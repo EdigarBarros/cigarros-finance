@@ -9,7 +9,7 @@ export const MODULOS: { id: Modulo; nome: string; pergunta: string; descricao: s
   {
     id: 'bancos', nome: 'Bancos e contas', icone: 'carteira',
     pergunta: 'Uso mais de um banco, conta ou carteira',
-    descricao: 'O que entra e sai de cada banco e quanto está guardado em cada um.',
+    descricao: 'O que entra e sai de cada banco e quanto você tem guardado em cada um.',
   },
   {
     id: 'investimentos', nome: 'Investimentos', icone: 'investir',
@@ -29,9 +29,9 @@ export const MODULOS: { id: Modulo; nome: string; pergunta: string; descricao: s
 ]
 
 export const DETALHES: { id: Detalhe; nome: string; descricao: string }[] = [
-  { id: 'simples', nome: 'Simples', descricao: 'Só o essencial: quanto entrou, quanto saiu e quanto sobrou.' },
-  { id: 'equilibrado', nome: 'Equilibrado', descricao: 'O essencial, mais gráficos e a comparação com o mês anterior.' },
-  { id: 'detalhado', nome: 'Detalhado', descricao: 'Tudo: quadros no estilo planilha, tabela do ano e cada número.' },
+  { id: 'simples', nome: 'Simples', descricao: 'Quanto sobrou, quanto entrou e quanto saiu. Sem gráficos nem comparações.' },
+  { id: 'equilibrado', nome: 'Equilibrado', descricao: 'O simples, mais gráficos e a comparação com o mês passado.' },
+  { id: 'detalhado', nome: 'Detalhado', descricao: 'O equilibrado, mais todas as categorias, mais lançamentos e o ano mês a mês.' },
 ]
 
 export const PERFIL_PADRAO: Perfil = {
@@ -86,7 +86,7 @@ export function visao(p: Perfil) {
     comparacao: nivel >= 1,
     graficoAno: nivel >= 1,
     paginaAno: nivel >= 1,
-    /** Quadros e tabelas no estilo da planilha. */
+    /** Todos os números: categorias completas, lançamentos do mês e mais indicadores. */
     planilha: nivel >= 2,
   }
 }

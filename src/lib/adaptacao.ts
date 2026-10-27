@@ -72,7 +72,7 @@ export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number,
 
   if (!p.modulos.dividas && lancs.filter((l) => PADRAO_DIVIDA.test(l.descricao) || ehPagamentoDeDivida(l)).length >= 2) {
     lista.push({
-      id: 'modulo:dividas', icone: 'divida', botao: 'Ligar dívidas',
+      id: 'modulo:dividas', icone: 'divida', botao: 'Acompanhar dívidas',
       titulo: 'Você está pagando parcelas',
       texto: 'Quer ver quanto falta em cada dívida e em que mês ela acaba? Cada pagamento lançado abate sozinho.',
       aplicar: ligar('dividas'),
@@ -80,7 +80,7 @@ export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number,
   }
   if (!p.modulos.investimentos && conta(PADRAO_INVESTIMENTO) >= 1) {
     lista.push({
-      id: 'modulo:investimentos', icone: 'investir', botao: 'Ligar investimentos',
+      id: 'modulo:investimentos', icone: 'investir', botao: 'Acompanhar investimentos',
       titulo: 'Começou a investir?',
       texto: 'Acompanhe quanto você tem investido mês a mês, junto com o resto do seu dinheiro.',
       aplicar: ligar('investimentos'),
@@ -88,7 +88,7 @@ export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number,
   }
   if (!p.modulos.metas && conta(PADRAO_GUARDAR) >= 1) {
     lista.push({
-      id: 'modulo:metas', icone: 'meta', botao: 'Ligar metas',
+      id: 'modulo:metas', icone: 'meta', botao: 'Acompanhar metas',
       titulo: 'Está guardando dinheiro?',
       texto: 'Crie uma meta (viagem, reserva, carro…) e veja quanto guardar por mês e quando você chega lá.',
       aplicar: ligar('metas'),
@@ -118,16 +118,16 @@ export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number,
   if (p.detalhe === 'simples' && lancs.length >= 40) {
     lista.push({
       id: 'detalhe:equilibrado', icone: 'ano', botao: 'Mostrar gráficos',
-      titulo: 'Você já tem bastante coisa lançada',
-      texto: 'Gráficos e a comparação com o mês anterior ajudam a ver para onde as coisas estão indo.',
+      titulo: 'Você já lançou bastante coisa',
+      texto: 'Gráficos e a comparação com o mês passado ajudam a ver para onde as coisas estão indo.',
       aplicar: nivel('equilibrado'),
     })
   }
   if (p.detalhe === 'equilibrado' && mesesComDados >= 4 && lancs.length >= 80) {
     lista.push({
-      id: 'detalhe:detalhado', icone: 'lista', botao: 'Ver tudo',
+      id: 'detalhe:detalhado', icone: 'lista', botao: 'Ver mais detalhes',
       titulo: `${mesesComDados} meses de histórico`,
-      texto: 'Com esse histórico, a tabela do ano mês a mês e os quadros completos mostram cada detalhe.',
+      texto: 'Com esse histórico, vale ver todas as categorias, os lançamentos do mês e o ano mês a mês.',
       aplicar: nivel('detalhado'),
     })
   }

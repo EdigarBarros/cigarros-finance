@@ -16,9 +16,9 @@ export function ItemLancamento({ l, banco, categoria, aoClicar, mostrarData = tr
           <span className="item-desc">{l.descricao || (entrada ? 'Entrada' : 'Saída')}</span>
           <span className="item-meta">
             {mostrarData && l.data && <>{fmtDataCurta(l.data)} · </>}
-            {banco && <><i className="marcador" style={{ background: banco.cor }} />{banco.nome} · </>}
+            {banco && <span className="item-banco"><i className="marcador" style={{ background: banco.cor }} />{banco.nome} · </span>}
             {c.nome}
-            {l.divida_id && ' · abate dívida'}
+            {l.divida_id && ' · paga dívida'}
           </span>
         </span>
         <span className={`item-valor ${entrada ? 'mais' : ''}`}>

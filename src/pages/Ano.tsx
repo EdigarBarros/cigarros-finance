@@ -22,19 +22,19 @@ export function Ano(c: Ctx) {
       </header>
 
       <div className="kpis">
-        <Kpi rotulo="Entradas no ano" valor={fmtValor(soma('entradas'))} cor={COR.entradas} />
-        <Kpi rotulo="Saídas no ano" valor={fmtValor(soma('saidas'))} cor={COR.saidas} />
+        <Kpi rotulo="Entrou no ano" valor={fmtValor(soma('entradas'))} cor={COR.entradas} />
+        <Kpi rotulo="Saiu no ano" valor={fmtValor(soma('saidas'))} cor={COR.saidas} />
         <Kpi rotulo="Sobrou no ano" valor={fmtValor(soma('fluxo'))} cor={COR.caixa} />
         <Kpi rotulo="Gasto médio por mês" valor={fmtValor(mediaGasto)} cor={COR.divida}>
           {melhor !== null && <span className="kpi-delta">Melhor mês: {MESES_NOME[melhor]}</span>}
         </Kpi>
       </div>
 
-      <Cartao titulo="Evolução no ano" acao={<span className="dica-cab">toque num mês para abrir</span>}>
-        <GraficoAnual porMes={c.porMes} mesAtual={c.mes} altura={400} aoClicarMes={(m) => { c.irParaMes(m); c.irPara('inicio') }} v={c.v} />
+      <Cartao titulo="Mês a mês" acao={<span className="dica-cab">toque num mês para abrir; na legenda, para mostrar mais linhas</span>}>
+        <GraficoAnual porMes={c.porMes} mesAtual={c.mes} altura={400} aoClicarMes={(m) => { c.irParaMes(m); c.irPara('inicio') }} v={c.v} linhas />
       </Cartao>
 
-      <Cartao titulo={`Resumo de ${c.ano}`}>
+      <Cartao titulo="Números de cada mês">
         <TabelaAnual porMes={c.porMes} mesAtual={c.mes} aoClicarMes={(m) => { c.irParaMes(m); c.irPara('inicio') }} v={c.v} />
       </Cartao>
 

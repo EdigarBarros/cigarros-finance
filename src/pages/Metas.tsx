@@ -10,7 +10,7 @@ import type { Ctx } from './contexto'
 
 const ICONES_META = ['🎯', '🛟', '✈️', '🚗', '🏠', '🎓', '🌴', '💍', '👶', '💻', '📱', '🎸', '🐶', '🏍️', '🎁', '💵', '🏖️', '⛺', '🏋️', '❤️']
 const CORES_META = ['#9d6bff', '#30d158', '#64d2ff', '#0a84ff', '#ff9f0a', '#ffd60a', '#ff375f', '#ff79c6', '#bf5af2', '#63e6e2']
-const quando = ([a, m]: [number, number]) => `${MESES_NOME[m - 1].toLowerCase()}/${a}`
+const quando = ([a, m]: [number, number]) => `${MESES_NOME[m - 1].toLowerCase()} de ${a}`
 const hoje = () => new Date().toISOString().slice(0, 10)
 
 /** Metas para qualquer objetivo: quanto falta, quanto guardar por mês e quando a pessoa chega lá. */
@@ -49,14 +49,14 @@ export function Metas(c: Ctx) {
           <h1>Metas</h1>
           <p className="sub">Junte dinheiro para o que importa. Cada meta mostra quanto guardar por mês e quando você chega lá.</p>
         </div>
-        {sits.length > 0 && <button className="btn primario" onClick={() => { setModelo(undefined); setEditando('nova') }}><Icone nome="mais" tamanho={16} /> Nova meta</button>}
+        {sits.length > 0 && <button className="btn primario" onClick={() => { setModelo(undefined); setEditando('nova') }}><Icone nome="mais" tamanho={16} /> Criar meta</button>}
       </header>
 
       {sits.length > 0 && (
         <div className="kpis">
           <Kpi rotulo="Guardado nas metas" valor={fmtValor(guardado)} cor={COR.entradas} />
           <Kpi rotulo="Falta juntar" valor={fmtValor(falta)} cor={COR.divida} />
-          {porMes > 0 && <Kpi rotulo="Guardar por mês para os prazos" valor={fmtValor(porMes)} cor={COR.caixa} />}
+          {porMes > 0 && <Kpi rotulo="Guardar por mês" valor={fmtValor(porMes)} cor={COR.caixa} />}
           <Kpi rotulo="Metas batidas" valor={`${batidas.length} de ${sits.length}`} cor={COR.investimentos} />
         </div>
       )}
@@ -155,8 +155,8 @@ function CartaoMeta({ s, c, aoEditar, aoGuardar, aoRetirar }: {
                 <span>{fmtDataCurta(m.data)}{m.descricao && ` · ${m.descricao}`}</span>
                 <span className={m.valor < 0 ? 'negativo' : ''}>
                   {m.valor < 0 ? '−' : '+'} {fmtMoeda(Math.abs(m.valor), moeda)}
-                  <button className="desfazer" aria-label="Apagar este registro" title="Apagar este registro"
-                    onClick={() => { if (confirm('Apagar este registro da meta?')) void c.d.delMovimentoMeta(m.id) }}>×</button>
+                  <button className="desfazer" aria-label="Excluir este registro" title="Excluir este registro"
+                    onClick={() => { if (confirm('Excluir este registro da meta?')) void c.d.delMovimentoMeta(m.id) }}>×</button>
                 </span>
               </li>
             ))}
@@ -188,7 +188,7 @@ function FormMeta({ c, meta, modelo, aoFechar }: { c: Ctx; meta?: Meta; modelo?:
   const salvar = () => {
     if (!nome.trim()) return setErro('Dê um nome para a meta.')
     const n = parseNumero(alvo)
-    if (!n || n <= 0) return setErro('Informe quanto você quer juntar.')
+    if (!n || n <= 0) return setErro('Digite quanto você quer juntar.')
     const dados = { nome: nome.trim(), icone, cor, moeda, alvo: n, prazo: prazo ? `${prazo}-01` : null }
     if (meta) void c.d.updMeta(meta.id, dados)
     else void c.d.addMeta(dados)
@@ -238,14 +238,14 @@ function FormMeta({ c, meta, modelo, aoFechar }: { c: Ctx; meta?: Meta; modelo?:
         <div className="form-acoes">
           {meta && (
             confirmar
-              ? <button type="button" className="btn perigo" onClick={() => { void c.d.delMeta(meta.id); aoFechar() }}>Apagar mesmo</button>
-              : <button type="button" className="btn perigo" onClick={() => setConfirmar(true)}>Apagar</button>
+              ? <button type="button" className="btn perigo" onClick={() => { void c.d.delMeta(meta.id); aoFechar() }}>Sim, excluir</button>
+              : <button type="button" className="btn perigo" onClick={() => setConfirmar(true)}>Excluir</button>
           )}
           <span className="espaco" />
           <button type="button" className="btn" onClick={aoFechar}>Cancelar</button>
           <button type="submit" className="btn primario">{meta ? 'Salvar' : 'Criar meta'}</button>
         </div>
-        {confirmar && <span className="campo-ajuda">A meta e todo o histórico dela serão apagados.</span>}
+        {confirmar && <span className="campo-ajuda">A meta e todo o histórico dela serão excluídos.</span>}
       </form>
     </Modal>
   )
@@ -261,7 +261,7 @@ function FormMovimento({ c, meta, retirar: inicial, aoFechar }: { c: Ctx; meta: 
 
   const salvar = () => {
     const n = parseNumero(valor)
-    if (!n || n <= 0) return setErro('Informe um valor maior que zero.')
+    if (!n || n <= 0) return setErro('Digite um valor maior que zero.')
     if (retirar && n > guardado + 0.001) return setErro(`Na meta só tem ${fmtMoeda(guardado, meta.moeda)}.`)
     void c.d.addMovimentoMeta({ meta_id: meta.id, data, valor: retirar ? -n : n, descricao: descricao.trim() })
     aoFechar()

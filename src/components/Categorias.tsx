@@ -47,7 +47,7 @@ export function EscolhaCategoria({ opcoes, valor, aoMudar, aoCriar, tipo }: {
         {visiveis.length < opcoes.length && (
           <button type="button" className="chip" onClick={() => setTodas(true)}>Mais {opcoes.length - visiveis.length}…</button>
         )}
-        {aoCriar && !criando && <button type="button" className="chip novo" onClick={() => setCriando(true)}>+ nova</button>}
+        {aoCriar && !criando && <button type="button" className="chip novo" onClick={() => setCriando(true)}>+ Nova categoria</button>}
       </div>
       {aoCriar && criando && (
         <EditorCategoria
@@ -101,8 +101,8 @@ function EditorCategoria({ inicial, tipo, corInicial, compacto, aoSalvar, aoExcl
       <div className="form-acoes">
         {aoExcluir && !inicial?.papel && (
           confirmar
-            ? <button type="button" className="btn perigo" onClick={aoExcluir}>Apagar mesmo</button>
-            : <button type="button" className="btn perigo" onClick={() => setConfirmar(true)}>Apagar</button>
+            ? <button type="button" className="btn perigo" onClick={aoExcluir}>Sim, excluir</button>
+            : <button type="button" className="btn perigo" onClick={() => setConfirmar(true)}>Excluir</button>
         )}
         <span className="espaco" />
         <button type="button" className="btn" onClick={aoCancelar}>Cancelar</button>
@@ -133,7 +133,7 @@ export function GerenciarCategorias({ categorias, contagem, aoCriar, aoEditar, a
         <div className="categorias-topo">
           <Segmentado rotulo="Tipo" valor={tipo} aoMudar={(t) => { setTipo(t); setEditando(null) }}
             opcoes={[{ id: 'saida', nome: 'Saídas' }, { id: 'entrada', nome: 'Entradas' }]} />
-          {editando !== 'nova' && <button type="button" className="btn primario" onClick={() => setEditando('nova')}><Icone nome="mais" tamanho={16} /> Nova</button>}
+          {editando !== 'nova' && <button type="button" className="btn primario" onClick={() => setEditando('nova')}><Icone nome="mais" tamanho={16} /> Criar categoria</button>}
         </div>
         {editando === 'nova' && (
           <EditorCategoria tipo={tipo} corInicial={corLivre(lista)} aoCancelar={() => setEditando(null)}
@@ -156,7 +156,7 @@ export function GerenciarCategorias({ categorias, contagem, aoCriar, aoEditar, a
               )}
             </li>
           ))}
-          {!lista.length && <li className="quadro-vazio">Nenhuma categoria de {tipo === 'saida' ? 'saída' : 'entrada'}. Toque em Nova.</li>}
+          {!lista.length && <li className="quadro-vazio">Nenhuma categoria de {tipo === 'saida' ? 'saída' : 'entrada'}. Toque em Criar categoria.</li>}
         </ul>
         <p className="dica">Dica: ao lançar, o app já sugere a categoria pela descrição ("iFood" → Alimentação) e aprende com o que você escolhe.</p>
       </div>

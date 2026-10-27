@@ -3,7 +3,7 @@ import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes } from '../lib/calc'
 import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
 import { situacaoDividas, type SituacaoDivida } from '../lib/dividas'
-import { definirMoedaPrincipal, MESES_NOME } from '../lib/format'
+import { definirMoedaPrincipal, MESES_CURTO, MESES_NOME } from '../lib/format'
 import { useCambio } from '../lib/moedas'
 import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
 import { supabase } from '../lib/supabase'
@@ -26,14 +26,24 @@ import { Marca } from './Marca'
 import { Personalizar } from './Personalizar'
 import { Questionario } from './Questionario'
 
+/**
+ * A ordem daqui é a do menu e também a prioridade nas abas do celular (veja docs/arquitetura-do-painel.md):
+ * o que se usa todo dia, depois o que tem prazo (do mais próximo ao mais distante), depois o que se constrói,
+ * e por fim a retrospectiva.
+ * As páginas `contas` ("Contas do mês") e `cartoes` ("Cartões") entram entre `lancamentos` e `dividas`.
+ */
 const PAGINAS: { id: Pagina; nome: string; curto: string; icone: string }[] = [
-  { id: 'inicio', nome: 'Visão geral', curto: 'Início', icone: 'inicio' },
+  { id: 'inicio', nome: 'Início', curto: 'Início', icone: 'inicio' },
   { id: 'lancamentos', nome: 'Lançamentos', curto: 'Lançamentos', icone: 'lista' },
+  // aqui entram `contas` e `cartoes`
   { id: 'dividas', nome: 'Dívidas', curto: 'Dívidas', icone: 'divida' },
   { id: 'metas', nome: 'Metas', curto: 'Metas', icone: 'meta' },
-  { id: 'patrimonio', nome: 'Meu dinheiro', curto: 'Dinheiro', icone: 'carteira' },
-  { id: 'ano', nome: 'Ano', curto: 'Ano', icone: 'ano' },
+  { id: 'patrimonio', nome: 'Dinheiro guardado', curto: 'Guardado', icone: 'carteira' },
+  { id: 'ano', nome: 'Resumo do ano', curto: 'Ano', icone: 'ano' },
 ]
+
+/** Na barra do celular cabem 5 abas; passando disso, as 4 primeiras ficam e o resto vai para "Mais". */
+const MAX_ABAS = 5
 
 const paginaDoHash = (): Pagina => {
   const h = location.hash.replace('#/', '') as Pagina
@@ -48,6 +58,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const [mes, setMes] = useState(hoje.getMonth() + 1)
   const [form, setForm] = useState<{ inicial?: Lancamento; tipo?: Tipo; preset?: Partial<Lancamento> } | null>(null)
   const [menu, setMenu] = useState(false)
+  const [mais, setMais] = useState(false)
   const [bancoAberto, setBancoAberto] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState<string | null>(null)
   const [ajustes, setAjustes] = useState(false)
@@ -96,6 +107,8 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const lenteNav = useLente(refNav, 'button.ativo', `${paginaAtual}|${paginas.length}|${noPainel}`)
   const lenteMeses = useLente(refMeses, 'button.ativo', `${mes}|${ano}|${noPainel}`)
   const lenteAbas = useLente(refAbas, 'button.ativo', `${paginaAtual}|${mobile}|${paginas.length}|${noPainel}`)
+  const abas = paginas.length <= MAX_ABAS ? paginas : paginas.slice(0, MAX_ABAS - 1)
+  const naMais = paginas.slice(abas.length)
 
   // Ao trocar de mês, os blocos da página saem do desfoque de novo (mesma animação da entrada).
   const primeiraVez = useRef(true)
@@ -122,6 +135,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
 
   const irPara = (p: Pagina) => {
     setBancoAberto(null)
+    setMais(false)
     location.hash = `/${p}`
     setPagina(p)
     window.scrollTo({ top: 0 })
@@ -167,15 +181,15 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   }
 
   const importar = (f: File) =>
-    tarefa('Lendo planilha…', async () => {
+    tarefa('Lendo a planilha…', async () => {
       // A biblioteca de planilhas é pesada; só baixa quando alguém importa ou exporta.
       const { lerPlanilha, gravarImportacao } = await import('../lib/planilha')
       const meses = await lerPlanilha(f)
       if (arquivo.current) arquivo.current.value = ''
       if (!meses.length) return alert('Não encontrei abas de mês (ex.: OUTUBRO26) com dados nessa planilha.')
       const lista = meses.map((m) => `${MESES_NOME[m.mes - 1]}/${m.ano}: ${m.lancs.length} lançamentos`).join('\n')
-      if (!confirm(`Encontrei ${meses.length} meses:\n\n${lista}\n\nOs dados desses meses no app serão SUBSTITUÍDOS pelos da planilha. Continuar?`)) return
-      setOcupado('Gravando…')
+      if (!confirm(`Encontrei ${meses.length} meses:\n\n${lista}\n\nOs dados desses meses no app serão substituídos pelos da planilha. Quer continuar?`)) return
+      setOcupado('Salvando…')
       await gravarImportacao(userId, meses)
       const ultimo = meses[meses.length - 1]
       if (ultimo.ano === ano) await d.recarregar()
@@ -210,7 +224,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     categorias: d.categorias,
     categoriaDe,
     gerenciarCategorias: () => (d.categoriasAntigas
-      ? d.setErro('Para criar e editar categorias, rode supabase/migracao-05-categorias.sql no SQL Editor do Supabase.')
+      ? d.setErro('Para criar e editar categorias, falta atualizar o banco de dados: rode supabase/migracao-05-categorias.sql no SQL Editor do Supabase.')
       : setEditarCategorias(true)),
     importar: () => arquivo.current?.click(),
     contaNova: !d.carregando && !temDados,
@@ -244,8 +258,8 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     <>
       <button onClick={() => setAjustes(true)}><Icone nome="ajustes" /> Personalizar painel</button>
       <button onClick={() => arquivo.current?.click()}><Icone nome="importar" /> Importar planilha</button>
-      <button onClick={() => tarefa('Gerando backup…', async () => (await import('../lib/planilha')).exportarBackup())}>
-        <Icone nome="exportar" /> Exportar backup
+      <button onClick={() => tarefa('Preparando o backup…', async () => (await import('../lib/planilha')).exportarBackup())}>
+        <Icone nome="exportar" /> Baixar backup
       </button>
       <button onClick={() => supabase.auth.signOut()}><Icone nome="sair" /> Sair</button>
     </>
@@ -286,7 +300,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
                 onClick={() => setMes(i + 1)}
                 aria-current={i + 1 === mes ? 'page' : undefined}
               >
-                {m.slice(0, 3).toUpperCase()}
+                {MESES_CURTO[i]}
               </button>
             ))}
           </nav>
@@ -304,14 +318,14 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
 
         {d.perfilSemTabela && (
           <div className="alerta aviso-migracao" role="status">
-            Falta atualizar o banco de dados para guardar suas preferências e usar outras moedas: rode
+            Falta atualizar o banco de dados para guardar suas preferências e usar outras moedas. Rode
             {' '}<code>supabase/migracao-04-perfil-e-moedas.sql</code> no SQL Editor do Supabase.
           </div>
         )}
 
         {d.erro && (
           <div className="alerta" role="alert">
-            Algo deu errado: {d.erro}
+            <span>Não deu certo. Tente de novo. <small>Detalhe: {d.erro}</small></span>
             <button className="link" onClick={() => d.setErro(null)}>Fechar</button>
           </div>
         )}
@@ -328,12 +342,29 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
 
       <nav className="abas-movel" ref={refAbas}>
         {lenteAbas && <span className="lente" aria-hidden="true" style={estiloLente(lenteAbas)} />}
-        {paginas.map((p) => (
+        {abas.map((p) => (
           <button key={p.id} className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}>
             <Icone nome={p.icone} /> <span>{p.curto}</span>
           </button>
         ))}
+        {naMais.length > 0 && (
+          <button className={naMais.some((p) => p.id === paginaAtual) ? 'ativo' : ''} onClick={() => setMais(!mais)} aria-expanded={mais}>
+            <Icone nome="reticencias" /> <span>Mais</span>
+          </button>
+        )}
       </nav>
+
+      {mobile && mais && (
+        <div className="mais-fundo" onClick={() => setMais(false)}>
+          <div className="menu-lista mais-lista" role="menu">
+            {naMais.map((p) => (
+              <button key={p.id} role="menuitem" className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}>
+                <Icone nome={p.icone} /> {p.nome}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <input ref={arquivo} type="file" accept=".xlsx,.xlsm,.xls" hidden onChange={(e) => e.target.files?.[0] && importar(e.target.files[0])} />
 

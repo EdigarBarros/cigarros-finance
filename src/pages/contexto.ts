@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { Sugestao } from '../lib/adaptacao'
 import type { MesEfetivo, Resumo } from '../lib/calc'
 import type { SituacaoDivida } from '../lib/dividas'
@@ -51,4 +52,14 @@ export interface Ctx {
   abrirBanco: (id: string | null) => void
   /** Abre o formulário de saída já ligado à dívida, com o valor da parcela. */
   pagarDivida: (s: SituacaoDivida) => void
+  /**
+   * Indicadores de outros módulos ("Falta pagar no mês", "Fatura do cartão"): um ou mais `<Kpi>`,
+   * logo depois de Saiu, em todos os jeitos de ver.
+   */
+  kpisExtras?: ReactNode
+  /**
+   * Blocos de outros módulos. Cada um é um único elemento raiz (`Bloco`, `<section className="bloco">` ou `Cartao`).
+   * Ficam na zona "O que fazer", antes das dívidas: primeiro `contas`, depois `cartoes`.
+   */
+  blocos?: { contas?: ReactNode; cartoes?: ReactNode }
 }
