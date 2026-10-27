@@ -3,8 +3,8 @@ import { dicaDaDescricao } from '../lib/adaptacao'
 import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
 import { gerarParcelas, textoParcelamento } from '../lib/cartoes'
 import { COR } from '../lib/charts'
-import { dividaPelaDescricao, type SituacaoDivida } from '../lib/dividas'
-import { dataPadrao, fmtValor, paraCampo, parseNumero, simbolo } from '../lib/format'
+import { dividaPelaDescricao, mesesAntes, parcelasDe, type SituacaoDivida } from '../lib/dividas'
+import { dataPadrao, fmtMesAno, fmtValor, paraCampo, parseNumero, simbolo } from '../lib/format'
 import { infoMoeda, type Taxas } from '../lib/moedas'
 import { visao } from '../lib/perfil'
 import { bancoConhecido, bancoNaDescricao, CORES_LIVRES, mesmoNome } from '../lib/rotulos'
@@ -395,33 +395,77 @@ interface FormDividaProps {
   mes: number
   /** Ao editar: a dívida e como ela está no mês aberto. */
   situacao?: SituacaoDivida
-  aoCriar: (d: { descricao: string; valor_parcela: number | null; saldo: number; data: string }) => void
+  aoCriar: (d: { descricao: string; valor_parcela: number | null; saldo: number; data: string; inicio?: { data: string; saldo: number } }) => void
   aoEditar: (id: string, patch: Partial<Divida>) => void
   aoNovoSaldo: (id: string, data: string, saldo: number) => void
   aoExcluir: (id: string) => void
   aoFechar: () => void
+  /** Aberto por "Definir parcela": começa no modo parcelado, com o cursor no valor da parcela. */
+  definirParcela?: boolean
 }
 
-export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo, aoExcluir, aoFechar }: FormDividaProps) {
+/** Quantidade de parcelas digitada: inteiro de 1 a 600, ou null. */
+const inteiro = (t: string) => {
+  const n = Number(t.trim())
+  return Number.isInteger(n) && n >= 1 && n <= 600 ? n : null
+}
+
+/**
+ * Dívida do jeito que a pessoa pensa: "é parcelado?" Parcelada, pede o valor da parcela e quantas faltam
+ * (e, se souber, de quantas); sem parcela fixa, pede quanto falta pagar.
+ */
+export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo, aoExcluir, aoFechar, definirParcela }: FormDividaProps) {
   const d = situacao?.divida
+  const atuais = situacao ? parcelasDe(situacao) : null
   const [descricao, setDescricao] = useState(d?.descricao ?? '')
+  const [parcelado, setParcelado] = useState<'sim' | 'nao'>(d && !d.valor_parcela && !definirParcela ? 'nao' : 'sim')
   const [parcela, setParcela] = useState(d?.valor_parcela ? paraCampo(d.valor_parcela) : '')
+  const [faltam, setFaltam] = useState('')
+  const [total, setTotal] = useState('')
   const [saldo, setSaldo] = useState('')
   const [data, setData] = useState(dataPadrao(ano, mes))
   const [erro, setErro] = useState<string | null>(null)
+  const [confirmar, setConfirmar] = useState(false)
+
+  const vp = parseNumero(parcela)
+  const nFaltam = inteiro(faltam)
+  const nTotal = inteiro(total)
+  // Prévia do que vai ficar: "falta R$ 3.600 (12 × R$ 300) · acaba em out de 2027"
+  const previa = parcelado === 'sim' && vp && vp > 0 && (nFaltam ?? atuais?.faltam)
+    ? (() => {
+        const n = (nFaltam ?? atuais!.faltam)
+        // mesma conta do cartão da dívida: as parcelas que faltam começam no mês seguinte
+        const t = ano * 12 + (mes - 1) + n
+        return `Falta pagar ${fmtValor(vp * n)} (${n} × ${fmtValor(vp)}) · última parcela em ${fmtMesAno(Math.floor(t / 12), (t % 12) + 1)}`
+      })()
+    : null
 
   const salvar = () => {
     if (!descricao.trim()) return setErro('Dê um nome para a dívida.')
-    const vp = parcela.trim() ? parseNumero(parcela) : null
-    if (parcela.trim() && (!vp || vp <= 0)) return setErro('Digite um valor de parcela válido.')
-    const s = saldo.trim() ? parseNumero(saldo) : null
-    if (saldo.trim() && (s === null || s < 0)) return setErro('Digite um valor válido.')
-    if (!d) {
-      if (s === null || s <= 0) return setErro('Digite quanto falta pagar.')
-      aoCriar({ descricao: descricao.trim(), valor_parcela: vp, saldo: s, data })
+    if (parcelado === 'sim') {
+      if (!vp || vp <= 0) return setErro('Digite o valor da parcela.')
+      if (faltam.trim() && !nFaltam) return setErro('Digite quantas parcelas faltam (um número inteiro).')
+      if (!d && !nFaltam) return setErro('Digite quantas parcelas faltam.')
+      if (total.trim() && (!nTotal || (nFaltam && nTotal < nFaltam))) return setErro('O total de parcelas não pode ser menor que as que faltam.')
+      const n = nFaltam ?? atuais?.faltam ?? 0
+      // Com o total, registra o valor de quando a dívida começou: é isso que mostra "parcela 4 de 12".
+      const inicio = nTotal && nTotal > n ? { data: mesesAntes(data, nTotal - n), saldo: Math.round(vp * nTotal * 100) / 100 } : undefined
+      if (!d) {
+        aoCriar({ descricao: descricao.trim(), valor_parcela: vp, saldo: Math.round(vp * n * 100) / 100, data, inicio })
+      } else {
+        if (descricao.trim() !== d.descricao || vp !== d.valor_parcela) aoEditar(d.id, { descricao: descricao.trim(), valor_parcela: vp })
+        if (inicio && inicio.saldo > situacao!.saldoInicial) aoNovoSaldo(d.id, inicio.data, inicio.saldo)
+        if (nFaltam) aoNovoSaldo(d.id, data, Math.round(vp * nFaltam * 100) / 100)
+      }
     } else {
-      if (descricao.trim() !== d.descricao || vp !== d.valor_parcela) aoEditar(d.id, { descricao: descricao.trim(), valor_parcela: vp })
-      if (s !== null) aoNovoSaldo(d.id, data, s)
+      const s = saldo.trim() ? parseNumero(saldo) : null
+      if (saldo.trim() && (s === null || s < 0)) return setErro('Digite um valor válido.')
+      if (!d && (s === null || s <= 0)) return setErro('Digite quanto falta pagar.')
+      if (!d) aoCriar({ descricao: descricao.trim(), valor_parcela: null, saldo: s!, data })
+      else {
+        if (descricao.trim() !== d.descricao || d.valor_parcela !== null) aoEditar(d.id, { descricao: descricao.trim(), valor_parcela: null })
+        if (s !== null) aoNovoSaldo(d.id, data, s)
+      }
     }
     aoFechar()
   }
@@ -431,40 +475,62 @@ export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo,
       <form className="form" onSubmit={(e) => { e.preventDefault(); salvar() }}>
         <label className="campo">
           <span className="campo-rotulo">Nome</span>
-          <input autoFocus={!d} value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex.: Notebook, cartão Nubank…" />
+          <input autoFocus={!d} value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex.: Notebook, empréstimo, cartão Nubank…" />
         </label>
-        <label className="campo">
-          <span className="campo-rotulo">Parcela mensal (opcional)</span>
-          <input inputMode="decimal" value={parcela} onChange={(e) => setParcela(e.target.value)} placeholder="0,00" />
-          <span className="campo-ajuda">Com a parcela, o app prevê quando a dívida acaba.</span>
-        </label>
-        <div className="form-linha">
-          <label className="campo">
-            <span className="campo-rotulo">{d ? 'Quanto falta pagar agora' : 'Quanto falta pagar'}</span>
-            <input inputMode="decimal" value={saldo} onChange={(e) => setSaldo(e.target.value)}
-              placeholder={d ? fmtValor(situacao!.restante) : '0,00'} />
-          </label>
-          <label className="campo">
-            <span className="campo-rotulo">Em que data</span>
-            <input type="date" value={data} onChange={(e) => setData(e.target.value)} />
-          </label>
+        <div className="campo">
+          <span className="campo-rotulo">É parcelado?</span>
+          <Segmentado rotulo="É parcelado?" valor={parcelado} aoMudar={(v) => { setParcelado(v); setErro(null) }}
+            opcoes={[{ id: 'sim', nome: 'Sim, pago em parcelas' }, { id: 'nao', nome: 'Não, tenho um valor a pagar' }]} />
         </div>
-        {d && <span className="campo-ajuda">Só preencha se o banco mudou o valor (juros, acordo). Os pagamentos já abatem sozinhos.</span>}
+        {parcelado === 'sim' ? (
+          <>
+            <div className="form-linha">
+              <label className="campo">
+                <span className="campo-rotulo">Valor da parcela</span>
+                <span className="campo-caixa"><span className="prefixo">{simbolo()}</span>
+                  <input autoFocus={Boolean(d) && !d?.valor_parcela} inputMode="decimal" value={parcela} onChange={(e) => setParcela(e.target.value)} placeholder="0,00" />
+                </span>
+              </label>
+              <label className="campo">
+                <span className="campo-rotulo">Quantas faltam</span>
+                <input inputMode="numeric" value={faltam} onChange={(e) => setFaltam(e.target.value)}
+                  placeholder={atuais ? String(atuais.faltam) : d && vp ? String(Math.ceil(situacao!.restante / vp - 0.001)) : 'Ex.: 10'} />
+              </label>
+            </div>
+            <label className="campo">
+              <span className="campo-rotulo">De quantas no total? <small>(opcional)</small></span>
+              <input inputMode="numeric" value={total} onChange={(e) => setTotal(e.target.value)} placeholder={atuais ? String(atuais.total) : 'Ex.: 12'} />
+              <span className="campo-ajuda">Se souber, o app mostra quanto você já pagou ("parcela 4 de 12").</span>
+            </label>
+            {previa && <p className="divida-previa">{previa}</p>}
+          </>
+        ) : (
+          <label className="campo">
+            <span className="campo-rotulo">{d ? 'Quanto falta pagar agora' : 'Quanto falta pagar'} {d && <small>(só se mudou)</small>}</span>
+            <span className="campo-caixa"><span className="prefixo">{simbolo()}</span>
+              <input inputMode="decimal" value={saldo} onChange={(e) => setSaldo(e.target.value)} placeholder={d ? paraCampo(situacao!.restante) : '0,00'} />
+            </span>
+          </label>
+        )}
+        {d && (
+          <label className="campo">
+            <span className="campo-rotulo">Valor atualizado em</span>
+            <input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+            <span className="campo-ajuda">Os pagamentos lançados já abatem sozinhos. Mude o que falta só se houve juros, acordo ou se estava errado.</span>
+          </label>
+        )}
         {erro && <p className="form-erro">{erro}</p>}
         <div className="form-acoes">
           {d && (
-            <button
-              type="button"
-              className="btn perigo"
-              onClick={() => { if (confirm(`Excluir "${d.descricao}" e todo o histórico dela?`)) { aoExcluir(d.id); aoFechar() } }}
-            >
-              Excluir
-            </button>
+            confirmar
+              ? <button type="button" className="btn perigo" onClick={() => { aoExcluir(d.id); aoFechar() }}>Excluir mesmo</button>
+              : <button type="button" className="btn perigo" onClick={() => setConfirmar(true)}>Excluir</button>
           )}
           <span className="espaco" />
           <button type="button" className="btn" onClick={aoFechar}>Cancelar</button>
           <button type="submit" className="btn primario">Salvar</button>
         </div>
+        {confirmar && <span className="campo-ajuda">A dívida e todo o histórico dela serão excluídos. Os pagamentos lançados continuam, só deixam de abater dela.</span>}
       </form>
     </Modal>
   )

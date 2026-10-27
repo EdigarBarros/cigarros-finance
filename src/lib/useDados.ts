@@ -153,12 +153,19 @@ export function useDados(userId: string, ano: number) {
   }
 
   /** Cria a dívida já com o saldo devedor de partida. */
-  const addDivida = async (d: { descricao: string; valor_parcela: number | null; saldo: number; data: string }) => {
+  /**
+   * Cria a dívida já com o saldo de partida. `inicio` (opcional) registra o valor de quando ela começou,
+   * para o app mostrar quanto já foi pago ("parcela 4 de 12").
+   */
+  const addDivida = async (d: {
+    descricao: string; valor_parcela: number | null; saldo: number; data: string; inicio?: { data: string; saldo: number }
+  }) => {
     const { data, error } = await supabase
       .from('dividas').insert({ descricao: d.descricao, valor_parcela: d.valor_parcela }).select().single()
     if (error) return falhou(error.message)
     const nova = normDiv(data as Divida)
     setDividas((xs) => [...xs, nova])
+    if (d.inicio) await addSaldo(nova.id, d.inicio.data, d.inicio.saldo)
     await addSaldo(nova.id, d.data, d.saldo)
   }
   const updDivida = async (id: string, patch: Partial<Divida>) => {
@@ -280,7 +287,24 @@ export function useDados(userId: string, ano: number) {
     if (error) falhou(error.message)
   }
 
+  /**
+   * Zera a conta: apaga lançamentos, dívidas, saldos dos meses, metas, contas fixas e cartões. Com `tudo`,
+   * apaga também bancos, categorias (as padrão voltam) e preferências (as perguntas iniciais aparecem de novo).
+   * As regras do banco só deixam apagar o que é da própria pessoa.
+   */
+  const zerarDados = async (tudo: boolean) => {
+    const tabelas = [
+      'faturas_pagas', 'meta_movimentos', 'metas', 'lancamentos', 'contas_fixas', 'cartoes', 'divida_saldos', 'dividas', 'meses',
+      ...(tudo ? ['bancos', 'categorias', 'perfis'] : []),
+    ]
+    for (const t of tabelas) {
+      const { error } = await supabase.from(t).delete().eq('user_id', userId)
+      if (error && !faltaTabela(error)) throw new Error(error.message)
+    }
+  }
+
   return {
+    zerarDados,
     metas, movimentosMeta, metasSemTabela, addMeta, updMeta, delMeta, addMovimentoMeta, delMovimentoMeta,
     categorias, categoriasAntigas, addCategoria, updCategoria, delCategoria,
     perfil, perfilSemTabela, salvarPerfil,

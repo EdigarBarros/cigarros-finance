@@ -7,8 +7,11 @@ import { Icone } from './Icone'
 import { Interruptor, Modal, Opcao } from './ui'
 
 /** Ajustes do painel. Cada mudança vale na hora, sem botão de salvar. */
-export function Personalizar({ perfil, aoMudar, aoRefazer, aoCategorias, aoFechar }: {
-  perfil: Perfil; aoMudar: (p: Perfil) => void; aoRefazer: () => void; aoCategorias: () => void; aoFechar: () => void
+export function Personalizar({ perfil, aoMudar, aoRefazer, aoCategorias, aoZerar, aoFechar }: {
+  perfil: Perfil; aoMudar: (p: Perfil) => void; aoRefazer: () => void; aoCategorias: () => void
+  /** Abre a confirmação de zerar os dados. */
+  aoZerar: () => void
+  aoFechar: () => void
 }) {
   const [nome, setNome] = useState(perfil.nome)
   const ligar = (m: Modulo, v: boolean) => aoMudar({ ...perfil, modulos: { ...perfil.modulos, [m]: v } })
@@ -87,10 +90,78 @@ export function Personalizar({ perfil, aoMudar, aoRefazer, aoCategorias, aoFecha
             placeholder="Seu nome ou apelido" maxLength={40} />
         </label>
 
+        <section className="campo zona-cuidado">
+          <span className="campo-rotulo">Começar de novo</span>
+          <button type="button" className="ajuste ajuste-botao" onClick={aoZerar}>
+            <span className="ajuste-icone"><Icone nome="lixeira" /></span>
+            <span className="ajuste-texto"><strong>Zerar meus dados</strong><small>Apaga os lançamentos e deixa o painel em branco. Pede confirmação antes.</small></span>
+            <Icone nome="dir" tamanho={16} />
+          </button>
+        </section>
+
         <div className="form-acoes">
           <button type="button" className="btn" onClick={aoRefazer}>Refazer as perguntas</button>
           <span className="espaco" />
           <button type="button" className="btn primario" onClick={() => { if (nome.trim() !== perfil.nome) aoMudar({ ...perfil, nome: nome.trim() }); aoFechar() }}>Pronto</button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+/**
+ * Confirmação de zerar os dados. É a única ação que não tem volta, então pede três coisas: entender o que
+ * será apagado, ter a chance de baixar o backup e digitar ZERAR.
+ */
+export function ZerarDados({ aoBaixarBackup, aoZerar, aoFechar }: {
+  aoBaixarBackup: () => Promise<unknown>; aoZerar: (tudo: boolean) => Promise<void>; aoFechar: () => void
+}) {
+  const [tudo, setTudo] = useState(false)
+  const [texto, setTexto] = useState('')
+  const [baixou, setBaixou] = useState(false)
+  const [ocupado, setOcupado] = useState<string | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+  const pode = texto.trim().toUpperCase() === 'ZERAR' && !ocupado
+
+  const baixar = async () => {
+    setOcupado('Gerando backup…')
+    try { await aoBaixarBackup(); setBaixou(true) } catch (e) { setErro(e instanceof Error ? e.message : String(e)) }
+    setOcupado(null)
+  }
+  const zerar = async () => {
+    setOcupado('Apagando…')
+    setErro(null)
+    try { await aoZerar(tudo) } catch (e) {
+      setErro(`Não deu para apagar tudo: ${e instanceof Error ? e.message : String(e)}. Tente de novo.`)
+      setOcupado(null)
+    }
+  }
+
+  return (
+    <Modal titulo="Zerar meus dados" aoFechar={() => !ocupado && aoFechar()}>
+      <div className="form">
+        <p className="zerar-texto">
+          Isto apaga <b>todos os lançamentos</b>, dívidas, contas do mês, cartões, metas e os saldos guardados de cada mês.
+          O painel volta a ficar em branco. <b>Não tem como desfazer.</b>
+        </p>
+        <div className="opcoes">
+          <Opcao ativo={!tudo} aoClicar={() => setTudo(false)} titulo="Manter minhas configurações"
+            texto="Categorias, bancos e o jeito do painel continuam como estão." />
+          <Opcao ativo={tudo} aoClicar={() => setTudo(true)} titulo="Apagar tudo, como uma conta nova"
+            texto="Categorias voltam às padrão, os bancos somem e as perguntas iniciais aparecem de novo." />
+        </div>
+        <button type="button" className="btn" onClick={baixar} disabled={Boolean(ocupado)}>
+          <Icone nome="exportar" tamanho={16} /> {baixou ? 'Backup baixado ✓' : 'Baixar backup antes (recomendado)'}
+        </button>
+        <label className="campo">
+          <span className="campo-rotulo">Para confirmar, digite <b>ZERAR</b></span>
+          <input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="ZERAR" autoComplete="off" autoCapitalize="characters" />
+        </label>
+        {erro && <p className="form-erro">{erro}</p>}
+        <div className="form-acoes">
+          <span className="espaco" />
+          <button type="button" className="btn" onClick={aoFechar} disabled={Boolean(ocupado)}>Cancelar</button>
+          <button type="button" className="btn perigo-forte" disabled={!pode} onClick={zerar}>{ocupado ?? 'Zerar meus dados'}</button>
         </div>
       </div>
     </Modal>

@@ -84,3 +84,32 @@ export function dividaPelaDescricao(descricao: string, dividas: Divida[]): Divid
 
 const normalizar = (s: string) =>
   s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim()
+
+export interface Parcelas {
+  /** Quantas parcelas a dívida tem ao todo (estimado pelo maior saldo registrado). */
+  total: number
+  pagas: number
+  faltam: number
+  /** A próxima a pagar (1 a total). */
+  proxima: number
+}
+
+/**
+ * "Parcela 4 de 12": tirado do valor da parcela e dos saldos, sem precisar guardar o número de parcelas.
+ * null quando a dívida não tem parcela definida.
+ */
+export function parcelasDe(s: SituacaoDivida): Parcelas | null {
+  const p = s.divida.valor_parcela
+  if (!p || p <= 0) return null
+  const faltam = s.restante > 0 ? Math.ceil(s.restante / p - 0.001) : 0
+  const total = Math.max(faltam, Math.round(s.saldoInicial / p))
+  const pagas = total - faltam
+  return { total, pagas, faltam, proxima: Math.min(total, pagas + 1) }
+}
+
+/** Data (dia 1) de n meses antes de uma data ISO, para registrar o saldo de quando a dívida começou. */
+export function mesesAntes(iso: string, n: number) {
+  const [a, m] = iso.split('-').map(Number)
+  const t = a * 12 + (m - 1) - n
+  return inicioDoMes(Math.floor(t / 12), (t % 12) + 1)
+}
