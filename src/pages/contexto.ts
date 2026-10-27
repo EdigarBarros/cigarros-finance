@@ -21,6 +21,10 @@ export interface Ctx {
   porMes: (Resumo | null)[]
   mobile: boolean
   irPara: (p: Pagina) => void
+  /** Abre a escolha de arquivo da planilha. */
+  importar: () => void
+  /** Conta sem nenhum dado ainda (primeiro acesso). */
+  contaNova: boolean
   irParaMes: (mes: number) => void
   novoLancamento: (tipo?: Tipo) => void
   editarLancamento: (l: Lancamento) => void

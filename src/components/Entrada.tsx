@@ -58,6 +58,11 @@ function traduzir(m: string) {
   if (/email not confirmed/i.test(m)) return 'Confirme seu e-mail pelo link que chegou na caixa de entrada.'
   if (/already registered/i.test(m)) return 'Esse e-mail já tem conta. Use "Já tenho conta".'
   if (/signups not allowed/i.test(m)) return 'Cadastro de novas contas está desativado.'
+  if (/not authorized|sending confirmation|sending.*email/i.test(m))
+    return 'Não foi possível enviar o e-mail de confirmação. Avise o dono do site para liberar o cadastro.'
+  if (/rate limit|too many/i.test(m)) return 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo.'
+  if (/password should be at least/i.test(m)) return 'A senha precisa ter pelo menos 6 caracteres.'
+  if (/invalid.*email|unable to validate email/i.test(m)) return 'Esse e-mail não parece válido.'
   return m
 }
 

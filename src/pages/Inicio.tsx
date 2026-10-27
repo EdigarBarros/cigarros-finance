@@ -62,6 +62,21 @@ export function Inicio(c: Ctx) {
           <p className="sub">{MESES_NOME[c.mes - 1]} de {c.ano}</p>
         </div>
       </header>
+      {c.contaNova && (
+        <section className="boas-vindas">
+          <img src="/emblema.webp" alt="" width={56} height={56} />
+          <div>
+            <h2>Bem-vindo ao Cigarros Finance</h2>
+            <p>Seus dados são só seus: ninguém mais vê o que você lança aqui. Para começar:</p>
+            <ol>
+              <li><button className="link" onClick={() => c.novoLancamento('entrada')}>Lance uma entrada</button> ou uma <button className="link" onClick={() => c.novoLancamento('saida')}>saída</button> — o botão <b>+</b> fica sempre à mão.</li>
+              <li><button className="link" onClick={() => c.irPara('patrimonio')}>Cadastre seus bancos</button> (opcional) para ver cada um separado.</li>
+              <li><button className="link" onClick={() => c.irPara('dividas')}>Registre suas dívidas</button> (opcional): os pagamentos abatem sozinhos.</li>
+            </ol>
+            <p className="boas-vindas-extra">Já usa a planilha do Cigarros Finance? <button className="link" onClick={c.importar}>Importe o arquivo .xlsx</button>.</p>
+          </div>
+        </section>
+      )}
       <section className="hero">
         <div>
           <span className="hero-rotulo">Fluxo de caixa · {MESES[c.mes - 1]}/{c.ano}</span>

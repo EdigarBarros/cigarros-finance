@@ -330,6 +330,19 @@ body::after { inset: 0; background: radial-gradient(120% 90% at 50% 0%, rgba(0, 
 .grafico { position: relative; }
 .vazio { color: var(--texto-3); text-align: center; padding: 28px 8px; margin: 0; line-height: 1.7; }
 
+.boas-vindas {
+  position: relative; display: flex; gap: 18px; align-items: flex-start; padding: 22px 24px; border-radius: var(--raio);
+  background: radial-gradient(90% 140% at 0% 0%, rgba(157, 107, 255, .22), transparent 60%), linear-gradient(180deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, 0) 120px) no-repeat, var(--vidro);
+  box-shadow: var(--brilho-interno), var(--sombra); backdrop-filter: var(--desfoque);
+}
+.boas-vindas img { width: 56px; height: 56px; border-radius: 15px; flex: none; box-shadow: 0 8px 22px -8px rgba(157, 107, 255, .7); }
+.boas-vindas h2 { font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
+.boas-vindas p { margin: 6px 0 0; color: var(--texto-2); }
+.boas-vindas ol { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 6px; color: var(--texto-2); }
+.boas-vindas .link { font-size: inherit; }
+.boas-vindas-extra { font-size: 13px; }
+@media (max-width: 860px) { .boas-vindas { flex-direction: column; gap: 12px; padding: 18px; } }
+
 /* ---------- progresso, meta ---------- */
 .progresso { height: 6px; border-radius: 999px; background: var(--preench-2); overflow: hidden; }
 .progresso > div { height: 100%; border-radius: 999px; transition: width 1s var(--mola); box-shadow: 0 0 10px -1px currentColor; }

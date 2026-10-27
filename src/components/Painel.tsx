@@ -161,6 +161,8 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
 
   const ctx: Ctx = {
     ano, mes, d, lancsMes, situacao, mesEf, porMes, mobile,
+    importar: () => arquivo.current?.click(),
+    contaNova: !d.carregando && !d.lancs.length && !d.bancos.length && !d.dividas.length && !d.meses.length,
     r: resumoMes(lancsMes, situacao, mesEf),
     anterior: mes > 1 ? porMes[mes - 2] : null,
     irPara,
