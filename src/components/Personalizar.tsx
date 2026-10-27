@@ -7,8 +7,8 @@ import { Icone } from './Icone'
 import { Interruptor, Modal, Opcao } from './ui'
 
 /** Ajustes do painel. Cada mudança vale na hora, sem botão de salvar. */
-export function Personalizar({ perfil, aoMudar, aoRefazer, aoFechar }: {
-  perfil: Perfil; aoMudar: (p: Perfil) => void; aoRefazer: () => void; aoFechar: () => void
+export function Personalizar({ perfil, aoMudar, aoRefazer, aoCategorias, aoFechar }: {
+  perfil: Perfil; aoMudar: (p: Perfil) => void; aoRefazer: () => void; aoCategorias: () => void; aoFechar: () => void
 }) {
   const [nome, setNome] = useState(perfil.nome)
   const ligar = (m: Modulo, v: boolean) => aoMudar({ ...perfil, modulos: { ...perfil.modulos, [m]: v } })
@@ -58,6 +58,15 @@ export function Personalizar({ perfil, aoMudar, aoRefazer, aoFechar }: {
               <Opcao key={d.id} ativo={perfil.detalhe === d.id} aoClicar={() => aoMudar({ ...perfil, detalhe: d.id })} titulo={d.nome} texto={d.descricao} />
             ))}
           </div>
+        </section>
+
+        <section className="campo">
+          <span className="campo-rotulo">Categorias</span>
+          <button type="button" className="ajuste ajuste-botao" onClick={aoCategorias}>
+            <span className="ajuste-icone"><Icone nome="lista" /></span>
+            <span className="ajuste-texto"><strong>Editar categorias</strong><small>Crie as suas, renomeie, troque emoji e cor.</small></span>
+            <Icone nome="dir" tamanho={16} />
+          </button>
         </section>
 
         <label className="campo">

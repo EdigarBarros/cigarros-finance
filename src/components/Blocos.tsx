@@ -3,21 +3,22 @@ import { caixaDoBanco, type Resumo } from '../lib/calc'
 import { COR } from '../lib/charts'
 import type { SituacaoDivida } from '../lib/dividas'
 import { fmtDataCurta, fmtMoeda, fmtValor, MESES, MESES_CURTO, MESES_NOME } from '../lib/format'
+import type { SituacaoMeta } from '../lib/metas'
 import { converter, infoMoeda, type Taxas } from '../lib/moedas'
 import type { Visao } from '../lib/perfil'
-import { CATEGORIAS, NOME_CATEGORIA } from '../lib/rotulos'
-import { TIPOS_CAIXA, type Banco, type Caixa, type Lancamento, type Tipo } from '../lib/types'
+import { fatiasDeGastos, SEM_CATEGORIA } from '../lib/categorias'
+import { TIPOS_CAIXA, type Banco, type Caixa, type Categoria, type Lancamento, type Tipo } from '../lib/types'
 import { Rosca } from './Graficos'
 import { Icone } from './Icone'
 import { Progresso } from './ui'
 
-const corCategoria = Object.fromEntries(CATEGORIAS.map((c) => [c.id, c.cor]))
 const porData = (a: Lancamento, b: Lancamento) =>
   (a.data ?? '').localeCompare(b.data ?? '') || (a.created_at ?? '').localeCompare(b.created_at ?? '')
 
 /** Bloco ENTRADAS ou SAÍDAS: cabeçalho colorido, linhas descrição/valor/data e total no rodapé. */
-export function QuadroLancamentos({ tipo, itens, aoNovo, aoEditar, limite }: {
+export function QuadroLancamentos({ tipo, itens, aoNovo, aoEditar, limite, categoriaDe }: {
   tipo: Tipo; itens: Lancamento[]; aoNovo: () => void; aoEditar: (l: Lancamento) => void
+  categoriaDe: (l: Lancamento) => Categoria | undefined
   /** No celular mostra só os mais recentes, com "ver todos". */
   limite?: number
 }) {
@@ -38,16 +39,19 @@ export function QuadroLancamentos({ tipo, itens, aoNovo, aoEditar, limite }: {
       </header>
       <div className="quadro-corpo">
         {!itens.length && <p className="quadro-vazio">Nenhuma {saida ? 'saída' : 'entrada'} neste mês.</p>}
-        {visiveis.map((l) => (
+        {visiveis.map((l) => {
+          const c = categoriaDe(l) ?? SEM_CATEGORIA
+          return (
           <button key={l.id} className="quadro-linha" onClick={() => aoEditar(l)}>
             <span className="quadro-desc">
-              {saida && <i className="marcador" style={{ background: corCategoria[l.categoria] }} title={NOME_CATEGORIA[l.categoria]} />}
+              <i className="marcador" style={{ background: c.cor }} title={c.nome} />
               {l.descricao || '—'}
             </span>
             <span className="num">{fmtValor(l.valor)}</span>
             <span className="quadro-data">{fmtDataCurta(l.data)}</span>
           </button>
-        ))}
+          )
+        })}
         {limite !== undefined && itens.length > limite && (
           <button className="quadro-ver" onClick={() => setAberto(!aberto)}>
             {aberto ? 'Mostrar menos' : `Ver todos os ${itens.length}`}
@@ -230,12 +234,11 @@ export function PorBanco({ bancos, lancs, caixa, aoAbrir }: {
   )
 }
 
-/** Quanto a pessoa tem em cada outra moeda e quanto isso vale na principal, com a meta em dólar. */
-export function BlocoMoedas({ moedas, lista, taxas, metaUsd, aoAbrir }: {
-  moedas: Record<string, number>; lista: string[]; taxas: Taxas; metaUsd: number; aoAbrir: () => void
+/** Quanto a pessoa tem em cada outra moeda e quanto isso vale na principal. */
+export function BlocoMoedas({ moedas, lista, taxas, aoAbrir }: {
+  moedas: Record<string, number>; lista: string[]; taxas: Taxas; aoAbrir: () => void
 }) {
   const total = lista.reduce((a, m) => a + (converter(moedas[m] ?? 0, m, taxas) ?? 0), 0)
-  const usd = moedas.USD ?? 0
   return (
     <section className="bloco">
       <header className="bloco-cab"><span style={{ color: COR.usd }}>OUTRAS MOEDAS</span><strong>≈ {fmtValor(total)}</strong></header>
@@ -253,28 +256,41 @@ export function BlocoMoedas({ moedas, lista, taxas, metaUsd, aoAbrir }: {
           </button>
         )
       })}
-      {metaUsd > 0 && lista.includes('USD') && (
-        <div className="meta meta-bloco">
-          <h3 className="bloco-titulo">META EM DÓLAR</h3>
-          <div><strong>{fmtMoeda(usd, 'USD')}</strong><span> de {fmtMoeda(metaUsd, 'USD')}</span></div>
-          <Progresso valor={usd} total={metaUsd} cor={COR.usd} />
-          <p className="barras-sub">{usd >= metaUsd ? 'Meta batida! 🎉' : `Faltam ${fmtMoeda(metaUsd - usd, 'USD')}`}</p>
-        </div>
+    </section>
+  )
+}
+
+/** As metas em andamento, para a visão geral (a página Metas tem o resto). */
+export function BlocoMetas({ metas, taxas, aoAbrir }: { metas: SituacaoMeta[]; taxas: Taxas; aoAbrir: () => void }) {
+  const ativas = metas.filter((s) => !s.batida)
+  const guardado = metas.reduce((a, s) => a + (converter(s.guardado, s.meta.moeda, taxas) ?? 0), 0)
+  return (
+    <section className="bloco">
+      <header className="bloco-cab"><span style={{ color: COR.investimentos }}>METAS</span><strong>{fmtValor(guardado)}</strong></header>
+      {!metas.length && (
+        <p className="quadro-vazio">Junte dinheiro para uma viagem, um carro ou uma reserva. <button className="link" onClick={aoAbrir}>Criar a primeira meta</button></p>
       )}
+      {metas.length > 0 && !ativas.length && <p className="quadro-vazio">Todas as metas batidas! 🎉 <button className="link" onClick={aoAbrir}>Criar outra</button></p>}
+      {ativas.slice(0, 4).map((s) => (
+        <button key={s.meta.id} className="banco-linha" onClick={aoAbrir}>
+          <span className="banco-linha-nome">{s.meta.icone}&nbsp;&nbsp;{s.meta.nome}</span>
+          <span className="banco-linha-saldo">{Math.round(s.progresso * 100)}%</span>
+          <Progresso valor={s.guardado} total={s.meta.alvo} cor={s.meta.cor} />
+          <span className="banco-linha-sub">
+            {fmtMoeda(s.guardado, s.meta.moeda)} de {fmtMoeda(s.meta.alvo, s.meta.moeda)}
+            {s.previsao && ` · chega em ${MESES_CURTO[s.previsao[1] - 1].toLowerCase()}/${String(s.previsao[0]).slice(2)}`}
+          </span>
+        </button>
+      ))}
     </section>
   )
 }
 
 const somaTipo = (ls: Lancamento[], t: Tipo) => ls.filter((l) => l.tipo === t).reduce((a, l) => a + l.valor, 0)
 
-export function Metricas({ r, mes }: { r: Resumo; mes: number }) {
-  // Mesma ordem e cores da planilha.
-  const itens = [
-    { nome: 'Transporte', valor: r.metricas.transporte, cor: corCategoria.transporte },
-    { nome: 'Dívidas', valor: r.metricas.divida, cor: corCategoria.divida },
-    { nome: 'Alimentação', valor: r.metricas.alimentacao, cor: corCategoria.alimentacao },
-    { nome: 'Outros', valor: r.metricas.outros, cor: corCategoria.outros },
-  ]
+/** Gasto de cada categoria no mês (todas na tabela; as maiores no gráfico). */
+export function Metricas({ r, mes, categorias, aoEditar }: { r: Resumo; mes: number; categorias: Categoria[]; aoEditar: () => void }) {
+  const itens = fatiasDeGastos(r.gastosPorCategoria, categorias, Infinity)
   return (
     <section className="bloco">
       <table className="tabela-bloco tabela-metricas">
@@ -282,15 +298,17 @@ export function Metricas({ r, mes }: { r: Resumo; mes: number }) {
         <tbody>
           {itens.map((i) => (
             <tr key={i.nome}>
-              <th><i className="marcador" style={{ background: i.cor }} />{i.nome.toUpperCase()}</th>
+              <th><i className="marcador" style={{ background: i.cor }} />{i.icone}&nbsp;{i.nome.toUpperCase()}</th>
               <td>{fmtValor(i.valor)}</td>
               <td>{r.saidas ? `${Math.round((i.valor / r.saidas) * 100)}%` : '–'}</td>
             </tr>
           ))}
+          {!itens.length && <tr className="sem-dados"><td colSpan={3}>Sem saídas neste mês.</td></tr>}
         </tbody>
       </table>
       <h3 className="bloco-titulo">MÉTRICAS - {MESES[mes - 1]}</h3>
-      {r.saidas > 0 ? <Rosca fatias={itens} /> : <p className="quadro-vazio">Sem saídas neste mês.</p>}
+      {r.saidas > 0 ? <Rosca fatias={fatiasDeGastos(r.gastosPorCategoria, categorias)} /> : <p className="quadro-vazio">Sem saídas neste mês.</p>}
+      <p className="aviso-herdado"><button className="link" onClick={aoEditar}>Editar categorias</button></p>
     </section>
   )
 }

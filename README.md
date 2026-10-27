@@ -12,6 +12,13 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   em **Personalizar painel**, ou com um toque em "+ Investimentos" no fim da visão geral
 - **Qualquer moeda**: a moeda principal define todos os totais (real, dólar, euro, peso…). Lançamentos podem ser feitos
   em outra moeda com a cotação do dia (editável); o valor original fica guardado e o total entra convertido
+- **Categorias suas**: toda conta começa com categorias que servem para qualquer pessoa (moradia, saúde, lazer,
+  assinaturas, pets, salário, renda extra…), e cada uma pode ser criada, renomeada, ganhar emoji e cor ou ser apagada.
+  Entradas também têm categoria. Ao lançar, o app sugere a categoria pela descrição ("Netflix" → Assinaturas) e aprende
+  com o que você escolhe; dá para criar uma categoria nova sem sair do lançamento
+- **Metas para qualquer objetivo**: viagem, carro, casa, estudos, reserva de emergência (o app sugere 6 meses dos seus
+  gastos)… Cada meta tem valor, moeda e prazo opcional; você registra o que guarda ou retira e o app mostra quanto falta,
+  quanto guardar por mês para chegar no prazo e, no seu ritmo, quando você chega lá
 - **Visão geral**: saldo do mês em destaque, indicadores (entradas, saídas, caixa, dívida, investimentos, dólar)
   com comparação ao mês anterior, gráfico entradas × saídas do ano, para onde foi o dinheiro (por categoria),
   saídas por conta (Principal, Nubank, Inter), dívidas em aberto e meta em dólar
@@ -50,7 +57,10 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
 
 > **Já tinha o banco criado antes?** Rode também as migrações que faltarem, em ordem, no SQL Editor:
 > [`migracao-02`](supabase/migracao-02-dividas-interligadas.sql), [`migracao-03`](supabase/migracao-03-bancos.sql) e
-> [`migracao-04-perfil-e-moedas`](supabase/migracao-04-perfil-e-moedas.sql) (perfil adaptável e outras moedas; só acrescenta, não apaga nada).
+> [`migracao-04-perfil-e-moedas`](supabase/migracao-04-perfil-e-moedas.sql) (perfil adaptável e outras moedas) e
+> [`migracao-05-categorias`](supabase/migracao-05-categorias.sql) (categorias editáveis; os lançamentos antigos passam para as
+> categorias novas) e [`migracao-06-metas`](supabase/migracao-06-metas.sql) (metas; a meta em dólar antiga vira uma meta).
+> Todas só acrescentam, não apagam nada.
 
 ### 3. Primeiro acesso
 

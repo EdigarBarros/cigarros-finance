@@ -54,11 +54,18 @@ export function mesEfetivo(meses: Mes[], ano: number, mes: number, hoje = new Da
 }
 
 /** Os números do quadro de resumo de cada mês. */
-export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: Mes | undefined, taxas: Taxas) {
+/** id da categoria de um lançamento ('' = sem categoria). */
+export type CategoriaDoLanc = (l: Lancamento) => string
+
+export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: Mes | undefined, taxas: Taxas, categoriaDo: CategoriaDoLanc) {
   const entradas = soma(lancs.filter((l) => l.tipo === 'entrada').map((l) => l.valor))
   const saidasLista = lancs.filter((l) => l.tipo === 'saida')
   const saidas = soma(saidasLista.map((l) => l.valor))
-  const porCategoria = (c: string) => soma(saidasLista.filter((l) => l.categoria === c).map((l) => l.valor))
+  const gastosPorCategoria: Record<string, number> = {}
+  for (const l of saidasLista) {
+    const k = categoriaDo(l)
+    gastosPorCategoria[k] = (gastosPorCategoria[k] ?? 0) + l.valor
+  }
 
   return {
     entradas,
@@ -71,15 +78,8 @@ export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: M
     moedas: mes?.moedas ?? {},
     /** Outras moedas somadas, na moeda principal (cotação de hoje). */
     moedasConvertido: totalConvertido(mes?.moedas ?? {}, taxas),
-    usd: mes?.moedas.USD ?? 0,
-    metaUsd: mes?.meta_usd ?? 0,
-    // Como nas abas da planilha: DÍVIDAS nas métricas = saídas que foram pagamento de dívida.
-    metricas: {
-      transporte: porCategoria('transporte'),
-      divida: porCategoria('divida'),
-      alimentacao: porCategoria('alimentacao'),
-      outros: porCategoria('outros'),
-    },
+    /** Quanto saiu em cada categoria, pelo id ('' = sem categoria). */
+    gastosPorCategoria,
   }
 }
 

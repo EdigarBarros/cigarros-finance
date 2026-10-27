@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes } from '../lib/calc'
+import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
 import { situacaoDividas, type SituacaoDivida } from '../lib/dividas'
 import { definirMoedaPrincipal, MESES_NOME } from '../lib/format'
 import { useCambio } from '../lib/moedas'
@@ -16,7 +17,9 @@ import type { Ctx, Pagina } from '../pages/contexto'
 import { Dividas } from '../pages/Dividas'
 import { Inicio } from '../pages/Inicio'
 import { Lancamentos } from '../pages/Lancamentos'
+import { Metas } from '../pages/Metas'
 import { Patrimonio } from '../pages/Patrimonio'
+import { GerenciarCategorias } from './Categorias'
 import { FormLancamento } from './Formularios'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
@@ -27,6 +30,7 @@ const PAGINAS: { id: Pagina; nome: string; curto: string; icone: string }[] = [
   { id: 'inicio', nome: 'Visão geral', curto: 'Início', icone: 'inicio' },
   { id: 'lancamentos', nome: 'Lançamentos', curto: 'Lançamentos', icone: 'lista' },
   { id: 'dividas', nome: 'Dívidas', curto: 'Dívidas', icone: 'divida' },
+  { id: 'metas', nome: 'Metas', curto: 'Metas', icone: 'meta' },
   { id: 'patrimonio', nome: 'Meu dinheiro', curto: 'Dinheiro', icone: 'carteira' },
   { id: 'ano', nome: 'Ano', curto: 'Ano', icone: 'ano' },
 ]
@@ -48,6 +52,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const [ocupado, setOcupado] = useState<string | null>(null)
   const [ajustes, setAjustes] = useState(false)
   const [refazendo, setRefazendo] = useState(false)
+  const [editarCategorias, setEditarCategorias] = useState(false)
   const arquivo = useRef<HTMLInputElement>(null)
   // controles flutuantes: vidro com refração líquida + lente deslizante no item ativo
   const refLateral = useRef<HTMLElement>(null)
@@ -75,11 +80,13 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   }, [precisaPerfil]) // eslint-disable-line react-hooks/exhaustive-deps
   definirMoedaPrincipal(perfil.moeda)
   const v = visao(perfil)
-  const { taxas } = useCambio(perfil.moeda, v.moedas || d.lancs.some((l) => l.moeda_original))
+  const { taxas } = useCambio(perfil.moeda, v.moedas || d.lancs.some((l) => l.moeda_original) || d.metas.some((m) => m.moeda !== perfil.moeda))
   const paginas = PAGINAS.filter((p) =>
-    p.id === 'dividas' ? v.dividas : p.id === 'patrimonio' ? v.bancos || v.investimentos || v.moedas : p.id === 'ano' ? v.paginaAno : true,
+    p.id === 'dividas' ? v.dividas : p.id === 'metas' ? v.metas : p.id === 'patrimonio' ? v.bancos || v.investimentos || v.moedas : p.id === 'ano' ? v.paginaAno : true,
   )
   const paginaAtual = paginas.some((p) => p.id === pagina) ? pagina : 'inicio'
+  const categoriaDe = (l: Lancamento) => categoriaDoLanc(l, d.categorias, d.categoriasAntigas)
+  const idCategoria = (l: Lancamento) => categoriaDe(l)?.id ?? ''
 
   useEffect(() => {
     const aoMudar = () => setPagina(paginaDoHash())
@@ -131,9 +138,9 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
       const temProprio = d.meses.some((x) => x.ano === ano && x.mes === m)
       // Meses futuros sem lançamentos ficam em branco, como na planilha.
       const vazio = !l.length && !temProprio && (ano * 12 + m > agora || (!sit.length && !ef.herdadoDe))
-      return { sit, ef, resumo: vazio ? null : resumoMes(l, sit, ef, taxas) }
+      return { sit, ef, resumo: vazio ? null : resumoMes(l, sit, ef, taxas, idCategoria) }
     })
-  }, [d.lancs, d.dividas, d.saldos, d.pagamentos, d.meses, ano, taxas])
+  }, [d.lancs, d.dividas, d.saldos, d.pagamentos, d.meses, ano, taxas, d.categorias]) // eslint-disable-line react-hooks/exhaustive-deps
   const porMes = porMesCompleto.map((x) => x.resumo)
 
   const lancsMes = d.lancs.filter((l) => l.mes === mes)
@@ -179,15 +186,15 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const mudarPerfil = (p: Perfil) => void d.salvarPerfil(p)
   const ligarModulo = (m: Modulo) => mudarPerfil({ ...perfil, modulos: { ...perfil.modulos, [m]: true } })
   const sugestao = useMemo(
-    () => sugestoes(perfil, d.lancs, porMes.filter(Boolean).length)[0] ?? null,
+    () => sugestoes(perfil, d.lancs, porMes.filter(Boolean).length, (l) => categoriaDe(l)?.papel === 'divida')[0] ?? null,
     // perfil muda de identidade a cada render; o que importa são os dados e as escolhas da pessoa
-    [d.lancs, porMesCompleto, perfil.modulos, perfil.moedas, perfil.detalhe, perfil.dispensadas], // eslint-disable-line react-hooks/exhaustive-deps
+    [d.lancs, d.categorias, porMesCompleto, perfil.modulos, perfil.moedas, perfil.detalhe, perfil.dispensadas], // eslint-disable-line react-hooks/exhaustive-deps
   )
 
   const pagarDivida = (s: SituacaoDivida) =>
     setForm({
       preset: {
-        tipo: 'saida', categoria: 'divida', divida_id: s.divida.id,
+        tipo: 'saida', categoria_id: d.categorias.find((c) => c.papel === 'divida')?.id ?? null, divida_id: s.divida.id,
         descricao: `${s.divida.descricao} – parcela`,
         valor: Math.min(s.divida.valor_parcela ?? s.restante, s.restante),
       },
@@ -200,9 +207,14 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),
     ligarModulo,
     personalizar: () => setAjustes(true),
+    categorias: d.categorias,
+    categoriaDe,
+    gerenciarCategorias: () => (d.categoriasAntigas
+      ? d.setErro('Para criar e editar categorias, rode supabase/migracao-05-categorias.sql no SQL Editor do Supabase.')
+      : setEditarCategorias(true)),
     importar: () => arquivo.current?.click(),
     contaNova: !d.carregando && !temDados,
-    r: resumoMes(lancsMes, situacao, mesEf, taxas),
+    r: resumoMes(lancsMes, situacao, mesEf, taxas, idCategoria),
     anterior: mes > 1 ? porMes[mes - 2] : null,
     irPara,
     irParaMes: setMes,
@@ -307,6 +319,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
         {paginaAtual === 'inicio' && <Inicio {...ctx} />}
         {paginaAtual === 'lancamentos' && <Lancamentos {...ctx} />}
         {paginaAtual === 'dividas' && <Dividas {...ctx} />}
+        {paginaAtual === 'metas' && <Metas {...ctx} />}
         {paginaAtual === 'patrimonio' && <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />}
         {paginaAtual === 'ano' && <Ano {...ctx} />}
       </div>
@@ -337,6 +350,9 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
           perfil={perfil}
           taxas={taxas}
           aoMudarPerfil={mudarPerfil}
+          categorias={d.categorias}
+          categoriaDe={categoriaDe}
+          aoNovaCategoria={d.categoriasAntigas ? undefined : d.addCategoria}
           bancos={d.bancos}
           aoNovoBanco={d.addBanco}
           aoSalvar={(l, id) => (id ? d.updLanc(id, l) : d.addLanc(l))}
@@ -350,7 +366,19 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
           perfil={perfil}
           aoMudar={mudarPerfil}
           aoRefazer={() => { setAjustes(false); setRefazendo(true) }}
+          aoCategorias={() => { setAjustes(false); ctx.gerenciarCategorias() }}
           aoFechar={() => setAjustes(false)}
+        />
+      )}
+
+      {editarCategorias && (
+        <GerenciarCategorias
+          categorias={d.categorias}
+          contagem={d.lancs.reduce<Record<string, number>>((m, l) => { const id = idCategoria(l); if (id) m[id] = (m[id] ?? 0) + 1; return m }, {})}
+          aoCriar={d.addCategoria}
+          aoEditar={d.updCategoria}
+          aoExcluir={d.delCategoria}
+          aoFechar={() => setEditarCategorias(false)}
         />
       )}
     </div>

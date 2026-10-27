@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
+import { CATEGORIAS_ANTIGAS } from './categorias'
 import { normPerfil } from './perfil'
 import { supabase } from './supabase'
-import type { Banco, Divida, Lancamento, Mes, Pagamento, Perfil, SaldoDivida } from './types'
+import type { Banco, Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida } from './types'
 
 const num = (v: unknown) => Number(v ?? 0)
 
@@ -10,6 +11,8 @@ const normLanc = (r: Lancamento): Lancamento => ({
 })
 const normDiv = (r: Divida): Divida => ({ ...r, valor_parcela: r.valor_parcela == null ? null : num(r.valor_parcela) })
 const normSaldo = (r: SaldoDivida): SaldoDivida => ({ ...r, saldo: num(r.saldo) })
+const normMeta = (r: Meta): Meta => ({ ...r, alvo: num(r.alvo) })
+const normMovMeta = (r: MovimentoMeta): MovimentoMeta => ({ ...r, valor: num(r.valor) })
 const normMes = (r: Mes & { usd?: number }): Mes => {
   const { usd, ...resto } = r
   const moedas = Object.fromEntries(Object.entries(r.moedas ?? {}).map(([k, v]) => [k, num(v)]))
@@ -37,12 +40,19 @@ export function useDados(userId: string, ano: number) {
   /** undefined = carregando; null = a pessoa ainda não tem perfil salvo. */
   const [perfil, setPerfil] = useState<Perfil | null | undefined>(undefined)
   const [perfilSemTabela, setPerfilSemTabela] = useState(false)
+  const [categorias, setCategorias] = useState<Categoria[]>([])
+  /** Sem a migração 5: usa as 4 categorias antigas. */
+  const [categoriasAntigas, setCategoriasAntigas] = useState(false)
+  const [metas, setMetas] = useState<Meta[]>([])
+  const [movimentosMeta, setMovimentosMeta] = useState<MovimentoMeta[]>([])
+  /** Sem a migração 6 não há onde guardar metas. */
+  const [metasSemTabela, setMetasSemTabela] = useState(false)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
 
   const recarregar = useCallback(async () => {
     setCarregando(true)
-    const [l, m, d, s, p, b, pf] = await Promise.all([
+    const [l, m, d, s, p, b, pf, ct, mt, mv] = await Promise.all([
       supabase.from('lancamentos').select('*').eq('ano', ano).order('data').order('created_at'),
       supabase.from('meses').select('*'),
       supabase.from('dividas').select('*').order('created_at'),
@@ -50,6 +60,9 @@ export function useDados(userId: string, ano: number) {
       supabase.from('lancamentos').select('id, divida_id, data, valor').not('divida_id', 'is', null),
       supabase.from('bancos').select('*').order('ordem').order('created_at'),
       supabase.from('perfis').select('*').maybeSingle(),
+      supabase.from('categorias').select('*').order('ordem').order('nome'),
+      supabase.from('metas').select('*').order('ordem').order('created_at'),
+      supabase.from('meta_movimentos').select('*').order('data'),
     ])
     const e = l.error ?? m.error ?? d.error ?? s.error ?? p.error ?? b.error
     if (e) setErro(e.message)
@@ -66,6 +79,26 @@ export function useDados(userId: string, ano: number) {
       setPerfil(null)
     } else if (pf.error) setErro(pf.error.message)
     else setPerfil(pf.data ? normPerfil(pf.data as Perfil) : null)
+    const em = mt.error ?? mv.error
+    if (em && faltaTabela(em)) setMetasSemTabela(true)
+    else if (em) setErro(em.message)
+    else {
+      setMetas((mt.data as Meta[]).map(normMeta))
+      setMovimentosMeta((mv.data as MovimentoMeta[]).map(normMovMeta))
+    }
+    if (ct.error && faltaTabela(ct.error)) {
+      setCategoriasAntigas(true)
+      setCategorias(CATEGORIAS_ANTIGAS)
+    } else if (ct.error) setErro(ct.error.message)
+    else if (ct.data.length) setCategorias(ct.data as Categoria[])
+    else {
+      // Conta nova: ganha as categorias padrão (definidas no banco, migração 5).
+      const criou = await supabase.rpc('criar_categorias_padrao')
+      const novas = await supabase.from('categorias').select('*').order('ordem').order('nome')
+      const falha = criou.error ?? novas.error
+      if (falha) setErro(falha.message)
+      else setCategorias(novas.data as Categoria[])
+    }
     setCarregando(false)
   }, [ano])
 
@@ -90,14 +123,21 @@ export function useDados(userId: string, ano: number) {
       return p ? [...sem, p] : sem
     })
 
+  /** Sem a migração 5, a categoria vai na coluna antiga. */
+  const paraBanco = <T extends Partial<Lancamento>>(l: T): T => {
+    if (!categoriasAntigas || !('categoria_id' in l)) return l
+    const { categoria_id, ...resto } = l
+    return { ...resto, categoria: l.tipo === 'entrada' ? 'outros' : categoria_id ?? 'outros' } as T
+  }
   const addLanc = async (novo: Omit<Lancamento, 'id'>) => {
-    const { data, error } = await supabase.from('lancamentos').insert(novo).select().single()
+    const { data, error } = await supabase.from('lancamentos').insert(paraBanco(novo)).select().single()
     if (error) return falhou(error.message)
     const l = normLanc(data as Lancamento)
     if (l.ano === ano) setLancs((xs) => [...xs, l])
     sincronizarPagamento(l.id, l)
   }
-  const updLanc = async (id: string, patch: Partial<Lancamento>) => {
+  const updLanc = async (id: string, mudancas: Partial<Lancamento>) => {
+    const patch = paraBanco(mudancas)
     const atual = lancs.find((x) => x.id === id)
     const novo = atual ? { ...atual, ...patch } : null
     setLancs((xs) => (novo && novo.ano !== ano ? xs.filter((x) => x.id !== id) : xs.map((x) => (x.id === id ? { ...x, ...patch } : x))))
@@ -187,7 +227,62 @@ export function useDados(userId: string, ano: number) {
     if (error) falhou(error.message)
   }
 
+  const addCategoria = async (c: Omit<Categoria, 'id' | 'ordem'>): Promise<Categoria | undefined> => {
+    const ordem = Math.max(0, ...categorias.filter((x) => x.tipo === c.tipo).map((x) => x.ordem)) + 1
+    const { data, error } = await supabase.from('categorias').insert({ ...c, ordem }).select().single()
+    if (error) {
+      falhou(/duplicate|unique/i.test(error.message) ? `Já existe uma categoria chamada "${c.nome}".` : error.message)
+      return
+    }
+    const nova = data as Categoria
+    setCategorias((xs) => [...xs, nova])
+    return nova
+  }
+  const updCategoria = async (id: string, patch: Partial<Categoria>) => {
+    setCategorias((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
+    const { error } = await supabase.from('categorias').update(patch).eq('id', id)
+    if (error) falhou(/duplicate|unique/i.test(error.message) ? `Já existe uma categoria chamada "${patch.nome}".` : error.message)
+  }
+  /** Os lançamentos dela continuam existindo, só ficam "sem categoria". */
+  const delCategoria = async (id: string) => {
+    setCategorias((xs) => xs.filter((x) => x.id !== id))
+    setLancs((xs) => xs.map((x) => (x.categoria_id === id ? { ...x, categoria_id: null } : x)))
+    const { error } = await supabase.from('categorias').delete().eq('id', id)
+    if (error) falhou(error.message)
+  }
+
+  const addMeta = async (nova: Omit<Meta, 'id' | 'ordem'>) => {
+    const { data, error } = await supabase.from('metas').insert({ ...nova, ordem: metas.length }).select().single()
+    if (error) return falhou(error.message)
+    setMetas((xs) => [...xs, normMeta(data as Meta)])
+  }
+  const updMeta = async (id: string, patch: Partial<Meta>) => {
+    setMetas((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
+    const { error } = await supabase.from('metas').update(patch).eq('id', id)
+    if (error) falhou(error.message)
+  }
+  /** Apaga a meta e todo o histórico dela. */
+  const delMeta = async (id: string) => {
+    setMetas((xs) => xs.filter((x) => x.id !== id))
+    setMovimentosMeta((xs) => xs.filter((x) => x.meta_id !== id))
+    const { error } = await supabase.from('metas').delete().eq('id', id)
+    if (error) falhou(error.message)
+  }
+  /** Guardar (valor positivo) ou retirar (negativo) dinheiro de uma meta. */
+  const addMovimentoMeta = async (mov: Omit<MovimentoMeta, 'id'>) => {
+    const { data, error } = await supabase.from('meta_movimentos').insert(mov).select().single()
+    if (error) return falhou(error.message)
+    setMovimentosMeta((xs) => [...xs, normMovMeta(data as MovimentoMeta)])
+  }
+  const delMovimentoMeta = async (id: string) => {
+    setMovimentosMeta((xs) => xs.filter((x) => x.id !== id))
+    const { error } = await supabase.from('meta_movimentos').delete().eq('id', id)
+    if (error) falhou(error.message)
+  }
+
   return {
+    metas, movimentosMeta, metasSemTabela, addMeta, updMeta, delMeta, addMovimentoMeta, delMovimentoMeta,
+    categorias, categoriasAntigas, addCategoria, updCategoria, delCategoria,
     perfil, perfilSemTabela, salvarPerfil,
     bancos, addBanco, updBanco, delBanco,
     lancs, meses, dividas, saldos, pagamentos, carregando, erro, setErro, recarregar,

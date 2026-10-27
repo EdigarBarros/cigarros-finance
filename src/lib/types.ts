@@ -1,5 +1,18 @@
 export type Tipo = 'entrada' | 'saida'
-export type Categoria = 'transporte' | 'divida' | 'alimentacao' | 'outros'
+/** As 4 categorias fixas de antes (coluna "categoria"), usadas só sem a migração 5. */
+export type CategoriaAntiga = 'transporte' | 'divida' | 'alimentacao' | 'outros'
+
+/** Categoria criada pela pessoa (ou das que toda conta ganha no começo). */
+export interface Categoria {
+  id: string
+  tipo: Tipo
+  nome: string
+  icone: string
+  cor: string
+  /** 'divida': as saídas nela podem abater uma dívida. */
+  papel: 'divida' | null
+  ordem: number
+}
 
 export interface Lancamento {
   id: string
@@ -9,7 +22,9 @@ export interface Lancamento {
   descricao: string
   valor: number
   data: string | null
-  categoria: Categoria
+  categoria_id?: string | null
+  /** Coluna antiga; só vale sem a migração 5. */
+  categoria?: CategoriaAntiga
   /** Banco do lançamento (opcional). */
   banco_id?: string | null
   /** Quando a saída é pagamento de uma dívida. */
@@ -68,7 +83,7 @@ export interface Mes {
 export const TIPOS_CAIXA: TipoCaixa[] = ['cc', 'caixinha', 'reserva']
 
 /** Partes do painel que cada pessoa liga ou desliga conforme a vida dela. */
-export type Modulo = 'dividas' | 'bancos' | 'investimentos' | 'moedas'
+export type Modulo = 'dividas' | 'bancos' | 'investimentos' | 'moedas' | 'metas'
 export type Detalhe = 'simples' | 'equilibrado' | 'detalhado'
 
 /** Como o painel se adapta a cada pessoa: respostas das perguntas iniciais e ajustes feitos depois. */
@@ -84,4 +99,27 @@ export interface Perfil {
   dispensadas: string[]
   /** null enquanto as perguntas iniciais não foram respondidas. */
   onboarding_em: string | null
+}
+
+/** Objetivo para juntar dinheiro (viagem, reserva de emergência, carro…), na moeda que a pessoa escolher. */
+export interface Meta {
+  id: string
+  nome: string
+  icone: string
+  cor: string
+  moeda: string
+  alvo: number
+  /** Opcional: com prazo, o app calcula quanto guardar por mês. */
+  prazo: string | null
+  ordem: number
+  created_at?: string
+}
+
+/** Dinheiro guardado (positivo) ou retirado (negativo) de uma meta, na moeda dela. */
+export interface MovimentoMeta {
+  id: string
+  meta_id: string
+  data: string
+  valor: number
+  descricao: string
 }

@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { COR } from '../lib/charts'
 import type { SituacaoDivida } from '../lib/dividas'
 import { fmtValor, MESES, MESES_NOME, variacao } from '../lib/format'
-import { CATEGORIAS } from '../lib/rotulos'
+import { fatiasDeGastos } from '../lib/categorias'
+import { situacaoMeta } from '../lib/metas'
+import { converter } from '../lib/moedas'
 import type { Lancamento, Tipo } from '../lib/types'
 import {
-  BlocoMoedas, ListaDividas, Metricas, PorBanco, QuadroCaixa, QuadroLancamentos, TabelaAnual, TabelaDividas,
+  BlocoMetas, BlocoMoedas, ListaDividas, Metricas, PorBanco, QuadroCaixa, QuadroLancamentos, TabelaAnual, TabelaDividas,
 } from '../components/Blocos'
 import { FormDivida } from '../components/Formularios'
 import { GraficoAnual, Rosca } from '../components/Graficos'
@@ -33,6 +35,7 @@ export function Inicio(c: Ctx) {
   const novaDivida = () => setDivida('nova')
   const delta = (atual: number, antes: number | undefined) => (v.comparacao ? variacao(atual, antes) : null)
   const nomeMes = MESES_NOME[c.mes - 1].toLowerCase()
+  const situacaoMetas = c.d.metas.map((m) => situacaoMeta(m, c.d.movimentosMeta))
 
   const kpis = (
     <div className="kpis">
@@ -55,6 +58,9 @@ export function Inicio(c: Ctx) {
           {!r.moedasConvertido && <button className="link kpi-acao" onClick={() => c.irPara('patrimonio')}>Informar quanto tem</button>}
         </Kpi>
       )}
+      {v.metas && situacaoMetas.length > 0 && (
+        <Kpi rotulo="Guardado nas metas" valor={fmtValor(situacaoMetas.reduce((t, x) => t + (converter(x.guardado, x.meta.moeda, c.taxas) ?? 0), 0))} cor={COR.investimentos} />
+      )}
     </div>
   )
 
@@ -65,7 +71,10 @@ export function Inicio(c: Ctx) {
     <PorBanco bancos={c.d.bancos} lancs={c.lancsMes} caixa={c.mesEf.caixa} aoAbrir={c.abrirBanco} />
   )
   const moedas = v.moedas && (
-    <BlocoMoedas moedas={c.mesEf.moedas} lista={c.perfil.moedas} taxas={c.taxas} metaUsd={r.metaUsd} aoAbrir={() => c.irPara('patrimonio')} />
+    <BlocoMoedas moedas={c.mesEf.moedas} lista={c.perfil.moedas} taxas={c.taxas} aoAbrir={() => c.irPara('patrimonio')} />
+  )
+  const metas = v.metas && !c.d.metasSemTabela && (
+    <BlocoMetas metas={situacaoMetas} taxas={c.taxas} aoAbrir={() => c.irPara('metas')} />
   )
   const dividas = v.dividas && (
     v.planilha && !mobile
@@ -84,7 +93,7 @@ export function Inicio(c: Ctx) {
   )
 
   // ---------- jeito simples e equilibrado: listas e um gráfico de categorias ----------
-  const fatias = CATEGORIAS.map((k) => ({ nome: k.nome, valor: r.metricas[k.id], cor: k.cor })).filter((f) => f.valor > 0)
+  const fatias = fatiasDeGastos(r.gastosPorCategoria, c.categorias)
   const essencial = (
     <>
       <div className="duas-colunas">
@@ -92,7 +101,8 @@ export function Inicio(c: Ctx) {
           {c.lancsMes.length ? (
             <ul className="lista-lanc">
               {recentes(c.lancsMes).slice(0, 6).map((l) => (
-                <ItemLancamento key={l.id} l={l} banco={v.bancos ? c.d.bancos.find((b) => b.id === l.banco_id) : undefined} aoClicar={() => c.editarLancamento(l)} />
+                <ItemLancamento key={l.id} l={l} categoria={c.categoriaDe(l)} banco={v.bancos ? c.d.bancos.find((b) => b.id === l.banco_id) : undefined}
+                  aoClicar={() => c.editarLancamento(l)} />
               ))}
             </ul>
           ) : (
@@ -103,17 +113,18 @@ export function Inicio(c: Ctx) {
             </Vazio>
           )}
         </Cartao>
-        <Cartao titulo="Para onde foi o dinheiro">
+        <Cartao titulo="Para onde foi o dinheiro" acao={<button className="link" onClick={c.gerenciarCategorias}>Categorias</button>}>
           {fatias.length ? <Rosca fatias={fatias} /> : <Vazio>Quando você lançar saídas, aparece aqui em que você mais gasta.</Vazio>}
         </Cartao>
       </div>
       {grafico(mobile)}
-      {(dividas || porBanco || caixa || moedas) && (
+      {(dividas || porBanco || caixa || moedas || metas) && (
         <div className="duas-colunas">
           {dividas}
           {porBanco}
           {caixa}
           {moedas}
+          {metas}
         </div>
       )}
     </>
@@ -123,7 +134,7 @@ export function Inicio(c: Ctx) {
   const completo = mobile ? (
     <>
       {grafico(true)}
-      <Metricas r={r} mes={c.mes} />
+      <Metricas r={r} mes={c.mes} categorias={c.categorias} aoEditar={c.gerenciarCategorias} />
       <section className="pilha">
         <Segmentado
           rotulo="Mostrar"
@@ -135,19 +146,20 @@ export function Inicio(c: Ctx) {
           ]}
         />
         <QuadroLancamentos key={lado} tipo={lado} itens={lado === 'saida' ? saidas : entradas} limite={6}
-          aoNovo={() => c.novoLancamento(lado)} aoEditar={c.editarLancamento} />
+          aoNovo={() => c.novoLancamento(lado)} aoEditar={c.editarLancamento} categoriaDe={c.categoriaDe} />
       </section>
       {dividas}
       {porBanco}
       {caixa}
       {moedas}
+          {metas}
       {tabelaAno}
     </>
   ) : (
     <>
       <div className="duas-colunas">
-        <QuadroLancamentos tipo="entrada" itens={entradas} aoNovo={() => c.novoLancamento('entrada')} aoEditar={c.editarLancamento} />
-        <QuadroLancamentos tipo="saida" itens={saidas} aoNovo={() => c.novoLancamento('saida')} aoEditar={c.editarLancamento} />
+        <QuadroLancamentos tipo="entrada" itens={entradas} aoNovo={() => c.novoLancamento('entrada')} aoEditar={c.editarLancamento} categoriaDe={c.categoriaDe} />
+        <QuadroLancamentos tipo="saida" itens={saidas} aoNovo={() => c.novoLancamento('saida')} aoEditar={c.editarLancamento} categoriaDe={c.categoriaDe} />
       </div>
       {grafico(false)}
       <div className="duas-colunas">
@@ -156,8 +168,9 @@ export function Inicio(c: Ctx) {
           {porBanco}
           {caixa}
           {moedas}
+          {metas}
         </div>
-        <Metricas r={r} mes={c.mes} />
+        <Metricas r={r} mes={c.mes} categorias={c.categorias} aoEditar={c.gerenciarCategorias} />
       </div>
       {tabelaAno}
     </>

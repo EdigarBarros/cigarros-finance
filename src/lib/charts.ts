@@ -56,9 +56,3 @@ export const COR = {
   principal: '#8e8e93',
 }
 
-export const COR_CATEGORIA = {
-  transporte: '#0a84ff', // systemBlue
-  divida: '#ff9f0a', // systemOrange
-  alimentacao: '#98989d', // systemGray
-  outros: '#ffd60a', // systemYellow
-}
