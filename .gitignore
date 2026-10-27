@@ -26,3 +26,4 @@ dist-ssr
 # segredos e planilhas pessoais nunca vão pro repositório
 .env
 *.xlsx
+.netlify
