@@ -17,6 +17,7 @@ import type { Ctx, Pagina } from '../pages/contexto'
 import { Dividas } from '../pages/Dividas'
 import { Inicio } from '../pages/Inicio'
 import { Lancamentos } from '../pages/Lancamentos'
+import { Metas } from '../pages/Metas'
 import { Patrimonio } from '../pages/Patrimonio'
 import { GerenciarCategorias } from './Categorias'
 import { FormLancamento } from './Formularios'
@@ -29,6 +30,7 @@ const PAGINAS: { id: Pagina; nome: string; curto: string; icone: string }[] = [
   { id: 'inicio', nome: 'Visão geral', curto: 'Início', icone: 'inicio' },
   { id: 'lancamentos', nome: 'Lançamentos', curto: 'Lançamentos', icone: 'lista' },
   { id: 'dividas', nome: 'Dívidas', curto: 'Dívidas', icone: 'divida' },
+  { id: 'metas', nome: 'Metas', curto: 'Metas', icone: 'meta' },
   { id: 'patrimonio', nome: 'Meu dinheiro', curto: 'Dinheiro', icone: 'carteira' },
   { id: 'ano', nome: 'Ano', curto: 'Ano', icone: 'ano' },
 ]
@@ -78,9 +80,9 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   }, [precisaPerfil]) // eslint-disable-line react-hooks/exhaustive-deps
   definirMoedaPrincipal(perfil.moeda)
   const v = visao(perfil)
-  const { taxas } = useCambio(perfil.moeda, v.moedas || d.lancs.some((l) => l.moeda_original))
+  const { taxas } = useCambio(perfil.moeda, v.moedas || d.lancs.some((l) => l.moeda_original) || d.metas.some((m) => m.moeda !== perfil.moeda))
   const paginas = PAGINAS.filter((p) =>
-    p.id === 'dividas' ? v.dividas : p.id === 'patrimonio' ? v.bancos || v.investimentos || v.moedas : p.id === 'ano' ? v.paginaAno : true,
+    p.id === 'dividas' ? v.dividas : p.id === 'metas' ? v.metas : p.id === 'patrimonio' ? v.bancos || v.investimentos || v.moedas : p.id === 'ano' ? v.paginaAno : true,
   )
   const paginaAtual = paginas.some((p) => p.id === pagina) ? pagina : 'inicio'
   const categoriaDe = (l: Lancamento) => categoriaDoLanc(l, d.categorias, d.categoriasAntigas)
@@ -317,6 +319,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
         {paginaAtual === 'inicio' && <Inicio {...ctx} />}
         {paginaAtual === 'lancamentos' && <Lancamentos {...ctx} />}
         {paginaAtual === 'dividas' && <Dividas {...ctx} />}
+        {paginaAtual === 'metas' && <Metas {...ctx} />}
         {paginaAtual === 'patrimonio' && <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />}
         {paginaAtual === 'ano' && <Ano {...ctx} />}
       </div>

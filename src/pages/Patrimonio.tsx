@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { caixaDoBanco, somaCaixa } from '../lib/calc'
 import { COR } from '../lib/charts'
-import { fmtMoeda, fmtValor, MESES_NOME, simbolo } from '../lib/format'
+import { fmtValor, MESES_NOME, simbolo } from '../lib/format'
 import { converter, infoMoeda } from '../lib/moedas'
 import { BANCOS_CONHECIDOS, bancoConhecido, CORES_LIVRES, NOME_TIPO_CAIXA } from '../lib/rotulos'
 import { TIPOS_CAIXA, type Banco, type TipoCaixa } from '../lib/types'
 import { Icone } from '../components/Icone'
 import { ItemLancamento } from '../components/ItemLancamento'
-import { CampoValor, Cartao, Kpi, Modal, Progresso, Vazio } from '../components/ui'
+import { CampoValor, Cartao, Kpi, Modal, Vazio } from '../components/ui'
 import type { Ctx } from './contexto'
 
 const SEM_BANCO = 'sem'
@@ -173,19 +173,7 @@ export function Patrimonio(c: Ctx) {
                     </div>
                   )
                 })}
-                {c.perfil.moedas.includes('USD') && (
-                  <CampoValor rotulo="Meta em dólar (vale para os próximos meses)" prefixo="US$" valor={c.r.metaUsd}
-                    aoSalvar={(meta_usd) => c.d.salvarMes(c.ano, c.mes, { meta_usd })} />
-                )}
               </div>
-              {c.perfil.moedas.includes('USD') && c.r.metaUsd > 0 && (
-                <div className="meta">
-                  <Progresso valor={c.r.usd} total={c.r.metaUsd} cor={COR.usd} />
-                  <p className="barras-sub">
-                    {c.r.usd >= c.r.metaUsd ? 'Meta batida! 🎉' : `Faltam ${fmtMoeda(c.r.metaUsd - c.r.usd, 'USD')} · ${Math.round((c.r.usd / c.r.metaUsd) * 100)}% concluído`}
-                  </p>
-                </div>
-              )}
               <p className="dica">Cotação do dia por <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer">ExchangeRate-API</a>. Para mudar as moedas, use <button className="link" onClick={c.personalizar}>Personalizar painel</button>.</p>
             </Cartao>
           )}

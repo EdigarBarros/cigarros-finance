@@ -6,7 +6,7 @@ import type { Visao } from '../lib/perfil'
 import type { Dados } from '../lib/useDados'
 import type { Categoria, Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 
-export type Pagina = 'inicio' | 'lancamentos' | 'dividas' | 'patrimonio' | 'ano'
+export type Pagina = 'inicio' | 'lancamentos' | 'dividas' | 'metas' | 'patrimonio' | 'ano'
 
 /** Tudo que as páginas precisam do mês aberto. */
 export interface Ctx {

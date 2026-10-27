@@ -13,6 +13,7 @@ const PADRAO_DIVIDA = new RegExp(
 const PADRAO_INVESTIMENTO = new RegExp(
   `\\b(invest\\w*|cdb|tesouro|a[cç][oõ]es|fiis?|poupan[cç]a|aplica[cç][aã]o|aporte|cripto\\w*|bitcoin|btc|corretora|renda fixa|lci|lca|previd[eê]ncia)${fim}`, 'i',
 )
+const PADRAO_GUARDAR = new RegExp(`\\b(guardar|guardei|guardando|poupar|poupan[cç]a|juntar|juntando|cofrinho|caixinha|reserva|porquinho)${fim}`, 'i')
 const MOEDAS_NO_TEXTO: [RegExp, string][] = [
   [/us\$|\busd\b|d[oó]lar/i, 'USD'],
   [/€|\beuros?\b|\beur\b/i, 'EUR'],
@@ -40,6 +41,9 @@ export function dicaDaDescricao(texto: string, p: Perfil, tipo: 'entrada' | 'sai
   }
   if (!p.modulos.dividas && tipo === 'saida' && PADRAO_DIVIDA.test(texto)) {
     return { modulo: 'dividas', texto: 'Parece uma parcela ou dívida.', botao: 'Controlar o que falta pagar' }
+  }
+  if (!p.modulos.metas && PADRAO_GUARDAR.test(texto)) {
+    return { modulo: 'metas', texto: 'Está guardando dinheiro para algo?', botao: 'Criar uma meta' }
   }
   const moeda = moedaNoTexto(texto)
   if (moeda && moeda !== p.moeda && !(p.modulos.moedas && p.moedas.includes(moeda))) {
@@ -80,6 +84,14 @@ export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number,
       titulo: 'Começou a investir?',
       texto: 'Acompanhe quanto você tem investido mês a mês, junto com o resto do seu dinheiro.',
       aplicar: ligar('investimentos'),
+    })
+  }
+  if (!p.modulos.metas && conta(PADRAO_GUARDAR) >= 1) {
+    lista.push({
+      id: 'modulo:metas', icone: 'meta', botao: 'Ligar metas',
+      titulo: 'Está guardando dinheiro?',
+      texto: 'Crie uma meta (viagem, reserva, carro…) e veja quanto guardar por mês e quando você chega lá.',
+      aplicar: ligar('metas'),
     })
   }
   for (const [re, m] of MOEDAS_NO_TEXTO) {

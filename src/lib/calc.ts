@@ -78,8 +78,6 @@ export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: M
     moedas: mes?.moedas ?? {},
     /** Outras moedas somadas, na moeda principal (cotação de hoje). */
     moedasConvertido: totalConvertido(mes?.moedas ?? {}, taxas),
-    usd: mes?.moedas.USD ?? 0,
-    metaUsd: mes?.meta_usd ?? 0,
     /** Quanto saiu em cada categoria, pelo id ('' = sem categoria). */
     gastosPorCategoria,
   }

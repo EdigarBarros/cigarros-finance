@@ -3,6 +3,7 @@ import { caixaDoBanco, type Resumo } from '../lib/calc'
 import { COR } from '../lib/charts'
 import type { SituacaoDivida } from '../lib/dividas'
 import { fmtDataCurta, fmtMoeda, fmtValor, MESES, MESES_CURTO, MESES_NOME } from '../lib/format'
+import type { SituacaoMeta } from '../lib/metas'
 import { converter, infoMoeda, type Taxas } from '../lib/moedas'
 import type { Visao } from '../lib/perfil'
 import { fatiasDeGastos, SEM_CATEGORIA } from '../lib/categorias'
@@ -233,12 +234,11 @@ export function PorBanco({ bancos, lancs, caixa, aoAbrir }: {
   )
 }
 
-/** Quanto a pessoa tem em cada outra moeda e quanto isso vale na principal, com a meta em dólar. */
-export function BlocoMoedas({ moedas, lista, taxas, metaUsd, aoAbrir }: {
-  moedas: Record<string, number>; lista: string[]; taxas: Taxas; metaUsd: number; aoAbrir: () => void
+/** Quanto a pessoa tem em cada outra moeda e quanto isso vale na principal. */
+export function BlocoMoedas({ moedas, lista, taxas, aoAbrir }: {
+  moedas: Record<string, number>; lista: string[]; taxas: Taxas; aoAbrir: () => void
 }) {
   const total = lista.reduce((a, m) => a + (converter(moedas[m] ?? 0, m, taxas) ?? 0), 0)
-  const usd = moedas.USD ?? 0
   return (
     <section className="bloco">
       <header className="bloco-cab"><span style={{ color: COR.usd }}>OUTRAS MOEDAS</span><strong>≈ {fmtValor(total)}</strong></header>
@@ -256,14 +256,32 @@ export function BlocoMoedas({ moedas, lista, taxas, metaUsd, aoAbrir }: {
           </button>
         )
       })}
-      {metaUsd > 0 && lista.includes('USD') && (
-        <div className="meta meta-bloco">
-          <h3 className="bloco-titulo">META EM DÓLAR</h3>
-          <div><strong>{fmtMoeda(usd, 'USD')}</strong><span> de {fmtMoeda(metaUsd, 'USD')}</span></div>
-          <Progresso valor={usd} total={metaUsd} cor={COR.usd} />
-          <p className="barras-sub">{usd >= metaUsd ? 'Meta batida! 🎉' : `Faltam ${fmtMoeda(metaUsd - usd, 'USD')}`}</p>
-        </div>
+    </section>
+  )
+}
+
+/** As metas em andamento, para a visão geral (a página Metas tem o resto). */
+export function BlocoMetas({ metas, taxas, aoAbrir }: { metas: SituacaoMeta[]; taxas: Taxas; aoAbrir: () => void }) {
+  const ativas = metas.filter((s) => !s.batida)
+  const guardado = metas.reduce((a, s) => a + (converter(s.guardado, s.meta.moeda, taxas) ?? 0), 0)
+  return (
+    <section className="bloco">
+      <header className="bloco-cab"><span style={{ color: COR.investimentos }}>METAS</span><strong>{fmtValor(guardado)}</strong></header>
+      {!metas.length && (
+        <p className="quadro-vazio">Junte dinheiro para uma viagem, um carro ou uma reserva. <button className="link" onClick={aoAbrir}>Criar a primeira meta</button></p>
       )}
+      {metas.length > 0 && !ativas.length && <p className="quadro-vazio">Todas as metas batidas! 🎉 <button className="link" onClick={aoAbrir}>Criar outra</button></p>}
+      {ativas.slice(0, 4).map((s) => (
+        <button key={s.meta.id} className="banco-linha" onClick={aoAbrir}>
+          <span className="banco-linha-nome">{s.meta.icone}&nbsp;&nbsp;{s.meta.nome}</span>
+          <span className="banco-linha-saldo">{Math.round(s.progresso * 100)}%</span>
+          <Progresso valor={s.guardado} total={s.meta.alvo} cor={s.meta.cor} />
+          <span className="banco-linha-sub">
+            {fmtMoeda(s.guardado, s.meta.moeda)} de {fmtMoeda(s.meta.alvo, s.meta.moeda)}
+            {s.previsao && ` · chega em ${MESES_CURTO[s.previsao[1] - 1].toLowerCase()}/${String(s.previsao[0]).slice(2)}`}
+          </span>
+        </button>
+      ))}
     </section>
   )
 }

@@ -83,7 +83,7 @@ export interface Mes {
 export const TIPOS_CAIXA: TipoCaixa[] = ['cc', 'caixinha', 'reserva']
 
 /** Partes do painel que cada pessoa liga ou desliga conforme a vida dela. */
-export type Modulo = 'dividas' | 'bancos' | 'investimentos' | 'moedas'
+export type Modulo = 'dividas' | 'bancos' | 'investimentos' | 'moedas' | 'metas'
 export type Detalhe = 'simples' | 'equilibrado' | 'detalhado'
 
 /** Como o painel se adapta a cada pessoa: respostas das perguntas iniciais e ajustes feitos depois. */
@@ -99,4 +99,27 @@ export interface Perfil {
   dispensadas: string[]
   /** null enquanto as perguntas iniciais não foram respondidas. */
   onboarding_em: string | null
+}
+
+/** Objetivo para juntar dinheiro (viagem, reserva de emergência, carro…), na moeda que a pessoa escolher. */
+export interface Meta {
+  id: string
+  nome: string
+  icone: string
+  cor: string
+  moeda: string
+  alvo: number
+  /** Opcional: com prazo, o app calcula quanto guardar por mês. */
+  prazo: string | null
+  ordem: number
+  created_at?: string
+}
+
+/** Dinheiro guardado (positivo) ou retirado (negativo) de uma meta, na moeda dela. */
+export interface MovimentoMeta {
+  id: string
+  meta_id: string
+  data: string
+  valor: number
+  descricao: string
 }

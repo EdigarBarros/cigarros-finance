@@ -175,3 +175,39 @@ returns void language sql security invoker set search_path = public as $$
     );
 $$;
 revoke execute on function public.criar_categorias_padrao(uuid) from anon;
+
+-- Metas para qualquer objetivo (viagem, reserva, carro…). meses.meta_usd é a meta em dólar antiga.
+create table if not exists public.metas (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users on delete cascade,
+  nome        text not null,
+  icone       text not null default '🎯',
+  cor         text not null default '#9d6bff',
+  moeda       text not null default 'BRL',
+  alvo        numeric(14, 2) not null check (alvo > 0),
+  -- prazo opcional: o app calcula quanto guardar por mês para chegar nele
+  prazo       date,
+  ordem       integer not null default 0,
+  created_at  timestamptz not null default now()
+);
+
+-- Cada vez que a pessoa guarda (valor positivo) ou retira (negativo) dinheiro de uma meta, na moeda dela.
+create table if not exists public.meta_movimentos (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users on delete cascade,
+  meta_id     uuid not null references public.metas on delete cascade,
+  data        date not null,
+  valor       numeric(14, 2) not null check (valor <> 0),
+  descricao   text not null default '',
+  created_at  timestamptz not null default now()
+);
+create index if not exists meta_movimentos_meta on public.meta_movimentos (meta_id, data);
+
+alter table public.metas enable row level security;
+alter table public.meta_movimentos enable row level security;
+drop policy if exists "dono" on public.metas;
+create policy "dono" on public.metas for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+drop policy if exists "dono" on public.meta_movimentos;
+create policy "dono" on public.meta_movimentos for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));

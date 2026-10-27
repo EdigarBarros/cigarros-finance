@@ -21,6 +21,11 @@ export const MODULOS: { id: Modulo; nome: string; pergunta: string; descricao: s
     pergunta: 'Tenho ou uso dinheiro em outra moeda',
     descricao: 'Dólar, euro e outras: quanto você tem e quanto vale na sua moeda, com a cotação do dia.',
   },
+  {
+    id: 'metas', nome: 'Metas', icone: 'meta',
+    pergunta: 'Quero juntar dinheiro para algo (viagem, reserva, carro…)',
+    descricao: 'Quanto falta para cada objetivo, quanto guardar por mês e quando você chega lá.',
+  },
 ]
 
 export const DETALHES: { id: Detalhe; nome: string; descricao: string }[] = [
@@ -34,7 +39,7 @@ export const PERFIL_PADRAO: Perfil = {
   moeda: 'BRL',
   moedas: [],
   detalhe: 'equilibrado',
-  modulos: { dividas: false, bancos: false, investimentos: false, moedas: false },
+  modulos: { dividas: false, bancos: false, investimentos: false, moedas: false, metas: false },
   dispensadas: [],
   onboarding_em: null,
 }
@@ -62,6 +67,7 @@ export function inferirPerfil(d: { lancs: Lancamento[]; dividas: Divida[]; banco
       bancos: d.bancos.length > 0,
       investimentos: d.meses.some((m) => m.investimentos !== 0),
       moedas: moedas.length > 0,
+      metas: d.meses.some((m) => m.meta_usd > 0),
     },
     onboarding_em: new Date().toISOString(),
   }
@@ -75,6 +81,7 @@ export function visao(p: Perfil) {
     bancos: p.modulos.bancos,
     investimentos: p.modulos.investimentos,
     moedas: p.modulos.moedas && p.moedas.length > 0,
+    metas: p.modulos.metas,
     /** Variação contra o mês anterior nos indicadores. */
     comparacao: nivel >= 1,
     graficoAno: nivel >= 1,

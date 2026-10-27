@@ -543,6 +543,7 @@ select option { background: #1c1c1e; color: var(--texto); }
 .banco-linha-saldo { font-family: var(--fonte-numeros); font-weight: 600; font-variant-numeric: tabular-nums; }
 .banco-barras { grid-column: 1 / -1; display: grid; gap: 3px; }
 .banco-barras span { display: block; height: 5px; border-radius: 999px; min-width: 3px; transition: width .9s var(--mola); }
+.banco-linha .progresso { grid-column: 1 / -1; }
 .banco-linha-sub { grid-column: 1 / -1; font-size: 12px; color: var(--texto-2); font-variant-numeric: tabular-nums; }
 
 .banco-cartao { display: grid; gap: 2px; padding: 18px; text-align: left; color: var(--texto); cursor: pointer; }
@@ -722,6 +723,25 @@ select option { background: #1c1c1e; color: var(--texto); }
 .ajuste-botao { width: 100%; border: 0; border-radius: var(--raio-m); background: var(--preench-4); color: var(--texto); text-align: left; transition: background .2s; }
 .ajuste-botao:hover { background: var(--preench-3); }
 .ajuste-botao > svg:last-child { color: var(--texto-3); }
+
+/* ---------- metas ---------- */
+.meta-cartao .divida-topo h3 { display: flex; align-items: center; gap: 8px; }
+.meta-icone { font-size: 22px; line-height: 1; }
+.meta-de { color: var(--texto-2); font-size: 14px; }
+.meta-cartao .progresso { height: 8px; }
+.meta-dicas { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; color: var(--texto-2); }
+.meta-dicas li { padding-left: 14px; position: relative; }
+.meta-dicas li::before { content: ''; position: absolute; left: 0; top: .55em; width: 6px; height: 6px; border-radius: 50%; background: var(--c, var(--destaque)); }
+.meta-dicas b { color: var(--texto); font-weight: 600; }
+.meta-dicas .atrasada { color: #ffb3ad; }
+.meta-movimentos li span:last-child { display: inline-flex; align-items: center; gap: 6px; }
+.meta-movimentos li span.negativo { color: var(--saida); }
+.desfazer { border: 0; background: none; color: var(--texto-3); font-size: 15px; line-height: 1; padding: 0 2px; border-radius: 6px; }
+.desfazer:hover { color: var(--saida); }
+.meta-acoes { display: flex; gap: 8px; }
+.meta-acoes .btn { flex: 1; }
+.cartao.batida { box-shadow: var(--brilho-interno), inset 0 0 0 1px rgba(48, 209, 88, .45), var(--sombra); }
+.secao-titulo { font-size: 20px; font-weight: 700; letter-spacing: -.02em; margin-top: 6px; }
 
 /* ---------- animações ---------- */
 /* 'backwards': a animação de entrada solta o elemento ao terminar, senão ela anula o movimento do mouse */

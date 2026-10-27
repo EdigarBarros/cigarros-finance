@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { CATEGORIAS_ANTIGAS } from './categorias'
 import { normPerfil } from './perfil'
 import { supabase } from './supabase'
-import type { Banco, Categoria, Divida, Lancamento, Mes, Pagamento, Perfil, SaldoDivida } from './types'
+import type { Banco, Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida } from './types'
 
 const num = (v: unknown) => Number(v ?? 0)
 
@@ -11,6 +11,8 @@ const normLanc = (r: Lancamento): Lancamento => ({
 })
 const normDiv = (r: Divida): Divida => ({ ...r, valor_parcela: r.valor_parcela == null ? null : num(r.valor_parcela) })
 const normSaldo = (r: SaldoDivida): SaldoDivida => ({ ...r, saldo: num(r.saldo) })
+const normMeta = (r: Meta): Meta => ({ ...r, alvo: num(r.alvo) })
+const normMovMeta = (r: MovimentoMeta): MovimentoMeta => ({ ...r, valor: num(r.valor) })
 const normMes = (r: Mes & { usd?: number }): Mes => {
   const { usd, ...resto } = r
   const moedas = Object.fromEntries(Object.entries(r.moedas ?? {}).map(([k, v]) => [k, num(v)]))
@@ -41,12 +43,16 @@ export function useDados(userId: string, ano: number) {
   const [categorias, setCategorias] = useState<Categoria[]>([])
   /** Sem a migração 5: usa as 4 categorias antigas. */
   const [categoriasAntigas, setCategoriasAntigas] = useState(false)
+  const [metas, setMetas] = useState<Meta[]>([])
+  const [movimentosMeta, setMovimentosMeta] = useState<MovimentoMeta[]>([])
+  /** Sem a migração 6 não há onde guardar metas. */
+  const [metasSemTabela, setMetasSemTabela] = useState(false)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
 
   const recarregar = useCallback(async () => {
     setCarregando(true)
-    const [l, m, d, s, p, b, pf, ct] = await Promise.all([
+    const [l, m, d, s, p, b, pf, ct, mt, mv] = await Promise.all([
       supabase.from('lancamentos').select('*').eq('ano', ano).order('data').order('created_at'),
       supabase.from('meses').select('*'),
       supabase.from('dividas').select('*').order('created_at'),
@@ -55,6 +61,8 @@ export function useDados(userId: string, ano: number) {
       supabase.from('bancos').select('*').order('ordem').order('created_at'),
       supabase.from('perfis').select('*').maybeSingle(),
       supabase.from('categorias').select('*').order('ordem').order('nome'),
+      supabase.from('metas').select('*').order('ordem').order('created_at'),
+      supabase.from('meta_movimentos').select('*').order('data'),
     ])
     const e = l.error ?? m.error ?? d.error ?? s.error ?? p.error ?? b.error
     if (e) setErro(e.message)
@@ -71,6 +79,13 @@ export function useDados(userId: string, ano: number) {
       setPerfil(null)
     } else if (pf.error) setErro(pf.error.message)
     else setPerfil(pf.data ? normPerfil(pf.data as Perfil) : null)
+    const em = mt.error ?? mv.error
+    if (em && faltaTabela(em)) setMetasSemTabela(true)
+    else if (em) setErro(em.message)
+    else {
+      setMetas((mt.data as Meta[]).map(normMeta))
+      setMovimentosMeta((mv.data as MovimentoMeta[]).map(normMovMeta))
+    }
     if (ct.error && faltaTabela(ct.error)) {
       setCategoriasAntigas(true)
       setCategorias(CATEGORIAS_ANTIGAS)
@@ -236,7 +251,37 @@ export function useDados(userId: string, ano: number) {
     if (error) falhou(error.message)
   }
 
+  const addMeta = async (nova: Omit<Meta, 'id' | 'ordem'>) => {
+    const { data, error } = await supabase.from('metas').insert({ ...nova, ordem: metas.length }).select().single()
+    if (error) return falhou(error.message)
+    setMetas((xs) => [...xs, normMeta(data as Meta)])
+  }
+  const updMeta = async (id: string, patch: Partial<Meta>) => {
+    setMetas((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
+    const { error } = await supabase.from('metas').update(patch).eq('id', id)
+    if (error) falhou(error.message)
+  }
+  /** Apaga a meta e todo o histórico dela. */
+  const delMeta = async (id: string) => {
+    setMetas((xs) => xs.filter((x) => x.id !== id))
+    setMovimentosMeta((xs) => xs.filter((x) => x.meta_id !== id))
+    const { error } = await supabase.from('metas').delete().eq('id', id)
+    if (error) falhou(error.message)
+  }
+  /** Guardar (valor positivo) ou retirar (negativo) dinheiro de uma meta. */
+  const addMovimentoMeta = async (mov: Omit<MovimentoMeta, 'id'>) => {
+    const { data, error } = await supabase.from('meta_movimentos').insert(mov).select().single()
+    if (error) return falhou(error.message)
+    setMovimentosMeta((xs) => [...xs, normMovMeta(data as MovimentoMeta)])
+  }
+  const delMovimentoMeta = async (id: string) => {
+    setMovimentosMeta((xs) => xs.filter((x) => x.id !== id))
+    const { error } = await supabase.from('meta_movimentos').delete().eq('id', id)
+    if (error) falhou(error.message)
+  }
+
   return {
+    metas, movimentosMeta, metasSemTabela, addMeta, updMeta, delMeta, addMovimentoMeta, delMovimentoMeta,
     categorias, categoriasAntigas, addCategoria, updCategoria, delCategoria,
     perfil, perfilSemTabela, salvarPerfil,
     bancos, addBanco, updBanco, delBanco,
