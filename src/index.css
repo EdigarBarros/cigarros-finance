@@ -40,8 +40,6 @@
   --raio-p: 12px;
   --mola: cubic-bezier(.32, .72, 0, 1);
   --mola-salto: cubic-bezier(.34, 1.4, .64, 1);
-  /* grão finíssimo que quebra as faixas (banding) dos degradês escuros */
-  --grao: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 .07 0 0 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
 
   --fonte: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', Inter, 'Segoe UI', system-ui, sans-serif;
   --fonte-numeros: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif;
@@ -81,15 +79,15 @@ code { background: var(--preench-3); padding: 1px 6px; border-radius: 6px; font-
 body::before, body::after { content: ''; position: fixed; inset: -25%; z-index: -1; pointer-events: none; }
 body::before {
   background:
-    radial-gradient(32% 30% at 14% 16%, rgba(10, 132, 255, .30), transparent 70%),
-    radial-gradient(30% 28% at 86% 12%, rgba(191, 90, 242, .26), transparent 70%),
-    radial-gradient(36% 32% at 78% 82%, rgba(94, 92, 230, .28), transparent 70%),
-    radial-gradient(28% 26% at 20% 84%, rgba(48, 209, 88, .20), transparent 70%),
-    radial-gradient(22% 20% at 52% 50%, rgba(100, 210, 255, .07), transparent 70%);
+    radial-gradient(32% 30% at 14% 16%, rgba(10, 132, 255, 0.300) 0%, rgba(10, 132, 255, 0.283) 9%, rgba(10, 132, 255, 0.239) 18%, rgba(10, 132, 255, 0.180) 27%, rgba(10, 132, 255, 0.118) 36%, rgba(10, 132, 255, 0.063) 45%, rgba(10, 132, 255, 0.024) 54%, rgba(10, 132, 255, 0.004) 63%, rgba(10, 132, 255, 0.000) 72%),
+    radial-gradient(30% 28% at 86% 12%, rgba(191, 90, 242, 0.260) 0%, rgba(191, 90, 242, 0.245) 9%, rgba(191, 90, 242, 0.207) 18%, rgba(191, 90, 242, 0.156) 27%, rgba(191, 90, 242, 0.102) 36%, rgba(191, 90, 242, 0.055) 45%, rgba(191, 90, 242, 0.021) 54%, rgba(191, 90, 242, 0.004) 63%, rgba(191, 90, 242, 0.000) 72%),
+    radial-gradient(36% 32% at 78% 82%, rgba(94, 92, 230, 0.280) 0%, rgba(94, 92, 230, 0.264) 9%, rgba(94, 92, 230, 0.223) 18%, rgba(94, 92, 230, 0.168) 27%, rgba(94, 92, 230, 0.110) 36%, rgba(94, 92, 230, 0.059) 45%, rgba(94, 92, 230, 0.023) 54%, rgba(94, 92, 230, 0.004) 63%, rgba(94, 92, 230, 0.000) 72%),
+    radial-gradient(28% 26% at 20% 84%, rgba(48, 209, 88, 0.200) 0%, rgba(48, 209, 88, 0.188) 9%, rgba(48, 209, 88, 0.159) 18%, rgba(48, 209, 88, 0.120) 27%, rgba(48, 209, 88, 0.078) 36%, rgba(48, 209, 88, 0.042) 45%, rgba(48, 209, 88, 0.016) 54%, rgba(48, 209, 88, 0.003) 63%, rgba(48, 209, 88, 0.000) 72%),
+    radial-gradient(22% 20% at 52% 50%, rgba(100, 210, 255, 0.070) 0%, rgba(100, 210, 255, 0.066) 9%, rgba(100, 210, 255, 0.056) 18%, rgba(100, 210, 255, 0.042) 27%, rgba(100, 210, 255, 0.027) 36%, rgba(100, 210, 255, 0.015) 45%, rgba(100, 210, 255, 0.006) 54%, rgba(100, 210, 255, 0.001) 63%, rgba(100, 210, 255, 0.000) 72%);
   animation: luzes 44s ease-in-out infinite alternate;
   will-change: transform;
 }
-body::after { inset: 0; background: var(--grao), radial-gradient(120% 90% at 50% 0%, transparent 35%, rgba(0, 0, 0, .6)); }
+body::after { inset: 0; background: radial-gradient(120% 90% at 50% 0%, rgba(0, 0, 0, 0) 35%, rgba(0, 0, 0, .12) 55%, rgba(0, 0, 0, .32) 75%, rgba(0, 0, 0, .55)); }
 @keyframes luzes {
   0% { transform: translate3d(0, 0, 0) scale(1); }
   50% { transform: translate3d(2.5%, -2%, 0) scale(1.05); }
@@ -101,7 +99,6 @@ body::after { inset: 0; background: var(--grao), radial-gradient(120% 90% at 50%
 .menu-lista, .abas-movel, .faixa-herdado, .fab {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, .085), rgba(255, 255, 255, 0) 120px) no-repeat,
-    var(--grao),
     var(--vidro);
   backdrop-filter: var(--desfoque);
  
@@ -295,7 +292,6 @@ body::after { inset: 0; background: var(--grao), radial-gradient(120% 90% at 50%
   background:
     radial-gradient(90% 140% at 0% 0%, rgba(48, 209, 88, .16), transparent 60%),
     linear-gradient(180deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, 0) 120px) no-repeat,
-    var(--grao),
     var(--vidro);
 }
 .hero > div:first-child { display: grid; gap: 4px; }
