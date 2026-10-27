@@ -1,8 +1,8 @@
 -- Migração 2: dívidas que atravessam os meses (só para bancos criados com o schema antigo).
 -- Supabase > SQL Editor > New query > colar > Run.
--- Atenção: apaga a tabela de dívidas antiga (que guardava uma cópia por mês).
+-- A tabela de dívidas antiga (uma cópia por mês) é só renomeada para dividas_antiga, nada é apagado.
 
-drop table if exists public.dividas;
+alter table public.dividas rename to dividas_antiga;
 
 create table public.dividas (
   id             uuid primary key default gen_random_uuid(),
