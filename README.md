@@ -1,19 +1,19 @@
 # Controle Financeiro
 
-Site para administrar as finanças com a mesma cara e as mesmas contas da planilha `PLANILHA_FINANCEIRA_2026.xlsx`:
+Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLANILHA_FINANCEIRA_2026.xlsx`
+(mesmos conceitos e cores, mas com cara de app):
 
-- **Entradas** e **Saídas** do mês (saídas separadas em principal, **Nubank** e **Inter**), editáveis direto na tabela, como planilha
-- **Resumo**: entradas, saídas, fluxo de caixa, caixa, dívida, investimentos e US$
-- **Visão anual**: gráfico entradas × saídas (com linhas de caixa, dívida, investimentos e US$) e tabela mês a mês
-- **Dívidas**: valor mensal, parcelas, pagas, restantes e total (botão `+1` para marcar parcela paga)
-- **Caixa**: conta corrente, caixinha e reserva de emergência em Nubank, Inter e Itaú
-- **Métricas**: transporte, dívidas, alimentação e outros, com gráfico de rosca (a categoria de cada saída é a bolinha `T` / `D` / `A` / `O`)
-- **Meta de US$** com gráfico de progresso
-- Abas de meses no rodapé, igual às abas da planilha
-- **Importar planilha (.xlsx)**: puxa todos os meses da sua planilha atual, já com as categorias
-- **Exportar backup (.xlsx)** com todos os dados
-- Botão para **trazer dívidas e caixa do mês anterior** ao abrir um mês novo
-- Campos de valor aceitam `1.234,56` e contas como na planilha: `=105,53-60,02`
+- **Visão geral**: saldo do mês em destaque, indicadores (entradas, saídas, caixa, dívida, investimentos, dólar)
+  com comparação ao mês anterior, gráfico entradas × saídas do ano, para onde foi o dinheiro (por categoria),
+  saídas por conta (Principal, Nubank, Inter), dívidas em aberto e meta em dólar
+- **Lançamentos**: lista por dia com busca e filtros; formulário rápido com "salvar e lançar outro",
+  sugestão de descrição e categoria automática pelo histórico (digitou "iFood", já vem Alimentação)
+- **Dívidas**: cartões com progresso das parcelas e botão "Paguei uma parcela"
+- **Patrimônio**: caixa por banco (conta corrente, caixinha, reserva), investimentos e meta em dólar
+- **Ano**: totais do ano, gráficos de saldo e evolução de caixa, dívida, investimentos e dólar, tabela mês a mês
+- **Importar planilha (.xlsx)** com os meses e categorias da planilha antiga; **exportar backup (.xlsx)**
+- Botão para trazer dívidas e caixa do mês anterior; valores aceitam `1.234,56` e contas como `=105,53-60,02`
+- Funciona no celular (navegação inferior e botão + para lançar)
 
 Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase** (Postgres), protegidos por login.
 

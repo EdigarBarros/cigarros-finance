@@ -9,6 +9,9 @@ const pct = new Intl.NumberFormat('pt-BR', { style: 'percent', maximumFractionDi
 
 export const fmtBRL = (n: number) => brl.format(n || 0)
 export const fmtUSD = (n: number) => usd.format(n || 0)
+export const MESES_NOME = MESES.map((m) => m[0] + m.slice(1).toLowerCase())
+export const MESES_CURTO = MESES_NOME.map((m) => m.slice(0, 3))
+
 export const fmtPct = (n: number) => pct.format(Number.isFinite(n) ? n : 0)
 
 const MES_CURTO = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
@@ -47,3 +50,17 @@ export function dataPadrao(ano: number, mes: number) {
   const dia = hoje.getFullYear() === ano && hoje.getMonth() + 1 === mes ? hoje.getDate() : 1
   return `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
 }
+
+/** "2026-10-02" -> "2 de outubro" */
+export function fmtDataLonga(iso: string | null) {
+  if (!iso) return 'Sem data'
+  const [, m, d] = iso.split('-').map(Number)
+  return `${d} de ${MESES_NOME[m - 1].toLowerCase()}`
+}
+
+/** Valor para preencher um campo de edição: 1234.5 -> "1234,50". */
+export const paraCampo = (n: number) => (n ? n.toFixed(2).replace('.', ',') : '')
+
+/** Variação percentual entre dois meses (null quando não há base de comparação). */
+export const variacao = (atual: number, anterior: number | undefined) =>
+  anterior === undefined || anterior === 0 ? null : (atual - anterior) / Math.abs(anterior)

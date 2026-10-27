@@ -1,32 +1,60 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { resumoMes, totalCaixa } from '../lib/calc'
-import { fmtBRL, MESES } from '../lib/format'
+import { MESES_NOME } from '../lib/format'
 import { supabase } from '../lib/supabase'
+import type { Lancamento, Tipo } from '../lib/types'
 import { useDados } from '../lib/useDados'
-import { Anual } from './Anual'
-import { CaixaQuadro } from './CaixaQuadro'
-import { Dividas } from './Dividas'
-import { ListaLancamentos } from './ListaLancamentos'
-import { Metricas, MetaUsd } from './Metricas'
-import { Resumo } from './Resumo'
+import { Ano } from '../pages/Ano'
+import type { Ctx, Pagina } from '../pages/contexto'
+import { Dividas } from '../pages/Dividas'
+import { Inicio } from '../pages/Inicio'
+import { Lancamentos } from '../pages/Lancamentos'
+import { Patrimonio } from '../pages/Patrimonio'
+import { FormLancamento } from './Formularios'
+import { Icone } from './Icone'
+
+const PAGINAS: { id: Pagina; nome: string; icone: string }[] = [
+  { id: 'inicio', nome: 'Visão geral', icone: 'inicio' },
+  { id: 'lancamentos', nome: 'Lançamentos', icone: 'lista' },
+  { id: 'dividas', nome: 'Dívidas', icone: 'divida' },
+  { id: 'patrimonio', nome: 'Patrimônio', icone: 'carteira' },
+  { id: 'ano', nome: 'Ano', icone: 'ano' },
+]
+
+const paginaDoHash = (): Pagina => {
+  const h = location.hash.replace('#/', '') as Pagina
+  return PAGINAS.some((p) => p.id === h) ? h : 'inicio'
+}
 
 const hoje = new Date()
 
 export function Painel({ userId, email }: { userId: string; email: string }) {
+  const [pagina, setPagina] = useState<Pagina>(paginaDoHash)
   const [ano, setAno] = useState(hoje.getFullYear())
   const [mes, setMes] = useState(hoje.getMonth() + 1)
-  const [ocupado, setOcupado] = useState<string | null>(null)
+  const [form, setForm] = useState<{ inicial?: Lancamento; tipo?: Tipo } | null>(null)
   const [menu, setMenu] = useState(false)
+  const [ocupado, setOcupado] = useState<string | null>(null)
   const arquivo = useRef<HTMLInputElement>(null)
   const d = useDados(userId, ano)
 
-  const doMes = <T extends { mes: number }>(xs: T[], m: number) => xs.filter((x) => x.mes === m)
+  useEffect(() => {
+    const aoMudar = () => setPagina(paginaDoHash())
+    window.addEventListener('hashchange', aoMudar)
+    return () => window.removeEventListener('hashchange', aoMudar)
+  }, [])
+  const irPara = (p: Pagina) => {
+    location.hash = `/${p}`
+    setPagina(p)
+    window.scrollTo({ top: 0 })
+  }
+
   const porMes = useMemo(
     () =>
-      MESES.map((_, i) => {
+      MESES_NOME.map((_, i) => {
         const m = i + 1
-        const l = doMes(d.lancs, m)
-        const dv = doMes(d.dividas, m)
+        const l = d.lancs.filter((x) => x.mes === m)
+        const dv = d.dividas.filter((x) => x.mes === m)
         const meta = d.meses.find((x) => x.mes === m)
         const vazio = !l.length && !dv.length && !totalCaixa(meta) && !meta?.investimentos && !meta?.usd
         return vazio ? null : resumoMes(l, dv, meta)
@@ -34,163 +62,140 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     [d.lancs, d.dividas, d.meses],
   )
 
-  const lancsMes = doMes(d.lancs, mes)
-  const dividasMes = doMes(d.dividas, mes)
+  const lancsMes = d.lancs.filter((l) => l.mes === mes)
+  const dividasMes = d.dividas.filter((x) => x.mes === mes)
   const metaMes = d.meses.find((x) => x.mes === mes)
-  const r = resumoMes(lancsMes, dividasMes, metaMes)
-  const saidas = (conta: string) => lancsMes.filter((l) => l.tipo === 'saida' && l.conta === conta)
 
-  const irPara = (a: number, m: number) => {
+  const mudarMes = (delta: number) => {
+    let [a, m] = [ano, mes + delta]
     if (m < 1) [a, m] = [a - 1, 12]
     if (m > 12) [a, m] = [a + 1, 1]
     setAno(a)
     setMes(m)
   }
 
-  const importar = async (f: File) => {
-    setOcupado('Lendo planilha…')
+  const tarefa = async (msg: string, fn: () => Promise<unknown>) => {
+    setOcupado(msg)
     try {
+      await fn()
+    } catch (e) {
+      d.setErro(e instanceof Error ? e.message : String(e))
+    } finally {
+      setOcupado(null)
+    }
+  }
+
+  const importar = (f: File) =>
+    tarefa('Lendo planilha…', async () => {
       // A biblioteca de planilhas é pesada; só baixa quando alguém importa ou exporta.
       const { lerPlanilha, gravarImportacao } = await import('../lib/planilha')
       const meses = await lerPlanilha(f)
-      if (!meses.length) {
-        alert('Não encontrei abas de mês (ex.: OUTUBRO26) com dados nessa planilha.')
-        return
-      }
-      const lista = meses.map((m) => `${MESES[m.mes - 1]}/${m.ano}: ${m.lancs.length} lançamentos, ${m.dividas.length} dívidas`).join('\n')
-      if (!confirm(`Encontrei ${meses.length} meses:\n\n${lista}\n\nOs dados desses meses no site serão SUBSTITUÍDOS pelos da planilha. Continuar?`)) return
-      setOcupado('Gravando no banco…')
+      if (arquivo.current) arquivo.current.value = ''
+      if (!meses.length) return alert('Não encontrei abas de mês (ex.: OUTUBRO26) com dados nessa planilha.')
+      const lista = meses.map((m) => `${MESES_NOME[m.mes - 1]}/${m.ano}: ${m.lancs.length} lançamentos`).join('\n')
+      if (!confirm(`Encontrei ${meses.length} meses:\n\n${lista}\n\nOs dados desses meses no app serão SUBSTITUÍDOS pelos da planilha. Continuar?`)) return
+      setOcupado('Gravando…')
       await gravarImportacao(userId, meses)
       const ultimo = meses[meses.length - 1]
       if (ultimo.ano === ano) await d.recarregar()
-      irPara(ultimo.ano, ultimo.mes)
-    } catch (e) {
-      d.setErro(e instanceof Error ? e.message : String(e))
-    } finally {
-      setOcupado(null)
-      if (arquivo.current) arquivo.current.value = ''
-    }
-  }
+      setAno(ultimo.ano)
+      setMes(ultimo.mes)
+    })
 
-  const exportar = async () => {
-    setOcupado('Gerando backup…')
-    try {
-      const { exportarBackup } = await import('../lib/planilha')
-      await exportarBackup()
-    } catch (e) {
-      d.setErro(e instanceof Error ? e.message : String(e))
-    } finally {
-      setOcupado(null)
-    }
+  const ctx: Ctx = {
+    ano, mes, d, lancsMes, dividasMes, metaMes, porMes,
+    r: resumoMes(lancsMes, dividasMes, metaMes),
+    anterior: mes > 1 ? porMes[mes - 2] : null,
+    irPara,
+    irParaMes: setMes,
+    novoLancamento: (tipo) => setForm({ tipo }),
+    editarLancamento: (l) => setForm({ inicial: l }),
+    copiarMesAnterior: () => tarefa('Copiando…', () => d.copiarMesAnterior(mes)),
   }
-
-  const copiar = async () => {
-    setOcupado('Copiando…')
-    await d.copiarMesAnterior(mes)
-    setOcupado(null)
-  }
-
-  const chave = `${ano}-${mes}`
-  const mesVazioDeDividasECaixa = !dividasMes.length && !totalCaixa(metaMes)
 
   return (
     <div className="app">
-      <header className="topo">
-        <button className="seta" onClick={() => irPara(ano, mes - 1)} aria-label="Mês anterior">‹</button>
-        <h1>
-          CONTROLE FINANCEIRO <span>{MESES[mes - 1]}/{ano}</span>
-        </h1>
-        <button className="seta" onClick={() => irPara(ano, mes + 1)} aria-label="Próximo mês">›</button>
-        <div className="menu">
-          <button className="menu-botao" onClick={() => setMenu(!menu)} aria-expanded={menu}>☰</button>
-          {menu && (
-            <div className="menu-lista" onClick={() => setMenu(false)}>
-              <span className="menu-email">{email}</span>
-              <button onClick={() => arquivo.current?.click()}>Importar planilha (.xlsx)</button>
-              <button onClick={exportar}>Exportar backup (.xlsx)</button>
-              <button onClick={() => supabase.auth.signOut()}>Sair</button>
-            </div>
-          )}
-        </div>
-        <input
-          ref={arquivo}
-          type="file"
-          accept=".xlsx,.xlsm,.xls"
-          hidden
-          onChange={(e) => e.target.files?.[0] && importar(e.target.files[0])}
-        />
-      </header>
-
-      {d.erro && (
-        <div className="erro" role="alert">
-          Erro: {d.erro} <button onClick={() => d.setErro(null)}>ok</button>
-        </div>
-      )}
-      {(ocupado || d.carregando) && <div className="carregando">{ocupado ?? 'Carregando…'}</div>}
-
-      <main className="grade">
-        <div className="col col-entradas">
-          <ListaLancamentos
-            key={`e-${chave}`} titulo="ENTRADAS" tema="entrada" tipo="entrada" conta="principal" ano={ano} mes={mes}
-            itens={lancsMes.filter((l) => l.tipo === 'entrada')} onAdd={d.addLanc} onUpd={d.updLanc} onDel={d.delLanc}
-          />
-          <p className="obs">OBS: não esquecer de contabilizar dinheiro de papel</p>
-        </div>
-
-        <div className="col col-saidas">
-          <ListaLancamentos
-            key={`s-${chave}`} titulo="SAÍDAS" tema="saida" tipo="saida" conta="principal" ano={ano} mes={mes}
-            itens={saidas('principal')} onAdd={d.addLanc} onUpd={d.updLanc} onDel={d.delLanc}
-          />
-          <ListaLancamentos
-            key={`n-${chave}`} titulo="NUBANK" tema="nubank" tipo="saida" conta="nubank" ano={ano} mes={mes} cabecalho={false}
-            itens={saidas('nubank')} onAdd={d.addLanc} onUpd={d.updLanc} onDel={d.delLanc}
-          />
-          <ListaLancamentos
-            key={`i-${chave}`} titulo="INTER" tema="inter" tipo="saida" conta="inter" ano={ano} mes={mes} cabecalho={false}
-            itens={saidas('inter')} onAdd={d.addLanc} onUpd={d.updLanc} onDel={d.delLanc}
-          />
-          <div className="total-geral">
-            <span>TOTAL</span>
-            <span>{fmtBRL(r.saidas)}</span>
-          </div>
-        </div>
-
-        <div className="col col-painel">
-          <Resumo
-            r={r}
-            onInvestimentos={(investimentos) => d.salvarMes(mes, { investimentos })}
-            onUsd={(usd) => d.salvarMes(mes, { usd })}
-          />
-          <Anual ano={ano} mesAtual={mes} porMes={porMes} onMes={setMes} />
-          {mesVazioDeDividasECaixa && !d.carregando && (
-            <button className="copiar" onClick={copiar}>
-              ⤓ Trazer dívidas e caixa de {MESES[(mes + 10) % 12]}
+      <aside className="lateral">
+        <div className="marca"><span className="marca-logo" />Controle Financeiro</div>
+        <nav>
+          {PAGINAS.map((p) => (
+            <button key={p.id} className={pagina === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}>
+              <Icone nome={p.icone} /> {p.nome}
             </button>
-          )}
-          <Dividas
-            ano={ano} mes={mes} itens={dividasMes} onAdd={d.addDivida} onUpd={d.updDivida} onDel={d.delDivida}
-          />
-          <CaixaQuadro mes={metaMes} onChange={(caixa) => d.salvarMes(mes, { caixa })} />
-          <div className="duas">
-            <Metricas r={r} mes={mes} />
-            <MetaUsd r={r} onMeta={(meta_usd) => d.salvarMes(mes, { meta_usd })} />
-          </div>
-        </div>
-      </main>
-
-      <nav className="abas">
-        <select value={ano} onChange={(e) => setAno(Number(e.target.value))} aria-label="Ano">
-          {Array.from({ length: 7 }, (_, i) => hoje.getFullYear() - 4 + i).map((a) => (
-            <option key={a} value={a}>{a}</option>
           ))}
-        </select>
-        {MESES.map((m, i) => (
-          <button key={m} className={i + 1 === mes ? 'ativa' : porMes[i] ? 'com-dados' : ''} onClick={() => setMes(i + 1)}>
-            {m}{String(ano).slice(2)}
+        </nav>
+        <div className="lateral-rodape">
+          <button onClick={() => arquivo.current?.click()}><Icone nome="importar" /> Importar planilha</button>
+          <button onClick={() => tarefa('Gerando backup…', async () => (await import('../lib/planilha')).exportarBackup())}>
+            <Icone nome="exportar" /> Exportar backup
+          </button>
+          <button onClick={() => supabase.auth.signOut()}><Icone nome="sair" /> Sair</button>
+          <span className="email">{email}</span>
+        </div>
+      </aside>
+
+      <div className="conteudo">
+        <header className="barra">
+          <div className="seletor-mes">
+            <button className="icone-btn" onClick={() => mudarMes(-1)} aria-label="Mês anterior"><Icone nome="esq" /></button>
+            <span>{MESES_NOME[mes - 1]} <small>{ano}</small></span>
+            <button className="icone-btn" onClick={() => mudarMes(1)} aria-label="Próximo mês"><Icone nome="dir" /></button>
+          </div>
+          {(ocupado || d.carregando) && <span className="carregando">{ocupado ?? 'Carregando…'}</span>}
+          <div className="menu-movel">
+            <button className="icone-btn" onClick={() => setMenu(!menu)} aria-label="Menu" aria-expanded={menu}><Icone nome="menu" /></button>
+            {menu && (
+              <div className="menu-lista" onClick={() => setMenu(false)}>
+                <span className="email">{email}</span>
+                <button onClick={() => arquivo.current?.click()}><Icone nome="importar" /> Importar planilha</button>
+                <button onClick={() => tarefa('Gerando backup…', async () => (await import('../lib/planilha')).exportarBackup())}>
+                  <Icone nome="exportar" /> Exportar backup
+                </button>
+                <button onClick={() => supabase.auth.signOut()}><Icone nome="sair" /> Sair</button>
+              </div>
+            )}
+          </div>
+        </header>
+
+        {d.erro && (
+          <div className="alerta" role="alert">
+            Algo deu errado: {d.erro}
+            <button className="link" onClick={() => d.setErro(null)}>Fechar</button>
+          </div>
+        )}
+
+        {pagina === 'inicio' && <Inicio {...ctx} />}
+        {pagina === 'lancamentos' && <Lancamentos {...ctx} />}
+        {pagina === 'dividas' && <Dividas {...ctx} />}
+        {pagina === 'patrimonio' && <Patrimonio {...ctx} />}
+        {pagina === 'ano' && <Ano {...ctx} />}
+      </div>
+
+      <button className="fab" onClick={() => setForm({})} aria-label="Novo lançamento"><Icone nome="mais" tamanho={26} /></button>
+
+      <nav className="abas-movel">
+        {PAGINAS.map((p) => (
+          <button key={p.id} className={pagina === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}>
+            <Icone nome={p.icone} /> <span>{p.nome.replace('Visão geral', 'Início')}</span>
           </button>
         ))}
       </nav>
+
+      <input ref={arquivo} type="file" accept=".xlsx,.xlsm,.xls" hidden onChange={(e) => e.target.files?.[0] && importar(e.target.files[0])} />
+
+      {form && (
+        <FormLancamento
+          key={form.inicial?.id ?? 'novo'}
+          ano={ano}
+          mes={mes}
+          inicial={form.inicial}
+          tipoInicial={form.tipo}
+          historico={d.lancs}
+          aoSalvar={(l, id) => (id ? d.updLanc(id, l) : d.addLanc(l))}
+          aoExcluir={d.delLanc}
+          aoFechar={() => setForm(null)}
+        />
+      )}
     </div>
   )
 }

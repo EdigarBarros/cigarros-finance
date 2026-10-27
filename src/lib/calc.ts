@@ -22,7 +22,7 @@ export function resumoMes(lancs: Lancamento[], dividas: Divida[], mes?: Mes) {
   const alimentacao = porCategoria('alimentacao')
   // Como nas abas da planilha: DÍVIDAS nas métricas = saídas que foram pagamento de dívida.
   const pagoDividas = porCategoria('divida')
-  const outros = saidas - transporte - pagoDividas - alimentacao
+  const outros = porCategoria('outros')
 
   return {
     entradas,
@@ -33,7 +33,12 @@ export function resumoMes(lancs: Lancamento[], dividas: Divida[], mes?: Mes) {
     investimentos: mes?.investimentos ?? 0,
     usd: mes?.usd ?? 0,
     metaUsd: mes?.meta_usd ?? 0,
-    metricas: { transporte, dividas: pagoDividas, alimentacao, outros },
+    metricas: { transporte, divida: pagoDividas, alimentacao, outros },
+    porConta: {
+      principal: soma(saidasLista.filter((l) => l.conta === 'principal').map((l) => l.valor)),
+      nubank: soma(saidasLista.filter((l) => l.conta === 'nubank').map((l) => l.valor)),
+      inter: soma(saidasLista.filter((l) => l.conta === 'inter').map((l) => l.valor)),
+    },
   }
 }
 

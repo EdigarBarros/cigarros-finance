@@ -1,27 +1,41 @@
 import {
-  ArcElement, BarController, BarElement, CategoryScale, Chart, Legend, LinearScale,
+  ArcElement, BarController, BarElement, CategoryScale, Chart, Filler, Legend, LinearScale,
   LineController, LineElement, PointElement, Tooltip,
 } from 'chart.js'
 
 Chart.register(
-  ArcElement, BarController, BarElement, CategoryScale, Legend, LinearScale,
+  ArcElement, BarController, BarElement, CategoryScale, Filler, Legend, LinearScale,
   LineController, LineElement, PointElement, Tooltip,
 )
-Chart.defaults.color = '#d9d9d9'
-Chart.defaults.borderColor = '#262626'
-Chart.defaults.font.family = 'Calibri, Carlito, "Segoe UI", system-ui, sans-serif'
+Chart.defaults.color = '#a0a0ab'
+Chart.defaults.borderColor = '#22222b'
+Chart.defaults.font.family = 'Inter, "Segoe UI", system-ui, sans-serif'
+Chart.defaults.font.size = 11
+Chart.defaults.plugins.tooltip.backgroundColor = '#22222b'
+Chart.defaults.plugins.tooltip.borderColor = '#33333d'
+Chart.defaults.plugins.tooltip.borderWidth = 1
+Chart.defaults.plugins.tooltip.padding = 10
+Chart.defaults.plugins.tooltip.titleColor = '#ededf0'
+Chart.defaults.plugins.tooltip.bodyColor = '#ededf0'
 
-// Cores tiradas da planilha.
+// Identidade da planilha (verde entradas, vermelho saídas, roxo Nubank, laranja Inter...),
+// com os tons ajustados para o fundo escuro e para leitura por daltônicos.
 export const COR = {
-  entradas: '#92d050',
-  saidas: '#ff0000',
-  fluxo: '#a6a6a6',
-  caixa: '#00b0f0',
-  divida: '#ffc000',
-  investimentos: '#cc00cc',
-  usd: '#00b050',
-  transporte: '#4472c4',
-  dividas: '#ed7d31',
-  alimentacao: '#a5a5a5',
-  outros: '#ffc000',
+  entradas: '#7cc242',
+  saidas: '#e5484d',
+  caixa: '#3987e5',
+  divida: '#c98500',
+  investimentos: '#d55181',
+  usd: '#199e70',
+  nubank: '#9b4dde',
+  inter: '#ff7a00',
+  itau: '#ec7000',
+  principal: '#8a8a96',
+}
+
+export const COR_CATEGORIA = {
+  transporte: '#3987e5',
+  divida: '#d95926',
+  alimentacao: '#199e70',
+  outros: '#c98500',
 }

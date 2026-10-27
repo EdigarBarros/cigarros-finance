@@ -23,7 +23,7 @@ export function Login() {
 
   return (
     <div className="tela-central">
-      <form className="cartao" onSubmit={enviar}>
+      <form className="cartao login" onSubmit={enviar}>
         <h1>CONTROLE FINANCEIRO</h1>
         <label>
           E-mail
@@ -40,7 +40,7 @@ export function Login() {
             autoComplete={criar ? 'new-password' : 'current-password'}
           />
         </label>
-        <button className="primario" disabled={ocupado}>{criar ? 'Criar conta' : 'Entrar'}</button>
+        <button className="btn primario" disabled={ocupado}>{criar ? 'Criar conta' : 'Entrar'}</button>
         {msg && <p className="aviso">{msg}</p>}
         <button type="button" className="link" onClick={() => setCriar(!criar)}>
           {criar ? 'Já tenho conta' : 'Primeiro acesso? Criar conta'}
@@ -61,7 +61,7 @@ function traduzir(m: string) {
 export function Configuracao() {
   return (
     <div className="tela-central">
-      <div className="cartao">
+      <div className="cartao login">
         <h1>Falta conectar o banco</h1>
         <p>
           Defina as variáveis <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code> (arquivo <code>.env</code> no
