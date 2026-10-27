@@ -1,34 +1,29 @@
-import { restantes, totalDivida } from '../lib/calc'
+import { useState } from 'react'
 import { COR } from '../lib/charts'
-import { fmtBRL, fmtUSD, MESES_NOME, variacao } from '../lib/format'
-import { CATEGORIAS, CONTAS } from '../lib/rotulos'
-import { GraficoEntradasSaidas, Rosca } from '../components/Graficos'
+import { fmtBRL, fmtUSD, MESES, variacao } from '../lib/format'
+import { COR_BANCO, NOME_BANCO, NOME_TIPO_CAIXA } from '../lib/rotulos'
+import { BANCOS, TIPOS_CAIXA, type Divida } from '../lib/types'
+import { Metricas, QuadroLancamentos, TabelaAnual, TabelaDividas } from '../components/Blocos'
+import { FormDivida } from '../components/Formularios'
+import { GraficoAnual } from '../components/Graficos'
 import { Icone } from '../components/Icone'
-import { ItemLancamento } from '../components/ItemLancamento'
-import { Cartao, Kpi, Progresso, Vazio } from '../components/ui'
+import { Cartao, Kpi, Progresso } from '../components/ui'
 import type { Ctx } from './contexto'
 
 export function Inicio(c: Ctx) {
   const { r, anterior: a } = c
-  const recentes = [...c.lancsMes]
-    .sort((x, y) => (y.data ?? '').localeCompare(x.data ?? '') || (y.created_at ?? '').localeCompare(x.created_at ?? ''))
-    .slice(0, 8)
-  const maiorConta = Math.max(...CONTAS.map((k) => r.porConta[k.id]), 1)
-  const dividasAbertas = c.dividasMes.filter((d) => restantes(d) > 0)
-  const taxaGasto = r.entradas > 0 ? r.saidas / r.entradas : null
+  const [divida, setDivida] = useState<Divida | 'nova' | null>(null)
+  const caixa = c.metaMes?.caixa ?? {}
 
   return (
     <div className="pagina">
       <section className="hero">
         <div>
-          <span className="hero-rotulo">Saldo de {MESES_NOME[c.mes - 1].toLowerCase()}</span>
+          <span className="hero-rotulo">Controle financeiro · {MESES[c.mes - 1]}/{c.ano}</span>
           <strong className={`hero-valor ${r.fluxo < 0 ? 'negativo' : 'positivo'}`}>{fmtBRL(r.fluxo)}</strong>
           <span className="hero-sub">
-            {taxaGasto === null
-              ? 'Nenhuma entrada registrada ainda.'
-              : r.fluxo < 0
-                ? `Saiu ${fmtBRL(-r.fluxo)} a mais do que entrou.`
-                : `Você gastou ${Math.round(taxaGasto * 100)}% do que entrou.`}
+            Fluxo de caixa do mês ·{' '}
+            {r.entradas === 0 ? 'nenhuma entrada ainda' : r.fluxo < 0 ? `saiu ${fmtBRL(-r.fluxo)} a mais do que entrou` : `sobrou ${fmtBRL(r.fluxo)}`}
           </span>
         </div>
         <div className="hero-acoes">
@@ -43,86 +38,83 @@ export function Inicio(c: Ctx) {
         <Kpi rotulo="Caixa" valor={fmtBRL(r.caixa)} cor={COR.caixa} delta={variacao(r.caixa, a?.caixa)} />
         <Kpi rotulo="Dívida" valor={fmtBRL(r.divida)} cor={COR.divida} delta={variacao(r.divida, a?.divida)} menorMelhor />
         <Kpi rotulo="Investimentos" valor={fmtBRL(r.investimentos)} cor={COR.investimentos} />
-        <Kpi rotulo="Dólar" valor={fmtUSD(r.usd)} cor={COR.usd} />
+        <Kpi rotulo="US$" valor={fmtUSD(r.usd)} cor={COR.usd} />
       </div>
 
-      <div className="grade-dash">
-        <Cartao titulo={`Entradas × saídas em ${c.ano}`} className="largo"
-          acao={<button className="link" onClick={() => c.irPara('ano')}>Ver ano</button>}>
-          <GraficoEntradasSaidas porMes={c.porMes} mesAtual={c.mes} aoClicarMes={c.irParaMes} />
-        </Cartao>
+      <div className="duas-colunas">
+        <QuadroLancamentos tipo="entrada" itens={c.lancsMes.filter((l) => l.tipo === 'entrada')}
+          aoNovo={() => c.novoLancamento('entrada')} aoEditar={c.editarLancamento} />
+        <QuadroLancamentos tipo="saida" itens={c.lancsMes.filter((l) => l.tipo === 'saida')}
+          aoNovo={() => c.novoLancamento('saida')} aoEditar={c.editarLancamento} />
+      </div>
 
-        <Cartao titulo="Para onde foi o dinheiro">
-          {r.saidas > 0 ? (
-            <Rosca
-              centro="Saídas"
-              total={r.saidas}
-              fatias={CATEGORIAS.map((k) => ({ nome: k.nome, valor: r.metricas[k.id], cor: k.cor }))}
-            />
-          ) : (
-            <Vazio>Sem saídas neste mês.</Vazio>
-          )}
-        </Cartao>
+      <Cartao titulo={`Evolução de ${c.ano}`} acao={<span className="dica-cab">toque num mês para abrir</span>}>
+        <GraficoAnual porMes={c.porMes} mesAtual={c.mes} aoClicarMes={c.irParaMes} />
+      </Cartao>
 
-        <Cartao titulo="Últimos lançamentos" className="largo" acao={<button className="link" onClick={() => c.irPara('lancamentos')}>Ver todos</button>}>
-          {recentes.length ? (
-            <ul className="lista-lanc">
-              {recentes.map((l) => <ItemLancamento key={l.id} l={l} aoClicar={() => c.editarLancamento(l)} />)}
-            </ul>
-          ) : (
-            <Vazio>Nada lançado em {MESES_NOME[c.mes - 1].toLowerCase()} ainda.</Vazio>
-          )}
-        </Cartao>
-
+      <div className="duas-colunas">
         <div className="pilha">
-        <Cartao titulo="Saídas por conta">
-          <ul className="barras">
-            {CONTAS.map((k) => (
-              <li key={k.id}>
-                <span className="barras-nome"><i className="marcador" style={{ background: k.cor }} />{k.nome}</span>
-                <span className="barras-valor">{fmtBRL(r.porConta[k.id])}</span>
-                <Progresso valor={r.porConta[k.id]} total={maiorConta} cor={k.cor} />
-              </li>
-            ))}
-          </ul>
-        </Cartao>
-
-        <Cartao titulo="Dívidas" acao={<button className="link" onClick={() => c.irPara('dividas')}>Gerenciar</button>}>
-          {dividasAbertas.length ? (
-            <ul className="barras">
-              {dividasAbertas.map((d) => (
-                <li key={d.id}>
-                  <span className="barras-nome">{d.descricao}</span>
-                  <span className="barras-valor">{fmtBRL(totalDivida(d))}</span>
-                  <Progresso valor={d.pagas} total={d.parcelas} cor={COR.divida} />
-                  <span className="barras-sub">{d.pagas} de {d.parcelas} parcelas pagas · {fmtBRL(d.valor_mensal)}/mês</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <Vazio>
-              Nenhuma dívida em aberto.
-              {!c.dividasMes.length && <><br /><button className="link" onClick={c.copiarMesAnterior}>Trazer do mês anterior</button></>}
-            </Vazio>
+          <TabelaDividas
+            itens={c.dividasMes}
+            aoNova={() => setDivida('nova')}
+            aoEditar={setDivida}
+            aoPagar={(d) => c.d.updDivida(d.id, { pagas: d.pagas + 1 })}
+          />
+          {!c.dividasMes.length && (
+            <button className="btn" onClick={c.copiarMesAnterior}><Icone nome="copiar" tamanho={16} /> Trazer dívidas e caixa do mês anterior</button>
           )}
-        </Cartao>
-
-        <Cartao titulo="Meta em dólar" acao={<button className="link" onClick={() => c.irPara('patrimonio')}>Editar</button>}>
-          {r.metaUsd > 0 ? (
-            <div className="meta">
-              <strong>{fmtUSD(r.usd)}</strong>
-              <span> de {fmtUSD(r.metaUsd)}</span>
-              <Progresso valor={r.usd} total={r.metaUsd} cor={COR.usd} />
-              <p className="barras-sub">
-                {r.usd >= r.metaUsd ? 'Meta batida! 🎉' : `Faltam ${fmtUSD(r.metaUsd - r.usd)} (${Math.round((r.usd / r.metaUsd) * 100)}% concluído)`}
-              </p>
+          <section className="bloco">
+            <div className="tabela-rolagem">
+              <table className="tabela-bloco tabela-caixa">
+                <thead>
+                  <tr>
+                    <th>CAIXA</th>
+                    {BANCOS.map((b) => <th key={b} style={{ color: COR_BANCO[b] }}>{NOME_BANCO[b].toUpperCase()}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {TIPOS_CAIXA.map((t) => (
+                    <tr key={t} onClick={() => c.irPara('patrimonio')}>
+                      <th>{NOME_TIPO_CAIXA[t].toUpperCase()}</th>
+                      {BANCOS.map((b) => <td key={b} className={caixa[b]?.[t] ? '' : 'vazio'}>{fmtBRL(caixa[b]?.[t] ?? 0)}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot><tr><th>TOTAL</th><td colSpan={3}>{fmtBRL(r.caixa)}</td></tr></tfoot>
+              </table>
             </div>
-          ) : (
-            <Vazio>Defina uma meta em Patrimônio para acompanhar aqui.</Vazio>
-          )}
-        </Cartao>
+          </section>
+          <section className="bloco meta-bloco">
+            <h3 className="bloco-titulo">META DE US$ DÓLARES</h3>
+            {r.metaUsd > 0 ? (
+              <div className="meta">
+                <div><strong>{fmtUSD(r.usd)}</strong><span> de {fmtUSD(r.metaUsd)}</span></div>
+                <Progresso valor={r.usd} total={r.metaUsd} cor={COR.usd} />
+                <p className="barras-sub">{r.usd >= r.metaUsd ? 'Meta batida! 🎉' : `Faltam ${fmtUSD(r.metaUsd - r.usd)}`}</p>
+              </div>
+            ) : (
+              <p className="quadro-vazio">Sem meta definida. <button className="link" onClick={() => c.irPara('patrimonio')}>Definir meta</button></p>
+            )}
+          </section>
         </div>
+        <Metricas r={r} mes={c.mes} />
       </div>
+
+      <Cartao titulo={`Resumo de ${c.ano}`}>
+        <TabelaAnual porMes={c.porMes} mesAtual={c.mes} aoClicarMes={c.irParaMes} />
+      </Cartao>
+
+      {divida && (
+        <FormDivida
+          ano={c.ano}
+          mes={c.mes}
+          ordem={c.dividasMes.length}
+          inicial={divida === 'nova' ? undefined : divida}
+          aoSalvar={(d, id) => (id ? c.d.updDivida(id, d) : c.d.addDivida(d))}
+          aoExcluir={c.d.delDivida}
+          aoFechar={() => setDivida(null)}
+        />
+      )}
     </div>
   )
 }

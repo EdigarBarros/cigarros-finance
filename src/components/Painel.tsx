@@ -43,6 +43,13 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     window.addEventListener('hashchange', aoMudar)
     return () => window.removeEventListener('hashchange', aoMudar)
   }, [])
+  // Mantém a aba do mês aberto visível quando a barra de meses rola (celular).
+  useEffect(() => {
+    const aba = document.querySelector('.abas-meses .ativo') as HTMLElement | null
+    const barra = aba?.parentElement
+    if (aba && barra) barra.scrollTo({ left: aba.offsetLeft - barra.clientWidth / 2 + aba.clientWidth / 2, behavior: 'smooth' })
+  }, [mes, pagina])
+
   const irPara = (p: Pagina) => {
     location.hash = `/${p}`
     setPagina(p)
@@ -141,6 +148,18 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
             <span>{MESES_NOME[mes - 1]} <small>{ano}</small></span>
             <button className="icone-btn" onClick={() => mudarMes(1)} aria-label="Próximo mês"><Icone nome="dir" /></button>
           </div>
+          <nav className="abas-meses" aria-label="Meses">
+            {MESES_NOME.map((m, i) => (
+              <button
+                key={m}
+                className={`${i + 1 === mes ? 'ativo' : ''} ${porMes[i] ? 'com-dados' : ''}`}
+                onClick={() => setMes(i + 1)}
+                aria-current={i + 1 === mes ? 'page' : undefined}
+              >
+                {m.slice(0, 3).toUpperCase()}
+              </button>
+            ))}
+          </nav>
           {(ocupado || d.carregando) && <span className="carregando">{ocupado ?? 'Carregando…'}</span>}
           <div className="menu-movel">
             <button className="icone-btn" onClick={() => setMenu(!menu)} aria-label="Menu" aria-expanded={menu}><Icone nome="menu" /></button>

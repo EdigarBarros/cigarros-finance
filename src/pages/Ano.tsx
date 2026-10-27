@@ -1,8 +1,8 @@
-import { Line } from 'react-chartjs-2'
 import type { Resumo } from '../lib/calc'
 import { COR } from '../lib/charts'
-import { fmtBRL, fmtUSD, MESES_CURTO, MESES_NOME } from '../lib/format'
-import { GraficoEntradasSaidas, GraficoSaldo } from '../components/Graficos'
+import { fmtBRL, MESES_NOME } from '../lib/format'
+import { TabelaAnual } from '../components/Blocos'
+import { GraficoAnual, GraficoSaldo } from '../components/Graficos'
 import { Cartao, Kpi } from '../components/ui'
 import type { Ctx } from './contexto'
 
@@ -30,67 +30,17 @@ export function Ano(c: Ctx) {
         </Kpi>
       </div>
 
-      <div className="grade-dash">
-        <Cartao titulo="Entradas × saídas" className="largo">
-          <GraficoEntradasSaidas porMes={c.porMes} mesAtual={c.mes} aoClicarMes={(m) => { c.irParaMes(m); c.irPara('inicio') }} />
-        </Cartao>
-        <Evolucao titulo="Caixa" cor={COR.caixa} serie={c.porMes.map((r) => r?.caixa ?? null)} />
-        <Cartao titulo="Saldo de cada mês" className="largo">
-          <GraficoSaldo porMes={c.porMes} />
-        </Cartao>
-        <Evolucao titulo="Dívida" cor={COR.divida} serie={c.porMes.map((r) => r?.divida ?? null)} />
-        <Evolucao titulo="Investimentos" cor={COR.investimentos} serie={c.porMes.map((r) => r?.investimentos ?? null)} />
-        <Evolucao titulo="Dólar" cor={COR.usd} usd serie={c.porMes.map((r) => r?.usd ?? null)} />
-      </div>
+      <Cartao titulo="Evolução no ano" acao={<span className="dica-cab">toque num mês para abrir</span>}>
+        <GraficoAnual porMes={c.porMes} mesAtual={c.mes} altura={400} aoClicarMes={(m) => { c.irParaMes(m); c.irPara('inicio') }} />
+      </Cartao>
 
-      <Cartao titulo="Mês a mês">
-        <div className="tabela-rolagem">
-          <table className="tabela">
-            <thead>
-              <tr><th>Mês</th><th>Entradas</th><th>Saídas</th><th>Saldo</th><th>Caixa</th><th>Dívida</th><th>Investimentos</th><th>US$</th></tr>
-            </thead>
-            <tbody>
-              {c.porMes.map((r, i) => (
-                <tr key={i} className={`${r ? 'clicavel' : 'sem-dados'} ${i + 1 === c.mes ? 'atual' : ''}`}
-                  onClick={() => r && (c.irParaMes(i + 1), c.irPara('inicio'))}>
-                  <th>{MESES_NOME[i]}</th>
-                  {r ? (
-                    <>
-                      <td>{fmtBRL(r.entradas)}</td><td>{fmtBRL(r.saidas)}</td>
-                      <td className={r.fluxo < 0 ? 'negativo' : 'positivo'}>{fmtBRL(r.fluxo)}</td>
-                      <td>{fmtBRL(r.caixa)}</td><td>{fmtBRL(r.divida)}</td><td>{fmtBRL(r.investimentos)}</td><td>{fmtUSD(r.usd)}</td>
-                    </>
-                  ) : <td colSpan={7}>—</td>}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <Cartao titulo={`Resumo de ${c.ano}`}>
+        <TabelaAnual porMes={c.porMes} mesAtual={c.mes} aoClicarMes={(m) => { c.irParaMes(m); c.irPara('inicio') }} />
+      </Cartao>
+
+      <Cartao titulo="Fluxo de caixa de cada mês">
+        <GraficoSaldo porMes={c.porMes} />
       </Cartao>
     </div>
-  )
-}
-
-/** Uma linha por medida (em vez de misturar escalas diferentes no mesmo gráfico). */
-function Evolucao({ titulo, cor, serie, usd }: { titulo: string; cor: string; serie: (number | null)[]; usd?: boolean }) {
-  const fmt = usd ? fmtUSD : fmtBRL
-  const ultimo = [...serie].reverse().find((v) => v !== null)
-  return (
-    <Cartao titulo={<><i className="marcador" style={{ background: cor }} />{titulo}</>} acao={<strong>{ultimo != null ? fmt(ultimo) : '—'}</strong>}>
-      <div className="grafico" style={{ height: 120 }}>
-        <Line
-          data={{
-            labels: MESES_CURTO,
-            datasets: [{ data: serie, borderColor: cor, backgroundColor: cor + '22', fill: true, borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, spanGaps: true, tension: 0.3 }],
-          }}
-          options={{
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { display: false }, tooltip: { callbacks: { title: (i) => MESES_NOME[i[0].dataIndex], label: (ctx) => ` ${fmt(ctx.parsed.y ?? 0)}` } } },
-            scales: { x: { grid: { display: false }, border: { display: false }, ticks: { maxTicksLimit: 6 } }, y: { display: false } },
-          }}
-        />
-      </div>
-    </Cartao>
   )
 }
