@@ -34,6 +34,15 @@ export interface Lancamento {
   /** Lançado em outra moeda: o valor original. `valor` fica sempre na moeda principal. */
   valor_original?: number | null
   moeda_original?: string | null
+  /** Compra no cartão de crédito: cada parcela é uma saída, com `data` no vencimento da fatura em que cai. */
+  cartao_id?: string | null
+  /** Junta as parcelas da mesma compra. */
+  compra_id?: string | null
+  /** Número desta parcela (3 de `parcelas`). */
+  parcela?: number | null
+  parcelas?: number | null
+  /** Dia em que a pessoa comprou. */
+  data_compra?: string | null
   created_at?: string
 }
 
@@ -85,7 +94,7 @@ export interface Mes {
 export const TIPOS_CAIXA: TipoCaixa[] = ['cc', 'caixinha', 'reserva']
 
 /** Partes do painel que cada pessoa liga ou desliga conforme a vida dela. */
-export type Modulo = 'dividas' | 'bancos' | 'investimentos' | 'moedas' | 'metas' | 'contas'
+export type Modulo = 'dividas' | 'contas' | 'cartoes' | 'bancos' | 'investimentos' | 'moedas' | 'metas'
 export type Detalhe = 'simples' | 'equilibrado' | 'detalhado'
 
 /** Como o painel se adapta a cada pessoa: respostas das perguntas iniciais e ajustes feitos depois. */
@@ -143,4 +152,28 @@ export interface ContaFixa {
   fim: string | null
   ativa: boolean
   created_at?: string
+}
+
+/** Cartão de crédito. As compras entram na fatura do mês que vence depois do dia de fechamento. */
+export interface CartaoCredito {
+  id: string
+  nome: string
+  cor: string
+  banco_id: string | null
+  limite: number | null
+  dia_fechamento: number
+  dia_vencimento: number
+  ativo: boolean
+  created_at?: string
+}
+
+/** Fatura que a pessoa marcou como paga (ano e mês do vencimento). */
+export interface FaturaPaga {
+  id: string
+  cartao_id: string
+  ano: number
+  mes: number
+  valor: number
+  pago_em: string
+  banco_id: string | null
 }

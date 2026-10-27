@@ -7,6 +7,11 @@ export const MODULOS: { id: Modulo; nome: string; pergunta: string; descricao: s
     descricao: 'Quanto falta pagar e quando cada dívida acaba. Cada pagamento lançado abate sozinho.',
   },
   {
+    id: 'cartoes', nome: 'Cartão de crédito', icone: 'cartao',
+    pergunta: 'Uso cartão de crédito',
+    descricao: 'A fatura de cada cartão, quando fecha e vence, as compras parceladas e quanto do limite ainda dá para usar.',
+  },
+  {
     id: 'bancos', nome: 'Bancos e contas', icone: 'carteira',
     pergunta: 'Uso mais de um banco, conta ou carteira',
     descricao: 'O que entra e sai de cada banco e quanto está guardado em cada um.',
@@ -44,7 +49,7 @@ export const PERFIL_PADRAO: Perfil = {
   moeda: 'BRL',
   moedas: [],
   detalhe: 'equilibrado',
-  modulos: { dividas: false, bancos: false, investimentos: false, moedas: false, metas: false, contas: false },
+  modulos: { dividas: false, contas: false, cartoes: false, bancos: false, investimentos: false, moedas: false, metas: false },
   dispensadas: [],
   onboarding_em: null,
 }
@@ -69,6 +74,7 @@ export function inferirPerfil(d: { lancs: Lancamento[]; dividas: Divida[]; banco
     detalhe: d.lancs.length || d.meses.length ? 'detalhado' : 'equilibrado',
     modulos: {
       dividas: d.dividas.length > 0,
+      cartoes: d.lancs.some((l) => Boolean(l.cartao_id)),
       bancos: d.bancos.length > 0,
       investimentos: d.meses.some((m) => m.investimentos !== 0),
       moedas: moedas.length > 0,
@@ -84,6 +90,7 @@ export function visao(p: Perfil) {
   const nivel = { simples: 0, equilibrado: 1, detalhado: 2 }[p.detalhe]
   return {
     dividas: p.modulos.dividas,
+    cartoes: p.modulos.cartoes,
     bancos: p.modulos.bancos,
     investimentos: p.modulos.investimentos,
     moedas: p.modulos.moedas && p.moedas.length > 0,

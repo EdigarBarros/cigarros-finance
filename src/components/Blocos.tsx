@@ -45,7 +45,7 @@ export function QuadroLancamentos({ tipo, itens, aoNovo, aoEditar, limite, categ
           <button key={l.id} className="quadro-linha" onClick={() => aoEditar(l)}>
             <span className="quadro-desc">
               <i className="marcador" style={{ background: c.cor }} title={c.nome} />
-              {l.descricao || '—'}
+              {l.descricao || '—'}{(l.parcelas ?? 1) > 1 && ` ${l.parcela}/${l.parcelas}`}
             </span>
             <span className="num">{fmtValor(l.valor)}</span>
             <span className="quadro-data">{fmtDataCurta(l.data)}</span>

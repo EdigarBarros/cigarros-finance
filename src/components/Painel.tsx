@@ -3,6 +3,7 @@ import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes } from '../lib/calc'
 import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
 import { lancamentoDaBaixa, lancamentoParecido, situacoesDoMes, type SituacaoConta } from '../lib/contasFixas'
+import { situacoesDoMes as situacoesDosCartoes } from '../lib/cartoes'
 import { situacaoDividas, type SituacaoDivida } from '../lib/dividas'
 import { definirMoedaPrincipal, fmtValor, MESES_NOME } from '../lib/format'
 import { useCambio } from '../lib/moedas'
@@ -12,9 +13,11 @@ import type { Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 import { useMobile } from '../lib/useMobile'
 import { estiloLente, useLente } from '../lib/useLente'
 import { useVidroLiquido } from '../lib/vidroLiquido'
+import { useCartoes } from '../lib/useCartoes'
 import { useContasFixas } from '../lib/useContasFixas'
 import { useDados } from '../lib/useDados'
 import { Ano } from '../pages/Ano'
+import { Cartoes } from '../pages/Cartoes'
 import { Contas } from '../pages/Contas'
 import type { Ctx, Pagina } from '../pages/contexto'
 import { Dividas } from '../pages/Dividas'
@@ -33,6 +36,7 @@ const PAGINAS: { id: Pagina; nome: string; curto: string; icone: string }[] = [
   { id: 'inicio', nome: 'Visão geral', curto: 'Início', icone: 'inicio' },
   { id: 'lancamentos', nome: 'Lançamentos', curto: 'Lançamentos', icone: 'lista' },
   { id: 'contas', nome: 'Contas do mês', curto: 'Contas', icone: 'calendario' },
+  { id: 'cartoes', nome: 'Cartões', curto: 'Cartões', icone: 'cartao' },
   { id: 'dividas', nome: 'Dívidas', curto: 'Dívidas', icone: 'divida' },
   { id: 'metas', nome: 'Metas', curto: 'Metas', icone: 'meta' },
   { id: 'patrimonio', nome: 'Meu dinheiro', curto: 'Dinheiro', icone: 'carteira' },
@@ -50,7 +54,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const [pagina, setPagina] = useState<Pagina>(paginaDoHash)
   const [ano, setAno] = useState(hoje.getFullYear())
   const [mes, setMes] = useState(hoje.getMonth() + 1)
-  const [form, setForm] = useState<{ inicial?: Lancamento; tipo?: Tipo; preset?: Partial<Lancamento> } | null>(null)
+  const [form, setForm] = useState<{ inicial?: Lancamento; tipo?: Tipo; preset?: Partial<Lancamento>; cartaoId?: string } | null>(null)
   const [menu, setMenu] = useState(false)
   const [bancoAberto, setBancoAberto] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState<string | null>(null)
@@ -89,9 +93,13 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   }, [precisaPerfil]) // eslint-disable-line react-hooks/exhaustive-deps
   definirMoedaPrincipal(perfil.moeda)
   const v = visao(perfil)
+  const cartoes = useCartoes({
+    ativo: v.cartoes, ano, lancsDoAno: d.lancs, categoriasAntigas: d.categoriasAntigas,
+    recarregarLancs: d.recarregar, aoErro: d.setErro,
+  })
   const { taxas } = useCambio(perfil.moeda, v.moedas || d.lancs.some((l) => l.moeda_original) || d.metas.some((m) => m.moeda !== perfil.moeda))
   const paginas = PAGINAS.filter((p) =>
-    p.id === 'contas' ? v.contas : p.id === 'dividas' ? v.dividas : p.id === 'metas' ? v.metas : p.id === 'patrimonio' ? v.bancos || v.investimentos || v.moedas : p.id === 'ano' ? v.paginaAno : true,
+    p.id === 'contas' ? v.contas : p.id === 'cartoes' ? v.cartoes : p.id === 'dividas' ? v.dividas : p.id === 'metas' ? v.metas : p.id === 'patrimonio' ? v.bancos || v.investimentos || v.moedas : p.id === 'ano' ? v.paginaAno : true,
   )
   const paginaAtual = paginas.some((p) => p.id === pagina) ? pagina : 'inicio'
   const categoriaDe = (l: Lancamento) => categoriaDoLanc(l, d.categorias, d.categoriasAntigas)
@@ -234,8 +242,17 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
       },
     })
 
+  const faturas = v.cartoes && !cartoes.semTabela ? situacoesDosCartoes(cartoes.cartoes, cartoes.compras, cartoes.faturasPagas, ano, mes) : []
+
+  // Editar uma parcela pode mudá-la de ano; as compras de outros anos só são lidas de novo ao recarregar.
+  const salvarLancamento = async (l: Omit<Lancamento, 'id'>, id?: string) => {
+    if (!id) return d.addLanc(l)
+    await d.updLanc(id, l)
+    if (d.lancs.find((x) => x.id === id)?.cartao_id) await cartoes.recarregar()
+  }
+
   const ctx: Ctx = {
-    ano, mes, d, lancsMes, situacao, mesEf, porMes, mobile,
+    ano, mes, d, cartoes, faturas, lancsMes, situacao, mesEf, porMes, mobile,
     perfil, v, taxas, sugestao,
     aceitarSugestao: (s: Sugestao) => mudarPerfil(s.aplicar(perfil)),
     recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),
@@ -254,6 +271,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     irParaMes: setMes,
     novoLancamento: (tipo) => setForm({ tipo }),
     editarLancamento: (l) => setForm({ inicial: l }),
+    novaCompraNoCartao: (cartaoId) => setForm({ tipo: 'saida', cartaoId }),
     pagarDivida,
     contas, situacoesContas, pagarConta, desfazerBaixa,
     bancoAberto,
@@ -354,6 +372,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
         {paginaAtual === 'inicio' && <Inicio {...ctx} />}
         {paginaAtual === 'lancamentos' && <Lancamentos {...ctx} />}
         {paginaAtual === 'contas' && <Contas {...ctx} />}
+        {paginaAtual === 'cartoes' && <Cartoes {...ctx} />}
         {paginaAtual === 'dividas' && <Dividas {...ctx} />}
         {paginaAtual === 'metas' && <Metas {...ctx} />}
         {paginaAtual === 'patrimonio' && <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />}
@@ -391,8 +410,13 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
           aoNovaCategoria={d.categoriasAntigas ? undefined : d.addCategoria}
           bancos={d.bancos}
           aoNovoBanco={d.addBanco}
-          aoSalvar={(l, id) => (id ? d.updLanc(id, l) : d.addLanc(l))}
+          aoSalvar={(l, id) => void salvarLancamento(l, id)}
           aoExcluir={d.delLanc}
+          cartoes={v.cartoes && !cartoes.semTabela ? cartoes.cartoes : undefined}
+          cartaoInicial={form.cartaoId}
+          aoSalvarCompra={cartoes.addCompra}
+          aoExcluirCompra={cartoes.delCompra}
+          aoNovoCartao={() => { setForm(null); irPara('cartoes') }}
           aoFechar={() => setForm(null)}
         />
       )}

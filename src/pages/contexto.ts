@@ -1,20 +1,26 @@
 import type { Sugestao } from '../lib/adaptacao'
 import type { MesEfetivo, Resumo } from '../lib/calc'
+import type { SituacaoCartao } from '../lib/cartoes'
 import type { SituacaoConta } from '../lib/contasFixas'
 import type { SituacaoDivida } from '../lib/dividas'
 import type { Taxas } from '../lib/moedas'
 import type { Visao } from '../lib/perfil'
+import type { DadosCartoes } from '../lib/useCartoes'
 import type { ContasFixas } from '../lib/useContasFixas'
 import type { Dados } from '../lib/useDados'
 import type { Categoria, Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 
-export type Pagina = 'inicio' | 'lancamentos' | 'contas' | 'dividas' | 'metas' | 'patrimonio' | 'ano'
+export type Pagina = 'inicio' | 'lancamentos' | 'contas' | 'cartoes' | 'dividas' | 'metas' | 'patrimonio' | 'ano'
 
 /** Tudo que as páginas precisam do mês aberto. */
 export interface Ctx {
   ano: number
   mes: number
   d: Dados
+  /** Cartões de crédito e suas faturas pagas (só carrega com o módulo ligado). */
+  cartoes: DadosCartoes
+  /** Fatura, limite e parcelas de cada cartão ativo no mês aberto (vazio sem o módulo). */
+  faturas: SituacaoCartao[]
   lancsMes: Lancamento[]
   /** Dívidas como estão neste mês (saldo calculado com os pagamentos). */
   situacao: SituacaoDivida[]
@@ -48,6 +54,8 @@ export interface Ctx {
   irParaMes: (mes: number) => void
   novoLancamento: (tipo?: Tipo) => void
   editarLancamento: (l: Lancamento) => void
+  /** Abre o formulário de saída já no cartão escolhido. */
+  novaCompraNoCartao: (cartaoId: string) => void
   /** Banco aberto na tela Bancos ('sem' = lançamentos sem banco). */
   bancoAberto: string | null
   abrirBanco: (id: string | null) => void
