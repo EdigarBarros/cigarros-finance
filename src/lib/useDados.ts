@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
+import { CATEGORIAS_ANTIGAS } from './categorias'
 import { normPerfil } from './perfil'
 import { supabase } from './supabase'
-import type { Banco, Divida, Lancamento, Mes, Pagamento, Perfil, SaldoDivida } from './types'
+import type { Banco, Categoria, Divida, Lancamento, Mes, Pagamento, Perfil, SaldoDivida } from './types'
 
 const num = (v: unknown) => Number(v ?? 0)
 
@@ -37,12 +38,15 @@ export function useDados(userId: string, ano: number) {
   /** undefined = carregando; null = a pessoa ainda não tem perfil salvo. */
   const [perfil, setPerfil] = useState<Perfil | null | undefined>(undefined)
   const [perfilSemTabela, setPerfilSemTabela] = useState(false)
+  const [categorias, setCategorias] = useState<Categoria[]>([])
+  /** Sem a migração 5: usa as 4 categorias antigas. */
+  const [categoriasAntigas, setCategoriasAntigas] = useState(false)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
 
   const recarregar = useCallback(async () => {
     setCarregando(true)
-    const [l, m, d, s, p, b, pf] = await Promise.all([
+    const [l, m, d, s, p, b, pf, ct] = await Promise.all([
       supabase.from('lancamentos').select('*').eq('ano', ano).order('data').order('created_at'),
       supabase.from('meses').select('*'),
       supabase.from('dividas').select('*').order('created_at'),
@@ -50,6 +54,7 @@ export function useDados(userId: string, ano: number) {
       supabase.from('lancamentos').select('id, divida_id, data, valor').not('divida_id', 'is', null),
       supabase.from('bancos').select('*').order('ordem').order('created_at'),
       supabase.from('perfis').select('*').maybeSingle(),
+      supabase.from('categorias').select('*').order('ordem').order('nome'),
     ])
     const e = l.error ?? m.error ?? d.error ?? s.error ?? p.error ?? b.error
     if (e) setErro(e.message)
@@ -66,6 +71,19 @@ export function useDados(userId: string, ano: number) {
       setPerfil(null)
     } else if (pf.error) setErro(pf.error.message)
     else setPerfil(pf.data ? normPerfil(pf.data as Perfil) : null)
+    if (ct.error && faltaTabela(ct.error)) {
+      setCategoriasAntigas(true)
+      setCategorias(CATEGORIAS_ANTIGAS)
+    } else if (ct.error) setErro(ct.error.message)
+    else if (ct.data.length) setCategorias(ct.data as Categoria[])
+    else {
+      // Conta nova: ganha as categorias padrão (definidas no banco, migração 5).
+      const criou = await supabase.rpc('criar_categorias_padrao')
+      const novas = await supabase.from('categorias').select('*').order('ordem').order('nome')
+      const falha = criou.error ?? novas.error
+      if (falha) setErro(falha.message)
+      else setCategorias(novas.data as Categoria[])
+    }
     setCarregando(false)
   }, [ano])
 
@@ -90,14 +108,21 @@ export function useDados(userId: string, ano: number) {
       return p ? [...sem, p] : sem
     })
 
+  /** Sem a migração 5, a categoria vai na coluna antiga. */
+  const paraBanco = <T extends Partial<Lancamento>>(l: T): T => {
+    if (!categoriasAntigas || !('categoria_id' in l)) return l
+    const { categoria_id, ...resto } = l
+    return { ...resto, categoria: l.tipo === 'entrada' ? 'outros' : categoria_id ?? 'outros' } as T
+  }
   const addLanc = async (novo: Omit<Lancamento, 'id'>) => {
-    const { data, error } = await supabase.from('lancamentos').insert(novo).select().single()
+    const { data, error } = await supabase.from('lancamentos').insert(paraBanco(novo)).select().single()
     if (error) return falhou(error.message)
     const l = normLanc(data as Lancamento)
     if (l.ano === ano) setLancs((xs) => [...xs, l])
     sincronizarPagamento(l.id, l)
   }
-  const updLanc = async (id: string, patch: Partial<Lancamento>) => {
+  const updLanc = async (id: string, mudancas: Partial<Lancamento>) => {
+    const patch = paraBanco(mudancas)
     const atual = lancs.find((x) => x.id === id)
     const novo = atual ? { ...atual, ...patch } : null
     setLancs((xs) => (novo && novo.ano !== ano ? xs.filter((x) => x.id !== id) : xs.map((x) => (x.id === id ? { ...x, ...patch } : x))))
@@ -187,7 +212,32 @@ export function useDados(userId: string, ano: number) {
     if (error) falhou(error.message)
   }
 
+  const addCategoria = async (c: Omit<Categoria, 'id' | 'ordem'>): Promise<Categoria | undefined> => {
+    const ordem = Math.max(0, ...categorias.filter((x) => x.tipo === c.tipo).map((x) => x.ordem)) + 1
+    const { data, error } = await supabase.from('categorias').insert({ ...c, ordem }).select().single()
+    if (error) {
+      falhou(/duplicate|unique/i.test(error.message) ? `Já existe uma categoria chamada "${c.nome}".` : error.message)
+      return
+    }
+    const nova = data as Categoria
+    setCategorias((xs) => [...xs, nova])
+    return nova
+  }
+  const updCategoria = async (id: string, patch: Partial<Categoria>) => {
+    setCategorias((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
+    const { error } = await supabase.from('categorias').update(patch).eq('id', id)
+    if (error) falhou(/duplicate|unique/i.test(error.message) ? `Já existe uma categoria chamada "${patch.nome}".` : error.message)
+  }
+  /** Os lançamentos dela continuam existindo, só ficam "sem categoria". */
+  const delCategoria = async (id: string) => {
+    setCategorias((xs) => xs.filter((x) => x.id !== id))
+    setLancs((xs) => xs.map((x) => (x.categoria_id === id ? { ...x, categoria_id: null } : x)))
+    const { error } = await supabase.from('categorias').delete().eq('id', id)
+    if (error) falhou(error.message)
+  }
+
   return {
+    categorias, categoriasAntigas, addCategoria, updCategoria, delCategoria,
     perfil, perfilSemTabela, salvarPerfil,
     bancos, addBanco, updBanco, delBanco,
     lancs, meses, dividas, saldos, pagamentos, carregando, erro, setErro, recarregar,

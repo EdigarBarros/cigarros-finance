@@ -77,7 +77,7 @@ export function Patrimonio(c: Ctx) {
         <Cartao titulo={`Lançamentos (${ls.length})`}>
           {ls.length ? (
             <ul className="lista-lanc">
-              {ls.map((l) => <ItemLancamento key={l.id} l={l} aoClicar={() => c.editarLancamento(l)} />)}
+              {ls.map((l) => <ItemLancamento key={l.id} l={l} categoria={c.categoriaDe(l)} aoClicar={() => c.editarLancamento(l)} />)}
             </ul>
           ) : (
             <Vazio>Nenhum lançamento {banco ? `no ${nome}` : 'sem banco'} neste mês.</Vazio>

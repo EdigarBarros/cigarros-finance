@@ -62,11 +62,11 @@ const ligar = (m: Modulo) => (p: Perfil): Perfil => ({ ...p, modulos: { ...p.mod
 const nivel = (d: Detalhe) => (p: Perfil): Perfil => ({ ...p, detalhe: d })
 
 /** Sugestões tiradas do uso, da mais útil para a menos útil. */
-export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number): Sugestao[] {
+export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number, ehPagamentoDeDivida: (l: Lancamento) => boolean): Sugestao[] {
   const lista: Sugestao[] = []
   const conta = (re: RegExp) => lancs.filter((l) => re.test(l.descricao)).length
 
-  if (!p.modulos.dividas && conta(PADRAO_DIVIDA) + lancs.filter((l) => l.categoria === 'divida').length >= 2) {
+  if (!p.modulos.dividas && lancs.filter((l) => PADRAO_DIVIDA.test(l.descricao) || ehPagamentoDeDivida(l)).length >= 2) {
     lista.push({
       id: 'modulo:dividas', icone: 'divida', botao: 'Ligar dívidas',
       titulo: 'Você está pagando parcelas',

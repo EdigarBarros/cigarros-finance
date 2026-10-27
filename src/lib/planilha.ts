@@ -3,7 +3,7 @@ import { MESES, parseNumero } from './format'
 import { supabase } from './supabase'
 import { inicioDoMes } from './dividas'
 import { bancoConhecido, bancoNaDescricao, mesmoNome } from './rotulos'
-import type { Banco, Caixa, Categoria, Lancamento, Mes, TipoCaixa } from './types'
+import type { Banco, Caixa, Categoria, CategoriaAntiga, Lancamento, Mes, TipoCaixa } from './types'
 import { TIPOS_CAIXA } from './types'
 
 /** Lançamento lido da planilha; o banco vem pelo nome e vira id na gravação. */
@@ -93,7 +93,7 @@ export async function lerPlanilha(arquivo: File): Promise<MesImportado[]> {
         const valor = numero(ws, `L${r}`)
         const desc = valorCelula(ws, `I${r}`)
         if (!valor && !desc) continue
-        const categoria: Categoria = transporte.has(r)
+        const categoria: CategoriaAntiga = transporte.has(r)
           ? 'transporte'
           : dividasPagas.has(r)
             ? 'divida'
@@ -194,11 +194,27 @@ export async function gravarImportacao(userId: string, meses: MesImportado[]) {
   }
   const idDe = (nome?: string) => (nome ? bancos.find((b) => mesmoNome(b.nome, nome))?.id ?? null : null)
 
+  // As 4 categorias da planilha viram as categorias da pessoa (sem a migração 5, ficam só na coluna antiga).
+  let cats = await supabase.from('categorias').select('*')
+  if (!cats.error && !cats.data.length) {
+    await supabase.rpc('criar_categorias_padrao')
+    cats = await supabase.from('categorias').select('*')
+  }
+  const minhas = cats.error ? null : (cats.data as Categoria[])
+  const NOMES: Record<CategoriaAntiga, string> = { alimentacao: 'alimentação', transporte: 'transporte', divida: 'dívidas e parcelas', outros: 'outros' }
+  const idCategoria = (l: NovoLanc) => {
+    const procurado = l.tipo === 'entrada' ? 'outros' : NOMES[l.categoria ?? 'outros']
+    const c = minhas?.find((x) => x.tipo === l.tipo && (l.categoria === 'divida' && l.tipo === 'saida' ? x.papel === 'divida' : x.nome.toLowerCase() === procurado))
+    return c?.id ?? null
+  }
+
   for (const m of meses) {
     const { error: e1 } = await supabase.from('lancamentos').delete().eq('ano', m.ano).eq('mes', m.mes)
     if (e1) throw e1
     if (m.lancs.length) {
-      const { error } = await supabase.from('lancamentos').insert(m.lancs.map(({ banco, ...l }) => ({ ...l, banco_id: idDe(banco) })))
+      const { error } = await supabase.from('lancamentos').insert(m.lancs.map(({ banco, ...l }) => ({
+        ...l, banco_id: idDe(banco), ...(minhas ? { categoria_id: idCategoria(l) } : {}),
+      })))
       if (error) throw error
     }
     const caixa: Caixa = Object.fromEntries(Object.entries(m.caixa).map(([nome, v]) => [idDe(nome)!, v]))
@@ -248,6 +264,9 @@ export async function exportarBackup() {
     buscarTudo<Mes>('meses'),
     buscarTudo<Banco>('bancos'),
   ])
+  // Sem a migração 5 não há tabela de categorias; o backup sai com a coluna antiga.
+  const categorias = await buscarTudo<Categoria>('categorias').catch(() => [] as Categoria[])
+  const nomeCategoria = new Map(categorias.map((c) => [c.id, c.nome]))
   const nomeBanco = new Map(bancos.map((b) => [b.id, b.nome]))
   const nomeDivida = new Map(dividas.map((d) => [d.id, d.descricao]))
   const wb = XLSX.utils.book_new()
@@ -255,14 +274,18 @@ export async function exportarBackup() {
     xs.map((x) => Object.fromEntries(Object.entries(x).filter(([k]) => !['id', 'user_id', 'created_at'].includes(k))))
   XLSX.utils.book_append_sheet(
     wb,
-    XLSX.utils.json_to_sheet(semIds(lancs).map(({ divida_id, banco_id, conta: _conta, ...l }) => ({
+    XLSX.utils.json_to_sheet(semIds(lancs).map(({ divida_id, banco_id, categoria_id, categoria, conta: _conta, ...l }) => ({
       ...l,
+      categoria: categoria_id ? nomeCategoria.get(String(categoria_id)) : categorias.length ? '' : categoria,
       banco: banco_id ? nomeBanco.get(String(banco_id)) : '',
       divida: divida_id ? nomeDivida.get(String(divida_id)) : '',
     }))),
     'Lançamentos',
   )
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(semIds(dividas)), 'Dívidas')
+  if (categorias.length) {
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(semIds(categorias).map(({ ordem: _o, ...c }) => c)), 'Categorias')
+  }
   XLSX.utils.book_append_sheet(
     wb,
     XLSX.utils.json_to_sheet(saldos.map((s) => ({ divida: nomeDivida.get(s.divida_id), data: s.data, saldo: s.saldo }))),

@@ -142,7 +142,10 @@ const porcentagens: Plugin<'doughnut'> = {
 export function Rosca({ fatias, altura = 260 }: { fatias: Fatia[]; altura?: number }) {
   return (
     <div className="grafico" style={{ height: altura }}>
+      {/* As fatias vêm da maior para a menor; quando a ordem muda, o gráfico é refeito
+          (animar a troca de posição das fatias quebra o Chart.js). */}
       <Doughnut
+        key={fatias.map((f) => f.nome).join('|')}
         data={{
           labels: fatias.map((f) => f.nome.toUpperCase()),
           datasets: [{ data: fatias.map((f) => Math.max(0, f.valor)), backgroundColor: fatias.map((f) => f.cor), borderColor: 'transparent', borderWidth: 0, spacing: 3, borderRadius: 6, hoverOffset: 8 }],

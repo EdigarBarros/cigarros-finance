@@ -1,5 +1,18 @@
 export type Tipo = 'entrada' | 'saida'
-export type Categoria = 'transporte' | 'divida' | 'alimentacao' | 'outros'
+/** As 4 categorias fixas de antes (coluna "categoria"), usadas só sem a migração 5. */
+export type CategoriaAntiga = 'transporte' | 'divida' | 'alimentacao' | 'outros'
+
+/** Categoria criada pela pessoa (ou das que toda conta ganha no começo). */
+export interface Categoria {
+  id: string
+  tipo: Tipo
+  nome: string
+  icone: string
+  cor: string
+  /** 'divida': as saídas nela podem abater uma dívida. */
+  papel: 'divida' | null
+  ordem: number
+}
 
 export interface Lancamento {
   id: string
@@ -9,7 +22,9 @@ export interface Lancamento {
   descricao: string
   valor: number
   data: string | null
-  categoria: Categoria
+  categoria_id?: string | null
+  /** Coluna antiga; só vale sem a migração 5. */
+  categoria?: CategoriaAntiga
   /** Banco do lançamento (opcional). */
   banco_id?: string | null
   /** Quando a saída é pagamento de uma dívida. */

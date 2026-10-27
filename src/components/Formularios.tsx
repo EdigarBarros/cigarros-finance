@@ -1,12 +1,14 @@
 import { useMemo, useRef, useState } from 'react'
 import { dicaDaDescricao } from '../lib/adaptacao'
+import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
 import { COR } from '../lib/charts'
 import { dividaPelaDescricao, type SituacaoDivida } from '../lib/dividas'
 import { dataPadrao, fmtValor, paraCampo, parseNumero, simbolo } from '../lib/format'
 import { infoMoeda, type Taxas } from '../lib/moedas'
 import { visao } from '../lib/perfil'
-import { bancoConhecido, bancoNaDescricao, CATEGORIAS, CORES_LIVRES, mesmoNome } from '../lib/rotulos'
+import { bancoConhecido, bancoNaDescricao, CORES_LIVRES, mesmoNome } from '../lib/rotulos'
 import type { Banco, Categoria, Divida, Lancamento, Perfil, Tipo } from '../lib/types'
+import { EscolhaCategoria } from './Categorias'
 import { Icone } from './Icone'
 import { Modal, Segmentado } from './ui'
 
@@ -27,6 +29,9 @@ interface FormLancProps {
   perfil: Perfil
   aoMudarPerfil: (p: Perfil) => void
   taxas: Taxas
+  categorias: Categoria[]
+  categoriaDe: (l: Lancamento) => Categoria | undefined
+  aoNovaCategoria?: (c: Omit<Categoria, 'id' | 'ordem'>) => Promise<Categoria | undefined>
   bancos: Banco[]
   aoNovoBanco: (nome: string, cor: string) => Promise<Banco | undefined>
   aoSalvar: (l: NovoLanc, id?: string) => void
@@ -48,7 +53,12 @@ export function FormLancamento(p: FormLancProps) {
   const [data, setData] = useState(ini.data ?? dataPadrao(p.ano, p.mes))
   const [bancoId, setBancoId] = useState<string>(ini.banco_id ?? '')
   const [mexeuBanco, setMexeuBanco] = useState(Boolean(p.inicial))
-  const [categoria, setCategoria] = useState<Categoria>(ini.categoria ?? 'outros')
+  // Sem escolha, a categoria fica em "Outros" (se a pessoa tiver uma com esse nome).
+  const outrosDe = (t: Tipo) => p.categorias.find((c) => c.tipo === t && /^outros$/i.test(c.nome))?.id ?? ''
+  const catDivida = p.categorias.find((c) => c.tipo === 'saida' && c.papel === 'divida')
+  const [categoriaId, setCategoriaId] = useState(
+    p.inicial ? p.categoriaDe(p.inicial)?.id ?? '' : ini.categoria_id ?? outrosDe(ini.tipo ?? p.tipoInicial ?? 'saida'),
+  )
   const [dividaId, setDividaId] = useState<string>(ini.divida_id ?? '')
   const [mexeuCategoria, setMexeuCategoria] = useState(Boolean(p.inicial || p.preset))
   const [mexeuDivida, setMexeuDivida] = useState(Boolean(p.inicial || p.preset))
@@ -62,6 +72,15 @@ export function FormLancamento(p: FormLancProps) {
     for (const l of p.historico) if (l.descricao) m.set(chave(l.descricao), l)
     return m
   }, [p.historico])
+  // Categorias do tipo, as mais usadas primeiro.
+  const opcoesCategoria = useMemo(() => {
+    const uso = new Map<string, number>()
+    for (const l of p.historico) {
+      const id = l.tipo === tipo ? p.categoriaDe(l)?.id : undefined
+      if (id) uso.set(id, (uso.get(id) ?? 0) + 1)
+    }
+    return doTipo(p.categorias, tipo).sort((a, b) => (uso.get(b.id) ?? 0) - (uso.get(a.id) ?? 0))
+  }, [p.historico, p.categorias, tipo]) // eslint-disable-line react-hooks/exhaustive-deps
   const sugestoes = useMemo(
     () => [...new Set(p.historico.filter((l) => l.tipo === tipo).map((l) => l.descricao).filter(Boolean))].slice(-300),
     [p.historico, tipo],
@@ -75,6 +94,14 @@ export function FormLancamento(p: FormLancProps) {
   const taxa = (cotacao.trim() ? parseNumero(cotacao) : null) ?? p.taxas[moeda] ?? null
   const numero = parseNumero(valor)
   const dica = dicaDaDescricao(descricao, p.perfil, tipo)
+  const ehDivida = p.categorias.find((c) => c.id === categoriaId)?.papel === 'divida'
+  const mudarTipo = (t: Tipo) => {
+    setTipo(t)
+    if (!p.categorias.some((c) => c.id === categoriaId && c.tipo === t)) {
+      setCategoriaId(categoriaPelaDescricao(descricao, t, p.categorias)?.id ?? outrosDe(t))
+      setMexeuCategoria(false)
+    }
+  }
 
   const aceitarDica = () => {
     if (!dica) return
@@ -92,7 +119,7 @@ export function FormLancamento(p: FormLancProps) {
     setMexeuDivida(true)
     const d = opcoesDivida.find((x) => x.id === id)
     if (d) {
-      setCategoria('divida')
+      if (catDivida) setCategoriaId(catDivida.id)
       if (!valor && d.valor_parcela) setValor(paraCampo(d.valor_parcela))
       if (!descricao) setDescricao(`${d.descricao} – parcela`)
     }
@@ -101,7 +128,12 @@ export function FormLancamento(p: FormLancProps) {
   const aoDigitarDescricao = (texto: string) => {
     setDescricao(texto)
     const anterior = memoria.get(chave(texto))
-    if (anterior && !mexeuCategoria && anterior.tipo === tipo) setCategoria(anterior.categoria)
+    // Categoria: a que você usou da última vez para essa descrição ou, sem histórico, a que a descrição sugere.
+    if (!mexeuCategoria) {
+      const daMemoria = anterior && anterior.tipo === tipo ? p.categoriaDe(anterior)?.id : undefined
+      const sugerida = daMemoria ?? categoriaPelaDescricao(texto, tipo, p.categorias)?.id
+      if (sugerida) setCategoriaId(sugerida)
+    }
     // Banco: o que estiver escrito na descrição, "(Next)", ou o que você usou da última vez.
     if (!mexeuBanco && v.bancos) {
       const escrito = bancoNaDescricao(texto, p.bancos)
@@ -112,7 +144,7 @@ export function FormLancamento(p: FormLancProps) {
     if (!mexeuDivida && tipo === 'saida' && v.dividas) {
       const d = dividaPelaDescricao(texto, p.dividas)
       setDividaId(d?.id ?? '')
-      if (d && !mexeuCategoria) setCategoria('divida')
+      if (d && !mexeuCategoria && catDivida) setCategoriaId(catDivida.id)
     }
   }
 
@@ -127,7 +159,7 @@ export function FormLancamento(p: FormLancProps) {
     if (estrangeira && (!taxa || taxa <= 0)) return setErro(`Informe quanto vale 1 ${infoMoeda(moeda).nome.toLowerCase()} em ${simbolo(principal)}.`)
     const [a, m] = data.split('-').map(Number)
     const saida = tipo === 'saida'
-    const ligada = saida && categoria === 'divida' && dividaId ? dividaId : null
+    const ligada = saida && ehDivida && dividaId ? dividaId : null
     // Em outra moeda, o valor vai convertido e o original fica guardado. Os campos só vão quando usados,
     // para funcionar também em bancos ainda sem a migração 4.
     const moedaOriginal = estrangeira
@@ -137,7 +169,7 @@ export function FormLancamento(p: FormLancProps) {
       {
         ano: a, mes: m, tipo, valor: estrangeira ? Math.round(n * taxa! * 100) / 100 : n, descricao: descricao.trim(), data,
         banco_id: bancoId || null,
-        categoria: saida ? categoria : 'outros',
+        categoria_id: categoriaId || null,
         divida_id: ligada,
         ...moedaOriginal,
       },
@@ -147,6 +179,7 @@ export function FormLancamento(p: FormLancProps) {
     setValor('')
     setDescricao('')
     setDividaId('')
+    setCategoriaId(outrosDe(tipo))
     setMexeuCategoria(false)
     setMexeuBanco(false)
     setMexeuDivida(false)
@@ -163,7 +196,7 @@ export function FormLancamento(p: FormLancProps) {
         <Segmentado
           rotulo="Tipo"
           valor={tipo}
-          aoMudar={setTipo}
+          aoMudar={mudarTipo}
           opcoes={[
             { id: 'saida', nome: 'Saída', cor: COR.saidas },
             { id: 'entrada', nome: 'Entrada', cor: COR.entradas },
@@ -233,18 +266,17 @@ export function FormLancamento(p: FormLancProps) {
             aoNovoBanco={p.aoNovoBanco}
           />
         )}
+        <EscolhaCategoria
+          key={tipo}
+          tipo={tipo}
+          opcoes={opcoesCategoria}
+          valor={categoriaId}
+          aoMudar={(id) => { setCategoriaId(id); setMexeuCategoria(true) }}
+          aoCriar={p.aoNovaCategoria}
+        />
         {tipo === 'saida' && (
           <>
-            <div className="campo">
-              <span className="campo-rotulo">Categoria</span>
-              <Segmentado
-                rotulo="Categoria"
-                valor={categoria}
-                aoMudar={(c) => { setCategoria(c); setMexeuCategoria(true) }}
-                opcoes={CATEGORIAS}
-              />
-            </div>
-            {categoria === 'divida' && (v.dividas || dividaId) && opcoesDivida.length > 0 && (
+            {ehDivida && (v.dividas || dividaId) && opcoesDivida.length > 0 && (
               <label className="campo">
                 <span className="campo-rotulo">Abate qual dívida?</span>
                 <select value={dividaId} onChange={(e) => escolherDivida(e.target.value)}>

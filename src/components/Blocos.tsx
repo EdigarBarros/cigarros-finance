@@ -5,19 +5,19 @@ import type { SituacaoDivida } from '../lib/dividas'
 import { fmtDataCurta, fmtMoeda, fmtValor, MESES, MESES_CURTO, MESES_NOME } from '../lib/format'
 import { converter, infoMoeda, type Taxas } from '../lib/moedas'
 import type { Visao } from '../lib/perfil'
-import { CATEGORIAS, NOME_CATEGORIA } from '../lib/rotulos'
-import { TIPOS_CAIXA, type Banco, type Caixa, type Lancamento, type Tipo } from '../lib/types'
+import { fatiasDeGastos, SEM_CATEGORIA } from '../lib/categorias'
+import { TIPOS_CAIXA, type Banco, type Caixa, type Categoria, type Lancamento, type Tipo } from '../lib/types'
 import { Rosca } from './Graficos'
 import { Icone } from './Icone'
 import { Progresso } from './ui'
 
-const corCategoria = Object.fromEntries(CATEGORIAS.map((c) => [c.id, c.cor]))
 const porData = (a: Lancamento, b: Lancamento) =>
   (a.data ?? '').localeCompare(b.data ?? '') || (a.created_at ?? '').localeCompare(b.created_at ?? '')
 
 /** Bloco ENTRADAS ou SAÍDAS: cabeçalho colorido, linhas descrição/valor/data e total no rodapé. */
-export function QuadroLancamentos({ tipo, itens, aoNovo, aoEditar, limite }: {
+export function QuadroLancamentos({ tipo, itens, aoNovo, aoEditar, limite, categoriaDe }: {
   tipo: Tipo; itens: Lancamento[]; aoNovo: () => void; aoEditar: (l: Lancamento) => void
+  categoriaDe: (l: Lancamento) => Categoria | undefined
   /** No celular mostra só os mais recentes, com "ver todos". */
   limite?: number
 }) {
@@ -38,16 +38,19 @@ export function QuadroLancamentos({ tipo, itens, aoNovo, aoEditar, limite }: {
       </header>
       <div className="quadro-corpo">
         {!itens.length && <p className="quadro-vazio">Nenhuma {saida ? 'saída' : 'entrada'} neste mês.</p>}
-        {visiveis.map((l) => (
+        {visiveis.map((l) => {
+          const c = categoriaDe(l) ?? SEM_CATEGORIA
+          return (
           <button key={l.id} className="quadro-linha" onClick={() => aoEditar(l)}>
             <span className="quadro-desc">
-              {saida && <i className="marcador" style={{ background: corCategoria[l.categoria] }} title={NOME_CATEGORIA[l.categoria]} />}
+              <i className="marcador" style={{ background: c.cor }} title={c.nome} />
               {l.descricao || '—'}
             </span>
             <span className="num">{fmtValor(l.valor)}</span>
             <span className="quadro-data">{fmtDataCurta(l.data)}</span>
           </button>
-        ))}
+          )
+        })}
         {limite !== undefined && itens.length > limite && (
           <button className="quadro-ver" onClick={() => setAberto(!aberto)}>
             {aberto ? 'Mostrar menos' : `Ver todos os ${itens.length}`}
@@ -267,14 +270,9 @@ export function BlocoMoedas({ moedas, lista, taxas, metaUsd, aoAbrir }: {
 
 const somaTipo = (ls: Lancamento[], t: Tipo) => ls.filter((l) => l.tipo === t).reduce((a, l) => a + l.valor, 0)
 
-export function Metricas({ r, mes }: { r: Resumo; mes: number }) {
-  // Mesma ordem e cores da planilha.
-  const itens = [
-    { nome: 'Transporte', valor: r.metricas.transporte, cor: corCategoria.transporte },
-    { nome: 'Dívidas', valor: r.metricas.divida, cor: corCategoria.divida },
-    { nome: 'Alimentação', valor: r.metricas.alimentacao, cor: corCategoria.alimentacao },
-    { nome: 'Outros', valor: r.metricas.outros, cor: corCategoria.outros },
-  ]
+/** Gasto de cada categoria no mês (todas na tabela; as maiores no gráfico). */
+export function Metricas({ r, mes, categorias, aoEditar }: { r: Resumo; mes: number; categorias: Categoria[]; aoEditar: () => void }) {
+  const itens = fatiasDeGastos(r.gastosPorCategoria, categorias, Infinity)
   return (
     <section className="bloco">
       <table className="tabela-bloco tabela-metricas">
@@ -282,15 +280,17 @@ export function Metricas({ r, mes }: { r: Resumo; mes: number }) {
         <tbody>
           {itens.map((i) => (
             <tr key={i.nome}>
-              <th><i className="marcador" style={{ background: i.cor }} />{i.nome.toUpperCase()}</th>
+              <th><i className="marcador" style={{ background: i.cor }} />{i.icone}&nbsp;{i.nome.toUpperCase()}</th>
               <td>{fmtValor(i.valor)}</td>
               <td>{r.saidas ? `${Math.round((i.valor / r.saidas) * 100)}%` : '–'}</td>
             </tr>
           ))}
+          {!itens.length && <tr className="sem-dados"><td colSpan={3}>Sem saídas neste mês.</td></tr>}
         </tbody>
       </table>
       <h3 className="bloco-titulo">MÉTRICAS - {MESES[mes - 1]}</h3>
-      {r.saidas > 0 ? <Rosca fatias={itens} /> : <p className="quadro-vazio">Sem saídas neste mês.</p>}
+      {r.saidas > 0 ? <Rosca fatias={fatiasDeGastos(r.gastosPorCategoria, categorias)} /> : <p className="quadro-vazio">Sem saídas neste mês.</p>}
+      <p className="aviso-herdado"><button className="link" onClick={aoEditar}>Editar categorias</button></p>
     </section>
   )
 }

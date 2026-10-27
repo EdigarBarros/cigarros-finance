@@ -4,7 +4,7 @@ import type { SituacaoDivida } from '../lib/dividas'
 import type { Taxas } from '../lib/moedas'
 import type { Visao } from '../lib/perfil'
 import type { Dados } from '../lib/useDados'
-import type { Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
+import type { Categoria, Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 
 export type Pagina = 'inicio' | 'lancamentos' | 'dividas' | 'patrimonio' | 'ano'
 
@@ -33,6 +33,10 @@ export interface Ctx {
   aceitarSugestao: (s: Sugestao) => void
   recusarSugestao: (s: Sugestao) => void
   ligarModulo: (m: Modulo) => void
+  categorias: Categoria[]
+  /** Categoria de um lançamento (undefined = sem categoria). */
+  categoriaDe: (l: Lancamento) => Categoria | undefined
+  gerenciarCategorias: () => void
   personalizar: () => void
   irPara: (p: Pagina) => void
   /** Abre a escolha de arquivo da planilha. */

@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { COR } from '../lib/charts'
 import { fmtValor, fmtDataLonga, MESES_NOME } from '../lib/format'
-import { CATEGORIAS } from '../lib/rotulos'
-import type { Categoria, Tipo } from '../lib/types'
+import { doTipo } from '../lib/categorias'
+import type { Tipo } from '../lib/types'
 import { Icone } from '../components/Icone'
 import { ItemLancamento } from '../components/ItemLancamento'
 import { Cartao, Segmentado, Vazio } from '../components/ui'
@@ -13,7 +13,8 @@ type Filtro<T> = T | 'todos'
 export function Lancamentos(c: Ctx) {
   const [tipo, setTipo] = useState<Filtro<Tipo>>('todos')
   const [banco, setBanco] = useState<Filtro<string>>('todos')
-  const [categoria, setCategoria] = useState<Filtro<Categoria>>('todos')
+  /** id da categoria, 'sem' (sem categoria) ou 'todos'. */
+  const [categoria, setCategoria] = useState<Filtro<string>>('todos')
   const [busca, setBusca] = useState('')
 
   const filtrados = useMemo(() => {
@@ -21,10 +22,10 @@ export function Lancamentos(c: Ctx) {
     return c.lancsMes
       .filter((l) => tipo === 'todos' || l.tipo === tipo)
       .filter((l) => banco === 'todos' || (banco === 'sem' ? !l.banco_id : l.banco_id === banco))
-      .filter((l) => categoria === 'todos' || (l.tipo === 'saida' && l.categoria === categoria))
+      .filter((l) => categoria === 'todos' || (categoria === 'sem' ? !c.categoriaDe(l) : c.categoriaDe(l)?.id === categoria))
       .filter((l) => !q || l.descricao.toLowerCase().includes(q))
       .sort((x, y) => (y.data ?? '').localeCompare(x.data ?? '') || (y.created_at ?? '').localeCompare(x.created_at ?? ''))
-  }, [c.lancsMes, tipo, banco, categoria, busca])
+  }, [c.lancsMes, tipo, banco, categoria, busca]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const dias = useMemo(() => {
     const g = new Map<string, typeof filtrados>()
@@ -66,10 +67,16 @@ export function Lancamentos(c: Ctx) {
               <option value="sem">Sem banco</option>
             </select>
           )}
-          <select value={categoria} onChange={(e) => setCategoria(e.target.value as Filtro<Categoria>)} aria-label="Categoria">
+          <select value={categoria} onChange={(e) => setCategoria(e.target.value)} aria-label="Categoria">
             <option value="todos">Todas as categorias</option>
-            {CATEGORIAS.map((k) => <option key={k.id} value={k.id}>{k.nome}</option>)}
+            {(['saida', 'entrada'] as const).map((t) => (
+              <optgroup key={t} label={t === 'saida' ? 'Saídas' : 'Entradas'}>
+                {doTipo(c.categorias, t).map((k) => <option key={k.id} value={k.id}>{k.icone} {k.nome}</option>)}
+              </optgroup>
+            ))}
+            <option value="sem">Sem categoria</option>
           </select>
+          <button className="link" onClick={c.gerenciarCategorias}>Editar categorias</button>
           {filtrando && (
             <button className="link" onClick={() => { setTipo('todos'); setBanco('todos'); setCategoria('todos'); setBusca('') }}>Limpar filtros</button>
           )}
@@ -85,7 +92,7 @@ export function Lancamentos(c: Ctx) {
                   <span className={saldoDia < 0 ? 'negativo' : 'positivo'}>{fmtValor(saldoDia)}</span>
                 </header>
                 <ul className="lista-lanc">
-                  {itens.map((l) => <ItemLancamento key={l.id} l={l} banco={c.v.bancos ? c.d.bancos.find((b) => b.id === l.banco_id) : undefined} mostrarData={false} aoClicar={() => c.editarLancamento(l)} />)}
+                  {itens.map((l) => <ItemLancamento key={l.id} l={l} categoria={c.categoriaDe(l)} banco={c.v.bancos ? c.d.bancos.find((b) => b.id === l.banco_id) : undefined} mostrarData={false} aoClicar={() => c.editarLancamento(l)} />)}
                 </ul>
               </section>
             )
