@@ -2,6 +2,7 @@ const CAMINHOS: Record<string, string> = {
   inicio: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
   lista: 'M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01',
   divida: 'M3 6h18v12H3zM3 10h18M7 15h4',
+  cartao: 'M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM3 10h18M7 15h2M12 15h5',
   carteira: 'M4 7h15a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12v3M16 13.5h.01',
   ano: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
   mais: 'M12 5v14M5 12h14',
@@ -17,10 +18,12 @@ const CAMINHOS: Record<string, string> = {
   copiar: 'M9 9h11v11H9zM5 15H4V4h11v1',
   check: 'M5 12l5 5 9-10',
   menu: 'M4 6h16M4 12h16M4 18h16',
+  reticencias: 'M5 12h.01M12 12h.01M19 12h.01',
   ajustes: 'M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4',
   globo: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3.5 9h17M3.5 15h17M12 3c2.5 2.7 3.5 5.7 3.5 9s-1 6.3-3.5 9c-2.5-2.7-3.5-5.7-3.5-9s1-6.3 3.5-9z',
   investir: 'M3 17l6-6 4 4 8-8M15 7h6v6',
   meta: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+  calendario: 'M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM4 10h16M8 3v4M16 3v4M8.5 14.5l2 2 4-4',
   ideia: 'M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2h5c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3z',
 }
 

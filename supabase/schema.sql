@@ -211,3 +211,87 @@ create policy "dono" on public.metas for all to authenticated
 drop policy if exists "dono" on public.meta_movimentos;
 create policy "dono" on public.meta_movimentos for all to authenticated
   using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+
+-- Contas fixas e a pagar (aluguel, luz, internet, salário…): o que se repete todo mês.
+create table if not exists public.contas_fixas (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null default auth.uid() references auth.users on delete cascade,
+  tipo          text not null check (tipo in ('entrada', 'saida')),
+  descricao     text not null,
+  -- valor de costume; ao dar baixa a pessoa pode trocar (a conta de luz muda)
+  valor         numeric(14, 2) not null check (valor > 0),
+  categoria_id  uuid references public.categorias on delete set null,
+  banco_id      uuid references public.bancos on delete set null,
+  -- dia do vencimento (ou do recebimento); em mês mais curto vale o último dia
+  dia           smallint not null check (dia between 1 and 31),
+  -- primeiro e último mês em que vale (sempre o dia 1 do mês); sem fim, continua para sempre
+  inicio        date not null,
+  fim           date,
+  ativa         boolean not null default true,
+  created_at    timestamptz not null default now(),
+  check (fim is null or fim >= inicio)
+);
+create index if not exists contas_fixas_user on public.contas_fixas (user_id);
+
+-- A baixa ("Paguei" / "Recebi") é um lançamento comum ligado à conta fixa.
+-- Se a conta for apagada, o lançamento continua existindo, só deixa de estar ligado a ela.
+alter table public.lancamentos add column if not exists conta_fixa_id uuid references public.contas_fixas on delete set null;
+-- no máximo uma baixa por conta em cada mês
+create unique index if not exists lancamentos_conta_fixa_mes on public.lancamentos (conta_fixa_id, ano, mes) where conta_fixa_id is not null;
+
+alter table public.contas_fixas enable row level security;
+drop policy if exists "dono" on public.contas_fixas;
+create policy "dono" on public.contas_fixas for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+
+-- Cartão de crédito: fatura, fechamento e vencimento, compras parceladas. Cada parcela é uma saída (lançamento)
+-- com a data de vencimento da fatura; pagar a fatura só a marca como paga, sem criar outra saída.
+create table if not exists public.cartoes (
+  id               uuid primary key default gen_random_uuid(),
+  user_id          uuid not null default auth.uid() references auth.users on delete cascade,
+  nome             text not null,
+  cor              text not null default '#9d6bff',
+  -- banco emissor (opcional); se o banco for apagado, o cartão continua
+  banco_id         uuid references public.bancos on delete set null,
+  limite           numeric(14, 2) check (limite is null or limite > 0),
+  -- compras feitas depois do dia de fechamento entram na fatura do mês seguinte
+  dia_fechamento   smallint not null check (dia_fechamento between 1 and 31),
+  dia_vencimento   smallint not null check (dia_vencimento between 1 and 31),
+  ativo            boolean not null default true,
+  created_at       timestamptz not null default now()
+);
+create unique index if not exists cartoes_user_nome on public.cartoes (user_id, lower(nome));
+
+-- Parcelas: cada uma é uma saída. compra_id junta as parcelas da mesma compra; "parcela" de "parcelas" (3 de 10).
+-- data_compra é o dia em que a pessoa comprou; "data" fica sendo o vencimento da fatura.
+-- Se o cartão for apagado, as saídas continuam, só deixam de ter cartão.
+alter table public.lancamentos add column if not exists cartao_id uuid references public.cartoes on delete set null;
+alter table public.lancamentos add column if not exists compra_id uuid;
+alter table public.lancamentos add column if not exists parcela smallint check (parcela >= 1);
+alter table public.lancamentos add column if not exists parcelas smallint check (parcelas >= 1);
+alter table public.lancamentos add column if not exists data_compra date;
+create index if not exists lancamentos_cartao on public.lancamentos (cartao_id, ano, mes) where cartao_id is not null;
+create index if not exists lancamentos_compra on public.lancamentos (compra_id) where compra_id is not null;
+
+-- Faturas que a pessoa marcou como pagas (ano e mes são os do vencimento). banco_id: de onde saiu o dinheiro (opcional).
+create table if not exists public.faturas_pagas (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users on delete cascade,
+  cartao_id   uuid not null references public.cartoes on delete cascade,
+  ano         smallint not null,
+  mes         smallint not null check (mes between 1 and 12),
+  valor       numeric(14, 2) not null,
+  pago_em     date not null default current_date,
+  banco_id    uuid references public.bancos on delete set null,
+  created_at  timestamptz not null default now(),
+  unique (cartao_id, ano, mes)
+);
+
+alter table public.cartoes enable row level security;
+alter table public.faturas_pagas enable row level security;
+drop policy if exists "dono" on public.cartoes;
+create policy "dono" on public.cartoes for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+drop policy if exists "dono" on public.faturas_pagas;
+create policy "dono" on public.faturas_pagas for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));

@@ -6,7 +6,7 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
 - **Painel que se adapta a cada pessoa**: no primeiro acesso, 4 perguntas rápidas (moeda, outras moedas, o que faz
   parte da vida financeira, jeito de ver) montam o painel só com o que faz sentido. Dívidas, bancos, investimentos e
   outras moedas são módulos que ligam e desligam; o jeito de ver vai de **simples** (só o essencial) a **detalhado**
-  (quadros da planilha e tabela do ano). Depois disso o app continua se adaptando: percebe pelos lançamentos que a pessoa
+  (todas as categorias, lançamentos do mês e mais indicadores). Depois disso o app continua se adaptando: percebe pelos lançamentos que a pessoa
   começou a investir, paga parcelas, mexe com dólar ou usa vários bancos e sugere ligar (sem insistir se ela recusar).
   No formulário, uma dica aparece enquanto ela digita ("Aporte no CDB" → acompanhar investimentos). Tudo pode ser mudado
   em **Personalizar painel**, ou com um toque em "+ Investimentos" no fim da visão geral
@@ -19,9 +19,22 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
 - **Metas para qualquer objetivo**: viagem, carro, casa, estudos, reserva de emergência (o app sugere 6 meses dos seus
   gastos)… Cada meta tem valor, moeda e prazo opcional; você registra o que guarda ou retira e o app mostra quanto falta,
   quanto guardar por mês para chegar no prazo e, no seu ritmo, quando você chega lá
-- **Visão geral**: saldo do mês em destaque, indicadores (entradas, saídas, caixa, dívida, investimentos, dólar)
-  com comparação ao mês anterior, gráfico entradas × saídas do ano, para onde foi o dinheiro (por categoria),
-  saídas por conta (Principal, Nubank, Inter), dívidas em aberto e meta em dólar
+- **Contas fixas e a pagar**: aluguel, luz, internet, academia, streaming… e também entradas fixas como o salário.
+  Cadastre uma vez (dia, valor de costume, categoria) e todo mês o app mostra o que está **atrasado**, o que **vence
+  esta semana**, o que vem depois e o que já foi **pago**. Nada é lançado sozinho: você toca em **Paguei** (ou **Recebi**)
+  e o app cria o lançamento com 1 toque, com a opção de trocar o valor (a conta de luz muda) ou a data; dá para desfazer.
+  O app também sugere transformar em conta fixa o que você paga todo mês. Módulo "Contas do mês", ligado nas perguntas
+  iniciais ou em Personalizar painel
+- **Cartão de crédito**: cadastre cada cartão com o dia em que a fatura fecha, o dia em que vence e o limite. Ao lançar uma
+  saída, escolha "Como pagou?" e em quantas vezes: cada parcela cai na fatura certa (compra depois do fechamento vai para o
+  mês seguinte) e conta como saída no mês em que você de fato paga. A página Cartões mostra a fatura de cada mês com situação
+  (aberta, fechada, paga, venceu), as compras dela, as próximas 6 faturas, as compras parceladas em andamento ("3/10") e quanto
+  do limite ainda está livre. "Paguei a fatura" só marca como paga, sem contar o gasto duas vezes
+- **Início**: responde, nesta ordem, "como estou este mês?" (quanto sobrou, entrou e saiu), "o que preciso fazer?"
+  (dívidas e o que vem por aí) e "para onde está indo meu dinheiro?" (categorias e últimos lançamentos); depois o mês a
+  mês do ano, o dinheiro guardado e as metas. O jeito de ver (simples, equilibrado, detalhado) só acrescenta linhas aos
+  mesmos blocos. A lógica de cada modo está em [`docs/arquitetura-do-painel.md`](docs/arquitetura-do-painel.md), junto
+  com o guia de linguagem do app
 - **Lançamentos**: lista por dia com busca e filtros; formulário rápido com "salvar e lançar outro",
   sugestão de descrição e categoria automática pelo histórico (digitou "iFood", já vem Alimentação)
 - **Dívidas interligadas**: cada dívida existe ao longo dos meses. Ao lançar uma saída de dívida, você escolhe
@@ -59,7 +72,9 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
 > [`migracao-02`](supabase/migracao-02-dividas-interligadas.sql), [`migracao-03`](supabase/migracao-03-bancos.sql) e
 > [`migracao-04-perfil-e-moedas`](supabase/migracao-04-perfil-e-moedas.sql) (perfil adaptável e outras moedas) e
 > [`migracao-05-categorias`](supabase/migracao-05-categorias.sql) (categorias editáveis; os lançamentos antigos passam para as
-> categorias novas) e [`migracao-06-metas`](supabase/migracao-06-metas.sql) (metas; a meta em dólar antiga vira uma meta).
+> categorias novas), [`migracao-06-metas`](supabase/migracao-06-metas.sql) (metas; a meta em dólar antiga vira uma meta),
+> [`migracao-07-contas-fixas`](supabase/migracao-07-contas-fixas.sql) (contas fixas e a pagar; precisa das migrações 3 e 5) e
+> [`migracao-08-cartoes`](supabase/migracao-08-cartoes.sql) (cartões de crédito, faturas e compras parceladas).
 > Todas só acrescentam, não apagam nada.
 
 ### 3. Primeiro acesso

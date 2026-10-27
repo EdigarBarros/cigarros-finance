@@ -1,13 +1,14 @@
 import { useMemo, useRef, useState } from 'react'
 import { dicaDaDescricao } from '../lib/adaptacao'
 import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
+import { gerarParcelas, textoParcelamento } from '../lib/cartoes'
 import { COR } from '../lib/charts'
 import { dividaPelaDescricao, type SituacaoDivida } from '../lib/dividas'
 import { dataPadrao, fmtValor, paraCampo, parseNumero, simbolo } from '../lib/format'
 import { infoMoeda, type Taxas } from '../lib/moedas'
 import { visao } from '../lib/perfil'
 import { bancoConhecido, bancoNaDescricao, CORES_LIVRES, mesmoNome } from '../lib/rotulos'
-import type { Banco, Categoria, Divida, Lancamento, Perfil, Tipo } from '../lib/types'
+import type { Banco, CartaoCredito, Categoria, Divida, Lancamento, Perfil, Tipo } from '../lib/types'
 import { EscolhaCategoria } from './Categorias'
 import { Icone } from './Icone'
 import { Modal, Segmentado } from './ui'
@@ -36,6 +37,13 @@ interface FormLancProps {
   aoNovoBanco: (nome: string, cor: string) => Promise<Banco | undefined>
   aoSalvar: (l: NovoLanc, id?: string) => void
   aoExcluir?: (id: string) => void
+  /** Cartões de crédito (só com o módulo ligado): a saída pode ser uma compra no cartão. */
+  cartoes?: CartaoCredito[]
+  cartaoInicial?: string
+  /** Grava todas as parcelas de uma compra no cartão de uma vez. */
+  aoSalvarCompra?: (parcelas: NovoLanc[]) => void
+  aoExcluirCompra?: (compraId: string) => void
+  aoNovoCartao?: () => void
   aoFechar: () => void
 }
 
@@ -65,6 +73,11 @@ export function FormLancamento(p: FormLancProps) {
   const [erro, setErro] = useState<string | null>(null)
   const [salvos, setSalvos] = useState(0)
   const campoValor = useRef<HTMLInputElement>(null)
+  // Compra no cartão: só em saída nova. Ao editar uma parcela, o cartão e a compra já estão definidos.
+  const [cartaoId, setCartaoId] = useState(p.cartaoInicial ?? '')
+  const [vezes, setVezes] = useState(1)
+  const ehParcela = Boolean(p.inicial?.compra_id)
+  const cartaoDaParcela = p.cartoes?.find((c) => c.id === p.inicial?.cartao_id)
 
   // Última conta/categoria usada para cada descrição — "iFood" já vem como alimentação.
   const memoria = useMemo(() => {
@@ -94,6 +107,11 @@ export function FormLancamento(p: FormLancProps) {
   const taxa = (cotacao.trim() ? parseNumero(cotacao) : null) ?? p.taxas[moeda] ?? null
   const numero = parseNumero(valor)
   const dica = dicaDaDescricao(descricao, p.perfil, tipo)
+  const cartao = !p.inicial && tipo === 'saida' && p.aoSalvarCompra ? p.cartoes?.find((c) => c.id === cartaoId && c.ativo) : undefined
+  const parcelas = useMemo(() => {
+    const total = numero && numero > 0 ? (estrangeira ? (taxa ? Math.round(numero * taxa * 100) / 100 : 0) : numero) : 0
+    return cartao && total > 0 && data ? gerarParcelas(total, vezes, data, cartao) : []
+  }, [cartao, numero, estrangeira, taxa, vezes, data])
   const ehDivida = p.categorias.find((c) => c.id === categoriaId)?.papel === 'divida'
   const mudarTipo = (t: Tipo) => {
     setTipo(t)
@@ -151,12 +169,12 @@ export function FormLancamento(p: FormLancProps) {
   const salvar = (continuar: boolean) => {
     const n = parseNumero(valor)
     if (!n || n <= 0) {
-      setErro('Informe um valor maior que zero.')
+      setErro('Digite um valor maior que zero.')
       campoValor.current?.focus()
       return
     }
-    if (!data) return setErro('Informe a data.')
-    if (estrangeira && (!taxa || taxa <= 0)) return setErro(`Informe quanto vale 1 ${infoMoeda(moeda).nome.toLowerCase()} em ${simbolo(principal)}.`)
+    if (!data) return setErro('Escolha a data.')
+    if (estrangeira && (!taxa || taxa <= 0)) return setErro(`Digite quanto vale 1 ${infoMoeda(moeda).nome.toLowerCase()} em ${simbolo(principal)}.`)
     const [a, m] = data.split('-').map(Number)
     const saida = tipo === 'saida'
     const ligada = saida && ehDivida && dividaId ? dividaId : null
@@ -165,16 +183,27 @@ export function FormLancamento(p: FormLancProps) {
     const moedaOriginal = estrangeira
       ? { valor_original: n, moeda_original: moeda }
       : original ? { valor_original: null, moeda_original: null } : {}
-    p.aoSalvar(
-      {
-        ano: a, mes: m, tipo, valor: estrangeira ? Math.round(n * taxa! * 100) / 100 : n, descricao: descricao.trim(), data,
-        banco_id: bancoId || null,
-        categoria_id: categoriaId || null,
-        divida_id: ligada,
-        ...moedaOriginal,
-      },
-      p.inicial?.id,
-    )
+    if (cartao && p.aoSalvarCompra) {
+      // Uma saída por parcela, na fatura em que cai; a data de cada uma é o vencimento da fatura.
+      const compraId = crypto.randomUUID()
+      p.aoSalvarCompra(gerarParcelas(estrangeira ? Math.round(n * taxa! * 100) / 100 : n, vezes, data, cartao).map((x) => ({
+        ano: x.ano, mes: x.mes, tipo: 'saida', valor: x.valor, descricao: descricao.trim(), data: x.data,
+        banco_id: null, categoria_id: categoriaId || null, divida_id: null,
+        cartao_id: cartao.id, compra_id: compraId, parcela: x.parcela, parcelas: x.parcelas, data_compra: data,
+      })))
+      setVezes(1)
+    } else {
+      p.aoSalvar(
+        {
+          ano: a, mes: m, tipo, valor: estrangeira ? Math.round(n * taxa! * 100) / 100 : n, descricao: descricao.trim(), data,
+          banco_id: bancoId || null,
+          categoria_id: categoriaId || null,
+          divida_id: ligada,
+          ...moedaOriginal,
+        },
+        p.inicial?.id,
+      )
+    }
     if (!continuar) return p.aoFechar()
     setValor('')
     setDescricao('')
@@ -191,17 +220,28 @@ export function FormLancamento(p: FormLancProps) {
   const cor = tipo === 'entrada' ? COR.entradas : COR.saidas
 
   return (
-    <Modal titulo={p.inicial ? 'Editar lançamento' : p.preset?.divida_id ? 'Pagamento de dívida' : 'Novo lançamento'} aoFechar={p.aoFechar}>
+    <Modal titulo={p.inicial ? 'Editar lançamento' : p.preset?.divida_id ? 'Pagar dívida' : 'Novo lançamento'} aoFechar={p.aoFechar}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); salvar(false) }}>
-        <Segmentado
-          rotulo="Tipo"
-          valor={tipo}
-          aoMudar={mudarTipo}
-          opcoes={[
-            { id: 'saida', nome: 'Saída', cor: COR.saidas },
-            { id: 'entrada', nome: 'Entrada', cor: COR.entradas },
-          ]}
-        />
+        {ehParcela && (
+          <div className="form-dica fixa" role="status">
+            <Icone nome="cartao" tamanho={16} />
+            <span>
+              {(p.inicial!.parcelas ?? 1) > 1 ? `Parcela ${p.inicial!.parcela} de ${p.inicial!.parcelas} da compra` : 'Compra no cartão'}
+              {cartaoDaParcela && <> no <b>{cartaoDaParcela.nome}</b></>}. As outras parcelas não mudam.
+            </span>
+          </div>
+        )}
+        {!ehParcela && (
+          <Segmentado
+            rotulo="Tipo"
+            valor={tipo}
+            aoMudar={mudarTipo}
+            opcoes={[
+              { id: 'saida', nome: 'Saída', cor: COR.saidas },
+              { id: 'entrada', nome: 'Entrada', cor: COR.entradas },
+            ]}
+          />
+        )}
         {moedasDisponiveis.length > 1 && (
           <div className="moeda-escolha">
             <Segmentado rotulo="Moeda" valor={moeda} aoMudar={(m) => { setMoeda(m); setCotacao('') }}
@@ -255,10 +295,38 @@ export function FormLancamento(p: FormLancProps) {
           </div>
         )}
         <label className="campo">
-          <span className="campo-rotulo">Data</span>
+          <span className="campo-rotulo">{cartao ? 'Data da compra' : ehParcela ? 'Vencimento da parcela' : 'Data'}</span>
           <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
         </label>
-        {(v.bancos || bancoId) && (
+        {!p.inicial && tipo === 'saida' && p.cartoes && p.aoSalvarCompra && (
+          <>
+            <div className="campo">
+              <span className="campo-rotulo">Como pagou?</span>
+              <div className="chips">
+                <button type="button" className={`chip ${!cartao ? 'ativo' : ''}`} onClick={() => setCartaoId('')}>Débito/Pix/dinheiro</button>
+                {p.cartoes.filter((c) => c.ativo).map((c) => (
+                  <button key={c.id} type="button" className={`chip ${cartao?.id === c.id ? 'ativo' : ''}`} onClick={() => setCartaoId(c.id)}
+                    style={{ '--c': c.cor } as React.CSSProperties}>
+                    <i className="marcador" />{c.nome}
+                  </button>
+                ))}
+                {p.aoNovoCartao && <button type="button" className="chip novo" onClick={p.aoNovoCartao}>+ cartão</button>}
+              </div>
+            </div>
+            {cartao && (
+              <label className="campo">
+                <span className="campo-rotulo">Em quantas vezes?</span>
+                <select value={vezes} onChange={(e) => setVezes(Number(e.target.value))}>
+                  {Array.from({ length: 24 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n === 1 ? '1x (à vista)' : `${n}x`}</option>)}
+                </select>
+                <span className="campo-ajuda">
+                  {parcelas.length ? textoParcelamento(parcelas, Number(data.slice(0, 4))) : 'Informe o valor para ver como as parcelas ficam.'}
+                </span>
+              </label>
+            )}
+          </>
+        )}
+        {(v.bancos || bancoId) && !cartao && !ehParcela && (
           <EscolhaBanco
             bancos={p.bancos}
             valor={bancoId}
@@ -278,14 +346,14 @@ export function FormLancamento(p: FormLancProps) {
           <>
             {ehDivida && (v.dividas || dividaId) && opcoesDivida.length > 0 && (
               <label className="campo">
-                <span className="campo-rotulo">Abate qual dívida?</span>
+                <span className="campo-rotulo">Qual dívida você está pagando?</span>
                 <select value={dividaId} onChange={(e) => escolherDivida(e.target.value)}>
-                  <option value="">Nenhuma (só conta como gasto com dívida)</option>
+                  <option value="">Nenhuma (só entra como gasto)</option>
                   {opcoesDivida.map((d) => (
                     <option key={d.id} value={d.id}>{d.descricao}{d.valor_parcela ? ` · parcela ${fmtValor(d.valor_parcela)}` : ''}</option>
                   ))}
                 </select>
-                {dividaId && <span className="campo-ajuda">O saldo da dívida cai automaticamente com este pagamento.</span>}
+                {dividaId && <span className="campo-ajuda">A dívida diminui sozinha com este pagamento.</span>}
               </label>
             )}
           </>
@@ -297,9 +365,18 @@ export function FormLancamento(p: FormLancProps) {
             <button
               type="button"
               className="btn perigo"
-              onClick={() => { if (confirm('Excluir este lançamento?')) { p.aoExcluir!(p.inicial!.id); p.aoFechar() } }}
+              onClick={() => { if (confirm(ehParcela ? 'Excluir só esta parcela? As outras continuam.' : 'Excluir este lançamento?')) { p.aoExcluir!(p.inicial!.id); p.aoFechar() } }}
             >
-              Excluir
+              {ehParcela && (p.inicial.parcelas ?? 1) > 1 ? 'Excluir só esta parcela' : 'Excluir'}
+            </button>
+          )}
+          {ehParcela && (p.inicial!.parcelas ?? 1) > 1 && p.aoExcluirCompra && (
+            <button
+              type="button"
+              className="btn perigo"
+              onClick={() => { if (confirm(`Excluir a compra inteira "${p.inicial!.descricao}"? Todas as parcelas serão apagadas.`)) { p.aoExcluirCompra!(p.inicial!.compra_id!); p.aoFechar() } }}
+            >
+              Excluir a compra inteira
             </button>
           )}
           <span className="espaco" />
@@ -336,11 +413,11 @@ export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo,
   const salvar = () => {
     if (!descricao.trim()) return setErro('Dê um nome para a dívida.')
     const vp = parcela.trim() ? parseNumero(parcela) : null
-    if (parcela.trim() && (!vp || vp <= 0)) return setErro('Valor da parcela inválido.')
+    if (parcela.trim() && (!vp || vp <= 0)) return setErro('Digite um valor de parcela válido.')
     const s = saldo.trim() ? parseNumero(saldo) : null
-    if (saldo.trim() && (s === null || s < 0)) return setErro('Saldo inválido.')
+    if (saldo.trim() && (s === null || s < 0)) return setErro('Digite um valor válido.')
     if (!d) {
-      if (s === null || s <= 0) return setErro('Informe quanto falta pagar.')
+      if (s === null || s <= 0) return setErro('Digite quanto falta pagar.')
       aoCriar({ descricao: descricao.trim(), valor_parcela: vp, saldo: s, data })
     } else {
       if (descricao.trim() !== d.descricao || vp !== d.valor_parcela) aoEditar(d.id, { descricao: descricao.trim(), valor_parcela: vp })
@@ -350,7 +427,7 @@ export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo,
   }
 
   return (
-    <Modal titulo={d ? 'Editar dívida' : 'Nova dívida'} aoFechar={aoFechar}>
+    <Modal titulo={d ? 'Editar dívida' : 'Adicionar dívida'} aoFechar={aoFechar}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); salvar() }}>
         <label className="campo">
           <span className="campo-rotulo">Nome</span>
@@ -363,16 +440,16 @@ export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo,
         </label>
         <div className="form-linha">
           <label className="campo">
-            <span className="campo-rotulo">{d ? 'Saldo devedor atualizado' : 'Quanto falta pagar'}</span>
+            <span className="campo-rotulo">{d ? 'Quanto falta pagar agora' : 'Quanto falta pagar'}</span>
             <input inputMode="decimal" value={saldo} onChange={(e) => setSaldo(e.target.value)}
               placeholder={d ? fmtValor(situacao!.restante) : '0,00'} />
           </label>
           <label className="campo">
-            <span className="campo-rotulo">Em qual data</span>
+            <span className="campo-rotulo">Em que data</span>
             <input type="date" value={data} onChange={(e) => setData(e.target.value)} />
           </label>
         </div>
-        {d && <span className="campo-ajuda">Só preencha o saldo se o banco mudou o valor (juros, acordo). Pagamentos já abatem sozinhos.</span>}
+        {d && <span className="campo-ajuda">Só preencha se o banco mudou o valor (juros, acordo). Os pagamentos já abatem sozinhos.</span>}
         {erro && <p className="form-erro">{erro}</p>}
         <div className="form-acoes">
           {d && (
@@ -394,7 +471,7 @@ export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo,
 }
 
 /** Banco do lançamento: opcional, com atalho para cadastrar um novo. */
-function EscolhaBanco({ bancos, valor, aoMudar, aoNovoBanco }: {
+export function EscolhaBanco({ bancos, valor, aoMudar, aoNovoBanco }: {
   bancos: Banco[]; valor: string; aoMudar: (id: string) => void
   aoNovoBanco: (nome: string, cor: string) => Promise<Banco | undefined>
 }) {
@@ -418,7 +495,7 @@ function EscolhaBanco({ bancos, valor, aoMudar, aoNovoBanco }: {
             <i className="marcador" />{b.nome}
           </button>
         ))}
-        <button type="button" className="chip novo" onClick={novo}>+ banco</button>
+        <button type="button" className="chip novo" onClick={novo}>+ Novo banco</button>
       </div>
     </div>
   )

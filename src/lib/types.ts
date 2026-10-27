@@ -29,9 +29,20 @@ export interface Lancamento {
   banco_id?: string | null
   /** Quando a saída é pagamento de uma dívida. */
   divida_id?: string | null
+  /** Quando o lançamento é a baixa ("Paguei" / "Recebi") de uma conta fixa do mês. */
+  conta_fixa_id?: string | null
   /** Lançado em outra moeda: o valor original. `valor` fica sempre na moeda principal. */
   valor_original?: number | null
   moeda_original?: string | null
+  /** Compra no cartão de crédito: cada parcela é uma saída, com `data` no vencimento da fatura em que cai. */
+  cartao_id?: string | null
+  /** Junta as parcelas da mesma compra. */
+  compra_id?: string | null
+  /** Número desta parcela (3 de `parcelas`). */
+  parcela?: number | null
+  parcelas?: number | null
+  /** Dia em que a pessoa comprou. */
+  data_compra?: string | null
   created_at?: string
 }
 
@@ -83,7 +94,7 @@ export interface Mes {
 export const TIPOS_CAIXA: TipoCaixa[] = ['cc', 'caixinha', 'reserva']
 
 /** Partes do painel que cada pessoa liga ou desliga conforme a vida dela. */
-export type Modulo = 'dividas' | 'bancos' | 'investimentos' | 'moedas' | 'metas'
+export type Modulo = 'dividas' | 'contas' | 'cartoes' | 'bancos' | 'investimentos' | 'moedas' | 'metas'
 export type Detalhe = 'simples' | 'equilibrado' | 'detalhado'
 
 /** Como o painel se adapta a cada pessoa: respostas das perguntas iniciais e ajustes feitos depois. */
@@ -122,4 +133,47 @@ export interface MovimentoMeta {
   data: string
   valor: number
   descricao: string
+}
+
+/** Conta que se repete todo mês: aluguel, luz, internet (saída) ou salário (entrada). */
+export interface ContaFixa {
+  id: string
+  tipo: Tipo
+  descricao: string
+  /** Valor de costume; na baixa a pessoa pode trocar. */
+  valor: number
+  categoria_id: string | null
+  banco_id: string | null
+  /** Dia do vencimento ou do recebimento (1 a 31); em mês mais curto vale o último dia. */
+  dia: number
+  /** Primeiro mês em que vale (dia 1 do mês). */
+  inicio: string
+  /** Último mês em que vale (dia 1 do mês); null = continua. */
+  fim: string | null
+  ativa: boolean
+  created_at?: string
+}
+
+/** Cartão de crédito. As compras entram na fatura do mês que vence depois do dia de fechamento. */
+export interface CartaoCredito {
+  id: string
+  nome: string
+  cor: string
+  banco_id: string | null
+  limite: number | null
+  dia_fechamento: number
+  dia_vencimento: number
+  ativo: boolean
+  created_at?: string
+}
+
+/** Fatura que a pessoa marcou como paga (ano e mês do vencimento). */
+export interface FaturaPaga {
+  id: string
+  cartao_id: string
+  ano: number
+  mes: number
+  valor: number
+  pago_em: string
+  banco_id: string | null
 }

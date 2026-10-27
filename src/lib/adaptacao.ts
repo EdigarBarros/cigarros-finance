@@ -2,6 +2,7 @@
  * O painel continua se adaptando depois das perguntas iniciais: olha o que a pessoa lança e sugere ligar
  * o que ela parece precisar. Nada liga sozinho; cada sugestão recusada não volta mais.
  */
+import { saidasQueSeRepetem } from './contasFixas'
 import { infoMoeda } from './moedas'
 import { BANCOS_CONHECIDOS } from './rotulos'
 import type { Detalhe, Lancamento, Modulo, Perfil } from './types'
@@ -10,6 +11,13 @@ const fim = '(?![a-z0-9à-ú])'
 const PADRAO_DIVIDA = new RegExp(
   `\\b(parcela|presta[cç][aã]o|empr[eé]stimo|financiamento|consignado|acordo|carn[eê]|\\d{1,2}\\s*/\\s*\\d{1,2}|\\d{1,2}x)${fim}`, 'i',
 )
+// "10x" sozinho (compra parcelada) indica cartão; "parcela", "empréstimo"… indicam dívida.
+const PADRAO_DIVIDA_SEM_X = new RegExp(
+  `\\b(parcela|presta[cç][aã]o|empr[eé]stimo|financiamento|consignado|acordo|carn[eê]|\\d{1,2}\\s*/\\s*\\d{1,2})${fim}`, 'i',
+)
+// Palavras que sozinhas já indicam cartão; "Nubank" e "10x" só contam se se repetirem (muita gente usa o Nubank no débito).
+const CARTAO_EXPLICITO = new RegExp(`\\b(cart[aã]o|fatura|cr[eé]dito)${fim}`, 'i')
+const PADRAO_CARTAO = new RegExp(`\\b(cart[aã]o|fatura|cr[eé]dito|nubank|visa|mastercard|\\d{1,2}x)${fim}`, 'i')
 const PADRAO_INVESTIMENTO = new RegExp(
   `\\b(invest\\w*|cdb|tesouro|a[cç][oõ]es|fiis?|poupan[cç]a|aplica[cç][aã]o|aporte|cripto\\w*|bitcoin|btc|corretora|renda fixa|lci|lca|previd[eê]ncia)${fim}`, 'i',
 )
@@ -38,6 +46,9 @@ export function dicaDaDescricao(texto: string, p: Perfil, tipo: 'entrada' | 'sai
   if (!texto.trim()) return null
   if (!p.modulos.investimentos && PADRAO_INVESTIMENTO.test(texto)) {
     return { modulo: 'investimentos', texto: 'Isso parece investimento.', botao: 'Acompanhar meus investimentos' }
+  }
+  if (!p.modulos.cartoes && tipo === 'saida' && PADRAO_CARTAO.test(texto) && !PADRAO_DIVIDA_SEM_X.test(texto)) {
+    return { modulo: 'cartoes', texto: 'Foi no cartão de crédito?', botao: 'Acompanhar minhas faturas' }
   }
   if (!p.modulos.dividas && tipo === 'saida' && PADRAO_DIVIDA.test(texto)) {
     return { modulo: 'dividas', texto: 'Parece uma parcela ou dívida.', botao: 'Controlar o que falta pagar' }
@@ -70,9 +81,17 @@ export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number,
   const lista: Sugestao[] = []
   const conta = (re: RegExp) => lancs.filter((l) => re.test(l.descricao)).length
 
+  if (!p.modulos.cartoes && (conta(CARTAO_EXPLICITO) >= 1 || conta(PADRAO_CARTAO) >= 2)) {
+    lista.push({
+      id: 'modulo:cartoes', icone: 'cartao', botao: 'Ligar cartões',
+      titulo: 'Você usa cartão de crédito?',
+      texto: 'Veja a fatura de cada cartão, quando ela fecha e vence, as compras parceladas e quanto do limite ainda dá para usar.',
+      aplicar: ligar('cartoes'),
+    })
+  }
   if (!p.modulos.dividas && lancs.filter((l) => PADRAO_DIVIDA.test(l.descricao) || ehPagamentoDeDivida(l)).length >= 2) {
     lista.push({
-      id: 'modulo:dividas', icone: 'divida', botao: 'Ligar dívidas',
+      id: 'modulo:dividas', icone: 'divida', botao: 'Acompanhar dívidas',
       titulo: 'Você está pagando parcelas',
       texto: 'Quer ver quanto falta em cada dívida e em que mês ela acaba? Cada pagamento lançado abate sozinho.',
       aplicar: ligar('dividas'),
@@ -80,7 +99,7 @@ export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number,
   }
   if (!p.modulos.investimentos && conta(PADRAO_INVESTIMENTO) >= 1) {
     lista.push({
-      id: 'modulo:investimentos', icone: 'investir', botao: 'Ligar investimentos',
+      id: 'modulo:investimentos', icone: 'investir', botao: 'Acompanhar investimentos',
       titulo: 'Começou a investir?',
       texto: 'Acompanhe quanto você tem investido mês a mês, junto com o resto do seu dinheiro.',
       aplicar: ligar('investimentos'),
@@ -88,11 +107,23 @@ export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number,
   }
   if (!p.modulos.metas && conta(PADRAO_GUARDAR) >= 1) {
     lista.push({
-      id: 'modulo:metas', icone: 'meta', botao: 'Ligar metas',
+      id: 'modulo:metas', icone: 'meta', botao: 'Acompanhar metas',
       titulo: 'Está guardando dinheiro?',
       texto: 'Crie uma meta (viagem, reserva, carro…) e veja quanto guardar por mês e quando você chega lá.',
       aplicar: ligar('metas'),
     })
+  }
+  if (!p.modulos.contas) {
+    // parcelas já têm o módulo de dívidas; aqui entram aluguel, luz, internet, assinaturas…
+    const fixa = saidasQueSeRepetem(lancs.filter((l) => !PADRAO_DIVIDA.test(l.descricao) && !ehPagamentoDeDivida(l)))[0]
+    if (fixa) {
+      lista.push({
+        id: 'modulo:contas', icone: 'calendario', botao: 'Ligar contas do mês',
+        titulo: `Você paga ${fixa.descricao} todo mês?`,
+        texto: 'Transforme em conta fixa e o app te lembra do vencimento, mostra o que está atrasado e dá baixa com um toque.',
+        aplicar: ligar('contas'),
+      })
+    }
   }
   for (const [re, m] of MOEDAS_NO_TEXTO) {
     if (m === p.moeda || (p.modulos.moedas && p.moedas.includes(m)) || !lancs.some((l) => re.test(l.descricao))) continue
@@ -118,16 +149,16 @@ export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number,
   if (p.detalhe === 'simples' && lancs.length >= 40) {
     lista.push({
       id: 'detalhe:equilibrado', icone: 'ano', botao: 'Mostrar gráficos',
-      titulo: 'Você já tem bastante coisa lançada',
-      texto: 'Gráficos e a comparação com o mês anterior ajudam a ver para onde as coisas estão indo.',
+      titulo: 'Você já lançou bastante coisa',
+      texto: 'Gráficos e a comparação com o mês passado ajudam a ver para onde as coisas estão indo.',
       aplicar: nivel('equilibrado'),
     })
   }
   if (p.detalhe === 'equilibrado' && mesesComDados >= 4 && lancs.length >= 80) {
     lista.push({
-      id: 'detalhe:detalhado', icone: 'lista', botao: 'Ver tudo',
+      id: 'detalhe:detalhado', icone: 'lista', botao: 'Ver mais detalhes',
       titulo: `${mesesComDados} meses de histórico`,
-      texto: 'Com esse histórico, a tabela do ano mês a mês e os quadros completos mostram cada detalhe.',
+      texto: 'Com esse histórico, vale ver todas as categorias, os lançamentos do mês e o ano mês a mês.',
       aplicar: nivel('detalhado'),
     })
   }

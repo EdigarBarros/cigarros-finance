@@ -33,12 +33,15 @@ export const fmtPct = (n: number) => pct.format(Number.isFinite(n) ? n : 0)
 
 const MES_CURTO = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 
-/** "2026-10-02" -> "2-out", o mesmo formato da coluna DATA da planilha. */
+/** "2026-10-02" -> "2 de out" */
 export function fmtDataCurta(iso: string | null) {
   if (!iso) return ''
   const [, m, d] = iso.split('-').map(Number)
-  return `${d}-${MES_CURTO[m - 1]}`
+  return `${d} de ${MES_CURTO[m - 1]}`
 }
+
+/** (2027, 3) -> "mar de 2027" */
+export const fmtMesAno = (ano: number, mes: number) => `${MES_CURTO[mes - 1]} de ${ano}`
 
 /**
  * Converte o que foi digitado em número. Aceita "1.234,56", "12,5", "R$ 10"

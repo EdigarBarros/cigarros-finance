@@ -1,0 +1,220 @@
+# Arquitetura do painel e guia de linguagem
+
+Este documento explica **o que a Início mostra, em que ordem e por quê**, e fixa o vocabulário do app inteiro.
+Vale para quem nunca controlou dinheiro e para quem quer ver cada número.
+
+## 1. Diagnóstico (como estava)
+
+| Problema | Onde | Efeito na pessoa |
+| --- | --- | --- |
+| Rótulos em CAIXA ALTA e jargão de planilha: "FLUXO DE CAIXA", "MÉTRICAS - OUTUBRO", "QUADRO", "CAIXA", "RESTANTE", "QUITAÇÃO" | `Blocos.tsx`, `Inicio.tsx`, `Graficos.tsx`, `index.css` (`text-transform: uppercase`) | Parece contabilidade. O leigo não sabe o que é "caixa" nem "fluxo". Texto em maiúsculas é mais lento de ler e soa como grito |
+| Até 7 indicadores no topo (Entrou, Saiu, Guardado, Falta pagar, Investido, Outras moedas, Metas) com o mesmo peso | `kpis` em `Inicio.tsx` | Nenhum se destaca. Passa de 4 itens, a pessoa deixa de comparar e só varre |
+| Muitos blocos do mesmo tamanho e da mesma cor, sem ordem por importância (dívidas, por banco, caixa, moedas, metas empilhados) | `essencial` e `completo` em `Inicio.tsx` | Sem hierarquia, tudo pede atenção ao mesmo tempo |
+| O resultado do mês mistura duas ideias ("Sobrou R$ X no mês. Dívidas: R$ Y.") e o rótulo muda de nome conforme o modo ("Fluxo de caixa" / "Resultado de") | `hero` | A frase mais importante da tela carrega ruído |
+| Gráfico anual com 6 séries (2 barras e 4 linhas em escalas diferentes), valores de patrimônio e de fluxo no mesmo eixo | `GraficoAnual` | Ilegível. A linha de dívida domina e esconde as barras que importam |
+| Tabela do ano repetida na Início e na página Ano; quadros de Entradas e Saídas repetem a página Lançamentos | `TabelaAnual`, `QuadroLancamentos` | Mesma informação em dois lugares: a tela cresce sem a pessoa saber mais |
+| Três blocos para o mesmo assunto "bancos" (Por banco, Caixa, Outras moedas) | `PorBanco`, `QuadroCaixa`, `BlocoMoedas` | Fragmenta o que a pessoa lê como uma coisa só |
+| Dívida no topo como indicador vermelho/amarelo e na frase principal | `Kpi` "Falta pagar", `hero-sub` | Ansiedade logo na primeira olhada, sem mostrar o progresso nem o que fazer |
+| Sugestão roxa e cheia de brilho acima do resultado do mês | `CartaoSugestao` antes do `hero` | Rouba o primeiro olhar da informação principal |
+| "Visão geral" no menu e "Início" na aba; "Entradas/Entrou", "Apagar/Excluir", "Caixa/Guardado", "pagar/Registrar pagamento" misturados | `Painel.tsx`, formulários | A mesma coisa com dois nomes obriga a pessoa a traduzir |
+| Datas "2-out", "mar/27", "11-out" | `format.ts`, blocos | Formato de planilha, não de conversa |
+| Estado vazio mostra caixas zeradas (indicadores, gráfico, listas) | `Inicio.tsx` | Conta nova vê um painel cheio de zeros e nada a fazer |
+
+## 2. Princípios e regras práticas
+
+1. **Hierarquia visual e leitura em F/Z.** O olhar começa no canto superior esquerdo, desce pela borda esquerda e só entra nos blocos se algo prender.
+   Regra: um único elemento gigante por tela (o resultado do mês, no alto à esquerda); as ações ficam no canto oposto da mesma linha (Z); cada zona abaixo tem um título de tamanho único.
+2. **Lei de Hick (menos escolhas, decisão mais rápida).** Regra: no máximo 1 botão principal por bloco; a primeira tela do modo simples tem 3 números, não 7; o que não é decisão de hoje fica em "Ver tudo".
+3. **Lei de Miller e carga cognitiva.** Regra: no máximo 4 indicadores no topo (6 só no detalhado, em duas linhas de 3); blocos do mesmo assunto viram um (3 de bancos viram "Dinheiro guardado"); nunca mais de 4 zonas visíveis ao mesmo tempo.
+4. **Revelação progressiva.** O simples é subconjunto do equilibrado, que é subconjunto do detalhado. Regra: cada bloco tem o **mesmo nome e a mesma posição** nos três modos; subir de nível só acrescenta linhas, colunas, comparações e gráficos *dentro do mesmo bloco*. Nada muda de lugar, nada some.
+5. **Proximidade e semelhança (Gestalt).** Regra: blocos que respondem à mesma pergunta ficam juntos, com espaço menor entre si (14 px) e maior entre perguntas diferentes (28 px); todo número de dinheiro usa a mesma fonte; verde é só entrada/progresso, vermelho só saída, amarelo só atenção, roxo só destaque do app.
+6. **Aversão à perda e enquadramento.** Regra para dívida e atraso: mostrar o problema **inteiro** (valor, prazo) mas junto do progresso e do próximo passo. "Você já pagou 42%" antes de "faltam R$ 4.800"; "Venceu dia 5" com botão "Pagar", nunca "ATRASADA!" nem vermelho saturado cobrindo o bloco. Resultado negativo vira "Faltou R$ 340" com a frase "saiu R$ 340 a mais do que entrou" e um atalho para ver onde.
+7. **Posição serial (primeiro e último são lembrados).** Topo: o resultado do mês e o que vence. Fim: metas (o que a pessoa está construindo). O meio fica com a análise. O que é opcional (sugestão, personalizar) nunca ocupa topo nem fim: a sugestão vem logo abaixo dos indicadores, em faixa fina, e "Personalizar" é um rodapé discreto.
+8. **Lei de Fitts (alvos grandes e alcançáveis).** Regra: no computador, as duas ações (Lançar entrada, Lançar saída) ficam no mesmo cartão do resultado, a um movimento do olhar; no celular, o botão "+" fixo de 58 px na zona do polegar (canto inferior direito, acima da barra de abas) faz o papel de ação principal; linhas clicáveis têm 44 px ou mais; "Pagar" e "Guardar" são botões de verdade, não links.
+9. **Ancoragem.** Um número só faz sentido perto de uma referência. Regra: o resultado vem com "22% do que entrou" e, a partir do equilibrado, com "R$ 120 a mais que em set"; cada indicador compara com o mês anterior; cada categoria, no detalhado, também.
+10. **Controle e otimismo ("o que fazer agora").** Regra: toda zona de alerta termina com um verbo (Pagar, Lançar, Guardar, Adicionar); estados vazios dizem o primeiro passo; contas a vencer aparecem antes de gráficos.
+11. **Pico-fim.** A tela termina com algo positivo e acionável: progresso das metas ("27% da viagem, chega em jul de 2027"). Em estado vazio, termina no botão de lançar.
+
+## 3. As perguntas que a Início responde, nesta ordem
+
+1. **Como estou este mês?** Resultado do mês (Sobrou/Faltou) + Entrou + Saiu.
+2. **O que preciso fazer, o que vem por aí?** Contas do mês, fatura do cartão, dívidas (próxima parcela e progresso).
+3. **Para onde está indo meu dinheiro?** Gastos por categoria + últimos lançamentos.
+
+Depois, só depois: **evolução no tempo** (mês a mês no ano). E por último, **o que a pessoa tem e está construindo**: dinheiro guardado e metas.
+
+Por que essa ordem: a primeira pergunta é a que a pessoa abre o app para responder; a segunda é a única que pede uma ação com prazo; a terceira é análise, útil mas sem pressa; o histórico e o patrimônio mudam devagar e não exigem decisão hoje.
+
+## 4. Especificação por modo
+
+Ordem vertical, igual no computador e no celular. A diferença entre as telas é só a grade (veja 4.4).
+
+Legenda: **[M]** só aparece se o módulo estiver ligado. **(slot)** é preenchido por outro componente através do `Ctx`.
+
+### 4.1 Simples: "só o essencial"
+
+| # | Zona | Conteúdo |
+| - | --- | --- |
+| 0 | Cabeçalho | "Olá, Nome" e "Resumo de outubro de 2026". Conta nova: cartão "Tudo pronto para começar" com os dois botões de lançar |
+| 1 | **Resultado do mês** | "Sobrou em outubro" (ou "Faltou") em número grande + frase ("Você ficou com 22% do que entrou"). No computador: botões **Lançar entrada** e **Lançar saída** à direita. No celular: sem botões, o "+" fixo |
+| 2 | **Indicadores** (até 4) | **Entrou**, **Saiu** e, se existirem, `kpisExtras` ("Falta pagar no mês", "Fatura do cartão"). Sem comparação com o mês anterior |
+| 3 | Sugestão (se houver) | Faixa fina com 1 sugestão por vez |
+| 4 | **O que fazer** (pergunta 2) | `blocos.contas` (slot, [M] contas) → `blocos.cartoes` (slot, [M] cartões) → **Dívidas** [M] (até 4 linhas, 1 por dívida: nome, quanto falta, barra de progresso, "Acaba em…" e "Pagar"; no topo do bloco "Você já pagou 23%. Sem dívidas em set de 2027") |
+| 5 | **Para onde foi** (pergunta 3) | À esquerda **Para onde foi o dinheiro**: as 4 maiores categorias em lista com barra; à direita **Últimos lançamentos** (5). Mês sem lançamentos: um único cartão "Nada lançado em outubro" com os botões |
+| 6 | **Dinheiro guardado** [M bancos, investimentos ou outras moedas] | Uma linha por módulo ligado: "Nas contas", "Investido", "Em outras moedas" |
+| 7 | **Metas** [M] | 2 metas com barra de progresso |
+| 8 | Rodapé | "Quer acompanhar mais coisas?" com um chip por módulo desligado |
+
+Não aparecem: gráficos, comparação com o mês anterior, evolução do ano, página Ano no menu.
+
+### 4.2 Equilibrado: o simples mais comparação e gráficos
+
+Mesma ordem. Acrescenta, **dentro dos mesmos blocos**:
+
+| Zona | O que muda |
+| --- | --- |
+| 1 Resultado | Chip "R$ 120 a mais que em set" |
+| 2 Indicadores | Variação ("16% a mais que em set") em Entrou e Saiu, com cor boa/ruim |
+| 4 Dívidas | A linha de cada dívida ganha o valor da parcela: "Parcela R$ 300 · acaba em jun de 2027" |
+| 5 Para onde foi | Rosca com o total no centro à esquerda da lista; 5 categorias; Últimos lançamentos com 6 linhas |
+| **5b Evolução** (novo, depois da pergunta 3) | **Mês a mês em 2026**: barras de Entrou e Saiu (só 2 séries) com link "Ver o ano" |
+| 6 Dinheiro guardado | "Nas contas" se abre em uma linha por banco; "Em outras moedas" em uma linha por moeda com o equivalente na sua moeda |
+| 7 Metas | 4 metas, com valor guardado e previsão |
+
+### 4.3 Detalhado: tudo, na mesma ordem
+
+Acrescenta ao equilibrado:
+
+| Zona | O que muda |
+| --- | --- |
+| 1 Resultado | Igual ao equilibrado |
+| 2 Indicadores (até 6) | + **Gasto médio por dia** e **Maior saída**. No computador, a partir de 5 cartões a grade passa a 3 por linha, então nunca sobra um cartão esticado sozinho |
+| 4 Dívidas | + "pago neste mês" por dívida |
+| 5 Para onde foi | **Todas** as categorias, com valor, % e, quando a mudança contra o mês anterior é de 10% ou mais, a variação (abaixo disso é ruído). **Lançamentos do mês** (em vez de "Últimos"): 10 linhas com filtro Tudo / Entradas / Saídas e "Ver todos os N" |
+| 5b Evolução | Mesmas barras; as linhas extras (Guardado nas contas, Dívidas, Investido, Em outras moedas) começam **escondidas** e entram ao tocar na legenda |
+| 6 Dinheiro guardado | Cada banco mostra "entrou / saiu neste mês" |
+| 7 Metas | Todas as metas em andamento (até 6) |
+
+Saíram da Início: quadros de Entradas e Saídas (a página **Lançamentos** lista tudo, com filtros) e a tabela do ano (a página **Ano** tem a tabela completa).
+
+### 4.4 Computador × celular
+
+| Aspecto | Computador (≥ 861 px) | Celular |
+| --- | --- | --- |
+| Colunas | Zonas 4 e 6: cartões lado a lado, o último sozinho ocupa a linha inteira. Zona 5: duas colunas. Zona 5b: largura total | Uma coluna, na mesma ordem |
+| Ações de lançar | Dois botões no cartão do resultado, à direita. Conta nova: também no cartão de boas-vindas | Botão "+" fixo (polegar). Conta nova: dois botões grandes no cartão de boas-vindas |
+| Indicadores | Linha de cartões (até 3 por linha no detalhado) | 2 por linha; o último, se ímpar, ocupa a linha inteira |
+| Rosca (equilibrado e detalhado) | Ao lado da lista | Acima da lista, menor |
+| Últimos lançamentos | 6 linhas (detalhado: 10) | 5 linhas (detalhado: 8) |
+| Evolução | 320 px de altura, legenda embaixo | 230 px, eixo em "mil" |
+
+### 4.5 Slots para outros componentes
+
+- `Ctx.kpisExtras?: ReactNode` → um ou mais `<Kpi>` (ex.: "Falta pagar no mês", "Fatura do cartão"), logo depois de Saiu, em **todos** os modos.
+- `Ctx.blocos.contas?: ReactNode` → um único elemento raiz (`<section className="bloco">` ou `Cartao`), 1ª posição da zona "O que fazer".
+- `Ctx.blocos.cartoes?: ReactNode` → um único elemento raiz, 2ª posição da zona "O que fazer".
+- Quem preenche o slot pode ler `c.perfil.detalhe` para mostrar menos itens no simples (sugestão: 3), equilibrado (5) e detalhado (todos).
+- Sem slots, nada aparece e o layout fecha sozinho.
+
+### 4.6 Estados especiais
+
+- **Conta nova** (sem nenhum dado): cabeçalho, cartão "Tudo pronto para começar" (com os botões), e só os blocos de módulos ligados com o primeiro passo ("Adicionar dívida", "Criar a primeira meta"). Sem indicadores zerados, sem rosca, sem gráfico.
+- **Mês sem lançamentos** (conta antiga): resultado com "Nada lançado em outubro ainda", indicadores só se houver `kpisExtras`, cartão único com os botões no lugar de "Para onde foi" e "Últimos".
+- **Resultado negativo**: número em coral (não vermelho puro), "Faltou", frase "Saiu R$ X a mais do que entrou" e atalho "Ver para onde foi".
+
+## 5. Guia de linguagem
+
+### 5.1 Regras
+
+1. **Frases curtas, voz ativa, segunda pessoa.** "Você pagou 42%", não "42% do saldo foi quitado".
+2. **Títulos em sentença**: só a primeira letra maiúscula ("Para onde foi o dinheiro"). Nada de CAIXA ALTA, nem em gráficos e tabelas.
+3. **Botões começam com verbo no infinitivo** e dizem o que acontece: Lançar entrada, Pagar, Guardar, Adicionar dívida, Criar meta, Salvar, Excluir. Um verbo por ação em todo o app: **Lançar** (entrada/saída), **Adicionar** (item de lista: dívida, banco), **Criar** (meta, conta, categoria), **Pagar**, **Guardar/Retirar** (metas), **Excluir** (nunca "apagar/remover").
+4. **Números sempre com moeda** ("R$ 1.200,00"); variação em palavras ("12% a mais que em set"), não em siglas ("vs").
+5. **Datas**: "5 de nov"; mês e ano "nov de 2026" (nunca "nov/26"); mês inteiro só no título ("outubro de 2026").
+6. **Passado para o que já aconteceu no mês** (Entrou, Saiu, Sobrou), **substantivo para tipo de lançamento** (entrada, saída).
+7. **Atraso e dívida, tom calmo e acionável**: dizer o fato, o valor e o próximo passo. "Venceu dia 5 · R$ 120 · Pagar". Proibido: "ATRASADA", "URGENTE", "cuidado!", pontos de exclamação em alertas. Progresso antes de saldo ("Você já pagou 42%").
+8. **Erros**: dizer o que aconteceu, que não foi culpa da pessoa e o que fazer. "Não deu para salvar. Tente de novo." + detalhe técnico depois.
+9. **Sem jargão**: não usar fluxo, caixa, saldo devedor, quitação, métricas, patrimônio.
+10. Emoji só em momentos positivos (meta batida, sem dívidas) e nas categorias.
+
+### 5.2 Termo antigo → termo novo
+
+| Antes | Agora |
+| --- | --- |
+| Visão geral (menu), Início (aba) | **Início** |
+| Fluxo de caixa / Resultado de outubro | **Sobrou em outubro** / **Faltou em outubro** |
+| Caixa | **Guardado nas contas** (bloco: **Dinheiro guardado**) |
+| Meu dinheiro / Patrimônio (menu) | **Dinheiro guardado** |
+| Métricas / Métricas - outubro | **Para onde foi o dinheiro** |
+| Quadro, Entradas / Saídas (quadros) | **Últimos lançamentos**, **Lançamentos do mês** |
+| Por banco | linhas dentro de **Dinheiro guardado** |
+| Falta pagar (indicador de dívidas) | **Dívidas** (indicador) e "Falta pagar" só dentro de cada dívida |
+| Restante / Quitação | **Falta pagar** / **Acaba em** |
+| Saldo devedor atualizado | **Quanto falta pagar agora** |
+| Total devendo / Livre de dívidas em | **Você deve no total** / **Sem dívidas em** |
+| Registrar pagamento / pagar | **Lançar pagamento** / **Pagar** |
+| Evolução de 2026 / Resumo de 2026 | **Mês a mês em 2026** / **Resumo de 2026** (só na página Ano) |
+| Ano (menu) | **Resumo do ano** (aba: Ano) |
+| Entradas no ano / Saídas no ano | **Entrou no ano** / **Saiu no ano** |
+| Resultado no mês (banco) | **Sobrou no mês** |
+| 12% vs mês anterior | **12% a mais que em set** |
+| ENTRADAS, SAÍDAS, CAIXA, DÍVIDA (séries do gráfico) | **Entrou**, **Saiu**, **Guardado nas contas**, **Dívidas** |
+| Apagar / Apagar mesmo | **Excluir** / **Sim, excluir** |
+| Nova (categoria), + nova, + banco | **Criar categoria**, **+ Nova categoria**, **+ Novo banco** |
+| Ligar dívidas / Ligar metas (sugestões) | **Acompanhar dívidas** / **Acompanhar metas** |
+| Cadastrar uma dívida / Cadastrar banco | **Adicionar dívida** / **Adicionar banco** |
+| Informe um valor maior que zero | **Digite um valor maior que zero** |
+| Exportar backup | **Baixar backup** |
+| 2-out, mar/27 | **2 de out**, **mar de 2027** |
+| JAN FEV MAR (barra de meses) | **Jan Fev Mar** |
+| Algo deu errado: … | **Não deu certo. Tente de novo.** Detalhe: … |
+
+### 5.3 Microcopy de exemplo
+
+**Estados vazios**
+- Mês sem lançamentos: "Nada lançado em outubro ainda. Comece pelo que entrou ou pelo que saiu."
+- Dívidas ligadas e vazias: "Tem parcela ou empréstimo? Adicione para ver quanto falta e quando acaba." (sem comemorar: numa conta nova "sem dívidas" não é conquista)
+- Todas as metas batidas: "Todas as metas batidas! 🎉"
+- Sem bancos: "Adicione seus bancos para ver quanto tem em cada um."
+- Sem metas: "Junte dinheiro para uma viagem, um carro ou uma reserva."
+- Sem gastos: "Quando você lançar saídas, aparece aqui em que você mais gasta."
+
+**Confirmações**
+- Excluir lançamento: "Excluir este lançamento?" com "Excluir" e "Cancelar".
+- Excluir dívida: "Excluir "Notebook" e todo o histórico dela?"
+- Importar planilha: "Encontrei 3 meses. Os dados desses meses no app serão substituídos pelos da planilha. Quer continuar?"
+- Lançamento salvo em sequência: "2 lançamentos salvos. Pode lançar o próximo."
+
+**Erros**
+- Campo: "Digite um valor maior que zero."
+- Rede: "Não deu certo. Tente de novo. Detalhe: …"
+- Login: "E-mail ou senha incorretos."
+
+**Dívida e atraso**
+- Dívida: "Você já pagou 42%. Faltam R$ 4.800 e a última parcela é em mar de 2027."
+- Atraso (conta): "Venceu dia 5 · R$ 120,00 · Pagar"
+- Mês no vermelho: "Saiu R$ 340,00 a mais do que entrou. Ver para onde foi."
+
+## 6. Menu
+
+Ordem dos itens (computador), por frequência e por pergunta respondida:
+
+1. **Início** (sempre)
+2. **Lançamentos** (sempre)
+3. **Contas do mês** [M contas] *(outro componente)*
+4. **Cartões** [M cartões] *(outro componente)*
+5. **Dívidas** [M dívidas]
+6. **Metas** [M metas]
+7. **Dinheiro guardado** [M bancos, investimentos ou outras moedas]
+8. **Resumo do ano** (equilibrado e detalhado)
+
+Justificativa: o que se usa todo dia primeiro (Início, Lançamentos); depois o que tem prazo, do mais próximo para o mais distante (contas, cartões, dívidas); depois o que se constrói (metas, dinheiro guardado); a retrospectiva por último, porque é a menos urgente.
+
+**Celular (barra de abas, no máximo 5)**: se houver até 5 páginas, aparecem todas. Com mais de 5, aparecem as **4 primeiras** da ordem acima e a quinta aba é **Mais**, que abre uma folha com as demais. A ordem do menu é também a prioridade das abas, então Dívidas e Contas ganham lugar antes de Resumo do ano. "Mais" fica ativa quando a página aberta está dentro dela. Configurações (Personalizar painel, Importar, Baixar backup, Sair) continuam no menu do topo.
+
+| Quem liga o quê | Abas |
+| --- | --- |
+| Nada ligado, simples | Início · Lançamentos |
+| Equilibrado, sem módulos | Início · Lançamentos · Resumo do ano |
+| Dívidas, metas e bancos, equilibrado | Início · Lançamentos · Dívidas · Metas · Mais (Dinheiro guardado, Resumo do ano) |
+| Tudo ligado | Início · Lançamentos · Contas do mês · Cartões · Mais (Dívidas, Metas, Dinheiro guardado, Resumo do ano) |

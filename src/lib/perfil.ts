@@ -7,9 +7,14 @@ export const MODULOS: { id: Modulo; nome: string; pergunta: string; descricao: s
     descricao: 'Quanto falta pagar e quando cada dívida acaba. Cada pagamento lançado abate sozinho.',
   },
   {
+    id: 'cartoes', nome: 'Cartão de crédito', icone: 'cartao',
+    pergunta: 'Uso cartão de crédito',
+    descricao: 'A fatura de cada cartão, quando fecha e vence, as compras parceladas e quanto do limite ainda dá para usar.',
+  },
+  {
     id: 'bancos', nome: 'Bancos e contas', icone: 'carteira',
     pergunta: 'Uso mais de um banco, conta ou carteira',
-    descricao: 'O que entra e sai de cada banco e quanto está guardado em cada um.',
+    descricao: 'O que entra e sai de cada banco e quanto você tem guardado em cada um.',
   },
   {
     id: 'investimentos', nome: 'Investimentos', icone: 'investir',
@@ -26,12 +31,17 @@ export const MODULOS: { id: Modulo; nome: string; pergunta: string; descricao: s
     pergunta: 'Quero juntar dinheiro para algo (viagem, reserva, carro…)',
     descricao: 'Quanto falta para cada objetivo, quanto guardar por mês e quando você chega lá.',
   },
+  {
+    id: 'contas', nome: 'Contas do mês', icone: 'calendario',
+    pergunta: 'Tenho contas que se repetem todo mês (aluguel, luz, internet…)',
+    descricao: 'O app lembra do vencimento, mostra o que está atrasado e dá baixa com um toque em "Paguei".',
+  },
 ]
 
 export const DETALHES: { id: Detalhe; nome: string; descricao: string }[] = [
-  { id: 'simples', nome: 'Simples', descricao: 'Só o essencial: quanto entrou, quanto saiu e quanto sobrou.' },
-  { id: 'equilibrado', nome: 'Equilibrado', descricao: 'O essencial, mais gráficos e a comparação com o mês anterior.' },
-  { id: 'detalhado', nome: 'Detalhado', descricao: 'Tudo: quadros no estilo planilha, tabela do ano e cada número.' },
+  { id: 'simples', nome: 'Simples', descricao: 'Quanto sobrou, quanto entrou e quanto saiu. Sem gráficos nem comparações.' },
+  { id: 'equilibrado', nome: 'Equilibrado', descricao: 'O simples, mais gráficos e a comparação com o mês passado.' },
+  { id: 'detalhado', nome: 'Detalhado', descricao: 'O equilibrado, mais todas as categorias, mais lançamentos e o ano mês a mês.' },
 ]
 
 export const PERFIL_PADRAO: Perfil = {
@@ -39,7 +49,7 @@ export const PERFIL_PADRAO: Perfil = {
   moeda: 'BRL',
   moedas: [],
   detalhe: 'equilibrado',
-  modulos: { dividas: false, bancos: false, investimentos: false, moedas: false, metas: false },
+  modulos: { dividas: false, contas: false, cartoes: false, bancos: false, investimentos: false, moedas: false, metas: false },
   dispensadas: [],
   onboarding_em: null,
 }
@@ -64,10 +74,12 @@ export function inferirPerfil(d: { lancs: Lancamento[]; dividas: Divida[]; banco
     detalhe: d.lancs.length || d.meses.length ? 'detalhado' : 'equilibrado',
     modulos: {
       dividas: d.dividas.length > 0,
+      cartoes: d.lancs.some((l) => Boolean(l.cartao_id)),
       bancos: d.bancos.length > 0,
       investimentos: d.meses.some((m) => m.investimentos !== 0),
       moedas: moedas.length > 0,
       metas: d.meses.some((m) => m.meta_usd > 0),
+      contas: d.lancs.some((l) => l.conta_fixa_id),
     },
     onboarding_em: new Date().toISOString(),
   }
@@ -78,15 +90,17 @@ export function visao(p: Perfil) {
   const nivel = { simples: 0, equilibrado: 1, detalhado: 2 }[p.detalhe]
   return {
     dividas: p.modulos.dividas,
+    cartoes: p.modulos.cartoes,
     bancos: p.modulos.bancos,
     investimentos: p.modulos.investimentos,
     moedas: p.modulos.moedas && p.moedas.length > 0,
     metas: p.modulos.metas,
+    contas: p.modulos.contas,
     /** Variação contra o mês anterior nos indicadores. */
     comparacao: nivel >= 1,
     graficoAno: nivel >= 1,
     paginaAno: nivel >= 1,
-    /** Quadros e tabelas no estilo da planilha. */
+    /** Todos os números: categorias completas, lançamentos do mês e mais indicadores. */
     planilha: nivel >= 2,
   }
 }
