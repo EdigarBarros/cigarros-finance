@@ -10,6 +10,13 @@ const fim = '(?![a-z0-9à-ú])'
 const PADRAO_DIVIDA = new RegExp(
   `\\b(parcela|presta[cç][aã]o|empr[eé]stimo|financiamento|consignado|acordo|carn[eê]|\\d{1,2}\\s*/\\s*\\d{1,2}|\\d{1,2}x)${fim}`, 'i',
 )
+// "10x" sozinho (compra parcelada) indica cartão; "parcela", "empréstimo"… indicam dívida.
+const PADRAO_DIVIDA_SEM_X = new RegExp(
+  `\\b(parcela|presta[cç][aã]o|empr[eé]stimo|financiamento|consignado|acordo|carn[eê]|\\d{1,2}\\s*/\\s*\\d{1,2})${fim}`, 'i',
+)
+// Palavras que sozinhas já indicam cartão; "Nubank" e "10x" só contam se se repetirem (muita gente usa o Nubank no débito).
+const CARTAO_EXPLICITO = new RegExp(`\\b(cart[aã]o|fatura|cr[eé]dito)${fim}`, 'i')
+const PADRAO_CARTAO = new RegExp(`\\b(cart[aã]o|fatura|cr[eé]dito|nubank|visa|mastercard|\\d{1,2}x)${fim}`, 'i')
 const PADRAO_INVESTIMENTO = new RegExp(
   `\\b(invest\\w*|cdb|tesouro|a[cç][oõ]es|fiis?|poupan[cç]a|aplica[cç][aã]o|aporte|cripto\\w*|bitcoin|btc|corretora|renda fixa|lci|lca|previd[eê]ncia)${fim}`, 'i',
 )
@@ -38,6 +45,9 @@ export function dicaDaDescricao(texto: string, p: Perfil, tipo: 'entrada' | 'sai
   if (!texto.trim()) return null
   if (!p.modulos.investimentos && PADRAO_INVESTIMENTO.test(texto)) {
     return { modulo: 'investimentos', texto: 'Isso parece investimento.', botao: 'Acompanhar meus investimentos' }
+  }
+  if (!p.modulos.cartoes && tipo === 'saida' && PADRAO_CARTAO.test(texto) && !PADRAO_DIVIDA_SEM_X.test(texto)) {
+    return { modulo: 'cartoes', texto: 'Foi no cartão de crédito?', botao: 'Acompanhar minhas faturas' }
   }
   if (!p.modulos.dividas && tipo === 'saida' && PADRAO_DIVIDA.test(texto)) {
     return { modulo: 'dividas', texto: 'Parece uma parcela ou dívida.', botao: 'Controlar o que falta pagar' }
@@ -70,6 +80,14 @@ export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number,
   const lista: Sugestao[] = []
   const conta = (re: RegExp) => lancs.filter((l) => re.test(l.descricao)).length
 
+  if (!p.modulos.cartoes && (conta(CARTAO_EXPLICITO) >= 1 || conta(PADRAO_CARTAO) >= 2)) {
+    lista.push({
+      id: 'modulo:cartoes', icone: 'cartao', botao: 'Ligar cartões',
+      titulo: 'Você usa cartão de crédito?',
+      texto: 'Veja a fatura de cada cartão, quando ela fecha e vence, as compras parceladas e quanto do limite ainda dá para usar.',
+      aplicar: ligar('cartoes'),
+    })
+  }
   if (!p.modulos.dividas && lancs.filter((l) => PADRAO_DIVIDA.test(l.descricao) || ehPagamentoDeDivida(l)).length >= 2) {
     lista.push({
       id: 'modulo:dividas', icone: 'divida', botao: 'Ligar dívidas',

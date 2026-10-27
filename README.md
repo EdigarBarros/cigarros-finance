@@ -19,6 +19,11 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
 - **Metas para qualquer objetivo**: viagem, carro, casa, estudos, reserva de emergência (o app sugere 6 meses dos seus
   gastos)… Cada meta tem valor, moeda e prazo opcional; você registra o que guarda ou retira e o app mostra quanto falta,
   quanto guardar por mês para chegar no prazo e, no seu ritmo, quando você chega lá
+- **Cartão de crédito**: cadastre cada cartão com o dia em que a fatura fecha, o dia em que vence e o limite. Ao lançar uma
+  saída, escolha "Como pagou?" e em quantas vezes: cada parcela cai na fatura certa (compra depois do fechamento vai para o
+  mês seguinte) e conta como saída no mês em que você de fato paga. A página Cartões mostra a fatura de cada mês com situação
+  (aberta, fechada, paga, venceu), as compras dela, as próximas 6 faturas, as compras parceladas em andamento ("3/10") e quanto
+  do limite ainda está livre. "Paguei a fatura" só marca como paga, sem contar o gasto duas vezes
 - **Visão geral**: saldo do mês em destaque, indicadores (entradas, saídas, caixa, dívida, investimentos, dólar)
   com comparação ao mês anterior, gráfico entradas × saídas do ano, para onde foi o dinheiro (por categoria),
   saídas por conta (Principal, Nubank, Inter), dívidas em aberto e meta em dólar
@@ -59,7 +64,8 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
 > [`migracao-02`](supabase/migracao-02-dividas-interligadas.sql), [`migracao-03`](supabase/migracao-03-bancos.sql) e
 > [`migracao-04-perfil-e-moedas`](supabase/migracao-04-perfil-e-moedas.sql) (perfil adaptável e outras moedas) e
 > [`migracao-05-categorias`](supabase/migracao-05-categorias.sql) (categorias editáveis; os lançamentos antigos passam para as
-> categorias novas) e [`migracao-06-metas`](supabase/migracao-06-metas.sql) (metas; a meta em dólar antiga vira uma meta).
+> categorias novas), [`migracao-06-metas`](supabase/migracao-06-metas.sql) (metas; a meta em dólar antiga vira uma meta) e
+> [`migracao-08-cartoes`](supabase/migracao-08-cartoes.sql) (cartões de crédito, faturas e compras parceladas).
 > Todas só acrescentam, não apagam nada.
 
 ### 3. Primeiro acesso

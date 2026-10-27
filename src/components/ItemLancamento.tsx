@@ -19,6 +19,7 @@ export function ItemLancamento({ l, banco, categoria, aoClicar, mostrarData = tr
             {banco && <><i className="marcador" style={{ background: banco.cor }} />{banco.nome} · </>}
             {c.nome}
             {l.divida_id && ' · abate dívida'}
+            {l.compra_id && (l.parcelas ?? 1) > 1 ? ` · parcela ${l.parcela}/${l.parcelas} no cartão` : l.cartao_id && ' · no cartão'}
           </span>
         </span>
         <span className={`item-valor ${entrada ? 'mais' : ''}`}>
