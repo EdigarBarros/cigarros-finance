@@ -1,6 +1,7 @@
-import type { Resumo } from '../lib/calc'
+import type { MesEfetivo, Resumo } from '../lib/calc'
+import type { SituacaoDivida } from '../lib/dividas'
 import type { Dados } from '../lib/useDados'
-import type { Divida, Lancamento, Mes, Tipo } from '../lib/types'
+import type { Lancamento, Tipo } from '../lib/types'
 
 export type Pagina = 'inicio' | 'lancamentos' | 'dividas' | 'patrimonio' | 'ano'
 
@@ -10,15 +11,19 @@ export interface Ctx {
   mes: number
   d: Dados
   lancsMes: Lancamento[]
-  dividasMes: Divida[]
-  metaMes?: Mes
+  /** Dívidas como estão neste mês (saldo calculado com os pagamentos). */
+  situacao: SituacaoDivida[]
+  /** Valores do mês, com caixa/US$ herdados do último mês informado. */
+  mesEf: MesEfetivo
   r: Resumo
   /** Resumo do mês anterior (só dentro do mesmo ano) para comparar. */
   anterior: Resumo | null
   porMes: (Resumo | null)[]
+  mobile: boolean
   irPara: (p: Pagina) => void
   irParaMes: (mes: number) => void
   novoLancamento: (tipo?: Tipo) => void
   editarLancamento: (l: Lancamento) => void
-  copiarMesAnterior: () => void
+  /** Abre o formulário de saída já ligado à dívida, com o valor da parcela. */
+  pagarDivida: (s: SituacaoDivida) => void
 }

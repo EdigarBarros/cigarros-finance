@@ -16,19 +16,28 @@ create table if not exists public.lancamentos (
 );
 create index if not exists lancamentos_user_periodo on public.lancamentos (user_id, ano, mes);
 
+-- Dívidas atravessam os meses. O saldo de cada mês é calculado:
+-- último saldo informado (divida_saldos) menos os pagamentos (saídas com divida_id) feitos depois dele.
 create table if not exists public.dividas (
-  id            uuid primary key default gen_random_uuid(),
-  user_id       uuid not null default auth.uid() references auth.users on delete cascade,
-  ano           smallint not null,
-  mes           smallint not null check (mes between 1 and 12),
-  descricao     text not null default '',
-  valor_mensal  numeric(12, 2) not null default 0,
-  parcelas      integer not null default 1,
-  pagas         integer not null default 0,
-  ordem         integer not null default 0,
-  created_at    timestamptz not null default now()
+  id             uuid primary key default gen_random_uuid(),
+  user_id        uuid not null default auth.uid() references auth.users on delete cascade,
+  descricao      text not null default '',
+  valor_parcela  numeric(12, 2),
+  created_at     timestamptz not null default now()
 );
-create index if not exists dividas_user_periodo on public.dividas (user_id, ano, mes);
+
+create table if not exists public.divida_saldos (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users on delete cascade,
+  divida_id   uuid not null references public.dividas on delete cascade,
+  data        date not null,
+  saldo       numeric(12, 2) not null,
+  created_at  timestamptz not null default now()
+);
+create index if not exists divida_saldos_divida on public.divida_saldos (divida_id, data);
+
+alter table public.lancamentos add column if not exists divida_id uuid references public.dividas on delete set null;
+create index if not exists lancamentos_divida on public.lancamentos (divida_id) where divida_id is not null;
 
 -- Valores digitados à mão em cada mês: investimentos, US$, meta de US$ e o quadro de caixa.
 create table if not exists public.meses (
@@ -46,6 +55,7 @@ create table if not exists public.meses (
 alter table public.lancamentos enable row level security;
 alter table public.dividas     enable row level security;
 alter table public.meses       enable row level security;
+alter table public.divida_saldos enable row level security;
 
 drop policy if exists "dono" on public.lancamentos;
 create policy "dono" on public.lancamentos for all to authenticated
@@ -57,4 +67,8 @@ create policy "dono" on public.dividas for all to authenticated
 
 drop policy if exists "dono" on public.meses;
 create policy "dono" on public.meses for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+
+drop policy if exists "dono" on public.divida_saldos;
+create policy "dono" on public.divida_saldos for all to authenticated
   using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));

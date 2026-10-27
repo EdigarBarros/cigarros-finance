@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { COR } from '../lib/charts'
-import { dataPadrao, paraCampo, parseNumero } from '../lib/format'
+import { dividaPelaDescricao, type SituacaoDivida } from '../lib/dividas'
+import { dataPadrao, fmtBRL, paraCampo, parseNumero } from '../lib/format'
 import { CATEGORIAS, CONTAS } from '../lib/rotulos'
 import type { Categoria, Conta, Divida, Lancamento, Tipo } from '../lib/types'
 import { Modal, Segmentado } from './ui'
@@ -11,22 +12,29 @@ interface FormLancProps {
   ano: number
   mes: number
   inicial?: Lancamento
+  /** Valores pré-preenchidos (ex.: pagamento de uma dívida). */
+  preset?: Partial<NovoLanc>
   tipoInicial?: Tipo
   /** Lançamentos já feitos, para sugerir descrição, conta e categoria. */
   historico: Lancamento[]
+  /** Dívidas em aberto, para ligar o pagamento. */
+  dividas: Divida[]
   aoSalvar: (l: NovoLanc, id?: string) => void
   aoExcluir?: (id: string) => void
   aoFechar: () => void
 }
 
-export function FormLancamento({ ano, mes, inicial, tipoInicial = 'saida', historico, aoSalvar, aoExcluir, aoFechar }: FormLancProps) {
-  const [tipo, setTipo] = useState<Tipo>(inicial?.tipo ?? tipoInicial)
-  const [valor, setValor] = useState(inicial ? paraCampo(inicial.valor) : '')
-  const [descricao, setDescricao] = useState(inicial?.descricao ?? '')
-  const [data, setData] = useState(inicial?.data ?? dataPadrao(ano, mes))
-  const [conta, setConta] = useState<Conta>(inicial?.conta ?? 'principal')
-  const [categoria, setCategoria] = useState<Categoria>(inicial?.categoria ?? 'outros')
-  const [mexeuCategoria, setMexeuCategoria] = useState(Boolean(inicial))
+export function FormLancamento(p: FormLancProps) {
+  const ini = { ...p.preset, ...p.inicial }
+  const [tipo, setTipo] = useState<Tipo>(ini.tipo ?? p.tipoInicial ?? 'saida')
+  const [valor, setValor] = useState(ini.valor ? paraCampo(ini.valor) : '')
+  const [descricao, setDescricao] = useState(ini.descricao ?? '')
+  const [data, setData] = useState(ini.data ?? dataPadrao(p.ano, p.mes))
+  const [conta, setConta] = useState<Conta>(ini.conta ?? 'principal')
+  const [categoria, setCategoria] = useState<Categoria>(ini.categoria ?? 'outros')
+  const [dividaId, setDividaId] = useState<string>(ini.divida_id ?? '')
+  const [mexeuCategoria, setMexeuCategoria] = useState(Boolean(p.inicial || p.preset))
+  const [mexeuDivida, setMexeuDivida] = useState(Boolean(p.inicial || p.preset))
   const [erro, setErro] = useState<string | null>(null)
   const [salvos, setSalvos] = useState(0)
   const campoValor = useRef<HTMLInputElement>(null)
@@ -34,20 +42,42 @@ export function FormLancamento({ ano, mes, inicial, tipoInicial = 'saida', histo
   // Última conta/categoria usada para cada descrição — "iFood" já vem como alimentação.
   const memoria = useMemo(() => {
     const m = new Map<string, Lancamento>()
-    for (const l of historico) if (l.descricao) m.set(chave(l.descricao), l)
+    for (const l of p.historico) if (l.descricao) m.set(chave(l.descricao), l)
     return m
-  }, [historico])
+  }, [p.historico])
   const sugestoes = useMemo(
-    () => [...new Set(historico.filter((l) => l.tipo === tipo).map((l) => l.descricao).filter(Boolean))].slice(-300),
-    [historico, tipo],
+    () => [...new Set(p.historico.filter((l) => l.tipo === tipo).map((l) => l.descricao).filter(Boolean))].slice(-300),
+    [p.historico, tipo],
   )
+  // A dívida ligada pode já ter sido quitada; continua na lista para não sumir da edição.
+  const opcoesDivida = useMemo(() => {
+    const extra = ini.divida_id && !p.dividas.some((d) => d.id === ini.divida_id) ? [{ id: ini.divida_id, descricao: 'Dívida quitada', valor_parcela: null }] : []
+    return [...p.dividas, ...extra]
+  }, [p.dividas, ini.divida_id])
 
-  const aoDigitarDescricao = (d: string) => {
-    setDescricao(d)
-    const anterior = memoria.get(chave(d))
+  const escolherDivida = (id: string) => {
+    setDividaId(id)
+    setMexeuDivida(true)
+    const d = opcoesDivida.find((x) => x.id === id)
+    if (d) {
+      setCategoria('divida')
+      if (!valor && d.valor_parcela) setValor(paraCampo(d.valor_parcela))
+      if (!descricao) setDescricao(`${d.descricao} – parcela`)
+    }
+  }
+
+  const aoDigitarDescricao = (texto: string) => {
+    setDescricao(texto)
+    const anterior = memoria.get(chave(texto))
     if (anterior && !mexeuCategoria && anterior.tipo === tipo) {
       setCategoria(anterior.categoria)
       setConta(anterior.conta)
+    }
+    // "Notebook – parcela" já se liga à dívida do notebook.
+    if (!mexeuDivida && tipo === 'saida') {
+      const d = dividaPelaDescricao(texto, p.dividas)
+      setDividaId(d?.id ?? '')
+      if (d && !mexeuCategoria) setCategoria('divida')
     }
   }
 
@@ -60,18 +90,23 @@ export function FormLancamento({ ano, mes, inicial, tipoInicial = 'saida', histo
     }
     if (!data) return setErro('Informe a data.')
     const [a, m] = data.split('-').map(Number)
-    aoSalvar(
+    const saida = tipo === 'saida'
+    const ligada = saida && categoria === 'divida' && dividaId ? dividaId : null
+    p.aoSalvar(
       {
         ano: a, mes: m, tipo, valor: n, descricao: descricao.trim(), data,
-        conta: tipo === 'saida' ? conta : 'principal',
-        categoria: tipo === 'saida' ? categoria : 'outros',
+        conta: saida ? conta : 'principal',
+        categoria: saida ? categoria : 'outros',
+        divida_id: ligada,
       },
-      inicial?.id,
+      p.inicial?.id,
     )
-    if (!continuar) return aoFechar()
+    if (!continuar) return p.aoFechar()
     setValor('')
     setDescricao('')
+    setDividaId('')
     setMexeuCategoria(false)
+    setMexeuDivida(false)
     setErro(null)
     setSalvos((s) => s + 1)
     campoValor.current?.focus()
@@ -80,7 +115,7 @@ export function FormLancamento({ ano, mes, inicial, tipoInicial = 'saida', histo
   const cor = tipo === 'entrada' ? COR.entradas : COR.saidas
 
   return (
-    <Modal titulo={inicial ? 'Editar lançamento' : 'Novo lançamento'} aoFechar={aoFechar}>
+    <Modal titulo={p.inicial ? 'Editar lançamento' : p.preset?.divida_id ? 'Pagamento de dívida' : 'Novo lançamento'} aoFechar={p.aoFechar}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); salvar(false) }}>
         <Segmentado
           rotulo="Tipo"
@@ -134,22 +169,34 @@ export function FormLancamento({ ano, mes, inicial, tipoInicial = 'saida', histo
                 opcoes={CATEGORIAS}
               />
             </div>
+            {categoria === 'divida' && opcoesDivida.length > 0 && (
+              <label className="campo">
+                <span className="campo-rotulo">Abate qual dívida?</span>
+                <select value={dividaId} onChange={(e) => escolherDivida(e.target.value)}>
+                  <option value="">Nenhuma (só conta como gasto com dívida)</option>
+                  {opcoesDivida.map((d) => (
+                    <option key={d.id} value={d.id}>{d.descricao}{d.valor_parcela ? ` · parcela ${fmtBRL(d.valor_parcela)}` : ''}</option>
+                  ))}
+                </select>
+                {dividaId && <span className="campo-ajuda">O saldo da dívida cai automaticamente com este pagamento.</span>}
+              </label>
+            )}
           </>
         )}
         {erro && <p className="form-erro">{erro}</p>}
         {salvos > 0 && !erro && <p className="form-ok">{salvos} lançamento{salvos > 1 ? 's' : ''} salvo{salvos > 1 ? 's' : ''}. Pode lançar o próximo.</p>}
         <div className="form-acoes">
-          {inicial && aoExcluir && (
+          {p.inicial && p.aoExcluir && (
             <button
               type="button"
               className="btn perigo"
-              onClick={() => { if (confirm('Excluir este lançamento?')) { aoExcluir(inicial.id); aoFechar() } }}
+              onClick={() => { if (confirm('Excluir este lançamento?')) { p.aoExcluir!(p.inicial!.id); p.aoFechar() } }}
             >
               Excluir
             </button>
           )}
           <span className="espaco" />
-          {!inicial && <button type="button" className="btn" onClick={() => salvar(true)}>Salvar e lançar outro</button>}
+          {!p.inicial && !p.preset && <button type="button" className="btn" onClick={() => salvar(true)}>Salvar e lançar outro</button>}
           <button type="submit" className="btn primario">Salvar</button>
         </div>
       </form>
@@ -162,60 +209,70 @@ const chave = (s: string) => s.trim().toLowerCase().replace(/\s+[–-]\s+\d+x$/,
 interface FormDividaProps {
   ano: number
   mes: number
-  inicial?: Divida
-  ordem: number
-  aoSalvar: (d: Omit<Divida, 'id'>, id?: string) => void
-  aoExcluir?: (id: string) => void
+  /** Ao editar: a dívida e como ela está no mês aberto. */
+  situacao?: SituacaoDivida
+  aoCriar: (d: { descricao: string; valor_parcela: number | null; saldo: number; data: string }) => void
+  aoEditar: (id: string, patch: Partial<Divida>) => void
+  aoNovoSaldo: (id: string, data: string, saldo: number) => void
+  aoExcluir: (id: string) => void
   aoFechar: () => void
 }
 
-export function FormDivida({ ano, mes, inicial, ordem, aoSalvar, aoExcluir, aoFechar }: FormDividaProps) {
-  const [descricao, setDescricao] = useState(inicial?.descricao ?? '')
-  const [valor, setValor] = useState(inicial ? paraCampo(inicial.valor_mensal) : '')
-  const [parcelas, setParcelas] = useState(String(inicial?.parcelas ?? 1))
-  const [pagas, setPagas] = useState(String(inicial?.pagas ?? 0))
+export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo, aoExcluir, aoFechar }: FormDividaProps) {
+  const d = situacao?.divida
+  const [descricao, setDescricao] = useState(d?.descricao ?? '')
+  const [parcela, setParcela] = useState(d?.valor_parcela ? paraCampo(d.valor_parcela) : '')
+  const [saldo, setSaldo] = useState('')
+  const [data, setData] = useState(dataPadrao(ano, mes))
   const [erro, setErro] = useState<string | null>(null)
 
   const salvar = () => {
-    const v = parseNumero(valor)
-    const p = Number(parcelas)
-    const pg = Number(pagas)
     if (!descricao.trim()) return setErro('Dê um nome para a dívida.')
-    if (!v || v <= 0) return setErro('Informe o valor de cada parcela.')
-    if (!Number.isInteger(p) || p < 1) return setErro('Parcelas precisa ser 1 ou mais.')
-    if (!Number.isInteger(pg) || pg < 0 || pg > p) return setErro('Pagas precisa estar entre 0 e o total de parcelas.')
-    aoSalvar({ ano, mes, descricao: descricao.trim(), valor_mensal: v, parcelas: p, pagas: pg, ordem: inicial?.ordem ?? ordem }, inicial?.id)
+    const vp = parcela.trim() ? parseNumero(parcela) : null
+    if (parcela.trim() && (!vp || vp <= 0)) return setErro('Valor da parcela inválido.')
+    const s = saldo.trim() ? parseNumero(saldo) : null
+    if (saldo.trim() && (s === null || s < 0)) return setErro('Saldo inválido.')
+    if (!d) {
+      if (s === null || s <= 0) return setErro('Informe quanto falta pagar.')
+      aoCriar({ descricao: descricao.trim(), valor_parcela: vp, saldo: s, data })
+    } else {
+      if (descricao.trim() !== d.descricao || vp !== d.valor_parcela) aoEditar(d.id, { descricao: descricao.trim(), valor_parcela: vp })
+      if (s !== null) aoNovoSaldo(d.id, data, s)
+    }
     aoFechar()
   }
 
   return (
-    <Modal titulo={inicial ? 'Editar dívida' : 'Nova dívida'} aoFechar={aoFechar}>
+    <Modal titulo={d ? 'Editar dívida' : 'Nova dívida'} aoFechar={aoFechar}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); salvar() }}>
         <label className="campo">
           <span className="campo-rotulo">Nome</span>
-          <input autoFocus value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex.: Notebook, cartão Nubank…" />
+          <input autoFocus={!d} value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex.: Notebook, cartão Nubank…" />
         </label>
         <label className="campo">
-          <span className="campo-rotulo">Valor de cada parcela (R$)</span>
-          <input inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0,00" />
+          <span className="campo-rotulo">Parcela mensal (opcional)</span>
+          <input inputMode="decimal" value={parcela} onChange={(e) => setParcela(e.target.value)} placeholder="0,00" />
+          <span className="campo-ajuda">Com a parcela, o app prevê quando a dívida acaba.</span>
         </label>
         <div className="form-linha">
           <label className="campo">
-            <span className="campo-rotulo">Total de parcelas</span>
-            <input type="number" min={1} value={parcelas} onChange={(e) => setParcelas(e.target.value)} />
+            <span className="campo-rotulo">{d ? 'Saldo devedor atualizado' : 'Quanto falta pagar'}</span>
+            <input inputMode="decimal" value={saldo} onChange={(e) => setSaldo(e.target.value)}
+              placeholder={d ? fmtBRL(situacao!.restante) : '0,00'} />
           </label>
           <label className="campo">
-            <span className="campo-rotulo">Já pagas</span>
-            <input type="number" min={0} value={pagas} onChange={(e) => setPagas(e.target.value)} />
+            <span className="campo-rotulo">Em qual data</span>
+            <input type="date" value={data} onChange={(e) => setData(e.target.value)} />
           </label>
         </div>
+        {d && <span className="campo-ajuda">Só preencha o saldo se o banco mudou o valor (juros, acordo). Pagamentos já abatem sozinhos.</span>}
         {erro && <p className="form-erro">{erro}</p>}
         <div className="form-acoes">
-          {inicial && aoExcluir && (
+          {d && (
             <button
               type="button"
               className="btn perigo"
-              onClick={() => { if (confirm(`Excluir "${inicial.descricao}"?`)) { aoExcluir(inicial.id); aoFechar() } }}
+              onClick={() => { if (confirm(`Excluir "${d.descricao}" e todo o histórico dela?`)) { aoExcluir(d.id); aoFechar() } }}
             >
               Excluir
             </button>

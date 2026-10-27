@@ -21,6 +21,7 @@ export function ItemLancamento({ l, aoClicar, mostrarData = true }: { l: Lancame
             {entrada ? 'Entrada' : (
               <>
                 {NOME_CONTA[l.conta]} · <i className="marcador" style={{ background: corCategoria[l.categoria] }} />{NOME_CATEGORIA[l.categoria]}
+                {l.divida_id && ' · abate dívida'}
               </>
             )}
           </span>

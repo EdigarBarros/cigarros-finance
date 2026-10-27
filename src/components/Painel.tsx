@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { resumoMes, totalCaixa } from '../lib/calc'
+import { mesEfetivo, resumoMes } from '../lib/calc'
+import { situacaoDividas, type SituacaoDivida } from '../lib/dividas'
 import { MESES_NOME } from '../lib/format'
 import { supabase } from '../lib/supabase'
 import type { Lancamento, Tipo } from '../lib/types'
+import { useMobile } from '../lib/useMobile'
 import { useDados } from '../lib/useDados'
 import { Ano } from '../pages/Ano'
 import type { Ctx, Pagina } from '../pages/contexto'
@@ -32,11 +34,12 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const [pagina, setPagina] = useState<Pagina>(paginaDoHash)
   const [ano, setAno] = useState(hoje.getFullYear())
   const [mes, setMes] = useState(hoje.getMonth() + 1)
-  const [form, setForm] = useState<{ inicial?: Lancamento; tipo?: Tipo } | null>(null)
+  const [form, setForm] = useState<{ inicial?: Lancamento; tipo?: Tipo; preset?: Partial<Lancamento> } | null>(null)
   const [menu, setMenu] = useState(false)
   const [ocupado, setOcupado] = useState<string | null>(null)
   const arquivo = useRef<HTMLInputElement>(null)
   const d = useDados(userId, ano)
+  const mobile = useMobile()
 
   useEffect(() => {
     const aoMudar = () => setPagina(paginaDoHash())
@@ -56,22 +59,25 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     window.scrollTo({ top: 0 })
   }
 
-  const porMes = useMemo(
-    () =>
-      MESES_NOME.map((_, i) => {
-        const m = i + 1
-        const l = d.lancs.filter((x) => x.mes === m)
-        const dv = d.dividas.filter((x) => x.mes === m)
-        const meta = d.meses.find((x) => x.mes === m)
-        const vazio = !l.length && !dv.length && !totalCaixa(meta) && !meta?.investimentos && !meta?.usd
-        return vazio ? null : resumoMes(l, dv, meta)
-      }),
-    [d.lancs, d.dividas, d.meses],
-  )
+  // Cada mês é calculado com dívidas e caixa contínuos: nada precisa ser copiado à mão.
+  const porMesCompleto = useMemo(() => {
+    const agora = hoje.getFullYear() * 12 + hoje.getMonth() + 1
+    return MESES_NOME.map((_, i) => {
+      const m = i + 1
+      const l = d.lancs.filter((x) => x.mes === m)
+      const sit = situacaoDividas(d.dividas, d.saldos, d.pagamentos, ano, m)
+      const ef = mesEfetivo(d.meses, ano, m)
+      const temProprio = d.meses.some((x) => x.ano === ano && x.mes === m)
+      // Meses futuros sem lançamentos ficam em branco, como na planilha.
+      const vazio = !l.length && !temProprio && (ano * 12 + m > agora || (!sit.length && !ef.herdadoDe))
+      return { sit, ef, resumo: vazio ? null : resumoMes(l, sit, ef) }
+    })
+  }, [d.lancs, d.dividas, d.saldos, d.pagamentos, d.meses, ano])
+  const porMes = porMesCompleto.map((x) => x.resumo)
 
   const lancsMes = d.lancs.filter((l) => l.mes === mes)
-  const dividasMes = d.dividas.filter((x) => x.mes === mes)
-  const metaMes = d.meses.find((x) => x.mes === mes)
+  const { sit: situacao, ef: mesEf } = porMesCompleto[mes - 1]
+  const dividasAbertas = situacao.filter((s) => s.restante > 0).map((s) => s.divida)
 
   const mudarMes = (delta: number) => {
     let [a, m] = [ano, mes + delta]
@@ -109,15 +115,24 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
       setMes(ultimo.mes)
     })
 
+  const pagarDivida = (s: SituacaoDivida) =>
+    setForm({
+      preset: {
+        tipo: 'saida', categoria: 'divida', divida_id: s.divida.id,
+        descricao: `${s.divida.descricao} – parcela`,
+        valor: Math.min(s.divida.valor_parcela ?? s.restante, s.restante),
+      },
+    })
+
   const ctx: Ctx = {
-    ano, mes, d, lancsMes, dividasMes, metaMes, porMes,
-    r: resumoMes(lancsMes, dividasMes, metaMes),
+    ano, mes, d, lancsMes, situacao, mesEf, porMes, mobile,
+    r: resumoMes(lancsMes, situacao, mesEf),
     anterior: mes > 1 ? porMes[mes - 2] : null,
     irPara,
     irParaMes: setMes,
     novoLancamento: (tipo) => setForm({ tipo }),
     editarLancamento: (l) => setForm({ inicial: l }),
-    copiarMesAnterior: () => tarefa('Copiando…', () => d.copiarMesAnterior(mes)),
+    pagarDivida,
   }
 
   return (
@@ -204,12 +219,14 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
 
       {form && (
         <FormLancamento
-          key={form.inicial?.id ?? 'novo'}
+          key={form.inicial?.id ?? form.preset?.divida_id ?? 'novo'}
           ano={ano}
           mes={mes}
           inicial={form.inicial}
           tipoInicial={form.tipo}
+          preset={form.preset}
           historico={d.lancs}
+          dividas={dividasAbertas}
           aoSalvar={(l, id) => (id ? d.updLanc(id, l) : d.addLanc(l))}
           aoExcluir={d.delLanc}
           aoFechar={() => setForm(null)}

@@ -1,64 +1,74 @@
 import { useState } from 'react'
-import { restantes, totalDivida } from '../lib/calc'
 import { COR } from '../lib/charts'
-import { fmtBRL } from '../lib/format'
-import type { Divida } from '../lib/types'
+import type { SituacaoDivida } from '../lib/dividas'
+import { fmtBRL, fmtDataCurta, MESES_NOME } from '../lib/format'
 import { FormDivida } from '../components/Formularios'
 import { Icone } from '../components/Icone'
 import { Cartao, Kpi, Progresso, Vazio } from '../components/ui'
 import type { Ctx } from './contexto'
 
 export function Dividas(c: Ctx) {
-  const [editando, setEditando] = useState<Divida | 'nova' | null>(null)
-  const abertas = c.dividasMes.filter((d) => restantes(d) > 0)
-  const quitadas = c.dividasMes.filter((d) => restantes(d) <= 0)
-  const mensal = abertas.reduce((a, d) => a + d.valor_mensal, 0)
-
-  const salvar = (d: Omit<Divida, 'id'>, id?: string) => (id ? c.d.updDivida(id, d) : c.d.addDivida(d))
+  const [editando, setEditando] = useState<SituacaoDivida | 'nova' | null>(null)
+  const pagoNoMes = c.situacao.reduce((a, s) => a + s.pagoNoMes, 0)
+  // Só dá para prever o fim se toda dívida em aberto tiver parcela definida.
+  const semParcela = c.situacao.some((s) => s.restante > 0 && !s.quitacao)
+  const ultimaQuitacao = semParcela ? undefined : c.situacao
+    .map((s) => s.quitacao)
+    .filter((q): q is [number, number] => q !== null)
+    .sort((a, b) => b[0] * 12 + b[1] - (a[0] * 12 + a[1]))[0]
 
   return (
     <div className="pagina">
       <header className="pagina-topo">
         <div>
           <h1>Dívidas</h1>
-          <p className="sub">Situação das dívidas neste mês</p>
+          <p className="sub">Saldos em {MESES_NOME[c.mes - 1].toLowerCase()}/{c.ano}. Cada pagamento lançado abate sozinho.</p>
         </div>
         <button className="btn primario" onClick={() => setEditando('nova')}><Icone nome="mais" tamanho={16} /> Nova dívida</button>
       </header>
 
       <div className="kpis">
-        <Kpi rotulo="Total a pagar" valor={fmtBRL(c.r.divida)} cor={COR.divida} />
-        <Kpi rotulo="Parcelas por mês" valor={fmtBRL(mensal)} cor={COR.saidas} />
-        <Kpi rotulo="Pago em dívidas no mês" valor={fmtBRL(c.r.metricas.divida)} cor={COR.entradas} />
+        <Kpi rotulo="Total devendo" valor={fmtBRL(c.r.divida)} cor={COR.divida} delta={c.anterior ? (c.anterior.divida ? (c.r.divida - c.anterior.divida) / c.anterior.divida : null) : null} menorMelhor />
+        <Kpi rotulo="Pago em dívidas no mês" valor={fmtBRL(pagoNoMes)} cor={COR.entradas} />
+        <Kpi rotulo="Parcelas por mês" valor={fmtBRL(c.r.parcelasMensais)} cor={COR.saidas} />
+        <Kpi rotulo="Livre de dívidas em" valor={ultimaQuitacao ? `${MESES_NOME[ultimaQuitacao[1] - 1]}/${ultimaQuitacao[0]}` : c.r.divida > 0 ? 'Defina as parcelas' : 'Já está! 🎉'} cor={COR.caixa} />
       </div>
 
-      {!c.dividasMes.length ? (
-        <Cartao>
-          <Vazio>
-            Nenhuma dívida cadastrada neste mês.<br />
-            <button className="link" onClick={c.copiarMesAnterior}><Icone nome="copiar" tamanho={14} /> Trazer dívidas e caixa do mês anterior</button>
-          </Vazio>
-        </Cartao>
+      {!c.situacao.length ? (
+        <Cartao><Vazio>Nenhuma dívida em aberto neste mês. 🎉</Vazio></Cartao>
       ) : (
         <div className="grade-cartoes">
-          {[...abertas, ...quitadas].map((d) => {
-            const resta = restantes(d)
+          {c.situacao.map((s) => {
+            const pagamentos = c.d.pagamentos
+              .filter((p) => p.divida_id === s.divida.id && p.data)
+              .sort((a, b) => b.data!.localeCompare(a.data!))
+              .slice(0, 4)
             return (
-              <Cartao key={d.id} className={resta <= 0 ? 'quitada' : ''}>
+              <Cartao key={s.divida.id} className={s.quitadaNoMes ? 'quitada' : ''}>
                 <div className="divida">
                   <div className="divida-topo">
-                    <h3>{d.descricao}</h3>
-                    <button className="link" onClick={() => setEditando(d)}>Editar</button>
+                    <h3>{s.divida.descricao}</h3>
+                    <button className="link" onClick={() => setEditando(s)}>Editar</button>
                   </div>
-                  <strong className="divida-total">{resta > 0 ? fmtBRL(totalDivida(d)) : 'Quitada ✓'}</strong>
-                  <Progresso valor={d.pagas} total={d.parcelas} cor={resta > 0 ? COR.divida : COR.entradas} />
+                  <strong className="divida-total">{s.quitadaNoMes ? 'Quitada ✓' : fmtBRL(s.restante)}</strong>
+                  <Progresso valor={s.saldoInicial - s.restante} total={s.saldoInicial} cor={s.quitadaNoMes ? COR.entradas : COR.divida} />
                   <div className="divida-info">
-                    <span>{d.pagas} de {d.parcelas} parcelas</span>
-                    <span>{fmtBRL(d.valor_mensal)}/mês</span>
+                    <span>{Math.round(((s.saldoInicial - s.restante) / (s.saldoInicial || 1)) * 100)}% pago de {fmtBRL(s.saldoInicial)}</span>
+                    {s.divida.valor_parcela ? <span>{fmtBRL(s.divida.valor_parcela)}/mês</span> : null}
                   </div>
-                  {resta > 0 && (
-                    <button className="btn" onClick={() => c.d.updDivida(d.id, { pagas: d.pagas + 1 })}>
-                      <Icone nome="check" tamanho={16} /> Paguei uma parcela
+                  {s.quitacao && (
+                    <p className="divida-previsao">
+                      Acaba em <b>{MESES_NOME[s.quitacao[1] - 1].toLowerCase()}/{s.quitacao[0]}</b> ({s.mesesRestantes} {s.mesesRestantes === 1 ? 'parcela' : 'parcelas'})
+                    </p>
+                  )}
+                  {pagamentos.length > 0 && (
+                    <ul className="divida-pagamentos">
+                      {pagamentos.map((p) => <li key={p.id}><span>{fmtDataCurta(p.data)}</span><span>− {fmtBRL(p.valor)}</span></li>)}
+                    </ul>
+                  )}
+                  {!s.quitadaNoMes && (
+                    <button className="btn" onClick={() => c.pagarDivida(s)}>
+                      <Icone nome="check" tamanho={16} /> Registrar pagamento
                     </button>
                   )}
                 </div>
@@ -72,9 +82,10 @@ export function Dividas(c: Ctx) {
         <FormDivida
           ano={c.ano}
           mes={c.mes}
-          ordem={c.dividasMes.length}
-          inicial={editando === 'nova' ? undefined : editando}
-          aoSalvar={salvar}
+          situacao={editando === 'nova' ? undefined : editando}
+          aoCriar={c.d.addDivida}
+          aoEditar={c.d.updDivida}
+          aoNovoSaldo={c.d.addSaldo}
           aoExcluir={c.d.delDivida}
           aoFechar={() => setEditando(null)}
         />

@@ -8,12 +8,15 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   saídas por conta (Principal, Nubank, Inter), dívidas em aberto e meta em dólar
 - **Lançamentos**: lista por dia com busca e filtros; formulário rápido com "salvar e lançar outro",
   sugestão de descrição e categoria automática pelo histórico (digitou "iFood", já vem Alimentação)
-- **Dívidas**: cartões com progresso das parcelas e botão "Paguei uma parcela"
-- **Patrimônio**: caixa por banco (conta corrente, caixinha, reserva), investimentos e meta em dólar
+- **Dívidas interligadas**: cada dívida existe ao longo dos meses. Ao lançar uma saída de dívida, você escolhe
+  qual dívida ela abate (ou o app reconhece pela descrição) e o saldo cai sozinho em todos os meses seguintes.
+  Com a parcela definida, o app prevê quando a dívida acaba. Juros ou acordo? Basta informar o saldo novo
+- **Patrimônio**: caixa por banco (conta corrente, caixinha, reserva), investimentos e dólar. Caixa, US$ e meta
+  passam automaticamente para os meses seguintes até você atualizar — nada de copiar mês anterior
 - **Ano**: totais do ano, gráficos de saldo e evolução de caixa, dívida, investimentos e dólar, tabela mês a mês
 - **Importar planilha (.xlsx)** com os meses e categorias da planilha antiga; **exportar backup (.xlsx)**
-- Botão para trazer dívidas e caixa do mês anterior; valores aceitam `1.234,56` e contas como `=105,53-60,02`
-- Funciona no celular (navegação inferior e botão + para lançar)
+- Valores aceitam `1.234,56` e contas como `=105,53-60,02`
+- Celular em modo leitura: resumo, gráficos e listas recolhidas; editar continua a um toque (botão + e tocando nos itens)
 
 Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase** (Postgres), protegidos por login.
 

@@ -1,17 +1,19 @@
 import * as XLSX from 'xlsx'
 import { MESES, parseNumero } from './format'
 import { supabase } from './supabase'
-import type { Caixa, Categoria, Conta, Divida, Lancamento, Mes } from './types'
+import { inicioDoMes } from './dividas'
+import type { Caixa, Categoria, Conta, Lancamento, Mes } from './types'
 import { BANCOS, TIPOS_CAIXA } from './types'
 
 type NovoLanc = Omit<Lancamento, 'id'>
-type NovaDivida = Omit<Divida, 'id'>
+/** Uma linha do quadro DÍVIDAS de uma aba. */
+interface LinhaDivida { descricao: string; valor_mensal: number; parcelas: number; pagas: number }
 
 export interface MesImportado {
   ano: number
   mes: number
   lancs: NovoLanc[]
-  dividas: NovaDivida[]
+  dividas: LinhaDivida[]
   meta: Mes
 }
 
@@ -99,15 +101,12 @@ export async function lerPlanilha(arquivo: File): Promise<MesImportado[]> {
       }
     }
 
-    const dividas: NovaDivida[] = []
+    const dividas: LinhaDivida[] = []
     for (let r = 37; r <= 47; r++) {
       const desc = valorCelula(ws, `Q${r}`)
       const valor = numero(ws, `S${r}`)
       if (!desc && !valor) continue
-      dividas.push({
-        ano, mes, descricao: String(desc ?? ''), valor_mensal: valor,
-        parcelas: numero(ws, `T${r}`), pagas: numero(ws, `U${r}`), ordem: r,
-      })
+      dividas.push({ descricao: String(desc ?? ''), valor_mensal: valor, parcelas: numero(ws, `T${r}`), pagas: numero(ws, `U${r}`) })
     }
 
     const caixa: Caixa = {}
@@ -130,25 +129,80 @@ export async function lerPlanilha(arquivo: File): Promise<MesImportado[]> {
   return resultado
 }
 
-/** Substitui no banco os meses que vieram na planilha. */
+/** "Cartão Nubank – saldo em atraso" e "Cartão Nubank – fatura vencida" são a mesma dívida. */
+const nomeBase = (descricao: string) => descricao.split(/\s+[–-]\s+/)[0].trim()
+const chaveDivida = (descricao: string) => nomeBase(descricao).toLowerCase()
+
+interface DividaImportada {
+  descricao: string
+  valor_parcela: number | null
+  saldos: { data: string; saldo: number }[]
+}
+
+/**
+ * Na planilha cada aba tem uma cópia do quadro de dívidas. Aqui elas viram uma dívida só,
+ * com o saldo de cada mês registrado; quando some da aba seguinte, ela foi quitada.
+ * O saldo é datado no dia 1º para que pagamentos lançados depois, no próprio app, abatam dele
+ * (os pagamentos que vieram da planilha não ficam ligados à dívida, então não contam duas vezes).
+ */
+export function juntarDividas(meses: MesImportado[]): DividaImportada[] {
+  const ordenados = [...meses].sort((a, b) => a.ano * 12 + a.mes - (b.ano * 12 + b.mes))
+  const mapa = new Map<string, DividaImportada & { ultimo: number }>()
+  ordenados.forEach((m, idx) => {
+    for (const linha of m.dividas) {
+      const k = chaveDivida(linha.descricao)
+      if (!k) continue
+      const restantes = Math.max(0, linha.parcelas - linha.pagas)
+      const saldo = Math.round(restantes * linha.valor_mensal * 100) / 100
+      const atual = mapa.get(k) ?? { descricao: nomeBase(linha.descricao), valor_parcela: null, saldos: [], ultimo: -1 }
+      // vale a parcela do mês mais recente (acordos mudam); dívida de parcela única não tem parcela fixa
+      atual.valor_parcela = linha.parcelas > 1 ? linha.valor_mensal : null
+      atual.saldos.push({ data: inicioDoMes(m.ano, m.mes), saldo })
+      atual.ultimo = idx
+      mapa.set(k, atual)
+    }
+  })
+  for (const d of mapa.values()) {
+    const seguinte = ordenados[d.ultimo + 1]
+    const ultimoSaldo = d.saldos[d.saldos.length - 1]?.saldo ?? 0
+    if (seguinte && ultimoSaldo > 0) d.saldos.push({ data: inicioDoMes(seguinte.ano, seguinte.mes), saldo: 0 })
+  }
+  return [...mapa.values()].map(({ descricao, valor_parcela, saldos }) => ({ descricao, valor_parcela, saldos }))
+}
+
+/** Substitui no banco os meses que vieram na planilha (e as dívidas com o mesmo nome). */
 export async function gravarImportacao(userId: string, meses: MesImportado[]) {
   for (const m of meses) {
-    for (const tabela of ['lancamentos', 'dividas'] as const) {
-      const { error } = await supabase.from(tabela).delete().eq('ano', m.ano).eq('mes', m.mes)
-      if (error) throw error
-    }
+    const { error: e1 } = await supabase.from('lancamentos').delete().eq('ano', m.ano).eq('mes', m.mes)
+    if (e1) throw e1
     if (m.lancs.length) {
       const { error } = await supabase.from('lancamentos').insert(m.lancs)
-      if (error) throw error
-    }
-    if (m.dividas.length) {
-      const { error } = await supabase.from('dividas').insert(m.dividas)
       if (error) throw error
     }
     const { error } = await supabase
       .from('meses')
       .upsert({ ...m.meta, user_id: userId }, { onConflict: 'user_id,ano,mes' })
     if (error) throw error
+  }
+
+  const novas = juntarDividas(meses)
+  if (!novas.length) return
+  const { data: existentes, error: e2 } = await supabase.from('dividas').select('id, descricao')
+  if (e2) throw e2
+  const repetidas = (existentes as { id: string; descricao: string }[])
+    .filter((x) => novas.some((n) => chaveDivida(n.descricao) === chaveDivida(x.descricao)))
+    .map((x) => x.id)
+  if (repetidas.length) {
+    const { error } = await supabase.from('dividas').delete().in('id', repetidas)
+    if (error) throw error
+  }
+  for (const n of novas) {
+    const { data, error } = await supabase
+      .from('dividas').insert({ descricao: n.descricao, valor_parcela: n.valor_parcela }).select('id').single()
+    if (error) throw error
+    const id = (data as { id: string }).id
+    const { error: e3 } = await supabase.from('divida_saldos').insert(n.saldos.map((s) => ({ ...s, divida_id: id })))
+    if (e3) throw e3
   }
 }
 
@@ -164,16 +218,27 @@ async function buscarTudo<T>(tabela: string): Promise<T[]> {
 
 /** Backup completo em .xlsx, uma aba por tabela. */
 export async function exportarBackup() {
-  const [lancs, dividas, meses] = await Promise.all([
+  const [lancs, dividas, saldos, meses] = await Promise.all([
     buscarTudo<Lancamento>('lancamentos'),
-    buscarTudo<Divida>('dividas'),
+    buscarTudo<{ id: string; descricao: string; valor_parcela: number | null }>('dividas'),
+    buscarTudo<{ divida_id: string; data: string; saldo: number }>('divida_saldos'),
     buscarTudo<Mes>('meses'),
   ])
+  const nomeDivida = new Map(dividas.map((d) => [d.id, d.descricao]))
   const wb = XLSX.utils.book_new()
   const semIds = <T extends object>(xs: T[]) =>
     xs.map((x) => Object.fromEntries(Object.entries(x).filter(([k]) => !['id', 'user_id', 'created_at'].includes(k))))
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(semIds(lancs)), 'Lançamentos')
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.json_to_sheet(semIds(lancs).map(({ divida_id, ...l }) => ({ ...l, divida: divida_id ? nomeDivida.get(String(divida_id)) : '' }))),
+    'Lançamentos',
+  )
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(semIds(dividas)), 'Dívidas')
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.json_to_sheet(saldos.map((s) => ({ divida: nomeDivida.get(s.divida_id), data: s.data, saldo: s.saldo }))),
+    'Saldos das dívidas',
+  )
   XLSX.utils.book_append_sheet(
     wb,
     XLSX.utils.json_to_sheet(semIds(meses).map((m) => ({ ...m, caixa: JSON.stringify(m.caixa) }))),

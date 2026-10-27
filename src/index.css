@@ -222,6 +222,38 @@ code { background: var(--cartao-2); padding: 1px 5px; border-radius: 4px; font-s
 .form-acoes { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 4px; }
 .espaco { flex: 1; }
 
+
+/* ---------- interligado: dívidas, herança de caixa ---------- */
+.quadro-ver { width: 100%; border: 0; background: none; color: #8db8ff; font-weight: 600; padding: 10px; }
+.bloco-cab { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: #2b2b35; font-weight: 800; font-size: 12px; letter-spacing: .04em; }
+.bloco-cab strong { margin-left: auto; font-size: 14px; letter-spacing: 0; }
+.lista-dividas .bloco-cab span { color: var(--divida); }
+.divida-linha { display: flex; align-items: center; gap: 10px; padding: 4px 14px 4px 0; border-bottom: 1px solid #ffffff08; }
+.divida-linha:last-child { border-bottom: 0; }
+.divida-linha-info { flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; padding: 10px 0 10px 14px; border: 0; background: none; text-align: left; }
+.divida-linha-info .progresso { grid-column: 1 / -1; height: 6px; }
+.divida-linha-nome { font-weight: 700; color: var(--divida); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.divida-linha-valor { font-weight: 800; font-variant-numeric: tabular-nums; }
+.divida-linha-sub { grid-column: 1 / -1; font-size: 12px; color: var(--texto-3); }
+.divida-linha.quitada .divida-linha-nome { color: var(--texto-3); text-decoration: line-through; }
+.pagar { border: 0; background: #ffc00022; color: var(--divida); font-weight: 800; font-size: 12px; border-radius: 8px; padding: 6px 10px; flex: none; }
+.pagar:hover { background: #ffc00038; }
+.caixa-bancos { display: grid; grid-template-columns: repeat(3, 1fr); }
+.caixa-bancos button { display: grid; gap: 4px; padding: 12px 14px; border: 0; background: none; text-align: left; }
+.caixa-bancos button + button { border-left: 1px solid var(--borda); }
+.caixa-bancos span { font-size: 12px; color: var(--texto-2); display: flex; align-items: center; }
+.caixa-bancos strong { font-variant-numeric: tabular-nums; font-size: 14px; }
+.aviso-herdado { margin: 0; padding: 8px 14px 6px; font-size: 12px; color: var(--texto-3); }
+.faixa-herdado { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border-radius: var(--raio); background: #0b2a3d; border: 1px solid #12425f; color: #bfe6ff; }
+.campo select { height: 42px; padding: 0 10px; background: var(--fundo); border: 1px solid var(--borda); border-radius: 10px; }
+.campo-ajuda { font-size: 12px; color: var(--texto-3); }
+.divida-previsao { margin: 0; font-size: 13px; color: var(--texto-2); }
+.divida-previsao b { color: var(--texto); }
+.divida-pagamentos { list-style: none; margin: 0; padding: 8px 0 0; border-top: 1px solid var(--borda); display: grid; gap: 4px; font-size: 12px; color: var(--texto-2); }
+.divida-pagamentos li { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
+.divida-pagamentos li span:last-child { color: var(--entrada); }
+.tabela-dividas tr.quitada td:nth-child(4) { text-decoration: none; }
+
 /* ---------- responsivo ---------- */
 /* ---------- abas de meses ---------- */
 .barra { flex-wrap: wrap; }
@@ -322,9 +354,23 @@ code { background: var(--cartao-2); padding: 1px 5px; border-radius: 4px; font-s
   .so-desktop { display: none; }
   .grade-dash { grid-template-columns: minmax(0, 1fr); }
   .grade-dash .largo { grid-column: auto; }
-  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .kpi-valor { font-size: 17px; }
-  .hero-valor { font-size: 32px; }
+  .pagina { gap: 14px; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .kpi { padding: 11px 12px; gap: 3px; border-radius: 12px; }
+  .kpi-rotulo { font-size: 12px; }
+  .kpi-valor { font-size: 16px; }
+  .kpi-delta { font-size: 11px; }
+  .hero { padding: 16px; }
+  .hero-valor { font-size: 34px; }
+  .hero-sub { font-size: 13px; }
+  .cartao { padding: 14px; }
+  .pilha > .segmentado { display: grid; grid-template-columns: 1fr 1fr; }
+  .pilha > .segmentado button { justify-content: center; font-size: 12px; padding: 0 6px; }
+  .quadro-corpo { max-height: none; }
+  .bloco-titulo { font-size: 13px; }
+  .tabela-anual { font-size: 12px; }
+  .tabela-anual th, .tabela-anual td { padding: 8px 8px; }
+  .faixa-herdado { font-size: 13px; }
   .hero-acoes { width: 100%; }
   .hero-acoes .btn { flex: 1; }
   .fab { display: grid; place-items: center; position: fixed; right: 18px; bottom: 80px; z-index: 20; width: 56px; height: 56px; border-radius: 18px; border: 0; background: var(--texto); color: #0b0b0f; box-shadow: 0 8px 24px #000c; }

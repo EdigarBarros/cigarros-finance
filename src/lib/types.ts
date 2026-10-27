@@ -12,18 +12,32 @@ export interface Lancamento {
   data: string | null
   conta: Conta
   categoria: Categoria
+  /** Quando a saída é pagamento de uma dívida. */
+  divida_id?: string | null
   created_at?: string
 }
 
+/** Uma dívida existe ao longo dos meses; o saldo vem de divida_saldos e dos pagamentos. */
 export interface Divida {
   id: string
-  ano: number
-  mes: number
   descricao: string
-  valor_mensal: number
-  parcelas: number
-  pagas: number
-  ordem: number
+  valor_parcela: number | null
+}
+
+/** "Em tal data, o saldo devedor era X" (informado por você ou vindo da planilha). */
+export interface SaldoDivida {
+  id: string
+  divida_id: string
+  data: string
+  saldo: number
+}
+
+/** Saída ligada a uma dívida (de qualquer ano). */
+export interface Pagamento {
+  id: string
+  divida_id: string
+  data: string | null
+  valor: number
 }
 
 export type Banco = 'nubank' | 'inter' | 'itau'

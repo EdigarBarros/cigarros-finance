@@ -10,18 +10,22 @@ const eixoReais = {
   border: { display: false },
 }
 
+const milhar = (n: number) => (Math.abs(n) >= 1000 ? `${(n / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil` : String(n))
+
 /** O gráfico da planilha: barras de entradas × saídas e linhas de caixa, dívida, investimentos e US$. */
-export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 360 }: {
+export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 360, compacto }: {
   porMes: (Resumo | null)[]; mesAtual: number; aoClicarMes?: (m: number) => void; altura?: number
+  /** Celular: eixo em "mil", legenda menor e barras mais finas. */
+  compacto?: boolean
 }) {
   const serie = (f: (r: Resumo) => number) => porMes.map((r) => (r ? f(r) : 0))
   const linha = (label: string, cor: string, f: (r: Resumo) => number) => ({
     type: 'line' as const, label, data: serie(f), borderColor: cor, backgroundColor: cor,
-    borderWidth: 3, pointRadius: 0, pointHoverRadius: 5, tension: 0, order: 0,
+    borderWidth: compacto ? 2 : 3, pointRadius: 0, pointHoverRadius: 5, tension: 0, order: 0,
   })
   const barra = (label: string, cor: string, f: (r: Resumo) => number) => ({
     type: 'bar' as const, label, data: serie(f), backgroundColor: cor,
-    borderRadius: 3, maxBarThickness: 16, categoryPercentage: 0.55, order: 1,
+    borderRadius: 3, maxBarThickness: compacto ? 7 : 16, categoryPercentage: compacto ? 0.7 : 0.55, order: 1,
   })
   return (
     <div className="grafico" style={{ height: altura }}>
@@ -43,7 +47,7 @@ export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 360 }: {
           interaction: { mode: 'index', intersect: false },
           onClick: (_e, els) => els[0] && aoClicarMes?.(els[0].index + 1),
           plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: 22, boxHeight: 8, padding: 16, font: { size: 11, weight: 600 }, sort: (x, y) => x.datasetIndex! - y.datasetIndex! } },
+            legend: { position: 'bottom', labels: { boxWidth: compacto ? 10 : 22, boxHeight: compacto ? 6 : 8, padding: compacto ? 8 : 16, font: { size: compacto ? 9 : 11, weight: 600 }, sort: (x, y) => x.datasetIndex! - y.datasetIndex! } },
             tooltip: {
               callbacks: {
                 title: (i) => MESES_NOME[i[0].dataIndex],
@@ -55,9 +59,15 @@ export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 360 }: {
             x: {
               grid: { display: false },
               border: { color: '#3a3a46' },
-              ticks: { color: (t) => (t.index + 1 === mesAtual ? '#ffffff' : '#a0a0ab'), font: (t) => ({ weight: t.index + 1 === mesAtual ? 800 : 600 }) },
+              ticks: {
+                color: (t) => (t.index + 1 === mesAtual ? '#ffffff' : '#a0a0ab'),
+                font: (t) => ({ weight: t.index + 1 === mesAtual ? 800 : 600, size: compacto ? 9 : 11 }),
+                maxRotation: 0,
+                autoSkip: false,
+                callback: (_v, i) => (compacto ? MESES[i].slice(0, 1) : MESES[i].slice(0, 3)),
+              },
             },
-            y: eixoReais,
+            y: compacto ? { ...eixoReais, ticks: { callback: (v: string | number) => milhar(Number(v)), maxTicksLimit: 6, font: { size: 9 } }, suggestedMin: 0, grace: 0 } : eixoReais,
           },
         }}
       />
