@@ -789,6 +789,7 @@ select option { background: #1c1c1e; color: var(--texto); }
 .divida-sem-parcela:hover { background: rgba(255, 214, 10, .16); }
 .divida-sem-parcela svg { color: var(--divida); flex: none; }
 .divida-sem-parcela b { color: var(--divida); font-weight: 600; margin-left: auto; }
+.divida-quitar { justify-self: start; font-size: 13px; }
 .divida-previa { margin: -4px 0 0; padding: 10px 12px; border-radius: var(--raio-p); background: var(--preench-4); font-size: 13px; color: var(--texto-2); }
 
 /* ---------- zerar dados ---------- */

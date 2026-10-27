@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { COR } from '../lib/charts'
 import { parcelasDe, type SituacaoDivida } from '../lib/dividas'
-import { fmtValor, fmtDataCurta, fmtMesAno, MESES_CURTO } from '../lib/format'
+import { dataPadrao, fmtValor, fmtDataCurta, fmtMesAno, MESES_CURTO } from '../lib/format'
 import { FormDivida } from '../components/Formularios'
 import { Icone } from '../components/Icone'
 import { Cartao, Kpi, Progresso, Vazio } from '../components/ui'
@@ -134,6 +134,9 @@ function CartaoDivida({ s, c, aoEditar }: { s: SituacaoDivida; c: Ctx; aoEditar:
           <ul className="divida-pagamentos">
             {pagamentos.map((x) => <li key={x.id}><span>{fmtDataCurta(x.data)}</span><span>− {fmtValor(x.valor)}</span></li>)}
           </ul>
+        )}
+        {!quitada && !p && (
+          <button className="link divida-quitar" onClick={() => c.d.addSaldo(s.divida.id, dataPadrao(c.ano, c.mes), 0)}>Já paguei tudo? Marcar como quitada</button>
         )}
         {!quitada && (
           <button className="btn primario" onClick={() => c.pagarDivida(s)}>
