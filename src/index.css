@@ -254,6 +254,42 @@ code { background: var(--cartao-2); padding: 1px 5px; border-radius: 4px; font-s
 .divida-pagamentos li span:last-child { color: var(--entrada); }
 .tabela-dividas tr.quitada td:nth-child(4) { text-decoration: none; }
 
+
+/* ---------- bancos ---------- */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid var(--borda); background: var(--cartao-2); color: var(--texto-2); font-weight: 500; font-size: 13px; }
+.chip .marcador { background: var(--c); border-radius: 50%; margin-right: 6px; }
+.chip.ativo { background: color-mix(in srgb, var(--c, #ededf0) 18%, var(--fundo)); border-color: var(--c, #ededf0); color: var(--texto); font-weight: 600; }
+.chip.novo { border-style: dashed; color: #8db8ff; }
+.cor { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; box-shadow: inset 0 0 0 2px #0006; }
+.cor.ativo { border-color: #fff; }
+.campo-rotulo small { color: var(--texto-3); font-weight: 400; }
+.grade-bancos { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.banco-cartao { display: grid; gap: 4px; text-align: left; border-top: 3px solid var(--c); cursor: pointer; color: var(--texto); }
+.banco-cartao:hover { border-color: var(--c); background: var(--cartao-2); }
+.banco-cartao-nome { display: flex; align-items: center; font-weight: 700; }
+.banco-cartao-nome .marcador { background: var(--c); }
+.banco-cartao-saldo { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; margin-top: 6px; }
+.banco-cartao-rot { font-size: 12px; color: var(--texto-3); }
+.banco-cartao-mov { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--borda); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.bloco-cab-leg { margin-left: auto; display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--texto-2); font-weight: 600; letter-spacing: 0; }
+.bloco-cab-leg i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-left: 6px; }
+.banco-linha { width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; padding: 12px 14px; border: 0; border-bottom: 1px solid #ffffff08; background: none; text-align: left; }
+.banco-linha:last-child { border-bottom: 0; }
+.banco-linha:hover { background: var(--cartao-2); }
+.banco-linha-nome { display: flex; align-items: center; font-weight: 700; }
+.banco-linha-saldo { font-weight: 800; font-variant-numeric: tabular-nums; }
+.banco-barras { grid-column: 1 / -1; display: grid; gap: 3px; }
+.banco-barras span { display: block; height: 5px; border-radius: 3px; min-width: 2px; }
+.banco-linha-sub { grid-column: 1 / -1; font-size: 12px; color: var(--texto-3); font-variant-numeric: tabular-nums; }
+.voltar { margin-bottom: 8px; }
+.pagina-topo h1 { display: flex; align-items: center; }
+.marcador.grande { width: 14px; height: 14px; border-radius: 4px; margin-right: 10px; }
+.campos-linha { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.caixa-bancos { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+.caixa-bancos button { border-top: 1px solid var(--borda); }
+.caixa-bancos button + button { border-left: 0; }
+
 /* ---------- responsivo ---------- */
 /* ---------- abas de meses ---------- */
 .barra { flex-wrap: wrap; }
@@ -371,6 +407,10 @@ code { background: var(--cartao-2); padding: 1px 5px; border-radius: 4px; font-s
   .tabela-anual { font-size: 12px; }
   .tabela-anual th, .tabela-anual td { padding: 8px 8px; }
   .faixa-herdado { font-size: 13px; }
+  .grade-bancos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .banco-cartao { padding: 12px; }
+  .banco-cartao-saldo { font-size: 17px; }
+  .banco-cartao-mov { flex-direction: column; gap: 2px; font-size: 12px; }
   .hero-acoes { width: 100%; }
   .hero-acoes .btn { flex: 1; }
   .fab { display: grid; place-items: center; position: fixed; right: 18px; bottom: 80px; z-index: 20; width: 56px; height: 56px; border-radius: 18px; border: 0; background: var(--texto); color: #0b0b0f; box-shadow: 0 8px 24px #000c; }

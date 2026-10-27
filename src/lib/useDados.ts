@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from './supabase'
-import type { Divida, Lancamento, Mes, Pagamento, SaldoDivida } from './types'
+import type { Banco, Divida, Lancamento, Mes, Pagamento, SaldoDivida } from './types'
 
 const num = (v: unknown) => Number(v ?? 0)
 
@@ -27,19 +27,21 @@ export function useDados(userId: string, ano: number) {
   const [dividas, setDividas] = useState<Divida[]>([])
   const [saldos, setSaldos] = useState<SaldoDivida[]>([])
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
+  const [bancos, setBancos] = useState<Banco[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
 
   const recarregar = useCallback(async () => {
     setCarregando(true)
-    const [l, m, d, s, p] = await Promise.all([
+    const [l, m, d, s, p, b] = await Promise.all([
       supabase.from('lancamentos').select('*').eq('ano', ano).order('data').order('created_at'),
       supabase.from('meses').select('*'),
       supabase.from('dividas').select('*').order('created_at'),
       supabase.from('divida_saldos').select('*').order('data'),
       supabase.from('lancamentos').select('id, divida_id, data, valor').not('divida_id', 'is', null),
+      supabase.from('bancos').select('*').order('ordem').order('created_at'),
     ])
-    const e = l.error ?? m.error ?? d.error ?? s.error ?? p.error
+    const e = l.error ?? m.error ?? d.error ?? s.error ?? p.error ?? b.error
     if (e) setErro(e.message)
     else {
       setLancs((l.data as Lancamento[]).map(normLanc))
@@ -47,6 +49,7 @@ export function useDados(userId: string, ano: number) {
       setDividas((d.data as Divida[]).map(normDiv))
       setSaldos((s.data as SaldoDivida[]).map(normSaldo))
       setPagamentos((p.data as Pagamento[]).map((x) => ({ ...x, valor: num(x.valor) })))
+      setBancos(b.data as Banco[])
     }
     setCarregando(false)
   }, [ano])
@@ -135,7 +138,31 @@ export function useDados(userId: string, ano: number) {
     if (error) falhou(error.message)
   }
 
+  const addBanco = async (nome: string, cor: string): Promise<Banco | undefined> => {
+    const { data, error } = await supabase.from('bancos').insert({ nome, cor, ordem: bancos.length }).select().single()
+    if (error) {
+      falhou(/duplicate|unique/i.test(error.message) ? `Já existe um banco chamado "${nome}".` : error.message)
+      return
+    }
+    const novo = data as Banco
+    setBancos((xs) => [...xs, novo])
+    return novo
+  }
+  const updBanco = async (id: string, patch: Partial<Banco>) => {
+    setBancos((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
+    const { error } = await supabase.from('bancos').update(patch).eq('id', id)
+    if (error) falhou(error.message)
+  }
+  /** Os lançamentos do banco continuam existindo, só ficam "sem banco". */
+  const delBanco = async (id: string) => {
+    setBancos((xs) => xs.filter((x) => x.id !== id))
+    setLancs((xs) => xs.map((x) => (x.banco_id === id ? { ...x, banco_id: null } : x)))
+    const { error } = await supabase.from('bancos').delete().eq('id', id)
+    if (error) falhou(error.message)
+  }
+
   return {
+    bancos, addBanco, updBanco, delBanco,
     lancs, meses, dividas, saldos, pagamentos, carregando, erro, setErro, recarregar,
     addLanc, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, salvarMes,
   }

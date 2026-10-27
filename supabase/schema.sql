@@ -16,6 +16,20 @@ create table if not exists public.lancamentos (
 );
 create index if not exists lancamentos_user_periodo on public.lancamentos (user_id, ano, mes);
 
+-- Bancos cadastrados pelo usuário. O banco de um lançamento é opcional.
+create table if not exists public.bancos (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users on delete cascade,
+  nome        text not null,
+  cor         text not null default '#8a8a96',
+  ordem       integer not null default 0,
+  created_at  timestamptz not null default now()
+);
+create unique index if not exists bancos_user_nome on public.bancos (user_id, lower(nome));
+
+alter table public.lancamentos add column if not exists banco_id uuid references public.bancos on delete set null;
+create index if not exists lancamentos_banco on public.lancamentos (banco_id) where banco_id is not null;
+
 -- Dívidas atravessam os meses. O saldo de cada mês é calculado:
 -- último saldo informado (divida_saldos) menos os pagamentos (saídas com divida_id) feitos depois dele.
 create table if not exists public.dividas (
@@ -39,7 +53,8 @@ create index if not exists divida_saldos_divida on public.divida_saldos (divida_
 alter table public.lancamentos add column if not exists divida_id uuid references public.dividas on delete set null;
 create index if not exists lancamentos_divida on public.lancamentos (divida_id) where divida_id is not null;
 
--- Valores digitados à mão em cada mês: investimentos, US$, meta de US$ e o quadro de caixa.
+-- Valores digitados à mão em cada mês: investimentos, US$, meta de US$ e o saldo guardado em cada banco
+-- (caixa = { <id do banco>: { cc, caixinha, reserva } }).
 create table if not exists public.meses (
   user_id        uuid not null default auth.uid() references auth.users on delete cascade,
   ano            smallint not null,
@@ -56,6 +71,7 @@ alter table public.lancamentos enable row level security;
 alter table public.dividas     enable row level security;
 alter table public.meses       enable row level security;
 alter table public.divida_saldos enable row level security;
+alter table public.bancos enable row level security;
 
 drop policy if exists "dono" on public.lancamentos;
 create policy "dono" on public.lancamentos for all to authenticated
@@ -71,4 +87,8 @@ create policy "dono" on public.meses for all to authenticated
 
 drop policy if exists "dono" on public.divida_saldos;
 create policy "dono" on public.divida_saldos for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+
+drop policy if exists "dono" on public.bancos;
+create policy "dono" on public.bancos for all to authenticated
   using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));

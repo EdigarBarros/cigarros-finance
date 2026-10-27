@@ -11,8 +11,10 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
 - **Dívidas interligadas**: cada dívida existe ao longo dos meses. Ao lançar uma saída de dívida, você escolhe
   qual dívida ela abate (ou o app reconhece pela descrição) e o saldo cai sozinho em todos os meses seguintes.
   Com a parcela definida, o app prevê quando a dívida acaba. Juros ou acordo? Basta informar o saldo novo
-- **Patrimônio**: caixa por banco (conta corrente, caixinha, reserva), investimentos e dólar. Caixa, US$ e meta
-  passam automaticamente para os meses seguintes até você atualizar — nada de copiar mês anterior
+- **Bancos**: cadastre os seus (Nubank, Itaú, Next, PicPay, dinheiro vivo…). O banco de cada entrada/saída é
+  **opcional** — o app reconhece "(Next)" na descrição e lembra o banco que você usa para cada coisa. Tela de bancos
+  com saldo guardado e movimento do mês de cada um, detalhe individual e bloco "Por banco" na visão geral.
+  Saldos, US$ e meta passam automaticamente para os meses seguintes até você atualizar
 - **Ano**: totais do ano, gráficos de saldo e evolução de caixa, dívida, investimentos e dólar, tabela mês a mês
 - **Importar planilha (.xlsx)** com os meses e categorias da planilha antiga; **exportar backup (.xlsx)**
 - Valores aceitam `1.234,56` e contas como `=105,53-60,02`

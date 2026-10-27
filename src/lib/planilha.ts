@@ -2,10 +2,12 @@ import * as XLSX from 'xlsx'
 import { MESES, parseNumero } from './format'
 import { supabase } from './supabase'
 import { inicioDoMes } from './dividas'
-import type { Caixa, Categoria, Conta, Lancamento, Mes } from './types'
-import { BANCOS, TIPOS_CAIXA } from './types'
+import { bancoConhecido, bancoNaDescricao, mesmoNome } from './rotulos'
+import type { Banco, Caixa, Categoria, Lancamento, Mes, TipoCaixa } from './types'
+import { TIPOS_CAIXA } from './types'
 
-type NovoLanc = Omit<Lancamento, 'id'>
+/** Lançamento lido da planilha; o banco vem pelo nome e vira id na gravação. */
+type NovoLanc = Omit<Lancamento, 'id' | 'banco_id'> & { banco?: string }
 /** Uma linha do quadro DÍVIDAS de uma aba. */
 interface LinhaDivida { descricao: string; valor_mensal: number; parcelas: number; pagas: number }
 
@@ -14,16 +16,20 @@ export interface MesImportado {
   mes: number
   lancs: NovoLanc[]
   dividas: LinhaDivida[]
-  meta: Mes
+  /** Caixa pelo nome do banco (colunas NUBANK, INTER, ITAU da planilha). */
+  caixa: Record<string, Partial<Record<TipoCaixa, number>>>
+  meta: Omit<Mes, 'caixa'>
 }
 
 // Faixas de linhas do modelo da planilha (1-based, como no Excel).
 const FAIXA_ENTRADAS: [number, number] = [3, 106]
-const FAIXAS_SAIDAS: [Conta, number, number][] = [
-  ['principal', 3, 52],
-  ['nubank', 55, 129],
-  ['inter', 132, 136],
+// O primeiro bloco de saídas não tem banco definido; os outros são NUBANK e INTER.
+const FAIXAS_SAIDAS: [string | undefined, number, number][] = [
+  [undefined, 3, 52],
+  ['Nubank', 55, 129],
+  ['Inter', 132, 136],
 ]
+const BANCOS_CAIXA = [['AB', 'Nubank'], ['AC', 'Inter'], ['AD', 'Itaú']] as const
 
 function valorCelula(ws: XLSX.WorkSheet, ref: string): number | string | null {
   const c = ws[ref] as XLSX.CellObject | undefined
@@ -79,10 +85,10 @@ export async function lerPlanilha(arquivo: File): Promise<MesImportado[]> {
       if (!valor && !desc) continue
       lancs.push({
         ano, mes, tipo: 'entrada', descricao: String(desc ?? ''), valor,
-        data: data(ws, `F${r}`, ano, mes), conta: 'principal', categoria: 'outros',
+        data: data(ws, `F${r}`, ano, mes), categoria: 'outros', banco: bancoNaDescricao(String(desc ?? '')),
       })
     }
-    for (const [conta, ini, fim] of FAIXAS_SAIDAS) {
+    for (const [bancoBloco, ini, fim] of FAIXAS_SAIDAS) {
       for (let r = ini; r <= fim; r++) {
         const valor = numero(ws, `L${r}`)
         const desc = valorCelula(ws, `I${r}`)
@@ -96,7 +102,8 @@ export async function lerPlanilha(arquivo: File): Promise<MesImportado[]> {
               : 'outros'
         lancs.push({
           ano, mes, tipo: 'saida', descricao: String(desc ?? ''), valor,
-          data: data(ws, `N${r}`, ano, mes), conta, categoria,
+          data: data(ws, `N${r}`, ano, mes), categoria,
+          banco: bancoNaDescricao(String(desc ?? '')) ?? bancoBloco,
         })
       }
     }
@@ -109,22 +116,22 @@ export async function lerPlanilha(arquivo: File): Promise<MesImportado[]> {
       dividas.push({ descricao: String(desc ?? ''), valor_mensal: valor, parcelas: numero(ws, `T${r}`), pagas: numero(ws, `U${r}`) })
     }
 
-    const caixa: Caixa = {}
-    BANCOS.forEach((b, ci) =>
+    const caixa: MesImportado['caixa'] = {}
+    for (const [col, nome] of BANCOS_CAIXA) {
       TIPOS_CAIXA.forEach((t, ri) => {
-        const v = numero(ws, `${['AB', 'AC', 'AD'][ci]}${33 + ri}`)
-        if (v) (caixa[b] ??= {})[t] = v
-      }),
-    )
-    const meta: Mes = {
-      ano, mes, caixa,
+        const v = numero(ws, `${col}${33 + ri}`)
+        if (v) (caixa[nome] ??= {})[t] = v
+      })
+    }
+    const meta: MesImportado['meta'] = {
+      ano, mes,
       investimentos: numero(ws, 'W22'),
       usd: numero(ws, 'T14'),
       meta_usd: numero(ws, 'T85'),
     }
 
     const temAlgo = lancs.length || dividas.length || Object.keys(caixa).length || meta.investimentos || meta.usd
-    if (temAlgo) resultado.push({ ano, mes, lancs, dividas, meta })
+    if (temAlgo) resultado.push({ ano, mes, lancs, dividas, caixa, meta })
   }
   return resultado
 }
@@ -172,16 +179,31 @@ export function juntarDividas(meses: MesImportado[]): DividaImportada[] {
 
 /** Substitui no banco os meses que vieram na planilha (e as dívidas com o mesmo nome). */
 export async function gravarImportacao(userId: string, meses: MesImportado[]) {
+  // Garante que os bancos citados na planilha existam e pega o id de cada um.
+  const { data: jaTem, error: e0 } = await supabase.from('bancos').select('*')
+  if (e0) throw e0
+  const bancos = [...(jaTem as Banco[])]
+  const citados = new Set(meses.flatMap((m) => [...m.lancs.map((l) => l.banco), ...Object.keys(m.caixa)]).filter(Boolean) as string[])
+  for (const nome of citados) {
+    if (bancos.some((b) => mesmoNome(b.nome, nome))) continue
+    const { data, error } = await supabase
+      .from('bancos').insert({ nome, cor: bancoConhecido(nome)?.cor ?? '#8a8a96', ordem: bancos.length }).select().single()
+    if (error) throw error
+    bancos.push(data as Banco)
+  }
+  const idDe = (nome?: string) => (nome ? bancos.find((b) => mesmoNome(b.nome, nome))?.id ?? null : null)
+
   for (const m of meses) {
     const { error: e1 } = await supabase.from('lancamentos').delete().eq('ano', m.ano).eq('mes', m.mes)
     if (e1) throw e1
     if (m.lancs.length) {
-      const { error } = await supabase.from('lancamentos').insert(m.lancs)
+      const { error } = await supabase.from('lancamentos').insert(m.lancs.map(({ banco, ...l }) => ({ ...l, banco_id: idDe(banco) })))
       if (error) throw error
     }
+    const caixa: Caixa = Object.fromEntries(Object.entries(m.caixa).map(([nome, v]) => [idDe(nome)!, v]))
     const { error } = await supabase
       .from('meses')
-      .upsert({ ...m.meta, user_id: userId }, { onConflict: 'user_id,ano,mes' })
+      .upsert({ ...m.meta, caixa, user_id: userId }, { onConflict: 'user_id,ano,mes' })
     if (error) throw error
   }
 
@@ -218,19 +240,25 @@ async function buscarTudo<T>(tabela: string): Promise<T[]> {
 
 /** Backup completo em .xlsx, uma aba por tabela. */
 export async function exportarBackup() {
-  const [lancs, dividas, saldos, meses] = await Promise.all([
+  const [lancs, dividas, saldos, meses, bancos] = await Promise.all([
     buscarTudo<Lancamento>('lancamentos'),
     buscarTudo<{ id: string; descricao: string; valor_parcela: number | null }>('dividas'),
     buscarTudo<{ divida_id: string; data: string; saldo: number }>('divida_saldos'),
     buscarTudo<Mes>('meses'),
+    buscarTudo<Banco>('bancos'),
   ])
+  const nomeBanco = new Map(bancos.map((b) => [b.id, b.nome]))
   const nomeDivida = new Map(dividas.map((d) => [d.id, d.descricao]))
   const wb = XLSX.utils.book_new()
   const semIds = <T extends object>(xs: T[]) =>
     xs.map((x) => Object.fromEntries(Object.entries(x).filter(([k]) => !['id', 'user_id', 'created_at'].includes(k))))
   XLSX.utils.book_append_sheet(
     wb,
-    XLSX.utils.json_to_sheet(semIds(lancs).map(({ divida_id, ...l }) => ({ ...l, divida: divida_id ? nomeDivida.get(String(divida_id)) : '' }))),
+    XLSX.utils.json_to_sheet(semIds(lancs).map(({ divida_id, banco_id, conta: _conta, ...l }) => ({
+      ...l,
+      banco: banco_id ? nomeBanco.get(String(banco_id)) : '',
+      divida: divida_id ? nomeDivida.get(String(divida_id)) : '',
+    }))),
     'Lançamentos',
   )
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(semIds(dividas)), 'Dívidas')
@@ -241,7 +269,10 @@ export async function exportarBackup() {
   )
   XLSX.utils.book_append_sheet(
     wb,
-    XLSX.utils.json_to_sheet(semIds(meses).map((m) => ({ ...m, caixa: JSON.stringify(m.caixa) }))),
+    XLSX.utils.json_to_sheet(semIds(meses).map((m) => ({
+      ...m,
+      caixa: JSON.stringify(Object.fromEntries(Object.entries(m.caixa as Caixa).map(([id, v]) => [nomeBanco.get(id) ?? id, v]))),
+    }))),
     'Meses',
   )
   XLSX.writeFile(wb, `backup-financas-${new Date().toISOString().slice(0, 10)}.xlsx`)

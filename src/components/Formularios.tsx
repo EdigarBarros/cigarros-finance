@@ -2,8 +2,8 @@ import { useMemo, useRef, useState } from 'react'
 import { COR } from '../lib/charts'
 import { dividaPelaDescricao, type SituacaoDivida } from '../lib/dividas'
 import { dataPadrao, fmtBRL, paraCampo, parseNumero } from '../lib/format'
-import { CATEGORIAS, CONTAS } from '../lib/rotulos'
-import type { Categoria, Conta, Divida, Lancamento, Tipo } from '../lib/types'
+import { bancoConhecido, bancoNaDescricao, CATEGORIAS, CORES_LIVRES, mesmoNome } from '../lib/rotulos'
+import type { Banco, Categoria, Divida, Lancamento, Tipo } from '../lib/types'
 import { Modal, Segmentado } from './ui'
 
 type NovoLanc = Omit<Lancamento, 'id'>
@@ -19,6 +19,8 @@ interface FormLancProps {
   historico: Lancamento[]
   /** Dívidas em aberto, para ligar o pagamento. */
   dividas: Divida[]
+  bancos: Banco[]
+  aoNovoBanco: (nome: string, cor: string) => Promise<Banco | undefined>
   aoSalvar: (l: NovoLanc, id?: string) => void
   aoExcluir?: (id: string) => void
   aoFechar: () => void
@@ -30,7 +32,8 @@ export function FormLancamento(p: FormLancProps) {
   const [valor, setValor] = useState(ini.valor ? paraCampo(ini.valor) : '')
   const [descricao, setDescricao] = useState(ini.descricao ?? '')
   const [data, setData] = useState(ini.data ?? dataPadrao(p.ano, p.mes))
-  const [conta, setConta] = useState<Conta>(ini.conta ?? 'principal')
+  const [bancoId, setBancoId] = useState<string>(ini.banco_id ?? '')
+  const [mexeuBanco, setMexeuBanco] = useState(Boolean(p.inicial))
   const [categoria, setCategoria] = useState<Categoria>(ini.categoria ?? 'outros')
   const [dividaId, setDividaId] = useState<string>(ini.divida_id ?? '')
   const [mexeuCategoria, setMexeuCategoria] = useState(Boolean(p.inicial || p.preset))
@@ -69,9 +72,12 @@ export function FormLancamento(p: FormLancProps) {
   const aoDigitarDescricao = (texto: string) => {
     setDescricao(texto)
     const anterior = memoria.get(chave(texto))
-    if (anterior && !mexeuCategoria && anterior.tipo === tipo) {
-      setCategoria(anterior.categoria)
-      setConta(anterior.conta)
+    if (anterior && !mexeuCategoria && anterior.tipo === tipo) setCategoria(anterior.categoria)
+    // Banco: o que estiver escrito na descrição, "(Next)", ou o que você usou da última vez.
+    if (!mexeuBanco) {
+      const escrito = bancoNaDescricao(texto, p.bancos)
+      const doNome = escrito ? p.bancos.find((b) => mesmoNome(b.nome, escrito)) : undefined
+      setBancoId(doNome?.id ?? anterior?.banco_id ?? '')
     }
     // "Notebook – parcela" já se liga à dívida do notebook.
     if (!mexeuDivida && tipo === 'saida') {
@@ -95,7 +101,7 @@ export function FormLancamento(p: FormLancProps) {
     p.aoSalvar(
       {
         ano: a, mes: m, tipo, valor: n, descricao: descricao.trim(), data,
-        conta: saida ? conta : 'principal',
+        banco_id: bancoId || null,
         categoria: saida ? categoria : 'outros',
         divida_id: ligada,
       },
@@ -106,6 +112,7 @@ export function FormLancamento(p: FormLancProps) {
     setDescricao('')
     setDividaId('')
     setMexeuCategoria(false)
+    setMexeuBanco(false)
     setMexeuDivida(false)
     setErro(null)
     setSalvos((s) => s + 1)
@@ -154,12 +161,14 @@ export function FormLancamento(p: FormLancProps) {
           <span className="campo-rotulo">Data</span>
           <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
         </label>
+        <EscolhaBanco
+          bancos={p.bancos}
+          valor={bancoId}
+          aoMudar={(id) => { setBancoId(id); setMexeuBanco(true) }}
+          aoNovoBanco={p.aoNovoBanco}
+        />
         {tipo === 'saida' && (
           <>
-            <div className="campo">
-              <span className="campo-rotulo">Conta</span>
-              <Segmentado rotulo="Conta" valor={conta} aoMudar={setConta} opcoes={CONTAS} />
-            </div>
             <div className="campo">
               <span className="campo-rotulo">Categoria</span>
               <Segmentado
@@ -283,5 +292,36 @@ export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo,
         </div>
       </form>
     </Modal>
+  )
+}
+
+/** Banco do lançamento: opcional, com atalho para cadastrar um novo. */
+function EscolhaBanco({ bancos, valor, aoMudar, aoNovoBanco }: {
+  bancos: Banco[]; valor: string; aoMudar: (id: string) => void
+  aoNovoBanco: (nome: string, cor: string) => Promise<Banco | undefined>
+}) {
+  const novo = async () => {
+    const nome = prompt('Nome do banco (ex.: Nubank, Itaú, Next, Dinheiro):')?.trim()
+    if (!nome) return
+    const existente = bancos.find((b) => mesmoNome(b.nome, nome))
+    if (existente) return aoMudar(existente.id)
+    const cor = bancoConhecido(nome)?.cor ?? CORES_LIVRES[bancos.length % CORES_LIVRES.length]
+    const criado = await aoNovoBanco(bancoConhecido(nome)?.nome ?? nome, cor)
+    if (criado) aoMudar(criado.id)
+  }
+  return (
+    <div className="campo">
+      <span className="campo-rotulo">Banco <small>(opcional)</small></span>
+      <div className="chips">
+        <button type="button" className={`chip ${valor === '' ? 'ativo' : ''}`} onClick={() => aoMudar('')}>Nenhum</button>
+        {bancos.map((b) => (
+          <button key={b.id} type="button" className={`chip ${valor === b.id ? 'ativo' : ''}`} onClick={() => aoMudar(b.id)}
+            style={{ '--c': b.cor } as React.CSSProperties}>
+            <i className="marcador" />{b.nome}
+          </button>
+        ))}
+        <button type="button" className="chip novo" onClick={novo}>+ banco</button>
+      </div>
+    </div>
   )
 }

@@ -24,6 +24,9 @@ export interface Ctx {
   irParaMes: (mes: number) => void
   novoLancamento: (tipo?: Tipo) => void
   editarLancamento: (l: Lancamento) => void
+  /** Banco aberto na tela Bancos ('sem' = lançamentos sem banco). */
+  bancoAberto: string | null
+  abrirBanco: (id: string | null) => void
   /** Abre o formulário de saída já ligado à dívida, com o valor da parcela. */
   pagarDivida: (s: SituacaoDivida) => void
 }

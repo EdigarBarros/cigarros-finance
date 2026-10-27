@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { COR } from '../lib/charts'
 import { fmtBRL, fmtDataLonga, MESES_NOME } from '../lib/format'
-import { CATEGORIAS, CONTAS } from '../lib/rotulos'
-import type { Categoria, Conta, Tipo } from '../lib/types'
+import { CATEGORIAS } from '../lib/rotulos'
+import type { Categoria, Tipo } from '../lib/types'
 import { Icone } from '../components/Icone'
 import { ItemLancamento } from '../components/ItemLancamento'
 import { Cartao, Segmentado, Vazio } from '../components/ui'
@@ -12,7 +12,7 @@ type Filtro<T> = T | 'todos'
 
 export function Lancamentos(c: Ctx) {
   const [tipo, setTipo] = useState<Filtro<Tipo>>('todos')
-  const [conta, setConta] = useState<Filtro<Conta>>('todos')
+  const [banco, setBanco] = useState<Filtro<string>>('todos')
   const [categoria, setCategoria] = useState<Filtro<Categoria>>('todos')
   const [busca, setBusca] = useState('')
 
@@ -20,11 +20,11 @@ export function Lancamentos(c: Ctx) {
     const q = busca.trim().toLowerCase()
     return c.lancsMes
       .filter((l) => tipo === 'todos' || l.tipo === tipo)
-      .filter((l) => conta === 'todos' || (l.tipo === 'saida' && l.conta === conta))
+      .filter((l) => banco === 'todos' || (banco === 'sem' ? !l.banco_id : l.banco_id === banco))
       .filter((l) => categoria === 'todos' || (l.tipo === 'saida' && l.categoria === categoria))
       .filter((l) => !q || l.descricao.toLowerCase().includes(q))
       .sort((x, y) => (y.data ?? '').localeCompare(x.data ?? '') || (y.created_at ?? '').localeCompare(x.created_at ?? ''))
-  }, [c.lancsMes, tipo, conta, categoria, busca])
+  }, [c.lancsMes, tipo, banco, categoria, busca])
 
   const dias = useMemo(() => {
     const g = new Map<string, typeof filtrados>()
@@ -33,7 +33,7 @@ export function Lancamentos(c: Ctx) {
   }, [filtrados])
 
   const soma = (t: Tipo) => filtrados.filter((l) => l.tipo === t).reduce((a, l) => a + l.valor, 0)
-  const filtrando = tipo !== 'todos' || conta !== 'todos' || categoria !== 'todos' || busca
+  const filtrando = tipo !== 'todos' || banco !== 'todos' || categoria !== 'todos' || busca
 
   return (
     <div className="pagina">
@@ -59,16 +59,19 @@ export function Lancamentos(c: Ctx) {
           </label>
           <Segmentado rotulo="Tipo" valor={tipo} aoMudar={setTipo}
             opcoes={[{ id: 'todos', nome: 'Todos' }, { id: 'entrada', nome: 'Entradas' }, { id: 'saida', nome: 'Saídas' }]} />
-          <select value={conta} onChange={(e) => setConta(e.target.value as Filtro<Conta>)} aria-label="Conta">
-            <option value="todos">Todas as contas</option>
-            {CONTAS.map((k) => <option key={k.id} value={k.id}>{k.nome}</option>)}
-          </select>
+          {c.d.bancos.length > 0 && (
+            <select value={banco} onChange={(e) => setBanco(e.target.value)} aria-label="Banco">
+              <option value="todos">Todos os bancos</option>
+              {c.d.bancos.map((b) => <option key={b.id} value={b.id}>{b.nome}</option>)}
+              <option value="sem">Sem banco</option>
+            </select>
+          )}
           <select value={categoria} onChange={(e) => setCategoria(e.target.value as Filtro<Categoria>)} aria-label="Categoria">
             <option value="todos">Todas as categorias</option>
             {CATEGORIAS.map((k) => <option key={k.id} value={k.id}>{k.nome}</option>)}
           </select>
           {filtrando && (
-            <button className="link" onClick={() => { setTipo('todos'); setConta('todos'); setCategoria('todos'); setBusca('') }}>Limpar filtros</button>
+            <button className="link" onClick={() => { setTipo('todos'); setBanco('todos'); setCategoria('todos'); setBusca('') }}>Limpar filtros</button>
           )}
         </div>
 
@@ -82,7 +85,7 @@ export function Lancamentos(c: Ctx) {
                   <span className={saldoDia < 0 ? 'negativo' : 'positivo'}>{fmtBRL(saldoDia)}</span>
                 </header>
                 <ul className="lista-lanc">
-                  {itens.map((l) => <ItemLancamento key={l.id} l={l} mostrarData={false} aoClicar={() => c.editarLancamento(l)} />)}
+                  {itens.map((l) => <ItemLancamento key={l.id} l={l} banco={c.d.bancos.find((b) => b.id === l.banco_id)} mostrarData={false} aoClicar={() => c.editarLancamento(l)} />)}
                 </ul>
               </section>
             )

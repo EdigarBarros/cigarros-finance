@@ -1,5 +1,4 @@
 export type Tipo = 'entrada' | 'saida'
-export type Conta = 'principal' | 'nubank' | 'inter'
 export type Categoria = 'transporte' | 'divida' | 'alimentacao' | 'outros'
 
 export interface Lancamento {
@@ -10,8 +9,9 @@ export interface Lancamento {
   descricao: string
   valor: number
   data: string | null
-  conta: Conta
   categoria: Categoria
+  /** Banco do lançamento (opcional). */
+  banco_id?: string | null
   /** Quando a saída é pagamento de uma dívida. */
   divida_id?: string | null
   created_at?: string
@@ -40,9 +40,17 @@ export interface Pagamento {
   valor: number
 }
 
-export type Banco = 'nubank' | 'inter' | 'itau'
+/** Banco cadastrado por você (Nubank, Itaú, Next, dinheiro vivo…). */
+export interface Banco {
+  id: string
+  nome: string
+  cor: string
+  ordem: number
+}
+
 export type TipoCaixa = 'cc' | 'caixinha' | 'reserva'
-export type Caixa = Partial<Record<Banco, Partial<Record<TipoCaixa, number>>>>
+/** Saldo guardado em cada banco no mês, pelo id do banco. */
+export type Caixa = Record<string, Partial<Record<TipoCaixa, number>> | undefined>
 
 export interface Mes {
   ano: number
@@ -53,5 +61,4 @@ export interface Mes {
   caixa: Caixa
 }
 
-export const BANCOS: Banco[] = ['nubank', 'inter', 'itau']
 export const TIPOS_CAIXA: TipoCaixa[] = ['cc', 'caixinha', 'reserva']

@@ -1,13 +1,14 @@
 import type { SituacaoDivida } from './dividas'
 import type { Caixa, Lancamento, Mes } from './types'
-import { BANCOS, TIPOS_CAIXA } from './types'
+import { TIPOS_CAIXA } from './types'
 
 const soma = (xs: number[]) => xs.reduce((a, b) => a + b, 0)
 
 export function somaCaixa(caixa?: Caixa) {
   if (!caixa) return 0
-  return soma(BANCOS.flatMap((b) => TIPOS_CAIXA.map((t) => caixa[b]?.[t] ?? 0)))
+  return soma(Object.values(caixa).flatMap((b) => TIPOS_CAIXA.map((t) => b?.[t] ?? 0)))
 }
+export const caixaDoBanco = (caixa: Caixa, id: string) => soma(TIPOS_CAIXA.map((t) => caixa[id]?.[t] ?? 0))
 export const totalCaixa = (m?: Mes) => somaCaixa(m?.caixa)
 
 /** Mês com os valores que valem nele: o que foi informado, ou herdado do último mês informado. */
@@ -55,7 +56,6 @@ export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes?: 
   const saidasLista = lancs.filter((l) => l.tipo === 'saida')
   const saidas = soma(saidasLista.map((l) => l.valor))
   const porCategoria = (c: string) => soma(saidasLista.filter((l) => l.categoria === c).map((l) => l.valor))
-  const porConta = (c: string) => soma(saidasLista.filter((l) => l.conta === c).map((l) => l.valor))
 
   return {
     entradas,
@@ -74,7 +74,6 @@ export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes?: 
       alimentacao: porCategoria('alimentacao'),
       outros: porCategoria('outros'),
     },
-    porConta: { principal: porConta('principal'), nubank: porConta('nubank'), inter: porConta('inter') },
   }
 }
 

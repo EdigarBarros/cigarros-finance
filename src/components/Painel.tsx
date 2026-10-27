@@ -19,7 +19,7 @@ const PAGINAS: { id: Pagina; nome: string; icone: string }[] = [
   { id: 'inicio', nome: 'Visão geral', icone: 'inicio' },
   { id: 'lancamentos', nome: 'Lançamentos', icone: 'lista' },
   { id: 'dividas', nome: 'Dívidas', icone: 'divida' },
-  { id: 'patrimonio', nome: 'Patrimônio', icone: 'carteira' },
+  { id: 'patrimonio', nome: 'Bancos', icone: 'carteira' },
   { id: 'ano', nome: 'Ano', icone: 'ano' },
 ]
 
@@ -36,6 +36,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const [mes, setMes] = useState(hoje.getMonth() + 1)
   const [form, setForm] = useState<{ inicial?: Lancamento; tipo?: Tipo; preset?: Partial<Lancamento> } | null>(null)
   const [menu, setMenu] = useState(false)
+  const [bancoAberto, setBancoAberto] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState<string | null>(null)
   const arquivo = useRef<HTMLInputElement>(null)
   const d = useDados(userId, ano)
@@ -54,6 +55,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   }, [mes, pagina])
 
   const irPara = (p: Pagina) => {
+    setBancoAberto(null)
     location.hash = `/${p}`
     setPagina(p)
     window.scrollTo({ top: 0 })
@@ -133,6 +135,11 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     novoLancamento: (tipo) => setForm({ tipo }),
     editarLancamento: (l) => setForm({ inicial: l }),
     pagarDivida,
+    bancoAberto,
+    abrirBanco: (id) => {
+      irPara('patrimonio')
+      setBancoAberto(id ?? 'sem')
+    },
   }
 
   return (
@@ -201,7 +208,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
         {pagina === 'inicio' && <Inicio {...ctx} />}
         {pagina === 'lancamentos' && <Lancamentos {...ctx} />}
         {pagina === 'dividas' && <Dividas {...ctx} />}
-        {pagina === 'patrimonio' && <Patrimonio {...ctx} />}
+        {pagina === 'patrimonio' && <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />}
         {pagina === 'ano' && <Ano {...ctx} />}
       </div>
 
@@ -227,6 +234,8 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
           preset={form.preset}
           historico={d.lancs}
           dividas={dividasAbertas}
+          bancos={d.bancos}
+          aoNovoBanco={d.addBanco}
           aoSalvar={(l, id) => (id ? d.updLanc(id, l) : d.addLanc(l))}
           aoExcluir={d.delLanc}
           aoFechar={() => setForm(null)}

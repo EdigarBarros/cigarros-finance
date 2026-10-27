@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Resumo } from '../lib/calc'
+import { caixaDoBanco, type Resumo } from '../lib/calc'
 import { COR } from '../lib/charts'
 import type { SituacaoDivida } from '../lib/dividas'
 import { fmtBRL, fmtDataCurta, fmtUSD, MESES, MESES_CURTO, MESES_NOME } from '../lib/format'
-import { CATEGORIAS, COR_BANCO, CONTAS, NOME_BANCO, NOME_CATEGORIA } from '../lib/rotulos'
-import { BANCOS, TIPOS_CAIXA, type Caixa, type Lancamento, type Tipo } from '../lib/types'
+import { CATEGORIAS, NOME_CATEGORIA } from '../lib/rotulos'
+import { TIPOS_CAIXA, type Banco, type Caixa, type Lancamento, type Tipo } from '../lib/types'
 import { Rosca } from './Graficos'
 import { Icone } from './Icone'
 import { Progresso } from './ui'
@@ -24,11 +24,7 @@ export function QuadroLancamentos({ tipo, itens, aoNovo, aoEditar, limite }: {
   const total = itens.reduce((a, l) => a + l.valor, 0)
   const cortar = limite !== undefined && !aberto && itens.length > limite
   // No modo resumido aparecem os mais recentes primeiro.
-  const visiveis = cortar ? [...itens].sort(porData).reverse().slice(0, limite) : itens
-  // Saídas agrupadas por conta, como os blocos NUBANK e INTER da planilha.
-  const grupos = saida && !cortar
-    ? CONTAS.map((k) => ({ conta: k, itens: visiveis.filter((l) => l.conta === k.id).sort(porData) })).filter((g) => g.itens.length)
-    : [{ conta: null, itens: cortar ? visiveis : [...visiveis].sort(porData) }]
+  const visiveis = cortar ? [...itens].sort(porData).reverse().slice(0, limite) : [...itens].sort(porData)
 
   return (
     <section className={`quadro quadro-${tipo}`}>
@@ -40,25 +36,15 @@ export function QuadroLancamentos({ tipo, itens, aoNovo, aoEditar, limite }: {
       </header>
       <div className="quadro-corpo">
         {!itens.length && <p className="quadro-vazio">Nenhuma {saida ? 'saída' : 'entrada'} neste mês.</p>}
-        {grupos.map((g) => (
-          <div key={g.conta?.id ?? 'todas'}>
-            {g.conta && grupos.length > 1 && (
-              <div className="quadro-grupo" style={{ '--c': g.conta.cor } as React.CSSProperties}>
-                <i className="marcador" />{g.conta.nome.toUpperCase()}
-                <span>{fmtBRL(g.itens.reduce((a, l) => a + l.valor, 0))}</span>
-              </div>
-            )}
-            {g.itens.map((l) => (
-              <button key={l.id} className="quadro-linha" onClick={() => aoEditar(l)}>
-                <span className="quadro-desc">
-                  {saida && <i className="marcador" style={{ background: corCategoria[l.categoria] }} title={NOME_CATEGORIA[l.categoria]} />}
-                  {l.descricao || '—'}
-                </span>
-                <span className="num">{fmtBRL(l.valor)}</span>
-                <span className="quadro-data">{fmtDataCurta(l.data)}</span>
-              </button>
-            ))}
-          </div>
+        {visiveis.map((l) => (
+          <button key={l.id} className="quadro-linha" onClick={() => aoEditar(l)}>
+            <span className="quadro-desc">
+              {saida && <i className="marcador" style={{ background: corCategoria[l.categoria] }} title={NOME_CATEGORIA[l.categoria]} />}
+              {l.descricao || '—'}
+            </span>
+            <span className="num">{fmtBRL(l.valor)}</span>
+            <span className="quadro-data">{fmtDataCurta(l.data)}</span>
+          </button>
         ))}
         {limite !== undefined && itens.length > limite && (
           <button className="quadro-ver" onClick={() => setAberto(!aberto)}>
@@ -153,22 +139,30 @@ export function ListaDividas({ itens, aoEditar, aoPagar, aoNova }: {
 }
 
 /** Caixa por banco. No celular mostra só o total de cada banco. */
-export function QuadroCaixa({ caixa, total, herdadoDe, compacto, aoAbrir }: {
-  caixa: Caixa; total: number; herdadoDe: [number, number] | null; compacto?: boolean; aoAbrir: () => void
+export function QuadroCaixa({ caixa, bancos, total, herdadoDe, compacto, aoAbrir }: {
+  caixa: Caixa; bancos: Banco[]; total: number; herdadoDe: [number, number] | null; compacto?: boolean; aoAbrir: () => void
 }) {
   const nomes = { cc: 'CONTA CORRENTE', caixinha: 'CAIXINHA', reserva: 'RESERVA DE EMERGÊNCIA' }
   const aviso = herdadoDe && (
     <p className="aviso-herdado">Valores de {MESES_NOME[herdadoDe[1] - 1].toLowerCase()}/{herdadoDe[0]} — <button className="link" onClick={aoAbrir}>atualizar</button></p>
   )
-  if (compacto) {
+  if (!bancos.length) {
+    return (
+      <section className="bloco">
+        <header className="bloco-cab"><span style={{ color: COR.caixa }}>CAIXA</span><strong>{fmtBRL(total)}</strong></header>
+        <p className="quadro-vazio">Cadastre seus bancos para acompanhar o saldo de cada um. <button className="link" onClick={aoAbrir}>Cadastrar</button></p>
+      </section>
+    )
+  }
+  if (compacto || bancos.length > 4) {
     return (
       <section className="bloco">
         <header className="bloco-cab"><span style={{ color: COR.caixa }}>CAIXA</span><strong>{fmtBRL(total)}</strong></header>
         <div className="caixa-bancos">
-          {BANCOS.map((b) => (
-            <button key={b} onClick={aoAbrir}>
-              <span><i className="marcador" style={{ background: COR_BANCO[b] }} />{NOME_BANCO[b]}</span>
-              <strong>{fmtBRL(TIPOS_CAIXA.reduce((a, t) => a + (caixa[b]?.[t] ?? 0), 0))}</strong>
+          {bancos.map((b) => (
+            <button key={b.id} onClick={aoAbrir}>
+              <span><i className="marcador" style={{ background: b.cor }} />{b.nome}</span>
+              <strong>{fmtBRL(caixaDoBanco(caixa, b.id))}</strong>
             </button>
           ))}
         </div>
@@ -183,24 +177,58 @@ export function QuadroCaixa({ caixa, total, herdadoDe, compacto, aoAbrir }: {
           <thead>
             <tr>
               <th>CAIXA</th>
-              {BANCOS.map((b) => <th key={b} style={{ color: COR_BANCO[b] }}>{NOME_BANCO[b].toUpperCase()}</th>)}
+              {bancos.map((b) => <th key={b.id} style={{ color: b.cor }}>{b.nome.toUpperCase()}</th>)}
             </tr>
           </thead>
           <tbody>
             {TIPOS_CAIXA.map((t) => (
               <tr key={t} onClick={aoAbrir}>
                 <th>{nomes[t]}</th>
-                {BANCOS.map((b) => <td key={b} className={caixa[b]?.[t] ? '' : 'vazio'}>{fmtBRL(caixa[b]?.[t] ?? 0)}</td>)}
+                {bancos.map((b) => <td key={b.id} className={caixa[b.id]?.[t] ? '' : 'vazio'}>{fmtBRL(caixa[b.id]?.[t] ?? 0)}</td>)}
               </tr>
             ))}
           </tbody>
-          <tfoot><tr><th>TOTAL</th><td colSpan={3}>{fmtBRL(total)}</td></tr></tfoot>
+          <tfoot><tr><th>TOTAL</th><td colSpan={bancos.length}>{fmtBRL(total)}</td></tr></tfoot>
         </table>
       </div>
       {aviso}
     </section>
   )
 }
+
+/** Quanto entrou e saiu por banco no mês (lançamentos sem banco ficam em "Sem banco"). */
+export function PorBanco({ bancos, lancs, caixa, aoAbrir }: {
+  bancos: Banco[]; lancs: Lancamento[]; caixa: Caixa; aoAbrir: (id: string | null) => void
+}) {
+  const linhas = [
+    ...bancos.map((b) => ({ id: b.id as string | null, nome: b.nome, cor: b.cor, ls: lancs.filter((l) => l.banco_id === b.id) })),
+    { id: null, nome: 'Sem banco', cor: '#55555f', ls: lancs.filter((l) => !l.banco_id || !bancos.some((b) => b.id === l.banco_id)) },
+  ].filter((x) => x.ls.length || (x.id && caixaDoBanco(caixa, x.id)))
+  const maior = Math.max(1, ...linhas.flatMap((x) => [somaTipo(x.ls, 'entrada'), somaTipo(x.ls, 'saida')]))
+  return (
+    <section className="bloco">
+      <header className="bloco-cab"><span>POR BANCO</span><span className="bloco-cab-leg"><i style={{ background: COR.entradas }} />entrou <i style={{ background: COR.saidas }} />saiu</span></header>
+      {!linhas.length && <p className="quadro-vazio">Nenhum lançamento neste mês.</p>}
+      {linhas.map((x) => {
+        const ent = somaTipo(x.ls, 'entrada')
+        const sai = somaTipo(x.ls, 'saida')
+        return (
+          <button key={x.id ?? 'sem'} className="banco-linha" onClick={() => aoAbrir(x.id)}>
+            <span className="banco-linha-nome"><i className="marcador" style={{ background: x.cor }} />{x.nome}</span>
+            <span className={`banco-linha-saldo ${ent - sai < 0 ? 'negativo' : ''}`}>{fmtBRL(ent - sai)}</span>
+            <span className="banco-barras">
+              <span style={{ width: `${(ent / maior) * 100}%`, background: COR.entradas }} />
+              <span style={{ width: `${(sai / maior) * 100}%`, background: COR.saidas }} />
+            </span>
+            <span className="banco-linha-sub">+{fmtBRL(ent)} · −{fmtBRL(sai)}</span>
+          </button>
+        )
+      })}
+    </section>
+  )
+}
+
+const somaTipo = (ls: Lancamento[], t: Tipo) => ls.filter((l) => l.tipo === t).reduce((a, l) => a + l.valor, 0)
 
 export function Metricas({ r, mes }: { r: Resumo; mes: number }) {
   // Mesma ordem e cores da planilha.

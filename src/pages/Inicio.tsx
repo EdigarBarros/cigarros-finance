@@ -3,7 +3,7 @@ import { COR } from '../lib/charts'
 import type { SituacaoDivida } from '../lib/dividas'
 import { fmtBRL, fmtUSD, MESES, MESES_NOME, variacao } from '../lib/format'
 import type { Tipo } from '../lib/types'
-import { ListaDividas, Metricas, QuadroCaixa, QuadroLancamentos, TabelaAnual, TabelaDividas } from '../components/Blocos'
+import { ListaDividas, Metricas, PorBanco, QuadroCaixa, QuadroLancamentos, TabelaAnual, TabelaDividas } from '../components/Blocos'
 import { FormDivida } from '../components/Formularios'
 import { GraficoAnual } from '../components/Graficos'
 import { Icone } from '../components/Icone'
@@ -47,7 +47,11 @@ export function Inicio(c: Ctx) {
   )
 
   const caixa = (
-    <QuadroCaixa caixa={c.mesEf.caixa} total={r.caixa} herdadoDe={c.mesEf.herdadoDe} compacto={mobile} aoAbrir={() => c.irPara('patrimonio')} />
+    <QuadroCaixa caixa={c.mesEf.caixa} bancos={c.d.bancos} total={r.caixa} herdadoDe={c.mesEf.herdadoDe} compacto={mobile} aoAbrir={() => c.irPara('patrimonio')} />
+  )
+
+  const porBanco = c.d.bancos.length > 0 && (
+    <PorBanco bancos={c.d.bancos} lancs={c.lancsMes} caixa={c.mesEf.caixa} aoAbrir={c.abrirBanco} />
   )
 
   return (
@@ -93,6 +97,7 @@ export function Inicio(c: Ctx) {
               aoNovo={() => c.novoLancamento(lado)} aoEditar={c.editarLancamento} />
           </section>
           <ListaDividas itens={c.situacao} aoEditar={abrirDivida} aoPagar={c.pagarDivida} aoNova={novaDivida} />
+          {porBanco}
           {caixa}
           {meta}
           <Cartao titulo={`Resumo de ${c.ano}`}>
@@ -111,6 +116,7 @@ export function Inicio(c: Ctx) {
           <div className="duas-colunas">
             <div className="pilha">
               <TabelaDividas itens={c.situacao} aoNova={novaDivida} aoEditar={abrirDivida} aoPagar={c.pagarDivida} />
+              {porBanco}
               {caixa}
               {meta}
             </div>
