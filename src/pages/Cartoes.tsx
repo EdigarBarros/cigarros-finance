@@ -318,8 +318,8 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
         <div className="form-acoes">
           {cartao && (
             confirmar
-              ? <button type="button" className="btn perigo" onClick={() => { void c.cartoes.delCartao(cartao.id); aoFechar() }}>Apagar mesmo</button>
-              : <button type="button" className="btn perigo" onClick={() => setConfirmar(true)}>Apagar</button>
+              ? <button type="button" className="btn perigo" onClick={() => { void c.cartoes.delCartao(cartao.id); aoFechar() }}>Excluir mesmo</button>
+              : <button type="button" className="btn perigo" onClick={() => setConfirmar(true)}>Excluir</button>
           )}
           <span className="espaco" />
           <button type="button" className="btn" onClick={aoFechar}>Cancelar</button>

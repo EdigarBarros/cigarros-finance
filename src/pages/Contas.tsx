@@ -126,7 +126,7 @@ export function Contas(c: Ctx) {
 
       {contas.length > 0 && (
         <Cartao titulo="Suas contas fixas">
-          <p className="campo-ajuda">Toque numa conta para editar, pausar ou apagar.</p>
+          <p className="campo-ajuda">Toque numa conta para editar, pausar ou excluir.</p>
           <ul className="conta-gerenciar">
             {contas.map((x) => {
               const cat = c.categorias.find((k) => k.id === x.categoria_id)
@@ -337,8 +337,8 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
         <div className="form-acoes">
           {conta && (
             confirmar
-              ? <button type="button" className="btn perigo" onClick={() => { void c.contas.delConta(conta.id); aoFechar() }}>Apagar mesmo</button>
-              : <button type="button" className="btn perigo" onClick={() => setConfirmar(true)}>Apagar</button>
+              ? <button type="button" className="btn perigo" onClick={() => { void c.contas.delConta(conta.id); aoFechar() }}>Excluir mesmo</button>
+              : <button type="button" className="btn perigo" onClick={() => setConfirmar(true)}>Excluir</button>
           )}
           {conta && (
             <button type="button" className="btn" onClick={() => { void c.contas.updConta(conta.id, { ativa: !conta.ativa }); aoFechar() }}>
@@ -350,7 +350,7 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
           <button type="submit" className="btn primario">{conta ? 'Salvar' : 'Criar conta'}</button>
         </div>
         {confirmar && <span className="campo-ajuda">Os lançamentos já pagos não somem: só deixam de estar ligados a esta conta.</span>}
-        {conta && !confirmar && <span className="campo-ajuda">Pausar esconde a conta dos meses que ainda não foram pagos, sem apagar o histórico.</span>}
+        {conta && !confirmar && <span className="campo-ajuda">Pausar esconde a conta dos meses que ainda não foram pagos, sem excluir o histórico.</span>}
       </form>
     </Modal>
   )

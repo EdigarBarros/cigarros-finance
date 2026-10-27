@@ -47,9 +47,9 @@ export function Lancamentos(c: Ctx) {
       </header>
 
       <div className="faixa-totais">
-        <div><span>Entradas</span><strong style={{ color: COR.entradas }}>{fmtValor(soma('entrada'))}</strong></div>
-        <div><span>Saídas</span><strong style={{ color: COR.saidas }}>{fmtValor(soma('saida'))}</strong></div>
-        <div><span>Saldo</span><strong>{fmtValor(soma('entrada') - soma('saida'))}</strong></div>
+        <div><span>Entrou</span><strong style={{ color: COR.entradas }}>{fmtValor(soma('entrada'))}</strong></div>
+        <div><span>Saiu</span><strong style={{ color: COR.saidas }}>{fmtValor(soma('saida'))}</strong></div>
+        <div><span>Sobrou</span><strong>{fmtValor(soma('entrada') - soma('saida'))}</strong></div>
       </div>
 
       <Cartao>

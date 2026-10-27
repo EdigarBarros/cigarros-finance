@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { COR } from '../lib/charts'
 import type { SituacaoDivida } from '../lib/dividas'
-import { fmtValor, fmtDataCurta, MESES_NOME } from '../lib/format'
+import { fmtValor, fmtDataCurta, MESES_CURTO, MESES_NOME } from '../lib/format'
 import { FormDivida } from '../components/Formularios'
 import { Icone } from '../components/Icone'
 import { Cartao, Kpi, Progresso, Vazio } from '../components/ui'
@@ -22,16 +22,16 @@ export function Dividas(c: Ctx) {
       <header className="pagina-topo">
         <div>
           <h1>Dívidas</h1>
-          <p className="sub">Saldos em {MESES_NOME[c.mes - 1].toLowerCase()}/{c.ano}. Cada pagamento lançado abate sozinho.</p>
+          <p className="sub">Saldos em {MESES_NOME[c.mes - 1].toLowerCase()} de {c.ano}. Cada pagamento lançado abate sozinho.</p>
         </div>
-        <button className="btn primario" onClick={() => setEditando('nova')}><Icone nome="mais" tamanho={16} /> Nova dívida</button>
+        <button className="btn primario" onClick={() => setEditando('nova')}><Icone nome="mais" tamanho={16} /> Adicionar dívida</button>
       </header>
 
       <div className="kpis">
-        <Kpi rotulo="Total devendo" valor={fmtValor(c.r.divida)} cor={COR.divida} delta={c.anterior ? (c.anterior.divida ? (c.r.divida - c.anterior.divida) / c.anterior.divida : null) : null} menorMelhor />
-        <Kpi rotulo="Pago em dívidas no mês" valor={fmtValor(pagoNoMes)} cor={COR.entradas} />
+        <Kpi rotulo="Você deve no total" valor={fmtValor(c.r.divida)} cor={COR.divida} delta={c.anterior ? (c.anterior.divida ? (c.r.divida - c.anterior.divida) / c.anterior.divida : null) : null} menorMelhor contra={c.mes > 1 ? `em ${MESES_CURTO[c.mes - 2].toLowerCase()}` : undefined} />
+        <Kpi rotulo="Pago neste mês" valor={fmtValor(pagoNoMes)} cor={COR.entradas} />
         <Kpi rotulo="Parcelas por mês" valor={fmtValor(c.r.parcelasMensais)} cor={COR.saidas} />
-        <Kpi rotulo="Livre de dívidas em" valor={ultimaQuitacao ? `${MESES_NOME[ultimaQuitacao[1] - 1]}/${ultimaQuitacao[0]}` : c.r.divida > 0 ? 'Defina as parcelas' : 'Já está! 🎉'} cor={COR.caixa} />
+        <Kpi rotulo="Sem dívidas em" valor={ultimaQuitacao ? `${MESES_NOME[ultimaQuitacao[1] - 1].toLowerCase()} de ${ultimaQuitacao[0]}` : c.r.divida > 0 ? 'Defina as parcelas' : 'Já está! 🎉'} cor={COR.caixa} />
       </div>
 
       {!c.situacao.length ? (
@@ -58,7 +58,7 @@ export function Dividas(c: Ctx) {
                   </div>
                   {s.quitacao && (
                     <p className="divida-previsao">
-                      Acaba em <b>{MESES_NOME[s.quitacao[1] - 1].toLowerCase()}/{s.quitacao[0]}</b> ({s.mesesRestantes} {s.mesesRestantes === 1 ? 'parcela' : 'parcelas'})
+                      Acaba em <b>{MESES_NOME[s.quitacao[1] - 1].toLowerCase()} de {s.quitacao[0]}</b> ({s.mesesRestantes} {s.mesesRestantes === 1 ? 'parcela' : 'parcelas'})
                     </p>
                   )}
                   {pagamentos.length > 0 && (
@@ -68,7 +68,7 @@ export function Dividas(c: Ctx) {
                   )}
                   {!s.quitadaNoMes && (
                     <button className="btn" onClick={() => c.pagarDivida(s)}>
-                      <Icone nome="check" tamanho={16} /> Registrar pagamento
+                      <Icone nome="check" tamanho={16} /> Lançar pagamento
                     </button>
                   )}
                 </div>

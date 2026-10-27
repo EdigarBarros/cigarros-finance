@@ -20,8 +20,10 @@ export function Cartao({ titulo, acao, children, className = '' }: {
 }
 
 /** Indicador do topo: valor grande, marcador de cor e variação contra o mês anterior. */
-export function Kpi({ rotulo, valor, cor, delta, menorMelhor, children }: {
-  rotulo: string; valor: string; cor: string; delta?: number | null; menorMelhor?: boolean; children?: ReactNode
+export function Kpi({ rotulo, valor, cor, delta, menorMelhor, contra = 'no mês passado', children }: {
+  rotulo: string; valor: string; cor: string; delta?: number | null; menorMelhor?: boolean
+  /** Com o que se compara, depois de "que": "em set", "no mês passado". */
+  contra?: string; children?: ReactNode
 }) {
   const bom = delta == null ? null : menorMelhor ? delta <= 0 : delta >= 0
   return (
@@ -31,7 +33,7 @@ export function Kpi({ rotulo, valor, cor, delta, menorMelhor, children }: {
       {delta != null && (
         <span className={`kpi-delta ${bom ? 'bom' : 'ruim'}`}>
           <Icone nome={delta >= 0 ? 'sobe' : 'desce'} tamanho={12} />
-          {fmtPct(Math.abs(delta))} vs mês anterior
+          {fmtPct(Math.abs(delta))} {delta >= 0 ? 'a mais' : 'a menos'} que {contra}
         </span>
       )}
       {children}

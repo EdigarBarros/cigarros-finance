@@ -67,12 +67,12 @@ export function fatiasDeGastos(gastos: Record<string, number>, cats: Categoria[]
     .filter(([, v]) => v > 0)
     .map(([id, valor]) => {
       const c = cats.find((x) => x.id === id) ?? SEM_CATEGORIA
-      return { nome: c.nome, icone: c.icone, cor: c.cor, valor }
+      return { id, nome: c.nome, icone: c.icone, cor: c.cor, valor }
     })
     .sort((a, b) => b.valor - a.valor)
   if (fatias.length <= limite) return fatias
   const resto = fatias.slice(limite - 1).reduce((a, f) => a + f.valor, 0)
-  return [...fatias.slice(0, limite - 1), { nome: 'Outras', icone: '…', cor: '#48484a', valor: resto }]
+  return [...fatias.slice(0, limite - 1), { id: 'outras', nome: 'Outras', icone: '…', cor: '#48484a', valor: resto }]
 }
 
 /** Emojis e cores para escolher ao criar ou editar uma categoria. */

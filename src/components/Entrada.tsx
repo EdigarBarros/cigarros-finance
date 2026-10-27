@@ -46,7 +46,7 @@ export function Login() {
         <button className="btn primario" disabled={ocupado}>{criar ? 'Criar conta' : 'Entrar'}</button>
         {msg && <p className="aviso">{msg}</p>}
         <button type="button" className="link" onClick={() => setCriar(!criar)}>
-          {criar ? 'Já tenho conta' : 'Primeiro acesso? Criar conta'}
+          {criar ? 'Já tenho conta. Entrar' : 'Ainda não tem conta? Criar conta'}
         </button>
       </form>
     </div>
@@ -56,7 +56,7 @@ export function Login() {
 function traduzir(m: string) {
   if (/invalid login/i.test(m)) return 'E-mail ou senha incorretos.'
   if (/email not confirmed/i.test(m)) return 'Confirme seu e-mail pelo link que chegou na caixa de entrada.'
-  if (/already registered/i.test(m)) return 'Esse e-mail já tem conta. Use "Já tenho conta".'
+  if (/already registered/i.test(m)) return 'Esse e-mail já tem conta. Toque em "Já tenho conta".'
   if (/signups not allowed/i.test(m)) return 'Cadastro de novas contas está desativado.'
   if (/not authorized|sending confirmation|sending.*email/i.test(m))
     return 'Não foi possível enviar o e-mail de confirmação. Avise o dono do site para liberar o cadastro.'
@@ -73,7 +73,7 @@ export function Configuracao() {
         <div className="login-marca">
           <img src="/logo.webp" alt="Cigarros Finance" width={148} height={148} />
         </div>
-        <h1>Falta conectar o banco</h1>
+        <h1>Falta conectar o banco de dados</h1>
         <p>
           Defina as variáveis <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code> (arquivo <code>.env</code> no
           computador, ou em Environment Variables na Vercel/Netlify) e publique de novo. O passo a passo está no README.

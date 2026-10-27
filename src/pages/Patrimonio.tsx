@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { caixaDoBanco, somaCaixa } from '../lib/calc'
 import { COR } from '../lib/charts'
-import { fmtValor, MESES_NOME, simbolo } from '../lib/format'
+import { fmtValor, MESES_CURTO, MESES_NOME, simbolo } from '../lib/format'
 import { converter, infoMoeda } from '../lib/moedas'
 import { BANCOS_CONHECIDOS, bancoConhecido, CORES_LIVRES, NOME_TIPO_CAIXA } from '../lib/rotulos'
 import { TIPOS_CAIXA, type Banco, type TipoCaixa } from '../lib/types'
@@ -33,7 +33,7 @@ export function Patrimonio(c: Ctx) {
 
   const faixaHerdado = herdado && (
     <div className="faixa-herdado">
-      <span>Os saldos vêm de <b>{MESES_NOME[herdado[1] - 1].toLowerCase()}/{herdado[0]}</b>. Se nada mudou, confirme; se mudou, edite.</span>
+      <span>Os saldos vêm de <b>{MESES_NOME[herdado[1] - 1].toLowerCase()} de {herdado[0]}</b>. Se nada mudou, confirme; se mudou, edite.</span>
       <button className="btn" onClick={confirmar}><Icone nome="check" tamanho={16} /> Continua igual</button>
     </div>
   )
@@ -60,7 +60,7 @@ export function Patrimonio(c: Ctx) {
           {banco && <Kpi rotulo="Saldo guardado" valor={fmtValor(caixaDoBanco(caixa, banco.id))} cor={cor} />}
           <Kpi rotulo="Entrou" valor={fmtValor(ent)} cor={COR.entradas} />
           <Kpi rotulo="Saiu" valor={fmtValor(sai)} cor={COR.saidas} />
-          <Kpi rotulo="Resultado no mês" valor={fmtValor(ent - sai)} cor={COR.fluxo} />
+          <Kpi rotulo="Sobrou no mês" valor={fmtValor(ent - sai)} cor={COR.fluxo} />
         </div>
         {banco && (
           <>
@@ -99,18 +99,18 @@ export function Patrimonio(c: Ctx) {
     <div className="pagina">
       <header className="pagina-topo">
         <div>
-          <h1>Meu dinheiro</h1>
+          <h1>Dinheiro guardado</h1>
           <p className="sub">
-            Como está em {MESES_NOME[c.mes - 1].toLowerCase()}/{c.ano}.{v.bancos && ' Toque num banco para ver só ele.'}
+            Como está em {MESES_NOME[c.mes - 1].toLowerCase()} de {c.ano}.{v.bancos && ' Toque num banco para ver só ele.'}
           </p>
         </div>
-        {v.bancos && <button className="btn primario" onClick={() => setGerenciar('novo')}><Icone nome="mais" tamanho={16} /> Novo banco</button>}
+        {v.bancos && <button className="btn primario" onClick={() => setGerenciar('novo')}><Icone nome="mais" tamanho={16} /> Adicionar banco</button>}
       </header>
 
       {v.bancos && <>
       <div className="kpis">
         <Kpi rotulo="Total guardado" valor={fmtValor(somaCaixa(caixa))} cor={COR.caixa}
-          delta={c.anterior?.caixa ? (c.r.caixa - c.anterior.caixa) / c.anterior.caixa : null} />
+          delta={c.anterior?.caixa ? (c.r.caixa - c.anterior.caixa) / c.anterior.caixa : null} contra={c.mes > 1 ? `em ${MESES_CURTO[c.mes - 2].toLowerCase()}` : undefined} />
         {TIPOS_CAIXA.map((t) => (
           <Kpi key={t} rotulo={NOME_TIPO_CAIXA[t]} valor={fmtValor(bancos.reduce((a, b) => a + (caixa[b.id]?.[t] ?? 0), 0))} cor={COR.caixa} />
         ))}
@@ -121,8 +121,8 @@ export function Patrimonio(c: Ctx) {
       {!bancos.length && (
         <Cartao>
           <Vazio>
-            Você ainda não cadastrou bancos. Eles são opcionais: servem para ver cada banco separado e guardar o saldo de cada um.<br />
-            <button className="link" onClick={() => setGerenciar('novo')}>Cadastrar o primeiro banco</button>
+            Você ainda não adicionou bancos. Eles são opcionais: servem para ver cada banco separado e guardar o saldo de cada um.<br />
+            <button className="link" onClick={() => setGerenciar('novo')}>Adicionar o primeiro banco</button>
           </Vazio>
         </Cartao>
       )}
@@ -201,7 +201,7 @@ function FormBanco({ c, banco, aoFechar, aoExcluir }: { c: Ctx; banco?: Banco; a
   }
 
   return (
-    <Modal titulo={banco ? 'Editar banco' : 'Novo banco'} aoFechar={aoFechar}>
+    <Modal titulo={banco ? 'Editar banco' : 'Adicionar banco'} aoFechar={aoFechar}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); void salvar() }}>
         {!banco && sugestoes.length > 0 && (
           <div className="campo">

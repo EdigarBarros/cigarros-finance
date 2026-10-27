@@ -87,7 +87,7 @@ export function Questionario({ inicial, aoConcluir, aoCancelar }: {
     },
     {
       titulo: 'O que faz parte da sua vida hoje?',
-      sub: 'Marque quantas quiser. Se nada disso, é só continuar: entradas e saídas já vêm sempre.',
+      sub: 'Marque o que for do seu jeito. Se nada disso, pode continuar: entradas e saídas já vêm sempre.',
       corpo: (
         <div className="opcoes">
           {MODULOS.filter((m) => m.id !== 'moedas').map((m) => (
@@ -97,8 +97,8 @@ export function Questionario({ inicial, aoConcluir, aoCancelar }: {
       ),
     },
     {
-      titulo: 'Como você prefere ver suas contas?',
-      sub: 'Começar no simples é uma boa: o app avisa quando valer a pena mostrar mais.',
+      titulo: 'Quanto detalhe você quer ver?',
+      sub: 'Dica: comece pelo simples. O app avisa quando valer a pena mostrar mais.',
       corpo: (
         <div className="opcoes">
           {DETALHES.map((d) => (

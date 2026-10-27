@@ -122,7 +122,7 @@ export function AdicionarAoPainel({ perfil, aoLigar, aoPersonalizar }: {
   return (
     <section className="adicionar">
       <div>
-        <strong>{desligados.length ? 'Quer acompanhar mais coisas?' : 'Seu painel está completo'}</strong>
+        <strong>{desligados.length ? 'Quer acompanhar mais coisas?' : 'Seu painel mostra tudo'}</strong>
         <p>{desligados.length ? 'Toque para adicionar ao painel. Dá para tirar depois.' : 'Mostre ou esconda partes do painel quando quiser.'}</p>
       </div>
       <div className="chips">

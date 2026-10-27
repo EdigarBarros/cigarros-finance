@@ -169,12 +169,12 @@ export function FormLancamento(p: FormLancProps) {
   const salvar = (continuar: boolean) => {
     const n = parseNumero(valor)
     if (!n || n <= 0) {
-      setErro('Informe um valor maior que zero.')
+      setErro('Digite um valor maior que zero.')
       campoValor.current?.focus()
       return
     }
-    if (!data) return setErro('Informe a data.')
-    if (estrangeira && (!taxa || taxa <= 0)) return setErro(`Informe quanto vale 1 ${infoMoeda(moeda).nome.toLowerCase()} em ${simbolo(principal)}.`)
+    if (!data) return setErro('Escolha a data.')
+    if (estrangeira && (!taxa || taxa <= 0)) return setErro(`Digite quanto vale 1 ${infoMoeda(moeda).nome.toLowerCase()} em ${simbolo(principal)}.`)
     const [a, m] = data.split('-').map(Number)
     const saida = tipo === 'saida'
     const ligada = saida && ehDivida && dividaId ? dividaId : null
@@ -220,7 +220,7 @@ export function FormLancamento(p: FormLancProps) {
   const cor = tipo === 'entrada' ? COR.entradas : COR.saidas
 
   return (
-    <Modal titulo={p.inicial ? 'Editar lançamento' : p.preset?.divida_id ? 'Pagamento de dívida' : 'Novo lançamento'} aoFechar={p.aoFechar}>
+    <Modal titulo={p.inicial ? 'Editar lançamento' : p.preset?.divida_id ? 'Pagar dívida' : 'Novo lançamento'} aoFechar={p.aoFechar}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); salvar(false) }}>
         {ehParcela && (
           <div className="form-dica fixa" role="status">
@@ -346,14 +346,14 @@ export function FormLancamento(p: FormLancProps) {
           <>
             {ehDivida && (v.dividas || dividaId) && opcoesDivida.length > 0 && (
               <label className="campo">
-                <span className="campo-rotulo">Abate qual dívida?</span>
+                <span className="campo-rotulo">Qual dívida você está pagando?</span>
                 <select value={dividaId} onChange={(e) => escolherDivida(e.target.value)}>
-                  <option value="">Nenhuma (só conta como gasto com dívida)</option>
+                  <option value="">Nenhuma (só entra como gasto)</option>
                   {opcoesDivida.map((d) => (
                     <option key={d.id} value={d.id}>{d.descricao}{d.valor_parcela ? ` · parcela ${fmtValor(d.valor_parcela)}` : ''}</option>
                   ))}
                 </select>
-                {dividaId && <span className="campo-ajuda">O saldo da dívida cai automaticamente com este pagamento.</span>}
+                {dividaId && <span className="campo-ajuda">A dívida diminui sozinha com este pagamento.</span>}
               </label>
             )}
           </>
@@ -413,11 +413,11 @@ export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo,
   const salvar = () => {
     if (!descricao.trim()) return setErro('Dê um nome para a dívida.')
     const vp = parcela.trim() ? parseNumero(parcela) : null
-    if (parcela.trim() && (!vp || vp <= 0)) return setErro('Valor da parcela inválido.')
+    if (parcela.trim() && (!vp || vp <= 0)) return setErro('Digite um valor de parcela válido.')
     const s = saldo.trim() ? parseNumero(saldo) : null
-    if (saldo.trim() && (s === null || s < 0)) return setErro('Saldo inválido.')
+    if (saldo.trim() && (s === null || s < 0)) return setErro('Digite um valor válido.')
     if (!d) {
-      if (s === null || s <= 0) return setErro('Informe quanto falta pagar.')
+      if (s === null || s <= 0) return setErro('Digite quanto falta pagar.')
       aoCriar({ descricao: descricao.trim(), valor_parcela: vp, saldo: s, data })
     } else {
       if (descricao.trim() !== d.descricao || vp !== d.valor_parcela) aoEditar(d.id, { descricao: descricao.trim(), valor_parcela: vp })
@@ -427,7 +427,7 @@ export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo,
   }
 
   return (
-    <Modal titulo={d ? 'Editar dívida' : 'Nova dívida'} aoFechar={aoFechar}>
+    <Modal titulo={d ? 'Editar dívida' : 'Adicionar dívida'} aoFechar={aoFechar}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); salvar() }}>
         <label className="campo">
           <span className="campo-rotulo">Nome</span>
@@ -440,16 +440,16 @@ export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo,
         </label>
         <div className="form-linha">
           <label className="campo">
-            <span className="campo-rotulo">{d ? 'Saldo devedor atualizado' : 'Quanto falta pagar'}</span>
+            <span className="campo-rotulo">{d ? 'Quanto falta pagar agora' : 'Quanto falta pagar'}</span>
             <input inputMode="decimal" value={saldo} onChange={(e) => setSaldo(e.target.value)}
               placeholder={d ? fmtValor(situacao!.restante) : '0,00'} />
           </label>
           <label className="campo">
-            <span className="campo-rotulo">Em qual data</span>
+            <span className="campo-rotulo">Em que data</span>
             <input type="date" value={data} onChange={(e) => setData(e.target.value)} />
           </label>
         </div>
-        {d && <span className="campo-ajuda">Só preencha o saldo se o banco mudou o valor (juros, acordo). Pagamentos já abatem sozinhos.</span>}
+        {d && <span className="campo-ajuda">Só preencha se o banco mudou o valor (juros, acordo). Os pagamentos já abatem sozinhos.</span>}
         {erro && <p className="form-erro">{erro}</p>}
         <div className="form-acoes">
           {d && (
@@ -495,7 +495,7 @@ export function EscolhaBanco({ bancos, valor, aoMudar, aoNovoBanco }: {
             <i className="marcador" />{b.nome}
           </button>
         ))}
-        <button type="button" className="chip novo" onClick={novo}>+ banco</button>
+        <button type="button" className="chip novo" onClick={novo}>+ Novo banco</button>
       </div>
     </div>
   )

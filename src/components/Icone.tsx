@@ -18,6 +18,7 @@ const CAMINHOS: Record<string, string> = {
   copiar: 'M9 9h11v11H9zM5 15H4V4h11v1',
   check: 'M5 12l5 5 9-10',
   menu: 'M4 6h16M4 12h16M4 18h16',
+  reticencias: 'M5 12h.01M12 12h.01M19 12h.01',
   ajustes: 'M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4',
   globo: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3.5 9h17M3.5 15h17M12 3c2.5 2.7 3.5 5.7 3.5 9s-1 6.3-3.5 9c-2.5-2.7-3.5-5.7-3.5-9s1-6.3 3.5-9z',
   investir: 'M3 17l6-6 4 4 8-8M15 7h6v6',
