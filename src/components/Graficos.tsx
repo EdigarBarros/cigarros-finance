@@ -6,7 +6,7 @@ import { fmtBRL, fmtUSD, MESES, MESES_NOME } from '../lib/format'
 
 const eixoReais = {
   ticks: { callback: (v: string | number) => fmtBRL(Number(v)), maxTicksLimit: 7 },
-  grid: { color: 'rgba(255, 255, 255, .06)' },
+  grid: { color: 'rgba(84, 84, 88, .35)' },
   border: { display: false },
 }
 
@@ -25,7 +25,7 @@ export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 360, comp
   })
   const barra = (label: string, cor: string, f: (r: Resumo) => number) => ({
     type: 'bar' as const, label, data: serie(f), backgroundColor: cor,
-    borderRadius: 3, maxBarThickness: compacto ? 7 : 16, categoryPercentage: compacto ? 0.7 : 0.55, order: 1,
+    borderRadius: 6, borderSkipped: false as const, maxBarThickness: compacto ? 7 : 14, categoryPercentage: compacto ? 0.7 : 0.55, order: 1,
   })
   // Valores negativos pequenos (ex.: investimento de -R$ 27) não justificam um eixo indo a -R$ 5 mil.
   const valores = porMes.flatMap((r) => (r ? [r.entradas, r.saidas, r.caixa, r.divida, r.investimentos, r.usd] : []))
@@ -50,7 +50,7 @@ export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 360, comp
           interaction: { mode: 'index', intersect: false },
           onClick: (_e, els) => els[0] && aoClicarMes?.(els[0].index + 1),
           plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: compacto ? 10 : 22, boxHeight: compacto ? 6 : 8, padding: compacto ? 8 : 16, font: { size: compacto ? 9 : 11, weight: 600 }, sort: (x, y) => x.datasetIndex! - y.datasetIndex! } },
+            legend: { position: 'bottom', labels: { boxWidth: compacto ? 6 : 8, boxHeight: compacto ? 6 : 8, padding: compacto ? 10 : 18, font: { size: compacto ? 10 : 12, weight: 500 }, sort: (x, y) => x.datasetIndex! - y.datasetIndex! } },
             tooltip: {
               callbacks: {
                 title: (i) => MESES_NOME[i[0].dataIndex],
@@ -91,7 +91,8 @@ export function GraficoSaldo({ porMes }: { porMes: (Resumo | null)[] }) {
             label: 'Fluxo de caixa',
             data: porMes.map((r) => r?.fluxo ?? null),
             backgroundColor: porMes.map((r) => ((r?.fluxo ?? 0) >= 0 ? COR.entradas : COR.saidas)),
-            borderRadius: 3,
+            borderRadius: 6,
+            borderSkipped: false,
             maxBarThickness: 22,
           }],
         }}
@@ -118,7 +119,7 @@ const porcentagens: Plugin<'doughnut'> = {
     const total = dados.reduce((a, b) => a + b, 0)
     const { ctx } = chart
     ctx.save()
-    ctx.font = '700 12px Inter, system-ui, sans-serif'
+    ctx.font = '600 12px -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     chart.getDatasetMeta(0).data.forEach((arco, i) => {
@@ -140,14 +141,14 @@ export function Rosca({ fatias, altura = 260 }: { fatias: Fatia[]; altura?: numb
       <Doughnut
         data={{
           labels: fatias.map((f) => f.nome.toUpperCase()),
-          datasets: [{ data: fatias.map((f) => Math.max(0, f.valor)), backgroundColor: fatias.map((f) => f.cor), borderColor: 'rgba(10, 11, 15, .6)', borderWidth: 2, hoverOffset: 8 }],
+          datasets: [{ data: fatias.map((f) => Math.max(0, f.valor)), backgroundColor: fatias.map((f) => f.cor), borderColor: 'transparent', borderWidth: 0, spacing: 3, borderRadius: 6, hoverOffset: 8 }],
         }}
         plugins={[porcentagens]}
         options={{
           cutout: '45%',
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, padding: 14, font: { size: 11, weight: 600 } } },
+            legend: { position: 'bottom', labels: { boxWidth: 8, boxHeight: 8, padding: 14, font: { size: 12, weight: 500 } } },
             tooltip: { callbacks: { label: (c) => ` ${fmtBRL(Number(c.raw))}` } },
           },
         }}

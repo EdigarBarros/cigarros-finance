@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { fmtPct, paraCampo, parseNumero } from '../lib/format'
 import { Icone } from './Icone'
 
@@ -56,6 +56,7 @@ export function Modal({ titulo, aoFechar, children }: { titulo: string; aoFechar
   return (
     <div className="modal-fundo" onMouseDown={(e) => e.target === e.currentTarget && aoFechar()}>
       <div className="modal" role="dialog" aria-modal="true" aria-label={titulo}>
+        <span className="alca" aria-hidden="true" />
         <header className="modal-topo">
           <h2>{titulo}</h2>
           <button className="icone-btn" onClick={aoFechar} aria-label="Fechar"><Icone nome="fechar" /></button>
@@ -99,11 +100,28 @@ export function CampoValor({ valor, aoSalvar, prefixo = 'R$', rotulo }: {
   )
 }
 
+/** Controle segmentado no estilo Apple: uma pílula de vidro desliza até a opção escolhida. */
 export function Segmentado<T extends string>({ opcoes, valor, aoMudar, rotulo }: {
   opcoes: { id: T; nome: string; cor?: string }[]; valor: T; aoMudar: (v: T) => void; rotulo: string
 }) {
+  const caixa = useRef<HTMLDivElement>(null)
+  const [pilula, setPilula] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
+  useLayoutEffect(() => {
+    const medir = () => {
+      const el = caixa.current?.querySelector<HTMLElement>('button.ativo')
+      setPilula(el ? { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight } : null)
+    }
+    medir()
+    const ro = new ResizeObserver(medir)
+    if (caixa.current) ro.observe(caixa.current)
+    return () => ro.disconnect()
+  }, [valor, opcoes.length])
   return (
-    <div className="segmentado" role="radiogroup" aria-label={rotulo}>
+    <div className="segmentado" role="radiogroup" aria-label={rotulo} ref={caixa}>
+      {pilula && (
+        <span className="segmentado-pilula" aria-hidden="true"
+          style={{ transform: `translate(${pilula.x}px, ${pilula.y}px)`, width: pilula.w, height: pilula.h }} />
+      )}
       {opcoes.map((o) => (
         <button
           key={o.id}

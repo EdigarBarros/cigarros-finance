@@ -58,7 +58,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     document.querySelectorAll<HTMLElement>('.pagina > *').forEach((el, i) =>
       el.animate(
         [{ opacity: 0.35, filter: 'blur(8px)', transform: 'translateY(6px)' }, { opacity: 1, filter: 'none', transform: 'none' }],
-        { duration: 500, delay: Math.min(i, 6) * 35, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' },
+        { duration: 650, delay: Math.min(i, 6) * 35, easing: 'cubic-bezier(.32,.72,0,1)', fill: 'backwards' },
       ),
     )
   }, [mes, ano])

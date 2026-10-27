@@ -12,7 +12,7 @@ const brilho: Plugin = {
     const ctx = chart.ctx
     ctx.save()
     ctx.shadowColor = (meta.dataset?.options as { borderColor?: string })?.borderColor ?? 'transparent'
-    ctx.shadowBlur = 10
+    ctx.shadowBlur = 6
   },
   afterDatasetDraw(chart, { meta }) {
     if (meta.type === 'line') chart.ctx.restore()
@@ -23,38 +23,42 @@ Chart.register(
   ArcElement, BarController, BarElement, CategoryScale, Filler, Legend, LinearScale,
   LineController, LineElement, PointElement, Tooltip, brilho,
 )
-Chart.defaults.color = '#c9c9d1'
+Chart.defaults.color = 'rgba(235, 235, 245, .6)'
 Chart.defaults.borderColor = '#22222b'
-Chart.defaults.font.family = 'Inter, "Segoe UI", system-ui, sans-serif'
+Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif'
 Chart.defaults.font.size = 11
-Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(24, 25, 32, .88)'
+Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(44, 44, 46, .92)'
 Chart.defaults.plugins.tooltip.borderColor = 'rgba(255, 255, 255, .12)'
 Chart.defaults.plugins.tooltip.borderWidth = 1
 Chart.defaults.plugins.tooltip.padding = 10
-Chart.defaults.plugins.tooltip.cornerRadius = 12
-Chart.defaults.animation = { duration: 900, easing: 'easeOutQuart' }
+Chart.defaults.plugins.tooltip.cornerRadius = 14
+Chart.defaults.plugins.tooltip.boxPadding = 4
+Chart.defaults.plugins.tooltip.usePointStyle = true
+Chart.defaults.plugins.legend.labels.usePointStyle = true
+Chart.defaults.plugins.legend.labels.pointStyle = 'circle'
+Chart.defaults.animation = { duration: 900, easing: 'easeOutQuint' }
 Chart.defaults.borderColor = 'rgba(255, 255, 255, .06)'
 Chart.defaults.plugins.tooltip.titleColor = '#ededf0'
 Chart.defaults.plugins.tooltip.bodyColor = '#ededf0'
 
-// As cores da planilha.
+// Os mesmos papéis de cor da planilha, nas cores de sistema da Apple (modo escuro).
 export const COR = {
-  entradas: '#92d050',
-  saidas: '#ff2b2b',
-  fluxo: '#a6a6a6',
-  caixa: '#00b0f0',
-  divida: '#ffc000',
-  investimentos: '#e040e0',
-  usd: '#00b050',
+  entradas: '#30d158', // systemGreen
+  saidas: '#ff453a', // systemRed
+  fluxo: '#98989d', // systemGray
+  caixa: '#64d2ff', // systemCyan
+  divida: '#ffd60a', // systemYellow
+  investimentos: '#bf5af2', // systemPurple
+  usd: '#63e6e2', // systemMint
   nubank: '#9b4dde',
   inter: '#ff7a00',
   itau: '#ec7000',
-  principal: '#8a8a96',
+  principal: '#8e8e93',
 }
 
 export const COR_CATEGORIA = {
-  transporte: '#4472c4',
-  divida: '#ed7d31',
-  alimentacao: '#a5a5a5',
-  outros: '#ffc000',
+  transporte: '#0a84ff', // systemBlue
+  divida: '#ff9f0a', // systemOrange
+  alimentacao: '#98989d', // systemGray
+  outros: '#ffd60a', // systemYellow
 }

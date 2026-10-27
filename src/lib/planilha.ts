@@ -23,9 +23,9 @@ export interface MesImportado {
 
 // Faixas de linhas do modelo da planilha (1-based, como no Excel).
 const FAIXA_ENTRADAS: [number, number] = [3, 106]
-// O primeiro bloco de saídas não tem banco definido; os outros são NUBANK e INTER.
-const FAIXAS_SAIDAS: [string | undefined, number, number][] = [
-  [undefined, 3, 52],
+// O primeiro bloco de saídas (o "principal" da planilha) é o Itaú; os outros são NUBANK e INTER.
+const FAIXAS_SAIDAS: [string, number, number][] = [
+  ['Itaú', 3, 52],
   ['Nubank', 55, 129],
   ['Inter', 132, 136],
 ]

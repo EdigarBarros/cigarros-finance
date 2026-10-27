@@ -56,6 +56,12 @@ export function Inicio(c: Ctx) {
 
   return (
     <div className="pagina">
+      <header className="pagina-topo">
+        <div>
+          <h1>Visão geral</h1>
+          <p className="sub">{MESES_NOME[c.mes - 1]} de {c.ano}</p>
+        </div>
+      </header>
       <section className="hero">
         <div>
           <span className="hero-rotulo">Fluxo de caixa · {MESES[c.mes - 1]}/{c.ano}</span>
