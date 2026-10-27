@@ -5,6 +5,8 @@ import { MESES_NOME } from '../lib/format'
 import { supabase } from '../lib/supabase'
 import type { Lancamento, Tipo } from '../lib/types'
 import { useMobile } from '../lib/useMobile'
+import { estiloLente, useLente } from '../lib/useLente'
+import { useVidroLiquido } from '../lib/vidroLiquido'
 import { useDados } from '../lib/useDados'
 import { Ano } from '../pages/Ano'
 import type { Ctx, Pagina } from '../pages/contexto'
@@ -39,6 +41,16 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const [bancoAberto, setBancoAberto] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState<string | null>(null)
   const arquivo = useRef<HTMLInputElement>(null)
+  // controles flutuantes: vidro com refração líquida + lente deslizante no item ativo
+  const refLateral = useRef<HTMLElement>(null)
+  const refNav = useRef<HTMLElement>(null)
+  const refSeletor = useRef<HTMLDivElement>(null)
+  const refMeses = useRef<HTMLElement>(null)
+  const refAbas = useRef<HTMLElement>(null)
+  useVidroLiquido(refLateral, { escala: 26, bezel: 22, desfoque: 20 })
+  useVidroLiquido(refSeletor)
+  useVidroLiquido(refMeses)
+  useVidroLiquido(refAbas, { escala: 40, bezel: 20 })
   const d = useDados(userId, ano)
   const mobile = useMobile()
 
@@ -47,6 +59,10 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     window.addEventListener('hashchange', aoMudar)
     return () => window.removeEventListener('hashchange', aoMudar)
   }, [])
+  const lenteNav = useLente(refNav, 'button.ativo', pagina)
+  const lenteMeses = useLente(refMeses, 'button.ativo', `${mes}|${ano}`)
+  const lenteAbas = useLente(refAbas, 'button.ativo', `${pagina}|${mobile}`)
+
   // Ao trocar de mês, os blocos da página saem do desfoque de novo (mesma animação da entrada).
   const primeiraVez = useRef(true)
   useEffect(() => {
@@ -160,9 +176,10 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
 
   return (
     <div className="app">
-      <aside className="lateral">
+      <aside className="lateral" ref={refLateral}>
         <div className="marca"><span className="marca-logo" />Controle Financeiro</div>
-        <nav>
+        <nav ref={refNav}>
+          {lenteNav && <span className="lente" aria-hidden="true" style={estiloLente(lenteNav)} />}
           {PAGINAS.map((p) => (
             <button key={p.id} className={pagina === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}>
               <Icone nome={p.icone} /> {p.nome}
@@ -181,12 +198,13 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
 
       <div className="conteudo">
         <header className="barra">
-          <div className="seletor-mes">
+          <div className="seletor-mes" ref={refSeletor}>
             <button className="icone-btn" onClick={() => mudarMes(-1)} aria-label="Mês anterior"><Icone nome="esq" /></button>
             <span>{MESES_NOME[mes - 1]} <small>{ano}</small></span>
             <button className="icone-btn" onClick={() => mudarMes(1)} aria-label="Próximo mês"><Icone nome="dir" /></button>
           </div>
-          <nav className="abas-meses" aria-label="Meses">
+          <nav className="abas-meses" aria-label="Meses" ref={refMeses}>
+            {lenteMeses && <span className="lente" aria-hidden="true" style={estiloLente(lenteMeses)} />}
             {MESES_NOME.map((m, i) => (
               <button
                 key={m}
@@ -230,7 +248,8 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
 
       <button className="fab" onClick={() => setForm({})} aria-label="Novo lançamento"><Icone nome="mais" tamanho={26} /></button>
 
-      <nav className="abas-movel">
+      <nav className="abas-movel" ref={refAbas}>
+        {lenteAbas && <span className="lente" aria-hidden="true" style={estiloLente(lenteAbas)} />}
         {PAGINAS.map((p) => (
           <button key={p.id} className={pagina === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}>
             <Icone nome={p.icone} /> <span>{p.nome.replace('Visão geral', 'Início')}</span>

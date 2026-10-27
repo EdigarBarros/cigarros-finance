@@ -1,5 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { fmtPct, paraCampo, parseNumero } from '../lib/format'
+import { estiloLente, useLente } from '../lib/useLente'
 import { Icone } from './Icone'
 
 export function Cartao({ titulo, acao, children, className = '' }: {
@@ -105,22 +106,11 @@ export function Segmentado<T extends string>({ opcoes, valor, aoMudar, rotulo }:
   opcoes: { id: T; nome: string; cor?: string }[]; valor: T; aoMudar: (v: T) => void; rotulo: string
 }) {
   const caixa = useRef<HTMLDivElement>(null)
-  const [pilula, setPilula] = useState<{ x: number; y: number; w: number; h: number } | null>(null)
-  useLayoutEffect(() => {
-    const medir = () => {
-      const el = caixa.current?.querySelector<HTMLElement>('button.ativo')
-      setPilula(el ? { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight } : null)
-    }
-    medir()
-    const ro = new ResizeObserver(medir)
-    if (caixa.current) ro.observe(caixa.current)
-    return () => ro.disconnect()
-  }, [valor, opcoes.length])
+  const pilula = useLente(caixa, 'button.ativo', `${valor}|${opcoes.length}`)
   return (
     <div className="segmentado" role="radiogroup" aria-label={rotulo} ref={caixa}>
       {pilula && (
-        <span className="segmentado-pilula" aria-hidden="true"
-          style={{ transform: `translate(${pilula.x}px, ${pilula.y}px)`, width: pilula.w, height: pilula.h }} />
+        <span className="segmentado-pilula" aria-hidden="true" style={estiloLente(pilula)} />
       )}
       {opcoes.map((o) => (
         <button
