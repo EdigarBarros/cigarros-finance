@@ -190,6 +190,7 @@ export function Inicio(c: Ctx) {
           aoNovoSaldo={c.d.addSaldo}
           aoExcluir={c.d.delDivida}
           aoFechar={() => setDivida(null)}
+          definirParcela={divida !== 'nova' && !divida.divida.valor_parcela && !divida.quitadaNoMes}
         />
       )}
     </div>

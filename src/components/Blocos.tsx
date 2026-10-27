@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { caixaDoBanco, type Resumo } from '../lib/calc'
 import { COR } from '../lib/charts'
-import type { SituacaoDivida } from '../lib/dividas'
+import { parcelasDe, type SituacaoDivida } from '../lib/dividas'
 import { fmtMoeda, fmtMesAno, fmtPct, fmtValor, MESES_CURTO, MESES_NOME } from '../lib/format'
 import type { SituacaoMeta } from '../lib/metas'
 import { converter, infoMoeda, type Taxas } from '../lib/moedas'
@@ -163,11 +163,15 @@ export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTod
                 <span className="divida-linha-valor">{s.quitadaNoMes ? 'Quitada ✓' : fmtValor(s.restante)}</span>
                 <Progresso valor={s.saldoInicial - s.restante} total={s.saldoInicial} cor={COR.entradas} />
                 <span className="divida-linha-sub">
-                  {capitalizar([
-                    nivel !== 'simples' && s.divida.valor_parcela ? `Parcela ${fmtValor(s.divida.valor_parcela)}` : null,
-                    s.quitadaNoMes ? null : s.quitacao ? `acaba em ${quando(s.quitacao)}` : 'defina a parcela para ver quando acaba',
-                    nivel === 'detalhado' && s.pagoNoMes ? `pago neste mês ${fmtValor(s.pagoNoMes)}` : null,
-                  ].filter(Boolean).join(' · '))}
+                  {(() => {
+                    const p = parcelasDe(s)
+                    return capitalizar([
+                      p && !s.quitadaNoMes ? `parcela ${p.proxima} de ${p.total}` : null,
+                      nivel !== 'simples' && s.divida.valor_parcela ? `${fmtValor(s.divida.valor_parcela)} por mês` : null,
+                      s.quitadaNoMes ? null : s.quitacao ? `acaba em ${quando(s.quitacao)}` : 'sem parcela definida, toque para definir',
+                      nivel === 'detalhado' && s.pagoNoMes ? `pago neste mês ${fmtValor(s.pagoNoMes)}` : null,
+                    ].filter(Boolean).join(' · '))
+                  })()}
                 </span>
               </button>
               {!s.quitadaNoMes && <button className="pagar" onClick={() => aoPagar(s)}>Pagar</button>}

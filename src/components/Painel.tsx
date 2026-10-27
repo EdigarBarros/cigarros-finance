@@ -33,7 +33,7 @@ import { FormLancamento } from './Formularios'
 import { Kpi } from './ui'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
-import { Personalizar } from './Personalizar'
+import { Personalizar, ZerarDados } from './Personalizar'
 import { Questionario } from './Questionario'
 
 /**
@@ -75,6 +75,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const [ajustes, setAjustes] = useState(false)
   const [refazendo, setRefazendo] = useState(false)
   const [editarCategorias, setEditarCategorias] = useState(false)
+  const [zerando, setZerando] = useState(false)
   const arquivo = useRef<HTMLInputElement>(null)
   // controles flutuantes: vidro com refração líquida + lente deslizante no item ativo
   const refLateral = useRef<HTMLElement>(null)
@@ -479,7 +480,17 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
           aoMudar={mudarPerfil}
           aoRefazer={() => { setAjustes(false); setRefazendo(true) }}
           aoCategorias={() => { setAjustes(false); ctx.gerenciarCategorias() }}
+          aoZerar={() => { setAjustes(false); setZerando(true) }}
           aoFechar={() => setAjustes(false)}
+        />
+      )}
+
+      {zerando && (
+        <ZerarDados
+          aoBaixarBackup={async () => (await import('../lib/planilha')).exportarBackup()}
+          // depois de apagar, recarrega a página: todos os dados e o perfil voltam do zero
+          aoZerar={async (tudo) => { await d.zerarDados(tudo); location.hash = '/inicio'; location.reload() }}
+          aoFechar={() => setZerando(false)}
         />
       )}
 
