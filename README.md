@@ -1,4 +1,4 @@
-# Controle Financeiro
+# Cigarros Finance
 
 Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLANILHA_FINANCEIRA_2026.xlsx`
 (mesmos conceitos e cores, mas com cara de app):

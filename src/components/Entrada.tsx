@@ -24,7 +24,10 @@ export function Login() {
   return (
     <div className="tela-central">
       <form className="cartao login" onSubmit={enviar}>
-        <h1>CONTROLE FINANCEIRO</h1>
+        <div className="login-marca">
+          <img src="/logo.webp" alt="Cigarros Finance" width={148} height={148} />
+          <p>{criar ? 'Crie sua conta para começar' : 'Entre na sua conta'}</p>
+        </div>
         <label>
           E-mail
           <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
@@ -62,6 +65,9 @@ export function Configuracao() {
   return (
     <div className="tela-central">
       <div className="cartao login">
+        <div className="login-marca">
+          <img src="/logo.webp" alt="Cigarros Finance" width={148} height={148} />
+        </div>
         <h1>Falta conectar o banco</h1>
         <p>
           Defina as variáveis <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code> (arquivo <code>.env</code> no

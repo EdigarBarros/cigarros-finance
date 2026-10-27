@@ -16,6 +16,7 @@ import { Lancamentos } from '../pages/Lancamentos'
 import { Patrimonio } from '../pages/Patrimonio'
 import { FormLancamento } from './Formularios'
 import { Icone } from './Icone'
+import { Marca } from './Marca'
 
 const PAGINAS: { id: Pagina; nome: string; icone: string }[] = [
   { id: 'inicio', nome: 'Visão geral', icone: 'inicio' },
@@ -177,7 +178,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   return (
     <div className="app">
       <aside className="lateral" ref={refLateral}>
-        <div className="marca"><span className="marca-logo" />Controle Financeiro</div>
+        <Marca />
         <nav ref={refNav}>
           {lenteNav && <span className="lente" aria-hidden="true" style={estiloLente(lenteNav)} />}
           {PAGINAS.map((p) => (
@@ -198,6 +199,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
 
       <div className="conteudo">
         <header className="barra">
+          {mobile && <Marca compacta />}
           <div className="seletor-mes" ref={refSeletor}>
             <button className="icone-btn" onClick={() => mudarMes(-1)} aria-label="Mês anterior"><Icone nome="esq" /></button>
             <span>{MESES_NOME[mes - 1]} <small>{ano}</small></span>

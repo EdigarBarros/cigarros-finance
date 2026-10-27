@@ -23,8 +23,9 @@
   --saida: #ff453a;
   --caixa: #64d2ff;
   --divida: #ffd60a;
-  --azul: #0a84ff;
-  --link: #409cff;
+  /* destaque: o violeta da logo Cigarros Finance */
+  --destaque: #9d6bff;
+  --link: #b9a0ff;
   --nubank: #9b4dde;
 
   /* vidro */
@@ -79,7 +80,7 @@ code { background: var(--preench-3); padding: 1px 6px; border-radius: 6px; font-
 body::before, body::after { content: ''; position: fixed; inset: -25%; z-index: -1; pointer-events: none; }
 body::before {
   background:
-    radial-gradient(32% 30% at 14% 16%, rgba(10, 132, 255, 0.300) 0%, rgba(10, 132, 255, 0.283) 9%, rgba(10, 132, 255, 0.239) 18%, rgba(10, 132, 255, 0.180) 27%, rgba(10, 132, 255, 0.118) 36%, rgba(10, 132, 255, 0.063) 45%, rgba(10, 132, 255, 0.024) 54%, rgba(10, 132, 255, 0.004) 63%, rgba(10, 132, 255, 0.000) 72%),
+    radial-gradient(32% 30% at 14% 16%, rgba(124, 77, 255, 0.300) 0%, rgba(124, 77, 255, 0.283) 9%, rgba(124, 77, 255, 0.239) 18%, rgba(124, 77, 255, 0.180) 27%, rgba(124, 77, 255, 0.118) 36%, rgba(124, 77, 255, 0.063) 45%, rgba(124, 77, 255, 0.024) 54%, rgba(124, 77, 255, 0.004) 63%, rgba(124, 77, 255, 0.000) 72%),
     radial-gradient(30% 28% at 86% 12%, rgba(191, 90, 242, 0.260) 0%, rgba(191, 90, 242, 0.245) 9%, rgba(191, 90, 242, 0.207) 18%, rgba(191, 90, 242, 0.156) 27%, rgba(191, 90, 242, 0.102) 36%, rgba(191, 90, 242, 0.055) 45%, rgba(191, 90, 242, 0.021) 54%, rgba(191, 90, 242, 0.004) 63%, rgba(191, 90, 242, 0.000) 72%),
     radial-gradient(36% 32% at 78% 82%, rgba(94, 92, 230, 0.280) 0%, rgba(94, 92, 230, 0.264) 9%, rgba(94, 92, 230, 0.223) 18%, rgba(94, 92, 230, 0.168) 27%, rgba(94, 92, 230, 0.110) 36%, rgba(94, 92, 230, 0.059) 45%, rgba(94, 92, 230, 0.023) 54%, rgba(94, 92, 230, 0.004) 63%, rgba(94, 92, 230, 0.000) 72%),
     radial-gradient(28% 26% at 20% 84%, rgba(48, 209, 88, 0.200) 0%, rgba(48, 209, 88, 0.188) 9%, rgba(48, 209, 88, 0.159) 18%, rgba(48, 209, 88, 0.120) 27%, rgba(48, 209, 88, 0.078) 36%, rgba(48, 209, 88, 0.042) 45%, rgba(48, 209, 88, 0.016) 54%, rgba(48, 209, 88, 0.003) 63%, rgba(48, 209, 88, 0.000) 72%),
@@ -137,8 +138,8 @@ body::after { inset: 0; background: radial-gradient(120% 90% at 50% 0%, rgba(0, 
 .btn:disabled { opacity: .5; }
 .btn.primario {
   color: #fff;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .28), rgba(255, 255, 255, 0) 55%), var(--azul);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 8px 22px -8px rgba(10, 132, 255, .7);
+  background: linear-gradient(180deg, rgba(255, 255, 255, .28), rgba(255, 255, 255, 0) 55%), var(--destaque);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 8px 22px -8px rgba(157, 107, 255, .65);
 }
 .btn.entrada { color: var(--entrada); background: linear-gradient(180deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, 0)), rgba(48, 209, 88, .18); }
 .btn.saida { color: #ff6961; background: linear-gradient(180deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, 0)), rgba(255, 69, 58, .18); }
@@ -189,10 +190,18 @@ body::after { inset: 0; background: radial-gradient(120% 90% at 50% 0%, rgba(0, 
 /* ---------- login ---------- */
 .tela-central { min-height: 100vh; display: grid; place-items: center; padding: 16px; color: var(--texto-2); }
 .cartao.login { width: min(380px, 100%); padding: 32px 28px 24px; display: grid; gap: 16px; border-radius: 32px; animation: surgir .8s var(--mola) both; }
+.login-marca { display: grid; justify-items: center; gap: 14px; margin: -6px 0 6px; }
+.login-marca img {
+  width: 148px; height: 148px; border-radius: 34px;
+  box-shadow: 0 24px 60px -18px rgba(157, 107, 255, .55), 0 10px 30px -12px rgba(0, 0, 0, .8);
+  animation: flutuar 6s ease-in-out infinite;
+}
+.login-marca p { margin: 0; color: var(--texto-2); font-size: 15px; }
+@keyframes flutuar { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 .cartao.login h1 { font-size: 22px; font-weight: 700; letter-spacing: -.02em; color: var(--texto); }
 .cartao.login label { display: grid; gap: 6px; color: var(--texto-2); font-size: 13px; }
 .cartao.login input { height: 46px; padding: 0 14px; border: 0; border-radius: var(--raio-p); background: var(--preench-2); outline: none; transition: box-shadow .2s; }
-.cartao.login input:focus { box-shadow: 0 0 0 3px rgba(10, 132, 255, .55); }
+.cartao.login input:focus { box-shadow: 0 0 0 3px rgba(157, 107, 255, .55); }
 .cartao.login .btn { height: 46px; }
 .aviso { color: var(--divida); margin: 0; font-size: 13px; }
 
@@ -202,19 +211,24 @@ body::after { inset: 0; background: radial-gradient(120% 90% at 50% 0%, rgba(0, 
   position: sticky; top: 12px; height: calc(100vh - 24px); margin: 12px 0 12px 12px; border-radius: 28px;
   display: flex; flex-direction: column; gap: 22px; padding: 18px 12px;
 }
-.marca { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; padding: 2px 8px; letter-spacing: -.02em; }
-.marca-logo {
-  width: 30px; height: 30px; border-radius: 9px; flex: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .35), rgba(255, 255, 255, 0) 50%), linear-gradient(135deg, #30d158, #0a84ff 55%, #bf5af2);
-  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .3), 0 4px 12px -2px rgba(10, 132, 255, .5);
+.marca { display: flex; align-items: center; gap: 11px; padding: 2px 6px; }
+.marca-emblema {
+  width: 36px; height: 36px; border-radius: 10px; flex: none;
+  box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .2), 0 6px 18px -6px rgba(157, 107, 255, .65), 0 0 0 .5px rgba(255, 255, 255, .12);
 }
+.marca-nome { display: grid; line-height: 1.05; }
+.marca-nome strong { font-size: 16px; font-weight: 700; letter-spacing: -.02em; }
+.marca-nome small { font-size: 9.5px; font-weight: 600; letter-spacing: .32em; color: var(--link); margin-top: 3px; }
+.marca.compacta { padding: 0; }
+.marca.compacta .marca-emblema { width: 34px; height: 34px; border-radius: 10px; }
+
 .lateral nav { display: grid; gap: 2px; }
 .lateral button, .menu-lista button {
   display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 12px; border: 0; border-radius: 12px;
   background: none; color: var(--texto); font-weight: 500; text-align: left;
   transition: background .25s var(--mola), transform .3s var(--mola-salto);
 }
-.lateral button svg, .menu-lista button svg { color: var(--azul); }
+.lateral button svg, .menu-lista button svg { color: var(--destaque); }
 .lateral button:hover, .menu-lista button:hover { background: var(--preench-4); }
 .lateral button:active, .menu-lista button:active { transform: scale(.97); }
 .lateral nav { position: relative; }
@@ -382,12 +396,12 @@ body::after { inset: 0; background: radial-gradient(120% 90% at 50% 0%, rgba(0, 
 .campo-rotulo small { color: var(--texto-3); font-weight: 400; }
 .campo-ajuda { font-size: 12px; color: var(--texto-3); }
 .campo-caixa { display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 14px; border-radius: var(--raio-p); background: var(--preench-2); transition: box-shadow .2s; }
-.campo-caixa:focus-within { box-shadow: 0 0 0 3px rgba(10, 132, 255, .5); }
+.campo-caixa:focus-within { box-shadow: 0 0 0 3px rgba(157, 107, 255, .5); }
 .campo-caixa input { border: 0; background: none; outline: none; width: 100%; text-align: right; font-family: var(--fonte-numeros); font-weight: 600; font-variant-numeric: tabular-nums; }
 .prefixo { color: var(--texto-2); font-size: 14px; }
 .campo-valor.erro .campo-caixa { box-shadow: 0 0 0 2px var(--saida); }
 .campo input, .campo select { width: 100%; height: 44px; padding: 0 14px; border: 0; border-radius: var(--raio-p); background: var(--preench-2); outline: none; transition: box-shadow .2s; }
-.campo input:focus, .campo select:focus { box-shadow: 0 0 0 3px rgba(10, 132, 255, .5); }
+.campo input:focus, .campo select:focus { box-shadow: 0 0 0 3px rgba(157, 107, 255, .5); }
 .campo input::placeholder { color: var(--texto-3); }
 .campo input[type='date']::-webkit-calendar-picker-indicator { filter: invert(.75); }
 .campo .segmentado { justify-self: start; }
@@ -406,7 +420,7 @@ select option { background: #1c1c1e; color: var(--texto); }
 .tabela tr.clicavel:hover { background: var(--preench-4); }
 .tabela tr.sem-dados { color: var(--texto-3); }
 .tabela tr.sem-dados td { text-align: center; }
-.tabela tr.atual th { box-shadow: inset 3px 0 var(--azul); }
+.tabela tr.atual th { box-shadow: inset 3px 0 var(--destaque); }
 
 /* ---------- blocos da planilha (Entradas, Saídas, Dívidas, Métricas, Caixa) ---------- */
 .quadro { border-radius: var(--raio); overflow: hidden; display: flex; flex-direction: column; --c: var(--entrada); }
@@ -695,12 +709,12 @@ select option { background: #1c1c1e; color: var(--texto); }
   }
   .abas-movel button:active { transform: scale(.92); }
   .abas-movel button { position: relative; z-index: 1; }
-  .abas-movel button.ativo { color: var(--azul); }
+  .abas-movel button.ativo { color: var(--destaque); }
   .fab {
     display: grid; place-items: center; position: fixed; z-index: 20; right: 18px; bottom: calc(92px + env(safe-area-inset-bottom));
     width: 58px; height: 58px; border-radius: 50%; color: #fff;
-    background: linear-gradient(180deg, rgba(255, 255, 255, .32), rgba(255, 255, 255, 0) 55%), var(--azul);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4), 0 12px 28px -8px rgba(10, 132, 255, .75), 0 4px 10px rgba(0, 0, 0, .4);
+    background: linear-gradient(180deg, rgba(255, 255, 255, .32), rgba(255, 255, 255, 0) 55%), var(--destaque);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4), 0 12px 28px -8px rgba(157, 107, 255, .7), 0 4px 10px rgba(0, 0, 0, .4);
     transition: transform .35s var(--mola-salto);
   }
   .fab:active { transform: scale(.88); }
