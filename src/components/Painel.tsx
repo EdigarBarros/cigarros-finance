@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes } from '../lib/calc'
 import { situacaoDividas, type SituacaoDivida } from '../lib/dividas'
-import { MESES_NOME } from '../lib/format'
+import { definirMoedaPrincipal, MESES_NOME } from '../lib/format'
+import { useCambio } from '../lib/moedas'
+import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
 import { supabase } from '../lib/supabase'
-import type { Lancamento, Tipo } from '../lib/types'
+import type { Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 import { useMobile } from '../lib/useMobile'
 import { estiloLente, useLente } from '../lib/useLente'
 import { useVidroLiquido } from '../lib/vidroLiquido'
@@ -17,13 +20,15 @@ import { Patrimonio } from '../pages/Patrimonio'
 import { FormLancamento } from './Formularios'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
+import { Personalizar } from './Personalizar'
+import { Questionario } from './Questionario'
 
-const PAGINAS: { id: Pagina; nome: string; icone: string }[] = [
-  { id: 'inicio', nome: 'Visão geral', icone: 'inicio' },
-  { id: 'lancamentos', nome: 'Lançamentos', icone: 'lista' },
-  { id: 'dividas', nome: 'Dívidas', icone: 'divida' },
-  { id: 'patrimonio', nome: 'Bancos', icone: 'carteira' },
-  { id: 'ano', nome: 'Ano', icone: 'ano' },
+const PAGINAS: { id: Pagina; nome: string; curto: string; icone: string }[] = [
+  { id: 'inicio', nome: 'Visão geral', curto: 'Início', icone: 'inicio' },
+  { id: 'lancamentos', nome: 'Lançamentos', curto: 'Lançamentos', icone: 'lista' },
+  { id: 'dividas', nome: 'Dívidas', curto: 'Dívidas', icone: 'divida' },
+  { id: 'patrimonio', nome: 'Meu dinheiro', curto: 'Dinheiro', icone: 'carteira' },
+  { id: 'ano', nome: 'Ano', curto: 'Ano', icone: 'ano' },
 ]
 
 const paginaDoHash = (): Pagina => {
@@ -41,6 +46,8 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const [menu, setMenu] = useState(false)
   const [bancoAberto, setBancoAberto] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState<string | null>(null)
+  const [ajustes, setAjustes] = useState(false)
+  const [refazendo, setRefazendo] = useState(false)
   const arquivo = useRef<HTMLInputElement>(null)
   // controles flutuantes: vidro com refração líquida + lente deslizante no item ativo
   const refLateral = useRef<HTMLElement>(null)
@@ -48,21 +55,40 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const refSeletor = useRef<HTMLDivElement>(null)
   const refMeses = useRef<HTMLElement>(null)
   const refAbas = useRef<HTMLElement>(null)
-  useVidroLiquido(refLateral, { escala: 26, bezel: 22, desfoque: 20 })
-  useVidroLiquido(refSeletor)
-  useVidroLiquido(refMeses)
-  useVidroLiquido(refAbas, { escala: 40, bezel: 20 })
   const d = useDados(userId, ano)
   const mobile = useMobile()
+
+  // Quem já tinha dados antes das perguntas existirem ganha um perfil com o que já usa, sem questionário.
+  const temDados = d.lancs.length > 0 || d.bancos.length > 0 || d.dividas.length > 0 || d.meses.length > 0
+  const perfil: Perfil = d.perfil ?? (temDados || d.perfilSemTabela ? inferirPerfil(d) : PERFIL_PADRAO)
+  const precisaPerfil = !d.carregando && d.perfil === null && !d.perfilSemTabela && temDados
+  // Antes do painel podem aparecer o carregamento e as perguntas do primeiro acesso.
+  const carregandoPerfil = d.perfil === undefined && d.carregando
+  const perguntar = (d.perfil === null && !temDados && !d.perfilSemTabela && !d.carregando) || refazendo
+  const noPainel = !carregandoPerfil && !perguntar
+  useVidroLiquido(refLateral, { escala: 26, bezel: 22, desfoque: 20, ativo: noPainel })
+  useVidroLiquido(refSeletor, { ativo: noPainel })
+  useVidroLiquido(refMeses, { ativo: noPainel })
+  useVidroLiquido(refAbas, { escala: 40, bezel: 20, ativo: noPainel })
+  useEffect(() => {
+    if (precisaPerfil) void d.salvarPerfil(perfil)
+  }, [precisaPerfil]) // eslint-disable-line react-hooks/exhaustive-deps
+  definirMoedaPrincipal(perfil.moeda)
+  const v = visao(perfil)
+  const { taxas } = useCambio(perfil.moeda, v.moedas || d.lancs.some((l) => l.moeda_original))
+  const paginas = PAGINAS.filter((p) =>
+    p.id === 'dividas' ? v.dividas : p.id === 'patrimonio' ? v.bancos || v.investimentos || v.moedas : p.id === 'ano' ? v.paginaAno : true,
+  )
+  const paginaAtual = paginas.some((p) => p.id === pagina) ? pagina : 'inicio'
 
   useEffect(() => {
     const aoMudar = () => setPagina(paginaDoHash())
     window.addEventListener('hashchange', aoMudar)
     return () => window.removeEventListener('hashchange', aoMudar)
   }, [])
-  const lenteNav = useLente(refNav, 'button.ativo', pagina)
-  const lenteMeses = useLente(refMeses, 'button.ativo', `${mes}|${ano}`)
-  const lenteAbas = useLente(refAbas, 'button.ativo', `${pagina}|${mobile}`)
+  const lenteNav = useLente(refNav, 'button.ativo', `${paginaAtual}|${paginas.length}|${noPainel}`)
+  const lenteMeses = useLente(refMeses, 'button.ativo', `${mes}|${ano}|${noPainel}`)
+  const lenteAbas = useLente(refAbas, 'button.ativo', `${paginaAtual}|${mobile}|${paginas.length}|${noPainel}`)
 
   // Ao trocar de mês, os blocos da página saem do desfoque de novo (mesma animação da entrada).
   const primeiraVez = useRef(true)
@@ -105,9 +131,9 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
       const temProprio = d.meses.some((x) => x.ano === ano && x.mes === m)
       // Meses futuros sem lançamentos ficam em branco, como na planilha.
       const vazio = !l.length && !temProprio && (ano * 12 + m > agora || (!sit.length && !ef.herdadoDe))
-      return { sit, ef, resumo: vazio ? null : resumoMes(l, sit, ef) }
+      return { sit, ef, resumo: vazio ? null : resumoMes(l, sit, ef, taxas) }
     })
-  }, [d.lancs, d.dividas, d.saldos, d.pagamentos, d.meses, ano])
+  }, [d.lancs, d.dividas, d.saldos, d.pagamentos, d.meses, ano, taxas])
   const porMes = porMesCompleto.map((x) => x.resumo)
 
   const lancsMes = d.lancs.filter((l) => l.mes === mes)
@@ -150,6 +176,14 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
       setMes(ultimo.mes)
     })
 
+  const mudarPerfil = (p: Perfil) => void d.salvarPerfil(p)
+  const ligarModulo = (m: Modulo) => mudarPerfil({ ...perfil, modulos: { ...perfil.modulos, [m]: true } })
+  const sugestao = useMemo(
+    () => sugestoes(perfil, d.lancs, porMes.filter(Boolean).length)[0] ?? null,
+    // perfil muda de identidade a cada render; o que importa são os dados e as escolhas da pessoa
+    [d.lancs, porMesCompleto, perfil.modulos, perfil.moedas, perfil.detalhe, perfil.dispensadas], // eslint-disable-line react-hooks/exhaustive-deps
+  )
+
   const pagarDivida = (s: SituacaoDivida) =>
     setForm({
       preset: {
@@ -161,9 +195,14 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
 
   const ctx: Ctx = {
     ano, mes, d, lancsMes, situacao, mesEf, porMes, mobile,
+    perfil, v, taxas, sugestao,
+    aceitarSugestao: (s: Sugestao) => mudarPerfil(s.aplicar(perfil)),
+    recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),
+    ligarModulo,
+    personalizar: () => setAjustes(true),
     importar: () => arquivo.current?.click(),
-    contaNova: !d.carregando && !d.lancs.length && !d.bancos.length && !d.dividas.length && !d.meses.length,
-    r: resumoMes(lancsMes, situacao, mesEf),
+    contaNova: !d.carregando && !temDados,
+    r: resumoMes(lancsMes, situacao, mesEf, taxas),
     anterior: mes > 1 ? porMes[mes - 2] : null,
     irPara,
     irParaMes: setMes,
@@ -177,24 +216,43 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     },
   }
 
+  // Primeiro acesso: as perguntas montam o painel antes de qualquer coisa.
+  if (carregandoPerfil) return <div className="tela-central">Carregando…</div>
+  if (perguntar) {
+    return (
+      <Questionario
+        inicial={perfil}
+        aoConcluir={(p) => { mudarPerfil(p); setRefazendo(false); irPara('inicio') }}
+        aoCancelar={refazendo ? () => setRefazendo(false) : undefined}
+      />
+    )
+  }
+
+  const menuItens = (
+    <>
+      <button onClick={() => setAjustes(true)}><Icone nome="ajustes" /> Personalizar painel</button>
+      <button onClick={() => arquivo.current?.click()}><Icone nome="importar" /> Importar planilha</button>
+      <button onClick={() => tarefa('Gerando backup…', async () => (await import('../lib/planilha')).exportarBackup())}>
+        <Icone nome="exportar" /> Exportar backup
+      </button>
+      <button onClick={() => supabase.auth.signOut()}><Icone nome="sair" /> Sair</button>
+    </>
+  )
+
   return (
     <div className="app">
       <aside className="lateral" ref={refLateral}>
         <Marca />
         <nav ref={refNav}>
           {lenteNav && <span className="lente" aria-hidden="true" style={estiloLente(lenteNav)} />}
-          {PAGINAS.map((p) => (
-            <button key={p.id} className={pagina === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}>
+          {paginas.map((p) => (
+            <button key={p.id} className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}>
               <Icone nome={p.icone} /> {p.nome}
             </button>
           ))}
         </nav>
         <div className="lateral-rodape">
-          <button onClick={() => arquivo.current?.click()}><Icone nome="importar" /> Importar planilha</button>
-          <button onClick={() => tarefa('Gerando backup…', async () => (await import('../lib/planilha')).exportarBackup())}>
-            <Icone nome="exportar" /> Exportar backup
-          </button>
-          <button onClick={() => supabase.auth.signOut()}><Icone nome="sair" /> Sair</button>
+          {menuItens}
           <span className="email">{email}</span>
         </div>
       </aside>
@@ -226,15 +284,18 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
             {menu && (
               <div className="menu-lista" onClick={() => setMenu(false)}>
                 <span className="email">{email}</span>
-                <button onClick={() => arquivo.current?.click()}><Icone nome="importar" /> Importar planilha</button>
-                <button onClick={() => tarefa('Gerando backup…', async () => (await import('../lib/planilha')).exportarBackup())}>
-                  <Icone nome="exportar" /> Exportar backup
-                </button>
-                <button onClick={() => supabase.auth.signOut()}><Icone nome="sair" /> Sair</button>
+                {menuItens}
               </div>
             )}
           </div>
         </header>
+
+        {d.perfilSemTabela && (
+          <div className="alerta aviso-migracao" role="status">
+            Falta atualizar o banco de dados para guardar suas preferências e usar outras moedas: rode
+            {' '}<code>supabase/migracao-04-perfil-e-moedas.sql</code> no SQL Editor do Supabase.
+          </div>
+        )}
 
         {d.erro && (
           <div className="alerta" role="alert">
@@ -243,20 +304,20 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
           </div>
         )}
 
-        {pagina === 'inicio' && <Inicio {...ctx} />}
-        {pagina === 'lancamentos' && <Lancamentos {...ctx} />}
-        {pagina === 'dividas' && <Dividas {...ctx} />}
-        {pagina === 'patrimonio' && <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />}
-        {pagina === 'ano' && <Ano {...ctx} />}
+        {paginaAtual === 'inicio' && <Inicio {...ctx} />}
+        {paginaAtual === 'lancamentos' && <Lancamentos {...ctx} />}
+        {paginaAtual === 'dividas' && <Dividas {...ctx} />}
+        {paginaAtual === 'patrimonio' && <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />}
+        {paginaAtual === 'ano' && <Ano {...ctx} />}
       </div>
 
       <button className="fab" onClick={() => setForm({})} aria-label="Novo lançamento"><Icone nome="mais" tamanho={26} /></button>
 
       <nav className="abas-movel" ref={refAbas}>
         {lenteAbas && <span className="lente" aria-hidden="true" style={estiloLente(lenteAbas)} />}
-        {PAGINAS.map((p) => (
-          <button key={p.id} className={pagina === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}>
-            <Icone nome={p.icone} /> <span>{p.nome.replace('Visão geral', 'Início')}</span>
+        {paginas.map((p) => (
+          <button key={p.id} className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}>
+            <Icone nome={p.icone} /> <span>{p.curto}</span>
           </button>
         ))}
       </nav>
@@ -273,11 +334,23 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
           preset={form.preset}
           historico={d.lancs}
           dividas={dividasAbertas}
+          perfil={perfil}
+          taxas={taxas}
+          aoMudarPerfil={mudarPerfil}
           bancos={d.bancos}
           aoNovoBanco={d.addBanco}
           aoSalvar={(l, id) => (id ? d.updLanc(id, l) : d.addLanc(l))}
           aoExcluir={d.delLanc}
           aoFechar={() => setForm(null)}
+        />
+      )}
+
+      {ajustes && (
+        <Personalizar
+          perfil={perfil}
+          aoMudar={mudarPerfil}
+          aoRefazer={() => { setAjustes(false); setRefazendo(true) }}
+          aoFechar={() => setAjustes(false)}
         />
       )}
     </div>

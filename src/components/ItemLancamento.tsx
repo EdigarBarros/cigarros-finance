@@ -1,5 +1,5 @@
 import { COR } from '../lib/charts'
-import { fmtBRL, fmtDataCurta } from '../lib/format'
+import { fmtDataCurta, fmtMoeda, fmtValor } from '../lib/format'
 import { CATEGORIAS, NOME_CATEGORIA } from '../lib/rotulos'
 import type { Banco, Lancamento } from '../lib/types'
 import { Icone } from './Icone'
@@ -27,7 +27,10 @@ export function ItemLancamento({ l, banco, aoClicar, mostrarData = true }: { l: 
             )}
           </span>
         </span>
-        <span className={`item-valor ${entrada ? 'mais' : ''}`}>{entrada ? '+' : '−'} {fmtBRL(l.valor)}</span>
+        <span className={`item-valor ${entrada ? 'mais' : ''}`}>
+          {entrada ? '+' : '−'} {fmtValor(l.valor)}
+          {l.moeda_original && l.valor_original != null && <small>{fmtMoeda(l.valor_original, l.moeda_original)}</small>}
+        </span>
       </button>
     </li>
   )

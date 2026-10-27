@@ -1,7 +1,10 @@
+import type { Sugestao } from '../lib/adaptacao'
 import type { MesEfetivo, Resumo } from '../lib/calc'
 import type { SituacaoDivida } from '../lib/dividas'
+import type { Taxas } from '../lib/moedas'
+import type { Visao } from '../lib/perfil'
 import type { Dados } from '../lib/useDados'
-import type { Lancamento, Tipo } from '../lib/types'
+import type { Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 
 export type Pagina = 'inicio' | 'lancamentos' | 'dividas' | 'patrimonio' | 'ano'
 
@@ -20,6 +23,17 @@ export interface Ctx {
   anterior: Resumo | null
   porMes: (Resumo | null)[]
   mobile: boolean
+  perfil: Perfil
+  /** O que aparece na tela, conforme o perfil. */
+  v: Visao
+  /** Cotação do dia das outras moedas, na moeda principal. */
+  taxas: Taxas
+  /** Sugestão do momento, tirada do uso ("Começou a investir?"). */
+  sugestao: Sugestao | null
+  aceitarSugestao: (s: Sugestao) => void
+  recusarSugestao: (s: Sugestao) => void
+  ligarModulo: (m: Modulo) => void
+  personalizar: () => void
   irPara: (p: Pagina) => void
   /** Abre a escolha de arquivo da planilha. */
   importar: () => void

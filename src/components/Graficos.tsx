@@ -2,19 +2,23 @@ import type { Plugin } from 'chart.js'
 import { Bar, Chart, Doughnut } from 'react-chartjs-2'
 import type { Resumo } from '../lib/calc'
 import { COR } from '../lib/charts'
-import { fmtBRL, fmtUSD, MESES, MESES_NOME } from '../lib/format'
+import { fmtValor, MESES, MESES_NOME } from '../lib/format'
+import type { Visao } from '../lib/perfil'
 
 const eixoReais = {
-  ticks: { callback: (v: string | number) => fmtBRL(Number(v)), maxTicksLimit: 7 },
+  ticks: { callback: (v: string | number) => fmtValor(Number(v)), maxTicksLimit: 7 },
   grid: { color: 'rgba(84, 84, 88, .35)' },
   border: { display: false },
 }
 
 const milhar = (n: number) => (Math.abs(n) >= 1000 ? `${(n / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil` : String(n))
 
-/** O gráfico da planilha: barras de entradas × saídas e linhas de caixa, dívida, investimentos e US$. */
-export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 360, compacto }: {
-  porMes: (Resumo | null)[]; mesAtual: number; aoClicarMes?: (m: number) => void; altura?: number
+/**
+ * O gráfico da planilha: barras de entradas × saídas e linhas de caixa, dívida, investimentos e outras moedas
+ * (convertidas para a moeda principal, no mesmo eixo). Só entram as linhas dos módulos ligados.
+ */
+export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 360, compacto, v }: {
+  porMes: (Resumo | null)[]; mesAtual: number; aoClicarMes?: (m: number) => void; altura?: number; v: Visao
   /** Celular: eixo em "mil", legenda menor e barras mais finas. */
   compacto?: boolean
 }) {
@@ -28,7 +32,7 @@ export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 360, comp
     borderRadius: 6, borderSkipped: false as const, maxBarThickness: compacto ? 7 : 14, categoryPercentage: compacto ? 0.7 : 0.55, order: 1,
   })
   // Valores negativos pequenos (ex.: investimento de -R$ 27) não justificam um eixo indo a -R$ 5 mil.
-  const valores = porMes.flatMap((r) => (r ? [r.entradas, r.saidas, r.caixa, r.divida, r.investimentos, r.usd] : []))
+  const valores = porMes.flatMap((r) => (r ? [r.entradas, r.saidas, r.caixa, r.divida, r.investimentos, r.moedasConvertido] : []))
   const piso = Math.min(0, ...valores) >= -0.05 * Math.max(1, ...valores) ? 0 : undefined
   return (
     <div className="grafico" style={{ height: altura }}>
@@ -39,10 +43,10 @@ export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 360, comp
           datasets: [
             barra('ENTRADAS', COR.entradas, (r) => r.entradas),
             barra('SAÍDAS', COR.saidas, (r) => r.saidas),
-            linha('CAIXA', COR.caixa, (r) => r.caixa),
-            linha('DÍVIDA', COR.divida, (r) => r.divida),
-            linha('INVESTIMENTOS', COR.investimentos, (r) => r.investimentos),
-            linha('US$', COR.usd, (r) => r.usd),
+            ...(v.bancos ? [linha('CAIXA', COR.caixa, (r) => r.caixa)] : []),
+            ...(v.dividas ? [linha('DÍVIDA', COR.divida, (r) => r.divida)] : []),
+            ...(v.investimentos ? [linha('INVESTIMENTOS', COR.investimentos, (r) => r.investimentos)] : []),
+            ...(v.moedas ? [linha('OUTRAS MOEDAS', COR.usd, (r) => r.moedasConvertido)] : []),
           ],
         }}
         options={{
@@ -54,7 +58,7 @@ export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 360, comp
             tooltip: {
               callbacks: {
                 title: (i) => MESES_NOME[i[0].dataIndex],
-                label: (c) => ` ${c.dataset.label}: ${c.dataset.label === 'US$' ? fmtUSD(c.parsed.y ?? 0) : fmtBRL(c.parsed.y ?? 0)}`,
+                label: (c) => ` ${c.dataset.label}: ${fmtValor(c.parsed.y ?? 0)}`,
               },
             },
           },
@@ -88,7 +92,7 @@ export function GraficoSaldo({ porMes }: { porMes: (Resumo | null)[] }) {
         data={{
           labels: MESES.map((m) => m.slice(0, 3)),
           datasets: [{
-            label: 'Fluxo de caixa',
+            label: 'Sobrou',
             data: porMes.map((r) => r?.fluxo ?? null),
             backgroundColor: porMes.map((r) => ((r?.fluxo ?? 0) >= 0 ? COR.entradas : COR.saidas)),
             borderRadius: 6,
@@ -100,7 +104,7 @@ export function GraficoSaldo({ porMes }: { porMes: (Resumo | null)[] }) {
           maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
-            tooltip: { callbacks: { title: (i) => MESES_NOME[i[0].dataIndex], label: (c) => ` Fluxo: ${fmtBRL(c.parsed.y ?? 0)}` } },
+            tooltip: { callbacks: { title: (i) => MESES_NOME[i[0].dataIndex], label: (c) => ` Sobrou: ${fmtValor(c.parsed.y ?? 0)}` } },
           },
           scales: { x: { grid: { display: false }, border: { display: false } }, y: eixoReais },
         }}
@@ -149,7 +153,7 @@ export function Rosca({ fatias, altura = 260 }: { fatias: Fatia[]; altura?: numb
           maintainAspectRatio: false,
           plugins: {
             legend: { position: 'bottom', labels: { boxWidth: 8, boxHeight: 8, padding: 14, font: { size: 12, weight: 500 } } },
-            tooltip: { callbacks: { label: (c) => ` ${fmtBRL(Number(c.raw))}` } },
+            tooltip: { callbacks: { label: (c) => ` ${fmtValor(Number(c.raw))}` } },
           },
         }}
       />

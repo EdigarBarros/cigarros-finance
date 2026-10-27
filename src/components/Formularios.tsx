@@ -1,9 +1,13 @@
 import { useMemo, useRef, useState } from 'react'
+import { dicaDaDescricao } from '../lib/adaptacao'
 import { COR } from '../lib/charts'
 import { dividaPelaDescricao, type SituacaoDivida } from '../lib/dividas'
-import { dataPadrao, fmtBRL, paraCampo, parseNumero } from '../lib/format'
+import { dataPadrao, fmtValor, paraCampo, parseNumero, simbolo } from '../lib/format'
+import { infoMoeda, type Taxas } from '../lib/moedas'
+import { visao } from '../lib/perfil'
 import { bancoConhecido, bancoNaDescricao, CATEGORIAS, CORES_LIVRES, mesmoNome } from '../lib/rotulos'
-import type { Banco, Categoria, Divida, Lancamento, Tipo } from '../lib/types'
+import type { Banco, Categoria, Divida, Lancamento, Perfil, Tipo } from '../lib/types'
+import { Icone } from './Icone'
 import { Modal, Segmentado } from './ui'
 
 type NovoLanc = Omit<Lancamento, 'id'>
@@ -19,6 +23,10 @@ interface FormLancProps {
   historico: Lancamento[]
   /** Dívidas em aberto, para ligar o pagamento. */
   dividas: Divida[]
+  /** Decide quais campos aparecem; a dica do formulário pode ligar um módulo na hora. */
+  perfil: Perfil
+  aoMudarPerfil: (p: Perfil) => void
+  taxas: Taxas
   bancos: Banco[]
   aoNovoBanco: (nome: string, cor: string) => Promise<Banco | undefined>
   aoSalvar: (l: NovoLanc, id?: string) => void
@@ -28,8 +36,14 @@ interface FormLancProps {
 
 export function FormLancamento(p: FormLancProps) {
   const ini = { ...p.preset, ...p.inicial }
+  const v = visao(p.perfil)
+  const principal = p.perfil.moeda
+  const original = ini.moeda_original && ini.valor_original ? { moeda: ini.moeda_original, valor: ini.valor_original } : null
   const [tipo, setTipo] = useState<Tipo>(ini.tipo ?? p.tipoInicial ?? 'saida')
-  const [valor, setValor] = useState(ini.valor ? paraCampo(ini.valor) : '')
+  const [valor, setValor] = useState(original ? paraCampo(original.valor) : ini.valor ? paraCampo(ini.valor) : '')
+  const [moeda, setMoeda] = useState(original?.moeda ?? principal)
+  // Cotação usada: a de quando foi lançado (ao editar) ou, vazia, a do dia.
+  const [cotacao, setCotacao] = useState(original && ini.valor ? String(Math.round((ini.valor / original.valor) * 10000) / 10000).replace('.', ',') : '')
   const [descricao, setDescricao] = useState(ini.descricao ?? '')
   const [data, setData] = useState(ini.data ?? dataPadrao(p.ano, p.mes))
   const [bancoId, setBancoId] = useState<string>(ini.banco_id ?? '')
@@ -53,10 +67,25 @@ export function FormLancamento(p: FormLancProps) {
     [p.historico, tipo],
   )
   // A dívida ligada pode já ter sido quitada; continua na lista para não sumir da edição.
-  const opcoesDivida = useMemo(() => {
-    const extra = ini.divida_id && !p.dividas.some((d) => d.id === ini.divida_id) ? [{ id: ini.divida_id, descricao: 'Dívida quitada', valor_parcela: null }] : []
-    return [...p.dividas, ...extra]
-  }, [p.dividas, ini.divida_id])
+  const extra = ini.divida_id && !p.dividas.some((d) => d.id === ini.divida_id) ? [{ id: ini.divida_id, descricao: 'Dívida quitada', valor_parcela: null }] : []
+  const opcoesDivida = [...p.dividas, ...extra]
+
+  const moedasDisponiveis = [...new Set([principal, ...(v.moedas ? p.perfil.moedas : []), ...(original ? [original.moeda] : [])])]
+  const estrangeira = moeda !== principal
+  const taxa = (cotacao.trim() ? parseNumero(cotacao) : null) ?? p.taxas[moeda] ?? null
+  const numero = parseNumero(valor)
+  const dica = dicaDaDescricao(descricao, p.perfil, tipo)
+
+  const aceitarDica = () => {
+    if (!dica) return
+    const pf = p.perfil
+    if (dica.modulo === 'moedas' && dica.moeda) {
+      p.aoMudarPerfil({ ...pf, moedas: [...new Set([...pf.moedas, dica.moeda])], modulos: { ...pf.modulos, moedas: true } })
+      setMoeda(dica.moeda)
+    } else {
+      p.aoMudarPerfil({ ...pf, modulos: { ...pf.modulos, [dica.modulo]: true } })
+    }
+  }
 
   const escolherDivida = (id: string) => {
     setDividaId(id)
@@ -74,13 +103,13 @@ export function FormLancamento(p: FormLancProps) {
     const anterior = memoria.get(chave(texto))
     if (anterior && !mexeuCategoria && anterior.tipo === tipo) setCategoria(anterior.categoria)
     // Banco: o que estiver escrito na descrição, "(Next)", ou o que você usou da última vez.
-    if (!mexeuBanco) {
+    if (!mexeuBanco && v.bancos) {
       const escrito = bancoNaDescricao(texto, p.bancos)
       const doNome = escrito ? p.bancos.find((b) => mesmoNome(b.nome, escrito)) : undefined
       setBancoId(doNome?.id ?? anterior?.banco_id ?? '')
     }
     // "Notebook – parcela" já se liga à dívida do notebook.
-    if (!mexeuDivida && tipo === 'saida') {
+    if (!mexeuDivida && tipo === 'saida' && v.dividas) {
       const d = dividaPelaDescricao(texto, p.dividas)
       setDividaId(d?.id ?? '')
       if (d && !mexeuCategoria) setCategoria('divida')
@@ -95,15 +124,22 @@ export function FormLancamento(p: FormLancProps) {
       return
     }
     if (!data) return setErro('Informe a data.')
+    if (estrangeira && (!taxa || taxa <= 0)) return setErro(`Informe quanto vale 1 ${infoMoeda(moeda).nome.toLowerCase()} em ${simbolo(principal)}.`)
     const [a, m] = data.split('-').map(Number)
     const saida = tipo === 'saida'
     const ligada = saida && categoria === 'divida' && dividaId ? dividaId : null
+    // Em outra moeda, o valor vai convertido e o original fica guardado. Os campos só vão quando usados,
+    // para funcionar também em bancos ainda sem a migração 4.
+    const moedaOriginal = estrangeira
+      ? { valor_original: n, moeda_original: moeda }
+      : original ? { valor_original: null, moeda_original: null } : {}
     p.aoSalvar(
       {
-        ano: a, mes: m, tipo, valor: n, descricao: descricao.trim(), data,
+        ano: a, mes: m, tipo, valor: estrangeira ? Math.round(n * taxa! * 100) / 100 : n, descricao: descricao.trim(), data,
         banco_id: bancoId || null,
         categoria: saida ? categoria : 'outros',
         divida_id: ligada,
+        ...moedaOriginal,
       },
       p.inicial?.id,
     )
@@ -133,8 +169,14 @@ export function FormLancamento(p: FormLancProps) {
             { id: 'entrada', nome: 'Entrada', cor: COR.entradas },
           ]}
         />
+        {moedasDisponiveis.length > 1 && (
+          <div className="moeda-escolha">
+            <Segmentado rotulo="Moeda" valor={moeda} aoMudar={(m) => { setMoeda(m); setCotacao('') }}
+              opcoes={moedasDisponiveis.map((m) => ({ id: m, nome: `${infoMoeda(m).bandeira} ${m}` }))} />
+          </div>
+        )}
         <label className="valor-grande" style={{ '--c': cor } as React.CSSProperties}>
-          <span>R$</span>
+          <span>{simbolo(moeda)}</span>
           <input
             ref={campoValor}
             autoFocus
@@ -145,6 +187,21 @@ export function FormLancamento(p: FormLancProps) {
             aria-label="Valor"
           />
         </label>
+        {estrangeira && (
+          <div className="cotacao">
+            <label className="campo-caixa">
+              <span className="prefixo">1 {moeda} =</span>
+              <input inputMode="decimal" value={cotacao} onChange={(e) => setCotacao(e.target.value)}
+                placeholder={p.taxas[moeda] ? String(Math.round(p.taxas[moeda] * 10000) / 10000).replace('.', ',') : 'cotação'}
+                aria-label={`Cotação de 1 ${moeda} em ${principal}`} />
+              <span className="prefixo">{simbolo(principal)}</span>
+            </label>
+            <span className="campo-ajuda">
+              {numero && taxa ? <>≈ <b>{fmtValor(numero * taxa)}</b> na sua moeda. </> : null}
+              {cotacao.trim() ? 'Cotação que você informou.' : p.taxas[moeda] ? 'Cotação de hoje; troque se pagou outra.' : 'Sem cotação automática agora: informe a que você pagou.'}
+            </span>
+          </div>
+        )}
         <label className="campo">
           <span className="campo-rotulo">Descrição</span>
           <input
@@ -157,16 +214,25 @@ export function FormLancamento(p: FormLancProps) {
             {sugestoes.map((s) => <option key={s} value={s} />)}
           </datalist>
         </label>
+        {dica && (
+          <div className="form-dica" role="status">
+            <Icone nome="ideia" tamanho={16} />
+            <span>{dica.texto}</span>
+            <button type="button" className="link" onClick={aceitarDica}>{dica.botao}</button>
+          </div>
+        )}
         <label className="campo">
           <span className="campo-rotulo">Data</span>
           <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
         </label>
-        <EscolhaBanco
-          bancos={p.bancos}
-          valor={bancoId}
-          aoMudar={(id) => { setBancoId(id); setMexeuBanco(true) }}
-          aoNovoBanco={p.aoNovoBanco}
-        />
+        {(v.bancos || bancoId) && (
+          <EscolhaBanco
+            bancos={p.bancos}
+            valor={bancoId}
+            aoMudar={(id) => { setBancoId(id); setMexeuBanco(true) }}
+            aoNovoBanco={p.aoNovoBanco}
+          />
+        )}
         {tipo === 'saida' && (
           <>
             <div className="campo">
@@ -178,13 +244,13 @@ export function FormLancamento(p: FormLancProps) {
                 opcoes={CATEGORIAS}
               />
             </div>
-            {categoria === 'divida' && opcoesDivida.length > 0 && (
+            {categoria === 'divida' && (v.dividas || dividaId) && opcoesDivida.length > 0 && (
               <label className="campo">
                 <span className="campo-rotulo">Abate qual dívida?</span>
                 <select value={dividaId} onChange={(e) => escolherDivida(e.target.value)}>
                   <option value="">Nenhuma (só conta como gasto com dívida)</option>
                   {opcoesDivida.map((d) => (
-                    <option key={d.id} value={d.id}>{d.descricao}{d.valor_parcela ? ` · parcela ${fmtBRL(d.valor_parcela)}` : ''}</option>
+                    <option key={d.id} value={d.id}>{d.descricao}{d.valor_parcela ? ` · parcela ${fmtValor(d.valor_parcela)}` : ''}</option>
                   ))}
                 </select>
                 {dividaId && <span className="campo-ajuda">O saldo da dívida cai automaticamente com este pagamento.</span>}
@@ -267,7 +333,7 @@ export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo,
           <label className="campo">
             <span className="campo-rotulo">{d ? 'Saldo devedor atualizado' : 'Quanto falta pagar'}</span>
             <input inputMode="decimal" value={saldo} onChange={(e) => setSaldo(e.target.value)}
-              placeholder={d ? fmtBRL(situacao!.restante) : '0,00'} />
+              placeholder={d ? fmtValor(situacao!.restante) : '0,00'} />
           </label>
           <label className="campo">
             <span className="campo-rotulo">Em qual data</span>

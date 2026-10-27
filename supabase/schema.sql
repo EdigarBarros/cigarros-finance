@@ -53,8 +53,13 @@ create index if not exists divida_saldos_divida on public.divida_saldos (divida_
 alter table public.lancamentos add column if not exists divida_id uuid references public.dividas on delete set null;
 create index if not exists lancamentos_divida on public.lancamentos (divida_id) where divida_id is not null;
 
--- Valores digitados à mão em cada mês: investimentos, US$, meta de US$ e o saldo guardado em cada banco
--- (caixa = { <id do banco>: { cc, caixinha, reserva } }).
+-- Lançamento feito em outra moeda: o valor original fica guardado; "valor" segue na moeda principal.
+alter table public.lancamentos add column if not exists valor_original numeric(14, 2);
+alter table public.lancamentos add column if not exists moeda_original text;
+
+-- Valores digitados à mão em cada mês: investimentos, saldo em outras moedas (moedas = { USD: 1200 }),
+-- meta de US$ e o saldo guardado em cada banco (caixa = { <id do banco>: { cc, caixinha, reserva } }).
+-- usd é a coluna antiga de dólar, mantida igual a moedas.USD.
 create table if not exists public.meses (
   user_id        uuid not null default auth.uid() references auth.users on delete cascade,
   ano            smallint not null,
@@ -63,7 +68,22 @@ create table if not exists public.meses (
   usd            numeric(12, 2) not null default 0,
   meta_usd       numeric(12, 2) not null default 0,
   caixa          jsonb not null default '{}'::jsonb,
+  moedas         jsonb not null default '{}'::jsonb,
   primary key (user_id, ano, mes)
+);
+
+-- Como o painel se adapta a cada pessoa: respostas das perguntas iniciais e ajustes feitos depois.
+create table if not exists public.perfis (
+  user_id        uuid primary key default auth.uid() references auth.users on delete cascade,
+  nome           text not null default '',
+  moeda          text not null default 'BRL',
+  moedas         text[] not null default '{}',
+  detalhe        text not null default 'equilibrado' check (detalhe in ('simples', 'equilibrado', 'detalhado')),
+  modulos        jsonb not null default '{}'::jsonb,
+  dispensadas    text[] not null default '{}',
+  onboarding_em  timestamptz,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now()
 );
 
 -- Cada usuário só enxerga e altera os próprios dados.
@@ -72,6 +92,7 @@ alter table public.dividas     enable row level security;
 alter table public.meses       enable row level security;
 alter table public.divida_saldos enable row level security;
 alter table public.bancos enable row level security;
+alter table public.perfis enable row level security;
 
 drop policy if exists "dono" on public.lancamentos;
 create policy "dono" on public.lancamentos for all to authenticated
@@ -91,4 +112,8 @@ create policy "dono" on public.divida_saldos for all to authenticated
 
 drop policy if exists "dono" on public.bancos;
 create policy "dono" on public.bancos for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+
+drop policy if exists "dono" on public.perfis;
+create policy "dono" on public.perfis for all to authenticated
   using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));

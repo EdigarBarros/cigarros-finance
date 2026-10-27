@@ -123,14 +123,15 @@ export async function lerPlanilha(arquivo: File): Promise<MesImportado[]> {
         if (v) (caixa[nome] ??= {})[t] = v
       })
     }
+    const usd = numero(ws, 'T14')
     const meta: MesImportado['meta'] = {
       ano, mes,
       investimentos: numero(ws, 'W22'),
-      usd: numero(ws, 'T14'),
+      moedas: usd ? { USD: usd } : {},
       meta_usd: numero(ws, 'T85'),
     }
 
-    const temAlgo = lancs.length || dividas.length || Object.keys(caixa).length || meta.investimentos || meta.usd
+    const temAlgo = lancs.length || dividas.length || Object.keys(caixa).length || meta.investimentos || usd
     if (temAlgo) resultado.push({ ano, mes, lancs, dividas, caixa, meta })
   }
   return resultado
@@ -203,7 +204,7 @@ export async function gravarImportacao(userId: string, meses: MesImportado[]) {
     const caixa: Caixa = Object.fromEntries(Object.entries(m.caixa).map(([nome, v]) => [idDe(nome)!, v]))
     const { error } = await supabase
       .from('meses')
-      .upsert({ ...m.meta, caixa, user_id: userId }, { onConflict: 'user_id,ano,mes' })
+      .upsert({ ...m.meta, usd: m.meta.moedas.USD ?? 0, caixa, user_id: userId }, { onConflict: 'user_id,ano,mes' })
     if (error) throw error
   }
 
@@ -272,6 +273,7 @@ export async function exportarBackup() {
     XLSX.utils.json_to_sheet(semIds(meses).map((m) => ({
       ...m,
       caixa: JSON.stringify(Object.fromEntries(Object.entries(m.caixa as Caixa).map(([id, v]) => [nomeBanco.get(id) ?? id, v]))),
+      moedas: JSON.stringify(m.moedas ?? {}),
     }))),
     'Meses',
   )

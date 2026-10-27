@@ -85,13 +85,15 @@ interface Opcoes {
   bezel?: number
   /** Desfoque aplicado junto (o mesmo do vidro normal). */
   desfoque?: number
+  /** false enquanto o elemento ainda não está na tela (ex.: o painel atrás de outra tela). */
+  ativo?: boolean
 }
 
 /** Aplica a refração líquida ao elemento enquanto ele estiver na tela. */
-export function useVidroLiquido(ref: RefObject<HTMLElement | null>, { escala = 34, bezel = 18, desfoque = 14 }: Opcoes = {}) {
+export function useVidroLiquido(ref: RefObject<HTMLElement | null>, { escala = 34, bezel = 18, desfoque = 14, ativo = true }: Opcoes = {}) {
   useEffect(() => {
     const el = ref.current
-    if (!el || !refracaoSuportada) return
+    if (!el || !refracaoSuportada || !ativo) return
     const id = `vidro-liquido-${++contador}`
     const ns = 'http://www.w3.org/2000/svg'
     const filtro = document.createElementNS(ns, 'filter')
@@ -143,5 +145,5 @@ export function useVidroLiquido(ref: RefObject<HTMLElement | null>, { escala = 3
       el.style.backdropFilter = ''
       el.classList.remove('liquido')
     }
-  }, [ref, escala, bezel, desfoque])
+  }, [ref, escala, bezel, desfoque, ativo])
 }
