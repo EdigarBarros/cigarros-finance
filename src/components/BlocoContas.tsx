@@ -25,13 +25,18 @@ export function BlocoContasDoMes({ situacoes, aoAbrir, aoPagar }: {
   return (
     <section className="bloco">
       <header className="bloco-cab">
-        <span style={{ color: qtdAtrasadas ? COR.saidas : COR.caixa }}>CONTAS DO MÊS</span>
-        {situacoes.length > 0 && <strong><small className="conta-bloco-falta">falta pagar</small> {fmtValor(faltaPagar)}</strong>}
+        <h2>Contas do mês</h2>
+        {situacoes.length > 0 && (
+          <span className="bloco-cab-valor">
+            <small style={qtdAtrasadas ? { color: COR.saidas } : undefined}>{qtdAtrasadas ? `${qtdAtrasadas} vencida${qtdAtrasadas > 1 ? 's' : ''} · falta pagar` : 'falta pagar'}</small>
+            <strong>{fmtValor(faltaPagar)}</strong>
+          </span>
+        )}
       </header>
       {!situacoes.length && (
         <p className="quadro-vazio">
-          Aluguel, luz, internet, salário… Cadastre o que se repete todo mês e o app avisa quando vencer.{' '}
-          <button className="link" onClick={aoAbrir}>Cadastrar a primeira conta</button>
+          Aluguel, luz, internet, salário… Adicione o que se repete todo mês e o app avisa quando vencer.{' '}
+          <button className="link" onClick={aoAbrir}>Adicionar a primeira conta</button>
         </p>
       )}
       {situacoes.length > 0 && !linhas.length && (

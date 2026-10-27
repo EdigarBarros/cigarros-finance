@@ -43,10 +43,10 @@ export function Cartoes(c: Ctx) {
       {cartoes.carregado && !cartoes.cartoes.length && (
         <Cartao>
           <Vazio>
-            Cadastre seu cartão com o dia em que a fatura fecha e o dia em que vence. Daí é só lançar as compras escolhendo o cartão:
+            Adicione seu cartão com o dia em que a fatura fecha e o dia em que vence. Daí é só lançar as compras escolhendo o cartão:
             o app põe cada parcela na fatura certa e mostra quanto você ainda pode gastar.<br />
             <button className="btn primario" style={{ marginTop: 14 }} onClick={() => setEditando('novo')}>
-              <Icone nome="mais" tamanho={16} /> Cadastrar meu primeiro cartão
+              <Icone nome="mais" tamanho={16} /> Adicionar meu primeiro cartão
             </button>
           </Vazio>
         </Cartao>

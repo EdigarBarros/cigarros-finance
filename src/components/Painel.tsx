@@ -271,10 +271,13 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   // Contas fixas e cartões entram na Início pelos lugares reservados para eles (zona "O que fazer" e indicadores).
   const comContas = v.contas && !contas.semTabela
   const comCartoes = v.cartoes && !cartoes.semTabela
-  const kpisExtras = (comContas && situacoesContas.length > 0) || (comCartoes && faturas.length > 0) ? (
+  // Indicador zerado no topo só ocupa atenção: a fatura entra quando há fatura no mês.
+  const totalFaturas = comCartoes ? totalFaturasDoMes(faturas) : 0
+  const comKpiContas = comContas && situacoesContas.length > 0
+  const kpisExtras = comKpiContas || totalFaturas > 0 ? (
     <>
-      {comContas && situacoesContas.length > 0 && <Kpi rotulo="Falta pagar no mês" valor={fmtValor(faltaPagarNoMes(situacoesContas))} cor={COR.divida} />}
-      {comCartoes && faturas.length > 0 && <Kpi rotulo="Fatura do cartão" valor={fmtValor(totalFaturasDoMes(faturas))} cor={COR.investimentos} />}
+      {comKpiContas && <Kpi rotulo="Falta pagar no mês" valor={fmtValor(faltaPagarNoMes(situacoesContas))} cor={COR.divida} />}
+      {totalFaturas > 0 && <Kpi rotulo="Fatura do cartão" valor={fmtValor(totalFaturas)} cor={COR.investimentos} />}
     </>
   ) : undefined
 

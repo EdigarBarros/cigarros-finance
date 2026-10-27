@@ -1,5 +1,4 @@
 import { textoStatus, totalFaturasDoMes, type SituacaoCartao } from '../lib/cartoes'
-import { COR } from '../lib/charts'
 import { fmtValor } from '../lib/format'
 import { Progresso } from './ui'
 
@@ -12,11 +11,11 @@ export function BlocoCartoes({ situacoes, aoAbrir }: { situacoes: SituacaoCartao
   return (
     <section className="bloco">
       <header className="bloco-cab">
-        <span style={{ color: COR.investimentos }}>CARTÕES</span>
-        <strong>{fmtValor(totalFaturasDoMes(situacoes))}</strong>
+        <h2>Cartões</h2>
+        <span className="bloco-cab-valor"><small>faturas do mês</small><strong>{fmtValor(totalFaturasDoMes(situacoes))}</strong></span>
       </header>
       {!situacoes.length && (
-        <p className="quadro-vazio">Cadastre seu cartão para ver a fatura de cada mês e quanto do limite ainda dá para usar. <button className="link" onClick={aoAbrir}>Cadastrar</button></p>
+        <p className="quadro-vazio">Adicione seu cartão para ver a fatura de cada mês e quanto do limite ainda dá para usar. <button className="link" onClick={aoAbrir}>Adicionar cartão</button></p>
       )}
       {situacoes.map((s) => (
         <button key={s.cartao.id} className="banco-linha" onClick={aoAbrir}>
