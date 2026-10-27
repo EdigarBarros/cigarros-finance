@@ -47,6 +47,22 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     window.addEventListener('hashchange', aoMudar)
     return () => window.removeEventListener('hashchange', aoMudar)
   }, [])
+  // Ao trocar de mês, os blocos da página saem do desfoque de novo (mesma animação da entrada).
+  const primeiraVez = useRef(true)
+  useEffect(() => {
+    if (primeiraVez.current) {
+      primeiraVez.current = false
+      return
+    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    document.querySelectorAll<HTMLElement>('.pagina > *').forEach((el, i) =>
+      el.animate(
+        [{ opacity: 0.35, filter: 'blur(8px)', transform: 'translateY(6px)' }, { opacity: 1, filter: 'none', transform: 'none' }],
+        { duration: 500, delay: Math.min(i, 6) * 35, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' },
+      ),
+    )
+  }, [mes, ano])
+
   // Mantém a aba do mês aberto visível quando a barra de meses rola (celular).
   useEffect(() => {
     const aba = document.querySelector('.abas-meses .ativo') as HTMLElement | null

@@ -27,10 +27,13 @@ Chart.defaults.color = '#c9c9d1'
 Chart.defaults.borderColor = '#22222b'
 Chart.defaults.font.family = 'Inter, "Segoe UI", system-ui, sans-serif'
 Chart.defaults.font.size = 11
-Chart.defaults.plugins.tooltip.backgroundColor = '#22222b'
-Chart.defaults.plugins.tooltip.borderColor = '#33333d'
+Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(24, 25, 32, .88)'
+Chart.defaults.plugins.tooltip.borderColor = 'rgba(255, 255, 255, .12)'
 Chart.defaults.plugins.tooltip.borderWidth = 1
 Chart.defaults.plugins.tooltip.padding = 10
+Chart.defaults.plugins.tooltip.cornerRadius = 12
+Chart.defaults.animation = { duration: 900, easing: 'easeOutQuart' }
+Chart.defaults.borderColor = 'rgba(255, 255, 255, .06)'
 Chart.defaults.plugins.tooltip.titleColor = '#ededf0'
 Chart.defaults.plugins.tooltip.bodyColor = '#ededf0'
 

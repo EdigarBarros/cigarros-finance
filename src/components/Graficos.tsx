@@ -6,7 +6,7 @@ import { fmtBRL, fmtUSD, MESES, MESES_NOME } from '../lib/format'
 
 const eixoReais = {
   ticks: { callback: (v: string | number) => fmtBRL(Number(v)), maxTicksLimit: 7 },
-  grid: { color: '#1e1e26' },
+  grid: { color: 'rgba(255, 255, 255, .06)' },
   border: { display: false },
 }
 
@@ -27,6 +27,9 @@ export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 360, comp
     type: 'bar' as const, label, data: serie(f), backgroundColor: cor,
     borderRadius: 3, maxBarThickness: compacto ? 7 : 16, categoryPercentage: compacto ? 0.7 : 0.55, order: 1,
   })
+  // Valores negativos pequenos (ex.: investimento de -R$ 27) não justificam um eixo indo a -R$ 5 mil.
+  const valores = porMes.flatMap((r) => (r ? [r.entradas, r.saidas, r.caixa, r.divida, r.investimentos, r.usd] : []))
+  const piso = Math.min(0, ...valores) >= -0.05 * Math.max(1, ...valores) ? 0 : undefined
   return (
     <div className="grafico" style={{ height: altura }}>
       <Chart
@@ -67,7 +70,9 @@ export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 360, comp
                 callback: (_v, i) => (compacto ? MESES[i].slice(0, 1) : MESES[i].slice(0, 3)),
               },
             },
-            y: compacto ? { ...eixoReais, ticks: { callback: (v: string | number) => milhar(Number(v)), maxTicksLimit: 6, font: { size: 9 } }, suggestedMin: 0, grace: 0 } : eixoReais,
+            y: compacto
+              ? { ...eixoReais, min: piso, ticks: { callback: (v: string | number) => milhar(Number(v)), maxTicksLimit: 6, font: { size: 9 } } }
+              : { ...eixoReais, min: piso },
           },
         }}
       />
@@ -135,7 +140,7 @@ export function Rosca({ fatias, altura = 260 }: { fatias: Fatia[]; altura?: numb
       <Doughnut
         data={{
           labels: fatias.map((f) => f.nome.toUpperCase()),
-          datasets: [{ data: fatias.map((f) => Math.max(0, f.valor)), backgroundColor: fatias.map((f) => f.cor), borderColor: '#14141a', borderWidth: 2, hoverOffset: 6 }],
+          datasets: [{ data: fatias.map((f) => Math.max(0, f.valor)), backgroundColor: fatias.map((f) => f.cor), borderColor: 'rgba(10, 11, 15, .6)', borderWidth: 2, hoverOffset: 8 }],
         }}
         plugins={[porcentagens]}
         options={{
