@@ -274,7 +274,7 @@ export async function exportarBackup() {
     xs.map((x) => Object.fromEntries(Object.entries(x).filter(([k]) => !['id', 'user_id', 'created_at'].includes(k))))
   XLSX.utils.book_append_sheet(
     wb,
-    XLSX.utils.json_to_sheet(semIds(lancs).map(({ divida_id, banco_id, categoria_id, categoria, conta: _conta, ...l }) => ({
+    XLSX.utils.json_to_sheet(semIds(lancs).map(({ divida_id, banco_id, categoria_id, categoria, conta: _conta, conta_fixa_id: _contaFixa, ...l }) => ({
       ...l,
       categoria: categoria_id ? nomeCategoria.get(String(categoria_id)) : categorias.length ? '' : categoria,
       banco: banco_id ? nomeBanco.get(String(banco_id)) : '',

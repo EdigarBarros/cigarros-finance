@@ -2,6 +2,7 @@
  * O painel continua se adaptando depois das perguntas iniciais: olha o que a pessoa lança e sugere ligar
  * o que ela parece precisar. Nada liga sozinho; cada sugestão recusada não volta mais.
  */
+import { saidasQueSeRepetem } from './contasFixas'
 import { infoMoeda } from './moedas'
 import { BANCOS_CONHECIDOS } from './rotulos'
 import type { Detalhe, Lancamento, Modulo, Perfil } from './types'
@@ -93,6 +94,18 @@ export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number,
       texto: 'Crie uma meta (viagem, reserva, carro…) e veja quanto guardar por mês e quando você chega lá.',
       aplicar: ligar('metas'),
     })
+  }
+  if (!p.modulos.contas) {
+    // parcelas já têm o módulo de dívidas; aqui entram aluguel, luz, internet, assinaturas…
+    const fixa = saidasQueSeRepetem(lancs.filter((l) => !PADRAO_DIVIDA.test(l.descricao) && !ehPagamentoDeDivida(l)))[0]
+    if (fixa) {
+      lista.push({
+        id: 'modulo:contas', icone: 'calendario', botao: 'Ligar contas do mês',
+        titulo: `Você paga ${fixa.descricao} todo mês?`,
+        texto: 'Transforme em conta fixa e o app te lembra do vencimento, mostra o que está atrasado e dá baixa com um toque.',
+        aplicar: ligar('contas'),
+      })
+    }
   }
   for (const [re, m] of MOEDAS_NO_TEXTO) {
     if (m === p.moeda || (p.modulos.moedas && p.moedas.includes(m)) || !lancs.some((l) => re.test(l.descricao))) continue

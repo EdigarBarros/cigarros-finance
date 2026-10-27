@@ -1,12 +1,14 @@
 import type { Sugestao } from '../lib/adaptacao'
 import type { MesEfetivo, Resumo } from '../lib/calc'
+import type { SituacaoConta } from '../lib/contasFixas'
 import type { SituacaoDivida } from '../lib/dividas'
 import type { Taxas } from '../lib/moedas'
 import type { Visao } from '../lib/perfil'
+import type { ContasFixas } from '../lib/useContasFixas'
 import type { Dados } from '../lib/useDados'
 import type { Categoria, Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 
-export type Pagina = 'inicio' | 'lancamentos' | 'dividas' | 'metas' | 'patrimonio' | 'ano'
+export type Pagina = 'inicio' | 'lancamentos' | 'contas' | 'dividas' | 'metas' | 'patrimonio' | 'ano'
 
 /** Tudo que as páginas precisam do mês aberto. */
 export interface Ctx {
@@ -51,4 +53,11 @@ export interface Ctx {
   abrirBanco: (id: string | null) => void
   /** Abre o formulário de saída já ligado à dívida, com o valor da parcela. */
   pagarDivida: (s: SituacaoDivida) => void
+  /** Contas fixas (aluguel, luz, salário…) e a situação de cada uma no mês aberto. */
+  contas: ContasFixas
+  situacoesContas: SituacaoConta[]
+  /** "Paguei" / "Recebi": cria o lançamento da conta neste mês (valor e data podem ser trocados). */
+  pagarConta: (s: SituacaoConta, mudancas?: { valor?: number; data?: string }) => void
+  /** Apaga o lançamento da baixa, e a conta volta a ficar em aberto. */
+  desfazerBaixa: (s: SituacaoConta) => void
 }

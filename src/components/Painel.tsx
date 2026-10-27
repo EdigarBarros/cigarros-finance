@@ -2,8 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes } from '../lib/calc'
 import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
+import { lancamentoDaBaixa, lancamentoParecido, situacoesDoMes, type SituacaoConta } from '../lib/contasFixas'
 import { situacaoDividas, type SituacaoDivida } from '../lib/dividas'
-import { definirMoedaPrincipal, MESES_NOME } from '../lib/format'
+import { definirMoedaPrincipal, fmtValor, MESES_NOME } from '../lib/format'
 import { useCambio } from '../lib/moedas'
 import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
 import { supabase } from '../lib/supabase'
@@ -11,8 +12,10 @@ import type { Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 import { useMobile } from '../lib/useMobile'
 import { estiloLente, useLente } from '../lib/useLente'
 import { useVidroLiquido } from '../lib/vidroLiquido'
+import { useContasFixas } from '../lib/useContasFixas'
 import { useDados } from '../lib/useDados'
 import { Ano } from '../pages/Ano'
+import { Contas } from '../pages/Contas'
 import type { Ctx, Pagina } from '../pages/contexto'
 import { Dividas } from '../pages/Dividas'
 import { Inicio } from '../pages/Inicio'
@@ -29,6 +32,7 @@ import { Questionario } from './Questionario'
 const PAGINAS: { id: Pagina; nome: string; curto: string; icone: string }[] = [
   { id: 'inicio', nome: 'Visão geral', curto: 'Início', icone: 'inicio' },
   { id: 'lancamentos', nome: 'Lançamentos', curto: 'Lançamentos', icone: 'lista' },
+  { id: 'contas', nome: 'Contas do mês', curto: 'Contas', icone: 'calendario' },
   { id: 'dividas', nome: 'Dívidas', curto: 'Dívidas', icone: 'divida' },
   { id: 'metas', nome: 'Metas', curto: 'Metas', icone: 'meta' },
   { id: 'patrimonio', nome: 'Meu dinheiro', curto: 'Dinheiro', icone: 'carteira' },
@@ -61,6 +65,11 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const refMeses = useRef<HTMLElement>(null)
   const refAbas = useRef<HTMLElement>(null)
   const d = useDados(userId, ano)
+  const contas = useContasFixas(d.setErro)
+  // Baixas em andamento e uma pausa curta depois de cada uma: ao dar baixa a conta sai da lista e a de baixo sobe, então um toque
+  // duplo (ou apressado) não pode cair em "Paguei" de outra conta.
+  const baixando = useRef(new Set<string>())
+  const esfriando = useRef(false)
   const mobile = useMobile()
 
   // Quem já tinha dados antes das perguntas existirem ganha um perfil com o que já usa, sem questionário.
@@ -82,7 +91,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const v = visao(perfil)
   const { taxas } = useCambio(perfil.moeda, v.moedas || d.lancs.some((l) => l.moeda_original) || d.metas.some((m) => m.moeda !== perfil.moeda))
   const paginas = PAGINAS.filter((p) =>
-    p.id === 'dividas' ? v.dividas : p.id === 'metas' ? v.metas : p.id === 'patrimonio' ? v.bancos || v.investimentos || v.moedas : p.id === 'ano' ? v.paginaAno : true,
+    p.id === 'contas' ? v.contas : p.id === 'dividas' ? v.dividas : p.id === 'metas' ? v.metas : p.id === 'patrimonio' ? v.bancos || v.investimentos || v.moedas : p.id === 'ano' ? v.paginaAno : true,
   )
   const paginaAtual = paginas.some((p) => p.id === pagina) ? pagina : 'inicio'
   const categoriaDe = (l: Lancamento) => categoriaDoLanc(l, d.categorias, d.categoriasAntigas)
@@ -183,6 +192,31 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
       setMes(ultimo.mes)
     })
 
+  const situacoesContas = useMemo(
+    () => situacoesDoMes(contas.contas, d.lancs, ano, mes),
+    [contas.contas, d.lancs, ano, mes],
+  )
+  const esfriar = () => {
+    esfriando.current = true
+    setTimeout(() => { esfriando.current = false }, 800)
+  }
+  const pagarConta = (s: SituacaoConta, mudancas?: { valor?: number; data?: string }) => {
+    if (s.baixa || baixando.current.has(s.conta.id) || esfriando.current) return
+    // Já lançou "Aluguel" à mão este mês? Em vez de lançar de novo, a pessoa pode usar esse lançamento.
+    const parecido = lancamentoParecido(s.conta, d.lancs, ano, mes)
+    if (parecido && confirm(`Já existe um lançamento “${parecido.descricao}” de ${fmtValor(parecido.valor)} neste mês.\n\nEle é ${s.conta.tipo === 'entrada' ? 'o recebimento' : 'o pagamento'} desta conta?\n\nOK: sim, usar ele.\nCancelar: não, lançar outro.`)) {
+      esfriar()
+      void d.updLanc(parecido.id, { conta_fixa_id: s.conta.id })
+      return
+    }
+    esfriar()
+    baixando.current.add(s.conta.id)
+    void d.addLanc(lancamentoDaBaixa(s.conta, ano, mes, mudancas)).finally(() => baixando.current.delete(s.conta.id))
+  }
+  const desfazerBaixa = (s: SituacaoConta) => {
+    if (s.baixa) void d.delLanc(s.baixa.id)
+  }
+
   const mudarPerfil = (p: Perfil) => void d.salvarPerfil(p)
   const ligarModulo = (m: Modulo) => mudarPerfil({ ...perfil, modulos: { ...perfil.modulos, [m]: true } })
   const sugestao = useMemo(
@@ -221,6 +255,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     novoLancamento: (tipo) => setForm({ tipo }),
     editarLancamento: (l) => setForm({ inicial: l }),
     pagarDivida,
+    contas, situacoesContas, pagarConta, desfazerBaixa,
     bancoAberto,
     abrirBanco: (id) => {
       irPara('patrimonio')
@@ -318,6 +353,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
 
         {paginaAtual === 'inicio' && <Inicio {...ctx} />}
         {paginaAtual === 'lancamentos' && <Lancamentos {...ctx} />}
+        {paginaAtual === 'contas' && <Contas {...ctx} />}
         {paginaAtual === 'dividas' && <Dividas {...ctx} />}
         {paginaAtual === 'metas' && <Metas {...ctx} />}
         {paginaAtual === 'patrimonio' && <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />}

@@ -394,7 +394,7 @@ export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo,
 }
 
 /** Banco do lançamento: opcional, com atalho para cadastrar um novo. */
-function EscolhaBanco({ bancos, valor, aoMudar, aoNovoBanco }: {
+export function EscolhaBanco({ bancos, valor, aoMudar, aoNovoBanco }: {
   bancos: Banco[]; valor: string; aoMudar: (id: string) => void
   aoNovoBanco: (nome: string, cor: string) => Promise<Banco | undefined>
 }) {

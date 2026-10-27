@@ -1,0 +1,58 @@
+import { COR } from '../lib/charts'
+import { fraseDaSituacao, pendentes, totaisDoMes, type SituacaoConta } from '../lib/contasFixas'
+import { fmtValor } from '../lib/format'
+import './contas.css'
+
+const PROXIMAS = 4
+const ATRASADAS = 5
+
+/**
+ * Contas do mês na visão geral: o que está atrasado e as próximas a vencer, com "Paguei" a um toque.
+ * `situacoes` são as do mês aberto (vindas de `situacoesDoMes`, ou de `ctx.situacoesContas`).
+ */
+export function BlocoContasDoMes({ situacoes, aoAbrir, aoPagar }: {
+  situacoes: SituacaoConta[]
+  /** Abre a página Contas do mês (também para cadastrar a primeira conta). */
+  aoAbrir: () => void
+  /** "Paguei" / "Recebi" a um toque, com o valor de costume da conta. */
+  aoPagar: (s: SituacaoConta) => void
+}) {
+  const { faltaPagar, qtdAtrasadas } = totaisDoMes(situacoes)
+  const { atrasadas, proximas } = pendentes(situacoes)
+  const linhas = [...atrasadas.slice(0, ATRASADAS), ...proximas.slice(0, PROXIMAS)]
+  const escondidas = atrasadas.length + proximas.length - linhas.length
+
+  return (
+    <section className="bloco">
+      <header className="bloco-cab">
+        <span style={{ color: qtdAtrasadas ? COR.saidas : COR.caixa }}>CONTAS DO MÊS</span>
+        {situacoes.length > 0 && <strong><small className="conta-bloco-falta">falta pagar</small> {fmtValor(faltaPagar)}</strong>}
+      </header>
+      {!situacoes.length && (
+        <p className="quadro-vazio">
+          Aluguel, luz, internet, salário… Cadastre o que se repete todo mês e o app avisa quando vencer.{' '}
+          <button className="link" onClick={aoAbrir}>Cadastrar a primeira conta</button>
+        </p>
+      )}
+      {situacoes.length > 0 && !linhas.length && (
+        <p className="quadro-vazio">Tudo em dia neste mês! 🎉 <button className="link" onClick={aoAbrir}>Ver contas</button></p>
+      )}
+      {linhas.map((s) => (
+        <div key={s.conta.id} className={`conta-linha ${s.estado}`}>
+          <button className="conta-info" onClick={aoAbrir}>
+            <strong>{s.conta.descricao}</strong>
+            <small>dia {s.dia} · <b>{fraseDaSituacao(s)}</b></small>
+          </button>
+          <span className="conta-valor">{fmtValor(s.valor)}</span>
+          <button className="btn primario" onClick={() => aoPagar(s)}>{s.conta.tipo === 'entrada' ? 'Recebi' : 'Paguei'}</button>
+        </div>
+      ))}
+      {linhas.length > 0 && (
+        <div className="conta-bloco-rodape">
+          <span>{atrasadas.length + proximas.length} {atrasadas.length + proximas.length === 1 ? 'conta em aberto' : 'contas em aberto'}</span>
+          <button className="link" onClick={aoAbrir}>{escondidas > 0 ? `Ver todas (+${escondidas})` : 'Ver todas'}</button>
+        </div>
+      )}
+    </section>
+  )
+}

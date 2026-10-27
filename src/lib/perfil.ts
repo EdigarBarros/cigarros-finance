@@ -26,6 +26,11 @@ export const MODULOS: { id: Modulo; nome: string; pergunta: string; descricao: s
     pergunta: 'Quero juntar dinheiro para algo (viagem, reserva, carro…)',
     descricao: 'Quanto falta para cada objetivo, quanto guardar por mês e quando você chega lá.',
   },
+  {
+    id: 'contas', nome: 'Contas do mês', icone: 'calendario',
+    pergunta: 'Tenho contas que se repetem todo mês (aluguel, luz, internet…)',
+    descricao: 'O app lembra do vencimento, mostra o que está atrasado e dá baixa com um toque em "Paguei".',
+  },
 ]
 
 export const DETALHES: { id: Detalhe; nome: string; descricao: string }[] = [
@@ -39,7 +44,7 @@ export const PERFIL_PADRAO: Perfil = {
   moeda: 'BRL',
   moedas: [],
   detalhe: 'equilibrado',
-  modulos: { dividas: false, bancos: false, investimentos: false, moedas: false, metas: false },
+  modulos: { dividas: false, bancos: false, investimentos: false, moedas: false, metas: false, contas: false },
   dispensadas: [],
   onboarding_em: null,
 }
@@ -68,6 +73,7 @@ export function inferirPerfil(d: { lancs: Lancamento[]; dividas: Divida[]; banco
       investimentos: d.meses.some((m) => m.investimentos !== 0),
       moedas: moedas.length > 0,
       metas: d.meses.some((m) => m.meta_usd > 0),
+      contas: d.lancs.some((l) => l.conta_fixa_id),
     },
     onboarding_em: new Date().toISOString(),
   }
@@ -82,6 +88,7 @@ export function visao(p: Perfil) {
     investimentos: p.modulos.investimentos,
     moedas: p.modulos.moedas && p.moedas.length > 0,
     metas: p.modulos.metas,
+    contas: p.modulos.contas,
     /** Variação contra o mês anterior nos indicadores. */
     comparacao: nivel >= 1,
     graficoAno: nivel >= 1,

@@ -29,6 +29,8 @@ export interface Lancamento {
   banco_id?: string | null
   /** Quando a saída é pagamento de uma dívida. */
   divida_id?: string | null
+  /** Quando o lançamento é a baixa ("Paguei" / "Recebi") de uma conta fixa do mês. */
+  conta_fixa_id?: string | null
   /** Lançado em outra moeda: o valor original. `valor` fica sempre na moeda principal. */
   valor_original?: number | null
   moeda_original?: string | null
@@ -83,7 +85,7 @@ export interface Mes {
 export const TIPOS_CAIXA: TipoCaixa[] = ['cc', 'caixinha', 'reserva']
 
 /** Partes do painel que cada pessoa liga ou desliga conforme a vida dela. */
-export type Modulo = 'dividas' | 'bancos' | 'investimentos' | 'moedas' | 'metas'
+export type Modulo = 'dividas' | 'bancos' | 'investimentos' | 'moedas' | 'metas' | 'contas'
 export type Detalhe = 'simples' | 'equilibrado' | 'detalhado'
 
 /** Como o painel se adapta a cada pessoa: respostas das perguntas iniciais e ajustes feitos depois. */
@@ -122,4 +124,23 @@ export interface MovimentoMeta {
   data: string
   valor: number
   descricao: string
+}
+
+/** Conta que se repete todo mês: aluguel, luz, internet (saída) ou salário (entrada). */
+export interface ContaFixa {
+  id: string
+  tipo: Tipo
+  descricao: string
+  /** Valor de costume; na baixa a pessoa pode trocar. */
+  valor: number
+  categoria_id: string | null
+  banco_id: string | null
+  /** Dia do vencimento ou do recebimento (1 a 31); em mês mais curto vale o último dia. */
+  dia: number
+  /** Primeiro mês em que vale (dia 1 do mês). */
+  inicio: string
+  /** Último mês em que vale (dia 1 do mês); null = continua. */
+  fim: string | null
+  ativa: boolean
+  created_at?: string
 }
