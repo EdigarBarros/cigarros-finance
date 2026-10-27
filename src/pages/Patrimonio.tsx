@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { caixaDoBanco, somaCaixa } from '../lib/calc'
 import { COR } from '../lib/charts'
-import { fmtBRL, fmtUSD, MESES_NOME } from '../lib/format'
+import { fmtMoeda, fmtValor, MESES_NOME, simbolo } from '../lib/format'
+import { converter, infoMoeda } from '../lib/moedas'
 import { BANCOS_CONHECIDOS, bancoConhecido, CORES_LIVRES, NOME_TIPO_CAIXA } from '../lib/rotulos'
 import { TIPOS_CAIXA, type Banco, type TipoCaixa } from '../lib/types'
 import { Icone } from '../components/Icone'
@@ -11,16 +12,20 @@ import type { Ctx } from './contexto'
 
 const SEM_BANCO = 'sem'
 
-/** Bancos: visão geral de cada banco, detalhe individual e o seu patrimônio (investimentos e dólar). */
+/** Meu dinheiro: cada banco (com detalhe individual), investimentos e outras moedas, conforme os módulos ligados. */
 export function Patrimonio(c: Ctx) {
+  const { v } = c
   const [aberto, setAberto] = useState<string | null>(c.bancoAberto)
   const [gerenciar, setGerenciar] = useState<Banco | 'novo' | null>(null)
   const bancos = c.d.bancos
   const caixa = c.mesEf.caixa
   const herdado = c.mesEf.herdadoDe
-  const salvarCaixa = (id: string, t: TipoCaixa, v: number) =>
-    c.d.salvarMes(c.ano, c.mes, { caixa: { ...caixa, [id]: { ...caixa[id], [t]: v } }, usd: c.mesEf.usd })
-  const confirmar = () => c.d.salvarMes(c.ano, c.mes, { caixa, usd: c.mesEf.usd })
+  // Ao gravar o mês, o que ele herdou (caixa e moedas) passa a ser dele.
+  const salvarCaixa = (id: string, t: TipoCaixa, valor: number) =>
+    c.d.salvarMes(c.ano, c.mes, { caixa: { ...caixa, [id]: { ...caixa[id], [t]: valor } }, moedas: c.mesEf.moedas })
+  const salvarMoeda = (m: string, valor: number) =>
+    c.d.salvarMes(c.ano, c.mes, { caixa, moedas: { ...c.mesEf.moedas, [m]: valor } })
+  const confirmar = () => c.d.salvarMes(c.ano, c.mes, { caixa, moedas: c.mesEf.moedas })
 
   const lancsDe = (id: string) =>
     c.lancsMes.filter((l) => (id === SEM_BANCO ? !l.banco_id || !bancos.some((b) => b.id === l.banco_id) : l.banco_id === id))
@@ -52,10 +57,10 @@ export function Patrimonio(c: Ctx) {
           {banco && <button className="btn" onClick={() => setGerenciar(banco)}>Editar banco</button>}
         </header>
         <div className="kpis">
-          {banco && <Kpi rotulo="Saldo guardado" valor={fmtBRL(caixaDoBanco(caixa, banco.id))} cor={cor} />}
-          <Kpi rotulo="Entrou" valor={fmtBRL(ent)} cor={COR.entradas} />
-          <Kpi rotulo="Saiu" valor={fmtBRL(sai)} cor={COR.saidas} />
-          <Kpi rotulo="Resultado no mês" valor={fmtBRL(ent - sai)} cor={COR.fluxo} />
+          {banco && <Kpi rotulo="Saldo guardado" valor={fmtValor(caixaDoBanco(caixa, banco.id))} cor={cor} />}
+          <Kpi rotulo="Entrou" valor={fmtValor(ent)} cor={COR.entradas} />
+          <Kpi rotulo="Saiu" valor={fmtValor(sai)} cor={COR.saidas} />
+          <Kpi rotulo="Resultado no mês" valor={fmtValor(ent - sai)} cor={COR.fluxo} />
         </div>
         {banco && (
           <>
@@ -94,17 +99,20 @@ export function Patrimonio(c: Ctx) {
     <div className="pagina">
       <header className="pagina-topo">
         <div>
-          <h1>Bancos</h1>
-          <p className="sub">Saldos e movimento de {MESES_NOME[c.mes - 1].toLowerCase()}/{c.ano}. Toque num banco para ver só ele.</p>
+          <h1>Meu dinheiro</h1>
+          <p className="sub">
+            Como está em {MESES_NOME[c.mes - 1].toLowerCase()}/{c.ano}.{v.bancos && ' Toque num banco para ver só ele.'}
+          </p>
         </div>
-        <button className="btn primario" onClick={() => setGerenciar('novo')}><Icone nome="mais" tamanho={16} /> Novo banco</button>
+        {v.bancos && <button className="btn primario" onClick={() => setGerenciar('novo')}><Icone nome="mais" tamanho={16} /> Novo banco</button>}
       </header>
 
+      {v.bancos && <>
       <div className="kpis">
-        <Kpi rotulo="Total guardado" valor={fmtBRL(somaCaixa(caixa))} cor={COR.caixa}
+        <Kpi rotulo="Total guardado" valor={fmtValor(somaCaixa(caixa))} cor={COR.caixa}
           delta={c.anterior?.caixa ? (c.r.caixa - c.anterior.caixa) / c.anterior.caixa : null} />
         {TIPOS_CAIXA.map((t) => (
-          <Kpi key={t} rotulo={NOME_TIPO_CAIXA[t]} valor={fmtBRL(bancos.reduce((a, b) => a + (caixa[b.id]?.[t] ?? 0), 0))} cor={COR.caixa} />
+          <Kpi key={t} rotulo={NOME_TIPO_CAIXA[t]} valor={fmtValor(bancos.reduce((a, b) => a + (caixa[b.id]?.[t] ?? 0), 0))} cor={COR.caixa} />
         ))}
       </div>
 
@@ -126,39 +134,63 @@ export function Patrimonio(c: Ctx) {
           return (
             <button key={x.id} className="cartao banco-cartao" style={{ '--c': x.cor } as React.CSSProperties} onClick={() => setAberto(x.id)}>
               <span className="banco-cartao-nome"><i className="marcador" />{x.nome}</span>
-              <strong className="banco-cartao-saldo">{x.guardado === null ? `${x.ls.length} lançamentos` : fmtBRL(x.guardado)}</strong>
+              <strong className="banco-cartao-saldo">{x.guardado === null ? `${x.ls.length} lançamentos` : fmtValor(x.guardado)}</strong>
               <span className="banco-cartao-rot">{x.guardado === null ? 'sem banco definido' : 'guardado'}</span>
               <span className="banco-cartao-mov">
-                <span style={{ color: COR.entradas }}>+{fmtBRL(ent)}</span>
-                <span style={{ color: COR.saidas }}>−{fmtBRL(sai)}</span>
+                <span style={{ color: COR.entradas }}>+{fmtValor(ent)}</span>
+                <span style={{ color: COR.saidas }}>−{fmtValor(sai)}</span>
               </span>
             </button>
           )
         })}
       </div>
+      </>}
 
-      <div className="grade-cartoes">
-        <Cartao titulo={<><i className="marcador" style={{ background: COR.investimentos }} />Investimentos do mês</>}>
-          <div className="campos">
-            <CampoValor rotulo="Valor investido neste mês" valor={c.r.investimentos} aoSalvar={(investimentos) => c.d.salvarMes(c.ano, c.mes, { investimentos })} />
-          </div>
-          <p className="dica">Aceita contas, como na planilha: <code>=105,53-60,02</code></p>
-        </Cartao>
-        <Cartao titulo={<><i className="marcador" style={{ background: COR.usd }} />Dólar</>}>
-          <div className="campos">
-            <CampoValor rotulo="Guardado em dólar" prefixo="US$" valor={c.r.usd} aoSalvar={(usd) => c.d.salvarMes(c.ano, c.mes, { usd })} />
-            <CampoValor rotulo="Meta (vale para os próximos meses)" prefixo="US$" valor={c.r.metaUsd} aoSalvar={(meta_usd) => c.d.salvarMes(c.ano, c.mes, { meta_usd })} />
-          </div>
-          {c.r.metaUsd > 0 && (
-            <div className="meta">
-              <Progresso valor={c.r.usd} total={c.r.metaUsd} cor={COR.usd} />
-              <p className="barras-sub">
-                {c.r.usd >= c.r.metaUsd ? 'Meta batida! 🎉' : `Faltam ${fmtUSD(c.r.metaUsd - c.r.usd)} · ${Math.round((c.r.usd / c.r.metaUsd) * 100)}% concluído`}
-              </p>
-            </div>
+      {(v.investimentos || v.moedas) && (
+        <div className="grade-cartoes">
+          {v.investimentos && (
+            <Cartao titulo={<><i className="marcador" style={{ background: COR.investimentos }} />Investimentos</>}>
+              <div className="campos">
+                <CampoValor rotulo="Quanto você tem investido neste mês" prefixo={simbolo()} valor={c.r.investimentos}
+                  aoSalvar={(investimentos) => c.d.salvarMes(c.ano, c.mes, { investimentos })} />
+              </div>
+              <p className="dica">Aceita contas: <code>=1500+320</code></p>
+            </Cartao>
           )}
-        </Cartao>
-      </div>
+          {v.moedas && (
+            <Cartao titulo={<><i className="marcador" style={{ background: COR.usd }} />Outras moedas</>}
+              acao={<strong>≈ {fmtValor(c.r.moedasConvertido)}</strong>}>
+              <div className="campos">
+                {c.perfil.moedas.map((m) => {
+                  const conv = converter(c.mesEf.moedas[m] ?? 0, m, c.taxas)
+                  return (
+                    <div key={m} className="campo">
+                      <CampoValor rotulo={`${infoMoeda(m).bandeira} ${infoMoeda(m).nome}`} prefixo={simbolo(m)} valor={c.mesEf.moedas[m] ?? 0}
+                        aoSalvar={(valor) => salvarMoeda(m, valor)} />
+                      <span className="campo-ajuda">
+                        {conv === null ? 'Sem cotação agora.' : `≈ ${fmtValor(conv)} · 1 ${m} = ${fmtValor(c.taxas[m])} hoje`}
+                      </span>
+                    </div>
+                  )
+                })}
+                {c.perfil.moedas.includes('USD') && (
+                  <CampoValor rotulo="Meta em dólar (vale para os próximos meses)" prefixo="US$" valor={c.r.metaUsd}
+                    aoSalvar={(meta_usd) => c.d.salvarMes(c.ano, c.mes, { meta_usd })} />
+                )}
+              </div>
+              {c.perfil.moedas.includes('USD') && c.r.metaUsd > 0 && (
+                <div className="meta">
+                  <Progresso valor={c.r.usd} total={c.r.metaUsd} cor={COR.usd} />
+                  <p className="barras-sub">
+                    {c.r.usd >= c.r.metaUsd ? 'Meta batida! 🎉' : `Faltam ${fmtMoeda(c.r.metaUsd - c.r.usd, 'USD')} · ${Math.round((c.r.usd / c.r.metaUsd) * 100)}% concluído`}
+                  </p>
+                </div>
+              )}
+              <p className="dica">Cotação do dia por <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer">ExchangeRate-API</a>. Para mudar as moedas, use <button className="link" onClick={c.personalizar}>Personalizar painel</button>.</p>
+            </Cartao>
+          )}
+        </div>
+      )}
 
       {gerenciar && <FormBanco c={c} banco={gerenciar === 'novo' ? undefined : gerenciar} aoFechar={() => setGerenciar(null)} />}
     </div>

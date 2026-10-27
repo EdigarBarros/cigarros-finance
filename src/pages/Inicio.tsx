@@ -1,17 +1,29 @@
 import { useState } from 'react'
 import { COR } from '../lib/charts'
 import type { SituacaoDivida } from '../lib/dividas'
-import { fmtBRL, fmtUSD, MESES, MESES_NOME, variacao } from '../lib/format'
-import type { Tipo } from '../lib/types'
-import { ListaDividas, Metricas, PorBanco, QuadroCaixa, QuadroLancamentos, TabelaAnual, TabelaDividas } from '../components/Blocos'
+import { fmtValor, MESES, MESES_NOME, variacao } from '../lib/format'
+import { CATEGORIAS } from '../lib/rotulos'
+import type { Lancamento, Tipo } from '../lib/types'
+import {
+  BlocoMoedas, ListaDividas, Metricas, PorBanco, QuadroCaixa, QuadroLancamentos, TabelaAnual, TabelaDividas,
+} from '../components/Blocos'
 import { FormDivida } from '../components/Formularios'
-import { GraficoAnual } from '../components/Graficos'
+import { GraficoAnual, Rosca } from '../components/Graficos'
 import { Icone } from '../components/Icone'
-import { Cartao, Kpi, Progresso, Segmentado } from '../components/ui'
+import { ItemLancamento } from '../components/ItemLancamento'
+import { AdicionarAoPainel, CartaoSugestao } from '../components/Personalizar'
+import { Cartao, Kpi, Segmentado, Vazio } from '../components/ui'
 import type { Ctx } from './contexto'
 
+const recentes = (ls: Lancamento[]) =>
+  [...ls].sort((a, b) => (b.data ?? '').localeCompare(a.data ?? '') || (b.created_at ?? '').localeCompare(a.created_at ?? ''))
+
+/**
+ * Visão geral. Monta-se conforme o perfil: só os blocos dos módulos ligados e, no jeito "detalhado",
+ * os quadros no estilo da planilha.
+ */
 export function Inicio(c: Ctx) {
-  const { r, anterior: a, mobile } = c
+  const { r, anterior: a, mobile, v } = c
   const [divida, setDivida] = useState<SituacaoDivida | 'nova' | null>(null)
   const [lado, setLado] = useState<Tipo>('saida')
 
@@ -19,46 +31,143 @@ export function Inicio(c: Ctx) {
   const saidas = c.lancsMes.filter((l) => l.tipo === 'saida')
   const abrirDivida = (s: SituacaoDivida) => setDivida(s)
   const novaDivida = () => setDivida('nova')
+  const delta = (atual: number, antes: number | undefined) => (v.comparacao ? variacao(atual, antes) : null)
+  const nomeMes = MESES_NOME[c.mes - 1].toLowerCase()
 
   const kpis = (
     <div className="kpis">
-      <Kpi rotulo="Entradas" valor={fmtBRL(r.entradas)} cor={COR.entradas} delta={variacao(r.entradas, a?.entradas)} />
-      <Kpi rotulo="Saídas" valor={fmtBRL(r.saidas)} cor={COR.saidas} delta={variacao(r.saidas, a?.saidas)} menorMelhor />
-      <Kpi rotulo="Caixa" valor={fmtBRL(r.caixa)} cor={COR.caixa} delta={variacao(r.caixa, a?.caixa)} />
-      <Kpi rotulo="Dívida" valor={fmtBRL(r.divida)} cor={COR.divida} delta={variacao(r.divida, a?.divida)} menorMelhor />
-      <Kpi rotulo="Investimentos" valor={fmtBRL(r.investimentos)} cor={COR.investimentos} />
-      <Kpi rotulo="US$" valor={fmtUSD(r.usd)} cor={COR.usd} />
+      <Kpi rotulo="Entrou" valor={fmtValor(r.entradas)} cor={COR.entradas} delta={delta(r.entradas, a?.entradas)} />
+      <Kpi rotulo="Saiu" valor={fmtValor(r.saidas)} cor={COR.saidas} delta={delta(r.saidas, a?.saidas)} menorMelhor />
+      {v.bancos && <Kpi rotulo="Guardado nas contas" valor={fmtValor(r.caixa)} cor={COR.caixa} delta={delta(r.caixa, a?.caixa)} />}
+      {v.dividas && (
+        <Kpi rotulo="Falta pagar" valor={fmtValor(r.divida)} cor={COR.divida} delta={delta(r.divida, a?.divida)} menorMelhor>
+          {!c.situacao.length && <button className="link kpi-acao" onClick={novaDivida}>Cadastrar uma dívida</button>}
+        </Kpi>
+      )}
+      {/* módulo recém-ligado ainda sem valor: o próprio indicador leva até onde preencher */}
+      {v.investimentos && (
+        <Kpi rotulo="Investido" valor={fmtValor(r.investimentos)} cor={COR.investimentos}>
+          {!r.investimentos && <button className="link kpi-acao" onClick={() => c.irPara('patrimonio')}>Informar quanto tem</button>}
+        </Kpi>
+      )}
+      {v.moedas && (
+        <Kpi rotulo="Em outras moedas" valor={`≈ ${fmtValor(r.moedasConvertido)}`} cor={COR.usd}>
+          {!r.moedasConvertido && <button className="link kpi-acao" onClick={() => c.irPara('patrimonio')}>Informar quanto tem</button>}
+        </Kpi>
+      )}
     </div>
   )
 
-  const meta = (
-    <section className="bloco meta-bloco">
-      <h3 className="bloco-titulo">META DE US$ DÓLARES</h3>
-      {r.metaUsd > 0 ? (
-        <div className="meta">
-          <div><strong>{fmtUSD(r.usd)}</strong><span> de {fmtUSD(r.metaUsd)}</span></div>
-          <Progresso valor={r.usd} total={r.metaUsd} cor={COR.usd} />
-          <p className="barras-sub">{r.usd >= r.metaUsd ? 'Meta batida! 🎉' : `Faltam ${fmtUSD(r.metaUsd - r.usd)}`}</p>
-        </div>
-      ) : (
-        <p className="quadro-vazio">Sem meta definida. <button className="link" onClick={() => c.irPara('patrimonio')}>Definir meta</button></p>
-      )}
-    </section>
+  const caixa = v.bancos && (
+    <QuadroCaixa caixa={c.mesEf.caixa} bancos={c.d.bancos} total={r.caixa} herdadoDe={c.mesEf.herdadoDe} compacto={mobile || !v.planilha} aoAbrir={() => c.irPara('patrimonio')} />
   )
-
-  const caixa = (
-    <QuadroCaixa caixa={c.mesEf.caixa} bancos={c.d.bancos} total={r.caixa} herdadoDe={c.mesEf.herdadoDe} compacto={mobile} aoAbrir={() => c.irPara('patrimonio')} />
-  )
-
-  const porBanco = c.d.bancos.length > 0 && (
+  const porBanco = v.bancos && c.d.bancos.length > 0 && (
     <PorBanco bancos={c.d.bancos} lancs={c.lancsMes} caixa={c.mesEf.caixa} aoAbrir={c.abrirBanco} />
+  )
+  const moedas = v.moedas && (
+    <BlocoMoedas moedas={c.mesEf.moedas} lista={c.perfil.moedas} taxas={c.taxas} metaUsd={r.metaUsd} aoAbrir={() => c.irPara('patrimonio')} />
+  )
+  const dividas = v.dividas && (
+    v.planilha && !mobile
+      ? <TabelaDividas itens={c.situacao} aoNova={novaDivida} aoEditar={abrirDivida} aoPagar={c.pagarDivida} />
+      : <ListaDividas itens={c.situacao} aoEditar={abrirDivida} aoPagar={c.pagarDivida} aoNova={novaDivida} />
+  )
+  const grafico = (compacto: boolean) => v.graficoAno && (
+    <Cartao titulo={`Evolução de ${c.ano}`} acao={!compacto && <span className="dica-cab">toque num mês para abrir</span>}>
+      <GraficoAnual porMes={c.porMes} mesAtual={c.mes} aoClicarMes={c.irParaMes} v={v} {...(compacto ? { altura: 260, compacto } : {})} />
+    </Cartao>
+  )
+  const tabelaAno = v.planilha && (
+    <Cartao titulo={`Resumo de ${c.ano}`}>
+      <TabelaAnual porMes={c.porMes} mesAtual={c.mes} aoClicarMes={c.irParaMes} v={v} />
+    </Cartao>
+  )
+
+  // ---------- jeito simples e equilibrado: listas e um gráfico de categorias ----------
+  const fatias = CATEGORIAS.map((k) => ({ nome: k.nome, valor: r.metricas[k.id], cor: k.cor })).filter((f) => f.valor > 0)
+  const essencial = (
+    <>
+      <div className="duas-colunas">
+        <Cartao titulo="Últimos lançamentos" acao={c.lancsMes.length > 0 && <button className="link" onClick={() => c.irPara('lancamentos')}>Ver todos</button>}>
+          {c.lancsMes.length ? (
+            <ul className="lista-lanc">
+              {recentes(c.lancsMes).slice(0, 6).map((l) => (
+                <ItemLancamento key={l.id} l={l} banco={v.bancos ? c.d.bancos.find((b) => b.id === l.banco_id) : undefined} aoClicar={() => c.editarLancamento(l)} />
+              ))}
+            </ul>
+          ) : (
+            <Vazio>
+              Nada lançado em {nomeMes} ainda.<br />
+              <button className="link" onClick={() => c.novoLancamento('entrada')}>Lançar uma entrada</button> ou{' '}
+              <button className="link" onClick={() => c.novoLancamento('saida')}>uma saída</button>
+            </Vazio>
+          )}
+        </Cartao>
+        <Cartao titulo="Para onde foi o dinheiro">
+          {fatias.length ? <Rosca fatias={fatias} /> : <Vazio>Quando você lançar saídas, aparece aqui em que você mais gasta.</Vazio>}
+        </Cartao>
+      </div>
+      {grafico(mobile)}
+      {(dividas || porBanco || caixa || moedas) && (
+        <div className="duas-colunas">
+          {dividas}
+          {porBanco}
+          {caixa}
+          {moedas}
+        </div>
+      )}
+    </>
+  )
+
+  // ---------- jeito detalhado: os quadros da planilha ----------
+  const completo = mobile ? (
+    <>
+      {grafico(true)}
+      <Metricas r={r} mes={c.mes} />
+      <section className="pilha">
+        <Segmentado
+          rotulo="Mostrar"
+          valor={lado}
+          aoMudar={setLado}
+          opcoes={[
+            { id: 'saida', nome: `Saídas · ${fmtValor(r.saidas)}`, cor: COR.saidas },
+            { id: 'entrada', nome: `Entradas · ${fmtValor(r.entradas)}`, cor: COR.entradas },
+          ]}
+        />
+        <QuadroLancamentos key={lado} tipo={lado} itens={lado === 'saida' ? saidas : entradas} limite={6}
+          aoNovo={() => c.novoLancamento(lado)} aoEditar={c.editarLancamento} />
+      </section>
+      {dividas}
+      {porBanco}
+      {caixa}
+      {moedas}
+      {tabelaAno}
+    </>
+  ) : (
+    <>
+      <div className="duas-colunas">
+        <QuadroLancamentos tipo="entrada" itens={entradas} aoNovo={() => c.novoLancamento('entrada')} aoEditar={c.editarLancamento} />
+        <QuadroLancamentos tipo="saida" itens={saidas} aoNovo={() => c.novoLancamento('saida')} aoEditar={c.editarLancamento} />
+      </div>
+      {grafico(false)}
+      <div className="duas-colunas">
+        <div className="pilha">
+          {dividas}
+          {porBanco}
+          {caixa}
+          {moedas}
+        </div>
+        <Metricas r={r} mes={c.mes} />
+      </div>
+      {tabelaAno}
+    </>
   )
 
   return (
     <div className="pagina">
       <header className="pagina-topo">
         <div>
-          <h1>Visão geral</h1>
+          <h1>{c.perfil.nome ? `Olá, ${c.perfil.nome}` : 'Visão geral'}</h1>
           <p className="sub">{MESES_NOME[c.mes - 1]} de {c.ano}</p>
         </div>
       </header>
@@ -66,26 +175,25 @@ export function Inicio(c: Ctx) {
         <section className="boas-vindas">
           <img src="/emblema.webp" alt="" width={56} height={56} />
           <div>
-            <h2>Bem-vindo ao Cigarros Finance</h2>
-            <p>Seus dados são só seus: ninguém mais vê o que você lança aqui. Para começar:</p>
-            <ol>
-              <li><button className="link" onClick={() => c.novoLancamento('entrada')}>Lance uma entrada</button> ou uma <button className="link" onClick={() => c.novoLancamento('saida')}>saída</button> — o botão <b>+</b> fica sempre à mão.</li>
-              <li><button className="link" onClick={() => c.irPara('patrimonio')}>Cadastre seus bancos</button> (opcional) para ver cada um separado.</li>
-              <li><button className="link" onClick={() => c.irPara('dividas')}>Registre suas dívidas</button> (opcional): os pagamentos abatem sozinhos.</li>
-            </ol>
-            <p className="boas-vindas-extra">Já usa a planilha do Cigarros Finance? <button className="link" onClick={c.importar}>Importe o arquivo .xlsx</button>.</p>
+            <h2>Seu painel está pronto</h2>
+            <p>Seus dados são só seus: ninguém mais vê o que você lança aqui. Para começar, lance o que entrou e o que saiu este mês. O botão <b>+</b> fica sempre à mão.</p>
+            <div className="hero-acoes boas-vindas-acoes">
+              <button className="btn entrada" onClick={() => c.novoLancamento('entrada')}><Icone nome="sobe" tamanho={16} /> Lançar entrada</button>
+              <button className="btn saida" onClick={() => c.novoLancamento('saida')}><Icone nome="desce" tamanho={16} /> Lançar saída</button>
+            </div>
           </div>
         </section>
       )}
+      {c.sugestao && <CartaoSugestao s={c.sugestao} aoAceitar={() => c.aceitarSugestao(c.sugestao!)} aoRecusar={() => c.recusarSugestao(c.sugestao!)} />}
       <section className="hero">
         <div>
-          <span className="hero-rotulo">Fluxo de caixa · {MESES[c.mes - 1]}/{c.ano}</span>
-          <strong className={`hero-valor ${r.fluxo < 0 ? 'negativo' : 'positivo'}`}>{fmtBRL(r.fluxo)}</strong>
+          <span className="hero-rotulo">{v.planilha ? `Fluxo de caixa · ${MESES[c.mes - 1]}/${c.ano}` : `Resultado de ${nomeMes}`}</span>
+          <strong className={`hero-valor ${r.fluxo < 0 ? 'negativo' : 'positivo'}`}>{fmtValor(r.fluxo)}</strong>
           <span className="hero-sub">
             {r.entradas === 0 && r.saidas === 0
-              ? `Nada lançado em ${MESES_NOME[c.mes - 1].toLowerCase()} ainda.`
-              : r.fluxo < 0 ? `Saiu ${fmtBRL(-r.fluxo)} a mais do que entrou.` : `Sobrou ${fmtBRL(r.fluxo)} no mês.`}
-            {r.divida > 0 && ` Dívidas: ${fmtBRL(r.divida)}.`}
+              ? `Nada lançado em ${nomeMes} ainda.`
+              : r.fluxo < 0 ? `Saiu ${fmtValor(-r.fluxo)} a mais do que entrou.` : `Sobrou ${fmtValor(r.fluxo)} no mês.`}
+            {v.dividas && r.divida > 0 && ` Dívidas: ${fmtValor(r.divida)}.`}
           </span>
         </div>
         {!mobile && (
@@ -98,56 +206,9 @@ export function Inicio(c: Ctx) {
 
       {kpis}
 
-      {mobile ? (
-        <>
-          <Cartao titulo={`Evolução de ${c.ano}`}>
-            <GraficoAnual porMes={c.porMes} mesAtual={c.mes} aoClicarMes={c.irParaMes} altura={260} compacto />
-          </Cartao>
-          <Metricas r={r} mes={c.mes} />
-          <section className="pilha">
-            <Segmentado
-              rotulo="Mostrar"
-              valor={lado}
-              aoMudar={setLado}
-              opcoes={[
-                { id: 'saida', nome: `Saídas · ${fmtBRL(r.saidas)}`, cor: COR.saidas },
-                { id: 'entrada', nome: `Entradas · ${fmtBRL(r.entradas)}`, cor: COR.entradas },
-              ]}
-            />
-            <QuadroLancamentos key={lado} tipo={lado} itens={lado === 'saida' ? saidas : entradas} limite={6}
-              aoNovo={() => c.novoLancamento(lado)} aoEditar={c.editarLancamento} />
-          </section>
-          <ListaDividas itens={c.situacao} aoEditar={abrirDivida} aoPagar={c.pagarDivida} aoNova={novaDivida} />
-          {porBanco}
-          {caixa}
-          {meta}
-          <Cartao titulo={`Resumo de ${c.ano}`}>
-            <TabelaAnual porMes={c.porMes} mesAtual={c.mes} aoClicarMes={c.irParaMes} />
-          </Cartao>
-        </>
-      ) : (
-        <>
-          <div className="duas-colunas">
-            <QuadroLancamentos tipo="entrada" itens={entradas} aoNovo={() => c.novoLancamento('entrada')} aoEditar={c.editarLancamento} />
-            <QuadroLancamentos tipo="saida" itens={saidas} aoNovo={() => c.novoLancamento('saida')} aoEditar={c.editarLancamento} />
-          </div>
-          <Cartao titulo={`Evolução de ${c.ano}`} acao={<span className="dica-cab">toque num mês para abrir</span>}>
-            <GraficoAnual porMes={c.porMes} mesAtual={c.mes} aoClicarMes={c.irParaMes} />
-          </Cartao>
-          <div className="duas-colunas">
-            <div className="pilha">
-              <TabelaDividas itens={c.situacao} aoNova={novaDivida} aoEditar={abrirDivida} aoPagar={c.pagarDivida} />
-              {porBanco}
-              {caixa}
-              {meta}
-            </div>
-            <Metricas r={r} mes={c.mes} />
-          </div>
-          <Cartao titulo={`Resumo de ${c.ano}`}>
-            <TabelaAnual porMes={c.porMes} mesAtual={c.mes} aoClicarMes={c.irParaMes} />
-          </Cartao>
-        </>
-      )}
+      {v.planilha ? completo : essencial}
+
+      <AdicionarAoPainel perfil={c.perfil} aoLigar={c.ligarModulo} aoPersonalizar={c.personalizar} />
 
       {divida && (
         <FormDivida

@@ -1,6 +1,6 @@
 import type { Resumo } from '../lib/calc'
 import { COR } from '../lib/charts'
-import { fmtBRL, MESES_NOME } from '../lib/format'
+import { fmtValor, MESES_NOME } from '../lib/format'
 import { TabelaAnual } from '../components/Blocos'
 import { GraficoAnual, GraficoSaldo } from '../components/Graficos'
 import { Cartao, Kpi } from '../components/ui'
@@ -22,23 +22,23 @@ export function Ano(c: Ctx) {
       </header>
 
       <div className="kpis">
-        <Kpi rotulo="Entradas no ano" valor={fmtBRL(soma('entradas'))} cor={COR.entradas} />
-        <Kpi rotulo="Saídas no ano" valor={fmtBRL(soma('saidas'))} cor={COR.saidas} />
-        <Kpi rotulo="Saldo do ano" valor={fmtBRL(soma('fluxo'))} cor={COR.caixa} />
-        <Kpi rotulo="Gasto médio por mês" valor={fmtBRL(mediaGasto)} cor={COR.divida}>
+        <Kpi rotulo="Entradas no ano" valor={fmtValor(soma('entradas'))} cor={COR.entradas} />
+        <Kpi rotulo="Saídas no ano" valor={fmtValor(soma('saidas'))} cor={COR.saidas} />
+        <Kpi rotulo="Sobrou no ano" valor={fmtValor(soma('fluxo'))} cor={COR.caixa} />
+        <Kpi rotulo="Gasto médio por mês" valor={fmtValor(mediaGasto)} cor={COR.divida}>
           {melhor !== null && <span className="kpi-delta">Melhor mês: {MESES_NOME[melhor]}</span>}
         </Kpi>
       </div>
 
       <Cartao titulo="Evolução no ano" acao={<span className="dica-cab">toque num mês para abrir</span>}>
-        <GraficoAnual porMes={c.porMes} mesAtual={c.mes} altura={400} aoClicarMes={(m) => { c.irParaMes(m); c.irPara('inicio') }} />
+        <GraficoAnual porMes={c.porMes} mesAtual={c.mes} altura={400} aoClicarMes={(m) => { c.irParaMes(m); c.irPara('inicio') }} v={c.v} />
       </Cartao>
 
       <Cartao titulo={`Resumo de ${c.ano}`}>
-        <TabelaAnual porMes={c.porMes} mesAtual={c.mes} aoClicarMes={(m) => { c.irParaMes(m); c.irPara('inicio') }} />
+        <TabelaAnual porMes={c.porMes} mesAtual={c.mes} aoClicarMes={(m) => { c.irParaMes(m); c.irPara('inicio') }} v={c.v} />
       </Cartao>
 
-      <Cartao titulo="Fluxo de caixa de cada mês">
+      <Cartao titulo="Quanto sobrou em cada mês">
         <GraficoSaldo porMes={c.porMes} />
       </Cartao>
     </div>

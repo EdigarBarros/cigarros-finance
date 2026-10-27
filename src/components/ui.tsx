@@ -133,3 +133,32 @@ export function Segmentado<T extends string>({ opcoes, valor, aoMudar, rotulo }:
 export function Vazio({ children }: { children: ReactNode }) {
   return <p className="vazio">{children}</p>
 }
+
+/** Interruptor liga/desliga, como nos Ajustes do iPhone. */
+export function Interruptor({ ligado, aoMudar, rotulo }: { ligado: boolean; aoMudar: (v: boolean) => void; rotulo: string }) {
+  return (
+    <button type="button" role="switch" aria-checked={ligado} aria-label={rotulo} className={`interruptor ${ligado ? 'ligado' : ''}`}
+      onClick={() => aoMudar(!ligado)}>
+      <span />
+    </button>
+  )
+}
+
+/** Cartão de escolha grande, fácil de tocar (perguntas iniciais e ajustes). */
+export function Opcao({ ativo, aoClicar, icone, titulo, texto, multipla }: {
+  ativo: boolean; aoClicar: () => void; icone?: string; titulo: ReactNode; texto?: ReactNode
+  /** Mostra uma caixa de seleção em vez de um círculo. */
+  multipla?: boolean
+}) {
+  return (
+    <button type="button" className={`opcao ${ativo ? 'ativo' : ''}`} onClick={aoClicar}
+      role={multipla ? 'checkbox' : 'radio'} aria-checked={ativo}>
+      {icone && <span className="opcao-icone">{/^[a-z]+$/.test(icone) ? <Icone nome={icone} /> : icone}</span>}
+      <span className="opcao-texto">
+        <strong>{titulo}</strong>
+        {texto && <small>{texto}</small>}
+      </span>
+      <span className={`opcao-marca ${multipla ? 'quadrada' : ''}`} aria-hidden="true">{ativo && <Icone nome="check" tamanho={14} />}</span>
+    </button>
+  )
+}

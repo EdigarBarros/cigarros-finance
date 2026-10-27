@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { COR } from '../lib/charts'
-import { fmtBRL, fmtDataLonga, MESES_NOME } from '../lib/format'
+import { fmtValor, fmtDataLonga, MESES_NOME } from '../lib/format'
 import { CATEGORIAS } from '../lib/rotulos'
 import type { Categoria, Tipo } from '../lib/types'
 import { Icone } from '../components/Icone'
@@ -46,9 +46,9 @@ export function Lancamentos(c: Ctx) {
       </header>
 
       <div className="faixa-totais">
-        <div><span>Entradas</span><strong style={{ color: COR.entradas }}>{fmtBRL(soma('entrada'))}</strong></div>
-        <div><span>Saídas</span><strong style={{ color: COR.saidas }}>{fmtBRL(soma('saida'))}</strong></div>
-        <div><span>Saldo</span><strong>{fmtBRL(soma('entrada') - soma('saida'))}</strong></div>
+        <div><span>Entradas</span><strong style={{ color: COR.entradas }}>{fmtValor(soma('entrada'))}</strong></div>
+        <div><span>Saídas</span><strong style={{ color: COR.saidas }}>{fmtValor(soma('saida'))}</strong></div>
+        <div><span>Saldo</span><strong>{fmtValor(soma('entrada') - soma('saida'))}</strong></div>
       </div>
 
       <Cartao>
@@ -59,7 +59,7 @@ export function Lancamentos(c: Ctx) {
           </label>
           <Segmentado rotulo="Tipo" valor={tipo} aoMudar={setTipo}
             opcoes={[{ id: 'todos', nome: 'Todos' }, { id: 'entrada', nome: 'Entradas' }, { id: 'saida', nome: 'Saídas' }]} />
-          {c.d.bancos.length > 0 && (
+          {c.v.bancos && c.d.bancos.length > 0 && (
             <select value={banco} onChange={(e) => setBanco(e.target.value)} aria-label="Banco">
               <option value="todos">Todos os bancos</option>
               {c.d.bancos.map((b) => <option key={b.id} value={b.id}>{b.nome}</option>)}
@@ -82,10 +82,10 @@ export function Lancamentos(c: Ctx) {
               <section key={dia} className="dia">
                 <header>
                   <span>{fmtDataLonga(dia || null)}</span>
-                  <span className={saldoDia < 0 ? 'negativo' : 'positivo'}>{fmtBRL(saldoDia)}</span>
+                  <span className={saldoDia < 0 ? 'negativo' : 'positivo'}>{fmtValor(saldoDia)}</span>
                 </header>
                 <ul className="lista-lanc">
-                  {itens.map((l) => <ItemLancamento key={l.id} l={l} banco={c.d.bancos.find((b) => b.id === l.banco_id)} mostrarData={false} aoClicar={() => c.editarLancamento(l)} />)}
+                  {itens.map((l) => <ItemLancamento key={l.id} l={l} banco={c.v.bancos ? c.d.bancos.find((b) => b.id === l.banco_id) : undefined} mostrarData={false} aoClicar={() => c.editarLancamento(l)} />)}
                 </ul>
               </section>
             )

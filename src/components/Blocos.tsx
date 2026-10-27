@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { caixaDoBanco, type Resumo } from '../lib/calc'
 import { COR } from '../lib/charts'
 import type { SituacaoDivida } from '../lib/dividas'
-import { fmtBRL, fmtDataCurta, fmtUSD, MESES, MESES_CURTO, MESES_NOME } from '../lib/format'
+import { fmtDataCurta, fmtMoeda, fmtValor, MESES, MESES_CURTO, MESES_NOME } from '../lib/format'
+import { converter, infoMoeda, type Taxas } from '../lib/moedas'
+import type { Visao } from '../lib/perfil'
 import { CATEGORIAS, NOME_CATEGORIA } from '../lib/rotulos'
 import { TIPOS_CAIXA, type Banco, type Caixa, type Lancamento, type Tipo } from '../lib/types'
 import { Rosca } from './Graficos'
@@ -42,7 +44,7 @@ export function QuadroLancamentos({ tipo, itens, aoNovo, aoEditar, limite }: {
               {saida && <i className="marcador" style={{ background: corCategoria[l.categoria] }} title={NOME_CATEGORIA[l.categoria]} />}
               {l.descricao || '—'}
             </span>
-            <span className="num">{fmtBRL(l.valor)}</span>
+            <span className="num">{fmtValor(l.valor)}</span>
             <span className="quadro-data">{fmtDataCurta(l.data)}</span>
           </button>
         ))}
@@ -54,7 +56,7 @@ export function QuadroLancamentos({ tipo, itens, aoNovo, aoEditar, limite }: {
       </div>
       <footer className="quadro-total">
         <span>TOTAL</span>
-        <span className="num">{fmtBRL(total)}</span>
+        <span className="num">{fmtValor(total)}</span>
         <span>{itens.length} {itens.length === 1 ? 'item' : 'itens'}</span>
       </footer>
     </section>
@@ -83,10 +85,10 @@ export function TabelaDividas({ itens, aoNova, aoEditar, aoPagar }: {
             {itens.map((s) => (
               <tr key={s.divida.id} className={s.quitadaNoMes ? 'quitada' : ''} onClick={() => aoEditar(s)}>
                 <th>{s.divida.descricao}</th>
-                <td>{s.divida.valor_parcela ? fmtBRL(s.divida.valor_parcela) : '—'}</td>
-                <td>{s.pagoNoMes ? fmtBRL(s.pagoNoMes) : '—'}</td>
+                <td>{s.divida.valor_parcela ? fmtValor(s.divida.valor_parcela) : '—'}</td>
+                <td>{s.pagoNoMes ? fmtValor(s.pagoNoMes) : '—'}</td>
                 <td>{s.quitadaNoMes ? 'quitada ✓' : quando(s.quitacao)}</td>
-                <td>{fmtBRL(s.restante)}</td>
+                <td>{fmtValor(s.restante)}</td>
                 <td>
                   {!s.quitadaNoMes && (
                     <button className="pagar" title="Registrar pagamento" onClick={(e) => { e.stopPropagation(); aoPagar(s) }}>pagar</button>
@@ -99,7 +101,7 @@ export function TabelaDividas({ itens, aoNova, aoEditar, aoPagar }: {
             )}
           </tbody>
           <tfoot>
-            <tr><th>TOTAL</th><td>{fmtBRL(parcelas)}</td><td>{fmtBRL(pago)}</td><td /><td>{fmtBRL(total)}</td><td /></tr>
+            <tr><th>TOTAL</th><td>{fmtValor(parcelas)}</td><td>{fmtValor(pago)}</td><td /><td>{fmtValor(total)}</td><td /></tr>
           </tfoot>
         </table>
       </div>
@@ -116,7 +118,7 @@ export function ListaDividas({ itens, aoEditar, aoPagar, aoNova }: {
     <section className="bloco lista-dividas">
       <header className="bloco-cab">
         <span>DÍVIDAS</span>
-        <strong>{fmtBRL(total)}</strong>
+        <strong>{fmtValor(total)}</strong>
         <button className="quadro-mais" onClick={aoNova} aria-label="Nova dívida"><Icone nome="mais" tamanho={16} /></button>
       </header>
       {!itens.length && <p className="quadro-vazio">Nenhuma dívida em aberto 🎉</p>}
@@ -124,10 +126,10 @@ export function ListaDividas({ itens, aoEditar, aoPagar, aoNova }: {
         <div key={s.divida.id} className={`divida-linha ${s.quitadaNoMes ? 'quitada' : ''}`}>
           <button className="divida-linha-info" onClick={() => aoEditar(s)}>
             <span className="divida-linha-nome">{s.divida.descricao}</span>
-            <span className="divida-linha-valor">{s.quitadaNoMes ? 'quitada ✓' : fmtBRL(s.restante)}</span>
+            <span className="divida-linha-valor">{s.quitadaNoMes ? 'quitada ✓' : fmtValor(s.restante)}</span>
             <Progresso valor={s.saldoInicial - s.restante} total={s.saldoInicial} cor={s.quitadaNoMes ? COR.entradas : COR.divida} />
             <span className="divida-linha-sub">
-              {s.pagoNoMes ? `pago no mês ${fmtBRL(s.pagoNoMes)}` : 'nada pago no mês'}
+              {s.pagoNoMes ? `pago no mês ${fmtValor(s.pagoNoMes)}` : 'nada pago no mês'}
               {s.quitacao && ` · acaba em ${quando(s.quitacao)}`}
             </span>
           </button>
@@ -149,7 +151,7 @@ export function QuadroCaixa({ caixa, bancos, total, herdadoDe, compacto, aoAbrir
   if (!bancos.length) {
     return (
       <section className="bloco">
-        <header className="bloco-cab"><span style={{ color: COR.caixa }}>CAIXA</span><strong>{fmtBRL(total)}</strong></header>
+        <header className="bloco-cab"><span style={{ color: COR.caixa }}>CAIXA</span><strong>{fmtValor(total)}</strong></header>
         <p className="quadro-vazio">Cadastre seus bancos para acompanhar o saldo de cada um. <button className="link" onClick={aoAbrir}>Cadastrar</button></p>
       </section>
     )
@@ -157,12 +159,12 @@ export function QuadroCaixa({ caixa, bancos, total, herdadoDe, compacto, aoAbrir
   if (compacto || bancos.length > 4) {
     return (
       <section className="bloco">
-        <header className="bloco-cab"><span style={{ color: COR.caixa }}>CAIXA</span><strong>{fmtBRL(total)}</strong></header>
+        <header className="bloco-cab"><span style={{ color: COR.caixa }}>CAIXA</span><strong>{fmtValor(total)}</strong></header>
         <div className="caixa-bancos">
           {bancos.map((b) => (
             <button key={b.id} onClick={aoAbrir}>
               <span><i className="marcador" style={{ background: b.cor }} />{b.nome}</span>
-              <strong>{fmtBRL(caixaDoBanco(caixa, b.id))}</strong>
+              <strong>{fmtValor(caixaDoBanco(caixa, b.id))}</strong>
             </button>
           ))}
         </div>
@@ -184,11 +186,11 @@ export function QuadroCaixa({ caixa, bancos, total, herdadoDe, compacto, aoAbrir
             {TIPOS_CAIXA.map((t) => (
               <tr key={t} onClick={aoAbrir}>
                 <th>{nomes[t]}</th>
-                {bancos.map((b) => <td key={b.id} className={caixa[b.id]?.[t] ? '' : 'vazio'}>{fmtBRL(caixa[b.id]?.[t] ?? 0)}</td>)}
+                {bancos.map((b) => <td key={b.id} className={caixa[b.id]?.[t] ? '' : 'vazio'}>{fmtValor(caixa[b.id]?.[t] ?? 0)}</td>)}
               </tr>
             ))}
           </tbody>
-          <tfoot><tr><th>TOTAL</th><td colSpan={bancos.length}>{fmtBRL(total)}</td></tr></tfoot>
+          <tfoot><tr><th>TOTAL</th><td colSpan={bancos.length}>{fmtValor(total)}</td></tr></tfoot>
         </table>
       </div>
       {aviso}
@@ -215,15 +217,50 @@ export function PorBanco({ bancos, lancs, caixa, aoAbrir }: {
         return (
           <button key={x.id ?? 'sem'} className="banco-linha" onClick={() => aoAbrir(x.id)}>
             <span className="banco-linha-nome"><i className="marcador" style={{ background: x.cor }} />{x.nome}</span>
-            <span className={`banco-linha-saldo ${ent - sai < 0 ? 'negativo' : ''}`}>{fmtBRL(ent - sai)}</span>
+            <span className={`banco-linha-saldo ${ent - sai < 0 ? 'negativo' : ''}`}>{fmtValor(ent - sai)}</span>
             <span className="banco-barras">
               <span style={{ width: `${(ent / maior) * 100}%`, background: COR.entradas }} />
               <span style={{ width: `${(sai / maior) * 100}%`, background: COR.saidas }} />
             </span>
-            <span className="banco-linha-sub">+{fmtBRL(ent)} · −{fmtBRL(sai)}</span>
+            <span className="banco-linha-sub">+{fmtValor(ent)} · −{fmtValor(sai)}</span>
           </button>
         )
       })}
+    </section>
+  )
+}
+
+/** Quanto a pessoa tem em cada outra moeda e quanto isso vale na principal, com a meta em dólar. */
+export function BlocoMoedas({ moedas, lista, taxas, metaUsd, aoAbrir }: {
+  moedas: Record<string, number>; lista: string[]; taxas: Taxas; metaUsd: number; aoAbrir: () => void
+}) {
+  const total = lista.reduce((a, m) => a + (converter(moedas[m] ?? 0, m, taxas) ?? 0), 0)
+  const usd = moedas.USD ?? 0
+  return (
+    <section className="bloco">
+      <header className="bloco-cab"><span style={{ color: COR.usd }}>OUTRAS MOEDAS</span><strong>≈ {fmtValor(total)}</strong></header>
+      {lista.map((m) => {
+        const i = infoMoeda(m)
+        const valor = moedas[m] ?? 0
+        const conv = converter(valor, m, taxas)
+        return (
+          <button key={m} className="banco-linha" onClick={aoAbrir}>
+            <span className="banco-linha-nome">{i.bandeira}&nbsp;&nbsp;{i.nome}</span>
+            <span className="banco-linha-saldo">{fmtMoeda(valor, m)}</span>
+            <span className="banco-linha-sub">
+              {conv === null ? 'Sem cotação agora' : `≈ ${fmtValor(conv)} · 1 ${m} = ${fmtValor(taxas[m])}`}
+            </span>
+          </button>
+        )
+      })}
+      {metaUsd > 0 && lista.includes('USD') && (
+        <div className="meta meta-bloco">
+          <h3 className="bloco-titulo">META EM DÓLAR</h3>
+          <div><strong>{fmtMoeda(usd, 'USD')}</strong><span> de {fmtMoeda(metaUsd, 'USD')}</span></div>
+          <Progresso valor={usd} total={metaUsd} cor={COR.usd} />
+          <p className="barras-sub">{usd >= metaUsd ? 'Meta batida! 🎉' : `Faltam ${fmtMoeda(metaUsd - usd, 'USD')}`}</p>
+        </div>
+      )}
     </section>
   )
 }
@@ -246,7 +283,7 @@ export function Metricas({ r, mes }: { r: Resumo; mes: number }) {
           {itens.map((i) => (
             <tr key={i.nome}>
               <th><i className="marcador" style={{ background: i.cor }} />{i.nome.toUpperCase()}</th>
-              <td>{fmtBRL(i.valor)}</td>
+              <td>{fmtValor(i.valor)}</td>
               <td>{r.saidas ? `${Math.round((i.valor / r.saidas) * 100)}%` : '–'}</td>
             </tr>
           ))}
@@ -258,19 +295,19 @@ export function Metricas({ r, mes }: { r: Resumo; mes: number }) {
   )
 }
 
-const LINHAS_ANUAIS: { nome: string; cor: string; valor: (r: Resumo) => string }[] = [
-  { nome: 'ENTRADAS', cor: COR.entradas, valor: (r) => fmtBRL(r.entradas) },
-  { nome: 'SAÍDAS', cor: COR.saidas, valor: (r) => fmtBRL(r.saidas) },
-  { nome: 'FLUXO DE CAIXA', cor: COR.fluxo, valor: (r) => fmtBRL(r.fluxo) },
-  { nome: 'CAIXA', cor: COR.caixa, valor: (r) => fmtBRL(r.caixa) },
-  { nome: 'DÍVIDA', cor: COR.divida, valor: (r) => fmtBRL(r.divida) },
-  { nome: 'INVESTIMENTOS', cor: COR.investimentos, valor: (r) => fmtBRL(r.investimentos) },
-  { nome: 'US$', cor: COR.usd, valor: (r) => fmtUSD(r.usd) },
+const LINHAS_ANUAIS: { nome: string; cor: string; valor: (r: Resumo) => number; mostrar?: (v: Visao) => boolean }[] = [
+  { nome: 'ENTRADAS', cor: COR.entradas, valor: (r) => r.entradas },
+  { nome: 'SAÍDAS', cor: COR.saidas, valor: (r) => r.saidas },
+  { nome: 'SOBROU', cor: COR.fluxo, valor: (r) => r.fluxo },
+  { nome: 'CAIXA', cor: COR.caixa, valor: (r) => r.caixa, mostrar: (v) => v.bancos },
+  { nome: 'DÍVIDA', cor: COR.divida, valor: (r) => r.divida, mostrar: (v) => v.dividas },
+  { nome: 'INVESTIMENTOS', cor: COR.investimentos, valor: (r) => r.investimentos, mostrar: (v) => v.investimentos },
+  { nome: 'OUTRAS MOEDAS', cor: COR.usd, valor: (r) => r.moedasConvertido, mostrar: (v) => v.moedas },
 ]
 
-/** Resumo do ano: uma linha colorida por indicador, uma coluna por mês. */
-export function TabelaAnual({ porMes, mesAtual, aoClicarMes }: {
-  porMes: (Resumo | null)[]; mesAtual: number; aoClicarMes: (m: number) => void
+/** Resumo do ano: uma linha colorida por indicador (dos módulos ligados), uma coluna por mês. */
+export function TabelaAnual({ porMes, mesAtual, aoClicarMes, v }: {
+  porMes: (Resumo | null)[]; mesAtual: number; aoClicarMes: (m: number) => void; v: Visao
 }) {
   // Rola até o mês aberto (no celular a tabela não cabe inteira).
   const caixa = useRef<HTMLDivElement>(null)
@@ -293,12 +330,12 @@ export function TabelaAnual({ porMes, mesAtual, aoClicarMes }: {
           </tr>
         </thead>
         <tbody>
-          {LINHAS_ANUAIS.map((l) => (
+          {LINHAS_ANUAIS.filter((l) => !l.mostrar || l.mostrar(v)).map((l) => (
             <tr key={l.nome} style={{ '--c': l.cor } as React.CSSProperties}>
               <th>{l.nome}</th>
               {porMes.map((r, i) => (
                 <td key={i} className={`${i + 1 === mesAtual ? 'atual' : ''} ${r ? '' : 'vazio'}`}>
-                  {r ? l.valor(r) : l.nome === 'US$' ? fmtUSD(0) : fmtBRL(0)}
+                  {fmtValor(r ? l.valor(r) : 0)}
                 </td>
               ))}
             </tr>

@@ -14,6 +14,9 @@ export interface Lancamento {
   banco_id?: string | null
   /** Quando a saída é pagamento de uma dívida. */
   divida_id?: string | null
+  /** Lançado em outra moeda: o valor original. `valor` fica sempre na moeda principal. */
+  valor_original?: number | null
+  moeda_original?: string | null
   created_at?: string
 }
 
@@ -56,9 +59,29 @@ export interface Mes {
   ano: number
   mes: number
   investimentos: number
-  usd: number
+  /** Saldo guardado em cada outra moeda, pelo código ({ USD: 1200, EUR: 300 }). */
+  moedas: Record<string, number>
   meta_usd: number
   caixa: Caixa
 }
 
 export const TIPOS_CAIXA: TipoCaixa[] = ['cc', 'caixinha', 'reserva']
+
+/** Partes do painel que cada pessoa liga ou desliga conforme a vida dela. */
+export type Modulo = 'dividas' | 'bancos' | 'investimentos' | 'moedas'
+export type Detalhe = 'simples' | 'equilibrado' | 'detalhado'
+
+/** Como o painel se adapta a cada pessoa: respostas das perguntas iniciais e ajustes feitos depois. */
+export interface Perfil {
+  nome: string
+  /** Moeda principal: todos os totais aparecem nela. */
+  moeda: string
+  /** Outras moedas que a pessoa usa além da principal. */
+  moedas: string[]
+  detalhe: Detalhe
+  modulos: Record<Modulo, boolean>
+  /** Sugestões recusadas, para o app não insistir. */
+  dispensadas: string[]
+  /** null enquanto as perguntas iniciais não foram respondidas. */
+  onboarding_em: string | null
+}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { COR } from '../lib/charts'
 import type { SituacaoDivida } from '../lib/dividas'
-import { fmtBRL, fmtDataCurta, MESES_NOME } from '../lib/format'
+import { fmtValor, fmtDataCurta, MESES_NOME } from '../lib/format'
 import { FormDivida } from '../components/Formularios'
 import { Icone } from '../components/Icone'
 import { Cartao, Kpi, Progresso, Vazio } from '../components/ui'
@@ -28,9 +28,9 @@ export function Dividas(c: Ctx) {
       </header>
 
       <div className="kpis">
-        <Kpi rotulo="Total devendo" valor={fmtBRL(c.r.divida)} cor={COR.divida} delta={c.anterior ? (c.anterior.divida ? (c.r.divida - c.anterior.divida) / c.anterior.divida : null) : null} menorMelhor />
-        <Kpi rotulo="Pago em dívidas no mês" valor={fmtBRL(pagoNoMes)} cor={COR.entradas} />
-        <Kpi rotulo="Parcelas por mês" valor={fmtBRL(c.r.parcelasMensais)} cor={COR.saidas} />
+        <Kpi rotulo="Total devendo" valor={fmtValor(c.r.divida)} cor={COR.divida} delta={c.anterior ? (c.anterior.divida ? (c.r.divida - c.anterior.divida) / c.anterior.divida : null) : null} menorMelhor />
+        <Kpi rotulo="Pago em dívidas no mês" valor={fmtValor(pagoNoMes)} cor={COR.entradas} />
+        <Kpi rotulo="Parcelas por mês" valor={fmtValor(c.r.parcelasMensais)} cor={COR.saidas} />
         <Kpi rotulo="Livre de dívidas em" valor={ultimaQuitacao ? `${MESES_NOME[ultimaQuitacao[1] - 1]}/${ultimaQuitacao[0]}` : c.r.divida > 0 ? 'Defina as parcelas' : 'Já está! 🎉'} cor={COR.caixa} />
       </div>
 
@@ -50,11 +50,11 @@ export function Dividas(c: Ctx) {
                     <h3>{s.divida.descricao}</h3>
                     <button className="link" onClick={() => setEditando(s)}>Editar</button>
                   </div>
-                  <strong className="divida-total">{s.quitadaNoMes ? 'Quitada ✓' : fmtBRL(s.restante)}</strong>
+                  <strong className="divida-total">{s.quitadaNoMes ? 'Quitada ✓' : fmtValor(s.restante)}</strong>
                   <Progresso valor={s.saldoInicial - s.restante} total={s.saldoInicial} cor={s.quitadaNoMes ? COR.entradas : COR.divida} />
                   <div className="divida-info">
-                    <span>{Math.round(((s.saldoInicial - s.restante) / (s.saldoInicial || 1)) * 100)}% pago de {fmtBRL(s.saldoInicial)}</span>
-                    {s.divida.valor_parcela ? <span>{fmtBRL(s.divida.valor_parcela)}/mês</span> : null}
+                    <span>{Math.round(((s.saldoInicial - s.restante) / (s.saldoInicial || 1)) * 100)}% pago de {fmtValor(s.saldoInicial)}</span>
+                    {s.divida.valor_parcela ? <span>{fmtValor(s.divida.valor_parcela)}/mês</span> : null}
                   </div>
                   {s.quitacao && (
                     <p className="divida-previsao">
@@ -63,7 +63,7 @@ export function Dividas(c: Ctx) {
                   )}
                   {pagamentos.length > 0 && (
                     <ul className="divida-pagamentos">
-                      {pagamentos.map((p) => <li key={p.id}><span>{fmtDataCurta(p.data)}</span><span>− {fmtBRL(p.valor)}</span></li>)}
+                      {pagamentos.map((p) => <li key={p.id}><span>{fmtDataCurta(p.data)}</span><span>− {fmtValor(p.valor)}</span></li>)}
                     </ul>
                   )}
                   {!s.quitadaNoMes && (

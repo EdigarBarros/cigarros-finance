@@ -3,12 +3,29 @@ export const MESES = [
   'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO',
 ]
 
-const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
-const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
+const formatos = new Map<string, Intl.NumberFormat>()
+const formato = (moeda: string) => {
+  let f = formatos.get(moeda)
+  if (!f) {
+    f = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: moeda })
+    formatos.set(moeda, f)
+  }
+  return f
+}
+
+let moedaPrincipal = 'BRL'
+/** Moeda principal da pessoa: todos os totais da tela aparecem nela. */
+export const definirMoedaPrincipal = (moeda: string) => { moedaPrincipal = moeda }
+export const moedaAtual = () => moedaPrincipal
+
 const pct = new Intl.NumberFormat('pt-BR', { style: 'percent', maximumFractionDigits: 0 })
 
-export const fmtBRL = (n: number) => brl.format(n || 0)
-export const fmtUSD = (n: number) => usd.format(n || 0)
+/** Valor na moeda principal. */
+export const fmtValor = (n: number) => formato(moedaPrincipal).format(n || 0)
+export const fmtMoeda = (n: number, moeda: string) => formato(moeda).format(n || 0)
+/** "R$", "US$", "€"… */
+export const simbolo = (moeda = moedaPrincipal) =>
+  formato(moeda).formatToParts(0).find((p) => p.type === 'currency')?.value ?? moeda
 export const MESES_NOME = MESES.map((m) => m[0] + m.slice(1).toLowerCase())
 export const MESES_CURTO = MESES_NOME.map((m) => m.slice(0, 3))
 
@@ -28,7 +45,7 @@ export function fmtDataCurta(iso: string | null) {
  * e, como na planilha, contas simples começando com "=" (ex.: "=105,53-60,02").
  */
 export function parseNumero(texto: string): number | null {
-  let s = texto.trim().replace(/R\$|US\$|\$|\s/g, '')
+  let s = texto.trim().replace(/R\$|US\$|\$|€|£|¥|\s/g, '')
   if (!s) return null
   const conta = s.startsWith('=')
   if (conta) s = s.slice(1)

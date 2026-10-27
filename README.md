@@ -3,6 +3,15 @@
 Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLANILHA_FINANCEIRA_2026.xlsx`
 (mesmos conceitos e cores, mas com cara de app):
 
+- **Painel que se adapta a cada pessoa**: no primeiro acesso, 4 perguntas rápidas (moeda, outras moedas, o que faz
+  parte da vida financeira, jeito de ver) montam o painel só com o que faz sentido. Dívidas, bancos, investimentos e
+  outras moedas são módulos que ligam e desligam; o jeito de ver vai de **simples** (só o essencial) a **detalhado**
+  (quadros da planilha e tabela do ano). Depois disso o app continua se adaptando: percebe pelos lançamentos que a pessoa
+  começou a investir, paga parcelas, mexe com dólar ou usa vários bancos e sugere ligar (sem insistir se ela recusar).
+  No formulário, uma dica aparece enquanto ela digita ("Aporte no CDB" → acompanhar investimentos). Tudo pode ser mudado
+  em **Personalizar painel**, ou com um toque em "+ Investimentos" no fim da visão geral
+- **Qualquer moeda**: a moeda principal define todos os totais (real, dólar, euro, peso…). Lançamentos podem ser feitos
+  em outra moeda com a cotação do dia (editável); o valor original fica guardado e o total entra convertido
 - **Visão geral**: saldo do mês em destaque, indicadores (entradas, saídas, caixa, dívida, investimentos, dólar)
   com comparação ao mês anterior, gráfico entradas × saídas do ano, para onde foi o dinheiro (por categoria),
   saídas por conta (Principal, Nubank, Inter), dívidas em aberto e meta em dólar
@@ -38,6 +47,10 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
 **Vercel:** <https://vercel.com/new> → importe este repositório → em *Environment Variables* adicione as duas variáveis acima → **Deploy**.
 
 **Netlify:** <https://app.netlify.com/start> → importe este repositório (o `netlify.toml` já configura o build) → *Site configuration → Environment variables* → adicione as duas variáveis → **Deploy**.
+
+> **Já tinha o banco criado antes?** Rode também as migrações que faltarem, em ordem, no SQL Editor:
+> [`migracao-02`](supabase/migracao-02-dividas-interligadas.sql), [`migracao-03`](supabase/migracao-03-bancos.sql) e
+> [`migracao-04-perfil-e-moedas`](supabase/migracao-04-perfil-e-moedas.sql) (perfil adaptável e outras moedas; só acrescenta, não apaga nada).
 
 ### 3. Primeiro acesso
 
