@@ -168,7 +168,7 @@ export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTod
                     return capitalizar([
                       p && !s.quitadaNoMes ? `parcela ${p.proxima} de ${p.total}` : null,
                       nivel !== 'simples' && s.divida.valor_parcela ? `${fmtValor(s.divida.valor_parcela)} por mês` : null,
-                      s.quitadaNoMes ? null : s.quitacao ? `acaba em ${quando(s.quitacao)}` : 'sem parcela definida, toque para definir',
+                      s.quitadaNoMes ? null : s.quitacao ? `acaba em ${quando(s.quitacao)}` : 'sem parcela fixa',
                       nivel === 'detalhado' && s.pagoNoMes ? `pago neste mês ${fmtValor(s.pagoNoMes)}` : null,
                     ].filter(Boolean).join(' · '))
                   })()}

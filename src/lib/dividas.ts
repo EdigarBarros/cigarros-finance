@@ -46,7 +46,11 @@ export function situacaoDividas(
     const restante = saldoEm(d, saldos, pagamentos, fim)
     if (restante === null) continue
     const restanteAntes = saldoEm(d, saldos, pagamentos, fimAntes)
-    if (restante <= 0 && (restanteAntes === null || restanteAntes <= 0)) continue
+    // Criada e quitada no mesmo mês: sem saldo antes, mas teve saldo positivo neste mês.
+    const devendoNoMes = restanteAntes === null
+      ? saldos.some((s) => s.divida_id === d.id && s.data >= ini && s.data <= fim && s.saldo > 0)
+      : restanteAntes > 0
+    if (restante <= 0 && !devendoNoMes) continue
     const doMes = pagamentos.filter((p) => p.divida_id === d.id && p.data && p.data >= ini && p.data <= fim)
     const parcela = d.valor_parcela ?? 0
     const mesesRestantes = parcela > 0 && restante > 0 ? Math.ceil(restante / parcela - 0.001) : null
