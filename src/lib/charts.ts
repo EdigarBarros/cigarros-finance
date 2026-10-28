@@ -1,5 +1,5 @@
 import {
-  ArcElement, BarController, BarElement, CategoryScale, Chart, Filler, Legend, LinearScale,
+  Animation, animator, ArcElement, BarController, BarElement, CategoryScale, Chart, Filler, Legend, LinearScale,
   LineController, LineElement, PointElement, Tooltip,
   type Plugin,
 } from 'chart.js'
@@ -42,11 +42,67 @@ Chart.defaults.animation = {
 // Até 2× a resolução da tela: no iPhone (3×) cada gráfico ocupa bem menos memória e o Safari para de descartá-lo.
 Chart.defaults.devicePixelRatio = Math.min(2, window.devicePixelRatio || 1)
 
+// ---------- gráficos que não travam ----------
+// O Chart.js tem um motor de animação só para a página toda. Se um quadro de animação de qualquer gráfico dá erro, o motor
+// fica marcado como ocupado e nunca mais roda: todos os gráficos, inclusive os criados depois, ficam em branco para sempre.
+// Aqui o motor pega o erro, registra no console e termina as animações desenhando tudo no estado final.
+
+/** Últimos erros de gráfico, para diagnóstico (F12 → Console: `__opuscashErrosGraficos`). */
+const errosGraficos: unknown[] = []
+;(window as unknown as { __opuscashErrosGraficos: unknown[] }).__opuscashErrosGraficos = errosGraficos
+function registrarErro(e: unknown) {
+  if (errosGraficos.length < 20) errosGraficos.push(e)
+  console.error('[OpusCash] erro num gráfico; o painel se recuperou sozinho:', e)
+}
+
+type MotorInterno = { _update: (data?: number) => void; _charts: Map<Chart, { items: unknown[] }> }
+const motor = animator as unknown as MotorInterno
+const passoOriginal = motor._update.bind(motor)
+motor._update = (data?: number) => {
+  try {
+    passoOriginal(data)
+  } catch (e) {
+    registrarErro(e)
+    // abandona as animações em curso e desenha cada gráfico no estado final
+    motor._charts.forEach((a) => { a.items.length = 0 })
+    setTimeout(() => Object.values(Chart.instances).forEach((c) => {
+      try { c.update('none') } catch (e2) { registrarErro(e2) }
+    }))
+  }
+}
+
+// Uma animação sem interpolador (valor que não é número nem cor, como um degradê) pula direto para o valor final,
+// em vez de quebrar o quadro.
+type AnimacaoInterna = { _fn?: unknown; tick: (data: number) => void }
+const prototipo = Animation.prototype as unknown as AnimacaoInterna
+const tickOriginal = prototipo.tick
+prototipo.tick = function (this: AnimacaoInterna, data: number) {
+  if (typeof this._fn !== 'function') this._fn = (_de: unknown, para: unknown) => para
+  return tickOriginal.call(this, data)
+}
+
+// Vigia: o gráfico que não se desenhar até 1,8 s depois de criado é desenhado direto, sem animação.
+type ComVigia = Chart & { $desenhou?: boolean }
+Chart.register({
+  id: 'vigia',
+  afterInit(chart: Chart) {
+    setTimeout(() => {
+      const c = chart as ComVigia
+      if (!c.$desenhou && c.canvas) {
+        try { c.update('none') } catch (e) { registrarErro(e) }
+      }
+    }, 1800)
+  },
+  afterDraw(chart: Chart) { (chart as ComVigia).$desenhou = true },
+})
+
 /**
  * O Safari (iPhone, iPad e Mac) apaga o desenho dos gráficos quando a aba ou o app fica em segundo plano, ou quando a
  * página volta do cache, e o Chart.js não percebe. Ao voltar, redesenha todos.
  */
-const redesenhar = () => Object.values(Chart.instances).forEach((c) => { c.resize(); c.update('none') })
+const redesenhar = () => Object.values(Chart.instances).forEach((c) => {
+  try { c.resize(); c.update('none') } catch (e) { registrarErro(e) }
+})
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') requestAnimationFrame(redesenhar) })
 window.addEventListener('pageshow', () => requestAnimationFrame(redesenhar))
 window.addEventListener('focus', () => requestAnimationFrame(redesenhar))

@@ -260,3 +260,11 @@ O Safari (iPhone, iPad e Mac) descarta o desenho dos gráficos (canvas) quando a
 repintar um canvas dentro de um bloco animado com desfoque. Por isso (`lib/charts.ts` e `index.css`): todos os gráficos se
 redesenham ao voltar para a aba, à página ou à janela; blocos com gráfico entram sem desfoque; a resolução dos gráficos vai até 2×
 (menos memória no iPhone); e o crescimento a partir do zero acontece só no primeiro desenho, depois o gráfico só transiciona.
+
+### 4.8 Gráficos que não travam
+
+O Chart.js tem um único motor de animação para a página. Se um quadro de animação de qualquer gráfico dá erro, o motor fica
+marcado como ocupado e nunca mais roda: todos os gráficos, inclusive os criados depois, ficam em branco até recarregar a página.
+`lib/charts.ts` protege isso: o motor pega o erro, termina as animações desenhando tudo no estado final e registra o erro no
+console (`[OpusCash] erro num gráfico…`; os últimos ficam em `__opuscashErrosGraficos`). Uma animação sem interpolador pula para
+o valor final, e um vigia desenha sem animação o gráfico que não se desenhou até 1,8 s depois de criado.

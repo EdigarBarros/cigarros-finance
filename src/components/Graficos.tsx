@@ -31,7 +31,8 @@ const crescer = {
 const degrade = (cor: string, forca = 0.32) => (ctx: ScriptableContext<'line'>) => {
   const { chart } = ctx
   const area = (chart as ChartJS).chartArea
-  if (!area) return 'transparent'
+  // gráfico ainda sem área (ou já desmontado): cor lisa em vez de um degradê inválido
+  if (!area || !chart.ctx || ![area.top, area.bottom].every(Number.isFinite) || area.bottom <= area.top) return cor + '33'
   const g = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom)
   g.addColorStop(0, cor + Math.round(forca * 255).toString(16).padStart(2, '0'))
   g.addColorStop(1, cor + '00')
