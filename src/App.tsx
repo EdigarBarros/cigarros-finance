@@ -17,5 +17,5 @@ export default function App() {
   if (!configurado) return <Configuracao />
   if (sessao === undefined) return <div className="tela-central">Carregando…</div>
   if (!sessao) return <Login />
-  return <Painel userId={sessao.user.id} email={sessao.user.email ?? ''} />
+  return <Painel userId={sessao.user.id} email={sessao.user.email ?? ''} nome={sessao.user.user_metadata?.nome} />
 }

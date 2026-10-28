@@ -65,7 +65,7 @@ const paginaDoHash = (): Pagina => {
 
 const hoje = new Date()
 
-export function Painel({ userId, email }: { userId: string; email: string }) {
+export function Painel({ userId, email, nome: nomeConta }: { userId: string; email: string; nome?: string }) {
   const [pagina, setPagina] = useState<Pagina>(paginaDoHash)
   const [ano, setAno] = useState(hoje.getFullYear())
   const [mes, setMes] = useState(hoje.getMonth() + 1)
@@ -352,7 +352,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   if (perguntar) {
     return (
       <Questionario
-        inicial={perfil}
+        inicial={perfil.nome || !nomeConta ? perfil : { ...perfil, nome: nomeConta }}
         aoConcluir={(p) => { mudarPerfil(p); setRefazendo(false); irPara('inicio') }}
         aoCancelar={refazendo ? () => setRefazendo(false) : undefined}
       />

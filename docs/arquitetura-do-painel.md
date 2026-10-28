@@ -443,3 +443,15 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
   se a pessoa ainda não tem). Grava tudo de uma vez (`addLancs`, em lotes).
 - **Organizar nomes:** a mesma limpeza nos lançamentos do ano aberto, agrupados por nome igual, com antes → depois para
   aceitar ou editar; os que eram só número aparecem em branco, com a data e o valor para lembrar (`renomearLancs`).
+
+### 4.20 Tela de entrada (login e cadastro)
+
+- **Cartão dividido** (`Entrada.tsx`): formulário de um lado, painel da marca do outro (gradiente OpusCash, paisagem
+  ao fundo, título em serifa com a segunda linha em itálico). "Entrar" fica à esquerda; "Criar conta", à direita.
+- **Lâmina:** ao trocar de modo, o painel é recortado por um polígono cujas quatro bordas (`--a`, `--b`, `--c`, `--d`,
+  registradas com `@property`) se animam em dois tempos: primeiro avança a borda de um lado (o painel cobre o cartão
+  inteiro) e depois recua a do outro. Um fio com o gradiente da marca acompanha a diagonal.
+- **Campos com linha:** o rótulo começa dentro e sobe ao focar ou preencher; a linha se acende com o gradiente. Senha
+  com olho para mostrar e, no cadastro, medidor de força. O nome do cadastro vai em `user_metadata.nome` e já aparece
+  preenchido na primeira pergunta do painel.
+- **Celular:** o painel vira uma faixa diagonal no alto e só o formulário troca.
