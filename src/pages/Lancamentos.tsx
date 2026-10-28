@@ -88,9 +88,13 @@ export function Lancamentos(c: Ctx) {
           <h1>Lançamentos</h1>
           <p className="sub">{MESES_NOME[c.mes - 1]} de {c.ano} · {filtrados.length} {filtrados.length === 1 ? 'lançamento' : 'lançamentos'}{filtrando ? ' com os filtros' : ''}</p>
         </div>
-        <div className="lc-topo-acoes so-desktop">
-          <button className="btn lc-btn-entrada" onClick={() => c.novoLancamento('entrada')}><Icone nome="receber" tamanho={16} /> Entrada</button>
-          <button className="btn lc-btn-saida" onClick={() => c.novoLancamento('saida')}><Icone nome="enviar" tamanho={16} /> Saída</button>
+        <div className="lc-topo-acoes">
+          <button className="btn" onClick={c.importarExtrato} title="PDF, CSV, Excel, Word ou OFX do banco"><Icone nome="relatorio" tamanho={16} /> Importar extrato</button>
+          <button className="icone-btn" onClick={c.organizarNomes} title="Organizar nomes" aria-label="Organizar nomes"><Icone nome="lapis" tamanho={17} /></button>
+          <span className="so-desktop lc-topo-novo">
+            <button className="btn lc-btn-entrada" onClick={() => c.novoLancamento('entrada')}><Icone nome="receber" tamanho={16} /> Entrada</button>
+            <button className="btn lc-btn-saida" onClick={() => c.novoLancamento('saida')}><Icone nome="enviar" tamanho={16} /> Saída</button>
+          </span>
         </div>
       </header>
 

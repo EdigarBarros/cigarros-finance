@@ -36,7 +36,7 @@ function CartaoAcao({ icone, titulo, texto, aoClicar, perigo }: { icone: string;
 }
 
 /** Configurações em tela cheia: menu de seções à esquerda e cartões à direita. Cada mudança vale na hora. */
-export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoZerar, aoSair, aoFechar }: {
+export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoExtrato, aoOrganizar, aoZerar, aoSair, aoFechar }: {
   perfil: Perfil; email: string; aoMudar: (p: Perfil) => void; aoRefazer: () => void; aoCategorias: () => void
   /** Para mostrar as categorias na seção Categorias. */
   categorias?: Categoria[]
@@ -44,6 +44,8 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
   foto?: string | null
   aoMudarFoto?: (f: string | null) => void
   aoBackup: () => void; aoImportar: () => void
+  /** Importar extrato do banco e organizar os nomes dos lançamentos. */
+  aoExtrato?: () => void; aoOrganizar?: () => void
   /** Abre a confirmação de zerar os dados. */
   aoZerar: () => void; aoSair: () => void
   aoFechar: () => void
@@ -207,6 +209,8 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
           {secao === 'dados' && (
             <div className="cfg-acoes">
               <CartaoAcao icone="exportar" titulo="Baixar backup" texto="Um arquivo com todos os seus dados, para guardar com você." aoClicar={aoBackup} />
+              {aoExtrato && <CartaoAcao icone="relatorio" titulo="Importar extrato" texto="PDF, CSV, Excel, Word ou OFX do seu banco. Arruma os nomes e mostra tudo antes de gravar." aoClicar={aoExtrato} />}
+              {aoOrganizar && <CartaoAcao icone="lapis" titulo="Organizar nomes" texto="Tira CPF, CNPJ, códigos e texto de banco dos nomes dos lançamentos que você já tem." aoClicar={aoOrganizar} />}
               <CartaoAcao icone="importar" titulo="Importar planilha" texto="Traz os meses de uma planilha (.xlsx). Pede confirmação antes." aoClicar={aoImportar} />
               <CartaoAcao icone="lixeira" titulo="Zerar dados" texto="Escolha o que apagar: tudo, entradas, saídas, dívidas, cartões e mais." aoClicar={aoZerar} perigo />
             </div>

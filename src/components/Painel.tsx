@@ -29,6 +29,7 @@ import { Patrimonio } from '../pages/Patrimonio'
 import { GerenciarCategorias } from './Categorias'
 import { BlocoCartoes } from './BlocoCartoes'
 import { BlocoContasDoMes } from './BlocoContas'
+import { ImportarExtrato, OrganizarNomes } from './Extrato'
 import { FormLancamento } from './Formularios'
 import { Kpi } from './ui'
 import { Icone } from './Icone'
@@ -79,6 +80,8 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const [zerando, setZerando] = useState(false)
   const [quadroMeses, setQuadroMeses] = useState(false)
   const [busca, setBusca] = useState('')
+  const [extrato, setExtrato] = useState(false)
+  const [organizar, setOrganizar] = useState(false)
   const arquivo = useRef<HTMLInputElement>(null)
   // pílula que desliza até o item ativo (menu lateral e abas do celular)
   const refNav = useRef<HTMLElement>(null)
@@ -325,6 +328,8 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
       ? d.setErro('Para criar e editar categorias, falta atualizar o banco de dados: rode supabase/migracao-05-categorias.sql no SQL Editor do Supabase.')
       : setEditarCategorias(true)),
     importar: () => arquivo.current?.click(),
+    importarExtrato: () => setExtrato(true),
+    organizarNomes: () => setOrganizar(true),
     contaNova: !d.carregando && !temDados,
     r: resumoMes(lancsMes, situacao, mesEf, taxas, idCategoria),
     anterior: mes > 1 ? porMes[mes - 2] : null,
@@ -410,6 +415,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     <>
       <button onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> Configurações</button>
       <button onClick={trocarTema}><Icone nome={tema === 'escuro' ? 'sol' : 'lua'} /> {tema === 'escuro' ? 'Tema claro' : 'Tema escuro'}</button>
+      <button onClick={() => setExtrato(true)}><Icone nome="relatorio" /> Importar extrato</button>
       <button onClick={() => arquivo.current?.click()}><Icone nome="importar" /> Importar planilha</button>
       <button onClick={() => tarefa('Preparando o backup…', async () => (await import('../lib/planilha')).exportarBackup())}>
         <Icone nome="exportar" /> Baixar backup
@@ -611,11 +617,16 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
           aoCategorias={() => { setAjustes(false); ctx.gerenciarCategorias() }}
           aoBackup={() => tarefa('Preparando o backup…', async () => (await import('../lib/planilha')).exportarBackup())}
           aoImportar={() => { setAjustes(false); arquivo.current?.click() }}
+          aoExtrato={() => { setAjustes(false); setExtrato(true) }}
+          aoOrganizar={() => { setAjustes(false); setOrganizar(true) }}
           aoZerar={() => { setAjustes(false); setZerando(true) }}
           aoSair={() => supabase.auth.signOut()}
           aoFechar={() => setAjustes(false)}
         />
       )}
+
+      {extrato && <ImportarExtrato c={ctx} aoFechar={() => setExtrato(false)} />}
+      {organizar && <OrganizarNomes c={ctx} aoFechar={() => setOrganizar(false)} />}
 
       {zerando && (
         <ZerarDados

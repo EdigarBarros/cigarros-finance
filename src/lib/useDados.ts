@@ -164,6 +164,30 @@ export function useDados(userId: string, ano: number) {
     sincronizarPagamento(l.id, l)
     return l
   }
+  /** Vários lançamentos de uma vez (importação de extrato), em lotes; devolve quantos foram gravados. */
+  const addLancs = async (novos: Omit<Lancamento, 'id'>[]): Promise<number> => {
+    let gravados = 0
+    for (let i = 0; i < novos.length; i += 250) {
+      const { data, error } = await supabase.from('lancamentos').insert(novos.slice(i, i + 250).map((l) => paraBanco(l))).select('id')
+      if (error) {
+        falhou(error.message)
+        return gravados
+      }
+      gravados += data?.length ?? 0
+    }
+    await recarregar()
+    return gravados
+  }
+  /** Troca a descrição de vários lançamentos ("Organizar nomes"). */
+  const renomearLancs = async (lista: { id: string; descricao: string }[]) => {
+    const nomes = new Map(lista.map((x) => [x.id, x.descricao]))
+    setLancs((xs) => xs.map((x) => (nomes.has(x.id) ? { ...x, descricao: nomes.get(x.id)! } : x)))
+    for (let i = 0; i < lista.length; i += 20) {
+      const res = await Promise.all(lista.slice(i, i + 20).map((x) => supabase.from('lancamentos').update({ descricao: x.descricao }).eq('id', x.id)))
+      const e = res.find((r) => r.error)?.error
+      if (e) return falhou(e.message)
+    }
+  }
   const updLanc = async (id: string, mudancas: Partial<Lancamento>) => {
     const patch = paraBanco(mudancas)
     const atual = lancs.find((x) => x.id === id)
@@ -374,7 +398,7 @@ export function useDados(userId: string, ano: number) {
     bancos, addBanco, updBanco, delBanco,
     dividasSemExtras,
     lancs, meses, dividas, saldos, pagamentos, carregando, erro, setErro, recarregar,
-    addLanc, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, salvarMes,
+    addLanc, addLancs, renomearLancs, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, salvarMes,
   }
 }
 

@@ -421,3 +421,25 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
 - Escolhas visuais: avatar com as iniciais ao digitar o nome, moedas com as bandeiras em SVG, módulos como cartões com
   ícone, jeito de ver com as miniaturas do painel (`Previas.tsx`, as mesmas das Configurações) e, no fim, o resumo em
   selos.
+
+### 4.19 Importar extrato e organizar nomes
+
+- **Importar extrato** (Lançamentos, menu do avatar e Configurações → Dados): PDF, CSV/TXT, Excel (.xlsx/.xls/.ods), Word
+  (.docx) e OFX. `lib/extrato.ts` acha em cada linha a data, o valor e se entrou ou saiu (sinal, "C"/"D", colunas de
+  crédito/débito ou palavras como "recebido"/"enviado"), ignora linhas de saldo e junta nomes quebrados em duas linhas.
+  - PDF: texto pelo pdf.js, carregado da CDN (cdnjs, versão fixa) só quando alguém importa um PDF; as palavras são
+    agrupadas por linha na página. PDF com senha pede para exportar sem senha.
+  - Word: `lib/zip.ts` abre o .docx com o `DecompressionStream` do navegador (sem biblioteca) e lê tabelas e parágrafos.
+  - Excel: a biblioteca de planilhas que já existe, com as células cruas (datas e números).
+  - Tabelas: o cabeçalho é reconhecido ("Data", "Descrição"/"Histórico", "Valor", "Crédito"/"Débito", "Tipo");
+    sem cabeçalho, as colunas são adivinhadas pelo conteúdo.
+- **Limpeza dos nomes** (`limparDescricao`): tira CPF/CNPJ (inclusive a raiz de CNPJ de MEI, "51.365.272 Fulano"),
+  documentos mascarados, ids de transação, agência/conta, horários, datas grudadas e nomes de banco; transforma
+  "TRANSFERENCIA RECEBIDA PELO PIX - FULANO - …" em "Pix de Fulano", "Pagamento de boleto X" em "Boleto X", reconhece
+  lojas (iFood, Uber, Netflix…) e corrige TUDO MAIÚSCULO. É idempotente (limpar duas vezes dá o mesmo). O que fica sem
+  nome (só números) vira "Entrada"/"Saída" marcado para revisar.
+- **Revisão antes de gravar:** nome editável com o original embaixo, entrada/saída trocável, categoria sugerida, filtros
+  "para revisar" e "já lançados" (mesmo dia, valor e tipo: vêm desmarcados), banco reconhecido (cria o banco do catálogo
+  se a pessoa ainda não tem). Grava tudo de uma vez (`addLancs`, em lotes).
+- **Organizar nomes:** a mesma limpeza nos lançamentos do ano aberto, agrupados por nome igual, com antes → depois para
+  aceitar ou editar; os que eram só número aparecem em branco, com a data e o valor para lembrar (`renomearLancs`).

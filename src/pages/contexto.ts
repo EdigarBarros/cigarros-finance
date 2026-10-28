@@ -57,6 +57,9 @@ export interface Ctx {
   irPara: (p: Pagina) => void
   /** Abre a escolha de arquivo da planilha. */
   importar: () => void
+  /** Importar extrato do banco (PDF, CSV, Excel, Word, OFX) e organizar os nomes dos lançamentos. */
+  importarExtrato: () => void
+  organizarNomes: () => void
   /** Conta sem nenhum dado ainda (primeiro acesso). */
   contaNova: boolean
   irParaMes: (mes: number) => void
