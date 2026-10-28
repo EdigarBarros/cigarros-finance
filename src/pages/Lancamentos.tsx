@@ -10,6 +10,7 @@ import { Selo } from '../components/Categorias'
 import { Icone } from '../components/Icone'
 import { ItemLancamento } from '../components/ItemLancamento'
 import { Numero } from '../components/Numero'
+import { CenaLancamentos } from '../components/Vazios'
 import { Segmentado } from '../components/ui'
 import type { Ctx } from './contexto'
 
@@ -114,7 +115,8 @@ export function Lancamentos(c: Ctx) {
         </div>
       </header>
 
-      <section className="lc-topo">
+      {/* mês sem nenhum lançamento: o calendário só teria dias vazios, então a ilustração sobe para o lugar dele */}
+      <section className={`lc-topo ${c.lancsMes.length === 0 ? 'sem-calendario' : ''}`}>
         <div className="lc-totais">
           {[
             { id: 'entrou', rotulo: 'Entrou', valor: entrou, cor: COR.entradas, icone: 'receber' },
@@ -127,10 +129,11 @@ export function Lancamentos(c: Ctx) {
             </div>
           ))}
         </div>
-        <CalorDoMes ano={c.ano} mes={c.mes} lancs={semDia} dia={dia} hoje={hoje} aoEscolher={(d) => setDia(d === dia ? null : d)} />
+        {c.lancsMes.length > 0 && <CalorDoMes ano={c.ano} mes={c.mes} lancs={semDia} dia={dia} hoje={hoje} aoEscolher={(d) => setDia(d === dia ? null : d)} />}
       </section>
 
       <section className="cartao lc-lista">
+        {(c.lancsMes.length > 0 || filtrando) && (
         <div className="lc-filtros">
           <label className="busca">
             <Icone nome="busca" tamanho={16} />
@@ -141,6 +144,7 @@ export function Lancamentos(c: Ctx) {
           <Segmentado rotulo="Ordem" valor={ordem} aoMudar={setOrdem}
             opcoes={[{ id: 'data', nome: 'Recentes' }, { id: 'valor', nome: 'Maiores' }]} />
         </div>
+        )}
 
         {chips.length > 0 && (
           <div className="lc-chips" role="group" aria-label="Categorias">
@@ -194,9 +198,14 @@ export function Lancamentos(c: Ctx) {
         )}
 
         {!filtrados.length ? (
-          <div className="lc-vazio">
-            <span className="lc-vazio-icone"><Icone nome={filtrando ? 'busca' : 'lista'} tamanho={30} /></span>
-            <strong>{filtrando ? 'Nada com esses filtros' : `Nada lançado em ${MESES_NOME[c.mes - 1].toLowerCase()}`}</strong>
+          <div className={filtrando ? 'lc-vazio' : 'lc-vazio vz-vazio'}>
+            {filtrando ? <span className="lc-vazio-icone"><Icone nome="busca" tamanho={30} /></span> : <CenaLancamentos />}
+            {filtrando
+              ? <strong>Nada com esses filtros</strong>
+              : <h2>{c.d.lancs.length === 0 ? 'Comece a fazer seus lançamentos' : `Nada lançado em ${MESES_NOME[c.mes - 1].toLowerCase()}`}</h2>}
+            {!filtrando && <p>{c.d.lancs.length === 0
+              ? 'Registre o que entrou e o que saiu, um por um, ou traga tudo de uma vez do extrato do seu banco. O painel se monta sozinho.'
+              : 'Quando você lançar algo neste mês, ele aparece aqui, dia a dia.'}</p>}
             {filtrando
               ? <button className="btn" onClick={limpar}>Limpar filtros</button>
               : <span className="lc-vazio-acoes">

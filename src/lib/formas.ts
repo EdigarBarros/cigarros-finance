@@ -11,7 +11,7 @@ export const FORMAS: { id: FormaPagamento; nome: string; icone: string; cor: str
   { id: 'credito', nome: 'Crédito', icone: 'cartao', cor: '#9d6bff', tipos: ['saida'] },
   { id: 'dinheiro', nome: 'Dinheiro', icone: 'carteira', cor: '#6bbf59', tipos: ['saida', 'entrada'] },
   { id: 'boleto', nome: 'Boleto', icone: 'relatorio', cor: '#e0a030', tipos: ['saida'] },
-  { id: 'transferencia', nome: 'Transferência', icone: 'acordo', cor: '#7a8cff', tipos: ['entrada'] },
+  { id: 'transferencia', nome: 'Transferência', icone: 'acordo', cor: '#7a8cff', tipos: ['saida', 'entrada'] },
 ]
 
 export const formasDoTipo = (t: Tipo) => FORMAS.filter((f) => f.tipos.includes(t))
@@ -25,7 +25,7 @@ export const formaDe = (l: Pick<Lancamento, 'forma' | 'cartao_id'>): FormaPagame
 export function formaPelaDescricao(texto: string, tipo: Tipo): FormaGravada | null {
   const t = texto.toLowerCase()
   if (/\bpix\b/.test(t)) return 'pix'
-  if (/\b(ted|doc|transfer[eê]ncia)\b/.test(t)) return tipo === 'entrada' ? 'transferencia' : 'pix'
+  if (/\b(ted|doc|transf(er[eê]ncia)?)\b/.test(t)) return 'transferencia'
   if (/\bboleto\b/.test(t) && tipo === 'saida') return 'boleto'
   if (/\bd[eé]bito\b/.test(t) && tipo === 'saida') return 'debito'
   return null

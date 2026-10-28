@@ -5,6 +5,7 @@
  */
 import { CATALOGO_BANCOS } from './bancos'
 import type { Tipo } from './types'
+import { formaPelaDescricao, type FormaGravada } from './formas'
 import { lerDoZip } from './zip'
 
 export interface LinhaExtrato {
@@ -17,6 +18,8 @@ export interface LinhaExtrato {
   tipo: Tipo
   /** Motivo para a pessoa conferir (nome incompleto, tipo adivinhado…). */
   revisar?: string
+  /** Como foi pago, quando o extrato diz (Pix, transferência, boleto, débito): o nome fica só com a pessoa ou a loja. */
+  forma?: FormaGravada | null
 }
 
 export interface ExtratoLido {
@@ -55,17 +58,17 @@ const LOJAS: [RegExp, string][] = [
 
 /** O que a linha é, pelo começo da descrição (a ordem importa: o mais específico primeiro). */
 const TIPOS_DE_LINHA: { re: RegExp; tipo?: Tipo; nome: (resto: string, tipo: Tipo) => string }[] = [
-  { re: /^(transf(erencia)?\.?\s+)?(pix\s+)?(recebid[oa]|recebimento)(\s+(pelo|via|por)\s+pix)?\s*(de|-|:)?\s*/, tipo: 'entrada', nome: (r) => (r ? `Pix de ${r}` : 'Pix recebido') },
-  { re: /^(transf(erencia)?\.?\s+)?(pix\s+)?(enviad[oa]|envio)(\s+(pelo|via|por)\s+pix)?\s*(para|-|:)?\s*/, tipo: 'saida', nome: (r) => (r ? `Pix para ${r}` : 'Pix enviado') },
-  { re: /^pix\s+de\s+/, tipo: 'entrada', nome: (r) => (r ? `Pix de ${r}` : 'Pix recebido') },
-  { re: /^pix\s+para\s+/, tipo: 'saida', nome: (r) => (r ? `Pix para ${r}` : 'Pix enviado') },
-  { re: /^(transferencia|transf\.?)\s+de\s+/, tipo: 'entrada', nome: (r) => (r ? `Transferência de ${r}` : 'Transferência recebida') },
-  { re: /^(transferencia|transf\.?)\s+para\s+/, tipo: 'saida', nome: (r) => (r ? `Transferência para ${r}` : 'Transferência enviada') },
-  { re: /^(ted|doc|transferencia|transf\.?)\s+recebid[oa]\s*(de|-|:)?\s*/, tipo: 'entrada', nome: (r) => (r ? `Transferência de ${r}` : 'Transferência recebida') },
-  { re: /^(ted|doc|transferencia|transf\.?)\s+enviad[oa]\s*(para|-|:)?\s*/, tipo: 'saida', nome: (r) => (r ? `Transferência para ${r}` : 'Transferência enviada') },
-  { re: /^pix\s*(transf(erencia)?\.?|qr\s*code|copia e cola|agendado)?\s*(-|:)?\s*/, nome: (r, t) => (r ? `Pix ${t === 'entrada' ? 'de' : 'para'} ${r}` : t === 'entrada' ? 'Pix recebido' : 'Pix enviado') },
-  { re: /^(ted|doc|transferencia|transf\.?)\s*(-|:)?\s*/, nome: (r, t) => (r ? `Transferência ${t === 'entrada' ? 'de' : 'para'} ${r}` : 'Transferência') },
-  { re: /^((pagamento|pgto|pag\.?)\s+(de\s+)?)?(boleto|titulo)\s*(-|:)?\s*/, tipo: 'saida', nome: (r) => (r ? `Boleto ${r}` : 'Boleto') },
+  { re: /^(transf(erencia)?\.?\s+)?(pix\s+)?(recebid[oa]|recebimento)(\s+(pelo|via|por)\s+pix)?\s*(de|-|:)?\s*/, tipo: 'entrada', nome: (r) => r || 'Pix recebido' },
+  { re: /^(transf(erencia)?\.?\s+)?(pix\s+)?(enviad[oa]|envio)(\s+(pelo|via|por)\s+pix)?\s*(para|-|:)?\s*/, tipo: 'saida', nome: (r) => r || 'Pix enviado' },
+  { re: /^pix\s+de\s+/, tipo: 'entrada', nome: (r) => r || 'Pix recebido' },
+  { re: /^pix\s+para\s+/, tipo: 'saida', nome: (r) => r || 'Pix enviado' },
+  { re: /^(transferencia|transf\.?)\s+de\s+/, tipo: 'entrada', nome: (r) => r || 'Transferência recebida' },
+  { re: /^(transferencia|transf\.?)\s+para\s+/, tipo: 'saida', nome: (r) => r || 'Transferência enviada' },
+  { re: /^(ted|doc|transferencia|transf\.?)\s+recebid[oa]\s*(de|-|:)?\s*/, tipo: 'entrada', nome: (r) => r || 'Transferência recebida' },
+  { re: /^(ted|doc|transferencia|transf\.?)\s+enviad[oa]\s*(para|-|:)?\s*/, tipo: 'saida', nome: (r) => r || 'Transferência enviada' },
+  { re: /^pix\s*(transf(erencia)?\.?|qr[sc]?(\s*code)?|copia e cola|agendado)?\s*(-|:)?\s*/, nome: (r, t) => r || (t === 'entrada' ? 'Pix recebido' : 'Pix enviado') },
+  { re: /^(ted|doc|transferencia|transf\.?)\s*(-|:)?\s*/, nome: (r, t) => r || (t === 'entrada' ? 'Transferência recebida' : 'Transferência enviada') },
+  { re: /^((pagamento|pgto|pag\.?)\s+(de\s+)?)?(boleto|titulo)\s*(-|:)?\s*/, tipo: 'saida', nome: (r) => r || 'Boleto' },
   { re: /^((pagamento|pgto)\s+(de\s+)?)?fatura\s*(do\s+cartao)?\s*(-|:)?\s*/, tipo: 'saida', nome: (r) => (r ? `Fatura ${r}` : 'Fatura do cartão') },
   { re: /^(compra (com |no |de )?cart[aã]o( de debito| de credito| deb| cred)?( mc| visa| elo)?|compra no debito|compra no credito|compra|debito|cartao)\s*(-|:|em)?\s*/, tipo: 'saida', nome: (r) => r || 'Compra' },
   { re: /^(saque)\b\s*(-|:)?\s*/, tipo: 'saida', nome: () => 'Saque' },
@@ -109,11 +112,34 @@ function nomeDosPedacos(s: string) {
   return pedacos.find((p) => !INSTITUICAO.test(normal(p))) ?? pedacos[0] ?? ''
 }
 
+/** Byte de cada caractere que o Windows-1252 põe no lugar dos bytes 0x80–0x9F (para desfazer UTF-8 lido como Latin-1). */
+const CP1252: Record<string, number> = {
+  '€': 0x80, '‚': 0x82, 'ƒ': 0x83, '„': 0x84, '…': 0x85, '†': 0x86, '‡': 0x87, 'ˆ': 0x88, '‰': 0x89, 'Š': 0x8a, '‹': 0x8b, 'Œ': 0x8c,
+  'Ž': 0x8e, '‘': 0x91, '’': 0x92, '“': 0x93, '”': 0x94, '•': 0x95, '–': 0x96, '—': 0x97, '˜': 0x98, '™': 0x99, 'š': 0x9a, '›': 0x9b,
+  'œ': 0x9c, 'ž': 0x9e, 'Ÿ': 0x9f,
+}
+const MOJIBAKE = /[ÃÂ][\u0080-\u00bf€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ]/
+
 /**
- * Descrição limpa de um lançamento do extrato e, se for o caso, o tipo que ela revela ("Pix recebido" é entrada).
- * `revisar` diz quando sobrou pouco do nome (só números, ou cortado).
+ * Acentos quebrados do arquivo: UTF-8 lido como Latin-1 ("Ã§" onde era "ç", "Ã" + caractere invisível onde era "Á") é
+ * desfeito; o que nunca deu para ler (�, caracteres de controle) sai do texto e `ilegivel` avisa que faltou uma letra.
  */
-export function limparDescricao(bruta: string, tipoAtual?: Tipo): { descricao: string; tipo?: Tipo; revisar?: string } {
+export function consertarTexto(s: string): { texto: string; ilegivel: boolean } {
+  let t = s.normalize('NFC')
+  if (MOJIBAKE.test(t)) {
+    try {
+      const bytes = Uint8Array.from(t, (c) => CP1252[c] ?? c.charCodeAt(0))
+      if (![...t].some((c) => c.charCodeAt(0) > 0xff && !(c in CP1252))) {
+        const certo = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+        if (!certo.includes('\ufffd')) t = certo
+      }
+    } catch { /* não era UTF-8 lido errado: fica como está */ }
+  }
+  const ilegivel = /[\ufffd\u0080-\u009f]/.test(t)
+  return { texto: ilegivel ? t.replace(/[\ufffd\u0080-\u009f]/g, '') : t, ilegivel }
+}
+
+function limparSemForma(bruta: string, tipoAtual?: Tipo): { descricao: string; tipo?: Tipo; revisar?: string } {
   const original = bruta.replace(/\s+/g, ' ').trim()
   const n = normal(original)
   for (const [re, loja] of LOJAS) if (re.test(n)) return { descricao: loja }
@@ -135,6 +161,18 @@ export function limparDescricao(bruta: string, tipoAtual?: Tipo): { descricao: s
     return { descricao: t === 'entrada' ? 'Entrada' : 'Saída', revisar: original ? 'sem nome: só números no extrato' : 'sem descrição' }
   }
   return { descricao: nome }
+}
+
+/**
+ * Descrição limpa de um lançamento do extrato, o tipo que ela revela ("Pix recebido" é entrada) e a forma de pagamento
+ * (Pix, transferência, boleto, débito): o nome fica só com quem recebeu ou pagou. `revisar` diz quando sobrou pouco do
+ * nome (só números, cortado ou com letra que não deu para ler).
+ */
+export function limparDescricao(bruta: string, tipoAtual?: Tipo): { descricao: string; tipo?: Tipo; revisar?: string; forma?: FormaGravada | null } {
+  const { texto, ilegivel } = consertarTexto(bruta)
+  const r = limparSemForma(texto, tipoAtual)
+  const forma = formaPelaDescricao(texto, r.tipo ?? tipoAtual ?? 'saida')
+  return { ...r, forma, revisar: r.revisar ?? (ilegivel ? 'tinha letra que não deu para ler: confira o nome' : undefined) }
 }
 
 // ---------- datas e valores ----------
@@ -198,7 +236,7 @@ function montar(data: string, desc: string, valor: number, sinal: -1 | 0 | 1, ex
   const limpo = limparDescricao(desc, tipo)
   if (!sinal && !extraTipo && limpo.tipo) tipo = limpo.tipo
   return {
-    data, valor: Math.round(Math.abs(valor) * 100) / 100, tipo, descricao: limpo.descricao, original: desc.trim(),
+    data, valor: Math.round(Math.abs(valor) * 100) / 100, tipo, descricao: limpo.descricao, original: consertarTexto(desc).texto.trim(), forma: limpo.forma,
     revisar: limpo.revisar ?? (adivinhado && !limpo.tipo ? 'confira se entrou ou saiu' : undefined),
   }
 }
@@ -486,8 +524,8 @@ export async function lerExtrato(arquivo: File, anoPadrao = new Date().getFullYe
     throw new Error('Arquivos .doc antigos não dão para ler. Abra no Word e salve como .docx (ou exporte o extrato em PDF/CSV).')
   } else {
     // CSV, TXT, OFX: texto (tenta UTF-8 e, com caracteres quebrados, Latin-1, comum nos bancos)
-    let texto = new TextDecoder('utf-8').decode(dados)
-    if (texto.includes('�')) texto = new TextDecoder('windows-1252').decode(dados)
+    let texto: string
+    try { texto = new TextDecoder('utf-8', { fatal: true }).decode(dados) } catch { texto = new TextDecoder('windows-1252').decode(dados) }
     textoTodo += ` ${texto.slice(0, 3000)}`
     if (/<OFX>|<STMTTRN>/i.test(texto)) { linhas = deOfx(texto); formato = 'OFX' } else {
       const tabela = lerCsv(texto)
