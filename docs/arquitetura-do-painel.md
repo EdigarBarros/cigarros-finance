@@ -60,6 +60,11 @@ A ordem das perguntas continua a mesma; a grade segue o layout do OpusCash:
 | Análise | **Para onde foi o dinheiro** (rosca + legenda com %; lista com barras no simples e ao tocar em "Ver valores") + **Suas metas** + banner "Planeje hoje, conquiste amanhã" | Sem banner |
 | Guardado | Dinheiro guardado | Igual |
 
+Encaixe sem buracos: "O que fazer" e, no detalhado (ou com 4 blocos), a linha de análise usam um **mosaico** de duas colunas que se
+equilibram sozinhas (cada bloco inteiro numa coluna), em vez de uma grade em que um bloco baixo ao lado de um alto deixa um vão.
+O gráfico de fluxo estica até a altura dos lançamentos ao lado. Na Início as listas têm teto (dívidas: 3 no simples, 4 nos outros;
+lançamentos: 5, ou 7 no detalhado) e "Ver todas" leva à página completa. Com 5 ou 6 indicadores, os cartões ficam mais baixos, 3 por linha.
+
 O resultado do mês deixou de ser um "hero" separado: virou o primeiro cartão, em destaque, mantendo a frase de ancoragem.
 O gráfico de 12 meses com as linhas extras continua na página **Resumo do ano**.
 

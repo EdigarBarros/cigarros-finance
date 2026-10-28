@@ -39,8 +39,10 @@ const degrade = (cor: string, forca = 0.32) => (ctx: ScriptableContext<'line'>) 
  * Fluxo financeiro: Entrou × Saiu nos últimos 6 meses do ano aberto, em área com degradê.
  * Mês sem dados fica em branco (a linha para).
  */
-export function GraficoFluxo({ porMes, mesAtual, aoClicarMes, altura = 280, compacto }: {
-  porMes: (Resumo | null)[]; mesAtual: number; aoClicarMes?: (m: number) => void; altura?: number; compacto?: boolean
+export function GraficoFluxo({ porMes, mesAtual, aoClicarMes, altura, compacto }: {
+  porMes: (Resumo | null)[]; mesAtual: number; aoClicarMes?: (m: number) => void
+  /** Sem altura, ocupa a caixa em que está (veja .grafico-esticado). */
+  altura?: number; compacto?: boolean
 }) {
   const c = useCoresDoGrafico()
   // seis meses terminando no mês aberto (de jan a jun quando o mês aberto é antes de junho)
@@ -53,7 +55,7 @@ export function GraficoFluxo({ porMes, mesAtual, aoClicarMes, altura = 280, comp
     pointBackgroundColor: cor, pointBorderColor: c.fundo, pointBorderWidth: 2, pointHoverRadius: 6, spanGaps: false,
   })
   return (
-    <div className="grafico" style={{ height: altura }}>
+    <div className="grafico" style={altura ? { height: altura } : undefined}>
       <Line
         key={c.tema}
         data={{

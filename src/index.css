@@ -564,10 +564,12 @@ select option { background: var(--superficie-forte); color: var(--texto); }
 /* o último bloco sozinho na linha ocupa a linha inteira */
 .zona > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 /* Fluxo financeiro (largo) + Últimas transações */
-.linha-fluxo { display: grid; grid-template-columns: minmax(0, 2.05fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+.linha-fluxo { display: grid; grid-template-columns: minmax(0, 1.75fr) minmax(340px, 1fr); gap: 16px; align-items: stretch; }
 .linha-fluxo > :only-child { grid-column: 1 / -1; }
 /* Despesas por categoria + Suas metas + banner */
-.linha-analise { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; align-items: stretch; }
+.linha-analise { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; align-items: stretch; }
+.linha-analise > :last-child:nth-child(odd):not(:first-child) { grid-column: 1 / -1; }
+@media (min-width: 1101px) { .linha-analise:has(> :nth-child(3)) { grid-template-columns: repeat(3, minmax(0, 1fr)); } .linha-analise:has(> :nth-child(3)) > :last-child:nth-child(3) { grid-column: auto; } }
 .inicio .hero-acoes { flex-wrap: wrap; }
 .hero-delta { margin-top: 6px; }
 
@@ -987,7 +989,8 @@ select option { background: var(--superficie-forte); color: var(--texto); }
   .perfil-botao span { display: none; }
 }
 @media (max-width: 1100px) {
-  .kpis, .kpis:has(> :nth-child(5)), .kpis:has(> :nth-child(7)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpis, .kpis:has(> :nth-child(7)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpis:has(> :nth-child(5)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .linha-fluxo, .esqueleto-meio { grid-template-columns: minmax(0, 1fr); }
   .busca-topo { display: none; }
 }
@@ -1101,7 +1104,6 @@ select option { background: var(--superficie-forte); color: var(--texto); }
 /* clique fora fecha menus e o quadro de meses */
 .fora { position: fixed; inset: 0; z-index: 30; }
 .saudacao-lado { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
-.linha-fluxo.longa { align-items: start; }
 @media (max-width: 860px) { .saudacao-lado { display: none; } }
 @media (max-width: 860px) {
   .barra .marca .marca-nome { font-size: 15px; }
@@ -1111,3 +1113,29 @@ select option { background: var(--superficie-forte); color: var(--texto); }
 @media (max-width: 440px) {
   .barra .marca .marca-nome { display: none; }
 }
+
+/* ---------- Início: encaixe sem buracos ---------- */
+/* mosaico: duas colunas que se equilibram sozinhas; cada bloco fica inteiro numa coluna */
+.mosaico { column-count: 2; column-gap: 16px; margin-bottom: -16px; }
+.mosaico:has(> :only-child) { column-count: 1; }
+.mosaico > * { display: block; width: 100%; margin-bottom: 16px; break-inside: avoid; }
+.mosaico > .banner { display: flex; }
+@media (max-width: 900px) { .mosaico { column-count: 1; } }
+
+/* gráfico que estica até a altura do cartão (fica da mesma altura que os lançamentos ao lado) */
+.bloco-esticado { display: flex; flex-direction: column; }
+.grafico-esticado { position: relative; flex: 1; min-height: 280px; }
+.grafico-esticado .grafico { position: absolute; inset: 4px 22px 14px; width: auto; }
+@media (max-width: 860px) {
+  .grafico-esticado { min-height: 220px; }
+  .grafico-esticado .grafico { inset: 4px 12px 12px; }
+}
+
+/* 5 ou 6 indicadores: cartões mais baixos, ícone menor ao lado do rótulo */
+.kpis:has(> :nth-child(5)) .kpi { grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; padding: 16px 18px; }
+.kpis:has(> :nth-child(5)) .kpi > :not(.kpi-icone):not(.kpi-seta) { grid-column: 1 / -1; }
+.kpis:has(> :nth-child(5)) .kpi-icone { width: 38px; height: 38px; margin: 0; grid-column: 1; grid-row: 1; }
+.kpis:has(> :nth-child(5)) .kpi-icone svg { width: 18px; height: 18px; }
+.kpis:has(> :nth-child(5)) .kpi > .kpi-icone ~ .kpi-rotulo { grid-column: 2; grid-row: 1; align-self: center; }
+.kpis:has(> :nth-child(5)) .kpi-valor { font-size: 24px; margin-top: 4px; }
+.kpis:has(> :nth-child(5)) .kpi-seta { top: 16px; }

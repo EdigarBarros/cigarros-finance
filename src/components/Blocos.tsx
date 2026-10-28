@@ -52,7 +52,8 @@ export function BlocoLancamentos({ lancs, nivel, categoriaDe, bancos, aoEditar, 
 }) {
   const [filtro, setFiltro] = useState<Tipo | 'todos'>('todos')
   const detalhado = nivel === 'detalhado'
-  const limite = detalhado ? 30 : 5
+  // na Início a lista acompanha a altura do gráfico ao lado; o resto fica em Lançamentos
+  const limite = detalhado ? 7 : 5
   const doFiltro = maisRecentes(lancs).filter((l) => filtro === 'todos' || l.tipo === filtro)
   return (
     <Bloco titulo={detalhado ? 'Lançamentos do mês' : 'Últimos lançamentos'}
@@ -158,7 +159,8 @@ export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTod
   const semParcela = itens.some((s) => s.restante > 0 && !s.quitacao)
   const fim = semParcela ? null : itens.map((s) => s.quitacao).filter((q): q is [number, number] => q !== null)
     .sort((a, b) => b[0] * 12 + b[1] - (a[0] * 12 + a[1]))[0] ?? null
-  const limite = nivel === 'detalhado' ? Infinity : 4
+  // na Início a lista fica curta para caber ao lado de contas e cartões; a página Dívidas tem todas
+  const limite = nivel === 'simples' ? 3 : 4
   return (
     <Bloco titulo="Dívidas" valor={itens.length ? fmtValor(total) : undefined} legenda={itens.length ? 'falta pagar' : undefined}
       acao={<button className="quadro-mais" onClick={aoNova} aria-label="Adicionar dívida"><Icone nome="mais" tamanho={16} /></button>}>

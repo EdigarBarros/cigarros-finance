@@ -147,10 +147,11 @@ export function Inicio(c: Ctx) {
 
   // ---------- 3. Para onde está indo? ----------
   const fluxo = v.graficoAno && haAno && (
-    <Bloco titulo="Fluxo financeiro" sub="Entrou × saiu nos últimos 6 meses"
+    <Bloco titulo="Fluxo financeiro" sub="Entrou × saiu nos últimos 6 meses" className="bloco-esticado"
       acao={<span className="legenda-topo"><span><i className="marcador" style={{ background: COR.entradas }} />Entrou</span><span><i className="marcador" style={{ background: COR.despesas }} />Saiu</span></span>}>
-      <div className="bloco-corpo">
-        <GraficoFluxo porMes={c.porMes} mesAtual={c.mes} aoClicarMes={c.irParaMes} {...(mobile ? { altura: 220, compacto: true } : { altura: 300 })} />
+      {/* o gráfico ocupa a altura que sobrar no cartão, para ficar da mesma altura que os lançamentos ao lado */}
+      <div className="bloco-corpo grafico-esticado">
+        <GraficoFluxo porMes={c.porMes} mesAtual={c.mes} aoClicarMes={c.irParaMes} compacto={mobile} />
       </div>
     </Bloco>
   )
@@ -187,14 +188,13 @@ export function Inicio(c: Ctx) {
         : <button className="btn" onClick={c.personalizar}>Personalizar <Icone nome="seta" tamanho={16} /></button>}
     </section>
   )
-  const analise = zona([gastos, metas, banner])
-
   // ---------- 5. O que tenho ----------
   const dinheiro = (v.bancos || v.investimentos || v.moedas) && (
     <BlocoDinheiro v={v} nivel={nivel} bancos={c.d.bancos} caixa={c.mesEf.caixa} investimentos={r.investimentos}
       moedas={c.mesEf.moedas} lista={c.perfil.moedas} taxas={c.taxas} lancs={c.lancsMes} herdadoDe={c.mesEf.herdadoDe}
       aoAbrir={() => c.irPara('patrimonio')} aoAbrirBanco={c.abrirBanco} />
   )
+  const analise = zona([gastos, metas, dinheiro, banner])
 
   return (
     <div className="pagina inicio">
@@ -213,10 +213,11 @@ export function Inicio(c: Ctx) {
 
       {sugestao}
 
-      {oQueFazer.length > 0 && <div className="zona">{oQueFazer}</div>}
-      {linhaFluxo.length > 0 && <div className={`linha-fluxo ${detalhado ? 'longa' : ''}`}>{linhaFluxo}</div>}
-      {analise.length > 0 && <div className="linha-analise">{analise}</div>}
-      {dinheiro && <div className="zona">{dinheiro}</div>}
+      {/* mosaicos: duas colunas que empilham cada uma no seu ritmo, sem buracos entre blocos de alturas diferentes */}
+      {oQueFazer.length > 0 && <div className="mosaico">{oQueFazer}</div>}
+      {linhaFluxo.length > 0 && <div className="linha-fluxo">{linhaFluxo}</div>}
+      {/* até 3 blocos de altura parecida: lado a lado, da mesma altura (como no layout); senão, mosaico */}
+      {analise.length > 0 && <div className={!detalhado && analise.length <= 3 ? 'linha-analise' : 'mosaico'}>{analise}</div>}
 
       <AdicionarAoPainel perfil={c.perfil} aoLigar={c.ligarModulo} aoPersonalizar={c.personalizar} />
 
