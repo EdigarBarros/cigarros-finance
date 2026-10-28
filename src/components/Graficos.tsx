@@ -1,5 +1,5 @@
 import type { Plugin } from 'chart.js'
-import { Bar, Chart, Doughnut } from 'react-chartjs-2'
+import { Bar, Doughnut, Line } from 'react-chartjs-2'
 import type { Resumo } from '../lib/calc'
 import { COR } from '../lib/charts'
 import { fmtValor, MESES_CURTO, MESES_NOME } from '../lib/format'
@@ -17,42 +17,38 @@ const eixoReais = {
 const milhar = (n: number) => (Math.abs(n) >= 1000 ? `${(n / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil` : String(n))
 
 /**
- * Barras de Entrou × Saiu mês a mês. Com `linhas`, a legenda também oferece Guardado nas contas, Dívidas,
- * Investido e Em outras moedas (dos módulos ligados, na moeda principal), mas elas começam escondidas:
+ * Linhas de Entrou, Saiu e Sobrou mês a mês. Com `linhas`, a legenda também oferece Guardado nas contas, Dívidas,
+ * Investido e Em outras moedas (dos módulos ligados), mas elas começam escondidas:
  * quem quer ver toca na legenda. Assim o gráfico abre limpo e continua completo.
  */
 export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 360, compacto, v, linhas }: {
   porMes: (Resumo | null)[]; mesAtual: number; aoClicarMes?: (m: number) => void; altura?: number; v: Visao
-  /** Celular: eixo em "mil", legenda menor e barras mais finas. */
+  /** Celular: eixo em "mil" e legenda menor. */
   compacto?: boolean
   /** Oferece as linhas extras na legenda (escondidas até a pessoa tocar). */
   linhas?: boolean
 }) {
-  const serie = (f: (r: Resumo) => number) => porMes.map((r) => (r ? f(r) : 0))
-  const linha = (label: string, cor: string, f: (r: Resumo) => number) => ({
-    type: 'line' as const, label, data: serie(f), borderColor: cor, backgroundColor: cor, hidden: true,
-    borderWidth: compacto ? 2 : 3, pointRadius: 0, pointHoverRadius: 5, tension: 0, order: 0,
+  // Meses sem dados ficam em branco (a linha para), em vez de cair a zero.
+  const serie = (f: (r: Resumo) => number) => porMes.map((r) => (r ? f(r) : null))
+  const linha = (label: string, cor: string, f: (r: Resumo) => number, escondida = false) => ({
+    label, data: serie(f), borderColor: cor, backgroundColor: cor, hidden: escondida,
+    borderWidth: compacto ? 2 : 3, pointRadius: compacto ? 2 : 3, pointHoverRadius: 6, tension: 0.25, spanGaps: false,
   })
-  const barra = (label: string, cor: string, f: (r: Resumo) => number) => ({
-    type: 'bar' as const, label, data: serie(f), backgroundColor: cor,
-    borderRadius: 6, borderSkipped: false as const, maxBarThickness: compacto ? 7 : 14, categoryPercentage: compacto ? 0.7 : 0.55, order: 1,
-  })
-  // Valores negativos pequenos (ex.: investimento de -R$ 27) não justificam um eixo indo a -R$ 5 mil.
-  const valores = porMes.flatMap((r) => (r ? (linhas ? [r.entradas, r.saidas, r.caixa, r.divida, r.investimentos, r.moedasConvertido] : [r.entradas, r.saidas]) : []))
+  const valores = porMes.flatMap((r) => (r ? [r.entradas, r.saidas, r.fluxo] : []))
   const piso = Math.min(0, ...valores) >= -0.05 * Math.max(1, ...valores) ? 0 : undefined
   return (
     <div className="grafico" style={{ height: altura }}>
-      <Chart
-        type="bar"
+      <Line
         data={{
           labels: MESES_CURTO,
           datasets: [
-            barra('Entrou', COR.entradas, (r) => r.entradas),
-            barra('Saiu', COR.saidas, (r) => r.saidas),
-            ...(linhas && v.bancos ? [linha('Guardado nas contas', COR.caixa, (r) => r.caixa)] : []),
-            ...(linhas && v.dividas ? [linha('Dívidas', COR.divida, (r) => r.divida)] : []),
-            ...(linhas && v.investimentos ? [linha('Investido', COR.investimentos, (r) => r.investimentos)] : []),
-            ...(linhas && v.moedas ? [linha('Em outras moedas', COR.usd, (r) => r.moedasConvertido)] : []),
+            linha('Entrou', COR.entradas, (r) => r.entradas),
+            linha('Saiu', COR.saidas, (r) => r.saidas),
+            linha('Sobrou', COR.fluxo, (r) => r.fluxo),
+            ...(linhas && v.bancos ? [linha('Guardado nas contas', COR.caixa, (r) => r.caixa, true)] : []),
+            ...(linhas && v.dividas ? [linha('Dívidas', COR.divida, (r) => r.divida, true)] : []),
+            ...(linhas && v.investimentos ? [linha('Investido', COR.investimentos, (r) => r.investimentos, true)] : []),
+            ...(linhas && v.moedas ? [linha('Em outras moedas', COR.usd, (r) => r.moedasConvertido, true)] : []),
           ],
         }}
         options={{
@@ -60,7 +56,7 @@ export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 360, comp
           interaction: { mode: 'index', intersect: false },
           onClick: (_e, els) => els[0] && aoClicarMes?.(els[0].index + 1),
           plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: compacto ? 6 : 8, boxHeight: compacto ? 6 : 8, padding: compacto ? 10 : 18, font: { size: compacto ? 10 : 12, weight: 500 }, sort: (x, y) => x.datasetIndex! - y.datasetIndex! } },
+            legend: { position: 'bottom', labels: { boxWidth: compacto ? 6 : 8, boxHeight: compacto ? 6 : 8, padding: compacto ? 10 : 18, font: { size: compacto ? 10 : 12, weight: 500 } } },
             tooltip: {
               callbacks: {
                 title: (i) => MESES_NOME[i[0].dataIndex],

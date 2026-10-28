@@ -50,7 +50,8 @@ export function Progresso({ valor, total, cor }: { valor: number; total: number;
   )
 }
 
-export function Modal({ titulo, aoFechar, children }: { titulo: string; aoFechar: () => void; children: ReactNode }) {
+/** `tamanho="grande"`: painel largo no computador e tela cheia no celular (ex.: Configurações). */
+export function Modal({ titulo, aoFechar, children, tamanho }: { titulo: string; aoFechar: () => void; children: ReactNode; tamanho?: 'grande' }) {
   useEffect(() => {
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && aoFechar()
     window.addEventListener('keydown', esc)
@@ -58,7 +59,7 @@ export function Modal({ titulo, aoFechar, children }: { titulo: string; aoFechar
   }, [aoFechar])
   return (
     <div className="modal-fundo" onMouseDown={(e) => e.target === e.currentTarget && aoFechar()}>
-      <div className="modal" role="dialog" aria-modal="true" aria-label={titulo}>
+      <div className={`modal ${tamanho ?? ''}`} role="dialog" aria-modal="true" aria-label={titulo}>
         <span className="alca" aria-hidden="true" />
         <header className="modal-topo">
           <h2>{titulo}</h2>

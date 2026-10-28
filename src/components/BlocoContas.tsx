@@ -10,7 +10,9 @@ const ATRASADAS = 5
  * Contas do mês na visão geral: o que está atrasado e as próximas a vencer, com "Paguei" a um toque.
  * `situacoes` são as do mês aberto (vindas de `situacoesDoMes`, ou de `ctx.situacoesContas`).
  */
-export function BlocoContasDoMes({ situacoes, aoAbrir, aoPagar }: {
+export function BlocoContasDoMes({ situacoes, aoAbrir, aoPagar, completo }: {
+  /** Detalhado: mostra todas as contas pendentes, sem cortar a lista. */
+  completo?: boolean
   situacoes: SituacaoConta[]
   /** Abre a página Contas do mês (também para cadastrar a primeira conta). */
   aoAbrir: () => void
@@ -19,7 +21,7 @@ export function BlocoContasDoMes({ situacoes, aoAbrir, aoPagar }: {
 }) {
   const { faltaPagar, qtdAtrasadas } = totaisDoMes(situacoes)
   const { atrasadas, proximas } = pendentes(situacoes)
-  const linhas = [...atrasadas.slice(0, ATRASADAS), ...proximas.slice(0, PROXIMAS)]
+  const linhas = [...atrasadas.slice(0, completo ? undefined : ATRASADAS), ...proximas.slice(0, completo ? undefined : PROXIMAS)]
   const escondidas = atrasadas.length + proximas.length - linhas.length
 
   return (

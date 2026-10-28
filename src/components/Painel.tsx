@@ -33,7 +33,7 @@ import { FormLancamento } from './Formularios'
 import { Kpi } from './ui'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
-import { Personalizar, ZerarDados } from './Personalizar'
+import { Configuracoes, ZerarDados } from './Configuracoes'
 import { Questionario } from './Questionario'
 
 /**
@@ -285,7 +285,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const ctx: Ctx = {
     kpisExtras,
     blocos: {
-      contas: comContas ? <BlocoContasDoMes situacoes={situacoesContas} aoAbrir={() => irPara('contas')} aoPagar={pagarConta} /> : undefined,
+      contas: comContas ? <BlocoContasDoMes completo={perfil.detalhe === 'detalhado'} situacoes={situacoesContas} aoAbrir={() => irPara('contas')} aoPagar={pagarConta} /> : undefined,
       cartoes: comCartoes ? <BlocoCartoes situacoes={faturas} aoAbrir={() => irPara('cartoes')} /> : undefined,
     },
     ano, mes, d, cartoes, faturas, lancsMes, situacao, mesEf, porMes, mobile,
@@ -331,7 +331,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
 
   const menuItens = (
     <>
-      <button onClick={() => setAjustes(true)}><Icone nome="ajustes" /> Personalizar painel</button>
+      <button onClick={() => setAjustes(true)}><Icone nome="ajustes" /> Configurações</button>
       <button onClick={() => arquivo.current?.click()}><Icone nome="importar" /> Importar planilha</button>
       <button onClick={() => tarefa('Preparando o backup…', async () => (await import('../lib/planilha')).exportarBackup())}>
         <Icone nome="exportar" /> Baixar backup
@@ -475,21 +475,31 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
       )}
 
       {ajustes && (
-        <Personalizar
+        <Configuracoes
           perfil={perfil}
+          email={email}
           aoMudar={mudarPerfil}
           aoRefazer={() => { setAjustes(false); setRefazendo(true) }}
           aoCategorias={() => { setAjustes(false); ctx.gerenciarCategorias() }}
+          aoBackup={() => tarefa('Preparando o backup…', async () => (await import('../lib/planilha')).exportarBackup())}
+          aoImportar={() => { setAjustes(false); arquivo.current?.click() }}
           aoZerar={() => { setAjustes(false); setZerando(true) }}
+          aoSair={() => supabase.auth.signOut()}
           aoFechar={() => setAjustes(false)}
         />
       )}
 
       {zerando && (
         <ZerarDados
+          contagem={{
+            entradas: d.lancs.filter((l) => l.tipo === 'entrada').length,
+            saidas: d.lancs.filter((l) => l.tipo === 'saida').length,
+            dividas: d.dividas.length, cartoes: cartoes.cartoes.length, contas: contas.contas.length, metas: d.metas.length,
+            guardado: d.meses.filter((m) => m.investimentos || Object.keys(m.moedas ?? {}).length || Object.keys(m.caixa ?? {}).length).length,
+          }}
           aoBaixarBackup={async () => (await import('../lib/planilha')).exportarBackup()}
           // depois de apagar, recarrega a página: todos os dados e o perfil voltam do zero
-          aoZerar={async (tudo) => { await d.zerarDados(tudo); location.hash = '/inicio'; location.reload() }}
+          aoZerar={async (escolha) => { await d.zerarDados(escolha); location.hash = '/inicio'; location.reload() }}
           aoFechar={() => setZerando(false)}
         />
       )}

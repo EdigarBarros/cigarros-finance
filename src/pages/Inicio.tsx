@@ -9,7 +9,7 @@ import {
 import { FormDivida } from '../components/Formularios'
 import { GraficoAnual } from '../components/Graficos'
 import { Icone } from '../components/Icone'
-import { AdicionarAoPainel, CartaoSugestao } from '../components/Personalizar'
+import { AdicionarAoPainel, CartaoSugestao } from '../components/Configuracoes'
 import { Kpi } from '../components/ui'
 import type { Ctx } from './contexto'
 

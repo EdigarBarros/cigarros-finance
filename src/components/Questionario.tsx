@@ -10,7 +10,7 @@ const PRINCIPAIS = ['BRL', 'USD', 'EUR', 'GBP', 'ARS', 'AOA']
 
 /**
  * Perguntas do primeiro acesso. São poucas, todas podem ser puladas, e cada resposta liga ou desliga
- * uma parte do painel. Tudo pode ser mudado depois em "Personalizar painel".
+ * uma parte do painel. Tudo pode ser mudado depois em "Configurações".
  */
 export function Questionario({ inicial, aoConcluir, aoCancelar }: {
   inicial: Perfil; aoConcluir: (p: Perfil) => void
@@ -123,7 +123,7 @@ export function Questionario({ inicial, aoConcluir, aoCancelar }: {
             <li><Icone nome="check" tamanho={16} /> Jeito {DETALHES.find((d) => d.id === p.detalhe)!.nome.toLowerCase()} de ver</li>
           </ul>
           <p className="questionario-nota">
-            Sua vida mudou? Começou a investir, fez uma dívida, abriu outra conta? É só tocar em <b>Personalizar painel</b>.
+            Sua vida mudou? Começou a investir, fez uma dívida, abriu outra conta? É só tocar em <b>Configurações</b>.
             O app também vai sugerindo conforme você usa.
           </p>
         </>

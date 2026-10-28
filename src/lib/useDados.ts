@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { CATEGORIAS_ANTIGAS } from './categorias'
 import { normPerfil } from './perfil'
 import { supabase } from './supabase'
+import type { EscolhaZerar, ParteZerar } from './zerar'
 import type { Banco, Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida } from './types'
 
 const num = (v: unknown) => Number(v ?? 0)
@@ -288,19 +289,35 @@ export function useDados(userId: string, ano: number) {
   }
 
   /**
-   * Zera a conta: apaga lançamentos, dívidas, saldos dos meses, metas, contas fixas e cartões. Com `tudo`,
-   * apaga também bancos, categorias (as padrão voltam) e preferências (as perguntas iniciais aparecem de novo).
-   * As regras do banco só deixam apagar o que é da própria pessoa.
+   * Apaga só o que foi escolhido, na ordem que respeita as ligações entre as tabelas. Dívida, cartão e conta
+   * fixa apagados desvinculam os lançamentos (que ficam, a menos que entradas/saídas também sejam apagadas).
+   * `tudo` zera a conta: inclui bancos, categorias (as padrão voltam) e preferências (as perguntas iniciais
+   * aparecem de novo). As regras do banco só deixam apagar o que é da própria pessoa.
    */
-  const zerarDados = async (tudo: boolean) => {
-    const tabelas = [
-      'faturas_pagas', 'meta_movimentos', 'metas', 'lancamentos', 'contas_fixas', 'cartoes', 'divida_saldos', 'dividas', 'meses',
-      ...(tudo ? ['bancos', 'categorias', 'perfis'] : []),
-    ]
-    for (const t of tabelas) {
-      const { error } = await supabase.from(t).delete().eq('user_id', userId)
-      if (error && !faltaTabela(error)) throw new Error(error.message)
+  const zerarDados = async (e: EscolhaZerar) => {
+    const todo = Boolean(e.tudo)
+    const tem = (p: Exclude<ParteZerar, 'tudo'>) => todo || Boolean(e[p])
+    const tab = (t: string) => supabase.from(t)
+    const checar = (error: { code?: string; message: string } | null) => { if (error && !faltaTabela(error)) throw new Error(error.message) }
+    const apagar = async (t: string, filtro?: [string, string]) => {
+      let q = tab(t).delete().eq('user_id', userId)
+      if (filtro) q = q.eq(filtro[0], filtro[1])
+      checar((await q).error)
     }
+    const desvincular = async (coluna: string) => checar((await tab('lancamentos').update({ [coluna]: null }).eq('user_id', userId)).error)
+
+    if (tem('metas')) { await apagar('meta_movimentos'); await apagar('metas') }
+    if (tem('cartoes')) { await apagar('faturas_pagas'); await desvincular('cartao_id') }
+    if (tem('dividas')) await desvincular('divida_id')
+    if (tem('contas')) await desvincular('conta_fixa_id')
+    if (tem('entradas')) await apagar('lancamentos', ['tipo', 'entrada'])
+    if (tem('saidas')) await apagar('lancamentos', ['tipo', 'saida'])
+    if (tem('contas')) await apagar('contas_fixas')
+    if (tem('cartoes')) await apagar('cartoes')
+    if (tem('dividas')) { await apagar('divida_saldos'); await apagar('dividas') }
+    if (todo) await apagar('meses')
+    else if (e.guardado) checar((await tab('meses').update({ investimentos: 0, moedas: {}, caixa: {} }).eq('user_id', userId)).error)
+    if (todo) for (const t of ['bancos', 'categorias', 'perfis']) await apagar(t)
   }
 
   return {

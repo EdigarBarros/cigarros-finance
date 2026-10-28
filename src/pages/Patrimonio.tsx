@@ -3,7 +3,8 @@ import { caixaDoBanco, somaCaixa } from '../lib/calc'
 import { COR } from '../lib/charts'
 import { fmtValor, MESES_CURTO, MESES_NOME, simbolo } from '../lib/format'
 import { converter, infoMoeda } from '../lib/moedas'
-import { BANCOS_CONHECIDOS, bancoConhecido, CORES_LIVRES, NOME_TIPO_CAIXA } from '../lib/rotulos'
+import { CATALOGO_BANCOS, PALETA_BANCOS } from '../lib/bancos'
+import { mesmoNome, NOME_TIPO_CAIXA } from '../lib/rotulos'
 import { TIPOS_CAIXA, type Banco, type TipoCaixa } from '../lib/types'
 import { Icone } from '../components/Icone'
 import { ItemLancamento } from '../components/ItemLancamento'
@@ -11,6 +12,8 @@ import { CampoValor, Cartao, Kpi, Modal, Vazio } from '../components/ui'
 import type { Ctx } from './contexto'
 
 const SEM_BANCO = 'sem'
+const semAcento = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+const contem = (nome: string, busca: string) => semAcento(nome).includes(semAcento(busca.trim()))
 
 /** Meu dinheiro: cada banco (com detalhe individual), investimentos e outras moedas, conforme os módulos ligados. */
 export function Patrimonio(c: Ctx) {
@@ -174,7 +177,7 @@ export function Patrimonio(c: Ctx) {
                   )
                 })}
               </div>
-              <p className="dica">Cotação do dia por <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer">ExchangeRate-API</a>. Para mudar as moedas, use <button className="link" onClick={c.personalizar}>Personalizar painel</button>.</p>
+              <p className="dica">Cotação do dia por <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer">ExchangeRate-API</a>. Para mudar as moedas, use <button className="link" onClick={c.personalizar}>Configurações</button>.</p>
             </Cartao>
           )}
         </div>
@@ -187,14 +190,18 @@ export function Patrimonio(c: Ctx) {
 
 function FormBanco({ c, banco, aoFechar, aoExcluir }: { c: Ctx; banco?: Banco; aoFechar: () => void; aoExcluir?: () => void }) {
   const [nome, setNome] = useState(banco?.nome ?? '')
-  const [cor, setCor] = useState(banco?.cor ?? CORES_LIVRES[c.d.bancos.length % CORES_LIVRES.length])
-  const [mexeuCor, setMexeuCor] = useState(Boolean(banco))
-  const jaTem = new Set(c.d.bancos.map((b) => b.nome.toLowerCase()))
-  const sugestoes = BANCOS_CONHECIDOS.filter((b) => !jaTem.has(b.nome.toLowerCase()))
+  const [cor, setCor] = useState(banco?.cor ?? PALETA_BANCOS[c.d.bancos.length % PALETA_BANCOS.length])
+  const [outro, setOutro] = useState(Boolean(banco))
+  const [busca, setBusca] = useState('')
+  const [erro, setErro] = useState('')
+  const outros = c.d.bancos.filter((b) => b.id !== banco?.id)
+  const repetido = (n: string) => outros.some((b) => mesmoNome(b.nome, n))
+  const lista = CATALOGO_BANCOS.filter((b) => contem(b.nome, busca))
 
   const salvar = async () => {
     const n = nome.trim()
-    if (!n) return
+    if (!n) { setErro(outro ? 'Digite o nome do banco.' : 'Escolha um banco da lista ou toque em "Outro banco".'); return }
+    if (repetido(n)) { setErro(`Você já tem um banco chamado "${n}".`); return }
     if (banco) await c.d.updBanco(banco.id, { nome: n, cor })
     else await c.d.addBanco(n, cor)
     aoFechar()
@@ -203,33 +210,47 @@ function FormBanco({ c, banco, aoFechar, aoExcluir }: { c: Ctx; banco?: Banco; a
   return (
     <Modal titulo={banco ? 'Editar banco' : 'Adicionar banco'} aoFechar={aoFechar}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); void salvar() }}>
-        {!banco && sugestoes.length > 0 && (
+        {!banco && (
           <div className="campo">
-            <span className="campo-rotulo">Escolha rápida</span>
-            <div className="chips">
-              {sugestoes.map((b) => (
-                <button key={b.nome} type="button" className={`chip ${nome === b.nome ? 'ativo' : ''}`} style={{ '--c': b.cor } as React.CSSProperties}
-                  onClick={() => { setNome(b.nome); setCor(b.cor) }}>
-                  <i className="marcador" />{b.nome}
-                </button>
-              ))}
+            <span className="campo-rotulo">Qual é o banco?</span>
+            <input type="search" value={busca} placeholder="Buscar banco…" onChange={(e) => setBusca(e.target.value)} />
+            <div className="chips" style={{ maxHeight: 190, overflowY: 'auto' }}>
+              {lista.map((b) => {
+                const tem = repetido(b.nome)
+                return (
+                  <button key={b.nome} type="button" disabled={tem} title={tem ? 'Você já cadastrou este banco' : undefined}
+                    className={`chip ${!outro && nome === b.nome ? 'ativo' : ''}`} style={{ '--c': b.cor, opacity: tem ? 0.4 : 1 } as React.CSSProperties}
+                    onClick={() => { setOutro(false); setNome(b.nome); setCor(b.cor); setErro('') }}>
+                    <i className="marcador" style={{ background: b.cor }} />{b.nome}
+                  </button>
+                )
+              })}
+              <button type="button" className={`chip novo ${outro ? 'ativo' : ''}`}
+                onClick={() => { setOutro(true); setNome(''); setErro('') }}>+ Outro banco</button>
             </div>
           </div>
         )}
-        <label className="campo">
-          <span className="campo-rotulo">Nome</span>
-          <input autoFocus={Boolean(banco)} value={nome} placeholder="Ex.: Nubank, Itaú, Dinheiro…"
-            onChange={(e) => { setNome(e.target.value); const k = bancoConhecido(e.target.value); if (k && !mexeuCor) setCor(k.cor) }} />
-        </label>
-        <div className="campo">
-          <span className="campo-rotulo">Cor</span>
-          <div className="chips">
-            {[...new Set([cor, ...CORES_LIVRES, ...BANCOS_CONHECIDOS.map((b) => b.cor)])].slice(0, 14).map((k) => (
-              <button key={k} type="button" className={`cor ${cor === k ? 'ativo' : ''}`} style={{ background: k }} aria-label={k}
-                onClick={() => { setCor(k); setMexeuCor(true) }} />
-            ))}
+        {outro && (
+          <label className="campo">
+            <span className="campo-rotulo">Nome do banco</span>
+            <input autoFocus value={nome} placeholder="Ex.: Cooperativa da cidade, Dinheiro…"
+              onChange={(e) => { setNome(e.target.value); setErro('') }} />
+          </label>
+        )}
+        {(outro || banco) && (
+          <div className="campo">
+            <span className="campo-rotulo">Cor</span>
+            <div className="chips" style={{ alignItems: 'center' }}>
+              {[...new Set([cor, ...PALETA_BANCOS])].map((k) => (
+                <button key={k} type="button" className={`cor ${cor === k ? 'ativo' : ''}`} style={{ background: k }} aria-label={`Cor ${k}`}
+                  onClick={() => setCor(k)} />
+              ))}
+              <input type="color" value={cor} aria-label="Escolher outra cor" onChange={(e) => setCor(e.target.value)}
+                style={{ width: 30, height: 30, padding: 0, border: 0, background: 'none', borderRadius: '50%' }} />
+            </div>
           </div>
-        </div>
+        )}
+        {erro && <p role="alert" style={{ margin: 0, color: '#ff6b6b', fontSize: 13 }}>{erro}</p>}
         <div className="form-acoes">
           {banco && (
             <button type="button" className="btn perigo" onClick={() => {
