@@ -44,6 +44,11 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   mês do ano, o dinheiro guardado e as metas. O jeito de ver (simples, equilibrado, detalhado) só acrescenta linhas aos
   mesmos blocos. A lógica de cada modo está em [`docs/arquitetura-do-painel.md`](docs/arquitetura-do-painel.md), junto
   com o guia de linguagem do app
+- **Forma de pagamento**: todo lançamento tem "Como pagou?" (Pix, débito, crédito, dinheiro, boleto) ou "Como recebeu?" (Pix,
+  transferência, dinheiro). O app lembra a forma que você usou para cada descrição e reconhece "Pix" escrito no texto (e
+  no extrato importado). **Crédito** leva ao cartão e às parcelas e a compra entra na fatura e no limite da aba Cartões;
+  Pix e débito saem do banco escolhido. Na lista, um filtro por forma mostra quanto foi gasto em cada uma (migração 11;
+  sem ela o app funciona, só não guarda Pix/débito/dinheiro)
 - **Lançamentos**: lista por dia com busca e filtros; formulário rápido com "salvar e lançar outro",
   sugestão de descrição e categoria automática pelo histórico (digitou "iFood", já vem Alimentação)
 - **Dívidas interligadas**: cada dívida existe ao longo dos meses. Ao lançar uma saída de dívida, você escolhe

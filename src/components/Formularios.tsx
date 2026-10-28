@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { dicaDaDescricao } from '../lib/adaptacao'
 import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
 import { gerarParcelas, hojeLocal, textoParcelamento } from '../lib/cartoes'
+import { formaDe, formaPelaDescricao, formasDoTipo, type FormaPagamento } from '../lib/formas'
 import { COR } from '../lib/charts'
 import { calendarioDe, dividaPelaDescricao, inicioPelaProxima, meDevem, mesesAntes, parcelasDe, somaMesesData, type SituacaoDivida } from '../lib/dividas'
 import { dataPadrao, fmtMesAno, fmtValor, paraCampo, parseNumero, simbolo } from '../lib/format'
@@ -76,6 +77,9 @@ export function FormLancamento(p: FormLancProps) {
   const campoValor = useRef<HTMLInputElement>(null)
   // Compra no cartão: só em saída nova. Ao editar uma parcela, o cartão e a compra já estão definidos.
   const [cartaoId, setCartaoId] = useState(p.cartaoInicial ?? '')
+  // Forma de pagamento: a do lançamento, "crédito" quando já vem de um cartão, ou vazia até a pessoa escolher (ou o app deduzir).
+  const [forma, setForma] = useState<FormaPagamento | ''>(formaDe({ forma: ini.forma, cartao_id: ini.cartao_id ?? p.cartaoInicial }) ?? '')
+  const [mexeuForma, setMexeuForma] = useState(Boolean(p.inicial || p.cartaoInicial))
   const [vezes, setVezes] = useState(1)
   const ehParcela = Boolean(p.inicial?.compra_id)
   const cartaoDaParcela = p.cartoes?.find((c) => c.id === p.inicial?.cartao_id)
@@ -111,7 +115,8 @@ export function FormLancamento(p: FormLancProps) {
   const taxa = (cotacao.trim() ? parseNumero(cotacao) : null) ?? p.taxas[moeda] ?? null
   const numero = parseNumero(valor)
   const dica = dicaDaDescricao(descricao, p.perfil, tipo)
-  const cartao = !p.inicial && tipo === 'saida' && p.aoSalvarCompra ? p.cartoes?.find((c) => c.id === cartaoId && c.ativo) : undefined
+  const cartao = !p.inicial && tipo === 'saida' && forma === 'credito' && p.aoSalvarCompra ? p.cartoes?.find((c) => c.id === cartaoId && c.ativo) : undefined
+  const cartoesAtivos = p.cartoes?.filter((c) => c.ativo) ?? []
   const parcelas = useMemo(() => {
     const total = numero && numero > 0 ? (estrangeira ? (taxa ? Math.round(numero * taxa * 100) / 100 : 0) : numero) : 0
     return cartao && total > 0 && data ? gerarParcelas(total, vezes, data, cartao) : []
@@ -119,6 +124,7 @@ export function FormLancamento(p: FormLancProps) {
   const ehDivida = p.categorias.find((c) => c.id === categoriaId)?.papel === 'divida'
   const mudarTipo = (t: Tipo) => {
     setTipo(t)
+    if (forma && !formasDoTipo(t).some((f) => f.id === forma)) setForma('')
     if (!p.categorias.some((c) => c.id === categoriaId && c.tipo === t)) {
       setCategoriaId(categoriaPelaDescricao(descricao, t, p.categorias)?.id ?? outrosDe(t))
       setMexeuCategoria(false)
@@ -147,9 +153,26 @@ export function FormLancamento(p: FormLancProps) {
     }
   }
 
+  const escolherForma = (f: FormaPagamento) => {
+    setMexeuForma(true)
+    const nova = forma === f ? '' : f
+    setForma(nova)
+    // crédito com um cartão só: já deixa escolhido
+    if (nova === 'credito' && !cartaoId && cartoesAtivos.length === 1) setCartaoId(cartoesAtivos[0].id)
+  }
+  const ligarCartoes = () => p.aoMudarPerfil({ ...p.perfil, modulos: { ...p.perfil.modulos, cartoes: true } })
+
   const aoDigitarDescricao = (texto: string) => {
     setDescricao(texto)
     const anterior = memoria.get(chave(texto))
+    // Forma de pagamento: a que você usou da última vez para essa descrição ou, sem histórico, a que o texto diz ("Pix João").
+    if (!mexeuForma) {
+      const daMemoria = anterior && anterior.tipo === tipo ? formaDe(anterior) : null
+      const cartaoDaMemoria = daMemoria === 'credito' ? cartoesAtivos.find((c) => c.id === anterior?.cartao_id) : undefined
+      if (daMemoria === 'credito' && !(cartaoDaMemoria && !p.inicial && p.aoSalvarCompra)) setForma('')
+      else if (daMemoria === 'credito') { setForma('credito'); setCartaoId(cartaoDaMemoria!.id) }
+      else setForma(daMemoria ?? formaPelaDescricao(texto, tipo) ?? '')
+    }
     // Categoria: a que você usou da última vez para essa descrição ou, sem histórico, a que a descrição sugere.
     if (!mexeuCategoria) {
       const daMemoria = anterior && anterior.tipo === tipo ? p.categoriaDe(anterior)?.id : undefined
@@ -178,6 +201,7 @@ export function FormLancamento(p: FormLancProps) {
       return
     }
     if (!data) return setErro('Escolha a data.')
+    if (forma === 'credito' && !p.inicial && !cartao) return setErro('Escolha o cartão de crédito da compra.')
     if (estrangeira && (!taxa || taxa <= 0)) return setErro(`Digite quanto vale 1 ${infoMoeda(moeda).nome.toLowerCase()} em ${simbolo(principal)}.`)
     const [a, m] = data.split('-').map(Number)
     const saida = tipo === 'saida'
@@ -206,6 +230,7 @@ export function FormLancamento(p: FormLancProps) {
           banco_id: bancoId || null,
           categoria_id: categoriaId || null,
           divida_id: ligada,
+          forma: forma && forma !== 'credito' ? forma : null,
           ...moedaOriginal,
         },
         p.inicial?.id,
@@ -218,6 +243,7 @@ export function FormLancamento(p: FormLancProps) {
     setCategoriaId(outrosDe(tipo))
     setMexeuCategoria(false)
     setMexeuBanco(false)
+    setMexeuForma(false)
     setMexeuDivida(false)
     setErro(null)
     setSalvos((s) => s + 1)
@@ -305,33 +331,50 @@ export function FormLancamento(p: FormLancProps) {
           <span className="campo-rotulo">{cartao ? 'Data da compra' : ehParcela ? 'Vencimento da parcela' : 'Data'}</span>
           <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
         </label>
-        {!p.inicial && tipo === 'saida' && p.cartoes && p.aoSalvarCompra && (
-          <>
-            <div className="campo">
-              <span className="campo-rotulo">Como pagou?</span>
-              <div className="chips">
-                <button type="button" className={`chip ${!cartao ? 'ativo' : ''}`} onClick={() => setCartaoId('')}>Débito/Pix/dinheiro</button>
-                {p.cartoes.filter((c) => c.ativo).map((c) => (
-                  <button key={c.id} type="button" className={`chip ${cartao?.id === c.id ? 'ativo' : ''}`} onClick={() => setCartaoId(c.id)}
-                    style={{ '--c': c.cor } as React.CSSProperties}>
-                    <i className="marcador" />{c.nome}
-                  </button>
-                ))}
-                {p.aoNovoCartao && <button type="button" className="chip novo" onClick={p.aoNovoCartao}>+ cartão</button>}
-              </div>
+        {!ehParcela && (
+          <div className="campo">
+            <span className="campo-rotulo">{tipo === 'saida' ? 'Como pagou?' : 'Como recebeu?'} <small>(opcional)</small></span>
+            <div className="chips forma-chips" role="group" aria-label="Forma de pagamento">
+              {formasDoTipo(tipo).filter((f) => !(f.id === 'credito' && p.inicial)).map((f) => (
+                <button key={f.id} type="button" className={`chip forma-chip ${forma === f.id ? 'ativo' : ''}`} aria-pressed={forma === f.id}
+                  style={{ '--c': f.cor } as React.CSSProperties} onClick={() => escolherForma(f.id)}>
+                  <Icone nome={f.icone} tamanho={14} />{f.nome}
+                </button>
+              ))}
             </div>
-            {cartao && (
-              <label className="campo">
-                <span className="campo-rotulo">Em quantas vezes?</span>
-                <select value={vezes} onChange={(e) => setVezes(Number(e.target.value))}>
-                  {Array.from({ length: 24 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n === 1 ? '1x (à vista)' : `${n}x`}</option>)}
-                </select>
-                <span className="campo-ajuda">
-                  {parcelas.length ? textoParcelamento(parcelas, Number(data.slice(0, 4))) : 'Informe o valor para ver como as parcelas ficam.'}
-                </span>
-              </label>
-            )}
-          </>
+            {forma === 'credito' && !p.inicial && (p.cartoes ? (
+              <>
+                <div className="chips forma-cartoes">
+                  {cartoesAtivos.map((c) => (
+                    <button key={c.id} type="button" className={`chip ${cartao?.id === c.id ? 'ativo' : ''}`} onClick={() => setCartaoId(c.id)}
+                      style={{ '--c': c.cor } as React.CSSProperties}>
+                      <i className="marcador" />{c.nome}
+                    </button>
+                  ))}
+                  {p.aoNovoCartao && <button type="button" className="chip novo" onClick={p.aoNovoCartao}>+ cartão</button>}
+                </div>
+                {!cartoesAtivos.length && <span className="campo-ajuda">Você ainda não cadastrou nenhum cartão. Cadastre um para a compra entrar na fatura.</span>}
+              </>
+            ) : p.perfil.modulos.cartoes ? (
+              <span className="campo-ajuda">Cartão de crédito indisponível: falta rodar a migração 8 no Supabase.</span>
+            ) : (
+              <span className="campo-ajuda">
+                Para a compra entrar na fatura, ligue o cartão de crédito. <button type="button" className="link" onClick={ligarCartoes}>Ligar agora</button>
+              </span>
+            ))}
+            {cartao && <span className="campo-ajuda">A compra entra na fatura do {cartao.nome} e desconta do limite dele na aba Cartões.</span>}
+          </div>
+        )}
+        {cartao && (
+          <label className="campo">
+            <span className="campo-rotulo">Em quantas vezes?</span>
+            <select value={vezes} onChange={(e) => setVezes(Number(e.target.value))}>
+              {Array.from({ length: 24 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n === 1 ? '1x (à vista)' : `${n}x`}</option>)}
+            </select>
+            <span className="campo-ajuda">
+              {parcelas.length ? textoParcelamento(parcelas, Number(data.slice(0, 4))) : 'Informe o valor para ver como as parcelas ficam.'}
+            </span>
+          </label>
         )}
         {(v.bancos || bancoId) && !cartao && !ehParcela && (
           <EscolhaBanco

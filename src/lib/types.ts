@@ -43,6 +43,8 @@ export interface Lancamento {
   parcelas?: number | null
   /** Dia em que a pessoa comprou. */
   data_compra?: string | null
+  /** Pix, débito, dinheiro, boleto ou transferência (migração 11). Compra no cartão não usa: veja `formaDe`. */
+  forma?: 'pix' | 'debito' | 'dinheiro' | 'boleto' | 'transferencia' | null
   created_at?: string
 }
 

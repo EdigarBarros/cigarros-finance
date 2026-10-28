@@ -190,6 +190,9 @@ body::before {
   background: color-mix(in srgb, var(--c, var(--destaque)) 18%, var(--superficie));
 }
 .chip.novo { color: var(--link); background: transparent; border-style: dashed; }
+.forma-chip { gap: 6px; }
+.forma-chip svg { color: var(--c, currentColor); }
+.forma-cartoes { margin-top: 8px; }
 .cor { width: 30px; height: 30px; border-radius: 50%; border: 0; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2); }
 .cor.ativo { box-shadow: 0 0 0 2px var(--superficie), 0 0 0 4px var(--texto); }
 
@@ -1467,6 +1470,7 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .item-tag.no-cartao { color: var(--violeta); background: color-mix(in srgb, var(--violeta) 13%, transparent); }
 .item-tag.divida { color: var(--divida); background: color-mix(in srgb, var(--divida) 14%, transparent); }
 .item-tag.receber { color: var(--entrada); background: color-mix(in srgb, var(--entrada) 13%, transparent); }
+.item-tag.forma { color: var(--c, var(--texto-2)); background: color-mix(in srgb, var(--c, var(--texto-2)) 13%, transparent); }
 .item-tag.conta { color: var(--caixa); background: color-mix(in srgb, var(--caixa) 13%, transparent); }
 
 @media (max-width: 1100px) {
