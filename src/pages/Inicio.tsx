@@ -1,5 +1,5 @@
 import { Fragment, useState } from 'react'
-import { COR } from '../lib/charts'
+import { COR, PALETA } from '../lib/charts'
 import type { SituacaoDivida } from '../lib/dividas'
 import { fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, variacao } from '../lib/format'
 import { situacaoMeta } from '../lib/metas'
@@ -159,7 +159,13 @@ export function Inicio(c: Ctx) {
   // ---------- 3. Para onde está indo? ----------
   const fluxo = v.graficoAno && haAno && (
     <Bloco titulo="Fluxo financeiro" className="bloco-esticado"
-      acao={<span className="legenda-topo"><span><i className="marcador" style={{ background: COR.entradas }} />Entrou</span><span><i className="marcador" style={{ background: COR.despesas }} />Saiu</span></span>}>
+      acao={
+        <span className="legenda-topo">
+          <span><i className="legenda-barra" style={{ background: PALETA.entradas[0] }} />Entrou</span>
+          <span><i className="legenda-barra" style={{ background: PALETA.saidas[0] }} />Saiu</span>
+          <span><i className="legenda-linha" style={{ background: PALETA.sobrou }} />Sobrou</span>
+        </span>
+      }>
       {/* o gráfico ocupa a altura que sobrar no cartão, para ficar da mesma altura que os lançamentos ao lado */}
       <div className="bloco-corpo grafico-esticado">
         <GraficoFluxo porMes={c.porMes} mesAtual={c.mes} aoClicarMes={c.irParaMes} compacto={mobile} />

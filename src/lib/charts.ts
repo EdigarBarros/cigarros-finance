@@ -13,7 +13,7 @@ const brilho: Plugin = {
     const ctx = chart.ctx
     ctx.save()
     ctx.shadowColor = (meta.dataset?.options as { borderColor?: string })?.borderColor ?? 'transparent'
-    ctx.shadowBlur = 6
+    ctx.shadowBlur = 10
   },
   afterDatasetDraw(chart, { meta }) {
     if (meta.type === 'line') chart.ctx.restore()
@@ -33,12 +33,15 @@ Chart.defaults.plugins.tooltip.boxPadding = 4
 Chart.defaults.plugins.tooltip.usePointStyle = true
 Chart.defaults.plugins.legend.labels.usePointStyle = true
 Chart.defaults.plugins.legend.labels.pointStyle = 'circle'
-Chart.defaults.animation = {
-  duration: 1100,
-  easing: 'easeOutQuart',
-  // depois da primeira animação, o gráfico só faz transições suaves: não volta a crescer do zero a cada atualização
-  onComplete: ({ chart }) => { (chart as Chart & { $cresceu?: boolean }).$cresceu = true },
-}
+// Mexer campo a campo, nunca trocar o objeto inteiro: o Chart.js usa os nomes que existem em defaults.animation
+// (delay, from, type…) para saber o que ler de cada animação. Trocando o objeto, ele passava a ignorar type/from/delay:
+// as animações por mês não funcionavam e a animação de cor de um degradê quebrava o motor de animação da página inteira
+// (todos os gráficos sumiam).
+const animacaoPadrao = Chart.defaults.animation as Exclude<typeof Chart.defaults.animation, false>
+animacaoPadrao.duration = 1100
+animacaoPadrao.easing = 'easeOutQuart'
+// depois da primeira animação, o gráfico só faz transições suaves: não volta a crescer do zero a cada atualização
+animacaoPadrao.onComplete = ({ chart }) => { (chart as Chart & { $cresceu?: boolean }).$cresceu = true }
 // Até 2× a resolução da tela: no iPhone (3×) cada gráfico ocupa bem menos memória e o Safari para de descartá-lo.
 Chart.defaults.devicePixelRatio = Math.min(2, window.devicePixelRatio || 1)
 
@@ -143,4 +146,19 @@ export const COR = {
   principal: '#8e98ae',
   /** Gradiente do símbolo, da esquerda para a direita. */
   marca: ['#3d4be0', '#1f8ef1', '#14c9a0'] as const,
+}
+
+/**
+ * Cores dos gráficos de barras e linhas, na base do gráfico da planilha: entradas em verde, saídas em vermelho e linhas
+ * vivas com brilho (caixa azul, dívida amarela, investimentos roxo, dólar verde). Barras com degradê [topo, base].
+ */
+export const PALETA = {
+  entradas: ['#5ee08f', '#14b88a'] as const,
+  saidas: ['#ff6b6b', '#e0435f'] as const,
+  sobrou: '#22b8f0',
+  acumulado: '#ffc000',
+  caixa: '#22b8f0',
+  divida: '#ffc000',
+  investimentos: '#c45cf0',
+  usd: '#10d07a',
 }

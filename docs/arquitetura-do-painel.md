@@ -56,7 +56,7 @@ A ordem das perguntas continua a mesma; a grade segue o layout do OpusCash:
 | Saudação | "Olá, Nome!" (nome no verde da marca) + resumo do mês à esquerda; data de hoje e **Lançar entrada / Lançar saída** à direita | Só a saudação; lançar fica no "+" |
 | Indicadores | Cartões com ícone: **Sobrou/Faltou** (cartão em destaque, com a frase ou a comparação), **Entrou no mês**, **Saiu no mês**, `kpisExtras`; sobrando lugar na linha de 4, a meta mais adiantada entra como 4º cartão | 2 por linha |
 | O que fazer | Contas, cartões, dívidas (igual) | Igual |
-| Fluxo | **Fluxo financeiro** (área Entrou × Saiu dos últimos 6 meses, a partir do equilibrado) + **Últimos lançamentos** (5; detalhado: Lançamentos do mês) | Um embaixo do outro |
+| Fluxo | **Fluxo financeiro** (barras Entrou e Saiu lado a lado e a linha brilhante do que sobrou, nos últimos 6 meses, a partir do equilibrado) + **Últimos lançamentos** (5; detalhado: Lançamentos do mês) | Um embaixo do outro |
 | Análise | **Para onde foi o dinheiro** (rosca + legenda com %; lista com barras no simples e ao tocar em "Ver valores") + **Suas metas** + banner "Planeje hoje, conquiste amanhã" | Sem banner |
 | Guardado | Dinheiro guardado | Igual |
 
@@ -268,3 +268,22 @@ marcado como ocupado e nunca mais roda: todos os gráficos, inclusive os criados
 `lib/charts.ts` protege isso: o motor pega o erro, termina as animações desenhando tudo no estado final e registra o erro no
 console (`[OpusCash] erro num gráfico…`; os últimos ficam em `__opuscashErrosGraficos`). Uma animação sem interpolador pula para
 o valor final, e um vigia desenha sem animação o gráfico que não se desenhou até 1,8 s depois de criado.
+
+**Causa raiz do sumiço (corrigida):** `lib/charts.ts` trocava o objeto `Chart.defaults.animation` inteiro. O Chart.js usa os
+nomes que existem nesse objeto (`delay`, `from`, `type`…) para saber o que ler de cada animação; trocando-o, passava a ignorar
+`type`, `from` e `delay`. Sem o `type`, a animação de cor de um degradê não tinha como misturar as cores e dava erro
+("`_fn is not a function`"), travando o motor. Agora os campos são ajustados um a um, sem trocar o objeto.
+
+### 4.9 Gráficos de barras e linhas (base da planilha)
+
+Os três gráficos de evolução seguem o gráfico da planilha antiga (`components/Graficos.tsx`, cores em `PALETA` de
+`lib/charts.ts`): barras de Entrou (verde) e Saiu (vermelho) lado a lado, com degradê, e linhas vivas com brilho por cima.
+
+- **Fluxo financeiro** (Início): 6 meses, barras Entrou/Saiu e a linha do que sobrou.
+- **Mês a mês** (Resumo do ano): 12 meses, barras Entrou/Saiu e as linhas dos módulos ligados (guardado nas contas, dívidas,
+  investido, outras moedas). Tocar na legenda esconde ou mostra uma série; tocar num mês abre o mês.
+- **Quanto sobrou em cada mês** (Resumo do ano): barra verde quando sobrou e vermelha (para baixo) quando faltou, e a linha do
+  acumulado no ano num eixo próprio à direita, para as barras do mês não ficarem achatadas.
+
+Animação de entrada (só no primeiro desenho): as barras nascem da linha do zero, mês a mês; as linhas se desenham da esquerda
+para a direita, ponto a ponto, como uma caneta.

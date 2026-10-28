@@ -10,6 +10,7 @@ export function Ano(c: Ctx) {
   const meses = c.porMes.filter((r): r is Resumo => r !== null)
   const soma = (k: 'entradas' | 'saidas' | 'fluxo') => meses.reduce((a, r) => a + r[k], 0)
   const mediaGasto = meses.length ? soma('saidas') / meses.length : 0
+  const abrirMes = (m: number) => { c.irParaMes(m); c.irPara('inicio') }
   const melhor = c.porMes.reduce<number | null>((b, r, i) => (r && (b === null || r.fluxo > c.porMes[b]!.fluxo) ? i : b), null)
 
   return (
@@ -30,16 +31,16 @@ export function Ano(c: Ctx) {
         </Kpi>
       </div>
 
-      <Cartao titulo="Mês a mês" acao={<span className="dica-cab">toque num mês para abrir; na legenda, para mostrar mais linhas</span>}>
-        <GraficoAnual porMes={c.porMes} mesAtual={c.mes} altura={400} aoClicarMes={(m) => { c.irParaMes(m); c.irPara('inicio') }} v={c.v} linhas />
+      <Cartao titulo="Mês a mês" acao={<span className="dica-cab so-desktop">toque num mês para abrir · na legenda, para esconder uma série</span>}>
+        <GraficoAnual porMes={c.porMes} mesAtual={c.mes} altura={c.mobile ? 320 : 420} compacto={c.mobile} aoClicarMes={abrirMes} v={c.v} />
       </Cartao>
 
       <Cartao titulo="Números de cada mês">
-        <TabelaAnual porMes={c.porMes} mesAtual={c.mes} aoClicarMes={(m) => { c.irParaMes(m); c.irPara('inicio') }} v={c.v} />
+        <TabelaAnual porMes={c.porMes} mesAtual={c.mes} aoClicarMes={abrirMes} v={c.v} />
       </Cartao>
 
       <Cartao titulo="Quanto sobrou em cada mês">
-        <GraficoSaldo porMes={c.porMes} />
+        <GraficoSaldo porMes={c.porMes} mesAtual={c.mes} compacto={c.mobile} aoClicarMes={abrirMes} />
       </Cartao>
     </div>
   )

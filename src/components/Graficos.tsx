@@ -1,47 +1,148 @@
-import type { Chart as ChartJS, Plugin, ScriptableContext } from 'chart.js'
-import { Bar, Doughnut, Line } from 'react-chartjs-2'
+import type { Chart as ChartJS, ChartData, ChartOptions, Plugin, ScriptableContext } from 'chart.js'
+import { Chart as Misto, Doughnut } from 'react-chartjs-2'
 import type { Resumo } from '../lib/calc'
-import { COR, useCoresDoGrafico } from '../lib/charts'
+import { PALETA, useCoresDoGrafico } from '../lib/charts'
 import { fmtValor, MESES_CURTO, MESES_NOME } from '../lib/format'
 import type { Visao } from '../lib/perfil'
 
 /** Eixo sem os ",00": R$ 8.000 lê mais fácil que R$ 8.000,00. */
 const semCentavos = (n: number) => fmtValor(n).replace(/,00$/, '')
+const milhar = (n: number) => (Math.abs(n) >= 1000 ? `${(n / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil` : String(n))
 
-const eixoReais = (grade: string) => ({
-  ticks: { callback: (v: string | number) => semCentavos(Number(v)), maxTicksLimit: 6, padding: 8 },
-  grid: { color: grade },
-  border: { display: false },
-})
+type Quadro = {
+  chart: ChartJS & { $cresceu?: boolean }; type: string; mode: string; dataIndex: number; datasetIndex: number; index: number
+}
+const primeira = (ctx: Quadro) => !ctx.chart.$cresceu && ctx.type === 'data' && ctx.mode === 'default'
+// a linha do zero no eixo da própria série (a linha do acumulado usa o eixo da direita)
+const zeroY = (ctx: Quadro) => ctx.chart.getDatasetMeta(ctx.datasetIndex)?.yScale?.getPixelForValue(0) ?? ctx.chart.scales.y?.getPixelForValue(0)
+
+const ehLinha = (ctx: Quadro) => (ctx.chart.data.datasets[ctx.datasetIndex] as { type?: string } | undefined)?.type === 'line'
 
 /**
- * Pontos e barras nascem da linha do zero, um depois do outro (como no vídeo de referência). Só na primeira vez:
- * depois (dados chegando, outro mês) o gráfico vai suave do valor atual para o novo, sem sumir e crescer de novo.
+ * Animação de entrada, como no vídeo de referência. Só na primeira vez; depois (dados chegando, outro mês) o gráfico
+ * vai suave do valor atual para o novo.
+ * - Barras nascem da linha do zero, mês a mês, uma série logo depois da outra.
+ * - Linhas se desenham da esquerda para a direita, como uma caneta: cada ponto aparece depois do anterior, saindo da
+ *   altura dele, começando quando as barras já estão subindo.
  */
-type Quadro = { chart: ChartJS & { $cresceu?: boolean }; type: string; mode: string; dataIndex: number }
-const crescer = {
-  y: {
-    type: 'number' as const, properties: ['y'], duration: 1100, easing: 'easeOutQuart' as const,
-    from: (ctx: Quadro) => (ctx.chart.$cresceu ? undefined : ctx.chart.scales.y?.getPixelForValue(0)),
-    delay: (ctx: Quadro) => (!ctx.chart.$cresceu && ctx.type === 'data' && ctx.mode === 'default' ? ctx.dataIndex * 70 : 0),
-  },
+function animacoesDeEntrada(pontos: number) {
+  const passo = 1100 / Math.max(1, pontos)
+  const anterior = (ctx: Quadro) => {
+    if (!ctx.dataIndex) return zeroY(ctx)
+    const p = ctx.chart.getDatasetMeta(ctx.datasetIndex).data[ctx.dataIndex - 1]
+    const y = p?.getProps(['y'], true).y
+    return Number.isFinite(y) ? y : zeroY(ctx)
+  }
+  return {
+    // os degradês são recriados a cada quadro; animar a cor deles quebra o Chart.js
+    colors: false as const,
+    x: {
+      type: 'number' as const, easing: 'linear' as const, duration: passo,
+      from: (ctx: Quadro) => (primeira(ctx) && ehLinha(ctx) ? NaN : undefined),
+      delay: (ctx: Quadro) => (primeira(ctx) && ehLinha(ctx) ? 350 + ctx.dataIndex * passo : 0),
+    },
+    y: {
+      type: 'number' as const, easing: 'easeOutQuart' as const,
+      duration: (ctx: Quadro) => (primeira(ctx) && ehLinha(ctx) ? passo : 900),
+      from: (ctx: Quadro) => (!primeira(ctx) ? undefined : ehLinha(ctx) ? anterior(ctx) : zeroY(ctx)),
+      delay: (ctx: Quadro) => (!primeira(ctx) ? 0 : ehLinha(ctx) ? 350 + ctx.dataIndex * passo : ctx.dataIndex * 70 + ctx.datasetIndex * 40),
+    },
+  }
 }
 
-/** Preenchimento em degradê da cor da linha até transparente, de cima para baixo. */
-const degrade = (cor: string, forca = 0.32) => (ctx: ScriptableContext<'line'>) => {
+/** Degradê vertical para as barras (ou cor lisa enquanto o gráfico ainda não tem área). */
+const degradeBarra = ([topo, base]: readonly [string, string]) => (ctx: ScriptableContext<'bar'>) => {
   const { chart } = ctx
   const area = (chart as ChartJS).chartArea
-  // gráfico ainda sem área (ou já desmontado): cor lisa em vez de um degradê inválido
-  if (!area || !chart.ctx || ![area.top, area.bottom].every(Number.isFinite) || area.bottom <= area.top) return cor + '33'
+  if (!area || !chart.ctx || ![area.top, area.bottom].every(Number.isFinite) || area.bottom <= area.top) return topo
   const g = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom)
-  g.addColorStop(0, cor + Math.round(forca * 255).toString(16).padStart(2, '0'))
-  g.addColorStop(1, cor + '00')
+  g.addColorStop(0, topo)
+  g.addColorStop(1, base)
   return g
 }
 
+const barra = (label: string, cores: readonly [string, string], data: (number | null)[], compacto?: boolean) => ({
+  type: 'bar' as const, label, data, order: 2,
+  backgroundColor: degradeBarra(cores), hoverBackgroundColor: cores[0],
+  borderRadius: compacto ? 3 : 5, borderSkipped: 'start' as const,
+  maxBarThickness: compacto ? 10 : 20, categoryPercentage: 0.64, barPercentage: 0.84,
+})
+
+const linha = (label: string, cor: string, data: (number | null)[], compacto?: boolean, extra?: object) => ({
+  type: 'line' as const, label, data, order: 1,
+  borderColor: cor, backgroundColor: cor, borderWidth: compacto ? 2.5 : 3, tension: 0.35,
+  pointRadius: 0, pointHoverRadius: 5, pointHitRadius: 10, pointBackgroundColor: cor, spanGaps: false,
+  ...extra,
+})
+
+/** Opções comuns: eixo em reais (aceita negativos), meses embaixo, legenda com o desenho de cada série. */
+function opcoes(c: ReturnType<typeof useCoresDoGrafico>, {
+  rotulos, mesDoIndice, mesAtual, compacto, legenda = true, aoClicarMes, eixoDireito,
+}: {
+  rotulos: string[]; mesDoIndice: (i: number) => number; mesAtual?: number; compacto?: boolean; legenda?: boolean
+  aoClicarMes?: (m: number) => void
+  /** Cor do eixo da direita (y1), para uma série de outra grandeza, como o acumulado do ano. */
+  eixoDireito?: string
+}): ChartOptions<'bar'> {
+  const ticksReais = compacto
+    ? { callback: (v: string | number) => milhar(Number(v)), maxTicksLimit: 5, font: { size: 9 } }
+    : { callback: (v: string | number) => semCentavos(Number(v)), maxTicksLimit: 7, padding: 8 }
+  return {
+    maintainAspectRatio: false,
+    animations: animacoesDeEntrada(rotulos.length) as unknown as ChartOptions<'bar'>['animations'],
+    interaction: { mode: 'index', intersect: false },
+    onClick: (_e, els) => { if (els[0]) aoClicarMes?.(mesDoIndice(els[0].index)) },
+    plugins: {
+      legend: {
+        display: legenda, position: 'bottom',
+        labels: {
+          usePointStyle: true, padding: compacto ? 10 : 18, boxWidth: compacto ? 7 : 9, boxHeight: compacto ? 7 : 9,
+          font: { size: compacto ? 10 : 12, weight: 600 },
+          // barra vira um quadradinho; linha vira um traço, como na legenda da planilha
+          generateLabels: (chart) => chart.data.datasets.map((d, i) => {
+            const linhaSerie = (d as { type?: string }).type === 'line'
+            const hover = d.hoverBackgroundColor as string | string[]
+            const cor = linhaSerie ? (d.borderColor as string) : Array.isArray(hover) ? PALETA.entradas[0] : hover
+            return {
+              text: d.label ?? '', datasetIndex: i, hidden: !chart.isDatasetVisible(i), fontColor: c.texto,
+              fillStyle: cor, strokeStyle: cor, lineWidth: linhaSerie ? 3 : 0, pointStyle: linhaSerie ? 'line' : 'rectRounded',
+            }
+          }),
+        },
+      },
+      tooltip: {
+        callbacks: {
+          title: (i) => MESES_NOME[mesDoIndice(i[0].dataIndex) - 1],
+          label: (x) => ` ${x.dataset.label}: ${fmtValor(x.parsed.y ?? 0)}`,
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: { display: false }, border: { color: c.eixo },
+        ticks: {
+          color: (t) => (mesDoIndice(t.index) === mesAtual ? c.textoForte : c.texto),
+          font: (t) => ({ weight: mesDoIndice(t.index) === mesAtual ? 800 : 600, size: compacto ? 9 : 11 }),
+          maxRotation: 0, autoSkip: false,
+          callback: (_v, i) => (compacto && rotulos.length > 6 ? rotulos[i].slice(0, 1) : rotulos[i]),
+        },
+      },
+      y: { grace: '6%', grid: { color: c.grade }, border: { display: false }, ticks: ticksReais },
+      ...(eixoDireito ? {
+        y1: {
+          position: 'right' as const, grace: '6%', grid: { display: false }, border: { display: false },
+          ticks: { ...ticksReais, color: eixoDireito },
+        },
+      } : {}),
+    },
+  }
+}
+
+const serie = (meses: (Resumo | null)[], f: (r: Resumo) => number) => meses.map((r) => (r ? f(r) : null))
+
 /**
- * Fluxo financeiro: Entrou × Saiu nos últimos 6 meses do ano aberto, em área com degradê.
- * Mês sem dados fica em branco (a linha para).
+ * Fluxo financeiro da Início: Entrou e Saiu em barras lado a lado e a linha brilhante do que sobrou, nos 6 meses até o
+ * aberto (de jan a jun quando o mês aberto é antes de junho). Mês sem dados fica em branco.
  */
 export function GraficoFluxo({ porMes, mesAtual, aoClicarMes, altura, compacto }: {
   porMes: (Resumo | null)[]; mesAtual: number; aoClicarMes?: (m: number) => void
@@ -49,160 +150,84 @@ export function GraficoFluxo({ porMes, mesAtual, aoClicarMes, altura, compacto }
   altura?: number; compacto?: boolean
 }) {
   const c = useCoresDoGrafico()
-  // seis meses terminando no mês aberto (de jan a jun quando o mês aberto é antes de junho)
   const inicio = Math.max(0, Math.min(mesAtual - 6, 6))
   const meses = porMes.slice(inicio, inicio + 6)
-  const serie = (f: (r: Resumo) => number) => meses.map((r) => (r ? f(r) : null))
-  const area = (label: string, cor: string, f: (r: Resumo) => number) => ({
-    label, data: serie(f), borderColor: cor, backgroundColor: degrade(cor), fill: 'origin' as const,
-    borderWidth: compacto ? 2 : 2.5, tension: 0.42, pointRadius: meses.map((_, i) => (inicio + i + 1 === mesAtual ? 4 : 0)),
-    pointBackgroundColor: cor, pointBorderColor: c.fundo, pointBorderWidth: 2, pointHoverRadius: 6, spanGaps: false,
-  })
+  const data = {
+    labels: MESES_CURTO.slice(inicio, inicio + 6),
+    datasets: [
+      barra('Entrou', PALETA.entradas, serie(meses, (r) => r.entradas), compacto),
+      barra('Saiu', PALETA.saidas, serie(meses, (r) => r.saidas), compacto),
+      linha('Sobrou', PALETA.sobrou, serie(meses, (r) => r.fluxo), compacto, { pointRadius: compacto ? 2 : 3 }),
+    ],
+  } as unknown as ChartData<'bar'>
   return (
     <div className="grafico" style={altura ? { height: altura } : undefined}>
-      <Line
-        key={c.tema}
-        data={{
-          labels: MESES_CURTO.slice(inicio, inicio + 6),
-          datasets: [area('Entrou', COR.entradas, (r) => r.entradas), area('Saiu', COR.despesas, (r) => r.saidas)],
-        }}
-        options={{
-          maintainAspectRatio: false,
-          // o degradê é recriado a cada quadro; animar a cor dele quebra o Chart.js
-          animations: { ...crescer, colors: false },
-          interaction: { mode: 'index', intersect: false },
-          onClick: (_e, els) => els[0] && aoClicarMes?.(inicio + els[0].index + 1),
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                title: (i) => MESES_NOME[inicio + i[0].dataIndex],
-                label: (x) => ` ${x.dataset.label}: ${fmtValor(x.parsed.y ?? 0)}`,
-              },
-            },
-          },
-          scales: {
-            x: {
-              grid: { display: false }, border: { display: false },
-              ticks: {
-                color: (t) => (inicio + t.index + 1 === mesAtual ? c.textoForte : c.texto),
-                font: (t) => ({ weight: inicio + t.index + 1 === mesAtual ? 700 : 500, size: compacto ? 10 : 12 }),
-                padding: 8,
-              },
-            },
-            y: compacto
-              ? { ...eixoReais(c.grade), min: 0, ticks: { callback: (v: string | number) => milhar(Number(v)), maxTicksLimit: 5, font: { size: 10 } } }
-              : { ...eixoReais(c.grade), min: 0 },
-          },
-        }}
-      />
+      <Misto type="bar" key={c.tema} data={data}
+        options={opcoes(c, { rotulos: MESES_CURTO.slice(inicio, inicio + 6), mesDoIndice: (i) => inicio + i + 1, mesAtual, compacto, legenda: false, aoClicarMes })} />
     </div>
   )
 }
 
-const milhar = (n: number) => (Math.abs(n) >= 1000 ? `${(n / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil` : String(n))
-
 /**
- * Linhas de Entrou, Saiu e Sobrou mês a mês. Com `linhas`, a legenda também oferece Guardado nas contas, Dívidas,
- * Investido e Em outras moedas (dos módulos ligados), mas elas começam escondidas:
- * quem quer ver toca na legenda. Assim o gráfico abre limpo e continua completo.
+ * Mês a mês do ano, como o gráfico da planilha: Entrou e Saiu em barras e, por cima, as linhas brilhantes do que a pessoa
+ * acompanha (guardado nas contas, dívidas, investido, outras moedas), conforme os módulos ligados.
  */
-export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 360, compacto, v, linhas }: {
+export function GraficoAnual({ porMes, mesAtual, aoClicarMes, altura = 400, compacto, v }: {
   porMes: (Resumo | null)[]; mesAtual: number; aoClicarMes?: (m: number) => void; altura?: number; v: Visao
   /** Celular: eixo em "mil" e legenda menor. */
   compacto?: boolean
-  /** Oferece as linhas extras na legenda (escondidas até a pessoa tocar). */
-  linhas?: boolean
 }) {
   const c = useCoresDoGrafico()
-  // Meses sem dados ficam em branco (a linha para), em vez de cair a zero.
-  const serie = (f: (r: Resumo) => number) => porMes.map((r) => (r ? f(r) : null))
-  const linha = (label: string, cor: string, f: (r: Resumo) => number, escondida = false) => ({
-    label, data: serie(f), borderColor: cor, backgroundColor: cor, hidden: escondida,
-    borderWidth: compacto ? 2 : 2.5, pointRadius: compacto ? 2 : 3, pointHoverRadius: 6, tension: 0.35, spanGaps: false,
-  })
-  const valores = porMes.flatMap((r) => (r ? [r.entradas, r.saidas, r.fluxo] : []))
-  const piso = Math.min(0, ...valores) >= -0.05 * Math.max(1, ...valores) ? 0 : undefined
+  const data = {
+    labels: MESES_CURTO,
+    datasets: [
+      barra('Entrou', PALETA.entradas, serie(porMes, (r) => r.entradas), compacto),
+      barra('Saiu', PALETA.saidas, serie(porMes, (r) => r.saidas), compacto),
+      ...(v.bancos ? [linha('Guardado nas contas', PALETA.caixa, serie(porMes, (r) => r.caixa), compacto)] : []),
+      ...(v.dividas ? [linha('Dívidas', PALETA.divida, serie(porMes, (r) => r.divida), compacto)] : []),
+      ...(v.investimentos ? [linha('Investido', PALETA.investimentos, serie(porMes, (r) => r.investimentos), compacto)] : []),
+      ...(v.moedas ? [linha('Em outras moedas', PALETA.usd, serie(porMes, (r) => r.moedasConvertido), compacto)] : []),
+    ],
+  } as unknown as ChartData<'bar'>
   return (
     <div className="grafico" style={{ height: altura }}>
-      <Line
-        key={c.tema}
-        data={{
-          labels: MESES_CURTO,
-          datasets: [
-            linha('Entrou', COR.entradas, (r) => r.entradas),
-            linha('Saiu', COR.saidas, (r) => r.saidas),
-            linha('Sobrou', COR.fluxo, (r) => r.fluxo),
-            ...(linhas && v.bancos ? [linha('Guardado nas contas', COR.caixa, (r) => r.caixa, true)] : []),
-            ...(linhas && v.dividas ? [linha('Dívidas', COR.divida, (r) => r.divida, true)] : []),
-            ...(linhas && v.investimentos ? [linha('Investido', COR.investimentos, (r) => r.investimentos, true)] : []),
-            ...(linhas && v.moedas ? [linha('Em outras moedas', COR.usd, (r) => r.moedasConvertido, true)] : []),
-          ],
-        }}
-        options={{
-          maintainAspectRatio: false,
-          animations: crescer,
-          interaction: { mode: 'index', intersect: false },
-          onClick: (_e, els) => els[0] && aoClicarMes?.(els[0].index + 1),
-          plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: compacto ? 6 : 8, boxHeight: compacto ? 6 : 8, padding: compacto ? 10 : 18, font: { size: compacto ? 10 : 12, weight: 500 } } },
-            tooltip: {
-              callbacks: {
-                title: (i) => MESES_NOME[i[0].dataIndex],
-                label: (c) => ` ${c.dataset.label}: ${fmtValor(c.parsed.y ?? 0)}`,
-              },
-            },
-          },
-          scales: {
-            x: {
-              grid: { display: false },
-              border: { color: c.eixo },
-              ticks: {
-                color: (t) => (t.index + 1 === mesAtual ? c.textoForte : c.texto),
-                font: (t) => ({ weight: t.index + 1 === mesAtual ? 800 : 600, size: compacto ? 9 : 11 }),
-                maxRotation: 0,
-                autoSkip: false,
-                callback: (_v, i) => (compacto ? MESES_CURTO[i].slice(0, 1) : MESES_CURTO[i]),
-              },
-            },
-            y: compacto
-              ? { ...eixoReais(c.grade), min: piso, ticks: { callback: (v: string | number) => milhar(Number(v)), maxTicksLimit: 6, font: { size: 9 } } }
-              : { ...eixoReais(c.grade), min: piso },
-          },
-        }}
-      />
+      <Misto type="bar" key={c.tema} data={data}
+        options={opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual, compacto, aoClicarMes })} />
     </div>
   )
 }
 
-/** Saldo de cada mês (positivo ou negativo). */
-export function GraficoSaldo({ porMes }: { porMes: (Resumo | null)[] }) {
+/**
+ * Quanto sobrou em cada mês: barra verde quando sobrou e vermelha quando faltou, e a linha brilhante do acumulado no
+ * ano (quanto já sobrou somando os meses até ali).
+ */
+export function GraficoSaldo({ porMes, mesAtual, aoClicarMes, compacto }: {
+  porMes: (Resumo | null)[]; mesAtual?: number; aoClicarMes?: (m: number) => void; compacto?: boolean
+}) {
   const c = useCoresDoGrafico()
+  // acumulado no ano: soma do que sobrou até cada mês (meses sem dados ficam em branco)
+  const acumulado = porMes.map((r, i) => (r ? porMes.slice(0, i + 1).reduce((a, x) => a + (x?.fluxo ?? 0), 0) : null))
+  const sobrou = serie(porMes, (r) => r.fluxo)
+  const data = {
+    labels: MESES_CURTO,
+    datasets: [
+      {
+        ...barra('Sobrou no mês', PALETA.entradas, sobrou, compacto),
+        // faltou: vermelho, descendo da linha do zero
+        backgroundColor: (ctx: ScriptableContext<'bar'>) => {
+          const v = sobrou[ctx.dataIndex] ?? 0
+          return degradeBarra(v >= 0 ? PALETA.entradas : [PALETA.saidas[1], PALETA.saidas[0]])(ctx)
+        },
+        hoverBackgroundColor: sobrou.map((v) => ((v ?? 0) >= 0 ? PALETA.entradas[0] : PALETA.saidas[0])),
+        maxBarThickness: compacto ? 14 : 26,
+      },
+      linha('Acumulado no ano', PALETA.acumulado, acumulado, compacto, { pointRadius: compacto ? 2 : 3, yAxisID: 'y1' }),
+    ],
+  } as unknown as ChartData<'bar'>
   return (
-    <div className="grafico" style={{ height: 220 }}>
-      <Bar
-        key={c.tema}
-        data={{
-          labels: MESES_CURTO,
-          datasets: [{
-            label: 'Sobrou',
-            data: porMes.map((r) => r?.fluxo ?? null),
-            backgroundColor: porMes.map((r) => ((r?.fluxo ?? 0) >= 0 ? COR.entradas : COR.saidas)),
-            borderRadius: 6,
-            borderSkipped: false,
-            maxBarThickness: 22,
-          }],
-        }}
-        options={{
-          maintainAspectRatio: false,
-          animations: crescer,
-          plugins: {
-            legend: { display: false },
-            tooltip: { callbacks: { title: (i) => MESES_NOME[i[0].dataIndex], label: (x) => ` Sobrou: ${fmtValor(x.parsed.y ?? 0)}` } },
-          },
-          scales: { x: { grid: { display: false }, border: { display: false } }, y: eixoReais(c.grade) },
-        }}
-      />
+    <div className="grafico" style={{ height: compacto ? 240 : 280 }}>
+      <Misto type="bar" key={c.tema} data={data}
+        options={opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual, compacto, aoClicarMes, eixoDireito: PALETA.acumulado })} />
     </div>
   )
 }

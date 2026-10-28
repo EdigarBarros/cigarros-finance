@@ -1269,3 +1269,7 @@ select option { background: var(--superficie-forte); color: var(--texto); }
 .faisca-balao small { font-size: 10.5px; font-weight: 600; color: var(--texto-2); text-transform: capitalize; }
 /* no cartão compacto a minilinha fica embaixo: o balão sobe */
 .kpis:has(> :nth-child(5)) .faisca-balao { top: auto; bottom: calc(100% + 4px); }
+
+/* legenda do fluxo no cabeçalho: quadradinho para barra, traço brilhante para linha (como na planilha) */
+.legenda-barra { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 7px; }
+.legenda-linha { display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 7px; box-shadow: 0 0 6px currentColor; color: #22b8f0; }
