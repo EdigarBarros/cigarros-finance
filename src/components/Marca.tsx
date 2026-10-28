@@ -1,14 +1,9 @@
-/** Emblema + nome "Cigarros Finance". */
-export function Marca({ compacta }: { compacta?: boolean }) {
+/** Símbolo do infinito + nome "OPUSCASH" (OPUS na cor do texto, CASH no verde-água da marca). */
+export function Marca({ compacta, grande }: { compacta?: boolean; grande?: boolean }) {
   return (
-    <div className={`marca ${compacta ? 'compacta' : ''}`}>
-      <img className="marca-emblema" src="/emblema.webp" alt="" width={36} height={36} />
-      {!compacta && (
-        <span className="marca-nome">
-          <strong>Cigarros</strong>
-          <small>FINANCE</small>
-        </span>
-      )}
+    <div className={`marca ${compacta ? 'compacta' : ''} ${grande ? 'grande' : ''}`} aria-label="OpusCash">
+      <img className="marca-simbolo" src="/simbolo.webp" alt="" width={46} height={22} />
+      <span className="marca-nome" aria-hidden="true">OPUS<b>CASH</b></span>
     </div>
   )
 }

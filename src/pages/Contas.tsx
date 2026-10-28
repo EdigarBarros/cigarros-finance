@@ -85,11 +85,11 @@ export function Contas(c: Ctx) {
 
       {sits.length > 0 && (
         <div className="kpis">
-          {sits.some((s) => s.conta.tipo === 'saida') && <Kpi rotulo="Falta pagar no mês" valor={fmtValor(t.faltaPagar)} cor={COR.saidas} />}
-          {t.jaPago > 0 && <Kpi rotulo="Já pago" valor={fmtValor(t.jaPago)} cor={COR.entradas} />}
-          {t.atrasado > 0 && <Kpi rotulo="Atrasado" valor={fmtValor(t.atrasado)} cor={COR.divida} />}
+          {sits.some((s) => s.conta.tipo === 'saida') && <Kpi rotulo="Falta pagar no mês" valor={t.faltaPagar} cor={COR.saidas} />}
+          {t.jaPago > 0 && <Kpi rotulo="Já pago" valor={t.jaPago} cor={COR.entradas} />}
+          {t.atrasado > 0 && <Kpi rotulo="Atrasado" valor={t.atrasado} cor={COR.divida} />}
           {t.temEntradas && (
-            <Kpi rotulo="A receber" valor={fmtValor(t.aReceber)} cor={COR.caixa}>
+            <Kpi rotulo="A receber" valor={t.aReceber} cor={COR.caixa}>
               {t.jaRecebido > 0 && <span className="campo-ajuda">já recebeu {fmtValor(t.jaRecebido)}</span>}
             </Kpi>
           )}

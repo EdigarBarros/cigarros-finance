@@ -17,13 +17,14 @@ import { Progresso, Segmentado } from './ui'
  * Bloco da Início: título à esquerda, um número de apoio à direita e o conteúdo embaixo.
  * Todos os blocos de uma zona usam este mesmo cabeçalho, para a página ler como uma coisa só.
  */
-export function Bloco({ titulo, valor, legenda, acao, id, className = '', children }: {
-  titulo: ReactNode; valor?: ReactNode; legenda?: string; acao?: ReactNode; id?: string; className?: string; children: ReactNode
+export function Bloco({ titulo, sub, valor, legenda, acao, id, className = '', children }: {
+  titulo: ReactNode; sub?: ReactNode; valor?: ReactNode; legenda?: string; acao?: ReactNode; id?: string; className?: string; children: ReactNode
 }) {
   return (
     <section className={`bloco ${className}`} id={id}>
       <header className="bloco-cab">
         <h2>{titulo}</h2>
+        {sub && <p className="bloco-cab-sub">{sub}</p>}
         {valor !== undefined && (
           <span className="bloco-cab-valor">
             {legenda && <small>{legenda}</small>}
@@ -42,8 +43,8 @@ const maisRecentes = (ls: Lancamento[]) =>
   [...ls].sort((a, b) => (b.data ?? '').localeCompare(a.data ?? '') || (b.created_at ?? '').localeCompare(a.created_at ?? ''))
 
 /** Últimos lançamentos (simples e equilibrado) ou lançamentos do mês com filtro (detalhado). */
-export function BlocoLancamentos({ lancs, nivel, mobile, categoriaDe, bancos, aoEditar, aoVerTodos }: {
-  lancs: Lancamento[]; nivel: Detalhe; mobile: boolean
+export function BlocoLancamentos({ lancs, nivel, categoriaDe, bancos, aoEditar, aoVerTodos }: {
+  lancs: Lancamento[]; nivel: Detalhe
   categoriaDe: (l: Lancamento) => Categoria | undefined
   /** Só passa quando o módulo de bancos está ligado. */
   bancos?: Banco[]
@@ -51,10 +52,11 @@ export function BlocoLancamentos({ lancs, nivel, mobile, categoriaDe, bancos, ao
 }) {
   const [filtro, setFiltro] = useState<Tipo | 'todos'>('todos')
   const detalhado = nivel === 'detalhado'
-  const limite = detalhado ? 30 : mobile || nivel === 'simples' ? 5 : 6
+  const limite = detalhado ? 30 : 5
   const doFiltro = maisRecentes(lancs).filter((l) => filtro === 'todos' || l.tipo === filtro)
   return (
-    <Bloco titulo={detalhado ? 'Lançamentos do mês' : 'Últimos lançamentos'}>
+    <Bloco titulo={detalhado ? 'Lançamentos do mês' : 'Últimos lançamentos'}
+      acao={lancs.length > 0 && <button className="link" onClick={aoVerTodos}>Ver todos <Icone nome="seta" tamanho={14} /></button>}>
       {detalhado && (
         <div className="bloco-filtro">
           <Segmentado rotulo="Mostrar" valor={filtro} aoMudar={setFiltro}
@@ -70,7 +72,7 @@ export function BlocoLancamentos({ lancs, nivel, mobile, categoriaDe, bancos, ao
       ) : (
         <p className="quadro-vazio">{filtro === 'entrada' ? 'Nenhuma entrada neste mês.' : 'Nenhuma saída neste mês.'}</p>
       )}
-      {lancs.length > limite && (
+      {detalhado && lancs.length > limite && (
         <button className="quadro-ver" onClick={aoVerTodos}>Ver todos os {lancs.length} lançamentos</button>
       )}
     </Bloco>
@@ -97,12 +99,23 @@ export function BlocoGastos({ r, anterior, categorias, nivel, mesAnterior, aoEdi
       ) : (
         <>
           {nivel !== 'simples' && (
-            <div className="rosca-centro-caixa">
-              <Rosca fatias={completas} altura={188} legenda={false} rotulos={false} cutout="66%" />
-              <div className="rosca-centro"><small>Saiu</small><strong>{fmtValor(r.saidas)}</strong></div>
+            <div className="rosca-lado">
+              <div className="rosca-centro-caixa">
+                <Rosca fatias={fatiasDeGastos(r.gastosPorCategoria, categorias, 6)} altura={170} legenda={false} rotulos={false} cutout="72%" />
+                <div className="rosca-centro"><strong>{fmtValor(r.saidas)}</strong><small>Saiu no mês</small></div>
+              </div>
+              <ul className="legenda-lista">
+                {fatiasDeGastos(r.gastosPorCategoria, categorias, 6).map((f) => (
+                  <li key={f.id}>
+                    <i className="marcador" style={{ background: f.cor }} />
+                    <span>{f.nome}</span>
+                    <b>{r.saidas ? `${Math.round((f.valor / r.saidas) * 100)}%` : ''}</b>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
-          <ul className="gastos">
+          {(nivel === 'simples' || detalhado || todas) && <ul className="gastos">
             {fatias.map((f) => {
               const antes = anterior?.gastosPorCategoria[f.id]
               // só vale destacar mudança grande (10% ou mais); abaixo disso é ruído
@@ -118,9 +131,11 @@ export function BlocoGastos({ r, anterior, categorias, nivel, mesAnterior, aoEdi
                 </li>
               )
             })}
-          </ul>
-          {!detalhado && completas.length > limite && (
-            <button className="quadro-ver" onClick={() => setTodas(!todas)}>{todas ? 'Mostrar menos' : `Ver todas as ${completas.length} categorias`}</button>
+          </ul>}
+          {!detalhado && (nivel === 'simples' ? completas.length > limite : true) && (
+            <button className="quadro-ver" onClick={() => setTodas(!todas)}>
+              {todas ? 'Mostrar menos' : nivel === 'simples' ? `Ver todas as ${completas.length} categorias` : 'Ver valores por categoria'}
+            </button>
           )}
         </>
       )}
@@ -237,21 +252,22 @@ export function BlocoMetas({ metas, taxas, nivel, aoAbrir }: { metas: SituacaoMe
   const guardado = metas.reduce((a, s) => a + (converter(s.guardado, s.meta.moeda, taxas) ?? 0), 0)
   const limite = nivel === 'simples' ? 2 : nivel === 'equilibrado' ? 4 : Infinity
   return (
-    <Bloco titulo="Metas" valor={metas.length ? fmtValor(guardado) : undefined} legenda={metas.length ? 'guardado' : undefined}
-      acao={<button className="link" onClick={aoAbrir}>{metas.length ? 'Abrir' : 'Criar'}</button>}>
+    <Bloco titulo="Suas metas" sub={metas.length ? <>{fmtValor(guardado)} guardado no total</> : undefined}
+      acao={<button className="link" onClick={aoAbrir}>{metas.length ? <>Ver todas <Icone nome="seta" tamanho={14} /></> : 'Criar'}</button>}>
       {!metas.length && (
         <p className="quadro-vazio">Junte dinheiro para uma viagem, um carro ou uma reserva. <button className="link" onClick={aoAbrir}>Criar a primeira meta</button></p>
       )}
       {metas.length > 0 && !ativas.length && <p className="quadro-vazio">Todas as metas batidas! 🎉 <button className="link" onClick={aoAbrir}>Criar outra</button></p>}
       {ativas.slice(0, limite).map((s) => (
-        <button key={s.meta.id} className="banco-linha" onClick={aoAbrir}>
-          <span className="banco-linha-nome">{s.meta.icone}&nbsp;&nbsp;{s.meta.nome}</span>
-          <span className="banco-linha-saldo">{Math.round(s.progresso * 100)}%</span>
-          <Progresso valor={s.guardado} total={s.meta.alvo} cor={s.meta.cor} />
-          <span className="banco-linha-sub">
-            {fmtMoeda(s.guardado, s.meta.moeda)} de {fmtMoeda(s.meta.alvo, s.meta.moeda)}
-            {s.previsao && ` · chega em ${fmtMesAno(s.previsao[0], s.previsao[1])}`}
+        <button key={s.meta.id} className="meta-linha" onClick={aoAbrir} style={{ '--c': s.meta.cor } as React.CSSProperties}>
+          <span className="meta-linha-icone" aria-hidden="true">{s.meta.icone}</span>
+          <span className="meta-linha-nome">{s.meta.nome}</span>
+          <span className="meta-linha-pct">{Math.round(s.progresso * 100)}%</span>
+          <span className="meta-linha-valor">
+            {fmtMoeda(s.guardado, s.meta.moeda)} / {fmtMoeda(s.meta.alvo, s.meta.moeda)}
+            {nivel !== 'simples' && s.previsao && ` · chega em ${fmtMesAno(s.previsao[0], s.previsao[1])}`}
           </span>
+          <Progresso valor={s.guardado} total={s.meta.alvo} cor={s.meta.cor} />
         </button>
       ))}
       {ativas.length > limite && <button className="quadro-ver" onClick={aoAbrir}>Ver todas as {ativas.length} metas</button>}

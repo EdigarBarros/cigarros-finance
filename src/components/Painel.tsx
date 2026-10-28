@@ -13,7 +13,7 @@ import { supabase } from '../lib/supabase'
 import type { Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 import { useMobile } from '../lib/useMobile'
 import { estiloLente, useLente } from '../lib/useLente'
-import { useVidroLiquido } from '../lib/vidroLiquido'
+import { definirTema, useTema } from '../lib/tema'
 import { useCartoes } from '../lib/useCartoes'
 import { useContasFixas } from '../lib/useContasFixas'
 import { useDados } from '../lib/useDados'
@@ -76,13 +76,13 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const [refazendo, setRefazendo] = useState(false)
   const [editarCategorias, setEditarCategorias] = useState(false)
   const [zerando, setZerando] = useState(false)
+  const [quadroMeses, setQuadroMeses] = useState(false)
+  const [busca, setBusca] = useState('')
   const arquivo = useRef<HTMLInputElement>(null)
-  // controles flutuantes: vidro com refração líquida + lente deslizante no item ativo
-  const refLateral = useRef<HTMLElement>(null)
+  // pílula que desliza até o item ativo (menu lateral e abas do celular)
   const refNav = useRef<HTMLElement>(null)
-  const refSeletor = useRef<HTMLDivElement>(null)
-  const refMeses = useRef<HTMLElement>(null)
   const refAbas = useRef<HTMLElement>(null)
+  const { tema } = useTema()
   const d = useDados(userId, ano)
   const contas = useContasFixas(d.setErro)
   // Baixas em andamento e uma pausa curta depois de cada uma: ao dar baixa a conta sai da lista e a de baixo sobe, então um toque
@@ -99,10 +99,6 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const carregandoPerfil = d.perfil === undefined && d.carregando
   const perguntar = (d.perfil === null && !temDados && !d.perfilSemTabela && !d.carregando) || refazendo
   const noPainel = !carregandoPerfil && !perguntar
-  useVidroLiquido(refLateral, { escala: 26, bezel: 22, desfoque: 20, ativo: noPainel })
-  useVidroLiquido(refSeletor, { ativo: noPainel })
-  useVidroLiquido(refMeses, { ativo: noPainel })
-  useVidroLiquido(refAbas, { escala: 40, bezel: 20, ativo: noPainel })
   useEffect(() => {
     if (precisaPerfil) void d.salvarPerfil(perfil)
   }, [precisaPerfil]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -126,7 +122,6 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     return () => window.removeEventListener('hashchange', aoMudar)
   }, [])
   const lenteNav = useLente(refNav, 'button.ativo', `${paginaAtual}|${paginas.length}|${noPainel}`)
-  const lenteMeses = useLente(refMeses, 'button.ativo', `${mes}|${ano}|${noPainel}`)
   const lenteAbas = useLente(refAbas, 'button.ativo', `${paginaAtual}|${mobile}|${paginas.length}|${noPainel}`)
   const abas = paginas.length <= MAX_ABAS ? paginas : paginas.slice(0, MAX_ABAS - 1)
   const naMais = paginas.slice(abas.length)
@@ -139,7 +134,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
       return
     }
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    document.querySelectorAll<HTMLElement>('.pagina > *').forEach((el, i) =>
+    document.querySelectorAll<HTMLElement>('.pagina > *, .kpis > *').forEach((el, i) =>
       el.animate(
         [{ opacity: 0.35, filter: 'blur(8px)', transform: 'translateY(6px)' }, { opacity: 1, filter: 'none', transform: 'none' }],
         { duration: 650, delay: Math.min(i, 6) * 35, easing: 'cubic-bezier(.32,.72,0,1)', fill: 'backwards' },
@@ -147,16 +142,10 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     )
   }, [mes, ano])
 
-  // Mantém a aba do mês aberto visível quando a barra de meses rola (celular).
-  useEffect(() => {
-    const aba = document.querySelector('.abas-meses .ativo') as HTMLElement | null
-    const barra = aba?.parentElement
-    if (aba && barra) barra.scrollTo({ left: aba.offsetLeft - barra.clientWidth / 2 + aba.clientWidth / 2, behavior: 'smooth' })
-  }, [mes, pagina])
-
   const irPara = (p: Pagina) => {
     setBancoAberto(null)
     setMais(false)
+    setMenu(false)
     location.hash = `/${p}`
     setPagina(p)
     window.scrollTo({ top: 0 })
@@ -277,8 +266,8 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const comKpiContas = comContas && situacoesContas.length > 0
   const kpisExtras = comKpiContas || totalFaturas > 0 ? (
     <>
-      {comKpiContas && <Kpi rotulo="Falta pagar no mês" valor={fmtValor(faltaPagarNoMes(situacoesContas))} cor={COR.divida} />}
-      {totalFaturas > 0 && <Kpi rotulo="Fatura do cartão" valor={fmtValor(totalFaturas)} cor={COR.investimentos} />}
+      {comKpiContas && <Kpi rotulo="Falta pagar no mês" valor={faltaPagarNoMes(situacoesContas)} cor={COR.divida} icone="calendario" aoClicar={() => irPara('contas')} />}
+      {totalFaturas > 0 && <Kpi rotulo="Fatura do cartão" valor={totalFaturas} cor={COR.investimentos} icone="cartao" aoClicar={() => irPara('cartoes')} />}
     </>
   ) : undefined
 
@@ -288,6 +277,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
       contas: comContas ? <BlocoContasDoMes completo={perfil.detalhe === 'detalhado'} situacoes={situacoesContas} aoAbrir={() => irPara('contas')} aoPagar={pagarConta} /> : undefined,
       cartoes: comCartoes ? <BlocoCartoes situacoes={faturas} aoAbrir={() => irPara('cartoes')} /> : undefined,
     },
+    busca, setBusca,
     ano, mes, d, cartoes, faturas, lancsMes, situacao, mesEf, porMes, mobile,
     perfil, v, taxas, sugestao,
     aceitarSugestao: (s: Sugestao) => mudarPerfil(s.aplicar(perfil)),
@@ -318,7 +308,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   }
 
   // Primeiro acesso: as perguntas montam o painel antes de qualquer coisa.
-  if (carregandoPerfil) return <div className="tela-central">Carregando…</div>
+  if (carregandoPerfil) return <Esqueleto />
   if (perguntar) {
     return (
       <Questionario
@@ -329,9 +319,21 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     )
   }
 
+  const trocarTema = (e: React.MouseEvent) => definirTema(tema === 'escuro' ? 'claro' : 'escuro', { x: e.clientX, y: e.clientY })
+  const nome = perfil.nome.trim() || email.split('@')[0]
+  const iniciais = nome.split(/\s+/).slice(0, 2).map((x) => x[0]?.toUpperCase() ?? '').join('')
+  // o sino acende com contas atrasadas ou vencendo hoje
+  const avisos = comContas ? situacoesContas.filter((s) => s.conta.tipo === 'saida' && (s.estado === 'atrasada' || s.estado === 'vence_hoje')) : []
+  const atrasadas = avisos.filter((s) => s.estado === 'atrasada').length
+  const buscar = (q: string) => {
+    setBusca(q)
+    if (paginaAtual !== 'lancamentos') irPara('lancamentos')
+  }
+
   const menuItens = (
     <>
-      <button onClick={() => setAjustes(true)}><Icone nome="ajustes" /> Configurações</button>
+      <button onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> Configurações</button>
+      <button onClick={trocarTema}><Icone nome={tema === 'escuro' ? 'sol' : 'lua'} /> {tema === 'escuro' ? 'Tema claro' : 'Tema escuro'}</button>
       <button onClick={() => arquivo.current?.click()}><Icone nome="importar" /> Importar planilha</button>
       <button onClick={() => tarefa('Preparando o backup…', async () => (await import('../lib/planilha')).exportarBackup())}>
         <Icone nome="exportar" /> Baixar backup
@@ -342,52 +344,103 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
 
   return (
     <div className="app">
-      <aside className="lateral" ref={refLateral}>
+      <aside className="lateral">
         <Marca />
-        <nav ref={refNav}>
+        <nav ref={refNav} aria-label="Páginas">
           {lenteNav && <span className="lente" aria-hidden="true" style={estiloLente(lenteNav)} />}
           {paginas.map((p) => (
-            <button key={p.id} className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}>
+            <button key={p.id} className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)} aria-current={paginaAtual === p.id ? 'page' : undefined}>
               <Icone nome={p.icone} /> {p.nome}
             </button>
           ))}
+          <button onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> Configurações</button>
         </nav>
         <div className="lateral-rodape">
-          {menuItens}
-          <span className="email">{email}</span>
+          <section className="lateral-promo">
+            <strong>Mais controle para o seu dinheiro.</strong>
+            <p>Escolha o que acompanhar e o jeito de ver o painel com o OpusCash.</p>
+            <button className="btn" onClick={() => setAjustes(true)}>Personalizar <Icone nome="seta" tamanho={16} /></button>
+          </section>
         </div>
       </aside>
 
       <div className="conteudo">
         <header className="barra">
           {mobile && <Marca compacta />}
-          <div className="seletor-mes" ref={refSeletor}>
-            <button className="icone-btn" onClick={() => mudarMes(-1)} aria-label="Mês anterior"><Icone nome="esq" /></button>
-            <span>{MESES_NOME[mes - 1]} <small>{ano}</small></span>
-            <button className="icone-btn" onClick={() => mudarMes(1)} aria-label="Próximo mês"><Icone nome="dir" /></button>
-          </div>
-          <nav className="abas-meses" aria-label="Meses" ref={refMeses}>
-            {lenteMeses && <span className="lente" aria-hidden="true" style={estiloLente(lenteMeses)} />}
-            {MESES_NOME.map((m, i) => (
-              <button
-                key={m}
-                className={`${i + 1 === mes ? 'ativo' : ''} ${porMes[i] ? 'com-dados' : ''}`}
-                onClick={() => setMes(i + 1)}
-                aria-current={i + 1 === mes ? 'page' : undefined}
-              >
-                {MESES_CURTO[i]}
+          {!mobile && (
+            <label className="busca-topo">
+              <Icone nome="busca" tamanho={18} />
+              <input type="search" placeholder="Busque por lançamentos ou categorias…" value={busca} onChange={(e) => buscar(e.target.value)} aria-label="Buscar lançamentos" />
+            </label>
+          )}
+          <div className="barra-direita">
+            {(ocupado || d.carregando) && <span className="carregando so-desktop">{ocupado ?? 'Carregando…'}</span>}
+            <div className="seletor-mes">
+              <button className="icone-btn" onClick={() => mudarMes(-1)} aria-label="Mês anterior"><Icone nome="esq" tamanho={18} /></button>
+              <button className="seletor-mes-nome" onClick={() => setQuadroMeses(!quadroMeses)} aria-expanded={quadroMeses} aria-label="Escolher mês">
+                <Icone nome="calendario" tamanho={17} />{mobile ? MESES_CURTO[mes - 1] : MESES_NOME[mes - 1]} <small>{ano}</small>
               </button>
-            ))}
-          </nav>
-          {(ocupado || d.carregando) && <span className="carregando">{ocupado ?? 'Carregando…'}</span>}
-          <div className="menu-movel">
-            <button className="icone-btn" onClick={() => setMenu(!menu)} aria-label="Menu" aria-expanded={menu}><Icone nome="menu" /></button>
-            {menu && (
-              <div className="menu-lista" onClick={() => setMenu(false)}>
-                <span className="email">{email}</span>
-                {menuItens}
-              </div>
+              <button className="icone-btn" onClick={() => mudarMes(1)} aria-label="Próximo mês"><Icone nome="dir" tamanho={18} /></button>
+              {quadroMeses && (
+                <>
+                  <div className="fora" onClick={() => setQuadroMeses(false)} />
+                  <div className="quadro-meses" role="dialog" aria-label="Meses">
+                    <div className="quadro-meses-ano">
+                      <button className="icone-btn" onClick={() => setAno(ano - 1)} aria-label="Ano anterior"><Icone nome="esq" tamanho={16} /></button>
+                      {ano}
+                      <button className="icone-btn" onClick={() => setAno(ano + 1)} aria-label="Próximo ano"><Icone nome="dir" tamanho={16} /></button>
+                    </div>
+                    <div className="quadro-meses-grade">
+                      {MESES_CURTO.map((m, i) => (
+                        <button key={m} className={`${i + 1 === mes ? 'ativo' : ''} ${porMes[i] ? 'com-dados' : ''}`}
+                          onClick={() => { setMes(i + 1); setQuadroMeses(false) }} aria-current={i + 1 === mes ? 'date' : undefined}>
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+            <button className="icone-btn tema-btn so-desktop" onClick={trocarTema} aria-label={tema === 'escuro' ? 'Usar tema claro' : 'Usar tema escuro'} title={tema === 'escuro' ? 'Tema claro' : 'Tema escuro'}>
+              <Icone nome={tema === 'escuro' ? 'sol' : 'lua'} />
+            </button>
+            {comContas && (
+              <button className="icone-btn" onClick={() => irPara('contas')}
+                aria-label={avisos.length ? `${avisos.length} ${avisos.length === 1 ? 'conta pede' : 'contas pedem'} atenção` : 'Contas do mês'}
+                title={avisos.length ? `${avisos.length} ${avisos.length === 1 ? 'conta pede' : 'contas pedem'} atenção` : 'Nada atrasado'}>
+                <Icone nome="sino" />
+                {avisos.length > 0 && <span className={`sino-ponto ${atrasadas ? 'atraso' : ''}`} />}
+              </button>
             )}
+            <div className="perfil-topo">
+              <button className="perfil-botao" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label="Sua conta">
+                <span className="avatar" aria-hidden="true">{iniciais || '?'}</span>
+                <span>Olá, {nome}</span>
+                <Icone nome="abaixo" tamanho={18} />
+              </button>
+              {menu && !mobile && (
+                <>
+                  <div className="fora" onClick={() => setMenu(false)} />
+                  <div className="menu-lista" onClick={() => setMenu(false)}>
+                    <span className="email">{email}</span>
+                    {menuItens}
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="menu-movel">
+              <button className="icone-btn" onClick={() => setMenu(!menu)} aria-label="Menu" aria-expanded={menu}><Icone nome="menu" /></button>
+              {menu && mobile && (
+                <>
+                  <div className="fora" onClick={() => setMenu(false)} />
+                  <div className="menu-lista" onClick={() => setMenu(false)}>
+                    <span className="email">{email}</span>
+                    {menuItens}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </header>
 
@@ -514,6 +567,22 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
           aoFechar={() => setEditarCategorias(false)}
         />
       )}
+    </div>
+  )
+}
+
+/** Enquanto os dados chegam: a moldura do painel com blocos que brilham, em vez de uma tela vazia. */
+function Esqueleto() {
+  return (
+    <div className="app" aria-busy="true" aria-label="Carregando">
+      <aside className="lateral"><Marca /></aside>
+      <div className="conteudo">
+        <div className="esqueleto-tela">
+          <div className="esqueleto linha-titulo" />
+          <div className="esqueleto-kpis">{[0, 1, 2, 3].map((i) => <div key={i} className="esqueleto" />)}</div>
+          <div className="esqueleto-meio"><div className="esqueleto" /><div className="esqueleto" /></div>
+        </div>
+      </div>
     </div>
   )
 }

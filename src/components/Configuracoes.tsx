@@ -2,10 +2,11 @@ import { useState } from 'react'
 import type { Sugestao } from '../lib/adaptacao'
 import { MOEDAS } from '../lib/moedas'
 import { DETALHES, MODULOS } from '../lib/perfil'
+import { definirTema, useTema, type PreferenciaTema } from '../lib/tema'
 import type { Modulo, Perfil } from '../lib/types'
 import { PARTES_ZERAR, type EscolhaZerar, type ParteZerar } from '../lib/zerar'
 import { Icone } from './Icone'
-import { Interruptor, Modal, Opcao } from './ui'
+import { Interruptor, Modal, Opcao, Segmentado } from './ui'
 
 type Secao = 'perfil' | 'painel' | 'categorias' | 'dados' | 'conta'
 const SECOES: { id: Secao; nome: string; icone: Parameters<typeof Icone>[0]['nome'] }[] = [
@@ -36,6 +37,7 @@ export function Configuracoes({ perfil, email, aoMudar, aoRefazer, aoCategorias,
 }) {
   const [secao, setSecao] = useState<Secao>('perfil')
   const [nome, setNome] = useState(perfil.nome)
+  const { preferencia } = useTema()
   const ligar = (m: Modulo, v: boolean) => aoMudar({ ...perfil, modulos: { ...perfil.modulos, [m]: v } })
   const alternarMoeda = (m: string) => {
     const moedas = perfil.moedas.includes(m) ? perfil.moedas.filter((x) => x !== m) : [...perfil.moedas, m]
@@ -106,6 +108,12 @@ export function Configuracoes({ perfil, email, aoMudar, aoRefazer, aoCategorias,
                     </div>
                   ))}
                 </div>
+              </section>
+              <section className="campo">
+                <span className="campo-rotulo">Aparência</span>
+                <Segmentado<PreferenciaTema> rotulo="Tema" valor={preferencia} aoMudar={(t) => definirTema(t)}
+                  opcoes={[{ id: 'sistema', nome: 'Automático' }, { id: 'claro', nome: 'Claro' }, { id: 'escuro', nome: 'Escuro' }]} />
+                <span className="campo-ajuda">Automático segue o claro ou escuro do seu aparelho.</span>
               </section>
               <section className="campo">
                 <span className="campo-rotulo">Jeito de ver</span>

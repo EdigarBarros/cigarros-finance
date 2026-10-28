@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { Marca } from './Marca'
 
 /** Tela de login. Cada pessoa tem seus próprios dados (protegidos no banco por RLS). */
 export function Login() {
@@ -25,7 +26,7 @@ export function Login() {
     <div className="tela-central">
       <form className="cartao login" onSubmit={enviar}>
         <div className="login-marca">
-          <img src="/logo.webp" alt="Cigarros Finance" width={148} height={148} />
+          <Marca grande />
           <p>{criar ? 'Crie sua conta para começar' : 'Entre na sua conta'}</p>
         </div>
         <label>
@@ -43,7 +44,7 @@ export function Login() {
             autoComplete={criar ? 'new-password' : 'current-password'}
           />
         </label>
-        <button className="btn primario" disabled={ocupado}>{criar ? 'Criar conta' : 'Entrar'}</button>
+        <button className="btn gradiente" disabled={ocupado}>{criar ? 'Criar conta' : 'Entrar'}</button>
         {msg && <p className="aviso">{msg}</p>}
         <button type="button" className="link" onClick={() => setCriar(!criar)}>
           {criar ? 'Já tenho conta. Entrar' : 'Ainda não tem conta? Criar conta'}
@@ -71,7 +72,7 @@ export function Configuracao() {
     <div className="tela-central">
       <div className="cartao login">
         <div className="login-marca">
-          <img src="/logo.webp" alt="Cigarros Finance" width={148} height={148} />
+          <Marca grande />
         </div>
         <h1>Falta conectar o banco de dados</h1>
         <p>

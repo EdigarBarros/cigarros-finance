@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { fmtPct, paraCampo, parseNumero } from '../lib/format'
+import { fmtPct, fmtValor, paraCampo, parseNumero } from '../lib/format'
 import { estiloLente, useLente } from '../lib/useLente'
 import { Icone } from './Icone'
+import { Numero } from './Numero'
 
 export function Cartao({ titulo, acao, children, className = '' }: {
   titulo?: ReactNode; acao?: ReactNode; children: ReactNode; className?: string
@@ -19,26 +20,38 @@ export function Cartao({ titulo, acao, children, className = '' }: {
   )
 }
 
-/** Indicador do topo: valor grande, marcador de cor e variação contra o mês anterior. */
-export function Kpi({ rotulo, valor, cor, delta, menorMelhor, contra = 'no mês passado', children }: {
-  rotulo: string; valor: string; cor: string; delta?: number | null; menorMelhor?: boolean
+/**
+ * Indicador do topo: ícone redondo, valor grande (que conta até o número quando é number) e variação contra o mês anterior.
+ * `destaque` pinta o cartão inteiro com a cor (o resultado do mês).
+ */
+export function Kpi({ rotulo, valor, cor, icone, destaque, delta, menorMelhor, contra = 'no mês passado', aoClicar, children }: {
+  rotulo: string; valor: string | number; cor: string; icone?: string; destaque?: boolean
+  delta?: number | null; menorMelhor?: boolean
   /** Com o que se compara, depois de "que": "em set", "no mês passado". */
-  contra?: string; children?: ReactNode
+  contra?: string; aoClicar?: () => void; children?: ReactNode
 }) {
   const bom = delta == null ? null : menorMelhor ? delta <= 0 : delta >= 0
-  return (
-    <div className="kpi" style={{ '--c': cor } as React.CSSProperties}>
-      <span className="kpi-rotulo"><i className="marcador" />{rotulo}</span>
-      <strong className="kpi-valor">{valor}</strong>
+  const conteudo = (
+    <>
+      {icone && <span className="kpi-icone"><Icone nome={icone} tamanho={22} /></span>}
+      {aoClicar && <span className="kpi-seta"><Icone nome="dir" tamanho={18} /></span>}
+      <span className="kpi-rotulo">{!icone && <i className="marcador" />}{rotulo}</span>
+      <strong className="kpi-valor">{typeof valor === 'number' ? <Numero valor={valor} formato={fmtValor} /> : valor}</strong>
       {delta != null && (
         <span className={`kpi-delta ${bom ? 'bom' : 'ruim'}`}>
-          <Icone nome={delta >= 0 ? 'sobe' : 'desce'} tamanho={12} />
-          {fmtPct(Math.abs(delta))} {delta >= 0 ? 'a mais' : 'a menos'} que {contra}
+          <Icone nome={delta >= 0 ? 'sobe' : 'desce'} tamanho={13} />
+          {fmtPct(Math.abs(delta))} {delta >= 0 ? 'a mais' : 'a menos'}
+          <span>que {contra}</span>
         </span>
       )}
       {children}
-    </div>
+    </>
   )
+  const estilo = { '--c': cor } as React.CSSProperties
+  const classe = `kpi ${destaque ? 'destaque' : ''}`
+  return aoClicar
+    ? <button type="button" className={classe} style={estilo} onClick={aoClicar}>{conteudo}</button>
+    : <div className={classe} style={estilo}>{conteudo}</div>
 }
 
 export function Progresso({ valor, total, cor }: { valor: number; total: number; cor: string }) {

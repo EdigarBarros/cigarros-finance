@@ -15,7 +15,7 @@ export function Lancamentos(c: Ctx) {
   const [banco, setBanco] = useState<Filtro<string>>('todos')
   /** id da categoria, 'sem' (sem categoria) ou 'todos'. */
   const [categoria, setCategoria] = useState<Filtro<string>>('todos')
-  const [busca, setBusca] = useState('')
+  const { busca, setBusca } = c
 
   const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase()
@@ -23,9 +23,9 @@ export function Lancamentos(c: Ctx) {
       .filter((l) => tipo === 'todos' || l.tipo === tipo)
       .filter((l) => banco === 'todos' || (banco === 'sem' ? !l.banco_id : l.banco_id === banco))
       .filter((l) => categoria === 'todos' || (categoria === 'sem' ? !c.categoriaDe(l) : c.categoriaDe(l)?.id === categoria))
-      .filter((l) => !q || l.descricao.toLowerCase().includes(q))
+      .filter((l) => !q || l.descricao.toLowerCase().includes(q) || Boolean(c.categoriaDe(l)?.nome.toLowerCase().includes(q)))
       .sort((x, y) => (y.data ?? '').localeCompare(x.data ?? '') || (y.created_at ?? '').localeCompare(x.created_at ?? ''))
-  }, [c.lancsMes, tipo, banco, categoria, busca]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [c.lancsMes, tipo, banco, categoria, busca, c.categorias]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const dias = useMemo(() => {
     const g = new Map<string, typeof filtrados>()
@@ -56,7 +56,7 @@ export function Lancamentos(c: Ctx) {
         <div className="filtros">
           <label className="busca">
             <Icone nome="busca" tamanho={16} />
-            <input placeholder="Buscar descrição" value={busca} onChange={(e) => setBusca(e.target.value)} />
+            <input placeholder="Buscar descrição ou categoria" value={busca} onChange={(e) => setBusca(e.target.value)} />
           </label>
           <Segmentado rotulo="Tipo" valor={tipo} aoMudar={setTipo}
             opcoes={[{ id: 'todos', nome: 'Todos' }, { id: 'entrada', nome: 'Entradas' }, { id: 'saida', nome: 'Saídas' }]} />

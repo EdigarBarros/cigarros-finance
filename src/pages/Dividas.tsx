@@ -36,14 +36,14 @@ export function Dividas(c: Ctx) {
 
       {c.situacao.length > 0 && (
         <div className="kpis">
-          <Kpi rotulo="Falta pagar" valor={fmtValor(c.r.divida)} cor={COR.divida}
+          <Kpi rotulo="Falta pagar" valor={c.r.divida} cor={COR.divida}
             delta={c.anterior?.divida ? (c.r.divida - c.anterior.divida) / c.anterior.divida : null} menorMelhor
             contra={c.mes > 1 ? `em ${MESES_CURTO[c.mes - 2].toLowerCase()}` : undefined} />
-          <Kpi rotulo="Parcelas por mês" valor={fmtValor(c.r.parcelasMensais)} cor={COR.saidas} />
+          <Kpi rotulo="Parcelas por mês" valor={c.r.parcelasMensais} cor={COR.saidas} />
           <Kpi rotulo="Sem dívidas em" valor={ultimaQuitacao ? fmtMesAno(ultimaQuitacao[0], ultimaQuitacao[1]) : abertas.length ? '—' : 'Já está! 🎉'} cor={COR.caixa}>
             {temSemParcela && <span className="kpi-delta">Há dívidas sem parcela fixa</span>}
           </Kpi>
-          <Kpi rotulo="Pago neste mês" valor={fmtValor(pagoNoMes)} cor={COR.entradas} />
+          <Kpi rotulo="Pago neste mês" valor={pagoNoMes} cor={COR.entradas} />
         </div>
       )}
 

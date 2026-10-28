@@ -60,10 +60,10 @@ export function Patrimonio(c: Ctx) {
           {banco && <button className="btn" onClick={() => setGerenciar(banco)}>Editar banco</button>}
         </header>
         <div className="kpis">
-          {banco && <Kpi rotulo="Saldo guardado" valor={fmtValor(caixaDoBanco(caixa, banco.id))} cor={cor} />}
-          <Kpi rotulo="Entrou" valor={fmtValor(ent)} cor={COR.entradas} />
-          <Kpi rotulo="Saiu" valor={fmtValor(sai)} cor={COR.saidas} />
-          <Kpi rotulo="Sobrou no mês" valor={fmtValor(ent - sai)} cor={COR.fluxo} />
+          {banco && <Kpi rotulo="Saldo guardado" valor={caixaDoBanco(caixa, banco.id)} cor={cor} />}
+          <Kpi rotulo="Entrou" valor={ent} cor={COR.entradas} />
+          <Kpi rotulo="Saiu" valor={sai} cor={COR.saidas} />
+          <Kpi rotulo="Sobrou no mês" valor={ent - sai} cor={COR.fluxo} />
         </div>
         {banco && (
           <>
@@ -112,10 +112,10 @@ export function Patrimonio(c: Ctx) {
 
       {v.bancos && <>
       <div className="kpis">
-        <Kpi rotulo="Total guardado" valor={fmtValor(somaCaixa(caixa))} cor={COR.caixa}
+        <Kpi rotulo="Total guardado" valor={somaCaixa(caixa)} cor={COR.caixa}
           delta={c.anterior?.caixa ? (c.r.caixa - c.anterior.caixa) / c.anterior.caixa : null} contra={c.mes > 1 ? `em ${MESES_CURTO[c.mes - 2].toLowerCase()}` : undefined} />
         {TIPOS_CAIXA.map((t) => (
-          <Kpi key={t} rotulo={NOME_TIPO_CAIXA[t]} valor={fmtValor(bancos.reduce((a, b) => a + (caixa[b.id]?.[t] ?? 0), 0))} cor={COR.caixa} />
+          <Kpi key={t} rotulo={NOME_TIPO_CAIXA[t]} valor={bancos.reduce((a, b) => a + (caixa[b.id]?.[t] ?? 0), 0)} cor={COR.caixa} />
         ))}
       </div>
 

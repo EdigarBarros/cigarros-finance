@@ -15,6 +15,9 @@ export type Pagina = 'inicio' | 'lancamentos' | 'contas' | 'cartoes' | 'dividas'
 
 /** Tudo que as páginas precisam do mês aberto. */
 export interface Ctx {
+  /** Texto da busca do topo (filtra a página Lançamentos). */
+  busca: string
+  setBusca: (q: string) => void
   ano: number
   mes: number
   d: Dados

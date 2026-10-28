@@ -54,10 +54,10 @@ export function Cartoes(c: Ctx) {
 
       {faturas.length > 0 && (
         <div className="kpis">
-          <Kpi rotulo={`Faturas de ${MESES_NOME[c.mes - 1].toLowerCase()}`} valor={fmtValor(totalFaturasDoMes(faturas))} cor={COR.saidas} />
-          <Kpi rotulo="Falta pagar" valor={fmtValor(totalFaturasAPagar(faturas))} cor={COR.divida} />
+          <Kpi rotulo={`Faturas de ${MESES_NOME[c.mes - 1].toLowerCase()}`} valor={totalFaturasDoMes(faturas)} cor={COR.saidas} />
+          <Kpi rotulo="Falta pagar" valor={totalFaturasAPagar(faturas)} cor={COR.divida} />
           {comLimite.length > 0 && (
-            <Kpi rotulo="Limite disponível" valor={fmtValor(comLimite.reduce((a, s) => a + Math.max(0, s.limiteDisponivel!), 0))} cor={COR.caixa} />
+            <Kpi rotulo="Limite disponível" valor={comLimite.reduce((a, s) => a + Math.max(0, s.limiteDisponivel!), 0)} cor={COR.caixa} />
           )}
         </div>
       )}

@@ -1,7 +1,16 @@
-# Cigarros Finance
+# OpusCash
 
 Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLANILHA_FINANCEIRA_2026.xlsx`
-(mesmos conceitos e cores, mas com cara de app):
+(mesmos conceitos, mas com cara de app):
+
+- **Visual OpusCash, claro e escuro**: menu lateral com a marca, barra de busca, seletor de mês, sino de contas e
+  perfil no topo; na Início, saudação, cartões de indicadores, fluxo financeiro dos últimos 6 meses, últimos
+  lançamentos, rosca por categoria, metas e um convite para planejar. As cores vêm do símbolo (índigo → azul →
+  verde-água). O tema segue o aparelho ou é escolhido no botão ☀/☾ do topo (o novo tema se espalha em círculo a partir
+  do clique) e em **Configurações → Painel → Aparência**
+- **Animações**: blocos que saem do desfoque um após o outro, números que contam até o valor, gráficos que crescem
+  da base, barras de progresso que enchem, pílula do menu que desliza até a página aberta e cartões que sobem sob o
+  ponteiro. Quem pede menos movimento no sistema vê tudo parado
 
 - **Painel que se adapta a cada pessoa**: no primeiro acesso, 4 perguntas rápidas (moeda, outras moedas, o que faz
   parte da vida financeira, jeito de ver) montam o painel só com o que faz sentido. Dívidas, bancos, investimentos e
