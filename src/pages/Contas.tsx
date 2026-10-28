@@ -12,6 +12,7 @@ import { EscolhaBanco } from '../components/Formularios'
 import { Icone } from '../components/Icone'
 import { Cartao, Kpi, Modal, Segmentado, Vazio } from '../components/ui'
 import type { Ctx } from './contexto'
+import { IconeCategoria } from '../components/IconeCategoria'
 import '../components/contas.css'
 
 /** Pontos de partida para quem não sabe por onde começar. */
@@ -101,7 +102,7 @@ export function Contas(c: Ctx) {
           <div className="opcoes grade">
             {EXEMPLOS.map((e) => (
               <button key={e.nome} type="button" className="opcao" onClick={() => nova(e)}>
-                <span className="opcao-icone">{e.icone}</span>
+                <span className="opcao-icone"><IconeCategoria emoji={e.icone} tamanho={20} /></span>
                 <span className="opcao-texto"><strong>{e.nome}</strong><small>{e.dica}</small></span>
                 <span />
               </button>

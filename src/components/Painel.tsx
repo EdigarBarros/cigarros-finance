@@ -556,6 +556,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
         <Configuracoes
           perfil={perfil}
           email={email}
+          categorias={d.categorias}
           aoMudar={mudarPerfil}
           aoRefazer={() => { setAjustes(false); setRefazendo(true) }}
           aoCategorias={() => { setAjustes(false); ctx.gerenciarCategorias() }}

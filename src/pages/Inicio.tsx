@@ -9,7 +9,7 @@ import {
 import { FormDivida } from '../components/Formularios'
 import { GraficoFluxo } from '../components/Graficos'
 import { Icone } from '../components/Icone'
-import { Marca } from '../components/Marca'
+import { BannerCarrossel, type Slide } from '../components/BannerCarrossel'
 import { CartaoAcompanhar, CartaoSugestao } from '../components/Configuracoes'
 import { Encaixe, type ItemEncaixe } from '../components/Encaixe'
 import { Kpi, Progresso, ReguaMeses, type Tendencia } from '../components/ui'
@@ -193,20 +193,30 @@ export function Inicio(c: Ctx) {
   const metas = v.metas && !c.d.metasSemTabela && (
     <BlocoMetas metas={situacaoMetas} taxas={c.taxas} nivel={nivel} aoAbrir={() => c.irPara('metas')} />
   )
-  const banner = !mobile && !c.contaNova && (
-    <section className="banner">
-      <svg className="montanhas" viewBox="0 0 400 200" preserveAspectRatio="none" aria-hidden="true">
-        <path d="M0 150 L70 90 L120 120 L190 40 L250 105 L300 70 L400 140 L400 200 L0 200Z" fill="rgba(20,30,58,.85)" />
-        <path d="M0 175 L90 125 L150 150 L230 95 L310 150 L360 128 L400 160 L400 200 L0 200Z" fill="rgba(8,13,26,.95)" />
-      </svg>
-      <Marca />
-      <strong>Planeje hoje,<br />conquiste amanhã.</strong>
-      <p>Organize suas finanças e realize seus sonhos.</p>
-      {v.paginaAno
-        ? <button className="btn" onClick={() => c.irPara('ano')}>Ver o ano <Icone nome="seta" tamanho={16} /></button>
-        : <button className="btn" onClick={c.personalizar}>Personalizar <Icone nome="seta" tamanho={16} /></button>}
-    </section>
-  )
+  // Banner ilustrado: mensagens que se revezam, cada uma com a sua paisagem (só as que fazem sentido para o perfil).
+  const slides: Slide[] = [
+    {
+      id: 'planeje', cena: 'montanhas', titulo: ['Planeje hoje,', 'conquiste amanhã.'], texto: 'Organize suas finanças e realize seus sonhos.',
+      ...(v.paginaAno ? { botao: 'Ver o ano', acao: () => c.irPara('ano') } : { botao: 'Personalizar', acao: c.personalizar }),
+    },
+    {
+      id: 'viagem', cena: 'mar', titulo: ['Pequenos passos,', 'grandes viagens.'], texto: 'Junte um pouco todo mês para a próxima viagem.',
+      botao: v.metas ? 'Ver metas' : 'Criar meta', acao: () => { if (!v.metas) c.ligarModulo('metas'); c.irPara('metas') },
+    },
+    {
+      id: 'destino', cena: 'cidade', titulo: ['Cada real', 'com um destino.'], texto: 'Veja para onde foi o seu dinheiro este mês.',
+      botao: 'Ver lançamentos', acao: () => c.irPara('lancamentos'),
+    },
+    {
+      id: 'reserva', cena: 'floresta', titulo: ['Reserva primeiro,', 'tranquilidade depois.'], texto: 'Seis meses de gastos guardados seguram qualquer imprevisto.',
+      ...(v.bancos || v.investimentos ? { botao: 'Dinheiro guardado', acao: () => c.irPara('patrimonio') } : { botao: v.metas ? 'Ver metas' : 'Criar meta', acao: () => { if (!v.metas) c.ligarModulo('metas'); c.irPara('metas') } }),
+    },
+    ...(v.dividas ? [{
+      id: 'dividas', cena: 'dunas' as const, titulo: ['Dívida paga', 'é liberdade.'] as [string, string], texto: 'Acompanhe quanto falta e quando cada uma termina.',
+      botao: 'Ver dívidas', acao: () => c.irPara('dividas'),
+    }] : []),
+  ]
+  const banner = !mobile && !c.contaNova && <BannerCarrossel slides={slides} />
 
   // ---------- 5. O que tenho ----------
   const dinheiro = (v.bancos || v.investimentos || v.moedas) && (

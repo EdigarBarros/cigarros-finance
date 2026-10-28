@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { CORES, doTipo, ICONES } from '../lib/categorias'
+import { IconeCategoria } from './IconeCategoria'
 import type { Categoria, Tipo } from '../lib/types'
 import { Icone } from './Icone'
 import { Modal, Segmentado } from './ui'
@@ -9,11 +10,11 @@ type NovaCategoria = Omit<Categoria, 'id' | 'ordem'>
 /** Cor para uma categoria nova: a primeira que ainda não está em uso, para o gráfico não repetir cores. */
 const corLivre = (usadas: Categoria[]) => CORES.find((k) => !usadas.some((c) => c.cor === k)) ?? CORES[usadas.length % CORES.length]
 
-/** Bolinha com o emoji da categoria, na cor dela. */
+/** Quadradinho arredondado com o desenho da categoria, na cor dela. */
 export function Selo({ c, tamanho = 30 }: { c: { icone: string; cor: string }; tamanho?: number }) {
   return (
-    <span className="selo" style={{ '--c': c.cor, width: tamanho, height: tamanho, fontSize: tamanho * 0.52 } as React.CSSProperties} aria-hidden="true">
-      {c.icone}
+    <span className="selo" style={{ '--c': c.cor, width: tamanho, height: tamanho } as React.CSSProperties} aria-hidden="true">
+      <IconeCategoria emoji={c.icone} tamanho={Math.round(tamanho * 0.5)} />
     </span>
   )
 }
@@ -41,7 +42,7 @@ export function EscolhaCategoria({ opcoes, valor, aoMudar, aoCriar, tipo }: {
         {[...visiveis, ...(escondida ? [escondida] : [])].map((c) => (
           <button key={c.id} type="button" className={`chip ${valor === c.id ? 'ativo' : ''}`} style={{ '--c': c.cor } as React.CSSProperties}
             onClick={() => aoMudar(valor === c.id ? '' : c.id)}>
-            <span className="chip-icone">{c.icone}</span>{c.nome}
+            <span className="chip-icone"><IconeCategoria emoji={c.icone} tamanho={15} /></span>{c.nome}
           </button>
         ))}
         {visiveis.length < opcoes.length && (

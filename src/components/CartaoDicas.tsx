@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { semMovimento } from '../lib/tema'
 import { Icone } from './Icone'
+import { Paisagem, type Cena } from './Paisagem'
+
+const CENAS: Cena[] = ['montanhas', 'mar', 'cidade', 'floresta', 'dunas']
 
 export interface Dica {
   id: string
@@ -15,8 +18,8 @@ export interface Dica {
 const INTERVALO = 7000
 
 /**
- * Cartão do pé do menu lateral: mostra uma dica útil por vez, cada uma com um botão de ação, e troca sozinho a cada
- * poucos segundos (para quando o ponteiro está em cima). Os pontinhos embaixo escolhem a dica.
+ * Cartão do menu lateral, esticado de logo abaixo do menu até o pé: mostra uma dica útil por vez, com uma paisagem e um
+ * botão de ação, e troca sozinho a cada poucos segundos (para quando o ponteiro está em cima). Os pontinhos escolhem a dica.
  */
 export function CartaoDicas({ dicas }: { dicas: Dica[] }) {
   const [i, setI] = useState(0)
@@ -35,6 +38,8 @@ export function CartaoDicas({ dicas }: { dicas: Dica[] }) {
     <section className={`lateral-promo dicas ${atual.alerta ? 'alerta-dica' : ''}`}
       onMouseEnter={() => setParado(true)} onMouseLeave={() => setParado(false)}
       onFocus={() => setParado(true)} onBlur={() => setParado(false)} aria-live="polite">
+      {/* cada dica com a sua paisagem, preenchendo o alto do cartão */}
+      <div className="dica-cena" key={`cena-${atual.id}`}><Paisagem cena={CENAS[(n ? i % n : 0) % CENAS.length]} /></div>
       <div className="dica-conteudo" key={atual.id}>
         <span className="dica-icone"><Icone nome={atual.icone} tamanho={18} /></span>
         <strong>{atual.titulo}</strong>

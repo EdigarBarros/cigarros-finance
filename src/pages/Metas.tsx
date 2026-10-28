@@ -7,6 +7,7 @@ import type { Meta } from '../lib/types'
 import { Icone } from '../components/Icone'
 import { Cartao, Kpi, Modal, Progresso, Segmentado, Vazio } from '../components/ui'
 import type { Ctx } from './contexto'
+import { IconeCategoria } from '../components/IconeCategoria'
 
 const ICONES_META = ['🎯', '🛟', '✈️', '🚗', '🏠', '🎓', '🌴', '💍', '👶', '💻', '📱', '🎸', '🐶', '🏍️', '🎁', '💵', '🏖️', '⛺', '🏋️', '❤️']
 const CORES_META = ['#9d6bff', '#30d158', '#64d2ff', '#0a84ff', '#ff9f0a', '#ffd60a', '#ff375f', '#ff79c6', '#bf5af2', '#63e6e2']
@@ -66,7 +67,7 @@ export function Metas(c: Ctx) {
           <div className="opcoes grade">
             {MODELOS.map((m) => (
               <button key={m.nome} type="button" className="opcao" onClick={() => novaDoModelo(m)}>
-                <span className="opcao-icone">{m.icone}</span>
+                <span className="opcao-icone" style={{ color: m.cor }}><IconeCategoria emoji={m.icone} tamanho={20} /></span>
                 <span className="opcao-texto">
                   <strong>{m.nome}</strong>
                   <small>{m.reserva && gastoMedio ? `Sugestão: ${fmtValor(Math.round(gastoMedio * 6))} (6 meses de gastos)` : m.dica}</small>
@@ -123,7 +124,7 @@ function CartaoMeta({ s, c, aoEditar, aoGuardar, aoRetirar }: {
     <Cartao className={`meta-cartao ${s.batida ? 'batida' : ''}`}>
       <div className="divida" style={{ '--c': meta.cor } as React.CSSProperties}>
         <div className="divida-topo">
-          <h3><span className="meta-icone">{meta.icone}</span>{meta.nome}</h3>
+          <h3><span className="meta-icone" style={{ color: meta.cor, '--c': meta.cor } as React.CSSProperties}><IconeCategoria emoji={meta.icone} tamanho={18} /></span>{meta.nome}</h3>
           <button className="link" onClick={aoEditar}>Editar</button>
         </div>
         <div>

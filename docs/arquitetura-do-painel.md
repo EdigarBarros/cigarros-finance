@@ -295,3 +295,19 @@ linhas são reveladas por uma cortina que corre da esquerda para a direita com a
 
 Menu lateral: o cartão do pé alterna dicas úteis, cada uma com um botão (contas que pedem atenção, lançar o gasto de hoje,
 quanto falta nas dívidas, metas, personalizar, backup, tema). Troca a cada 7 s, para sob o ponteiro, e os pontinhos escolhem a dica.
+
+### 4.10 Visual: ícones, bandeiras, paisagens e Configurações
+
+- **Ícones de categoria** (`components/IconeCategoria.tsx`): cada emoji que o app oferece vira um ícone de traço no estilo do
+  app, num quadradinho arredondado na cor da categoria (`Selo`). O emoji continua sendo o que fica salvo; emoji sem desenho
+  aparece como emoji.
+- **Bandeiras** (`components/Bandeira.tsx`): as 18 moedas têm bandeira desenhada em SVG, redonda (no Windows os emojis de
+  bandeira viravam só as letras do país).
+- **Paisagens** (`components/Paisagem.tsx`): montanhas, mar, cidade, floresta e dunas, à noite no tema escuro e de dia no
+  claro. Usadas no banner da Início, que alterna mensagens (planejar, viagem, destino do dinheiro, reserva, dívidas) a cada 8 s,
+  e no cartão de dicas do menu lateral, que estica de logo abaixo do menu até o pé.
+- **Configurações** em tela cheia: menu de seções com pílula deslizante (Perfil, Aparência, Painel, Categorias, Dados, Conta) e
+  cartões em grade: moedas com bandeira, tema e jeito de ver com miniatura do app, animações com prévia, módulos com
+  interruptor e ações grandes. No celular, seções em abas roláveis e grades de duas colunas.
+- **Seletor de mês do topo**: o mês é uma pílula sólida da marca, sem brilho.
+

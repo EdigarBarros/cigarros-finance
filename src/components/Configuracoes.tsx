@@ -1,35 +1,66 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { Sugestao } from '../lib/adaptacao'
 import { MOEDAS } from '../lib/moedas'
 import { DETALHES, MODULOS } from '../lib/perfil'
 import { definirMovimento, definirTema, useMovimento, useTema, type Movimento, type PreferenciaTema } from '../lib/tema'
-import type { Modulo, Perfil } from '../lib/types'
+import type { Categoria, Modulo, Perfil } from '../lib/types'
+import { estiloLente, useLente } from '../lib/useLente'
+import { Bandeira } from './Bandeira'
+import { Selo } from './Categorias'
 import { PARTES_ZERAR, type EscolhaZerar, type ParteZerar } from '../lib/zerar'
 import { Icone } from './Icone'
-import { Interruptor, Modal, Opcao, Segmentado } from './ui'
+import { Interruptor, Modal, Opcao } from './ui'
 
-type Secao = 'perfil' | 'painel' | 'categorias' | 'dados' | 'conta'
-const SECOES: { id: Secao; nome: string; icone: Parameters<typeof Icone>[0]['nome'] }[] = [
-  { id: 'perfil', nome: 'Perfil', icone: 'lista' },
-  { id: 'painel', nome: 'Painel', icone: 'ajustes' },
-  { id: 'categorias', nome: 'Categorias', icone: 'lista' },
-  { id: 'dados', nome: 'Dados', icone: 'exportar' },
-  { id: 'conta', nome: 'Conta', icone: 'sair' },
+type Secao = 'perfil' | 'aparencia' | 'painel' | 'categorias' | 'dados' | 'conta'
+const SECOES: { id: Secao; nome: string; icone: string; sub: string }[] = [
+  { id: 'perfil', nome: 'Perfil', icone: 'carteira', sub: 'Seu nome e as moedas que você usa' },
+  { id: 'aparencia', nome: 'Aparência', icone: 'sol', sub: 'Tema e animações' },
+  { id: 'painel', nome: 'Painel', icone: 'ajustes', sub: 'O que aparece e o jeito de ver' },
+  { id: 'categorias', nome: 'Categorias', icone: 'lista', sub: 'Onde cada lançamento se encaixa' },
+  { id: 'dados', nome: 'Dados', icone: 'exportar', sub: 'Backup, planilha e começar de novo' },
+  { id: 'conta', nome: 'Conta', icone: 'sair', sub: 'Sua sessão neste aparelho' },
 ]
 
-function Linha({ icone, titulo, texto, aoClicar }: { icone: Parameters<typeof Icone>[0]['nome']; titulo: string; texto: string; aoClicar: () => void }) {
+/** Cartão de ação grande (Dados e Conta). */
+function CartaoAcao({ icone, titulo, texto, aoClicar, perigo }: { icone: string; titulo: string; texto: string; aoClicar: () => void; perigo?: boolean }) {
   return (
-    <button type="button" className="ajuste ajuste-botao" onClick={aoClicar}>
-      <span className="ajuste-icone"><Icone nome={icone} /></span>
-      <span className="ajuste-texto"><strong>{titulo}</strong><small>{texto}</small></span>
-      <Icone nome="dir" tamanho={16} />
+    <button type="button" className={`cfg-acao ${perigo ? 'perigo' : ''}`} onClick={aoClicar}>
+      <span className="cfg-acao-icone"><Icone nome={icone} /></span>
+      <strong>{titulo}</strong>
+      <small>{texto}</small>
+      <span className="cfg-acao-seta"><Icone nome="seta" tamanho={16} /></span>
     </button>
   )
 }
 
-/** Configurações: perfil, painel, categorias, dados e conta. Cada mudança vale na hora, sem botão de salvar. */
-export function Configuracoes({ perfil, email, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoZerar, aoSair, aoFechar }: {
+/** Miniatura do app em cada tema, para escolher vendo. */
+function PreviaTema({ tema }: { tema: 'claro' | 'escuro' | 'auto' }) {
+  return (
+    <span className={`previa-tema ${tema}`} aria-hidden="true">
+      <span className="pt-lado" />
+      <span className="pt-topo" />
+      <span className="pt-cartoes"><i /><i /><i /></span>
+      <span className="pt-grafico"><i /><i /><i /><i /><i /></span>
+    </span>
+  )
+}
+
+/** Miniatura de cada jeito de ver: mais blocos e gráficos conforme o nível. */
+function PreviaDetalhe({ nivel }: { nivel: 'simples' | 'equilibrado' | 'detalhado' }) {
+  return (
+    <span className={`previa-detalhe ${nivel}`} aria-hidden="true">
+      <span className="pd-kpis"><i /><i /><i />{nivel === 'detalhado' && <><i /><i /></>}</span>
+      {nivel !== 'simples' && <span className="pd-grafico"><i /><i /><i /><i /><i /><i /></span>}
+      <span className="pd-lista"><i /><i />{nivel === 'detalhado' && <><i /><i /></>}</span>
+    </span>
+  )
+}
+
+/** Configurações em tela cheia: menu de seções à esquerda e cartões à direita. Cada mudança vale na hora. */
+export function Configuracoes({ perfil, email, categorias, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoZerar, aoSair, aoFechar }: {
   perfil: Perfil; email: string; aoMudar: (p: Perfil) => void; aoRefazer: () => void; aoCategorias: () => void
+  /** Para mostrar as categorias na seção Categorias. */
+  categorias?: Categoria[]
   aoBackup: () => void; aoImportar: () => void
   /** Abre a confirmação de zerar os dados. */
   aoZerar: () => void; aoSair: () => void
@@ -39,94 +70,141 @@ export function Configuracoes({ perfil, email, aoMudar, aoRefazer, aoCategorias,
   const [nome, setNome] = useState(perfil.nome)
   const { preferencia } = useTema()
   const movimento = useMovimento()
+  const nav = useRef<HTMLElement>(null)
+  const lente = useLente(nav, 'button.ativo', secao)
   const ligar = (m: Modulo, v: boolean) => aoMudar({ ...perfil, modulos: { ...perfil.modulos, [m]: v } })
   const alternarMoeda = (m: string) => {
     const moedas = perfil.moedas.includes(m) ? perfil.moedas.filter((x) => x !== m) : [...perfil.moedas, m]
     aoMudar({ ...perfil, moedas, modulos: { ...perfil.modulos, moedas: moedas.length > 0 } })
   }
+  const escolherPrincipal = (moeda: string) => {
+    const moedas = perfil.moedas.filter((x) => x !== moeda)
+    aoMudar({ ...perfil, moeda, moedas, modulos: { ...perfil.modulos, moedas: perfil.modulos.moedas && moedas.length > 0 } })
+  }
   const salvarNome = () => { if (nome.trim() !== perfil.nome) aoMudar({ ...perfil, nome: nome.trim() }) }
   const fechar = () => { salvarNome(); aoFechar() }
+  const iniciais = (nome.trim() || email).split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((x) => x[0]?.toUpperCase()).join('')
+  const info = SECOES.find((x) => x.id === secao)!
+  const trocarTema = (t: PreferenciaTema, e: React.MouseEvent) => definirTema(t, { x: e.clientX, y: e.clientY })
 
   return (
     <Modal titulo="Configurações" aoFechar={fechar} tamanho="grande">
       <div className="config">
-        <nav className="config-nav" aria-label="Seções">
-          {SECOES.map((x) => (
-            <button key={x.id} type="button" className={secao === x.id ? 'ativo' : ''} onClick={() => { salvarNome(); setSecao(x.id) }}>
-              <Icone nome={x.icone} tamanho={18} /><span>{x.nome}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="config-conteudo form">
+        <aside className="config-lado">
+          <div className="config-quem">
+            <span className="config-avatar">{iniciais || '?'}</span>
+            <span><strong>{nome.trim() || 'Você'}</strong><small>{email}</small></span>
+          </div>
+          <nav className="config-nav" aria-label="Seções" ref={nav}>
+            {lente && <span className="config-lente" aria-hidden="true" style={estiloLente(lente)} />}
+            {SECOES.map((x) => (
+              <button key={x.id} type="button" className={secao === x.id ? 'ativo' : ''} onClick={() => { salvarNome(); setSecao(x.id) }}>
+                <Icone nome={x.icone} tamanho={18} /><span>{x.nome}</span>
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        <div className="config-conteudo" key={secao}>
+          <header className="config-cab">
+            <h3>{info.nome}</h3>
+            <p>{info.sub}</p>
+          </header>
+
           {secao === 'perfil' && (
             <>
-              <h3>Perfil</h3>
-              <label className="campo">
-                <span className="campo-rotulo">Como quer ser chamado</span>
-                <input value={nome} onChange={(e) => setNome(e.target.value)} onBlur={salvarNome} placeholder="Seu nome ou apelido" maxLength={40} />
-              </label>
-              <label className="campo">
-                <span className="campo-rotulo">Moeda principal</span>
-                <select value={perfil.moeda} onChange={(e) => {
-                  const moeda = e.target.value
-                  const moedas = perfil.moedas.filter((x) => x !== moeda)
-                  aoMudar({ ...perfil, moeda, moedas, modulos: { ...perfil.modulos, moedas: perfil.modulos.moedas && moedas.length > 0 } })
-                }}>
-                  {MOEDAS.map((m) => <option key={m.codigo} value={m.codigo}>{m.bandeira} {m.nome} ({m.codigo})</option>)}
-                </select>
-                <span className="campo-ajuda">Os totais passam a aparecer nela. Valores já lançados não são convertidos.</span>
-              </label>
-              <div className="campo">
-                <span className="campo-rotulo">Outras moedas que você usa</span>
-                <div className="chips">
-                  {MOEDAS.filter((x) => x.codigo !== perfil.moeda).map((x) => (
-                    <button key={x.codigo} type="button" className={`chip ${perfil.moedas.includes(x.codigo) ? 'ativo' : ''}`} onClick={() => alternarMoeda(x.codigo)}>
-                      {x.bandeira}&nbsp;{x.nome}
+              <section className="cfg-cartao cfg-voce">
+                <span className="config-avatar grande">{iniciais || '?'}</span>
+                <label className="campo">
+                  <span className="campo-rotulo">Como quer ser chamado</span>
+                  <input value={nome} onChange={(e) => setNome(e.target.value)} onBlur={salvarNome} placeholder="Seu nome ou apelido" maxLength={40} />
+                </label>
+              </section>
+              <section className="cfg-bloco">
+                <h4>Moeda principal <small>todos os totais aparecem nela; o que já foi lançado não é convertido</small></h4>
+                <div className="cfg-moedas" role="radiogroup" aria-label="Moeda principal">
+                  {MOEDAS.map((m) => (
+                    <button key={m.codigo} type="button" role="radio" aria-checked={perfil.moeda === m.codigo}
+                      className={`cfg-moeda ${perfil.moeda === m.codigo ? 'ativo' : ''}`} onClick={() => escolherPrincipal(m.codigo)}>
+                      <Bandeira moeda={m.codigo} tamanho={34} />
+                      <span><strong>{m.codigo}</strong><small>{m.nome}</small></span>
+                      <i className="cfg-marca"><Icone nome="check" tamanho={12} /></i>
                     </button>
                   ))}
                 </div>
-              </div>
+              </section>
+              <section className="cfg-bloco">
+                <h4>Outras moedas que você usa <small>toque para ligar ou desligar; o painel mostra quanto valem na sua moeda</small></h4>
+                <div className="cfg-moedas" role="group" aria-label="Outras moedas">
+                  {MOEDAS.filter((x) => x.codigo !== perfil.moeda).map((m) => (
+                    <button key={m.codigo} type="button" role="checkbox" aria-checked={perfil.moedas.includes(m.codigo)}
+                      className={`cfg-moeda multipla ${perfil.moedas.includes(m.codigo) ? 'ativo' : ''}`} onClick={() => alternarMoeda(m.codigo)}>
+                      <Bandeira moeda={m.codigo} tamanho={34} />
+                      <span><strong>{m.codigo}</strong><small>{m.nome}</small></span>
+                      <i className="cfg-marca"><Icone nome="check" tamanho={12} /></i>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            </>
+          )}
+
+          {secao === 'aparencia' && (
+            <>
+              <section className="cfg-bloco">
+                <h4>Tema</h4>
+                <div className="cfg-escolhas tres" role="radiogroup" aria-label="Tema">
+                  {([['sistema', 'Automático', 'auto', 'Segue o seu aparelho'], ['claro', 'Claro', 'claro', 'Fundo claro, ótimo de dia'], ['escuro', 'Escuro', 'escuro', 'Descansa os olhos à noite']] as const).map(([id, rotulo, previa, texto]) => (
+                    <button key={id} type="button" role="radio" aria-checked={preferencia === id}
+                      className={`cfg-escolha ${preferencia === id ? 'ativo' : ''}`} onClick={(e) => trocarTema(id, e)}>
+                      <PreviaTema tema={previa} />
+                      <span className="cfg-escolha-texto"><strong>{rotulo}</strong><small>{texto}</small></span>
+                      <i className="cfg-marca"><Icone nome="check" tamanho={12} /></i>
+                    </button>
+                  ))}
+                </div>
+              </section>
+              <section className="cfg-bloco">
+                <h4>Animações</h4>
+                <div className="cfg-escolhas dois" role="radiogroup" aria-label="Animações">
+                  {([['completo', 'Completas', 'Blocos que surgem, números que contam e o tema que se espalha'], ['reduzido', 'Reduzidas', 'Tudo aparece direto, sem movimento']] as const).map(([id, rotulo, texto]) => (
+                    <button key={id} type="button" role="radio" aria-checked={movimento === id}
+                      className={`cfg-escolha ${movimento === id ? 'ativo' : ''}`} onClick={() => definirMovimento(id as Movimento)}>
+                      <span className={`previa-movimento ${id}`} aria-hidden="true"><i /><i /><i /><i /><i /></span>
+                      <span className="cfg-escolha-texto"><strong>{rotulo}</strong><small>{texto}</small></span>
+                      <i className="cfg-marca"><Icone nome="check" tamanho={12} /></i>
+                    </button>
+                  ))}
+                </div>
+              </section>
             </>
           )}
 
           {secao === 'painel' && (
             <>
-              <h3>Painel</h3>
-              <section className="campo">
-                <span className="campo-rotulo">O que aparece no seu painel</span>
-                <div className="lista-ajustes">
-                  <div className="ajuste fixo">
-                    <span className="ajuste-icone"><Icone nome="lista" /></span>
-                    <span className="ajuste-texto"><strong>Entradas e saídas</strong><small>Sempre ligado: é a base de tudo.</small></span>
-                  </div>
-                  {MODULOS.map((m) => (
-                    <div key={m.id} className="ajuste-grupo">
-                      <div className="ajuste">
-                        <span className="ajuste-icone"><Icone nome={m.icone} /></span>
-                        <span className="ajuste-texto"><strong>{m.nome}</strong><small>{m.descricao}</small></span>
-                        <Interruptor rotulo={m.nome} ligado={perfil.modulos[m.id]} aoMudar={(v) => ligar(m.id, v)} />
-                      </div>
-                    </div>
+              <section className="cfg-bloco">
+                <h4>Jeito de ver</h4>
+                <div className="cfg-escolhas tres" role="radiogroup" aria-label="Jeito de ver">
+                  {DETALHES.map((d) => (
+                    <button key={d.id} type="button" role="radio" aria-checked={perfil.detalhe === d.id}
+                      className={`cfg-escolha ${perfil.detalhe === d.id ? 'ativo' : ''}`} onClick={() => aoMudar({ ...perfil, detalhe: d.id })}>
+                      <PreviaDetalhe nivel={d.id} />
+                      <span className="cfg-escolha-texto"><strong>{d.nome}</strong><small>{d.descricao}</small></span>
+                      <i className="cfg-marca"><Icone nome="check" tamanho={12} /></i>
+                    </button>
                   ))}
                 </div>
               </section>
-              <section className="campo">
-                <span className="campo-rotulo">Aparência</span>
-                <Segmentado<PreferenciaTema> rotulo="Tema" valor={preferencia} aoMudar={(t) => definirTema(t)}
-                  opcoes={[{ id: 'sistema', nome: 'Automático' }, { id: 'claro', nome: 'Claro' }, { id: 'escuro', nome: 'Escuro' }]} />
-                <span className="campo-ajuda">Automático segue o claro ou escuro do seu aparelho.</span>
-              </section>
-              <section className="campo">
-                <span className="campo-rotulo">Animações</span>
-                <Segmentado<Movimento> rotulo="Animações" valor={movimento} aoMudar={definirMovimento}
-                  opcoes={[{ id: 'completo', nome: 'Completas' }, { id: 'reduzido', nome: 'Reduzidas' }]} />
-                <span className="campo-ajuda">Reduzidas tira os efeitos de entrada, a contagem dos números e a troca de tema animada.</span>
-              </section>
-              <section className="campo">
-                <span className="campo-rotulo">Jeito de ver</span>
-                <div className="opcoes">
-                  {DETALHES.map((d) => (
-                    <Opcao key={d.id} ativo={perfil.detalhe === d.id} aoClicar={() => aoMudar({ ...perfil, detalhe: d.id })} titulo={d.nome} texto={d.descricao} />
+              <section className="cfg-bloco">
+                <h4>O que aparece no seu painel <small>entradas e saídas estão sempre ligadas: são a base de tudo</small></h4>
+                <div className="cfg-modulos">
+                  {MODULOS.map((m) => (
+                    <div key={m.id} className={`cfg-modulo ${perfil.modulos[m.id] ? 'ligado' : ''}`}>
+                      <span className="cfg-modulo-icone"><Icone nome={m.icone} /></span>
+                      <Interruptor rotulo={m.nome} ligado={perfil.modulos[m.id]} aoMudar={(v) => ligar(m.id, v)} />
+                      <strong>{m.nome}</strong>
+                      <small>{m.descricao}</small>
+                    </div>
                   ))}
                 </div>
               </section>
@@ -134,33 +212,34 @@ export function Configuracoes({ perfil, email, aoMudar, aoRefazer, aoCategorias,
           )}
 
           {secao === 'categorias' && (
-            <>
-              <h3>Categorias</h3>
-              <Linha icone="lista" titulo="Editar categorias" texto="Crie as suas, renomeie, troque emoji e cor." aoClicar={aoCategorias} />
-            </>
+            <section className="cfg-cartao cfg-categorias">
+              <div className="cfg-selos">
+                {(categorias ?? []).slice(0, 18).map((c) => (
+                  <span key={c.id} className="cfg-selo" title={c.nome}><Selo c={c} tamanho={44} /><small>{c.nome}</small></span>
+                ))}
+              </div>
+              <button type="button" className="btn primario" onClick={aoCategorias}><Icone nome="ajustes" tamanho={16} /> Editar categorias</button>
+            </section>
           )}
 
           {secao === 'dados' && (
-            <>
-              <h3>Dados</h3>
-              <Linha icone="exportar" titulo="Baixar backup" texto="Um arquivo com todos os seus dados, para guardar com você." aoClicar={aoBackup} />
-              <Linha icone="importar" titulo="Importar planilha" texto="Traz os meses de uma planilha (.xlsx). Pede confirmação antes." aoClicar={aoImportar} />
-              <section className="campo zona-cuidado">
-                <span className="campo-rotulo">Começar de novo</span>
-                <Linha icone="lixeira" titulo="Zerar dados" texto="Escolha o que apagar: tudo, entradas, saídas, dívidas, cartões e mais. Pede confirmação." aoClicar={aoZerar} />
-              </section>
-            </>
+            <div className="cfg-acoes">
+              <CartaoAcao icone="exportar" titulo="Baixar backup" texto="Um arquivo com todos os seus dados, para guardar com você." aoClicar={aoBackup} />
+              <CartaoAcao icone="importar" titulo="Importar planilha" texto="Traz os meses de uma planilha (.xlsx). Pede confirmação antes." aoClicar={aoImportar} />
+              <CartaoAcao icone="lixeira" titulo="Zerar dados" texto="Escolha o que apagar: tudo, entradas, saídas, dívidas, cartões e mais." aoClicar={aoZerar} perigo />
+            </div>
           )}
 
           {secao === 'conta' && (
             <>
-              <h3>Conta</h3>
-              <div className="campo">
-                <span className="campo-rotulo">Você entrou como</span>
-                <strong className="config-email">{email || 'sem e-mail'}</strong>
+              <section className="cfg-cartao cfg-voce">
+                <span className="config-avatar grande">{iniciais || '?'}</span>
+                <span className="cfg-conta"><small>Você entrou como</small><strong className="config-email">{email || 'sem e-mail'}</strong></span>
+              </section>
+              <div className="cfg-acoes">
+                <CartaoAcao icone="ajustes" titulo="Refazer as perguntas" texto="Responda de novo as perguntas iniciais para reajustar o painel." aoClicar={aoRefazer} />
+                <CartaoAcao icone="sair" titulo="Sair" texto="Encerra a sessão neste aparelho." aoClicar={aoSair} />
               </div>
-              <Linha icone="ajustes" titulo="Refazer as perguntas" texto="Responda de novo as perguntas iniciais para reajustar o painel." aoClicar={aoRefazer} />
-              <Linha icone="sair" titulo="Sair" texto="Encerra a sessão neste aparelho." aoClicar={aoSair} />
             </>
           )}
         </div>

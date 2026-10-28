@@ -9,6 +9,7 @@ import type { Visao } from '../lib/perfil'
 import { fatiasDeGastos } from '../lib/categorias'
 import type { Banco, Caixa, Categoria, Detalhe, Lancamento, Tipo } from '../lib/types'
 import { Rosca } from './Graficos'
+import { IconeCategoria } from './IconeCategoria'
 import { Icone } from './Icone'
 import { ItemLancamento } from './ItemLancamento'
 import { Anel, Progresso, Segmentado } from './ui'
@@ -124,7 +125,7 @@ export function BlocoGastos({ r, anterior, categorias, nivel, mesAnterior, aoEdi
               return (
                 <li key={f.id}>
                   <span className="gasto-nome">
-                    <i className="marcador" style={{ background: f.cor }} />{f.icone}&nbsp;{f.nome}
+                    <span className="gasto-icone" style={{ color: f.cor }}><IconeCategoria emoji={f.icone} tamanho={15} /></span>{f.nome}
                     {dif !== null && Math.abs(dif) >= 0.1 && (
                       <span className={`chip-info ${dif > 0 ? 'ruim' : 'bom'}`} title={`${fmtPct(Math.abs(dif))} ${dif > 0 ? 'a mais' : 'a menos'} que em ${mesAnterior}`}>
                         <Icone nome={dif > 0 ? 'sobe' : 'desce'} tamanho={11} />{fmtPct(Math.abs(dif))}
@@ -270,7 +271,7 @@ export function BlocoMetas({ metas, taxas, nivel, aoAbrir }: { metas: SituacaoMe
       {metas.length > 0 && !ativas.length && <p className="quadro-vazio">Todas as metas batidas! 🎉 <button className="link" onClick={aoAbrir}>Criar outra</button></p>}
       {ativas.slice(0, limite).map((s) => (
         <button key={s.meta.id} className="meta-linha" onClick={aoAbrir} style={{ '--c': s.meta.cor } as React.CSSProperties}>
-          <span className="meta-linha-icone" aria-hidden="true">{s.meta.icone}</span>
+          <span className="meta-linha-icone" aria-hidden="true"><IconeCategoria emoji={s.meta.icone} tamanho={20} /></span>
           <span className="meta-linha-nome">{s.meta.nome}</span>
           <span className="meta-linha-pct">{Math.round(s.progresso * 100)}%</span>
           <span className="meta-linha-valor">
