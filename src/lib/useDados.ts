@@ -191,11 +191,11 @@ export function useDados(userId: string, ano: number) {
     return gravados
   }
   /** Troca a descrição de vários lançamentos ("Organizar nomes"). */
-  const renomearLancs = async (lista: { id: string; descricao: string }[]) => {
-    const nomes = new Map(lista.map((x) => [x.id, x.descricao]))
-    setLancs((xs) => xs.map((x) => (nomes.has(x.id) ? { ...x, descricao: nomes.get(x.id)! } : x)))
+  const renomearLancs = async (lista: { id: string; descricao: string; forma?: Lancamento['forma'] }[]) => {
+    const mudancas = new Map(lista.map((x) => [x.id, { descricao: x.descricao, ...(x.forma ? { forma: x.forma } : {}) }]))
+    setLancs((xs) => xs.map((x) => (mudancas.has(x.id) ? { ...x, ...mudancas.get(x.id)! } : x)))
     for (let i = 0; i < lista.length; i += 20) {
-      const res = await Promise.all(lista.slice(i, i + 20).map((x) => supabase.from('lancamentos').update({ descricao: x.descricao }).eq('id', x.id)))
+      const res = await Promise.all(lista.slice(i, i + 20).map((x) => gravar(() => supabase.from('lancamentos').update(paraBanco(mudancas.get(x.id)!)).eq('id', x.id))))
       const e = res.find((r) => r.error)?.error
       if (e) return falhou(e.message)
     }

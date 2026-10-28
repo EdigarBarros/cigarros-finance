@@ -1,7 +1,7 @@
-import { formaPelaDescricao } from '../lib/formas'
 import { useMemo, useRef, useState } from 'react'
 import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
 import { lerExtrato, limparDescricao, type LinhaExtrato } from '../lib/extrato'
+import { infoForma } from '../lib/formas'
 import { fmtValor, MESES_NOME } from '../lib/format'
 import { mesmoNome } from '../lib/rotulos'
 import { CATALOGO_BANCOS } from '../lib/bancos'
@@ -85,7 +85,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
     const n = await c.d.addLancs(escolhidas.map((l) => ({
       ano: Number(l.data.slice(0, 4)), mes: Number(l.data.slice(5, 7)), tipo: l.tipo, valor: l.valor,
       descricao: l.descricao.trim() || (l.tipo === 'entrada' ? 'Entrada' : 'Saída'), data: l.data,
-      categoria_id: l.categoria_id || null, banco_id: banco, divida_id: null, forma: formaPelaDescricao(l.descricao, l.tipo),
+      categoria_id: l.categoria_id || null, banco_id: banco, divida_id: null, forma: l.forma ?? null,
     })))
     setGravados(n)
     setEtapa('pronto')
@@ -176,6 +176,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
                     <small>
                       {l.revisar && <em><Icone nome="sino" tamanho={11} /> {l.revisar}</em>}
                       {l.repetido && <em className="rep">parece já lançado</em>}
+                      {l.forma && <em className="forma">{infoForma(l.forma).nome}</em>}
                       {l.original && l.original !== l.descricao && <span title={l.original}>era: {l.original}</span>}
                     </small>
                   </span>
@@ -240,7 +241,7 @@ export function OrganizarNomes({ c, aoFechar }: { c: Ctx; aoFechar: () => void }
     return [...m.values()].map((g) => {
       const r = limparDescricao(g.original, g.tipo)
       const semNome = Boolean(r.revisar && /sem nome|sem descri/.test(r.revisar))
-      return { ...g, sugestao: semNome ? '' : r.descricao, revisar: r.revisar, semNome }
+      return { ...g, sugestao: semNome ? '' : r.descricao, revisar: r.revisar, semNome, forma: r.forma }
     }).filter((g) => g.semNome || (g.sugestao && g.sugestao !== g.original))
       .sort((a, b) => Number(b.semNome) - Number(a.semNome) || b.ids.length - a.ids.length)
   }, [c.d.lancs])
@@ -251,7 +252,9 @@ export function OrganizarNomes({ c, aoFechar }: { c: Ctx; aoFechar: () => void }
   const total = aplicaveis.reduce((a, g) => a + g.ids.length, 0)
 
   const aplicar = async () => {
-    await c.d.renomearLancs(aplicaveis.flatMap((g) => g.ids.map((id) => ({ id, descricao: nomes[g.original + g.tipo].trim() }))))
+    // o "Pix" que sai do nome vai para a forma de pagamento (sem sobrescrever uma forma que a pessoa já tenha escolhido)
+    const sem = new Set(c.d.lancs.filter((l) => !l.forma && !l.cartao_id).map((l) => l.id))
+    await c.d.renomearLancs(aplicaveis.flatMap((g) => g.ids.map((id) => ({ id, descricao: nomes[g.original + g.tipo].trim(), forma: g.forma && sem.has(id) ? g.forma : undefined }))))
     setFeito(total)
   }
 
