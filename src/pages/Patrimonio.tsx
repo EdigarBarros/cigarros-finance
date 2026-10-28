@@ -8,14 +8,28 @@ import { mesmoNome, NOME_TIPO_CAIXA } from '../lib/rotulos'
 import { TIPOS_CAIXA, type Banco, type TipoCaixa } from '../lib/types'
 import { Icone } from '../components/Icone'
 import { ItemLancamento } from '../components/ItemLancamento'
-import { CampoValor, Cartao, Kpi, Modal, Vazio } from '../components/ui'
+import { BancoIcone } from '../components/BancoIcone'
+import { Bandeira } from '../components/Bandeira'
+import { CartaoIlustrado } from '../components/CartaoIlustrado'
+import { Numero } from '../components/Numero'
+import { Anel, CampoValor, Cartao, Faisca, Kpi, Modal, Vazio } from '../components/ui'
 import type { Ctx } from './contexto'
 
 const SEM_BANCO = 'sem'
 const semAcento = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 const contem = (nome: string, busca: string) => semAcento(nome).includes(semAcento(busca.trim()))
 
-/** Meu dinheiro: cada banco (com detalhe individual), investimentos e outras moedas, conforme os módulos ligados. */
+const ICONE_TIPO: Record<TipoCaixa, string> = { cc: 'carteira', caixinha: 'cofre', reserva: 'escudo' }
+const COR_TIPO: Record<TipoCaixa, string> = { cc: COR.caixa, caixinha: COR.entradas, reserva: COR.divida }
+const TEXTO_TIPO: Record<TipoCaixa, string> = {
+  cc: 'para o dia a dia', caixinha: 'rendendo, pode tirar quando quiser', reserva: 'só para imprevistos',
+}
+
+/**
+ * Dinheiro guardado: o patrimônio do mês (bancos, investimentos e outras moedas) com a composição e a evolução, quantos
+ * meses a reserva cobre, cada banco com o selo e a divisão conta/caixinha/reserva (toque para ver só ele) e os campos
+ * para atualizar os saldos. Caixinha ligada a um cartão mostra o limite que ela garante.
+ */
 export function Patrimonio(c: Ctx) {
   const { v } = c
   const [aberto, setAberto] = useState<string | null>(c.bancoAberto)
@@ -33,6 +47,8 @@ export function Patrimonio(c: Ctx) {
   const lancsDe = (id: string) =>
     c.lancsMes.filter((l) => (id === SEM_BANCO ? !l.banco_id || !bancos.some((b) => b.id === l.banco_id) : l.banco_id === id))
   const soma = (ls: typeof c.lancsMes, t: 'entrada' | 'saida') => ls.filter((l) => l.tipo === t).reduce((a, l) => a + l.valor, 0)
+  // Caixinha que vira limite de cartão (limite garantido ligado à caixinha do banco).
+  const garantias = (bancoId: string) => c.cartoes.cartoes.filter((k) => k.ativo && k.garantia_caixinha && k.banco_id === bancoId)
 
   const faixaHerdado = herdado && (
     <div className="faixa-herdado">
@@ -49,32 +65,55 @@ export function Patrimonio(c: Ctx) {
     const sai = soma(ls, 'saida')
     const nome = banco?.nome ?? 'Sem banco'
     const cor = banco?.cor ?? '#55555f'
+    const cartoesDoBanco = banco ? c.cartoes.cartoes.filter((k) => k.ativo && k.banco_id === banco.id) : []
     return (
-      <div className="pagina">
+      <div className="pagina pg-guardado" style={{ '--c': cor } as React.CSSProperties}>
         <header className="pagina-topo">
           <div>
             <button className="link voltar" onClick={() => setAberto(null)}><Icone nome="esq" tamanho={16} /> Todos os bancos</button>
-            <h1><i className="marcador grande" style={{ background: cor }} />{nome}</h1>
+            <h1 className="gd-titulo-banco">{banco ? <BancoIcone nome={banco.nome} cor={banco.cor} tamanho={40} /> : <span className="gd-sem-banco"><Icone nome="carteira" tamanho={22} /></span>}{nome}</h1>
             <p className="sub">{MESES_NOME[c.mes - 1]} de {c.ano}</p>
           </div>
-          {banco && <button className="btn" onClick={() => setGerenciar(banco)}>Editar banco</button>}
+          {banco && <button className="btn" onClick={() => setGerenciar(banco)}><Icone nome="lapis" tamanho={15} /> Editar banco</button>}
         </header>
         <div className="kpis">
-          {banco && <Kpi rotulo="Saldo guardado" valor={caixaDoBanco(caixa, banco.id)} cor={cor} />}
-          <Kpi rotulo="Entrou" valor={ent} cor={COR.entradas} />
-          <Kpi rotulo="Saiu" valor={sai} cor={COR.saidas} />
-          <Kpi rotulo="Sobrou no mês" valor={ent - sai} cor={COR.fluxo} />
+          {banco && <Kpi rotulo="Guardado" valor={caixaDoBanco(caixa, banco.id)} cor={cor} icone="carteira" />}
+          <Kpi rotulo="Entrou" valor={ent} cor={COR.entradas} icone="receber" />
+          <Kpi rotulo="Saiu" valor={sai} cor={COR.saidas} icone="enviar" />
+          <Kpi rotulo="Sobrou no mês" valor={ent - sai} cor={COR.fluxo} icone="investir" />
         </div>
         {banco && (
           <>
             {faixaHerdado}
-            <Cartao titulo="Saldo guardado">
-              <div className="campos campos-linha">
-                {TIPOS_CAIXA.map((t) => (
-                  <CampoValor key={t} rotulo={NOME_TIPO_CAIXA[t]} valor={caixa[banco.id]?.[t] ?? 0} aoSalvar={(v) => salvarCaixa(banco.id, t, v)} />
-                ))}
-              </div>
-            </Cartao>
+            <section className="gd-tipos">
+              {TIPOS_CAIXA.map((t, i) => (
+                <div key={t} className="cartao gd-tipo" style={{ '--t': COR_TIPO[t], animationDelay: `${i * 70}ms` } as React.CSSProperties}>
+                  <span className="gd-tipo-icone"><Icone nome={ICONE_TIPO[t]} tamanho={22} /></span>
+                  <span className="gd-tipo-texto"><strong>{NOME_TIPO_CAIXA[t]}</strong><small>{TEXTO_TIPO[t]}</small></span>
+                  <CampoValor rotulo={`Quanto tem em ${NOME_TIPO_CAIXA[t].toLowerCase()}`} valor={caixa[banco.id]?.[t] ?? 0} prefixo={simbolo()}
+                    aoSalvar={(n) => salvarCaixa(banco.id, t, n)} />
+                  {t === 'caixinha' && garantias(banco.id).map((k) => (
+                    <span key={k.id} className="chip-info bom"><Icone nome="escudo" tamanho={12} /> vira limite no {k.nome}</span>
+                  ))}
+                </div>
+              ))}
+            </section>
+            {cartoesDoBanco.length > 0 && (
+              <section className="cartao gd-cartoes-banco">
+                <h3 className="ccd-titulo">Cartões deste banco</h3>
+                <div className="gd-cartoes-lista">
+                  {cartoesDoBanco.map((k) => {
+                    const f = c.faturas.find((x) => x.cartao.id === k.id)
+                    return (
+                      <button key={k.id} className="gd-cartao-mini" onClick={() => c.irPara('cartoes')}>
+                        <CartaoIlustrado nome={k.nome} cor={k.cor} banco={banco.nome} compacto
+                          conteudo={f ? <span className="cc-plastico-fatura"><small>fatura</small><b>{fmtValor(f.valor)}</b></span> : undefined} />
+                      </button>
+                    )
+                  })}
+                </div>
+              </section>
+            )}
           </>
         )}
         <Cartao titulo={`Lançamentos (${ls.length})`}>
@@ -91,94 +130,172 @@ export function Patrimonio(c: Ctx) {
     )
   }
 
-  // ---------- todos os bancos ----------
+  // ---------- visão geral ----------
   const semBanco = lancsDe(SEM_BANCO)
-  const cartoes = [
+  const porTipo = Object.fromEntries(TIPOS_CAIXA.map((t) => [t, bancos.reduce((a, b) => a + (caixa[b.id]?.[t] ?? 0), 0)])) as Record<TipoCaixa, number>
+  const investido = v.investimentos ? c.r.investimentos : 0
+  const emMoedas = v.moedas ? c.r.moedasConvertido : 0
+  const emBancos = v.bancos ? somaCaixa(caixa) : 0
+  const total = emBancos + investido + emMoedas
+  const valorDe = (x: NonNullable<Ctx['porMes'][number]>) => (v.bancos ? x.caixa : 0) + (v.investimentos ? x.investimentos : 0) + (v.moedas ? x.moedasConvertido : 0)
+  const anterior = c.anterior ? valorDe(c.anterior) : 0
+  const janela = Array.from({ length: Math.min(6, c.mes) }, (_, i) => c.mes - Math.min(6, c.mes) + i + 1)
+  const tendencia = { valores: janela.map((m) => { const x = c.porMes[m - 1]; return x ? valorDe(x) : null }), meses: janela.map((m) => MESES_CURTO[m - 1]) }
+  const partes = [
+    ...(v.bancos ? TIPOS_CAIXA.map((t) => ({ id: t, nome: NOME_TIPO_CAIXA[t], valor: porTipo[t], cor: COR_TIPO[t] })) : []),
+    ...(v.investimentos ? [{ id: 'inv', nome: 'Investimentos', valor: investido, cor: COR.investimentos }] : []),
+    ...(v.moedas ? [{ id: 'moedas', nome: 'Outras moedas', valor: emMoedas, cor: COR.usd }] : []),
+  ].filter((p) => p.valor > 0)
+  // Reserva de emergência: quantos meses de gastos ela cobre (média das saídas dos meses com dados).
+  const comDados = c.porMes.filter((r) => r && r.saidas > 0)
+  const gastoMedio = comDados.length ? comDados.reduce((a, r) => a + r!.saidas, 0) / comDados.length : 0
+  const reserva = porTipo.reserva
+  const mesesReserva = gastoMedio > 0 ? reserva / gastoMedio : 0
+  const cartoesBanco = [
     ...bancos.map((b) => ({ id: b.id, nome: b.nome, cor: b.cor, guardado: caixaDoBanco(caixa, b.id), ls: lancsDe(b.id) })),
-    ...(semBanco.length ? [{ id: SEM_BANCO, nome: 'Sem banco', cor: '#55555f', guardado: null as number | null, ls: semBanco }] : []),
+    ...(semBanco.length ? [{ id: SEM_BANCO, nome: 'Sem banco', cor: '#6b7a99', guardado: null as number | null, ls: semBanco }] : []),
   ]
 
   return (
-    <div className="pagina">
+    <div className="pagina pg-guardado">
       <header className="pagina-topo">
         <div>
           <h1>Dinheiro guardado</h1>
-          <p className="sub">
-            Como está em {MESES_NOME[c.mes - 1].toLowerCase()} de {c.ano}.{v.bancos && ' Toque num banco para ver só ele.'}
-          </p>
+          <p className="sub">Como está em {MESES_NOME[c.mes - 1].toLowerCase()} de {c.ano}.{v.bancos && ' Toque num banco para ver só ele.'}</p>
         </div>
         {v.bancos && <button className="btn primario" onClick={() => setGerenciar('novo')}><Icone nome="mais" tamanho={16} /> Adicionar banco</button>}
       </header>
 
-      {v.bancos && <>
-      <div className="kpis">
-        <Kpi rotulo="Total guardado" valor={somaCaixa(caixa)} cor={COR.caixa}
-          delta={c.anterior?.caixa ? (c.r.caixa - c.anterior.caixa) / c.anterior.caixa : null} contra={c.mes > 1 ? `em ${MESES_CURTO[c.mes - 2].toLowerCase()}` : undefined} />
-        {TIPOS_CAIXA.map((t) => (
-          <Kpi key={t} rotulo={NOME_TIPO_CAIXA[t]} valor={bancos.reduce((a, b) => a + (caixa[b.id]?.[t] ?? 0), 0)} cor={COR.caixa} />
-        ))}
-      </div>
+      <section className="gd-topo">
+        <div className="cartao gd-total">
+          <span className="gd-total-cab">
+            <span className="gd-total-icone"><Icone nome="carteira" tamanho={22} /></span>
+            <span><small>tudo o que você tem</small><strong><Numero valor={total} formato={fmtValor} /></strong></span>
+            {tendencia.valores.filter((x) => x !== null).length > 1 && <span className="gd-faisca"><Faisca {...tendencia} cor={COR.caixa} /></span>}
+          </span>
+          {anterior > 0 && Math.abs(total - anterior) < 0.01 && <span className="chip-info">igual a {MESES_CURTO[c.mes - 2].toLowerCase()}</span>}
+          {anterior > 0 && Math.abs(total - anterior) >= 0.01 && (
+            <span className={`chip-info ${total > anterior ? 'bom' : 'ruim'}`}>
+              <Icone nome={total > anterior ? 'sobe' : 'desce'} tamanho={12} />
+              {fmtValor(Math.abs(total - anterior))} {total > anterior ? 'a mais' : 'a menos'} que em {MESES_CURTO[c.mes - 2].toLowerCase()}
+            </span>
+          )}
+          {partes.length > 0 ? (
+            <>
+              <span className="gd-composicao" aria-hidden="true">
+                {partes.map((p, i) => <i key={p.id} style={{ flexGrow: p.valor, background: p.cor, animationDelay: `${200 + i * 90}ms` }} />)}
+              </span>
+              <ul className="gd-legenda">
+                {partes.map((p) => (
+                  <li key={p.id}><i style={{ background: p.cor }} />{p.nome}<b>{fmtValor(p.valor)}</b><small>{total ? Math.round((p.valor / total) * 100) : 0}%</small></li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="quadro-vazio">Atualize os saldos abaixo para ver tudo junto aqui.</p>
+          )}
+        </div>
+        {v.bancos && (
+          <div className="cartao gd-reserva">
+            <h3 className="ccd-titulo"><Icone nome="escudo" tamanho={18} /> Reserva de emergência</h3>
+            <div className="gd-reserva-corpo">
+              <Anel valor={Math.min(1, mesesReserva / 6)} cor={mesesReserva >= 6 ? COR.entradas : mesesReserva >= 3 ? COR.caixa : COR.divida} tamanho={104}>
+                <span className="gd-reserva-meses"><b>{mesesReserva >= 10 ? Math.round(mesesReserva) : mesesReserva.toFixed(1).replace('.', ',')}</b><small>meses</small></span>
+              </Anel>
+              <span className="gd-reserva-texto">
+                <span>{reserva > 0
+                  ? <>Sua reserva de <b>{fmtValor(reserva)}</b> cobre {mesesReserva >= 6 ? 'mais de ' : ''}<b>{mesesReserva.toFixed(1).replace('.', ',')} meses</b> do que você gasta.</>
+                  : <>Marque em cada banco quanto é <b>reserva</b>: o app mostra quantos meses de gastos ela cobre.</>}</span>
+                <small>{gastoMedio > 0 ? `O ideal são 6 meses: ${fmtValor(gastoMedio * 6)}.` : 'Lance seus gastos para o app calcular.'}</small>
+                {v.metas && reserva < gastoMedio * 6 && gastoMedio > 0 && (
+                  <button className="link" onClick={() => c.irPara('metas')}>Criar meta para a reserva <Icone nome="seta" tamanho={14} /></button>
+                )}
+              </span>
+            </div>
+          </div>
+        )}
+      </section>
 
-      {faixaHerdado}
+      {v.bancos && faixaHerdado}
 
-      {!bancos.length && (
-        <Cartao>
-          <Vazio>
-            Você ainda não adicionou bancos. Eles são opcionais: servem para ver cada banco separado e guardar o saldo de cada um.<br />
-            <button className="link" onClick={() => setGerenciar('novo')}>Adicionar o primeiro banco</button>
-          </Vazio>
-        </Cartao>
+      {v.bancos && !bancos.length && (
+        <section className="cartao gd-vazio">
+          <span className="gd-vazio-selos" aria-hidden="true">
+            {['Nubank', 'Itaú', 'PicPay', 'Inter'].map((n, i) => <BancoIcone key={n} nome={n} tamanho={46 + (i % 2) * 8} />)}
+          </span>
+          <h2>Separe por banco</h2>
+          <p>Bancos são opcionais: servem para ver cada um separado e guardar quanto tem em conta, caixinha e reserva.</p>
+          <button className="btn primario" onClick={() => setGerenciar('novo')}><Icone nome="mais" tamanho={16} /> Adicionar o primeiro banco</button>
+        </section>
       )}
 
-      <div className="grade-bancos">
-        {cartoes.map((x) => {
-          const ent = soma(x.ls, 'entrada')
-          const sai = soma(x.ls, 'saida')
-          return (
-            <button key={x.id} className="cartao banco-cartao" style={{ '--c': x.cor } as React.CSSProperties} onClick={() => setAberto(x.id)}>
-              <span className="banco-cartao-nome"><i className="marcador" />{x.nome}</span>
-              <strong className="banco-cartao-saldo">{x.guardado === null ? `${x.ls.length} lançamentos` : fmtValor(x.guardado)}</strong>
-              <span className="banco-cartao-rot">{x.guardado === null ? 'sem banco definido' : 'guardado'}</span>
-              <span className="banco-cartao-mov">
-                <span style={{ color: COR.entradas }}>+{fmtValor(ent)}</span>
-                <span style={{ color: COR.saidas }}>−{fmtValor(sai)}</span>
-              </span>
-            </button>
-          )
-        })}
-      </div>
-      </>}
+      {v.bancos && cartoesBanco.length > 0 && (
+        <div className="gd-bancos">
+          {cartoesBanco.map((x, i) => {
+            const ent = soma(x.ls, 'entrada')
+            const sai = soma(x.ls, 'saida')
+            const gar = x.id !== SEM_BANCO ? garantias(x.id) : []
+            return (
+              <button key={x.id} className="cartao gd-banco" style={{ '--c': x.cor, animationDelay: `${Math.min(i, 8) * 60}ms` } as React.CSSProperties} onClick={() => setAberto(x.id)}>
+                <span className="gd-banco-cab">
+                  {x.id === SEM_BANCO ? <span className="gd-sem-banco"><Icone nome="carteira" tamanho={20} /></span> : <BancoIcone nome={x.nome} cor={x.cor} tamanho={38} />}
+                  <strong>{x.nome}</strong>
+                  <Icone nome="dir" tamanho={16} />
+                </span>
+                <span className="gd-banco-saldo">
+                  <small>{x.guardado === null ? 'sem banco definido' : 'guardado'}</small>
+                  <b>{x.guardado === null ? `${x.ls.length} lançamentos` : <Numero valor={x.guardado} formato={fmtValor} />}</b>
+                </span>
+                {x.guardado !== null && x.guardado > 0 && (
+                  <span className="gd-banco-barra" aria-hidden="true">
+                    {TIPOS_CAIXA.map((t) => (caixa[x.id]?.[t] ?? 0) > 0 && <i key={t} style={{ flexGrow: caixa[x.id]?.[t] ?? 0, background: COR_TIPO[t] }} title={NOME_TIPO_CAIXA[t]} />)}
+                  </span>
+                )}
+                {gar.length > 0 && <span className="chip-info bom"><Icone nome="escudo" tamanho={12} /> caixinha vira limite no {gar.map((k) => k.nome).join(', ')}</span>}
+                <span className="gd-banco-mov">
+                  <span><Icone nome="receber" tamanho={14} /> {fmtValor(ent)}</span>
+                  <span><Icone nome="enviar" tamanho={14} /> {fmtValor(sai)}</span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {(v.investimentos || v.moedas) && (
-        <div className="grade-cartoes">
+        <div className="gd-extras">
           {v.investimentos && (
-            <Cartao titulo={<><i className="marcador" style={{ background: COR.investimentos }} />Investimentos</>}>
-              <div className="campos">
-                <CampoValor rotulo="Quanto você tem investido neste mês" prefixo={simbolo()} valor={c.r.investimentos}
-                  aoSalvar={(investimentos) => c.d.salvarMes(c.ano, c.mes, { investimentos })} />
-              </div>
+            <section className="cartao gd-extra" style={{ '--c': COR.investimentos } as React.CSSProperties}>
+              <h3 className="ccd-titulo"><span className="gd-extra-icone"><Icone nome="investir" tamanho={18} /></span> Investimentos</h3>
+              <CampoValor rotulo="Quanto você tem investido neste mês" prefixo={simbolo()} valor={c.r.investimentos}
+                aoSalvar={(investimentos) => c.d.salvarMes(c.ano, c.mes, { investimentos })} />
+              {(() => {
+                const serie = { valores: janela.map((m) => c.porMes[m - 1]?.investimentos ?? null), meses: janela.map((m) => MESES_CURTO[m - 1]) }
+                return serie.valores.filter((x) => x).length > 1 ? <span className="gd-extra-faisca"><Faisca {...serie} cor={COR.investimentos} /></span> : null
+              })()}
               <p className="dica">Aceita contas: <code>=1500+320</code></p>
-            </Cartao>
+            </section>
           )}
           {v.moedas && (
-            <Cartao titulo={<><i className="marcador" style={{ background: COR.usd }} />Outras moedas</>}
-              acao={<strong>≈ {fmtValor(c.r.moedasConvertido)}</strong>}>
-              <div className="campos">
+            <section className="cartao gd-extra" style={{ '--c': COR.usd } as React.CSSProperties}>
+              <h3 className="ccd-titulo"><span className="gd-extra-icone"><Icone nome="globo" tamanho={18} /></span> Outras moedas <small>≈ {fmtValor(c.r.moedasConvertido)}</small></h3>
+              <ul className="gd-moedas">
                 {c.perfil.moedas.map((m) => {
                   const conv = converter(c.mesEf.moedas[m] ?? 0, m, c.taxas)
                   return (
-                    <div key={m} className="campo">
-                      <CampoValor rotulo={`${infoMoeda(m).bandeira} ${infoMoeda(m).nome}`} prefixo={simbolo(m)} valor={c.mesEf.moedas[m] ?? 0}
-                        aoSalvar={(valor) => salvarMoeda(m, valor)} />
-                      <span className="campo-ajuda">
-                        {conv === null ? 'Sem cotação agora.' : `≈ ${fmtValor(conv)} · 1 ${m} = ${fmtValor(c.taxas[m])} hoje`}
+                    <li key={m}>
+                      <Bandeira moeda={m} tamanho={34} />
+                      <CampoValor rotulo={infoMoeda(m).nome} prefixo={simbolo(m)} valor={c.mesEf.moedas[m] ?? 0} aoSalvar={(valor) => salvarMoeda(m, valor)} />
+                      <span className="gd-moeda-conv">
+                        <b>{conv === null ? '—' : `≈ ${fmtValor(conv)}`}</b>
+                        <small>{c.taxas[m] ? `1 ${m} = ${fmtValor(c.taxas[m])}` : 'sem cotação agora'}</small>
                       </span>
-                    </div>
+                    </li>
                   )
                 })}
-              </div>
+              </ul>
               <p className="dica">Cotação do dia por <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer">ExchangeRate-API</a>. Para mudar as moedas, use <button className="link" onClick={c.personalizar}>Configurações</button>.</p>
-            </Cartao>
+            </section>
           )}
         </div>
       )}
@@ -214,19 +331,22 @@ function FormBanco({ c, banco, aoFechar, aoExcluir }: { c: Ctx; banco?: Banco; a
           <div className="campo">
             <span className="campo-rotulo">Qual é o banco?</span>
             <input type="search" value={busca} placeholder="Buscar banco…" onChange={(e) => setBusca(e.target.value)} />
-            <div className="chips" style={{ maxHeight: 190, overflowY: 'auto' }}>
+            <div className="cc-sugestoes gd-escolha-banco">
               {lista.map((b) => {
                 const tem = repetido(b.nome)
                 return (
                   <button key={b.nome} type="button" disabled={tem} title={tem ? 'Você já cadastrou este banco' : undefined}
-                    className={`chip ${!outro && nome === b.nome ? 'ativo' : ''}`} style={{ '--c': b.cor, opacity: tem ? 0.4 : 1 } as React.CSSProperties}
+                    className={`cc-sugestao ${!outro && nome === b.nome ? 'ativo' : ''}`}
                     onClick={() => { setOutro(false); setNome(b.nome); setCor(b.cor); setErro('') }}>
-                    <i className="marcador" style={{ background: b.cor }} />{b.nome}
+                    <BancoIcone nome={b.nome} cor={b.cor} tamanho={30} />
+                    <span>{b.nome}</span>
                   </button>
                 )
               })}
-              <button type="button" className={`chip novo ${outro ? 'ativo' : ''}`}
-                onClick={() => { setOutro(true); setNome(''); setErro('') }}>+ Outro banco</button>
+              <button type="button" className={`cc-sugestao ${outro ? 'ativo' : ''}`}
+                onClick={() => { setOutro(true); setNome(''); setErro('') }}>
+                <span className="gd-sem-banco"><Icone nome="mais" tamanho={16} /></span><span>Outro banco</span>
+              </button>
             </div>
           </div>
         )}

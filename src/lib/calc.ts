@@ -21,7 +21,7 @@ export interface MesEfetivo extends Mes {
 const temMoedas = (m: Record<string, number>) => Object.values(m).some((v) => v > 0)
 
 /**
- * Caixa, outras moedas e meta passam de um mês para o outro até você atualizar.
+ * Caixa, investimentos, outras moedas e meta passam de um mês para o outro até você atualizar.
  * Só herda até o mês atual do calendário, para meses futuros não parecerem preenchidos.
  */
 export function mesEfetivo(meses: Mes[], ano: number, mes: number, hoje = new Date()): MesEfetivo {
@@ -49,8 +49,17 @@ export function mesEfetivo(meses: Mes[], ano: number, mes: number, hoje = new Da
       herdadoDe ??= [m.ano, m.mes]
     }
   }
+  // investimento que você não atualizou continua lá (senão o patrimônio parece cair a zero no mês novo)
+  let investimentos = base.investimentos
+  if (podeHerdar && !investimentos) {
+    const m = ultimoCom((x) => x.investimentos > 0)
+    if (m) {
+      investimentos = m.investimentos
+      herdadoDe ??= [m.ano, m.mes]
+    }
+  }
   const meta = base.meta_usd || ultimoCom((x) => x.meta_usd > 0)?.meta_usd || 0
-  return { ...base, caixa, moedas, meta_usd: meta, herdadoDe }
+  return { ...base, caixa, moedas, investimentos, meta_usd: meta, herdadoDe }
 }
 
 /** Os números do quadro de resumo de cada mês. */

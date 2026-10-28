@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { COR } from '../lib/charts'
-import { fmtDataCurta, fmtMoeda, fmtValor, MESES_NOME, parseNumero, paraCampo, simbolo } from '../lib/format'
+import { fmtDataLonga, fmtMoeda, fmtValor, MESES_NOME, parseNumero, paraCampo, simbolo } from '../lib/format'
 import { situacaoMeta, MODELOS, type SituacaoMeta } from '../lib/metas'
 import { converter, MOEDAS } from '../lib/moedas'
 import type { Meta } from '../lib/types'
 import { Icone } from '../components/Icone'
-import { Cartao, Kpi, Modal, Progresso, Segmentado, Vazio } from '../components/ui'
+import { Numero } from '../components/Numero'
+import { PoteMeta } from '../components/PoteMeta'
+import { Anel, Cartao, Modal, Segmentado, Vazio } from '../components/ui'
 import type { Ctx } from './contexto'
 import { IconeCategoria } from '../components/IconeCategoria'
 
@@ -14,25 +16,44 @@ const CORES_META = ['#9d6bff', '#30d158', '#64d2ff', '#0a84ff', '#ff9f0a', '#ffd
 const quando = ([a, m]: [number, number]) => `${MESES_NOME[m - 1].toLowerCase()} de ${a}`
 const hoje = () => new Date().toISOString().slice(0, 10)
 
-/** Metas para qualquer objetivo: quanto falta, quanto guardar por mês e quando a pessoa chega lá. */
+const mesAno = (iso: string) => quando([Number(iso.slice(0, 4)), Number(iso.slice(5, 7))])
+
+/** Situação da meta em uma palavra, para o selo do cartão. */
+function estadoMeta(s: SituacaoMeta) {
+  if (s.batida) return { id: 'batida', texto: 'Batida 🎉' }
+  if (s.atrasada) return { id: 'atrasada', texto: 'Prazo passou' }
+  if (s.porMesNoPrazo !== null && s.ritmo !== null) return s.ritmo >= s.porMesNoPrazo - 0.01 ? { id: 'em_dia', texto: 'No ritmo' } : { id: 'devagar', texto: 'Abaixo do ritmo' }
+  if (!s.guardado) return { id: 'nova', texto: 'Começando' }
+  return { id: 'livre', texto: 'Sem prazo' }
+}
+
+/**
+ * Metas para qualquer objetivo: cada uma é um pote que enche conforme você guarda, com quanto guardar por mês para
+ * chegar no prazo e quando chega no ritmo atual. A sobra do mês aberto vira um atalho para guardar numa meta.
+ */
 export function Metas(c: Ctx) {
   const [editando, setEditando] = useState<Meta | 'nova' | null>(null)
   const [modelo, setModelo] = useState<Partial<Meta> | undefined>()
-  const [movendo, setMovendo] = useState<{ meta: Meta; retirar: boolean } | null>(null)
+  const [movendo, setMovendo] = useState<{ meta: Meta; retirar: boolean; valor?: number } | null>(null)
+  const [aberta, setAberta] = useState<string | null>(null)
   const sits = c.d.metas.map((m) => situacaoMeta(m, c.d.movimentosMeta))
   const ativas = sits.filter((s) => !s.batida)
   const batidas = sits.filter((s) => s.batida)
   const naPrincipal = (valor: number, moeda: string) => converter(valor, moeda, c.taxas) ?? 0
   const guardado = sits.reduce((a, s) => a + naPrincipal(s.guardado, s.meta.moeda), 0)
+  const alvoTotal = sits.reduce((a, s) => a + naPrincipal(s.meta.alvo, s.meta.moeda), 0)
   const falta = ativas.reduce((a, s) => a + naPrincipal(s.falta, s.meta.moeda), 0)
   const porMes = ativas.reduce((a, s) => a + naPrincipal(s.porMesNoPrazo ?? 0, s.meta.moeda), 0)
   // Para a reserva de emergência: média do que saiu nos meses com dados.
   const comDados = c.porMes.filter((r) => r && r.saidas > 0)
   const gastoMedio = comDados.length ? comDados.reduce((a, r) => a + r!.saidas, 0) / comDados.length : 0
+  const sobra = Math.max(0, c.r.fluxo)
+  const aberto = sits.find((s) => s.meta.id === aberta)
   const novaDoModelo = (m: (typeof MODELOS)[number]) => {
     setModelo({ nome: m.nome, icone: m.icone, cor: m.cor, alvo: m.reserva && gastoMedio ? Math.round(gastoMedio * 6) : undefined })
     setEditando('nova')
   }
+  const guardar = (meta: Meta, valor?: number) => setMovendo({ meta, retirar: false, valor })
 
   if (c.d.metasSemTabela) {
     return (
@@ -43,52 +64,98 @@ export function Metas(c: Ctx) {
     )
   }
 
+  const modelos = (
+    <div className="mt-modelos">
+      {MODELOS.map((m, i) => (
+        <button key={m.nome} type="button" className="mt-modelo" style={{ '--c': m.cor, animationDelay: `${i * 50}ms` } as React.CSSProperties} onClick={() => novaDoModelo(m)}>
+          <span className="mt-modelo-icone"><IconeCategoria emoji={m.icone} tamanho={22} /></span>
+          <strong>{m.nome}</strong>
+          <small>{m.reserva && gastoMedio ? `${fmtValor(Math.round(gastoMedio * 6))} = 6 meses de gastos` : m.dica}</small>
+        </button>
+      ))}
+      <button type="button" className="mt-modelo" style={{ '--c': '#9d6bff' } as React.CSSProperties} onClick={() => { setModelo(undefined); setEditando('nova') }}>
+        <span className="mt-modelo-icone"><IconeCategoria emoji="🎯" tamanho={22} /></span>
+        <strong>Outro objetivo</strong>
+        <small>do seu jeito</small>
+      </button>
+    </div>
+  )
+
   return (
-    <div className="pagina">
+    <div className="pagina pg-metas">
       <header className="pagina-topo">
         <div>
           <h1>Metas</h1>
-          <p className="sub">Junte dinheiro para o que importa. Cada meta mostra quanto guardar por mês e quando você chega lá.</p>
+          <p className="sub">Junte dinheiro para o que importa: cada pote enche conforme você guarda.</p>
         </div>
         {sits.length > 0 && <button className="btn primario" onClick={() => { setModelo(undefined); setEditando('nova') }}><Icone nome="mais" tamanho={16} /> Criar meta</button>}
       </header>
 
       {sits.length > 0 && (
-        <div className="kpis">
-          <Kpi rotulo="Guardado nas metas" valor={fmtValor(guardado)} cor={COR.entradas} />
-          <Kpi rotulo="Falta juntar" valor={fmtValor(falta)} cor={COR.divida} />
-          {porMes > 0 && <Kpi rotulo="Guardar por mês" valor={fmtValor(porMes)} cor={COR.caixa} />}
-          <Kpi rotulo="Metas batidas" valor={`${batidas.length} de ${sits.length}`} cor={COR.investimentos} />
-        </div>
+        <section className="mt-topo">
+          <div className="cartao mt-resumo">
+            <Anel valor={alvoTotal ? guardado / alvoTotal : 0} cor={COR.entradas} tamanho={108}>
+              <span className="mt-resumo-pct">{alvoTotal ? Math.round((guardado / alvoTotal) * 100) : 0}%</span>
+            </Anel>
+            <span className="mt-resumo-texto">
+              <small>guardado nas metas</small>
+              <strong><Numero valor={guardado} formato={fmtValor} /></strong>
+              <small>de {fmtValor(alvoTotal)}</small>
+              <span className="chips-info">
+                {falta > 0 && <span className="chip-info">faltam {fmtValor(falta)}</span>}
+                {porMes > 0 && <span className="chip-info"><Icone nome="calendario" tamanho={12} /> {fmtValor(porMes)}/mês</span>}
+                <span className="chip-info bom">{batidas.length} de {sits.length} batidas</span>
+              </span>
+            </span>
+          </div>
+          {sobra > 0 && ativas.length > 0 ? (
+            <div className="cartao mt-sobra">
+              <span className="mt-sobra-icone"><Icone nome="cofre" tamanho={26} /></span>
+              <span className="mt-sobra-texto">
+                <small>sobrou em {MESES_NOME[c.mes - 1].toLowerCase()}</small>
+                <strong>{fmtValor(sobra)}</strong>
+                <span>Guardar numa meta?</span>
+              </span>
+              <span className="mt-sobra-metas">
+                {ativas.slice(0, 4).map((s) => (
+                  <button key={s.meta.id} className="mt-sobra-meta" style={{ '--c': s.meta.cor } as React.CSSProperties}
+                    onClick={() => guardar(s.meta, Math.min(sobra, naPrincipal(s.falta, s.meta.moeda)))} disabled={s.meta.moeda !== c.perfil.moeda} title={s.meta.nome}>
+                    <IconeCategoria emoji={s.meta.icone} tamanho={16} /><span>{s.meta.nome}</span>
+                  </button>
+                ))}
+              </span>
+            </div>
+          ) : (
+            <div className="cartao mt-sobra calma">
+              <span className="mt-sobra-icone"><Icone nome="ideia" tamanho={24} /></span>
+              <span className="mt-sobra-texto">
+                <small>dica</small>
+                <strong>{porMes > 0 ? `Guarde ${fmtValor(porMes)} por mês` : 'Guarde um pouco todo mês'}</strong>
+                <span>{porMes > 0 ? 'É o que falta, por mês, para bater todas as metas no prazo.' : 'Pôr um prazo na meta mostra quanto guardar por mês.'}</span>
+              </span>
+            </div>
+          )}
+        </section>
       )}
 
       {!sits.length && (
-        <Cartao titulo="Comece por um objetivo">
-          <div className="opcoes grade">
-            {MODELOS.map((m) => (
-              <button key={m.nome} type="button" className="opcao" onClick={() => novaDoModelo(m)}>
-                <span className="opcao-icone" style={{ color: m.cor }}><IconeCategoria emoji={m.icone} tamanho={20} /></span>
-                <span className="opcao-texto">
-                  <strong>{m.nome}</strong>
-                  <small>{m.reserva && gastoMedio ? `Sugestão: ${fmtValor(Math.round(gastoMedio * 6))} (6 meses de gastos)` : m.dica}</small>
-                </span>
-                <span />
-              </button>
-            ))}
-            <button type="button" className="opcao" onClick={() => { setModelo(undefined); setEditando('nova') }}>
-              <span className="opcao-icone">🎯</span>
-              <span className="opcao-texto"><strong>Outro objetivo</strong><small>do seu jeito</small></span>
-              <span />
-            </button>
+        <section className="cartao mt-vazio">
+          <div className="mt-vazio-potes" aria-hidden="true">
+            <PoteMeta progresso={0.35} cor="#64d2ff" icone="✈️" tamanho={92} />
+            <PoteMeta progresso={0.7} cor="#30d158" icone="🛟" tamanho={110} />
+            <PoteMeta progresso={0.2} cor="#ff9f0a" icone="🏠" tamanho={92} />
           </div>
-        </Cartao>
+          <h2>Comece por um objetivo</h2>
+          <p>Escolha um ponto de partida ou crie do seu jeito. O app mostra quanto guardar por mês e quando você chega lá.</p>
+          {modelos}
+        </section>
       )}
 
       {ativas.length > 0 && (
-        <div className="grade-cartoes">
-          {ativas.map((s) => (
-            <CartaoMeta key={s.meta.id} s={s} c={c} aoEditar={() => setEditando(s.meta)}
-              aoGuardar={() => setMovendo({ meta: s.meta, retirar: false })} aoRetirar={() => setMovendo({ meta: s.meta, retirar: true })} />
+        <div className="mt-grade">
+          {ativas.map((s, i) => (
+            <CartaoMeta key={s.meta.id} s={s} c={c} indice={i} aoAbrir={() => setAberta(s.meta.id)}
+              aoGuardar={() => guardar(s.meta)} aoRetirar={() => setMovendo({ meta: s.meta, retirar: true })} />
           ))}
         </div>
       )}
@@ -96,79 +163,157 @@ export function Metas(c: Ctx) {
       {batidas.length > 0 && (
         <>
           <h2 className="secao-titulo">Metas batidas 🎉</h2>
-          <div className="grade-cartoes">
-            {batidas.map((s) => (
-              <CartaoMeta key={s.meta.id} s={s} c={c} aoEditar={() => setEditando(s.meta)}
-                aoGuardar={() => setMovendo({ meta: s.meta, retirar: false })} aoRetirar={() => setMovendo({ meta: s.meta, retirar: true })} />
+          <div className="mt-grade">
+            {batidas.map((s, i) => (
+              <CartaoMeta key={s.meta.id} s={s} c={c} indice={i} aoAbrir={() => setAberta(s.meta.id)}
+                aoGuardar={() => guardar(s.meta)} aoRetirar={() => setMovendo({ meta: s.meta, retirar: true })} />
             ))}
           </div>
         </>
       )}
 
+      {aberto && (
+        <FichaMeta s={aberto} c={c} aoFechar={() => setAberta(null)}
+          aoEditar={() => { setAberta(null); setEditando(aberto.meta) }}
+          aoGuardar={() => { setAberta(null); guardar(aberto.meta) }}
+          aoRetirar={() => { setAberta(null); setMovendo({ meta: aberto.meta, retirar: true }) }} />
+      )}
       {editando && (
         <FormMeta c={c} meta={editando === 'nova' ? undefined : editando} modelo={modelo} aoFechar={() => setEditando(null)} />
       )}
-      {movendo && <FormMovimento c={c} meta={movendo.meta} retirar={movendo.retirar} aoFechar={() => setMovendo(null)} />}
+      {movendo && <FormMovimento c={c} meta={movendo.meta} retirar={movendo.retirar} valorInicial={movendo.valor} aoFechar={() => setMovendo(null)} />}
     </div>
   )
 }
 
-function CartaoMeta({ s, c, aoEditar, aoGuardar, aoRetirar }: {
-  s: SituacaoMeta; c: Ctx; aoEditar: () => void; aoGuardar: () => void; aoRetirar: () => void
+function CartaoMeta({ s, c, indice, aoAbrir, aoGuardar, aoRetirar }: {
+  s: SituacaoMeta; c: Ctx; indice: number; aoAbrir: () => void; aoGuardar: () => void; aoRetirar: () => void
 }) {
   const { meta } = s
   const moeda = meta.moeda
-  const estrangeira = moeda !== c.perfil.moeda
-  const conv = estrangeira ? converter(s.guardado, moeda, c.taxas) : null
+  const conv = moeda !== c.perfil.moeda ? converter(s.guardado, moeda, c.taxas) : null
+  const estado = estadoMeta(s)
   return (
-    <Cartao className={`meta-cartao ${s.batida ? 'batida' : ''}`}>
-      <div className="divida" style={{ '--c': meta.cor } as React.CSSProperties}>
-        <div className="divida-topo">
-          <h3><span className="meta-icone" style={{ color: meta.cor, '--c': meta.cor } as React.CSSProperties}><IconeCategoria emoji={meta.icone} tamanho={18} /></span>{meta.nome}</h3>
-          <button className="link" onClick={aoEditar}>Editar</button>
-        </div>
-        <div>
-          <strong className="divida-total">{fmtMoeda(s.guardado, moeda)}</strong>
-          <span className="meta-de"> de {fmtMoeda(meta.alvo, moeda)}</span>
-          {conv !== null && <span className="meta-de"> · ≈ {fmtValor(conv)}</span>}
-        </div>
-        <Progresso valor={s.guardado} total={meta.alvo} cor={meta.cor} />
-        <div className="divida-info">
-          <span>{Math.round(s.progresso * 100)}%</span>
-          <span>{s.batida ? 'Meta batida! 🎉' : `Faltam ${fmtMoeda(s.falta, moeda)}`}</span>
+    <article className={`cartao mt-cartao ${estado.id}`} style={{ '--c': meta.cor, animationDelay: `${Math.min(indice, 8) * 70}ms` } as React.CSSProperties}>
+      <button className="mt-cartao-corpo" onClick={aoAbrir} aria-label={`Ver ${meta.nome}`}>
+        <PoteMeta progresso={s.progresso} cor={meta.cor} icone={meta.icone} tamanho={104} />
+        <span className="mt-info">
+          <span className="mt-info-topo">
+            <strong className="mt-nome">{meta.nome}</strong>
+            <span className={`chip-estado mt ${estado.id}`}>{estado.texto}</span>
+          </span>
+          <span className="mt-valor">
+            <b><Numero valor={s.guardado} formato={(n) => fmtMoeda(n, moeda)} /></b>
+            <small>de {fmtMoeda(meta.alvo, moeda)}{conv !== null && ` · ≈ ${fmtValor(conv)}`}</small>
+          </span>
+          <span className="mt-trilho" aria-hidden="true">
+            <i style={{ width: `${s.progresso * 100}%` }} />
+            {[25, 50, 75].map((m) => <em key={m} style={{ left: `${m}%` }} className={s.progresso * 100 >= m ? 'passou' : ''} />)}
+          </span>
+          <span className="mt-linha">
+            {s.batida ? <>Você juntou tudo. 🎉</>
+              : s.atrasada && meta.prazo ? <>O prazo ({mesAno(meta.prazo)}) passou. Que tal um novo?</>
+                : s.porMesNoPrazo !== null && meta.prazo ? <>Guarde <b>{fmtMoeda(s.porMesNoPrazo, moeda)}/mês</b> até {mesAno(meta.prazo)}</>
+                  : s.previsao ? <>No seu ritmo, chega em <b>{quando(s.previsao)}</b></>
+                    : <>Faltam <b>{fmtMoeda(s.falta, moeda)}</b></>}
+          </span>
+        </span>
+      </button>
+      <div className="mt-acoes">
+        <button className="btn primario" onClick={aoGuardar}><Icone nome="mais" tamanho={16} /> Guardar</button>
+        {s.guardado > 0 && <button className="btn" onClick={aoRetirar}>Retirar</button>}
+      </div>
+    </article>
+  )
+}
+
+/** Linha do quanto foi guardado ao longo do tempo (soma dos movimentos, mês a mês). */
+function Evolucao({ s }: { s: SituacaoMeta }) {
+  const porMes = new Map<string, number>()
+  for (const m of [...s.movimentos].reverse()) porMes.set(m.data.slice(0, 7), (porMes.get(m.data.slice(0, 7)) ?? 0) + m.valor)
+  const meses = [...porMes.entries()].sort(([a], [b]) => a.localeCompare(b))
+  const pontos = meses.map(([mes], i) => ({ mes, total: meses.slice(0, i + 1).reduce((t, [, v]) => t + v, 0) }))
+  if (pontos.length < 2) return null
+  const maior = Math.max(s.meta.alvo, ...pontos.map((p) => p.total))
+  const L = 300
+  const A = 110
+  const xy = pontos.map((p, i) => [(i / (pontos.length - 1)) * L, A - (p.total / maior) * (A - 10)] as const)
+  const linha = xy.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' ')
+  const alvoY = A - (s.meta.alvo / maior) * (A - 10)
+  return (
+    <figure className="mt-evolucao" style={{ '--c': s.meta.cor } as React.CSSProperties}>
+      <svg viewBox={`0 0 ${L} ${A + 4}`} preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id={`ev-${s.meta.id}`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor={s.meta.cor} stopOpacity=".35" />
+            <stop offset="1" stopColor={s.meta.cor} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={`M0 ${alvoY}H${L}`} className="mt-evolucao-alvo" />
+        <path d={`${linha} L${L} ${A} L0 ${A}Z`} fill={`url(#ev-${s.meta.id})`} className="mt-evolucao-area" />
+        <path d={linha} className="mt-evolucao-linha" pathLength={1} />
+      </svg>
+      <figcaption>
+        <span>{mesAno(`${pontos[0].mes}-01`)}</span>
+        <span>alvo {fmtMoeda(s.meta.alvo, s.meta.moeda)}</span>
+        <span>{mesAno(`${pontos.at(-1)!.mes}-01`)}</span>
+      </figcaption>
+    </figure>
+  )
+}
+
+function FichaMeta({ s, c, aoFechar, aoEditar, aoGuardar, aoRetirar }: {
+  s: SituacaoMeta; c: Ctx; aoFechar: () => void; aoEditar: () => void; aoGuardar: () => void; aoRetirar: () => void
+}) {
+  const { meta } = s
+  const moeda = meta.moeda
+  return (
+    <Modal titulo={meta.nome} aoFechar={aoFechar}>
+      <div className="mt-ficha" style={{ '--c': meta.cor } as React.CSSProperties}>
+        <div className="mt-ficha-topo">
+          <PoteMeta progresso={s.progresso} cor={meta.cor} icone={meta.icone} tamanho={124} />
+          <span className="mt-ficha-numeros">
+            <span><small>guardado</small><strong>{fmtMoeda(s.guardado, moeda)}</strong></span>
+            <span><small>{s.batida ? 'alvo' : 'falta'}</small><strong>{fmtMoeda(s.batida ? meta.alvo : s.falta, moeda)}</strong></span>
+            <span><small>{Math.round(s.progresso * 100)}% do caminho</small>
+              <strong>{meta.prazo ? `até ${mesAno(meta.prazo)}` : 'sem prazo'}</strong></span>
+            {s.ritmo !== null && <span><small>seu ritmo</small><strong>{fmtMoeda(s.ritmo, moeda)}/mês</strong></span>}
+          </span>
         </div>
         {!s.batida && (
           <ul className="meta-dicas">
-            {s.porMesNoPrazo !== null && meta.prazo && (
-              s.atrasada
-                ? <li className="atrasada">O prazo ({quando([Number(meta.prazo.slice(0, 4)), Number(meta.prazo.slice(5, 7))])}) passou. Que tal um prazo novo?</li>
-                : <li>Para chegar em <b>{quando([Number(meta.prazo.slice(0, 4)), Number(meta.prazo.slice(5, 7))])}</b>, guarde <b>{fmtMoeda(s.porMesNoPrazo, moeda)}</b> por mês.</li>
-            )}
-            {s.previsao
-              ? <li>No seu ritmo ({fmtMoeda(s.ritmo!, moeda)}/mês), você chega em <b>{quando(s.previsao)}</b>.</li>
-              : <li>Guarde a primeira parte para o app prever quando você chega lá.</li>}
+            {s.porMesNoPrazo !== null && meta.prazo && !s.atrasada && <li>Para chegar em <b>{mesAno(meta.prazo)}</b>, guarde <b>{fmtMoeda(s.porMesNoPrazo, moeda)}</b> por mês.</li>}
+            {s.atrasada && meta.prazo && <li className="atrasada">O prazo ({mesAno(meta.prazo)}) passou. Edite a meta para pôr um novo.</li>}
+            {s.previsao ? <li>No seu ritmo, você chega em <b>{quando(s.previsao)}</b>.</li> : <li>Guarde a primeira parte para o app prever quando você chega lá.</li>}
           </ul>
         )}
-        {s.movimentos.length > 0 && (
-          <ul className="divida-pagamentos meta-movimentos">
-            {s.movimentos.slice(0, 4).map((m) => (
-              <li key={m.id}>
-                <span>{fmtDataCurta(m.data)}{m.descricao && ` · ${m.descricao}`}</span>
-                <span className={m.valor < 0 ? 'negativo' : ''}>
-                  {m.valor < 0 ? '−' : '+'} {fmtMoeda(Math.abs(m.valor), moeda)}
-                  <button className="desfazer" aria-label="Excluir este registro" title="Excluir este registro"
-                    onClick={() => { if (confirm('Excluir este registro da meta?')) void c.d.delMovimentoMeta(m.id) }}>×</button>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="meta-acoes">
-          <button className="btn primario" onClick={aoGuardar}><Icone nome="mais" tamanho={16} /> Guardar</button>
+        <Evolucao s={s} />
+        <section>
+          <h4 className="dv-ficha-titulo">Histórico <small>{s.movimentos.length || ''}</small></h4>
+          {s.movimentos.length ? (
+            <ul className="dv-movimentos">
+              {s.movimentos.slice(0, 15).map((m) => (
+                <li key={m.id}>
+                  <div className="mt-mov">
+                    <span className={`ccd-hist-icone ${m.valor < 0 ? 'reneg' : 'ok'}`}><Icone nome={m.valor < 0 ? 'enviar' : 'receber'} tamanho={15} /></span>
+                    <span className="ccd-hist-texto"><strong>{fmtDataLonga(m.data)}</strong><small>{m.descricao || (m.valor < 0 ? 'retirado' : 'guardado')}</small></span>
+                    <span className={`ccd-hist-valor ${m.valor < 0 ? 'negativo' : ''}`}>{m.valor < 0 ? '−' : '+'} {fmtMoeda(Math.abs(m.valor), moeda)}</span>
+                    <button className="icone-btn pequeno" aria-label="Excluir este registro" title="Excluir este registro"
+                      onClick={() => { if (confirm('Excluir este registro da meta?')) void c.d.delMovimentoMeta(m.id) }}><Icone nome="lixeira" tamanho={15} /></button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : <p className="quadro-vazio">Nada guardado ainda.</p>}
+        </section>
+        <div className="form-acoes">
+          <button className="btn" onClick={aoEditar}><Icone nome="lapis" tamanho={15} /> Editar</button>
+          <span className="espaco" />
           {s.guardado > 0 && <button className="btn" onClick={aoRetirar}>Retirar</button>}
+          <button className="btn primario" onClick={aoGuardar}><Icone nome="mais" tamanho={16} /> Guardar</button>
         </div>
       </div>
-    </Cartao>
+    </Modal>
   )
 }
 
@@ -200,13 +345,14 @@ function FormMeta({ c, meta, modelo, aoFechar }: { c: Ctx; meta?: Meta; modelo?:
     <Modal titulo={meta ? 'Editar meta' : 'Nova meta'} aoFechar={aoFechar}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); salvar() }}>
         <div className="editor-categoria-nome">
-          <span className="selo" style={{ '--c': cor, width: 44, height: 44, fontSize: 23 } as React.CSSProperties}>{icone}</span>
+          <span className="mt-form-pote"><PoteMeta progresso={0.55} cor={cor} icone={icone} tamanho={58} /></span>
           <input autoFocus={!meta} value={nome} onChange={(e) => setNome(e.target.value)} maxLength={40}
             placeholder="Ex.: Viagem pra praia, Notebook novo…" aria-label="Nome da meta" />
         </div>
         <div className="grade-icones" role="radiogroup" aria-label="Ícone">
           {ICONES_META.map((i) => (
-            <button key={i} type="button" role="radio" aria-checked={icone === i} className={icone === i ? 'ativo' : ''} onClick={() => setIcone(i)}>{i}</button>
+            <button key={i} type="button" role="radio" aria-checked={icone === i} aria-label={i} className={icone === i ? 'ativo' : ''} onClick={() => setIcone(i)}
+              style={{ '--c': cor } as React.CSSProperties}><IconeCategoria emoji={i} tamanho={20} /></button>
           ))}
         </div>
         <div className="chips" role="radiogroup" aria-label="Cor">
@@ -252,13 +398,24 @@ function FormMeta({ c, meta, modelo, aoFechar }: { c: Ctx; meta?: Meta; modelo?:
   )
 }
 
-function FormMovimento({ c, meta, retirar: inicial, aoFechar }: { c: Ctx; meta: Meta; retirar: boolean; aoFechar: () => void }) {
+function FormMovimento({ c, meta, retirar: inicial, valorInicial, aoFechar }: { c: Ctx; meta: Meta; retirar: boolean; valorInicial?: number; aoFechar: () => void }) {
   const [retirar, setRetirar] = useState(inicial)
-  const [valor, setValor] = useState('')
+  const [valor, setValor] = useState(valorInicial ? paraCampo(valorInicial) : '')
   const [data, setData] = useState(hoje())
   const [descricao, setDescricao] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const guardado = c.d.movimentosMeta.filter((m) => m.meta_id === meta.id).reduce((a, m) => a + m.valor, 0)
+  const s = situacaoMeta(meta, c.d.movimentosMeta)
+  const sobra = meta.moeda === c.perfil.moeda ? Math.max(0, c.r.fluxo) : 0
+  // atalhos: valores redondos, o que falta por mês para o prazo e a sobra do mês
+  const atalhos = retirar
+    ? [{ rotulo: 'Tudo', valor: guardado }]
+    : [
+        ...[50, 100, 200].map((v) => ({ rotulo: `+${fmtMoeda(v, meta.moeda).replace(/,00$/, '')}`, valor: v })),
+        ...(s.porMesNoPrazo ? [{ rotulo: 'Do mês', valor: Math.round(s.porMesNoPrazo * 100) / 100 }] : []),
+        ...(sobra > 0 ? [{ rotulo: 'A sobra', valor: Math.min(sobra, s.falta || sobra) }] : []),
+        ...(s.falta > 0 ? [{ rotulo: 'O que falta', valor: s.falta }] : []),
+      ]
 
   const salvar = () => {
     const n = parseNumero(valor)
@@ -269,7 +426,7 @@ function FormMovimento({ c, meta, retirar: inicial, aoFechar }: { c: Ctx; meta: 
   }
 
   return (
-    <Modal titulo={`${meta.icone} ${meta.nome}`} aoFechar={aoFechar}>
+    <Modal titulo={meta.nome} aoFechar={aoFechar}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); salvar() }}>
         <Segmentado rotulo="Movimento" valor={retirar ? 'retirar' : 'guardar'} aoMudar={(v) => setRetirar(v === 'retirar')}
           opcoes={[{ id: 'guardar', nome: 'Guardar', cor: COR.entradas }, { id: 'retirar', nome: 'Retirar', cor: COR.saidas }]} />
@@ -277,6 +434,18 @@ function FormMovimento({ c, meta, retirar: inicial, aoFechar }: { c: Ctx; meta: 
           <span>{simbolo(meta.moeda)}</span>
           <input autoFocus inputMode="decimal" placeholder="0,00" value={valor} onChange={(e) => { setValor(e.target.value); setErro(null) }} aria-label="Valor" />
         </label>
+        <div className="mt-atalhos">
+          {atalhos.map((a) => (
+            <button key={a.rotulo} type="button" className="chip" onClick={() => {
+              // "+R$ 50" soma ao que já está digitado; os outros põem o valor
+              const soma = a.rotulo.startsWith('+')
+              setValor(paraCampo(soma ? (parseNumero(valor) ?? 0) + a.valor : a.valor))
+              setErro(null)
+            }}>
+              {a.rotulo}{!a.rotulo.startsWith('+') && <small> {fmtMoeda(a.valor, meta.moeda)}</small>}
+            </button>
+          ))}
+        </div>
         <div className="form-linha">
           <label className="campo">
             <span className="campo-rotulo">Data</span>

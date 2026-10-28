@@ -365,3 +365,28 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
 - **Sem a migração 10** (`supabase/migracao-10-dividas-e-a-receber.sql`) a página funciona só com "Eu devo", sem pessoa e
   sem calendário, e mostra o aviso.
 - A renegociação de fatura do cartão cria a dívida já com o banco, o total de parcelas e o vencimento da 1ª parcela.
+
+### 4.14 Metas (potes)
+
+- Cada meta é um **pote de vidro** (`PoteMeta`, SVG) que enche com a cor da meta até o progresso: ao aparecer o líquido
+  sobe do fundo, a superfície tem uma onda lenta, os marcos de 25/50/75% acendem na lateral e, batida, sobem bolhas.
+- Topo: anel do total guardado em todas as metas (com o que falta, quanto guardar por mês e quantas foram batidas) e o
+  cartão **"Sobrou R$ X em <mês>: guardar numa meta?"** (sobra do mês aberto, `r.fluxo`), com um atalho por meta que já
+  abre o "Guardar" com o valor. Sem sobra, uma dica de quanto guardar por mês.
+- Selo de cada meta: No ritmo, Abaixo do ritmo, Prazo passou, Sem prazo, Começando, Batida.
+- Ficha (toque no cartão): números, dicas de prazo/ritmo, a linha do que foi guardado mês a mês com o alvo tracejado e o
+  histórico (cada registro pode ser excluído).
+- Guardar/Retirar: atalhos "+R$ 50/100/200" (somam ao valor digitado), "Do mês", "A sobra" e "O que falta".
+
+### 4.15 Dinheiro guardado
+
+- **Tudo o que você tem:** bancos + investimentos + outras moedas (convertidas), com a comparação com o mês anterior, a
+  minilinha dos últimos meses e a barra de composição (conta corrente, caixinha, reserva, investimentos, moedas).
+- **Reserva de emergência:** quantos meses de gastos a reserva cobre (média das saídas), num anel com o ideal de 6
+  meses; abaixo disso, atalho para criar a meta.
+- Bancos com o selo (`BancoIcone`), o guardado, a divisão conta/caixinha/reserva numa barrinha, entrou/saiu no mês e,
+  quando a caixinha é limite garantido de um cartão, o aviso "caixinha vira limite no …". No detalhe do banco, cada tipo
+  de saldo é um cartão com ícone e campo, e aparecem os cartões de crédito daquele banco (desenhados, com a fatura).
+- Investimentos com a minilinha da evolução; outras moedas com as bandeiras em SVG e o valor convertido.
+- Investimentos passam a valer de um mês para o outro até serem atualizados (como caixa e moedas, em `mesEfetivo`):
+  sem isso, o patrimônio parecia cair a zero em todo mês novo.
