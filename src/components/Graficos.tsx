@@ -14,13 +14,16 @@ const eixoReais = (grade: string) => ({
   border: { display: false },
 })
 
-/** Pontos e barras nascem da linha do zero, um depois do outro (como no vídeo de referência). */
-type Quadro = { chart: ChartJS; type: string; mode: string; dataIndex: number }
+/**
+ * Pontos e barras nascem da linha do zero, um depois do outro (como no vídeo de referência). Só na primeira vez:
+ * depois (dados chegando, outro mês) o gráfico vai suave do valor atual para o novo, sem sumir e crescer de novo.
+ */
+type Quadro = { chart: ChartJS & { $cresceu?: boolean }; type: string; mode: string; dataIndex: number }
 const crescer = {
   y: {
     type: 'number' as const, properties: ['y'], duration: 1100, easing: 'easeOutQuart' as const,
-    from: (ctx: Quadro) => ctx.chart.scales.y?.getPixelForValue(0),
-    delay: (ctx: Quadro) => (ctx.type === 'data' && ctx.mode === 'default' ? ctx.dataIndex * 70 : 0),
+    from: (ctx: Quadro) => (ctx.chart.$cresceu ? undefined : ctx.chart.scales.y?.getPixelForValue(0)),
+    delay: (ctx: Quadro) => (!ctx.chart.$cresceu && ctx.type === 'data' && ctx.mode === 'default' ? ctx.dataIndex * 70 : 0),
   },
 }
 

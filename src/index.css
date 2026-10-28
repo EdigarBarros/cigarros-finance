@@ -1180,7 +1180,7 @@ select option { background: var(--superficie-forte); color: var(--texto); }
 .anel-meio { position: relative; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 /* minilinha de tendência nos indicadores */
-.kpi-faisca { position: absolute; top: 22px; right: 18px; pointer-events: none; }
+.kpi-faisca { position: absolute; top: 22px; right: 18px; }
 .faisca { display: block; overflow: visible; }
 .faisca-linha { fill: none; stroke: var(--c); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 0; animation: faisca 1.4s var(--mola) .35s backwards; }
 .faisca-area { animation: aparece 1s .9s backwards; }
@@ -1252,3 +1252,20 @@ select option { background: var(--superficie-forte); color: var(--texto); }
   .conta-linha.com-dia .btn { grid-column: 2 / -1; justify-self: start; }
   .cc-mini { padding-left: 16px; padding-right: 16px; grid-template-columns: 76px minmax(0, 1fr); }
 }
+
+/* Blocos com gráfico entram sem desfoque: no Safari, um canvas dentro de um bloco com filtro animado pode ficar em branco */
+.pagina > :has(canvas), .linha-fluxo > :has(canvas), .encaixe-item:has(canvas), .duas-colunas > :has(canvas) { animation-name: surgir-sem-desfoque; }
+@keyframes surgir-sem-desfoque { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+.faisca-caixa { position: relative; display: block; }
+.faisca { cursor: crosshair; touch-action: pan-y; }
+.faisca-foco { fill: var(--c); stroke: var(--superficie); stroke-width: 2; }
+.faisca-balao {
+  position: absolute; top: calc(100% + 4px); translate: -50% 0; z-index: 3; display: grid; justify-items: center; padding: 5px 9px; border-radius: 9px;
+  white-space: nowrap; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--texto);
+  background: var(--superficie-forte); border: 1px solid var(--borda-forte); box-shadow: var(--sombra-alta); pointer-events: none;
+  animation: aparece .15s;
+}
+.faisca-balao small { font-size: 10.5px; font-weight: 600; color: var(--texto-2); text-transform: capitalize; }
+/* no cartão compacto a minilinha fica embaixo: o balão sobe */
+.kpis:has(> :nth-child(5)) .faisca-balao { top: auto; bottom: calc(100% + 4px); }

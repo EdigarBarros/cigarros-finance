@@ -136,7 +136,10 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     if (semMovimento()) return
     document.querySelectorAll<HTMLElement>('.pagina > *, .kpis > *').forEach((el, i) =>
       el.animate(
-        [{ opacity: 0.35, filter: 'blur(8px)', transform: 'translateY(6px)' }, { opacity: 1, filter: 'none', transform: 'none' }],
+        // sem desfoque em quem tem gráfico (o Safari pode deixar o canvas em branco sob filtro animado)
+        el.querySelector('canvas')
+          ? [{ opacity: 0.35, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }]
+          : [{ opacity: 0.35, filter: 'blur(8px)', transform: 'translateY(6px)' }, { opacity: 1, filter: 'none', transform: 'none' }],
         { duration: 650, delay: Math.min(i, 6) * 35, easing: 'cubic-bezier(.32,.72,0,1)', fill: 'backwards' },
       ),
     )

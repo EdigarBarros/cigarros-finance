@@ -26,8 +26,8 @@ export function Cartao({ titulo, acao, children, className = '' }: {
  */
 export function Kpi({ rotulo, valor, cor, icone, destaque, delta, menorMelhor, contra = 'no mês passado', aoClicar, tendencia, children }: {
   rotulo: string; valor: string | number; cor: string; icone?: string; destaque?: boolean
-  /** Valores dos últimos meses para a minilinha no canto do cartão. */
-  tendencia?: (number | null)[]
+  /** Valores dos últimos meses (e o nome de cada mês) para a minilinha no canto do cartão. */
+  tendencia?: Tendencia
   delta?: number | null; menorMelhor?: boolean
   /** Com o que se compara, depois de "que": "em set", "no mês passado". */
   contra?: string; aoClicar?: () => void; children?: ReactNode
@@ -37,7 +37,7 @@ export function Kpi({ rotulo, valor, cor, icone, destaque, delta, menorMelhor, c
     <>
       {icone && <span className="kpi-icone"><Icone nome={icone} tamanho={22} /></span>}
       {aoClicar && <span className="kpi-seta"><Icone nome="dir" tamanho={18} /></span>}
-      {tendencia && <span className="kpi-faisca"><Faisca valores={tendencia} cor={cor} /></span>}
+      {tendencia && <span className="kpi-faisca"><Faisca {...tendencia} cor={cor} /></span>}
       <span className="kpi-rotulo">{!icone && <i className="marcador" />}{rotulo}</span>
       <strong className="kpi-valor">{typeof valor === 'number' ? <Numero valor={valor} formato={fmtValor} /> : valor}</strong>
       {delta != null && (
@@ -196,8 +196,18 @@ export function Anel({ valor, cor, tamanho = 64, children }: { valor: number; co
   )
 }
 
-/** Minilinha de tendência (últimos meses), com o último ponto marcado; desenha-se da esquerda para a direita. */
-export function Faisca({ valores, cor }: { valores: (number | null)[]; cor: string }) {
+export interface Tendencia {
+  valores: (number | null)[]
+  /** Nome curto de cada mês, na mesma ordem dos valores. */
+  meses: string[]
+}
+
+/**
+ * Minilinha de tendência dos últimos meses (dados de verdade), com o último ponto marcado; desenha-se da esquerda
+ * para a direita. Passando o ponteiro (ou segurando o dedo) aparece o valor de cada mês.
+ */
+export function Faisca({ valores, meses, cor }: Tendencia & { cor: string }) {
+  const [foco, setFoco] = useState<number | null>(null)
   const pts = valores.map((v, i) => [i, v] as const).filter((x): x is readonly [number, number] => x[1] !== null)
   if (pts.length < 2) return null
   const ys = pts.map((x) => x[1])
@@ -205,7 +215,9 @@ export function Faisca({ valores, cor }: { valores: (number | null)[]; cor: stri
   const max = Math.max(...ys)
   const L = 96
   const A = 34
-  const xy = pts.map(([i, v]) => [(i / (valores.length - 1)) * (L - 4) + 2, A - 3 - ((v - min) / (max - min || 1)) * (A - 8)] as const)
+  const xDe = (i: number) => (i / (valores.length - 1)) * (L - 6) + 3
+  const yDe = (v: number) => A - 3 - ((v - min) / (max - min || 1)) * (A - 8)
+  const xy = pts.map(([i, v]) => [xDe(i), yDe(v)] as const)
   // curva suave passando pelos pontos
   const d = xy.map(([x, y], i) => {
     if (!i) return `M${x.toFixed(1)} ${y.toFixed(1)}`
@@ -215,17 +227,35 @@ export function Faisca({ valores, cor }: { valores: (number | null)[]; cor: stri
   }).join(' ')
   const [ux, uy] = xy[xy.length - 1]
   const id = `faisca-${cor.replace('#', '')}`
+  // mês mais perto do ponteiro / dedo
+  const apontar = (e: React.PointerEvent<SVGSVGElement>) => {
+    const r = e.currentTarget.getBoundingClientRect()
+    const i = Math.round(((e.clientX - r.left) / r.width) * (valores.length - 1))
+    setFoco(Math.max(0, Math.min(valores.length - 1, i)))
+  }
+  const vf = foco === null ? null : valores[foco]
   return (
-    <svg className="faisca" viewBox={`0 0 ${L} ${A}`} width={L} height={A} aria-hidden="true" style={{ '--c': cor } as React.CSSProperties}>
-      <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={cor} stopOpacity=".28" />
-          <stop offset="1" stopColor={cor} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path className="faisca-area" d={`${d} L${ux.toFixed(1)} ${A} L${xy[0][0].toFixed(1)} ${A}Z`} fill={`url(#${id})`} />
-      <path className="faisca-linha" d={d} pathLength={1} />
-      <circle className="faisca-ponto" cx={ux} cy={uy} r="2.6" />
-    </svg>
+    <span className="faisca-caixa">
+      {foco !== null && (
+        <span className="faisca-balao" style={{ left: `${(xDe(foco) / L) * 100}%` }}>
+          <small>{meses[foco]}</small>{vf === null ? 'sem dados' : fmtValor(vf)}
+        </span>
+      )}
+      <svg className="faisca" viewBox={`0 0 ${L} ${A}`} width={L} height={A} role="img" style={{ '--c': cor } as React.CSSProperties}
+        aria-label={valores.map((v, i) => `${meses[i]}: ${v === null ? 'sem dados' : fmtValor(v)}`).join(', ')}
+        onPointerMove={apontar} onPointerDown={apontar} onPointerLeave={() => setFoco(null)}>
+        <defs>
+          <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor={cor} stopOpacity=".28" />
+            <stop offset="1" stopColor={cor} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path className="faisca-area" d={`${d} L${ux.toFixed(1)} ${A} L${xy[0][0].toFixed(1)} ${A}Z`} fill={`url(#${id})`} />
+        <path className="faisca-linha" d={d} pathLength={1} />
+        {vf !== null && foco !== null
+          ? <circle className="faisca-foco" cx={xDe(foco)} cy={yDe(vf)} r="3.2" />
+          : <circle className="faisca-ponto" cx={ux} cy={uy} r="2.6" />}
+      </svg>
+    </span>
   )
 }

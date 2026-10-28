@@ -33,7 +33,23 @@ Chart.defaults.plugins.tooltip.boxPadding = 4
 Chart.defaults.plugins.tooltip.usePointStyle = true
 Chart.defaults.plugins.legend.labels.usePointStyle = true
 Chart.defaults.plugins.legend.labels.pointStyle = 'circle'
-Chart.defaults.animation = { duration: 1100, easing: 'easeOutQuart' }
+Chart.defaults.animation = {
+  duration: 1100,
+  easing: 'easeOutQuart',
+  // depois da primeira animação, o gráfico só faz transições suaves: não volta a crescer do zero a cada atualização
+  onComplete: ({ chart }) => { (chart as Chart & { $cresceu?: boolean }).$cresceu = true },
+}
+// Até 2× a resolução da tela: no iPhone (3×) cada gráfico ocupa bem menos memória e o Safari para de descartá-lo.
+Chart.defaults.devicePixelRatio = Math.min(2, window.devicePixelRatio || 1)
+
+/**
+ * O Safari (iPhone, iPad e Mac) apaga o desenho dos gráficos quando a aba ou o app fica em segundo plano, ou quando a
+ * página volta do cache, e o Chart.js não percebe. Ao voltar, redesenha todos.
+ */
+const redesenhar = () => Object.values(Chart.instances).forEach((c) => { c.resize(); c.update('none') })
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') requestAnimationFrame(redesenhar) })
+window.addEventListener('pageshow', () => requestAnimationFrame(redesenhar))
+window.addEventListener('focus', () => requestAnimationFrame(redesenhar))
 
 /** Ajusta as cores padrão do Chart.js ao tema (texto, linhas de grade e balão). */
 export function coresPadrao(t: Tema) {

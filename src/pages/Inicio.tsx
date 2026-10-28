@@ -12,7 +12,7 @@ import { Icone } from '../components/Icone'
 import { Marca } from '../components/Marca'
 import { CartaoAcompanhar, CartaoSugestao } from '../components/Configuracoes'
 import { Encaixe, type ItemEncaixe } from '../components/Encaixe'
-import { Kpi, Progresso } from '../components/ui'
+import { Kpi, Progresso, type Tendencia } from '../components/ui'
 import type { Ctx } from './contexto'
 
 const hoje = new Date()
@@ -79,9 +79,11 @@ export function Inicio(c: Ctx) {
   )
 
   // ---------- 1. Como estou este mês? ----------
-  // Minilinha dos últimos 6 meses até o aberto (a partir do equilibrado).
-  const tendencia = (f: (x: NonNullable<Ctx['porMes'][number]>) => number) =>
-    v.comparacao ? c.porMes.slice(Math.max(0, c.mes - 6), c.mes).map((x) => (x ? f(x) : null)) : undefined
+  // Minilinha com os valores reais dos últimos 6 meses até o aberto (a partir do equilibrado).
+  const janela = Array.from({ length: Math.min(6, c.mes) }, (_, i) => c.mes - Math.min(6, c.mes) + i + 1)
+  const serie = (f: (m: number) => number | null): Tendencia | undefined =>
+    v.comparacao ? { valores: janela.map(f), meses: janela.map((m) => MESES_CURTO[m - 1]) } : undefined
+  const tendencia = (f: (x: NonNullable<Ctx['porMes'][number]>) => number) => serie((m) => { const x = c.porMes[m - 1]; return x ? f(x) : null })
 
   const difAnterior = v.comparacao && !mesVazio && a && (a.entradas || a.saidas) ? r.fluxo - a.fluxo : null
   const irParaGastos = () => document.getElementById('para-onde-foi')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -105,18 +107,24 @@ export function Inicio(c: Ctx) {
   const diasNoMes = new Date(c.ano, c.mes, 0).getDate()
   const decorridos = c.ano === hoje.getFullYear() && c.mes === hoje.getMonth() + 1 ? hoje.getDate() : diasNoMes
   const maiorSaida = c.lancsMes.filter((l) => l.tipo === 'saida').sort((x, y) => y.valor - x.valor)[0]
+  const diasDe = (m: number) => (c.ano === hoje.getFullYear() && m === hoje.getMonth() + 1 ? hoje.getDate() : new Date(c.ano, m, 0).getDate())
+  const tendMedia = serie((m) => { const x = c.porMes[m - 1]; return x ? x.saidas / diasDe(m) : null })
+  const tendMaior = serie((m) => {
+    const saidas = c.d.lancs.filter((l) => l.mes === m && l.tipo === 'saida')
+    return saidas.length ? Math.max(...saidas.map((l) => l.valor)) : null
+  })
   const indicadores = [
     resultado,
     !mesVazio && <Kpi key="entrou" rotulo="Entrou no mês" valor={r.entradas} icone="receber" cor={COR.caixa} tendencia={tendencia((x) => x.entradas)} delta={delta(r.entradas, a?.entradas)} contra={mesAnt && `em ${mesAnt}`} />,
     !mesVazio && <Kpi key="saiu" rotulo="Saiu no mês" valor={r.saidas} icone="enviar" cor={COR.despesas} tendencia={tendencia((x) => x.saidas)} delta={delta(r.saidas, a?.saidas)} menorMelhor contra={mesAnt && `em ${mesAnt}`} />,
     c.kpisExtras,
     detalhado && !mesVazio && (
-      <Kpi key="media" rotulo="Gasto médio por dia" valor={r.saidas / decorridos} cor={COR.fluxo} icone="ano">
+      <Kpi key="media" rotulo="Gasto médio por dia" valor={r.saidas / decorridos} cor={COR.fluxo} icone="ano" tendencia={tendMedia}>
         <span className="kpi-sub">em {decorridos} {decorridos === 1 ? 'dia' : 'dias'}</span>
       </Kpi>
     ),
     detalhado && maiorSaida && (
-      <Kpi key="maior" rotulo="Maior saída" valor={maiorSaida.valor} cor={COR.saidas} icone="desce">
+      <Kpi key="maior" rotulo="Maior saída" valor={maiorSaida.valor} cor={COR.saidas} icone="desce" tendencia={tendMaior}>
         <span className="kpi-sub">{maiorSaida.descricao || 'Sem descrição'}</span>
       </Kpi>
     ),

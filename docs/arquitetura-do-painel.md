@@ -69,7 +69,8 @@ de itens, para nada pular de lugar enquanto a pessoa mexe. O gráfico de fluxo e
 Na Início as listas têm teto (dívidas: 3 no simples, 4 nos outros; lançamentos: 5, ou 7 no detalhado) e "Ver todas" leva à página
 completa. Com 5 ou 6 indicadores, os cartões ficam mais baixos, 3 por linha.
 
-Menos texto, mais sinais: minilinha dos últimos 6 meses nos indicadores (a partir do equilibrado), anel com quanto das dívidas já foi
+Menos texto, mais sinais: minilinha com os valores reais dos últimos 6 meses nos indicadores (Sobrou, Entrou, Saiu e, no
+detalhado, Gasto médio por dia e Maior saída; passando o ponteiro ou o dedo aparece o valor de cada mês), anel com quanto das dívidas já foi
 pago, parcela/valor/fim de cada dívida em selos curtos, o dia do vencimento das contas em bloco colorido pela situação, um
 cartãozinho na cor de cada cartão de crédito e a variação de cada categoria num selo ao lado do nome.
 
@@ -252,3 +253,10 @@ Justificativa: o que se usa todo dia primeiro (Início, Lançamentos); depois o 
 | Equilibrado, sem módulos | Início · Lançamentos · Resumo do ano |
 | Dívidas, metas e bancos, equilibrado | Início · Lançamentos · Dívidas · Metas · Mais (Dinheiro guardado, Resumo do ano) |
 | Tudo ligado | Início · Lançamentos · Contas do mês · Cartões · Mais (Dívidas, Metas, Dinheiro guardado, Resumo do ano) |
+
+### 4.7 Gráficos no Safari
+
+O Safari (iPhone, iPad e Mac) descarta o desenho dos gráficos (canvas) quando a aba ou o app vai para segundo plano, e pode não
+repintar um canvas dentro de um bloco animado com desfoque. Por isso (`lib/charts.ts` e `index.css`): todos os gráficos se
+redesenham ao voltar para a aba, à página ou à janela; blocos com gráfico entram sem desfoque; a resolução dos gráficos vai até 2×
+(menos memória no iPhone); e o crescimento a partir do zero acontece só no primeiro desenho, depois o gráfico só transiciona.
