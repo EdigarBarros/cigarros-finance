@@ -390,3 +390,16 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
 - Investimentos com a minilinha da evolução; outras moedas com as bandeiras em SVG e o valor convertido.
 - Investimentos passam a valer de um mês para o outro até serem atualizados (como caixa e moedas, em `mesEfetivo`):
   sem isso, o patrimônio parecia cair a zero em todo mês novo.
+
+### 4.16 Lançamentos
+
+- Topo: **Entrou / Saiu / Sobrou** (contam até o valor e seguem os filtros) e o **calendário do mês**: cada dia pinta mais
+  forte quanto mais saiu nele, com um pontinho verde quando entrou dinheiro; tocar num dia mostra só ele (tocar de novo
+  volta). O "dia que mais saiu" aparece no cabeçalho.
+- Filtros: busca (a mesma do topo), tipo, **chips de categoria** com ícone e total (as do tipo escolhido; sem tipo, as de
+  saída, da maior para a menor), **chips de banco** com o selo, e ordem **Recentes** (por dia) ou **Maiores** (lista única
+  pelo valor). "Limpar filtros" volta tudo.
+- Lista por dia com o quadradinho da data (dia e dia da semana; "Hoje"/"Ontem"), quantos lançamentos e o saldo do dia;
+  o cabeçalho do dia fica preso no topo ao rolar.
+- `ItemLancamento` ganhou **etiquetas**: cartão (com o selo do banco e a parcela, ex. 5/12), dívida, recebido (de quem te
+  devia) e "todo mês" (conta fixa). Aparecem também na Início e no Dinheiro guardado.

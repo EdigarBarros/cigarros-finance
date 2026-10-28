@@ -1,15 +1,37 @@
 import { fmtDataCurta, fmtMoeda, fmtValor } from '../lib/format'
 import { SEM_CATEGORIA } from '../lib/categorias'
 import type { Banco, Categoria, Lancamento } from '../lib/types'
+import { BancoIcone } from './BancoIcone'
 import { Selo } from './Categorias'
+import { Icone } from './Icone'
 
-export function ItemLancamento({ l, banco, categoria, aoClicar, mostrarData = true }: {
-  l: Lancamento; banco?: Banco; categoria?: Categoria; aoClicar: () => void; mostrarData?: boolean
+/**
+ * Um lançamento na lista: selo da categoria, descrição, categoria e banco, e etiquetas do que ele é além de um gasto
+ * comum (parcela no cartão, pagamento de dívida, recebimento de quem te devia, conta do mês, outra moeda).
+ */
+export function ItemLancamento({ l, banco, categoria, cartao, aoClicar, mostrarData = true, indice }: {
+  l: Lancamento; banco?: Banco; categoria?: Categoria
+  /** Cartão de crédito da compra, para a etiqueta com o selo do banco. */
+  cartao?: { nome: string; cor: string }
+  aoClicar: () => void; mostrarData?: boolean
+  /** Posição na lista, para a entrada em cascata. */
+  indice?: number
 }) {
   const entrada = l.tipo === 'entrada'
   const c = categoria ?? SEM_CATEGORIA
+  const parcelado = Boolean(l.compra_id && (l.parcelas ?? 1) > 1)
+  const etiquetas = [
+    l.cartao_id && (
+      <span key="cc" className="item-tag no-cartao">
+        {cartao ? <BancoIcone nome={cartao.nome} cor={cartao.cor} tamanho={13} /> : <Icone nome="cartao" tamanho={12} />}
+        {parcelado ? `${l.parcela}/${l.parcelas}` : 'cartão'}
+      </span>
+    ),
+    l.divida_id && <span key="dv" className={`item-tag ${entrada ? 'receber' : 'divida'}`}><Icone nome={entrada ? 'receber' : 'divida'} tamanho={12} />{entrada ? 'recebido' : 'dívida'}</span>,
+    l.conta_fixa_id && <span key="cf" className="item-tag conta"><Icone nome="calendario" tamanho={12} />todo mês</span>,
+  ].filter(Boolean)
   return (
-    <li>
+    <li style={indice !== undefined ? { animationDelay: `${Math.min(indice, 12) * 30}ms` } : undefined}>
       <button className="item-lanc" onClick={aoClicar}>
         <Selo c={c} tamanho={38} />
         <span className="item-texto">
@@ -18,8 +40,7 @@ export function ItemLancamento({ l, banco, categoria, aoClicar, mostrarData = tr
             {mostrarData && l.data && <>{fmtDataCurta(l.data)} · </>}
             {banco && <span className="item-banco"><i className="marcador" style={{ background: banco.cor }} />{banco.nome} · </span>}
             {c.nome}
-            {l.divida_id && ' · paga dívida'}
-            {l.compra_id && (l.parcelas ?? 1) > 1 ? ` · parcela ${l.parcela}/${l.parcelas} no cartão` : l.cartao_id && ' · no cartão'}
+            {etiquetas.length > 0 && <span className="item-tags">{etiquetas}</span>}
           </span>
         </span>
         <span className={`item-valor ${entrada ? 'mais' : ''}`}>
