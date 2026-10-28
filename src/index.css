@@ -2686,3 +2686,18 @@ button.ex-tipo:hover { transform: scale(1.1); }
   .en-form, .en-form.entrar, .en-form.criar { grid-row: 2; grid-column: 1; align-self: start; width: 100%; padding: 18px 22px 40px; --sai: 0px; transform: translateY(14px); }
   .en-form.ativo { transform: none; transition: opacity .45s .1s, transform .6s .1s var(--mola), visibility 0s; }
 }
+
+/* ---------- assinatura ---------- */
+.cartao.as { width: min(440px, 100%); padding: 34px 30px 24px; display: grid; justify-items: center; gap: 14px; text-align: center; border-radius: 28px; box-shadow: var(--sombra-alta); animation: surgir .9s var(--mola) both; }
+.as h1 { margin: 4px 0 0; font-family: var(--fonte-titulo); font-size: 26px; font-weight: 600; letter-spacing: -.03em; color: var(--texto); }
+.as-sub { margin: 0; color: var(--texto-2); font-size: 15px; line-height: 1.5; }
+.as-preco { display: grid; justify-items: center; gap: 2px; padding: 14px 22px; border-radius: 18px; background: var(--destaque-suave); }
+.as-preco strong { font-size: 34px; font-weight: 700; letter-spacing: -.03em; color: var(--texto); }
+.as-preco span { color: var(--texto-2); font-size: 14px; margin-top: -4px; }
+.as-preco small { margin-top: 6px; color: var(--texto-2); font-size: 12px; }
+.as-lista { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; text-align: left; color: var(--texto); font-size: 14px; }
+.as-lista li { display: flex; align-items: center; gap: 10px; }
+.as-lista svg { color: var(--destaque); flex: none; }
+.as-botao { width: 100%; height: 48px; justify-content: center; font-size: 15px; font-weight: 600; }
+.as-nota { color: var(--texto-2); font-size: 12px; }
+.as-sair { margin-top: 6px; font-size: 13px; color: var(--texto-2); }

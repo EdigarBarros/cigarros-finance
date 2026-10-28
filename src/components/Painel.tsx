@@ -14,6 +14,7 @@ import type { Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 import { useMobile } from '../lib/useMobile'
 import { estiloLente, useLente } from '../lib/useLente'
 import { definirTema, semMovimento, useTema } from '../lib/tema'
+import type { Assinatura } from '../lib/assinatura'
 import { useCartoes } from '../lib/useCartoes'
 import { useContasFixas } from '../lib/useContasFixas'
 import { useDados } from '../lib/useDados'
@@ -65,7 +66,7 @@ const paginaDoHash = (): Pagina => {
 
 const hoje = new Date()
 
-export function Painel({ userId, email, nome: nomeConta }: { userId: string; email: string; nome?: string }) {
+export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId: string; email: string; nome?: string; assinatura?: Assinatura | null }) {
   const [pagina, setPagina] = useState<Pagina>(paginaDoHash)
   const [ano, setAno] = useState(hoje.getFullYear())
   const [mes, setMes] = useState(hoje.getMonth() + 1)
@@ -620,6 +621,7 @@ export function Painel({ userId, email, nome: nomeConta }: { userId: string; ema
           aoExtrato={() => { setAjustes(false); setExtrato(true) }}
           aoOrganizar={() => { setAjustes(false); setOrganizar(true) }}
           aoZerar={() => { setAjustes(false); setZerando(true) }}
+          assinatura={assinatura}
           aoSair={() => supabase.auth.signOut()}
           aoFechar={() => setAjustes(false)}
         />
