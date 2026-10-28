@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import type { Sugestao } from '../lib/adaptacao'
+import { reduzirFoto } from '../lib/foto'
 import { MOEDAS } from '../lib/moedas'
 import { DETALHES, MODULOS } from '../lib/perfil'
 import { definirMovimento, definirTema, useMovimento, useTema, type Movimento, type PreferenciaTema } from '../lib/tema'
@@ -57,10 +58,13 @@ function PreviaDetalhe({ nivel }: { nivel: 'simples' | 'equilibrado' | 'detalhad
 }
 
 /** Configurações em tela cheia: menu de seções à esquerda e cartões à direita. Cada mudança vale na hora. */
-export function Configuracoes({ perfil, email, categorias, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoZerar, aoSair, aoFechar }: {
+export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoZerar, aoSair, aoFechar }: {
   perfil: Perfil; email: string; aoMudar: (p: Perfil) => void; aoRefazer: () => void; aoCategorias: () => void
   /** Para mostrar as categorias na seção Categorias. */
   categorias?: Categoria[]
+  /** Foto de perfil (data URL) e como trocá-la (null tira a foto). */
+  foto?: string | null
+  aoMudarFoto?: (f: string | null) => void
   aoBackup: () => void; aoImportar: () => void
   /** Abre a confirmação de zerar os dados. */
   aoZerar: () => void; aoSair: () => void
@@ -92,7 +96,7 @@ export function Configuracoes({ perfil, email, categorias, aoMudar, aoRefazer, a
       <div className="config">
         <aside className="config-lado">
           <div className="config-quem">
-            <span className="config-avatar">{iniciais || '?'}</span>
+            <span className="config-avatar">{foto ? <img src={foto} alt="" /> : iniciais || '?'}</span>
             <span><strong>{nome.trim() || 'Você'}</strong><small>{email}</small></span>
           </div>
           <nav className="config-nav" aria-label="Seções" ref={nav}>
@@ -114,7 +118,7 @@ export function Configuracoes({ perfil, email, categorias, aoMudar, aoRefazer, a
           {secao === 'perfil' && (
             <>
               <section className="cfg-cartao cfg-voce">
-                <span className="config-avatar grande">{iniciais || '?'}</span>
+                <FotoPerfil foto={foto ?? null} iniciais={iniciais} aoMudar={aoMudarFoto} />
                 <label className="campo">
                   <span className="campo-rotulo">Como quer ser chamado</span>
                   <input value={nome} onChange={(e) => setNome(e.target.value)} onBlur={salvarNome} placeholder="Seu nome ou apelido" maxLength={40} />
@@ -367,5 +371,43 @@ export function CartaoAcompanhar({ perfil, aoLigar, aoPersonalizar }: {
         )}
       </div>
     </section>
+  )
+}
+
+/**
+ * Avatar grande com a foto (ou as iniciais) e o botão de câmera para trocar. A imagem escolhida é recortada no
+ * quadrado do meio e reduzida no próprio aparelho antes de ser guardada.
+ */
+function FotoPerfil({ foto, iniciais, aoMudar }: { foto: string | null; iniciais: string; aoMudar?: (f: string | null) => void }) {
+  const entrada = useRef<HTMLInputElement>(null)
+  const [erro, setErro] = useState<string | null>(null)
+  const [lendo, setLendo] = useState(false)
+  const escolher = async (f: File | undefined) => {
+    if (!f || !aoMudar) return
+    setErro(null)
+    setLendo(true)
+    try {
+      aoMudar(await reduzirFoto(f))
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : String(e))
+    } finally {
+      setLendo(false)
+      if (entrada.current) entrada.current.value = ''
+    }
+  }
+  return (
+    <div className="cfg-foto">
+      <button type="button" className={`config-avatar grande cfg-foto-botao ${lendo ? 'lendo' : ''}`} onClick={() => entrada.current?.click()}
+        disabled={!aoMudar} aria-label={foto ? 'Trocar foto de perfil' : 'Pôr foto de perfil'}>
+        {foto ? <img key={foto.slice(-24)} src={foto} alt="" /> : iniciais || '?'}
+        <span className="cfg-foto-camera" aria-hidden="true"><Icone nome="camera" tamanho={15} /></span>
+      </button>
+      <input ref={entrada} type="file" accept="image/*" hidden onChange={(e) => void escolher(e.target.files?.[0])} />
+      <span className="cfg-foto-acoes">
+        <button type="button" className="link" onClick={() => entrada.current?.click()} disabled={!aoMudar}>{foto ? 'Trocar foto' : 'Pôr foto'}</button>
+        {foto && aoMudar && <button type="button" className="link perigo" onClick={() => aoMudar(null)}>Tirar</button>}
+      </span>
+      {erro && <small className="form-erro">{erro}</small>}
+    </div>
   )
 }

@@ -83,7 +83,9 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
 > [`migracao-05-categorias`](supabase/migracao-05-categorias.sql) (categorias editáveis; os lançamentos antigos passam para as
 > categorias novas), [`migracao-06-metas`](supabase/migracao-06-metas.sql) (metas; a meta em dólar antiga vira uma meta),
 > [`migracao-07-contas-fixas`](supabase/migracao-07-contas-fixas.sql) (contas fixas e a pagar; precisa das migrações 3 e 5) e
-> [`migracao-08-cartoes`](supabase/migracao-08-cartoes.sql) (cartões de crédito, faturas e compras parceladas).
+> [`migracao-08-cartoes`](supabase/migracao-08-cartoes.sql) (cartões de crédito, faturas e compras parceladas) e
+> [`migracao-09-cartoes-extras`](supabase/migracao-09-cartoes-extras.sql) (renegociar fatura, juros de atraso, limite
+> garantido da caixinha e foto de perfil).
 > Todas só acrescentam, não apagam nada.
 
 ### 3. Primeiro acesso

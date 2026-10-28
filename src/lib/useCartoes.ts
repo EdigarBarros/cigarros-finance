@@ -4,21 +4,34 @@ import { supabase } from './supabase'
 import type { CartaoCredito, FaturaPaga, Lancamento } from './types'
 
 const num = (v: unknown) => Number(v ?? 0)
-const normCartao = (r: CartaoCredito): CartaoCredito => ({ ...r, limite: r.limite == null ? null : num(r.limite) })
-const normFatura = (r: FaturaPaga): FaturaPaga => ({ ...r, valor: num(r.valor) })
+const normCartao = (r: CartaoCredito): CartaoCredito => ({
+  ...r, limite: r.limite == null ? null : num(r.limite), limite_garantido: num(r.limite_garantido), garantia_caixinha: Boolean(r.garantia_caixinha),
+})
+const normFatura = (r: FaturaPaga): FaturaPaga => ({ ...r, valor: num(r.valor), juros: num(r.juros), tipo: r.tipo ?? 'paga' })
 const normLanc = (r: Lancamento): Lancamento => ({
   ...r, valor: num(r.valor), valor_original: r.valor_original == null ? null : num(r.valor_original),
 })
-/** Tabela ou coluna ainda não criada (migração 8 pendente). */
+/** Tabela ou coluna ainda não criada (migração 8 ou 9 pendente). */
 const faltaTabela = (e: { code?: string; message: string }) =>
-  e.code === '42P01' || e.code === '42703' || e.code === 'PGRST205' || /does not exist|schema cache/i.test(e.message)
+  e.code === '42P01' || e.code === '42703' || e.code === 'PGRST205' || e.code === 'PGRST204' || /does not exist|schema cache/i.test(e.message)
 
 const buscar = () =>
   Promise.all([
     supabase.from('cartoes').select('*').order('created_at'),
     supabase.from('faturas_pagas').select('*').order('ano').order('mes'),
     supabase.from('lancamentos').select('*').not('cartao_id', 'is', null).order('data'),
+    // só para saber se a migração 9 (renegociar, juros, limite garantido) já foi rodada
+    supabase.from('faturas_pagas').select('tipo, juros, juros_lanc_id, divida_id').limit(1),
+    supabase.from('cartoes').select('limite_garantido, garantia_caixinha').limit(1),
   ])
+
+/** Campos que só existem com a migração 9: sem ela, ficam de fora do que é gravado. */
+const EXTRAS_CARTAO = ['limite_garantido', 'garantia_caixinha'] as const
+const EXTRAS_FATURA = ['tipo', 'juros', 'juros_lanc_id', 'divida_id', 'obs'] as const
+const sem = <T extends object>(o: T, campos: readonly string[]) =>
+  Object.fromEntries(Object.entries(o).filter(([k]) => !campos.includes(k))) as Partial<T>
+
+export type NovoPagamento = Omit<FaturaPaga, 'id' | 'pago_em' | 'banco_id'> & { pago_em?: string; banco_id?: string | null }
 
 /**
  * Cartões de crédito, faturas pagas e as compras no cartão de todos os anos (a fatura de um mês pode ter
@@ -44,10 +57,14 @@ export function useCartoes(opcoes: {
   const [faturasPagas, setFaturasPagas] = useState<FaturaPaga[]>([])
   const [todas, setTodas] = useState<Lancamento[]>([])
   const [semTabela, setSemTabela] = useState(false)
+  /** Migração 9 pendente: as funções novas (renegociar, juros, limite garantido) ficam desligadas. */
+  const [semExtras, setSemExtras] = useState(false)
   const [carregado, setCarregado] = useState(false)
 
-  const aplicar = useCallback(([c, f, l]: Awaited<ReturnType<typeof buscar>>) => {
+  const aplicar = useCallback(([c, f, l, xf, xc]: Awaited<ReturnType<typeof buscar>>) => {
     const e = c.error ?? f.error ?? l.error
+    const ex = xf.error ?? xc.error
+    setSemExtras(Boolean(ex && faltaTabela(ex)))
     if (e && faltaTabela(e)) setSemTabela(true)
     else if (e) aoErro(e.message)
     else {
@@ -80,7 +97,7 @@ export function useCartoes(opcoes: {
   }
 
   const addCartao = async (novo: Omit<CartaoCredito, 'id' | 'created_at'>): Promise<CartaoCredito | undefined> => {
-    const { data, error } = await supabase.from('cartoes').insert(novo).select().single()
+    const { data, error } = await supabase.from('cartoes').insert(semExtras ? sem(novo, EXTRAS_CARTAO) : novo).select().single()
     if (error) {
       aoErro(/duplicate|unique/i.test(error.message) ? `Já existe um cartão chamado "${novo.nome}".` : error.message)
       return
@@ -91,7 +108,7 @@ export function useCartoes(opcoes: {
   }
   const updCartao = async (id: string, patch: Partial<CartaoCredito>) => {
     setCartoes((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
-    const { error } = await supabase.from('cartoes').update(patch).eq('id', id)
+    const { error } = await supabase.from('cartoes').update(semExtras ? sem(patch, EXTRAS_CARTAO) : patch).eq('id', id)
     if (error) falhou(/duplicate|unique/i.test(error.message) ? `Já existe um cartão chamado "${patch.nome}".` : error.message)
   }
   /** As compras continuam como saídas, só deixam de ter cartão; as faturas marcadas como pagas somem. */
@@ -123,13 +140,27 @@ export function useCartoes(opcoes: {
     await recarregarLancs()
   }
 
-  /** "Paguei a fatura": não cria outra saída, só marca a fatura (as parcelas já são as saídas do mês). */
-  const pagarFatura = async (f: { cartao_id: string; ano: number; mes: number; valor: number; pago_em?: string; banco_id?: string | null }) => {
+  /**
+   * "Paguei a fatura" (ou "Renegociei", com `tipo: 'renegociada'`): não cria outra saída, só marca a fatura (as parcelas
+   * já são as saídas do mês). Juros e a dívida da renegociação são criados antes por quem chama, e chegam aqui pelos ids.
+   */
+  const pagarFatura = async (f: NovoPagamento): Promise<FaturaPaga | undefined> => {
     if (faturasPagas.some((x) => x.cartao_id === f.cartao_id && x.ano === f.ano && x.mes === f.mes)) return
-    const { data, error } = await supabase
-      .from('faturas_pagas').insert({ ...f, pago_em: f.pago_em ?? hojeLocal(), banco_id: f.banco_id ?? null }).select().single()
-    if (error) return falhou(error.message)
-    setFaturasPagas((xs) => [...xs, normFatura(data as FaturaPaga)])
+    const linha = { ...f, pago_em: f.pago_em ?? hojeLocal(), banco_id: f.banco_id ?? null }
+    const { data, error } = await supabase.from('faturas_pagas').insert(semExtras ? sem(linha, EXTRAS_FATURA) : linha).select().single()
+    if (error) {
+      falhou(error.message)
+      return
+    }
+    const nova = normFatura(data as FaturaPaga)
+    setFaturasPagas((xs) => [...xs, nova])
+    return nova
+  }
+  /** Ajeita uma fatura já paga: valor, dia, banco, juros. */
+  const editarPagamento = async (id: string, patch: Partial<FaturaPaga>) => {
+    setFaturasPagas((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
+    const { error } = await supabase.from('faturas_pagas').update(semExtras ? sem(patch, EXTRAS_FATURA) : patch).eq('id', id)
+    if (error) falhou(error.message)
   }
   const desfazerPagamento = async (id: string) => {
     setFaturasPagas((xs) => xs.filter((x) => x.id !== id))
@@ -138,8 +169,8 @@ export function useCartoes(opcoes: {
   }
 
   return {
-    cartoes, faturasPagas, compras, semTabela, carregado, recarregar,
-    addCartao, updCartao, delCartao, addCompra, delCompra, pagarFatura, desfazerPagamento,
+    cartoes, faturasPagas, compras, semTabela, semExtras, carregado, recarregar,
+    addCartao, updCartao, delCartao, addCompra, delCompra, pagarFatura, editarPagamento, desfazerPagamento,
   }
 }
 

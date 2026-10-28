@@ -1,5 +1,6 @@
 import { textoStatus, totalFaturasDoMes, type SituacaoCartao } from '../lib/cartoes'
 import { fmtValor } from '../lib/format'
+import { BancoIcone } from './BancoIcone'
 import { Progresso } from './ui'
 
 /**
@@ -20,13 +21,16 @@ export function BlocoCartoes({ situacoes, aoAbrir }: { situacoes: SituacaoCartao
       {situacoes.map((s) => (
         <button key={s.cartao.id} className="cc-mini" onClick={aoAbrir} style={{ '--c': s.cartao.cor } as React.CSSProperties}>
           {/* um cartãozinho na cor do cartão, com chip e o final do nome */}
-          <span className="cc-mini-plastico" aria-hidden="true"><i className="cc-mini-chip" /><span>{s.cartao.nome.slice(0, 10)}</span></span>
+          <span className="cc-mini-plastico" aria-hidden="true">
+            <BancoIcone nome={s.cartao.nome} cor={s.cartao.cor} tamanho={16} />
+            <i className="cc-mini-chip" /><span>{s.cartao.nome.slice(0, 10)}</span>
+          </span>
           <span className="cc-mini-info">
             <span className="cc-mini-topo"><strong>{s.cartao.nome}</strong><span className="cc-mini-valor">{fmtValor(s.valor)}</span></span>
             <span className={`chip-estado cc ${s.status}`}>{textoStatus(s)}</span>
-            {s.cartao.limite ? (
+            {s.limiteTotal ? (
               <span className="cc-mini-limite">
-                <Progresso valor={s.limiteUsado} total={s.cartao.limite} cor={s.cartao.cor} />
+                <Progresso valor={s.limiteUsado} total={s.limiteTotal} cor={s.cartao.cor} />
                 {s.limiteDisponivel !== null && <small>livre {fmtValor(Math.max(0, s.limiteDisponivel))}</small>}
               </span>
             ) : null}

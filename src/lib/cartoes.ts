@@ -88,11 +88,30 @@ export function gerarParcelas(valor: number, n: number, dataCompra: string, c: D
 
 // ---------- situação de cada cartão ----------
 
-/** futura: ainda não abriu · aberta: recebendo compras · fechada: esperando o vencimento · atrasada: venceu sem ser marcada como paga */
-export type StatusFatura = 'futura' | 'aberta' | 'fechada' | 'paga' | 'atrasada'
+/**
+ * futura: ainda não abriu · aberta: recebendo compras · fechada: esperando o vencimento · atrasada: venceu sem ser
+ * marcada como paga · renegociada: virou uma dívida em parcelas com o banco
+ */
+export type StatusFatura = 'futura' | 'aberta' | 'fechada' | 'paga' | 'atrasada' | 'renegociada'
 
 export const ROTULO_STATUS: Record<StatusFatura, string> = {
-  futura: 'Ainda não abriu', aberta: 'Aberta', fechada: 'Fechada', paga: 'Paga', atrasada: 'Venceu',
+  futura: 'Ainda não abriu', aberta: 'Aberta', fechada: 'Fechada', paga: 'Paga', atrasada: 'Venceu', renegociada: 'Renegociada',
+}
+
+/** Fatura resolvida por renegociação (sem a migração 9 toda fatura marcada é paga). */
+export const renegociada = (p: Pick<FaturaPaga, 'tipo'> | null | undefined) => p?.tipo === 'renegociada'
+/** Paga depois do dia do vencimento. */
+export const pagaComAtraso = (p: Pick<FaturaPaga, 'pago_em' | 'tipo'> | null | undefined, vencimento: string) =>
+  Boolean(p && !renegociada(p) && p.pago_em > vencimento)
+
+const chaveFatura = (cartao_id: string, ano: number, mes: number) => `${cartao_id}|${ano}|${mes}`
+/**
+ * Compras de faturas renegociadas não contam nas saídas: a fatura virou uma dívida, e o que sai do bolso passa a ser
+ * cada parcela paga dela (senão o mesmo gasto contaria duas vezes). Devolve o teste para filtrar os lançamentos.
+ */
+export function contaNasSaidas(pagas: FaturaPaga[]) {
+  const fora = new Set(pagas.filter(renegociada).map((p) => chaveFatura(p.cartao_id, p.ano, p.mes)))
+  return (l: Lancamento) => !fora.size || !l.cartao_id || !fora.has(chaveFatura(l.cartao_id, l.ano, l.mes))
 }
 
 export interface Fatura {
@@ -130,6 +149,12 @@ export interface SituacaoCartao extends Fatura {
   limiteUsado: number
   /** null quando o cartão não tem limite informado. */
   limiteDisponivel: number | null
+  /** Limite do banco mais o garantido (null sem limite). */
+  limiteTotal: number | null
+  /** Parte do limite que vem da caixinha (limite garantido). */
+  garantido: number
+  /** Faturas de meses anteriores que venceram e não foram pagas nem renegociadas. */
+  atrasadas: Fatura[]
   /** As 6 faturas seguintes. */
   proximas: Fatura[]
   parceladas: CompraParcelada[]
@@ -138,8 +163,8 @@ export interface SituacaoCartao extends Fatura {
 const doCartao = (c: CartaoCredito, lancs: Lancamento[]) => lancs.filter((l) => l.cartao_id === c.id && l.tipo === 'saida')
 const dataDaCompra = (l: Lancamento) => l.data_compra ?? l.data ?? ''
 
-function statusDaFatura(valor: number, paga: boolean, fechAnterior: string, fech: string, venc: string, hoje: string): StatusFatura {
-  if (paga) return 'paga'
+function statusDaFatura(valor: number, paga: FaturaPaga | null, fechAnterior: string, fech: string, venc: string, hoje: string): StatusFatura {
+  if (paga) return renegociada(paga) ? 'renegociada' : 'paga'
   if (hoje <= fechAnterior) return 'futura'
   if (hoje <= fech) return 'aberta'
   // fatura vazia que venceu não está "atrasada": não há nada a pagar
@@ -157,12 +182,19 @@ export function faturaDoMes(c: CartaoCredito, lancs: Lancamento[], pagas: Fatura
   const paga = pagas.find((p) => p.cartao_id === c.id && p.ano === ano && p.mes === mes) ?? null
   return {
     ano, mes, valor, fechamento, vencimento, paga, compras,
-    status: statusDaFatura(valor, Boolean(paga), datasDaFatura(c, anterior.ano, anterior.mes).fechamento, fechamento, vencimento, hoje),
+    status: statusDaFatura(valor, paga, datasDaFatura(c, anterior.ano, anterior.mes).fechamento, fechamento, vencimento, hoje),
   }
 }
 
-/** Limite usado e disponível: o que ainda falta pagar, das faturas do mês atual em diante. */
-export function limiteDoCartao(c: CartaoCredito, lancs: Lancamento[], pagas: FaturaPaga[], hoje = hojeLocal()) {
+/** Limite garantido do cartão: o valor fixo ou, com `garantia_caixinha`, o que veio de `caixinha` (a caixinha do banco). */
+export const garantidoDo = (c: CartaoCredito, caixinha?: number) =>
+  centavos(Math.max(0, c.garantia_caixinha ? caixinha ?? 0 : c.limite_garantido ?? 0))
+
+/**
+ * Limite usado e disponível: o que ainda falta pagar, das faturas do mês atual em diante. O limite total é o do banco
+ * mais o garantido (dinheiro na caixinha que vira limite); sem nenhum dos dois, não há limite para mostrar.
+ */
+export function limiteDoCartao(c: CartaoCredito, lancs: Lancamento[], pagas: FaturaPaga[], hoje = hojeLocal(), garantido = garantidoDo(c)) {
   const [ha, hm] = partes(hoje)
   const agora = chaveMes(ha, hm)
   const usado = soma(
@@ -170,7 +202,8 @@ export function limiteDoCartao(c: CartaoCredito, lancs: Lancamento[], pagas: Fat
       .filter((l) => chaveMes(l.ano, l.mes) >= agora && !pagas.some((p) => p.cartao_id === c.id && p.ano === l.ano && p.mes === l.mes))
       .map((l) => l.valor),
   )
-  return { usado, disponivel: c.limite == null ? null : centavos(c.limite - usado) }
+  const total = c.limite == null && !garantido ? null : centavos((c.limite ?? 0) + garantido)
+  return { usado, total, garantido, disponivel: total == null ? null : centavos(total - usado) }
 }
 
 /** Compras parceladas que ainda têm parcelas a partir do mês de referência. */
@@ -202,15 +235,20 @@ export function comprasParceladas(c: CartaoCredito, lancs: Lancamento[], ano: nu
 }
 
 /** Tudo sobre um cartão no mês: a fatura, o limite, as próximas faturas e as compras parceladas. */
-export function situacaoCartao(c: CartaoCredito, lancs: Lancamento[], pagas: FaturaPaga[], ano: number, mes: number, hoje = hojeLocal()): SituacaoCartao {
+export function situacaoCartao(
+  c: CartaoCredito, lancs: Lancamento[], pagas: FaturaPaga[], ano: number, mes: number, hoje = hojeLocal(), garantido = garantidoDo(c),
+): SituacaoCartao {
   const f = faturaDoMes(c, lancs, pagas, ano, mes, hoje)
-  const limite = limiteDoCartao(c, lancs, pagas, hoje)
+  const limite = limiteDoCartao(c, lancs, pagas, hoje, garantido)
   return {
     ...f,
     cartao: c,
     diasParaVencer: diasEntre(hoje, f.vencimento),
     limiteUsado: limite.usado,
     limiteDisponivel: limite.disponivel,
+    limiteTotal: limite.total,
+    garantido: limite.garantido,
+    atrasadas: faturasAtrasadas(c, lancs, pagas, ano, mes, hoje),
     proximas: [1, 2, 3, 4, 5, 6].map((i) => {
       const m = somaMeses({ ano, mes }, i)
       return faturaDoMes(c, lancs, pagas, m.ano, m.mes, hoje)
@@ -219,19 +257,42 @@ export function situacaoCartao(c: CartaoCredito, lancs: Lancamento[], pagas: Fat
   }
 }
 
-/** Situação de cada cartão ativo no mês. */
-export const situacoesDoMes = (cartoes: CartaoCredito[], lancs: Lancamento[], pagas: FaturaPaga[], ano: number, mes: number, hoje = hojeLocal()) =>
-  cartoes.filter((c) => c.ativo).map((c) => situacaoCartao(c, lancs, pagas, ano, mes, hoje))
+/**
+ * Faturas dos 12 meses antes do de referência que venceram com valor e ficaram sem pagar (as mais antigas primeiro).
+ * Mais para trás que isso fica de fora: é quase sempre fatura paga que só não foi marcada.
+ */
+export function faturasAtrasadas(c: CartaoCredito, lancs: Lancamento[], pagas: FaturaPaga[], ano: number, mes: number, hoje = hojeLocal()): Fatura[] {
+  const ref = chaveMes(ano, mes)
+  const meses = new Set(doCartao(c, lancs).map((l) => chaveMes(l.ano, l.mes)).filter((k) => k < ref && k >= ref - 12))
+  return [...meses].sort((a, b) => a - b)
+    .map((k) => doMesChave(k))
+    .map((m) => faturaDoMes(c, lancs, pagas, m.ano, m.mes, hoje))
+    .filter((f) => f.status === 'atrasada')
+}
 
-/** Para um indicador: quanto vence de fatura no mês, somando todos os cartões (paga ou não). */
-export const totalFaturasDoMes = (situacoes: Pick<SituacaoCartao, 'valor'>[]) => soma(situacoes.map((s) => s.valor))
+/**
+ * Situação de cada cartão ativo no mês. `garantidoDe` dá o limite garantido de cada cartão quando ele vem da caixinha
+ * do banco (sem ela, vale o valor fixo do cartão).
+ */
+export const situacoesDoMes = (
+  cartoes: CartaoCredito[], lancs: Lancamento[], pagas: FaturaPaga[], ano: number, mes: number, hoje = hojeLocal(),
+  garantidoDe: (c: CartaoCredito) => number = (c) => garantidoDo(c),
+) => cartoes.filter((c) => c.ativo).map((c) => situacaoCartao(c, lancs, pagas, ano, mes, hoje, garantidoDe(c)))
+
+/**
+ * Para um indicador: quanto vence de fatura no mês, somando todos os cartões (paga ou não). Fatura renegociada fica
+ * de fora: virou dívida e não vence mais como fatura (as compras dela também saíram das saídas do mês).
+ */
+export const totalFaturasDoMes = (situacoes: Pick<SituacaoCartao, 'valor' | 'status'>[]) =>
+  soma(situacoes.filter((s) => s.status !== 'renegociada').map((s) => s.valor))
 /** Quanto das faturas do mês ainda falta pagar. */
 export const totalFaturasAPagar = (situacoes: Pick<SituacaoCartao, 'valor' | 'status'>[]) =>
-  soma(situacoes.filter((s) => s.status !== 'paga').map((s) => s.valor))
+  soma(situacoes.filter((s) => s.status !== 'paga' && s.status !== 'renegociada').map((s) => s.valor))
 
 /** "vence hoje", "vence em 9 dias", "venceu há 3 dias"… */
 export function quandoVence(s: Pick<SituacaoCartao, 'status' | 'diasParaVencer'>) {
   if (s.status === 'paga') return 'paga'
+  if (s.status === 'renegociada') return 'renegociada'
   const d = s.diasParaVencer
   if (d === 0) return 'vence hoje'
   if (d === 1) return 'vence amanhã'
@@ -257,6 +318,7 @@ export function textoParcelamento(ps: ParcelaGerada[], anoCompra: number) {
 /** Uma frase com a situação da fatura: "Fechada · vence em 9 dias", "Paga", "Venceu há 3 dias". */
 export function textoStatus(s: Pick<SituacaoCartao, 'status' | 'diasParaVencer' | 'valor'>) {
   if (s.status === 'paga') return 'Paga'
+  if (s.status === 'renegociada') return 'Renegociada'
   if (s.valor === 0) return 'Sem compras na fatura'
   const quando = quandoVence(s)
   return s.status === 'atrasada' ? quando[0].toUpperCase() + quando.slice(1) : `${ROTULO_STATUS[s.status]} · ${quando}`

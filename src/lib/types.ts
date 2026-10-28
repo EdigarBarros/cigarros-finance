@@ -110,6 +110,8 @@ export interface Perfil {
   dispensadas: string[]
   /** null enquanto as perguntas iniciais não foram respondidas. */
   onboarding_em: string | null
+  /** Foto (data URL pequena). Gravada à parte do resto do perfil: a coluna só existe com a migração 9. */
+  foto?: string | null
 }
 
 /** Objetivo para juntar dinheiro (viagem, reserva de emergência, carro…), na moeda que a pessoa escolher. */
@@ -164,10 +166,17 @@ export interface CartaoCredito {
   dia_fechamento: number
   dia_vencimento: number
   ativo: boolean
+  /** Dinheiro numa caixinha do banco que vira limite extra (migração 9). */
+  limite_garantido?: number
+  /** O limite garantido é o valor da caixinha do banco do cartão (tela Patrimônio), não um valor fixo. */
+  garantia_caixinha?: boolean
   created_at?: string
 }
 
-/** Fatura que a pessoa marcou como paga (ano e mês do vencimento). */
+/**
+ * Fatura resolvida (ano e mês do vencimento): paga, ou renegociada com o banco (virou uma dívida em parcelas,
+ * e as compras dela deixam de contar nas saídas do mês).
+ */
 export interface FaturaPaga {
   id: string
   cartao_id: string
@@ -176,4 +185,12 @@ export interface FaturaPaga {
   valor: number
   pago_em: string
   banco_id: string | null
+  /** Campos da migração 9. */
+  tipo?: 'paga' | 'renegociada'
+  /** Juros e multa pagos junto (viram uma saída à parte, `juros_lanc_id`). */
+  juros?: number
+  juros_lanc_id?: string | null
+  /** Dívida criada na renegociação. */
+  divida_id?: string | null
+  obs?: string | null
 }

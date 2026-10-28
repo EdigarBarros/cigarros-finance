@@ -24,6 +24,14 @@ const normMes = (r: Mes & { usd?: number }): Mes => {
 /** Tabela ainda não criada (migração pendente). */
 const faltaTabela = (e: { code?: string; message: string }) =>
   e.code === '42P01' || e.code === 'PGRST205' || /does not exist|schema cache/i.test(e.message)
+const chaveFoto = (userId: string) => `opuscash-foto-${userId}`
+const fotoLocal = (userId: string) => {
+  try {
+    return localStorage.getItem(chaveFoto(userId))
+  } catch {
+    return null
+  }
+}
 const paraPagamento = (l: Lancamento): Pagamento | null =>
   l.divida_id && l.tipo === 'saida' ? { id: l.id, divida_id: l.divida_id, data: l.data, valor: l.valor } : null
 
@@ -41,6 +49,8 @@ export function useDados(userId: string, ano: number) {
   /** undefined = carregando; null = a pessoa ainda não tem perfil salvo. */
   const [perfil, setPerfil] = useState<Perfil | null | undefined>(undefined)
   const [perfilSemTabela, setPerfilSemTabela] = useState(false)
+  /** Foto de perfil: do banco (migração 9) ou, sem a coluna, guardada só neste aparelho. */
+  const [foto, setFoto] = useState<string | null>(() => fotoLocal(userId))
   const [categorias, setCategorias] = useState<Categoria[]>([])
   /** Sem a migração 5: usa as 4 categorias antigas. */
   const [categoriasAntigas, setCategoriasAntigas] = useState(false)
@@ -79,7 +89,10 @@ export function useDados(userId: string, ano: number) {
       setPerfilSemTabela(true)
       setPerfil(null)
     } else if (pf.error) setErro(pf.error.message)
-    else setPerfil(pf.data ? normPerfil(pf.data as Perfil) : null)
+    else {
+      setPerfil(pf.data ? normPerfil(pf.data as Perfil) : null)
+      if (pf.data && 'foto' in pf.data) setFoto((pf.data as Perfil).foto ?? fotoLocal(userId))
+    }
     const em = mt.error ?? mv.error
     if (em && faltaTabela(em)) setMetasSemTabela(true)
     else if (em) setErro(em.message)
@@ -101,7 +114,7 @@ export function useDados(userId: string, ano: number) {
       else setCategorias(novas.data as Categoria[])
     }
     setCarregando(false)
-  }, [ano])
+  }, [ano, userId])
 
   useEffect(() => {
     void recarregar()
@@ -130,12 +143,16 @@ export function useDados(userId: string, ano: number) {
     const { categoria_id, ...resto } = l
     return { ...resto, categoria: l.tipo === 'entrada' ? 'outros' : categoria_id ?? 'outros' } as T
   }
-  const addLanc = async (novo: Omit<Lancamento, 'id'>) => {
+  const addLanc = async (novo: Omit<Lancamento, 'id'>): Promise<Lancamento | undefined> => {
     const { data, error } = await supabase.from('lancamentos').insert(paraBanco(novo)).select().single()
-    if (error) return falhou(error.message)
+    if (error) {
+      falhou(error.message)
+      return
+    }
     const l = normLanc(data as Lancamento)
     if (l.ano === ano) setLancs((xs) => [...xs, l])
     sincronizarPagamento(l.id, l)
+    return l
   }
   const updLanc = async (id: string, mudancas: Partial<Lancamento>) => {
     const patch = paraBanco(mudancas)
@@ -153,21 +170,24 @@ export function useDados(userId: string, ano: number) {
     if (error) falhou(error.message)
   }
 
-  /** Cria a dívida já com o saldo devedor de partida. */
   /**
    * Cria a dívida já com o saldo de partida. `inicio` (opcional) registra o valor de quando ela começou,
    * para o app mostrar quanto já foi pago ("parcela 4 de 12").
    */
   const addDivida = async (d: {
     descricao: string; valor_parcela: number | null; saldo: number; data: string; inicio?: { data: string; saldo: number }
-  }) => {
+  }): Promise<Divida | undefined> => {
     const { data, error } = await supabase
       .from('dividas').insert({ descricao: d.descricao, valor_parcela: d.valor_parcela }).select().single()
-    if (error) return falhou(error.message)
+    if (error) {
+      falhou(error.message)
+      return
+    }
     const nova = normDiv(data as Divida)
     setDividas((xs) => [...xs, nova])
     if (d.inicio) await addSaldo(nova.id, d.inicio.data, d.inicio.saldo)
     await addSaldo(nova.id, d.data, d.saldo)
+    return nova
   }
   const updDivida = async (id: string, patch: Partial<Divida>) => {
     setDividas((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
@@ -227,12 +247,27 @@ export function useDados(userId: string, ano: number) {
     if (error) falhou(error.message)
   }
 
-  /** Grava o perfil inteiro (sem a tabela, a mudança vale só até recarregar a página). */
+  /** Grava o perfil inteiro (sem a tabela, a mudança vale só até recarregar a página). A foto é gravada à parte. */
   const salvarPerfil = async (novo: Perfil) => {
     setPerfil(novo)
     if (perfilSemTabela) return
-    const { error } = await supabase.from('perfis').upsert({ ...novo, user_id: userId, updated_at: new Date().toISOString() })
+    const { foto: _foto, ...semFoto } = novo
+    const { error } = await supabase.from('perfis').upsert({ ...semFoto, user_id: userId, updated_at: new Date().toISOString() })
     if (error) falhou(error.message)
+  }
+  /**
+   * Troca (ou tira, com null) a foto de perfil. Fica sempre guardada neste aparelho e, com a migração 9, também no
+   * banco (para aparecer nos outros aparelhos). Sem a coluna, o erro é engolido: a foto local já vale.
+   */
+  const salvarFoto = async (nova: string | null) => {
+    setFoto(nova)
+    try {
+      if (nova) localStorage.setItem(chaveFoto(userId), nova)
+      else localStorage.removeItem(chaveFoto(userId))
+    } catch { /* sem armazenamento: vale até recarregar */ }
+    if (perfilSemTabela) return
+    const { error } = await supabase.from('perfis').update({ foto: nova }).eq('user_id', userId)
+    if (error && !faltaTabela(error) && error.code !== '42703' && error.code !== 'PGRST204') falhou(error.message)
   }
 
   const addCategoria = async (c: Omit<Categoria, 'id' | 'ordem'>): Promise<Categoria | undefined> => {
@@ -324,7 +359,7 @@ export function useDados(userId: string, ano: number) {
     zerarDados,
     metas, movimentosMeta, metasSemTabela, addMeta, updMeta, delMeta, addMovimentoMeta, delMovimentoMeta,
     categorias, categoriasAntigas, addCategoria, updCategoria, delCategoria,
-    perfil, perfilSemTabela, salvarPerfil,
+    perfil, perfilSemTabela, salvarPerfil, foto, salvarFoto,
     bancos, addBanco, updBanco, delBanco,
     lancs, meses, dividas, saldos, pagamentos, carregando, erro, setErro, recarregar,
     addLanc, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, salvarMes,

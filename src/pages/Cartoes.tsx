@@ -1,25 +1,49 @@
 import { useState } from 'react'
-import { hojeLocal, nomeDaFatura, quandoVence, ROTULO_STATUS, totalFaturasAPagar, totalFaturasDoMes, type CompraParcelada, type SituacaoCartao } from '../lib/cartoes'
+import { CATALOGO_BANCOS } from '../lib/bancos'
+import {
+  datasDaFatura, faturaDoMes, hojeLocal, nomeDaFatura, pagaComAtraso, quandoVence, renegociada, somaMeses, textoStatus,
+  totalFaturasAPagar, totalFaturasDoMes, type CompraParcelada, type Fatura, type SituacaoCartao,
+} from '../lib/cartoes'
 import { COR } from '../lib/charts'
 import { SEM_CATEGORIA } from '../lib/categorias'
-import { fmtDataCurta, fmtDataLonga, fmtValor, MESES_NOME, paraCampo, parseNumero, simbolo } from '../lib/format'
-import { BANCOS_CONHECIDOS, CORES_LIVRES, mesmoNome } from '../lib/rotulos'
-import type { CartaoCredito } from '../lib/types'
+import { fmtDataCurta, fmtDataLonga, fmtValor, MESES_CURTO, MESES_NOME, paraCampo, parseNumero, simbolo } from '../lib/format'
+import { CORES_LIVRES, mesmoNome } from '../lib/rotulos'
+import type { CartaoCredito, FaturaPaga } from '../lib/types'
+import { BancoIcone } from '../components/BancoIcone'
+import { CartaoIlustrado } from '../components/CartaoIlustrado'
 import { Selo } from '../components/Categorias'
 import { Icone } from '../components/Icone'
-import { Cartao, Interruptor, Kpi, Modal, Progresso, Vazio } from '../components/ui'
+import { Numero } from '../components/Numero'
+import { Cartao, Interruptor, Kpi, Modal, Vazio } from '../components/ui'
 import type { Ctx } from './contexto'
 
 const DIAS = Array.from({ length: 31 }, (_, i) => i + 1)
-const sufixoMes = (ano: number, mes: number) => `${MESES_NOME[mes - 1].slice(0, 3).toLowerCase()}/${String(ano).slice(2)}`
+const sufixoMes = (ano: number, mes: number) => `${MESES_CURTO[mes - 1].toLowerCase()}/${String(ano).slice(2)}`
+const centavos = (n: number) => Math.round(n * 100) / 100
+/** Dias de b menos a (datas ISO). */
+const dias = (a: string, b: string) => Math.round((Date.parse(`${b}T12:00:00`) - Date.parse(`${a}T12:00:00`)) / 86400000)
+const anoMesDe = (iso: string) => ({ ano: Number(iso.slice(0, 4)), mes: Number(iso.slice(5, 7)) })
 
-/** Cartões de crédito: a fatura de cada mês, o que entrou nela, o limite e as parcelas que ainda vêm. */
+/** Uma fatura escolhida para pagar, renegociar ou ajeitar. */
+interface Alvo { cartao: CartaoCredito; f: Fatura; pagamento?: FaturaPaga }
+
+/**
+ * Cartões de crédito: a carteira com os cartões desenhados e, do cartão escolhido, a fatura do mês, o limite (com o
+ * garantido da caixinha), as faturas que atrasaram, as próximas, as parceladas e o histórico do que já foi pago ou
+ * renegociado. Renegociar cria uma dívida; juros de atraso viram uma saída.
+ */
 export function Cartoes(c: Ctx) {
   const [editando, setEditando] = useState<CartaoCredito | 'novo' | null>(null)
-  const [pagando, setPagando] = useState<SituacaoCartao | null>(null)
+  const [pagando, setPagando] = useState<Alvo | null>(null)
+  const [renegociando, setRenegociando] = useState<Alvo | null>(null)
+  const [escolhido, setEscolhido] = useState<string | null>(null)
   const { cartoes, faturas } = c
   const arquivados = cartoes.cartoes.filter((x) => !x.ativo)
-  const comLimite = faturas.filter((s) => s.limiteDisponivel !== null)
+  const s = faturas.find((x) => x.cartao.id === escolhido) ?? faturas[0]
+  const comLimite = faturas.filter((x) => x.limiteDisponivel !== null)
+  const atrasadas = faturas.flatMap((x) => [...x.atrasadas, ...(x.status === 'atrasada' ? [x] : [])])
+  const emAtraso = centavos(atrasadas.reduce((a, f) => a + f.valor, 0))
+  const nomeMes = MESES_NOME[c.mes - 1].toLowerCase()
 
   if (cartoes.semTabela) {
     return (
@@ -31,48 +55,69 @@ export function Cartoes(c: Ctx) {
   }
 
   return (
-    <div className="pagina">
+    <div className="pagina pg-cartoes">
       <header className="pagina-topo">
         <div>
           <h1>Cartões</h1>
-          <p className="sub">Faturas de {MESES_NOME[c.mes - 1].toLowerCase()}/{c.ano}. Cada compra entra sozinha na fatura certa, e as parceladas se espalham pelos meses.</p>
+          <p className="sub">Faturas de {nomeMes}/{c.ano}, limite e parcelas de cada cartão.</p>
         </div>
         {cartoes.cartoes.length > 0 && <button className="btn primario" onClick={() => setEditando('novo')}><Icone nome="mais" tamanho={16} /> Novo cartão</button>}
       </header>
 
-      {cartoes.carregado && !cartoes.cartoes.length && (
-        <Cartao>
-          <Vazio>
-            Adicione seu cartão com o dia em que a fatura fecha e o dia em que vence. Daí é só lançar as compras escolhendo o cartão:
-            o app põe cada parcela na fatura certa e mostra quanto você ainda pode gastar.<br />
-            <button className="btn primario" style={{ marginTop: 14 }} onClick={() => setEditando('novo')}>
-              <Icone nome="mais" tamanho={16} /> Adicionar meu primeiro cartão
+      {cartoes.semExtras && cartoes.carregado && cartoes.cartoes.length > 0 && (
+        <p className="cc-aviso-migracao">
+          <Icone nome="ideia" tamanho={16} />
+          <span>Para renegociar faturas, registrar juros de atraso e usar limite garantido, rode <code>supabase/migracao-09-cartoes-extras.sql</code> no SQL Editor do Supabase.</span>
+        </p>
+      )}
+
+      {cartoes.carregado && !cartoes.cartoes.length && <SemCartoes aoCriar={() => setEditando('novo')} />}
+
+      {faturas.length > 0 && s && (
+        <>
+          <section className="cc-carteira" aria-label="Seus cartões">
+            {faturas.map((x, i) => (
+              <div key={x.cartao.id} className="cc-carteira-item" style={{ animationDelay: `${i * 70}ms` }}>
+                <CartaoIlustrado
+                  nome={x.cartao.nome} cor={x.cartao.cor} banco={c.d.bancos.find((b) => b.id === x.cartao.banco_id)?.nome}
+                  ativo={x === s} aoClicar={() => setEscolhido(x.cartao.id)}
+                  conteudo={<span className="cc-plastico-fatura"><small>fatura de {nomeDaFatura(x.ano, x.mes, c.ano)}</small><b>{fmtValor(x.valor)}</b></span>}
+                  rodape={<>fecha dia {x.cartao.dia_fechamento} · vence dia {x.cartao.dia_vencimento}</>}
+                />
+                <span className={`chip-estado cc ${x.status}`}>{textoStatus(x)}</span>
+              </div>
+            ))}
+            <button className="cc-carteira-novo" onClick={() => setEditando('novo')}>
+              <span><Icone nome="mais" tamanho={22} /></span>Novo cartão
             </button>
-          </Vazio>
-        </Cartao>
-      )}
+          </section>
 
-      {faturas.length > 0 && (
-        <div className="kpis">
-          <Kpi rotulo={`Faturas de ${MESES_NOME[c.mes - 1].toLowerCase()}`} valor={totalFaturasDoMes(faturas)} cor={COR.saidas} />
-          <Kpi rotulo="Falta pagar" valor={totalFaturasAPagar(faturas)} cor={COR.divida} />
-          {comLimite.length > 0 && (
-            <Kpi rotulo="Limite disponível" valor={comLimite.reduce((a, s) => a + Math.max(0, s.limiteDisponivel!), 0)} cor={COR.caixa} />
-          )}
-        </div>
-      )}
+          <div className="kpis">
+            <Kpi rotulo={`Faturas de ${nomeMes}`} valor={totalFaturasDoMes(faturas)} cor={COR.saidas} icone="cartao" />
+            <Kpi rotulo="Falta pagar" valor={totalFaturasAPagar(faturas)} cor={COR.divida} icone="relogio" />
+            {comLimite.length > 0 && (
+              <Kpi rotulo="Limite livre" valor={comLimite.reduce((a, x) => a + Math.max(0, x.limiteDisponivel!), 0)} cor={COR.caixa} icone="escudo" />
+            )}
+            {emAtraso > 0 && <Kpi rotulo={`Em atraso (${atrasadas.length})`} valor={emAtraso} cor={COR.saidas} icone="sino" />}
+          </div>
 
-      {faturas.map((s) => (
-        <CartaoDeCredito key={s.cartao.id} s={s} c={c} aoEditar={() => setEditando(s.cartao)} aoPagar={() => setPagando(s)} />
-      ))}
+          <Detalhe key={s.cartao.id} s={s} c={c}
+            aoEditar={() => setEditando(s.cartao)}
+            aoPagar={(f, pagamento) => setPagando({ cartao: s.cartao, f, pagamento })}
+            aoRenegociar={(f) => setRenegociando({ cartao: s.cartao, f })} />
+        </>
+      )}
 
       {arquivados.length > 0 && (
         <Cartao titulo="Cartões que você não usa mais">
-          <ul className="lista-lanc">
+          <ul className="cc-arquivados">
             {arquivados.map((x) => (
-              <li key={x.id} className="cc-arquivado">
-                <span><i className="marcador" style={{ background: x.cor }} />{x.nome}</span>
-                <button className="link" onClick={() => setEditando(x)}>Editar</button>
+              <li key={x.id}>
+                <button onClick={() => setEditando(x)}>
+                  <BancoIcone nome={x.nome} cor={x.cor} tamanho={30} />
+                  <span>{x.nome}</span>
+                  <Icone nome="lapis" tamanho={16} />
+                </button>
               </li>
             ))}
           </ul>
@@ -80,81 +125,105 @@ export function Cartoes(c: Ctx) {
       )}
 
       {editando && <FormCartao c={c} cartao={editando === 'novo' ? undefined : editando} aoFechar={() => setEditando(null)} />}
-      {pagando && <FormPagarFatura c={c} s={pagando} aoFechar={() => setPagando(null)} />}
+      {pagando && <FormPagarFatura c={c} alvo={pagando} aoFechar={() => setPagando(null)} />}
+      {renegociando && <FormRenegociar c={c} alvo={renegociando} aoFechar={() => setRenegociando(null)} />}
     </div>
   )
 }
 
-function CartaoDeCredito({ s, c, aoEditar, aoPagar }: { s: SituacaoCartao; c: Ctx; aoEditar: () => void; aoPagar: () => void }) {
+/** Conta sem cartões: uma pilha de cartões desenhados e o convite para adicionar o primeiro. */
+function SemCartoes({ aoCriar }: { aoCriar: () => void }) {
+  return (
+    <section className="cartao cc-vazio">
+      <div className="cc-vazio-pilha" aria-hidden="true">
+        <CartaoIlustrado nome="Nubank" cor="#8a05be" compacto />
+        <CartaoIlustrado nome="Itaú" cor="#ec7000" compacto />
+        <CartaoIlustrado nome="PicPay" cor="#21c25e" compacto />
+      </div>
+      <div className="cc-vazio-texto">
+        <h2>Coloque seus cartões aqui</h2>
+        <p>Diga o dia em que a fatura fecha e o dia em que vence. Depois é só lançar as compras escolhendo o cartão: cada parcela cai na fatura certa e você vê quanto do limite ainda sobra.</p>
+        <button className="btn primario" onClick={aoCriar}><Icone nome="mais" tamanho={16} /> Adicionar meu primeiro cartão</button>
+      </div>
+    </section>
+  )
+}
+
+function Detalhe({ s, c, aoEditar, aoPagar, aoRenegociar }: {
+  s: SituacaoCartao; c: Ctx; aoEditar: () => void
+  aoPagar: (f: Fatura, pagamento?: FaturaPaga) => void
+  aoRenegociar: (f: Fatura) => void
+}) {
   const { cartao } = s
-  const banco = c.v.bancos ? c.d.bancos.find((b) => b.id === cartao.banco_id) : undefined
-  const hoje = hojeLocal()
-  const fatura = nomeDaFatura(s.ano, s.mes, c.ano)
-  const paga = s.paga
-  const mudou = paga && Math.abs(paga.valor - s.valor) >= 0.01
-  const usadoPct = cartao.limite ? s.limiteUsado / cartao.limite : 0
+  const historico = c.cartoes.faturasPagas
+    .filter((p) => p.cartao_id === cartao.id)
+    .sort((a, b) => b.ano * 12 + b.mes - (a.ano * 12 + a.mes))
+  const faturaDe = (p: FaturaPaga) => faturaDoMes(cartao, c.cartoes.compras, c.cartoes.faturasPagas, p.ano, p.mes)
+  const banco = c.d.bancos.find((b) => b.id === cartao.banco_id)
 
   return (
-    <Cartao className="cc">
-      <header className="cc-topo">
-        <h2 className="cc-nome">
-          <i className="marcador grande" style={{ background: cartao.cor }} />{cartao.nome}
-          {banco && <small>{banco.nome}</small>}
-        </h2>
-        <div className="cc-acoes">
-          <button className="link" onClick={aoEditar}>Editar</button>
-          <button className="btn" onClick={() => c.novaCompraNoCartao(cartao.id)}><Icone nome="mais" tamanho={16} /> Nova compra</button>
-        </div>
+    <div className="ccd" style={{ '--c': cartao.cor } as React.CSSProperties}>
+      <header className="ccd-cab">
+        <BancoIcone nome={cartao.nome} reserva={banco?.nome} cor={cartao.cor} tamanho={40} />
+        <span>
+          <h2>{cartao.nome}</h2>
+          <small>{banco ? `${banco.nome} · ` : ''}fecha dia {cartao.dia_fechamento}, vence dia {cartao.dia_vencimento}</small>
+        </span>
+        <span className="espaco" />
+        <button className="btn" onClick={aoEditar}><Icone nome="lapis" tamanho={16} /> Editar</button>
+        <button className="btn primario" onClick={() => c.novaCompraNoCartao(cartao.id)}><Icone nome="mais" tamanho={16} /> Nova compra</button>
       </header>
 
-      <div className="cc-corpo">
-        <div className="cc-fatura" style={{ '--c': cartao.cor } as React.CSSProperties}>
-          <div className="cc-fatura-topo">
-            <span>Fatura de {fatura}</span>
-            <span className={`cc-status ${s.status}`}>{ROTULO_STATUS[s.status]}</span>
-          </div>
-          <strong className="cc-valor">{fmtValor(s.valor)}</strong>
-          <p className="cc-datas">
-            {s.fechamento < hoje ? 'Fechou' : s.fechamento === hoje ? 'Fecha hoje' : 'Fecha'}{s.fechamento !== hoje && ` em ${fmtDataLonga(s.fechamento)}`}
-            <br />
-            {paga
-              ? <>Paga em {fmtDataLonga(paga.pago_em)}</>
-              : <>Vence em {fmtDataLonga(s.vencimento)} <b>({quandoVence(s)})</b></>}
-          </p>
-          {mudou && <p className="cc-aviso">Você pagou {fmtValor(paga.valor)}; depois disso a fatura mudou.</p>}
-          {paga
-            ? <button className="btn" onClick={() => void c.cartoes.desfazerPagamento(paga.id)}>Desfazer pagamento</button>
-            : s.valor > 0 && s.status !== 'futura' && <button className="btn primario" onClick={aoPagar}><Icone nome="check" tamanho={16} /> Paguei a fatura</button>}
+      {s.atrasadas.length > 0 && (
+        <section className="cartao ccd-atrasadas">
+          <header className="ccd-atrasadas-cab">
+            <h3 className="ccd-titulo"><Icone nome="sino" tamanho={18} /> {s.atrasadas.length === 1 ? 'Uma fatura venceu sem pagar' : `${s.atrasadas.length} faturas venceram sem pagar`}</h3>
+            {s.atrasadas.length > 1 && (
+              <button className="link" onClick={() => {
+                if (!confirm(`Marcar as ${s.atrasadas.length} faturas como pagas no dia do vencimento de cada uma?`)) return
+                for (const f of s.atrasadas) void c.cartoes.pagarFatura({ cartao_id: cartao.id, ano: f.ano, mes: f.mes, valor: f.valor, pago_em: f.vencimento, banco_id: cartao.banco_id, tipo: 'paga', juros: 0 })
+              }}>Já paguei todas</button>
+            )}
+          </header>
+          <ul>
+            {s.atrasadas.map((f) => (
+              <li key={`${f.ano}-${f.mes}`}>
+                <span className="ccd-atrasada-mes">{sufixoMes(f.ano, f.mes)}</span>
+                <span className="ccd-atrasada-texto">
+                  <strong>{fmtValor(f.valor)}</strong>
+                  <small>venceu há {dias(f.vencimento, hojeLocal())} dias, em {fmtDataLonga(f.vencimento)}</small>
+                </span>
+                <span className="ccd-atrasada-acoes">
+                  <button className="btn" onClick={() => aoPagar(f)}><Icone nome="check" tamanho={15} /> Paguei</button>
+                  <button className="btn" onClick={() => aoRenegociar(f)} disabled={c.cartoes.semExtras}><Icone nome="acordo" tamanho={15} /> Renegociei</button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
-          {cartao.limite ? (
-            <div className="cc-limite">
-              <Progresso valor={s.limiteUsado} total={cartao.limite} cor={usadoPct > 0.9 ? COR.saidas : cartao.cor} />
-              <div className="divida-info">
-                <span>Usado {fmtValor(s.limiteUsado)}</span>
-                <span>Disponível {fmtValor(Math.max(0, s.limiteDisponivel ?? 0))}</span>
-              </div>
-              <small>Limite de {fmtValor(cartao.limite)}. Conta o que ainda falta pagar, das faturas deste mês em diante.</small>
-            </div>
-          ) : (
-            <button className="link cc-sem-limite" onClick={aoEditar}>Informe o limite para ver quanto ainda pode gastar</button>
-          )}
-        </div>
+      <div className="ccd-linha">
+        <FaturaDoMes s={s} c={c} aoPagar={aoPagar} aoRenegociar={aoRenegociar} />
+        <Limite s={s} c={c} aoEditar={aoEditar} />
+      </div>
 
-        <div className="cc-lado">
-          <h3 className="cc-titulo">Compras desta fatura</h3>
+      <div className="ccd-linha">
+        <section className="cartao ccd-compras">
+          <h3 className="ccd-titulo">Compras desta fatura <small>{s.compras.length || ''}</small></h3>
           {s.compras.length ? (
             <ul className="lista-lanc">
-              {s.compras.map((l) => {
+              {s.compras.map((l, i) => {
                 const k = c.categoriaDe(l) ?? SEM_CATEGORIA
                 return (
-                  <li key={l.id}>
+                  <li key={l.id} style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
                     <button className="item-lanc" onClick={() => c.editarLancamento(l)}>
                       <Selo c={k} tamanho={34} />
                       <span className="item-texto">
                         <span className="item-desc">{l.descricao || 'Compra'}</span>
                         <span className="item-meta">
                           {fmtDataCurta(l.data_compra ?? null) && <>{fmtDataCurta(l.data_compra ?? null)} · </>}{k.nome}
-                          {(l.parcelas ?? 1) > 1 && <> · parcela {l.parcela}/{l.parcelas}</>}
+                          {(l.parcelas ?? 1) > 1 && <> · {l.parcela}/{l.parcelas}</>}
                         </span>
                       </span>
                       <span className="item-valor">{fmtValor(l.valor)}</span>
@@ -166,47 +235,245 @@ function CartaoDeCredito({ s, c, aoEditar, aoPagar }: { s: SituacaoCartao; c: Ct
           ) : (
             <p className="quadro-vazio">Nenhuma compra nesta fatura. Toque em “Nova compra” e escolha este cartão.</p>
           )}
-        </div>
+        </section>
+        <Proximas s={s} c={c} />
       </div>
 
-      <div className="cc-baixo">
-        <section>
-          <h3 className="cc-titulo">Próximas faturas</h3>
-          <ul className="cc-proximas">
-            {s.proximas.map((f) => (
-              <li key={`${f.ano}-${f.mes}`} className={f.valor ? '' : 'vazia'}>
-                <span>{sufixoMes(f.ano, f.mes)}</span>
-                <strong>{f.valor ? fmtValor(f.valor) : '—'}</strong>
-              </li>
-            ))}
-          </ul>
-        </section>
-        <section>
-          <h3 className="cc-titulo">Compras parceladas em andamento</h3>
+      <div className="ccd-linha">
+        <section className="cartao">
+          <h3 className="ccd-titulo">Parceladas em andamento <small>{s.parceladas.length || ''}</small></h3>
           {s.parceladas.length ? (
-            <ul className="cc-parceladas">
-              {s.parceladas.map((p) => <Parcelada key={p.compra_id} p={p} cor={cartao.cor} />)}
+            <ul className="ccd-parceladas">
+              {s.parceladas.map((p) => <Parcelada key={p.compra_id} p={p} />)}
             </ul>
           ) : (
             <p className="quadro-vazio">Nenhuma compra parcelada pela frente.</p>
           )}
         </section>
+        <section className="cartao">
+          <h3 className="ccd-titulo">Faturas resolvidas <small>toque para ajeitar</small></h3>
+          {historico.length ? (
+            <ul className="ccd-historico">
+              {historico.slice(0, 8).map((p) => {
+                const f = faturaDe(p)
+                const reneg = renegociada(p)
+                const atraso = pagaComAtraso(p, f.vencimento)
+                return (
+                  <li key={p.id}>
+                    <button onClick={() => (reneg ? aoRenegociar(f) : aoPagar(f, p))}>
+                      <span className={`ccd-hist-icone ${reneg ? 'reneg' : atraso ? 'atraso' : 'ok'}`}>
+                        <Icone nome={reneg ? 'acordo' : atraso ? 'relogio' : 'check'} tamanho={16} />
+                      </span>
+                      <span className="ccd-hist-texto">
+                        <strong>{MESES_NOME[p.mes - 1]}{p.ano !== c.ano ? `/${p.ano}` : ''}</strong>
+                        <small>
+                          {reneg ? 'renegociada' : `paga em ${fmtDataCurta(p.pago_em)}`}
+                          {atraso && ` · ${dias(f.vencimento, p.pago_em)} dias de atraso`}
+                          {(p.juros ?? 0) > 0 && ` · ${reneg ? 'acréscimo' : 'juros'} ${fmtValor(p.juros!)}`}
+                        </small>
+                      </span>
+                      <span className="ccd-hist-valor">{fmtValor(p.valor)}</span>
+                      <Icone nome="lapis" tamanho={15} />
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          ) : (
+            <p className="quadro-vazio">Quando você marcar uma fatura como paga ou renegociada, ela aparece aqui.</p>
+          )}
+        </section>
       </div>
-    </Cartao>
+    </div>
   )
 }
 
-function Parcelada({ p, cor }: { p: CompraParcelada; cor: string }) {
+/** A fatura do mês aberto: valor, situação, a linha do tempo (abriu → fecha → vence) e o que dá para fazer com ela. */
+function FaturaDoMes({ s, c, aoPagar, aoRenegociar }: {
+  s: SituacaoCartao; c: Ctx; aoPagar: (f: Fatura, p?: FaturaPaga) => void; aoRenegociar: (f: Fatura) => void
+}) {
+  const hoje = hojeLocal()
+  const ant = somaMeses({ ano: s.ano, mes: s.mes }, -1)
+  const abriu = datasDaFatura(s.cartao, ant.ano, ant.mes).fechamento
+  const total = Math.max(1, dias(abriu, s.vencimento))
+  const pos = (d: string) => Math.min(100, Math.max(0, (dias(abriu, d) / total) * 100))
+  const p = s.paga
+  const atraso = pagaComAtraso(p, s.vencimento)
+  const mudou = p && !renegociada(p) && Math.abs(p.valor - s.valor) >= 0.01
+  const podeResolver = s.valor > 0 && s.status !== 'futura' && !p
+
+  return (
+    <section className={`cartao ccd-fatura ${s.status}`}>
+      <div className="ccd-fatura-topo">
+        <span>Fatura de {nomeDaFatura(s.ano, s.mes, c.ano)}</span>
+        <span className={`chip-estado cc ${s.status}`}>{textoStatus(s)}</span>
+      </div>
+      <strong className="ccd-valor"><Numero valor={s.valor} formato={fmtValor} /></strong>
+
+      <div className="ccd-tempo" role="img" aria-label={`Fecha em ${fmtDataLonga(s.fechamento)} e vence em ${fmtDataLonga(s.vencimento)}`}>
+        <div className="ccd-tempo-trilho">
+          <i className="ccd-tempo-cheio" style={{ width: `${pos(hoje)}%` }} />
+          <i className="ccd-tempo-marco" style={{ left: `${pos(s.fechamento)}%` }} />
+          <i className="ccd-tempo-marco fim" style={{ left: '100%' }} />
+          {hoje >= abriu && hoje <= s.vencimento && <i className="ccd-tempo-hoje" style={{ left: `${pos(hoje)}%` }} title="hoje" />}
+        </div>
+        <div className="ccd-tempo-rotulos">
+          <span>abriu<b>{fmtDataCurta(abriu)}</b></span>
+          <span>fecha<b>{fmtDataCurta(s.fechamento)}</b></span>
+          <span>vence<b>{fmtDataCurta(s.vencimento)}</b></span>
+        </div>
+      </div>
+
+      {p ? (
+        <div className="ccd-pago">
+          <span className={`ccd-hist-icone ${renegociada(p) ? 'reneg' : atraso ? 'atraso' : 'ok'}`}>
+            <Icone nome={renegociada(p) ? 'acordo' : atraso ? 'relogio' : 'check'} tamanho={16} />
+          </span>
+          <span>
+            {renegociada(p)
+              ? <>Renegociada em {fmtDataLonga(p.pago_em)}. Virou uma dívida em parcelas; as compras dela saíram das saídas do mês.</>
+              : <>Paga em {fmtDataLonga(p.pago_em)}{atraso && <>, com <b>{dias(s.vencimento, p.pago_em)} dias de atraso</b></>}{(p.juros ?? 0) > 0 && <> e {fmtValor(p.juros!)} de juros</>}.</>}
+            {mudou && <small className="cc-aviso"> Você pagou {fmtValor(p.valor)}; depois disso a fatura mudou.</small>}
+          </span>
+        </div>
+      ) : s.valor > 0 && s.status !== 'futura' ? (
+        <p className="ccd-quando">{s.status === 'atrasada' ? 'Já venceu' : 'Para pagar'}: <b>{quandoVence(s)}</b></p>
+      ) : null}
+
+      <PorCategoria s={s} c={c} />
+
+      <div className="ccd-acoes">
+        {podeResolver && <button className="btn primario" onClick={() => aoPagar(s)}><Icone nome="check" tamanho={16} /> Paguei a fatura</button>}
+        {podeResolver && (
+          <button className="btn" onClick={() => aoRenegociar(s)} disabled={c.cartoes.semExtras}
+            title={c.cartoes.semExtras ? 'Falta rodar a migração 9' : 'O banco parcelou a fatura'}>
+            <Icone nome="acordo" tamanho={16} /> Renegociar
+          </button>
+        )}
+        {p && !renegociada(p) && <button className="btn" onClick={() => aoPagar(s, p)}><Icone nome="lapis" tamanho={16} /> Ajeitar pagamento</button>}
+        {p && renegociada(p) && <button className="btn" onClick={() => aoRenegociar(s)}><Icone nome="acordo" tamanho={16} /> Ver renegociação</button>}
+      </div>
+    </section>
+  )
+}
+
+/** Para onde foi a fatura: uma barra dividida pelas categorias das compras, com as maiores embaixo. */
+function PorCategoria({ s, c }: { s: SituacaoCartao; c: Ctx }) {
+  if (!s.compras.length || s.valor <= 0) return null
+  const grupos = new Map<string, { nome: string; cor: string; valor: number }>()
+  for (const l of s.compras) {
+    const k = c.categoriaDe(l) ?? SEM_CATEGORIA
+    const g = grupos.get(k.nome) ?? { nome: k.nome, cor: k.cor, valor: 0 }
+    g.valor += l.valor
+    grupos.set(k.nome, g)
+  }
+  const lista = [...grupos.values()].sort((a, b) => b.valor - a.valor)
+  return (
+    <div className="ccd-cats">
+      <div className="ccd-cats-barra" aria-hidden="true">
+        {lista.map((g, i) => <i key={g.nome} style={{ flexGrow: g.valor, background: g.cor, animationDelay: `${300 + i * 80}ms` }} />)}
+      </div>
+      <ul>
+        {lista.slice(0, 4).map((g) => (
+          <li key={g.nome}><i style={{ background: g.cor }} />{g.nome}<b>{Math.round((g.valor / s.valor) * 100)}%</b></li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+/** Anel do limite: usado na cor do cartão, o garantido (caixinha) num arco por fora, e quanto sobra no meio. */
+function Limite({ s, c, aoEditar }: { s: SituacaoCartao; c: Ctx; aoEditar: () => void }) {
+  if (s.limiteTotal == null) {
+    return (
+      <section className="cartao ccd-limite sem">
+        <span className="ccd-limite-icone"><Icone nome="escudo" tamanho={30} /></span>
+        <p>Informe o limite do cartão para ver quanto ainda dá para gastar.</p>
+        <button className="btn" onClick={aoEditar}>Informar limite</button>
+      </section>
+    )
+  }
+  const total = s.limiteTotal
+  const usado = Math.min(1, s.limiteUsado / total)
+  const garantido = Math.min(1, s.garantido / total)
+  const livre = Math.max(0, s.limiteDisponivel ?? 0)
+  const estourou = (s.limiteDisponivel ?? 0) < 0
+  const cor = usado > 0.9 ? COR.saidas : s.cartao.cor
+  return (
+    <section className="cartao ccd-limite">
+      <h3 className="ccd-titulo">Limite</h3>
+      <div className="ccd-limite-corpo">
+        <svg className="ccd-anel" viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="46" className="ccd-anel-fundo" />
+          {usado > 0 && <circle cx="60" cy="60" r="46" className="ccd-anel-usado" stroke={cor} pathLength={100} strokeDasharray={`${usado * 100} 100`} />}
+          <circle cx="60" cy="60" r="56" className="ccd-anel-fundo fino" />
+          {garantido > 0 && <circle cx="60" cy="60" r="56" className="ccd-anel-garantido" pathLength={100} strokeDasharray={`${garantido * 100} 100`} />}
+        </svg>
+        <span className="ccd-anel-meio">
+          <small>{estourou ? 'passou do limite' : 'livre'}</small>
+          <strong><Numero valor={estourou ? -(s.limiteDisponivel ?? 0) : livre} formato={fmtValor} /></strong>
+          <small>de {fmtValor(total)}</small>
+        </span>
+      </div>
+      <ul className="ccd-legenda">
+        <li><i style={{ background: cor }} />Usado<b>{fmtValor(s.limiteUsado)}</b></li>
+        <li><i className="livre" />Livre<b>{fmtValor(livre)}</b></li>
+        {s.garantido > 0 && <li><i className="garantido" />Garantido<b>{fmtValor(s.garantido)}</b></li>}
+      </ul>
+      {!c.cartoes.semExtras && (
+        <button className="ccd-garantia" onClick={aoEditar}>
+          <Icone nome="cofre" tamanho={18} />
+          <span>
+            {s.garantido > 0
+              ? <>{fmtValor(s.garantido)} da caixinha {s.cartao.garantia_caixinha ? 'do banco ' : ''}viram limite</>
+              : <>Tem dinheiro numa caixinha que vira limite? Toque para somar.</>}
+          </span>
+          <Icone nome="dir" tamanho={16} />
+        </button>
+      )}
+    </section>
+  )
+}
+
+/** Barras da fatura do mês e das 6 seguintes (o que já está comprometido pelas parcelas). */
+function Proximas({ s, c }: { s: SituacaoCartao; c: Ctx }) {
+  const todas: Fatura[] = [s, ...s.proximas]
+  const maior = Math.max(1, ...todas.map((f) => f.valor))
+  const comprometido = centavos(s.proximas.reduce((a, f) => a + f.valor, 0))
+  return (
+    <section className="cartao ccd-proximas">
+      <h3 className="ccd-titulo">Próximas faturas <small>{comprometido > 0 ? `${fmtValor(comprometido)} já comprometidos` : 'nada comprometido'}</small></h3>
+      <div className="ccd-barras">
+        {todas.map((f, i) => (
+          <div key={`${f.ano}-${f.mes}`} className={`ccd-barra ${i === 0 ? 'atual' : ''} ${f.valor ? '' : 'vazia'}`} title={`${nomeDaFatura(f.ano, f.mes, c.ano)}: ${fmtValor(f.valor)}`}>
+            <span className="ccd-barra-valor">{f.valor ? fmtValor(f.valor).replace(/,\d\d$/, '') : '—'}</span>
+            <span className="ccd-barra-trilho">
+              <i style={{ height: `${Math.max(f.valor ? 6 : 0, (f.valor / maior) * 100)}%`, animationDelay: `${i * 60}ms` }} />
+            </span>
+            <span className="ccd-barra-mes">{MESES_CURTO[f.mes - 1].toLowerCase()}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function Parcelada({ p }: { p: CompraParcelada }) {
+  const pagas = p.parcelas - p.restantes
   return (
     <li>
-      <div className="cc-parcelada-linha">
+      <div className="ccd-parcelada-linha">
         <span className="item-desc">{p.descricao || 'Compra'}</span>
         <b>{p.atual}/{p.parcelas}</b>
       </div>
-      <Progresso valor={p.parcelas - p.restantes} total={p.parcelas} cor={cor} />
-      <small>
-        {fmtValor(p.valorParcela)} por mês · faltam {fmtValor(p.valorRestante)} · termina em {sufixoMes(p.termina.ano, p.termina.mes)}
-      </small>
+      {p.parcelas <= 24 ? (
+        <span className="ccd-pips" aria-hidden="true">
+          {Array.from({ length: p.parcelas }, (_, i) => <i key={i} className={i < pagas ? 'paga' : i === pagas ? 'atual' : ''} style={{ animationDelay: `${i * 25}ms` }} />)}
+        </span>
+      ) : (
+        <span className="ccd-pips longo" aria-hidden="true"><i className="paga" style={{ width: `${(pagas / p.parcelas) * 100}%` }} /></span>
+      )}
+      <small>{fmtValor(p.valorParcela)}/mês · faltam {fmtValor(p.valorRestante)} · até {sufixoMes(p.termina.ano, p.termina.mes)}</small>
     </li>
   )
 }
@@ -219,10 +486,15 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
   const [limite, setLimite] = useState(cartao?.limite ? paraCampo(cartao.limite) : '')
   const [bancoId, setBancoId] = useState(cartao?.banco_id ?? '')
   const [ativo, setAtivo] = useState(cartao?.ativo ?? true)
+  const [comGarantia, setComGarantia] = useState(Boolean(cartao?.garantia_caixinha || cartao?.limite_garantido))
+  const [daCaixinha, setDaCaixinha] = useState(Boolean(cartao?.garantia_caixinha))
+  const [garantido, setGarantido] = useState(cartao?.limite_garantido ? paraCampo(cartao.limite_garantido) : '')
   const [erro, setErro] = useState<string | null>(null)
   const [confirmar, setConfirmar] = useState(false)
   const bancos = c.d.bancos
-  const sugestoes = BANCOS_CONHECIDOS.filter((b) => b.nome !== 'Dinheiro').slice(0, 9)
+  const sugestoes = CATALOGO_BANCOS.filter((b) => !b.nome.startsWith('Carteira')).slice(0, 12)
+  const caixinha = bancoId ? c.mesEf.caixa[bancoId]?.caixinha ?? 0 : 0
+  const podeCaixinha = c.v.bancos && Boolean(bancoId)
 
   const escolherSugestao = (b: (typeof sugestoes)[number]) => {
     setNome(b.nome)
@@ -236,9 +508,12 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
     if (!fecha || !vence) return setErro('Escolha o dia em que a fatura fecha e o dia em que vence.')
     const lim = limite.trim() ? parseNumero(limite) : null
     if (limite.trim() && (!lim || lim <= 0)) return setErro('Limite inválido.')
+    const gar = comGarantia && !daCaixinha && garantido.trim() ? parseNumero(garantido) : 0
+    if (gar == null || gar < 0) return setErro('Valor da caixinha inválido.')
     const dados = {
       nome: nome.trim(), cor, banco_id: bancoId || null, limite: lim,
       dia_fechamento: Number(fecha), dia_vencimento: Number(vence), ativo,
+      limite_garantido: gar, garantia_caixinha: comGarantia && daCaixinha && podeCaixinha,
     }
     if (cartao) await c.cartoes.updCartao(cartao.id, dados)
     else await c.cartoes.addCartao(dados)
@@ -248,14 +523,19 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
   return (
     <Modal titulo={cartao ? 'Editar cartão' : 'Novo cartão'} aoFechar={aoFechar}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); void salvar() }}>
+        <div className="cc-form-previa">
+          <CartaoIlustrado nome={nome.trim() || 'Seu cartão'} cor={cor} banco={bancos.find((b) => b.id === bancoId)?.nome}
+            rodape={<>{fecha ? `fecha dia ${fecha}` : 'fecha dia —'} · {vence ? `vence dia ${vence}` : 'vence dia —'}</>}
+            conteudo={parseNumero(limite) ? <span className="cc-plastico-fatura"><small>limite</small><b>{fmtValor(parseNumero(limite)!)}</b></span> : undefined} />
+        </div>
         {!cartao && (
           <div className="campo">
             <span className="campo-rotulo">Escolha rápida</span>
-            <div className="chips">
+            <div className="cc-sugestoes">
               {sugestoes.map((b) => (
-                <button key={b.nome} type="button" className={`chip ${nome === b.nome ? 'ativo' : ''}`} style={{ '--c': b.cor } as React.CSSProperties}
-                  onClick={() => escolherSugestao(b)}>
-                  <i className="marcador" />{b.nome}
+                <button key={b.nome} type="button" className={`cc-sugestao ${nome === b.nome ? 'ativo' : ''}`} onClick={() => escolherSugestao(b)}>
+                  <BancoIcone nome={b.nome} cor={b.cor} tamanho={30} />
+                  <span>{b.nome}</span>
                 </button>
               ))}
             </div>
@@ -268,7 +548,7 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
         <div className="campo">
           <span className="campo-rotulo">Cor</span>
           <div className="chips" role="radiogroup" aria-label="Cor">
-            {[...new Set([cor, ...CORES_LIVRES, ...BANCOS_CONHECIDOS.map((b) => b.cor)])].slice(0, 14).map((k) => (
+            {[...new Set([cor, ...CORES_LIVRES, ...CATALOGO_BANCOS.map((b) => b.cor)])].slice(0, 16).map((k) => (
               <button key={k} type="button" role="radio" aria-checked={cor === k} aria-label={k} className={`cor ${cor === k ? 'ativo' : ''}`}
                 style={{ background: k }} onClick={() => setCor(k)} />
             ))}
@@ -297,7 +577,6 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
             <span className="prefixo">{simbolo()}</span>
             <input inputMode="decimal" value={limite} onChange={(e) => setLimite(e.target.value)} placeholder="0,00" />
           </span>
-          <span className="campo-ajuda">Com o limite, o app mostra quanto ainda dá para gastar.</span>
         </label>
         {bancos.length > 0 && (
           <label className="campo">
@@ -307,6 +586,40 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
               {bancos.map((b) => <option key={b.id} value={b.id}>{b.nome}</option>)}
             </select>
           </label>
+        )}
+        {!c.cartoes.semExtras && (
+          <div className="cc-garantia-form">
+            <div className="cc-uso">
+              <span><Icone nome="cofre" tamanho={18} /> Limite garantido<small>Dinheiro guardado numa caixinha do banco que vira limite extra no cartão.</small></span>
+              <Interruptor ligado={comGarantia} aoMudar={setComGarantia} rotulo="Limite garantido" />
+            </div>
+            {comGarantia && (
+              <>
+                {podeCaixinha && (
+                  <div className="chips">
+                    <button type="button" className={`chip ${daCaixinha ? 'ativo' : ''}`} onClick={() => setDaCaixinha(true)}>
+                      Usar a caixinha do banco ({fmtValor(caixinha)})
+                    </button>
+                    <button type="button" className={`chip ${!daCaixinha ? 'ativo' : ''}`} onClick={() => setDaCaixinha(false)}>Valor fixo</button>
+                  </div>
+                )}
+                {(!daCaixinha || !podeCaixinha) && (
+                  <label className="campo">
+                    <span className="campo-rotulo">Quanto está na caixinha</span>
+                    <span className="campo-caixa">
+                      <span className="prefixo">{simbolo()}</span>
+                      <input inputMode="decimal" value={garantido} onChange={(e) => setGarantido(e.target.value)} placeholder="0,00" />
+                    </span>
+                  </label>
+                )}
+                <span className="campo-ajuda">
+                  {daCaixinha && podeCaixinha
+                    ? 'O limite acompanha a caixinha que você informa em Dinheiro guardado: guardou mais, o limite cresce sozinho.'
+                    : bancos.length > 0 && c.v.bancos ? 'Escolhendo o banco do cartão, dá para ligar o limite à caixinha dele.' : 'Some este valor ao limite do cartão.'}
+                </span>
+              </>
+            )}
+          </div>
         )}
         {cartao && (
           <div className="cc-uso">
@@ -331,27 +644,100 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
   )
 }
 
-function FormPagarFatura({ c, s, aoFechar }: { c: Ctx; s: SituacaoCartao; aoFechar: () => void }) {
-  const [data, setData] = useState(hojeLocal())
-  const [bancoId, setBancoId] = useState(s.cartao.banco_id ?? '')
-  const bancos = c.v.bancos ? c.d.bancos : []
+/** Saída dos juros e multa de uma fatura paga com atraso (na categoria de dívidas, no mês em que foi paga). */
+const lancamentoDosJuros = (c: Ctx, cartao: CartaoCredito, f: Fatura, juros: number, pagoEm: string, bancoId: string | null) => ({
+  ...anoMesDe(pagoEm),
+  tipo: 'saida' as const,
+  descricao: `Juros e multa – fatura ${cartao.nome} de ${nomeDaFatura(f.ano, f.mes)}`,
+  valor: juros,
+  data: pagoEm,
+  categoria_id: c.categorias.find((k) => k.papel === 'divida')?.id ?? null,
+  banco_id: bancoId,
+})
 
-  const salvar = () => {
-    void c.cartoes.pagarFatura({ cartao_id: s.cartao.id, ano: s.ano, mes: s.mes, valor: s.valor, pago_em: data || hojeLocal(), banco_id: bancoId || null })
+/** Pagar a fatura (ou ajeitar um pagamento já feito): dia, valor, banco, e juros/multa quando pagou com atraso. */
+function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: () => void }) {
+  const { cartao, f, pagamento } = alvo
+  const [data, setData] = useState(pagamento?.pago_em ?? hojeLocal())
+  const [valor, setValor] = useState(paraCampo(pagamento?.valor ?? f.valor))
+  const [juros, setJuros] = useState(pagamento?.juros ? paraCampo(pagamento.juros) : '')
+  const [bancoId, setBancoId] = useState(pagamento?.banco_id ?? cartao.banco_id ?? '')
+  const [erro, setErro] = useState<string | null>(null)
+  const [desfazer, setDesfazer] = useState(false)
+  const bancos = c.v.bancos ? c.d.bancos : []
+  const atraso = data > f.vencimento ? dias(f.vencimento, data) : 0
+  const semExtras = c.cartoes.semExtras
+
+  const salvar = async () => {
+    const v = parseNumero(valor)
+    const j = juros.trim() ? parseNumero(juros) : 0
+    if (!v || v <= 0) return setErro('Valor inválido.')
+    if (j == null || j < 0) return setErro('Juros inválidos.')
+    const pagoEm = data || hojeLocal()
     aoFechar()
+    if (!pagamento) {
+      const lanc = j > 0 && !semExtras ? await c.d.addLanc(lancamentoDosJuros(c, cartao, f, j, pagoEm, bancoId || null)) : undefined
+      await c.cartoes.pagarFatura({
+        cartao_id: cartao.id, ano: f.ano, mes: f.mes, valor: v, pago_em: pagoEm, banco_id: bancoId || null,
+        tipo: 'paga', juros: j, juros_lanc_id: lanc?.id ?? null,
+      })
+      return
+    }
+    // ajeitando: a saída dos juros acompanha o que mudou
+    let jurosLanc = pagamento.juros_lanc_id ?? null
+    if (!semExtras) {
+      if (j > 0 && jurosLanc) await c.d.updLanc(jurosLanc, { valor: j, data: pagoEm, ...anoMesDe(pagoEm), banco_id: bancoId || null })
+      else if (j > 0) jurosLanc = (await c.d.addLanc(lancamentoDosJuros(c, cartao, f, j, pagoEm, bancoId || null)))?.id ?? null
+      else if (jurosLanc) {
+        await c.d.delLanc(jurosLanc)
+        jurosLanc = null
+      }
+    }
+    await c.cartoes.editarPagamento(pagamento.id, { valor: v, pago_em: pagoEm, banco_id: bancoId || null, juros: j, juros_lanc_id: jurosLanc })
+  }
+
+  const desfazerPagamento = async () => {
+    if (!pagamento) return
+    aoFechar()
+    if (pagamento.juros_lanc_id) await c.d.delLanc(pagamento.juros_lanc_id)
+    await c.cartoes.desfazerPagamento(pagamento.id)
   }
 
   return (
-    <Modal titulo={`Fatura ${s.cartao.nome}`} aoFechar={aoFechar}>
-      <form className="form" onSubmit={(e) => { e.preventDefault(); salvar() }}>
+    <Modal titulo={pagamento ? 'Ajeitar pagamento' : `Pagar fatura ${cartao.nome}`} aoFechar={aoFechar}>
+      <form className="form" onSubmit={(e) => { e.preventDefault(); void salvar() }}>
         <div className="cc-confirma">
-          <span>Fatura de {nomeDaFatura(s.ano, s.mes, c.ano)}</span>
-          <strong>{fmtValor(s.valor)}</strong>
+          <span className="cc-confirma-quem"><BancoIcone nome={cartao.nome} cor={cartao.cor} tamanho={34} /><span>Fatura de {nomeDaFatura(f.ano, f.mes, c.ano)}<small>{f.vencimento < hojeLocal() ? 'venceu' : 'vence'} em {fmtDataLonga(f.vencimento)}</small></span></span>
+          <strong>{fmtValor(f.valor)}</strong>
         </div>
-        <label className="campo">
-          <span className="campo-rotulo">Dia do pagamento</span>
-          <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
-        </label>
+        <div className="form-linha">
+          <label className="campo">
+            <span className="campo-rotulo">Dia do pagamento</span>
+            <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+          </label>
+          <label className="campo">
+            <span className="campo-rotulo">Quanto pagou</span>
+            <span className="campo-caixa">
+              <span className="prefixo">{simbolo()}</span>
+              <input inputMode="decimal" value={valor} onChange={(e) => { setValor(e.target.value); setErro(null) }} />
+            </span>
+          </label>
+        </div>
+        {atraso > 0 && (
+          <div className="cc-atraso">
+            <Icone nome="relogio" tamanho={18} />
+            <span>Pago <b>{atraso} {atraso === 1 ? 'dia' : 'dias'} depois</b> do vencimento.{!semExtras && ' Se teve juros ou multa, coloque aqui: eles entram como uma saída do mês do pagamento.'}</span>
+          </div>
+        )}
+        {!semExtras && (atraso > 0 || (pagamento?.juros ?? 0) > 0) && (
+          <label className="campo">
+            <span className="campo-rotulo">Juros e multa <small>(opcional)</small></span>
+            <span className="campo-caixa">
+              <span className="prefixo">{simbolo()}</span>
+              <input inputMode="decimal" value={juros} onChange={(e) => { setJuros(e.target.value); setErro(null) }} placeholder="0,00" />
+            </span>
+          </label>
+        )}
         {bancos.length > 0 && (
           <label className="campo">
             <span className="campo-rotulo">De qual banco saiu? <small>(opcional)</small></span>
@@ -362,12 +748,129 @@ function FormPagarFatura({ c, s, aoFechar }: { c: Ctx; s: SituacaoCartao; aoFech
           </label>
         )}
         <span className="campo-ajuda">
-          Isso só marca a fatura como paga. O gasto de cada compra já está nas suas saídas de {MESES_NOME[s.mes - 1].toLowerCase()}, então nada é contado duas vezes.
+          Isso marca a fatura como paga. O gasto de cada compra já está nas suas saídas de {MESES_NOME[f.mes - 1].toLowerCase()}, então nada é contado duas vezes.
         </span>
+        {erro && <p className="form-erro">{erro}</p>}
+        <div className="form-acoes">
+          {pagamento && (desfazer
+            ? <button type="button" className="btn perigo" onClick={() => void desfazerPagamento()}>Desfazer mesmo</button>
+            : <button type="button" className="btn perigo" onClick={() => setDesfazer(true)}><Icone nome="desfazer" tamanho={15} /> Desfazer</button>)}
+          <span className="espaco" />
+          <button type="button" className="btn" onClick={aoFechar}>Cancelar</button>
+          <button type="submit" className="btn primario">{pagamento ? 'Salvar' : 'Marcar como paga'}</button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
+/**
+ * Renegociar a fatura: o banco transformou o que você devia em parcelas. Cria uma dívida (com as parcelas e o total,
+ * juros inclusos) e marca a fatura como renegociada; as compras dela deixam de contar nas saídas do mês e o que passa a
+ * contar é cada parcela paga da dívida. Aberto numa fatura já renegociada, mostra o acordo e deixa desfazer.
+ */
+function FormRenegociar({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: () => void }) {
+  const { cartao, f } = alvo
+  const feita = f.paga && renegociada(f.paga) ? f.paga : null
+  const divida = feita?.divida_id ? c.d.dividas.find((x) => x.id === feita.divida_id) : undefined
+  const [n, setN] = useState('6')
+  const [total, setTotal] = useState(paraCampo(f.valor))
+  const [data, setData] = useState(hojeLocal())
+  const [erro, setErro] = useState<string | null>(null)
+  const [desfazer, setDesfazer] = useState(false)
+  const tot = parseNumero(total) ?? 0
+  const parcelas = Math.max(1, Math.min(120, Number(n) || 1))
+  const parcela = centavos(tot / parcelas)
+  const acrescimo = centavos(Math.max(0, tot - f.valor))
+
+  const salvar = async () => {
+    if (!tot || tot <= 0) return setErro('Valor total inválido.')
+    aoFechar()
+    if (!c.v.dividas) c.ligarModulo('dividas')
+    const d = await c.d.addDivida({
+      descricao: `Fatura ${cartao.nome} de ${nomeDaFatura(f.ano, f.mes)} (renegociada)`,
+      valor_parcela: parcela, saldo: tot, data: data || hojeLocal(),
+    })
+    if (!d) return
+    await c.cartoes.pagarFatura({
+      cartao_id: cartao.id, ano: f.ano, mes: f.mes, valor: f.valor, pago_em: data || hojeLocal(),
+      tipo: 'renegociada', divida_id: d.id, juros: acrescimo,
+    })
+  }
+
+  const desfazerAcordo = async () => {
+    if (!feita) return
+    aoFechar()
+    // a dívida só vai junto se nada foi pago nela ainda; com parcelas pagas, ela fica (e o histórico também)
+    if (feita.divida_id && !c.d.pagamentos.some((p) => p.divida_id === feita.divida_id)) await c.d.delDivida(feita.divida_id)
+    await c.cartoes.desfazerPagamento(feita.id)
+  }
+
+  if (feita) {
+    const pagos = c.d.pagamentos.filter((p) => p.divida_id === feita.divida_id)
+    return (
+      <Modal titulo="Fatura renegociada" aoFechar={aoFechar}>
+        <div className="form">
+          <div className="cc-confirma">
+            <span className="cc-confirma-quem"><BancoIcone nome={cartao.nome} cor={cartao.cor} tamanho={34} /><span>Fatura de {nomeDaFatura(f.ano, f.mes, c.ano)}<small>renegociada em {fmtDataLonga(feita.pago_em)}</small></span></span>
+            <strong>{fmtValor(f.valor)}</strong>
+          </div>
+          <p className="campo-ajuda">
+            {divida
+              ? <>Virou a dívida <b>{divida.descricao}</b>{divida.valor_parcela ? <>, em parcelas de {fmtValor(divida.valor_parcela)}</> : null}{(feita.juros ?? 0) > 0 && <>, com {fmtValor(feita.juros!)} de acréscimo</>}. {pagos.length ? `${pagos.length} ${pagos.length === 1 ? 'parcela paga' : 'parcelas pagas'} até agora.` : 'Nenhuma parcela paga ainda.'}</>
+              : 'A dívida desta renegociação foi apagada.'}
+          </p>
+          <p className="campo-ajuda">Desfazer devolve as compras às saídas do mês da fatura{pagos.length ? '; a dívida fica, porque já tem parcelas pagas' : ' e apaga a dívida criada'}.</p>
+          <div className="form-acoes">
+            {desfazer
+              ? <button type="button" className="btn perigo" onClick={() => void desfazerAcordo()}>Desfazer mesmo</button>
+              : <button type="button" className="btn perigo" onClick={() => setDesfazer(true)}><Icone nome="desfazer" tamanho={15} /> Desfazer</button>}
+            <span className="espaco" />
+            {divida && <button type="button" className="btn" onClick={() => { aoFechar(); c.irPara('dividas') }}>Ver dívida</button>}
+            <button type="button" className="btn primario" onClick={aoFechar}>Fechar</button>
+          </div>
+        </div>
+      </Modal>
+    )
+  }
+
+  return (
+    <Modal titulo={`Renegociar fatura ${cartao.nome}`} aoFechar={aoFechar}>
+      <form className="form" onSubmit={(e) => { e.preventDefault(); void salvar() }}>
+        <div className="cc-confirma">
+          <span className="cc-confirma-quem"><BancoIcone nome={cartao.nome} cor={cartao.cor} tamanho={34} /><span>Fatura de {nomeDaFatura(f.ano, f.mes, c.ano)}<small>{f.status === 'atrasada' ? `venceu em ${fmtDataLonga(f.vencimento)}` : `vence em ${fmtDataLonga(f.vencimento)}`}</small></span></span>
+          <strong>{fmtValor(f.valor)}</strong>
+        </div>
+        <div className="form-linha">
+          <label className="campo">
+            <span className="campo-rotulo">Total do acordo</span>
+            <span className="campo-caixa">
+              <span className="prefixo">{simbolo()}</span>
+              <input inputMode="decimal" value={total} onChange={(e) => { setTotal(e.target.value); setErro(null) }} />
+            </span>
+          </label>
+          <label className="campo">
+            <span className="campo-rotulo">Em quantas parcelas</span>
+            <input type="number" min={1} max={120} value={n} onChange={(e) => setN(e.target.value)} />
+          </label>
+        </div>
+        <label className="campo">
+          <span className="campo-rotulo">Dia do acordo</span>
+          <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+        </label>
+        <div className="cc-acordo-resumo">
+          <span><small>parcela</small><b>{parcelas}x {fmtValor(parcela)}</b></span>
+          <span><small>acréscimo</small><b className={acrescimo > 0 ? 'ruim' : ''}>{fmtValor(acrescimo)}</b></span>
+          <span><small>a mais</small><b className={acrescimo > 0 ? 'ruim' : ''}>{f.valor ? `${Math.round((acrescimo / f.valor) * 100)}%` : '—'}</b></span>
+        </div>
+        <span className="campo-ajuda">
+          Vira uma dívida em Dívidas. As compras desta fatura saem das saídas de {MESES_NOME[f.mes - 1].toLowerCase()}, e cada parcela que você pagar entra como saída no mês em que pagar. Assim nada conta duas vezes.
+        </span>
+        {erro && <p className="form-erro">{erro}</p>}
         <div className="form-acoes">
           <span className="espaco" />
           <button type="button" className="btn" onClick={aoFechar}>Cancelar</button>
-          <button type="submit" className="btn primario">Marcar como paga</button>
+          <button type="submit" className="btn primario"><Icone nome="acordo" tamanho={16} /> Renegociar</button>
         </div>
       </form>
     </Modal>

@@ -311,3 +311,31 @@ quanto falta nas dívidas, metas, personalizar, backup, tema). Troca a cada 7 s,
   interruptor e ações grandes. No celular, seções em abas roláveis e grades de duas colunas.
 - **Seletor de mês do topo**: o mês é uma pílula sólida da marca, sem brilho.
 
+
+### 4.11 Cartões de crédito (página redesenhada)
+
+- **Carteira:** cada cartão ativo é desenhado (`CartaoIlustrado`): plástico na cor do cartão, desenho de fundo escolhido
+  pelo nome, chip, aproximação, selo do banco (`BancoIcone`, monograma em SVG na cor da marca, sem logos reais), a fatura
+  do mês e os dias de fechamento/vencimento. Inclina em 3D e brilha seguindo o ponteiro; um reflexo passa ao aparecer e ao
+  ser escolhido. No celular os cartões deslizam de lado. Tocar num cartão abre o detalhe dele.
+- **Detalhe do cartão:** faturas que venceram sem pagar (até 12 meses para trás, com "Paguei", "Renegociei" e "Já paguei
+  todas"), fatura do mês (valor que conta, linha do tempo abriu → fecha → vence com o "hoje" pulsando, divisão por
+  categoria, ações), anel do limite (usado na cor do cartão; o garantido num arco dourado por fora), barras das próximas
+  faturas, parceladas com um tracinho por parcela e o histórico das faturas resolvidas (toque para ajeitar).
+- **Pagar / ajeitar:** dia, valor, banco e juros/multa. Pago depois do vencimento aparece "com N dias de atraso"; os
+  juros viram uma saída na categoria de dívidas, no mês do pagamento (`juros_lanc_id`). Ajeitar atualiza, cria ou apaga
+  essa saída; desfazer apaga também.
+- **Renegociar:** o banco parcelou a fatura. Cria uma dívida (total do acordo, parcelas) e marca a fatura como
+  `renegociada`. As compras dela saem das saídas do mês (`contaNasSaidas`, aplicado em `Painel` antes de `resumoMes`), e o
+  que passa a contar é cada parcela paga da dívida: nada conta duas vezes. Também saem do total de faturas e do "falta
+  pagar". Desfazer devolve as compras e apaga a dívida se nenhuma parcela foi paga.
+- **Limite garantido:** dinheiro numa caixinha que vira limite. Valor fixo, ou ligado à caixinha do banco do cartão
+  (tela Dinheiro guardado, valor de hoje). Limite total = limite do banco + garantido.
+- **Sem a migração 9** (`supabase/migracao-09-cartoes-extras.sql`), a página funciona como antes e mostra um aviso;
+  renegociar, juros e limite garantido ficam desligados e os campos novos não são gravados.
+- **Alerta:** fatura vencida sem pagar entra nas dicas do menu lateral ("Resolver").
+
+### 4.12 Foto de perfil
+
+Configurações → Perfil: a foto escolhida é recortada no quadrado do meio e reduzida no aparelho (192 px, JPEG) e aparece
+no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a migração 9 (`perfis.foto`), também no banco.

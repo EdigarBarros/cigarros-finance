@@ -3,7 +3,7 @@ import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes } from '../lib/calc'
 import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
 import { faltaPagarNoMes, lancamentoDaBaixa, lancamentoParecido, situacoesDoMes, type SituacaoConta } from '../lib/contasFixas'
-import { situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
+import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
 import { COR } from '../lib/charts'
 import { situacaoDividas, type SituacaoDivida } from '../lib/dividas'
 import { definirMoedaPrincipal, fmtValor, MESES_CURTO, MESES_NOME } from '../lib/format'
@@ -155,12 +155,21 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     window.scrollTo({ top: 0 })
   }
 
+  // Compras de fatura renegociada saem das contas do mês: a fatura virou dívida, e o que sai do bolso são as parcelas dela.
+  const comFaturas = v.cartoes && !cartoes.semTabela
+  // só as renegociações mudam a conta: a chave evita refazer tudo a cada fatura marcada como paga
+  const chaveRenegociadas = cartoes.faturasPagas.filter(renegociada).map((p) => `${p.cartao_id}${p.ano}${p.mes}`).join()
+  const lancsContados = useMemo(
+    () => (comFaturas && chaveRenegociadas ? d.lancs.filter(contaNasSaidas(cartoes.faturasPagas)) : d.lancs),
+    [d.lancs, chaveRenegociadas, comFaturas], // eslint-disable-line react-hooks/exhaustive-deps
+  )
+
   // Cada mês é calculado com dívidas e caixa contínuos: nada precisa ser copiado à mão.
   const porMesCompleto = useMemo(() => {
     const agora = hoje.getFullYear() * 12 + hoje.getMonth() + 1
     return MESES_NOME.map((_, i) => {
       const m = i + 1
-      const l = d.lancs.filter((x) => x.mes === m)
+      const l = lancsContados.filter((x) => x.mes === m)
       const sit = situacaoDividas(d.dividas, d.saldos, d.pagamentos, ano, m)
       const ef = mesEfetivo(d.meses, ano, m)
       const temProprio = d.meses.some((x) => x.ano === ano && x.mes === m)
@@ -168,10 +177,10 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
       const vazio = !l.length && !temProprio && (ano * 12 + m > agora || (!sit.length && !ef.herdadoDe))
       return { sit, ef, resumo: vazio ? null : resumoMes(l, sit, ef, taxas, idCategoria) }
     })
-  }, [d.lancs, d.dividas, d.saldos, d.pagamentos, d.meses, ano, taxas, d.categorias]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lancsContados, d.dividas, d.saldos, d.pagamentos, d.meses, ano, taxas, d.categorias]) // eslint-disable-line react-hooks/exhaustive-deps
   const porMes = porMesCompleto.map((x) => x.resumo)
 
-  const lancsMes = d.lancs.filter((l) => l.mes === mes)
+  const lancsMes = lancsContados.filter((l) => l.mes === mes)
   const { sit: situacao, ef: mesEf } = porMesCompleto[mes - 1]
   const dividasAbertas = situacao.filter((s) => s.restante > 0).map((s) => s.divida)
 
@@ -253,7 +262,12 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
       },
     })
 
-  const faturas = v.cartoes && !cartoes.semTabela ? situacoesDosCartoes(cartoes.cartoes, cartoes.compras, cartoes.faturasPagas, ano, mes) : []
+  // Limite garantido que vem da caixinha do banco do cartão: o valor guardado nela hoje (tela Dinheiro guardado).
+  const caixaHoje = mesEfetivo(d.meses, hoje.getFullYear(), hoje.getMonth() + 1).caixa
+  const garantidoDe = (k: (typeof cartoes.cartoes)[number]) => garantidoDo(k, k.banco_id ? caixaHoje[k.banco_id]?.caixinha : 0)
+  const faturas = comFaturas ? situacoesDosCartoes(cartoes.cartoes, cartoes.compras, cartoes.faturasPagas, ano, mes, undefined, garantidoDe) : []
+  // faturas que venceram sem pagar (em qualquer cartão), para o alerta das dicas
+  const faturasAtrasadas = faturas.flatMap((s) => [...s.atrasadas, ...(s.status === 'atrasada' ? [s] : [])].map((f) => ({ ...f, cartao: s.cartao })))
 
   // Editar uma parcela pode mudá-la de ano; as compras de outros anos só são lidas de novo ao recarregar.
   const salvarLancamento = async (l: Omit<Lancamento, 'id'>, id?: string) => {
@@ -264,7 +278,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
 
   // Contas fixas e cartões entram na Início pelos lugares reservados para eles (zona "O que fazer" e indicadores).
   const comContas = v.contas && !contas.semTabela
-  const comCartoes = v.cartoes && !cartoes.semTabela
+  const comCartoes = comFaturas
   // Indicador zerado no topo só ocupa atenção: a fatura entra quando há fatura no mês.
   const totalFaturas = comCartoes ? totalFaturasDoMes(faturas) : 0
   const comKpiContas = comContas && situacoesContas.length > 0
@@ -340,6 +354,12 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     ...(avisos.length ? [{
       id: 'contas', alerta: true, icone: 'sino', botao: 'Ver contas', acao: () => irPara('contas'),
       titulo: `${avisos.length} ${avisos.length === 1 ? 'conta pede' : 'contas pedem'} atenção.`,
+    }] : []),
+    ...(faturasAtrasadas.length ? [{
+      id: 'faturas', alerta: true, icone: 'cartao', botao: 'Resolver', acao: () => irPara('cartoes'),
+      titulo: faturasAtrasadas.length === 1
+        ? `A fatura ${faturasAtrasadas[0].cartao.nome} de ${nomeDaFatura(faturasAtrasadas[0].ano, faturasAtrasadas[0].mes, ano)} venceu.`
+        : `${faturasAtrasadas.length} faturas venceram sem pagar.`,
     }] : []),
     { id: 'lancar', icone: 'mais', botao: 'Lançar agora', acao: () => setForm({}), titulo: 'Lançou o que gastou hoje?' },
     ...(v.dividas && faltaDividas > 0 ? [{
@@ -440,7 +460,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
             )}
             <div className="perfil-topo">
               <button className="perfil-botao" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label="Sua conta">
-                <span className="avatar" aria-hidden="true">{iniciais || '?'}</span>
+                <span className="avatar" aria-hidden="true">{d.foto ? <img src={d.foto} alt="" /> : iniciais || '?'}</span>
                 <span>Olá, {nome}</span>
                 <Icone nome="abaixo" tamanho={18} />
               </button>
@@ -557,6 +577,8 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
           perfil={perfil}
           email={email}
           categorias={d.categorias}
+          foto={d.foto}
+          aoMudarFoto={(f) => void d.salvarFoto(f)}
           aoMudar={mudarPerfil}
           aoRefazer={() => { setAjustes(false); setRefazendo(true) }}
           aoCategorias={() => { setAjustes(false); ctx.gerenciarCategorias() }}
