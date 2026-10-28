@@ -1,3 +1,4 @@
+import { CenaDividas } from '../components/Vazios'
 import { useState } from 'react'
 import { COR } from '../lib/charts'
 import {
@@ -202,7 +203,7 @@ export function Dividas(c: Ctx) {
 function VazioLado({ recebe, aoNova }: { recebe: boolean; aoNova: () => void }) {
   return (
     <section className="cartao dv-vazio">
-      <span className="dv-vazio-icone"><Icone nome={recebe ? 'receber' : 'check'} tamanho={34} /></span>
+      <CenaDividas recebe={recebe} />
       <h2>{recebe ? 'Ninguém te deve nada por aqui' : 'Nenhuma dívida por aqui 🎉'}</h2>
       <p>{recebe
         ? 'Vendeu algo parcelado ou emprestou dinheiro? Registre quem te deve: cada valor recebido entra como entrada e abate sozinho.'

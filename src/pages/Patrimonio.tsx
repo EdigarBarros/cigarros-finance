@@ -1,3 +1,4 @@
+import { CenaCofre } from '../components/Vazios'
 import { useState } from 'react'
 import { caixaDoBanco, somaCaixa } from '../lib/calc'
 import { COR } from '../lib/charts'
@@ -220,10 +221,12 @@ export function Patrimonio(c: Ctx) {
 
       {v.bancos && !bancos.length && (
         <section className="cartao gd-vazio">
+          <CenaCofre />
+          <h2>Seu dinheiro guardado começa aqui</h2>
           <span className="gd-vazio-selos" aria-hidden="true">
-            {['Nubank', 'Itaú', 'PicPay', 'Inter'].map((n, i) => <BancoIcone key={n} nome={n} tamanho={46 + (i % 2) * 8} />)}
+            {['Nubank', 'Itaú', 'PicPay', 'Inter'].map((n, i) => <BancoIcone key={n} nome={n} tamanho={38 + (i % 2) * 6} />)}
           </span>
-          <h2>Separe por banco</h2>
+          <strong className="gd-vazio-sub">Separe por banco</strong>
           <p>Bancos são opcionais: servem para ver cada um separado e guardar quanto tem em conta, caixinha e reserva.</p>
           <button className="btn primario" onClick={() => setGerenciar('novo')}><Icone nome="mais" tamanho={16} /> Adicionar o primeiro banco</button>
         </section>

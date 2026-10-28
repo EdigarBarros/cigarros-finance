@@ -3,6 +3,8 @@ import { COR } from '../lib/charts'
 import { fmtValor, MESES_NOME } from '../lib/format'
 import { TabelaAnual } from '../components/Blocos'
 import { GraficoAnual, GraficoSaldo } from '../components/Graficos'
+import { CenaAno } from '../components/Vazios'
+import { Icone } from '../components/Icone'
 import { Cartao, Kpi } from '../components/ui'
 import type { Ctx } from './contexto'
 
@@ -22,6 +24,17 @@ export function Ano(c: Ctx) {
         </div>
       </header>
 
+      {!meses.length ? (
+        <section className="cartao vz-vazio">
+          <CenaAno />
+          <h2>Seu ano vai se desenhar aqui</h2>
+          <p>Assim que você lançar o que entrou e o que saiu, aparecem o total de cada mês, o gráfico mês a mês e quanto sobrou. Dá para começar agora ou trazer tudo do extrato do seu banco.</p>
+          <div className="vz-vazio-acoes">
+            <button className="btn primario" onClick={() => c.novoLancamento('saida')}><Icone nome="mais" tamanho={16} /> Fazer o primeiro lançamento</button>
+            <button className="btn" onClick={c.importarExtrato}><Icone nome="relatorio" tamanho={16} /> Importar extrato</button>
+          </div>
+        </section>
+      ) : (<>
       <div className="kpis">
         <Kpi rotulo="Entrou no ano" valor={fmtValor(soma('entradas'))} cor={COR.entradas} />
         <Kpi rotulo="Saiu no ano" valor={fmtValor(soma('saidas'))} cor={COR.saidas} />
@@ -42,6 +55,7 @@ export function Ano(c: Ctx) {
       <Cartao titulo="Quanto sobrou em cada mês">
         <GraficoSaldo porMes={c.porMes} mesAtual={c.mes} compacto={c.mobile} />
       </Cartao>
+      </>)}
     </div>
   )
 }
