@@ -110,6 +110,7 @@ function FormCriar({ ativo, ocupado, aviso, aoEnviar, aoTrocar }: PropsForm & { 
       </div>
       <BotaoEnviar ocupado={ocupado}>Criar conta</BotaoEnviar>
       {aviso && <p className={`en-aviso ${aviso.ok ? 'ok' : ''}`} role="alert">{aviso.texto}</p>}
+      <p className="en-termos">Ao criar a conta, você concorda com os <a href="#/termos">Termos de uso</a> e a <a href="#/privacidade">Política de privacidade</a>.</p>
       <p className="en-troca">Já tem conta? <button type="button" className="link" onClick={aoTrocar}>Entrar</button></p>
     </form>
   )
