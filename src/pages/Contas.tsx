@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
 import { COR } from '../lib/charts'
 import {
-  agruparContas, dataDaBaixa, fraseDaSituacao, inicioDoMes, mesesComAtraso, totaisDoMes, type SituacaoConta,
+  agruparContas, dataDaBaixa, fraseDaSituacao, hojeLocal, inicioDoMes, mesesComAtraso, totaisDoMes, type SituacaoConta,
 } from '../lib/contasFixas'
 import { fmtValor, MESES_NOME, paraCampo, parseNumero, simbolo } from '../lib/format'
 import { mesmoNome } from '../lib/rotulos'
@@ -10,7 +10,9 @@ import type { ContaFixa, Tipo } from '../lib/types'
 import { EscolhaCategoria, Selo } from '../components/Categorias'
 import { EscolhaBanco } from '../components/Formularios'
 import { Icone } from '../components/Icone'
-import { Cartao, Kpi, Modal, Segmentado, Vazio } from '../components/ui'
+import { Numero } from '../components/Numero'
+import { PoteMeta } from '../components/PoteMeta'
+import { Cartao, Modal, Segmentado, Vazio } from '../components/ui'
 import type { Ctx } from './contexto'
 import { IconeCategoria } from '../components/IconeCategoria'
 import '../components/contas.css'
@@ -31,7 +33,12 @@ type Modelo = Pick<(typeof EXEMPLOS)[number], 'nome' | 'tipo' | 'categoria'>
 const mesDe = (iso: string | null) => (iso ? iso.slice(0, 7) : '')
 const quando = (iso: string) => `${MESES_NOME[Number(iso.slice(5, 7)) - 1].toLowerCase()}/${iso.slice(0, 4)}`
 
-/** Contas que se repetem todo mês: o que vence, o que está atrasado e o que já foi pago, com "Paguei" a um toque. */
+const MES_CURTO = (m: number) => MESES_NOME[m - 1].slice(0, 3).toLowerCase()
+
+/**
+ * Contas que se repetem todo mês: o pote do mês enche conforme você paga, a linha do mês mostra quando vence cada uma
+ * e cada conta é um boleto que ganha o carimbo "pago" com um toque em "Paguei" (o app lança por você).
+ */
 export function Contas(c: Ctx) {
   const [editando, setEditando] = useState<ContaFixa | 'nova' | null>(null)
   const [modelo, setModelo] = useState<Modelo | undefined>()
@@ -43,7 +50,7 @@ export function Contas(c: Ctx) {
   const nomeMes = MESES_NOME[c.mes - 1].toLowerCase()
   const anteriores = mesesComAtraso(contas, c.d.lancs, c.ano, c.mes)
   const nova = (m?: Modelo) => { setModelo(m); setEditando('nova') }
-  const totalDe = (xs: SituacaoConta[]) => xs.reduce((a, s) => a + s.valor, 0)
+  const totalSaidas = t.jaPago + t.faltaPagar
 
   if (c.contas.semTabela) {
     return (
@@ -54,87 +61,74 @@ export function Contas(c: Ctx) {
     )
   }
 
-  const grupo = (titulo: string, itens: SituacaoConta[], classe = '') => itens.length > 0 && (
-    <Cartao className={`conta-grupo ${classe}`} titulo={titulo}
-      acao={<span className="conta-grupo-total">{itens.length} {itens.length === 1 ? 'conta' : 'contas'} · {fmtValor(totalDe(itens))}</span>}>
-      <ul className="conta-lista">
-        {itens.map((s) => (
-          <ItemConta key={s.conta.id} s={s} c={c} aoEditar={() => setEditando(s.conta)} aoOutroValor={() => setOutroValor(s)} />
+  const grupo = (titulo: string, itens: SituacaoConta[], icone: string) => itens.length > 0 && (
+    <section className="ct-grupo">
+      <h2 className="ct-grupo-titulo"><Icone nome={icone} tamanho={18} /> {titulo}
+        <small>{itens.length} · {fmtValor(itens.reduce((a, s) => a + s.valor, 0))}</small></h2>
+      <div className="ct-boletos">
+        {itens.map((s, i) => (
+          <Boleto key={s.conta.id} s={s} c={c} indice={i} aoEditar={() => setEditando(s.conta)} aoOutroValor={() => setOutroValor(s)} />
         ))}
-      </ul>
-    </Cartao>
+      </div>
+    </section>
   )
 
   return (
-    <div className="pagina">
+    <div className="pagina pg-contas">
       <header className="pagina-topo">
         <div>
           <h1>Contas do mês</h1>
-          <p className="sub">O que vence, o que está atrasado e o que já foi pago em {nomeMes}. Toque em “Paguei” e o app lança por você.</p>
+          <p className="sub">{contas.length ? `O que vence em ${nomeMes}. Toque em “Paguei” e o app lança por você.` : 'Nunca mais esqueça uma conta.'}</p>
         </div>
-        {contas.length > 0 && <button className="btn primario" onClick={() => nova()}><Icone nome="mais" tamanho={16} /> Nova conta fixa</button>}
+        {contas.length > 0 && <button className="btn primario" onClick={() => nova()}><Icone nome="mais" tamanho={16} /> Nova conta</button>}
       </header>
 
       {anteriores.length > 0 && (
         <div className="conta-aviso" role="status">
-          <span>
-            Ficou conta sem pagar em {anteriores.map((a) => `${MESES_NOME[a.mes - 1].toLowerCase()} (${a.qtd})`).join(', ')}.
-          </span>
+          <Icone nome="sino" tamanho={16} />
+          <span>Ficou conta sem pagar em {anteriores.map((a) => `${MESES_NOME[a.mes - 1].toLowerCase()} (${a.qtd})`).join(', ')}.</span>
           <button className="link" onClick={() => c.irParaMes(anteriores[0].mes)}>Ver {MESES_NOME[anteriores[0].mes - 1].toLowerCase()}</button>
         </div>
       )}
 
-      {sits.length > 0 && (
-        <div className="kpis">
-          {sits.some((s) => s.conta.tipo === 'saida') && <Kpi rotulo="Falta pagar no mês" valor={t.faltaPagar} cor={COR.saidas} />}
-          {t.jaPago > 0 && <Kpi rotulo="Já pago" valor={t.jaPago} cor={COR.entradas} />}
-          {t.atrasado > 0 && <Kpi rotulo="Atrasado" valor={t.atrasado} cor={COR.divida} />}
-          {t.temEntradas && (
-            <Kpi rotulo="A receber" valor={t.aReceber} cor={COR.caixa}>
-              {t.jaRecebido > 0 && <span className="campo-ajuda">já recebeu {fmtValor(t.jaRecebido)}</span>}
-            </Kpi>
-          )}
-        </div>
-      )}
+      {!contas.length && <SemContas aoNova={nova} />}
 
-      {!contas.length && (
-        <Cartao titulo="Comece pelas contas que se repetem todo mês">
-          <div className="opcoes grade">
-            {EXEMPLOS.map((e) => (
-              <button key={e.nome} type="button" className="opcao" onClick={() => nova(e)}>
-                <span className="opcao-icone"><IconeCategoria emoji={e.icone} tamanho={20} /></span>
-                <span className="opcao-texto"><strong>{e.nome}</strong><small>{e.dica}</small></span>
-                <span />
-              </button>
-            ))}
-            <button type="button" className="opcao" onClick={() => nova()}>
-              <span className="opcao-icone">➕</span>
-              <span className="opcao-texto"><strong>Outra conta</strong><small>do seu jeito</small></span>
-              <span />
-            </button>
+      {sits.length > 0 && (
+        <section className="ct-topo">
+          <div className="cartao ct-pote">
+            <PoteMeta progresso={totalSaidas ? t.jaPago / totalSaidas : t.temEntradas ? 1 : 0} cor={COR.entradas} icone="🧾" tamanho={112} />
+            <span className="ct-pote-texto">
+              <small>pago em {nomeMes}</small>
+              <strong><Numero valor={t.jaPago} formato={fmtValor} /></strong>
+              <small>de {fmtValor(totalSaidas)}</small>
+              <span className="chips-info">
+                {t.faltaPagar > 0 && <span className="chip-info">falta {fmtValor(t.faltaPagar)}</span>}
+                {t.qtdAtrasadas > 0 && <span className="chip-info ruim">{t.qtdAtrasadas} atrasada{t.qtdAtrasadas > 1 ? 's' : ''}</span>}
+                {t.temEntradas && <span className="chip-info bom">{t.aReceber > 0 ? `a receber ${fmtValor(t.aReceber)}` : `recebido ${fmtValor(t.jaRecebido)}`}</span>}
+                {t.faltaPagar === 0 && totalSaidas > 0 && <span className="chip-info bom">tudo pago 🎉</span>}
+              </span>
+            </span>
           </div>
-        </Cartao>
+          <LinhaDoMes c={c} sits={sits} />
+        </section>
       )}
 
       {contas.length > 0 && !sits.length && (
-        <Cartao><Vazio>Nenhuma conta fixa vale em {nomeMes} de {c.ano}. Confira abaixo o mês em que cada uma começa.</Vazio></Cartao>
+        <Cartao><Vazio>Nenhuma conta vale em {nomeMes} de {c.ano}. Confira abaixo o mês em que cada uma começa.</Vazio></Cartao>
       )}
 
-      {grupo('Atrasadas', g.atrasadas, 'atrasadas')}
-      {grupo('Vencem esta semana', g.estaSemana)}
-      {grupo('Mais para frente', g.maisAFrente)}
-      {grupo('Pagas', g.pagas)}
+      {/* uma grade só, da mais urgente para a já paga: o selo de cada boleto diz a situação */}
+      {grupo(`Contas de ${nomeMes}`, [...g.atrasadas, ...g.estaSemana, ...g.maisAFrente, ...g.pagas], 'calendario')}
 
       {contas.length > 0 && (
-        <Cartao titulo="Suas contas fixas">
-          <p className="campo-ajuda">Toque numa conta para editar, pausar ou excluir.</p>
+        <Cartao titulo="Suas contas fixas" acao={<span className="conta-grupo-total">{contas.length}</span>}>
           <ul className="conta-gerenciar">
             {contas.map((x) => {
               const cat = c.categorias.find((k) => k.id === x.categoria_id)
               return (
                 <li key={x.id} className={x.ativa ? '' : 'pausada'}>
                   <button type="button" onClick={() => setEditando(x)}>
-                    <Selo c={cat ?? { icone: x.tipo === 'entrada' ? '💰' : '📅', cor: '#636366' }} />
+                    <Selo c={cat ?? { icone: x.tipo === 'entrada' ? '💰' : '🧾', cor: '#636366' }} />
                     <span className="conta-info">
                       <strong>{x.descricao}{!x.ativa && <span className="conta-etiqueta">pausada</span>}</strong>
                       <small>
@@ -143,7 +137,7 @@ export function Contas(c: Ctx) {
                         {x.inicio > inicioDoMes(c.ano, c.mes) ? ` · começa em ${quando(x.inicio)}` : ''}
                       </small>
                     </span>
-                    <span className="conta-valor">{fmtValor(x.valor)}</span>
+                    <span className={`conta-valor ${x.tipo === 'entrada' ? 'entrada' : ''}`}>{x.tipo === 'entrada' ? '+' : ''}{fmtValor(x.valor)}</span>
                     <Icone nome="dir" tamanho={16} />
                   </button>
                 </li>
@@ -161,36 +155,128 @@ export function Contas(c: Ctx) {
   )
 }
 
-function ItemConta({ s, c, aoEditar, aoOutroValor }: { s: SituacaoConta; c: Ctx; aoEditar: () => void; aoOutroValor: () => void }) {
+/** Conta sem contas fixas: uma pilha de boletos de exemplo e os atalhos para começar. */
+function SemContas({ aoNova }: { aoNova: (m?: Modelo) => void }) {
+  const exemplos = [
+    { nome: 'Aluguel', icone: '🏠', cor: '#ff9f0a', dia: 5, valor: 'R$ 1.200', pago: true },
+    { nome: 'Luz', icone: '💡', cor: '#ffd60a', dia: 12, valor: 'R$ 180', pago: false },
+    { nome: 'Internet', icone: '📶', cor: '#64d2ff', dia: 20, valor: 'R$ 99', pago: false },
+  ]
+  return (
+    <section className="cartao ct-vazio">
+      <div className="ct-vazio-pilha" aria-hidden="true">
+        {exemplos.map((e) => (
+          <div key={e.nome} className={`ct-boleto exemplo ${e.pago ? 'paga' : 'a_vencer'}`} style={{ '--c': e.cor } as React.CSSProperties}>
+            <span className="ct-boleto-canhoto"><b>{String(e.dia).padStart(2, '0')}</b><small>todo mês</small></span>
+            <span className="ct-boleto-corpo">
+              <span className="ct-boleto-cab"><span className="ct-boleto-icone"><IconeCategoria emoji={e.icone} tamanho={18} /></span><strong>{e.nome}</strong></span>
+              <span className="ct-boleto-valor">{e.valor}</span>
+              <span className="ct-boleto-codigo" />
+            </span>
+            {e.pago && <span className="ct-carimbo">pago</span>}
+          </div>
+        ))}
+      </div>
+      <div className="ct-vazio-texto">
+        <h2>Nunca mais esqueça uma conta</h2>
+        <p>Cadastre uma vez o que se repete todo mês. O app lembra o vencimento, avisa o que atrasou e, com um toque em “Paguei”, lança o gasto por você.</p>
+      </div>
+      <div className="mt-modelos ct-modelos">
+        {EXEMPLOS.map((e, i) => (
+          <button key={e.nome} type="button" className="mt-modelo" style={{ '--c': e.tipo === 'entrada' ? '#30d158' : CORES_EXEMPLO[i % CORES_EXEMPLO.length], animationDelay: `${i * 45}ms` } as React.CSSProperties}
+            onClick={() => aoNova(e)}>
+            <span className="mt-modelo-icone"><IconeCategoria emoji={e.icone} tamanho={22} /></span>
+            <strong>{e.nome}</strong>
+            <small>{e.dica}</small>
+          </button>
+        ))}
+        <button type="button" className="mt-modelo" style={{ '--c': '#9d6bff' } as React.CSSProperties} onClick={() => aoNova()}>
+          <span className="mt-modelo-icone"><Icone nome="mais" tamanho={22} /></span>
+          <strong>Outra conta</strong>
+          <small>do seu jeito</small>
+        </button>
+      </div>
+    </section>
+  )
+}
+const CORES_EXEMPLO = ['#ff9f0a', '#ffd60a', '#64d2ff', '#0a84ff', '#ff375f', '#bf5af2']
+
+/** Os dias do mês numa linha, com cada conta no dia em que vence (cor da situação) e o dia de hoje marcado. */
+function LinhaDoMes({ c, sits }: { c: Ctx; sits: SituacaoConta[] }) {
+  const dias = new Date(c.ano, c.mes, 0).getDate()
+  const [hojeIso] = useState(hojeLocal)
+  const hoje = { ano: Number(hojeIso.slice(0, 4)), mes: Number(hojeIso.slice(5, 7)), dia: Number(hojeIso.slice(8, 10)) }
+  const ehMesAtual = hoje.ano === c.ano && hoje.mes === c.mes
+  const pos = (d: number) => ((d - 0.5) / dias) * 100
+  const porDia = new Map<number, SituacaoConta[]>()
+  for (const s of sits) porDia.set(s.dia, [...(porDia.get(s.dia) ?? []), s])
+  return (
+    <div className="cartao ct-linha">
+      <h3 className="ccd-titulo">Linha do mês <small>{MESES_NOME[c.mes - 1]}</small></h3>
+      <div className="ct-linha-trilho">
+        <i className="ct-linha-base" />
+        {ehMesAtual && <i className="ct-linha-feito" style={{ width: `${pos(hoje.dia)}%` }} />}
+        {ehMesAtual && <span className="ct-linha-hoje" style={{ left: `${pos(hoje.dia)}%` }}><small>hoje</small></span>}
+        {[...porDia.entries()].map(([d, xs], i) => {
+          const estado = xs.some((s) => s.estado === 'atrasada') ? 'atrasada' : xs.every((s) => s.estado === 'paga') ? 'paga' : xs.some((s) => s.estado === 'vence_hoje') ? 'vence_hoje' : 'a_vencer'
+          const cat = c.categorias.find((k) => k.id === xs[0].conta.categoria_id)
+          return (
+            <span key={d} className={`ct-linha-marco ${estado}`} style={{ left: `${pos(d)}%`, animationDelay: `${200 + i * 60}ms` }}
+              title={xs.map((s) => `${s.conta.descricao}: ${fmtValor(s.valor)}`).join(' · ')}>
+              <span className="ct-linha-pino"><IconeCategoria emoji={cat?.icone ?? (xs[0].conta.tipo === 'entrada' ? '💰' : '🧾')} tamanho={14} /></span>
+              <small>{d}{xs.length > 1 && <sup>×{xs.length}</sup>}</small>
+            </span>
+          )
+        })}
+      </div>
+      <div className="ct-linha-pe">
+        <span>1 {MES_CURTO(c.mes)}</span>
+        <span className="ct-linha-legenda"><i className="paga" />paga<i className="a_vencer" />a vencer<i className="atrasada" />atrasada</span>
+        <span>{dias} {MES_CURTO(c.mes)}</span>
+      </div>
+    </div>
+  )
+}
+
+/** Uma conta como boleto: canhoto com o dia, o valor, a situação e o carimbo "pago" quando foi paga. */
+function Boleto({ s, c, indice, aoEditar, aoOutroValor }: { s: SituacaoConta; c: Ctx; indice: number; aoEditar: () => void; aoOutroValor: () => void }) {
   const { conta } = s
   const entrada = conta.tipo === 'entrada'
   const cat = c.categorias.find((k) => k.id === conta.categoria_id)
+  const cor = cat?.cor ?? (entrada ? COR.entradas : '#8e8e93')
   return (
-    <li className={`conta-item ${s.estado}`}>
-      <Selo c={cat ?? { icone: entrada ? '💰' : '📅', cor: '#636366' }} tamanho={40} />
-      <button type="button" className="conta-info" onClick={aoEditar}>
-        <strong>{conta.descricao}</strong>
-        <small>{cat ? `${cat.nome} · ` : ''}dia {s.dia} · <b>{fraseDaSituacao(s)}</b></small>
-      </button>
-      <span className="conta-valor">{fmtValor(s.valor)}</span>
-      <div className="conta-acoes">
-        {s.baixa ? (
-          <>
-            <button className="btn" onClick={() => c.editarLancamento(s.baixa!)}>Editar</button>
-            <button className="btn" onClick={() => { if (confirm(`Desfazer? O lançamento de ${fmtValor(s.valor)} será apagado e a conta volta a ficar em aberto.`)) c.desfazerBaixa(s) }}>
-              Desfazer
-            </button>
-          </>
-        ) : (
-          <>
-            <button className="btn" onClick={aoOutroValor}>Outro valor</button>
-            <button className="btn primario conta-paguei" onClick={() => c.pagarConta(s)}>
-              <Icone nome="check" tamanho={16} /> {entrada ? 'Recebi' : 'Paguei'}
-            </button>
-          </>
-        )}
+    <article className={`ct-boleto ${s.estado} ${entrada ? 'entrada' : ''}`} style={{ '--c': cor, animationDelay: `${Math.min(indice, 8) * 60}ms` } as React.CSSProperties}>
+      <span className="ct-boleto-canhoto">
+        <b>{String(s.dia).padStart(2, '0')}</b>
+        <small>{MES_CURTO(c.mes)}</small>
+      </span>
+      <div className="ct-boleto-corpo">
+        <button type="button" className="ct-boleto-cab" onClick={aoEditar}>
+          <span className="ct-boleto-icone"><IconeCategoria emoji={cat?.icone ?? (entrada ? '💰' : '🧾')} tamanho={18} /></span>
+          <span className="ct-boleto-nome"><strong>{conta.descricao}</strong><small>{cat?.nome ?? (entrada ? 'entrada fixa' : 'conta')}</small></span>
+        </button>
+        <span className="ct-boleto-valor">{entrada ? '+ ' : ''}{fmtValor(s.valor)}</span>
+        <span className={`chip-estado ${s.estado}`}>{fraseDaSituacao(s)}</span>
+        <div className="ct-boleto-acoes">
+          {s.baixa ? (
+            <>
+              <button className="btn" onClick={() => c.editarLancamento(s.baixa!)}><Icone nome="lapis" tamanho={14} /> Editar</button>
+              <button className="btn" onClick={() => { if (confirm(`Desfazer? O lançamento de ${fmtValor(s.valor)} será apagado e a conta volta a ficar em aberto.`)) c.desfazerBaixa(s) }}>
+                <Icone nome="desfazer" tamanho={14} /> Desfazer
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="btn primario conta-paguei" onClick={() => c.pagarConta(s)}>
+                <Icone nome={entrada ? 'receber' : 'check'} tamanho={16} /> {entrada ? 'Recebi' : 'Paguei'}
+              </button>
+              <button className="icone-btn" onClick={aoOutroValor} title="Outro valor ou outra data" aria-label="Outro valor ou outra data"><Icone nome="lapis" tamanho={16} /></button>
+            </>
+          )}
+        </div>
       </div>
-    </li>
+      {s.estado === 'paga' && <span className="ct-carimbo">{entrada ? 'recebido' : 'pago'}</span>}
+    </article>
   )
 }
 

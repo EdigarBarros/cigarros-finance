@@ -7,6 +7,7 @@ import { definirMovimento, definirTema, useMovimento, useTema, type Movimento, t
 import type { Categoria, Modulo, Perfil } from '../lib/types'
 import { estiloLente, useLente } from '../lib/useLente'
 import { Bandeira } from './Bandeira'
+import { PreviaDetalhe, PreviaTema } from './Previas'
 import { Selo } from './Categorias'
 import { PARTES_ZERAR, type EscolhaZerar, type ParteZerar } from '../lib/zerar'
 import { Icone } from './Icone'
@@ -31,29 +32,6 @@ function CartaoAcao({ icone, titulo, texto, aoClicar, perigo }: { icone: string;
       <small>{texto}</small>
       <span className="cfg-acao-seta"><Icone nome="seta" tamanho={16} /></span>
     </button>
-  )
-}
-
-/** Miniatura do app em cada tema, para escolher vendo. */
-function PreviaTema({ tema }: { tema: 'claro' | 'escuro' | 'auto' }) {
-  return (
-    <span className={`previa-tema ${tema}`} aria-hidden="true">
-      <span className="pt-lado" />
-      <span className="pt-topo" />
-      <span className="pt-cartoes"><i /><i /><i /></span>
-      <span className="pt-grafico"><i /><i /><i /><i /><i /></span>
-    </span>
-  )
-}
-
-/** Miniatura de cada jeito de ver: mais blocos e gráficos conforme o nível. */
-function PreviaDetalhe({ nivel }: { nivel: 'simples' | 'equilibrado' | 'detalhado' }) {
-  return (
-    <span className={`previa-detalhe ${nivel}`} aria-hidden="true">
-      <span className="pd-kpis"><i /><i /><i />{nivel === 'detalhado' && <><i /><i /></>}</span>
-      {nivel !== 'simples' && <span className="pd-grafico"><i /><i /><i /><i /><i /><i /></span>}
-      <span className="pd-lista"><i /><i />{nivel === 'detalhado' && <><i /><i /></>}</span>
-    </span>
   )
 }
 
@@ -237,7 +215,7 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
           {secao === 'conta' && (
             <>
               <section className="cfg-cartao cfg-voce">
-                <span className="config-avatar grande">{iniciais || '?'}</span>
+                <span className="config-avatar grande">{foto ? <img src={foto} alt="" /> : iniciais || '?'}</span>
                 <span className="cfg-conta"><small>Você entrou como</small><strong className="config-email">{email || 'sem e-mail'}</strong></span>
               </section>
               <div className="cfg-acoes">

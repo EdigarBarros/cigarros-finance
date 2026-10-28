@@ -403,3 +403,21 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
   o cabeçalho do dia fica preso no topo ao rolar.
 - `ItemLancamento` ganhou **etiquetas**: cartão (com o selo do banco e a parcela, ex. 5/12), dívida, recebido (de quem te
   devia) e "todo mês" (conta fixa). Aparecem também na Início e no Dinheiro guardado.
+
+### 4.17 Contas do mês (boletos)
+
+- Topo: **pote do mês** (`PoteMeta`, enche com o que já foi pago das contas a pagar) com o que falta, as atrasadas e o
+  que há a receber; e a **linha do mês**: os dias numa trilha, um alfinete por dia de vencimento (verde paga, azul a
+  vencer, amarelo vence hoje, vermelho atrasada) e o "hoje".
+- Cada conta é um **boleto**: canhoto com o dia (picote com dois furos), ícone e nome, valor, a situação e o botão
+  "Paguei"/"Recebi" (lápis para outro valor ou data). Paga, ganha o carimbo **PAGO** animado. Uma grade só, da mais urgente
+  para a já paga.
+- Sem contas: pilha de boletos de exemplo e os atalhos (Aluguel, Luz, Internet, Celular, Academia, Streaming, Salário).
+
+### 4.18 Perguntas do primeiro acesso
+
+- Tela cheia: à esquerda a marca, uma paisagem por passo e a lista dos passos (com check nos feitos; dá para voltar
+  tocando); à direita uma pergunta por vez, entrando de lado. No celular, só a pergunta com a barra de progresso.
+- Escolhas visuais: avatar com as iniciais ao digitar o nome, moedas com as bandeiras em SVG, módulos como cartões com
+  ícone, jeito de ver com as miniaturas do painel (`Previas.tsx`, as mesmas das Configurações) e, no fim, o resumo em
+  selos.

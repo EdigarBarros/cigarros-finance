@@ -55,3 +55,130 @@
   .conta-acoes .conta-paguei { flex: 1; }
   .conta-linha { padding: 11px 14px; }
 }
+
+/* ---------- redesenho: pote do mês, linha do mês e boletos ---------- */
+.conta-aviso > svg { flex: none; }
+.conta-valor.entrada { color: var(--entrada); }
+.ct-topo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 16px; }
+.ct-pote {
+  display: flex; align-items: center; gap: 20px;
+  background: radial-gradient(110% 100% at 0% 100%, color-mix(in srgb, var(--entrada) 13%, transparent), transparent 60%), var(--superficie);
+}
+.ct-pote-texto { display: grid; gap: 2px; justify-items: start; min-width: 0; }
+.ct-pote-texto > small { font-size: 12.5px; color: var(--texto-2); }
+.ct-pote-texto strong { font-family: var(--fonte-numeros); font-size: 28px; font-weight: 700; letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
+.ct-pote-texto .chips-info { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+.ct-linha { display: grid; gap: 8px; align-content: start; }
+.ct-linha .ccd-titulo { margin: 0; }
+.ct-linha-trilho { position: relative; height: 92px; margin: 0 6px; }
+.ct-linha-base { position: absolute; left: 0; right: 0; top: 56px; height: 6px; border-radius: 99px; background: var(--preench-3); }
+.ct-linha-feito {
+  position: absolute; left: 0; top: 56px; height: 6px; border-radius: 99px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--destaque) 30%, transparent), var(--destaque)); transform-origin: left; animation: cc-enche 1.2s .2s var(--mola) backwards;
+}
+.ct-linha-hoje { position: absolute; top: 46px; width: 2px; height: 26px; margin-left: -1px; border-radius: 2px; background: var(--destaque); }
+.ct-linha-hoje small { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); font-size: 10.5px; font-weight: 700; color: var(--destaque); }
+.ct-linha-marco {
+  --m: var(--texto-3);
+  position: absolute; top: 0; display: grid; justify-items: center; gap: 4px; transform: translateX(-50%);
+  animation: ct-cai .7s var(--mola-salto) backwards;
+}
+.ct-linha-marco.paga { --m: var(--entrada); }
+.ct-linha-marco.a_vencer { --m: var(--caixa); }
+.ct-linha-marco.vence_hoje { --m: var(--divida); }
+.ct-linha-marco.atrasada { --m: var(--saida); }
+.ct-linha-pino {
+  position: relative; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50% 50% 50% 4px; transform: rotate(-45deg);
+  color: #fff; background: var(--m); box-shadow: 0 6px 14px -6px var(--m);
+}
+.ct-linha-pino svg { transform: rotate(45deg); }
+.ct-linha-marco small { margin-top: 26px; font-size: 11px; font-weight: 700; color: var(--m); }
+.ct-linha-marco sup { font-size: 9px; margin-left: 1px; }
+@keyframes ct-cai { from { opacity: 0; transform: translate(-50%, -18px); } }
+.ct-linha-pe { display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; color: var(--texto-3); }
+.ct-linha-legenda { display: flex; align-items: center; gap: 5px; }
+.ct-linha-legenda i { width: 8px; height: 8px; margin-left: 6px; border-radius: 50%; }
+.ct-linha-legenda i.paga { background: var(--entrada); }
+.ct-linha-legenda i.a_vencer { background: var(--caixa); }
+.ct-linha-legenda i.atrasada { background: var(--saida); }
+
+.ct-grupo { display: grid; gap: 12px; }
+.ct-grupo-titulo { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+.ct-grupo-titulo small { font-size: 13px; font-weight: 500; color: var(--texto-2); margin-left: 4px; }
+.ct-grupo.atrasadas .ct-grupo-titulo { color: var(--saida); }
+.ct-grupo.pagas .ct-grupo-titulo svg { color: var(--entrada); }
+.ct-boletos { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+
+/* o boleto: canhoto com o dia, picote e corpo */
+.ct-boleto {
+  --c: #8e8e93;
+  position: relative; display: grid; grid-template-columns: 78px minmax(0, 1fr); border-radius: 18px; overflow: hidden; isolation: isolate;
+  background: radial-gradient(120% 100% at 100% 0%, color-mix(in srgb, var(--c) 10%, transparent), transparent 55%), var(--superficie);
+  border: 1px solid var(--borda); box-shadow: var(--sombra); animation: surgir .7s var(--mola) backwards;
+  transition: transform .45s var(--mola), box-shadow .45s var(--mola);
+}
+.ct-boleto:hover { transform: translateY(-3px); box-shadow: var(--sombra-alta); }
+.ct-boleto-canhoto {
+  position: relative; display: grid; place-content: center; justify-items: center; gap: 2px; line-height: 1;
+  color: var(--c); background: color-mix(in srgb, var(--c) 14%, var(--superficie-2)); border-right: 2px dashed color-mix(in srgb, var(--texto) 14%, transparent);
+}
+/* os dois "furos" do picote */
+.ct-boleto-canhoto::before, .ct-boleto-canhoto::after {
+  content: ''; position: absolute; right: -9px; width: 16px; height: 16px; border-radius: 50%; background: var(--fundo); box-shadow: inset 0 0 0 1px var(--borda);
+}
+.ct-boleto-canhoto::before { top: -9px; }
+.ct-boleto-canhoto::after { bottom: -9px; }
+.ct-boleto-canhoto b { font-family: var(--fonte-numeros); font-size: 30px; font-weight: 800; letter-spacing: -.03em; }
+.ct-boleto-canhoto small { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; opacity: .8; }
+.ct-boleto-corpo { display: grid; gap: 8px; padding: 14px 16px 14px 18px; min-width: 0; }
+.ct-boleto-cab { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; }
+.ct-boleto-icone { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 11px; color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); }
+.ct-boleto-nome { display: grid; min-width: 0; }
+.ct-boleto-nome strong { font-size: 15.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ct-boleto-nome small { font-size: 12px; color: var(--texto-2); }
+.ct-boleto-valor { font-family: var(--fonte-numeros); font-size: 24px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.ct-boleto.entrada .ct-boleto-valor { color: var(--entrada); }
+.ct-boleto .chip-estado { justify-self: start; }
+.ct-boleto-acoes { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.ct-boleto-acoes .conta-paguei { flex: 1; min-width: 0; justify-content: center; }
+.ct-boleto.atrasada { border-color: color-mix(in srgb, var(--saida) 40%, var(--borda)); }
+.ct-boleto.atrasada .ct-boleto-canhoto { color: var(--saida); background: color-mix(in srgb, var(--saida) 14%, var(--superficie-2)); }
+.ct-boleto.vence_hoje .ct-boleto-canhoto { color: var(--divida); background: color-mix(in srgb, var(--divida) 16%, var(--superficie-2)); }
+.ct-boleto.paga .ct-boleto-corpo > :not(.ct-boleto-acoes) { opacity: .62; }
+.ct-boleto.paga .ct-boleto-canhoto { color: var(--entrada); background: color-mix(in srgb, var(--entrada) 12%, var(--superficie-2)); }
+/* carimbo "pago" */
+.ct-carimbo {
+  position: absolute; top: 16px; right: 16px; padding: 4px 12px; border-radius: 8px; pointer-events: none;
+  font-family: var(--fonte-marca); font-size: 15px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--entrada); border: 3px double var(--entrada); transform: rotate(-12deg); opacity: .9;
+  animation: ct-carimba .6s .25s var(--mola-salto) backwards;
+}
+@keyframes ct-carimba { from { opacity: 0; transform: rotate(-12deg) scale(2.2); } 60% { opacity: 1; } }
+.ct-boleto-codigo { display: block; height: 22px; margin-top: 2px; opacity: .35; background: repeating-linear-gradient(90deg, var(--texto) 0 2px, transparent 2px 4px, var(--texto) 4px 5px, transparent 5px 8px, var(--texto) 8px 11px, transparent 11px 13px); }
+
+/* conta sem contas fixas */
+.ct-vazio { display: grid; justify-items: center; text-align: center; gap: 18px; padding: 32px 24px; }
+.ct-vazio-pilha { position: relative; width: min(100%, 360px); height: 250px; }
+.ct-vazio-pilha .ct-boleto { position: absolute; left: 0; right: 0; text-align: left; box-shadow: var(--sombra-alta); animation: ct-pilha 1s var(--mola) backwards; }
+.ct-vazio-pilha .ct-boleto:nth-child(1) { top: 0; transform: rotate(-6deg) translateX(-14px); animation-delay: .05s; }
+.ct-vazio-pilha .ct-boleto:nth-child(2) { top: 58px; transform: rotate(3deg) translateX(12px); animation-delay: .15s; }
+.ct-vazio-pilha .ct-boleto:nth-child(3) { top: 116px; transform: rotate(-1.5deg) translateX(-4px); animation-delay: .25s; }
+.ct-vazio-pilha .ct-boleto:hover { transform: none; }
+@keyframes ct-pilha { from { opacity: 0; transform: translateY(40px) rotate(0) scale(.92); } }
+.ct-vazio-texto { display: grid; gap: 8px; justify-items: center; }
+.ct-vazio-texto h2 { font-size: 24px; letter-spacing: -.02em; }
+.ct-vazio-texto p { margin: 0; max-width: 540px; color: var(--texto-2); line-height: 1.55; }
+.ct-modelos { max-width: 900px; }
+
+@media (max-width: 1000px) {
+  .ct-topo { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 860px) {
+  .ct-boletos { grid-template-columns: minmax(0, 1fr); }
+  .ct-linha-trilho { margin: 0; }
+  .ct-linha-pino { width: 24px; height: 24px; }
+  .ct-linha-pino svg { width: 12px; height: 12px; }
+  .ct-linha-legenda { display: none; }
+  .ct-vazio-pilha { height: 240px; }
+}
