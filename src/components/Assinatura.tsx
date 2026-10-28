@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { irParaStripe, type Assinatura } from '../lib/assinatura'
 import { supabase } from '../lib/supabase'
 import { Icone } from './Icone'
+import { LinksLegais } from './Legal'
 import { Marca } from './Marca'
 
 const BENEFICIOS = [
@@ -74,9 +75,11 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
             <button className="btn gradiente as-botao" onClick={assinar} disabled={ocupado}>
               {ocupado ? 'Abrindo o pagamento…' : jaTeve ? 'Assinar por R$ 9,99/mês' : 'Começar 7 dias grátis'}
             </button>
-            {!jaTeve && <small className="as-nota">Depois do teste, R$ 9,99 por mês no cartão. Sem fidelidade.</small>}
+            {!jaTeve && <small className="as-nota">Depois do teste, R$ 9,99 por mês no cartão. Sem fidelidade. Cancele quando quiser, sem multa.</small>}
+            <small className="as-nota">Ao continuar, você concorda com os <a href="#/termos">Termos de uso</a> e a <a href="#/privacidade">Política de privacidade</a>.</small>
           </>
         )}
+        <LinksLegais />
         <button className="link as-sair" onClick={() => supabase.auth.signOut()}>Sair ({email})</button>
       </div>
     </div>
