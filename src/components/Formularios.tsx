@@ -526,6 +526,9 @@ export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo,
               ? <button type="button" className="btn perigo" onClick={() => { aoExcluir(d.id); aoFechar() }}>Excluir mesmo</button>
               : <button type="button" className="btn perigo" onClick={() => setConfirmar(true)}>Excluir</button>
           )}
+          {d && situacao!.restante > 0 && (
+            <button type="button" className="btn" onClick={() => { aoNovoSaldo(d.id, data, 0); aoFechar() }}>Já quitei</button>
+          )}
           <span className="espaco" />
           <button type="button" className="btn" onClick={aoFechar}>Cancelar</button>
           <button type="submit" className="btn primario">Salvar</button>
