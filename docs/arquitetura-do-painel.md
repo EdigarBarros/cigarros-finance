@@ -339,3 +339,27 @@ quanto falta nas dívidas, metas, personalizar, backup, tema). Troca a cada 7 s,
 
 Configurações → Perfil: a foto escolhida é recortada no quadrado do meio e reduzida no aparelho (192 px, JPEG) e aparece
 no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a migração 9 (`perfis.foto`), também no banco.
+
+### 4.13 Dívidas: "Eu devo" e "Me devem"
+
+- **Dois lados, um jeito só.** A página tem a chave **Eu devo | Me devem**. "Me devem" é o mesmo modelo de dívida com
+  `sentido = 'me_devem'` (venda parcelada, empréstimo que você fez). Pagar o que você deve é uma **saída** ligada pelo
+  `divida_id`; receber de quem te deve é uma **entrada** ligada do mesmo jeito: os dois abatem do que falta.
+  O que te devem fica fora de `r.divida` e dos indicadores do mês (`Painel` separa `situacao` de `aReceber`).
+- **Calendário de parcelas** (`calendarioDe`): com `inicio` (vencimento da 1ª), cada parcela vence no mesmo dia dos meses
+  seguintes. O total pago (maior saldo − o que falta) cobre as parcelas da mais antiga para a mais nova: pagou metade, a
+  parcela fica **pela metade**; pulou uma, ela fica **atrasada** quando vence; pagou a mais, adianta as próximas. Sem
+  parcela fixa, `inicio` é a data combinada. O formulário pergunta "a próxima vence em" e calcula `inicio`
+  (`inicioPelaProxima`). Dívida antiga sem data mostra "Quando vence a próxima?" na ficha.
+- **Um botão por dívida:** "Pagar R$ X" / "Receber R$ X" já sugere o atrasado (ou a próxima parcela); o valor pode ser
+  trocado. Sem parcela nem data, o valor fica em branco ("Lançar pagamento").
+- **Visual:** cartão por dívida com o selo de quem (banco conhecido vira `BancoIcone`; pessoa vira as iniciais num
+  círculo colorido), anel do quanto já foi pago, um tracinho por parcela (verde paga, vermelho atrasada, metade pintada
+  quando parcial) e a próxima data. Em cima: anel do total já pago com "livre em" e as barras dos próximos 12 meses
+  (`projecaoMensal`). A ficha (toque no cartão) mostra cada parcela e os pagamentos/recebimentos (toque para editar).
+- **Recebe todo mês** (aluguel, mesada): não é dívida, é conta fixa de entrada em Contas do mês. Em "Me devem" elas
+  aparecem com o botão "Recebi", e um atalho leva para cadastrar.
+- **Alertas:** parcelas atrasadas (suas e de quem te deve) entram nas dicas do menu lateral.
+- **Sem a migração 10** (`supabase/migracao-10-dividas-e-a-receber.sql`) a página funciona só com "Eu devo", sem pessoa e
+  sem calendário, e mostra o aviso.
+- A renegociação de fatura do cartão cria a dívida já com o banco, o total de parcelas e o vencimento da 1ª parcela.

@@ -32,8 +32,14 @@ const fotoLocal = (userId: string) => {
     return null
   }
 }
+/** Saída que paga uma dívida sua ou entrada que recebe de quem te deve: as duas abatem do que falta. */
 const paraPagamento = (l: Lancamento): Pagamento | null =>
-  l.divida_id && l.tipo === 'saida' ? { id: l.id, divida_id: l.divida_id, data: l.data, valor: l.valor } : null
+  l.divida_id ? { id: l.id, divida_id: l.divida_id, data: l.data, valor: l.valor } : null
+/** Campos de dívida que só existem com a migração 10. */
+const EXTRAS_DIVIDA = ['sentido', 'pessoa', 'inicio', 'total_parcelas', 'obs'] as const
+const semExtrasDivida = <T extends object>(o: T) =>
+  Object.fromEntries(Object.entries(o).filter(([k]) => !(EXTRAS_DIVIDA as readonly string[]).includes(k))) as Partial<T>
+export type NovaDivida = Pick<Divida, 'descricao' | 'valor_parcela'> & Partial<Pick<Divida, (typeof EXTRAS_DIVIDA)[number]>>
 
 /**
  * Lançamentos do ano aberto + tudo que atravessa os anos (dívidas, saldos, pagamentos e meses),
@@ -58,12 +64,14 @@ export function useDados(userId: string, ano: number) {
   const [movimentosMeta, setMovimentosMeta] = useState<MovimentoMeta[]>([])
   /** Sem a migração 6 não há onde guardar metas. */
   const [metasSemTabela, setMetasSemTabela] = useState(false)
+  /** Sem a migração 10: dívidas sem "me devem", pessoa e calendário de parcelas. */
+  const [dividasSemExtras, setDividasSemExtras] = useState(false)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
 
   const recarregar = useCallback(async () => {
     setCarregando(true)
-    const [l, m, d, s, p, b, pf, ct, mt, mv] = await Promise.all([
+    const [l, m, d, s, p, b, pf, ct, mt, mv, xd] = await Promise.all([
       supabase.from('lancamentos').select('*').eq('ano', ano).order('data').order('created_at'),
       supabase.from('meses').select('*'),
       supabase.from('dividas').select('*').order('created_at'),
@@ -74,7 +82,9 @@ export function useDados(userId: string, ano: number) {
       supabase.from('categorias').select('*').order('ordem').order('nome'),
       supabase.from('metas').select('*').order('ordem').order('created_at'),
       supabase.from('meta_movimentos').select('*').order('data'),
+      supabase.from('dividas').select('sentido, pessoa, inicio, total_parcelas').limit(1),
     ])
+    setDividasSemExtras(Boolean(xd.error))
     const e = l.error ?? m.error ?? d.error ?? s.error ?? p.error ?? b.error
     if (e) setErro(e.message)
     else {
@@ -171,27 +181,28 @@ export function useDados(userId: string, ano: number) {
   }
 
   /**
-   * Cria a dívida já com o saldo de partida. `inicio` (opcional) registra o valor de quando ela começou,
+   * Cria a dívida já com o saldo de partida. `marcoInicial` (opcional) registra o valor de quando ela começou,
    * para o app mostrar quanto já foi pago ("parcela 4 de 12").
    */
-  const addDivida = async (d: {
-    descricao: string; valor_parcela: number | null; saldo: number; data: string; inicio?: { data: string; saldo: number }
+  const addDivida = async (d: NovaDivida & {
+    saldo: number; data: string; marcoInicial?: { data: string; saldo: number }
   }): Promise<Divida | undefined> => {
+    const { saldo: _s, data: _d, marcoInicial: _m, ...campos } = d
     const { data, error } = await supabase
-      .from('dividas').insert({ descricao: d.descricao, valor_parcela: d.valor_parcela }).select().single()
+      .from('dividas').insert(dividasSemExtras ? semExtrasDivida(campos) : campos).select().single()
     if (error) {
       falhou(error.message)
       return
     }
     const nova = normDiv(data as Divida)
     setDividas((xs) => [...xs, nova])
-    if (d.inicio) await addSaldo(nova.id, d.inicio.data, d.inicio.saldo)
+    if (d.marcoInicial) await addSaldo(nova.id, d.marcoInicial.data, d.marcoInicial.saldo)
     await addSaldo(nova.id, d.data, d.saldo)
     return nova
   }
   const updDivida = async (id: string, patch: Partial<Divida>) => {
     setDividas((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
-    const { error } = await supabase.from('dividas').update(patch).eq('id', id)
+    const { error } = await supabase.from('dividas').update(dividasSemExtras ? semExtrasDivida(patch) : patch).eq('id', id)
     if (error) falhou(error.message)
   }
   const delDivida = async (id: string) => {
@@ -361,6 +372,7 @@ export function useDados(userId: string, ano: number) {
     categorias, categoriasAntigas, addCategoria, updCategoria, delCategoria,
     perfil, perfilSemTabela, salvarPerfil, foto, salvarFoto,
     bancos, addBanco, updBanco, delBanco,
+    dividasSemExtras,
     lancs, meses, dividas, saldos, pagamentos, carregando, erro, setErro, recarregar,
     addLanc, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, salvarMes,
   }

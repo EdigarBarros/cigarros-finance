@@ -85,7 +85,9 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
 > [`migracao-07-contas-fixas`](supabase/migracao-07-contas-fixas.sql) (contas fixas e a pagar; precisa das migrações 3 e 5) e
 > [`migracao-08-cartoes`](supabase/migracao-08-cartoes.sql) (cartões de crédito, faturas e compras parceladas) e
 > [`migracao-09-cartoes-extras`](supabase/migracao-09-cartoes-extras.sql) (renegociar fatura, juros de atraso, limite
-> garantido da caixinha e foto de perfil).
+> garantido da caixinha e foto de perfil) e
+> [`migracao-10-dividas-e-a-receber`](supabase/migracao-10-dividas-e-a-receber.sql) (quem te deve, com quem é a dívida e
+> calendário de parcelas: paga, pela metade, atrasada).
 > Todas só acrescentam, não apagam nada.
 
 ### 3. Primeiro acesso

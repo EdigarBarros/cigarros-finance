@@ -5,6 +5,7 @@ import {
   totalFaturasAPagar, totalFaturasDoMes, type CompraParcelada, type Fatura, type SituacaoCartao,
 } from '../lib/cartoes'
 import { COR } from '../lib/charts'
+import { somaMesesData } from '../lib/dividas'
 import { SEM_CATEGORIA } from '../lib/categorias'
 import { fmtDataCurta, fmtDataLonga, fmtValor, MESES_CURTO, MESES_NOME, paraCampo, parseNumero, simbolo } from '../lib/format'
 import { CORES_LIVRES, mesmoNome } from '../lib/rotulos'
@@ -790,6 +791,9 @@ function FormRenegociar({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: (
     const d = await c.d.addDivida({
       descricao: `Fatura ${cartao.nome} de ${nomeDaFatura(f.ano, f.mes)} (renegociada)`,
       valor_parcela: parcela, saldo: tot, data: data || hojeLocal(),
+      // a 1ª parcela do acordo vence no mês seguinte, no dia do vencimento do cartão
+      sentido: 'devo', pessoa: cartao.nome, total_parcelas: parcelas,
+      inicio: somaMesesData(`${(data || hojeLocal()).slice(0, 8)}${String(Math.min(cartao.dia_vencimento, 28)).padStart(2, '0')}`, 1),
     })
     if (!d) return
     await c.cartoes.pagarFatura({

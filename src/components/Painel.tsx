@@ -5,7 +5,7 @@ import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
 import { faltaPagarNoMes, lancamentoDaBaixa, lancamentoParecido, situacoesDoMes, type SituacaoConta } from '../lib/contasFixas'
 import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
 import { COR } from '../lib/charts'
-import { situacaoDividas, type SituacaoDivida } from '../lib/dividas'
+import { calendarioDe, fimDoMes, meDevem, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
 import { definirMoedaPrincipal, fmtValor, MESES_CURTO, MESES_NOME } from '../lib/format'
 import { useCambio } from '../lib/moedas'
 import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
@@ -164,25 +164,36 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     [d.lancs, chaveRenegociadas, comFaturas], // eslint-disable-line react-hooks/exhaustive-deps
   )
 
+  // O que você deve entra nas contas do mês; o que te devem fica à parte (só vira entrada quando você recebe).
+  const dividasDevo = useMemo(() => d.dividas.filter((x) => !meDevem(x)), [d.dividas])
+  const dividasMeDevem = useMemo(() => d.dividas.filter(meDevem), [d.dividas])
+
   // Cada mês é calculado com dívidas e caixa contínuos: nada precisa ser copiado à mão.
   const porMesCompleto = useMemo(() => {
     const agora = hoje.getFullYear() * 12 + hoje.getMonth() + 1
     return MESES_NOME.map((_, i) => {
       const m = i + 1
       const l = lancsContados.filter((x) => x.mes === m)
-      const sit = situacaoDividas(d.dividas, d.saldos, d.pagamentos, ano, m)
+      const sit = situacaoDividas(dividasDevo, d.saldos, d.pagamentos, ano, m)
       const ef = mesEfetivo(d.meses, ano, m)
       const temProprio = d.meses.some((x) => x.ano === ano && x.mes === m)
       // Meses futuros sem lançamentos ficam em branco, como na planilha.
       const vazio = !l.length && !temProprio && (ano * 12 + m > agora || (!sit.length && !ef.herdadoDe))
       return { sit, ef, resumo: vazio ? null : resumoMes(l, sit, ef, taxas, idCategoria) }
     })
-  }, [lancsContados, d.dividas, d.saldos, d.pagamentos, d.meses, ano, taxas, d.categorias]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lancsContados, dividasDevo, d.saldos, d.pagamentos, d.meses, ano, taxas, d.categorias]) // eslint-disable-line react-hooks/exhaustive-deps
   const porMes = porMesCompleto.map((x) => x.resumo)
 
   const lancsMes = lancsContados.filter((l) => l.mes === mes)
   const { sit: situacao, ef: mesEf } = porMesCompleto[mes - 1]
-  const dividasAbertas = situacao.filter((s) => s.restante > 0).map((s) => s.divida)
+  const aReceber = useMemo(
+    () => situacaoDividas(dividasMeDevem, d.saldos, d.pagamentos, ano, mes),
+    [dividasMeDevem, d.saldos, d.pagamentos, ano, mes],
+  )
+  // Dia que vale para dizer o que está atrasado: hoje, ou o fim do mês aberto quando ele já passou.
+  const hojeIso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
+  const diaRef = fimDoMes(ano, mes) < hojeIso ? fimDoMes(ano, mes) : hojeIso
+  const dividasAbertas = [...situacao, ...aReceber].filter((s) => s.restante > 0).map((s) => s.divida)
 
   const mudarMes = (delta: number) => {
     let [a, m] = [ano, mes + delta]
@@ -253,14 +264,20 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     [d.lancs, d.categorias, porMesCompleto, perfil.modulos, perfil.moedas, perfil.detalhe, perfil.dispensadas], // eslint-disable-line react-hooks/exhaustive-deps
   )
 
-  const pagarDivida = (s: SituacaoDivida) =>
+  // Pagar (o que você deve) ou receber (o que te devem): o valor sugerido é o atrasado ou a próxima parcela.
+  const pagarDivida = (s: SituacaoDivida, valor?: number) => {
+    // sem calendário nem parcela fixa, o valor fica em branco: a pessoa paga quanto puder
+    const sugerido = valor ?? calendarioDe(s, diaRef)?.sugerido ?? (s.divida.valor_parcela ? Math.min(s.divida.valor_parcela, s.restante) : undefined)
+    const recebe = meDevem(s.divida)
     setForm({
       preset: {
-        tipo: 'saida', categoria_id: d.categorias.find((c) => c.papel === 'divida')?.id ?? null, divida_id: s.divida.id,
-        descricao: `${s.divida.descricao} – parcela`,
-        valor: Math.min(s.divida.valor_parcela ?? s.restante, s.restante),
+        tipo: recebe ? 'entrada' : 'saida', divida_id: s.divida.id,
+        ...(recebe ? {} : { categoria_id: d.categorias.find((c) => c.papel === 'divida')?.id ?? null }),
+        descricao: recebe ? `${s.divida.descricao}${s.divida.pessoa ? ` (${s.divida.pessoa})` : ''} – recebido` : `${s.divida.descricao} – parcela`,
+        valor: sugerido && sugerido > 0 ? sugerido : undefined,
       },
     })
+  }
 
   // Limite garantido que vem da caixinha do banco do cartão: o valor guardado nela hoje (tela Dinheiro guardado).
   const caixaHoje = mesEfetivo(d.meses, hoje.getFullYear(), hoje.getMonth() + 1).caixa
@@ -296,7 +313,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
       cartoes: comCartoes ? <BlocoCartoes situacoes={faturas} aoAbrir={() => irPara('cartoes')} /> : undefined,
     },
     busca, setBusca,
-    ano, mes, d, cartoes, faturas, lancsMes, situacao, mesEf, porMes, mobile,
+    ano, mes, d, cartoes, faturas, lancsMes, situacao, aReceber, diaRef, mesEf, porMes, mobile,
     perfil, v, taxas, sugestao,
     aceitarSugestao: (s: Sugestao) => mudarPerfil(s.aplicar(perfil)),
     recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),
@@ -350,6 +367,8 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
 
   // Dicas que se revezam no pé do menu lateral: primeiro o que pede atenção, depois atalhos úteis.
   const faltaDividas = situacao.reduce((a, s) => a + s.restante, 0)
+  const atrasoDevo = situacao.reduce((a, s) => a + (calendarioDe(s, diaRef)?.emAtraso ?? 0), 0)
+  const atrasoReceber = aReceber.reduce((a, s) => a + (calendarioDe(s, diaRef)?.emAtraso ?? 0), 0)
   const dicas: Dica[] = [
     ...(avisos.length ? [{
       id: 'contas', alerta: true, icone: 'sino', botao: 'Ver contas', acao: () => irPara('contas'),
@@ -362,6 +381,14 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
         : `${faturasAtrasadas.length} faturas venceram sem pagar.`,
     }] : []),
     { id: 'lancar', icone: 'mais', botao: 'Lançar agora', acao: () => setForm({}), titulo: 'Lançou o que gastou hoje?' },
+    ...(v.dividas && atrasoDevo > 0 ? [{
+      id: 'dividas-atraso', alerta: true, icone: 'relogio', botao: 'Ver dívidas', acao: () => irPara('dividas'),
+      titulo: `${fmtValor(atrasoDevo)} de parcelas atrasadas.`,
+    }] : []),
+    ...(v.dividas && atrasoReceber > 0 ? [{
+      id: 'receber-atraso', icone: 'receber', botao: 'Cobrar', acao: () => irPara('dividas'),
+      titulo: `Te devem ${fmtValor(atrasoReceber)} que já venceu.`,
+    }] : []),
     ...(v.dividas && faltaDividas > 0 ? [{
       id: 'dividas', icone: 'divida', botao: 'Ver dívidas', acao: () => irPara('dividas'), titulo: `Faltam ${fmtValor(faltaDividas)} nas dívidas.`,
     }] : []),

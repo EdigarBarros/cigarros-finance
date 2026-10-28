@@ -28,6 +28,10 @@ export interface Ctx {
   lancsMes: Lancamento[]
   /** Dívidas como estão neste mês (saldo calculado com os pagamentos). */
   situacao: SituacaoDivida[]
+  /** Dinheiro que te devem (dívidas com sentido 'me_devem') como está neste mês. Fica fora de `r.divida`. */
+  aReceber: SituacaoDivida[]
+  /** Dia para dizer o que está atrasado: hoje, ou o fim do mês aberto quando ele já passou. */
+  diaRef: string
   /** Valores do mês, com caixa/US$ herdados do último mês informado. */
   mesEf: MesEfetivo
   r: Resumo
@@ -64,7 +68,8 @@ export interface Ctx {
   bancoAberto: string | null
   abrirBanco: (id: string | null) => void
   /** Abre o formulário de saída já ligado à dívida, com o valor da parcela. */
-  pagarDivida: (s: SituacaoDivida) => void
+  /** Abre o lançamento já ligado à dívida: saída para pagar, entrada para receber; `valor` troca o sugerido. */
+  pagarDivida: (s: SituacaoDivida, valor?: number) => void
   /** Contas fixas (aluguel, luz, salário…) e a situação de cada uma no mês aberto. */
   contas: ContasFixas
   situacoesContas: SituacaoConta[]

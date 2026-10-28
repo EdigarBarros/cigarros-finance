@@ -51,6 +51,14 @@ export interface Divida {
   id: string
   descricao: string
   valor_parcela: number | null
+  /** Campos da migração 10. 'me_devem': dinheiro que alguém deve a você (recebido com lançamentos de entrada). */
+  sentido?: 'devo' | 'me_devem'
+  /** Com quem: banco, loja, pessoa. */
+  pessoa?: string | null
+  /** Vencimento da 1ª parcela (as outras no mesmo dia dos meses seguintes); sem parcela fixa, a data combinada. */
+  inicio?: string | null
+  total_parcelas?: number | null
+  obs?: string | null
 }
 
 /** "Em tal data, o saldo devedor era X" (informado por você ou vindo da planilha). */

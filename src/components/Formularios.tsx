@@ -1,9 +1,9 @@
 import { useMemo, useRef, useState } from 'react'
 import { dicaDaDescricao } from '../lib/adaptacao'
 import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
-import { gerarParcelas, textoParcelamento } from '../lib/cartoes'
+import { gerarParcelas, hojeLocal, textoParcelamento } from '../lib/cartoes'
 import { COR } from '../lib/charts'
-import { dividaPelaDescricao, mesesAntes, parcelasDe, type SituacaoDivida } from '../lib/dividas'
+import { calendarioDe, dividaPelaDescricao, inicioPelaProxima, meDevem, mesesAntes, parcelasDe, somaMesesData, type SituacaoDivida } from '../lib/dividas'
 import { dataPadrao, fmtMesAno, fmtValor, paraCampo, parseNumero, simbolo } from '../lib/format'
 import { infoMoeda, type Taxas } from '../lib/moedas'
 import { visao } from '../lib/perfil'
@@ -11,6 +11,7 @@ import { bancoConhecido, bancoNaDescricao, CORES_LIVRES, mesmoNome } from '../li
 import type { Banco, CartaoCredito, Categoria, Divida, Lancamento, Perfil, Tipo } from '../lib/types'
 import { EscolhaCategoria } from './Categorias'
 import { Icone } from './Icone'
+import type { NovaDivida } from '../lib/useDados'
 import { Modal, Segmentado } from './ui'
 
 type NovoLanc = Omit<Lancamento, 'id'>
@@ -99,8 +100,11 @@ export function FormLancamento(p: FormLancProps) {
     [p.historico, tipo],
   )
   // A dívida ligada pode já ter sido quitada; continua na lista para não sumir da edição.
-  const extra = ini.divida_id && !p.dividas.some((d) => d.id === ini.divida_id) ? [{ id: ini.divida_id, descricao: 'Dívida quitada', valor_parcela: null }] : []
+  const extra: Divida[] = ini.divida_id && !p.dividas.some((d) => d.id === ini.divida_id) ? [{ id: ini.divida_id, descricao: ini.tipo === 'entrada' ? 'Já recebida' : 'Dívida quitada', valor_parcela: null }] : []
   const opcoesDivida = [...p.dividas, ...extra]
+  // saída paga o que você deve; entrada recebe de quem te deve
+  const devo = opcoesDivida.filter((d) => !meDevem(d))
+  const aReceber = opcoesDivida.filter((d) => meDevem(d) || (d.id === ini.divida_id && ini.tipo === 'entrada'))
 
   const moedasDisponiveis = [...new Set([principal, ...(v.moedas ? p.perfil.moedas : []), ...(original ? [original.moeda] : [])])]
   const estrangeira = moeda !== principal
@@ -160,7 +164,7 @@ export function FormLancamento(p: FormLancProps) {
     }
     // "Notebook – parcela" já se liga à dívida do notebook.
     if (!mexeuDivida && tipo === 'saida' && v.dividas) {
-      const d = dividaPelaDescricao(texto, p.dividas)
+      const d = dividaPelaDescricao(texto, p.dividas.filter((x) => !meDevem(x)))
       setDividaId(d?.id ?? '')
       if (d && !mexeuCategoria && catDivida) setCategoriaId(catDivida.id)
     }
@@ -177,7 +181,10 @@ export function FormLancamento(p: FormLancProps) {
     if (estrangeira && (!taxa || taxa <= 0)) return setErro(`Digite quanto vale 1 ${infoMoeda(moeda).nome.toLowerCase()} em ${simbolo(principal)}.`)
     const [a, m] = data.split('-').map(Number)
     const saida = tipo === 'saida'
-    const ligada = saida && ehDivida && dividaId ? dividaId : null
+    // aberto pela própria dívida (ou já ligado), o pagamento fica ligado mesmo sem a categoria de dívidas
+    const ligada = saida
+      ? ((ehDivida || dividaId === ini.divida_id) && devo.some((d) => d.id === dividaId) ? dividaId : null)
+      : (aReceber.some((d) => d.id === dividaId) ? dividaId : null)
     // Em outra moeda, o valor vai convertido e o original fica guardado. Os campos só vão quando usados,
     // para funcionar também em bancos ainda sem a migração 4.
     const moedaOriginal = estrangeira
@@ -220,7 +227,7 @@ export function FormLancamento(p: FormLancProps) {
   const cor = tipo === 'entrada' ? COR.entradas : COR.saidas
 
   return (
-    <Modal titulo={p.inicial ? 'Editar lançamento' : p.preset?.divida_id ? 'Pagar dívida' : 'Novo lançamento'} aoFechar={p.aoFechar}>
+    <Modal titulo={p.inicial ? 'Editar lançamento' : p.preset?.divida_id ? (p.preset.tipo === 'entrada' ? 'Receber' : 'Pagar dívida') : 'Novo lançamento'} aoFechar={p.aoFechar}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); salvar(false) }}>
         {ehParcela && (
           <div className="form-dica fixa" role="status">
@@ -344,12 +351,12 @@ export function FormLancamento(p: FormLancProps) {
         />
         {tipo === 'saida' && (
           <>
-            {ehDivida && (v.dividas || dividaId) && opcoesDivida.length > 0 && (
+            {(ehDivida || (dividaId && dividaId === ini.divida_id)) && (v.dividas || dividaId) && devo.length > 0 && (
               <label className="campo">
                 <span className="campo-rotulo">Qual dívida você está pagando?</span>
                 <select value={dividaId} onChange={(e) => escolherDivida(e.target.value)}>
                   <option value="">Nenhuma (só entra como gasto)</option>
-                  {opcoesDivida.map((d) => (
+                  {devo.map((d) => (
                     <option key={d.id} value={d.id}>{d.descricao}{d.valor_parcela ? ` · parcela ${fmtValor(d.valor_parcela)}` : ''}</option>
                   ))}
                 </select>
@@ -357,6 +364,18 @@ export function FormLancamento(p: FormLancProps) {
               </label>
             )}
           </>
+        )}
+        {tipo === 'entrada' && (v.dividas || dividaId) && aReceber.length > 0 && (
+          <label className="campo">
+            <span className="campo-rotulo">É de alguém que te devia? <small>(opcional)</small></span>
+            <select value={aReceber.some((d) => d.id === dividaId) ? dividaId : ''} onChange={(e) => { setDividaId(e.target.value); setMexeuDivida(true) }}>
+              <option value="">Não</option>
+              {aReceber.map((d) => (
+                <option key={d.id} value={d.id}>{d.descricao}{d.pessoa ? ` · ${d.pessoa}` : ''}{d.valor_parcela ? ` · parcela ${fmtValor(d.valor_parcela)}` : ''}</option>
+              ))}
+            </select>
+            {dividaId && aReceber.some((d) => d.id === dividaId) && <span className="campo-ajuda">O que falta receber diminui sozinho com esta entrada.</span>}
+          </label>
         )}
         {erro && <p className="form-erro">{erro}</p>}
         {salvos > 0 && !erro && <p className="form-ok">{salvos} lançamento{salvos > 1 ? 's' : ''} salvo{salvos > 1 ? 's' : ''}. Pode lançar o próximo.</p>}
@@ -395,7 +414,11 @@ interface FormDividaProps {
   mes: number
   /** Ao editar: a dívida e como ela está no mês aberto. */
   situacao?: SituacaoDivida
-  aoCriar: (d: { descricao: string; valor_parcela: number | null; saldo: number; data: string; inicio?: { data: string; saldo: number } }) => void
+  /** Dívida nova: de que lado começa ("devo" ou "me devem"). */
+  sentidoInicial?: 'devo' | 'me_devem'
+  /** Migração 10 pendente: sem "me devem", pessoa e vencimento. */
+  semExtras?: boolean
+  aoCriar: (d: NovaDivida & { saldo: number; data: string; marcoInicial?: { data: string; saldo: number } }) => unknown
   aoEditar: (id: string, patch: Partial<Divida>) => void
   aoNovoSaldo: (id: string, data: string, saldo: number) => void
   aoExcluir: (id: string) => void
@@ -411,76 +434,103 @@ const inteiro = (t: string) => {
 }
 
 /**
- * Dívida do jeito que a pessoa pensa: "é parcelado?" Parcelada, pede o valor da parcela e quantas faltam
- * (e, se souber, de quantas); sem parcela fixa, pede quanto falta pagar.
+ * Dívida do jeito que a pessoa pensa, dos dois lados ("eu devo" e "me devem"): com quem, é parcelado?, quanto e quando
+ * vence a próxima. Parcelada, pede o valor da parcela e quantas faltam (e, se souber, de quantas); sem parcela fixa,
+ * pede quanto falta e, se houver, a data combinada. O vencimento da próxima monta o calendário de parcelas.
  */
-export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo, aoExcluir, aoFechar, definirParcela }: FormDividaProps) {
+export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, aoCriar, aoEditar, aoNovoSaldo, aoExcluir, aoFechar, definirParcela }: FormDividaProps) {
   const d = situacao?.divida
   const atuais = situacao ? parcelasDe(situacao) : null
+  const [hoje] = useState(() => hojeLocal())
+  const cal = situacao ? calendarioDe(situacao, hoje) : null
+  const [sentido, setSentido] = useState<'devo' | 'me_devem'>(d?.sentido ?? sentidoInicial ?? 'devo')
   const [descricao, setDescricao] = useState(d?.descricao ?? '')
+  const [pessoa, setPessoa] = useState(d?.pessoa ?? '')
   const [parcelado, setParcelado] = useState<'sim' | 'nao'>(d && !d.valor_parcela && !definirParcela ? 'nao' : 'sim')
   const [parcela, setParcela] = useState(d?.valor_parcela ? paraCampo(d.valor_parcela) : '')
   const [faltam, setFaltam] = useState('')
   const [total, setTotal] = useState('')
   const [saldo, setSaldo] = useState('')
+  // vencimento da próxima parcela em aberto (ou a data combinada, sem parcela fixa)
+  const [proxima, setProxima] = useState(cal?.proxima?.vencimento ?? (d ? '' : somaMesesData(hoje, 1)))
   const [data, setData] = useState(dataPadrao(ano, mes))
   const [erro, setErro] = useState<string | null>(null)
   const [confirmar, setConfirmar] = useState(false)
+  const recebe = sentido === 'me_devem'
 
   const vp = parseNumero(parcela)
   const nFaltam = inteiro(faltam)
   const nTotal = inteiro(total)
-  // Prévia do que vai ficar: "falta R$ 3.600 (12 × R$ 300) · acaba em out de 2027"
-  const previa = parcelado === 'sim' && vp && vp > 0 && (nFaltam ?? atuais?.faltam)
+  // Prévia do que vai ficar: "falta R$ 3.600 (12 × R$ 300) · última em out de 2027"
+  const n = nFaltam ?? atuais?.faltam
+  const previa = parcelado === 'sim' && vp && vp > 0 && n
     ? (() => {
-        const n = (nFaltam ?? atuais!.faltam)
-        // mesma conta do cartão da dívida: as parcelas que faltam começam no mês seguinte
+        const ultima = proxima ? somaMesesData(proxima, n - 1) : null
         const t = ano * 12 + (mes - 1) + n
-        return `Falta pagar ${fmtValor(vp * n)} (${n} × ${fmtValor(vp)}) · última parcela em ${fmtMesAno(Math.floor(t / 12), (t % 12) + 1)}`
+        const [ua, um] = ultima ? ultima.split('-').map(Number) : [Math.floor(t / 12), (t % 12) + 1]
+        return `${recebe ? 'Falta receber' : 'Falta pagar'} ${fmtValor(vp * n)} (${n} × ${fmtValor(vp)}) · última parcela em ${fmtMesAno(ua, um)}`
       })()
     : null
 
   const salvar = () => {
-    if (!descricao.trim()) return setErro('Dê um nome para a dívida.')
+    if (!descricao.trim()) return setErro(recebe ? 'Dê um nome (ex.: computador que vendi).' : 'Dê um nome para a dívida.')
+    const extras = { sentido, pessoa: pessoa.trim() || null }
     if (parcelado === 'sim') {
       if (!vp || vp <= 0) return setErro('Digite o valor da parcela.')
       if (faltam.trim() && !nFaltam) return setErro('Digite quantas parcelas faltam (um número inteiro).')
       if (!d && !nFaltam) return setErro('Digite quantas parcelas faltam.')
       if (total.trim() && (!nTotal || (nFaltam && nTotal < nFaltam))) return setErro('O total de parcelas não pode ser menor que as que faltam.')
-      const n = nFaltam ?? atuais?.faltam ?? 0
+      const nf = nFaltam ?? atuais?.faltam ?? 0
+      const totalN = nTotal ?? (d ? d.total_parcelas ?? atuais?.total ?? nf : nf)
       // Com o total, registra o valor de quando a dívida começou: é isso que mostra "parcela 4 de 12".
-      const inicio = nTotal && nTotal > n ? { data: mesesAntes(data, nTotal - n), saldo: Math.round(vp * nTotal * 100) / 100 } : undefined
+      const marcoInicial = nTotal && nTotal > nf ? { data: mesesAntes(data, nTotal - nf), saldo: Math.round(vp * nTotal * 100) / 100 } : undefined
+      const inicio = proxima ? inicioPelaProxima(proxima, totalN - nf) : d?.inicio ?? null
+      const campos = { descricao: descricao.trim(), valor_parcela: vp, ...extras, inicio, total_parcelas: totalN || null }
       if (!d) {
-        aoCriar({ descricao: descricao.trim(), valor_parcela: vp, saldo: Math.round(vp * n * 100) / 100, data, inicio })
+        aoCriar({ ...campos, saldo: Math.round(vp * nf * 100) / 100, data, marcoInicial })
       } else {
-        if (descricao.trim() !== d.descricao || vp !== d.valor_parcela) aoEditar(d.id, { descricao: descricao.trim(), valor_parcela: vp })
-        if (inicio && inicio.saldo > situacao!.saldoInicial) aoNovoSaldo(d.id, inicio.data, inicio.saldo)
+        aoEditar(d.id, campos)
+        if (marcoInicial && marcoInicial.saldo > situacao!.saldoInicial) aoNovoSaldo(d.id, marcoInicial.data, marcoInicial.saldo)
         if (nFaltam) aoNovoSaldo(d.id, data, Math.round(vp * nFaltam * 100) / 100)
       }
     } else {
-      const s = saldo.trim() ? parseNumero(saldo) : null
-      if (saldo.trim() && (s === null || s < 0)) return setErro('Digite um valor válido.')
-      if (!d && (s === null || s <= 0)) return setErro('Digite quanto falta pagar.')
-      if (!d) aoCriar({ descricao: descricao.trim(), valor_parcela: null, saldo: s!, data })
+      const v = saldo.trim() ? parseNumero(saldo) : null
+      if (saldo.trim() && (v === null || v < 0)) return setErro('Digite um valor válido.')
+      if (!d && (v === null || v <= 0)) return setErro(recebe ? 'Digite quanto falta receber.' : 'Digite quanto falta pagar.')
+      const campos = { descricao: descricao.trim(), valor_parcela: null, ...extras, inicio: proxima || null, total_parcelas: null }
+      if (!d) aoCriar({ ...campos, saldo: v!, data })
       else {
-        if (descricao.trim() !== d.descricao || d.valor_parcela !== null) aoEditar(d.id, { descricao: descricao.trim(), valor_parcela: null })
-        if (s !== null) aoNovoSaldo(d.id, data, s)
+        aoEditar(d.id, campos)
+        if (v !== null) aoNovoSaldo(d.id, data, v)
       }
     }
     aoFechar()
   }
 
   return (
-    <Modal titulo={d ? 'Editar dívida' : 'Adicionar dívida'} aoFechar={aoFechar}>
+    <Modal titulo={d ? (recebe ? 'Editar a receber' : 'Editar dívida') : recebe ? 'Alguém te deve' : 'Adicionar dívida'} aoFechar={aoFechar}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); salvar() }}>
-        <label className="campo">
-          <span className="campo-rotulo">Nome</span>
-          <input autoFocus={!d} value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex.: Notebook, empréstimo, cartão Nubank…" />
-        </label>
+        {!semExtras && (
+          <Segmentado rotulo="Quem deve" valor={sentido} aoMudar={(v) => { setSentido(v); setErro(null) }}
+            opcoes={[{ id: 'devo', nome: 'Eu devo', cor: COR.saidas }, { id: 'me_devem', nome: 'Me devem', cor: COR.entradas }]} />
+        )}
+        <div className="form-linha">
+          <label className="campo">
+            <span className="campo-rotulo">{recebe ? 'O quê' : 'Nome'}</span>
+            <input autoFocus={!d} value={descricao} onChange={(e) => setDescricao(e.target.value)}
+              placeholder={recebe ? 'Ex.: computador que vendi, empréstimo…' : 'Ex.: notebook, empréstimo, acordo…'} />
+          </label>
+          {!semExtras && (
+            <label className="campo">
+              <span className="campo-rotulo">{recebe ? 'Quem te deve' : 'Com quem'} <small>(opcional)</small></span>
+              <input value={pessoa} onChange={(e) => setPessoa(e.target.value)} maxLength={40} placeholder={recebe ? 'Ex.: João' : 'Ex.: Nubank, loja, Maria'} />
+            </label>
+          )}
+        </div>
         <div className="campo">
           <span className="campo-rotulo">É parcelado?</span>
           <Segmentado rotulo="É parcelado?" valor={parcelado} aoMudar={(v) => { setParcelado(v); setErro(null) }}
-            opcoes={[{ id: 'sim', nome: 'Sim, pago em parcelas' }, { id: 'nao', nome: 'Não, tenho um valor a pagar' }]} />
+            opcoes={[{ id: 'sim', nome: 'Sim, em parcelas' }, { id: 'nao', nome: recebe ? 'Não, um valor só' : 'Não, tenho um valor a pagar' }]} />
         </div>
         {parcelado === 'sim' ? (
           <>
@@ -497,26 +547,45 @@ export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo,
                   placeholder={atuais ? String(atuais.faltam) : d && vp ? String(Math.ceil(situacao!.restante / vp - 0.001)) : 'Ex.: 10'} />
               </label>
             </div>
-            <label className="campo">
-              <span className="campo-rotulo">De quantas no total? <small>(opcional)</small></span>
-              <input inputMode="numeric" value={total} onChange={(e) => setTotal(e.target.value)} placeholder={atuais ? String(atuais.total) : 'Ex.: 12'} />
-              <span className="campo-ajuda">Se souber, o app mostra quanto você já pagou ("parcela 4 de 12").</span>
-            </label>
+            <div className="form-linha">
+              <label className="campo">
+                <span className="campo-rotulo">De quantas no total? <small>(opcional)</small></span>
+                <input inputMode="numeric" value={total} onChange={(e) => setTotal(e.target.value)} placeholder={atuais ? String(atuais.total) : 'Ex.: 12'} />
+              </label>
+              {!semExtras && (
+                <label className="campo">
+                  <span className="campo-rotulo">A próxima vence em</span>
+                  <input type="date" value={proxima} onChange={(e) => setProxima(e.target.value)} />
+                </label>
+              )}
+            </div>
+            <span className="campo-ajuda">
+              {semExtras ? 'Se souber o total, o app mostra quanto já foi pago ("parcela 4 de 12").'
+                : `Com o vencimento, o app mostra cada parcela ${recebe ? 'recebida' : 'paga'}, pela metade ou atrasada.`}
+            </span>
             {previa && <p className="divida-previa">{previa}</p>}
           </>
         ) : (
-          <label className="campo">
-            <span className="campo-rotulo">{d ? 'Quanto falta pagar agora' : 'Quanto falta pagar'} {d && <small>(só se mudou)</small>}</span>
-            <span className="campo-caixa"><span className="prefixo">{simbolo()}</span>
-              <input inputMode="decimal" value={saldo} onChange={(e) => setSaldo(e.target.value)} placeholder={d ? paraCampo(situacao!.restante) : '0,00'} />
-            </span>
-          </label>
+          <div className="form-linha">
+            <label className="campo">
+              <span className="campo-rotulo">{recebe ? 'Quanto falta receber' : 'Quanto falta pagar'}{d && <small> (só se mudou)</small>}</span>
+              <span className="campo-caixa"><span className="prefixo">{simbolo()}</span>
+                <input inputMode="decimal" value={saldo} onChange={(e) => setSaldo(e.target.value)} placeholder={d ? paraCampo(situacao!.restante) : '0,00'} />
+              </span>
+            </label>
+            {!semExtras && (
+              <label className="campo">
+                <span className="campo-rotulo">Combinado para <small>(opcional)</small></span>
+                <input type="date" value={proxima} onChange={(e) => setProxima(e.target.value)} />
+              </label>
+            )}
+          </div>
         )}
         {d && (
           <label className="campo">
             <span className="campo-rotulo">Valor atualizado em</span>
             <input type="date" value={data} onChange={(e) => setData(e.target.value)} />
-            <span className="campo-ajuda">Os pagamentos lançados já abatem sozinhos. Mude o que falta só se houve juros, acordo ou se estava errado.</span>
+            <span className="campo-ajuda">{recebe ? 'Cada recebimento lançado' : 'Os pagamentos lançados'} já abatem sozinhos. Mude o que falta só se houve juros, acordo ou se estava errado.</span>
           </label>
         )}
         {erro && <p className="form-erro">{erro}</p>}
@@ -527,13 +596,13 @@ export function FormDivida({ ano, mes, situacao, aoCriar, aoEditar, aoNovoSaldo,
               : <button type="button" className="btn perigo" onClick={() => setConfirmar(true)}>Excluir</button>
           )}
           {d && situacao!.restante > 0 && (
-            <button type="button" className="btn" onClick={() => { aoNovoSaldo(d.id, data, 0); aoFechar() }}>Já quitei</button>
+            <button type="button" className="btn" onClick={() => { aoNovoSaldo(d.id, data, 0); aoFechar() }}>{recebe ? 'Já recebi tudo' : 'Já quitei'}</button>
           )}
           <span className="espaco" />
           <button type="button" className="btn" onClick={aoFechar}>Cancelar</button>
           <button type="submit" className="btn primario">Salvar</button>
         </div>
-        {confirmar && <span className="campo-ajuda">A dívida e todo o histórico dela serão excluídos. Os pagamentos lançados continuam, só deixam de abater dela.</span>}
+        {confirmar && <span className="campo-ajuda">Ela e todo o histórico dela serão excluídos. Os lançamentos continuam, só deixam de abater dela.</span>}
       </form>
     </Modal>
   )
