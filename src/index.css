@@ -557,6 +557,20 @@ select option { background: #1c1c1e; color: var(--texto); }
 .modal-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
 .modal-topo h2 { font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
 .modal-topo .icone-btn { width: 30px; height: 30px; }
+/* Configurações: painel grande no computador, tela cheia no celular */
+.modal.grande { width: min(1100px, 95vw); height: min(90vh, 860px); max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+.modal.grande .modal-topo { flex: none; }
+.config { flex: 1; min-height: 0; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 24px; }
+.config-nav { display: flex; flex-direction: column; gap: 4px; align-self: start; }
+.config-nav button {
+  display: flex; align-items: center; gap: 10px; padding: 11px 14px; border: 0; border-radius: var(--raio-m); background: transparent;
+  color: var(--texto-2); font: inherit; font-weight: 600; text-align: left; cursor: pointer; transition: background .2s, color .2s;
+}
+.config-nav button:hover { background: var(--preench-2); }
+.config-nav button.ativo { background: var(--preench-3); color: var(--texto); }
+.config-conteudo { align-content: start; overflow-y: auto; min-height: 0; padding-right: 6px; max-width: 720px; }
+.config-conteudo h3 { font-size: 18px; font-weight: 700; letter-spacing: -.02em; }
+.config-email { font-size: 16px; word-break: break-all; }
 @keyframes aparece { from { opacity: 0; } }
 @keyframes modal-entra { from { opacity: 0; transform: translateY(18px) scale(.95); } to { opacity: 1; transform: none; } }
 .form { display: grid; gap: 16px; }
@@ -943,6 +957,10 @@ select option { background: #1c1c1e; color: var(--texto); }
     border-radius: 38px 38px 0 0; max-height: 94vh; padding: 10px 20px calc(22px + env(safe-area-inset-bottom));
     animation: folha-sobe .55s var(--mola);
   }
+  .modal.grande { width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; padding: 10px 16px calc(14px + env(safe-area-inset-bottom)); }
+  .config { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 12px; }
+  .config-nav { flex-direction: row; overflow-x: auto; gap: 6px; padding-bottom: 2px; }
+  .config-nav button { flex: none; padding: 9px 12px; }
   .alca { display: block; width: 36px; height: 5px; margin: 0 auto 10px; border-radius: 999px; background: rgba(255, 255, 255, .3); }
   @keyframes folha-sobe { from { transform: translateY(100%); } to { transform: none; } }
 }

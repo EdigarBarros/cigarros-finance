@@ -177,7 +177,7 @@ export function Patrimonio(c: Ctx) {
                   )
                 })}
               </div>
-              <p className="dica">Cotação do dia por <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer">ExchangeRate-API</a>. Para mudar as moedas, use <button className="link" onClick={c.personalizar}>Personalizar painel</button>.</p>
+              <p className="dica">Cotação do dia por <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer">ExchangeRate-API</a>. Para mudar as moedas, use <button className="link" onClick={c.personalizar}>Configurações</button>.</p>
             </Cartao>
           )}
         </div>
