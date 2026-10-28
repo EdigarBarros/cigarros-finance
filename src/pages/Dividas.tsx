@@ -8,19 +8,18 @@ import { Cartao, Kpi, Progresso, Vazio } from '../components/ui'
 import type { Ctx } from './contexto'
 
 /**
- * Dívidas: quanto falta em cada uma, em que parcela está e quando acaba. As que ainda não têm parcela
- * aparecem com um convite para definir; as quitadas ficam no fim.
+ * Dívidas: quanto falta em cada uma, em que parcela está e quando acaba. As que não têm parcela
+ * aparecem como "sem parcela fixa"; as quitadas ficam no fim.
  */
 export function Dividas(c: Ctx) {
   const [editando, setEditando] = useState<SituacaoDivida | 'nova' | null>(null)
-  const [definirParcela, setDefinirParcela] = useState(false)
-  const editar = (s: SituacaoDivida, parcela = false) => { setDefinirParcela(parcela); setEditando(s) }
+  const editar = (s: SituacaoDivida) => setEditando(s)
   const abertas = c.situacao.filter((s) => !s.quitadaNoMes)
   const quitadas = c.situacao.filter((s) => s.quitadaNoMes)
-  const semParcela = abertas.filter((s) => !s.divida.valor_parcela)
   const pagoNoMes = c.situacao.reduce((a, s) => a + s.pagoNoMes, 0)
-  // Só dá para prever o fim se toda dívida em aberto tiver parcela definida.
-  const ultimaQuitacao = semParcela.length ? undefined : abertas
+  // Só dá para prever o fim se toda dívida em aberto tiver parcela fixa.
+  const temSemParcela = abertas.some((s) => !s.divida.valor_parcela)
+  const ultimaQuitacao = temSemParcela ? undefined : abertas
     .map((s) => s.quitacao)
     .filter((q): q is [number, number] => q !== null)
     .sort((a, b) => b[0] * 12 + b[1] - (a[0] * 12 + a[1]))[0]
@@ -42,19 +41,9 @@ export function Dividas(c: Ctx) {
             contra={c.mes > 1 ? `em ${MESES_CURTO[c.mes - 2].toLowerCase()}` : undefined} />
           <Kpi rotulo="Parcelas por mês" valor={fmtValor(c.r.parcelasMensais)} cor={COR.saidas} />
           <Kpi rotulo="Sem dívidas em" valor={ultimaQuitacao ? fmtMesAno(ultimaQuitacao[0], ultimaQuitacao[1]) : abertas.length ? '—' : 'Já está! 🎉'} cor={COR.caixa}>
-            {semParcela.length > 0 && <span className="kpi-delta">Falta definir parcelas</span>}
+            {temSemParcela && <span className="kpi-delta">Há dívidas sem parcela fixa</span>}
           </Kpi>
           <Kpi rotulo="Pago neste mês" valor={fmtValor(pagoNoMes)} cor={COR.entradas} />
-        </div>
-      )}
-
-      {semParcela.length > 0 && (
-        <div className="faixa-aviso">
-          <span>
-            <b>{semParcela.length === 1 ? '1 dívida está' : `${semParcela.length} dívidas estão`} sem parcela.</b>{' '}
-            Diga quanto você paga por mês para o app mostrar em que parcela está e quando você fica livre.
-          </span>
-          <button className="btn" onClick={() => editar(semParcela[0], true)}>Definir agora</button>
         </div>
       )}
 
@@ -67,7 +56,7 @@ export function Dividas(c: Ctx) {
         </Cartao>
       ) : (
         <div className="grade-cartoes">
-          {abertas.map((s) => <CartaoDivida key={s.divida.id} s={s} c={c} aoEditar={(parcela) => editar(s, parcela)} />)}
+          {abertas.map((s) => <CartaoDivida key={s.divida.id} s={s} c={c} aoEditar={() => editar(s)} />)}
         </div>
       )}
 
@@ -90,14 +79,13 @@ export function Dividas(c: Ctx) {
           aoNovoSaldo={c.d.addSaldo}
           aoExcluir={c.d.delDivida}
           aoFechar={() => setEditando(null)}
-          definirParcela={definirParcela}
         />
       )}
     </div>
   )
 }
 
-function CartaoDivida({ s, c, aoEditar }: { s: SituacaoDivida; c: Ctx; aoEditar: (definirParcela?: boolean) => void }) {
+function CartaoDivida({ s, c, aoEditar }: { s: SituacaoDivida; c: Ctx; aoEditar: () => void }) {
   const p = parcelasDe(s)
   const pagamentos = c.d.pagamentos
     .filter((x) => x.divida_id === s.divida.id && x.data)
@@ -124,11 +112,7 @@ function CartaoDivida({ s, c, aoEditar }: { s: SituacaoDivida; c: Ctx; aoEditar:
               <span>{p.faltam === 1 ? 'Falta 1 parcela' : `Faltam ${p.faltam} parcelas`} · última em {fmtMesAno(s.quitacao[0], s.quitacao[1])}</span>
             )}
           </div>
-        ) : !quitada && (
-          <button className="divida-sem-parcela" onClick={() => aoEditar(true)}>
-            <Icone nome="ideia" tamanho={16} /> Sem parcela definida. <b>Definir parcela</b>
-          </button>
-        )}
+        ) : !quitada && <p className="divida-previsao">Sem parcela fixa: você paga quanto e quando puder.</p>}
         {s.pagoNoMes > 0 && <p className="divida-previsao">Pago neste mês: <b>{fmtValor(s.pagoNoMes)}</b></p>}
         {pagamentos.length > 0 && (
           <ul className="divida-pagamentos">
