@@ -118,6 +118,15 @@ export function mesesAntes(iso: string, n: number) {
   return inicioDoMes(Math.floor(t / 12), (t % 12) + 1)
 }
 
+/** Lado que a página Dívidas abre na próxima vez (a linha "A receber" da Início pede "me devem"). */
+let ladoPedido: 'devo' | 'me_devem' = 'devo'
+export const pedirLadoDividas = (l: 'devo' | 'me_devem') => { ladoPedido = l }
+export const tomarLadoDividas = () => {
+  const l = ladoPedido
+  ladoPedido = 'devo'
+  return l
+}
+
 // ---------- calendário de parcelas ----------
 
 export const sentidoDe = (d: Divida) => d.sentido ?? 'devo'

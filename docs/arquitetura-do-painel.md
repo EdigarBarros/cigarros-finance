@@ -360,6 +360,8 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
 - **Recebe todo mês** (aluguel, mesada): não é dívida, é conta fixa de entrada em Contas do mês. Em "Me devem" elas
   aparecem com o botão "Recebi", e um atalho leva para cadastrar.
 - **Alertas:** parcelas atrasadas (suas e de quem te deve) entram nas dicas do menu lateral.
+- **Na Início:** o bloco Dívidas termina com a linha **A receber** (quanto falta receber, quantos em aberto e o que já
+  venceu); tocar nela abre a página Dívidas já em "Me devem" (`pedirLadoDividas`).
 - **Sem a migração 10** (`supabase/migracao-10-dividas-e-a-receber.sql`) a página funciona só com "Eu devo", sem pessoa e
   sem calendário, e mostra o aviso.
 - A renegociação de fatura do cartão cria a dívida já com o banco, o total de parcelas e o vencimento da 1ª parcela.

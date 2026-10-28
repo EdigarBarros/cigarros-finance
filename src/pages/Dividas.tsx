@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { COR } from '../lib/charts'
 import {
-  calendarioDe, inicioPelaProxima, parcelasDe, projecaoMensal, totalDeParcelas,
+  calendarioDe, inicioPelaProxima, parcelasDe, projecaoMensal, tomarLadoDividas, totalDeParcelas,
   type Calendario, type ParcelaDivida, type SituacaoDivida,
 } from '../lib/dividas'
 import { estiloDoBanco } from '../lib/estiloBanco'
@@ -33,7 +33,7 @@ function estadoDe(s: SituacaoDivida, cal: Calendario | null) {
  * botão só, que já sugere o valor certo. O que se recebe todo mês (aluguel) vem das contas fixas de entrada.
  */
 export function Dividas(c: Ctx) {
-  const [lado, setLado] = useState<Lado>('devo')
+  const [lado, setLado] = useState<Lado>(tomarLadoDividas)
   const [editando, setEditando] = useState<SituacaoDivida | 'nova' | null>(null)
   const [aberta, setAberta] = useState<string | null>(null)
   const recebe = lado === 'me_devem'

@@ -152,9 +152,12 @@ export function BlocoGastos({ r, anterior, categorias, nivel, mesAnterior, aoEdi
 const quando = (q: [number, number] | null) => (q ? fmtMesAno(q[0], q[1]) : null)
 
 /** Dívidas: o problema inteiro (quanto falta), junto do progresso e do próximo passo (pagar). */
-export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTodas }: {
+export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTodas, aReceber, aoVerReceber }: {
   itens: SituacaoDivida[]; nivel: Detalhe
   aoEditar: (s: SituacaoDivida) => void; aoPagar: (s: SituacaoDivida) => void; aoNova: () => void; aoVerTodas: () => void
+  /** O que te devem (lado "me devem"), numa linha no pé do bloco. */
+  aReceber?: { falta: number; atrasado: number; quantos: number }
+  aoVerReceber?: () => void
 }) {
   const total = itens.reduce((a, s) => a + s.restante, 0)
   const inicial = itens.reduce((a, s) => a + s.saldoInicial, 0)
@@ -205,6 +208,20 @@ export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTod
           ))}
           {itens.length > limite && <button className="quadro-ver" onClick={aoVerTodas}>Ver todas as {itens.length} dívidas</button>}
         </>
+      )}
+      {aReceber && aReceber.quantos > 0 && (
+        <button className="divida-receber" onClick={aoVerReceber}>
+          <span className="divida-receber-icone"><Icone nome="receber" tamanho={18} /></span>
+          <span className="divida-receber-texto">
+            <b>A receber</b>
+            <small>
+              {aReceber.quantos} em aberto
+              {aReceber.atrasado > 0 && <> · <em>{fmtValor(aReceber.atrasado)} venceu</em></>}
+            </small>
+          </span>
+          <strong>{fmtValor(aReceber.falta)}</strong>
+          <Icone nome="dir" tamanho={16} />
+        </button>
       )}
     </Bloco>
   )

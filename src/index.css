@@ -647,6 +647,20 @@ select option { background: var(--superficie-forte); color: var(--texto); }
 .divida-linha-valor { font-family: var(--fonte-numeros); font-weight: 650; font-variant-numeric: tabular-nums; }
 .divida-linha-sub { grid-column: 1 / -1; font-size: 12px; color: var(--texto-2); }
 .divida-linha.quitada { opacity: .6; }
+/* linha "A receber" no pé do bloco de dívidas */
+.divida-receber {
+  display: flex; align-items: center; gap: 12px; width: calc(100% - 28px); margin: 6px 14px 14px; padding: 12px 14px; border-radius: var(--raio-m);
+  border: 1px solid color-mix(in srgb, var(--entrada) 26%, var(--borda)); color: inherit; text-align: left;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--entrada) 12%, transparent), transparent 75%), var(--superficie-2);
+  transition: transform .4s var(--mola), border-color .25s; animation: surgir-sem-desfoque .7s .2s var(--mola) backwards;
+}
+.divida-receber:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--entrada) 50%, var(--borda)); }
+.divida-receber-icone { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 11px; color: var(--entrada); background: color-mix(in srgb, var(--entrada) 15%, transparent); }
+.divida-receber-texto { display: grid; flex: 1; min-width: 0; }
+.divida-receber-texto small { font-size: 12.5px; color: var(--texto-2); }
+.divida-receber-texto em { font-style: normal; font-weight: 600; color: var(--saida); }
+.divida-receber > strong { font-variant-numeric: tabular-nums; color: var(--entrada); }
+.divida-receber > svg { color: var(--texto-3); flex: none; }
 
 /* por banco */
 .banco-linha { position: relative; width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; padding: 13px 22px; border: 0; background: none; text-align: left; transition: background .25s var(--mola); }

@@ -1,6 +1,6 @@
 import { Fragment, useState } from 'react'
 import { COR, PALETA } from '../lib/charts'
-import type { SituacaoDivida } from '../lib/dividas'
+import { calendarioDe, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
 import { fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, variacao } from '../lib/format'
 import { situacaoMeta } from '../lib/metas'
 import {
@@ -151,8 +151,16 @@ export function Inicio(c: Ctx) {
   )
 
   // ---------- 2. O que preciso fazer? ----------
+  // quem te deve: o total que falta receber e o que já venceu (do calendário de parcelas)
+  const abertasReceber = c.aReceber.filter((s) => s.restante > 0)
+  const aReceber = {
+    quantos: abertasReceber.length,
+    falta: abertasReceber.reduce((a, s) => a + s.restante, 0),
+    atrasado: abertasReceber.reduce((a, s) => a + (calendarioDe(s, c.diaRef)?.emAtraso ?? 0), 0),
+  }
   const dividas = v.dividas && (
-    <BlocoDividas itens={c.situacao} nivel={nivel} aoNova={novaDivida} aoEditar={abrirDivida} aoPagar={c.pagarDivida} aoVerTodas={() => c.irPara('dividas')} />
+    <BlocoDividas itens={c.situacao} nivel={nivel} aoNova={novaDivida} aoEditar={abrirDivida} aoPagar={c.pagarDivida} aoVerTodas={() => c.irPara('dividas')}
+      aReceber={aReceber} aoVerReceber={() => { pedirLadoDividas('me_devem'); c.irPara('dividas') }} />
   )
   const oQueFazer = itensDe([['contas', c.blocos?.contas], ['cartoes', c.blocos?.cartoes], ['dividas', dividas]])
 
@@ -234,7 +242,7 @@ export function Inicio(c: Ctx) {
   else if (elBanner) analise.push(elBanner)
   if (elAcompanhar) (analise.length || !oQueFazer.length ? analise : oQueFazer).push(elAcompanhar)
   // muda quando o tamanho dos blocos muda de verdade: aí os blocos podem trocar de coluna
-  const versao = [c.ano, c.mes, nivel, c.lancsMes.length, c.situacao.length, c.situacoesContas.length, c.faturas.length, c.d.metas.length, c.categorias.length].join('|')
+  const versao = [c.ano, c.mes, nivel, c.lancsMes.length, c.situacao.length, c.aReceber.length, c.situacoesContas.length, c.faturas.length, c.d.metas.length, c.categorias.length].join('|')
 
   return (
     <div className="pagina inicio">
