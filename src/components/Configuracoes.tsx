@@ -37,7 +37,7 @@ function CartaoAcao({ icone, titulo, texto, aoClicar, perigo }: { icone: string;
 }
 
 /** Configurações em tela cheia: menu de seções à esquerda e cartões à direita. Cada mudança vale na hora. */
-export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoExtrato, aoOrganizar, aoZerar, aoSair, aoFechar, assinatura }: {
+export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoExtrato, aoOrganizar, aoZerar, aoSair, aoFechar, assinatura, aoTour }: {
   perfil: Perfil; email: string; aoMudar: (p: Perfil) => void; aoRefazer: () => void; aoCategorias: () => void
   /** Para mostrar as categorias na seção Categorias. */
   categorias?: Categoria[]
@@ -52,6 +52,8 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
   aoFechar: () => void
   /** Situação da assinatura (null quando não há cobrança nesta conta). */
   assinatura?: Assinatura | null
+  /** Abre o tutorial guiado do painel. */
+  aoTour?: () => void
 }) {
   const [secao, setSecao] = useState<Secao>('perfil')
   const [nome, setNome] = useState(perfil.nome)
@@ -226,6 +228,7 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
                 <span className="cfg-conta"><small>Você entrou como</small><strong className="config-email">{email || 'sem e-mail'}</strong></span>
               </section>
               <div className="cfg-acoes">
+                {aoTour && <CartaoAcao icone="ideia" titulo="Ver o tutorial" texto="Um passeio rápido pelo painel, mostrando onde fica cada coisa e como ligar mais abas." aoClicar={aoTour} />}
                 <CartaoAcao icone="ajustes" titulo="Refazer as perguntas" texto="Responda de novo as perguntas iniciais para reajustar o painel." aoClicar={aoRefazer} />
                 {assinatura && assinatura.status !== 'cortesia' && (
                   <CartaoAcao icone="cartao" titulo="Gerenciar assinatura" texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-portal').then((m) => m && alert(m))} />

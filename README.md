@@ -44,6 +44,9 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   mês do ano, o dinheiro guardado e as metas. O jeito de ver (simples, equilibrado, detalhado) só acrescenta linhas aos
   mesmos blocos. A lógica de cada modo está em [`docs/arquitetura-do-painel.md`](docs/arquitetura-do-painel.md), junto
   com o guia de linguagem do app
+- **Tutorial guiado**: depois das perguntas iniciais, o painel escurece e destaca, um por vez, onde fica cada coisa (lançar, resumo,
+  lançamentos, importar extrato, e só as abas que a pessoa ligou). Um passo oferece ligar abas que ela não tinha escolhido.
+  Dá para pular a qualquer momento (botão, X ou Esc) e rever em Configurações → Conta → Ver o tutorial, ou no menu da conta
 - **Assinatura (Stripe)**: conta nova vê a tela de assinatura em vez do painel: 7 dias grátis com cartão obrigatório, depois R$ 9,99
   por mês (ou o equivalente em USD, EUR, ARS, CLP, UYU, COP, PEN, MXN, CAD, AUD, CHF, GBP, conforme a moeda da pessoa).
   Teste acabou, cancelou ou o cartão falhou: o painel fica bloqueado. Contas que já existiam entram como `cortesia`. Peças:

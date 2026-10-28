@@ -74,7 +74,7 @@ export function Inicio(c: Ctx) {
           <Icone nome="calendario" tamanho={22} />
           <span>Hoje<b>{hojePorExtenso}</b></span>
         </div>
-        {!mobile && !c.contaNova && <div className="hero-acoes">{botoes}</div>}
+        {!mobile && !c.contaNova && <div className="hero-acoes" data-tour="lancar">{botoes}</div>}
       </div>
     </header>
   )
@@ -266,7 +266,7 @@ export function Inicio(c: Ctx) {
           <div>
             <h2>Tudo pronto para começar</h2>
             <p>Lance o que entrou e o que saiu neste mês e o painel se monta sozinho. Seus dados são só seus: ninguém mais vê o que você lança aqui.</p>
-            <div className="hero-acoes boas-vindas-acoes">{botoes}</div>
+            <div className="hero-acoes boas-vindas-acoes" data-tour="lancar">{botoes}</div>
           </div>
         </section>
       ) : kpis}
