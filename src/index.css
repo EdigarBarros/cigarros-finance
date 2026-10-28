@@ -62,7 +62,7 @@
   --fonte: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --fonte-numeros: Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --fonte-marca: Montserrat, Inter, system-ui, sans-serif;
-  --fonte-serifa: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --fonte-titulo: Sora, Inter, system-ui, sans-serif;
 
   font-family: var(--fonte);
   font-size: 15px;
@@ -2510,39 +2510,46 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .link.perigo { color: var(--saida); }
 
 /* ---------- tela de entrada (login e cadastro) ----------
-   Um cartão dividido: formulário de um lado, painel da marca do outro. O painel é recortado por um polígono cujas
-   quatro bordas (--a e --b em cima, --d e --c embaixo) são propriedades animáveis; ao trocar de modo, primeiro avança
-   a borda de um lado (o painel cobre o cartão inteiro, como uma lâmina varrendo) e depois recua a do outro. */
+   Ocupa a tela toda, dividida em dois: formulário de um lado, painel da marca do outro. O painel é recortado por um
+   polígono cujas quatro bordas (--a e --b em cima, --d e --c embaixo) são propriedades animáveis; ao trocar de modo,
+   primeiro avança a borda de um lado (o painel cobre a tela inteira, como uma lâmina varrendo) e depois recua a do outro.
+   O painel é claro e calmo de propósito: o destaque é a logo. */
 @property --a { syntax: '<percentage>'; inherits: true; initial-value: 50%; }
 @property --b { syntax: '<percentage>'; inherits: true; initial-value: 100%; }
 @property --c { syntax: '<percentage>'; inherits: true; initial-value: 100%; }
-@property --d { syntax: '<percentage>'; inherits: true; initial-value: 58%; }
+@property --d { syntax: '<percentage>'; inherits: true; initial-value: 56%; }
 
 .en {
-  min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 28px 20px;
-  background:
-    radial-gradient(60% 50% at 85% 10%, color-mix(in srgb, var(--marca-1) 22%, transparent), transparent 70%),
-    radial-gradient(50% 45% at 10% 95%, color-mix(in srgb, var(--marca-3) 16%, transparent), transparent 70%);
+  --en-papel: var(--fundo);
+  --en-painel: #0d1424;
+  --en-brilho-1: rgba(31, 142, 241, .16);
+  --en-brilho-2: rgba(20, 201, 160, .12);
+  --en-orbita: rgba(148, 163, 196, .12);
+  min-height: 100vh; min-height: 100dvh;
+}
+:root[data-tema='claro'] .en {
+  --en-papel: #ffffff;
+  --en-painel: #f1f5fd;
+  --en-brilho-1: rgba(61, 75, 224, .1);
+  --en-brilho-2: rgba(20, 201, 160, .13);
+  --en-orbita: rgba(20, 35, 70, .08);
 }
 .en-cartao {
-  --pena: #3fe0b5;
-  position: relative; display: grid; grid-template-columns: 1fr 1fr; width: min(1060px, 100%); min-height: 640px;
-  border: 1px solid var(--borda); border-radius: 30px; overflow: hidden; background: var(--superficie); box-shadow: var(--sombra-alta);
-  animation: surgir .9s var(--mola) both;
+  position: relative; display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; min-height: 100dvh;
+  overflow: hidden; background: var(--en-papel);
 }
-:root[data-tema='claro'] .en-cartao { --pena: #9dfbe0; }
 
 .en-form {
-  grid-row: 1; display: flex; flex-direction: column; justify-content: center; gap: 18px; padding: 56px clamp(30px, 5vw, 64px);
+  grid-row: 1; align-self: center; justify-self: center; display: flex; flex-direction: column; gap: 18px;
+  width: min(420px, 100%); padding: 56px clamp(28px, 4vw, 48px);
   opacity: 0; visibility: hidden; transform: translateX(var(--sai, -28px));
   transition: opacity .35s, transform .5s var(--mola), visibility 0s .5s;
 }
 .en-form.entrar { grid-column: 1; }
 .en-form.criar { grid-column: 2; --sai: 28px; }
 .en-form.ativo { opacity: 1; visibility: visible; transform: none; transition: opacity .5s .55s, transform .8s .55s var(--mola), visibility 0s; }
-.en-form h1 { margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -.025em; color: var(--texto); }
-.en-form h1::after { content: ''; display: block; width: 38px; height: 3px; margin-top: 10px; border-radius: 3px; background: var(--gradiente); }
-.en-sub { margin: -6px 0 6px; color: var(--texto-2); font-size: 14.5px; }
+.en-form h1 { margin: 0; font-family: var(--fonte-titulo); font-size: 30px; font-weight: 600; letter-spacing: -.03em; color: var(--texto); }
+.en-sub { margin: -8px 0 8px; color: var(--texto-2); font-size: 15px; }
 
 .en-campo { position: relative; display: block; padding-top: 18px; }
 .en-campo input {
@@ -2573,8 +2580,8 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .en-forca.f4 i { background: var(--entrada); }
 
 .en-botao {
-  display: flex; align-items: center; justify-content: center; gap: 8px; height: 50px; margin-top: 6px; border: 0; border-radius: 999px;
-  color: #fff; font: inherit; font-size: 15.5px; font-weight: 650; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px; height: 52px; margin-top: 6px; border: 0; border-radius: 999px;
+  color: #fff; font-family: var(--fonte-titulo); font-size: 15.5px; font-weight: 600; cursor: pointer;
   background: linear-gradient(90deg, var(--marca-1), var(--marca-2), var(--marca-3), var(--marca-2)) 0 0 / 300% 100%;
   box-shadow: 0 16px 30px -16px var(--marca-2); transition: background-position .6s var(--mola), transform .25s var(--mola), box-shadow .25s;
 }
@@ -2592,65 +2599,86 @@ button.ex-tipo:hover { transform: scale(1.1); }
 /* a lâmina: fio colorido por trás e o painel por cima, os dois com o mesmo recorte */
 .en-lamina {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  --a: 50%; --b: 100%; --c: 100%; --d: 58%;
+  --a: 50%; --b: 100%; --c: 100%; --d: 56%;
   transition: --a .7s .38s var(--mola), --d .7s .44s var(--mola), --b .5s cubic-bezier(.65, 0, .35, 1), --c .5s .05s cubic-bezier(.65, 0, .35, 1);
 }
 .criar .en-lamina {
-  --a: 0%; --b: 42%; --c: 50%; --d: 0%;
+  --a: 0%; --b: 44%; --c: 50%; --d: 0%;
   transition: --a .5s cubic-bezier(.65, 0, .35, 1), --d .5s .05s cubic-bezier(.65, 0, .35, 1), --b .7s .38s var(--mola), --c .7s .44s var(--mola);
 }
 .en-fio, .en-painel { position: absolute; inset: 0; }
 .en-fio {
   display: block; background: linear-gradient(180deg, var(--marca-3), var(--marca-2) 50%, var(--marca-1));
-  clip-path: polygon(calc(var(--a) - 3px) 0, calc(var(--b) + 3px) 0, calc(var(--c) + 3px) 100%, calc(var(--d) - 3px) 100%);
+  clip-path: polygon(calc(var(--a) - 2px) 0, calc(var(--b) + 2px) 0, calc(var(--c) + 2px) 100%, calc(var(--d) - 2px) 100%);
 }
 .en-painel {
-  overflow: hidden; color: #fff;
+  overflow: hidden; color: var(--texto);
   background:
-    radial-gradient(70% 55% at 85% 0%, rgba(31, 142, 241, .45), transparent 70%),
-    linear-gradient(165deg, #0a1233 0%, #13246e 42%, #0c4a6e 78%, #0a6b62 100%);
+    radial-gradient(45% 40% at 78% 30%, var(--en-brilho-1), transparent 70%),
+    radial-gradient(40% 40% at 70% 85%, var(--en-brilho-2), transparent 70%),
+    var(--en-painel);
   clip-path: polygon(var(--a) 0, var(--b) 0, var(--c) 100%, var(--d) 100%);
 }
-:root[data-tema='claro'] .en-painel {
-  background:
-    radial-gradient(70% 55% at 85% 0%, rgba(120, 200, 255, .5), transparent 70%),
-    linear-gradient(165deg, #2733b8 0%, #1f6fe0 48%, #138fb0 78%, #12a98a 100%);
+/* pontinhos bem leves, para o painel não ficar chapado */
+.en-painel::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle, var(--en-orbita) 1px, transparent 1.4px) 0 0 / 22px 22px;
+  -webkit-mask-image: radial-gradient(60% 60% at 50% 45%, #000, transparent); mask-image: radial-gradient(60% 60% at 50% 45%, #000, transparent);
 }
-.en-cena { position: absolute; left: 0; right: 0; bottom: 0; height: 46%; opacity: .55; mix-blend-mode: soft-light;
-  -webkit-mask-image: linear-gradient(transparent, #000 55%); mask-image: linear-gradient(transparent, #000 55%); }
 .en-brilho {
-  position: absolute; width: 520px; height: 520px; top: -180px; left: 62%; border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--marca-3) 40%, transparent), transparent 65%); filter: blur(10px);
+  position: absolute; width: 560px; height: 560px; top: 4%; left: 58%; border-radius: 50%;
+  background: radial-gradient(circle, var(--en-brilho-2), transparent 65%);
   transition: left 1.1s var(--mola); animation: dv-flutua 7s ease-in-out infinite;
 }
-.criar .en-brilho { left: -10%; }
+.criar .en-brilho { left: -6%; }
+
+/* a vitrine (logo + frase) muda de lado junto com o painel */
+.en-vitrine {
+  position: absolute; top: 0; bottom: 0; left: 56%; right: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 44px; padding: 40px clamp(24px, 4vw, 64px); text-align: center; transition: left 1.1s .2s var(--mola), right 1.1s .2s var(--mola);
+}
+.criar .en-vitrine { left: 0; right: 52%; }
+.en-logo { position: relative; display: grid; place-items: center; padding: 26px 0; }
+.en-logo .marca.grande { gap: 22px; padding: 0; }
+.en-logo .marca.grande .marca-simbolo { width: clamp(150px, 15vw, 210px); filter: drop-shadow(0 18px 34px color-mix(in srgb, var(--marca-2) 32%, transparent)); }
+.en-logo .marca.grande .marca-nome { font-size: clamp(30px, 3vw, 42px); letter-spacing: .08em; }
+.en-orbita {
+  position: absolute; left: 50%; top: 40%; width: var(--t); height: var(--t); margin: calc(var(--t) / -2) 0 0 calc(var(--t) / -2);
+  border: 1px solid var(--en-orbita); border-radius: 50%; animation: en-respira 6s ease-in-out infinite;
+}
+.en-orbita:nth-child(1) { --t: 220px; }
+.en-orbita:nth-child(2) { --t: 320px; animation-delay: -2s; border-style: dashed; }
+.en-orbita:nth-child(3) { --t: 420px; animation-delay: -4s; opacity: .6; }
+@keyframes en-respira { 50% { transform: scale(1.04); opacity: .6; } }
+.en-frases { display: grid; width: min(500px, 100%); }
 .en-chamada {
-  position: absolute; top: 44px; bottom: 56px; display: flex; flex-direction: column; justify-content: flex-end; gap: 14px;
-  opacity: 0; transform: translateY(18px); filter: blur(8px); transition: opacity .3s, transform .3s, filter .3s;
+  grid-area: 1 / 1; display: grid; gap: 12px;
+  opacity: 0; transform: translateY(14px); filter: blur(6px); transition: opacity .3s, transform .3s, filter .3s;
 }
-.en-chamada.entrar { left: 62%; right: 5%; }
-.en-chamada.criar { left: 6%; right: 56%; }
-.en-chamada.visivel { opacity: 1; transform: none; filter: none; transition: opacity .7s .6s, transform 1s .6s var(--mola), filter .7s .6s; }
-.en-chamada::before { /* a marca, no alto do painel */
-  content: ''; position: absolute; top: 0; left: 0; width: 46px; height: 22px; background: url(/simbolo.webp) left / contain no-repeat;
+.en-chamada.visivel { opacity: 1; transform: none; filter: none; transition: opacity .7s .7s, transform 1s .7s var(--mola), filter .7s .7s; }
+.en-chamada h2 { margin: 0; font-family: var(--fonte-titulo); font-size: clamp(26px, 2.4vw, 34px); font-weight: 600; line-height: 1.15; letter-spacing: -.03em; text-wrap: balance; }
+.en-chamada h2 em {
+  font-style: normal; background: var(--gradiente); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.en-selo { font-size: 11.5px; font-weight: 700; letter-spacing: .28em; color: var(--pena); }
-.en-chamada h2 { margin: 0; font-family: var(--fonte-serifa); font-size: clamp(40px, 4.6vw, 58px); font-weight: 400; line-height: 1.02; letter-spacing: -.01em; }
-.en-chamada h2 em { display: block; font-style: italic; color: var(--pena); }
-.en-chamada p { margin: 0; max-width: 300px; color: rgba(255, 255, 255, .78); font-size: 14.5px; line-height: 1.5; }
+.en-chamada p { margin: 0; color: var(--texto-2); font-size: 15px; line-height: 1.55; text-wrap: balance; }
 
 @media (max-width: 760px) {
-  .en { padding: 0; place-items: stretch; }
-  .en-cartao { grid-template-columns: 1fr; grid-template-rows: auto 1fr; min-height: 100vh; min-height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
-  .en-lamina, .criar .en-lamina { position: relative; grid-row: 1; height: 290px; transition: none; }
-  .en-painel, .criar .en-painel { clip-path: polygon(0 0, 100% 0, 100% 82%, 0 100%); }
-  .en-fio { top: 4px; bottom: -4px; clip-path: polygon(0 0, 100% 0, 100% 82%, 0 100%); }
-  .en-brilho { left: 40%; }
-  .en-chamada.entrar, .en-chamada.criar { left: 22px; right: 22px; top: 26px; bottom: 58px; }
-  .en-chamada { gap: 10px; }
-  .en-chamada h2 { font-size: 36px; }
+  .en-cartao { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .en-lamina, .criar .en-lamina { position: relative; grid-row: 1; height: 330px; transition: none; }
+  .en-painel, .criar .en-painel { clip-path: polygon(0 0, 100% 0, 100% 86%, 0 100%); }
+  .en-fio { top: 3px; bottom: -3px; clip-path: polygon(0 0, 100% 0, 100% 86%, 0 100%); }
+  .en-brilho, .criar .en-brilho { left: 30%; top: -30%; }
+  .en-vitrine, .criar .en-vitrine { left: 0; right: 0; bottom: 40px; gap: 22px; padding: 30px 22px 0; }
+  .en-logo { padding: 0; }
+  .en-logo .marca.grande { gap: 12px; }
+  .en-logo .marca.grande .marca-simbolo { width: 104px; }
+  .en-logo .marca.grande .marca-nome { font-size: 26px; }
+  .en-orbita:nth-child(1) { --t: 170px; }
+  .en-orbita:nth-child(2) { --t: 250px; }
+  .en-orbita:nth-child(3) { display: none; }
+  .en-chamada { gap: 6px; }
+  .en-chamada h2 { font-size: 22px; }
   .en-chamada p { font-size: 13.5px; }
-  .en-chamada h2 em { display: inline; margin-left: 10px; }
-  .en-form, .en-form.entrar, .en-form.criar { grid-row: 2; grid-column: 1; justify-content: flex-start; padding: 22px 22px 40px; --sai: 0px; transform: translateY(14px); }
+  .en-form, .en-form.entrar, .en-form.criar { grid-row: 2; grid-column: 1; align-self: start; width: 100%; padding: 18px 22px 40px; --sai: 0px; transform: translateY(14px); }
   .en-form.ativo { transform: none; transition: opacity .45s .1s, transform .6s .1s var(--mola), visibility 0s; }
 }

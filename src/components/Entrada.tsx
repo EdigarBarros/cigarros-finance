@@ -2,14 +2,13 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
-import { Paisagem } from './Paisagem'
 
 type Modo = 'entrar' | 'criar'
 type Aviso = { texto: string; ok?: boolean } | null
 
 /**
- * Tela de entrada. Um cartão dividido em dois: de um lado o formulário, do outro o painel da marca. Ao trocar entre
- * "Entrar" e "Criar conta", uma lâmina diagonal varre o cartão e leva o painel para o outro lado (as bordas do recorte
+ * Tela de entrada, ocupando a tela toda. Dividida em dois: de um lado o formulário, do outro o painel da marca. Ao trocar entre
+ * "Entrar" e "Criar conta", uma lâmina diagonal varre a tela e leva o painel (com a logo) para o outro lado (as bordas do recorte
  * são propriedades CSS animadas; veja .en-lamina). No celular o painel fica em cima e só o formulário troca.
  * Cada pessoa tem seus próprios dados (protegidos no banco por RLS).
  */
@@ -46,10 +45,17 @@ export function Login() {
         <div className="en-lamina" aria-hidden="true">
           <i className="en-fio" />
           <div className="en-painel">
-            <Paisagem cena="montanhas" className="en-cena" />
             <span className="en-brilho" />
-            <Chamada lado="entrar" visivel={!criar} titulo="Bom te ver" italico="de novo." texto="Seus lançamentos, contas e metas estão do jeitinho que você deixou." />
-            <Chamada lado="criar" visivel={criar} titulo="Comece a sua" italico="primeira página." texto="Uma conta para entradas, saídas, cartões, dívidas e metas. Só sua, do seu jeito." />
+            <div className="en-vitrine">
+              <div className="en-logo">
+                <i className="en-orbita" /><i className="en-orbita" /><i className="en-orbita" />
+                <Marca grande />
+              </div>
+              <div className="en-frases">
+                <Chamada visivel={!criar} titulo="Bom te ver" destaque="de novo." texto="Seus lançamentos, contas e metas estão do jeitinho que você deixou." />
+                <Chamada visivel={criar} titulo="Seu dinheiro," destaque="do seu jeito." texto="Entradas, saídas, cartões, dívidas e metas num lugar só. Só seu." />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -57,11 +63,10 @@ export function Login() {
   )
 }
 
-function Chamada({ lado, visivel, titulo, italico, texto }: { lado: Modo; visivel: boolean; titulo: string; italico: string; texto: string }) {
+function Chamada({ visivel, titulo, destaque, texto }: { visivel: boolean; titulo: string; destaque: string; texto: string }) {
   return (
-    <div className={`en-chamada ${lado} ${visivel ? 'visivel' : ''}`}>
-      <span className="en-selo">OPUSCASH</span>
-      <h2>{titulo}<em>{italico}</em></h2>
+    <div className={`en-chamada ${visivel ? 'visivel' : ''}`}>
+      <h2>{titulo} <em>{destaque}</em></h2>
       <p>{texto}</p>
     </div>
   )
