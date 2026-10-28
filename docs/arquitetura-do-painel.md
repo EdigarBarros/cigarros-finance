@@ -449,7 +449,7 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
 - **Tela inteira dividida** (`Entrada.tsx`): formulário de um lado, painel da marca do outro. O painel é claro e calmo
   (tom neutro com brilhos leves da marca) para a logo completa, grande e cercada de anéis, ser o destaque; embaixo dela
   uma frase em Sora com o final no gradiente da marca. "Entrar" fica à esquerda; "Criar conta", à direita.
-- **Lâmina:** ao trocar de modo, o painel é recortado por um polígono cujas quatro bordas (`--a`, `--b`, `--c`, `--d`,
+- **Lâmina:** ao trocar de modo, o painel é recortado por um polígono cujas quatro bordas (`--en-a`, `--en-b`, `--en-c`, `--en-d`,
   registradas com `@property`) se animam em dois tempos: primeiro avança a borda de um lado (o painel cobre a tela
   inteira) e depois recua a do outro. Um fio com o gradiente da marca acompanha a diagonal.
 - **Campos com linha:** o rótulo começa dentro e sobe ao focar ou preencher; a linha se acende com o gradiente. Senha

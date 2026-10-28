@@ -2511,13 +2511,13 @@ button.ex-tipo:hover { transform: scale(1.1); }
 
 /* ---------- tela de entrada (login e cadastro) ----------
    Ocupa a tela toda, dividida em dois: formulário de um lado, painel da marca do outro. O painel é recortado por um
-   polígono cujas quatro bordas (--a e --b em cima, --d e --c embaixo) são propriedades animáveis; ao trocar de modo,
+   polígono cujas quatro bordas (--en-a e --en-b em cima, --en-d e --en-c embaixo) são propriedades animáveis; ao trocar de modo,
    primeiro avança a borda de um lado (o painel cobre a tela inteira, como uma lâmina varrendo) e depois recua a do outro.
    O painel é claro e calmo de propósito: o destaque é a logo. */
-@property --a { syntax: '<percentage>'; inherits: true; initial-value: 50%; }
-@property --b { syntax: '<percentage>'; inherits: true; initial-value: 100%; }
-@property --c { syntax: '<percentage>'; inherits: true; initial-value: 100%; }
-@property --d { syntax: '<percentage>'; inherits: true; initial-value: 56%; }
+@property --en-a { syntax: '<percentage>'; inherits: true; initial-value: 50%; }
+@property --en-b { syntax: '<percentage>'; inherits: true; initial-value: 100%; }
+@property --en-c { syntax: '<percentage>'; inherits: true; initial-value: 100%; }
+@property --en-d { syntax: '<percentage>'; inherits: true; initial-value: 56%; }
 
 .en {
   --en-papel: var(--fundo);
@@ -2599,17 +2599,17 @@ button.ex-tipo:hover { transform: scale(1.1); }
 /* a lâmina: fio colorido por trás e o painel por cima, os dois com o mesmo recorte */
 .en-lamina {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
-  --a: 50%; --b: 100%; --c: 100%; --d: 56%;
-  transition: --a .7s .38s var(--mola), --d .7s .44s var(--mola), --b .5s cubic-bezier(.65, 0, .35, 1), --c .5s .05s cubic-bezier(.65, 0, .35, 1);
+  --en-a: 50%; --en-b: 100%; --en-c: 100%; --en-d: 56%;
+  transition: --en-a .7s .38s var(--mola), --en-d .7s .44s var(--mola), --en-b .5s cubic-bezier(.65, 0, .35, 1), --en-c .5s .05s cubic-bezier(.65, 0, .35, 1);
 }
 .criar .en-lamina {
-  --a: 0%; --b: 44%; --c: 50%; --d: 0%;
-  transition: --a .5s cubic-bezier(.65, 0, .35, 1), --d .5s .05s cubic-bezier(.65, 0, .35, 1), --b .7s .38s var(--mola), --c .7s .44s var(--mola);
+  --en-a: 0%; --en-b: 44%; --en-c: 50%; --en-d: 0%;
+  transition: --en-a .5s cubic-bezier(.65, 0, .35, 1), --en-d .5s .05s cubic-bezier(.65, 0, .35, 1), --en-b .7s .38s var(--mola), --en-c .7s .44s var(--mola);
 }
 .en-fio, .en-painel { position: absolute; inset: 0; }
 .en-fio {
   display: block; background: linear-gradient(180deg, var(--marca-3), var(--marca-2) 50%, var(--marca-1));
-  clip-path: polygon(calc(var(--a) - 2px) 0, calc(var(--b) + 2px) 0, calc(var(--c) + 2px) 100%, calc(var(--d) - 2px) 100%);
+  clip-path: polygon(calc(var(--en-a) - 2px) 0, calc(var(--en-b) + 2px) 0, calc(var(--en-c) + 2px) 100%, calc(var(--en-d) - 2px) 100%);
 }
 .en-painel {
   overflow: hidden; color: var(--texto);
@@ -2617,7 +2617,7 @@ button.ex-tipo:hover { transform: scale(1.1); }
     radial-gradient(45% 40% at 78% 30%, var(--en-brilho-1), transparent 70%),
     radial-gradient(40% 40% at 70% 85%, var(--en-brilho-2), transparent 70%),
     var(--en-painel);
-  clip-path: polygon(var(--a) 0, var(--b) 0, var(--c) 100%, var(--d) 100%);
+  clip-path: polygon(var(--en-a) 0, var(--en-b) 0, var(--en-c) 100%, var(--en-d) 100%);
 }
 /* pontinhos bem leves, para o painel não ficar chapado */
 .en-painel::before {
