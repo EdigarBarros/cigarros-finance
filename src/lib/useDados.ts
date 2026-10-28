@@ -300,7 +300,9 @@ export function useDados(userId: string, ano: number) {
     if (perfilSemTabela) return
     const { foto: _foto, ...semFoto } = novo
     const { error } = await supabase.from('perfis').upsert({ ...semFoto, user_id: userId, updated_at: new Date().toISOString() })
-    if (error) falhou(error.message)
+    if (error) return falhou(error.message)
+    // Foto escolhida antes de o perfil existir (perguntas do primeiro acesso): só agora há uma linha para recebê-la.
+    if (foto && !perfil) await supabase.from('perfis').update({ foto }).eq('user_id', userId)
   }
   /**
    * Troca (ou tira, com null) a foto de perfil. Fica sempre guardada neste aparelho e, com a migração 9, também no

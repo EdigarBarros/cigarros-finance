@@ -10,6 +10,7 @@ import { FormDivida } from '../components/Formularios'
 import { GraficoFluxo } from '../components/Graficos'
 import { Icone } from '../components/Icone'
 import { BannerCarrossel, type Slide } from '../components/BannerCarrossel'
+import { ConviteImportar } from '../components/ConviteImportar'
 import { CartaoAcompanhar, CartaoSugestao } from '../components/Configuracoes'
 import { Encaixe, type ItemEncaixe } from '../components/Encaixe'
 import { Kpi, Progresso, ReguaMeses, type Tendencia } from '../components/ui'
@@ -203,6 +204,10 @@ export function Inicio(c: Ctx) {
   )
   // Banner ilustrado: mensagens que se revezam, cada uma com a sua paisagem (só as que fazem sentido para o perfil).
   const slides: Slide[] = [
+    ...(c.d.lancs.length < 40 ? [{
+      id: 'importar', cena: 'cidade' as const, titulo: ['Seus dados', 'de uma vez só.'] as [string, string], texto: 'Tem um extrato do banco ou uma planilha? Importe e pronto.',
+      botao: 'Importar extrato', acao: c.importarExtrato,
+    }] : []),
     {
       id: 'planeje', cena: 'montanhas', titulo: ['Planeje hoje,', 'conquiste amanhã.'], texto: 'Organize suas finanças e realize seus sonhos.',
       ...(v.paginaAno ? { botao: 'Ver o ano', acao: () => c.irPara('ano') } : { botao: 'Personalizar', acao: c.personalizar }),
@@ -224,6 +229,10 @@ export function Inicio(c: Ctx) {
       botao: 'Ver dívidas', acao: () => c.irPara('dividas'),
     }] : []),
   ]
+  // Quem ainda tem poucos lançamentos vê o convite em destaque até dispensar.
+  const convite = c.d.lancs.length < 20 && !c.perfil.dispensadas.includes('importar') && (
+    <ConviteImportar aoExtrato={c.importarExtrato} aoPlanilha={c.importar} aoDispensar={() => c.dispensar('importar')} />
+  )
   const banner = !mobile && !c.contaNova && <BannerCarrossel slides={slides} />
 
   // ---------- 5. O que tenho ----------
@@ -248,6 +257,9 @@ export function Inicio(c: Ctx) {
     <div className="pagina inicio">
       {saudacao}
 
+      {/* conta nova: o convite vem antes de tudo, para ser a primeira coisa que a pessoa vê */}
+      {c.contaNova && convite}
+
       {c.contaNova ? (
         <section className="boas-vindas">
           <img src="/simbolo.webp" alt="" width={84} height={41} />
@@ -258,6 +270,8 @@ export function Inicio(c: Ctx) {
           </div>
         </section>
       ) : kpis}
+
+      {!c.contaNova && convite}
 
       {sugestao}
 
