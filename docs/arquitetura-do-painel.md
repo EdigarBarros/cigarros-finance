@@ -285,5 +285,13 @@ Os três gráficos de evolução seguem o gráfico da planilha antiga (`componen
 - **Quanto sobrou em cada mês** (Resumo do ano): barra verde quando sobrou e vermelha (para baixo) quando faltou, e a linha do
   acumulado no ano num eixo próprio à direita, para as barras do mês não ficarem achatadas.
 
-Animação de entrada (só no primeiro desenho): as barras nascem da linha do zero, mês a mês; as linhas se desenham da esquerda
-para a direita, ponto a ponto, como uma caneta.
+Linhas finas e suaves (curva monotônica), sem brilho, com bolinhas discretas em cada mês. O gráfico não troca de mês ao ser
+tocado (isso pegava a pessoa de surpresa); o mês aberto fica marcado por uma faixa clarinha atrás dele.
+No Fluxo financeiro, uma **régua com os 12 meses** logo abaixo do gráfico escolhe o mês e troca a página inteira (como o seletor
+do topo, que também ficou em destaque, na cor da marca).
+
+Animação de entrada (só no primeiro desenho): as barras sobem da linha do zero numa onda suave (atraso pequeno entre elas) e as
+linhas são reveladas por uma cortina que corre da esquerda para a direita com aceleração suave (plugin `revelar`).
+
+Menu lateral: o cartão do pé alterna dicas úteis, cada uma com um botão (contas que pedem atenção, lançar o gasto de hoje,
+quanto falta nas dívidas, metas, personalizar, backup, tema). Troca a cada 7 s, para sob o ponteiro, e os pontinhos escolhem a dica.

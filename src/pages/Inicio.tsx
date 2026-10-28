@@ -12,7 +12,7 @@ import { Icone } from '../components/Icone'
 import { Marca } from '../components/Marca'
 import { CartaoAcompanhar, CartaoSugestao } from '../components/Configuracoes'
 import { Encaixe, type ItemEncaixe } from '../components/Encaixe'
-import { Kpi, Progresso, type Tendencia } from '../components/ui'
+import { Kpi, Progresso, ReguaMeses, type Tendencia } from '../components/ui'
 import type { Ctx } from './contexto'
 
 const hoje = new Date()
@@ -168,8 +168,10 @@ export function Inicio(c: Ctx) {
       }>
       {/* o gráfico ocupa a altura que sobrar no cartão, para ficar da mesma altura que os lançamentos ao lado */}
       <div className="bloco-corpo grafico-esticado">
-        <GraficoFluxo porMes={c.porMes} mesAtual={c.mes} aoClicarMes={c.irParaMes} compacto={mobile} />
+        <GraficoFluxo porMes={c.porMes} mesAtual={c.mes} compacto={mobile} />
       </div>
+      {/* escolher o mês aqui troca a página inteira, como o seletor do topo */}
+      <ReguaMeses mes={c.mes} comDados={c.porMes.map(Boolean)} aoEscolher={c.irParaMes} />
     </Bloco>
   )
   const lancamentos = !mesVazio ? (

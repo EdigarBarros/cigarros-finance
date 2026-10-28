@@ -1,28 +1,72 @@
 import {
   Animation, animator, ArcElement, BarController, BarElement, CategoryScale, Chart, Filler, Legend, LinearScale,
   LineController, LineElement, PointElement, Tooltip,
-  type Plugin,
+  type ChartType, type Plugin,
 } from 'chart.js'
-import { coresDoGrafico, useTema, type Tema } from './tema'
 
-// Linhas com brilho, como no gráfico da planilha.
-const brilho: Plugin = {
-  id: 'brilho',
+declare module 'chart.js' {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface PluginOptionsByType<TType extends ChartType> {
+    /** Faixa atrás do mês escolhido: índice do rótulo (-1 = nenhum). */
+    destaqueMes?: { indice?: number; cor?: string }
+  }
+}
+import { coresDoGrafico, semMovimento, useTema, type Tema } from './tema'
+
+type ComRevelar = Chart & { $revelarInicio?: number; $revelado?: boolean; $quadro?: number; $recortou?: boolean }
+const suaveVaiVolta = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
+
+/**
+ * Entrada das linhas: em vez de pular ponto a ponto, a linha inteira é revelada por uma cortina que corre da esquerda para
+ * a direita com aceleração suave. Só no primeiro desenho do gráfico.
+ */
+const revelar: Plugin = {
+  id: 'revelar',
   beforeDatasetDraw(chart, { meta }) {
-    if (meta.type !== 'line') return
-    const ctx = chart.ctx
-    ctx.save()
-    ctx.shadowColor = (meta.dataset?.options as { borderColor?: string })?.borderColor ?? 'transparent'
-    ctx.shadowBlur = 10
+    const c = chart as ComRevelar
+    if (meta.type !== 'line' || c.$revelado || !chart.chartArea) return
+    if (semMovimento()) { c.$revelado = true; return }
+    const agora = performance.now()
+    c.$revelarInicio ??= agora
+    const t = Math.min(1, Math.max(0, (agora - c.$revelarInicio - 250) / 1300))
+    if (t >= 1) { c.$revelado = true; return }
+    const { left, top, right, bottom } = chart.chartArea
+    chart.ctx.save()
+    chart.ctx.beginPath()
+    chart.ctx.rect(left - 8, top - 12, (right - left + 16) * suaveVaiVolta(t), bottom - top + 24)
+    chart.ctx.clip()
+    c.$recortou = true
+    // continua redesenhando até a cortina terminar (as barras podem já ter parado)
+    if (!c.$quadro) c.$quadro = requestAnimationFrame(() => { c.$quadro = 0; if (c.ctx) c.draw() })
   },
   afterDatasetDraw(chart, { meta }) {
-    if (meta.type === 'line') chart.ctx.restore()
+    const c = chart as ComRevelar
+    if (meta.type === 'line' && c.$recortou) { chart.ctx.restore(); c.$recortou = false }
+  },
+}
+
+/** Faixa clarinha atrás do mês escolhido (options.plugins.destaqueMes.indice). */
+const destaqueMes: Plugin = {
+  id: 'destaqueMes',
+  beforeDatasetsDraw(chart, _args, opts: { indice?: number; cor?: string }) {
+    const x = chart.scales.x
+    if (opts?.indice == null || opts.indice < 0 || !x || !chart.chartArea) return
+    const meio = x.getPixelForValue(opts.indice)
+    const largura = (x.width / Math.max(1, x.ticks.length)) * 0.86
+    const { top, bottom } = chart.chartArea
+    const ctx = chart.ctx
+    ctx.save()
+    ctx.fillStyle = opts.cor ?? 'rgba(128, 140, 170, .1)'
+    ctx.beginPath()
+    ctx.roundRect(meio - largura / 2, top, largura, bottom - top, 10)
+    ctx.fill()
+    ctx.restore()
   },
 }
 
 Chart.register(
   ArcElement, BarController, BarElement, CategoryScale, Filler, Legend, LinearScale,
-  LineController, LineElement, PointElement, Tooltip, brilho,
+  LineController, LineElement, PointElement, Tooltip, revelar, destaqueMes,
 )
 Chart.defaults.font.family = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif'
 Chart.defaults.font.size = 11

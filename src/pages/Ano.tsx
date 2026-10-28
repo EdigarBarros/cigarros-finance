@@ -31,8 +31,8 @@ export function Ano(c: Ctx) {
         </Kpi>
       </div>
 
-      <Cartao titulo="Mês a mês" acao={<span className="dica-cab so-desktop">toque num mês para abrir · na legenda, para esconder uma série</span>}>
-        <GraficoAnual porMes={c.porMes} mesAtual={c.mes} altura={c.mobile ? 320 : 420} compacto={c.mobile} aoClicarMes={abrirMes} v={c.v} />
+      <Cartao titulo="Mês a mês" acao={<span className="dica-cab so-desktop">toque na legenda para esconder ou mostrar uma série</span>}>
+        <GraficoAnual porMes={c.porMes} mesAtual={c.mes} altura={c.mobile ? 320 : 420} compacto={c.mobile} v={c.v} />
       </Cartao>
 
       <Cartao titulo="Números de cada mês">
@@ -40,7 +40,7 @@ export function Ano(c: Ctx) {
       </Cartao>
 
       <Cartao titulo="Quanto sobrou em cada mês">
-        <GraficoSaldo porMes={c.porMes} mesAtual={c.mes} compacto={c.mobile} aoClicarMes={abrirMes} />
+        <GraficoSaldo porMes={c.porMes} mesAtual={c.mes} compacto={c.mobile} />
       </Cartao>
     </div>
   )

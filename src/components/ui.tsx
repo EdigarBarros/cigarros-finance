@@ -189,7 +189,8 @@ export function Anel({ valor, cor, tamanho = 64, children }: { valor: number; co
     <span className="anel" style={{ width: tamanho, height: tamanho, '--c': cor } as React.CSSProperties} role="img" aria-label={`${Math.round(p * 100)}%`}>
       <svg viewBox="0 0 36 36" aria-hidden="true">
         <circle cx="18" cy="18" r="15.5" className="anel-fundo" />
-        <circle cx="18" cy="18" r="15.5" className="anel-arco" pathLength={100} strokeDasharray={`${p * 100} 100`} />
+        {/* em 0% não desenha o arco: a ponta arredondada viraria um pontinho solto */}
+        {p > 0 && <circle cx="18" cy="18" r="15.5" className="anel-arco" pathLength={100} strokeDasharray={`${p * 100} 100`} />}
       </svg>
       <span className="anel-meio">{children}</span>
     </span>
@@ -257,5 +258,32 @@ export function Faisca({ valores, meses, cor }: Tendencia & { cor: string }) {
           : <circle className="faisca-ponto" cx={ux} cy={uy} r="2.6" />}
       </svg>
     </span>
+  )
+}
+
+const MESES_REGUA = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+
+/**
+ * Régua com os 12 meses para escolher o mês aberto (troca a página inteira). Uma pílula desliza até o mês escolhido;
+ * meses com lançamentos têm um pontinho. No celular a régua rola sozinha até o mês escolhido.
+ */
+export function ReguaMeses({ mes, comDados, aoEscolher }: { mes: number; comDados: boolean[]; aoEscolher: (m: number) => void }) {
+  const caixa = useRef<HTMLDivElement>(null)
+  const pilula = useLente(caixa, 'button.ativo', mes)
+  useEffect(() => {
+    const el = caixa.current
+    const ativo = el?.querySelector<HTMLElement>('button.ativo')
+    if (el && ativo && el.scrollWidth > el.clientWidth) el.scrollTo({ left: ativo.offsetLeft - el.clientWidth / 2 + ativo.clientWidth / 2, behavior: 'smooth' })
+  }, [mes])
+  return (
+    <div className="regua-meses" ref={caixa} role="tablist" aria-label="Escolher o mês">
+      {pilula && <span className="regua-pilula" aria-hidden="true" style={estiloLente(pilula)} />}
+      {MESES_REGUA.map((m, i) => (
+        <button key={m} type="button" role="tab" aria-selected={mes === i + 1}
+          className={`${mes === i + 1 ? 'ativo' : ''} ${comDados[i] ? 'com-dados' : ''}`} onClick={() => aoEscolher(i + 1)}>
+          {m}
+        </button>
+      ))}
+    </div>
   )
 }

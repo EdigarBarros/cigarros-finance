@@ -278,11 +278,17 @@ body::before {
 .barra-direita { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 
 /* seletor de mês: ‹ Outubro 2026 › e um quadro com os 12 meses */
-.seletor-mes { position: relative; display: flex; align-items: center; gap: 2px; height: 46px; padding: 0 4px; border-radius: 999px; border: 1px solid var(--borda-forte); background: var(--superficie); }
-.seletor-mes .icone-btn { width: 34px; height: 34px; border: 0; background: none; }
-.seletor-mes .icone-btn:hover { background: var(--preench-3); }
-.seletor-mes-nome { display: flex; align-items: center; gap: 8px; min-width: 150px; justify-content: center; height: 36px; padding: 0 10px; border: 0; border-radius: 999px; background: none; font-weight: 600; font-size: 14.5px; }
-.seletor-mes-nome:hover { background: var(--preench-3); }
+.seletor-mes {
+  position: relative; display: flex; align-items: center; gap: 2px; height: 46px; padding: 0 4px; border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--destaque) 45%, transparent);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--destaque) 16%, transparent), color-mix(in srgb, var(--marca-2) 10%, transparent)), var(--superficie);
+  box-shadow: 0 8px 22px -14px var(--destaque);
+}
+.seletor-mes .icone-btn { width: 34px; height: 34px; border: 0; background: none; color: var(--destaque); }
+.seletor-mes .icone-btn:hover { background: var(--destaque-suave); }
+.seletor-mes-nome { display: flex; align-items: center; gap: 8px; min-width: 160px; justify-content: center; height: 36px; padding: 0 12px; border: 0; border-radius: 999px; background: none; font-weight: 700; font-size: 15px; }
+.seletor-mes-nome:hover { background: var(--destaque-suave); }
+.seletor-mes-nome::after { content: ''; width: 0; height: 0; margin-left: 2px; border: 4px solid transparent; border-top: 5px solid var(--texto-2); transform: translateY(2px); }
 .seletor-mes-nome svg { color: var(--destaque); }
 .seletor-mes small { color: var(--texto-2); font-weight: 500; font-size: 14px; }
 .quadro-meses {
@@ -1172,10 +1178,11 @@ select option { background: var(--superficie-forte); color: var(--texto); }
 
 /* anel de progresso */
 .anel { position: relative; display: inline-grid; place-items: center; flex: none; }
-.anel svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.anel svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
 .anel circle { fill: none; stroke-width: 3.4; stroke-linecap: round; }
 .anel-fundo { stroke: var(--preench-2); }
-.anel-arco { stroke: var(--c); animation: anel 1.6s var(--mola) .2s backwards; filter: drop-shadow(0 0 3px color-mix(in srgb, var(--c) 50%, transparent)); }
+/* sem brilho: o brilho do arco era cortado pela borda do desenho */
+.anel-arco { stroke: var(--c); animation: anel 1.6s var(--mola) .2s backwards; }
 @keyframes anel { from { stroke-dasharray: 0 100; } }
 .anel-meio { position: relative; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
@@ -1272,4 +1279,54 @@ select option { background: var(--superficie-forte); color: var(--texto); }
 
 /* legenda do fluxo no cabeçalho: quadradinho para barra, traço brilhante para linha (como na planilha) */
 .legenda-barra { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 7px; }
-.legenda-linha { display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: 7px; box-shadow: 0 0 6px currentColor; color: #22b8f0; }
+.legenda-linha { display: inline-block; width: 14px; height: 2.5px; border-radius: 2px; margin-right: 7px; }
+
+/* régua de meses embaixo do Fluxo financeiro */
+.regua-meses {
+  position: relative; display: grid; grid-template-columns: repeat(12, minmax(42px, 1fr)); gap: 2px; margin: 0 22px 16px; padding: 4px;
+  border-radius: 14px; background: var(--preench-3); box-shadow: inset 0 0 0 1px var(--borda); overflow-x: auto; scrollbar-width: none;
+}
+.regua-meses::-webkit-scrollbar { display: none; }
+.regua-pilula { position: absolute; left: 0; top: 0; z-index: 0; border-radius: 10px; background: var(--destaque); box-shadow: 0 6px 16px -8px var(--destaque); transition: transform .55s var(--mola), width .55s var(--mola); }
+.regua-meses button {
+  position: relative; z-index: 1; height: 34px; border: 0; border-radius: 10px; background: none; color: var(--texto-3);
+  font-size: 12.5px; font-weight: 600; transition: color .25s, background .25s;
+}
+.regua-meses button.com-dados { color: var(--texto-2); }
+.regua-meses button.com-dados::after { content: ''; position: absolute; left: 50%; bottom: 4px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: currentColor; opacity: .7; }
+.regua-meses button:hover { color: var(--texto); background: var(--preench-3); }
+.regua-meses button.ativo { color: var(--destaque-texto); background: none; }
+@media (max-width: 860px) { .regua-meses { margin: 0 12px 12px; grid-template-columns: repeat(12, 46px); } }
+
+/* cartão de dicas do menu lateral: uma dica por vez, troca sozinho */
+.lateral-promo.dicas { min-height: 178px; padding: 18px 18px 14px; display: flex; flex-direction: column; }
+.dica-conteudo { flex: 1; display: grid; gap: 10px; align-content: start; justify-items: start; animation: dica-entra .6s var(--mola) both; }
+@keyframes dica-entra { from { opacity: 0; transform: translateY(10px); filter: blur(4px); } }
+.dica-icone { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: var(--destaque); background: var(--destaque-suave); }
+.lateral-promo.alerta-dica .dica-icone { color: var(--saida); background: color-mix(in srgb, var(--saida) 14%, transparent); }
+.lateral-promo.alerta-dica { border-color: color-mix(in srgb, var(--saida) 35%, var(--borda)); }
+.dica-conteudo strong { min-height: 2.5em; }
+.dica-pontos { display: flex; gap: 6px; margin-top: 12px; }
+.lateral .dica-pontos button {
+  position: relative; width: 8px; height: 6px; padding: 0; border-radius: 999px; background: var(--preench-1); overflow: hidden;
+  transition: width .4s var(--mola), background .3s;
+}
+.lateral .dica-pontos button.ativo { width: 24px; background: var(--preench-2); }
+.dica-pontos i { position: absolute; inset: 0; border-radius: inherit; background: var(--destaque); transform-origin: left; animation: dica-tempo linear both; }
+@keyframes dica-tempo { from { transform: scaleX(0); } }
+.dica-pontos button.ativo:not(:has(i)) { background: var(--destaque); }
+
+/* 5 ou 7 indicadores: a última linha estica para não sobrar buraco (3 + 2 ou 4 + 3) */
+@media (min-width: 1101px) {
+  .kpis:has(> :nth-child(5)):not(:has(> :nth-child(6))) { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .kpis:has(> :nth-child(5)):not(:has(> :nth-child(6))) > * { grid-column: span 2; }
+  .kpis:has(> :nth-child(5)):not(:has(> :nth-child(6))) > :nth-child(n+4) { grid-column: span 3; }
+  .kpis:has(> :nth-child(7)):not(:has(> :nth-child(8))) { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  .kpis:has(> :nth-child(7)):not(:has(> :nth-child(8))) > * { grid-column: span 3; }
+  .kpis:has(> :nth-child(7)):not(:has(> :nth-child(8))) > :nth-child(n+5) { grid-column: span 4; }
+}
+@media (max-width: 1100px) and (min-width: 861px) {
+  .kpis:has(> :nth-child(5)):not(:has(> :nth-child(6))) { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .kpis:has(> :nth-child(5)):not(:has(> :nth-child(6))) > * { grid-column: span 2; }
+  .kpis:has(> :nth-child(5)):not(:has(> :nth-child(6))) > :nth-child(n+4) { grid-column: span 3; }
+}

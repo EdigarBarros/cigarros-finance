@@ -32,6 +32,7 @@ import { BlocoContasDoMes } from './BlocoContas'
 import { FormLancamento } from './Formularios'
 import { Kpi } from './ui'
 import { Icone } from './Icone'
+import { CartaoDicas, type Dica } from './CartaoDicas'
 import { Marca } from './Marca'
 import { Configuracoes, ZerarDados } from './Configuracoes'
 import { Questionario } from './Questionario'
@@ -333,6 +334,31 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
     if (paginaAtual !== 'lancamentos') irPara('lancamentos')
   }
 
+  // Dicas que se revezam no pé do menu lateral: primeiro o que pede atenção, depois atalhos úteis.
+  const faltaDividas = situacao.reduce((a, s) => a + s.restante, 0)
+  const dicas: Dica[] = [
+    ...(avisos.length ? [{
+      id: 'contas', alerta: true, icone: 'sino', botao: 'Ver contas', acao: () => irPara('contas'),
+      titulo: `${avisos.length} ${avisos.length === 1 ? 'conta pede' : 'contas pedem'} atenção.`,
+    }] : []),
+    { id: 'lancar', icone: 'mais', botao: 'Lançar agora', acao: () => setForm({}), titulo: 'Lançou o que gastou hoje?' },
+    ...(v.dividas && faltaDividas > 0 ? [{
+      id: 'dividas', icone: 'divida', botao: 'Ver dívidas', acao: () => irPara('dividas'), titulo: `Faltam ${fmtValor(faltaDividas)} nas dívidas.`,
+    }] : []),
+    v.metas
+      ? { id: 'metas', icone: 'meta', botao: 'Ver metas', acao: () => irPara('metas'), titulo: 'Guarde um pouco para as suas metas.' }
+      : { id: 'metas', icone: 'meta', botao: 'Criar meta', acao: () => { ligarModulo('metas'); irPara('metas') }, titulo: 'Tem um sonho para juntar dinheiro?' },
+    { id: 'controle', icone: 'ajustes', botao: 'Personalizar', acao: () => setAjustes(true), titulo: 'Mais controle para o seu dinheiro.' },
+    {
+      id: 'backup', icone: 'exportar', botao: 'Baixar backup', titulo: 'Guarde uma cópia dos seus dados.',
+      acao: () => tarefa('Preparando o backup…', async () => (await import('../lib/planilha')).exportarBackup()),
+    },
+    {
+      id: 'tema', icone: tema === 'escuro' ? 'sol' : 'lua', botao: 'Trocar tema', titulo: tema === 'escuro' ? 'Que tal o tema claro?' : 'Que tal o tema escuro?',
+      acao: () => definirTema(tema === 'escuro' ? 'claro' : 'escuro', { x: 130, y: innerHeight - 110 }),
+    },
+  ]
+
   const menuItens = (
     <>
       <button onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> Configurações</button>
@@ -359,10 +385,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
           <button onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> Configurações</button>
         </nav>
         <div className="lateral-rodape">
-          <section className="lateral-promo">
-            <strong>Mais controle para o seu dinheiro.</strong>
-            <button className="btn" onClick={() => setAjustes(true)}>Personalizar <Icone nome="seta" tamanho={16} /></button>
-          </section>
+          <CartaoDicas dicas={dicas} />
         </div>
       </aside>
 
