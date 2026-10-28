@@ -321,6 +321,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     perfil, v, taxas, sugestao,
     aceitarSugestao: (s: Sugestao) => mudarPerfil(s.aplicar(perfil)),
     recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),
+    dispensar: (id: string) => mudarPerfil({ ...perfil, dispensadas: [...new Set([...perfil.dispensadas, id])] }),
     ligarModulo,
     personalizar: () => setAjustes(true),
     categorias: d.categorias,
@@ -354,7 +355,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     return (
       <Questionario
         inicial={perfil.nome || !nomeConta ? perfil : { ...perfil, nome: nomeConta }}
-        aoConcluir={(p) => { mudarPerfil(p); setRefazendo(false); irPara('inicio') }}
+        foto={d.foto}
+        aoMudarFoto={(f) => void d.salvarFoto(f)}
+        aoConcluir={(p, importar) => { mudarPerfil(p); setRefazendo(false); irPara('inicio'); if (importar) setExtrato(true) }}
         aoCancelar={refazendo ? () => setRefazendo(false) : undefined}
       />
     )
@@ -387,6 +390,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         : `${faturasAtrasadas.length} faturas venceram sem pagar.`,
     }] : []),
     { id: 'lancar', icone: 'mais', botao: 'Lançar agora', acao: () => setForm({}), titulo: 'Lançou o que gastou hoje?' },
+    ...(d.lancs.length < 40 ? [{ id: 'importar', icone: 'relatorio', botao: 'Importar extrato', acao: () => setExtrato(true), titulo: 'Tem um extrato ou planilha? Traga tudo de uma vez.' }] : []),
     ...(v.dividas && atrasoDevo > 0 ? [{
       id: 'dividas-atraso', alerta: true, icone: 'relogio', botao: 'Ver dívidas', acao: () => irPara('dividas'),
       titulo: `${fmtValor(atrasoDevo)} de parcelas atrasadas.`,

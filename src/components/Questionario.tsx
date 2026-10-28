@@ -3,6 +3,7 @@ import { MOEDAS, infoMoeda } from '../lib/moedas'
 import { DETALHES, MODULOS } from '../lib/perfil'
 import type { Modulo, Perfil } from '../lib/types'
 import { Bandeira } from './Bandeira'
+import { FotoPerfil } from './Configuracoes'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
 import { Paisagem, type Cena } from './Paisagem'
@@ -16,8 +17,13 @@ const NOMES_PASSOS = ['Você', 'Sua moeda', 'Outras moedas', 'Sua vida', 'Jeito 
  * escolhas visuais (bandeiras, cartões com ícone, miniaturas do painel). São poucas, todas podem ser puladas e cada
  * resposta liga ou desliga uma parte do painel. Tudo pode ser mudado depois em "Configurações".
  */
-export function Questionario({ inicial, aoConcluir, aoCancelar }: {
-  inicial: Perfil; aoConcluir: (p: Perfil) => void
+export function Questionario({ inicial, foto, aoMudarFoto, aoConcluir, aoCancelar }: {
+  inicial: Perfil
+  /** `importar`: a pessoa pediu para já abrir a importação de extrato ao entrar no painel. */
+  aoConcluir: (p: Perfil, importar?: boolean) => void
+  /** Foto de perfil (opcional), escolhida logo no primeiro passo. */
+  foto?: string | null
+  aoMudarFoto?: (f: string | null) => void
   /** Quando a pessoa refaz as perguntas pelos ajustes, dá para sair sem mudar nada. */
   aoCancelar?: () => void
 }) {
@@ -44,7 +50,10 @@ export function Questionario({ inicial, aoConcluir, aoCancelar }: {
       sub: 'São poucas perguntas para mostrar só o que faz sentido para você. Dá para mudar tudo depois.',
       corpo: (
         <div className="qz-voce">
-          <span className="qz-avatar" aria-hidden="true">{iniciais || <Icone nome="inicio" tamanho={30} />}</span>
+          <div className="qz-foto">
+            <FotoPerfil foto={foto ?? null} iniciais={iniciais} aoMudar={aoMudarFoto} />
+            <small>Foto de perfil <span>(opcional)</span></small>
+          </div>
           <label className="campo">
             <span className="campo-rotulo">Como você quer ser chamado? <small>(opcional)</small></span>
             <input className="qz-input-grande" autoFocus value={p.nome} onChange={(e) => setP({ ...p, nome: e.target.value })} placeholder="Seu nome ou apelido" maxLength={40} />
@@ -156,7 +165,7 @@ export function Questionario({ inicial, aoConcluir, aoCancelar }: {
 
   const ultimo = passo === passos.length - 1
   const atual = passos[passo]
-  const concluir = () => aoConcluir({ ...p, nome, onboarding_em: new Date().toISOString() })
+  const concluir = (importar = false) => aoConcluir({ ...p, nome, onboarding_em: new Date().toISOString() }, importar)
   const ir = (n: number) => { setVoltando(n < passo); setPasso(n) }
 
   return (
@@ -194,6 +203,7 @@ export function Questionario({ inicial, aoConcluir, aoCancelar }: {
           <footer className="qz-acoes">
             {passo > 0 && <button type="button" className="btn" onClick={() => ir(passo - 1)}><Icone nome="esq" tamanho={16} /> Voltar</button>}
             <span className="espaco" />
+            {ultimo && <button type="button" className="btn qz-importar" onClick={() => concluir(true)}><Icone nome="relatorio" tamanho={16} /> Abrir e importar meu extrato</button>}
             <button type="submit" className="btn primario qz-continuar">
               {ultimo ? 'Abrir meu painel' : passo === 0 ? 'Começar' : 'Continuar'} <Icone nome="seta" tamanho={16} />
             </button>

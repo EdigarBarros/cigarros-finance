@@ -366,7 +366,7 @@ export function CartaoAcompanhar({ perfil, aoLigar, aoPersonalizar }: {
  * Avatar grande com a foto (ou as iniciais) e o botão de câmera para trocar. A imagem escolhida é recortada no
  * quadrado do meio e reduzida no próprio aparelho antes de ser guardada.
  */
-function FotoPerfil({ foto, iniciais, aoMudar }: { foto: string | null; iniciais: string; aoMudar?: (f: string | null) => void }) {
+export function FotoPerfil({ foto, iniciais, aoMudar }: { foto: string | null; iniciais: string; aoMudar?: (f: string | null) => void }) {
   const entrada = useRef<HTMLInputElement>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [lendo, setLendo] = useState(false)

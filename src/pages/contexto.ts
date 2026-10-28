@@ -48,6 +48,8 @@ export interface Ctx {
   sugestao: Sugestao | null
   aceitarSugestao: (s: Sugestao) => void
   recusarSugestao: (s: Sugestao) => void
+  /** Esconde de vez um convite ou dica avulsa (guardado no perfil, junto com as sugestões recusadas). */
+  dispensar: (id: string) => void
   ligarModulo: (m: Modulo) => void
   categorias: Categoria[]
   /** Categoria de um lançamento (undefined = sem categoria). */

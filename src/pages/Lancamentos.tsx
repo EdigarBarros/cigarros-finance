@@ -202,6 +202,7 @@ export function Lancamentos(c: Ctx) {
               : <span className="lc-vazio-acoes">
                   <button className="btn lc-btn-entrada" onClick={() => c.novoLancamento('entrada')}><Icone nome="receber" tamanho={16} /> Entrada</button>
                   <button className="btn lc-btn-saida" onClick={() => c.novoLancamento('saida')}><Icone nome="enviar" tamanho={16} /> Saída</button>
+                  <button className="btn" onClick={c.importarExtrato}><Icone nome="relatorio" tamanho={16} /> Importar extrato ou planilha</button>
                 </span>}
           </div>
         ) : ordem === 'valor' ? (
