@@ -285,7 +285,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
   const ctx: Ctx = {
     kpisExtras,
     blocos: {
-      contas: comContas ? <BlocoContasDoMes situacoes={situacoesContas} aoAbrir={() => irPara('contas')} aoPagar={pagarConta} /> : undefined,
+      contas: comContas ? <BlocoContasDoMes completo={perfil.detalhe === 'detalhado'} situacoes={situacoesContas} aoAbrir={() => irPara('contas')} aoPagar={pagarConta} /> : undefined,
       cartoes: comCartoes ? <BlocoCartoes situacoes={faturas} aoAbrir={() => irPara('cartoes')} /> : undefined,
     },
     ano, mes, d, cartoes, faturas, lancsMes, situacao, mesEf, porMes, mobile,

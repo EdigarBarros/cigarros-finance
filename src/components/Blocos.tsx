@@ -51,7 +51,7 @@ export function BlocoLancamentos({ lancs, nivel, mobile, categoriaDe, bancos, ao
 }) {
   const [filtro, setFiltro] = useState<Tipo | 'todos'>('todos')
   const detalhado = nivel === 'detalhado'
-  const limite = detalhado ? (mobile ? 8 : 10) : mobile || nivel === 'simples' ? 5 : 6
+  const limite = detalhado ? 30 : mobile || nivel === 'simples' ? 5 : 6
   const doFiltro = maisRecentes(lancs).filter((l) => filtro === 'todos' || l.tipo === filtro)
   return (
     <Bloco titulo={detalhado ? 'Lançamentos do mês' : 'Últimos lançamentos'}>
@@ -235,7 +235,7 @@ export function BlocoDinheiro({ v, nivel, bancos, caixa, investimentos, moedas, 
 export function BlocoMetas({ metas, taxas, nivel, aoAbrir }: { metas: SituacaoMeta[]; taxas: Taxas; nivel: Detalhe; aoAbrir: () => void }) {
   const ativas = metas.filter((s) => !s.batida)
   const guardado = metas.reduce((a, s) => a + (converter(s.guardado, s.meta.moeda, taxas) ?? 0), 0)
-  const limite = nivel === 'simples' ? 2 : nivel === 'equilibrado' ? 4 : 6
+  const limite = nivel === 'simples' ? 2 : nivel === 'equilibrado' ? 4 : Infinity
   return (
     <Bloco titulo="Metas" valor={metas.length ? fmtValor(guardado) : undefined} legenda={metas.length ? 'guardado' : undefined}
       acao={<button className="link" onClick={aoAbrir}>{metas.length ? 'Abrir' : 'Criar'}</button>}>

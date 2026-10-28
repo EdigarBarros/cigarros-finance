@@ -330,7 +330,8 @@ body::after { inset: 0; background: radial-gradient(120% 90% at 50% 0%, rgba(0, 
 .grade-bancos { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
 .duas-colunas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
 .pilha { display: grid; gap: 16px; align-content: start; min-width: 0; }
-.grafico { position: relative; }
+.grafico { position: relative; width: 100%; min-width: 0; }
+.grafico canvas { max-width: 100%; }
 .vazio { color: var(--texto-3); text-align: center; padding: 28px 8px; margin: 0; line-height: 1.7; }
 
 .boas-vindas {
@@ -498,7 +499,7 @@ select option { background: #1c1c1e; color: var(--texto); }
 .divida-linha + .divida-linha::before { content: ''; position: absolute; top: 0; left: 20px; right: 0; height: 1px; transform: scaleY(.5); background: var(--separador); }
 .divida-linha-info { flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; padding: 12px 0 12px 20px; border: 0; background: none; text-align: left; }
 .divida-linha-info .progresso { grid-column: 1 / -1; height: 5px; }
-.divida-linha-nome { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.divida-linha-nome { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
 .divida-linha-valor { font-family: var(--fonte-numeros); font-weight: 600; font-variant-numeric: tabular-nums; }
 .divida-linha-sub { grid-column: 1 / -1; font-size: 12px; color: var(--texto-2); }
 .divida-linha.quitada { opacity: .6; }
