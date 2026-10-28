@@ -60,10 +60,22 @@ A ordem das perguntas continua a mesma; a grade segue o layout do OpusCash:
 | Análise | **Para onde foi o dinheiro** (rosca + legenda com %; lista com barras no simples e ao tocar em "Ver valores") + **Suas metas** + banner "Planeje hoje, conquiste amanhã" | Sem banner |
 | Guardado | Dinheiro guardado | Igual |
 
-Encaixe sem buracos: "O que fazer" e, no detalhado (ou com 4 blocos), a linha de análise usam um **mosaico** de duas colunas que se
-equilibram sozinhas (cada bloco inteiro numa coluna), em vez de uma grade em que um bloco baixo ao lado de um alto deixa um vão.
-O gráfico de fluxo estica até a altura dos lançamentos ao lado. Na Início as listas têm teto (dívidas: 3 no simples, 4 nos outros;
-lançamentos: 5, ou 7 no detalhado) e "Ver todas" leva à página completa. Com 5 ou 6 indicadores, os cartões ficam mais baixos, 3 por linha.
+Encaixe sem vãos (`components/Encaixe.tsx`): "O que fazer" e a análise (categorias, metas, dinheiro guardado) ficam em duas
+colunas que terminam na mesma altura. O componente mede cada bloco, testa as divisões possíveis (mantendo a ordem de leitura em
+cada coluna) e escolhe a que deixa a menor sobra; quem estica para alinhar o fim das colunas é, de preferência, um cartão
+**elástico**: o banner "Planeje hoje, conquiste amanhã" (junto do "O que fazer") e o cartão **Acompanhe mais** (módulos
+desligados em blocos com ícone, que crescem junto). Os blocos só trocam de coluna quando muda o mês, o jeito de ver ou a quantidade
+de itens, para nada pular de lugar enquanto a pessoa mexe. O gráfico de fluxo estica até a altura dos lançamentos ao lado.
+Na Início as listas têm teto (dívidas: 3 no simples, 4 nos outros; lançamentos: 5, ou 7 no detalhado) e "Ver todas" leva à página
+completa. Com 5 ou 6 indicadores, os cartões ficam mais baixos, 3 por linha.
+
+Menos texto, mais sinais: minilinha dos últimos 6 meses nos indicadores (a partir do equilibrado), anel com quanto das dívidas já foi
+pago, parcela/valor/fim de cada dívida em selos curtos, o dia do vencimento das contas em bloco colorido pela situação, um
+cartãozinho na cor de cada cartão de crédito e a variação de cada categoria num selo ao lado do nome.
+
+Animações: o app tem a própria escolha (Configurações → Painel → Aparência → Animações: Completas ou Reduzidas). O "reduzir
+movimento" do sistema não desliga mais as animações sozinho. A troca de tema espalha o tema novo como uma mancha de tinta de borda
+ondulada a partir do botão (View Transitions; sem elas, uma camada da cor do tema novo faz o mesmo caminho).
 
 O resultado do mês deixou de ser um "hero" separado: virou o primeiro cartão, em destaque, mantendo a frase de ancoragem.
 O gráfico de 12 meses com as linhas extras continua na página **Resumo do ano**.

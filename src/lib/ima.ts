@@ -1,3 +1,5 @@
+import { semMovimento } from './tema'
+
 /**
  * Efeito magnético do iPad: botões e controles pequenos são levemente puxados na direção do cursor.
  * Grava o deslocamento em --tx/--ty (no máximo uma vez por quadro); o CSS anima com mola.
@@ -8,7 +10,7 @@ const MAXIMO = 5
 
 export function iniciarIma() {
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  if (semMovimento()) return
   let quadro = 0
   let ultimo: PointerEvent | null = null
   let atual: HTMLElement | null = null

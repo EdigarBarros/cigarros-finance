@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { semMovimento } from '../lib/tema'
 
-const semMovimento = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const suave = (t: number) => 1 - Math.pow(1 - t, 4)
 
 /**

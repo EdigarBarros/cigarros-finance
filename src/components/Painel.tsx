@@ -13,7 +13,7 @@ import { supabase } from '../lib/supabase'
 import type { Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 import { useMobile } from '../lib/useMobile'
 import { estiloLente, useLente } from '../lib/useLente'
-import { definirTema, useTema } from '../lib/tema'
+import { definirTema, semMovimento, useTema } from '../lib/tema'
 import { useCartoes } from '../lib/useCartoes'
 import { useContasFixas } from '../lib/useContasFixas'
 import { useDados } from '../lib/useDados'
@@ -133,7 +133,7 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
       primeiraVez.current = false
       return
     }
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (semMovimento()) return
     document.querySelectorAll<HTMLElement>('.pagina > *, .kpis > *').forEach((el, i) =>
       el.animate(
         [{ opacity: 0.35, filter: 'blur(8px)', transform: 'translateY(6px)' }, { opacity: 1, filter: 'none', transform: 'none' }],
@@ -358,7 +358,6 @@ export function Painel({ userId, email }: { userId: string; email: string }) {
         <div className="lateral-rodape">
           <section className="lateral-promo">
             <strong>Mais controle para o seu dinheiro.</strong>
-            <p>Escolha o que acompanhar e o jeito de ver o painel com o OpusCash.</p>
             <button className="btn" onClick={() => setAjustes(true)}>Personalizar <Icone nome="seta" tamanho={16} /></button>
           </section>
         </div>

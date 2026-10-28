@@ -10,7 +10,8 @@ import { FormDivida } from '../components/Formularios'
 import { GraficoFluxo } from '../components/Graficos'
 import { Icone } from '../components/Icone'
 import { Marca } from '../components/Marca'
-import { AdicionarAoPainel, CartaoSugestao } from '../components/Configuracoes'
+import { CartaoAcompanhar, CartaoSugestao } from '../components/Configuracoes'
+import { Encaixe, type ItemEncaixe } from '../components/Encaixe'
 import { Kpi, Progresso } from '../components/ui'
 import type { Ctx } from './contexto'
 
@@ -18,6 +19,8 @@ const hoje = new Date()
 const hojePorExtenso = hoje.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
 /** Lista de blocos de uma zona, sem os que não existem. */
 const zona = (xs: unknown[]) => xs.filter(Boolean).map((x, i) => <Fragment key={i}>{x as React.ReactNode}</Fragment>)
+/** Blocos que existem, prontos para o encaixe. */
+const itensDe = (xs: [string, React.ReactNode][]): ItemEncaixe[] => xs.filter(([, no]) => Boolean(no)).map(([chave, no]) => ({ chave, no }))
 /** Cada palavra do título sai do desfoque um pouco depois da anterior. */
 const palavras = (texto: string, atraso = 0) =>
   texto.split(' ').map((p, i) => (
@@ -49,11 +52,7 @@ export function Inicio(c: Ctx) {
 
   // ---------- 0. Saudação ----------
   const sobrou = r.fluxo >= 0
-  const animo = c.contaNova ? 'Seu painel começa com o primeiro lançamento.'
-    : mesVazio ? 'Lance o primeiro movimento do mês para começar.'
-    : r.fluxo > 0 ? 'Continue assim, você está no caminho certo!'
-    : r.fluxo < 0 ? 'Saiu mais do que entrou. Vale olhar para onde foi.'
-    : 'Entrou e saiu o mesmo valor até agora.'
+  const animo = c.contaNova || mesVazio ? '' : r.fluxo > 0 ? ' Você está no caminho certo! 🚀' : r.fluxo < 0 ? ' Vale olhar para onde foi.' : ''
   const botoes = (
     <>
       <button className="btn entrada" onClick={() => c.novoLancamento('entrada')}><Icone nome="sobe" tamanho={16} /> Lançar entrada</button>
@@ -67,7 +66,7 @@ export function Inicio(c: Ctx) {
           {palavras('Olá,')}
           {c.perfil.nome ? <span className="nome">{palavras(`${c.perfil.nome}!`, 0.09)}</span> : palavras('!')}
         </h1>
-        <p className="sub">Aqui está o resumo de {nomeMes} de {c.ano}.<br />{animo}</p>
+        <p className="sub">Resumo de {nomeMes} de {c.ano}.{animo}</p>
       </div>
       <div className="saudacao-lado">
         <div className="data-hoje">
@@ -80,6 +79,10 @@ export function Inicio(c: Ctx) {
   )
 
   // ---------- 1. Como estou este mês? ----------
+  // Minilinha dos últimos 6 meses até o aberto (a partir do equilibrado).
+  const tendencia = (f: (x: NonNullable<Ctx['porMes'][number]>) => number) =>
+    v.comparacao ? c.porMes.slice(Math.max(0, c.mes - 6), c.mes).map((x) => (x ? f(x) : null)) : undefined
+
   const difAnterior = v.comparacao && !mesVazio && a && (a.entradas || a.saidas) ? r.fluxo - a.fluxo : null
   const irParaGastos = () => document.getElementById('para-onde-foi')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   const fraseResultado = mesVazio ? `Nada lançado em ${nomeMes} ainda.`
@@ -88,7 +91,7 @@ export function Inicio(c: Ctx) {
     : `Você ficou com ${Math.round((r.fluxo / r.entradas) * 100)}% do que entrou.`
   const resultado = (
     <Kpi rotulo={`${sobrou ? 'Sobrou' : 'Faltou'} em ${nomeMes}`} valor={Math.abs(r.fluxo)} icone="carteira" destaque
-      cor={sobrou ? COR.entradas : COR.saidas}>
+      cor={sobrou ? COR.entradas : COR.saidas} tendencia={tendencia((x) => x.fluxo)}>
       {difAnterior !== null && Math.abs(difAnterior) >= 0.5 ? (
         <span className={`kpi-delta ${difAnterior > 0 ? 'bom' : 'ruim'}`}>
           <Icone nome={difAnterior > 0 ? 'sobe' : 'desce'} tamanho={13} />
@@ -104,8 +107,8 @@ export function Inicio(c: Ctx) {
   const maiorSaida = c.lancsMes.filter((l) => l.tipo === 'saida').sort((x, y) => y.valor - x.valor)[0]
   const indicadores = [
     resultado,
-    !mesVazio && <Kpi key="entrou" rotulo="Entrou no mês" valor={r.entradas} icone="receber" cor={COR.caixa} delta={delta(r.entradas, a?.entradas)} contra={mesAnt && `em ${mesAnt}`} />,
-    !mesVazio && <Kpi key="saiu" rotulo="Saiu no mês" valor={r.saidas} icone="enviar" cor={COR.fluxo} delta={delta(r.saidas, a?.saidas)} menorMelhor contra={mesAnt && `em ${mesAnt}`} />,
+    !mesVazio && <Kpi key="entrou" rotulo="Entrou no mês" valor={r.entradas} icone="receber" cor={COR.caixa} tendencia={tendencia((x) => x.entradas)} delta={delta(r.entradas, a?.entradas)} contra={mesAnt && `em ${mesAnt}`} />,
+    !mesVazio && <Kpi key="saiu" rotulo="Saiu no mês" valor={r.saidas} icone="enviar" cor={COR.despesas} tendencia={tendencia((x) => x.saidas)} delta={delta(r.saidas, a?.saidas)} menorMelhor contra={mesAnt && `em ${mesAnt}`} />,
     c.kpisExtras,
     detalhado && !mesVazio && (
       <Kpi key="media" rotulo="Gasto médio por dia" valor={r.saidas / decorridos} cor={COR.fluxo} icone="ano">
@@ -143,11 +146,11 @@ export function Inicio(c: Ctx) {
   const dividas = v.dividas && (
     <BlocoDividas itens={c.situacao} nivel={nivel} aoNova={novaDivida} aoEditar={abrirDivida} aoPagar={c.pagarDivida} aoVerTodas={() => c.irPara('dividas')} />
   )
-  const oQueFazer = zona([c.blocos?.contas, c.blocos?.cartoes, dividas])
+  const oQueFazer = itensDe([['contas', c.blocos?.contas], ['cartoes', c.blocos?.cartoes], ['dividas', dividas]])
 
   // ---------- 3. Para onde está indo? ----------
   const fluxo = v.graficoAno && haAno && (
-    <Bloco titulo="Fluxo financeiro" sub="Entrou × saiu nos últimos 6 meses" className="bloco-esticado"
+    <Bloco titulo="Fluxo financeiro" className="bloco-esticado"
       acao={<span className="legenda-topo"><span><i className="marcador" style={{ background: COR.entradas }} />Entrou</span><span><i className="marcador" style={{ background: COR.despesas }} />Saiu</span></span>}>
       {/* o gráfico ocupa a altura que sobrar no cartão, para ficar da mesma altura que os lançamentos ao lado */}
       <div className="bloco-corpo grafico-esticado">
@@ -188,13 +191,24 @@ export function Inicio(c: Ctx) {
         : <button className="btn" onClick={c.personalizar}>Personalizar <Icone nome="seta" tamanho={16} /></button>}
     </section>
   )
+
   // ---------- 5. O que tenho ----------
   const dinheiro = (v.bancos || v.investimentos || v.moedas) && (
     <BlocoDinheiro v={v} nivel={nivel} bancos={c.d.bancos} caixa={c.mesEf.caixa} investimentos={r.investimentos}
       moedas={c.mesEf.moedas} lista={c.perfil.moedas} taxas={c.taxas} lancs={c.lancsMes} herdadoDe={c.mesEf.herdadoDe}
       aoAbrir={() => c.irPara('patrimonio')} aoAbrirBanco={c.abrirBanco} />
   )
-  const analise = zona([gastos, metas, dinheiro, banner])
+  const acompanhar = !c.contaNova && <CartaoAcompanhar perfil={c.perfil} aoLigar={c.ligarModulo} aoPersonalizar={c.personalizar} />
+  const analise = itensDe([['gastos', gastos], ['metas', metas], ['dinheiro', dinheiro]])
+  // Os cartões elásticos (banner e "Acompanhe mais") preenchem a sobra das colunas: o banner fica junto do
+  // "O que fazer"; sem esse grupo, os dois vão para a análise.
+  const elBanner: ItemEncaixe | null = banner ? { chave: 'banner', no: banner, elastico: true, fixarNasColunas: true } : null
+  const elAcompanhar: ItemEncaixe | null = acompanhar ? { chave: 'acompanhar', no: acompanhar, elastico: true } : null
+  if (oQueFazer.length && elBanner) oQueFazer.push(elBanner)
+  else if (elBanner) analise.push(elBanner)
+  if (elAcompanhar) (analise.length || !oQueFazer.length ? analise : oQueFazer).push(elAcompanhar)
+  // muda quando o tamanho dos blocos muda de verdade: aí os blocos podem trocar de coluna
+  const versao = [c.ano, c.mes, nivel, c.lancsMes.length, c.situacao.length, c.situacoesContas.length, c.faturas.length, c.d.metas.length, c.categorias.length].join('|')
 
   return (
     <div className="pagina inicio">
@@ -213,13 +227,10 @@ export function Inicio(c: Ctx) {
 
       {sugestao}
 
-      {/* mosaicos: duas colunas que empilham cada uma no seu ritmo, sem buracos entre blocos de alturas diferentes */}
-      {oQueFazer.length > 0 && <div className="mosaico">{oQueFazer}</div>}
+      {/* duas colunas que terminam juntas: os blocos se dividem e os cartões elásticos preenchem a sobra */}
+      {oQueFazer.length > 0 && <Encaixe itens={oQueFazer} versao={versao} />}
       {linhaFluxo.length > 0 && <div className="linha-fluxo">{linhaFluxo}</div>}
-      {/* até 3 blocos de altura parecida: lado a lado, da mesma altura (como no layout); senão, mosaico */}
-      {analise.length > 0 && <div className={!detalhado && analise.length <= 3 ? 'linha-analise' : 'mosaico'}>{analise}</div>}
-
-      <AdicionarAoPainel perfil={c.perfil} aoLigar={c.ligarModulo} aoPersonalizar={c.personalizar} />
+      {analise.length > 0 && <Encaixe itens={analise} versao={versao} />}
 
       {divida && (
         <FormDivida

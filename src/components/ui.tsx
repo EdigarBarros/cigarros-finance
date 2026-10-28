@@ -24,8 +24,10 @@ export function Cartao({ titulo, acao, children, className = '' }: {
  * Indicador do topo: ícone redondo, valor grande (que conta até o número quando é number) e variação contra o mês anterior.
  * `destaque` pinta o cartão inteiro com a cor (o resultado do mês).
  */
-export function Kpi({ rotulo, valor, cor, icone, destaque, delta, menorMelhor, contra = 'no mês passado', aoClicar, children }: {
+export function Kpi({ rotulo, valor, cor, icone, destaque, delta, menorMelhor, contra = 'no mês passado', aoClicar, tendencia, children }: {
   rotulo: string; valor: string | number; cor: string; icone?: string; destaque?: boolean
+  /** Valores dos últimos meses para a minilinha no canto do cartão. */
+  tendencia?: (number | null)[]
   delta?: number | null; menorMelhor?: boolean
   /** Com o que se compara, depois de "que": "em set", "no mês passado". */
   contra?: string; aoClicar?: () => void; children?: ReactNode
@@ -35,6 +37,7 @@ export function Kpi({ rotulo, valor, cor, icone, destaque, delta, menorMelhor, c
     <>
       {icone && <span className="kpi-icone"><Icone nome={icone} tamanho={22} /></span>}
       {aoClicar && <span className="kpi-seta"><Icone nome="dir" tamanho={18} /></span>}
+      {tendencia && <span className="kpi-faisca"><Faisca valores={tendencia} cor={cor} /></span>}
       <span className="kpi-rotulo">{!icone && <i className="marcador" />}{rotulo}</span>
       <strong className="kpi-valor">{typeof valor === 'number' ? <Numero valor={valor} formato={fmtValor} /> : valor}</strong>
       {delta != null && (
@@ -176,5 +179,53 @@ export function Opcao({ ativo, aoClicar, icone, titulo, texto, multipla }: {
       </span>
       <span className={`opcao-marca ${multipla ? 'quadrada' : ''}`} aria-hidden="true">{ativo && <Icone nome="check" tamanho={14} />}</span>
     </button>
+  )
+}
+
+/** Anel de progresso (0 a 1) com o número no meio; desenha-se ao aparecer. */
+export function Anel({ valor, cor, tamanho = 64, children }: { valor: number; cor: string; tamanho?: number; children?: ReactNode }) {
+  const p = Math.min(1, Math.max(0, valor))
+  return (
+    <span className="anel" style={{ width: tamanho, height: tamanho, '--c': cor } as React.CSSProperties} role="img" aria-label={`${Math.round(p * 100)}%`}>
+      <svg viewBox="0 0 36 36" aria-hidden="true">
+        <circle cx="18" cy="18" r="15.5" className="anel-fundo" />
+        <circle cx="18" cy="18" r="15.5" className="anel-arco" pathLength={100} strokeDasharray={`${p * 100} 100`} />
+      </svg>
+      <span className="anel-meio">{children}</span>
+    </span>
+  )
+}
+
+/** Minilinha de tendência (últimos meses), com o último ponto marcado; desenha-se da esquerda para a direita. */
+export function Faisca({ valores, cor }: { valores: (number | null)[]; cor: string }) {
+  const pts = valores.map((v, i) => [i, v] as const).filter((x): x is readonly [number, number] => x[1] !== null)
+  if (pts.length < 2) return null
+  const ys = pts.map((x) => x[1])
+  const min = Math.min(...ys)
+  const max = Math.max(...ys)
+  const L = 96
+  const A = 34
+  const xy = pts.map(([i, v]) => [(i / (valores.length - 1)) * (L - 4) + 2, A - 3 - ((v - min) / (max - min || 1)) * (A - 8)] as const)
+  // curva suave passando pelos pontos
+  const d = xy.map(([x, y], i) => {
+    if (!i) return `M${x.toFixed(1)} ${y.toFixed(1)}`
+    const [px, py] = xy[i - 1]
+    const cx = (px + x) / 2
+    return `C${cx.toFixed(1)} ${py.toFixed(1)} ${cx.toFixed(1)} ${y.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)}`
+  }).join(' ')
+  const [ux, uy] = xy[xy.length - 1]
+  const id = `faisca-${cor.replace('#', '')}`
+  return (
+    <svg className="faisca" viewBox={`0 0 ${L} ${A}`} width={L} height={A} aria-hidden="true" style={{ '--c': cor } as React.CSSProperties}>
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={cor} stopOpacity=".28" />
+          <stop offset="1" stopColor={cor} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path className="faisca-area" d={`${d} L${ux.toFixed(1)} ${A} L${xy[0][0].toFixed(1)} ${A}Z`} fill={`url(#${id})`} />
+      <path className="faisca-linha" d={d} pathLength={1} />
+      <circle className="faisca-ponto" cx={ux} cy={uy} r="2.6" />
+    </svg>
   )
 }

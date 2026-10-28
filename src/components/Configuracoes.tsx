@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { Sugestao } from '../lib/adaptacao'
 import { MOEDAS } from '../lib/moedas'
 import { DETALHES, MODULOS } from '../lib/perfil'
-import { definirTema, useTema, type PreferenciaTema } from '../lib/tema'
+import { definirMovimento, definirTema, useMovimento, useTema, type Movimento, type PreferenciaTema } from '../lib/tema'
 import type { Modulo, Perfil } from '../lib/types'
 import { PARTES_ZERAR, type EscolhaZerar, type ParteZerar } from '../lib/zerar'
 import { Icone } from './Icone'
@@ -38,6 +38,7 @@ export function Configuracoes({ perfil, email, aoMudar, aoRefazer, aoCategorias,
   const [secao, setSecao] = useState<Secao>('perfil')
   const [nome, setNome] = useState(perfil.nome)
   const { preferencia } = useTema()
+  const movimento = useMovimento()
   const ligar = (m: Modulo, v: boolean) => aoMudar({ ...perfil, modulos: { ...perfil.modulos, [m]: v } })
   const alternarMoeda = (m: string) => {
     const moedas = perfil.moedas.includes(m) ? perfil.moedas.filter((x) => x !== m) : [...perfil.moedas, m]
@@ -114,6 +115,12 @@ export function Configuracoes({ perfil, email, aoMudar, aoRefazer, aoCategorias,
                 <Segmentado<PreferenciaTema> rotulo="Tema" valor={preferencia} aoMudar={(t) => definirTema(t)}
                   opcoes={[{ id: 'sistema', nome: 'Automático' }, { id: 'claro', nome: 'Claro' }, { id: 'escuro', nome: 'Escuro' }]} />
                 <span className="campo-ajuda">Automático segue o claro ou escuro do seu aparelho.</span>
+              </section>
+              <section className="campo">
+                <span className="campo-rotulo">Animações</span>
+                <Segmentado<Movimento> rotulo="Animações" valor={movimento} aoMudar={definirMovimento}
+                  opcoes={[{ id: 'completo', nome: 'Completas' }, { id: 'reduzido', nome: 'Reduzidas' }]} />
+                <span className="campo-ajuda">Reduzidas tira os efeitos de entrada, a contagem dos números e a troca de tema animada.</span>
               </section>
               <section className="campo">
                 <span className="campo-rotulo">Jeito de ver</span>
@@ -250,25 +257,35 @@ export function CartaoSugestao({ s, aoAceitar, aoRecusar }: { s: Sugestao; aoAce
   )
 }
 
-/** "Quer acompanhar mais coisas?": liga um módulo com um toque, sem precisar achar os ajustes. */
-export function AdicionarAoPainel({ perfil, aoLigar, aoPersonalizar }: {
+/**
+ * "Acompanhe mais": cada módulo desligado é um bloco com ícone, que liga com um toque (dá para tirar depois).
+ * É elástico: na Início ele cresce para preencher a sobra da coluna, e os blocos crescem junto.
+ */
+export function CartaoAcompanhar({ perfil, aoLigar, aoPersonalizar }: {
   perfil: Perfil; aoLigar: (m: Modulo) => void; aoPersonalizar: () => void
 }) {
   const desligados = MODULOS.filter((m) => !perfil.modulos[m.id] || (m.id === 'moedas' && !perfil.moedas.length))
   return (
-    <section className="adicionar">
-      <div>
-        <strong>{desligados.length ? 'Quer acompanhar mais coisas?' : 'Seu painel mostra tudo'}</strong>
-        <p>{desligados.length ? 'Toque para adicionar ao painel. Dá para tirar depois.' : 'Mostre ou esconda partes do painel quando quiser.'}</p>
-      </div>
-      <div className="chips">
+    <section className="bloco acompanhar">
+      <header className="bloco-cab">
+        <h2>{desligados.length ? 'Acompanhe mais' : 'Seu painel'}</h2>
+        <button className="link" onClick={aoPersonalizar}><Icone nome="ajustes" tamanho={15} /> Personalizar</button>
+      </header>
+      <div className="acompanhar-grade">
         {desligados.map((m) => (
           // Para outras moedas falta escolher quais: liga e abre os ajustes já na lista de moedas.
-          <button key={m.id} className="chip novo" onClick={() => { aoLigar(m.id); if (m.id === 'moedas') aoPersonalizar() }}>
-            <Icone nome="mais" tamanho={14} />&nbsp;{m.nome}
+          <button key={m.id} className="acompanhar-item" onClick={() => { aoLigar(m.id); if (m.id === 'moedas') aoPersonalizar() }} title={m.descricao}>
+            <span className="acompanhar-icone"><Icone nome={m.icone} /></span>
+            <span>{m.nome}</span>
+            <i className="acompanhar-mais" aria-hidden="true"><Icone nome="mais" tamanho={12} /></i>
           </button>
         ))}
-        <button className="chip" onClick={aoPersonalizar}><Icone nome="ajustes" tamanho={14} />&nbsp;Configurações</button>
+        {!desligados.length && (
+          <button className="acompanhar-item" onClick={aoPersonalizar}>
+            <span className="acompanhar-icone"><Icone nome="check" /></span>
+            <span>Tudo ligado</span>
+          </button>
+        )}
       </div>
     </section>
   )

@@ -11,7 +11,7 @@ import type { Banco, Caixa, Categoria, Detalhe, Lancamento, Tipo } from '../lib/
 import { Rosca } from './Graficos'
 import { Icone } from './Icone'
 import { ItemLancamento } from './ItemLancamento'
-import { Progresso, Segmentado } from './ui'
+import { Anel, Progresso, Segmentado } from './ui'
 
 /**
  * Bloco da Início: título à esquerda, um número de apoio à direita e o conteúdo embaixo.
@@ -123,12 +123,16 @@ export function BlocoGastos({ r, anterior, categorias, nivel, mesAnterior, aoEdi
               const dif = detalhado && mesAnterior && antes ? (f.valor - antes) / antes : null
               return (
                 <li key={f.id}>
-                  <span className="gasto-nome"><i className="marcador" style={{ background: f.cor }} />{f.icone}&nbsp;{f.nome}</span>
+                  <span className="gasto-nome">
+                    <i className="marcador" style={{ background: f.cor }} />{f.icone}&nbsp;{f.nome}
+                    {dif !== null && Math.abs(dif) >= 0.1 && (
+                      <span className={`chip-info ${dif > 0 ? 'ruim' : 'bom'}`} title={`${fmtPct(Math.abs(dif))} ${dif > 0 ? 'a mais' : 'a menos'} que em ${mesAnterior}`}>
+                        <Icone nome={dif > 0 ? 'sobe' : 'desce'} tamanho={11} />{fmtPct(Math.abs(dif))}
+                      </span>
+                    )}
+                  </span>
                   <span className="gasto-valor">{fmtValor(f.valor)}<small>{r.saidas ? `${Math.round((f.valor / r.saidas) * 100)}%` : ''}</small></span>
                   <span className="gasto-barra"><span style={{ width: `${(f.valor / maior) * 100}%`, background: f.cor }} /></span>
-                  {dif !== null && Math.abs(dif) >= 0.1 && (
-                    <span className="gasto-sub">{fmtPct(Math.abs(dif))} {dif > 0 ? 'a mais' : 'a menos'} que em {mesAnterior}</span>
-                  )}
                 </li>
               )
             })}
@@ -144,7 +148,6 @@ export function BlocoGastos({ r, anterior, categorias, nivel, mesAnterior, aoEdi
   )
 }
 
-const capitalizar = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
 const quando = (q: [number, number] | null) => (q ? fmtMesAno(q[0], q[1]) : null)
 
 /** Dívidas: o problema inteiro (quanto falta), junto do progresso e do próximo passo (pagar). */
@@ -169,9 +172,14 @@ export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTod
       ) : (
         <>
           {total > 0 && (
-            <p className="bloco-sub">
-              Você já pagou <b>{pagoPct}%</b>.{fim && <> Sem dívidas em <b>{quando(fim)}</b>.</>}
-            </p>
+            <div className="divida-resumo">
+              <Anel valor={pagoPct / 100} cor={COR.entradas} tamanho={58}>{pagoPct}%</Anel>
+              <span className="divida-resumo-texto">
+                <small>já pago</small>
+                <b>{fmtValor(inicial - total)}</b>
+              </span>
+              {fim && <span className="chip-info"><Icone nome="calendario" tamanho={13} /> livre em {quando(fim)}</span>}
+            </div>
           )}
           {itens.slice(0, limite).map((s) => (
             <div key={s.divida.id} className={`divida-linha ${s.quitadaNoMes ? 'quitada' : ''}`}>
@@ -179,17 +187,17 @@ export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTod
                 <span className="divida-linha-nome">{s.divida.descricao}</span>
                 <span className="divida-linha-valor">{s.quitadaNoMes ? 'Quitada ✓' : fmtValor(s.restante)}</span>
                 <Progresso valor={s.saldoInicial - s.restante} total={s.saldoInicial} cor={COR.entradas} />
-                <span className="divida-linha-sub">
-                  {(() => {
-                    const p = parcelasDe(s)
-                    return capitalizar([
-                      p && !s.quitadaNoMes ? `parcela ${p.proxima} de ${p.total}` : null,
-                      nivel !== 'simples' && s.divida.valor_parcela ? `${fmtValor(s.divida.valor_parcela)} por mês` : null,
-                      s.quitadaNoMes ? null : s.quitacao ? `acaba em ${quando(s.quitacao)}` : 'sem parcela fixa',
-                      nivel === 'detalhado' && s.pagoNoMes ? `pago neste mês ${fmtValor(s.pagoNoMes)}` : null,
-                    ].filter(Boolean).join(' · '))
-                  })()}
-                </span>
+                {(() => {
+                  // chips curtos no lugar da frase: parcela, valor por mês, quando acaba, pago no mês
+                  const p = parcelasDe(s)
+                  const chips = [
+                    p && !s.quitadaNoMes ? <span key="p" className="chip-info" title={`parcela ${p.proxima} de ${p.total}`}>{p.proxima}/{p.total}</span> : null,
+                    nivel !== 'simples' && s.divida.valor_parcela ? <span key="v" className="chip-info">{fmtValor(s.divida.valor_parcela)}/mês</span> : null,
+                    !s.quitadaNoMes && s.quitacao ? <span key="q" className="chip-info"><Icone nome="calendario" tamanho={12} />{quando(s.quitacao)}</span> : null,
+                    nivel === 'detalhado' && s.pagoNoMes ? <span key="m" className="chip-info bom">+{fmtValor(s.pagoNoMes)}</span> : null,
+                  ].filter(Boolean)
+                  return chips.length > 0 && <span className="divida-linha-sub chips-info">{chips}</span>
+                })()}
               </button>
               {!s.quitadaNoMes && <button className="pagar" onClick={() => aoPagar(s)}>Pagar</button>}
             </div>

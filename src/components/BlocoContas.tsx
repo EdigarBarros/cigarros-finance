@@ -1,6 +1,8 @@
 import { COR } from '../lib/charts'
 import { fraseDaSituacao, pendentes, totaisDoMes, type SituacaoConta } from '../lib/contasFixas'
 import { fmtValor } from '../lib/format'
+
+const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 import './contas.css'
 
 const PROXIMAS = 4
@@ -45,10 +47,12 @@ export function BlocoContasDoMes({ situacoes, aoAbrir, aoPagar, completo }: {
         <p className="quadro-vazio">Tudo em dia neste mês! 🎉 <button className="link" onClick={aoAbrir}>Ver contas</button></p>
       )}
       {linhas.map((s) => (
-        <div key={s.conta.id} className={`conta-linha ${s.estado}`}>
+        <div key={s.conta.id} className={`conta-linha com-dia ${s.estado}`}>
+          {/* o dia do vencimento em bloco, na cor da situação */}
+          <span className="conta-dia" aria-hidden="true"><b>{String(s.dia).padStart(2, '0')}</b><small>{MES[Number(s.vencimento.slice(5, 7)) - 1]}</small></span>
           <button className="conta-info" onClick={aoAbrir}>
             <strong>{s.conta.descricao}</strong>
-            <small>dia {s.dia} · <b>{fraseDaSituacao(s)}</b></small>
+            <span className={`chip-estado ${s.estado}`}>{fraseDaSituacao(s)}</span>
           </button>
           <span className="conta-valor">{fmtValor(s.valor)}</span>
           <button className="btn primario" onClick={() => aoPagar(s)}>{s.conta.tipo === 'entrada' ? 'Recebi' : 'Paguei'}</button>
