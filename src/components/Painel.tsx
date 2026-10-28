@@ -38,6 +38,7 @@ import { CartaoDicas, type Dica } from './CartaoDicas'
 import { Marca } from './Marca'
 import { Configuracoes, ZerarDados } from './Configuracoes'
 import { Questionario } from './Questionario'
+import { Tour } from './Tour'
 
 /**
  * A ordem daqui é a do menu e também a prioridade nas abas do celular (veja docs/arquitetura-do-painel.md):
@@ -77,6 +78,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const [ocupado, setOcupado] = useState<string | null>(null)
   const [ajustes, setAjustes] = useState(false)
   const [refazendo, setRefazendo] = useState(false)
+  /** Tutorial guiado aberto. */
+  const [tour, setTour] = useState(false)
   const [editarCategorias, setEditarCategorias] = useState(false)
   const [zerando, setZerando] = useState(false)
   const [quadroMeses, setQuadroMeses] = useState(false)
@@ -118,6 +121,13 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     p.id === 'contas' ? v.contas : p.id === 'cartoes' ? v.cartoes : p.id === 'dividas' ? v.dividas : p.id === 'metas' ? v.metas : p.id === 'patrimonio' ? v.bancos || v.investimentos || v.moedas : p.id === 'ano' ? v.paginaAno : true,
   )
   const paginaAtual = paginas.some((p) => p.id === pagina) ? pagina : 'inicio'
+  // Quem terminou as perguntas há pouco e ainda não viu (nem pulou) o tutorial recebe o convite sozinho, uma vez por abertura.
+  useEffect(() => {
+    const recemChegou = perfil.onboarding_em ? Date.now() - new Date(perfil.onboarding_em).getTime() < 3 * 86400000 : false
+    if (!noPainel || d.carregando || !recemChegou || perfil.dispensadas.includes('tour')) return
+    const t = window.setTimeout(() => setTour(true), 1200)
+    return () => window.clearTimeout(t)
+  }, [noPainel, d.carregando, perfil.onboarding_em, perfil.dispensadas]) // eslint-disable-line react-hooks/exhaustive-deps
   const categoriaDe = (l: Lancamento) => categoriaDoLanc(l, d.categorias, d.categoriasAntigas)
   const idCategoria = (l: Lancamento) => categoriaDe(l)?.id ?? ''
 
@@ -357,7 +367,11 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         inicial={perfil.nome || !nomeConta ? perfil : { ...perfil, nome: nomeConta }}
         foto={d.foto}
         aoMudarFoto={(f) => void d.salvarFoto(f)}
-        aoConcluir={(p, importar) => { mudarPerfil(p); setRefazendo(false); irPara('inicio'); if (importar) setExtrato(true) }}
+        aoConcluir={(p, importar) => {
+          mudarPerfil(p); setRefazendo(false); irPara('inicio')
+          if (importar) setExtrato(true)
+          else if (!perfil.dispensadas.includes('tour')) window.setTimeout(() => setTour(true), 700)
+        }}
         aoCancelar={refazendo ? () => setRefazendo(false) : undefined}
       />
     )
@@ -419,6 +433,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const menuItens = (
     <>
       <button onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> Configurações</button>
+      <button onClick={() => setTour(true)}><Icone nome="ideia" /> Ver o tutorial</button>
       <button onClick={trocarTema}><Icone nome={tema === 'escuro' ? 'sol' : 'lua'} /> {tema === 'escuro' ? 'Tema claro' : 'Tema escuro'}</button>
       <button onClick={() => setExtrato(true)}><Icone nome="relatorio" /> Importar extrato</button>
       <button onClick={() => arquivo.current?.click()}><Icone nome="importar" /> Importar planilha</button>
@@ -436,11 +451,11 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         <nav ref={refNav} aria-label="Páginas">
           {lenteNav && <span className="lente" aria-hidden="true" style={estiloLente(lenteNav)} />}
           {paginas.map((p) => (
-            <button key={p.id} className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)} aria-current={paginaAtual === p.id ? 'page' : undefined}>
+            <button key={p.id} data-tour={`nav-${p.id}`} className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)} aria-current={paginaAtual === p.id ? 'page' : undefined}>
               <Icone nome={p.icone} /> {p.nome}
             </button>
           ))}
-          <button onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> Configurações</button>
+          <button data-tour="nav-config" onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> Configurações</button>
         </nav>
         <div className="lateral-rodape">
           <CartaoDicas dicas={dicas} />
@@ -497,7 +512,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
               </button>
             )}
             <div className="perfil-topo">
-              <button className="perfil-botao" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label="Sua conta">
+              <button className="perfil-botao" data-tour="menu-conta" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label="Sua conta">
                 <span className="avatar" aria-hidden="true">{d.foto ? <img src={d.foto} alt="" /> : iniciais || '?'}</span>
                 <span>Olá, {nome}</span>
                 <Icone nome="abaixo" tamanho={18} />
@@ -513,7 +528,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
               )}
             </div>
             <div className="menu-movel">
-              <button className="icone-btn" onClick={() => setMenu(!menu)} aria-label="Menu" aria-expanded={menu}><Icone nome="menu" /></button>
+              <button className="icone-btn" data-tour="menu-conta" onClick={() => setMenu(!menu)} aria-label="Menu" aria-expanded={menu}><Icone nome="menu" /></button>
               {menu && mobile && (
                 <>
                   <div className="fora" onClick={() => setMenu(false)} />
@@ -551,17 +566,17 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         {paginaAtual === 'ano' && <Ano {...ctx} />}
       </div>
 
-      <button className="fab" onClick={() => setForm({})} aria-label="Novo lançamento"><Icone nome="mais" tamanho={26} /></button>
+      <button className="fab" data-tour="lancar" onClick={() => setForm({})} aria-label="Novo lançamento"><Icone nome="mais" tamanho={26} /></button>
 
       <nav className="abas-movel" ref={refAbas}>
         {lenteAbas && <span className="lente" aria-hidden="true" style={estiloLente(lenteAbas)} />}
         {abas.map((p) => (
-          <button key={p.id} className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}>
+          <button key={p.id} data-tour={`nav-${p.id}`} className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}>
             <Icone nome={p.icone} /> <span>{p.curto}</span>
           </button>
         ))}
         {naMais.length > 0 && (
-          <button className={naMais.some((p) => p.id === paginaAtual) ? 'ativo' : ''} onClick={() => setMais(!mais)} aria-expanded={mais}>
+          <button data-tour="mais" className={naMais.some((p) => p.id === paginaAtual) ? 'ativo' : ''} onClick={() => setMais(!mais)} aria-expanded={mais}>
             <Icone nome="reticencias" /> <span>Mais</span>
           </button>
         )}
@@ -619,6 +634,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           aoMudarFoto={(f) => void d.salvarFoto(f)}
           aoMudar={mudarPerfil}
           aoRefazer={() => { setAjustes(false); setRefazendo(true) }}
+          aoTour={() => { setAjustes(false); setTour(true) }}
           aoCategorias={() => { setAjustes(false); ctx.gerenciarCategorias() }}
           aoBackup={() => tarefa('Preparando o backup…', async () => (await import('../lib/planilha')).exportarBackup())}
           aoImportar={() => { setAjustes(false); arquivo.current?.click() }}
@@ -632,6 +648,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       )}
 
       {extrato && <ImportarExtrato c={ctx} aoFechar={() => setExtrato(false)} />}
+      {tour && !form && !ajustes && !extrato && !organizar && (
+        <Tour perfil={perfil} v={v} nome={perfil.nome.trim()} mobile={mobile} aoLigar={ligarModulo} aoIrPara={irPara}
+          aoTerminar={() => { setTour(false); if (!perfil.dispensadas.includes('tour')) ctx.dispensar('tour') }} />
+      )}
       {organizar && <OrganizarNomes c={ctx} aoFechar={() => setOrganizar(false)} />}
 
       {zerando && (

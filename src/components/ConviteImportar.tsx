@@ -6,7 +6,7 @@ import { Icone } from './Icone'
  */
 export function ConviteImportar({ aoExtrato, aoPlanilha, aoDispensar }: { aoExtrato: () => void; aoPlanilha: () => void; aoDispensar: () => void }) {
   return (
-    <section className="convite-importar" aria-label="Importar seus dados">
+    <section className="convite-importar" data-tour="importar" aria-label="Importar seus dados">
       <span className="convite-importar-icone" aria-hidden="true"><Icone nome="relatorio" tamanho={26} /></span>
       <div className="convite-importar-texto">
         <strong>Você tem algum extrato ou planilha?</strong>
