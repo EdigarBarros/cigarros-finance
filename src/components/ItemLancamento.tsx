@@ -1,5 +1,6 @@
 import { fmtDataCurta, fmtMoeda, fmtValor } from '../lib/format'
 import { SEM_CATEGORIA } from '../lib/categorias'
+import { infoForma } from '../lib/formas'
 import type { Banco, Categoria, Lancamento } from '../lib/types'
 import { BancoIcone } from './BancoIcone'
 import { Selo } from './Categorias'
@@ -25,6 +26,11 @@ export function ItemLancamento({ l, banco, categoria, cartao, aoClicar, mostrarD
       <span key="cc" className="item-tag no-cartao">
         {cartao ? <BancoIcone nome={cartao.nome} cor={cartao.cor} tamanho={13} /> : <Icone nome="cartao" tamanho={12} />}
         {parcelado ? `${l.parcela}/${l.parcelas}` : 'cartão'}
+      </span>
+    ),
+    !l.cartao_id && l.forma && (
+      <span key="fp" className="item-tag forma" style={{ '--c': infoForma(l.forma).cor } as React.CSSProperties}>
+        <Icone nome={infoForma(l.forma).icone} tamanho={12} />{infoForma(l.forma).nome}
       </span>
     ),
     l.divida_id && <span key="dv" className={`item-tag ${entrada ? 'receber' : 'divida'}`}><Icone nome={entrada ? 'receber' : 'divida'} tamanho={12} />{entrada ? 'recebido' : 'dívida'}</span>,

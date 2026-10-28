@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { hojeLocal } from '../lib/cartoes'
 import { COR } from '../lib/charts'
 import { SEM_CATEGORIA } from '../lib/categorias'
+import { formaDe, FORMAS, type FormaPagamento } from '../lib/formas'
 import { fmtDataLonga, fmtValor, MESES_NOME } from '../lib/format'
 import type { Lancamento, Tipo } from '../lib/types'
 import { BancoIcone } from '../components/BancoIcone'
@@ -25,6 +26,7 @@ const somaTipo = (ls: Lancamento[], t: Tipo) => ls.filter((l) => l.tipo === t).r
 export function Lancamentos(c: Ctx) {
   const [tipo, setTipo] = useState<Filtro<Tipo>>('todos')
   const [banco, setBanco] = useState<Filtro<string>>('todos')
+  const [forma, setForma] = useState<Filtro<FormaPagamento | 'sem'>>('todos')
   /** id da categoria, 'sem' (sem categoria) ou 'todos'. */
   const [categoria, setCategoria] = useState<Filtro<string>>('todos')
   const [dia, setDia] = useState<string | null>(null)
@@ -38,8 +40,9 @@ export function Lancamentos(c: Ctx) {
     return c.lancsMes
       .filter((l) => tipo === 'todos' || l.tipo === tipo)
       .filter((l) => banco === 'todos' || (banco === 'sem' ? !l.banco_id : l.banco_id === banco))
+      .filter((l) => forma === 'todos' || (formaDe(l) ?? 'sem') === forma)
       .filter((l) => !q || l.descricao.toLowerCase().includes(q) || Boolean(c.categoriaDe(l)?.nome.toLowerCase().includes(q)))
-  }, [c.lancsMes, tipo, banco, busca, c.categorias]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [c.lancsMes, tipo, banco, forma, busca, c.categorias]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const daCategoria = (l: Lancamento) => categoria === 'todos' || (categoria === 'sem' ? !c.categoriaDe(l) : c.categoriaDe(l)?.id === categoria)
   const semDia = base.filter(daCategoria)
@@ -72,8 +75,21 @@ export function Lancamentos(c: Ctx) {
 
   const entrou = somaTipo(filtrados, 'entrada')
   const saiu = somaTipo(filtrados, 'saida')
-  const filtrando = tipo !== 'todos' || banco !== 'todos' || categoria !== 'todos' || busca || dia
-  const limpar = () => { setTipo('todos'); setBanco('todos'); setCategoria('todos'); setBusca(''); setDia(null) }
+  const filtrando = tipo !== 'todos' || banco !== 'todos' || forma !== 'todos' || categoria !== 'todos' || busca || dia
+  const limpar = () => { setTipo('todos'); setBanco('todos'); setForma('todos'); setCategoria('todos'); setBusca(''); setDia(null) }
+  // formas de pagamento usadas no mês (com os outros filtros aplicados, menos a própria forma)
+  const formasDoMes = useMemo(() => {
+    const q = busca.trim().toLowerCase()
+    const m = new Map<FormaPagamento | 'sem', number>()
+    for (const l of c.lancsMes) {
+      if (tipo !== 'todos' && l.tipo !== tipo) continue
+      if (banco !== 'todos' && (banco === 'sem' ? l.banco_id : l.banco_id !== banco)) continue
+      if (q && !l.descricao.toLowerCase().includes(q)) continue
+      const f = formaDe(l) ?? 'sem'
+      m.set(f, (m.get(f) ?? 0) + l.valor)
+    }
+    return m
+  }, [c.lancsMes, tipo, banco, busca])
   const bancoDe = (l: Lancamento) => (c.v.bancos ? c.d.bancos.find((b) => b.id === l.banco_id) : undefined)
   const cartaoDe = (l: Lancamento) => (l.cartao_id ? c.cartoes.cartoes.find((k) => k.id === l.cartao_id) : undefined)
   const item = (l: Lancamento, i: number, mostrarData: boolean) => (
@@ -152,6 +168,20 @@ export function Lancamentos(c: Ctx) {
               </button>
             ))}
             <button className={`lc-banco ${banco === 'sem' ? 'ativo' : ''}`} onClick={() => setBanco(banco === 'sem' ? 'todos' : 'sem')}>Sem banco</button>
+          </div>
+        )}
+
+        {(formasDoMes.size > 1 || forma !== 'todos') && (
+          <div className="lc-bancos" role="group" aria-label="Forma de pagamento">
+            <button className={`lc-banco ${forma === 'todos' ? 'ativo' : ''}`} onClick={() => setForma('todos')}>Todas as formas</button>
+            {FORMAS.filter((f) => formasDoMes.has(f.id) || forma === f.id).map((f) => (
+              <button key={f.id} className={`lc-banco ${forma === f.id ? 'ativo' : ''}`} onClick={() => setForma(forma === f.id ? 'todos' : f.id)}>
+                <Icone nome={f.icone} tamanho={14} />{f.nome} · {fmtValor(formasDoMes.get(f.id) ?? 0)}
+              </button>
+            ))}
+            {(formasDoMes.has('sem') || forma === 'sem') && (
+              <button className={`lc-banco ${forma === 'sem' ? 'ativo' : ''}`} onClick={() => setForma(forma === 'sem' ? 'todos' : 'sem')}>Sem forma · {fmtValor(formasDoMes.get('sem') ?? 0)}</button>
+            )}
           </div>
         )}
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { CATEGORIAS_ANTIGAS } from './categorias'
 import { normPerfil } from './perfil'
 import { supabase } from './supabase'
@@ -147,14 +147,26 @@ export function useDados(userId: string, ano: number) {
       return p ? [...sem, p] : sem
     })
 
+  /** Sem a migração 11, a coluna da forma de pagamento não existe: o campo fica de fora do que é gravado. */
+  const semForma = useRef(false)
   /** Sem a migração 5, a categoria vai na coluna antiga. */
   const paraBanco = <T extends Partial<Lancamento>>(l: T): T => {
+    if (semForma.current && 'forma' in l) l = (({ forma: _f, ...resto }) => resto as T)(l)
     if (!categoriasAntigas || !('categoria_id' in l)) return l
     const { categoria_id, ...resto } = l
     return { ...resto, categoria: l.tipo === 'entrada' ? 'outros' : categoria_id ?? 'outros' } as T
   }
+  /** Grava; se só falta a coluna `forma`, lembra disso e tenta de novo sem ela. */
+  const gravar = async <R extends { error: { code?: string; message: string } | null }>(fazer: () => PromiseLike<R>): Promise<R> => {
+    const r = await fazer()
+    if (r.error && !semForma.current && /forma/.test(r.error.message) && (r.error.code === '42703' || r.error.code === 'PGRST204')) {
+      semForma.current = true
+      return fazer()
+    }
+    return r
+  }
   const addLanc = async (novo: Omit<Lancamento, 'id'>): Promise<Lancamento | undefined> => {
-    const { data, error } = await supabase.from('lancamentos').insert(paraBanco(novo)).select().single()
+    const { data, error } = await gravar(() => supabase.from('lancamentos').insert(paraBanco(novo)).select().single())
     if (error) {
       falhou(error.message)
       return
@@ -168,7 +180,7 @@ export function useDados(userId: string, ano: number) {
   const addLancs = async (novos: Omit<Lancamento, 'id'>[]): Promise<number> => {
     let gravados = 0
     for (let i = 0; i < novos.length; i += 250) {
-      const { data, error } = await supabase.from('lancamentos').insert(novos.slice(i, i + 250).map((l) => paraBanco(l))).select('id')
+      const { data, error } = await gravar(() => supabase.from('lancamentos').insert(novos.slice(i, i + 250).map((l) => paraBanco(l))).select('id'))
       if (error) {
         falhou(error.message)
         return gravados
@@ -194,7 +206,7 @@ export function useDados(userId: string, ano: number) {
     const novo = atual ? { ...atual, ...patch } : null
     setLancs((xs) => (novo && novo.ano !== ano ? xs.filter((x) => x.id !== id) : xs.map((x) => (x.id === id ? { ...x, ...patch } : x))))
     if (novo) sincronizarPagamento(id, novo)
-    const { error } = await supabase.from('lancamentos').update(patch).eq('id', id)
+    const { error } = await gravar(() => supabase.from('lancamentos').update(paraBanco(mudancas)).eq('id', id))
     if (error) falhou(error.message)
   }
   const delLanc = async (id: string) => {

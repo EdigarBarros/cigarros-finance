@@ -190,6 +190,9 @@ body::before {
   background: color-mix(in srgb, var(--c, var(--destaque)) 18%, var(--superficie));
 }
 .chip.novo { color: var(--link); background: transparent; border-style: dashed; }
+.forma-chip { gap: 6px; }
+.forma-chip svg { color: var(--c, currentColor); }
+.forma-cartoes { margin-top: 8px; }
 .cor { width: 30px; height: 30px; border-radius: 50%; border: 0; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2); }
 .cor.ativo { box-shadow: 0 0 0 2px var(--superficie), 0 0 0 4px var(--texto); }
 
@@ -1467,6 +1470,7 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .item-tag.no-cartao { color: var(--violeta); background: color-mix(in srgb, var(--violeta) 13%, transparent); }
 .item-tag.divida { color: var(--divida); background: color-mix(in srgb, var(--divida) 14%, transparent); }
 .item-tag.receber { color: var(--entrada); background: color-mix(in srgb, var(--entrada) 13%, transparent); }
+.item-tag.forma { color: var(--c, var(--texto-2)); background: color-mix(in srgb, var(--c, var(--texto-2)) 13%, transparent); }
 .item-tag.conta { color: var(--caixa); background: color-mix(in srgb, var(--caixa) 13%, transparent); }
 
 @media (max-width: 1100px) {
@@ -2682,3 +2686,18 @@ button.ex-tipo:hover { transform: scale(1.1); }
   .en-form, .en-form.entrar, .en-form.criar { grid-row: 2; grid-column: 1; align-self: start; width: 100%; padding: 18px 22px 40px; --sai: 0px; transform: translateY(14px); }
   .en-form.ativo { transform: none; transition: opacity .45s .1s, transform .6s .1s var(--mola), visibility 0s; }
 }
+
+/* ---------- assinatura ---------- */
+.cartao.as { width: min(440px, 100%); padding: 34px 30px 24px; display: grid; justify-items: center; gap: 14px; text-align: center; border-radius: 28px; box-shadow: var(--sombra-alta); animation: surgir .9s var(--mola) both; }
+.as h1 { margin: 4px 0 0; font-family: var(--fonte-titulo); font-size: 26px; font-weight: 600; letter-spacing: -.03em; color: var(--texto); }
+.as-sub { margin: 0; color: var(--texto-2); font-size: 15px; line-height: 1.5; }
+.as-preco { display: grid; justify-items: center; gap: 2px; padding: 14px 22px; border-radius: 18px; background: var(--destaque-suave); }
+.as-preco strong { font-size: 34px; font-weight: 700; letter-spacing: -.03em; color: var(--texto); }
+.as-preco span { color: var(--texto-2); font-size: 14px; margin-top: -4px; }
+.as-preco small { margin-top: 6px; color: var(--texto-2); font-size: 12px; }
+.as-lista { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; text-align: left; color: var(--texto); font-size: 14px; }
+.as-lista li { display: flex; align-items: center; gap: 10px; }
+.as-lista svg { color: var(--destaque); flex: none; }
+.as-botao { width: 100%; height: 48px; justify-content: center; font-size: 15px; font-weight: 600; }
+.as-nota { color: var(--texto-2); font-size: 12px; }
+.as-sair { margin-top: 6px; font-size: 13px; color: var(--texto-2); }

@@ -1,3 +1,4 @@
+import { irParaStripe, type Assinatura } from '../lib/assinatura'
 import { useRef, useState } from 'react'
 import type { Sugestao } from '../lib/adaptacao'
 import { reduzirFoto } from '../lib/foto'
@@ -36,7 +37,7 @@ function CartaoAcao({ icone, titulo, texto, aoClicar, perigo }: { icone: string;
 }
 
 /** Configurações em tela cheia: menu de seções à esquerda e cartões à direita. Cada mudança vale na hora. */
-export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoExtrato, aoOrganizar, aoZerar, aoSair, aoFechar }: {
+export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoExtrato, aoOrganizar, aoZerar, aoSair, aoFechar, assinatura }: {
   perfil: Perfil; email: string; aoMudar: (p: Perfil) => void; aoRefazer: () => void; aoCategorias: () => void
   /** Para mostrar as categorias na seção Categorias. */
   categorias?: Categoria[]
@@ -49,6 +50,8 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
   /** Abre a confirmação de zerar os dados. */
   aoZerar: () => void; aoSair: () => void
   aoFechar: () => void
+  /** Situação da assinatura (null quando não há cobrança nesta conta). */
+  assinatura?: Assinatura | null
 }) {
   const [secao, setSecao] = useState<Secao>('perfil')
   const [nome, setNome] = useState(perfil.nome)
@@ -224,6 +227,9 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
               </section>
               <div className="cfg-acoes">
                 <CartaoAcao icone="ajustes" titulo="Refazer as perguntas" texto="Responda de novo as perguntas iniciais para reajustar o painel." aoClicar={aoRefazer} />
+                {assinatura && assinatura.status !== 'cortesia' && (
+                  <CartaoAcao icone="cartao" titulo="Gerenciar assinatura" texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-portal').then((m) => m && alert(m))} />
+                )}
                 <CartaoAcao icone="sair" titulo="Sair" texto="Encerra a sessão neste aparelho." aoClicar={aoSair} />
               </div>
             </>
@@ -392,4 +398,11 @@ function FotoPerfil({ foto, iniciais, aoMudar }: { foto: string | null; iniciais
       {erro && <small className="form-erro">{erro}</small>}
     </div>
   )
+}
+
+const dataAssinatura = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '')
+function textoAssinatura(a: Assinatura) {
+  if (a.status === 'trialing') return `Teste grátis até ${dataAssinatura(a.teste_fim)}. Troque o cartão, veja as faturas ou cancele.`
+  if (a.cancela_no_fim) return `Cancelada: você usa até ${dataAssinatura(a.periodo_fim)}. Dá para reativar.`
+  return 'Troque o cartão, veja as faturas ou cancele a assinatura.'
 }

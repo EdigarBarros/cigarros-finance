@@ -1,3 +1,4 @@
+import { formaPelaDescricao } from '../lib/formas'
 import { useMemo, useRef, useState } from 'react'
 import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
 import { lerExtrato, limparDescricao, type LinhaExtrato } from '../lib/extrato'
@@ -84,7 +85,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
     const n = await c.d.addLancs(escolhidas.map((l) => ({
       ano: Number(l.data.slice(0, 4)), mes: Number(l.data.slice(5, 7)), tipo: l.tipo, valor: l.valor,
       descricao: l.descricao.trim() || (l.tipo === 'entrada' ? 'Entrada' : 'Saída'), data: l.data,
-      categoria_id: l.categoria_id || null, banco_id: banco, divida_id: null,
+      categoria_id: l.categoria_id || null, banco_id: banco, divida_id: null, forma: formaPelaDescricao(l.descricao, l.tipo),
     })))
     setGravados(n)
     setEtapa('pronto')
