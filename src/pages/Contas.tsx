@@ -10,6 +10,7 @@ import { moedasUsaveis } from '../lib/moedas'
 import { mesmoNome } from '../lib/rotulos'
 import type { ContaFixa, Tipo } from '../lib/types'
 import { EscolhaCategoria, Selo } from '../components/Categorias'
+import { CampoCotacao } from '../components/CampoCotacao'
 import { EscolhaMoeda } from '../components/EscolhaMoeda'
 import { EscolhaBanco } from '../components/Formularios'
 import { Icone } from '../components/Icone'
@@ -288,7 +289,8 @@ function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () 
   const entrada = s.conta.tipo === 'entrada'
   const moeda = s.moeda ?? c.perfil.moeda
   const [valor, setValor] = useState(paraCampoMoeda(s.valorNativo, moeda))
-  const [cotacao, setCotacao] = useState('')
+  // a cotação combinada da conta (se houver) já vem preenchida; dá para trocar pela que valeu no dia do pagamento
+  const [cotacao, setCotacao] = useState<number | null>(s.conta.cotacao ?? null)
   const [data, setData] = useState(dataDaBaixa(s.conta, c.ano, c.mes))
   const [erro, setErro] = useState<string | null>(null)
   const mm = String(c.mes).padStart(2, '0')
@@ -298,9 +300,7 @@ function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () 
     const n = parseNumero(valor)
     if (!n || n <= 0) return setErro('Informe um valor maior que zero.')
     if (!data || data.slice(0, 7) !== `${c.ano}-${mm}`) return setErro(`Escolha uma data dentro de ${MESES_NOME[c.mes - 1].toLowerCase()}.`)
-    const t = cotacao.trim() ? parseNumero(cotacao) : null
-    if (s.moeda && cotacao.trim() && (!t || t <= 0)) return setErro('Cotação inválida. Digite quanto vale 1 ' + s.moeda + '.')
-    c.pagarConta(s, { valor: n, data, ...(s.moeda && t ? { cotacao: t } : {}) })
+    c.pagarConta(s, { valor: n, data, ...(s.moeda && cotacao ? { cotacao } : {}) })
     aoFechar()
   }
 
@@ -313,15 +313,10 @@ function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () 
         </label>
         {s.moeda && (
           <div className="cotacao">
-            <label className="campo-caixa">
-              <span className="prefixo">1 {s.moeda} =</span>
-              <input inputMode="decimal" value={cotacao} onChange={(e) => setCotacao(e.target.value)}
-                placeholder={c.taxas[s.moeda] ? String(Math.round(c.taxas[s.moeda] * 10000) / 10000).replace('.', ',') : 'cotação'} aria-label={`Cotação de 1 ${s.moeda}`} />
-              <span className="prefixo">{simbolo(c.perfil.moeda)}</span>
-            </label>
+            <CampoCotacao moeda={s.moeda} principal={c.perfil.moeda} taxaDia={c.taxas[s.moeda]} valor={cotacao} aoMudar={setCotacao} />
             <span className="campo-ajuda">
-              {parseNumero(valor) && (parseNumero(cotacao) ?? c.taxas[s.moeda]) ? <>≈ <b>{fmtValor(parseNumero(valor)! * (parseNumero(cotacao) ?? c.taxas[s.moeda]))}</b> na sua moeda. </> : null}
-              {cotacao.trim() ? 'Cotação que você informou.' : 'Cotação de hoje; troque se pagou por outra.'}
+              {parseNumero(valor) && (cotacao ?? c.taxas[s.moeda]) ? <>≈ <b>{fmtValor(parseNumero(valor)! * (cotacao ?? c.taxas[s.moeda]))}</b> na sua moeda. </> : null}
+              {s.conta.cotacao && cotacao === s.conta.cotacao ? 'Cotação combinada na conta; troque se pagou por outra.' : cotacao ? 'Cotação que você informou.' : 'Cotação de hoje; troque se pagou por outra.'}
             </span>
           </div>
         )}
@@ -351,6 +346,7 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
   const [nome, setNome] = useState(conta?.descricao ?? modelo?.nome ?? '')
   const moedaInicial = conta?.moeda || c.perfil.moeda
   const [moeda, setMoeda] = useState(moedaInicial)
+  const [cotacao, setCotacao] = useState<number | null>(conta?.cotacao ?? null)
   const [valor, setValor] = useState(conta ? paraCampoMoeda(conta.valor, moedaInicial) : '')
   const moedas = moedasUsaveis(c.perfil, conta?.moeda)
   const [dia, setDia] = useState(conta ? String(conta.dia) : '')
@@ -385,7 +381,7 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
     if (!inicio) return setErro('Escolha a partir de qual mês vale.')
     if (fim && fim < inicio) return setErro('O último mês não pode ser antes do primeiro.')
     const dados = {
-      tipo, descricao: nome.trim(), valor: n, dia: Number(dia), moeda: moeda === c.perfil.moeda ? null : moeda,
+      tipo, descricao: nome.trim(), valor: n, dia: Number(dia), moeda: moeda === c.perfil.moeda ? null : moeda, cotacao: moeda === c.perfil.moeda ? null : cotacao,
       categoria_id: categoriaId || null, banco_id: bancoId || null,
       inicio: `${inicio}-01`, fim: fim ? `${fim}-01` : null, ativa: conta?.ativa ?? true,
     }
@@ -406,7 +402,7 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
         </label>
         {moedas.length > 1 && !c.contas.semMoeda && (
           <EscolhaMoeda moedas={moedas} valor={moeda}
-            aoMudar={(m) => { setMoeda(m); setValor((t) => { const x = parseNumero(t); return x ? paraCampoMoeda(x, m) : t }) }} />
+            aoMudar={(m) => { setMoeda(m); setCotacao(null); setValor((t) => { const x = parseNumero(t); return x ? paraCampoMoeda(x, m) : t }) }} />
         )}
         <div className="form-linha">
           <label className="campo-valor">
@@ -425,6 +421,16 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
           </label>
         </div>
         {Number(dia) > 28 && <span className="campo-ajuda">Em meses mais curtos, vale o último dia do mês.</span>}
+        {moeda !== c.perfil.moeda && (
+          <div className="campo">
+            <span className="campo-rotulo">Cotação que você paga <small>(opcional)</small></span>
+            <CampoCotacao key={moeda} moeda={moeda} principal={c.perfil.moeda} taxaDia={c.taxas[moeda]} valor={cotacao} aoMudar={setCotacao} />
+            <span className="campo-ajuda">
+              {parseNumero(valor) && (cotacao ?? c.taxas[moeda]) ? <>Dá <b>≈ {fmtValor(parseNumero(valor)! * (cotacao ?? c.taxas[moeda]))}</b> por mês na sua moeda. </> : null}
+              {cotacao ? 'Com a cotação que você combinou, o total do mês fica exato.' : 'Em branco, vale a cotação do dia. Com a que você paga, o valor da conta fica certo.'}
+            </span>
+          </div>
+        )}
         <EscolhaCategoria
           key={tipo}
           tipo={tipo}

@@ -166,6 +166,8 @@ export interface ContaFixa {
   dia: number
   /** Moeda da conta (migração 14); null = a moeda principal. `valor` fica nessa moeda. */
   moeda?: string | null
+  /** Cotação combinada (migração 15): quanto vale 1 da moeda da conta na principal. null = a cotação do dia. */
+  cotacao?: number | null
   /** Primeiro mês em que vale (dia 1 do mês). */
   inicio: string
   /** Último mês em que vale (dia 1 do mês); null = continua. */

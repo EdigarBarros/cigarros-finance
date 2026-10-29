@@ -8,11 +8,11 @@ const faltaTabela = (e: { code?: string; message: string }) =>
 
 const consultar = () => supabase.from('contas_fixas').select('*').order('dia').order('created_at')
 
-/** Sem a migração 14 a coluna `moeda` não existe: o campo fica de fora do que é gravado. */
-const colunaMoedaFaltando = (e: { code?: string; message: string }) => /moeda/.test(e.message) && (e.code === '42703' || e.code === 'PGRST204')
-const tirarMoeda = <T extends object>(o: T): T => { const { moeda: _m, ...resto } = o as T & { moeda?: unknown }; return resto as T }
+/** Sem as migrações 14 (moeda) e 15 (cotação) as colunas não existem: o campo fica de fora do que é gravado. */
+const colunaFaltando = (e: { code?: string; message: string }) => /moeda|cotacao/.test(e.message) && (e.code === '42703' || e.code === 'PGRST204')
+const tirarNovas = <T extends object>(o: T): T => { const { moeda: _m, cotacao: _c, ...resto } = o as T & { moeda?: unknown; cotacao?: unknown }; return resto as T }
 
-const norm = (r: ContaFixa): ContaFixa => ({ ...r, valor: Number(r.valor ?? 0), dia: Number(r.dia) })
+const norm = (r: ContaFixa): ContaFixa => ({ ...r, valor: Number(r.valor ?? 0), dia: Number(r.dia), cotacao: r.cotacao == null ? null : Number(r.cotacao) })
 
 /**
  * As contas fixas da pessoa (não dependem do ano). A baixa ("Paguei") não passa por aqui:
@@ -49,20 +49,20 @@ export function useContasFixas(aoErro: (msg: string) => void) {
 
   const faltaMoeda = useRef(false)
   const addConta = async (nova: Omit<ContaFixa, 'id'>) => {
-    let r = await supabase.from('contas_fixas').insert(faltaMoeda.current ? tirarMoeda(nova) : nova).select().single()
-    if (r.error && !faltaMoeda.current && colunaMoedaFaltando(r.error)) {
+    let r = await supabase.from('contas_fixas').insert(faltaMoeda.current ? tirarNovas(nova) : nova).select().single()
+    if (r.error && !faltaMoeda.current && colunaFaltando(r.error)) {
       faltaMoeda.current = true
-      r = await supabase.from('contas_fixas').insert(tirarMoeda(nova)).select().single()
+      r = await supabase.from('contas_fixas').insert(tirarNovas(nova)).select().single()
     }
     if (r.error) return falhou(r.error.message)
     setContas((xs) => [...xs, norm(r.data as ContaFixa)])
   }
   const updConta = async (id: string, patch: Partial<ContaFixa>) => {
     setContas((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
-    let { error } = await supabase.from('contas_fixas').update(faltaMoeda.current ? tirarMoeda(patch) : patch).eq('id', id)
-    if (error && !faltaMoeda.current && colunaMoedaFaltando(error)) {
+    let { error } = await supabase.from('contas_fixas').update(faltaMoeda.current ? tirarNovas(patch) : patch).eq('id', id)
+    if (error && !faltaMoeda.current && colunaFaltando(error)) {
       faltaMoeda.current = true
-      ;({ error } = await supabase.from('contas_fixas').update(tirarMoeda(patch)).eq('id', id))
+      ;({ error } = await supabase.from('contas_fixas').update(tirarNovas(patch)).eq('id', id))
     }
     if (error) falhou(error.message)
   }

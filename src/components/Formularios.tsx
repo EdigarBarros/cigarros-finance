@@ -14,6 +14,7 @@ import type { Banco, CartaoCredito, Categoria, Divida, Lancamento, Perfil, Tipo 
 import { EscolhaCategoria } from './Categorias'
 import { Icone } from './Icone'
 import type { NovaDivida } from '../lib/useDados'
+import { CampoCotacao } from './CampoCotacao'
 import { EscolhaMoeda } from './EscolhaMoeda'
 import { Modal, Segmentado } from './ui'
 
@@ -60,7 +61,7 @@ export function FormLancamento(p: FormLancProps) {
   const [valor, setValor] = useState(original ? paraCampoMoeda(original.valor, original.moeda) : ini.valor ? paraCampoMoeda(ini.valor, principal) : '')
   const [moeda, setMoeda] = useState(original?.moeda ?? principal)
   // Cotação usada: a de quando foi lançado (ao editar) ou, vazia, a do dia.
-  const [cotacao, setCotacao] = useState(original && ini.valor ? String(Math.round((ini.valor / original.valor) * 10000) / 10000).replace('.', ',') : '')
+  const [cotacao, setCotacao] = useState<number | null>(original && ini.valor ? ini.valor / original.valor : null)
   const [descricao, setDescricao] = useState(ini.descricao ?? '')
   const [data, setData] = useState(ini.data ?? dataPadrao(p.ano, p.mes))
   const [bancoId, setBancoId] = useState<string>(ini.banco_id ?? '')
@@ -114,7 +115,7 @@ export function FormLancamento(p: FormLancProps) {
 
   const moedasDisponiveis = moedasUsaveis(p.perfil, original?.moeda, ini.moeda_original)
   const estrangeira = moeda !== principal
-  const taxa = (cotacao.trim() ? parseNumero(cotacao) : null) ?? p.taxas[moeda] ?? null
+  const taxa = cotacao ?? p.taxas[moeda] ?? null
   const numero = parseNumero(valor)
   const dica = dicaDaDescricao(descricao, p.perfil, tipo)
   const cartao = !p.inicial && tipo === 'saida' && forma === 'credito' && p.aoSalvarCompra ? p.cartoes?.find((c) => c.id === cartaoId && c.ativo) : undefined
@@ -151,7 +152,7 @@ export function FormLancamento(p: FormLancProps) {
     if (d) {
       if (catDivida) setCategoriaId(catDivida.id)
       // dívida em outra moeda: o pagamento já abre nessa moeda, com a parcela dela
-      if (d.moeda && moedasDisponiveis.includes(d.moeda)) { setMoeda(d.moeda); setCotacao('') }
+      if (d.moeda && moedasDisponiveis.includes(d.moeda)) { setMoeda(d.moeda); setCotacao(null) }
       if (!valor && d.valor_parcela) setValor(paraCampoMoeda(d.valor_parcela, d.moeda ?? principal))
       if (!descricao) setDescricao(`${d.descricao} – parcela`)
     }
@@ -281,7 +282,7 @@ export function FormLancamento(p: FormLancProps) {
         )}
         {moedasDisponiveis.length > 1 && (
           <EscolhaMoeda moedas={moedasDisponiveis} valor={moeda}
-            aoMudar={(m) => { setMoeda(m); setCotacao(''); setValor((t) => { const n = parseNumero(t); return n ? paraCampoMoeda(n, m) : t }) }} />
+            aoMudar={(m) => { setMoeda(m); setCotacao(null); setValor((t) => { const n = parseNumero(t); return n ? paraCampoMoeda(n, m) : t }) }} />
         )}
         <label className="valor-grande" style={{ '--c': cor } as React.CSSProperties}>
           <span>{simbolo(moeda)}</span>
@@ -297,16 +298,10 @@ export function FormLancamento(p: FormLancProps) {
         </label>
         {estrangeira && (
           <div className="cotacao">
-            <label className="campo-caixa">
-              <span className="prefixo">1 {moeda} =</span>
-              <input inputMode="decimal" value={cotacao} onChange={(e) => setCotacao(e.target.value)}
-                placeholder={p.taxas[moeda] ? String(Math.round(p.taxas[moeda] * 10000) / 10000).replace('.', ',') : 'cotação'}
-                aria-label={`Cotação de 1 ${moeda} em ${principal}`} />
-              <span className="prefixo">{simbolo(principal)}</span>
-            </label>
+            <CampoCotacao key={moeda} moeda={moeda} principal={principal} taxaDia={p.taxas[moeda]} valor={cotacao} aoMudar={setCotacao} />
             <span className="campo-ajuda">
               {numero && taxa ? <>≈ <b>{fmtValor(numero * taxa)}</b> na sua moeda. </> : null}
-              {cotacao.trim() ? 'Cotação que você informou.' : p.taxas[moeda] ? 'Cotação de hoje; troque se pagou outra.' : 'Sem cotação automática agora: informe a que você pagou.'}
+              {cotacao ? 'Cotação que você informou.' : p.taxas[moeda] ? 'Cotação de hoje; troque se pagou outra.' : 'Sem cotação automática agora: informe a que você pagou.'}
             </span>
           </div>
         )}

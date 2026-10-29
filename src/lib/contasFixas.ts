@@ -60,8 +60,9 @@ export function situacaoDaConta(c: ContaFixa, lancs: Lancamento[], ano: number, 
   const vencimento = `${ano}-${dois(mes)}-${dois(dia)}`
   const baixa = lancs.find((l) => l.conta_fixa_id === c.id && l.ano === ano && l.mes === mes) ?? null
   const moeda = moedaDaConta(c)
-  const taxa = moeda ? taxas[moeda] ?? 1 : 1
-  // o valor de costume numa moeda de fora entra nos totais convertido pela cotação do dia
+  // a cotação que a pessoa combinou para a conta; sem ela, a do dia
+  const taxa = moeda ? c.cotacao ?? taxas[moeda] ?? 1 : 1
+  // o valor de costume numa moeda de fora entra nos totais convertido por ela
   const estimado = moeda ? centavos(c.valor * taxa) : c.valor
   const base = { conta: c, dia, vencimento, baixa, valor: estimado, moeda, taxa, valorNativo: c.valor, diasRestantes: null, diasAtraso: null }
   // Uma baixa já dada vale mesmo que a conta tenha sido pausada ou mudado de datas depois.
@@ -175,7 +176,7 @@ export function lancamentoDaBaixa(
     categoria_id: c.categoria_id, banco_id: c.banco_id, conta_fixa_id: c.id,
   }
   if (!moeda) return { ...base, valor: nativo }
-  const taxa = mudancas.cotacao ?? taxas[moeda] ?? 1
+  const taxa = mudancas.cotacao ?? c.cotacao ?? taxas[moeda] ?? 1
   return { ...base, valor: centavos(nativo * taxa), valor_original: nativo, moeda_original: moeda }
 }
 

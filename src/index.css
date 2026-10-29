@@ -2924,3 +2924,7 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .moeda-pilula.ativo .moeda-pilula-texto small { color: var(--destaque); }
 .moeda-escolha { display: block; }
 .conta-aprox, .dv-aprox { display: block; font-size: 11px; font-weight: 500; color: var(--texto-3); font-variant-numeric: tabular-nums; }
+.campo-cotacao { display: flex; align-items: center; gap: 8px; }
+.campo-cotacao .campo-caixa { flex: 1; min-width: 0; }
+.campo-cotacao-inverter { flex: none; }
+.campo-cotacao .prefixo { white-space: nowrap; }

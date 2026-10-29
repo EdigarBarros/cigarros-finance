@@ -28,3 +28,21 @@ export function paraCampoMoeda(n: number, moeda: string): string {
   const d = casasDaMoeda(moeda)
   return mascarar(String(Math.round(n * 10 ** d)), d)
 }
+
+/**
+ * Cotação digitada ("1.250,5", "287,7", "0,0035") como número, sem arredondar para 2 casas: o peso argentino vale uns
+ * 0,0035 reais, e arredondar zeraria a conta. null se não for um número maior que zero.
+ */
+export function parseTaxa(texto: string): number | null {
+  let s = texto.trim().replace(/[^\d.,]/g, '')
+  if (!s) return null
+  s = s.includes(',') ? s.replace(/\./g, '').replace(',', '.') : s
+  const n = Number(s)
+  return Number.isFinite(n) && n > 0 ? n : null
+}
+
+/** Cotação no jeito de mostrar: 5,3476 · 287,70 · 0,003476 (poucas casas quando é grande, as significativas quando é pequena). */
+export function fmtTaxa(n: number): string {
+  const t = n >= 100 ? n.toFixed(2) : n >= 1 ? String(Number(n.toFixed(4))) : String(Number(n.toPrecision(4)))
+  return t.replace('.', ',')
+}
