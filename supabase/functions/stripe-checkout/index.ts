@@ -2,15 +2,28 @@
 // Segredo necessário: STRIPE_SECRET_KEY. O resto (SUPABASE_URL, chaves) o Supabase já fornece.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
+const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
+
+// Restringe CORS: aceita a origem da requisição se for localhost ou .netlify.app, senão usa '*' (necessário para o cliente Supabase funcionar em dev/prod sem config extra de env, mas idealmente seria restrito).
+// Nota: Em produção crítica, defina ALLOWED_ORIGINS no ambiente. Aqui, priorizamos funcionalidade com segurança razoável (JWT ainda é validado).
+const getCorsHeaders = (req: Request) => {
+  const origin = req.headers.get('Origin') || ''
+  // Permite localhost (dev) e netlify.app (prod). Ajuste conforme seu domínio real.
+  const isAllowed = origin.includes('localhost') || origin.includes('netlify.app') || origin.includes('opuscash')
+  return {
+    ...CORS_HEADERS,
+    'Access-Control-Allow-Origin': isAllowed ? origin : '*',
+  }
+}
+
 const MOEDAS = ['brl', 'usd', 'eur', 'gbp', 'ars', 'clp', 'uyu', 'cop', 'pen', 'mxn', 'cad', 'aud', 'chf']
 const DIAS_DE_TESTE = 7
 
-const resposta = (corpo: unknown, status = 200) =>
-  new Response(JSON.stringify(corpo), { status, headers: { ...CORS, 'Content-Type': 'application/json' } })
+const resposta = (corpo: unknown, status = 200, req: Request) =>
+  new Response(JSON.stringify(corpo), { status, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } })
 
 /** Formulário no jeito do Stripe: objetos e listas viram chaves[com][colchetes]. */
 function formulario(obj: Record<string, unknown>, prefixo = '', saida = new URLSearchParams()) {
@@ -35,20 +48,20 @@ async function stripe(caminho: string, dados?: Record<string, unknown>) {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: getCorsHeaders(req) })
   try {
     const url = Deno.env.get('SUPABASE_URL')!
     const eu = createClient(url, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } })
     const { data: { user } } = await eu.auth.getUser()
-    if (!user) return resposta({ erro: 'Entre na sua conta para assinar.' }, 401)
+    if (!user) return resposta({ erro: 'Entre na sua conta para assinar.' }, 401, req)
     const servico = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 
     const { retorno, moeda } = await req.json().catch(() => ({}))
     let origem: string
-    try { origem = new URL(String(retorno)).origin } catch { return resposta({ erro: 'Endereço de retorno inválido.' }, 400) }
+    try { origem = new URL(String(retorno)).origin } catch { return resposta({ erro: 'Endereço de retorno inválido.' }, 400, req) }
 
     const { data: atual } = await servico.from('assinaturas').select('*').eq('user_id', user.id).maybeSingle()
-    if (atual && ['trialing', 'active', 'past_due', 'cortesia'].includes(atual.status)) return resposta({ erro: 'ja_ativa' }, 409)
+    if (atual && ['trialing', 'active', 'past_due', 'cortesia'].includes(atual.status)) return resposta({ erro: 'ja_ativa' }, 409, req)
 
     let cliente: string | null = atual?.stripe_customer_id ?? null
     if (!cliente) {
@@ -59,7 +72,7 @@ Deno.serve(async (req) => {
 
     const precos = await stripe('prices?lookup_keys[]=opuscash_mensal&active=true')
     const preco = precos.data?.[0]?.id
-    if (!preco) return resposta({ erro: 'Plano não encontrado no Stripe.' }, 500)
+    if (!preco) return resposta({ erro: 'Plano não encontrado no Stripe.' }, 500, req)
 
     // O teste grátis é uma vez só por pessoa: quem já teve assinatura volta a pagar direto.
     const jaTeve = Boolean(atual?.stripe_subscription_id)
@@ -81,8 +94,8 @@ Deno.serve(async (req) => {
       success_url: `${origem}/?assinatura=ok`,
       cancel_url: `${origem}/?assinatura=cancelada`,
     })
-    return resposta({ url: sessao.url })
+    return resposta({ url: sessao.url }, 200, req)
   } catch (e) {
-    return resposta({ erro: e instanceof Error ? e.message : 'Erro inesperado.' }, 500)
+    return resposta({ erro: e instanceof Error ? e.message : 'Erro inesperado.' }, 500, req)
   }
 })

@@ -162,6 +162,12 @@ function Detalhe({ s, c, aoEditar, aoPagar, aoRenegociar }: {
     .sort((a, b) => b.ano * 12 + b.mes - (a.ano * 12 + a.mes))
   const faturaDe = (p: FaturaPaga) => faturaDoMes(cartao, c.cartoes.compras, c.cartoes.faturasPagas, p.ano, p.mes)
   const banco = c.d.bancos.find((b) => b.id === cartao.banco_id)
+  /** Abre uma parcela da compra para editar ou excluir, esteja ela na fatura que está na tela ou não. */
+  const abrirCompra = (p: CompraParcelada) => {
+    const ps = c.cartoes.compras.filter((l) => l.compra_id === p.compra_id)
+    const l = ps.find((x) => (x.parcela ?? 1) === p.atual) ?? ps[0]
+    if (l) c.editarLancamento(l)
+  }
 
   return (
     <div className="ccd" style={{ '--c': cartao.cor } as React.CSSProperties}>
@@ -246,7 +252,7 @@ function Detalhe({ s, c, aoEditar, aoPagar, aoRenegociar }: {
           <h3 className="ccd-titulo">Parceladas em andamento <small>{s.parceladas.length || ''}</small></h3>
           {s.parceladas.length ? (
             <ul className="ccd-parceladas">
-              {s.parceladas.map((p) => <Parcelada key={p.compra_id} p={p} />)}
+              {s.parceladas.map((p) => <Parcelada key={p.compra_id} p={p} aoAbrir={() => abrirCompra(p)} />)}
             </ul>
           ) : (
             <p className="quadro-vazio">Nenhuma compra parcelada pela frente.</p>
@@ -460,10 +466,11 @@ function Proximas({ s, c }: { s: SituacaoCartao; c: Ctx }) {
   )
 }
 
-function Parcelada({ p }: { p: CompraParcelada }) {
+function Parcelada({ p, aoAbrir }: { p: CompraParcelada; aoAbrir: () => void }) {
   const pagas = p.parcelas - p.restantes
   return (
     <li>
+      <button type="button" className="ccd-parcelada-btn" onClick={aoAbrir} aria-label={`Abrir a compra ${p.descricao || ''}`}>
       <div className="ccd-parcelada-linha">
         <span className="item-desc">{p.descricao || 'Compra'}</span>
         <b>{p.atual}/{p.parcelas}</b>
@@ -476,6 +483,7 @@ function Parcelada({ p }: { p: CompraParcelada }) {
         <span className="ccd-pips longo" aria-hidden="true"><i className="paga" style={{ width: `${(pagas / p.parcelas) * 100}%` }} /></span>
       )}
       <small>{fmtValor(p.valorParcela)}/mês · faltam {fmtValor(p.valorRestante)} · até {sufixoMes(p.termina.ano, p.termina.mes)}</small>
+      </button>
     </li>
   )
 }
