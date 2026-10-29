@@ -506,8 +506,11 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
                 </>
               )}
             </div>
-            <button className="icone-btn tema-btn so-desktop" onClick={trocarTema} aria-label={tema === 'escuro' ? 'Usar tema claro' : 'Usar tema escuro'} title={tema === 'escuro' ? 'Tema claro' : 'Tema escuro'}>
+            <button className="icone-btn tema-btn" onClick={trocarTema} aria-label={tema === 'escuro' ? 'Usar tema claro' : 'Usar tema escuro'} title={tema === 'escuro' ? 'Tema claro' : 'Tema escuro'}>
               <Icone nome={tema === 'escuro' ? 'sol' : 'lua'} />
+            </button>
+            <button className="icone-btn" onClick={() => setAjustes(true)} aria-label="Configurações" title="Configurações">
+              <Icone nome="engrenagem" />
             </button>
             {comContas && (
               <button className="icone-btn" onClick={() => irPara('contas')}

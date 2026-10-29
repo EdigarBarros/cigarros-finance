@@ -2976,3 +2976,26 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .campo-cotacao .campo-caixa { flex: 1; min-width: 0; }
 .campo-cotacao-inverter { flex: none; }
 .campo-cotacao .prefixo { white-space: nowrap; }
+
+/* ---------- barra do topo no celular: seletor de mês + tema, configurações, sino e menu ----------
+   Os quatro botões redondos precisam caber ao lado do seletor: tudo um pouco mais justo, e nas telas mais estreitas
+   as setinhas do mês saem (tocar no mês abre o quadro com os 12 meses). */
+@media (max-width: 860px) {
+  .barra .marca.compacta .marca-simbolo { width: 36px; }
+  .barra-direita { gap: 5px; }
+  .barra .icone-btn { width: 34px; height: 34px; }
+  .seletor-mes { height: 40px; padding: 0 3px; gap: 0; }
+  .seletor-mes > .icone-btn { width: 26px; height: 26px; }
+  .seletor-mes-nome { height: 32px; padding: 0 9px; gap: 5px; font-size: 14px; }
+  .seletor-mes small { font-size: 13px; }
+}
+@media (max-width: 380px) {
+  .barra { gap: 4px; }
+  .barra-direita { gap: 4px; }
+  .barra .icone-btn { width: 32px; height: 32px; }
+  .barra .marca.compacta .marca-simbolo { width: 30px; }
+}
+@media (max-width: 365px) {
+  .seletor-mes > .icone-btn { display: none; }
+  .seletor-mes { padding: 0 4px; }
+}
