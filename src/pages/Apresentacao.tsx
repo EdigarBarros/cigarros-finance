@@ -24,13 +24,13 @@ const DW = 1280, DH = 860
 type Ret = [x: number, y: number, w: number, h: number]
 const BLOCOS = {
   topo: [252, 34, 988, 76],
-  k1: [252, 130, 316, 128],
-  k2: [588, 130, 316, 128],
-  k3: [924, 130, 316, 128],
-  graf: [252, 278, 628, 282],
-  cart: [900, 278, 340, 282],
-  contas: [252, 580, 408, 246],
-  metas: [680, 580, 560, 246],
+  k1: [252, 128, 316, 142],
+  k2: [588, 128, 316, 142],
+  k3: [924, 128, 316, 142],
+  graf: [252, 288, 628, 276],
+  cart: [900, 288, 340, 276],
+  contas: [252, 582, 408, 266],
+  metas: [680, 582, 560, 266],
 } satisfies Record<string, Ret>
 type Bloco = keyof typeof BLOCOS
 const TUDO: Ret = [0, 0, DW, DH]
