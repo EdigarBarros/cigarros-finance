@@ -1,0 +1,134 @@
+<!doctype html>
+<!-- Imagem de prévia do link (og:image, 1200 x 630). Gere de novo com: node scripts/og-image/gerar.cjs -->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=Montserrat:wght@800&family=Sora:wght@600;700&display=block" rel="stylesheet" />
+<style>
+  :root {
+    --fundo: #070b14; --texto: #eef2fa; --texto-2: rgba(203, 213, 235, .72);
+    --m1: #3d4be0; --m2: #1f8ef1; --m3: #14c9a0; --saida: #ff6b81;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; background: var(--fundo); }
+  body { position: relative; font-family: Inter, sans-serif; color: var(--texto); }
+
+  /* luz e textura do fundo */
+  .luz { position: absolute; inset: 0;
+    background:
+      radial-gradient(520px 420px at 82% 38%, rgba(20, 201, 160, .20), transparent 70%),
+      radial-gradient(560px 460px at 62% 92%, rgba(61, 75, 224, .26), transparent 70%),
+      radial-gradient(420px 320px at 8% 6%, rgba(31, 142, 241, .14), transparent 70%); }
+  .pontos { position: absolute; inset: 0; opacity: .5;
+    background: radial-gradient(circle, rgba(148, 163, 196, .16) 1.2px, transparent 1.6px) 0 0 / 26px 26px;
+    -webkit-mask-image: radial-gradient(70% 80% at 70% 50%, #000, transparent); mask-image: radial-gradient(70% 80% at 70% 50%, #000, transparent); }
+  .borda { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: linear-gradient(90deg, var(--m1), var(--m2) 52%, var(--m3)); }
+
+  /* coluna do texto */
+  .texto { position: absolute; left: 72px; top: 0; bottom: 0; width: 600px; display: flex; flex-direction: column; justify-content: center; gap: 30px; }
+  .marca { display: flex; align-items: center; gap: 22px; }
+  .marca img { width: 150px; height: auto; filter: drop-shadow(0 14px 30px rgba(31, 142, 241, .35)); }
+  .marca span { font-family: Montserrat, sans-serif; font-weight: 800; font-size: 50px; letter-spacing: .04em; line-height: 1; }
+  .marca b { color: var(--m3); font-weight: 800; }
+  h1 { font-family: Sora, sans-serif; font-weight: 700; font-size: 58px; line-height: 1.06; letter-spacing: -.035em; }
+  h1 em { font-style: normal; background: linear-gradient(90deg, var(--m1), var(--m2) 45%, var(--m3)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  p { font-size: 24px; line-height: 1.4; color: var(--texto-2); font-weight: 500; max-width: 600px; }
+  .rodape { display: flex; align-items: center; gap: 18px; }
+  .pilula { padding: 12px 22px; border-radius: 999px; font-size: 22px; font-weight: 600; color: #032319; background: linear-gradient(90deg, #1fd1a0, #14c9a0); box-shadow: 0 12px 30px -10px rgba(31, 209, 160, .6); }
+  .site { font-size: 22px; font-weight: 600; color: var(--texto-2); }
+
+  /* ilustração */
+  .arte { position: absolute; right: 30px; top: 50%; translate: 0 -50%; width: 520px; height: 520px; }
+</style>
+</head>
+<body>
+  <div class="luz"></div>
+  <div class="pontos"></div>
+
+  <div class="texto">
+    <div class="marca"><img src="simbolo.png" alt="" /><span>OPUS<b>CASH</b></span></div>
+    <h1>Seu dinheiro,<br /><em>infinitas</em> possibilidades</h1>
+    <p>Cartões, contas, metas e dívidas num painel só.</p>
+    <div class="rodape"><span class="pilula">7 dias grátis</span><span class="site">opuscash.com.br</span></div>
+  </div>
+
+  <svg class="arte" viewBox="0 0 520 520" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <linearGradient id="linha" x1="0" x2="1"><stop offset="0" stop-color="#3d4be0" /><stop offset=".5" stop-color="#1f8ef1" /><stop offset="1" stop-color="#14c9a0" /></linearGradient>
+      <linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#1f8ef1" stop-opacity=".38" /><stop offset="1" stop-color="#1f8ef1" stop-opacity="0" /></linearGradient>
+      <linearGradient id="painel" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#16203a" /><stop offset="1" stop-color="#0d1424" /></linearGradient>
+      <linearGradient id="barra-e" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#2ad4a0" /><stop offset="1" stop-color="#2ad4a0" stop-opacity=".35" /></linearGradient>
+      <linearGradient id="barra-s" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#ff6b81" /><stop offset="1" stop-color="#ff6b81" stop-opacity=".3" /></linearGradient>
+      <linearGradient id="cartao" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#9b2ff0" /><stop offset=".55" stop-color="#6a0fc0" /><stop offset="1" stop-color="#3d4be0" /></linearGradient>
+      <linearGradient id="chip" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#f6d77a" /><stop offset="1" stop-color="#c9a03c" /></linearGradient>
+      <linearGradient id="moeda" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ffe08a" /><stop offset="1" stop-color="#e0a72e" /></linearGradient>
+      <filter id="sombra" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000" flood-opacity=".55" /></filter>
+      <filter id="brilho" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6" /></filter>
+    </defs>
+
+    <!-- painel com o gráfico de linha subindo -->
+    <g filter="url(#sombra)">
+      <rect x="40" y="70" width="420" height="300" rx="26" fill="url(#painel)" stroke="rgba(148,163,196,.22)" />
+    </g>
+    <rect x="72" y="100" width="120" height="12" rx="6" fill="rgba(203,213,235,.35)" />
+    <rect x="72" y="124" width="180" height="22" rx="8" fill="#eef2fa" opacity=".92" />
+    <g stroke="rgba(148,163,196,.12)" stroke-width="1.5">
+      <line x1="72" x2="428" y1="190" y2="190" /><line x1="72" x2="428" y1="240" y2="240" /><line x1="72" x2="428" y1="290" y2="290" /><line x1="72" x2="428" y1="340" y2="340" />
+    </g>
+    <path d="M72 320 C110 312 130 300 160 296 S210 304 236 280 S280 236 312 240 S366 214 392 186 S418 160 428 154 L428 344 L72 344 Z" fill="url(#area)" />
+    <path d="M72 320 C110 312 130 300 160 296 S210 304 236 280 S280 236 312 240 S366 214 392 186 S418 160 428 154" fill="none" stroke="url(#linha)" stroke-width="6" stroke-linecap="round" />
+    <path d="M72 320 C110 312 130 300 160 296 S210 304 236 280 S280 236 312 240 S366 214 392 186 S418 160 428 154" fill="none" stroke="#1f8ef1" stroke-width="10" opacity=".35" filter="url(#brilho)" />
+    <circle cx="428" cy="154" r="9" fill="#14c9a0" stroke="#0d1424" stroke-width="4" />
+    <circle cx="312" cy="240" r="6" fill="#1f8ef1" stroke="#0d1424" stroke-width="3" />
+    <circle cx="160" cy="296" r="6" fill="#3d4be0" stroke="#0d1424" stroke-width="3" />
+
+    <!-- selo de alta -->
+    <g transform="translate(318 34)" filter="url(#sombra)">
+      <rect width="132" height="52" rx="26" fill="#0f1a2e" stroke="rgba(20,201,160,.55)" stroke-width="2" />
+      <path d="M26 33 L38 21 L46 29 L58 17" fill="none" stroke="#14c9a0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M50 17 H58 V25" fill="none" stroke="#14c9a0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+      <text x="70" y="34" font-family="Sora, sans-serif" font-weight="700" font-size="20" fill="#14c9a0">+18%</text>
+    </g>
+
+    <!-- barras: entrou e saiu -->
+    <g transform="translate(250 330)" filter="url(#sombra)">
+      <rect width="230" height="150" rx="22" fill="url(#painel)" stroke="rgba(148,163,196,.22)" />
+    </g>
+    <g transform="translate(276 444)">
+      <rect x="0" y="-52" width="14" height="52" rx="4" fill="url(#barra-e)" /><rect x="18" y="-40" width="14" height="40" rx="4" fill="url(#barra-s)" />
+      <rect x="46" y="-70" width="14" height="70" rx="4" fill="url(#barra-e)" /><rect x="64" y="-48" width="14" height="48" rx="4" fill="url(#barra-s)" />
+      <rect x="92" y="-62" width="14" height="62" rx="4" fill="url(#barra-e)" /><rect x="110" y="-44" width="14" height="44" rx="4" fill="url(#barra-s)" />
+      <rect x="138" y="-86" width="14" height="86" rx="4" fill="url(#barra-e)" /><rect x="156" y="-52" width="14" height="52" rx="4" fill="url(#barra-s)" />
+    </g>
+    <rect x="276" y="352" width="70" height="10" rx="5" fill="rgba(203,213,235,.35)" />
+
+    <!-- anel de meta -->
+    <g transform="translate(118 420)" filter="url(#sombra)">
+      <circle r="62" fill="url(#painel)" stroke="rgba(148,163,196,.22)" />
+    </g>
+    <g transform="translate(118 420) rotate(-90)">
+      <circle r="44" fill="none" stroke="rgba(148,163,196,.14)" stroke-width="12" />
+      <circle r="44" fill="none" stroke="url(#linha)" stroke-width="12" stroke-linecap="round" stroke-dasharray="207 277" />
+    </g>
+    <text x="118" y="428" text-anchor="middle" font-family="Sora, sans-serif" font-weight="700" font-size="24" fill="#eef2fa">75%</text>
+
+    <!-- cartão de crédito inclinado -->
+    <g transform="translate(-6 196) rotate(-14)" filter="url(#sombra)">
+      <rect width="176" height="110" rx="16" fill="url(#cartao)" />
+      <rect x="18" y="38" width="30" height="22" rx="5" fill="url(#chip)" />
+      <rect x="18" y="80" width="86" height="8" rx="4" fill="rgba(255,255,255,.55)" />
+      <circle cx="140" cy="84" r="12" fill="rgba(255,255,255,.35)" /><circle cx="154" cy="84" r="12" fill="rgba(255,255,255,.22)" />
+      <path d="M0 0 H176 V40 C120 30 60 70 0 50 Z" fill="rgba(255,255,255,.08)" />
+    </g>
+
+    <!-- moedas -->
+    <g transform="translate(470 300)" filter="url(#sombra)">
+      <ellipse cx="0" cy="40" rx="34" ry="11" fill="#b9861f" /><rect x="-34" y="26" width="68" height="14" fill="#c9952a" /><ellipse cx="0" cy="26" rx="34" ry="11" fill="url(#moeda)" />
+      <ellipse cx="0" cy="18" rx="34" ry="11" fill="#b9861f" /><rect x="-34" y="4" width="68" height="14" fill="#c9952a" /><ellipse cx="0" cy="4" rx="34" ry="11" fill="url(#moeda)" />
+      <text x="0" y="10" text-anchor="middle" font-family="Sora, sans-serif" font-weight="700" font-size="14" fill="#8a5a00">R$</text>
+    </g>
+  </svg>
+
+  <div class="borda"></div>
+</body>
+</html>
