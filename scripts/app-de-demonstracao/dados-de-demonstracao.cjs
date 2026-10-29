@@ -1,4 +1,4 @@
-// Conta de demonstração (Marina, 10 meses de histórico) usada nas capturas da landing page. Tudo inventado.
+// Conta de demonstração (Marina, 10 meses de histórico) para testar o app com dados realistas. Tudo inventado.
 const U='11111111-1111-4111-8111-111111111111'
 const ANO=2026
 const id=(p,n)=>`${p}-${String(n).padStart(4,'0')}-4000-8000-000000000000`

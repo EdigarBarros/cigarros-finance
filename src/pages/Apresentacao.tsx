@@ -414,7 +414,7 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
         <div className="ap-hero-centro">
           <div className="ap-logo-flutuante">
             {/* o logo em imagem tem "OPUS" branco: no tema claro entra a marca desenhada */}
-            <img className="ap-logo-escuro" src="/logo-opuscash.webp" alt="OpusCash" />
+            <img className="ap-logo-escuro" src="/logo-opuscash.webp" alt="OpusCash" width={960} height={329} fetchPriority="high" />
             <span className="ap-logo-claro"><Marca grande /></span>
             <span className="ap-logo-brilho" />
           </div>

@@ -1,4 +1,3 @@
-// Servidor estático do dist + Supabase falso em memória + Chromium (Playwright). Só para gerar as capturas da landing page.
 // Servidor estático do dist + Supabase falso em memória, para testar o app no Chromium.
 const http=require('http'),fs=require('fs'),path=require('path'),crypto=require('crypto')
 const CSP=JSON.parse(fs.readFileSync(path.join(__dirname,'..','..','vercel.json'))).headers[0].headers.find(h=>h.key==='Content-Security-Policy').value
