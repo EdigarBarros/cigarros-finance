@@ -1,7 +1,6 @@
 /* =========================================================================
-   OpusCash — Landing Page Premium com Scroll-Driven 3D
-   Dashboard "gruda" na tela e se transforma conforme o scroll.
-   Foco em visual, animações e ilustrações — mínimo de texto.
+   OpusCash — Landing page
+   No meio dela, as telas reais do app flutuam em 3D e a câmera voa entre elas conforme o scroll.
    ========================================================================= */
 
 .ap {
@@ -232,621 +231,104 @@
   50% { top: 18px; opacity: .3; }
 }
 
+
 /* =========================================================================
-   PALCO 3D — Dashboard sticky que se transforma no scroll
+   AS TELAS DO APP EM 3D
+   Cada tela é uma captura real do app (public/landing). Ficam em fila no espaço dentro de .ap-mundo; o scroll move a
+   câmera (transform do .ap-mundo, escrito pelo componente) de uma para a outra, sempre olhando de lado.
    ========================================================================= */
-.ap-palco {
-  position: relative;
-  /* Altura total = 5 cenas × 100vh para dar espaço ao scroll */
-  height: 500vh;
-}
+.ap-palco { position: relative; height: 640vh; }
 
 .ap-palco-sticky {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  --w: 900px;
+  --ar: .625; /* altura / largura de cada tela */
+  --persp: 1700px;
+  position: sticky; top: 0; height: 100vh; height: 100dvh; overflow: hidden;
+  background: var(--fundo);
 }
 
-/* Labels das cenas */
-.ap-cena-label {
-  position: absolute;
-  left: 5%;
-  top: 50%;
-  transform: translateY(-50%) translateX(-30px);
-  opacity: 0;
-  transition: all .6s var(--mola);
-  z-index: 10;
-  max-width: 280px;
+/* luz ambiente atrás das telas; a cor desliza com a posição da câmera (--k) */
+.ap-luz {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(46% 58% at calc(72% - var(--k, 0) * 4%) 50%, color-mix(in srgb, var(--marca-3) 22%, transparent), transparent 70%),
+    radial-gradient(40% 52% at calc(30% + var(--k, 0) * 5%) 70%, color-mix(in srgb, var(--marca-1) 20%, transparent), transparent 72%);
 }
 
-.ap-cena-label.ativa {
-  opacity: 1;
-  transform: translateY(-50%) translateX(0);
+.ap-palco-cena {
+  position: absolute; inset: 0; z-index: 1;
+  perspective: var(--persp);
+  perspective-origin: 60% 50%;
 }
 
-.ap-cena-num {
-  display: block;
-  font-family: var(--fonte-numeros);
-  font-size: .8rem;
-  font-weight: 700;
-  color: var(--marca-3);
-  letter-spacing: .1em;
-  margin-bottom: 8px;
-}
-
-.ap-cena-label h2 {
-  font-family: var(--fonte-titulo);
-  font-size: 1.8rem;
-  font-weight: 700;
-  margin: 0 0 8px;
-  letter-spacing: -.02em;
-}
-
-.ap-cena-label p {
-  color: var(--texto-2);
-  font-size: .95rem;
-  line-height: 1.5;
-  margin: 0;
-}
-
-/* Dashboard 3D container */
-.ap-dash-3d {
-  position: relative;
-  width: min(900px, 85vw);
-  transition: transform .15s linear;
+/* origem do mundo: um pouco à direita do centro no desktop, para sobrar lugar para o texto à esquerda */
+.ap-mundo {
+  position: absolute; left: 60%; top: 50%; width: 0; height: 0;
+  transform-style: preserve-3d;
   will-change: transform;
 }
 
-.ap-dash-glow {
-  position: absolute;
-  inset: -30px;
-  background: radial-gradient(ellipse at center, rgba(31, 209, 160, .1) 0%, transparent 70%);
-  border-radius: var(--raio);
-  filter: blur(40px);
-  pointer-events: none;
-  z-index: -1;
-}
-
-.ap-dash-frame {
+.ap-plano {
+  position: absolute; left: 0; top: 0;
+  width: var(--w); height: calc(var(--w) * var(--ar));
+  margin: calc(var(--w) * var(--ar) * -.5) 0 0 calc(var(--w) * -.5);
+  border-radius: clamp(10px, calc(var(--w) * .016), 20px);
+  overflow: hidden;
   background: var(--superficie);
-  border: 1px solid var(--borda-forte);
-  border-radius: var(--raio);
-  overflow: hidden;
-  box-shadow: var(--sombra-alta), 0 0 0 1px rgba(255,255,255,.03) inset;
-}
-
-/* Topbar do dashboard mock */
-.ap-dash-topbar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 20px;
-  background: var(--superficie-2);
-  border-bottom: 1px solid var(--borda);
-}
-
-.ap-dash-dots {
-  display: flex;
-  gap: 7px;
-}
-
-.ap-dash-dots i {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  display: block;
-}
-
-.ap-dash-dots i:nth-child(1) { background: #ff5f57; }
-.ap-dash-dots i:nth-child(2) { background: #ffbd2e; }
-.ap-dash-dots i:nth-child(3) { background: #28ca42; }
-
-.ap-dash-mes {
-  margin-left: auto;
-  font-size: .8rem;
-  color: var(--texto-3);
-}
-
-/* Body do dashboard */
-.ap-dash-body {
-  display: flex;
-  min-height: 420px;
-}
-
-/* Nav lateral */
-.ap-dash-nav {
-  width: 180px;
-  background: var(--fundo-lateral);
-  padding: 20px 12px;
-  border-right: 1px solid var(--borda);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.ap-dash-nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border-radius: var(--raio-p);
-  font-size: .82rem;
-  color: var(--texto-2);
-  transition: all .3s var(--mola);
-}
-
-.ap-dash-nav-item.ativo {
-  background: var(--destaque-suave);
-  color: var(--destaque);
-  font-weight: 600;
-}
-
-.ap-dash-nav-item span {
-  white-space: nowrap;
-}
-
-/* Conteúdo principal */
-.ap-dash-content {
-  flex: 1;
-  padding: 24px;
-  position: relative;
-  overflow: hidden;
-}
-
-/* Cenas do dashboard */
-.ap-dash-cena {
-  position: absolute;
-  inset: 24px;
-  opacity: 0;
-  transform: translateY(20px) scale(.97);
-  transition: all .5s var(--mola);
-  pointer-events: none;
-}
-
-.ap-dash-cena.ativa {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: auto;
-}
-
-/* ── Cena 0: Visão geral ── */
-.ap-kpi-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 18px;
-}
-
-.ap-kpi {
-  background: var(--superficie-2);
-  border: 1px solid var(--borda);
-  border-radius: var(--raio-m);
-  padding: 18px;
-}
-
-.ap-kpi small {
-  display: block;
-  font-size: .75rem;
-  color: var(--texto-3);
-  margin-bottom: 6px;
-}
-
-.ap-kpi strong {
-  font-family: var(--fonte-numeros);
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.ap-kpi strong small {
-  display: inline;
-  font-size: .9rem;
-  color: var(--texto-2);
-  margin: 0;
-}
-
-.ap-kpi-saldo { grid-column: 1; }
-.ap-kpi-entrada strong { color: var(--entrada); }
-.ap-kpi-saida strong { color: var(--saida); }
-
-.ap-spark {
-  width: 100%;
-  height: 50px;
-  margin-top: 10px;
-}
-
-.ap-bar-mini {
-  height: 6px;
-  background: var(--preench-3);
-  border-radius: 3px;
-  margin-top: 10px;
-  overflow: hidden;
-}
-
-.ap-bar-mini i {
-  display: block;
-  height: 100%;
-  background: var(--entrada);
-  border-radius: 3px;
-  transition: width 1s var(--mola);
-}
-
-.ap-bar-mini.saida i {
-  background: var(--saida);
-}
-
-/* Cards de banco na visão geral */
-.ap-cards-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.ap-card-vis {
-  border-radius: var(--raio-m);
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.ap-card-nubank {
-  background: linear-gradient(135deg, #820ad1, #a020f0);
-  color: #fff;
-}
-
-.ap-card-itaú {
-  background: linear-gradient(135deg, #ec6608, #ff8c00);
-  color: #fff;
-}
-
-.ap-card-band {
-  font-size: .7rem;
-  opacity: .7;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-}
-
-.ap-card-val {
-  font-family: var(--fonte-numeros);
-  font-size: 1.3rem;
-  font-weight: 700;
-}
-
-.ap-card-lim {
-  font-size: .75rem;
-  opacity: .6;
-}
-
-/* ── Cena 1: Cartões ── */
-.ap-cards-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-bottom: 18px;
-}
-
-.ap-card-big {
-  border-radius: var(--raio-m);
-  padding: 22px;
-  position: relative;
-  overflow: hidden;
-  color: #fff;
-}
-
-.ap-card-nubank-big {
-  background: linear-gradient(135deg, #820ad1, #6b00b0);
-}
-
-.ap-card-itau-big {
-  background: linear-gradient(135deg, #ec6608, #cc5500);
-}
-
-.ap-card-chip {
-  width: 36px;
-  height: 26px;
-  background: linear-gradient(135deg, #ffd700, #daa520);
-  border-radius: 5px;
-  margin-bottom: 14px;
-}
-
-.ap-card-num {
-  font-family: var(--fonte-numeros);
-  font-size: 1.1rem;
-  letter-spacing: .15em;
-  display: block;
-  margin-bottom: 12px;
-}
-
-.ap-card-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: .8rem;
-  opacity: .8;
-}
-
-.ap-card-barra {
-  height: 4px;
-  background: rgba(255,255,255,.2);
-  border-radius: 2px;
-  margin-top: 14px;
-  overflow: hidden;
-}
-
-.ap-card-barra i {
-  display: block;
-  height: 100%;
-  background: rgba(255,255,255,.7);
-  border-radius: 2px;
-}
-
-.ap-parcelas h4 {
-  font-size: .85rem;
-  color: var(--texto-2);
-  margin: 0 0 10px;
-}
-
-.ap-parcela-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  background: var(--superficie-2);
-  border: 1px solid var(--borda);
-  border-radius: var(--raio-p);
-  margin-bottom: 6px;
-  font-size: .82rem;
-}
-
-.ap-parcela-item strong {
-  font-family: var(--fonte-numeros);
-  color: var(--texto);
-}
-
-.ap-parcela-item small {
-  color: var(--texto-3);
-}
-
-/* ── Cena 2: Metas ── */
-.ap-metas-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-.ap-meta-card {
-  background: var(--superficie-2);
-  border: 1px solid var(--borda);
-  border-radius: var(--raio-m);
-  padding: 20px;
-  text-align: center;
-}
-
-.ap-meta-ring {
-  position: relative;
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 12px;
-}
-
-.ap-meta-ring svg {
-  width: 100%;
-  height: 100%;
-  transform: rotate(0deg);
-}
-
-.ap-meta-ring span {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--fonte-numeros);
-  font-size: .9rem;
-  font-weight: 700;
-}
-
-.ap-meta-card h4 {
-  font-size: .85rem;
-  margin: 0 0 4px;
-}
-
-.ap-meta-card p {
-  font-family: var(--fonte-numeros);
-  font-size: .8rem;
-  color: var(--texto-2);
-  margin: 0;
-}
-
-.ap-meta-card p small {
-  color: var(--texto-3);
-}
-
-/* ── Cena 3: Dívidas ── */
-.ap-dividas-lista {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.ap-divida-card {
-  background: var(--superficie-2);
-  border: 1px solid var(--borda);
-  border-radius: var(--raio-m);
-  padding: 18px;
-}
-
-.ap-divida-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.ap-divida-top h4 {
-  font-size: .9rem;
-  margin: 0;
-}
-
-.ap-divida-badge {
-  font-size: .7rem;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 20px;
-  color: #fff;
-}
-
-.ap-divida-vals {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 12px;
-}
-
-.ap-divida-vals div {
-  display: flex;
-  flex-direction: column;
-}
-
-.ap-divida-vals small {
-  font-size: .7rem;
-  color: var(--texto-3);
-}
-
-.ap-divida-vals strong {
-  font-family: var(--fonte-numeros);
-  font-size: .95rem;
-}
-
-.ap-divida-barra {
-  height: 6px;
-  background: var(--preench-3);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.ap-divida-barra i {
-  display: block;
-  height: 100%;
-  border-radius: 3px;
-  transition: width 1s var(--mola);
-}
-
-/* ── Cena 4: Relatório ── */
-.ap-relatorio {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.ap-grafico-barras {
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  height: 160px;
-  padding: 0 4px;
-}
-
-.ap-barra-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-  justify-content: flex-end;
-  gap: 6px;
-}
-
-.ap-barra-fill {
-  width: 100%;
-  background: var(--saida);
-  border-radius: 4px 4px 0 0;
-  position: relative;
-  overflow: hidden;
-  transition: height .8s var(--mola);
-  min-height: 8px;
-}
-
-.ap-barra-entrada {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: var(--entrada);
-  border-radius: 0 0 0 0;
-}
-
-.ap-barra-col small {
-  font-size: .65rem;
-  color: var(--texto-3);
-}
-
-.ap-legenda {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  font-size: .75rem;
-  color: var(--texto-2);
-}
-
-.ap-legenda span {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.ap-leg-ent, .ap-leg-sai {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  display: inline-block;
-}
-
-.ap-leg-ent { background: var(--entrada); }
-.ap-leg-sai { background: var(--saida); }
-
-.ap-categorias-top {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ap-cat-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: .8rem;
-}
-
-.ap-cat-item span {
-  width: 90px;
-  color: var(--texto-2);
-  flex-shrink: 0;
-}
-
-.ap-cat-bar {
-  flex: 1;
-  height: 6px;
-  background: var(--preench-3);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.ap-cat-bar i {
-  display: block;
-  height: 100%;
-  border-radius: 3px;
-  transition: width 1s var(--mola);
-}
-
-.ap-cat-item strong {
-  font-family: var(--fonte-numeros);
-  width: 36px;
-  text-align: right;
-  color: var(--texto);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--texto) 12%, transparent),
+    0 50px 110px -34px rgba(0, 0, 0, .65),
+    0 0 90px -20px color-mix(in srgb, var(--marca-3) 28%, transparent);
+  backface-visibility: hidden;
+  will-change: opacity, transform;
+}
+.ap-plano img { display: block; width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; }
+/* reflexo de vidro sobre a tela, só para dar volume */
+.ap-plano::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(112deg, rgba(255, 255, 255, .13) 0%, rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0) 70%, rgba(255, 255, 255, .05) 100%);
+}
+
+/* legenda e trilho */
+.ap-cenas {
+  position: absolute; z-index: 3; left: clamp(20px, 5vw, 72px); bottom: clamp(36px, 12vh, 120px);
+  width: min(360px, 40vw); display: grid; gap: 26px;
+}
+.ap-cena-pilha { display: grid; }
+.ap-cena-label {
+  grid-area: 1 / 1; opacity: 0; transform: translateY(18px); pointer-events: none;
+  transition: opacity .5s var(--mola), transform .6s var(--mola);
+}
+.ap-cena-label.ativa { opacity: 1; transform: none; pointer-events: auto; }
+.ap-cena-num { display: block; font-family: var(--fonte-numeros); font-size: .8rem; font-weight: 700; color: var(--marca-3); letter-spacing: .1em; margin-bottom: 10px; }
+.ap-cena-label h2 { font-family: var(--fonte-titulo); font-size: clamp(1.8rem, 2.8vw, 2.7rem); font-weight: 700; line-height: 1.06; letter-spacing: -.025em; margin: 0 0 12px; }
+.ap-cena-label p { color: var(--texto-2); font-size: 1.04rem; line-height: 1.5; margin: 0; max-width: 30ch; }
+
+.ap-trilho { display: flex; gap: 10px; align-items: center; }
+.ap-trilho-ponto {
+  width: 10px; height: 10px; padding: 0; border: 0; border-radius: 999px; cursor: pointer;
+  background: var(--borda-forte); transition: width .4s var(--mola), background .3s;
+}
+.ap-trilho-ponto:hover { background: var(--texto-3); }
+.ap-trilho-ponto.ativo { width: 34px; background: linear-gradient(90deg, var(--marca-1), var(--marca-3)); }
+.ap-trilho-ponto:focus-visible { outline: 2px solid var(--destaque); outline-offset: 3px; }
+
+/* celular: texto em cima, telas embaixo (grandes, passando um pouco da borda) */
+@media (max-width: 900px) {
+  .ap-palco { height: 600vh; }
+  .ap-palco-cena { perspective-origin: 50% 62%; }
+  .ap-mundo { left: 50%; top: 63%; }
+  .ap-cenas {
+    left: 0; right: 0; top: clamp(56px, 9vh, 90px); bottom: auto; width: auto;
+    padding: 0 22px; text-align: center; justify-items: center; gap: 16px;
+  }
+  .ap-cena-pilha { min-height: 118px; }
+  .ap-cena-label h2 { font-size: 1.65rem; }
+  .ap-cena-label p { margin-inline: auto; font-size: .95rem; max-width: 32ch; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-cena-label, .ap-trilho-ponto { transition: none; }
 }
 
 /* =========================================================================
@@ -986,219 +468,11 @@
   color: var(--marca-3);
 }
 
-/* =========================================================================
-   RESPONSIVE
-   ========================================================================= */
+
 @media (max-width: 768px) {
-  .ap-logo-flutuante img {
-    width: 220px;
-  }
-
-  .ap-cena-label {
-    position: relative;
-    left: auto;
-    top: auto;
-    transform: none;
-    text-align: center;
-    max-width: 100%;
-    padding: 0 20px;
-    margin-bottom: 20px;
-  }
-
-  .ap-cena-label.ativa {
-    transform: none;
-  }
-
-  .ap-palco-sticky {
-    flex-direction: column;
-    justify-content: flex-start;
-    padding-top: 60px;
-  }
-
-  .ap-dash-3d {
-    width: 95vw;
-  }
-
-  .ap-dash-nav {
-    display: none;
-  }
-
-  .ap-kpi-row {
-    grid-template-columns: 1fr;
-  }
-
-  .ap-cards-row {
-    grid-template-columns: 1fr;
-  }
-
-  .ap-metas-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .ap-botoes {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .ap-btn {
-    justify-content: center;
-  }
-
-  .ap-features-mini {
-    flex-direction: column;
-    align-items: center;
-  }
-}
-/* =========================================================================
-   PALCO — layout em duas colunas (legenda + dashboard), trilho de cenas e
-   transformação 3D guiada pela variável --p (0 a 1), definida no scroll.
-   Estas regras sobrepõem as primeiras versões acima.
-   ========================================================================= */
-.ap-palco { --p: 0; }
-
-.ap-palco-sticky {
-  display: block;
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
-}
-
-.ap-palco-grade {
-  height: 100%;
-  max-width: 1480px;
-  margin: 0 auto;
-  padding: 0 clamp(20px, 5vw, 72px);
-  display: grid;
-  grid-template-columns: minmax(240px, 360px) minmax(0, 1fr);
-  align-items: center;
-  gap: clamp(24px, 4vw, 72px);
-}
-
-.ap-cenas { display: grid; gap: 28px; }
-
-/* todas as legendas ocupam a mesma célula; só a ativa aparece */
-.ap-cena-pilha { display: grid; }
-.ap-cena-label,
-.ap-cena-label.ativa {
-  position: static;
-  grid-area: 1 / 1;
-  max-width: none;
-  transform: translateY(18px);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .5s var(--mola), transform .6s var(--mola);
-}
-.ap-cena-label.ativa { opacity: 1; transform: none; pointer-events: auto; }
-.ap-cena-label h2 { font-size: clamp(1.7rem, 2.6vw, 2.5rem); line-height: 1.08; margin-bottom: 12px; }
-.ap-cena-label p { font-size: 1.02rem; max-width: 30ch; }
-
-/* trilho: uma bolinha por cena, clicável */
-.ap-trilho { display: flex; gap: 10px; align-items: center; }
-.ap-trilho-ponto {
-  width: 10px; height: 10px; padding: 0; border: 0; border-radius: 999px; cursor: pointer;
-  background: var(--borda-forte); transition: width .4s var(--mola), background .3s;
-}
-.ap-trilho-ponto:hover { background: var(--texto-3); }
-.ap-trilho-ponto.ativo { width: 34px; background: linear-gradient(90deg, var(--marca-1), var(--marca-3)); }
-.ap-trilho-ponto:focus-visible { outline: 2px solid var(--destaque); outline-offset: 3px; }
-
-/* dashboard: mais largo, altura fixa para as cenas caberem, tombado no começo e de frente no fim */
-.ap-dash-3d {
-  width: 100%;
-  max-width: 1000px;
-  justify-self: center;
-  transform-origin: 30% 50%;
-  transform:
-    perspective(1500px)
-    rotateX(calc(10deg - var(--p) * 10deg))
-    rotateY(calc(-12deg + var(--p) * 9deg))
-    scale(calc(.9 + var(--p) * .1))
-    translateY(calc(30px - var(--p) * 30px));
-  transition: none;
-}
-.ap-dash-glow { background: radial-gradient(ellipse at center, rgba(31, 209, 160, .22) 0%, rgba(61, 75, 224, .12) 45%, transparent 72%); }
-.ap-dash-body { height: clamp(400px, 62vh, 580px); min-height: 0; }
-.ap-dash-content { min-width: 0; padding: 0; }
-.ap-dash-cena { inset: 0; padding: 22px; overflow: hidden; }
-
-@media (max-width: 900px) {
-  .ap-palco-grade {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
-    align-content: center;
-    align-items: start;
-    gap: 18px;
-    padding: 0 14px;
-  }
-  .ap-cenas { gap: 14px; text-align: center; justify-items: center; padding-top: 4px; }
-  .ap-cena-pilha { min-height: 128px; }
-  .ap-cena-label, .ap-cena-label.ativa { padding: 0; margin: 0; text-align: center; max-width: none; }
-  .ap-cena-label h2 { font-size: 1.55rem; }
-  .ap-cena-label p { margin-inline: auto; font-size: .95rem; max-width: 34ch; }
-  .ap-dash-3d {
-    width: 100%;
-    transform:
-      perspective(1100px)
-      rotateX(calc(6deg - var(--p) * 6deg))
-      rotateY(0deg)
-      scale(calc(.94 + var(--p) * .06));
-  }
-  .ap-dash-body { height: clamp(330px, 50dvh, 460px); }
-  .ap-dash-nav { display: none; }
-  .ap-dash-cena { padding: 14px; }
-  .ap-dash-topbar { padding: 10px 14px; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ap-dash-3d { transform: none; }
-  .ap-cena-label, .ap-dash-cena, .ap-trilho-ponto { transition: none; }
-}
-
-/* ── cena 1: últimos lançamentos (preenche a parte de baixo) ── */
-.ap-dash-cena > .ap-cards-row { margin-bottom: 14px; }
-.ap-lanc { display: grid; gap: 8px; }
-.ap-lanc h4 { margin: 4px 0 2px; font-size: .78rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--texto-3); }
-.ap-lanc-item {
-  display: flex; align-items: center; gap: 12px; padding: 8px 14px;
-  background: var(--superficie-2); border: 1px solid var(--borda); border-radius: var(--raio-p);
-}
-.ap-lanc-ponto { width: 8px; height: 8px; border-radius: 50%; flex: none; }
-.ap-lanc-ponto.ent { background: var(--entrada); }
-.ap-lanc-ponto.sai { background: var(--saida); }
-.ap-lanc-nome { flex: 1; min-width: 0; display: grid; font-size: .85rem; font-weight: 600; }
-.ap-lanc-nome small { font-size: .72rem; font-weight: 400; color: var(--texto-3); }
-.ap-lanc-item strong { font-family: var(--fonte-numeros); font-size: .86rem; font-variant-numeric: tabular-nums; }
-.ap-lanc-item strong.ent { color: var(--entrada); }
-.ap-lanc-item strong.sai { color: var(--saida); }
-
-/* ── cena 2: dois cartões lado a lado, para caberem as três parcelas ── */
-.ap-cards-detail { flex-direction: row; gap: 12px; margin-bottom: 14px; }
-.ap-card-big { flex: 1; min-width: 0; padding: 16px; }
-.ap-card-big .ap-card-chip { margin-bottom: 10px; }
-.ap-card-big .ap-card-info { display: grid; gap: 2px; font-size: .78rem; }
-
-/* ── cena 3: as metas preenchem o espaço ── */
-.ap-metas-grid { height: 100%; grid-auto-rows: 1fr; }
-.ap-meta-card { display: grid; align-content: center; justify-items: center; padding: 14px; }
-
-/* ── luz ambiente atrás do palco: muda de cor com o scroll ── */
-.ap-palco-sticky { background: var(--fundo); }
-.ap-palco-sticky::before {
-  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  background:
-    radial-gradient(48% 56% at calc(78% - var(--p) * 18%) 46%, color-mix(in srgb, var(--marca-3) 20%, transparent), transparent 70%),
-    radial-gradient(40% 50% at calc(14% + var(--p) * 10%) 62%, color-mix(in srgb, var(--marca-1) 18%, transparent), transparent 72%);
-}
-.ap-palco-grade { position: relative; z-index: 1; }
-
-@media (max-width: 900px) {
-  .ap-card-big { padding: 12px; }
-  .ap-card-big .ap-card-num { font-size: .85rem; letter-spacing: .08em; }
-  .ap-card-big .ap-card-info { font-size: .68rem; }
-  .ap-card-big .ap-card-barra { margin-top: 8px; }
-  .ap-parcela-item { padding: 8px 10px; font-size: .78rem; }
-  .ap-lanc-item { padding: 8px 10px; }
-  .ap-meta-card h4 { font-size: .78rem; }
+  .ap-logo-flutuante img { width: 220px; }
+  .ap-botoes { flex-direction: column; align-items: stretch; }
+  .ap-btn { justify-content: center; }
 }
 
 /* ── logo do herói: imagem no tema escuro, marca desenhada no claro (o "OPUS" da imagem é branco) ── */
