@@ -49,7 +49,10 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   somam tudo na moeda principal pela cotação do dia. "Paguei" numa conta em dólar guarda o valor original e a cotação (dá para
   informar a que você pagou); pagar uma dívida em dólar já abre em dólar. A escolha de moeda é uma fileira de pílulas com a
   bandeira desenhada, o código e o símbolo, e os campos de dinheiro preenchem os centavos sozinhos (digitar 1500 mostra 15,00;
-  contas como `=105,53-60,02` continuam valendo). Pede a [migração 14](supabase/migracao-14-moeda-em-contas-e-dividas.sql)
+  contas como `=105,53-60,02` continuam valendo). A conta em outra moeda aceita uma **cotação combinada** (a que a pessoa paga de
+  verdade, "1 R$ = 290 ARS", com botão para inverter): o valor da conta em reais passa a ser exato e a mesma cotação já vem
+  preenchida no "Paguei". Pedem a [migração 14](supabase/migracao-14-moeda-em-contas-e-dividas.sql) e a
+  [15](supabase/migracao-15-cotacao-da-conta.sql)
 - **Tutorial guiado**: depois das perguntas iniciais, o painel escurece e destaca, um por vez, onde fica cada coisa (lançar, resumo,
   lançamentos, importar extrato, e só as abas que a pessoa ligou). Um passo oferece ligar abas que ela não tinha escolhido.
   Dá para pular a qualquer momento (botão, X ou Esc) e rever em Configurações → Conta → Ver o tutorial, ou no menu da conta
