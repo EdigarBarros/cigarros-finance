@@ -46,7 +46,7 @@
 "invalidLogin": "Correo o contraseña incorrectos.",
 "emailNaoConfirmado": "Confirma tu correo mediante el enlace enviado a tu bandeja de entrada.",
 "jaRegistrado": "Este correo ya tiene una cuenta. Toca \"Iniciar sesión\".",
-"cadastroDesativado": "El registro de nuevas cuentas está desactivado.",
+"cadastroDesativado": "El registro de nuevas cuentas está desativado.",
 "envioEmail": "No se pudo enviar el correo de confirmación. Contacta al dueño del sitio para habilitar el registro.",
 "senhaFraca": "Esta contraseña es muy común o ha sido filtrada. Elige otra.",
 "senhaIgual": "La nueva contraseña debe ser diferente de la anterior.",
@@ -77,6 +77,19 @@
 "fechar": "Cerrar",
 "erroGeral": "Algo salió mal. Inténtalo de nuevo.",
 "detalhe": "Detalle"
+},
+"bloqueio": {
+"titulo": "Tu prueba gratuita ha terminado",
+"subtitulo": "¡Pero no te preocupes, puedes seguir disfrutando de todo!",
+"diasGratis": "días gratis",
+"premium": "Premium",
+"descripcion": "Disfrutaste de 7 días gratis para organizar tus finanzas. Ahora es el momento de elegir un plan para seguir accediendo a todas las funciones.",
+"efectuarPago": "Suscribirse ahora",
+"salirCuenta": "Salir de la cuenta",
+"beneficiosTitulo": "Lo que obtienes al suscribirte:",
+"beneficio1": "Acceso ilimitado a todas las funciones",
+"beneficio2": "Sincronización en tiempo real",
+"beneficio3": "Soporte prioritario"
 },
 "inicio": {
 "saudacao": "Hola,",

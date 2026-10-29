@@ -42,6 +42,10 @@ import { Configuracoes, ExcluirContaModal, ZerarDados } from './Configuracoes'
 import { SeletorIdioma } from './SeletorIdioma'
 import { Questionario } from './Questionario'
 import { Tour } from './Tour'
+import { BloqueioPeriodoTeste } from './BloqueioPeriodoTeste'
+import { BloqueioPeriodoTeste } from './BloqueioPeriodoTeste'
+import { BloqueioPeriodoTeste } from './BloqueioPeriodoTeste'
+import { BloqueioPeriodoTeste } from './BloqueioPeriodoTeste'
 
 /**
  * A ordem daqui é a do menu e também a prioridade nas abas do celular (veja docs/arquitetura-do-painel.md):
@@ -71,6 +75,7 @@ const paginaDoHash = (): Pagina => {
 const hoje = new Date()
 
 export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId: string; email: string; nome?: string; assinatura?: Assinatura | null }) {
+  const { t } = useTranslation()
   const [pagina, setPagina] = useState<Pagina>(paginaDoHash)
   const [ano, setAno] = useState(hoje.getFullYear())
   const [mes, setMes] = useState(hoje.getMonth() + 1)
@@ -107,6 +112,16 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   // Quem já tinha dados antes das perguntas existirem ganha um perfil com o que já usa, sem questionário.
   const temDados = d.lancs.length > 0 || d.bancos.length > 0 || d.dividas.length > 0 || d.meses.length > 0
   const perfil: Perfil = d.perfil ?? (temDados || d.perfilSemTabela ? inferirPerfil(d) : PERFIL_PADRAO)
+
+  // Verifica se o período de teste de 7 dias acabou
+  const dataCadastro = perfil?.criado_em ? new Date(perfil.criado_em) : null
+  const periodoTesteAtivo = dataCadastro ? (Date.now() - dataCadastro.getTime()) < 7 * 24 * 60 * 60 * 1000 : true
+  const testeExpirou = !periodoTesteAtivo && !assinatura
+
+  const aoSair = async () => {
+    await supabase.auth.signOut()
+    window.location.reload()
+  }
   const precisaPerfil = !d.carregando && d.perfil === null && !d.perfilSemTabela && temDados
   // Antes do painel podem aparecer o carregamento e as perguntas do primeiro acesso.
   const carregandoPerfil = d.perfil === undefined && d.carregando
@@ -473,7 +488,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         </div>
       </aside>
 
-      <div className="conteudo">
+      {testeExpirou && <BloqueioPeriodoTeste aoSair={aoSair} />}
+      <div className="conteudo" style={testeExpirou ? { filter: 'blur(8px)', pointerEvents: 'none' } : undefined}>
         <header className="barra">
           {mobile && <Marca compacta />}
           {!mobile && (

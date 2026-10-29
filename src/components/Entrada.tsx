@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
+import { SeletorIdioma } from './SeletorIdioma'
 
 type Modo = 'entrar' | 'criar'
 type Aviso = { texto: string; ok?: boolean } | null
@@ -54,8 +55,23 @@ export function Login({ inicial = 'entrar' }: { inicial?: Modo }) {
     else if (!data.session) setAviso({ texto: t('login.contaCriada'), ok: true })
   }
 
+  const [mostrarIdiomas, setMostrarIdiomas] = useState(false)
+
   return (
     <div className="en">
+      <button
+        className="en-idioma-botao"
+        onClick={() => setMostrarIdiomas(!mostrarIdiomas)}
+        aria-label={t('idiomas.selecionar')}
+        title={t('idiomas.selecionar')}
+      >
+        <Icone nome="globo" tamanho={20} />
+      </button>
+      {mostrarIdiomas && (
+        <div className="en-idioma-menu">
+          <SeletorIdioma aoFechar={() => setMostrarIdiomas(false)} />
+        </div>
+      )}
       <div className={`en-cartao ${modo} ${trocou ? 'trocou' : ''}`}>
         <FormEntrar ativo={!criar} ocupado={ocupado} aviso={!criar ? aviso : null} aoEnviar={entrar} aoEsqueci={esqueci} aoReenviar={reenviar} aoTrocar={() => trocar('criar')} />
         <FormCriar ativo={criar} ocupado={ocupado} aviso={criar ? aviso : null} aoEnviar={cadastrar} aoReenviar={reenviar} aoTrocar={() => trocar('entrar')} />

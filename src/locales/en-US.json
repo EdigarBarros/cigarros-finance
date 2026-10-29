@@ -78,6 +78,19 @@
 "erroGeral": "Something went wrong. Try again.",
 "detalhe": "Detail"
 },
+"bloqueio": {
+"titulo": "Your free trial has ended",
+"subtitulo": "But don't worry, you can keep enjoying everything!",
+"diasGratis": "free days",
+"premium": "Premium",
+"descricao": "You enjoyed 7 free days to organize your finances. Now it's time to choose a plan to keep accessing all features.",
+"efetuarPagamento": "Subscribe now",
+"sairConta": "Log out",
+"beneficiosTitulo": "What you get by subscribing:",
+"beneficio1": "Unlimited access to all features",
+"beneficio2": "Real-time synchronization",
+"beneficio3": "Priority support"
+},
 "inicio": {
 "saudacao": "Hello,",
 "resumo": "{{month}} {{year}} summary.",

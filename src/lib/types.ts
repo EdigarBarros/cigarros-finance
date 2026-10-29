@@ -126,6 +126,8 @@ export interface Perfil {
   dispensadas: string[]
   /** null enquanto as perguntas iniciais não foram respondidas. */
   onboarding_em: string | null
+  /** Data de criação da conta, usada para calcular o período de teste. */
+  criado_em?: string | null
   /** Foto (data URL pequena). Gravada à parte do resto do perfil: a coluna só existe com a migração 9. */
   foto?: string | null
 }
