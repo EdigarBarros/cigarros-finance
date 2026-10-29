@@ -12,8 +12,8 @@ export interface Assinatura {
   moeda: string | null
 }
 
-/** Teste grátis, assinatura em dia ou conta liberada: entram no painel. */
-export const temAcesso = (a: Assinatura | null) => Boolean(a && ['trialing', 'active', 'cortesia'].includes(a.status))
+/** Teste grátis, assinatura em dia, conta liberada, ou cobrança recusada ainda em nova tentativa (past_due): entram no painel. */
+export const temAcesso = (a: Assinatura | null) => Boolean(a && ['trialing', 'active', 'past_due', 'cortesia'].includes(a.status))
 
 const faltaTabela = (e: { code?: string; message: string }) =>
   e.code === '42P01' || e.code === 'PGRST205' || /does not exist|schema cache/i.test(e.message)
@@ -54,4 +54,14 @@ export async function irParaStripe(funcao: 'stripe-checkout' | 'stripe-portal', 
     return null
   }
   return (data?.erro as string | undefined) ?? error?.message ?? 'Não foi possível abrir o pagamento. Tente de novo.'
+}
+
+/** Apaga a conta (login e todos os dados) e cancela a assinatura. Devolve a mensagem de erro, ou null se deu certo. */
+export async function excluirConta(email: string): Promise<string | null> {
+  const { data, error } = await supabase.functions.invoke('excluir-conta', { body: { confirmar: email } })
+  if (data?.ok) {
+    await supabase.auth.signOut()
+    return null
+  }
+  return (data?.erro as string | undefined) ?? error?.message ?? 'Não foi possível excluir a conta. Tente de novo.'
 }

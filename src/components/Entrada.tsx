@@ -27,10 +27,24 @@ export function Login() {
     if (error) setAviso({ texto: traduzir(error.message) })
   }
 
+  const esqueci = async (email: string) => {
+    setOcupado(true); setAviso(null)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
+    setOcupado(false)
+    setAviso(error ? { texto: traduzir(error.message) } : { texto: 'Se esse e-mail tiver conta, enviamos um link para criar uma senha nova. Olhe também o spam.', ok: true })
+  }
+
+  const reenviar = async (email: string) => {
+    setOcupado(true); setAviso(null)
+    const { error } = await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: window.location.origin } })
+    setOcupado(false)
+    setAviso(error ? { texto: traduzir(error.message) } : { texto: 'Reenviamos o e-mail de confirmação. Pode levar alguns minutos; olhe também o spam.', ok: true })
+  }
+
   const cadastrar = async (nome: string, email: string, senha: string) => {
     setOcupado(true); setAviso(null)
     // o nome vai junto e já aparece preenchido na primeira pergunta do painel
-    const { data, error } = await supabase.auth.signUp({ email, password: senha, options: { data: nome ? { nome } : undefined } })
+    const { data, error } = await supabase.auth.signUp({ email, password: senha, options: { data: nome ? { nome } : undefined, emailRedirectTo: window.location.origin } })
     setOcupado(false)
     if (error) setAviso({ texto: traduzir(error.message) })
     else if (!data.session) setAviso({ texto: 'Conta criada! Confirme pelo link que chegou no seu e-mail e depois entre.', ok: true })
@@ -39,8 +53,8 @@ export function Login() {
   return (
     <div className="en">
       <div className={`en-cartao ${modo}`}>
-        <FormEntrar ativo={!criar} ocupado={ocupado} aviso={!criar ? aviso : null} aoEnviar={entrar} aoTrocar={() => trocar('criar')} />
-        <FormCriar ativo={criar} ocupado={ocupado} aviso={criar ? aviso : null} aoEnviar={cadastrar} aoTrocar={() => trocar('entrar')} />
+        <FormEntrar ativo={!criar} ocupado={ocupado} aviso={!criar ? aviso : null} aoEnviar={entrar} aoEsqueci={esqueci} aoReenviar={reenviar} aoTrocar={() => trocar('criar')} />
+        <FormCriar ativo={criar} ocupado={ocupado} aviso={criar ? aviso : null} aoEnviar={cadastrar} aoReenviar={reenviar} aoTrocar={() => trocar('entrar')} />
 
         <div className="en-lamina" aria-hidden="true">
           <i className="en-fio" />
@@ -74,24 +88,32 @@ function Chamada({ visivel, titulo, destaque, texto }: { visivel: boolean; titul
 
 type PropsForm = { ativo: boolean; ocupado: boolean; aviso: Aviso; aoTrocar: () => void }
 
-function FormEntrar({ ativo, ocupado, aviso, aoEnviar, aoTrocar }: PropsForm & { aoEnviar: (email: string, senha: string) => void }) {
+function FormEntrar({ ativo, ocupado, aviso, aoEnviar, aoEsqueci, aoReenviar, aoTrocar }: PropsForm & {
+  aoEnviar: (email: string, senha: string) => void; aoEsqueci: (email: string) => void; aoReenviar: (email: string) => void
+}) {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
+  const [recuperar, setRecuperar] = useState(false)
+  const naoConfirmado = Boolean(aviso && !aviso.ok && /confirme seu e-mail/i.test(aviso.texto))
   return (
     <form className={`en-form entrar ${ativo ? 'ativo' : ''}`} inert={!ativo} aria-hidden={!ativo}
-      onSubmit={(e) => { e.preventDefault(); aoEnviar(email, senha) }}>
-      <h1>Entrar</h1>
-      <p className="en-sub">Que bom que voltou. Seu painel está esperando.</p>
+      onSubmit={(e) => { e.preventDefault(); if (recuperar) aoEsqueci(email); else aoEnviar(email, senha) }}>
+      <h1>{recuperar ? 'Nova senha' : 'Entrar'}</h1>
+      <p className="en-sub">{recuperar ? 'Digite seu e-mail e enviamos um link para você criar uma senha nova.' : 'Que bom que voltou. Seu painel está esperando.'}</p>
       <Campo rotulo="E-mail" icone="email" tipo="email" valor={email} mudar={setEmail} completar="email" />
-      <CampoSenha valor={senha} mudar={setSenha} completar="current-password" />
-      <BotaoEnviar ocupado={ocupado}>Entrar</BotaoEnviar>
+      {!recuperar && <CampoSenha valor={senha} mudar={setSenha} completar="current-password" />}
+      <BotaoEnviar ocupado={ocupado}>{recuperar ? 'Enviar link' : 'Entrar'}</BotaoEnviar>
       {aviso && <p className={`en-aviso ${aviso.ok ? 'ok' : ''}`} role="alert">{aviso.texto}</p>}
+      {naoConfirmado && email && <button type="button" className="link" onClick={() => aoReenviar(email)} disabled={ocupado}>Reenviar e-mail de confirmação</button>}
+      <p className="en-troca">
+        <button type="button" className="link" onClick={() => setRecuperar(!recuperar)}>{recuperar ? 'Voltar para entrar' : 'Esqueci minha senha'}</button>
+      </p>
       <p className="en-troca">Novo no OpusCash? <button type="button" className="link" onClick={aoTrocar}>Criar conta</button></p>
     </form>
   )
 }
 
-function FormCriar({ ativo, ocupado, aviso, aoEnviar, aoTrocar }: PropsForm & { aoEnviar: (nome: string, email: string, senha: string) => void }) {
+function FormCriar({ ativo, ocupado, aviso, aoEnviar, aoReenviar, aoTrocar }: PropsForm & { aoEnviar: (nome: string, email: string, senha: string) => void; aoReenviar: (email: string) => void }) {
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
@@ -110,6 +132,7 @@ function FormCriar({ ativo, ocupado, aviso, aoEnviar, aoTrocar }: PropsForm & { 
       </div>
       <BotaoEnviar ocupado={ocupado}>Criar conta</BotaoEnviar>
       {aviso && <p className={`en-aviso ${aviso.ok ? 'ok' : ''}`} role="alert">{aviso.texto}</p>}
+      {aviso?.ok && email && <button type="button" className="link" onClick={() => aoReenviar(email)} disabled={ocupado}>Não chegou? Reenviar e-mail</button>}
       <p className="en-termos">Ao criar a conta, você concorda com os <a href="#/termos">Termos de uso</a> e a <a href="#/privacidade">Política de privacidade</a>.</p>
       <p className="en-troca">Já tem conta? <button type="button" className="link" onClick={aoTrocar}>Entrar</button></p>
     </form>
@@ -158,6 +181,8 @@ function traduzir(m: string) {
   if (/signups not allowed/i.test(m)) return 'Cadastro de novas contas está desativado.'
   if (/not authorized|sending confirmation|sending.*email/i.test(m))
     return 'Não foi possível enviar o e-mail de confirmação. Avise o dono do site para liberar o cadastro.'
+  if (/weak|pwned|compromised|easy to guess/i.test(m)) return 'Essa senha é muito comum ou já vazou em algum site. Escolha outra.'
+  if (/same.*password|different from the old/i.test(m)) return 'A senha nova precisa ser diferente da antiga.'
   if (/rate limit|too many/i.test(m)) return 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo.'
   if (/password should be at least/i.test(m)) return 'A senha precisa ter pelo menos 6 caracteres.'
   if (/invalid.*email|unable to validate email/i.test(m)) return 'Esse e-mail não parece válido.'
@@ -177,6 +202,33 @@ export function Configuracao() {
           computador, ou em Environment Variables na Vercel/Netlify) e publique de novo. O passo a passo está no README.
         </p>
       </div>
+    </div>
+  )
+}
+
+/** Tela de nova senha, aberta pelo link que chega no e-mail de "Esqueci minha senha". */
+export function NovaSenha({ aoConcluir }: { aoConcluir: () => void }) {
+  const [senha, setSenha] = useState('')
+  const [ocupado, setOcupado] = useState(false)
+  const [aviso, setAviso] = useState<Aviso>(null)
+  const salvar = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setOcupado(true); setAviso(null)
+    const { error } = await supabase.auth.updateUser({ password: senha })
+    setOcupado(false)
+    if (error) setAviso({ texto: traduzir(error.message) })
+    else { setAviso({ texto: 'Senha trocada! Entrando…', ok: true }); window.setTimeout(aoConcluir, 900) }
+  }
+  return (
+    <div className="en" style={{ display: 'grid' }}>
+      <form className="en-form ativo" onSubmit={salvar}>
+        <Marca grande />
+        <h1>Criar senha nova</h1>
+        <p className="en-sub">Escolha a senha nova da sua conta.</p>
+        <CampoSenha valor={senha} mudar={setSenha} completar="new-password" />
+        <BotaoEnviar ocupado={ocupado}>Salvar senha</BotaoEnviar>
+        {aviso && <p className={`en-aviso ${aviso.ok ? 'ok' : ''}`} role="alert">{aviso.texto}</p>}
+      </form>
     </div>
   )
 }

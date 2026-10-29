@@ -1,4 +1,4 @@
-import { irParaStripe, type Assinatura } from '../lib/assinatura'
+import { excluirConta, irParaStripe, type Assinatura } from '../lib/assinatura'
 import { useRef, useState } from 'react'
 import type { Sugestao } from '../lib/adaptacao'
 import { reduzirFoto } from '../lib/foto'
@@ -37,7 +37,7 @@ function CartaoAcao({ icone, titulo, texto, aoClicar, perigo }: { icone: string;
 }
 
 /** Configurações em tela cheia: menu de seções à esquerda e cartões à direita. Cada mudança vale na hora. */
-export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoExtrato, aoOrganizar, aoZerar, aoSair, aoFechar, assinatura, aoTour }: {
+export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoExtrato, aoOrganizar, aoZerar, aoSair, aoExcluirConta, aoFechar, assinatura, aoTour }: {
   perfil: Perfil; email: string; aoMudar: (p: Perfil) => void; aoRefazer: () => void; aoCategorias: () => void
   /** Para mostrar as categorias na seção Categorias. */
   categorias?: Categoria[]
@@ -48,7 +48,7 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
   /** Importar extrato do banco e organizar os nomes dos lançamentos. */
   aoExtrato?: () => void; aoOrganizar?: () => void
   /** Abre a confirmação de zerar os dados. */
-  aoZerar: () => void; aoSair: () => void
+  aoZerar: () => void; aoSair: () => void; aoExcluirConta?: () => void
   aoFechar: () => void
   /** Situação da assinatura (null quando não há cobrança nesta conta). */
   assinatura?: Assinatura | null
@@ -234,6 +234,7 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
                   <CartaoAcao icone="cartao" titulo="Gerenciar assinatura" texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-portal').then((m) => m && alert(m))} />
                 )}
                 <CartaoAcao icone="sair" titulo="Sair" texto="Encerra a sessão neste aparelho." aoClicar={aoSair} />
+                {aoExcluirConta && <CartaoAcao icone="lixeira" titulo="Excluir minha conta" texto="Apaga seu login e todos os seus dados de vez e cancela a assinatura." aoClicar={aoExcluirConta} perigo />}
               </div>
             </>
           )}
@@ -408,4 +409,45 @@ function textoAssinatura(a: Assinatura) {
   if (a.status === 'trialing') return `Teste grátis até ${dataAssinatura(a.teste_fim)}. Troque o cartão, veja as faturas ou cancele.`
   if (a.cancela_no_fim) return `Cancelada: você usa até ${dataAssinatura(a.periodo_fim)}. Dá para reativar.`
   return 'Troque o cartão, veja as faturas ou cancele a assinatura.'
+}
+
+/** Excluir a conta de vez (login, dados e assinatura). Pede o e-mail digitado e oferece o backup antes. */
+export function ExcluirContaModal({ email, aoBaixarBackup, aoFechar }: { email: string; aoBaixarBackup: () => Promise<unknown>; aoFechar: () => void }) {
+  const [texto, setTexto] = useState('')
+  const [baixou, setBaixou] = useState(false)
+  const [ocupado, setOcupado] = useState<string | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+  const pode = texto.trim().toLowerCase() === email.toLowerCase() && !ocupado
+
+  const baixar = async () => {
+    setOcupado('Gerando backup…')
+    try { await aoBaixarBackup(); setBaixou(true) } catch (e) { setErro(e instanceof Error ? e.message : String(e)) }
+    setOcupado(null)
+  }
+  const excluir = async () => {
+    setOcupado('Excluindo…'); setErro(null)
+    const msg = await excluirConta(email)
+    if (msg) { setErro(msg); setOcupado(null) }
+  }
+
+  return (
+    <Modal titulo="Excluir minha conta" aoFechar={() => !ocupado && aoFechar()}>
+      <div className="form">
+        <p className="zerar-texto">Isso apaga seu login e <b>todos os seus dados</b> (lançamentos, cartões, dívidas, metas, tudo) e cancela a assinatura, se houver. <b>Não tem como desfazer.</b></p>
+        <button type="button" className="btn" onClick={baixar} disabled={Boolean(ocupado)}>
+          <Icone nome="exportar" tamanho={16} /> {baixou ? 'Backup baixado ✓' : 'Baixar backup antes (recomendado)'}
+        </button>
+        <label className="campo">
+          <span className="campo-rotulo">Para confirmar, digite seu e-mail: <b>{email}</b></span>
+          <input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={email} autoComplete="off" autoCapitalize="none" />
+        </label>
+        {erro && <p className="form-erro" role="alert">{erro}</p>}
+        <div className="form-acoes">
+          <span className="espaco" />
+          <button type="button" className="btn" onClick={aoFechar} disabled={Boolean(ocupado)}>Cancelar</button>
+          <button type="button" className="btn perigo-forte" disabled={!pode} onClick={excluir}>{ocupado ?? 'Excluir para sempre'}</button>
+        </div>
+      </div>
+    </Modal>
+  )
 }

@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     try { origem = new URL(String(retorno)).origin } catch { return resposta({ erro: 'Endereço de retorno inválido.' }, 400, req) }
 
     const { data: atual } = await servico.from('assinaturas').select('*').eq('user_id', user.id).maybeSingle()
-    if (atual && ['trialing', 'active', 'cortesia'].includes(atual.status)) return resposta({ erro: 'ja_ativa' }, 409, req)
+    if (atual && ['trialing', 'active', 'past_due', 'cortesia'].includes(atual.status)) return resposta({ erro: 'ja_ativa' }, 409, req)
 
     let cliente: string | null = atual?.stripe_customer_id ?? null
     if (!cliente) {
