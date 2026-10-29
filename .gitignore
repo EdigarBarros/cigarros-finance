@@ -27,3 +27,6 @@ dist-ssr
 .env
 *.xlsx
 .netlify
+
+# capturas intermediárias da landing (PNG grandes; o que vale são os WebP em public/landing)
+scripts/telas-da-landing/saida
