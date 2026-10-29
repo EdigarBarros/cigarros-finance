@@ -1,26 +1,3 @@
 [build]
-  command = "npm run build"
-  publish = "dist"
-
-# Security Headers
-[[headers]]
-  for = "/*"
-  [headers.values]
-    # Prevent clickjacking
-    X-Frame-Options = "DENY"
-    # Prevent MIME type sniffing
-    X-Content-Type-Options = "nosniff"
-    # Enforce HTTPS
-    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
-    # Control referrer information
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    # Disable unnecessary browser features
-    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
-    # Content Security Policy
-    # - default-src 'self': Only load resources from same origin
-    # - script-src 'self': Only run scripts from same origin
-    # - style-src 'self' 'unsafe-inline': Allow inline styles (common in React/CSS-in-JS)
-    # - img-src 'self' data: https:: Allow images from same origin, data URIs, and HTTPS
-    # - connect-src 'self' https://*.supabase.co https://api.stripe.com: Allow API calls to Supabase and Stripe
-    # - frame-src https://js.stripe.com https://hooks.stripe.com: Allow Stripe iframes
-    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co https://api.stripe.com; frame-src https://js.stripe.com https://hooks.stripe.com;"
+command = "npm run build"
+publish = "dist"
