@@ -300,5 +300,5 @@ export async function exportarBackup() {
     }))),
     'Meses',
   )
-  XLSX.writeFile(wb, `backup-financas-${new Date().toISOString().slice(0, 10)}.xlsx`)
+  XLSX.writeFile(wb, `backup-financas-${new Date().toLocaleDateString('sv-SE')}.xlsx`)
 }
