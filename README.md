@@ -129,6 +129,7 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
   | Confirm sign up | `confirmar-cadastro.html` | Confirme seu e-mail no OpusCash |
   | Reset password | `redefinir-senha.html` | Crie uma senha nova no OpusCash |
   | Change email address | `trocar-email.html` | Confirme seu novo e-mail no OpusCash |
+  | Password changed (ative "Ativar notificações") | `senha-alterada.html` | Sua senha do OpusCash foi alterada |
 
   Em Authentication → Sign In / Providers → Email, deixe **Confirm email** ligado.
 - **Passwords:** ligue "Prevent use of leaked passwords" (plano Pro) e deixe o mínimo em 8 caracteres ou mais.

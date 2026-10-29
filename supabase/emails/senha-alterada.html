@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Sua senha foi alterada</title>
+</head>
+<body style="margin:0;padding:0;background:#f3f5fa;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">A senha da sua conta no OpusCash foi alterada.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f5fa;padding:32px 16px;">
+  <tr><td align="center">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border-radius:16px;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+      <tr><td style="height:5px;background:#1f8ef1;background-image:linear-gradient(90deg,#3d4be0,#1f8ef1 52%,#14c9a0);font-size:0;line-height:0;">&nbsp;</td></tr>
+      <tr><td style="padding:32px 32px 8px;">
+        <span style="font-size:22px;font-weight:800;letter-spacing:2px;color:#0e1525;">OPUS<span style="color:#14c9a0;">CASH</span></span>
+      </td></tr>
+      <tr><td style="padding:16px 32px 0;">
+        <h1 style="margin:0 0 12px;font-size:22px;line-height:1.3;color:#0e1525;">Sua senha foi alterada</h1>
+        <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#4a5670;">A senha da conta <strong>{{ .Email }}</strong> acabou de ser trocada. Se foi você, está tudo certo e não precisa fazer mais nada.</p>
+      </td></tr>
+      <tr><td style="padding:0 32px 8px;">
+        <p style="margin:0 0 24px;font-size:13px;line-height:1.5;color:#6b7791;">Não foi você? Entre em <a href="{{ .SiteURL }}" style="color:#1f8ef1;">{{ .SiteURL }}</a>, toque em "Esqueci minha senha" para criar uma nova e avise o suporte do OpusCash o quanto antes.</p>
+      </td></tr>
+      <tr><td style="padding:16px 32px 28px;border-top:1px solid #e6eaf3;">
+        <p style="margin:0;font-size:12px;line-height:1.5;color:#8a94ab;">OpusCash · suas finanças, do seu jeito.</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body>
+</html>
