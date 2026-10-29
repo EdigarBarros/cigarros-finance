@@ -107,7 +107,7 @@ for(let m=1;m<=12;m++) meses.push({user_id:U,ano:ANO,mes:m,investimentos:8000+m*
   caixa:{[NU]:{cc:2200+m*140,caixinha:5200+m*610,reserva:3000+m*400},[IT]:{cc:1400+m*60,caixinha:0,reserva:0},[CA]:{cc:180,caixinha:0,reserva:0}}})
 const faturas_pagas=[]
 // todas as faturas que já venceram aparecem pagas (o valor é a soma das parcelas daquele mês)
-cartoes.forEach((c,ci)=>{
+cartoes.forEach((c)=>{
   for(let m=1;m<=10;m++){
     const venc=`${ANO}-${pad(m)}-${pad(c.dia_vencimento)}`
     if(venc>'2026-10-18') continue

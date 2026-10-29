@@ -11,7 +11,7 @@ const user={id:uid,aud:'authenticated',role:'authenticated',email:'teste@exemplo
 const sessao={access_token:jwt,refresh_token:'r',token_type:'bearer',expires_in:99999,expires_at:4102444800,user}
 const body0=r=>{try{return r.postDataJSON()}catch{return null}}
 exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,semSessao=false,assinatura=null,funcoes={},dpr=1}={}){
-  const db0=0;const db={assinaturas:[{user_id:uid,status:'cortesia',teste_fim:null,periodo_fim:null,cancela_no_fim:false,moeda:null}],
+  const db={assinaturas:[{user_id:uid,status:'cortesia',teste_fim:null,periodo_fim:null,cancela_no_fim:false,moeda:null}],
     perfis:[{user_id:uid,nome:'Teste',moeda:'BRL',moedas:[],detalhe:'detalhado',modulos:{dividas:true,contas:true,cartoes:true,bancos:true,investimentos:true,moedas:false,metas:true},dispensadas:['tour','importar'],onboarding_em:'2026-01-01T00:00:00Z',...perfil}],
     categorias:[],lancamentos:[],meses:[],dividas:[],divida_saldos:[],bancos:[],metas:[],meta_movimentos:[],contas_fixas:[],cartoes:[],faturas_pagas:[],erros_app:[],...dados}
   const cats=[['saida','Alimentação'],['saida','Moradia'],['saida','Outros'],['saida','Dívidas e parcelas'],['entrada','Salário'],['entrada','Outros']]
