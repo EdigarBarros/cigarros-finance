@@ -289,6 +289,8 @@ export function Inicio(c: Ctx) {
           aoEditar={c.d.updDivida}
           aoNovoSaldo={c.d.addSaldo}
           aoExcluir={c.d.delDivida}
+          perfil={c.perfil}
+          semMoeda={c.d.dividasSemMoeda}
           aoFechar={() => setDivida(null)}
         />
       )}

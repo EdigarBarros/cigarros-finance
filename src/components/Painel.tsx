@@ -5,7 +5,7 @@ import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
 import { faltaPagarNoMes, lancamentoDaBaixa, lancamentoParecido, situacoesDoMes, type SituacaoConta } from '../lib/contasFixas'
 import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
 import { COR } from '../lib/charts'
-import { calendarioDe, fimDoMes, meDevem, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
+import { calendarioDe, fimDoMes, meDevem, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
 import { definirMoedaPrincipal, fmtValor, MESES_CURTO, MESES_NOME } from '../lib/format'
 import { useCambio } from '../lib/moedas'
 import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
@@ -116,7 +116,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     ativo: v.cartoes, ano, lancsDoAno: d.lancs, categoriasAntigas: d.categoriasAntigas,
     recarregarLancs: d.recarregar, aoErro: d.setErro,
   })
-  const { taxas } = useCambio(perfil.moeda, v.moedas || d.lancs.some((l) => l.moeda_original) || d.metas.some((m) => m.moeda !== perfil.moeda))
+  const { taxas } = useCambio(perfil.moeda, v.moedas || d.lancs.some((l) => l.moeda_original) || d.metas.some((m) => m.moeda !== perfil.moeda)
+    || d.dividas.some((x) => x.moeda && x.moeda !== perfil.moeda) || contas.contas.some((x) => x.moeda && x.moeda !== perfil.moeda))
   const paginas = PAGINAS.filter((p) =>
     p.id === 'contas' ? v.contas : p.id === 'cartoes' ? v.cartoes : p.id === 'dividas' ? v.dividas : p.id === 'metas' ? v.metas : p.id === 'patrimonio' ? v.bancos || v.investimentos || v.moedas : p.id === 'ano' ? v.paginaAno : true,
   )
@@ -188,7 +189,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     return MESES_NOME.map((_, i) => {
       const m = i + 1
       const l = lancsContados.filter((x) => x.mes === m)
-      const sit = situacaoDividas(dividasDevo, d.saldos, d.pagamentos, ano, m)
+      const sit = situacaoDividas(dividasDevo, d.saldos, d.pagamentos, ano, m, taxas)
       const ef = mesEfetivo(d.meses, ano, m)
       const temProprio = d.meses.some((x) => x.ano === ano && x.mes === m)
       // Meses futuros sem lançamentos ficam em branco, como na planilha.
@@ -201,13 +202,14 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const lancsMes = lancsContados.filter((l) => l.mes === mes)
   const { sit: situacao, ef: mesEf } = porMesCompleto[mes - 1]
   const aReceber = useMemo(
-    () => situacaoDividas(dividasMeDevem, d.saldos, d.pagamentos, ano, mes),
-    [dividasMeDevem, d.saldos, d.pagamentos, ano, mes],
+    () => situacaoDividas(dividasMeDevem, d.saldos, d.pagamentos, ano, mes, taxas),
+    [dividasMeDevem, d.saldos, d.pagamentos, ano, mes, taxas],
   )
   // Dia que vale para dizer o que está atrasado: hoje, ou o fim do mês aberto quando ele já passou.
   const hojeIso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
   const diaRef = fimDoMes(ano, mes) < hojeIso ? fimDoMes(ano, mes) : hojeIso
-  const dividasAbertas = [...situacao, ...aReceber].filter((s) => s.restante > 0).map((s) => s.divida)
+  // as dívidas como foram cadastradas (parcela na moeda delas), para as listas dos formulários
+  const dividasAbertas = [...situacao, ...aReceber].filter((s) => s.restante > 0).map((s) => s.original)
 
   const mudarMes = (delta: number) => {
     let [a, m] = [ano, mes + delta]
@@ -246,14 +248,14 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     })
 
   const situacoesContas = useMemo(
-    () => situacoesDoMes(contas.contas, d.lancs, ano, mes),
-    [contas.contas, d.lancs, ano, mes],
+    () => situacoesDoMes(contas.contas, d.lancs, ano, mes, undefined, taxas),
+    [contas.contas, d.lancs, ano, mes, taxas],
   )
   const esfriar = () => {
     esfriando.current = true
     setTimeout(() => { esfriando.current = false }, 800)
   }
-  const pagarConta = (s: SituacaoConta, mudancas?: { valor?: number; data?: string }) => {
+  const pagarConta = (s: SituacaoConta, mudancas?: { valor?: number; data?: string; cotacao?: number }) => {
     if (s.baixa || baixando.current.has(s.conta.id) || esfriando.current) return
     // Já lançou "Aluguel" à mão este mês? Em vez de lançar de novo, a pessoa pode usar esse lançamento.
     const parecido = lancamentoParecido(s.conta, d.lancs, ano, mes)
@@ -264,7 +266,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     }
     esfriar()
     baixando.current.add(s.conta.id)
-    void d.addLanc(lancamentoDaBaixa(s.conta, ano, mes, mudancas)).finally(() => baixando.current.delete(s.conta.id))
+    void d.addLanc(lancamentoDaBaixa(s.conta, ano, mes, mudancas, taxas)).finally(() => baixando.current.delete(s.conta.id))
   }
   const desfazerBaixa = (s: SituacaoConta) => {
     if (s.baixa) void d.delLanc(s.baixa.id)
@@ -289,6 +291,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         ...(recebe ? {} : { categoria_id: d.categorias.find((c) => c.papel === 'divida')?.id ?? null }),
         descricao: recebe ? `${s.divida.descricao}${s.divida.pessoa ? ` (${s.divida.pessoa})` : ''} – recebido` : `${s.divida.descricao} – parcela`,
         valor: sugerido && sugerido > 0 ? sugerido : undefined,
+        // dívida em outra moeda: o pagamento abre nessa moeda, com o valor sugerido nela
+        ...(s.moeda && sugerido && sugerido > 0 ? { moeda_original: s.moeda, valor_original: nativoDiv(s, sugerido) } : {}),
       },
     })
   }

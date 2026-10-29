@@ -4,15 +4,17 @@ import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
 import { gerarParcelas, hojeLocal, textoParcelamento } from '../lib/cartoes'
 import { formaDe, formaPelaDescricao, formasDoTipo, type FormaPagamento } from '../lib/formas'
 import { COR } from '../lib/charts'
-import { calendarioDe, dividaPelaDescricao, inicioPelaProxima, meDevem, mesesAntes, parcelasDe, somaMesesData, type SituacaoDivida } from '../lib/dividas'
-import { dataPadrao, fmtMesAno, fmtValor, paraCampo, parseNumero, simbolo } from '../lib/format'
-import { infoMoeda, type Taxas } from '../lib/moedas'
+import { calendarioDe, dividaPelaDescricao, inicioPelaProxima, meDevem, mesesAntes, nativoDiv, parcelasDe, somaMesesData, type SituacaoDivida } from '../lib/dividas'
+import { dataPadrao, fmtMesAno, fmtMoeda, fmtValor, parseNumero, simbolo } from '../lib/format'
+import { casasDaMoeda, mascarar, paraCampoMoeda } from '../lib/dinheiro'
+import { infoMoeda, moedasUsaveis, type Taxas } from '../lib/moedas'
 import { visao } from '../lib/perfil'
 import { bancoConhecido, bancoNaDescricao, CORES_LIVRES, mesmoNome } from '../lib/rotulos'
 import type { Banco, CartaoCredito, Categoria, Divida, Lancamento, Perfil, Tipo } from '../lib/types'
 import { EscolhaCategoria } from './Categorias'
 import { Icone } from './Icone'
 import type { NovaDivida } from '../lib/useDados'
+import { EscolhaMoeda } from './EscolhaMoeda'
 import { Modal, Segmentado } from './ui'
 
 type NovoLanc = Omit<Lancamento, 'id'>
@@ -55,7 +57,7 @@ export function FormLancamento(p: FormLancProps) {
   const principal = p.perfil.moeda
   const original = ini.moeda_original && ini.valor_original ? { moeda: ini.moeda_original, valor: ini.valor_original } : null
   const [tipo, setTipo] = useState<Tipo>(ini.tipo ?? p.tipoInicial ?? 'saida')
-  const [valor, setValor] = useState(original ? paraCampo(original.valor) : ini.valor ? paraCampo(ini.valor) : '')
+  const [valor, setValor] = useState(original ? paraCampoMoeda(original.valor, original.moeda) : ini.valor ? paraCampoMoeda(ini.valor, principal) : '')
   const [moeda, setMoeda] = useState(original?.moeda ?? principal)
   // Cotação usada: a de quando foi lançado (ao editar) ou, vazia, a do dia.
   const [cotacao, setCotacao] = useState(original && ini.valor ? String(Math.round((ini.valor / original.valor) * 10000) / 10000).replace('.', ',') : '')
@@ -110,7 +112,7 @@ export function FormLancamento(p: FormLancProps) {
   const devo = opcoesDivida.filter((d) => !meDevem(d))
   const aReceber = opcoesDivida.filter((d) => meDevem(d) || (d.id === ini.divida_id && ini.tipo === 'entrada'))
 
-  const moedasDisponiveis = [...new Set([principal, ...(v.moedas ? p.perfil.moedas : []), ...(original ? [original.moeda] : [])])]
+  const moedasDisponiveis = moedasUsaveis(p.perfil, original?.moeda, ini.moeda_original)
   const estrangeira = moeda !== principal
   const taxa = (cotacao.trim() ? parseNumero(cotacao) : null) ?? p.taxas[moeda] ?? null
   const numero = parseNumero(valor)
@@ -148,7 +150,9 @@ export function FormLancamento(p: FormLancProps) {
     const d = opcoesDivida.find((x) => x.id === id)
     if (d) {
       if (catDivida) setCategoriaId(catDivida.id)
-      if (!valor && d.valor_parcela) setValor(paraCampo(d.valor_parcela))
+      // dívida em outra moeda: o pagamento já abre nessa moeda, com a parcela dela
+      if (d.moeda && moedasDisponiveis.includes(d.moeda)) { setMoeda(d.moeda); setCotacao('') }
+      if (!valor && d.valor_parcela) setValor(paraCampoMoeda(d.valor_parcela, d.moeda ?? principal))
       if (!descricao) setDescricao(`${d.descricao} – parcela`)
     }
   }
@@ -276,10 +280,8 @@ export function FormLancamento(p: FormLancProps) {
           />
         )}
         {moedasDisponiveis.length > 1 && (
-          <div className="moeda-escolha">
-            <Segmentado rotulo="Moeda" valor={moeda} aoMudar={(m) => { setMoeda(m); setCotacao('') }}
-              opcoes={moedasDisponiveis.map((m) => ({ id: m, nome: `${infoMoeda(m).bandeira} ${m}` }))} />
-          </div>
+          <EscolhaMoeda moedas={moedasDisponiveis} valor={moeda}
+            aoMudar={(m) => { setMoeda(m); setCotacao(''); setValor((t) => { const n = parseNumero(t); return n ? paraCampoMoeda(n, m) : t }) }} />
         )}
         <label className="valor-grande" style={{ '--c': cor } as React.CSSProperties}>
           <span>{simbolo(moeda)}</span>
@@ -289,7 +291,7 @@ export function FormLancamento(p: FormLancProps) {
             inputMode="decimal"
             placeholder="0,00"
             value={valor}
-            onChange={(e) => { setValor(e.target.value); setErro(null) }}
+            onChange={(e) => { setValor(mascarar(e.target.value, casasDaMoeda(moeda))); setErro(null) }}
             aria-label="Valor"
           />
         </label>
@@ -400,7 +402,7 @@ export function FormLancamento(p: FormLancProps) {
                 <select value={dividaId} onChange={(e) => escolherDivida(e.target.value)}>
                   <option value="">Nenhuma (só entra como gasto)</option>
                   {devo.map((d) => (
-                    <option key={d.id} value={d.id}>{d.descricao}{d.valor_parcela ? ` · parcela ${fmtValor(d.valor_parcela)}` : ''}</option>
+                    <option key={d.id} value={d.id}>{d.descricao}{d.valor_parcela ? ` · parcela ${fmtMoeda(d.valor_parcela, d.moeda ?? principal)}` : ''}</option>
                   ))}
                 </select>
                 {dividaId && <span className="campo-ajuda">A dívida diminui sozinha com este pagamento.</span>}
@@ -414,7 +416,7 @@ export function FormLancamento(p: FormLancProps) {
             <select value={aReceber.some((d) => d.id === dividaId) ? dividaId : ''} onChange={(e) => { setDividaId(e.target.value); setMexeuDivida(true) }}>
               <option value="">Não</option>
               {aReceber.map((d) => (
-                <option key={d.id} value={d.id}>{d.descricao}{d.pessoa ? ` · ${d.pessoa}` : ''}{d.valor_parcela ? ` · parcela ${fmtValor(d.valor_parcela)}` : ''}</option>
+                <option key={d.id} value={d.id}>{d.descricao}{d.pessoa ? ` · ${d.pessoa}` : ''}{d.valor_parcela ? ` · parcela ${fmtMoeda(d.valor_parcela, d.moeda ?? principal)}` : ''}</option>
               ))}
             </select>
             {dividaId && aReceber.some((d) => d.id === dividaId) && <span className="campo-ajuda">O que falta receber diminui sozinho com esta entrada.</span>}
@@ -461,6 +463,10 @@ interface FormDividaProps {
   sentidoInicial?: 'devo' | 'me_devem'
   /** Migração 10 pendente: sem "me devem", pessoa e vencimento. */
   semExtras?: boolean
+  /** Para oferecer as moedas que a pessoa usa. */
+  perfil: Perfil
+  /** Migração 14 pendente: dívida só na moeda principal. */
+  semMoeda?: boolean
   aoCriar: (d: NovaDivida & { saldo: number; data: string; marcoInicial?: { data: string; saldo: number } }) => unknown
   aoEditar: (id: string, patch: Partial<Divida>) => void
   aoNovoSaldo: (id: string, data: string, saldo: number) => void
@@ -481,8 +487,12 @@ const inteiro = (t: string) => {
  * vence a próxima. Parcelada, pede o valor da parcela e quantas faltam (e, se souber, de quantas); sem parcela fixa,
  * pede quanto falta e, se houver, a data combinada. O vencimento da próxima monta o calendário de parcelas.
  */
-export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, aoCriar, aoEditar, aoNovoSaldo, aoExcluir, aoFechar, definirParcela }: FormDividaProps) {
-  const d = situacao?.divida
+export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perfil, semMoeda, aoCriar, aoEditar, aoNovoSaldo, aoExcluir, aoFechar, definirParcela }: FormDividaProps) {
+  // a dívida como foi cadastrada (parcela na moeda dela); `situacao.divida` já vem convertida para a moeda principal
+  const d = situacao?.original
+  const moedaInicial = d?.moeda || perfil.moeda
+  const [moeda, setMoeda] = useState(moedaInicial)
+  const moedas = moedasUsaveis(perfil, d?.moeda)
   const atuais = situacao ? parcelasDe(situacao) : null
   const [hoje] = useState(() => hojeLocal())
   const cal = situacao ? calendarioDe(situacao, hoje) : null
@@ -490,7 +500,7 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, aoCr
   const [descricao, setDescricao] = useState(d?.descricao ?? '')
   const [pessoa, setPessoa] = useState(d?.pessoa ?? '')
   const [parcelado, setParcelado] = useState<'sim' | 'nao'>(d && !d.valor_parcela && !definirParcela ? 'nao' : 'sim')
-  const [parcela, setParcela] = useState(d?.valor_parcela ? paraCampo(d.valor_parcela) : '')
+  const [parcela, setParcela] = useState(d?.valor_parcela ? paraCampoMoeda(d.valor_parcela, moedaInicial) : '')
   const [faltam, setFaltam] = useState('')
   const [total, setTotal] = useState('')
   const [saldo, setSaldo] = useState('')
@@ -511,7 +521,7 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, aoCr
         const ultima = proxima ? somaMesesData(proxima, n - 1) : null
         const t = ano * 12 + (mes - 1) + n
         const [ua, um] = ultima ? ultima.split('-').map(Number) : [Math.floor(t / 12), (t % 12) + 1]
-        return `${recebe ? 'Falta receber' : 'Falta pagar'} ${fmtValor(vp * n)} (${n} × ${fmtValor(vp)}) · última parcela em ${fmtMesAno(ua, um)}`
+        return `${recebe ? 'Falta receber' : 'Falta pagar'} ${fmtMoeda(vp * n, moeda)} (${n} × ${fmtMoeda(vp, moeda)}) · última parcela em ${fmtMesAno(ua, um)}`
       })()
     : null
 
@@ -528,19 +538,19 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, aoCr
       // Com o total, registra o valor de quando a dívida começou: é isso que mostra "parcela 4 de 12".
       const marcoInicial = nTotal && nTotal > nf ? { data: mesesAntes(data, nTotal - nf), saldo: Math.round(vp * nTotal * 100) / 100 } : undefined
       const inicio = proxima ? inicioPelaProxima(proxima, totalN - nf) : d?.inicio ?? null
-      const campos = { descricao: descricao.trim(), valor_parcela: vp, ...extras, inicio, total_parcelas: totalN || null }
+      const campos = { descricao: descricao.trim(), valor_parcela: vp, ...extras, moeda: moeda === perfil.moeda ? null : moeda, inicio, total_parcelas: totalN || null }
       if (!d) {
         aoCriar({ ...campos, saldo: Math.round(vp * nf * 100) / 100, data, marcoInicial })
       } else {
         aoEditar(d.id, campos)
-        if (marcoInicial && marcoInicial.saldo > situacao!.saldoInicial) aoNovoSaldo(d.id, marcoInicial.data, marcoInicial.saldo)
+        if (marcoInicial && marcoInicial.saldo > nativoDiv(situacao!, situacao!.saldoInicial)) aoNovoSaldo(d.id, marcoInicial.data, marcoInicial.saldo)
         if (nFaltam) aoNovoSaldo(d.id, data, Math.round(vp * nFaltam * 100) / 100)
       }
     } else {
       const v = saldo.trim() ? parseNumero(saldo) : null
       if (saldo.trim() && (v === null || v < 0)) return setErro('Digite um valor válido.')
       if (!d && (v === null || v <= 0)) return setErro(recebe ? 'Digite quanto falta receber.' : 'Digite quanto falta pagar.')
-      const campos = { descricao: descricao.trim(), valor_parcela: null, ...extras, inicio: proxima || null, total_parcelas: null }
+      const campos = { descricao: descricao.trim(), valor_parcela: null, ...extras, moeda: moeda === perfil.moeda ? null : moeda, inicio: proxima || null, total_parcelas: null }
       if (!d) aoCriar({ ...campos, saldo: v!, data })
       else {
         aoEditar(d.id, campos)
@@ -556,6 +566,13 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, aoCr
         {!semExtras && (
           <Segmentado rotulo="Quem deve" valor={sentido} aoMudar={(v) => { setSentido(v); setErro(null) }}
             opcoes={[{ id: 'devo', nome: 'Eu devo', cor: COR.saidas }, { id: 'me_devem', nome: 'Me devem', cor: COR.entradas }]} />
+        )}
+        {moedas.length > 1 && !semMoeda && (
+          <div className="campo">
+            <span className="campo-rotulo">{d ? 'Moeda da dívida' : 'Em que moeda?'}</span>
+            {/* depois de criada, a moeda não muda: os saldos já estão guardados nela */}
+            <EscolhaMoeda moedas={d ? [moeda] : moedas} valor={moeda} aoMudar={(m) => { setMoeda(m); setParcela((t) => { const x = parseNumero(t); return x ? paraCampoMoeda(x, m) : t }); setSaldo((t) => { const x = parseNumero(t); return x ? paraCampoMoeda(x, m) : t }) }} />
+          </div>
         )}
         <div className="form-linha">
           <label className="campo">
@@ -580,14 +597,14 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, aoCr
             <div className="form-linha">
               <label className="campo">
                 <span className="campo-rotulo">Valor da parcela</span>
-                <span className="campo-caixa"><span className="prefixo">{simbolo()}</span>
-                  <input autoFocus={Boolean(d) && !d?.valor_parcela} inputMode="decimal" value={parcela} onChange={(e) => setParcela(e.target.value)} placeholder="0,00" />
+                <span className="campo-caixa"><span className="prefixo">{simbolo(moeda)}</span>
+                  <input autoFocus={Boolean(d) && !d?.valor_parcela} inputMode="decimal" value={parcela} onChange={(e) => setParcela(mascarar(e.target.value, casasDaMoeda(moeda)))} placeholder="0,00" />
                 </span>
               </label>
               <label className="campo">
                 <span className="campo-rotulo">Quantas faltam</span>
                 <input inputMode="numeric" value={faltam} onChange={(e) => setFaltam(e.target.value)}
-                  placeholder={atuais ? String(atuais.faltam) : d && vp ? String(Math.ceil(situacao!.restante / vp - 0.001)) : 'Ex.: 10'} />
+                  placeholder={atuais ? String(atuais.faltam) : d && vp ? String(Math.ceil(nativoDiv(situacao!, situacao!.restante) / vp - 0.001)) : 'Ex.: 10'} />
               </label>
             </div>
             <div className="form-linha">
@@ -612,8 +629,8 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, aoCr
           <div className="form-linha">
             <label className="campo">
               <span className="campo-rotulo">{recebe ? 'Quanto falta receber' : 'Quanto falta pagar'}{d && <small> (só se mudou)</small>}</span>
-              <span className="campo-caixa"><span className="prefixo">{simbolo()}</span>
-                <input inputMode="decimal" value={saldo} onChange={(e) => setSaldo(e.target.value)} placeholder={d ? paraCampo(situacao!.restante) : '0,00'} />
+              <span className="campo-caixa"><span className="prefixo">{simbolo(moeda)}</span>
+                <input inputMode="decimal" value={saldo} onChange={(e) => setSaldo(mascarar(e.target.value, casasDaMoeda(moeda)))} placeholder={d ? paraCampoMoeda(nativoDiv(situacao!, situacao!.restante), moeda) : '0,00'} />
               </span>
             </label>
             {!semExtras && (

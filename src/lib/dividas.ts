@@ -1,3 +1,5 @@
+import { fmtMoeda, fmtValor, moedaAtual } from './format'
+import type { Taxas } from './moedas'
 import type { Divida, Pagamento, SaldoDivida } from './types'
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -6,7 +8,17 @@ export const inicioDoMes = (ano: number, mes: number) => `${ano}-${pad(mes)}-01`
 const mesAnterior = (ano: number, mes: number): [number, number] => (mes === 1 ? [ano - 1, 12] : [ano, mes - 1])
 
 export interface SituacaoDivida {
+  /**
+   * A dívida já no referencial da moeda principal: parcela convertida pela cotação do dia. Todos os valores desta situação
+   * (restante, parcela, pago…) estão na moeda principal, então somam com o resto do painel.
+   */
   divida: Divida
+  /** A dívida como foi cadastrada (parcela e saldos na moeda dela), para editar e para mostrar o valor original. */
+  original: Divida
+  /** Moeda da dívida quando não é a principal. */
+  moeda: string | null
+  /** Quanto 1 unidade da moeda da dívida vale na principal (1 se a dívida é na principal). */
+  taxa: number
   /** Saldo devedor no fim do mês. */
   restante: number
   /** Saldo no fim do mês anterior (null se a dívida ainda não existia). */
@@ -34,24 +46,44 @@ export function saldoEm(divida: Divida, saldos: SaldoDivida[], pagamentos: Pagam
   return Math.max(0, Math.round((marco.saldo - pagoDepois) * 100) / 100)
 }
 
-/** Dívidas que aparecem no mês: as que existiam e não estavam quitadas antes dele. */
+const centavosDe = (n: number) => Math.round(n * 100) / 100
+/** A moeda da dívida, ou null quando é a principal. */
+export const moedaDaDivida = (d: Pick<Divida, 'moeda'>) => (d.moeda && d.moeda !== moedaAtual() ? d.moeda : null)
+
+/** Um valor (na moeda principal) desta dívida, no jeito dela: "US$ 5,00" numa dívida em dólar, "R$ 26,75" numa em real. */
+export const fmtDiv = (s: Pick<SituacaoDivida, 'moeda' | 'taxa'>, valor: number) => (s.moeda ? fmtMoeda(centavosDe(valor / s.taxa), s.moeda) : fmtValor(valor))
+/** "≈ R$ 26,75" para dívida em outra moeda (vazio quando é na principal). */
+export const aproxDiv = (s: Pick<SituacaoDivida, 'moeda' | 'taxa'>, valor: number) => (s.moeda ? `≈ ${fmtValor(valor)}` : '')
+/** O valor na moeda da dívida, como número (para preencher campos). */
+export const nativoDiv = (s: Pick<SituacaoDivida, 'moeda' | 'taxa'>, valor: number) => (s.moeda ? centavosDe(valor / s.taxa) : valor)
+
+/** Dívidas que aparecem no mês: as que existiam e não estavam quitadas antes dele. `taxas` converte as dívidas em outra moeda. */
 export function situacaoDividas(
-  dividas: Divida[], saldos: SaldoDivida[], pagamentos: Pagamento[], ano: number, mes: number,
+  dividas: Divida[], saldos: SaldoDivida[], pagamentos: Pagamento[], ano: number, mes: number, taxas: Taxas = {},
 ): SituacaoDivida[] {
   const fim = fimDoMes(ano, mes)
   const ini = inicioDoMes(ano, mes)
   const fimAntes = fimDoMes(...mesAnterior(ano, mes))
   const lista: SituacaoDivida[] = []
-  for (const d of dividas) {
-    const restante = saldoEm(d, saldos, pagamentos, fim)
+  for (const original of dividas) {
+    // Dívida em outra moeda: parcela, saldos e pagamentos passam para a moeda principal pela cotação do dia, e tudo abaixo
+    // (restante, parcelas, calendário) é calculado numa unidade só. Pagamento lançado nessa moeda vale o valor original.
+    const moeda = moedaDaDivida(original)
+    const taxa = moeda ? taxas[moeda] ?? 1 : 1
+    const d: Divida = moeda ? { ...original, valor_parcela: original.valor_parcela == null ? null : centavosDe(original.valor_parcela * taxa) } : original
+    const saldosD = moeda ? saldos.filter((x) => x.divida_id === d.id).map((x) => ({ ...x, saldo: centavosDe(x.saldo * taxa) })) : saldos
+    const pagamentosD = moeda
+      ? pagamentos.filter((x) => x.divida_id === d.id).map((x) => ({ ...x, valor: x.moeda_original === moeda && x.valor_original ? centavosDe(x.valor_original * taxa) : x.valor }))
+      : pagamentos
+    const restante = saldoEm(d, saldosD, pagamentosD, fim)
     if (restante === null) continue
-    const restanteAntes = saldoEm(d, saldos, pagamentos, fimAntes)
+    const restanteAntes = saldoEm(d, saldosD, pagamentosD, fimAntes)
     // Criada e quitada no mesmo mês: sem saldo antes, mas teve saldo positivo neste mês.
     const devendoNoMes = restanteAntes === null
-      ? saldos.some((s) => s.divida_id === d.id && s.data >= ini && s.data <= fim && s.saldo > 0)
+      ? saldosD.some((s) => s.divida_id === d.id && s.data >= ini && s.data <= fim && s.saldo > 0)
       : restanteAntes > 0
     if (restante <= 0 && !devendoNoMes) continue
-    const doMes = pagamentos.filter((p) => p.divida_id === d.id && p.data && p.data >= ini && p.data <= fim)
+    const doMes = pagamentosD.filter((p) => p.divida_id === d.id && p.data && p.data >= ini && p.data <= fim)
     const parcela = d.valor_parcela ?? 0
     const mesesRestantes = parcela > 0 && restante > 0 ? Math.ceil(restante / parcela - 0.001) : null
     let quitacao: [number, number] | null = null
@@ -59,15 +91,15 @@ export function situacaoDividas(
       const t = ano * 12 + (mes - 1) + mesesRestantes
       quitacao = [Math.floor(t / 12), (t % 12) + 1]
     }
-    const saldoInicial = Math.max(restante, ...saldos.filter((s) => s.divida_id === d.id && s.data <= fim).map((s) => s.saldo))
+    const saldoInicial = Math.max(restante, ...saldosD.filter((s) => s.divida_id === d.id && s.data <= fim).map((s) => s.saldo))
     lista.push({
-      divida: d,
+      divida: d, original, moeda, taxa,
       restante,
       restanteAntes,
       saldoInicial,
       pagoNoMes: doMes.reduce((a, p) => a + p.valor, 0),
       pagamentosNoMes: doMes.length,
-      totalPago: pagamentos.filter((p) => p.divida_id === d.id && p.data && p.data <= fim).reduce((a, p) => a + p.valor, 0),
+      totalPago: pagamentosD.filter((p) => p.divida_id === d.id && p.data && p.data <= fim).reduce((a, p) => a + p.valor, 0),
       mesesRestantes,
       quitacao,
       quitadaNoMes: restante <= 0,

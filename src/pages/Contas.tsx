@@ -2,12 +2,15 @@ import { useState } from 'react'
 import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
 import { COR } from '../lib/charts'
 import {
-  agruparContas, dataDaBaixa, fraseDaSituacao, hojeLocal, inicioDoMes, mesesComAtraso, totaisDoMes, type SituacaoConta,
+  agruparContas, aproxConta, dataDaBaixa, fmtConta, fraseDaSituacao, hojeLocal, inicioDoMes, mesesComAtraso, totaisDoMes, type SituacaoConta,
 } from '../lib/contasFixas'
-import { fmtValor, MESES_NOME, paraCampo, parseNumero, simbolo } from '../lib/format'
+import { casasDaMoeda, mascarar, paraCampoMoeda } from '../lib/dinheiro'
+import { fmtMoeda, fmtValor, MESES_NOME, parseNumero, simbolo } from '../lib/format'
+import { moedasUsaveis } from '../lib/moedas'
 import { mesmoNome } from '../lib/rotulos'
 import type { ContaFixa, Tipo } from '../lib/types'
 import { EscolhaCategoria, Selo } from '../components/Categorias'
+import { EscolhaMoeda } from '../components/EscolhaMoeda'
 import { EscolhaBanco } from '../components/Formularios'
 import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
@@ -222,7 +225,7 @@ function LinhaDoMes({ c, sits }: { c: Ctx; sits: SituacaoConta[] }) {
           const cat = c.categorias.find((k) => k.id === xs[0].conta.categoria_id)
           return (
             <span key={d} className={`ct-linha-marco ${estado}`} style={{ left: `${pos(d)}%`, animationDelay: `${200 + i * 60}ms` }}
-              title={xs.map((s) => `${s.conta.descricao}: ${fmtValor(s.valor)}`).join(' · ')}>
+              title={xs.map((s) => `${s.conta.descricao}: ${fmtConta(s)}`).join(' · ')}>
               <span className="ct-linha-pino"><IconeCategoria emoji={cat?.icone ?? (xs[0].conta.tipo === 'entrada' ? '💰' : '🧾')} tamanho={14} /></span>
               <small>{d}{xs.length > 1 && <sup>×{xs.length}</sup>}</small>
             </span>
@@ -255,13 +258,13 @@ function Boleto({ s, c, indice, aoEditar, aoOutroValor }: { s: SituacaoConta; c:
           <span className="ct-boleto-icone"><IconeCategoria emoji={cat?.icone ?? (entrada ? '💰' : '🧾')} tamanho={18} /></span>
           <span className="ct-boleto-nome"><strong>{conta.descricao}</strong><small>{cat?.nome ?? (entrada ? 'entrada fixa' : 'conta')}</small></span>
         </button>
-        <span className="ct-boleto-valor">{entrada ? '+ ' : ''}{fmtValor(s.valor)}</span>
+        <span className="ct-boleto-valor">{entrada ? '+ ' : ''}{fmtConta(s)}{s.moeda && <small className="conta-aprox">{aproxConta(s)}</small>}</span>
         <span className={`chip-estado ${s.estado}`}>{fraseDaSituacao(s)}</span>
         <div className="ct-boleto-acoes">
           {s.baixa ? (
             <>
               <button className="btn" onClick={() => c.editarLancamento(s.baixa!)}><Icone nome="lapis" tamanho={14} /> Editar</button>
-              <button className="btn" onClick={() => { if (confirm(`Desfazer? O lançamento de ${fmtValor(s.valor)} será apagado e a conta volta a ficar em aberto.`)) c.desfazerBaixa(s) }}>
+              <button className="btn" onClick={() => { if (confirm(`Desfazer? O lançamento de ${fmtConta(s)} será apagado e a conta volta a ficar em aberto.`)) c.desfazerBaixa(s) }}>
                 <Icone nome="desfazer" tamanho={14} /> Desfazer
               </button>
             </>
@@ -283,7 +286,9 @@ function Boleto({ s, c, indice, aoEditar, aoOutroValor }: { s: SituacaoConta; c:
 /** "Paguei" com outro valor ou outra data (a conta de luz muda todo mês). */
 function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () => void }) {
   const entrada = s.conta.tipo === 'entrada'
-  const [valor, setValor] = useState(paraCampo(s.valor))
+  const moeda = s.moeda ?? c.perfil.moeda
+  const [valor, setValor] = useState(paraCampoMoeda(s.valorNativo, moeda))
+  const [cotacao, setCotacao] = useState('')
   const [data, setData] = useState(dataDaBaixa(s.conta, c.ano, c.mes))
   const [erro, setErro] = useState<string | null>(null)
   const mm = String(c.mes).padStart(2, '0')
@@ -293,7 +298,9 @@ function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () 
     const n = parseNumero(valor)
     if (!n || n <= 0) return setErro('Informe um valor maior que zero.')
     if (!data || data.slice(0, 7) !== `${c.ano}-${mm}`) return setErro(`Escolha uma data dentro de ${MESES_NOME[c.mes - 1].toLowerCase()}.`)
-    c.pagarConta(s, { valor: n, data })
+    const t = cotacao.trim() ? parseNumero(cotacao) : null
+    if (s.moeda && cotacao.trim() && (!t || t <= 0)) return setErro('Cotação inválida. Digite quanto vale 1 ' + s.moeda + '.')
+    c.pagarConta(s, { valor: n, data, ...(s.moeda && t ? { cotacao: t } : {}) })
     aoFechar()
   }
 
@@ -301,14 +308,28 @@ function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () 
     <Modal titulo={s.conta.descricao} aoFechar={aoFechar}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); salvar() }}>
         <label className="valor-grande" style={{ '--c': entrada ? COR.entradas : COR.saidas } as React.CSSProperties}>
-          <span>{simbolo()}</span>
-          <input autoFocus inputMode="decimal" placeholder="0,00" value={valor} onChange={(e) => { setValor(e.target.value); setErro(null) }} aria-label="Valor" />
+          <span>{simbolo(moeda)}</span>
+          <input autoFocus inputMode="decimal" placeholder="0,00" value={valor} onChange={(e) => { setValor(mascarar(e.target.value, casasDaMoeda(moeda))); setErro(null) }} aria-label="Valor" />
         </label>
+        {s.moeda && (
+          <div className="cotacao">
+            <label className="campo-caixa">
+              <span className="prefixo">1 {s.moeda} =</span>
+              <input inputMode="decimal" value={cotacao} onChange={(e) => setCotacao(e.target.value)}
+                placeholder={c.taxas[s.moeda] ? String(Math.round(c.taxas[s.moeda] * 10000) / 10000).replace('.', ',') : 'cotação'} aria-label={`Cotação de 1 ${s.moeda}`} />
+              <span className="prefixo">{simbolo(c.perfil.moeda)}</span>
+            </label>
+            <span className="campo-ajuda">
+              {parseNumero(valor) && (parseNumero(cotacao) ?? c.taxas[s.moeda]) ? <>≈ <b>{fmtValor(parseNumero(valor)! * (parseNumero(cotacao) ?? c.taxas[s.moeda]))}</b> na sua moeda. </> : null}
+              {cotacao.trim() ? 'Cotação que você informou.' : 'Cotação de hoje; troque se pagou por outra.'}
+            </span>
+          </div>
+        )}
         <label className="campo">
           <span className="campo-rotulo">{entrada ? 'Dia em que recebeu' : 'Dia em que pagou'}</span>
           <input type="date" value={data} min={`${c.ano}-${mm}-01`} max={`${c.ano}-${mm}-${String(ultimo).padStart(2, '0')}`}
             onChange={(e) => setData(e.target.value)} required />
-          <span className="campo-ajuda">O valor de costume é {fmtValor(s.conta.valor)}. Aqui você muda só para este mês.</span>
+          <span className="campo-ajuda">O valor de costume é {fmtMoeda(s.conta.valor, moeda)}. Aqui você muda só para este mês.</span>
         </label>
         {erro && <p className="form-erro">{erro}</p>}
         <div className="form-acoes">
@@ -328,7 +349,10 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
   }
   const [tipo, setTipo] = useState<Tipo>(conta?.tipo ?? modelo?.tipo ?? 'saida')
   const [nome, setNome] = useState(conta?.descricao ?? modelo?.nome ?? '')
-  const [valor, setValor] = useState(conta ? paraCampo(conta.valor) : '')
+  const moedaInicial = conta?.moeda || c.perfil.moeda
+  const [moeda, setMoeda] = useState(moedaInicial)
+  const [valor, setValor] = useState(conta ? paraCampoMoeda(conta.valor, moedaInicial) : '')
+  const moedas = moedasUsaveis(c.perfil, conta?.moeda)
   const [dia, setDia] = useState(conta ? String(conta.dia) : '')
   const [categoriaId, setCategoriaId] = useState(conta ? conta.categoria_id ?? '' : hint(modelo?.tipo ?? 'saida', modelo?.nome ?? ''))
   const [mexeuCategoria, setMexeuCategoria] = useState(Boolean(conta))
@@ -361,7 +385,7 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
     if (!inicio) return setErro('Escolha a partir de qual mês vale.')
     if (fim && fim < inicio) return setErro('O último mês não pode ser antes do primeiro.')
     const dados = {
-      tipo, descricao: nome.trim(), valor: n, dia: Number(dia),
+      tipo, descricao: nome.trim(), valor: n, dia: Number(dia), moeda: moeda === c.perfil.moeda ? null : moeda,
       categoria_id: categoriaId || null, banco_id: bancoId || null,
       inicio: `${inicio}-01`, fim: fim ? `${fim}-01` : null, ativa: conta?.ativa ?? true,
     }
@@ -380,12 +404,16 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
           <input autoFocus={!modelo && !conta} value={nome} onChange={(e) => aoDigitarNome(e.target.value)} maxLength={40}
             placeholder={entrada ? 'Ex.: Salário, Aluguel recebido…' : 'Ex.: Aluguel, Luz, Internet, Academia…'} />
         </label>
+        {moedas.length > 1 && !c.contas.semMoeda && (
+          <EscolhaMoeda moedas={moedas} valor={moeda}
+            aoMudar={(m) => { setMoeda(m); setValor((t) => { const x = parseNumero(t); return x ? paraCampoMoeda(x, m) : t }) }} />
+        )}
         <div className="form-linha">
           <label className="campo-valor">
             <span className="campo-rotulo">{entrada ? 'Quanto costuma cair' : 'Quanto costuma ser'}</span>
             <span className="campo-caixa">
-              <span className="prefixo">{simbolo()}</span>
-              <input autoFocus={Boolean(modelo) && !conta} inputMode="decimal" value={valor} onChange={(e) => { setValor(e.target.value); setErro(null) }} placeholder="0,00" />
+              <span className="prefixo">{simbolo(moeda)}</span>
+              <input autoFocus={Boolean(modelo) && !conta} inputMode="decimal" value={valor} onChange={(e) => { setValor(mascarar(e.target.value, casasDaMoeda(moeda))); setErro(null) }} placeholder="0,00" />
             </span>
           </label>
           <label className="campo">

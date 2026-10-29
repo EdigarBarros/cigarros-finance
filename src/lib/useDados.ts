@@ -34,12 +34,14 @@ const fotoLocal = (userId: string) => {
 }
 /** Saída que paga uma dívida sua ou entrada que recebe de quem te deve: as duas abatem do que falta. */
 const paraPagamento = (l: Lancamento): Pagamento | null =>
-  l.divida_id ? { id: l.id, divida_id: l.divida_id, data: l.data, valor: l.valor } : null
+  l.divida_id ? { id: l.id, divida_id: l.divida_id, data: l.data, valor: l.valor, valor_original: l.valor_original ?? null, moeda_original: l.moeda_original ?? null } : null
 /** Campos de dívida que só existem com a migração 10. */
 const EXTRAS_DIVIDA = ['sentido', 'pessoa', 'inicio', 'total_parcelas', 'obs'] as const
 const semExtrasDivida = <T extends object>(o: T) =>
   Object.fromEntries(Object.entries(o).filter(([k]) => !(EXTRAS_DIVIDA as readonly string[]).includes(k))) as Partial<T>
-export type NovaDivida = Pick<Divida, 'descricao' | 'valor_parcela'> & Partial<Pick<Divida, (typeof EXTRAS_DIVIDA)[number]>>
+/** Sem a migração 14 a coluna `moeda` não existe. */
+const semMoedaDivida = <T extends object>(o: T) => { const { moeda: _m, ...resto } = o as T & { moeda?: unknown }; return resto as T }
+export type NovaDivida = Pick<Divida, 'descricao' | 'valor_parcela'> & Partial<Pick<Divida, (typeof EXTRAS_DIVIDA)[number] | 'moeda'>>
 
 /**
  * Lançamentos do ano aberto + tudo que atravessa os anos (dívidas, saldos, pagamentos e meses),
@@ -66,25 +68,29 @@ export function useDados(userId: string, ano: number) {
   const [metasSemTabela, setMetasSemTabela] = useState(false)
   /** Sem a migração 10: dívidas sem "me devem", pessoa e calendário de parcelas. */
   const [dividasSemExtras, setDividasSemExtras] = useState(false)
+  /** Sem a migração 14: dívidas só na moeda principal. */
+  const [dividasSemMoeda, setDividasSemMoeda] = useState(false)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
 
   const recarregar = useCallback(async () => {
     setCarregando(true)
-    const [l, m, d, s, p, b, pf, ct, mt, mv, xd] = await Promise.all([
+    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm] = await Promise.all([
       supabase.from('lancamentos').select('*').eq('ano', ano).order('data').order('created_at'),
       supabase.from('meses').select('*'),
       supabase.from('dividas').select('*').order('created_at'),
       supabase.from('divida_saldos').select('*').order('data'),
-      supabase.from('lancamentos').select('id, divida_id, data, valor').not('divida_id', 'is', null),
+      supabase.from('lancamentos').select('id, divida_id, data, valor, valor_original, moeda_original').not('divida_id', 'is', null),
       supabase.from('bancos').select('*').order('ordem').order('created_at'),
       supabase.from('perfis').select('*').maybeSingle(),
       supabase.from('categorias').select('*').order('ordem').order('nome'),
       supabase.from('metas').select('*').order('ordem').order('created_at'),
       supabase.from('meta_movimentos').select('*').order('data'),
       supabase.from('dividas').select('sentido, pessoa, inicio, total_parcelas').limit(1),
+      supabase.from('dividas').select('moeda').limit(1),
     ])
     setDividasSemExtras(Boolean(xd.error))
+    setDividasSemMoeda(Boolean(xm.error))
     const e = l.error ?? m.error ?? d.error ?? s.error ?? p.error ?? b.error
     if (e) setErro(e.message)
     else {
@@ -92,7 +98,7 @@ export function useDados(userId: string, ano: number) {
       setMeses((m.data as Mes[]).map(normMes))
       setDividas((d.data as Divida[]).map(normDiv))
       setSaldos((s.data as SaldoDivida[]).map(normSaldo))
-      setPagamentos((p.data as Pagamento[]).map((x) => ({ ...x, valor: num(x.valor) })))
+      setPagamentos((p.data as Pagamento[]).map((x) => ({ ...x, valor: num(x.valor), valor_original: x.valor_original == null ? null : num(x.valor_original) })))
       setBancos(b.data as Banco[])
     }
     if (pf.error && faltaTabela(pf.error)) {
@@ -165,6 +171,7 @@ export function useDados(userId: string, ano: number) {
     }
     return r
   }
+  const semMoedaSeFalta = <T extends object>(o: T) => (dividasSemMoeda ? semMoedaDivida(o) : o)
   const addLanc = async (novo: Omit<Lancamento, 'id'>): Promise<Lancamento | undefined> => {
     const { data, error } = await gravar(() => supabase.from('lancamentos').insert(paraBanco(novo)).select().single())
     if (error) {
@@ -225,7 +232,7 @@ export function useDados(userId: string, ano: number) {
   }): Promise<Divida | undefined> => {
     const { saldo: _s, data: _d, marcoInicial: _m, ...campos } = d
     const { data, error } = await supabase
-      .from('dividas').insert(dividasSemExtras ? semExtrasDivida(campos) : campos).select().single()
+      .from('dividas').insert(semMoedaSeFalta(dividasSemExtras ? semExtrasDivida(campos) : campos)).select().single()
     if (error) {
       falhou(error.message)
       return
@@ -238,7 +245,7 @@ export function useDados(userId: string, ano: number) {
   }
   const updDivida = async (id: string, patch: Partial<Divida>) => {
     setDividas((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
-    const { error } = await supabase.from('dividas').update(dividasSemExtras ? semExtrasDivida(patch) : patch).eq('id', id)
+    const { error } = await supabase.from('dividas').update(semMoedaSeFalta(dividasSemExtras ? semExtrasDivida(patch) : patch)).eq('id', id)
     if (error) falhou(error.message)
   }
   const delDivida = async (id: string) => {
@@ -411,6 +418,7 @@ export function useDados(userId: string, ano: number) {
     perfil, perfilSemTabela, salvarPerfil, foto, salvarFoto,
     bancos, addBanco, updBanco, delBanco,
     dividasSemExtras,
+    dividasSemMoeda,
     lancs, meses, dividas, saldos, pagamentos, carregando, erro, setErro, recarregar,
     addLanc, addLancs, renomearLancs, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, salvarMes,
   }
