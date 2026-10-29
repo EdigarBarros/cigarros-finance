@@ -44,6 +44,50 @@ export function fmtDataCurta(iso: string | null) {
 export const fmtMesAno = (ano: number, mes: number) => `${MES_CURTO[mes - 1]} de ${ano}`
 
 /**
+ * Calcula uma conta simples (+ - * / e parênteses, números com ponto decimal) sem usar eval/Function, que a política de
+ * segurança do site (CSP) bloqueia. Devolve null se a expressão for inválida.
+ */
+function calcular(expr: string): number | null {
+  const fichas = expr.match(/\d*\.?\d+|[-+*/()]/g)
+  if (!fichas || fichas.join('') !== expr.replace(/\s/g, '')) return null
+  let i = 0
+  const soma = (): number | null => {
+    let v = produto()
+    while (v !== null && (fichas[i] === '+' || fichas[i] === '-')) {
+      const op = fichas[i++]
+      const d = produto()
+      if (d === null) return null
+      v = op === '+' ? v + d : v - d
+    }
+    return v
+  }
+  const produto = (): number | null => {
+    let v = unario()
+    while (v !== null && (fichas[i] === '*' || fichas[i] === '/')) {
+      const op = fichas[i++]
+      const d = unario()
+      if (d === null) return null
+      v = op === '*' ? v * d : v / d
+    }
+    return v
+  }
+  const unario = (): number | null => {
+    if (fichas[i] === '-') { i++; const v = unario(); return v === null ? null : -v }
+    if (fichas[i] === '+') { i++; return unario() }
+    if (fichas[i] === '(') {
+      i++
+      const v = soma()
+      if (v === null || fichas[i++] !== ')') return null
+      return v
+    }
+    const n = Number(fichas[i++])
+    return Number.isFinite(n) ? n : null
+  }
+  const r = soma()
+  return r !== null && i === fichas.length ? r : null
+}
+
+/**
  * Converte o que foi digitado em número. Aceita "1.234,56", "12,5", "R$ 10"
  * e, como na planilha, contas simples começando com "=" (ex.: "=105,53-60,02").
  */
@@ -56,12 +100,8 @@ export function parseNumero(texto: string): number | null {
   s = s.replace(/(\d)\.(?=\d{3}(\D|$))/g, '$1').replace(/,/g, '.')
   if (!/^[\d.+\-*/() ]+$/.test(s)) return null
   if (!conta && !/^-?\d*\.?\d+$/.test(s)) return null
-  try {
-    const n = Function(`"use strict";return (${s})`)() as unknown
-    return typeof n === 'number' && Number.isFinite(n) ? Math.round(n * 100) / 100 : null
-  } catch {
-    return null
-  }
+  const n = calcular(s)
+  return n !== null && Number.isFinite(n) ? Math.round(n * 100) / 100 : null
 }
 
 /** Data padrão para um lançamento novo: hoje, se estiver no mês aberto; senão, dia 1. */
