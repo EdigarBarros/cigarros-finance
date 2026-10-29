@@ -16,6 +16,8 @@ const CENAS = [
   { titulo: 'O ano inteiro', texto: 'Para onde vai o dinheiro, mês a mês.' },
 ]
 
+const ANO = new Date().getFullYear()
+
 const mesAtual = () => {
   const t = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
   return t.charAt(0).toUpperCase() + t.slice(1)
@@ -383,7 +385,7 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
       {/* ─── FOOTER ─── */}
       <footer className="ap-footer">
         <Marca />
-        <p>© {new Date().getFullYear()} OpusCash · Todos os direitos reservados</p>
+        <p>© {ANO} OpusCash · Todos os direitos reservados</p>
         <div className="ap-footer-links">
           <a href="#/termos">Termos</a>
           <a href="#/privacidade">Privacidade</a>
