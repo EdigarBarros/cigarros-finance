@@ -14,6 +14,7 @@ import type { Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 import { useMobile } from '../lib/useMobile'
 import { estiloLente, useLente } from '../lib/useLente'
 import { definirTema, semMovimento, useTema } from '../lib/tema'
+import { ehErroDeVersao } from '../lib/atualizacao'
 import { irParaStripe, type Assinatura } from '../lib/assinatura'
 import { useCartoes } from '../lib/useCartoes'
 import { useContasFixas } from '../lib/useContasFixas'
@@ -226,7 +227,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     try {
       await fn()
     } catch (e) {
-      d.setErro(e instanceof Error ? e.message : String(e))
+      d.setErro(ehErroDeVersao(e)
+        ? 'Saiu uma versão nova do OpusCash. Feche esta janela e ele se atualiza sozinho; depois é só tentar de novo.'
+        : e instanceof Error ? e.message : String(e))
     } finally {
       setOcupado(null)
     }

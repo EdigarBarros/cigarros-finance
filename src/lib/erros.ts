@@ -1,3 +1,4 @@
+import { VERSAO } from './atualizacao'
 import { supabase } from './supabase'
 
 /**
@@ -16,7 +17,7 @@ export function registrarErro(erro: unknown, onde: string) {
     void supabase.auth.getSession().then(({ data }) => {
       if (!data.session) return
       return supabase.from('erros_app').insert({
-        mensagem, onde: onde.slice(0, 300), detalhe: (e.stack ?? '').slice(0, 4000),
+        mensagem, onde: onde.slice(0, 300), detalhe: (e.stack ?? '').slice(0, 4000), versao: VERSAO,
       })
     }).catch(() => {})
   } catch { /* nunca atrapalha */ }

@@ -2999,3 +2999,18 @@ button.ex-tipo:hover { transform: scale(1.1); }
   .seletor-mes > .icone-btn { display: none; }
   .seletor-mes { padding: 0 4px; }
 }
+
+/* ---------- aviso depois de o app se atualizar sozinho (src/lib/atualizacao.ts) ---------- */
+.aviso-atualizado {
+  position: fixed; left: 50%; bottom: calc(110px + env(safe-area-inset-bottom)); z-index: 9000; translate: -50% 0;
+  padding: 10px 16px; border-radius: 999px; font-size: 13.5px; font-weight: 600; color: var(--texto);
+  background: var(--superficie-2); border: 1px solid var(--borda-forte); box-shadow: var(--sombra-alta);
+  animation: aviso-atualizado 3.6s var(--mola) both; pointer-events: none;
+}
+@media (min-width: 861px) { .aviso-atualizado { bottom: 28px; } }
+@keyframes aviso-atualizado {
+  0% { opacity: 0; transform: translateY(12px) scale(.96); }
+  12%, 82% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(6px); }
+}
+@media (prefers-reduced-motion: reduce) { .aviso-atualizado { animation-duration: .01s; animation-delay: 3s; opacity: 1; } }

@@ -2,13 +2,14 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import { LimiteDeErro } from './components/LimiteDeErro'
+import { iniciarAtualizacao } from './lib/atualizacao'
 import { iniciarRegistroDeErros } from './lib/erros'
-import './lib/charts'
 import { iniciarIma } from './lib/ima'
 import './index.css'
 
 iniciarIma()
 iniciarRegistroDeErros()
+iniciarAtualizacao()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
