@@ -9,17 +9,20 @@ import { Marca } from '../components/Marca'
  * Foco em visual, animações e ilustrações — mínimo de texto.
  */
 export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSignup: () => void }) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [progresso, setProgresso] = useState(0) // 0 a 1 — progresso total do scroll
+  const palcoRef = useRef<HTMLDivElement>(null)
+  const [progresso, setProgresso] = useState(0) // 0 a 1 — progresso do scroll no palco
   const [cena, setCena] = useState(0) // 0-4: qual cena está ativa
 
   const aoScroll = useCallback(() => {
-    if (!containerRef.current) return
-    const el = containerRef.current
+    if (!palcoRef.current) return
+    const el = palcoRef.current
     const rect = el.getBoundingClientRect()
-    const total = el.scrollHeight - window.innerHeight
+    const alturaPalco = el.offsetHeight
+    const alturaViewport = window.innerHeight
+    // Calcula quanto do palco já passou pelo topo da viewport
     const scrolled = Math.max(0, -rect.top)
-    const p = Math.min(1, Math.max(0, scrolled / total))
+    const totalScrollavel = alturaPalco - alturaViewport
+    const p = totalScrollavel > 0 ? Math.min(1, Math.max(0, scrolled / totalScrollavel)) : 0
     setProgresso(p)
     setCena(Math.min(4, Math.floor(p * 5)))
   }, [])
@@ -31,13 +34,13 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
   }, [aoScroll])
 
   // Transforms 3D do dashboard baseado no progresso
-  const rotateX = 15 - progresso * 15 // 15deg → 0deg
-  const rotateY = -8 + progresso * 16 // -8deg → 8deg
-  const scale = 0.7 + progresso * 0.3 // 0.7 → 1.0
-  const translateY = 60 - progresso * 60 // 60px → 0px
+  const rotateX = 12 - progresso * 12 // 12deg → 0deg
+  const rotateY = -6 + progresso * 12 // -6deg → 6deg
+  const scale = 0.85 + progresso * 0.15 // 0.85 → 1.0
+  const translateY = 40 - progresso * 40 // 40px → 0px
 
   return (
-    <div className="ap" ref={containerRef}>
+    <div className="ap">
       {/* ─── HERO ─── */}
       <section className="ap-hero">
         <div className="ap-hero-orbs">
@@ -72,7 +75,7 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
       </section>
 
       {/* ─── DASHBOARD 3D STICKY ─── */}
-      <section className="ap-palco">
+      <section className="ap-palco" ref={palcoRef}>
         <div className="ap-palco-sticky">
           {/* Labels das cenas que aparecem/desaparecem */}
           <div className={`ap-cena-label ${cena === 0 ? 'ativa' : ''}`}>
