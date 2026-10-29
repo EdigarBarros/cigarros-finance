@@ -1,7 +1,9 @@
+import { hojeLocal } from './cartoes'
 import type { Meta, MovimentoMeta } from './types'
 
 const chaveMes = (iso: string) => Number(iso.slice(0, 4)) * 12 + Number(iso.slice(5, 7)) - 1
-const hojeIso = () => new Date().toISOString().slice(0, 10)
+// data local (não UTC): à noite no Brasil o UTC já é o dia seguinte
+const hojeIso = () => hojeLocal()
 
 export interface SituacaoMeta {
   meta: Meta

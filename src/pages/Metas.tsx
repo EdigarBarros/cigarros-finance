@@ -3,6 +3,7 @@ import { COR } from '../lib/charts'
 import { casasDaMoeda, mascarar, paraCampoMoeda } from '../lib/dinheiro'
 import { fmtDataLonga, fmtMoeda, fmtValor, MESES_NOME, parseNumero, paraCampo, simbolo } from '../lib/format'
 import { situacaoMeta, MODELOS, type SituacaoMeta } from '../lib/metas'
+import { hojeLocal } from '../lib/cartoes'
 import { converter, MOEDAS } from '../lib/moedas'
 import type { Meta } from '../lib/types'
 import { EscolhaMoeda } from '../components/EscolhaMoeda'
@@ -16,7 +17,7 @@ import { IconeCategoria } from '../components/IconeCategoria'
 const ICONES_META = ['🎯', '🛟', '✈️', '🚗', '🏠', '🎓', '🌴', '💍', '👶', '💻', '📱', '🎸', '🐶', '🏍️', '🎁', '💵', '🏖️', '⛺', '🏋️', '❤️']
 const CORES_META = ['#9d6bff', '#30d158', '#64d2ff', '#0a84ff', '#ff9f0a', '#ffd60a', '#ff375f', '#ff79c6', '#bf5af2', '#63e6e2']
 const quando = ([a, m]: [number, number]) => `${MESES_NOME[m - 1].toLowerCase()} de ${a}`
-const hoje = () => new Date().toISOString().slice(0, 10)
+const hoje = () => hojeLocal()
 
 const mesAno = (iso: string) => quando([Number(iso.slice(0, 4)), Number(iso.slice(5, 7))])
 
