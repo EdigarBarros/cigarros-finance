@@ -42,8 +42,8 @@ const FOCO: Partial<Record<Bloco, [number, number]>> = { graf: [0.31, 0.38], car
 /** Roteiro da câmera: para onde olha (alvo), quanto aproxima (m, sobre o enquadramento do alvo) e de que ângulo. */
 interface Quadro { p: number; alvo: Bloco | 'tudo'; m: number; rx: number; ry: number; rz: number }
 const CAMERA: Quadro[] = [
-  { p: 0, alvo: 'tudo', m: 0.72, rx: 56, ry: 0, rz: -16 },
-  { p: 0.1, alvo: 'tudo', m: 0.86, rx: 16, ry: -22, rz: 2 },
+  { p: 0, alvo: 'tudo', m: 0.74, rx: 48, ry: 0, rz: -12 },
+  { p: 0.11, alvo: 'tudo', m: 0.86, rx: 16, ry: -22, rz: 2 },
   { p: 0.2, alvo: 'tudo', m: 0.8, rx: 22, ry: -34, rz: 5 },
   { p: 0.25, alvo: 'tudo', m: 0.8, rx: 18, ry: -30, rz: 3 },
   { p: 0.32, alvo: 'graf', m: 0.9, rx: 12, ry: 18, rz: -1 },
@@ -65,7 +65,26 @@ const suave = (a: number, b: number, x: number) => {
   return t * t * (3 - 2 * t)
 }
 const mistura = (a: number, b: number, t: number) => a + (b - a) * t
-const vaiEVolta = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2)
+/**
+ * Curva suave que passa por todos os pontos (ps, vs): Hermite monotônica (Fritsch-Carlson). A velocidade é contínua de
+ * um ponto ao outro, então a câmera não para e arranca em cada quadro do roteiro, e a curva nunca passa do ponto.
+ */
+function curva(ps: readonly number[], vs: readonly number[]) {
+  const n = ps.length
+  const d = ps.slice(0, -1).map((_, i) => (vs[i + 1] - vs[i]) / (ps[i + 1] - ps[i]))
+  const m = ps.map((_, i) => (i === 0 || i === n - 1 || d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2))
+  d.forEach((di, i) => {
+    if (di === 0) { m[i] = 0; m[i + 1] = 0; return }
+    const a = m[i] / di, b = m[i + 1] / di, h = a * a + b * b
+    if (h > 9) { const t = 3 / Math.sqrt(h); m[i] = t * a * di; m[i + 1] = t * b * di }
+  })
+  return (p: number) => {
+    let i = 0
+    while (i < n - 2 && p > ps[i + 1]) i++
+    const h = ps[i + 1] - ps[i], t = limitar((p - ps[i]) / h), t2 = t * t, t3 = t2 * t
+    return (2 * t3 - 3 * t2 + 1) * vs[i] + (t3 - 2 * t2 + t) * h * m[i] + (-2 * t3 + 3 * t2) * vs[i + 1] + (t3 - t2) * h * m[i + 1]
+  }
+}
 /** Peso do foco de um bloco: sobe antes da janela, fica 1 nela e desce depois. */
 const peso = (j: [number, number] | undefined, p: number) => (j ? suave(j[0] - 0.07, j[0], p) * (1 - suave(j[1], j[1] + 0.07, p)) : 0)
 
@@ -222,10 +241,16 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
     const fatura = tela.querySelector<HTMLElement>('[data-fatura]')!
     const valoresContas = [1800, 119.9, 182.4, 99.9]
 
+    const centro = (q: Quadro) => {
+      const [x, y, w, h] = q.alvo === 'tudo' ? TUDO : BLOCOS[q.alvo]
+      return [x + w / 2, y + h / 2]
+    }
+
     // medidas da área onde a tela aparece; recalculadas no resize
     let cx = 0, cy = 0, aw = 0, ah = 0, reduzir = false, giroMax = 1
     // enquadramento (escala) de cada quadro da câmera, para o alvo dele caber na área
     let escalas: number[] = []
+    let cam: Record<'fx' | 'fy' | 's' | 'rx' | 'ry' | 'rz', (p: number) => number>
     const medir = () => {
       const w = sticky.clientWidth, h = sticky.clientHeight
       const celular = w <= 900
@@ -248,27 +273,31 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
         const folga = q.alvo === 'tudo' && celular ? 1.3 : 1
         return Math.min((aw * folga) / rw, ah / rh, q.alvo === 'tudo' ? 9 : 1.3) * q.m
       })
+      const ps = CAMERA.map((q) => q.p)
+      cam = {
+        fx: curva(ps, CAMERA.map((q) => centro(q)[0])),
+        fy: curva(ps, CAMERA.map((q) => centro(q)[1])),
+        s: curva(ps, escalas.map(Math.log)), // zoom em escala log: aproximar e afastar no mesmo ritmo
+        rx: curva(ps, CAMERA.map((q) => q.rx)),
+        ry: curva(ps, CAMERA.map((q) => q.ry)),
+        rz: curva(ps, CAMERA.map((q) => q.rz)),
+      }
     }
 
-    const centro = (q: Quadro) => {
-      const [x, y, w, h] = q.alvo === 'tudo' ? TUDO : BLOCOS[q.alvo]
-      return [x + w / 2, y + h / 2]
+    // só toca no DOM quando o valor muda: cada escrita à toa custa recálculo de estilo ou repintura
+    const ultimo = new Map<string, string>()
+    const por = (chave: string, valor: string, aplicar: (v: string) => void) => {
+      if (ultimo.get(chave) !== valor) { ultimo.set(chave, valor); aplicar(valor) }
     }
 
-    let ultimoContador = -1, ultimaMeta = -1, ultimaConta = -1, cenaAtual = -1
+    let ultimaConta = -1, cenaAtual = -1
     const desenhar = (p: number, tempo: number) => {
-      // câmera: acha o trecho do roteiro e mistura os dois quadros com "vai-e-volta"
-      let i = 0
-      while (i < CAMERA.length - 2 && p > CAMERA[i + 1].p) i++
-      const a = CAMERA[i], b = CAMERA[i + 1]
-      const t = vaiEVolta(rampa(a.p, b.p, p))
-      const [ax, ay] = centro(a), [bx, by] = centro(b)
-      const fx = mistura(ax, bx, t), fy = mistura(ay, by, t)
-      const s = Math.exp(mistura(Math.log(escalas[i]), Math.log(escalas[i + 1]), t)) // zoom em escala log: sem "arrancada"
+      // câmera: segue a curva do roteiro
+      const fx = cam.fx(p), fy = cam.fy(p), s = Math.exp(cam.s(p))
       const giro = giroMax
       // um balanço leve e contínuo, para a tela nunca parecer congelada
       const bx2 = reduzir ? 0 : Math.sin(tempo * 0.00055) * 1.4, by2 = reduzir ? 0 : Math.cos(tempo * 0.00043) * 1.8
-      const rx = mistura(a.rx, b.rx, t) * giro + bx2, ry = mistura(a.ry, b.ry, t) * giro + by2, rz = mistura(a.rz, b.rz, t) * giro
+      const rx = cam.rx(p) * giro + bx2, ry = cam.ry(p) * giro + by2, rz = cam.rz(p) * giro
       tela.style.transform = `scale3d(${s.toFixed(4)}, ${s.toFixed(4)}, ${s.toFixed(4)}) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) rotateZ(${rz.toFixed(2)}deg) translate3d(${(-fx).toFixed(1)}px, ${(-fy).toFixed(1)}px, 0)`
 
       // explosão em camadas no começo; foco (sobe e acende) na ferramenta da vez; no fim, tudo se recolhe
@@ -279,26 +308,25 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
         const f = pesos[j]
         const z = ALTURA[b] * explode + (reduzir ? 0 : 70 * f)
         const esc = 1 + 0.025 * f
-        el.style.transform = `translate3d(0, 0, ${z.toFixed(1)}px) scale(${esc.toFixed(4)})`
-        el.style.opacity = (1 - 0.6 * (somaFoco - f)).toFixed(3)
+        por(`t${b}`, `translate3d(0, 0, ${z.toFixed(1)}px) scale(${esc.toFixed(4)})`, (v) => { el.style.transform = v })
+        por(`o${b}`, (1 - 0.6 * (somaFoco - f)).toFixed(3), (v) => { el.style.opacity = v })
         el.classList.toggle('em-foco', f > 0.5)
       })
 
       // números contando
       const n = suave(0.02, 0.15, p)
-      if (Math.abs(n - ultimoContador) > 0.001) {
-        ultimoContador = n
-        contadores.forEach((el) => { el.textContent = brl.format(Number(el.dataset.conta) * n) })
-        tela.style.setProperty('--n', n.toFixed(4))
-      }
+      por('n', n.toFixed(3), (v) => {
+        contadores.forEach((el) => { el.textContent = brl.format(Number(el.dataset.conta) * Number(v)) })
+        tela.style.setProperty('--n', v)
+      })
       // gráfico crescendo (cada mês um pouco depois do anterior)
-      tela.style.setProperty('--g', suave(0.26, 0.38, p).toFixed(4))
+      por('g', suave(0.26, 0.38, p).toFixed(3), (v) => tela.style.setProperty('--g', v))
       // cartão: sai da tela, dá uma volta inteira e volta; a fatura enche
       const giroCartao = suave(0.42, 0.52, p)
       const sobe = Math.sin(giroCartao * Math.PI)
-      cartao.style.transform = `translateZ(${(sobe * 60).toFixed(1)}px) rotateY(${(giroCartao * 360 * (reduzir ? 0 : 1)).toFixed(1)}deg) rotateX(${(sobe * 10 * giro).toFixed(1)}deg)`
-      brilho.style.transform = `translateX(${mistura(-120, 220, suave(0.47, 0.53, p)).toFixed(1)}%) skewX(-18deg)`
-      fatura.style.transform = `scaleX(${(0.42 * suave(0.46, 0.54, p)).toFixed(4)})`
+      por('cartao', `translateZ(${(sobe * 60).toFixed(1)}px) rotateY(${(giroCartao * 360 * (reduzir ? 0 : 1)).toFixed(1)}deg) rotateX(${(sobe * 10 * giro).toFixed(1)}deg)`, (v) => { cartao.style.transform = v })
+      por('brilho', `translateX(${mistura(-120, 220, suave(0.47, 0.53, p)).toFixed(1)}%) skewX(-18deg)`, (v) => { brilho.style.transform = v })
+      por('fatura', `scaleX(${(0.42 * suave(0.46, 0.54, p)).toFixed(3)})`, (v) => { fatura.style.transform = v })
       // contas sendo pagas uma a uma
       const c = rampa(0.58, 0.68, p) * CONTAS.length
       const pagas = Math.floor(c + 0.0001)
@@ -310,31 +338,39 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
       }
       // metas enchendo
       const m = suave(0.71, 0.82, p)
-      if (Math.abs(m - ultimaMeta) > 0.001) {
-        ultimaMeta = m
+      por('m', m.toFixed(3), (t) => {
         aros.forEach((el, k) => {
-          const v = Number(el.dataset.aro) * limitar(m * 1.25 - k * 0.12)
+          const v = Number(el.dataset.aro) * limitar(Number(t) * 1.25 - k * 0.12)
           el.style.strokeDashoffset = (ARO * (1 - v)).toFixed(2)
           pcts[k].textContent = `${Math.round(v * 100)}%`
         })
-      }
+      })
 
-      sticky.style.setProperty('--k', p.toFixed(4))
       const qual = FIM_CENA.findIndex((f) => p <= f)
       if (qual !== cenaAtual) { cenaAtual = qual; setCena(qual) }
     }
 
-    // progresso alvo (do scroll) e progresso desenhado, que corre atrás dele suavemente
-    let alvo = 0, atual = 0, antes = 0, quadro = 0, visivel = false
+    // progresso alvo (do scroll) e progresso desenhado. O desenhado anda como uma mola amortecida (acelera e freia
+    // sem tranco) e com velocidade máxima: num scroll rápido a animação não pula etapas, só corre no ritmo dela.
+    let alvo = 0, atual = 0, vel = 0, antes = 0, quadro = 0, visivel = false
     const lerScroll = () => {
       const total = palco.offsetHeight - window.innerHeight
       alvo = total > 0 ? limitar(-palco.getBoundingClientRect().top / total) : 0
     }
+    const RIGIDEZ = 42, AMORTECE = 2 * Math.sqrt(RIGIDEZ), VEL_MAX = 0.24 // VEL_MAX em progresso por segundo
     const laco = (agora: number) => {
-      const dt = Math.min(64, agora - (antes || agora))
+      const dt = Math.min(0.05, (agora - (antes || agora)) / 1000)
       antes = agora
-      atual = reduzir ? alvo : atual + (alvo - atual) * (1 - Math.exp(-dt / 110))
-      if (Math.abs(alvo - atual) < 0.00005) atual = alvo
+      if (reduzir) { atual = alvo; vel = 0 } else {
+        // passos de no máximo 1/120 s, para a mola ficar estável mesmo quando um quadro atrasa
+        for (let resto = dt; resto > 0; resto -= 1 / 120) {
+          const h = Math.min(resto, 1 / 120)
+          vel += (RIGIDEZ * (alvo - atual) - AMORTECE * vel) * h
+          vel = limitar(vel, -VEL_MAX, VEL_MAX)
+          atual += vel * h
+        }
+        if (Math.abs(alvo - atual) < 0.00005 && Math.abs(vel) < 0.0005) { atual = alvo; vel = 0 }
+      }
       desenhar(atual, agora)
       quadro = visivel ? requestAnimationFrame(laco) : 0
     }
@@ -344,7 +380,7 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
     obs.observe(palco)
     const aoScroll = () => lerScroll()
     const aoRedimensionar = () => { medir(); lerScroll(); desenhar(atual, performance.now()) }
-    medir(); lerScroll(); atual = alvo; desenhar(atual, performance.now())
+    medir(); lerScroll(); atual = alvo; vel = 0; desenhar(atual, performance.now())
     window.addEventListener('scroll', aoScroll, { passive: true })
     window.addEventListener('resize', aoRedimensionar)
     return () => {
