@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { Perfil } from './types'
 
 export const MOEDAS: { codigo: string; nome: string; bandeira: string }[] = [
   { codigo: 'BRL', nome: 'Real', bandeira: '🇧🇷' },
@@ -95,3 +96,7 @@ export function converter(valor: number, moeda: string, taxas: Taxas): number | 
 /** Total das outras moedas convertido para a principal (as sem cotação ficam de fora). */
 export const totalConvertido = (moedas: Record<string, number>, taxas: Taxas) =>
   Object.entries(moedas).reduce((a, [m, v]) => a + (converter(v, m, taxas) ?? 0), 0)
+
+/** Moedas que a pessoa pode escolher num formulário: a principal, as que ela usa além dela e, ao editar, a que o registro já tem. */
+export const moedasUsaveis = (perfil: Perfil, ...extras: (string | null | undefined)[]) =>
+  [...new Set([perfil.moeda, ...(perfil.modulos.moedas ? perfil.moedas : []), ...extras.filter((m): m is string => Boolean(m))])]

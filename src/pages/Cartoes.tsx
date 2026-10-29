@@ -1,3 +1,4 @@
+import { casasDaMoeda, mascarar } from '../lib/dinheiro'
 import { useState } from 'react'
 import { CATALOGO_BANCOS } from '../lib/bancos'
 import {
@@ -7,7 +8,7 @@ import {
 import { COR } from '../lib/charts'
 import { somaMesesData } from '../lib/dividas'
 import { SEM_CATEGORIA } from '../lib/categorias'
-import { fmtDataCurta, fmtDataLonga, fmtValor, MESES_CURTO, MESES_NOME, paraCampo, parseNumero, simbolo } from '../lib/format'
+import { fmtDataCurta, fmtDataLonga, fmtValor, MESES_CURTO, MESES_NOME, moedaAtual, paraCampo, parseNumero, simbolo } from '../lib/format'
 import { CORES_LIVRES, mesmoNome } from '../lib/rotulos'
 import type { CartaoCredito, FaturaPaga } from '../lib/types'
 import { BancoIcone } from '../components/BancoIcone'
@@ -576,7 +577,7 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
           <span className="campo-rotulo">Limite <small>(opcional)</small></span>
           <span className="campo-caixa">
             <span className="prefixo">{simbolo()}</span>
-            <input inputMode="decimal" value={limite} onChange={(e) => setLimite(e.target.value)} placeholder="0,00" />
+            <input inputMode="decimal" value={limite} onChange={(e) => setLimite(mascarar(e.target.value, casasDaMoeda(moedaAtual())))} placeholder="0,00" />
           </span>
         </label>
         {bancos.length > 0 && (
@@ -609,7 +610,7 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
                     <span className="campo-rotulo">Quanto está na caixinha</span>
                     <span className="campo-caixa">
                       <span className="prefixo">{simbolo()}</span>
-                      <input inputMode="decimal" value={garantido} onChange={(e) => setGarantido(e.target.value)} placeholder="0,00" />
+                      <input inputMode="decimal" value={garantido} onChange={(e) => setGarantido(mascarar(e.target.value, casasDaMoeda(moedaAtual())))} placeholder="0,00" />
                     </span>
                   </label>
                 )}
@@ -720,7 +721,7 @@ function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: 
             <span className="campo-rotulo">Quanto pagou</span>
             <span className="campo-caixa">
               <span className="prefixo">{simbolo()}</span>
-              <input inputMode="decimal" value={valor} onChange={(e) => { setValor(e.target.value); setErro(null) }} />
+              <input inputMode="decimal" value={valor} onChange={(e) => { setValor(mascarar(e.target.value, casasDaMoeda(moedaAtual()))); setErro(null) }} />
             </span>
           </label>
         </div>
@@ -735,7 +736,7 @@ function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: 
             <span className="campo-rotulo">Juros e multa <small>(opcional)</small></span>
             <span className="campo-caixa">
               <span className="prefixo">{simbolo()}</span>
-              <input inputMode="decimal" value={juros} onChange={(e) => { setJuros(e.target.value); setErro(null) }} placeholder="0,00" />
+              <input inputMode="decimal" value={juros} onChange={(e) => { setJuros(mascarar(e.target.value, casasDaMoeda(moedaAtual()))); setErro(null) }} placeholder="0,00" />
             </span>
           </label>
         )}
@@ -850,7 +851,7 @@ function FormRenegociar({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: (
             <span className="campo-rotulo">Total do acordo</span>
             <span className="campo-caixa">
               <span className="prefixo">{simbolo()}</span>
-              <input inputMode="decimal" value={total} onChange={(e) => { setTotal(e.target.value); setErro(null) }} />
+              <input inputMode="decimal" value={total} onChange={(e) => { setTotal(mascarar(e.target.value, casasDaMoeda(moedaAtual()))); setErro(null) }} />
             </span>
           </label>
           <label className="campo">

@@ -60,6 +60,8 @@ export interface Divida {
   /** Vencimento da 1ª parcela (as outras no mesmo dia dos meses seguintes); sem parcela fixa, a data combinada. */
   inicio?: string | null
   total_parcelas?: number | null
+  /** Moeda em que a dívida foi feita (migração 14); null = a moeda principal. Parcela e saldos ficam nessa moeda. */
+  moeda?: string | null
   obs?: string | null
 }
 
@@ -76,7 +78,11 @@ export interface Pagamento {
   id: string
   divida_id: string
   data: string | null
+  /** Na moeda principal. */
   valor: number
+  /** Pago em outra moeda: o valor original (migração 4). */
+  valor_original?: number | null
+  moeda_original?: string | null
 }
 
 /** Banco cadastrado por você (Nubank, Itaú, Next, dinheiro vivo…). */
@@ -158,6 +164,8 @@ export interface ContaFixa {
   banco_id: string | null
   /** Dia do vencimento ou do recebimento (1 a 31); em mês mais curto vale o último dia. */
   dia: number
+  /** Moeda da conta (migração 14); null = a moeda principal. `valor` fica nessa moeda. */
+  moeda?: string | null
   /** Primeiro mês em que vale (dia 1 do mês). */
   inicio: string
   /** Último mês em que vale (dia 1 do mês); null = continua. */

@@ -288,7 +288,7 @@ export function Patrimonio(c: Ctx) {
                   return (
                     <li key={m}>
                       <Bandeira moeda={m} tamanho={34} />
-                      <CampoValor rotulo={infoMoeda(m).nome} prefixo={simbolo(m)} valor={c.mesEf.moedas[m] ?? 0} aoSalvar={(valor) => salvarMoeda(m, valor)} />
+                      <CampoValor rotulo={infoMoeda(m).nome} prefixo={simbolo(m)} moeda={m} valor={c.mesEf.moedas[m] ?? 0} aoSalvar={(valor) => salvarMoeda(m, valor)} />
                       <span className="gd-moeda-conv">
                         <b>{conv === null ? '—' : `≈ ${fmtValor(conv)}`}</b>
                         <small>{c.taxas[m] ? `1 ${m} = ${fmtValor(c.taxas[m])}` : 'sem cotação agora'}</small>

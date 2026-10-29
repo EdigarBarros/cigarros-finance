@@ -1,3 +1,4 @@
+import { casasDaMoeda, mascarar } from '../lib/dinheiro'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { fmtPct, fmtValor, paraCampo, parseNumero } from '../lib/format'
 import { estiloLente, useLente } from '../lib/useLente'
@@ -88,8 +89,10 @@ export function Modal({ titulo, aoFechar, children, tamanho }: { titulo: string;
 }
 
 /** Campo de dinheiro que salva ao sair. Aceita "1.234,56" e contas como "=105,53-60,02". */
-export function CampoValor({ valor, aoSalvar, prefixo = 'R$', rotulo }: {
+export function CampoValor({ valor, aoSalvar, prefixo = 'R$', rotulo, moeda }: {
   valor: number; aoSalvar: (n: number) => void; prefixo?: string; rotulo: string
+  /** Moeda do campo (para as casas decimais da máscara); sem ela, 2 casas. */
+  moeda?: string
 }) {
   const [texto, setTexto] = useState(paraCampo(valor))
   const [erro, setErro] = useState(false)
@@ -105,7 +108,7 @@ export function CampoValor({ valor, aoSalvar, prefixo = 'R$', rotulo }: {
           placeholder="0,00"
           value={texto}
           onFocus={(e) => { setFocado(true); e.target.select() }}
-          onChange={(e) => { setTexto(e.target.value); setErro(false) }}
+          onChange={(e) => { setTexto(mascarar(e.target.value, moeda ? casasDaMoeda(moeda) : 2)); setErro(false) }}
           onBlur={() => {
             setFocado(false)
             const n = texto.trim() ? parseNumero(texto) : 0

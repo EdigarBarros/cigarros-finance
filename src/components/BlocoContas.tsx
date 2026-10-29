@@ -1,5 +1,5 @@
 import { COR } from '../lib/charts'
-import { fraseDaSituacao, pendentes, totaisDoMes, type SituacaoConta } from '../lib/contasFixas'
+import { aproxConta, fmtConta, fraseDaSituacao, pendentes, totaisDoMes, type SituacaoConta } from '../lib/contasFixas'
 import { fmtValor } from '../lib/format'
 
 const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
@@ -54,7 +54,7 @@ export function BlocoContasDoMes({ situacoes, aoAbrir, aoPagar, completo }: {
             <strong>{s.conta.descricao}</strong>
             <span className={`chip-estado ${s.estado}`}>{fraseDaSituacao(s)}</span>
           </button>
-          <span className="conta-valor">{fmtValor(s.valor)}</span>
+          <span className="conta-valor">{fmtConta(s)}{s.moeda && <small className="conta-aprox">{aproxConta(s)}</small>}</span>
           <button className="btn primario" onClick={() => aoPagar(s)}>{s.conta.tipo === 'entrada' ? 'Recebi' : 'Paguei'}</button>
         </div>
       ))}

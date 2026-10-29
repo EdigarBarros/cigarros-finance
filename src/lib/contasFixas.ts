@@ -2,7 +2,8 @@
  * Contas fixas: o que se repete todo mês (aluguel, luz, internet, salário…).
  * Aqui só há cálculo: dado as contas e os lançamentos do ano, diz o que venceu, o que vence e o que já foi pago.
  */
-import { fmtDataCurta } from './format'
+import { fmtDataCurta, fmtMoeda, fmtValor, moedaAtual } from './format'
+import type { Taxas } from './moedas'
 import type { ContaFixa, Lancamento } from './types'
 
 export type EstadoConta = 'paga' | 'atrasada' | 'vence_hoje' | 'a_vencer' | 'fora'
@@ -20,8 +21,14 @@ export interface SituacaoConta {
   diasAtraso: number | null
   /** O lançamento da baixa ("Paguei" / "Recebi"), se já foi dada. */
   baixa: Lancamento | null
-  /** Valor pago, se paga; senão, o valor de costume da conta. */
+  /** Valor pago, se paga; senão, o valor de costume da conta. Sempre na moeda principal (é o que entra nos totais). */
   valor: number
+  /** Moeda da conta quando não é a principal. */
+  moeda: string | null
+  /** Quanto 1 unidade da moeda da conta vale na principal (1 se a conta é na principal). */
+  taxa: number
+  /** O mesmo valor na moeda da conta (o que a pessoa lançou ou combinou). */
+  valorNativo: number
 }
 
 const dois = (n: number) => String(n).padStart(2, '0')
@@ -45,13 +52,23 @@ export function valeNoMes(c: ContaFixa, ano: number, mes: number) {
 }
 
 /** Situação de uma conta num mês, com a data de hoje como referência. */
-export function situacaoDaConta(c: ContaFixa, lancs: Lancamento[], ano: number, mes: number, hoje = hojeLocal()): SituacaoConta {
+/** A moeda da conta, ou null quando é a principal. */
+export const moedaDaConta = (c: Pick<ContaFixa, 'moeda'>) => (c.moeda && c.moeda !== moedaAtual() ? c.moeda : null)
+
+export function situacaoDaConta(c: ContaFixa, lancs: Lancamento[], ano: number, mes: number, hoje = hojeLocal(), taxas: Taxas = {}): SituacaoConta {
   const dia = diaNoMes(c.dia, ano, mes)
   const vencimento = `${ano}-${dois(mes)}-${dois(dia)}`
   const baixa = lancs.find((l) => l.conta_fixa_id === c.id && l.ano === ano && l.mes === mes) ?? null
-  const base = { conta: c, dia, vencimento, baixa, valor: c.valor, diasRestantes: null, diasAtraso: null }
+  const moeda = moedaDaConta(c)
+  const taxa = moeda ? taxas[moeda] ?? 1 : 1
+  // o valor de costume numa moeda de fora entra nos totais convertido pela cotação do dia
+  const estimado = moeda ? centavos(c.valor * taxa) : c.valor
+  const base = { conta: c, dia, vencimento, baixa, valor: estimado, moeda, taxa, valorNativo: c.valor, diasRestantes: null, diasAtraso: null }
   // Uma baixa já dada vale mesmo que a conta tenha sido pausada ou mudado de datas depois.
-  if (baixa) return { ...base, estado: 'paga', valor: baixa.valor }
+  if (baixa) {
+    const nativo = !moeda ? baixa.valor : baixa.moeda_original === moeda && baixa.valor_original ? baixa.valor_original : centavos(baixa.valor / taxa)
+    return { ...base, estado: 'paga', valor: baixa.valor, valorNativo: nativo }
+  }
   if (!valeNoMes(c, ano, mes)) return { ...base, estado: 'fora' }
   if (vencimento < hoje) return { ...base, estado: 'atrasada', diasAtraso: diasEntre(vencimento, hoje) }
   if (vencimento === hoje) return { ...base, estado: 'vence_hoje', diasRestantes: 0 }
@@ -59,9 +76,9 @@ export function situacaoDaConta(c: ContaFixa, lancs: Lancamento[], ano: number, 
 }
 
 /** As contas que valem no mês (ou já foram pagas nele), por dia de vencimento. Quem está "fora" não entra. */
-export function situacoesDoMes(contas: ContaFixa[], lancs: Lancamento[], ano: number, mes: number, hoje = hojeLocal()): SituacaoConta[] {
+export function situacoesDoMes(contas: ContaFixa[], lancs: Lancamento[], ano: number, mes: number, hoje = hojeLocal(), taxas: Taxas = {}): SituacaoConta[] {
   return contas
-    .map((c) => situacaoDaConta(c, lancs, ano, mes, hoje))
+    .map((c) => situacaoDaConta(c, lancs, ano, mes, hoje, taxas))
     .filter((s) => s.estado !== 'fora')
     .sort((a, b) => a.dia - b.dia || a.conta.descricao.localeCompare(b.conta.descricao))
 }
@@ -129,10 +146,10 @@ export function pendentes(sits: SituacaoConta[]) {
 }
 
 /** Meses anteriores ao aberto (no mesmo ano) que ficaram com conta sem baixa. */
-export function mesesComAtraso(contas: ContaFixa[], lancs: Lancamento[], ano: number, ate: number, hoje = hojeLocal()) {
+export function mesesComAtraso(contas: ContaFixa[], lancs: Lancamento[], ano: number, ate: number, hoje = hojeLocal(), taxas: Taxas = {}) {
   const achados: { mes: number; qtd: number }[] = []
   for (let m = 1; m < ate; m++) {
-    const qtd = situacoesDoMes(contas, lancs, ano, m, hoje).filter((s) => s.estado === 'atrasada' && s.conta.tipo === 'saida').length
+    const qtd = situacoesDoMes(contas, lancs, ano, m, hoje, taxas).filter((s) => s.estado === 'atrasada' && s.conta.tipo === 'saida').length
     if (qtd) achados.push({ mes: m, qtd })
   }
   return achados
@@ -143,15 +160,29 @@ export function dataDaBaixa(c: ContaFixa, ano: number, mes: number, hoje = hojeL
   return chaveIso(hoje) === chaveMes(ano, mes) ? hoje : `${ano}-${dois(mes)}-${dois(diaNoMes(c.dia, ano, mes))}`
 }
 
-/** O lançamento que "Paguei" / "Recebi" cria. O valor e a data podem ser trocados (a conta de luz muda). */
-export function lancamentoDaBaixa(c: ContaFixa, ano: number, mes: number, mudancas: { valor?: number; data?: string } = {}): Omit<Lancamento, 'id'> {
-  return {
+/**
+ * O lançamento que "Paguei" / "Recebi" cria. O valor (na moeda da conta) e a data podem ser trocados (a conta de luz muda).
+ * Conta em outra moeda: o lançamento guarda o valor original e a conversão pela cotação (a do dia ou a que a pessoa informou).
+ */
+export function lancamentoDaBaixa(
+  c: ContaFixa, ano: number, mes: number, mudancas: { valor?: number; data?: string; cotacao?: number } = {}, taxas: Taxas = {},
+): Omit<Lancamento, 'id'> {
+  const moeda = moedaDaConta(c)
+  const nativo = mudancas.valor ?? c.valor
+  const base = {
     ano, mes, tipo: c.tipo, descricao: c.descricao,
-    valor: mudancas.valor ?? c.valor,
     data: mudancas.data ?? dataDaBaixa(c, ano, mes),
     categoria_id: c.categoria_id, banco_id: c.banco_id, conta_fixa_id: c.id,
   }
+  if (!moeda) return { ...base, valor: nativo }
+  const taxa = mudancas.cotacao ?? taxas[moeda] ?? 1
+  return { ...base, valor: centavos(nativo * taxa), valor_original: nativo, moeda_original: moeda }
 }
+
+/** O valor da conta no jeito que a pessoa combinou (na moeda dela), para mostrar nas telas. */
+export const fmtConta = (s: SituacaoConta) => (s.moeda ? fmtMoeda(s.valorNativo, s.moeda) : fmtValor(s.valor))
+/** "≈ R$ 267,50" quando a conta é em outra moeda (para somar de cabeça com o resto); vazio quando é na principal. */
+export const aproxConta = (s: SituacaoConta) => (s.moeda ? `≈ ${fmtValor(s.valor)}` : '')
 
 const normal = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim()
 

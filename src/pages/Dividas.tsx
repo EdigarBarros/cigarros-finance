@@ -2,11 +2,12 @@ import { CenaDividas } from '../components/Vazios'
 import { useState } from 'react'
 import { COR } from '../lib/charts'
 import {
-  calendarioDe, inicioPelaProxima, parcelasDe, projecaoMensal, tomarLadoDividas, totalDeParcelas,
+  aproxDiv, calendarioDe, fmtDiv, inicioPelaProxima, parcelasDe, projecaoMensal, tomarLadoDividas, totalDeParcelas,
   type Calendario, type ParcelaDivida, type SituacaoDivida,
 } from '../lib/dividas'
+import { fmtConta } from '../lib/contasFixas'
 import { estiloDoBanco } from '../lib/estiloBanco'
-import { fmtDataCurta, fmtDataLonga, fmtMesAno, fmtValor, MESES_CURTO } from '../lib/format'
+import { fmtDataCurta, fmtDataLonga, fmtMesAno, fmtMoeda, fmtValor, MESES_CURTO } from '../lib/format'
 import { BancoIcone } from '../components/BancoIcone'
 import { FormDivida } from '../components/Formularios'
 import { Icone } from '../components/Icone'
@@ -146,7 +147,7 @@ export function Dividas(c: Ctx) {
                 <li key={s.conta.id}>
                   <span className={`dv-todo-dia ${s.estado}`}><b>{String(s.dia).padStart(2, '0')}</b><small>{MESES_CURTO[c.mes - 1].toLowerCase()}</small></span>
                   <span className="dv-todo-texto"><strong>{s.conta.descricao}</strong><small>{s.estado === 'paga' ? 'recebido' : s.estado === 'atrasada' ? `atrasado ${s.diasAtraso} dias` : s.estado === 'vence_hoje' ? 'cai hoje' : `cai em ${s.diasRestantes} dias`}</small></span>
-                  <span className="dv-todo-valor">{fmtValor(s.valor)}</span>
+                  <span className="dv-todo-valor">{fmtConta(s)}</span>
                   {s.estado === 'paga'
                     ? <span className="chip-estado paga">Recebido</span>
                     : <button className="btn" onClick={() => c.pagarConta(s)}><Icone nome="check" tamanho={15} /> Recebi</button>}
@@ -186,6 +187,8 @@ export function Dividas(c: Ctx) {
           situacao={editando === 'nova' ? undefined : editando}
           sentidoInicial={lado}
           semExtras={c.d.dividasSemExtras}
+          perfil={c.perfil}
+          semMoeda={c.d.dividasSemMoeda}
           aoCriar={async (d) => {
             if (d.sentido && d.sentido !== lado) setLado(d.sentido)
             return c.d.addDivida(d)
@@ -251,7 +254,8 @@ function CartaoDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar }: {
         <div className="dv-cartao-meio">
           <span>
             <small>{quitada ? (recebe ? 'recebido' : 'quitada') : recebe ? 'falta receber' : 'falta pagar'}</small>
-            <strong>{quitada ? fmtValor(s.saldoInicial) : <Numero valor={s.restante} formato={fmtValor} />}</strong>
+            <strong>{quitada ? fmtDiv(s, s.saldoInicial) : <Numero valor={s.restante} formato={(n) => fmtDiv(s, n)} />}</strong>
+            {s.moeda && !quitada && <small className="dv-aprox">{aproxDiv(s, s.restante)}</small>}
           </span>
           <Anel valor={pct} cor={quitada ? COR.entradas : recebe ? COR.entradas : COR.caixa} tamanho={54}>{Math.round(pct * 100)}%</Anel>
         </div>
@@ -262,15 +266,15 @@ function CartaoDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar }: {
         )}
         <p className="dv-cartao-linha">
           {quitada ? <>Tudo {recebe ? 'recebido' : 'pago'}. 🎉</>
-            : cal?.atrasadas.length ? <><b className="ruim">{fmtValor(cal.emAtraso)}</b> vencido desde {fmtDataCurta(cal.atrasadas[0].vencimento)}</>
-              : cal?.proxima ? <>Próxima: <b>{fmtDataCurta(cal.proxima.vencimento)}</b> · {fmtValor(cal.proxima.falta)}{cal.proxima.pago > 0 && ' (resto)'}</>
-                : s.divida.valor_parcela ? <>{fmtValor(s.divida.valor_parcela)} por mês{s.quitacao && <> · até {fmtMesAno(s.quitacao[0], s.quitacao[1])}</>}</>
+            : cal?.atrasadas.length ? <><b className="ruim">{fmtDiv(s, cal.emAtraso)}</b> vencido desde {fmtDataCurta(cal.atrasadas[0].vencimento)}</>
+              : cal?.proxima ? <>Próxima: <b>{fmtDataCurta(cal.proxima.vencimento)}</b> · {fmtDiv(s, cal.proxima.falta)}{cal.proxima.pago > 0 && ' (resto)'}</>
+                : s.divida.valor_parcela ? <>{fmtDiv(s, s.divida.valor_parcela)} por mês{s.quitacao && <> · até {fmtMesAno(s.quitacao[0], s.quitacao[1])}</>}</>
                   : <>{recebe ? 'Recebe' : 'Paga'} quanto e quando puder</>}
         </p>
       </button>
       {!quitada && (
         <button className={`btn ${estado.id === 'atrasada' ? 'perigo-forte' : 'primario'} dv-cartao-botao`} onClick={aoPagar}>
-          <Icone nome={recebe ? 'receber' : 'check'} tamanho={16} /> {sugerido ? `${verbo} ${fmtValor(sugerido)}` : recebe ? 'Lançar recebimento' : 'Lançar pagamento'}
+          <Icone nome={recebe ? 'receber' : 'check'} tamanho={16} /> {sugerido ? `${verbo} ${fmtDiv(s, sugerido)}` : recebe ? 'Lançar recebimento' : 'Lançar pagamento'}
         </button>
       )}
     </article>
@@ -325,8 +329,8 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
   const lancs = c.d.lancs.filter((l) => l.divida_id === s.divida.id)
   const outrosAnos = c.d.pagamentos.filter((x) => x.divida_id === s.divida.id && !lancs.some((l) => l.id === x.id))
   const movimentos = [
-    ...lancs.map((l) => ({ id: l.id, data: l.data, valor: l.valor, descricao: l.descricao, lanc: l })),
-    ...outrosAnos.map((x) => ({ id: x.id, data: x.data, valor: x.valor, descricao: '', lanc: null })),
+    ...lancs.map((l) => ({ id: l.id, data: l.data, texto: l.moeda_original && l.valor_original ? fmtMoeda(l.valor_original, l.moeda_original) : fmtValor(l.valor), descricao: l.descricao, lanc: l })),
+    ...outrosAnos.map((x) => ({ id: x.id, data: x.data, texto: x.moeda_original && x.valor_original ? fmtMoeda(x.valor_original, x.moeda_original) : fmtValor(x.valor), descricao: '', lanc: null })),
   ].sort((a, b) => (b.data ?? '').localeCompare(a.data ?? ''))
   const quitada = s.restante <= 0
   const sugerido = cal?.sugerido || (s.divida.valor_parcela ? Math.min(s.divida.valor_parcela, s.restante) : 0)
@@ -351,23 +355,23 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
         </header>
 
         <div className="dv-ficha-numeros">
-          <span><small>{recebe ? 'falta receber' : 'falta pagar'}</small><strong>{fmtValor(s.restante)}</strong></span>
-          <span><small>{recebe ? 'já recebido' : 'já pago'}</small><strong className="bom">{fmtValor(Math.max(0, s.saldoInicial - s.restante))}</strong></span>
-          <span><small>{s.divida.valor_parcela ? 'parcela' : 'total'}</small><strong>{fmtValor(s.divida.valor_parcela ?? s.saldoInicial)}</strong></span>
+          <span><small>{recebe ? 'falta receber' : 'falta pagar'}</small><strong>{fmtDiv(s, s.restante)}</strong>{s.moeda && <small className="dv-aprox">{aproxDiv(s, s.restante)}</small>}</span>
+          <span><small>{recebe ? 'já recebido' : 'já pago'}</small><strong className="bom">{fmtDiv(s, Math.max(0, s.saldoInicial - s.restante))}</strong></span>
+          <span><small>{s.divida.valor_parcela ? 'parcela' : 'total'}</small><strong>{fmtDiv(s, s.divida.valor_parcela ?? s.saldoInicial)}</strong></span>
         </div>
 
         {cal ? (
           <section>
             <h4 className="dv-ficha-titulo">{cal.parcelas.length > 1 ? 'Parcelas' : 'Combinado'}
-              {cal.atrasadas.length > 0 && <span className="chip-estado dv atrasada">{fmtValor(cal.emAtraso)} atrasado</span>}
+              {cal.atrasadas.length > 0 && <span className="chip-estado dv atrasada">{fmtDiv(s, cal.emAtraso)} atrasado</span>}
             </h4>
             <ol className="dv-calendario">
               {cal.parcelas.map((x, i) => (
                 <li key={x.n} className={x.estado} style={{ '--p': `${(x.pago / x.valor) * 100}%`, animationDelay: `${Math.min(i, 24) * 25}ms` } as React.CSSProperties}>
                   <span className="dv-cal-n">{cal.parcelas.length > 1 ? `${x.n}ª` : <Icone nome="calendario" tamanho={13} />}</span>
                   <span className="dv-cal-mes">{mesCurto(x.vencimento)}</span>
-                  <span className="dv-cal-valor">{x.estado === 'paga' ? <Icone nome="check" tamanho={14} /> : fmtValor(x.falta).replace(/,00$/, '')}</span>
-                  <span className="dv-cal-estado">{x.pago > 0 && x.estado !== 'paga' ? `${fmtValor(x.pago).replace(/,00$/, '')} ${recebe ? 'recebido' : 'pago'}` : ROTULO_PARCELA[x.estado]}</span>
+                  <span className="dv-cal-valor">{x.estado === 'paga' ? <Icone nome="check" tamanho={14} /> : fmtDiv(s, x.falta).replace(/,00$/, '')}</span>
+                  <span className="dv-cal-estado">{x.pago > 0 && x.estado !== 'paga' ? `${fmtDiv(s, x.pago).replace(/,00$/, '')} ${recebe ? 'recebido' : 'pago'}` : ROTULO_PARCELA[x.estado]}</span>
                 </li>
               ))}
             </ol>
@@ -394,7 +398,7 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
                   <button disabled={!m.lanc} onClick={() => { if (m.lanc) { aoFechar(); c.editarLancamento(m.lanc) } }}>
                     <span className="ccd-hist-icone ok"><Icone nome={recebe ? 'receber' : 'check'} tamanho={15} /></span>
                     <span className="ccd-hist-texto"><strong>{m.data ? fmtDataLonga(m.data) : 'sem data'}</strong><small>{m.descricao || (recebe ? 'recebido' : 'pago')}</small></span>
-                    <span className="ccd-hist-valor">{fmtValor(m.valor)}</span>
+                    <span className="ccd-hist-valor">{m.texto}</span>
                     {m.lanc && <Icone nome="lapis" tamanho={14} />}
                   </button>
                 </li>
@@ -409,7 +413,7 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
           <span className="espaco" />
           {!quitada && (
             <button className="btn primario" onClick={() => { aoFechar(); c.pagarDivida(s) }}>
-              <Icone nome={recebe ? 'receber' : 'check'} tamanho={16} /> {recebe ? 'Receber' : 'Pagar'}{sugerido ? ` ${fmtValor(sugerido)}` : ''}
+              <Icone nome={recebe ? 'receber' : 'check'} tamanho={16} /> {recebe ? 'Receber' : 'Pagar'}{sugerido ? ` ${fmtDiv(s, sugerido)}` : ''}
             </button>
           )}
         </div>

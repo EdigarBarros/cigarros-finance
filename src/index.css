@@ -2905,3 +2905,22 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .tour-pontos i.feito { background: color-mix(in srgb, var(--destaque) 50%, transparent); }
 .tour-pontos i.ativo { width: 18px; background: var(--destaque); }
 .tour-pular { font-size: 13px; color: var(--texto-2); }
+
+/* ---------- escolha de moeda (pílulas com bandeira) ---------- */
+.moeda-escolha-fila { display: flex; gap: 8px; overflow-x: auto; padding: 3px 2px 6px; margin: 0 -2px; scrollbar-width: none; scroll-snap-type: x proximity; }
+.moeda-escolha-fila::-webkit-scrollbar { display: none; }
+.moeda-pilula {
+  flex: none; display: inline-flex; align-items: center; gap: 9px; padding: 6px 14px 6px 7px; border-radius: 999px; scroll-snap-align: start;
+  background: var(--superficie-2); border: 1px solid var(--borda); color: var(--texto-2); transition: transform .25s var(--mola-salto), border-color .2s, background .2s, box-shadow .2s;
+}
+.moeda-pilula:hover { transform: translateY(-1px); border-color: var(--borda-forte); }
+.moeda-pilula:active { transform: scale(.96); }
+.moeda-pilula-texto { display: grid; text-align: left; line-height: 1.1; }
+.moeda-pilula-texto b { font-size: 13px; font-weight: 700; letter-spacing: .02em; color: var(--texto); }
+.moeda-pilula-texto small { font-size: 11px; color: var(--texto-3); font-weight: 600; }
+.moeda-pilula.ativo {
+  border-color: var(--destaque); background: color-mix(in srgb, var(--destaque) 13%, var(--superficie-2)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--destaque) 18%, transparent), 0 8px 18px -12px var(--destaque);
+}
+.moeda-pilula.ativo .moeda-pilula-texto small { color: var(--destaque); }
+.moeda-escolha { display: block; }
+.conta-aprox, .dv-aprox { display: block; font-size: 11px; font-weight: 500; color: var(--texto-3); font-variant-numeric: tabular-nums; }

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { caixaDoBanco, type Resumo } from '../lib/calc'
 import { COR } from '../lib/charts'
-import { parcelasDe, type SituacaoDivida } from '../lib/dividas'
+import { fmtDiv, parcelasDe, type SituacaoDivida } from '../lib/dividas'
 import { fmtMoeda, fmtMesAno, fmtPct, fmtValor, MESES_CURTO, MESES_NOME } from '../lib/format'
 import type { SituacaoMeta } from '../lib/metas'
 import { converter, infoMoeda, type Taxas } from '../lib/moedas'
@@ -189,16 +189,16 @@ export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTod
             <div key={s.divida.id} className={`divida-linha ${s.quitadaNoMes ? 'quitada' : ''}`}>
               <button className="divida-linha-info" onClick={() => aoEditar(s)}>
                 <span className="divida-linha-nome">{s.divida.descricao}</span>
-                <span className="divida-linha-valor">{s.quitadaNoMes ? 'Quitada ✓' : fmtValor(s.restante)}</span>
+                <span className="divida-linha-valor">{s.quitadaNoMes ? 'Quitada ✓' : fmtDiv(s, s.restante)}</span>
                 <Progresso valor={s.saldoInicial - s.restante} total={s.saldoInicial} cor={COR.entradas} />
                 {(() => {
                   // chips curtos no lugar da frase: parcela, valor por mês, quando acaba, pago no mês
                   const p = parcelasDe(s)
                   const chips = [
                     p && !s.quitadaNoMes ? <span key="p" className="chip-info" title={`parcela ${p.proxima} de ${p.total}`}>{p.proxima}/{p.total}</span> : null,
-                    nivel !== 'simples' && s.divida.valor_parcela ? <span key="v" className="chip-info">{fmtValor(s.divida.valor_parcela)}/mês</span> : null,
+                    nivel !== 'simples' && s.divida.valor_parcela ? <span key="v" className="chip-info">{fmtDiv(s, s.divida.valor_parcela)}/mês</span> : null,
                     !s.quitadaNoMes && s.quitacao ? <span key="q" className="chip-info"><Icone nome="calendario" tamanho={12} />{quando(s.quitacao)}</span> : null,
-                    nivel === 'detalhado' && s.pagoNoMes ? <span key="m" className="chip-info bom">+{fmtValor(s.pagoNoMes)}</span> : null,
+                    nivel === 'detalhado' && s.pagoNoMes ? <span key="m" className="chip-info bom">+{fmtDiv(s, s.pagoNoMes)}</span> : null,
                   ].filter(Boolean)
                   return chips.length > 0 && <span className="divida-linha-sub chips-info">{chips}</span>
                 })()}

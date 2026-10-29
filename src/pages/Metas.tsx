@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { COR } from '../lib/charts'
+import { casasDaMoeda, mascarar, paraCampoMoeda } from '../lib/dinheiro'
 import { fmtDataLonga, fmtMoeda, fmtValor, MESES_NOME, parseNumero, paraCampo, simbolo } from '../lib/format'
 import { situacaoMeta, MODELOS, type SituacaoMeta } from '../lib/metas'
 import { converter, MOEDAS } from '../lib/moedas'
 import type { Meta } from '../lib/types'
+import { EscolhaMoeda } from '../components/EscolhaMoeda'
 import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
 import { PoteMeta } from '../components/PoteMeta'
@@ -366,15 +368,14 @@ function FormMeta({ c, meta, modelo, aoFechar }: { c: Ctx; meta?: Meta; modelo?:
             <span className="campo-rotulo">Quanto quer juntar</span>
             <span className="campo-caixa">
               <span className="prefixo">{simbolo(moeda)}</span>
-              <input inputMode="decimal" value={alvo} onChange={(e) => setAlvo(e.target.value)} placeholder="0,00" />
+              <input inputMode="decimal" value={alvo} onChange={(e) => setAlvo(mascarar(e.target.value, casasDaMoeda(moeda)))} placeholder="0,00" />
             </span>
           </label>
-          <label className="campo">
-            <span className="campo-rotulo">Moeda</span>
-            <select value={moeda} onChange={(e) => setMoeda(e.target.value)} disabled={Boolean(meta && c.d.movimentosMeta.some((m) => m.meta_id === meta.id))}>
-              {opcoesMoeda.map((m) => <option key={m.codigo} value={m.codigo}>{m.bandeira} {m.codigo}</option>)}
-            </select>
-          </label>
+        </div>
+        <div className="campo">
+          <span className="campo-rotulo">Moeda</span>
+          <EscolhaMoeda moedas={opcoesMoeda.map((m) => m.codigo)} valor={moeda} travada={Boolean(meta && c.d.movimentosMeta.some((m) => m.meta_id === meta.id))}
+            aoMudar={(m) => { setMoeda(m); setAlvo((t) => { const x = parseNumero(t); return x ? paraCampoMoeda(x, m) : t }) }} />
         </div>
         <label className="campo">
           <span className="campo-rotulo">Até quando? <small>(opcional)</small></span>
@@ -432,7 +433,7 @@ function FormMovimento({ c, meta, retirar: inicial, valorInicial, aoFechar }: { 
           opcoes={[{ id: 'guardar', nome: 'Guardar', cor: COR.entradas }, { id: 'retirar', nome: 'Retirar', cor: COR.saidas }]} />
         <label className="valor-grande" style={{ '--c': retirar ? COR.saidas : COR.entradas } as React.CSSProperties}>
           <span>{simbolo(meta.moeda)}</span>
-          <input autoFocus inputMode="decimal" placeholder="0,00" value={valor} onChange={(e) => { setValor(e.target.value); setErro(null) }} aria-label="Valor" />
+          <input autoFocus inputMode="decimal" placeholder="0,00" value={valor} onChange={(e) => { setValor(mascarar(e.target.value, casasDaMoeda(meta.moeda))); setErro(null) }} aria-label="Valor" />
         </label>
         <div className="mt-atalhos">
           {atalhos.map((a) => (
