@@ -2,7 +2,7 @@
 -- Supabase > SQL Editor > New query > colar > Run. Só acrescenta e pode ser rodada de novo sem problema.
 --
 -- Uma linha por pessoa. Quem grava é só o servidor (as funções stripe-* usam a chave de serviço): a pessoa só consegue LER a
--- própria linha. Contas que já existiam hoje entram como 'cortesia' (acesso liberado, sem cobrança). Conta nova não tem
+-- própria linha. Cortesia (acesso liberado, sem cobrança) é dada à mão, só para os e-mails escolhidos. Conta nova não tem
 -- linha até assinar, e sem linha o app mostra a tela de assinatura em vez do painel.
 -- O bloqueio dentro do banco (RLS) está na migração 13, para ligar depois de testar o fluxo.
 
@@ -26,7 +26,8 @@ create policy "ler a propria" on public.assinaturas for select to authenticated 
 -- sem política de escrita de propósito: ninguém liga a própria assinatura pelo navegador
 revoke insert, update, delete on public.assinaturas from anon, authenticated;
 
--- quem já usava o app antes da cobrança fica liberado
-insert into public.assinaturas (user_id, status) select id, 'cortesia' from auth.users on conflict (user_id) do nothing;
+-- ATENÇÃO: esta migração NÃO libera ninguém por conta própria. (Antes ela dava 'cortesia' a todos os usuários existentes,
+-- o que era uma armadilha: rodar de novo depois do lançamento liberaria de graça quem tivesse se cadastrado.)
+-- Para dar cortesia a contas específicas (você e amigos), use supabase/dar-cortesia.sql, informando os e-mails.
 
 notify pgrst, 'reload schema';

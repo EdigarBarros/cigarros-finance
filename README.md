@@ -100,24 +100,35 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
 
 **Netlify:** <https://app.netlify.com/start> → importe este repositório (o `netlify.toml` já configura o build) → *Site configuration → Environment variables* → adicione as duas variáveis → **Deploy**.
 
-> **Já tinha o banco criado antes?** Rode também as migrações que faltarem, em ordem, no SQL Editor:
-> [`migracao-02`](supabase/migracao-02-dividas-interligadas.sql), [`migracao-03`](supabase/migracao-03-bancos.sql) e
-> [`migracao-04-perfil-e-moedas`](supabase/migracao-04-perfil-e-moedas.sql) (perfil adaptável e outras moedas) e
-> [`migracao-05-categorias`](supabase/migracao-05-categorias.sql) (categorias editáveis; os lançamentos antigos passam para as
-> categorias novas), [`migracao-06-metas`](supabase/migracao-06-metas.sql) (metas; a meta em dólar antiga vira uma meta),
-> [`migracao-07-contas-fixas`](supabase/migracao-07-contas-fixas.sql) (contas fixas e a pagar; precisa das migrações 3 e 5) e
-> [`migracao-08-cartoes`](supabase/migracao-08-cartoes.sql) (cartões de crédito, faturas e compras parceladas) e
-> [`migracao-09-cartoes-extras`](supabase/migracao-09-cartoes-extras.sql) (renegociar fatura, juros de atraso, limite
-> garantido da caixinha e foto de perfil) e
-> [`migracao-10-dividas-e-a-receber`](supabase/migracao-10-dividas-e-a-receber.sql) (quem te deve, com quem é a dívida e
-> calendário de parcelas: paga, pela metade, atrasada).
-> Todas só acrescentam, não apagam nada.
+> **Já tinha o banco criado antes?** Rode também as migrações que faltarem, em ordem, no SQL Editor (de
+> [`migracao-02`](supabase/migracao-02-dividas-interligadas.sql) até a [`migracao-16`](supabase/migracao-16-acesso-teste-e-erros.sql)).
+> Todas só acrescentam, não apagam nada. A 12 (assinaturas) e a 13 (bloqueio no banco) só servem se você cobra assinatura; a 16 acrescenta
+> carência no cartão recusado, teste grátis por cartão e o registro de erros.
+
+### 2b. Cobrança (Stripe) e contas de cortesia
+
+1. No Stripe, crie o produto com preço mensal e `lookup_key = opuscash_mensal` (em reais e nas outras moedas aceitas).
+2. Supabase → **Edge Functions**: publique `stripe-checkout`, `stripe-portal`, `excluir-conta` (com verificação de JWT) e `stripe-webhook`
+   (**sem** verificação de JWT). Em **Secrets**, defina `STRIPE_SECRET_KEY`.
+3. Stripe → Webhooks: aponte para a função `stripe-webhook` com os eventos `customer.subscription.created`, `.updated` e `.deleted`.
+4. **Cortesia** (acesso liberado, sem cobrança, nunca revogado pelo Stripe): rode [`supabase/dar-cortesia.sql`](supabase/dar-cortesia.sql)
+   com os e-mails escolhidos. Rodar as migrações **não** dá cortesia a ninguém.
+5. Na hospedagem (Vercel), defina `VITE_EMAIL_SUPORTE` e `VITE_RESPONSAVEL`: aparecem nos Termos e na Privacidade.
+
+### 2c. Login (Supabase → Authentication)
+
+- **URL Configuration:** `Site URL` = endereço do site; em `Redirect URLs` adicione o mesmo endereço (o link de "Esqueci minha senha" e
+  o de confirmação voltam para ele).
+- **SMTP próprio** (Project Settings → Authentication → SMTP): o e-mail padrão do Supabase manda pouquíssimos por hora e quase
+  não serve para um site aberto. Use Resend, Brevo, SendGrid etc.
+- **Passwords:** ligue "Prevent use of leaked passwords" (plano Pro) e deixe o mínimo em 8 caracteres ou mais.
+- Erros do app aparecem em `select * from erros_app order by criado_em desc limit 50;`.
 
 ### 3. Primeiro acesso
 
 1. Abra o site → **Primeiro acesso? Criar conta** → confirme pelo e-mail.
 2. Menu **☰ → Importar planilha (.xlsx)** e escolha sua planilha. Os meses que vierem nela substituem os do site.
-3. **Recomendado:** depois de criar sua conta, no Supabase vá em **Authentication → Sign In / Providers** e desligue **Allow new users to sign up**, para ninguém mais conseguir se cadastrar no seu site.
+3. Se o site for **só seu** (sem cobrança), desligue **Allow new users to sign up** em **Authentication → Sign In / Providers**. Se for aberto ao público, deixe ligado.
 
 ## Bom saber
 

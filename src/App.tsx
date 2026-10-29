@@ -1,21 +1,26 @@
 import type { Session } from '@supabase/supabase-js'
-import { useEffect, useState } from 'react'
-import { Configuracao, Login } from './components/Entrada'
+import { lazy, Suspense, useEffect, useState } from 'react'
+import { Configuracao, Login, NovaSenha } from './components/Entrada'
 import { TelaAssinatura } from './components/Assinatura'
 import { PaginaLegal } from './components/Legal'
 import { documentoDoHash } from './lib/legal'
-import { Painel } from './components/Painel'
 import { temAcesso, useAssinatura } from './lib/assinatura'
 import { configurado, supabase } from './lib/supabase'
+
+const Painel = lazy(() => import('./components/Painel').then((m) => ({ default: m.Painel })))
 
 export default function App() {
   const [sessao, setSessao] = useState<Session | null | undefined>(undefined)
   const [doc, setDoc] = useState(documentoDoHash)
+  const [recuperando, setRecuperando] = useState(false)
 
   useEffect(() => {
     if (!configurado) return
     supabase.auth.getSession().then(({ data }) => setSessao(data.session))
-    const { data } = supabase.auth.onAuthStateChange((_e, s) => setSessao(s))
+    const { data } = supabase.auth.onAuthStateChange((e, s) => {
+      setSessao(s)
+      if (e === 'PASSWORD_RECOVERY') setRecuperando(true)
+    })
     return () => data.subscription.unsubscribe()
   }, [])
 
@@ -29,6 +34,7 @@ export default function App() {
   if (!configurado) return <Configuracao />
   if (sessao === undefined) return <div className="tela-central">Carregando…</div>
   if (!sessao) return <Login />
+  if (recuperando) return <NovaSenha aoConcluir={() => setRecuperando(false)} />
   return <ComAcesso userId={sessao.user.id} email={sessao.user.email ?? ''} nome={sessao.user.user_metadata?.nome} />
 }
 
@@ -37,5 +43,9 @@ function ComAcesso({ userId, email, nome }: { userId: string; email: string; nom
   const { assinatura, carregando, cobranca, recarregar } = useAssinatura(userId)
   if (carregando) return <div className="tela-central">Carregando…</div>
   if (cobranca && !temAcesso(assinatura)) return <TelaAssinatura assinatura={assinatura} email={email} aoAtualizar={recarregar} />
-  return <Painel userId={userId} email={email} nome={nome} assinatura={cobranca ? assinatura : null} />
+  return (
+    <Suspense fallback={<div className="tela-central">Carregando…</div>}>
+      <Painel userId={userId} email={email} nome={nome} assinatura={cobranca ? assinatura : null} />
+    </Suspense>
+  )
 }

@@ -14,7 +14,7 @@ import type { Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 import { useMobile } from '../lib/useMobile'
 import { estiloLente, useLente } from '../lib/useLente'
 import { definirTema, semMovimento, useTema } from '../lib/tema'
-import type { Assinatura } from '../lib/assinatura'
+import { irParaStripe, type Assinatura } from '../lib/assinatura'
 import { useCartoes } from '../lib/useCartoes'
 import { useContasFixas } from '../lib/useContasFixas'
 import { useDados } from '../lib/useDados'
@@ -36,7 +36,7 @@ import { Kpi } from './ui'
 import { Icone } from './Icone'
 import { CartaoDicas, type Dica } from './CartaoDicas'
 import { Marca } from './Marca'
-import { Configuracoes, ZerarDados } from './Configuracoes'
+import { Configuracoes, ExcluirContaModal, ZerarDados } from './Configuracoes'
 import { Questionario } from './Questionario'
 import { Tour } from './Tour'
 
@@ -82,6 +82,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const [tour, setTour] = useState(false)
   const [editarCategorias, setEditarCategorias] = useState(false)
   const [zerando, setZerando] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
   const [quadroMeses, setQuadroMeses] = useState(false)
   const [busca, setBusca] = useState('')
   const [extrato, setExtrato] = useState(false)
@@ -546,6 +547,13 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           </div>
         </header>
 
+        {assinatura?.status === 'past_due' && (
+          <div className="alerta" role="status">
+            <span>Não conseguimos cobrar seu cartão. Atualize a forma de pagamento para não perder o acesso.</span>
+            <button className="link" onClick={() => void irParaStripe('stripe-portal').then((m) => m && alert(m))}>Atualizar cartão</button>
+          </div>
+        )}
+
         {d.perfilSemTabela && (
           <div className="alerta aviso-migracao" role="status">
             Falta atualizar o banco de dados para guardar suas preferências e usar outras moedas. Rode
@@ -647,6 +655,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           aoZerar={() => { setAjustes(false); setZerando(true) }}
           assinatura={assinatura}
           aoSair={() => supabase.auth.signOut()}
+          aoExcluirConta={() => { setAjustes(false); setExcluindo(true) }}
           aoFechar={() => setAjustes(false)}
         />
       )}
@@ -657,6 +666,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           aoTerminar={() => { setTour(false); if (!perfil.dispensadas.includes('tour')) ctx.dispensar('tour') }} />
       )}
       {organizar && <OrganizarNomes c={ctx} aoFechar={() => setOrganizar(false)} />}
+
+      {excluindo && (
+        <ExcluirContaModal email={email} aoBaixarBackup={async () => (await import('../lib/planilha')).exportarBackup()} aoFechar={() => setExcluindo(false)} />
+      )}
 
       {zerando && (
         <ZerarDados
