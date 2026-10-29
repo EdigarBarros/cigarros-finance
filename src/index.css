@@ -943,6 +943,7 @@ button.cc-plastico:not(.ativo):hover { filter: none; }
   display: grid; place-content: center; justify-items: center; gap: 10px; aspect-ratio: 1.586; border-radius: 18px;
   border: 2px dashed var(--borda-forte); background: transparent; color: var(--texto-2); font-weight: 600;
   transition: border-color .3s, color .3s, transform .5s var(--mola); animation: cc-entra .9s .2s var(--mola) backwards;
+  scroll-snap-align: start; /* sem ponto de parada, a rolagem "grudava" de volta no último cartão e ele nunca aparecia */
 }
 .cc-carteira-novo span { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: var(--preench-3); transition: transform .5s var(--mola-salto), background .3s; }
 .cc-carteira-novo:hover { border-color: var(--destaque); color: var(--texto); transform: translateY(-3px); }
@@ -1162,7 +1163,8 @@ button.cc-plastico:not(.ativo):hover { filter: none; }
   .ccd-linha { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 860px) {
-  .cc-carteira { grid-auto-columns: 82%; gap: 14px; margin: 0 -16px; padding: 6px 16px 10px; scroll-padding: 0 16px; }
+  /* folga embaixo para o brilho do cartão (a margem negativa devolve o espaço), como no computador */
+  .cc-carteira { grid-auto-columns: 82%; gap: 14px; margin: 0 -16px -40px; padding: 6px 16px 56px; scroll-padding: 0 16px; }
   .cc-vazio { grid-template-columns: minmax(0, 1fr); padding: 22px; gap: 20px; }
   .cc-vazio-pilha { height: 190px; }
   .cc-vazio-pilha .cc-plastico { width: 210px; }
