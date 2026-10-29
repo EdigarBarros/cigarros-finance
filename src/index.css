@@ -889,7 +889,7 @@ select option { background: var(--superficie-forte); color: var(--texto); }
   background:
     radial-gradient(130% 120% at 0% 0%, color-mix(in srgb, var(--c) 72%, #fff) 0%, transparent 48%),
     linear-gradient(140deg, var(--c) 10%, color-mix(in srgb, var(--c) 55%, #060a16) 100%);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, .28) inset, 0 -1px 0 rgba(0, 0, 0, .25) inset, 0 18px 36px -18px color-mix(in srgb, var(--c) 80%, #000);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .28) inset, 0 -1px 0 rgba(0, 0, 0, .25) inset, 0 18px 36px -18px color-mix(in srgb, var(--c) 60%, #000);
   transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
   transition: transform .5s var(--mola), box-shadow .5s var(--mola), filter .4s;
 }
@@ -927,16 +927,18 @@ button.cc-plastico { cursor: pointer; }
 button.cc-plastico:hover { box-shadow: 0 1px 0 rgba(255, 255, 255, .3) inset, 0 26px 44px -18px color-mix(in srgb, var(--c) 85%, #000); }
 button.cc-plastico:not(.ativo) { filter: saturate(.8) brightness(.92); }
 button.cc-plastico:not(.ativo):hover { filter: none; }
-.cc-plastico.ativo { box-shadow: 0 0 0 2px var(--fundo), 0 0 0 4px color-mix(in srgb, var(--c) 70%, #fff), 0 26px 48px -18px color-mix(in srgb, var(--c) 85%, #000); }
+.cc-plastico.ativo { box-shadow: 0 0 0 2px var(--fundo), 0 0 0 4px color-mix(in srgb, var(--c) 70%, #fff), 0 26px 48px -18px color-mix(in srgb, var(--c) 60%, #000); }
 
 /* carteira: os cartões lado a lado (no celular, deslizam de lado) */
 .cc-carteira {
-  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(260px, 320px); gap: 22px; padding: 6px 4px 8px; margin: 0 -4px;
+  /* overflow-x: auto também corta na vertical: sem folga embaixo, a sombra colorida do cartão aparecia cortada em linha reta.
+     O padding de baixo dá lugar para ela inteira e a margem negativa devolve quase todo o espaço (a barra de rolagem fica fora da seção de baixo). */
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(260px, 320px); gap: 22px; padding: 6px 4px 60px; margin: 0 -4px -36px;
   overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: thin;
 }
 .cc-carteira-item { display: grid; gap: 10px; justify-items: start; scroll-snap-align: start; animation: cc-entra .9s var(--mola) backwards; }
 @keyframes cc-entra { from { opacity: 0; transform: translateY(26px) rotate(-4deg) scale(.94); filter: blur(8px); } }
-.cc-carteira-item .chip-estado { margin-left: 6px; }
+.cc-carteira-item .chip-estado { margin-left: 6px; position: relative; z-index: 1; }
 .cc-carteira-novo {
   display: grid; place-content: center; justify-items: center; gap: 10px; aspect-ratio: 1.586; border-radius: 18px;
   border: 2px dashed var(--borda-forte); background: transparent; color: var(--texto-2); font-weight: 600;
