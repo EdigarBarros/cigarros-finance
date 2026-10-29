@@ -8,36 +8,59 @@ import { Marca } from '../components/Marca'
  * revelando diferentes funcionalidades com perspectiva 3D.
  * Foco em visual, animações e ilustrações — mínimo de texto.
  */
+const CENAS = [
+  { titulo: 'Visão geral', texto: 'Quanto sobrou, quanto entrou e quanto saiu, num relance.' },
+  { titulo: 'Cartões sob controle', texto: 'Faturas, parcelas e limite de cada cartão.' },
+  { titulo: 'Metas que enchem', texto: 'Veja o pote encher a cada valor guardado.' },
+  { titulo: 'Dívidas organizadas', texto: 'Parcelas, saldo restante e quando acaba.' },
+  { titulo: 'O ano inteiro', texto: 'Para onde vai o dinheiro, mês a mês.' },
+]
+
+const mesAtual = () => {
+  const t = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  return t.charAt(0).toUpperCase() + t.slice(1)
+}
+
 export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSignup: () => void }) {
   const palcoRef = useRef<HTMLDivElement>(null)
-  const [progresso, setProgresso] = useState(0) // 0 a 1 — progresso do scroll no palco
+  const quadro = useRef(0)
   const [cena, setCena] = useState(0) // 0-4: qual cena está ativa
 
+  // O progresso do scroll vai para a variável CSS --p (0 a 1) sem re-renderizar a página a cada pixel;
+  // só a troca de cena passa pelo React.
   const aoScroll = useCallback(() => {
-    if (!palcoRef.current) return
-    const el = palcoRef.current
-    const rect = el.getBoundingClientRect()
-    const alturaPalco = el.offsetHeight
-    const alturaViewport = window.innerHeight
-    // Calcula quanto do palco já passou pelo topo da viewport
-    const scrolled = Math.max(0, -rect.top)
-    const totalScrollavel = alturaPalco - alturaViewport
-    const p = totalScrollavel > 0 ? Math.min(1, Math.max(0, scrolled / totalScrollavel)) : 0
-    setProgresso(p)
-    setCena(Math.min(4, Math.floor(p * 5)))
+    if (quadro.current) return
+    quadro.current = requestAnimationFrame(() => {
+      quadro.current = 0
+      const el = palcoRef.current
+      if (!el) return
+      const total = el.offsetHeight - window.innerHeight
+      const p = total > 0 ? Math.min(1, Math.max(0, -el.getBoundingClientRect().top / total)) : 0
+      el.style.setProperty('--p', p.toFixed(4))
+      const c = Math.min(CENAS.length - 1, Math.floor(p * CENAS.length))
+      setCena((antes) => (antes === c ? antes : c))
+    })
   }, [])
 
   useEffect(() => {
     window.addEventListener('scroll', aoScroll, { passive: true })
+    window.addEventListener('resize', aoScroll)
     aoScroll()
-    return () => window.removeEventListener('scroll', aoScroll)
+    return () => {
+      window.removeEventListener('scroll', aoScroll)
+      window.removeEventListener('resize', aoScroll)
+      if (quadro.current) cancelAnimationFrame(quadro.current)
+    }
   }, [aoScroll])
 
-  // Transforms 3D do dashboard baseado no progresso
-  const rotateX = 12 - progresso * 12 // 12deg → 0deg
-  const rotateY = -6 + progresso * 12 // -6deg → 6deg
-  const scale = 0.85 + progresso * 0.15 // 0.85 → 1.0
-  const translateY = 40 - progresso * 40 // 40px → 0px
+  // clicar numa bolinha do trilho leva ao meio daquela cena
+  const irParaCena = (i: number) => {
+    const el = palcoRef.current
+    if (!el) return
+    const topo = el.getBoundingClientRect().top + window.scrollY
+    const total = el.offsetHeight - window.innerHeight
+    window.scrollTo({ top: topo + total * ((i + 0.5) / CENAS.length), behavior: 'smooth' })
+  }
 
   return (
     <div className="ap">
@@ -50,7 +73,9 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
         </div>
         <div className="ap-hero-centro">
           <div className="ap-logo-flutuante">
-            <img src="/logo-opuscash.webp" alt="OpusCash" />
+            {/* o logo em imagem tem "OPUS" branco: no tema claro entra a marca desenhada */}
+            <img className="ap-logo-escuro" src="/logo-opuscash.webp" alt="OpusCash" />
+            <span className="ap-logo-claro"><Marca grande /></span>
             <span className="ap-logo-brilho" />
           </div>
 <h1 className="ap-h1">
@@ -77,47 +102,35 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
       {/* ─── DASHBOARD 3D STICKY ─── */}
       <section className="ap-palco" ref={palcoRef}>
         <div className="ap-palco-sticky">
-          {/* Labels das cenas que aparecem/desaparecem */}
-          <div className={`ap-cena-label ${cena === 0 ? 'ativa' : ''}`}>
-            <span className="ap-cena-num">01</span>
-            <h2>Visão geral</h2>
-            <p>Saldo, entradas e saídas num glance</p>
-          </div>
-          <div className={`ap-cena-label ${cena === 1 ? 'ativa' : ''}`}>
-            <span className="ap-cena-num">02</span>
-            <h2>Cartões inteligentes</h2>
-            <p>Faturas, parcelas e limites sob controle</p>
-          </div>
-          <div className={`ap-cena-label ${cena === 2 ? 'ativa' : ''}`}>
-            <span className="ap-cena-num">03</span>
-            <h2>Metas visuais</h2>
-            <p>Progresso em tempo real com gráficos vivos</p>
-          </div>
-          <div className={`ap-cena-label ${cena === 3 ? 'ativa' : ''}`}>
-            <span className="ap-cena-num">04</span>
-            <h2>Dívidas organizadas</h2>
-            <p>Parcelas, saldo restante e evolução clara</p>
-          </div>
-          <div className={`ap-cena-label ${cena === 4 ? 'ativa' : ''}`}>
-            <span className="ap-cena-num">05</span>
-            <h2>Relatórios completos</h2>
-            <p>Entenda seus gastos com gráficos interativos</p>
-          </div>
+          <div className="ap-palco-grade">
+            {/* Legendas: ficam empilhadas no mesmo lugar e uma aparece por vez */}
+            <div className="ap-cenas">
+              <div className="ap-cena-pilha">
+                {CENAS.map((c, i) => (
+                  <div key={c.titulo} className={`ap-cena-label ${cena === i ? 'ativa' : ''}`} aria-hidden={cena !== i}>
+                    <span className="ap-cena-num">{String(i + 1).padStart(2, '0')} / {String(CENAS.length).padStart(2, '0')}</span>
+                    <h2>{c.titulo}</h2>
+                    <p>{c.texto}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="ap-trilho" role="tablist" aria-label="Cenas">
+                {CENAS.map((c, i) => (
+                  <button key={c.titulo} role="tab" aria-selected={cena === i} aria-label={c.titulo}
+                    className={`ap-trilho-ponto ${cena === i ? 'ativo' : ''}`} onClick={() => irParaCena(i)} />
+                ))}
+              </div>
+            </div>
 
           {/* Dashboard 3D */}
-          <div
-            className="ap-dash-3d"
-            style={{
-              transform: `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale}) translateY(${translateY}px)`,
-            }}
-          >
+          <div className="ap-dash-3d">
             <div className="ap-dash-glow" />
             <div className="ap-dash-frame">
               {/* Barra superior do dashboard */}
               <div className="ap-dash-topbar">
                 <div className="ap-dash-dots"><i /><i /><i /></div>
                 <Marca compacta />
-                <div className="ap-dash-mes">Outubro 2025</div>
+                <div className="ap-dash-mes">{mesAtual()}</div>
               </div>
 
               <div className="ap-dash-body">
@@ -179,6 +192,20 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
                         <span className="ap-card-val">R$ 1.120</span>
                         <span className="ap-card-lim">de R$ 5.000</span>
                       </div>
+                    </div>
+                    <div className="ap-lanc">
+                      <h4>Últimos lançamentos</h4>
+                      {[
+                        { nome: 'Salário', cat: 'Entrada · hoje', val: '+R$ 5.000,00', ent: true },
+                        { nome: 'Mercado', cat: 'Alimentação · ontem', val: '−R$ 312,40', ent: false },
+                        { nome: 'iFood', cat: 'Alimentação · ontem', val: '−R$ 58,90', ent: false },
+                      ].map((l) => (
+                        <div key={l.nome} className="ap-lanc-item">
+                          <span className={`ap-lanc-ponto ${l.ent ? 'ent' : 'sai'}`} />
+                          <span className="ap-lanc-nome">{l.nome}<small>{l.cat}</small></span>
+                          <strong className={l.ent ? 'ent' : 'sai'}>{l.val}</strong>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
@@ -283,7 +310,7 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
                           return (
                             <div key={m} className="ap-barra-col">
                               <div className="ap-barra-fill" style={{ height: `${h}%` }}>
-                                <div className="ap-barra-entrada" style={{ height: `${60 + Math.random() * 20}%` }} />
+                                <div className="ap-barra-entrada" style={{ height: `${[68, 72, 61, 78, 66, 74, 63, 70, 76, 65][i]}%` }} />
                               </div>
                               <small>{m}</small>
                             </div>
@@ -316,9 +343,10 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
             </div>
           </div>
         </div>
+        </div>
       </section>
 
-{/* ─── CTA FINAL ─── */}
+      {/* ─── CTA FINAL ─── */}
       <section className="ap-cta-final">
         <div className="ap-cta-orbs">
           <i className="ap-orb ap-orb-d" />
@@ -332,7 +360,7 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
               <strong>9,99</strong>
               <span>/mês</span>
             </div>
-            <p className="ap-preco-nota">Cancele em até 7 dias e não cobramos nada</p>
+            <p className="ap-preco-nota">Cartão necessário para começar. Cancele em até 7 dias e não cobramos nada.</p>
           </div>
           <h2 className="ap-cta-titulo">Pronto para transformar<br />suas finanças?</h2>
           <div className="ap-botoes">
@@ -344,10 +372,10 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
             </button>
           </div>
           <ul className="ap-features-mini">
-            <li><Icone nome="check" tamanho={14} /> Lançamentos ilimitados</li>
-            <li><Icone nome="check" tamanho={14} /> Múltiplos cartões</li>
-            <li><Icone nome="check" tamanho={14} /> Metas e dívidas</li>
-            <li><Icone nome="check" tamanho={14} /> Relatórios completos</li>
+            <li><Icone nome="check" tamanho={14} /> Cartões, faturas e parcelas</li>
+            <li><Icone nome="check" tamanho={14} /> Metas, dívidas e contas do mês</li>
+            <li><Icone nome="check" tamanho={14} /> Qualquer moeda, com a cotação do dia</li>
+            <li><Icone nome="check" tamanho={14} /> Importa extrato do banco e planilhas</li>
           </ul>
         </div>
       </section>
@@ -355,7 +383,7 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
       {/* ─── FOOTER ─── */}
       <footer className="ap-footer">
         <Marca />
-        <p>© 2025 OpusCash · Todos os direitos reservados</p>
+        <p>© {new Date().getFullYear()} OpusCash · Todos os direitos reservados</p>
         <div className="ap-footer-links">
           <a href="#/termos">Termos</a>
           <a href="#/privacidade">Privacidade</a>

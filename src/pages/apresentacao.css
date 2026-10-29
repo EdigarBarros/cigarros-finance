@@ -8,7 +8,8 @@
   min-height: 100vh;
   background: var(--fundo);
   color: var(--texto);
-  overflow-x: hidden;
+  /* clip (e não hidden): hidden vira um contêiner de rolagem e quebra o position: sticky do palco */
+  overflow-x: clip;
 }
 
 /* =========================================================================
@@ -1047,4 +1048,175 @@
     flex-direction: column;
     align-items: center;
   }
+}
+/* =========================================================================
+   PALCO — layout em duas colunas (legenda + dashboard), trilho de cenas e
+   transformação 3D guiada pela variável --p (0 a 1), definida no scroll.
+   Estas regras sobrepõem as primeiras versões acima.
+   ========================================================================= */
+.ap-palco { --p: 0; }
+
+.ap-palco-sticky {
+  display: block;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.ap-palco-grade {
+  height: 100%;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 5vw, 72px);
+  display: grid;
+  grid-template-columns: minmax(240px, 360px) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(24px, 4vw, 72px);
+}
+
+.ap-cenas { display: grid; gap: 28px; }
+
+/* todas as legendas ocupam a mesma célula; só a ativa aparece */
+.ap-cena-pilha { display: grid; }
+.ap-cena-label,
+.ap-cena-label.ativa {
+  position: static;
+  grid-area: 1 / 1;
+  max-width: none;
+  transform: translateY(18px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .5s var(--mola), transform .6s var(--mola);
+}
+.ap-cena-label.ativa { opacity: 1; transform: none; pointer-events: auto; }
+.ap-cena-label h2 { font-size: clamp(1.7rem, 2.6vw, 2.5rem); line-height: 1.08; margin-bottom: 12px; }
+.ap-cena-label p { font-size: 1.02rem; max-width: 30ch; }
+
+/* trilho: uma bolinha por cena, clicável */
+.ap-trilho { display: flex; gap: 10px; align-items: center; }
+.ap-trilho-ponto {
+  width: 10px; height: 10px; padding: 0; border: 0; border-radius: 999px; cursor: pointer;
+  background: var(--borda-forte); transition: width .4s var(--mola), background .3s;
+}
+.ap-trilho-ponto:hover { background: var(--texto-3); }
+.ap-trilho-ponto.ativo { width: 34px; background: linear-gradient(90deg, var(--marca-1), var(--marca-3)); }
+.ap-trilho-ponto:focus-visible { outline: 2px solid var(--destaque); outline-offset: 3px; }
+
+/* dashboard: mais largo, altura fixa para as cenas caberem, tombado no começo e de frente no fim */
+.ap-dash-3d {
+  width: 100%;
+  max-width: 1000px;
+  justify-self: center;
+  transform-origin: 30% 50%;
+  transform:
+    perspective(1500px)
+    rotateX(calc(10deg - var(--p) * 10deg))
+    rotateY(calc(-12deg + var(--p) * 9deg))
+    scale(calc(.9 + var(--p) * .1))
+    translateY(calc(30px - var(--p) * 30px));
+  transition: none;
+}
+.ap-dash-glow { background: radial-gradient(ellipse at center, rgba(31, 209, 160, .22) 0%, rgba(61, 75, 224, .12) 45%, transparent 72%); }
+.ap-dash-body { height: clamp(400px, 62vh, 580px); min-height: 0; }
+.ap-dash-content { min-width: 0; padding: 0; }
+.ap-dash-cena { inset: 0; padding: 22px; overflow: hidden; }
+
+@media (max-width: 900px) {
+  .ap-palco-grade {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    align-content: center;
+    align-items: start;
+    gap: 18px;
+    padding: 0 14px;
+  }
+  .ap-cenas { gap: 14px; text-align: center; justify-items: center; padding-top: 4px; }
+  .ap-cena-pilha { min-height: 128px; }
+  .ap-cena-label, .ap-cena-label.ativa { padding: 0; margin: 0; text-align: center; max-width: none; }
+  .ap-cena-label h2 { font-size: 1.55rem; }
+  .ap-cena-label p { margin-inline: auto; font-size: .95rem; max-width: 34ch; }
+  .ap-dash-3d {
+    width: 100%;
+    transform:
+      perspective(1100px)
+      rotateX(calc(6deg - var(--p) * 6deg))
+      rotateY(0deg)
+      scale(calc(.94 + var(--p) * .06));
+  }
+  .ap-dash-body { height: clamp(330px, 50dvh, 460px); }
+  .ap-dash-nav { display: none; }
+  .ap-dash-cena { padding: 14px; }
+  .ap-dash-topbar { padding: 10px 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-dash-3d { transform: none; }
+  .ap-cena-label, .ap-dash-cena, .ap-trilho-ponto { transition: none; }
+}
+
+/* ── cena 1: últimos lançamentos (preenche a parte de baixo) ── */
+.ap-dash-cena > .ap-cards-row { margin-bottom: 14px; }
+.ap-lanc { display: grid; gap: 8px; }
+.ap-lanc h4 { margin: 4px 0 2px; font-size: .78rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--texto-3); }
+.ap-lanc-item {
+  display: flex; align-items: center; gap: 12px; padding: 8px 14px;
+  background: var(--superficie-2); border: 1px solid var(--borda); border-radius: var(--raio-p);
+}
+.ap-lanc-ponto { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.ap-lanc-ponto.ent { background: var(--entrada); }
+.ap-lanc-ponto.sai { background: var(--saida); }
+.ap-lanc-nome { flex: 1; min-width: 0; display: grid; font-size: .85rem; font-weight: 600; }
+.ap-lanc-nome small { font-size: .72rem; font-weight: 400; color: var(--texto-3); }
+.ap-lanc-item strong { font-family: var(--fonte-numeros); font-size: .86rem; font-variant-numeric: tabular-nums; }
+.ap-lanc-item strong.ent { color: var(--entrada); }
+.ap-lanc-item strong.sai { color: var(--saida); }
+
+/* ── cena 2: dois cartões lado a lado, para caberem as três parcelas ── */
+.ap-cards-detail { flex-direction: row; gap: 12px; margin-bottom: 14px; }
+.ap-card-big { flex: 1; min-width: 0; padding: 16px; }
+.ap-card-big .ap-card-chip { margin-bottom: 10px; }
+.ap-card-big .ap-card-info { display: grid; gap: 2px; font-size: .78rem; }
+
+/* ── cena 3: as metas preenchem o espaço ── */
+.ap-metas-grid { height: 100%; grid-auto-rows: 1fr; }
+.ap-meta-card { display: grid; align-content: center; justify-items: center; padding: 14px; }
+
+/* ── luz ambiente atrás do palco: muda de cor com o scroll ── */
+.ap-palco-sticky { background: var(--fundo); }
+.ap-palco-sticky::before {
+  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(48% 56% at calc(78% - var(--p) * 18%) 46%, color-mix(in srgb, var(--marca-3) 20%, transparent), transparent 70%),
+    radial-gradient(40% 50% at calc(14% + var(--p) * 10%) 62%, color-mix(in srgb, var(--marca-1) 18%, transparent), transparent 72%);
+}
+.ap-palco-grade { position: relative; z-index: 1; }
+
+@media (max-width: 900px) {
+  .ap-card-big { padding: 12px; }
+  .ap-card-big .ap-card-num { font-size: .85rem; letter-spacing: .08em; }
+  .ap-card-big .ap-card-info { font-size: .68rem; }
+  .ap-card-big .ap-card-barra { margin-top: 8px; }
+  .ap-parcela-item { padding: 8px 10px; font-size: .78rem; }
+  .ap-lanc-item { padding: 8px 10px; }
+  .ap-meta-card h4 { font-size: .78rem; }
+}
+
+/* ── logo do herói: imagem no tema escuro, marca desenhada no claro (o "OPUS" da imagem é branco) ── */
+.ap-logo-claro { display: none; }
+:root[data-tema='claro'] .ap-logo-flutuante img.ap-logo-escuro { display: none; }
+:root[data-tema='claro'] .ap-logo-claro { display: block; animation: logo-float 6s ease-in-out infinite; }
+.ap-logo-claro .marca { gap: 18px; padding: 0; }
+.ap-logo-claro .marca-simbolo { width: 128px; filter: drop-shadow(0 18px 40px rgba(31, 209, 160, .35)); }
+.ap-logo-claro .marca-nome { font-size: 56px; }
+@media (max-width: 768px) {
+  .ap-logo-claro .marca-simbolo { width: 84px; }
+  .ap-logo-claro .marca-nome { font-size: 36px; }
+}
+
+/* ── rodapé centralizado (a marca ficava colada à esquerda) ── */
+.ap-footer { display: grid; justify-items: center; }
+
+@media (max-width: 768px) {
+  /* benefícios alinhados pela esquerda, o bloco inteiro centralizado */
+  .ap-features-mini { display: grid; justify-content: center; justify-items: start; gap: 10px; }
 }
