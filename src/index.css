@@ -2677,11 +2677,21 @@ button.ex-tipo:hover { transform: scale(1.1); }
 
 @media (max-width: 760px) {
   .en-cartao { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-  .en-lamina, .criar .en-lamina { position: relative; grid-row: 1; height: 330px; transition: none; }
-  .en-painel, .criar .en-painel { clip-path: polygon(0 0, 100% 0, 100% 86%, 0 100%); }
-  .en-fio { top: 3px; bottom: -3px; clip-path: polygon(0 0, 100% 0, 100% 86%, 0 100%); }
+  /* o painel ocupa a faixa de cima (330px) com o fundo em diagonal; --en-e e --en-f são a altura da borda de baixo
+     à esquerda e à direita. A lâmina cobre a tela toda (para a cortina poder descer), mas fora da troca só a faixa aparece */
+  .en-cartao { grid-template-rows: 330px 1fr; }
+  .en-lamina, .criar .en-lamina { --en-e: 330px; --en-f: 284px; transition: none; }
+  .criar .en-lamina { --en-e: 284px; --en-f: 330px; }
+  .en-painel, .criar .en-painel { clip-path: polygon(0 0, 100% 0, 100% var(--en-f), 0 var(--en-e)); }
+  .en-fio { clip-path: polygon(0 0, 100% 0, 100% calc(var(--en-f) + 3px), 0 calc(var(--en-e) + 3px)); }
+  /* a troca: a cortina desce (um canto na frente do outro), cobre a tela, e sobe com a diagonal invertida.
+     Dois nomes de animação iguais para ela recomeçar a cada troca */
+  .trocou.criar .en-lamina { animation: en-cortina-criar 1.15s cubic-bezier(.7, 0, .25, 1); }
+  .trocou.entrar .en-lamina { animation: en-cortina-entrar 1.15s cubic-bezier(.7, 0, .25, 1); }
+  .trocou.criar .en-vitrine { animation: en-logo-desce-a 1.15s cubic-bezier(.7, 0, .25, 1); }
+  .trocou.entrar .en-vitrine { animation: en-logo-desce-b 1.15s cubic-bezier(.7, 0, .25, 1); }
   .en-brilho, .criar .en-brilho { left: 30%; top: -30%; }
-  .en-vitrine, .criar .en-vitrine { left: 0; right: 0; bottom: 40px; gap: 22px; padding: 30px 22px 0; }
+  .en-vitrine, .criar .en-vitrine { left: 0; right: 0; bottom: auto; height: 290px; gap: 22px; padding: 30px 22px 0; }
   .en-logo { padding: 0; }
   .en-logo .marca.grande { gap: 12px; }
   .en-logo .marca.grande .marca-simbolo { width: 104px; }
@@ -2694,6 +2704,35 @@ button.ex-tipo:hover { transform: scale(1.1); }
   .en-chamada p { font-size: 13.5px; }
   .en-form, .en-form.entrar, .en-form.criar { grid-row: 2; grid-column: 1; align-self: start; width: 100%; padding: 18px 22px 40px; --sai: 0px; transform: translateY(14px); }
   .en-form.ativo { transform: none; transition: opacity .45s .1s, transform .6s .1s var(--mola), visibility 0s; }
+  /* depois de uma troca, o formulário novo só aparece quando a cortina já está subindo */
+  .trocou .en-form.ativo { transition: opacity .5s .62s, transform .7s .62s var(--mola), visibility 0s; }
+  .en-chamada.visivel { transition: opacity .6s .5s, transform .8s .5s var(--mola), filter .6s .5s; }
+}
+@property --en-e { syntax: '<length-percentage>'; inherits: true; initial-value: 330px; }
+@property --en-f { syntax: '<length-percentage>'; inherits: true; initial-value: 284px; }
+@keyframes en-cortina-criar {
+  0% { --en-e: 330px; --en-f: 284px; }
+  38% { --en-e: calc(100% + 80px); --en-f: 100%; }
+  56% { --en-e: calc(100% + 80px); --en-f: calc(100% + 80px); }
+  100% { --en-e: 284px; --en-f: 330px; }
+}
+@keyframes en-cortina-entrar {
+  0% { --en-e: 284px; --en-f: 330px; }
+  38% { --en-e: 100%; --en-f: calc(100% + 80px); }
+  56% { --en-e: calc(100% + 80px); --en-f: calc(100% + 80px); }
+  100% { --en-e: 330px; --en-f: 284px; }
+}
+/* a logo desce junto com a cortina até o meio da tela e volta para o lugar */
+@keyframes en-logo-desce-a {
+  0%, 100% { transform: none; }
+  40%, 56% { transform: translateY(calc(50dvh - 170px)) scale(1.12); }
+}
+@keyframes en-logo-desce-b {
+  0%, 100% { transform: none; }
+  40%, 56% { transform: translateY(calc(50dvh - 170px)) scale(1.12); }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: reduce) {
+  .trocou .en-lamina, .trocou .en-vitrine { animation: none !important; }
 }
 
 /* ---------- assinatura ---------- */

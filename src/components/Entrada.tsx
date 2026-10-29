@@ -9,16 +9,18 @@ type Aviso = { texto: string; ok?: boolean } | null
 /**
  * Tela de entrada, ocupando a tela toda. Dividida em dois: de um lado o formulário, do outro o painel da marca. Ao trocar entre
  * "Entrar" e "Criar conta", uma lâmina diagonal varre a tela e leva o painel (com a logo) para o outro lado (as bordas do recorte
- * são propriedades CSS animadas; veja .en-lamina). No celular o painel fica em cima e só o formulário troca.
+ * são propriedades CSS animadas; veja .en-lamina). No celular o painel fica em cima; ao trocar, ele desce como uma cortina diagonal,
+ * cobre a tela levando a logo junto, o formulário troca por baixo e a cortina sobe de volta inclinada para o outro lado.
  * Cada pessoa tem seus próprios dados (protegidos no banco por RLS).
  */
 export function Login({ inicial = 'entrar' }: { inicial?: Modo }) {
   const [modo, setModo] = useState<Modo>(inicial)
   const [aviso, setAviso] = useState<Aviso>(null)
   const [ocupado, setOcupado] = useState(false)
+  const [trocou, setTrocou] = useState(false) // a cortina do celular só corre depois da primeira troca, não ao abrir a tela
   const criar = modo === 'criar'
 
-  const trocar = (m: Modo) => { setModo(m); setAviso(null) }
+  const trocar = (m: Modo) => { setModo(m); setAviso(null); setTrocou(true) }
 
   const entrar = async (email: string, senha: string) => {
     setOcupado(true); setAviso(null)
@@ -52,7 +54,7 @@ export function Login({ inicial = 'entrar' }: { inicial?: Modo }) {
 
   return (
     <div className="en">
-      <div className={`en-cartao ${modo}`}>
+      <div className={`en-cartao ${modo} ${trocou ? 'trocou' : ''}`}>
         <FormEntrar ativo={!criar} ocupado={ocupado} aviso={!criar ? aviso : null} aoEnviar={entrar} aoEsqueci={esqueci} aoReenviar={reenviar} aoTrocar={() => trocar('criar')} />
         <FormCriar ativo={criar} ocupado={ocupado} aviso={criar ? aviso : null} aoEnviar={cadastrar} aoReenviar={reenviar} aoTrocar={() => trocar('entrar')} />
 
