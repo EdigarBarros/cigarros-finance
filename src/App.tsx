@@ -6,6 +6,8 @@ import { PaginaLegal } from './components/Legal'
 import { documentoDoHash } from './lib/legal'
 import { temAcesso, useAssinatura } from './lib/assinatura'
 import { configurado, supabase } from './lib/supabase'
+import { Apresentacao } from './pages/Apresentacao'
+import './pages/apresentacao.css'
 
 const Painel = lazy(() => import('./components/Painel').then((m) => ({ default: m.Painel })))
 
@@ -13,6 +15,7 @@ export default function App() {
   const [sessao, setSessao] = useState<Session | null | undefined>(undefined)
   const [doc, setDoc] = useState(documentoDoHash)
   const [recuperando, setRecuperando] = useState(false)
+  const [mostrarLogin, setMostrarLogin] = useState(false)
 
   useEffect(() => {
     if (!configurado) return
@@ -33,8 +36,14 @@ export default function App() {
   if (doc) return <PaginaLegal doc={doc} />
   if (!configurado) return <Configuracao />
   if (sessao === undefined) return <div className="tela-central">Carregando…</div>
-  if (!sessao) return <Login />
-  if (recuperando) return <NovaSenha aoConcluir={() => setRecuperando(false)} />
+
+  if (!sessao) {
+    if (recuperando) return <NovaSenha aoConcluir={() => setRecuperando(false)} />
+    // Mostra a landing page premium por padrão, ou o login se o usuário clicou em "Já tenho conta"
+    if (mostrarLogin) return <Login />
+    return <Apresentacao onLogin={() => setMostrarLogin(true)} onSignup={() => setMostrarLogin(true)} />
+  }
+
   return <ComAcesso userId={sessao.user.id} email={sessao.user.email ?? ''} nome={sessao.user.user_metadata?.nome} />
 }
 
