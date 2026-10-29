@@ -336,14 +336,13 @@
 .td-par i.e { background: linear-gradient(to top, color-mix(in srgb, var(--entrada) 55%, transparent), var(--entrada)); }
 .td-par i.s { background: linear-gradient(to top, color-mix(in srgb, var(--saida) 50%, transparent), var(--saida)); }
 
-/* cartão: o plástico sai da tela e gira */
-.td-cartao-palco { transform-style: preserve-3d; height: 168px; display: grid; place-items: center; }
-.td-cartao { position: relative; width: 268px; height: 164px; transform-style: preserve-3d; will-change: transform; }
-.td-cartao-frente, .td-cartao-verso {
-  position: absolute; inset: 0; border-radius: 16px; backface-visibility: hidden; overflow: hidden;
-  box-shadow: 0 10px 16px -10px rgba(76, 20, 140, .7);
-}
+/* cartão: o plástico salta e inclina. Desenhado com perspectiva própria e achatado no bloco (flat): em 3D de verdade
+   ele cruzava o plano do bloco e aparecia cortado */
+.td-cartao-palco { transform-style: flat; perspective: 700px; height: 168px; display: grid; place-items: center; }
+.td-cartao { position: relative; width: 268px; height: 164px; will-change: transform; }
 .td-cartao-frente {
+  position: absolute; inset: 0; border-radius: 16px; overflow: hidden;
+  box-shadow: 0 10px 16px -10px rgba(76, 20, 140, .7);
   background: linear-gradient(135deg, #9b2ff0, #6a0fc0 55%, #4b0a8f); color: #fff;
   padding: 16px 18px; display: grid; grid-template-rows: auto 1fr auto auto auto; gap: 2px;
 }
@@ -355,9 +354,6 @@
 .td-cartao-rodape { display: flex; justify-content: space-between; font-size: 10.5px; opacity: .85; margin-top: 4px; }
 .td-cartao-rodape b { letter-spacing: .14em; }
 .td-brilho { position: absolute; top: -20%; bottom: -20%; left: 0; width: 40%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .35), transparent); transform: translateX(-120%); }
-.td-cartao-verso { transform: rotateY(180deg); background: linear-gradient(135deg, #3a0a6e, #5c12a8); display: grid; align-content: space-between; padding: 22px 0 16px; color: rgba(255, 255, 255, .8); }
-.td-tarja { height: 34px; background: #14081f; }
-.td-cartao-verso span { padding: 0 18px; font-family: var(--fonte-numeros); letter-spacing: .1em; font-size: 14px; }
 .td-limite { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--texto-2); margin: 14px 0 7px; }
 .td-trilha { height: 8px; border-radius: 99px; background: var(--preench-3); overflow: hidden; }
 .td-trilha i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #9b2ff0, #c86bff); transform-origin: left; transform: scaleX(0); }

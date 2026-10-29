@@ -179,7 +179,6 @@ function TelaDemo() {
               <span className="td-cartao-rodape">vence dia 10 <b>CRÉDITO</b></span>
               <i className="td-brilho" data-brilho />
             </div>
-            <div className="td-cartao-verso"><i className="td-tarja" /><span>•••• 4821</span></div>
           </div>
         </div>
         <div className="td-limite"><span>Limite usado</span><span>livre R$ 4.520,00</span></div>
@@ -322,10 +321,13 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
       // gráfico crescendo (cada mês um pouco depois do anterior)
       por('g', suave(0.26, 0.38, p).toFixed(3), (v) => tela.style.setProperty('--g', v))
       // cartão: sai da tela, dá uma volta inteira e volta; a fatura enche
-      const giroCartao = suave(0.42, 0.52, p)
-      const sobe = Math.sin(giroCartao * Math.PI)
-      por('cartao', `translateZ(${(sobe * 60).toFixed(1)}px) rotateY(${(giroCartao * 360 * (reduzir ? 0 : 1)).toFixed(1)}deg) rotateX(${(sobe * 10 * giro).toFixed(1)}deg)`, (v) => { cartao.style.transform = v })
-      por('brilho', `translateX(${mistura(-120, 220, suave(0.47, 0.53, p)).toFixed(1)}%) skewX(-18deg)`, (v) => { brilho.style.transform = v })
+      // cartão: salta da tela, inclina de um lado para o outro e assenta de volta. Nunca fica de lado, então não
+      // atravessa o bloco (o giro de 360° cortava o cartão no meio, sobretudo no celular)
+      const t = suave(0.42, 0.53, p)
+      const sobe = Math.sin(t * Math.PI)
+      const lado = Math.sin(t * Math.PI * 2) * (reduzir ? 0 : 1) // -1..1: inclina para um lado e depois para o outro
+      por('cartao', `translateZ(${(sobe * 46).toFixed(1)}px) rotateX(${(sobe * 14 * giro).toFixed(2)}deg) rotateY(${(lado * -24).toFixed(2)}deg)`, (v) => { cartao.style.transform = v })
+      por('brilho', `translateX(${mistura(-120, 260, suave(0.44, 0.52, p)).toFixed(1)}%) skewX(-18deg)`, (v) => { brilho.style.transform = v })
       por('fatura', `scaleX(${(0.42 * suave(0.46, 0.54, p)).toFixed(3)})`, (v) => { fatura.style.transform = v })
       // contas sendo pagas uma a uma
       const c = rampa(0.58, 0.68, p) * CONTAS.length
