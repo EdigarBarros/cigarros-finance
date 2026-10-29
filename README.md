@@ -121,6 +121,16 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
   o de confirmação voltam para ele).
 - **SMTP próprio** (Project Settings → Authentication → SMTP): o e-mail padrão do Supabase manda pouquíssimos por hora e quase
   não serve para um site aberto. Use Resend, Brevo, SendGrid etc.
+- **E-mails com a cara do OpusCash** (Authentication → Emails → Templates): cole o conteúdo de cada arquivo de
+  [`supabase/emails/`](supabase/emails/) no template correspondente e use o assunto sugerido:
+
+  | Template do Supabase | Arquivo | Assunto |
+  | --- | --- | --- |
+  | Confirm sign up | `confirmar-cadastro.html` | Confirme seu e-mail no OpusCash |
+  | Reset password | `redefinir-senha.html` | Crie uma senha nova no OpusCash |
+  | Change email address | `trocar-email.html` | Confirme seu novo e-mail no OpusCash |
+
+  Em Authentication → Sign In / Providers → Email, deixe **Confirm email** ligado.
 - **Passwords:** ligue "Prevent use of leaked passwords" (plano Pro) e deixe o mínimo em 8 caracteres ou mais.
 - Erros do app aparecem em `select * from erros_app order by criado_em desc limit 50;`.
 
