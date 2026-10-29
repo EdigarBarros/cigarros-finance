@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
@@ -14,6 +15,7 @@ type Aviso = { texto: string; ok?: boolean } | null
  * Cada pessoa tem seus próprios dados (protegidos no banco por RLS).
  */
 export function Login({ inicial = 'entrar' }: { inicial?: Modo }) {
+  const { t } = useTranslation()
   const [modo, setModo] = useState<Modo>(inicial)
   const [aviso, setAviso] = useState<Aviso>(null)
   const [ocupado, setOcupado] = useState(false)
@@ -26,21 +28,21 @@ export function Login({ inicial = 'entrar' }: { inicial?: Modo }) {
     setOcupado(true); setAviso(null)
     const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
     setOcupado(false)
-    if (error) setAviso({ texto: traduzir(error.message) })
+    if (error) setAviso({ texto: traduzir(error.message, t) })
   }
 
   const esqueci = async (email: string) => {
     setOcupado(true); setAviso(null)
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
     setOcupado(false)
-    setAviso(error ? { texto: traduzir(error.message) } : { texto: 'Se esse e-mail tiver conta, enviamos um link para criar uma senha nova. Olhe também o spam.', ok: true })
+    setAviso(error ? { texto: traduzir(error.message, t) } : { texto: t('login.esqueciSucesso'), ok: true })
   }
 
   const reenviar = async (email: string) => {
     setOcupado(true); setAviso(null)
     const { error } = await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: window.location.origin } })
     setOcupado(false)
-    setAviso(error ? { texto: traduzir(error.message) } : { texto: 'Reenviamos o e-mail de confirmação. Pode levar alguns minutos; olhe também o spam.', ok: true })
+    setAviso(error ? { texto: traduzir(error.message, t) } : { texto: t('login.reenviarSucesso'), ok: true })
   }
 
   const cadastrar = async (nome: string, email: string, senha: string) => {
@@ -48,8 +50,8 @@ export function Login({ inicial = 'entrar' }: { inicial?: Modo }) {
     // o nome vai junto e já aparece preenchido na primeira pergunta do painel
     const { data, error } = await supabase.auth.signUp({ email, password: senha, options: { data: nome ? { nome } : undefined, emailRedirectTo: window.location.origin } })
     setOcupado(false)
-    if (error) setAviso({ texto: traduzir(error.message) })
-    else if (!data.session) setAviso({ texto: 'Conta criada! Confirme pelo link que chegou no seu e-mail e depois entre.', ok: true })
+    if (error) setAviso({ texto: traduzir(error.message, t) })
+    else if (!data.session) setAviso({ texto: t('login.contaCriada'), ok: true })
   }
 
   return (
@@ -68,8 +70,8 @@ export function Login({ inicial = 'entrar' }: { inicial?: Modo }) {
                 <Marca grande />
               </div>
               <div className="en-frases">
-                <Chamada visivel={!criar} titulo="Bom te ver" destaque="de novo." texto="Seus lançamentos, contas e metas estão do jeitinho que você deixou." />
-                <Chamada visivel={criar} titulo="Seu dinheiro," destaque="do seu jeito." texto="Entradas, saídas, cartões, dívidas e metas num lugar só. Só seu." />
+                <Chamada visivel={!criar} titulo={t('login.bomVer')} destaque={t('login.deNovo')} texto={t('login.textoEntrar')} />
+                <Chamada visivel={criar} titulo={t('login.seuDinheiro')} destaque={t('login.doSeuJeito')} texto={t('login.textoCriar')} />
               </div>
             </div>
           </div>
@@ -93,6 +95,7 @@ type PropsForm = { ativo: boolean; ocupado: boolean; aviso: Aviso; aoTrocar: () 
 function FormEntrar({ ativo, ocupado, aviso, aoEnviar, aoEsqueci, aoReenviar, aoTrocar }: PropsForm & {
   aoEnviar: (email: string, senha: string) => void; aoEsqueci: (email: string) => void; aoReenviar: (email: string) => void
 }) {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [recuperar, setRecuperar] = useState(false)
@@ -100,22 +103,23 @@ function FormEntrar({ ativo, ocupado, aviso, aoEnviar, aoEsqueci, aoReenviar, ao
   return (
     <form className={`en-form entrar ${ativo ? 'ativo' : ''}`} inert={!ativo} aria-hidden={!ativo}
       onSubmit={(e) => { e.preventDefault(); if (recuperar) aoEsqueci(email); else aoEnviar(email, senha) }}>
-      <h1>{recuperar ? 'Nova senha' : 'Entrar'}</h1>
-      <p className="en-sub">{recuperar ? 'Digite seu e-mail e enviamos um link para você criar uma senha nova.' : 'Que bom que voltou. Seu painel está esperando.'}</p>
-      <Campo rotulo="E-mail" icone="email" tipo="email" valor={email} mudar={setEmail} completar="email" />
+      <h1>{recuperar ? t('login.novaSenha') : t('login.entrar')}</h1>
+      <p className="en-sub">{recuperar ? t('login.esqueciSub') : t('login.entrarSub')}</p>
+      <Campo rotulo={t('login.email')} icone="email" tipo="email" valor={email} mudar={setEmail} completar="email" />
       {!recuperar && <CampoSenha valor={senha} mudar={setSenha} completar="current-password" />}
-      <BotaoEnviar ocupado={ocupado}>{recuperar ? 'Enviar link' : 'Entrar'}</BotaoEnviar>
+      <BotaoEnviar ocupado={ocupado}>{recuperar ? t('login.enviarLink') : t('login.entrar')}</BotaoEnviar>
       {aviso && <p className={`en-aviso ${aviso.ok ? 'ok' : ''}`} role="alert">{aviso.texto}</p>}
-      {naoConfirmado && email && <button type="button" className="link" onClick={() => aoReenviar(email)} disabled={ocupado}>Reenviar e-mail de confirmação</button>}
+      {naoConfirmado && email && <button type="button" className="link" onClick={() => aoReenviar(email)} disabled={ocupado}>{t('login.reenviarConfirmacao')}</button>}
       <p className="en-troca">
-        <button type="button" className="link" onClick={() => setRecuperar(!recuperar)}>{recuperar ? 'Voltar para entrar' : 'Esqueci minha senha'}</button>
+        <button type="button" className="link" onClick={() => setRecuperar(!recuperar)}>{recuperar ? t('login.voltarEntrar') : t('login.esqueciSenha')}</button>
       </p>
-      <p className="en-troca">Novo no OpusCash? <button type="button" className="link" onClick={aoTrocar}>Criar conta</button></p>
+      <p className="en-troca">{t('login.novoAqui')} <button type="button" className="link" onClick={aoTrocar}>{t('login.criarConta')}</button></p>
     </form>
   )
 }
 
 function FormCriar({ ativo, ocupado, aviso, aoEnviar, aoReenviar, aoTrocar }: PropsForm & { aoEnviar: (nome: string, email: string, senha: string) => void; aoReenviar: (email: string) => void }) {
+  const { t } = useTranslation()
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
@@ -123,20 +127,20 @@ function FormCriar({ ativo, ocupado, aviso, aoEnviar, aoReenviar, aoTrocar }: Pr
   return (
     <form className={`en-form criar ${ativo ? 'ativo' : ''}`} inert={!ativo} aria-hidden={!ativo}
       onSubmit={(e) => { e.preventDefault(); aoEnviar(nome.trim(), email, senha) }}>
-      <h1>Criar conta</h1>
-      <p className="en-sub">Leva menos de um minuto.</p>
-      <Campo rotulo="Como quer ser chamado" icone="pessoa" valor={nome} mudar={setNome} completar="nickname" obrigatorio={false} />
-      <Campo rotulo="E-mail" icone="email" tipo="email" valor={email} mudar={setEmail} completar="email" />
+      <h1>{t('login.criarConta')}</h1>
+      <p className="en-sub">{t('login.criarSub')}</p>
+      <Campo rotulo={t('login.comoChamar')} icone="pessoa" valor={nome} mudar={setNome} completar="nickname" obrigatorio={false} />
+      <Campo rotulo={t('login.email')} icone="email" tipo="email" valor={email} mudar={setEmail} completar="email" />
       <CampoSenha valor={senha} mudar={setSenha} completar="new-password" />
       <div className={`en-forca f${senha ? forca : 0}`} aria-hidden="true">
         <span><i /><i /><i /><i /></span>
-        <small>{!senha ? 'Use 6 caracteres ou mais' : senha.length < 6 ? `Faltam ${6 - senha.length}` : ['', 'Senha fraca', 'Senha razoável', 'Senha boa', 'Senha forte'][forca]}</small>
+        <small>{!senha ? t('login.senhaDica') : senha.length < 6 ? t('login.senhaFalta', { falta: 6 - senha.length }) : ['', t('login.senhaFraca'), t('login.senhaRazoavel'), t('login.senhaBoa'), t('login.senhaForte')][forca]}</small>
       </div>
-      <BotaoEnviar ocupado={ocupado}>Criar conta</BotaoEnviar>
+      <BotaoEnviar ocupado={ocupado}>{t('login.criarConta')}</BotaoEnviar>
       {aviso && <p className={`en-aviso ${aviso.ok ? 'ok' : ''}`} role="alert">{aviso.texto}</p>}
-      {aviso?.ok && email && <button type="button" className="link" onClick={() => aoReenviar(email)} disabled={ocupado}>Não chegou? Reenviar e-mail</button>}
-      <p className="en-termos">Ao criar a conta, você concorda com os <a href="#/termos">Termos de uso</a> e a <a href="#/privacidade">Política de privacidade</a>.</p>
-      <p className="en-troca">Já tem conta? <button type="button" className="link" onClick={aoTrocar}>Entrar</button></p>
+      {aviso?.ok && email && <button type="button" className="link" onClick={() => aoReenviar(email)} disabled={ocupado}>{t('login.reenviarEmail')}</button>}
+      <p className="en-termos">{t('login.termos')} <a href="#/termos">{t('login.termosUso')}</a> {t('login.e')} <a href="#/privacidade">{t('login.politicaPrivacidade')}</a>.</p>
+      <p className="en-troca">{t('login.jaTemConta')} <button type="button" className="link" onClick={aoTrocar}>{t('login.entrar')}</button></p>
     </form>
   )
 }
@@ -176,32 +180,32 @@ function BotaoEnviar({ ocupado, children }: { ocupado: boolean; children: React.
   )
 }
 
-function traduzir(m: string) {
-  if (/invalid login/i.test(m)) return 'E-mail ou senha incorretos.'
-  if (/email not confirmed/i.test(m)) return 'Confirme seu e-mail pelo link que chegou na caixa de entrada.'
-  if (/already registered/i.test(m)) return 'Esse e-mail já tem conta. Toque em "Entrar".'
-  if (/signups not allowed/i.test(m)) return 'Cadastro de novas contas está desativado.'
+function traduzir(m: string, t: (key: string) => string) {
+  if (/invalid login/i.test(m)) return t('login.erros.invalidLogin')
+  if (/email not confirmed/i.test(m)) return t('login.erros.emailNaoConfirmado')
+  if (/already registered/i.test(m)) return t('login.erros.jaRegistrado')
+  if (/signups not allowed/i.test(m)) return t('login.erros.cadastroDesativado')
   if (/not authorized|sending confirmation|sending.*email/i.test(m))
-    return 'Não foi possível enviar o e-mail de confirmação. Avise o dono do site para liberar o cadastro.'
-  if (/weak|pwned|compromised|easy to guess/i.test(m)) return 'Essa senha é muito comum ou já vazou em algum site. Escolha outra.'
-  if (/same.*password|different from the old/i.test(m)) return 'A senha nova precisa ser diferente da antiga.'
-  if (/rate limit|too many/i.test(m)) return 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo.'
-  if (/password should be at least/i.test(m)) return 'A senha precisa ter pelo menos 6 caracteres.'
-  if (/invalid.*email|unable to validate email/i.test(m)) return 'Esse e-mail não parece válido.'
+    return t('login.erros.envioEmail')
+  if (/weak|pwned|compromised|easy to guess/i.test(m)) return t('login.erros.senhaFraca')
+  if (/same.*password|different from the old/i.test(m)) return t('login.erros.senhaIgual')
+  if (/rate limit|too many/i.test(m)) return t('login.erros.muitasTentativas')
+  if (/password should be at least/i.test(m)) return t('login.erros.senhaCurta')
+  if (/invalid.*email|unable to validate email/i.test(m)) return t('login.erros.emailInvalido')
   return m
 }
 
 export function Configuracao() {
+  const { t } = useTranslation()
   return (
     <div className="tela-central">
       <div className="cartao login">
         <div className="login-marca">
           <Marca grande />
         </div>
-        <h1>Falta conectar o banco de dados</h1>
+        <h1>{t('config.faltaBanco')}</h1>
         <p>
-          Defina as variáveis <code>VITE_SUPABASE_URL</code> e <code>VITE_SUPABASE_ANON_KEY</code> (arquivo <code>.env</code> no
-          computador, ou em Environment Variables na Vercel/Netlify) e publique de novo. O passo a passo está no README.
+          {t('config.definaVariaveis')} <code>VITE_SUPABASE_URL</code> {t('config.e')} <code>VITE_SUPABASE_ANON_KEY</code> ({t('config.arquivoEnv')} <code>.env</code> {t('config.noComputador')}, {t('config.ouEm')} Environment Variables {t('config.naVercel')}) {t('config.ePubliqueNovo')}. {t('config.passoAPassoReadme')}
         </p>
       </div>
     </div>
@@ -210,6 +214,7 @@ export function Configuracao() {
 
 /** Tela de nova senha, aberta pelo link que chega no e-mail de "Esqueci minha senha". */
 export function NovaSenha({ aoConcluir }: { aoConcluir: () => void }) {
+  const { t } = useTranslation()
   const [senha, setSenha] = useState('')
   const [ocupado, setOcupado] = useState(false)
   const [aviso, setAviso] = useState<Aviso>(null)
@@ -218,17 +223,17 @@ export function NovaSenha({ aoConcluir }: { aoConcluir: () => void }) {
     setOcupado(true); setAviso(null)
     const { error } = await supabase.auth.updateUser({ password: senha })
     setOcupado(false)
-    if (error) setAviso({ texto: traduzir(error.message) })
-    else { setAviso({ texto: 'Senha trocada! Entrando…', ok: true }); window.setTimeout(aoConcluir, 900) }
+    if (error) setAviso({ texto: traduzir(error.message, t) })
+    else { setAviso({ texto: t('login.senhaTrocada'), ok: true }); window.setTimeout(aoConcluir, 900) }
   }
   return (
     <div className="en" style={{ display: 'grid' }}>
       <form className="en-form ativo" onSubmit={salvar}>
         <Marca grande />
-        <h1>Criar senha nova</h1>
-        <p className="en-sub">Escolha a senha nova da sua conta.</p>
+        <h1>{t('login.novaSenhaTitulo')}</h1>
+        <p className="en-sub">{t('login.novaSenhaSub')}</p>
         <CampoSenha valor={senha} mudar={setSenha} completar="new-password" />
-        <BotaoEnviar ocupado={ocupado}>Salvar senha</BotaoEnviar>
+        <BotaoEnviar ocupado={ocupado}>{t('login.salvarSenha')}</BotaoEnviar>
         {aviso && <p className={`en-aviso ${aviso.ok ? 'ok' : ''}`} role="alert">{aviso.texto}</p>}
       </form>
     </div>

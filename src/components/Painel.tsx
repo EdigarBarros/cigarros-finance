@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes } from '../lib/calc'
 import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
@@ -38,6 +39,7 @@ import { Icone } from './Icone'
 import { CartaoDicas, type Dica } from './CartaoDicas'
 import { Marca } from './Marca'
 import { Configuracoes, ExcluirContaModal, ZerarDados } from './Configuracoes'
+import { SeletorIdioma } from './SeletorIdioma'
 import { Questionario } from './Questionario'
 import { Tour } from './Tour'
 
@@ -512,6 +514,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
             <button className="icone-btn tema-btn" onClick={trocarTema} aria-label={tema === 'escuro' ? 'Usar tema claro' : 'Usar tema escuro'} title={tema === 'escuro' ? 'Tema claro' : 'Tema escuro'}>
               <Icone nome={tema === 'escuro' ? 'sol' : 'lua'} />
             </button>
+            <SeletorIdioma />
             <button className="icone-btn" onClick={() => setAjustes(true)} aria-label="Configurações" title="Configurações">
               <Icone nome="engrenagem" />
             </button>
@@ -556,15 +559,15 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
 
         {assinatura?.status === 'past_due' && (
           <div className="alerta" role="status">
-            <span>Não conseguimos cobrar seu cartão. Atualize a forma de pagamento para não perder o acesso.</span>
-            <button className="link" onClick={() => void irParaStripe('stripe-portal').then((m) => m && alert(m))}>Atualizar cartão</button>
+            <span>{t('painel.cobrancaFalha')}</span>
+            <button className="link" onClick={() => void irParaStripe('stripe-portal').then((m) => m && alert(m))}>{t('painel.atualizarCartao')}</button>
           </div>
         )}
 
         {d.perfilSemTabela && (
           <div className="alerta aviso-migracao" role="status">
-            Falta atualizar o banco de dados para guardar suas preferências e usar outras moedas. Rode
-            {' '}<code>supabase/migracao-04-perfil-e-moedas.sql</code> no SQL Editor do Supabase.
+            {t('painel.faltaMigracao')}
+            {' '}<code>supabase/migracao-04-perfil-e-moedas.sql</code> {t('painel.noSqlEditor')}
           </div>
         )}
 
@@ -572,20 +575,20 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           <div className="alerta aviso-ok" role="status">
             <span>
               {avisoFatura.depoisDoFechamento
-                ? <>Compra lançada na fatura de <b>{nomeDaFatura(avisoFatura.ano, avisoFatura.mes, avisoFatura.anoCompra)}</b> do {avisoFatura.cartao}, porque a fatura anterior já fechou (dia {avisoFatura.fechamento}).</>
-                : <>Compra lançada na fatura de <b>{nomeDaFatura(avisoFatura.ano, avisoFatura.mes, avisoFatura.anoCompra)}</b> do {avisoFatura.cartao}.</>}
+                ? <>{t('painel.compraFaturaFechada', { nome: nomeDaFatura(avisoFatura.ano, avisoFatura.mes, avisoFatura.anoCompra), cartao: avisoFatura.cartao, dia: avisoFatura.fechamento })}</>
+                : <>{t('painel.compraFatura', { nome: nomeDaFatura(avisoFatura.ano, avisoFatura.mes, avisoFatura.anoCompra), cartao: avisoFatura.cartao })}</>}
             </span>
             <span>
-              <button className="link" onClick={() => { setAno(avisoFatura.ano); setMes(avisoFatura.mes); setAvisoFatura(null); irPara('cartoes') }}>Ver fatura</button>
-              {' '}<button className="link" onClick={() => setAvisoFatura(null)}>Fechar</button>
+              <button className="link" onClick={() => { setAno(avisoFatura.ano); setMes(avisoFatura.mes); setAvisoFatura(null); irPara('cartoes') }}>{t('painel.verFatura')}</button>
+              {' '}<button className="link" onClick={() => setAvisoFatura(null)}>{t('painel.fechar')}</button>
             </span>
           </div>
         )}
 
         {d.erro && (
           <div className="alerta" role="alert">
-            <span>Não deu certo. Tente de novo. <small>Detalhe: {d.erro}</small></span>
-            <button className="link" onClick={() => d.setErro(null)}>Fechar</button>
+            <span>{t('painel.erroGeral')} <small>{t('painel.detalhe')}: {d.erro}</small></span>
+            <button className="link" onClick={() => d.setErro(null)}>{t('painel.fechar')}</button>
           </div>
         )}
 

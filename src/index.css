@@ -52,6 +52,28 @@
   --alerta-texto: #ffb3be;
   --aviso-texto: #ffe08a;
 
+  /* seletor de idioma */
+  .seletor-idioma {
+    background: var(--superficie);
+    color: var(--texto);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio-p);
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+
+  .seletor-idioma:hover {
+    border-color: var(--borda-forte);
+  }
+
+  .seletor-idioma:focus {
+    border-color: var(--destaque);
+    box-shadow: 0 0 0 2px var(--foco);
+  }
+
   /* forma e movimento */
   --raio: 20px;
   --raio-m: 16px;
