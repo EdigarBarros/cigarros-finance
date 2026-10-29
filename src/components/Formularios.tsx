@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { dicaDaDescricao } from '../lib/adaptacao'
 import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
-import { gerarParcelas, hojeLocal, textoParcelamento } from '../lib/cartoes'
+import { gerarParcelas, hojeLocal, nomeDaFatura, textoParcelamento } from '../lib/cartoes'
 import { formaDe, formaPelaDescricao, formasDoTipo, type FormaPagamento } from '../lib/formas'
 import { COR } from '../lib/charts'
 import { calendarioDe, dividaPelaDescricao, inicioPelaProxima, meDevem, mesesAntes, nativoDiv, parcelasDe, somaMesesData, type SituacaoDivida } from '../lib/dividas'
@@ -48,6 +48,10 @@ interface FormLancProps {
   /** Grava todas as parcelas de uma compra no cartão de uma vez. */
   aoSalvarCompra?: (parcelas: NovoLanc[]) => void
   aoExcluirCompra?: (compraId: string) => void
+  /** Compras já lançadas nos cartões: servem para avisar quando a mesma compra é lançada duas vezes. */
+  comprasCartao?: Lancamento[]
+  /** Avisa em que fatura a compra caiu (principalmente quando já passou do fechamento). */
+  aoCompraSalva?: (aviso: { cartao: string; fechamento: number; depoisDoFechamento: boolean; ano: number; mes: number; anoCompra: number }) => void
   aoNovoCartao?: () => void
   aoFechar: () => void
 }
@@ -124,6 +128,14 @@ export function FormLancamento(p: FormLancProps) {
     const total = numero && numero > 0 ? (estrangeira ? (taxa ? Math.round(numero * taxa * 100) / 100 : 0) : numero) : 0
     return cartao && total > 0 && data ? gerarParcelas(total, vezes, data, cartao) : []
   }, [cartao, numero, estrangeira, taxa, vezes, data])
+  const depoisDoFechamento = Boolean(cartao && parcelas.length && Number(data.slice(8, 10)) > cartao.dia_fechamento)
+  const duplicada = useMemo(() => {
+    if (!cartao || !parcelas.length) return false
+    const nome = descricao.trim().toLowerCase()
+    return (p.comprasCartao ?? []).some((l) => l.cartao_id === cartao.id && (l.parcela ?? 1) === 1 && l.data_compra === data
+      && Math.abs(l.valor - parcelas[0].valor) < 0.005 && (l.descricao ?? '').trim().toLowerCase() === nome)
+  }, [cartao, parcelas, data, descricao, p.comprasCartao])
+  const [duplicadaOk, setDuplicadaOk] = useState(false)
   const ehDivida = p.categorias.find((c) => c.id === categoriaId)?.papel === 'divida'
   const mudarTipo = (t: Tipo) => {
     setTipo(t)
@@ -220,6 +232,10 @@ export function FormLancamento(p: FormLancProps) {
       ? { valor_original: n, moeda_original: moeda }
       : original ? { valor_original: null, moeda_original: null } : {}
     if (cartao && p.aoSalvarCompra) {
+      if (duplicada && !duplicadaOk) {
+        setDuplicadaOk(true)
+        return setErro('Você já lançou uma compra igual a essa neste cartão. Se for outra compra mesmo, toque em salvar de novo.')
+      }
       // Uma saída por parcela, na fatura em que cai; a data de cada uma é o vencimento da fatura.
       const compraId = crypto.randomUUID()
       p.aoSalvarCompra(gerarParcelas(estrangeira ? Math.round(n * taxa! * 100) / 100 : n, vezes, data, cartao).map((x) => ({
@@ -228,6 +244,11 @@ export function FormLancamento(p: FormLancProps) {
         cartao_id: cartao.id, compra_id: compraId, parcela: x.parcela, parcelas: x.parcelas, data_compra: data,
       })))
       setVezes(1)
+      setDuplicadaOk(false)
+      p.aoCompraSalva?.({
+        cartao: cartao.nome, fechamento: cartao.dia_fechamento, depoisDoFechamento,
+        ano: parcelas[0].ano, mes: parcelas[0].mes, anoCompra: Number(data.slice(0, 4)),
+      })
     } else {
       p.aoSalvar(
         {
@@ -368,6 +389,11 @@ export function FormLancamento(p: FormLancProps) {
             <select value={vezes} onChange={(e) => setVezes(Number(e.target.value))}>
               {Array.from({ length: 24 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n === 1 ? '1x (à vista)' : `${n}x`}</option>)}
             </select>
+            {depoisDoFechamento && (
+              <span className="campo-ajuda aviso-fatura" role="note">
+                A fatura do {cartao!.nome} fecha dia {cartao!.dia_fechamento}, então essa compra entra na fatura de {nomeDaFatura(parcelas[0].ano, parcelas[0].mes, Number(data.slice(0, 4)))}.
+              </span>
+            )}
             <span className="campo-ajuda">
               {parcelas.length ? textoParcelamento(parcelas, Number(data.slice(0, 4))) : 'Informe o valor para ver como as parcelas ficam.'}
             </span>

@@ -71,6 +71,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const [pagina, setPagina] = useState<Pagina>(paginaDoHash)
   const [ano, setAno] = useState(hoje.getFullYear())
   const [mes, setMes] = useState(hoje.getMonth() + 1)
+  const [avisoFatura, setAvisoFatura] = useState<{ cartao: string; fechamento: number; depoisDoFechamento: boolean; ano: number; mes: number; anoCompra: number } | null>(null)
   const [form, setForm] = useState<{ inicial?: Lancamento; tipo?: Tipo; preset?: Partial<Lancamento>; cartaoId?: string } | null>(null)
   const [menu, setMenu] = useState(false)
   const [mais, setMais] = useState(false)
@@ -553,6 +554,20 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           </div>
         )}
 
+        {avisoFatura && (
+          <div className="alerta aviso-ok" role="status">
+            <span>
+              {avisoFatura.depoisDoFechamento
+                ? <>Compra lançada na fatura de <b>{nomeDaFatura(avisoFatura.ano, avisoFatura.mes, avisoFatura.anoCompra)}</b> do {avisoFatura.cartao}, porque a fatura anterior já fechou (dia {avisoFatura.fechamento}).</>
+                : <>Compra lançada na fatura de <b>{nomeDaFatura(avisoFatura.ano, avisoFatura.mes, avisoFatura.anoCompra)}</b> do {avisoFatura.cartao}.</>}
+            </span>
+            <span>
+              <button className="link" onClick={() => { setAno(avisoFatura.ano); setMes(avisoFatura.mes); setAvisoFatura(null); irPara('cartoes') }}>Ver fatura</button>
+              {' '}<button className="link" onClick={() => setAvisoFatura(null)}>Fechar</button>
+            </span>
+          </div>
+        )}
+
         {d.erro && (
           <div className="alerta" role="alert">
             <span>Não deu certo. Tente de novo. <small>Detalhe: {d.erro}</small></span>
@@ -624,6 +639,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           cartaoInicial={form.cartaoId}
           aoSalvarCompra={cartoes.addCompra}
           aoExcluirCompra={cartoes.delCompra}
+          comprasCartao={cartoes.compras}
+          aoCompraSalva={(a) => setAvisoFatura(a)}
           aoNovoCartao={() => { setForm(null); irPara('cartoes') }}
           aoFechar={() => setForm(null)}
         />
