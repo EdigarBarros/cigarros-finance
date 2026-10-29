@@ -38,7 +38,7 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
           </div>
 
           <h1 className="ap-titulo">
-            Seu dinheiro, <em>infinito</em> possibilidades
+            Seu dinheiro, <em>infinitas</em> possibilidades
           </h1>
 
           <p className="ap-subtitulo">
@@ -180,23 +180,21 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
           <p className="ap-section-subtitle">7 dias de teste grátis. Cancele quando quiser.</p>
 
           <div className="ap-pricing-card">
-            <div className="ap-pricing-badge">Mais popular</div>
             <div className="ap-pricing-price">
               <span className="ap-price-currency">R$</span>
-              <span className="ap-price-value">19</span>
+              <span className="ap-price-value">9,99</span>
               <span className="ap-price-period">/mês</span>
             </div>
             <ul className="ap-pricing-features">
-              <li><Icone nome="check" tamanho={16} /> Lançamentos ilimitados</li>
-              <li><Icone nome="check" tamanho={16} /> Múltiplos cartões</li>
-              <li><Icone nome="check" tamanho={16} /> Metas e objetivos</li>
-              <li><Icone nome="check" tamanho={16} /> Relatórios completos</li>
-              <li><Icone nome="check" tamanho={16} /> Suporte prioritário</li>
+              <li><Icone nome="check" tamanho={16} /> Lançamentos, categorias, bancos e cartões</li>
+              <li><Icone nome="check" tamanho={16} /> Dívidas, metas e contas do mês</li>
+              <li><Icone nome="check" tamanho={16} /> Qualquer moeda, com a cotação do dia</li>
+              <li><Icone nome="check" tamanho={16} /> Importa extrato do banco e planilhas</li>
             </ul>
             <button className="ap-btn-primary ap-btn-large" onClick={onSignup}>
               Começar teste grátis
             </button>
-            <p className="ap-pricing-note">Sem cartão de crédito para começar</p>
+            <p className="ap-pricing-note">Cartão necessário para começar o teste. Cancele em até 7 dias e não cobramos nada. Depois, R$ 9,99 por mês (ou o equivalente na sua moeda), sem fidelidade.</p>
           </div>
         </div>
       </section>

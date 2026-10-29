@@ -12,8 +12,8 @@ type Aviso = { texto: string; ok?: boolean } | null
  * são propriedades CSS animadas; veja .en-lamina). No celular o painel fica em cima e só o formulário troca.
  * Cada pessoa tem seus próprios dados (protegidos no banco por RLS).
  */
-export function Login() {
-  const [modo, setModo] = useState<Modo>('entrar')
+export function Login({ inicial = 'entrar' }: { inicial?: Modo }) {
+  const [modo, setModo] = useState<Modo>(inicial)
   const [aviso, setAviso] = useState<Aviso>(null)
   const [ocupado, setOcupado] = useState(false)
   const criar = modo === 'criar'
