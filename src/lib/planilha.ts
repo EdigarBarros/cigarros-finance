@@ -25,10 +25,12 @@ export interface MesImportado {
 const FAIXA_ENTRADAS: [number, number] = [3, 106]
 // O primeiro bloco de saídas (o "principal" da planilha) é o Itaú; os outros são NUBANK e INTER.
 const FAIXAS_SAIDAS: [string, number, number][] = [
-  ['Itaú', 3, 52],
+  ['Itaú', 3, 54],
   ['Nubank', 55, 129],
   ['Inter', 132, 136],
 ]
+/** Linhas de soma do fim de cada quadro ("TOTAL", "SUBTOTAL"): o resultado delas já vem dos lançamentos. */
+const ehTotal = (desc: number | string | null) => typeof desc === 'string' && /^sub-?total\b|^total\b/i.test(desc)
 const BANCOS_CAIXA = [['AB', 'Nubank'], ['AC', 'Inter'], ['AD', 'Itaú']] as const
 
 function valorCelula(ws: XLSX.WorkSheet, ref: string): number | string | null {
@@ -62,17 +64,37 @@ function linhasDaFormula(ws: XLSX.WorkSheet, ref: string) {
   return new Set([...f.matchAll(/L\$?(\d+)/g)].map((m) => Number(m[1])))
 }
 
+/** Abreviações de três letras que a planilha usa nas abas (ABR, SET, NOV 26...). */
+const MES_ABREVIADO = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ']
+
+/**
+ * Descobre mês e ano de uma aba: o nome vale cheio ou abreviado ("OUTUBRO26", "NOV 26", "JANEIRO"), e quando o nome
+ * não traz o ano ele vem do título da própria aba ("CONTROLE FINANCEIRO JANEIRO/2024").
+ */
+function mesDaAba(nome: string, ws: XLSX.WorkSheet): { ano: number; mes: number } | null {
+  const m = /^([A-ZÇ]+)[\s_/-]*(\d{2}|\d{4})?$/.exec(nome.trim().toUpperCase())
+  if (!m) return null
+  const idx = MESES.indexOf(m[1]) >= 0 ? MESES.indexOf(m[1]) : m[1].length === 3 ? MES_ABREVIADO.indexOf(m[1]) : -1
+  if (idx < 0) return null
+  if (m[2]) return { ano: m[2].length === 2 ? 2000 + Number(m[2]) : Number(m[2]), mes: idx + 1 }
+  // sem ano no nome: só serve se for uma aba do modelo (ENTRADAS e SAÍDAS lado a lado) com o ano no título
+  if (valorCelula(ws, 'C2') !== 'ENTRADAS' || valorCelula(ws, 'I2') !== 'SAÍDAS') return null
+  for (const ref of ['C1', 'A1', 'B1']) {
+    const ano = /\b(20\d{2})\b/.exec(String(valorCelula(ws, ref) ?? ''))
+    if (ano) return { ano: Number(ano[1]), mes: idx + 1 }
+  }
+  return null
+}
+
 export async function lerPlanilha(arquivo: File): Promise<MesImportado[]> {
   const wb = XLSX.read(await arquivo.arrayBuffer(), { cellFormula: true, cellDates: false, sheetStubs: true })
   const resultado: MesImportado[] = []
 
   for (const nome of wb.SheetNames) {
-    const m = /^([A-ZÇ]+)(\d{2})$/.exec(nome.trim().toUpperCase())
-    const idx = m ? MESES.indexOf(m[1]) : -1
-    if (!m || idx < 0) continue
-    const ano = 2000 + Number(m[2])
-    const mes = idx + 1
     const ws = wb.Sheets[nome]
+    const quando = mesDaAba(nome, ws)
+    if (!quando) continue
+    const { ano, mes } = quando
 
     const transporte = linhasDaFormula(ws, 'V55')
     const dividasPagas = linhasDaFormula(ws, 'V56')
@@ -82,7 +104,7 @@ export async function lerPlanilha(arquivo: File): Promise<MesImportado[]> {
     for (let r = FAIXA_ENTRADAS[0]; r <= FAIXA_ENTRADAS[1]; r++) {
       const valor = numero(ws, `D${r}`)
       const desc = valorCelula(ws, `C${r}`)
-      if (!valor && !desc) continue
+      if ((!valor && !desc) || ehTotal(desc)) continue
       lancs.push({
         ano, mes, tipo: 'entrada', descricao: String(desc ?? ''), valor,
         data: data(ws, `F${r}`, ano, mes), categoria: 'outros', banco: bancoNaDescricao(String(desc ?? '')),
@@ -92,7 +114,7 @@ export async function lerPlanilha(arquivo: File): Promise<MesImportado[]> {
       for (let r = ini; r <= fim; r++) {
         const valor = numero(ws, `L${r}`)
         const desc = valorCelula(ws, `I${r}`)
-        if (!valor && !desc) continue
+        if ((!valor && !desc) || ehTotal(desc)) continue
         const categoria: CategoriaAntiga = transporte.has(r)
           ? 'transporte'
           : dividasPagas.has(r)

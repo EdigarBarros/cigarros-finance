@@ -2347,10 +2347,11 @@
     "en": "Reading the spreadsheet…",
     "es": "Leyendo la planilla…"
   },
-  "Não encontrei abas de mês (ex.: OUTUBRO26) com dados nessa planilha.": {
-    "en": "I couldn't find month tabs (e.g., OCTOBER26) with data in this spreadsheet.",
-    "es": "No encontré pestañas de mes (ej.: OCTUBRE26) con datos en esta planilla."
+  "Não encontrei abas de mês com dados nessa planilha. Cada aba precisa ter o mês e o ano no nome (ex.: OUTUBRO26 ou NOV 26) ou no título (ex.: CONTROLE FINANCEIRO JANEIRO/2024).": {
+    "en": "I couldn't find month tabs with data in this spreadsheet. Each tab needs the month and year in its name (e.g., OCTOBER26 or NOV 26) or in its title (e.g., CONTROLE FINANCEIRO JANEIRO/2024).",
+    "es": "No encontré pestañas de mes con datos en esta planilla. Cada pestaña necesita el mes y el año en el nombre (ej.: OCTUBRE26 o NOV 26) o en el título (ej.: CONTROLE FINANCEIRO JANEIRO/2024)."
   },
+
   "{0}/{1}: {2} lançamentos": {
     "en": "{0}/{1}: {2} transactions",
     "es": "{0}/{1}: {2} movimientos"
