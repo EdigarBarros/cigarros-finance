@@ -132,7 +132,7 @@ function TelaDemo() {
 
       <div className="td-bloco td-topo" data-bloco="topo" style={estiloBloco('topo')}>
         <div>
-          <strong>Olá, <em>Marina!</em></strong>
+          <strong>Olá, <em translate="no">Marina!</em></strong>
           <span>Resumo de outubro de 2026. Você está no caminho certo!</span>
         </div>
         <div className="td-topo-botoes">

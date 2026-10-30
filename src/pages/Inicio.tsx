@@ -65,7 +65,7 @@ export function Inicio(c: Ctx) {
       <div>
         <h1>
           {palavras('Olá,')}
-          {c.perfil.nome ? <span className="nome">{palavras(`${c.perfil.nome}!`, 0.09)}</span> : palavras('!')}
+          {c.perfil.nome ? <span className="nome" translate="no">{palavras(`${c.perfil.nome}!`, 0.09)}</span> : palavras('!')}
         </h1>
         <p className="sub">Resumo de {nomeMes} de {c.ano}.{animo}</p>
       </div>

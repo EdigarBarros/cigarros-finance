@@ -24,5 +24,6 @@ export function Numero({ valor, formato, duracao = 1200 }: { valor: number; form
     })
     return () => cancelAnimationFrame(quadro)
   }, [valor, duracao, parado])
-  return <>{formato(parado ? valor : mostrado)}</>
+  // translate="no": o tradutor do Google (lib/idioma.ts) não mexe em valores, que mudam o tempo todo enquanto contam
+  return <span translate="no">{formato(parado ? valor : mostrado)}</span>
 }

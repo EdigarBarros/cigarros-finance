@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js'
 import { lazy, Suspense, useEffect, useReducer, useState } from 'react'
+import { BotaoIdioma } from './components/BotaoIdioma'
 import { Carregando } from './components/Carregando'
 import { Configuracao, Login, NovaSenha } from './components/Entrada'
 import { TelaAssinatura } from './components/Assinatura'
@@ -9,6 +10,9 @@ import { temAcesso, useAssinatura } from './lib/assinatura'
 import { configurado, supabase } from './lib/supabase'
 import { Apresentacao } from './pages/Apresentacao'
 import './pages/apresentacao.css'
+
+/** Telas sem a barra do painel: o botão de idioma fica preso no canto de cima (no painel, ele fica na barra, ao lado do tema). */
+const comIdioma = (tela: React.ReactNode) => <>{tela}<BotaoIdioma flutuante /></>
 
 const Painel = lazy(() => import('./components/Painel').then((m) => ({ default: m.Painel })))
 
@@ -35,16 +39,16 @@ export default function App() {
     return () => window.removeEventListener('hashchange', aoMudar)
   }, [])
 
-  if (doc) return <PaginaLegal doc={doc} />
-  if (!configurado) return <Configuracao />
+  if (doc) return comIdioma(<PaginaLegal doc={doc} />)
+  if (!configurado) return comIdioma(<Configuracao />)
   if (sessao === undefined) return <Carregando />
 
   // o link de "Esqueci minha senha" cria uma sessão: a tela de nova senha vem antes de qualquer outra
-  if (recuperando) return <NovaSenha aoConcluir={() => setRecuperando(false)} />
+  if (recuperando) return comIdioma(<NovaSenha aoConcluir={() => setRecuperando(false)} />)
   if (!sessao) {
     // Landing page por padrão; o login (ou o cadastro) abre quando a pessoa clica
-    if (login) return <Login inicial={login} />
-    return <Apresentacao onLogin={() => setLogin('entrar')} onSignup={() => setLogin('criar')} />
+    if (login) return comIdioma(<Login inicial={login} />)
+    return comIdioma(<Apresentacao onLogin={() => setLogin('entrar')} onSignup={() => setLogin('criar')} />)
   }
 
   return <ComAcesso userId={sessao.user.id} email={sessao.user.email ?? ''} nome={sessao.user.user_metadata?.nome} />
@@ -64,7 +68,7 @@ function ComAcesso({ userId, email, nome }: { userId: string; email: string; nom
     return () => window.clearTimeout(t)
   }, [fimDoTeste])
   if (carregando) return <Carregando />
-  if (cobranca && !temAcesso(assinatura)) return <TelaAssinatura assinatura={assinatura} email={email} aoAtualizar={recarregar} />
+  if (cobranca && !temAcesso(assinatura)) return comIdioma(<TelaAssinatura assinatura={assinatura} email={email} aoAtualizar={recarregar} />)
   return (
     <Suspense fallback={<Carregando />}>
       <Painel userId={userId} email={email} nome={nome} assinatura={cobranca ? assinatura : null} />

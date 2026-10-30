@@ -3247,3 +3247,56 @@ button.ex-tipo:hover { transform: scale(1.1); }
   100% { opacity: 0; transform: translateY(6px); }
 }
 @media (prefers-reduced-motion: reduce) { .aviso-atualizado { animation-duration: .01s; animation-delay: 3s; opacity: 1; } }
+
+/* ===== Idioma (components/BotaoIdioma.tsx, lib/idioma.ts) ===== */
+.idioma { position: relative; }
+.idioma.flutuante { position: fixed; z-index: 45; top: calc(14px + env(safe-area-inset-top)); right: calc(14px + env(safe-area-inset-right)); }
+.idioma-btn {
+  display: inline-flex; align-items: center; gap: 5px; height: 38px; padding: 0 11px 0 9px; border-radius: 999px;
+  border: 1px solid var(--borda); background: var(--superficie); color: var(--texto-2); font-weight: 700; font-size: 12px; letter-spacing: .04em;
+  transition: color .2s, border-color .2s, transform .2s var(--mola-salto);
+}
+.idioma-btn:hover { color: var(--texto); border-color: var(--borda-forte); }
+.idioma-btn:active { transform: scale(.95); }
+.idioma.flutuante .idioma-btn {
+  background: color-mix(in srgb, var(--superficie-forte) 78%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--sombra-alta);
+}
+.idioma .fora { z-index: 44; }
+.idioma-menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 46; width: 290px; display: grid; grid-template-rows: auto minmax(0, 1fr);
+  max-height: min(460px, calc(100dvh - 90px)); padding: 8px; border-radius: 18px;
+  background: var(--superficie-forte); border: 1px solid var(--borda-forte); box-shadow: var(--sombra-alta);
+  transform-origin: top right; animation: menu-abre .35s var(--mola-salto);
+}
+.idioma-busca {
+  display: flex; align-items: center; gap: 8px; padding: 0 12px; margin-bottom: 6px; border-radius: 12px;
+  background: var(--preench-3); color: var(--texto-3);
+}
+.idioma-busca input { flex: 1; min-width: 0; height: 40px; border: 0; padding: 0; background: none; color: var(--texto); font: inherit; font-size: 14px; outline: none; box-shadow: none; }
+.idioma-lista { list-style: none; margin: 0; padding: 0; overflow-y: auto; overscroll-behavior: contain; }
+.idioma-lista button {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; min-height: 42px; padding: 8px 12px;
+  border: 0; border-radius: 10px; background: none; color: var(--texto); font-size: 14px; text-align: start;
+}
+.idioma-lista button:hover { background: var(--preench-4); }
+.idioma-lista button small { color: var(--texto-3); font-size: 12px; }
+.idioma-lista button.ativo { background: color-mix(in srgb, var(--marca-2) 14%, transparent); font-weight: 700; }
+.idioma-lista button.ativo svg { color: var(--marca-2); }
+.idioma-vazio { display: flex; justify-content: center; gap: 6px; padding: 18px; color: var(--texto-3); }
+@media (max-width: 860px) { .barra-direita .idioma-btn { height: 34px; } }
+@media (max-width: 560px) {
+  .idioma.flutuante .idioma-menu { position: fixed; top: calc(62px + env(safe-area-inset-top)); left: 12px; right: 12px; width: auto; }
+  /* no celular o idioma vira só o ícone, e a engrenagem sai da barra para caber (Configurações continua no menu ☰) */
+  .barra-direita .idioma-sigla, .barra-direita .ajustes-btn { display: none; }
+  .barra-direita .idioma-btn { width: 34px; padding: 0; justify-content: center; }
+  .barra-direita .idioma-menu { position: fixed; top: 70px; left: 12px; right: 12px; width: auto; }
+}
+@media (max-width: 380px) { .barra-direita .idioma-btn { width: 32px; height: 32px; } }
+
+/* Tradutor do Google: traduz a página, mas a barra, os balões e o realce dele ficam escondidos (quem troca é o botão acima) */
+#tradutor-google { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+iframe.skiptranslate, .skiptranslate > iframe, .goog-te-banner-frame, #goog-gt-tt, .goog-te-balloon-frame,
+.VIpgJd-ZVi9od-ORHb-OEVmcd, .VIpgJd-ZVi9od-aZ2wEe-wOHMyf, .VIpgJd-yAWNEb-L7lbkb { display: none !important; }
+body { top: 0 !important; }
+.goog-text-highlight, .VIpgJd-yAWNEb-VIpgJd-fmcmS-sn54Q { background: none !important; box-shadow: none !important; }
