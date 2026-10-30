@@ -1345,6 +1345,10 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .ex-nome small span { overflow: hidden; text-overflow: ellipsis; }
 .ex-nome em { display: inline-flex; align-items: center; gap: 3px; font-style: normal; font-weight: 600; color: var(--divida); flex: none; }
 .ex-nome em.rep { color: var(--caixa); }
+.ex-nome .ex-conta {
+  display: inline-flex; align-items: center; gap: 3px; flex: none; padding: 0 6px; border-radius: 6px; border: 0; cursor: pointer;
+  font: inherit; font-weight: 650; color: var(--destaque); background: color-mix(in srgb, var(--destaque) 12%, transparent);
+}
 .ex-cat { height: 34px; padding: 0 8px; border-radius: 9px; font-size: 13px; min-width: 0; }
 .ex-valor { text-align: right; font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ex-valor.entrada { color: var(--entrada); }

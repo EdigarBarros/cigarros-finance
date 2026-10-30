@@ -413,6 +413,17 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
   "Paguei"/"Recebi" (lápis para outro valor ou data). Paga, ganha o carimbo **PAGO** animado. Uma grade só, da mais urgente
   para a já paga.
 - Sem contas: pilha de boletos de exemplo e os atalhos (Aluguel, Luz, Internet, Celular, Academia, Streaming, Salário).
+- **Lançamento que é de uma conta** (`conta_fixa_id`, sem migração nova): o dinheiro da conta pode já estar num lançamento
+  (veio do extrato, foi lançado à mão). O app reconhece pelo nome (igual ao de um lançamento já ligado à conta, ou com uma
+  palavra em comum que não seja "Pix", "transferência"…), pelo valor e pelo dia (`parecencaComConta` em `lib/contasFixas.ts`)
+  e aprende com cada vínculo, também dos outros anos (`vinculosOutrosAnos` em `useDados`).
+  - No boleto: "Parece que já caiu: Pix de João · R$ 800 · 6 de out" com **É esse** / **Não é**. "Recebi"/"Paguei" com um
+    candidato pergunta antes de lançar de novo.
+  - No formulário do lançamento: "É de uma conta do mês?" (uma por mês; a conta que já tem lançamento no mês fica indisponível).
+    Digitando um nome já ligado ("Pix de João Silva"), a conta vem escolhida.
+  - Ligou um? O app procura os parecidos dos outros meses e pergunta "Mais lançamentos da Pensão?" (`ParecidosConta`): os certos
+    vêm marcados, os duvidosos não. Só pelo valor, só nos meses em que a conta vale.
+  - "Não é" e os desmarcados ficam em `perfil.dispensadas` (`conta:<conta>:<lançamento>`) e não são sugeridos de novo.
 
 ### 4.18 Perguntas do primeiro acesso
 
@@ -431,8 +442,13 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
     agrupadas por linha na página. PDF com senha pede para exportar sem senha.
   - Word: `lib/zip.ts` abre o .docx com o `DecompressionStream` do navegador (sem biblioteca) e lê tabelas e parágrafos.
   - Excel: a biblioteca de planilhas que já existe, com as células cruas (datas e números).
-  - Tabelas: o cabeçalho é reconhecido ("Data", "Descrição"/"Histórico", "Valor", "Crédito"/"Débito", "Tipo");
-    sem cabeçalho, as colunas são adivinhadas pelo conteúdo.
+  - Tabelas: o cabeçalho é reconhecido ("Data", "Descrição"/"Histórico", "Valor", "Crédito"/"Débito", "Tipo",
+    "Tipo de transação", "Movimentação"); sem cabeçalho, as colunas são adivinhadas pelo conteúdo.
+  - Entrou ou saiu: um número sem sinal ("40.90") não diz nada sozinho. Se a coluna de valor tem negativos, o sem sinal é
+    entrada; se não tem, decide a coluna "Tipo" ("D", "Débito", "Saída", "Compra no débito"…) ou o texto da linha. "-1.200"
+    é mil e duzentos.
+  - Contas do mês (só no ano aberto): a linha que parece ser de uma conta sem baixa no mês vem ligada a ela (etiqueta com a
+    conta, toque para desligar) e vira a baixa ao importar; a que repete uma baixa já dada vem desmarcada.
 - **Limpeza dos nomes** (`limparDescricao`): tira CPF/CNPJ (inclusive a raiz de CNPJ de MEI, "51.365.272 Fulano"),
   documentos mascarados, ids de transação, agência/conta, horários, datas grudadas e nomes de banco; transforma
   "TRANSFERENCIA RECEBIDA PELO PIX - FULANO - …" em "Pix de Fulano", "Pagamento de boleto X" em "Boleto X", reconhece

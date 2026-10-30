@@ -2,11 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes } from '../lib/calc'
 import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
-import { faltaPagarNoMes, lancamentoDaBaixa, lancamentoParecido, situacoesDoMes, type SituacaoConta } from '../lib/contasFixas'
+import {
+  chaveRecusa, faltaPagarNoMes, lancamentoDaBaixa, memoriaDasContas, parecidosNosOutrosMeses, situacoesDoMes, sugestoesDoMes,
+  type SituacaoConta, type SugestaoVinculo,
+} from '../lib/contasFixas'
 import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
 import { COR } from '../lib/charts'
 import { calendarioDe, fimDoMes, meDevem, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
-import { definirMoedaPrincipal, fmtValor, MESES_CURTO, MESES_NOME } from '../lib/format'
+import { definirMoedaPrincipal, fmtDataCurta, fmtValor, MESES_CURTO, MESES_NOME } from '../lib/format'
 import { useCambio } from '../lib/moedas'
 import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
 import { supabase } from '../lib/supabase'
@@ -41,6 +44,7 @@ import { Marca } from './Marca'
 import { Configuracoes, ExcluirContaModal, ZerarDados } from './Configuracoes'
 import { Questionario } from './Questionario'
 import { Tour } from './Tour'
+import { ParecidosConta } from './VinculoConta'
 
 /**
  * A ordem daqui é a do menu e também a prioridade nas abas do celular (veja docs/arquitetura-do-painel.md):
@@ -90,6 +94,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const [busca, setBusca] = useState('')
   const [extrato, setExtrato] = useState(false)
   const [organizar, setOrganizar] = useState(false)
+  /** "Esses também são da pensão?": aberto depois de ligar um lançamento a uma conta do mês. */
+  const [parecidos, setParecidos] = useState<{ modelo: Lancamento; itens: SugestaoVinculo[] } | null>(null)
   const arquivo = useRef<HTMLInputElement>(null)
   // pílula que desliza até o item ativo (menu lateral e abas do celular)
   const refNav = useRef<HTMLElement>(null)
@@ -261,14 +267,46 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     esfriando.current = true
     setTimeout(() => { esfriando.current = false }, 800)
   }
+
+  // Como cada conta aparece nos lançamentos: o nome dela e tudo o que a pessoa já ligou a ela (deste e dos outros anos).
+  const memoriaContas = useMemo(
+    () => memoriaDasContas(contas.contas, [...d.lancs.filter((l) => l.conta_fixa_id), ...d.vinculosOutrosAnos], taxas),
+    [contas.contas, d.lancs, d.vinculosOutrosAnos, taxas],
+  )
+  // Lançamento do mês que parece ser de cada conta ainda sem baixa (veio do extrato, por exemplo).
+  const sugestoesVinculo = useMemo(
+    () => sugestoesDoMes(situacoesContas, d.lancs, ano, mes, memoriaContas, perfil.dispensadas),
+    [situacoesContas, d.lancs, ano, mes, memoriaContas, perfil.dispensadas], // eslint-disable-line react-hooks/exhaustive-deps
+  )
+  /** Depois de ligar `salvo` a uma conta: procura os parecidos dos outros meses e pergunta se também são dela. */
+  const perguntarParecidos = (salvo: Lancamento, lancs: Lancamento[]) => {
+    const conta = contas.contas.find((x) => x.id === salvo.conta_fixa_id)
+    if (!conta) return
+    const mem = memoriaDasContas([conta], [...lancs.filter((l) => l.conta_fixa_id), ...d.vinculosOutrosAnos], taxas).get(conta.id)!
+    const itens = parecidosNosOutrosMeses(conta, mem, lancs.filter((l) => l.id !== salvo.id), perfil.dispensadas)
+    if (itens.length) setParecidos({ modelo: salvo, itens })
+  }
+  const ligarAConta = (lancId: string, contaId: string) => {
+    const l = d.lancs.find((x) => x.id === lancId)
+    if (!l) return
+    const ligado = { ...l, conta_fixa_id: contaId }
+    void d.updLanc(lancId, { conta_fixa_id: contaId })
+    perguntarParecidos(ligado, d.lancs.map((x) => (x.id === lancId ? ligado : x)))
+  }
+  const recusarVinculos = (lancIds: string[], contaId: string) => {
+    if (lancIds.length) mudarPerfil({ ...perfil, dispensadas: [...new Set([...perfil.dispensadas, ...lancIds.map((id) => chaveRecusa(contaId, id))])] })
+  }
+
   const pagarConta = (s: SituacaoConta, mudancas?: { valor?: number; data?: string; cotacao?: number }) => {
     if (s.baixa || baixando.current.has(s.conta.id) || esfriando.current) return
-    // Já lançou "Aluguel" à mão este mês? Em vez de lançar de novo, a pessoa pode usar esse lançamento.
-    const parecido = lancamentoParecido(s.conta, d.lancs, ano, mes)
-    if (parecido && confirm(`Já existe um lançamento “${parecido.descricao}” de ${fmtValor(parecido.valor)} neste mês.\n\nEle é ${s.conta.tipo === 'entrada' ? 'o recebimento' : 'o pagamento'} desta conta?\n\nOK: sim, usar ele.\nCancelar: não, lançar outro.`)) {
+    // O dinheiro já está num lançamento (veio do extrato, ou foi lançado à mão)? Em vez de lançar de novo, usa esse.
+    const sugerido = sugestoesVinculo.get(s.conta.id)
+    if (sugerido && !mudancas) {
+      const { lanc } = sugerido
+      const usar = confirm(`Já existe “${lanc.descricao}” de ${fmtValor(lanc.valor)} em ${fmtDataCurta(lanc.data)}.\n\nEle é ${s.conta.tipo === 'entrada' ? 'o recebimento' : 'o pagamento'} de ${s.conta.descricao}?\n\nOK: sim, usar ele (sem lançar de novo).\nCancelar: não, lançar outro.`)
       esfriar()
-      void d.updLanc(parecido.id, { conta_fixa_id: s.conta.id })
-      return
+      if (usar) return ligarAConta(lanc.id, s.conta.id)
+      recusarVinculos([lanc.id], s.conta.id)
     }
     esfriar()
     baixando.current.add(s.conta.id)
@@ -311,10 +349,20 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const faturasAtrasadas = faturas.flatMap((s) => [...s.atrasadas, ...(s.status === 'atrasada' ? [s] : [])].map((f) => ({ ...f, cartao: s.cartao })))
 
   // Editar uma parcela pode mudá-la de ano; as compras de outros anos só são lidas de novo ao recarregar.
+  // Ligou o lançamento a uma conta do mês? Em seguida o app pergunta pelos parecidos dos outros meses.
   const salvarLancamento = async (l: Omit<Lancamento, 'id'>, id?: string) => {
-    if (!id) return d.addLanc(l)
-    await d.updLanc(id, l)
-    if (d.lancs.find((x) => x.id === id)?.cartao_id) await cartoes.recarregar()
+    const antes = id ? d.lancs.find((x) => x.id === id) : undefined
+    const lancs = d.lancs
+    let salvo: Lancamento | undefined
+    if (!id) salvo = await d.addLanc(l)
+    else {
+      await d.updLanc(id, l)
+      if (antes) salvo = { ...antes, ...l }
+      if (antes?.cartao_id) await cartoes.recarregar()
+    }
+    if (salvo?.conta_fixa_id && salvo.conta_fixa_id !== antes?.conta_fixa_id) {
+      perguntarParecidos(salvo, [...lancs.filter((x) => x.id !== salvo.id), salvo])
+    }
   }
 
   // Contas fixas e cartões entram na Início pelos lugares reservados para eles (zona "O que fazer" e indicadores).
@@ -362,6 +410,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     novaCompraNoCartao: (cartaoId) => setForm({ tipo: 'saida', cartaoId }),
     pagarDivida,
     contas, situacoesContas, pagarConta, desfazerBaixa,
+    memoriaContas,
+    sugestaoDaConta: (id) => (comContas ? sugestoesVinculo.get(id) : undefined),
+    ligarAConta,
+    recusarVinculo: (lancId, contaId) => recusarVinculos([lancId], contaId),
     bancoAberto,
     abrirBanco: (id) => {
       irPara('patrimonio')
@@ -659,9 +711,21 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           comprasCartao={cartoes.compras}
           aoCompraSalva={(a) => setAvisoFatura(a)}
           aoNovoCartao={() => { setForm(null); irPara('cartoes') }}
+          contasFixas={comContas ? contas.contas : undefined}
+          memoriaContas={memoriaContas}
           aoFechar={() => setForm(null)}
         />
       )}
+
+      {parecidos && (() => {
+        const conta = contas.contas.find((x) => x.id === parecidos.modelo.conta_fixa_id)
+        return conta && (
+          <ParecidosConta conta={conta} modelo={parecidos.modelo} itens={parecidos.itens}
+            aoLigar={(ids) => { for (const id of ids) void d.updLanc(id, { conta_fixa_id: conta.id }) }}
+            aoRecusar={(ids) => recusarVinculos(ids, conta.id)}
+            aoFechar={() => setParecidos(null)} />
+        )
+      })()}
 
       {ajustes && (
         <Configuracoes

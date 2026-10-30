@@ -187,13 +187,143 @@ export const aproxConta = (s: SituacaoConta) => (s.moeda ? `≈ ${fmtValor(s.val
 
 const normal = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim()
 
+// ---------- lançamento que é de uma conta (vínculo) ----------
+
+/** Palavras que não dizem de quem é o dinheiro ("Pix de", "Transferência recebida"). */
+const GENERICAS = new Set([
+  'pix', 'de', 'da', 'do', 'das', 'dos', 'para', 'pra', 'e', 'a', 'o', 'em', 'no', 'na', 'recebido', 'recebida', 'enviado', 'enviada',
+  'transferencia', 'transf', 'ted', 'doc', 'pagamento', 'pgto', 'compra', 'debito', 'credito', 'boleto', 'conta', 'mensal', 'entrada', 'saida',
+])
+const palavras = (s: string) => normal(s).split(' ').filter((p) => p.length >= 3 && !GENERICAS.has(p))
+
+/** Chave que a pessoa usa para recusar uma sugestão ("este lançamento não é desta conta"), guardada no perfil. */
+export const chaveRecusa = (contaId: string, lancId: string) => `conta:${contaId}:${lancId}`
+
+/** O que o app sabe de uma conta para reconhecer os lançamentos dela: os nomes e os valores que a pessoa já ligou a ela. */
+export interface MemoriaConta {
+  nomes: Set<string>
+  palavras: Set<string>
+  valores: number[]
+}
+
 /**
- * Lançamento do mês que parece ser o pagamento desta conta, mas não está ligado a ela
- * (a pessoa lançou "Aluguel" à mão antes de cadastrar a conta fixa): evita lançar duas vezes.
+ * Memória de cada conta: o nome dela e o valor de costume (convertido, se for em outra moeda) mais a descrição e o valor de
+ * cada lançamento já ligado a ela, de qualquer ano. É assim que "Pix de João Silva" passa a ser reconhecido como a pensão.
  */
-export function lancamentoParecido(c: ContaFixa, lancs: Lancamento[], ano: number, mes: number) {
-  const nome = normal(c.descricao)
-  return nome ? lancs.find((l) => !l.conta_fixa_id && l.ano === ano && l.mes === mes && l.tipo === c.tipo && normal(l.descricao) === nome) : undefined
+export function memoriaDasContas(contas: ContaFixa[], ligados: Pick<Lancamento, 'conta_fixa_id' | 'descricao' | 'valor'>[], taxas: Taxas = {}) {
+  const m = new Map<string, MemoriaConta>()
+  for (const c of contas) {
+    const moeda = moedaDaConta(c)
+    const costume = moeda ? centavos(c.valor * (c.cotacao ?? taxas[moeda] ?? 1)) : c.valor
+    m.set(c.id, { nomes: new Set([normal(c.descricao)].filter(Boolean)), palavras: new Set(palavras(c.descricao)), valores: [costume] })
+  }
+  for (const l of ligados) {
+    const mem = l.conta_fixa_id ? m.get(l.conta_fixa_id) : undefined
+    if (!mem) continue
+    const n = normal(l.descricao)
+    if (n) mem.nomes.add(n)
+    for (const p of palavras(l.descricao)) mem.palavras.add(p)
+    mem.valores.push(l.valor)
+  }
+  return m
+}
+
+/** 'certo': nome conhecido e valor ou dia batendo. 'talvez': vale perguntar. */
+export type Forca = 'certo' | 'talvez'
+
+/**
+ * Este lançamento parece ser desta conta? Olha o nome (igual a um já ligado, ou com uma palavra em comum que não seja
+ * "Pix", "transferência"…), o valor (igual ou perto do de costume) e o dia (perto do vencimento). `unicoComValor` diz se
+ * ele é o único do mês, desse tipo, com esse valor: aí o valor igual sozinho já vale a pergunta.
+ */
+export function parecencaComConta(c: ContaFixa, mem: MemoriaConta, l: Lancamento, unicoComValor = false): Forca | null {
+  if (l.tipo !== c.tipo || l.conta_fixa_id) return null
+  const n = normal(l.descricao)
+  const nomeIgual = Boolean(n) && mem.nomes.has(n)
+  const nomeParecido = !nomeIgual && palavras(l.descricao).some((p) => mem.palavras.has(p))
+  const dif = Math.min(...mem.valores.map((v) => Math.abs(l.valor - v) / Math.max(v, 0.01)))
+  const valorIgual = dif <= 0.01
+  const valorPerto = dif <= 0.2
+  const dia = l.data ? Number(l.data.slice(8, 10)) : null
+  const diaPerto = dia !== null && Math.abs(dia - diaNoMes(c.dia, l.ano, l.mes)) <= 5
+  if (nomeIgual && (valorPerto || diaPerto)) return 'certo'
+  if (nomeParecido && valorIgual) return 'certo'
+  if (nomeIgual) return 'talvez'
+  if (nomeParecido && (valorPerto || diaPerto)) return 'talvez'
+  if (valorIgual && (diaPerto || unicoComValor)) return 'talvez'
+  return null
+}
+
+/** Conta que a pessoa já ligou a um lançamento com este mesmo nome ("Pix de João Silva" → Pensão). */
+export function contaPeloNome(texto: string, tipo: Lancamento['tipo'], contas: ContaFixa[], memoria: Map<string, MemoriaConta>) {
+  const n = normal(texto)
+  return n ? contas.find((c) => c.tipo === tipo && c.ativa && memoria.get(c.id)?.nomes.has(n)) : undefined
+}
+
+export interface SugestaoVinculo {
+  conta: ContaFixa
+  lanc: Lancamento
+  forca: Forca
+}
+
+const ordemForca = (f: Forca) => (f === 'certo' ? 2 : 1)
+
+/**
+ * Para cada conta sem baixa no mês, o lançamento do mês que mais parece ser dela (sem repetir lançamento entre contas).
+ * `recusadas` são as chaves de `chaveRecusa` que a pessoa já disse que não.
+ */
+export function sugestoesDoMes(
+  sits: SituacaoConta[], lancs: Lancamento[], ano: number, mes: number, memoria: Map<string, MemoriaConta>, recusadas: string[] = [],
+): Map<string, SugestaoVinculo> {
+  const doMes = lancs.filter((l) => l.ano === ano && l.mes === mes && !l.conta_fixa_id)
+  const recusa = new Set(recusadas)
+  const candidatos: SugestaoVinculo[] = []
+  for (const s of sits) {
+    const mem = memoria.get(s.conta.id)
+    if (s.baixa || !mem) continue
+    for (const l of doMes) {
+      if (recusa.has(chaveRecusa(s.conta.id, l.id))) continue
+      const unico = doMes.filter((x) => x.tipo === l.tipo && Math.abs(x.valor - l.valor) < 0.005).length === 1
+      const forca = parecencaComConta(s.conta, mem, l, unico)
+      if (forca) candidatos.push({ conta: s.conta, lanc: l, forca })
+    }
+  }
+  // os mais certos primeiro; cada lançamento e cada conta entram uma vez só
+  candidatos.sort((a, b) => ordemForca(b.forca) - ordemForca(a.forca))
+  const usados = new Set<string>()
+  const saida = new Map<string, SugestaoVinculo>()
+  for (const x of candidatos) {
+    if (saida.has(x.conta.id) || usados.has(x.lanc.id)) continue
+    saida.set(x.conta.id, x)
+    usados.add(x.lanc.id)
+  }
+  return saida
+}
+
+/**
+ * Depois que a pessoa liga um lançamento a uma conta: os outros meses (dos lançamentos carregados) em que a conta ainda
+ * está sem baixa e há um lançamento parecido, um por mês, para perguntar "esses também são da pensão?".
+ */
+export function parecidosNosOutrosMeses(
+  c: ContaFixa, mem: MemoriaConta, lancs: Lancamento[], recusadas: string[] = [],
+): SugestaoVinculo[] {
+  const comBaixa = new Set(lancs.filter((l) => l.conta_fixa_id === c.id).map((l) => chaveMes(l.ano, l.mes)))
+  const recusa = new Set(recusadas)
+  const porMes = new Map<number, SugestaoVinculo>()
+  for (const l of lancs) {
+    const k = chaveMes(l.ano, l.mes)
+    if (comBaixa.has(k) || recusa.has(chaveRecusa(c.id, l.id))) continue
+    // Com o nome batendo, vale até em mês de antes de a conta ser cadastrada (o histórico da pessoa). Só pelo valor, não:
+    // fora dos meses da conta, um "Freela" do mesmo valor não tem nada a ver com ela.
+    const vale = valeNoMes(c, l.ano, l.mes)
+    if (!vale && !mem.nomes.has(normal(l.descricao)) && !palavras(l.descricao).some((p) => mem.palavras.has(p))) continue
+    const unico = vale && lancs.filter((x) => x.ano === l.ano && x.mes === l.mes && x.tipo === l.tipo && Math.abs(x.valor - l.valor) < 0.005).length === 1
+    const forca = parecencaComConta(c, mem, l, unico)
+    if (!forca) continue
+    const atual = porMes.get(k)
+    if (!atual || ordemForca(forca) > ordemForca(atual.forca)) porMes.set(k, { conta: c, lanc: l, forca })
+  }
+  return [...porMes.values()].sort((a, b) => (a.lanc.data ?? '').localeCompare(b.lanc.data ?? ''))
 }
 
 export interface Repeticao {

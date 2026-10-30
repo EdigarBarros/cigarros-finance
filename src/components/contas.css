@@ -142,6 +142,17 @@
 .ct-boleto .chip-estado { justify-self: start; }
 .ct-boleto-acoes { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
 .ct-boleto-acoes .conta-paguei { flex: 1; min-width: 0; justify-content: center; }
+/* "Parece que já caiu: Pix de João…": o dinheiro da conta já está num lançamento */
+.ct-sugestao {
+  display: grid; gap: 8px; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.35;
+  background: color-mix(in srgb, var(--destaque) 9%, var(--superficie-2)); border: 1px solid color-mix(in srgb, var(--destaque) 28%, var(--borda));
+  animation: surgir .5s var(--mola) backwards;
+}
+.ct-sugestao-texto { display: flex; gap: 7px; align-items: flex-start; color: var(--texto-2); }
+.ct-sugestao-texto svg { flex: none; margin-top: 2px; color: var(--destaque); }
+.ct-sugestao-texto b { color: var(--texto); font-weight: 650; }
+.ct-sugestao-acoes { display: flex; gap: 8px; }
+.ct-sugestao-acoes .btn { min-height: 34px; padding: 6px 12px; font-size: 13px; }
 .ct-boleto.atrasada { border-color: color-mix(in srgb, var(--saida) 40%, var(--borda)); }
 .ct-boleto.atrasada .ct-boleto-canhoto { color: var(--saida); background: color-mix(in srgb, var(--saida) 14%, var(--superficie-2)); }
 .ct-boleto.vence_hoje .ct-boleto-canhoto { color: var(--divida); background: color-mix(in srgb, var(--divida) 16%, var(--superficie-2)); }
@@ -183,3 +194,22 @@
   .ct-linha-legenda { display: none; }
   .ct-vazio-pilha { height: 240px; }
 }
+
+/* "Mais lançamentos da Pensão?": os parecidos dos outros meses, para ligar de uma vez */
+.vinculo-intro { margin: 0; color: var(--texto-2); font-size: 14px; line-height: 1.5; }
+.vinculo-intro b { color: var(--texto); }
+.vinculo-lista { display: grid; gap: 8px; max-height: min(46vh, 380px); margin: 0; padding: 0; overflow: auto; list-style: none; }
+.vinculo-lista label {
+  display: grid; grid-template-columns: 20px 58px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 12px; min-height: 48px;
+  border-radius: 12px; background: var(--superficie-2); border: 1px solid var(--borda); cursor: pointer;
+  transition: opacity .2s;
+}
+.vinculo-lista label.desmarcado > :not(input) { opacity: .5; }
+.vinculo-lista input { width: 18px; height: 18px; accent-color: var(--destaque); }
+.vinculo-data { display: grid; font-size: 13px; font-weight: 650; }
+.vinculo-data small { font-size: 11px; font-weight: 500; color: var(--texto-3); }
+.vinculo-nome { display: grid; min-width: 0; }
+.vinculo-nome strong { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vinculo-nome small { font-size: 11.5px; color: var(--divida); }
+.vinculo-valor { font-family: var(--fonte-numeros); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vinculo-valor.entrada { color: var(--entrada); }
