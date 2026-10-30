@@ -429,7 +429,7 @@ const CIENCIAS: { chave: string; texto: React.ReactNode }[] = [
   },
   {
     chave: 'registros',
-    texto: <>Sei que <b>alguns registros podem ser mantidos quando a lei exigir</b>, como os registros de cobrança no Stripe, e que o OpusCash guarda apenas uma identificação irreversível do cartão para impedir que o teste grátis se repita (art. 16 da LGPD).</>,
+    texto: <>Sei que <b>alguns registros continuam depois da exclusão</b>: os de cobrança no Stripe, mantidos quando a lei exigir (art. 16 da LGPD), e a identificação irreversível do cartão, guardada junto do código interno da conta (sem e-mail nem nome) só para impedir que o teste grátis se repita (prevenção a abusos, legítimo interesse).</>,
   },
   {
     chave: 'termos',
