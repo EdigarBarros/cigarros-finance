@@ -21,7 +21,17 @@ export const diasDeTeste = (a: Assinatura | null) => (emTeste(a) ? Math.max(1, M
 /** Teste grátis, assinatura em dia, conta liberada, ou cobrança recusada ainda em nova tentativa (past_due): entram no painel. */
 export const temAcesso = (a: Assinatura | null) => Boolean(a && (['trialing', 'active', 'past_due', 'cortesia'].includes(a.status) || emTeste(a)))
 
-const faltaTabela = (e: { code?: string; message: string }) =>
+/** Ainda não usou o teste grátis (conta nova que não escolheu plano): pode começar o teste sem cartão. */
+export const podeTestar = (a: Assinatura | null) => !a || (a.status === 'sem_assinatura' && !a.teste_fim)
+
+/** Começa o teste grátis de 7 dias (o banco grava e garante que só acontece uma vez). Devolve a mensagem de erro, ou null se deu certo. */
+export async function iniciarTesteGratis(): Promise<string | null> {
+  const { data, error } = await supabase.rpc('iniciar_teste_gratis')
+  if (error) return 'Não foi possível começar o teste agora. Tente de novo.'
+  return data ? null : 'O teste grátis já foi usado nesta conta. Assine para continuar.'
+}
+
+const faltaTabela =(e: { code?: string; message: string }) =>
   e.code === '42P01' || e.code === 'PGRST205' || /does not exist|schema cache/i.test(e.message)
 
 /**
