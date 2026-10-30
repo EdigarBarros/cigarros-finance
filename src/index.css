@@ -2909,6 +2909,13 @@ button.ex-tipo:hover { transform: scale(1.1); }
 @keyframes pv-progresso { to { transform: scaleX(1); } }
 .pv-exemplo { margin-left: auto; font-size: 11px; color: var(--texto-3); }
 @media (max-width: 900px) { .pv-palco { height: 226px; } .pv-barras { height: 140px; } }
+.pv-aba, .pv-exemplo { white-space: nowrap; }
+@media (max-width: 440px) {
+  .pv-pontos { display: none; }
+  .pl-faixa { flex-wrap: nowrap; gap: 6px; }
+  .pl-faixa span { padding: 7px 11px; font-size: 13px; white-space: nowrap; }
+  .pl-faixa strong { font-size: 14px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .pv *, .pv *::before, .pv *::after { animation: none !important; transition: none !important; }
   .pv-lista li, .pv-conversao { opacity: 1; }
