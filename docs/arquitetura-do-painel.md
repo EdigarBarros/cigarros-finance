@@ -393,16 +393,23 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
 
 ### 4.16 Lançamentos
 
-- Topo: **Entrou / Saiu / Sobrou** (contam até o valor e seguem os filtros) e o **calendário do mês**: cada dia pinta mais
-  forte quanto mais saiu nele, com um pontinho verde quando entrou dinheiro; tocar num dia mostra só ele (tocar de novo
-  volta). O "dia que mais saiu" aparece no cabeçalho.
-- Filtros: busca (a mesma do topo), tipo, **chips de categoria** com ícone e total (as do tipo escolhido; sem tipo, as de
-  saída, da maior para a menor), **chips de banco** com o selo, e ordem **Recentes** (por dia) ou **Maiores** (lista única
-  pelo valor). "Limpar filtros" volta tudo.
-- Lista por dia com o quadradinho da data (dia e dia da semana; "Hoje"/"Ontem"), quantos lançamentos e o saldo do dia;
-  o cabeçalho do dia fica preso no topo ao rolar.
-- `ItemLancamento` ganhou **etiquetas**: cartão (com o selo do banco e a parcela, ex. 5/12), dívida, recebido (de quem te
-  devia) e "todo mês" (conta fixa). Aparecem também na Início e no Dinheiro guardado.
+Duas colunas no computador. A lista com selos redondos saiu; cada lançamento agora é um **cartão**.
+
+- **Coluna da esquerda** (presa ao rolar): no alto o **calendário do mês** (cada dia pinta mais forte quanto mais saiu
+  nele, com um pontinho verde quando entrou dinheiro; tocar num dia mostra só ele, tocar de novo volta; o "dia que mais
+  saiu" no cabeçalho). Embaixo, **Para onde foi** (ou **De onde veio** com o filtro Entradas): as categorias em barras,
+  da maior para a menor, com valor e %; tocar filtra a categoria e apaga as outras. Mostra 5 e "Ver todas as N".
+- **Coluna da direita**: o **resumo** (Entrou / Saiu / Sobrou lado a lado, com a régua "Saiu 88% do que entrou"), a
+  **barra de filtros** (busca, tipo, ordem **Por dia** ou **Maiores**, e banco e forma de pagamento em listas de escolha
+  em vez de fileiras de botões) e os lançamentos.
+- **Linha do tempo**: cada dia tem o quadradinho da data preso à esquerda, ligado aos outros por um fio (tocar nele filtra
+  o dia), o nome do dia ("Hoje"/"Ontem"), quantos lançamentos e o saldo; ao lado, os cartões do dia em grade.
+- **Cartão do lançamento** (`CartaoLancamento`, só nesta página): uma faixa na cor da categoria, o nome da categoria em
+  cima na mesma cor (sem ícone), a descrição, o valor grande e etiquetas em texto: banco (com o pontinho da cor dele),
+  "Cartão Nubank", "Parcela 2 de 6", a forma, "Pagamento de dívida" / "Recebido de quem devia" e "Todo mês".
+- Tablet: o resumo vai para o topo e o calendário e as categorias ficam lado a lado embaixo dele. Celular: tudo em uma
+  coluna (resumo, calendário, categorias, filtros, lista) e o cartão fica numa linha só, com o valor à direita.
+- `ItemLancamento` (lista com selo e etiquetas) continua na Início e no Dinheiro guardado.
 
 ### 4.17 Contas do mês (boletos)
 

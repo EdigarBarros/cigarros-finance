@@ -4291,21 +4291,9 @@
     "en": "Sort",
     "es": "Orden"
   },
-  "Recentes": {
-    "en": "Recent",
-    "es": "Recientes"
-  },
   "Maiores": {
     "en": "Largest",
     "es": "Mayores"
-  },
-  "Todas": {
-    "en": "All",
-    "es": "Todas"
-  },
-  "Bancos": {
-    "en": "Banks",
-    "es": "Bancos"
   },
   "Todos os bancos": {
     "en": "All banks",
@@ -5738,5 +5726,57 @@
   "falta": {
     "en": "to go",
     "es": "falta"
+  },
+  "De onde veio": {
+    "en": "Where it came from",
+    "es": "De dónde vino"
+  },
+  "Para onde foi": {
+    "en": "Where it went",
+    "es": "A dónde fue"
+  },
+  "Ver todas as {0}": {
+    "en": "See all {0}",
+    "es": "Ver las {0}"
+  },
+  "Saiu {0}% do que entrou": {
+    "en": "{0}% of what came in went out",
+    "es": "Salió el {0}% de lo que entró"
+  },
+  "Nada entrou com esses filtros": {
+    "en": "Nothing came in with these filters",
+    "es": "No entró nada con estos filtros"
+  },
+  "Por dia": {
+    "en": "By day",
+    "es": "Por día"
+  },
+  "Mostrar só este dia": {
+    "en": "Show only this day",
+    "es": "Mostrar solo este día"
+  },
+  "Cartão {0}": {
+    "en": "{0} card",
+    "es": "Tarjeta {0}"
+  },
+  "Cartão": {
+    "en": "Card",
+    "es": "Tarjeta"
+  },
+  "Parcela {0} de {1}": {
+    "en": "Installment {0} of {1}",
+    "es": "Cuota {0} de {1}"
+  },
+  "Recebido de quem devia": {
+    "en": "Paid back to you",
+    "es": "Cobrado de quien debía"
+  },
+  "Pagamento de dívida": {
+    "en": "Debt payment",
+    "es": "Pago de deuda"
+  },
+  "Todo mês": {
+    "en": "Every month",
+    "es": "Todos los meses"
   }
 }
