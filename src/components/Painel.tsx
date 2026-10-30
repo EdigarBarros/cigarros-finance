@@ -283,12 +283,16 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     const conta = contas.contas.find((x) => x.id === salvo.conta_fixa_id)
     if (!conta) return
     const mem = memoriaDasContas([conta], [...lancs.filter((l) => l.conta_fixa_id), ...d.vinculosOutrosAnos], taxas).get(conta.id)!
-    const itens = parecidosNosOutrosMeses(conta, mem, lancs.filter((l) => l.id !== salvo.id), perfil.dispensadas)
+    // com `salvo` na lista: é ele que marca o mês dele como já resolvido (cada conta tem um lançamento por mês)
+    const itens = parecidosNosOutrosMeses(conta, mem, lancs, perfil.dispensadas)
     if (itens.length) setParecidos({ modelo: salvo, itens })
   }
+  /** A conta já tem um lançamento ligado nesse mês? (o banco aceita só um por mês) */
+  const contaOcupada = (contaId: string, l: Pick<Lancamento, 'id' | 'ano' | 'mes'>) =>
+    d.lancs.some((x) => x.conta_fixa_id === contaId && x.ano === l.ano && x.mes === l.mes && x.id !== l.id)
   const ligarAConta = (lancId: string, contaId: string) => {
     const l = d.lancs.find((x) => x.id === lancId)
-    if (!l) return
+    if (!l || contaOcupada(contaId, l)) return
     const ligado = { ...l, conta_fixa_id: contaId }
     void d.updLanc(lancId, { conta_fixa_id: contaId })
     perguntarParecidos(ligado, d.lancs.map((x) => (x.id === lancId ? ligado : x)))
@@ -721,7 +725,16 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         const conta = contas.contas.find((x) => x.id === parecidos.modelo.conta_fixa_id)
         return conta && (
           <ParecidosConta conta={conta} modelo={parecidos.modelo} itens={parecidos.itens}
-            aoLigar={(ids) => { for (const id of ids) void d.updLanc(id, { conta_fixa_id: conta.id }) }}
+            aoLigar={(ids) => {
+              // um por mês: pula o mês que já tem lançamento ligado (ou que já recebeu outro desta lista)
+              const meses = new Set<number>()
+              for (const id of ids) {
+                const l = d.lancs.find((x) => x.id === id)
+                if (!l || meses.has(l.ano * 12 + l.mes) || contaOcupada(conta.id, l)) continue
+                meses.add(l.ano * 12 + l.mes)
+                void d.updLanc(id, { conta_fixa_id: conta.id })
+              }
+            }}
             aoRecusar={(ids) => recusarVinculos(ids, conta.id)}
             aoFechar={() => setParecidos(null)} />
         )

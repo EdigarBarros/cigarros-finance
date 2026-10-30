@@ -150,7 +150,9 @@ export function useDados(userId: string, ano: number) {
   // Toda falha de gravação mostra o erro e recarrega do banco, para a tela nunca mentir.
   const falhou = useCallback(
     (msg: string) => {
-      setErro(msg)
+      setErro(/lancamentos_conta_fixa_mes/.test(msg)
+        ? 'Essa conta do mês já tem um lançamento ligado nesse mês (cada conta tem um por mês). Nada foi mudado.'
+        : msg)
       void recarregar()
     },
     [recarregar],
