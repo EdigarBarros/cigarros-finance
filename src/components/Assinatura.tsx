@@ -29,6 +29,8 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
   const [ocupado, setOcupado] = useState<'teste' | 'assinar' | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [esperando, setEsperando] = useState(voltou)
+  const [saindo, setSaindo] = useState(false)
+  const testeGravado = useRef(false)
   const tentativas = useRef(0)
 
   // Depois de pagar, o aviso do Stripe leva alguns segundos para chegar: consulta até liberar (ou desiste em 40 s).
@@ -48,9 +50,20 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
   const comecarTeste = async () => {
     setOcupado('teste')
     setErro(null)
-    const msg = await iniciarTesteGratis()
-    if (msg) { setErro(msg); setOcupado(null); return }
-    await aoAtualizar() // com o teste gravado, o App troca esta tela pelo painel
+    // Se o teste já foi gravado numa tentativa anterior (e só o painel não abriu), não repete a gravação: só tenta abrir de novo.
+    if (!testeGravado.current) {
+      const msg = await iniciarTesteGratis()
+      if (msg) { setErro(msg); setOcupado(null); return }
+      testeGravado.current = true
+    }
+    // a tela é coberta pela marca (a mesma do "Carregando") e, só então, o App a troca pelo painel: nunca fica em branco
+    setSaindo(true)
+    await new Promise((r) => window.setTimeout(r, 480))
+    await aoAtualizar()
+    // se esta tela continua aqui, o painel não abriu (leitura falhou): descobre a tela e deixa tentar de novo
+    setSaindo(false)
+    setOcupado(null)
+    setErro('Seu teste já começou, mas não deu para abrir o painel agora. Toque no botão para tentar de novo.')
   }
   const assinar = async () => {
     setOcupado('assinar')
@@ -71,7 +84,7 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
     : 'Assine para voltar ao seu painel. Seus dados continuam guardados.'
 
   return (
-    <main className="pl">
+    <main className={`pl ${saindo ? 'saindo' : ''}`}>
       <section className="pl-lado">
         <div className="pl-orbe pl-orbe-a" aria-hidden="true" />
         <div className="pl-orbe pl-orbe-b" aria-hidden="true" />

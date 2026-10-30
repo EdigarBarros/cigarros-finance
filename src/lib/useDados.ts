@@ -89,6 +89,18 @@ export function useDados(userId: string, ano: number) {
       supabase.from('dividas').select('sentido, pessoa, inicio, total_parcelas').limit(1),
       supabase.from('dividas').select('moeda').limit(1),
     ])
+    // Conta nova: ganha as categorias padrão (definidas no banco, migração 5). Isso precisa acontecer ANTES de qualquer setState:
+    // um await no meio fazia o React desenhar o painel de verdade (perfil já lido, "carregando" ainda ligado) e só depois as
+    // perguntas do primeiro acesso apareciam por cima. Sem await entre os setState, tudo chega junto, num render só.
+    let categoriasNovas: Categoria[] | null = null
+    let falhaCategorias: string | null = null
+    if (!ct.error && !ct.data.length) {
+      const criou = await supabase.rpc('criar_categorias_padrao')
+      const novas = await supabase.from('categorias').select('*').order('ordem').order('nome')
+      const falha = criou.error ?? novas.error
+      if (falha) falhaCategorias = falha.message
+      else categoriasNovas = novas.data as Categoria[]
+    }
     setDividasSemExtras(Boolean(xd.error))
     setDividasSemMoeda(Boolean(xm.error))
     const e = l.error ?? m.error ?? d.error ?? s.error ?? p.error ?? b.error
@@ -121,14 +133,8 @@ export function useDados(userId: string, ano: number) {
       setCategorias(CATEGORIAS_ANTIGAS)
     } else if (ct.error) setErro(ct.error.message)
     else if (ct.data.length) setCategorias(ct.data as Categoria[])
-    else {
-      // Conta nova: ganha as categorias padrão (definidas no banco, migração 5).
-      const criou = await supabase.rpc('criar_categorias_padrao')
-      const novas = await supabase.from('categorias').select('*').order('ordem').order('nome')
-      const falha = criou.error ?? novas.error
-      if (falha) setErro(falha.message)
-      else setCategorias(novas.data as Categoria[])
-    }
+    else if (falhaCategorias) setErro(falhaCategorias)
+    else if (categoriasNovas) setCategorias(categoriasNovas)
     setCarregando(false)
   }, [ano, userId])
 
