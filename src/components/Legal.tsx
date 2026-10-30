@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { EMAIL_SUPORTE, RESPONSAVEL, type Documento } from '../lib/legal'
 import { Marca } from './Marca'
 
-const ATUALIZADO = '29 de outubro de 2026'
+const ATUALIZADO = '30 de outubro de 2026'
 const contato = EMAIL_SUPORTE
   ? <a href={`mailto:${EMAIL_SUPORTE}`}>{EMAIL_SUPORTE}</a>
   : 'o e-mail de suporte indicado no aplicativo'
@@ -56,7 +56,7 @@ function Termos() {
 
       <h2>3. Teste grátis, assinatura e cobrança</h2>
       <ul>
-        <li><strong>Teste grátis:</strong> contas novas têm 7 dias grátis, começando no cadastro e sem precisar de cartão. Quando o teste acaba, o painel fica bloqueado até você assinar; seus dados continuam guardados.</li>
+        <li><strong>Teste grátis:</strong> quem cria uma conta pode escolher começar 7 dias grátis, sem precisar de cartão. O teste começa quando você o escolhe na tela de planos e vale uma vez por conta. Quando o teste acaba, o painel fica bloqueado até você assinar; seus dados continuam guardados.</li>
         <li><strong>Cobrança automática:</strong> só começa se você decidir assinar. Nesse momento você cadastra o cartão, que é cobrado todo mês, de forma recorrente, até você cancelar.</li>
         <li><strong>Preço:</strong> R$ 9,99 por mês. Para quem paga em outra moeda, o valor é o equivalente definido para ela e mostrado na página de pagamento, <strong>antes</strong> de você confirmar. Impostos e tarifas do seu banco ou operadora de cartão, quando houver, não estão incluídos.</li>
         <li><strong>Pagamento:</strong> é processado pelo Stripe. O OpusCash não recebe nem guarda o número do seu cartão.</li>

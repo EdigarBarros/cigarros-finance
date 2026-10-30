@@ -500,6 +500,7 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
             <li><Icone nome="check" tamanho={14} /> Metas, dívidas e contas do mês</li>
             <li><Icone nome="check" tamanho={14} /> Qualquer moeda, com a cotação do dia</li>
             <li><Icone nome="check" tamanho={14} /> Importa extrato do banco e planilhas</li>
+            <li><Icone nome="escudo" tamanho={14} /> Conexão e dados criptografados, só você enxerga os seus</li>
           </ul>
         </div>
       </section>
