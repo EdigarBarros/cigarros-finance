@@ -1,5 +1,9 @@
+import { idiomaAtual } from './idioma'
+import { nativo, tx } from './textos'
+
+/** Em português e maiúsculas: é como a planilha de importação escreve os meses (lib/planilha.ts). */
 export const MESES = [
-  'JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
+  'JANEIRO', 'FEVEREIRO', tx('MARÇO'), 'ABRIL', 'MAIO', 'JUNHO',
   'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO',
 ]
 
@@ -26,22 +30,31 @@ export const fmtMoeda = (n: number, moeda: string) => formato(moeda).format(n ||
 /** "R$", "US$", "€"… */
 export const simbolo = (moeda = moedaPrincipal) =>
   formato(moeda).formatToParts(0).find((p) => p.type === 'currency')?.value ?? moeda
-export const MESES_NOME = MESES.map((m) => m[0] + m.slice(1).toLowerCase())
+// nomes dos meses na língua da tela (inglês e espanhol têm tradução nossa; o resto passa pelo tradutor do Google a partir do português)
+const idiomaDasDatas = nativo ? idiomaAtual() : 'pt'
+/** Para toLocaleDateString: as datas por extenso saem na língua da tela. */
+export const LOCAL_DAS_DATAS = idiomaDasDatas === 'pt' ? 'pt-BR' : idiomaDasDatas
+const nomesDosMeses = (formato: 'long' | 'short') =>
+  Array.from({ length: 12 }, (_, i) => {
+    const nome = new Intl.DateTimeFormat(idiomaDasDatas, { month: formato, timeZone: 'UTC' }).format(Date.UTC(2026, i, 15)).replace('.', '')
+    return nome[0].toUpperCase() + nome.slice(1)
+  })
+export const MESES_NOME = nomesDosMeses('long')
 export const MESES_CURTO = MESES_NOME.map((m) => m.slice(0, 3))
 
 export const fmtPct = (n: number) => pct.format(Number.isFinite(n) ? n : 0)
 
-const MES_CURTO = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+const MES_CURTO = MESES_CURTO.map((m) => (idiomaDasDatas === 'en' ? m : m.toLowerCase()))
 
-/** "2026-10-02" -> "2 de out" */
+/** "2026-10-02" -> "2 de out" (em inglês, "Oct 2") */
 export function fmtDataCurta(iso: string | null) {
   if (!iso) return ''
   const [, m, d] = iso.split('-').map(Number)
-  return `${d} de ${MES_CURTO[m - 1]}`
+  return tx('{0} de {1}', d, MES_CURTO[m - 1])
 }
 
-/** (2027, 3) -> "mar de 2027" */
-export const fmtMesAno = (ano: number, mes: number) => `${MES_CURTO[mes - 1]} de ${ano}`
+/** (2027, 3) -> "mar de 2027" (em inglês, "Mar 2027") */
+export const fmtMesAno = (ano: number, mes: number) => tx('{1} de {0}', ano, MES_CURTO[mes - 1])
 
 /**
  * Calcula uma conta simples (+ - * / e parênteses, números com ponto decimal) sem usar eval/Function, que a política de
@@ -113,9 +126,9 @@ export function dataPadrao(ano: number, mes: number) {
 
 /** "2026-10-02" -> "2 de outubro" */
 export function fmtDataLonga(iso: string | null) {
-  if (!iso) return 'Sem data'
+  if (!iso) return tx('Sem data')
   const [, m, d] = iso.split('-').map(Number)
-  return `${d} de ${MESES_NOME[m - 1].toLowerCase()}`
+  return tx('{0} de {1}', d, idiomaDasDatas === 'en' ? MESES_NOME[m - 1] : MESES_NOME[m - 1].toLowerCase())
 }
 
 /** Valor para preencher um campo de edição: 1234.5 -> "1234,50". */

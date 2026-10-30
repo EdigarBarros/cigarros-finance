@@ -46,6 +46,7 @@ import { Configuracoes, ExcluirContaModal, ZerarDados } from './Configuracoes'
 import { Questionario } from './Questionario'
 import { Tour } from './Tour'
 import { ParecidosConta } from './VinculoConta'
+import { tx } from '../lib/textos'
 
 /**
  * A ordem daqui é a do menu e também a prioridade nas abas do celular (veja docs/arquitetura-do-painel.md):
@@ -54,14 +55,14 @@ import { ParecidosConta } from './VinculoConta'
  * As páginas `contas` ("Contas do mês") e `cartoes` ("Cartões") entram entre `lancamentos` e `dividas`.
  */
 const PAGINAS: { id: Pagina; nome: string; curto: string; icone: string }[] = [
-  { id: 'inicio', nome: 'Início', curto: 'Início', icone: 'inicio' },
-  { id: 'lancamentos', nome: 'Lançamentos', curto: 'Lançamentos', icone: 'lista' },
-  { id: 'contas', nome: 'Contas do mês', curto: 'Contas', icone: 'calendario' },
-  { id: 'cartoes', nome: 'Cartões', curto: 'Cartões', icone: 'cartao' },
-  { id: 'dividas', nome: 'Dívidas', curto: 'Dívidas', icone: 'divida' },
-  { id: 'metas', nome: 'Metas', curto: 'Metas', icone: 'meta' },
-  { id: 'patrimonio', nome: 'Dinheiro guardado', curto: 'Guardado', icone: 'carteira' },
-  { id: 'ano', nome: 'Resumo do ano', curto: 'Ano', icone: 'ano' },
+  { id: 'inicio', nome: tx('Início'), curto: tx('Início'), icone: 'inicio' },
+  { id: 'lancamentos', nome: tx('Lançamentos'), curto: tx('Lançamentos'), icone: 'lista' },
+  { id: 'contas', nome: tx('Contas do mês'), curto: tx('Contas'), icone: 'calendario' },
+  { id: 'cartoes', nome: tx('Cartões'), curto: tx('Cartões'), icone: 'cartao' },
+  { id: 'dividas', nome: tx('Dívidas'), curto: tx('Dívidas'), icone: 'divida' },
+  { id: 'metas', nome: tx('Metas'), curto: tx('Metas'), icone: 'meta' },
+  { id: 'patrimonio', nome: tx('Dinheiro guardado'), curto: tx('Guardado'), icone: 'carteira' },
+  { id: 'ano', nome: tx('Resumo do ano'), curto: tx('Ano'), icone: 'ano' },
 ]
 
 /** Na barra do celular cabem 5 abas; passando disso, as 4 primeiras ficam e o resto vai para "Mais". */
@@ -236,7 +237,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       await fn()
     } catch (e) {
       d.setErro(ehErroDeVersao(e)
-        ? 'Saiu uma versão nova do OpusCash. Feche esta janela e ele se atualiza sozinho; depois é só tentar de novo.'
+        ? tx('Saiu uma versão nova do OpusCash. Feche esta janela e ele se atualiza sozinho; depois é só tentar de novo.')
         : e instanceof Error ? e.message : String(e))
     } finally {
       setOcupado(null)
@@ -244,15 +245,15 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   }
 
   const importar = (f: File) =>
-    tarefa('Lendo a planilha…', async () => {
+    tarefa(tx('Lendo a planilha…'), async () => {
       // A biblioteca de planilhas é pesada; só baixa quando alguém importa ou exporta.
       const { lerPlanilha, gravarImportacao } = await import('../lib/planilha')
       const meses = await lerPlanilha(f)
       if (arquivo.current) arquivo.current.value = ''
-      if (!meses.length) return alert('Não encontrei abas de mês (ex.: OUTUBRO26) com dados nessa planilha.')
-      const lista = meses.map((m) => `${MESES_NOME[m.mes - 1]}/${m.ano}: ${m.lancs.length} lançamentos`).join('\n')
-      if (!confirm(`Encontrei ${meses.length} meses:\n\n${lista}\n\nOs dados desses meses no app serão substituídos pelos da planilha. Quer continuar?`)) return
-      setOcupado('Salvando…')
+      if (!meses.length) return alert(tx('Não encontrei abas de mês (ex.: OUTUBRO26) com dados nessa planilha.'))
+      const lista = meses.map((m) => tx('{0}/{1}: {2} lançamentos', MESES_NOME[m.mes - 1], m.ano, m.lancs.length)).join('\n')
+      if (!confirm(tx('Encontrei {0} meses:\n\n{1}\n\nOs dados desses meses no app serão substituídos pelos da planilha. Quer continuar?', meses.length, lista))) return
+      setOcupado(tx('Salvando…'))
       await gravarImportacao(userId, meses)
       const ultimo = meses[meses.length - 1]
       if (ultimo.ano === ano) await d.recarregar()
@@ -308,7 +309,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     const sugerido = sugestoesVinculo.get(s.conta.id)
     if (sugerido && !mudancas) {
       const { lanc } = sugerido
-      const usar = confirm(`Já existe “${lanc.descricao}” de ${fmtValor(lanc.valor)} em ${fmtDataCurta(lanc.data)}.\n\nEle é ${s.conta.tipo === 'entrada' ? 'o recebimento' : 'o pagamento'} de ${s.conta.descricao}?\n\nOK: sim, usar ele (sem lançar de novo).\nCancelar: não, lançar outro.`)
+      const usar = confirm(s.conta.tipo === 'entrada'
+        ? tx('Já existe “{0}” de {1} em {2}.\n\nEle é o recebimento de {3}?\n\nOK: sim, usar ele (sem lançar de novo).\nCancelar: não, lançar outro.', lanc.descricao, fmtValor(lanc.valor), fmtDataCurta(lanc.data), s.conta.descricao)
+        : tx('Já existe “{0}” de {1} em {2}.\n\nEle é o pagamento de {3}?\n\nOK: sim, usar ele (sem lançar de novo).\nCancelar: não, lançar outro.', lanc.descricao, fmtValor(lanc.valor), fmtDataCurta(lanc.data), s.conta.descricao))
       esfriar()
       if (usar) return ligarAConta(lanc.id, s.conta.id)
       recusarVinculos([lanc.id], s.conta.id)
@@ -338,7 +341,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       preset: {
         tipo: recebe ? 'entrada' : 'saida', divida_id: s.divida.id,
         ...(recebe ? {} : { categoria_id: d.categorias.find((c) => c.papel === 'divida')?.id ?? null }),
-        descricao: recebe ? `${s.divida.descricao}${s.divida.pessoa ? ` (${s.divida.pessoa})` : ''} – recebido` : `${s.divida.descricao} – parcela`,
+        descricao: recebe ? tx('{0} – recebido', `${s.divida.descricao}${s.divida.pessoa ? ` (${s.divida.pessoa})` : ''}`) : tx('{0} – parcela', s.divida.descricao),
         valor: sugerido && sugerido > 0 ? sugerido : undefined,
         // dívida em outra moeda: o pagamento abre nessa moeda, com o valor sugerido nela
         ...(s.moeda && sugerido && sugerido > 0 ? { moeda_original: s.moeda, valor_original: nativoDiv(s, sugerido) } : {}),
@@ -378,8 +381,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const comKpiContas = comContas && situacoesContas.length > 0
   const kpisExtras = comKpiContas || totalFaturas > 0 ? (
     <>
-      {comKpiContas && <Kpi rotulo="Falta pagar no mês" valor={faltaPagarNoMes(situacoesContas)} cor={COR.divida} icone="calendario" aoClicar={() => irPara('contas')} />}
-      {totalFaturas > 0 && <Kpi rotulo="Fatura do cartão" valor={totalFaturas} cor={COR.investimentos} icone="cartao" aoClicar={() => irPara('cartoes')} />}
+      {comKpiContas && <Kpi rotulo={tx('Falta pagar no mês')} valor={faltaPagarNoMes(situacoesContas)} cor={COR.divida} icone="calendario" aoClicar={() => irPara('contas')} />}
+      {totalFaturas > 0 && <Kpi rotulo={tx('Fatura do cartão')} valor={totalFaturas} cor={COR.investimentos} icone="cartao" aoClicar={() => irPara('cartoes')} />}
     </>
   ) : undefined
 
@@ -400,7 +403,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     categorias: d.categorias,
     categoriaDe,
     gerenciarCategorias: () => (d.categoriasAntigas
-      ? d.setErro('Para criar e editar categorias, falta atualizar o banco de dados: rode supabase/migracao-05-categorias.sql no SQL Editor do Supabase.')
+      ? d.setErro(tx('Para criar e editar categorias, falta atualizar o banco de dados: rode supabase/migracao-05-categorias.sql no SQL Editor do Supabase.'))
       : setEditarCategorias(true)),
     importar: () => arquivo.current?.click(),
     importarExtrato: () => setExtrato(true),
@@ -461,53 +464,53 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const atrasoReceber = aReceber.reduce((a, s) => a + (calendarioDe(s, diaRef)?.emAtraso ?? 0), 0)
   const dicas: Dica[] = [
     ...(avisos.length ? [{
-      id: 'contas', alerta: true, icone: 'sino', botao: 'Ver contas', acao: () => irPara('contas'),
-      titulo: `${avisos.length} ${avisos.length === 1 ? 'conta pede' : 'contas pedem'} atenção.`,
+      id: 'contas', alerta: true, icone: 'sino', botao: tx('Ver contas'), acao: () => irPara('contas'),
+      titulo: avisos.length === 1 ? tx('1 conta pede atenção.') : tx('{0} contas pedem atenção.', avisos.length),
     }] : []),
     ...(faturasAtrasadas.length ? [{
-      id: 'faturas', alerta: true, icone: 'cartao', botao: 'Resolver', acao: () => irPara('cartoes'),
+      id: 'faturas', alerta: true, icone: 'cartao', botao: tx('Resolver'), acao: () => irPara('cartoes'),
       titulo: faturasAtrasadas.length === 1
-        ? `A fatura ${faturasAtrasadas[0].cartao.nome} de ${nomeDaFatura(faturasAtrasadas[0].ano, faturasAtrasadas[0].mes, ano)} venceu.`
-        : `${faturasAtrasadas.length} faturas venceram sem pagar.`,
+        ? tx('A fatura {0} de {1} venceu.', faturasAtrasadas[0].cartao.nome, nomeDaFatura(faturasAtrasadas[0].ano, faturasAtrasadas[0].mes, ano))
+        : tx('{0} faturas venceram sem pagar.', faturasAtrasadas.length),
     }] : []),
-    { id: 'lancar', icone: 'mais', botao: 'Lançar agora', acao: () => setForm({}), titulo: 'Lançou o que gastou hoje?' },
-    ...(d.lancs.length < 40 ? [{ id: 'importar', icone: 'relatorio', botao: 'Importar extrato', acao: () => setExtrato(true), titulo: 'Tem um extrato ou planilha? Traga tudo de uma vez.' }] : []),
+    { id: 'lancar', icone: 'mais', botao: tx('Lançar agora'), acao: () => setForm({}), titulo: tx('Lançou o que gastou hoje?') },
+    ...(d.lancs.length < 40 ? [{ id: 'importar', icone: 'relatorio', botao: tx('Importar extrato'), acao: () => setExtrato(true), titulo: tx('Tem um extrato ou planilha? Traga tudo de uma vez.') }] : []),
     ...(v.dividas && atrasoDevo > 0 ? [{
-      id: 'dividas-atraso', alerta: true, icone: 'relogio', botao: 'Ver dívidas', acao: () => irPara('dividas'),
-      titulo: `${fmtValor(atrasoDevo)} de parcelas atrasadas.`,
+      id: 'dividas-atraso', alerta: true, icone: 'relogio', botao: tx('Ver dívidas'), acao: () => irPara('dividas'),
+      titulo: tx('{0} de parcelas atrasadas.', fmtValor(atrasoDevo)),
     }] : []),
     ...(v.dividas && atrasoReceber > 0 ? [{
-      id: 'receber-atraso', icone: 'receber', botao: 'Cobrar', acao: () => irPara('dividas'),
-      titulo: `Te devem ${fmtValor(atrasoReceber)} que já venceu.`,
+      id: 'receber-atraso', icone: 'receber', botao: tx('Cobrar'), acao: () => irPara('dividas'),
+      titulo: tx('Te devem {0} que já venceu.', fmtValor(atrasoReceber)),
     }] : []),
     ...(v.dividas && faltaDividas > 0 ? [{
-      id: 'dividas', icone: 'divida', botao: 'Ver dívidas', acao: () => irPara('dividas'), titulo: `Faltam ${fmtValor(faltaDividas)} nas dívidas.`,
+      id: 'dividas', icone: 'divida', botao: tx('Ver dívidas'), acao: () => irPara('dividas'), titulo: tx('Faltam {0} nas dívidas.', fmtValor(faltaDividas)),
     }] : []),
     v.metas
-      ? { id: 'metas', icone: 'meta', botao: 'Ver metas', acao: () => irPara('metas'), titulo: 'Guarde um pouco para as suas metas.' }
-      : { id: 'metas', icone: 'meta', botao: 'Criar meta', acao: () => { ligarModulo('metas'); irPara('metas') }, titulo: 'Tem um sonho para juntar dinheiro?' },
-    { id: 'controle', icone: 'ajustes', botao: 'Personalizar', acao: () => setAjustes(true), titulo: 'Mais controle para o seu dinheiro.' },
+      ? { id: 'metas', icone: 'meta', botao: tx('Ver metas'), acao: () => irPara('metas'), titulo: tx('Guarde um pouco para as suas metas.') }
+      : { id: 'metas', icone: 'meta', botao: tx('Criar meta'), acao: () => { ligarModulo('metas'); irPara('metas') }, titulo: tx('Tem um sonho para juntar dinheiro?') },
+    { id: 'controle', icone: 'ajustes', botao: tx('Personalizar'), acao: () => setAjustes(true), titulo: tx('Mais controle para o seu dinheiro.') },
     {
-      id: 'backup', icone: 'exportar', botao: 'Baixar backup', titulo: 'Guarde uma cópia dos seus dados.',
-      acao: () => tarefa('Preparando o backup…', async () => (await import('../lib/planilha')).exportarBackup()),
+      id: 'backup', icone: 'exportar', botao: tx('Baixar backup'), titulo: tx('Guarde uma cópia dos seus dados.'),
+      acao: () => tarefa(tx('Preparando o backup…'), async () => (await import('../lib/planilha')).exportarBackup()),
     },
     {
-      id: 'tema', icone: tema === 'escuro' ? 'sol' : 'lua', botao: 'Trocar tema', titulo: tema === 'escuro' ? 'Que tal o tema claro?' : 'Que tal o tema escuro?',
+      id: 'tema', icone: tema === 'escuro' ? 'sol' : 'lua', botao: tx('Trocar tema'), titulo: tema === 'escuro' ? tx('Que tal o tema claro?') : tx('Que tal o tema escuro?'),
       acao: () => definirTema(tema === 'escuro' ? 'claro' : 'escuro', { x: 130, y: innerHeight - 110 }),
     },
   ]
 
   const menuItens = (
     <>
-      <button onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> Configurações</button>
-      <button onClick={() => setTour(true)}><Icone nome="ideia" /> Ver o tutorial</button>
-      <button onClick={trocarTema}><Icone nome={tema === 'escuro' ? 'sol' : 'lua'} /> {tema === 'escuro' ? 'Tema claro' : 'Tema escuro'}</button>
-      <button onClick={() => setExtrato(true)}><Icone nome="relatorio" /> Importar extrato</button>
-      <button onClick={() => arquivo.current?.click()}><Icone nome="importar" /> Importar planilha</button>
-      <button onClick={() => tarefa('Preparando o backup…', async () => (await import('../lib/planilha')).exportarBackup())}>
-        <Icone nome="exportar" /> Baixar backup
+      <button onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> {tx('Configurações')}</button>
+      <button onClick={() => setTour(true)}><Icone nome="ideia" /> {tx('Ver o tutorial')}</button>
+      <button onClick={trocarTema}><Icone nome={tema === 'escuro' ? 'sol' : 'lua'} /> {tema === 'escuro' ? tx('Tema claro') : tx('Tema escuro')}</button>
+      <button onClick={() => setExtrato(true)}><Icone nome="relatorio" /> {tx('Importar extrato')}</button>
+      <button onClick={() => arquivo.current?.click()}><Icone nome="importar" /> {tx('Importar planilha')}</button>
+      <button onClick={() => tarefa(tx('Preparando o backup…'), async () => (await import('../lib/planilha')).exportarBackup())}>
+        <Icone nome="exportar" /> {tx('Baixar backup')}
       </button>
-      <button onClick={() => supabase.auth.signOut()}><Icone nome="sair" /> Sair</button>
+      <button onClick={() => supabase.auth.signOut()}><Icone nome="sair" /> {tx('Sair')}</button>
     </>
   )
 
@@ -515,14 +518,14 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     <div className="app">
       <aside className="lateral">
         <Marca />
-        <nav ref={refNav} aria-label="Páginas">
+        <nav ref={refNav} aria-label={tx('Páginas')}>
           {lenteNav && <span className="lente" aria-hidden="true" style={estiloLente(lenteNav)} />}
           {paginas.map((p) => (
             <button key={p.id} data-tour={`nav-${p.id}`} className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)} aria-current={paginaAtual === p.id ? 'page' : undefined}>
               <Icone nome={p.icone} /> {p.nome}
             </button>
           ))}
-          <button data-tour="nav-config" onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> Configurações</button>
+          <button data-tour="nav-config" onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> {tx('Configurações')}</button>
         </nav>
         <div className="lateral-rodape">
           <CartaoDicas dicas={dicas} />
@@ -535,25 +538,25 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           {!mobile && (
             <label className="busca-topo">
               <Icone nome="busca" tamanho={18} />
-              <input type="search" placeholder="Busque por lançamentos ou categorias…" value={busca} onChange={(e) => buscar(e.target.value)} aria-label="Buscar lançamentos" />
+              <input type="search" placeholder={tx('Busque por lançamentos ou categorias…')} value={busca} onChange={(e) => buscar(e.target.value)} aria-label={tx('Buscar lançamentos')} />
             </label>
           )}
           <div className="barra-direita">
-            {(ocupado || d.carregando) && <span className="carregando so-desktop">{ocupado ?? 'Carregando…'}</span>}
+            {(ocupado || d.carregando) && <span className="carregando so-desktop">{ocupado ?? tx('Carregando…')}</span>}
             <div className="seletor-mes">
-              <button className="icone-btn" onClick={() => mudarMes(-1)} aria-label="Mês anterior"><Icone nome="esq" tamanho={18} /></button>
-              <button className="seletor-mes-nome" onClick={() => setQuadroMeses(!quadroMeses)} aria-expanded={quadroMeses} aria-label="Escolher mês">
+              <button className="icone-btn" onClick={() => mudarMes(-1)} aria-label={tx('Mês anterior')}><Icone nome="esq" tamanho={18} /></button>
+              <button className="seletor-mes-nome" onClick={() => setQuadroMeses(!quadroMeses)} aria-expanded={quadroMeses} aria-label={tx('Escolher mês')}>
                 <Icone nome="calendario" tamanho={17} />{mobile ? MESES_CURTO[mes - 1] : MESES_NOME[mes - 1]} <small>{ano}</small>
               </button>
-              <button className="icone-btn" onClick={() => mudarMes(1)} aria-label="Próximo mês"><Icone nome="dir" tamanho={18} /></button>
+              <button className="icone-btn" onClick={() => mudarMes(1)} aria-label={tx('Próximo mês')}><Icone nome="dir" tamanho={18} /></button>
               {quadroMeses && (
                 <>
                   <div className="fora" onClick={() => setQuadroMeses(false)} />
-                  <div className="quadro-meses" role="dialog" aria-label="Meses">
+                  <div className="quadro-meses" role="dialog" aria-label={tx('Meses')}>
                     <div className="quadro-meses-ano">
-                      <button className="icone-btn" onClick={() => setAno(ano - 1)} aria-label="Ano anterior"><Icone nome="esq" tamanho={16} /></button>
+                      <button className="icone-btn" onClick={() => setAno(ano - 1)} aria-label={tx('Ano anterior')}><Icone nome="esq" tamanho={16} /></button>
                       {ano}
-                      <button className="icone-btn" onClick={() => setAno(ano + 1)} aria-label="Próximo ano"><Icone nome="dir" tamanho={16} /></button>
+                      <button className="icone-btn" onClick={() => setAno(ano + 1)} aria-label={tx('Próximo ano')}><Icone nome="dir" tamanho={16} /></button>
                     </div>
                     <div className="quadro-meses-grade">
                       {MESES_CURTO.map((m, i) => (
@@ -568,24 +571,24 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
               )}
             </div>
             <BotaoIdioma />
-            <button className="icone-btn tema-btn" onClick={trocarTema} aria-label={tema === 'escuro' ? 'Usar tema claro' : 'Usar tema escuro'} title={tema === 'escuro' ? 'Tema claro' : 'Tema escuro'}>
+            <button className="icone-btn tema-btn" onClick={trocarTema} aria-label={tema === 'escuro' ? tx('Usar tema claro') : tx('Usar tema escuro')} title={tema === 'escuro' ? tx('Tema claro') : tx('Tema escuro')}>
               <Icone nome={tema === 'escuro' ? 'sol' : 'lua'} />
             </button>
-            <button className="icone-btn ajustes-btn" onClick={() => setAjustes(true)} aria-label="Configurações" title="Configurações">
+            <button className="icone-btn ajustes-btn" onClick={() => setAjustes(true)} aria-label={tx('Configurações')} title={tx('Configurações')}>
               <Icone nome="engrenagem" />
             </button>
             {comContas && (
               <button className="icone-btn" onClick={() => irPara('contas')}
-                aria-label={avisos.length ? `${avisos.length} ${avisos.length === 1 ? 'conta pede' : 'contas pedem'} atenção` : 'Contas do mês'}
-                title={avisos.length ? `${avisos.length} ${avisos.length === 1 ? 'conta pede' : 'contas pedem'} atenção` : 'Nada atrasado'}>
+                aria-label={avisos.length ? (avisos.length === 1 ? tx('1 conta pede atenção') : tx('{0} contas pedem atenção', avisos.length)) : tx('Contas do mês')}
+                title={avisos.length ? (avisos.length === 1 ? tx('1 conta pede atenção') : tx('{0} contas pedem atenção', avisos.length)) : tx('Nada atrasado')}>
                 <Icone nome="sino" />
                 {avisos.length > 0 && <span className={`sino-ponto ${atrasadas ? 'atraso' : ''}`} />}
               </button>
             )}
             <div className="perfil-topo">
-              <button className="perfil-botao" data-tour="menu-conta" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label="Sua conta">
+              <button className="perfil-botao" data-tour="menu-conta" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label={tx('Sua conta')}>
                 <span className="avatar" aria-hidden="true">{d.foto ? <img src={d.foto} alt="" /> : iniciais || '?'}</span>
-                <span>Olá, <span translate="no">{nome}</span></span>
+                <span>{tx('Olá,')} <span translate="no">{nome}</span></span>
                 <Icone nome="abaixo" tamanho={18} />
               </button>
               {menu && !mobile && (
@@ -599,7 +602,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
               )}
             </div>
             <div className="menu-movel">
-              <button className="icone-btn" data-tour="menu-conta" onClick={() => setMenu(!menu)} aria-label="Menu" aria-expanded={menu}><Icone nome="menu" /></button>
+              <button className="icone-btn" data-tour="menu-conta" onClick={() => setMenu(!menu)} aria-label={tx('Menu')} aria-expanded={menu}><Icone nome="menu" /></button>
               {menu && mobile && (
                 <>
                   <div className="fora" onClick={() => setMenu(false)} />
@@ -617,15 +620,14 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
 
         {assinatura?.status === 'past_due' && (
           <div className="alerta" role="status">
-            <span>Não conseguimos cobrar seu cartão. Atualize a forma de pagamento para não perder o acesso.</span>
-            <button className="link" onClick={() => void irParaStripe('stripe-portal').then((m) => m && alert(m))}>Atualizar cartão</button>
+            <span>{tx('Não conseguimos cobrar seu cartão. Atualize a forma de pagamento para não perder o acesso.')}</span>
+            <button className="link" onClick={() => void irParaStripe('stripe-portal').then((m) => m && alert(m))}>{tx('Atualizar cartão')}</button>
           </div>
         )}
 
         {d.perfilSemTabela && (
           <div className="alerta aviso-migracao" role="status">
-            Falta atualizar o banco de dados para guardar suas preferências e usar outras moedas. Rode
-            {' '}<code>supabase/migracao-04-perfil-e-moedas.sql</code> no SQL Editor do Supabase.
+            {tx('Falta atualizar o banco de dados para guardar suas preferências e usar outras moedas. Rode {0}', ' ')}<code>supabase/migracao-04-perfil-e-moedas.sql</code> {tx('no SQL Editor do Supabase.')}
           </div>
         )}
 
@@ -633,20 +635,20 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           <div className="alerta aviso-ok" role="status">
             <span>
               {avisoFatura.depoisDoFechamento
-                ? <>Compra lançada na fatura de <b>{nomeDaFatura(avisoFatura.ano, avisoFatura.mes, avisoFatura.anoCompra)}</b> do {avisoFatura.cartao}, porque a fatura anterior já fechou (dia {avisoFatura.fechamento}).</>
-                : <>Compra lançada na fatura de <b>{nomeDaFatura(avisoFatura.ano, avisoFatura.mes, avisoFatura.anoCompra)}</b> do {avisoFatura.cartao}.</>}
+                ? <>{tx('Compra lançada na fatura de')} <b>{nomeDaFatura(avisoFatura.ano, avisoFatura.mes, avisoFatura.anoCompra)}</b> {tx('do {0}, porque a fatura anterior já fechou (dia {1}).', avisoFatura.cartao, avisoFatura.fechamento)}</>
+                : <>{tx('Compra lançada na fatura de')} <b>{nomeDaFatura(avisoFatura.ano, avisoFatura.mes, avisoFatura.anoCompra)}</b> {tx('do {0}.', avisoFatura.cartao)}</>}
             </span>
             <span>
-              <button className="link" onClick={() => { setAno(avisoFatura.ano); setMes(avisoFatura.mes); setAvisoFatura(null); irPara('cartoes') }}>Ver fatura</button>
-              {' '}<button className="link" onClick={() => setAvisoFatura(null)}>Fechar</button>
+              <button className="link" onClick={() => { setAno(avisoFatura.ano); setMes(avisoFatura.mes); setAvisoFatura(null); irPara('cartoes') }}>{tx('Ver fatura')}</button>
+              {' '}<button className="link" onClick={() => setAvisoFatura(null)}>{tx('Fechar')}</button>
             </span>
           </div>
         )}
 
         {d.erro && (
           <div className="alerta" role="alert">
-            <span>Não deu certo. Tente de novo. <small>Detalhe: {d.erro}</small></span>
-            <button className="link" onClick={() => d.setErro(null)}>Fechar</button>
+            <span>{tx('Não deu certo. Tente de novo.')} <small>{tx('Detalhe: {0}', d.erro)}</small></span>
+            <button className="link" onClick={() => d.setErro(null)}>{tx('Fechar')}</button>
           </div>
         )}
 
@@ -660,7 +662,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         {paginaAtual === 'ano' && <Ano {...ctx} />}
       </div>
 
-      <button className="fab" data-tour="lancar" onClick={() => setForm({})} aria-label="Novo lançamento"><Icone nome="mais" tamanho={26} /></button>
+      <button className="fab" data-tour="lancar" onClick={() => setForm({})} aria-label={tx('Novo lançamento')}><Icone nome="mais" tamanho={26} /></button>
 
       <nav className="abas-movel" ref={refAbas}>
         {lenteAbas && <span className="lente" aria-hidden="true" style={estiloLente(lenteAbas)} />}
@@ -671,7 +673,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         ))}
         {naMais.length > 0 && (
           <button data-tour="mais" className={naMais.some((p) => p.id === paginaAtual) ? 'ativo' : ''} onClick={() => setMais(!mais)} aria-expanded={mais}>
-            <Icone nome="reticencias" /> <span>Mais</span>
+            <Icone nome="reticencias" /> <span>{tx('Mais')}</span>
           </button>
         )}
       </nav>
@@ -753,7 +755,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           aoRefazer={() => { setAjustes(false); setRefazendo(true) }}
           aoTour={() => { setAjustes(false); setTour(true) }}
           aoCategorias={() => { setAjustes(false); ctx.gerenciarCategorias() }}
-          aoBackup={() => tarefa('Preparando o backup…', async () => (await import('../lib/planilha')).exportarBackup())}
+          aoBackup={() => tarefa(tx('Preparando o backup…'), async () => (await import('../lib/planilha')).exportarBackup())}
           aoImportar={() => { setAjustes(false); arquivo.current?.click() }}
           aoExtrato={() => { setAjustes(false); setExtrato(true) }}
           aoOrganizar={() => { setAjustes(false); setOrganizar(true) }}
@@ -808,7 +810,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
 /** Enquanto os dados chegam: a moldura do painel com blocos que brilham, em vez de uma tela vazia. */
 function Esqueleto() {
   return (
-    <div className="app" aria-busy="true" aria-label="Carregando">
+    <div className="app" aria-busy="true" aria-label={tx('Carregando')}>
       <aside className="lateral"><Marca /></aside>
       <div className="conteudo">
         <div className="esqueleto-tela">

@@ -3,6 +3,7 @@ import { semMovimento } from '../lib/tema'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
 import { Paisagem, type Cena } from './Paisagem'
+import { tx } from '../lib/textos'
 
 export interface Slide {
   id: string
@@ -36,7 +37,7 @@ export function BannerCarrossel({ slides }: { slides: Slide[] }) {
       <div className="banner-topo">
         <Marca />
         {n > 1 && (
-          <div className="banner-pontos" role="tablist" aria-label="Mensagens">
+          <div className="banner-pontos" role="tablist" aria-label={tx('Mensagens')}>
             {slides.map((s, k) => (
               <button key={s.id} role="tab" aria-selected={k === i % n} aria-label={s.titulo.join(' ')}
                 className={k === i % n ? 'ativo' : ''} onClick={() => setI(k)}>

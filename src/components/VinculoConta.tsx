@@ -4,6 +4,7 @@ import { fmtDataCurta, fmtValor } from '../lib/format'
 import type { ContaFixa, Lancamento } from '../lib/types'
 import { Icone } from './Icone'
 import { Modal } from './ui'
+import { tx } from '../lib/textos'
 
 /**
  * Depois de ligar um lançamento a uma conta do mês: "Achei mais estes parecidos. Também são da Pensão?". Os que o app tem
@@ -32,11 +33,10 @@ export function ParecidosConta({ conta, modelo, itens, aoLigar, aoRecusar, aoFec
   }
 
   return (
-    <Modal titulo={`Mais lançamentos de ${conta.descricao}?`} aoFechar={aoFechar}>
+    <Modal titulo={tx('Mais lançamentos de {0}?', conta.descricao)} aoFechar={aoFechar}>
       <div className="form vinculo-parecidos">
         <p className="vinculo-intro">
-          Você ligou <b>{modelo.descricao}</b> a <b>{conta.descricao}</b>. Achei {itens.length === 1 ? 'outro lançamento parecido' : `mais ${itens.length} lançamentos parecidos`} em
-          outros meses. {itens.length === 1 ? 'Ele também é' : 'Eles também são'} {entrada ? 'o recebimento' : 'o pagamento'} dessa conta?
+          {tx('Você ligou')} <b>{modelo.descricao}</b> {tx('a')} <b>{conta.descricao}</b>{tx('. Achei')} {itens.length === 1 ? tx('outro lançamento parecido') : tx('mais {0} lançamentos parecidos', itens.length)} {tx('em outros meses.')} {itens.length === 1 ? tx('Ele também é') : tx('Eles também são')} {entrada ? tx('o recebimento') : tx('o pagamento')} {tx('dessa conta?')}
         </p>
         <ul className="vinculo-lista">
           {itens.map(({ lanc, forca }) => (
@@ -44,18 +44,18 @@ export function ParecidosConta({ conta, modelo, itens, aoLigar, aoRecusar, aoFec
               <label className={marcados.has(lanc.id) ? '' : 'desmarcado'}>
                 <input type="checkbox" checked={marcados.has(lanc.id)} onChange={() => alternar(lanc.id)} />
                 <span className="vinculo-data">{fmtDataCurta(lanc.data)}<small>{lanc.ano}</small></span>
-                <span className="vinculo-nome"><strong>{lanc.descricao}</strong>{forca === 'talvez' && <small>parecido, confira</small>}</span>
+                <span className="vinculo-nome"><strong>{lanc.descricao}</strong>{forca === 'talvez' && <small>{tx('parecido, confira')}</small>}</span>
                 <span className={`vinculo-valor ${lanc.tipo}`}>{entrada ? '+' : '−'} {fmtValor(lanc.valor)}</span>
               </label>
             </li>
           ))}
         </ul>
-        <span className="campo-ajuda">Ligados, eles contam como {entrada ? 'recebidos' : 'pagos'} em Contas do mês e não precisam de “{entrada ? 'Recebi' : 'Paguei'}”.</span>
+        <span className="campo-ajuda">{tx('Ligados, eles contam como {0} em Contas do mês e não precisam de “', entrada ? 'recebidos' : 'pagos')}{entrada ? tx('Recebi') : tx('Paguei')}”.</span>
         <div className="form-acoes">
           <span className="espaco" />
-          <button type="button" className="btn" onClick={() => { aoRecusar(itens.map((x) => x.lanc.id)); aoFechar() }}>Nenhum é</button>
+          <button type="button" className="btn" onClick={() => { aoRecusar(itens.map((x) => x.lanc.id)); aoFechar() }}>{tx('Nenhum é')}</button>
           <button type="button" className="btn primario" disabled={!marcados.size} onClick={confirmar}>
-            <Icone nome="check" tamanho={16} /> Ligar {marcados.size || ''}
+            <Icone nome="check" tamanho={16} /> {tx('Ligar {0}', marcados.size || '')}
           </button>
         </div>
       </div>

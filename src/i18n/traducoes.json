@@ -167,10 +167,6 @@
     "en": "statements R$ 2.190,00",
     "es": "resúmenes R$ 2.190,00"
   },
-  "nu": {
-    "en": "nu",
-    "es": "nu"
-  },
   "Nubank": {
     "en": "Nubank",
     "es": "Nubank"
@@ -199,10 +195,6 @@
     "en": "R$ 2.202,20 left to pay",
     "es": "falta pagar R$ 2.202,20"
   },
-  "OUT": {
-    "en": "OCT",
-    "es": "OCT"
-  },
   "3 potes enchendo": {
     "en": "3 jars filling up",
     "es": "3 frascos llenándose"
@@ -222,14 +214,6 @@
   "Seu dinheiro,": {
     "en": "Your money,",
     "es": "Tu dinero,"
-  },
-  "infinitas": {
-    "en": "endless",
-    "es": "infinitas"
-  },
-  "possibilidades": {
-    "en": "possibilities",
-    "es": "posibilidades"
   },
   "Controle financeiro com visual premium": {
     "en": "Money management with a premium look",
@@ -446,14 +430,6 @@
   "Defina as variáveis": {
     "en": "Set the variables",
     "es": "Define las variables"
-  },
-  "e": {
-    "en": "and",
-    "es": "y"
-  },
-  ".env": {
-    "en": ".env",
-    "es": ".env"
   },
   "no computador, ou em Environment Variables na Vercel/Netlify) e publique de novo. O passo a passo está no README.": {
     "en": "on your computer, or in Environment Variables on Vercel/Netlify) and publish again. The step-by-step guide is in the README.",
@@ -806,5 +782,4777 @@
   "O pagamento é feito na página segura do Stripe. Cancele quando quiser, sem multa.": {
     "en": "Payment happens on Stripe's secure page. Cancel anytime, no fees.",
     "es": "El pago se hace en la página segura de Stripe. Cancela cuando quieras, sin multa."
+  },
+  "Teste grátis:": {
+    "en": "",
+    "es": ""
+  },
+  "falta 1 dia": {
+    "en": "",
+    "es": ""
+  },
+  "faltam {0} dias": {
+    "en": "",
+    "es": ""
+  },
+  "Quando acabar, é só assinar por R$ 9,99 por mês para continuar de onde parou.": {
+    "en": "",
+    "es": ""
+  },
+  "Assinar agora": {
+    "en": "",
+    "es": ""
+  },
+  "Fechar aviso": {
+    "en": "",
+    "es": ""
+  },
+  "Mensagens": {
+    "en": "",
+    "es": ""
+  },
+  "faturas do mês": {
+    "en": "",
+    "es": ""
+  },
+  "Adicione seu cartão para ver a fatura de cada mês e quanto do limite ainda dá para usar.": {
+    "en": "",
+    "es": ""
+  },
+  "Adicionar cartão": {
+    "en": "",
+    "es": ""
+  },
+  "livre {0}": {
+    "en": "",
+    "es": ""
+  },
+  "{0} vencida{1} · falta pagar": {
+    "en": "",
+    "es": ""
+  },
+  "falta pagar": {
+    "en": "",
+    "es": ""
+  },
+  "Aluguel, luz, internet, salário… Adicione o que se repete todo mês e o app avisa quando vencer.{0}": {
+    "en": "",
+    "es": ""
+  },
+  "Adicionar a primeira conta": {
+    "en": "",
+    "es": ""
+  },
+  "Tudo em dia neste mês! 🎉": {
+    "en": "",
+    "es": ""
+  },
+  "Ver contas": {
+    "en": "",
+    "es": ""
+  },
+  "Recebi": {
+    "en": "",
+    "es": ""
+  },
+  "Paguei": {
+    "en": "",
+    "es": ""
+  },
+  "conta em aberto": {
+    "en": "",
+    "es": ""
+  },
+  "contas em aberto": {
+    "en": "",
+    "es": ""
+  },
+  "Ver todas (+{0})": {
+    "en": "",
+    "es": ""
+  },
+  "Ver todas": {
+    "en": "",
+    "es": ""
+  },
+  "Lançamentos do mês": {
+    "en": "",
+    "es": ""
+  },
+  "Últimos lançamentos": {
+    "en": "",
+    "es": ""
+  },
+  "Ver todos": {
+    "en": "",
+    "es": ""
+  },
+  "Mostrar": {
+    "en": "",
+    "es": ""
+  },
+  "Tudo": {
+    "en": "",
+    "es": ""
+  },
+  "Entradas": {
+    "en": "",
+    "es": ""
+  },
+  "Saídas": {
+    "en": "",
+    "es": ""
+  },
+  "Nenhuma entrada neste mês.": {
+    "en": "",
+    "es": ""
+  },
+  "Nenhuma saída neste mês.": {
+    "en": "",
+    "es": ""
+  },
+  "Ver todos os {0} lançamentos": {
+    "en": "",
+    "es": ""
+  },
+  "Para onde foi o dinheiro": {
+    "en": "",
+    "es": ""
+  },
+  "Categorias": {
+    "en": "",
+    "es": ""
+  },
+  "Quando você lançar saídas, aparece aqui em que você mais gasta.": {
+    "en": "",
+    "es": ""
+  },
+  "a mais": {
+    "en": "",
+    "es": ""
+  },
+  "a menos": {
+    "en": "",
+    "es": ""
+  },
+  "Mostrar menos": {
+    "en": "",
+    "es": ""
+  },
+  "Ver todas as {0} categorias": {
+    "en": "",
+    "es": ""
+  },
+  "Ver valores por categoria": {
+    "en": "",
+    "es": ""
+  },
+  "Adicionar dívida": {
+    "en": "",
+    "es": ""
+  },
+  "Tem parcela ou empréstimo? Adicione para ver quanto falta e quando acaba.": {
+    "en": "",
+    "es": ""
+  },
+  "já pago": {
+    "en": "",
+    "es": ""
+  },
+  "livre em": {
+    "en": "",
+    "es": ""
+  },
+  "Quitada ✓": {
+    "en": "",
+    "es": ""
+  },
+  "parcela {0} de {1}": {
+    "en": "",
+    "es": ""
+  },
+  "{0}/mês": {
+    "en": "",
+    "es": ""
+  },
+  "Pagar": {
+    "en": "",
+    "es": ""
+  },
+  "Ver todas as {0} dívidas": {
+    "en": "",
+    "es": ""
+  },
+  "A receber": {
+    "en": "",
+    "es": ""
+  },
+  "{0} em aberto": {
+    "en": "",
+    "es": ""
+  },
+  "{0} venceu": {
+    "en": "",
+    "es": ""
+  },
+  "Dinheiro guardado": {
+    "en": "",
+    "es": ""
+  },
+  "Abrir": {
+    "en": "",
+    "es": ""
+  },
+  "Entrou {0} · saiu {1} neste mês": {
+    "en": "",
+    "es": ""
+  },
+  "Nas contas": {
+    "en": "",
+    "es": ""
+  },
+  "Adicione seus bancos para ver quanto tem em cada um": {
+    "en": "",
+    "es": ""
+  },
+  "Investido": {
+    "en": "",
+    "es": ""
+  },
+  "Informar quanto você tem investido": {
+    "en": "",
+    "es": ""
+  },
+  "Sem cotação agora": {
+    "en": "",
+    "es": ""
+  },
+  "Em outras moedas": {
+    "en": "",
+    "es": ""
+  },
+  "Valores de {0} de {1}.": {
+    "en": "",
+    "es": ""
+  },
+  "Atualizar": {
+    "en": "",
+    "es": ""
+  },
+  "Suas metas": {
+    "en": "",
+    "es": ""
+  },
+  "{0} guardado no total": {
+    "en": "",
+    "es": ""
+  },
+  "Criar": {
+    "en": "",
+    "es": ""
+  },
+  "Junte dinheiro para uma viagem, um carro ou uma reserva.": {
+    "en": "",
+    "es": ""
+  },
+  "Criar a primeira meta": {
+    "en": "",
+    "es": ""
+  },
+  "Todas as metas batidas! 🎉": {
+    "en": "",
+    "es": ""
+  },
+  "Criar outra": {
+    "en": "",
+    "es": ""
+  },
+  "Ver todas as {0} metas": {
+    "en": "",
+    "es": ""
+  },
+  "Sobrou": {
+    "en": "",
+    "es": ""
+  },
+  "Guardado nas contas": {
+    "en": "",
+    "es": ""
+  },
+  "Abrir {0}": {
+    "en": "",
+    "es": ""
+  },
+  "cotação": {
+    "en": "",
+    "es": ""
+  },
+  "Cotação: quanto vale 1 {0} em {1}": {
+    "en": "",
+    "es": ""
+  },
+  "Inverter a cotação": {
+    "en": "",
+    "es": ""
+  },
+  "Carregando": {
+    "en": "",
+    "es": ""
+  },
+  "Dicas": {
+    "en": "",
+    "es": ""
+  },
+  "crédito": {
+    "en": "",
+    "es": ""
+  },
+  "Categoria": {
+    "en": "",
+    "es": ""
+  },
+  "Mais {0}…": {
+    "en": "",
+    "es": ""
+  },
+  "+ Nova categoria": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: Academia, Filhos, Viagens…": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: Aluguel recebido, Pensão…": {
+    "en": "",
+    "es": ""
+  },
+  "Nome da categoria": {
+    "en": "",
+    "es": ""
+  },
+  "Ícone": {
+    "en": "",
+    "es": ""
+  },
+  "Cor": {
+    "en": "",
+    "es": ""
+  },
+  "É nesta categoria que as saídas podem abater uma dívida, por isso ela não pode ser apagada.": {
+    "en": "",
+    "es": ""
+  },
+  "Sim, excluir": {
+    "en": "",
+    "es": ""
+  },
+  "Excluir": {
+    "en": "",
+    "es": ""
+  },
+  "Cancelar": {
+    "en": "",
+    "es": ""
+  },
+  "Salvar": {
+    "en": "",
+    "es": ""
+  },
+  "Os lançamentos dela não somem: só ficam \"sem categoria\".": {
+    "en": "",
+    "es": ""
+  },
+  "Tipo": {
+    "en": "",
+    "es": ""
+  },
+  "Criar categoria": {
+    "en": "",
+    "es": ""
+  },
+  "lançamento": {
+    "en": "",
+    "es": ""
+  },
+  "lançamentos": {
+    "en": "",
+    "es": ""
+  },
+  "Nenhuma categoria de": {
+    "en": "",
+    "es": ""
+  },
+  "saída": {
+    "en": "",
+    "es": ""
+  },
+  ". Toque em Criar categoria.": {
+    "en": "",
+    "es": ""
+  },
+  "Dica: ao lançar, o app já sugere a categoria pela descrição (\"iFood\" → Alimentação) e aprende com o que você escolhe.": {
+    "en": "",
+    "es": ""
+  },
+  "Perfil": {
+    "en": "",
+    "es": ""
+  },
+  "Seu nome e as moedas que você usa": {
+    "en": "",
+    "es": ""
+  },
+  "Aparência": {
+    "en": "",
+    "es": ""
+  },
+  "Tema e animações": {
+    "en": "",
+    "es": ""
+  },
+  "Painel": {
+    "en": "",
+    "es": ""
+  },
+  "O que aparece e o jeito de ver": {
+    "en": "",
+    "es": ""
+  },
+  "Onde cada lançamento se encaixa": {
+    "en": "",
+    "es": ""
+  },
+  "Dados": {
+    "en": "",
+    "es": ""
+  },
+  "Backup, planilha e começar de novo": {
+    "en": "",
+    "es": ""
+  },
+  "Conta": {
+    "en": "",
+    "es": ""
+  },
+  "Sua sessão neste aparelho": {
+    "en": "",
+    "es": ""
+  },
+  "Configurações": {
+    "en": "",
+    "es": ""
+  },
+  "Você": {
+    "en": "",
+    "es": ""
+  },
+  "Seções": {
+    "en": "",
+    "es": ""
+  },
+  "Seu nome ou apelido": {
+    "en": "",
+    "es": ""
+  },
+  "Moeda principal": {
+    "en": "",
+    "es": ""
+  },
+  "todos os totais aparecem nela; o que já foi lançado não é convertido": {
+    "en": "",
+    "es": ""
+  },
+  "Outras moedas que você usa": {
+    "en": "",
+    "es": ""
+  },
+  "toque para ligar ou desligar; o painel mostra quanto valem na sua moeda": {
+    "en": "",
+    "es": ""
+  },
+  "Outras moedas": {
+    "en": "",
+    "es": ""
+  },
+  "Tema": {
+    "en": "",
+    "es": ""
+  },
+  "Automático": {
+    "en": "",
+    "es": ""
+  },
+  "Segue o seu aparelho": {
+    "en": "",
+    "es": ""
+  },
+  "Claro": {
+    "en": "",
+    "es": ""
+  },
+  "Fundo claro, ótimo de dia": {
+    "en": "",
+    "es": ""
+  },
+  "Escuro": {
+    "en": "",
+    "es": ""
+  },
+  "Descansa os olhos à noite": {
+    "en": "",
+    "es": ""
+  },
+  "Animações": {
+    "en": "",
+    "es": ""
+  },
+  "Completas": {
+    "en": "",
+    "es": ""
+  },
+  "Blocos que surgem, números que contam e o tema que se espalha": {
+    "en": "",
+    "es": ""
+  },
+  "Reduzidas": {
+    "en": "",
+    "es": ""
+  },
+  "Tudo aparece direto, sem movimento": {
+    "en": "",
+    "es": ""
+  },
+  "Jeito de ver": {
+    "en": "",
+    "es": ""
+  },
+  "O que aparece no seu painel": {
+    "en": "",
+    "es": ""
+  },
+  "entradas e saídas estão sempre ligadas: são a base de tudo": {
+    "en": "",
+    "es": ""
+  },
+  "Editar categorias": {
+    "en": "",
+    "es": ""
+  },
+  "Baixar backup": {
+    "en": "",
+    "es": ""
+  },
+  "Um arquivo com todos os seus dados, para guardar com você.": {
+    "en": "",
+    "es": ""
+  },
+  "Importar extrato": {
+    "en": "",
+    "es": ""
+  },
+  "PDF, CSV, Excel, Word ou OFX do seu banco. Arruma os nomes e mostra tudo antes de gravar.": {
+    "en": "",
+    "es": ""
+  },
+  "Organizar nomes": {
+    "en": "",
+    "es": ""
+  },
+  "Tira CPF, CNPJ, códigos e texto de banco dos nomes dos lançamentos que você já tem.": {
+    "en": "",
+    "es": ""
+  },
+  "Importar planilha": {
+    "en": "",
+    "es": ""
+  },
+  "Traz os meses de uma planilha (.xlsx). Pede confirmação antes.": {
+    "en": "",
+    "es": ""
+  },
+  "Zerar dados": {
+    "en": "",
+    "es": ""
+  },
+  "Escolha o que apagar: tudo, entradas, saídas, dívidas, cartões e mais.": {
+    "en": "",
+    "es": ""
+  },
+  "Você entrou como": {
+    "en": "",
+    "es": ""
+  },
+  "sem e-mail": {
+    "en": "",
+    "es": ""
+  },
+  "Ver o tutorial": {
+    "en": "",
+    "es": ""
+  },
+  "Um passeio rápido pelo painel, mostrando onde fica cada coisa e como ligar mais abas.": {
+    "en": "",
+    "es": ""
+  },
+  "Refazer as perguntas": {
+    "en": "",
+    "es": ""
+  },
+  "Responda de novo as perguntas iniciais para reajustar o painel.": {
+    "en": "",
+    "es": ""
+  },
+  "Assinar o OpusCash": {
+    "en": "",
+    "es": ""
+  },
+  "Gerenciar assinatura": {
+    "en": "",
+    "es": ""
+  },
+  "Sair": {
+    "en": "",
+    "es": ""
+  },
+  "Encerra a sessão neste aparelho.": {
+    "en": "",
+    "es": ""
+  },
+  "Excluir minha conta": {
+    "en": "",
+    "es": ""
+  },
+  "Apaga seu login e todos os seus dados de vez e cancela a assinatura.": {
+    "en": "",
+    "es": ""
+  },
+  "Gerando backup…": {
+    "en": "",
+    "es": ""
+  },
+  "Apagando…": {
+    "en": "",
+    "es": ""
+  },
+  "Não deu para apagar tudo: {0}. Tente de novo.": {
+    "en": "",
+    "es": ""
+  },
+  "Escolha o que apagar.": {
+    "en": "",
+    "es": ""
+  },
+  "Não tem como desfazer.": {
+    "en": "",
+    "es": ""
+  },
+  "Vai apagar": {
+    "en": "",
+    "es": ""
+  },
+  ": lançamentos, dívidas, cartões, contas fixas, metas, saldos, bancos e categorias. As perguntas iniciais aparecem de novo.": {
+    "en": "",
+    "es": ""
+  },
+  "Vai apagar:": {
+    "en": "",
+    "es": ""
+  },
+  ". O resto fica como está.": {
+    "en": "",
+    "es": ""
+  },
+  "Marque o que quer apagar.": {
+    "en": "",
+    "es": ""
+  },
+  "Backup baixado ✓": {
+    "en": "",
+    "es": ""
+  },
+  "Baixar backup antes (recomendado)": {
+    "en": "",
+    "es": ""
+  },
+  "Para confirmar, digite": {
+    "en": "",
+    "es": ""
+  },
+  "Agora não": {
+    "en": "",
+    "es": ""
+  },
+  "Acompanhe mais": {
+    "en": "",
+    "es": ""
+  },
+  "Seu painel": {
+    "en": "",
+    "es": ""
+  },
+  "Personalizar": {
+    "en": "",
+    "es": ""
+  },
+  "Tudo ligado": {
+    "en": "",
+    "es": ""
+  },
+  "Trocar foto de perfil": {
+    "en": "",
+    "es": ""
+  },
+  "Pôr foto de perfil": {
+    "en": "",
+    "es": ""
+  },
+  "Trocar foto": {
+    "en": "",
+    "es": ""
+  },
+  "Pôr foto": {
+    "en": "",
+    "es": ""
+  },
+  "Tirar": {
+    "en": "",
+    "es": ""
+  },
+  "Teste grátis até {0}. Troque o cartão, veja as faturas ou cancele.": {
+    "en": "",
+    "es": ""
+  },
+  "Cancelada: você usa até {0}. Dá para reativar.": {
+    "en": "",
+    "es": ""
+  },
+  "Troque o cartão, veja as faturas ou cancele a assinatura.": {
+    "en": "",
+    "es": ""
+  },
+  "Sei que a exclusão é": {
+    "en": "",
+    "es": ""
+  },
+  "definitiva e não tem como desfazer": {
+    "en": "",
+    "es": ""
+  },
+  ": meu login e todos os meus dados (lançamentos, categorias, bancos, cartões, dívidas, metas, contas do mês e foto) serão apagados.": {
+    "en": "",
+    "es": ""
+  },
+  "Sei que minha": {
+    "en": "",
+    "es": ""
+  },
+  "assinatura será cancelada": {
+    "en": "",
+    "es": ""
+  },
+  "e que não há reembolso proporcional do período já iniciado, salvo quando a lei exigir (como o direito de arrependimento de 7 dias do Código de Defesa do Consumidor) ou nos casos previstos nos Termos de uso.": {
+    "en": "",
+    "es": ""
+  },
+  "Sei que": {
+    "en": "",
+    "es": ""
+  },
+  "alguns registros continuam depois da exclusão": {
+    "en": "",
+    "es": ""
+  },
+  ": os de cobrança no Stripe, mantidos quando a lei exigir (art. 16 da LGPD), e a identificação irreversível do cartão, guardada junto do código interno da conta (sem e-mail nem nome) só para impedir que o teste grátis se repita (prevenção a abusos, legítimo interesse).": {
+    "en": "",
+    "es": ""
+  },
+  "Li e concordo com os": {
+    "en": "",
+    "es": ""
+  },
+  "e com a": {
+    "en": "",
+    "es": ""
+  },
+  ", e peço, de forma livre e informada, a eliminação dos meus dados pessoais (art. 18, inciso VI, da LGPD, Lei 13.709/2018).": {
+    "en": "",
+    "es": ""
+  },
+  "Excluindo…": {
+    "en": "",
+    "es": ""
+  },
+  "Você está pedindo para apagar a conta": {
+    "en": "",
+    "es": ""
+  },
+  ". Leia e marque cada item para confirmar que está ciente.": {
+    "en": "",
+    "es": ""
+  },
+  "Seus direitos continuam valendo": {
+    "en": "",
+    "es": ""
+  },
+  "Antes de excluir, você pode levar uma cópia dos seus dados (portabilidade, art. 18, inciso V, da LGPD). Se tiver qualquer dúvida ou pedido sobre seus dados, fale com o suporte, pelo e-mail que aparece na Política de privacidade. Também é possível reclamar à Autoridade Nacional de Proteção de Dados (ANPD).": {
+    "en": "",
+    "es": ""
+  },
+  "Termos de ciência": {
+    "en": "",
+    "es": ""
+  },
+  "Excluir para sempre": {
+    "en": "",
+    "es": ""
+  },
+  "Importar seus dados": {
+    "en": "",
+    "es": ""
+  },
+  "Você tem algum extrato ou planilha?": {
+    "en": "",
+    "es": ""
+  },
+  "Traga tudo de uma vez em vez de lançar um por um. Aceita o extrato do seu banco (PDF, OFX, Excel, CSV ou Word) e planilhas do Excel. O app arruma os nomes e mostra tudo antes de gravar.": {
+    "en": "",
+    "es": ""
+  },
+  "Não mostrar de novo": {
+    "en": "",
+    "es": ""
+  },
+  "Moeda": {
+    "en": "",
+    "es": ""
+  },
+  "{0} já está como {1} em Contas do mês": {
+    "en": "",
+    "es": ""
+  },
+  "Excel": {
+    "en": "",
+    "es": ""
+  },
+  "Word": {
+    "en": "",
+    "es": ""
+  },
+  "Conta do mês": {
+    "en": "",
+    "es": ""
+  },
+  "Saída": {
+    "en": "",
+    "es": ""
+  },
+  "Lendo {0}…": {
+    "en": "",
+    "es": ""
+  },
+  "Achando datas, valores e arrumando os nomes.": {
+    "en": "",
+    "es": ""
+  },
+  "Arraste o extrato aqui ou toque para escolher": {
+    "en": "",
+    "es": ""
+  },
+  "PDF, CSV, Excel, Word, OFX ou TXT, do banco que for.": {
+    "en": "",
+    "es": ""
+  },
+  "Como tirar o extrato:": {
+    "en": "",
+    "es": ""
+  },
+  "no app do banco, procure “Extrato” → “Exportar” ou “Compartilhar”. CSV, Excel ou OFX são os mais certeiros; PDF também funciona.": {
+    "en": "",
+    "es": ""
+  },
+  "Nomes arrumados:": {
+    "en": "",
+    "es": ""
+  },
+  "o app tira CPF, CNPJ, códigos e o “TRANSFERÊNCIA RECEBIDA PELO PIX” do começo. O que não der para entender fica marcado para você revisar.": {
+    "en": "",
+    "es": ""
+  },
+  "Nada é gravado": {
+    "en": "",
+    "es": ""
+  },
+  "antes de você revisar. O que parecer já lançado (mesmo dia, valor e tipo) vem desmarcado.": {
+    "en": "",
+    "es": ""
+  },
+  "{0} de {1}": {
+    "en": "",
+    "es": ""
+  },
+  "Contam como pagas ou recebidas em Contas do mês": {
+    "en": "",
+    "es": ""
+  },
+  "{0} de contas do mês": {
+    "en": "",
+    "es": ""
+  },
+  "Banco": {
+    "en": "",
+    "es": ""
+  },
+  "Criar \"{0}\"": {
+    "en": "",
+    "es": ""
+  },
+  "Nenhum": {
+    "en": "",
+    "es": ""
+  },
+  "Todos ({0})": {
+    "en": "",
+    "es": ""
+  },
+  "Para revisar ({0})": {
+    "en": "",
+    "es": ""
+  },
+  "Já lançados ({0})": {
+    "en": "",
+    "es": ""
+  },
+  "Marcar todos os novos": {
+    "en": "",
+    "es": ""
+  },
+  "Desmarcar todos": {
+    "en": "",
+    "es": ""
+  },
+  "Importar este": {
+    "en": "",
+    "es": ""
+  },
+  "Trocar entrada/saída": {
+    "en": "",
+    "es": ""
+  },
+  "Dê um nome": {
+    "en": "",
+    "es": ""
+  },
+  "Descrição": {
+    "en": "",
+    "es": ""
+  },
+  "parece já lançado": {
+    "en": "",
+    "es": ""
+  },
+  "Não é dessa conta: tocar para desligar": {
+    "en": "",
+    "es": ""
+  },
+  "era: {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Sem categoria": {
+    "en": "",
+    "es": ""
+  },
+  "Outro arquivo": {
+    "en": "",
+    "es": ""
+  },
+  "Importar {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Importando…": {
+    "en": "",
+    "es": ""
+  },
+  "Eles já entram nos totais, gráficos e categorias. Dá para editar qualquer um em Lançamentos.": {
+    "en": "",
+    "es": ""
+  },
+  "Importar outro": {
+    "en": "",
+    "es": ""
+  },
+  "Ver lançamentos": {
+    "en": "",
+    "es": ""
+  },
+  "sem data": {
+    "en": "",
+    "es": ""
+  },
+  "lançamento arrumado": {
+    "en": "",
+    "es": ""
+  },
+  "lançamentos arrumados": {
+    "en": "",
+    "es": ""
+  },
+  "Os nomes novos já aparecem em todo o app.": {
+    "en": "",
+    "es": ""
+  },
+  "Fechar": {
+    "en": "",
+    "es": ""
+  },
+  "Os nomes de {0} já estão organizados": {
+    "en": "",
+    "es": ""
+  },
+  "Nada com CPF, CNPJ, código ou texto de banco sobrando.": {
+    "en": "",
+    "es": ""
+  },
+  "Achei": {
+    "en": "",
+    "es": ""
+  },
+  "nome que dá": {
+    "en": "",
+    "es": ""
+  },
+  "nomes que dão": {
+    "en": "",
+    "es": ""
+  },
+  "para arrumar nos lançamentos de {0}. Confira, mude o que quiser e aplique. Os que eram só números ficam em branco para você escrever.": {
+    "en": "",
+    "es": ""
+  },
+  "Arrumar este": {
+    "en": "",
+    "es": ""
+  },
+  "(sem nome)": {
+    "en": "",
+    "es": ""
+  },
+  "{0} lançamentos": {
+    "en": "",
+    "es": ""
+  },
+  "Escreva o nome": {
+    "en": "",
+    "es": ""
+  },
+  "Nome novo": {
+    "en": "",
+    "es": ""
+  },
+  "Arrumar {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Já recebida": {
+    "en": "",
+    "es": ""
+  },
+  "Dívida quitada": {
+    "en": "",
+    "es": ""
+  },
+  "{0} – parcela": {
+    "en": "",
+    "es": ""
+  },
+  "Digite um valor maior que zero.": {
+    "en": "",
+    "es": ""
+  },
+  "Escolha a data.": {
+    "en": "",
+    "es": ""
+  },
+  "Escolha o cartão de crédito da compra.": {
+    "en": "",
+    "es": ""
+  },
+  "Digite quanto vale 1 {0} em {1}.": {
+    "en": "",
+    "es": ""
+  },
+  "{0} já tem um lançamento neste mês. Escolha “Não” ou mude a data.": {
+    "en": "",
+    "es": ""
+  },
+  "Você já lançou uma compra igual a essa neste cartão. Se for outra compra mesmo, toque em salvar de novo.": {
+    "en": "",
+    "es": ""
+  },
+  "Editar lançamento": {
+    "en": "",
+    "es": ""
+  },
+  "Receber": {
+    "en": "",
+    "es": ""
+  },
+  "Pagar dívida": {
+    "en": "",
+    "es": ""
+  },
+  "Novo lançamento": {
+    "en": "",
+    "es": ""
+  },
+  "Parcela {0} de {1} da compra": {
+    "en": "",
+    "es": ""
+  },
+  "Compra no cartão": {
+    "en": "",
+    "es": ""
+  },
+  ". As outras parcelas não mudam.": {
+    "en": "",
+    "es": ""
+  },
+  "Valor": {
+    "en": "",
+    "es": ""
+  },
+  "na sua moeda.": {
+    "en": "",
+    "es": ""
+  },
+  "Cotação que você informou.": {
+    "en": "",
+    "es": ""
+  },
+  "Cotação de hoje; troque se pagou outra.": {
+    "en": "",
+    "es": ""
+  },
+  "Sem cotação automática agora: informe a que você pagou.": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: iFood, 99, mercado…": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: salário, Pix de cliente…": {
+    "en": "",
+    "es": ""
+  },
+  "Data da compra": {
+    "en": "",
+    "es": ""
+  },
+  "Vencimento da parcela": {
+    "en": "",
+    "es": ""
+  },
+  "Data": {
+    "en": "",
+    "es": ""
+  },
+  "Como pagou?": {
+    "en": "",
+    "es": ""
+  },
+  "Como recebeu?": {
+    "en": "",
+    "es": ""
+  },
+  "Forma de pagamento": {
+    "en": "",
+    "es": ""
+  },
+  "+ cartão": {
+    "en": "",
+    "es": ""
+  },
+  "Você ainda não cadastrou nenhum cartão. Cadastre um para a compra entrar na fatura.": {
+    "en": "",
+    "es": ""
+  },
+  "Cartão de crédito indisponível: falta rodar a migração 8 no Supabase.": {
+    "en": "",
+    "es": ""
+  },
+  "Para a compra entrar na fatura, ligue o cartão de crédito.": {
+    "en": "",
+    "es": ""
+  },
+  "Ligar agora": {
+    "en": "",
+    "es": ""
+  },
+  "A compra entra na fatura do {0} e desconta do limite dele na aba Cartões.": {
+    "en": "",
+    "es": ""
+  },
+  "Em quantas vezes?": {
+    "en": "",
+    "es": ""
+  },
+  "1x (à vista)": {
+    "en": "",
+    "es": ""
+  },
+  "A fatura do {0} fecha dia {1}, então essa compra entra na fatura de {2}.": {
+    "en": "",
+    "es": ""
+  },
+  "Informe o valor para ver como as parcelas ficam.": {
+    "en": "",
+    "es": ""
+  },
+  "É de uma entrada fixa?": {
+    "en": "",
+    "es": ""
+  },
+  "É de uma conta do mês?": {
+    "en": "",
+    "es": ""
+  },
+  "Não": {
+    "en": "",
+    "es": ""
+  },
+  "{0} fica como {1} neste mês, sem precisar tocar em “": {
+    "en": "",
+    "es": ""
+  },
+  "Qual dívida você está pagando?": {
+    "en": "",
+    "es": ""
+  },
+  "Nenhuma (só entra como gasto)": {
+    "en": "",
+    "es": ""
+  },
+  "A dívida diminui sozinha com este pagamento.": {
+    "en": "",
+    "es": ""
+  },
+  "É de alguém que te devia?": {
+    "en": "",
+    "es": ""
+  },
+  "O que falta receber diminui sozinho com esta entrada.": {
+    "en": "",
+    "es": ""
+  },
+  "{0} lançamento{1} salvo{2}. Pode lançar o próximo.": {
+    "en": "",
+    "es": ""
+  },
+  "Excluir só esta parcela? As outras continuam.": {
+    "en": "",
+    "es": ""
+  },
+  "Excluir este lançamento?": {
+    "en": "",
+    "es": ""
+  },
+  "Excluir só esta parcela": {
+    "en": "",
+    "es": ""
+  },
+  "Excluir a compra inteira \"{0}\"? Todas as parcelas serão apagadas.": {
+    "en": "",
+    "es": ""
+  },
+  "Excluir a compra inteira": {
+    "en": "",
+    "es": ""
+  },
+  "Salvar e lançar outro": {
+    "en": "",
+    "es": ""
+  },
+  "Falta receber": {
+    "en": "",
+    "es": ""
+  },
+  "Falta pagar": {
+    "en": "",
+    "es": ""
+  },
+  "Dê um nome (ex.: computador que vendi).": {
+    "en": "",
+    "es": ""
+  },
+  "Dê um nome para a dívida.": {
+    "en": "",
+    "es": ""
+  },
+  "Digite o valor da parcela.": {
+    "en": "",
+    "es": ""
+  },
+  "Digite quantas parcelas faltam (um número inteiro).": {
+    "en": "",
+    "es": ""
+  },
+  "Digite quantas parcelas faltam.": {
+    "en": "",
+    "es": ""
+  },
+  "O total de parcelas não pode ser menor que as que faltam.": {
+    "en": "",
+    "es": ""
+  },
+  "Digite um valor válido.": {
+    "en": "",
+    "es": ""
+  },
+  "Digite quanto falta receber.": {
+    "en": "",
+    "es": ""
+  },
+  "Digite quanto falta pagar.": {
+    "en": "",
+    "es": ""
+  },
+  "Editar a receber": {
+    "en": "",
+    "es": ""
+  },
+  "Editar dívida": {
+    "en": "",
+    "es": ""
+  },
+  "Alguém te deve": {
+    "en": "",
+    "es": ""
+  },
+  "Quem deve": {
+    "en": "",
+    "es": ""
+  },
+  "Eu devo": {
+    "en": "",
+    "es": ""
+  },
+  "Me devem": {
+    "en": "",
+    "es": ""
+  },
+  "Moeda da dívida": {
+    "en": "",
+    "es": ""
+  },
+  "Em que moeda?": {
+    "en": "",
+    "es": ""
+  },
+  "O quê": {
+    "en": "",
+    "es": ""
+  },
+  "Nome": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: computador que vendi, empréstimo…": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: notebook, empréstimo, acordo…": {
+    "en": "",
+    "es": ""
+  },
+  "Quem te deve": {
+    "en": "",
+    "es": ""
+  },
+  "Com quem": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: João": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: Nubank, loja, Maria": {
+    "en": "",
+    "es": ""
+  },
+  "É parcelado?": {
+    "en": "",
+    "es": ""
+  },
+  "Sim, em parcelas": {
+    "en": "",
+    "es": ""
+  },
+  "Não, um valor só": {
+    "en": "",
+    "es": ""
+  },
+  "Não, tenho um valor a pagar": {
+    "en": "",
+    "es": ""
+  },
+  "Valor da parcela": {
+    "en": "",
+    "es": ""
+  },
+  "Quantas faltam": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: 10": {
+    "en": "",
+    "es": ""
+  },
+  "De quantas no total?": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: 12": {
+    "en": "",
+    "es": ""
+  },
+  "A próxima vence em": {
+    "en": "",
+    "es": ""
+  },
+  "Se souber o total, o app mostra quanto já foi pago (\"parcela 4 de 12\").": {
+    "en": "",
+    "es": ""
+  },
+  "Com o vencimento, o app mostra cada parcela {0}, pela metade ou atrasada.": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto falta receber": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto falta pagar": {
+    "en": "",
+    "es": ""
+  },
+  "(só se mudou)": {
+    "en": "",
+    "es": ""
+  },
+  "Combinado para": {
+    "en": "",
+    "es": ""
+  },
+  "Valor atualizado em": {
+    "en": "",
+    "es": ""
+  },
+  "Cada recebimento lançado": {
+    "en": "",
+    "es": ""
+  },
+  "Os pagamentos lançados": {
+    "en": "",
+    "es": ""
+  },
+  "já abatem sozinhos. Mude o que falta só se houve juros, acordo ou se estava errado.": {
+    "en": "",
+    "es": ""
+  },
+  "Excluir mesmo": {
+    "en": "",
+    "es": ""
+  },
+  "Já recebi tudo": {
+    "en": "",
+    "es": ""
+  },
+  "Já quitei": {
+    "en": "",
+    "es": ""
+  },
+  "Ela e todo o histórico dela serão excluídos. Os lançamentos continuam, só deixam de abater dela.": {
+    "en": "",
+    "es": ""
+  },
+  "Nome do banco (ex.: Nubank, Itaú, Next, Dinheiro):": {
+    "en": "",
+    "es": ""
+  },
+  "+ Novo banco": {
+    "en": "",
+    "es": ""
+  },
+  "{0} mil": {
+    "en": "",
+    "es": ""
+  },
+  "Sobrou no mês": {
+    "en": "",
+    "es": ""
+  },
+  "Acumulado no ano": {
+    "en": "",
+    "es": ""
+  },
+  "600 12px -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif": {
+    "en": "",
+    "es": ""
+  },
+  "cartão": {
+    "en": "",
+    "es": ""
+  },
+  "dívida": {
+    "en": "",
+    "es": ""
+  },
+  "todo mês": {
+    "en": "",
+    "es": ""
+  },
+  "Atualizando o OpusCash…": {
+    "en": "",
+    "es": ""
+  },
+  "Algo deu errado": {
+    "en": "",
+    "es": ""
+  },
+  "Já registramos o problema. Seus dados estão guardados. Recarregue a página para continuar.": {
+    "en": "",
+    "es": ""
+  },
+  "Recarregar": {
+    "en": "",
+    "es": ""
+  },
+  "Se continuar, escreva para": {
+    "en": "",
+    "es": ""
+  },
+  "Guardado": {
+    "en": "",
+    "es": ""
+  },
+  "Saiu uma versão nova do OpusCash. Feche esta janela e ele se atualiza sozinho; depois é só tentar de novo.": {
+    "en": "",
+    "es": ""
+  },
+  "Lendo a planilha…": {
+    "en": "",
+    "es": ""
+  },
+  "Não encontrei abas de mês (ex.: OUTUBRO26) com dados nessa planilha.": {
+    "en": "",
+    "es": ""
+  },
+  "{0}/{1}: {2} lançamentos": {
+    "en": "",
+    "es": ""
+  },
+  "Encontrei {0} meses:\n\n{1}\n\nOs dados desses meses no app serão substituídos pelos da planilha. Quer continuar?": {
+    "en": "",
+    "es": ""
+  },
+  "Salvando…": {
+    "en": "",
+    "es": ""
+  },
+  "o recebimento": {
+    "en": "",
+    "es": ""
+  },
+  "o pagamento": {
+    "en": "",
+    "es": ""
+  },
+  "Falta pagar no mês": {
+    "en": "",
+    "es": ""
+  },
+  "Fatura do cartão": {
+    "en": "",
+    "es": ""
+  },
+  "Para criar e editar categorias, falta atualizar o banco de dados: rode supabase/migracao-05-categorias.sql no SQL Editor do Supabase.": {
+    "en": "",
+    "es": ""
+  },
+  "Resolver": {
+    "en": "",
+    "es": ""
+  },
+  "A fatura {0} de {1} venceu.": {
+    "en": "",
+    "es": ""
+  },
+  "{0} faturas venceram sem pagar.": {
+    "en": "",
+    "es": ""
+  },
+  "Lançar agora": {
+    "en": "",
+    "es": ""
+  },
+  "Lançou o que gastou hoje?": {
+    "en": "",
+    "es": ""
+  },
+  "Tem um extrato ou planilha? Traga tudo de uma vez.": {
+    "en": "",
+    "es": ""
+  },
+  "Ver dívidas": {
+    "en": "",
+    "es": ""
+  },
+  "{0} de parcelas atrasadas.": {
+    "en": "",
+    "es": ""
+  },
+  "Cobrar": {
+    "en": "",
+    "es": ""
+  },
+  "Te devem {0} que já venceu.": {
+    "en": "",
+    "es": ""
+  },
+  "Faltam {0} nas dívidas.": {
+    "en": "",
+    "es": ""
+  },
+  "Ver metas": {
+    "en": "",
+    "es": ""
+  },
+  "Guarde um pouco para as suas metas.": {
+    "en": "",
+    "es": ""
+  },
+  "Criar meta": {
+    "en": "",
+    "es": ""
+  },
+  "Tem um sonho para juntar dinheiro?": {
+    "en": "",
+    "es": ""
+  },
+  "Mais controle para o seu dinheiro.": {
+    "en": "",
+    "es": ""
+  },
+  "Guarde uma cópia dos seus dados.": {
+    "en": "",
+    "es": ""
+  },
+  "Preparando o backup…": {
+    "en": "",
+    "es": ""
+  },
+  "Trocar tema": {
+    "en": "",
+    "es": ""
+  },
+  "Que tal o tema claro?": {
+    "en": "",
+    "es": ""
+  },
+  "Que tal o tema escuro?": {
+    "en": "",
+    "es": ""
+  },
+  "Tema claro": {
+    "en": "",
+    "es": ""
+  },
+  "Tema escuro": {
+    "en": "",
+    "es": ""
+  },
+  "Páginas": {
+    "en": "",
+    "es": ""
+  },
+  "Busque por lançamentos ou categorias…": {
+    "en": "",
+    "es": ""
+  },
+  "Buscar lançamentos": {
+    "en": "",
+    "es": ""
+  },
+  "Carregando…": {
+    "en": "",
+    "es": ""
+  },
+  "Mês anterior": {
+    "en": "",
+    "es": ""
+  },
+  "Escolher mês": {
+    "en": "",
+    "es": ""
+  },
+  "Próximo mês": {
+    "en": "",
+    "es": ""
+  },
+  "Meses": {
+    "en": "",
+    "es": ""
+  },
+  "Ano anterior": {
+    "en": "",
+    "es": ""
+  },
+  "Próximo ano": {
+    "en": "",
+    "es": ""
+  },
+  "Usar tema claro": {
+    "en": "",
+    "es": ""
+  },
+  "Usar tema escuro": {
+    "en": "",
+    "es": ""
+  },
+  "Nada atrasado": {
+    "en": "",
+    "es": ""
+  },
+  "Sua conta": {
+    "en": "",
+    "es": ""
+  },
+  "Menu": {
+    "en": "",
+    "es": ""
+  },
+  "Não conseguimos cobrar seu cartão. Atualize a forma de pagamento para não perder o acesso.": {
+    "en": "",
+    "es": ""
+  },
+  "Atualizar cartão": {
+    "en": "",
+    "es": ""
+  },
+  "Falta atualizar o banco de dados para guardar suas preferências e usar outras moedas. Rode {0}": {
+    "en": "",
+    "es": ""
+  },
+  "no SQL Editor do Supabase.": {
+    "en": "",
+    "es": ""
+  },
+  "Compra lançada na fatura de": {
+    "en": "",
+    "es": ""
+  },
+  "do {0}, porque a fatura anterior já fechou (dia {1}).": {
+    "en": "",
+    "es": ""
+  },
+  "do {0}.": {
+    "en": "",
+    "es": ""
+  },
+  "Ver fatura": {
+    "en": "",
+    "es": ""
+  },
+  "Não deu certo. Tente de novo.": {
+    "en": "",
+    "es": ""
+  },
+  "Detalhe: {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Mais": {
+    "en": "",
+    "es": ""
+  },
+  "M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 T150 6 T180 6 T210 6 T240 6 V160 H0Z": {
+    "en": "",
+    "es": ""
+  },
+  "Sua moeda": {
+    "en": "",
+    "es": ""
+  },
+  "Sua vida": {
+    "en": "",
+    "es": ""
+  },
+  "Pronto": {
+    "en": "",
+    "es": ""
+  },
+  "Vamos montar o seu painel": {
+    "en": "",
+    "es": ""
+  },
+  "São poucas perguntas para mostrar só o que faz sentido para você. Dá para mudar tudo depois.": {
+    "en": "",
+    "es": ""
+  },
+  "Foto de perfil": {
+    "en": "",
+    "es": ""
+  },
+  "Como você quer ser chamado?": {
+    "en": "",
+    "es": ""
+  },
+  "Qual moeda você usa no dia a dia?": {
+    "en": "",
+    "es": ""
+  },
+  "Todos os totais vão aparecer nela.": {
+    "en": "",
+    "es": ""
+  },
+  "Você também tem dinheiro em outra moeda?": {
+    "en": "",
+    "es": ""
+  },
+  "Dólar guardado, euro de uma viagem, salário em outra moeda… Toque em quantas quiser.": {
+    "en": "",
+    "es": ""
+  },
+  "Não, só {0}": {
+    "en": "",
+    "es": ""
+  },
+  "pode ligar depois": {
+    "en": "",
+    "es": ""
+  },
+  "O que faz parte da sua vida hoje?": {
+    "en": "",
+    "es": ""
+  },
+  "Toque no que for do seu jeito. Entradas e saídas já vêm sempre.": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto detalhe você quer ver?": {
+    "en": "",
+    "es": ""
+  },
+  "Dica: comece pelo simples. O app avisa quando valer a pena mostrar mais.": {
+    "en": "",
+    "es": ""
+  },
+  "Tudo pronto, {0}!": {
+    "en": "",
+    "es": ""
+  },
+  "Tudo pronto!": {
+    "en": "",
+    "es": ""
+  },
+  "Seu painel vai mostrar:": {
+    "en": "",
+    "es": ""
+  },
+  "Entradas e saídas em {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Jeito {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Sua vida mudou? Começou a investir, fez uma dívida, abriu outra conta? É só ir em": {
+    "en": "",
+    "es": ""
+  },
+  ". O app também vai sugerindo conforme você usa.": {
+    "en": "",
+    "es": ""
+  },
+  "Tudo pode ser mudado depois em Configurações.": {
+    "en": "",
+    "es": ""
+  },
+  "Pular": {
+    "en": "",
+    "es": ""
+  },
+  "Passo {0} de {1}": {
+    "en": "",
+    "es": ""
+  },
+  "Voltar": {
+    "en": "",
+    "es": ""
+  },
+  "Abrir e importar meu extrato": {
+    "en": "",
+    "es": ""
+  },
+  "Abrir meu painel": {
+    "en": "",
+    "es": ""
+  },
+  "Começar": {
+    "en": "",
+    "es": ""
+  },
+  "Continuar": {
+    "en": "",
+    "es": ""
+  },
+  "Cadastre aluguel, luz e internet uma vez só. O app lembra o vencimento e, com um toque em “Paguei”, lança o gasto por você.": {
+    "en": "",
+    "es": ""
+  },
+  "Diga o dia em que cada fatura fecha e vence. As compras parceladas caem na fatura certa e você vê quanto do limite ainda sobra.": {
+    "en": "",
+    "es": ""
+  },
+  "Empréstimos e parcelamentos: quanto falta, o que já venceu e quando você fica livre. Também dá para registrar quem te deve.": {
+    "en": "",
+    "es": ""
+  },
+  "Crie objetivos, como viagem ou reserva de emergência. O app mostra quanto guardar por mês para chegar lá.": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto você tem em cada banco, nos investimentos e em outras moedas, tudo somado num lugar só.": {
+    "en": "",
+    "es": ""
+  },
+  "Oi, {0}! Vamos conhecer seu painel?": {
+    "en": "",
+    "es": ""
+  },
+  "Vamos conhecer seu painel?": {
+    "en": "",
+    "es": ""
+  },
+  "É um passeio de 1 minuto, montado com o que você respondeu. Dá para pular quando quiser.": {
+    "en": "",
+    "es": ""
+  },
+  "Comece lançando": {
+    "en": "",
+    "es": ""
+  },
+  "Toque aqui para registrar o que entrou ou saiu. Diga como pagou (Pix, débito, crédito…) e, no crédito, a compra entra na fatura do cartão sozinha.": {
+    "en": "",
+    "es": ""
+  },
+  "Tudo o que você lançou": {
+    "en": "",
+    "es": ""
+  },
+  "Fica em “Mais”.": {
+    "en": "",
+    "es": ""
+  },
+  "Aqui ficam todos os lançamentos, por dia, com busca e filtros. Tem um extrato do banco ou uma planilha? Dá para importar e lançar tudo de uma vez.": {
+    "en": "",
+    "es": ""
+  },
+  "Seu resumo do mês": {
+    "en": "",
+    "es": ""
+  },
+  "O Início mostra, de forma simples, quanto sobrou, quanto entrou e quanto saiu no mês.": {
+    "en": "",
+    "es": ""
+  },
+  "Traga seus dados de uma vez": {
+    "en": "",
+    "es": ""
+  },
+  "Importe o extrato do banco (PDF, OFX, Excel, CSV ou Word) ou uma planilha. O app arruma os nomes e mostra tudo antes de gravar.": {
+    "en": "",
+    "es": ""
+  },
+  "Mês a mês: quanto entrou, saiu e sobrou, num gráfico e numa tabela. Toque num mês para abri-lo.": {
+    "en": "",
+    "es": ""
+  },
+  "Quer mais abas?": {
+    "en": "",
+    "es": ""
+  },
+  "Você começou só com o que respondeu, mas o app tem mais. Ligue agora o que fizer sentido; dá para desligar depois em Configurações.": {
+    "en": "",
+    "es": ""
+  },
+  "Tudo se ajusta aqui": {
+    "en": "",
+    "es": ""
+  },
+  "Toque no menu e escolha Configurações.": {
+    "en": "",
+    "es": ""
+  },
+  "Em Configurações você põe sua foto, troca o tema, muda as moedas e as categorias, faz backup e vê este passeio de novo quando quiser.": {
+    "en": "",
+    "es": ""
+  },
+  "Tutorial do painel": {
+    "en": "",
+    "es": ""
+  },
+  "Pular tutorial": {
+    "en": "",
+    "es": ""
+  },
+  "O que o seu painel tem": {
+    "en": "",
+    "es": ""
+  },
+  "Ligada": {
+    "en": "",
+    "es": ""
+  },
+  "Ligar": {
+    "en": "",
+    "es": ""
+  },
+  "Concluir": {
+    "en": "",
+    "es": ""
+  },
+  "Próximo": {
+    "en": "",
+    "es": ""
+  },
+  "Mais lançamentos de {0}?": {
+    "en": "",
+    "es": ""
+  },
+  "Você ligou": {
+    "en": "",
+    "es": ""
+  },
+  ". Achei": {
+    "en": "",
+    "es": ""
+  },
+  "outro lançamento parecido": {
+    "en": "",
+    "es": ""
+  },
+  "mais {0} lançamentos parecidos": {
+    "en": "",
+    "es": ""
+  },
+  "em outros meses.": {
+    "en": "",
+    "es": ""
+  },
+  "Ele também é": {
+    "en": "",
+    "es": ""
+  },
+  "Eles também são": {
+    "en": "",
+    "es": ""
+  },
+  "dessa conta?": {
+    "en": "",
+    "es": ""
+  },
+  "parecido, confira": {
+    "en": "",
+    "es": ""
+  },
+  "Ligados, eles contam como {0} em Contas do mês e não precisam de “": {
+    "en": "",
+    "es": ""
+  },
+  "Nenhum é": {
+    "en": "",
+    "es": ""
+  },
+  "Ligar {0}": {
+    "en": "",
+    "es": ""
+  },
+  "no mês passado": {
+    "en": "",
+    "es": ""
+  },
+  "que {0}": {
+    "en": "",
+    "es": ""
+  },
+  "sem dados": {
+    "en": "",
+    "es": ""
+  },
+  "Jan": {
+    "en": "",
+    "es": ""
+  },
+  "Fev": {
+    "en": "",
+    "es": ""
+  },
+  "Mar": {
+    "en": "",
+    "es": ""
+  },
+  "Abr": {
+    "en": "",
+    "es": ""
+  },
+  "Mai": {
+    "en": "",
+    "es": ""
+  },
+  "Jun": {
+    "en": "",
+    "es": ""
+  },
+  "Jul": {
+    "en": "",
+    "es": ""
+  },
+  "Ago": {
+    "en": "",
+    "es": ""
+  },
+  "Set": {
+    "en": "",
+    "es": ""
+  },
+  "Out": {
+    "en": "",
+    "es": ""
+  },
+  "Nov": {
+    "en": "",
+    "es": ""
+  },
+  "Dez": {
+    "en": "",
+    "es": ""
+  },
+  "Escolher o mês": {
+    "en": "",
+    "es": ""
+  },
+  "Resumo de {0}": {
+    "en": "",
+    "es": ""
+  },
+  "mês": {
+    "en": "",
+    "es": ""
+  },
+  "com dados · toque num mês para abrir": {
+    "en": "",
+    "es": ""
+  },
+  "Seu ano vai se desenhar aqui": {
+    "en": "",
+    "es": ""
+  },
+  "Assim que você lançar o que entrou e o que saiu, aparecem o total de cada mês, o gráfico mês a mês e quanto sobrou. Dá para começar agora ou trazer tudo do extrato do seu banco.": {
+    "en": "",
+    "es": ""
+  },
+  "Fazer o primeiro lançamento": {
+    "en": "",
+    "es": ""
+  },
+  "Entrou no ano": {
+    "en": "",
+    "es": ""
+  },
+  "Saiu no ano": {
+    "en": "",
+    "es": ""
+  },
+  "Sobrou no ano": {
+    "en": "",
+    "es": ""
+  },
+  "Gasto médio por mês": {
+    "en": "",
+    "es": ""
+  },
+  "Melhor mês: {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Mês a mês": {
+    "en": "",
+    "es": ""
+  },
+  "toque na legenda para esconder ou mostrar uma série": {
+    "en": "",
+    "es": ""
+  },
+  "Números de cada mês": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto sobrou em cada mês": {
+    "en": "",
+    "es": ""
+  },
+  "Para usar cartões de crédito, falta atualizar o banco de dados: rode": {
+    "en": "",
+    "es": ""
+  },
+  "Faturas de {0}/{1}, limite e parcelas de cada cartão.": {
+    "en": "",
+    "es": ""
+  },
+  "Novo cartão": {
+    "en": "",
+    "es": ""
+  },
+  "Para renegociar faturas, registrar juros de atraso e usar limite garantido, rode": {
+    "en": "",
+    "es": ""
+  },
+  "Seus cartões": {
+    "en": "",
+    "es": ""
+  },
+  "fatura de {0}": {
+    "en": "",
+    "es": ""
+  },
+  "fecha dia {0} · vence dia {1}": {
+    "en": "",
+    "es": ""
+  },
+  "Faturas de {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Limite livre": {
+    "en": "",
+    "es": ""
+  },
+  "Em atraso ({0})": {
+    "en": "",
+    "es": ""
+  },
+  "Cartões que você não usa mais": {
+    "en": "",
+    "es": ""
+  },
+  "Coloque seus cartões aqui": {
+    "en": "",
+    "es": ""
+  },
+  "Diga o dia em que a fatura fecha e o dia em que vence. Depois é só lançar as compras escolhendo o cartão: cada parcela cai na fatura certa e você vê quanto do limite ainda sobra.": {
+    "en": "",
+    "es": ""
+  },
+  "Adicionar meu primeiro cartão": {
+    "en": "",
+    "es": ""
+  },
+  "fecha dia {0}, vence dia {1}": {
+    "en": "",
+    "es": ""
+  },
+  "Editar": {
+    "en": "",
+    "es": ""
+  },
+  "Nova compra": {
+    "en": "",
+    "es": ""
+  },
+  "Uma fatura venceu sem pagar": {
+    "en": "",
+    "es": ""
+  },
+  "{0} faturas venceram sem pagar": {
+    "en": "",
+    "es": ""
+  },
+  "Marcar as {0} faturas como pagas no dia do vencimento de cada uma?": {
+    "en": "",
+    "es": ""
+  },
+  "Já paguei todas": {
+    "en": "",
+    "es": ""
+  },
+  "venceu há {0} dias, em {1}": {
+    "en": "",
+    "es": ""
+  },
+  "Renegociei": {
+    "en": "",
+    "es": ""
+  },
+  "Compras desta fatura": {
+    "en": "",
+    "es": ""
+  },
+  "Compra": {
+    "en": "",
+    "es": ""
+  },
+  "Nenhuma compra nesta fatura. Toque em “Nova compra” e escolha este cartão.": {
+    "en": "",
+    "es": ""
+  },
+  "Parceladas em andamento": {
+    "en": "",
+    "es": ""
+  },
+  "Nenhuma compra parcelada pela frente.": {
+    "en": "",
+    "es": ""
+  },
+  "Faturas resolvidas": {
+    "en": "",
+    "es": ""
+  },
+  "toque para ajeitar": {
+    "en": "",
+    "es": ""
+  },
+  "paga em {0}": {
+    "en": "",
+    "es": ""
+  },
+  "acréscimo": {
+    "en": "",
+    "es": ""
+  },
+  "Quando você marcar uma fatura como paga ou renegociada, ela aparece aqui.": {
+    "en": "",
+    "es": ""
+  },
+  "Fatura de {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Fecha em {0} e vence em {1}": {
+    "en": "",
+    "es": ""
+  },
+  "Renegociada em {0}. Virou uma dívida em parcelas; as compras dela saíram das saídas do mês.": {
+    "en": "",
+    "es": ""
+  },
+  "Paga em {0}": {
+    "en": "",
+    "es": ""
+  },
+  ", com": {
+    "en": "",
+    "es": ""
+  },
+  "{0} dias de atraso": {
+    "en": "",
+    "es": ""
+  },
+  "e {0} de juros": {
+    "en": "",
+    "es": ""
+  },
+  "Você pagou {0}; depois disso a fatura mudou.": {
+    "en": "",
+    "es": ""
+  },
+  "Já venceu": {
+    "en": "",
+    "es": ""
+  },
+  "Para pagar": {
+    "en": "",
+    "es": ""
+  },
+  "Paguei a fatura": {
+    "en": "",
+    "es": ""
+  },
+  "Falta rodar a migração 9": {
+    "en": "",
+    "es": ""
+  },
+  "O banco parcelou a fatura": {
+    "en": "",
+    "es": ""
+  },
+  "Renegociar": {
+    "en": "",
+    "es": ""
+  },
+  "Ajeitar pagamento": {
+    "en": "",
+    "es": ""
+  },
+  "Ver renegociação": {
+    "en": "",
+    "es": ""
+  },
+  "Informe o limite do cartão para ver quanto ainda dá para gastar.": {
+    "en": "",
+    "es": ""
+  },
+  "Informar limite": {
+    "en": "",
+    "es": ""
+  },
+  "Limite": {
+    "en": "",
+    "es": ""
+  },
+  "passou do limite": {
+    "en": "",
+    "es": ""
+  },
+  "de {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Usado": {
+    "en": "",
+    "es": ""
+  },
+  "Livre": {
+    "en": "",
+    "es": ""
+  },
+  "Garantido": {
+    "en": "",
+    "es": ""
+  },
+  "{0} da caixinha": {
+    "en": "",
+    "es": ""
+  },
+  "viram limite": {
+    "en": "",
+    "es": ""
+  },
+  "Tem dinheiro numa caixinha que vira limite? Toque para somar.": {
+    "en": "",
+    "es": ""
+  },
+  "Próximas faturas": {
+    "en": "",
+    "es": ""
+  },
+  "{0} já comprometidos": {
+    "en": "",
+    "es": ""
+  },
+  "nada comprometido": {
+    "en": "",
+    "es": ""
+  },
+  "Abrir a compra {0}": {
+    "en": "",
+    "es": ""
+  },
+  "{0}/mês · faltam {1} · até {2}": {
+    "en": "",
+    "es": ""
+  },
+  "Carteira": {
+    "en": "",
+    "es": ""
+  },
+  "Dê um nome para o cartão.": {
+    "en": "",
+    "es": ""
+  },
+  "Escolha o dia em que a fatura fecha e o dia em que vence.": {
+    "en": "",
+    "es": ""
+  },
+  "Limite inválido.": {
+    "en": "",
+    "es": ""
+  },
+  "Valor da caixinha inválido.": {
+    "en": "",
+    "es": ""
+  },
+  "Editar cartão": {
+    "en": "",
+    "es": ""
+  },
+  "Seu cartão": {
+    "en": "",
+    "es": ""
+  },
+  "fecha dia {0}": {
+    "en": "",
+    "es": ""
+  },
+  "fecha dia —": {
+    "en": "",
+    "es": ""
+  },
+  "vence dia {0}": {
+    "en": "",
+    "es": ""
+  },
+  "vence dia —": {
+    "en": "",
+    "es": ""
+  },
+  "Escolha rápida": {
+    "en": "",
+    "es": ""
+  },
+  "Nome do cartão": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: Nubank, Itaú Platinum…": {
+    "en": "",
+    "es": ""
+  },
+  "Dia que a fatura fecha": {
+    "en": "",
+    "es": ""
+  },
+  "Escolher…": {
+    "en": "",
+    "es": ""
+  },
+  "dia {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Dia que vence": {
+    "en": "",
+    "es": ""
+  },
+  "Os dois dias aparecem no app do seu banco. Compras feitas depois do dia que fecha entram na fatura do mês seguinte.": {
+    "en": "",
+    "es": ""
+  },
+  "Banco do cartão": {
+    "en": "",
+    "es": ""
+  },
+  "Limite garantido": {
+    "en": "",
+    "es": ""
+  },
+  "Dinheiro guardado numa caixinha do banco que vira limite extra no cartão.": {
+    "en": "",
+    "es": ""
+  },
+  "Usar a caixinha do banco ({0})": {
+    "en": "",
+    "es": ""
+  },
+  "Valor fixo": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto está na caixinha": {
+    "en": "",
+    "es": ""
+  },
+  "O limite acompanha a caixinha que você informa em Dinheiro guardado: guardou mais, o limite cresce sozinho.": {
+    "en": "",
+    "es": ""
+  },
+  "Escolhendo o banco do cartão, dá para ligar o limite à caixinha dele.": {
+    "en": "",
+    "es": ""
+  },
+  "Some este valor ao limite do cartão.": {
+    "en": "",
+    "es": ""
+  },
+  "Ainda uso este cartão": {
+    "en": "",
+    "es": ""
+  },
+  "Se desligar, ele some das telas, mas o histórico fica.": {
+    "en": "",
+    "es": ""
+  },
+  "Criar cartão": {
+    "en": "",
+    "es": ""
+  },
+  "As compras continuam nas suas saídas, só deixam de ser ligadas a este cartão. As faturas marcadas como pagas são esquecidas.": {
+    "en": "",
+    "es": ""
+  },
+  "Juros e multa – fatura {0} de {1}": {
+    "en": "",
+    "es": ""
+  },
+  "Valor inválido.": {
+    "en": "",
+    "es": ""
+  },
+  "Juros inválidos.": {
+    "en": "",
+    "es": ""
+  },
+  "Pagar fatura {0}": {
+    "en": "",
+    "es": ""
+  },
+  "{0} em {1}": {
+    "en": "",
+    "es": ""
+  },
+  "Dia do pagamento": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto pagou": {
+    "en": "",
+    "es": ""
+  },
+  "Pago": {
+    "en": "",
+    "es": ""
+  },
+  "{0} {1} depois": {
+    "en": "",
+    "es": ""
+  },
+  "do vencimento.": {
+    "en": "",
+    "es": ""
+  },
+  "Juros e multa": {
+    "en": "",
+    "es": ""
+  },
+  "De qual banco saiu?": {
+    "en": "",
+    "es": ""
+  },
+  "Não sei / não importa": {
+    "en": "",
+    "es": ""
+  },
+  "Isso marca a fatura como paga. O gasto de cada compra já está nas suas saídas de {0}, então nada é contado duas vezes.": {
+    "en": "",
+    "es": ""
+  },
+  "Desfazer mesmo": {
+    "en": "",
+    "es": ""
+  },
+  "Desfazer": {
+    "en": "",
+    "es": ""
+  },
+  "Marcar como paga": {
+    "en": "",
+    "es": ""
+  },
+  "Valor total inválido.": {
+    "en": "",
+    "es": ""
+  },
+  "Fatura {0} de {1} (renegociada)": {
+    "en": "",
+    "es": ""
+  },
+  "Fatura renegociada": {
+    "en": "",
+    "es": ""
+  },
+  "renegociada em {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Virou a dívida": {
+    "en": "",
+    "es": ""
+  },
+  ", em parcelas de {0}": {
+    "en": "",
+    "es": ""
+  },
+  ", com {0} de acréscimo": {
+    "en": "",
+    "es": ""
+  },
+  "Nenhuma parcela paga ainda.": {
+    "en": "",
+    "es": ""
+  },
+  "A dívida desta renegociação foi apagada.": {
+    "en": "",
+    "es": ""
+  },
+  "Desfazer devolve as compras às saídas do mês da fatura": {
+    "en": "",
+    "es": ""
+  },
+  "; a dívida fica, porque já tem parcelas pagas": {
+    "en": "",
+    "es": ""
+  },
+  "Ver dívida": {
+    "en": "",
+    "es": ""
+  },
+  "Renegociar fatura {0}": {
+    "en": "",
+    "es": ""
+  },
+  "venceu em {0}": {
+    "en": "",
+    "es": ""
+  },
+  "vence em {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Total do acordo": {
+    "en": "",
+    "es": ""
+  },
+  "Em quantas parcelas": {
+    "en": "",
+    "es": ""
+  },
+  "Dia do acordo": {
+    "en": "",
+    "es": ""
+  },
+  "{0}x {1}": {
+    "en": "",
+    "es": ""
+  },
+  "Vira uma dívida em Dívidas. As compras desta fatura saem das saídas de {0}, e cada parcela que você pagar entra como saída no mês em que pagar. Assim nada conta duas vezes.": {
+    "en": "",
+    "es": ""
+  },
+  "ou prestação da casa": {
+    "en": "",
+    "es": ""
+  },
+  "Moradia": {
+    "en": "",
+    "es": ""
+  },
+  "Luz": {
+    "en": "",
+    "es": ""
+  },
+  "o valor muda, você acerta na hora de pagar": {
+    "en": "",
+    "es": ""
+  },
+  "casa ou celular": {
+    "en": "",
+    "es": ""
+  },
+  "Celular": {
+    "en": "",
+    "es": ""
+  },
+  "plano ou aparelho": {
+    "en": "",
+    "es": ""
+  },
+  "Assinaturas": {
+    "en": "",
+    "es": ""
+  },
+  "Saúde": {
+    "en": "",
+    "es": ""
+  },
+  "Streaming": {
+    "en": "",
+    "es": ""
+  },
+  "Netflix, Spotify, Disney…": {
+    "en": "",
+    "es": ""
+  },
+  "o dia em que cai na conta": {
+    "en": "",
+    "es": ""
+  },
+  "Para usar as contas do mês, falta atualizar o banco de dados: rode": {
+    "en": "",
+    "es": ""
+  },
+  "O que vence em {0}. Toque em “Paguei” e o app lança por você.": {
+    "en": "",
+    "es": ""
+  },
+  "Nunca mais esqueça uma conta.": {
+    "en": "",
+    "es": ""
+  },
+  "Nova conta": {
+    "en": "",
+    "es": ""
+  },
+  "Ficou conta sem pagar em": {
+    "en": "",
+    "es": ""
+  },
+  "Ver {0}": {
+    "en": "",
+    "es": ""
+  },
+  "pago em {0}": {
+    "en": "",
+    "es": ""
+  },
+  "falta {0}": {
+    "en": "",
+    "es": ""
+  },
+  "{0} atrasada{1}": {
+    "en": "",
+    "es": ""
+  },
+  "a receber {0}": {
+    "en": "",
+    "es": ""
+  },
+  "tudo pago 🎉": {
+    "en": "",
+    "es": ""
+  },
+  "Nenhuma conta vale em {0} de {1}. Confira abaixo o mês em que cada uma começa.": {
+    "en": "",
+    "es": ""
+  },
+  "Contas de {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Suas contas fixas": {
+    "en": "",
+    "es": ""
+  },
+  "{0} todo dia {1}": {
+    "en": "",
+    "es": ""
+  },
+  "Nunca mais esqueça uma conta": {
+    "en": "",
+    "es": ""
+  },
+  "Cadastre uma vez o que se repete todo mês. O app lembra o vencimento, avisa o que atrasou e, com um toque em “Paguei”, lança o gasto por você.": {
+    "en": "",
+    "es": ""
+  },
+  "Outra conta": {
+    "en": "",
+    "es": ""
+  },
+  "do seu jeito": {
+    "en": "",
+    "es": ""
+  },
+  "Linha do mês": {
+    "en": "",
+    "es": ""
+  },
+  "a vencer": {
+    "en": "",
+    "es": ""
+  },
+  "entrada fixa": {
+    "en": "",
+    "es": ""
+  },
+  "Parece que já": {
+    "en": "",
+    "es": ""
+  },
+  "foi pago": {
+    "en": "",
+    "es": ""
+  },
+  "É esse": {
+    "en": "",
+    "es": ""
+  },
+  "Não é": {
+    "en": "",
+    "es": ""
+  },
+  "Desfazer? O lançamento de {0} será apagado e a conta volta a ficar em aberto.": {
+    "en": "",
+    "es": ""
+  },
+  "Outro valor ou outra data": {
+    "en": "",
+    "es": ""
+  },
+  "Informe um valor maior que zero.": {
+    "en": "",
+    "es": ""
+  },
+  "Escolha uma data dentro de {0}.": {
+    "en": "",
+    "es": ""
+  },
+  "Cotação combinada na conta; troque se pagou por outra.": {
+    "en": "",
+    "es": ""
+  },
+  "Cotação de hoje; troque se pagou por outra.": {
+    "en": "",
+    "es": ""
+  },
+  "Dia em que recebeu": {
+    "en": "",
+    "es": ""
+  },
+  "Dia em que pagou": {
+    "en": "",
+    "es": ""
+  },
+  "O valor de costume é {0}. Aqui você muda só para este mês.": {
+    "en": "",
+    "es": ""
+  },
+  "Dê um nome para a conta (ex.: Aluguel).": {
+    "en": "",
+    "es": ""
+  },
+  "Informe o valor, mesmo que aproximado. Você pode mudar na hora de pagar.": {
+    "en": "",
+    "es": ""
+  },
+  "Escolha o dia em que o dinheiro cai.": {
+    "en": "",
+    "es": ""
+  },
+  "Escolha o dia do vencimento.": {
+    "en": "",
+    "es": ""
+  },
+  "Escolha a partir de qual mês vale.": {
+    "en": "",
+    "es": ""
+  },
+  "O último mês não pode ser antes do primeiro.": {
+    "en": "",
+    "es": ""
+  },
+  "Editar conta fixa": {
+    "en": "",
+    "es": ""
+  },
+  "Nova conta fixa": {
+    "en": "",
+    "es": ""
+  },
+  "Conta a pagar": {
+    "en": "",
+    "es": ""
+  },
+  "Entrada fixa": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: Salário, Aluguel recebido…": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: Aluguel, Luz, Internet, Academia…": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto costuma cair": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto costuma ser": {
+    "en": "",
+    "es": ""
+  },
+  "Cai todo dia": {
+    "en": "",
+    "es": ""
+  },
+  "Vence todo dia": {
+    "en": "",
+    "es": ""
+  },
+  "Escolha…": {
+    "en": "",
+    "es": ""
+  },
+  "Em meses mais curtos, vale o último dia do mês.": {
+    "en": "",
+    "es": ""
+  },
+  "Cotação que você paga": {
+    "en": "",
+    "es": ""
+  },
+  "Dá": {
+    "en": "",
+    "es": ""
+  },
+  "por mês na sua moeda.": {
+    "en": "",
+    "es": ""
+  },
+  "Com a cotação que você combinou, o total do mês fica exato.": {
+    "en": "",
+    "es": ""
+  },
+  "Em branco, vale a cotação do dia. Com a que você paga, o valor da conta fica certo.": {
+    "en": "",
+    "es": ""
+  },
+  "A partir de": {
+    "en": "",
+    "es": ""
+  },
+  "Até quando?": {
+    "en": "",
+    "es": ""
+  },
+  "A conta aparece todo mês a partir daí. Se já {0} neste mês, é só tocar em “": {
+    "en": "",
+    "es": ""
+  },
+  "” depois. Deixe o “até quando” em branco se ela não tem data para acabar.": {
+    "en": "",
+    "es": ""
+  },
+  "Pausar": {
+    "en": "",
+    "es": ""
+  },
+  "Reativar": {
+    "en": "",
+    "es": ""
+  },
+  "Os lançamentos já pagos não somem: só deixam de estar ligados a esta conta.": {
+    "en": "",
+    "es": ""
+  },
+  "Pausar esconde a conta dos meses que ainda não foram pagos, sem excluir o histórico.": {
+    "en": "",
+    "es": ""
+  },
+  "Quitada": {
+    "en": "",
+    "es": ""
+  },
+  "1 atrasada": {
+    "en": "",
+    "es": ""
+  },
+  "Vence hoje": {
+    "en": "",
+    "es": ""
+  },
+  "Em dia": {
+    "en": "",
+    "es": ""
+  },
+  "Sem data": {
+    "en": "",
+    "es": ""
+  },
+  "Quem te deve, quanto falta receber e o que já venceu.": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto falta em cada uma, o que venceu e quando você fica livre.": {
+    "en": "",
+    "es": ""
+  },
+  "Lado": {
+    "en": "",
+    "es": ""
+  },
+  "Alguém me deve": {
+    "en": "",
+    "es": ""
+  },
+  "Para registrar quem te deve e ver cada parcela como paga, pela metade ou atrasada, rode": {
+    "en": "",
+    "es": ""
+  },
+  "Entra por mês": {
+    "en": "",
+    "es": ""
+  },
+  "Parcelas por mês": {
+    "en": "",
+    "es": ""
+  },
+  "Atrasado ({0} {1})": {
+    "en": "",
+    "es": ""
+  },
+  "Atrasado": {
+    "en": "",
+    "es": ""
+  },
+  "Recebido no mês": {
+    "en": "",
+    "es": ""
+  },
+  "Pago no mês": {
+    "en": "",
+    "es": ""
+  },
+  "já recebido": {
+    "en": "",
+    "es": ""
+  },
+  "tudo recebido em": {
+    "en": "",
+    "es": ""
+  },
+  "tudo recebido": {
+    "en": "",
+    "es": ""
+  },
+  "sem dívidas": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto entra nos próximos meses": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto sai nos próximos meses": {
+    "en": "",
+    "es": ""
+  },
+  "Recebe todo mês": {
+    "en": "",
+    "es": ""
+  },
+  "aluguel, mesada, salário": {
+    "en": "",
+    "es": ""
+  },
+  "atrasado {0} dias": {
+    "en": "",
+    "es": ""
+  },
+  "cai hoje": {
+    "en": "",
+    "es": ""
+  },
+  "cai em {0} dias": {
+    "en": "",
+    "es": ""
+  },
+  "Recebido": {
+    "en": "",
+    "es": ""
+  },
+  "Aluguel, mesada ou qualquer valor que cai todo mês fica em": {
+    "en": "",
+    "es": ""
+  },
+  ", como recebimento: o app lembra o dia e você dá baixa com “Recebi”.": {
+    "en": "",
+    "es": ""
+  },
+  "Ver em Contas do mês": {
+    "en": "",
+    "es": ""
+  },
+  "Cadastrar um recebimento mensal": {
+    "en": "",
+    "es": ""
+  },
+  "Recebidas neste mês": {
+    "en": "",
+    "es": ""
+  },
+  "Quitadas neste mês": {
+    "en": "",
+    "es": ""
+  },
+  "Ninguém te deve nada por aqui": {
+    "en": "",
+    "es": ""
+  },
+  "Nenhuma dívida por aqui 🎉": {
+    "en": "",
+    "es": ""
+  },
+  "Vendeu algo parcelado ou emprestou dinheiro? Registre quem te deve: cada valor recebido entra como entrada e abate sozinho.": {
+    "en": "",
+    "es": ""
+  },
+  "Tem empréstimo, parcelamento ou acordo? Adicione e acompanhe cada parcela até quitar.": {
+    "en": "",
+    "es": ""
+  },
+  "valor único": {
+    "en": "",
+    "es": ""
+  },
+  "falta receber": {
+    "en": "",
+    "es": ""
+  },
+  "Tudo {0}. 🎉": {
+    "en": "",
+    "es": ""
+  },
+  "vencido desde {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Próxima:": {
+    "en": "",
+    "es": ""
+  },
+  "{0} por mês": {
+    "en": "",
+    "es": ""
+  },
+  "· até {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Recebe": {
+    "en": "",
+    "es": ""
+  },
+  "Paga": {
+    "en": "",
+    "es": ""
+  },
+  "quanto e quando puder": {
+    "en": "",
+    "es": ""
+  },
+  "Lançar recebimento": {
+    "en": "",
+    "es": ""
+  },
+  "Lançar pagamento": {
+    "en": "",
+    "es": ""
+  },
+  "Nada com data marcada pela frente.": {
+    "en": "",
+    "es": ""
+  },
+  "pela metade": {
+    "en": "",
+    "es": ""
+  },
+  "vence hoje": {
+    "en": "",
+    "es": ""
+  },
+  "Dívida": {
+    "en": "",
+    "es": ""
+  },
+  "quem deve": {
+    "en": "",
+    "es": ""
+  },
+  "a receber": {
+    "en": "",
+    "es": ""
+  },
+  "Parcelas": {
+    "en": "",
+    "es": ""
+  },
+  "Combinado": {
+    "en": "",
+    "es": ""
+  },
+  "{0} atrasado": {
+    "en": "",
+    "es": ""
+  },
+  "O que você {0} cobre as parcelas da mais antiga para a mais nova: pagou metade, a parcela fica pela metade; pagou a mais, adianta as próximas.": {
+    "en": "",
+    "es": ""
+  },
+  "Quando vence a próxima parcela?": {
+    "en": "",
+    "es": ""
+  },
+  "Tem data combinada?": {
+    "en": "",
+    "es": ""
+  },
+  "Com a data, o app mostra o que está em dia e o que atrasou.": {
+    "en": "",
+    "es": ""
+  },
+  "Vencimento": {
+    "en": "",
+    "es": ""
+  },
+  "Recebimentos": {
+    "en": "",
+    "es": ""
+  },
+  "Pagamentos": {
+    "en": "",
+    "es": ""
+  },
+  "Nada {0} ainda. Use o botão abaixo: o valor já vem sugerido e dá para trocar (pagar parte ou mais de uma parcela).": {
+    "en": "",
+    "es": ""
+  },
+  "Resumo de {0} de {1}.{2}": {
+    "en": "",
+    "es": ""
+  },
+  "Nada lançado em {0} ainda.": {
+    "en": "",
+    "es": ""
+  },
+  "Saiu {0} a mais.": {
+    "en": "",
+    "es": ""
+  },
+  "Ver para onde foi": {
+    "en": "",
+    "es": ""
+  },
+  "Entrou e saiu o mesmo valor.": {
+    "en": "",
+    "es": ""
+  },
+  "Você ficou com {0}% do que entrou.": {
+    "en": "",
+    "es": ""
+  },
+  "Faltou": {
+    "en": "",
+    "es": ""
+  },
+  "que em": {
+    "en": "",
+    "es": ""
+  },
+  "Gasto médio por dia": {
+    "en": "",
+    "es": ""
+  },
+  "em {0} {1}": {
+    "en": "",
+    "es": ""
+  },
+  "Maior saída": {
+    "en": "",
+    "es": ""
+  },
+  "Sem descrição": {
+    "en": "",
+    "es": ""
+  },
+  "Meta: {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Fluxo financeiro": {
+    "en": "",
+    "es": ""
+  },
+  "Comece por aqui": {
+    "en": "",
+    "es": ""
+  },
+  "Lance o que entrou ou o que saiu em {0}. O resto do painel se monta sozinho.": {
+    "en": "",
+    "es": ""
+  },
+  "Seus dados": {
+    "en": "",
+    "es": ""
+  },
+  "de uma vez só.": {
+    "en": "",
+    "es": ""
+  },
+  "Tem um extrato do banco ou uma planilha? Importe e pronto.": {
+    "en": "",
+    "es": ""
+  },
+  "Planeje hoje,": {
+    "en": "",
+    "es": ""
+  },
+  "conquiste amanhã.": {
+    "en": "",
+    "es": ""
+  },
+  "Organize suas finanças e realize seus sonhos.": {
+    "en": "",
+    "es": ""
+  },
+  "Ver o ano": {
+    "en": "",
+    "es": ""
+  },
+  "Pequenos passos,": {
+    "en": "",
+    "es": ""
+  },
+  "grandes viagens.": {
+    "en": "",
+    "es": ""
+  },
+  "Junte um pouco todo mês para a próxima viagem.": {
+    "en": "",
+    "es": ""
+  },
+  "Cada real": {
+    "en": "",
+    "es": ""
+  },
+  "com um destino.": {
+    "en": "",
+    "es": ""
+  },
+  "Veja para onde foi o seu dinheiro este mês.": {
+    "en": "",
+    "es": ""
+  },
+  "Reserva primeiro,": {
+    "en": "",
+    "es": ""
+  },
+  "tranquilidade depois.": {
+    "en": "",
+    "es": ""
+  },
+  "Seis meses de gastos guardados seguram qualquer imprevisto.": {
+    "en": "",
+    "es": ""
+  },
+  "Dívida paga": {
+    "en": "",
+    "es": ""
+  },
+  "é liberdade.": {
+    "en": "",
+    "es": ""
+  },
+  "Acompanhe quanto falta e quando cada uma termina.": {
+    "en": "",
+    "es": ""
+  },
+  "Tudo pronto para começar": {
+    "en": "",
+    "es": ""
+  },
+  "Lance o que entrou e o que saiu neste mês e o painel se monta sozinho. Seus dados são só seus: ninguém mais vê o que você lança aqui.": {
+    "en": "",
+    "es": ""
+  },
+  "sáb": {
+    "en": "",
+    "es": ""
+  },
+  "{0} de {1} · {2}": {
+    "en": "",
+    "es": ""
+  },
+  "PDF, CSV, Excel, Word ou OFX do banco": {
+    "en": "",
+    "es": ""
+  },
+  "Buscar descrição ou categoria": {
+    "en": "",
+    "es": ""
+  },
+  "Todos": {
+    "en": "",
+    "es": ""
+  },
+  "Ordem": {
+    "en": "",
+    "es": ""
+  },
+  "Recentes": {
+    "en": "",
+    "es": ""
+  },
+  "Maiores": {
+    "en": "",
+    "es": ""
+  },
+  "Todas": {
+    "en": "",
+    "es": ""
+  },
+  "Bancos": {
+    "en": "",
+    "es": ""
+  },
+  "Todos os bancos": {
+    "en": "",
+    "es": ""
+  },
+  "Sem banco": {
+    "en": "",
+    "es": ""
+  },
+  "Todas as formas": {
+    "en": "",
+    "es": ""
+  },
+  "Sem forma · {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Limpar filtros": {
+    "en": "",
+    "es": ""
+  },
+  "lc-vazio vz-vazio": {
+    "en": "",
+    "es": ""
+  },
+  "Nada com esses filtros": {
+    "en": "",
+    "es": ""
+  },
+  "Comece a fazer seus lançamentos": {
+    "en": "",
+    "es": ""
+  },
+  "Nada lançado em {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Registre o que entrou e o que saiu, um por um, ou traga tudo de uma vez do extrato do seu banco. O painel se monta sozinho.": {
+    "en": "",
+    "es": ""
+  },
+  "Quando você lançar algo neste mês, ele aparece aqui, dia a dia.": {
+    "en": "",
+    "es": ""
+  },
+  "Importar extrato ou planilha": {
+    "en": "",
+    "es": ""
+  },
+  "Ontem": {
+    "en": "",
+    "es": ""
+  },
+  "Dia a dia": {
+    "en": "",
+    "es": ""
+  },
+  "dia que mais saiu:": {
+    "en": "",
+    "es": ""
+  },
+  "Gastos por dia de {0}": {
+    "en": "",
+    "es": ""
+  },
+  ", entrou {0}": {
+    "en": "",
+    "es": ""
+  },
+  "{0}: nada lançado": {
+    "en": "",
+    "es": ""
+  },
+  "mais gasto": {
+    "en": "",
+    "es": ""
+  },
+  "Batida 🎉": {
+    "en": "",
+    "es": ""
+  },
+  "Prazo passou": {
+    "en": "",
+    "es": ""
+  },
+  "No ritmo": {
+    "en": "",
+    "es": ""
+  },
+  "Abaixo do ritmo": {
+    "en": "",
+    "es": ""
+  },
+  "Começando": {
+    "en": "",
+    "es": ""
+  },
+  "Sem prazo": {
+    "en": "",
+    "es": ""
+  },
+  "Para usar metas, falta atualizar o banco de dados: rode": {
+    "en": "",
+    "es": ""
+  },
+  "{0} = 6 meses de gastos": {
+    "en": "",
+    "es": ""
+  },
+  "Outro objetivo": {
+    "en": "",
+    "es": ""
+  },
+  "Junte dinheiro para o que importa: cada pote enche conforme você guarda.": {
+    "en": "",
+    "es": ""
+  },
+  "guardado nas metas": {
+    "en": "",
+    "es": ""
+  },
+  "faltam {0}": {
+    "en": "",
+    "es": ""
+  },
+  "{0} de {1} batidas": {
+    "en": "",
+    "es": ""
+  },
+  "sobrou em {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Guardar numa meta?": {
+    "en": "",
+    "es": ""
+  },
+  "Guarde {0} por mês": {
+    "en": "",
+    "es": ""
+  },
+  "Guarde um pouco todo mês": {
+    "en": "",
+    "es": ""
+  },
+  "É o que falta, por mês, para bater todas as metas no prazo.": {
+    "en": "",
+    "es": ""
+  },
+  "Pôr um prazo na meta mostra quanto guardar por mês.": {
+    "en": "",
+    "es": ""
+  },
+  "Comece por um objetivo": {
+    "en": "",
+    "es": ""
+  },
+  "Escolha um ponto de partida ou crie do seu jeito. O app mostra quanto guardar por mês e quando você chega lá.": {
+    "en": "",
+    "es": ""
+  },
+  "Metas batidas 🎉": {
+    "en": "",
+    "es": ""
+  },
+  "Você juntou tudo. 🎉": {
+    "en": "",
+    "es": ""
+  },
+  "O prazo ({0}) passou. Que tal um novo?": {
+    "en": "",
+    "es": ""
+  },
+  "Guarde": {
+    "en": "",
+    "es": ""
+  },
+  "até {0}": {
+    "en": "",
+    "es": ""
+  },
+  "No seu ritmo, chega em": {
+    "en": "",
+    "es": ""
+  },
+  "Faltam": {
+    "en": "",
+    "es": ""
+  },
+  "Guardar": {
+    "en": "",
+    "es": ""
+  },
+  "Retirar": {
+    "en": "",
+    "es": ""
+  },
+  "alvo {0}": {
+    "en": "",
+    "es": ""
+  },
+  "guardado": {
+    "en": "",
+    "es": ""
+  },
+  "{0}% do caminho": {
+    "en": "",
+    "es": ""
+  },
+  "sem prazo": {
+    "en": "",
+    "es": ""
+  },
+  "seu ritmo": {
+    "en": "",
+    "es": ""
+  },
+  "Para chegar em": {
+    "en": "",
+    "es": ""
+  },
+  ", guarde": {
+    "en": "",
+    "es": ""
+  },
+  "por mês.": {
+    "en": "",
+    "es": ""
+  },
+  "O prazo ({0}) passou. Edite a meta para pôr um novo.": {
+    "en": "",
+    "es": ""
+  },
+  "No seu ritmo, você chega em": {
+    "en": "",
+    "es": ""
+  },
+  "Guarde a primeira parte para o app prever quando você chega lá.": {
+    "en": "",
+    "es": ""
+  },
+  "Histórico": {
+    "en": "",
+    "es": ""
+  },
+  "Excluir este registro": {
+    "en": "",
+    "es": ""
+  },
+  "Excluir este registro da meta?": {
+    "en": "",
+    "es": ""
+  },
+  "Nada guardado ainda.": {
+    "en": "",
+    "es": ""
+  },
+  "Dê um nome para a meta.": {
+    "en": "",
+    "es": ""
+  },
+  "Digite quanto você quer juntar.": {
+    "en": "",
+    "es": ""
+  },
+  "Editar meta": {
+    "en": "",
+    "es": ""
+  },
+  "Nova meta": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: Viagem pra praia, Notebook novo…": {
+    "en": "",
+    "es": ""
+  },
+  "Nome da meta": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto quer juntar": {
+    "en": "",
+    "es": ""
+  },
+  "Com um prazo, o app calcula quanto guardar por mês.": {
+    "en": "",
+    "es": ""
+  },
+  "A meta e todo o histórico dela serão excluídos.": {
+    "en": "",
+    "es": ""
+  },
+  "Do mês": {
+    "en": "",
+    "es": ""
+  },
+  "A sobra": {
+    "en": "",
+    "es": ""
+  },
+  "O que falta": {
+    "en": "",
+    "es": ""
+  },
+  "Na meta só tem {0}.": {
+    "en": "",
+    "es": ""
+  },
+  "Movimento": {
+    "en": "",
+    "es": ""
+  },
+  "Observação": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: paguei a passagem": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: sobra do mês": {
+    "en": "",
+    "es": ""
+  },
+  "Retirar diminui o guardado na meta.": {
+    "en": "",
+    "es": ""
+  },
+  "Registre quando separar dinheiro para esta meta (numa caixinha, poupança, conta…).": {
+    "en": "",
+    "es": ""
+  },
+  "para o dia a dia": {
+    "en": "",
+    "es": ""
+  },
+  "rendendo, pode tirar quando quiser": {
+    "en": "",
+    "es": ""
+  },
+  "só para imprevistos": {
+    "en": "",
+    "es": ""
+  },
+  "Os saldos vêm de": {
+    "en": "",
+    "es": ""
+  },
+  ". Se nada mudou, confirme; se mudou, edite.": {
+    "en": "",
+    "es": ""
+  },
+  "Continua igual": {
+    "en": "",
+    "es": ""
+  },
+  "Editar banco": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto tem em {0}": {
+    "en": "",
+    "es": ""
+  },
+  "vira limite no {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Cartões deste banco": {
+    "en": "",
+    "es": ""
+  },
+  "Lançamentos ({0})": {
+    "en": "",
+    "es": ""
+  },
+  "Nenhum lançamento": {
+    "en": "",
+    "es": ""
+  },
+  "sem banco": {
+    "en": "",
+    "es": ""
+  },
+  "neste mês.": {
+    "en": "",
+    "es": ""
+  },
+  "Investimentos": {
+    "en": "",
+    "es": ""
+  },
+  "Como está em {0} de {1}.": {
+    "en": "",
+    "es": ""
+  },
+  "Adicionar banco": {
+    "en": "",
+    "es": ""
+  },
+  "tudo o que você tem": {
+    "en": "",
+    "es": ""
+  },
+  "igual a {0}": {
+    "en": "",
+    "es": ""
+  },
+  "que em {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Atualize os saldos abaixo para ver tudo junto aqui.": {
+    "en": "",
+    "es": ""
+  },
+  "Reserva de emergência": {
+    "en": "",
+    "es": ""
+  },
+  "meses": {
+    "en": "",
+    "es": ""
+  },
+  "Sua reserva de": {
+    "en": "",
+    "es": ""
+  },
+  "{0} meses": {
+    "en": "",
+    "es": ""
+  },
+  "do que você gasta.": {
+    "en": "",
+    "es": ""
+  },
+  "Marque em cada banco quanto é": {
+    "en": "",
+    "es": ""
+  },
+  ": o app mostra quantos meses de gastos ela cobre.": {
+    "en": "",
+    "es": ""
+  },
+  "O ideal são 6 meses: {0}.": {
+    "en": "",
+    "es": ""
+  },
+  "Lance seus gastos para o app calcular.": {
+    "en": "",
+    "es": ""
+  },
+  "Criar meta para a reserva": {
+    "en": "",
+    "es": ""
+  },
+  "Seu dinheiro guardado começa aqui": {
+    "en": "",
+    "es": ""
+  },
+  "Itaú": {
+    "en": "",
+    "es": ""
+  },
+  "PicPay": {
+    "en": "",
+    "es": ""
+  },
+  "Inter": {
+    "en": "",
+    "es": ""
+  },
+  "Separe por banco": {
+    "en": "",
+    "es": ""
+  },
+  "Bancos são opcionais: servem para ver cada um separado e guardar quanto tem em conta, caixinha e reserva.": {
+    "en": "",
+    "es": ""
+  },
+  "Adicionar o primeiro banco": {
+    "en": "",
+    "es": ""
+  },
+  "sem banco definido": {
+    "en": "",
+    "es": ""
+  },
+  "caixinha vira limite no {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto você tem investido neste mês": {
+    "en": "",
+    "es": ""
+  },
+  "Aceita contas:": {
+    "en": "",
+    "es": ""
+  },
+  "sem cotação agora": {
+    "en": "",
+    "es": ""
+  },
+  "Cotação do dia por": {
+    "en": "",
+    "es": ""
+  },
+  "ExchangeRate-API": {
+    "en": "",
+    "es": ""
+  },
+  ". Para mudar as moedas, use": {
+    "en": "",
+    "es": ""
+  },
+  "Digite o nome do banco.": {
+    "en": "",
+    "es": ""
+  },
+  "Escolha um banco da lista ou toque em \"Outro banco\".": {
+    "en": "",
+    "es": ""
+  },
+  "Você já tem um banco chamado \"{0}\".": {
+    "en": "",
+    "es": ""
+  },
+  "Qual é o banco?": {
+    "en": "",
+    "es": ""
+  },
+  "Buscar banco…": {
+    "en": "",
+    "es": ""
+  },
+  "Você já cadastrou este banco": {
+    "en": "",
+    "es": ""
+  },
+  "Outro banco": {
+    "en": "",
+    "es": ""
+  },
+  "Nome do banco": {
+    "en": "",
+    "es": ""
+  },
+  "Ex.: Cooperativa da cidade, Dinheiro…": {
+    "en": "",
+    "es": ""
+  },
+  "Cor {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Escolher outra cor": {
+    "en": "",
+    "es": ""
+  },
+  "Excluir \"{0}\"? Os lançamentos dele continuam, só ficam sem banco.": {
+    "en": "",
+    "es": ""
+  },
+  "Isso parece investimento.": {
+    "en": "",
+    "es": ""
+  },
+  "Acompanhar meus investimentos": {
+    "en": "",
+    "es": ""
+  },
+  "Foi no cartão de crédito?": {
+    "en": "",
+    "es": ""
+  },
+  "Acompanhar minhas faturas": {
+    "en": "",
+    "es": ""
+  },
+  "Parece uma parcela ou dívida.": {
+    "en": "",
+    "es": ""
+  },
+  "Controlar o que falta pagar": {
+    "en": "",
+    "es": ""
+  },
+  "Está guardando dinheiro para algo?": {
+    "en": "",
+    "es": ""
+  },
+  "Criar uma meta": {
+    "en": "",
+    "es": ""
+  },
+  "Foi em {0}?": {
+    "en": "",
+    "es": ""
+  },
+  "Lançar em {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Ligar cartões": {
+    "en": "",
+    "es": ""
+  },
+  "Você usa cartão de crédito?": {
+    "en": "",
+    "es": ""
+  },
+  "Veja a fatura de cada cartão, quando ela fecha e vence, as compras parceladas e quanto do limite ainda dá para usar.": {
+    "en": "",
+    "es": ""
+  },
+  "Acompanhar dívidas": {
+    "en": "",
+    "es": ""
+  },
+  "Você está pagando parcelas": {
+    "en": "",
+    "es": ""
+  },
+  "Quer ver quanto falta em cada dívida e em que mês ela acaba? Cada pagamento lançado abate sozinho.": {
+    "en": "",
+    "es": ""
+  },
+  "Acompanhar investimentos": {
+    "en": "",
+    "es": ""
+  },
+  "Começou a investir?": {
+    "en": "",
+    "es": ""
+  },
+  "Acompanhe quanto você tem investido mês a mês, junto com o resto do seu dinheiro.": {
+    "en": "",
+    "es": ""
+  },
+  "Acompanhar metas": {
+    "en": "",
+    "es": ""
+  },
+  "Está guardando dinheiro?": {
+    "en": "",
+    "es": ""
+  },
+  "Crie uma meta (viagem, reserva, carro…) e veja quanto guardar por mês e quando você chega lá.": {
+    "en": "",
+    "es": ""
+  },
+  "Ligar contas do mês": {
+    "en": "",
+    "es": ""
+  },
+  "Você paga {0} todo mês?": {
+    "en": "",
+    "es": ""
+  },
+  "Transforme em conta fixa e o app te lembra do vencimento, mostra o que está atrasado e dá baixa com um toque.": {
+    "en": "",
+    "es": ""
+  },
+  "Usar {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Você mexe com {0}?": {
+    "en": "",
+    "es": ""
+  },
+  "Lance em {0} e veja quanto vale na sua moeda, com a cotação do dia.": {
+    "en": "",
+    "es": ""
+  },
+  "Separar por banco": {
+    "en": "",
+    "es": ""
+  },
+  "Você usa {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Quer ver o que entra e sai de cada banco e quanto tem guardado em cada um?": {
+    "en": "",
+    "es": ""
+  },
+  "Mostrar gráficos": {
+    "en": "",
+    "es": ""
+  },
+  "Você já lançou bastante coisa": {
+    "en": "",
+    "es": ""
+  },
+  "Gráficos e a comparação com o mês passado ajudam a ver para onde as coisas estão indo.": {
+    "en": "",
+    "es": ""
+  },
+  "Ver mais detalhes": {
+    "en": "",
+    "es": ""
+  },
+  "{0} meses de histórico": {
+    "en": "",
+    "es": ""
+  },
+  "Com esse histórico, vale ver todas as categorias, os lançamentos do mês e o ano mês a mês.": {
+    "en": "",
+    "es": ""
+  },
+  "Não foi possível começar o teste agora. Tente de novo.": {
+    "en": "",
+    "es": ""
+  },
+  "O teste grátis já foi usado nesta conta. Assine para continuar.": {
+    "en": "",
+    "es": ""
+  },
+  "Não foi possível abrir o pagamento. Tente de novo.": {
+    "en": "",
+    "es": ""
+  },
+  "Não foi possível excluir a conta. Tente de novo.": {
+    "en": "",
+    "es": ""
+  },
+  "OpusCash atualizado ✓": {
+    "en": "",
+    "es": ""
+  },
+  "Ainda não abriu": {
+    "en": "",
+    "es": ""
+  },
+  "Aberta": {
+    "en": "",
+    "es": ""
+  },
+  "Fechada": {
+    "en": "",
+    "es": ""
+  },
+  "Venceu": {
+    "en": "",
+    "es": ""
+  },
+  "Renegociada": {
+    "en": "",
+    "es": ""
+  },
+  "vence amanhã": {
+    "en": "",
+    "es": ""
+  },
+  "vence em {0} dias": {
+    "en": "",
+    "es": ""
+  },
+  "venceu ontem": {
+    "en": "",
+    "es": ""
+  },
+  "venceu há {0} dias": {
+    "en": "",
+    "es": ""
+  },
+  "primeira na fatura de {0}": {
+    "en": "",
+    "es": ""
+  },
+  "{0} à vista no cartão · na fatura de {1}": {
+    "en": "",
+    "es": ""
+  },
+  "Sem compras na fatura": {
+    "en": "",
+    "es": ""
+  },
+  "recebido em {0}": {
+    "en": "",
+    "es": ""
+  },
+  "era para cair ontem": {
+    "en": "",
+    "es": ""
+  },
+  "era para cair há {0} dias": {
+    "en": "",
+    "es": ""
+  },
+  "era para cair em {0}": {
+    "en": "",
+    "es": ""
+  },
+  "cai amanhã": {
+    "en": "",
+    "es": ""
+  },
+  "6 meses do que você gasta, para imprevistos": {
+    "en": "",
+    "es": ""
+  },
+  "passagens, hospedagem e passeios": {
+    "en": "",
+    "es": ""
+  },
+  "Carro": {
+    "en": "",
+    "es": ""
+  },
+  "entrada ou o carro inteiro": {
+    "en": "",
+    "es": ""
+  },
+  "Casa própria": {
+    "en": "",
+    "es": ""
+  },
+  "entrada do imóvel": {
+    "en": "",
+    "es": ""
+  },
+  "Estudos": {
+    "en": "",
+    "es": ""
+  },
+  "curso, faculdade, intercâmbio": {
+    "en": "",
+    "es": ""
+  },
+  "Aposentadoria": {
+    "en": "",
+    "es": ""
+  },
+  "para o futuro, sem pressa": {
+    "en": "",
+    "es": ""
+  },
+  "Real": {
+    "en": "",
+    "es": ""
+  },
+  "Dólar americano": {
+    "en": "",
+    "es": ""
+  },
+  "Libra esterlina": {
+    "en": "",
+    "es": ""
+  },
+  "Peso argentino": {
+    "en": "",
+    "es": ""
+  },
+  "Peso chileno": {
+    "en": "",
+    "es": ""
+  },
+  "Peso uruguaio": {
+    "en": "",
+    "es": ""
+  },
+  "Guarani paraguaio": {
+    "en": "",
+    "es": ""
+  },
+  "Peso colombiano": {
+    "en": "",
+    "es": ""
+  },
+  "Sol peruano": {
+    "en": "",
+    "es": ""
+  },
+  "Peso mexicano": {
+    "en": "",
+    "es": ""
+  },
+  "Dólar canadense": {
+    "en": "",
+    "es": ""
+  },
+  "Dólar australiano": {
+    "en": "",
+    "es": ""
+  },
+  "Franco suíço": {
+    "en": "",
+    "es": ""
+  },
+  "Iene japonês": {
+    "en": "",
+    "es": ""
+  },
+  "Yuan chinês": {
+    "en": "",
+    "es": ""
+  },
+  "Kwanza angolano": {
+    "en": "",
+    "es": ""
+  },
+  "Metical moçambicano": {
+    "en": "",
+    "es": ""
+  },
+  "Dívidas e parcelas": {
+    "en": "",
+    "es": ""
+  },
+  "Tenho dívidas, empréstimos ou compras parceladas": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto falta pagar e quando cada dívida acaba. Cada pagamento lançado abate sozinho.": {
+    "en": "",
+    "es": ""
+  },
+  "Cartão de crédito": {
+    "en": "",
+    "es": ""
+  },
+  "Uso cartão de crédito": {
+    "en": "",
+    "es": ""
+  },
+  "A fatura de cada cartão, quando fecha e vence, as compras parceladas e quanto do limite ainda dá para usar.": {
+    "en": "",
+    "es": ""
+  },
+  "Bancos e contas": {
+    "en": "",
+    "es": ""
+  },
+  "Uso mais de um banco, conta ou carteira": {
+    "en": "",
+    "es": ""
+  },
+  "O que entra e sai de cada banco e quanto você tem guardado em cada um.": {
+    "en": "",
+    "es": ""
+  },
+  "Invisto ou guardo dinheiro rendendo": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto você tem investido, mês a mês.": {
+    "en": "",
+    "es": ""
+  },
+  "Tenho ou uso dinheiro em outra moeda": {
+    "en": "",
+    "es": ""
+  },
+  "Dólar, euro e outras: quanto você tem e quanto vale na sua moeda, com a cotação do dia.": {
+    "en": "",
+    "es": ""
+  },
+  "Quero juntar dinheiro para algo (viagem, reserva, carro…)": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto falta para cada objetivo, quanto guardar por mês e quando você chega lá.": {
+    "en": "",
+    "es": ""
+  },
+  "Tenho contas que se repetem todo mês (aluguel, luz, internet…)": {
+    "en": "",
+    "es": ""
+  },
+  "O app lembra do vencimento, mostra o que está atrasado e dá baixa com um toque em \"Paguei\".": {
+    "en": "",
+    "es": ""
+  },
+  "Simples": {
+    "en": "",
+    "es": ""
+  },
+  "Quanto sobrou, quanto entrou e quanto saiu. Sem gráficos nem comparações.": {
+    "en": "",
+    "es": ""
+  },
+  "Equilibrado": {
+    "en": "",
+    "es": ""
+  },
+  "O simples, mais gráficos e a comparação com o mês passado.": {
+    "en": "",
+    "es": ""
+  },
+  "Detalhado": {
+    "en": "",
+    "es": ""
+  },
+  "O equilibrado, mais todas as categorias, mais lançamentos e o ano mês a mês.": {
+    "en": "",
+    "es": ""
+  },
+  "Já existe um cartão chamado \"{0}\".": {
+    "en": "",
+    "es": ""
+  },
+  "Essa conta do mês já tem um lançamento ligado nesse mês (cada conta tem um por mês). Nada foi mudado.": {
+    "en": "",
+    "es": ""
+  },
+  "Já existe um banco chamado \"{0}\".": {
+    "en": "",
+    "es": ""
+  },
+  "Já existe uma categoria chamada \"{0}\".": {
+    "en": "",
+    "es": ""
+  },
+  "Tudo, como conta nova": {
+    "en": "",
+    "es": ""
+  },
+  "Apaga tudo, inclusive bancos, categorias e preferências. As perguntas iniciais aparecem de novo.": {
+    "en": "",
+    "es": ""
+  },
+  "Todos os lançamentos de entrada (salário, renda extra…).": {
+    "en": "",
+    "es": ""
+  },
+  "Todos os lançamentos de saída, inclusive pagamentos de dívidas e compras no cartão.": {
+    "en": "",
+    "es": ""
+  },
+  "As dívidas e seus saldos. Os pagamentos lançados ficam, só sem vínculo com a dívida.": {
+    "en": "",
+    "es": ""
+  },
+  "Os cartões e as faturas pagas. As compras ficam como saídas comuns.": {
+    "en": "",
+    "es": ""
+  },
+  "Contas fixas": {
+    "en": "",
+    "es": ""
+  },
+  "As contas que se repetem todo mês. Os lançamentos já feitos ficam.": {
+    "en": "",
+    "es": ""
+  },
+  "As metas e o histórico de dinheiro guardado nelas.": {
+    "en": "",
+    "es": ""
+  },
+  "Saldos por banco, investimentos e moedas de cada mês.": {
+    "en": "",
+    "es": ""
+  },
+  "MARÇO": {
+    "en": "",
+    "es": ""
+  },
+  "{1} de {0}": {
+    "en": "",
+    "es": ""
+  },
+  "entrada": {
+    "en": "",
+    "es": ""
+  },
+  "· já tem lançamento neste mês": {
+    "en": "",
+    "es": ""
+  },
+  "Depois o app procura os parecidos dos outros meses.": {
+    "en": "",
+    "es": ""
+  },
+  "recebido": {
+    "en": "",
+    "es": ""
+  },
+  "renegociada": {
+    "en": "",
+    "es": ""
+  },
+  "juros": {
+    "en": "",
+    "es": ""
+  },
+  "livre": {
+    "en": "",
+    "es": ""
+  },
+  "do banco": {
+    "en": "",
+    "es": ""
+  },
+  "Mudar os dias vale para as próximas compras; as que você já lançou ficam onde estão.": {
+    "en": "",
+    "es": ""
+  },
+  "Se teve juros ou multa, coloque aqui: eles entram como uma saída do mês do pagamento.": {
+    "en": "",
+    "es": ""
+  },
+  "e apaga a dívida criada": {
+    "en": "",
+    "es": ""
+  },
+  "conta": {
+    "en": "",
+    "es": ""
+  },
+  "caiu": {
+    "en": "",
+    "es": ""
+  },
+  "parcelado": {
+    "en": "",
+    "es": ""
+  },
+  "com": {
+    "en": "",
+    "es": ""
+  },
+  "Você está no caminho certo! 🚀": {
+    "en": "",
+    "es": ""
+  },
+  "Vale olhar para onde foi.": {
+    "en": "",
+    "es": ""
+  },
+  "com os filtros": {
+    "en": "",
+    "es": ""
+  },
+  "Toque num banco para ver só ele.": {
+    "en": "",
+    "es": ""
+  },
+  "mais de": {
+    "en": "",
+    "es": ""
+  },
+  "Falta receber {0} ({1} × {2}) · última parcela em {3}": {
+    "en": "",
+    "es": ""
+  },
+  "Falta pagar {0} ({1} × {2}) · última parcela em {3}": {
+    "en": "",
+    "es": ""
+  },
+  "1 lançamento importado": {
+    "en": "",
+    "es": ""
+  },
+  "{0} lançamentos importados": {
+    "en": "",
+    "es": ""
+  },
+  "Já existe “{0}” de {1} em {2}.\n\nEle é o recebimento de {3}?\n\nOK: sim, usar ele (sem lançar de novo).\nCancelar: não, lançar outro.": {
+    "en": "",
+    "es": ""
+  },
+  "Já existe “{0}” de {1} em {2}.\n\nEle é o pagamento de {3}?\n\nOK: sim, usar ele (sem lançar de novo).\nCancelar: não, lançar outro.": {
+    "en": "",
+    "es": ""
+  },
+  "{0} – recebido": {
+    "en": "",
+    "es": ""
+  },
+  "1 conta pede atenção.": {
+    "en": "",
+    "es": ""
+  },
+  "{0} contas pedem atenção.": {
+    "en": "",
+    "es": ""
+  },
+  "1 conta pede atenção": {
+    "en": "",
+    "es": ""
+  },
+  "{0} contas pedem atenção": {
+    "en": "",
+    "es": ""
+  },
+  "1 lançamento": {
+    "en": "",
+    "es": ""
+  },
+  "Teste grátis até {0} (falta 1 dia). O cartão só é pedido quando você assinar.": {
+    "en": "",
+    "es": ""
+  },
+  "Teste grátis até {0} (faltam {1} dias). O cartão só é pedido quando você assinar.": {
+    "en": "",
+    "es": ""
+  },
+  "{0} a mais que em {1}": {
+    "en": "",
+    "es": ""
+  },
+  "{0} a menos que em {1}": {
+    "en": "",
+    "es": ""
+  },
+  "O Início mostra quanto sobrou, entrou e saiu, compara com o mês passado e para onde o dinheiro foi. Use o seletor de mês lá em cima para voltar no tempo.": {
+    "en": "",
+    "es": ""
+  },
+  "O Início mostra quanto sobrou, entrou e saiu e para onde o dinheiro foi. Use o seletor de mês lá em cima para voltar no tempo.": {
+    "en": "",
+    "es": ""
+  },
+  "{0}x de {1} (a primeira, {2}) · {3}": {
+    "en": "",
+    "es": ""
+  },
+  "{0}x de {1} · {2}": {
+    "en": "",
+    "es": ""
+  },
+  "1 parcela paga até agora.": {
+    "en": "",
+    "es": ""
+  },
+  "{0} parcelas pagas até agora.": {
+    "en": "",
+    "es": ""
+  },
+  "Sobrou em {0}": {
+    "en": "",
+    "es": ""
+  },
+  "Faltou em {0}": {
+    "en": "",
+    "es": ""
+  },
+  "{0}: saiu {1}": {
+    "en": "",
+    "es": ""
   }
 }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from './supabase'
+import { tx } from './textos'
 
 export type StatusAssinatura =
   | 'sem_assinatura' | 'teste' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid' | 'incomplete' | 'incomplete_expired' | 'paused' | 'cortesia'
@@ -27,8 +28,8 @@ export const podeTestar = (a: Assinatura | null) => !a || (a.status === 'sem_ass
 /** Começa o teste grátis de 7 dias (o banco grava e garante que só acontece uma vez). Devolve a mensagem de erro, ou null se deu certo. */
 export async function iniciarTesteGratis(): Promise<string | null> {
   const { data, error } = await supabase.rpc('iniciar_teste_gratis')
-  if (error) return 'Não foi possível começar o teste agora. Tente de novo.'
-  return data ? null : 'O teste grátis já foi usado nesta conta. Assine para continuar.'
+  if (error) return tx('Não foi possível começar o teste agora. Tente de novo.')
+  return data ? null : tx('O teste grátis já foi usado nesta conta. Assine para continuar.')
 }
 
 const faltaTabela =(e: { code?: string; message: string }) =>
@@ -69,7 +70,7 @@ export async function irParaStripe(funcao: 'stripe-checkout' | 'stripe-portal', 
     window.location.reload()
     return null
   }
-  return (data?.erro as string | undefined) ?? error?.message ?? 'Não foi possível abrir o pagamento. Tente de novo.'
+  return (data?.erro as string | undefined) ?? error?.message ?? tx('Não foi possível abrir o pagamento. Tente de novo.')
 }
 
 /** Apaga a conta (login e todos os dados) e cancela a assinatura. Devolve a mensagem de erro, ou null se deu certo. */
@@ -79,5 +80,5 @@ export async function excluirConta(email: string): Promise<string | null> {
     await supabase.auth.signOut()
     return null
   }
-  return (data?.erro as string | undefined) ?? error?.message ?? 'Não foi possível excluir a conta. Tente de novo.'
+  return (data?.erro as string | undefined) ?? error?.message ?? tx('Não foi possível excluir a conta. Tente de novo.')
 }

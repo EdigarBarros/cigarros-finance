@@ -1,8 +1,9 @@
 import { useId } from 'react'
 import { IconeCategoria } from './IconeCategoria'
+import { tx } from '../lib/textos'
 
 /** Onda que se repete a cada 60 unidades: deslizando 60 para a esquerda, volta ao começo sem emenda. */
-const ONDA = 'M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 T150 6 T180 6 T210 6 T240 6 V160 H0Z'
+const ONDA = tx('M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 T150 6 T180 6 T210 6 T240 6 V160 H0Z')
 
 /**
  * Pote de vidro que enche com a cor da meta até o progresso (0 a 1), com uma onda suave na superfície, os marcos de

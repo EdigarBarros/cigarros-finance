@@ -80,7 +80,10 @@ function ComAcesso({ userId, email, nome }: { userId: string; email: string; nom
   if (cobranca && !temAcesso(assinatura)) return comIdioma(<TelaAssinatura assinatura={assinatura} email={email} aoAtualizar={recarregar} />)
   return (
     <Suspense fallback={<Carregando />}>
-      <Painel userId={userId} email={email} nome={nome} assinatura={cobranca ? assinatura : null} />
+      {/* inglês e espanhol: o painel já vem traduzido (tx), o tradutor do Google não mexe */}
+      {nativo
+        ? <div translate="no" className="tela-nativa"><Painel userId={userId} email={email} nome={nome} assinatura={cobranca ? assinatura : null} /></div>
+        : <Painel userId={userId} email={email} nome={nome} assinatura={cobranca ? assinatura : null} />}
     </Suspense>
   )
 }

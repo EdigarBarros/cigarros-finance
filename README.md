@@ -13,8 +13,8 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   escolhe **Animações: Reduzidas** em Configurações → Painel → Aparência
 - **Qualquer idioma**: o botão 文A (no topo do painel; nas outras telas, preso no canto de cima) abre a lista de mais de
   100 idiomas, cada um escrito nele mesmo, com busca. O app é escrito em português. Inglês e espanhol têm tradução nossa
-  (`lib/textos.ts` e `src/i18n/traducoes.json`, por enquanto na página inicial, no login e na assinatura); o resto, e os
-  outros idiomas, é a tradução automática do Google (`lib/idioma.ts`). A escolha fica salva no navegador. Valores em dinheiro, a marca e o nome da pessoa não são traduzidos.
+  (`lib/textos.ts` e `src/i18n/traducoes.json`, no app inteiro menos as páginas legais); os outros idiomas são a
+  tradução automática do Google (`lib/idioma.ts`). A escolha fica salva no navegador. Valores em dinheiro, a marca e o nome da pessoa não são traduzidos.
   A política de segurança (`vercel.json`) libera o tradutor do Google; se ele mudar o script que roda na barra dele, o hash
   `sha256-…` do `script-src` precisa ser atualizado (o console do navegador mostra o novo)
 

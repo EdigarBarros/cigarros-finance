@@ -6,6 +6,7 @@ import { saidasQueSeRepetem } from './contasFixas'
 import { infoMoeda } from './moedas'
 import { BANCOS_CONHECIDOS } from './rotulos'
 import type { Detalhe, Lancamento, Modulo, Perfil } from './types'
+import { tx } from './textos'
 
 const fim = '(?![a-z0-9à-ú])'
 const PADRAO_DIVIDA = new RegExp(
@@ -29,7 +30,7 @@ const MOEDAS_NO_TEXTO: [RegExp, string][] = [
   [/peso argentino|\bars\b/i, 'ARS'],
 ]
 // "Caixa", "Dinheiro" e "Inter" aparecem em descrições comuns ("caixa de leite"), então não contam.
-const BANCOS_TEXTO = BANCOS_CONHECIDOS.filter((b) => !['Caixa', 'Dinheiro', 'Inter'].includes(b.nome))
+const BANCOS_TEXTO = BANCOS_CONHECIDOS.filter((b) => !['Caixa', 'Dinheiro', 'Inter'].includes(b.nome)) // sem-tx
   .map((b) => ({ nome: b.nome, re: new RegExp(`\\b(${[b.nome, ...(b.apelidos ?? [])].join('|')})${fim}`, 'i') }))
 
 export const moedaNoTexto = (texto: string) => MOEDAS_NO_TEXTO.find(([re]) => re.test(texto))?.[1]
@@ -45,20 +46,20 @@ export interface Dica {
 export function dicaDaDescricao(texto: string, p: Perfil, tipo: 'entrada' | 'saida'): Dica | null {
   if (!texto.trim()) return null
   if (!p.modulos.investimentos && PADRAO_INVESTIMENTO.test(texto)) {
-    return { modulo: 'investimentos', texto: 'Isso parece investimento.', botao: 'Acompanhar meus investimentos' }
+    return { modulo: 'investimentos', texto: tx('Isso parece investimento.'), botao: tx('Acompanhar meus investimentos') }
   }
   if (!p.modulos.cartoes && tipo === 'saida' && PADRAO_CARTAO.test(texto) && !PADRAO_DIVIDA_SEM_X.test(texto)) {
-    return { modulo: 'cartoes', texto: 'Foi no cartão de crédito?', botao: 'Acompanhar minhas faturas' }
+    return { modulo: 'cartoes', texto: tx('Foi no cartão de crédito?'), botao: tx('Acompanhar minhas faturas') }
   }
   if (!p.modulos.dividas && tipo === 'saida' && PADRAO_DIVIDA.test(texto)) {
-    return { modulo: 'dividas', texto: 'Parece uma parcela ou dívida.', botao: 'Controlar o que falta pagar' }
+    return { modulo: 'dividas', texto: tx('Parece uma parcela ou dívida.'), botao: tx('Controlar o que falta pagar') }
   }
   if (!p.modulos.metas && PADRAO_GUARDAR.test(texto)) {
-    return { modulo: 'metas', texto: 'Está guardando dinheiro para algo?', botao: 'Criar uma meta' }
+    return { modulo: 'metas', texto: tx('Está guardando dinheiro para algo?'), botao: tx('Criar uma meta') }
   }
   const moeda = moedaNoTexto(texto)
   if (moeda && moeda !== p.moeda && !(p.modulos.moedas && p.moedas.includes(moeda))) {
-    return { modulo: 'moedas', moeda, texto: `Foi em ${infoMoeda(moeda).nome.toLowerCase()}?`, botao: `Lançar em ${infoMoeda(moeda).nome.toLowerCase()}` }
+    return { modulo: 'moedas', moeda, texto: tx('Foi em {0}?', infoMoeda(moeda).nome.toLowerCase()), botao: tx('Lançar em {0}', infoMoeda(moeda).nome.toLowerCase()) }
   }
   return null
 }
@@ -83,33 +84,33 @@ export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number,
 
   if (!p.modulos.cartoes && (conta(CARTAO_EXPLICITO) >= 1 || conta(PADRAO_CARTAO) >= 2)) {
     lista.push({
-      id: 'modulo:cartoes', icone: 'cartao', botao: 'Ligar cartões',
-      titulo: 'Você usa cartão de crédito?',
-      texto: 'Veja a fatura de cada cartão, quando ela fecha e vence, as compras parceladas e quanto do limite ainda dá para usar.',
+      id: 'modulo:cartoes', icone: 'cartao', botao: tx('Ligar cartões'),
+      titulo: tx('Você usa cartão de crédito?'),
+      texto: tx('Veja a fatura de cada cartão, quando ela fecha e vence, as compras parceladas e quanto do limite ainda dá para usar.'),
       aplicar: ligar('cartoes'),
     })
   }
   if (!p.modulos.dividas && lancs.filter((l) => PADRAO_DIVIDA.test(l.descricao) || ehPagamentoDeDivida(l)).length >= 2) {
     lista.push({
-      id: 'modulo:dividas', icone: 'divida', botao: 'Acompanhar dívidas',
-      titulo: 'Você está pagando parcelas',
-      texto: 'Quer ver quanto falta em cada dívida e em que mês ela acaba? Cada pagamento lançado abate sozinho.',
+      id: 'modulo:dividas', icone: 'divida', botao: tx('Acompanhar dívidas'),
+      titulo: tx('Você está pagando parcelas'),
+      texto: tx('Quer ver quanto falta em cada dívida e em que mês ela acaba? Cada pagamento lançado abate sozinho.'),
       aplicar: ligar('dividas'),
     })
   }
   if (!p.modulos.investimentos && conta(PADRAO_INVESTIMENTO) >= 1) {
     lista.push({
-      id: 'modulo:investimentos', icone: 'investir', botao: 'Acompanhar investimentos',
-      titulo: 'Começou a investir?',
-      texto: 'Acompanhe quanto você tem investido mês a mês, junto com o resto do seu dinheiro.',
+      id: 'modulo:investimentos', icone: 'investir', botao: tx('Acompanhar investimentos'),
+      titulo: tx('Começou a investir?'),
+      texto: tx('Acompanhe quanto você tem investido mês a mês, junto com o resto do seu dinheiro.'),
       aplicar: ligar('investimentos'),
     })
   }
   if (!p.modulos.metas && conta(PADRAO_GUARDAR) >= 1) {
     lista.push({
-      id: 'modulo:metas', icone: 'meta', botao: 'Acompanhar metas',
-      titulo: 'Está guardando dinheiro?',
-      texto: 'Crie uma meta (viagem, reserva, carro…) e veja quanto guardar por mês e quando você chega lá.',
+      id: 'modulo:metas', icone: 'meta', botao: tx('Acompanhar metas'),
+      titulo: tx('Está guardando dinheiro?'),
+      texto: tx('Crie uma meta (viagem, reserva, carro…) e veja quanto guardar por mês e quando você chega lá.'),
       aplicar: ligar('metas'),
     })
   }
@@ -118,9 +119,9 @@ export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number,
     const fixa = saidasQueSeRepetem(lancs.filter((l) => !PADRAO_DIVIDA.test(l.descricao) && !ehPagamentoDeDivida(l)))[0]
     if (fixa) {
       lista.push({
-        id: 'modulo:contas', icone: 'calendario', botao: 'Ligar contas do mês',
-        titulo: `Você paga ${fixa.descricao} todo mês?`,
-        texto: 'Transforme em conta fixa e o app te lembra do vencimento, mostra o que está atrasado e dá baixa com um toque.',
+        id: 'modulo:contas', icone: 'calendario', botao: tx('Ligar contas do mês'),
+        titulo: tx('Você paga {0} todo mês?', fixa.descricao),
+        texto: tx('Transforme em conta fixa e o app te lembra do vencimento, mostra o que está atrasado e dá baixa com um toque.'),
         aplicar: ligar('contas'),
       })
     }
@@ -129,9 +130,9 @@ export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number,
     if (m === p.moeda || (p.modulos.moedas && p.moedas.includes(m)) || !lancs.some((l) => re.test(l.descricao))) continue
     const nome = infoMoeda(m).nome.toLowerCase()
     lista.push({
-      id: `moeda:${m}`, icone: 'globo', botao: `Usar ${nome}`,
-      titulo: `Você mexe com ${nome}?`,
-      texto: `Lance em ${nome} e veja quanto vale na sua moeda, com a cotação do dia.`,
+      id: `moeda:${m}`, icone: 'globo', botao: tx('Usar {0}', nome),
+      titulo: tx('Você mexe com {0}?', nome),
+      texto: tx('Lance em {0} e veja quanto vale na sua moeda, com a cotação do dia.', nome),
       aplicar: (x) => ({ ...x, moedas: [...new Set([...x.moedas, m])], modulos: { ...x.modulos, moedas: true } }),
     })
   }
@@ -139,26 +140,26 @@ export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number,
     const citados = new Set(BANCOS_TEXTO.filter((b) => lancs.some((l) => b.re.test(l.descricao))).map((b) => b.nome))
     if (citados.size >= 2) {
       lista.push({
-        id: 'modulo:bancos', icone: 'carteira', botao: 'Separar por banco',
-        titulo: `Você usa ${[...citados].slice(0, 2).join(' e ')}`,
-        texto: 'Quer ver o que entra e sai de cada banco e quanto tem guardado em cada um?',
+        id: 'modulo:bancos', icone: 'carteira', botao: tx('Separar por banco'),
+        titulo: tx('Você usa {0}', [...citados].slice(0, 2).join(' e ')),
+        texto: tx('Quer ver o que entra e sai de cada banco e quanto tem guardado em cada um?'),
         aplicar: ligar('bancos'),
       })
     }
   }
   if (p.detalhe === 'simples' && lancs.length >= 40) {
     lista.push({
-      id: 'detalhe:equilibrado', icone: 'ano', botao: 'Mostrar gráficos',
-      titulo: 'Você já lançou bastante coisa',
-      texto: 'Gráficos e a comparação com o mês passado ajudam a ver para onde as coisas estão indo.',
+      id: 'detalhe:equilibrado', icone: 'ano', botao: tx('Mostrar gráficos'),
+      titulo: tx('Você já lançou bastante coisa'),
+      texto: tx('Gráficos e a comparação com o mês passado ajudam a ver para onde as coisas estão indo.'),
       aplicar: nivel('equilibrado'),
     })
   }
   if (p.detalhe === 'equilibrado' && mesesComDados >= 4 && lancs.length >= 80) {
     lista.push({
-      id: 'detalhe:detalhado', icone: 'lista', botao: 'Ver mais detalhes',
-      titulo: `${mesesComDados} meses de histórico`,
-      texto: 'Com esse histórico, vale ver todas as categorias, os lançamentos do mês e o ano mês a mês.',
+      id: 'detalhe:detalhado', icone: 'lista', botao: tx('Ver mais detalhes'),
+      titulo: tx('{0} meses de histórico', mesesComDados),
+      texto: tx('Com esse histórico, vale ver todas as categorias, os lançamentos do mês e o ano mês a mês.'),
       aplicar: nivel('detalhado'),
     })
   }

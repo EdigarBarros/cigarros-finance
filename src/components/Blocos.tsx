@@ -13,6 +13,7 @@ import { IconeCategoria } from './IconeCategoria'
 import { Icone } from './Icone'
 import { ItemLancamento } from './ItemLancamento'
 import { Anel, Progresso, Segmentado } from './ui'
+import { tx } from '../lib/textos'
 
 /**
  * Bloco da Início: título à esquerda, um número de apoio à direita e o conteúdo embaixo.
@@ -57,12 +58,12 @@ export function BlocoLancamentos({ lancs, nivel, categoriaDe, bancos, aoEditar, 
   const limite = detalhado ? 7 : 5
   const doFiltro = maisRecentes(lancs).filter((l) => filtro === 'todos' || l.tipo === filtro)
   return (
-    <Bloco titulo={detalhado ? 'Lançamentos do mês' : 'Últimos lançamentos'}
-      acao={lancs.length > 0 && <button className="link" onClick={aoVerTodos}>Ver todos <Icone nome="seta" tamanho={14} /></button>}>
+    <Bloco titulo={detalhado ? tx('Lançamentos do mês') : tx('Últimos lançamentos')}
+      acao={lancs.length > 0 && <button className="link" onClick={aoVerTodos}>{tx('Ver todos')} <Icone nome="seta" tamanho={14} /></button>}>
       {detalhado && (
         <div className="bloco-filtro">
-          <Segmentado rotulo="Mostrar" valor={filtro} aoMudar={setFiltro}
-            opcoes={[{ id: 'todos', nome: 'Tudo' }, { id: 'entrada', nome: 'Entradas' }, { id: 'saida', nome: 'Saídas' }]} />
+          <Segmentado rotulo={tx('Mostrar')} valor={filtro} aoMudar={setFiltro}
+            opcoes={[{ id: 'todos', nome: tx('Tudo') }, { id: 'entrada', nome: tx('Entradas') }, { id: 'saida', nome: tx('Saídas') }]} />
         </div>
       )}
       {doFiltro.length ? (
@@ -72,10 +73,10 @@ export function BlocoLancamentos({ lancs, nivel, categoriaDe, bancos, aoEditar, 
           ))}
         </ul>
       ) : (
-        <p className="quadro-vazio">{filtro === 'entrada' ? 'Nenhuma entrada neste mês.' : 'Nenhuma saída neste mês.'}</p>
+        <p className="quadro-vazio">{filtro === 'entrada' ? tx('Nenhuma entrada neste mês.') : tx('Nenhuma saída neste mês.')}</p>
       )}
       {detalhado && lancs.length > limite && (
-        <button className="quadro-ver" onClick={aoVerTodos}>Ver todos os {lancs.length} lançamentos</button>
+        <button className="quadro-ver" onClick={aoVerTodos}>{tx('Ver todos os {0} lançamentos', lancs.length)}</button>
       )}
     </Bloco>
   )
@@ -95,16 +96,16 @@ export function BlocoGastos({ r, anterior, categorias, nivel, mesAnterior, aoEdi
   const fatias = detalhado || todas ? completas : fatiasDeGastos(r.gastosPorCategoria, categorias, limite)
   const maior = completas[0]?.valor ?? 0
   return (
-    <Bloco id="para-onde-foi" titulo="Para onde foi o dinheiro" acao={<button className="link" onClick={aoEditar}>Categorias</button>}>
+    <Bloco id="para-onde-foi" titulo={tx('Para onde foi o dinheiro')} acao={<button className="link" onClick={aoEditar}>{tx('Categorias')}</button>}>
       {!completas.length ? (
-        <p className="quadro-vazio">Quando você lançar saídas, aparece aqui em que você mais gasta.</p>
+        <p className="quadro-vazio">{tx('Quando você lançar saídas, aparece aqui em que você mais gasta.')}</p>
       ) : (
         <>
           {nivel !== 'simples' && (
             <div className="rosca-lado">
               <div className="rosca-centro-caixa">
                 <Rosca fatias={fatiasDeGastos(r.gastosPorCategoria, categorias, 6)} altura={170} legenda={false} rotulos={false} cutout="72%" />
-                <div className="rosca-centro"><strong>{fmtValor(r.saidas)}</strong><small>Saiu no mês</small></div>
+                <div className="rosca-centro"><strong>{fmtValor(r.saidas)}</strong><small>{tx('Saiu no mês')}</small></div>
               </div>
               <ul className="legenda-lista">
                 {fatiasDeGastos(r.gastosPorCategoria, categorias, 6).map((f) => (
@@ -127,7 +128,7 @@ export function BlocoGastos({ r, anterior, categorias, nivel, mesAnterior, aoEdi
                   <span className="gasto-nome">
                     <span className="gasto-icone" style={{ color: f.cor }}><IconeCategoria emoji={f.icone} tamanho={15} /></span>{f.nome}
                     {dif !== null && Math.abs(dif) >= 0.1 && (
-                      <span className={`chip-info ${dif > 0 ? 'ruim' : 'bom'}`} title={`${fmtPct(Math.abs(dif))} ${dif > 0 ? 'a mais' : 'a menos'} que em ${mesAnterior}`}>
+                      <span className={`chip-info ${dif > 0 ? 'ruim' : 'bom'}`} title={dif > 0 ? tx('{0} a mais que em {1}', fmtPct(Math.abs(dif)), mesAnterior) : tx('{0} a menos que em {1}', fmtPct(Math.abs(dif)), mesAnterior)}>
                         <Icone nome={dif > 0 ? 'sobe' : 'desce'} tamanho={11} />{fmtPct(Math.abs(dif))}
                       </span>
                     )}
@@ -140,7 +141,7 @@ export function BlocoGastos({ r, anterior, categorias, nivel, mesAnterior, aoEdi
           </ul>}
           {!detalhado && (nivel === 'simples' ? completas.length > limite : true) && (
             <button className="quadro-ver" onClick={() => setTodas(!todas)}>
-              {todas ? 'Mostrar menos' : nivel === 'simples' ? `Ver todas as ${completas.length} categorias` : 'Ver valores por categoria'}
+              {todas ? tx('Mostrar menos') : nivel === 'simples' ? tx('Ver todas as {0} categorias', completas.length) : tx('Ver valores por categoria')}
             </button>
           )}
         </>
@@ -169,54 +170,54 @@ export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTod
   // na Início a lista fica curta para caber ao lado de contas e cartões; a página Dívidas tem todas
   const limite = nivel === 'simples' ? 3 : 4
   return (
-    <Bloco titulo="Dívidas" valor={itens.length ? fmtValor(total) : undefined} legenda={itens.length ? 'falta pagar' : undefined}
-      acao={<button className="quadro-mais" onClick={aoNova} aria-label="Adicionar dívida"><Icone nome="mais" tamanho={16} /></button>}>
+    <Bloco titulo={tx('Dívidas')} valor={itens.length ? fmtValor(total) : undefined} legenda={itens.length ? tx('falta pagar') : undefined}
+      acao={<button className="quadro-mais" onClick={aoNova} aria-label={tx('Adicionar dívida')}><Icone nome="mais" tamanho={16} /></button>}>
       {!itens.length ? (
-        <p className="quadro-vazio">Tem parcela ou empréstimo? Adicione para ver quanto falta e quando acaba. <button className="link" onClick={aoNova}>Adicionar dívida</button></p>
+        <p className="quadro-vazio">{tx('Tem parcela ou empréstimo? Adicione para ver quanto falta e quando acaba.')} <button className="link" onClick={aoNova}>{tx('Adicionar dívida')}</button></p>
       ) : (
         <>
           {total > 0 && (
             <div className="divida-resumo">
               <Anel valor={pagoPct / 100} cor={COR.entradas} tamanho={58}>{pagoPct}%</Anel>
               <span className="divida-resumo-texto">
-                <small>já pago</small>
+                <small>{tx('já pago')}</small>
                 <b>{fmtValor(inicial - total)}</b>
               </span>
-              {fim && <span className="chip-info"><Icone nome="calendario" tamanho={13} /> livre em {quando(fim)}</span>}
+              {fim && <span className="chip-info"><Icone nome="calendario" tamanho={13} /> {tx('livre em')} {quando(fim)}</span>}
             </div>
           )}
           {itens.slice(0, limite).map((s) => (
             <div key={s.divida.id} className={`divida-linha ${s.quitadaNoMes ? 'quitada' : ''}`}>
               <button className="divida-linha-info" onClick={() => aoEditar(s)}>
                 <span className="divida-linha-nome">{s.divida.descricao}</span>
-                <span className="divida-linha-valor">{s.quitadaNoMes ? 'Quitada ✓' : fmtDiv(s, s.restante)}</span>
+                <span className="divida-linha-valor">{s.quitadaNoMes ? tx('Quitada ✓') : fmtDiv(s, s.restante)}</span>
                 <Progresso valor={s.saldoInicial - s.restante} total={s.saldoInicial} cor={COR.entradas} />
                 {(() => {
                   // chips curtos no lugar da frase: parcela, valor por mês, quando acaba, pago no mês
                   const p = parcelasDe(s)
                   const chips = [
-                    p && !s.quitadaNoMes ? <span key="p" className="chip-info" title={`parcela ${p.proxima} de ${p.total}`}>{p.proxima}/{p.total}</span> : null,
-                    nivel !== 'simples' && s.divida.valor_parcela ? <span key="v" className="chip-info">{fmtDiv(s, s.divida.valor_parcela)}/mês</span> : null,
+                    p && !s.quitadaNoMes ? <span key="p" className="chip-info" title={tx('parcela {0} de {1}', p.proxima, p.total)}>{p.proxima}/{p.total}</span> : null,
+                    nivel !== 'simples' && s.divida.valor_parcela ? <span key="v" className="chip-info">{tx('{0}/mês', fmtDiv(s, s.divida.valor_parcela))}</span> : null,
                     !s.quitadaNoMes && s.quitacao ? <span key="q" className="chip-info"><Icone nome="calendario" tamanho={12} />{quando(s.quitacao)}</span> : null,
                     nivel === 'detalhado' && s.pagoNoMes ? <span key="m" className="chip-info bom">+{fmtDiv(s, s.pagoNoMes)}</span> : null,
                   ].filter(Boolean)
                   return chips.length > 0 && <span className="divida-linha-sub chips-info">{chips}</span>
                 })()}
               </button>
-              {!s.quitadaNoMes && <button className="pagar" onClick={() => aoPagar(s)}>Pagar</button>}
+              {!s.quitadaNoMes && <button className="pagar" onClick={() => aoPagar(s)}>{tx('Pagar')}</button>}
             </div>
           ))}
-          {itens.length > limite && <button className="quadro-ver" onClick={aoVerTodas}>Ver todas as {itens.length} dívidas</button>}
+          {itens.length > limite && <button className="quadro-ver" onClick={aoVerTodas}>{tx('Ver todas as {0} dívidas', itens.length)}</button>}
         </>
       )}
       {aReceber && aReceber.quantos > 0 && (
         <button className="divida-receber" onClick={aoVerReceber}>
           <span className="divida-receber-icone"><Icone nome="receber" tamanho={18} /></span>
           <span className="divida-receber-texto">
-            <b>A receber</b>
+            <b>{tx('A receber')}</b>
             <small>
-              {aReceber.quantos} em aberto
-              {aReceber.atrasado > 0 && <> · <em>{fmtValor(aReceber.atrasado)} venceu</em></>}
+              {tx('{0} em aberto', aReceber.quantos)}
+              {aReceber.atrasado > 0 && <> · <em>{tx('{0} venceu', fmtValor(aReceber.atrasado))}</em></>}
             </small>
           </span>
           <strong>{fmtValor(aReceber.falta)}</strong>
@@ -246,29 +247,29 @@ export function BlocoDinheiro({ v, nivel, bancos, caixa, investimentos, moedas, 
     </button>
   )
   return (
-    <Bloco titulo="Dinheiro guardado" valor={total ? fmtValor(total) : undefined}
-      acao={<button className="link" onClick={aoAbrir}>Abrir</button>}>
+    <Bloco titulo={tx('Dinheiro guardado')} valor={total ? fmtValor(total) : undefined}
+      acao={<button className="link" onClick={aoAbrir}>{tx('Abrir')}</button>}>
       {v.bancos && (abrir && bancos.length
         ? bancos.map((b) => {
           const ls = lancs.filter((l) => l.banco_id === b.id)
           return linha(b.id, <><i className="marcador" style={{ background: b.cor }} />{b.nome}</>, fmtValor(caixaDoBanco(caixa, b.id)),
-            nivel === 'detalhado' && ls.length ? `Entrou ${fmtValor(somaTipo(ls, 'entrada'))} · saiu ${fmtValor(somaTipo(ls, 'saida'))} neste mês` : null,
+            nivel === 'detalhado' && ls.length ? tx('Entrou {0} · saiu {1} neste mês', fmtValor(somaTipo(ls, 'entrada')), fmtValor(somaTipo(ls, 'saida'))) : null,
             () => aoAbrirBanco(b.id))
         })
-        : linha('contas', <><i className="marcador" style={{ background: COR.caixa }} />Nas contas</>, fmtValor(totalCaixa),
-          bancos.length ? null : 'Adicione seus bancos para ver quanto tem em cada um', aoAbrir))}
-      {v.investimentos && linha('inv', <><i className="marcador" style={{ background: COR.investimentos }} />Investido</>, fmtValor(investimentos),
-        investimentos ? null : 'Informar quanto você tem investido', aoAbrir)}
+        : linha('contas', <><i className="marcador" style={{ background: COR.caixa }} />{tx('Nas contas')}</>, fmtValor(totalCaixa),
+          bancos.length ? null : tx('Adicione seus bancos para ver quanto tem em cada um'), aoAbrir))}
+      {v.investimentos && linha('inv', <><i className="marcador" style={{ background: COR.investimentos }} />{tx('Investido')}</>, fmtValor(investimentos),
+        investimentos ? null : tx('Informar quanto você tem investido'), aoAbrir)}
       {v.moedas && (abrir
         ? lista.map((m) => {
           const i = infoMoeda(m)
           const conv = converter(moedas[m] ?? 0, m, taxas)
           return linha(m, <>{i.bandeira}&nbsp;&nbsp;{i.nome}</>, conv === null ? '—' : `≈ ${fmtValor(conv)}`,
-            conv === null ? 'Sem cotação agora' : `${fmtMoeda(moedas[m] ?? 0, m)} · 1 ${m} = ${fmtValor(taxas[m])}`, aoAbrir)
+            conv === null ? tx('Sem cotação agora') : `${fmtMoeda(moedas[m] ?? 0, m)} · 1 ${m} = ${fmtValor(taxas[m])}`, aoAbrir)
         })
-        : linha('moedas', <><i className="marcador" style={{ background: COR.usd }} />Em outras moedas</>, `≈ ${fmtValor(totalMoedas)}`, null, aoAbrir))}
+        : linha('moedas', <><i className="marcador" style={{ background: COR.usd }} />{tx('Em outras moedas')}</>, `≈ ${fmtValor(totalMoedas)}`, null, aoAbrir))}
       {herdadoDe && (
-        <p className="aviso-herdado">Valores de {MESES_NOME[herdadoDe[1] - 1].toLowerCase()} de {herdadoDe[0]}. <button className="link" onClick={aoAbrir}>Atualizar</button></p>
+        <p className="aviso-herdado">{tx('Valores de {0} de {1}.', MESES_NOME[herdadoDe[1] - 1].toLowerCase(), herdadoDe[0])} <button className="link" onClick={aoAbrir}>{tx('Atualizar')}</button></p>
       )}
     </Bloco>
   )
@@ -280,12 +281,12 @@ export function BlocoMetas({ metas, taxas, nivel, aoAbrir }: { metas: SituacaoMe
   const guardado = metas.reduce((a, s) => a + (converter(s.guardado, s.meta.moeda, taxas) ?? 0), 0)
   const limite = nivel === 'simples' ? 2 : nivel === 'equilibrado' ? 4 : Infinity
   return (
-    <Bloco titulo="Suas metas" sub={metas.length ? <>{fmtValor(guardado)} guardado no total</> : undefined}
-      acao={<button className="link" onClick={aoAbrir}>{metas.length ? <>Ver todas <Icone nome="seta" tamanho={14} /></> : 'Criar'}</button>}>
+    <Bloco titulo={tx('Suas metas')} sub={metas.length ? <>{tx('{0} guardado no total', fmtValor(guardado))}</> : undefined}
+      acao={<button className="link" onClick={aoAbrir}>{metas.length ? <>{tx('Ver todas')} <Icone nome="seta" tamanho={14} /></> : tx('Criar')}</button>}>
       {!metas.length && (
-        <p className="quadro-vazio">Junte dinheiro para uma viagem, um carro ou uma reserva. <button className="link" onClick={aoAbrir}>Criar a primeira meta</button></p>
+        <p className="quadro-vazio">{tx('Junte dinheiro para uma viagem, um carro ou uma reserva.')} <button className="link" onClick={aoAbrir}>{tx('Criar a primeira meta')}</button></p>
       )}
-      {metas.length > 0 && !ativas.length && <p className="quadro-vazio">Todas as metas batidas! 🎉 <button className="link" onClick={aoAbrir}>Criar outra</button></p>}
+      {metas.length > 0 && !ativas.length && <p className="quadro-vazio">{tx('Todas as metas batidas! 🎉')} <button className="link" onClick={aoAbrir}>{tx('Criar outra')}</button></p>}
       {ativas.slice(0, limite).map((s) => (
         <button key={s.meta.id} className="meta-linha" onClick={aoAbrir} style={{ '--c': s.meta.cor } as React.CSSProperties}>
           <span className="meta-linha-icone" aria-hidden="true"><IconeCategoria emoji={s.meta.icone} tamanho={20} /></span>
@@ -298,19 +299,19 @@ export function BlocoMetas({ metas, taxas, nivel, aoAbrir }: { metas: SituacaoMe
           <Progresso valor={s.guardado} total={s.meta.alvo} cor={s.meta.cor} />
         </button>
       ))}
-      {ativas.length > limite && <button className="quadro-ver" onClick={aoAbrir}>Ver todas as {ativas.length} metas</button>}
+      {ativas.length > limite && <button className="quadro-ver" onClick={aoAbrir}>{tx('Ver todas as {0} metas', ativas.length)}</button>}
     </Bloco>
   )
 }
 
 const LINHAS_ANUAIS: { nome: string; cor: string; valor: (r: Resumo) => number; mostrar?: (v: Visao) => boolean }[] = [
-  { nome: 'Entrou', cor: COR.entradas, valor: (r) => r.entradas },
-  { nome: 'Saiu', cor: COR.saidas, valor: (r) => r.saidas },
-  { nome: 'Sobrou', cor: COR.fluxo, valor: (r) => r.fluxo },
-  { nome: 'Guardado nas contas', cor: COR.caixa, valor: (r) => r.caixa, mostrar: (v) => v.bancos },
-  { nome: 'Dívidas', cor: COR.divida, valor: (r) => r.divida, mostrar: (v) => v.dividas },
-  { nome: 'Investido', cor: COR.investimentos, valor: (r) => r.investimentos, mostrar: (v) => v.investimentos },
-  { nome: 'Em outras moedas', cor: COR.usd, valor: (r) => r.moedasConvertido, mostrar: (v) => v.moedas },
+  { nome: tx('Entrou'), cor: COR.entradas, valor: (r) => r.entradas },
+  { nome: tx('Saiu'), cor: COR.saidas, valor: (r) => r.saidas },
+  { nome: tx('Sobrou'), cor: COR.fluxo, valor: (r) => r.fluxo },
+  { nome: tx('Guardado nas contas'), cor: COR.caixa, valor: (r) => r.caixa, mostrar: (v) => v.bancos },
+  { nome: tx('Dívidas'), cor: COR.divida, valor: (r) => r.divida, mostrar: (v) => v.dividas },
+  { nome: tx('Investido'), cor: COR.investimentos, valor: (r) => r.investimentos, mostrar: (v) => v.investimentos },
+  { nome: tx('Em outras moedas'), cor: COR.usd, valor: (r) => r.moedasConvertido, mostrar: (v) => v.moedas },
 ]
 
 /** Resumo do ano: uma linha colorida por indicador (dos módulos ligados), uma coluna por mês. */
@@ -332,7 +333,7 @@ export function TabelaAnual({ porMes, mesAtual, aoClicarMes, v }: {
             <th />
             {MESES_CURTO.map((m, i) => (
               <th key={m} className={i + 1 === mesAtual ? 'atual' : ''}>
-                <button onClick={() => aoClicarMes(i + 1)} title={`Abrir ${MESES_NOME[i].toLowerCase()}`}>{m}</button>
+                <button onClick={() => aoClicarMes(i + 1)} title={tx('Abrir {0}', MESES_NOME[i].toLowerCase())}>{m}</button>
               </th>
             ))}
           </tr>

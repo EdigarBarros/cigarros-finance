@@ -13,15 +13,17 @@ import { Selo } from './Categorias'
 import { PARTES_ZERAR, type EscolhaZerar, type ParteZerar } from '../lib/zerar'
 import { Icone } from './Icone'
 import { Interruptor, Modal, Opcao } from './ui'
+import { LOCAL_DAS_DATAS } from '../lib/format'
+import { tx } from '../lib/textos'
 
 type Secao = 'perfil' | 'aparencia' | 'painel' | 'categorias' | 'dados' | 'conta'
 const SECOES: { id: Secao; nome: string; icone: string; sub: string }[] = [
-  { id: 'perfil', nome: 'Perfil', icone: 'carteira', sub: 'Seu nome e as moedas que você usa' },
-  { id: 'aparencia', nome: 'Aparência', icone: 'sol', sub: 'Tema e animações' },
-  { id: 'painel', nome: 'Painel', icone: 'ajustes', sub: 'O que aparece e o jeito de ver' },
-  { id: 'categorias', nome: 'Categorias', icone: 'lista', sub: 'Onde cada lançamento se encaixa' },
-  { id: 'dados', nome: 'Dados', icone: 'exportar', sub: 'Backup, planilha e começar de novo' },
-  { id: 'conta', nome: 'Conta', icone: 'sair', sub: 'Sua sessão neste aparelho' },
+  { id: 'perfil', nome: tx('Perfil'), icone: 'carteira', sub: tx('Seu nome e as moedas que você usa') },
+  { id: 'aparencia', nome: tx('Aparência'), icone: 'sol', sub: tx('Tema e animações') },
+  { id: 'painel', nome: tx('Painel'), icone: 'ajustes', sub: tx('O que aparece e o jeito de ver') },
+  { id: 'categorias', nome: tx('Categorias'), icone: 'lista', sub: tx('Onde cada lançamento se encaixa') },
+  { id: 'dados', nome: tx('Dados'), icone: 'exportar', sub: tx('Backup, planilha e começar de novo') },
+  { id: 'conta', nome: tx('Conta'), icone: 'sair', sub: tx('Sua sessão neste aparelho') },
 ]
 
 /** Cartão de ação grande (Dados e Conta). */
@@ -77,14 +79,14 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
   const trocarTema = (t: PreferenciaTema, e: React.MouseEvent) => definirTema(t, { x: e.clientX, y: e.clientY })
 
   return (
-    <Modal titulo="Configurações" aoFechar={fechar} tamanho="grande">
+    <Modal titulo={tx('Configurações')} aoFechar={fechar} tamanho="grande">
       <div className="config">
         <aside className="config-lado">
           <div className="config-quem">
             <span className="config-avatar">{foto ? <img src={foto} alt="" /> : iniciais || '?'}</span>
-            <span><strong>{nome.trim() || 'Você'}</strong><small>{email}</small></span>
+            <span><strong>{nome.trim() || tx('Você')}</strong><small>{email}</small></span>
           </div>
-          <nav className="config-nav" aria-label="Seções" ref={nav}>
+          <nav className="config-nav" aria-label={tx('Seções')} ref={nav}>
             {lente && <span className="config-lente" aria-hidden="true" style={estiloLente(lente)} />}
             {SECOES.map((x) => (
               <button key={x.id} type="button" className={secao === x.id ? 'ativo' : ''} onClick={() => { salvarNome(); setSecao(x.id) }}>
@@ -105,13 +107,13 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
               <section className="cfg-cartao cfg-voce">
                 <FotoPerfil foto={foto ?? null} iniciais={iniciais} aoMudar={aoMudarFoto} />
                 <label className="campo">
-                  <span className="campo-rotulo">Como quer ser chamado</span>
-                  <input value={nome} onChange={(e) => setNome(e.target.value)} onBlur={salvarNome} placeholder="Seu nome ou apelido" maxLength={40} />
+                  <span className="campo-rotulo">{tx('Como quer ser chamado')}</span>
+                  <input value={nome} onChange={(e) => setNome(e.target.value)} onBlur={salvarNome} placeholder={tx('Seu nome ou apelido')} maxLength={40} />
                 </label>
               </section>
               <section className="cfg-bloco">
-                <h4>Moeda principal <small>todos os totais aparecem nela; o que já foi lançado não é convertido</small></h4>
-                <div className="cfg-moedas" role="radiogroup" aria-label="Moeda principal">
+                <h4>{tx('Moeda principal')} <small>{tx('todos os totais aparecem nela; o que já foi lançado não é convertido')}</small></h4>
+                <div className="cfg-moedas" role="radiogroup" aria-label={tx('Moeda principal')}>
                   {MOEDAS.map((m) => (
                     <button key={m.codigo} type="button" role="radio" aria-checked={perfil.moeda === m.codigo}
                       className={`cfg-moeda ${perfil.moeda === m.codigo ? 'ativo' : ''}`} onClick={() => escolherPrincipal(m.codigo)}>
@@ -123,8 +125,8 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
                 </div>
               </section>
               <section className="cfg-bloco">
-                <h4>Outras moedas que você usa <small>toque para ligar ou desligar; o painel mostra quanto valem na sua moeda</small></h4>
-                <div className="cfg-moedas" role="group" aria-label="Outras moedas">
+                <h4>{tx('Outras moedas que você usa')} <small>{tx('toque para ligar ou desligar; o painel mostra quanto valem na sua moeda')}</small></h4>
+                <div className="cfg-moedas" role="group" aria-label={tx('Outras moedas')}>
                   {MOEDAS.filter((x) => x.codigo !== perfil.moeda).map((m) => (
                     <button key={m.codigo} type="button" role="checkbox" aria-checked={perfil.moedas.includes(m.codigo)}
                       className={`cfg-moeda multipla ${perfil.moedas.includes(m.codigo) ? 'ativo' : ''}`} onClick={() => alternarMoeda(m.codigo)}>
@@ -141,9 +143,9 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
           {secao === 'aparencia' && (
             <>
               <section className="cfg-bloco">
-                <h4>Tema</h4>
-                <div className="cfg-escolhas tres" role="radiogroup" aria-label="Tema">
-                  {([['sistema', 'Automático', 'auto', 'Segue o seu aparelho'], ['claro', 'Claro', 'claro', 'Fundo claro, ótimo de dia'], ['escuro', 'Escuro', 'escuro', 'Descansa os olhos à noite']] as const).map(([id, rotulo, previa, texto]) => (
+                <h4>{tx('Tema')}</h4>
+                <div className="cfg-escolhas tres" role="radiogroup" aria-label={tx('Tema')}>
+                  {([['sistema', tx('Automático'), 'auto', tx('Segue o seu aparelho')], ['claro', tx('Claro'), 'claro', tx('Fundo claro, ótimo de dia')], ['escuro', tx('Escuro'), 'escuro', tx('Descansa os olhos à noite')]] as const).map(([id, rotulo, previa, texto]) => (
                     <button key={id} type="button" role="radio" aria-checked={preferencia === id}
                       className={`cfg-escolha ${preferencia === id ? 'ativo' : ''}`} onClick={(e) => trocarTema(id, e)}>
                       <PreviaTema tema={previa} />
@@ -154,9 +156,9 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
                 </div>
               </section>
               <section className="cfg-bloco">
-                <h4>Animações</h4>
-                <div className="cfg-escolhas dois" role="radiogroup" aria-label="Animações">
-                  {([['completo', 'Completas', 'Blocos que surgem, números que contam e o tema que se espalha'], ['reduzido', 'Reduzidas', 'Tudo aparece direto, sem movimento']] as const).map(([id, rotulo, texto]) => (
+                <h4>{tx('Animações')}</h4>
+                <div className="cfg-escolhas dois" role="radiogroup" aria-label={tx('Animações')}>
+                  {([['completo', tx('Completas'), tx('Blocos que surgem, números que contam e o tema que se espalha')], ['reduzido', tx('Reduzidas'), tx('Tudo aparece direto, sem movimento')]] as const).map(([id, rotulo, texto]) => (
                     <button key={id} type="button" role="radio" aria-checked={movimento === id}
                       className={`cfg-escolha ${movimento === id ? 'ativo' : ''}`} onClick={() => definirMovimento(id as Movimento)}>
                       <span className={`previa-movimento ${id}`} aria-hidden="true"><i /><i /><i /><i /><i /></span>
@@ -172,8 +174,8 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
           {secao === 'painel' && (
             <>
               <section className="cfg-bloco">
-                <h4>Jeito de ver</h4>
-                <div className="cfg-escolhas tres" role="radiogroup" aria-label="Jeito de ver">
+                <h4>{tx('Jeito de ver')}</h4>
+                <div className="cfg-escolhas tres" role="radiogroup" aria-label={tx('Jeito de ver')}>
                   {DETALHES.map((d) => (
                     <button key={d.id} type="button" role="radio" aria-checked={perfil.detalhe === d.id}
                       className={`cfg-escolha ${perfil.detalhe === d.id ? 'ativo' : ''}`} onClick={() => aoMudar({ ...perfil, detalhe: d.id })}>
@@ -185,7 +187,7 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
                 </div>
               </section>
               <section className="cfg-bloco">
-                <h4>O que aparece no seu painel <small>entradas e saídas estão sempre ligadas: são a base de tudo</small></h4>
+                <h4>{tx('O que aparece no seu painel')} <small>{tx('entradas e saídas estão sempre ligadas: são a base de tudo')}</small></h4>
                 <div className="cfg-modulos">
                   {MODULOS.map((m) => (
                     <div key={m.id} className={`cfg-modulo ${perfil.modulos[m.id] ? 'ligado' : ''}`}>
@@ -207,17 +209,17 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
                   <span key={c.id} className="cfg-selo" title={c.nome}><Selo c={c} tamanho={44} /><small>{c.nome}</small></span>
                 ))}
               </div>
-              <button type="button" className="btn primario" onClick={aoCategorias}><Icone nome="ajustes" tamanho={16} /> Editar categorias</button>
+              <button type="button" className="btn primario" onClick={aoCategorias}><Icone nome="ajustes" tamanho={16} /> {tx('Editar categorias')}</button>
             </section>
           )}
 
           {secao === 'dados' && (
             <div className="cfg-acoes">
-              <CartaoAcao icone="exportar" titulo="Baixar backup" texto="Um arquivo com todos os seus dados, para guardar com você." aoClicar={aoBackup} />
-              {aoExtrato && <CartaoAcao icone="relatorio" titulo="Importar extrato" texto="PDF, CSV, Excel, Word ou OFX do seu banco. Arruma os nomes e mostra tudo antes de gravar." aoClicar={aoExtrato} />}
-              {aoOrganizar && <CartaoAcao icone="lapis" titulo="Organizar nomes" texto="Tira CPF, CNPJ, códigos e texto de banco dos nomes dos lançamentos que você já tem." aoClicar={aoOrganizar} />}
-              <CartaoAcao icone="importar" titulo="Importar planilha" texto="Traz os meses de uma planilha (.xlsx). Pede confirmação antes." aoClicar={aoImportar} />
-              <CartaoAcao icone="lixeira" titulo="Zerar dados" texto="Escolha o que apagar: tudo, entradas, saídas, dívidas, cartões e mais." aoClicar={aoZerar} perigo />
+              <CartaoAcao icone="exportar" titulo={tx('Baixar backup')} texto={tx('Um arquivo com todos os seus dados, para guardar com você.')} aoClicar={aoBackup} />
+              {aoExtrato && <CartaoAcao icone="relatorio" titulo={tx('Importar extrato')} texto={tx('PDF, CSV, Excel, Word ou OFX do seu banco. Arruma os nomes e mostra tudo antes de gravar.')} aoClicar={aoExtrato} />}
+              {aoOrganizar && <CartaoAcao icone="lapis" titulo={tx('Organizar nomes')} texto={tx('Tira CPF, CNPJ, códigos e texto de banco dos nomes dos lançamentos que você já tem.')} aoClicar={aoOrganizar} />}
+              <CartaoAcao icone="importar" titulo={tx('Importar planilha')} texto={tx('Traz os meses de uma planilha (.xlsx). Pede confirmação antes.')} aoClicar={aoImportar} />
+              <CartaoAcao icone="lixeira" titulo={tx('Zerar dados')} texto={tx('Escolha o que apagar: tudo, entradas, saídas, dívidas, cartões e mais.')} aoClicar={aoZerar} perigo />
             </div>
           )}
 
@@ -225,18 +227,18 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
             <>
               <section className="cfg-cartao cfg-voce">
                 <span className="config-avatar grande">{foto ? <img src={foto} alt="" /> : iniciais || '?'}</span>
-                <span className="cfg-conta"><small>Você entrou como</small><strong className="config-email">{email || 'sem e-mail'}</strong></span>
+                <span className="cfg-conta"><small>{tx('Você entrou como')}</small><strong className="config-email">{email || tx('sem e-mail')}</strong></span>
               </section>
               <div className="cfg-acoes">
-                {aoTour && <CartaoAcao icone="ideia" titulo="Ver o tutorial" texto="Um passeio rápido pelo painel, mostrando onde fica cada coisa e como ligar mais abas." aoClicar={aoTour} />}
-                <CartaoAcao icone="ajustes" titulo="Refazer as perguntas" texto="Responda de novo as perguntas iniciais para reajustar o painel." aoClicar={aoRefazer} />
+                {aoTour && <CartaoAcao icone="ideia" titulo={tx('Ver o tutorial')} texto={tx('Um passeio rápido pelo painel, mostrando onde fica cada coisa e como ligar mais abas.')} aoClicar={aoTour} />}
+                <CartaoAcao icone="ajustes" titulo={tx('Refazer as perguntas')} texto={tx('Responda de novo as perguntas iniciais para reajustar o painel.')} aoClicar={aoRefazer} />
                 {assinatura && assinatura.status !== 'cortesia' && (
                   emTeste(assinatura)
-                    ? <CartaoAcao icone="cartao" titulo="Assinar o OpusCash" texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-checkout', perfil.moeda).then((m) => m && alert(m))} />
-                    : <CartaoAcao icone="cartao" titulo="Gerenciar assinatura" texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-portal').then((m) => m && alert(m))} />
+                    ? <CartaoAcao icone="cartao" titulo={tx('Assinar o OpusCash')} texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-checkout', perfil.moeda).then((m) => m && alert(m))} />
+                    : <CartaoAcao icone="cartao" titulo={tx('Gerenciar assinatura')} texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-portal').then((m) => m && alert(m))} />
                 )}
-                <CartaoAcao icone="sair" titulo="Sair" texto="Encerra a sessão neste aparelho." aoClicar={aoSair} />
-                {aoExcluirConta && <CartaoAcao icone="lixeira" titulo="Excluir minha conta" texto="Apaga seu login e todos os seus dados de vez e cancela a assinatura." aoClicar={aoExcluirConta} perigo />}
+                <CartaoAcao icone="sair" titulo={tx('Sair')} texto={tx('Encerra a sessão neste aparelho.')} aoClicar={aoSair} />
+                {aoExcluirConta && <CartaoAcao icone="lixeira" titulo={tx('Excluir minha conta')} texto={tx('Apaga seu login e todos os seus dados de vez e cancela a assinatura.')} aoClicar={aoExcluirConta} perigo />}
               </div>
             </>
           )}
@@ -265,24 +267,24 @@ export function ZerarDados({ contagem, aoBaixarBackup, aoZerar, aoFechar }: {
 
   const alternar = (id: ParteZerar) => setEscolha((e) => ({ ...e, [id]: !e[id] }))
   const baixar = async () => {
-    setOcupado('Gerando backup…')
+    setOcupado(tx('Gerando backup…'))
     try { await aoBaixarBackup(); setBaixou(true) } catch (e) { setErro(e instanceof Error ? e.message : String(e)) }
     setOcupado(null)
   }
   const zerar = async () => {
-    setOcupado('Apagando…')
+    setOcupado(tx('Apagando…'))
     setErro(null)
     try { await aoZerar(escolha) } catch (e) {
-      setErro(`Não deu para apagar tudo: ${e instanceof Error ? e.message : String(e)}. Tente de novo.`)
+      setErro(tx('Não deu para apagar tudo: {0}. Tente de novo.', e instanceof Error ? e.message : String(e)))
       setOcupado(null)
     }
   }
   const quanto = (id: ParteZerar) => (contagem[id] ? ` (${contagem[id]})` : '')
 
   return (
-    <Modal titulo="Zerar dados" aoFechar={() => !ocupado && aoFechar()}>
+    <Modal titulo={tx('Zerar dados')} aoFechar={() => !ocupado && aoFechar()}>
       <div className="form">
-        <p className="zerar-texto">Escolha o que apagar. <b>Não tem como desfazer.</b></p>
+        <p className="zerar-texto">{tx('Escolha o que apagar.')} <b>{tx('Não tem como desfazer.')}</b></p>
         <div className="opcoes">
           {PARTES_ZERAR.map((x) => {
             const ativo = Boolean(escolha[x.id] || (escolha.tudo && x.id !== 'tudo'))
@@ -294,23 +296,23 @@ export function ZerarDados({ contagem, aoBaixarBackup, aoZerar, aoFechar }: {
         </div>
         <p className="zerar-texto" aria-live="polite">
           {escolha.tudo
-            ? <>Vai apagar <b>tudo</b>: lançamentos, dívidas, cartões, contas fixas, metas, saldos, bancos e categorias. As perguntas iniciais aparecem de novo.</>
+            ? <>{tx('Vai apagar')} <b>{tx('tudo')}</b>{tx(': lançamentos, dívidas, cartões, contas fixas, metas, saldos, bancos e categorias. As perguntas iniciais aparecem de novo.')}</>
             : marcadas.length
-              ? <>Vai apagar: <b>{marcadas.map((x) => x.nome.toLowerCase()).join(', ')}</b>. O resto fica como está.</>
-              : 'Marque o que quer apagar.'}
+              ? <>{tx('Vai apagar:')} <b>{marcadas.map((x) => x.nome.toLowerCase()).join(', ')}</b>{tx('. O resto fica como está.')}</>
+              : tx('Marque o que quer apagar.')}
         </p>
         <button type="button" className="btn" onClick={baixar} disabled={Boolean(ocupado)}>
-          <Icone nome="exportar" tamanho={16} /> {baixou ? 'Backup baixado ✓' : 'Baixar backup antes (recomendado)'}
+          <Icone nome="exportar" tamanho={16} /> {baixou ? tx('Backup baixado ✓') : tx('Baixar backup antes (recomendado)')}
         </button>
         <label className="campo">
-          <span className="campo-rotulo">Para confirmar, digite <b>ZERAR</b></span>
+          <span className="campo-rotulo">{tx('Para confirmar, digite')} <b>{tx('ZERAR')}</b></span>
           <input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="ZERAR" autoComplete="off" autoCapitalize="characters" />
         </label>
         {erro && <p className="form-erro">{erro}</p>}
         <div className="form-acoes">
           <span className="espaco" />
-          <button type="button" className="btn" onClick={aoFechar} disabled={Boolean(ocupado)}>Cancelar</button>
-          <button type="button" className="btn perigo-forte" disabled={!pode} onClick={zerar}>{ocupado ?? 'Zerar dados'}</button>
+          <button type="button" className="btn" onClick={aoFechar} disabled={Boolean(ocupado)}>{tx('Cancelar')}</button>
+          <button type="button" className="btn perigo-forte" disabled={!pode} onClick={zerar}>{ocupado ?? tx('Zerar dados')}</button>
         </div>
       </div>
     </Modal>
@@ -328,7 +330,7 @@ export function CartaoSugestao({ s, aoAceitar, aoRecusar }: { s: Sugestao; aoAce
       </div>
       <div className="sugestao-acoes">
         <button className="btn primario" onClick={aoAceitar}>{s.botao}</button>
-        <button className="btn" onClick={aoRecusar}>Agora não</button>
+        <button className="btn" onClick={aoRecusar}>{tx('Agora não')}</button>
       </div>
     </section>
   )
@@ -345,8 +347,8 @@ export function CartaoAcompanhar({ perfil, aoLigar, aoPersonalizar }: {
   return (
     <section className="bloco acompanhar">
       <header className="bloco-cab">
-        <h2>{desligados.length ? 'Acompanhe mais' : 'Seu painel'}</h2>
-        <button className="link" onClick={aoPersonalizar}><Icone nome="ajustes" tamanho={15} /> Personalizar</button>
+        <h2>{desligados.length ? tx('Acompanhe mais') : tx('Seu painel')}</h2>
+        <button className="link" onClick={aoPersonalizar}><Icone nome="ajustes" tamanho={15} /> {tx('Personalizar')}</button>
       </header>
       <div className="acompanhar-grade">
         {desligados.map((m) => (
@@ -360,7 +362,7 @@ export function CartaoAcompanhar({ perfil, aoLigar, aoPersonalizar }: {
         {!desligados.length && (
           <button className="acompanhar-item" onClick={aoPersonalizar}>
             <span className="acompanhar-icone"><Icone nome="check" /></span>
-            <span>Tudo ligado</span>
+            <span>{tx('Tudo ligado')}</span>
           </button>
         )}
       </div>
@@ -392,26 +394,28 @@ export function FotoPerfil({ foto, iniciais, aoMudar }: { foto: string | null; i
   return (
     <div className="cfg-foto">
       <button type="button" className={`config-avatar grande cfg-foto-botao ${lendo ? 'lendo' : ''}`} onClick={() => entrada.current?.click()}
-        disabled={!aoMudar} aria-label={foto ? 'Trocar foto de perfil' : 'Pôr foto de perfil'}>
+        disabled={!aoMudar} aria-label={foto ? tx('Trocar foto de perfil') : tx('Pôr foto de perfil')}>
         {foto ? <img key={foto.slice(-24)} src={foto} alt="" /> : iniciais || '?'}
         <span className="cfg-foto-camera" aria-hidden="true"><Icone nome="camera" tamanho={15} /></span>
       </button>
       <input ref={entrada} type="file" accept="image/*" hidden onChange={(e) => void escolher(e.target.files?.[0])} />
       <span className="cfg-foto-acoes">
-        <button type="button" className="link" onClick={() => entrada.current?.click()} disabled={!aoMudar}>{foto ? 'Trocar foto' : 'Pôr foto'}</button>
-        {foto && aoMudar && <button type="button" className="link perigo" onClick={() => aoMudar(null)}>Tirar</button>}
+        <button type="button" className="link" onClick={() => entrada.current?.click()} disabled={!aoMudar}>{foto ? tx('Trocar foto') : tx('Pôr foto')}</button>
+        {foto && aoMudar && <button type="button" className="link perigo" onClick={() => aoMudar(null)}>{tx('Tirar')}</button>}
       </span>
       {erro && <small className="form-erro">{erro}</small>}
     </div>
   )
 }
 
-const dataAssinatura = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '')
+const dataAssinatura = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString(LOCAL_DAS_DATAS) : '')
 function textoAssinatura(a: Assinatura) {
-  if (emTeste(a)) return `Teste grátis até ${dataAssinatura(a.teste_fim)} (${diasDeTeste(a) === 1 ? 'falta 1 dia' : `faltam ${diasDeTeste(a)} dias`}). O cartão só é pedido quando você assinar.`
-  if (a.status === 'trialing') return `Teste grátis até ${dataAssinatura(a.teste_fim)}. Troque o cartão, veja as faturas ou cancele.`
-  if (a.cancela_no_fim) return `Cancelada: você usa até ${dataAssinatura(a.periodo_fim)}. Dá para reativar.`
-  return 'Troque o cartão, veja as faturas ou cancele a assinatura.'
+  if (emTeste(a)) return diasDeTeste(a) === 1
+    ? tx('Teste grátis até {0} (falta 1 dia). O cartão só é pedido quando você assinar.', dataAssinatura(a.teste_fim))
+    : tx('Teste grátis até {0} (faltam {1} dias). O cartão só é pedido quando você assinar.', dataAssinatura(a.teste_fim), diasDeTeste(a))
+  if (a.status === 'trialing') return tx('Teste grátis até {0}. Troque o cartão, veja as faturas ou cancele.', dataAssinatura(a.teste_fim))
+  if (a.cancela_no_fim) return tx('Cancelada: você usa até {0}. Dá para reativar.', dataAssinatura(a.periodo_fim))
+  return tx('Troque o cartão, veja as faturas ou cancele a assinatura.')
 }
 
 /**
@@ -421,19 +425,19 @@ function textoAssinatura(a: Assinatura) {
 const CIENCIAS: { chave: string; texto: React.ReactNode }[] = [
   {
     chave: 'definitivo',
-    texto: <>Sei que a exclusão é <b>definitiva e não tem como desfazer</b>: meu login e todos os meus dados (lançamentos, categorias, bancos, cartões, dívidas, metas, contas do mês e foto) serão apagados.</>,
+    texto: <>{tx('Sei que a exclusão é')} <b>{tx('definitiva e não tem como desfazer')}</b>{tx(': meu login e todos os meus dados (lançamentos, categorias, bancos, cartões, dívidas, metas, contas do mês e foto) serão apagados.')}</>,
   },
   {
     chave: 'assinatura',
-    texto: <>Sei que minha <b>assinatura será cancelada</b> e que não há reembolso proporcional do período já iniciado, salvo quando a lei exigir (como o direito de arrependimento de 7 dias do Código de Defesa do Consumidor) ou nos casos previstos nos Termos de uso.</>,
+    texto: <>{tx('Sei que minha')} <b>{tx('assinatura será cancelada')}</b> {tx('e que não há reembolso proporcional do período já iniciado, salvo quando a lei exigir (como o direito de arrependimento de 7 dias do Código de Defesa do Consumidor) ou nos casos previstos nos Termos de uso.')}</>,
   },
   {
     chave: 'registros',
-    texto: <>Sei que <b>alguns registros continuam depois da exclusão</b>: os de cobrança no Stripe, mantidos quando a lei exigir (art. 16 da LGPD), e a identificação irreversível do cartão, guardada junto do código interno da conta (sem e-mail nem nome) só para impedir que o teste grátis se repita (prevenção a abusos, legítimo interesse).</>,
+    texto: <>{tx('Sei que')} <b>{tx('alguns registros continuam depois da exclusão')}</b>{tx(': os de cobrança no Stripe, mantidos quando a lei exigir (art. 16 da LGPD), e a identificação irreversível do cartão, guardada junto do código interno da conta (sem e-mail nem nome) só para impedir que o teste grátis se repita (prevenção a abusos, legítimo interesse).')}</>,
   },
   {
     chave: 'termos',
-    texto: <>Li e concordo com os <a href="#/termos" target="_blank" rel="noopener noreferrer">Termos de uso</a> e com a <a href="#/privacidade" target="_blank" rel="noopener noreferrer">Política de privacidade</a>, e peço, de forma livre e informada, a eliminação dos meus dados pessoais (art. 18, inciso VI, da LGPD, Lei 13.709/2018).</>,
+    texto: <>{tx('Li e concordo com os')} <a href="#/termos" target="_blank" rel="noopener noreferrer">{tx('Termos de uso')}</a> {tx('e com a')} <a href="#/privacidade" target="_blank" rel="noopener noreferrer">{tx('Política de privacidade')}</a>{tx(', e peço, de forma livre e informada, a eliminação dos meus dados pessoais (art. 18, inciso VI, da LGPD, Lei 13.709/2018).')}</>,
   },
 ]
 
@@ -446,28 +450,28 @@ export function ExcluirContaModal({ email, aoBaixarBackup, aoFechar }: { email: 
   const pode = CIENCIAS.every((c) => aceites[c.chave]) && !ocupado
 
   const baixar = async () => {
-    setOcupado('Gerando backup…')
+    setOcupado(tx('Gerando backup…'))
     try { await aoBaixarBackup(); setBaixou(true) } catch (e) { setErro(e instanceof Error ? e.message : String(e)) }
     setOcupado(null)
   }
   const excluir = async () => {
-    setOcupado('Excluindo…'); setErro(null)
+    setOcupado(tx('Excluindo…')); setErro(null)
     const msg = await excluirConta(email)
     if (msg) { setErro(msg); setOcupado(null) }
   }
 
   return (
-    <Modal titulo="Excluir minha conta" aoFechar={() => !ocupado && aoFechar()}>
+    <Modal titulo={tx('Excluir minha conta')} aoFechar={() => !ocupado && aoFechar()}>
       <div className="form">
-        <p className="zerar-texto">Você está pedindo para apagar a conta <b>{email}</b>. Leia e marque cada item para confirmar que está ciente.</p>
+        <p className="zerar-texto">{tx('Você está pedindo para apagar a conta')} <b>{email}</b>{tx('. Leia e marque cada item para confirmar que está ciente.')}</p>
         <div className="exc-direitos">
-          <strong><Icone nome="escudo" tamanho={16} /> Seus direitos continuam valendo</strong>
-          <p>Antes de excluir, você pode levar uma cópia dos seus dados (portabilidade, art. 18, inciso V, da LGPD). Se tiver qualquer dúvida ou pedido sobre seus dados, fale com o suporte, pelo e-mail que aparece na Política de privacidade. Também é possível reclamar à Autoridade Nacional de Proteção de Dados (ANPD).</p>
+          <strong><Icone nome="escudo" tamanho={16} /> {tx('Seus direitos continuam valendo')}</strong>
+          <p>{tx('Antes de excluir, você pode levar uma cópia dos seus dados (portabilidade, art. 18, inciso V, da LGPD). Se tiver qualquer dúvida ou pedido sobre seus dados, fale com o suporte, pelo e-mail que aparece na Política de privacidade. Também é possível reclamar à Autoridade Nacional de Proteção de Dados (ANPD).')}</p>
         </div>
         <button type="button" className="btn" onClick={baixar} disabled={Boolean(ocupado)}>
-          <Icone nome="exportar" tamanho={16} /> {baixou ? 'Backup baixado ✓' : 'Baixar backup antes (recomendado)'}
+          <Icone nome="exportar" tamanho={16} /> {baixou ? tx('Backup baixado ✓') : tx('Baixar backup antes (recomendado)')}
         </button>
-        <div className="exc-ciencias" role="group" aria-label="Termos de ciência">
+        <div className="exc-ciencias" role="group" aria-label={tx('Termos de ciência')}>
           {CIENCIAS.map((c) => (
             <label key={c.chave} className={`exc-ciencia ${aceites[c.chave] ? 'marcada' : ''}`}>
               <input type="checkbox" checked={Boolean(aceites[c.chave])} disabled={Boolean(ocupado)}
@@ -479,8 +483,8 @@ export function ExcluirContaModal({ email, aoBaixarBackup, aoFechar }: { email: 
         {erro && <p className="form-erro" role="alert">{erro}</p>}
         <div className="form-acoes">
           <span className="espaco" />
-          <button type="button" className="btn" onClick={aoFechar} disabled={Boolean(ocupado)}>Cancelar</button>
-          <button type="button" className="btn perigo-forte" disabled={!pode} onClick={excluir}>{ocupado ?? 'Excluir para sempre'}</button>
+          <button type="button" className="btn" onClick={aoFechar} disabled={Boolean(ocupado)}>{tx('Cancelar')}</button>
+          <button type="button" className="btn perigo-forte" disabled={!pode} onClick={excluir}>{ocupado ?? tx('Excluir para sempre')}</button>
         </div>
       </div>
     </Modal>

@@ -1,3 +1,4 @@
+import { tx } from './textos'
 /**
  * Atualização automática: quando sai uma versão nova do site, o app se recarrega sozinho, mas só num momento em que a
  * pessoa não perde nada.
@@ -92,7 +93,7 @@ function voltarAoLugar() {
     const aviso = document.createElement('div')
     aviso.className = 'aviso-atualizado'
     aviso.setAttribute('role', 'status')
-    aviso.textContent = 'OpusCash atualizado ✓'
+    aviso.textContent = tx('OpusCash atualizado ✓')
     document.body.appendChild(aviso)
     setTimeout(() => aviso.remove(), 3600)
   }, 600)

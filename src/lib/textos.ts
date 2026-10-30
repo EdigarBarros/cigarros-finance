@@ -13,7 +13,8 @@ const lista = traducoes as Record<string, Partial<Record<(typeof IDIOMAS_NATIVOS
 const idioma = idiomaAtual()
 export const nativo = (IDIOMAS_NATIVOS as readonly string[]).includes(idioma)
 
-export function tx(pt: string, ...valores: (string | number)[]): string {
+export function tx(pt: string, ...valores: (string | number | null | undefined)[]): string {
   const texto = (nativo && lista[pt]?.[idioma as 'en' | 'es']) || pt
-  return valores.length ? texto.replace(/\{(\d+)\}/g, (_, i: string) => String(valores[+i] ?? '')) : texto
+  // como num `texto ${valor}`: o valor entra como String() o escreveria
+  return valores.length ? texto.replace(/\{(\d+)\}/g, (_, i: string) => (+i < valores.length ? String(valores[+i]) : '')) : texto
 }

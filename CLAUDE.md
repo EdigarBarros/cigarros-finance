@@ -24,10 +24,15 @@ branch. Mudanças no banco (arquivos em `supabase/`) não se aplicam sozinhas: a
 
 Inglês e espanhol têm tradução nossa; os outros idiomas vêm do tradutor do Google (`src/lib/idioma.ts`).
 
-- Telas já traduzidas: página inicial (`pages/Apresentacao.tsx`), login e nova senha (`components/Entrada.tsx`), assinatura
-  (`components/Assinatura.tsx`, `components/VitrinePlanos.tsx`). O painel e as páginas legais ainda usam o Google.
-- Nessas telas, todo texto novo passa por `tx('texto em português')` e ganha as versões `en` e `es` em
-  `src/i18n/traducoes.json`. Para tirar os textos de uma tela inteira: `node scripts/traducao/extrair.cjs <arquivo>`
+- O app inteiro tem tradução nossa (página inicial, login, assinatura e todo o painel), menos as páginas legais
+  (`components/Legal.tsx`, `lib/legal.ts`), que ainda usam o Google.
+- Todo texto de tela novo passa por `tx('texto em português')` e ganha as versões `en` e `es` em
+  `src/i18n/traducoes.json`. Valores entram por posição: `tx('Faltam {0} dias', n)`. Escreva a frase inteira em cada
+  caso (`n === 1 ? tx('1 conta') : tx('{0} contas', n)`), nunca juntando pedaços (`${n} ${'conta'}s atrasada`).
+- Meses e datas: use `MESES_NOME`, `fmtDataCurta`, `fmtDataLonga`, `fmtMesAno` e `LOCAL_DAS_DATAS` de `lib/format.ts`
+  (já saem no idioma). `MESES` fica em português maiúsculo de propósito: é como a planilha de importação escreve.
+- Não passe por `tx` o que vira dado ou serve para reconhecer dado (nomes de bancos e categorias em `lib/rotulos.ts`,
+  `lib/categorias.ts`, `lib/bancos.ts`, leitura de extrato e planilha). Linha com `// sem-tx` o script não toca. Para tirar os textos de uma tela inteira: `node scripts/traducao/extrair.cjs <arquivo>`
   (confira a lista que ele imprime). `node scripts/traducao/extrair.cjs --faltando` mostra o que está sem tradução.
-- Para passar uma tela do Google para a tradução nossa: rode o script nela, traduza o que ele listar e marque a tela como
-  traduzida (em `App.tsx`, `comIdioma`; no painel, `translate="no"` na raiz quando `nativo`).
+- Para conferir antes de trocar: `--simular`. Para tirar da lista o que ninguém usa mais:
+  `node scripts/traducao/extrair.cjs --limpar $(grep -rl "tx(" src --include=*.ts --include=*.tsx)`.

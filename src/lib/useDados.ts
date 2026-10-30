@@ -4,6 +4,7 @@ import { normPerfil } from './perfil'
 import { lerTudo, supabase } from './supabase'
 import type { EscolhaZerar, ParteZerar } from './zerar'
 import type { Banco, Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida } from './types'
+import { tx } from './textos'
 
 const num = (v: unknown) => Number(v ?? 0)
 
@@ -152,7 +153,7 @@ export function useDados(userId: string, ano: number) {
   const falhou = useCallback(
     (msg: string) => {
       setErro(/lancamentos_conta_fixa_mes/.test(msg)
-        ? 'Essa conta do mês já tem um lançamento ligado nesse mês (cada conta tem um por mês). Nada foi mudado.'
+        ? tx('Essa conta do mês já tem um lançamento ligado nesse mês (cada conta tem um por mês). Nada foi mudado.')
         : msg)
       void recarregar()
     },
@@ -295,7 +296,7 @@ export function useDados(userId: string, ano: number) {
   const addBanco = async (nome: string, cor: string): Promise<Banco | undefined> => {
     const { data, error } = await supabase.from('bancos').insert({ nome, cor, ordem: bancos.length }).select().single()
     if (error) {
-      falhou(/duplicate|unique/i.test(error.message) ? `Já existe um banco chamado "${nome}".` : error.message)
+      falhou(/duplicate|unique/i.test(error.message) ? tx('Já existe um banco chamado "{0}".', nome) : error.message)
       return
     }
     const novo = data as Banco
@@ -344,7 +345,7 @@ export function useDados(userId: string, ano: number) {
     const ordem = Math.max(0, ...categorias.filter((x) => x.tipo === c.tipo).map((x) => x.ordem)) + 1
     const { data, error } = await supabase.from('categorias').insert({ ...c, ordem }).select().single()
     if (error) {
-      falhou(/duplicate|unique/i.test(error.message) ? `Já existe uma categoria chamada "${c.nome}".` : error.message)
+      falhou(/duplicate|unique/i.test(error.message) ? tx('Já existe uma categoria chamada "{0}".', c.nome) : error.message)
       return
     }
     const nova = data as Categoria
@@ -354,7 +355,7 @@ export function useDados(userId: string, ano: number) {
   const updCategoria = async (id: string, patch: Partial<Categoria>) => {
     setCategorias((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
     const { error } = await supabase.from('categorias').update(patch).eq('id', id)
-    if (error) falhou(/duplicate|unique/i.test(error.message) ? `Já existe uma categoria chamada "${patch.nome}".` : error.message)
+    if (error) falhou(/duplicate|unique/i.test(error.message) ? tx('Já existe uma categoria chamada "{0}".', patch.nome) : error.message)
   }
   /** Os lançamentos dela continuam existindo, só ficam "sem categoria". */
   const delCategoria = async (id: string) => {

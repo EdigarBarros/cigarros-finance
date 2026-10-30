@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { semMovimento } from '../lib/tema'
 import { Icone } from './Icone'
 import { Paisagem, type Cena } from './Paisagem'
+import { tx } from '../lib/textos'
 
 const CENAS: Cena[] = ['montanhas', 'mar', 'cidade', 'floresta', 'dunas']
 
@@ -46,7 +47,7 @@ export function CartaoDicas({ dicas }: { dicas: Dica[] }) {
         <button className="btn" onClick={atual.acao}>{atual.botao} <Icone nome="seta" tamanho={16} /></button>
       </div>
       {n > 1 && (
-        <div className="dica-pontos" role="tablist" aria-label="Dicas">
+        <div className="dica-pontos" role="tablist" aria-label={tx('Dicas')}>
           {dicas.map((d, k) => (
             <button key={d.id} role="tab" aria-selected={k === i % n} aria-label={d.titulo}
               className={k === i % n ? 'ativo' : ''} onClick={() => setI(k)}>

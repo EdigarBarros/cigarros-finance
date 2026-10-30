@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { fmtTaxa, parseTaxa } from '../lib/dinheiro'
 import { simbolo } from '../lib/format'
 import { Icone } from './Icone'
+import { tx } from '../lib/textos'
 
 /**
  * Cotação de uma moeda em relação à moeda principal. Moeda forte (dólar): "1 US$ = 5,35 R$". Moeda fraca (peso, iene): o jeito
@@ -29,17 +30,17 @@ export function CampoCotacao({ moeda, principal, taxaDia, valor, aoMudar }: {
     setInvertido(!invertido)
     setTexto(n ? fmtTaxa(1 / n) : '')
   }
-  const exemplo = taxaDia ? fmtTaxa(invertido ? 1 / taxaDia : taxaDia) : 'cotação'
+  const exemplo = taxaDia ? fmtTaxa(invertido ? 1 / taxaDia : taxaDia) : tx('cotação')
   const [de, para] = invertido ? [simbolo(principal), moeda] : [moeda, simbolo(principal)]
   return (
     <div className="campo-cotacao">
       <label className="campo-caixa">
         <span className="prefixo">1 {de} =</span>
         <input inputMode="decimal" value={texto} onChange={(e) => mudar(e.target.value)} placeholder={exemplo}
-          aria-label={`Cotação: quanto vale 1 ${de} em ${para}`} />
+          aria-label={tx('Cotação: quanto vale 1 {0} em {1}', de, para)} />
         <span className="prefixo">{para}</span>
       </label>
-      <button type="button" className="icone-btn campo-cotacao-inverter" onClick={inverter} title="Inverter a cotação" aria-label="Inverter a cotação">
+      <button type="button" className="icone-btn campo-cotacao-inverter" onClick={inverter} title={tx('Inverter a cotação')} aria-label={tx('Inverter a cotação')}>
         <Icone nome="desfazer" tamanho={16} />
       </button>
     </div>

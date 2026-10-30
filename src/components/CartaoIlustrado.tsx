@@ -2,6 +2,7 @@ import { useRef, type ReactNode } from 'react'
 import { semMovimento } from '../lib/tema'
 import { corSobre } from '../lib/estiloBanco'
 import { BancoIcone } from './BancoIcone'
+import { tx } from '../lib/textos'
 
 /** Desenhos de fundo do plástico; cada cartão fica com um, escolhido pelo nome (sempre o mesmo para o mesmo cartão). */
 const PADROES = [
@@ -100,7 +101,7 @@ export function CartaoIlustrado({ nome, cor, banco, conteudo, rodape, ativo, com
       </span>
       <span className="cc-plastico-pe">
         <span className="cc-plastico-rodape">{rodape}</span>
-        <span className="cc-tipo">crédito</span>
+        <span className="cc-tipo">{tx('crédito')}</span>
       </span>
     </>
   )

@@ -1,7 +1,7 @@
 import { Fragment, useState } from 'react'
 import { COR, PALETA } from '../lib/charts'
 import { calendarioDe, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
-import { fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, variacao } from '../lib/format'
+import { fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, variacao, LOCAL_DAS_DATAS } from '../lib/format'
 import { situacaoMeta } from '../lib/metas'
 import {
   Bloco, BlocoDinheiro, BlocoDividas, BlocoGastos, BlocoLancamentos, BlocoMetas,
@@ -15,9 +15,10 @@ import { CartaoAcompanhar, CartaoSugestao } from '../components/Configuracoes'
 import { Encaixe, type ItemEncaixe } from '../components/Encaixe'
 import { Kpi, Progresso, ReguaMeses, type Tendencia } from '../components/ui'
 import type { Ctx } from './contexto'
+import { tx } from '../lib/textos'
 
 const hoje = new Date()
-const hojePorExtenso = hoje.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
+const hojePorExtenso = hoje.toLocaleDateString(LOCAL_DAS_DATAS, { day: 'numeric', month: 'long', year: 'numeric' })
 /** Lista de blocos de uma zona, sem os que não existem. */
 const zona = (xs: unknown[]) => xs.filter(Boolean).map((x, i) => <Fragment key={i}>{x as React.ReactNode}</Fragment>)
 /** Blocos que existem, prontos para o encaixe. */
@@ -53,26 +54,26 @@ export function Inicio(c: Ctx) {
 
   // ---------- 0. Saudação ----------
   const sobrou = r.fluxo >= 0
-  const animo = c.contaNova || mesVazio ? '' : r.fluxo > 0 ? ' Você está no caminho certo! 🚀' : r.fluxo < 0 ? ' Vale olhar para onde foi.' : ''
+  const animo = c.contaNova || mesVazio ? '' : r.fluxo > 0 ? (' ' + tx('Você está no caminho certo! 🚀')) : r.fluxo < 0 ? (' ' + tx('Vale olhar para onde foi.')) : ''
   const botoes = (
     <>
-      <button className="btn entrada" onClick={() => c.novoLancamento('entrada')}><Icone nome="sobe" tamanho={16} /> Lançar entrada</button>
-      <button className="btn saida" onClick={() => c.novoLancamento('saida')}><Icone nome="desce" tamanho={16} /> Lançar saída</button>
+      <button className="btn entrada" onClick={() => c.novoLancamento('entrada')}><Icone nome="sobe" tamanho={16} /> {tx('Lançar entrada')}</button>
+      <button className="btn saida" onClick={() => c.novoLancamento('saida')}><Icone nome="desce" tamanho={16} /> {tx('Lançar saída')}</button>
     </>
   )
   const saudacao = (
     <header className="pagina-topo saudacao">
       <div>
         <h1>
-          {palavras('Olá,')}
+          {palavras(tx('Olá,'))}
           {c.perfil.nome ? <span className="nome" translate="no">{palavras(`${c.perfil.nome}!`, 0.09)}</span> : palavras('!')}
         </h1>
-        <p className="sub">Resumo de {nomeMes} de {c.ano}.{animo}</p>
+        <p className="sub">{tx('Resumo de {0} de {1}.{2}', nomeMes, c.ano, animo)}</p>
       </div>
       <div className="saudacao-lado">
         <div className="data-hoje">
           <Icone nome="calendario" tamanho={22} />
-          <span>Hoje<b>{hojePorExtenso}</b></span>
+          <span>{tx('Hoje')}<b>{hojePorExtenso}</b></span>
         </div>
         {!mobile && !c.contaNova && <div className="hero-acoes" data-tour="lancar">{botoes}</div>}
       </div>
@@ -88,17 +89,17 @@ export function Inicio(c: Ctx) {
 
   const difAnterior = v.comparacao && !mesVazio && a && (a.entradas || a.saidas) ? r.fluxo - a.fluxo : null
   const irParaGastos = () => document.getElementById('para-onde-foi')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  const fraseResultado = mesVazio ? `Nada lançado em ${nomeMes} ainda.`
-    : r.fluxo < 0 ? <>Saiu {fmtValor(-r.fluxo)} a mais. <button className="link" onClick={irParaGastos}>Ver para onde foi</button></>
-    : r.fluxo === 0 ? 'Entrou e saiu o mesmo valor.'
-    : `Você ficou com ${Math.round((r.fluxo / r.entradas) * 100)}% do que entrou.`
+  const fraseResultado = mesVazio ? tx('Nada lançado em {0} ainda.', nomeMes)
+    : r.fluxo < 0 ? <>{tx('Saiu {0} a mais.', fmtValor(-r.fluxo))} <button className="link" onClick={irParaGastos}>{tx('Ver para onde foi')}</button></>
+    : r.fluxo === 0 ? tx('Entrou e saiu o mesmo valor.')
+    : tx('Você ficou com {0}% do que entrou.', Math.round((r.fluxo / r.entradas) * 100))
   const resultado = (
-    <Kpi rotulo={`${sobrou ? 'Sobrou' : 'Faltou'} em ${nomeMes}`} valor={Math.abs(r.fluxo)} icone="carteira" destaque
+    <Kpi rotulo={sobrou ? tx('Sobrou em {0}', nomeMes) : tx('Faltou em {0}', nomeMes)} valor={Math.abs(r.fluxo)} icone="carteira" destaque
       cor={sobrou ? COR.entradas : COR.saidas} tendencia={tendencia((x) => x.fluxo)}>
       {difAnterior !== null && Math.abs(difAnterior) >= 0.5 ? (
         <span className={`kpi-delta ${difAnterior > 0 ? 'bom' : 'ruim'}`}>
           <Icone nome={difAnterior > 0 ? 'sobe' : 'desce'} tamanho={13} />
-          {fmtValor(Math.abs(difAnterior))} {difAnterior > 0 ? 'a mais' : 'a menos'}<span>que em {mesAnt}</span>
+          {fmtValor(Math.abs(difAnterior))} {difAnterior > 0 ? tx('a mais') : tx('a menos')}<span>{tx('que em')} {mesAnt}</span>
         </span>
       ) : <span className="kpi-sub">{fraseResultado}</span>}
     </Kpi>
@@ -116,17 +117,17 @@ export function Inicio(c: Ctx) {
   })
   const indicadores = [
     resultado,
-    !mesVazio && <Kpi key="entrou" rotulo="Entrou no mês" valor={r.entradas} icone="receber" cor={COR.caixa} tendencia={tendencia((x) => x.entradas)} delta={delta(r.entradas, a?.entradas)} contra={mesAnt && `em ${mesAnt}`} />,
-    !mesVazio && <Kpi key="saiu" rotulo="Saiu no mês" valor={r.saidas} icone="enviar" cor={COR.despesas} tendencia={tendencia((x) => x.saidas)} delta={delta(r.saidas, a?.saidas)} menorMelhor contra={mesAnt && `em ${mesAnt}`} />,
+    !mesVazio && <Kpi key="entrou" rotulo={tx('Entrou no mês')} valor={r.entradas} icone="receber" cor={COR.caixa} tendencia={tendencia((x) => x.entradas)} delta={delta(r.entradas, a?.entradas)} contra={mesAnt && `em ${mesAnt}`} />,
+    !mesVazio && <Kpi key="saiu" rotulo={tx('Saiu no mês')} valor={r.saidas} icone="enviar" cor={COR.despesas} tendencia={tendencia((x) => x.saidas)} delta={delta(r.saidas, a?.saidas)} menorMelhor contra={mesAnt && `em ${mesAnt}`} />,
     c.kpisExtras,
     detalhado && !mesVazio && (
-      <Kpi key="media" rotulo="Gasto médio por dia" valor={r.saidas / decorridos} cor={COR.fluxo} icone="ano" tendencia={tendMedia}>
-        <span className="kpi-sub">em {decorridos} {decorridos === 1 ? 'dia' : 'dias'}</span>
+      <Kpi key="media" rotulo={tx('Gasto médio por dia')} valor={r.saidas / decorridos} cor={COR.fluxo} icone="ano" tendencia={tendMedia}>
+        <span className="kpi-sub">{tx('em {0} {1}', decorridos, decorridos === 1 ? 'dia' : 'dias')}</span>
       </Kpi>
     ),
     detalhado && maiorSaida && (
-      <Kpi key="maior" rotulo="Maior saída" valor={maiorSaida.valor} cor={COR.saidas} icone="desce" tendencia={tendMaior}>
-        <span className="kpi-sub">{maiorSaida.descricao || 'Sem descrição'}</span>
+      <Kpi key="maior" rotulo={tx('Maior saída')} valor={maiorSaida.valor} cor={COR.saidas} icone="desce" tendencia={tendMaior}>
+        <span className="kpi-sub">{maiorSaida.descricao || tx('Sem descrição')}</span>
       </Kpi>
     ),
   ]
@@ -136,7 +137,7 @@ export function Inicio(c: Ctx) {
   const ocupados = 1 + (mesVazio ? 0 : 2) + (c.kpisExtras ? 1 : 0)
   if (metaDestaque && ocupados < 4) {
     indicadores.push(
-      <Kpi key="meta" rotulo={`Meta: ${metaDestaque.meta.nome}`} valor={fmtMoeda(metaDestaque.meta.alvo, metaDestaque.meta.moeda)}
+      <Kpi key="meta" rotulo={tx('Meta: {0}', metaDestaque.meta.nome)} valor={fmtMoeda(metaDestaque.meta.alvo, metaDestaque.meta.moeda)}
         icone="meta" cor={metaDestaque.meta.cor} aoClicar={() => c.irPara('metas')}>
         <span className="kpi-meta">
           <Progresso valor={metaDestaque.guardado} total={metaDestaque.meta.alvo} cor={metaDestaque.meta.cor} />
@@ -167,12 +168,12 @@ export function Inicio(c: Ctx) {
 
   // ---------- 3. Para onde está indo? ----------
   const fluxo = v.graficoAno && haAno && (
-    <Bloco titulo="Fluxo financeiro" className="bloco-esticado"
+    <Bloco titulo={tx('Fluxo financeiro')} className="bloco-esticado"
       acao={
         <span className="legenda-topo">
-          <span><i className="legenda-barra" style={{ background: PALETA.entradas[0] }} />Entrou</span>
-          <span><i className="legenda-barra" style={{ background: PALETA.saidas[0] }} />Saiu</span>
-          <span><i className="legenda-linha" style={{ background: PALETA.sobrou }} />Sobrou</span>
+          <span><i className="legenda-barra" style={{ background: PALETA.entradas[0] }} />{tx('Entrou')}</span>
+          <span><i className="legenda-barra" style={{ background: PALETA.saidas[0] }} />{tx('Saiu')}</span>
+          <span><i className="legenda-linha" style={{ background: PALETA.sobrou }} />{tx('Sobrou')}</span>
         </span>
       }>
       {/* o gráfico ocupa a altura que sobrar no cartão, para ficar da mesma altura que os lançamentos ao lado */}
@@ -188,8 +189,8 @@ export function Inicio(c: Ctx) {
       bancos={v.bancos ? c.d.bancos : undefined} aoEditar={c.editarLancamento} aoVerTodos={() => c.irPara('lancamentos')} />
   ) : !c.contaNova && (
     <section className="cartao vazio-mes">
-      <h2>Comece por aqui</h2>
-      <p>Lance o que entrou ou o que saiu em {nomeMes}. O resto do painel se monta sozinho.</p>
+      <h2>{tx('Comece por aqui')}</h2>
+      <p>{tx('Lance o que entrou ou o que saiu em {0}. O resto do painel se monta sozinho.', nomeMes)}</p>
       <div className="hero-acoes">{botoes}</div>
     </section>
   )
@@ -205,28 +206,28 @@ export function Inicio(c: Ctx) {
   // Banner ilustrado: mensagens que se revezam, cada uma com a sua paisagem (só as que fazem sentido para o perfil).
   const slides: Slide[] = [
     ...(c.d.lancs.length < 40 ? [{
-      id: 'importar', cena: 'cidade' as const, titulo: ['Seus dados', 'de uma vez só.'] as [string, string], texto: 'Tem um extrato do banco ou uma planilha? Importe e pronto.',
-      botao: 'Importar extrato', acao: c.importarExtrato,
+      id: 'importar', cena: 'cidade' as const, titulo: [tx('Seus dados'), tx('de uma vez só.')] as [string, string], texto: tx('Tem um extrato do banco ou uma planilha? Importe e pronto.'),
+      botao: tx('Importar extrato'), acao: c.importarExtrato,
     }] : []),
     {
-      id: 'planeje', cena: 'montanhas', titulo: ['Planeje hoje,', 'conquiste amanhã.'], texto: 'Organize suas finanças e realize seus sonhos.',
-      ...(v.paginaAno ? { botao: 'Ver o ano', acao: () => c.irPara('ano') } : { botao: 'Personalizar', acao: c.personalizar }),
+      id: 'planeje', cena: 'montanhas', titulo: [tx('Planeje hoje,'), tx('conquiste amanhã.')], texto: tx('Organize suas finanças e realize seus sonhos.'),
+      ...(v.paginaAno ? { botao: tx('Ver o ano'), acao: () => c.irPara('ano') } : { botao: tx('Personalizar'), acao: c.personalizar }),
     },
     {
-      id: 'viagem', cena: 'mar', titulo: ['Pequenos passos,', 'grandes viagens.'], texto: 'Junte um pouco todo mês para a próxima viagem.',
-      botao: v.metas ? 'Ver metas' : 'Criar meta', acao: () => { if (!v.metas) c.ligarModulo('metas'); c.irPara('metas') },
+      id: 'viagem', cena: 'mar', titulo: [tx('Pequenos passos,'), tx('grandes viagens.')], texto: tx('Junte um pouco todo mês para a próxima viagem.'),
+      botao: v.metas ? tx('Ver metas') : tx('Criar meta'), acao: () => { if (!v.metas) c.ligarModulo('metas'); c.irPara('metas') },
     },
     {
-      id: 'destino', cena: 'cidade', titulo: ['Cada real', 'com um destino.'], texto: 'Veja para onde foi o seu dinheiro este mês.',
-      botao: 'Ver lançamentos', acao: () => c.irPara('lancamentos'),
+      id: 'destino', cena: 'cidade', titulo: [tx('Cada real'), tx('com um destino.')], texto: tx('Veja para onde foi o seu dinheiro este mês.'),
+      botao: tx('Ver lançamentos'), acao: () => c.irPara('lancamentos'),
     },
     {
-      id: 'reserva', cena: 'floresta', titulo: ['Reserva primeiro,', 'tranquilidade depois.'], texto: 'Seis meses de gastos guardados seguram qualquer imprevisto.',
-      ...(v.bancos || v.investimentos ? { botao: 'Dinheiro guardado', acao: () => c.irPara('patrimonio') } : { botao: v.metas ? 'Ver metas' : 'Criar meta', acao: () => { if (!v.metas) c.ligarModulo('metas'); c.irPara('metas') } }),
+      id: 'reserva', cena: 'floresta', titulo: [tx('Reserva primeiro,'), tx('tranquilidade depois.')], texto: tx('Seis meses de gastos guardados seguram qualquer imprevisto.'),
+      ...(v.bancos || v.investimentos ? { botao: tx('Dinheiro guardado'), acao: () => c.irPara('patrimonio') } : { botao: v.metas ? tx('Ver metas') : tx('Criar meta'), acao: () => { if (!v.metas) c.ligarModulo('metas'); c.irPara('metas') } }),
     },
     ...(v.dividas ? [{
-      id: 'dividas', cena: 'dunas' as const, titulo: ['Dívida paga', 'é liberdade.'] as [string, string], texto: 'Acompanhe quanto falta e quando cada uma termina.',
-      botao: 'Ver dívidas', acao: () => c.irPara('dividas'),
+      id: 'dividas', cena: 'dunas' as const, titulo: [tx('Dívida paga'), tx('é liberdade.')] as [string, string], texto: tx('Acompanhe quanto falta e quando cada uma termina.'),
+      botao: tx('Ver dívidas'), acao: () => c.irPara('dividas'),
     }] : []),
   ]
   // Quem ainda tem poucos lançamentos vê o convite em destaque até dispensar.
@@ -264,8 +265,8 @@ export function Inicio(c: Ctx) {
         <section className="boas-vindas">
           <img src="/simbolo.webp" alt="" width={84} height={41} />
           <div>
-            <h2>Tudo pronto para começar</h2>
-            <p>Lance o que entrou e o que saiu neste mês e o painel se monta sozinho. Seus dados são só seus: ninguém mais vê o que você lança aqui.</p>
+            <h2>{tx('Tudo pronto para começar')}</h2>
+            <p>{tx('Lance o que entrou e o que saiu neste mês e o painel se monta sozinho. Seus dados são só seus: ninguém mais vê o que você lança aqui.')}</p>
             <div className="hero-acoes boas-vindas-acoes" data-tour="lancar">{botoes}</div>
           </div>
         </section>

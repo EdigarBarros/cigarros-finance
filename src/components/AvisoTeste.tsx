@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { diasDeTeste, emTeste, irParaStripe, type Assinatura } from '../lib/assinatura'
 import { Icone } from './Icone'
+import { tx } from '../lib/textos'
 
 const DURACAO = 15000
 
@@ -43,14 +44,14 @@ export function AvisoTeste({ assinatura, userId, moeda, adiar }: { assinatura: A
       onMouseEnter={() => setPausado(true)} onMouseLeave={() => setPausado(false)}>
       <span className="aviso-teste-icone"><Icone nome="relogio" tamanho={20} /></span>
       <div className="aviso-teste-texto">
-        <strong>Teste grátis: {dias === 1 ? 'falta 1 dia' : `faltam ${dias} dias`}</strong>
-        <p>Quando acabar, é só assinar por R$ 9,99 por mês para continuar de onde parou.</p>
+        <strong>{tx('Teste grátis:')} {dias === 1 ? tx('falta 1 dia') : tx('faltam {0} dias', dias)}</strong>
+        <p>{tx('Quando acabar, é só assinar por R$ 9,99 por mês para continuar de onde parou.')}</p>
         <button type="button" className="aviso-teste-assinar"
           onClick={() => void irParaStripe('stripe-checkout', moeda).then((m) => m && alert(m))}>
-          Assinar agora <Icone nome="seta" tamanho={14} />
+          {tx('Assinar agora')} <Icone nome="seta" tamanho={14} />
         </button>
       </div>
-      <button type="button" className="aviso-teste-fechar" onClick={fechar} aria-label="Fechar aviso"><Icone nome="fechar" tamanho={16} /></button>
+      <button type="button" className="aviso-teste-fechar" onClick={fechar} aria-label={tx('Fechar aviso')}><Icone nome="fechar" tamanho={16} /></button>
       <i className="aviso-teste-barra" style={{ animationDuration: `${DURACAO}ms` }} onAnimationEnd={fechar} aria-hidden="true" />
     </aside>
   )
