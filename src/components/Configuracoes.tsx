@@ -1,4 +1,4 @@
-import { excluirConta, irParaStripe, type Assinatura } from '../lib/assinatura'
+import { diasDeTeste, emTeste, excluirConta, irParaStripe, type Assinatura } from '../lib/assinatura'
 import { useRef, useState } from 'react'
 import type { Sugestao } from '../lib/adaptacao'
 import { reduzirFoto } from '../lib/foto'
@@ -231,7 +231,9 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
                 {aoTour && <CartaoAcao icone="ideia" titulo="Ver o tutorial" texto="Um passeio rápido pelo painel, mostrando onde fica cada coisa e como ligar mais abas." aoClicar={aoTour} />}
                 <CartaoAcao icone="ajustes" titulo="Refazer as perguntas" texto="Responda de novo as perguntas iniciais para reajustar o painel." aoClicar={aoRefazer} />
                 {assinatura && assinatura.status !== 'cortesia' && (
-                  <CartaoAcao icone="cartao" titulo="Gerenciar assinatura" texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-portal').then((m) => m && alert(m))} />
+                  emTeste(assinatura)
+                    ? <CartaoAcao icone="cartao" titulo="Assinar o OpusCash" texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-checkout', perfil.moeda).then((m) => m && alert(m))} />
+                    : <CartaoAcao icone="cartao" titulo="Gerenciar assinatura" texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-portal').then((m) => m && alert(m))} />
                 )}
                 <CartaoAcao icone="sair" titulo="Sair" texto="Encerra a sessão neste aparelho." aoClicar={aoSair} />
                 {aoExcluirConta && <CartaoAcao icone="lixeira" titulo="Excluir minha conta" texto="Apaga seu login e todos os seus dados de vez e cancela a assinatura." aoClicar={aoExcluirConta} perigo />}
@@ -406,6 +408,7 @@ export function FotoPerfil({ foto, iniciais, aoMudar }: { foto: string | null; i
 
 const dataAssinatura = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '')
 function textoAssinatura(a: Assinatura) {
+  if (emTeste(a)) return `Teste grátis até ${dataAssinatura(a.teste_fim)} (${diasDeTeste(a) === 1 ? 'falta 1 dia' : `faltam ${diasDeTeste(a)} dias`}). O cartão só é pedido quando você assinar.`
   if (a.status === 'trialing') return `Teste grátis até ${dataAssinatura(a.teste_fim)}. Troque o cartão, veja as faturas ou cancele.`
   if (a.cancela_no_fim) return `Cancelada: você usa até ${dataAssinatura(a.periodo_fim)}. Dá para reativar.`
   return 'Troque o cartão, veja as faturas ou cancele a assinatura.'

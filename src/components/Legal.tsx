@@ -56,8 +56,8 @@ function Termos() {
 
       <h2>3. Teste grátis, assinatura e cobrança</h2>
       <ul>
-        <li><strong>Teste grátis:</strong> contas novas têm 7 dias grátis, uma vez por pessoa e por cartão. É preciso cadastrar um cartão para começar. Se o mesmo cartão já tiver sido usado no teste de outra conta, o teste não é concedido e a cobrança começa na hora.</li>
-        <li><strong>Cobrança automática:</strong> se você não cancelar até o fim dos 7 dias, a assinatura começa e o cartão é cobrado todo mês, de forma recorrente, até você cancelar.</li>
+        <li><strong>Teste grátis:</strong> contas novas têm 7 dias grátis, começando no cadastro e sem precisar de cartão. Quando o teste acaba, o painel fica bloqueado até você assinar; seus dados continuam guardados.</li>
+        <li><strong>Cobrança automática:</strong> só começa se você decidir assinar. Nesse momento você cadastra o cartão, que é cobrado todo mês, de forma recorrente, até você cancelar.</li>
         <li><strong>Preço:</strong> R$ 9,99 por mês. Para quem paga em outra moeda, o valor é o equivalente definido para ela e mostrado na página de pagamento, <strong>antes</strong> de você confirmar. Impostos e tarifas do seu banco ou operadora de cartão, quando houver, não estão incluídos.</li>
         <li><strong>Pagamento:</strong> é processado pelo Stripe. O OpusCash não recebe nem guarda o número do seu cartão.</li>
         <li><strong>Mudança de preço:</strong> podemos alterar o valor para cobranças futuras, avisando você com antecedência razoável. Se não concordar, é só cancelar antes da renovação.</li>
@@ -65,7 +65,7 @@ function Termos() {
       </ul>
 
       <h2>4. Como cancelar</h2>
-      <p>Você cancela quando quiser em <strong>Configurações → Conta → Gerenciar assinatura</strong>, sem multa e sem precisar falar com ninguém. Cancelando durante o teste grátis, nada é cobrado. Cancelando depois, você continua usando até o fim do período já pago e não há nova cobrança.</p>
+      <p>Você cancela quando quiser em <strong>Configurações → Conta → Gerenciar assinatura</strong>, sem multa e sem precisar falar com ninguém. Durante o teste grátis nada é cobrado. Depois de assinar, ao cancelar, você continua usando até o fim do período já pago e não há nova cobrança.</p>
 
       <h2>5. Reembolso</h2>
       <p>Se você contratou pela internet no Brasil, pode desistir em até 7 dias corridos da primeira cobrança e receber o valor de volta (direito de arrependimento do Código de Defesa do Consumidor). Para pedir, escreva para {contato}. Fora desse prazo não fazemos reembolso proporcional de períodos já iniciados, salvo quando a lei exigir ou em caso de falha nossa.</p>
