@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js'
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useReducer, useState } from 'react'
+import { Carregando } from './components/Carregando'
 import { Configuracao, Login, NovaSenha } from './components/Entrada'
 import { TelaAssinatura } from './components/Assinatura'
 import { PaginaLegal } from './components/Legal'
@@ -36,7 +37,7 @@ export default function App() {
 
   if (doc) return <PaginaLegal doc={doc} />
   if (!configurado) return <Configuracao />
-  if (sessao === undefined) return <div className="tela-central">Carregando…</div>
+  if (sessao === undefined) return <Carregando />
 
   // o link de "Esqueci minha senha" cria uma sessão: a tela de nova senha vem antes de qualquer outra
   if (recuperando) return <NovaSenha aoConcluir={() => setRecuperando(false)} />
@@ -52,10 +53,20 @@ export default function App() {
 /** Só abre o painel para quem está no teste grátis, com a assinatura em dia ou com a conta liberada. */
 function ComAcesso({ userId, email, nome }: { userId: string; email: string; nome?: string }) {
   const { assinatura, carregando, cobranca, recarregar } = useAssinatura(userId)
-  if (carregando) return <div className="tela-central">Carregando…</div>
+  // Quando o teste grátis acaba com o painel aberto, a tela de assinatura entra na hora (sem esperar a pessoa recarregar).
+  const [, reavaliar] = useReducer((n: number) => n + 1, 0)
+  const fimDoTeste = assinatura?.status === 'teste' && assinatura.teste_fim ? new Date(assinatura.teste_fim).getTime() : null
+  useEffect(() => {
+    if (!fimDoTeste) return
+    const falta = fimDoTeste - Date.now()
+    if (falta <= 0 || falta > 2_000_000_000) return // já acabou, ou longe demais para um timer
+    const t = window.setTimeout(reavaliar, falta + 500)
+    return () => window.clearTimeout(t)
+  }, [fimDoTeste])
+  if (carregando) return <Carregando />
   if (cobranca && !temAcesso(assinatura)) return <TelaAssinatura assinatura={assinatura} email={email} aoAtualizar={recarregar} />
   return (
-    <Suspense fallback={<div className="tela-central">Carregando…</div>}>
+    <Suspense fallback={<Carregando />}>
       <Painel userId={userId} email={email} nome={nome} assinatura={cobranca ? assinatura : null} />
     </Suspense>
   )

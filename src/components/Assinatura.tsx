@@ -29,6 +29,7 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
   const [ocupado, setOcupado] = useState<'teste' | 'assinar' | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [esperando, setEsperando] = useState(voltou)
+  const [saindo, setSaindo] = useState(false)
   const tentativas = useRef(0)
 
   // Depois de pagar, o aviso do Stripe leva alguns segundos para chegar: consulta até liberar (ou desiste em 40 s).
@@ -50,6 +51,9 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
     setErro(null)
     const msg = await iniciarTesteGratis()
     if (msg) { setErro(msg); setOcupado(null); return }
+    // a tela some suavemente e, só então, o App a troca pelo painel
+    setSaindo(true)
+    await new Promise((r) => window.setTimeout(r, 480))
     await aoAtualizar() // com o teste gravado, o App troca esta tela pelo painel
   }
   const assinar = async () => {
@@ -71,7 +75,7 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
     : 'Assine para voltar ao seu painel. Seus dados continuam guardados.'
 
   return (
-    <main className="pl">
+    <main className={`pl ${saindo ? 'saindo' : ''}`}>
       <section className="pl-lado">
         <div className="pl-orbe pl-orbe-a" aria-hidden="true" />
         <div className="pl-orbe pl-orbe-b" aria-hidden="true" />
