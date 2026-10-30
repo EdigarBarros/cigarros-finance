@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { Sugestao } from '../lib/adaptacao'
 import type { MesEfetivo, Resumo } from '../lib/calc'
 import type { SituacaoCartao } from '../lib/cartoes'
-import type { SituacaoConta } from '../lib/contasFixas'
+import type { MemoriaConta, SituacaoConta, SugestaoVinculo } from '../lib/contasFixas'
 import type { SituacaoDivida } from '../lib/dividas'
 import type { Taxas } from '../lib/moedas'
 import type { Visao } from '../lib/perfil'
@@ -82,6 +82,14 @@ export interface Ctx {
   pagarConta: (s: SituacaoConta, mudancas?: { valor?: number; data?: string }) => void
   /** Apaga o lançamento da baixa, e a conta volta a ficar em aberto. */
   desfazerBaixa: (s: SituacaoConta) => void
+  /** Como cada conta aparece nos lançamentos (nomes e valores já ligados a ela), pelo id da conta. */
+  memoriaContas: Map<string, MemoriaConta>
+  /** Lançamento do mês aberto que parece ser desta conta ainda sem baixa ("Pix de João" → Pensão). */
+  sugestaoDaConta: (contaId: string) => SugestaoVinculo | undefined
+  /** Liga um lançamento que já existe à conta: vira a baixa dela no mês (sem lançar de novo). Depois pergunta pelos parecidos. */
+  ligarAConta: (lancId: string, contaId: string) => void
+  /** "Não é dessa conta": o app não sugere mais esse lançamento para ela. */
+  recusarVinculo: (lancId: string, contaId: string) => void
   /**
    * Indicadores de outros módulos ("Falta pagar no mês", "Fatura do cartão"): um ou mais `<Kpi>`,
    * logo depois de Saiu, em todos os jeitos de ver.

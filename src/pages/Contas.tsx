@@ -5,7 +5,7 @@ import {
   agruparContas, aproxConta, dataDaBaixa, fmtConta, fraseDaSituacao, hojeLocal, inicioDoMes, mesesComAtraso, totaisDoMes, type SituacaoConta,
 } from '../lib/contasFixas'
 import { casasDaMoeda, mascarar, paraCampoMoeda } from '../lib/dinheiro'
-import { fmtMoeda, fmtValor, MESES_NOME, parseNumero, simbolo } from '../lib/format'
+import { fmtDataCurta, fmtMoeda, fmtValor, MESES_NOME, parseNumero, simbolo } from '../lib/format'
 import { moedasUsaveis } from '../lib/moedas'
 import { mesmoNome } from '../lib/rotulos'
 import type { ContaFixa, Tipo } from '../lib/types'
@@ -248,6 +248,8 @@ function Boleto({ s, c, indice, aoEditar, aoOutroValor }: { s: SituacaoConta; c:
   const entrada = conta.tipo === 'entrada'
   const cat = c.categorias.find((k) => k.id === conta.categoria_id)
   const cor = cat?.cor ?? (entrada ? COR.entradas : '#8e8e93')
+  // o dinheiro desta conta pode já estar num lançamento (do extrato, por exemplo): pergunta antes de lançar de novo
+  const sugestao = s.baixa ? undefined : c.sugestaoDaConta(conta.id)
   return (
     <article className={`ct-boleto ${s.estado} ${entrada ? 'entrada' : ''}`} style={{ '--c': cor, animationDelay: `${Math.min(indice, 8) * 60}ms` } as React.CSSProperties}>
       <span className="ct-boleto-canhoto">
@@ -261,6 +263,18 @@ function Boleto({ s, c, indice, aoEditar, aoOutroValor }: { s: SituacaoConta; c:
         </button>
         <span className="ct-boleto-valor">{entrada ? '+ ' : ''}{fmtConta(s)}{s.moeda && <small className="conta-aprox">{aproxConta(s)}</small>}</span>
         <span className={`chip-estado ${s.estado}`}>{fraseDaSituacao(s)}</span>
+        {sugestao && (
+          <div className="ct-sugestao" role="status">
+            <span className="ct-sugestao-texto">
+              <Icone nome="ideia" tamanho={14} />
+              <span>Parece que já {entrada ? 'caiu' : 'foi pago'}: <b>{sugestao.lanc.descricao}</b> · {fmtValor(sugestao.lanc.valor)} · {fmtDataCurta(sugestao.lanc.data)}</span>
+            </span>
+            <span className="ct-sugestao-acoes">
+              <button className="btn primario" onClick={() => c.ligarAConta(sugestao.lanc.id, conta.id)}><Icone nome="check" tamanho={14} /> É esse</button>
+              <button className="btn" onClick={() => c.recusarVinculo(sugestao.lanc.id, conta.id)}>Não é</button>
+            </span>
+          </div>
+        )}
         <div className="ct-boleto-acoes">
           {s.baixa ? (
             <>

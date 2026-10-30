@@ -1,11 +1,12 @@
 import { useMemo, useRef, useState } from 'react'
 import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
+import { parecencaComConta, situacoesDoMes, sugestoesDoMes } from '../lib/contasFixas'
 import { lerExtrato, limparDescricao, type LinhaExtrato } from '../lib/extrato'
 import { infoForma } from '../lib/formas'
 import { fmtValor, MESES_NOME } from '../lib/format'
 import { mesmoNome } from '../lib/rotulos'
 import { CATALOGO_BANCOS } from '../lib/bancos'
-import type { Tipo } from '../lib/types'
+import type { Lancamento, Tipo } from '../lib/types'
 import type { Ctx } from '../pages/contexto'
 import { BancoIcone } from './BancoIcone'
 import { Icone } from './Icone'
@@ -16,6 +17,45 @@ interface Linha extends LinhaExtrato {
   incluir: boolean
   repetido: boolean
   categoria_id: string
+  /** Conta do mês de que esta linha parece ser (a pensão que caiu): vira a baixa dela ao importar. */
+  conta_fixa_id: string
+  /** Por que parece já lançado, quando não é o mesmo dia e valor ("já marcada como recebida em Pensão"). */
+  repetidoPor?: string
+}
+
+/**
+ * Liga as linhas do extrato às contas do mês (só do ano aberto, onde dá para saber o que já foi pago): a linha que parece
+ * ser de uma conta sem baixa no mês vira a baixa dela; a que repete uma baixa já dada ("Recebi" tocado antes de importar)
+ * vem desmarcada.
+ */
+function ligarAsContas(linhas: Linha[], c: Ctx): Linha[] {
+  const contas = c.v.contas && !c.contas.semTabela ? c.contas.contas : []
+  if (!contas.length) return linhas
+  const saida = linhas.map((l) => ({ ...l }))
+  const doAno = saida.filter((l) => Number(l.data.slice(0, 4)) === c.ano)
+  const comoLanc = (l: Linha): Lancamento => ({
+    id: `extrato-${l.chave}`, ano: c.ano, mes: Number(l.data.slice(5, 7)), tipo: l.tipo, descricao: l.descricao, valor: l.valor, data: l.data,
+  })
+  for (const mes of new Set(doAno.map((l) => Number(l.data.slice(5, 7))))) {
+    const sits = situacoesDoMes(contas, c.d.lancs, c.ano, mes, undefined, c.taxas)
+    const doMes = doAno.filter((l) => Number(l.data.slice(5, 7)) === mes)
+    for (const s of sits) {
+      const mem = c.memoriaContas.get(s.conta.id)
+      if (!s.baixa || !mem) continue
+      for (const l of doMes) {
+        if (l.repetido || Math.abs(l.valor - s.baixa.valor) >= 0.005 || !parecencaComConta(s.conta, mem, comoLanc(l), true)) continue
+        Object.assign(l, { repetido: true, incluir: false, repetidoPor: `${s.conta.descricao} já está como ${s.conta.tipo === 'entrada' ? 'recebida' : 'paga'} em Contas do mês` })
+        break
+      }
+    }
+    const novos = doMes.filter((l) => !l.repetido)
+    for (const [contaId, sug] of sugestoesDoMes(sits, novos.map(comoLanc), c.ano, mes, c.memoriaContas)) {
+      const l = novos.find((x) => `extrato-${x.chave}` === sug.lanc.id)!
+      l.conta_fixa_id = contaId
+      if (sug.conta.categoria_id) l.categoria_id = sug.conta.categoria_id
+    }
+  }
+  return saida
 }
 
 const FORMATOS = [
@@ -53,9 +93,9 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
       const existentes = c.d.lancs
       const prontas = r.linhas.map((l, i): Linha => {
         const repetido = existentes.some((x) => x.data === l.data && Math.abs(x.valor - l.valor) < 0.005 && x.tipo === l.tipo)
-        return { ...l, chave: i, repetido, incluir: !repetido, categoria_id: categoriaPelaDescricao(l.descricao, l.tipo, c.categorias)?.id ?? '' }
+        return { ...l, chave: i, repetido, incluir: !repetido, conta_fixa_id: '', categoria_id: categoriaPelaDescricao(l.descricao, l.tipo, c.categorias)?.id ?? '' }
       })
-      setLinhas(prontas)
+      setLinhas(ligarAsContas(prontas, c))
       setFormato(r.formato)
       setBancoLido(r.banco)
       const meu = r.banco ? c.d.bancos.find((b) => mesmoNome(b.nome, r.banco!)) : undefined
@@ -77,6 +117,8 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
   const visiveis = filtro === 'revisar' ? paraRevisar : filtro === 'repetidos' ? repetidos : linhas
   const catalogo = bancoLido ? CATALOGO_BANCOS.find((b) => b.nome === bancoLido) : undefined
   const bancoNovo = bancoLido && !c.d.bancos.some((b) => mesmoNome(b.nome, bancoLido))
+  const nomeConta = (id: string) => c.contas.contas.find((k) => k.id === id)?.descricao ?? 'Conta do mês'
+  const ligadas = escolhidas.filter((l) => l.conta_fixa_id).length
 
   const importar = async () => {
     setEtapa('gravando')
@@ -86,6 +128,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
       ano: Number(l.data.slice(0, 4)), mes: Number(l.data.slice(5, 7)), tipo: l.tipo, valor: l.valor,
       descricao: l.descricao.trim() || (l.tipo === 'entrada' ? 'Entrada' : 'Saída'), data: l.data,
       categoria_id: l.categoria_id || null, banco_id: banco, divida_id: null, forma: l.forma ?? null,
+      ...(l.conta_fixa_id ? { conta_fixa_id: l.conta_fixa_id } : {}),
     })))
     setGravados(n)
     setEtapa('pronto')
@@ -141,6 +184,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
                 <span className="chip-info bom">+ {fmtValor(soma('entrada'))}</span>
                 <span className="chip-info ruim">− {fmtValor(soma('saida'))}</span>
                 <span className="chip-info">{escolhidas.length} de {linhas.length}</span>
+              {ligadas > 0 && <span className="chip-info" title="Contam como pagas ou recebidas em Contas do mês">{ligadas} de contas do mês</span>}
               </span>
               {c.v.bancos && (
                 <label className="ex-banco">
@@ -168,14 +212,20 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
                   <input type="checkbox" checked={l.incluir} onChange={(e) => mudar(l.chave, { incluir: e.target.checked })} aria-label="Importar este" />
                   <span className="ex-data">{dataCurta(l.data)}</span>
                   <button type="button" className={`ex-tipo ${l.tipo}`} title="Trocar entrada/saída"
-                    onClick={() => mudar(l.chave, { tipo: l.tipo === 'entrada' ? 'saida' : 'entrada', categoria_id: '' })}>
+                    onClick={() => mudar(l.chave, { tipo: l.tipo === 'entrada' ? 'saida' : 'entrada', categoria_id: '', conta_fixa_id: '' })}>
                     <Icone nome={l.tipo === 'entrada' ? 'receber' : 'enviar'} tamanho={14} />
                   </button>
                   <span className="ex-nome">
                     <input value={l.descricao} onChange={(e) => mudar(l.chave, { descricao: e.target.value })} placeholder="Dê um nome" aria-label="Descrição" />
                     <small>
                       {l.revisar && <em><Icone nome="sino" tamanho={11} /> {l.revisar}</em>}
-                      {l.repetido && <em className="rep">parece já lançado</em>}
+                      {l.repetido && <em className="rep" title={l.repetidoPor}>{l.repetidoPor ?? 'parece já lançado'}</em>}
+                      {l.conta_fixa_id && (
+                        <button type="button" className="ex-conta" title="Não é dessa conta: tocar para desligar"
+                          onClick={() => mudar(l.chave, { conta_fixa_id: '' })}>
+                          <Icone nome="calendario" tamanho={11} /> {nomeConta(l.conta_fixa_id)} <Icone nome="fechar" tamanho={10} />
+                        </button>
+                      )}
                       {l.forma && <em className="forma">{infoForma(l.forma).nome}</em>}
                       {l.original && l.original !== l.descricao && <span title={l.original}>era: {l.original}</span>}
                     </small>

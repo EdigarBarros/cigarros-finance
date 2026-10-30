@@ -300,18 +300,37 @@ const COLUNAS = {
   valor: /^(valor|amount|quantia|montante)|valor \(r\$\)|valor r\$/,
   credito: /^(credito|entrada|entradas|valor credito)/,
   debito: /^(debito|saida|saidas|valor debito)/,
-  tipo: /^(tipo|natureza|d\/c|c\/d|operacao)$/,
+  tipo: /^(tipo|natureza|d\/c|c\/d|e\/s|operacao|movimentacao|entrada\/saida|credito\/debito|debito\/credito)( de (transacao|lancamento|movimentacao|operacao))?$/,
   saldo: /^saldo/,
 }
 
-/** Valor de uma célula: número cru do Excel ("-80.5", "250") ou texto com R$ e vírgula. */
+/**
+ * Valor de uma célula: número cru do Excel ("-80.5", "250"), milhar sem centavos ("-1.200") ou texto com R$ e vírgula.
+ * Sem sinal escrito, o sinal fica 0 (não dá para saber se entrou ou saiu só pelo número): quem decide é a coluna.
+ */
 function valorDaCelula(c: string): { valor: number; sinal: -1 | 0 | 1 } | null {
-  const t = c.trim()
-  if (/^[-+]?\d+(\.\d+)?$/.test(t)) {
-    const n = Number(t)
-    return n ? { valor: Math.abs(n), sinal: n < 0 ? -1 : 1 } : null
+  const t = c.trim().replace(/^([-+−])\s+/, '$1')
+  const sinalEscrito = (n: number): -1 | 0 | 1 => (n < 0 ? -1 : t.startsWith('+') ? 1 : 0)
+  if (/^[-+−]?\d{1,3}(\.\d{3})+$/.test(t)) {
+    const n = Number(t.replace('−', '-').replace(/\./g, ''))
+    return n ? { valor: Math.abs(n), sinal: sinalEscrito(n) } : null
+  }
+  if (/^[-+−]?\d+(\.\d+)?$/.test(t)) {
+    const n = Number(t.replace('−', '-'))
+    return n ? { valor: Math.abs(n), sinal: sinalEscrito(n) } : null
   }
   return acharValores(t)[0] ?? null
+}
+
+/** Coluna "Tipo" ("C", "Débito", "Saída", "Pix recebido", "Compra no débito"…) → entrada ou saída. */
+function tipoDaCelula(c: string): Tipo | undefined {
+  const t = normal(c).trim()
+  if (!t) return undefined
+  if (/^(c|cr|cred|e|\+)$/.test(t)) return 'entrada'
+  if (/^(d|db|deb|s|-)$/.test(t)) return 'saida'
+  if (/recebid|^(credito|entrada|receita|deposito|rendimento|estorno|reembolso)/.test(t)) return 'entrada'
+  if (/enviad|^(debito|saida|despesa|pagamento|pgto|compra|saque|tarifa|boleto)/.test(t)) return 'saida'
+  return tipoPorPista(t) ?? undefined
 }
 
 /** Linhas de uma tabela → lançamentos. Acha o cabeçalho (ou adivinha as colunas pelo conteúdo). */
@@ -353,6 +372,9 @@ export function deTabela(linhas: string[][], anoPadrao: number): LinhaExtrato[] 
     col.desc = textos.indexOf(Math.max(...textos))
     if (!datas[col.data] || !valores[col.valor]) return deTexto(rows.map((r) => r.join('  ')), anoPadrao)
   }
+  // Coluna de valor com sinal (as saídas vêm negativas): nela, o valor sem sinal é entrada. Sem nenhum negativo na coluna,
+  // o número sozinho não diz nada e quem decide é a coluna "Tipo" ou o texto da linha.
+  const colComSinal = col.valor !== undefined && corpo.some((r) => acharData(r[col.data!] ?? '', anoPadrao) && valorDaCelula(r[col.valor!] ?? '')?.sinal === -1)
   const saida: LinhaExtrato[] = []
   for (const r of corpo) {
     const d = col.data !== undefined ? acharData(r[col.data] ?? '', anoPadrao) : null
@@ -367,12 +389,8 @@ export function deTabela(linhas: string[][], anoPadrao: number): LinhaExtrato[] 
     if (!valor && col.credito !== undefined) { const v = valorDaCelula(r[col.credito] ?? ''); if (v) { valor = v.valor; sinal = 1 } }
     if (!valor && col.debito !== undefined) { const v = valorDaCelula(r[col.debito] ?? ''); if (v) { valor = v.valor; sinal = -1 } }
     if (!valor) continue
-    let extraTipo: Tipo | undefined
-    if (col.tipo !== undefined) {
-      const t = normal(r[col.tipo] ?? '')
-      if (/^(c|credito|entrada|receita)/.test(t)) extraTipo = 'entrada'
-      else if (/^(d|debito|saida|despesa)/.test(t)) extraTipo = 'saida'
-    }
+    const extraTipo = col.tipo !== undefined ? tipoDaCelula(r[col.tipo] ?? '') : undefined
+    if (!sinal && !extraTipo && colComSinal) sinal = 1
     // descrição: a coluna de descrição e, se houver, as outras de texto (Inter: "Histórico" + "Descrição")
     const usadas = new Set([col.data, col.valor, col.credito, col.debito, col.tipo, col.saldo].filter((x) => x !== undefined))
     // outras colunas de texto, menos as que são código (sem espaço, com número: "abc-123", ids)

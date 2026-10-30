@@ -10,7 +10,8 @@ import { casasDaMoeda, mascarar, paraCampoMoeda } from '../lib/dinheiro'
 import { infoMoeda, moedasUsaveis, type Taxas } from '../lib/moedas'
 import { visao } from '../lib/perfil'
 import { bancoConhecido, bancoNaDescricao, CORES_LIVRES, mesmoNome } from '../lib/rotulos'
-import type { Banco, CartaoCredito, Categoria, Divida, Lancamento, Perfil, Tipo } from '../lib/types'
+import { contaPeloNome, type MemoriaConta } from '../lib/contasFixas'
+import type { Banco, CartaoCredito, Categoria, ContaFixa, Divida, Lancamento, Perfil, Tipo } from '../lib/types'
 import { EscolhaCategoria } from './Categorias'
 import { Icone } from './Icone'
 import type { NovaDivida } from '../lib/useDados'
@@ -53,6 +54,10 @@ interface FormLancProps {
   /** Avisa em que fatura a compra caiu (principalmente quando já passou do fechamento). */
   aoCompraSalva?: (aviso: { cartao: string; fechamento: number; depoisDoFechamento: boolean; ano: number; mes: number; anoCompra: number }) => void
   aoNovoCartao?: () => void
+  /** Contas do mês (só com o módulo ligado): o lançamento pode ser a baixa de uma delas ("este Pix é a pensão"). */
+  contasFixas?: ContaFixa[]
+  /** Nomes que a pessoa já ligou a cada conta, para escolher a conta sozinho ao digitar a descrição. */
+  memoriaContas?: Map<string, MemoriaConta>
   aoFechar: () => void
 }
 
@@ -88,6 +93,8 @@ export function FormLancamento(p: FormLancProps) {
   const [forma, setForma] = useState<FormaPagamento | ''>(formaDe({ forma: ini.forma, cartao_id: ini.cartao_id ?? p.cartaoInicial }) ?? '')
   const [mexeuForma, setMexeuForma] = useState(Boolean(p.inicial || p.cartaoInicial))
   const [vezes, setVezes] = useState(1)
+  const [contaId, setContaId] = useState(ini.conta_fixa_id ?? '')
+  const [mexeuConta, setMexeuConta] = useState(Boolean(p.inicial || p.preset))
   const ehParcela = Boolean(p.inicial?.compra_id)
   const cartaoDaParcela = p.cartoes?.find((c) => c.id === p.inicial?.cartao_id)
 
@@ -137,6 +144,18 @@ export function FormLancamento(p: FormLancProps) {
   }, [cartao, parcelas, data, descricao, p.comprasCartao])
   const [duplicadaOk, setDuplicadaOk] = useState(false)
   const ehDivida = p.categorias.find((c) => c.id === categoriaId)?.papel === 'divida'
+  // Contas do mês do mesmo tipo. Cada conta tem uma baixa por mês: a que já tem outro lançamento no mês fica indisponível.
+  const [anoData, mesData] = data ? data.split('-').map(Number) : [p.ano, p.mes]
+  const contasDoTipo = (p.contasFixas ?? []).filter((c) => c.tipo === tipo && (c.ativa || c.id === ini.conta_fixa_id))
+  const ocupada = (id: string) => p.historico.some((x) => x.conta_fixa_id === id && x.ano === anoData && x.mes === mesData && x.id !== p.inicial?.id)
+  const contaEscolhida = contasDoTipo.find((c) => c.id === contaId)
+  const escolherConta = (id: string) => {
+    setContaId(id)
+    setMexeuConta(true)
+    const k = contasDoTipo.find((c) => c.id === id)
+    if (k?.categoria_id && !mexeuCategoria) setCategoriaId(k.categoria_id)
+    if (k && !descricao.trim()) setDescricao(k.descricao)
+  }
   const mudarTipo = (t: Tipo) => {
     setTipo(t)
     if (forma && !formasDoTipo(t).some((f) => f.id === forma)) setForma('')
@@ -202,6 +221,11 @@ export function FormLancamento(p: FormLancProps) {
       const doNome = escrito ? p.bancos.find((b) => mesmoNome(b.nome, escrito)) : undefined
       setBancoId(doNome?.id ?? anterior?.banco_id ?? '')
     }
+    // "Pix de João Silva" já ligado antes à pensão: escolhe a conta sozinho (se ela ainda não tem lançamento neste mês).
+    if (!mexeuConta && p.contasFixas && p.memoriaContas) {
+      const k = contaPeloNome(texto, tipo, p.contasFixas, p.memoriaContas)
+      setContaId(k && !ocupada(k.id) ? k.id : '')
+    }
     // "Notebook – parcela" já se liga à dívida do notebook.
     if (!mexeuDivida && tipo === 'saida' && v.dividas) {
       const d = dividaPelaDescricao(texto, p.dividas.filter((x) => !meDevem(x)))
@@ -220,6 +244,9 @@ export function FormLancamento(p: FormLancProps) {
     if (!data) return setErro('Escolha a data.')
     if (forma === 'credito' && !p.inicial && !cartao) return setErro('Escolha o cartão de crédito da compra.')
     if (estrangeira && (!taxa || taxa <= 0)) return setErro(`Digite quanto vale 1 ${infoMoeda(moeda).nome.toLowerCase()} em ${simbolo(principal)}.`)
+    if (contaEscolhida && !cartao && ocupada(contaEscolhida.id)) {
+      return setErro(`${contaEscolhida.descricao} já tem um lançamento neste mês. Escolha “Não” ou mude a data.`)
+    }
     const [a, m] = data.split('-').map(Number)
     const saida = tipo === 'saida'
     // aberto pela própria dívida (ou já ligado), o pagamento fica ligado mesmo sem a categoria de dívidas
@@ -257,6 +284,8 @@ export function FormLancamento(p: FormLancProps) {
           categoria_id: categoriaId || null,
           divida_id: ligada,
           forma: forma && forma !== 'credito' ? forma : null,
+          // sem o módulo de contas o campo não aparece: o vínculo que já existia fica como está
+          ...(p.contasFixas ? { conta_fixa_id: contaEscolhida?.id ?? null } : {}),
           ...moedaOriginal,
         },
         p.inicial?.id,
@@ -266,6 +295,8 @@ export function FormLancamento(p: FormLancProps) {
     setValor('')
     setDescricao('')
     setDividaId('')
+    setContaId('')
+    setMexeuConta(false)
     setCategoriaId(outrosDe(tipo))
     setMexeuCategoria(false)
     setMexeuBanco(false)
@@ -415,6 +446,25 @@ export function FormLancamento(p: FormLancProps) {
           aoMudar={(id) => { setCategoriaId(id); setMexeuCategoria(true) }}
           aoCriar={p.aoNovaCategoria}
         />
+        {!cartao && contasDoTipo.length > 0 && (
+          <label className="campo">
+            <span className="campo-rotulo">{tipo === 'entrada' ? 'É de uma entrada fixa?' : 'É de uma conta do mês?'} <small>(opcional)</small></span>
+            <select value={contaEscolhida?.id ?? ''} onChange={(e) => escolherConta(e.target.value)}>
+              <option value="">Não</option>
+              {contasDoTipo.map((k) => (
+                <option key={k.id} value={k.id} disabled={ocupada(k.id) && k.id !== contaId}>
+                  {k.descricao}{ocupada(k.id) ? ' · já tem lançamento neste mês' : ''}
+                </option>
+              ))}
+            </select>
+            {contaEscolhida && (
+              <span className="campo-ajuda">
+                {contaEscolhida.descricao} fica como {tipo === 'entrada' ? 'recebida' : 'paga'} neste mês, sem precisar tocar em “{tipo === 'entrada' ? 'Recebi' : 'Paguei'}”.
+                {!ini.conta_fixa_id && ' Depois o app procura os parecidos dos outros meses.'}
+              </span>
+            )}
+          </label>
+        )}
         {tipo === 'saida' && (
           <>
             {(ehDivida || (dividaId && dividaId === ini.divida_id)) && (v.dividas || dividaId) && devo.length > 0 && (

@@ -70,12 +70,14 @@ export function useDados(userId: string, ano: number) {
   const [dividasSemExtras, setDividasSemExtras] = useState(false)
   /** Sem a migração 14: dívidas só na moeda principal. */
   const [dividasSemMoeda, setDividasSemMoeda] = useState(false)
+  /** Lançamentos de outros anos ligados a uma conta do mês: ensinam ao app como cada conta aparece no extrato. */
+  const [vinculosOutrosAnos, setVinculosOutrosAnos] = useState<Pick<Lancamento, 'id' | 'conta_fixa_id' | 'descricao' | 'valor'>[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
 
   const recarregar = useCallback(async () => {
     setCarregando(true)
-    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm] = await Promise.all([
+    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, vc] = await Promise.all([
       supabase.from('lancamentos').select('*').eq('ano', ano).order('data').order('created_at'),
       supabase.from('meses').select('*'),
       supabase.from('dividas').select('*').order('created_at'),
@@ -88,6 +90,7 @@ export function useDados(userId: string, ano: number) {
       supabase.from('meta_movimentos').select('*').order('data'),
       supabase.from('dividas').select('sentido, pessoa, inicio, total_parcelas').limit(1),
       supabase.from('dividas').select('moeda').limit(1),
+      supabase.from('lancamentos').select('id, conta_fixa_id, descricao, valor').not('conta_fixa_id', 'is', null).neq('ano', ano),
     ])
     // Conta nova: ganha as categorias padrão (definidas no banco, migração 5). Isso precisa acontecer ANTES de qualquer setState:
     // um await no meio fazia o React desenhar o painel de verdade (perfil já lido, "carregando" ainda ligado) e só depois as
@@ -103,6 +106,8 @@ export function useDados(userId: string, ano: number) {
     }
     setDividasSemExtras(Boolean(xd.error))
     setDividasSemMoeda(Boolean(xm.error))
+    // sem a migração 7 a coluna não existe: o app só não aprende com os outros anos
+    setVinculosOutrosAnos(vc.error ? [] : (vc.data as Pick<Lancamento, 'id' | 'conta_fixa_id' | 'descricao' | 'valor'>[]).map((x) => ({ ...x, valor: num(x.valor) })))
     const e = l.error ?? m.error ?? d.error ?? s.error ?? p.error ?? b.error
     if (e) setErro(e.message)
     else {
@@ -425,7 +430,7 @@ export function useDados(userId: string, ano: number) {
     bancos, addBanco, updBanco, delBanco,
     dividasSemExtras,
     dividasSemMoeda,
-    lancs, meses, dividas, saldos, pagamentos, carregando, erro, setErro, recarregar,
+    lancs, meses, dividas, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,
     addLanc, addLancs, renomearLancs, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, salvarMes,
   }
 }
