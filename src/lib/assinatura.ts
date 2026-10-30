@@ -10,6 +10,8 @@ export interface Assinatura {
   periodo_fim: string | null
   cancela_no_fim: boolean
   moeda: string | null
+  /** Quando a pessoa assinou (migração 19). Vazio em quem assinou antes dela. */
+  assinada_em?: string | null
 }
 
 /** Teste grátis do OpusCash (sem cartão): vale até teste_fim. */
@@ -44,8 +46,13 @@ export function useAssinatura(userId: string) {
   const [cobranca, setCobranca] = useState(true)
 
   const recarregar = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('assinaturas').select('status, teste_fim, periodo_fim, cancela_no_fim, moeda').eq('user_id', userId).maybeSingle()
+    let { data, error } = await supabase
+      .from('assinaturas').select('status, teste_fim, periodo_fim, cancela_no_fim, moeda, assinada_em').eq('user_id', userId).maybeSingle()
+    // Sem a migração 19 a coluna "assinada_em" não existe: lê de novo sem ela (nunca deixar a pessoa sem acesso por causa disso).
+    if (error && (error.code === '42703' || /assinada_em/i.test(error.message))) {
+      ;({ data, error } = await supabase
+        .from('assinaturas').select('status, teste_fim, periodo_fim, cancela_no_fim, moeda').eq('user_id', userId).maybeSingle())
+    }
     if (error && faltaTabela(error)) setCobranca(false)
     else setAssinatura((data as Assinatura | null) ?? null)
     setCarregando(false)
