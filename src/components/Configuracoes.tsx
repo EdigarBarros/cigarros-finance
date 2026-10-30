@@ -1,4 +1,4 @@
-import { diasDeTeste, emTeste, excluirConta, irParaStripe, type Assinatura } from '../lib/assinatura'
+import { excluirConta, type Assinatura } from '../lib/assinatura'
 import { useRef, useState } from 'react'
 import type { Sugestao } from '../lib/adaptacao'
 import { reduzirFoto } from '../lib/foto'
@@ -12,15 +12,17 @@ import { PreviaDetalhe, PreviaTema } from './Previas'
 import { Selo } from './Categorias'
 import { PARTES_ZERAR, type EscolhaZerar, type ParteZerar } from '../lib/zerar'
 import { Icone } from './Icone'
+import { PlanoAssinatura } from './PlanoAssinatura'
 import { Interruptor, Modal, Opcao } from './ui'
 
-type Secao = 'perfil' | 'aparencia' | 'painel' | 'categorias' | 'dados' | 'conta'
+type Secao = 'perfil' | 'aparencia' | 'painel' | 'categorias' | 'dados' | 'plano' | 'conta'
 const SECOES: { id: Secao; nome: string; icone: string; sub: string }[] = [
   { id: 'perfil', nome: 'Perfil', icone: 'carteira', sub: 'Seu nome e as moedas que você usa' },
   { id: 'aparencia', nome: 'Aparência', icone: 'sol', sub: 'Tema e animações' },
   { id: 'painel', nome: 'Painel', icone: 'ajustes', sub: 'O que aparece e o jeito de ver' },
   { id: 'categorias', nome: 'Categorias', icone: 'lista', sub: 'Onde cada lançamento se encaixa' },
   { id: 'dados', nome: 'Dados', icone: 'exportar', sub: 'Backup, planilha e começar de novo' },
+  { id: 'plano', nome: 'Plano', icone: 'cartao', sub: 'Sua assinatura, datas e quantos dias faltam' },
   { id: 'conta', nome: 'Conta', icone: 'sair', sub: 'Sua sessão neste aparelho' },
 ]
 
@@ -73,7 +75,9 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
   const salvarNome = () => { if (nome.trim() !== perfil.nome) aoMudar({ ...perfil, nome: nome.trim() }) }
   const fechar = () => { salvarNome(); aoFechar() }
   const iniciais = (nome.trim() || email).split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((x) => x[0]?.toUpperCase()).join('')
-  const info = SECOES.find((x) => x.id === secao)!
+  // a aba Plano só existe quando há cobrança nesta conta
+  const secoes = SECOES.filter((x) => x.id !== 'plano' || Boolean(assinatura))
+  const info = secoes.find((x) => x.id === secao) ?? secoes[0]
   const trocarTema = (t: PreferenciaTema, e: React.MouseEvent) => definirTema(t, { x: e.clientX, y: e.clientY })
 
   return (
@@ -86,7 +90,7 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
           </div>
           <nav className="config-nav" aria-label="Seções" ref={nav}>
             {lente && <span className="config-lente" aria-hidden="true" style={estiloLente(lente)} />}
-            {SECOES.map((x) => (
+            {secoes.map((x) => (
               <button key={x.id} type="button" className={secao === x.id ? 'ativo' : ''} onClick={() => { salvarNome(); setSecao(x.id) }}>
                 <Icone nome={x.icone} tamanho={18} /><span>{x.nome}</span>
               </button>
@@ -221,6 +225,8 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
             </div>
           )}
 
+          {secao === 'plano' && assinatura && <PlanoAssinatura assinatura={assinatura} moeda={perfil.moeda} />}
+
           {secao === 'conta' && (
             <>
               <section className="cfg-cartao cfg-voce">
@@ -230,11 +236,7 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
               <div className="cfg-acoes">
                 {aoTour && <CartaoAcao icone="ideia" titulo="Ver o tutorial" texto="Um passeio rápido pelo painel, mostrando onde fica cada coisa e como ligar mais abas." aoClicar={aoTour} />}
                 <CartaoAcao icone="ajustes" titulo="Refazer as perguntas" texto="Responda de novo as perguntas iniciais para reajustar o painel." aoClicar={aoRefazer} />
-                {assinatura && assinatura.status !== 'cortesia' && (
-                  emTeste(assinatura)
-                    ? <CartaoAcao icone="cartao" titulo="Assinar o OpusCash" texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-checkout', perfil.moeda).then((m) => m && alert(m))} />
-                    : <CartaoAcao icone="cartao" titulo="Gerenciar assinatura" texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-portal').then((m) => m && alert(m))} />
-                )}
+                {assinatura && <CartaoAcao icone="cartao" titulo="Meu plano" texto="Veja o status da assinatura, as datas e quantos dias faltam." aoClicar={() => setSecao('plano')} />}
                 <CartaoAcao icone="sair" titulo="Sair" texto="Encerra a sessão neste aparelho." aoClicar={aoSair} />
                 {aoExcluirConta && <CartaoAcao icone="lixeira" titulo="Excluir minha conta" texto="Apaga seu login e todos os seus dados de vez e cancela a assinatura." aoClicar={aoExcluirConta} perigo />}
               </div>
@@ -404,14 +406,6 @@ export function FotoPerfil({ foto, iniciais, aoMudar }: { foto: string | null; i
       {erro && <small className="form-erro">{erro}</small>}
     </div>
   )
-}
-
-const dataAssinatura = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '')
-function textoAssinatura(a: Assinatura) {
-  if (emTeste(a)) return `Teste grátis até ${dataAssinatura(a.teste_fim)} (${diasDeTeste(a) === 1 ? 'falta 1 dia' : `faltam ${diasDeTeste(a)} dias`}). O cartão só é pedido quando você assinar.`
-  if (a.status === 'trialing') return `Teste grátis até ${dataAssinatura(a.teste_fim)}. Troque o cartão, veja as faturas ou cancele.`
-  if (a.cancela_no_fim) return `Cancelada: você usa até ${dataAssinatura(a.periodo_fim)}. Dá para reativar.`
-  return 'Troque o cartão, veja as faturas ou cancele a assinatura.'
 }
 
 /**

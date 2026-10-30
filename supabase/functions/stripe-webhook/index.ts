@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     if (sub.status === 'trialing' && evento.type !== 'customer.subscription.deleted') await conferirCartaoDoTeste(servico, sub, userId)
 
     const fim = sub.current_period_end ?? sub.items?.data?.[0]?.current_period_end
-    const { error } = await servico.from('assinaturas').upsert({
+    const linha = {
       user_id: userId,
       status: evento.type === 'customer.subscription.deleted' ? 'canceled' : sub.status,
       stripe_customer_id: sub.customer,
@@ -79,7 +79,13 @@ Deno.serve(async (req) => {
       cancela_no_fim: Boolean(sub.cancel_at_period_end),
       moeda: sub.currency,
       atualizado_em: new Date().toISOString(),
-    })
+    }
+    // "assinada_em" (migração 19) é quando a assinatura começou no Stripe. Sem a migração a coluna não existe: grava sem ela,
+    // para o aviso do Stripe nunca falhar por causa disso.
+    let { error } = await servico.from('assinaturas').upsert({ ...linha, assinada_em: iso(sub.start_date) })
+    if (error && (error.code === '42703' || /assinada_em/i.test(error.message))) {
+      ;({ error } = await servico.from('assinaturas').upsert(linha))
+    }
     if (error) return new Response(error.message, { status: 500 })
     return new Response('ok')
   } catch (e) {
