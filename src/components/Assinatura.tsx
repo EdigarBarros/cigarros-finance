@@ -4,20 +4,12 @@ import { supabase } from '../lib/supabase'
 import { Icone } from './Icone'
 import { LinksLegais } from './Legal'
 import { Marca } from './Marca'
-
-const RECURSOS = [
-  { icone: 'carteira', texto: 'Lançamentos e categorias' },
-  { icone: 'cartao', texto: 'Cartões e faturas' },
-  { icone: 'divida', texto: 'Dívidas e contas do mês' },
-  { icone: 'meta', texto: 'Metas e cofrinhos' },
-  { icone: 'globo', texto: 'Qualquer moeda, cotação do dia' },
-  { icone: 'importar', texto: 'Importa extrato e planilhas' },
-]
+import { VitrinePlanos } from './VitrinePlanos'
 
 const ETAPAS = [
-  { icone: 'calendario', titulo: 'Hoje', texto: 'Seu teste começa na hora. Acesso completo, sem cartão.' },
-  { icone: 'relogio', titulo: 'Dia 7', texto: 'O teste termina e o painel fica bloqueado. Seus dados continuam guardados.' },
-  { icone: 'cartao', titulo: 'Para continuar', texto: 'Assine por R$ 9,99 por mês. Sem fidelidade, cancele quando quiser.' },
+  { icone: 'calendario', cor: 'var(--entrada)', titulo: 'Hoje', texto: 'Seu teste começa na hora. Acesso completo, sem cartão.' },
+  { icone: 'relogio', cor: '#f5a524', titulo: 'Dia 7', texto: 'O teste termina e o painel fica bloqueado. Seus dados continuam guardados.' },
+  { icone: 'cartao', cor: 'var(--destaque)', titulo: 'Para continuar', texto: 'Assine por R$ 9,99 por mês. Sem fidelidade, cancele quando quiser.' },
 ]
 
 const SEGURANCA = [
@@ -86,14 +78,7 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
         <div className="pl-lado-conteudo">
           <Marca grande />
           <h2 className="pl-frase">Suas finanças em <span className="gradiente-texto">um só lugar</span>.</h2>
-          <ul className="pl-recursos">
-            {RECURSOS.map((r, i) => (
-              <li key={r.texto} style={{ '--i': i } as CSSProperties}>
-                <span className="pl-recurso-icone"><Icone nome={r.icone} tamanho={20} /></span>
-                {r.texto}
-              </li>
-            ))}
-          </ul>
+          <VitrinePlanos />
           <div className="pl-seguranca">
             <h3><Icone nome="escudo" tamanho={18} />Seus dados, protegidos</h3>
             <ul>
@@ -122,19 +107,17 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
                 {novo ? (
                   <>
                     <span className="pl-selo"><Icone nome="ideia" tamanho={13} />Sem cartão para começar</span>
-                    <div className="pl-anel" aria-hidden="true">
-                      <svg viewBox="0 0 120 120">
-                        <circle className="pl-anel-fundo" cx="60" cy="60" r="52" />
-                        <circle className="pl-anel-barra" cx="60" cy="60" r="52" pathLength="100" />
-                      </svg>
-                      <div><strong>7</strong><span>dias grátis</span></div>
-                    </div>
                     <h1>{titulo}</h1>
+                    <div className="pl-faixa">
+                      <span><strong>7 dias</strong> grátis</span>
+                      <Icone nome="seta" tamanho={16} />
+                      <span><strong>R$ 9,99</strong> por mês</span>
+                    </div>
                     <p className="pl-sub">{sub}</p>
                     <ol className="pl-linha">
                       {ETAPAS.map((e, i) => (
                         <li key={e.titulo} style={{ '--i': i } as CSSProperties}>
-                          <span className="pl-etapa-icone"><Icone nome={e.icone} tamanho={18} /></span>
+                          <span className="pl-etapa-icone" style={{ '--c': e.cor } as CSSProperties}><Icone nome={e.icone} tamanho={18} /></span>
                           <div><strong>{e.titulo}</strong><p>{e.texto}</p></div>
                         </li>
                       ))}
@@ -142,13 +125,7 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
                   </>
                 ) : (
                   <>
-                    <div className="pl-anel pl-anel-preco" aria-hidden="true">
-                      <svg viewBox="0 0 120 120">
-                        <circle className="pl-anel-fundo" cx="60" cy="60" r="52" />
-                        <circle className="pl-anel-barra" cx="60" cy="60" r="52" pathLength="100" />
-                      </svg>
-                      <div><strong>R$ 9,99</strong><span>por mês</span></div>
-                    </div>
+                    <div className="pl-preco-grande"><strong>R$ 9,99</strong><span>por mês</span></div>
                     <h1>{titulo}</h1>
                     <p className="pl-sub">{sub}</p>
                     <ul className="pl-pontos">
