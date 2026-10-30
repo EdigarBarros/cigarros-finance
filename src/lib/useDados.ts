@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { CATEGORIAS_ANTIGAS } from './categorias'
 import { normPerfil } from './perfil'
-import { supabase } from './supabase'
+import { lerTudo, supabase } from './supabase'
 import type { EscolhaZerar, ParteZerar } from './zerar'
 import type { Banco, Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida } from './types'
 
@@ -78,19 +78,20 @@ export function useDados(userId: string, ano: number) {
   const recarregar = useCallback(async () => {
     setCarregando(true)
     const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, vc] = await Promise.all([
-      supabase.from('lancamentos').select('*').eq('ano', ano).order('data').order('created_at'),
-      supabase.from('meses').select('*'),
+      // as tabelas que crescem sem parar são lidas em páginas (lerTudo): o Supabase corta em 1000 linhas
+      lerTudo(() => supabase.from('lancamentos').select('*').eq('ano', ano).order('data').order('created_at').order('id')),
+      lerTudo(() => supabase.from('meses').select('*').order('ano').order('mes')),
       supabase.from('dividas').select('*').order('created_at'),
-      supabase.from('divida_saldos').select('*').order('data'),
-      supabase.from('lancamentos').select('id, divida_id, data, valor, valor_original, moeda_original').not('divida_id', 'is', null),
+      lerTudo(() => supabase.from('divida_saldos').select('*').order('data').order('id')),
+      lerTudo(() => supabase.from('lancamentos').select('id, divida_id, data, valor, valor_original, moeda_original').not('divida_id', 'is', null).order('id')),
       supabase.from('bancos').select('*').order('ordem').order('created_at'),
       supabase.from('perfis').select('*').maybeSingle(),
       supabase.from('categorias').select('*').order('ordem').order('nome'),
       supabase.from('metas').select('*').order('ordem').order('created_at'),
-      supabase.from('meta_movimentos').select('*').order('data'),
+      lerTudo(() => supabase.from('meta_movimentos').select('*').order('data').order('id')),
       supabase.from('dividas').select('sentido, pessoa, inicio, total_parcelas').limit(1),
       supabase.from('dividas').select('moeda').limit(1),
-      supabase.from('lancamentos').select('id, conta_fixa_id, descricao, valor').not('conta_fixa_id', 'is', null).neq('ano', ano),
+      lerTudo(() => supabase.from('lancamentos').select('id, conta_fixa_id, descricao, valor').not('conta_fixa_id', 'is', null).neq('ano', ano).order('id')),
     ])
     // Conta nova: ganha as categorias padrão (definidas no banco, migração 5). Isso precisa acontecer ANTES de qualquer setState:
     // um await no meio fazia o React desenhar o painel de verdade (perfil já lido, "carregando" ainda ligado) e só depois as
