@@ -38,6 +38,7 @@ import { BlocoContasDoMes } from './BlocoContas'
 import { ImportarExtrato, OrganizarNomes } from './Extrato'
 import { FormLancamento } from './Formularios'
 import { Kpi } from './ui'
+import { BotaoIdioma } from './BotaoIdioma'
 import { Icone } from './Icone'
 import { CartaoDicas, type Dica } from './CartaoDicas'
 import { Marca } from './Marca'
@@ -566,10 +567,11 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
                 </>
               )}
             </div>
+            <BotaoIdioma />
             <button className="icone-btn tema-btn" onClick={trocarTema} aria-label={tema === 'escuro' ? 'Usar tema claro' : 'Usar tema escuro'} title={tema === 'escuro' ? 'Tema claro' : 'Tema escuro'}>
               <Icone nome={tema === 'escuro' ? 'sol' : 'lua'} />
             </button>
-            <button className="icone-btn" onClick={() => setAjustes(true)} aria-label="Configurações" title="Configurações">
+            <button className="icone-btn ajustes-btn" onClick={() => setAjustes(true)} aria-label="Configurações" title="Configurações">
               <Icone nome="engrenagem" />
             </button>
             {comContas && (
@@ -583,7 +585,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
             <div className="perfil-topo">
               <button className="perfil-botao" data-tour="menu-conta" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label="Sua conta">
                 <span className="avatar" aria-hidden="true">{d.foto ? <img src={d.foto} alt="" /> : iniciais || '?'}</span>
-                <span>Olá, {nome}</span>
+                <span>Olá, <span translate="no">{nome}</span></span>
                 <Icone nome="abaixo" tamanho={18} />
               </button>
               {menu && !mobile && (
