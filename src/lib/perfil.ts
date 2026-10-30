@@ -1,47 +1,48 @@
 import type { Banco, Detalhe, Divida, Lancamento, Mes, Modulo, Perfil } from './types'
+import { tx } from './textos'
 
 export const MODULOS: { id: Modulo; nome: string; pergunta: string; descricao: string; icone: string }[] = [
   {
-    id: 'dividas', nome: 'Dívidas e parcelas', icone: 'divida',
-    pergunta: 'Tenho dívidas, empréstimos ou compras parceladas',
-    descricao: 'Quanto falta pagar e quando cada dívida acaba. Cada pagamento lançado abate sozinho.',
+    id: 'dividas', nome: tx('Dívidas e parcelas'), icone: 'divida',
+    pergunta: tx('Tenho dívidas, empréstimos ou compras parceladas'),
+    descricao: tx('Quanto falta pagar e quando cada dívida acaba. Cada pagamento lançado abate sozinho.'),
   },
   {
-    id: 'cartoes', nome: 'Cartão de crédito', icone: 'cartao',
-    pergunta: 'Uso cartão de crédito',
-    descricao: 'A fatura de cada cartão, quando fecha e vence, as compras parceladas e quanto do limite ainda dá para usar.',
+    id: 'cartoes', nome: tx('Cartão de crédito'), icone: 'cartao',
+    pergunta: tx('Uso cartão de crédito'),
+    descricao: tx('A fatura de cada cartão, quando fecha e vence, as compras parceladas e quanto do limite ainda dá para usar.'),
   },
   {
-    id: 'bancos', nome: 'Bancos e contas', icone: 'carteira',
-    pergunta: 'Uso mais de um banco, conta ou carteira',
-    descricao: 'O que entra e sai de cada banco e quanto você tem guardado em cada um.',
+    id: 'bancos', nome: tx('Bancos e contas'), icone: 'carteira',
+    pergunta: tx('Uso mais de um banco, conta ou carteira'),
+    descricao: tx('O que entra e sai de cada banco e quanto você tem guardado em cada um.'),
   },
   {
-    id: 'investimentos', nome: 'Investimentos', icone: 'investir',
-    pergunta: 'Invisto ou guardo dinheiro rendendo',
-    descricao: 'Quanto você tem investido, mês a mês.',
+    id: 'investimentos', nome: tx('Investimentos'), icone: 'investir',
+    pergunta: tx('Invisto ou guardo dinheiro rendendo'),
+    descricao: tx('Quanto você tem investido, mês a mês.'),
   },
   {
-    id: 'moedas', nome: 'Outras moedas', icone: 'globo',
-    pergunta: 'Tenho ou uso dinheiro em outra moeda',
-    descricao: 'Dólar, euro e outras: quanto você tem e quanto vale na sua moeda, com a cotação do dia.',
+    id: 'moedas', nome: tx('Outras moedas'), icone: 'globo',
+    pergunta: tx('Tenho ou uso dinheiro em outra moeda'),
+    descricao: tx('Dólar, euro e outras: quanto você tem e quanto vale na sua moeda, com a cotação do dia.'),
   },
   {
-    id: 'metas', nome: 'Metas', icone: 'meta',
-    pergunta: 'Quero juntar dinheiro para algo (viagem, reserva, carro…)',
-    descricao: 'Quanto falta para cada objetivo, quanto guardar por mês e quando você chega lá.',
+    id: 'metas', nome: tx('Metas'), icone: 'meta',
+    pergunta: tx('Quero juntar dinheiro para algo (viagem, reserva, carro…)'),
+    descricao: tx('Quanto falta para cada objetivo, quanto guardar por mês e quando você chega lá.'),
   },
   {
-    id: 'contas', nome: 'Contas do mês', icone: 'calendario',
-    pergunta: 'Tenho contas que se repetem todo mês (aluguel, luz, internet…)',
-    descricao: 'O app lembra do vencimento, mostra o que está atrasado e dá baixa com um toque em "Paguei".',
+    id: 'contas', nome: tx('Contas do mês'), icone: 'calendario',
+    pergunta: tx('Tenho contas que se repetem todo mês (aluguel, luz, internet…)'),
+    descricao: tx('O app lembra do vencimento, mostra o que está atrasado e dá baixa com um toque em "Paguei".'),
   },
 ]
 
 export const DETALHES: { id: Detalhe; nome: string; descricao: string }[] = [
-  { id: 'simples', nome: 'Simples', descricao: 'Quanto sobrou, quanto entrou e quanto saiu. Sem gráficos nem comparações.' },
-  { id: 'equilibrado', nome: 'Equilibrado', descricao: 'O simples, mais gráficos e a comparação com o mês passado.' },
-  { id: 'detalhado', nome: 'Detalhado', descricao: 'O equilibrado, mais todas as categorias, mais lançamentos e o ano mês a mês.' },
+  { id: 'simples', nome: tx('Simples'), descricao: tx('Quanto sobrou, quanto entrou e quanto saiu. Sem gráficos nem comparações.') },
+  { id: 'equilibrado', nome: tx('Equilibrado'), descricao: tx('O simples, mais gráficos e a comparação com o mês passado.') },
+  { id: 'detalhado', nome: tx('Detalhado'), descricao: tx('O equilibrado, mais todas as categorias, mais lançamentos e o ano mês a mês.') },
 ]
 
 export const PERFIL_PADRAO: Perfil = {

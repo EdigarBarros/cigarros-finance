@@ -2,6 +2,7 @@ import { textoStatus, totalFaturasDoMes, type SituacaoCartao } from '../lib/cart
 import { fmtValor } from '../lib/format'
 import { BancoIcone } from './BancoIcone'
 import { Progresso } from './ui'
+import { tx } from '../lib/textos'
 
 /**
  * As faturas do mês de cada cartão, para a visão geral: valor, quando vence, situação e quanto sobra do limite.
@@ -12,11 +13,11 @@ export function BlocoCartoes({ situacoes, aoAbrir }: { situacoes: SituacaoCartao
   return (
     <section className="bloco">
       <header className="bloco-cab">
-        <h2>Cartões</h2>
-        <span className="bloco-cab-valor"><small>faturas do mês</small><strong>{fmtValor(totalFaturasDoMes(situacoes))}</strong></span>
+        <h2>{tx('Cartões')}</h2>
+        <span className="bloco-cab-valor"><small>{tx('faturas do mês')}</small><strong>{fmtValor(totalFaturasDoMes(situacoes))}</strong></span>
       </header>
       {!situacoes.length && (
-        <p className="quadro-vazio">Adicione seu cartão para ver a fatura de cada mês e quanto do limite ainda dá para usar. <button className="link" onClick={aoAbrir}>Adicionar cartão</button></p>
+        <p className="quadro-vazio">{tx('Adicione seu cartão para ver a fatura de cada mês e quanto do limite ainda dá para usar.')} <button className="link" onClick={aoAbrir}>{tx('Adicionar cartão')}</button></p>
       )}
       {situacoes.map((s) => (
         <button key={s.cartao.id} className="cc-mini" onClick={aoAbrir} style={{ '--c': s.cartao.cor } as React.CSSProperties}>
@@ -31,7 +32,7 @@ export function BlocoCartoes({ situacoes, aoAbrir }: { situacoes: SituacaoCartao
             {s.limiteTotal ? (
               <span className="cc-mini-limite">
                 <Progresso valor={s.limiteUsado} total={s.limiteTotal} cor={s.cartao.cor} />
-                {s.limiteDisponivel !== null && <small>livre {fmtValor(Math.max(0, s.limiteDisponivel))}</small>}
+                {s.limiteDisponivel !== null && <small>{tx('livre {0}', fmtValor(Math.max(0, s.limiteDisponivel)))}</small>}
               </span>
             ) : null}
           </span>

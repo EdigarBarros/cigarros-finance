@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { hojeLocal } from './cartoes'
 import { lerTudo, supabase } from './supabase'
 import type { CartaoCredito, FaturaPaga, Lancamento } from './types'
+import { tx } from './textos'
 
 const num = (v: unknown) => Number(v ?? 0)
 const normCartao = (r: CartaoCredito): CartaoCredito => ({
@@ -99,7 +100,7 @@ export function useCartoes(opcoes: {
   const addCartao = async (novo: Omit<CartaoCredito, 'id' | 'created_at'>): Promise<CartaoCredito | undefined> => {
     const { data, error } = await supabase.from('cartoes').insert(semExtras ? sem(novo, EXTRAS_CARTAO) : novo).select().single()
     if (error) {
-      aoErro(/duplicate|unique/i.test(error.message) ? `Já existe um cartão chamado "${novo.nome}".` : error.message)
+      aoErro(/duplicate|unique/i.test(error.message) ? tx('Já existe um cartão chamado "{0}".', novo.nome) : error.message)
       return
     }
     const criado = normCartao(data as CartaoCredito)
@@ -109,7 +110,7 @@ export function useCartoes(opcoes: {
   const updCartao = async (id: string, patch: Partial<CartaoCredito>) => {
     setCartoes((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
     const { error } = await supabase.from('cartoes').update(semExtras ? sem(patch, EXTRAS_CARTAO) : patch).eq('id', id)
-    if (error) falhou(/duplicate|unique/i.test(error.message) ? `Já existe um cartão chamado "${patch.nome}".` : error.message)
+    if (error) falhou(/duplicate|unique/i.test(error.message) ? tx('Já existe um cartão chamado "{0}".', patch.nome) : error.message)
   }
   /** As compras continuam como saídas, só deixam de ter cartão; as faturas marcadas como pagas somem. */
   const delCartao = async (id: string) => {

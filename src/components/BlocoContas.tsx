@@ -4,6 +4,7 @@ import { fmtValor } from '../lib/format'
 
 const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 import './contas.css'
+import { tx } from '../lib/textos'
 
 const PROXIMAS = 4
 const ATRASADAS = 5
@@ -29,22 +30,22 @@ export function BlocoContasDoMes({ situacoes, aoAbrir, aoPagar, completo }: {
   return (
     <section className="bloco">
       <header className="bloco-cab">
-        <h2>Contas do mês</h2>
+        <h2>{tx('Contas do mês')}</h2>
         {situacoes.length > 0 && (
           <span className="bloco-cab-valor">
-            <small style={qtdAtrasadas ? { color: COR.saidas } : undefined}>{qtdAtrasadas ? `${qtdAtrasadas} vencida${qtdAtrasadas > 1 ? 's' : ''} · falta pagar` : 'falta pagar'}</small>
+            <small style={qtdAtrasadas ? { color: COR.saidas } : undefined}>{qtdAtrasadas ? tx('{0} vencida{1} · falta pagar', qtdAtrasadas, qtdAtrasadas > 1 ? 's' : '') : tx('falta pagar')}</small>
             <strong>{fmtValor(faltaPagar)}</strong>
           </span>
         )}
       </header>
       {!situacoes.length && (
         <p className="quadro-vazio">
-          Aluguel, luz, internet, salário… Adicione o que se repete todo mês e o app avisa quando vencer.{' '}
-          <button className="link" onClick={aoAbrir}>Adicionar a primeira conta</button>
+          {tx('Aluguel, luz, internet, salário… Adicione o que se repete todo mês e o app avisa quando vencer.{0}', ' ')}
+          <button className="link" onClick={aoAbrir}>{tx('Adicionar a primeira conta')}</button>
         </p>
       )}
       {situacoes.length > 0 && !linhas.length && (
-        <p className="quadro-vazio">Tudo em dia neste mês! 🎉 <button className="link" onClick={aoAbrir}>Ver contas</button></p>
+        <p className="quadro-vazio">{tx('Tudo em dia neste mês! 🎉')} <button className="link" onClick={aoAbrir}>{tx('Ver contas')}</button></p>
       )}
       {linhas.map((s) => (
         <div key={s.conta.id} className={`conta-linha com-dia ${s.estado}`}>
@@ -55,13 +56,13 @@ export function BlocoContasDoMes({ situacoes, aoAbrir, aoPagar, completo }: {
             <span className={`chip-estado ${s.estado}`}>{fraseDaSituacao(s)}</span>
           </button>
           <span className="conta-valor">{fmtConta(s)}{s.moeda && <small className="conta-aprox">{aproxConta(s)}</small>}</span>
-          <button className="btn primario" onClick={() => aoPagar(s)}>{s.conta.tipo === 'entrada' ? 'Recebi' : 'Paguei'}</button>
+          <button className="btn primario" onClick={() => aoPagar(s)}>{s.conta.tipo === 'entrada' ? tx('Recebi') : tx('Paguei')}</button>
         </div>
       ))}
       {linhas.length > 0 && (
         <div className="conta-bloco-rodape">
-          <span>{atrasadas.length + proximas.length} {atrasadas.length + proximas.length === 1 ? 'conta em aberto' : 'contas em aberto'}</span>
-          <button className="link" onClick={aoAbrir}>{escondidas > 0 ? `Ver todas (+${escondidas})` : 'Ver todas'}</button>
+          <span>{atrasadas.length + proximas.length} {atrasadas.length + proximas.length === 1 ? tx('conta em aberto') : tx('contas em aberto')}</span>
+          <button className="link" onClick={aoAbrir}>{escondidas > 0 ? tx('Ver todas (+{0})', escondidas) : tx('Ver todas')}</button>
         </div>
       )}
     </section>

@@ -4,10 +4,11 @@ import type { Resumo } from '../lib/calc'
 import { PALETA, useCoresDoGrafico } from '../lib/charts'
 import { fmtValor, MESES_CURTO, MESES_NOME } from '../lib/format'
 import type { Visao } from '../lib/perfil'
+import { tx } from '../lib/textos'
 
 /** Eixo sem os ",00": R$ 8.000 lê mais fácil que R$ 8.000,00. */
 const semCentavos = (n: number) => fmtValor(n).replace(/,00$/, '')
-const milhar = (n: number) => (Math.abs(n) >= 1000 ? `${(n / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil` : String(n))
+const milhar = (n: number) => (Math.abs(n) >= 1000 ? tx('{0} mil', (n / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })) : String(n))
 
 type Quadro = {
   chart: ChartJS & { $cresceu?: boolean }; type: string; mode: string; dataIndex: number; datasetIndex: number; index: number
@@ -145,9 +146,9 @@ export function GraficoFluxo({ porMes, mesAtual, altura, compacto }: {
   const data = {
     labels: MESES_CURTO.slice(inicio, inicio + 6),
     datasets: [
-      barra('Entrou', PALETA.entradas, serie(meses, (r) => r.entradas), compacto),
-      barra('Saiu', PALETA.saidas, serie(meses, (r) => r.saidas), compacto),
-      linha('Sobrou', PALETA.sobrou, serie(meses, (r) => r.fluxo), c.fundo, compacto),
+      barra(tx('Entrou'), PALETA.entradas, serie(meses, (r) => r.entradas), compacto),
+      barra(tx('Saiu'), PALETA.saidas, serie(meses, (r) => r.saidas), compacto),
+      linha(tx('Sobrou'), PALETA.sobrou, serie(meses, (r) => r.fluxo), c.fundo, compacto),
     ],
   } as unknown as ChartData<'bar'>
   return (
@@ -171,12 +172,12 @@ export function GraficoAnual({ porMes, mesAtual, altura = 400, compacto, v }: {
   const data = {
     labels: MESES_CURTO,
     datasets: [
-      barra('Entrou', PALETA.entradas, serie(porMes, (r) => r.entradas), compacto),
-      barra('Saiu', PALETA.saidas, serie(porMes, (r) => r.saidas), compacto),
-      ...(v.bancos ? [linha('Guardado nas contas', PALETA.caixa, serie(porMes, (r) => r.caixa), c.fundo, compacto)] : []),
-      ...(v.dividas ? [linha('Dívidas', PALETA.divida, serie(porMes, (r) => r.divida), c.fundo, compacto)] : []),
-      ...(v.investimentos ? [linha('Investido', PALETA.investimentos, serie(porMes, (r) => r.investimentos), c.fundo, compacto)] : []),
-      ...(v.moedas ? [linha('Em outras moedas', PALETA.usd, serie(porMes, (r) => r.moedasConvertido), c.fundo, compacto)] : []),
+      barra(tx('Entrou'), PALETA.entradas, serie(porMes, (r) => r.entradas), compacto),
+      barra(tx('Saiu'), PALETA.saidas, serie(porMes, (r) => r.saidas), compacto),
+      ...(v.bancos ? [linha(tx('Guardado nas contas'), PALETA.caixa, serie(porMes, (r) => r.caixa), c.fundo, compacto)] : []),
+      ...(v.dividas ? [linha(tx('Dívidas'), PALETA.divida, serie(porMes, (r) => r.divida), c.fundo, compacto)] : []),
+      ...(v.investimentos ? [linha(tx('Investido'), PALETA.investimentos, serie(porMes, (r) => r.investimentos), c.fundo, compacto)] : []),
+      ...(v.moedas ? [linha(tx('Em outras moedas'), PALETA.usd, serie(porMes, (r) => r.moedasConvertido), c.fundo, compacto)] : []),
     ],
   } as unknown as ChartData<'bar'>
   return (
@@ -202,7 +203,7 @@ export function GraficoSaldo({ porMes, mesAtual, compacto }: {
     labels: MESES_CURTO,
     datasets: [
       {
-        ...barra('Sobrou no mês', PALETA.entradas, sobrou, compacto),
+        ...barra(tx('Sobrou no mês'), PALETA.entradas, sobrou, compacto),
         // faltou: vermelho, descendo da linha do zero
         backgroundColor: (ctx: ScriptableContext<'bar'>) => {
           const v = sobrou[ctx.dataIndex] ?? 0
@@ -211,7 +212,7 @@ export function GraficoSaldo({ porMes, mesAtual, compacto }: {
         hoverBackgroundColor: sobrou.map((v) => ((v ?? 0) >= 0 ? PALETA.entradas[0] : PALETA.saidas[0])),
         maxBarThickness: compacto ? 14 : 26,
       },
-      linha('Acumulado no ano', PALETA.acumulado, acumulado, c.fundo, compacto, { yAxisID: 'y1' }),
+      linha(tx('Acumulado no ano'), PALETA.acumulado, acumulado, c.fundo, compacto, { yAxisID: 'y1' }),
     ],
   } as unknown as ChartData<'bar'>
   return (
@@ -232,7 +233,7 @@ const porcentagens: Plugin<'doughnut'> = {
     const total = dados.reduce((a, b) => a + b, 0)
     const { ctx } = chart
     ctx.save()
-    ctx.font = '600 12px -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif'
+    ctx.font = tx('600 12px -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif')
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     chart.getDatasetMeta(0).data.forEach((arco, i) => {

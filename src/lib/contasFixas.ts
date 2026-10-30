@@ -5,6 +5,7 @@
 import { fmtDataCurta, fmtMoeda, fmtValor, moedaAtual } from './format'
 import type { Taxas } from './moedas'
 import type { ContaFixa, Lancamento } from './types'
+import { tx } from './textos'
 
 export type EstadoConta = 'paga' | 'atrasada' | 'vence_hoje' | 'a_vencer' | 'fora'
 
@@ -363,21 +364,26 @@ export function saidasQueSeRepetem(lancs: Lancamento[]): Repeticao[] {
 /** Primeiro dia do mês, como a conta guarda "a partir de" e "até". */
 export const inicioDoMes = (ano: number, mes: number) => `${ano}-${dois(mes)}-01`
 
-/** Em palavras simples: "vence em 3 dias", "venceu ontem", "pago em 5-out". */
+/** Em palavras simples: "vence em 3 dias", "venceu ontem", "pago em 5 de out". Frases inteiras, para cada idioma ter a sua. */
 export function fraseDaSituacao(s: SituacaoConta) {
   const entrada = s.conta.tipo === 'entrada'
-  const verbo = entrada ? 'cai' : 'vence'
-  const verboPassado = entrada ? 'era para cair' : 'venceu'
   switch (s.estado) {
-    case 'paga': return `${entrada ? 'recebido' : 'pago'} em ${fmtDataCurta(s.baixa?.data ?? s.vencimento)}`
+    case 'paga': {
+      const d = fmtDataCurta(s.baixa?.data ?? s.vencimento)
+      return entrada ? tx('recebido em {0}', d) : tx('pago em {0}', d)
+    }
     case 'atrasada': {
       const n = s.diasAtraso ?? 0
-      return n === 1 ? `${verboPassado} ontem` : n <= 30 ? `${verboPassado} há ${n} dias` : `${verboPassado} em ${fmtDataCurta(s.vencimento)}`
+      const d = fmtDataCurta(s.vencimento)
+      if (n === 1) return entrada ? tx('era para cair ontem') : tx('venceu ontem')
+      if (n <= 30) return entrada ? tx('era para cair há {0} dias', n) : tx('venceu há {0} dias', n)
+      return entrada ? tx('era para cair em {0}', d) : tx('venceu em {0}', d)
     }
-    case 'vence_hoje': return `${verbo} hoje`
+    case 'vence_hoje': return entrada ? tx('cai hoje') : tx('vence hoje')
     case 'a_vencer': {
       const n = s.diasRestantes ?? 0
-      return n === 1 ? `${verbo} amanhã` : `${verbo} em ${n} dias`
+      if (n === 1) return entrada ? tx('cai amanhã') : tx('vence amanhã')
+      return entrada ? tx('cai em {0} dias', n) : tx('vence em {0} dias', n)
     }
     default: return ''
   }

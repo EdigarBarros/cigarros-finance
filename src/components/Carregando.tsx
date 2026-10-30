@@ -1,4 +1,5 @@
 import { Marca } from './Marca'
+import { tx } from '../lib/textos'
 
 /**
  * Tela cheia de carregamento, na mesma cor da cortina da tela de planos: assim, ao criar a conta ou entrar, a marca fica
@@ -6,7 +7,7 @@ import { Marca } from './Marca'
  */
 export function Carregando() {
   return (
-    <div className="splash" role="status" aria-label="Carregando">
+    <div className="splash" role="status" aria-label={tx('Carregando')}>
       <Marca grande />
       <span className="splash-pontos" aria-hidden="true"><i /><i /><i /></span>
     </div>

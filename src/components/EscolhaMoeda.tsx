@@ -1,11 +1,12 @@
 import { simbolo } from '../lib/format'
 import { Bandeira } from './Bandeira'
+import { tx } from '../lib/textos'
 
 /**
  * Escolha da moeda: uma pílula por moeda, com a bandeira desenhada (no Windows o emoji de bandeira vira só as letras do país),
  * o código e o símbolo. Em tela pequena a fileira rola para o lado. Serve para qualquer moeda e em qualquer formulário.
  */
-export function EscolhaMoeda({ moedas, valor, aoMudar, rotulo = 'Moeda', travada = false }: {
+export function EscolhaMoeda({ moedas, valor, aoMudar, rotulo = tx('Moeda'), travada = false }: {
   moedas: string[]; valor: string; aoMudar: (m: string) => void; rotulo?: string
   /** Não deixa trocar (a moeda já tem movimentos). */
   travada?: boolean

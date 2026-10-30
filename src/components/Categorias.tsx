@@ -4,6 +4,7 @@ import { IconeCategoria } from './IconeCategoria'
 import type { Categoria, Tipo } from '../lib/types'
 import { Icone } from './Icone'
 import { Modal, Segmentado } from './ui'
+import { tx } from '../lib/textos'
 
 type NovaCategoria = Omit<Categoria, 'id' | 'ordem'>
 
@@ -37,7 +38,7 @@ export function EscolhaCategoria({ opcoes, valor, aoMudar, aoCriar, tipo }: {
 
   return (
     <div className="campo">
-      <span className="campo-rotulo">Categoria</span>
+      <span className="campo-rotulo">{tx('Categoria')}</span>
       <div className="chips">
         {[...visiveis, ...(escondida ? [escondida] : [])].map((c) => (
           <button key={c.id} type="button" className={`chip ${valor === c.id ? 'ativo' : ''}`} style={{ '--c': c.cor } as React.CSSProperties}
@@ -46,9 +47,9 @@ export function EscolhaCategoria({ opcoes, valor, aoMudar, aoCriar, tipo }: {
           </button>
         ))}
         {visiveis.length < opcoes.length && (
-          <button type="button" className="chip" onClick={() => setTodas(true)}>Mais {opcoes.length - visiveis.length}…</button>
+          <button type="button" className="chip" onClick={() => setTodas(true)}>{tx('Mais {0}…', opcoes.length - visiveis.length)}</button>
         )}
-        {aoCriar && !criando && <button type="button" className="chip novo" onClick={() => setCriando(true)}>+ Nova categoria</button>}
+        {aoCriar && !criando && <button type="button" className="chip novo" onClick={() => setCriando(true)}>{tx('+ Nova categoria')}</button>}
       </div>
       {aoCriar && criando && (
         <EditorCategoria
@@ -85,31 +86,31 @@ function EditorCategoria({ inicial, tipo, corInicial, compacto, aoSalvar, aoExcl
       <div className="editor-categoria-nome">
         <Selo c={{ icone, cor }} tamanho={40} />
         <input autoFocus value={nome} onChange={(e) => setNome(e.target.value)} maxLength={30}
-          placeholder={tipo === 'saida' ? 'Ex.: Academia, Filhos, Viagens…' : 'Ex.: Aluguel recebido, Pensão…'} aria-label="Nome da categoria" />
+          placeholder={tipo === 'saida' ? tx('Ex.: Academia, Filhos, Viagens…') : tx('Ex.: Aluguel recebido, Pensão…')} aria-label={tx('Nome da categoria')} />
       </div>
-      <div className="grade-icones" role="radiogroup" aria-label="Ícone">
+      <div className="grade-icones" role="radiogroup" aria-label={tx('Ícone')}>
         {(compacto ? ICONES.slice(0, 20) : ICONES).map((i) => (
           <button key={i} type="button" role="radio" aria-checked={icone === i} className={icone === i ? 'ativo' : ''} onClick={() => setIcone(i)}>{i}</button>
         ))}
       </div>
-      <div className="chips" role="radiogroup" aria-label="Cor">
+      <div className="chips" role="radiogroup" aria-label={tx('Cor')}>
         {CORES.map((k) => (
           <button key={k} type="button" role="radio" aria-checked={cor === k} aria-label={k} className={`cor ${cor === k ? 'ativo' : ''}`}
             style={{ background: k }} onClick={() => setCor(k)} />
         ))}
       </div>
-      {inicial?.papel === 'divida' && <span className="campo-ajuda">É nesta categoria que as saídas podem abater uma dívida, por isso ela não pode ser apagada.</span>}
+      {inicial?.papel === 'divida' && <span className="campo-ajuda">{tx('É nesta categoria que as saídas podem abater uma dívida, por isso ela não pode ser apagada.')}</span>}
       <div className="form-acoes">
         {aoExcluir && !inicial?.papel && (
           confirmar
-            ? <button type="button" className="btn perigo" onClick={aoExcluir}>Sim, excluir</button>
-            : <button type="button" className="btn perigo" onClick={() => setConfirmar(true)}>Excluir</button>
+            ? <button type="button" className="btn perigo" onClick={aoExcluir}>{tx('Sim, excluir')}</button>
+            : <button type="button" className="btn perigo" onClick={() => setConfirmar(true)}>{tx('Excluir')}</button>
         )}
         <span className="espaco" />
-        <button type="button" className="btn" onClick={aoCancelar}>Cancelar</button>
-        <button type="button" className="btn primario" disabled={!nome.trim()} onClick={salvar}>{inicial ? 'Salvar' : 'Criar'}</button>
+        <button type="button" className="btn" onClick={aoCancelar}>{tx('Cancelar')}</button>
+        <button type="button" className="btn primario" disabled={!nome.trim()} onClick={salvar}>{inicial ? tx('Salvar') : tx('Criar')}</button>
       </div>
-      {confirmar && <span className="campo-ajuda">Os lançamentos dela não somem: só ficam "sem categoria".</span>}
+      {confirmar && <span className="campo-ajuda">{tx('Os lançamentos dela não somem: só ficam "sem categoria".')}</span>}
     </div>
   )
 }
@@ -129,12 +130,12 @@ export function GerenciarCategorias({ categorias, contagem, aoCriar, aoEditar, a
   const lista = doTipo(categorias, tipo)
 
   return (
-    <Modal titulo="Categorias" aoFechar={aoFechar}>
+    <Modal titulo={tx('Categorias')} aoFechar={aoFechar}>
       <div className="form">
         <div className="categorias-topo">
-          <Segmentado rotulo="Tipo" valor={tipo} aoMudar={(t) => { setTipo(t); setEditando(null) }}
-            opcoes={[{ id: 'saida', nome: 'Saídas' }, { id: 'entrada', nome: 'Entradas' }]} />
-          {editando !== 'nova' && <button type="button" className="btn primario" onClick={() => setEditando('nova')}><Icone nome="mais" tamanho={16} /> Criar categoria</button>}
+          <Segmentado rotulo={tx('Tipo')} valor={tipo} aoMudar={(t) => { setTipo(t); setEditando(null) }}
+            opcoes={[{ id: 'saida', nome: tx('Saídas') }, { id: 'entrada', nome: tx('Entradas') }]} />
+          {editando !== 'nova' && <button type="button" className="btn primario" onClick={() => setEditando('nova')}><Icone nome="mais" tamanho={16} /> {tx('Criar categoria')}</button>}
         </div>
         {editando === 'nova' && (
           <EditorCategoria tipo={tipo} corInicial={corLivre(lista)} aoCancelar={() => setEditando(null)}
@@ -151,15 +152,15 @@ export function GerenciarCategorias({ categorias, contagem, aoCriar, aoEditar, a
                 <button type="button" className="categoria-linha" onClick={() => setEditando(c.id)}>
                   <Selo c={c} />
                   <span className="categoria-linha-nome">{c.nome}</span>
-                  <span className="categoria-linha-sub">{contagem[c.id] ? `${contagem[c.id]} ${contagem[c.id] === 1 ? 'lançamento' : 'lançamentos'}` : ''}</span>
+                  <span className="categoria-linha-sub">{contagem[c.id] ? (contagem[c.id] === 1 ? tx('1 lançamento') : tx('{0} lançamentos', contagem[c.id])) : ''}</span>
                   <Icone nome="dir" tamanho={16} />
                 </button>
               )}
             </li>
           ))}
-          {!lista.length && <li className="quadro-vazio">Nenhuma categoria de {tipo === 'saida' ? 'saída' : 'entrada'}. Toque em Criar categoria.</li>}
+          {!lista.length && <li className="quadro-vazio">{tx('Nenhuma categoria de')} {tipo === 'saida' ? tx('saída') : tx('entrada')}{tx('. Toque em Criar categoria.')}</li>}
         </ul>
-        <p className="dica">Dica: ao lançar, o app já sugere a categoria pela descrição ("iFood" → Alimentação) e aprende com o que você escolhe.</p>
+        <p className="dica">{tx('Dica: ao lançar, o app já sugere a categoria pela descrição ("iFood" → Alimentação) e aprende com o que você escolhe.')}</p>
       </div>
     </Modal>
   )

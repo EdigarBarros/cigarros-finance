@@ -1,25 +1,26 @@
 import { useEffect, useState } from 'react'
 import type { Perfil } from './types'
+import { tx } from './textos'
 
 export const MOEDAS: { codigo: string; nome: string; bandeira: string }[] = [
-  { codigo: 'BRL', nome: 'Real', bandeira: '🇧🇷' },
-  { codigo: 'USD', nome: 'Dólar americano', bandeira: '🇺🇸' },
-  { codigo: 'EUR', nome: 'Euro', bandeira: '🇪🇺' },
-  { codigo: 'GBP', nome: 'Libra esterlina', bandeira: '🇬🇧' },
-  { codigo: 'ARS', nome: 'Peso argentino', bandeira: '🇦🇷' },
-  { codigo: 'CLP', nome: 'Peso chileno', bandeira: '🇨🇱' },
-  { codigo: 'UYU', nome: 'Peso uruguaio', bandeira: '🇺🇾' },
-  { codigo: 'PYG', nome: 'Guarani paraguaio', bandeira: '🇵🇾' },
-  { codigo: 'COP', nome: 'Peso colombiano', bandeira: '🇨🇴' },
-  { codigo: 'PEN', nome: 'Sol peruano', bandeira: '🇵🇪' },
-  { codigo: 'MXN', nome: 'Peso mexicano', bandeira: '🇲🇽' },
-  { codigo: 'CAD', nome: 'Dólar canadense', bandeira: '🇨🇦' },
-  { codigo: 'AUD', nome: 'Dólar australiano', bandeira: '🇦🇺' },
-  { codigo: 'CHF', nome: 'Franco suíço', bandeira: '🇨🇭' },
-  { codigo: 'JPY', nome: 'Iene japonês', bandeira: '🇯🇵' },
-  { codigo: 'CNY', nome: 'Yuan chinês', bandeira: '🇨🇳' },
-  { codigo: 'AOA', nome: 'Kwanza angolano', bandeira: '🇦🇴' },
-  { codigo: 'MZN', nome: 'Metical moçambicano', bandeira: '🇲🇿' },
+  { codigo: 'BRL', nome: tx('Real'), bandeira: '🇧🇷' },
+  { codigo: 'USD', nome: tx('Dólar americano'), bandeira: '🇺🇸' },
+  { codigo: 'EUR', nome: tx('Euro'), bandeira: '🇪🇺' },
+  { codigo: 'GBP', nome: tx('Libra esterlina'), bandeira: '🇬🇧' },
+  { codigo: 'ARS', nome: tx('Peso argentino'), bandeira: '🇦🇷' },
+  { codigo: 'CLP', nome: tx('Peso chileno'), bandeira: '🇨🇱' },
+  { codigo: 'UYU', nome: tx('Peso uruguaio'), bandeira: '🇺🇾' },
+  { codigo: 'PYG', nome: tx('Guarani paraguaio'), bandeira: '🇵🇾' },
+  { codigo: 'COP', nome: tx('Peso colombiano'), bandeira: '🇨🇴' },
+  { codigo: 'PEN', nome: tx('Sol peruano'), bandeira: '🇵🇪' },
+  { codigo: 'MXN', nome: tx('Peso mexicano'), bandeira: '🇲🇽' },
+  { codigo: 'CAD', nome: tx('Dólar canadense'), bandeira: '🇨🇦' },
+  { codigo: 'AUD', nome: tx('Dólar australiano'), bandeira: '🇦🇺' },
+  { codigo: 'CHF', nome: tx('Franco suíço'), bandeira: '🇨🇭' },
+  { codigo: 'JPY', nome: tx('Iene japonês'), bandeira: '🇯🇵' },
+  { codigo: 'CNY', nome: tx('Yuan chinês'), bandeira: '🇨🇳' },
+  { codigo: 'AOA', nome: tx('Kwanza angolano'), bandeira: '🇦🇴' },
+  { codigo: 'MZN', nome: tx('Metical moçambicano'), bandeira: '🇲🇿' },
 ]
 
 export const infoMoeda = (codigo: string) => MOEDAS.find((m) => m.codigo === codigo) ?? { codigo, nome: codigo, bandeira: '💱' }

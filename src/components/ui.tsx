@@ -4,6 +4,7 @@ import { fmtPct, fmtValor, paraCampo, parseNumero } from '../lib/format'
 import { estiloLente, useLente } from '../lib/useLente'
 import { Icone } from './Icone'
 import { Numero } from './Numero'
+import { tx } from '../lib/textos'
 
 export function Cartao({ titulo, acao, children, className = '' }: {
   titulo?: ReactNode; acao?: ReactNode; children: ReactNode; className?: string
@@ -25,7 +26,7 @@ export function Cartao({ titulo, acao, children, className = '' }: {
  * Indicador do topo: ícone redondo, valor grande (que conta até o número quando é number) e variação contra o mês anterior.
  * `destaque` pinta o cartão inteiro com a cor (o resultado do mês).
  */
-export function Kpi({ rotulo, valor, cor, icone, destaque, delta, menorMelhor, contra = 'no mês passado', aoClicar, tendencia, children }: {
+export function Kpi({ rotulo, valor, cor, icone, destaque, delta, menorMelhor, contra = tx('no mês passado'), aoClicar, tendencia, children }: {
   rotulo: string; valor: string | number; cor: string; icone?: string; destaque?: boolean
   /** Valores dos últimos meses (e o nome de cada mês) para a minilinha no canto do cartão. */
   tendencia?: Tendencia
@@ -44,8 +45,8 @@ export function Kpi({ rotulo, valor, cor, icone, destaque, delta, menorMelhor, c
       {delta != null && (
         <span className={`kpi-delta ${bom ? 'bom' : 'ruim'}`}>
           <Icone nome={delta >= 0 ? 'sobe' : 'desce'} tamanho={13} />
-          {fmtPct(Math.abs(delta))} {delta >= 0 ? 'a mais' : 'a menos'}
-          <span>que {contra}</span>
+          {fmtPct(Math.abs(delta))} {delta >= 0 ? tx('a mais') : tx('a menos')}
+          <span>{tx('que {0}', contra)}</span>
         </span>
       )}
       {children}
@@ -80,7 +81,7 @@ export function Modal({ titulo, aoFechar, children, tamanho }: { titulo: string;
         <span className="alca" aria-hidden="true" />
         <header className="modal-topo">
           <h2>{titulo}</h2>
-          <button className="icone-btn" onClick={aoFechar} aria-label="Fechar"><Icone nome="fechar" /></button>
+          <button className="icone-btn" onClick={aoFechar} aria-label={tx('Fechar')}><Icone nome="fechar" /></button>
         </header>
         {children}
       </div>
@@ -242,11 +243,11 @@ export function Faisca({ valores, meses, cor }: Tendencia & { cor: string }) {
     <span className="faisca-caixa">
       {foco !== null && (
         <span className="faisca-balao" style={{ left: `${(xDe(foco) / L) * 100}%` }}>
-          <small>{meses[foco]}</small>{vf === null ? 'sem dados' : fmtValor(vf)}
+          <small>{meses[foco]}</small>{vf === null ? tx('sem dados') : fmtValor(vf)}
         </span>
       )}
       <svg className="faisca" viewBox={`0 0 ${L} ${A}`} width={L} height={A} role="img" style={{ '--c': cor } as React.CSSProperties}
-        aria-label={valores.map((v, i) => `${meses[i]}: ${v === null ? 'sem dados' : fmtValor(v)}`).join(', ')}
+        aria-label={valores.map((v, i) => `${meses[i]}: ${v === null ? tx('sem dados') : fmtValor(v)}`).join(', ')}
         onPointerMove={apontar} onPointerDown={apontar} onPointerLeave={() => setFoco(null)}>
         <defs>
           <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
@@ -264,7 +265,7 @@ export function Faisca({ valores, meses, cor }: Tendencia & { cor: string }) {
   )
 }
 
-const MESES_REGUA = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+const MESES_REGUA = [tx('Jan'), tx('Fev'), tx('Mar'), tx('Abr'), tx('Mai'), tx('Jun'), tx('Jul'), tx('Ago'), tx('Set'), tx('Out'), tx('Nov'), tx('Dez')]
 
 /**
  * Régua com os 12 meses para escolher o mês aberto (troca a página inteira). Uma pílula desliza até o mês escolhido;
@@ -279,7 +280,7 @@ export function ReguaMeses({ mes, comDados, aoEscolher }: { mes: number; comDado
     if (el && ativo && el.scrollWidth > el.clientWidth) el.scrollTo({ left: ativo.offsetLeft - el.clientWidth / 2 + ativo.clientWidth / 2, behavior: 'smooth' })
   }, [mes])
   return (
-    <div className="regua-meses" ref={caixa} role="tablist" aria-label="Escolher o mês">
+    <div className="regua-meses" ref={caixa} role="tablist" aria-label={tx('Escolher o mês')}>
       {pilula && <span className="regua-pilula" aria-hidden="true" style={estiloLente(pilula)} />}
       {MESES_REGUA.map((m, i) => (
         <button key={m} type="button" role="tab" aria-selected={mes === i + 1}

@@ -3,6 +3,7 @@ import { ehErroDeVersao, versaoNovaNecessaria } from '../lib/atualizacao'
 import { registrarErro } from '../lib/erros'
 import { Marca } from './Marca'
 import { EMAIL_SUPORTE } from '../lib/legal'
+import { tx } from '../lib/textos'
 
 /** Se uma tela quebrar, mostra um aviso com saída em vez de deixar a página em branco, e registra o erro. */
 export class LimiteDeErro extends Component<{ children: ReactNode }, { quebrou: boolean; versao: boolean }> {
@@ -15,15 +16,15 @@ export class LimiteDeErro extends Component<{ children: ReactNode }, { quebrou: 
   }
   render() {
     if (!this.state.quebrou) return this.props.children
-    if (this.state.versao) return <div className="tela-central">Atualizando o OpusCash…</div>
+    if (this.state.versao) return <div className="tela-central">{tx('Atualizando o OpusCash…')}</div>
     return (
       <div className="tela-central">
         <div className="cartao login">
           <div className="login-marca"><Marca grande /></div>
-          <h1>Algo deu errado</h1>
-          <p>Já registramos o problema. Seus dados estão guardados. Recarregue a página para continuar.</p>
-          <button className="btn gradiente" onClick={() => location.reload()}>Recarregar</button>
-          {EMAIL_SUPORTE && <small>Se continuar, escreva para <a href={`mailto:${EMAIL_SUPORTE}`}>{EMAIL_SUPORTE}</a>.</small>}
+          <h1>{tx('Algo deu errado')}</h1>
+          <p>{tx('Já registramos o problema. Seus dados estão guardados. Recarregue a página para continuar.')}</p>
+          <button className="btn gradiente" onClick={() => location.reload()}>{tx('Recarregar')}</button>
+          {EMAIL_SUPORTE && <small>{tx('Se continuar, escreva para')} <a href={`mailto:${EMAIL_SUPORTE}`}>{EMAIL_SUPORTE}</a>.</small>}
         </div>
       </div>
     )

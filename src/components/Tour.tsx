@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { MODULOS, type Visao } from '../lib/perfil'
 import type { Modulo, Perfil } from '../lib/types'
 import { Icone } from './Icone'
+import { tx } from '../lib/textos'
 
 interface Passo {
   id: string
@@ -16,11 +17,11 @@ interface Passo {
 }
 
 const TEXTO_MODULO: Record<string, { titulo: string; texto: string }> = {
-  contas: { titulo: 'Contas do mês', texto: 'Cadastre aluguel, luz e internet uma vez só. O app lembra o vencimento e, com um toque em “Paguei”, lança o gasto por você.' },
-  cartoes: { titulo: 'Cartões', texto: 'Diga o dia em que cada fatura fecha e vence. As compras parceladas caem na fatura certa e você vê quanto do limite ainda sobra.' },
-  dividas: { titulo: 'Dívidas', texto: 'Empréstimos e parcelamentos: quanto falta, o que já venceu e quando você fica livre. Também dá para registrar quem te deve.' },
-  metas: { titulo: 'Metas', texto: 'Crie objetivos, como viagem ou reserva de emergência. O app mostra quanto guardar por mês para chegar lá.' },
-  patrimonio: { titulo: 'Dinheiro guardado', texto: 'Quanto você tem em cada banco, nos investimentos e em outras moedas, tudo somado num lugar só.' },
+  contas: { titulo: tx('Contas do mês'), texto: tx('Cadastre aluguel, luz e internet uma vez só. O app lembra o vencimento e, com um toque em “Paguei”, lança o gasto por você.') },
+  cartoes: { titulo: tx('Cartões'), texto: tx('Diga o dia em que cada fatura fecha e vence. As compras parceladas caem na fatura certa e você vê quanto do limite ainda sobra.') },
+  dividas: { titulo: tx('Dívidas'), texto: tx('Empréstimos e parcelamentos: quanto falta, o que já venceu e quando você fica livre. Também dá para registrar quem te deve.') },
+  metas: { titulo: tx('Metas'), texto: tx('Crie objetivos, como viagem ou reserva de emergência. O app mostra quanto guardar por mês para chegar lá.') },
+  patrimonio: { titulo: tx('Dinheiro guardado'), texto: tx('Quanto você tem em cada banco, nos investimentos e em outras moedas, tudo somado num lugar só.') },
 }
 
 /** O primeiro elemento com esse data-tour que está de fato visível (o menu lateral e a barra de abas existem os dois, um fica escondido). */
@@ -61,27 +62,29 @@ export function Tour({ perfil, v, nome, mobile, aoLigar, aoIrPara, aoTerminar }:
 
   const passos: Passo[] = useMemo(() => {
     const lista: Passo[] = [
-      { id: 'inicio', icone: 'ideia', titulo: nome ? `Oi, ${nome}! Vamos conhecer seu painel?` : 'Vamos conhecer seu painel?',
-        texto: 'É um passeio de 1 minuto, montado com o que você respondeu. Dá para pular quando quiser.' },
-      { id: 'lancar', icone: 'mais', titulo: 'Comece lançando', alvo: 'lancar',
-        texto: 'Toque aqui para registrar o que entrou ou saiu. Diga como pagou (Pix, débito, crédito…) e, no crédito, a compra entra na fatura do cartão sozinha.' },
-      { id: 'lancamentos', icone: 'lista', titulo: 'Tudo o que você lançou', alvo: 'nav-lancamentos',
-        alternativo: { alvo: 'mais', nota: 'Fica em “Mais”.' },
-        texto: 'Aqui ficam todos os lançamentos, por dia, com busca e filtros. Tem um extrato do banco ou uma planilha? Dá para importar e lançar tudo de uma vez.' },
+      { id: 'inicio', icone: 'ideia', titulo: nome ? tx('Oi, {0}! Vamos conhecer seu painel?', nome) : tx('Vamos conhecer seu painel?'),
+        texto: tx('É um passeio de 1 minuto, montado com o que você respondeu. Dá para pular quando quiser.') },
+      { id: 'lancar', icone: 'mais', titulo: tx('Comece lançando'), alvo: 'lancar',
+        texto: tx('Toque aqui para registrar o que entrou ou saiu. Diga como pagou (Pix, débito, crédito…) e, no crédito, a compra entra na fatura do cartão sozinha.') },
+      { id: 'lancamentos', icone: 'lista', titulo: tx('Tudo o que você lançou'), alvo: 'nav-lancamentos',
+        alternativo: { alvo: 'mais', nota: tx('Fica em “Mais”.') },
+        texto: tx('Aqui ficam todos os lançamentos, por dia, com busca e filtros. Tem um extrato do banco ou uma planilha? Dá para importar e lançar tudo de uma vez.') },
     ]
     if (v0.paginaAno) lista.splice(2, 0, {
-      id: 'resumo', icone: 'inicio', titulo: 'Seu resumo do mês', alvo: 'nav-inicio',
-      alternativo: { alvo: 'mais', nota: 'Fica em “Mais”.' },
-      texto: `O Início mostra quanto sobrou, entrou e saiu${v0.comparacao ? ', compara com o mês passado' : ''} e para onde o dinheiro foi. Use o seletor de mês lá em cima para voltar no tempo.`,
+      id: 'resumo', icone: 'inicio', titulo: tx('Seu resumo do mês'), alvo: 'nav-inicio',
+      alternativo: { alvo: 'mais', nota: tx('Fica em “Mais”.') },
+      texto: v0.comparacao
+        ? tx('O Início mostra quanto sobrou, entrou e saiu, compara com o mês passado e para onde o dinheiro foi. Use o seletor de mês lá em cima para voltar no tempo.')
+        : tx('O Início mostra quanto sobrou, entrou e saiu e para onde o dinheiro foi. Use o seletor de mês lá em cima para voltar no tempo.'),
     })
     else lista.splice(2, 0, {
-      id: 'resumo', icone: 'inicio', titulo: 'Seu resumo do mês', alvo: 'nav-inicio',
-      alternativo: { alvo: 'mais', nota: 'Fica em “Mais”.' },
-      texto: 'O Início mostra, de forma simples, quanto sobrou, quanto entrou e quanto saiu no mês.',
+      id: 'resumo', icone: 'inicio', titulo: tx('Seu resumo do mês'), alvo: 'nav-inicio',
+      alternativo: { alvo: 'mais', nota: tx('Fica em “Mais”.') },
+      texto: tx('O Início mostra, de forma simples, quanto sobrou, quanto entrou e quanto saiu no mês.'),
     })
     if (document.querySelector('[data-tour="importar"]')) lista.push({
-      id: 'importar', icone: 'relatorio', titulo: 'Traga seus dados de uma vez', alvo: 'importar',
-      texto: 'Importe o extrato do banco (PDF, OFX, Excel, CSV ou Word) ou uma planilha. O app arruma os nomes e mostra tudo antes de gravar.',
+      id: 'importar', icone: 'relatorio', titulo: tx('Traga seus dados de uma vez'), alvo: 'importar',
+      texto: tx('Importe o extrato do banco (PDF, OFX, Excel, CSV ou Word) ou uma planilha. O app arruma os nomes e mostra tudo antes de gravar.'),
     })
     const paginas: { modulo: boolean; pagina: string; chave: string }[] = [
       { modulo: v0.contas, pagina: 'contas', chave: 'contas' },
@@ -93,19 +96,19 @@ export function Tour({ perfil, v, nome, mobile, aoLigar, aoIrPara, aoTerminar }:
     for (const p of paginas) if (p.modulo) lista.push({
       id: p.chave, icone: p.pagina === 'patrimonio' ? 'carteira' : p.pagina === 'metas' ? 'meta' : p.pagina === 'contas' ? 'calendario' : 'cartao',
       titulo: TEXTO_MODULO[p.chave].titulo, texto: TEXTO_MODULO[p.chave].texto, alvo: `nav-${p.pagina}`,
-      alternativo: { alvo: 'mais', nota: 'Fica em “Mais”.' },
+      alternativo: { alvo: 'mais', nota: tx('Fica em “Mais”.') },
     })
     if (v0.paginaAno) lista.push({
-      id: 'ano', icone: 'ano', titulo: 'O ano inteiro', alvo: 'nav-ano', alternativo: { alvo: 'mais', nota: 'Fica em “Mais”.' },
-      texto: 'Mês a mês: quanto entrou, saiu e sobrou, num gráfico e numa tabela. Toque num mês para abri-lo.',
+      id: 'ano', icone: 'ano', titulo: tx('O ano inteiro'), alvo: 'nav-ano', alternativo: { alvo: 'mais', nota: tx('Fica em “Mais”.') },
+      texto: tx('Mês a mês: quanto entrou, saiu e sobrou, num gráfico e numa tabela. Toque num mês para abri-lo.'),
     })
     if (oferta.length) lista.push({
-      id: 'mais-abas', icone: 'ajustes', titulo: 'Quer mais abas?', alvo: 'nav-config', alternativo: { alvo: 'menu-conta', nota: '' },
-      texto: 'Você começou só com o que respondeu, mas o app tem mais. Ligue agora o que fizer sentido; dá para desligar depois em Configurações.',
+      id: 'mais-abas', icone: 'ajustes', titulo: tx('Quer mais abas?'), alvo: 'nav-config', alternativo: { alvo: 'menu-conta', nota: '' },
+      texto: tx('Você começou só com o que respondeu, mas o app tem mais. Ligue agora o que fizer sentido; dá para desligar depois em Configurações.'),
     })
     lista.push({
-      id: 'config', icone: 'engrenagem', titulo: 'Tudo se ajusta aqui', alvo: 'nav-config', alternativo: { alvo: 'menu-conta', nota: 'Toque no menu e escolha Configurações.' },
-      texto: 'Em Configurações você põe sua foto, troca o tema, muda as moedas e as categorias, faz backup e vê este passeio de novo quando quiser.',
+      id: 'config', icone: 'engrenagem', titulo: tx('Tudo se ajusta aqui'), alvo: 'nav-config', alternativo: { alvo: 'menu-conta', nota: tx('Toque no menu e escolha Configurações.') },
+      texto: tx('Em Configurações você põe sua foto, troca o tema, muda as moedas e as categorias, faz backup e vê este passeio de novo quando quiser.'),
     })
     return lista
   }, [nome, v0, oferta.length])
@@ -175,17 +178,17 @@ export function Tour({ perfil, v, nome, mobile, aoLigar, aoIrPara, aoTerminar }:
     : undefined
 
   return (
-    <div className="tour" role="dialog" aria-modal="true" aria-label="Tutorial do painel">
+    <div className="tour" role="dialog" aria-modal="true" aria-label={tx('Tutorial do painel')}>
       {foco ? <span className="tour-foco" style={foco} aria-hidden="true" /> : <span className="tour-escuro" aria-hidden="true" />}
       <div ref={cartao} className="tour-cartao" style={{ ...pos, width: w }} key={passo.id}>
-        <button className="tour-x" onClick={aoTerminar} aria-label="Pular tutorial" title="Pular tutorial"><Icone nome="fechar" tamanho={16} /></button>
+        <button className="tour-x" onClick={aoTerminar} aria-label={tx('Pular tutorial')} title={tx('Pular tutorial')}><Icone nome="fechar" tamanho={16} /></button>
         <span className="tour-icone" aria-hidden="true"><Icone nome={passo.icone} tamanho={22} /></span>
         <h2>{passo.titulo}</h2>
         <p>{passo.texto}{nota && <> <b>{nota}</b></>}</p>
 
         {passo.id === 'inicio' && (
-          <div className="tour-chips" aria-label="O que o seu painel tem">
-            {['Lançamentos', ...MODULOS.filter((x) => perfil.modulos[x.id] && (x.id !== 'moedas' || perfil.moedas.length)).map((x) => x.nome)].map((n) => <span key={n}>{n}</span>)}
+          <div className="tour-chips" aria-label={tx('O que o seu painel tem')}>
+            {[tx('Lançamentos'), ...MODULOS.filter((x) => perfil.modulos[x.id] && (x.id !== 'moedas' || perfil.moedas.length)).map((x) => x.nome)].map((n) => <span key={n}>{n}</span>)}
           </div>
         )}
         {passo.id === 'mais-abas' && (
@@ -199,7 +202,7 @@ export function Tour({ perfil, v, nome, mobile, aoLigar, aoIrPara, aoTerminar }:
                   <span className="tour-modulo-texto"><strong>{mod.nome}</strong><small>{mod.descricao}</small></span>
                   <button type="button" className={`btn ${ligada ? '' : 'primario'}`} disabled={ligada}
                     onClick={() => aoLigar(id)}>
-                    {ligada ? <><Icone nome="check" tamanho={14} /> Ligada</> : 'Ligar'}
+                    {ligada ? <><Icone nome="check" tamanho={14} /> {tx('Ligada')}</> : tx('Ligar')}
                   </button>
                 </li>
               )
@@ -208,15 +211,15 @@ export function Tour({ perfil, v, nome, mobile, aoLigar, aoIrPara, aoTerminar }:
         )}
 
         <div className="tour-rodape">
-          <span className="tour-pontos" aria-label={`Passo ${i + 1} de ${passos.length}`}>
+          <span className="tour-pontos" aria-label={tx('Passo {0} de {1}', i + 1, passos.length)}>
             {passos.map((p, k) => <i key={p.id} className={k === i ? 'ativo' : k < i ? 'feito' : ''} />)}
           </span>
           <div className="tour-acoes">
-            {!ultimo && <button type="button" className="link tour-pular" onClick={aoTerminar}>Pular tutorial</button>}
+            {!ultimo && <button type="button" className="link tour-pular" onClick={aoTerminar}>{tx('Pular tutorial')}</button>}
             <span className="espaco" />
-            {!primeiro && <button type="button" className="btn" onClick={voltar}>Voltar</button>}
+            {!primeiro && <button type="button" className="btn" onClick={voltar}>{tx('Voltar')}</button>}
             <button ref={principal} type="button" className="btn primario" onClick={seguir}>
-              {ultimo ? 'Concluir' : primeiro ? 'Começar' : 'Próximo'}
+              {ultimo ? tx('Concluir') : primeiro ? tx('Começar') : tx('Próximo')}
             </button>
           </div>
         </div>

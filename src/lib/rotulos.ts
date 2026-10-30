@@ -1,26 +1,27 @@
+import { tx } from './textos'
 import type { TipoCaixa } from './types'
 
 export const NOME_TIPO_CAIXA: Record<TipoCaixa, string> = {
-  cc: 'Conta corrente',
-  caixinha: 'Caixinha',
-  reserva: 'Reserva de emergência',
+  cc: tx('Conta corrente'),
+  caixinha: tx('Caixinha'),
+  reserva: tx('Reserva de emergência'),
 }
 
 /** Bancos conhecidos e suas cores, para sugerir ao cadastrar e reconhecer "(Next)" nas descrições. */
 export const BANCOS_CONHECIDOS: { nome: string; cor: string; apelidos?: string[] }[] = [
-  { nome: 'Nubank', cor: '#9b4dde', apelidos: ['nu'] },
-  { nome: 'Itaú', cor: '#ec7000', apelidos: ['itau'] },
-  { nome: 'Inter', cor: '#ff7a00' },
-  { nome: 'Next', cor: '#00d26a' },
-  { nome: 'PicPay', cor: '#21c25e' },
-  { nome: 'Mercado Pago', cor: '#00b1ea' },
-  { nome: 'C6 Bank', cor: '#c8c8c8', apelidos: ['c6'] },
-  { nome: 'Bradesco', cor: '#cc092f' },
-  { nome: 'Santander', cor: '#ec0000' },
-  { nome: 'Caixa', cor: '#1c60ab', apelidos: ['caixa economica'] },
-  { nome: 'Banco do Brasil', cor: '#f8d117', apelidos: ['bb'] },
-  { nome: 'PagBank', cor: '#00a868', apelidos: ['pagseguro'] },
-  { nome: 'Dinheiro', cor: '#92d050', apelidos: ['especie', 'dinheiro vivo'] },
+  { nome: 'Nubank', cor: '#9b4dde', apelidos: ['nu'] }, // sem-tx
+  { nome: 'Itaú', cor: '#ec7000', apelidos: ['itau'] }, // sem-tx
+  { nome: 'Inter', cor: '#ff7a00' }, // sem-tx
+  { nome: 'Next', cor: '#00d26a' }, // sem-tx
+  { nome: 'PicPay', cor: '#21c25e' }, // sem-tx
+  { nome: 'Mercado Pago', cor: '#00b1ea' }, // sem-tx
+  { nome: 'C6 Bank', cor: '#c8c8c8', apelidos: ['c6'] }, // sem-tx
+  { nome: 'Bradesco', cor: '#cc092f' }, // sem-tx
+  { nome: 'Santander', cor: '#ec0000' }, // sem-tx
+  { nome: 'Caixa', cor: '#1c60ab', apelidos: ['caixa economica'] }, // sem-tx
+  { nome: 'Banco do Brasil', cor: '#f8d117', apelidos: ['bb'] }, // sem-tx
+  { nome: 'PagBank', cor: '#00a868', apelidos: ['pagseguro'] }, // sem-tx
+  { nome: 'Dinheiro', cor: '#92d050', apelidos: ['especie', 'dinheiro vivo'] }, // sem-tx
 ]
 
 /** Cores para bancos que não estão na lista acima. */

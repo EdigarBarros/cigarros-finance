@@ -3,7 +3,7 @@ import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
 import { parecencaComConta, situacoesDoMes, sugestoesDoMes } from '../lib/contasFixas'
 import { lerExtrato, limparDescricao, type LinhaExtrato } from '../lib/extrato'
 import { infoForma } from '../lib/formas'
-import { fmtValor, MESES_NOME } from '../lib/format'
+import { fmtValor, MESES_NOME, noMeioDaFrase } from '../lib/format'
 import { mesmoNome } from '../lib/rotulos'
 import { CATALOGO_BANCOS } from '../lib/bancos'
 import type { Lancamento, Tipo } from '../lib/types'
@@ -11,6 +11,7 @@ import type { Ctx } from '../pages/contexto'
 import { BancoIcone } from './BancoIcone'
 import { Icone } from './Icone'
 import { Modal } from './ui'
+import { tx } from '../lib/textos'
 
 interface Linha extends LinhaExtrato {
   chave: number
@@ -44,7 +45,7 @@ function ligarAsContas(linhas: Linha[], c: Ctx): Linha[] {
       if (!s.baixa || !mem) continue
       for (const l of doMes) {
         if (l.repetido || Math.abs(l.valor - s.baixa.valor) >= 0.005 || !parecencaComConta(s.conta, mem, comoLanc(l), true)) continue
-        Object.assign(l, { repetido: true, incluir: false, repetidoPor: `${s.conta.descricao} já está como ${s.conta.tipo === 'entrada' ? 'recebida' : 'paga'} em Contas do mês` })
+        Object.assign(l, { repetido: true, incluir: false, repetidoPor: tx('{0} já está como {1} em Contas do mês', s.conta.descricao, s.conta.tipo === 'entrada' ? tx('recebida') : tx('paga')) })
         break
       }
     }
@@ -59,8 +60,8 @@ function ligarAsContas(linhas: Linha[], c: Ctx): Linha[] {
 }
 
 const FORMATOS = [
-  { ext: 'PDF', cor: '#ff5a5f' }, { ext: 'CSV', cor: '#30d158' }, { ext: 'Excel', cor: '#1fa463' },
-  { ext: 'Word', cor: '#2b7cd3' }, { ext: 'OFX', cor: '#bf5af2' }, { ext: 'TXT', cor: '#8e8e93' },
+  { ext: 'PDF', cor: '#ff5a5f' }, { ext: 'CSV', cor: '#30d158' }, { ext: tx('Excel'), cor: '#1fa463' },
+  { ext: tx('Word'), cor: '#2b7cd3' }, { ext: 'OFX', cor: '#bf5af2' }, { ext: 'TXT', cor: '#8e8e93' },
 ]
 const dataCurta = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
 
@@ -117,7 +118,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
   const visiveis = filtro === 'revisar' ? paraRevisar : filtro === 'repetidos' ? repetidos : linhas
   const catalogo = bancoLido ? CATALOGO_BANCOS.find((b) => b.nome === bancoLido) : undefined
   const bancoNovo = bancoLido && !c.d.bancos.some((b) => mesmoNome(b.nome, bancoLido))
-  const nomeConta = (id: string) => c.contas.contas.find((k) => k.id === id)?.descricao ?? 'Conta do mês'
+  const nomeConta = (id: string) => c.contas.contas.find((k) => k.id === id)?.descricao ?? tx('Conta do mês')
   const ligadas = escolhidas.filter((l) => l.conta_fixa_id).length
 
   const importar = async () => {
@@ -126,7 +127,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
     if (!banco && bancoNovo && catalogo && c.v.bancos) banco = (await c.d.addBanco(catalogo.nome, catalogo.cor))?.id ?? null
     const n = await c.d.addLancs(escolhidas.map((l) => ({
       ano: Number(l.data.slice(0, 4)), mes: Number(l.data.slice(5, 7)), tipo: l.tipo, valor: l.valor,
-      descricao: l.descricao.trim() || (l.tipo === 'entrada' ? 'Entrada' : 'Saída'), data: l.data,
+      descricao: l.descricao.trim() || (l.tipo === 'entrada' ? tx('Entrada') : tx('Saída')), data: l.data,
       categoria_id: l.categoria_id || null, banco_id: banco, divida_id: null, forma: l.forma ?? null,
       ...(l.conta_fixa_id ? { conta_fixa_id: l.conta_fixa_id } : {}),
     })))
@@ -138,7 +139,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
   const ultimoMes = escolhidas.length ? escolhidas[escolhidas.length - 1].data : ''
 
   return (
-    <Modal titulo="Importar extrato" aoFechar={aoFechar} tamanho="grande">
+    <Modal titulo={tx('Importar extrato')} aoFechar={aoFechar} tamanho="grande">
       <div className="ex">
         {(etapa === 'escolher' || etapa === 'lendo') && (
           <div className="ex-escolher">
@@ -154,21 +155,21 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
               </span>
               {etapa === 'lendo' ? (
                 <>
-                  <strong><span className="ex-girando"><Icone nome="relogio" tamanho={18} /></span> Lendo {arquivo}…</strong>
-                  <small>Achando datas, valores e arrumando os nomes.</small>
+                  <strong><span className="ex-girando"><Icone nome="relogio" tamanho={18} /></span> {tx('Lendo {0}…', arquivo)}</strong>
+                  <small>{tx('Achando datas, valores e arrumando os nomes.')}</small>
                 </>
               ) : (
                 <>
-                  <strong>Arraste o extrato aqui ou toque para escolher</strong>
-                  <small>PDF, CSV, Excel, Word, OFX ou TXT, do banco que for.</small>
+                  <strong>{tx('Arraste o extrato aqui ou toque para escolher')}</strong>
+                  <small>{tx('PDF, CSV, Excel, Word, OFX ou TXT, do banco que for.')}</small>
                 </>
               )}
             </label>
             {erro && <p className="form-erro ex-erro"><Icone nome="sino" tamanho={16} /> {erro}</p>}
             <div className="ex-dicas">
-              <div><span className="ex-dica-icone"><Icone nome="importar" tamanho={18} /></span><p><b>Como tirar o extrato:</b> no app do banco, procure “Extrato” → “Exportar” ou “Compartilhar”. CSV, Excel ou OFX são os mais certeiros; PDF também funciona.</p></div>
-              <div><span className="ex-dica-icone"><Icone nome="ideia" tamanho={18} /></span><p><b>Nomes arrumados:</b> o app tira CPF, CNPJ, códigos e o “TRANSFERÊNCIA RECEBIDA PELO PIX” do começo. O que não der para entender fica marcado para você revisar.</p></div>
-              <div><span className="ex-dica-icone"><Icone nome="check" tamanho={18} /></span><p><b>Nada é gravado</b> antes de você revisar. O que parecer já lançado (mesmo dia, valor e tipo) vem desmarcado.</p></div>
+              <div><span className="ex-dica-icone"><Icone nome="importar" tamanho={18} /></span><p><b>{tx('Como tirar o extrato:')}</b> {tx('no app do banco, procure “Extrato” → “Exportar” ou “Compartilhar”. CSV, Excel ou OFX são os mais certeiros; PDF também funciona.')}</p></div>
+              <div><span className="ex-dica-icone"><Icone nome="ideia" tamanho={18} /></span><p><b>{tx('Nomes arrumados:')}</b> {tx('o app tira CPF, CNPJ, códigos e o “TRANSFERÊNCIA RECEBIDA PELO PIX” do começo. O que não der para entender fica marcado para você revisar.')}</p></div>
+              <div><span className="ex-dica-icone"><Icone nome="check" tamanho={18} /></span><p><b>{tx('Nada é gravado')}</b> {tx('antes de você revisar. O que parecer já lançado (mesmo dia, valor e tipo) vem desmarcado.')}</p></div>
             </div>
           </div>
         )}
@@ -183,14 +184,14 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
               <span className="ex-resumo">
                 <span className="chip-info bom">+ {fmtValor(soma('entrada'))}</span>
                 <span className="chip-info ruim">− {fmtValor(soma('saida'))}</span>
-                <span className="chip-info">{escolhidas.length} de {linhas.length}</span>
-              {ligadas > 0 && <span className="chip-info" title="Contam como pagas ou recebidas em Contas do mês">{ligadas} de contas do mês</span>}
+                <span className="chip-info">{tx('{0} de {1}', escolhidas.length, linhas.length)}</span>
+              {ligadas > 0 && <span className="chip-info" title={tx('Contam como pagas ou recebidas em Contas do mês')}>{tx('{0} de contas do mês', ligadas)}</span>}
               </span>
               {c.v.bancos && (
                 <label className="ex-banco">
-                  <span>Banco</span>
+                  <span>{tx('Banco')}</span>
                   <select value={bancoId} onChange={(e) => setBancoId(e.target.value)}>
-                    <option value="">{bancoNovo && catalogo ? `Criar "${catalogo.nome}"` : 'Nenhum'}</option>
+                    <option value="">{bancoNovo && catalogo ? tx('Criar "{0}"', catalogo.nome) : tx('Nenhum')}</option>
                     {c.d.bancos.map((b) => <option key={b.id} value={b.id}>{b.nome}</option>)}
                   </select>
                 </label>
@@ -198,40 +199,40 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
             </header>
 
             <div className="ex-filtros">
-              {([['todos', `Todos (${linhas.length})`], ['revisar', `Para revisar (${paraRevisar.length})`], ['repetidos', `Já lançados (${repetidos.length})`]] as const).map(([id, rotulo]) => (
+              {([['todos', tx('Todos ({0})', linhas.length)], ['revisar', tx('Para revisar ({0})', paraRevisar.length)], ['repetidos', tx('Já lançados ({0})', repetidos.length)]] as const).map(([id, rotulo]) => (
                 <button key={id} className={`lc-banco ${filtro === id ? 'ativo' : ''}`} onClick={() => setFiltro(id)} disabled={id !== 'todos' && rotulo.endsWith('(0)')}>{rotulo}</button>
               ))}
               <span className="espaco" />
-              <button className="link" onClick={() => setLinhas((xs) => xs.map((x) => ({ ...x, incluir: !x.repetido })))}>Marcar todos os novos</button>
-              <button className="link" onClick={() => setLinhas((xs) => xs.map((x) => ({ ...x, incluir: false })))}>Desmarcar todos</button>
+              <button className="link" onClick={() => setLinhas((xs) => xs.map((x) => ({ ...x, incluir: !x.repetido })))}>{tx('Marcar todos os novos')}</button>
+              <button className="link" onClick={() => setLinhas((xs) => xs.map((x) => ({ ...x, incluir: false })))}>{tx('Desmarcar todos')}</button>
             </div>
 
             <ul className="ex-lista">
               {visiveis.map((l, i) => (
                 <li key={l.chave} className={`ex-linha ${l.incluir ? '' : 'desmarcada'} ${l.revisar ? 'revisar' : ''}`} style={{ animationDelay: `${Math.min(i, 20) * 20}ms` }}>
-                  <input type="checkbox" checked={l.incluir} onChange={(e) => mudar(l.chave, { incluir: e.target.checked })} aria-label="Importar este" />
+                  <input type="checkbox" checked={l.incluir} onChange={(e) => mudar(l.chave, { incluir: e.target.checked })} aria-label={tx('Importar este')} />
                   <span className="ex-data">{dataCurta(l.data)}</span>
-                  <button type="button" className={`ex-tipo ${l.tipo}`} title="Trocar entrada/saída"
+                  <button type="button" className={`ex-tipo ${l.tipo}`} title={tx('Trocar entrada/saída')}
                     onClick={() => mudar(l.chave, { tipo: l.tipo === 'entrada' ? 'saida' : 'entrada', categoria_id: '', conta_fixa_id: '' })}>
                     <Icone nome={l.tipo === 'entrada' ? 'receber' : 'enviar'} tamanho={14} />
                   </button>
                   <span className="ex-nome">
-                    <input value={l.descricao} onChange={(e) => mudar(l.chave, { descricao: e.target.value })} placeholder="Dê um nome" aria-label="Descrição" />
+                    <input value={l.descricao} onChange={(e) => mudar(l.chave, { descricao: e.target.value })} placeholder={tx('Dê um nome')} aria-label={tx('Descrição')} />
                     <small>
                       {l.revisar && <em><Icone nome="sino" tamanho={11} /> {l.revisar}</em>}
-                      {l.repetido && <em className="rep" title={l.repetidoPor}>{l.repetidoPor ?? 'parece já lançado'}</em>}
+                      {l.repetido && <em className="rep" title={l.repetidoPor}>{l.repetidoPor ?? tx('parece já lançado')}</em>}
                       {l.conta_fixa_id && (
-                        <button type="button" className="ex-conta" title="Não é dessa conta: tocar para desligar"
+                        <button type="button" className="ex-conta" title={tx('Não é dessa conta: tocar para desligar')}
                           onClick={() => mudar(l.chave, { conta_fixa_id: '' })}>
                           <Icone nome="calendario" tamanho={11} /> {nomeConta(l.conta_fixa_id)} <Icone nome="fechar" tamanho={10} />
                         </button>
                       )}
                       {l.forma && <em className="forma">{infoForma(l.forma).nome}</em>}
-                      {l.original && l.original !== l.descricao && <span title={l.original}>era: {l.original}</span>}
+                      {l.original && l.original !== l.descricao && <span title={l.original}>{tx('era: {0}', l.original)}</span>}
                     </small>
                   </span>
-                  <select className="ex-cat" value={l.categoria_id} onChange={(e) => mudar(l.chave, { categoria_id: e.target.value })} aria-label="Categoria">
-                    <option value="">Sem categoria</option>
+                  <select className="ex-cat" value={l.categoria_id} onChange={(e) => mudar(l.chave, { categoria_id: e.target.value })} aria-label={tx('Categoria')}>
+                    <option value="">{tx('Sem categoria')}</option>
                     {doTipo(c.categorias, l.tipo).map((k) => <option key={k.id} value={k.id}>{k.nome}</option>)}
                   </select>
                   <span className={`ex-valor ${l.tipo}`}>{l.tipo === 'entrada' ? '+' : '−'} {fmtValor(l.valor)}</span>
@@ -240,10 +241,10 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
             </ul>
 
             <footer className="ex-acoes">
-              <button className="btn" onClick={() => { setLinhas([]); setEtapa('escolher') }}><Icone nome="esq" tamanho={16} /> Outro arquivo</button>
+              <button className="btn" onClick={() => { setLinhas([]); setEtapa('escolher') }}><Icone nome="esq" tamanho={16} /> {tx('Outro arquivo')}</button>
               <span className="espaco" />
               <button className="btn primario" disabled={!escolhidas.length} onClick={() => void importar()}>
-                <Icone nome="importar" tamanho={16} /> Importar {escolhidas.length} {escolhidas.length === 1 ? 'lançamento' : 'lançamentos'}
+                <Icone nome="importar" tamanho={16} /> {tx('Importar {0}', escolhidas.length)} {escolhidas.length === 1 ? tx('lançamento') : tx('lançamentos')}
               </button>
             </footer>
           </div>
@@ -252,17 +253,17 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
         {(etapa === 'gravando' || etapa === 'pronto') && (
           <div className="ex-pronto">
             <span className={`qz-pronto ${etapa === 'gravando' ? 'gravando' : ''}`}><Icone nome={etapa === 'gravando' ? 'relogio' : 'check'} tamanho={40} /></span>
-            <h2>{etapa === 'gravando' ? 'Importando…' : `${gravados} ${gravados === 1 ? 'lançamento importado' : 'lançamentos importados'}`}</h2>
+            <h2>{etapa === 'gravando' ? tx('Importando…') : (gravados === 1 ? tx('1 lançamento importado') : tx('{0} lançamentos importados', gravados))}</h2>
             {etapa === 'pronto' && (
               <>
-                <p>Eles já entram nos totais, gráficos e categorias. Dá para editar qualquer um em Lançamentos.</p>
+                <p>{tx('Eles já entram nos totais, gráficos e categorias. Dá para editar qualquer um em Lançamentos.')}</p>
                 <div className="ex-pronto-acoes">
-                  <button className="btn" onClick={() => { setLinhas([]); setEtapa('escolher') }}>Importar outro</button>
+                  <button className="btn" onClick={() => { setLinhas([]); setEtapa('escolher') }}>{tx('Importar outro')}</button>
                   <button className="btn primario" onClick={() => {
                     aoFechar()
                     if (ultimoMes && Number(ultimoMes.slice(0, 4)) === c.ano) c.irParaMes(Number(ultimoMes.slice(5, 7)))
                     c.irPara('lancamentos')
-                  }}>Ver lançamentos{ultimoMes ? ` de ${MESES_NOME[Number(ultimoMes.slice(5, 7)) - 1].toLowerCase()}` : ''}</button>
+                  }}>{ultimoMes ? tx('Ver lançamentos de {0}', noMeioDaFrase(MESES_NOME[Number(ultimoMes.slice(5, 7)) - 1])) : tx('Ver lançamentos')}</button>
                 </div>
               </>
             )}
@@ -284,7 +285,7 @@ export function OrganizarNomes({ c, aoFechar }: { c: Ctx; aoFechar: () => void }
     for (const l of c.d.lancs) {
       const k = `${l.tipo}|${l.descricao.trim()}`
       // data e valor de um deles, para lembrar o que era quando o nome é só número
-      const g = m.get(k) ?? { original: l.descricao.trim(), tipo: l.tipo, ids: [], exemplo: `${l.data ? dataCurta(l.data) : 'sem data'} · ${fmtValor(l.valor)}` }
+      const g = m.get(k) ?? { original: l.descricao.trim(), tipo: l.tipo, ids: [], exemplo: `${l.data ? dataCurta(l.data) : tx('sem data')} · ${fmtValor(l.valor)}` }
       g.ids.push(l.id)
       m.set(k, g)
     }
@@ -309,42 +310,41 @@ export function OrganizarNomes({ c, aoFechar }: { c: Ctx; aoFechar: () => void }
   }
 
   return (
-    <Modal titulo="Organizar nomes" aoFechar={aoFechar} tamanho="grande">
+    <Modal titulo={tx('Organizar nomes')} aoFechar={aoFechar} tamanho="grande">
       <div className="ex">
         {feito !== null ? (
           <div className="ex-pronto">
             <span className="qz-pronto"><Icone nome="check" tamanho={40} /></span>
-            <h2>{feito} {feito === 1 ? 'lançamento arrumado' : 'lançamentos arrumados'}</h2>
-            <p>Os nomes novos já aparecem em todo o app.</p>
-            <div className="ex-pronto-acoes"><button className="btn primario" onClick={aoFechar}>Fechar</button></div>
+            <h2>{feito} {feito === 1 ? tx('lançamento arrumado') : tx('lançamentos arrumados')}</h2>
+            <p>{tx('Os nomes novos já aparecem em todo o app.')}</p>
+            <div className="ex-pronto-acoes"><button className="btn primario" onClick={aoFechar}>{tx('Fechar')}</button></div>
           </div>
         ) : !grupos.length ? (
           <div className="ex-pronto">
             <span className="qz-pronto"><Icone nome="check" tamanho={40} /></span>
-            <h2>Os nomes de {c.ano} já estão organizados</h2>
-            <p>Nada com CPF, CNPJ, código ou texto de banco sobrando.</p>
-            <div className="ex-pronto-acoes"><button className="btn primario" onClick={aoFechar}>Fechar</button></div>
+            <h2>{tx('Os nomes de {0} já estão organizados', c.ano)}</h2>
+            <p>{tx('Nada com CPF, CNPJ, código ou texto de banco sobrando.')}</p>
+            <div className="ex-pronto-acoes"><button className="btn primario" onClick={aoFechar}>{tx('Fechar')}</button></div>
           </div>
         ) : (
           <div className="ex-revisar">
             <p className="ex-intro">
-              Achei <b>{grupos.length}</b> {grupos.length === 1 ? 'nome que dá' : 'nomes que dão'} para arrumar nos lançamentos de {c.ano}.
-              Confira, mude o que quiser e aplique. Os que eram só números ficam em branco para você escrever.
+              {tx('Achei')} <b>{grupos.length}</b> {grupos.length === 1 ? tx('nome que dá') : tx('nomes que dão')} {tx('para arrumar nos lançamentos de {0}. Confira, mude o que quiser e aplique. Os que eram só números ficam em branco para você escrever.', c.ano)}
             </p>
             <ul className="ex-lista">
               {grupos.map((g, i) => {
                 const k = g.original + g.tipo
                 return (
                   <li key={k} className={`ex-linha org ${marcados[k] ? '' : 'desmarcada'} ${g.semNome ? 'revisar' : ''}`} style={{ animationDelay: `${Math.min(i, 20) * 20}ms` }}>
-                    <input type="checkbox" checked={Boolean(marcados[k])} onChange={(e) => setMarcados({ ...marcados, [k]: e.target.checked })} aria-label="Arrumar este" />
+                    <input type="checkbox" checked={Boolean(marcados[k])} onChange={(e) => setMarcados({ ...marcados, [k]: e.target.checked })} aria-label={tx('Arrumar este')} />
                     <span className={`ex-tipo ${g.tipo}`}><Icone nome={g.tipo === 'entrada' ? 'receber' : 'enviar'} tamanho={14} /></span>
                     <span className="org-antes" title={g.original}>
-                      <s>{g.original || '(sem nome)'}</s>
-                      <small>{g.ids.length === 1 ? g.exemplo : `${g.ids.length} lançamentos`}</small>
+                      <s>{g.original || tx('(sem nome)')}</s>
+                      <small>{g.ids.length === 1 ? g.exemplo : tx('{0} lançamentos', g.ids.length)}</small>
                     </span>
                     <Icone nome="seta" tamanho={16} />
                     <span className="ex-nome">
-                      <input value={nomes[k] ?? ''} placeholder="Escreva o nome" aria-label="Nome novo"
+                      <input value={nomes[k] ?? ''} placeholder={tx('Escreva o nome')} aria-label={tx('Nome novo')}
                         onChange={(e) => { setNomes({ ...nomes, [k]: e.target.value }); setMarcados({ ...marcados, [k]: Boolean(e.target.value.trim()) }) }} />
                       {g.revisar && <small><em><Icone nome="sino" tamanho={11} /> {g.revisar}</em></small>}
                     </span>
@@ -354,9 +354,9 @@ export function OrganizarNomes({ c, aoFechar }: { c: Ctx; aoFechar: () => void }
             </ul>
             <footer className="ex-acoes">
               <span className="espaco" />
-              <button className="btn" onClick={aoFechar}>Cancelar</button>
+              <button className="btn" onClick={aoFechar}>{tx('Cancelar')}</button>
               <button className="btn primario" disabled={!total} onClick={() => void aplicar()}>
-                <Icone nome="check" tamanho={16} /> Arrumar {total} {total === 1 ? 'lançamento' : 'lançamentos'}
+                <Icone nome="check" tamanho={16} /> {tx('Arrumar {0}', total)} {total === 1 ? tx('lançamento') : tx('lançamentos')}
               </button>
             </footer>
           </div>

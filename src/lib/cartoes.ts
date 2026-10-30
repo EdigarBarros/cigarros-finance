@@ -4,8 +4,9 @@
  * Modelo: cada parcela é uma saída (lançamento) com `data` no dia do vencimento da fatura em que cai.
  * Uma fatura é identificada pelo mês e ano do vencimento. Tudo aqui é puro (sem tela nem banco).
  */
-import { fmtValor, MESES_NOME } from './format'
+import { fmtValor, MESES_NOME, noMeioDaFrase } from './format'
 import type { CartaoCredito, FaturaPaga, Lancamento } from './types'
+import { tx } from './textos'
 
 export type DiasCartao = Pick<CartaoCredito, 'dia_fechamento' | 'dia_vencimento'>
 export interface MesFatura { ano: number; mes: number }
@@ -95,7 +96,7 @@ export function gerarParcelas(valor: number, n: number, dataCompra: string, c: D
 export type StatusFatura = 'futura' | 'aberta' | 'fechada' | 'paga' | 'atrasada' | 'renegociada'
 
 export const ROTULO_STATUS: Record<StatusFatura, string> = {
-  futura: 'Ainda não abriu', aberta: 'Aberta', fechada: 'Fechada', paga: 'Paga', atrasada: 'Venceu', renegociada: 'Renegociada',
+  futura: tx('Ainda não abriu'), aberta: tx('Aberta'), fechada: tx('Fechada'), paga: tx('Paga'), atrasada: tx('Venceu'), renegociada: tx('Renegociada'),
 }
 
 /** Fatura resolvida por renegociação (sem a migração 9 toda fatura marcada é paga). */
@@ -294,32 +295,34 @@ export function quandoVence(s: Pick<SituacaoCartao, 'status' | 'diasParaVencer'>
   if (s.status === 'paga') return 'paga'
   if (s.status === 'renegociada') return 'renegociada'
   const d = s.diasParaVencer
-  if (d === 0) return 'vence hoje'
-  if (d === 1) return 'vence amanhã'
-  if (d > 1) return `vence em ${d} dias`
-  return d === -1 ? 'venceu ontem' : `venceu há ${-d} dias`
+  if (d === 0) return tx('vence hoje')
+  if (d === 1) return tx('vence amanhã')
+  if (d > 1) return tx('vence em {0} dias', d)
+  return d === -1 ? tx('venceu ontem') : tx('venceu há {0} dias', -d)
 }
 
 /** "novembro" (ou "novembro/2027" quando não é o ano de referência). */
 export const nomeDaFatura = (ano: number, mes: number, anoRef = ano) =>
-  MESES_NOME[mes - 1].toLowerCase() + (ano === anoRef ? '' : `/${ano}`)
+  noMeioDaFrase(MESES_NOME[mes - 1]) + (ano === anoRef ? '' : `/${ano}`)
 
 /** "12x de R$ 83,33 · primeira na fatura de novembro" — o que a pessoa vê antes de salvar a compra. */
 export function textoParcelamento(ps: ParcelaGerada[], anoCompra: number) {
   if (!ps.length) return ''
-  const primeira = `primeira na fatura de ${nomeDaFatura(ps[0].ano, ps[0].mes, anoCompra)}`
-  if (ps.length === 1) return `${fmtValor(ps[0].valor)} à vista no cartão · na fatura de ${nomeDaFatura(ps[0].ano, ps[0].mes, anoCompra)}`
+  const primeira = tx('primeira na fatura de {0}', nomeDaFatura(ps[0].ano, ps[0].mes, anoCompra))
+  if (ps.length === 1) return tx('{0} à vista no cartão · na fatura de {1}', fmtValor(ps[0].valor), nomeDaFatura(ps[0].ano, ps[0].mes, anoCompra))
   const resto = ps[1].valor
   // sobra de centavos: a primeira parcela leva a diferença
   const desigual = ps[0].valor !== resto
-  return `${ps.length}x de ${fmtValor(resto)}${desigual ? ` (a primeira, ${fmtValor(ps[0].valor)})` : ''} · ${primeira}`
+  return desigual
+    ? tx('{0}x de {1} (a primeira, {2}) · {3}', ps.length, fmtValor(resto), fmtValor(ps[0].valor), primeira)
+    : tx('{0}x de {1} · {2}', ps.length, fmtValor(resto), primeira)
 }
 
 /** Uma frase com a situação da fatura: "Fechada · vence em 9 dias", "Paga", "Venceu há 3 dias". */
 export function textoStatus(s: Pick<SituacaoCartao, 'status' | 'diasParaVencer' | 'valor'>) {
-  if (s.status === 'paga') return 'Paga'
-  if (s.status === 'renegociada') return 'Renegociada'
-  if (s.valor === 0) return 'Sem compras na fatura'
+  if (s.status === 'paga') return tx('Paga')
+  if (s.status === 'renegociada') return tx('Renegociada')
+  if (s.valor === 0) return tx('Sem compras na fatura')
   const quando = quandoVence(s)
   return s.status === 'atrasada' ? quando[0].toUpperCase() + quando.slice(1) : `${ROTULO_STATUS[s.status]} · ${quando}`
 }

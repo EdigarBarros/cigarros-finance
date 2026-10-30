@@ -5,6 +5,7 @@ import type { Banco, Categoria, Lancamento } from '../lib/types'
 import { BancoIcone } from './BancoIcone'
 import { Selo } from './Categorias'
 import { Icone } from './Icone'
+import { tx } from '../lib/textos'
 
 /**
  * Um lançamento na lista: selo da categoria, descrição, categoria e banco, e etiquetas do que ele é além de um gasto
@@ -25,7 +26,7 @@ export function ItemLancamento({ l, banco, categoria, cartao, aoClicar, mostrarD
     l.cartao_id && (
       <span key="cc" className="item-tag no-cartao">
         {cartao ? <BancoIcone nome={cartao.nome} cor={cartao.cor} tamanho={13} /> : <Icone nome="cartao" tamanho={12} />}
-        {parcelado ? `${l.parcela}/${l.parcelas}` : 'cartão'}
+        {parcelado ? `${l.parcela}/${l.parcelas}` : tx('cartão')}
       </span>
     ),
     !l.cartao_id && l.forma && (
@@ -33,15 +34,15 @@ export function ItemLancamento({ l, banco, categoria, cartao, aoClicar, mostrarD
         <Icone nome={infoForma(l.forma).icone} tamanho={12} />{infoForma(l.forma).nome}
       </span>
     ),
-    l.divida_id && <span key="dv" className={`item-tag ${entrada ? 'receber' : 'divida'}`}><Icone nome={entrada ? 'receber' : 'divida'} tamanho={12} />{entrada ? 'recebido' : 'dívida'}</span>,
-    l.conta_fixa_id && <span key="cf" className="item-tag conta"><Icone nome="calendario" tamanho={12} />todo mês</span>,
+    l.divida_id && <span key="dv" className={`item-tag ${entrada ? 'receber' : 'divida'}`}><Icone nome={entrada ? 'receber' : 'divida'} tamanho={12} />{entrada ? tx('recebido') : tx('dívida')}</span>,
+    l.conta_fixa_id && <span key="cf" className="item-tag conta"><Icone nome="calendario" tamanho={12} />{tx('todo mês')}</span>,
   ].filter(Boolean)
   return (
     <li style={indice !== undefined ? { animationDelay: `${Math.min(indice, 12) * 30}ms` } : undefined}>
       <button className="item-lanc" onClick={aoClicar}>
         <Selo c={c} tamanho={38} />
         <span className="item-texto">
-          <span className="item-desc">{l.descricao || (entrada ? 'Entrada' : 'Saída')}</span>
+          <span className="item-desc">{l.descricao || (entrada ? tx('Entrada') : tx('Saída'))}</span>
           <span className="item-meta">
             {mostrarData && l.data && <>{fmtDataCurta(l.data)} · </>}
             {banco && <span className="item-banco"><i className="marcador" style={{ background: banco.cor }} />{banco.nome} · </span>}

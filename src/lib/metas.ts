@@ -1,5 +1,6 @@
 import { hojeLocal } from './cartoes'
 import type { Meta, MovimentoMeta } from './types'
+import { tx } from './textos'
 
 const chaveMes = (iso: string) => Number(iso.slice(0, 4)) * 12 + Number(iso.slice(5, 7)) - 1
 // data local (não UTC): à noite no Brasil o UTC já é o dia seguinte
@@ -62,10 +63,10 @@ export function situacaoMeta(meta: Meta, todos: MovimentoMeta[], hoje = hojeIso(
 
 /** Pontos de partida para quem não sabe por onde começar. */
 export const MODELOS: { nome: string; icone: string; cor: string; dica: string; reserva?: boolean }[] = [
-  { nome: 'Reserva de emergência', icone: '🛟', cor: '#30d158', dica: '6 meses do que você gasta, para imprevistos', reserva: true },
-  { nome: 'Viagem', icone: '✈️', cor: '#64d2ff', dica: 'passagens, hospedagem e passeios' },
-  { nome: 'Carro', icone: '🚗', cor: '#0a84ff', dica: 'entrada ou o carro inteiro' },
-  { nome: 'Casa própria', icone: '🏠', cor: '#ff9f0a', dica: 'entrada do imóvel' },
-  { nome: 'Estudos', icone: '🎓', cor: '#5e5ce6', dica: 'curso, faculdade, intercâmbio' },
-  { nome: 'Aposentadoria', icone: '🌴', cor: '#bf5af2', dica: 'para o futuro, sem pressa' },
+  { nome: tx('Reserva de emergência'), icone: '🛟', cor: '#30d158', dica: tx('6 meses do que você gasta, para imprevistos'), reserva: true },
+  { nome: tx('Viagem'), icone: '✈️', cor: '#64d2ff', dica: tx('passagens, hospedagem e passeios') },
+  { nome: tx('Carro'), icone: '🚗', cor: '#0a84ff', dica: tx('entrada ou o carro inteiro') },
+  { nome: tx('Casa própria'), icone: '🏠', cor: '#ff9f0a', dica: tx('entrada do imóvel') },
+  { nome: tx('Estudos'), icone: '🎓', cor: '#5e5ce6', dica: tx('curso, faculdade, intercâmbio') },
+  { nome: tx('Aposentadoria'), icone: '🌴', cor: '#bf5af2', dica: tx('para o futuro, sem pressa') },
 ]
