@@ -2,13 +2,10 @@ import { useMemo, useState } from 'react'
 import { hojeLocal } from '../lib/cartoes'
 import { COR } from '../lib/charts'
 import { SEM_CATEGORIA } from '../lib/categorias'
-import { formaDe, FORMAS, type FormaPagamento } from '../lib/formas'
-import { fmtDataLonga, fmtValor, MESES_NOME, noMeioDaFrase } from '../lib/format'
-import type { Lancamento, Tipo } from '../lib/types'
-import { BancoIcone } from '../components/BancoIcone'
-import { Selo } from '../components/Categorias'
+import { formaDe, FORMAS, infoForma, type FormaPagamento } from '../lib/formas'
+import { fmtDataCurta, fmtDataLonga, fmtMoeda, fmtValor, MESES_NOME, noMeioDaFrase } from '../lib/format'
+import type { Banco, Categoria, Lancamento, Tipo } from '../lib/types'
 import { Icone } from '../components/Icone'
-import { ItemLancamento } from '../components/ItemLancamento'
 import { Numero } from '../components/Numero'
 import { CenaLancamentos } from '../components/Vazios'
 import { Segmentado } from '../components/ui'
@@ -22,8 +19,9 @@ const doisDig = (n: number) => String(n).padStart(2, '0')
 const somaTipo = (ls: Lancamento[], t: Tipo) => ls.filter((l) => l.tipo === t).reduce((a, l) => a + l.valor, 0)
 
 /**
- * Lançamentos do mês: os totais, o calendário do mês (cada dia mais forte quanto mais saiu; tocar filtra o dia), as
- * categorias em chips com o total de cada uma, os bancos, a busca e a lista por dia ou pelos maiores valores.
+ * Lançamentos do mês em duas colunas. À esquerda, presa ao rolar: o calendário do mês (cada dia mais forte quanto mais
+ * saiu; tocar filtra o dia) e "Para onde foi", as categorias em barras (tocar filtra a categoria). À direita: o resumo
+ * (entrou, saiu, sobrou), a barra de filtros e os lançamentos em cartões, numa linha do tempo por dia ou pelos maiores.
  */
 export function Lancamentos(c: Ctx) {
   const [tipo, setTipo] = useState<Filtro<Tipo>>('todos')
@@ -33,6 +31,7 @@ export function Lancamentos(c: Ctx) {
   const [categoria, setCategoria] = useState<Filtro<string>>('todos')
   const [dia, setDia] = useState<string | null>(null)
   const [ordem, setOrdem] = useState<'data' | 'valor'>('data')
+  const [todasCategorias, setTodasCategorias] = useState(false)
   const { busca, setBusca } = c
   const hoje = hojeLocal()
 
@@ -94,10 +93,16 @@ export function Lancamentos(c: Ctx) {
   }, [c.lancsMes, tipo, banco, busca])
   const bancoDe = (l: Lancamento) => (c.v.bancos ? c.d.bancos.find((b) => b.id === l.banco_id) : undefined)
   const cartaoDe = (l: Lancamento) => (l.cartao_id ? c.cartoes.cartoes.find((k) => k.id === l.cartao_id) : undefined)
-  const item = (l: Lancamento, i: number, mostrarData: boolean) => (
-    <ItemLancamento key={l.id} l={l} indice={i} categoria={c.categoriaDe(l)} banco={bancoDe(l)} cartao={cartaoDe(l)}
+
+  const totalChips = chips.reduce((a, k) => a + k.total, 0)
+  const chipsVisiveis = todasCategorias || chips.length <= 6 ? chips : chips.slice(0, 5)
+  const cartao = (l: Lancamento, i: number, mostrarData: boolean) => (
+    <CartaoLancamento key={l.id} l={l} indice={i} categoria={c.categoriaDe(l)} banco={bancoDe(l)} cartao={cartaoDe(l)}
       mostrarData={mostrarData} aoClicar={() => c.editarLancamento(l)} />
   )
+  const comBancos = c.v.bancos && c.d.bancos.length > 0
+  const comFormas = formasDoMes.size > 1 || forma !== 'todos'
+  const parteSaiu = entrou > 0 ? Math.min(1, saiu / entrou) : saiu > 0 ? 1 : 0
 
   return (
     <div className="pagina pg-lanc">
@@ -107,138 +112,197 @@ export function Lancamentos(c: Ctx) {
           <p className="sub">{tx('{0} de {1} · {2}', MESES_NOME[c.mes - 1], c.ano, filtrados.length)} {filtrados.length === 1 ? tx('lançamento') : tx('lançamentos')}{filtrando ? (' ' + tx('com os filtros')) : ''}</p>
         </div>
         <div className="lc-topo-acoes">
-          <button className="btn" onClick={c.importarExtrato} title={tx('PDF, CSV, Excel, Word ou OFX do banco')}><Icone nome="relatorio" tamanho={16} /> {tx('Importar extrato')}</button>
-          <button className="icone-btn" onClick={c.organizarNomes} title={tx('Organizar nomes')} aria-label={tx('Organizar nomes')}><Icone nome="lapis" tamanho={17} /></button>
+          <button className="btn" onClick={c.importarExtrato} title={tx('PDF, CSV, Excel, Word ou OFX do banco')}>{tx('Importar extrato')}</button>
+          <button className="btn" onClick={c.organizarNomes}>{tx('Organizar nomes')}</button>
           <span className="so-desktop lc-topo-novo">
-            <button className="btn lc-btn-entrada" onClick={() => c.novoLancamento('entrada')}><Icone nome="receber" tamanho={16} /> {tx('Entrada')}</button>
-            <button className="btn lc-btn-saida" onClick={() => c.novoLancamento('saida')}><Icone nome="enviar" tamanho={16} /> {tx('Saída')}</button>
+            <button className="btn lc-btn-entrada" onClick={() => c.novoLancamento('entrada')}>+ {tx('Entrada')}</button>
+            <button className="btn lc-btn-saida" onClick={() => c.novoLancamento('saida')}>− {tx('Saída')}</button>
           </span>
         </div>
       </header>
 
-      {/* mês sem nenhum lançamento: o calendário só teria dias vazios, então a ilustração sobe para o lugar dele */}
-      <section className={`lc-topo ${c.lancsMes.length === 0 ? 'sem-calendario' : ''}`}>
-        <div className="lc-totais">
-          {[
-            { id: 'entrou', rotulo: tx('Entrou'), valor: entrou, cor: COR.entradas, icone: 'receber' },
-            { id: 'saiu', rotulo: tx('Saiu'), valor: saiu, cor: COR.saidas, icone: 'enviar' },
-            { id: 'sobrou', rotulo: entrou - saiu < 0 ? tx('Faltou') : tx('Sobrou'), valor: entrou - saiu, cor: entrou - saiu < 0 ? COR.saidas : COR.caixa, icone: 'investir' },
-          ].map((t, i) => (
-            <div key={t.id} className="cartao lc-total" style={{ '--c': t.cor, animationDelay: `${i * 60}ms` } as React.CSSProperties}>
-              <span className="lc-total-icone"><Icone nome={t.icone} tamanho={18} /></span>
-              <span><small>{t.rotulo}</small><strong><Numero valor={Math.abs(t.valor)} formato={fmtValor} /></strong></span>
-            </div>
-          ))}
-        </div>
-        {c.lancsMes.length > 0 && <CalorDoMes ano={c.ano} mes={c.mes} lancs={semDia} dia={dia} hoje={hoje} aoEscolher={(d) => setDia(d === dia ? null : d)} />}
-      </section>
+      <div className={`lc-grade ${c.lancsMes.length === 0 ? 'sem-lado' : ''}`}>
+        {c.lancsMes.length > 0 && (
+          <aside className="lc-lado">
+            <CalorDoMes ano={c.ano} mes={c.mes} lancs={semDia} dia={dia} hoje={hoje} aoEscolher={(d) => setDia(d === dia ? null : d)} />
 
-      <section className="cartao lc-lista">
-        {(c.lancsMes.length > 0 || filtrando) && (
-        <div className="lc-filtros">
-          <label className="busca">
-            <Icone nome="busca" tamanho={16} />
-            <input placeholder={tx('Buscar descrição ou categoria')} value={busca} onChange={(e) => setBusca(e.target.value)} />
-          </label>
-          <Segmentado rotulo={tx('Tipo')} valor={tipo} aoMudar={(t) => { setTipo(t); setCategoria('todos') }}
-            opcoes={[{ id: 'todos', nome: tx('Todos') }, { id: 'entrada', nome: tx('Entradas'), cor: COR.entradas }, { id: 'saida', nome: tx('Saídas'), cor: COR.saidas }]} />
-          <Segmentado rotulo={tx('Ordem')} valor={ordem} aoMudar={setOrdem}
-            opcoes={[{ id: 'data', nome: tx('Recentes') }, { id: 'valor', nome: tx('Maiores') }]} />
-        </div>
-        )}
-
-        {chips.length > 0 && (
-          <div className="lc-chips" role="group" aria-label={tx('Categorias')}>
-            <button className={`lc-chip ${categoria === 'todos' ? 'ativo' : ''}`} onClick={() => setCategoria('todos')}>
-              <span className="lc-chip-todas"><Icone nome="lista" tamanho={14} /></span>
-              <span><b>{tx('Todas')}</b><small>{fmtValor(chips.reduce((a, k) => a + k.total, 0))}</small></span>
-            </button>
-            {chips.map((k) => (
-              <button key={k.id} className={`lc-chip ${categoria === k.id ? 'ativo' : ''}`} style={{ '--c': k.cor } as React.CSSProperties}
-                onClick={() => setCategoria(categoria === k.id ? 'todos' : k.id)} title={k.n === 1 ? tx('1 lançamento') : tx('{0} lançamentos', k.n)}>
-                <Selo c={k} tamanho={26} />
-                <span><b>{k.nome}</b><small>{fmtValor(k.total)}</small></span>
-              </button>
-            ))}
-            <button className="lc-chip editar" onClick={c.gerenciarCategorias}><Icone nome="lapis" tamanho={14} /> {tx('Editar')}</button>
-          </div>
-        )}
-
-        {c.v.bancos && c.d.bancos.length > 0 && (
-          <div className="lc-bancos" role="group" aria-label={tx('Bancos')}>
-            <button className={`lc-banco ${banco === 'todos' ? 'ativo' : ''}`} onClick={() => setBanco('todos')}>{tx('Todos os bancos')}</button>
-            {c.d.bancos.map((b) => (
-              <button key={b.id} className={`lc-banco ${banco === b.id ? 'ativo' : ''}`} onClick={() => setBanco(banco === b.id ? 'todos' : b.id)}>
-                <BancoIcone nome={b.nome} cor={b.cor} tamanho={18} />{b.nome}
-              </button>
-            ))}
-            <button className={`lc-banco ${banco === 'sem' ? 'ativo' : ''}`} onClick={() => setBanco(banco === 'sem' ? 'todos' : 'sem')}>{tx('Sem banco')}</button>
-          </div>
-        )}
-
-        {(formasDoMes.size > 1 || forma !== 'todos') && (
-          <div className="lc-bancos" role="group" aria-label={tx('Forma de pagamento')}>
-            <button className={`lc-banco ${forma === 'todos' ? 'ativo' : ''}`} onClick={() => setForma('todos')}>{tx('Todas as formas')}</button>
-            {FORMAS.filter((f) => formasDoMes.has(f.id) || forma === f.id).map((f) => (
-              <button key={f.id} className={`lc-banco ${forma === f.id ? 'ativo' : ''}`} onClick={() => setForma(forma === f.id ? 'todos' : f.id)}>
-                <Icone nome={f.icone} tamanho={14} />{f.nome} · {fmtValor(formasDoMes.get(f.id) ?? 0)}
-              </button>
-            ))}
-            {(formasDoMes.has('sem') || forma === 'sem') && (
-              <button className={`lc-banco ${forma === 'sem' ? 'ativo' : ''}`} onClick={() => setForma(forma === 'sem' ? 'todos' : 'sem')}>{tx('Sem forma · {0}', fmtValor(formasDoMes.get('sem') ?? 0))}</button>
-            )}
-          </div>
-        )}
-
-        {filtrando && (
-          <div className="lc-filtrando">
-            {dia && <span className="chip-info"><Icone nome="calendario" tamanho={12} /> {fmtDataLonga(dia)}</span>}
-            <span>{tx('{0} de {1}', filtrados.length, c.lancsMes.length)}</span>
-            <button className="link" onClick={limpar}><Icone nome="fechar" tamanho={13} /> {tx('Limpar filtros')}</button>
-          </div>
-        )}
-
-        {!filtrados.length ? (
-          <div className={filtrando ? 'lc-vazio' : tx('lc-vazio vz-vazio')}>
-            {filtrando ? <span className="lc-vazio-icone"><Icone nome="busca" tamanho={30} /></span> : <CenaLancamentos />}
-            {filtrando
-              ? <strong>{tx('Nada com esses filtros')}</strong>
-              : <h2>{c.d.lancs.length === 0 ? tx('Comece a fazer seus lançamentos') : tx('Nada lançado em {0}', noMeioDaFrase(MESES_NOME[c.mes - 1]))}</h2>}
-            {!filtrando && <p>{c.d.lancs.length === 0
-              ? tx('Registre o que entrou e o que saiu, um por um, ou traga tudo de uma vez do extrato do seu banco. O painel se monta sozinho.')
-              : tx('Quando você lançar algo neste mês, ele aparece aqui, dia a dia.')}</p>}
-            {filtrando
-              ? <button className="btn" onClick={limpar}>{tx('Limpar filtros')}</button>
-              : <span className="lc-vazio-acoes">
-                  <button className="btn lc-btn-entrada" onClick={() => c.novoLancamento('entrada')}><Icone nome="receber" tamanho={16} /> {tx('Entrada')}</button>
-                  <button className="btn lc-btn-saida" onClick={() => c.novoLancamento('saida')}><Icone nome="enviar" tamanho={16} /> {tx('Saída')}</button>
-                  <button className="btn" onClick={c.importarExtrato}><Icone nome="relatorio" tamanho={16} /> {tx('Importar extrato ou planilha')}</button>
-                </span>}
-          </div>
-        ) : ordem === 'valor' ? (
-          <ul className="lista-lanc lc-itens">{filtrados.map((l, i) => item(l, i, true))}</ul>
-        ) : (
-          grupos.map(([d, itens], gi) => {
-            const saldo = itens.reduce((a, l) => a + (l.tipo === 'entrada' ? l.valor : -l.valor), 0)
-            const data = d ? new Date(`${d}T12:00:00`) : null
-            const ontem = data && d === somaDias(hoje, -1)
-            return (
-              <section key={d} className="lc-dia" style={{ animationDelay: `${Math.min(gi, 8) * 50}ms` }}>
-                <header className="lc-dia-cab">
-                  <span className={`lc-dia-tile ${d === hoje ? 'hoje' : ''}`}>
-                    <b>{data ? doisDig(data.getDate()) : '—'}</b>
-                    <small>{data ? SEMANA[data.getDay()] : ''}</small>
-                  </span>
-                  <span className="lc-dia-nome">{d === hoje ? tx('Hoje') : ontem ? tx('Ontem') : d ? fmtDataLonga(d) : tx('Sem data')}<small>{itens.length} {itens.length === 1 ? tx('lançamento') : tx('lançamentos')}</small></span>
-                  <span className={`lc-dia-saldo ${saldo < 0 ? 'negativo' : 'positivo'}`}>{saldo < 0 ? '−' : '+'} {fmtValor(Math.abs(saldo))}</span>
+            {chips.length > 0 && (
+              <section className="cartao lc-cats" aria-label={tx('Categorias')}>
+                <header className="lc-cats-cab">
+                  <h3 className="ccd-titulo">{tipoChips === 'entrada' ? tx('De onde veio') : tx('Para onde foi')}</h3>
+                  <button className="link" onClick={c.gerenciarCategorias}>{tx('Editar categorias')}</button>
                 </header>
-                <ul className="lista-lanc lc-itens">{itens.map((l, i) => item(l, i, false))}</ul>
+                <div className="lc-cats-lista">
+                  {chipsVisiveis.map((k, i) => (
+                    <button key={k.id} className={`lc-cat ${categoria === k.id ? 'ativo' : ''} ${categoria !== 'todos' && categoria !== k.id ? 'apagado' : ''}`}
+                      style={{ '--c': k.cor, '--p': totalChips ? k.total / chips[0].total : 0, animationDelay: `${i * 40}ms` } as React.CSSProperties}
+                      onClick={() => setCategoria(categoria === k.id ? 'todos' : k.id)} aria-pressed={categoria === k.id}
+                      title={k.n === 1 ? tx('1 lançamento') : tx('{0} lançamentos', k.n)}>
+                      <span className="lc-cat-nome">{k.nome}</span>
+                      <span className="lc-cat-valor">{fmtValor(k.total)}<small>{totalChips ? Math.round((k.total / totalChips) * 100) : 0}%</small></span>
+                      <span className="lc-cat-barra"><i /></span>
+                    </button>
+                  ))}
+                </div>
+                {chips.length > 6 && (
+                  <button className="link lc-cats-mais" onClick={() => setTodasCategorias(!todasCategorias)}>
+                    {todasCategorias ? tx('Mostrar menos') : tx('Ver todas as {0}', chips.length)}
+                  </button>
+                )}
               </section>
-            )
-          })
+            )}
+          </aside>
         )}
-      </section>
+
+        <div className="lc-principal">
+          <section className="cartao lc-resumo">
+            <div className="lc-resumo-numeros">
+              {[
+                { id: 'entrou', rotulo: tx('Entrou'), valor: entrou, cor: COR.entradas },
+                { id: 'saiu', rotulo: tx('Saiu'), valor: saiu, cor: COR.saidas },
+                { id: 'sobrou', rotulo: entrou - saiu < 0 ? tx('Faltou') : tx('Sobrou'), valor: entrou - saiu, cor: entrou - saiu < 0 ? COR.saidas : COR.caixa },
+              ].map((t) => (
+                <div key={t.id} className="lc-resumo-item" style={{ '--c': t.cor } as React.CSSProperties}>
+                  <small>{t.rotulo}</small>
+                  <strong><Numero valor={Math.abs(t.valor)} formato={fmtValor} /></strong>
+                </div>
+              ))}
+            </div>
+            {(entrou > 0 || saiu > 0) && (
+              <div className="lc-resumo-regua">
+                <span className="lc-resumo-trilho"><i style={{ width: `${parteSaiu * 100}%` }} /></span>
+                <small>{entrou > 0
+                  ? tx('Saiu {0}% do que entrou', Math.round((saiu / entrou) * 100))
+                  : tx('Nada entrou com esses filtros')}</small>
+              </div>
+            )}
+          </section>
+
+          {(c.lancsMes.length > 0 || filtrando) && (
+            <section className="lc-barra">
+              <label className="busca">
+                <Icone nome="busca" tamanho={16} />
+                <input placeholder={tx('Buscar descrição ou categoria')} value={busca} onChange={(e) => setBusca(e.target.value)} />
+              </label>
+              <Segmentado rotulo={tx('Tipo')} valor={tipo} aoMudar={(t) => { setTipo(t); setCategoria('todos') }}
+                opcoes={[{ id: 'todos', nome: tx('Todos') }, { id: 'entrada', nome: tx('Entradas'), cor: COR.entradas }, { id: 'saida', nome: tx('Saídas'), cor: COR.saidas }]} />
+              <Segmentado rotulo={tx('Ordem')} valor={ordem} aoMudar={setOrdem}
+                opcoes={[{ id: 'data', nome: tx('Por dia') }, { id: 'valor', nome: tx('Maiores') }]} />
+              {comBancos && (
+                <select className={`lc-select ${banco !== 'todos' ? 'ativo' : ''}`} value={banco} onChange={(e) => setBanco(e.target.value)} aria-label={tx('Banco')}>
+                  <option value="todos">{tx('Todos os bancos')}</option>
+                  {c.d.bancos.map((b) => <option key={b.id} value={b.id}>{b.nome}</option>)}
+                  <option value="sem">{tx('Sem banco')}</option>
+                </select>
+              )}
+              {comFormas && (
+                <select className={`lc-select ${forma !== 'todos' ? 'ativo' : ''}`} value={forma} onChange={(e) => setForma(e.target.value as Filtro<FormaPagamento | 'sem'>)} aria-label={tx('Forma de pagamento')}>
+                  <option value="todos">{tx('Todas as formas')}</option>
+                  {FORMAS.filter((f) => formasDoMes.has(f.id) || forma === f.id).map((f) => (
+                    <option key={f.id} value={f.id}>{f.nome} · {fmtValor(formasDoMes.get(f.id) ?? 0)}</option>
+                  ))}
+                  {(formasDoMes.has('sem') || forma === 'sem') && <option value="sem">{tx('Sem forma · {0}', fmtValor(formasDoMes.get('sem') ?? 0))}</option>}
+                </select>
+              )}
+            </section>
+          )}
+
+          {filtrando && (
+            <div className="lc-filtrando">
+              {dia && <span className="chip-info">{fmtDataLonga(dia)}</span>}
+              {categoria !== 'todos' && <span className="chip-info">{chips.find((k) => k.id === categoria)?.nome ?? SEM_CATEGORIA.nome}</span>}
+              <span>{tx('{0} de {1}', filtrados.length, c.lancsMes.length)}</span>
+              <button className="link" onClick={limpar}><Icone nome="fechar" tamanho={13} /> {tx('Limpar filtros')}</button>
+            </div>
+          )}
+
+          {!filtrados.length ? (
+            <section className={`cartao ${filtrando ? 'lc-vazio' : tx('lc-vazio vz-vazio')}`}>
+              {filtrando ? <span className="lc-vazio-icone"><Icone nome="busca" tamanho={30} /></span> : <CenaLancamentos />}
+              {filtrando
+                ? <strong>{tx('Nada com esses filtros')}</strong>
+                : <h2>{c.d.lancs.length === 0 ? tx('Comece a fazer seus lançamentos') : tx('Nada lançado em {0}', noMeioDaFrase(MESES_NOME[c.mes - 1]))}</h2>}
+              {!filtrando && <p>{c.d.lancs.length === 0
+                ? tx('Registre o que entrou e o que saiu, um por um, ou traga tudo de uma vez do extrato do seu banco. O painel se monta sozinho.')
+                : tx('Quando você lançar algo neste mês, ele aparece aqui, dia a dia.')}</p>}
+              {filtrando
+                ? <button className="btn" onClick={limpar}>{tx('Limpar filtros')}</button>
+                : <span className="lc-vazio-acoes">
+                    <button className="btn lc-btn-entrada" onClick={() => c.novoLancamento('entrada')}>+ {tx('Entrada')}</button>
+                    <button className="btn lc-btn-saida" onClick={() => c.novoLancamento('saida')}>− {tx('Saída')}</button>
+                    <button className="btn" onClick={c.importarExtrato}>{tx('Importar extrato ou planilha')}</button>
+                  </span>}
+            </section>
+          ) : ordem === 'valor' ? (
+            <div className="lc-cartoes">{filtrados.map((l, i) => cartao(l, i, true))}</div>
+          ) : (
+            <div className="lc-linha-tempo">
+              {grupos.map(([d, itens], gi) => {
+                const saldo = itens.reduce((a, l) => a + (l.tipo === 'entrada' ? l.valor : -l.valor), 0)
+                const data = d ? new Date(`${d}T12:00:00`) : null
+                const ontem = data && d === somaDias(hoje, -1)
+                return (
+                  <section key={d} className={`lc-dia ${d === hoje ? 'hoje' : ''} ${d === dia ? 'ativo' : ''}`} style={{ animationDelay: `${Math.min(gi, 8) * 50}ms` }}>
+                    <button className="lc-dia-marco" onClick={() => d && setDia(d === dia ? null : d)} title={tx('Mostrar só este dia')} disabled={!d}>
+                      <b>{data ? doisDig(data.getDate()) : '—'}</b>
+                      <small>{data ? SEMANA[data.getDay()] : ''}</small>
+                    </button>
+                    <div className="lc-dia-corpo">
+                      <header className="lc-dia-cab">
+                        <span className="lc-dia-nome">{d === hoje ? tx('Hoje') : ontem ? tx('Ontem') : d ? fmtDataLonga(d) : tx('Sem data')}</span>
+                        <small>{itens.length} {itens.length === 1 ? tx('lançamento') : tx('lançamentos')}</small>
+                        <span className={`lc-dia-saldo ${saldo < 0 ? 'negativo' : 'positivo'}`}>{saldo < 0 ? '−' : '+'} {fmtValor(Math.abs(saldo))}</span>
+                      </header>
+                      <div className="lc-cartoes">{itens.map((l, i) => cartao(l, i, false))}</div>
+                    </div>
+                  </section>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
+  )
+}
+
+/**
+ * Um lançamento como cartão: a categoria em cima, na cor dela (sem selo), a descrição, o valor grande e, embaixo, em
+ * texto, o que ele é além de um gasto comum (banco, forma, cartão e parcela, dívida, conta do mês, outra moeda).
+ */
+function CartaoLancamento({ l, banco, categoria, cartao, aoClicar, mostrarData, indice }: {
+  l: Lancamento; banco?: Banco; categoria?: Categoria; cartao?: { nome: string; cor: string }
+  aoClicar: () => void; mostrarData: boolean; indice: number
+}) {
+  const entrada = l.tipo === 'entrada'
+  const k = categoria ?? SEM_CATEGORIA
+  const parcelado = Boolean(l.compra_id && (l.parcelas ?? 1) > 1)
+  const etiquetas = [
+    banco && { id: 'bc', texto: banco.nome, cor: banco.cor },
+    l.cartao_id && { id: 'cc', texto: cartao ? tx('Cartão {0}', cartao.nome) : tx('Cartão'), cor: cartao?.cor },
+    parcelado && { id: 'pc', texto: tx('Parcela {0} de {1}', l.parcela, l.parcelas) },
+    !l.cartao_id && l.forma && { id: 'fp', texto: infoForma(l.forma).nome },
+    l.divida_id && { id: 'dv', texto: entrada ? tx('Recebido de quem devia') : tx('Pagamento de dívida') },
+    l.conta_fixa_id && { id: 'cf', texto: tx('Todo mês') },
+  ].filter(Boolean) as { id: string; texto: string; cor?: string }[]
+  return (
+    <button className={`lc-card ${entrada ? 'entrada' : ''}`} onClick={aoClicar}
+      style={{ '--c': k.cor, animationDelay: `${Math.min(indice, 12) * 30}ms` } as React.CSSProperties}>
+      <span className="lc-card-topo">
+        <span className="lc-card-cat">{k.nome}</span>
+        {mostrarData && l.data && <small>{fmtDataCurta(l.data)}</small>}
+      </span>
+      <span className="lc-card-desc">{l.descricao || (entrada ? tx('Entrada') : tx('Saída'))}</span>
+      <span className="lc-card-valor">
+        {entrada ? '+' : '−'} {fmtValor(l.valor)}
+        {l.moeda_original && l.valor_original != null && <small>{fmtMoeda(l.valor_original, l.moeda_original)}</small>}
+      </span>
+      {etiquetas.length > 0 && (
+        <span className="lc-card-etiquetas">
+          {etiquetas.map((e) => <span key={e.id} style={e.cor ? ({ '--e': e.cor } as React.CSSProperties) : undefined} className={e.cor ? 'com-cor' : ''}>{e.texto}</span>)}
+        </span>
+      )}
+    </button>
   )
 }
 
