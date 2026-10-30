@@ -19,3 +19,15 @@ branch. Mudanças no banco (arquivos em `supabase/`) não se aplicam sozinhas: a
 
 - `README.md`: o que o app faz e como colocar no ar.
 - `docs/arquitetura-do-painel.md`: a lógica de cada tela e o guia de linguagem (textos sem jargão, botões com verbo).
+
+## Idiomas
+
+Inglês e espanhol têm tradução nossa; os outros idiomas vêm do tradutor do Google (`src/lib/idioma.ts`).
+
+- Telas já traduzidas: página inicial (`pages/Apresentacao.tsx`), login e nova senha (`components/Entrada.tsx`), assinatura
+  (`components/Assinatura.tsx`, `components/VitrinePlanos.tsx`). O painel e as páginas legais ainda usam o Google.
+- Nessas telas, todo texto novo passa por `tx('texto em português')` e ganha as versões `en` e `es` em
+  `src/i18n/traducoes.json`. Para tirar os textos de uma tela inteira: `node scripts/traducao/extrair.cjs <arquivo>`
+  (confira a lista que ele imprime). `node scripts/traducao/extrair.cjs --faltando` mostra o que está sem tradução.
+- Para passar uma tela do Google para a tradução nossa: rode o script nela, traduza o que ele listar e marque a tela como
+  traduzida (em `App.tsx`, `comIdioma`; no painel, `translate="no"` na raiz quando `nativo`).
