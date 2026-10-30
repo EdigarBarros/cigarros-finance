@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Icone } from '../components/Icone'
 import { Marca } from '../components/Marca'
+import { tx } from '../lib/textos'
 
 /**
  * Landing page do OpusCash. No meio dela, uma tela do app (montada em HTML, com dados de demonstração) flutua em 3D:
@@ -9,12 +10,12 @@ import { Marca } from '../components/Marca'
  * Tudo é escrito direto no DOM a cada quadro, a partir de um progresso suavizado: nada de re-render por pixel.
  */
 const CENAS = [
-  { titulo: 'Tudo num relance', texto: 'Quanto sobrou, quanto entrou e quanto saiu. Logo ao abrir.', p: 0.16 },
-  { titulo: 'O ano inteiro', texto: 'Para onde foi o dinheiro, mês a mês.', p: 0.34 },
-  { titulo: 'Cartões sob controle', texto: 'Fatura, parcelas e limite de cada cartão, no dia certo.', p: 0.48 },
-  { titulo: 'Contas do mês', texto: 'Aluguel, luz, internet. Toque em “Paguei” e pronto.', p: 0.62 },
-  { titulo: 'Metas que enchem', texto: 'Cada pote enche conforme você guarda.', p: 0.76 },
-  { titulo: 'Tudo em um só lugar', texto: 'Seu dinheiro organizado, do jeito que deveria ser.', p: 0.95 },
+  { titulo: tx('Tudo num relance'), texto: tx('Quanto sobrou, quanto entrou e quanto saiu. Logo ao abrir.'), p: 0.16 },
+  { titulo: tx('O ano inteiro'), texto: tx('Para onde foi o dinheiro, mês a mês.'), p: 0.34 },
+  { titulo: tx('Cartões sob controle'), texto: tx('Fatura, parcelas e limite de cada cartão, no dia certo.'), p: 0.48 },
+  { titulo: tx('Contas do mês'), texto: tx('Aluguel, luz, internet. Toque em “Paguei” e pronto.'), p: 0.62 },
+  { titulo: tx('Metas que enchem'), texto: tx('Cada pote enche conforme você guarda.'), p: 0.76 },
+  { titulo: tx('Tudo em um só lugar'), texto: tx('Seu dinheiro organizado, do jeito que deveria ser.'), p: 0.95 },
 ] as const
 /** Onde termina cada cena (progresso do scroll). */
 const FIM_CENA = [0.27, 0.41, 0.55, 0.69, 0.84, 1]
@@ -90,23 +91,23 @@ const peso = (j: [number, number] | undefined, p: number) => (j ? suave(j[0] - 0
 
 const brl = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 const KPIS = [
-  { id: 'k1', titulo: 'Sobrou em outubro', valor: 1046.9, nota: 'R$ 209,60 a mais que em set', cor: 'var(--entrada)', icone: 'carteira' },
-  { id: 'k2', titulo: 'Entrou no mês', valor: 8900, nota: '11% a mais que em set', cor: 'var(--caixa)', icone: 'receber' },
-  { id: 'k3', titulo: 'Saiu no mês', valor: 7853.1, nota: '10% a mais que em set', cor: 'var(--saida)', icone: 'enviar' },
+  { id: 'k1', titulo: tx('Sobrou em outubro'), valor: 1046.9, nota: tx('R$ 209,60 a mais que em set'), cor: 'var(--entrada)', icone: 'carteira' },
+  { id: 'k2', titulo: tx('Entrou no mês'), valor: 8900, nota: tx('11% a mais que em set'), cor: 'var(--caixa)', icone: 'receber' },
+  { id: 'k3', titulo: tx('Saiu no mês'), valor: 7853.1, nota: tx('10% a mais que em set'), cor: 'var(--saida)', icone: 'enviar' },
 ] as const
 const MESES = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
 const ENTRADAS = [0.62, 0.66, 0.6, 0.7, 0.68, 0.74, 0.72, 0.78, 0.8, 0.86, 0.82, 0.9]
 const SAIDAS = [0.55, 0.6, 0.64, 0.58, 0.66, 0.62, 0.7, 0.66, 0.72, 0.76, 0.7, 0.74]
 const CONTAS = [
-  { dia: 5, nome: 'Aluguel', valor: 'R$ 1.800,00' },
-  { dia: 10, nome: 'Internet', valor: 'R$ 119,90' },
-  { dia: 15, nome: 'Conta de luz', valor: 'R$ 182,40' },
-  { dia: 20, nome: 'Academia', valor: 'R$ 99,90' },
+  { dia: 5, nome: tx('Aluguel'), valor: 'R$ 1.800,00' },
+  { dia: 10, nome: tx('Internet'), valor: 'R$ 119,90' },
+  { dia: 15, nome: tx('Conta de luz'), valor: 'R$ 182,40' },
+  { dia: 20, nome: tx('Academia'), valor: 'R$ 99,90' },
 ]
 const METAS = [
-  { nome: 'Viagem', valor: 0.72, cor: 'var(--caixa)', falta: 'faltam R$ 840' },
-  { nome: 'Reserva', valor: 0.48, cor: 'var(--entrada)', falta: 'faltam R$ 5.200' },
-  { nome: 'Notebook', valor: 0.9, cor: 'var(--violeta)', falta: 'faltam R$ 380' },
+  { nome: tx('Viagem'), valor: 0.72, cor: 'var(--caixa)', falta: tx('faltam R$ 840') },
+  { nome: tx('Reserva'), valor: 0.48, cor: 'var(--entrada)', falta: tx('faltam R$ 5.200') },
+  { nome: tx('Notebook'), valor: 0.9, cor: 'var(--violeta)', falta: tx('faltam R$ 380') },
 ]
 const ARO = 2 * Math.PI * 42
 
@@ -124,7 +125,7 @@ function TelaDemo() {
       <aside className="td-lateral">
         <Marca compacta />
         <nav>
-          {[['inicio', 'Início'], ['lista', 'Lançamentos'], ['calendario', 'Contas do mês'], ['cartao', 'Cartões'], ['divida', 'Dívidas'], ['meta', 'Metas'], ['ano', 'Resumo do ano']].map(([i, t], n) => (
+          {[['inicio', tx('Início')], ['lista', tx('Lançamentos')], ['calendario', tx('Contas do mês')], ['cartao', tx('Cartões')], ['divida', tx('Dívidas')], ['meta', tx('Metas')], ['ano', tx('Resumo do ano')]].map(([i, t], n) => (
             <span key={t} className={n === 0 ? 'ativo' : ''}><Icone nome={i} tamanho={17} />{t}</span>
           ))}
         </nav>
@@ -132,12 +133,12 @@ function TelaDemo() {
 
       <div className="td-bloco td-topo" data-bloco="topo" style={estiloBloco('topo')}>
         <div>
-          <strong>Olá, <em translate="no">Marina!</em></strong>
-          <span>Resumo de outubro de 2026. Você está no caminho certo!</span>
+          <strong>{tx('Olá,')} <em translate="no">{tx('Marina!')}</em></strong>
+          <span>{tx('Resumo de outubro de 2026. Você está no caminho certo!')}</span>
         </div>
         <div className="td-topo-botoes">
-          <i className="td-pilula entrada"><Icone nome="sobe" tamanho={14} /> Lançar entrada</i>
-          <i className="td-pilula saida"><Icone nome="desce" tamanho={14} /> Lançar saída</i>
+          <i className="td-pilula entrada"><Icone nome="sobe" tamanho={14} /> {tx('Lançar entrada')}</i>
+          <i className="td-pilula saida"><Icone nome="desce" tamanho={14} /> {tx('Lançar saída')}</i>
         </div>
       </div>
 
@@ -153,7 +154,7 @@ function TelaDemo() {
       ))}
 
       <div className="td-bloco td-graf" data-bloco="graf" style={estiloBloco('graf')}>
-        <header><strong>Resumo do ano</strong><span><i className="e" /> Entrou <i className="s" /> Saiu</span></header>
+        <header><strong>{tx('Resumo do ano')}</strong><span><i className="e" /> {tx('Entrou')} <i className="s" /> {tx('Saiu')}</span></header>
         <div className="td-barras">
           {MESES.map((m, i) => (
             <div key={i} className="td-mes" style={{ '--i': i } as CSSProperties}>
@@ -168,29 +169,29 @@ function TelaDemo() {
       </div>
 
       <div className="td-bloco td-cart" data-bloco="cart" style={estiloBloco('cart')}>
-        <header><strong>Cartões</strong><span>faturas R$ 2.190,00</span></header>
+        <header><strong>{tx('Cartões')}</strong><span>{tx('faturas R$ 2.190,00')}</span></header>
         <div className="td-cartao-palco">
           <div className="td-cartao" data-cartao>
             <div className="td-cartao-frente">
-              <span className="td-cartao-nome"><b>nu</b> Nubank</span>
+              <span className="td-cartao-nome"><b>{tx('nu')}</b> {tx('Nubank')}</span>
               <i className="td-chip" />
-              <small>fatura de outubro</small>
+              <small>{tx('fatura de outubro')}</small>
               <strong>R$ 780,00</strong>
-              <span className="td-cartao-rodape">vence dia 10 <b>CRÉDITO</b></span>
+              <span className="td-cartao-rodape">{tx('vence dia 10')} <b>{tx('CRÉDITO')}</b></span>
               <i className="td-brilho" data-brilho />
             </div>
           </div>
         </div>
-        <div className="td-limite"><span>Limite usado</span><span>livre R$ 4.520,00</span></div>
+        <div className="td-limite"><span>{tx('Limite usado')}</span><span>{tx('livre R$ 4.520,00')}</span></div>
         <div className="td-trilha"><i data-fatura /></div>
       </div>
 
       <div className="td-bloco td-contas" data-bloco="contas" style={estiloBloco('contas')}>
-        <header><strong>Contas do mês</strong><span data-falta>falta pagar R$ 2.202,20</span></header>
+        <header><strong>{tx('Contas do mês')}</strong><span data-falta>{tx('falta pagar R$ 2.202,20')}</span></header>
         <ul>
           {CONTAS.map((c) => (
             <li key={c.nome} data-conta-item>
-              <span className="td-dia">{c.dia}<small>OUT</small></span>
+              <span className="td-dia">{c.dia}<small>{tx('OUT')}</small></span>
               <span className="td-conta-nome">{c.nome}</span>
               <span className="td-conta-valor">{c.valor}</span>
               <i className="td-check"><Icone nome="check" tamanho={14} /></i>
@@ -200,7 +201,7 @@ function TelaDemo() {
       </div>
 
       <div className="td-bloco td-metas" data-bloco="metas" style={estiloBloco('metas')}>
-        <header><strong>Metas</strong><span>3 potes enchendo</span></header>
+        <header><strong>{tx('Metas')}</strong><span>{tx('3 potes enchendo')}</span></header>
         <div className="td-aros">
           {METAS.map((m) => (
             <div key={m.nome} className="td-meta" style={{ '--c': m.cor } as CSSProperties}>
@@ -336,7 +337,7 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
         ultimaConta = pagas
         itens.forEach((el, k) => el.classList.toggle('paga', k < pagas))
         const resto = valoresContas.slice(pagas).reduce((x, y) => x + y, 0)
-        falta.textContent = resto > 0 ? `falta pagar ${brl.format(resto)}` : 'tudo pago ✓'
+        falta.textContent = resto > 0 ? tx('falta pagar {0}', brl.format(resto)) : tx('tudo pago ✓')
       }
       // metas enchendo
       const m = suave(0.71, 0.82, p)
@@ -414,20 +415,20 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
         <div className="ap-hero-centro">
           <div className="ap-logo-flutuante">
             {/* o logo em imagem tem "OPUS" branco: no tema claro entra a marca desenhada */}
-            <img className="ap-logo-escuro" src="/logo-opuscash.webp" alt="OpusCash" width={960} height={329} fetchPriority="high" />
+            <img className="ap-logo-escuro" src="/logo-opuscash.webp" alt={tx('OpusCash')} width={960} height={329} fetchPriority="high" />
             <span className="ap-logo-claro"><Marca grande /></span>
             <span className="ap-logo-brilho" />
           </div>
 <h1 className="ap-h1">
-            Seu dinheiro,<br /><em>infinitas</em> possibilidades
+            {tx('Seu dinheiro,')}<br /><em>{tx('infinitas')}</em> {tx('possibilidades')}
           </h1>
-          <p className="ap-tagline">Controle financeiro com visual premium</p>
+          <p className="ap-tagline">{tx('Controle financeiro com visual premium')}</p>
           <div className="ap-botoes">
             <button className="ap-btn ap-btn-cta" onClick={onSignup}>
-              Começar grátis <Icone nome="seta" tamanho={17} />
+              {tx('Começar grátis')} <Icone nome="seta" tamanho={17} />
             </button>
             <button className="ap-btn ap-btn-ghost" onClick={onLogin}>
-              Já tenho conta
+              {tx('Já tenho conta')}
             </button>
           </div>
         </div>
@@ -435,7 +436,7 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
           <span className="ap-scroll-mouse">
             <span className="ap-scroll-dot" />
           </span>
-          <small>Role para explorar</small>
+          <small>{tx('Role para explorar')}</small>
         </div>
       </section>
 
@@ -460,7 +461,7 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
                 </div>
               ))}
             </div>
-            <div className="ap-trilho" role="tablist" aria-label="Telas do OpusCash">
+            <div className="ap-trilho" role="tablist" aria-label={tx('Telas do OpusCash')}>
               {CENAS.map((c, i) => (
                 <button key={c.titulo} role="tab" aria-selected={cena === i} aria-label={c.titulo}
                   className={`ap-trilho-ponto ${cena === i ? 'ativo' : ''}`} onClick={() => irParaCena(i)} />
@@ -478,29 +479,29 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
         </div>
         <div className="ap-cta-centro">
           <div className="ap-preco">
-            <span className="ap-preco-tag">Teste grátis por 7 dias</span>
+            <span className="ap-preco-tag">{tx('Teste grátis por 7 dias')}</span>
             <div className="ap-preco-valor">
               <small>R$</small>
               <strong>9,99</strong>
-              <span>/mês</span>
+              <span>{tx('/mês')}</span>
             </div>
-            <p className="ap-preco-nota">Sem cartão para começar. Só pedimos o cartão se você decidir assinar.</p>
+            <p className="ap-preco-nota">{tx('Sem cartão para começar. Só pedimos o cartão se você decidir assinar.')}</p>
           </div>
-          <h2 className="ap-cta-titulo">Pronto para transformar<br />suas finanças?</h2>
+          <h2 className="ap-cta-titulo">{tx('Pronto para transformar')}<br />{tx('suas finanças?')}</h2>
           <div className="ap-botoes">
             <button className="ap-btn ap-btn-cta ap-btn-grande" onClick={onSignup}>
-              Criar conta grátis <Icone nome="seta" tamanho={17} />
+              {tx('Criar conta grátis')} <Icone nome="seta" tamanho={17} />
             </button>
             <button className="ap-btn ap-btn-ghost" onClick={onLogin}>
-              Entrar
+              {tx('Entrar')}
             </button>
           </div>
           <ul className="ap-features-mini">
-            <li><Icone nome="check" tamanho={14} /> Cartões, faturas e parcelas</li>
-            <li><Icone nome="check" tamanho={14} /> Metas, dívidas e contas do mês</li>
-            <li><Icone nome="check" tamanho={14} /> Qualquer moeda, com a cotação do dia</li>
-            <li><Icone nome="check" tamanho={14} /> Importa extrato do banco e planilhas</li>
-            <li><Icone nome="escudo" tamanho={14} /> Conexão e dados criptografados, só você enxerga os seus</li>
+            <li><Icone nome="check" tamanho={14} /> {tx('Cartões, faturas e parcelas')}</li>
+            <li><Icone nome="check" tamanho={14} /> {tx('Metas, dívidas e contas do mês')}</li>
+            <li><Icone nome="check" tamanho={14} /> {tx('Qualquer moeda, com a cotação do dia')}</li>
+            <li><Icone nome="check" tamanho={14} /> {tx('Importa extrato do banco e planilhas')}</li>
+            <li><Icone nome="escudo" tamanho={14} /> {tx('Conexão e dados criptografados, só você enxerga os seus')}</li>
           </ul>
         </div>
       </section>
@@ -508,10 +509,10 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
       {/* ─── FOOTER ─── */}
       <footer className="ap-footer">
         <Marca />
-        <p>© {ANO} OpusCash · Todos os direitos reservados</p>
+        <p>{tx('© {0} OpusCash · Todos os direitos reservados', ANO)}</p>
         <div className="ap-footer-links">
-          <a href="#/termos">Termos</a>
-          <a href="#/privacidade">Privacidade</a>
+          <a href="#/termos">{tx('Termos')}</a>
+          <a href="#/privacidade">{tx('Privacidade')}</a>
         </div>
       </footer>
     </div>

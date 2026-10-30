@@ -6,13 +6,22 @@ import { Configuracao, Login, NovaSenha } from './components/Entrada'
 import { TelaAssinatura } from './components/Assinatura'
 import { PaginaLegal } from './components/Legal'
 import { documentoDoHash } from './lib/legal'
+import { nativo } from './lib/textos'
 import { temAcesso, useAssinatura } from './lib/assinatura'
 import { configurado, supabase } from './lib/supabase'
 import { Apresentacao } from './pages/Apresentacao'
 import './pages/apresentacao.css'
 
-/** Telas sem a barra do painel: o botão de idioma fica preso no canto de cima (no painel, ele fica na barra, ao lado do tema). */
-const comIdioma = (tela: React.ReactNode) => <>{tela}<BotaoIdioma flutuante /></>
+/**
+ * Telas sem a barra do painel: o botão de idioma fica preso no canto de cima (no painel, ele fica na barra, ao lado do tema).
+ * `traduzida`: a tela tem os textos em inglês e espanhol (lib/textos.ts); nesses idiomas o tradutor do Google não mexe nela.
+ */
+const comIdioma = (tela: React.ReactNode, traduzida = true) => (
+  <>
+    {traduzida && nativo ? <div translate="no" className="tela-nativa">{tela}</div> : tela}
+    <BotaoIdioma flutuante />
+  </>
+)
 
 const Painel = lazy(() => import('./components/Painel').then((m) => ({ default: m.Painel })))
 
@@ -39,7 +48,7 @@ export default function App() {
     return () => window.removeEventListener('hashchange', aoMudar)
   }, [])
 
-  if (doc) return comIdioma(<PaginaLegal doc={doc} />)
+  if (doc) return comIdioma(<PaginaLegal doc={doc} />, false)
   if (!configurado) return comIdioma(<Configuracao />)
   if (sessao === undefined) return <Carregando />
 

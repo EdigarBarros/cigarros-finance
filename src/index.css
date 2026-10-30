@@ -3294,6 +3294,9 @@ button.ex-tipo:hover { transform: scale(1.1); }
 }
 @media (max-width: 380px) { .barra-direita .idioma-btn { width: 32px; height: 32px; } }
 
+/* telas com tradução nossa em inglês e espanhol (App.tsx): o invólucro não ocupa lugar no layout */
+.tela-nativa { display: contents; }
+
 /* Tradutor do Google: traduz a página, mas a barra, os balões e o realce dele ficam escondidos (quem troca é o botão acima) */
 #tradutor-google { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 iframe.skiptranslate, .skiptranslate > iframe, .goog-te-banner-frame, #goog-gt-tt, .goog-te-balloon-frame,

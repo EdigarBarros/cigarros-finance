@@ -11,6 +11,8 @@ import { useSyncExternalStore } from 'react'
  */
 
 export const ORIGINAL = 'pt'
+/** Idiomas com tradução nossa (lib/textos.ts, src/i18n/traducoes.json); os outros vêm do tradutor do Google. */
+export const IDIOMAS_NATIVOS = ['en', 'es'] as const
 
 /** código do Google, nome no próprio idioma, nome em inglês e em português (os três servem para a busca do menu) */
 export type Idioma = { codigo: string; nativo: string; ingles: string; portugues: string }
@@ -176,6 +178,9 @@ const assinar = (f: () => void) => {
   return () => ouvintes.delete(f)
 }
 
+/** O idioma escolhido, lido uma vez ao abrir (trocar de idioma recarrega a página). */
+export const idiomaAtual = () => atual
+
 /** O idioma escolhido (código do Google). */
 export const useIdioma = () => useSyncExternalStore(assinar, () => atual)
 export const idiomaPorCodigo = (codigo: string) => porCodigo.get(codigo) ?? porCodigo.get(ORIGINAL)!
@@ -219,7 +224,8 @@ export function trocarIdioma(codigo: string) {
   if (codigo === atual) return
   gravarCookie(codigo === ORIGINAL ? null : codigo)
   // Já traduzida, a página recarrega no idioma novo: desfazer uma tradução e fazer outra por cima deixa restos na tela.
-  if (carregado || codigo === ORIGINAL) {
+  // Inglês e espanhol também recarregam: os textos nossos (tx) são escolhidos quando a página abre.
+  if (carregado || codigo === ORIGINAL || (IDIOMAS_NATIVOS as readonly string[]).includes(codigo)) {
     location.reload()
     return
   }

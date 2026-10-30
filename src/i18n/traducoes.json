@@ -1,0 +1,810 @@
+{
+  "Tudo num relance": {
+    "en": "Everything at a glance",
+    "es": "Todo de un vistazo"
+  },
+  "Quanto sobrou, quanto entrou e quanto saiu. Logo ao abrir.": {
+    "en": "What's left, what came in and what went out. Right when you open it.",
+    "es": "Cuánto sobró, cuánto entró y cuánto salió. Apenas lo abres."
+  },
+  "O ano inteiro": {
+    "en": "The whole year",
+    "es": "Todo el año"
+  },
+  "Para onde foi o dinheiro, mês a mês.": {
+    "en": "Where your money went, month by month.",
+    "es": "A dónde fue tu dinero, mes a mes."
+  },
+  "Cartões sob controle": {
+    "en": "Cards under control",
+    "es": "Tarjetas bajo control"
+  },
+  "Fatura, parcelas e limite de cada cartão, no dia certo.": {
+    "en": "Statement, installments and limit for every card, right on time.",
+    "es": "Resumen, cuotas y límite de cada tarjeta, en el día justo."
+  },
+  "Contas do mês": {
+    "en": "Monthly bills",
+    "es": "Cuentas del mes"
+  },
+  "Aluguel, luz, internet. Toque em “Paguei” e pronto.": {
+    "en": "Rent, power, internet. Tap “Paid” and you're done.",
+    "es": "Alquiler, luz, internet. Toca “Pagué” y listo."
+  },
+  "Metas que enchem": {
+    "en": "Goals that fill up",
+    "es": "Metas que se llenan"
+  },
+  "Cada pote enche conforme você guarda.": {
+    "en": "Each jar fills up as you save.",
+    "es": "Cada frasco se llena a medida que ahorras."
+  },
+  "Tudo em um só lugar": {
+    "en": "All in one place",
+    "es": "Todo en un solo lugar"
+  },
+  "Seu dinheiro organizado, do jeito que deveria ser.": {
+    "en": "Your money organized, the way it should be.",
+    "es": "Tu dinero organizado, como debería ser."
+  },
+  "Sobrou em outubro": {
+    "en": "Left over in October",
+    "es": "Sobró en octubre"
+  },
+  "R$ 209,60 a mais que em set": {
+    "en": "R$ 209,60 more than in Sep",
+    "es": "R$ 209,60 más que en sep"
+  },
+  "Entrou no mês": {
+    "en": "Income this month",
+    "es": "Entró en el mes"
+  },
+  "11% a mais que em set": {
+    "en": "11% more than in Sep",
+    "es": "11% más que en sep"
+  },
+  "Saiu no mês": {
+    "en": "Spent this month",
+    "es": "Salió en el mes"
+  },
+  "10% a mais que em set": {
+    "en": "10% more than in Sep",
+    "es": "10% más que en sep"
+  },
+  "Aluguel": {
+    "en": "Rent",
+    "es": "Alquiler"
+  },
+  "Internet": {
+    "en": "Internet",
+    "es": "Internet"
+  },
+  "Conta de luz": {
+    "en": "Power bill",
+    "es": "Factura de luz"
+  },
+  "Academia": {
+    "en": "Gym",
+    "es": "Gimnasio"
+  },
+  "Viagem": {
+    "en": "Trip",
+    "es": "Viaje"
+  },
+  "faltam R$ 840": {
+    "en": "R$ 840 to go",
+    "es": "faltan R$ 840"
+  },
+  "Reserva": {
+    "en": "Emergency fund",
+    "es": "Fondo de reserva"
+  },
+  "faltam R$ 5.200": {
+    "en": "R$ 5.200 to go",
+    "es": "faltan R$ 5.200"
+  },
+  "Notebook": {
+    "en": "Laptop",
+    "es": "Portátil"
+  },
+  "faltam R$ 380": {
+    "en": "R$ 380 to go",
+    "es": "faltan R$ 380"
+  },
+  "Início": {
+    "en": "Home",
+    "es": "Inicio"
+  },
+  "Lançamentos": {
+    "en": "Transactions",
+    "es": "Movimientos"
+  },
+  "Cartões": {
+    "en": "Cards",
+    "es": "Tarjetas"
+  },
+  "Dívidas": {
+    "en": "Debts",
+    "es": "Deudas"
+  },
+  "Metas": {
+    "en": "Goals",
+    "es": "Metas"
+  },
+  "Resumo do ano": {
+    "en": "Year summary",
+    "es": "Resumen del año"
+  },
+  "Olá,": {
+    "en": "Hi,",
+    "es": "¡Hola,"
+  },
+  "Marina!": {
+    "en": "Marina!",
+    "es": "Marina!"
+  },
+  "Resumo de outubro de 2026. Você está no caminho certo!": {
+    "en": "October 2026 summary. You're on the right track!",
+    "es": "Resumen de octubre de 2026. ¡Vas por buen camino!"
+  },
+  "Lançar entrada": {
+    "en": "Add income",
+    "es": "Registrar ingreso"
+  },
+  "Lançar saída": {
+    "en": "Add expense",
+    "es": "Registrar gasto"
+  },
+  "Entrou": {
+    "en": "In",
+    "es": "Entró"
+  },
+  "Saiu": {
+    "en": "Out",
+    "es": "Salió"
+  },
+  "faturas R$ 2.190,00": {
+    "en": "statements R$ 2.190,00",
+    "es": "resúmenes R$ 2.190,00"
+  },
+  "nu": {
+    "en": "nu",
+    "es": "nu"
+  },
+  "Nubank": {
+    "en": "Nubank",
+    "es": "Nubank"
+  },
+  "fatura de outubro": {
+    "en": "October statement",
+    "es": "resumen de octubre"
+  },
+  "vence dia 10": {
+    "en": "due on the 10th",
+    "es": "vence el día 10"
+  },
+  "CRÉDITO": {
+    "en": "CREDIT",
+    "es": "CRÉDITO"
+  },
+  "Limite usado": {
+    "en": "Limit used",
+    "es": "Límite usado"
+  },
+  "livre R$ 4.520,00": {
+    "en": "available R$ 4.520,00",
+    "es": "disponible R$ 4.520,00"
+  },
+  "falta pagar R$ 2.202,20": {
+    "en": "R$ 2.202,20 left to pay",
+    "es": "falta pagar R$ 2.202,20"
+  },
+  "OUT": {
+    "en": "OCT",
+    "es": "OCT"
+  },
+  "3 potes enchendo": {
+    "en": "3 jars filling up",
+    "es": "3 frascos llenándose"
+  },
+  "falta pagar {0}": {
+    "en": "{0} left to pay",
+    "es": "falta pagar {0}"
+  },
+  "tudo pago ✓": {
+    "en": "all paid ✓",
+    "es": "todo pagado ✓"
+  },
+  "OpusCash": {
+    "en": "OpusCash",
+    "es": "OpusCash"
+  },
+  "Seu dinheiro,": {
+    "en": "Your money,",
+    "es": "Tu dinero,"
+  },
+  "infinitas": {
+    "en": "endless",
+    "es": "infinitas"
+  },
+  "possibilidades": {
+    "en": "possibilities",
+    "es": "posibilidades"
+  },
+  "Controle financeiro com visual premium": {
+    "en": "Money management with a premium look",
+    "es": "Control financiero con diseño premium"
+  },
+  "Começar grátis": {
+    "en": "Start for free",
+    "es": "Empezar gratis"
+  },
+  "Já tenho conta": {
+    "en": "I have an account",
+    "es": "Ya tengo cuenta"
+  },
+  "Role para explorar": {
+    "en": "Scroll to explore",
+    "es": "Desliza para explorar"
+  },
+  "Telas do OpusCash": {
+    "en": "OpusCash screens",
+    "es": "Pantallas de OpusCash"
+  },
+  "Teste grátis por 7 dias": {
+    "en": "Free for 7 days",
+    "es": "Prueba gratis por 7 días"
+  },
+  "Sem cartão para começar. Só pedimos o cartão se você decidir assinar.": {
+    "en": "No card to start. We only ask for a card if you decide to subscribe.",
+    "es": "Sin tarjeta para empezar. Solo te pedimos la tarjeta si decides suscribirte."
+  },
+  "Pronto para transformar": {
+    "en": "Ready to transform",
+    "es": "¿Listo para transformar"
+  },
+  "suas finanças?": {
+    "en": "your finances?",
+    "es": "tus finanzas?"
+  },
+  "Criar conta grátis": {
+    "en": "Create free account",
+    "es": "Crear cuenta gratis"
+  },
+  "Entrar": {
+    "en": "Sign in",
+    "es": "Iniciar sesión"
+  },
+  "Cartões, faturas e parcelas": {
+    "en": "Cards, statements and installments",
+    "es": "Tarjetas, resúmenes y cuotas"
+  },
+  "Metas, dívidas e contas do mês": {
+    "en": "Goals, debts and monthly bills",
+    "es": "Metas, deudas y cuentas del mes"
+  },
+  "Qualquer moeda, com a cotação do dia": {
+    "en": "Any currency, at today's rate",
+    "es": "Cualquier moneda, con la cotización del día"
+  },
+  "Importa extrato do banco e planilhas": {
+    "en": "Imports bank statements and spreadsheets",
+    "es": "Importa extractos bancarios y planillas"
+  },
+  "Conexão e dados criptografados, só você enxerga os seus": {
+    "en": "Encrypted connection and data, only you see yours",
+    "es": "Conexión y datos cifrados, solo tú ves los tuyos"
+  },
+  "© {0} OpusCash · Todos os direitos reservados": {
+    "en": "© {0} OpusCash · All rights reserved",
+    "es": "© {0} OpusCash · Todos los derechos reservados"
+  },
+  "Termos": {
+    "en": "Terms",
+    "es": "Términos"
+  },
+  "Privacidade": {
+    "en": "Privacy",
+    "es": "Privacidad"
+  },
+  "Se esse e-mail tiver conta, enviamos um link para criar uma senha nova. Olhe também o spam.": {
+    "en": "If this email has an account, we sent a link to create a new password. Check your spam folder too.",
+    "es": "Si este correo tiene cuenta, te enviamos un enlace para crear una contraseña nueva. Revisa también el spam."
+  },
+  "Reenviamos o e-mail de confirmação. Pode levar alguns minutos; olhe também o spam.": {
+    "en": "We resent the confirmation email. It may take a few minutes; check your spam folder too.",
+    "es": "Reenviamos el correo de confirmación. Puede tardar unos minutos; revisa también el spam."
+  },
+  "Conta criada! Confirme pelo link que chegou no seu e-mail e depois entre.": {
+    "en": "Account created! Confirm using the link we emailed you, then sign in.",
+    "es": "¡Cuenta creada! Confirma con el enlace que llegó a tu correo y después inicia sesión."
+  },
+  "Bom te ver": {
+    "en": "Good to see you",
+    "es": "Qué bueno verte"
+  },
+  "de novo.": {
+    "en": "again.",
+    "es": "de nuevo."
+  },
+  "Seus lançamentos, contas e metas estão do jeitinho que você deixou.": {
+    "en": "Your transactions, bills and goals are just the way you left them.",
+    "es": "Tus movimientos, cuentas y metas están tal como los dejaste."
+  },
+  "do seu jeito.": {
+    "en": "your way.",
+    "es": "a tu manera."
+  },
+  "Entradas, saídas, cartões, dívidas e metas num lugar só. Só seu.": {
+    "en": "Income, expenses, cards, debts and goals in one place. Yours alone.",
+    "es": "Ingresos, gastos, tarjetas, deudas y metas en un solo lugar. Solo tuyo."
+  },
+  "Reenviar e-mail de confirmação": {
+    "en": "Resend confirmation email",
+    "es": "Reenviar correo de confirmación"
+  },
+  "Novo no OpusCash?": {
+    "en": "New to OpusCash?",
+    "es": "¿Nuevo en OpusCash?"
+  },
+  "Criar conta": {
+    "en": "Create account",
+    "es": "Crear cuenta"
+  },
+  "Leva menos de um minuto.": {
+    "en": "It takes less than a minute.",
+    "es": "Toma menos de un minuto."
+  },
+  "Como quer ser chamado": {
+    "en": "What should we call you",
+    "es": "Cómo quieres que te llamemos"
+  },
+  "Não chegou? Reenviar e-mail": {
+    "en": "Didn't get it? Resend email",
+    "es": "¿No llegó? Reenviar correo"
+  },
+  "Ao criar a conta, você concorda com os": {
+    "en": "By creating an account, you agree to the",
+    "es": "Al crear la cuenta, aceptas los"
+  },
+  "Termos de uso": {
+    "en": "Terms of use",
+    "es": "Términos de uso"
+  },
+  "e a": {
+    "en": "and the",
+    "es": "y la"
+  },
+  "Política de privacidade": {
+    "en": "Privacy policy",
+    "es": "Política de privacidad"
+  },
+  "Já tem conta?": {
+    "en": "Already have an account?",
+    "es": "¿Ya tienes cuenta?"
+  },
+  "Senha": {
+    "en": "Password",
+    "es": "Contraseña"
+  },
+  "Esconder senha": {
+    "en": "Hide password",
+    "es": "Ocultar contraseña"
+  },
+  "Mostrar senha": {
+    "en": "Show password",
+    "es": "Mostrar contraseña"
+  },
+  "Aguarde": {
+    "en": "Please wait",
+    "es": "Espera"
+  },
+  "E-mail ou senha incorretos.": {
+    "en": "Wrong email or password.",
+    "es": "Correo o contraseña incorrectos."
+  },
+  "Confirme seu e-mail pelo link que chegou na caixa de entrada.": {
+    "en": "Confirm your email using the link in your inbox.",
+    "es": "Confirma tu correo con el enlace que llegó a tu bandeja de entrada."
+  },
+  "Esse e-mail já tem conta. Toque em \"Entrar\".": {
+    "en": "This email already has an account. Tap \"Sign in\".",
+    "es": "Este correo ya tiene cuenta. Toca \"Iniciar sesión\"."
+  },
+  "Cadastro de novas contas está desativado.": {
+    "en": "New sign-ups are turned off.",
+    "es": "El registro de cuentas nuevas está desactivado."
+  },
+  "Não foi possível enviar o e-mail de confirmação. Avise o dono do site para liberar o cadastro.": {
+    "en": "We couldn't send the confirmation email. Let the site owner know so they can enable sign-ups.",
+    "es": "No se pudo enviar el correo de confirmación. Avisa al dueño del sitio para que habilite el registro."
+  },
+  "Essa senha é muito comum ou já vazou em algum site. Escolha outra.": {
+    "en": "This password is too common or has leaked on some site. Choose another one.",
+    "es": "Esta contraseña es muy común o ya se filtró en algún sitio. Elige otra."
+  },
+  "A senha nova precisa ser diferente da antiga.": {
+    "en": "The new password must be different from the old one.",
+    "es": "La contraseña nueva debe ser distinta de la anterior."
+  },
+  "Muitas tentativas seguidas. Espere alguns minutos e tente de novo.": {
+    "en": "Too many attempts in a row. Wait a few minutes and try again.",
+    "es": "Demasiados intentos seguidos. Espera unos minutos e inténtalo de nuevo."
+  },
+  "A senha precisa ter pelo menos 6 caracteres.": {
+    "en": "The password must have at least 6 characters.",
+    "es": "La contraseña debe tener al menos 6 caracteres."
+  },
+  "Esse e-mail não parece válido.": {
+    "en": "This email doesn't look valid.",
+    "es": "Este correo no parece válido."
+  },
+  "Falta conectar o banco de dados": {
+    "en": "The database isn't connected yet",
+    "es": "Falta conectar la base de datos"
+  },
+  "Defina as variáveis": {
+    "en": "Set the variables",
+    "es": "Define las variables"
+  },
+  "e": {
+    "en": "and",
+    "es": "y"
+  },
+  ".env": {
+    "en": ".env",
+    "es": ".env"
+  },
+  "no computador, ou em Environment Variables na Vercel/Netlify) e publique de novo. O passo a passo está no README.": {
+    "en": "on your computer, or in Environment Variables on Vercel/Netlify) and publish again. The step-by-step guide is in the README.",
+    "es": "en tu computadora, o en Environment Variables en Vercel/Netlify) y publica de nuevo. El paso a paso está en el README."
+  },
+  "Senha trocada! Entrando…": {
+    "en": "Password changed! Signing in…",
+    "es": "¡Contraseña cambiada! Entrando…"
+  },
+  "Criar senha nova": {
+    "en": "Create a new password",
+    "es": "Crear contraseña nueva"
+  },
+  "Escolha a senha nova da sua conta.": {
+    "en": "Choose your account's new password.",
+    "es": "Elige la contraseña nueva de tu cuenta."
+  },
+  "Salvar senha": {
+    "en": "Save password",
+    "es": "Guardar contraseña"
+  },
+  "Hoje": {
+    "en": "Today",
+    "es": "Hoy"
+  },
+  "Seu teste começa na hora. Acesso completo, sem cartão.": {
+    "en": "Your trial starts right away. Full access, no card.",
+    "es": "Tu prueba empieza al instante. Acceso completo, sin tarjeta."
+  },
+  "Dia 7": {
+    "en": "Day 7",
+    "es": "Día 7"
+  },
+  "O teste termina e o painel fica bloqueado. Seus dados continuam guardados.": {
+    "en": "The trial ends and the dashboard is locked. Your data stays saved.",
+    "es": "La prueba termina y el panel queda bloqueado. Tus datos siguen guardados."
+  },
+  "Para continuar": {
+    "en": "To keep going",
+    "es": "Para continuar"
+  },
+  "Assine por R$ 9,99 por mês. Sem fidelidade, cancele quando quiser.": {
+    "en": "Subscribe for R$ 9,99 a month. No commitment, cancel anytime.",
+    "es": "Suscríbete por R$ 9,99 al mes. Sin permanencia, cancela cuando quieras."
+  },
+  "Conexão criptografada": {
+    "en": "Encrypted connection",
+    "es": "Conexión cifrada"
+  },
+  "Tudo o que você digita viaja protegido (HTTPS) entre o seu aparelho e o OpusCash.": {
+    "en": "Everything you type travels protected (HTTPS) between your device and OpusCash.",
+    "es": "Todo lo que escribes viaja protegido (HTTPS) entre tu dispositivo y OpusCash."
+  },
+  "Dados criptografados": {
+    "en": "Encrypted data",
+    "es": "Datos cifrados"
+  },
+  "Seus dados ficam guardados em servidores com criptografia, e sua senha nunca é salva em texto.": {
+    "en": "Your data is stored on encrypted servers, and your password is never saved as plain text.",
+    "es": "Tus datos se guardan en servidores cifrados, y tu contraseña nunca se guarda como texto."
+  },
+  "Só você enxerga": {
+    "en": "Only you can see it",
+    "es": "Solo tú lo ves"
+  },
+  "Cada conta é isolada no banco de dados: ninguém vê os lançamentos de ninguém. Não vendemos nem lemos seus dados.": {
+    "en": "Each account is isolated in the database: nobody sees anyone else's transactions. We don't sell or read your data.",
+    "es": "Cada cuenta está aislada en la base de datos: nadie ve los movimientos de nadie. No vendemos ni leemos tus datos."
+  },
+  "Seu teste já começou, mas não deu para abrir o painel agora. Toque no botão para tentar de novo.": {
+    "en": "Your trial has started, but we couldn't open the dashboard right now. Tap the button to try again.",
+    "es": "Tu prueba ya empezó, pero no pudimos abrir el panel ahora. Toca el botón para intentarlo de nuevo."
+  },
+  "Confirmando seu pagamento…": {
+    "en": "Confirming your payment…",
+    "es": "Confirmando tu pago…"
+  },
+  "Comece com 7 dias grátis": {
+    "en": "Start with 7 days free",
+    "es": "Empieza con 7 días gratis"
+  },
+  "Seu teste grátis acabou": {
+    "en": "Your free trial is over",
+    "es": "Tu prueba gratis terminó"
+  },
+  "Não conseguimos cobrar seu cartão": {
+    "en": "We couldn't charge your card",
+    "es": "No pudimos cobrar tu tarjeta"
+  },
+  "Sua assinatura terminou": {
+    "en": "Your subscription has ended",
+    "es": "Tu suscripción terminó"
+  },
+  "Use o OpusCash completo por 7 dias, sem pagar nada. Se quiser continuar depois, são R$ 9,99 por mês.": {
+    "en": "Use all of OpusCash for 7 days without paying anything. If you want to keep going, it's R$ 9,99 a month.",
+    "es": "Usa OpusCash completo por 7 días, sin pagar nada. Si quieres seguir después, son R$ 9,99 al mes."
+  },
+  "Seus 7 dias grátis terminaram. Assine para continuar de onde parou. Seus dados continuam guardados.": {
+    "en": "Your 7 free days are over. Subscribe to pick up where you left off. Your data stays saved.",
+    "es": "Tus 7 días gratis terminaron. Suscríbete para seguir donde lo dejaste. Tus datos siguen guardados."
+  },
+  "Assine para voltar ao seu painel. Seus dados continuam guardados.": {
+    "en": "Subscribe to get back to your dashboard. Your data stays saved.",
+    "es": "Suscríbete para volver a tu panel. Tus datos siguen guardados."
+  },
+  "Suas finanças em": {
+    "en": "Your finances in",
+    "es": "Tus finanzas en"
+  },
+  "um só lugar": {
+    "en": "one place",
+    "es": "un solo lugar"
+  },
+  "Seus dados, protegidos": {
+    "en": "Your data, protected",
+    "es": "Tus datos, protegidos"
+  },
+  "Isso leva só alguns segundos. Você entra sozinho assim que o pagamento for confirmado.": {
+    "en": "This only takes a few seconds. You'll get in automatically as soon as the payment is confirmed.",
+    "es": "Esto toma solo unos segundos. Entrarás solo apenas se confirme el pago."
+  },
+  "Sem cartão para começar": {
+    "en": "No card to start",
+    "es": "Sin tarjeta para empezar"
+  },
+  "7 dias": {
+    "en": "7 days",
+    "es": "7 días"
+  },
+  "grátis": {
+    "en": "free",
+    "es": "gratis"
+  },
+  "por mês": {
+    "en": "a month",
+    "es": "al mes"
+  },
+  "Tudo do OpusCash, sem limites": {
+    "en": "All of OpusCash, no limits",
+    "es": "Todo OpusCash, sin límites"
+  },
+  "Sem fidelidade, cancele quando quiser": {
+    "en": "No commitment, cancel anytime",
+    "es": "Sin permanencia, cancela cuando quieras"
+  },
+  "Valor na sua moeda na página de pagamento": {
+    "en": "Price in your currency on the payment page",
+    "es": "Precio en tu moneda en la página de pago"
+  },
+  "Preparando seu painel…": {
+    "en": "Getting your dashboard ready…",
+    "es": "Preparando tu panel…"
+  },
+  "Começar meus 7 dias grátis": {
+    "en": "Start my 7 free days",
+    "es": "Empezar mis 7 días gratis"
+  },
+  "Ao continuar, você concorda com os": {
+    "en": "By continuing, you agree to the",
+    "es": "Al continuar, aceptas los"
+  },
+  "Sair ({0})": {
+    "en": "Sign out ({0})",
+    "es": "Cerrar sesión ({0})"
+  },
+  "Mercado": {
+    "en": "Groceries",
+    "es": "Supermercado"
+  },
+  "Alimentação": {
+    "en": "Food",
+    "es": "Alimentación"
+  },
+  "Salário": {
+    "en": "Salary",
+    "es": "Sueldo"
+  },
+  "Entrada": {
+    "en": "Income",
+    "es": "Ingreso"
+  },
+  "Uber": {
+    "en": "Uber",
+    "es": "Uber"
+  },
+  "Transporte": {
+    "en": "Transport",
+    "es": "Transporte"
+  },
+  "Cinema": {
+    "en": "Movies",
+    "es": "Cine"
+  },
+  "Lazer": {
+    "en": "Leisure",
+    "es": "Ocio"
+  },
+  "Dólar": {
+    "en": "Dollar",
+    "es": "Dólar"
+  },
+  "Euro": {
+    "en": "Euro",
+    "es": "Euro"
+  },
+  "Libra": {
+    "en": "Pound",
+    "es": "Libra"
+  },
+  "Lançamentos e categorias": {
+    "en": "Transactions and categories",
+    "es": "Movimientos y categorías"
+  },
+  "Anote cada entrada e saída em segundos e veja para onde vai o seu dinheiro.": {
+    "en": "Log every income and expense in seconds and see where your money goes.",
+    "es": "Anota cada ingreso y gasto en segundos y mira a dónde va tu dinero."
+  },
+  "Cartões e faturas": {
+    "en": "Cards and statements",
+    "es": "Tarjetas y resúmenes"
+  },
+  "Fatura, parcelas e limite de cada cartão, com o vencimento no dia certo.": {
+    "en": "Statement, installments and limit for every card, with the right due date.",
+    "es": "Resumen, cuotas y límite de cada tarjeta, con el vencimiento en el día justo."
+  },
+  "Contas": {
+    "en": "Bills",
+    "es": "Cuentas"
+  },
+  "Dívidas e contas do mês": {
+    "en": "Debts and monthly bills",
+    "es": "Deudas y cuentas del mes"
+  },
+  "Aluguel, luz, internet e dívidas num lugar só. Toque em “Paguei” e pronto.": {
+    "en": "Rent, power, internet and debts in one place. Tap “Paid” and you're done.",
+    "es": "Alquiler, luz, internet y deudas en un solo lugar. Toca “Pagué” y listo."
+  },
+  "Financiamento": {
+    "en": "Financing",
+    "es": "Financiamiento"
+  },
+  "8 de 24 parcelas pagas": {
+    "en": "8 of 24 installments paid",
+    "es": "8 de 24 cuotas pagadas"
+  },
+  "Crie cofrinhos para cada sonho e acompanhe quanto já guardou.": {
+    "en": "Create a piggy bank for each dream and track how much you've saved.",
+    "es": "Crea alcancías para cada sueño y sigue cuánto ya ahorraste."
+  },
+  "Moedas": {
+    "en": "Currencies",
+    "es": "Monedas"
+  },
+  "Lance em dólar, euro ou a moeda que quiser. O app converte pela cotação do dia.": {
+    "en": "Log in dollars, euros or any currency you want. The app converts at today's rate.",
+    "es": "Registra en dólares, euros o la moneda que quieras. La app convierte con la cotización del día."
+  },
+  "cotação do dia": {
+    "en": "today's rate",
+    "es": "cotización del día"
+  },
+  "Ano": {
+    "en": "Year",
+    "es": "Año"
+  },
+  "O ano inteiro num gráfico": {
+    "en": "The whole year in one chart",
+    "es": "Todo el año en un gráfico"
+  },
+  "Veja mês a mês quanto entrou, quanto saiu e como você está evoluindo.": {
+    "en": "See month by month what came in, what went out and how you're doing.",
+    "es": "Mira mes a mes cuánto entró, cuánto salió y cómo vas avanzando."
+  },
+  "OpusCash · {0}": {
+    "en": "OpusCash · {0}",
+    "es": "OpusCash · {0}"
+  },
+  "dados de exemplo": {
+    "en": "sample data",
+    "es": "datos de ejemplo"
+  },
+  "/mês": {
+    "en": "/month",
+    "es": "/mes"
+  },
+  "Nova senha": {
+    "en": "New password",
+    "es": "Contraseña nueva"
+  },
+  "Digite seu e-mail e enviamos um link para você criar uma senha nova.": {
+    "en": "Enter your email and we'll send you a link to create a new password.",
+    "es": "Escribe tu correo y te enviamos un enlace para crear una contraseña nueva."
+  },
+  "Que bom que voltou. Seu painel está esperando.": {
+    "en": "Glad you're back. Your dashboard is waiting.",
+    "es": "Qué bueno que volviste. Tu panel te está esperando."
+  },
+  "E-mail": {
+    "en": "Email",
+    "es": "Correo"
+  },
+  "Enviar link": {
+    "en": "Send link",
+    "es": "Enviar enlace"
+  },
+  "Voltar para entrar": {
+    "en": "Back to sign in",
+    "es": "Volver a iniciar sesión"
+  },
+  "Esqueci minha senha": {
+    "en": "I forgot my password",
+    "es": "Olvidé mi contraseña"
+  },
+  "Use 6 caracteres ou mais": {
+    "en": "Use 6 or more characters",
+    "es": "Usa 6 caracteres o más"
+  },
+  "Faltam {0}": {
+    "en": "{0} more to go",
+    "es": "Faltan {0}"
+  },
+  "Senha fraca": {
+    "en": "Weak password",
+    "es": "Contraseña débil"
+  },
+  "Senha razoável": {
+    "en": "Fair password",
+    "es": "Contraseña aceptable"
+  },
+  "Senha boa": {
+    "en": "Good password",
+    "es": "Contraseña buena"
+  },
+  "Senha forte": {
+    "en": "Strong password",
+    "es": "Contraseña fuerte"
+  },
+  "Abrindo o pagamento…": {
+    "en": "Opening checkout…",
+    "es": "Abriendo el pago…"
+  },
+  "Assinar por R$ 9,99/mês": {
+    "en": "Subscribe for R$ 9,99/month",
+    "es": "Suscribirme por R$ 9,99/mes"
+  },
+  "Depois dos 7 dias, para continuar usando o painel: R$ 9,99 por mês. O cartão só é pedido nessa hora, na página segura do Stripe.": {
+    "en": "After the 7 days, to keep using the dashboard: R$ 9,99 a month. We only ask for a card then, on Stripe's secure page.",
+    "es": "Después de los 7 días, para seguir usando el panel: R$ 9,99 al mes. La tarjeta solo se pide en ese momento, en la página segura de Stripe."
+  },
+  "O pagamento é feito na página segura do Stripe. Cancele quando quiser, sem multa.": {
+    "en": "Payment happens on Stripe's secure page. Cancel anytime, no fees.",
+    "es": "El pago se hace en la página segura de Stripe. Cancela cuando quieras, sin multa."
+  }
+}
