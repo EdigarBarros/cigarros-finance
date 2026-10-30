@@ -1898,6 +1898,15 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .zona-cuidado .ajuste-icone { color: var(--saida); background: color-mix(in srgb, var(--saida) 14%, transparent); }
 .zerar-texto { margin: 0; color: var(--texto-2); line-height: 1.5; }
 .zerar-texto b { color: var(--texto); }
+.exc-direitos { display: grid; gap: 4px; padding: 12px 14px; border-radius: var(--raio-p); background: var(--destaque-suave); border: 1px solid color-mix(in srgb, var(--destaque) 30%, transparent); }
+.exc-direitos strong { display: flex; align-items: center; gap: 7px; font-size: 14px; color: var(--destaque); }
+.exc-direitos p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--texto-2); }
+.exc-ciencias { display: grid; gap: 8px; }
+.exc-ciencia { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; padding: 12px 14px; border-radius: var(--raio-p); border: 1px solid var(--borda); background: var(--superficie-2); cursor: pointer; font-size: 13px; line-height: 1.5; color: var(--texto-2); transition: border-color .2s, background .2s; }
+.exc-ciencia input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--saida); cursor: pointer; }
+.exc-ciencia b { color: var(--texto); }
+.exc-ciencia a { color: var(--link); text-decoration: underline; text-underline-offset: 2px; }
+.exc-ciencia.marcada { border-color: color-mix(in srgb, var(--saida) 45%, transparent); background: color-mix(in srgb, var(--saida) 7%, var(--superficie-2)); color: var(--texto); }
 .btn.perigo-forte { color: #fff; border-color: transparent; background: var(--saida); }
 .btn.perigo-forte:disabled { opacity: .4; }
 

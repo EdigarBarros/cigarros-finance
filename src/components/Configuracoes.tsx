@@ -414,13 +414,36 @@ function textoAssinatura(a: Assinatura) {
   return 'Troque o cartão, veja as faturas ou cancele a assinatura.'
 }
 
-/** Excluir a conta de vez (login, dados e assinatura). Pede o e-mail digitado e oferece o backup antes. */
+/**
+ * Termos de ciência que a pessoa precisa marcar para excluir a conta. Cada item é um consentimento separado e informado
+ * (LGPD, Lei 13.709/2018). As referências valem para o que o OpusCash faz de fato; ver a Política de privacidade (seções 5 e 6).
+ */
+const CIENCIAS: { chave: string; texto: React.ReactNode }[] = [
+  {
+    chave: 'definitivo',
+    texto: <>Sei que a exclusão é <b>definitiva e não tem como desfazer</b>: meu login e todos os meus dados (lançamentos, categorias, bancos, cartões, dívidas, metas, contas do mês e foto) serão apagados.</>,
+  },
+  {
+    chave: 'assinatura',
+    texto: <>Sei que minha <b>assinatura será cancelada</b> e que não há reembolso proporcional do período já iniciado, salvo quando a lei exigir (como o direito de arrependimento de 7 dias do Código de Defesa do Consumidor) ou nos casos previstos nos Termos de uso.</>,
+  },
+  {
+    chave: 'registros',
+    texto: <>Sei que <b>alguns registros podem ser mantidos quando a lei exigir</b>, como os registros de cobrança no Stripe, e que o OpusCash guarda apenas uma identificação irreversível do cartão para impedir que o teste grátis se repita (art. 16 da LGPD).</>,
+  },
+  {
+    chave: 'termos',
+    texto: <>Li e concordo com os <a href="#/termos" target="_blank" rel="noopener noreferrer">Termos de uso</a> e com a <a href="#/privacidade" target="_blank" rel="noopener noreferrer">Política de privacidade</a>, e peço, de forma livre e informada, a eliminação dos meus dados pessoais (art. 18, inciso VI, da LGPD, Lei 13.709/2018).</>,
+  },
+]
+
+/** Excluir a conta de vez (login, dados e assinatura). Pede o aceite de cada termo de ciência e oferece o backup antes. */
 export function ExcluirContaModal({ email, aoBaixarBackup, aoFechar }: { email: string; aoBaixarBackup: () => Promise<unknown>; aoFechar: () => void }) {
-  const [texto, setTexto] = useState('')
+  const [aceites, setAceites] = useState<Record<string, boolean>>({})
   const [baixou, setBaixou] = useState(false)
   const [ocupado, setOcupado] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
-  const pode = texto.trim().toLowerCase() === email.toLowerCase() && !ocupado
+  const pode = CIENCIAS.every((c) => aceites[c.chave]) && !ocupado
 
   const baixar = async () => {
     setOcupado('Gerando backup…')
@@ -436,14 +459,23 @@ export function ExcluirContaModal({ email, aoBaixarBackup, aoFechar }: { email: 
   return (
     <Modal titulo="Excluir minha conta" aoFechar={() => !ocupado && aoFechar()}>
       <div className="form">
-        <p className="zerar-texto">Isso apaga seu login e <b>todos os seus dados</b> (lançamentos, cartões, dívidas, metas, tudo) e cancela a assinatura, se houver. <b>Não tem como desfazer.</b></p>
+        <p className="zerar-texto">Você está pedindo para apagar a conta <b>{email}</b>. Leia e marque cada item para confirmar que está ciente.</p>
+        <div className="exc-direitos">
+          <strong><Icone nome="escudo" tamanho={16} /> Seus direitos continuam valendo</strong>
+          <p>Antes de excluir, você pode levar uma cópia dos seus dados (portabilidade, art. 18, inciso V, da LGPD). Se tiver qualquer dúvida ou pedido sobre seus dados, fale com o suporte, pelo e-mail que aparece na Política de privacidade. Também é possível reclamar à Autoridade Nacional de Proteção de Dados (ANPD).</p>
+        </div>
         <button type="button" className="btn" onClick={baixar} disabled={Boolean(ocupado)}>
           <Icone nome="exportar" tamanho={16} /> {baixou ? 'Backup baixado ✓' : 'Baixar backup antes (recomendado)'}
         </button>
-        <label className="campo">
-          <span className="campo-rotulo">Para confirmar, digite seu e-mail: <b>{email}</b></span>
-          <input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={email} autoComplete="off" autoCapitalize="none" />
-        </label>
+        <div className="exc-ciencias" role="group" aria-label="Termos de ciência">
+          {CIENCIAS.map((c) => (
+            <label key={c.chave} className={`exc-ciencia ${aceites[c.chave] ? 'marcada' : ''}`}>
+              <input type="checkbox" checked={Boolean(aceites[c.chave])} disabled={Boolean(ocupado)}
+                onChange={(e) => setAceites({ ...aceites, [c.chave]: e.target.checked })} />
+              <span>{c.texto}</span>
+            </label>
+          ))}
+        </div>
         {erro && <p className="form-erro" role="alert">{erro}</p>}
         <div className="form-acoes">
           <span className="espaco" />
