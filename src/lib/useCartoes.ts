@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { hojeLocal } from './cartoes'
-import { supabase } from './supabase'
+import { lerTudo, supabase } from './supabase'
 import type { CartaoCredito, FaturaPaga, Lancamento } from './types'
 
 const num = (v: unknown) => Number(v ?? 0)
@@ -19,7 +19,7 @@ const buscar = () =>
   Promise.all([
     supabase.from('cartoes').select('*').order('created_at'),
     supabase.from('faturas_pagas').select('*').order('ano').order('mes'),
-    supabase.from('lancamentos').select('*').not('cartao_id', 'is', null).order('data'),
+    lerTudo(() => supabase.from('lancamentos').select('*').not('cartao_id', 'is', null).order('data').order('id')),
     // só para saber se a migração 9 (renegociar, juros, limite garantido) já foi rodada
     supabase.from('faturas_pagas').select('tipo, juros, juros_lanc_id, divida_id').limit(1),
     supabase.from('cartoes').select('limite_garantido, garantia_caixinha').limit(1),

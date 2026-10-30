@@ -37,7 +37,8 @@ exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,se
     if(!(t in db))return route.fulfill({status:404,headers:h,body:JSON.stringify({code:'42P01',message:'relation does not exist'})})
     const single=/pgrst\.object/.test(req.headers()['accept']||'')
     let body=null;try{body=req.postDataJSON()}catch{}
-    if(m==='GET'||m==='HEAD'){const rows=db[t];return route.fulfill({status:200,headers:h,body:JSON.stringify(single?(rows[0]??null):rows)})}
+    if(m==='GET'||m==='HEAD'){const off=+(u.searchParams.get('offset')||0),lim=Math.min(+(u.searchParams.get('limit')||1000),1000);const rows=db[t].slice(off,off+lim);// como o Supabase: no máximo 1000 linhas por consulta
+    return route.fulfill({status:200,headers:h,body:JSON.stringify(single?(rows[0]??null):rows)})}
     if(m==='POST'){const arr=Array.isArray(body)?body:[body];const novos=arr.map(x=>({id:crypto.randomUUID(),user_id:uid,created_at:new Date().toISOString(),...x}));
       if(u.searchParams.get('on_conflict')||/merge-duplicates/.test(req.headers()['prefer']||'')){const i=db[t].findIndex(x=>x.user_id===uid);if(i>=0&&t==='perfis'){db[t][i]={...db[t][i],...novos[0],id:undefined};return route.fulfill({status:201,headers:h,body:'[]'})}}
       db[t].push(...novos);log.push(['POST',t,novos]);return route.fulfill({status:201,headers:h,body:JSON.stringify(single?novos[0]:novos)})}
