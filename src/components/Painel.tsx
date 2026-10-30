@@ -15,7 +15,7 @@ import { useMobile } from '../lib/useMobile'
 import { estiloLente, useLente } from '../lib/useLente'
 import { definirTema, semMovimento, useTema } from '../lib/tema'
 import { ehErroDeVersao } from '../lib/atualizacao'
-import { irParaStripe, type Assinatura } from '../lib/assinatura'
+import { diasDeTeste, emTeste, irParaStripe, type Assinatura } from '../lib/assinatura'
 import { useCartoes } from '../lib/useCartoes'
 import { useContasFixas } from '../lib/useContasFixas'
 import { useDados } from '../lib/useDados'
@@ -553,6 +553,13 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
             </div>
           </div>
         </header>
+
+        {emTeste(assinatura ?? null) && (
+          <div className="alerta" role="status">
+            <span>Teste grátis: {diasDeTeste(assinatura ?? null) === 1 ? 'falta 1 dia' : `faltam ${diasDeTeste(assinatura ?? null)} dias`}. Só pedimos o cartão quando você decidir assinar.</span>
+            <button className="link" onClick={() => void irParaStripe('stripe-checkout', perfil.moeda).then((m) => m && alert(m))}>Assinar agora</button>
+          </div>
+        )}
 
         {assinatura?.status === 'past_due' && (
           <div className="alerta" role="status">

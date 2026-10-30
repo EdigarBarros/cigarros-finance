@@ -1,4 +1,5 @@
-// Cria a página de pagamento do Stripe (7 dias grátis, cartão obrigatório) e devolve o endereço dela.
+// Cria a página de pagamento do Stripe e devolve o endereço dela. O teste grátis de 7 dias é do OpusCash (sem cartão, migração 17):
+// aqui a cobrança começa assim que a pessoa assina.
 // Segredo necessário: STRIPE_SECRET_KEY. O resto (SUPABASE_URL, chaves) o Supabase já fornece.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
@@ -20,7 +21,6 @@ const getCorsHeaders = (req: Request) => {
 }
 
 const MOEDAS = ['brl', 'usd', 'eur', 'gbp', 'ars', 'clp', 'uyu', 'cop', 'pen', 'mxn', 'cad', 'aud', 'chf']
-const DIAS_DE_TESTE = 7
 
 const resposta = (corpo: unknown, status = 200, req: Request) =>
   new Response(JSON.stringify(corpo), { status, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } })
@@ -74,8 +74,6 @@ Deno.serve(async (req) => {
     const preco = precos.data?.[0]?.id
     if (!preco) return resposta({ erro: 'Plano não encontrado no Stripe.' }, 500, req)
 
-    // O teste grátis é uma vez só por pessoa: quem já teve assinatura volta a pagar direto.
-    const jaTeve = Boolean(atual?.stripe_subscription_id)
     const moedaEscolhida = typeof moeda === 'string' && MOEDAS.includes(moeda.toLowerCase()) ? moeda.toLowerCase() : undefined
     const sessao = await stripe('checkout/sessions', {
       mode: 'subscription',
@@ -85,8 +83,6 @@ Deno.serve(async (req) => {
       currency: moedaEscolhida,
       payment_method_collection: 'always',
       subscription_data: {
-        trial_period_days: jaTeve ? undefined : DIAS_DE_TESTE,
-        trial_settings: jaTeve ? undefined : { end_behavior: { missing_payment_method: 'cancel' } },
         metadata: { supabase_user_id: user.id },
       },
       allow_promotion_codes: true,

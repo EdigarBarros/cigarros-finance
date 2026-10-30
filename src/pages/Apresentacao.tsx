@@ -484,7 +484,7 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
               <strong>9,99</strong>
               <span>/mês</span>
             </div>
-            <p className="ap-preco-nota">Cartão necessário para começar. Cancele em até 7 dias e não cobramos nada.</p>
+            <p className="ap-preco-nota">Sem cartão para começar. Só pedimos o cartão se você decidir assinar.</p>
           </div>
           <h2 className="ap-cta-titulo">Pronto para transformar<br />suas finanças?</h2>
           <div className="ap-botoes">

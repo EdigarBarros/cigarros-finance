@@ -14,7 +14,7 @@ const BENEFICIOS = [
 
 /**
  * Tela que fica no lugar do painel enquanto a pessoa não tem acesso: conta nova, teste que acabou, assinatura cancelada
- * ou cobrança que falhou. O pagamento é na página do Stripe (cartão obrigatório; os 7 dias grátis só valem na primeira vez).
+ * ou cobrança que falhou. O teste grátis de 7 dias começa no cadastro, sem cartão; o cartão só é pedido aqui, na página do Stripe.
  * Voltando da página de pagamento, espera o Stripe avisar o servidor e entra sozinha.
  */
 export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura: Assinatura | null; email: string; aoAtualizar: () => Promise<unknown> }) {
@@ -35,7 +35,7 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
     return () => window.clearInterval(t)
   }, [esperando, aoAtualizar])
 
-  const jaTeve = Boolean(assinatura && assinatura.status !== 'sem_assinatura')
+  const testeAcabou = assinatura?.status === 'teste'
   const assinar = async () => {
     setOcupado(true)
     setErro(null)
@@ -46,7 +46,8 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
   }
 
   const titulo = esperando ? 'Confirmando seu pagamento…'
-    : !jaTeve ? 'Experimente 7 dias grátis'
+    : testeAcabou ? 'Seu teste grátis acabou'
+    : !assinatura || assinatura.status === 'sem_assinatura' ? 'Assine o OpusCash'
     : assinatura?.status === 'past_due' || assinatura?.status === 'unpaid' ? 'Não conseguimos cobrar seu cartão'
     : 'Sua assinatura terminou'
 
@@ -60,9 +61,9 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
         ) : (
           <>
             <p className="as-sub">
-              {!jaTeve
-                ? 'Cadastre o cartão agora e use tudo por 7 dias sem pagar nada. Cancele quando quiser, antes do fim do teste, e não cobramos.'
-                : 'Assine de novo para voltar ao seu painel. Seus dados continuam guardados.'}
+              {testeAcabou
+                ? 'Seus 7 dias grátis terminaram. Assine para continuar de onde parou. Seus dados continuam guardados.'
+                : 'Assine para voltar ao seu painel. Seus dados continuam guardados.'}
             </p>
             <div className="as-preco">
               <strong>R$ 9,99</strong><span>/ mês</span>
@@ -73,9 +74,9 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
             </ul>
             {erro && <p className="form-erro" role="alert">{erro}</p>}
             <button className="btn gradiente as-botao" onClick={assinar} disabled={ocupado}>
-              {ocupado ? 'Abrindo o pagamento…' : jaTeve ? 'Assinar por R$ 9,99/mês' : 'Começar 7 dias grátis'}
+              {ocupado ? 'Abrindo o pagamento…' : 'Assinar por R$ 9,99/mês'}
             </button>
-            {!jaTeve && <small className="as-nota">Depois do teste, R$ 9,99 por mês no cartão. Sem fidelidade. Cancele quando quiser, sem multa.</small>}
+            <small className="as-nota">R$ 9,99 por mês no cartão. Sem fidelidade. Cancele quando quiser, sem multa.</small>
             <small className="as-nota">Ao continuar, você concorda com os <a href="#/termos">Termos de uso</a> e a <a href="#/privacidade">Política de privacidade</a>.</small>
           </>
         )}

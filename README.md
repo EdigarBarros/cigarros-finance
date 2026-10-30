@@ -56,7 +56,7 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
 - **Tutorial guiado**: depois das perguntas iniciais, o painel escurece e destaca, um por vez, onde fica cada coisa (lançar, resumo,
   lançamentos, importar extrato, e só as abas que a pessoa ligou). Um passo oferece ligar abas que ela não tinha escolhido.
   Dá para pular a qualquer momento (botão, X ou Esc) e rever em Configurações → Conta → Ver o tutorial, ou no menu da conta
-- **Assinatura (Stripe)**: conta nova vê a tela de assinatura em vez do painel: 7 dias grátis com cartão obrigatório, depois R$ 9,99
+- **Assinatura (Stripe)**: conta nova ganha 7 dias grátis **sem cartão** (a [migração 17](supabase/migracao-17-teste-sem-cartao.sql) cria o teste no cadastro); o cartão só é pedido ao assinar, por R$ 9,99
   por mês (ou o equivalente em USD, EUR, ARS, CLP, UYU, COP, PEN, MXN, CAD, AUD, CHF, GBP, conforme a moeda da pessoa).
   Teste acabou, cancelou ou o cartão falhou: o painel fica bloqueado. Contas que já existiam entram como `cortesia`. Peças:
   tabela `assinaturas` ([migração 12](supabase/migracao-12-assinaturas.sql)), funções `stripe-checkout`, `stripe-portal` e

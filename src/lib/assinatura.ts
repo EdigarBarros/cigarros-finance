@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from './supabase'
 
 export type StatusAssinatura =
-  | 'sem_assinatura' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid' | 'incomplete' | 'incomplete_expired' | 'paused' | 'cortesia'
+  | 'sem_assinatura' | 'teste' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid' | 'incomplete' | 'incomplete_expired' | 'paused' | 'cortesia'
 
 export interface Assinatura {
   status: StatusAssinatura
@@ -12,8 +12,14 @@ export interface Assinatura {
   moeda: string | null
 }
 
+/** Teste grátis do OpusCash (sem cartão): vale até teste_fim. */
+export const emTeste = (a: Assinatura | null) => Boolean(a && a.status === 'teste' && a.teste_fim && new Date(a.teste_fim).getTime() > Date.now())
+
+/** Dias que faltam do teste grátis sem cartão (arredonda para cima; 0 se acabou). */
+export const diasDeTeste = (a: Assinatura | null) => (emTeste(a) ? Math.max(1, Math.ceil((new Date(a!.teste_fim!).getTime() - Date.now()) / 86_400_000)) : 0)
+
 /** Teste grátis, assinatura em dia, conta liberada, ou cobrança recusada ainda em nova tentativa (past_due): entram no painel. */
-export const temAcesso = (a: Assinatura | null) => Boolean(a && ['trialing', 'active', 'past_due', 'cortesia'].includes(a.status))
+export const temAcesso = (a: Assinatura | null) => Boolean(a && (['trialing', 'active', 'past_due', 'cortesia'].includes(a.status) || emTeste(a)))
 
 const faltaTabela = (e: { code?: string; message: string }) =>
   e.code === '42P01' || e.code === 'PGRST205' || /does not exist|schema cache/i.test(e.message)
@@ -42,7 +48,7 @@ export function useAssinatura(userId: string) {
   return { assinatura, carregando, cobranca, recarregar }
 }
 
-/** Abre a página de pagamento (7 dias grátis) ou o portal de gerenciar a assinatura, e leva a pessoa até lá. */
+/** Abre a página de pagamento (cartão só aqui, ao assinar) ou o portal de gerenciar a assinatura, e leva a pessoa até lá. */
 export async function irParaStripe(funcao: 'stripe-checkout' | 'stripe-portal', moeda?: string): Promise<string | null> {
   const { data, error } = await supabase.functions.invoke(funcao, { body: { retorno: window.location.origin, moeda } })
   if (data?.url) {
