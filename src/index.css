@@ -2838,12 +2838,13 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .pl-planos-miolo { animation: pl-vem-dir .9s .65s var(--mola) both; }
 @keyframes pl-vem-esq { from { opacity: 0; transform: translateX(-36px); } to { opacity: 1; transform: none; } }
 @keyframes pl-vem-dir { from { opacity: 0; transform: translateX(36px); } to { opacity: 1; transform: none; } }
-.pl.saindo { animation: pl-sai .48s ease-in forwards; }
-.pl.saindo::before, .pl.saindo::after { display: none; }
-@keyframes pl-sai { to { opacity: 0; transform: scale(1.03); filter: blur(6px); } }
+.pl.saindo::before { animation: pl-cortina-fecha .48s cubic-bezier(.4, 0, .2, 1) forwards; }
+.pl.saindo::after { animation: pl-cortina-fecha-marca .48s cubic-bezier(.4, 0, .2, 1) forwards; }
+@keyframes pl-cortina-fecha { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes pl-cortina-fecha-marca { from { transform: translateY(100%); opacity: 0; } 40% { opacity: 1; } to { transform: none; opacity: 1; } }
 @media (max-width: 900px) { .pl-lado-conteudo, .pl-planos-miolo { animation-name: pl-vem-baixo; } }
 @keyframes pl-vem-baixo { from { opacity: 0; transform: translateY(26px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .pl::before, .pl::after { display: none; } .pl.saindo { animation: none; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .pl::before, .pl::after { display: none; } .pl.saindo::before, .pl.saindo::after { display: block; animation: none !important; transform: none; opacity: 1; } }
 
 /* lembrete do teste grátis (notificação no canto, some sozinha) */
 .aviso-teste { position: fixed; top: 18px; right: 18px; z-index: 40; display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start; width: min(390px, calc(100vw - 24px)); padding: 16px 14px 18px 16px; overflow: hidden;
