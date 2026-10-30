@@ -8,7 +8,7 @@ import {
 import { COR } from '../lib/charts'
 import { somaMesesData } from '../lib/dividas'
 import { SEM_CATEGORIA } from '../lib/categorias'
-import { fmtDataCurta, fmtDataLonga, fmtValor, MESES_CURTO, MESES_NOME, moedaAtual, paraCampo, parseNumero, simbolo } from '../lib/format'
+import { fmtDataCurta, fmtDataLonga, fmtValor, MESES_CURTO, MESES_NOME, moedaAtual, paraCampo, parseNumero, simbolo, noMeioDaFrase } from '../lib/format'
 import { CORES_LIVRES, mesmoNome } from '../lib/rotulos'
 import type { CartaoCredito, FaturaPaga } from '../lib/types'
 import { BancoIcone } from '../components/BancoIcone'
@@ -21,7 +21,7 @@ import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 
 const DIAS = Array.from({ length: 31 }, (_, i) => i + 1)
-const sufixoMes = (ano: number, mes: number) => `${MESES_CURTO[mes - 1].toLowerCase()}/${String(ano).slice(2)}`
+const sufixoMes = (ano: number, mes: number) => `${noMeioDaFrase(MESES_CURTO[mes - 1])}/${String(ano).slice(2)}`
 const centavos = (n: number) => Math.round(n * 100) / 100
 /** Dias de b menos a (datas ISO). */
 const dias = (a: string, b: string) => Math.round((Date.parse(`${b}T12:00:00`) - Date.parse(`${a}T12:00:00`)) / 86400000)
@@ -46,7 +46,7 @@ export function Cartoes(c: Ctx) {
   const comLimite = faturas.filter((x) => x.limiteDisponivel !== null)
   const atrasadas = faturas.flatMap((x) => [...x.atrasadas, ...(x.status === 'atrasada' ? [x] : [])])
   const emAtraso = centavos(atrasadas.reduce((a, f) => a + f.valor, 0))
-  const nomeMes = MESES_NOME[c.mes - 1].toLowerCase()
+  const nomeMes = noMeioDaFrase(MESES_NOME[c.mes - 1])
 
   if (cartoes.semTabela) {
     return (
@@ -459,7 +459,7 @@ function Proximas({ s, c }: { s: SituacaoCartao; c: Ctx }) {
             <span className="ccd-barra-trilho">
               <i style={{ height: `${Math.max(f.valor ? 6 : 0, (f.valor / maior) * 100)}%`, animationDelay: `${i * 60}ms` }} />
             </span>
-            <span className="ccd-barra-mes">{MESES_CURTO[f.mes - 1].toLowerCase()}</span>
+            <span className="ccd-barra-mes">{noMeioDaFrase(MESES_CURTO[f.mes - 1])}</span>
           </div>
         ))}
       </div>
@@ -718,7 +718,7 @@ function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: 
     <Modal titulo={pagamento ? tx('Ajeitar pagamento') : tx('Pagar fatura {0}', cartao.nome)} aoFechar={aoFechar}>
       <form className="form" onSubmit={(e) => { e.preventDefault(); void salvar() }}>
         <div className="cc-confirma">
-          <span className="cc-confirma-quem"><BancoIcone nome={cartao.nome} cor={cartao.cor} tamanho={34} /><span>{tx('Fatura de {0}', nomeDaFatura(f.ano, f.mes, c.ano))}<small>{tx('{0} em {1}', f.vencimento < hojeLocal() ? 'venceu' : 'vence', fmtDataLonga(f.vencimento))}</small></span></span>
+          <span className="cc-confirma-quem"><BancoIcone nome={cartao.nome} cor={cartao.cor} tamanho={34} /><span>{tx('Fatura de {0}', nomeDaFatura(f.ano, f.mes, c.ano))}<small>{tx('{0} em {1}', f.vencimento < hojeLocal() ? tx('venceu') : tx('vence'), fmtDataLonga(f.vencimento))}</small></span></span>
           <strong>{fmtValor(f.valor)}</strong>
         </div>
         <div className="form-linha">
@@ -737,7 +737,7 @@ function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: 
         {atraso > 0 && (
           <div className="cc-atraso">
             <Icone nome="relogio" tamanho={18} />
-            <span>{tx('Pago')} <b>{tx('{0} {1} depois', atraso, atraso === 1 ? 'dia' : 'dias')}</b> {tx('do vencimento.')}{!semExtras && (' ' + tx('Se teve juros ou multa, coloque aqui: eles entram como uma saída do mês do pagamento.'))}</span>
+            <span>{tx('Pago')} <b>{tx('{0} {1} depois', atraso, atraso === 1 ? tx('dia') : tx('dias'))}</b> {tx('do vencimento.')}{!semExtras && (' ' + tx('Se teve juros ou multa, coloque aqui: eles entram como uma saída do mês do pagamento.'))}</span>
           </div>
         )}
         {!semExtras && (atraso > 0 || (pagamento?.juros ?? 0) > 0) && (
@@ -759,7 +759,7 @@ function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: 
           </label>
         )}
         <span className="campo-ajuda">
-          {tx('Isso marca a fatura como paga. O gasto de cada compra já está nas suas saídas de {0}, então nada é contado duas vezes.', MESES_NOME[f.mes - 1].toLowerCase())}
+          {tx('Isso marca a fatura como paga. O gasto de cada compra já está nas suas saídas de {0}, então nada é contado duas vezes.', noMeioDaFrase(MESES_NOME[f.mes - 1]))}
         </span>
         {erro && <p className="form-erro">{erro}</p>}
         <div className="form-acoes">
@@ -878,7 +878,7 @@ function FormRenegociar({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: (
           <span><small>{tx('a mais')}</small><b className={acrescimo > 0 ? 'ruim' : ''}>{f.valor ? `${Math.round((acrescimo / f.valor) * 100)}%` : '—'}</b></span>
         </div>
         <span className="campo-ajuda">
-          {tx('Vira uma dívida em Dívidas. As compras desta fatura saem das saídas de {0}, e cada parcela que você pagar entra como saída no mês em que pagar. Assim nada conta duas vezes.', MESES_NOME[f.mes - 1].toLowerCase())}
+          {tx('Vira uma dívida em Dívidas. As compras desta fatura saem das saídas de {0}, e cada parcela que você pagar entra como saída no mês em que pagar. Assim nada conta duas vezes.', noMeioDaFrase(MESES_NOME[f.mes - 1]))}
         </span>
         {erro && <p className="form-erro">{erro}</p>}
         <div className="form-acoes">

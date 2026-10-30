@@ -4,7 +4,7 @@
  * Modelo: cada parcela é uma saída (lançamento) com `data` no dia do vencimento da fatura em que cai.
  * Uma fatura é identificada pelo mês e ano do vencimento. Tudo aqui é puro (sem tela nem banco).
  */
-import { fmtValor, MESES_NOME } from './format'
+import { fmtValor, MESES_NOME, noMeioDaFrase } from './format'
 import type { CartaoCredito, FaturaPaga, Lancamento } from './types'
 import { tx } from './textos'
 
@@ -303,7 +303,7 @@ export function quandoVence(s: Pick<SituacaoCartao, 'status' | 'diasParaVencer'>
 
 /** "novembro" (ou "novembro/2027" quando não é o ano de referência). */
 export const nomeDaFatura = (ano: number, mes: number, anoRef = ano) =>
-  MESES_NOME[mes - 1].toLowerCase() + (ano === anoRef ? '' : `/${ano}`)
+  noMeioDaFrase(MESES_NOME[mes - 1]) + (ano === anoRef ? '' : `/${ano}`)
 
 /** "12x de R$ 83,33 · primeira na fatura de novembro" — o que a pessoa vê antes de salvar a compra. */
 export function textoParcelamento(ps: ParcelaGerada[], anoCompra: number) {

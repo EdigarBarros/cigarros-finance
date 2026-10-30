@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { caixaDoBanco, type Resumo } from '../lib/calc'
 import { COR } from '../lib/charts'
 import { fmtDiv, parcelasDe, type SituacaoDivida } from '../lib/dividas'
-import { fmtMoeda, fmtMesAno, fmtPct, fmtValor, MESES_CURTO, MESES_NOME } from '../lib/format'
+import { fmtMoeda, fmtMesAno, fmtPct, fmtValor, MESES_CURTO, MESES_NOME, noMeioDaFrase } from '../lib/format'
 import type { SituacaoMeta } from '../lib/metas'
 import { converter, infoMoeda, type Taxas } from '../lib/moedas'
 import type { Visao } from '../lib/perfil'
@@ -294,7 +294,7 @@ export function BlocoMetas({ metas, taxas, nivel, aoAbrir }: { metas: SituacaoMe
           <span className="meta-linha-pct">{Math.round(s.progresso * 100)}%</span>
           <span className="meta-linha-valor">
             {fmtMoeda(s.guardado, s.meta.moeda)} / {fmtMoeda(s.meta.alvo, s.meta.moeda)}
-            {nivel !== 'simples' && s.previsao && ` · chega em ${fmtMesAno(s.previsao[0], s.previsao[1])}`}
+            {nivel !== 'simples' && s.previsao && (' · ' + tx('chega em {0}', fmtMesAno(s.previsao[0], s.previsao[1])))}
           </span>
           <Progresso valor={s.guardado} total={s.meta.alvo} cor={s.meta.cor} />
         </button>
@@ -333,7 +333,7 @@ export function TabelaAnual({ porMes, mesAtual, aoClicarMes, v }: {
             <th />
             {MESES_CURTO.map((m, i) => (
               <th key={m} className={i + 1 === mesAtual ? 'atual' : ''}>
-                <button onClick={() => aoClicarMes(i + 1)} title={tx('Abrir {0}', MESES_NOME[i].toLowerCase())}>{m}</button>
+                <button onClick={() => aoClicarMes(i + 1)} title={tx('Abrir {0}', noMeioDaFrase(MESES_NOME[i]))}>{m}</button>
               </th>
             ))}
           </tr>

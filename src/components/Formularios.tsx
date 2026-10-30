@@ -460,7 +460,7 @@ export function FormLancamento(p: FormLancProps) {
             </select>
             {contaEscolhida && (
               <span className="campo-ajuda">
-                {tx('{0} fica como {1} neste mês, sem precisar tocar em “', contaEscolhida.descricao, tipo === 'entrada' ? 'recebida' : 'paga')}{tipo === 'entrada' ? tx('Recebi') : tx('Paguei')}”.
+                {tx('{0} fica como {1} neste mês, sem precisar tocar em “', contaEscolhida.descricao, tipo === 'entrada' ? tx('recebida') : tx('paga'))}{tipo === 'entrada' ? tx('Recebi') : tx('Paguei')}”.
                 {!ini.conta_fixa_id && (' ' + tx('Depois o app procura os parecidos dos outros meses.'))}
               </span>
             )}
@@ -695,7 +695,7 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
             </div>
             <span className="campo-ajuda">
               {semExtras ? tx('Se souber o total, o app mostra quanto já foi pago ("parcela 4 de 12").')
-                : tx('Com o vencimento, o app mostra cada parcela {0}, pela metade ou atrasada.', recebe ? 'recebida' : 'paga')}
+                : tx('Com o vencimento, o app mostra cada parcela {0}, pela metade ou atrasada.', recebe ? tx('recebida') : tx('paga'))}
             </span>
             {previa && <p className="divida-previa">{previa}</p>}
           </>

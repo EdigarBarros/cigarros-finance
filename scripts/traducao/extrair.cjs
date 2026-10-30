@@ -123,6 +123,8 @@ for (const arquivo of arquivos) {
           trocar(ini, fim, `{${chamada(chave, valores)}}`)
         }
       }
+      // sem texto em volta, os valores do grupo ainda podem ter tx('…') dentro, que precisam ser registrados
+      else grupo.forEach((n) => ts.isJsxExpression(n) && visitar(n.expression))
       grupo = []
     }
     for (const f of filhos) {

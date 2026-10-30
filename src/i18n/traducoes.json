@@ -784,4775 +784,4959 @@
     "es": "El pago se hace en la página segura de Stripe. Cancela cuando quieras, sin multa."
   },
   "Teste grátis:": {
-    "en": "",
-    "es": ""
+    "en": "Free trial:",
+    "es": "Prueba gratis:"
   },
   "falta 1 dia": {
-    "en": "",
-    "es": ""
+    "en": "1 day left",
+    "es": "falta 1 día"
   },
   "faltam {0} dias": {
-    "en": "",
-    "es": ""
+    "en": "{0} days left",
+    "es": "faltan {0} días"
   },
   "Quando acabar, é só assinar por R$ 9,99 por mês para continuar de onde parou.": {
-    "en": "",
-    "es": ""
+    "en": "When it ends, just subscribe for R$ 9,99 a month to pick up where you left off.",
+    "es": "Cuando termine, solo suscríbete por R$ 9,99 al mes para seguir donde lo dejaste."
   },
   "Assinar agora": {
-    "en": "",
-    "es": ""
+    "en": "Subscribe now",
+    "es": "Suscribirme ahora"
   },
   "Fechar aviso": {
-    "en": "",
-    "es": ""
+    "en": "Close notice",
+    "es": "Cerrar aviso"
   },
   "Mensagens": {
-    "en": "",
-    "es": ""
+    "en": "Messages",
+    "es": "Mensajes"
   },
   "faturas do mês": {
-    "en": "",
-    "es": ""
+    "en": "statements this month",
+    "es": "resúmenes del mes"
   },
   "Adicione seu cartão para ver a fatura de cada mês e quanto do limite ainda dá para usar.": {
-    "en": "",
-    "es": ""
+    "en": "Add your card to see each month's statement and how much of the limit you can still use.",
+    "es": "Agrega tu tarjeta para ver el resumen de cada mes y cuánto del límite todavía puedes usar."
   },
   "Adicionar cartão": {
-    "en": "",
-    "es": ""
+    "en": "Add card",
+    "es": "Agregar tarjeta"
   },
   "livre {0}": {
-    "en": "",
-    "es": ""
+    "en": "available {0}",
+    "es": "disponible {0}"
   },
   "{0} vencida{1} · falta pagar": {
-    "en": "",
-    "es": ""
+    "en": "{0} overdue · to pay",
+    "es": "{0} vencida{1} · por pagar"
   },
   "falta pagar": {
-    "en": "",
-    "es": ""
+    "en": "to pay",
+    "es": "por pagar"
   },
   "Aluguel, luz, internet, salário… Adicione o que se repete todo mês e o app avisa quando vencer.{0}": {
-    "en": "",
-    "es": ""
+    "en": "Rent, electricity, internet, salary… Add what repeats every month and the app will remind you when it's due.{0}",
+    "es": "Alquiler, luz, internet, sueldo… Agrega lo que se repite cada mes y la app te avisa cuando venza.{0}"
   },
   "Adicionar a primeira conta": {
-    "en": "",
-    "es": ""
+    "en": "Add your first bill",
+    "es": "Agrega tu primera cuenta"
   },
   "Tudo em dia neste mês! 🎉": {
-    "en": "",
-    "es": ""
+    "en": "All caught up this month! 🎉",
+    "es": "¡Todo al día este mes! 🎉"
   },
   "Ver contas": {
-    "en": "",
-    "es": ""
+    "en": "See bills",
+    "es": "Ver cuentas"
   },
   "Recebi": {
-    "en": "",
-    "es": ""
+    "en": "Received",
+    "es": "Recibí"
   },
   "Paguei": {
-    "en": "",
-    "es": ""
+    "en": "Paid",
+    "es": "Pagué"
   },
   "conta em aberto": {
-    "en": "",
-    "es": ""
+    "en": "open bill",
+    "es": "cuenta pendiente"
   },
   "contas em aberto": {
-    "en": "",
-    "es": ""
+    "en": "open bills",
+    "es": "cuentas pendientes"
   },
   "Ver todas (+{0})": {
-    "en": "",
-    "es": ""
+    "en": "See all (+{0})",
+    "es": "Ver todas (+{0})"
   },
   "Ver todas": {
-    "en": "",
-    "es": ""
+    "en": "See all",
+    "es": "Ver todas"
   },
   "Lançamentos do mês": {
-    "en": "",
-    "es": ""
+    "en": "Transactions this month",
+    "es": "Movimientos del mes"
   },
   "Últimos lançamentos": {
-    "en": "",
-    "es": ""
+    "en": "Latest transactions",
+    "es": "Últimos movimientos"
   },
   "Ver todos": {
-    "en": "",
-    "es": ""
+    "en": "See all",
+    "es": "Ver todos"
   },
   "Mostrar": {
-    "en": "",
-    "es": ""
+    "en": "Show",
+    "es": "Mostrar"
   },
   "Tudo": {
-    "en": "",
-    "es": ""
+    "en": "All",
+    "es": "Todo"
   },
   "Entradas": {
-    "en": "",
-    "es": ""
+    "en": "Income",
+    "es": "Ingresos"
   },
   "Saídas": {
-    "en": "",
-    "es": ""
+    "en": "Expenses",
+    "es": "Gastos"
   },
   "Nenhuma entrada neste mês.": {
-    "en": "",
-    "es": ""
+    "en": "No income this month.",
+    "es": "Ningún ingreso este mes."
   },
   "Nenhuma saída neste mês.": {
-    "en": "",
-    "es": ""
+    "en": "No expenses this month.",
+    "es": "Ningún gasto este mes."
   },
   "Ver todos os {0} lançamentos": {
-    "en": "",
-    "es": ""
+    "en": "See all {0} transactions",
+    "es": "Ver los {0} movimientos"
   },
   "Para onde foi o dinheiro": {
-    "en": "",
-    "es": ""
+    "en": "Where your money went",
+    "es": "A dónde fue tu dinero"
   },
   "Categorias": {
-    "en": "",
-    "es": ""
+    "en": "Categories",
+    "es": "Categorías"
   },
   "Quando você lançar saídas, aparece aqui em que você mais gasta.": {
-    "en": "",
-    "es": ""
+    "en": "When you add expenses, it shows here where you spend the most.",
+    "es": "Cuando registres gastos, aquí aparece en qué gastas más."
   },
   "a mais": {
-    "en": "",
-    "es": ""
+    "en": "more",
+    "es": "más"
   },
   "a menos": {
-    "en": "",
-    "es": ""
+    "en": "less",
+    "es": "menos"
   },
   "Mostrar menos": {
-    "en": "",
-    "es": ""
+    "en": "Show less",
+    "es": "Mostrar menos"
   },
   "Ver todas as {0} categorias": {
-    "en": "",
-    "es": ""
+    "en": "See all {0} categories",
+    "es": "Ver las {0} categorías"
   },
   "Ver valores por categoria": {
-    "en": "",
-    "es": ""
+    "en": "See amounts by category",
+    "es": "Ver importes por categoría"
   },
   "Adicionar dívida": {
-    "en": "",
-    "es": ""
+    "en": "Add debt",
+    "es": "Agregar deuda"
   },
   "Tem parcela ou empréstimo? Adicione para ver quanto falta e quando acaba.": {
-    "en": "",
-    "es": ""
+    "en": "Have an installment plan or a loan? Add it to see how much is left and when it ends.",
+    "es": "¿Tienes cuotas o un préstamo? Agrégalo para ver cuánto falta y cuándo termina."
   },
   "já pago": {
-    "en": "",
-    "es": ""
+    "en": "already paid",
+    "es": "ya pagado"
   },
   "livre em": {
-    "en": "",
-    "es": ""
+    "en": "debt-free in",
+    "es": "libre en"
   },
   "Quitada ✓": {
-    "en": "",
-    "es": ""
+    "en": "Paid off ✓",
+    "es": "Saldada ✓"
   },
   "parcela {0} de {1}": {
-    "en": "",
-    "es": ""
+    "en": "installment {0} of {1}",
+    "es": "cuota {0} de {1}"
   },
   "{0}/mês": {
-    "en": "",
-    "es": ""
+    "en": "{0}/month",
+    "es": "{0}/mes"
   },
   "Pagar": {
-    "en": "",
-    "es": ""
+    "en": "Pay",
+    "es": "Pagar"
   },
   "Ver todas as {0} dívidas": {
-    "en": "",
-    "es": ""
+    "en": "See all {0} debts",
+    "es": "Ver las {0} deudas"
   },
   "A receber": {
-    "en": "",
-    "es": ""
+    "en": "To receive",
+    "es": "Por cobrar"
   },
   "{0} em aberto": {
-    "en": "",
-    "es": ""
+    "en": "{0} open",
+    "es": "{0} pendientes"
   },
   "{0} venceu": {
-    "en": "",
-    "es": ""
+    "en": "{0} overdue",
+    "es": "{0} vencido"
   },
   "Dinheiro guardado": {
-    "en": "",
-    "es": ""
+    "en": "Money saved",
+    "es": "Dinero ahorrado"
   },
   "Abrir": {
-    "en": "",
-    "es": ""
+    "en": "Open",
+    "es": "Abrir"
   },
   "Entrou {0} · saiu {1} neste mês": {
-    "en": "",
-    "es": ""
+    "en": "In {0} · out {1} this month",
+    "es": "Entró {0} · salió {1} en el mes"
   },
   "Nas contas": {
-    "en": "",
-    "es": ""
+    "en": "In bank accounts",
+    "es": "En cuentas bancarias"
   },
   "Adicione seus bancos para ver quanto tem em cada um": {
-    "en": "",
-    "es": ""
+    "en": "Add your banks to see how much you have in each one",
+    "es": "Agrega tus bancos para ver cuánto tienes en cada uno"
   },
   "Investido": {
-    "en": "",
-    "es": ""
+    "en": "Invested",
+    "es": "Invertido"
   },
   "Informar quanto você tem investido": {
-    "en": "",
-    "es": ""
+    "en": "Enter how much you have invested",
+    "es": "Informa cuánto tienes invertido"
   },
   "Sem cotação agora": {
-    "en": "",
-    "es": ""
+    "en": "No exchange rate right now",
+    "es": "Sin cotización por ahora"
   },
   "Em outras moedas": {
-    "en": "",
-    "es": ""
+    "en": "In other currencies",
+    "es": "En otras monedas"
   },
   "Valores de {0} de {1}.": {
-    "en": "",
-    "es": ""
+    "en": "Figures from {0} {1}.",
+    "es": "Valores de {0} de {1}."
   },
   "Atualizar": {
-    "en": "",
-    "es": ""
+    "en": "Update",
+    "es": "Actualizar"
   },
   "Suas metas": {
-    "en": "",
-    "es": ""
+    "en": "Your goals",
+    "es": "Tus metas"
   },
   "{0} guardado no total": {
-    "en": "",
-    "es": ""
+    "en": "{0} saved in total",
+    "es": "{0} ahorrado en total"
   },
   "Criar": {
-    "en": "",
-    "es": ""
+    "en": "Create",
+    "es": "Crear"
   },
   "Junte dinheiro para uma viagem, um carro ou uma reserva.": {
-    "en": "",
-    "es": ""
+    "en": "Save money for a trip, a car or an emergency fund.",
+    "es": "Junta dinero para un viaje, un auto o un fondo de reserva."
   },
   "Criar a primeira meta": {
-    "en": "",
-    "es": ""
+    "en": "Create your first goal",
+    "es": "Crear tu primera meta"
   },
   "Todas as metas batidas! 🎉": {
-    "en": "",
-    "es": ""
+    "en": "All goals met! 🎉",
+    "es": "¡Todas las metas cumplidas! 🎉"
   },
   "Criar outra": {
-    "en": "",
-    "es": ""
+    "en": "Create another",
+    "es": "Crear otra"
   },
   "Ver todas as {0} metas": {
-    "en": "",
-    "es": ""
+    "en": "See all {0} goals",
+    "es": "Ver las {0} metas"
   },
   "Sobrou": {
-    "en": "",
-    "es": ""
+    "en": "Left over",
+    "es": "Sobró"
   },
   "Guardado nas contas": {
-    "en": "",
-    "es": ""
+    "en": "Saved in bank accounts",
+    "es": "Ahorrado en cuentas bancarias"
   },
   "Abrir {0}": {
-    "en": "",
-    "es": ""
+    "en": "Open {0}",
+    "es": "Abrir {0}"
   },
   "cotação": {
-    "en": "",
-    "es": ""
+    "en": "rate",
+    "es": "cotización"
   },
   "Cotação: quanto vale 1 {0} em {1}": {
-    "en": "",
-    "es": ""
+    "en": "Rate: how much 1 {0} is worth in {1}",
+    "es": "Cotización: cuánto vale 1 {0} en {1}"
   },
   "Inverter a cotação": {
-    "en": "",
-    "es": ""
+    "en": "Flip the rate",
+    "es": "Invertir la cotización"
   },
   "Carregando": {
-    "en": "",
-    "es": ""
+    "en": "Loading",
+    "es": "Cargando"
   },
   "Dicas": {
-    "en": "",
-    "es": ""
+    "en": "Tips",
+    "es": "Consejos"
   },
   "crédito": {
-    "en": "",
-    "es": ""
+    "en": "credit",
+    "es": "crédito"
   },
   "Categoria": {
-    "en": "",
-    "es": ""
+    "en": "Category",
+    "es": "Categoría"
   },
   "Mais {0}…": {
-    "en": "",
-    "es": ""
+    "en": "{0} more…",
+    "es": "{0} más…"
   },
   "+ Nova categoria": {
-    "en": "",
-    "es": ""
+    "en": "+ New category",
+    "es": "+ Nueva categoría"
   },
   "Ex.: Academia, Filhos, Viagens…": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: Gym, Kids, Trips…",
+    "es": "Ej.: Gimnasio, Hijos, Viajes…"
   },
   "Ex.: Aluguel recebido, Pensão…": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: Rent received, Alimony…",
+    "es": "Ej.: Alquiler recibido, Pensión…"
   },
   "Nome da categoria": {
-    "en": "",
-    "es": ""
+    "en": "Category name",
+    "es": "Nombre de la categoría"
   },
   "Ícone": {
-    "en": "",
-    "es": ""
+    "en": "Icon",
+    "es": "Ícono"
   },
   "Cor": {
-    "en": "",
-    "es": ""
+    "en": "Color",
+    "es": "Color"
   },
   "É nesta categoria que as saídas podem abater uma dívida, por isso ela não pode ser apagada.": {
-    "en": "",
-    "es": ""
+    "en": "This is the category expenses can use to pay down a debt, so it can't be deleted.",
+    "es": "Es en esta categoría donde los gastos pueden reducir una deuda, por eso no se puede eliminar."
   },
   "Sim, excluir": {
-    "en": "",
-    "es": ""
+    "en": "Yes, delete",
+    "es": "Sí, eliminar"
   },
   "Excluir": {
-    "en": "",
-    "es": ""
+    "en": "Delete",
+    "es": "Eliminar"
   },
   "Cancelar": {
-    "en": "",
-    "es": ""
+    "en": "Cancel",
+    "es": "Cancelar"
   },
   "Salvar": {
-    "en": "",
-    "es": ""
+    "en": "Save",
+    "es": "Guardar"
   },
   "Os lançamentos dela não somem: só ficam \"sem categoria\".": {
-    "en": "",
-    "es": ""
+    "en": "Its transactions aren't lost; they just become \"no category\".",
+    "es": "Sus movimientos no desaparecen: solo quedan \"sin categoría\"."
   },
   "Tipo": {
-    "en": "",
-    "es": ""
+    "en": "Type",
+    "es": "Tipo"
   },
   "Criar categoria": {
-    "en": "",
-    "es": ""
+    "en": "Create category",
+    "es": "Crear categoría"
   },
   "lançamento": {
-    "en": "",
-    "es": ""
+    "en": "transaction",
+    "es": "movimiento"
   },
   "lançamentos": {
-    "en": "",
-    "es": ""
+    "en": "transactions",
+    "es": "movimientos"
   },
   "Nenhuma categoria de": {
-    "en": "",
-    "es": ""
+    "en": "No categories for",
+    "es": "No hay categorías de"
   },
   "saída": {
-    "en": "",
-    "es": ""
+    "en": "expenses",
+    "es": "gastos"
   },
   ". Toque em Criar categoria.": {
-    "en": "",
-    "es": ""
+    "en": ". Tap Create category.",
+    "es": ". Toca Crear categoría."
   },
   "Dica: ao lançar, o app já sugere a categoria pela descrição (\"iFood\" → Alimentação) e aprende com o que você escolhe.": {
-    "en": "",
-    "es": ""
+    "en": "Tip: when you add a transaction, the app suggests a category from the description (\"iFood\" → Food) and learns from your choices.",
+    "es": "Consejo: al registrar un movimiento, la app sugiere la categoría según la descripción (\"iFood\" → Alimentación) y aprende de lo que elijas."
   },
   "Perfil": {
-    "en": "",
-    "es": ""
+    "en": "Profile",
+    "es": "Perfil"
   },
   "Seu nome e as moedas que você usa": {
-    "en": "",
-    "es": ""
+    "en": "Your name and the currencies you use",
+    "es": "Tu nombre y las monedas que usas"
   },
   "Aparência": {
-    "en": "",
-    "es": ""
+    "en": "Appearance",
+    "es": "Apariencia"
   },
   "Tema e animações": {
-    "en": "",
-    "es": ""
+    "en": "Theme and animations",
+    "es": "Tema y animaciones"
   },
   "Painel": {
-    "en": "",
-    "es": ""
+    "en": "Dashboard",
+    "es": "Panel"
   },
   "O que aparece e o jeito de ver": {
-    "en": "",
-    "es": ""
+    "en": "What shows up and how you view it",
+    "es": "Qué aparece y cómo lo ves"
   },
   "Onde cada lançamento se encaixa": {
-    "en": "",
-    "es": ""
+    "en": "Where each transaction fits",
+    "es": "Dónde encaja cada movimiento"
   },
   "Dados": {
-    "en": "",
-    "es": ""
+    "en": "Data",
+    "es": "Datos"
   },
   "Backup, planilha e começar de novo": {
-    "en": "",
-    "es": ""
+    "en": "Backup, spreadsheet and starting over",
+    "es": "Copia de seguridad, planilla y empezar de nuevo"
   },
   "Conta": {
-    "en": "",
-    "es": ""
+    "en": "Account",
+    "es": "Cuenta"
   },
   "Sua sessão neste aparelho": {
-    "en": "",
-    "es": ""
+    "en": "Your session on this device",
+    "es": "Tu sesión en este dispositivo"
   },
   "Configurações": {
-    "en": "",
-    "es": ""
+    "en": "Settings",
+    "es": "Configuración"
   },
   "Você": {
-    "en": "",
-    "es": ""
+    "en": "You",
+    "es": "Tú"
   },
   "Seções": {
-    "en": "",
-    "es": ""
+    "en": "Sections",
+    "es": "Secciones"
   },
   "Seu nome ou apelido": {
-    "en": "",
-    "es": ""
+    "en": "Your name or nickname",
+    "es": "Tu nombre o apodo"
   },
   "Moeda principal": {
-    "en": "",
-    "es": ""
+    "en": "Main currency",
+    "es": "Moneda principal"
   },
   "todos os totais aparecem nela; o que já foi lançado não é convertido": {
-    "en": "",
-    "es": ""
+    "en": "all totals show up in it; what's already been added is not converted",
+    "es": "todos los totales aparecen en ella; lo que ya registraste no se convierte"
   },
   "Outras moedas que você usa": {
-    "en": "",
-    "es": ""
+    "en": "Other currencies you use",
+    "es": "Otras monedas que usas"
   },
   "toque para ligar ou desligar; o painel mostra quanto valem na sua moeda": {
-    "en": "",
-    "es": ""
+    "en": "tap to turn on or off; the dashboard shows how much they're worth in your currency",
+    "es": "toca para activar o desactivar; el panel muestra cuánto valen en tu moneda"
   },
   "Outras moedas": {
-    "en": "",
-    "es": ""
+    "en": "Other currencies",
+    "es": "Otras monedas"
   },
   "Tema": {
-    "en": "",
-    "es": ""
+    "en": "Theme",
+    "es": "Tema"
   },
   "Automático": {
-    "en": "",
-    "es": ""
+    "en": "Automatic",
+    "es": "Automático"
   },
   "Segue o seu aparelho": {
-    "en": "",
-    "es": ""
+    "en": "Follows your device",
+    "es": "Sigue tu dispositivo"
   },
   "Claro": {
-    "en": "",
-    "es": ""
+    "en": "Light",
+    "es": "Claro"
   },
   "Fundo claro, ótimo de dia": {
-    "en": "",
-    "es": ""
+    "en": "Light background, great by day",
+    "es": "Fondo claro, ideal de día"
   },
   "Escuro": {
-    "en": "",
-    "es": ""
+    "en": "Dark",
+    "es": "Oscuro"
   },
   "Descansa os olhos à noite": {
-    "en": "",
-    "es": ""
+    "en": "Easy on your eyes at night",
+    "es": "Descansa la vista de noche"
   },
   "Animações": {
-    "en": "",
-    "es": ""
+    "en": "Animations",
+    "es": "Animaciones"
   },
   "Completas": {
-    "en": "",
-    "es": ""
+    "en": "Full",
+    "es": "Completas"
   },
   "Blocos que surgem, números que contam e o tema que se espalha": {
-    "en": "",
-    "es": ""
+    "en": "Blocks that slide in, numbers that count up and the theme that spreads",
+    "es": "Bloques que aparecen, números que suben y el tema que se extiende"
   },
   "Reduzidas": {
-    "en": "",
-    "es": ""
+    "en": "Reduced",
+    "es": "Reducidas"
   },
   "Tudo aparece direto, sem movimento": {
-    "en": "",
-    "es": ""
+    "en": "Everything appears right away, no motion",
+    "es": "Todo aparece directo, sin movimiento"
   },
   "Jeito de ver": {
-    "en": "",
-    "es": ""
+    "en": "View style",
+    "es": "Forma de ver"
   },
   "O que aparece no seu painel": {
-    "en": "",
-    "es": ""
+    "en": "What shows on your dashboard",
+    "es": "Qué aparece en tu panel"
   },
   "entradas e saídas estão sempre ligadas: são a base de tudo": {
-    "en": "",
-    "es": ""
+    "en": "income and expenses are always on: they're the base of everything",
+    "es": "los ingresos y los gastos siempre están activos: son la base de todo"
   },
   "Editar categorias": {
-    "en": "",
-    "es": ""
+    "en": "Edit categories",
+    "es": "Editar categorías"
   },
   "Baixar backup": {
-    "en": "",
-    "es": ""
+    "en": "Download backup",
+    "es": "Descargar copia de seguridad"
   },
   "Um arquivo com todos os seus dados, para guardar com você.": {
-    "en": "",
-    "es": ""
+    "en": "A file with all your data, to keep safe.",
+    "es": "Un archivo con todos tus datos, para que lo guardes."
   },
   "Importar extrato": {
-    "en": "",
-    "es": ""
+    "en": "Import statement",
+    "es": "Importar extracto"
   },
   "PDF, CSV, Excel, Word ou OFX do seu banco. Arruma os nomes e mostra tudo antes de gravar.": {
-    "en": "",
-    "es": ""
+    "en": "PDF, CSV, Excel, Word or OFX from your bank. Cleans up the names and shows everything before saving.",
+    "es": "PDF, CSV, Excel, Word u OFX de tu banco. Limpia los nombres y muestra todo antes de guardar."
   },
   "Organizar nomes": {
-    "en": "",
-    "es": ""
+    "en": "Organize names",
+    "es": "Organizar nombres"
   },
   "Tira CPF, CNPJ, códigos e texto de banco dos nomes dos lançamentos que você já tem.": {
-    "en": "",
-    "es": ""
+    "en": "Removes CPF, CNPJ, codes and bank text from the names of the transactions you already have.",
+    "es": "Quita CPF, CNPJ, códigos y texto de banco de los nombres de los movimientos que ya tienes."
   },
   "Importar planilha": {
-    "en": "",
-    "es": ""
+    "en": "Import spreadsheet",
+    "es": "Importar planilla"
   },
   "Traz os meses de uma planilha (.xlsx). Pede confirmação antes.": {
-    "en": "",
-    "es": ""
+    "en": "Brings in the months from a spreadsheet (.xlsx). Asks for confirmation first.",
+    "es": "Trae los meses de una planilla (.xlsx). Pide confirmación antes."
   },
   "Zerar dados": {
-    "en": "",
-    "es": ""
+    "en": "Erase data",
+    "es": "Borrar datos"
   },
   "Escolha o que apagar: tudo, entradas, saídas, dívidas, cartões e mais.": {
-    "en": "",
-    "es": ""
+    "en": "Choose what to delete: everything, income, expenses, debts, cards and more.",
+    "es": "Elige qué borrar: todo, ingresos, gastos, deudas, tarjetas y más."
   },
   "Você entrou como": {
-    "en": "",
-    "es": ""
+    "en": "Signed in as",
+    "es": "Iniciaste sesión como"
   },
   "sem e-mail": {
-    "en": "",
-    "es": ""
+    "en": "no email",
+    "es": "sin correo"
   },
   "Ver o tutorial": {
-    "en": "",
-    "es": ""
+    "en": "See the tutorial",
+    "es": "Ver el tutorial"
   },
   "Um passeio rápido pelo painel, mostrando onde fica cada coisa e como ligar mais abas.": {
-    "en": "",
-    "es": ""
+    "en": "A quick tour of the dashboard, showing where everything is and how to turn on more tabs.",
+    "es": "Un recorrido rápido por el panel, que muestra dónde está cada cosa y cómo activar más pestañas."
   },
   "Refazer as perguntas": {
-    "en": "",
-    "es": ""
+    "en": "Redo the questions",
+    "es": "Rehacer las preguntas"
   },
   "Responda de novo as perguntas iniciais para reajustar o painel.": {
-    "en": "",
-    "es": ""
+    "en": "Answer the opening questions again to adjust your dashboard.",
+    "es": "Responde de nuevo las preguntas iniciales para ajustar tu panel."
   },
   "Assinar o OpusCash": {
-    "en": "",
-    "es": ""
+    "en": "Subscribe to OpusCash",
+    "es": "Suscribirse a OpusCash"
   },
   "Gerenciar assinatura": {
-    "en": "",
-    "es": ""
+    "en": "Manage subscription",
+    "es": "Administrar suscripción"
   },
   "Sair": {
-    "en": "",
-    "es": ""
+    "en": "Sign out",
+    "es": "Salir"
   },
   "Encerra a sessão neste aparelho.": {
-    "en": "",
-    "es": ""
+    "en": "Ends your session on this device.",
+    "es": "Cierra la sesión en este dispositivo."
   },
   "Excluir minha conta": {
-    "en": "",
-    "es": ""
+    "en": "Delete my account",
+    "es": "Eliminar mi cuenta"
   },
   "Apaga seu login e todos os seus dados de vez e cancela a assinatura.": {
-    "en": "",
-    "es": ""
+    "en": "Permanently erases your login and all your data, and cancels your subscription.",
+    "es": "Borra de una vez tu inicio de sesión y todos tus datos, y cancela la suscripción."
   },
   "Gerando backup…": {
-    "en": "",
-    "es": ""
+    "en": "Creating backup…",
+    "es": "Generando copia de seguridad…"
   },
   "Apagando…": {
-    "en": "",
-    "es": ""
+    "en": "Erasing…",
+    "es": "Borrando…"
   },
   "Não deu para apagar tudo: {0}. Tente de novo.": {
-    "en": "",
-    "es": ""
+    "en": "Couldn't erase everything: {0}. Try again.",
+    "es": "No se pudo borrar todo: {0}. Inténtalo de nuevo."
   },
   "Escolha o que apagar.": {
-    "en": "",
-    "es": ""
+    "en": "Choose what to erase.",
+    "es": "Elige qué borrar."
   },
   "Não tem como desfazer.": {
-    "en": "",
-    "es": ""
+    "en": "This can't be undone.",
+    "es": "No se puede deshacer."
   },
   "Vai apagar": {
-    "en": "",
-    "es": ""
+    "en": "This will erase",
+    "es": "Se va a borrar"
   },
   ": lançamentos, dívidas, cartões, contas fixas, metas, saldos, bancos e categorias. As perguntas iniciais aparecem de novo.": {
-    "en": "",
-    "es": ""
+    "en": ": transactions, debts, cards, recurring bills, goals, balances, banks and categories. The opening questions will show up again.",
+    "es": ": movimientos, deudas, tarjetas, cuentas fijas, metas, saldos, bancos y categorías. Las preguntas iniciales volverán a aparecer."
   },
   "Vai apagar:": {
-    "en": "",
-    "es": ""
+    "en": "This will erase:",
+    "es": "Se va a borrar:"
   },
   ". O resto fica como está.": {
-    "en": "",
-    "es": ""
+    "en": ". The rest stays as it is.",
+    "es": ". El resto queda como está."
   },
   "Marque o que quer apagar.": {
-    "en": "",
-    "es": ""
+    "en": "Check what you want to erase.",
+    "es": "Marca lo que quieres borrar."
   },
   "Backup baixado ✓": {
-    "en": "",
-    "es": ""
+    "en": "Backup downloaded ✓",
+    "es": "Copia descargada ✓"
   },
   "Baixar backup antes (recomendado)": {
-    "en": "",
-    "es": ""
+    "en": "Download backup first (recommended)",
+    "es": "Descargar copia antes (recomendado)"
   },
   "Para confirmar, digite": {
-    "en": "",
-    "es": ""
+    "en": "To confirm, type",
+    "es": "Para confirmar, escribe"
   },
   "Agora não": {
-    "en": "",
-    "es": ""
+    "en": "Not now",
+    "es": "Ahora no"
   },
   "Acompanhe mais": {
-    "en": "",
-    "es": ""
+    "en": "Track more",
+    "es": "Sigue más"
   },
   "Seu painel": {
-    "en": "",
-    "es": ""
+    "en": "Your dashboard",
+    "es": "Tu panel"
   },
   "Personalizar": {
-    "en": "",
-    "es": ""
+    "en": "Customize",
+    "es": "Personalizar"
   },
   "Tudo ligado": {
-    "en": "",
-    "es": ""
+    "en": "All turned on",
+    "es": "Todo activado"
   },
   "Trocar foto de perfil": {
-    "en": "",
-    "es": ""
+    "en": "Change profile photo",
+    "es": "Cambiar foto de perfil"
   },
   "Pôr foto de perfil": {
-    "en": "",
-    "es": ""
+    "en": "Add profile photo",
+    "es": "Poner foto de perfil"
   },
   "Trocar foto": {
-    "en": "",
-    "es": ""
+    "en": "Change photo",
+    "es": "Cambiar foto"
   },
   "Pôr foto": {
-    "en": "",
-    "es": ""
+    "en": "Add photo",
+    "es": "Poner foto"
   },
   "Tirar": {
-    "en": "",
-    "es": ""
+    "en": "Remove",
+    "es": "Quitar"
   },
   "Teste grátis até {0}. Troque o cartão, veja as faturas ou cancele.": {
-    "en": "",
-    "es": ""
+    "en": "Free trial until {0}. Change your card, see statements or cancel.",
+    "es": "Prueba gratis hasta el {0}. Cambia la tarjeta, mira los resúmenes o cancela."
   },
   "Cancelada: você usa até {0}. Dá para reativar.": {
-    "en": "",
-    "es": ""
+    "en": "Canceled: you have access until {0}. You can reactivate it.",
+    "es": "Cancelada: tienes acceso hasta el {0}. Se puede reactivar."
   },
   "Troque o cartão, veja as faturas ou cancele a assinatura.": {
-    "en": "",
-    "es": ""
+    "en": "Change your card, see statements or cancel your subscription.",
+    "es": "Cambia la tarjeta, mira los resúmenes o cancela la suscripción."
   },
   "Sei que a exclusão é": {
-    "en": "",
-    "es": ""
+    "en": "I understand that deletion is",
+    "es": "Sé que la eliminación es"
   },
   "definitiva e não tem como desfazer": {
-    "en": "",
-    "es": ""
+    "en": "permanent and cannot be undone",
+    "es": "definitiva y no se puede deshacer"
   },
   ": meu login e todos os meus dados (lançamentos, categorias, bancos, cartões, dívidas, metas, contas do mês e foto) serão apagados.": {
-    "en": "",
-    "es": ""
+    "en": ": my login and all my data (transactions, categories, banks, cards, debts, goals, monthly bills and photo) will be erased.",
+    "es": ": mi inicio de sesión y todos mis datos (movimientos, categorías, bancos, tarjetas, deudas, metas, cuentas del mes y foto) serán borrados."
   },
   "Sei que minha": {
-    "en": "",
-    "es": ""
+    "en": "I understand that my",
+    "es": "Sé que mi"
   },
   "assinatura será cancelada": {
-    "en": "",
-    "es": ""
+    "en": "subscription will be canceled",
+    "es": "suscripción será cancelada"
   },
   "e que não há reembolso proporcional do período já iniciado, salvo quando a lei exigir (como o direito de arrependimento de 7 dias do Código de Defesa do Consumidor) ou nos casos previstos nos Termos de uso.": {
-    "en": "",
-    "es": ""
+    "en": "and that there is no pro-rata refund for the period already started, unless the law requires it (such as the 7-day right of withdrawal under the Brazilian Consumer Defense Code) or in the cases set out in the Terms of use.",
+    "es": "y que no hay reembolso proporcional del período ya iniciado, salvo cuando la ley lo exija (como el derecho de arrepentimiento de 7 días del Código de Defensa del Consumidor) o en los casos previstos en los Términos de uso."
   },
   "Sei que": {
-    "en": "",
-    "es": ""
+    "en": "I understand that",
+    "es": "Sé que"
   },
   "alguns registros continuam depois da exclusão": {
-    "en": "",
-    "es": ""
+    "en": "some records will remain after deletion",
+    "es": "algunos registros seguirán existiendo después de la eliminación"
   },
   ": os de cobrança no Stripe, mantidos quando a lei exigir (art. 16 da LGPD), e a identificação irreversível do cartão, guardada junto do código interno da conta (sem e-mail nem nome) só para impedir que o teste grátis se repita (prevenção a abusos, legítimo interesse).": {
-    "en": "",
-    "es": ""
+    "en": ": the billing records at Stripe, kept when the law requires it (art. 16 of the LGPD), and the irreversible identification of the card, stored together with the account's internal code (no email or name), only to prevent the free trial from being repeated (abuse prevention, legitimate interest).",
+    "es": ": los registros de cobro en Stripe, que se conservan cuando la ley lo exija (art. 16 de la LGPD), y la identificación irreversible de la tarjeta, guardada junto con el código interno de la cuenta (sin correo ni nombre) solo para evitar que la prueba gratis se repita (prevención de abusos, interés legítimo)."
   },
   "Li e concordo com os": {
-    "en": "",
-    "es": ""
+    "en": "I have read and agree to the",
+    "es": "Leí y acepto los"
   },
   "e com a": {
-    "en": "",
-    "es": ""
+    "en": "and the",
+    "es": "y la"
   },
   ", e peço, de forma livre e informada, a eliminação dos meus dados pessoais (art. 18, inciso VI, da LGPD, Lei 13.709/2018).": {
-    "en": "",
-    "es": ""
+    "en": ", and I request, freely and with full information, the deletion of my personal data (art. 18, item VI, of the LGPD, Law 13.709/2018).",
+    "es": ", y solicito, de forma libre e informada, la eliminación de mis datos personales (art. 18, inciso VI, de la LGPD, Ley 13.709/2018)."
   },
   "Excluindo…": {
-    "en": "",
-    "es": ""
+    "en": "Deleting…",
+    "es": "Eliminando…"
   },
   "Você está pedindo para apagar a conta": {
-    "en": "",
-    "es": ""
+    "en": "You're asking to erase the account",
+    "es": "Estás pidiendo borrar la cuenta"
   },
   ". Leia e marque cada item para confirmar que está ciente.": {
-    "en": "",
-    "es": ""
+    "en": ". Read and check each item to confirm you're aware of it.",
+    "es": ". Lee y marca cada punto para confirmar que lo entiendes."
   },
   "Seus direitos continuam valendo": {
-    "en": "",
-    "es": ""
+    "en": "Your rights still apply",
+    "es": "Tus derechos siguen vigentes"
   },
   "Antes de excluir, você pode levar uma cópia dos seus dados (portabilidade, art. 18, inciso V, da LGPD). Se tiver qualquer dúvida ou pedido sobre seus dados, fale com o suporte, pelo e-mail que aparece na Política de privacidade. Também é possível reclamar à Autoridade Nacional de Proteção de Dados (ANPD).": {
-    "en": "",
-    "es": ""
+    "en": "Before deleting, you can take a copy of your data (portability, art. 18, item V, of the LGPD). If you have any questions or requests about your data, contact support at the email shown in the Privacy Policy. You can also file a complaint with the National Data Protection Authority (ANPD).",
+    "es": "Antes de eliminar, puedes llevarte una copia de tus datos (portabilidad, art. 18, inciso V, de la LGPD). Si tienes alguna duda o pedido sobre tus datos, contacta al soporte, al correo que aparece en la Política de privacidad. También puedes presentar una queja ante la Autoridad Nacional de Protección de Datos (ANPD)."
   },
   "Termos de ciência": {
-    "en": "",
-    "es": ""
+    "en": "Acknowledgments",
+    "es": "Confirmaciones"
   },
   "Excluir para sempre": {
-    "en": "",
-    "es": ""
+    "en": "Delete forever",
+    "es": "Eliminar para siempre"
   },
   "Importar seus dados": {
-    "en": "",
-    "es": ""
+    "en": "Import your data",
+    "es": "Importar tus datos"
   },
   "Você tem algum extrato ou planilha?": {
-    "en": "",
-    "es": ""
+    "en": "Got a bank statement or spreadsheet?",
+    "es": "¿Tienes algún extracto o planilla?"
   },
   "Traga tudo de uma vez em vez de lançar um por um. Aceita o extrato do seu banco (PDF, OFX, Excel, CSV ou Word) e planilhas do Excel. O app arruma os nomes e mostra tudo antes de gravar.": {
-    "en": "",
-    "es": ""
+    "en": "Bring everything in at once instead of adding one by one. It accepts your bank statement (PDF, OFX, Excel, CSV or Word) and Excel spreadsheets. The app tidies up the names and shows everything before saving.",
+    "es": "Trae todo de una vez en vez de registrar uno por uno. Acepta el extracto de tu banco (PDF, OFX, Excel, CSV o Word) y planillas de Excel. La app ordena los nombres y muestra todo antes de guardar."
   },
   "Não mostrar de novo": {
-    "en": "",
-    "es": ""
+    "en": "Don't show again",
+    "es": "No volver a mostrar"
   },
   "Moeda": {
-    "en": "",
-    "es": ""
+    "en": "Currency",
+    "es": "Moneda"
   },
   "{0} já está como {1} em Contas do mês": {
-    "en": "",
-    "es": ""
+    "en": "{0} is already listed as {1} in Monthly bills.",
+    "es": "{0} ya está como {1} en Cuentas del mes."
   },
   "Excel": {
-    "en": "",
-    "es": ""
+    "en": "Excel",
+    "es": "Excel"
   },
   "Word": {
-    "en": "",
-    "es": ""
+    "en": "Word",
+    "es": "Word"
   },
   "Conta do mês": {
-    "en": "",
-    "es": ""
+    "en": "Monthly bill",
+    "es": "Cuenta del mes"
   },
   "Saída": {
-    "en": "",
-    "es": ""
+    "en": "Expense",
+    "es": "Gasto"
   },
   "Lendo {0}…": {
-    "en": "",
-    "es": ""
+    "en": "Reading {0}…",
+    "es": "Leyendo {0}…"
   },
   "Achando datas, valores e arrumando os nomes.": {
-    "en": "",
-    "es": ""
+    "en": "Finding dates and amounts and tidying up names.",
+    "es": "Buscando fechas y valores, y ordenando los nombres."
   },
   "Arraste o extrato aqui ou toque para escolher": {
-    "en": "",
-    "es": ""
+    "en": "Drag your statement here or tap to choose",
+    "es": "Arrastra el extracto aquí o toca para elegir"
   },
   "PDF, CSV, Excel, Word, OFX ou TXT, do banco que for.": {
-    "en": "",
-    "es": ""
+    "en": "PDF, CSV, Excel, Word, OFX or TXT, from any bank.",
+    "es": "PDF, CSV, Excel, Word, OFX o TXT, del banco que sea."
   },
   "Como tirar o extrato:": {
-    "en": "",
-    "es": ""
+    "en": "How to get your statement:",
+    "es": "Cómo sacar el extracto:"
   },
   "no app do banco, procure “Extrato” → “Exportar” ou “Compartilhar”. CSV, Excel ou OFX são os mais certeiros; PDF também funciona.": {
-    "en": "",
-    "es": ""
+    "en": "in your bank's app, look for “Statement” → “Export” or “Share”. CSV, Excel or OFX work best; PDF works too.",
+    "es": "en la app de tu banco, busca “Extracto” → “Exportar” o “Compartir”. CSV, Excel u OFX son los más precisos; PDF también funciona."
   },
   "Nomes arrumados:": {
-    "en": "",
-    "es": ""
+    "en": "Names tidied up:",
+    "es": "Nombres ordenados:"
   },
   "o app tira CPF, CNPJ, códigos e o “TRANSFERÊNCIA RECEBIDA PELO PIX” do começo. O que não der para entender fica marcado para você revisar.": {
-    "en": "",
-    "es": ""
+    "en": "the app removes CPF, CNPJ, codes and “TRANSFERÊNCIA RECEBIDA PELO PIX” from the start. Anything it can't make sense of is flagged for you to review.",
+    "es": "la app quita CPF, CNPJ, códigos y el “TRANSFERÊNCIA RECEBIDA PELO PIX” del principio. Lo que no se entienda queda marcado para que lo revises."
   },
   "Nada é gravado": {
-    "en": "",
-    "es": ""
+    "en": "Nothing is saved",
+    "es": "Nada se guarda"
   },
   "antes de você revisar. O que parecer já lançado (mesmo dia, valor e tipo) vem desmarcado.": {
-    "en": "",
-    "es": ""
+    "en": "before you review it. Anything that looks already entered (same day, amount and type) comes unchecked.",
+    "es": "antes de revisarlo. Lo que parezca ya registrado (mismo día, valor y tipo) viene desmarcado."
   },
   "{0} de {1}": {
-    "en": "",
-    "es": ""
+    "en": "{0} of {1}",
+    "es": "{0} de {1}"
   },
   "Contam como pagas ou recebidas em Contas do mês": {
-    "en": "",
-    "es": ""
+    "en": "Count as paid or received in Monthly bills",
+    "es": "Cuentan como pagadas o recibidas en Cuentas del mes"
   },
   "{0} de contas do mês": {
-    "en": "",
-    "es": ""
+    "en": "{0} of monthly bills",
+    "es": "{0} de cuentas del mes"
   },
   "Banco": {
-    "en": "",
-    "es": ""
+    "en": "Bank",
+    "es": "Banco"
   },
   "Criar \"{0}\"": {
-    "en": "",
-    "es": ""
+    "en": "Create \"{0}\"",
+    "es": "Crear \"{0}\""
   },
   "Nenhum": {
-    "en": "",
-    "es": ""
+    "en": "None",
+    "es": "Ninguno"
   },
   "Todos ({0})": {
-    "en": "",
-    "es": ""
+    "en": "All ({0})",
+    "es": "Todos ({0})"
   },
   "Para revisar ({0})": {
-    "en": "",
-    "es": ""
+    "en": "To review ({0})",
+    "es": "Para revisar ({0})"
   },
   "Já lançados ({0})": {
-    "en": "",
-    "es": ""
+    "en": "Already added ({0})",
+    "es": "Ya registrados ({0})"
   },
   "Marcar todos os novos": {
-    "en": "",
-    "es": ""
+    "en": "Check all new ones",
+    "es": "Marcar todos los nuevos"
   },
   "Desmarcar todos": {
-    "en": "",
-    "es": ""
+    "en": "Uncheck all",
+    "es": "Desmarcar todos"
   },
   "Importar este": {
-    "en": "",
-    "es": ""
+    "en": "Import this one",
+    "es": "Importar este"
   },
   "Trocar entrada/saída": {
-    "en": "",
-    "es": ""
+    "en": "Switch income/expense",
+    "es": "Cambiar ingreso/gasto"
   },
   "Dê um nome": {
-    "en": "",
-    "es": ""
+    "en": "Give it a name",
+    "es": "Ponle un nombre"
   },
   "Descrição": {
-    "en": "",
-    "es": ""
+    "en": "Description",
+    "es": "Descripción"
   },
   "parece já lançado": {
-    "en": "",
-    "es": ""
+    "en": "looks already added",
+    "es": "parece ya registrado"
   },
   "Não é dessa conta: tocar para desligar": {
-    "en": "",
-    "es": ""
+    "en": "Not this bill: tap to turn off",
+    "es": "No es de esta cuenta: toca para desactivar"
   },
   "era: {0}": {
-    "en": "",
-    "es": ""
+    "en": "was: {0}",
+    "es": "era: {0}"
   },
   "Sem categoria": {
-    "en": "",
-    "es": ""
+    "en": "No category",
+    "es": "Sin categoría"
   },
   "Outro arquivo": {
-    "en": "",
-    "es": ""
+    "en": "Another file",
+    "es": "Otro archivo"
   },
   "Importar {0}": {
-    "en": "",
-    "es": ""
+    "en": "Import {0}",
+    "es": "Importar {0}"
   },
   "Importando…": {
-    "en": "",
-    "es": ""
+    "en": "Importing…",
+    "es": "Importando…"
   },
   "Eles já entram nos totais, gráficos e categorias. Dá para editar qualquer um em Lançamentos.": {
-    "en": "",
-    "es": ""
+    "en": "They now count in totals, charts and categories. You can edit any of them in Transactions.",
+    "es": "Ya cuentan en los totales, gráficos y categorías. Puedes editar cualquiera en Movimientos."
   },
   "Importar outro": {
-    "en": "",
-    "es": ""
+    "en": "Import another",
+    "es": "Importar otro"
   },
   "Ver lançamentos": {
-    "en": "",
-    "es": ""
+    "en": "See transactions",
+    "es": "Ver movimientos"
   },
   "sem data": {
-    "en": "",
-    "es": ""
+    "en": "no date",
+    "es": "sin fecha"
   },
   "lançamento arrumado": {
-    "en": "",
-    "es": ""
+    "en": "transaction cleaned up",
+    "es": "movimiento ordenado"
   },
   "lançamentos arrumados": {
-    "en": "",
-    "es": ""
+    "en": "transactions cleaned up",
+    "es": "movimientos ordenados"
   },
   "Os nomes novos já aparecem em todo o app.": {
-    "en": "",
-    "es": ""
+    "en": "The new names already show up across the app.",
+    "es": "Los nombres nuevos ya aparecen en toda la app."
   },
   "Fechar": {
-    "en": "",
-    "es": ""
+    "en": "Close",
+    "es": "Cerrar"
   },
   "Os nomes de {0} já estão organizados": {
-    "en": "",
-    "es": ""
+    "en": "Names from {0} are already organized",
+    "es": "Los nombres de {0} ya están organizados"
   },
   "Nada com CPF, CNPJ, código ou texto de banco sobrando.": {
-    "en": "",
-    "es": ""
+    "en": "No CPF, CNPJ, codes or bank text left over.",
+    "es": "No queda nada con CPF, CNPJ, códigos o texto del banco."
   },
   "Achei": {
-    "en": "",
-    "es": ""
+    "en": "I found",
+    "es": "Encontré"
   },
   "nome que dá": {
-    "en": "",
-    "es": ""
+    "en": "name",
+    "es": "nombre"
   },
   "nomes que dão": {
-    "en": "",
-    "es": ""
+    "en": "names",
+    "es": "nombres"
   },
   "para arrumar nos lançamentos de {0}. Confira, mude o que quiser e aplique. Os que eram só números ficam em branco para você escrever.": {
-    "en": "",
-    "es": ""
+    "en": "to fix in the transactions from {0}. Check them, change whatever you like and apply. The ones that were just numbers are left blank for you to type.",
+    "es": "para ordenar en los movimientos de {0}. Revisa, cambia lo que quieras y aplica. Los que eran solo números quedan en blanco para que escribas."
   },
   "Arrumar este": {
-    "en": "",
-    "es": ""
+    "en": "Tidy this one",
+    "es": "Ordenar este"
   },
   "(sem nome)": {
-    "en": "",
-    "es": ""
+    "en": "(no name)",
+    "es": "(sin nombre)"
   },
   "{0} lançamentos": {
-    "en": "",
-    "es": ""
+    "en": "{0} transactions",
+    "es": "{0} movimientos"
   },
   "Escreva o nome": {
-    "en": "",
-    "es": ""
+    "en": "Type the name",
+    "es": "Escribe el nombre"
   },
   "Nome novo": {
-    "en": "",
-    "es": ""
+    "en": "New name",
+    "es": "Nombre nuevo"
   },
   "Arrumar {0}": {
-    "en": "",
-    "es": ""
+    "en": "Tidy up {0}",
+    "es": "Ordenar {0}"
   },
   "Já recebida": {
-    "en": "",
-    "es": ""
+    "en": "Already received",
+    "es": "Ya recibida"
   },
   "Dívida quitada": {
-    "en": "",
-    "es": ""
+    "en": "Debt paid off",
+    "es": "Deuda saldada"
   },
   "{0} – parcela": {
-    "en": "",
-    "es": ""
+    "en": "{0} – installment",
+    "es": "{0} – cuota"
   },
   "Digite um valor maior que zero.": {
-    "en": "",
-    "es": ""
+    "en": "Enter an amount greater than zero.",
+    "es": "Escribe un valor mayor que cero."
   },
   "Escolha a data.": {
-    "en": "",
-    "es": ""
+    "en": "Choose the date.",
+    "es": "Elige la fecha."
   },
   "Escolha o cartão de crédito da compra.": {
-    "en": "",
-    "es": ""
+    "en": "Choose the credit card for this purchase.",
+    "es": "Elige la tarjeta de crédito de la compra."
   },
   "Digite quanto vale 1 {0} em {1}.": {
-    "en": "",
-    "es": ""
+    "en": "Enter how much 1 {0} is worth in {1}.",
+    "es": "Escribe cuánto vale 1 {0} en {1}."
   },
   "{0} já tem um lançamento neste mês. Escolha “Não” ou mude a data.": {
-    "en": "",
-    "es": ""
+    "en": "{0} already has a transaction this month. Choose “No” or change the date.",
+    "es": "{0} ya tiene un movimiento este mes. Elige “No” o cambia la fecha."
   },
   "Você já lançou uma compra igual a essa neste cartão. Se for outra compra mesmo, toque em salvar de novo.": {
-    "en": "",
-    "es": ""
+    "en": "You already added a purchase like this one on this card. If it really is another purchase, tap save again.",
+    "es": "Ya registraste una compra igual a esta con esta tarjeta. Si es otra compra, toca guardar de nuevo."
   },
   "Editar lançamento": {
-    "en": "",
-    "es": ""
+    "en": "Edit transaction",
+    "es": "Editar movimiento"
   },
   "Receber": {
-    "en": "",
-    "es": ""
+    "en": "Receive",
+    "es": "Recibir"
   },
   "Pagar dívida": {
-    "en": "",
-    "es": ""
+    "en": "Pay debt",
+    "es": "Pagar deuda"
   },
   "Novo lançamento": {
-    "en": "",
-    "es": ""
+    "en": "New transaction",
+    "es": "Nuevo movimiento"
   },
   "Parcela {0} de {1} da compra": {
-    "en": "",
-    "es": ""
+    "en": "Installment {0} of {1} for this purchase",
+    "es": "Cuota {0} de {1} de la compra"
   },
   "Compra no cartão": {
-    "en": "",
-    "es": ""
+    "en": "Card purchase",
+    "es": "Compra con tarjeta"
   },
   ". As outras parcelas não mudam.": {
-    "en": "",
-    "es": ""
+    "en": ". The other installments don't change.",
+    "es": ". Las otras cuotas no cambian."
   },
   "Valor": {
-    "en": "",
-    "es": ""
+    "en": "Amount",
+    "es": "Valor"
   },
   "na sua moeda.": {
-    "en": "",
-    "es": ""
+    "en": "in your currency.",
+    "es": "en tu moneda."
   },
   "Cotação que você informou.": {
-    "en": "",
-    "es": ""
+    "en": "Exchange rate you entered.",
+    "es": "Cotización que ingresaste."
   },
   "Cotação de hoje; troque se pagou outra.": {
-    "en": "",
-    "es": ""
+    "en": "Today's exchange rate; change it if you paid a different one.",
+    "es": "Cotización de hoy; cámbiala si pagaste otra."
   },
   "Sem cotação automática agora: informe a que você pagou.": {
-    "en": "",
-    "es": ""
+    "en": "No automatic exchange rate right now: enter the one you paid.",
+    "es": "Sin cotización automática ahora: ingresa la que pagaste."
   },
   "Ex.: iFood, 99, mercado…": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: iFood, 99, groceries…",
+    "es": "Ej.: iFood, 99, supermercado…"
   },
   "Ex.: salário, Pix de cliente…": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: salary, Pix from a client…",
+    "es": "Ej.: sueldo, Pix de un cliente…"
   },
   "Data da compra": {
-    "en": "",
-    "es": ""
+    "en": "Purchase date",
+    "es": "Fecha de la compra"
   },
   "Vencimento da parcela": {
-    "en": "",
-    "es": ""
+    "en": "Installment due date",
+    "es": "Vencimiento de la cuota"
   },
   "Data": {
-    "en": "",
-    "es": ""
+    "en": "Date",
+    "es": "Fecha"
   },
   "Como pagou?": {
-    "en": "",
-    "es": ""
+    "en": "How did you pay?",
+    "es": "¿Cómo pagaste?"
   },
   "Como recebeu?": {
-    "en": "",
-    "es": ""
+    "en": "How did you receive it?",
+    "es": "¿Cómo lo recibiste?"
   },
   "Forma de pagamento": {
-    "en": "",
-    "es": ""
+    "en": "Payment method",
+    "es": "Forma de pago"
   },
   "+ cartão": {
-    "en": "",
-    "es": ""
+    "en": "+ card",
+    "es": "+ tarjeta"
   },
   "Você ainda não cadastrou nenhum cartão. Cadastre um para a compra entrar na fatura.": {
-    "en": "",
-    "es": ""
+    "en": "You haven't added any card yet. Add one so the purchase goes on a statement.",
+    "es": "Aún no registraste ninguna tarjeta. Registra una para que la compra entre en el resumen."
   },
   "Cartão de crédito indisponível: falta rodar a migração 8 no Supabase.": {
-    "en": "",
-    "es": ""
+    "en": "Credit card unavailable: migration 8 still needs to run on Supabase.",
+    "es": "Tarjeta de crédito no disponible: falta ejecutar la migración 8 en Supabase."
   },
   "Para a compra entrar na fatura, ligue o cartão de crédito.": {
-    "en": "",
-    "es": ""
+    "en": "For the purchase to go on a statement, turn on the credit card.",
+    "es": "Para que la compra entre en el resumen, activa la tarjeta de crédito."
   },
   "Ligar agora": {
-    "en": "",
-    "es": ""
+    "en": "Turn on now",
+    "es": "Activar ahora"
   },
   "A compra entra na fatura do {0} e desconta do limite dele na aba Cartões.": {
-    "en": "",
-    "es": ""
+    "en": "The purchase goes on the {0} statement and is deducted from its limit on the Cards tab.",
+    "es": "La compra entra en el resumen de {0} y descuenta de su límite en la pestaña Tarjetas."
   },
   "Em quantas vezes?": {
-    "en": "",
-    "es": ""
+    "en": "In how many installments?",
+    "es": "¿En cuántas cuotas?"
   },
   "1x (à vista)": {
-    "en": "",
-    "es": ""
+    "en": "1x (upfront)",
+    "es": "1x (al contado)"
   },
   "A fatura do {0} fecha dia {1}, então essa compra entra na fatura de {2}.": {
-    "en": "",
-    "es": ""
+    "en": "The {0} statement closes on day {1}, so this purchase goes on the {2} statement.",
+    "es": "El resumen de {0} cierra el día {1}, así que esta compra entra en el resumen de {2}."
   },
   "Informe o valor para ver como as parcelas ficam.": {
-    "en": "",
-    "es": ""
+    "en": "Enter the amount to see how the installments work out.",
+    "es": "Ingresa el valor para ver cómo quedan las cuotas."
   },
   "É de uma entrada fixa?": {
-    "en": "",
-    "es": ""
+    "en": "Is it a recurring income?",
+    "es": "¿Es un ingreso fijo?"
   },
   "É de uma conta do mês?": {
-    "en": "",
-    "es": ""
+    "en": "Is it a monthly bill?",
+    "es": "¿Es una cuenta del mes?"
   },
   "Não": {
-    "en": "",
-    "es": ""
+    "en": "No",
+    "es": "No"
   },
   "{0} fica como {1} neste mês, sem precisar tocar em “": {
-    "en": "",
-    "es": ""
+    "en": "{0} stays {1} this month, no need to tap “",
+    "es": "{0} queda como {1} este mes, sin necesidad de tocar “"
   },
   "Qual dívida você está pagando?": {
-    "en": "",
-    "es": ""
+    "en": "Which debt are you paying?",
+    "es": "¿Qué deuda estás pagando?"
   },
   "Nenhuma (só entra como gasto)": {
-    "en": "",
-    "es": ""
+    "en": "None (just counts as an expense)",
+    "es": "Ninguna (solo cuenta como gasto)"
   },
   "A dívida diminui sozinha com este pagamento.": {
-    "en": "",
-    "es": ""
+    "en": "The debt goes down on its own with this payment.",
+    "es": "La deuda baja sola con este pago."
   },
   "É de alguém que te devia?": {
-    "en": "",
-    "es": ""
+    "en": "Is it from someone who owed you?",
+    "es": "¿Es de alguien que te debía?"
   },
   "O que falta receber diminui sozinho com esta entrada.": {
-    "en": "",
-    "es": ""
+    "en": "What's left to receive goes down on its own with this income.",
+    "es": "Lo que falta recibir baja solo con este ingreso."
   },
   "{0} lançamento{1} salvo{2}. Pode lançar o próximo.": {
-    "en": "",
-    "es": ""
+    "en": "{0} transaction{1} saved. You can add the next one.",
+    "es": "{0} movimiento{1} guardado{2}. Puedes registrar el siguiente."
   },
   "Excluir só esta parcela? As outras continuam.": {
-    "en": "",
-    "es": ""
+    "en": "Delete only this installment? The others stay.",
+    "es": "¿Eliminar solo esta cuota? Las demás se mantienen."
   },
   "Excluir este lançamento?": {
-    "en": "",
-    "es": ""
+    "en": "Delete this transaction?",
+    "es": "¿Eliminar este movimiento?"
   },
   "Excluir só esta parcela": {
-    "en": "",
-    "es": ""
+    "en": "Delete only this installment",
+    "es": "Eliminar solo esta cuota"
   },
   "Excluir a compra inteira \"{0}\"? Todas as parcelas serão apagadas.": {
-    "en": "",
-    "es": ""
+    "en": "Delete the whole purchase \"{0}\"? All installments will be deleted.",
+    "es": "¿Eliminar toda la compra \"{0}\"? Se borrarán todas las cuotas."
   },
   "Excluir a compra inteira": {
-    "en": "",
-    "es": ""
+    "en": "Delete the whole purchase",
+    "es": "Eliminar toda la compra"
   },
   "Salvar e lançar outro": {
-    "en": "",
-    "es": ""
+    "en": "Save and add another",
+    "es": "Guardar y registrar otro"
   },
   "Falta receber": {
-    "en": "",
-    "es": ""
+    "en": "Still to receive",
+    "es": "Falta por recibir"
   },
   "Falta pagar": {
-    "en": "",
-    "es": ""
+    "en": "Left to pay",
+    "es": "Por pagar"
   },
   "Dê um nome (ex.: computador que vendi).": {
-    "en": "",
-    "es": ""
+    "en": "Give it a name (e.g.: computer I sold).",
+    "es": "Ponle un nombre (ej.: computadora que vendí)."
   },
   "Dê um nome para a dívida.": {
-    "en": "",
-    "es": ""
+    "en": "Give the debt a name.",
+    "es": "Ponle un nombre a la deuda."
   },
   "Digite o valor da parcela.": {
-    "en": "",
-    "es": ""
+    "en": "Enter the installment amount.",
+    "es": "Escribe el valor de la cuota."
   },
   "Digite quantas parcelas faltam (um número inteiro).": {
-    "en": "",
-    "es": ""
+    "en": "Enter how many installments are left (a whole number).",
+    "es": "Escribe cuántas cuotas faltan (un número entero)."
   },
   "Digite quantas parcelas faltam.": {
-    "en": "",
-    "es": ""
+    "en": "Enter how many installments are left.",
+    "es": "Escribe cuántas cuotas faltan."
   },
   "O total de parcelas não pode ser menor que as que faltam.": {
-    "en": "",
-    "es": ""
+    "en": "The total number of installments can't be less than the ones left.",
+    "es": "El total de cuotas no puede ser menor que las que faltan."
   },
   "Digite um valor válido.": {
-    "en": "",
-    "es": ""
+    "en": "Enter a valid amount.",
+    "es": "Escribe un valor válido."
   },
   "Digite quanto falta receber.": {
-    "en": "",
-    "es": ""
+    "en": "Enter how much is left to receive.",
+    "es": "Escribe cuánto falta por recibir."
   },
   "Digite quanto falta pagar.": {
-    "en": "",
-    "es": ""
+    "en": "Enter how much is left to pay.",
+    "es": "Escribe cuánto falta por pagar."
   },
   "Editar a receber": {
-    "en": "",
-    "es": ""
+    "en": "Edit money owed to you",
+    "es": "Editar lo que te deben"
   },
   "Editar dívida": {
-    "en": "",
-    "es": ""
+    "en": "Edit debt",
+    "es": "Editar deuda"
   },
   "Alguém te deve": {
-    "en": "",
-    "es": ""
+    "en": "Someone owes you",
+    "es": "Alguien te debe"
   },
   "Quem deve": {
-    "en": "",
-    "es": ""
+    "en": "Who owes",
+    "es": "Quién debe"
   },
   "Eu devo": {
-    "en": "",
-    "es": ""
+    "en": "I owe",
+    "es": "Yo debo"
   },
   "Me devem": {
-    "en": "",
-    "es": ""
+    "en": "They owe me",
+    "es": "Me deben"
   },
   "Moeda da dívida": {
-    "en": "",
-    "es": ""
+    "en": "Debt currency",
+    "es": "Moneda de la deuda"
   },
   "Em que moeda?": {
-    "en": "",
-    "es": ""
+    "en": "In which currency?",
+    "es": "¿En qué moneda?"
   },
   "O quê": {
-    "en": "",
-    "es": ""
+    "en": "What",
+    "es": "Qué"
   },
   "Nome": {
-    "en": "",
-    "es": ""
+    "en": "Name",
+    "es": "Nombre"
   },
   "Ex.: computador que vendi, empréstimo…": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: computer I sold, loan…",
+    "es": "Ej.: computadora que vendí, préstamo…"
   },
   "Ex.: notebook, empréstimo, acordo…": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: laptop, loan, agreement…",
+    "es": "Ej.: portátil, préstamo, acuerdo…"
   },
   "Quem te deve": {
-    "en": "",
-    "es": ""
+    "en": "Who owes you",
+    "es": "Quién te debe"
   },
   "Com quem": {
-    "en": "",
-    "es": ""
+    "en": "With whom",
+    "es": "Con quién"
   },
   "Ex.: João": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: João",
+    "es": "Ej.: João"
   },
   "Ex.: Nubank, loja, Maria": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: Nubank, store, Maria",
+    "es": "Ej.: Nubank, tienda, María"
   },
   "É parcelado?": {
-    "en": "",
-    "es": ""
+    "en": "Is it in installments?",
+    "es": "¿Es en cuotas?"
   },
   "Sim, em parcelas": {
-    "en": "",
-    "es": ""
+    "en": "Yes, in installments",
+    "es": "Sí, en cuotas"
   },
   "Não, um valor só": {
-    "en": "",
-    "es": ""
+    "en": "No, a single amount",
+    "es": "No, un solo valor"
   },
   "Não, tenho um valor a pagar": {
-    "en": "",
-    "es": ""
+    "en": "No, I have one amount to pay",
+    "es": "No, tengo un solo valor por pagar"
   },
   "Valor da parcela": {
-    "en": "",
-    "es": ""
+    "en": "Installment amount",
+    "es": "Valor de la cuota"
   },
   "Quantas faltam": {
-    "en": "",
-    "es": ""
+    "en": "How many are left",
+    "es": "Cuántas faltan"
   },
   "Ex.: 10": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: 10",
+    "es": "Ej.: 10"
   },
   "De quantas no total?": {
-    "en": "",
-    "es": ""
+    "en": "Out of how many in total?",
+    "es": "¿De cuántas en total?"
   },
   "Ex.: 12": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: 12",
+    "es": "Ej.: 12"
   },
   "A próxima vence em": {
-    "en": "",
-    "es": ""
+    "en": "Next one is due on",
+    "es": "La próxima vence el"
   },
   "Se souber o total, o app mostra quanto já foi pago (\"parcela 4 de 12\").": {
-    "en": "",
-    "es": ""
+    "en": "If you know the total, the app shows how much has been paid (\"installment 4 of 12\").",
+    "es": "Si sabes el total, la app muestra cuánto ya se pagó (\"cuota 4 de 12\")."
   },
   "Com o vencimento, o app mostra cada parcela {0}, pela metade ou atrasada.": {
-    "en": "",
-    "es": ""
+    "en": "Once due, the app shows each installment as {0}, partly {0}, or overdue.",
+    "es": "Al vencer, la app muestra cada cuota como {0}, a medias o atrasada."
   },
   "Quanto falta receber": {
-    "en": "",
-    "es": ""
+    "en": "How much is left to receive",
+    "es": "Cuánto falta por recibir"
   },
   "Quanto falta pagar": {
-    "en": "",
-    "es": ""
+    "en": "How much is left to pay",
+    "es": "Cuánto falta por pagar"
   },
   "(só se mudou)": {
-    "en": "",
-    "es": ""
+    "en": "(only if changed)",
+    "es": "(solo si cambió)"
   },
   "Combinado para": {
-    "en": "",
-    "es": ""
+    "en": "Agreed for",
+    "es": "Acordado para"
   },
   "Valor atualizado em": {
-    "en": "",
-    "es": ""
+    "en": "Amount updated on",
+    "es": "Valor actualizado el"
   },
   "Cada recebimento lançado": {
-    "en": "",
-    "es": ""
+    "en": "Every payment you add",
+    "es": "Cada cobro que registras"
   },
   "Os pagamentos lançados": {
-    "en": "",
-    "es": ""
+    "en": "The payments you add",
+    "es": "Los pagos que registras"
   },
   "já abatem sozinhos. Mude o que falta só se houve juros, acordo ou se estava errado.": {
-    "en": "",
-    "es": ""
+    "en": "reduce it on their own. Change what's left only if there was interest, an agreement, or a mistake.",
+    "es": "lo reducen solos. Cambia lo que falta solo si hubo intereses, un acuerdo o un error."
   },
   "Excluir mesmo": {
-    "en": "",
-    "es": ""
+    "en": "Delete anyway",
+    "es": "Eliminar igual"
   },
   "Já recebi tudo": {
-    "en": "",
-    "es": ""
+    "en": "I've received it all",
+    "es": "Ya recibí todo"
   },
   "Já quitei": {
-    "en": "",
-    "es": ""
+    "en": "I've paid it off",
+    "es": "Ya la pagué"
   },
   "Ela e todo o histórico dela serão excluídos. Os lançamentos continuam, só deixam de abater dela.": {
-    "en": "",
-    "es": ""
+    "en": "It and its whole history will be deleted. The transactions stay; they just stop counting toward it.",
+    "es": "Se eliminarán ella y todo su historial. Los movimientos se mantienen; solo dejan de descontar de ella."
   },
   "Nome do banco (ex.: Nubank, Itaú, Next, Dinheiro):": {
-    "en": "",
-    "es": ""
+    "en": "Bank name (e.g.: Nubank, Itaú, Next, Cash):",
+    "es": "Nombre del banco (ej.: Nubank, Itaú, Next, Efectivo):"
   },
   "+ Novo banco": {
-    "en": "",
-    "es": ""
+    "en": "+ New bank",
+    "es": "+ Nuevo banco"
   },
   "{0} mil": {
-    "en": "",
-    "es": ""
+    "en": "{0}K",
+    "es": "{0} mil"
   },
   "Sobrou no mês": {
-    "en": "",
-    "es": ""
+    "en": "Left over this month",
+    "es": "Sobró en el mes"
   },
   "Acumulado no ano": {
-    "en": "",
-    "es": ""
+    "en": "Year to date",
+    "es": "Acumulado en el año"
   },
   "600 12px -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif": {
-    "en": "",
-    "es": ""
+    "en": "600 12px -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif",
+    "es": "600 12px -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif"
   },
   "cartão": {
-    "en": "",
-    "es": ""
+    "en": "card",
+    "es": "tarjeta"
   },
   "dívida": {
-    "en": "",
-    "es": ""
+    "en": "debt",
+    "es": "deuda"
   },
   "todo mês": {
-    "en": "",
-    "es": ""
+    "en": "every month",
+    "es": "todos los meses"
   },
   "Atualizando o OpusCash…": {
-    "en": "",
-    "es": ""
+    "en": "Updating OpusCash…",
+    "es": "Actualizando OpusCash…"
   },
   "Algo deu errado": {
-    "en": "",
-    "es": ""
+    "en": "Something went wrong",
+    "es": "Algo salió mal"
   },
   "Já registramos o problema. Seus dados estão guardados. Recarregue a página para continuar.": {
-    "en": "",
-    "es": ""
+    "en": "We've logged the problem. Your data is saved. Reload the page to continue.",
+    "es": "Ya registramos el problema. Tus datos están guardados. Recarga la página para continuar."
   },
   "Recarregar": {
-    "en": "",
-    "es": ""
+    "en": "Reload",
+    "es": "Recargar"
   },
   "Se continuar, escreva para": {
-    "en": "",
-    "es": ""
+    "en": "If it keeps happening, email",
+    "es": "Si sigue, escribe a"
   },
   "Guardado": {
-    "en": "",
-    "es": ""
+    "en": "Saved",
+    "es": "Ahorrado"
   },
   "Saiu uma versão nova do OpusCash. Feche esta janela e ele se atualiza sozinho; depois é só tentar de novo.": {
-    "en": "",
-    "es": ""
+    "en": "There's a new version of OpusCash. Close this window and it will update by itself; then just try again.",
+    "es": "Salió una versión nueva de OpusCash. Cierra esta ventana y se actualiza por sí solo; después solo tienes que intentarlo de nuevo."
   },
   "Lendo a planilha…": {
-    "en": "",
-    "es": ""
+    "en": "Reading the spreadsheet…",
+    "es": "Leyendo la planilla…"
   },
   "Não encontrei abas de mês (ex.: OUTUBRO26) com dados nessa planilha.": {
-    "en": "",
-    "es": ""
+    "en": "I couldn't find month tabs (e.g., OCTOBER26) with data in this spreadsheet.",
+    "es": "No encontré pestañas de mes (ej.: OCTUBRE26) con datos en esta planilla."
   },
   "{0}/{1}: {2} lançamentos": {
-    "en": "",
-    "es": ""
+    "en": "{0}/{1}: {2} transactions",
+    "es": "{0}/{1}: {2} movimientos"
   },
   "Encontrei {0} meses:\n\n{1}\n\nOs dados desses meses no app serão substituídos pelos da planilha. Quer continuar?": {
-    "en": "",
-    "es": ""
+    "en": "I found {0} months:\n\n{1}\n\nThe data for these months in the app will be replaced by the spreadsheet's. Do you want to continue?",
+    "es": "Encontré {0} meses:\n\n{1}\n\nLos datos de esos meses en la app se reemplazarán por los de la planilla. ¿Quieres continuar?"
   },
   "Salvando…": {
-    "en": "",
-    "es": ""
+    "en": "Saving…",
+    "es": "Guardando…"
   },
   "o recebimento": {
-    "en": "",
-    "es": ""
+    "en": "the incoming payment",
+    "es": "el cobro"
   },
   "o pagamento": {
-    "en": "",
-    "es": ""
+    "en": "the payment",
+    "es": "el pago"
   },
   "Falta pagar no mês": {
-    "en": "",
-    "es": ""
+    "en": "Left to pay this month",
+    "es": "Falta pagar en el mes"
   },
   "Fatura do cartão": {
-    "en": "",
-    "es": ""
+    "en": "Card statement",
+    "es": "Resumen de la tarjeta"
   },
   "Para criar e editar categorias, falta atualizar o banco de dados: rode supabase/migracao-05-categorias.sql no SQL Editor do Supabase.": {
-    "en": "",
-    "es": ""
+    "en": "To create and edit categories, the database needs an update: run supabase/migracao-05-categorias.sql in the Supabase SQL Editor.",
+    "es": "Para crear y editar categorías, falta actualizar la base de datos: ejecuta supabase/migracao-05-categorias.sql en el SQL Editor de Supabase."
   },
   "Resolver": {
-    "en": "",
-    "es": ""
+    "en": "Fix it",
+    "es": "Resolver"
   },
   "A fatura {0} de {1} venceu.": {
-    "en": "",
-    "es": ""
+    "en": "The {0} statement for {1} is overdue.",
+    "es": "El resumen de {0} de {1} venció."
   },
   "{0} faturas venceram sem pagar.": {
-    "en": "",
-    "es": ""
+    "en": "{0} statements are overdue and unpaid.",
+    "es": "{0} resúmenes vencieron sin pagar."
   },
   "Lançar agora": {
-    "en": "",
-    "es": ""
+    "en": "Add now",
+    "es": "Registrar ahora"
   },
   "Lançou o que gastou hoje?": {
-    "en": "",
-    "es": ""
+    "en": "Did you add what you spent today?",
+    "es": "¿Registraste lo que gastaste hoy?"
   },
   "Tem um extrato ou planilha? Traga tudo de uma vez.": {
-    "en": "",
-    "es": ""
+    "en": "Have a statement or spreadsheet? Bring it all in at once.",
+    "es": "¿Tienes un extracto o una planilla? Trae todo de una vez."
   },
   "Ver dívidas": {
-    "en": "",
-    "es": ""
+    "en": "See debts",
+    "es": "Ver deudas"
   },
   "{0} de parcelas atrasadas.": {
-    "en": "",
-    "es": ""
+    "en": "{0} in overdue installments.",
+    "es": "{0} en cuotas atrasadas."
   },
   "Cobrar": {
-    "en": "",
-    "es": ""
+    "en": "Collect",
+    "es": "Cobrar"
   },
   "Te devem {0} que já venceu.": {
-    "en": "",
-    "es": ""
+    "en": "{0} owed to you is already overdue.",
+    "es": "Te deben {0} que ya venció."
   },
   "Faltam {0} nas dívidas.": {
-    "en": "",
-    "es": ""
+    "en": "{0} still to pay on debts.",
+    "es": "Faltan {0} en deudas."
   },
   "Ver metas": {
-    "en": "",
-    "es": ""
+    "en": "See goals",
+    "es": "Ver metas"
   },
   "Guarde um pouco para as suas metas.": {
-    "en": "",
-    "es": ""
+    "en": "Save a little for your goals.",
+    "es": "Ahorra un poco para tus metas."
   },
   "Criar meta": {
-    "en": "",
-    "es": ""
+    "en": "Create goal",
+    "es": "Crear meta"
   },
   "Tem um sonho para juntar dinheiro?": {
-    "en": "",
-    "es": ""
+    "en": "Have a dream to save up for?",
+    "es": "¿Tienes un sueño para juntar dinero?"
   },
   "Mais controle para o seu dinheiro.": {
-    "en": "",
-    "es": ""
+    "en": "More control over your money.",
+    "es": "Más control de tu dinero."
   },
   "Guarde uma cópia dos seus dados.": {
-    "en": "",
-    "es": ""
+    "en": "Keep a copy of your data.",
+    "es": "Guarda una copia de tus datos."
   },
   "Preparando o backup…": {
-    "en": "",
-    "es": ""
+    "en": "Preparing the backup…",
+    "es": "Preparando la copia de seguridad…"
   },
   "Trocar tema": {
-    "en": "",
-    "es": ""
+    "en": "Switch theme",
+    "es": "Cambiar tema"
   },
   "Que tal o tema claro?": {
-    "en": "",
-    "es": ""
+    "en": "How about the light theme?",
+    "es": "¿Qué tal el tema claro?"
   },
   "Que tal o tema escuro?": {
-    "en": "",
-    "es": ""
+    "en": "How about the dark theme?",
+    "es": "¿Qué tal el tema oscuro?"
   },
   "Tema claro": {
-    "en": "",
-    "es": ""
+    "en": "Light theme",
+    "es": "Tema claro"
   },
   "Tema escuro": {
-    "en": "",
-    "es": ""
+    "en": "Dark theme",
+    "es": "Tema oscuro"
   },
   "Páginas": {
-    "en": "",
-    "es": ""
+    "en": "Pages",
+    "es": "Páginas"
   },
   "Busque por lançamentos ou categorias…": {
-    "en": "",
-    "es": ""
+    "en": "Search transactions or categories…",
+    "es": "Busca movimientos o categorías…"
   },
   "Buscar lançamentos": {
-    "en": "",
-    "es": ""
+    "en": "Search transactions",
+    "es": "Buscar movimientos"
   },
   "Carregando…": {
-    "en": "",
-    "es": ""
+    "en": "Loading…",
+    "es": "Cargando…"
   },
   "Mês anterior": {
-    "en": "",
-    "es": ""
+    "en": "Previous month",
+    "es": "Mes anterior"
   },
   "Escolher mês": {
-    "en": "",
-    "es": ""
+    "en": "Choose month",
+    "es": "Elegir mes"
   },
   "Próximo mês": {
-    "en": "",
-    "es": ""
+    "en": "Next month",
+    "es": "Próximo mes"
   },
   "Meses": {
-    "en": "",
-    "es": ""
+    "en": "Months",
+    "es": "Meses"
   },
   "Ano anterior": {
-    "en": "",
-    "es": ""
+    "en": "Previous year",
+    "es": "Año anterior"
   },
   "Próximo ano": {
-    "en": "",
-    "es": ""
+    "en": "Next year",
+    "es": "Próximo año"
   },
   "Usar tema claro": {
-    "en": "",
-    "es": ""
+    "en": "Use light theme",
+    "es": "Usar tema claro"
   },
   "Usar tema escuro": {
-    "en": "",
-    "es": ""
+    "en": "Use dark theme",
+    "es": "Usar tema oscuro"
   },
   "Nada atrasado": {
-    "en": "",
-    "es": ""
+    "en": "Nothing overdue",
+    "es": "Nada atrasado"
   },
   "Sua conta": {
-    "en": "",
-    "es": ""
+    "en": "Your account",
+    "es": "Tu cuenta"
   },
   "Menu": {
-    "en": "",
-    "es": ""
+    "en": "Menu",
+    "es": "Menú"
   },
   "Não conseguimos cobrar seu cartão. Atualize a forma de pagamento para não perder o acesso.": {
-    "en": "",
-    "es": ""
+    "en": "We couldn't charge your card. Update your payment method so you don't lose access.",
+    "es": "No pudimos cobrar tu tarjeta. Actualiza la forma de pago para no perder el acceso."
   },
   "Atualizar cartão": {
-    "en": "",
-    "es": ""
+    "en": "Update card",
+    "es": "Actualizar tarjeta"
   },
   "Falta atualizar o banco de dados para guardar suas preferências e usar outras moedas. Rode {0}": {
-    "en": "",
-    "es": ""
+    "en": "The database needs an update to save your preferences and use other currencies. Run {0}",
+    "es": "Falta actualizar la base de datos para guardar tus preferencias y usar otras monedas. Ejecuta {0}"
   },
   "no SQL Editor do Supabase.": {
-    "en": "",
-    "es": ""
+    "en": "in the Supabase SQL Editor.",
+    "es": "en el SQL Editor de Supabase."
   },
   "Compra lançada na fatura de": {
-    "en": "",
-    "es": ""
+    "en": "Purchase added to the statement for",
+    "es": "Compra registrada en el resumen de"
   },
   "do {0}, porque a fatura anterior já fechou (dia {1}).": {
-    "en": "",
-    "es": ""
+    "en": "on {0}, because the previous statement already closed (day {1}).",
+    "es": "de {0}, porque el resumen anterior ya cerró (día {1})."
   },
   "do {0}.": {
-    "en": "",
-    "es": ""
+    "en": "on {0}.",
+    "es": "de {0}."
   },
   "Ver fatura": {
-    "en": "",
-    "es": ""
+    "en": "See statement",
+    "es": "Ver resumen"
   },
   "Não deu certo. Tente de novo.": {
-    "en": "",
-    "es": ""
+    "en": "Something went wrong. Try again.",
+    "es": "Algo salió mal. Inténtalo de nuevo."
   },
   "Detalhe: {0}": {
-    "en": "",
-    "es": ""
+    "en": "Detail: {0}",
+    "es": "Detalle: {0}"
   },
   "Mais": {
-    "en": "",
-    "es": ""
+    "en": "More",
+    "es": "Más"
   },
   "M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 T150 6 T180 6 T210 6 T240 6 V160 H0Z": {
-    "en": "",
-    "es": ""
+    "en": "M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 T150 6 T180 6 T210 6 T240 6 V160 H0Z",
+    "es": "M0 6 Q15 0 30 6 T60 6 T90 6 T120 6 T150 6 T180 6 T210 6 T240 6 V160 H0Z"
   },
   "Sua moeda": {
-    "en": "",
-    "es": ""
+    "en": "Your currency",
+    "es": "Tu moneda"
   },
   "Sua vida": {
-    "en": "",
-    "es": ""
+    "en": "Your life",
+    "es": "Tu vida"
   },
   "Pronto": {
-    "en": "",
-    "es": ""
+    "en": "Done",
+    "es": "Listo"
   },
   "Vamos montar o seu painel": {
-    "en": "",
-    "es": ""
+    "en": "Let's set up your dashboard",
+    "es": "Vamos a armar tu panel"
   },
   "São poucas perguntas para mostrar só o que faz sentido para você. Dá para mudar tudo depois.": {
-    "en": "",
-    "es": ""
+    "en": "Just a few questions to show only what makes sense for you. You can change everything later.",
+    "es": "Son pocas preguntas para mostrarte solo lo que tiene sentido para ti. Puedes cambiar todo después."
   },
   "Foto de perfil": {
-    "en": "",
-    "es": ""
+    "en": "Profile photo",
+    "es": "Foto de perfil"
   },
   "Como você quer ser chamado?": {
-    "en": "",
-    "es": ""
+    "en": "What should we call you?",
+    "es": "¿Cómo quieres que te llamemos?"
   },
   "Qual moeda você usa no dia a dia?": {
-    "en": "",
-    "es": ""
+    "en": "Which currency do you use day to day?",
+    "es": "¿Qué moneda usas en el día a día?"
   },
   "Todos os totais vão aparecer nela.": {
-    "en": "",
-    "es": ""
+    "en": "All totals will show in it.",
+    "es": "Todos los totales aparecerán en ella."
   },
   "Você também tem dinheiro em outra moeda?": {
-    "en": "",
-    "es": ""
+    "en": "Do you also have money in another currency?",
+    "es": "¿También tienes dinero en otra moneda?"
   },
   "Dólar guardado, euro de uma viagem, salário em outra moeda… Toque em quantas quiser.": {
-    "en": "",
-    "es": ""
+    "en": "Saved dollars, euros for a trip, salary in another currency… Tap as many as you want.",
+    "es": "Dólares ahorrados, euros de un viaje, sueldo en otra moneda… Toca todas las que quieras."
   },
   "Não, só {0}": {
-    "en": "",
-    "es": ""
+    "en": "No, just {0}",
+    "es": "No, solo {0}"
   },
   "pode ligar depois": {
-    "en": "",
-    "es": ""
+    "en": "you can add more later",
+    "es": "puedes agregar más después"
   },
   "O que faz parte da sua vida hoje?": {
-    "en": "",
-    "es": ""
+    "en": "What's part of your life today?",
+    "es": "¿Qué forma parte de tu vida hoy?"
   },
   "Toque no que for do seu jeito. Entradas e saídas já vêm sempre.": {
-    "en": "",
-    "es": ""
+    "en": "Tap what fits you. Income and expenses always come included.",
+    "es": "Toca lo que sea de tu estilo. Ingresos y gastos siempre vienen incluidos."
   },
   "Quanto detalhe você quer ver?": {
-    "en": "",
-    "es": ""
+    "en": "How much detail do you want to see?",
+    "es": "¿Cuánto detalle quieres ver?"
   },
   "Dica: comece pelo simples. O app avisa quando valer a pena mostrar mais.": {
-    "en": "",
-    "es": ""
+    "en": "Tip: start simple. The app will tell you when it's worth showing more.",
+    "es": "Consejo: empieza por lo simple. La app te avisa cuando valga la pena mostrar más."
   },
   "Tudo pronto, {0}!": {
-    "en": "",
-    "es": ""
+    "en": "All set, {0}!",
+    "es": "¡Todo listo, {0}!"
   },
   "Tudo pronto!": {
-    "en": "",
-    "es": ""
+    "en": "All set!",
+    "es": "¡Todo listo!"
   },
   "Seu painel vai mostrar:": {
-    "en": "",
-    "es": ""
+    "en": "Your dashboard will show:",
+    "es": "Tu panel mostrará:"
   },
   "Entradas e saídas em {0}": {
-    "en": "",
-    "es": ""
+    "en": "Income and expenses in {0}",
+    "es": "Ingresos y gastos en {0}"
   },
   "Jeito {0}": {
-    "en": "",
-    "es": ""
+    "en": "Style: {0}",
+    "es": "Estilo: {0}"
   },
   "Sua vida mudou? Começou a investir, fez uma dívida, abriu outra conta? É só ir em": {
-    "en": "",
-    "es": ""
+    "en": "Has your life changed? Started investing, took on a debt, opened another account? Just go to",
+    "es": "¿Tu vida cambió? ¿Empezaste a invertir, tomaste una deuda, abriste otra cuenta? Solo ve a"
   },
   ". O app também vai sugerindo conforme você usa.": {
-    "en": "",
-    "es": ""
+    "en": ". The app will also suggest things as you use it.",
+    "es": ". La app también te irá sugiriendo cosas a medida que la uses."
   },
   "Tudo pode ser mudado depois em Configurações.": {
-    "en": "",
-    "es": ""
+    "en": "You can change everything later in Settings.",
+    "es": "Todo se puede cambiar después en Configuración."
   },
   "Pular": {
-    "en": "",
-    "es": ""
+    "en": "Skip",
+    "es": "Omitir"
   },
   "Passo {0} de {1}": {
-    "en": "",
-    "es": ""
+    "en": "Step {0} of {1}",
+    "es": "Paso {0} de {1}"
   },
   "Voltar": {
-    "en": "",
-    "es": ""
+    "en": "Back",
+    "es": "Volver"
   },
   "Abrir e importar meu extrato": {
-    "en": "",
-    "es": ""
+    "en": "Open and import my statement",
+    "es": "Abrir e importar mi extracto"
   },
   "Abrir meu painel": {
-    "en": "",
-    "es": ""
+    "en": "Open my dashboard",
+    "es": "Abrir mi panel"
   },
   "Começar": {
-    "en": "",
-    "es": ""
+    "en": "Start",
+    "es": "Empezar"
   },
   "Continuar": {
-    "en": "",
-    "es": ""
+    "en": "Continue",
+    "es": "Continuar"
   },
   "Cadastre aluguel, luz e internet uma vez só. O app lembra o vencimento e, com um toque em “Paguei”, lança o gasto por você.": {
-    "en": "",
-    "es": ""
+    "en": "Add rent, power and internet just once. The app reminds you of the due date and, with one tap on “Paid”, records the expense for you.",
+    "es": "Registra alquiler, luz e internet una sola vez. La app te recuerda el vencimiento y, con un toque en “Pagué”, registra el gasto por ti."
   },
   "Diga o dia em que cada fatura fecha e vence. As compras parceladas caem na fatura certa e você vê quanto do limite ainda sobra.": {
-    "en": "",
-    "es": ""
+    "en": "Set the day each statement closes and is due. Installment purchases go to the right statement, and you can see how much of your limit is left.",
+    "es": "Indica el día en que cierra y vence cada resumen. Las compras en cuotas caen en el resumen correcto y ves cuánto del límite todavía queda."
   },
   "Empréstimos e parcelamentos: quanto falta, o que já venceu e quando você fica livre. Também dá para registrar quem te deve.": {
-    "en": "",
-    "es": ""
+    "en": "Loans and installment plans: how much is left, what's already overdue and when you'll be free. You can also record who owes you.",
+    "es": "Préstamos y planes en cuotas: cuánto falta, qué ya venció y cuándo quedas libre. También puedes registrar quién te debe."
   },
   "Crie objetivos, como viagem ou reserva de emergência. O app mostra quanto guardar por mês para chegar lá.": {
-    "en": "",
-    "es": ""
+    "en": "Create goals, like a trip or an emergency fund. The app shows how much to save each month to get there.",
+    "es": "Crea objetivos, como un viaje o un fondo de emergencia. La app muestra cuánto ahorrar por mes para llegar."
   },
   "Quanto você tem em cada banco, nos investimentos e em outras moedas, tudo somado num lugar só.": {
-    "en": "",
-    "es": ""
+    "en": "How much you have in each bank, in investments and in other currencies, all added up in one place.",
+    "es": "Cuánto tienes en cada banco, en inversiones y en otras monedas, todo sumado en un solo lugar."
   },
   "Oi, {0}! Vamos conhecer seu painel?": {
-    "en": "",
-    "es": ""
+    "en": "Hi, {0}! Shall we explore your dashboard?",
+    "es": "¡Hola, {0}! ¿Vamos a conocer tu panel?"
   },
   "Vamos conhecer seu painel?": {
-    "en": "",
-    "es": ""
+    "en": "Shall we explore your dashboard?",
+    "es": "¿Vamos a conocer tu panel?"
   },
   "É um passeio de 1 minuto, montado com o que você respondeu. Dá para pular quando quiser.": {
-    "en": "",
-    "es": ""
+    "en": "It's a 1-minute tour, built from your answers. You can skip it anytime.",
+    "es": "Es un recorrido de 1 minuto, armado con lo que respondiste. Puedes saltarlo cuando quieras."
   },
   "Comece lançando": {
-    "en": "",
-    "es": ""
+    "en": "Start by adding",
+    "es": "Empieza registrando"
   },
   "Toque aqui para registrar o que entrou ou saiu. Diga como pagou (Pix, débito, crédito…) e, no crédito, a compra entra na fatura do cartão sozinha.": {
-    "en": "",
-    "es": ""
+    "en": "Tap here to record what came in or went out. Say how you paid (Pix, debit, credit…) and, for credit, the purchase goes onto your card statement automatically.",
+    "es": "Toca aquí para registrar lo que entró o salió. Indica cómo pagaste (Pix, débito, crédito…) y, con crédito, la compra entra sola en el resumen de la tarjeta."
   },
   "Tudo o que você lançou": {
-    "en": "",
-    "es": ""
+    "en": "Everything you've added",
+    "es": "Todo lo que registraste"
   },
   "Fica em “Mais”.": {
-    "en": "",
-    "es": ""
+    "en": "It's under “More”.",
+    "es": "Está en “Más”."
   },
   "Aqui ficam todos os lançamentos, por dia, com busca e filtros. Tem um extrato do banco ou uma planilha? Dá para importar e lançar tudo de uma vez.": {
-    "en": "",
-    "es": ""
+    "en": "All your transactions are here, by day, with search and filters. Have a bank statement or a spreadsheet? You can import and add everything at once.",
+    "es": "Aquí están todos los movimientos, por día, con búsqueda y filtros. ¿Tienes un extracto del banco o una planilla? Puedes importar y registrar todo de una vez."
   },
   "Seu resumo do mês": {
-    "en": "",
-    "es": ""
+    "en": "Your month summary",
+    "es": "Tu resumen del mes"
   },
   "O Início mostra, de forma simples, quanto sobrou, quanto entrou e quanto saiu no mês.": {
-    "en": "",
-    "es": ""
+    "en": "Home shows, simply, what's left over, what came in and what went out this month.",
+    "es": "Inicio muestra, de forma sencilla, cuánto sobró, cuánto entró y cuánto salió en el mes."
   },
   "Traga seus dados de uma vez": {
-    "en": "",
-    "es": ""
+    "en": "Bring in your data all at once",
+    "es": "Trae tus datos de una vez"
   },
   "Importe o extrato do banco (PDF, OFX, Excel, CSV ou Word) ou uma planilha. O app arruma os nomes e mostra tudo antes de gravar.": {
-    "en": "",
-    "es": ""
+    "en": "Import your bank statement (PDF, OFX, Excel, CSV or Word) or a spreadsheet. The app tidies up the names and shows everything before saving.",
+    "es": "Importa el extracto del banco (PDF, OFX, Excel, CSV o Word) o una planilla. La app ordena los nombres y muestra todo antes de guardar."
   },
   "Mês a mês: quanto entrou, saiu e sobrou, num gráfico e numa tabela. Toque num mês para abri-lo.": {
-    "en": "",
-    "es": ""
+    "en": "Month by month: what came in, went out and was left over, in a chart and a table. Tap a month to open it.",
+    "es": "Mes a mes: cuánto entró, salió y sobró, en un gráfico y una tabla. Toca un mes para abrirlo."
   },
   "Quer mais abas?": {
-    "en": "",
-    "es": ""
+    "en": "Want more tabs?",
+    "es": "¿Quieres más pestañas?"
   },
   "Você começou só com o que respondeu, mas o app tem mais. Ligue agora o que fizer sentido; dá para desligar depois em Configurações.": {
-    "en": "",
-    "es": ""
+    "en": "You started with just what you answered, but the app has more. Turn on what makes sense now; you can turn things off later in Settings.",
+    "es": "Empezaste solo con lo que respondiste, pero la app tiene más. Activa ahora lo que tenga sentido; puedes desactivarlo después en Configuración."
   },
   "Tudo se ajusta aqui": {
-    "en": "",
-    "es": ""
+    "en": "Adjust everything here",
+    "es": "Aquí se ajusta todo"
   },
   "Toque no menu e escolha Configurações.": {
-    "en": "",
-    "es": ""
+    "en": "Tap the menu and choose Settings.",
+    "es": "Toca el menú y elige Configuración."
   },
   "Em Configurações você põe sua foto, troca o tema, muda as moedas e as categorias, faz backup e vê este passeio de novo quando quiser.": {
-    "en": "",
-    "es": ""
+    "en": "In Settings you add your photo, change the theme, switch currencies and categories, make a backup and see this tour again whenever you like.",
+    "es": "En Configuración pones tu foto, cambias el tema, cambias las monedas y las categorías, haces una copia de seguridad y vuelves a ver este recorrido cuando quieras."
   },
   "Tutorial do painel": {
-    "en": "",
-    "es": ""
+    "en": "Dashboard tour",
+    "es": "Recorrido del panel"
   },
   "Pular tutorial": {
-    "en": "",
-    "es": ""
+    "en": "Skip tour",
+    "es": "Saltar recorrido"
   },
   "O que o seu painel tem": {
-    "en": "",
-    "es": ""
+    "en": "What your dashboard includes",
+    "es": "Lo que tiene tu panel"
   },
   "Ligada": {
-    "en": "",
-    "es": ""
+    "en": "On",
+    "es": "Activada"
   },
   "Ligar": {
-    "en": "",
-    "es": ""
+    "en": "Turn on",
+    "es": "Activar"
   },
   "Concluir": {
-    "en": "",
-    "es": ""
+    "en": "Finish",
+    "es": "Terminar"
   },
   "Próximo": {
-    "en": "",
-    "es": ""
+    "en": "Next",
+    "es": "Siguiente"
   },
   "Mais lançamentos de {0}?": {
-    "en": "",
-    "es": ""
+    "en": "More transactions for {0}?",
+    "es": "¿Más movimientos de {0}?"
   },
   "Você ligou": {
-    "en": "",
-    "es": ""
+    "en": "You linked",
+    "es": "Vinculaste"
   },
   ". Achei": {
-    "en": "",
-    "es": ""
+    "en": ". I found",
+    "es": ". Encontré"
   },
   "outro lançamento parecido": {
-    "en": "",
-    "es": ""
+    "en": "one other similar transaction",
+    "es": "otro movimiento parecido"
   },
   "mais {0} lançamentos parecidos": {
-    "en": "",
-    "es": ""
+    "en": "{0} more similar transactions",
+    "es": "otros {0} movimientos parecidos"
   },
   "em outros meses.": {
-    "en": "",
-    "es": ""
+    "en": "in other months.",
+    "es": "en otros meses."
   },
   "Ele também é": {
-    "en": "",
-    "es": ""
+    "en": "It's also",
+    "es": "Este también es"
   },
   "Eles também são": {
-    "en": "",
-    "es": ""
+    "en": "They're also",
+    "es": "Estos también son"
   },
   "dessa conta?": {
-    "en": "",
-    "es": ""
+    "en": "for this bill?",
+    "es": "de esta cuenta?"
   },
   "parecido, confira": {
-    "en": "",
-    "es": ""
+    "en": "similar, check it",
+    "es": "parecido, revísalo"
   },
   "Ligados, eles contam como {0} em Contas do mês e não precisam de “": {
-    "en": "",
-    "es": ""
+    "en": "Once linked, they count as {0} in Monthly bills and don't need “",
+    "es": "Ya vinculados, cuentan como {0} en Cuentas del mes y no necesitan “"
   },
   "Nenhum é": {
-    "en": "",
-    "es": ""
+    "en": "None of these",
+    "es": "Ninguno de estos"
   },
   "Ligar {0}": {
-    "en": "",
-    "es": ""
+    "en": "Link {0}",
+    "es": "Vincular {0}"
   },
   "no mês passado": {
-    "en": "",
-    "es": ""
+    "en": "last month",
+    "es": "el mes pasado"
   },
   "que {0}": {
-    "en": "",
-    "es": ""
+    "en": "than {0}",
+    "es": "que {0}"
   },
   "sem dados": {
-    "en": "",
-    "es": ""
+    "en": "no data",
+    "es": "sin datos"
   },
   "Jan": {
-    "en": "",
-    "es": ""
+    "en": "Jan",
+    "es": "Ene"
   },
   "Fev": {
-    "en": "",
-    "es": ""
+    "en": "Feb",
+    "es": "Feb"
   },
   "Mar": {
-    "en": "",
-    "es": ""
+    "en": "Mar",
+    "es": "Mar"
   },
   "Abr": {
-    "en": "",
-    "es": ""
+    "en": "Apr",
+    "es": "Abr"
   },
   "Mai": {
-    "en": "",
-    "es": ""
+    "en": "May",
+    "es": "May"
   },
   "Jun": {
-    "en": "",
-    "es": ""
+    "en": "Jun",
+    "es": "Jun"
   },
   "Jul": {
-    "en": "",
-    "es": ""
+    "en": "Jul",
+    "es": "Jul"
   },
   "Ago": {
-    "en": "",
-    "es": ""
+    "en": "Aug",
+    "es": "Ago"
   },
   "Set": {
-    "en": "",
-    "es": ""
+    "en": "Sep",
+    "es": "Sep"
   },
   "Out": {
-    "en": "",
-    "es": ""
+    "en": "Oct",
+    "es": "Oct"
   },
   "Nov": {
-    "en": "",
-    "es": ""
+    "en": "Nov",
+    "es": "Nov"
   },
   "Dez": {
-    "en": "",
-    "es": ""
+    "en": "Dec",
+    "es": "Dic"
   },
   "Escolher o mês": {
-    "en": "",
-    "es": ""
+    "en": "Choose the month",
+    "es": "Elegir el mes"
   },
   "Resumo de {0}": {
-    "en": "",
-    "es": ""
+    "en": "{0} summary",
+    "es": "Resumen de {0}"
   },
   "mês": {
-    "en": "",
-    "es": ""
+    "en": "month",
+    "es": "mes"
   },
   "com dados · toque num mês para abrir": {
-    "en": "",
-    "es": ""
+    "en": "with data · tap a month to open it",
+    "es": "con datos · toca un mes para abrirlo"
   },
   "Seu ano vai se desenhar aqui": {
-    "en": "",
-    "es": ""
+    "en": "Your year will take shape here",
+    "es": "Tu año se va a dibujar aquí"
   },
   "Assim que você lançar o que entrou e o que saiu, aparecem o total de cada mês, o gráfico mês a mês e quanto sobrou. Dá para começar agora ou trazer tudo do extrato do seu banco.": {
-    "en": "",
-    "es": ""
+    "en": "As soon as you add what came in and what went out, you'll see each month's total, the month-by-month chart and what was left over. You can start now or bring everything in from your bank statement.",
+    "es": "En cuanto registres lo que entró y lo que salió, verás el total de cada mes, el gráfico mes a mes y cuánto sobró. Puedes empezar ahora o traer todo desde el extracto de tu banco."
   },
   "Fazer o primeiro lançamento": {
-    "en": "",
-    "es": ""
+    "en": "Add your first transaction",
+    "es": "Registrar tu primer movimiento"
   },
   "Entrou no ano": {
-    "en": "",
-    "es": ""
+    "en": "Income this year",
+    "es": "Entró en el año"
   },
   "Saiu no ano": {
-    "en": "",
-    "es": ""
+    "en": "Spent this year",
+    "es": "Salió en el año"
   },
   "Sobrou no ano": {
-    "en": "",
-    "es": ""
+    "en": "Left over this year",
+    "es": "Sobró en el año"
   },
   "Gasto médio por mês": {
-    "en": "",
-    "es": ""
+    "en": "Average spent per month",
+    "es": "Gasto medio por mes"
   },
   "Melhor mês: {0}": {
-    "en": "",
-    "es": ""
+    "en": "Best month: {0}",
+    "es": "Mejor mes: {0}"
   },
   "Mês a mês": {
-    "en": "",
-    "es": ""
+    "en": "Month by month",
+    "es": "Mes a mes"
   },
   "toque na legenda para esconder ou mostrar uma série": {
-    "en": "",
-    "es": ""
+    "en": "tap the legend to hide or show a series",
+    "es": "toca la leyenda para ocultar o mostrar una serie"
   },
   "Números de cada mês": {
-    "en": "",
-    "es": ""
+    "en": "Figures by month",
+    "es": "Cifras de cada mes"
   },
   "Quanto sobrou em cada mês": {
-    "en": "",
-    "es": ""
+    "en": "Left over each month",
+    "es": "Cuánto sobró cada mes"
   },
   "Para usar cartões de crédito, falta atualizar o banco de dados: rode": {
-    "en": "",
-    "es": ""
+    "en": "To use credit cards, the database needs an update: run",
+    "es": "Para usar tarjetas de crédito, falta actualizar la base de datos: ejecuta"
   },
   "Faturas de {0}/{1}, limite e parcelas de cada cartão.": {
-    "en": "",
-    "es": ""
+    "en": "Statements for {0}/{1}, limit and installments for each card.",
+    "es": "Resúmenes de {0}/{1}, límite y cuotas de cada tarjeta."
   },
   "Novo cartão": {
-    "en": "",
-    "es": ""
+    "en": "New card",
+    "es": "Nueva tarjeta"
   },
   "Para renegociar faturas, registrar juros de atraso e usar limite garantido, rode": {
-    "en": "",
-    "es": ""
+    "en": "To renegotiate statements, record late interest and use the secured limit, run",
+    "es": "Para renegociar resúmenes, registrar intereses por atraso y usar el límite garantizado, ejecuta"
   },
   "Seus cartões": {
-    "en": "",
-    "es": ""
+    "en": "Your cards",
+    "es": "Tus tarjetas"
   },
   "fatura de {0}": {
-    "en": "",
-    "es": ""
+    "en": "{0} statement",
+    "es": "resumen de {0}"
   },
   "fecha dia {0} · vence dia {1}": {
-    "en": "",
-    "es": ""
+    "en": "closes on day {0} · due on day {1}",
+    "es": "cierra el día {0} · vence el día {1}"
   },
   "Faturas de {0}": {
-    "en": "",
-    "es": ""
+    "en": "Statements for {0}",
+    "es": "Resúmenes de {0}"
   },
   "Limite livre": {
-    "en": "",
-    "es": ""
+    "en": "Available limit",
+    "es": "Límite disponible"
   },
   "Em atraso ({0})": {
-    "en": "",
-    "es": ""
+    "en": "Overdue ({0})",
+    "es": "Con atraso ({0})"
   },
   "Cartões que você não usa mais": {
-    "en": "",
-    "es": ""
+    "en": "Cards you no longer use",
+    "es": "Tarjetas que ya no usas"
   },
   "Coloque seus cartões aqui": {
-    "en": "",
-    "es": ""
+    "en": "Add your cards here",
+    "es": "Agrega tus tarjetas aquí"
   },
   "Diga o dia em que a fatura fecha e o dia em que vence. Depois é só lançar as compras escolhendo o cartão: cada parcela cai na fatura certa e você vê quanto do limite ainda sobra.": {
-    "en": "",
-    "es": ""
+    "en": "Tell us the day your statement closes and the day it's due. Then just add purchases by choosing the card: each installment lands on the right statement, and you can see how much of the limit is left.",
+    "es": "Indica el día en que cierra el resumen y el día en que vence. Después solo registra las compras eligiendo la tarjeta: cada cuota cae en el resumen correcto y ves cuánto del límite todavía queda."
   },
   "Adicionar meu primeiro cartão": {
-    "en": "",
-    "es": ""
+    "en": "Add my first card",
+    "es": "Agregar mi primera tarjeta"
   },
   "fecha dia {0}, vence dia {1}": {
-    "en": "",
-    "es": ""
+    "en": "closes on day {0}, due on day {1}",
+    "es": "cierra el día {0}, vence el día {1}"
   },
   "Editar": {
-    "en": "",
-    "es": ""
+    "en": "Edit",
+    "es": "Editar"
   },
   "Nova compra": {
-    "en": "",
-    "es": ""
+    "en": "New purchase",
+    "es": "Nueva compra"
   },
   "Uma fatura venceu sem pagar": {
-    "en": "",
-    "es": ""
+    "en": "A statement is overdue and unpaid",
+    "es": "Un resumen venció sin pagar"
   },
   "{0} faturas venceram sem pagar": {
-    "en": "",
-    "es": ""
+    "en": "{0} statements are overdue and unpaid",
+    "es": "{0} resúmenes vencieron sin pagar"
   },
   "Marcar as {0} faturas como pagas no dia do vencimento de cada uma?": {
-    "en": "",
-    "es": ""
+    "en": "Mark the {0} statements as paid on each one's due date?",
+    "es": "¿Marcar los {0} resúmenes como pagados en el día de vencimiento de cada uno?"
   },
   "Já paguei todas": {
-    "en": "",
-    "es": ""
+    "en": "I've paid them all",
+    "es": "Ya pagué todos"
   },
   "venceu há {0} dias, em {1}": {
-    "en": "",
-    "es": ""
+    "en": "was due {0} days ago, on {1}",
+    "es": "venció hace {0} días, el {1}"
   },
   "Renegociei": {
-    "en": "",
-    "es": ""
+    "en": "I renegotiated",
+    "es": "Renegocié"
   },
   "Compras desta fatura": {
-    "en": "",
-    "es": ""
+    "en": "Purchases on this statement",
+    "es": "Compras de este resumen"
   },
   "Compra": {
-    "en": "",
-    "es": ""
+    "en": "Purchase",
+    "es": "Compra"
   },
   "Nenhuma compra nesta fatura. Toque em “Nova compra” e escolha este cartão.": {
-    "en": "",
-    "es": ""
+    "en": "No purchases on this statement. Tap “New purchase” and choose this card.",
+    "es": "No hay compras en este resumen. Toca “Nueva compra” y elige esta tarjeta."
   },
   "Parceladas em andamento": {
-    "en": "",
-    "es": ""
+    "en": "Installments in progress",
+    "es": "Cuotas en curso"
   },
   "Nenhuma compra parcelada pela frente.": {
-    "en": "",
-    "es": ""
+    "en": "No installment purchases coming up.",
+    "es": "No hay compras en cuotas pendientes."
   },
   "Faturas resolvidas": {
-    "en": "",
-    "es": ""
+    "en": "Resolved statements",
+    "es": "Resúmenes resueltos"
   },
   "toque para ajeitar": {
-    "en": "",
-    "es": ""
+    "en": "tap to fix",
+    "es": "toca para corregir"
   },
   "paga em {0}": {
-    "en": "",
-    "es": ""
+    "en": "paid on {0}",
+    "es": "pagado el {0}"
   },
   "acréscimo": {
-    "en": "",
-    "es": ""
+    "en": "surcharge",
+    "es": "recargo"
   },
   "Quando você marcar uma fatura como paga ou renegociada, ela aparece aqui.": {
-    "en": "",
-    "es": ""
+    "en": "When you mark a statement as paid or renegotiated, it shows up here.",
+    "es": "Cuando marques un resumen como pagado o renegociado, aparecerá aquí."
   },
   "Fatura de {0}": {
-    "en": "",
-    "es": ""
+    "en": "Statement for {0}",
+    "es": "Resumen de {0}"
   },
   "Fecha em {0} e vence em {1}": {
-    "en": "",
-    "es": ""
+    "en": "Closes on {0} and is due on {1}",
+    "es": "Cierra el {0} y vence el {1}"
   },
   "Renegociada em {0}. Virou uma dívida em parcelas; as compras dela saíram das saídas do mês.": {
-    "en": "",
-    "es": ""
+    "en": "Renegotiated on {0}. It became a debt in installments; its purchases left this month's expenses.",
+    "es": "Renegociado el {0}. Se convirtió en una deuda en cuotas; sus compras salieron de los gastos del mes."
   },
   "Paga em {0}": {
-    "en": "",
-    "es": ""
+    "en": "Paid on {0}",
+    "es": "Pagado el {0}"
   },
   ", com": {
-    "en": "",
-    "es": ""
+    "en": ", with",
+    "es": ", con"
   },
   "{0} dias de atraso": {
-    "en": "",
-    "es": ""
+    "en": "{0} days overdue",
+    "es": "{0} días de atraso"
   },
   "e {0} de juros": {
-    "en": "",
-    "es": ""
+    "en": "and {0} in interest",
+    "es": "y {0} de intereses"
   },
   "Você pagou {0}; depois disso a fatura mudou.": {
-    "en": "",
-    "es": ""
+    "en": "You paid {0}; the statement changed after that.",
+    "es": "Pagaste {0}; después de eso el resumen cambió."
   },
   "Já venceu": {
-    "en": "",
-    "es": ""
+    "en": "Was due",
+    "es": "Venció"
   },
   "Para pagar": {
-    "en": "",
-    "es": ""
+    "en": "Due",
+    "es": "Para pagar"
   },
   "Paguei a fatura": {
-    "en": "",
-    "es": ""
+    "en": "I paid the statement",
+    "es": "Pagué el resumen"
   },
   "Falta rodar a migração 9": {
-    "en": "",
-    "es": ""
+    "en": "Migration 9 still needs to run",
+    "es": "Falta ejecutar la migración 9"
   },
   "O banco parcelou a fatura": {
-    "en": "",
-    "es": ""
+    "en": "The bank split the statement into installments",
+    "es": "El banco dividió el resumen en cuotas"
   },
   "Renegociar": {
-    "en": "",
-    "es": ""
+    "en": "Renegotiate",
+    "es": "Renegociar"
   },
   "Ajeitar pagamento": {
-    "en": "",
-    "es": ""
+    "en": "Fix payment",
+    "es": "Corregir pago"
   },
   "Ver renegociação": {
-    "en": "",
-    "es": ""
+    "en": "View renegotiation",
+    "es": "Ver renegociación"
   },
   "Informe o limite do cartão para ver quanto ainda dá para gastar.": {
-    "en": "",
-    "es": ""
+    "en": "Enter the card's limit to see how much you can still spend.",
+    "es": "Indica el límite de la tarjeta para ver cuánto todavía puedes gastar."
   },
   "Informar limite": {
-    "en": "",
-    "es": ""
+    "en": "Enter limit",
+    "es": "Indicar límite"
   },
   "Limite": {
-    "en": "",
-    "es": ""
+    "en": "Limit",
+    "es": "Límite"
   },
   "passou do limite": {
-    "en": "",
-    "es": ""
+    "en": "over the limit",
+    "es": "por encima del límite"
   },
   "de {0}": {
-    "en": "",
-    "es": ""
+    "en": "of {0}",
+    "es": "de {0}"
   },
   "Usado": {
-    "en": "",
-    "es": ""
+    "en": "Used",
+    "es": "Usado"
   },
   "Livre": {
-    "en": "",
-    "es": ""
+    "en": "Available",
+    "es": "Disponible"
   },
   "Garantido": {
-    "en": "",
-    "es": ""
+    "en": "Secured",
+    "es": "Garantizado"
   },
   "{0} da caixinha": {
-    "en": "",
-    "es": ""
+    "en": "{0} from the savings box",
+    "es": "{0} de la cajita de ahorro"
   },
   "viram limite": {
-    "en": "",
-    "es": ""
+    "en": "turn into limit",
+    "es": "se vuelven límite"
   },
   "Tem dinheiro numa caixinha que vira limite? Toque para somar.": {
-    "en": "",
-    "es": ""
+    "en": "Have money in a savings box that turns into limit? Tap to add it.",
+    "es": "¿Tienes dinero en una cajita de ahorro que se vuelve límite? Toca para sumarlo."
   },
   "Próximas faturas": {
-    "en": "",
-    "es": ""
+    "en": "Upcoming statements",
+    "es": "Próximos resúmenes"
   },
   "{0} já comprometidos": {
-    "en": "",
-    "es": ""
+    "en": "{0} already committed",
+    "es": "{0} ya comprometidos"
   },
   "nada comprometido": {
-    "en": "",
-    "es": ""
+    "en": "nothing committed",
+    "es": "nada comprometido"
   },
   "Abrir a compra {0}": {
-    "en": "",
-    "es": ""
+    "en": "Open purchase {0}",
+    "es": "Abrir la compra {0}"
   },
   "{0}/mês · faltam {1} · até {2}": {
-    "en": "",
-    "es": ""
+    "en": "{0}/month · {1} left · until {2}",
+    "es": "{0}/mes · faltan {1} · hasta {2}"
   },
   "Carteira": {
-    "en": "",
-    "es": ""
+    "en": "Wallet",
+    "es": "Billetera"
   },
   "Dê um nome para o cartão.": {
-    "en": "",
-    "es": ""
+    "en": "Give the card a name.",
+    "es": "Ponle un nombre a la tarjeta."
   },
   "Escolha o dia em que a fatura fecha e o dia em que vence.": {
-    "en": "",
-    "es": ""
+    "en": "Choose the day the statement closes and the day it's due.",
+    "es": "Elige el día en que cierra el resumen y el día en que vence."
   },
   "Limite inválido.": {
-    "en": "",
-    "es": ""
+    "en": "Invalid limit.",
+    "es": "Límite no válido."
   },
   "Valor da caixinha inválido.": {
-    "en": "",
-    "es": ""
+    "en": "Invalid savings box amount.",
+    "es": "Monto de la cajita de ahorro no válido."
   },
   "Editar cartão": {
-    "en": "",
-    "es": ""
+    "en": "Edit card",
+    "es": "Editar tarjeta"
   },
   "Seu cartão": {
-    "en": "",
-    "es": ""
+    "en": "Your card",
+    "es": "Tu tarjeta"
   },
   "fecha dia {0}": {
-    "en": "",
-    "es": ""
+    "en": "closes on day {0}",
+    "es": "cierra el día {0}"
   },
   "fecha dia —": {
-    "en": "",
-    "es": ""
+    "en": "closes on day —",
+    "es": "cierra el día —"
   },
   "vence dia {0}": {
-    "en": "",
-    "es": ""
+    "en": "due on day {0}",
+    "es": "vence el día {0}"
   },
   "vence dia —": {
-    "en": "",
-    "es": ""
+    "en": "due on day —",
+    "es": "vence el día —"
   },
   "Escolha rápida": {
-    "en": "",
-    "es": ""
+    "en": "Quick pick",
+    "es": "Elección rápida"
   },
   "Nome do cartão": {
-    "en": "",
-    "es": ""
+    "en": "Card name",
+    "es": "Nombre de la tarjeta"
   },
   "Ex.: Nubank, Itaú Platinum…": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: Nubank, Itaú Platinum…",
+    "es": "Ej.: Nubank, Itaú Platinum…"
   },
   "Dia que a fatura fecha": {
-    "en": "",
-    "es": ""
+    "en": "Day the statement closes",
+    "es": "Día en que cierra el resumen"
   },
   "Escolher…": {
-    "en": "",
-    "es": ""
+    "en": "Choose…",
+    "es": "Elegir…"
   },
   "dia {0}": {
-    "en": "",
-    "es": ""
+    "en": "day {0}",
+    "es": "día {0}"
   },
   "Dia que vence": {
-    "en": "",
-    "es": ""
+    "en": "Due day",
+    "es": "Día de vencimiento"
   },
   "Os dois dias aparecem no app do seu banco. Compras feitas depois do dia que fecha entram na fatura do mês seguinte.": {
-    "en": "",
-    "es": ""
+    "en": "Both days show up in your bank's app. Purchases made after the closing day go on next month's statement.",
+    "es": "Ambos días aparecen en la app de tu banco. Las compras hechas después del día de cierre van al resumen del mes siguiente."
   },
   "Banco do cartão": {
-    "en": "",
-    "es": ""
+    "en": "Card bank",
+    "es": "Banco de la tarjeta"
   },
   "Limite garantido": {
-    "en": "",
-    "es": ""
+    "en": "Secured limit",
+    "es": "Límite garantizado"
   },
   "Dinheiro guardado numa caixinha do banco que vira limite extra no cartão.": {
-    "en": "",
-    "es": ""
+    "en": "Money saved in a bank savings box that becomes extra limit on the card.",
+    "es": "Dinero ahorrado en una cajita de ahorro del banco que se convierte en límite extra de la tarjeta."
   },
   "Usar a caixinha do banco ({0})": {
-    "en": "",
-    "es": ""
+    "en": "Use the bank's savings box ({0})",
+    "es": "Usar la cajita de ahorro del banco ({0})"
   },
   "Valor fixo": {
-    "en": "",
-    "es": ""
+    "en": "Fixed amount",
+    "es": "Monto fijo"
   },
   "Quanto está na caixinha": {
-    "en": "",
-    "es": ""
+    "en": "How much is in the savings box",
+    "es": "Cuánto hay en la cajita de ahorro"
   },
   "O limite acompanha a caixinha que você informa em Dinheiro guardado: guardou mais, o limite cresce sozinho.": {
-    "en": "",
-    "es": ""
+    "en": "The limit follows the savings box you enter under Money saved: save more and the limit grows on its own.",
+    "es": "El límite sigue la cajita de ahorro que indicas en Dinero guardado: si ahorras más, el límite crece solo."
   },
   "Escolhendo o banco do cartão, dá para ligar o limite à caixinha dele.": {
-    "en": "",
-    "es": ""
+    "en": "If you pick the card's bank, you can link the limit to its savings box.",
+    "es": "Si eliges el banco de la tarjeta, puedes vincular el límite a su cajita de ahorro."
   },
   "Some este valor ao limite do cartão.": {
-    "en": "",
-    "es": ""
+    "en": "Add this amount to the card's limit.",
+    "es": "Suma este monto al límite de la tarjeta."
   },
   "Ainda uso este cartão": {
-    "en": "",
-    "es": ""
+    "en": "I still use this card",
+    "es": "Todavía uso esta tarjeta"
   },
   "Se desligar, ele some das telas, mas o histórico fica.": {
-    "en": "",
-    "es": ""
+    "en": "If you turn it off, it disappears from the screens, but the history stays.",
+    "es": "Si la desactivas, desaparece de las pantallas, pero el historial se queda."
   },
   "Criar cartão": {
-    "en": "",
-    "es": ""
+    "en": "Create card",
+    "es": "Crear tarjeta"
   },
   "As compras continuam nas suas saídas, só deixam de ser ligadas a este cartão. As faturas marcadas como pagas são esquecidas.": {
-    "en": "",
-    "es": ""
+    "en": "Purchases stay in your expenses; they just stop being linked to this card. Statements marked as paid are forgotten.",
+    "es": "Las compras siguen en tus gastos; solo dejan de estar vinculadas a esta tarjeta. Los resúmenes marcados como pagados se olvidan."
   },
   "Juros e multa – fatura {0} de {1}": {
-    "en": "",
-    "es": ""
+    "en": "Interest and late fee – {0} statement for {1}",
+    "es": "Intereses y multa – resumen {0} de {1}"
   },
   "Valor inválido.": {
-    "en": "",
-    "es": ""
+    "en": "Invalid amount.",
+    "es": "Monto no válido."
   },
   "Juros inválidos.": {
-    "en": "",
-    "es": ""
+    "en": "Invalid interest.",
+    "es": "Intereses no válidos."
   },
   "Pagar fatura {0}": {
-    "en": "",
-    "es": ""
+    "en": "Pay {0} statement",
+    "es": "Pagar resumen de {0}"
   },
   "{0} em {1}": {
-    "en": "",
-    "es": ""
+    "en": "{0} on {1}",
+    "es": "{0} el {1}"
   },
   "Dia do pagamento": {
-    "en": "",
-    "es": ""
+    "en": "Payment day",
+    "es": "Día del pago"
   },
   "Quanto pagou": {
-    "en": "",
-    "es": ""
+    "en": "How much you paid",
+    "es": "Cuánto pagaste"
   },
   "Pago": {
-    "en": "",
-    "es": ""
+    "en": "Paid",
+    "es": "Pagado"
   },
   "{0} {1} depois": {
-    "en": "",
-    "es": ""
+    "en": "{0} {1} after",
+    "es": "{0} {1} después"
   },
   "do vencimento.": {
-    "en": "",
-    "es": ""
+    "en": "the due date.",
+    "es": "del vencimiento."
   },
   "Juros e multa": {
-    "en": "",
-    "es": ""
+    "en": "Interest and late fee",
+    "es": "Intereses y multa"
   },
   "De qual banco saiu?": {
-    "en": "",
-    "es": ""
+    "en": "Which bank did it come out of?",
+    "es": "¿De qué banco salió?"
   },
   "Não sei / não importa": {
-    "en": "",
-    "es": ""
+    "en": "Not sure / doesn't matter",
+    "es": "No sé / no importa"
   },
   "Isso marca a fatura como paga. O gasto de cada compra já está nas suas saídas de {0}, então nada é contado duas vezes.": {
-    "en": "",
-    "es": ""
+    "en": "This marks the statement as paid. Each purchase's spending is already in your expenses for {0}, so nothing is counted twice.",
+    "es": "Esto marca el resumen como pagado. El gasto de cada compra ya está en tus gastos de {0}, así que nada se cuenta dos veces."
   },
   "Desfazer mesmo": {
-    "en": "",
-    "es": ""
+    "en": "Yes, undo it",
+    "es": "Sí, deshacer"
   },
   "Desfazer": {
-    "en": "",
-    "es": ""
+    "en": "Undo",
+    "es": "Deshacer"
   },
   "Marcar como paga": {
-    "en": "",
-    "es": ""
+    "en": "Mark as paid",
+    "es": "Marcar como pagado"
   },
   "Valor total inválido.": {
-    "en": "",
-    "es": ""
+    "en": "Invalid total amount.",
+    "es": "Monto total no válido."
   },
   "Fatura {0} de {1} (renegociada)": {
-    "en": "",
-    "es": ""
+    "en": "{0} statement for {1} (renegotiated)",
+    "es": "Resumen {0} de {1} (renegociado)"
   },
   "Fatura renegociada": {
-    "en": "",
-    "es": ""
+    "en": "Renegotiated statement",
+    "es": "Resumen renegociado"
   },
   "renegociada em {0}": {
-    "en": "",
-    "es": ""
+    "en": "renegotiated on {0}",
+    "es": "renegociado el {0}"
   },
   "Virou a dívida": {
-    "en": "",
-    "es": ""
+    "en": "It became the debt",
+    "es": "Se convirtió en la deuda"
   },
   ", em parcelas de {0}": {
-    "en": "",
-    "es": ""
+    "en": ", in installments of {0}",
+    "es": ", en cuotas de {0}"
   },
   ", com {0} de acréscimo": {
-    "en": "",
-    "es": ""
+    "en": ", with {0} surcharge",
+    "es": ", con {0} de recargo"
   },
   "Nenhuma parcela paga ainda.": {
-    "en": "",
-    "es": ""
+    "en": "No installments paid yet.",
+    "es": "Ninguna cuota pagada todavía."
   },
   "A dívida desta renegociação foi apagada.": {
-    "en": "",
-    "es": ""
+    "en": "The debt from this renegotiation was deleted.",
+    "es": "La deuda de esta renegociación fue eliminada."
   },
   "Desfazer devolve as compras às saídas do mês da fatura": {
-    "en": "",
-    "es": ""
+    "en": "Undoing puts the purchases back in the expenses of the statement's month",
+    "es": "Deshacer devuelve las compras a los gastos del mes del resumen"
   },
   "; a dívida fica, porque já tem parcelas pagas": {
-    "en": "",
-    "es": ""
+    "en": "; the debt stays, since it already has paid installments",
+    "es": "; la deuda se queda, porque ya tiene cuotas pagadas"
   },
   "Ver dívida": {
-    "en": "",
-    "es": ""
+    "en": "View debt",
+    "es": "Ver deuda"
   },
   "Renegociar fatura {0}": {
-    "en": "",
-    "es": ""
+    "en": "Renegotiate {0} statement",
+    "es": "Renegociar resumen de {0}"
   },
   "venceu em {0}": {
-    "en": "",
-    "es": ""
+    "en": "was due on {0}",
+    "es": "venció el {0}"
   },
   "vence em {0}": {
-    "en": "",
-    "es": ""
+    "en": "due on {0}",
+    "es": "vence el {0}"
   },
   "Total do acordo": {
-    "en": "",
-    "es": ""
+    "en": "Total of the agreement",
+    "es": "Total del acuerdo"
   },
   "Em quantas parcelas": {
-    "en": "",
-    "es": ""
+    "en": "In how many installments",
+    "es": "En cuántas cuotas"
   },
   "Dia do acordo": {
-    "en": "",
-    "es": ""
+    "en": "Agreement day",
+    "es": "Día del acuerdo"
   },
   "{0}x {1}": {
-    "en": "",
-    "es": ""
+    "en": "{0}x {1}",
+    "es": "{0}x {1}"
   },
   "Vira uma dívida em Dívidas. As compras desta fatura saem das saídas de {0}, e cada parcela que você pagar entra como saída no mês em que pagar. Assim nada conta duas vezes.": {
-    "en": "",
-    "es": ""
+    "en": "It becomes a debt under Debts. This statement's purchases leave the expenses for {0}, and each installment you pay counts as an expense in the month you pay it. That way nothing is counted twice.",
+    "es": "Se convierte en una deuda en Deudas. Las compras de este resumen salen de los gastos de {0}, y cada cuota que pagues cuenta como gasto en el mes en que la pagues. Así nada se cuenta dos veces."
   },
   "ou prestação da casa": {
-    "en": "",
-    "es": ""
+    "en": "or home loan payment",
+    "es": "o pago de la casa"
   },
   "Moradia": {
-    "en": "",
-    "es": ""
+    "en": "Housing",
+    "es": "Vivienda"
   },
   "Luz": {
-    "en": "",
-    "es": ""
+    "en": "Power",
+    "es": "Luz"
   },
   "o valor muda, você acerta na hora de pagar": {
-    "en": "",
-    "es": ""
+    "en": "the amount varies, you set it when you pay",
+    "es": "el valor cambia, lo ajustas al pagar"
   },
   "casa ou celular": {
-    "en": "",
-    "es": ""
+    "en": "home or mobile",
+    "es": "casa o celular"
   },
   "Celular": {
-    "en": "",
-    "es": ""
+    "en": "Mobile",
+    "es": "Celular"
   },
   "plano ou aparelho": {
-    "en": "",
-    "es": ""
+    "en": "plan or device",
+    "es": "plan o equipo"
   },
   "Assinaturas": {
-    "en": "",
-    "es": ""
+    "en": "Subscriptions",
+    "es": "Suscripciones"
   },
   "Saúde": {
-    "en": "",
-    "es": ""
+    "en": "Health",
+    "es": "Salud"
   },
   "Streaming": {
-    "en": "",
-    "es": ""
+    "en": "Streaming",
+    "es": "Streaming"
   },
   "Netflix, Spotify, Disney…": {
-    "en": "",
-    "es": ""
+    "en": "Netflix, Spotify, Disney…",
+    "es": "Netflix, Spotify, Disney…"
   },
   "o dia em que cai na conta": {
-    "en": "",
-    "es": ""
+    "en": "the day it hits your account",
+    "es": "el día en que cae en tu cuenta"
   },
   "Para usar as contas do mês, falta atualizar o banco de dados: rode": {
-    "en": "",
-    "es": ""
+    "en": "To use monthly bills, the database needs updating. Run:",
+    "es": "Para usar las cuentas del mes, falta actualizar la base de datos: ejecuta"
   },
   "O que vence em {0}. Toque em “Paguei” e o app lança por você.": {
-    "en": "",
-    "es": ""
+    "en": "What's due in {0}. Tap “Paid” and the app records it for you.",
+    "es": "Lo que vence en {0}. Toca “Pagué” y la app lo registra por ti."
   },
   "Nunca mais esqueça uma conta.": {
-    "en": "",
-    "es": ""
+    "en": "Never forget a bill again.",
+    "es": "Nunca más olvides una cuenta."
   },
   "Nova conta": {
-    "en": "",
-    "es": ""
+    "en": "New bill",
+    "es": "Nueva cuenta"
   },
   "Ficou conta sem pagar em": {
-    "en": "",
-    "es": ""
+    "en": "Unpaid bills in",
+    "es": "Cuentas sin pagar en"
   },
   "Ver {0}": {
-    "en": "",
-    "es": ""
+    "en": "See {0}",
+    "es": "Ver {0}"
   },
   "pago em {0}": {
-    "en": "",
-    "es": ""
+    "en": "paid on {0}",
+    "es": "pagado el {0}"
   },
   "falta {0}": {
-    "en": "",
-    "es": ""
+    "en": "{0} to go",
+    "es": "falta {0}"
   },
   "{0} atrasada{1}": {
-    "en": "",
-    "es": ""
+    "en": "{0} overdue",
+    "es": "{0} atrasada{1}"
   },
   "a receber {0}": {
-    "en": "",
-    "es": ""
+    "en": "{0} to receive",
+    "es": "{0} por recibir"
   },
   "tudo pago 🎉": {
-    "en": "",
-    "es": ""
+    "en": "all paid 🎉",
+    "es": "todo pagado 🎉"
   },
   "Nenhuma conta vale em {0} de {1}. Confira abaixo o mês em que cada uma começa.": {
-    "en": "",
-    "es": ""
+    "en": "No bill applies in {0} {1}. Check below for the month each one starts.",
+    "es": "No hay ninguna cuenta vigente en {0} de {1}. Mira abajo el mes en que empieza cada una."
   },
   "Contas de {0}": {
-    "en": "",
-    "es": ""
+    "en": "{0} bills",
+    "es": "Cuentas de {0}"
   },
   "Suas contas fixas": {
-    "en": "",
-    "es": ""
+    "en": "Your recurring bills",
+    "es": "Tus cuentas fijas"
   },
   "{0} todo dia {1}": {
-    "en": "",
-    "es": ""
+    "en": "{0} on day {1} each month",
+    "es": "{0} el día {1} de cada mes"
   },
   "Nunca mais esqueça uma conta": {
-    "en": "",
-    "es": ""
+    "en": "Never forget a bill again",
+    "es": "Nunca más olvides una cuenta"
   },
   "Cadastre uma vez o que se repete todo mês. O app lembra o vencimento, avisa o que atrasou e, com um toque em “Paguei”, lança o gasto por você.": {
-    "en": "",
-    "es": ""
+    "en": "Add once what repeats every month. The app reminds you when it's due, flags what's overdue and, with one tap on “Paid”, records the expense for you.",
+    "es": "Registra una vez lo que se repite cada mes. La app te recuerda el vencimiento, avisa lo que se atrasó y, con un toque en “Pagué”, registra el gasto por ti."
   },
   "Outra conta": {
-    "en": "",
-    "es": ""
+    "en": "Another bill",
+    "es": "Otra cuenta"
   },
   "do seu jeito": {
-    "en": "",
-    "es": ""
+    "en": "your way",
+    "es": "a tu manera"
   },
   "Linha do mês": {
-    "en": "",
-    "es": ""
+    "en": "Monthly timeline",
+    "es": "Línea del mes"
   },
   "a vencer": {
-    "en": "",
-    "es": ""
+    "en": "Upcoming",
+    "es": "Por vencer"
   },
   "entrada fixa": {
-    "en": "",
-    "es": ""
+    "en": "recurring income",
+    "es": "ingreso fijo"
   },
   "Parece que já": {
-    "en": "",
-    "es": ""
+    "en": "Looks like it's already",
+    "es": "Parece que ya"
   },
   "foi pago": {
-    "en": "",
-    "es": ""
+    "en": "paid",
+    "es": "está pagado"
   },
   "É esse": {
-    "en": "",
-    "es": ""
+    "en": "That's it",
+    "es": "Es este"
   },
   "Não é": {
-    "en": "",
-    "es": ""
+    "en": "Not this one",
+    "es": "No es ese"
   },
   "Desfazer? O lançamento de {0} será apagado e a conta volta a ficar em aberto.": {
-    "en": "",
-    "es": ""
+    "en": "Undo? The transaction for {0} will be deleted and the bill will be open again.",
+    "es": "¿Deshacer? El movimiento de {0} se borrará y la cuenta quedará abierta otra vez."
   },
   "Outro valor ou outra data": {
-    "en": "",
-    "es": ""
+    "en": "Other amount or date",
+    "es": "Otro valor u otra fecha"
   },
   "Informe um valor maior que zero.": {
-    "en": "",
-    "es": ""
+    "en": "Enter an amount greater than zero.",
+    "es": "Escribe un valor mayor que cero."
   },
   "Escolha uma data dentro de {0}.": {
-    "en": "",
-    "es": ""
+    "en": "Pick a date within {0}.",
+    "es": "Elige una fecha dentro de {0}."
   },
   "Cotação combinada na conta; troque se pagou por outra.": {
-    "en": "",
-    "es": ""
+    "en": "Rate agreed on the bill; change it if you paid at another rate.",
+    "es": "Cotización acordada en la cuenta; cámbiala si pagaste con otra."
   },
   "Cotação de hoje; troque se pagou por outra.": {
-    "en": "",
-    "es": ""
+    "en": "Today's rate; change it if you paid at another rate.",
+    "es": "Cotización de hoy; cámbiala si pagaste con otra."
   },
   "Dia em que recebeu": {
-    "en": "",
-    "es": ""
+    "en": "Day you received it",
+    "es": "Día en que lo recibiste"
   },
   "Dia em que pagou": {
-    "en": "",
-    "es": ""
+    "en": "Day you paid",
+    "es": "Día en que pagaste"
   },
   "O valor de costume é {0}. Aqui você muda só para este mês.": {
-    "en": "",
-    "es": ""
+    "en": "The usual amount is {0}. Here you change it just for this month.",
+    "es": "El valor habitual es {0}. Aquí lo cambias solo para este mes."
   },
   "Dê um nome para a conta (ex.: Aluguel).": {
-    "en": "",
-    "es": ""
+    "en": "Give the bill a name (e.g., Rent).",
+    "es": "Ponle un nombre a la cuenta (ej.: Alquiler)."
   },
   "Informe o valor, mesmo que aproximado. Você pode mudar na hora de pagar.": {
-    "en": "",
-    "es": ""
+    "en": "Enter the amount, even if it's approximate. You can change it when you pay.",
+    "es": "Escribe el valor, aunque sea aproximado. Puedes cambiarlo al pagar."
   },
   "Escolha o dia em que o dinheiro cai.": {
-    "en": "",
-    "es": ""
+    "en": "Pick the day the money comes in.",
+    "es": "Elige el día en que cae el dinero."
   },
   "Escolha o dia do vencimento.": {
-    "en": "",
-    "es": ""
+    "en": "Pick the due day.",
+    "es": "Elige el día de vencimiento."
   },
   "Escolha a partir de qual mês vale.": {
-    "en": "",
-    "es": ""
+    "en": "Pick the first month it applies.",
+    "es": "Elige desde qué mes aplica."
   },
   "O último mês não pode ser antes do primeiro.": {
-    "en": "",
-    "es": ""
+    "en": "The last month can't be before the first one.",
+    "es": "El último mes no puede ser antes del primero."
   },
   "Editar conta fixa": {
-    "en": "",
-    "es": ""
+    "en": "Edit recurring bill",
+    "es": "Editar cuenta fija"
   },
   "Nova conta fixa": {
-    "en": "",
-    "es": ""
+    "en": "New recurring bill",
+    "es": "Nueva cuenta fija"
   },
   "Conta a pagar": {
-    "en": "",
-    "es": ""
+    "en": "Bill to pay",
+    "es": "Cuenta por pagar"
   },
   "Entrada fixa": {
-    "en": "",
-    "es": ""
+    "en": "Recurring income",
+    "es": "Ingreso fijo"
   },
   "Ex.: Salário, Aluguel recebido…": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: Salary, Rent received…",
+    "es": "Ej.: Sueldo, Alquiler recibido…"
   },
   "Ex.: Aluguel, Luz, Internet, Academia…": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: Rent, Power, Internet, Gym…",
+    "es": "Ej.: Alquiler, Luz, Internet, Gimnasio…"
   },
   "Quanto costuma cair": {
-    "en": "",
-    "es": ""
+    "en": "How much usually comes in",
+    "es": "Cuánto suele entrar"
   },
   "Quanto costuma ser": {
-    "en": "",
-    "es": ""
+    "en": "How much it usually is",
+    "es": "Cuánto suele ser"
   },
   "Cai todo dia": {
-    "en": "",
-    "es": ""
+    "en": "Comes in on day",
+    "es": "Cae el día"
   },
   "Vence todo dia": {
-    "en": "",
-    "es": ""
+    "en": "Due on day",
+    "es": "Vence el día"
   },
   "Escolha…": {
-    "en": "",
-    "es": ""
+    "en": "Choose…",
+    "es": "Elige…"
   },
   "Em meses mais curtos, vale o último dia do mês.": {
-    "en": "",
-    "es": ""
+    "en": "In shorter months, the last day of the month applies.",
+    "es": "En los meses más cortos, vale el último día del mes."
   },
   "Cotação que você paga": {
-    "en": "",
-    "es": ""
+    "en": "Exchange rate you pay",
+    "es": "Cotización que pagas"
   },
   "Dá": {
-    "en": "",
-    "es": ""
+    "en": "That's",
+    "es": "Equivale a"
   },
   "por mês na sua moeda.": {
-    "en": "",
-    "es": ""
+    "en": "per month in your currency.",
+    "es": "al mes en tu moneda."
   },
   "Com a cotação que você combinou, o total do mês fica exato.": {
-    "en": "",
-    "es": ""
+    "en": "With the rate you agreed on, the month's total is exact.",
+    "es": "Con la cotización que acordaste, el total del mes queda exacto."
   },
   "Em branco, vale a cotação do dia. Com a que você paga, o valor da conta fica certo.": {
-    "en": "",
-    "es": ""
+    "en": "Blank means today's rate applies. With the rate you pay, the bill's amount comes out right.",
+    "es": "En blanco, vale la cotización del día. Con la que pagas, el valor de la cuenta queda bien."
   },
   "A partir de": {
-    "en": "",
-    "es": ""
+    "en": "Starting",
+    "es": "A partir de"
   },
   "Até quando?": {
-    "en": "",
-    "es": ""
+    "en": "Until when?",
+    "es": "¿Hasta cuándo?"
   },
   "A conta aparece todo mês a partir daí. Se já {0} neste mês, é só tocar em “": {
-    "en": "",
-    "es": ""
+    "en": "The bill shows up every month from then on. If you already {0} this month, just tap “",
+    "es": "La cuenta aparece cada mes desde ahí. Si ya {0} este mes, solo toca “"
   },
   "” depois. Deixe o “até quando” em branco se ela não tem data para acabar.": {
-    "en": "",
-    "es": ""
+    "en": "” later. Leave “Until when” blank if it has no end date.",
+    "es": "” después. Deja “Hasta cuándo” en blanco si no tiene fecha de fin."
   },
   "Pausar": {
-    "en": "",
-    "es": ""
+    "en": "Pause",
+    "es": "Pausar"
   },
   "Reativar": {
-    "en": "",
-    "es": ""
+    "en": "Reactivate",
+    "es": "Reactivar"
   },
   "Os lançamentos já pagos não somem: só deixam de estar ligados a esta conta.": {
-    "en": "",
-    "es": ""
+    "en": "Transactions already paid don't disappear; they just stop being linked to this bill.",
+    "es": "Los movimientos ya pagados no desaparecen: solo dejan de estar vinculados a esta cuenta."
   },
   "Pausar esconde a conta dos meses que ainda não foram pagos, sem excluir o histórico.": {
-    "en": "",
-    "es": ""
+    "en": "Pausing hides the bill from months not paid yet, without deleting its history.",
+    "es": "Pausar oculta la cuenta de los meses que aún no se han pagado, sin borrar el historial."
   },
   "Quitada": {
-    "en": "",
-    "es": ""
+    "en": "Paid off",
+    "es": "Saldada"
   },
   "1 atrasada": {
-    "en": "",
-    "es": ""
+    "en": "1 overdue",
+    "es": "1 atrasada"
   },
   "Vence hoje": {
-    "en": "",
-    "es": ""
+    "en": "Due today",
+    "es": "Vence hoy"
   },
   "Em dia": {
-    "en": "",
-    "es": ""
+    "en": "Up to date",
+    "es": "Al día"
   },
   "Sem data": {
-    "en": "",
-    "es": ""
+    "en": "No date",
+    "es": "Sin fecha"
   },
   "Quem te deve, quanto falta receber e o que já venceu.": {
-    "en": "",
-    "es": ""
+    "en": "Who owes you, how much is left to receive, and what's already due.",
+    "es": "Quién te debe, cuánto falta por recibir y qué ya venció."
   },
   "Quanto falta em cada uma, o que venceu e quando você fica livre.": {
-    "en": "",
-    "es": ""
+    "en": "How much is left on each one, what's overdue, and when you'll be free.",
+    "es": "Cuánto falta en cada una, qué ya venció y cuándo quedas libre."
   },
   "Lado": {
-    "en": "",
-    "es": ""
+    "en": "Side",
+    "es": "Lado"
   },
   "Alguém me deve": {
-    "en": "",
-    "es": ""
+    "en": "Add someone who owes you",
+    "es": "Registrar a quien te debe"
   },
   "Para registrar quem te deve e ver cada parcela como paga, pela metade ou atrasada, rode": {
-    "en": "",
-    "es": ""
+    "en": "To record who owes you and see each installment as paid, half paid or overdue, run",
+    "es": "Para registrar a quien te debe y ver cada cuota como pagada, a medias o atrasada, ejecuta"
   },
   "Entra por mês": {
-    "en": "",
-    "es": ""
+    "en": "Coming in per month",
+    "es": "Entra por mes"
   },
   "Parcelas por mês": {
-    "en": "",
-    "es": ""
+    "en": "Installments per month",
+    "es": "Cuotas por mes"
   },
   "Atrasado ({0} {1})": {
-    "en": "",
-    "es": ""
+    "en": "Overdue ({0} {1})",
+    "es": "En atraso ({0} {1})"
   },
   "Atrasado": {
-    "en": "",
-    "es": ""
+    "en": "Overdue",
+    "es": "En atraso"
   },
   "Recebido no mês": {
-    "en": "",
-    "es": ""
+    "en": "Received this month",
+    "es": "Recibido en el mes"
   },
   "Pago no mês": {
-    "en": "",
-    "es": ""
+    "en": "Paid this month",
+    "es": "Pagado en el mes"
   },
   "já recebido": {
-    "en": "",
-    "es": ""
+    "en": "already received",
+    "es": "ya recibido"
   },
   "tudo recebido em": {
-    "en": "",
-    "es": ""
+    "en": "all received by",
+    "es": "todo recibido en"
   },
   "tudo recebido": {
-    "en": "",
-    "es": ""
+    "en": "all received",
+    "es": "todo recibido"
   },
   "sem dívidas": {
-    "en": "",
-    "es": ""
+    "en": "no debts",
+    "es": "sin deudas"
   },
   "Quanto entra nos próximos meses": {
-    "en": "",
-    "es": ""
+    "en": "How much comes in over the coming months",
+    "es": "Cuánto entra en los próximos meses"
   },
   "Quanto sai nos próximos meses": {
-    "en": "",
-    "es": ""
+    "en": "How much goes out over the coming months",
+    "es": "Cuánto sale en los próximos meses"
   },
   "Recebe todo mês": {
-    "en": "",
-    "es": ""
+    "en": "Comes in every month",
+    "es": "Entra cada mes"
   },
   "aluguel, mesada, salário": {
-    "en": "",
-    "es": ""
+    "en": "rent, allowance, salary",
+    "es": "alquiler, asignación, sueldo"
   },
   "atrasado {0} dias": {
-    "en": "",
-    "es": ""
+    "en": "{0} days late",
+    "es": "{0} días de atraso"
   },
   "cai hoje": {
-    "en": "",
-    "es": ""
+    "en": "comes in today",
+    "es": "cae hoy"
   },
   "cai em {0} dias": {
-    "en": "",
-    "es": ""
+    "en": "comes in {0} days",
+    "es": "cae en {0} días"
   },
   "Recebido": {
-    "en": "",
-    "es": ""
+    "en": "Received",
+    "es": "Recibido"
   },
   "Aluguel, mesada ou qualquer valor que cai todo mês fica em": {
-    "en": "",
-    "es": ""
+    "en": "Rent, allowance or any amount that comes in every month goes under",
+    "es": "Alquiler, asignación o cualquier monto que entra cada mes va en"
   },
   ", como recebimento: o app lembra o dia e você dá baixa com “Recebi”.": {
-    "en": "",
-    "es": ""
+    "en": ", as money coming in: the app remembers the day and you tap “Received”.",
+    "es": ", como cobro: la app recuerda el día y tú marcas con “Recibí”."
   },
   "Ver em Contas do mês": {
-    "en": "",
-    "es": ""
+    "en": "See in Monthly bills",
+    "es": "Ver en Cuentas del mes"
   },
   "Cadastrar um recebimento mensal": {
-    "en": "",
-    "es": ""
+    "en": "Add a monthly income",
+    "es": "Registrar un ingreso mensual"
   },
   "Recebidas neste mês": {
-    "en": "",
-    "es": ""
+    "en": "Received this month",
+    "es": "Recibidas este mes"
   },
   "Quitadas neste mês": {
-    "en": "",
-    "es": ""
+    "en": "Paid off this month",
+    "es": "Saldadas este mes"
   },
   "Ninguém te deve nada por aqui": {
-    "en": "",
-    "es": ""
+    "en": "No one owes you anything here",
+    "es": "Nadie te debe nada por aquí"
   },
   "Nenhuma dívida por aqui 🎉": {
-    "en": "",
-    "es": ""
+    "en": "No debts here 🎉",
+    "es": "Ninguna deuda por aquí 🎉"
   },
   "Vendeu algo parcelado ou emprestou dinheiro? Registre quem te deve: cada valor recebido entra como entrada e abate sozinho.": {
-    "en": "",
-    "es": ""
+    "en": "Sold something in installments or lent money? Record who owes you: each amount received comes in as income and reduces the balance on its own.",
+    "es": "¿Vendiste algo en cuotas o prestaste dinero? Registra a quien te debe: cada monto recibido entra como ingreso y se descuenta solo."
   },
   "Tem empréstimo, parcelamento ou acordo? Adicione e acompanhe cada parcela até quitar.": {
-    "en": "",
-    "es": ""
+    "en": "Have a loan, installment plan or agreement? Add it and track each installment until it's paid off.",
+    "es": "¿Tienes un préstamo, plan de cuotas o acuerdo? Agrégalo y sigue cada cuota hasta saldarla."
   },
   "valor único": {
-    "en": "",
-    "es": ""
+    "en": "one-time",
+    "es": "pago único"
   },
   "falta receber": {
-    "en": "",
-    "es": ""
+    "en": "still to receive",
+    "es": "falta por recibir"
   },
   "Tudo {0}. 🎉": {
-    "en": "",
-    "es": ""
+    "en": "All {0}. 🎉",
+    "es": "Todo {0}. 🎉"
   },
   "vencido desde {0}": {
-    "en": "",
-    "es": ""
+    "en": "overdue since {0}",
+    "es": "vencido desde {0}"
   },
   "Próxima:": {
-    "en": "",
-    "es": ""
+    "en": "Next:",
+    "es": "Próxima:"
   },
   "{0} por mês": {
-    "en": "",
-    "es": ""
+    "en": "{0} a month",
+    "es": "{0} al mes"
   },
   "· até {0}": {
-    "en": "",
-    "es": ""
+    "en": "· until {0}",
+    "es": "· hasta {0}"
   },
   "Recebe": {
-    "en": "",
-    "es": ""
+    "en": "They pay you",
+    "es": "Te paga"
   },
   "Paga": {
-    "en": "",
-    "es": ""
+    "en": "Paid",
+    "es": "Pagado"
   },
   "quanto e quando puder": {
-    "en": "",
-    "es": ""
+    "en": "whatever and whenever they can",
+    "es": "lo que y cuando pueda"
   },
   "Lançar recebimento": {
-    "en": "",
-    "es": ""
+    "en": "Add payment received",
+    "es": "Registrar cobro"
   },
   "Lançar pagamento": {
-    "en": "",
-    "es": ""
+    "en": "Add payment",
+    "es": "Registrar pago"
   },
   "Nada com data marcada pela frente.": {
-    "en": "",
-    "es": ""
+    "en": "Nothing with a due date ahead.",
+    "es": "Nada con fecha marcada por delante."
   },
   "pela metade": {
-    "en": "",
-    "es": ""
+    "en": "half paid",
+    "es": "a medias"
   },
   "vence hoje": {
-    "en": "",
-    "es": ""
+    "en": "due today",
+    "es": "vence hoy"
   },
   "Dívida": {
-    "en": "",
-    "es": ""
+    "en": "Debt",
+    "es": "Deuda"
   },
   "quem deve": {
-    "en": "",
-    "es": ""
+    "en": "owed by",
+    "es": "deudor"
   },
   "a receber": {
-    "en": "",
-    "es": ""
+    "en": "to receive",
+    "es": "por cobrar"
   },
   "Parcelas": {
-    "en": "",
-    "es": ""
+    "en": "Installments",
+    "es": "Cuotas"
   },
   "Combinado": {
-    "en": "",
-    "es": ""
+    "en": "Agreed",
+    "es": "Acordado"
   },
   "{0} atrasado": {
-    "en": "",
-    "es": ""
-  },
-  "O que você {0} cobre as parcelas da mais antiga para a mais nova: pagou metade, a parcela fica pela metade; pagou a mais, adianta as próximas.": {
-    "en": "",
-    "es": ""
+    "en": "{0} overdue",
+    "es": "{0} en atraso"
   },
   "Quando vence a próxima parcela?": {
-    "en": "",
-    "es": ""
+    "en": "When is the next installment due?",
+    "es": "¿Cuándo vence la próxima cuota?"
   },
   "Tem data combinada?": {
-    "en": "",
-    "es": ""
+    "en": "Is there an agreed date?",
+    "es": "¿Hay una fecha acordada?"
   },
   "Com a data, o app mostra o que está em dia e o que atrasou.": {
-    "en": "",
-    "es": ""
+    "en": "With a date, the app shows what's up to date and what's overdue.",
+    "es": "Con la fecha, la app muestra lo que está al día y lo que se atrasó."
   },
   "Vencimento": {
-    "en": "",
-    "es": ""
+    "en": "Due date",
+    "es": "Vencimiento"
   },
   "Recebimentos": {
-    "en": "",
-    "es": ""
+    "en": "Received",
+    "es": "Cobros"
   },
   "Pagamentos": {
-    "en": "",
-    "es": ""
+    "en": "Payments",
+    "es": "Pagos"
   },
   "Nada {0} ainda. Use o botão abaixo: o valor já vem sugerido e dá para trocar (pagar parte ou mais de uma parcela).": {
-    "en": "",
-    "es": ""
+    "en": "Nothing {0} yet. Use the button below: the amount is already suggested, and you can change it (pay part or more than one installment).",
+    "es": "Nada {0} todavía. Usa el botón de abajo: el monto ya viene sugerido y puedes cambiarlo (pagar una parte o más de una cuota)."
   },
   "Resumo de {0} de {1}.{2}": {
-    "en": "",
-    "es": ""
+    "en": "Summary for {0} {1}.{2}",
+    "es": "Resumen de {0} de {1}.{2}"
   },
   "Nada lançado em {0} ainda.": {
-    "en": "",
-    "es": ""
+    "en": "Nothing added in {0} yet.",
+    "es": "Nada registrado en {0} todavía."
   },
   "Saiu {0} a mais.": {
-    "en": "",
-    "es": ""
+    "en": "{0} more went out than came in.",
+    "es": "Salió {0} más de lo que entró."
   },
   "Ver para onde foi": {
-    "en": "",
-    "es": ""
+    "en": "See where it went",
+    "es": "Ver a dónde fue"
   },
   "Entrou e saiu o mesmo valor.": {
-    "en": "",
-    "es": ""
+    "en": "Money in and out was the same.",
+    "es": "Entró y salió lo mismo."
   },
   "Você ficou com {0}% do que entrou.": {
-    "en": "",
-    "es": ""
+    "en": "You kept {0}% of what came in.",
+    "es": "Te quedaste con el {0}% de lo que entró."
   },
   "Faltou": {
-    "en": "",
-    "es": ""
+    "en": "Short",
+    "es": "Faltó"
   },
   "que em": {
-    "en": "",
-    "es": ""
+    "en": "than in",
+    "es": "que en"
   },
   "Gasto médio por dia": {
-    "en": "",
-    "es": ""
+    "en": "Average spend per day",
+    "es": "Gasto promedio por día"
   },
   "em {0} {1}": {
-    "en": "",
-    "es": ""
+    "en": "over {0} {1}",
+    "es": "en {0} {1}"
   },
   "Maior saída": {
-    "en": "",
-    "es": ""
+    "en": "Largest expense",
+    "es": "Mayor gasto"
   },
   "Sem descrição": {
-    "en": "",
-    "es": ""
+    "en": "No description",
+    "es": "Sin descripción"
   },
   "Meta: {0}": {
-    "en": "",
-    "es": ""
+    "en": "Goal: {0}",
+    "es": "Meta: {0}"
   },
   "Fluxo financeiro": {
-    "en": "",
-    "es": ""
+    "en": "Cash flow",
+    "es": "Flujo de dinero"
   },
   "Comece por aqui": {
-    "en": "",
-    "es": ""
+    "en": "Start here",
+    "es": "Empieza por aquí"
   },
   "Lance o que entrou ou o que saiu em {0}. O resto do painel se monta sozinho.": {
-    "en": "",
-    "es": ""
+    "en": "Add what came in or went out in {0}. The rest of the dashboard builds itself.",
+    "es": "Registra lo que entró o salió en {0}. Lo demás del panel se arma solo."
   },
   "Seus dados": {
-    "en": "",
-    "es": ""
+    "en": "Your data",
+    "es": "Tus datos"
   },
   "de uma vez só.": {
-    "en": "",
-    "es": ""
+    "en": "all at once.",
+    "es": "de una sola vez."
   },
   "Tem um extrato do banco ou uma planilha? Importe e pronto.": {
-    "en": "",
-    "es": ""
+    "en": "Got a bank statement or a spreadsheet? Import it and you're done.",
+    "es": "¿Tienes un extracto del banco o una planilla? Impórtala y listo."
   },
   "Planeje hoje,": {
-    "en": "",
-    "es": ""
+    "en": "Plan today,",
+    "es": "Planea hoy,"
   },
   "conquiste amanhã.": {
-    "en": "",
-    "es": ""
+    "en": "win tomorrow.",
+    "es": "conquista mañana."
   },
   "Organize suas finanças e realize seus sonhos.": {
-    "en": "",
-    "es": ""
+    "en": "Organize your finances and reach your dreams.",
+    "es": "Organiza tus finanzas y alcanza tus sueños."
   },
   "Ver o ano": {
-    "en": "",
-    "es": ""
+    "en": "See the year",
+    "es": "Ver el año"
   },
   "Pequenos passos,": {
-    "en": "",
-    "es": ""
+    "en": "Small steps,",
+    "es": "Pequeños pasos,"
   },
   "grandes viagens.": {
-    "en": "",
-    "es": ""
+    "en": "big trips.",
+    "es": "grandes viajes."
   },
   "Junte um pouco todo mês para a próxima viagem.": {
-    "en": "",
-    "es": ""
+    "en": "Save a little every month for your next trip.",
+    "es": "Ahorra un poco cada mes para tu próximo viaje."
   },
   "Cada real": {
-    "en": "",
-    "es": ""
+    "en": "Every cent",
+    "es": "Cada centavo"
   },
   "com um destino.": {
-    "en": "",
-    "es": ""
+    "en": "with a purpose.",
+    "es": "con un destino."
   },
   "Veja para onde foi o seu dinheiro este mês.": {
-    "en": "",
-    "es": ""
+    "en": "See where your money went this month.",
+    "es": "Mira a dónde fue tu dinero este mes."
   },
   "Reserva primeiro,": {
-    "en": "",
-    "es": ""
+    "en": "Emergency fund first,",
+    "es": "Primero el fondo de reserva,"
   },
   "tranquilidade depois.": {
-    "en": "",
-    "es": ""
+    "en": "peace of mind later.",
+    "es": "la tranquilidad después."
   },
   "Seis meses de gastos guardados seguram qualquer imprevisto.": {
-    "en": "",
-    "es": ""
+    "en": "Six months of expenses saved up cover any surprise.",
+    "es": "Seis meses de gastos ahorrados cubren cualquier imprevisto."
   },
   "Dívida paga": {
-    "en": "",
-    "es": ""
+    "en": "Debt paid",
+    "es": "Deuda pagada"
   },
   "é liberdade.": {
-    "en": "",
-    "es": ""
+    "en": "is freedom.",
+    "es": "es libertad."
   },
   "Acompanhe quanto falta e quando cada uma termina.": {
-    "en": "",
-    "es": ""
+    "en": "Track what's left and when each one ends.",
+    "es": "Sigue cuánto falta y cuándo termina cada una."
   },
   "Tudo pronto para começar": {
-    "en": "",
-    "es": ""
+    "en": "All set to start",
+    "es": "Todo listo para empezar"
   },
   "Lance o que entrou e o que saiu neste mês e o painel se monta sozinho. Seus dados são só seus: ninguém mais vê o que você lança aqui.": {
-    "en": "",
-    "es": ""
+    "en": "Add what came in and went out this month and the dashboard builds itself. Your data is only yours: no one else sees what you add here.",
+    "es": "Registra lo que entró y salió este mes y el panel se arma solo. Tus datos son solo tuyos: nadie más ve lo que registras aquí."
   },
   "sáb": {
-    "en": "",
-    "es": ""
+    "en": "Sat",
+    "es": "sáb"
   },
   "{0} de {1} · {2}": {
-    "en": "",
-    "es": ""
+    "en": "{0} {1} · {2}",
+    "es": "{0} de {1} · {2}"
   },
   "PDF, CSV, Excel, Word ou OFX do banco": {
-    "en": "",
-    "es": ""
+    "en": "PDF, CSV, Excel, Word or OFX from your bank",
+    "es": "PDF, CSV, Excel, Word u OFX de tu banco"
   },
   "Buscar descrição ou categoria": {
-    "en": "",
-    "es": ""
+    "en": "Search description or category",
+    "es": "Buscar descripción o categoría"
   },
   "Todos": {
-    "en": "",
-    "es": ""
+    "en": "All",
+    "es": "Todos"
   },
   "Ordem": {
-    "en": "",
-    "es": ""
+    "en": "Sort",
+    "es": "Orden"
   },
   "Recentes": {
-    "en": "",
-    "es": ""
+    "en": "Recent",
+    "es": "Recientes"
   },
   "Maiores": {
-    "en": "",
-    "es": ""
+    "en": "Largest",
+    "es": "Mayores"
   },
   "Todas": {
-    "en": "",
-    "es": ""
+    "en": "All",
+    "es": "Todas"
   },
   "Bancos": {
-    "en": "",
-    "es": ""
+    "en": "Banks",
+    "es": "Bancos"
   },
   "Todos os bancos": {
-    "en": "",
-    "es": ""
+    "en": "All banks",
+    "es": "Todos los bancos"
   },
   "Sem banco": {
-    "en": "",
-    "es": ""
+    "en": "No bank",
+    "es": "Sin banco"
   },
   "Todas as formas": {
-    "en": "",
-    "es": ""
+    "en": "All methods",
+    "es": "Todos los métodos"
   },
   "Sem forma · {0}": {
-    "en": "",
-    "es": ""
+    "en": "No method · {0}",
+    "es": "Sin método · {0}"
   },
   "Limpar filtros": {
-    "en": "",
-    "es": ""
+    "en": "Clear filters",
+    "es": "Limpiar filtros"
   },
   "lc-vazio vz-vazio": {
-    "en": "",
-    "es": ""
+    "en": "lc-vazio vz-vazio",
+    "es": "lc-vazio vz-vazio"
   },
   "Nada com esses filtros": {
-    "en": "",
-    "es": ""
+    "en": "Nothing matches these filters",
+    "es": "Nada con estos filtros"
   },
   "Comece a fazer seus lançamentos": {
-    "en": "",
-    "es": ""
+    "en": "Start adding your transactions",
+    "es": "Empieza a registrar tus movimientos"
   },
   "Nada lançado em {0}": {
-    "en": "",
-    "es": ""
+    "en": "Nothing added in {0}",
+    "es": "Nada registrado en {0}"
   },
   "Registre o que entrou e o que saiu, um por um, ou traga tudo de uma vez do extrato do seu banco. O painel se monta sozinho.": {
-    "en": "",
-    "es": ""
+    "en": "Add what came in and what went out, one by one, or bring everything at once from your bank statement. The dashboard builds itself.",
+    "es": "Registra lo que entró y lo que salió, uno por uno, o trae todo de una vez desde el extracto de tu banco. El panel se arma solo."
   },
   "Quando você lançar algo neste mês, ele aparece aqui, dia a dia.": {
-    "en": "",
-    "es": ""
+    "en": "When you add something this month, it shows up here, day by day.",
+    "es": "Cuando registres algo este mes, aparece aquí, día a día."
   },
   "Importar extrato ou planilha": {
-    "en": "",
-    "es": ""
+    "en": "Import bank statement or spreadsheet",
+    "es": "Importar extracto o planilla"
   },
   "Ontem": {
-    "en": "",
-    "es": ""
+    "en": "Yesterday",
+    "es": "Ayer"
   },
   "Dia a dia": {
-    "en": "",
-    "es": ""
+    "en": "Day by day",
+    "es": "Día a día"
   },
   "dia que mais saiu:": {
-    "en": "",
-    "es": ""
+    "en": "day you spent the most:",
+    "es": "día con más gasto:"
   },
   "Gastos por dia de {0}": {
-    "en": "",
-    "es": ""
+    "en": "Spending by day in {0}",
+    "es": "Gastos por día de {0}"
   },
   ", entrou {0}": {
-    "en": "",
-    "es": ""
+    "en": ", income {0}",
+    "es": ", entró {0}"
   },
   "{0}: nada lançado": {
-    "en": "",
-    "es": ""
+    "en": "{0}: nothing added",
+    "es": "{0}: nada registrado"
   },
   "mais gasto": {
-    "en": "",
-    "es": ""
+    "en": "most spent",
+    "es": "más gasto"
   },
   "Batida 🎉": {
-    "en": "",
-    "es": ""
+    "en": "Reached 🎉",
+    "es": "Lograda 🎉"
   },
   "Prazo passou": {
-    "en": "",
-    "es": ""
+    "en": "Deadline passed",
+    "es": "Plazo vencido"
   },
   "No ritmo": {
-    "en": "",
-    "es": ""
+    "en": "On track",
+    "es": "Al ritmo"
   },
   "Abaixo do ritmo": {
-    "en": "",
-    "es": ""
+    "en": "Behind pace",
+    "es": "Por debajo del ritmo"
   },
   "Começando": {
-    "en": "",
-    "es": ""
+    "en": "Just started",
+    "es": "Empezando"
   },
   "Sem prazo": {
-    "en": "",
-    "es": ""
+    "en": "No deadline",
+    "es": "Sin plazo"
   },
   "Para usar metas, falta atualizar o banco de dados: rode": {
-    "en": "",
-    "es": ""
+    "en": "To use goals, the database needs an update: run",
+    "es": "Para usar metas, falta actualizar la base de datos: ejecuta"
   },
   "{0} = 6 meses de gastos": {
-    "en": "",
-    "es": ""
+    "en": "{0} = 6 months of spending",
+    "es": "{0} = 6 meses de gastos"
   },
   "Outro objetivo": {
-    "en": "",
-    "es": ""
+    "en": "Another goal",
+    "es": "Otro objetivo"
   },
   "Junte dinheiro para o que importa: cada pote enche conforme você guarda.": {
-    "en": "",
-    "es": ""
+    "en": "Save up for what matters: each jar fills up as you save.",
+    "es": "Junta dinero para lo que importa: cada frasco se llena a medida que ahorras."
   },
   "guardado nas metas": {
-    "en": "",
-    "es": ""
+    "en": "saved in goals",
+    "es": "ahorrado en metas"
   },
   "faltam {0}": {
-    "en": "",
-    "es": ""
+    "en": "{0} to go",
+    "es": "faltan {0}"
   },
   "{0} de {1} batidas": {
-    "en": "",
-    "es": ""
+    "en": "{0} of {1} reached",
+    "es": "{0} de {1} logradas"
   },
   "sobrou em {0}": {
-    "en": "",
-    "es": ""
+    "en": "left over in {0}",
+    "es": "sobró en {0}"
   },
   "Guardar numa meta?": {
-    "en": "",
-    "es": ""
+    "en": "Save toward a goal?",
+    "es": "¿Ahorrar para una meta?"
   },
   "Guarde {0} por mês": {
-    "en": "",
-    "es": ""
+    "en": "Save {0} a month",
+    "es": "Ahorra {0} al mes"
   },
   "Guarde um pouco todo mês": {
-    "en": "",
-    "es": ""
+    "en": "Save a little every month",
+    "es": "Ahorra un poco cada mes"
   },
   "É o que falta, por mês, para bater todas as metas no prazo.": {
-    "en": "",
-    "es": ""
+    "en": "It's what's missing each month to hit every goal on time.",
+    "es": "Es lo que falta cada mes para cumplir todas las metas a tiempo."
   },
   "Pôr um prazo na meta mostra quanto guardar por mês.": {
-    "en": "",
-    "es": ""
+    "en": "Set a deadline on the goal to see how much to save each month.",
+    "es": "Pon un plazo a la meta para ver cuánto ahorrar cada mes."
   },
   "Comece por um objetivo": {
-    "en": "",
-    "es": ""
+    "en": "Start with a goal",
+    "es": "Empieza con un objetivo"
   },
   "Escolha um ponto de partida ou crie do seu jeito. O app mostra quanto guardar por mês e quando você chega lá.": {
-    "en": "",
-    "es": ""
+    "en": "Pick a starting point or create your own. The app shows how much to save each month and when you'll get there.",
+    "es": "Elige un punto de partida o crea la tuya a tu manera. La app muestra cuánto ahorrar al mes y cuándo llegas."
   },
   "Metas batidas 🎉": {
-    "en": "",
-    "es": ""
+    "en": "Goals reached 🎉",
+    "es": "Metas logradas 🎉"
   },
   "Você juntou tudo. 🎉": {
-    "en": "",
-    "es": ""
+    "en": "You saved it all. 🎉",
+    "es": "Juntaste todo. 🎉"
   },
   "O prazo ({0}) passou. Que tal um novo?": {
-    "en": "",
-    "es": ""
+    "en": "The deadline ({0}) has passed. How about a new one?",
+    "es": "El plazo ({0}) ya pasó. ¿Y si pones uno nuevo?"
   },
   "Guarde": {
-    "en": "",
-    "es": ""
+    "en": "Save",
+    "es": "Ahorra"
   },
   "até {0}": {
-    "en": "",
-    "es": ""
+    "en": "until {0}",
+    "es": "hasta {0}"
   },
   "No seu ritmo, chega em": {
-    "en": "",
-    "es": ""
+    "en": "At your pace, you reach it in",
+    "es": "Al ritmo que llevas, llegas en"
   },
   "Faltam": {
-    "en": "",
-    "es": ""
+    "en": "Remaining",
+    "es": "Faltan"
   },
   "Guardar": {
-    "en": "",
-    "es": ""
+    "en": "Save",
+    "es": "Ahorrar"
   },
   "Retirar": {
-    "en": "",
-    "es": ""
+    "en": "Withdraw",
+    "es": "Retirar"
   },
   "alvo {0}": {
-    "en": "",
-    "es": ""
+    "en": "target {0}",
+    "es": "objetivo {0}"
   },
   "guardado": {
-    "en": "",
-    "es": ""
+    "en": "saved",
+    "es": "ahorrado"
   },
   "{0}% do caminho": {
-    "en": "",
-    "es": ""
+    "en": "{0}% of the way",
+    "es": "{0}% del camino"
   },
   "sem prazo": {
-    "en": "",
-    "es": ""
+    "en": "no deadline",
+    "es": "sin plazo"
   },
   "seu ritmo": {
-    "en": "",
-    "es": ""
+    "en": "your pace",
+    "es": "tu ritmo"
   },
   "Para chegar em": {
-    "en": "",
-    "es": ""
+    "en": "To reach",
+    "es": "Para llegar a"
   },
   ", guarde": {
-    "en": "",
-    "es": ""
+    "en": ", save",
+    "es": ", ahorra"
   },
   "por mês.": {
-    "en": "",
-    "es": ""
+    "en": "a month.",
+    "es": "al mes."
   },
   "O prazo ({0}) passou. Edite a meta para pôr um novo.": {
-    "en": "",
-    "es": ""
+    "en": "The deadline ({0}) has passed. Edit the goal to set a new one.",
+    "es": "El plazo ({0}) ya pasó. Edita la meta para poner uno nuevo."
   },
   "No seu ritmo, você chega em": {
-    "en": "",
-    "es": ""
+    "en": "At your pace, you'll reach it in",
+    "es": "Al ritmo que llevas, tú llegas en"
   },
   "Guarde a primeira parte para o app prever quando você chega lá.": {
-    "en": "",
-    "es": ""
+    "en": "Save a first amount so the app can predict when you'll get there.",
+    "es": "Ahorra una primera parte para que la app prevea cuándo llegas."
   },
   "Histórico": {
-    "en": "",
-    "es": ""
+    "en": "History",
+    "es": "Historial"
   },
   "Excluir este registro": {
-    "en": "",
-    "es": ""
+    "en": "Delete this entry",
+    "es": "Eliminar este registro"
   },
   "Excluir este registro da meta?": {
-    "en": "",
-    "es": ""
+    "en": "Delete this entry from the goal?",
+    "es": "¿Eliminar este registro de la meta?"
   },
   "Nada guardado ainda.": {
-    "en": "",
-    "es": ""
+    "en": "Nothing saved yet.",
+    "es": "Nada ahorrado todavía."
   },
   "Dê um nome para a meta.": {
-    "en": "",
-    "es": ""
+    "en": "Give the goal a name.",
+    "es": "Ponle un nombre a la meta."
   },
   "Digite quanto você quer juntar.": {
-    "en": "",
-    "es": ""
+    "en": "Type how much you want to save up.",
+    "es": "Escribe cuánto quieres juntar."
   },
   "Editar meta": {
-    "en": "",
-    "es": ""
+    "en": "Edit goal",
+    "es": "Editar meta"
   },
   "Nova meta": {
-    "en": "",
-    "es": ""
+    "en": "New goal",
+    "es": "Nueva meta"
   },
   "Ex.: Viagem pra praia, Notebook novo…": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: Beach trip, New laptop…",
+    "es": "Ej.: Viaje a la playa, Portátil nuevo…"
   },
   "Nome da meta": {
-    "en": "",
-    "es": ""
+    "en": "Goal name",
+    "es": "Nombre de la meta"
   },
   "Quanto quer juntar": {
-    "en": "",
-    "es": ""
+    "en": "How much you want to save",
+    "es": "Cuánto quieres juntar"
   },
   "Com um prazo, o app calcula quanto guardar por mês.": {
-    "en": "",
-    "es": ""
+    "en": "With a deadline, the app works out how much to save each month.",
+    "es": "Con un plazo, la app calcula cuánto ahorrar al mes."
   },
   "A meta e todo o histórico dela serão excluídos.": {
-    "en": "",
-    "es": ""
+    "en": "The goal and its whole history will be deleted.",
+    "es": "La meta y todo su historial se eliminarán."
   },
   "Do mês": {
-    "en": "",
-    "es": ""
+    "en": "From the month",
+    "es": "Del mes"
   },
   "A sobra": {
-    "en": "",
-    "es": ""
+    "en": "Leftover",
+    "es": "El sobrante"
   },
   "O que falta": {
-    "en": "",
-    "es": ""
+    "en": "What's missing",
+    "es": "Lo que falta"
   },
   "Na meta só tem {0}.": {
-    "en": "",
-    "es": ""
+    "en": "The goal only has {0}.",
+    "es": "La meta solo tiene {0}."
   },
   "Movimento": {
-    "en": "",
-    "es": ""
+    "en": "Action",
+    "es": "Movimiento"
   },
   "Observação": {
-    "en": "",
-    "es": ""
+    "en": "Note",
+    "es": "Nota"
   },
   "Ex.: paguei a passagem": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: paid for the ticket",
+    "es": "Ej.: pagué el pasaje"
   },
   "Ex.: sobra do mês": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: left over from the month",
+    "es": "Ej.: sobrante del mes"
   },
   "Retirar diminui o guardado na meta.": {
-    "en": "",
-    "es": ""
+    "en": "Withdrawing lowers the amount saved in the goal.",
+    "es": "Retirar baja lo ahorrado en la meta."
   },
   "Registre quando separar dinheiro para esta meta (numa caixinha, poupança, conta…).": {
-    "en": "",
-    "es": ""
+    "en": "Record it when you set money aside for this goal (in a savings box, savings account, account…).",
+    "es": "Regístralo cuando apartes dinero para esta meta (en una cajita de ahorro, cuenta de ahorros, cuenta…)."
   },
   "para o dia a dia": {
-    "en": "",
-    "es": ""
+    "en": "for everyday use",
+    "es": "para el día a día"
   },
   "rendendo, pode tirar quando quiser": {
-    "en": "",
-    "es": ""
+    "en": "earning, withdraw anytime",
+    "es": "generando rendimiento, puedes sacar cuando quieras"
   },
   "só para imprevistos": {
-    "en": "",
-    "es": ""
+    "en": "only for emergencies",
+    "es": "solo para imprevistos"
   },
   "Os saldos vêm de": {
-    "en": "",
-    "es": ""
+    "en": "Balances come from",
+    "es": "Los saldos vienen de"
   },
   ". Se nada mudou, confirme; se mudou, edite.": {
-    "en": "",
-    "es": ""
+    "en": ". If nothing changed, confirm; if it did, edit.",
+    "es": ". Si nada cambió, confirma; si cambió, edita."
   },
   "Continua igual": {
-    "en": "",
-    "es": ""
+    "en": "Still the same",
+    "es": "Sigue igual"
   },
   "Editar banco": {
-    "en": "",
-    "es": ""
+    "en": "Edit bank",
+    "es": "Editar banco"
   },
   "Quanto tem em {0}": {
-    "en": "",
-    "es": ""
+    "en": "How much is in {0}?",
+    "es": "¿Cuánto hay en {0}?"
   },
   "vira limite no {0}": {
-    "en": "",
-    "es": ""
+    "en": "becomes the limit on {0}",
+    "es": "se vuelve límite en {0}"
   },
   "Cartões deste banco": {
-    "en": "",
-    "es": ""
+    "en": "Cards from this bank",
+    "es": "Tarjetas de este banco"
   },
   "Lançamentos ({0})": {
-    "en": "",
-    "es": ""
+    "en": "Transactions ({0})",
+    "es": "Movimientos ({0})"
   },
   "Nenhum lançamento": {
-    "en": "",
-    "es": ""
+    "en": "No transactions",
+    "es": "Ningún movimiento"
   },
   "sem banco": {
-    "en": "",
-    "es": ""
+    "en": "without a bank",
+    "es": "sin banco"
   },
   "neste mês.": {
-    "en": "",
-    "es": ""
+    "en": "this month.",
+    "es": "este mes."
   },
   "Investimentos": {
-    "en": "",
-    "es": ""
+    "en": "Investments",
+    "es": "Inversiones"
   },
   "Como está em {0} de {1}.": {
-    "en": "",
-    "es": ""
+    "en": "How things stand in {0} {1}.",
+    "es": "Así está en {0} de {1}."
   },
   "Adicionar banco": {
-    "en": "",
-    "es": ""
+    "en": "Add bank",
+    "es": "Agregar banco"
   },
   "tudo o que você tem": {
-    "en": "",
-    "es": ""
+    "en": "everything you have",
+    "es": "todo lo que tienes"
   },
   "igual a {0}": {
-    "en": "",
-    "es": ""
+    "en": "same as in {0}",
+    "es": "igual que en {0}"
   },
   "que em {0}": {
-    "en": "",
-    "es": ""
+    "en": "than in {0}",
+    "es": "que en {0}"
   },
   "Atualize os saldos abaixo para ver tudo junto aqui.": {
-    "en": "",
-    "es": ""
+    "en": "Update the balances below to see everything together here.",
+    "es": "Actualiza los saldos de abajo para ver todo junto aquí."
   },
   "Reserva de emergência": {
-    "en": "",
-    "es": ""
+    "en": "Emergency fund",
+    "es": "Fondo de emergencia"
   },
   "meses": {
-    "en": "",
-    "es": ""
+    "en": "months",
+    "es": "meses"
   },
   "Sua reserva de": {
-    "en": "",
-    "es": ""
+    "en": "Your emergency fund of",
+    "es": "Tu fondo de reserva de"
   },
   "{0} meses": {
-    "en": "",
-    "es": ""
+    "en": "{0} months",
+    "es": "{0} meses"
   },
   "do que você gasta.": {
-    "en": "",
-    "es": ""
+    "en": "of what you spend.",
+    "es": "de lo que gastas."
   },
   "Marque em cada banco quanto é": {
-    "en": "",
-    "es": ""
+    "en": "On each bank, mark how much is",
+    "es": "En cada banco, marca cuánto es"
   },
   ": o app mostra quantos meses de gastos ela cobre.": {
-    "en": "",
-    "es": ""
+    "en": ": the app shows how many months of spending it covers.",
+    "es": ": la app muestra cuántos meses de gastos cubre."
   },
   "O ideal são 6 meses: {0}.": {
-    "en": "",
-    "es": ""
+    "en": "The ideal is 6 months: {0}.",
+    "es": "Lo ideal son 6 meses: {0}."
   },
   "Lance seus gastos para o app calcular.": {
-    "en": "",
-    "es": ""
+    "en": "Add your spending so the app can calculate it.",
+    "es": "Registra tus gastos para que la app lo calcule."
   },
   "Criar meta para a reserva": {
-    "en": "",
-    "es": ""
+    "en": "Create a goal for the emergency fund",
+    "es": "Crear una meta para el fondo de reserva"
   },
   "Seu dinheiro guardado começa aqui": {
-    "en": "",
-    "es": ""
+    "en": "Your saved money starts here",
+    "es": "Tu dinero ahorrado empieza aquí"
   },
   "Itaú": {
-    "en": "",
-    "es": ""
+    "en": "Itaú",
+    "es": "Itaú"
   },
   "PicPay": {
-    "en": "",
-    "es": ""
+    "en": "PicPay",
+    "es": "PicPay"
   },
   "Inter": {
-    "en": "",
-    "es": ""
+    "en": "Inter",
+    "es": "Inter"
   },
   "Separe por banco": {
-    "en": "",
-    "es": ""
+    "en": "Split by bank",
+    "es": "Separa por banco"
   },
   "Bancos são opcionais: servem para ver cada um separado e guardar quanto tem em conta, caixinha e reserva.": {
-    "en": "",
-    "es": ""
+    "en": "Banks are optional: they let you see each one separately and track how much you have in your account, savings box and emergency fund.",
+    "es": "Los bancos son opcionales: sirven para ver cada uno por separado y guardar cuánto tienes en tu cuenta, cajita de ahorro y fondo de reserva."
   },
   "Adicionar o primeiro banco": {
-    "en": "",
-    "es": ""
+    "en": "Add your first bank",
+    "es": "Agrega tu primer banco"
   },
   "sem banco definido": {
-    "en": "",
-    "es": ""
+    "en": "no bank set",
+    "es": "sin banco definido"
   },
   "caixinha vira limite no {0}": {
-    "en": "",
-    "es": ""
+    "en": "savings box becomes the limit on {0}",
+    "es": "la cajita de ahorro se vuelve límite en {0}"
   },
   "Quanto você tem investido neste mês": {
-    "en": "",
-    "es": ""
+    "en": "How much you have invested this month",
+    "es": "Cuánto tienes invertido este mes"
   },
   "Aceita contas:": {
-    "en": "",
-    "es": ""
+    "en": "Accepts math:",
+    "es": "Acepta operaciones:"
   },
   "sem cotação agora": {
-    "en": "",
-    "es": ""
+    "en": "no exchange rate right now",
+    "es": "sin cotización ahora"
   },
   "Cotação do dia por": {
-    "en": "",
-    "es": ""
+    "en": "Today's exchange rate by",
+    "es": "Cotización del día por"
   },
   "ExchangeRate-API": {
-    "en": "",
-    "es": ""
+    "en": "ExchangeRate-API",
+    "es": "ExchangeRate-API"
   },
   ". Para mudar as moedas, use": {
-    "en": "",
-    "es": ""
+    "en": ". To change currencies, use",
+    "es": ". Para cambiar las monedas, usa"
   },
   "Digite o nome do banco.": {
-    "en": "",
-    "es": ""
+    "en": "Type the bank's name.",
+    "es": "Escribe el nombre del banco."
   },
   "Escolha um banco da lista ou toque em \"Outro banco\".": {
-    "en": "",
-    "es": ""
+    "en": "Choose a bank from the list or tap \"Other bank\".",
+    "es": "Elige un banco de la lista o toca \"Otro banco\"."
   },
   "Você já tem um banco chamado \"{0}\".": {
-    "en": "",
-    "es": ""
+    "en": "You already have a bank called \"{0}\".",
+    "es": "Ya tienes un banco llamado \"{0}\"."
   },
   "Qual é o banco?": {
-    "en": "",
-    "es": ""
+    "en": "Which bank?",
+    "es": "¿Cuál es el banco?"
   },
   "Buscar banco…": {
-    "en": "",
-    "es": ""
+    "en": "Search bank…",
+    "es": "Buscar banco…"
   },
   "Você já cadastrou este banco": {
-    "en": "",
-    "es": ""
+    "en": "You've already added this bank",
+    "es": "Ya agregaste este banco"
   },
   "Outro banco": {
-    "en": "",
-    "es": ""
+    "en": "Other bank",
+    "es": "Otro banco"
   },
   "Nome do banco": {
-    "en": "",
-    "es": ""
+    "en": "Bank name",
+    "es": "Nombre del banco"
   },
   "Ex.: Cooperativa da cidade, Dinheiro…": {
-    "en": "",
-    "es": ""
+    "en": "E.g.: City credit union, Cash…",
+    "es": "Ej.: Cooperativa de la ciudad, Efectivo…"
   },
   "Cor {0}": {
-    "en": "",
-    "es": ""
+    "en": "Color {0}",
+    "es": "Color {0}"
   },
   "Escolher outra cor": {
-    "en": "",
-    "es": ""
+    "en": "Choose another color",
+    "es": "Elegir otro color"
   },
   "Excluir \"{0}\"? Os lançamentos dele continuam, só ficam sem banco.": {
-    "en": "",
-    "es": ""
+    "en": "Delete \"{0}\"? Its transactions will stay, just without a bank.",
+    "es": "¿Eliminar \"{0}\"? Sus movimientos seguirán, solo quedarán sin banco."
   },
   "Isso parece investimento.": {
-    "en": "",
-    "es": ""
+    "en": "This looks like an investment.",
+    "es": "Esto parece una inversión."
   },
   "Acompanhar meus investimentos": {
-    "en": "",
-    "es": ""
+    "en": "Track my investments",
+    "es": "Seguir mis inversiones"
   },
   "Foi no cartão de crédito?": {
-    "en": "",
-    "es": ""
+    "en": "Was it on a credit card?",
+    "es": "¿Fue con tarjeta de crédito?"
   },
   "Acompanhar minhas faturas": {
-    "en": "",
-    "es": ""
+    "en": "Track my statements",
+    "es": "Seguir mis resúmenes"
   },
   "Parece uma parcela ou dívida.": {
-    "en": "",
-    "es": ""
+    "en": "Looks like an installment or debt.",
+    "es": "Parece una cuota o deuda."
   },
   "Controlar o que falta pagar": {
-    "en": "",
-    "es": ""
+    "en": "Keep track of what's left to pay",
+    "es": "Controlar lo que falta pagar"
   },
   "Está guardando dinheiro para algo?": {
-    "en": "",
-    "es": ""
+    "en": "Are you saving money for something?",
+    "es": "¿Estás ahorrando para algo?"
   },
   "Criar uma meta": {
-    "en": "",
-    "es": ""
+    "en": "Create a goal",
+    "es": "Crear una meta"
   },
   "Foi em {0}?": {
-    "en": "",
-    "es": ""
+    "en": "Was it in {0}?",
+    "es": "¿Fue en {0}?"
   },
   "Lançar em {0}": {
-    "en": "",
-    "es": ""
+    "en": "Add in {0}",
+    "es": "Registrar en {0}"
   },
   "Ligar cartões": {
-    "en": "",
-    "es": ""
+    "en": "Turn on cards",
+    "es": "Activar tarjetas"
   },
   "Você usa cartão de crédito?": {
-    "en": "",
-    "es": ""
+    "en": "Do you use a credit card?",
+    "es": "¿Usas tarjeta de crédito?"
   },
   "Veja a fatura de cada cartão, quando ela fecha e vence, as compras parceladas e quanto do limite ainda dá para usar.": {
-    "en": "",
-    "es": ""
+    "en": "See each card's statement, when it closes and is due, your installment purchases, and how much of your limit you can still use.",
+    "es": "Mira el resumen de cada tarjeta, cuándo cierra y vence, las compras en cuotas y cuánto del límite todavía puedes usar."
   },
   "Acompanhar dívidas": {
-    "en": "",
-    "es": ""
+    "en": "Track debts",
+    "es": "Seguir deudas"
   },
   "Você está pagando parcelas": {
-    "en": "",
-    "es": ""
+    "en": "You're paying installments",
+    "es": "Estás pagando cuotas"
   },
   "Quer ver quanto falta em cada dívida e em que mês ela acaba? Cada pagamento lançado abate sozinho.": {
-    "en": "",
-    "es": ""
+    "en": "Want to see how much is left on each debt and when it ends? Every payment you add reduces it on its own.",
+    "es": "¿Quieres ver cuánto falta en cada deuda y en qué mes termina? Cada pago registrado se descuenta solo."
   },
   "Acompanhar investimentos": {
-    "en": "",
-    "es": ""
+    "en": "Track investments",
+    "es": "Seguir inversiones"
   },
   "Começou a investir?": {
-    "en": "",
-    "es": ""
+    "en": "Started investing?",
+    "es": "¿Empezaste a invertir?"
   },
   "Acompanhe quanto você tem investido mês a mês, junto com o resto do seu dinheiro.": {
-    "en": "",
-    "es": ""
+    "en": "Track how much you've invested month by month, along with the rest of your money.",
+    "es": "Sigue cuánto has invertido mes a mes, junto con el resto de tu dinero."
   },
   "Acompanhar metas": {
-    "en": "",
-    "es": ""
+    "en": "Track goals",
+    "es": "Seguir metas"
   },
   "Está guardando dinheiro?": {
-    "en": "",
-    "es": ""
+    "en": "Are you saving money?",
+    "es": "¿Estás ahorrando dinero?"
   },
   "Crie uma meta (viagem, reserva, carro…) e veja quanto guardar por mês e quando você chega lá.": {
-    "en": "",
-    "es": ""
+    "en": "Create a goal (trip, emergency fund, car…) and see how much to save each month and when you'll get there.",
+    "es": "Crea una meta (viaje, fondo de emergencia, auto…) y mira cuánto ahorrar al mes y cuándo llegas."
   },
   "Ligar contas do mês": {
-    "en": "",
-    "es": ""
+    "en": "Turn on monthly bills",
+    "es": "Activar cuentas del mes"
   },
   "Você paga {0} todo mês?": {
-    "en": "",
-    "es": ""
+    "en": "Do you pay {0} every month?",
+    "es": "¿Pagas {0} todos los meses?"
   },
   "Transforme em conta fixa e o app te lembra do vencimento, mostra o que está atrasado e dá baixa com um toque.": {
-    "en": "",
-    "es": ""
+    "en": "Turn it into a recurring bill and the app reminds you of the due date, shows what's overdue, and marks it paid with one tap.",
+    "es": "Conviértela en cuenta fija y la app te recuerda el vencimiento, muestra lo que está atrasado y la marca como pagada con un toque."
   },
   "Usar {0}": {
-    "en": "",
-    "es": ""
+    "en": "Use {0}",
+    "es": "Usar {0}"
   },
   "Você mexe com {0}?": {
-    "en": "",
-    "es": ""
+    "en": "Do you deal in {0}?",
+    "es": "¿Manejas {0}?"
   },
   "Lance em {0} e veja quanto vale na sua moeda, com a cotação do dia.": {
-    "en": "",
-    "es": ""
+    "en": "Add entries in {0} and see what it's worth in your currency, at today's rate.",
+    "es": "Registra movimientos en {0} y mira cuánto valen en tu moneda, con la cotización del día."
   },
   "Separar por banco": {
-    "en": "",
-    "es": ""
+    "en": "Split by bank",
+    "es": "Separar por banco"
   },
   "Você usa {0}": {
-    "en": "",
-    "es": ""
+    "en": "You use {0}",
+    "es": "Usas {0}"
   },
   "Quer ver o que entra e sai de cada banco e quanto tem guardado em cada um?": {
-    "en": "",
-    "es": ""
+    "en": "Want to see what comes in and goes out of each bank, and how much you have saved in each one?",
+    "es": "¿Quieres ver qué entra y sale de cada banco y cuánto tienes ahorrado en cada uno?"
   },
   "Mostrar gráficos": {
-    "en": "",
-    "es": ""
+    "en": "Show charts",
+    "es": "Mostrar gráficos"
   },
   "Você já lançou bastante coisa": {
-    "en": "",
-    "es": ""
+    "en": "You've already added a lot",
+    "es": "Ya registraste bastante"
   },
   "Gráficos e a comparação com o mês passado ajudam a ver para onde as coisas estão indo.": {
-    "en": "",
-    "es": ""
+    "en": "Charts and the comparison with last month help you see where things are heading.",
+    "es": "Los gráficos y la comparación con el mes pasado te ayudan a ver hacia dónde van las cosas."
   },
   "Ver mais detalhes": {
-    "en": "",
-    "es": ""
+    "en": "See more details",
+    "es": "Ver más detalles"
   },
   "{0} meses de histórico": {
-    "en": "",
-    "es": ""
+    "en": "{0} months of history",
+    "es": "{0} meses de historial"
   },
   "Com esse histórico, vale ver todas as categorias, os lançamentos do mês e o ano mês a mês.": {
-    "en": "",
-    "es": ""
+    "en": "With this history, it's worth seeing all categories, this month's transactions, and the year month by month.",
+    "es": "Con este historial, conviene ver todas las categorías, los movimientos del mes y el año mes a mes."
   },
   "Não foi possível começar o teste agora. Tente de novo.": {
-    "en": "",
-    "es": ""
+    "en": "Couldn't start the trial right now. Try again.",
+    "es": "No pudimos empezar la prueba ahora. Inténtalo de nuevo."
   },
   "O teste grátis já foi usado nesta conta. Assine para continuar.": {
-    "en": "",
-    "es": ""
+    "en": "The free trial has already been used on this account. Subscribe to keep going.",
+    "es": "La prueba gratis ya se usó en esta cuenta. Suscríbete para seguir."
   },
   "Não foi possível abrir o pagamento. Tente de novo.": {
-    "en": "",
-    "es": ""
+    "en": "Couldn't open checkout. Try again.",
+    "es": "No pudimos abrir el pago. Inténtalo de nuevo."
   },
   "Não foi possível excluir a conta. Tente de novo.": {
-    "en": "",
-    "es": ""
+    "en": "Couldn't delete the account. Try again.",
+    "es": "No pudimos eliminar la cuenta. Inténtalo de nuevo."
   },
   "OpusCash atualizado ✓": {
-    "en": "",
-    "es": ""
+    "en": "OpusCash updated ✓",
+    "es": "OpusCash actualizado ✓"
   },
   "Ainda não abriu": {
-    "en": "",
-    "es": ""
+    "en": "Not open yet",
+    "es": "Todavía no abre"
   },
   "Aberta": {
-    "en": "",
-    "es": ""
+    "en": "Open",
+    "es": "Abierto"
   },
   "Fechada": {
-    "en": "",
-    "es": ""
+    "en": "Closed",
+    "es": "Cerrado"
   },
   "Venceu": {
-    "en": "",
-    "es": ""
+    "en": "Overdue",
+    "es": "Vencido"
   },
   "Renegociada": {
-    "en": "",
-    "es": ""
+    "en": "Renegotiated",
+    "es": "Renegociado"
   },
   "vence amanhã": {
-    "en": "",
-    "es": ""
+    "en": "due tomorrow",
+    "es": "vence mañana"
   },
   "vence em {0} dias": {
-    "en": "",
-    "es": ""
+    "en": "due in {0} days",
+    "es": "vence en {0} días"
   },
   "venceu ontem": {
-    "en": "",
-    "es": ""
+    "en": "was due yesterday",
+    "es": "venció ayer"
   },
   "venceu há {0} dias": {
-    "en": "",
-    "es": ""
+    "en": "was due {0} days ago",
+    "es": "venció hace {0} días"
   },
   "primeira na fatura de {0}": {
-    "en": "",
-    "es": ""
+    "en": "first on the {0} statement",
+    "es": "la primera en el resumen de {0}"
   },
   "{0} à vista no cartão · na fatura de {1}": {
-    "en": "",
-    "es": ""
+    "en": "{0} in one payment on the card · on the {1} statement",
+    "es": "{0} de contado con la tarjeta · en el resumen de {1}"
   },
   "Sem compras na fatura": {
-    "en": "",
-    "es": ""
+    "en": "No purchases on the statement",
+    "es": "Sin compras en el resumen"
   },
   "recebido em {0}": {
-    "en": "",
-    "es": ""
+    "en": "received on {0}",
+    "es": "recibido el {0}"
   },
   "era para cair ontem": {
-    "en": "",
-    "es": ""
+    "en": "was due to come in yesterday",
+    "es": "debía entrar ayer"
   },
   "era para cair há {0} dias": {
-    "en": "",
-    "es": ""
+    "en": "was due to come in {0} days ago",
+    "es": "debía entrar hace {0} días"
   },
   "era para cair em {0}": {
-    "en": "",
-    "es": ""
+    "en": "was due to come in on {0}",
+    "es": "debía entrar el {0}"
   },
   "cai amanhã": {
-    "en": "",
-    "es": ""
+    "en": "comes in tomorrow",
+    "es": "cae mañana"
   },
   "6 meses do que você gasta, para imprevistos": {
-    "en": "",
-    "es": ""
+    "en": "6 months of what you spend, for emergencies",
+    "es": "6 meses de lo que gastas, para imprevistos"
   },
   "passagens, hospedagem e passeios": {
-    "en": "",
-    "es": ""
+    "en": "flights, lodging and tours",
+    "es": "pasajes, alojamiento y paseos"
   },
   "Carro": {
-    "en": "",
-    "es": ""
+    "en": "Car",
+    "es": "Auto"
   },
   "entrada ou o carro inteiro": {
-    "en": "",
-    "es": ""
+    "en": "down payment or the whole car",
+    "es": "enganche o el auto completo"
   },
   "Casa própria": {
-    "en": "",
-    "es": ""
+    "en": "Own home",
+    "es": "Casa propia"
   },
   "entrada do imóvel": {
-    "en": "",
-    "es": ""
+    "en": "down payment on the home",
+    "es": "enganche de la casa"
   },
   "Estudos": {
-    "en": "",
-    "es": ""
+    "en": "Studies",
+    "es": "Estudios"
   },
   "curso, faculdade, intercâmbio": {
-    "en": "",
-    "es": ""
+    "en": "course, college, exchange program",
+    "es": "curso, universidad, intercambio"
   },
   "Aposentadoria": {
-    "en": "",
-    "es": ""
+    "en": "Retirement",
+    "es": "Jubilación"
   },
   "para o futuro, sem pressa": {
-    "en": "",
-    "es": ""
+    "en": "for the future, no rush",
+    "es": "para el futuro, sin prisa"
   },
   "Real": {
-    "en": "",
-    "es": ""
+    "en": "Real",
+    "es": "Real"
   },
   "Dólar americano": {
-    "en": "",
-    "es": ""
+    "en": "US dollar",
+    "es": "Dólar estadounidense"
   },
   "Libra esterlina": {
-    "en": "",
-    "es": ""
+    "en": "British pound",
+    "es": "Libra esterlina"
   },
   "Peso argentino": {
-    "en": "",
-    "es": ""
+    "en": "Argentine peso",
+    "es": "Peso argentino"
   },
   "Peso chileno": {
-    "en": "",
-    "es": ""
+    "en": "Chilean peso",
+    "es": "Peso chileno"
   },
   "Peso uruguaio": {
-    "en": "",
-    "es": ""
+    "en": "Uruguayan peso",
+    "es": "Peso uruguayo"
   },
   "Guarani paraguaio": {
-    "en": "",
-    "es": ""
+    "en": "Paraguayan guaraní",
+    "es": "Guaraní paraguayo"
   },
   "Peso colombiano": {
-    "en": "",
-    "es": ""
+    "en": "Colombian peso",
+    "es": "Peso colombiano"
   },
   "Sol peruano": {
-    "en": "",
-    "es": ""
+    "en": "Peruvian sol",
+    "es": "Sol peruano"
   },
   "Peso mexicano": {
-    "en": "",
-    "es": ""
+    "en": "Mexican peso",
+    "es": "Peso mexicano"
   },
   "Dólar canadense": {
-    "en": "",
-    "es": ""
+    "en": "Canadian dollar",
+    "es": "Dólar canadiense"
   },
   "Dólar australiano": {
-    "en": "",
-    "es": ""
+    "en": "Australian dollar",
+    "es": "Dólar australiano"
   },
   "Franco suíço": {
-    "en": "",
-    "es": ""
+    "en": "Swiss franc",
+    "es": "Franco suizo"
   },
   "Iene japonês": {
-    "en": "",
-    "es": ""
+    "en": "Japanese yen",
+    "es": "Yen japonés"
   },
   "Yuan chinês": {
-    "en": "",
-    "es": ""
+    "en": "Chinese yuan",
+    "es": "Yuan chino"
   },
   "Kwanza angolano": {
-    "en": "",
-    "es": ""
+    "en": "Angolan kwanza",
+    "es": "Kwanza angoleño"
   },
   "Metical moçambicano": {
-    "en": "",
-    "es": ""
+    "en": "Mozambican metical",
+    "es": "Metical mozambiqueño"
   },
   "Dívidas e parcelas": {
-    "en": "",
-    "es": ""
+    "en": "Debts and installments",
+    "es": "Deudas y cuotas"
   },
   "Tenho dívidas, empréstimos ou compras parceladas": {
-    "en": "",
-    "es": ""
+    "en": "I have debts, loans or installment purchases",
+    "es": "Tengo deudas, préstamos o compras en cuotas"
   },
   "Quanto falta pagar e quando cada dívida acaba. Cada pagamento lançado abate sozinho.": {
-    "en": "",
-    "es": ""
+    "en": "How much is left to pay and when each debt ends. Each payment you add reduces it on its own.",
+    "es": "Cuánto falta por pagar y cuándo termina cada deuda. Cada pago que registras la reduce sola."
   },
   "Cartão de crédito": {
-    "en": "",
-    "es": ""
+    "en": "Credit card",
+    "es": "Tarjeta de crédito"
   },
   "Uso cartão de crédito": {
-    "en": "",
-    "es": ""
+    "en": "I use a credit card",
+    "es": "Uso tarjeta de crédito"
   },
   "A fatura de cada cartão, quando fecha e vence, as compras parceladas e quanto do limite ainda dá para usar.": {
-    "en": "",
-    "es": ""
+    "en": "Each card's statement, when it closes and when it's due, installment purchases, and how much of the limit you can still use.",
+    "es": "El resumen de cada tarjeta, cuándo cierra y vence, las compras en cuotas y cuánto del límite todavía puedes usar."
   },
   "Bancos e contas": {
-    "en": "",
-    "es": ""
+    "en": "Banks and accounts",
+    "es": "Bancos y cuentas"
   },
   "Uso mais de um banco, conta ou carteira": {
-    "en": "",
-    "es": ""
+    "en": "I use more than one bank, account or wallet",
+    "es": "Uso más de un banco, cuenta o billetera"
   },
   "O que entra e sai de cada banco e quanto você tem guardado em cada um.": {
-    "en": "",
-    "es": ""
+    "en": "What comes in and goes out of each bank, and how much you have saved in each one.",
+    "es": "Lo que entra y sale de cada banco, y cuánto tienes ahorrado en cada uno."
   },
   "Invisto ou guardo dinheiro rendendo": {
-    "en": "",
-    "es": ""
+    "en": "I invest or save money that earns returns",
+    "es": "Invierto o ahorro dinero que genera rendimientos"
   },
   "Quanto você tem investido, mês a mês.": {
-    "en": "",
-    "es": ""
+    "en": "How much you have invested, month by month.",
+    "es": "Cuánto tienes invertido, mes a mes."
   },
   "Tenho ou uso dinheiro em outra moeda": {
-    "en": "",
-    "es": ""
+    "en": "I have or use money in another currency",
+    "es": "Tengo o uso dinero en otra moneda"
   },
   "Dólar, euro e outras: quanto você tem e quanto vale na sua moeda, com a cotação do dia.": {
-    "en": "",
-    "es": ""
+    "en": "Dollar, euro and others: how much you have and how much it's worth in your currency, at today's rate.",
+    "es": "Dólar, euro y otras: cuánto tienes y cuánto vale en tu moneda, con la cotización del día."
   },
   "Quero juntar dinheiro para algo (viagem, reserva, carro…)": {
-    "en": "",
-    "es": ""
+    "en": "I want to save up for something (trip, emergency fund, car…)",
+    "es": "Quiero juntar dinero para algo (viaje, fondo de reserva, carro…)"
   },
   "Quanto falta para cada objetivo, quanto guardar por mês e quando você chega lá.": {
-    "en": "",
-    "es": ""
+    "en": "How much is left for each goal, how much to save per month, and when you get there.",
+    "es": "Cuánto falta para cada meta, cuánto ahorrar por mes y cuándo llegas."
   },
   "Tenho contas que se repetem todo mês (aluguel, luz, internet…)": {
-    "en": "",
-    "es": ""
+    "en": "I have bills that repeat every month (rent, power, internet…)",
+    "es": "Tengo cuentas que se repiten cada mes (alquiler, luz, internet…)"
   },
   "O app lembra do vencimento, mostra o que está atrasado e dá baixa com um toque em \"Paguei\".": {
-    "en": "",
-    "es": ""
+    "en": "The app reminds you of due dates, shows what's overdue, and marks it off with one tap on “Paid”.",
+    "es": "La app te avisa del vencimiento, muestra lo que está atrasado y lo marca con un toque en “Pagué”."
   },
   "Simples": {
-    "en": "",
-    "es": ""
+    "en": "Simple",
+    "es": "Simple"
   },
   "Quanto sobrou, quanto entrou e quanto saiu. Sem gráficos nem comparações.": {
-    "en": "",
-    "es": ""
+    "en": "How much is left over, how much came in and how much went out. No charts or comparisons.",
+    "es": "Cuánto sobró, cuánto entró y cuánto salió. Sin gráficos ni comparaciones."
   },
   "Equilibrado": {
-    "en": "",
-    "es": ""
+    "en": "Balanced",
+    "es": "Equilibrado"
   },
   "O simples, mais gráficos e a comparação com o mês passado.": {
-    "en": "",
-    "es": ""
+    "en": "The simple one, plus charts and a comparison with last month.",
+    "es": "Lo simple, más gráficos y la comparación con el mes pasado."
   },
   "Detalhado": {
-    "en": "",
-    "es": ""
+    "en": "Detailed",
+    "es": "Detallado"
   },
   "O equilibrado, mais todas as categorias, mais lançamentos e o ano mês a mês.": {
-    "en": "",
-    "es": ""
+    "en": "The balanced one, plus all categories, transactions and the whole year month by month.",
+    "es": "Lo equilibrado, más todas las categorías, movimientos y el año mes a mes."
   },
   "Já existe um cartão chamado \"{0}\".": {
-    "en": "",
-    "es": ""
+    "en": "There's already a card called \"{0}\".",
+    "es": "Ya existe una tarjeta llamada \"{0}\"."
   },
   "Essa conta do mês já tem um lançamento ligado nesse mês (cada conta tem um por mês). Nada foi mudado.": {
-    "en": "",
-    "es": ""
+    "en": "This monthly bill already has a transaction linked to this month (each bill gets one per month). Nothing was changed.",
+    "es": "Esta cuenta del mes ya tiene un movimiento vinculado a este mes (cada cuenta tiene uno por mes). No se cambió nada."
   },
   "Já existe um banco chamado \"{0}\".": {
-    "en": "",
-    "es": ""
+    "en": "A bank called \"{0}\" already exists.",
+    "es": "Ya existe un banco llamado \"{0}\"."
   },
   "Já existe uma categoria chamada \"{0}\".": {
-    "en": "",
-    "es": ""
+    "en": "A category called \"{0}\" already exists.",
+    "es": "Ya existe una categoría llamada \"{0}\"."
   },
   "Tudo, como conta nova": {
-    "en": "",
-    "es": ""
+    "en": "Everything, like a new account",
+    "es": "Todo, como cuenta nueva"
   },
   "Apaga tudo, inclusive bancos, categorias e preferências. As perguntas iniciais aparecem de novo.": {
-    "en": "",
-    "es": ""
+    "en": "Deletes everything, including banks, categories and preferences. The starting questions show up again.",
+    "es": "Borra todo, incluidos bancos, categorías y preferencias. Las preguntas iniciales vuelven a aparecer."
   },
   "Todos os lançamentos de entrada (salário, renda extra…).": {
-    "en": "",
-    "es": ""
+    "en": "All income entries (salary, extra income…).",
+    "es": "Todos los movimientos de ingreso (sueldo, ingresos extra…)."
   },
   "Todos os lançamentos de saída, inclusive pagamentos de dívidas e compras no cartão.": {
-    "en": "",
-    "es": ""
+    "en": "All expense entries, including debt payments and card purchases.",
+    "es": "Todos los movimientos de gasto, incluidos los pagos de deudas y las compras con tarjeta."
   },
   "As dívidas e seus saldos. Os pagamentos lançados ficam, só sem vínculo com a dívida.": {
-    "en": "",
-    "es": ""
+    "en": "Debts and their balances. The payments you added stay, just unlinked from the debt.",
+    "es": "Las deudas y sus saldos. Los pagos registrados se quedan, solo sin vínculo con la deuda."
   },
   "Os cartões e as faturas pagas. As compras ficam como saídas comuns.": {
-    "en": "",
-    "es": ""
+    "en": "Cards and paid statements. Purchases stay as regular expenses.",
+    "es": "Las tarjetas y los resúmenes pagados. Las compras quedan como gastos comunes."
   },
   "Contas fixas": {
-    "en": "",
-    "es": ""
+    "en": "Recurring bills",
+    "es": "Cuentas fijas"
   },
   "As contas que se repetem todo mês. Os lançamentos já feitos ficam.": {
-    "en": "",
-    "es": ""
+    "en": "The bills that repeat every month. Entries already made stay.",
+    "es": "Las cuentas que se repiten cada mes. Los movimientos ya hechos se quedan."
   },
   "As metas e o histórico de dinheiro guardado nelas.": {
-    "en": "",
-    "es": ""
+    "en": "Goals and the history of money saved in them.",
+    "es": "Las metas y el historial del dinero ahorrado en ellas."
   },
   "Saldos por banco, investimentos e moedas de cada mês.": {
-    "en": "",
-    "es": ""
+    "en": "Balances by bank, investments and currencies for each month.",
+    "es": "Saldos por banco, inversiones y monedas de cada mes."
   },
   "MARÇO": {
-    "en": "",
-    "es": ""
-  },
-  "{1} de {0}": {
-    "en": "",
-    "es": ""
+    "en": "MARCH",
+    "es": "MARZO"
   },
   "entrada": {
-    "en": "",
-    "es": ""
+    "en": "income",
+    "es": "ingresos"
   },
   "· já tem lançamento neste mês": {
-    "en": "",
-    "es": ""
+    "en": "· already has a transaction this month",
+    "es": "· ya tiene un movimiento este mes"
   },
   "Depois o app procura os parecidos dos outros meses.": {
-    "en": "",
-    "es": ""
+    "en": "Afterwards the app finds similar ones from other months.",
+    "es": "Después la app busca los parecidos de otros meses."
   },
   "recebido": {
-    "en": "",
-    "es": ""
+    "en": "received",
+    "es": "recibido"
   },
   "renegociada": {
-    "en": "",
-    "es": ""
+    "en": "renegotiated",
+    "es": "renegociado"
   },
   "juros": {
-    "en": "",
-    "es": ""
+    "en": "interest",
+    "es": "intereses"
   },
   "livre": {
-    "en": "",
-    "es": ""
+    "en": "available",
+    "es": "disponible"
   },
   "do banco": {
-    "en": "",
-    "es": ""
+    "en": "from the bank",
+    "es": "del banco"
   },
   "Mudar os dias vale para as próximas compras; as que você já lançou ficam onde estão.": {
-    "en": "",
-    "es": ""
+    "en": "Changing the days applies to upcoming purchases; the ones you've already added stay where they are.",
+    "es": "Cambiar los días vale para las próximas compras; las que ya registraste se quedan donde están."
   },
   "Se teve juros ou multa, coloque aqui: eles entram como uma saída do mês do pagamento.": {
-    "en": "",
-    "es": ""
+    "en": "If there was interest or a late fee, enter it here: it counts as an expense in the month of payment.",
+    "es": "Si hubo intereses o multa, ponlos aquí: cuentan como un gasto del mes del pago."
   },
   "e apaga a dívida criada": {
-    "en": "",
-    "es": ""
+    "en": "and deletes the debt created",
+    "es": "y elimina la deuda creada"
   },
   "conta": {
-    "en": "",
-    "es": ""
+    "en": "bill",
+    "es": "cuenta"
   },
   "caiu": {
-    "en": "",
-    "es": ""
+    "en": "come in",
+    "es": "entró"
   },
   "parcelado": {
-    "en": "",
-    "es": ""
+    "en": "in installments",
+    "es": "en cuotas"
   },
   "com": {
-    "en": "",
-    "es": ""
+    "en": "with",
+    "es": "con"
   },
   "Você está no caminho certo! 🚀": {
-    "en": "",
-    "es": ""
+    "en": "You're on the right track! 🚀",
+    "es": "¡Vas por buen camino! 🚀"
   },
   "Vale olhar para onde foi.": {
-    "en": "",
-    "es": ""
+    "en": "Worth taking a look at where it went.",
+    "es": "Vale la pena mirar a dónde fue."
   },
   "com os filtros": {
-    "en": "",
-    "es": ""
+    "en": "with these filters",
+    "es": "con estos filtros"
   },
   "Toque num banco para ver só ele.": {
-    "en": "",
-    "es": ""
+    "en": "Tap a bank to see just that one.",
+    "es": "Toca un banco para ver solo ese."
   },
   "mais de": {
-    "en": "",
-    "es": ""
+    "en": "more than",
+    "es": "más de"
   },
   "Falta receber {0} ({1} × {2}) · última parcela em {3}": {
-    "en": "",
-    "es": ""
+    "en": "{0} left to receive ({1} × {2}) · last installment in {3}",
+    "es": "Falta recibir {0} ({1} × {2}) · última cuota en {3}"
   },
   "Falta pagar {0} ({1} × {2}) · última parcela em {3}": {
-    "en": "",
-    "es": ""
+    "en": "{0} left to pay ({1} × {2}) · last installment in {3}",
+    "es": "Falta pagar {0} ({1} × {2}) · última cuota en {3}"
   },
   "1 lançamento importado": {
-    "en": "",
-    "es": ""
+    "en": "1 transaction imported",
+    "es": "1 movimiento importado"
   },
   "{0} lançamentos importados": {
-    "en": "",
-    "es": ""
+    "en": "{0} transactions imported",
+    "es": "{0} movimientos importados"
   },
   "Já existe “{0}” de {1} em {2}.\n\nEle é o recebimento de {3}?\n\nOK: sim, usar ele (sem lançar de novo).\nCancelar: não, lançar outro.": {
-    "en": "",
-    "es": ""
+    "en": "There's already “{0}” for {1} on {2}.\n\nIs it the income from {3}?\n\nOK: yes, use it (don't add it again).\nCancel: no, add another one.",
+    "es": "Ya existe “{0}” de {1} el {2}.\n\n¿Es el ingreso de {3}?\n\nAceptar: sí, usar ese (sin registrar de nuevo).\nCancelar: no, registrar otro."
   },
   "Já existe “{0}” de {1} em {2}.\n\nEle é o pagamento de {3}?\n\nOK: sim, usar ele (sem lançar de novo).\nCancelar: não, lançar outro.": {
-    "en": "",
-    "es": ""
+    "en": "There's already “{0}” for {1} on {2}.\n\nIs it the payment for {3}?\n\nOK: yes, use it (don't add it again).\nCancel: no, add another one.",
+    "es": "Ya existe “{0}” de {1} el {2}.\n\n¿Es el pago de {3}?\n\nAceptar: sí, usar ese (sin registrar de nuevo).\nCancelar: no, registrar otro."
   },
   "{0} – recebido": {
-    "en": "",
-    "es": ""
+    "en": "{0} – received",
+    "es": "{0} – recibido"
   },
   "1 conta pede atenção.": {
-    "en": "",
-    "es": ""
+    "en": "1 bill needs attention.",
+    "es": "1 cuenta necesita atención."
   },
   "{0} contas pedem atenção.": {
-    "en": "",
-    "es": ""
+    "en": "{0} bills need attention.",
+    "es": "{0} cuentas necesitan atención."
   },
   "1 conta pede atenção": {
-    "en": "",
-    "es": ""
+    "en": "1 bill needs attention",
+    "es": "1 cuenta necesita atención"
   },
   "{0} contas pedem atenção": {
-    "en": "",
-    "es": ""
+    "en": "{0} bills need attention",
+    "es": "{0} cuentas necesitan atención"
   },
   "1 lançamento": {
-    "en": "",
-    "es": ""
+    "en": "1 transaction",
+    "es": "1 movimiento"
   },
   "Teste grátis até {0} (falta 1 dia). O cartão só é pedido quando você assinar.": {
-    "en": "",
-    "es": ""
+    "en": "Free trial until {0} (1 day left). We only ask for your card when you subscribe.",
+    "es": "Prueba gratis hasta el {0} (queda 1 día). La tarjeta solo se pide cuando te suscribas."
   },
   "Teste grátis até {0} (faltam {1} dias). O cartão só é pedido quando você assinar.": {
-    "en": "",
-    "es": ""
+    "en": "Free trial until {0} ({1} days left). We only ask for your card when you subscribe.",
+    "es": "Prueba gratis hasta el {0} (quedan {1} días). La tarjeta solo se pide cuando te suscribas."
   },
   "{0} a mais que em {1}": {
-    "en": "",
-    "es": ""
+    "en": "{0} more than in {1}",
+    "es": "{0} más que en {1}"
   },
   "{0} a menos que em {1}": {
-    "en": "",
-    "es": ""
+    "en": "{0} less than in {1}",
+    "es": "{0} menos que en {1}"
   },
   "O Início mostra quanto sobrou, entrou e saiu, compara com o mês passado e para onde o dinheiro foi. Use o seletor de mês lá em cima para voltar no tempo.": {
-    "en": "",
-    "es": ""
+    "en": "Home shows what's left over, what came in and what went out, compares with last month and where your money went. Use the month picker up top to go back in time.",
+    "es": "Inicio muestra cuánto sobró, entró y salió, compara con el mes pasado y a dónde fue tu dinero. Usa el selector de mes de arriba para volver en el tiempo."
   },
   "O Início mostra quanto sobrou, entrou e saiu e para onde o dinheiro foi. Use o seletor de mês lá em cima para voltar no tempo.": {
-    "en": "",
-    "es": ""
+    "en": "Home shows what's left over, what came in and went out, and where your money went. Use the month picker up top to go back in time.",
+    "es": "Inicio muestra cuánto sobró, entró y salió, y a dónde fue tu dinero. Usa el selector de mes de arriba para volver en el tiempo."
   },
   "{0}x de {1} (a primeira, {2}) · {3}": {
-    "en": "",
-    "es": ""
+    "en": "{0}x of {1} (the first one, {2}) · {3}",
+    "es": "{0}x de {1} (la primera, {2}) · {3}"
   },
   "{0}x de {1} · {2}": {
-    "en": "",
-    "es": ""
+    "en": "{0}x of {1} · {2}",
+    "es": "{0}x de {1} · {2}"
   },
   "1 parcela paga até agora.": {
-    "en": "",
-    "es": ""
+    "en": "1 installment paid so far.",
+    "es": "1 cuota pagada hasta ahora."
   },
   "{0} parcelas pagas até agora.": {
-    "en": "",
-    "es": ""
+    "en": "{0} installments paid so far.",
+    "es": "{0} cuotas pagadas hasta ahora."
   },
   "Sobrou em {0}": {
-    "en": "",
-    "es": ""
+    "en": "Left over in {0}",
+    "es": "Sobró en {0}"
   },
   "Faltou em {0}": {
-    "en": "",
-    "es": ""
+    "en": "Short in {0}",
+    "es": "Faltó en {0}"
   },
   "{0}: saiu {1}": {
-    "en": "",
-    "es": ""
+    "en": "{0}: spent {1}",
+    "es": "{0}: gastó {1}"
+  },
+  "recebida": {
+    "en": "received",
+    "es": "recibida"
+  },
+  "paga": {
+    "en": "paid",
+    "es": "pagada"
+  },
+  "recebidos": {
+    "en": "received",
+    "es": "recibidos"
+  },
+  "pagos": {
+    "en": "paid",
+    "es": "pagados"
+  },
+  "Ver lançamentos de {0}": {
+    "en": "See {0} transactions",
+    "es": "Ver movimientos de {0}"
+  },
+  "OpusCash: seu dinheiro organizado": {
+    "en": "OpusCash: your money, organized",
+    "es": "OpusCash: tu dinero organizado"
+  },
+  "venceu": {
+    "en": "was due",
+    "es": "venció"
+  },
+  "vence": {
+    "en": "due",
+    "es": "vence"
+  },
+  "dia": {
+    "en": "day",
+    "es": "día"
+  },
+  "dias": {
+    "en": "days",
+    "es": "días"
+  },
+  "cai": {
+    "en": "comes in",
+    "es": "entra"
+  },
+  "recebeu": {
+    "en": "received it",
+    "es": "la recibiste"
+  },
+  "pagou": {
+    "en": "paid it",
+    "es": "la pagaste"
+  },
+  "parcela": {
+    "en": "installment",
+    "es": "cuota"
+  },
+  "parcelas": {
+    "en": "installments",
+    "es": "cuotas"
+  },
+  "quitada": {
+    "en": "paid off",
+    "es": "saldada"
+  },
+  "pago": {
+    "en": "paid",
+    "es": "pagado"
+  },
+  "O que você recebe cobre as parcelas da mais antiga para a mais nova: pagou metade, a parcela fica pela metade; pagou a mais, adianta as próximas.": {
+    "en": "What you receive covers the installments from oldest to newest: if you got half, the installment stays half paid; if you got extra, it moves the next ones up.",
+    "es": "Lo que recibes cubre las cuotas de la más antigua a la más nueva: si recibiste la mitad, la cuota queda a medias; si recibiste de más, adelanta las siguientes."
+  },
+  "O que você paga cobre as parcelas da mais antiga para a mais nova: pagou metade, a parcela fica pela metade; pagou a mais, adianta as próximas.": {
+    "en": "What you pay covers the installments from oldest to newest: if you paid half, the installment stays half paid; if you paid extra, it moves the next ones up.",
+    "es": "Lo que pagas cubre las cuotas de la más antigua a la más nueva: si pagaste la mitad, la cuota queda a medias; si pagaste de más, adelanta las siguientes."
+  },
+  "em {0}": {
+    "en": "in {0}",
+    "es": "en {0}"
+  },
+  "chega em {0}": {
+    "en": "reached in {0}",
+    "es": "llega en {0}"
+  },
+  "Conta corrente": {
+    "en": "Checking account",
+    "es": "Cuenta corriente"
+  },
+  "Caixinha": {
+    "en": "Savings box",
+    "es": "Cajita de ahorro"
+  },
+  "e": {
+    "en": "and",
+    "es": "y"
+  },
+  ".env": {
+    "en": ".env",
+    "es": ".env"
+  },
+  "no": {
+    "en": "on",
+    "es": "en"
+  },
+  "a": {
+    "en": "to",
+    "es": "a"
+  },
+  "nu": {
+    "en": "nu",
+    "es": "nu"
+  },
+  "OUT": {
+    "en": "OCT",
+    "es": "OCT"
+  },
+  "tudo": {
+    "en": "everything",
+    "es": "todo"
+  },
+  "ZERAR": {
+    "en": "RESET",
+    "es": "BORRAR"
+  },
+  "abriu": {
+    "en": "opened ",
+    "es": "abrió "
+  },
+  "fecha": {
+    "en": "closes ",
+    "es": "cierra "
+  },
+  "limite": {
+    "en": "limit",
+    "es": "límite"
+  },
+  "pausada": {
+    "en": "paused",
+    "es": "pausada"
+  },
+  "hoje": {
+    "en": "today",
+    "es": "hoy"
+  },
+  "atrasada": {
+    "en": "overdue",
+    "es": "atrasada"
+  },
+  "fatura": {
+    "en": "statement",
+    "es": "resumen"
+  },
+  "cobre": {
+    "en": "covers",
+    "es": "cubre"
+  },
+  "reserva": {
+    "en": "emergency fund",
+    "es": "fondo de emergencia"
+  },
+  "menos": {
+    "en": "less",
+    "es": "menos"
+  },
+  "entrou": {
+    "en": "income",
+    "es": "entró"
+  },
+  "infinitas": {
+    "en": "endless",
+    "es": "infinitas"
+  },
+  "possibilidades": {
+    "en": "possibilities",
+    "es": "posibilidades"
+  },
+  "dica": {
+    "en": "tip",
+    "es": "consejo"
+  },
+  "total": {
+    "en": "total",
+    "es": "total"
+  },
+  "alvo": {
+    "en": "target",
+    "es": "objetivo"
+  },
+  "falta": {
+    "en": "to go",
+    "es": "falta"
   }
 }

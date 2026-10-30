@@ -41,6 +41,8 @@ const nomesDosMeses = (formato: 'long' | 'short') =>
   })
 export const MESES_NOME = nomesDosMeses('long')
 export const MESES_CURTO = MESES_NOME.map((m) => m.slice(0, 3))
+/** O mês no meio da frase: em minúscula ("de outubro"), menos em inglês, que escreve mês com maiúscula ("in October"). */
+export const noMeioDaFrase = (mes: string) => (idiomaDasDatas === 'en' ? mes : mes.toLowerCase())
 
 export const fmtPct = (n: number) => pct.format(Number.isFinite(n) ? n : 0)
 
@@ -50,11 +52,17 @@ const MES_CURTO = MESES_CURTO.map((m) => (idiomaDasDatas === 'en' ? m : m.toLowe
 export function fmtDataCurta(iso: string | null) {
   if (!iso) return ''
   const [, m, d] = iso.split('-').map(Number)
-  return tx('{0} de {1}', d, MES_CURTO[m - 1])
+  return idiomaDasDatas === 'en' ? `${MES_CURTO[m - 1]} ${d}` : `${d} de ${MES_CURTO[m - 1]}`
 }
 
 /** (2027, 3) -> "mar de 2027" (em inglês, "Mar 2027") */
-export const fmtMesAno = (ano: number, mes: number) => tx('{1} de {0}', ano, MES_CURTO[mes - 1])
+export const fmtMesAno = (ano: number, mes: number) => (idiomaDasDatas === 'en' ? `${MES_CURTO[mes - 1]} ${ano}` : `${MES_CURTO[mes - 1]} de ${ano}`)
+
+/** (2027, 4) -> "abril de 2027" (em inglês, "April 2027"); `inicio` com a primeira letra maiúscula, para começo de linha. */
+export const mesEAno = (ano: number, mes: number, inicio = false) => {
+  const nome = inicio ? MESES_NOME[mes - 1] : noMeioDaFrase(MESES_NOME[mes - 1])
+  return idiomaDasDatas === 'en' ? `${nome} ${ano}` : `${nome} de ${ano}`
+}
 
 /**
  * Calcula uma conta simples (+ - * / e parênteses, números com ponto decimal) sem usar eval/Function, que a política de
@@ -128,7 +136,7 @@ export function dataPadrao(ano: number, mes: number) {
 export function fmtDataLonga(iso: string | null) {
   if (!iso) return tx('Sem data')
   const [, m, d] = iso.split('-').map(Number)
-  return tx('{0} de {1}', d, idiomaDasDatas === 'en' ? MESES_NOME[m - 1] : MESES_NOME[m - 1].toLowerCase())
+  return idiomaDasDatas === 'en' ? `${MESES_NOME[m - 1]} ${d}` : `${d} de ${noMeioDaFrase(MESES_NOME[m - 1])}`
 }
 
 /** Valor para preencher um campo de edição: 1234.5 -> "1234,50". */

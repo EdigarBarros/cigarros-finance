@@ -1,5 +1,6 @@
 import { fmtValor, MESES_CURTO } from '../lib/format'
 import { Icone } from './Icone'
+import { tx } from '../lib/textos'
 
 /**
  * Ilustrações animadas das telas que ainda não têm nada (uma por tela, como as de Cartões, Contas do mês e Metas). São só
@@ -36,7 +37,7 @@ export function CenaDividas({ recebe = false }: { recebe?: boolean }) {
         <div key={i} className={`vz-parcela ${x.p === 1 ? 'quitada' : ''}`} style={{ '--i': i, '--p': x.p } as React.CSSProperties}>
           <span className="vz-parcela-topo"><b style={{ width: `${44 + i * 8}%` }} /><small>{x.n}</small></span>
           <span className="vz-parcela-trilho"><i /></span>
-          {x.p === 1 && <span className="vz-carimbo">{recebe ? 'recebido' : 'quitada'}</span>}
+          {x.p === 1 && <span className="vz-carimbo">{recebe ? tx('recebido') : tx('quitada')}</span>}
         </div>
       ))}
     </div>

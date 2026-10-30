@@ -50,7 +50,7 @@ export function ParecidosConta({ conta, modelo, itens, aoLigar, aoRecusar, aoFec
             </li>
           ))}
         </ul>
-        <span className="campo-ajuda">{tx('Ligados, eles contam como {0} em Contas do mês e não precisam de “', entrada ? 'recebidos' : 'pagos')}{entrada ? tx('Recebi') : tx('Paguei')}”.</span>
+        <span className="campo-ajuda">{tx('Ligados, eles contam como {0} em Contas do mês e não precisam de “', entrada ? tx('recebidos') : tx('pagos'))}{entrada ? tx('Recebi') : tx('Paguei')}”.</span>
         <div className="form-acoes">
           <span className="espaco" />
           <button type="button" className="btn" onClick={() => { aoRecusar(itens.map((x) => x.lanc.id)); aoFechar() }}>{tx('Nenhum é')}</button>

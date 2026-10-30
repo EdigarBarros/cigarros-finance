@@ -7,7 +7,7 @@ import {
 } from '../lib/dividas'
 import { fmtConta } from '../lib/contasFixas'
 import { estiloDoBanco } from '../lib/estiloBanco'
-import { fmtDataCurta, fmtDataLonga, fmtMesAno, fmtMoeda, fmtValor, MESES_CURTO } from '../lib/format'
+import { fmtDataCurta, fmtDataLonga, fmtMesAno, fmtMoeda, fmtValor, MESES_CURTO, noMeioDaFrase } from '../lib/format'
 import { BancoIcone } from '../components/BancoIcone'
 import { FormDivida } from '../components/Formularios'
 import { Icone } from '../components/Icone'
@@ -19,7 +19,7 @@ import { tx } from '../lib/textos'
 type Lado = 'devo' | 'me_devem'
 const CORES_PESSOA = ['#4c8dff', '#e255a1', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444', '#22c55e', '#0ea5e9']
 const hash = (s: string) => [...s].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7)
-const mesCurto = (iso: string) => `${MESES_CURTO[Number(iso.slice(5, 7)) - 1].toLowerCase()}/${iso.slice(2, 4)}`
+const mesCurto = (iso: string) => `${noMeioDaFrase(MESES_CURTO[Number(iso.slice(5, 7)) - 1])}/${iso.slice(2, 4)}`
 
 /** Situação resumida de uma dívida, para o selo e para ordenar a lista. */
 function estadoDe(s: SituacaoDivida, cal: Calendario | null) {
@@ -99,9 +99,9 @@ export function Dividas(c: Ctx) {
         <div className="kpis" key={lado}>
           <Kpi rotulo={recebe ? tx('Falta receber') : tx('Falta pagar')} valor={falta} cor={recebe ? COR.entradas : COR.divida} icone={recebe ? 'receber' : 'divida'}
             delta={!recebe && c.anterior?.divida ? (c.r.divida - c.anterior.divida) / c.anterior.divida : null} menorMelhor
-            contra={c.mes > 1 ? `em ${MESES_CURTO[c.mes - 2].toLowerCase()}` : undefined} />
+            contra={c.mes > 1 ? tx('em {0}', noMeioDaFrase(MESES_CURTO[c.mes - 2])) : undefined} />
           <Kpi rotulo={recebe ? tx('Entra por mês') : tx('Parcelas por mês')} valor={porMes} cor={COR.caixa} icone="calendario" />
-          <Kpi rotulo={nAtraso ? tx('Atrasado ({0} {1})', nAtraso, nAtraso === 1 ? 'parcela' : 'parcelas') : tx('Atrasado')} valor={emAtraso}
+          <Kpi rotulo={nAtraso ? tx('Atrasado ({0} {1})', nAtraso, nAtraso === 1 ? tx('parcela') : tx('parcelas')) : tx('Atrasado')} valor={emAtraso}
             cor={emAtraso ? COR.saidas : COR.entradas} icone="relogio" />
           <Kpi rotulo={recebe ? tx('Recebido no mês') : tx('Pago no mês')} valor={noMes} cor={COR.entradas} icone="check" />
         </div>
@@ -146,7 +146,7 @@ export function Dividas(c: Ctx) {
             <ul>
               {contasEntrada.map((s) => (
                 <li key={s.conta.id}>
-                  <span className={`dv-todo-dia ${s.estado}`}><b>{String(s.dia).padStart(2, '0')}</b><small>{MESES_CURTO[c.mes - 1].toLowerCase()}</small></span>
+                  <span className={`dv-todo-dia ${s.estado}`}><b>{String(s.dia).padStart(2, '0')}</b><small>{noMeioDaFrase(MESES_CURTO[c.mes - 1])}</small></span>
                   <span className="dv-todo-texto"><strong>{s.conta.descricao}</strong><small>{s.estado === 'paga' ? 'recebido' : s.estado === 'atrasada' ? tx('atrasado {0} dias', s.diasAtraso) : s.estado === 'vence_hoje' ? tx('cai hoje') : tx('cai em {0} dias', s.diasRestantes)}</small></span>
                   <span className="dv-todo-valor">{fmtConta(s)}</span>
                   {s.estado === 'paga'
@@ -254,7 +254,7 @@ function CartaoDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar }: {
         </header>
         <div className="dv-cartao-meio">
           <span>
-            <small>{quitada ? (recebe ? 'recebido' : 'quitada') : recebe ? tx('falta receber') : tx('falta pagar')}</small>
+            <small>{quitada ? (recebe ? tx('recebido') : tx('quitada')) : recebe ? tx('falta receber') : tx('falta pagar')}</small>
             <strong>{quitada ? fmtDiv(s, s.saldoInicial) : <Numero valor={s.restante} formato={(n) => fmtDiv(s, n)} />}</strong>
             {s.moeda && !quitada && <small className="dv-aprox">{aproxDiv(s, s.restante)}</small>}
           </span>
@@ -266,7 +266,7 @@ function CartaoDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar }: {
           <span className="dv-barra" aria-hidden="true"><i style={{ width: `${pct * 100}%` }} /></span>
         )}
         <p className="dv-cartao-linha">
-          {quitada ? <>{tx('Tudo {0}. 🎉', recebe ? 'recebido' : 'pago')}</>
+          {quitada ? <>{tx('Tudo {0}. 🎉', recebe ? tx('recebido') : tx('pago'))}</>
             : cal?.atrasadas.length ? <><b className="ruim">{fmtDiv(s, cal.emAtraso)}</b> {tx('vencido desde {0}', fmtDataCurta(cal.atrasadas[0].vencimento))}</>
               : cal?.proxima ? <>{tx('Próxima:')} <b>{fmtDataCurta(cal.proxima.vencimento)}</b> · {fmtDiv(s, cal.proxima.falta)}{cal.proxima.pago > 0 && ' (resto)'}</>
                 : s.divida.valor_parcela ? <>{tx('{0} por mês', fmtDiv(s, s.divida.valor_parcela))}{s.quitacao && <> {tx('· até {0}', fmtMesAno(s.quitacao[0], s.quitacao[1]))}</>}</>
@@ -307,7 +307,7 @@ function Barras({ valores, recebe }: { valores: { ano: number; mes: number; valo
         <div key={`${v.ano}-${v.mes}`} className={`ccd-barra ${i === 0 ? 'atual' : ''} ${v.valor ? '' : 'vazia'}`} title={`${fmtMesAno(v.ano, v.mes)}: ${fmtValor(v.valor)}`}>
           <span className="ccd-barra-valor">{v.valor ? fmtValor(v.valor).replace(/,\d\d$/, '') : '—'}</span>
           <span className="ccd-barra-trilho"><i style={{ height: `${Math.max(v.valor ? 6 : 0, (v.valor / maior) * 100)}%`, animationDelay: `${i * 45}ms` }} /></span>
-          <span className="ccd-barra-mes">{MESES_CURTO[v.mes - 1].toLowerCase()}</span>
+          <span className="ccd-barra-mes">{noMeioDaFrase(MESES_CURTO[v.mes - 1])}</span>
         </div>
       ))}
     </div>
@@ -358,7 +358,7 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
         <div className="dv-ficha-numeros">
           <span><small>{recebe ? tx('falta receber') : tx('falta pagar')}</small><strong>{fmtDiv(s, s.restante)}</strong>{s.moeda && <small className="dv-aprox">{aproxDiv(s, s.restante)}</small>}</span>
           <span><small>{recebe ? tx('já recebido') : tx('já pago')}</small><strong className="bom">{fmtDiv(s, Math.max(0, s.saldoInicial - s.restante))}</strong></span>
-          <span><small>{s.divida.valor_parcela ? 'parcela' : 'total'}</small><strong>{fmtDiv(s, s.divida.valor_parcela ?? s.saldoInicial)}</strong></span>
+          <span><small>{s.divida.valor_parcela ? tx('parcela') : tx('total')}</small><strong>{fmtDiv(s, s.divida.valor_parcela ?? s.saldoInicial)}</strong></span>
         </div>
 
         {cal ? (
@@ -376,7 +376,7 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
                 </li>
               ))}
             </ol>
-            <p className="campo-ajuda">{tx('O que você {0} cobre as parcelas da mais antiga para a mais nova: pagou metade, a parcela fica pela metade; pagou a mais, adianta as próximas.', recebe ? 'recebe' : 'paga')}</p>
+            <p className="campo-ajuda">{(recebe ? tx('O que você recebe cobre as parcelas da mais antiga para a mais nova: pagou metade, a parcela fica pela metade; pagou a mais, adianta as próximas.') : tx('O que você paga cobre as parcelas da mais antiga para a mais nova: pagou metade, a parcela fica pela metade; pagou a mais, adianta as próximas.'))}</p>
           </section>
         ) : !c.d.dividasSemExtras && !quitada ? (
           <section className="dv-sem-data">
@@ -398,7 +398,7 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
                 <li key={m.id}>
                   <button disabled={!m.lanc} onClick={() => { if (m.lanc) { aoFechar(); c.editarLancamento(m.lanc) } }}>
                     <span className="ccd-hist-icone ok"><Icone nome={recebe ? 'receber' : 'check'} tamanho={15} /></span>
-                    <span className="ccd-hist-texto"><strong>{m.data ? fmtDataLonga(m.data) : tx('sem data')}</strong><small>{m.descricao || (recebe ? 'recebido' : 'pago')}</small></span>
+                    <span className="ccd-hist-texto"><strong>{m.data ? fmtDataLonga(m.data) : tx('sem data')}</strong><small>{m.descricao || (recebe ? tx('recebido') : tx('pago'))}</small></span>
                     <span className="ccd-hist-valor">{m.texto}</span>
                     {m.lanc && <Icone nome="lapis" tamanho={14} />}
                   </button>
@@ -406,7 +406,7 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
               ))}
             </ul>
           ) : (
-            <p className="quadro-vazio">{tx('Nada {0} ainda. Use o botão abaixo: o valor já vem sugerido e dá para trocar (pagar parte ou mais de uma parcela).', recebe ? 'recebido' : 'pago')}</p>
+            <p className="quadro-vazio">{tx('Nada {0} ainda. Use o botão abaixo: o valor já vem sugerido e dá para trocar (pagar parte ou mais de uma parcela).', recebe ? tx('recebido') : tx('pago'))}</p>
           )}
         </section>
 

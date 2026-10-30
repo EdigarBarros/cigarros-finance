@@ -3,7 +3,7 @@ import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
 import { parecencaComConta, situacoesDoMes, sugestoesDoMes } from '../lib/contasFixas'
 import { lerExtrato, limparDescricao, type LinhaExtrato } from '../lib/extrato'
 import { infoForma } from '../lib/formas'
-import { fmtValor, MESES_NOME } from '../lib/format'
+import { fmtValor, MESES_NOME, noMeioDaFrase } from '../lib/format'
 import { mesmoNome } from '../lib/rotulos'
 import { CATALOGO_BANCOS } from '../lib/bancos'
 import type { Lancamento, Tipo } from '../lib/types'
@@ -45,7 +45,7 @@ function ligarAsContas(linhas: Linha[], c: Ctx): Linha[] {
       if (!s.baixa || !mem) continue
       for (const l of doMes) {
         if (l.repetido || Math.abs(l.valor - s.baixa.valor) >= 0.005 || !parecencaComConta(s.conta, mem, comoLanc(l), true)) continue
-        Object.assign(l, { repetido: true, incluir: false, repetidoPor: tx('{0} já está como {1} em Contas do mês', s.conta.descricao, s.conta.tipo === 'entrada' ? 'recebida' : 'paga') })
+        Object.assign(l, { repetido: true, incluir: false, repetidoPor: tx('{0} já está como {1} em Contas do mês', s.conta.descricao, s.conta.tipo === 'entrada' ? tx('recebida') : tx('paga')) })
         break
       }
     }
@@ -263,7 +263,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
                     aoFechar()
                     if (ultimoMes && Number(ultimoMes.slice(0, 4)) === c.ano) c.irParaMes(Number(ultimoMes.slice(5, 7)))
                     c.irPara('lancamentos')
-                  }}>{tx('Ver lançamentos')}{ultimoMes ? ` de ${MESES_NOME[Number(ultimoMes.slice(5, 7)) - 1].toLowerCase()}` : ''}</button>
+                  }}>{ultimoMes ? tx('Ver lançamentos de {0}', noMeioDaFrase(MESES_NOME[Number(ultimoMes.slice(5, 7)) - 1])) : tx('Ver lançamentos')}</button>
                 </div>
               </>
             )}

@@ -5,7 +5,7 @@ import {
   agruparContas, aproxConta, dataDaBaixa, fmtConta, fraseDaSituacao, hojeLocal, inicioDoMes, mesesComAtraso, totaisDoMes, type SituacaoConta,
 } from '../lib/contasFixas'
 import { casasDaMoeda, mascarar, paraCampoMoeda } from '../lib/dinheiro'
-import { fmtDataCurta, fmtMoeda, fmtValor, MESES_NOME, parseNumero, simbolo } from '../lib/format'
+import { fmtDataCurta, fmtMoeda, fmtValor, MESES_NOME, parseNumero, simbolo, noMeioDaFrase } from '../lib/format'
 import { moedasUsaveis } from '../lib/moedas'
 import { mesmoNome } from '../lib/rotulos'
 import type { ContaFixa, Tipo } from '../lib/types'
@@ -36,7 +36,7 @@ const EXEMPLOS: { nome: string; tipo: Tipo; icone: string; dica: string; categor
 type Modelo = Pick<(typeof EXEMPLOS)[number], 'nome' | 'tipo' | 'categoria'>
 
 const mesDe = (iso: string | null) => (iso ? iso.slice(0, 7) : '')
-const quando = (iso: string) => `${MESES_NOME[Number(iso.slice(5, 7)) - 1].toLowerCase()}/${iso.slice(0, 4)}`
+const quando = (iso: string) => `${noMeioDaFrase(MESES_NOME[Number(iso.slice(5, 7)) - 1])}/${iso.slice(0, 4)}`
 
 const MES_CURTO = (m: number) => MESES_NOME[m - 1].slice(0, 3).toLowerCase()
 
@@ -52,7 +52,7 @@ export function Contas(c: Ctx) {
   const sits = c.situacoesContas
   const t = totaisDoMes(sits)
   const g = agruparContas(sits)
-  const nomeMes = MESES_NOME[c.mes - 1].toLowerCase()
+  const nomeMes = noMeioDaFrase(MESES_NOME[c.mes - 1])
   const anteriores = mesesComAtraso(contas, c.d.lancs, c.ano, c.mes)
   const nova = (m?: Modelo) => { setModelo(m); setEditando('nova') }
   const totalSaidas = t.jaPago + t.faltaPagar
@@ -91,7 +91,7 @@ export function Contas(c: Ctx) {
       {anteriores.length > 0 && (
         <div className="conta-aviso" role="status">
           <Icone nome="sino" tamanho={16} />
-          <span>{tx('Ficou conta sem pagar em')} {anteriores.map((a) => `${MESES_NOME[a.mes - 1].toLowerCase()} (${a.qtd})`).join(', ')}.</span>
+          <span>{tx('Ficou conta sem pagar em')} {anteriores.map((a) => `${noMeioDaFrase(MESES_NOME[a.mes - 1])} (${a.qtd})`).join(', ')}.</span>
           <button className="link" onClick={() => c.irParaMes(anteriores[0].mes)}>{tx('Ver {0}', MESES_NOME[anteriores[0].mes - 1].toLowerCase())}</button>
         </div>
       )}
@@ -137,7 +137,7 @@ export function Contas(c: Ctx) {
                     <span className="conta-info">
                       <strong>{x.descricao}{!x.ativa && <span className="conta-etiqueta">{tx('pausada')}</span>}</strong>
                       <small>
-                        {tx('{0} todo dia {1}', x.tipo === 'entrada' ? 'cai' : 'vence', x.dia)}
+                        {tx('{0} todo dia {1}', x.tipo === 'entrada' ? tx('cai') : tx('vence'), x.dia)}
                         {x.fim ? ` · até ${quando(x.fim)}` : ''}
                         {x.inicio > inicioDoMes(c.ano, c.mes) ? ` · começa em ${quando(x.inicio)}` : ''}
                       </small>
@@ -294,7 +294,7 @@ function Boleto({ s, c, indice, aoEditar, aoOutroValor }: { s: SituacaoConta; c:
           )}
         </div>
       </div>
-      {s.estado === 'paga' && <span className="ct-carimbo">{entrada ? 'recebido' : 'pago'}</span>}
+      {s.estado === 'paga' && <span className="ct-carimbo">{entrada ? tx('recebido') : tx('pago')}</span>}
     </article>
   )
 }
@@ -314,7 +314,7 @@ function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () 
   const salvar = () => {
     const n = parseNumero(valor)
     if (!n || n <= 0) return setErro(tx('Informe um valor maior que zero.'))
-    if (!data || data.slice(0, 7) !== `${c.ano}-${mm}`) return setErro(tx('Escolha uma data dentro de {0}.', MESES_NOME[c.mes - 1].toLowerCase()))
+    if (!data || data.slice(0, 7) !== `${c.ano}-${mm}`) return setErro(tx('Escolha uma data dentro de {0}.', noMeioDaFrase(MESES_NOME[c.mes - 1])))
     c.pagarConta(s, { valor: n, data, ...(s.moeda && cotacao ? { cotacao } : {}) })
     aoFechar()
   }
@@ -466,7 +466,7 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
           </label>
         </div>
         <span className="campo-ajuda">
-          {tx('A conta aparece todo mês a partir daí. Se já {0} neste mês, é só tocar em “', entrada ? 'recebeu' : 'pagou')}{entrada ? tx('Recebi') : tx('Paguei')}{tx('” depois. Deixe o “até quando” em branco se ela não tem data para acabar.')}
+          {tx('A conta aparece todo mês a partir daí. Se já {0} neste mês, é só tocar em “', entrada ? tx('recebeu') : tx('pagou'))}{entrada ? tx('Recebi') : tx('Paguei')}{tx('” depois. Deixe o “até quando” em branco se ela não tem data para acabar.')}
         </span>
         {erro && <p className="form-erro">{erro}</p>}
         <div className="form-acoes">

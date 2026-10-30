@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { COR } from '../lib/charts'
 import { casasDaMoeda, mascarar, paraCampoMoeda } from '../lib/dinheiro'
-import { fmtDataLonga, fmtMoeda, fmtValor, MESES_NOME, parseNumero, paraCampo, simbolo } from '../lib/format'
+import { fmtDataLonga, fmtMoeda, fmtValor, MESES_NOME, parseNumero, paraCampo, simbolo, noMeioDaFrase, mesEAno } from '../lib/format'
 import { situacaoMeta, MODELOS, type SituacaoMeta } from '../lib/metas'
 import { hojeLocal } from '../lib/cartoes'
 import { converter, MOEDAS } from '../lib/moedas'
@@ -17,7 +17,7 @@ import { tx } from '../lib/textos'
 
 const ICONES_META = ['🎯', '🛟', '✈️', '🚗', '🏠', '🎓', '🌴', '💍', '👶', '💻', '📱', '🎸', '🐶', '🏍️', '🎁', '💵', '🏖️', '⛺', '🏋️', '❤️']
 const CORES_META = ['#9d6bff', '#30d158', '#64d2ff', '#0a84ff', '#ff9f0a', '#ffd60a', '#ff375f', '#ff79c6', '#bf5af2', '#63e6e2']
-const quando = ([a, m]: [number, number]) => `${MESES_NOME[m - 1].toLowerCase()} de ${a}`
+const quando = ([a, m]: [number, number]) => mesEAno(a, m)
 const hoje = () => hojeLocal()
 
 const mesAno = (iso: string) => quando([Number(iso.slice(0, 4)), Number(iso.slice(5, 7))])
@@ -116,7 +116,7 @@ export function Metas(c: Ctx) {
             <div className="cartao mt-sobra">
               <span className="mt-sobra-icone"><Icone nome="cofre" tamanho={26} /></span>
               <span className="mt-sobra-texto">
-                <small>{tx('sobrou em {0}', MESES_NOME[c.mes - 1].toLowerCase())}</small>
+                <small>{tx('sobrou em {0}', noMeioDaFrase(MESES_NOME[c.mes - 1]))}</small>
                 <strong>{fmtValor(sobra)}</strong>
                 <span>{tx('Guardar numa meta?')}</span>
               </span>
@@ -278,7 +278,7 @@ function FichaMeta({ s, c, aoFechar, aoEditar, aoGuardar, aoRetirar }: {
           <PoteMeta progresso={s.progresso} cor={meta.cor} icone={meta.icone} tamanho={124} />
           <span className="mt-ficha-numeros">
             <span><small>{tx('guardado')}</small><strong>{fmtMoeda(s.guardado, moeda)}</strong></span>
-            <span><small>{s.batida ? 'alvo' : 'falta'}</small><strong>{fmtMoeda(s.batida ? meta.alvo : s.falta, moeda)}</strong></span>
+            <span><small>{s.batida ? tx('alvo') : tx('falta')}</small><strong>{fmtMoeda(s.batida ? meta.alvo : s.falta, moeda)}</strong></span>
             <span><small>{tx('{0}% do caminho', Math.round(s.progresso * 100))}</small>
               <strong>{meta.prazo ? tx('até {0}', mesAno(meta.prazo)) : tx('sem prazo')}</strong></span>
             {s.ritmo !== null && <span><small>{tx('seu ritmo')}</small><strong>{tx('{0}/mês', fmtMoeda(s.ritmo, moeda))}</strong></span>}

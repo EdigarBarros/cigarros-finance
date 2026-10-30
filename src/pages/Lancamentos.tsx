@@ -3,7 +3,7 @@ import { hojeLocal } from '../lib/cartoes'
 import { COR } from '../lib/charts'
 import { SEM_CATEGORIA } from '../lib/categorias'
 import { formaDe, FORMAS, type FormaPagamento } from '../lib/formas'
-import { fmtDataLonga, fmtValor, MESES_NOME } from '../lib/format'
+import { fmtDataLonga, fmtValor, MESES_NOME, noMeioDaFrase } from '../lib/format'
 import type { Lancamento, Tipo } from '../lib/types'
 import { BancoIcone } from '../components/BancoIcone'
 import { Selo } from '../components/Categorias'
@@ -203,7 +203,7 @@ export function Lancamentos(c: Ctx) {
             {filtrando ? <span className="lc-vazio-icone"><Icone nome="busca" tamanho={30} /></span> : <CenaLancamentos />}
             {filtrando
               ? <strong>{tx('Nada com esses filtros')}</strong>
-              : <h2>{c.d.lancs.length === 0 ? tx('Comece a fazer seus lançamentos') : tx('Nada lançado em {0}', MESES_NOME[c.mes - 1].toLowerCase())}</h2>}
+              : <h2>{c.d.lancs.length === 0 ? tx('Comece a fazer seus lançamentos') : tx('Nada lançado em {0}', noMeioDaFrase(MESES_NOME[c.mes - 1]))}</h2>}
             {!filtrando && <p>{c.d.lancs.length === 0
               ? tx('Registre o que entrou e o que saiu, um por um, ou traga tudo de uma vez do extrato do seu banco. O painel se monta sozinho.')
               : tx('Quando você lançar algo neste mês, ele aparece aqui, dia a dia.')}</p>}

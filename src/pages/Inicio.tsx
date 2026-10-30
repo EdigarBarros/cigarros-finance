@@ -1,7 +1,7 @@
 import { Fragment, useState } from 'react'
 import { COR, PALETA } from '../lib/charts'
 import { calendarioDe, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
-import { fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, variacao, LOCAL_DAS_DATAS } from '../lib/format'
+import { fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, variacao, LOCAL_DAS_DATAS, noMeioDaFrase } from '../lib/format'
 import { situacaoMeta } from '../lib/metas'
 import {
   Bloco, BlocoDinheiro, BlocoDividas, BlocoGastos, BlocoLancamentos, BlocoMetas,
@@ -44,9 +44,9 @@ export function Inicio(c: Ctx) {
 
   const abrirDivida = (s: SituacaoDivida) => setDivida(s)
   const novaDivida = () => setDivida('nova')
-  const nomeMes = MESES_NOME[c.mes - 1].toLowerCase()
+  const nomeMes = noMeioDaFrase(MESES_NOME[c.mes - 1])
   // Comparação só dentro do mesmo ano (em janeiro não há mês anterior).
-  const mesAnt = c.mes > 1 ? MESES_CURTO[c.mes - 2].toLowerCase() : undefined
+  const mesAnt = c.mes > 1 ? noMeioDaFrase(MESES_CURTO[c.mes - 2]) : undefined
   const delta = (atual: number, antes: number | undefined) => (v.comparacao ? variacao(atual, antes) : null)
   const situacaoMetas = c.d.metas.map((m) => situacaoMeta(m, c.d.movimentosMeta))
   const mesVazio = c.lancsMes.length === 0
@@ -117,12 +117,12 @@ export function Inicio(c: Ctx) {
   })
   const indicadores = [
     resultado,
-    !mesVazio && <Kpi key="entrou" rotulo={tx('Entrou no mês')} valor={r.entradas} icone="receber" cor={COR.caixa} tendencia={tendencia((x) => x.entradas)} delta={delta(r.entradas, a?.entradas)} contra={mesAnt && `em ${mesAnt}`} />,
-    !mesVazio && <Kpi key="saiu" rotulo={tx('Saiu no mês')} valor={r.saidas} icone="enviar" cor={COR.despesas} tendencia={tendencia((x) => x.saidas)} delta={delta(r.saidas, a?.saidas)} menorMelhor contra={mesAnt && `em ${mesAnt}`} />,
+    !mesVazio && <Kpi key="entrou" rotulo={tx('Entrou no mês')} valor={r.entradas} icone="receber" cor={COR.caixa} tendencia={tendencia((x) => x.entradas)} delta={delta(r.entradas, a?.entradas)} contra={mesAnt && tx('em {0}', mesAnt)} />,
+    !mesVazio && <Kpi key="saiu" rotulo={tx('Saiu no mês')} valor={r.saidas} icone="enviar" cor={COR.despesas} tendencia={tendencia((x) => x.saidas)} delta={delta(r.saidas, a?.saidas)} menorMelhor contra={mesAnt && tx('em {0}', mesAnt)} />,
     c.kpisExtras,
     detalhado && !mesVazio && (
       <Kpi key="media" rotulo={tx('Gasto médio por dia')} valor={r.saidas / decorridos} cor={COR.fluxo} icone="ano" tendencia={tendMedia}>
-        <span className="kpi-sub">{tx('em {0} {1}', decorridos, decorridos === 1 ? 'dia' : 'dias')}</span>
+        <span className="kpi-sub">{tx('em {0} {1}', decorridos, decorridos === 1 ? tx('dia') : tx('dias'))}</span>
       </Kpi>
     ),
     detalhado && maiorSaida && (

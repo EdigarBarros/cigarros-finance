@@ -2,7 +2,7 @@ import { CenaCofre } from '../components/Vazios'
 import { useState } from 'react'
 import { caixaDoBanco, somaCaixa } from '../lib/calc'
 import { COR } from '../lib/charts'
-import { fmtValor, MESES_CURTO, MESES_NOME, simbolo } from '../lib/format'
+import { fmtValor, MESES_CURTO, MESES_NOME, simbolo, noMeioDaFrase, mesEAno } from '../lib/format'
 import { converter, infoMoeda } from '../lib/moedas'
 import { CATALOGO_BANCOS, PALETA_BANCOS } from '../lib/bancos'
 import { mesmoNome, NOME_TIPO_CAIXA } from '../lib/rotulos'
@@ -54,7 +54,7 @@ export function Patrimonio(c: Ctx) {
 
   const faixaHerdado = herdado && (
     <div className="faixa-herdado">
-      <span>{tx('Os saldos vêm de')} <b>{tx('{0} de {1}', MESES_NOME[herdado[1] - 1].toLowerCase(), herdado[0])}</b>{tx('. Se nada mudou, confirme; se mudou, edite.')}</span>
+      <span>{tx('Os saldos vêm de')} <b>{mesEAno(herdado[0], herdado[1])}</b>{tx('. Se nada mudou, confirme; se mudou, edite.')}</span>
       <button className="btn" onClick={confirmar}><Icone nome="check" tamanho={16} /> {tx('Continua igual')}</button>
     </div>
   )
@@ -74,7 +74,7 @@ export function Patrimonio(c: Ctx) {
           <div>
             <button className="link voltar" onClick={() => setAberto(null)}><Icone nome="esq" tamanho={16} /> {tx('Todos os bancos')}</button>
             <h1 className="gd-titulo-banco">{banco ? <BancoIcone nome={banco.nome} cor={banco.cor} tamanho={40} /> : <span className="gd-sem-banco"><Icone nome="carteira" tamanho={22} /></span>}{nome}</h1>
-            <p className="sub">{tx('{0} de {1}', MESES_NOME[c.mes - 1], c.ano)}</p>
+            <p className="sub">{mesEAno(c.ano, c.mes, true)}</p>
           </div>
           {banco && <button className="btn" onClick={() => setGerenciar(banco)}><Icone nome="lapis" tamanho={15} /> {tx('Editar banco')}</button>}
         </header>
@@ -163,7 +163,7 @@ export function Patrimonio(c: Ctx) {
       <header className="pagina-topo">
         <div>
           <h1>{tx('Dinheiro guardado')}</h1>
-          <p className="sub">{tx('Como está em {0} de {1}.', MESES_NOME[c.mes - 1].toLowerCase(), c.ano)}{v.bancos && (' ' + tx('Toque num banco para ver só ele.'))}</p>
+          <p className="sub">{tx('Como está em {0} de {1}.', noMeioDaFrase(MESES_NOME[c.mes - 1]), c.ano)}{v.bancos && (' ' + tx('Toque num banco para ver só ele.'))}</p>
         </div>
         {v.bancos && <button className="btn primario" onClick={() => setGerenciar('novo')}><Icone nome="mais" tamanho={16} /> {tx('Adicionar banco')}</button>}
       </header>
@@ -175,11 +175,11 @@ export function Patrimonio(c: Ctx) {
             <span><small>{tx('tudo o que você tem')}</small><strong><Numero valor={total} formato={fmtValor} /></strong></span>
             {tendencia.valores.filter((x) => x !== null).length > 1 && <span className="gd-faisca"><Faisca {...tendencia} cor={COR.caixa} /></span>}
           </span>
-          {anterior > 0 && Math.abs(total - anterior) < 0.01 && <span className="chip-info">{tx('igual a {0}', MESES_CURTO[c.mes - 2].toLowerCase())}</span>}
+          {anterior > 0 && Math.abs(total - anterior) < 0.01 && <span className="chip-info">{tx('igual a {0}', noMeioDaFrase(MESES_CURTO[c.mes - 2]))}</span>}
           {anterior > 0 && Math.abs(total - anterior) >= 0.01 && (
             <span className={`chip-info ${total > anterior ? 'bom' : 'ruim'}`}>
               <Icone nome={total > anterior ? 'sobe' : 'desce'} tamanho={12} />
-              {fmtValor(Math.abs(total - anterior))} {total > anterior ? tx('a mais') : tx('a menos')} {tx('que em {0}', MESES_CURTO[c.mes - 2].toLowerCase())}
+              {fmtValor(Math.abs(total - anterior))} {total > anterior ? tx('a mais') : tx('a menos')} {tx('que em {0}', noMeioDaFrase(MESES_CURTO[c.mes - 2]))}
             </span>
           )}
           {partes.length > 0 ? (

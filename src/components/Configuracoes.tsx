@@ -262,7 +262,7 @@ export function ZerarDados({ contagem, aoBaixarBackup, aoZerar, aoFechar }: {
   const [ocupado, setOcupado] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const algum = PARTES_ZERAR.some((x) => escolha[x.id])
-  const pode = algum && texto.trim().toUpperCase() === 'ZERAR' && !ocupado
+  const pode = algum && texto.trim().toUpperCase() === tx('ZERAR') // a palavra de confirmação muda com o idioma (RESET, BORRAR) && !ocupado
   const marcadas = PARTES_ZERAR.filter((x) => x.id !== 'tudo' && escolha[x.id])
 
   const alternar = (id: ParteZerar) => setEscolha((e) => ({ ...e, [id]: !e[id] }))
@@ -306,7 +306,7 @@ export function ZerarDados({ contagem, aoBaixarBackup, aoZerar, aoFechar }: {
         </button>
         <label className="campo">
           <span className="campo-rotulo">{tx('Para confirmar, digite')} <b>{tx('ZERAR')}</b></span>
-          <input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="ZERAR" autoComplete="off" autoCapitalize="characters" />
+          <input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={tx('ZERAR')} autoComplete="off" autoCapitalize="characters" />
         </label>
         {erro && <p className="form-erro">{erro}</p>}
         <div className="form-acoes">
