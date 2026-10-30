@@ -250,7 +250,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       const { lerPlanilha, gravarImportacao } = await import('../lib/planilha')
       const meses = await lerPlanilha(f)
       if (arquivo.current) arquivo.current.value = ''
-      if (!meses.length) return alert(tx('Não encontrei abas de mês (ex.: OUTUBRO26) com dados nessa planilha.'))
+      if (!meses.length) return alert(tx('Não encontrei abas de mês com dados nessa planilha. Cada aba precisa ter o mês e o ano no nome (ex.: OUTUBRO26 ou NOV 26) ou no título (ex.: CONTROLE FINANCEIRO JANEIRO/2024).'))
       const lista = meses.map((m) => tx('{0}/{1}: {2} lançamentos', MESES_NOME[m.mes - 1], m.ano, m.lancs.length)).join('\n')
       if (!confirm(tx('Encontrei {0} meses:\n\n{1}\n\nOs dados desses meses no app serão substituídos pelos da planilha. Quer continuar?', meses.length, lista))) return
       setOcupado(tx('Salvando…'))
