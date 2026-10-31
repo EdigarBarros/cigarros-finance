@@ -27,6 +27,8 @@ export interface SituacaoDivida {
   saldoInicial: number
   pagoNoMes: number
   pagamentosNoMes: number
+  /** Quanto a dívida aumentou no mês (dinheiro emprestado a mais). */
+  aumentoNoMes: number
   totalPago: number
   /** Meses que faltam pagando a parcela (null sem parcela definida). */
   mesesRestantes: number | null
@@ -35,7 +37,10 @@ export interface SituacaoDivida {
   quitadaNoMes: boolean
 }
 
-/** Saldo devedor numa data: último saldo informado até ela, menos os pagamentos feitos depois dele. */
+/** Entrada numa dívida sua (empréstimo recebido) ou saída em "me devem" (empréstimo feito): a dívida cresce em vez de diminuir. */
+export const aumentaDivida = (tipo: Pagamento['tipo'], d: Pick<Divida, 'sentido'>) => (tipo === 'entrada') === ((d.sentido ?? 'devo') === 'devo') && tipo !== undefined
+
+/** Saldo devedor numa data: último saldo informado até ela, menos os pagamentos (e mais os aumentos, que valem negativo) feitos depois dele. */
 export function saldoEm(divida: Divida, saldos: SaldoDivida[], pagamentos: Pagamento[], ate: string): number | null {
   const marcos = saldos.filter((s) => s.divida_id === divida.id && s.data <= ate).sort((a, b) => a.data.localeCompare(b.data))
   const marco = marcos[marcos.length - 1]
@@ -72,9 +77,11 @@ export function situacaoDividas(
     const taxa = moeda ? taxas[moeda] ?? 1 : 1
     const d: Divida = moeda ? { ...original, valor_parcela: original.valor_parcela == null ? null : centavosDe(original.valor_parcela * taxa) } : original
     const saldosD = moeda ? saldos.filter((x) => x.divida_id === d.id).map((x) => ({ ...x, saldo: centavosDe(x.saldo * taxa) })) : saldos
-    const pagamentosD = moeda
-      ? pagamentos.filter((x) => x.divida_id === d.id).map((x) => ({ ...x, valor: x.moeda_original === moeda && x.valor_original ? centavosDe(x.valor_original * taxa) : x.valor }))
-      : pagamentos
+    // Valor positivo abate a dívida; negativo (empréstimo a mais) aumenta.
+    const pagamentosD = pagamentos.filter((x) => x.divida_id === d.id).map((x) => {
+      const v = moeda && x.moeda_original === moeda && x.valor_original ? centavosDe(x.valor_original * taxa) : x.valor
+      return { ...x, valor: aumentaDivida(x.tipo, d) ? -v : v }
+    })
     const restante = saldoEm(d, saldosD, pagamentosD, fim)
     if (restante === null) continue
     const restanteAntes = saldoEm(d, saldosD, pagamentosD, fimAntes)
@@ -91,15 +98,19 @@ export function situacaoDividas(
       const t = ano * 12 + (mes - 1) + mesesRestantes
       quitacao = [Math.floor(t / 12), (t % 12) + 1]
     }
-    const saldoInicial = Math.max(restante, ...saldosD.filter((s) => s.divida_id === d.id && s.data <= fim).map((s) => s.saldo))
+    // Base do progresso: o maior saldo informado, mais o que foi emprestado a mais depois dele.
+    const aumentos = pagamentosD.filter((p) => p.valor < 0 && p.data && p.data <= fim)
+    const saldoInicial = Math.max(restante, ...saldosD.filter((s) => s.divida_id === d.id && s.data <= fim)
+      .map((s) => s.saldo + aumentos.filter((a) => a.data! > s.data).reduce((t, a) => t - a.valor, 0)))
     lista.push({
       divida: d, original, moeda, taxa,
       restante,
       restanteAntes,
       saldoInicial,
-      pagoNoMes: doMes.reduce((a, p) => a + p.valor, 0),
-      pagamentosNoMes: doMes.length,
-      totalPago: pagamentosD.filter((p) => p.divida_id === d.id && p.data && p.data <= fim).reduce((a, p) => a + p.valor, 0),
+      pagoNoMes: doMes.reduce((a, p) => a + Math.max(0, p.valor), 0),
+      pagamentosNoMes: doMes.filter((p) => p.valor > 0).length,
+      aumentoNoMes: doMes.reduce((a, p) => a + Math.max(0, -p.valor), 0),
+      totalPago: pagamentosD.filter((p) => p.data && p.data <= fim).reduce((a, p) => a + Math.max(0, p.valor), 0),
       mesesRestantes,
       quitacao,
       quitadaNoMes: restante <= 0,
@@ -163,6 +174,11 @@ export const tomarLadoDividas = () => {
 
 export const sentidoDe = (d: Divida) => d.sentido ?? 'devo'
 export const meDevem = (d: Divida) => sentidoDe(d) === 'me_devem'
+/** O lançamento é dinheiro emprestado a mais (e não pagamento nem recebimento)? */
+export const ehEmprestimo = (l: { tipo: Pagamento['tipo']; divida_id?: string | null }, dividas: Divida[]) => {
+  const d = l.divida_id ? dividas.find((x) => x.id === l.divida_id) : undefined
+  return Boolean(d && aumentaDivida(l.tipo, d))
+}
 
 /** paga · parcial (pagou parte e ainda não venceu) · atrasada (venceu sem pagar tudo) · vence_hoje · a_vencer */
 export type EstadoParcela = 'paga' | 'parcial' | 'atrasada' | 'vence_hoje' | 'a_vencer'

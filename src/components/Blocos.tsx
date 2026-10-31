@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { caixaDoBanco, type Resumo } from '../lib/calc'
 import { COR } from '../lib/charts'
-import { fmtDiv, parcelasDe, type SituacaoDivida } from '../lib/dividas'
+import { ehEmprestimo, fmtDiv, parcelasDe, type SituacaoDivida } from '../lib/dividas'
 import { fmtMoeda, fmtMesAno, fmtPct, fmtValor, MESES_CURTO, MESES_NOME, noMeioDaFrase } from '../lib/format'
 import type { SituacaoMeta } from '../lib/metas'
 import { converter, infoMoeda, type Taxas } from '../lib/moedas'
 import type { Visao } from '../lib/perfil'
 import { fatiasDeGastos } from '../lib/categorias'
-import type { Banco, Caixa, Categoria, Detalhe, Lancamento, Tipo } from '../lib/types'
+import type { Banco, Caixa, Categoria, Detalhe, Divida, Lancamento, Tipo } from '../lib/types'
 import { Rosca } from './Graficos'
 import { IconeCategoria } from './IconeCategoria'
 import { Icone } from './Icone'
@@ -45,8 +45,9 @@ const maisRecentes = (ls: Lancamento[]) =>
   [...ls].sort((a, b) => (b.data ?? '').localeCompare(a.data ?? '') || (b.created_at ?? '').localeCompare(a.created_at ?? ''))
 
 /** Últimos lançamentos (simples e equilibrado) ou lançamentos do mês com filtro (detalhado). */
-export function BlocoLancamentos({ lancs, nivel, categoriaDe, bancos, aoEditar, aoVerTodos }: {
+export function BlocoLancamentos({ lancs, nivel, categoriaDe, bancos, dividas, aoEditar, aoVerTodos }: {
   lancs: Lancamento[]; nivel: Detalhe
+  dividas?: Divida[]
   categoriaDe: (l: Lancamento) => Categoria | undefined
   /** Só passa quando o módulo de bancos está ligado. */
   bancos?: Banco[]
@@ -69,7 +70,7 @@ export function BlocoLancamentos({ lancs, nivel, categoriaDe, bancos, aoEditar, 
       {doFiltro.length ? (
         <ul className="lista-lanc bloco-lista">
           {doFiltro.slice(0, limite).map((l) => (
-            <ItemLancamento key={l.id} l={l} categoria={categoriaDe(l)} banco={bancos?.find((b) => b.id === l.banco_id)} aoClicar={() => aoEditar(l)} />
+            <ItemLancamento key={l.id} l={l} categoria={categoriaDe(l)} banco={bancos?.find((b) => b.id === l.banco_id)} emprestimo={dividas ? ehEmprestimo(l, dividas) : false} aoClicar={() => aoEditar(l)} />
           ))}
         </ul>
       ) : (

@@ -2,7 +2,7 @@ import { CenaDividas } from '../components/Vazios'
 import { useState } from 'react'
 import { COR } from '../lib/charts'
 import {
-  aproxDiv, calendarioDe, fmtDiv, inicioPelaProxima, parcelasDe, projecaoMensal, tomarLadoDividas, totalDeParcelas,
+  aproxDiv, aumentaDivida, calendarioDe, fmtDiv, inicioPelaProxima, parcelasDe, projecaoMensal, tomarLadoDividas, totalDeParcelas,
   type Calendario, type ParcelaDivida, type SituacaoDivida,
 } from '../lib/dividas'
 import { fmtConta } from '../lib/contasFixas'
@@ -330,8 +330,8 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
   const lancs = c.d.lancs.filter((l) => l.divida_id === s.divida.id)
   const outrosAnos = c.d.pagamentos.filter((x) => x.divida_id === s.divida.id && !lancs.some((l) => l.id === x.id))
   const movimentos = [
-    ...lancs.map((l) => ({ id: l.id, data: l.data, texto: l.moeda_original && l.valor_original ? fmtMoeda(l.valor_original, l.moeda_original) : fmtValor(l.valor), descricao: l.descricao, lanc: l })),
-    ...outrosAnos.map((x) => ({ id: x.id, data: x.data, texto: x.moeda_original && x.valor_original ? fmtMoeda(x.valor_original, x.moeda_original) : fmtValor(x.valor), descricao: '', lanc: null })),
+    ...lancs.map((l) => ({ id: l.id, data: l.data, texto: l.moeda_original && l.valor_original ? fmtMoeda(l.valor_original, l.moeda_original) : fmtValor(l.valor), descricao: l.descricao, lanc: l, aumenta: aumentaDivida(l.tipo, s.original) })),
+    ...outrosAnos.map((x) => ({ id: x.id, data: x.data, texto: x.moeda_original && x.valor_original ? fmtMoeda(x.valor_original, x.moeda_original) : fmtValor(x.valor), descricao: '', lanc: null, aumenta: aumentaDivida(x.tipo, s.original) })),
   ].sort((a, b) => (b.data ?? '').localeCompare(a.data ?? ''))
   const quitada = s.restante <= 0
   const sugerido = cal?.sugerido || (s.divida.valor_parcela ? Math.min(s.divida.valor_parcela, s.restante) : 0)
@@ -397,9 +397,9 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
               {movimentos.slice(0, 12).map((m) => (
                 <li key={m.id}>
                   <button disabled={!m.lanc} onClick={() => { if (m.lanc) { aoFechar(); c.editarLancamento(m.lanc) } }}>
-                    <span className="ccd-hist-icone ok"><Icone nome={recebe ? 'receber' : 'check'} tamanho={15} /></span>
-                    <span className="ccd-hist-texto"><strong>{m.data ? fmtDataLonga(m.data) : tx('sem data')}</strong><small>{m.descricao || (recebe ? tx('recebido') : tx('pago'))}</small></span>
-                    <span className="ccd-hist-valor">{m.texto}</span>
+                    <span className="ccd-hist-icone ok"><Icone nome={m.aumenta ? 'receber' : recebe ? 'receber' : 'check'} tamanho={15} /></span>
+                    <span className="ccd-hist-texto"><strong>{m.data ? fmtDataLonga(m.data) : tx('sem data')}</strong><small>{m.descricao || (m.aumenta ? tx('emprestado a mais') : recebe ? tx('recebido') : tx('pago'))}</small></span>
+                    <span className="ccd-hist-valor">{m.aumenta ? '+ ' : ''}{m.texto}</span>
                     {m.lanc && <Icone nome="lapis" tamanho={14} />}
                   </button>
                 </li>
