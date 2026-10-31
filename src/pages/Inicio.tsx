@@ -1,19 +1,19 @@
-import { Fragment, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { COR, PALETA } from '../lib/charts'
 import { calendarioDe, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
-import { fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, variacao, LOCAL_DAS_DATAS, noMeioDaFrase } from '../lib/format'
+import { fmtMoeda, fmtValor, MESES_CURTO, moedaAtual, MESES_NOME, variacao, LOCAL_DAS_DATAS, noMeioDaFrase } from '../lib/format'
 import { situacaoMeta } from '../lib/metas'
 import {
   Bloco, BlocoDinheiro, BlocoDividas, BlocoGastos, BlocoLancamentos, BlocoMetas,
 } from '../components/Blocos'
 import { FormDivida } from '../components/Formularios'
-import { GraficoFluxo } from '../components/Graficos'
+import { GraficoFluxo, moedasDoAno } from '../components/Graficos'
 import { Icone } from '../components/Icone'
 import { BannerCarrossel, type Slide } from '../components/BannerCarrossel'
 import { ConviteImportar } from '../components/ConviteImportar'
 import { CartaoAcompanhar, CartaoSugestao } from '../components/Configuracoes'
 import { Encaixe, type ItemEncaixe } from '../components/Encaixe'
-import { Kpi, Progresso, ReguaMeses, type Tendencia } from '../components/ui'
+import { Kpi, Progresso, ReguaMeses, Segmentado, type Tendencia } from '../components/ui'
 import { BlocoParaFazer, ResumoSimples } from '../components/Simples'
 import { tarefasDoMes } from '../lib/paraFazer'
 import { totaisDoMes } from '../lib/contasFixas'
@@ -46,6 +46,10 @@ export function Inicio(c: Ctx) {
   // conta nova vê a mesma boas-vindas em todos os jeitos
   const simples = nivel === 'simples' && !c.contaNova
   const [divida, setDivida] = useState<SituacaoDivida | 'nova' | null>(null)
+  // gráfico de fluxo em outra moeda (só há escolha quando existe algo em outra moeda no ano)
+  const moedasFora = useMemo(() => moedasDoAno(c.porMes), [c.porMes])
+  const [moedaEscolhida, setMoedaFluxo] = useState(moedaAtual())
+  const moedaFluxo = moedasFora.includes(moedaEscolhida) ? moedaEscolhida : moedaAtual()
 
   const abrirDivida = (s: SituacaoDivida) => setDivida(s)
   const novaDivida = () => setDivida('nova')
@@ -182,8 +186,15 @@ export function Inicio(c: Ctx) {
         </span>
       }>
       {/* o gráfico ocupa a altura que sobrar no cartão, para ficar da mesma altura que os lançamentos ao lado */}
+      {/* só aparece quando há algo em outra moeda; a visão padrão é a da moeda principal */}
+      {moedasFora.length > 0 && (
+        <div className="grafico-moeda grafico-moeda-inicio">
+          <Segmentado rotulo={tx('Ver o gráfico em')} valor={moedaFluxo} aoMudar={setMoedaFluxo}
+            opcoes={[moedaAtual(), ...moedasFora].map((m) => ({ id: m, nome: m }))} />
+        </div>
+      )}
       <div className="bloco-corpo grafico-esticado">
-        <GraficoFluxo porMes={c.porMes} mesAtual={c.mes} compacto={mobile} />
+        <GraficoFluxo porMes={c.porMes} mesAtual={c.mes} compacto={mobile} moeda={moedaFluxo} />
       </div>
       {/* escolher o mês aqui troca a página inteira, como o seletor do topo */}
       <ReguaMeses mes={c.mes} comDados={c.porMes.map(Boolean)} aoEscolher={c.irParaMes} />

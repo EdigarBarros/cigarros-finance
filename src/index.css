@@ -3739,3 +3739,4 @@ body { top: 0 !important; }
 
 /* seletor de moeda acima do gráfico do ano */
 .grafico-moeda { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+.grafico-moeda-inicio { padding: 0 22px 6px; margin-bottom: 0; }
