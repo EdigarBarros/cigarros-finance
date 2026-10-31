@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import type { Sugestao } from '../lib/adaptacao'
 import type { MesEfetivo, Resumo } from '../lib/calc'
 import type { SituacaoCartao } from '../lib/cartoes'
+import type { Conselho } from '../lib/conselheiro'
 import type { MemoriaConta, SituacaoConta, SugestaoVinculo } from '../lib/contasFixas'
 import type { SituacaoDivida } from '../lib/dividas'
 import type { Taxas } from '../lib/moedas'
@@ -53,6 +54,14 @@ export interface Ctx {
   /** Esconde de vez um convite ou dica avulsa (guardado no perfil, junto com as sugestões recusadas). */
   dispensar: (id: string) => void
   ligarModulo: (m: Modulo) => void
+  /** Conselhos do conselheiro financeiro (lib/conselheiro.ts), do mais para o menos importante, já sem os dispensados. */
+  conselhos: Conselho[]
+  /** "Agora não": esconde o conselho até o mês que vem. */
+  dispensarConselho: (id: string) => void
+  /** Poucos meses fechados com entradas e saídas: o conselheiro não tem base para opinar (a lista vem vazia). */
+  conselhosSemDados: boolean
+  /** Quantos conselhos a pessoa escondeu até o mês que vem. */
+  conselhosDispensados: number
   categorias: Categoria[]
   /** Categoria de um lançamento (undefined = sem categoria). */
   categoriaDe: (l: Lancamento) => Categoria | undefined

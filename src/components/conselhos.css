@@ -1,0 +1,72 @@
+/* =========================================================================
+   Saúde do seu dinheiro: os conselhos do conselheiro (lib/conselheiro.ts) na Início.
+   Cor pela gravidade, com as variáveis do app: urgente = --saida, atenção = --divida (amarelo), elogio = --entrada.
+   ========================================================================= */
+
+.conselhos-conta {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 600; color: var(--alerta-texto); background: color-mix(in srgb, var(--saida) 12%, transparent);
+}
+
+.conselhos-lista {
+  list-style: none; margin: 0; padding: 4px 14px 6px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 12px;
+}
+
+.conselho {
+  --c: var(--entrada); --ct: color-mix(in srgb, var(--entrada) 78%, var(--texto));
+  position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 14px; align-content: start;
+  padding: 16px 16px 14px 18px; border-radius: var(--raio-m); overflow: hidden;
+  background: color-mix(in srgb, var(--c) 6%, var(--superficie));
+  border: 1px solid color-mix(in srgb, var(--c) 26%, var(--borda));
+}
+/* a faixa da cor na esquerda marca a gravidade mesmo sem ler o selo */
+.conselho::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--c); }
+.conselho.urgente { --c: var(--saida); --ct: var(--alerta-texto); }
+.conselho.atencao { --c: var(--divida); --ct: var(--aviso-texto); }
+
+.conselho-icone {
+  display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%;
+  color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent);
+}
+:root[data-tema='claro'] .conselho-icone { color: var(--ct); }
+
+.conselho-texto { display: grid; gap: 5px; justify-items: start; min-width: 0; }
+.conselho-selo {
+  display: inline-flex; align-items: center; height: 21px; padding: 0 9px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 650; letter-spacing: .01em; color: var(--ct);
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+}
+.conselho-texto strong { font-size: 15.5px; font-weight: 650; line-height: 1.3; letter-spacing: -.01em; }
+.conselho-texto p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--texto-2); }
+
+.conselho-acoes { grid-column: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 8px; }
+.conselho-acoes .btn { height: 38px; padding: 0 16px; font-size: 14px; }
+.conselho-agora-nao {
+  background: none; border: 0; padding: 8px 2px; font-size: 13.5px; font-weight: 500; color: var(--texto-2);
+  text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; transition: color .2s, text-decoration-color .2s;
+}
+.conselho-agora-nao:hover, .conselho-agora-nao:focus-visible { color: var(--texto); text-decoration-color: currentColor; }
+
+.conselhos-vazio {
+  display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0; padding: 22px 22px 18px;
+  text-align: left; line-height: 1.5; color: var(--texto-2);
+}
+.conselhos-vazio svg { flex: none; }
+.conselhos-vazio.ok { font-weight: 550; }
+.conselhos-vazio.ok b { color: var(--texto); font-weight: 650; }
+.conselhos-vazio.ok svg { color: var(--entrada); }
+
+.conselhos-rodape { margin: 0; padding: 8px 22px 10px; font-size: 12.5px; line-height: 1.45; color: var(--texto-3); }
+
+@media (max-width: 860px) {
+  .conselhos-lista { padding: 2px 12px 4px; gap: 10px; }
+  .conselho { grid-template-columns: 34px minmax(0, 1fr); gap: 4px 12px; padding: 14px 14px 12px 16px; }
+  .conselho-icone { width: 34px; height: 34px; }
+  .conselho-icone svg { width: 18px; height: 18px; }
+  .conselho-acoes { grid-column: 1 / -1; margin-top: 6px; }
+  .conselho-acoes .btn { flex: 1 1 auto; height: 44px; }
+  .conselho-agora-nao { min-height: 44px; padding: 0 8px; }
+  .conselhos-rodape { padding: 6px 16px 8px; }
+  .conselhos-vazio { padding: 18px 16px 14px; }
+}

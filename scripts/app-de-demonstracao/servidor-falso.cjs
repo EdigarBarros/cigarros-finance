@@ -9,7 +9,7 @@ const jwt=`${b64({alg:'HS256',typ:'JWT'})}.${b64({sub:uid,role:'authenticated',e
 const user={id:uid,aud:'authenticated',role:'authenticated',email:'teste@exemplo.com',user_metadata:{nome:'Teste'},app_metadata:{},created_at:'2026-01-01T00:00:00Z'}
 const sessao={access_token:jwt,refresh_token:'r',token_type:'bearer',expires_in:99999,expires_at:4102444800,user}
 const body0=r=>{try{return r.postDataJSON()}catch{return null}}
-exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,semSessao=false,assinatura=null,funcoes={},dpr=1,toque=false}={}){
+exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,semSessao=false,assinatura=null,funcoes={},dpr=1,toque=false,semColunas={}}={}){
   const db={assinaturas:[{user_id:uid,status:'cortesia',teste_fim:null,periodo_fim:null,cancela_no_fim:false,moeda:null}],
     perfis:[{user_id:uid,nome:'Teste',moeda:'BRL',moedas:[],detalhe:'detalhado',modulos:{dividas:true,contas:true,cartoes:true,bancos:true,investimentos:true,moedas:false,metas:true},dispensadas:['tour','importar'],onboarding_em:'2026-01-01T00:00:00Z',...perfil}],
     categorias:[],lancamentos:[],meses:[],dividas:[],divida_saldos:[],bancos:[],metas:[],meta_movimentos:[],contas_fixas:[],cartoes:[],faturas_pagas:[],erros_app:[],...dados}
@@ -35,9 +35,14 @@ exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,se
     if(u.pathname.includes('/auth/v1/user'))return route.fulfill({status:200,headers:h,body:JSON.stringify(user)})
     if(u.pathname.includes('/auth/v1'))return route.fulfill({status:200,headers:h,body:JSON.stringify({...sessao,user})})
     if(!(t in db))return route.fulfill({status:404,headers:h,body:JSON.stringify({code:'42P01',message:'relation does not exist'})})
+    // semColunas: { dividas: ['juros_mes'] } simula uma migração que ainda não rodou: ler/gravar a coluna dá erro, como no Supabase
+    const faltam=semColunas[t]||[]
+    const erroColuna=(code,message)=>route.fulfill({status:400,headers:h,body:JSON.stringify({code,message})})
     const single=/pgrst\.object/.test(req.headers()['accept']||'')
     let body=null;try{body=req.postDataJSON()}catch{}
-    if(m==='GET'||m==='HEAD'){const off=+(u.searchParams.get('offset')||0),lim=Math.min(+(u.searchParams.get('limit')||1000),1000);const rows=db[t].slice(off,off+lim);// como o Supabase: no máximo 1000 linhas por consulta
+    if(faltam.length&&(m==='POST'||m==='PATCH')){const col=faltam.find(c=>(Array.isArray(body)?body:[body]).some(x=>x&&c in x));if(col)return erroColuna('PGRST204',`Could not find the '${col}' column of '${t}' in the schema cache`)}
+    if(faltam.length&&m==='GET'){const col=faltam.find(c=>(u.searchParams.get('select')||'').split(',').map(x=>x.trim()).includes(c));if(col)return erroColuna('42703',`column ${t}.${col} does not exist`)}
+    if(m==='GET'||m==='HEAD'){const off=+(u.searchParams.get('offset')||0),lim=Math.min(+(u.searchParams.get('limit')||1000),1000);const rows=db[t].slice(off,off+lim).map(x=>faltam.length?Object.fromEntries(Object.entries(x).filter(([k])=>!faltam.includes(k))):x);// como o Supabase: no máximo 1000 linhas por consulta
     return route.fulfill({status:200,headers:h,body:JSON.stringify(single?(rows[0]??null):rows)})}
     if(m==='POST'){const arr=Array.isArray(body)?body:[body];const novos=arr.map(x=>({id:crypto.randomUUID(),user_id:uid,created_at:new Date().toISOString(),...x}));
       if(u.searchParams.get('on_conflict')||/merge-duplicates/.test(req.headers()['prefer']||'')){const i=db[t].findIndex(x=>x.user_id===uid);if(i>=0&&t==='perfis'){db[t][i]={...db[t][i],...novos[0],id:undefined};return route.fulfill({status:201,headers:h,body:'[]'})}}

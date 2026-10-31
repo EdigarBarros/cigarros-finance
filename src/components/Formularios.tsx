@@ -4,8 +4,8 @@ import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
 import { gerarParcelas, hojeLocal, nomeDaFatura, textoParcelamento } from '../lib/cartoes'
 import { formaDe, formaPelaDescricao, formasDoTipo, type FormaPagamento } from '../lib/formas'
 import { COR } from '../lib/charts'
-import { calendarioDe, dividaPelaDescricao, inicioPelaProxima, meDevem, mesesAntes, nativoDiv, parcelasDe, somaMesesData, type SituacaoDivida } from '../lib/dividas'
-import { dataPadrao, fmtDataLonga, fmtMesAno, fmtMoeda, fmtValor, parseNumero, simbolo } from '../lib/format'
+import { calendarioDe, dividaPelaDescricao, inicioPelaProxima, jurosAoAno, meDevem, mesesAntes, nativoDiv, parcelasDe, somaMesesData, type SituacaoDivida } from '../lib/dividas'
+import { dataPadrao, fmtDataLonga, fmtMesAno, fmtMoeda, fmtTaxa, fmtTaxaAno, fmtValor, parseNumero, simbolo } from '../lib/format'
 import { casasDaMoeda, mascarar, paraCampoMoeda } from '../lib/dinheiro'
 import { infoMoeda, moedasUsaveis, type Taxas } from '../lib/moedas'
 import { visao } from '../lib/perfil'
@@ -664,6 +664,11 @@ interface FormDividaProps {
   perfil: Perfil
   /** Migração 14 pendente: dívida só na moeda principal. */
   semMoeda?: boolean
+  /**
+   * Juros por mês (migração 19). O campo só aparece com `false`: passe `dividasSemJuros` de `useDados`. Sem passar (ou com a
+   * migração pendente), o campo some e a dívida é gravada sem a coluna.
+   */
+  semJuros?: boolean
   aoCriar: (d: NovaDivida & { saldo: number; data: string; marcoInicial?: { data: string; saldo: number } }) => unknown
   aoEditar: (id: string, patch: Partial<Divida>) => void
   aoNovoSaldo: (id: string, data: string, saldo: number) => void
@@ -690,7 +695,7 @@ const inteiro = (t: string) => {
  * vence a próxima. Parcelada, pede o valor da parcela e quantas faltam (e, se souber, de quantas); sem parcela fixa,
  * pede quanto falta e, se houver, a data combinada. O vencimento da próxima monta o calendário de parcelas.
  */
-export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perfil, semMoeda, aoCriar, aoEditar, aoNovoSaldo, aoMudarValor, aoMoverInicio, pagamentos, aoExcluir, aoFechar, definirParcela }: FormDividaProps) {
+export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perfil, semMoeda, semJuros, aoCriar, aoEditar, aoNovoSaldo, aoMudarValor, aoMoverInicio, pagamentos, aoExcluir, aoFechar, definirParcela }: FormDividaProps) {
   // a dívida como foi cadastrada (parcela na moeda dela); `situacao.divida` já vem convertida para a moeda principal
   const d = situacao?.original
   const moedaInicial = d?.moeda || perfil.moeda
@@ -702,6 +707,8 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
   const [sentido, setSentido] = useState<'devo' | 'me_devem'>(d?.sentido ?? sentidoInicial ?? 'devo')
   const [descricao, setDescricao] = useState(d?.descricao ?? '')
   const [pessoa, setPessoa] = useState(d?.pessoa ?? '')
+  // juros por mês, como a pessoa digita ("2,5"); em branco = não sabe
+  const [juros, setJuros] = useState(d?.juros_mes != null ? fmtTaxa(d.juros_mes) : '')
   const [parcelado, setParcelado] = useState<'sim' | 'nao'>(d && !d.valor_parcela && !definirParcela ? 'nao' : 'sim')
   const [parcela, setParcela] = useState(d?.valor_parcela ? paraCampoMoeda(d.valor_parcela, moedaInicial) : '')
   const [faltam, setFaltam] = useState('')
@@ -726,6 +733,9 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
   const recebe = sentido === 'me_devem'
 
   const vp = parseNumero(parcela)
+  const comJuros = semJuros === false && !recebe
+  const jurosNum = juros.trim() ? parseNumero(juros.replace('%', '')) : null
+  const jurosValidos = jurosNum !== null && jurosNum >= 0 && jurosNum <= 100
   const nFaltam = inteiro(faltam)
   const nTotal = inteiro(total)
   // Prévia do que vai ficar: "falta R$ 3.600 (12 × R$ 300) · última em out de 2027"
@@ -748,7 +758,9 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
 
   const salvar = async () => {
     if (!descricao.trim()) return setErro(recebe ? tx('Dê um nome (ex.: computador que vendi).') : tx('Dê um nome para a dívida.'))
-    const extras = { sentido, pessoa: pessoa.trim() || null }
+    if (comJuros && juros.trim() && !jurosValidos) return setErro(tx('Digite os juros por mês de 0 a 100 (ex.: 2,5), ou deixe em branco se não souber.'))
+    // com o campo à mostra, em branco limpa os juros; em "me devem" ou sem a migração 19, a coluna nem entra
+    const extras = { sentido, pessoa: pessoa.trim() || null, ...(semJuros === false ? { juros_mes: comJuros && jurosValidos ? jurosNum : null } : {}) }
     if (!comecou) return setErro(tx('Escolha quando a dívida começou.'))
     if (d && situacao?.inicioEm && comecou !== situacao.inicioEm) {
       const motivo = await aoMoverInicio?.(d.id, comecou)
@@ -928,6 +940,20 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
             </label>
           )}
           </>
+        )}
+        {comJuros && (
+          <label className="campo">
+            <span className="campo-rotulo">{tx('Juros por mês (%)')} <small>(opcional)</small></span>
+            <span className="campo-caixa">
+              <input inputMode="decimal" value={juros} maxLength={6} placeholder={tx('Ex.: 2,5')} onFocus={(e) => e.target.select()}
+                onChange={(e) => setJuros(e.target.value.replace(/[^\d.,]/g, ''))} />
+              <span className="prefixo">%</span>
+            </span>
+            <span className="campo-ajuda">{tx('Quanto a dívida cresce por mês. Está no contrato ou na fatura (procure por "juros ao mês" ou "a.m."). Se não souber, deixe em branco.')}</span>
+            {jurosValidos && jurosNum > 0 && (
+              <span className="campo-ajuda">{tx('{0}% ao mês ≈ {1}% ao ano', fmtTaxa(jurosNum), fmtTaxaAno(jurosAoAno(jurosNum)))}</span>
+            )}
+          </label>
         )}
         {d && (
           <label className="campo">

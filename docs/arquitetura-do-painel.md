@@ -78,6 +78,20 @@ Animações: o app tem a própria escolha (Configurações → Painel → Aparê
 movimento" do sistema não desliga mais as animações sozinho. A troca de tema espalha o tema novo como uma mancha de tinta de borda
 ondulada a partir do botão (View Transitions; sem elas, uma camada da cor do tema novo faz o mesmo caminho).
 
+**Saúde do seu dinheiro** (`components/BlocoConselhos.tsx`, estilos em `components/conselhos.css`): bloco em largura total, logo
+abaixo dos indicadores (e do convite e da sugestão, se houver), antes do "O que fazer". Mostra **todos** os conselhos ativos do
+conselheiro (`lib/conselheiro.ts`; o `Painel` calcula uma vez e passa por `Ctx.conselhos`, o mesmo que alimenta o balão do menu
+lateral). Cada conselho é um cartão com ícone, selo da gravidade em palavras (**Importante**, **Fique de olho**, **Parabéns**),
+o título, o "porque" com os números, um botão com verbo que leva à página de destino e o "Agora não", discreto, que esconde o
+aviso até o mês que vem (`Ctx.dispensarConselho`, a mesma regra do "x" do balão). A cor segue a gravidade com as variáveis do app
+(urgente = `--saida`, atenção = `--divida`, elogio = `--entrada`) e uma faixa na borda esquerda, para não depender só da cor. Os
+urgentes vêm primeiro (o motor já ordena); no computador os cartões ficam em 2 colunas, no celular em 1, com o botão em largura
+cheia. No jeito **simples** aparecem os 2 primeiros e "Ver todos" abre o resto; no equilibrado e no detalhado, todos. Sem
+conselhos: com dados, "Tudo em ordem por aqui." (e, se a pessoa escondeu avisos neste mês, o lembrete de que voltam no mês que
+vem); sem dados (menos de 2 meses fechados com entradas e saídas, `faltamDadosParaConselhos` em `lib/conselheiro.ts`, com o mesmo critério do motor), a frase
+que explica o que lançar. Conta nova não vê o bloco. O rodapé diz, em palavras simples, que são orientações gerais calculadas
+com o que foi lançado, e não recomendação de investimento.
+
 O resultado do mês deixou de ser um "hero" separado: virou o primeiro cartão, em destaque, mantendo a frase de ancoragem.
 O gráfico de 12 meses com as linhas extras continua na página **Resumo do ano**.
 
@@ -309,6 +323,26 @@ linhas são reveladas por uma cortina que corre da esquerda para a direita com a
 Menu lateral: o cartão do pé alterna dicas úteis, cada uma com um botão (contas que pedem atenção, lançar o gasto de hoje,
 quanto falta nas dívidas, metas, personalizar, backup, tema). Troca a cada 7 s, para sob o ponteiro, e os pontinhos escolhem a dica.
 
+Ordem das dicas: primeiro os alertas de hoje (contas, faturas, parcelas atrasadas, te devem); depois até 3 **conselhos** do
+conselheiro financeiro (`lib/conselheiro.ts`); as dicas genéricas (lançar, importar, metas, personalizar, backup, tema) só
+aparecem quando o conselheiro não tem nada a dizer. O conselheiro é um motor de regras puro e determinístico: recebe os dados
+já carregados e devolve `Conselho[]` ordenado por prioridade (id estável, gravidade, ícone, título curto, "porque" com o número,
+página de destino e botão). Regras (limites como constantes no topo do arquivo, são referências de educação financeira, não
+regra rígida): gasta mais do que ganha (urgente), sobra menos de 5% das entradas, parcelas de dívidas acima de 30% das entradas
+(acima de 50% é urgente), dívida maior que há 3 meses, reserva abaixo de 3 meses de gastos, categoria do mês atual mais de 40%
+acima da média, parcelas do cartão no mês que vem acima de 30% das entradas, meta com prazo em ritmo menor que o necessário, e
+o elogio por sobrar mais de 20% nos 3 meses. Três regras usam os **juros por mês** de cada dívida (`dividas.juros_mes`, migração 19,
+campo opcional "Juros por mês (%)" no formulário da dívida, só em "Eu devo"; olham só dívidas que a pessoa deve e que ainda têm
+saldo): `juros-altos:<dívida>` (urgente, prioridade 92: a pior dívida cobra 8% ao mês ou mais, `JUROS_ALTOS_MES`; mostra o
+equivalente ao ano), `pagar-a-mais-cara` (atenção, 80, logo abaixo de "gasta mais do que ganha" e acima das outras regras de
+atenção: com juros informados em 2 ou mais dívidas, a de maior juros cobra pelo menos 0,5 ponto a mais que a segunda,
+`JUROS_DIFERENCA_MIN`; aconselha adiantar primeiro essa) e `informe-juros` (atenção, 20, só acima do elogio: há dívida em aberto e
+nenhuma tem juros informados; some assim que uma tiver). Sem a migração 19, `dividasSemJuros` (de `useDados`) esconde o campo,
+silencia o convite e as gravações vão sem a coluna. Equivalente ao ano = juros compostos, `(1 + i)^12 − 1` (`jurosAoAno`). As regras de fluxo usam a média dos últimos 3 meses **fechados** com entradas e
+saídas lançadas e só falam com pelo menos 2 deles. O "x" do canto dispensa o conselho até o mês que vem (grava
+`id@AAAA-MM` em `perfil.dispensadas`; o `id` puro na lista esconde de vez). Os lançamentos dos meses fechados que caem fora do
+ano aberto vêm de `lancsRecentes` em `useDados`.
+
 ### 4.10 Visual: ícones, bandeiras, paisagens e Configurações
 
 - **Ícones de categoria** (`components/IconeCategoria.tsx`): cada emoji que o app oferece vira um ícone de traço no estilo do
@@ -377,6 +411,11 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
   venceu); tocar nela abre a página Dívidas já em "Me devem" (`pedirLadoDividas`).
 - **Sem a migração 10** (`supabase/migracao-10-dividas-e-a-receber.sql`) a página funciona só com "Eu devo", sem pessoa e
   sem calendário, e mostra o aviso.
+- **Juros por mês** (opcional, só "Eu devo"): o formulário pergunta "Juros por mês (%)" com uma ajuda leiga e mostra o
+  equivalente ao ano ("2,5% ao mês ≈ 34% ao ano"); aceita vírgula. O cartão e a ficha mostram a taxa discretamente ao lado do
+  banco ("Banco Itaú · parcela 10 de 48 · 1,8% ao mês"). Os conselhos que usam isso estão na seção do menu lateral. Sem a
+  migração 19 (`supabase/migracao-19-juros-das-dividas.sql`) o campo some e nada mais muda. O `FormDivida` só mostra o campo
+  quando recebe `semJuros={c.d.dividasSemJuros}`.
 - A renegociação de fatura do cartão cria a dívida já com o banco, o total de parcelas e o vencimento da 1ª parcela.
 
 ### 4.14 Metas (potes)
