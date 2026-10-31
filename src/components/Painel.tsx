@@ -8,7 +8,7 @@ import {
 } from '../lib/contasFixas'
 import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
 import { COR } from '../lib/charts'
-import { calendarioDe, fimDoMes, inicioDaDivida, meDevem, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
+import { calendarioDe, fimDoMes, inicioDaDivida, meDevem, saldoMaisRecenteDaDivida, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
 import { definirMoedaPrincipal, definirValoresOcultos, fmtDataCurta, fmtValor, MESES_CURTO, MESES_NOME, useValoresOcultos } from '../lib/format'
 import { useCambio } from '../lib/moedas'
 import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
@@ -724,6 +724,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           dividas={dividasDoForm}
           aoNovaDivida={criarEmprestimo}
           inicioDivida={(id) => inicioDaDivida(d.saldos, id)}
+          saldoDaDivida={(id) => saldoMaisRecenteDaDivida(d.saldos, id)}
           aoMoverInicioDivida={d.moverInicioDivida}
           perfil={perfil}
           taxas={taxas}

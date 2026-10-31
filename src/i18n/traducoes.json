@@ -6114,5 +6114,9 @@
   "As dívidas em outras moedas entram aqui pela cotação de hoje. Para ver os valores exatos, escolha a moeda acima.": {
     "en": "Debts in other currencies are shown here at today's exchange rate. To see exact amounts, pick the currency above.",
     "es": "Las deudas en otras monedas entran aquí por la cotización de hoy. Para ver los valores exactos, elige la moneda arriba."
+  },
+  "Esta dívida teve o saldo informado em {0}, depois da data deste lançamento. O saldo desde lá já considera o que foi pago antes, então este lançamento não muda o que falta.": {
+    "en": "This debt had its balance set on {0}, after the date of this entry. The balance since then already accounts for what was paid before, so this entry does not change what is left.",
+    "es": "Esta deuda tuvo su saldo informado el {0}, después de la fecha de este registro. El saldo desde entonces ya considera lo pagado antes, así que este registro no cambia lo que falta."
   }
 }
