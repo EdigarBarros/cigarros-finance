@@ -143,6 +143,71 @@ Chart.register({
   afterDraw(chart: Chart) { (chart as ComVigia).$desenhou = true },
 })
 
+// ---------- caixinha de detalhes que não fica no caminho ----------
+// No celular não existe "tirar o mouse de cima": depois de um toque, a caixinha ficava presa tapando o gráfico. Agora ela
+// some sozinha 2,5 s depois do último toque, ao tocar de novo no mesmo mês, ao tocar fora do gráfico e ao rolar a página.
+// No computador, um clique no gráfico também a fecha, até o mouse passar para outro mês.
+// O Chart.js entrega o toque como evento de mouse (mousedown/mousemove/click): o dedo se reconhece pelo pointerType.
+type ComCaixinha = Chart & { $calado?: number | null; $timer?: ReturnType<typeof setTimeout> }
+const SOME_DEPOIS_DO_TOQUE = 2500
+const mesAtivo = (chart: Chart) => chart.tooltip?.getActiveElements()[0]?.index ?? null
+const aberta = (chart: Chart) => mesAtivo(chart) !== null && (chart.tooltip?.opacity ?? 0) > 0
+/** Fecha na hora (sem animação: a de sumir não rodava quando chamada no meio de um evento, e a caixinha ficava na tela). */
+function esconderCaixinha(chart: Chart) {
+  if (!chart.tooltip || mesAtivo(chart) === null) return
+  chart.tooltip.setActiveElements([], { x: 0, y: 0 })
+  chart.setActiveElements([])
+  setTimeout(() => { try { chart.update('none') } catch (e) { registrarErro(e) } })
+}
+const ehDedo = (e: Event | null | undefined) =>
+  !!e && ('pointerType' in e ? (e as PointerEvent).pointerType !== 'mouse' : e.type.startsWith('touch'))
+/** Mês sob o dedo ou o mouse, antes de a caixinha reagir ao evento. */
+const mesNoPonto = (chart: Chart, e: Event) =>
+  chart.getElementsAtEventForMode(e, 'index', { intersect: false }, false)[0]?.index ?? null
+Chart.register({
+  id: 'caixinhaEducada',
+  // Barrar o evento aqui (return false) evita que a caixinha reabra, nem que seja por um instante.
+  beforeEvent(chart: Chart, args: { event: { type: string; native: Event | null } }) {
+    const c = chart as ComCaixinha
+    const { type: tipo, native } = args.event
+    if (!native || (tipo !== 'mousedown' && tipo !== 'mousemove' && tipo !== 'click')) return
+    const mes = mesNoPonto(chart, native)
+    if (tipo === 'mousedown' && ehDedo(native)) {
+      // tocar no mês que já está aberto fecha a caixinha; tocar em qualquer outro lugar abre de novo
+      if (aberta(chart) && mes === mesAtivo(chart)) {
+        c.$calado = mes
+        esconderCaixinha(chart)
+        return false
+      }
+      c.$calado = null
+      return
+    }
+    if (c.$calado != null) {
+      if (mes === c.$calado) return false
+      c.$calado = null
+    }
+  },
+  afterEvent(chart: Chart, args: { event: { type: string; native: Event | null } }) {
+    const c = chart as ComCaixinha
+    const { type: tipo, native } = args.event
+    if (tipo === 'mouseout') { c.$calado = null; return }
+    if (ehDedo(native)) {
+      clearTimeout(c.$timer)
+      // no instante do toque a caixinha ainda está surgindo (opacidade 0): vale o mês ativo, não a opacidade
+      if (mesAtivo(chart) !== null) c.$timer = setTimeout(() => esconderCaixinha(chart), SOME_DEPOIS_DO_TOQUE)
+    } else if (tipo === 'click' && mesAtivo(chart) !== null) {
+      c.$calado = mesAtivo(chart)
+      esconderCaixinha(chart)
+    }
+  },
+})
+// Tocar fora do gráfico ou rolar a página fecha as caixinhas abertas.
+const fecharCaixinhas = (exceto?: EventTarget | null) => Object.values(Chart.instances).forEach((ch) => {
+  if (ch.canvas !== exceto) esconderCaixinha(ch)
+})
+document.addEventListener('pointerdown', (e) => fecharCaixinhas(e.target), { passive: true, capture: true })
+window.addEventListener('scroll', () => fecharCaixinhas(), { passive: true, capture: true })
+
 /**
  * O Safari (iPhone, iPad e Mac) apaga o desenho dos gráficos quando a aba ou o app fica em segundo plano, ou quando a
  * página volta do cache, e o Chart.js não percebe. Ao voltar, redesenha todos.

@@ -9,7 +9,7 @@ const jwt=`${b64({alg:'HS256',typ:'JWT'})}.${b64({sub:uid,role:'authenticated',e
 const user={id:uid,aud:'authenticated',role:'authenticated',email:'teste@exemplo.com',user_metadata:{nome:'Teste'},app_metadata:{},created_at:'2026-01-01T00:00:00Z'}
 const sessao={access_token:jwt,refresh_token:'r',token_type:'bearer',expires_in:99999,expires_at:4102444800,user}
 const body0=r=>{try{return r.postDataJSON()}catch{return null}}
-exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,semSessao=false,assinatura=null,funcoes={},dpr=1}={}){
+exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,semSessao=false,assinatura=null,funcoes={},dpr=1,toque=false}={}){
   const db={assinaturas:[{user_id:uid,status:'cortesia',teste_fim:null,periodo_fim:null,cancela_no_fim:false,moeda:null}],
     perfis:[{user_id:uid,nome:'Teste',moeda:'BRL',moedas:[],detalhe:'detalhado',modulos:{dividas:true,contas:true,cartoes:true,bancos:true,investimentos:true,moedas:false,metas:true},dispensadas:['tour','importar'],onboarding_em:'2026-01-01T00:00:00Z',...perfil}],
     categorias:[],lancamentos:[],meses:[],dividas:[],divida_saldos:[],bancos:[],metas:[],meta_movimentos:[],contas_fixas:[],cartoes:[],faturas_pagas:[],erros_app:[],...dados}
@@ -18,7 +18,7 @@ exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,se
   await new Promise(r=>srv.listen(porta,r))
   const {chromium}=require('playwright')
   const browser=await chromium.launch()
-  const ctx=await browser.newContext({viewport:{width:1280,height:900},deviceScaleFactor:dpr})
+  const ctx=await browser.newContext({viewport:{width:1280,height:900},deviceScaleFactor:dpr,hasTouch:toque,isMobile:toque})
   if(!semSessao) await ctx.addInitScript(([s])=>{try{localStorage.setItem('sb-fake-auth-token',JSON.stringify(s))}catch{}},[sessao])
   const log=[]
   if(semPerfil) db.perfis=[]
