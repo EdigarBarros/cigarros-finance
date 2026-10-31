@@ -3736,3 +3736,6 @@ body { top: 0 !important; }
 
 /* símbolo do banco pintado de branco sobre a cor da marca (lib/logosBancos, modo 'branco') */
 .bi-branco * { fill: #fff !important; }
+
+/* seletor de moeda acima do gráfico do ano */
+.grafico-moeda { display: flex; justify-content: flex-end; margin-bottom: 12px; }

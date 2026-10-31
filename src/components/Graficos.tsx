@@ -2,12 +2,14 @@ import type { Chart as ChartJS, ChartData, ChartOptions, Plugin, ScriptableConte
 import { Chart as Misto, Doughnut } from 'react-chartjs-2'
 import type { Resumo } from '../lib/calc'
 import { PALETA, useCoresDoGrafico } from '../lib/charts'
-import { fmtValor, MESES_CURTO, MESES_NOME, valoresEstaoOcultos } from '../lib/format'
+import { useMemo, useState } from 'react'
+import { fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, moedaAtual, valoresEstaoOcultos } from '../lib/format'
+import { Segmentado } from './ui'
 import type { Visao } from '../lib/perfil'
 import { tx } from '../lib/textos'
 
 /** Eixo sem os ",00": R$ 8.000 lê mais fácil que R$ 8.000,00. */
-const semCentavos = (n: number) => (valoresEstaoOcultos() ? '' : fmtValor(n).replace(/,00$/, ''))
+const semCentavos = (n: number, formatar: (n: number) => string = fmtValor) => (valoresEstaoOcultos() ? '' : formatar(n).replace(/,00$/, ''))
 const milhar = (n: number) => valoresEstaoOcultos() ? '' : (Math.abs(n) >= 1000 ? tx('{0} mil', (n / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })) : String(n))
 
 type Quadro = {
@@ -66,17 +68,19 @@ const linha = (label: string, cor: string, data: (number | null)[], fundo: strin
 
 /** Opções comuns: eixo em reais (aceita negativos), meses embaixo, legenda com o desenho de cada série. */
 function opcoes(c: ReturnType<typeof useCoresDoGrafico>, {
-  rotulos, mesDoIndice, mesAtual, compacto, legenda = true, eixoDireito, destacar,
+  rotulos, mesDoIndice, mesAtual, compacto, legenda = true, eixoDireito, destacar, formatar = fmtValor,
 }: {
   rotulos: string[]; mesDoIndice: (i: number) => number; mesAtual?: number; compacto?: boolean; legenda?: boolean
   /** Pinta uma faixa clarinha atrás do mês aberto. */
   destacar?: boolean
   /** Cor do eixo da direita (y1), para uma série de outra grandeza, como o acumulado do ano. */
   eixoDireito?: string
+  /** Como escrever um valor: na moeda principal por padrão, ou em outra moeda. */
+  formatar?: (n: number) => string
 }): ChartOptions<'bar'> {
   const ticksReais = compacto
     ? { callback: (v: string | number) => milhar(Number(v)), maxTicksLimit: 5, font: { size: 9 } }
-    : { callback: (v: string | number) => semCentavos(Number(v)), maxTicksLimit: 7, padding: 8 }
+    : { callback: (v: string | number) => semCentavos(Number(v), formatar), maxTicksLimit: 7, padding: 8 }
   return {
     maintainAspectRatio: false,
     animations: animacoesDeEntrada() as unknown as ChartOptions<'bar'>['animations'],
@@ -104,7 +108,7 @@ function opcoes(c: ReturnType<typeof useCoresDoGrafico>, {
       tooltip: {
         callbacks: {
           title: (i) => MESES_NOME[mesDoIndice(i[0].dataIndex) - 1],
-          label: (x) => ` ${x.dataset.label}: ${fmtValor(x.parsed.y ?? 0)}`,
+          label: (x) => ` ${x.dataset.label}: ${formatar(x.parsed.y ?? 0)}`,
         },
       },
     },
@@ -174,28 +178,69 @@ function origemDaDivida(r: Resumo | null | undefined): string[] {
   return l
 }
 
+/** Moedas (além da principal) que aparecem no ano: lançamentos, dívidas ou saldo guardado. */
+function moedasDoAno(porMes: (Resumo | null)[]) {
+  const achadas = new Set<string>()
+  for (const r of porMes) {
+    if (!r) continue
+    for (const k of [...Object.keys(r.entradasMoeda), ...Object.keys(r.saidasMoeda), ...Object.keys(r.dividaMoeda)]) achadas.add(k)
+    for (const [k, valor] of Object.entries(r.moedas)) if (valor > 0) achadas.add(k)
+  }
+  achadas.delete(moedaAtual())
+  return [...achadas].sort()
+}
+
 export function GraficoAnual({ porMes, mesAtual, altura = 400, compacto, v }: {
   porMes: (Resumo | null)[]; mesAtual: number; altura?: number; v: Visao
   /** Celular: eixo em "mil" e legenda menor. */
   compacto?: boolean
 }) {
   const c = useCoresDoGrafico()
-  const data = {
-    labels: MESES_CURTO,
-    datasets: [
-      barra(tx('Entrou'), PALETA.entradas, serie(porMes, (r) => r.entradas), compacto),
-      barra(tx('Saiu'), PALETA.saidas, serie(porMes, (r) => r.saidas), compacto),
-      ...(v.bancos ? [linha(tx('Guardado nas contas'), PALETA.caixa, serie(porMes, (r) => r.caixa), c.fundo, compacto)] : []),
-      ...(v.dividas ? [linha(tx('Dívidas'), PALETA.divida, serie(porMes, (r) => r.divida), c.fundo, compacto)] : []),
-      ...(v.investimentos ? [linha(tx('Investido'), PALETA.investimentos, serie(porMes, (r) => r.investimentos), c.fundo, compacto)] : []),
-      ...(v.moedas ? [linha(tx('Em outras moedas'), PALETA.usd, serie(porMes, (r) => r.moedasConvertido), c.fundo, compacto)] : []),
-    ],
-  } as unknown as ChartData<'bar'>
+  const principal = moedaAtual()
+  const extras = useMemo(() => moedasDoAno(porMes), [porMes])
+  const [escolhida, setEscolhida] = useState(principal)
+  // Só aparece o seletor quando há algo em outra moeda; a visão padrão é a da moeda principal, igual a antes.
+  const moeda = extras.includes(escolhida) ? escolhida : principal
+  const fora = moeda !== principal
+  const temDividaFora = porMes.some((r) => r && Object.keys(r.dividaMoeda).length > 0)
+  const algum = (f: (r: Resumo) => number) => porMes.some((r) => r && f(r) > 0)
+  const data = (fora
+    ? {
+        labels: MESES_CURTO,
+        datasets: [
+          barra(tx('Entrou'), PALETA.entradas, serie(porMes, (r) => r.entradasMoeda[moeda] ?? 0), compacto),
+          barra(tx('Saiu'), PALETA.saidas, serie(porMes, (r) => r.saidasMoeda[moeda] ?? 0), compacto),
+          ...(algum((r) => r.moedas[moeda] ?? 0) ? [linha(tx('Guardado em {0}', moeda), PALETA.caixa, serie(porMes, (r) => (r.moedas[moeda] ?? null) as number), c.fundo, compacto)] : []),
+          ...(algum((r) => r.dividaMoeda[moeda] ?? 0) ? [linha(tx('Dívidas em {0}', moeda), PALETA.divida, serie(porMes, (r) => r.dividaMoeda[moeda] ?? 0), c.fundo, compacto)] : []),
+        ],
+      }
+    : {
+        labels: MESES_CURTO,
+        datasets: [
+          barra(tx('Entrou'), PALETA.entradas, serie(porMes, (r) => r.entradas), compacto),
+          barra(tx('Saiu'), PALETA.saidas, serie(porMes, (r) => r.saidas), compacto),
+          ...(v.bancos ? [linha(tx('Guardado nas contas'), PALETA.caixa, serie(porMes, (r) => r.caixa), c.fundo, compacto)] : []),
+          ...(v.dividas ? [linha(tx('Dívidas'), PALETA.divida, serie(porMes, (r) => r.divida), c.fundo, compacto)] : []),
+          ...(v.investimentos ? [linha(tx('Investido'), PALETA.investimentos, serie(porMes, (r) => r.investimentos), c.fundo, compacto)] : []),
+          ...(v.moedas ? [linha(tx('Em outras moedas'), PALETA.usd, serie(porMes, (r) => r.moedasConvertido), c.fundo, compacto)] : []),
+        ],
+      }) as unknown as ChartData<'bar'>
+  const base = opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual, compacto, destacar: true, formatar: fora ? (n) => fmtMoeda(n, moeda) : fmtValor })
   return (
-    <div className="grafico" style={{ height: altura }}>
-      <Misto type="bar" key={c.tema + c.ocultos} data={data}
-        options={comOrigemDaDivida(opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual, compacto, destacar: true }), porMes)} />
-    </div>
+    <>
+      {extras.length > 0 && (
+        <div className="grafico-moeda">
+          <Segmentado rotulo={tx('Ver o gráfico em')} valor={moeda} aoMudar={setEscolhida}
+            opcoes={[principal, ...extras].map((m) => ({ id: m, nome: m }))} />
+        </div>
+      )}
+      <div className="grafico" style={{ height: altura }}>
+        <Misto type="bar" key={c.tema + c.ocultos + moeda} data={data} options={fora ? base : comOrigemDaDivida(base, porMes)} />
+      </div>
+      {fora
+        ? <p className="campo-ajuda">{tx('Valores em {0}, como você lançou: sem conversão. Entrou, Saiu e Dívidas só desta moeda.', moeda)}</p>
+        : temDividaFora && <p className="campo-ajuda">{tx('As dívidas em outras moedas entram aqui pela cotação de hoje. Para ver os valores exatos, escolha a moeda acima.')}</p>}
+    </>
   )
 }
 
