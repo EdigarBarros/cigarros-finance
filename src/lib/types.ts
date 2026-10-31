@@ -80,6 +80,8 @@ export interface Pagamento {
   data: string | null
   /** Na moeda principal. */
   valor: number
+  /** Saída ou entrada: numa dívida sua, a saída paga e a entrada (dinheiro emprestado) aumenta; em "me devem", é o contrário. */
+  tipo?: Tipo
   /** Pago em outra moeda: o valor original (migração 4). */
   valor_original?: number | null
   moeda_original?: string | null

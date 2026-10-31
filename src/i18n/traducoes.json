@@ -5790,5 +5790,33 @@
   "Mostrar valores": {
     "en": "Show amounts",
     "es": "Mostrar valores"
+  },
+  "Isso tem a ver com uma dívida?": {
+    "en": "Is this related to a debt?",
+    "es": "¿Esto tiene que ver con una deuda?"
+  },
+  "Peguei emprestado (a dívida aumenta)": {
+    "en": "I borrowed it (the debt grows)",
+    "es": "Me prestaron (la deuda aumenta)"
+  },
+  "Recebi de quem me devia (o que falta receber diminui)": {
+    "en": "Received from someone who owed me (what is left to receive goes down)",
+    "es": "Recibí de quien me debía (lo que falta por recibir baja)"
+  },
+  "A dívida aumenta sozinha com este dinheiro que você pegou.": {
+    "en": "The debt grows on its own with this money you borrowed.",
+    "es": "La deuda aumenta sola con este dinero que recibiste."
+  },
+  "emprestado": {
+    "en": "borrowed",
+    "es": "prestado"
+  },
+  "Dinheiro emprestado": {
+    "en": "Borrowed money",
+    "es": "Dinero prestado"
+  },
+  "emprestado a mais": {
+    "en": "borrowed more",
+    "es": "más prestado"
   }
 }

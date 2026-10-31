@@ -11,10 +11,12 @@ import { tx } from '../lib/textos'
  * Um lançamento na lista: selo da categoria, descrição, categoria e banco, e etiquetas do que ele é além de um gasto
  * comum (parcela no cartão, pagamento de dívida, recebimento de quem te devia, conta do mês, outra moeda).
  */
-export function ItemLancamento({ l, banco, categoria, cartao, aoClicar, mostrarData = true, indice }: {
+export function ItemLancamento({ l, banco, categoria, cartao, emprestimo, aoClicar, mostrarData = true, indice }: {
   l: Lancamento; banco?: Banco; categoria?: Categoria
   /** Cartão de crédito da compra, para a etiqueta com o selo do banco. */
   cartao?: { nome: string; cor: string }
+  /** Entrada que é dinheiro emprestado (aumenta uma dívida sua). */
+  emprestimo?: boolean
   aoClicar: () => void; mostrarData?: boolean
   /** Posição na lista, para a entrada em cascata. */
   indice?: number
@@ -34,7 +36,7 @@ export function ItemLancamento({ l, banco, categoria, cartao, aoClicar, mostrarD
         <Icone nome={infoForma(l.forma).icone} tamanho={12} />{infoForma(l.forma).nome}
       </span>
     ),
-    l.divida_id && <span key="dv" className={`item-tag ${entrada ? 'receber' : 'divida'}`}><Icone nome={entrada ? 'receber' : 'divida'} tamanho={12} />{entrada ? tx('recebido') : tx('dívida')}</span>,
+    l.divida_id && <span key="dv" className={`item-tag ${entrada ? 'receber' : 'divida'}`}><Icone nome={entrada ? 'receber' : 'divida'} tamanho={12} />{emprestimo ? tx('emprestado') : entrada ? tx('recebido') : tx('dívida')}</span>,
     l.conta_fixa_id && <span key="cf" className="item-tag conta"><Icone nome="calendario" tamanho={12} />{tx('todo mês')}</span>,
   ].filter(Boolean)
   return (
