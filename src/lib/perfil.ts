@@ -40,8 +40,8 @@ export const MODULOS: { id: Modulo; nome: string; pergunta: string; descricao: s
 ]
 
 export const DETALHES: { id: Detalhe; nome: string; descricao: string }[] = [
-  { id: 'simples', nome: tx('Simples'), descricao: tx('Quanto sobrou, quanto entrou e quanto saiu. Sem gráficos nem comparações.') },
-  { id: 'equilibrado', nome: tx('Equilibrado'), descricao: tx('O simples, mais gráficos e a comparação com o mês passado.') },
+  { id: 'simples', nome: tx('Simples'), descricao: tx('O mês em palavras, o que pagar e quanto deve sobrar no fim. Sem gráficos nem comparações.') },
+  { id: 'equilibrado', nome: tx('Equilibrado'), descricao: tx('O painel completo, com gráficos e a comparação com o mês passado.') },
   { id: 'detalhado', nome: tx('Detalhado'), descricao: tx('O equilibrado, mais todas as categorias, mais lançamentos e o ano mês a mês.') },
 ]
 

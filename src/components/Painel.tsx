@@ -85,7 +85,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const [mais, setMais] = useState(false)
   const [bancoAberto, setBancoAberto] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState<string | null>(null)
-  const [ajustes, setAjustes] = useState(false)
+  /** Configurações aberta; 'painel' abre direto na seção Painel (jeito de ver e o que aparece). */
+  const [ajustes, setAjustes] = useState<boolean | 'painel'>(false)
   const [refazendo, setRefazendo] = useState(false)
   /** Tutorial guiado aberto. */
   const [tour, setTour] = useState(false)
@@ -399,7 +400,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),
     dispensar: (id: string) => mudarPerfil({ ...perfil, dispensadas: [...new Set([...perfil.dispensadas, id])] }),
     ligarModulo,
-    personalizar: () => setAjustes(true),
+    personalizar: () => setAjustes('painel'),
     categorias: d.categorias,
     categoriaDe,
     gerenciarCategorias: () => (d.categoriasAntigas
@@ -746,6 +747,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
 
       {ajustes && (
         <Configuracoes
+          secaoInicial={ajustes === 'painel' ? 'painel' : undefined}
           perfil={perfil}
           email={email}
           categorias={d.categorias}

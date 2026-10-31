@@ -153,8 +153,10 @@ export function BlocoGastos({ r, anterior, categorias, nivel, mesAnterior, aoEdi
 const quando = (q: [number, number] | null) => (q ? fmtMesAno(q[0], q[1]) : null)
 
 /** Dívidas: o problema inteiro (quanto falta), junto do progresso e do próximo passo (pagar). */
-export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTodas, aReceber, aoVerReceber }: {
+export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTodas, aReceber, aoVerReceber, resumo }: {
   itens: SituacaoDivida[]; nivel: Detalhe
+  /** Só o progresso (quanto já pagou e quando acaba), sem uma linha por dívida: as parcelas do mês ficam no "Para fazer". */
+  resumo?: boolean
   aoEditar: (s: SituacaoDivida) => void; aoPagar: (s: SituacaoDivida) => void; aoNova: () => void; aoVerTodas: () => void
   /** O que te devem (lado "me devem"), numa linha no pé do bloco. */
   aReceber?: { falta: number; atrasado: number; quantos: number }
@@ -186,7 +188,8 @@ export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTod
               {fim && <span className="chip-info"><Icone nome="calendario" tamanho={13} /> {tx('livre em')} {quando(fim)}</span>}
             </div>
           )}
-          {itens.slice(0, limite).map((s) => (
+          {resumo && <button className="quadro-ver" onClick={aoVerTodas}>{tx('Ver dívidas')}</button>}
+          {!resumo && itens.slice(0, limite).map((s) => (
             <div key={s.divida.id} className={`divida-linha ${s.quitadaNoMes ? 'quitada' : ''}`}>
               <button className="divida-linha-info" onClick={() => aoEditar(s)}>
                 <span className="divida-linha-nome">{s.divida.descricao}</span>
@@ -207,10 +210,10 @@ export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTod
               {!s.quitadaNoMes && <button className="pagar" onClick={() => aoPagar(s)}>{tx('Pagar')}</button>}
             </div>
           ))}
-          {itens.length > limite && <button className="quadro-ver" onClick={aoVerTodas}>{tx('Ver todas as {0} dívidas', itens.length)}</button>}
+          {!resumo && itens.length > limite && <button className="quadro-ver" onClick={aoVerTodas}>{tx('Ver todas as {0} dívidas', itens.length)}</button>}
         </>
       )}
-      {aReceber && aReceber.quantos > 0 && (
+      {!resumo && aReceber && aReceber.quantos > 0 && (
         <button className="divida-receber" onClick={aoVerReceber}>
           <span className="divida-receber-icone"><Icone nome="receber" tamanho={18} /></span>
           <span className="divida-receber-texto">

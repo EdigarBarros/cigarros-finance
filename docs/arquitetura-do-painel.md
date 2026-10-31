@@ -26,7 +26,7 @@ Vale para quem nunca controlou dinheiro e para quem quer ver cada número.
    Regra: um único elemento gigante por tela (o resultado do mês, no alto à esquerda); as ações ficam no canto oposto da mesma linha (Z); cada zona abaixo tem um título de tamanho único.
 2. **Lei de Hick (menos escolhas, decisão mais rápida).** Regra: no máximo 1 botão principal por bloco; a primeira tela do modo simples tem 3 números, não 7; o que não é decisão de hoje fica em "Ver tudo".
 3. **Lei de Miller e carga cognitiva.** Regra: no máximo 4 indicadores no topo (6 só no detalhado, em duas linhas de 3); blocos do mesmo assunto viram um (3 de bancos viram "Dinheiro guardado"); nunca mais de 4 zonas visíveis ao mesmo tempo.
-4. **Revelação progressiva.** O simples é subconjunto do equilibrado, que é subconjunto do detalhado. Regra: cada bloco tem o **mesmo nome e a mesma posição** nos três modos; subir de nível só acrescenta linhas, colunas, comparações e gráficos *dentro do mesmo bloco*. Nada muda de lugar, nada some.
+4. **Cada jeito de ver atende uma pessoa.** O **simples** é para quem não entende de finanças e tem a sua própria tela (o mês em palavras, uma lista única do que fazer, nenhum gráfico; veja 4.1). Entre o **equilibrado** e o **detalhado** vale a revelação progressiva: cada bloco tem o mesmo nome e a mesma posição nos dois, e subir de nível só acrescenta linhas, colunas, comparações e gráficos *dentro do mesmo bloco*.
 5. **Proximidade e semelhança (Gestalt).** Regra: blocos que respondem à mesma pergunta ficam juntos, com espaço menor entre si (14 px) e maior entre perguntas diferentes (28 px); todo número de dinheiro usa a mesma fonte; verde é só entrada/progresso, vermelho só saída, amarelo só atenção; o gradiente índigo → verde-água do símbolo OpusCash é o destaque do app.
 6. **Aversão à perda e enquadramento.** Regra para dívida e atraso: mostrar o problema **inteiro** (valor, prazo) mas junto do progresso e do próximo passo. "Você já pagou 42%" antes de "faltam R$ 4.800"; "Venceu dia 5" com botão "Pagar", nunca "ATRASADA!" nem vermelho saturado cobrindo o bloco. Resultado negativo vira "Faltou R$ 340" com a frase "saiu R$ 340 a mais do que entrou" e um atalho para ver onde.
 7. **Posição serial (primeiro e último são lembrados).** Topo: o resultado do mês e o que vence. Fim: metas (o que a pessoa está construindo). O meio fica com a análise. O que é opcional (sugestão, personalizar) nunca ocupa topo nem fim: a sugestão vem logo abaixo dos indicadores, em faixa fina, e "Personalizar" é um rodapé discreto.
@@ -86,25 +86,38 @@ Ordem vertical, igual no computador e no celular. A diferença entre as telas é
 
 Legenda: **[M]** só aparece se o módulo estiver ligado. **(slot)** é preenchido por outro componente através do `Ctx`.
 
-### 4.1 Simples: "só o essencial"
+### 4.1 Simples: "está tudo bem? o que eu faço hoje?"
+
+Tela própria, para quem não entende de finanças: poucas palavras, números com nome, nenhum gráfico. Código em
+`components/Simples.tsx` (resumo e "Para fazer"), `lib/paraFazer.ts` (a lista) e `components/simples.css`; o resto
+reaproveita os blocos de `Blocos.tsx`.
 
 | # | Zona | Conteúdo |
 | - | --- | --- |
-| 0 | Cabeçalho | "Olá, Nome" e "Resumo de outubro de 2026". Conta nova: cartão "Tudo pronto para começar" com os dois botões de lançar |
-| 1 | **Resultado do mês** | "Sobrou em outubro" (ou "Faltou") em número grande + frase ("Você ficou com 22% do que entrou"). No computador: botões **Lançar entrada** e **Lançar saída** à direita. No celular: sem botões, o "+" fixo |
-| 2 | **Indicadores** (até 4) | **Entrou**, **Saiu** e, se existirem, `kpisExtras` ("Falta pagar no mês", "Fatura do cartão"). Sem comparação com o mês anterior |
-| 3 | Sugestão (se houver) | Faixa fina com 1 sugestão por vez |
-| 4 | **O que fazer** (pergunta 2) | `blocos.contas` (slot, [M] contas) → `blocos.cartoes` (slot, [M] cartões) → **Dívidas** [M] (até 4 linhas, 1 por dívida: nome, quanto falta, barra de progresso, "Acaba em…" e "Pagar"; no topo do bloco "Você já pagou 23%. Sem dívidas em set de 2027") |
-| 5 | **Para onde foi** (pergunta 3) | À esquerda **Para onde foi o dinheiro**: as 4 maiores categorias em lista com barra; à direita **Últimos lançamentos** (5). Mês sem lançamentos: um único cartão "Nada lançado em outubro" com os botões |
-| 6 | **Dinheiro guardado** [M bancos, investimentos ou outras moedas] | Uma linha por módulo ligado: "Nas contas", "Investido", "Em outras moedas" |
+| 0 | Cabeçalho | "Olá, Nome" e "Resumo de outubro de 2026" (sem os botões de lançar: eles ficam no resumo) |
+| 1 | **Resumo do mês** (cartão grande) | Selo em palavras: **Mês no azul** (verde), **Mês apertado** (amarelo: sobrou menos de 5% do que entrou ou, pagando o que falta, não fecha) ou **Mês no vermelho** (saiu mais do que entrou). "Sobrou em outubro" (ou "Faltou") em número grande, a frase de ancoragem e uma barra só: a barra inteira é o que entrou, o que saiu pinta por cima (listrado quando passa do que entrou). Ao lado (embaixo no celular), só no mês atual: **Até o fim do mês**: "Ainda falta pagar" (contas e parcelas do mês), "Ainda falta receber" (contas que entram) e **Deve sobrar / Pode faltar**. Botões **Lançar entrada** e **Lançar saída**, grandes, também no celular |
+| 2 | Convite para importar e sugestão (se houver) | Como nos outros jeitos |
+| 3 | **Para fazer** [M contas, cartões ou dívidas] | Uma lista só, na ordem do vencimento: contas em aberto ("Paguei"/"Recebi"), faturas a pagar ("Ver fatura") e parcelas de dívida que vencem até o fim do mês ("Pagar"). Dia do vencimento em bloco colorido, selo "N com atraso" no topo, 5 linhas e "Ver mais". Tudo pago: "Tudo em dia neste mês! 🎉" |
+| 4 | **Últimos lançamentos** | 5 linhas |
+| 5 | **Para onde foi o dinheiro** | As 4 maiores categorias em lista com barra; "Ver todas as N categorias" |
+| 6 | **Dívidas** [M] | Só o progresso: anel com quanto já pagou, quanto falta e quando acaba; "Ver dívidas" (as parcelas do mês estão no "Para fazer") |
 | 7 | **Metas** [M] | 2 metas com barra de progresso |
-| 8 | Rodapé | "Quer acompanhar mais coisas?" com um chip por módulo desligado |
+| 8 | **Dinheiro guardado** [M] | Uma linha por módulo ligado |
+| 9 | Rodapé | "Quer ver gráficos e comparar com o mês passado? **Mudar o jeito de ver**" (abre Configurações → Painel) |
 
-Não aparecem: gráficos, comparação com o mês anterior, evolução do ano, página Ano no menu.
+Computador: o resumo ocupa a largura toda; embaixo, duas colunas: à esquerda Para fazer e Últimos lançamentos, à direita
+Para onde foi, Dívidas, Metas e Dinheiro guardado. Celular: uma coluna, na ordem Para fazer, Para onde foi, Últimos
+lançamentos, Dívidas, Metas, Dinheiro guardado.
 
-### 4.2 Equilibrado: o simples mais comparação e gráficos
+Casos especiais: mês sem lançamentos mostra "Seu mês" com a frase "Nada lançado em outubro ainda…" e os botões; mês que
+ainda não começou não ganha selo ("Já sai em novembro" + "Novembro ainda não começou…"), sem barra. Conta nova vê as
+mesmas boas-vindas dos outros jeitos.
 
-Mesma ordem. Acrescenta, **dentro dos mesmos blocos**:
+Não aparecem: indicadores em cartões, gráficos, comparação com o mês anterior, banner, "Acompanhe mais", página Ano no menu.
+
+### 4.2 Equilibrado: o painel com comparação e gráficos
+
+A grade de 4.0. Em relação ao que o simples mostrava antes de ganhar tela própria, acrescenta, **dentro dos mesmos blocos**:
 
 | Zona | O que muda |
 | --- | --- |
