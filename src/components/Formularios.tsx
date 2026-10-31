@@ -643,6 +643,8 @@ interface FormDividaProps {
   aoCriar: (d: NovaDivida & { saldo: number; data: string; marcoInicial?: { data: string; saldo: number } }) => unknown
   aoEditar: (id: string, patch: Partial<Divida>) => void
   aoNovoSaldo: (id: string, data: string, saldo: number) => void
+  /** Muda o valor total da dívida (a diferença vale para o que falta também). */
+  aoMudarValor?: (id: string, delta: number) => void
   aoExcluir: (id: string) => void
   aoFechar: () => void
   /** Aberto por "Definir parcela": começa no modo parcelado, com o cursor no valor da parcela. */
@@ -660,7 +662,7 @@ const inteiro = (t: string) => {
  * vence a próxima. Parcelada, pede o valor da parcela e quantas faltam (e, se souber, de quantas); sem parcela fixa,
  * pede quanto falta e, se houver, a data combinada. O vencimento da próxima monta o calendário de parcelas.
  */
-export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perfil, semMoeda, aoCriar, aoEditar, aoNovoSaldo, aoExcluir, aoFechar, definirParcela }: FormDividaProps) {
+export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perfil, semMoeda, aoCriar, aoEditar, aoNovoSaldo, aoMudarValor, aoExcluir, aoFechar, definirParcela }: FormDividaProps) {
   // a dívida como foi cadastrada (parcela na moeda dela); `situacao.divida` já vem convertida para a moeda principal
   const d = situacao?.original
   const moedaInicial = d?.moeda || perfil.moeda
@@ -679,6 +681,10 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
   // editando, o campo já abre com o valor de hoje (e não só como sugestão apagada): é só mexer nele
   const [saldo, setSaldo] = useState(() => (situacao ? paraCampoMoeda(nativoDiv(situacao, situacao.restante), situacao.original.moeda || perfil.moeda) : ''))
   const saldoAtual = situacao ? nativoDiv(situacao, situacao.restante) : null
+  // valor total da dívida (o que ela era no começo): editável sem mexer no que já foi pago
+  const totalAtual = situacao ? nativoDiv(situacao, situacao.saldoInicial) : null
+  const [valorTotal, setValorTotal] = useState(() => (totalAtual !== null ? paraCampoMoeda(totalAtual, moedaInicial) : ''))
+  const [mexeuSaldo, setMexeuSaldo] = useState(false)
   // vencimento da próxima parcela em aberto (ou a data combinada, sem parcela fixa)
   const [proxima, setProxima] = useState(cal?.proxima?.vencimento ?? (d ? '' : somaMesesData(hoje, 1)))
   const [data, setData] = useState(dataPadrao(ano, mes))
@@ -736,8 +742,13 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
       if (!d) aoCriar({ ...campos, saldo: v!, data })
       else {
         aoEditar(d.id, campos)
-        // só grava um novo saldo se o valor mudou
-        if (v !== null && (saldoAtual === null || Math.abs(v - saldoAtual) >= 0.005)) aoNovoSaldo(d.id, data, v)
+        // Valor total: a diferença entra em todos os saldos, e o que falta muda junto (a não ser que você também mexa nele).
+        const t = valorTotal.trim() ? parseNumero(valorTotal) : null
+        if (valorTotal.trim() && (t === null || t <= 0)) return setErro(tx('Digite um valor total válido.'))
+        const delta = t !== null && totalAtual !== null && Math.abs(t - totalAtual) >= 0.005 ? Math.round((t - totalAtual) * 100) / 100 : 0
+        if (delta) aoMudarValor?.(d.id, delta)
+        // só grava um novo saldo se o "falta pagar" foi mudado à mão
+        if (v !== null && (saldoAtual === null || Math.abs(v - (saldoAtual + delta)) >= 0.005)) aoNovoSaldo(d.id, data, v)
       }
     }
     aoFechar()
@@ -819,11 +830,28 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
             {previa && <p className="divida-previa">{previa}</p>}
           </>
         ) : (
+          <>
+          {d && (
+            <label className="campo">
+              <span className="campo-rotulo">{recebe ? tx('Valor total a receber') : tx('Valor total da dívida')}</span>
+              <span className="campo-caixa"><span className="prefixo">{simbolo(moeda)}</span>
+                <input inputMode="decimal" value={valorTotal} onFocus={(e) => e.target.select()} placeholder="0,00"
+                  onChange={(e) => {
+                    const m = mascarar(e.target.value, casasDaMoeda(moeda))
+                    setValorTotal(m)
+                    // o que falta acompanha o total, a menos que você já tenha mexido nele
+                    const novo = parseNumero(m)
+                    if (!mexeuSaldo && novo && totalAtual !== null && saldoAtual !== null) setSaldo(paraCampoMoeda(Math.max(0, saldoAtual + (novo - totalAtual)), moeda))
+                  }} />
+              </span>
+              <span className="campo-ajuda">{tx('Quanto era a dívida no começo. Mudar o total não apaga o que você já pagou: o que falta muda junto.')}</span>
+            </label>
+          )}
           <div className="form-linha">
             <label className="campo">
               <span className="campo-rotulo">{recebe ? tx('Quanto falta receber') : tx('Quanto falta pagar')}{d && <small> {tx('(só se mudou)')}</small>}</span>
               <span className="campo-caixa"><span className="prefixo">{simbolo(moeda)}</span>
-                <input inputMode="decimal" value={saldo} onChange={(e) => setSaldo(mascarar(e.target.value, casasDaMoeda(moeda)))} onFocus={(e) => e.target.select()} placeholder="0,00" />
+                <input inputMode="decimal" value={saldo} onChange={(e) => { setMexeuSaldo(true); setSaldo(mascarar(e.target.value, casasDaMoeda(moeda))) }} onFocus={(e) => e.target.select()} placeholder="0,00" />
               </span>
             </label>
             {!semExtras && (
@@ -833,6 +861,7 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
               </label>
             )}
           </div>
+          </>
         )}
         {d && (
           <label className="campo">

@@ -267,6 +267,7 @@ export function Inicio(c: Ctx) {
       aoCriar={c.d.addDivida}
       aoEditar={c.d.updDivida}
       aoNovoSaldo={c.d.addSaldo}
+          aoMudarValor={c.d.ajustarValorDivida}
       aoExcluir={c.d.delDivida}
       perfil={c.perfil}
       semMoeda={c.d.dividasSemMoeda}

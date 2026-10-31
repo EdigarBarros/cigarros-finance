@@ -6006,5 +6006,21 @@
   "Empréstimo que você fez": {
     "en": "Loan you made",
     "es": "Préstamo que hiciste"
+  },
+  "Valor total a receber": {
+    "en": "Total amount to receive",
+    "es": "Valor total a recibir"
+  },
+  "Valor total da dívida": {
+    "en": "Total debt amount",
+    "es": "Valor total de la deuda"
+  },
+  "Digite um valor total válido.": {
+    "en": "Enter a valid total amount.",
+    "es": "Escribe un valor total válido."
+  },
+  "Quanto era a dívida no começo. Mudar o total não apaga o que você já pagou: o que falta muda junto.": {
+    "en": "How much the debt was at the start. Changing the total does not erase what you already paid: what is left changes along with it.",
+    "es": "Cuánto era la deuda al principio. Cambiar el total no borra lo que ya pagaste: lo que falta cambia junto."
   }
 }

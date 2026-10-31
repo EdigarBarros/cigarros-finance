@@ -278,6 +278,20 @@ export function useDados(userId: string, ano: number) {
     setSaldos((xs) => [...xs, normSaldo(linha as SaldoDivida)])
   }
 
+  /**
+   * Muda o valor total da dívida (quanto ela era no começo) sem mexer nos pagamentos: soma `delta` a todos os saldos
+   * informados, então o que falta muda junto. Saldo zerado (quitação) fica como está.
+   */
+  const ajustarValorDivida = async (divida_id: string, delta: number) => {
+    const alvos = saldos.filter((s) => s.divida_id === divida_id && s.saldo > 0)
+    if (!alvos.length || !delta) return
+    const novos = new Map(alvos.map((s) => [s.id, Math.max(0, Math.round((s.saldo + delta) * 100) / 100)]))
+    setSaldos((xs) => xs.map((s) => (novos.has(s.id) ? { ...s, saldo: novos.get(s.id)! } : s)))
+    const resultados = await Promise.all([...novos].map(([id, saldo]) => supabase.from('divida_saldos').update({ saldo }).eq('id', id)))
+    const erro = resultados.find((r) => r.error)?.error
+    if (erro) falhou(erro.message)
+  }
+
   const salvarMes = async (anoMes: number, mes: number, patch: Partial<Omit<Mes, 'ano' | 'mes'>>) => {
     const atual = meses.find((m) => m.ano === anoMes && m.mes === mes) ?? {
       ano: anoMes, mes, investimentos: 0, moedas: {}, meta_usd: 0, caixa: {},
@@ -435,7 +449,7 @@ export function useDados(userId: string, ano: number) {
     dividasSemExtras,
     dividasSemMoeda,
     lancs, meses, dividas, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,
-    addLanc, addLancs, renomearLancs, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, salvarMes,
+    addLanc, addLancs, renomearLancs, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, ajustarValorDivida, salvarMes,
   }
 }
 

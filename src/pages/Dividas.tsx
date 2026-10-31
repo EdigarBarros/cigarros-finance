@@ -196,6 +196,7 @@ export function Dividas(c: Ctx) {
           }}
           aoEditar={c.d.updDivida}
           aoNovoSaldo={c.d.addSaldo}
+          aoMudarValor={c.d.ajustarValorDivida}
           aoExcluir={c.d.delDivida}
           aoFechar={() => setEditando(null)}
         />
