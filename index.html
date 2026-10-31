@@ -3,11 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>OpusCash: seu dinheiro organizado</title>
-    <meta name="description" content="OpusCash — seu dinheiro organizado: entradas, saídas, metas e contas num painel só" />
+    <title>OpusCash: app de controle financeiro pessoal</title>
+    <meta name="description" content="OpusCash é um app de controle financeiro pessoal: entradas, saídas, cartões, dívidas, metas e contas do mês num painel só. Teste grátis por 7 dias." />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://www.opuscash.com.br/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="OpusCash" />
-    <meta property="og:title" content="OpusCash — seu dinheiro organizado" />
+    <meta property="og:title" content="OpusCash: app de controle financeiro pessoal" />
     <meta property="og:description" content="Entradas, saídas, cartões, dívidas, metas e contas do mês num painel só. 7 dias grátis." />
     <meta property="og:locale" content="pt_BR" />
     <meta property="og:url" content="https://www.opuscash.com.br/" />
@@ -35,9 +37,59 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&family=Sora:wght@500;600;700&display=swap" rel="stylesheet" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://www.opuscash.com.br/#organizacao",
+            "name": "OpusCash",
+            "url": "https://www.opuscash.com.br/",
+            "logo": "https://www.opuscash.com.br/icone-512.png",
+            "email": "opuscashsuporte@gmail.com"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://www.opuscash.com.br/#site",
+            "name": "OpusCash",
+            "alternateName": ["Opus Cash", "OpusCash app de finanças"],
+            "url": "https://www.opuscash.com.br/",
+            "inLanguage": "pt-BR",
+            "publisher": { "@id": "https://www.opuscash.com.br/#organizacao" }
+          },
+          {
+            "@type": "WebApplication",
+            "name": "OpusCash",
+            "url": "https://www.opuscash.com.br/",
+            "applicationCategory": "FinanceApplication",
+            "operatingSystem": "Web, iOS, Android",
+            "description": "App de controle financeiro pessoal: entradas, saídas, cartões, dívidas, metas e contas do mês num painel só.",
+            "inLanguage": "pt-BR",
+            "publisher": { "@id": "https://www.opuscash.com.br/#organizacao" }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+        <div id="root">
+      <!-- texto para os buscadores lerem antes do JavaScript carregar; o app o substitui assim que abre -->
+      <main style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">
+        <h1>OpusCash: app de controle financeiro pessoal</h1>
+        <p>OpusCash organiza o seu dinheiro num painel só: entradas, saídas, cartões de crédito, dívidas, metas e contas do mês.</p>
+        <ul>
+          <li>Veja quanto entrou, quanto saiu e quanto sobrou no mês e no ano.</li>
+          <li>Controle fatura, parcelas e limite de cada cartão.</li>
+          <li>Acompanhe contas do mês como aluguel, luz e internet.</li>
+          <li>Crie metas e acompanhe dívidas.</li>
+          <li>Use qualquer moeda, com a cotação do dia.</li>
+          <li>Importe extrato do banco e planilhas.</li>
+        </ul>
+        <p>Teste grátis por 7 dias, sem cartão para começar.</p>
+        <noscript>Ative o JavaScript para usar o OpusCash.</noscript>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
