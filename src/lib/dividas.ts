@@ -88,6 +88,8 @@ export function situacaoDividas(
     // Criada e quitada no mesmo mês: sem saldo antes, mas teve saldo positivo neste mês.
     const devendoNoMes = restanteAntes === null
       ? saldosD.some((s) => s.divida_id === d.id && s.data >= ini && s.data <= fim && s.saldo > 0)
+        // empréstimo recebido neste mesmo mês (a dívida nasceu zerada e cresceu com a entrada)
+        || pagamentosD.some((x) => x.valor < 0 && x.data && x.data >= ini && x.data <= fim)
       : restanteAntes > 0
     if (restante <= 0 && !devendoNoMes) continue
     const doMes = pagamentosD.filter((p) => p.divida_id === d.id && p.data && p.data >= ini && p.data <= fim)

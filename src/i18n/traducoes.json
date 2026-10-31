@@ -5818,5 +5818,37 @@
   "emprestado a mais": {
     "en": "borrowed more",
     "es": "más prestado"
+  },
+  "Escreva quem emprestou o dinheiro.": {
+    "en": "Write who lent you the money.",
+    "es": "Escribe quién te prestó el dinero."
+  },
+  "Não consegui criar a dívida. Tente de novo.": {
+    "en": "I couldn't create the debt. Try again.",
+    "es": "No pude crear la deuda. Inténtalo de nuevo."
+  },
+  "Isso paga alguma dívida?": {
+    "en": "Does this pay off a debt?",
+    "es": "¿Esto paga alguna deuda?"
+  },
+  "Peguei emprestado de alguém (criar dívida)": {
+    "en": "I borrowed from someone (create debt)",
+    "es": "Me prestó alguien (crear deuda)"
+  },
+  "Quem emprestou? Ex.: Matheus": {
+    "en": "Who lent it? E.g.: Matheus",
+    "es": "¿Quién prestó? Ej.: Matheus"
+  },
+  "Quem emprestou?": {
+    "en": "Who lent it?",
+    "es": "¿Quién prestó?"
+  },
+  "A dívida aparece na aba Dívidas com este valor. Quando devolver, lance uma saída e escolha esta dívida.": {
+    "en": "The debt shows up in Debts with this amount. When you pay it back, add an expense and pick this debt.",
+    "es": "La deuda aparece en Deudas con este valor. Cuando la devuelvas, registra una salida y elige esta deuda."
+  },
+  "Empréstimo do {0}": {
+    "en": "Loan from {0}",
+    "es": "Préstamo de {0}"
   }
 }
