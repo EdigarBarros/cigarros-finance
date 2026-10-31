@@ -26,6 +26,8 @@ export interface Ctx {
   /** Fatura, limite e parcelas de cada cartão ativo no mês aberto (vazio sem o módulo). */
   faturas: SituacaoCartao[]
   lancsMes: Lancamento[]
+  /** Todos os lançamentos do ano aberto (a busca procura no ano inteiro). */
+  lancsAno: Lancamento[]
   /** Dívidas como estão neste mês (saldo calculado com os pagamentos). */
   situacao: SituacaoDivida[]
   /** Dinheiro que te devem (dívidas com sentido 'me_devem') como está neste mês. Fica fora de `r.divida`. */

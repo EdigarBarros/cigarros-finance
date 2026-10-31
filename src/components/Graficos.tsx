@@ -269,9 +269,16 @@ export function GraficoSaldo({ porMes, mesAtual, compacto }: {
   porMes: (Resumo | null)[]; mesAtual?: number; compacto?: boolean
 }) {
   const c = useCoresDoGrafico()
+  const principal = moedaAtual()
+  const extras = useMemo(() => moedasDoAno(porMes), [porMes])
+  const [escolhida, setEscolhida] = useState(principal)
+  // Só aparece o seletor quando há algo em outra moeda; a visão padrão é a da moeda principal, igual a antes.
+  const moeda = extras.includes(escolhida) ? escolhida : principal
+  const fora = moeda !== principal
+  const fluxoDe = (r: Resumo) => (fora ? Math.round(((r.entradasMoeda[moeda] ?? 0) - (r.saidasMoeda[moeda] ?? 0)) * 100) / 100 : r.fluxo)
   // acumulado no ano: soma do que sobrou até cada mês (meses sem dados ficam em branco)
-  const acumulado = porMes.map((r, i) => (r ? porMes.slice(0, i + 1).reduce((a, x) => a + (x?.fluxo ?? 0), 0) : null))
-  const sobrou = serie(porMes, (r) => r.fluxo)
+  const acumulado = porMes.map((r, i) => (r ? porMes.slice(0, i + 1).reduce((a, x) => a + (x ? fluxoDe(x) : 0), 0) : null))
+  const sobrou = serie(porMes, fluxoDe)
   const data = {
     labels: MESES_CURTO,
     datasets: [
@@ -289,10 +296,19 @@ export function GraficoSaldo({ porMes, mesAtual, compacto }: {
     ],
   } as unknown as ChartData<'bar'>
   return (
-    <div className="grafico" style={{ height: compacto ? 240 : 280 }}>
-      <Misto type="bar" key={c.tema + c.ocultos} data={data}
-        options={opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual, compacto, eixoDireito: PALETA.acumulado, destacar: true })} />
-    </div>
+    <>
+      {extras.length > 0 && (
+        <div className="grafico-moeda">
+          <Segmentado rotulo={tx('Ver o gráfico em')} valor={moeda} aoMudar={setEscolhida}
+            opcoes={[principal, ...extras].map((m) => ({ id: m, nome: m }))} />
+        </div>
+      )}
+      <div className="grafico" style={{ height: compacto ? 240 : 280 }}>
+        <Misto type="bar" key={c.tema + c.ocultos + moeda} data={data}
+          options={opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual, compacto, eixoDireito: PALETA.acumulado, destacar: true, formatar: fora ? (n) => fmtMoeda(n, moeda) : fmtValor })} />
+      </div>
+      {fora && <p className="campo-ajuda">{tx('Valores em {0}, como você lançou: sem conversão. Entrou e Saiu só desta moeda.', moeda)}</p>}
+    </>
   )
 }
 
