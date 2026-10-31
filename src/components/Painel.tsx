@@ -8,8 +8,7 @@ import {
 } from '../lib/contasFixas'
 import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
 import { COR } from '../lib/charts'
-import { conselhos as conselhosDe, dispensarPorUmMes } from '../lib/conselheiro'
-import { avisosDispensadosNoMes, faltamDadosParaConselhos } from '../lib/conselhosTela'
+import { avisosDispensadosNoMes, conselhos as conselhosDe, dispensarPorUmMes, faltamDadosParaConselhos } from '../lib/conselheiro'
 import { calendarioDe, fimDoMes, inicioDaDivida, meDevem, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
 import { definirMoedaPrincipal, definirValoresOcultos, fmtDataCurta, fmtValor, MESES_CURTO, MESES_NOME, useValoresOcultos } from '../lib/format'
 import { useCambio } from '../lib/moedas'
@@ -433,7 +432,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),
     dispensar: (id: string) => mudarPerfil({ ...perfil, dispensadas: [...new Set([...perfil.dispensadas, id])] }),
     conselhos, dispensarConselho,
-    conselhosSemDados: faltamDadosParaConselhos(lancsDosConselhos, d.dividas, hoje),
+    conselhosSemDados: faltamDadosParaConselhos({ lancs: lancsDosConselhos, dividas: d.dividas, hoje }),
     conselhosDispensados: avisosDispensadosNoMes(perfil.dispensadas, hoje),
     ligarModulo,
     personalizar: () => setAjustes('painel'),

@@ -6342,5 +6342,9 @@
   "Com essa informação, o app mostra qual dívida pagar primeiro.": {
     "en": "With this information, the app shows which debt to pay first.",
     "es": "Con esta información, la app te muestra qué deuda pagar primero."
+  },
+  "É a mais cara das suas dívidas: se sobrar dinheiro, adiante esta primeiro.": {
+    "en": "It is your most expensive debt: if you have money left over, pay this one off first.",
+    "es": "Es la más cara de tus deudas: si te sobra dinero, adelanta esta primero."
   }
 }

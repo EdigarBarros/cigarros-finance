@@ -124,6 +124,8 @@ export interface EntradaConselheiro {
 const centavos = (n: number) => Math.round(n * 100) / 100
 const soma = (xs: number[]) => xs.reduce((a, b) => a + b, 0)
 const pct = (fracao: number) => Math.round(fracao * 100)
+/** Para quem passou de um limite: arredonda para cima, senão 30,3% sairia "30% … o ideal é ficar abaixo de 30%". */
+const pctAcima = (fracao: number) => Math.ceil(fracao * 100 - 1e-9)
 const numeroDecimal = new Intl.NumberFormat(LOCAL_DAS_DATAS, { maximumFractionDigits: 1 })
 
 /** Os meses (ano e mês) cujos lançamentos o conselheiro lê: os 3 fechados e o atual. Serve para saber o que carregar. */
@@ -189,17 +191,40 @@ function ritmoDosMesesFechados(movimentos: MovimentoMeta[], atual: number) {
   return Math.max(0, guardado / janela)
 }
 
+/** Meses fechados com entradas E saídas lançadas: a base de toda regra de fluxo (empréstimo não conta). */
+function mesesComDados(analise: Map<number, MesAnalisado>, fechados: number[]) {
+  return fechados.map((k) => analise.get(k)!).filter((m) => m.entradas > 0 && m.saidas > 0)
+}
+
+const fechadosAte = (atual: number) => Array.from({ length: MESES_NA_MEDIA }, (_, i) => atual - MESES_NA_MEDIA + i) // do mais antigo ao mais novo
+
+/**
+ * Para a tela explicar uma lista vazia: true quando faltam meses fechados com entradas e saídas para o conselheiro opinar.
+ * Usa exatamente o critério do motor (mesmos meses, empréstimo fora), para a tela e o motor nunca discordarem.
+ */
+export function faltamDadosParaConselhos(e: Pick<EntradaConselheiro, 'lancs' | 'dividas' | 'hoje'>): boolean {
+  const hoje = e.hoje ?? new Date()
+  const fechados = fechadosAte(chaveMes(hoje.getFullYear(), hoje.getMonth() + 1))
+  return mesesComDados(analisarMeses(e.lancs, e.dividas, () => '', fechados), fechados).length < MIN_MESES_COM_DADOS
+}
+
+/** Quantos avisos a pessoa escondeu "por este mês" (as marcas de `dispensarPorUmMes`). */
+export function avisosDispensadosNoMes(dispensadas: string[], hoje = new Date()): number {
+  const marca = chaveDeDispensaDoMes('', hoje)
+  return dispensadas.filter((x) => x.endsWith(marca)).length
+}
+
 // ---------- o motor ----------
 
 export function conselhos(e: EntradaConselheiro): Conselho[] {
   const hoje = e.hoje ?? new Date()
   const v = visao(e.perfil)
   const atual = chaveMes(hoje.getFullYear(), hoje.getMonth() + 1)
-  const fechados = Array.from({ length: MESES_NA_MEDIA }, (_, i) => atual - MESES_NA_MEDIA + i) // do mais antigo ao mais novo
+  const fechados = fechadosAte(atual)
   const analise = analisarMeses(e.lancs, e.dividas, e.categoriaDe, [...fechados, atual])
 
   // Meses fechados com entradas E saídas: a base de toda regra de fluxo.
-  const comDados = fechados.map((k) => analise.get(k)!).filter((m) => m.entradas > 0 && m.saidas > 0)
+  const comDados = mesesComDados(analise, fechados)
   const temFluxo = comDados.length >= MIN_MESES_COM_DADOS
   const entradasMedia = temFluxo ? centavos(soma(comDados.map((m) => m.entradas)) / comDados.length) : 0
   const saidasMedia = temFluxo ? centavos(soma(comDados.map((m) => m.saidas)) / comDados.length) : 0
@@ -240,7 +265,7 @@ export function conselhos(e: EntradaConselheiro): Conselho[] {
         id: 'parcelas-pesando', gravidade: urgente ? 'urgente' : 'atencao', prioridade: urgente ? 90 : 70, icone: 'divida', destino: 'dividas', botao: tx('Ver dívidas'),
         titulo: urgente ? tx('As parcelas levam mais da metade do que você recebe.') : tx('As parcelas estão pesando.'),
         porque: tx('Suas parcelas somam {0} por mês, {1}% do que você recebe. O ideal é ficar abaixo de {2}%.',
-          fmtValor(parcelas), pct(peso), pct(PARCELAS_ATENCAO)),
+          fmtValor(parcelas), pctAcima(peso), pct(PARCELAS_ATENCAO)),
       })
     }
   }
@@ -273,17 +298,21 @@ export function conselhos(e: EntradaConselheiro): Conselho[] {
     .filter((s) => typeof s.divida.juros_mes === 'number' && s.divida.juros_mes >= 0)
     .sort((a, b) => b.divida.juros_mes! - a.divida.juros_mes! || a.divida.id.localeCompare(b.divida.id))
   const maisCara = porJuros[0]
-  if (maisCara && maisCara.divida.juros_mes! >= JUROS_ALTOS_MES) {
+  const segunda = porJuros[1]
+  // a mais cara cobra claramente mais que a segunda: vale dizer qual adiantar primeiro
+  const temMaisCara = Boolean(maisCara && segunda && maisCara.divida.juros_mes! - segunda.divida.juros_mes! >= JUROS_DIFERENCA_MIN)
+  const jurosAltos = Boolean(maisCara && maisCara.divida.juros_mes! >= JUROS_ALTOS_MES)
+  if (jurosAltos) {
     const j = maisCara.divida.juros_mes!
+    // quando a de juros altos é também a mais cara, um aviso só (senão os dois ocupariam o balão falando da mesma dívida)
+    const porque = tx('{0}% ao mês viram cerca de {1}% ao ano. Vale tentar negociar com quem você deve ou trocar por uma dívida mais barata.',
+      fmtTaxa(j), fmtTaxaAno(jurosAoAno(j)))
     nova({
       id: `juros-altos:${maisCara.divida.id}`, gravidade: 'urgente', prioridade: 92, icone: 'divida', destino: 'dividas', botao: tx('Ver dívidas'),
       titulo: tx('{0} cobra juros muito altos.', maisCara.divida.descricao),
-      porque: tx('{0}% ao mês viram cerca de {1}% ao ano. Vale tentar negociar com quem você deve ou trocar por uma dívida mais barata.',
-        fmtTaxa(j), fmtTaxaAno(jurosAoAno(j))),
+      porque: temMaisCara ? `${porque} ${tx('É a mais cara das suas dívidas: se sobrar dinheiro, adiante esta primeiro.')}` : porque,
     })
-  }
-  const segunda = porJuros[1]
-  if (maisCara && segunda && maisCara.divida.juros_mes! - segunda.divida.juros_mes! >= JUROS_DIFERENCA_MIN) {
+  } else if (temMaisCara) {
     nova({
       id: 'pagar-a-mais-cara', gravidade: 'atencao', prioridade: 80, icone: 'divida', destino: 'dividas', botao: tx('Ver dívidas'),
       titulo: tx('Se sobrar dinheiro, adiante primeiro {0}.', maisCara.divida.descricao),
@@ -301,11 +330,14 @@ export function conselhos(e: EntradaConselheiro): Conselho[] {
     })
   }
 
-  // 5. Sem reserva: dinheiro guardado nos bancos contra o gasto médio por mês (só com saldo de banco preenchido)
+  // 5. Sem reserva: dinheiro guardado nos bancos (e nos investimentos, com o módulo ligado: muita gente guarda a reserva num
+  //    investimento de resgate rápido) contra o gasto médio por mês. Só fala com saldo de banco preenchido.
   if (v.bancos && temFluxo && saidasMedia > 0) {
-    const caixa = mesEfetivo(e.meses, hoje.getFullYear(), hoje.getMonth() + 1, hoje).caixa
+    const ef = mesEfetivo(e.meses, hoje.getFullYear(), hoje.getMonth() + 1, hoje)
+    const caixa = ef.caixa
     const preencheu = Object.values(caixa).some((b) => TIPOS_CAIXA.some((t) => typeof b?.[t] === 'number'))
-    const guardado = centavos(Math.max(0, soma(Object.keys(caixa).map((id) => caixaDoBanco(caixa, id)))))
+    const investido = v.investimentos ? Math.max(0, ef.investimentos || 0) : 0
+    const guardado = centavos(Math.max(0, soma(Object.keys(caixa).map((id) => caixaDoBanco(caixa, id))) + investido))
     const meses = guardado / saidasMedia
     if (preencheu && meses < RESERVA_MIN_MESES) {
       const [de, ate] = RESERVA_IDEAL_MESES
@@ -364,7 +396,7 @@ export function conselhos(e: EntradaConselheiro): Conselho[] {
         id: 'cartao-comprometido', gravidade: 'atencao', prioridade: 65, icone: 'cartao', destino: 'cartoes', botao: tx('Ver cartões'),
         titulo: tx('As parcelas do cartão estão pesando.'),
         porque: tx('Em {0} já estão marcados {1} em compras parceladas no cartão, {2}% do que você recebe. O ideal é ficar abaixo de {3}%.',
-          noMeioDaFrase(MESES_NOME[prox.mes - 1]), fmtValor(parcelas), pct(peso), pct(CARTAO_ATENCAO)),
+          noMeioDaFrase(MESES_NOME[prox.mes - 1]), fmtValor(parcelas), pctAcima(peso), pct(CARTAO_ATENCAO)),
       })
     }
   }

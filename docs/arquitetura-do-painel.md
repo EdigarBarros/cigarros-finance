@@ -88,7 +88,7 @@ aviso até o mês que vem (`Ctx.dispensarConselho`, a mesma regra do "x" do bal�
 urgentes vêm primeiro (o motor já ordena); no computador os cartões ficam em 2 colunas, no celular em 1, com o botão em largura
 cheia. No jeito **simples** aparecem os 2 primeiros e "Ver todos" abre o resto; no equilibrado e no detalhado, todos. Sem
 conselhos: com dados, "Tudo em ordem por aqui." (e, se a pessoa escondeu avisos neste mês, o lembrete de que voltam no mês que
-vem); sem dados (menos de 2 meses fechados com entradas e saídas, `faltamDadosParaConselhos` em `lib/conselhosTela.ts`), a frase
+vem); sem dados (menos de 2 meses fechados com entradas e saídas, `faltamDadosParaConselhos` em `lib/conselheiro.ts`, com o mesmo critério do motor), a frase
 que explica o que lançar. Conta nova não vê o bloco. O rodapé diz, em palavras simples, que são orientações gerais calculadas
 com o que foi lançado, e não recomendação de investimento.
 
