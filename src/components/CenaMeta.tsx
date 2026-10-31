@@ -229,7 +229,7 @@ export function CenaMeta({ icone }: { icone: string }) {
 
 /** Cartão de um modelo de meta: a cena grande num palco que inclina em 3D seguindo o mouse, e o nome embaixo. */
 export function CartaoModelo({ cor, icone, nome, dica, selo, indice, largo, aoEscolher }: {
-  cor: string; icone: string; nome: string; dica: string; selo?: string; indice: number; largo?: boolean; aoEscolher: () => void
+  cor: string; icone: string; nome: string; dica: string; selo?: React.ReactNode; indice: number; largo?: boolean; aoEscolher: () => void
 }) {
   const ref = useRef<HTMLButtonElement>(null)
   const mover = (e: React.PointerEvent) => {

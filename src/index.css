@@ -1655,10 +1655,19 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .mt-vazio h2 { font-size: 22px; letter-spacing: -.02em; }
 .mt-vazio > p { margin: 0; max-width: 520px; color: var(--texto-2); line-height: 1.55; }
 /* modelos de meta: vitrines com uma cena 3D que inclina com o mouse e ganha vida no hover */
-.mt-modelos { display: grid; grid-template-columns: repeat(auto-fit, minmax(146px, 1fr)); gap: 12px; width: 100%; margin-top: 10px; }
+.mt-modelos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; width: 100%; margin-top: 10px; }
+/* os 7 numa linha quando cabem; senão 4 + 3 (nunca um sozinho embaixo). A medida é a do cartão, não a da tela,
+   porque a barra lateral muda o espaço que sobra. */
+.mt-vazio { container-type: inline-size; }
+@container (min-width: 900px) { .mt-modelos { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
+/* 7 numa linha num espaço apertado: letra um pouco menor para "Aposentadoria" e o valor caberem sem esticar o cartão */
+@container (min-width: 900px) and (max-width: 1120px) {
+  .mt-modelo-texto strong { font-size: 14px; }
+  .mt-modelo-selo { font-size: 12px; padding: 5px 8px; }
+}
 .mt-modelo {
   --rx: 0deg; --ry: 0deg;
-  position: relative; display: grid; grid-template-rows: auto 1fr; justify-items: center; gap: 8px; padding: 14px 10px 16px;
+  position: relative; display: grid; grid-template-rows: auto 1fr; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 8px; padding: 14px 10px 16px;
   border-radius: 22px; border: 1px solid var(--borda); color: inherit; text-align: center; overflow: hidden; isolation: isolate;
   background:
     radial-gradient(85% 60% at 50% 38%, color-mix(in srgb, var(--c) 24%, transparent), transparent 72%),
@@ -1695,6 +1704,8 @@ button.ex-tipo:hover { transform: scale(1.1); }
   color: color-mix(in srgb, var(--c) 80%, var(--texto)); background: color-mix(in srgb, var(--c) 17%, transparent);
   border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
 }
+.mt-modelo-selo { display: grid; justify-items: center; gap: 1px; border-radius: 14px; padding: 5px 12px; }
+.mt-modelo-selo small { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; opacity: .75; }
 
 /* as cenas: tons da cor da meta, como os potes */
 .cn { overflow: visible; }

@@ -50,8 +50,13 @@ export function Metas(c: Ctx) {
   const falta = ativas.reduce((a, s) => a + naPrincipal(s.falta, s.meta.moeda), 0)
   const porMes = ativas.reduce((a, s) => a + naPrincipal(s.porMesNoPrazo ?? 0, s.meta.moeda), 0)
   // Para a reserva de emergência: média do que saiu nos meses com dados.
-  const comDados = c.porMes.filter((r) => r && r.saidas > 0)
-  const gastoMedio = comDados.length ? comDados.reduce((a, r) => a + r!.saidas, 0) / comDados.length : 0
+  // Só meses que já fecharam: o que ainda está correndo e os futuros (com contas fixas já lançadas) puxariam a média
+  // para baixo. Sem nenhum mês fechado, vale o que houver.
+  const [anoHoje, mesHoje] = hoje().split('-').map(Number)
+  const meses = c.porMes.map((r, i) => (r && r.saidas > 0 ? { r, i } : null)).filter((x) => x !== null)
+  const fechados = meses.filter((x) => c.ano < anoHoje || (c.ano === anoHoje && x.i < mesHoje - 1))
+  const comDados = (fechados.length ? fechados : meses).map((x) => x.r)
+  const gastoMedio = comDados.length ? comDados.reduce((a, r) => a + r.saidas, 0) / comDados.length : 0
   const sobra = Math.max(0, c.r.fluxo)
   const aberto = sits.find((s) => s.meta.id === aberta)
   const novaDoModelo = (m: (typeof MODELOS)[number]) => {
@@ -74,7 +79,7 @@ export function Metas(c: Ctx) {
       {MODELOS.map((m, i) => (
         <CartaoModelo key={m.nome} cor={m.cor} icone={m.icone} nome={m.nome} indice={i} aoEscolher={() => novaDoModelo(m)}
           dica={m.reserva && gastoMedio ? tx('{0} = 6 meses de gastos', fmtValor(Math.round(gastoMedio * 6))) : m.dica}
-          selo={m.reserva && gastoMedio ? fmtValor(Math.round(gastoMedio * 6)) : undefined} />
+          selo={m.reserva && gastoMedio ? <><small>{tx('6 meses')}</small>{fmtValor(Math.round(gastoMedio * 6))}</> : undefined} />
       ))}
       <CartaoModelo cor="#9d6bff" icone="🎯" nome={tx('Outro objetivo')} dica={tx('do seu jeito')} indice={MODELOS.length} largo
         aoEscolher={() => { setModelo(undefined); setEditando('nova') }} />
