@@ -16,7 +16,7 @@ import { EscolhaBanco } from '../components/Formularios'
 import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
 import { PoteMeta } from '../components/PoteMeta'
-import { Cartao, Modal, Segmentado, Vazio } from '../components/ui'
+import { Cartao, Modal, Palco, Segmentado, Vazio } from '../components/ui'
 import type { Ctx } from './contexto'
 import { IconeCategoria } from '../components/IconeCategoria'
 import '../components/contas.css'
@@ -388,6 +388,9 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
     if (sugerida) setCategoriaId(sugerida.id)
   }
 
+  const corConta = entrada ? COR.entradas : COR.saidas
+  const catConta = c.categorias.find((k) => k.id === categoriaId)
+
   const salvar = () => {
     if (!nome.trim()) return setErro(tx('Dê um nome para a conta (ex.: Aluguel).'))
     const n = parseNumero(valor)
@@ -406,7 +409,17 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
   }
 
   return (
-    <Modal titulo={conta ? tx('Editar conta fixa') : tx('Nova conta fixa')} aoFechar={aoFechar}>
+    <Modal titulo={conta ? tx('Editar conta fixa') : tx('Nova conta fixa')} aoFechar={aoFechar} tamanho="tela" cor={corConta} palco={
+      <Palco cor={catConta?.cor ?? corConta}
+        icone={catConta ? <IconeCategoria emoji={catConta.icone} tamanho={46} /> : <Icone nome="calendario" tamanho={42} />}>
+        {nome.trim() && <span className="palco-legenda">{nome.trim()}</span>}
+        <span className="palco-valor">
+          <small>{entrada ? tx('Quanto costuma cair') : tx('Quanto costuma ser')}</small>
+          <strong>{fmtMoeda(parseNumero(valor) ?? 0, moeda)}</strong>
+          {dia && <em><Icone nome="calendario" tamanho={14} /> {entrada ? tx('Cai todo dia') : tx('Vence todo dia')} {dia}</em>}
+        </span>
+      </Palco>
+    }>
       <form className="form" onSubmit={(e) => { e.preventDefault(); salvar() }}>
         <Segmentado rotulo={tx('Tipo')} valor={tipo} aoMudar={mudarTipo}
           opcoes={[{ id: 'saida', nome: tx('Conta a pagar'), cor: COR.saidas }, { id: 'entrada', nome: tx('Entrada fixa'), cor: COR.entradas }]} />
@@ -448,13 +461,14 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
         )}
         <EscolhaCategoria
           key={tipo}
+          grade
           tipo={tipo}
           opcoes={doTipo(c.categorias, tipo)}
           valor={categoriaId}
           aoMudar={(id) => { setCategoriaId(id); setMexeuCategoria(true) }}
           aoCriar={c.d.categoriasAntigas ? undefined : c.d.addCategoria}
         />
-        {(c.v.bancos || bancoId) && <EscolhaBanco bancos={c.d.bancos} valor={bancoId} aoMudar={setBancoId} aoNovoBanco={c.d.addBanco} />}
+        {(c.v.bancos || bancoId) && <EscolhaBanco grade bancos={c.d.bancos} valor={bancoId} aoMudar={setBancoId} aoNovoBanco={c.d.addBanco} />}
         <div className="form-linha">
           <label className="campo">
             <span className="campo-rotulo">{tx('A partir de')}</span>

@@ -342,10 +342,15 @@ function FormMeta({ c, meta, modelo, aoFechar }: { c: Ctx; meta?: Meta; modelo?:
   }
 
   return (
-    <Modal titulo={meta ? tx('Editar meta') : tx('Nova meta')} aoFechar={aoFechar}>
+    <Modal titulo={meta ? tx('Editar meta') : tx('Nova meta')} aoFechar={aoFechar} tamanho="tela" cor={cor} palco={
+      <div className="palco" style={{ '--c': cor } as React.CSSProperties}>
+        <span className="palco-pote"><PoteMeta key={icone + cor} progresso={0.55} cor={cor} icone={icone} tamanho={150} /></span>
+        {nome.trim() && <span className="palco-legenda">{nome.trim()}</span>}
+        {parseNumero(alvo) ? <span className="palco-valor"><small>{tx('Quanto quer juntar')}</small><strong>{fmtMoeda(parseNumero(alvo)!, moeda)}</strong></span> : null}
+      </div>
+    }>
       <form className="form" onSubmit={(e) => { e.preventDefault(); salvar() }}>
         <div className="editor-categoria-nome">
-          <span className="mt-form-pote"><PoteMeta progresso={0.55} cor={cor} icone={icone} tamanho={58} /></span>
           <input autoFocus={!meta} value={nome} onChange={(e) => setNome(e.target.value)} maxLength={40}
             placeholder={tx('Ex.: Viagem pra praia, Notebook novo…')} aria-label={tx('Nome da meta')} />
         </div>
@@ -416,6 +421,9 @@ function FormMovimento({ c, meta, retirar: inicial, valorInicial, aoFechar }: { 
         ...(s.falta > 0 ? [{ rotulo: tx('O que falta'), valor: s.falta }] : []),
       ]
 
+  // o pote do palco já mostra como fica depois deste movimento
+  const depois = Math.max(0, guardado + (retirar ? -1 : 1) * (parseNumero(valor) ?? 0))
+
   const salvar = () => {
     const n = parseNumero(valor)
     if (!n || n <= 0) return setErro(tx('Digite um valor maior que zero.'))
@@ -425,7 +433,16 @@ function FormMovimento({ c, meta, retirar: inicial, valorInicial, aoFechar }: { 
   }
 
   return (
-    <Modal titulo={meta.nome} aoFechar={aoFechar}>
+    <Modal titulo={meta.nome} aoFechar={aoFechar} tamanho="tela" cor={meta.cor} palco={
+      <div className="palco" style={{ '--c': meta.cor } as React.CSSProperties}>
+        <span className="palco-pote"><PoteMeta progresso={depois / meta.alvo} cor={meta.cor} icone={meta.icone} tamanho={150} /></span>
+        <span className="palco-valor">
+          <small>{tx('guardado nas metas')}</small>
+          <strong>{fmtMoeda(depois, meta.moeda)}</strong>
+          <em>{tx('de {0}', fmtMoeda(meta.alvo, meta.moeda))} · {Math.round(Math.min(1, Math.max(0, depois / meta.alvo)) * 100)}%</em>
+        </span>
+      </div>
+    }>
       <form className="form" onSubmit={(e) => { e.preventDefault(); salvar() }}>
         <Segmentado rotulo={tx('Movimento')} valor={retirar ? 'retirar' : 'guardar'} aoMudar={(v) => setRetirar(v === 'retirar')}
           opcoes={[{ id: 'guardar', nome: tx('Guardar'), cor: COR.entradas }, { id: 'retirar', nome: tx('Retirar'), cor: COR.saidas }]} />

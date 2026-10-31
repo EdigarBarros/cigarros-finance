@@ -3534,3 +3534,183 @@ iframe.skiptranslate, .skiptranslate > iframe, .goog-te-banner-frame, #goog-gt-t
 .VIpgJd-ZVi9od-ORHb-OEVmcd, .VIpgJd-ZVi9od-aZ2wEe-wOHMyf, .VIpgJd-yAWNEb-L7lbkb { display: none !important; }
 body { top: 0 !important; }
 .goog-text-highlight, .VIpgJd-yAWNEb-VIpgJd-fmcmS-sn54Q { background: none !important; box-shadow: none !important; }
+
+/* ================= telas de cadastro: vidro quase em tela cheia ================= */
+/* fundo da página só esmaecido (o vidro do painel é que desfoca), para o app continuar aparecendo atrás */
+.modal-fundo.vidro { padding: 24px; background: rgba(3, 6, 14, .42); backdrop-filter: blur(4px); }
+:root[data-tema='claro'] .modal-fundo.vidro { background: rgba(20, 30, 55, .16); }
+.modal.tela {
+  --c: var(--destaque);
+  position: relative; display: flex; flex-direction: column; width: min(1360px, 100%); height: min(960px, calc(100dvh - 48px)); max-height: none;
+  padding: 0; overflow: hidden; isolation: isolate; border-radius: 30px;
+  background: color-mix(in srgb, var(--superficie-forte) 88%, transparent);
+  -webkit-backdrop-filter: blur(48px) saturate(1.6); backdrop-filter: blur(48px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, .13);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .1) inset, 0 40px 90px -30px rgba(0, 0, 0, .65);
+}
+:root[data-tema='claro'] .modal.tela {
+  background: color-mix(in srgb, #fff 86%, transparent); border-color: rgba(255, 255, 255, .8);
+  box-shadow: 0 1px 0 #fff inset, 0 40px 80px -36px rgba(20, 30, 60, .35);
+}
+/* luz na cor do assunto, bem de leve, passeando atrás de tudo */
+.tela-aurora { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.tela-aurora i { position: absolute; width: 58%; aspect-ratio: 1; border-radius: 50%; background: var(--c); filter: blur(80px); opacity: .2; transition: background .6s; animation: tela-aurora 16s ease-in-out infinite alternate; }
+.tela-aurora i:first-child { left: -16%; top: -22%; }
+.tela-aurora i:last-child { right: -20%; bottom: -34%; opacity: .1; animation-duration: 22s; animation-direction: alternate-reverse; }
+:root[data-tema='claro'] .tela-aurora i { opacity: .16; }
+@keyframes tela-aurora { to { transform: translate(12%, 10%) scale(1.15); } }
+
+.modal.tela .modal-topo { flex: none; margin: 0; padding: 18px 22px 12px 30px; }
+.modal.tela .modal-topo h2 { font-size: 21px; }
+.tela-corpo { flex: 1; min-height: 0; display: grid; grid-template-columns: clamp(320px, 38%, 500px) minmax(0, 1fr); }
+.tela-palco {
+  display: grid; place-items: center; min-height: 0; overflow-y: auto; padding: 8px 30px 40px;
+  border-right: 1px solid color-mix(in srgb, var(--borda) 70%, transparent);
+}
+.tela-conteudo { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; padding: 8px 36px 0; scrollbar-width: thin; }
+/* o formulário ocupa a altura toda para os botões ficarem sempre no pé do painel, mesmo num formulário curto */
+.tela-conteudo > .form { display: flex; flex-direction: column; flex: 1 0 auto; width: 100%; max-width: 780px; margin: 0 auto; gap: 22px; }
+/* botões sempre à vista, presos ao pé */
+.modal.tela .form-acoes {
+  /* margin-top: auto leva os botões para o pé do painel quando o formulário é curto */
+  position: sticky; bottom: 0; z-index: 3; margin: auto -36px 0; padding: 18px 36px 22px;
+  background: linear-gradient(to top, color-mix(in srgb, var(--superficie-forte) 94%, transparent) 62%, transparent);
+}
+:root[data-tema='claro'] .modal.tela .form-acoes { background: linear-gradient(to top, rgba(255, 255, 255, .94) 62%, transparent); }
+.modal.tela .form-acoes .btn { height: 48px; padding: 0 20px; border-radius: 15px; gap: 8px; font-size: 14.5px; }
+.modal.tela .form-acoes .btn.primario { padding: 0 28px; }
+
+/* campos: maiores, translúcidos, com a cor do assunto no foco */
+.modal.tela .campo-rotulo { display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; }
+.modal.tela .campo-rotulo svg { color: var(--c); }
+.modal.tela .campo-rotulo small { display: none; }
+.modal.tela .campo input, .modal.tela .campo select, .modal.tela .campo-caixa, .modal.tela .editor-categoria-nome input {
+  height: 52px; border-radius: 16px; font-size: 15.5px; background: color-mix(in srgb, var(--superficie-2) 78%, transparent);
+}
+.modal.tela .campo input:focus, .modal.tela .campo select:focus, .modal.tela .campo-caixa:focus-within, .modal.tela .editor-categoria-nome input:focus {
+  border-color: var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 18%, transparent);
+}
+.modal.tela .segmentado { display: flex; width: 100%; padding: 4px; border-radius: 16px; }
+.modal.tela .segmentado button { flex: 1; height: 44px; border-radius: 12px; font-size: 14.5px; }
+.modal.tela .chip { height: 40px; padding: 0 16px; border-radius: 13px; font-size: 13.5px; }
+.modal.tela .form-dica { margin-top: 0; padding: 12px 14px; border-radius: 14px; }
+
+/* campo com ícone no lugar do rótulo */
+.campo-ic { position: relative; display: flex; align-items: center; min-width: 0; }
+.campo-ic > svg { position: absolute; left: 17px; color: var(--c, var(--texto-2)); pointer-events: none; }
+.campo-ic input {
+  width: 100%; height: 56px; padding: 0 16px 0 48px; border-radius: 17px; border: 1px solid var(--borda); outline: none; font-size: 16px;
+  background: color-mix(in srgb, var(--superficie-2) 78%, transparent); transition: box-shadow .2s, border-color .2s;
+}
+.campo-ic input:focus { border-color: var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 18%, transparent); }
+.campo-ic input::placeholder { color: var(--texto-3); }
+:root:not([data-tema='claro']) .campo-ic input[type='date']::-webkit-calendar-picker-indicator { filter: invert(.75); }
+.lf-data { display: flex; gap: 8px; align-items: center; }
+.lf-data .chip { flex: none; height: 56px; padding: 0 20px; border-radius: 17px; font-size: 14px; }
+.lf-data .campo-ic { flex: 1; }
+
+/* escolhas em ladrilhos: ícone grande, nome embaixo e um ✓ que salta ao escolher */
+.chips.grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 9px; }
+.modal .chips.grade .chip, .chips.grade .chip {
+  position: relative; display: flex; flex-direction: column; justify-content: center; gap: 8px; height: auto; min-height: 88px; padding: 12px 6px 10px;
+  border-radius: 18px; font-size: 12.5px; line-height: 1.15; text-align: center; white-space: normal; overflow-wrap: anywhere;
+  background: color-mix(in srgb, var(--superficie-2) 70%, transparent);
+  transition: transform .35s var(--mola-salto), border-color .2s, background .2s, box-shadow .3s;
+}
+.chips.grade .chip:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--c, var(--destaque)) 45%, var(--borda)); color: var(--texto); }
+.chips.grade .chip:active { transform: scale(.95); }
+.chips.grade .chip.ativo {
+  color: var(--texto); border-color: color-mix(in srgb, var(--c, var(--destaque)) 70%, transparent);
+  background: color-mix(in srgb, var(--c, var(--destaque)) 17%, var(--superficie));
+  box-shadow: 0 14px 28px -18px var(--c, var(--destaque));
+}
+.chips.grade .chip.ativo::after {
+  content: ''; position: absolute; top: 7px; right: 7px; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--c, var(--destaque)) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E") center / 11px no-repeat;
+  animation: grade-marca .45s var(--mola-salto) both;
+}
+@keyframes grade-marca { from { transform: scale(0) rotate(-40deg); } }
+.chips.grade .chip-icone {
+  display: grid; place-items: center; width: 40px; height: 40px; margin: 0; border-radius: 13px; color: var(--c, var(--destaque));
+  background: color-mix(in srgb, var(--c, var(--destaque)) 15%, transparent); transition: transform .4s var(--mola-salto);
+}
+.chips.grade .chip.ativo .chip-icone, .chips.grade .chip.ativo .banco-icone { transform: scale(1.1); }
+.chips.grade .banco-icone { transition: transform .4s var(--mola-salto); filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .2)); }
+.chips.grade .chip-icone.neutro { color: var(--texto-2); background: var(--preench-3); }
+.chips.grade .chip.novo .chip-icone { color: var(--link); background: color-mix(in srgb, var(--link) 12%, transparent); }
+
+/* o palco: a bolha do ícone flutuando, com um anel que pulsa, e o valor grande */
+.palco { display: grid; justify-items: center; gap: 14px; width: 100%; text-align: center; }
+.palco-bolha {
+  position: relative; display: grid; place-items: center; width: 124px; height: 124px; border-radius: 38px; color: var(--c);
+  background: radial-gradient(120% 120% at 28% 18%, color-mix(in srgb, var(--c) 40%, transparent), color-mix(in srgb, var(--c) 12%, transparent) 72%);
+  border: 1px solid color-mix(in srgb, var(--c) 42%, transparent);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .28) inset, 0 26px 50px -22px color-mix(in srgb, var(--c) 75%, #000);
+  animation: palco-entra .7s var(--mola-salto) both, palco-flutua 5s 1s ease-in-out infinite;
+}
+.palco-anel { position: absolute; inset: -10px; border-radius: 46px; border: 1.5px solid color-mix(in srgb, var(--c) 40%, transparent); animation: palco-anel 2.8s ease-out infinite; }
+@keyframes palco-anel { from { opacity: .8; transform: scale(.92); } to { opacity: 0; transform: scale(1.2); } }
+@keyframes palco-entra { from { opacity: 0; transform: scale(.55) rotate(-10deg); } }
+@keyframes palco-flutua { 50% { transform: translateY(-6px); } }
+.palco-legenda { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 17px; font-weight: 700; letter-spacing: -.01em; animation: aparece .4s; }
+.palco-valor { display: grid; justify-items: center; gap: 5px; }
+.palco-valor small { font-size: 13px; font-weight: 500; color: var(--texto-2); }
+.palco-valor strong { font-family: var(--fonte-numeros); font-size: clamp(32px, 3.4vw, 46px); font-weight: 700; letter-spacing: -.03em; color: var(--c); font-variant-numeric: tabular-nums; }
+.palco-valor em { display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 99px; font-style: normal; font-size: 13px; color: var(--texto-2); background: var(--preench-3); }
+.palco-pote { display: grid; place-items: center; filter: drop-shadow(0 26px 30px color-mix(in srgb, var(--c) 35%, transparent)); animation: palco-flutua 5s ease-in-out infinite; }
+.tela-palco .cc-form-previa { width: 100%; padding: 0; animation: palco-entra .7s var(--mola-salto) both; }
+.tela-palco .cc-form-previa .cc-plastico { max-width: 400px; }
+.palco-fatura {
+  flex-direction: column; justify-content: center; gap: 18px; width: 100%; max-width: 360px; padding: 30px 24px; border-radius: 26px; text-align: center;
+  background: color-mix(in srgb, var(--superficie-2) 66%, transparent); animation: palco-entra .7s var(--mola-salto) both;
+}
+.palco-fatura .cc-confirma-quem { flex-direction: column; gap: 12px; }
+.palco-fatura .cc-confirma-quem .banco-icone { width: 64px; height: 64px; }
+.palco-fatura strong { font-size: 42px; color: var(--c); }
+
+/* lançamento: entrada ou saída em botões grandes e o valor gigante */
+.lf-palco { gap: 18px; }
+.lf-tipos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 360px; }
+.lf-tipo {
+  display: flex; align-items: center; justify-content: center; gap: 10px; height: 60px; border-radius: 19px; border: 1px solid var(--borda);
+  background: color-mix(in srgb, var(--superficie-2) 66%, transparent); color: var(--texto-2); font-size: 15px; font-weight: 600;
+  transition: background .3s, border-color .3s, color .3s, box-shadow .4s, transform .35s var(--mola-salto);
+}
+.lf-tipo:hover:not(.ativo) { color: var(--texto); border-color: var(--borda-forte); }
+.lf-tipo:active { transform: scale(.96); }
+.lf-tipo-icone { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); transition: transform .45s var(--mola-salto), background .3s, color .3s; }
+.lf-tipo.ativo { color: var(--texto); border-color: color-mix(in srgb, var(--c) 60%, transparent); background: color-mix(in srgb, var(--c) 15%, var(--superficie)); box-shadow: 0 16px 32px -20px var(--c); }
+.lf-tipo.ativo .lf-tipo-icone { color: #fff; background: var(--c); transform: scale(1.08) rotate(-6deg); }
+.lf-palco .valor-grande { padding: 0; }
+.lf-palco .valor-grande span { font-size: 28px; }
+.lf-palco .valor-grande input { max-width: 100%; font-size: clamp(50px, 5.4vw, 76px); }
+.lf-palco .form-dica { margin: 0; text-align: left; }
+.lf-palco .cotacao { width: 100%; text-align: left; }
+
+@media (max-width: 860px) {
+  .modal-fundo.vidro { padding: 0; place-items: stretch; }
+  .modal.tela { width: 100%; height: 100dvh; max-height: none; border: 0; border-radius: 0; padding: 0; animation: folha-sobe .55s var(--mola); }
+  .modal.tela .alca { display: none; }
+  .modal.tela .modal-topo { padding: calc(12px + env(safe-area-inset-top)) 14px 6px 20px; }
+  .modal.tela .modal-topo h2 { font-size: 19px; }
+  /* no celular rola tudo junto: o palco vira o topo da tela e os botões ficam presos embaixo */
+  .tela-corpo { display: block; overflow-y: auto; overscroll-behavior: contain; }
+  .tela-palco { overflow: visible; padding: 2px 16px 20px; border-right: 0; }
+  .tela-conteudo { overflow: visible; padding: 0 16px; }
+  .modal.tela .form-acoes { margin: auto -16px 0; padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); }
+  .modal.tela .form-acoes .btn { height: 50px; flex: 1; justify-content: center; padding: 0 14px; }
+  .modal.tela .form-acoes .espaco { display: none; }
+  .modal.tela .form-acoes .btn.primario { flex: 1.4; margin-left: 0; }
+  .palco-bolha { width: 88px; height: 88px; border-radius: 28px; }
+  .palco-bolha svg, .palco-bolha .icone-emoji { transform: scale(.8); }
+  .palco-pote .pote { width: 112px; height: auto; }
+  .tela-palco .cc-form-previa .cc-plastico { max-width: 320px; }
+  .lf-palco { gap: 14px; }
+  .lf-tipo { height: 54px; }
+  .chips.grade { grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 8px; }
+  .modal .chips.grade .chip, .chips.grade .chip { min-height: 82px; }
+  .lf-data .chip { padding: 0 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tela-aurora i, .palco-bolha, .palco-anel, .palco-pote { animation: none !important; }
+}
