@@ -931,9 +931,11 @@ button.cc-plastico:not(.ativo):hover { filter: none; }
 
 /* carteira: os cartões lado a lado (no celular, deslizam de lado) */
 .cc-carteira {
-  /* overflow-x: auto também corta na vertical: sem folga embaixo, a sombra colorida do cartão aparecia cortada em linha reta.
-     O padding de baixo dá lugar para ela inteira e a margem negativa devolve quase todo o espaço (a barra de rolagem fica fora da seção de baixo). */
-  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(260px, 320px); gap: 22px; padding: 6px 4px 60px; margin: 0 -4px -36px;
+  /* overflow-x: auto corta tudo o que passa da borda: sem folga, a luz colorida do cartão aparecia cortada em linha reta
+     (embaixo e, com um cartão só, dos lados, como um quadrado). O padding dá lugar para ela inteira em volta e a margem
+     negativa devolve o espaço, então os cartões continuam alinhados com o resto da página. */
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(260px, 320px); gap: 22px;
+  padding: 22px 32px 60px; margin: -16px -32px -36px; scroll-padding-inline: 32px;
   overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: thin;
 }
 .cc-carteira-item { display: grid; gap: 10px; justify-items: start; scroll-snap-align: start; animation: cc-entra .9s var(--mola) backwards; }
