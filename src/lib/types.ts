@@ -62,6 +62,8 @@ export interface Divida {
   total_parcelas?: number | null
   /** Moeda em que a dívida foi feita (migração 14); null = a moeda principal. Parcela e saldos ficam nessa moeda. */
   moeda?: string | null
+  /** Juros da dívida em % ao mês (migração 19): 2.5 = 2,5% ao mês; null = não informado. Só faz sentido em dívida que você deve. */
+  juros_mes?: number | null
   obs?: string | null
 }
 

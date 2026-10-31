@@ -2,12 +2,12 @@ import { CenaDividas } from '../components/Vazios'
 import { useState } from 'react'
 import { COR } from '../lib/charts'
 import {
-  aproxDiv, aumentaDivida, calendarioDe, fmtDiv, inicioPelaProxima, parcelasDe, projecaoMensal, tomarLadoDividas, totalDeParcelas,
+  aproxDiv, aumentaDivida, calendarioDe, fmtDiv, inicioPelaProxima, meDevem, parcelasDe, projecaoMensal, tomarLadoDividas, totalDeParcelas,
   type Calendario, type ParcelaDivida, type SituacaoDivida,
 } from '../lib/dividas'
 import { fmtConta } from '../lib/contasFixas'
 import { estiloDoBanco } from '../lib/estiloBanco'
-import { fmtDataCurta, fmtDataLonga, fmtMesAno, fmtMoeda, fmtValor, MESES_CURTO, noMeioDaFrase } from '../lib/format'
+import { fmtDataCurta, fmtDataLonga, fmtMesAno, fmtMoeda, fmtTaxa, fmtValor, MESES_CURTO, noMeioDaFrase } from '../lib/format'
 import { BancoIcone } from '../components/BancoIcone'
 import { FormDivida } from '../components/Formularios'
 import { Icone } from '../components/Icone'
@@ -190,6 +190,7 @@ export function Dividas(c: Ctx) {
           semExtras={c.d.dividasSemExtras}
           perfil={c.perfil}
           semMoeda={c.d.dividasSemMoeda}
+          semJuros={c.d.dividasSemJuros}
           aoCriar={async (d) => {
             if (d.sentido && d.sentido !== lado) setLado(d.sentido)
             return c.d.addDivida(d)
@@ -234,6 +235,12 @@ function Quem({ s, tamanho = 42 }: { s: SituacaoDivida; tamanho?: number }) {
   )
 }
 
+/** "1,8% ao mês" quando a pessoa informou os juros de uma dívida que ela deve e ainda não quitou; senão null. */
+const jurosDaDivida = (s: SituacaoDivida) => {
+  const j = s.divida.juros_mes
+  return !meDevem(s.divida) && s.restante > 0 && typeof j === 'number' && j > 0 ? tx('{0}% ao mês', fmtTaxa(j)) : null
+}
+
 function CartaoDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar }: {
   s: SituacaoDivida; cal: Calendario | null; estado: ReturnType<typeof estadoDe>; recebe: boolean; indice: number
   aoAbrir: () => void; aoPagar: () => void
@@ -251,7 +258,7 @@ function CartaoDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar }: {
           <Quem s={s} />
           <span className="dv-cartao-nome">
             <strong>{s.divida.descricao}</strong>
-            <small>{[s.divida.pessoa, p && !quitada ? tx('parcela {0} de {1}', p.proxima, totalDeParcelas(s)) : null].filter(Boolean).join(' · ') || (s.divida.valor_parcela ? tx('parcelado') : tx('valor único'))}</small>
+            <small>{[s.divida.pessoa, p && !quitada ? tx('parcela {0} de {1}', p.proxima, totalDeParcelas(s)) : null, jurosDaDivida(s)].filter(Boolean).join(' · ') || (s.divida.valor_parcela ? tx('parcelado') : tx('valor único'))}</small>
           </span>
           <span className={`chip-estado dv ${estado.id}`}>{estado.texto}</span>
         </header>
@@ -355,7 +362,7 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
           <Quem s={s} tamanho={52} />
           <span className="dv-ficha-nome">
             <h3>{s.divida.descricao}</h3>
-            <small>{s.divida.pessoa ? `${recebe ? tx('quem deve') : tx('com')}: ${s.divida.pessoa}` : recebe ? tx('a receber') : tx('dívida')}</small>
+            <small>{[s.divida.pessoa ? `${recebe ? tx('quem deve') : tx('com')}: ${s.divida.pessoa}` : recebe ? tx('a receber') : tx('dívida'), jurosDaDivida(s)].filter(Boolean).join(' · ')}</small>
           </span>
           <button className="btn" onClick={aoEditar}><Icone nome="lapis" tamanho={15} /> {tx('Editar')}</button>
         </header>

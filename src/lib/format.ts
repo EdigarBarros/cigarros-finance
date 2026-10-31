@@ -54,6 +54,14 @@ export const simbolo = (moeda = moedaPrincipal) =>
 const idiomaDasDatas = nativo ? idiomaAtual() : 'pt'
 /** Para toLocaleDateString: as datas por extenso saem na língua da tela. */
 export const LOCAL_DAS_DATAS = idiomaDasDatas === 'pt' ? 'pt-BR' : idiomaDasDatas
+
+const formatoTaxa = new Intl.NumberFormat(LOCAL_DAS_DATAS, { maximumFractionDigits: 2 })
+const formatoTaxaAno = new Intl.NumberFormat(LOCAL_DAS_DATAS, { maximumFractionDigits: 0 })
+const formatoTaxaAnoPequena = new Intl.NumberFormat(LOCAL_DAS_DATAS, { maximumFractionDigits: 1 })
+/** Taxa de juros por mês, sem o "%" (o texto leva o símbolo): 2,5; 0,99; 12. */
+export const fmtTaxa = (n: number) => formatoTaxa.format(n)
+/** Taxa de juros por ano, arredondada para não dar falsa precisão: 34; 6,2 (abaixo de 10 mostra uma casa). */
+export const fmtTaxaAno = (n: number) => (Math.abs(n) >= 10 ? formatoTaxaAno : formatoTaxaAnoPequena).format(n)
 const nomesDosMeses = (formato: 'long' | 'short') =>
   Array.from({ length: 12 }, (_, i) => {
     const nome = new Intl.DateTimeFormat(idiomaDasDatas, { month: formato, timeZone: 'UTC' }).format(Date.UTC(2026, i, 15)).replace('.', '')
