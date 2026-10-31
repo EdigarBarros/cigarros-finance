@@ -409,7 +409,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       cartoes: comCartoes ? <BlocoCartoes situacoes={faturas} aoAbrir={() => irPara('cartoes')} /> : undefined,
     },
     busca, setBusca,
-    ano, mes, d, cartoes, faturas, lancsMes, situacao, aReceber, diaRef, mesEf, porMes, mobile,
+    ano, mes, d, cartoes, faturas, lancsMes, lancsAno: lancsContados, situacao, aReceber, diaRef, mesEf, porMes, mobile,
     perfil, v, taxas, sugestao,
     aceitarSugestao: (s: Sugestao) => mudarPerfil(s.aplicar(perfil)),
     recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),
@@ -554,7 +554,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           {!mobile && (
             <label className="busca-topo">
               <Icone nome="busca" tamanho={18} />
-              <input type="search" placeholder={tx('Busque por lançamentos ou categorias…')} value={busca} onChange={(e) => buscar(e.target.value)} aria-label={tx('Buscar lançamentos')} />
+              <input type="search" placeholder={tx('Busque por nome, valor ou data…')} value={busca} onChange={(e) => buscar(e.target.value)} aria-label={tx('Buscar lançamentos')} />
             </label>
           )}
           <div className="barra-direita">
