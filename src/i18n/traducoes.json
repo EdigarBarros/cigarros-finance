@@ -5890,5 +5890,13 @@
   "O painel completo, com gráficos e a comparação com o mês passado.": {
     "en": "The full dashboard, with charts and a comparison with last month.",
     "es": "El panel completo, con gráficos y la comparación con el mes pasado."
+  },
+  "Ocultar valores": {
+    "en": "Hide amounts",
+    "es": "Ocultar valores"
+  },
+  "Mostrar valores": {
+    "en": "Show amounts",
+    "es": "Mostrar valores"
   }
 }

@@ -11,6 +11,7 @@ declare module 'chart.js' {
     destaqueMes?: { indice?: number; cor?: string }
   }
 }
+import { useValoresOcultos } from './format'
 import { coresDoGrafico, semMovimento, useTema, type Tema } from './tema'
 
 type ComRevelar = Chart & { $revelarInicio?: number; $revelado?: boolean; $quadro?: number; $recortou?: boolean }
@@ -234,7 +235,8 @@ export function coresPadrao(t: Tema) {
 /** Hook dos gráficos: cores do tema atual. Use `tema` como key para refazer o gráfico ao trocar de tema. */
 export function useCoresDoGrafico() {
   const { tema } = useTema()
-  return { tema, ...coresPadrao(tema) }
+  // `ocultos` entra na chave dos gráficos: ao esconder os valores eles são refeitos sem números nos eixos
+  return { tema, ocultos: useValoresOcultos() ? 'o' : '', ...coresPadrao(tema) }
 }
 
 // Papéis de cor (os mesmos da planilha), em tons que funcionam no claro e no escuro.
