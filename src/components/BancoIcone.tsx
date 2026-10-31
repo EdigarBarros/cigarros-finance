@@ -31,8 +31,10 @@ export function BancoIcone({ nome, reserva, cor = '#6b7a99', tamanho = 28 }: { n
         <clipPath id={`${id}-c`}><rect width="24" height="24" rx="7" /></clipPath>
       </defs>
       {logo?.modo === 'icone' ? (
-        // o arquivo já é o ícone do app: preenche o selo inteiro
+        // o arquivo já é o ícone do app: preenche o selo inteiro. O branco por baixo aparece nos vazados do desenho
+        // (as letras do Itaú são buracos no laranja; sem ele, mostrariam o fundo escuro da página).
         <g clipPath={`url(#${id}-c)`}>
+          <rect width="24" height="24" fill="#fff" />
           <svg width="24" height="24" viewBox={logo.viewBox} preserveAspectRatio="xMidYMid slice" dangerouslySetInnerHTML={{ __html: logo.corpo }} />
         </g>
       ) : (
