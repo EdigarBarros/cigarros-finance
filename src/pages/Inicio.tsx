@@ -14,6 +14,9 @@ import { ConviteImportar } from '../components/ConviteImportar'
 import { CartaoAcompanhar, CartaoSugestao } from '../components/Configuracoes'
 import { Encaixe, type ItemEncaixe } from '../components/Encaixe'
 import { Kpi, Progresso, ReguaMeses, type Tendencia } from '../components/ui'
+import { BlocoParaFazer, ResumoSimples } from '../components/Simples'
+import { tarefasDoMes } from '../lib/paraFazer'
+import { totaisDoMes } from '../lib/contasFixas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 
@@ -33,13 +36,15 @@ const palavras = (texto: string, atraso = 0) =>
  * Início, no layout do OpusCash. A ordem continua respondendo, nesta sequência: como estou este mês (saudação e
  * indicadores)? o que preciso fazer (contas, cartões, dívidas)? para onde está indo meu dinheiro (fluxo, lançamentos,
  * categorias)? e por fim o que estou construindo (metas, dinheiro guardado).
- * Os três jeitos de ver mostram os mesmos blocos, na mesma posição; só mudam as linhas de cada um
- * (veja docs/arquitetura-do-painel.md).
+ * O equilibrado e o detalhado mostram os mesmos blocos, na mesma posição; só mudam as linhas de cada um. O simples tem
+ * a sua própria tela: o mês em palavras, uma lista única do que fazer e menos números (veja docs/arquitetura-do-painel.md).
  */
 export function Inicio(c: Ctx) {
   const { r, anterior: a, mobile, v } = c
   const nivel = c.perfil.detalhe
   const detalhado = nivel === 'detalhado'
+  // conta nova vê a mesma boas-vindas em todos os jeitos
+  const simples = nivel === 'simples' && !c.contaNova
   const [divida, setDivida] = useState<SituacaoDivida | 'nova' | null>(null)
 
   const abrirDivida = (s: SituacaoDivida) => setDivida(s)
@@ -54,7 +59,7 @@ export function Inicio(c: Ctx) {
 
   // ---------- 0. Saudação ----------
   const sobrou = r.fluxo >= 0
-  const animo = c.contaNova || mesVazio ? '' : r.fluxo > 0 ? (' ' + tx('Você está no caminho certo! 🚀')) : r.fluxo < 0 ? (' ' + tx('Vale olhar para onde foi.')) : ''
+  const animo = c.contaNova || mesVazio || simples ? '' : r.fluxo > 0 ? (' ' + tx('Você está no caminho certo! 🚀')) : r.fluxo < 0 ? (' ' + tx('Vale olhar para onde foi.')) : ''
   const botoes = (
     <>
       <button className="btn entrada" onClick={() => c.novoLancamento('entrada')}><Icone nome="sobe" tamanho={16} /> {tx('Lançar entrada')}</button>
@@ -75,7 +80,7 @@ export function Inicio(c: Ctx) {
           <Icone nome="calendario" tamanho={22} />
           <span>{tx('Hoje')}<b>{hojePorExtenso}</b></span>
         </div>
-        {!mobile && !c.contaNova && <div className="hero-acoes" data-tour="lancar">{botoes}</div>}
+        {!mobile && !c.contaNova && !simples && <div className="hero-acoes" data-tour="lancar">{botoes}</div>}
       </div>
     </header>
   )
@@ -254,6 +259,72 @@ export function Inicio(c: Ctx) {
   // muda quando o tamanho dos blocos muda de verdade: aí os blocos podem trocar de coluna
   const versao = [c.ano, c.mes, nivel, c.lancsMes.length, c.situacao.length, c.aReceber.length, c.situacoesContas.length, c.faturas.length, c.d.metas.length, c.categorias.length].join('|')
 
+  const formDivida = divida && (
+    <FormDivida
+      ano={c.ano}
+      mes={c.mes}
+      situacao={divida === 'nova' ? undefined : divida}
+      aoCriar={c.d.addDivida}
+      aoEditar={c.d.updDivida}
+      aoNovoSaldo={c.d.addSaldo}
+      aoExcluir={c.d.delDivida}
+      perfil={c.perfil}
+      semMoeda={c.d.dividasSemMoeda}
+      aoFechar={() => setDivida(null)}
+    />
+  )
+
+  // ---------- Jeito simples: a própria tela ----------
+  if (simples) {
+    const contasDoMes = v.contas ? c.situacoesContas : []
+    const faturas = v.cartoes ? c.faturas : []
+    const dividasAbertas = v.dividas ? c.situacao.filter((s) => s.restante > 0) : []
+    const tarefas = tarefasDoMes({
+      ano: c.ano, mes: c.mes, contas: contasDoMes, faturas, dividas: dividasAbertas, diaRef: c.diaRef,
+      aoPagarConta: c.pagarConta, aoPagarDivida: c.pagarDivida, aoVerCartoes: () => c.irPara('cartoes'),
+    })
+    // só aparece quem tem algo cadastrado: sem contas, cartões nem dívidas, não há o que fazer
+    const comParaFazer = contasDoMes.length > 0 || faturas.length > 0 || dividasAbertas.length > 0
+    const mesAtual = c.ano === hoje.getFullYear() && c.mes === hoje.getMonth() + 1
+    const contasTot = totaisDoMes(contasDoMes)
+    const faltaPagar = Math.round((contasTot.faltaPagar + tarefas.parcelas) * 100) / 100
+    const previsao = mesAtual && !mesVazio && (faltaPagar > 0 || contasTot.aReceber > 0) ? { faltaPagar, faltaReceber: contasTot.aReceber } : null
+    const dividasResumo = v.dividas && (
+      <BlocoDividas itens={c.situacao} nivel={nivel} resumo aoNova={novaDivida} aoEditar={abrirDivida} aoPagar={c.pagarDivida} aoVerTodas={() => c.irPara('dividas')} />
+    )
+    // no computador, duas colunas (o que fazer e o que aconteceu à esquerda; para onde foi e o que você tem à direita);
+    // no celular, uma só, na ordem de `ordem`
+    const esquerda = [
+      comParaFazer && ['fazer', <BlocoParaFazer key="fazer" tarefas={tarefas.lista} aoVerTudo={v.contas ? () => c.irPara('contas') : undefined} />],
+      !mesVazio && ['lancamentos', lancamentos],
+    ].filter(Boolean) as [string, React.ReactNode][]
+    const direita = [
+      gastos && ['gastos', gastos],
+      dividasResumo && ['dividas', dividasResumo],
+      metas && ['metas', metas],
+      dinheiro && ['dinheiro', dinheiro],
+    ].filter(Boolean) as [string, React.ReactNode][]
+    const coluna = (itens: [string, React.ReactNode][]) => itens.length > 0 && (
+      <div className="simples-col">{itens.map(([k, no]) => <div key={k} className={`so so-${k}`}>{no}</div>)}</div>
+    )
+    return (
+      <div className="pagina inicio inicio-simples">
+        {saudacao}
+        <ResumoSimples r={r} nomeMes={nomeMes} vazio={mesVazio} futuro={c.ano * 12 + c.mes > hoje.getFullYear() * 12 + hoje.getMonth() + 1} previsao={previsao}
+          comCartao={tarefas.lista.some((t) => t.chave.startsWith('fatura:'))} acoes={botoes} aoVerGastos={irParaGastos} />
+        {convite}
+        {sugestao}
+        {(esquerda.length > 0 || direita.length > 0) && (
+          <div className="simples-colunas">{coluna(esquerda)}{coluna(direita)}</div>
+        )}
+        <p className="simples-rodape">
+          {tx('Quer ver gráficos e comparar com o mês passado?')} <button className="link" onClick={c.personalizar}>{tx('Mudar o jeito de ver')}</button>
+        </p>
+        {formDivida}
+      </div>
+    )
+  }
+
   return (
     <div className="pagina inicio">
       {saudacao}
@@ -281,20 +352,7 @@ export function Inicio(c: Ctx) {
       {linhaFluxo.length > 0 && <div className="linha-fluxo">{linhaFluxo}</div>}
       {analise.length > 0 && <Encaixe itens={analise} versao={versao} />}
 
-      {divida && (
-        <FormDivida
-          ano={c.ano}
-          mes={c.mes}
-          situacao={divida === 'nova' ? undefined : divida}
-          aoCriar={c.d.addDivida}
-          aoEditar={c.d.updDivida}
-          aoNovoSaldo={c.d.addSaldo}
-          aoExcluir={c.d.delDivida}
-          perfil={c.perfil}
-          semMoeda={c.d.dividasSemMoeda}
-          aoFechar={() => setDivida(null)}
-        />
-      )}
+      {formDivida}
     </div>
   )
 }

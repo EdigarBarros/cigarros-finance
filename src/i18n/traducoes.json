@@ -5279,17 +5279,9 @@
     "en": "Simple",
     "es": "Simple"
   },
-  "Quanto sobrou, quanto entrou e quanto saiu. Sem gráficos nem comparações.": {
-    "en": "How much is left over, how much came in and how much went out. No charts or comparisons.",
-    "es": "Cuánto sobró, cuánto entró y cuánto salió. Sin gráficos ni comparaciones."
-  },
   "Equilibrado": {
     "en": "Balanced",
     "es": "Equilibrado"
-  },
-  "O simples, mais gráficos e a comparação com o mês passado.": {
-    "en": "The simple one, plus charts and a comparison with last month.",
-    "es": "Lo simple, más gráficos y la comparación con el mes pasado."
   },
   "Detalhado": {
     "en": "Detailed",
@@ -5782,6 +5774,122 @@
   "Todo mês": {
     "en": "Every month",
     "es": "Todos los meses"
+  },
+  "Para fazer": {
+    "en": "To do",
+    "es": "Pendientes"
+  },
+  "1 com atraso": {
+    "en": "1 overdue",
+    "es": "1 atrasada"
+  },
+  "{0} com atraso": {
+    "en": "{0} overdue",
+    "es": "{0} atrasadas"
+  },
+  "1 em aberto": {
+    "en": "1 open",
+    "es": "1 pendiente"
+  },
+  "Ver mais {0}": {
+    "en": "See {0} more",
+    "es": "Ver {0} más"
+  },
+  "Ver contas do mês": {
+    "en": "See this month's bills",
+    "es": "Ver cuentas del mes"
+  },
+  "Mês no vermelho": {
+    "en": "In the red this month",
+    "es": "Mes en rojo"
+  },
+  "Mês apertado": {
+    "en": "Tight month",
+    "es": "Mes ajustado"
+  },
+  "Mês no azul": {
+    "en": "In the green this month",
+    "es": "Mes en positivo"
+  },
+  "{0} ainda não começou. Isso é o que já está lançado para ele, como parcelas e compras no cartão.": {
+    "en": "{0} hasn't started yet. This is what's already recorded for it, like installments and card purchases.",
+    "es": "{0} todavía no empezó. Esto es lo que ya está registrado para él, como cuotas y compras con tarjeta."
+  },
+  "Nada lançado em {0} ainda. Comece pelo que entrou ou pelo que saiu.": {
+    "en": "Nothing recorded in {0} yet. Start with what came in or what went out.",
+    "es": "Nada registrado en {0} todavía. Empieza por lo que entró o lo que salió."
+  },
+  "Saiu {0} a mais do que entrou.": {
+    "en": "{0} more went out than came in.",
+    "es": "Salió {0} más de lo que entró."
+  },
+  "Seu mês": {
+    "en": "Your month",
+    "es": "Tu mes"
+  },
+  "Deve sobrar em {0}": {
+    "en": "Should be left in {0}",
+    "es": "Debería sobrar en {0}"
+  },
+  "Já sai em {0}": {
+    "en": "Already going out in {0}",
+    "es": "Ya sale en {0}"
+  },
+  "Entrou {0} e saiu {1}": {
+    "en": "{0} came in and {1} went out",
+    "es": "Entró {0} y salió {1}"
+  },
+  "Até o fim do mês": {
+    "en": "By the end of the month",
+    "es": "Hasta fin de mes"
+  },
+  "Ainda falta pagar": {
+    "en": "Still to pay",
+    "es": "Falta pagar"
+  },
+  "Ainda falta receber": {
+    "en": "Still to receive",
+    "es": "Falta recibir"
+  },
+  "Pode faltar": {
+    "en": "You may be short",
+    "es": "Puede faltar"
+  },
+  "Deve sobrar": {
+    "en": "Should be left",
+    "es": "Debería sobrar"
+  },
+  "As compras no cartão já contam no que saiu.": {
+    "en": "Card purchases already count in what went out.",
+    "es": "Las compras con tarjeta ya cuentan en lo que salió."
+  },
+  "Fatura do cartão {0}": {
+    "en": "{0} card bill",
+    "es": "Factura de la tarjeta {0}"
+  },
+  "{0}: {1} parcelas": {
+    "en": "{0}: {1} installments",
+    "es": "{0}: {1} cuotas"
+  },
+  "Parcela: {0}": {
+    "en": "Installment: {0}",
+    "es": "Cuota: {0}"
+  },
+  "Quer ver gráficos e comparar com o mês passado?": {
+    "en": "Want to see charts and compare with last month?",
+    "es": "¿Quieres ver gráficos y comparar con el mes pasado?"
+  },
+  "Mudar o jeito de ver": {
+    "en": "Change the view",
+    "es": "Cambiar la vista"
+  },
+  "O mês em palavras, o que pagar e quanto deve sobrar no fim. Sem gráficos nem comparações.": {
+    "en": "Your month in plain words, what to pay and how much should be left at the end. No charts or comparisons.",
+    "es": "Tu mes en palabras, qué pagar y cuánto debería sobrar al final. Sin gráficos ni comparaciones."
+  },
+  "O painel completo, com gráficos e a comparação com o mês passado.": {
+    "en": "The full dashboard, with charts and a comparison with last month.",
+    "es": "El panel completo, con gráficos y la comparación con el mes pasado."
   },
   "Ocultar valores": {
     "en": "Hide amounts",

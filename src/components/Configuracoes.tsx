@@ -39,7 +39,9 @@ function CartaoAcao({ icone, titulo, texto, aoClicar, perigo }: { icone: string;
 }
 
 /** Configurações em tela cheia: menu de seções à esquerda e cartões à direita. Cada mudança vale na hora. */
-export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoExtrato, aoOrganizar, aoZerar, aoSair, aoExcluirConta, aoFechar, assinatura, aoTour }: {
+export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoExtrato, aoOrganizar, aoZerar, aoSair, aoExcluirConta, aoFechar, assinatura, aoTour, secaoInicial = 'perfil' }: {
+  /** Seção que abre primeiro ("Personalizar" abre direto em Painel). */
+  secaoInicial?: Secao
   perfil: Perfil; email: string; aoMudar: (p: Perfil) => void; aoRefazer: () => void; aoCategorias: () => void
   /** Para mostrar as categorias na seção Categorias. */
   categorias?: Categoria[]
@@ -57,7 +59,7 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
   /** Abre o tutorial guiado do painel. */
   aoTour?: () => void
 }) {
-  const [secao, setSecao] = useState<Secao>('perfil')
+  const [secao, setSecao] = useState<Secao>(secaoInicial)
   const [nome, setNome] = useState(perfil.nome)
   const { preferencia } = useTema()
   const movimento = useMovimento()

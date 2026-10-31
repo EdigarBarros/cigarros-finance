@@ -2700,7 +2700,12 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .previa-detalhe .pd-lista { flex-direction: column; gap: 4px; }
 .previa-detalhe .pd-lista i { height: 6px; border-radius: 99px; background: var(--preench-1); }
 .previa-detalhe .pd-lista i:nth-child(odd) { width: 80%; }
-.previa-detalhe.simples .pd-kpis i { height: 34px; }
+.previa-detalhe .pd-resumo {
+  flex-direction: column; gap: 7px; padding: 9px 8px; border-radius: 7px;
+  background: color-mix(in srgb, var(--destaque) 22%, var(--superficie)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--destaque) 35%, transparent);
+}
+.previa-detalhe .pd-resumo b { width: 52%; height: 10px; border-radius: 99px; background: var(--destaque); }
+.previa-detalhe .pd-resumo em { height: 6px; border-radius: 99px; background: linear-gradient(90deg, #ff6b81 0 78%, #2ad4a0 78%); }
 
 /* módulos: cartões com ícone e interruptor */
 /* flex: a última linha estica, sem buraco */
