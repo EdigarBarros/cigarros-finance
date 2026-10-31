@@ -48,6 +48,8 @@ interface FormLancProps {
   /** Cria a dívida de um empréstimo recebido ("quem emprestou") e devolve ela, para ligar à entrada. */
   /** Dia em que a dívida começou, para avisar quando o lançamento ligado a ela é de antes. */
   inicioDivida?: (id: string) => string | null
+  /** Dia do último saldo informado da dívida (ajuste de juros, acordo ou saldo de hoje). */
+  saldoDaDivida?: (id: string) => string | null
   aoMoverInicioDivida?: (id: string, data: string) => Promise<string | null>
   aoNovaDivida?: (d: { quem: string; data: string; sentido: 'devo' | 'me_devem' }) => Promise<Divida | undefined>
   aoExcluir?: (id: string) => void
@@ -111,6 +113,7 @@ export function FormLancamento(p: FormLancProps) {
   const [contaId, setContaId] = useState(ini.conta_fixa_id ?? '')
   const [mexeuConta, setMexeuConta] = useState(Boolean(p.inicial || p.preset))
   const inicioLigada = dividaId && !novoEmprestimo ? p.inicioDivida?.(dividaId) ?? null : null
+  const saldoLigado = dividaId && !novoEmprestimo ? p.saldoDaDivida?.(dividaId) ?? null : null
   const ehParcela = Boolean(p.inicial?.compra_id)
   const cartaoDaParcela = p.cartoes?.find((c) => c.id === p.inicial?.cartao_id)
 
@@ -610,6 +613,12 @@ export function FormLancamento(p: FormLancProps) {
             </span>
           </div>
         )}
+        {inicioLigada && saldoLigado && saldoLigado !== inicioLigada && data <= saldoLigado && data >= inicioLigada && (
+          <div className="form-dica fixa" role="status">
+            <Icone nome="calendario" tamanho={16} />
+            <span>{tx('Esta dívida teve o saldo informado em {0}, depois da data deste lançamento. O saldo desde lá já considera o que foi pago antes, então este lançamento não muda o que falta.', fmtDataLonga(saldoLigado))}</span>
+          </div>
+        )}
         {erro && <p className="form-erro">{erro}</p>}
         {salvos > 0 && !erro && <p className="form-ok">{tx('{0} lançamento{1} salvo{2}. Pode lançar o próximo.', salvos, salvos > 1 ? 's' : '', salvos > 1 ? 's' : '')}</p>}
         <div className="form-acoes">
@@ -753,11 +762,13 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
       const nf = nFaltam ?? atuais?.faltam ?? 0
       const totalN = nTotal ?? (d ? d.total_parcelas ?? atuais?.total ?? nf : nf)
       // Com o total, registra o valor de quando a dívida começou: é isso que mostra "parcela 4 de 12".
-      const marcoInicial = nTotal && nTotal > nf ? { data: mexeuComecou ? comecou : mesesAntes(data, nTotal - nf), saldo: Math.round(vp * nTotal * 100) / 100 } : undefined
       const inicio = proxima ? inicioPelaProxima(proxima, totalN - nf) : d?.inicio ?? null
+      // Dívida nova com a 1ª parcela no passado: ela começou naquele mês (e não hoje), senão os pagamentos antigos não contam.
+      const origem = !d && mexeuComecou ? comecou : !d && inicio && inicio < data ? `${inicio.slice(0, 7)}-01` : null
+      const marcoInicial = nTotal && nTotal > nf ? { data: origem ?? mesesAntes(data, nTotal - nf), saldo: Math.round(vp * nTotal * 100) / 100 } : undefined
       const campos = { descricao: descricao.trim(), valor_parcela: vp, ...extras, moeda: moeda === perfil.moeda ? null : moeda, inicio, total_parcelas: totalN || null }
       if (!d) {
-        aoCriar({ ...campos, saldo: Math.round(vp * nf * 100) / 100, data: !marcoInicial && mexeuComecou ? comecou : data, marcoInicial })
+        aoCriar({ ...campos, saldo: Math.round(vp * nf * 100) / 100, data: !marcoInicial && origem ? origem : data, marcoInicial })
       } else {
         aoEditar(d.id, campos)
         if (marcoInicial && marcoInicial.saldo > nativoDiv(situacao!, situacao!.saldoInicial)) aoNovoSaldo(d.id, marcoInicial.data, marcoInicial.saldo)
