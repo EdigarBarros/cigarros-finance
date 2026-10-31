@@ -78,6 +78,20 @@ Animações: o app tem a própria escolha (Configurações → Painel → Aparê
 movimento" do sistema não desliga mais as animações sozinho. A troca de tema espalha o tema novo como uma mancha de tinta de borda
 ondulada a partir do botão (View Transitions; sem elas, uma camada da cor do tema novo faz o mesmo caminho).
 
+**Saúde do seu dinheiro** (`components/BlocoConselhos.tsx`, estilos em `components/conselhos.css`): bloco em largura total, logo
+abaixo dos indicadores (e do convite e da sugestão, se houver), antes do "O que fazer". Mostra **todos** os conselhos ativos do
+conselheiro (`lib/conselheiro.ts`; o `Painel` calcula uma vez e passa por `Ctx.conselhos`, o mesmo que alimenta o balão do menu
+lateral). Cada conselho é um cartão com ícone, selo da gravidade em palavras (**Importante**, **Fique de olho**, **Parabéns**),
+o título, o "porque" com os números, um botão com verbo que leva à página de destino e o "Agora não", discreto, que esconde o
+aviso até o mês que vem (`Ctx.dispensarConselho`, a mesma regra do "x" do balão). A cor segue a gravidade com as variáveis do app
+(urgente = `--saida`, atenção = `--divida`, elogio = `--entrada`) e uma faixa na borda esquerda, para não depender só da cor. Os
+urgentes vêm primeiro (o motor já ordena); no computador os cartões ficam em 2 colunas, no celular em 1, com o botão em largura
+cheia. No jeito **simples** aparecem os 2 primeiros e "Ver todos" abre o resto; no equilibrado e no detalhado, todos. Sem
+conselhos: com dados, "Tudo em ordem por aqui." (e, se a pessoa escondeu avisos neste mês, o lembrete de que voltam no mês que
+vem); sem dados (menos de 2 meses fechados com entradas e saídas, `faltamDadosParaConselhos` em `lib/conselhosTela.ts`), a frase
+que explica o que lançar. Conta nova não vê o bloco. O rodapé diz, em palavras simples, que são orientações gerais calculadas
+com o que foi lançado, e não recomendação de investimento.
+
 O resultado do mês deixou de ser um "hero" separado: virou o primeiro cartão, em destaque, mantendo a frase de ancoragem.
 O gráfico de 12 meses com as linhas extras continua na página **Resumo do ano**.
 

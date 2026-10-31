@@ -9,6 +9,7 @@ import {
 import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
 import { COR } from '../lib/charts'
 import { conselhos as conselhosDe, dispensarPorUmMes } from '../lib/conselheiro'
+import { avisosDispensadosNoMes, faltamDadosParaConselhos } from '../lib/conselhosTela'
 import { calendarioDe, fimDoMes, inicioDaDivida, meDevem, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
 import { definirMoedaPrincipal, definirValoresOcultos, fmtDataCurta, fmtValor, MESES_CURTO, MESES_NOME, useValoresOcultos } from '../lib/format'
 import { useCambio } from '../lib/moedas'
@@ -347,6 +348,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     compras: comFaturas ? cartoes.compras.filter(contaNasSaidas(cartoes.faturasPagas)) : [],
   }), [lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, d.meses, d.metas, d.movimentosMeta, perfil.modulos, perfil.moedas, perfil.dispensadas, comFaturas, cartoes.compras, chaveRenegociadas]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // "Agora não": o conselho some até o mês que vem (se ainda for verdade, volta).
+  const dispensarConselho = (id: string) => mudarPerfil({ ...perfil, dispensadas: dispensarPorUmMes(perfil.dispensadas, id, hoje) })
+
   // Pagar (o que você deve) ou receber (o que te devem): o valor sugerido é o atrasado ou a próxima parcela.
   const pagarDivida = (s: SituacaoDivida, valor?: number) => {
     // sem calendário nem parcela fixa, o valor fica em branco: a pessoa paga quanto puder
@@ -427,6 +431,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     aceitarSugestao: (s: Sugestao) => mudarPerfil(s.aplicar(perfil)),
     recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),
     dispensar: (id: string) => mudarPerfil({ ...perfil, dispensadas: [...new Set([...perfil.dispensadas, id])] }),
+    conselhos, dispensarConselho,
+    conselhosSemDados: faltamDadosParaConselhos(lancsDosConselhos, d.dividas, hoje),
+    conselhosDispensados: avisosDispensadosNoMes(perfil.dispensadas, hoje),
     ligarModulo,
     personalizar: () => setAjustes('painel'),
     categorias: d.categorias,
@@ -513,8 +520,6 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       titulo: tx('Te devem {0} que já venceu.', fmtValor(atrasoReceber)),
     }] : []),
   ]
-  // "Agora não": o conselho some até o mês que vem (se ainda for verdade, volta).
-  const dispensarConselho = (id: string) => mudarPerfil({ ...perfil, dispensadas: dispensarPorUmMes(perfil.dispensadas, id, hoje) })
   const dicasDoConselheiro: Dica[] = conselhos.slice(0, 3).map((c) => ({
     id: c.id, alerta: c.gravidade === 'urgente', icone: c.icone, titulo: c.titulo, botao: c.botao, acao: () => irPara(c.destino),
     dispensar: () => dispensarConselho(c.id),

@@ -6234,5 +6234,53 @@
   "Para chegar em {0}, o ideal é guardar {1} por mês. Hoje você guarda cerca de {2} por mês.": {
     "en": "To get there by {0}, the ideal is to save {1} a month. Right now you save about {2} a month.",
     "es": "Para llegar en {0}, lo ideal es ahorrar {1} al mes. Hoy ahorras cerca de {2} al mes."
+  },
+  "Importante": {
+    "en": "Important",
+    "es": "Importante"
+  },
+  "Fique de olho": {
+    "en": "Keep an eye on this",
+    "es": "Ojo con esto"
+  },
+  "Parabéns": {
+    "en": "Well done",
+    "es": "Felicidades"
+  },
+  "Saúde do seu dinheiro": {
+    "en": "Your money health",
+    "es": "Salud de tu dinero"
+  },
+  "1 importante": {
+    "en": "1 important",
+    "es": "1 importante"
+  },
+  "{0} importantes": {
+    "en": "{0} important",
+    "es": "{0} importantes"
+  },
+  "Esconde este aviso até o mês que vem": {
+    "en": "Hides this notice until next month",
+    "es": "Oculta este aviso hasta el mes que viene"
+  },
+  "Agora não: esconde este aviso até o mês que vem": {
+    "en": "Not now: hides this notice until next month",
+    "es": "Ahora no: oculta este aviso hasta el mes que viene"
+  },
+  "Lance entradas e saídas de pelo menos 2 meses que já terminaram para receber conselhos sobre o seu dinheiro.": {
+    "en": "Add income and spending for at least 2 months that have already ended to get advice about your money.",
+    "es": "Registra ingresos y gastos de al menos 2 meses ya terminados para recibir consejos sobre tu dinero."
+  },
+  "Tudo em ordem por aqui.": {
+    "en": "Everything looks good here.",
+    "es": "Todo en orden por aquí."
+  },
+  "Os avisos que você escondeu voltam no mês que vem, se ainda forem verdade.": {
+    "en": "The notices you hid come back next month, if they still apply.",
+    "es": "Los avisos que ocultaste vuelven el mes que viene, si siguen siendo ciertos."
+  },
+  "São orientações gerais, calculadas com o que você lançou. Não são recomendação de investimento.": {
+    "en": "These are general guidelines, worked out from what you have entered. They are not investment advice.",
+    "es": "Son orientaciones generales, calculadas con lo que registraste. No son una recomendación de inversión."
   }
 }

@@ -15,6 +15,7 @@ import { CartaoAcompanhar, CartaoSugestao } from '../components/Configuracoes'
 import { Encaixe, type ItemEncaixe } from '../components/Encaixe'
 import { Kpi, Progresso, ReguaMeses, type Tendencia } from '../components/ui'
 import { BlocoParaFazer, ResumoSimples } from '../components/Simples'
+import { BlocoConselhos } from '../components/BlocoConselhos'
 import { tarefasDoMes } from '../lib/paraFazer'
 import { totaisDoMes } from '../lib/contasFixas'
 import type { Ctx } from './contexto'
@@ -155,6 +156,12 @@ export function Inicio(c: Ctx) {
 
   const sugestao = c.sugestao && (
     <CartaoSugestao s={c.sugestao} aoAceitar={() => c.aceitarSugestao(c.sugestao!)} aoRecusar={() => c.recusarSugestao(c.sugestao!)} />
+  )
+
+  // Saúde do seu dinheiro: todos os conselhos ativos, logo abaixo do resumo do mês (conta nova ainda não tem o que analisar)
+  const saude = !c.contaNova && (
+    <BlocoConselhos conselhos={c.conselhos} semDados={c.conselhosSemDados} dispensados={c.conselhosDispensados} simples={simples}
+      aoIr={c.irPara} aoDispensar={c.dispensarConselho} />
   )
 
   // ---------- 2. O que preciso fazer? ----------
@@ -317,6 +324,7 @@ export function Inicio(c: Ctx) {
           comCartao={tarefas.lista.some((t) => t.chave.startsWith('fatura:'))} acoes={botoes} aoVerGastos={irParaGastos} />
         {convite}
         {sugestao}
+        {saude}
         {(esquerda.length > 0 || direita.length > 0) && (
           <div className="simples-colunas">{coluna(esquerda)}{coluna(direita)}</div>
         )}
@@ -349,6 +357,8 @@ export function Inicio(c: Ctx) {
       {!c.contaNova && convite}
 
       {sugestao}
+
+      {saude}
 
       {/* duas colunas que terminam juntas: os blocos se dividem e os cartões elásticos preenchem a sobra */}
       {oQueFazer.length > 0 && <Encaixe itens={oQueFazer} versao={versao} />}
