@@ -34,6 +34,8 @@ const MODOS: Record<string, ModoLogo> = {
   agibank: { modo: 'branco', margem: 4.4 },
   wise: { modo: 'cores', margem: 5, trocar: { '#00b9ff': '#163300' } },
   nomad: { modo: 'cores', margem: 4.6 },
+  sicredi: { modo: 'branco', margem: 4.4 },
+  sicoob: { modo: 'cores', fundo: ['#0c5560', '#003641'], margem: 4.6 },
   'will-bank': { modo: 'cores', margem: 5 },
 }
 
