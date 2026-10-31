@@ -5958,5 +5958,53 @@
   "Empréstimo do {0}": {
     "en": "Loan from {0}",
     "es": "Préstamo de {0}"
+  },
+  "Escreva para quem você emprestou o dinheiro.": {
+    "en": "Write who you lent the money to.",
+    "es": "Escribe a quién le prestaste el dinero."
+  },
+  "Isso paga ou empresta para alguém?": {
+    "en": "Does this pay a debt or lend to someone?",
+    "es": "¿Esto paga una deuda o presta a alguien?"
+  },
+  "Emprestei para alguém (criar o que me devem)": {
+    "en": "I lent to someone (create what they owe me)",
+    "es": "Presté a alguien (crear lo que me deben)"
+  },
+  "Estou pagando uma dívida (ela diminui)": {
+    "en": "I'm paying a debt (it goes down)",
+    "es": "Estoy pagando una deuda (baja)"
+  },
+  "Emprestei mais para quem já me devia (o que falta receber aumenta)": {
+    "en": "I lent more to someone who already owed me (what is left to receive goes up)",
+    "es": "Presté más a quien ya me debía (lo que falta por recibir sube)"
+  },
+  "O que falta receber aumenta sozinho com este dinheiro que você emprestou.": {
+    "en": "What is left to receive goes up on its own with this money you lent.",
+    "es": "Lo que falta por recibir sube solo con este dinero que prestaste."
+  },
+  "Para quem? Ex.: Rafael": {
+    "en": "To whom? E.g.: Rafael",
+    "es": "¿A quién? Ej.: Rafael"
+  },
+  "Para quem você emprestou?": {
+    "en": "Who did you lend to?",
+    "es": "¿A quién le prestaste?"
+  },
+  "Aparece na aba Dívidas, em “Me devem”. Quando a pessoa devolver, lance uma entrada e escolha esta dívida.": {
+    "en": "Shows up in Debts, under “Owed to me”. When they pay you back, add an income and pick this debt.",
+    "es": "Aparece en Deudas, en “Me deben”. Cuando la persona devuelva, registra una entrada y elige esta deuda."
+  },
+  "Empréstimo para {0}": {
+    "en": "Loan to {0}",
+    "es": "Préstamo a {0}"
+  },
+  "emprestei": {
+    "en": "lent",
+    "es": "presté"
+  },
+  "Empréstimo que você fez": {
+    "en": "Loan you made",
+    "es": "Préstamo que hiciste"
   }
 }

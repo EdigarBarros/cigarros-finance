@@ -283,7 +283,7 @@ function CartaoLancamento({ l, banco, categoria, cartao, emprestimo, aoClicar, m
     l.cartao_id && { id: 'cc', texto: cartao ? tx('Cartão {0}', cartao.nome) : tx('Cartão'), cor: cartao?.cor },
     parcelado && { id: 'pc', texto: tx('Parcela {0} de {1}', l.parcela, l.parcelas) },
     !l.cartao_id && l.forma && { id: 'fp', texto: infoForma(l.forma).nome },
-    l.divida_id && { id: 'dv', texto: emprestimo ? tx('Dinheiro emprestado') : entrada ? tx('Recebido de quem devia') : tx('Pagamento de dívida') },
+    l.divida_id && { id: 'dv', texto: emprestimo ? (entrada ? tx('Dinheiro emprestado') : tx('Empréstimo que você fez')) : entrada ? tx('Recebido de quem devia') : tx('Pagamento de dívida') },
     l.conta_fixa_id && { id: 'cf', texto: tx('Todo mês') },
   ].filter(Boolean) as { id: string; texto: string; cor?: string }[]
   return (

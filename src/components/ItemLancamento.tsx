@@ -36,7 +36,7 @@ export function ItemLancamento({ l, banco, categoria, cartao, emprestimo, aoClic
         <Icone nome={infoForma(l.forma).icone} tamanho={12} />{infoForma(l.forma).nome}
       </span>
     ),
-    l.divida_id && <span key="dv" className={`item-tag ${entrada ? 'receber' : 'divida'}`}><Icone nome={entrada ? 'receber' : 'divida'} tamanho={12} />{emprestimo ? tx('emprestado') : entrada ? tx('recebido') : tx('dívida')}</span>,
+    l.divida_id && <span key="dv" className={`item-tag ${entrada ? 'receber' : 'divida'}`}><Icone nome={entrada ? 'receber' : 'divida'} tamanho={12} />{emprestimo ? (entrada ? tx('emprestado') : tx('emprestei')) : entrada ? tx('recebido') : tx('dívida')}</span>,
     l.conta_fixa_id && <span key="cf" className="item-tag conta"><Icone nome="calendario" tamanho={12} />{tx('todo mês')}</span>,
   ].filter(Boolean)
   return (
