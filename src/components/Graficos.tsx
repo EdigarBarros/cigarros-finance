@@ -2,13 +2,13 @@ import type { Chart as ChartJS, ChartData, ChartOptions, Plugin, ScriptableConte
 import { Chart as Misto, Doughnut } from 'react-chartjs-2'
 import type { Resumo } from '../lib/calc'
 import { PALETA, useCoresDoGrafico } from '../lib/charts'
-import { fmtValor, MESES_CURTO, MESES_NOME } from '../lib/format'
+import { fmtValor, MESES_CURTO, MESES_NOME, valoresEstaoOcultos } from '../lib/format'
 import type { Visao } from '../lib/perfil'
 import { tx } from '../lib/textos'
 
 /** Eixo sem os ",00": R$ 8.000 lê mais fácil que R$ 8.000,00. */
-const semCentavos = (n: number) => fmtValor(n).replace(/,00$/, '')
-const milhar = (n: number) => (Math.abs(n) >= 1000 ? tx('{0} mil', (n / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })) : String(n))
+const semCentavos = (n: number) => (valoresEstaoOcultos() ? '' : fmtValor(n).replace(/,00$/, ''))
+const milhar = (n: number) => valoresEstaoOcultos() ? '' : (Math.abs(n) >= 1000 ? tx('{0} mil', (n / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })) : String(n))
 
 type Quadro = {
   chart: ChartJS & { $cresceu?: boolean }; type: string; mode: string; dataIndex: number; datasetIndex: number; index: number
@@ -153,7 +153,7 @@ export function GraficoFluxo({ porMes, mesAtual, altura, compacto }: {
   } as unknown as ChartData<'bar'>
   return (
     <div className="grafico" style={altura ? { height: altura } : undefined}>
-      <Misto type="bar" key={c.tema} data={data}
+      <Misto type="bar" key={c.tema + c.ocultos} data={data}
         options={opcoes(c, { rotulos: MESES_CURTO.slice(inicio, inicio + 6), mesDoIndice: (i) => inicio + i + 1, mesAtual, compacto, legenda: false, destacar: true })} />
     </div>
   )
@@ -182,7 +182,7 @@ export function GraficoAnual({ porMes, mesAtual, altura = 400, compacto, v }: {
   } as unknown as ChartData<'bar'>
   return (
     <div className="grafico" style={{ height: altura }}>
-      <Misto type="bar" key={c.tema} data={data}
+      <Misto type="bar" key={c.tema + c.ocultos} data={data}
         options={opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual, compacto, destacar: true })} />
     </div>
   )
@@ -217,7 +217,7 @@ export function GraficoSaldo({ porMes, mesAtual, compacto }: {
   } as unknown as ChartData<'bar'>
   return (
     <div className="grafico" style={{ height: compacto ? 240 : 280 }}>
-      <Misto type="bar" key={c.tema} data={data}
+      <Misto type="bar" key={c.tema + c.ocultos} data={data}
         options={opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual, compacto, eixoDireito: PALETA.acumulado, destacar: true })} />
     </div>
   )
@@ -263,7 +263,7 @@ export function Rosca({ fatias, altura = 260, legenda = true, rotulos = true, cu
       {/* As fatias vêm da maior para a menor; quando a ordem muda, o gráfico é refeito
           (animar a troca de posição das fatias quebra o Chart.js). */}
       <Doughnut
-        key={c.tema + fatias.map((f) => f.nome).join('|')}
+        key={c.tema + c.ocultos + fatias.map((f) => f.nome).join('|')}
         data={{
           labels: fatias.map((f) => f.nome),
           datasets: [{ data: fatias.map((f) => Math.max(0, f.valor)), backgroundColor: fatias.map((f) => f.cor), borderColor: c.fundo, borderWidth: 3, spacing: 0, borderRadius: 4, hoverOffset: 8 }],
