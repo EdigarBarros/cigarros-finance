@@ -29,6 +29,14 @@ export interface SituacaoDivida {
   pagamentosNoMes: number
   /** Quanto a dívida aumentou no mês (dinheiro emprestado a mais). */
   aumentoNoMes: number
+  /** Quando a dívida começou: a data do saldo mais antigo (null se não há saldo). */
+  inicioEm: string | null
+  /** Mudanças de saldo sem lançamento (juros, acordo, desconto, quitação), com a diferença que cada uma fez. */
+  ajustes: { data: string; valor: number }[]
+  /** Soma dos ajustes que caem no mês. */
+  ajusteNoMes: number
+  /** Valor com que a dívida nasceu, se ela nasceu neste mês (senão 0). */
+  novaNoMes: number
   totalPago: number
   /** Meses que faltam pagando a parcela (null sem parcela definida). */
   mesesRestantes: number | null
@@ -39,6 +47,13 @@ export interface SituacaoDivida {
 
 /** Entrada numa dívida sua (empréstimo recebido) ou saída em "me devem" (empréstimo feito): a dívida cresce em vez de diminuir. */
 export const aumentaDivida = (tipo: Pagamento['tipo'], d: Pick<Divida, 'sentido'>) => (tipo === 'entrada') === ((d.sentido ?? 'devo') === 'devo') && tipo !== undefined
+
+/** Quando a dívida começou: a data do saldo mais antigo dela. */
+export function inicioDaDivida(saldos: SaldoDivida[], dividaId: string): string | null {
+  let achado: string | null = null
+  for (const s of saldos) if (s.divida_id === dividaId && (achado === null || s.data < achado)) achado = s.data
+  return achado
+}
 
 /** Saldo devedor numa data: último saldo informado até ela, menos os pagamentos (e mais os aumentos, que valem negativo) feitos depois dele. */
 export function saldoEm(divida: Divida, saldos: SaldoDivida[], pagamentos: Pagamento[], ate: string): number | null {
@@ -104,8 +119,21 @@ export function situacaoDividas(
     const aumentos = pagamentosD.filter((p) => p.valor < 0 && p.data && p.data <= fim)
     const saldoInicial = Math.max(restante, ...saldosD.filter((s) => s.divida_id === d.id && s.data <= fim)
       .map((s) => s.saldo + aumentos.filter((a) => a.data! > s.data).reduce((t, a) => t - a.valor, 0)))
+    // Ajustes: cada saldo informado depois do primeiro vale quanto era esperado (saldo anterior menos pagamentos) mais a diferença.
+    const marcos = saldosD.filter((x) => x.divida_id === d.id).sort((a, b) => a.data.localeCompare(b.data) || a.id.localeCompare(b.id))
+    const ajustes: { data: string; valor: number }[] = []
+    marcos.forEach((m, i) => {
+      if (i === 0) return
+      const esperado = saldoEm(d, marcos.slice(0, i), pagamentosD, m.data) ?? 0
+      const dif = centavosDe(m.saldo - esperado)
+      if (Math.abs(dif) >= 0.005) ajustes.push({ data: m.data, valor: dif })
+    })
     lista.push({
       divida: d, original, moeda, taxa,
+      inicioEm: marcos[0]?.data ?? null,
+      ajustes,
+      ajusteNoMes: centavosDe(ajustes.filter((a) => a.data >= ini && a.data <= fim).reduce((t, a) => t + a.valor, 0)),
+      novaNoMes: marcos[0] && marcos[0].data >= ini && marcos[0].data <= fim ? marcos[0].saldo : 0,
       restante,
       restanteAntes,
       saldoInicial,

@@ -4,6 +4,7 @@ import { normPerfil } from './perfil'
 import { lerTudo, supabase } from './supabase'
 import type { EscolhaZerar, ParteZerar } from './zerar'
 import type { Banco, Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida } from './types'
+import { fmtDataLonga } from './format'
 import { tx } from './textos'
 
 const num = (v: unknown) => Number(v ?? 0)
@@ -292,6 +293,25 @@ export function useDados(userId: string, ano: number) {
     if (erro) falhou(erro.message)
   }
 
+  /**
+   * Muda o dia em que a dívida começou: move o saldo mais antigo dela (e não cria outro), então os pagamentos já lançados
+   * continuam valendo. Devolve o motivo quando não pode (null = feito).
+   */
+  const moverInicioDivida = async (divida_id: string, data: string): Promise<string | null> => {
+    const marcos = saldos.filter((s) => s.divida_id === divida_id).sort((a, b) => a.data.localeCompare(b.data) || a.id.localeCompare(b.id))
+    const primeiro = marcos[0]
+    if (!primeiro || primeiro.data === data) return null
+    if (marcos[1] && data > marcos[1].data) return tx('Essa dívida tem um ajuste de saldo em {0}. Escolha uma data até lá.', fmtDataLonga(marcos[1].data))
+    setSaldos((xs) => xs.map((s) => (s.id === primeiro.id ? { ...s, data } : s)))
+    const { error } = await supabase.from('divida_saldos').update({ data }).eq('id', primeiro.id)
+    if (error) {
+      setSaldos((xs) => xs.map((s) => (s.id === primeiro.id ? { ...s, data: primeiro.data } : s)))
+      falhou(error.message)
+      return error.message
+    }
+    return null
+  }
+
   const salvarMes = async (anoMes: number, mes: number, patch: Partial<Omit<Mes, 'ano' | 'mes'>>) => {
     const atual = meses.find((m) => m.ano === anoMes && m.mes === mes) ?? {
       ano: anoMes, mes, investimentos: 0, moedas: {}, meta_usd: 0, caixa: {},
@@ -449,7 +469,7 @@ export function useDados(userId: string, ano: number) {
     dividasSemExtras,
     dividasSemMoeda,
     lancs, meses, dividas, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,
-    addLanc, addLancs, renomearLancs, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, ajustarValorDivida, salvarMes,
+    addLanc, addLancs, renomearLancs, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, ajustarValorDivida, moverInicioDivida, salvarMes,
   }
 }
 
