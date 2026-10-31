@@ -10,6 +10,7 @@ import { EscolhaMoeda } from '../components/EscolhaMoeda'
 import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
 import { PoteMeta } from '../components/PoteMeta'
+import { CartaoModelo } from '../components/CenaMeta'
 import { Anel, Cartao, Modal, Segmentado, Vazio } from '../components/ui'
 import type { Ctx } from './contexto'
 import { IconeCategoria } from '../components/IconeCategoria'
@@ -71,17 +72,12 @@ export function Metas(c: Ctx) {
   const modelos = (
     <div className="mt-modelos">
       {MODELOS.map((m, i) => (
-        <button key={m.nome} type="button" className="mt-modelo" style={{ '--c': m.cor, animationDelay: `${i * 50}ms` } as React.CSSProperties} onClick={() => novaDoModelo(m)}>
-          <span className="mt-modelo-icone"><IconeCategoria emoji={m.icone} tamanho={22} /></span>
-          <strong>{m.nome}</strong>
-          <small>{m.reserva && gastoMedio ? tx('{0} = 6 meses de gastos', fmtValor(Math.round(gastoMedio * 6))) : m.dica}</small>
-        </button>
+        <CartaoModelo key={m.nome} cor={m.cor} icone={m.icone} nome={m.nome} indice={i} aoEscolher={() => novaDoModelo(m)}
+          dica={m.reserva && gastoMedio ? tx('{0} = 6 meses de gastos', fmtValor(Math.round(gastoMedio * 6))) : m.dica}
+          selo={m.reserva && gastoMedio ? fmtValor(Math.round(gastoMedio * 6)) : undefined} />
       ))}
-      <button type="button" className="mt-modelo" style={{ '--c': '#9d6bff' } as React.CSSProperties} onClick={() => { setModelo(undefined); setEditando('nova') }}>
-        <span className="mt-modelo-icone"><IconeCategoria emoji="🎯" tamanho={22} /></span>
-        <strong>{tx('Outro objetivo')}</strong>
-        <small>{tx('do seu jeito')}</small>
-      </button>
+      <CartaoModelo cor="#9d6bff" icone="🎯" nome={tx('Outro objetivo')} dica={tx('do seu jeito')} indice={MODELOS.length} largo
+        aoEscolher={() => { setModelo(undefined); setEditando('nova') }} />
     </div>
   )
 
