@@ -45,6 +45,8 @@ interface FormLancProps {
   bancos: Banco[]
   aoNovoBanco: (nome: string, cor: string) => Promise<Banco | undefined>
   aoSalvar: (l: NovoLanc, id?: string) => void
+  /** Cria a dívida de um empréstimo recebido ("quem emprestou") e devolve ela, para ligar à entrada. */
+  aoNovaDivida?: (d: { quem: string; data: string }) => Promise<Divida | undefined>
   aoExcluir?: (id: string) => void
   /** Cartões de crédito (só com o módulo ligado): a saída pode ser uma compra no cartão. */
   cartoes?: CartaoCredito[]
@@ -63,6 +65,9 @@ interface FormLancProps {
   memoriaContas?: Map<string, MemoriaConta>
   aoFechar: () => void
 }
+
+/** Valor da opção "criar dívida" no seletor de entrada. */
+const NOVO = '__novo__'
 
 export function FormLancamento(p: FormLancProps) {
   const ini = { ...p.preset, ...p.inicial }
@@ -85,6 +90,9 @@ export function FormLancamento(p: FormLancProps) {
     p.inicial ? p.categoriaDe(p.inicial)?.id ?? '' : ini.categoria_id ?? outrosDe(ini.tipo ?? p.tipoInicial ?? 'saida'),
   )
   const [dividaId, setDividaId] = useState<string>(ini.divida_id ?? '')
+  /** Entrada que é empréstimo de alguém ainda sem dívida: a dívida nasce ao salvar. */
+  const [novoEmprestimo, setNovoEmprestimo] = useState(false)
+  const [quemEmprestou, setQuemEmprestou] = useState('')
   const [mexeuCategoria, setMexeuCategoria] = useState(Boolean(p.inicial || p.preset))
   const [mexeuDivida, setMexeuDivida] = useState(Boolean(p.inicial || p.preset))
   const [erro, setErro] = useState<string | null>(null)
@@ -149,7 +157,6 @@ export function FormLancamento(p: FormLancProps) {
       && Math.abs(l.valor - parcelas[0].valor) < 0.005 && (l.descricao ?? '').trim().toLowerCase() === nome)
   }, [cartao, parcelas, data, descricao, p.comprasCartao])
   const [duplicadaOk, setDuplicadaOk] = useState(false)
-  const ehDivida = p.categorias.find((c) => c.id === categoriaId)?.papel === 'divida'
   // Contas do mês do mesmo tipo. Cada conta tem uma baixa por mês: a que já tem outro lançamento no mês fica indisponível.
   const [anoData, mesData] = data ? data.split('-').map(Number) : [p.ano, p.mes]
   const contasDoTipo = (p.contasFixas ?? []).filter((c) => c.tipo === tipo && (c.ativa || c.id === ini.conta_fixa_id))
@@ -240,7 +247,7 @@ export function FormLancamento(p: FormLancProps) {
     }
   }
 
-  const salvar = (continuar: boolean) => {
+  const salvar = async (continuar: boolean) => {
     const n = parseNumero(valor)
     if (!n || n <= 0) {
       setErro(tx('Digite um valor maior que zero.'))
@@ -255,10 +262,17 @@ export function FormLancamento(p: FormLancProps) {
     }
     const [a, m] = data.split('-').map(Number)
     const saida = tipo === 'saida'
-    // aberto pela própria dívida (ou já ligado), o pagamento fica ligado mesmo sem a categoria de dívidas
-    const ligada = saida
-      ? ((ehDivida || dividaId === ini.divida_id) && devo.some((d) => d.id === dividaId) ? dividaId : null)
+    const criarEmprestimo = !saida && novoEmprestimo && Boolean(p.aoNovaDivida)
+    if (criarEmprestimo && !quemEmprestou.trim()) return setErro(tx('Escreva quem emprestou o dinheiro.'))
+    // o pagamento fica ligado à dívida escolhida, seja qual for a categoria
+    let ligada = saida
+      ? (devo.some((d) => d.id === dividaId) ? dividaId : null)
       : ([...aReceber, ...emprestimos].some((d) => d.id === dividaId) ? dividaId : null)
+    if (criarEmprestimo) {
+      const nova = await p.aoNovaDivida!({ quem: quemEmprestou.trim(), data })
+      if (!nova) return setErro(tx('Não consegui criar a dívida. Tente de novo.'))
+      ligada = nova.id
+    }
     // Em outra moeda, o valor vai convertido e o original fica guardado. Os campos só vão quando usados,
     // para funcionar também em bancos ainda sem a migração 4.
     const moedaOriginal = estrangeira
@@ -301,6 +315,8 @@ export function FormLancamento(p: FormLancProps) {
     setValor('')
     setDescricao('')
     setDividaId('')
+    setNovoEmprestimo(false)
+    setQuemEmprestou('')
     setContaId('')
     setMexeuConta(false)
     setCategoriaId(outrosDe(tipo))
@@ -378,7 +394,7 @@ export function FormLancamento(p: FormLancProps) {
   return (
     <Modal titulo={p.inicial ? tx('Editar lançamento') : p.preset?.divida_id ? (p.preset.tipo === 'entrada' ? tx('Receber') : tx('Pagar dívida')) : tx('Novo lançamento')}
       aoFechar={p.aoFechar} tamanho="tela" cor={cor} palco={palco}>
-      <form id={idForm} className="form" onSubmit={(e) => { e.preventDefault(); salvar(false) }}>
+      <form id={idForm} className="form" onSubmit={(e) => { e.preventDefault(); void salvar(false) }}>
         <label className="campo-ic">
           <Icone nome="lapis" tamanho={18} />
           <input
@@ -498,13 +514,13 @@ export function FormLancamento(p: FormLancProps) {
         )}
         {tipo === 'saida' && (
           <>
-            {(ehDivida || (dividaId && dividaId === ini.divida_id)) && (v.dividas || dividaId) && devo.length > 0 && (
+            {(v.dividas || dividaId) && devo.length > 0 && (
               <label className="campo">
-                <span className="campo-rotulo">{tx('Qual dívida você está pagando?')}</span>
+                <span className="campo-rotulo">{tx('Isso paga alguma dívida?')} <small>(opcional)</small></span>
                 <select value={dividaId} onChange={(e) => escolherDivida(e.target.value)}>
                   <option value="">{tx('Nenhuma (só entra como gasto)')}</option>
                   {devo.map((d) => (
-                    <option key={d.id} value={d.id}>{d.descricao}{d.valor_parcela ? ` · parcela ${fmtMoeda(d.valor_parcela, d.moeda ?? principal)}` : ''}</option>
+                    <option key={d.id} value={d.id}>{d.descricao}{d.pessoa && !d.descricao.includes(d.pessoa) ? ` · ${d.pessoa}` : ''}{d.valor_parcela ? ` · parcela ${fmtMoeda(d.valor_parcela, d.moeda ?? principal)}` : ''}</option>
                   ))}
                 </select>
                 {dividaId && <span className="campo-ajuda">{tx('A dívida diminui sozinha com este pagamento.')}</span>}
@@ -512,15 +528,22 @@ export function FormLancamento(p: FormLancProps) {
             )}
           </>
         )}
-        {tipo === 'entrada' && (v.dividas || dividaId) && (aReceber.length > 0 || emprestimos.length > 0) && (
+        {tipo === 'entrada' && (v.dividas || dividaId || novoEmprestimo || p.aoNovaDivida) && (
           <label className="campo">
             <span className="campo-rotulo">{tx('Isso tem a ver com uma dívida?')} <small>(opcional)</small></span>
-            <select value={[...aReceber, ...emprestimos].some((d) => d.id === dividaId) ? dividaId : ''} onChange={(e) => { setDividaId(e.target.value); setMexeuDivida(true) }}>
+            <select value={novoEmprestimo ? NOVO : [...aReceber, ...emprestimos].some((d) => d.id === dividaId) ? dividaId : ''}
+              onChange={(e) => {
+                const novo = e.target.value === NOVO
+                setNovoEmprestimo(novo)
+                setDividaId(novo ? '' : e.target.value)
+                setMexeuDivida(true)
+              }}>
               <option value="">{tx('Não')}</option>
+              {p.aoNovaDivida && <option value={NOVO}>{tx('Peguei emprestado de alguém (criar dívida)')}</option>}
               {emprestimos.length > 0 && (
                 <optgroup label={tx('Peguei emprestado (a dívida aumenta)')}>
                   {emprestimos.map((d) => (
-                    <option key={d.id} value={d.id}>{d.descricao}{d.pessoa ? ` · ${d.pessoa}` : ''}</option>
+                    <option key={d.id} value={d.id}>{d.descricao}{d.pessoa && !d.descricao.includes(d.pessoa) ? ` · ${d.pessoa}` : ''}</option>
                   ))}
                 </optgroup>
               )}
@@ -534,6 +557,13 @@ export function FormLancamento(p: FormLancProps) {
             </select>
             {dividaId && aReceber.some((d) => d.id === dividaId) && <span className="campo-ajuda">{tx('O que falta receber diminui sozinho com esta entrada.')}</span>}
             {dividaId && emprestimos.some((d) => d.id === dividaId) && <span className="campo-ajuda">{tx('A dívida aumenta sozinha com este dinheiro que você pegou.')}</span>}
+            {novoEmprestimo && (
+              <>
+                <input type="text" value={quemEmprestou} onChange={(e) => setQuemEmprestou(e.target.value)} maxLength={60}
+                  placeholder={tx('Quem emprestou? Ex.: Matheus')} aria-label={tx('Quem emprestou?')} autoFocus />
+                <span className="campo-ajuda">{tx('A dívida aparece na aba Dívidas com este valor. Quando devolver, lance uma saída e escolha esta dívida.')}</span>
+              </>
+            )}
           </label>
         )}
         {erro && <p className="form-erro">{erro}</p>}
@@ -558,7 +588,7 @@ export function FormLancamento(p: FormLancProps) {
             </button>
           )}
           <span className="espaco" />
-          {!p.inicial && !p.preset && <button type="button" className="btn" onClick={() => salvar(true)}><Icone nome="mais" tamanho={16} />{tx('Salvar e lançar outro')}</button>}
+          {!p.inicial && !p.preset && <button type="button" className="btn" onClick={() => void salvar(true)}><Icone nome="mais" tamanho={16} />{tx('Salvar e lançar outro')}</button>}
           <button type="submit" className="btn primario"><Icone nome="check" tamanho={17} />{tx('Salvar')}</button>
         </div>
       </form>

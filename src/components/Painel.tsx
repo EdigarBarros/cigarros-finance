@@ -360,6 +360,17 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
 
   // Editar uma parcela pode mudá-la de ano; as compras de outros anos só são lidas de novo ao recarregar.
   // Ligou o lançamento a uma conta do mês? Em seguida o app pergunta pelos parecidos dos outros meses.
+  /** Dívida de um empréstimo recebido: nasce zerada na véspera da entrada, que então soma o valor emprestado. */
+  const criarEmprestimo = ({ quem, data }: { quem: string; data: string }) => {
+    const vespera = new Date(`${data}T12:00:00`)
+    vespera.setDate(vespera.getDate() - 1)
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return d.addDivida({
+      descricao: tx('Empréstimo do {0}', quem), pessoa: quem, sentido: 'devo', valor_parcela: null, inicio: null,
+      saldo: 0, data: `${vespera.getFullYear()}-${pad(vespera.getMonth() + 1)}-${pad(vespera.getDate())}`,
+    })
+  }
+
   const salvarLancamento = async (l: Omit<Lancamento, 'id'>, id?: string) => {
     const antes = id ? d.lancs.find((x) => x.id === id) : undefined
     const lancs = d.lancs
@@ -377,6 +388,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
 
   // Contas fixas e cartões entram na Início pelos lugares reservados para eles (zona "O que fazer" e indicadores).
   const comContas = v.contas && !contas.semTabela
+  // a dívida já ligada ao lançamento aberto continua na lista, mesmo quitada
+  const ligadaAoForm = form?.inicial?.divida_id ? d.dividas.find((x) => x.id === form.inicial?.divida_id) : undefined
+  const dividasDoForm = ligadaAoForm && !dividasAbertas.some((x) => x.id === ligadaAoForm.id) ? [...dividasAbertas, ligadaAoForm] : dividasAbertas
   const comCartoes = comFaturas
   // Indicador zerado no topo só ocupa atenção: a fatura entra quando há fatura no mês.
   const totalFaturas = comCartoes ? totalFaturasDoMes(faturas) : 0
@@ -707,7 +721,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           tipoInicial={form.tipo}
           preset={form.preset}
           historico={d.lancs}
-          dividas={dividasAbertas}
+          dividas={dividasDoForm}
+          aoNovaDivida={criarEmprestimo}
           perfil={perfil}
           taxas={taxas}
           aoMudarPerfil={mudarPerfil}
