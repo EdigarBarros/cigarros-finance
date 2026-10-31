@@ -139,26 +139,31 @@ const serie = (meses: (Resumo | null)[], f: (r: Resumo) => number) => meses.map(
  * Fluxo financeiro da Início: Entrou e Saiu em barras lado a lado e a linha brilhante do que sobrou, nos 6 meses até o
  * aberto (de jan a jun quando o mês aberto é antes de junho). Mês sem dados fica em branco.
  */
-export function GraficoFluxo({ porMes, mesAtual, altura, compacto }: {
+export function GraficoFluxo({ porMes, mesAtual, altura, compacto, moeda }: {
   porMes: (Resumo | null)[]; mesAtual: number
+  /** Outra moeda (valores como foram lançados, sem conversão); sem ela, a moeda principal. */
+  moeda?: string
   /** Sem altura, ocupa a caixa em que está (veja .grafico-esticado). */
   altura?: number; compacto?: boolean
 }) {
   const c = useCoresDoGrafico()
   const inicio = Math.max(0, Math.min(mesAtual - 6, 6))
   const meses = porMes.slice(inicio, inicio + 6)
+  const fora = Boolean(moeda) && moeda !== moedaAtual()
+  const entrou = (r: Resumo) => (fora ? r.entradasMoeda[moeda!] ?? 0 : r.entradas)
+  const saiu = (r: Resumo) => (fora ? r.saidasMoeda[moeda!] ?? 0 : r.saidas)
   const data = {
     labels: MESES_CURTO.slice(inicio, inicio + 6),
     datasets: [
-      barra(tx('Entrou'), PALETA.entradas, serie(meses, (r) => r.entradas), compacto),
-      barra(tx('Saiu'), PALETA.saidas, serie(meses, (r) => r.saidas), compacto),
-      linha(tx('Sobrou'), PALETA.sobrou, serie(meses, (r) => r.fluxo), c.fundo, compacto),
+      barra(tx('Entrou'), PALETA.entradas, serie(meses, entrou), compacto),
+      barra(tx('Saiu'), PALETA.saidas, serie(meses, saiu), compacto),
+      linha(tx('Sobrou'), PALETA.sobrou, serie(meses, (r) => (fora ? Math.round((entrou(r) - saiu(r)) * 100) / 100 : r.fluxo)), c.fundo, compacto),
     ],
   } as unknown as ChartData<'bar'>
   return (
     <div className="grafico" style={altura ? { height: altura } : undefined}>
-      <Misto type="bar" key={c.tema + c.ocultos} data={data}
-        options={opcoes(c, { rotulos: MESES_CURTO.slice(inicio, inicio + 6), mesDoIndice: (i) => inicio + i + 1, mesAtual, compacto, legenda: false, destacar: true })} />
+      <Misto type="bar" key={c.tema + c.ocultos + (fora ? moeda : '')} data={data}
+        options={opcoes(c, { rotulos: MESES_CURTO.slice(inicio, inicio + 6), mesDoIndice: (i) => inicio + i + 1, mesAtual, compacto, legenda: false, destacar: true, formatar: fora ? (n) => fmtMoeda(n, moeda!) : fmtValor })} />
     </div>
   )
 }
@@ -179,7 +184,7 @@ function origemDaDivida(r: Resumo | null | undefined): string[] {
 }
 
 /** Moedas (além da principal) que aparecem no ano: lançamentos, dívidas ou saldo guardado. */
-function moedasDoAno(porMes: (Resumo | null)[]) {
+export function moedasDoAno(porMes: (Resumo | null)[]) {
   const achadas = new Set<string>()
   for (const r of porMes) {
     if (!r) continue
