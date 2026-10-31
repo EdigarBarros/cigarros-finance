@@ -127,6 +127,8 @@ export function FormLancamento(p: FormLancProps) {
   // saída paga o que você deve; entrada recebe de quem te deve
   const devo = opcoesDivida.filter((d) => !meDevem(d))
   const aReceber = opcoesDivida.filter((d) => meDevem(d) || (d.id === ini.divida_id && ini.tipo === 'entrada'))
+  // entrada também pode ser dinheiro emprestado: aumenta uma dívida sua
+  const emprestimos = devo.filter((d) => !aReceber.some((a) => a.id === d.id))
 
   const moedasDisponiveis = moedasUsaveis(p.perfil, original?.moeda, ini.moeda_original)
   const estrangeira = moeda !== principal
@@ -256,7 +258,7 @@ export function FormLancamento(p: FormLancProps) {
     // aberto pela própria dívida (ou já ligado), o pagamento fica ligado mesmo sem a categoria de dívidas
     const ligada = saida
       ? ((ehDivida || dividaId === ini.divida_id) && devo.some((d) => d.id === dividaId) ? dividaId : null)
-      : (aReceber.some((d) => d.id === dividaId) ? dividaId : null)
+      : ([...aReceber, ...emprestimos].some((d) => d.id === dividaId) ? dividaId : null)
     // Em outra moeda, o valor vai convertido e o original fica guardado. Os campos só vão quando usados,
     // para funcionar também em bancos ainda sem a migração 4.
     const moedaOriginal = estrangeira
@@ -510,16 +512,28 @@ export function FormLancamento(p: FormLancProps) {
             )}
           </>
         )}
-        {tipo === 'entrada' && (v.dividas || dividaId) && aReceber.length > 0 && (
+        {tipo === 'entrada' && (v.dividas || dividaId) && (aReceber.length > 0 || emprestimos.length > 0) && (
           <label className="campo">
-            <span className="campo-rotulo">{tx('É de alguém que te devia?')} <small>(opcional)</small></span>
-            <select value={aReceber.some((d) => d.id === dividaId) ? dividaId : ''} onChange={(e) => { setDividaId(e.target.value); setMexeuDivida(true) }}>
+            <span className="campo-rotulo">{tx('Isso tem a ver com uma dívida?')} <small>(opcional)</small></span>
+            <select value={[...aReceber, ...emprestimos].some((d) => d.id === dividaId) ? dividaId : ''} onChange={(e) => { setDividaId(e.target.value); setMexeuDivida(true) }}>
               <option value="">{tx('Não')}</option>
-              {aReceber.map((d) => (
-                <option key={d.id} value={d.id}>{d.descricao}{d.pessoa ? ` · ${d.pessoa}` : ''}{d.valor_parcela ? ` · parcela ${fmtMoeda(d.valor_parcela, d.moeda ?? principal)}` : ''}</option>
-              ))}
+              {emprestimos.length > 0 && (
+                <optgroup label={tx('Peguei emprestado (a dívida aumenta)')}>
+                  {emprestimos.map((d) => (
+                    <option key={d.id} value={d.id}>{d.descricao}{d.pessoa ? ` · ${d.pessoa}` : ''}</option>
+                  ))}
+                </optgroup>
+              )}
+              {aReceber.length > 0 && (
+                <optgroup label={tx('Recebi de quem me devia (o que falta receber diminui)')}>
+                  {aReceber.map((d) => (
+                    <option key={d.id} value={d.id}>{d.descricao}{d.pessoa ? ` · ${d.pessoa}` : ''}{d.valor_parcela ? ` · parcela ${fmtMoeda(d.valor_parcela, d.moeda ?? principal)}` : ''}</option>
+                  ))}
+                </optgroup>
+              )}
             </select>
             {dividaId && aReceber.some((d) => d.id === dividaId) && <span className="campo-ajuda">{tx('O que falta receber diminui sozinho com esta entrada.')}</span>}
+            {dividaId && emprestimos.some((d) => d.id === dividaId) && <span className="campo-ajuda">{tx('A dívida aumenta sozinha com este dinheiro que você pegou.')}</span>}
           </label>
         )}
         {erro && <p className="form-erro">{erro}</p>}

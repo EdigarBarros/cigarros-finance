@@ -4,6 +4,7 @@ import { COR } from '../lib/charts'
 import { SEM_CATEGORIA } from '../lib/categorias'
 import { formaDe, FORMAS, infoForma, type FormaPagamento } from '../lib/formas'
 import { fmtDataCurta, fmtDataLonga, fmtMoeda, fmtValor, MESES_NOME, noMeioDaFrase } from '../lib/format'
+import { ehEmprestimo } from '../lib/dividas'
 import type { Banco, Categoria, Lancamento, Tipo } from '../lib/types'
 import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
@@ -97,7 +98,7 @@ export function Lancamentos(c: Ctx) {
   const totalChips = chips.reduce((a, k) => a + k.total, 0)
   const chipsVisiveis = todasCategorias || chips.length <= 6 ? chips : chips.slice(0, 5)
   const cartao = (l: Lancamento, i: number, mostrarData: boolean) => (
-    <CartaoLancamento key={l.id} l={l} indice={i} categoria={c.categoriaDe(l)} banco={bancoDe(l)} cartao={cartaoDe(l)}
+    <CartaoLancamento key={l.id} l={l} indice={i} categoria={c.categoriaDe(l)} banco={bancoDe(l)} cartao={cartaoDe(l)} emprestimo={ehEmprestimo(l, c.d.dividas)}
       mostrarData={mostrarData} aoClicar={() => c.editarLancamento(l)} />
   )
   const comBancos = c.v.bancos && c.d.bancos.length > 0
@@ -270,8 +271,8 @@ export function Lancamentos(c: Ctx) {
  * Um lançamento como cartão: a categoria em cima, na cor dela (sem selo), a descrição, o valor grande e, embaixo, em
  * texto, o que ele é além de um gasto comum (banco, forma, cartão e parcela, dívida, conta do mês, outra moeda).
  */
-function CartaoLancamento({ l, banco, categoria, cartao, aoClicar, mostrarData, indice }: {
-  l: Lancamento; banco?: Banco; categoria?: Categoria; cartao?: { nome: string; cor: string }
+function CartaoLancamento({ l, banco, categoria, cartao, emprestimo, aoClicar, mostrarData, indice }: {
+  l: Lancamento; banco?: Banco; categoria?: Categoria; cartao?: { nome: string; cor: string }; emprestimo?: boolean
   aoClicar: () => void; mostrarData: boolean; indice: number
 }) {
   const entrada = l.tipo === 'entrada'
@@ -282,7 +283,7 @@ function CartaoLancamento({ l, banco, categoria, cartao, aoClicar, mostrarData, 
     l.cartao_id && { id: 'cc', texto: cartao ? tx('Cartão {0}', cartao.nome) : tx('Cartão'), cor: cartao?.cor },
     parcelado && { id: 'pc', texto: tx('Parcela {0} de {1}', l.parcela, l.parcelas) },
     !l.cartao_id && l.forma && { id: 'fp', texto: infoForma(l.forma).nome },
-    l.divida_id && { id: 'dv', texto: entrada ? tx('Recebido de quem devia') : tx('Pagamento de dívida') },
+    l.divida_id && { id: 'dv', texto: emprestimo ? tx('Dinheiro emprestado') : entrada ? tx('Recebido de quem devia') : tx('Pagamento de dívida') },
     l.conta_fixa_id && { id: 'cf', texto: tx('Todo mês') },
   ].filter(Boolean) as { id: string; texto: string; cor?: string }[]
   return (

@@ -185,7 +185,7 @@ export function Inicio(c: Ctx) {
     </Bloco>
   )
   const lancamentos = !mesVazio ? (
-    <BlocoLancamentos lancs={c.lancsMes} nivel={nivel} categoriaDe={c.categoriaDe}
+    <BlocoLancamentos lancs={c.lancsMes} nivel={nivel} categoriaDe={c.categoriaDe} dividas={c.d.dividas}
       bancos={v.bancos ? c.d.bancos : undefined} aoEditar={c.editarLancamento} aoVerTodos={() => c.irPara('lancamentos')} />
   ) : !c.contaNova && (
     <section className="cartao vazio-mes">
