@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react'
 import { idiomaAtual } from './idioma'
 import { nativo, tx } from './textos'
 
@@ -24,9 +25,28 @@ export const moedaAtual = () => moedaPrincipal
 
 const pct = new Intl.NumberFormat('pt-BR', { style: 'percent', maximumFractionDigits: 0 })
 
-/** Valor na moeda principal. */
-export const fmtValor = (n: number) => formato(moedaPrincipal).format(n || 0)
-export const fmtMoeda = (n: number, moeda: string) => formato(moeda).format(n || 0)
+// ---------- ocultar valores (o botão do olho) ----------
+const CHAVE_OCULTAR = 'opuscash-ocultar-valores'
+let valoresOcultos = (() => {
+  try { return localStorage.getItem(CHAVE_OCULTAR) === '1' } catch { return false }
+})()
+const ouvintesOcultar = new Set<() => void>()
+/** O que aparece no lugar de cada valor em dinheiro quando a pessoa esconde os números. */
+export const MASCARA_VALOR = '••••••'
+export const valoresEstaoOcultos = () => valoresOcultos
+export function definirValoresOcultos(v: boolean) {
+  valoresOcultos = v
+  try { localStorage.setItem(CHAVE_OCULTAR, v ? '1' : '0') } catch { /* vale só nesta visita */ }
+  ouvintesOcultar.forEach((f) => f())
+}
+/** true quando os valores estão escondidos; quem usa re-renderiza ao ligar/desligar. */
+export function useValoresOcultos() {
+  return useSyncExternalStore((f) => { ouvintesOcultar.add(f); return () => ouvintesOcultar.delete(f) }, () => valoresOcultos)
+}
+
+/** Valor na moeda principal (ou a máscara, com os valores escondidos). */
+export const fmtValor = (n: number) => (valoresOcultos ? MASCARA_VALOR : formato(moedaPrincipal).format(n || 0))
+export const fmtMoeda = (n: number, moeda: string) => (valoresOcultos ? MASCARA_VALOR : formato(moeda).format(n || 0))
 /** "R$", "US$", "€"… */
 export const simbolo = (moeda = moedaPrincipal) =>
   formato(moeda).formatToParts(0).find((p) => p.type === 'currency')?.value ?? moeda

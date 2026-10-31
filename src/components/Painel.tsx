@@ -9,7 +9,7 @@ import {
 import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
 import { COR } from '../lib/charts'
 import { calendarioDe, fimDoMes, meDevem, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
-import { definirMoedaPrincipal, fmtDataCurta, fmtValor, MESES_CURTO, MESES_NOME } from '../lib/format'
+import { definirMoedaPrincipal, definirValoresOcultos, fmtDataCurta, fmtValor, MESES_CURTO, MESES_NOME, useValoresOcultos } from '../lib/format'
 import { useCambio } from '../lib/moedas'
 import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
 import { supabase } from '../lib/supabase'
@@ -103,6 +103,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const refNav = useRef<HTMLElement>(null)
   const refAbas = useRef<HTMLElement>(null)
   const { tema } = useTema()
+  const ocultos = useValoresOcultos()
   const d = useDados(userId, ano)
   const contas = useContasFixas(d.setErro)
   // Baixas em andamento e uma pausa curta depois de cada uma: ao dar baixa a conta sai da lista e a de baixo sobe, então um toque
@@ -571,6 +572,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
               )}
             </div>
             <BotaoIdioma />
+            <button className="icone-btn" onClick={() => definirValoresOcultos(!ocultos)} aria-pressed={ocultos}
+              aria-label={ocultos ? tx('Mostrar valores') : tx('Ocultar valores')} title={ocultos ? tx('Mostrar valores') : tx('Ocultar valores')}>
+              <Icone nome={ocultos ? 'olho-fechado' : 'olho'} />
+            </button>
             <button className="icone-btn tema-btn" onClick={trocarTema} aria-label={tema === 'escuro' ? tx('Usar tema claro') : tx('Usar tema escuro')} title={tema === 'escuro' ? tx('Tema claro') : tx('Tema escuro')}>
               <Icone nome={tema === 'escuro' ? 'sol' : 'lua'} />
             </button>

@@ -2351,7 +2351,6 @@
     "en": "I couldn't find month tabs with data in this spreadsheet. Each tab needs the month and year in its name (e.g., OCTOBER26 or NOV 26) or in its title (e.g., CONTROLE FINANCEIRO JANEIRO/2024).",
     "es": "No encontré pestañas de mes con datos en esta planilla. Cada pestaña necesita el mes y el año en el nombre (ej.: OCTUBRE26 o NOV 26) o en el título (ej.: CONTROLE FINANCEIRO JANEIRO/2024)."
   },
-
   "{0}/{1}: {2} lançamentos": {
     "en": "{0}/{1}: {2} transactions",
     "es": "{0}/{1}: {2} movimientos"
@@ -5783,5 +5782,13 @@
   "Todo mês": {
     "en": "Every month",
     "es": "Todos los meses"
+  },
+  "Ocultar valores": {
+    "en": "Hide amounts",
+    "es": "Ocultar valores"
+  },
+  "Mostrar valores": {
+    "en": "Show amounts",
+    "es": "Mostrar valores"
   }
 }
