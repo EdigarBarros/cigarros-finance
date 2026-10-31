@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useId, useMemo, useRef, useState } from 'react'
 import { dicaDaDescricao } from '../lib/adaptacao'
 import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
 import { gerarParcelas, hojeLocal, nomeDaFatura, textoParcelamento } from '../lib/cartoes'
@@ -13,11 +13,13 @@ import { bancoConhecido, bancoNaDescricao, CORES_LIVRES, mesmoNome } from '../li
 import { contaPeloNome, type MemoriaConta } from '../lib/contasFixas'
 import type { Banco, CartaoCredito, Categoria, ContaFixa, Divida, Lancamento, Perfil, Tipo } from '../lib/types'
 import { EscolhaCategoria } from './Categorias'
+import { IconeCategoria } from './IconeCategoria'
 import { Icone } from './Icone'
+import { BancoIcone } from './BancoIcone'
 import type { NovaDivida } from '../lib/useDados'
 import { CampoCotacao } from './CampoCotacao'
 import { EscolhaMoeda } from './EscolhaMoeda'
-import { Modal, Segmentado } from './ui'
+import { Modal, Palco, Segmentado } from './ui'
 import { tx } from '../lib/textos'
 
 type NovoLanc = Omit<Lancamento, 'id'>
@@ -88,6 +90,7 @@ export function FormLancamento(p: FormLancProps) {
   const [erro, setErro] = useState<string | null>(null)
   const [salvos, setSalvos] = useState(0)
   const campoValor = useRef<HTMLInputElement>(null)
+  const idForm = useId()
   // Compra no cartão: só em saída nova. Ao editar uma parcela, o cartão e a compra já estão definidos.
   const [cartaoId, setCartaoId] = useState(p.cartaoInicial ?? '')
   // Forma de pagamento: a do lançamento, "crédito" quando já vem de um cartão, ou vazia até a pessoa escolher (ou o app deduzir).
@@ -309,62 +312,79 @@ export function FormLancamento(p: FormLancProps) {
   }
 
   const cor = tipo === 'entrada' ? COR.entradas : COR.saidas
+  const catEscolhida = p.categorias.find((c) => c.id === categoriaId)
+  // atalhos de data, calculados ao abrir
+  const [[hoje, ontem]] = useState(() => { const d = new Date(); const h = hojeLocal(d); d.setDate(d.getDate() - 1); return [h, hojeLocal(d)] })
+
+  // Palco: entrada ou saída, a categoria em destaque e o valor grande. Os campos daqui pertencem ao formulário
+  // pelo atributo form (Enter no valor salva).
+  const palco = (
+    <div className="palco lf-palco" style={{ '--c': cor } as React.CSSProperties}>
+      {ehParcela ? (
+        <div className="form-dica fixa" role="status">
+          <Icone nome="cartao" tamanho={16} />
+          <span>
+            {(p.inicial!.parcelas ?? 1) > 1 ? tx('Parcela {0} de {1} da compra', p.inicial!.parcela, p.inicial!.parcelas) : tx('Compra no cartão')}
+            {cartaoDaParcela && <> {tx('no')} <b>{cartaoDaParcela.nome}</b></>}{tx('. As outras parcelas não mudam.')}
+          </span>
+        </div>
+      ) : (
+        <div className="lf-tipos" role="radiogroup" aria-label={tx('Tipo')}>
+          {(['saida', 'entrada'] as const).map((t) => (
+            <button key={t} type="button" role="radio" aria-checked={tipo === t} className={`lf-tipo ${tipo === t ? 'ativo' : ''}`}
+              style={{ '--c': t === 'entrada' ? COR.entradas : COR.saidas } as React.CSSProperties} onClick={() => mudarTipo(t)}>
+              <span className="lf-tipo-icone"><Icone nome={t === 'entrada' ? 'receber' : 'enviar'} tamanho={22} /></span>
+              {t === 'entrada' ? tx('Entrada') : tx('Saída')}
+            </button>
+          ))}
+        </div>
+      )}
+      <span className="palco-bolha" key={catEscolhida?.id ?? tipo} style={{ '--c': catEscolhida?.cor ?? cor } as React.CSSProperties}>
+        <span className="palco-anel" aria-hidden="true" />
+        {catEscolhida ? <IconeCategoria emoji={catEscolhida.icone} tamanho={46} /> : <Icone nome={tipo === 'entrada' ? 'receber' : 'enviar'} tamanho={42} />}
+      </span>
+      {catEscolhida && <span className="palco-legenda">{catEscolhida.nome}</span>}
+      {moedasDisponiveis.length > 1 && (
+        <EscolhaMoeda moedas={moedasDisponiveis} valor={moeda}
+          aoMudar={(m) => { setMoeda(m); setCotacao(null); setValor((t) => { const n = parseNumero(t); return n ? paraCampoMoeda(n, m) : t }) }} />
+      )}
+      <label className="valor-grande" style={{ '--c': cor } as React.CSSProperties}>
+        <span>{simbolo(moeda)}</span>
+        <input
+          ref={campoValor}
+          form={idForm}
+          autoFocus
+          inputMode="decimal"
+          placeholder="0,00"
+          value={valor}
+          onChange={(e) => { setValor(mascarar(e.target.value, casasDaMoeda(moeda))); setErro(null) }}
+          aria-label={tx('Valor')}
+        />
+      </label>
+      {estrangeira && (
+        <div className="cotacao">
+          <CampoCotacao key={moeda} moeda={moeda} principal={principal} taxaDia={p.taxas[moeda]} valor={cotacao} aoMudar={setCotacao} />
+          <span className="campo-ajuda">
+            {numero && taxa ? <>≈ <b>{fmtValor(numero * taxa)}</b> {tx('na sua moeda.')} </> : null}
+            {cotacao ? tx('Cotação que você informou.') : p.taxas[moeda] ? tx('Cotação de hoje; troque se pagou outra.') : tx('Sem cotação automática agora: informe a que você pagou.')}
+          </span>
+        </div>
+      )}
+    </div>
+  )
 
   return (
-    <Modal titulo={p.inicial ? tx('Editar lançamento') : p.preset?.divida_id ? (p.preset.tipo === 'entrada' ? tx('Receber') : tx('Pagar dívida')) : tx('Novo lançamento')} aoFechar={p.aoFechar}>
-      <form className="form" onSubmit={(e) => { e.preventDefault(); salvar(false) }}>
-        {ehParcela && (
-          <div className="form-dica fixa" role="status">
-            <Icone nome="cartao" tamanho={16} />
-            <span>
-              {(p.inicial!.parcelas ?? 1) > 1 ? tx('Parcela {0} de {1} da compra', p.inicial!.parcela, p.inicial!.parcelas) : tx('Compra no cartão')}
-              {cartaoDaParcela && <> {tx('no')} <b>{cartaoDaParcela.nome}</b></>}{tx('. As outras parcelas não mudam.')}
-            </span>
-          </div>
-        )}
-        {!ehParcela && (
-          <Segmentado
-            rotulo={tx('Tipo')}
-            valor={tipo}
-            aoMudar={mudarTipo}
-            opcoes={[
-              { id: 'saida', nome: tx('Saída'), cor: COR.saidas },
-              { id: 'entrada', nome: tx('Entrada'), cor: COR.entradas },
-            ]}
-          />
-        )}
-        {moedasDisponiveis.length > 1 && (
-          <EscolhaMoeda moedas={moedasDisponiveis} valor={moeda}
-            aoMudar={(m) => { setMoeda(m); setCotacao(null); setValor((t) => { const n = parseNumero(t); return n ? paraCampoMoeda(n, m) : t }) }} />
-        )}
-        <label className="valor-grande" style={{ '--c': cor } as React.CSSProperties}>
-          <span>{simbolo(moeda)}</span>
-          <input
-            ref={campoValor}
-            autoFocus
-            inputMode="decimal"
-            placeholder="0,00"
-            value={valor}
-            onChange={(e) => { setValor(mascarar(e.target.value, casasDaMoeda(moeda))); setErro(null) }}
-            aria-label={tx('Valor')}
-          />
-        </label>
-        {estrangeira && (
-          <div className="cotacao">
-            <CampoCotacao key={moeda} moeda={moeda} principal={principal} taxaDia={p.taxas[moeda]} valor={cotacao} aoMudar={setCotacao} />
-            <span className="campo-ajuda">
-              {numero && taxa ? <>≈ <b>{fmtValor(numero * taxa)}</b> {tx('na sua moeda.')} </> : null}
-              {cotacao ? tx('Cotação que você informou.') : p.taxas[moeda] ? tx('Cotação de hoje; troque se pagou outra.') : tx('Sem cotação automática agora: informe a que você pagou.')}
-            </span>
-          </div>
-        )}
-        <label className="campo">
-          <span className="campo-rotulo">{tx('Descrição')}</span>
+    <Modal titulo={p.inicial ? tx('Editar lançamento') : p.preset?.divida_id ? (p.preset.tipo === 'entrada' ? tx('Receber') : tx('Pagar dívida')) : tx('Novo lançamento')}
+      aoFechar={p.aoFechar} tamanho="tela" cor={cor} palco={palco}>
+      <form id={idForm} className="form" onSubmit={(e) => { e.preventDefault(); salvar(false) }}>
+        <label className="campo-ic">
+          <Icone nome="lapis" tamanho={18} />
           <input
             list="sugestoes-descricao"
             value={descricao}
             onChange={(e) => aoDigitarDescricao(e.target.value)}
             placeholder={tipo === 'saida' ? tx('Ex.: iFood, 99, mercado…') : tx('Ex.: salário, Pix de cliente…')}
+            aria-label={tx('Descrição')}
           />
           <datalist id="sugestoes-descricao">
             {sugestoes.map((s) => <option key={s} value={s} />)}
@@ -377,31 +397,37 @@ export function FormLancamento(p: FormLancProps) {
             <button type="button" className="link" onClick={aceitarDica}>{dica.botao}</button>
           </div>
         )}
-        <label className="campo">
-          <span className="campo-rotulo">{cartao ? tx('Data da compra') : ehParcela ? tx('Vencimento da parcela') : tx('Data')}</span>
-          <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
-        </label>
+        <div className="lf-data">
+          {!ehParcela && !cartao && [[hoje, tx('Hoje')], [ontem, tx('Ontem')]].map(([d, nome]) => (
+            <button key={d} type="button" className={`chip ${data === d ? 'ativo' : ''}`} onClick={() => setData(d)}>{nome}</button>
+          ))}
+          <label className="campo-ic">
+            <Icone nome="calendario" tamanho={18} />
+            <input type="date" value={data} onChange={(e) => setData(e.target.value)} required
+              aria-label={cartao ? tx('Data da compra') : ehParcela ? tx('Vencimento da parcela') : tx('Data')} />
+          </label>
+        </div>
         {!ehParcela && (
           <div className="campo">
-            <span className="campo-rotulo">{tipo === 'saida' ? tx('Como pagou?') : tx('Como recebeu?')} <small>(opcional)</small></span>
-            <div className="chips forma-chips" role="group" aria-label={tx('Forma de pagamento')}>
+            <span className="campo-rotulo"><Icone nome="enviar" tamanho={15} />{tipo === 'saida' ? tx('Como pagou?') : tx('Como recebeu?')} <small>(opcional)</small></span>
+            <div className="chips grade" role="group" aria-label={tx('Forma de pagamento')}>
               {formasDoTipo(tipo).filter((f) => !(f.id === 'credito' && p.inicial)).map((f) => (
                 <button key={f.id} type="button" className={`chip forma-chip ${forma === f.id ? 'ativo' : ''}`} aria-pressed={forma === f.id}
                   style={{ '--c': f.cor } as React.CSSProperties} onClick={() => escolherForma(f.id)}>
-                  <Icone nome={f.icone} tamanho={14} />{f.nome}
+                  <span className="chip-icone"><Icone nome={f.icone} tamanho={20} /></span>{f.nome}
                 </button>
               ))}
             </div>
             {forma === 'credito' && !p.inicial && (p.cartoes ? (
               <>
-                <div className="chips forma-cartoes">
+                <div className="chips grade forma-cartoes">
                   {cartoesAtivos.map((c) => (
                     <button key={c.id} type="button" className={`chip ${cartao?.id === c.id ? 'ativo' : ''}`} onClick={() => setCartaoId(c.id)}
                       style={{ '--c': c.cor } as React.CSSProperties}>
-                      <i className="marcador" />{c.nome}
+                      <BancoIcone nome={c.nome} cor={c.cor} tamanho={34} />{c.nome}
                     </button>
                   ))}
-                  {p.aoNovoCartao && <button type="button" className="chip novo" onClick={p.aoNovoCartao}>{tx('+ cartão')}</button>}
+                  {p.aoNovoCartao && <button type="button" className="chip novo" onClick={p.aoNovoCartao}><span className="chip-icone"><Icone nome="mais" tamanho={18} /></span>{tx('+ cartão')}</button>}
                 </div>
                 {!cartoesAtivos.length && <span className="campo-ajuda">{tx('Você ainda não cadastrou nenhum cartão. Cadastre um para a compra entrar na fatura.')}</span>}
               </>
@@ -433,6 +459,7 @@ export function FormLancamento(p: FormLancProps) {
         )}
         {(v.bancos || bancoId) && !cartao && !ehParcela && (
           <EscolhaBanco
+            grade
             bancos={p.bancos}
             valor={bancoId}
             aoMudar={(id) => { setBancoId(id); setMexeuBanco(true) }}
@@ -441,6 +468,7 @@ export function FormLancamento(p: FormLancProps) {
         )}
         <EscolhaCategoria
           key={tipo}
+          grade
           tipo={tipo}
           opcoes={opcoesCategoria}
           valor={categoriaId}
@@ -503,7 +531,7 @@ export function FormLancamento(p: FormLancProps) {
               className="btn perigo"
               onClick={() => { if (confirm(ehParcela ? tx('Excluir só esta parcela? As outras continuam.') : tx('Excluir este lançamento?'))) { p.aoExcluir!(p.inicial!.id); p.aoFechar() } }}
             >
-              {ehParcela && (p.inicial.parcelas ?? 1) > 1 ? tx('Excluir só esta parcela') : tx('Excluir')}
+              <Icone nome="lixeira" tamanho={16} />{ehParcela && (p.inicial.parcelas ?? 1) > 1 ? tx('Excluir só esta parcela') : tx('Excluir')}
             </button>
           )}
           {ehParcela && (p.inicial!.parcelas ?? 1) > 1 && p.aoExcluirCompra && (
@@ -516,8 +544,8 @@ export function FormLancamento(p: FormLancProps) {
             </button>
           )}
           <span className="espaco" />
-          {!p.inicial && !p.preset && <button type="button" className="btn" onClick={() => salvar(true)}>{tx('Salvar e lançar outro')}</button>}
-          <button type="submit" className="btn primario">{tx('Salvar')}</button>
+          {!p.inicial && !p.preset && <button type="button" className="btn" onClick={() => salvar(true)}><Icone nome="mais" tamanho={16} />{tx('Salvar e lançar outro')}</button>}
+          <button type="submit" className="btn primario"><Icone nome="check" tamanho={17} />{tx('Salvar')}</button>
         </div>
       </form>
     </Modal>
@@ -599,6 +627,11 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
       })()
     : null
 
+  const corDivida = recebe ? COR.entradas : COR.divida
+  const faltaNoPalco = parcelado === 'sim'
+    ? (vp && n ? vp * n : 0)
+    : parseNumero(saldo) ?? (d ? nativoDiv(situacao!, situacao!.restante) : 0)
+
   const salvar = () => {
     if (!descricao.trim()) return setErro(recebe ? tx('Dê um nome (ex.: computador que vendi).') : tx('Dê um nome para a dívida.'))
     const extras = { sentido, pessoa: pessoa.trim() || null }
@@ -635,7 +668,17 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
   }
 
   return (
-    <Modal titulo={d ? (recebe ? tx('Editar a receber') : tx('Editar dívida')) : recebe ? tx('Alguém te deve') : tx('Adicionar dívida')} aoFechar={aoFechar}>
+    <Modal titulo={d ? (recebe ? tx('Editar a receber') : tx('Editar dívida')) : recebe ? tx('Alguém te deve') : tx('Adicionar dívida')} aoFechar={aoFechar}
+      tamanho="tela" cor={corDivida} palco={
+        <Palco icone={<Icone nome={recebe ? 'receber' : 'divida'} tamanho={44} />} cor={corDivida}>
+          {descricao.trim() && <span className="palco-legenda">{descricao.trim()}{pessoa.trim() ? ` · ${pessoa.trim()}` : ''}</span>}
+          <span className="palco-valor">
+            <small>{recebe ? tx('Quanto falta receber') : tx('Quanto falta pagar')}</small>
+            <strong>{fmtMoeda(faltaNoPalco, moeda)}</strong>
+            {parcelado === 'sim' && vp && n ? <em>{n} × {fmtMoeda(vp, moeda)}</em> : null}
+          </span>
+        </Palco>
+      }>
       <form className="form" onSubmit={(e) => { e.preventDefault(); salvar() }}>
         {!semExtras && (
           <Segmentado rotulo={tx('Quem deve')} valor={sentido} aoMudar={(v) => { setSentido(v); setErro(null) }}
@@ -742,10 +785,11 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
   )
 }
 
-/** Banco do lançamento: opcional, com atalho para cadastrar um novo. */
-export function EscolhaBanco({ bancos, valor, aoMudar, aoNovoBanco }: {
+/** Banco do lançamento: opcional, com atalho para cadastrar um novo. `grade`: ladrilhos com o logo do banco. */
+export function EscolhaBanco({ bancos, valor, aoMudar, aoNovoBanco, grade }: {
   bancos: Banco[]; valor: string; aoMudar: (id: string) => void
   aoNovoBanco: (nome: string, cor: string) => Promise<Banco | undefined>
+  grade?: boolean
 }) {
   const novo = async () => {
     const nome = prompt(tx('Nome do banco (ex.: Nubank, Itaú, Next, Dinheiro):'))?.trim()
@@ -758,16 +802,20 @@ export function EscolhaBanco({ bancos, valor, aoMudar, aoNovoBanco }: {
   }
   return (
     <div className="campo">
-      <span className="campo-rotulo">{tx('Banco')} <small>(opcional)</small></span>
-      <div className="chips">
-        <button type="button" className={`chip ${valor === '' ? 'ativo' : ''}`} onClick={() => aoMudar('')}>{tx('Nenhum')}</button>
+      <span className="campo-rotulo">{grade && <Icone nome="carteira" tamanho={15} />}{tx('Banco')} <small>(opcional)</small></span>
+      <div className={`chips ${grade ? 'grade' : ''}`}>
+        <button type="button" className={`chip ${valor === '' ? 'ativo' : ''}`} onClick={() => aoMudar('')}>
+          {grade && <span className="chip-icone neutro"><Icone nome="fechar" tamanho={16} /></span>}{tx('Nenhum')}
+        </button>
         {bancos.map((b) => (
           <button key={b.id} type="button" className={`chip ${valor === b.id ? 'ativo' : ''}`} onClick={() => aoMudar(b.id)}
             style={{ '--c': b.cor } as React.CSSProperties}>
-            <i className="marcador" />{b.nome}
+            {grade ? <BancoIcone nome={b.nome} cor={b.cor} tamanho={34} /> : <i className="marcador" />}{b.nome}
           </button>
         ))}
-        <button type="button" className="chip novo" onClick={novo}>{tx('+ Novo banco')}</button>
+        <button type="button" className="chip novo" onClick={novo}>
+          {grade && <span className="chip-icone"><Icone nome="mais" tamanho={18} /></span>}{tx('+ Novo banco')}
+        </button>
       </div>
     </div>
   )

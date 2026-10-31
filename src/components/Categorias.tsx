@@ -24,32 +24,40 @@ export function Selo({ c, tamanho = 30 }: { c: { icone: string; cor: string }; t
  * Escolha da categoria no formulário: as mais usadas primeiro, o resto em "mais", e "+ nova"
  * para criar ali mesmo, sem sair do lançamento.
  */
-export function EscolhaCategoria({ opcoes, valor, aoMudar, aoCriar, tipo }: {
+export function EscolhaCategoria({ opcoes, valor, aoMudar, aoCriar, tipo, grade }: {
   /** Já na ordem de uso. */
   opcoes: Categoria[]; valor: string; aoMudar: (id: string) => void
   /** undefined: não dá para criar (banco sem a migração 5). */
   aoCriar?: (c: NovaCategoria) => Promise<Categoria | undefined>; tipo: Tipo
+  /** Ladrilhos com o ícone grande (telas de cadastro). */
+  grade?: boolean
 }) {
   const [todas, setTodas] = useState(false)
   const [criando, setCriando] = useState(false)
-  const LIMITE = 8
+  const LIMITE = grade ? 11 : 8
   const visiveis = todas || opcoes.length <= LIMITE + 1 ? opcoes : opcoes.slice(0, LIMITE)
   const escondida = !visiveis.some((c) => c.id === valor) ? opcoes.find((c) => c.id === valor) : undefined
 
   return (
     <div className="campo">
-      <span className="campo-rotulo">{tx('Categoria')}</span>
-      <div className="chips">
+      <span className="campo-rotulo">{grade && <Icone nome="menu" tamanho={15} />}{tx('Categoria')}</span>
+      <div className={`chips ${grade ? 'grade' : ''}`}>
         {[...visiveis, ...(escondida ? [escondida] : [])].map((c) => (
           <button key={c.id} type="button" className={`chip ${valor === c.id ? 'ativo' : ''}`} style={{ '--c': c.cor } as React.CSSProperties}
             onClick={() => aoMudar(valor === c.id ? '' : c.id)}>
-            <span className="chip-icone"><IconeCategoria emoji={c.icone} tamanho={15} /></span>{c.nome}
+            <span className="chip-icone"><IconeCategoria emoji={c.icone} tamanho={grade ? 22 : 15} /></span>{c.nome}
           </button>
         ))}
         {visiveis.length < opcoes.length && (
-          <button type="button" className="chip" onClick={() => setTodas(true)}>{tx('Mais {0}…', opcoes.length - visiveis.length)}</button>
+          <button type="button" className="chip" onClick={() => setTodas(true)}>
+            {grade && <span className="chip-icone neutro"><Icone nome="reticencias" tamanho={18} /></span>}{tx('Mais {0}…', opcoes.length - visiveis.length)}
+          </button>
         )}
-        {aoCriar && !criando && <button type="button" className="chip novo" onClick={() => setCriando(true)}>{tx('+ Nova categoria')}</button>}
+        {aoCriar && !criando && (
+          <button type="button" className="chip novo" onClick={() => setCriando(true)}>
+            {grade && <span className="chip-icone"><Icone nome="mais" tamanho={18} /></span>}{tx('+ Nova categoria')}
+          </button>
+        )}
       </div>
       {aoCriar && criando && (
         <EditorCategoria

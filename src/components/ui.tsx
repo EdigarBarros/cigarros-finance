@@ -69,22 +69,53 @@ export function Progresso({ valor, total, cor }: { valor: number; total: number;
 }
 
 /** `tamanho="grande"`: painel largo no computador e tela cheia no celular (ex.: Configurações). */
-export function Modal({ titulo, aoFechar, children, tamanho }: { titulo: string; aoFechar: () => void; children: ReactNode; tamanho?: 'grande' }) {
+/**
+ * Janela por cima da página. `tamanho="tela"` é o formato das telas de cadastro: painel de vidro quase do tamanho da
+ * tela no computador (a tela inteira no celular), com o `palco` visual ao lado (em cima, no celular), o formulário
+ * rolando ao lado dele e os botões sempre à vista. `cor` tinge a luz de fundo.
+ */
+export function Modal({ titulo, aoFechar, children, tamanho, palco, cor }: {
+  titulo: string; aoFechar: () => void; children: ReactNode; tamanho?: 'grande' | 'tela'; palco?: ReactNode; cor?: string
+}) {
   useEffect(() => {
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && aoFechar()
     window.addEventListener('keydown', esc)
     return () => window.removeEventListener('keydown', esc)
   }, [aoFechar])
+  const tela = tamanho === 'tela'
   return (
-    <div className="modal-fundo" onMouseDown={(e) => e.target === e.currentTarget && aoFechar()}>
-      <div className={`modal ${tamanho ?? ''}`} role="dialog" aria-modal="true" aria-label={titulo}>
+    <div className={`modal-fundo ${tela ? 'vidro' : ''}`} onMouseDown={(e) => e.target === e.currentTarget && aoFechar()}>
+      <div className={`modal ${tamanho ?? ''}`} role="dialog" aria-modal="true" aria-label={titulo}
+        style={cor ? { '--c': cor } as React.CSSProperties : undefined}>
         <span className="alca" aria-hidden="true" />
+        {tela && <span className="tela-aurora" aria-hidden="true"><i /><i /></span>}
         <header className="modal-topo">
           <h2>{titulo}</h2>
           <button className="icone-btn" onClick={aoFechar} aria-label={tx('Fechar')}><Icone nome="fechar" /></button>
         </header>
-        {children}
+        {tela ? (
+          <div className="tela-corpo">
+            {palco && <aside className="tela-palco">{palco}</aside>}
+            <div className="tela-conteudo">{children}</div>
+          </div>
+        ) : children}
       </div>
+    </div>
+  )
+}
+
+/**
+ * O palco padrão das telas de cadastro: o ícone grande numa bolha que flutua, na cor do assunto, com o que a pessoa
+ * está montando embaixo (um valor, um resumo). `icone` aceita um emoji de categoria ou um nome do Icone.
+ */
+export function Palco({ icone, cor, children }: { icone: ReactNode; cor: string; children?: ReactNode }) {
+  return (
+    <div className="palco" style={{ '--c': cor } as React.CSSProperties}>
+      <span className="palco-bolha" key={cor}>
+        <span className="palco-anel" aria-hidden="true" />
+        {icone}
+      </span>
+      {children}
     </div>
   )
 }

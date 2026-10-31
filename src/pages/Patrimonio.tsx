@@ -13,7 +13,7 @@ import { BancoIcone } from '../components/BancoIcone'
 import { Bandeira } from '../components/Bandeira'
 import { CartaoIlustrado } from '../components/CartaoIlustrado'
 import { Numero } from '../components/Numero'
-import { Anel, CampoValor, Cartao, Faisca, Kpi, Modal, Vazio } from '../components/ui'
+import { Anel, CampoValor, Cartao, Faisca, Kpi, Modal, Vazio, Palco } from '../components/ui'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 
@@ -329,7 +329,11 @@ function FormBanco({ c, banco, aoFechar, aoExcluir }: { c: Ctx; banco?: Banco; a
   }
 
   return (
-    <Modal titulo={banco ? tx('Editar banco') : tx('Adicionar banco')} aoFechar={aoFechar}>
+    <Modal titulo={banco ? tx('Editar banco') : tx('Adicionar banco')} aoFechar={aoFechar} tamanho="tela" cor={cor} palco={
+      <Palco cor={cor} icone={<BancoIcone nome={nome.trim() || '?'} cor={cor} tamanho={84} />}>
+        {nome.trim() && <span className="palco-legenda">{nome.trim()}</span>}
+      </Palco>
+    }>
       <form className="form" onSubmit={(e) => { e.preventDefault(); void salvar() }}>
         {!banco && (
           <div className="campo">

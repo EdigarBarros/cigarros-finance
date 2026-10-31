@@ -532,13 +532,14 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
   }
 
   return (
-    <Modal titulo={cartao ? tx('Editar cartão') : tx('Novo cartão')} aoFechar={aoFechar}>
+    <Modal titulo={cartao ? tx('Editar cartão') : tx('Novo cartão')} aoFechar={aoFechar} tamanho="tela" cor={cor} palco={
+      <div className="cc-form-previa">
+        <CartaoIlustrado nome={nome.trim() || tx('Seu cartão')} cor={cor} banco={bancos.find((b) => b.id === bancoId)?.nome}
+          rodape={<>{fecha ? tx('fecha dia {0}', fecha) : tx('fecha dia —')} · {vence ? tx('vence dia {0}', vence) : tx('vence dia —')}</>}
+          conteudo={parseNumero(limite) ? <span className="cc-plastico-fatura"><small>{tx('limite')}</small><b>{fmtValor(parseNumero(limite)!)}</b></span> : undefined} />
+      </div>
+    }>
       <form className="form" onSubmit={(e) => { e.preventDefault(); void salvar() }}>
-        <div className="cc-form-previa">
-          <CartaoIlustrado nome={nome.trim() || tx('Seu cartão')} cor={cor} banco={bancos.find((b) => b.id === bancoId)?.nome}
-            rodape={<>{fecha ? tx('fecha dia {0}', fecha) : tx('fecha dia —')} · {vence ? tx('vence dia {0}', vence) : tx('vence dia —')}</>}
-            conteudo={parseNumero(limite) ? <span className="cc-plastico-fatura"><small>{tx('limite')}</small><b>{fmtValor(parseNumero(limite)!)}</b></span> : undefined} />
-        </div>
         {!cartao && (
           <div className="campo">
             <span className="campo-rotulo">{tx('Escolha rápida')}</span>
@@ -715,12 +716,13 @@ function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: 
   }
 
   return (
-    <Modal titulo={pagamento ? tx('Ajeitar pagamento') : tx('Pagar fatura {0}', cartao.nome)} aoFechar={aoFechar}>
+    <Modal titulo={pagamento ? tx('Ajeitar pagamento') : tx('Pagar fatura {0}', cartao.nome)} aoFechar={aoFechar} tamanho="tela" cor={cartao.cor} palco={
+      <div className="cc-confirma palco-fatura">
+        <span className="cc-confirma-quem"><BancoIcone nome={cartao.nome} cor={cartao.cor} tamanho={34} /><span>{tx('Fatura de {0}', nomeDaFatura(f.ano, f.mes, c.ano))}<small>{tx('{0} em {1}', f.vencimento < hojeLocal() ? tx('venceu') : tx('vence'), fmtDataLonga(f.vencimento))}</small></span></span>
+        <strong>{fmtValor(f.valor)}</strong>
+      </div>
+    }>
       <form className="form" onSubmit={(e) => { e.preventDefault(); void salvar() }}>
-        <div className="cc-confirma">
-          <span className="cc-confirma-quem"><BancoIcone nome={cartao.nome} cor={cartao.cor} tamanho={34} /><span>{tx('Fatura de {0}', nomeDaFatura(f.ano, f.mes, c.ano))}<small>{tx('{0} em {1}', f.vencimento < hojeLocal() ? tx('venceu') : tx('vence'), fmtDataLonga(f.vencimento))}</small></span></span>
-          <strong>{fmtValor(f.valor)}</strong>
-        </div>
         <div className="form-linha">
           <label className="campo">
             <span className="campo-rotulo">{tx('Dia do pagamento')}</span>
@@ -849,12 +851,13 @@ function FormRenegociar({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: (
   }
 
   return (
-    <Modal titulo={tx('Renegociar fatura {0}', cartao.nome)} aoFechar={aoFechar}>
+    <Modal titulo={tx('Renegociar fatura {0}', cartao.nome)} aoFechar={aoFechar} tamanho="tela" cor={cartao.cor} palco={
+      <div className="cc-confirma palco-fatura">
+        <span className="cc-confirma-quem"><BancoIcone nome={cartao.nome} cor={cartao.cor} tamanho={34} /><span>{tx('Fatura de {0}', nomeDaFatura(f.ano, f.mes, c.ano))}<small>{f.status === 'atrasada' ? tx('venceu em {0}', fmtDataLonga(f.vencimento)) : tx('vence em {0}', fmtDataLonga(f.vencimento))}</small></span></span>
+        <strong>{fmtValor(f.valor)}</strong>
+      </div>
+    }>
       <form className="form" onSubmit={(e) => { e.preventDefault(); void salvar() }}>
-        <div className="cc-confirma">
-          <span className="cc-confirma-quem"><BancoIcone nome={cartao.nome} cor={cartao.cor} tamanho={34} /><span>{tx('Fatura de {0}', nomeDaFatura(f.ano, f.mes, c.ano))}<small>{f.status === 'atrasada' ? tx('venceu em {0}', fmtDataLonga(f.vencimento)) : tx('vence em {0}', fmtDataLonga(f.vencimento))}</small></span></span>
-          <strong>{fmtValor(f.valor)}</strong>
-        </div>
         <div className="form-linha">
           <label className="campo">
             <span className="campo-rotulo">{tx('Total do acordo')}</span>
