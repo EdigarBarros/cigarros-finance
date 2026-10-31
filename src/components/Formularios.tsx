@@ -676,7 +676,9 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
   const [parcela, setParcela] = useState(d?.valor_parcela ? paraCampoMoeda(d.valor_parcela, moedaInicial) : '')
   const [faltam, setFaltam] = useState('')
   const [total, setTotal] = useState('')
-  const [saldo, setSaldo] = useState('')
+  // editando, o campo já abre com o valor de hoje (e não só como sugestão apagada): é só mexer nele
+  const [saldo, setSaldo] = useState(() => (situacao ? paraCampoMoeda(nativoDiv(situacao, situacao.restante), situacao.original.moeda || perfil.moeda) : ''))
+  const saldoAtual = situacao ? nativoDiv(situacao, situacao.restante) : null
   // vencimento da próxima parcela em aberto (ou a data combinada, sem parcela fixa)
   const [proxima, setProxima] = useState(cal?.proxima?.vencimento ?? (d ? '' : somaMesesData(hoje, 1)))
   const [data, setData] = useState(dataPadrao(ano, mes))
@@ -734,7 +736,8 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
       if (!d) aoCriar({ ...campos, saldo: v!, data })
       else {
         aoEditar(d.id, campos)
-        if (v !== null) aoNovoSaldo(d.id, data, v)
+        // só grava um novo saldo se o valor mudou
+        if (v !== null && (saldoAtual === null || Math.abs(v - saldoAtual) >= 0.005)) aoNovoSaldo(d.id, data, v)
       }
     }
     aoFechar()
@@ -820,7 +823,7 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
             <label className="campo">
               <span className="campo-rotulo">{recebe ? tx('Quanto falta receber') : tx('Quanto falta pagar')}{d && <small> {tx('(só se mudou)')}</small>}</span>
               <span className="campo-caixa"><span className="prefixo">{simbolo(moeda)}</span>
-                <input inputMode="decimal" value={saldo} onChange={(e) => setSaldo(mascarar(e.target.value, casasDaMoeda(moeda)))} placeholder={d ? paraCampoMoeda(nativoDiv(situacao!, situacao!.restante), moeda) : '0,00'} />
+                <input inputMode="decimal" value={saldo} onChange={(e) => setSaldo(mascarar(e.target.value, casasDaMoeda(moeda)))} onFocus={(e) => e.target.select()} placeholder="0,00" />
               </span>
             </label>
             {!semExtras && (

@@ -723,6 +723,9 @@ select option { background: var(--superficie-forte); color: var(--texto); }
 @keyframes modal-entra { from { opacity: 0; transform: translateY(18px) scale(.96); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
 .form { display: grid; gap: 16px; }
 .form-linha { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* sem isso, o campo de data do iPhone tem largura mínima própria e empurra a coluna para fora da tela */
+.form-linha > * { min-width: 0; }
+.campo input[type='date'] { min-width: 0; max-width: 100%; }
 .valor-grande { display: flex; align-items: baseline; justify-content: center; gap: 6px; padding: 14px 4px 6px; }
 .valor-grande span { font-family: var(--fonte-numeros); font-size: 24px; color: var(--texto-2); font-weight: 600; }
 .valor-grande input {
