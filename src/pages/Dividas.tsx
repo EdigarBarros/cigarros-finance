@@ -197,6 +197,8 @@ export function Dividas(c: Ctx) {
           aoEditar={c.d.updDivida}
           aoNovoSaldo={c.d.addSaldo}
           aoMudarValor={c.d.ajustarValorDivida}
+          aoMoverInicio={c.d.moverInicioDivida}
+          pagamentos={c.d.pagamentos}
           aoExcluir={c.d.delDivida}
           aoFechar={() => setEditando(null)}
         />
@@ -331,8 +333,10 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
   const lancs = c.d.lancs.filter((l) => l.divida_id === s.divida.id)
   const outrosAnos = c.d.pagamentos.filter((x) => x.divida_id === s.divida.id && !lancs.some((l) => l.id === x.id))
   const movimentos = [
-    ...lancs.map((l) => ({ id: l.id, data: l.data, texto: l.moeda_original && l.valor_original ? fmtMoeda(l.valor_original, l.moeda_original) : fmtValor(l.valor), descricao: l.descricao, lanc: l, aumenta: aumentaDivida(l.tipo, s.original) })),
-    ...outrosAnos.map((x) => ({ id: x.id, data: x.data, texto: x.moeda_original && x.valor_original ? fmtMoeda(x.valor_original, x.moeda_original) : fmtValor(x.valor), descricao: '', lanc: null, aumenta: aumentaDivida(x.tipo, s.original) })),
+    ...lancs.map((l) => ({ id: l.id, data: l.data, texto: l.moeda_original && l.valor_original ? fmtMoeda(l.valor_original, l.moeda_original) : fmtValor(l.valor), descricao: l.descricao, lanc: l, aumenta: aumentaDivida(l.tipo, s.original), sinal: aumentaDivida(l.tipo, s.original) ? '+ ' : '' })),
+    ...outrosAnos.map((x) => ({ id: x.id, data: x.data, texto: x.moeda_original && x.valor_original ? fmtMoeda(x.valor_original, x.moeda_original) : fmtValor(x.valor), descricao: '', lanc: null, aumenta: aumentaDivida(x.tipo, s.original), sinal: aumentaDivida(x.tipo, s.original) ? '+ ' : '' })),
+    // juros, acordo, desconto: mudanças de saldo sem lançamento, para a linha do gráfico ter explicação
+    ...s.ajustes.map((a) => ({ id: `aj-${a.data}-${a.valor}`, data: a.data, texto: fmtDiv(s, Math.abs(a.valor)), descricao: tx('ajuste de saldo'), lanc: null, aumenta: a.valor > 0, sinal: a.valor > 0 ? '+ ' : '− ' })),
   ].sort((a, b) => (b.data ?? '').localeCompare(a.data ?? ''))
   const quitada = s.restante <= 0
   const sugerido = cal?.sugerido || (s.divida.valor_parcela ? Math.min(s.divida.valor_parcela, s.restante) : 0)
@@ -400,7 +404,7 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
                   <button disabled={!m.lanc} onClick={() => { if (m.lanc) { aoFechar(); c.editarLancamento(m.lanc) } }}>
                     <span className="ccd-hist-icone ok"><Icone nome={m.aumenta ? 'receber' : recebe ? 'receber' : 'check'} tamanho={15} /></span>
                     <span className="ccd-hist-texto"><strong>{m.data ? fmtDataLonga(m.data) : tx('sem data')}</strong><small>{m.descricao || (m.aumenta ? tx('emprestado a mais') : recebe ? tx('recebido') : tx('pago'))}</small></span>
-                    <span className="ccd-hist-valor">{m.aumenta ? '+ ' : ''}{m.texto}</span>
+                    <span className="ccd-hist-valor">{m.sinal}{m.texto}</span>
                     {m.lanc && <Icone nome="lapis" tamanho={14} />}
                   </button>
                 </li>

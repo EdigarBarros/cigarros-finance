@@ -163,6 +163,17 @@ export function GraficoFluxo({ porMes, mesAtual, altura, compacto }: {
  * Mês a mês do ano, como o gráfico da planilha: Entrou e Saiu em barras e, por cima, as linhas brilhantes do que a pessoa
  * acompanha (guardado nas contas, dívidas, investido, outras moedas), conforme os módulos ligados.
  */
+/** Linhas da dica das dívidas: de onde veio a subida ou a descida do mês. */
+function origemDaDivida(r: Resumo | null | undefined): string[] {
+  if (!r) return []
+  const l: string[] = []
+  if (r.dividaNovas) l.push(`  ${tx('nova dívida')}: +${fmtValor(r.dividaNovas)}`)
+  if (r.dividaAumentos) l.push(`  ${tx('emprestado a mais')}: +${fmtValor(r.dividaAumentos)}`)
+  if (r.dividaAjustes) l.push(`  ${tx('ajuste de saldo')}: ${r.dividaAjustes > 0 ? '+' : '−'}${fmtValor(Math.abs(r.dividaAjustes))}`)
+  if (r.dividaPagos) l.push(`  ${tx('pagamentos')}: −${fmtValor(r.dividaPagos)}`)
+  return l
+}
+
 export function GraficoAnual({ porMes, mesAtual, altura = 400, compacto, v }: {
   porMes: (Resumo | null)[]; mesAtual: number; altura?: number; v: Visao
   /** Celular: eixo em "mil" e legenda menor. */
@@ -183,9 +194,21 @@ export function GraficoAnual({ porMes, mesAtual, altura = 400, compacto, v }: {
   return (
     <div className="grafico" style={{ height: altura }}>
       <Misto type="bar" key={c.tema + c.ocultos} data={data}
-        options={opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual, compacto, destacar: true })} />
+        options={comOrigemDaDivida(opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual, compacto, destacar: true }), porMes)} />
     </div>
   )
+}
+
+/** Acrescenta à dica da linha de Dívidas o que fez ela mudar naquele mês. */
+function comOrigemDaDivida(o: ChartOptions<'bar'>, porMes: (Resumo | null)[]): ChartOptions<'bar'> {
+  const cb = o.plugins?.tooltip?.callbacks
+  return {
+    ...o,
+    plugins: {
+      ...o.plugins,
+      tooltip: { ...o.plugins?.tooltip, callbacks: { ...cb, afterLabel: (x) => (x.dataset.label === tx('Dívidas') ? origemDaDivida(porMes[x.dataIndex]) : []) } },
+    },
+  }
 }
 
 /**

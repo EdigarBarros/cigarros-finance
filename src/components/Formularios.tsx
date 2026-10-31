@@ -5,13 +5,13 @@ import { gerarParcelas, hojeLocal, nomeDaFatura, textoParcelamento } from '../li
 import { formaDe, formaPelaDescricao, formasDoTipo, type FormaPagamento } from '../lib/formas'
 import { COR } from '../lib/charts'
 import { calendarioDe, dividaPelaDescricao, inicioPelaProxima, meDevem, mesesAntes, nativoDiv, parcelasDe, somaMesesData, type SituacaoDivida } from '../lib/dividas'
-import { dataPadrao, fmtMesAno, fmtMoeda, fmtValor, parseNumero, simbolo } from '../lib/format'
+import { dataPadrao, fmtDataLonga, fmtMesAno, fmtMoeda, fmtValor, parseNumero, simbolo } from '../lib/format'
 import { casasDaMoeda, mascarar, paraCampoMoeda } from '../lib/dinheiro'
 import { infoMoeda, moedasUsaveis, type Taxas } from '../lib/moedas'
 import { visao } from '../lib/perfil'
 import { bancoConhecido, bancoNaDescricao, CORES_LIVRES, mesmoNome } from '../lib/rotulos'
 import { contaPeloNome, type MemoriaConta } from '../lib/contasFixas'
-import type { Banco, CartaoCredito, Categoria, ContaFixa, Divida, Lancamento, Perfil, Tipo } from '../lib/types'
+import type { Banco, CartaoCredito, Categoria, ContaFixa, Divida, Lancamento, Pagamento, Perfil, Tipo } from '../lib/types'
 import { EscolhaCategoria } from './Categorias'
 import { IconeCategoria } from './IconeCategoria'
 import { Icone } from './Icone'
@@ -46,6 +46,9 @@ interface FormLancProps {
   aoNovoBanco: (nome: string, cor: string) => Promise<Banco | undefined>
   aoSalvar: (l: NovoLanc, id?: string) => void
   /** Cria a dívida de um empréstimo recebido ("quem emprestou") e devolve ela, para ligar à entrada. */
+  /** Dia em que a dívida começou, para avisar quando o lançamento ligado a ela é de antes. */
+  inicioDivida?: (id: string) => string | null
+  aoMoverInicioDivida?: (id: string, data: string) => Promise<string | null>
   aoNovaDivida?: (d: { quem: string; data: string; sentido: 'devo' | 'me_devem' }) => Promise<Divida | undefined>
   aoExcluir?: (id: string) => void
   /** Cartões de crédito (só com o módulo ligado): a saída pode ser uma compra no cartão. */
@@ -107,6 +110,7 @@ export function FormLancamento(p: FormLancProps) {
   const [vezes, setVezes] = useState(1)
   const [contaId, setContaId] = useState(ini.conta_fixa_id ?? '')
   const [mexeuConta, setMexeuConta] = useState(Boolean(p.inicial || p.preset))
+  const inicioLigada = dividaId && !novoEmprestimo ? p.inicioDivida?.(dividaId) ?? null : null
   const ehParcela = Boolean(p.inicial?.compra_id)
   const cartaoDaParcela = p.cartoes?.find((c) => c.id === p.inicial?.cartao_id)
 
@@ -595,6 +599,17 @@ export function FormLancamento(p: FormLancProps) {
             )}
           </label>
         )}
+        {inicioLigada && data < inicioLigada && (
+          <div className="form-dica fixa" role="status">
+            <Icone nome="calendario" tamanho={16} />
+            <span>
+              {tx('Esta dívida começou em {0}, depois da data deste lançamento. Ele não conta no gráfico.', fmtDataLonga(inicioLigada))}
+              {p.aoMoverInicioDivida && (
+                <> <button type="button" className="link" onClick={async () => { const e = await p.aoMoverInicioDivida!(dividaId, data); if (e) setErro(e) }}>{tx('Começar a dívida em {0}', fmtDataLonga(data))}</button></>
+              )}
+            </span>
+          </div>
+        )}
         {erro && <p className="form-erro">{erro}</p>}
         {salvos > 0 && !erro && <p className="form-ok">{tx('{0} lançamento{1} salvo{2}. Pode lançar o próximo.', salvos, salvos > 1 ? 's' : '', salvos > 1 ? 's' : '')}</p>}
         <div className="form-acoes">
@@ -645,6 +660,10 @@ interface FormDividaProps {
   aoNovoSaldo: (id: string, data: string, saldo: number) => void
   /** Muda o valor total da dívida (a diferença vale para o que falta também). */
   aoMudarValor?: (id: string, delta: number) => void
+  /** Muda o dia em que a dívida começou; devolve o motivo quando não pode. */
+  aoMoverInicio?: (id: string, data: string) => Promise<string | null>
+  /** Pagamentos já lançados (de todos os anos), para avisar dos que ficam antes do início. */
+  pagamentos?: Pagamento[]
   aoExcluir: (id: string) => void
   aoFechar: () => void
   /** Aberto por "Definir parcela": começa no modo parcelado, com o cursor no valor da parcela. */
@@ -662,7 +681,7 @@ const inteiro = (t: string) => {
  * vence a próxima. Parcelada, pede o valor da parcela e quantas faltam (e, se souber, de quantas); sem parcela fixa,
  * pede quanto falta e, se houver, a data combinada. O vencimento da próxima monta o calendário de parcelas.
  */
-export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perfil, semMoeda, aoCriar, aoEditar, aoNovoSaldo, aoMudarValor, aoExcluir, aoFechar, definirParcela }: FormDividaProps) {
+export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perfil, semMoeda, aoCriar, aoEditar, aoNovoSaldo, aoMudarValor, aoMoverInicio, pagamentos, aoExcluir, aoFechar, definirParcela }: FormDividaProps) {
   // a dívida como foi cadastrada (parcela na moeda dela); `situacao.divida` já vem convertida para a moeda principal
   const d = situacao?.original
   const moedaInicial = d?.moeda || perfil.moeda
@@ -685,6 +704,11 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
   const totalAtual = situacao ? nativoDiv(situacao, situacao.saldoInicial) : null
   const [valorTotal, setValorTotal] = useState(() => (totalAtual !== null ? paraCampoMoeda(totalAtual, moedaInicial) : ''))
   const [mexeuSaldo, setMexeuSaldo] = useState(false)
+  // Quando a dívida começou: o saldo mais antigo dela. Ao criar, abre no mês aberto; só vale a mudança se a pessoa mexer.
+  const [comecou, setComecou] = useState(situacao?.inicioEm ?? dataPadrao(ano, mes))
+  const [mexeuComecou, setMexeuComecou] = useState(false)
+  // dívida nova que a pessoa já vinha pagando fora do app: quanto falta hoje
+  const [faltaHoje, setFaltaHoje] = useState('')
   // vencimento da próxima parcela em aberto (ou a data combinada, sem parcela fixa)
   const [proxima, setProxima] = useState(cal?.proxima?.vencimento ?? (d ? '' : somaMesesData(hoje, 1)))
   const [data, setData] = useState(dataPadrao(ano, mes))
@@ -713,9 +737,14 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
     ? (vp && n ? vp * n : 0)
     : parseNumero(saldo) ?? (d ? nativoDiv(situacao!, situacao!.restante) : 0)
 
-  const salvar = () => {
+  const salvar = async () => {
     if (!descricao.trim()) return setErro(recebe ? tx('Dê um nome (ex.: computador que vendi).') : tx('Dê um nome para a dívida.'))
     const extras = { sentido, pessoa: pessoa.trim() || null }
+    if (!comecou) return setErro(tx('Escolha quando a dívida começou.'))
+    if (d && situacao?.inicioEm && comecou !== situacao.inicioEm) {
+      const motivo = await aoMoverInicio?.(d.id, comecou)
+      if (motivo) return setErro(motivo)
+    }
     if (parcelado === 'sim') {
       if (!vp || vp <= 0) return setErro(tx('Digite o valor da parcela.'))
       if (faltam.trim() && !nFaltam) return setErro(tx('Digite quantas parcelas faltam (um número inteiro).'))
@@ -724,11 +753,11 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
       const nf = nFaltam ?? atuais?.faltam ?? 0
       const totalN = nTotal ?? (d ? d.total_parcelas ?? atuais?.total ?? nf : nf)
       // Com o total, registra o valor de quando a dívida começou: é isso que mostra "parcela 4 de 12".
-      const marcoInicial = nTotal && nTotal > nf ? { data: mesesAntes(data, nTotal - nf), saldo: Math.round(vp * nTotal * 100) / 100 } : undefined
+      const marcoInicial = nTotal && nTotal > nf ? { data: mexeuComecou ? comecou : mesesAntes(data, nTotal - nf), saldo: Math.round(vp * nTotal * 100) / 100 } : undefined
       const inicio = proxima ? inicioPelaProxima(proxima, totalN - nf) : d?.inicio ?? null
       const campos = { descricao: descricao.trim(), valor_parcela: vp, ...extras, moeda: moeda === perfil.moeda ? null : moeda, inicio, total_parcelas: totalN || null }
       if (!d) {
-        aoCriar({ ...campos, saldo: Math.round(vp * nf * 100) / 100, data, marcoInicial })
+        aoCriar({ ...campos, saldo: Math.round(vp * nf * 100) / 100, data: !marcoInicial && mexeuComecou ? comecou : data, marcoInicial })
       } else {
         aoEditar(d.id, campos)
         if (marcoInicial && marcoInicial.saldo > nativoDiv(situacao!, situacao!.saldoInicial)) aoNovoSaldo(d.id, marcoInicial.data, marcoInicial.saldo)
@@ -739,7 +768,13 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
       if (saldo.trim() && (v === null || v < 0)) return setErro(tx('Digite um valor válido.'))
       if (!d && (v === null || v <= 0)) return setErro(recebe ? tx('Digite quanto falta receber.') : tx('Digite quanto falta pagar.'))
       const campos = { descricao: descricao.trim(), valor_parcela: null, ...extras, moeda: moeda === perfil.moeda ? null : moeda, inicio: proxima || null, total_parcelas: null }
-      if (!d) aoCriar({ ...campos, saldo: v!, data })
+      if (!d) {
+        // o valor digitado é o da dívida quando ela começou; se já pagou parte fora do app, o que falta hoje entra como ajuste
+        const hojeFalta = faltaHoje.trim() ? parseNumero(faltaHoje) : null
+        if (faltaHoje.trim() && (hojeFalta === null || hojeFalta < 0 || hojeFalta > v!)) return setErro(tx('O que falta hoje não pode ser maior que o valor da dívida.'))
+        if (hojeFalta !== null && hojeFalta < v! && hoje > comecou) aoCriar({ ...campos, saldo: hojeFalta, data: hoje, marcoInicial: { data: comecou, saldo: v! } })
+        else aoCriar({ ...campos, saldo: v!, data: comecou })
+      }
       else {
         aoEditar(d.id, campos)
         // Valor total: a diferença entra em todos os saldos, e o que falta muda junto (a não ser que você também mexa nele).
@@ -754,6 +789,9 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
     aoFechar()
   }
 
+  // pagamentos já lançados que ficariam antes do início: o cálculo não os conta
+  const antesDoInicio = d && pagamentos ? pagamentos.filter((x) => x.divida_id === d.id && x.data && x.data < comecou).length : 0
+
   return (
     <Modal titulo={d ? (recebe ? tx('Editar a receber') : tx('Editar dívida')) : recebe ? tx('Alguém te deve') : tx('Adicionar dívida')} aoFechar={aoFechar}
       tamanho="tela" cor={corDivida} palco={
@@ -766,7 +804,7 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
           </span>
         </Palco>
       }>
-      <form className="form" onSubmit={(e) => { e.preventDefault(); salvar() }}>
+      <form className="form" onSubmit={(e) => { e.preventDefault(); void salvar() }}>
         {!semExtras && (
           <Segmentado rotulo={tx('Quem deve')} valor={sentido} aoMudar={(v) => { setSentido(v); setErro(null) }}
             opcoes={[{ id: 'devo', nome: tx('Eu devo'), cor: COR.saidas }, { id: 'me_devem', nome: tx('Me devem'), cor: COR.entradas }]} />
@@ -791,6 +829,14 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
             </label>
           )}
         </div>
+        <label className="campo">
+          <span className="campo-rotulo">{tx('Quando começou?')}</span>
+          <input type="date" value={comecou} onChange={(e) => { setComecou(e.target.value); setMexeuComecou(true) }} />
+          <span className="campo-ajuda">{d
+            ? tx('É daqui que o gráfico do ano passa a mostrar esta dívida. Os pagamentos já lançados continuam valendo.')
+            : tx('Dívida de meses atrás? Coloque o dia em que ela começou: o gráfico do ano mostra ela desde lá. Depois, lance cada pagamento com a data certa.')}</span>
+          {antesDoInicio > 0 && <span className="campo-ajuda" role="alert">{antesDoInicio === 1 ? tx('Há 1 pagamento anterior a esta data: ele deixa de contar.') : tx('Há {0} pagamentos anteriores a esta data: eles deixam de contar.', antesDoInicio)}</span>}
+        </label>
         <div className="campo">
           <span className="campo-rotulo">{tx('É parcelado?')}</span>
           <Segmentado rotulo={tx('É parcelado?')} valor={parcelado} aoMudar={(v) => { setParcelado(v); setErro(null) }}
@@ -849,7 +895,7 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
           )}
           <div className="form-linha">
             <label className="campo">
-              <span className="campo-rotulo">{recebe ? tx('Quanto falta receber') : tx('Quanto falta pagar')}{d && <small> {tx('(só se mudou)')}</small>}</span>
+              <span className="campo-rotulo">{d ? (recebe ? tx('Quanto falta receber') : tx('Quanto falta pagar')) : (recebe ? tx('Valor total a receber') : tx('Valor total da dívida'))}{d && <small> {tx('(só se mudou)')}</small>}</span>
               <span className="campo-caixa"><span className="prefixo">{simbolo(moeda)}</span>
                 <input inputMode="decimal" value={saldo} onChange={(e) => { setMexeuSaldo(true); setSaldo(mascarar(e.target.value, casasDaMoeda(moeda))) }} onFocus={(e) => e.target.select()} placeholder="0,00" />
               </span>
@@ -861,13 +907,22 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
               </label>
             )}
           </div>
+          {!d && (
+            <label className="campo">
+              <span className="campo-rotulo">{recebe ? tx('Quanto falta receber hoje?') : tx('Quanto falta pagar hoje?')} <small>(opcional)</small></span>
+              <span className="campo-caixa"><span className="prefixo">{simbolo(moeda)}</span>
+                <input inputMode="decimal" value={faltaHoje} onChange={(e) => setFaltaHoje(mascarar(e.target.value, casasDaMoeda(moeda)))} placeholder="0,00" />
+              </span>
+              <span className="campo-ajuda">{tx('Só preencha se já pagou parte antes de usar o app. Para o gráfico mostrar a dívida descendo mês a mês, lance cada pagamento com a data certa.')}</span>
+            </label>
+          )}
           </>
         )}
         {d && (
           <label className="campo">
-            <span className="campo-rotulo">{tx('Valor atualizado em')}</span>
+            <span className="campo-rotulo">{tx('Data do ajuste de saldo')}</span>
             <input type="date" value={data} onChange={(e) => setData(e.target.value)} />
-            <span className="campo-ajuda">{recebe ? tx('Cada recebimento lançado') : tx('Os pagamentos lançados')} {tx('já abatem sozinhos. Mude o que falta só se houve juros, acordo ou se estava errado.')}</span>
+            <span className="campo-ajuda">{recebe ? tx('Cada recebimento lançado') : tx('Os pagamentos lançados')} {tx('já abatem sozinhos. Mude o que falta só se houve juros, acordo ou se estava errado. A data é o mês em que o gráfico muda.')}</span>
           </label>
         )}
         {erro && <p className="form-erro">{erro}</p>}

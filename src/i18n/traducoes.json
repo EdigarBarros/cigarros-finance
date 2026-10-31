@@ -6022,5 +6022,77 @@
   "Quanto era a dívida no começo. Mudar o total não apaga o que você já pagou: o que falta muda junto.": {
     "en": "How much the debt was at the start. Changing the total does not erase what you already paid: what is left changes along with it.",
     "es": "Cuánto era la deuda al principio. Cambiar el total no borra lo que ya pagaste: lo que falta cambia junto."
+  },
+  "Essa dívida tem um ajuste de saldo em {0}. Escolha uma data até lá.": {
+    "en": "This debt has a balance adjustment on {0}. Pick a date up to then.",
+    "es": "Esta deuda tiene un ajuste de saldo el {0}. Elige una fecha hasta entonces."
+  },
+  "Escolha quando a dívida começou.": {
+    "en": "Choose when the debt started.",
+    "es": "Elige cuándo empezó la deuda."
+  },
+  "O que falta hoje não pode ser maior que o valor da dívida.": {
+    "en": "What is left today cannot be more than the debt amount.",
+    "es": "Lo que falta hoy no puede ser mayor que el valor de la deuda."
+  },
+  "Quando começou?": {
+    "en": "When did it start?",
+    "es": "¿Cuándo empezó?"
+  },
+  "É daqui que o gráfico do ano passa a mostrar esta dívida. Os pagamentos já lançados continuam valendo.": {
+    "en": "The yearly chart shows this debt from this date on. Payments already added still count.",
+    "es": "Desde aquí el gráfico del año muestra esta deuda. Los pagos ya registrados siguen valiendo."
+  },
+  "Dívida de meses atrás? Coloque o dia em que ela começou: o gráfico do ano mostra ela desde lá. Depois, lance cada pagamento com a data certa.": {
+    "en": "A debt from months ago? Enter the day it started: the yearly chart shows it from then. Then add each payment with the right date.",
+    "es": "¿Una deuda de hace meses? Pon el día en que empezó: el gráfico del año la muestra desde allí. Luego registra cada pago con la fecha correcta."
+  },
+  "Há 1 pagamento anterior a esta data: ele deixa de contar.": {
+    "en": "There is 1 payment before this date: it stops counting.",
+    "es": "Hay 1 pago anterior a esta fecha: deja de contar."
+  },
+  "Há {0} pagamentos anteriores a esta data: eles deixam de contar.": {
+    "en": "There are {0} payments before this date: they stop counting.",
+    "es": "Hay {0} pagos anteriores a esta fecha: dejan de contar."
+  },
+  "Quanto falta receber hoje?": {
+    "en": "How much is left to receive today?",
+    "es": "¿Cuánto falta por recibir hoy?"
+  },
+  "Quanto falta pagar hoje?": {
+    "en": "How much is left to pay today?",
+    "es": "¿Cuánto falta por pagar hoy?"
+  },
+  "Só preencha se já pagou parte antes de usar o app. Para o gráfico mostrar a dívida descendo mês a mês, lance cada pagamento com a data certa.": {
+    "en": "Only fill this in if you already paid part before using the app. For the chart to show the debt going down month by month, add each payment with the right date.",
+    "es": "Rellena solo si ya pagaste una parte antes de usar la app. Para que el gráfico muestre la deuda bajando mes a mes, registra cada pago con la fecha correcta."
+  },
+  "Data do ajuste de saldo": {
+    "en": "Balance adjustment date",
+    "es": "Fecha del ajuste de saldo"
+  },
+  "já abatem sozinhos. Mude o que falta só se houve juros, acordo ou se estava errado. A data é o mês em que o gráfico muda.": {
+    "en": "are subtracted on their own. Change what is left only if there was interest, a deal or it was wrong. The date is the month the chart changes.",
+    "es": "se descuentan solos. Cambia lo que falta solo si hubo intereses, un acuerdo o estaba mal. La fecha es el mes en que cambia el gráfico."
+  },
+  "Esta dívida começou em {0}, depois da data deste lançamento. Ele não conta no gráfico.": {
+    "en": "This debt started on {0}, after the date of this entry. It will not count in the chart.",
+    "es": "Esta deuda empezó el {0}, después de la fecha de este registro. No cuenta en el gráfico."
+  },
+  "Começar a dívida em {0}": {
+    "en": "Start the debt on {0}",
+    "es": "Empezar la deuda el {0}"
+  },
+  "ajuste de saldo": {
+    "en": "balance adjustment",
+    "es": "ajuste de saldo"
+  },
+  "nova dívida": {
+    "en": "new debt",
+    "es": "deuda nueva"
+  },
+  "pagamentos": {
+    "en": "payments",
+    "es": "pagos"
   }
 }

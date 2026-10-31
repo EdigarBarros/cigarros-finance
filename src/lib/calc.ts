@@ -82,6 +82,11 @@ export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: M
     fluxo: entradas - saidas,
     caixa: totalCaixa(mes),
     divida: soma(dividas.map((d) => d.restante)),
+    /** De onde veio a variação das dívidas no mês: nasceram, foram pagas, aumentaram (empréstimo) ou foram ajustadas (juros, acordo). */
+    dividaNovas: soma(dividas.map((d) => d.novaNoMes)),
+    dividaPagos: soma(dividas.map((d) => d.pagoNoMes)),
+    dividaAumentos: soma(dividas.map((d) => d.aumentoNoMes)),
+    dividaAjustes: soma(dividas.map((d) => d.ajusteNoMes)),
     parcelasMensais: soma(dividas.filter((d) => d.restante > 0).map((d) => d.divida.valor_parcela ?? 0)),
     investimentos: mes?.investimentos ?? 0,
     moedas: mes?.moedas ?? {},
