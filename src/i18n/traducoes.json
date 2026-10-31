@@ -6114,5 +6114,125 @@
   "As dívidas em outras moedas entram aqui pela cotação de hoje. Para ver os valores exatos, escolha a moeda acima.": {
     "en": "Debts in other currencies are shown here at today's exchange rate. To see exact amounts, pick the currency above.",
     "es": "Las deudas en otras monedas entran aquí por la cotización de hoy. Para ver los valores exactos, elige la moneda arriba."
+  },
+  "Ver gastos": {
+    "en": "See spending",
+    "es": "Ver gastos"
+  },
+  "Está saindo mais do que entrando.": {
+    "en": "More is going out than coming in.",
+    "es": "Está saliendo más de lo que entra."
+  },
+  "Nos últimos meses fechados, entraram em média {0} por mês e saíram {1}: {2} a mais do que entrou.": {
+    "en": "In the last full months, an average of {0} came in each month and {1} went out: {2} more than came in.",
+    "es": "En los últimos meses cerrados, entraron en promedio {0} por mes y salieron {1}: {2} más de lo que entró."
+  },
+  "Quase nada está sobrando.": {
+    "en": "Almost nothing is left over.",
+    "es": "Casi no está sobrando nada."
+  },
+  "De cada {0} que entram, sobram só {1}. É a média dos últimos meses fechados.": {
+    "en": "For every {0} that comes in, only {1} is left. That's the average of the last full months.",
+    "es": "De cada {0} que entran, sobran solo {1}. Es el promedio de los últimos meses cerrados."
+  },
+  "As parcelas levam mais da metade do que você recebe.": {
+    "en": "Installments take more than half of what you earn.",
+    "es": "Las cuotas se llevan más de la mitad de lo que recibes."
+  },
+  "As parcelas estão pesando.": {
+    "en": "Installments are weighing on you.",
+    "es": "Las cuotas están pesando."
+  },
+  "Suas parcelas somam {0} por mês, {1}% do que você recebe. O ideal é ficar abaixo de {2}%.": {
+    "en": "Your installments add up to {0} a month, {1}% of what you earn. The ideal is to stay below {2}%.",
+    "es": "Tus cuotas suman {0} al mes, el {1}% de lo que recibes. Lo ideal es quedar por debajo del {2}%."
+  },
+  "As dívidas estão aumentando.": {
+    "en": "Your debts are growing.",
+    "es": "Las deudas están aumentando."
+  },
+  "Há {0} meses você devia {1}. Hoje são {2}: {3} a mais.": {
+    "en": "{0} months ago you owed {1}. Today it's {2}: {3} more.",
+    "es": "Hace {0} meses debías {1}. Hoy son {2}: {3} más."
+  },
+  "Ver o guardado": {
+    "en": "See what you've saved",
+    "es": "Ver lo ahorrado"
+  },
+  "Você ainda não tem reserva.": {
+    "en": "You don't have a safety cushion yet.",
+    "es": "Todavía no tienes reserva."
+  },
+  "Você gasta cerca de {0} por mês. Para imprevistos, o ideal é ter de {1} a {2} meses guardados.": {
+    "en": "You spend about {0} a month. For the unexpected, the ideal is to have {1} to {2} months saved.",
+    "es": "Gastas cerca de {0} al mes. Para imprevistos, lo ideal es tener ahorrados de {1} a {2} meses."
+  },
+  "Sua reserva não chega a 1 mês de gastos.": {
+    "en": "Your savings don't cover even 1 month of spending.",
+    "es": "Tu reserva no llega a 1 mes de gastos."
+  },
+  "Sua reserva cobre 1 mês de gastos.": {
+    "en": "Your savings cover 1 month of spending.",
+    "es": "Tu reserva cubre 1 mes de gastos."
+  },
+  "Sua reserva cobre {0} meses de gastos.": {
+    "en": "Your savings cover {0} months of spending.",
+    "es": "Tu reserva cubre {0} meses de gastos."
+  },
+  "Você tem {0} guardados e gasta cerca de {1} por mês. Para imprevistos, o ideal é ter de {2} a {3} meses guardados.": {
+    "en": "You have {0} saved and spend about {1} a month. For the unexpected, the ideal is to have {2} to {3} months saved.",
+    "es": "Tienes {0} ahorrados y gastas cerca de {1} al mes. Para imprevistos, lo ideal es tener ahorrados de {2} a {3} meses."
+  },
+  "Você gastou mais que o normal em {0}.": {
+    "en": "You spent more than usual on {0}.",
+    "es": "Gastaste más de lo normal en {0}."
+  },
+  "Em {0} saíram {1} este mês, contra {2} por mês em média nos meses anteriores.": {
+    "en": "In {0}, {1} went out this month, compared with {2} a month on average in the previous months.",
+    "es": "En {0} salieron {1} este mes, frente a {2} al mes en promedio en los meses anteriores."
+  },
+  "Ver cartões": {
+    "en": "See cards",
+    "es": "Ver tarjetas"
+  },
+  "As parcelas do cartão estão pesando.": {
+    "en": "Card installments are weighing on you.",
+    "es": "Las cuotas de la tarjeta están pesando."
+  },
+  "Em {0} já estão marcados {1} em compras parceladas no cartão, {2}% do que você recebe. O ideal é ficar abaixo de {3}%.": {
+    "en": "In {0}, {1} in card installments is already scheduled, {2}% of what you earn. The ideal is to stay below {3}%.",
+    "es": "En {0} ya hay {1} marcados en compras en cuotas con tarjeta, el {2}% de lo que recibes. Lo ideal es quedar por debajo del {3}%."
+  },
+  "A meta “{0}” passou do prazo.": {
+    "en": "The goal “{0}” is past its deadline.",
+    "es": "La meta “{0}” pasó de plazo."
+  },
+  "Faltam {0} para juntar {1}, e o prazo acabou em {2}.": {
+    "en": "{0} still to go to reach {1}, and the deadline ended in {2}.",
+    "es": "Faltan {0} para juntar {1}, y el plazo terminó en {2}."
+  },
+  "A meta “{0}” não vai chegar a tempo.": {
+    "en": "The goal “{0}” won't be reached in time.",
+    "es": "La meta “{0}” no va a llegar a tiempo."
+  },
+  "Para chegar em {0}, o ideal é guardar {1} por mês. Nos últimos meses, nada foi guardado.": {
+    "en": "To get there by {0}, the ideal is to save {1} a month. In recent months, nothing has been saved.",
+    "es": "Para llegar en {0}, lo ideal es ahorrar {1} al mes. En los últimos meses no se ahorró nada."
+  },
+  "Você está guardando todo mês. Continue assim!": {
+    "en": "You're saving every month. Keep it up!",
+    "es": "Estás ahorrando todos los meses. ¡Sigue así!"
+  },
+  "Nos últimos {0} meses, sobraram mais de {1}% do que entrou: em média {2} por mês.": {
+    "en": "In the last {0} months, more than {1}% of what came in was left over: {2} a month on average.",
+    "es": "En los últimos {0} meses, sobró más del {1}% de lo que entró: en promedio {2} al mes."
+  },
+  "Dispensar por este mês": {
+    "en": "Dismiss for this month",
+    "es": "Descartar por este mes"
+  },
+  "Para chegar em {0}, o ideal é guardar {1} por mês. Hoje você guarda cerca de {2} por mês.": {
+    "en": "To get there by {0}, the ideal is to save {1} a month. Right now you save about {2} a month.",
+    "es": "Para llegar en {0}, lo ideal es ahorrar {1} al mes. Hoy ahorras cerca de {2} al mes."
   }
 }

@@ -5,6 +5,7 @@ import { lerTudo, supabase } from './supabase'
 import type { EscolhaZerar, ParteZerar } from './zerar'
 import type { Banco, Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida } from './types'
 import { fmtDataLonga } from './format'
+import { mesesDoConselheiro } from './conselheiro'
 import { tx } from './textos'
 
 const num = (v: unknown) => Number(v ?? 0)
@@ -46,6 +47,22 @@ const semMoedaDivida = <T extends object>(o: T) => { const { moeda: _m, ...resto
 export type NovaDivida = Pick<Divida, 'descricao' | 'valor_parcela'> & Partial<Pick<Divida, (typeof EXTRAS_DIVIDA)[number] | 'moeda'>>
 
 /**
+ * Lançamentos dos meses que o conselheiro lê (3 fechados + o atual) que caem fora do ano aberto: no começo do ano, os
+ * últimos meses do anterior; com outro ano aberto, os de agora. Só consulta o que falta (em outubro, com o ano atual aberto, nada).
+ */
+async function lancamentosRecentes(ano: number): Promise<Lancamento[]> {
+  const meses = mesesDoConselheiro().filter((m) => m.ano !== ano)
+  const anos = [...new Set(meses.map((m) => m.ano))]
+  const grupos = await Promise.all(anos.map(async (a) => {
+    const doAno = meses.filter((m) => m.ano === a).map((m) => m.mes)
+    const r = await lerTudo(() => supabase.from('lancamentos').select('*').eq('ano', a).gte('mes', Math.min(...doAno)).lte('mes', Math.max(...doAno)).order('id'))
+    // o filtro de cima já limita; a conferência de baixo vale para qualquer servidor que o ignore
+    return r.error ? [] : (r.data as Lancamento[]).filter((l) => l.ano === a && doAno.includes(l.mes))
+  }))
+  return grupos.flat()
+}
+
+/**
  * Lançamentos do ano aberto + tudo que atravessa os anos (dívidas, saldos, pagamentos e meses),
  * para que dívida e caixa sejam calculados de forma contínua.
  */
@@ -74,12 +91,14 @@ export function useDados(userId: string, ano: number) {
   const [dividasSemMoeda, setDividasSemMoeda] = useState(false)
   /** Lançamentos de outros anos ligados a uma conta do mês: ensinam ao app como cada conta aparece no extrato. */
   const [vinculosOutrosAnos, setVinculosOutrosAnos] = useState<Pick<Lancamento, 'id' | 'conta_fixa_id' | 'descricao' | 'valor'>[]>([])
+  /** Lançamentos de outros anos que o conselheiro lê (os 3 meses fechados e o atual), quando o ano aberto não cobre todos. */
+  const [lancsRecentes, setLancsRecentes] = useState<Lancamento[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
 
   const recarregar = useCallback(async () => {
     setCarregando(true)
-    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, vc] = await Promise.all([
+    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, vc, rc] = await Promise.all([
       // as tabelas que crescem sem parar são lidas em páginas (lerTudo): o Supabase corta em 1000 linhas
       lerTudo(() => supabase.from('lancamentos').select('*').eq('ano', ano).order('data').order('created_at').order('id')),
       lerTudo(() => supabase.from('meses').select('*').order('ano').order('mes')),
@@ -94,6 +113,7 @@ export function useDados(userId: string, ano: number) {
       supabase.from('dividas').select('sentido, pessoa, inicio, total_parcelas').limit(1),
       supabase.from('dividas').select('moeda').limit(1),
       lerTudo(() => supabase.from('lancamentos').select('id, conta_fixa_id, descricao, valor').not('conta_fixa_id', 'is', null).neq('ano', ano).order('id')),
+      lancamentosRecentes(ano),
     ])
     // Conta nova: ganha as categorias padrão (definidas no banco, migração 5). Isso precisa acontecer ANTES de qualquer setState:
     // um await no meio fazia o React desenhar o painel de verdade (perfil já lido, "carregando" ainda ligado) e só depois as
@@ -107,6 +127,8 @@ export function useDados(userId: string, ano: number) {
       if (falha) falhaCategorias = falha.message
       else categoriasNovas = novas.data as Categoria[]
     }
+    // se falhar, o conselheiro só fala com o que o ano aberto tem
+    setLancsRecentes(rc.map(normLanc))
     setDividasSemExtras(Boolean(xd.error))
     setDividasSemMoeda(Boolean(xm.error))
     // sem a migração 7 a coluna não existe: o app só não aprende com os outros anos
@@ -468,7 +490,7 @@ export function useDados(userId: string, ano: number) {
     bancos, addBanco, updBanco, delBanco,
     dividasSemExtras,
     dividasSemMoeda,
-    lancs, meses, dividas, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,
+    lancs, lancsRecentes, meses, dividas, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,
     addLanc, addLancs, renomearLancs, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, ajustarValorDivida, moverInicioDivida, salvarMes,
   }
 }

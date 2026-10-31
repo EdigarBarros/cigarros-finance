@@ -8,6 +8,7 @@ import {
 } from '../lib/contasFixas'
 import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
 import { COR } from '../lib/charts'
+import { conselhos as conselhosDe, dispensarPorUmMes } from '../lib/conselheiro'
 import { calendarioDe, fimDoMes, inicioDaDivida, meDevem, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
 import { definirMoedaPrincipal, definirValoresOcultos, fmtDataCurta, fmtValor, MESES_CURTO, MESES_NOME, useValoresOcultos } from '../lib/format'
 import { useCambio } from '../lib/moedas'
@@ -334,6 +335,18 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     [d.lancs, d.categorias, porMesCompleto, perfil.modulos, perfil.moedas, perfil.detalhe, perfil.dispensadas], // eslint-disable-line react-hooks/exhaustive-deps
   )
 
+  // Conselheiro: lê os últimos meses fechados (de qualquer ano) e o mês atual, sem depender do mês que está aberto na tela.
+  const lancsDosConselhos = useMemo(() => {
+    const abertos = new Set(lancsContados.map((l) => l.id))
+    const outros = d.lancsRecentes.filter((l) => !abertos.has(l.id))
+    return [...lancsContados, ...(comFaturas && chaveRenegociadas ? outros.filter(contaNasSaidas(cartoes.faturasPagas)) : outros)]
+  }, [lancsContados, d.lancsRecentes, chaveRenegociadas, comFaturas]) // eslint-disable-line react-hooks/exhaustive-deps
+  const conselhos = useMemo(() => conselhosDe({
+    hoje, lancs: lancsDosConselhos, categorias: d.categorias, categoriaDe: idCategoria, dividas: d.dividas, saldos: d.saldos,
+    pagamentos: d.pagamentos, taxas, meses: d.meses, metas: d.metas, movimentosMeta: d.movimentosMeta, perfil,
+    compras: comFaturas ? cartoes.compras.filter(contaNasSaidas(cartoes.faturasPagas)) : [],
+  }), [lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, d.meses, d.metas, d.movimentosMeta, perfil.modulos, perfil.moedas, perfil.dispensadas, comFaturas, cartoes.compras, chaveRenegociadas]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Pagar (o que você deve) ou receber (o que te devem): o valor sugerido é o atrasado ou a próxima parcela.
   const pagarDivida = (s: SituacaoDivida, valor?: number) => {
     // sem calendário nem parcela fixa, o valor fica em branco: a pessoa paga quanto puder
@@ -478,7 +491,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const faltaDividas = situacao.reduce((a, s) => a + s.restante, 0)
   const atrasoDevo = situacao.reduce((a, s) => a + (calendarioDe(s, diaRef)?.emAtraso ?? 0), 0)
   const atrasoReceber = aReceber.reduce((a, s) => a + (calendarioDe(s, diaRef)?.emAtraso ?? 0), 0)
-  const dicas: Dica[] = [
+  // Primeiro os alertas de hoje (contas, faturas, parcelas atrasadas); depois até 3 conselhos do conselheiro (lib/conselheiro.ts);
+  // as dicas genéricas só aparecem enquanto o conselheiro não tem nada a dizer.
+  const alertas: Dica[] = [
     ...(avisos.length ? [{
       id: 'contas', alerta: true, icone: 'sino', botao: tx('Ver contas'), acao: () => irPara('contas'),
       titulo: avisos.length === 1 ? tx('1 conta pede atenção.') : tx('{0} contas pedem atenção.', avisos.length),
@@ -489,8 +504,6 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         ? tx('A fatura {0} de {1} venceu.', faturasAtrasadas[0].cartao.nome, nomeDaFatura(faturasAtrasadas[0].ano, faturasAtrasadas[0].mes, ano))
         : tx('{0} faturas venceram sem pagar.', faturasAtrasadas.length),
     }] : []),
-    { id: 'lancar', icone: 'mais', botao: tx('Lançar agora'), acao: () => setForm({}), titulo: tx('Lançou o que gastou hoje?') },
-    ...(d.lancs.length < 40 ? [{ id: 'importar', icone: 'relatorio', botao: tx('Importar extrato'), acao: () => setExtrato(true), titulo: tx('Tem um extrato ou planilha? Traga tudo de uma vez.') }] : []),
     ...(v.dividas && atrasoDevo > 0 ? [{
       id: 'dividas-atraso', alerta: true, icone: 'relogio', botao: tx('Ver dívidas'), acao: () => irPara('dividas'),
       titulo: tx('{0} de parcelas atrasadas.', fmtValor(atrasoDevo)),
@@ -499,6 +512,16 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       id: 'receber-atraso', icone: 'receber', botao: tx('Cobrar'), acao: () => irPara('dividas'),
       titulo: tx('Te devem {0} que já venceu.', fmtValor(atrasoReceber)),
     }] : []),
+  ]
+  // "Agora não": o conselho some até o mês que vem (se ainda for verdade, volta).
+  const dispensarConselho = (id: string) => mudarPerfil({ ...perfil, dispensadas: dispensarPorUmMes(perfil.dispensadas, id, hoje) })
+  const dicasDoConselheiro: Dica[] = conselhos.slice(0, 3).map((c) => ({
+    id: c.id, alerta: c.gravidade === 'urgente', icone: c.icone, titulo: c.titulo, botao: c.botao, acao: () => irPara(c.destino),
+    dispensar: () => dispensarConselho(c.id),
+  }))
+  const dicasGenericas: Dica[] = [
+    { id: 'lancar', icone: 'mais', botao: tx('Lançar agora'), acao: () => setForm({}), titulo: tx('Lançou o que gastou hoje?') },
+    ...(d.lancs.length < 40 ? [{ id: 'importar', icone: 'relatorio', botao: tx('Importar extrato'), acao: () => setExtrato(true), titulo: tx('Tem um extrato ou planilha? Traga tudo de uma vez.') }] : []),
     ...(v.dividas && faltaDividas > 0 ? [{
       id: 'dividas', icone: 'divida', botao: tx('Ver dívidas'), acao: () => irPara('dividas'), titulo: tx('Faltam {0} nas dívidas.', fmtValor(faltaDividas)),
     }] : []),
@@ -515,6 +538,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       acao: () => definirTema(tema === 'escuro' ? 'claro' : 'escuro', { x: 130, y: innerHeight - 110 }),
     },
   ]
+  const dicas: Dica[] = [...alertas, ...(dicasDoConselheiro.length ? dicasDoConselheiro : dicasGenericas)]
 
   const menuItens = (
     <>

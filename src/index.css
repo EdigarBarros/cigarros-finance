@@ -2784,6 +2784,12 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .lateral-promo.dicas::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(180deg, transparent 20%, var(--bv) 72%); }
 .dica-cena { position: absolute; inset: 0; z-index: -2; animation: cena-entra 1.2s var(--mola) both; }
 .lateral-promo.dicas .dica-conteudo { flex: none; }
+.lateral .dica-dispensar {
+  position: absolute; top: 10px; right: 10px; z-index: 1; display: grid; place-items: center; width: 28px; height: 28px; padding: 0;
+  border: 0; border-radius: 50%; cursor: pointer; color: var(--bt); background: color-mix(in srgb, var(--bv) 80%, transparent); opacity: .85;
+  transition: opacity .2s;
+}
+.lateral .dica-dispensar:hover, .lateral .dica-dispensar:focus-visible { opacity: 1; background: var(--bv); color: var(--bt); }
 .lateral-promo.dicas strong { color: var(--bt); }
 .lateral-promo.dicas .dica-icone { background: color-mix(in srgb, var(--destaque) 22%, var(--bv)); }
 .lateral .dica-pontos button { background: color-mix(in srgb, var(--bt) 30%, transparent); }

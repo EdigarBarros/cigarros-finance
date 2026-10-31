@@ -309,6 +309,19 @@ linhas são reveladas por uma cortina que corre da esquerda para a direita com a
 Menu lateral: o cartão do pé alterna dicas úteis, cada uma com um botão (contas que pedem atenção, lançar o gasto de hoje,
 quanto falta nas dívidas, metas, personalizar, backup, tema). Troca a cada 7 s, para sob o ponteiro, e os pontinhos escolhem a dica.
 
+Ordem das dicas: primeiro os alertas de hoje (contas, faturas, parcelas atrasadas, te devem); depois até 3 **conselhos** do
+conselheiro financeiro (`lib/conselheiro.ts`); as dicas genéricas (lançar, importar, metas, personalizar, backup, tema) só
+aparecem quando o conselheiro não tem nada a dizer. O conselheiro é um motor de regras puro e determinístico: recebe os dados
+já carregados e devolve `Conselho[]` ordenado por prioridade (id estável, gravidade, ícone, título curto, "porque" com o número,
+página de destino e botão). Regras (limites como constantes no topo do arquivo, são referências de educação financeira, não
+regra rígida): gasta mais do que ganha (urgente), sobra menos de 5% das entradas, parcelas de dívidas acima de 30% das entradas
+(acima de 50% é urgente), dívida maior que há 3 meses, reserva abaixo de 3 meses de gastos, categoria do mês atual mais de 40%
+acima da média, parcelas do cartão no mês que vem acima de 30% das entradas, meta com prazo em ritmo menor que o necessário, e
+o elogio por sobrar mais de 20% nos 3 meses. As regras de fluxo usam a média dos últimos 3 meses **fechados** com entradas e
+saídas lançadas e só falam com pelo menos 2 deles. O "x" do canto dispensa o conselho até o mês que vem (grava
+`id@AAAA-MM` em `perfil.dispensadas`; o `id` puro na lista esconde de vez). Os lançamentos dos meses fechados que caem fora do
+ano aberto vêm de `lancsRecentes` em `useDados`.
+
 ### 4.10 Visual: ícones, bandeiras, paisagens e Configurações
 
 - **Ícones de categoria** (`components/IconeCategoria.tsx`): cada emoji que o app oferece vira um ícone de traço no estilo do

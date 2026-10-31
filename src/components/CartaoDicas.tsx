@@ -14,6 +14,8 @@ export interface Dica {
   acao: () => void
   /** Pede atenção (conta vencida): fica no tom de alerta. */
   alerta?: boolean
+  /** Quando existe, aparece o "x" do canto: a dica some por um tempo (os conselhos do conselheiro usam). */
+  dispensar?: () => void
 }
 
 const INTERVALO = 7000
@@ -41,6 +43,11 @@ export function CartaoDicas({ dicas }: { dicas: Dica[] }) {
       onFocus={() => setParado(true)} onBlur={() => setParado(false)} aria-live="polite">
       {/* cada dica com a sua paisagem, preenchendo o alto do cartão */}
       <div className="dica-cena" key={`cena-${atual.id}`}><Paisagem cena={CENAS[(n ? i % n : 0) % CENAS.length]} /></div>
+      {atual.dispensar && (
+        <button className="dica-dispensar" onClick={atual.dispensar} aria-label={tx('Dispensar por este mês')} title={tx('Dispensar por este mês')}>
+          <Icone nome="fechar" tamanho={14} />
+        </button>
+      )}
       <div className="dica-conteudo" key={atual.id}>
         <span className="dica-icone"><Icone nome={atual.icone} tamanho={18} /></span>
         <strong>{atual.titulo}</strong>
