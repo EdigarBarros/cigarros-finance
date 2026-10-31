@@ -1655,7 +1655,7 @@ button.ex-tipo:hover { transform: scale(1.1); }
 /* modelos de meta: vitrines com uma cena 3D que inclina com o mouse e ganha vida no hover */
 .mt-modelos { display: grid; grid-template-columns: repeat(auto-fit, minmax(146px, 1fr)); gap: 12px; width: 100%; margin-top: 10px; }
 .mt-modelo {
-  --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 30%;
+  --rx: 0deg; --ry: 0deg;
   position: relative; display: grid; grid-template-rows: auto 1fr; justify-items: center; gap: 8px; padding: 14px 10px 16px;
   border-radius: 22px; border: 1px solid var(--borda); color: inherit; text-align: center; overflow: hidden; isolation: isolate;
   background:
@@ -1678,7 +1678,13 @@ button.ex-tipo:hover { transform: scale(1.1); }
   background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 45%, transparent), transparent); filter: blur(8px);
   opacity: .55; transition: opacity .4s, transform .5s var(--mola);
 }
-.mt-modelo:hover .mt-modelo-luz { opacity: .95; transform: scale(1.12); }
+.mt-modelo:hover .mt-modelo-luz, .mt-modelo:focus-visible .mt-modelo-luz { opacity: 1; transform: scale(1.3); filter: blur(12px); }
+.mt-modelo::before {
+  /* no hover, a luz da cena tinge o cartão na cor da meta */
+  content: ''; position: absolute; inset: 0; z-index: -1; opacity: 0; transition: opacity .45s;
+  background: radial-gradient(80% 65% at 50% 45%, color-mix(in srgb, var(--c) 22%, transparent), transparent 75%);
+}
+.mt-modelo:hover::before, .mt-modelo:focus-visible::before { opacity: 1; }
 .mt-modelo-palco .cn { position: relative; display: block; width: 100%; height: 100%; transform: translateZ(34px); }
 .mt-modelo-texto { display: grid; align-content: start; justify-items: center; gap: 6px; }
 .mt-modelo-texto strong { font-size: 15.5px; font-weight: 700; letter-spacing: -.015em; line-height: 1.2; text-wrap: balance; }
@@ -1687,11 +1693,6 @@ button.ex-tipo:hover { transform: scale(1.1); }
   color: color-mix(in srgb, var(--c) 80%, var(--texto)); background: color-mix(in srgb, var(--c) 17%, transparent);
   border: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
 }
-.mt-modelo-reflexo {
-  position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0; mix-blend-mode: soft-light; transition: opacity .4s;
-  background: radial-gradient(45% 55% at var(--mx) var(--my), rgba(255, 255, 255, .7), transparent 70%);
-}
-.mt-modelo:hover .mt-modelo-reflexo { opacity: 1; }
 
 /* as cenas: tons da cor da meta, como os potes */
 .cn { overflow: visible; }
