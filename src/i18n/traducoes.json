@@ -6094,5 +6094,25 @@
   "pagamentos": {
     "en": "payments",
     "es": "pagos"
+  },
+  "Ver o gráfico em": {
+    "en": "Show the chart in",
+    "es": "Ver el gráfico en"
+  },
+  "Guardado em {0}": {
+    "en": "Saved in {0}",
+    "es": "Guardado en {0}"
+  },
+  "Dívidas em {0}": {
+    "en": "Debts in {0}",
+    "es": "Deudas en {0}"
+  },
+  "Valores em {0}, como você lançou: sem conversão. Entrou, Saiu e Dívidas só desta moeda.": {
+    "en": "Amounts in {0}, as you entered them: no conversion. Income, expenses and debts for this currency only.",
+    "es": "Valores en {0}, como los registraste: sin conversión. Entró, Salió y Deudas solo de esta moneda."
+  },
+  "As dívidas em outras moedas entram aqui pela cotação de hoje. Para ver os valores exatos, escolha a moeda acima.": {
+    "en": "Debts in other currencies are shown here at today's exchange rate. To see exact amounts, pick the currency above.",
+    "es": "Las deudas en otras monedas entran aquí por la cotización de hoy. Para ver los valores exactos, elige la moneda arriba."
   }
 }

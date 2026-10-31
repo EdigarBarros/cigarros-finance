@@ -66,6 +66,13 @@ export function mesEfetivo(meses: Mes[], ano: number, mes: number, hoje = new Da
 /** id da categoria de um lançamento ('' = sem categoria). */
 export type CategoriaDoLanc = (l: Lancamento) => string
 
+/** Soma, por moeda, o valor original dos lançamentos feitos em outra moeda (o que a pessoa de fato digitou). */
+const nativoPorMoeda = (ls: Lancamento[]) => {
+  const r: Record<string, number> = {}
+  for (const l of ls) if (l.moeda_original && l.valor_original) r[l.moeda_original] = Math.round(((r[l.moeda_original] ?? 0) + l.valor_original) * 100) / 100
+  return r
+}
+
 export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: Mes | undefined, taxas: Taxas, categoriaDo: CategoriaDoLanc) {
   const entradas = soma(lancs.filter((l) => l.tipo === 'entrada').map((l) => l.valor))
   const saidasLista = lancs.filter((l) => l.tipo === 'saida')
@@ -82,6 +89,13 @@ export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: M
     fluxo: entradas - saidas,
     caixa: totalCaixa(mes),
     divida: soma(dividas.map((d) => d.restante)),
+    /** Em outra moeda, no valor que a pessoa digitou (sem conversão): entradas, saídas e dívidas de cada moeda. */
+    entradasMoeda: nativoPorMoeda(lancs.filter((l) => l.tipo === 'entrada')),
+    saidasMoeda: nativoPorMoeda(saidasLista),
+    dividaMoeda: dividas.reduce<Record<string, number>>((r, d) => {
+      if (d.moeda && d.restante > 0) r[d.moeda] = Math.round(((r[d.moeda] ?? 0) + d.restante / d.taxa) * 100) / 100
+      return r
+    }, {}),
     /** De onde veio a variação das dívidas no mês: nasceram, foram pagas, aumentaram (empréstimo) ou foram ajustadas (juros, acordo). */
     dividaNovas: soma(dividas.map((d) => d.novaNoMes)),
     dividaPagos: soma(dividas.map((d) => d.pagoNoMes)),
