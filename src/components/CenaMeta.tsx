@@ -240,11 +240,9 @@ export function CartaoModelo({ cor, icone, nome, dica, selo, indice, largo, aoEs
     const y = (e.clientY - r.top) / r.height
     el.style.setProperty('--ry', `${(x - 0.5) * 22}deg`)
     el.style.setProperty('--rx', `${(0.5 - y) * 16}deg`)
-    el.style.setProperty('--mx', `${x * 100}%`)
-    el.style.setProperty('--my', `${y * 100}%`)
   }
   const soltar = () => {
-    for (const p of ['--rx', '--ry', '--mx', '--my']) ref.current?.style.removeProperty(p)
+    for (const p of ['--rx', '--ry']) ref.current?.style.removeProperty(p)
   }
   return (
     <button ref={ref} type="button" className={`mt-modelo ${largo ? 'largo' : ''}`} title={dica} aria-label={`${nome}: ${dica}`}
@@ -258,7 +256,6 @@ export function CartaoModelo({ cor, icone, nome, dica, selo, indice, largo, aoEs
         <strong>{nome}</strong>
         {selo && <span className="mt-modelo-selo">{selo}</span>}
       </span>
-      <span className="mt-modelo-reflexo" aria-hidden="true" />
     </button>
   )
 }
