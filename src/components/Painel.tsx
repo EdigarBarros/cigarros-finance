@@ -344,8 +344,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const conselhos = useMemo(() => conselhosDe({
     hoje, lancs: lancsDosConselhos, categorias: d.categorias, categoriaDe: idCategoria, dividas: d.dividas, saldos: d.saldos,
     pagamentos: d.pagamentos, taxas, meses: d.meses, metas: d.metas, movimentosMeta: d.movimentosMeta, perfil,
+    dividasSemJuros: d.dividasSemJuros,
     compras: comFaturas ? cartoes.compras.filter(contaNasSaidas(cartoes.faturasPagas)) : [],
-  }), [lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, d.meses, d.metas, d.movimentosMeta, perfil.modulos, perfil.moedas, perfil.dispensadas, comFaturas, cartoes.compras, chaveRenegociadas]) // eslint-disable-line react-hooks/exhaustive-deps
+  }), [lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, d.meses, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.dispensadas, comFaturas, cartoes.compras, chaveRenegociadas]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Pagar (o que você deve) ou receber (o que te devem): o valor sugerido é o atrasado ou a próxima parcela.
   const pagarDivida = (s: SituacaoDivida, valor?: number) => {

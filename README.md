@@ -77,7 +77,9 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   sugestão de descrição e categoria automática pelo histórico (digitou "iFood", já vem Alimentação)
 - **Dívidas interligadas**: cada dívida existe ao longo dos meses. Ao lançar uma saída de dívida, você escolhe
   qual dívida ela abate (ou o app reconhece pela descrição) e o saldo cai sozinho em todos os meses seguintes.
-  Com a parcela definida, o app prevê quando a dívida acaba. Juros ou acordo? Basta informar o saldo novo
+  Com a parcela definida, o app prevê quando a dívida acaba. Juros ou acordo? Basta informar o saldo novo.
+  Se você informar os **juros por mês** de cada dívida (opcional, [migração 19](supabase/migracao-19-juros-das-dividas.sql)), o
+  conselheiro do menu diz qual dívida pagar primeiro (a que cobra mais) e avisa quando os juros são muito altos
 - **Bancos**: cadastre os seus (Nubank, Itaú, Next, PicPay, dinheiro vivo…). O banco de cada entrada/saída é
   **opcional** — o app reconhece "(Next)" na descrição e lembra o banco que você usa para cada coisa. Tela de bancos
   com saldo guardado e movimento do mês de cada um, detalhe individual e bloco "Por banco" na visão geral.
@@ -107,9 +109,9 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
 **Netlify:** <https://app.netlify.com/start> → importe este repositório (o `netlify.toml` já configura o build) → *Site configuration → Environment variables* → adicione as duas variáveis → **Deploy**.
 
 > **Já tinha o banco criado antes?** Rode também as migrações que faltarem, em ordem, no SQL Editor (de
-> [`migracao-02`](supabase/migracao-02-dividas-interligadas.sql) até a [`migracao-16`](supabase/migracao-16-acesso-teste-e-erros.sql)).
+> [`migracao-02`](supabase/migracao-02-dividas-interligadas.sql) até a [`migracao-19`](supabase/migracao-19-juros-das-dividas.sql)).
 > Todas só acrescentam, não apagam nada. A 12 (assinaturas) e a 13 (bloqueio no banco) só servem se você cobra assinatura; a 16 acrescenta
-> carência no cartão recusado, teste grátis por cartão e o registro de erros.
+> carência no cartão recusado, teste grátis por cartão e o registro de erros; a 19 acrescenta os juros por mês das dívidas (opcional).
 
 ### 2b. Cobrança (Stripe) e contas de cortesia
 

@@ -13,7 +13,10 @@ const num = (v: unknown) => Number(v ?? 0)
 const normLanc = (r: Lancamento): Lancamento => ({
   ...r, valor: num(r.valor), valor_original: r.valor_original == null ? null : num(r.valor_original),
 })
-const normDiv = (r: Divida): Divida => ({ ...r, valor_parcela: r.valor_parcela == null ? null : num(r.valor_parcela) })
+const normDiv = (r: Divida): Divida => ({
+  ...r, valor_parcela: r.valor_parcela == null ? null : num(r.valor_parcela),
+  ...('juros_mes' in r ? { juros_mes: r.juros_mes == null ? null : num(r.juros_mes) } : {}),
+})
 const normSaldo = (r: SaldoDivida): SaldoDivida => ({ ...r, saldo: num(r.saldo) })
 const normMeta = (r: Meta): Meta => ({ ...r, alvo: num(r.alvo) })
 const normMovMeta = (r: MovimentoMeta): MovimentoMeta => ({ ...r, valor: num(r.valor) })
@@ -44,7 +47,9 @@ const semExtrasDivida = <T extends object>(o: T) =>
   Object.fromEntries(Object.entries(o).filter(([k]) => !(EXTRAS_DIVIDA as readonly string[]).includes(k))) as Partial<T>
 /** Sem a migração 14 a coluna `moeda` não existe. */
 const semMoedaDivida = <T extends object>(o: T) => { const { moeda: _m, ...resto } = o as T & { moeda?: unknown }; return resto as T }
-export type NovaDivida = Pick<Divida, 'descricao' | 'valor_parcela'> & Partial<Pick<Divida, (typeof EXTRAS_DIVIDA)[number] | 'moeda'>>
+/** Sem a migração 19 a coluna `juros_mes` não existe. */
+const semJurosDivida = <T extends object>(o: T) => { const { juros_mes: _j, ...resto } = o as T & { juros_mes?: unknown }; return resto as T }
+export type NovaDivida = Pick<Divida, 'descricao' | 'valor_parcela'> & Partial<Pick<Divida, (typeof EXTRAS_DIVIDA)[number] | 'moeda' | 'juros_mes'>>
 
 /**
  * Lançamentos dos meses que o conselheiro lê (3 fechados + o atual) que caem fora do ano aberto: no começo do ano, os
@@ -89,6 +94,8 @@ export function useDados(userId: string, ano: number) {
   const [dividasSemExtras, setDividasSemExtras] = useState(false)
   /** Sem a migração 14: dívidas só na moeda principal. */
   const [dividasSemMoeda, setDividasSemMoeda] = useState(false)
+  /** Sem a migração 19: dívidas sem os juros por mês (o campo some e os conselhos de juros ficam calados). */
+  const [dividasSemJuros, setDividasSemJuros] = useState(false)
   /** Lançamentos de outros anos ligados a uma conta do mês: ensinam ao app como cada conta aparece no extrato. */
   const [vinculosOutrosAnos, setVinculosOutrosAnos] = useState<Pick<Lancamento, 'id' | 'conta_fixa_id' | 'descricao' | 'valor'>[]>([])
   /** Lançamentos de outros anos que o conselheiro lê (os 3 meses fechados e o atual), quando o ano aberto não cobre todos. */
@@ -98,7 +105,7 @@ export function useDados(userId: string, ano: number) {
 
   const recarregar = useCallback(async () => {
     setCarregando(true)
-    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, vc, rc] = await Promise.all([
+    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, xj, vc, rc] = await Promise.all([
       // as tabelas que crescem sem parar são lidas em páginas (lerTudo): o Supabase corta em 1000 linhas
       lerTudo(() => supabase.from('lancamentos').select('*').eq('ano', ano).order('data').order('created_at').order('id')),
       lerTudo(() => supabase.from('meses').select('*').order('ano').order('mes')),
@@ -112,6 +119,7 @@ export function useDados(userId: string, ano: number) {
       lerTudo(() => supabase.from('meta_movimentos').select('*').order('data').order('id')),
       supabase.from('dividas').select('sentido, pessoa, inicio, total_parcelas').limit(1),
       supabase.from('dividas').select('moeda').limit(1),
+      supabase.from('dividas').select('juros_mes').limit(1),
       lerTudo(() => supabase.from('lancamentos').select('id, conta_fixa_id, descricao, valor').not('conta_fixa_id', 'is', null).neq('ano', ano).order('id')),
       lancamentosRecentes(ano),
     ])
@@ -131,6 +139,7 @@ export function useDados(userId: string, ano: number) {
     setLancsRecentes(rc.map(normLanc))
     setDividasSemExtras(Boolean(xd.error))
     setDividasSemMoeda(Boolean(xm.error))
+    setDividasSemJuros(Boolean(xj.error))
     // sem a migração 7 a coluna não existe: o app só não aprende com os outros anos
     setVinculosOutrosAnos(vc.error ? [] : (vc.data as Pick<Lancamento, 'id' | 'conta_fixa_id' | 'descricao' | 'valor'>[]).map((x) => ({ ...x, valor: num(x.valor) })))
     const e = l.error ?? m.error ?? d.error ?? s.error ?? p.error ?? b.error
@@ -210,6 +219,9 @@ export function useDados(userId: string, ano: number) {
     return r
   }
   const semMoedaSeFalta = <T extends object>(o: T) => (dividasSemMoeda ? semMoedaDivida(o) : o)
+  const semJurosSeFalta = <T extends object>(o: T) => (dividasSemJuros ? semJurosDivida(o) : o)
+  /** Tira da dívida o que o banco ainda não tem (migrações 10, 14 e 19 pendentes) antes de gravar. */
+  const paraBancoDivida = <T extends object>(o: T) => semJurosSeFalta(semMoedaSeFalta(dividasSemExtras ? semExtrasDivida(o) : o))
   const addLanc = async (novo: Omit<Lancamento, 'id'>): Promise<Lancamento | undefined> => {
     const { data, error } = await gravar(() => supabase.from('lancamentos').insert(paraBanco(novo)).select().single())
     if (error) {
@@ -270,7 +282,7 @@ export function useDados(userId: string, ano: number) {
   }): Promise<Divida | undefined> => {
     const { saldo: _s, data: _d, marcoInicial: _m, ...campos } = d
     const { data, error } = await supabase
-      .from('dividas').insert(semMoedaSeFalta(dividasSemExtras ? semExtrasDivida(campos) : campos)).select().single()
+      .from('dividas').insert(paraBancoDivida(campos)).select().single()
     if (error) {
       falhou(error.message)
       return
@@ -283,7 +295,7 @@ export function useDados(userId: string, ano: number) {
   }
   const updDivida = async (id: string, patch: Partial<Divida>) => {
     setDividas((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
-    const { error } = await supabase.from('dividas').update(semMoedaSeFalta(dividasSemExtras ? semExtrasDivida(patch) : patch)).eq('id', id)
+    const { error } = await supabase.from('dividas').update(paraBancoDivida(patch)).eq('id', id)
     if (error) falhou(error.message)
   }
   const delDivida = async (id: string) => {
@@ -490,6 +502,7 @@ export function useDados(userId: string, ano: number) {
     bancos, addBanco, updBanco, delBanco,
     dividasSemExtras,
     dividasSemMoeda,
+    dividasSemJuros,
     lancs, lancsRecentes, meses, dividas, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,
     addLanc, addLancs, renomearLancs, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, ajustarValorDivida, moverInicioDivida, salvarMes,
   }

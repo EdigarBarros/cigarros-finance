@@ -317,7 +317,14 @@ página de destino e botão). Regras (limites como constantes no topo do arquivo
 regra rígida): gasta mais do que ganha (urgente), sobra menos de 5% das entradas, parcelas de dívidas acima de 30% das entradas
 (acima de 50% é urgente), dívida maior que há 3 meses, reserva abaixo de 3 meses de gastos, categoria do mês atual mais de 40%
 acima da média, parcelas do cartão no mês que vem acima de 30% das entradas, meta com prazo em ritmo menor que o necessário, e
-o elogio por sobrar mais de 20% nos 3 meses. As regras de fluxo usam a média dos últimos 3 meses **fechados** com entradas e
+o elogio por sobrar mais de 20% nos 3 meses. Três regras usam os **juros por mês** de cada dívida (`dividas.juros_mes`, migração 19,
+campo opcional "Juros por mês (%)" no formulário da dívida, só em "Eu devo"; olham só dívidas que a pessoa deve e que ainda têm
+saldo): `juros-altos:<dívida>` (urgente, prioridade 92: a pior dívida cobra 8% ao mês ou mais, `JUROS_ALTOS_MES`; mostra o
+equivalente ao ano), `pagar-a-mais-cara` (atenção, 80, logo abaixo de "gasta mais do que ganha" e acima das outras regras de
+atenção: com juros informados em 2 ou mais dívidas, a de maior juros cobra pelo menos 0,5 ponto a mais que a segunda,
+`JUROS_DIFERENCA_MIN`; aconselha adiantar primeiro essa) e `informe-juros` (atenção, 20, só acima do elogio: há dívida em aberto e
+nenhuma tem juros informados; some assim que uma tiver). Sem a migração 19, `dividasSemJuros` (de `useDados`) esconde o campo,
+silencia o convite e as gravações vão sem a coluna. Equivalente ao ano = juros compostos, `(1 + i)^12 − 1` (`jurosAoAno`). As regras de fluxo usam a média dos últimos 3 meses **fechados** com entradas e
 saídas lançadas e só falam com pelo menos 2 deles. O "x" do canto dispensa o conselho até o mês que vem (grava
 `id@AAAA-MM` em `perfil.dispensadas`; o `id` puro na lista esconde de vez). Os lançamentos dos meses fechados que caem fora do
 ano aberto vêm de `lancsRecentes` em `useDados`.
@@ -390,6 +397,11 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
   venceu); tocar nela abre a página Dívidas já em "Me devem" (`pedirLadoDividas`).
 - **Sem a migração 10** (`supabase/migracao-10-dividas-e-a-receber.sql`) a página funciona só com "Eu devo", sem pessoa e
   sem calendário, e mostra o aviso.
+- **Juros por mês** (opcional, só "Eu devo"): o formulário pergunta "Juros por mês (%)" com uma ajuda leiga e mostra o
+  equivalente ao ano ("2,5% ao mês ≈ 34% ao ano"); aceita vírgula. O cartão e a ficha mostram a taxa discretamente ao lado do
+  banco ("Banco Itaú · parcela 10 de 48 · 1,8% ao mês"). Os conselhos que usam isso estão na seção do menu lateral. Sem a
+  migração 19 (`supabase/migracao-19-juros-das-dividas.sql`) o campo some e nada mais muda. O `FormDivida` só mostra o campo
+  quando recebe `semJuros={c.d.dividasSemJuros}`.
 - A renegociação de fatura do cartão cria a dívida já com o banco, o total de parcelas e o vencimento da 1ª parcela.
 
 ### 4.14 Metas (potes)

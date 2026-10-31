@@ -20,8 +20,8 @@
  */
 import { caixaDoBanco, mesEfetivo } from './calc'
 import { doMesChave, chaveMes, hojeLocal } from './cartoes'
-import { aumentaDivida, meDevem, situacaoDividas } from './dividas'
-import { fmtMesAno, fmtMoeda, fmtValor, LOCAL_DAS_DATAS, MESES_NOME, noMeioDaFrase } from './format'
+import { aumentaDivida, jurosAoAno, meDevem, situacaoDividas } from './dividas'
+import { fmtMesAno, fmtMoeda, fmtTaxa, fmtTaxaAno, fmtValor, LOCAL_DAS_DATAS, MESES_NOME, noMeioDaFrase } from './format'
 import type { Taxas } from './moedas'
 import { situacaoMeta } from './metas'
 import { visao } from './perfil'
@@ -62,6 +62,10 @@ export const META_TOLERANCIA = 0.9
 export const META_DIAS_DE_CARENCIA = 30
 /** Sobrou mais que isto das entradas em cada um dos 3 meses: elogio. */
 export const ELOGIO_SOBRA = 0.2
+/** Juros por mês a partir dos quais a dívida é "muito alta" (a faixa do rotativo do cartão e do cheque especial no Brasil). */
+export const JUROS_ALTOS_MES = 8
+/** "A mais cara" só vale se cobrar pelo menos tantos pontos de juros por mês a mais que a segunda (evita 2,0% contra 1,9%). */
+export const JUROS_DIFERENCA_MIN = 0.5
 
 // ---------- tipos ----------
 
@@ -111,6 +115,8 @@ export interface EntradaConselheiro {
   movimentosMeta: MovimentoMeta[]
   /** Dá os módulos ligados (`visao`) e a lista de `dispensadas`. */
   perfil: Perfil
+  /** Migração 19 pendente (a tabela de dívidas não tem `juros_mes`): o convite para informar os juros fica calado. */
+  dividasSemJuros?: boolean
 }
 
 // ---------- apoio ----------
@@ -254,6 +260,45 @@ export function conselhos(e: EntradaConselheiro): Conselho[] {
           MESES_DA_DIVIDA, fmtValor(totalAntes), fmtValor(totalHoje), fmtValor(centavos(totalHoje - totalAntes))),
       })
     }
+  }
+
+  // 4b. Juros das dívidas (só as que a pessoa deve e ainda têm saldo; a taxa é opcional e vem de `juros_mes`).
+  //     juros-altos (urgente, 92): fica entre "gasta mais do que ganha" (100) e as parcelas acima de 50% (90), porque juros de 8% ao mês
+  //       ou mais dobram a dívida em menos de um ano. Fala só da pior.
+  //     pagar-a-mais-cara (atenção, 80): o melhor conselho de educação financeira, abaixo só do que é urgente e acima de "sobra pouco" (75)
+  //       e das outras regras de atenção. Precisa de 2 dívidas com juros informados e de uma folga clara da primeira sobre a segunda.
+  //     informe-juros (atenção, 20): convite leve, acima só do elogio (10); some assim que uma dívida tiver juros informados.
+  const abertas = dividasHoje.filter((s) => s.restante > 0)
+  const porJuros = abertas
+    .filter((s) => typeof s.divida.juros_mes === 'number' && s.divida.juros_mes >= 0)
+    .sort((a, b) => b.divida.juros_mes! - a.divida.juros_mes! || a.divida.id.localeCompare(b.divida.id))
+  const maisCara = porJuros[0]
+  if (maisCara && maisCara.divida.juros_mes! >= JUROS_ALTOS_MES) {
+    const j = maisCara.divida.juros_mes!
+    nova({
+      id: `juros-altos:${maisCara.divida.id}`, gravidade: 'urgente', prioridade: 92, icone: 'divida', destino: 'dividas', botao: tx('Ver dívidas'),
+      titulo: tx('{0} cobra juros muito altos.', maisCara.divida.descricao),
+      porque: tx('{0}% ao mês viram cerca de {1}% ao ano. Vale tentar negociar com quem você deve ou trocar por uma dívida mais barata.',
+        fmtTaxa(j), fmtTaxaAno(jurosAoAno(j))),
+    })
+  }
+  const segunda = porJuros[1]
+  if (maisCara && segunda && maisCara.divida.juros_mes! - segunda.divida.juros_mes! >= JUROS_DIFERENCA_MIN) {
+    nova({
+      id: 'pagar-a-mais-cara', gravidade: 'atencao', prioridade: 80, icone: 'divida', destino: 'dividas', botao: tx('Ver dívidas'),
+      titulo: tx('Se sobrar dinheiro, adiante primeiro {0}.', maisCara.divida.descricao),
+      porque: tx('Ela cobra {0}% ao mês, a mais cara das suas dívidas (a próxima cobra {1}%). Dinheiro pago nela evita mais juros do que o mesmo valor pago nas outras.',
+        fmtTaxa(maisCara.divida.juros_mes!), fmtTaxa(segunda.divida.juros_mes!)),
+    })
+  }
+  if (!e.dividasSemJuros && abertas.length > 0 && porJuros.length === 0) {
+    nova({
+      id: 'informe-juros', gravidade: 'atencao', prioridade: 20, icone: 'divida', destino: 'dividas', botao: tx('Informar os juros'),
+      titulo: abertas.length === 1 ? tx('Quanto de juros a sua dívida cobra?') : tx('Quanto de juros as suas dívidas cobram?'),
+      porque: abertas.length === 1
+        ? tx('Com essa informação, o app avisa se ela está cobrando caro.')
+        : tx('Com essa informação, o app mostra qual dívida pagar primeiro.'),
+    })
   }
 
   // 5. Sem reserva: dinheiro guardado nos bancos contra o gasto médio por mês (só com saldo de banco preenchido)

@@ -82,8 +82,8 @@ baixa(contas_fixas[2].id,'Conta de luz',11,'saida',173.4,'Moradia')
 baixa(contas_fixas[6].id,'Condomínio',17,'saida',420,'Moradia')
 // dívidas
 const dividas=[
- {id:id('d',1),user_id:U,descricao:'Financiamento do carro',valor_parcela:1250,sentido:'devo',pessoa:'Banco Itaú',inicio:'2026-01-10',total_parcelas:48,moeda:null,created_at:'2026-01-01T00:00:00Z'},
- {id:id('d',2),user_id:U,descricao:'Empréstimo pessoal',valor_parcela:480,sentido:'devo',pessoa:'Nubank',inicio:'2026-01-15',total_parcelas:18,moeda:null,created_at:'2026-01-02T00:00:00Z'},
+ {id:id('d',1),user_id:U,descricao:'Financiamento do carro',valor_parcela:1250,sentido:'devo',pessoa:'Banco Itaú',inicio:'2026-01-10',total_parcelas:48,moeda:null,juros_mes:1.8,created_at:'2026-01-01T00:00:00Z'},
+ {id:id('d',2),user_id:U,descricao:'Empréstimo pessoal',valor_parcela:480,sentido:'devo',pessoa:'Nubank',inicio:'2026-01-15',total_parcelas:18,moeda:null,juros_mes:4.2,created_at:'2026-01-02T00:00:00Z'},
  {id:id('d',3),user_id:U,descricao:'Empréstimo ao Rafa',valor_parcela:300,sentido:'me_devem',pessoa:'Rafael',inicio:'2026-09-20',total_parcelas:6,moeda:null,created_at:'2026-01-03T00:00:00Z'}]
 const divida_saldos=[
  {id:id('s',1),user_id:U,divida_id:id('d',1),data:'2026-01-02',saldo:61250},

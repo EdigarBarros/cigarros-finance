@@ -204,6 +204,9 @@ export const tomarLadoDividas = () => {
 
 export const sentidoDe = (d: Divida) => d.sentido ?? 'devo'
 export const meDevem = (d: Divida) => sentidoDe(d) === 'me_devem'
+
+/** Juros de um mês viram quanto no ano (juros compostos): 2,5% ao mês dão cerca de 34,5% ao ano. */
+export const jurosAoAno = (jurosMes: number) => (Math.pow(1 + jurosMes / 100, 12) - 1) * 100
 /** O lançamento é dinheiro emprestado a mais (e não pagamento nem recebimento)? */
 export const ehEmprestimo = (l: { tipo: Pagamento['tipo']; divida_id?: string | null }, dividas: Divida[]) => {
   const d = l.divida_id ? dividas.find((x) => x.id === l.divida_id) : undefined

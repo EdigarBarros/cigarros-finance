@@ -6234,5 +6234,65 @@
   "Para chegar em {0}, o ideal é guardar {1} por mês. Hoje você guarda cerca de {2} por mês.": {
     "en": "To get there by {0}, the ideal is to save {1} a month. Right now you save about {2} a month.",
     "es": "Para llegar en {0}, lo ideal es ahorrar {1} al mes. Hoy ahorras cerca de {2} al mes."
+  },
+  "Digite os juros por mês de 0 a 100 (ex.: 2,5), ou deixe em branco se não souber.": {
+    "en": "Enter the monthly interest from 0 to 100 (e.g. 2.5), or leave it blank if you don't know.",
+    "es": "Escribe el interés mensual de 0 a 100 (ej.: 2,5), o déjalo en blanco si no lo sabes."
+  },
+  "Juros por mês (%)": {
+    "en": "Interest per month (%)",
+    "es": "Interés por mes (%)"
+  },
+  "Ex.: 2,5": {
+    "en": "E.g. 2.5",
+    "es": "Ej.: 2,5"
+  },
+  "Quanto a dívida cresce por mês. Está no contrato ou na fatura (procure por \"juros ao mês\" ou \"a.m.\"). Se não souber, deixe em branco.": {
+    "en": "How much the debt grows each month. It is in the contract or on the statement (look for \"monthly interest\" or \"per month\"). If you don't know, leave it blank.",
+    "es": "Cuánto crece la deuda cada mes. Está en el contrato o en el estado de cuenta (busca \"interés mensual\" o \"al mes\"). Si no lo sabes, déjalo en blanco."
+  },
+  "{0}% ao mês ≈ {1}% ao ano": {
+    "en": "{0}% a month ≈ {1}% a year",
+    "es": "{0}% al mes ≈ {1}% al año"
+  },
+  "{0}% ao mês": {
+    "en": "{0}% a month",
+    "es": "{0}% al mes"
+  },
+  "{0} cobra juros muito altos.": {
+    "en": "{0} charges very high interest.",
+    "es": "{0} cobra intereses muy altos."
+  },
+  "{0}% ao mês viram cerca de {1}% ao ano. Vale tentar negociar com quem você deve ou trocar por uma dívida mais barata.": {
+    "en": "{0}% a month adds up to about {1}% a year. It is worth trying to negotiate with whoever you owe, or to swap it for a cheaper debt.",
+    "es": "{0}% al mes se convierte en cerca de {1}% al año. Vale la pena intentar negociar con quien le debes o cambiarla por una deuda más barata."
+  },
+  "Se sobrar dinheiro, adiante primeiro {0}.": {
+    "en": "If you have money left over, pay ahead on {0} first.",
+    "es": "Si te sobra dinero, adelanta primero {0}."
+  },
+  "Ela cobra {0}% ao mês, a mais cara das suas dívidas (a próxima cobra {1}%). Dinheiro pago nela evita mais juros do que o mesmo valor pago nas outras.": {
+    "en": "It charges {0}% a month, the most expensive of your debts (the next one charges {1}%). Money paid on it saves more interest than the same amount paid on the others.",
+    "es": "Cobra {0}% al mes, la más cara de tus deudas (la siguiente cobra {1}%). El dinero que pagas en ella evita más intereses que el mismo valor pagado en las otras."
+  },
+  "Informar os juros": {
+    "en": "Add the interest",
+    "es": "Informar los intereses"
+  },
+  "Quanto de juros a sua dívida cobra?": {
+    "en": "How much interest does your debt charge?",
+    "es": "¿Cuánto interés cobra tu deuda?"
+  },
+  "Quanto de juros as suas dívidas cobram?": {
+    "en": "How much interest do your debts charge?",
+    "es": "¿Cuánto interés cobran tus deudas?"
+  },
+  "Com essa informação, o app avisa se ela está cobrando caro.": {
+    "en": "With this information, the app tells you if it is charging too much.",
+    "es": "Con esta información, la app te avisa si está cobrando caro."
+  },
+  "Com essa informação, o app mostra qual dívida pagar primeiro.": {
+    "en": "With this information, the app shows which debt to pay first.",
+    "es": "Con esta información, la app te muestra qué deuda pagar primero."
   }
 }

@@ -72,6 +72,17 @@ create index if not exists divida_saldos_divida on public.divida_saldos (divida_
 alter table public.lancamentos add column if not exists divida_id uuid references public.dividas on delete set null;
 create index if not exists lancamentos_divida on public.lancamentos (divida_id) where divida_id is not null;
 
+-- Juros da dívida em % ao mês (2.5 = 2,5% ao mês); null = a pessoa não informou. Migração 19.
+alter table public.dividas add column if not exists juros_mes numeric;
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'dividas_juros_mes_entre_0_e_100') then
+    alter table public.dividas
+      add constraint dividas_juros_mes_entre_0_e_100 check (juros_mes is null or (juros_mes >= 0 and juros_mes <= 100));
+  end if;
+end $$;
+comment on column public.dividas.juros_mes is 'Juros da dívida em % ao mês (2.5 = 2,5% ao mês); null = não informado.';
+
 -- Lançamento feito em outra moeda: o valor original fica guardado; "valor" segue na moeda principal.
 alter table public.lancamentos add column if not exists valor_original numeric(14, 2);
 alter table public.lancamentos add column if not exists moeda_original text;
