@@ -360,13 +360,13 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
 
   // Editar uma parcela pode mudá-la de ano; as compras de outros anos só são lidas de novo ao recarregar.
   // Ligou o lançamento a uma conta do mês? Em seguida o app pergunta pelos parecidos dos outros meses.
-  /** Dívida de um empréstimo recebido: nasce zerada na véspera da entrada, que então soma o valor emprestado. */
-  const criarEmprestimo = ({ quem, data }: { quem: string; data: string }) => {
+  /** Dívida de um empréstimo (recebido ou feito): nasce zerada na véspera do lançamento, que então soma o valor emprestado. */
+  const criarEmprestimo = ({ quem, data, sentido }: { quem: string; data: string; sentido: 'devo' | 'me_devem' }) => {
     const vespera = new Date(`${data}T12:00:00`)
     vespera.setDate(vespera.getDate() - 1)
     const pad = (n: number) => String(n).padStart(2, '0')
     return d.addDivida({
-      descricao: tx('Empréstimo do {0}', quem), pessoa: quem, sentido: 'devo', valor_parcela: null, inicio: null,
+      descricao: sentido === 'devo' ? tx('Empréstimo do {0}', quem) : tx('Empréstimo para {0}', quem), pessoa: quem, sentido, valor_parcela: null, inicio: null,
       saldo: 0, data: `${vespera.getFullYear()}-${pad(vespera.getMonth() + 1)}-${pad(vespera.getDate())}`,
     })
   }

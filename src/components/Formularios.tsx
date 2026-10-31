@@ -46,7 +46,7 @@ interface FormLancProps {
   aoNovoBanco: (nome: string, cor: string) => Promise<Banco | undefined>
   aoSalvar: (l: NovoLanc, id?: string) => void
   /** Cria a dívida de um empréstimo recebido ("quem emprestou") e devolve ela, para ligar à entrada. */
-  aoNovaDivida?: (d: { quem: string; data: string }) => Promise<Divida | undefined>
+  aoNovaDivida?: (d: { quem: string; data: string; sentido: 'devo' | 'me_devem' }) => Promise<Divida | undefined>
   aoExcluir?: (id: string) => void
   /** Cartões de crédito (só com o módulo ligado): a saída pode ser uma compra no cartão. */
   cartoes?: CartaoCredito[]
@@ -137,6 +137,8 @@ export function FormLancamento(p: FormLancProps) {
   const aReceber = opcoesDivida.filter((d) => meDevem(d) || (d.id === ini.divida_id && ini.tipo === 'entrada'))
   // entrada também pode ser dinheiro emprestado: aumenta uma dívida sua
   const emprestimos = devo.filter((d) => !aReceber.some((a) => a.id === d.id))
+  // saída também pode ser dinheiro que você emprestou: aumenta o que alguém te deve
+  const jaEmprestei = opcoesDivida.filter((d) => meDevem(d))
 
   const moedasDisponiveis = moedasUsaveis(p.perfil, original?.moeda, ini.moeda_original)
   const estrangeira = moeda !== principal
@@ -171,6 +173,8 @@ export function FormLancamento(p: FormLancProps) {
   }
   const mudarTipo = (t: Tipo) => {
     setTipo(t)
+    // a dívida escolhida de um lado não vale para o outro
+    if (t !== tipo) { setNovoEmprestimo(false); setDividaId('') }
     if (forma && !formasDoTipo(t).some((f) => f.id === forma)) setForma('')
     if (!p.categorias.some((c) => c.id === categoriaId && c.tipo === t)) {
       setCategoriaId(categoriaPelaDescricao(descricao, t, p.categorias)?.id ?? outrosDe(t))
@@ -262,14 +266,14 @@ export function FormLancamento(p: FormLancProps) {
     }
     const [a, m] = data.split('-').map(Number)
     const saida = tipo === 'saida'
-    const criarEmprestimo = !saida && novoEmprestimo && Boolean(p.aoNovaDivida)
-    if (criarEmprestimo && !quemEmprestou.trim()) return setErro(tx('Escreva quem emprestou o dinheiro.'))
+    const criarEmprestimo = novoEmprestimo && Boolean(p.aoNovaDivida)
+    if (criarEmprestimo && !quemEmprestou.trim()) return setErro(saida ? tx('Escreva para quem você emprestou o dinheiro.') : tx('Escreva quem emprestou o dinheiro.'))
     // o pagamento fica ligado à dívida escolhida, seja qual for a categoria
     let ligada = saida
-      ? (devo.some((d) => d.id === dividaId) ? dividaId : null)
+      ? ([...devo, ...jaEmprestei].some((d) => d.id === dividaId) ? dividaId : null)
       : ([...aReceber, ...emprestimos].some((d) => d.id === dividaId) ? dividaId : null)
     if (criarEmprestimo) {
-      const nova = await p.aoNovaDivida!({ quem: quemEmprestou.trim(), data })
+      const nova = await p.aoNovaDivida!({ quem: quemEmprestou.trim(), data, sentido: saida ? 'me_devem' : 'devo' })
       if (!nova) return setErro(tx('Não consegui criar a dívida. Tente de novo.'))
       ligada = nova.id
     }
@@ -514,16 +518,41 @@ export function FormLancamento(p: FormLancProps) {
         )}
         {tipo === 'saida' && (
           <>
-            {(v.dividas || dividaId) && devo.length > 0 && (
+            {(v.dividas || dividaId || novoEmprestimo || p.aoNovaDivida) && (
               <label className="campo">
-                <span className="campo-rotulo">{tx('Isso paga alguma dívida?')} <small>(opcional)</small></span>
-                <select value={dividaId} onChange={(e) => escolherDivida(e.target.value)}>
+                <span className="campo-rotulo">{tx('Isso paga ou empresta para alguém?')} <small>(opcional)</small></span>
+                <select value={novoEmprestimo ? NOVO : [...devo, ...jaEmprestei].some((d) => d.id === dividaId) ? dividaId : ''}
+                  onChange={(e) => {
+                    const id = e.target.value
+                    setNovoEmprestimo(id === NOVO)
+                    if (id === NOVO) { setDividaId(''); setMexeuDivida(true) } else if (jaEmprestei.some((d) => d.id === id)) { setDividaId(id); setMexeuDivida(true) } else escolherDivida(id)
+                  }}>
                   <option value="">{tx('Nenhuma (só entra como gasto)')}</option>
-                  {devo.map((d) => (
-                    <option key={d.id} value={d.id}>{d.descricao}{d.pessoa && !d.descricao.includes(d.pessoa) ? ` · ${d.pessoa}` : ''}{d.valor_parcela ? ` · parcela ${fmtMoeda(d.valor_parcela, d.moeda ?? principal)}` : ''}</option>
-                  ))}
+                  {p.aoNovaDivida && <option value={NOVO}>{tx('Emprestei para alguém (criar o que me devem)')}</option>}
+                  {devo.length > 0 && (
+                    <optgroup label={tx('Estou pagando uma dívida (ela diminui)')}>
+                      {devo.map((d) => (
+                        <option key={d.id} value={d.id}>{d.descricao}{d.pessoa && !d.descricao.includes(d.pessoa) ? ` · ${d.pessoa}` : ''}{d.valor_parcela ? ` · parcela ${fmtMoeda(d.valor_parcela, d.moeda ?? principal)}` : ''}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {jaEmprestei.length > 0 && (
+                    <optgroup label={tx('Emprestei mais para quem já me devia (o que falta receber aumenta)')}>
+                      {jaEmprestei.map((d) => (
+                        <option key={d.id} value={d.id}>{d.descricao}{d.pessoa && !d.descricao.includes(d.pessoa) ? ` · ${d.pessoa}` : ''}</option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
-                {dividaId && <span className="campo-ajuda">{tx('A dívida diminui sozinha com este pagamento.')}</span>}
+                {dividaId && devo.some((d) => d.id === dividaId) && <span className="campo-ajuda">{tx('A dívida diminui sozinha com este pagamento.')}</span>}
+                {dividaId && jaEmprestei.some((d) => d.id === dividaId) && <span className="campo-ajuda">{tx('O que falta receber aumenta sozinho com este dinheiro que você emprestou.')}</span>}
+                {novoEmprestimo && (
+                  <>
+                    <input type="text" value={quemEmprestou} onChange={(e) => setQuemEmprestou(e.target.value)} maxLength={60}
+                      placeholder={tx('Para quem? Ex.: Rafael')} aria-label={tx('Para quem você emprestou?')} autoFocus />
+                    <span className="campo-ajuda">{tx('Aparece na aba Dívidas, em “Me devem”. Quando a pessoa devolver, lance uma entrada e escolha esta dívida.')}</span>
+                  </>
+                )}
               </label>
             )}
           </>
@@ -550,7 +579,7 @@ export function FormLancamento(p: FormLancProps) {
               {aReceber.length > 0 && (
                 <optgroup label={tx('Recebi de quem me devia (o que falta receber diminui)')}>
                   {aReceber.map((d) => (
-                    <option key={d.id} value={d.id}>{d.descricao}{d.pessoa ? ` · ${d.pessoa}` : ''}{d.valor_parcela ? ` · parcela ${fmtMoeda(d.valor_parcela, d.moeda ?? principal)}` : ''}</option>
+                    <option key={d.id} value={d.id}>{d.descricao}{d.pessoa && !d.descricao.includes(d.pessoa) ? ` · ${d.pessoa}` : ''}{d.valor_parcela ? ` · parcela ${fmtMoeda(d.valor_parcela, d.moeda ?? principal)}` : ''}</option>
                   ))}
                 </optgroup>
               )}
