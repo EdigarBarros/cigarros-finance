@@ -3714,3 +3714,6 @@ body { top: 0 !important; }
 @media (prefers-reduced-motion: reduce) {
   .tela-aurora i, .palco-bolha, .palco-anel, .palco-pote { animation: none !important; }
 }
+
+/* símbolo do banco pintado de branco sobre a cor da marca (lib/logosBancos, modo 'branco') */
+.bi-branco * { fill: #fff !important; }

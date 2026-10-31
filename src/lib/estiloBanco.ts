@@ -6,6 +6,8 @@ export interface EstiloBanco {
   texto: string
   /** Faixa ou detalhe de outra cor, para os selos não ficarem todos iguais. */
   detalhe?: string
+  /** Primeiro apelido do banco na lista abaixo: é por ele que o símbolo de verdade é achado (lib/logosBancos). */
+  chave?: string
 }
 
 const E = (fundo: [string, string], letra: string, texto: string, detalhe?: string): EstiloBanco => ({ fundo, letra, texto, detalhe })
@@ -48,7 +50,8 @@ const normal = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/
 /** Acha o selo pelo nome: nome inteiro do banco contido no texto, ou apelido curto como palavra inteira. */
 export function estiloDoBanco(nome: string): EstiloBanco | undefined {
   const n = ` ${normal(nome)} `
-  return ESTILOS.find(([nomes]) => nomes.some((x) => n.includes(` ${x} `)))?.[1]
+  const achado = ESTILOS.find(([nomes]) => nomes.some((x) => n.includes(` ${x} `)))
+  return achado && { ...achado[1], chave: achado[0][0] }
 }
 
 /** Cor da letra que dá para ler sobre uma cor de fundo (texto escuro em amarelo, claro em roxo). */
