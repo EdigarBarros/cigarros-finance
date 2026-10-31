@@ -6346,5 +6346,33 @@
   "É a mais cara das suas dívidas: se sobrar dinheiro, adiante esta primeiro.": {
     "en": "It is your most expensive debt: if you have money left over, pay this one off first.",
     "es": "Es la más cara de tus deudas: si te sobra dinero, adelanta esta primero."
+  },
+  "Esta dívida teve o saldo informado em {0}, depois da data deste lançamento. O saldo desde lá já considera o que foi pago antes, então este lançamento não muda o que falta.": {
+    "en": "This debt had its balance set on {0}, after the date of this entry. The balance since then already accounts for what was paid before, so this entry does not change what is left.",
+    "es": "Esta deuda tuvo su saldo informado el {0}, después de la fecha de este registro. El saldo desde entonces ya considera lo pagado antes, así que este registro no cambia lo que falta."
+  },
+  "Valores em {0}, como você lançou: sem conversão. Entrou e Saiu só desta moeda.": {
+    "en": "Amounts in {0}, as you entered them: no conversion. Income and expenses for this currency only.",
+    "es": "Valores en {0}, como los registraste: sin conversión. Entró y Salió solo de esta moneda."
+  },
+  "Busca em {0} inteiro · {1}": {
+    "en": "Search in all of {0} · {1}",
+    "es": "Búsqueda en todo {0} · {1}"
+  },
+  "Buscar por nome, valor ou data": {
+    "en": "Search by name, amount or date",
+    "es": "Buscar por nombre, valor o fecha"
+  },
+  "Busque por nome, valor ou data…": {
+    "en": "Search by name, amount or date…",
+    "es": "Busca por nombre, valor o fecha…"
+  },
+  "Em {0} inteiro": {
+    "en": "All of {0}",
+    "es": "Todo {0}"
+  },
+  "A busca olha {0} inteiro: nome, valor (150 ou 150,40) ou data (25/10, outubro, 2025). Para outro ano, troque o ano no topo.": {
+    "en": "The search covers all of {0}: name, amount (150 or 150.40) or date (25/10, October, 2025). For another year, change the year at the top.",
+    "es": "La búsqueda abarca todo {0}: nombre, valor (150 o 150,40) o fecha (25/10, octubre, 2025). Para otro año, cambia el año arriba."
   }
 }

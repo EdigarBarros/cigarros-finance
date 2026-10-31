@@ -139,26 +139,31 @@ const serie = (meses: (Resumo | null)[], f: (r: Resumo) => number) => meses.map(
  * Fluxo financeiro da Início: Entrou e Saiu em barras lado a lado e a linha brilhante do que sobrou, nos 6 meses até o
  * aberto (de jan a jun quando o mês aberto é antes de junho). Mês sem dados fica em branco.
  */
-export function GraficoFluxo({ porMes, mesAtual, altura, compacto }: {
+export function GraficoFluxo({ porMes, mesAtual, altura, compacto, moeda }: {
   porMes: (Resumo | null)[]; mesAtual: number
+  /** Outra moeda (valores como foram lançados, sem conversão); sem ela, a moeda principal. */
+  moeda?: string
   /** Sem altura, ocupa a caixa em que está (veja .grafico-esticado). */
   altura?: number; compacto?: boolean
 }) {
   const c = useCoresDoGrafico()
   const inicio = Math.max(0, Math.min(mesAtual - 6, 6))
   const meses = porMes.slice(inicio, inicio + 6)
+  const fora = Boolean(moeda) && moeda !== moedaAtual()
+  const entrou = (r: Resumo) => (fora ? r.entradasMoeda[moeda!] ?? 0 : r.entradas)
+  const saiu = (r: Resumo) => (fora ? r.saidasMoeda[moeda!] ?? 0 : r.saidas)
   const data = {
     labels: MESES_CURTO.slice(inicio, inicio + 6),
     datasets: [
-      barra(tx('Entrou'), PALETA.entradas, serie(meses, (r) => r.entradas), compacto),
-      barra(tx('Saiu'), PALETA.saidas, serie(meses, (r) => r.saidas), compacto),
-      linha(tx('Sobrou'), PALETA.sobrou, serie(meses, (r) => r.fluxo), c.fundo, compacto),
+      barra(tx('Entrou'), PALETA.entradas, serie(meses, entrou), compacto),
+      barra(tx('Saiu'), PALETA.saidas, serie(meses, saiu), compacto),
+      linha(tx('Sobrou'), PALETA.sobrou, serie(meses, (r) => (fora ? Math.round((entrou(r) - saiu(r)) * 100) / 100 : r.fluxo)), c.fundo, compacto),
     ],
   } as unknown as ChartData<'bar'>
   return (
     <div className="grafico" style={altura ? { height: altura } : undefined}>
-      <Misto type="bar" key={c.tema + c.ocultos} data={data}
-        options={opcoes(c, { rotulos: MESES_CURTO.slice(inicio, inicio + 6), mesDoIndice: (i) => inicio + i + 1, mesAtual, compacto, legenda: false, destacar: true })} />
+      <Misto type="bar" key={c.tema + c.ocultos + (fora ? moeda : '')} data={data}
+        options={opcoes(c, { rotulos: MESES_CURTO.slice(inicio, inicio + 6), mesDoIndice: (i) => inicio + i + 1, mesAtual, compacto, legenda: false, destacar: true, formatar: fora ? (n) => fmtMoeda(n, moeda!) : fmtValor })} />
     </div>
   )
 }
@@ -179,7 +184,7 @@ function origemDaDivida(r: Resumo | null | undefined): string[] {
 }
 
 /** Moedas (além da principal) que aparecem no ano: lançamentos, dívidas ou saldo guardado. */
-function moedasDoAno(porMes: (Resumo | null)[]) {
+export function moedasDoAno(porMes: (Resumo | null)[]) {
   const achadas = new Set<string>()
   for (const r of porMes) {
     if (!r) continue
@@ -264,9 +269,16 @@ export function GraficoSaldo({ porMes, mesAtual, compacto }: {
   porMes: (Resumo | null)[]; mesAtual?: number; compacto?: boolean
 }) {
   const c = useCoresDoGrafico()
+  const principal = moedaAtual()
+  const extras = useMemo(() => moedasDoAno(porMes), [porMes])
+  const [escolhida, setEscolhida] = useState(principal)
+  // Só aparece o seletor quando há algo em outra moeda; a visão padrão é a da moeda principal, igual a antes.
+  const moeda = extras.includes(escolhida) ? escolhida : principal
+  const fora = moeda !== principal
+  const fluxoDe = (r: Resumo) => (fora ? Math.round(((r.entradasMoeda[moeda] ?? 0) - (r.saidasMoeda[moeda] ?? 0)) * 100) / 100 : r.fluxo)
   // acumulado no ano: soma do que sobrou até cada mês (meses sem dados ficam em branco)
-  const acumulado = porMes.map((r, i) => (r ? porMes.slice(0, i + 1).reduce((a, x) => a + (x?.fluxo ?? 0), 0) : null))
-  const sobrou = serie(porMes, (r) => r.fluxo)
+  const acumulado = porMes.map((r, i) => (r ? porMes.slice(0, i + 1).reduce((a, x) => a + (x ? fluxoDe(x) : 0), 0) : null))
+  const sobrou = serie(porMes, fluxoDe)
   const data = {
     labels: MESES_CURTO,
     datasets: [
@@ -284,10 +296,19 @@ export function GraficoSaldo({ porMes, mesAtual, compacto }: {
     ],
   } as unknown as ChartData<'bar'>
   return (
-    <div className="grafico" style={{ height: compacto ? 240 : 280 }}>
-      <Misto type="bar" key={c.tema + c.ocultos} data={data}
-        options={opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual, compacto, eixoDireito: PALETA.acumulado, destacar: true })} />
-    </div>
+    <>
+      {extras.length > 0 && (
+        <div className="grafico-moeda">
+          <Segmentado rotulo={tx('Ver o gráfico em')} valor={moeda} aoMudar={setEscolhida}
+            opcoes={[principal, ...extras].map((m) => ({ id: m, nome: m }))} />
+        </div>
+      )}
+      <div className="grafico" style={{ height: compacto ? 240 : 280 }}>
+        <Misto type="bar" key={c.tema + c.ocultos + moeda} data={data}
+          options={opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual, compacto, eixoDireito: PALETA.acumulado, destacar: true, formatar: fora ? (n) => fmtMoeda(n, moeda) : fmtValor })} />
+      </div>
+      {fora && <p className="campo-ajuda">{tx('Valores em {0}, como você lançou: sem conversão. Entrou e Saiu só desta moeda.', moeda)}</p>}
+    </>
   )
 }
 

@@ -9,7 +9,7 @@ import {
 import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
 import { COR } from '../lib/charts'
 import { avisosDispensadosNoMes, conselhos as conselhosDe, dispensarPorUmMes, faltamDadosParaConselhos } from '../lib/conselheiro'
-import { calendarioDe, fimDoMes, inicioDaDivida, meDevem, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
+import { calendarioDe, fimDoMes, inicioDaDivida, meDevem, saldoMaisRecenteDaDivida, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
 import { definirMoedaPrincipal, definirValoresOcultos, fmtDataCurta, fmtValor, MESES_CURTO, MESES_NOME, useValoresOcultos } from '../lib/format'
 import { useCambio } from '../lib/moedas'
 import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
@@ -426,7 +426,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       cartoes: comCartoes ? <BlocoCartoes situacoes={faturas} aoAbrir={() => irPara('cartoes')} /> : undefined,
     },
     busca, setBusca,
-    ano, mes, d, cartoes, faturas, lancsMes, situacao, aReceber, diaRef, mesEf, porMes, mobile,
+    ano, mes, d, cartoes, faturas, lancsMes, lancsAno: lancsContados, situacao, aReceber, diaRef, mesEf, porMes, mobile,
     perfil, v, taxas, sugestao,
     aceitarSugestao: (s: Sugestao) => mudarPerfil(s.aplicar(perfil)),
     recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),
@@ -583,7 +583,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           {!mobile && (
             <label className="busca-topo">
               <Icone nome="busca" tamanho={18} />
-              <input type="search" placeholder={tx('Busque por lançamentos ou categorias…')} value={busca} onChange={(e) => buscar(e.target.value)} aria-label={tx('Buscar lançamentos')} />
+              <input type="search" placeholder={tx('Busque por nome, valor ou data…')} value={busca} onChange={(e) => buscar(e.target.value)} aria-label={tx('Buscar lançamentos')} />
             </label>
           )}
           <div className="barra-direita">
@@ -753,6 +753,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           dividas={dividasDoForm}
           aoNovaDivida={criarEmprestimo}
           inicioDivida={(id) => inicioDaDivida(d.saldos, id)}
+          saldoDaDivida={(id) => saldoMaisRecenteDaDivida(d.saldos, id)}
           aoMoverInicioDivida={d.moverInicioDivida}
           perfil={perfil}
           taxas={taxas}

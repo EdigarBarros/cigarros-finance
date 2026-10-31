@@ -4,6 +4,7 @@ import { COR } from '../lib/charts'
 import { SEM_CATEGORIA } from '../lib/categorias'
 import { formaDe, FORMAS, infoForma, type FormaPagamento } from '../lib/formas'
 import { fmtDataCurta, fmtDataLonga, fmtMoeda, fmtValor, MESES_NOME, noMeioDaFrase } from '../lib/format'
+import { criarBusca, semAcento } from '../lib/busca'
 import { ehEmprestimo } from '../lib/dividas'
 import type { Banco, Categoria, Lancamento, Tipo } from '../lib/types'
 import { Icone } from '../components/Icone'
@@ -36,15 +37,30 @@ export function Lancamentos(c: Ctx) {
   const { busca, setBusca } = c
   const hoje = hojeLocal()
 
+  // Com algo digitado na busca, ela procura no ano inteiro (o lançamento que você quer pode estar em outro mês).
+  const pesquisando = busca.trim().length > 0
+  const origem = pesquisando ? c.lancsAno : c.lancsMes
+  const casa = useMemo(() => criarBusca(busca, hoje, somaDias(hoje, -1)), [busca, hoje])
+  // o que o lançamento "diz", sem acento: nome, categoria, banco, cartão, forma, dívida e se é entrada ou saída
+  const textoDe = (l: Lancamento) => {
+    const f = formaDe(l)
+    const div = l.divida_id ? c.d.dividas.find((x) => x.id === l.divida_id) : undefined
+    return semAcento([
+      l.descricao, c.categoriaDe(l)?.nome, c.d.bancos.find((b) => b.id === l.banco_id)?.nome,
+      l.cartao_id ? `cartao ${c.cartoes.cartoes.find((k) => k.id === l.cartao_id)?.nome ?? ''}` : '',
+      f ? infoForma(f).nome : '', div ? `${div.descricao} ${div.pessoa ?? ''}` : '',
+      l.tipo === 'entrada' ? 'entrada entradas recebido' : 'saida saidas gasto', (l.parcelas ?? 1) > 1 ? 'parcela parcelado' : '',
+    ].filter(Boolean).join(' '))
+  }
+
   // tudo menos a categoria e o dia: base para os chips de categoria e para o calendário
   const base = useMemo(() => {
-    const q = busca.trim().toLowerCase()
-    return c.lancsMes
+    return origem
       .filter((l) => tipo === 'todos' || l.tipo === tipo)
       .filter((l) => banco === 'todos' || (banco === 'sem' ? !l.banco_id : l.banco_id === banco))
       .filter((l) => forma === 'todos' || (formaDe(l) ?? 'sem') === forma)
-      .filter((l) => !q || l.descricao.toLowerCase().includes(q) || Boolean(c.categoriaDe(l)?.nome.toLowerCase().includes(q)))
-  }, [c.lancsMes, tipo, banco, forma, busca, c.categorias]) // eslint-disable-line react-hooks/exhaustive-deps
+      .filter((l) => !casa || casa(l, textoDe(l)))
+  }, [origem, tipo, banco, forma, casa, c.categorias, c.d.bancos, c.d.dividas, c.cartoes.cartoes]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const daCategoria = (l: Lancamento) => categoria === 'todos' || (categoria === 'sem' ? !c.categoriaDe(l) : c.categoriaDe(l)?.id === categoria)
   const semDia = base.filter(daCategoria)
@@ -81,17 +97,16 @@ export function Lancamentos(c: Ctx) {
   const limpar = () => { setTipo('todos'); setBanco('todos'); setForma('todos'); setCategoria('todos'); setBusca(''); setDia(null) }
   // formas de pagamento usadas no mês (com os outros filtros aplicados, menos a própria forma)
   const formasDoMes = useMemo(() => {
-    const q = busca.trim().toLowerCase()
     const m = new Map<FormaPagamento | 'sem', number>()
-    for (const l of c.lancsMes) {
+    for (const l of origem) {
       if (tipo !== 'todos' && l.tipo !== tipo) continue
       if (banco !== 'todos' && (banco === 'sem' ? l.banco_id : l.banco_id !== banco)) continue
-      if (q && !l.descricao.toLowerCase().includes(q)) continue
+      if (casa && !casa(l, textoDe(l))) continue
       const f = formaDe(l) ?? 'sem'
       m.set(f, (m.get(f) ?? 0) + l.valor)
     }
     return m
-  }, [c.lancsMes, tipo, banco, busca])
+  }, [origem, tipo, banco, casa, c.categorias, c.d.bancos, c.d.dividas, c.cartoes.cartoes]) // eslint-disable-line react-hooks/exhaustive-deps
   const bancoDe = (l: Lancamento) => (c.v.bancos ? c.d.bancos.find((b) => b.id === l.banco_id) : undefined)
   const cartaoDe = (l: Lancamento) => (l.cartao_id ? c.cartoes.cartoes.find((k) => k.id === l.cartao_id) : undefined)
 
@@ -110,7 +125,7 @@ export function Lancamentos(c: Ctx) {
       <header className="pagina-topo">
         <div>
           <h1>{tx('Lançamentos')}</h1>
-          <p className="sub">{tx('{0} de {1} · {2}', MESES_NOME[c.mes - 1], c.ano, filtrados.length)} {filtrados.length === 1 ? tx('lançamento') : tx('lançamentos')}{filtrando ? (' ' + tx('com os filtros')) : ''}</p>
+          <p className="sub">{pesquisando ? tx('Busca em {0} inteiro · {1}', c.ano, filtrados.length) : tx('{0} de {1} · {2}', MESES_NOME[c.mes - 1], c.ano, filtrados.length)} {filtrados.length === 1 ? tx('lançamento') : tx('lançamentos')}{filtrando ? (' ' + tx('com os filtros')) : ''}</p>
         </div>
         <div className="lc-topo-acoes">
           <button className="btn" onClick={c.importarExtrato} title={tx('PDF, CSV, Excel, Word ou OFX do banco')}>{tx('Importar extrato')}</button>
@@ -183,7 +198,7 @@ export function Lancamentos(c: Ctx) {
             <section className="lc-barra">
               <label className="busca">
                 <Icone nome="busca" tamanho={16} />
-                <input placeholder={tx('Buscar descrição ou categoria')} value={busca} onChange={(e) => setBusca(e.target.value)} />
+                <input type="search" placeholder={tx('Buscar por nome, valor ou data')} value={busca} onChange={(e) => setBusca(e.target.value)} />
               </label>
               <Segmentado rotulo={tx('Tipo')} valor={tipo} aoMudar={(t) => { setTipo(t); setCategoria('todos') }}
                 opcoes={[{ id: 'todos', nome: tx('Todos') }, { id: 'entrada', nome: tx('Entradas'), cor: COR.entradas }, { id: 'saida', nome: tx('Saídas'), cor: COR.saidas }]} />
@@ -210,9 +225,10 @@ export function Lancamentos(c: Ctx) {
 
           {filtrando && (
             <div className="lc-filtrando">
+              {pesquisando && <span className="chip-info">{tx('Em {0} inteiro', c.ano)}</span>}
               {dia && <span className="chip-info">{fmtDataLonga(dia)}</span>}
               {categoria !== 'todos' && <span className="chip-info">{chips.find((k) => k.id === categoria)?.nome ?? SEM_CATEGORIA.nome}</span>}
-              <span>{tx('{0} de {1}', filtrados.length, c.lancsMes.length)}</span>
+              <span>{tx('{0} de {1}', filtrados.length, origem.length)}</span>
               <button className="link" onClick={limpar}><Icone nome="fechar" tamanho={13} /> {tx('Limpar filtros')}</button>
             </div>
           )}
@@ -221,7 +237,7 @@ export function Lancamentos(c: Ctx) {
             <section className={`cartao ${filtrando ? 'lc-vazio' : tx('lc-vazio vz-vazio')}`}>
               {filtrando ? <span className="lc-vazio-icone"><Icone nome="busca" tamanho={30} /></span> : <CenaLancamentos />}
               {filtrando
-                ? <strong>{tx('Nada com esses filtros')}</strong>
+                ? <><strong>{tx('Nada com esses filtros')}</strong>{pesquisando && <p>{tx('A busca olha {0} inteiro: nome, valor (150 ou 150,40) ou data (25/10, outubro, 2025). Para outro ano, troque o ano no topo.', c.ano)}</p>}</>
                 : <h2>{c.d.lancs.length === 0 ? tx('Comece a fazer seus lançamentos') : tx('Nada lançado em {0}', noMeioDaFrase(MESES_NOME[c.mes - 1]))}</h2>}
               {!filtrando && <p>{c.d.lancs.length === 0
                 ? tx('Registre o que entrou e o que saiu, um por um, ou traga tudo de uma vez do extrato do seu banco. O painel se monta sozinho.')

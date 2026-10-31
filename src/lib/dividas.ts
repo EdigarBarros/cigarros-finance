@@ -55,13 +55,24 @@ export function inicioDaDivida(saldos: SaldoDivida[], dividaId: string): string 
   return achado
 }
 
+/** Dia do saldo informado mais recente da dívida. */
+export function saldoMaisRecenteDaDivida(saldos: SaldoDivida[], dividaId: string): string | null {
+  let achado: string | null = null
+  for (const s of saldos) if (s.divida_id === dividaId && (achado === null || s.data > achado)) achado = s.data
+  return achado
+}
+
 /** Saldo devedor numa data: último saldo informado até ela, menos os pagamentos (e mais os aumentos, que valem negativo) feitos depois dele. */
 export function saldoEm(divida: Divida, saldos: SaldoDivida[], pagamentos: Pagamento[], ate: string): number | null {
   const marcos = saldos.filter((s) => s.divida_id === divida.id && s.data <= ate).sort((a, b) => a.data.localeCompare(b.data))
   const marco = marcos[marcos.length - 1]
   if (!marco) return null
+  // No saldo mais antigo (o dia em que a dívida começou), o pagamento do próprio dia conta: a dívida começou e foi paga nesse dia.
+  // Nos ajustes de saldo, o do dia já está incluído no valor informado.
+  const primeiraData = saldos.reduce((m, s) => (s.divida_id === divida.id && (m === null || s.data < m) ? s.data : m), null as string | null)
+  const origem = marco.data === primeiraData
   const pagoDepois = pagamentos
-    .filter((p) => p.divida_id === divida.id && p.data && p.data > marco.data && p.data <= ate)
+    .filter((p) => p.divida_id === divida.id && p.data && (origem ? p.data >= marco.data : p.data > marco.data) && p.data <= ate)
     .reduce((a, p) => a + p.valor, 0)
   return Math.max(0, Math.round((marco.saldo - pagoDepois) * 100) / 100)
 }
