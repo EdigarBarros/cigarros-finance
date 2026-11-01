@@ -62,7 +62,7 @@ interface FormLancProps {
   /** Compras já lançadas nos cartões: servem para avisar quando a mesma compra é lançada duas vezes. */
   comprasCartao?: Lancamento[]
   /** Avisa em que fatura a compra caiu (principalmente quando já passou do fechamento). */
-  aoCompraSalva?: (aviso: { cartao: string; fechamento: number; depoisDoFechamento: boolean; ano: number; mes: number; anoCompra: number }) => void
+  aoCompraSalva?: (aviso: { compraId: string; cartaoId: string; cartao: string; fechamento: number; depoisDoFechamento: boolean; ano: number; mes: number; anoCompra: number }) => void
   aoNovoCartao?: () => void
   /** Contas do mês (só com o módulo ligado): o lançamento pode ser a baixa de uma delas ("este Pix é a pensão"). */
   contasFixas?: ContaFixa[]
@@ -326,7 +326,7 @@ export function FormLancamento(p: FormLancProps) {
       setVezes(1)
       setDuplicadaOk(false)
       p.aoCompraSalva?.({
-        cartao: cartao.nome, fechamento: cartao.dia_fechamento, depoisDoFechamento,
+        compraId, cartaoId: cartao.id, cartao: cartao.nome, fechamento: cartao.dia_fechamento, depoisDoFechamento,
         ano: parcelas[0].ano, mes: parcelas[0].mes, anoCompra: Number(data.slice(0, 4)),
       })
     } else {

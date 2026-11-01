@@ -80,6 +80,10 @@ export interface Ctx {
   editarLancamento: (l: Lancamento) => void
   /** Abre o formulário de saída já no cartão escolhido. */
   novaCompraNoCartao: (cartaoId: string) => void
+  /** Cartão a mostrar ao abrir a tela Cartões (depois de lançar uma compra nele); null = o primeiro. */
+  cartaoAberto: string | null
+  /** Compra no cartão recém-lançada (id da compra): a tela Cartões rola até ela e a destaca. */
+  compraDestacada: string | null
   /** Banco aberto na tela Bancos ('sem' = lançamentos sem banco). */
   bancoAberto: string | null
   abrirBanco: (id: string | null) => void

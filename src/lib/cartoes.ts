@@ -161,6 +161,8 @@ export interface SituacaoCartao extends Fatura {
   parceladas: CompraParcelada[]
 }
 
+/** Compra no cartão de crédito (cada parcela é uma saída com `cartao_id`): fica na tela Cartões, não em Lançamentos. */
+export const ehCompraNoCartao = (l: Pick<Lancamento, 'cartao_id' | 'tipo'>) => Boolean(l.cartao_id) && l.tipo === 'saida'
 const doCartao = (c: CartaoCredito, lancs: Lancamento[]) => lancs.filter((l) => l.cartao_id === c.id && l.tipo === 'saida')
 const dataDaCompra = (l: Lancamento) => l.data_compra ?? l.data ?? ''
 

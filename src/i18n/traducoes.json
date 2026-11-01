@@ -6558,5 +6558,49 @@
   "pagamento da fatura: já está no extrato da conta": {
     "en": "card bill payment: already in your bank statement",
     "es": "pago de la factura: ya está en el extracto de la cuenta"
+  },
+  "Compras no cartão": {
+    "en": "Card purchases",
+    "es": "Compras con tarjeta"
+  },
+  "1 compra no cartão combina com a busca ({0}).": {
+    "en": "1 card purchase matches your search ({0}).",
+    "es": "1 compra con tarjeta coincide con tu búsqueda ({0})."
+  },
+  "{0} compras no cartão combinam com a busca ({1}).": {
+    "en": "{0} card purchases match your search ({1}).",
+    "es": "{0} compras con tarjeta coinciden con tu búsqueda ({1})."
+  },
+  "1 compra no cartão em {0} ({1}) fica na tela Cartões.": {
+    "en": "1 card purchase in {0} ({1}) is on the Cards screen.",
+    "es": "1 compra con tarjeta en {0} ({1}) está en la pantalla Tarjetas."
+  },
+  "{0} compras no cartão em {1} ({2}) ficam na tela Cartões.": {
+    "en": "{0} card purchases in {1} ({2}) are on the Cards screen.",
+    "es": "{0} compras con tarjeta en {1} ({2}) están en la pantalla Tarjetas."
+  },
+  "Ver em Cartões": {
+    "en": "See in Cards",
+    "es": "Ver en Tarjetas"
+  },
+  "Resultado da busca nos cartões": {
+    "en": "Search results in your cards",
+    "es": "Resultado de la búsqueda en tus tarjetas"
+  },
+  "Limpar busca": {
+    "en": "Clear search",
+    "es": "Borrar búsqueda"
+  },
+  "Mostrando {0} de {1}. Total: {2}": {
+    "en": "Showing {0} of {1}. Total: {2}",
+    "es": "Mostrando {0} de {1}. Total: {2}"
+  },
+  "Total: {0}": {
+    "en": "Total: {0}",
+    "es": "Total: {0}"
+  },
+  "Nenhuma compra no cartão combina com essa busca.": {
+    "en": "No card purchase matches this search.",
+    "es": "Ninguna compra con tarjeta coincide con esta búsqueda."
   }
 }

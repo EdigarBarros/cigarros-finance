@@ -1,9 +1,10 @@
 import { casasDaMoeda, mascarar } from '../lib/dinheiro'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { criarBusca, semAcento } from '../lib/busca'
 import { CATALOGO_BANCOS } from '../lib/bancos'
 import { mesEfetivo } from '../lib/calc'
 import {
-  datasDaFatura, faturaDoMes, hojeLocal, nomeDaFatura, pagaComAtraso, quandoVence, renegociada, somaMeses, textoStatus,
+  datasDaFatura, ehCompraNoCartao, faturaDoMes, hojeLocal, nomeDaFatura, pagaComAtraso, quandoVence, renegociada, somaMeses, textoStatus,
   totalFaturasAPagar, totalFaturasDoMes, type CompraParcelada, type Fatura, type SituacaoCartao,
 } from '../lib/cartoes'
 import { COR } from '../lib/charts'
@@ -11,6 +12,7 @@ import { somaMesesData } from '../lib/dividas'
 import { SEM_CATEGORIA } from '../lib/categorias'
 import { fmtDataCurta, fmtDataLonga, fmtValor, MESES_CURTO, MESES_NOME, moedaAtual, paraCampo, parseNumero, simbolo, noMeioDaFrase } from '../lib/format'
 import { CORES_LIVRES, mesmoNome } from '../lib/rotulos'
+import { semMovimento } from '../lib/tema'
 import type { CartaoCredito, FaturaPaga } from '../lib/types'
 import { BancoIcone } from '../components/BancoIcone'
 import { CartaoIlustrado } from '../components/CartaoIlustrado'
@@ -40,7 +42,8 @@ export function Cartoes(c: Ctx) {
   const [editando, setEditando] = useState<CartaoCredito | 'novo' | null>(null)
   const [pagando, setPagando] = useState<Alvo | null>(null)
   const [renegociando, setRenegociando] = useState<Alvo | null>(null)
-  const [escolhido, setEscolhido] = useState<string | null>(null)
+  // vem da compra que acabou de ser lançada (tela Lançamentos): abre direto no cartão dela
+  const [escolhido, setEscolhido] = useState<string | null>(c.cartaoAberto)
   const { cartoes, faturas } = c
   const arquivados = cartoes.cartoes.filter((x) => !x.ativo)
   const s = faturas.find((x) => x.cartao.id === escolhido) ?? faturas[0]
@@ -74,6 +77,8 @@ export function Cartoes(c: Ctx) {
           <span>{tx('Para renegociar faturas, registrar juros de atraso e usar limite garantido, rode')} <code>supabase/migracao-09-cartoes-extras.sql</code> {tx('no SQL Editor do Supabase.')}</span>
         </p>
       )}
+
+      {c.busca.trim() && cartoes.carregado && <ResultadoDaBusca c={c} />}
 
       {cartoes.carregado && !cartoes.cartoes.length && <SemCartoes aoCriar={() => setEditando('novo')} />}
 
@@ -135,6 +140,64 @@ export function Cartoes(c: Ctx) {
   )
 }
 
+/**
+ * O que a busca do topo achou nas compras no cartão, em todos os cartões e meses. As compras no cartão não aparecem em
+ * Lançamentos, então a busca de lá avisa e traz para cá.
+ */
+function ResultadoDaBusca({ c }: { c: Ctx }) {
+  const hoje = hojeLocal()
+  const casa = useMemo(() => criarBusca(c.busca, hoje, hojeLocal(new Date(Date.now() - 86400000))), [c.busca, hoje])
+  const achadas = useMemo(() => {
+    if (!casa) return []
+    return c.cartoes.compras
+      .filter((l) => ehCompraNoCartao(l) && casa(l, semAcento([
+        l.descricao, c.categoriaDe(l)?.nome, c.cartoes.cartoes.find((k) => k.id === l.cartao_id)?.nome, (l.parcelas ?? 1) > 1 ? 'parcela parcelado' : '', 'cartao',
+      ].filter(Boolean).join(' '))))
+      .sort((a, b) => (b.data_compra ?? b.data ?? '').localeCompare(a.data_compra ?? a.data ?? ''))
+  }, [casa, c.cartoes.compras, c.cartoes.cartoes, c.categorias]) // eslint-disable-line react-hooks/exhaustive-deps
+  const total = centavos(achadas.reduce((a, l) => a + l.valor, 0))
+  const mostradas = achadas.slice(0, 40)
+  return (
+    <section className="cartao cc-busca" aria-label={tx('Resultado da busca nos cartões')}>
+      <h3 className="ccd-titulo ccd-compras-cab">
+        <span>{tx('Resultado da busca nos cartões')} <small>{achadas.length || ''}</small></span>
+        <button className="link" onClick={() => c.setBusca('')}><Icone nome="fechar" tamanho={13} /> {tx('Limpar busca')}</button>
+      </h3>
+      {achadas.length ? (
+        <>
+          <ul className="lista-lanc">
+            {mostradas.map((l) => {
+              const k = c.categoriaDe(l) ?? SEM_CATEGORIA
+              const cartao = c.cartoes.cartoes.find((x) => x.id === l.cartao_id)
+              return (
+                <li key={l.id}>
+                  <button className="item-lanc" onClick={() => c.editarLancamento(l)}>
+                    <Selo c={k} tamanho={34} />
+                    <span className="item-texto">
+                      <span className="item-desc">{l.descricao || tx('Compra')}</span>
+                      <span className="item-meta">
+                        {cartao?.nome} · {tx('fatura de {0}', sufixoMes(l.ano, l.mes))}
+                        {fmtDataCurta(l.data_compra ?? null) && <> · {fmtDataCurta(l.data_compra ?? null)}</>}
+                        {(l.parcelas ?? 1) > 1 && <> · {l.parcela}/{l.parcelas}</>}
+                      </span>
+                    </span>
+                    <span className="item-valor">{fmtValor(l.valor)}</span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+          <p className="campo-ajuda">
+            {achadas.length > mostradas.length ? tx('Mostrando {0} de {1}. Total: {2}', mostradas.length, achadas.length, fmtValor(total)) : tx('Total: {0}', fmtValor(total))}
+          </p>
+        </>
+      ) : (
+        <p className="quadro-vazio">{tx('Nenhuma compra no cartão combina com essa busca.')}</p>
+      )}
+    </section>
+  )
+}
+
 /** Conta sem cartões: uma pilha de cartões desenhados e o convite para adicionar o primeiro. */
 function SemCartoes({ aoCriar }: { aoCriar: () => void }) {
   return (
@@ -171,6 +234,13 @@ function Detalhe({ s, c, aoEditar, aoPagar, aoRenegociar }: {
     const l = ps.find((x) => (x.parcela ?? 1) === p.atual) ?? ps[0]
     if (l) c.editarLancamento(l)
   }
+
+  // Acabou de lançar uma compra: rola até ela (a lista de compras fica abaixo da fatura e do limite)
+  useEffect(() => {
+    if (!c.compraDestacada) return
+    const t = window.setTimeout(() => document.querySelector('.ccd-compras .compra-nova')?.scrollIntoView({ block: 'center', behavior: semMovimento() ? 'auto' : 'smooth' }), 350)
+    return () => window.clearTimeout(t)
+  }, [c.compraDestacada])
 
   return (
     <div className="ccd" style={{ '--c': cartao.cor } as React.CSSProperties}>
@@ -221,14 +291,17 @@ function Detalhe({ s, c, aoEditar, aoPagar, aoRenegociar }: {
 
       <div className="ccd-linha">
         <section className="cartao ccd-compras">
-          <h3 className="ccd-titulo">{tx('Compras desta fatura')} <small>{s.compras.length || ''}</small></h3>
+          <h3 className="ccd-titulo ccd-compras-cab">
+            <span>{tx('Compras desta fatura')} <small>{s.compras.length || ''}</small></span>
+            {s.compras.length > 0 && <b>{fmtValor(s.valor)}</b>}
+          </h3>
           {s.compras.length ? (
             <ul className="lista-lanc">
               {s.compras.map((l, i) => {
                 const k = c.categoriaDe(l) ?? SEM_CATEGORIA
                 return (
                   <li key={l.id} style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
-                    <button className="item-lanc" onClick={() => c.editarLancamento(l)}>
+                    <button className={`item-lanc ${l.compra_id && l.compra_id === c.compraDestacada ? 'compra-nova' : ''}`} onClick={() => c.editarLancamento(l)}>
                       <Selo c={k} tamanho={34} />
                       <span className="item-texto">
                         <span className="item-desc">{l.descricao || tx('Compra')}</span>
