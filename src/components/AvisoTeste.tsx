@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { diasDeTeste, emTeste, irParaStripe, type Assinatura } from '../lib/assinatura'
 import { Icone } from './Icone'
+import { avisar } from './Avisos'
 import { tx } from '../lib/textos'
 
 const DURACAO = 15000
@@ -47,7 +48,7 @@ export function AvisoTeste({ assinatura, userId, moeda, adiar }: { assinatura: A
         <strong>{tx('Teste grátis:')} {dias === 1 ? tx('falta 1 dia') : tx('faltam {0} dias', dias)}</strong>
         <p>{tx('Quando acabar, é só assinar por R$ 9,99 por mês para continuar de onde parou.')}</p>
         <button type="button" className="aviso-teste-assinar"
-          onClick={() => void irParaStripe('stripe-checkout', moeda).then((m) => m && alert(m))}>
+          onClick={() => void irParaStripe('stripe-checkout', moeda).then((m) => m && avisar(m))}>
           {tx('Assinar agora')} <Icone nome="seta" tamanho={14} />
         </button>
       </div>

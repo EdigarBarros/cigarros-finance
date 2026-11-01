@@ -13,6 +13,7 @@ import { FormDivida } from '../components/Formularios'
 import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
 import { Anel, Kpi, Modal } from '../components/ui'
+import { CampoData } from '../components/Escolhas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 
@@ -397,7 +398,7 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
               <b>{s.divida.valor_parcela ? tx('Quando vence a próxima parcela?') : tx('Tem data combinada?')}</b>
               <small>{tx('Com a data, o app mostra o que está em dia e o que atrasou.')}</small>
             </span>
-            <input type="date" value={proxima} onChange={(e) => setProxima(e.target.value)} aria-label={tx('Vencimento')} />
+            <CampoData valor={proxima} aoMudar={setProxima} rotulo={tx('Vencimento')} />
             <button className="btn" onClick={definirVencimento} disabled={!proxima}>{tx('Salvar')}</button>
           </section>
         ) : null}

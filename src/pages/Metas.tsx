@@ -12,6 +12,8 @@ import { Numero } from '../components/Numero'
 import { PoteMeta } from '../components/PoteMeta'
 import { CartaoModelo } from '../components/CenaMeta'
 import { Anel, Cartao, Modal, Segmentado, Vazio } from '../components/ui'
+import { confirmar } from '../components/Avisos'
+import { CampoData, CampoMes } from '../components/Escolhas'
 import type { Ctx } from './contexto'
 import { IconeCategoria } from '../components/IconeCategoria'
 import { tx } from '../lib/textos'
@@ -304,7 +306,7 @@ function FichaMeta({ s, c, aoFechar, aoEditar, aoGuardar, aoRetirar }: {
                     <span className="ccd-hist-texto"><strong>{fmtDataLonga(m.data)}</strong><small>{m.descricao || (m.valor < 0 ? tx('retirado') : tx('guardado'))}</small></span>
                     <span className={`ccd-hist-valor ${m.valor < 0 ? 'negativo' : ''}`}>{m.valor < 0 ? '−' : '+'} {fmtMoeda(Math.abs(m.valor), moeda)}</span>
                     <button className="icone-btn pequeno" aria-label={tx('Excluir este registro')} title={tx('Excluir este registro')}
-                      onClick={() => { if (confirm(tx('Excluir este registro da meta?'))) void c.d.delMovimentoMeta(m.id) }}><Icone nome="lixeira" tamanho={15} /></button>
+                      onClick={async () => { if (await confirmar(tx('Excluir este registro da meta?'), { botao: tx('Excluir'), perigo: true })) void c.d.delMovimentoMeta(m.id) }}><Icone nome="lixeira" tamanho={15} /></button>
                   </div>
                 </li>
               ))}
@@ -391,7 +393,7 @@ function FormMeta({ c, meta, modelo, aoFechar }: { c: Ctx; meta?: Meta; modelo?:
         </div>
         <label className="campo">
           <span className="campo-rotulo">{tx('Até quando?')} <small>(opcional)</small></span>
-          <input type="month" value={prazo} onChange={(e) => setPrazo(e.target.value)} min={prazoJaPassou ? undefined : hoje().slice(0, 7)} />
+          <CampoMes valor={prazo} aoMudar={setPrazo} rotulo={tx('Até quando?')} min={prazoJaPassou ? undefined : hoje().slice(0, 7)} />
           <span className="campo-ajuda">{tx('Com um prazo, o app calcula quanto guardar por mês.')}</span>
         </label>
         {erro && <p className="form-erro">{erro}</p>}
@@ -476,7 +478,7 @@ function FormMovimento({ c, meta, retirar: inicial, valorInicial, aoFechar }: { 
         <div className="form-linha">
           <label className="campo">
             <span className="campo-rotulo">{tx('Data')}</span>
-            <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+            <CampoData valor={data} aoMudar={setData} rotulo={tx('Data')} obrigatorio />
           </label>
           <label className="campo">
             <span className="campo-rotulo">{tx('Observação')} <small>(opcional)</small></span>

@@ -18,6 +18,8 @@ import { Selo } from '../components/Categorias'
 import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
 import { Cartao, Interruptor, Kpi, Modal, Vazio } from '../components/ui'
+import { confirmar } from '../components/Avisos'
+import { CampoData, Seletor } from '../components/Escolhas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 
@@ -190,8 +192,8 @@ function Detalhe({ s, c, aoEditar, aoPagar, aoRenegociar }: {
           <header className="ccd-atrasadas-cab">
             <h3 className="ccd-titulo"><Icone nome="sino" tamanho={18} /> {s.atrasadas.length === 1 ? tx('Uma fatura venceu sem pagar') : tx('{0} faturas venceram sem pagar', s.atrasadas.length)}</h3>
             {s.atrasadas.length > 1 && (
-              <button className="link" onClick={() => {
-                if (!confirm(tx('Marcar as {0} faturas como pagas no dia do vencimento de cada uma?', s.atrasadas.length))) return
+              <button className="link" onClick={async () => {
+                if (!(await confirmar(tx('Marcar as {0} faturas como pagas no dia do vencimento de cada uma?', s.atrasadas.length), { botao: tx('Marcar como pagas') }))) return
                 for (const f of s.atrasadas) void c.cartoes.pagarFatura({ cartao_id: cartao.id, ano: f.ano, mes: f.mes, valor: f.valor, pago_em: f.vencimento, banco_id: cartao.banco_id, tipo: 'paga', juros: 0 })
               }}>{tx('Já paguei todas')}</button>
             )}
@@ -583,17 +585,13 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
         <div className="form-linha">
           <label className="campo">
             <span className="campo-rotulo">{tx('Dia que a fatura fecha')}</span>
-            <select value={fecha} onChange={(e) => { setFecha(e.target.value); setErro(null) }}>
-              <option value="">{tx('Escolher…')}</option>
-              {DIAS.map((d) => <option key={d} value={d}>{tx('dia {0}', d)}</option>)}
-            </select>
+            <Seletor valor={String(fecha)} aoMudar={(v) => { setFecha(v); setErro(null) }} rotulo={tx('Dia que fecha')}
+              opcoes={DIAS.map((d) => ({ valor: String(d), rotulo: tx('dia {0}', d) }))} />
           </label>
           <label className="campo">
             <span className="campo-rotulo">{tx('Dia que vence')}</span>
-            <select value={vence} onChange={(e) => { setVence(e.target.value); setErro(null) }}>
-              <option value="">{tx('Escolher…')}</option>
-              {DIAS.map((d) => <option key={d} value={d}>{tx('dia {0}', d)}</option>)}
-            </select>
+            <Seletor valor={String(vence)} aoMudar={(v) => { setVence(v); setErro(null) }} rotulo={tx('Dia que vence')}
+              opcoes={DIAS.map((d) => ({ valor: String(d), rotulo: tx('dia {0}', d) }))} />
           </label>
         </div>
         <span className="campo-ajuda">{tx('Os dois dias aparecem no app do seu banco. Compras feitas depois do dia que fecha entram na fatura do mês seguinte.')}{cartao && (' ' + tx('Mudar os dias vale para as próximas compras; as que você já lançou ficam onde estão.'))}</span>
@@ -607,10 +605,8 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
         {bancos.length > 0 && (
           <label className="campo">
             <span className="campo-rotulo">{tx('Banco do cartão')} <small>(opcional)</small></span>
-            <select value={bancoId} onChange={(e) => setBancoId(e.target.value)}>
-              <option value="">{tx('Nenhum')}</option>
-              {bancos.map((b) => <option key={b.id} value={b.id}>{b.nome}</option>)}
-            </select>
+            <Seletor valor={bancoId} aoMudar={setBancoId} rotulo={tx('Banco')}
+              opcoes={[{ valor: '', rotulo: tx('Nenhum') }, ...bancos.map((b) => ({ valor: b.id, rotulo: b.nome, cor: b.cor }))]} />
           </label>
         )}
         {!c.cartoes.semExtras && (
@@ -746,7 +742,7 @@ function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: 
         <div className="form-linha">
           <label className="campo">
             <span className="campo-rotulo">{tx('Dia do pagamento')}</span>
-            <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+            <CampoData valor={data} aoMudar={setData} rotulo={tx('Dia do pagamento')} obrigatorio />
           </label>
           <label className="campo">
             <span className="campo-rotulo">{tx('Quanto pagou')}</span>
@@ -774,10 +770,8 @@ function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: 
         {bancos.length > 0 && (
           <label className="campo">
             <span className="campo-rotulo">{tx('De qual banco saiu?')} <small>(opcional)</small></span>
-            <select value={bancoId} onChange={(e) => setBancoId(e.target.value)}>
-              <option value="">{tx('Não sei / não importa')}</option>
-              {bancos.map((b) => <option key={b.id} value={b.id}>{b.nome}</option>)}
-            </select>
+            <Seletor valor={bancoId} aoMudar={setBancoId} rotulo={tx('Banco')}
+              opcoes={[{ valor: '', rotulo: tx('Não sei / não importa') }, ...bancos.map((b) => ({ valor: b.id, rotulo: b.nome, cor: b.cor }))]} />
           </label>
         )}
         <span className="campo-ajuda">
@@ -893,7 +887,7 @@ function FormRenegociar({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: (
         </div>
         <label className="campo">
           <span className="campo-rotulo">{tx('Dia do acordo')}</span>
-          <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
+          <CampoData valor={data} aoMudar={setData} rotulo={tx('Dia do acordo')} obrigatorio />
         </label>
         <div className="cc-acordo-resumo">
           <span><small>{tx('parcela')}</small><b>{tx('{0}x {1}', parcelas, fmtValor(parcela))}</b></span>

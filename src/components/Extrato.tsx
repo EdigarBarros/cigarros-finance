@@ -11,6 +11,7 @@ import type { Ctx } from '../pages/contexto'
 import { BancoIcone } from './BancoIcone'
 import { Icone } from './Icone'
 import { Modal } from './ui'
+import { Seletor } from './Escolhas'
 import { tx } from '../lib/textos'
 
 interface Linha extends LinhaExtrato {
@@ -210,10 +211,11 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
               {c.v.bancos && (
                 <label className="ex-banco">
                   <span>{tx('Banco')}</span>
-                  <select value={bancoId} onChange={(e) => setBancoId(e.target.value)}>
-                    <option value="">{bancoNovo && catalogo ? tx('Criar "{0}"', catalogo.nome) : tx('Nenhum')}</option>
-                    {c.d.bancos.map((b) => <option key={b.id} value={b.id}>{b.nome}</option>)}
-                  </select>
+                  <Seletor valor={bancoId} aoMudar={setBancoId} rotulo={tx('Banco')}
+                    opcoes={[
+                      { valor: '', rotulo: bancoNovo && catalogo ? tx('Criar "{0}"', catalogo.nome) : tx('Nenhum') },
+                      ...c.d.bancos.map((b) => ({ valor: b.id, rotulo: b.nome, cor: b.cor })),
+                    ]} />
                 </label>
               )}
             </header>
@@ -252,10 +254,11 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
                       {l.original && l.original !== l.descricao && <span title={l.original}>{tx('era: {0}', l.original)}</span>}
                     </small>
                   </span>
-                  <select className="ex-cat" value={l.categoria_id} onChange={(e) => mudar(l.chave, { categoria_id: e.target.value })} aria-label={tx('Categoria')}>
-                    <option value="">{tx('Sem categoria')}</option>
-                    {doTipo(c.categorias, l.tipo).map((k) => <option key={k.id} value={k.id}>{k.nome}</option>)}
-                  </select>
+                  <Seletor className="ex-cat" valor={l.categoria_id} aoMudar={(v) => mudar(l.chave, { categoria_id: v })} rotulo={tx('Categoria')}
+                    opcoes={[
+                      { valor: '', rotulo: tx('Sem categoria') },
+                      ...doTipo(c.categorias, l.tipo).map((k) => ({ valor: k.id, rotulo: k.nome, cor: k.cor })),
+                    ]} />
                   <span className={`ex-valor ${l.tipo}`}>{l.tipo === 'entrada' ? '+' : '−'} {fmtValor(l.valor)}</span>
                 </li>
               ))}

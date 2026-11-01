@@ -6558,5 +6558,89 @@
   "pagamento da fatura: já está no extrato da conta": {
     "en": "card bill payment: already in your bank statement",
     "es": "pago de la factura: ya está en el extracto de la cuenta"
+  },
+  "Buscar": {
+    "en": "Search",
+    "es": "Buscar"
+  },
+  "Buscar…": {
+    "en": "Search…",
+    "es": "Buscar…"
+  },
+  "Confirmar": {
+    "en": "Confirm",
+    "es": "Confirmar"
+  },
+  "Dia": {
+    "en": "Day",
+    "es": "Día"
+  },
+  "Dia que fecha": {
+    "en": "Closing day",
+    "es": "Día de cierre"
+  },
+  "Entendi": {
+    "en": "Got it",
+    "es": "Entendido"
+  },
+  "Escolher data": {
+    "en": "Choose date",
+    "es": "Elegir fecha"
+  },
+  "Importar": {
+    "en": "Import",
+    "es": "Importar"
+  },
+  "Já está lançado?": {
+    "en": "Already recorded?",
+    "es": "¿Ya está registrado?"
+  },
+  "Já existe “{0}” de {1} em {2}. Ele é o pagamento de {3}?": {
+    "en": "There is already “{0}” for {1} on {2}. Is it the payment of {3}?",
+    "es": "Ya existe “{0}” de {1} el {2}. ¿Es el pago de {3}?"
+  },
+  "Já existe “{0}” de {1} em {2}. Ele é o recebimento de {3}?": {
+    "en": "There is already “{0}” for {1} on {2}. Is it the income from {3}?",
+    "es": "Ya existe “{0}” de {1} el {2}. ¿Es el cobro de {3}?"
+  },
+  "Limpar": {
+    "en": "Clear",
+    "es": "Borrar"
+  },
+  "Marcar como pagas": {
+    "en": "Mark as paid",
+    "es": "Marcar como pagadas"
+  },
+  "Nada encontrado": {
+    "en": "Nothing found",
+    "es": "Nada encontrado"
+  },
+  "Nada para importar": {
+    "en": "Nothing to import",
+    "es": "Nada para importar"
+  },
+  "Novo banco": {
+    "en": "New bank",
+    "es": "Nuevo banco"
+  },
+  "Não, lançar outro": {
+    "en": "No, record a new one",
+    "es": "No, registrar otro"
+  },
+  "Sem forma": {
+    "en": "No method",
+    "es": "Sin forma"
+  },
+  "Sim, usar este": {
+    "en": "Yes, use this one",
+    "es": "Sí, usar este"
+  },
+  "já tem lançamento neste mês": {
+    "en": "already recorded this month",
+    "es": "ya tiene registro este mes"
+  },
+  "{0} de {1} (data com ano)": {
+    "en": "{0}, {1}",
+    "es": "{0} de {1}"
   }
 }

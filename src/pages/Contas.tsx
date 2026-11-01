@@ -17,6 +17,8 @@ import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
 import { PoteMeta } from '../components/PoteMeta'
 import { Cartao, Modal, Palco, Segmentado, Vazio } from '../components/ui'
+import { confirmar } from '../components/Avisos'
+import { CampoData, CampoMes, Seletor } from '../components/Escolhas'
 import type { Ctx } from './contexto'
 import { IconeCategoria } from '../components/IconeCategoria'
 import '../components/contas.css'
@@ -284,7 +286,7 @@ function Boleto({ s, c, indice, aoEditar, aoOutroValor }: { s: SituacaoConta; c:
           {s.baixa ? (
             <>
               <button className="btn" onClick={() => c.editarLancamento(s.baixa!)}><Icone nome="lapis" tamanho={14} /> {tx('Editar')}</button>
-              <button className="btn" onClick={() => { if (confirm(tx('Desfazer? O lançamento de {0} será apagado e a conta volta a ficar em aberto.', fmtConta(s)))) c.desfazerBaixa(s) }}>
+              <button className="btn" onClick={async () => { if (await confirmar(tx('Desfazer? O lançamento de {0} será apagado e a conta volta a ficar em aberto.', fmtConta(s)), { botao: tx('Desfazer'), perigo: true })) c.desfazerBaixa(s) }}>
                 <Icone nome="desfazer" tamanho={14} /> {tx('Desfazer')}
               </button>
             </>
@@ -344,8 +346,8 @@ function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () 
         )}
         <label className="campo">
           <span className="campo-rotulo">{entrada ? tx('Dia em que recebeu') : tx('Dia em que pagou')}</span>
-          <input type="date" value={data} min={`${c.ano}-${mm}-01`} max={`${c.ano}-${mm}-${String(ultimo).padStart(2, '0')}`}
-            onChange={(e) => setData(e.target.value)} required />
+          <CampoData valor={data} aoMudar={setData} obrigatorio rotulo={entrada ? tx('Dia em que recebeu') : tx('Dia em que pagou')}
+            min={`${c.ano}-${mm}-01`} max={`${c.ano}-${mm}-${String(ultimo).padStart(2, '0')}`} />
           <span className="campo-ajuda">{tx('O valor de costume é {0}. Aqui você muda só para este mês.', fmtMoeda(s.conta.valor, moeda))}</span>
         </label>
         {erro && <p className="form-erro">{erro}</p>}
@@ -449,10 +451,8 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
           </label>
           <label className="campo">
             <span className="campo-rotulo">{entrada ? tx('Cai todo dia') : tx('Vence todo dia')}</span>
-            <select value={dia} onChange={(e) => { setDia(e.target.value); setErro(null) }}>
-              <option value="">{tx('Escolha…')}</option>
-              {Array.from({ length: 31 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}
-            </select>
+            <Seletor valor={String(dia)} aoMudar={(v) => { setDia(v); setErro(null) }} rotulo={tx('Dia')} placeholder={tx('Escolha…')}
+              opcoes={Array.from({ length: 31 }, (_, i) => ({ valor: String(i + 1), rotulo: String(i + 1) }))} />
           </label>
         </div>
         {Number(dia) > 28 && <span className="campo-ajuda">{tx('Em meses mais curtos, vale o último dia do mês.')}</span>}
@@ -479,11 +479,11 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
         <div className="form-linha">
           <label className="campo">
             <span className="campo-rotulo">{tx('A partir de')}</span>
-            <input type="month" value={inicio} onChange={(e) => setInicio(e.target.value)} required />
+            <CampoMes valor={inicio} aoMudar={setInicio} rotulo={tx('A partir de')} obrigatorio />
           </label>
           <label className="campo">
             <span className="campo-rotulo">{tx('Até quando?')} <small>(opcional)</small></span>
-            <input type="month" value={fim} onChange={(e) => setFim(e.target.value)} min={inicio} />
+            <CampoMes valor={fim} aoMudar={setFim} rotulo={tx('Até quando?')} min={inicio} />
           </label>
         </div>
         <span className="campo-ajuda">

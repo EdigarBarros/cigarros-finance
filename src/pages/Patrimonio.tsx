@@ -15,6 +15,7 @@ import { Bandeira } from '../components/Bandeira'
 import { CartaoIlustrado } from '../components/CartaoIlustrado'
 import { Numero } from '../components/Numero'
 import { Anel, CampoValor, Cartao, Faisca, Kpi, Modal, Vazio, Palco } from '../components/ui'
+import { confirmar } from '../components/Avisos'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 
@@ -395,8 +396,8 @@ function FormBanco({ c, banco, aoFechar, aoExcluir }: { c: Ctx; banco?: Banco; a
         {erro && <p role="alert" style={{ margin: 0, color: '#ff6b6b', fontSize: 13 }}>{erro}</p>}
         <div className="form-acoes">
           {banco && (
-            <button type="button" className="btn perigo" onClick={() => {
-              if (confirm(tx('Excluir "{0}"? Os lançamentos dele continuam, só ficam sem banco.', banco.nome))) {
+            <button type="button" className="btn perigo" onClick={async () => {
+              if (await confirmar(tx('Excluir "{0}"? Os lançamentos dele continuam, só ficam sem banco.', banco.nome), { botao: tx('Excluir'), perigo: true })) {
                 void c.d.delBanco(banco.id)
                 aoExcluir?.()
                 aoFechar()

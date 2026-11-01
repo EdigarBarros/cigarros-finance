@@ -13,6 +13,7 @@ import { Selo } from './Categorias'
 import { PARTES_ZERAR, type EscolhaZerar, type ParteZerar } from '../lib/zerar'
 import { Icone } from './Icone'
 import { Interruptor, Modal, Opcao } from './ui'
+import { avisar } from './Avisos'
 import { LOCAL_DAS_DATAS } from '../lib/format'
 import { tx } from '../lib/textos'
 
@@ -236,8 +237,8 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
                 <CartaoAcao icone="ajustes" titulo={tx('Refazer as perguntas')} texto={tx('Responda de novo as perguntas iniciais para reajustar o painel.')} aoClicar={aoRefazer} />
                 {assinatura && assinatura.status !== 'cortesia' && (
                   emTeste(assinatura)
-                    ? <CartaoAcao icone="cartao" titulo={tx('Assinar o OpusCash')} texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-checkout', perfil.moeda).then((m) => m && alert(m))} />
-                    : <CartaoAcao icone="cartao" titulo={tx('Gerenciar assinatura')} texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-portal').then((m) => m && alert(m))} />
+                    ? <CartaoAcao icone="cartao" titulo={tx('Assinar o OpusCash')} texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-checkout', perfil.moeda).then((m) => m && avisar(m))} />
+                    : <CartaoAcao icone="cartao" titulo={tx('Gerenciar assinatura')} texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-portal').then((m) => m && avisar(m))} />
                 )}
                 <CartaoAcao icone="sair" titulo={tx('Sair')} texto={tx('Encerra a sessão neste aparelho.')} aoClicar={aoSair} />
                 {aoExcluirConta && <CartaoAcao icone="lixeira" titulo={tx('Excluir minha conta')} texto={tx('Apaga seu login e todos os seus dados de vez e cancela a assinatura.')} aoClicar={aoExcluirConta} perigo />}
