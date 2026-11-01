@@ -281,13 +281,16 @@ body::before {
 .busca-topo input { flex: 1; min-width: 0; border: 0; background: none; outline: none; color: var(--texto); font-size: 14px; }
 .busca-topo input::placeholder { color: var(--texto-3); }
 .barra-direita { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+/* a busca é a que cede quando falta lugar (sem isto a conta ficava fora da tela entre 1101 e 1156px); entre 861 e 900px os botões ficam mais juntos */
+.busca-topo { min-width: 0; }
+@media (min-width: 861px) and (max-width: 900px) { .barra-direita { gap: 6px; } }
 
 /* seletor de mês: ‹ Outubro 2026 › e um quadro com os 12 meses */
 .seletor-mes {
   position: relative; display: flex; align-items: center; gap: 4px; height: 46px; padding: 0 5px; border-radius: 999px;
   border: 1px solid var(--borda-forte); background: var(--superficie);
 }
-.seletor-mes .icone-btn { width: 34px; height: 34px; border: 0; background: none; color: var(--texto-2); }
+.seletor-mes .icone-btn { width: 36px; height: 36px; border: 0; background: none; color: var(--texto-2); }
 .seletor-mes .icone-btn:hover { background: var(--preench-3); color: var(--texto); }
 /* o mês em destaque: pílula sólida da marca, sem brilho */
 .seletor-mes-nome {
@@ -322,7 +325,7 @@ body::before {
 .sino-ponto { position: absolute; top: 7px; right: 8px; width: 9px; height: 9px; border-radius: 50%; background: var(--destaque); box-shadow: 0 0 0 2px var(--superficie); }
 .sino-ponto.atraso { background: var(--saida); }
 .perfil-topo { position: relative; }
-.perfil-botao { display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 12px 0 4px; border: 0; border-radius: 999px; background: none; color: var(--texto); font-weight: 600; font-size: 14.5px; }
+.perfil-botao { display: flex; align-items: center; gap: 10px; height: 46px; min-width: 36px; padding: 0 12px 0 4px; border: 0; border-radius: 999px; background: none; color: var(--texto); font-weight: 600; font-size: 14.5px; }
 .perfil-botao:hover { background: var(--preench-4); }
 .perfil-botao svg { color: var(--texto-2); transition: transform .3s var(--mola); }
 .perfil-botao[aria-expanded='true'] svg { transform: rotate(180deg); }
@@ -3466,27 +3469,37 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .campo-cotacao-inverter { flex: none; }
 .campo-cotacao .prefixo { white-space: nowrap; }
 
-/* ---------- barra do topo no celular: seletor de mês + tema, configurações, sino e menu ----------
-   Os quatro botões redondos precisam caber ao lado do seletor: tudo um pouco mais justo, e nas telas mais estreitas
-   as setinhas do mês saem (tocar no mês abre o quadro com os 12 meses). */
+/* ---------- barra do topo no celular: marca, seletor de mês e os botões redondos ----------
+   Todos os botões têm 36px de toque e a barra nunca passa da largura da tela, em qualquer idioma. Conforme a tela
+   estreita, sai primeiro o que já existe no menu ☰ (tema, configurações), depois o nome ao lado do símbolo e as setinhas
+   do mês (tocar no mês abre o quadro com os 12 meses); o seletor ainda pode encolher (min-width: 0) como última folga. */
 @media (max-width: 860px) {
+  .barra { min-width: 0; }
+  .barra .marca.compacta { flex: none; }
   .barra .marca.compacta .marca-simbolo { width: 36px; }
-  .barra-direita { gap: 5px; }
-  .barra .icone-btn { width: 34px; height: 34px; }
-  .seletor-mes { height: 40px; padding: 0 3px; gap: 0; }
-  .seletor-mes > .icone-btn { width: 26px; height: 26px; }
-  .seletor-mes-nome { height: 32px; padding: 0 9px; gap: 5px; font-size: 14px; }
+  .barra-direita { gap: 4px; min-width: 0; }
+  .barra .icone-btn, .barra-direita .idioma-btn { width: 36px; height: 36px; flex: none; }
+  .barra-direita .idioma-btn { padding: 0 0; justify-content: center; }
+  .seletor-mes { height: 42px; padding: 0 3px; gap: 0; min-width: 0; flex: 0 1 auto; }
+  .seletor-mes > .icone-btn { width: 36px; height: 36px; }
+  .seletor-mes-nome { min-width: 0; height: 36px; padding: 0 9px; gap: 5px; font-size: 14px; white-space: nowrap; }
   .seletor-mes small { font-size: 13px; }
 }
+/* com o símbolo ao lado do nome ("OpusCash") e as setinhas, só cabe com sobra acima disto */
+@media (max-width: 860px) and (min-width: 561px) { .barra-direita .idioma-btn { width: auto; padding: 0 11px 0 9px; } }
+@media (max-width: 640px) { .barra .tema-btn { display: none; } }
+@media (max-width: 560px) { .barra .ajustes-btn, .barra-direita .idioma-sigla { display: none; } }
+@media (max-width: 520px) { .barra .marca .marca-nome { display: none; } }
+@media (max-width: 419px) { .seletor-mes > .icone-btn { display: none; } .seletor-mes { padding: 0 3px; } }
 @media (max-width: 380px) {
   .barra { gap: 4px; }
-  .barra-direita { gap: 4px; }
-  .barra .icone-btn { width: 32px; height: 32px; }
   .barra .marca.compacta .marca-simbolo { width: 30px; }
 }
-@media (max-width: 365px) {
-  .seletor-mes > .icone-btn { display: none; }
-  .seletor-mes { padding: 0 4px; }
+@media (max-width: 345px) {
+  .barra { gap: 3px; }
+  .barra-direita { gap: 3px; }
+  .seletor-mes-nome { padding: 0 6px; gap: 3px; font-size: 13px; }
+  .seletor-mes small { font-size: 12px; }
 }
 
 /* ---------- aviso depois de o app se atualizar sozinho (src/lib/atualizacao.ts) ---------- */
@@ -3540,15 +3553,11 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .idioma-lista button.ativo { background: color-mix(in srgb, var(--marca-2) 14%, transparent); font-weight: 700; }
 .idioma-lista button.ativo svg { color: var(--marca-2); }
 .idioma-vazio { display: flex; justify-content: center; gap: 6px; padding: 18px; color: var(--texto-3); }
-@media (max-width: 860px) { .barra-direita .idioma-btn { height: 34px; } }
 @media (max-width: 560px) {
   .idioma.flutuante .idioma-menu { position: fixed; top: calc(62px + env(safe-area-inset-top)); left: 12px; right: 12px; width: auto; }
-  /* no celular o idioma vira só o ícone, e a engrenagem sai da barra para caber (Configurações continua no menu ☰) */
-  .barra-direita .idioma-sigla, .barra-direita .ajustes-btn { display: none; }
-  .barra-direita .idioma-btn { width: 34px; padding: 0; justify-content: center; }
+  /* no celular o idioma vira só o ícone, e a engrenagem sai da barra para caber (Configurações continua no menu ☰); ver a barra do topo acima */
   .barra-direita .idioma-menu { position: fixed; top: 70px; left: 12px; right: 12px; width: auto; }
 }
-@media (max-width: 380px) { .barra-direita .idioma-btn { width: 32px; height: 32px; } }
 
 /* telas com tradução nossa em inglês e espanhol (App.tsx): o invólucro não ocupa lugar no layout */
 .tela-nativa { display: contents; }
@@ -3630,9 +3639,10 @@ body { top: 0 !important; }
 .campo-ic input:focus { border-color: var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 18%, transparent); }
 .campo-ic input::placeholder { color: var(--texto-3); }
 :root:not([data-tema='claro']) .campo-ic input[type='date']::-webkit-calendar-picker-indicator { filter: invert(.75); }
-.lf-data { display: flex; gap: 8px; align-items: center; }
+/* a data precisa de lugar para aparecer inteira (dd/mm/aaaa + o ícone do calendário): sem lugar ao lado dos atalhos, ela desce para uma linha só dela */
+.lf-data { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .lf-data .chip { flex: none; height: 56px; padding: 0 20px; border-radius: 17px; font-size: 14px; }
-.lf-data .campo-ic { flex: 1; }
+.lf-data .campo-ic { flex: 1 1 190px; }
 
 /* escolhas em ladrilhos: ícone grande, nome embaixo e um ✓ que salta ao escolher */
 .chips.grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 9px; }
