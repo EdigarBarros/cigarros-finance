@@ -2225,7 +2225,8 @@ button.ex-tipo:hover { transform: scale(1.1); }
   .app { grid-template-columns: 236px minmax(0, 1fr); }
   .conteudo { padding: 0 24px 56px; }
   .barra::before { inset: 0 -24px; }
-  .perfil-botao span { display: none; }
+  /* só a saudação some; a foto (ou as iniciais) continua no botão */
+  .perfil-botao > span:not(.avatar) { display: none; }
 }
 @media (max-width: 1100px) {
   .kpis, .kpis:has(> :nth-child(7)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -3650,7 +3651,7 @@ body { top: 0 !important; }
 .chips.grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 9px; }
 .modal .chips.grade .chip, .chips.grade .chip {
   position: relative; display: flex; flex-direction: column; justify-content: center; gap: 8px; height: auto; min-height: 88px; padding: 12px 6px 10px;
-  border-radius: 18px; font-size: 12.5px; line-height: 1.15; text-align: center; white-space: normal; overflow-wrap: anywhere;
+  border-radius: 18px; font-size: 12.5px; line-height: 1.15; text-align: center; white-space: normal; overflow-wrap: normal; hyphens: manual; min-width: 0;
   background: color-mix(in srgb, var(--superficie-2) 70%, transparent);
   transition: transform .35s var(--mola-salto), border-color .2s, background .2s, box-shadow .3s;
 }

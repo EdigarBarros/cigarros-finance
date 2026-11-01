@@ -202,7 +202,7 @@ function Detalhe({ s, c, aoEditar, aoPagar, aoRenegociar }: {
                 <span className="ccd-atrasada-mes">{sufixoMes(f.ano, f.mes)}</span>
                 <span className="ccd-atrasada-texto">
                   <strong>{fmtValor(f.valor)}</strong>
-                  <small>{tx('venceu há {0} dias, em {1}', dias(f.vencimento, hojeLocal()), fmtDataLonga(f.vencimento))}</small>
+                  <small>{dias(f.vencimento, hojeLocal()) === 1 ? tx('venceu há 1 dia, em {0}', fmtDataLonga(f.vencimento)) : tx('venceu há {0} dias, em {1}', dias(f.vencimento, hojeLocal()), fmtDataLonga(f.vencimento))}</small>
                 </span>
                 <span className="ccd-atrasada-acoes">
                   <button className="btn" onClick={() => aoPagar(f)}><Icone nome="check" tamanho={15} /> {tx('Paguei')}</button>

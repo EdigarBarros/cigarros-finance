@@ -6506,5 +6506,57 @@
   "Esconder a barra de baixo": {
     "en": "Hide the bottom bar",
     "es": "Ocultar la barra de abajo"
+  },
+  "Sua reserva de {0} cobre mais de {1} do que você gasta.": {
+    "en": "Your emergency fund of {0} covers more than {1} of what you spend.",
+    "es": "Tu fondo de reserva de {0} cubre más de {1} de lo que gastas."
+  },
+  "Sua reserva de {0} cobre {1} do que você gasta.": {
+    "en": "Your emergency fund of {0} covers {1} of what you spend.",
+    "es": "Tu fondo de reserva de {0} cubre {1} de lo que gastas."
+  },
+  "Marque em cada banco quanto é {0}: o app mostra quantos meses de gastos ela cobre.": {
+    "en": "On each bank, mark how much is {0}: the app shows how many months of spending it covers.",
+    "es": "En cada banco, marca cuánto es {0}: la app muestra cuántos meses de gastos cubre."
+  },
+  "venceu há 1 dia, em {0}": {
+    "en": "was due 1 day ago, on {0}",
+    "es": "venció hace 1 día, el {0}"
+  },
+  "mensalidade": {
+    "en": "monthly fee",
+    "es": "mensualidad"
+  },
+  "A conta aparece todo mês a partir daí. Se já recebeu neste mês, é só tocar em “Recebi” depois. Deixe o “até quando” em branco se ela não tem data para acabar.": {
+    "en": "The bill shows up every month from then on. If you already received it this month, just tap “Received” later. Leave “Until when” blank if it has no end date.",
+    "es": "La cuenta aparece cada mes desde ahí. Si ya la recibiste este mes, solo toca “Recibí” después. Deja “Hasta cuándo” en blanco si no tiene fecha de fin."
+  },
+  "A conta aparece todo mês a partir daí. Se já pagou neste mês, é só tocar em “Paguei” depois. Deixe o “até quando” em branco se ela não tem data para acabar.": {
+    "en": "The bill shows up every month from then on. If you already paid it this month, just tap “Paid” later. Leave “Until when” blank if it has no end date.",
+    "es": "La cuenta aparece cada mes desde ahí. Si ya la pagaste este mes, solo toca “Pagué” después. Deja “Hasta cuándo” en blanco si no tiene fecha de fin."
+  },
+  "nome incompleto": {
+    "en": "incomplete name",
+    "es": "nombre incompleto"
+  },
+  "sem descrição": {
+    "en": "no description",
+    "es": "sin descripción"
+  },
+  "sem nome: só números no extrato": {
+    "en": "no name: only numbers in the statement",
+    "es": "sin nombre: solo números en el extracto"
+  },
+  "tinha letra que não deu para ler: confira o nome": {
+    "en": "some letters could not be read: check the name",
+    "es": "había letras que no se pudieron leer: revisa el nombre"
+  },
+  "confira se entrou ou saiu": {
+    "en": "check whether it came in or went out",
+    "es": "revisa si entró o salió"
+  },
+  "pagamento da fatura: já está no extrato da conta": {
+    "en": "card bill payment: already in your bank statement",
+    "es": "pago de la factura: ya está en el extracto de la cuenta"
   }
 }

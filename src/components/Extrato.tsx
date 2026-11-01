@@ -63,6 +63,20 @@ const FORMATOS = [
   { ext: 'PDF', cor: '#ff5a5f' }, { ext: 'CSV', cor: '#30d158' }, { ext: tx('Excel'), cor: '#1fa463' },
   { ext: tx('Word'), cor: '#2b7cd3' }, { ext: 'OFX', cor: '#bf5af2' }, { ext: 'TXT', cor: '#8e8e93' },
 ]
+/**
+ * Os avisos do leitor de extrato (lib/extrato.ts) ficam em português, porque o leitor também os usa para reconhecer casos
+ * ("sem nome"); aqui, na hora de mostrar, viram texto de tela no idioma da pessoa. Um tx() por aviso, para o script de
+ * tradução enxergar cada um.
+ */
+const avisoDoExtrato = (aviso: string) => ({
+  'nome incompleto': tx('nome incompleto'),
+  'sem descrição': tx('sem descrição'),
+  'sem nome: só números no extrato': tx('sem nome: só números no extrato'),
+  'tinha letra que não deu para ler: confira o nome': tx('tinha letra que não deu para ler: confira o nome'),
+  'confira se entrou ou saiu': tx('confira se entrou ou saiu'),
+  'pagamento da fatura: já está no extrato da conta': tx('pagamento da fatura: já está no extrato da conta'),
+} as Record<string, string>)[aviso] ?? aviso
+
 const dataCurta = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
 
 /**
@@ -226,7 +240,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
                   <span className="ex-nome">
                     <input value={l.descricao} onChange={(e) => mudar(l.chave, { descricao: e.target.value })} placeholder={tx('Dê um nome')} aria-label={tx('Descrição')} />
                     <small>
-                      {l.revisar && <em><Icone nome="sino" tamanho={11} /> {l.revisar}</em>}
+                      {l.revisar && <em><Icone nome="sino" tamanho={11} /> {avisoDoExtrato(l.revisar)}</em>}
                       {l.repetido && <em className="rep" title={l.repetidoPor}>{l.repetidoPor ?? tx('parece já lançado')}</em>}
                       {l.conta_fixa_id && (
                         <button type="button" className="ex-conta" title={tx('Não é dessa conta: tocar para desligar')}
@@ -353,7 +367,7 @@ export function OrganizarNomes({ c, aoFechar }: { c: Ctx; aoFechar: () => void }
                     <span className="ex-nome">
                       <input value={nomes[k] ?? ''} placeholder={tx('Escreva o nome')} aria-label={tx('Nome novo')}
                         onChange={(e) => { setNomes({ ...nomes, [k]: e.target.value }); setMarcados({ ...marcados, [k]: Boolean(e.target.value.trim()) }) }} />
-                      {g.revisar && <small><em><Icone nome="sino" tamanho={11} /> {g.revisar}</em></small>}
+                      {g.revisar && <small><em><Icone nome="sino" tamanho={11} /> {avisoDoExtrato(g.revisar)}</em></small>}
                     </span>
                   </li>
                 )

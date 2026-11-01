@@ -19,6 +19,13 @@ import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 
 const SEM_BANCO = 'sem'
+/** Marcadores para pôr negrito no meio de uma frase traduzida inteira (a ordem das partes muda de um idioma para outro). */
+const NEGRITO = ['\uE000', '\uE001']
+const comNegrito = (frase: string, ...partes: string[]) =>
+  frase.split(/([\uE000\uE001])/).map((x, i) => {
+    const k = NEGRITO.indexOf(x)
+    return k >= 0 ? <b key={i}>{partes[k]}</b> : x
+  })
 /** Meses de reserva com uma casa decimal, no jeito da língua da tela (6,5 · 6.5). */
 const fmtMeses = (n: number) => n.toLocaleString(LOCAL_DAS_DATAS, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 const semAcento = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -210,8 +217,11 @@ export function Patrimonio(c: Ctx) {
               </Anel>
               <span className="gd-reserva-texto">
                 <span>{reserva > 0
-                  ? <>{tx('Sua reserva de')} <b>{fmtValor(reserva)}</b> {tx('cobre')} {mesesReserva >= 6 ? (tx('mais de') + ' ') : ''}<b>{tx('{0} meses', fmtMeses(mesesReserva))}</b> {tx('do que você gasta.')}</>
-                  : <>{tx('Marque em cada banco quanto é')} <b>{tx('reserva')}</b>{tx(': o app mostra quantos meses de gastos ela cobre.')}</>}</span>
+                  ? comNegrito(mesesReserva >= 6
+                    ? tx('Sua reserva de {0} cobre mais de {1} do que você gasta.', NEGRITO[0], NEGRITO[1])
+                    : tx('Sua reserva de {0} cobre {1} do que você gasta.', NEGRITO[0], NEGRITO[1]),
+                  fmtValor(reserva), tx('{0} meses', fmtMeses(mesesReserva)))
+                  : comNegrito(tx('Marque em cada banco quanto é {0}: o app mostra quantos meses de gastos ela cobre.', NEGRITO[0]), tx('reserva'))}</span>
                 <small>{gastoMedio > 0 ? tx('O ideal são 6 meses: {0}.', fmtValor(gastoMedio * 6)) : tx('Lance seus gastos para o app calcular.')}</small>
                 {v.metas && reserva < gastoMedio * 6 && gastoMedio > 0 && (
                   <button className="link" onClick={() => c.irPara('metas')}>{tx('Criar meta para a reserva')} <Icone nome="seta" tamanho={14} /></button>
