@@ -135,15 +135,20 @@ export function useCartoes(opcoes: {
   }
 
   /** Grava todas as parcelas de uma compra de uma vez. */
-  const addCompra = async (parcelas: Omit<Lancamento, 'id'>[]) => {
+  /** Devolve true quando gravou (o formulário só segue, avisa e fecha depois disso). */
+  const addCompra = async (parcelas: Omit<Lancamento, 'id'>[]): Promise<boolean> => {
     const linhas: Record<string, unknown>[] = categoriasAntigas
       ? parcelas.map(({ categoria_id, ...resto }) => ({ ...resto, categoria: categoria_id ?? 'outros' }))
       : parcelas
     const { data, error } = await supabase.from('lancamentos').insert(linhas).select()
-    if (error) return falhou(error.message)
+    if (error) {
+      falhou(error.message)
+      return false
+    }
     const novas = (data as Lancamento[]).map(normLanc)
     setTodas((xs) => [...xs, ...novas])
-    await recarregarLancs()
+    void recarregarLancs()
+    return true
   }
   /** Apaga todas as parcelas de uma compra. */
   const delCompra = async (compra_id: string) => {

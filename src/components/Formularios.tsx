@@ -57,12 +57,13 @@ interface FormLancProps {
   cartoes?: CartaoCredito[]
   cartaoInicial?: string
   /** Grava todas as parcelas de uma compra no cartão de uma vez. */
-  aoSalvarCompra?: (parcelas: NovoLanc[]) => void
+  /** Devolve false quando não gravou: o formulário fica aberto com o que foi digitado. */
+  aoSalvarCompra?: (parcelas: NovoLanc[]) => Promise<boolean | void> | void
   aoExcluirCompra?: (compraId: string) => void
   /** Compras já lançadas nos cartões: servem para avisar quando a mesma compra é lançada duas vezes. */
   comprasCartao?: Lancamento[]
   /** Avisa em que fatura a compra caiu (principalmente quando já passou do fechamento). */
-  aoCompraSalva?: (aviso: { cartao: string; fechamento: number; depoisDoFechamento: boolean; ano: number; mes: number; anoCompra: number }) => void
+  aoCompraSalva?: (aviso: { compraId: string; cartaoId: string; cartao: string; fechamento: number; depoisDoFechamento: boolean; ano: number; mes: number; anoCompra: number }) => void
   aoNovoCartao?: () => void
   /** Contas do mês (só com o módulo ligado): o lançamento pode ser a baixa de uma delas ("este Pix é a pensão"). */
   contasFixas?: ContaFixa[]
@@ -317,16 +318,17 @@ export function FormLancamento(p: FormLancProps) {
       // Em outra moeda, o valor de cada parcela é o convertido e o original é repartido do mesmo jeito (a diferença na primeira),
       // para a parcela guardar quanto custou na moeda de origem e a soma das parcelas fechar com o valor digitado.
       const originais = estrangeira ? dividirNaMoeda(n, vezes, casasDaMoeda(moeda)) : []
-      p.aoSalvarCompra(gerarParcelas(estrangeira ? Math.round(n * taxa! * 100) / 100 : n, vezes, data, cartao).map((x, i) => ({
+      const gravou = await p.aoSalvarCompra(gerarParcelas(estrangeira ? Math.round(n * taxa! * 100) / 100 : n, vezes, data, cartao).map((x, i) => ({
         ano: x.ano, mes: x.mes, tipo: 'saida', valor: x.valor, descricao: descricao.trim(), data: x.data,
         banco_id: null, categoria_id: categoriaId || null, divida_id: null,
         cartao_id: cartao.id, compra_id: compraId, parcela: x.parcela, parcelas: x.parcelas, data_compra: data,
         ...(estrangeira ? { valor_original: originais[i], moeda_original: moeda } : {}),
       })))
+      if (gravou === false) return setErro(tx('Não deu certo. Tente de novo.'))
       setVezes(1)
       setDuplicadaOk(false)
       p.aoCompraSalva?.({
-        cartao: cartao.nome, fechamento: cartao.dia_fechamento, depoisDoFechamento,
+        compraId, cartaoId: cartao.id, cartao: cartao.nome, fechamento: cartao.dia_fechamento, depoisDoFechamento,
         ano: parcelas[0].ano, mes: parcelas[0].mes, anoCompra: Number(data.slice(0, 4)),
       })
     } else {

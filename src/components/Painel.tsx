@@ -126,11 +126,17 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const [mes, setMes] = useState(() => mesAntesDeAtualizar()?.mes ?? hoje.getMonth() + 1)
   useEffect(() => lembrarMes(ano, mes), [ano, mes])
   useEffect(carregarRestante, [])
-  const [avisoFatura, setAvisoFatura] = useState<{ cartao: string; fechamento: number; depoisDoFechamento: boolean; ano: number; mes: number; anoCompra: number } | null>(null)
+  const [avisoFatura, setAvisoFatura] = useState<{ compraId: string; cartaoId: string; cartao: string; fechamento: number; depoisDoFechamento: boolean; ano: number; mes: number; anoCompra: number } | null>(null)
   const [form, setForm] = useState<{ inicial?: Lancamento; tipo?: Tipo; preset?: Partial<Lancamento>; cartaoId?: string } | null>(null)
   const [menu, setMenu] = useState(false)
   const [mais, setMais] = useState(false)
   const [bancoAberto, setBancoAberto] = useState<string | null>(null)
+  /** Cartão que a tela Cartões abre primeiro (o da compra que acabou de ser lançada). */
+  const [cartaoAberto, setCartaoAberto] = useState<string | null>(null)
+  /** Compra no cartão lançada na tela Lançamentos: a ida para a tela Cartões acontece quando o formulário fecha (com "Salvar e lançar outro" ele continua aberto). */
+  const idaParaCartao = useRef<{ ano: number; mes: number; cartaoId: string; compraId: string } | null>(null)
+  /** A compra recém-lançada que a tela Cartões destaca (rola até ela). */
+  const [compraDestacada, setCompraDestacada] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState<string | null>(null)
   /** Configurações aberta; 'painel' abre direto na seção Painel (jeito de ver e o que aparece). */
   const [ajustes, setAjustes] = useState<boolean | 'painel'>(false)
@@ -225,6 +231,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
 
   const irPara = (p: Pagina) => {
     setBancoAberto(null)
+    setCartaoAberto(null)
+    setCompraDestacada(null)
+    idaParaCartao.current = null
     setMais(false)
     setMenu(false)
     barra.fechar()
@@ -510,6 +519,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     sugestaoDaConta: (id) => (comContas ? sugestoesVinculo.get(id) : undefined),
     ligarAConta,
     recusarVinculo: (lancId, contaId) => recusarVinculos([lancId], contaId),
+    cartaoAberto, compraDestacada,
     bancoAberto,
     abrirBanco: (id) => {
       irPara('patrimonio')
@@ -545,7 +555,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const atrasadas = avisos.filter((s) => s.estado === 'atrasada').length
   const buscar = (q: string) => {
     setBusca(q)
-    if (paginaAtual !== 'lancamentos') irPara('lancamentos')
+    // a busca de Lançamentos e a dos Cartões são a mesma: digitar em Cartões refina o resultado de lá
+    if (paginaAtual !== 'lancamentos' && paginaAtual !== 'cartoes') irPara('lancamentos')
   }
 
   // Dicas que se revezam no pé do menu lateral: primeiro o que pede atenção, depois atalhos úteis.
@@ -753,7 +764,12 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
                 : <>{tx('Compra lançada na fatura de')} <b>{nomeDaFatura(avisoFatura.ano, avisoFatura.mes, avisoFatura.anoCompra)}</b> {tx('do {0}.', avisoFatura.cartao)}</>}
             </span>
             <span>
-              <button className="link" onClick={() => { setAno(avisoFatura.ano); setMes(avisoFatura.mes); setAvisoFatura(null); irPara('cartoes') }}>{tx('Ver fatura')}</button>
+              {!(paginaAtual === 'cartoes' && ano === avisoFatura.ano && mes === avisoFatura.mes && cartaoAberto === avisoFatura.cartaoId) && (
+                <button className="link" onClick={() => {
+                  setAno(avisoFatura.ano); setMes(avisoFatura.mes); setAvisoFatura(null)
+                  irPara('cartoes'); setCartaoAberto(avisoFatura.cartaoId); setCompraDestacada(avisoFatura.compraId)
+                }}>{tx('Ver fatura')}</button>
+              )}
               {' '}<button className="link" onClick={() => setAvisoFatura(null)}>{tx('Fechar')}</button>
             </span>
           </div>
@@ -770,7 +786,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         {paginaMostrada === 'inicio' && <Inicio {...ctx} />}
         {paginaMostrada === 'lancamentos' && <Lancamentos {...ctx} />}
         {paginaMostrada === 'contas' && <Contas {...ctx} />}
-        {paginaMostrada === 'cartoes' && <Cartoes {...ctx} />}
+        {paginaMostrada === 'cartoes' && <Cartoes key={cartaoAberto ?? 'todos'} {...ctx} />}
         {paginaMostrada === 'dividas' && <Dividas {...ctx} />}
         {paginaMostrada === 'metas' && <Metas {...ctx} />}
         {paginaMostrada === 'patrimonio' && <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />}
@@ -846,11 +862,25 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           aoSalvarCompra={cartoes.addCompra}
           aoExcluirCompra={cartoes.delCompra}
           comprasCartao={cartoes.compras}
-          aoCompraSalva={(a) => setAvisoFatura(a)}
+          aoCompraSalva={(a) => {
+            setAvisoFatura(a)
+            // Compra no cartão lançada na tela Lançamentos: ao fechar o formulário, leva para a tela Cartões, no cartão e na fatura em que ela caiu
+            if (paginaAtual === 'lancamentos') idaParaCartao.current = { ano: a.ano, mes: a.mes, cartaoId: a.cartaoId, compraId: a.compraId }
+          }}
           aoNovoCartao={() => { setForm(null); irPara('cartoes') }}
           contasFixas={comContas ? contas.contas : undefined}
           memoriaContas={memoriaContas}
-          aoFechar={() => setForm(null)}
+          aoFechar={() => {
+            setForm(null)
+            const ida = idaParaCartao.current
+            idaParaCartao.current = null
+            if (ida) {
+              setAno(ida.ano); setMes(ida.mes)
+              irPara('cartoes')
+              setCartaoAberto(ida.cartaoId)
+              setCompraDestacada(ida.compraId)
+            }
+          }}
         />
       )}
 
