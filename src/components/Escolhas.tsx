@@ -18,7 +18,7 @@ const hojeIso = () => { const d = new Date(); return `${d.getFullYear()}-${dois(
 interface Posicao { left: number; width: number; maxH: number; top?: number; bottom?: number }
 
 /** Onde o quadro aparece: embaixo do campo, ou em cima quando falta lugar; acompanha a rolagem. */
-function usePosicao(ancora: RefObject<HTMLElement | null>, aberto: boolean, largura: number, altura: number) {
+function usePosicao(ancora: RefObject<HTMLElement | null>, aberto: boolean, largura: number, altura: number, fixa: boolean) {
   const [pos, setPos] = useState<Posicao | null>(null)
   useLayoutEffect(() => {
     if (!aberto) return
@@ -27,7 +27,7 @@ function usePosicao(ancora: RefObject<HTMLElement | null>, aberto: boolean, larg
       if (!el) return
       const r = el.getBoundingClientRect()
       const vw = window.innerWidth, vh = window.innerHeight
-      const width = Math.min(Math.max(r.width, largura), vw - 16)
+      const width = Math.min(fixa ? largura : Math.max(r.width, largura), vw - 16)
       const left = Math.min(Math.max(8, r.left), vw - width - 8)
       const embaixo = vh - r.bottom - 14, emCima = r.top - 14
       const sobe = embaixo < Math.min(altura, 260) && emCima > embaixo
@@ -38,7 +38,7 @@ function usePosicao(ancora: RefObject<HTMLElement | null>, aberto: boolean, larg
     window.addEventListener('resize', calcular)
     window.addEventListener('scroll', calcular, true)
     return () => { window.removeEventListener('resize', calcular); window.removeEventListener('scroll', calcular, true) }
-  }, [aberto, ancora, largura, altura])
+  }, [aberto, ancora, largura, altura, fixa])
   return pos
 }
 
@@ -46,13 +46,13 @@ function usePosicao(ancora: RefObject<HTMLElement | null>, aberto: boolean, larg
  * O quadro que abre por cima de tudo (até das janelas). `folha`: no celular sobe de baixo, com alça e título.
  * Fecha com Esc, tocando fora ou com `aoFechar`; ao fechar, o foco volta para o campo.
  */
-function Quadro({ ancora, aoFechar, titulo, largura = 0, altura = 360, folha = true, foco = true, children, className = '' }: {
-  ancora: RefObject<HTMLElement | null>; aoFechar: () => void; titulo: string; largura?: number; altura?: number
+function Quadro({ ancora, aoFechar, titulo, largura = 0, larguraFixa, altura = 360, folha = true, foco = true, children, className = '' }: {
+  ancora: RefObject<HTMLElement | null>; aoFechar: () => void; titulo: string; largura?: number; larguraFixa?: boolean; altura?: number
   folha?: boolean; foco?: boolean; children: ReactNode; className?: string
 }) {
   const mobile = useMobile()
   const comoFolha = folha && mobile
-  const pos = usePosicao(ancora, !comoFolha, largura, altura)
+  const pos = usePosicao(ancora, !comoFolha, largura, altura, Boolean(larguraFixa))
   const caixa = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -105,15 +105,19 @@ export interface OpcaoEscolha {
   cor?: string
   /** Título da seção em que a opção aparece (as opções do mesmo grupo vêm juntas). */
   grupo?: string
+  /** Como a opção aparece na grade (ex.: "5"), quando o nome inteiro vai no campo ("dia 5"). */
+  curto?: string
 }
 
 /**
  * Lista de opções no lugar do <select>. Teclado: setas, Enter, Esc e começar a digitar um nome. Com muitas opções, ganha
  * uma busca no topo. `className` vai no botão (para quem já tinha um estilo próprio, como os filtros de Lançamentos).
  */
-export function Seletor({ valor, opcoes, aoMudar, rotulo, className = '', placeholder, desativado }: {
+export function Seletor({ valor, opcoes, aoMudar, rotulo, className = '', placeholder, desativado, grade }: {
   valor: string; opcoes: OpcaoEscolha[]; aoMudar: (v: string) => void; rotulo: string
   className?: string; placeholder?: string; desativado?: boolean
+  /** Opções curtas (os dias do mês) em grade de 7 colunas, como um calendário, em vez de uma lista comprida. */
+  grade?: boolean
 }) {
   const [aberto, setAberto] = useState(false)
   const botao = useRef<HTMLButtonElement>(null)
@@ -130,15 +134,15 @@ export function Seletor({ valor, opcoes, aoMudar, rotulo, className = '', placeh
         <Icone nome="abaixo" tamanho={16} />
       </button>
       {aberto && (
-        <Quadro ancora={botao} aoFechar={() => setAberto(false)} titulo={rotulo} largura={220}>
-          <ListaOpcoes opcoes={opcoes} valor={valor} rotulo={rotulo} aoEscolher={(v) => { setAberto(false); aoMudar(v) }} />
+        <Quadro ancora={botao} aoFechar={() => setAberto(false)} titulo={rotulo} largura={grade ? 312 : 220} larguraFixa={grade}>
+          <ListaOpcoes opcoes={opcoes} valor={valor} rotulo={rotulo} grade={grade} aoEscolher={(v) => { setAberto(false); aoMudar(v) }} />
         </Quadro>
       )}
     </>
   )
 }
 
-function ListaOpcoes({ opcoes, valor, rotulo, aoEscolher }: { opcoes: OpcaoEscolha[]; valor: string; rotulo: string; aoEscolher: (v: string) => void }) {
+function ListaOpcoes({ opcoes, valor, rotulo, grade, aoEscolher }: { opcoes: OpcaoEscolha[]; valor: string; rotulo: string; grade?: boolean; aoEscolher: (v: string) => void }) {
   const [busca, setBusca] = useState('')
   const comBusca = opcoes.length > 10
   const visiveis = useMemo(() => {
@@ -164,8 +168,10 @@ function ListaOpcoes({ opcoes, valor, rotulo, aoEscolher }: { opcoes: OpcaoEscol
     setRealce(i)
   }
   const teclas = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') { e.preventDefault(); mover(1) }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); mover(-1) }
+    if (e.key === 'ArrowDown') { e.preventDefault(); mover(grade ? 7 : 1) }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); mover(grade ? -7 : -1) }
+    else if (grade && e.key === 'ArrowRight') { e.preventDefault(); mover(1) }
+    else if (grade && e.key === 'ArrowLeft') { e.preventDefault(); mover(-1) }
     else if (e.key === 'Home') { e.preventDefault(); setRealce(0) }
     else if (e.key === 'End') { e.preventDefault(); setRealce(visiveis.length - 1) }
     else if (e.key === 'Enter' || (e.key === ' ' && !comBusca)) {
@@ -190,7 +196,7 @@ function ListaOpcoes({ opcoes, valor, rotulo, aoEscolher }: { opcoes: OpcaoEscol
             onChange={(e) => { setBusca(e.target.value); setRealce(0) }} autoComplete="off" />
         </div>
       )}
-      <ul ref={lista} id={id} className="escolha-lista" role="listbox" aria-label={rotulo} tabIndex={comBusca ? -1 : 0}
+      <ul ref={lista} id={id} className={`escolha-lista ${grade ? 'grade' : ''}`} role="listbox" aria-label={rotulo} tabIndex={comBusca ? -1 : 0}
         data-foco={comBusca ? undefined : true} aria-activedescendant={visiveis[realce] ? `${id}-${realce}` : undefined}>
         {visiveis.map((o, i) => [
           o.grupo && o.grupo !== visiveis[i - 1]?.grupo && <li key={`g${i}`} className="escolha-grupo" role="presentation">{o.grupo}</li>,
@@ -199,7 +205,7 @@ function ListaOpcoes({ opcoes, valor, rotulo, aoEscolher }: { opcoes: OpcaoEscol
             onMouseMove={() => i !== realce && !o.desativado && setRealce(i)}
             onClick={() => !o.desativado && aoEscolher(o.valor)}>
             {o.cor && <i className="escolha-cor" style={{ background: o.cor }} />}
-            <span className="escolha-nome">{o.rotulo}</span>
+            <span className="escolha-nome">{grade && o.curto ? o.curto : o.rotulo}</span>
             {o.detalhe && <small>{o.detalhe}</small>}
             {o.valor === valor && <Icone nome="check" tamanho={16} />}
           </li>,
@@ -241,7 +247,7 @@ export function CampoData({ valor, aoMudar, rotulo, min, max, obrigatorio, class
       {obrigatorio && <input className="escolha-obrigatorio" tabIndex={-1} aria-hidden="true" value={valor} required onChange={() => {}}
         onInvalid={() => setAberto(true)} />}
       {aberto && (
-        <Quadro ancora={botao} aoFechar={() => setAberto(false)} titulo={rotulo} largura={304} altura={400}>
+        <Quadro ancora={botao} aoFechar={() => setAberto(false)} titulo={rotulo} largura={312} larguraFixa altura={400}>
           <Calendario valor={valor} min={min} max={max} obrigatorio={obrigatorio}
             aoEscolher={(v) => { setAberto(false); aoMudar(v) }} />
         </Quadro>
@@ -343,7 +349,7 @@ export function CampoMes({ valor, aoMudar, rotulo, min, obrigatorio, className =
       {obrigatorio && <input className="escolha-obrigatorio" tabIndex={-1} aria-hidden="true" value={valor} required onChange={() => {}}
         onInvalid={() => setAberto(true)} />}
       {aberto && (
-        <Quadro ancora={botao} aoFechar={() => setAberto(false)} titulo={rotulo} largura={300} altura={300}>
+        <Quadro ancora={botao} aoFechar={() => setAberto(false)} titulo={rotulo} largura={300} larguraFixa altura={300}>
           <GradeMeses valor={valor} min={min} obrigatorio={obrigatorio} aoEscolher={(v) => { setAberto(false); aoMudar(v) }} />
         </Quadro>
       )}

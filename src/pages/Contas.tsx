@@ -451,7 +451,7 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
           </label>
           <label className="campo">
             <span className="campo-rotulo">{entrada ? tx('Cai todo dia') : tx('Vence todo dia')}</span>
-            <Seletor valor={String(dia)} aoMudar={(v) => { setDia(v); setErro(null) }} rotulo={tx('Dia')} placeholder={tx('Escolha…')}
+            <Seletor valor={String(dia)} aoMudar={(v) => { setDia(v); setErro(null) }} rotulo={tx('Dia')} placeholder={tx('Escolha…')} grade
               opcoes={Array.from({ length: 31 }, (_, i) => ({ valor: String(i + 1), rotulo: String(i + 1) }))} />
           </label>
         </div>

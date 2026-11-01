@@ -585,13 +585,13 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
         <div className="form-linha">
           <label className="campo">
             <span className="campo-rotulo">{tx('Dia que a fatura fecha')}</span>
-            <Seletor valor={String(fecha)} aoMudar={(v) => { setFecha(v); setErro(null) }} rotulo={tx('Dia que fecha')}
-              opcoes={DIAS.map((d) => ({ valor: String(d), rotulo: tx('dia {0}', d) }))} />
+            <Seletor valor={String(fecha)} aoMudar={(v) => { setFecha(v); setErro(null) }} rotulo={tx('Dia que fecha')} grade placeholder={tx('Escolher…')}
+              opcoes={DIAS.map((d) => ({ valor: String(d), rotulo: tx('dia {0}', d), curto: String(d) }))} />
           </label>
           <label className="campo">
             <span className="campo-rotulo">{tx('Dia que vence')}</span>
-            <Seletor valor={String(vence)} aoMudar={(v) => { setVence(v); setErro(null) }} rotulo={tx('Dia que vence')}
-              opcoes={DIAS.map((d) => ({ valor: String(d), rotulo: tx('dia {0}', d) }))} />
+            <Seletor valor={String(vence)} aoMudar={(v) => { setVence(v); setErro(null) }} rotulo={tx('Dia que vence')} grade placeholder={tx('Escolher…')}
+              opcoes={DIAS.map((d) => ({ valor: String(d), rotulo: tx('dia {0}', d), curto: String(d) }))} />
           </label>
         </div>
         <span className="campo-ajuda">{tx('Os dois dias aparecem no app do seu banco. Compras feitas depois do dia que fecha entram na fatura do mês seguinte.')}{cartao && (' ' + tx('Mudar os dias vale para as próximas compras; as que você já lançou ficam onde estão.'))}</span>
