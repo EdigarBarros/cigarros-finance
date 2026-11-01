@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx'
 import { MESES, parseNumero } from './format'
-import { supabase } from './supabase'
+import { lerTudo, supabase } from './supabase'
 import { inicioDoMes } from './dividas'
 import { bancoConhecido, bancoNaDescricao, mesmoNome } from './rotulos'
 import type { Banco, Caixa, Categoria, CategoriaAntiga, Lancamento, Mes, TipoCaixa } from './types'
@@ -39,7 +39,7 @@ function valorCelula(ws: XLSX.WorkSheet, ref: string): number | string | null {
   if (c.t === 'n' && typeof c.v === 'number') return c.v
   if (c.t === 's' && typeof c.v === 'string') return c.v.trim() || null
   // A planilha não guarda o resultado das fórmulas, então contas simples (=105.53-60.02) são refeitas aqui.
-  if (c.f) return parseNumero('=' + c.f)
+  if (c.f) return parseNumero('=' + c.f, true)
   return null
 }
 
@@ -74,7 +74,8 @@ const MES_ABREVIADO = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', '
 function mesDaAba(nome: string, ws: XLSX.WorkSheet): { ano: number; mes: number } | null {
   const m = /^([A-ZÇ]+)[\s_/-]*(\d{2}|\d{4})?$/.exec(nome.trim().toUpperCase())
   if (!m) return null
-  const idx = MESES.indexOf(m[1]) >= 0 ? MESES.indexOf(m[1]) : m[1].length === 3 ? MES_ABREVIADO.indexOf(m[1]) : -1
+  const mesCheio = m[1] === 'MARCO' ? 'MARÇO' : m[1] // sem a cedilha também vale
+  const idx = MESES.indexOf(mesCheio) >= 0 ? MESES.indexOf(mesCheio) : m[1].length === 3 ? MES_ABREVIADO.indexOf(m[1]) : -1
   if (idx < 0) return null
   if (m[2]) return { ano: m[2].length === 2 ? 2000 + Number(m[2]) : Number(m[2]), mes: idx + 1 }
   // sem ano no nome: só serve se for uma aba do modelo (ENTRADAS e SAÍDAS lado a lado) com o ano no título
@@ -231,13 +232,19 @@ export async function gravarImportacao(userId: string, meses: MesImportado[]) {
   }
 
   for (const m of meses) {
-    const { error: e1 } = await supabase.from('lancamentos').delete().eq('ano', m.ano).eq('mes', m.mes)
-    if (e1) throw e1
+    // Primeiro grava os novos e só depois apaga os antigos (pelo id, lidos antes): se a gravação falhar, o mês continua
+    // como estava; se o apagar falhar, sobram repetidos, que a próxima importação do mesmo mês limpa.
+    const velhos = await lerTudo<{ id: string }>(() => supabase.from('lancamentos').select('id').eq('ano', m.ano).eq('mes', m.mes).order('id'))
+    if (velhos.error) throw velhos.error
     if (m.lancs.length) {
       const { error } = await supabase.from('lancamentos').insert(m.lancs.map(({ banco, ...l }) => ({
         ...l, banco_id: idDe(banco), ...(minhas ? { categoria_id: idCategoria(l) } : {}),
       })))
       if (error) throw error
+    }
+    for (let i = 0; i < velhos.data.length; i += 100) {
+      const { error: e1 } = await supabase.from('lancamentos').delete().in('id', velhos.data.slice(i, i + 100).map((x) => x.id))
+      if (e1) throw e1
     }
     const caixa: Caixa = Object.fromEntries(Object.entries(m.caixa).map(([nome, v]) => [idDe(nome)!, v]))
     const { error } = await supabase

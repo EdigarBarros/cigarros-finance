@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { hojeLocal } from './cartoes'
+import { hojeLocal, renegociada } from './cartoes'
 import { lerTudo, supabase } from './supabase'
 import type { CartaoCredito, FaturaPaga, Lancamento } from './types'
 import { tx } from './textos'
@@ -107,19 +107,31 @@ export function useCartoes(opcoes: {
     setCartoes((xs) => [...xs, criado])
     return criado
   }
-  const updCartao = async (id: string, patch: Partial<CartaoCredito>) => {
+  /** Devolve false quando não gravou (o formulário fica aberto para a pessoa ajeitar). */
+  const updCartao = async (id: string, patch: Partial<CartaoCredito>): Promise<boolean> => {
     setCartoes((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
     const { error } = await supabase.from('cartoes').update(semExtras ? sem(patch, EXTRAS_CARTAO) : patch).eq('id', id)
     if (error) falhou(/duplicate|unique/i.test(error.message) ? tx('Já existe um cartão chamado "{0}".', patch.nome) : error.message)
+    return !error
   }
-  /** As compras continuam como saídas, só deixam de ter cartão; as faturas marcadas como pagas somem. */
+  /** O cartão tem fatura renegociada (virou uma dívida em parcelas)? */
+  const temRenegociada = (cartaoId: string) => faturasPagas.some((x) => x.cartao_id === cartaoId && renegociada(x))
+  /**
+   * As compras continuam como saídas, só deixam de ter cartão; as faturas marcadas como pagas somem. Com fatura renegociada
+   * não exclui: as compras dela voltariam às saídas do mês e contariam duas vezes junto com a dívida do acordo.
+   */
   const delCartao = async (id: string) => {
+    if (temRenegociada(id)) {
+      aoErro(tx('Este cartão tem uma fatura renegociada. Desfaça a renegociação antes de excluir, ou desligue "Ainda uso este cartão".'))
+      return false
+    }
     setCartoes((xs) => xs.filter((x) => x.id !== id))
     setFaturasPagas((xs) => xs.filter((x) => x.cartao_id !== id))
     setTodas((xs) => xs.filter((x) => x.cartao_id !== id))
     const { error } = await supabase.from('cartoes').delete().eq('id', id)
     if (error) falhou(error.message)
     else void recarregarLancs()
+    return !error
   }
 
   /** Grava todas as parcelas de uma compra de uma vez. */
@@ -171,7 +183,7 @@ export function useCartoes(opcoes: {
 
   return {
     cartoes, faturasPagas, compras, semTabela, semExtras, carregado, recarregar,
-    addCartao, updCartao, delCartao, addCompra, delCompra, pagarFatura, editarPagamento, desfazerPagamento,
+    addCartao, updCartao, delCartao, temRenegociada, addCompra, delCompra, pagarFatura, editarPagamento, desfazerPagamento,
   }
 }
 

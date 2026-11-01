@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { COR } from '../lib/charts'
-import { casasDaMoeda, mascarar, paraCampoMoeda } from '../lib/dinheiro'
+import { casasDaMoeda, dataPlausivel, erroDataFora, erroValorGrande, mascarar, paraCampoMoeda, valorGrandeDemais } from '../lib/dinheiro'
 import { fmtDataLonga, fmtMoeda, fmtValor, MESES_NOME, parseNumero, paraCampo, simbolo, noMeioDaFrase, mesEAno } from '../lib/format'
 import { situacaoMeta, MODELOS, type SituacaoMeta } from '../lib/metas'
 import { hojeLocal } from '../lib/cartoes'
@@ -301,7 +301,7 @@ function FichaMeta({ s, c, aoFechar, aoEditar, aoGuardar, aoRetirar }: {
                 <li key={m.id}>
                   <div className="mt-mov">
                     <span className={`ccd-hist-icone ${m.valor < 0 ? 'reneg' : 'ok'}`}><Icone nome={m.valor < 0 ? 'enviar' : 'receber'} tamanho={15} /></span>
-                    <span className="ccd-hist-texto"><strong>{fmtDataLonga(m.data)}</strong><small>{m.descricao || (m.valor < 0 ? 'retirado' : 'guardado')}</small></span>
+                    <span className="ccd-hist-texto"><strong>{fmtDataLonga(m.data)}</strong><small>{m.descricao || (m.valor < 0 ? tx('retirado') : tx('guardado'))}</small></span>
                     <span className={`ccd-hist-valor ${m.valor < 0 ? 'negativo' : ''}`}>{m.valor < 0 ? '−' : '+'} {fmtMoeda(Math.abs(m.valor), moeda)}</span>
                     <button className="icone-btn pequeno" aria-label={tx('Excluir este registro')} title={tx('Excluir este registro')}
                       onClick={() => { if (confirm(tx('Excluir este registro da meta?'))) void c.d.delMovimentoMeta(m.id) }}><Icone nome="lixeira" tamanho={15} /></button>
@@ -332,6 +332,8 @@ function FormMeta({ c, meta, modelo, aoFechar }: { c: Ctx; meta?: Meta; modelo?:
   const [prazo, setPrazo] = useState(meta?.prazo?.slice(0, 7) ?? '')
   const [erro, setErro] = useState<string | null>(null)
   const [confirmar, setConfirmar] = useState(false)
+  // Meta com prazo que já passou: o campo não pode exigir um mês futuro, senão o navegador trava até um simples renomear.
+  const prazoJaPassou = Boolean(meta?.prazo && meta.prazo.slice(0, 7) < hoje().slice(0, 7))
   // As moedas da pessoa primeiro; as outras continuam disponíveis.
   const minhas = [c.perfil.moeda, ...c.perfil.moedas]
   const opcoesMoeda = [...MOEDAS.filter((m) => minhas.includes(m.codigo)), ...MOEDAS.filter((m) => !minhas.includes(m.codigo))]
@@ -340,6 +342,8 @@ function FormMeta({ c, meta, modelo, aoFechar }: { c: Ctx; meta?: Meta; modelo?:
     if (!nome.trim()) return setErro(tx('Dê um nome para a meta.'))
     const n = parseNumero(alvo)
     if (!n || n <= 0) return setErro(tx('Digite quanto você quer juntar.'))
+    if (valorGrandeDemais(n)) return setErro(erroValorGrande())
+    if (prazo && !dataPlausivel(`${prazo}-01`)) return setErro(erroDataFora())
     const dados = { nome: nome.trim(), icone, cor, moeda, alvo: n, prazo: prazo ? `${prazo}-01` : null }
     if (meta) void c.d.updMeta(meta.id, dados)
     else void c.d.addMeta(dados)
@@ -387,7 +391,7 @@ function FormMeta({ c, meta, modelo, aoFechar }: { c: Ctx; meta?: Meta; modelo?:
         </div>
         <label className="campo">
           <span className="campo-rotulo">{tx('Até quando?')} <small>(opcional)</small></span>
-          <input type="month" value={prazo} onChange={(e) => setPrazo(e.target.value)} min={hoje().slice(0, 7)} />
+          <input type="month" value={prazo} onChange={(e) => setPrazo(e.target.value)} min={prazoJaPassou ? undefined : hoje().slice(0, 7)} />
           <span className="campo-ajuda">{tx('Com um prazo, o app calcula quanto guardar por mês.')}</span>
         </label>
         {erro && <p className="form-erro">{erro}</p>}
@@ -432,6 +436,8 @@ function FormMovimento({ c, meta, retirar: inicial, valorInicial, aoFechar }: { 
   const salvar = () => {
     const n = parseNumero(valor)
     if (!n || n <= 0) return setErro(tx('Digite um valor maior que zero.'))
+    if (valorGrandeDemais(n)) return setErro(erroValorGrande())
+    if (!dataPlausivel(data)) return setErro(erroDataFora())
     if (retirar && n > guardado + 0.001) return setErro(tx('Na meta só tem {0}.', fmtMoeda(guardado, meta.moeda)))
     void c.d.addMovimentoMeta({ meta_id: meta.id, data, valor: retirar ? -n : n, descricao: descricao.trim() })
     aoFechar()

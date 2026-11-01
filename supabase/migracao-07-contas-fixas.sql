@@ -1,3 +1,5 @@
+-- ATENÇÃO: NÃO rode esta migração de novo depois da migração 12. Ela apaga a política "dono" de contas_fixas e a recria SEM
+-- tem_acesso(), e o bloqueio de quem não pagou deixa de valer no banco. Se rodar, rode a migração 20 logo em seguida.
 -- Migração 7: contas fixas e a pagar (aluguel, luz, internet, salário…): o que se repete todo mês.
 -- Supabase > SQL Editor > New query > colar > Run. Só acrescenta; pode rodar mais de uma vez.
 -- Precisa das migrações 3 (bancos) e 5 (categorias) já rodadas.

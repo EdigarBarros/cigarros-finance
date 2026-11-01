@@ -4,7 +4,7 @@ import { nativo, tx } from './textos'
 
 /** Em português e maiúsculas: é como a planilha de importação escreve os meses (lib/planilha.ts). */
 export const MESES = [
-  'JANEIRO', 'FEVEREIRO', tx('MARÇO'), 'ABRIL', 'MAIO', 'JUNHO',
+  'JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
   'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO',
 ]
 
@@ -139,14 +139,19 @@ function calcular(expr: string): number | null {
 /**
  * Converte o que foi digitado em número. Aceita "1.234,56", "12,5", "R$ 10"
  * e, como na planilha, contas simples começando com "=" (ex.: "=105,53-60,02").
+ * `formulaDoExcel`: a conta veio de uma fórmula do Excel, que sempre escreve o decimal com ponto ("=33.333+10" é 43,33,
+ * não 33343); o que a pessoa digita no app segue o jeito brasileiro ("1.234" é mil duzentos e trinta e quatro).
  */
-export function parseNumero(texto: string): number | null {
+export function parseNumero(texto: string, formulaDoExcel = false): number | null {
   let s = texto.trim().replace(/R\$|US\$|\$|€|£|¥|\s/g, '')
   if (!s) return null
   const conta = s.startsWith('=')
   if (conta) s = s.slice(1)
-  // vírgula decimal brasileira: "1.234,56" -> "1234.56"
-  s = s.replace(/(\d)\.(?=\d{3}(\D|$))/g, '$1').replace(/,/g, '.')
+  if (!(conta && formulaDoExcel)) {
+    // vírgula decimal brasileira: "1.234,56" -> "1234.56"; milhar não começa com zero ("0.001" é um milésimo, não 1)
+    // (o 3º argumento é o grupo do lookahead; a posição do achado é o 4º)
+    s = s.replace(/(\d)\.(?=\d{3}(\D|$))/g, (m, d: string, _fim: string, pos: number) => (d === '0' && !/\d/.test(s[pos - 1] ?? '') ? m : d)).replace(/,/g, '.')
+  }
   if (!/^[\d.+\-*/() ]+$/.test(s)) return null
   if (!conta && !/^-?\d*\.?\d+$/.test(s)) return null
   const n = calcular(s)

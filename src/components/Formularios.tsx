@@ -6,7 +6,7 @@ import { formaDe, formaPelaDescricao, formasDoTipo, type FormaPagamento } from '
 import { COR } from '../lib/charts'
 import { calendarioDe, dividaPelaDescricao, inicioPelaProxima, jurosAoAno, meDevem, mesesAntes, nativoDiv, parcelasDe, somaMesesData, type SituacaoDivida } from '../lib/dividas'
 import { dataPadrao, fmtDataLonga, fmtMesAno, fmtMoeda, fmtTaxa, fmtTaxaAno, fmtValor, parseNumero, simbolo } from '../lib/format'
-import { casasDaMoeda, mascarar, paraCampoMoeda } from '../lib/dinheiro'
+import { casasDaMoeda, dataPlausivel, erroDataFora, erroValorGrande, mascarar, paraCampoMoeda, valorGrandeDemais } from '../lib/dinheiro'
 import { infoMoeda, moedasUsaveis, type Taxas } from '../lib/moedas'
 import { visao } from '../lib/perfil'
 import { bancoConhecido, bancoNaDescricao, CORES_LIVRES, mesmoNome } from '../lib/rotulos'
@@ -104,6 +104,9 @@ export function FormLancamento(p: FormLancProps) {
   const [salvos, setSalvos] = useState(0)
   const campoValor = useRef<HTMLInputElement>(null)
   const idForm = useId()
+  // trava contra clique ou Enter duplo: criar a dívida do empréstimo espera a rede, e salvar de novo nesse meio tempo duplicaria tudo
+  const trava = useRef(false)
+  const [salvando, setSalvando] = useState(false)
   // Compra no cartão: só em saída nova. Ao editar uma parcela, o cartão e a compra já estão definidos.
   const [cartaoId, setCartaoId] = useState(p.cartaoInicial ?? '')
   // Forma de pagamento: a do lançamento, "crédito" quando já vem de um cartão, ou vazia até a pessoa escolher (ou o app deduzir).
@@ -146,6 +149,10 @@ export function FormLancamento(p: FormLancProps) {
   const emprestimos = devo.filter((d) => !aReceber.some((a) => a.id === d.id))
   // saída também pode ser dinheiro que você emprestou: aumenta o que alguém te deve
   const jaEmprestei = opcoesDivida.filter((d) => meDevem(d))
+
+  // "Notebook · Nubank" e, com parcela, "Notebook · Nubank · parcela R$ 300,00" (a frase inteira, para traduzir)
+  const nomeDaDivida = (d: Divida) => d.descricao + (d.pessoa && !d.descricao.includes(d.pessoa) ? ` · ${d.pessoa}` : '')
+  const nomeComParcela = (d: Divida) => (d.valor_parcela ? tx('{0} · parcela {1}', nomeDaDivida(d), fmtMoeda(d.valor_parcela, d.moeda ?? principal)) : nomeDaDivida(d))
 
   const moedasDisponiveis = moedasUsaveis(p.perfil, original?.moeda, ini.moeda_original)
   const estrangeira = moeda !== principal
@@ -259,21 +266,32 @@ export function FormLancamento(p: FormLancProps) {
   }
 
   const salvar = async (continuar: boolean) => {
+    if (trava.current) return
+    trava.current = true
+    setSalvando(true)
+    try { await gravar(continuar) } finally { trava.current = false; setSalvando(false) }
+  }
+
+  const gravar = async (continuar: boolean) => {
     const n = parseNumero(valor)
     if (!n || n <= 0) {
       setErro(tx('Digite um valor maior que zero.'))
       campoValor.current?.focus()
       return
     }
+    if (valorGrandeDemais(n)) return setErro(erroValorGrande())
     if (!data) return setErro(tx('Escolha a data.'))
+    if (!dataPlausivel(data)) return setErro(erroDataFora())
     if (forma === 'credito' && !p.inicial && !cartao) return setErro(tx('Escolha o cartão de crédito da compra.'))
     if (estrangeira && (!taxa || taxa <= 0)) return setErro(tx('Digite quanto vale 1 {0} em {1}.', infoMoeda(moeda).nome.toLowerCase(), simbolo(principal)))
+    if (estrangeira && valorGrandeDemais(Math.round(n * taxa! * 100) / 100)) return setErro(erroValorGrande())
     if (contaEscolhida && !cartao && ocupada(contaEscolhida.id)) {
       return setErro(tx('{0} já tem um lançamento neste mês. Escolha “Não” ou mude a data.', contaEscolhida.descricao))
     }
     const [a, m] = data.split('-').map(Number)
     const saida = tipo === 'saida'
-    const criarEmprestimo = novoEmprestimo && Boolean(p.aoNovaDivida)
+    // compra no cartão não se liga a dívida (as parcelas vão sem divida_id): nunca cria o empréstimo nesse caminho
+    const criarEmprestimo = !cartao && novoEmprestimo && Boolean(p.aoNovaDivida)
     if (criarEmprestimo && !quemEmprestou.trim()) return setErro(saida ? tx('Escreva para quem você emprestou o dinheiro.') : tx('Escreva quem emprestou o dinheiro.'))
     // o pagamento fica ligado à dívida escolhida, seja qual for a categoria
     let ligada = saida
@@ -296,10 +314,14 @@ export function FormLancamento(p: FormLancProps) {
       }
       // Uma saída por parcela, na fatura em que cai; a data de cada uma é o vencimento da fatura.
       const compraId = crypto.randomUUID()
-      p.aoSalvarCompra(gerarParcelas(estrangeira ? Math.round(n * taxa! * 100) / 100 : n, vezes, data, cartao).map((x) => ({
+      // Em outra moeda, o valor de cada parcela é o convertido e o original é repartido do mesmo jeito (a diferença na primeira),
+      // para a parcela guardar quanto custou na moeda de origem e a soma das parcelas fechar com o valor digitado.
+      const originais = estrangeira ? dividirNaMoeda(n, vezes, casasDaMoeda(moeda)) : []
+      p.aoSalvarCompra(gerarParcelas(estrangeira ? Math.round(n * taxa! * 100) / 100 : n, vezes, data, cartao).map((x, i) => ({
         ano: x.ano, mes: x.mes, tipo: 'saida', valor: x.valor, descricao: descricao.trim(), data: x.data,
         banco_id: null, categoria_id: categoriaId || null, divida_id: null,
         cartao_id: cartao.id, compra_id: compraId, parcela: x.parcela, parcelas: x.parcelas, data_compra: data,
+        ...(estrangeira ? { valor_original: originais[i], moeda_original: moeda } : {}),
       })))
       setVezes(1)
       setDuplicadaOk(false)
@@ -523,7 +545,7 @@ export function FormLancamento(p: FormLancProps) {
             )}
           </label>
         )}
-        {tipo === 'saida' && (
+        {tipo === 'saida' && !cartao && (
           <>
             {(v.dividas || dividaId || novoEmprestimo || p.aoNovaDivida) && (
               <label className="campo">
@@ -539,7 +561,7 @@ export function FormLancamento(p: FormLancProps) {
                   {devo.length > 0 && (
                     <optgroup label={tx('Estou pagando uma dívida (ela diminui)')}>
                       {devo.map((d) => (
-                        <option key={d.id} value={d.id}>{d.descricao}{d.pessoa && !d.descricao.includes(d.pessoa) ? ` · ${d.pessoa}` : ''}{d.valor_parcela ? ` · parcela ${fmtMoeda(d.valor_parcela, d.moeda ?? principal)}` : ''}</option>
+                        <option key={d.id} value={d.id}>{nomeComParcela(d)}</option>
                       ))}
                     </optgroup>
                   )}
@@ -586,7 +608,7 @@ export function FormLancamento(p: FormLancProps) {
               {aReceber.length > 0 && (
                 <optgroup label={tx('Recebi de quem me devia (o que falta receber diminui)')}>
                   {aReceber.map((d) => (
-                    <option key={d.id} value={d.id}>{d.descricao}{d.pessoa && !d.descricao.includes(d.pessoa) ? ` · ${d.pessoa}` : ''}{d.valor_parcela ? ` · parcela ${fmtMoeda(d.valor_parcela, d.moeda ?? principal)}` : ''}</option>
+                    <option key={d.id} value={d.id}>{nomeComParcela(d)}</option>
                   ))}
                 </optgroup>
               )}
@@ -602,7 +624,7 @@ export function FormLancamento(p: FormLancProps) {
             )}
           </label>
         )}
-        {inicioLigada && data < inicioLigada && (
+        {inicioLigada && !cartao && data < inicioLigada && (
           <div className="form-dica fixa" role="status">
             <Icone nome="calendario" tamanho={16} />
             <span>
@@ -613,7 +635,7 @@ export function FormLancamento(p: FormLancProps) {
             </span>
           </div>
         )}
-        {inicioLigada && saldoLigado && saldoLigado !== inicioLigada && data <= saldoLigado && data >= inicioLigada && (
+        {inicioLigada && !cartao && saldoLigado && saldoLigado !== inicioLigada && data <= saldoLigado && data >= inicioLigada && (
           <div className="form-dica fixa" role="status">
             <Icone nome="calendario" tamanho={16} />
             <span>{tx('Esta dívida teve o saldo informado em {0}, depois da data deste lançamento. O saldo desde lá já considera o que foi pago antes, então este lançamento não muda o que falta.', fmtDataLonga(saldoLigado))}</span>
@@ -641,12 +663,21 @@ export function FormLancamento(p: FormLancProps) {
             </button>
           )}
           <span className="espaco" />
-          {!p.inicial && !p.preset && <button type="button" className="btn" onClick={() => void salvar(true)}><Icone nome="mais" tamanho={16} />{tx('Salvar e lançar outro')}</button>}
-          <button type="submit" className="btn primario"><Icone nome="check" tamanho={17} />{tx('Salvar')}</button>
+          {!p.inicial && !p.preset && <button type="button" className="btn" disabled={salvando} onClick={() => void salvar(true)}><Icone nome="mais" tamanho={16} />{tx('Salvar e lançar outro')}</button>}
+          <button type="submit" className="btn primario" disabled={salvando}><Icone nome="check" tamanho={17} />{tx('Salvar')}</button>
         </div>
       </form>
     </Modal>
   )
+}
+
+/** Divide um valor em N partes na menor unidade da moeda (centavos, ou inteiros no iene), a diferença vai na primeira. */
+function dividirNaMoeda(valor: number, n: number, casas: number): number[] {
+  const f = 10 ** casas
+  const total = Math.round(valor * f)
+  const base = Math.floor(total / n)
+  const resto = total - base * n
+  return Array.from({ length: n }, (_, i) => (i === 0 ? base + resto : base) / f)
 }
 
 const chave = (s: string) => s.trim().toLowerCase().replace(/\s+[–-]\s+\d+x$/, '')
@@ -731,6 +762,9 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
   const [erro, setErro] = useState<string | null>(null)
   const [confirmar, setConfirmar] = useState(false)
   const recebe = sentido === 'me_devem'
+  // trava contra clique ou Enter duplo enquanto espera a rede (mover o início da dívida)
+  const trava = useRef(false)
+  const [salvando, setSalvando] = useState(false)
 
   const vp = parseNumero(parcela)
   const comJuros = semJuros === false && !recebe
@@ -757,15 +791,22 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
     : parseNumero(saldo) ?? (d ? nativoDiv(situacao!, situacao!.restante) : 0)
 
   const salvar = async () => {
+    if (trava.current) return
+    trava.current = true
+    setSalvando(true)
+    try { await gravar() } finally { trava.current = false; setSalvando(false) }
+  }
+
+  // Valida tudo primeiro e só depois grava: uma validação que falha no meio não pode deixar metade da edição salva.
+  const gravar = async () => {
     if (!descricao.trim()) return setErro(recebe ? tx('Dê um nome (ex.: computador que vendi).') : tx('Dê um nome para a dívida.'))
     if (comJuros && juros.trim() && !jurosValidos) return setErro(tx('Digite os juros por mês de 0 a 100 (ex.: 2,5), ou deixe em branco se não souber.'))
     // com o campo à mostra, em branco limpa os juros; em "me devem" ou sem a migração 19, a coluna nem entra
     const extras = { sentido, pessoa: pessoa.trim() || null, ...(semJuros === false ? { juros_mes: comJuros && jurosValidos ? jurosNum : null } : {}) }
     if (!comecou) return setErro(tx('Escolha quando a dívida começou.'))
-    if (d && situacao?.inicioEm && comecou !== situacao.inicioEm) {
-      const motivo = await aoMoverInicio?.(d.id, comecou)
-      if (motivo) return setErro(motivo)
-    }
+    if (!dataPlausivel(comecou) || (proxima && !dataPlausivel(proxima)) || (d && !dataPlausivel(data))) return setErro(erroDataFora())
+    // muda o dia em que a dívida começou; chamado só depois das validações do caminho escolhido
+    const moverInicio = async () => (d && situacao?.inicioEm && comecou !== situacao.inicioEm ? (await aoMoverInicio?.(d.id, comecou)) ?? null : null)
     if (parcelado === 'sim') {
       if (!vp || vp <= 0) return setErro(tx('Digite o valor da parcela.'))
       if (faltam.trim() && !nFaltam) return setErro(tx('Digite quantas parcelas faltam (um número inteiro).'))
@@ -773,12 +814,15 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
       if (total.trim() && (!nTotal || (nFaltam && nTotal < nFaltam))) return setErro(tx('O total de parcelas não pode ser menor que as que faltam.'))
       const nf = nFaltam ?? atuais?.faltam ?? 0
       const totalN = nTotal ?? (d ? d.total_parcelas ?? atuais?.total ?? nf : nf)
+      if (valorGrandeDemais(vp) || valorGrandeDemais(vp * Math.max(nf, totalN))) return setErro(erroValorGrande())
       // Com o total, registra o valor de quando a dívida começou: é isso que mostra "parcela 4 de 12".
       const inicio = proxima ? inicioPelaProxima(proxima, totalN - nf) : d?.inicio ?? null
       // Dívida nova com a 1ª parcela no passado: ela começou naquele mês (e não hoje), senão os pagamentos antigos não contam.
       const origem = !d && mexeuComecou ? comecou : !d && inicio && inicio < data ? `${inicio.slice(0, 7)}-01` : null
       const marcoInicial = nTotal && nTotal > nf ? { data: origem ?? mesesAntes(data, nTotal - nf), saldo: Math.round(vp * nTotal * 100) / 100 } : undefined
       const campos = { descricao: descricao.trim(), valor_parcela: vp, ...extras, moeda: moeda === perfil.moeda ? null : moeda, inicio, total_parcelas: totalN || null }
+      const motivo = await moverInicio()
+      if (motivo) return setErro(motivo)
       if (!d) {
         aoCriar({ ...campos, saldo: Math.round(vp * nf * 100) / 100, data: !marcoInicial && origem ? origem : data, marcoInicial })
       } else {
@@ -795,15 +839,21 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
         // o valor digitado é o da dívida quando ela começou; se já pagou parte fora do app, o que falta hoje entra como ajuste
         const hojeFalta = faltaHoje.trim() ? parseNumero(faltaHoje) : null
         if (faltaHoje.trim() && (hojeFalta === null || hojeFalta < 0 || hojeFalta > v!)) return setErro(tx('O que falta hoje não pode ser maior que o valor da dívida.'))
+        if (valorGrandeDemais(v!)) return setErro(erroValorGrande())
+        const motivo = await moverInicio()
+        if (motivo) return setErro(motivo)
         if (hojeFalta !== null && hojeFalta < v! && hoje > comecou) aoCriar({ ...campos, saldo: hojeFalta, data: hoje, marcoInicial: { data: comecou, saldo: v! } })
         else aoCriar({ ...campos, saldo: v!, data: comecou })
       }
       else {
-        aoEditar(d.id, campos)
         // Valor total: a diferença entra em todos os saldos, e o que falta muda junto (a não ser que você também mexa nele).
         const t = valorTotal.trim() ? parseNumero(valorTotal) : null
         if (valorTotal.trim() && (t === null || t <= 0)) return setErro(tx('Digite um valor total válido.'))
+        if ((t !== null && valorGrandeDemais(t)) || (v !== null && valorGrandeDemais(v))) return setErro(erroValorGrande())
         const delta = t !== null && totalAtual !== null && Math.abs(t - totalAtual) >= 0.005 ? Math.round((t - totalAtual) * 100) / 100 : 0
+        const motivo = await moverInicio()
+        if (motivo) return setErro(motivo)
+        aoEditar(d.id, campos)
         if (delta) aoMudarValor?.(d.id, delta)
         // só grava um novo saldo se o "falta pagar" foi mudado à mão
         if (v !== null && (saldoAtual === null || Math.abs(v - (saldoAtual + delta)) >= 0.005)) aoNovoSaldo(d.id, data, v)
@@ -974,7 +1024,7 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
           )}
           <span className="espaco" />
           <button type="button" className="btn" onClick={aoFechar}>{tx('Cancelar')}</button>
-          <button type="submit" className="btn primario">{tx('Salvar')}</button>
+          <button type="submit" className="btn primario" disabled={salvando}>{tx('Salvar')}</button>
         </div>
         {confirmar && <span className="campo-ajuda">{tx('Ela e todo o histórico dela serão excluídos. Os lançamentos continuam, só deixam de abater dela.')}</span>}
       </form>

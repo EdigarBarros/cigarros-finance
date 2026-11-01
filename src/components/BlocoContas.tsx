@@ -1,8 +1,6 @@
 import { COR } from '../lib/charts'
 import { aproxConta, fmtConta, fraseDaSituacao, pendentes, totaisDoMes, type SituacaoConta } from '../lib/contasFixas'
-import { fmtValor } from '../lib/format'
-
-const MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+import { fmtValor, MESES_CURTO, noMeioDaFrase } from '../lib/format'
 import './contas.css'
 import { tx } from '../lib/textos'
 
@@ -33,7 +31,7 @@ export function BlocoContasDoMes({ situacoes, aoAbrir, aoPagar, completo }: {
         <h2>{tx('Contas do mês')}</h2>
         {situacoes.length > 0 && (
           <span className="bloco-cab-valor">
-            <small style={qtdAtrasadas ? { color: COR.saidas } : undefined}>{qtdAtrasadas ? tx('{0} vencida{1} · falta pagar', qtdAtrasadas, qtdAtrasadas > 1 ? 's' : '') : tx('falta pagar')}</small>
+            <small style={qtdAtrasadas ? { color: COR.saidas } : undefined}>{qtdAtrasadas ? (qtdAtrasadas === 1 ? tx('1 vencida · falta pagar') : tx('{0} vencidas · falta pagar', qtdAtrasadas)) : tx('falta pagar')}</small>
             <strong>{fmtValor(faltaPagar)}</strong>
           </span>
         )}
@@ -50,7 +48,7 @@ export function BlocoContasDoMes({ situacoes, aoAbrir, aoPagar, completo }: {
       {linhas.map((s) => (
         <div key={s.conta.id} className={`conta-linha com-dia ${s.estado}`}>
           {/* o dia do vencimento em bloco, na cor da situação */}
-          <span className="conta-dia" aria-hidden="true"><b>{String(s.dia).padStart(2, '0')}</b><small>{MES[Number(s.vencimento.slice(5, 7)) - 1]}</small></span>
+          <span className="conta-dia" aria-hidden="true"><b>{String(s.dia).padStart(2, '0')}</b><small>{noMeioDaFrase(MESES_CURTO[Number(s.vencimento.slice(5, 7)) - 1])}</small></span>
           <button className="conta-info" onClick={aoAbrir}>
             <strong>{s.conta.descricao}</strong>
             <span className={`chip-estado ${s.estado}`}>{fraseDaSituacao(s)}</span>

@@ -1,3 +1,5 @@
+-- ATENÇÃO: NÃO rode esta migração de novo depois da migração 12. Ela apaga a política "dono" de metas e meta_movimentos e a recria SEM
+-- tem_acesso(), e o bloqueio de quem não pagou deixa de valer no banco. Se rodar, rode a migração 20 logo em seguida.
 -- Migração 6: metas para qualquer objetivo (viagem, reserva, carro…), no lugar da meta fixa em dólar.
 -- Supabase > SQL Editor > New query > colar > Run. Só acrescenta; a coluna antiga meta_usd continua lá.
 

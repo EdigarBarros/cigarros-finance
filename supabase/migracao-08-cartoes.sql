@@ -1,3 +1,5 @@
+-- ATENÇÃO: NÃO rode esta migração de novo depois da migração 12. Ela apaga a política "dono" de cartoes e faturas_pagas e a recria SEM
+-- tem_acesso(), e o bloqueio de quem não pagou deixa de valer no banco. Se rodar, rode a migração 20 logo em seguida.
 -- Migração 8: cartão de crédito (fatura, fechamento e vencimento, compras parceladas).
 -- Supabase > SQL Editor > New query > colar > Run. Só acrescenta e pode ser rodada de novo sem problema.
 --

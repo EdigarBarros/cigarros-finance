@@ -1,3 +1,5 @@
+-- ATENÇÃO: a migração 20 substitui esta (mesmo bloqueio, com tem_acesso() completa, inclusive o teste grátis). NÃO rode esta de novo depois da
+-- 16, 17 ou 18: ela volta tem_acesso() para uma versão sem past_due e sem o teste grátis e tranca quem deveria entrar. Se rodar, rode a 20 em seguida.
 -- Migração 13: o banco só entrega os dados de quem tem acesso (teste grátis, assinatura em dia ou cortesia).
 -- RODE SÓ DEPOIS de testar o fluxo de assinatura com uma conta nova (migração 12 + funções stripe-* no ar).
 -- Sem isto, a tela de assinatura bloqueia o painel, mas alguém que chame a API direto ainda leria os próprios dados.

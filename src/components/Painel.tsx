@@ -49,6 +49,7 @@ import { Questionario } from './Questionario'
 import { Tour } from './Tour'
 import { ParecidosConta } from './VinculoConta'
 import { tx } from '../lib/textos'
+import { useHoje } from '../lib/useHoje'
 
 /**
  * A ordem daqui é a do menu e também a prioridade nas abas do celular (veja docs/arquitetura-do-painel.md):
@@ -75,9 +76,9 @@ const paginaDoHash = (): Pagina => {
   return PAGINAS.some((p) => p.id === h) ? h : 'inicio'
 }
 
-const hoje = new Date()
-
 export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId: string; email: string; nome?: string; assinatura?: Assinatura | null }) {
+  // muda sozinho na virada do dia (a aba pode ficar aberta de um dia para o outro)
+  const hoje = useHoje()
   const [pagina, setPagina] = useState<Pagina>(paginaDoHash)
   // depois de uma atualização automática, volta no mês que a pessoa estava olhando (senão, o mês de hoje)
   const [ano, setAno] = useState(() => mesAntesDeAtualizar()?.ano ?? hoje.getFullYear())
@@ -208,7 +209,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     const agora = hoje.getFullYear() * 12 + hoje.getMonth() + 1
     return MESES_NOME.map((_, i) => {
       const m = i + 1
-      const l = lancsContados.filter((x) => x.mes === m)
+      const l = lancsContados.filter((x) => x.mes === m && x.ano === ano)
       const sit = situacaoDividas(dividasDevo, d.saldos, d.pagamentos, ano, m, taxas)
       const ef = mesEfetivo(d.meses, ano, m)
       const temProprio = d.meses.some((x) => x.ano === ano && x.mes === m)
@@ -216,10 +217,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       const vazio = !l.length && !temProprio && (ano * 12 + m > agora || (!sit.length && !ef.herdadoDe))
       return { sit, ef, resumo: vazio ? null : resumoMes(l, sit, ef, taxas, idCategoria) }
     })
-  }, [lancsContados, dividasDevo, d.saldos, d.pagamentos, d.meses, ano, taxas, d.categorias]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lancsContados, dividasDevo, d.saldos, d.pagamentos, d.meses, ano, taxas, d.categorias, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
   const porMes = porMesCompleto.map((x) => x.resumo)
 
-  const lancsMes = lancsContados.filter((l) => l.mes === mes)
+  const lancsMes = lancsContados.filter((l) => l.mes === mes && l.ano === ano)
   const { sit: situacao, ef: mesEf } = porMesCompleto[mes - 1]
   const aReceber = useMemo(
     () => situacaoDividas(dividasMeDevem, d.saldos, d.pagamentos, ano, mes, taxas),
@@ -324,9 +325,12 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       if (usar) return ligarAConta(lanc.id, s.conta.id)
       recusarVinculos([lanc.id], s.conta.id)
     }
+    // Conta em outra moeda sem cotação (combinada ou do dia): não grava nada por 1 por 1, pede a cotação.
+    const baixa = lancamentoDaBaixa(s.conta, ano, mes, mudancas, taxas)
     esfriar()
+    if (!baixa) return d.setErro(tx('Ainda não temos a cotação de {0}. Toque no lápis (“Outro valor ou outra data”) e informe a cotação do pagamento.', s.moeda ?? ''))
     baixando.current.add(s.conta.id)
-    void d.addLanc(lancamentoDaBaixa(s.conta, ano, mes, mudancas, taxas)).finally(() => baixando.current.delete(s.conta.id))
+    void d.addLanc(baixa).finally(() => baixando.current.delete(s.conta.id))
   }
   const desfazerBaixa = (s: SituacaoConta) => {
     if (s.baixa) void d.delLanc(s.baixa.id)
@@ -366,7 +370,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         tipo: recebe ? 'entrada' : 'saida', divida_id: s.divida.id,
         ...(recebe ? {} : { categoria_id: d.categorias.find((c) => c.papel === 'divida')?.id ?? null }),
         descricao: recebe ? tx('{0} – recebido', `${s.divida.descricao}${s.divida.pessoa ? ` (${s.divida.pessoa})` : ''}`) : tx('{0} – parcela', s.divida.descricao),
-        valor: sugerido && sugerido > 0 ? sugerido : undefined,
+        // sem cotação da moeda da dívida não há valor na moeda principal: o formulário pede a cotação (não assume 1 por 1)
+        valor: sugerido && sugerido > 0 && !s.semCotacao ? sugerido : undefined,
         // dívida em outra moeda: o pagamento abre nessa moeda, com o valor sugerido nela
         ...(s.moeda && sugerido && sugerido > 0 ? { moeda_original: s.moeda, valor_original: nativoDiv(s, sugerido) } : {}),
       },
@@ -784,7 +789,11 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           bancos={d.bancos}
           aoNovoBanco={d.addBanco}
           aoSalvar={(l, id) => void salvarLancamento(l, id)}
-          aoExcluir={d.delLanc}
+          aoExcluir={(id) => {
+            // a parcela de cartão apagada também sai dos totais dos outros anos, que só são lidos de novo ao recarregar
+            const apagado = d.lancs.find((x) => x.id === id)
+            void Promise.resolve(d.delLanc(id)).then(() => (!apagado || apagado.cartao_id ? cartoes.recarregar() : undefined))
+          }}
           cartoes={v.cartoes && !cartoes.semTabela ? cartoes.cartoes : undefined}
           cartaoInicial={form.cartaoId}
           aoSalvarCompra={cartoes.addCompra}

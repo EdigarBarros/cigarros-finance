@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CATEGORIAS_ANTIGAS } from './categorias'
 import { normPerfil } from './perfil'
 import { lerTudo, supabase } from './supabase'
@@ -30,6 +30,9 @@ const normMes = (r: Mes & { usd?: number }): Mes => {
 /** Tabela ainda não criada (migração pendente). */
 const faltaTabela = (e: { code?: string; message: string }) =>
   e.code === '42P01' || e.code === 'PGRST205' || /does not exist|schema cache/i.test(e.message)
+/** Coluna ainda não criada (migração pendente). Só isso conta como "migração faltando": timeout e rede caída não. */
+const faltaColuna = (e: { code?: string; message: string }) =>
+  e.code === '42703' || e.code === 'PGRST204' || /column .*does not exist|could not find .*column/i.test(e.message)
 const chaveFoto = (userId: string) => `opuscash-foto-${userId}`
 const fotoLocal = (userId: string) => {
   try {
@@ -103,7 +106,11 @@ export function useDados(userId: string, ano: number) {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
 
+  /** Número do último pedido de leitura: respostas de pedidos mais antigos (troca rápida de ano) são descartadas. */
+  const pedidoAtual = useRef(0)
+
   const recarregar = useCallback(async () => {
+    const meu = ++pedidoAtual.current
     setCarregando(true)
     const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, xj, vc, rc] = await Promise.all([
       // as tabelas que crescem sem parar são lidas em páginas (lerTudo): o Supabase corta em 1000 linhas
@@ -131,15 +138,24 @@ export function useDados(userId: string, ano: number) {
     if (!ct.error && !ct.data.length) {
       const criou = await supabase.rpc('criar_categorias_padrao')
       const novas = await supabase.from('categorias').select('*').order('ordem').order('nome')
-      const falha = criou.error ?? novas.error
+      // 23505: duas leituras ao mesmo tempo criaram juntas; as categorias existem, então só vale o que foi lido
+      const falha = (criou.error && criou.error.code !== '23505' ? criou.error : null) ?? novas.error
       if (falha) falhaCategorias = falha.message
       else categoriasNovas = novas.data as Categoria[]
     }
+    // chegou outra leitura depois desta (ex.: troca de ano): esta resposta é velha e não pode sobrescrever a tela
+    if (meu !== pedidoAtual.current) return
     // se falhar, o conselheiro só fala com o que o ano aberto tem
     setLancsRecentes(rc.map(normLanc))
-    setDividasSemExtras(Boolean(xd.error))
-    setDividasSemMoeda(Boolean(xm.error))
-    setDividasSemJuros(Boolean(xj.error))
+    // Só a coluna inexistente liga "sem migração". Outro erro (rede, timeout) mantém o valor anterior: ligar sem querer faria
+    // cada gravação apagar sentido, pessoa, moeda e juros das dívidas.
+    const marcarFalta = (r: { error: { code?: string; message: string } | null }, definir: (v: boolean) => void) => {
+      if (!r.error) definir(false)
+      else if (faltaColuna(r.error)) definir(true)
+    }
+    marcarFalta(xd, setDividasSemExtras)
+    marcarFalta(xm, setDividasSemMoeda)
+    marcarFalta(xj, setDividasSemJuros)
     // sem a migração 7 a coluna não existe: o app só não aprende com os outros anos
     setVinculosOutrosAnos(vc.error ? [] : (vc.data as Pick<Lancamento, 'id' | 'conta_fixa_id' | 'descricao' | 'valor'>[]).map((x) => ({ ...x, valor: num(x.valor) })))
     const e = l.error ?? m.error ?? d.error ?? s.error ?? p.error ?? b.error
@@ -346,6 +362,19 @@ export function useDados(userId: string, ano: number) {
     return null
   }
 
+  /**
+   * Os meses como as telas usam: o caixa só com os bancos que existem. Excluir um banco não apaga o que ficou guardado nele
+   * nos meses (o JSON `caixa`), e sem este filtro esse dinheiro continuaria nos totais, no patrimônio e no conselheiro sem
+   * nenhum banco na tela para explicar ou zerar. Bancos e meses são lidos juntos (erro em um, nenhum é trocado).
+   */
+  const mesesDosBancos = useMemo(() => {
+    const ids = new Set(bancos.map((b) => b.id))
+    return meses.map((m) => {
+      const chaves = Object.keys(m.caixa ?? {})
+      return chaves.every((k) => ids.has(k)) ? m : { ...m, caixa: Object.fromEntries(Object.entries(m.caixa).filter(([k]) => ids.has(k))) }
+    })
+  }, [meses, bancos])
+
   const salvarMes = async (anoMes: number, mes: number, patch: Partial<Omit<Mes, 'ano' | 'mes'>>) => {
     const atual = meses.find((m) => m.ano === anoMes && m.mes === mes) ?? {
       ano: anoMes, mes, investimentos: 0, moedas: {}, meta_usd: 0, caixa: {},
@@ -503,7 +532,7 @@ export function useDados(userId: string, ano: number) {
     dividasSemExtras,
     dividasSemMoeda,
     dividasSemJuros,
-    lancs, lancsRecentes, meses, dividas, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,
+    lancs, lancsRecentes, meses: mesesDosBancos, dividas, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,
     addLanc, addLancs, renomearLancs, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, ajustarValorDivida, moverInicioDivida, salvarMes,
   }
 }
