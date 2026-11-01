@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
 import { parecencaComConta, situacoesDoMes, sugestoesDoMes } from '../lib/contasFixas'
-import { lerExtrato, limparDescricao, type LinhaExtrato } from '../lib/extrato'
+import { buscarJaLancados, chaveDeRepetido, lerExtrato, limparDescricao, type LinhaExtrato } from '../lib/extrato'
 import { infoForma } from '../lib/formas'
 import { fmtValor, MESES_NOME, noMeioDaFrase } from '../lib/format'
 import { mesmoNome } from '../lib/rotulos'
@@ -73,6 +73,8 @@ const dataCurta = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
 export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void }) {
   const [etapa, setEtapa] = useState<'escolher' | 'lendo' | 'revisar' | 'gravando' | 'pronto'>('escolher')
   const [erro, setErro] = useState<string | null>(null)
+  /** Aviso na tela de revisão (ex.: não deu para conferir os repetidos de outro ano). */
+  const [aviso, setAviso] = useState<string | null>(null)
   const [arquivo, setArquivo] = useState('')
   const [formato, setFormato] = useState('')
   const [bancoLido, setBancoLido] = useState<string | undefined>()
@@ -86,14 +88,18 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
   const ler = async (f: File | undefined) => {
     if (!f) return
     setErro(null)
+    setAviso(null)
     setArquivo(f.name)
     setEtapa('lendo')
     try {
       const r = await lerExtrato(f, c.ano)
       if (!r.linhas.length) throw new Error('Não achei lançamentos nesse arquivo. Confira se é o extrato (com data e valor de cada movimentação).')
-      const existentes = c.d.lancs
+      // só o ano aberto está carregado: num extrato que cruza a virada (dez–jan), os dias do outro ano são buscados no banco
+      const outros = await buscarJaLancados(r.linhas, c.ano)
+      if (outros.anosComErro.length) setAviso(tx('Não consegui conferir os lançamentos de {0}. Confira se o que é desse ano já não foi lançado antes de importar.', outros.anosComErro.join(', ')))
+      const existentes = new Set([...c.d.lancs, ...outros.lancs].map(chaveDeRepetido))
       const prontas = r.linhas.map((l, i): Linha => {
-        const repetido = existentes.some((x) => x.data === l.data && Math.abs(x.valor - l.valor) < 0.005 && x.tipo === l.tipo)
+        const repetido = existentes.has(chaveDeRepetido(l))
         return { ...l, chave: i, repetido, incluir: !repetido, conta_fixa_id: '', categoria_id: categoriaPelaDescricao(l.descricao, l.tipo, c.categorias)?.id ?? '' }
       })
       setLinhas(ligarAsContas(prontas, c))
@@ -198,6 +204,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
               )}
             </header>
 
+            {aviso && <p className="form-erro ex-erro"><Icone nome="sino" tamanho={16} /> {aviso}</p>}
             <div className="ex-filtros">
               {([['todos', tx('Todos ({0})', linhas.length)], ['revisar', tx('Para revisar ({0})', paraRevisar.length)], ['repetidos', tx('Já lançados ({0})', repetidos.length)]] as const).map(([id, rotulo]) => (
                 <button key={id} className={`lc-banco ${filtro === id ? 'ativo' : ''}`} onClick={() => setFiltro(id)} disabled={id !== 'todos' && rotulo.endsWith('(0)')}>{rotulo}</button>
