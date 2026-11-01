@@ -30,6 +30,7 @@ const CAMINHOS: Record<string, string> = {
   lua: 'M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z',
   sino: 'M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0',
   abaixo: 'M6 9l6 6 6-6',
+  cima: 'M18 15l-6-6-6 6',
   seta: 'M5 12h14M13 6l6 6-6 6',
   receber: 'M12 3v12M7 10l5 5 5-5M5 21h14',
   enviar: 'M12 20V8M7 13l5-5 5 5M5 3h14',
