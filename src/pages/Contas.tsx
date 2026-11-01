@@ -28,7 +28,7 @@ const EXEMPLOS: { nome: string; tipo: Tipo; icone: string; dica: string; categor
   { nome: tx('Luz'), tipo: 'saida', icone: '💡', dica: tx('o valor muda, você acerta na hora de pagar'), categoria: tx('Moradia') },
   { nome: tx('Internet'), tipo: 'saida', icone: '📶', dica: tx('casa ou celular'), categoria: tx('Moradia') },
   { nome: tx('Celular'), tipo: 'saida', icone: '📱', dica: tx('plano ou aparelho'), categoria: tx('Assinaturas') },
-  { nome: tx('Academia'), tipo: 'saida', icone: '🏋️', dica: 'mensalidade', categoria: tx('Saúde') },
+  { nome: tx('Academia'), tipo: 'saida', icone: '🏋️', dica: tx('mensalidade'), categoria: tx('Saúde') },
   { nome: tx('Streaming'), tipo: 'saida', icone: '📺', dica: tx('Netflix, Spotify, Disney…'), categoria: tx('Assinaturas') },
   { nome: tx('Salário'), tipo: 'entrada', icone: '💼', dica: tx('o dia em que cai na conta'), categoria: tx('Salário') },
 ]
@@ -487,7 +487,9 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
           </label>
         </div>
         <span className="campo-ajuda">
-          {tx('A conta aparece todo mês a partir daí. Se já {0} neste mês, é só tocar em “', entrada ? tx('recebeu') : tx('pagou'))}{entrada ? tx('Recebi') : tx('Paguei')}{tx('” depois. Deixe o “até quando” em branco se ela não tem data para acabar.')}
+          {entrada
+            ? tx('A conta aparece todo mês a partir daí. Se já recebeu neste mês, é só tocar em “Recebi” depois. Deixe o “até quando” em branco se ela não tem data para acabar.')
+            : tx('A conta aparece todo mês a partir daí. Se já pagou neste mês, é só tocar em “Paguei” depois. Deixe o “até quando” em branco se ela não tem data para acabar.')}
         </span>
         {erro && <p className="form-erro">{erro}</p>}
         <div className="form-acoes">
