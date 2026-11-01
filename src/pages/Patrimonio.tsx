@@ -15,7 +15,7 @@ import { Bandeira } from '../components/Bandeira'
 import { CartaoIlustrado } from '../components/CartaoIlustrado'
 import { Numero } from '../components/Numero'
 import { Anel, CampoValor, Cartao, Faisca, Kpi, Modal, Vazio, Palco } from '../components/ui'
-import { confirmar } from '../components/Avisos'
+import { confirmar } from '../lib/avisos'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 

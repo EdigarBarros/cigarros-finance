@@ -21,7 +21,7 @@ import { CampoCotacao } from './CampoCotacao'
 import { EscolhaMoeda } from './EscolhaMoeda'
 import { Modal, Palco, Segmentado } from './ui'
 import { CampoData, CampoSugestoes, Seletor } from './Escolhas'
-import { confirmar, perguntar } from './Avisos'
+import { confirmar, perguntar } from '../lib/avisos'
 import { tx } from '../lib/textos'
 
 type NovoLanc = Omit<Lancamento, 'id'>

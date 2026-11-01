@@ -1,65 +1,13 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { createRoot } from 'react-dom/client'
+import { filaDeAvisos, type Pedido } from '../lib/avisos'
 import { tx } from '../lib/textos'
 import { Icone } from './Icone'
 
-/*
- * Avisos, confirmações e perguntas do app, no lugar do alert(), confirm() e prompt() do navegador (que abriam a caixa
- * cinza do sistema). Usam a mesma janela do app: no computador no meio da tela, no celular sobem como folha.
- *
- *   if (!(await confirmar('Excluir este lançamento?', { botao: 'Excluir', perigo: true }))) return
- *   await avisar('Não encontrei abas de mês…')
- *   const nome = await perguntar('Nome do banco:')
- */
-
-interface Pedido {
-  tipo: 'aviso' | 'confirmacao' | 'pergunta'
-  texto: string
-  titulo?: string
-  botao?: string
-  perigo?: boolean
-  placeholder?: string
-  cancelar?: string
-  responder: (v: boolean | string | null) => void
-}
-
-let fila: Pedido[] = []
-const ouvintes = new Set<() => void>()
-const avisar_ = () => ouvintes.forEach((f) => f())
-let montado = false
-
-function pedir(p: Omit<Pedido, 'responder'>) {
-  if (!montado) {
-    montado = true
-    const div = document.createElement('div')
-    document.body.appendChild(div)
-    createRoot(div).render(<Janelas />)
-  }
-  return new Promise<boolean | string | null>((responder) => {
-    fila = [...fila, { ...p, responder }]
-    avisar_()
-  })
-}
-
-export interface OpcoesConfirmar { titulo?: string; botao?: string; perigo?: boolean; /** Texto do outro botão (padrão: Cancelar). */ cancelar?: string }
-
-/** Pergunta sim ou não. `perigo`: o botão de confirmar sai vermelho (excluir, apagar, substituir). */
-export const confirmar = (texto: string, o: OpcoesConfirmar = {}) => pedir({ tipo: 'confirmacao', texto, ...o }) as Promise<boolean>
-/** Só um recado, com um botão de OK. */
-export const avisar = (texto: string, titulo?: string) => pedir({ tipo: 'aviso', texto, titulo }).then(() => undefined)
-/** Pede um texto curto. Devolve null se a pessoa cancelar. */
-export const perguntar = (texto: string, o: { titulo?: string; placeholder?: string; botao?: string } = {}) =>
-  pedir({ tipo: 'pergunta', texto, ...o }) as Promise<string | null>
-
-function Janelas() {
-  const atual = useSyncExternalStore((f) => { ouvintes.add(f); return () => ouvintes.delete(f) }, () => fila[0])
+/** A janela dos avisos e confirmações de lib/avisos.ts, no visual do app. */
+export function Janelas() {
+  const atual = useSyncExternalStore(filaDeAvisos.ouvir, filaDeAvisos.atual)
   if (!atual) return null
-  const fechar = (v: boolean | string | null) => {
-    fila = fila.slice(1)
-    avisar_()
-    atual.responder(v)
-  }
-  return <Janela key={fila.length + atual.texto} p={atual} aoResponder={fechar} />
+  return <Janela key={filaDeAvisos.tamanho() + atual.texto} p={atual} aoResponder={filaDeAvisos.responder} />
 }
 
 function Janela({ p, aoResponder }: { p: Pedido; aoResponder: (v: boolean | string | null) => void }) {

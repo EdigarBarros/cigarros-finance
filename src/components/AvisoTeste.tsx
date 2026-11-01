@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { diasDeTeste, emTeste, irParaStripe, type Assinatura } from '../lib/assinatura'
 import { Icone } from './Icone'
-import { avisar } from './Avisos'
+import { avisar } from '../lib/avisos'
 import { tx } from '../lib/textos'
 
 const DURACAO = 15000

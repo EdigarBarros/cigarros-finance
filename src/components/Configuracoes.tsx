@@ -13,7 +13,7 @@ import { Selo } from './Categorias'
 import { PARTES_ZERAR, type EscolhaZerar, type ParteZerar } from '../lib/zerar'
 import { Icone } from './Icone'
 import { Interruptor, Modal, Opcao } from './ui'
-import { avisar } from './Avisos'
+import { avisar } from '../lib/avisos'
 import { LOCAL_DAS_DATAS } from '../lib/format'
 import { tx } from '../lib/textos'
 
