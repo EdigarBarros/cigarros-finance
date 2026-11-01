@@ -100,7 +100,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
       const existentes = new Set([...c.d.lancs, ...outros.lancs].map(chaveDeRepetido))
       const prontas = r.linhas.map((l, i): Linha => {
         const repetido = existentes.has(chaveDeRepetido(l))
-        return { ...l, chave: i, repetido, incluir: !repetido, conta_fixa_id: '', categoria_id: categoriaPelaDescricao(l.descricao, l.tipo, c.categorias)?.id ?? '' }
+        return { ...l, chave: i, repetido, incluir: !repetido && !l.pagamentoDaFatura, conta_fixa_id: '', categoria_id: categoriaPelaDescricao(l.descricao, l.tipo, c.categorias)?.id ?? '' }
       })
       setLinhas(ligarAsContas(prontas, c))
       setFormato(r.formato)
@@ -210,7 +210,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
                 <button key={id} className={`lc-banco ${filtro === id ? 'ativo' : ''}`} onClick={() => setFiltro(id)} disabled={id !== 'todos' && rotulo.endsWith('(0)')}>{rotulo}</button>
               ))}
               <span className="espaco" />
-              <button className="link" onClick={() => setLinhas((xs) => xs.map((x) => ({ ...x, incluir: !x.repetido })))}>{tx('Marcar todos os novos')}</button>
+              <button className="link" onClick={() => setLinhas((xs) => xs.map((x) => ({ ...x, incluir: !x.repetido && !x.pagamentoDaFatura })))}>{tx('Marcar todos os novos')}</button>
               <button className="link" onClick={() => setLinhas((xs) => xs.map((x) => ({ ...x, incluir: false })))}>{tx('Desmarcar todos')}</button>
             </div>
 

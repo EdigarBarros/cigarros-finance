@@ -21,6 +21,11 @@ export interface LinhaExtrato {
   revisar?: string
   /** Como foi pago, quando o extrato diz (Pix, transferência, boleto, débito): o nome fica só com a pessoa ou a loja. */
   forma?: FormaGravada | null
+  /**
+   * Pagamento da fatura numa fatura de cartão ("Pagamento recebido"). Não é renda: é o dinheiro que saiu da conta para pagar o
+   * cartão, e esse já aparece no extrato da conta. Vem desmarcado na revisão para não contar em dobro.
+   */
+  pagamentoDaFatura?: boolean
 }
 
 export interface ExtratoLido {
@@ -371,8 +376,10 @@ export function deTexto(linhas: string[], anoPadrao: number): LinhaExtrato[] {
       if (d) desc = desc.replace(new RegExp(d.trecho.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&'), 'i'), ' ')
       for (const x of valores.slice(1)) desc = desc.replace(x.trecho, ' ')
       // fatura de cartão em PDF: o pagamento da fatura vem com sinal de menos, mas é dinheiro que entrou no cartão
-      const sinal = v.sinal === -1 && /\bpagamento recebido\b/.test(normal(desc)) ? 1 : v.sinal
+      const pagouFatura = v.sinal === -1 && /\bpagamento recebido\b/.test(normal(desc))
+      const sinal = pagouFatura ? 1 : v.sinal
       const l = montar(data, desc, v.valor, sinal)
+      if (pagouFatura) Object.assign(l, { pagamentoDaFatura: true, revisar: l.revisar ?? 'pagamento da fatura: já está no extrato da conta' })
       saida.push(l)
       semAno.push(adivinhada)
       ultimo = { l, bruta: desc, sinal }
@@ -383,7 +390,7 @@ export function deTexto(linhas: string[], anoPadrao: number): LinhaExtrato[] {
       const junto: string = `${ultimo.bruta} ${linha}`
       // refaz como o lançamento nasceu (mesmo sinal), para o tipo, a forma e o aviso "confira se entrou ou saiu" acompanharem o nome inteiro
       const novo = montar(ultimo.l.data, junto, ultimo.l.valor, ultimo.sinal)
-      Object.assign(ultimo.l, { descricao: novo.descricao, original: novo.original, revisar: novo.revisar, tipo: novo.tipo, forma: novo.forma })
+      Object.assign(ultimo.l, { descricao: novo.descricao, original: novo.original, revisar: ultimo.l.pagamentoDaFatura ? ultimo.l.revisar : novo.revisar, tipo: novo.tipo, forma: novo.forma })
       ultimo = { l: ultimo.l, bruta: junto, sinal: ultimo.sinal }
     }
   }
@@ -509,7 +516,7 @@ export function deTabela(linhas: string[][], anoPadrao: number): LinhaExtrato[] 
     const desc = r.filter((c, j) => j === col.desc ? Boolean(c) : !usadas.has(j) && ehTexto(c)).join(' - ')
     const l = montar(d.data, desc, valor, sinal, extraTipo)
     // o pagamento da fatura sai da conta e já está no extrato dela: importar de novo contaria em dobro
-    if (fatura && sinal === 1 && /^pagamento recebido/.test(normal(desc))) l.revisar ??= 'pagamento da fatura: confira se já não está no extrato da conta'
+    if (fatura && sinal === 1 && /^pagamento recebido/.test(normal(desc))) Object.assign(l, { pagamentoDaFatura: true, revisar: l.revisar ?? 'pagamento da fatura: já está no extrato da conta' })
     saida.push(l)
     semAno.push(Boolean(d.semAno))
   }

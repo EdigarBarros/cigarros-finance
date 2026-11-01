@@ -149,7 +149,8 @@ export function parseNumero(texto: string, formulaDoExcel = false): number | nul
   if (conta) s = s.slice(1)
   if (!(conta && formulaDoExcel)) {
     // vírgula decimal brasileira: "1.234,56" -> "1234.56"; milhar não começa com zero ("0.001" é um milésimo, não 1)
-    s = s.replace(/(\d)\.(?=\d{3}(\D|$))/g, (m, d: string, pos: number) => (d === '0' && !/\d/.test(s[pos - 1] ?? '') ? m : d)).replace(/,/g, '.')
+    // (o 3º argumento é o grupo do lookahead; a posição do achado é o 4º)
+    s = s.replace(/(\d)\.(?=\d{3}(\D|$))/g, (m, d: string, _fim: string, pos: number) => (d === '0' && !/\d/.test(s[pos - 1] ?? '') ? m : d)).replace(/,/g, '.')
   }
   if (!/^[\d.+\-*/() ]+$/.test(s)) return null
   if (!conta && !/^-?\d*\.?\d+$/.test(s)) return null
