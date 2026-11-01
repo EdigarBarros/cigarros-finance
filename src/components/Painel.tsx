@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes } from '../lib/calc'
 import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
@@ -25,31 +25,71 @@ import { AvisoTeste } from './AvisoTeste'
 import { useCartoes } from '../lib/useCartoes'
 import { useContasFixas } from '../lib/useContasFixas'
 import { useDados } from '../lib/useDados'
-import { Ano } from '../pages/Ano'
-import { Cartoes } from '../pages/Cartoes'
-import { Contas } from '../pages/Contas'
 import type { Ctx, Pagina } from '../pages/contexto'
-import { Dividas } from '../pages/Dividas'
-import { Inicio } from '../pages/Inicio'
-import { Lancamentos } from '../pages/Lancamentos'
-import { Metas } from '../pages/Metas'
-import { Patrimonio } from '../pages/Patrimonio'
-import { GerenciarCategorias } from './Categorias'
 import { BlocoCartoes } from './BlocoCartoes'
 import { BlocoContasDoMes } from './BlocoContas'
-import { ImportarExtrato, OrganizarNomes } from './Extrato'
-import { FormLancamento } from './Formularios'
 import { Kpi } from './ui'
 import { BotaoIdioma } from './BotaoIdioma'
 import { Icone } from './Icone'
 import { CartaoDicas, type Dica } from './CartaoDicas'
 import { Marca } from './Marca'
-import { Configuracoes, ExcluirContaModal, ZerarDados } from './Configuracoes'
-import { Questionario } from './Questionario'
-import { Tour } from './Tour'
-import { ParecidosConta } from './VinculoConta'
 import { tx } from '../lib/textos'
 import { useHoje } from '../lib/useHoje'
+
+// Cada tela e cada janela vira um pedaço à parte: o painel abre só com o que a pessoa vê e o resto chega sob demanda
+// (e é baixado em segundo plano logo depois, veja `carregarRestante`).
+const paginas = {
+  Inicio: () => import('../pages/Inicio'),
+  Lancamentos: () => import('../pages/Lancamentos'),
+  Contas: () => import('../pages/Contas'),
+  Cartoes: () => import('../pages/Cartoes'),
+  Dividas: () => import('../pages/Dividas'),
+  Metas: () => import('../pages/Metas'),
+  Patrimonio: () => import('../pages/Patrimonio'),
+  Ano: () => import('../pages/Ano'),
+}
+const Inicio = lazy(() => paginas.Inicio().then((m) => ({ default: m.Inicio })))
+const Lancamentos = lazy(() => paginas.Lancamentos().then((m) => ({ default: m.Lancamentos })))
+const Contas = lazy(() => paginas.Contas().then((m) => ({ default: m.Contas })))
+const Cartoes = lazy(() => paginas.Cartoes().then((m) => ({ default: m.Cartoes })))
+const Dividas = lazy(() => paginas.Dividas().then((m) => ({ default: m.Dividas })))
+const Metas = lazy(() => paginas.Metas().then((m) => ({ default: m.Metas })))
+const Patrimonio = lazy(() => paginas.Patrimonio().then((m) => ({ default: m.Patrimonio })))
+const Ano = lazy(() => paginas.Ano().then((m) => ({ default: m.Ano })))
+const janelas = {
+  Formularios: () => import('./Formularios'),
+  Configuracoes: () => import('./Configuracoes'),
+  Extrato: () => import('./Extrato'),
+  Categorias: () => import('./Categorias'),
+  VinculoConta: () => import('./VinculoConta'),
+}
+const FormLancamento = lazy(() => janelas.Formularios().then((m) => ({ default: m.FormLancamento })))
+const Configuracoes = lazy(() => janelas.Configuracoes().then((m) => ({ default: m.Configuracoes })))
+const ExcluirContaModal = lazy(() => janelas.Configuracoes().then((m) => ({ default: m.ExcluirContaModal })))
+const ZerarDados = lazy(() => janelas.Configuracoes().then((m) => ({ default: m.ZerarDados })))
+const ImportarExtrato = lazy(() => janelas.Extrato().then((m) => ({ default: m.ImportarExtrato })))
+const OrganizarNomes = lazy(() => janelas.Extrato().then((m) => ({ default: m.OrganizarNomes })))
+const GerenciarCategorias = lazy(() => janelas.Categorias().then((m) => ({ default: m.GerenciarCategorias })))
+const ParecidosConta = lazy(() => janelas.VinculoConta().then((m) => ({ default: m.ParecidosConta })))
+const Questionario = lazy(() => import('./Questionario').then((m) => ({ default: m.Questionario })))
+const Tour = lazy(() => import('./Tour').then((m) => ({ default: m.Tour })))
+
+/** Com o painel já na tela e o aparelho parado, baixa as outras telas e janelas para a troca de tela ser instantânea. */
+function carregarRestante() {
+  const fila = [...Object.values(paginas), ...Object.values(janelas)]
+  const proximo = () => {
+    const f = fila.shift()
+    if (!f) return
+    void f().catch(() => {}) // sem rede agora: baixa quando a pessoa abrir
+    agendar(proximo)
+  }
+  agendar(proximo)
+}
+const agendar = (f: () => void) => {
+  const ric = (window as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback
+  if (ric) ric(f, { timeout: 4000 })
+  else setTimeout(f, 300)
+}
 
 /**
  * A ordem daqui é a do menu e também a prioridade nas abas do celular (veja docs/arquitetura-do-painel.md):
@@ -84,6 +124,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const [ano, setAno] = useState(() => mesAntesDeAtualizar()?.ano ?? hoje.getFullYear())
   const [mes, setMes] = useState(() => mesAntesDeAtualizar()?.mes ?? hoje.getMonth() + 1)
   useEffect(() => lembrarMes(ano, mes), [ano, mes])
+  useEffect(carregarRestante, [])
   const [avisoFatura, setAvisoFatura] = useState<{ cartao: string; fechamento: number; depoisDoFechamento: boolean; ano: number; mes: number; anoCompra: number } | null>(null)
   const [form, setForm] = useState<{ inicial?: Lancamento; tipo?: Tipo; preset?: Partial<Lancamento>; cartaoId?: string } | null>(null)
   const [menu, setMenu] = useState(false)
@@ -479,6 +520,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   if (carregandoPerfil) return <Esqueleto />
   if (perguntar) {
     return (
+      <Suspense fallback={<Esqueleto />}>
       <Questionario
         inicial={perfil.nome || !nomeConta ? perfil : { ...perfil, nome: nomeConta }}
         foto={d.foto}
@@ -490,6 +532,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         }}
         aoCancelar={refazendo ? () => setRefazendo(false) : undefined}
       />
+      </Suspense>
     )
   }
 
@@ -722,6 +765,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           </div>
         )}
 
+        <Suspense fallback={null}>
         {paginaMostrada === 'inicio' && <Inicio {...ctx} />}
         {paginaMostrada === 'lancamentos' && <Lancamentos {...ctx} />}
         {paginaMostrada === 'contas' && <Contas {...ctx} />}
@@ -730,6 +774,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         {paginaMostrada === 'metas' && <Metas {...ctx} />}
         {paginaMostrada === 'patrimonio' && <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />}
         {paginaMostrada === 'ano' && <Ano {...ctx} />}
+        </Suspense>
       </div>
 
       <button className="fab" data-tour="lancar" onClick={() => setForm({})} aria-label={tx('Novo lançamento')}><Icone nome="mais" tamanho={26} /></button>
@@ -766,6 +811,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
 
       <input ref={arquivo} type="file" accept=".xlsx,.xlsm,.xls" hidden onChange={(e) => e.target.files?.[0] && importar(e.target.files[0])} />
 
+      <Suspense fallback={null}>
       {form && (
         <FormLancamento
           key={form.inicial?.id ?? form.preset?.divida_id ?? 'novo'}
@@ -886,6 +932,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           aoFechar={() => setEditarCategorias(false)}
         />
       )}
+      </Suspense>
     </div>
   )
 }

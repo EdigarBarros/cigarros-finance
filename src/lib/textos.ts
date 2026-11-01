@@ -1,4 +1,3 @@
-import traducoes from '../i18n/traducoes.json'
 import { IDIOMAS_NATIVOS, idiomaAtual } from './idioma'
 
 /**
@@ -9,9 +8,12 @@ import { IDIOMAS_NATIVOS, idiomaAtual } from './idioma'
  * Trocar de idioma recarrega a página, então o idioma não muda com a página aberta.
  * Para tirar os textos de um arquivo novo: node scripts/traducao/extrair.cjs <arquivo>.
  */
-const lista = traducoes as Record<string, Partial<Record<(typeof IDIOMAS_NATIVOS)[number], string>>>
 const idioma = idiomaAtual()
 export const nativo = (IDIOMAS_NATIVOS as readonly string[]).includes(idioma)
+// Quem usa o app em português (a maioria) não baixa as ~200 kB de tradução: o arquivo só vem para inglês e espanhol.
+const lista: Record<string, Partial<Record<(typeof IDIOMAS_NATIVOS)[number], string>>> = nativo
+  ? (await import('../i18n/traducoes.json')).default
+  : {}
 
 export function tx(pt: string, ...valores: (string | number | null | undefined)[]): string {
   const texto = (nativo && lista[pt]?.[idioma as 'en' | 'es']) || pt

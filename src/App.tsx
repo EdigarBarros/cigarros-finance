@@ -23,7 +23,16 @@ const comIdioma = (tela: React.ReactNode, traduzida = true) => (
   </>
 )
 
-const Painel = lazy(() => import('./components/Painel').then((m) => ({ default: m.Painel })))
+const carregarPainel = () => import('./components/Painel').then((m) => ({ default: m.Painel }))
+const Painel = lazy(carregarPainel)
+
+/**
+ * Quem já tem sessão guardada neste aparelho vai cair no painel: começa a baixá-lo agora, junto com a leitura da sessão e da
+ * assinatura, em vez de esperar as duas terminarem (era uma fila: sessão, assinatura e só então o painel).
+ */
+try {
+  if (Object.keys(localStorage).some((k) => /^sb-.+-auth-token$/.test(k))) void carregarPainel()
+} catch { /* armazenamento bloqueado: baixa quando precisar */ }
 
 export default function App() {
   const [sessao, setSessao] = useState<Session | null | undefined>(undefined)
