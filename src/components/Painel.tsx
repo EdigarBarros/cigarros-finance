@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes } from '../lib/calc'
 import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
@@ -142,6 +142,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     p.id === 'contas' ? v.contas : p.id === 'cartoes' ? v.cartoes : p.id === 'dividas' ? v.dividas : p.id === 'metas' ? v.metas : p.id === 'patrimonio' ? v.bancos || v.investimentos || v.moedas : p.id === 'ano' ? v.paginaAno : true,
   )
   const paginaAtual = paginas.some((p) => p.id === pagina) ? pagina : 'inicio'
+  // O menu muda na hora; a página nova é montada em segundo plano (em pedaços), sem congelar a animação do menu.
+  const paginaMostrada = useDeferredValue(paginaAtual)
   // Quem terminou as perguntas há pouco e ainda não viu (nem pulou) o tutorial recebe o convite sozinho, uma vez por abertura.
   useEffect(() => {
     const recemChegou = perfil.onboarding_em ? Date.now() - new Date(perfil.onboarding_em).getTime() < 3 * 86400000 : false
@@ -162,7 +164,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const abas = paginas.length <= MAX_ABAS ? paginas : paginas.slice(0, MAX_ABAS - 1)
   const naMais = paginas.slice(abas.length)
 
-  // Ao trocar de mês, os blocos da página saem do desfoque de novo (mesma animação da entrada).
+  // Ao trocar de mês, os blocos da página sobem de novo (mesma animação da entrada).
   const primeiraVez = useRef(true)
   useEffect(() => {
     if (primeiraVez.current) {
@@ -172,11 +174,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     if (semMovimento()) return
     document.querySelectorAll<HTMLElement>('.pagina > *, .kpis > *').forEach((el, i) =>
       el.animate(
-        // sem desfoque em quem tem gráfico (o Safari pode deixar o canvas em branco sob filtro animado)
-        el.querySelector('canvas')
-          ? [{ opacity: 0.35, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }]
-          : [{ opacity: 0.35, filter: 'blur(8px)', transform: 'translateY(6px)' }, { opacity: 1, filter: 'none', transform: 'none' }],
-        { duration: 650, delay: Math.min(i, 6) * 35, easing: 'cubic-bezier(.32,.72,0,1)', fill: 'backwards' },
+        // só opacidade e deslocamento: animar 'filter' em blocos grandes engasga em tablet
+        [{ opacity: 0.35, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }],
+        { duration: 450, delay: Math.min(i, 6) * 30, easing: 'cubic-bezier(.32,.72,0,1)', fill: 'backwards' },
       ),
     )
   }, [mes, ano])
@@ -722,14 +722,14 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           </div>
         )}
 
-        {paginaAtual === 'inicio' && <Inicio {...ctx} />}
-        {paginaAtual === 'lancamentos' && <Lancamentos {...ctx} />}
-        {paginaAtual === 'contas' && <Contas {...ctx} />}
-        {paginaAtual === 'cartoes' && <Cartoes {...ctx} />}
-        {paginaAtual === 'dividas' && <Dividas {...ctx} />}
-        {paginaAtual === 'metas' && <Metas {...ctx} />}
-        {paginaAtual === 'patrimonio' && <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />}
-        {paginaAtual === 'ano' && <Ano {...ctx} />}
+        {paginaMostrada === 'inicio' && <Inicio {...ctx} />}
+        {paginaMostrada === 'lancamentos' && <Lancamentos {...ctx} />}
+        {paginaMostrada === 'contas' && <Contas {...ctx} />}
+        {paginaMostrada === 'cartoes' && <Cartoes {...ctx} />}
+        {paginaMostrada === 'dividas' && <Dividas {...ctx} />}
+        {paginaMostrada === 'metas' && <Metas {...ctx} />}
+        {paginaMostrada === 'patrimonio' && <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />}
+        {paginaMostrada === 'ano' && <Ano {...ctx} />}
       </div>
 
       <button className="fab" data-tour="lancar" onClick={() => setForm({})} aria-label={tx('Novo lançamento')}><Icone nome="mais" tamanho={26} /></button>
