@@ -2,11 +2,25 @@ import type { Chart as ChartJS, ChartData, ChartOptions, Plugin, ScriptableConte
 import { Chart as Misto, Doughnut } from 'react-chartjs-2'
 import type { Resumo } from '../lib/calc'
 import { PALETA, useCoresDoGrafico } from '../lib/charts'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, moedaAtual, valoresEstaoOcultos } from '../lib/format'
 import { Segmentado } from './ui'
 import type { Visao } from '../lib/perfil'
 import { tx } from '../lib/textos'
+
+/**
+ * Caixa do gráfico. O gráfico só é criado depois da primeira pintura da página: criar o Chart.js e desenhar os eixos custa
+ * dezenas de milissegundos e, junto com o resto da página, deixava a troca de tela travada (a caixa já ocupa o espaço, nada pula).
+ */
+function CaixaDoGrafico({ style, children }: { style?: CSSProperties; children: ReactNode }) {
+  const [pronto, setPronto] = useState(false)
+  useEffect(() => {
+    let b = 0
+    const a = requestAnimationFrame(() => { b = requestAnimationFrame(() => setPronto(true)) })
+    return () => { cancelAnimationFrame(a); cancelAnimationFrame(b) }
+  }, [])
+  return <div className="grafico" style={style}>{pronto ? children : null}</div>
+}
 
 /** Eixo sem os ",00": R$ 8.000 lê mais fácil que R$ 8.000,00. */
 const semCentavos = (n: number, formatar: (n: number) => string = fmtValor) => (valoresEstaoOcultos() ? '' : formatar(n).replace(/,00$/, ''))
@@ -31,9 +45,9 @@ function animacoesDeEntrada() {
     // os degradês são recriados a cada quadro; animar a cor deles quebra o Chart.js
     colors: false as const,
     y: {
-      type: 'number' as const, easing: 'easeOutCubic' as const, duration: 1100,
+      type: 'number' as const, easing: 'easeOutCubic' as const, duration: 650,
       from: (ctx: Quadro) => (primeira(ctx) && !ehLinha(ctx) ? zeroY(ctx) : undefined),
-      delay: (ctx: Quadro) => (primeira(ctx) && !ehLinha(ctx) ? ctx.dataIndex * 45 + ctx.datasetIndex * 25 : 0),
+      delay: (ctx: Quadro) => (primeira(ctx) && !ehLinha(ctx) ? ctx.dataIndex * 18 + ctx.datasetIndex * 10 : 0),
     },
   }
 }
@@ -161,10 +175,10 @@ export function GraficoFluxo({ porMes, mesAtual, altura, compacto, moeda }: {
     ],
   } as unknown as ChartData<'bar'>
   return (
-    <div className="grafico" style={altura ? { height: altura } : undefined}>
+    <CaixaDoGrafico style={altura ? { height: altura } : undefined}>
       <Misto type="bar" key={c.tema + c.ocultos + (fora ? moeda : '')} data={data}
         options={opcoes(c, { rotulos: MESES_CURTO.slice(inicio, inicio + 6), mesDoIndice: (i) => inicio + i + 1, mesAtual, compacto, legenda: false, destacar: true, formatar: fora ? (n) => fmtMoeda(n, moeda!) : fmtValor })} />
-    </div>
+    </CaixaDoGrafico>
   )
 }
 
@@ -239,9 +253,9 @@ export function GraficoAnual({ porMes, mesAtual, altura = 400, compacto, v }: {
             opcoes={[principal, ...extras].map((m) => ({ id: m, nome: m }))} />
         </div>
       )}
-      <div className="grafico" style={{ height: altura }}>
+      <CaixaDoGrafico style={{ height: altura }}>
         <Misto type="bar" key={c.tema + c.ocultos + moeda} data={data} options={fora ? base : comOrigemDaDivida(base, porMes)} />
-      </div>
+      </CaixaDoGrafico>
       {fora
         ? <p className="campo-ajuda">{tx('Valores em {0}, como você lançou: sem conversão. Entrou, Saiu e Dívidas só desta moeda.', moeda)}</p>
         : temDividaFora && <p className="campo-ajuda">{tx('As dívidas em outras moedas entram aqui pela cotação de hoje. Para ver os valores exatos, escolha a moeda acima.')}</p>}
@@ -303,10 +317,10 @@ export function GraficoSaldo({ porMes, mesAtual, compacto }: {
             opcoes={[principal, ...extras].map((m) => ({ id: m, nome: m }))} />
         </div>
       )}
-      <div className="grafico" style={{ height: compacto ? 240 : 280 }}>
+      <CaixaDoGrafico style={{ height: compacto ? 240 : 280 }}>
         <Misto type="bar" key={c.tema + c.ocultos + moeda} data={data}
           options={opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual, compacto, eixoDireito: PALETA.acumulado, destacar: true, formatar: fora ? (n) => fmtMoeda(n, moeda) : fmtValor })} />
-      </div>
+      </CaixaDoGrafico>
       {fora && <p className="campo-ajuda">{tx('Valores em {0}, como você lançou: sem conversão. Entrou e Saiu só desta moeda.', moeda)}</p>}
     </>
   )
@@ -348,7 +362,7 @@ export function Rosca({ fatias, altura = 260, legenda = true, rotulos = true, cu
 }) {
   const c = useCoresDoGrafico()
   return (
-    <div className="grafico" style={{ height: altura }}>
+    <CaixaDoGrafico style={{ height: altura }}>
       {/* As fatias vêm da maior para a menor; quando a ordem muda, o gráfico é refeito
           (animar a troca de posição das fatias quebra o Chart.js). */}
       <Doughnut
@@ -361,13 +375,13 @@ export function Rosca({ fatias, altura = 260, legenda = true, rotulos = true, cu
         options={{
           cutout,
           maintainAspectRatio: false,
-          animation: { animateRotate: true, animateScale: true, duration: 1300, easing: 'easeOutQuart' },
+          animation: { animateRotate: true, animateScale: true, duration: 700, easing: 'easeOutQuart' },
           plugins: {
             legend: { display: legenda, position: 'bottom', labels: { boxWidth: 8, boxHeight: 8, padding: 14, font: { size: 12, weight: 500 } } },
             tooltip: { callbacks: { label: (c) => ` ${fmtValor(Number(c.raw))}` } },
           },
         }}
       />
-    </div>
+    </CaixaDoGrafico>
   )
 }

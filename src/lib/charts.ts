@@ -29,7 +29,7 @@ const revelar: Plugin = {
     if (semMovimento()) { c.$revelado = true; return }
     const agora = performance.now()
     c.$revelarInicio ??= agora
-    const t = Math.min(1, Math.max(0, (agora - c.$revelarInicio - 250) / 1300))
+    const t = Math.min(1, Math.max(0, (agora - c.$revelarInicio - 100) / 750))
     if (t >= 1) { c.$revelado = true; return }
     const { left, top, right, bottom } = chart.chartArea
     chart.ctx.save()
@@ -83,7 +83,7 @@ Chart.defaults.plugins.legend.labels.pointStyle = 'circle'
 // as animações por mês não funcionavam e a animação de cor de um degradê quebrava o motor de animação da página inteira
 // (todos os gráficos sumiam).
 const animacaoPadrao = Chart.defaults.animation as Exclude<typeof Chart.defaults.animation, false>
-animacaoPadrao.duration = 1100
+animacaoPadrao.duration = 650
 animacaoPadrao.easing = 'easeOutQuart'
 // depois da primeira animação, o gráfico só faz transições suaves: não volta a crescer do zero a cada atualização
 animacaoPadrao.onComplete = ({ chart }) => { (chart as Chart & { $cresceu?: boolean }).$cresceu = true }
