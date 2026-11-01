@@ -1,9 +1,10 @@
-import type { Chart as ChartJS, ChartData, ChartOptions, Plugin, ScriptableContext } from 'chart.js'
+import type { Chart as ChartJS, ChartData, ChartEvent, ChartOptions, Plugin, ScriptableContext } from 'chart.js'
 import { Chart as Misto, Doughnut } from 'react-chartjs-2'
 import type { Resumo } from '../lib/calc'
 import { PALETA, useCoresDoGrafico } from '../lib/charts'
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, moedaAtual, valoresEstaoOcultos } from '../lib/format'
+import { Icone } from './Icone'
 import { Segmentado } from './ui'
 import type { Visao } from '../lib/perfil'
 import { tx } from '../lib/textos'
@@ -199,15 +200,61 @@ export function GraficoFluxo({ porMes, mesAtual, altura, compacto, moeda }: {
  * Mês a mês do ano, como o gráfico da planilha: Entrou e Saiu em barras e, por cima, as linhas brilhantes do que a pessoa
  * acompanha (guardado nas contas, dívidas, investido, outras moedas), conforme os módulos ligados.
  */
-/** Linhas da dica das dívidas: de onde veio a subida ou a descida do mês. */
-function origemDaDivida(r: Resumo | null | undefined): string[] {
+/** De onde veio a subida ou a descida da dívida no mês, como pares nome/valor (com sinal). */
+function origensDaDivida(r: Resumo | null | undefined): [string, number][] {
   if (!r) return []
-  const l: string[] = []
-  if (r.dividaNovas) l.push(`  ${tx('nova dívida')}: +${fmtValor(r.dividaNovas)}`)
-  if (r.dividaAumentos) l.push(`  ${tx('emprestado a mais')}: +${fmtValor(r.dividaAumentos)}`)
-  if (r.dividaAjustes) l.push(`  ${tx('ajuste de saldo')}: ${r.dividaAjustes > 0 ? '+' : '−'}${fmtValor(Math.abs(r.dividaAjustes))}`)
-  if (r.dividaPagos) l.push(`  ${tx('pagamentos')}: −${fmtValor(r.dividaPagos)}`)
+  const l: [string, number][] = []
+  if (r.dividaNovas) l.push([tx('nova dívida'), r.dividaNovas])
+  if (r.dividaAumentos) l.push([tx('emprestado a mais'), r.dividaAumentos])
+  if (r.dividaAjustes) l.push([tx('ajuste de saldo'), r.dividaAjustes])
+  if (r.dividaPagos) l.push([tx('pagamentos'), -r.dividaPagos])
   return l
+}
+
+/**
+ * Resumo do mês escolhido no gráfico, num painel fixo (ao lado do gráfico em tela larga, embaixo em tela estreita).
+ * Substitui o card que abria em cima do gráfico e escondia as barras e a linha.
+ */
+function PainelDoMes({ indice, r, v, fora, moeda, aoMudar }: {
+  indice: number; r: Resumo | null; v: Visao; fora: boolean; moeda: string; aoMudar: (i: number) => void
+}) {
+  const fmt = fora ? (n: number) => fmtMoeda(n, moeda) : fmtValor
+  const sinal = (n: number) => `${n < 0 ? '−' : '+'}${fmt(Math.abs(n))}`
+  const entrou = r ? (fora ? (r.entradasMoeda[moeda] ?? 0) : r.entradas) : 0
+  const saiu = r ? (fora ? (r.saidasMoeda[moeda] ?? 0) : r.saidas) : 0
+  const dif = Math.round((entrou - saiu) * 100) / 100
+  const guardado = r ? (fora ? (r.moedas[moeda] ?? 0) : r.caixa) : 0
+  const divida = r ? (fora ? (r.dividaMoeda[moeda] ?? 0) : r.divida) : 0
+  const origens = r && !fora ? origensDaDivida(r) : []
+  const linha = (nome: string, valor: string, tom: string) => (
+    <div className="pm-linha"><span>{nome}</span><b className={`pm-valor ${tom}`}>{valor}</b></div>
+  )
+  return (
+    <aside className="painel-mes" aria-live="polite">
+      <div className="pm-topo">
+        <button className="pm-nav" onClick={() => aoMudar(indice - 1)} disabled={indice <= 0} aria-label={tx('Mês anterior')}><Icone nome="esq" tamanho={16} /></button>
+        <h3>{MESES_NOME[indice]}</h3>
+        <button className="pm-nav" onClick={() => aoMudar(indice + 1)} disabled={indice >= 11} aria-label={tx('Próximo mês')}><Icone nome="dir" tamanho={16} /></button>
+      </div>
+      {!r ? <p className="pm-vazio">{tx('Sem lançamentos neste mês.')}</p> : (
+        <>
+          {linha(tx('Entrou'), fmt(entrou), 'entrou')}
+          {linha(tx('Saiu'), fmt(saiu), 'saiu')}
+          {linha(dif >= 0 ? tx('Sobrou') : tx('Faltou'), fmt(Math.abs(dif)), dif >= 0 ? 'entrou' : 'saiu')}
+          {((fora ? guardado > 0 : v.bancos) || (fora ? divida > 0 : v.dividas) || (!fora && (v.investimentos || v.moedas))) && <hr className="pm-sep" />}
+          {(fora ? guardado > 0 : v.bancos) && linha(fora ? tx('Guardado em {0}', moeda) : tx('Guardado nas contas'), fmt(guardado), 'caixa')}
+          {(fora ? divida > 0 : v.dividas) && linha(fora ? tx('Dívidas em {0}', moeda) : tx('Dívidas'), fmt(divida), 'divida')}
+          {origens.length > 0 && (
+            <ul className="pm-origem">
+              {origens.map(([nome, valor]) => <li key={nome}><span>{nome}</span><b>{sinal(valor)}</b></li>)}
+            </ul>
+          )}
+          {!fora && v.investimentos && linha(tx('Investido'), fmt(r.investimentos), 'invest')}
+          {!fora && v.moedas && linha(tx('Em outras moedas'), fmt(r.moedasConvertido), 'usd')}
+        </>
+      )}
+    </aside>
+  )
 }
 
 /** Moedas (além da principal) que aparecem no ano: lançamentos, dívidas ou saldo guardado. */
@@ -236,6 +283,10 @@ export function GraficoAnual({ porMes, mesAtual, altura = 400, compacto, v }: {
   const fora = moeda !== principal
   const temDividaFora = porMes.some((r) => r && Object.keys(r.dividaMoeda).length > 0)
   const algum = (f: (r: Resumo) => number) => porMes.some((r) => r && f(r) > 0)
+  // O mês do painel: o aberto no app, até a pessoa tocar em outro mês do gráfico (valendo só enquanto o mês aberto não mudar).
+  const [escolha, setEscolha] = useState<{ ref: number; indice: number } | null>(null)
+  const indice = escolha && escolha.ref === mesAtual ? escolha.indice : Math.min(11, Math.max(0, mesAtual - 1))
+  const escolher = (i: number) => setEscolha({ ref: mesAtual, indice: Math.min(11, Math.max(0, i)) })
   const data = (fora
     ? {
         labels: MESES_CURTO,
@@ -257,9 +308,22 @@ export function GraficoAnual({ porMes, mesAtual, altura = 400, compacto, v }: {
           ...(v.moedas ? [linhaSuave(tx('Em outras moedas'), PALETA.usd, serie(porMes, (r) => r.moedasConvertido), c.fundo, compacto)] : []),
         ],
       }) as unknown as ChartData<'bar'>
-  const opcoesBase = opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual, compacto, destacar: true, formatar: fora ? (n) => fmtMoeda(n, moeda) : fmtValor })
-  // a sombra da dívida é desenhada antes de qualquer série: fica atrás das barras, que continuam nítidas
-  const base: ChartOptions<'bar'> = { ...opcoesBase, plugins: { ...opcoesBase.plugins, filler: { drawTime: 'beforeDatasetsDraw' } } }
+  const opcoesBase = opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual: indice + 1, compacto, destacar: true, formatar: fora ? (n) => fmtMoeda(n, moeda) : fmtValor })
+  // Sem card flutuante: tocar (ou, com mouse, passar) num mês escolhe o mês do painel. A sombra da dívida é desenhada antes de
+  // qualquer série, atrás das barras, que continuam nítidas.
+  const base: ChartOptions<'bar'> = {
+    ...opcoesBase,
+    onClick: (e: ChartEvent, _: unknown, chart: ChartJS) => {
+      const i = chart.getElementsAtEventForMode(e as unknown as Event, 'index', { intersect: false }, true)[0]?.index
+      if (i !== undefined && i !== indice) escolher(i)
+    },
+    onHover: (e: ChartEvent, _: unknown, chart: ChartJS) => {
+      if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
+      const i = chart.getElementsAtEventForMode(e as unknown as Event, 'index', { intersect: false }, true)[0]?.index
+      if (i !== undefined && i !== indice) escolher(i)
+    },
+    plugins: { ...opcoesBase.plugins, tooltip: { enabled: false }, filler: { drawTime: 'beforeDatasetsDraw' } },
+  }
   return (
     <>
       {extras.length > 0 && (
@@ -268,26 +332,19 @@ export function GraficoAnual({ porMes, mesAtual, altura = 400, compacto, v }: {
             opcoes={[principal, ...extras].map((m) => ({ id: m, nome: m }))} />
         </div>
       )}
-      <CaixaDoGrafico style={{ height: altura }}>
-        <Misto type="bar" key={c.tema + c.ocultos + moeda} data={data} options={fora ? base : comOrigemDaDivida(base, porMes)} />
-      </CaixaDoGrafico>
+      <div className="grafico-com-painel">
+        <div className="gcp">
+          <CaixaDoGrafico style={{ height: altura }}>
+            <Misto type="bar" key={c.tema + c.ocultos + moeda} data={data} options={base} />
+          </CaixaDoGrafico>
+          <PainelDoMes indice={indice} r={porMes[indice] ?? null} v={v} fora={fora} moeda={moeda} aoMudar={escolher} />
+        </div>
+      </div>
       {fora
         ? <p className="campo-ajuda">{tx('Valores em {0}, como você lançou: sem conversão. Entrou, Saiu e Dívidas só desta moeda.', moeda)}</p>
         : temDividaFora && <p className="campo-ajuda">{tx('As dívidas em outras moedas entram aqui pela cotação de hoje. Para ver os valores exatos, escolha a moeda acima.')}</p>}
     </>
   )
-}
-
-/** Acrescenta à dica da linha de Dívidas o que fez ela mudar naquele mês. */
-function comOrigemDaDivida(o: ChartOptions<'bar'>, porMes: (Resumo | null)[]): ChartOptions<'bar'> {
-  const cb = o.plugins?.tooltip?.callbacks
-  return {
-    ...o,
-    plugins: {
-      ...o.plugins,
-      tooltip: { ...o.plugins?.tooltip, callbacks: { ...cb, afterLabel: (x) => (x.dataset.label === tx('Dívidas') ? origemDaDivida(porMes[x.dataIndex]) : []) } },
-    },
-  }
 }
 
 /**

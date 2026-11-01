@@ -4066,3 +4066,35 @@ body { top: 0 !important; }
 .escolha-lista.grade li > svg, .escolha-lista.grade li .escolha-nome + small { display: none; }
 .escolha-lista.grade .escolha-nome { flex: none; text-align: center; }
 .escolha-folha .escolha-lista.grade li { min-height: 0; }
+
+/* ---------- painel do mês no gráfico Mês a mês (no lugar do card que abria em cima do gráfico) ---------- */
+.grafico-com-painel { container-type: inline-size; }
+.gcp { display: grid; gap: 14px; }
+.gcp .grafico canvas { cursor: pointer; }
+.painel-mes { display: grid; gap: 9px; align-content: start; padding: 14px 16px; border-radius: var(--raio-m); background: var(--superficie-2); border: 1px solid var(--borda); }
+.pm-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pm-topo h3 { margin: 0; font-size: 15px; font-weight: 700; }
+.pm-nav { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border-radius: 50%; border: 1px solid var(--borda); background: var(--superficie); color: var(--texto-2); }
+.pm-nav:hover:not(:disabled) { color: var(--texto); border-color: var(--borda-forte); }
+.pm-nav:disabled { opacity: .35; }
+.pm-linha { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 14px; color: var(--texto-2); }
+.pm-valor { font-weight: 600; font-variant-numeric: tabular-nums; }
+.pm-valor.entrou { color: var(--entrada); }
+.pm-valor.saiu { color: var(--saida); }
+.pm-valor.divida { color: var(--divida); }
+.pm-valor.caixa { color: #22b8f0; }
+.pm-valor.invest { color: #c45cf0; }
+.pm-valor.usd { color: #10d07a; }
+.pm-sep { width: 100%; height: 1px; margin: 2px 0; border: 0; background: var(--borda); }
+.pm-origem { list-style: none; margin: 0; padding: 0 0 0 10px; display: grid; gap: 3px; font-size: 12.5px; color: var(--texto-3); }
+.pm-origem li { display: flex; justify-content: space-between; gap: 12px; }
+.pm-origem b { font-weight: 600; color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.pm-vazio { margin: 0; font-size: 13px; color: var(--texto-2); }
+/* tela larga (computador, tablet deitado): painel ao lado; estreita (tablet em pé, celular): embaixo, em duas colunas */
+@container (min-width: 720px) { .gcp { grid-template-columns: minmax(0, 1fr) 260px; align-items: start; } }
+@container (max-width: 719px) {
+  .painel-mes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 22px; }
+  .pm-topo, .pm-sep, .pm-origem, .pm-vazio { grid-column: 1 / -1; }
+}
+/* celular: uma coluna só, para os nomes não quebrarem nem os valores ficarem cortados */
+@container (max-width: 519px) { .painel-mes { grid-template-columns: minmax(0, 1fr); } }
