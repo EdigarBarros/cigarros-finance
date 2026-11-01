@@ -18,7 +18,7 @@ import type { Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 import { useMobile } from '../lib/useMobile'
 import { estiloLente, useLente } from '../lib/useLente'
 import { definirTema, semMovimento, useTema } from '../lib/tema'
-import { ehErroDeVersao } from '../lib/atualizacao'
+import { ehErroDeVersao, lembrarMes, mesAntesDeAtualizar } from '../lib/atualizacao'
 import { irParaStripe, type Assinatura } from '../lib/assinatura'
 import { AvisoTeste } from './AvisoTeste'
 import { useCartoes } from '../lib/useCartoes'
@@ -78,8 +78,10 @@ const hoje = new Date()
 
 export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId: string; email: string; nome?: string; assinatura?: Assinatura | null }) {
   const [pagina, setPagina] = useState<Pagina>(paginaDoHash)
-  const [ano, setAno] = useState(hoje.getFullYear())
-  const [mes, setMes] = useState(hoje.getMonth() + 1)
+  // depois de uma atualização automática, volta no mês que a pessoa estava olhando (senão, o mês de hoje)
+  const [ano, setAno] = useState(() => mesAntesDeAtualizar()?.ano ?? hoje.getFullYear())
+  const [mes, setMes] = useState(() => mesAntesDeAtualizar()?.mes ?? hoje.getMonth() + 1)
+  useEffect(() => lembrarMes(ano, mes), [ano, mes])
   const [avisoFatura, setAvisoFatura] = useState<{ cartao: string; fechamento: number; depoisDoFechamento: boolean; ano: number; mes: number; anoCompra: number } | null>(null)
   const [form, setForm] = useState<{ inicial?: Lancamento; tipo?: Tipo; preset?: Partial<Lancamento>; cartaoId?: string } | null>(null)
   const [menu, setMenu] = useState(false)

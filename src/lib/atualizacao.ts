@@ -9,7 +9,7 @@ import { tx } from './textos'
  * - Quando recarrega: nunca com uma janela aberta (lançamento, conta, cartão…), com o cursor num campo, logo depois de a
  *   pessoa digitar ou tocar, com o login preenchido, no tutorial ou nas perguntas iniciais. Recarrega quando a aba vai
  *   para o segundo plano ou depois de um tempo parada. Até lá, a versão antiga segue funcionando normalmente.
- * - Depois: volta para a mesma página, na mesma altura da tela, e mostra "OpusCash atualizado".
+ * - Depois: volta para a mesma página, no mesmo mês, na mesma altura da tela, e mostra "OpusCash atualizado".
  */
 declare const __VERSAO__: string
 export const VERSAO = __VERSAO__
@@ -20,6 +20,15 @@ const PARADA_POR = 30_000 // sem tocar nem digitar por esse tempo, com a aba à 
 
 let pendente = false
 let ultimoToque = Date.now()
+
+export interface MesAberto { ano: number; mes: number }
+/** O mês que o painel mostra agora (o painel avisa a cada troca), para voltar nele depois de recarregar. */
+let mesAberto: MesAberto | null = null
+/** O mês que estava aberto antes de recarregar por atualização (null quando a página abriu do jeito normal). */
+let mesDaVolta: MesAberto | null = null
+
+export const lembrarMes = (ano: number, mes: number) => { mesAberto = { ano, mes } }
+export const mesAntesDeAtualizar = () => mesDaVolta
 
 /** O erro é de um pedaço do app que sumiu numa publicação nova (cada navegador escreve de um jeito)? */
 export const ehErroDeVersao = (e: unknown) =>
@@ -39,7 +48,7 @@ function semNadaEmAndamento() {
 }
 
 function recarregar() {
-  try { sessionStorage.setItem(CHAVE, JSON.stringify({ y: Math.round(scrollY), hash: location.hash, em: Date.now() })) } catch { /* sem onde guardar: só não volta à altura */ }
+  try { sessionStorage.setItem(CHAVE, JSON.stringify({ y: Math.round(scrollY), hash: location.hash, em: Date.now(), mes: mesAberto })) } catch { /* sem onde guardar: só não volta à altura */ }
   location.reload()
 }
 
@@ -70,12 +79,13 @@ export function versaoNovaNecessaria() {
 
 /** Depois de recarregar por atualização: volta à mesma altura da tela e avisa, discretamente. */
 function voltarAoLugar() {
-  let volta: { y: number; hash: string; em: number } | null = null
+  let volta: { y: number; hash: string; em: number; mes?: MesAberto | null } | null = null
   try {
     volta = JSON.parse(sessionStorage.getItem(CHAVE) ?? 'null')
     sessionStorage.removeItem(CHAVE)
   } catch { return }
   if (!volta || Date.now() - volta.em > 60_000 || volta.hash !== location.hash) return
+  if (volta.mes && Number.isInteger(volta.mes.ano) && volta.mes.mes >= 1 && volta.mes.mes <= 12) mesDaVolta = volta.mes
   const alvo = volta.y
   // a página monta aos poucos (dados chegando): tenta até ela ter altura, e desiste se a pessoa rolar antes
   let mexeu = false
