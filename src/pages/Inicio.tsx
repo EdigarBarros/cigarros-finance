@@ -20,9 +20,8 @@ import { tarefasDoMes } from '../lib/paraFazer'
 import { totaisDoMes } from '../lib/contasFixas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
+import { useHoje } from '../lib/useHoje'
 
-const hoje = new Date()
-const hojePorExtenso = hoje.toLocaleDateString(LOCAL_DAS_DATAS, { day: 'numeric', month: 'long', year: 'numeric' })
 /** Lista de blocos de uma zona, sem os que não existem. */
 const zona = (xs: unknown[]) => xs.filter(Boolean).map((x, i) => <Fragment key={i}>{x as React.ReactNode}</Fragment>)
 /** Blocos que existem, prontos para o encaixe. */
@@ -42,6 +41,10 @@ const palavras = (texto: string, atraso = 0) =>
  */
 export function Inicio(c: Ctx) {
   const { r, anterior: a, mobile, v } = c
+  // muda sozinho na virada do dia (a aba pode ficar aberta de um dia para o outro)
+  const hoje = useHoje()
+  const hojePorExtenso = hoje.toLocaleDateString(LOCAL_DAS_DATAS, { day: 'numeric', month: 'long', year: 'numeric' })
+  const hojeIso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
   const nivel = c.perfil.detalhe
   const detalhado = nivel === 'detalhado'
   // conta nova vê a mesma boas-vindas em todos os jeitos
@@ -118,9 +121,13 @@ export function Inicio(c: Ctx) {
   // Média por dia: mês aberto até hoje; mês passado inteiro.
   const diasNoMes = new Date(c.ano, c.mes, 0).getDate()
   const decorridos = c.ano === hoje.getFullYear() && c.mes === hoje.getMonth() + 1 ? hoje.getDate() : diasNoMes
+  // No mês de hoje só contam as saídas até hoje: parcela de cartão e conta com data futura ainda não saíram do bolso.
+  const noMesDeHoje = (m: number) => c.ano === hoje.getFullYear() && m === hoje.getMonth() + 1
+  const saidasAteHoje = (m: number) => c.lancsAno.reduce((t, l) => (l.mes === m && l.tipo === 'saida' && (!l.data || l.data <= hojeIso) ? t + l.valor : t), 0)
+  const saidasContadas = (m: number) => (noMesDeHoje(m) ? saidasAteHoje(m) : c.porMes[m - 1]?.saidas ?? 0)
   const maiorSaida = c.lancsMes.filter((l) => l.tipo === 'saida').sort((x, y) => y.valor - x.valor)[0]
-  const diasDe = (m: number) => (c.ano === hoje.getFullYear() && m === hoje.getMonth() + 1 ? hoje.getDate() : new Date(c.ano, m, 0).getDate())
-  const tendMedia = serie((m) => { const x = c.porMes[m - 1]; return x ? x.saidas / diasDe(m) : null })
+  const diasDe = (m: number) => (noMesDeHoje(m) ? hoje.getDate() : new Date(c.ano, m, 0).getDate())
+  const tendMedia = serie((m) => { const x = c.porMes[m - 1]; return x ? saidasContadas(m) / diasDe(m) : null })
   const tendMaior = serie((m) => {
     const saidas = c.d.lancs.filter((l) => l.mes === m && l.tipo === 'saida')
     return saidas.length ? Math.max(...saidas.map((l) => l.valor)) : null
@@ -131,7 +138,7 @@ export function Inicio(c: Ctx) {
     !mesVazio && <Kpi key="saiu" rotulo={tx('Saiu no mês')} valor={r.saidas} icone="enviar" cor={COR.despesas} tendencia={tendencia((x) => x.saidas)} delta={delta(r.saidas, a?.saidas)} menorMelhor contra={mesAnt && tx('em {0}', mesAnt)} />,
     c.kpisExtras,
     detalhado && !mesVazio && (
-      <Kpi key="media" rotulo={tx('Gasto médio por dia')} valor={r.saidas / decorridos} cor={COR.fluxo} icone="ano" tendencia={tendMedia}>
+      <Kpi key="media" rotulo={tx('Gasto médio por dia')} valor={saidasContadas(c.mes) / decorridos} cor={COR.fluxo} icone="ano" tendencia={tendMedia}>
         <span className="kpi-sub">{tx('em {0} {1}', decorridos, decorridos === 1 ? tx('dia') : tx('dias'))}</span>
       </Kpi>
     ),

@@ -264,7 +264,8 @@ export function ZerarDados({ contagem, aoBaixarBackup, aoZerar, aoFechar }: {
   const [ocupado, setOcupado] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const algum = PARTES_ZERAR.some((x) => escolha[x.id])
-  const pode = algum && texto.trim().toUpperCase() === tx('ZERAR') // a palavra de confirmação muda com o idioma (RESET, BORRAR) && !ocupado
+  // a palavra de confirmação muda com o idioma (RESET, BORRAR)
+  const pode = algum && texto.trim().toUpperCase() === tx('ZERAR') && !ocupado
   const marcadas = PARTES_ZERAR.filter((x) => x.id !== 'tudo' && escolha[x.id])
 
   const alternar = (id: ParteZerar) => setEscolha((e) => ({ ...e, [id]: !e[id] }))

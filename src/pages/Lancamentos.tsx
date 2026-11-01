@@ -29,9 +29,18 @@ export function Lancamentos(c: Ctx) {
   const [tipo, setTipo] = useState<Filtro<Tipo>>('todos')
   const [banco, setBanco] = useState<Filtro<string>>('todos')
   const [forma, setForma] = useState<Filtro<FormaPagamento | 'sem'>>('todos')
+  // Dia e categoria escolhidos valem para o mês em que foram escolhidos: ao trocar de mês ou de ano voltam para "todos",
+  // senão o mês novo abriria vazio ("Nada com esses filtros") com todos os dias desligados.
+  const chaveMes = `${c.ano}-${c.mes}`
+  const [doMes, setDoMes] = useState<{ chave: string; dia: string | null; categoria: Filtro<string> }>({ chave: chaveMes, dia: null, categoria: 'todos' })
+  const vazios = { chave: chaveMes, dia: null as string | null, categoria: 'todos' as Filtro<string> }
+  const escolhidos = doMes.chave === chaveMes ? doMes : vazios
   /** id da categoria, 'sem' (sem categoria) ou 'todos'. */
-  const [categoria, setCategoria] = useState<Filtro<string>>('todos')
-  const [dia, setDia] = useState<string | null>(null)
+  const categoria = escolhidos.categoria
+  const dia = escolhidos.dia
+  const mudar = (parte: Partial<typeof vazios>) => setDoMes((a) => ({ ...(a.chave === chaveMes ? a : vazios), ...parte }))
+  const setCategoria = (k: Filtro<string>) => mudar({ categoria: k })
+  const setDia = (d: string | null) => mudar({ dia: d })
   const [ordem, setOrdem] = useState<'data' | 'valor'>('data')
   const [todasCategorias, setTodasCategorias] = useState(false)
   const { busca, setBusca } = c
@@ -95,18 +104,29 @@ export function Lancamentos(c: Ctx) {
   const saiu = somaTipo(filtrados, 'saida')
   const filtrando = tipo !== 'todos' || banco !== 'todos' || forma !== 'todos' || categoria !== 'todos' || busca || dia
   const limpar = () => { setTipo('todos'); setBanco('todos'); setForma('todos'); setCategoria('todos'); setBusca(''); setDia(null) }
-  // formas de pagamento usadas no mês (com os outros filtros aplicados, menos a própria forma)
+  // formas de pagamento usadas no mês, com os outros filtros aplicados (tipo, banco, categoria, dia e busca), menos a própria forma;
+  // entrou e saiu ficam separados para não somar um com o outro
   const formasDoMes = useMemo(() => {
-    const m = new Map<FormaPagamento | 'sem', number>()
+    const m = new Map<FormaPagamento | 'sem', { entrou: number; saiu: number }>()
     for (const l of origem) {
       if (tipo !== 'todos' && l.tipo !== tipo) continue
       if (banco !== 'todos' && (banco === 'sem' ? l.banco_id : l.banco_id !== banco)) continue
+      if (!daCategoria(l) || (dia && l.data !== dia)) continue
       if (casa && !casa(l, textoDe(l))) continue
       const f = formaDe(l) ?? 'sem'
-      m.set(f, (m.get(f) ?? 0) + l.valor)
+      const g = m.get(f) ?? { entrou: 0, saiu: 0 }
+      if (l.tipo === 'entrada') g.entrou += l.valor
+      else g.saiu += l.valor
+      m.set(f, g)
     }
     return m
-  }, [origem, tipo, banco, casa, c.categorias, c.d.bancos, c.d.dividas, c.cartoes.cartoes]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [origem, tipo, banco, categoria, dia, casa, c.categorias, c.d.bancos, c.d.dividas, c.cartoes.cartoes]) // eslint-disable-line react-hooks/exhaustive-deps
+  /** "− R$ 120,00", "+ R$ 50,00" ou os dois, conforme o que a forma teve com esses filtros. */
+  const valorDaForma = (f: FormaPagamento | 'sem') => {
+    const g = formasDoMes.get(f)
+    const partes = [g && g.saiu > 0 && `− ${fmtValor(g.saiu)}`, g && g.entrou > 0 && `+ ${fmtValor(g.entrou)}`].filter(Boolean)
+    return partes.length ? partes.join(' · ') : fmtValor(0)
+  }
   const bancoDe = (l: Lancamento) => (c.v.bancos ? c.d.bancos.find((b) => b.id === l.banco_id) : undefined)
   const cartaoDe = (l: Lancamento) => (l.cartao_id ? c.cartoes.cartoes.find((k) => k.id === l.cartao_id) : undefined)
 
@@ -215,9 +235,9 @@ export function Lancamentos(c: Ctx) {
                 <select className={`lc-select ${forma !== 'todos' ? 'ativo' : ''}`} value={forma} onChange={(e) => setForma(e.target.value as Filtro<FormaPagamento | 'sem'>)} aria-label={tx('Forma de pagamento')}>
                   <option value="todos">{tx('Todas as formas')}</option>
                   {FORMAS.filter((f) => formasDoMes.has(f.id) || forma === f.id).map((f) => (
-                    <option key={f.id} value={f.id}>{f.nome} · {fmtValor(formasDoMes.get(f.id) ?? 0)}</option>
+                    <option key={f.id} value={f.id}>{f.nome} · {valorDaForma(f.id)}</option>
                   ))}
-                  {(formasDoMes.has('sem') || forma === 'sem') && <option value="sem">{tx('Sem forma · {0}', fmtValor(formasDoMes.get('sem') ?? 0))}</option>}
+                  {(formasDoMes.has('sem') || forma === 'sem') && <option value="sem">{tx('Sem forma · {0}', valorDaForma('sem'))}</option>}
                 </select>
               )}
             </section>
@@ -227,7 +247,7 @@ export function Lancamentos(c: Ctx) {
             <div className="lc-filtrando">
               {pesquisando && <span className="chip-info">{tx('Em {0} inteiro', c.ano)}</span>}
               {dia && <span className="chip-info">{fmtDataLonga(dia)}</span>}
-              {categoria !== 'todos' && <span className="chip-info">{chips.find((k) => k.id === categoria)?.nome ?? SEM_CATEGORIA.nome}</span>}
+              {categoria !== 'todos' && <span className="chip-info">{categoria === 'sem' ? SEM_CATEGORIA.nome : chips.find((k) => k.id === categoria)?.nome ?? c.categorias.find((k) => k.id === categoria)?.nome ?? tx('Categoria')}</span>}
               <span>{tx('{0} de {1}', filtrados.length, origem.length)}</span>
               <button className="link" onClick={limpar}><Icone nome="fechar" tamanho={13} /> {tx('Limpar filtros')}</button>
             </div>
