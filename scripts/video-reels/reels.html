@@ -141,7 +141,7 @@ const CENAS = [
       { a: 6.2, chip: 'Resumo do ano', h: 'Quanto sobrou', p: 'E quanto você acumulou no ano.' }],
     cam: [{ t: 0, s: 1.4, rx: 12, ry: -16, rz: 1 }, { t: 1.0, s: 1.45, rx: 14, ry: -22 }, { t: 2.1, s: 2.2, rx: 6, ry: 8, rz: 0, fy: 548, oy: 130 },
       { t: 3.4, s: 2.3, rx: 4, ry: 6, fy: 545 }, { t: 4.4, s: 2.6, rx: 6, ry: -6, fx: 230, fy: 465, oy: 160 }, { t: 5.6, s: 2.7, rx: 4, ry: -10, fx: 225, fy: 470 },
-      { t: 6.0, sc: 0 }, { t: 6.8, s: 1.85, rx: 8, ry: 10, fx: SW / 2, fy: 612, sc: 640, oy: 90 }, { t: 9, s: 1.9, rx: 6, ry: 16 }],
+      { t: 6.0, sc: 0 }, { t: 6.8, s: 1.85, rx: 8, ry: 10, fx: SW / 2, fy: 612, sc: 640, oy: 90 }, { t: 8.3, s: 1.9, rx: 6, ry: 14 }, { t: 9.4, s: 1.35, rx: 2, ry: 0, rz: 0, fy: 560, oy: 40 }],
     lift: [[0, .3, 1.9, 120], [1, .4, 1.95, 170], [2, .5, 2.0, 150], [3, .6, 2.05, 210], [4, 1.2, 6.3, 70], [6, 6.4, 12, 110]],
     revela: { 4: [1.5, 3.2], 6: [6.7, 8.2] } },
 ]
@@ -208,7 +208,8 @@ gancho.innerHTML = '<div>Pra onde foi</div><div>o seu dinheiro</div><div><span c
 const linhasGancho = [...gancho.children]
 
 // final: as 8 telas num carrossel + marca
-const anel = el('div', 'anel', palco)
+const anel = el('div', 'anel', null)
+palco.insertBefore(anel, CENAS[0].tel) // atrás das peças que voam
 const minis = CENAS.map((c, i) => {
   const m = el('div', 'mini', anel, { backgroundImage: img(c.pg) })
   el('i', '', m, { backgroundImage: img('nav_' + c.pg) })
@@ -254,7 +255,10 @@ function desenhar(T) {
 
   // telas
   CENAS.forEach((c, ci) => {
-    const t = T - c.ini, vis = t > -.45 && t < c.dur + .45 && T < FINAL + .5
+    const ultima = ci === CENAS.length - 1
+    const t = T - c.ini, vis = t > -.45 && t < c.dur + (ultima ? 1.0 : .45)
+    // última tela: em vez de sair inteira, se desmonta nas próprias peças (0 a 1)
+    const x = ultima ? suave(c.dur - .7, c.dur + .9, t) : 0
     mostrar(c.tel, vis)
     c.legendas.forEach((l, k) => legenda(l.e, t, l.a + (k === 0 ? .1 : 0), k + 1 < c.legendas.length ? c.legendas[k + 1].a : c.dur - .05))
     if (!vis) return
@@ -266,22 +270,20 @@ function desenhar(T) {
     let pre
     if (c.entrada === 'baixo') pre = `translate3d(0, ${((1 - u) * 1500).toFixed(1)}px, ${(-(1 - u) * 300).toFixed(1)}px) rotateX(${((1 - u) * 30).toFixed(2)}deg)`
     else pre = `translate3d(${((1 - u) * 1150).toFixed(1)}px, 0, ${(-(1 - u) * 500).toFixed(1)}px) rotateY(${((1 - u) * 62).toFixed(2)}deg)`
-    if (ci === CENAS.length - 1) pre += ` translate3d(0, 0, ${(-e * 1400).toFixed(1)}px) rotateX(${(e * 25).toFixed(2)}deg)`
-    else pre += ` translate3d(${(-e * 1150).toFixed(1)}px, 0, ${(-e * 500).toFixed(1)}px) rotateY(${(-e * 62).toFixed(2)}deg)`
+    if (!ultima) pre += ` translate3d(${(-e * 1150).toFixed(1)}px, 0, ${(-e * 500).toFixed(1)}px) rotateY(${(-e * 62).toFixed(2)}deg)`
     por(c.tel, 'transform', `translate(${CX}px, ${(CY + q.oy).toFixed(1)}px) ${pre} scale3d(${q.s.toFixed(4)}, ${q.s.toFixed(4)}, ${q.s.toFixed(4)}) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) rotateZ(${q.rz.toFixed(2)}deg) translate(${(-q.fx).toFixed(1)}px, ${(-q.fy).toFixed(1)}px)`)
-    por(c.tel, 'opacity', (ci === CENAS.length - 1 ? 1 - e : 1).toFixed(3))
     const sc = q.sc
     por(c.base, 'backgroundPosition', `0 ${(-sc).toFixed(1)}px`)
 
     let maxPeso = 0
     c.cartas.forEach((k) => {
       const { r } = k, y0 = r.y - sc
-      const dentro = y0 + r.h > TOPO + 2 && y0 < SH - 2
+      const dentro = x > 0 ? true : y0 + r.h > TOPO + 2 && y0 < SH - 2
       mostrar(k.e, dentro)
       if (!dentro) return
       por(k.e, 'top', y0.toFixed(1) + 'px')
       const it = Math.max(0, TOPO - y0), ib = Math.max(0, y0 + r.h - SH)
-      por(k.e, 'clipPath', it || ib ? `inset(${it.toFixed(1)}px 0 ${ib.toFixed(1)}px 0 round 18px)` : 'none')
+      por(k.e, 'clipPath', (it || ib) && x === 0 ? `inset(${it.toFixed(1)}px 0 ${ib.toFixed(1)}px 0 round 18px)` : 'none')
       const w = pesoLift(k.lift, t)
       maxPeso = Math.max(maxPeso, w)
       let extra = ''
@@ -291,7 +293,16 @@ function desenhar(T) {
         por(k.brilho, 'transform', `translateX(${mistura(-140, 260, suave(k.lift[1] + .3, k.lift[1] + 1.3, t)).toFixed(1)}%) skewX(-18deg)`)
       }
       const z = (k.lift ? k.lift[3] : 0) * w
-      por(k.e, 'transform', `translate3d(0, 0, ${z.toFixed(1)}px) scale(${(1 + .03 * w).toFixed(4)})${extra}`)
+      let voo = ''
+      if (x > 0) {
+        // cada bloco sai do centro da tela para fora e vem para a câmera, girando um pouco; os de baixo saem depois
+        const dx = r.x + r.w / 2 - SW / 2, dy = y0 + r.h / 2 - SH / 2, n = Math.hypot(dx, dy) || 1
+        const xi = limitar((x - limitar(y0 / SH, 0, 1) * .18) / .82), q = xi * xi
+        const sinal = dx >= 0 ? 1 : -1
+        voo = ` translate3d(${(dx / n * 760 * q).toFixed(1)}px, ${(dy / n * 640 * q).toFixed(1)}px, ${(220 * xi + 1900 * q).toFixed(1)}px) rotateY(${(sinal * 50 * q).toFixed(2)}deg) rotateX(${(-dy / n * 30 * q).toFixed(2)}deg)`
+        por(k.e, 'opacity', (1 - suave(.55, 1, xi)).toFixed(3))
+      } else por(k.e, 'opacity', '1')
+      por(k.e, 'transform', `translate3d(0, 0, ${z.toFixed(1)}px)${voo} scale(${(1 + .03 * w).toFixed(4)})${extra}`)
       por(k.e, 'boxShadow', w > .01 ? `0 ${(30 * w).toFixed(1)}px ${(70 * w).toFixed(1)}px rgba(0,0,0,${(.55 * w).toFixed(2)}), 0 0 0 1px rgba(148,163,196,${(.3 * w).toFixed(2)})` : 'none')
       if (k.revela) {
         const [a, b] = k.revela.janela, v = suave(a, b, t)
@@ -300,9 +311,18 @@ function desenhar(T) {
     })
     por(c.base, 'filter', `brightness(${(1 - .5 * maxPeso).toFixed(3)})`)
     // peças fixas do app: a barra de cima, o botão + e as abas de baixo
-    por(c.barra, 'transform', 'translateZ(3px)')
-    por(c.fab, 'transform', `translateZ(${(14 + 60 * maxPeso).toFixed(1)}px)`)
-    por(c.nav, 'transform', `translateZ(${(10 + 40 * maxPeso).toFixed(1)}px)`)
+    const xx = x * x
+    por(c.barra, 'transform', `translate3d(0, ${(-560 * xx).toFixed(1)}px, ${(3 + 900 * xx).toFixed(1)}px) rotateX(${(30 * xx).toFixed(2)}deg)`)
+    por(c.fab, 'transform', `translate3d(${(260 * xx).toFixed(1)}px, ${(-120 * xx).toFixed(1)}px, ${(14 + 60 * maxPeso + 2000 * xx).toFixed(1)}px)`)
+    por(c.nav, 'transform', `translate3d(0, ${(520 * xx).toFixed(1)}px, ${(10 + 40 * maxPeso + 900 * xx).toFixed(1)}px) rotateX(${(-30 * xx).toFixed(2)}deg)`)
+    if (ultima) {
+      // a moldura e o fundo da tela somem primeiro; as peças de cima e de baixo, junto com os blocos
+      const fundo = (1 - suave(0, .45, x)).toFixed(3), pecas = (1 - suave(.5, 1, x)).toFixed(3)
+      por(c.base, 'opacity', fundo)
+      c.tel.querySelectorAll('.chapa').forEach((ch) => por(ch, 'opacity', fundo))
+      ;[c.barra, c.nav].forEach((p) => por(p, 'opacity', pecas))
+      por(c.fab, 'opacity', (1 - suave(0, .35, x)).toFixed(3))
+    }
     if (c.linha) {
       const d = suave(3.6, 5.2, t), sai = suave(6.0, 6.5, t)
       c.linha.forEach((p) => { p.setAttribute('stroke-dashoffset', (1 - d).toFixed(4)); p.setAttribute('opacity', ((p === c.linha[0] ? .9 : 1) * (1 - sai)).toFixed(3)) })
@@ -315,9 +335,9 @@ function desenhar(T) {
 
   // final
   const tf = T - FINAL
-  mostrar(anel, tf > -.6)
-  if (tf > -.6) {
-    const ent = suave(-.6, .9, tf), rec = suave(3.4, 4.6, tf)
+  mostrar(anel, tf > -.55)
+  if (tf > -.55) {
+    const ent = suave(-.55, 1.0, tf), rec = suave(3.4, 4.6, tf)
     const giro = -20 - tf * 52
     por(anel, 'transform', `translate3d(0, ${(rec * 330).toFixed(1)}px, ${(-1800 * (1 - ent) - 600 - rec * 900).toFixed(1)}px) rotateX(${(-8 + rec * 14).toFixed(2)}deg) rotateY(${giro.toFixed(2)}deg)`)
     const op = ent * (1 - .78 * rec)
