@@ -321,9 +321,12 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       if (usar) return ligarAConta(lanc.id, s.conta.id)
       recusarVinculos([lanc.id], s.conta.id)
     }
+    // Conta em outra moeda sem cotação (combinada ou do dia): não grava nada por 1 por 1, pede a cotação.
+    const baixa = lancamentoDaBaixa(s.conta, ano, mes, mudancas, taxas)
     esfriar()
+    if (!baixa) return d.setErro(tx('Ainda não temos a cotação de {0}. Toque no lápis (“Outro valor ou outra data”) e informe a cotação do pagamento.', s.moeda ?? ''))
     baixando.current.add(s.conta.id)
-    void d.addLanc(lancamentoDaBaixa(s.conta, ano, mes, mudancas, taxas)).finally(() => baixando.current.delete(s.conta.id))
+    void d.addLanc(baixa).finally(() => baixando.current.delete(s.conta.id))
   }
   const desfazerBaixa = (s: SituacaoConta) => {
     if (s.baixa) void d.delLanc(s.baixa.id)
@@ -363,7 +366,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         tipo: recebe ? 'entrada' : 'saida', divida_id: s.divida.id,
         ...(recebe ? {} : { categoria_id: d.categorias.find((c) => c.papel === 'divida')?.id ?? null }),
         descricao: recebe ? tx('{0} – recebido', `${s.divida.descricao}${s.divida.pessoa ? ` (${s.divida.pessoa})` : ''}`) : tx('{0} – parcela', s.divida.descricao),
-        valor: sugerido && sugerido > 0 ? sugerido : undefined,
+        // sem cotação da moeda da dívida não há valor na moeda principal: o formulário pede a cotação (não assume 1 por 1)
+        valor: sugerido && sugerido > 0 && !s.semCotacao ? sugerido : undefined,
         // dívida em outra moeda: o pagamento abre nessa moeda, com o valor sugerido nela
         ...(s.moeda && sugerido && sugerido > 0 ? { moeda_original: s.moeda, valor_original: nativoDiv(s, sugerido) } : {}),
       },

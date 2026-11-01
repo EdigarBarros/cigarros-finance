@@ -286,7 +286,7 @@ function Boleto({ s, c, indice, aoEditar, aoOutroValor }: { s: SituacaoConta; c:
             </>
           ) : (
             <>
-              <button className="btn primario conta-paguei" onClick={() => c.pagarConta(s)}>
+              <button className="btn primario conta-paguei" onClick={() => (s.semCotacao ? aoOutroValor() : c.pagarConta(s))}>
                 <Icone nome={entrada ? 'receber' : 'check'} tamanho={16} /> {entrada ? tx('Recebi') : tx('Paguei')}
               </button>
               <button className="icone-btn" onClick={aoOutroValor} title={tx('Outro valor ou outra data')} aria-label={tx('Outro valor ou outra data')}><Icone nome="lapis" tamanho={16} /></button>
@@ -315,6 +315,7 @@ function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () 
     const n = parseNumero(valor)
     if (!n || n <= 0) return setErro(tx('Informe um valor maior que zero.'))
     if (!data || data.slice(0, 7) !== `${c.ano}-${mm}`) return setErro(tx('Escolha uma data dentro de {0}.', noMeioDaFrase(MESES_NOME[c.mes - 1])))
+    if (s.moeda && !cotacao && !c.taxas[s.moeda]) return setErro(tx('Informe a cotação: quanto vale 1 {0} na sua moeda.', s.moeda))
     c.pagarConta(s, { valor: n, data, ...(s.moeda && cotacao ? { cotacao } : {}) })
     aoFechar()
   }
@@ -331,7 +332,7 @@ function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () 
             <CampoCotacao moeda={s.moeda} principal={c.perfil.moeda} taxaDia={c.taxas[s.moeda]} valor={cotacao} aoMudar={setCotacao} />
             <span className="campo-ajuda">
               {parseNumero(valor) && (cotacao ?? c.taxas[s.moeda]) ? <>≈ <b>{fmtValor(parseNumero(valor)! * (cotacao ?? c.taxas[s.moeda]))}</b> {tx('na sua moeda.')} </> : null}
-              {s.conta.cotacao && cotacao === s.conta.cotacao ? tx('Cotação combinada na conta; troque se pagou por outra.') : cotacao ? tx('Cotação que você informou.') : tx('Cotação de hoje; troque se pagou por outra.')}
+              {s.conta.cotacao && cotacao === s.conta.cotacao ? tx('Cotação combinada na conta; troque se pagou por outra.') : cotacao ? tx('Cotação que você informou.') : c.taxas[s.moeda] ? tx('Cotação de hoje; troque se pagou por outra.') : tx('Sem cotação automática agora: informe a que você pagou.')}
             </span>
           </div>
         )}
