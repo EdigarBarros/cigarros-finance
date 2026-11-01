@@ -11,6 +11,7 @@ import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
 import { CenaLancamentos } from '../components/Vazios'
 import { Segmentado } from '../components/ui'
+import { Seletor } from '../components/Escolhas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 
@@ -254,20 +255,21 @@ export function Lancamentos(c: Ctx) {
               <Segmentado rotulo={tx('Ordem')} valor={ordem} aoMudar={setOrdem}
                 opcoes={[{ id: 'data', nome: tx('Por dia') }, { id: 'valor', nome: tx('Maiores') }]} />
               {comBancos && (
-                <select className={`lc-select ${banco !== 'todos' ? 'ativo' : ''}`} value={banco} onChange={(e) => setBanco(e.target.value)} aria-label={tx('Banco')}>
-                  <option value="todos">{tx('Todos os bancos')}</option>
-                  {c.d.bancos.map((b) => <option key={b.id} value={b.id}>{b.nome}</option>)}
-                  <option value="sem">{tx('Sem banco')}</option>
-                </select>
+                <Seletor className={`lc-select ${banco !== 'todos' ? 'ativo' : ''}`} valor={banco} aoMudar={setBanco} rotulo={tx('Banco')}
+                  opcoes={[
+                    { valor: 'todos', rotulo: tx('Todos os bancos') },
+                    ...c.d.bancos.map((b) => ({ valor: b.id, rotulo: b.nome, cor: b.cor })),
+                    { valor: 'sem', rotulo: tx('Sem banco') },
+                  ]} />
               )}
               {comFormas && (
-                <select className={`lc-select ${forma !== 'todos' ? 'ativo' : ''}`} value={forma} onChange={(e) => setForma(e.target.value as Filtro<FormaPagamento | 'sem'>)} aria-label={tx('Forma de pagamento')}>
-                  <option value="todos">{tx('Todas as formas')}</option>
-                  {FORMAS.filter((f) => formasDoMes.has(f.id) || forma === f.id).map((f) => (
-                    <option key={f.id} value={f.id}>{f.nome} · {valorDaForma(f.id)}</option>
-                  ))}
-                  {(formasDoMes.has('sem') || forma === 'sem') && <option value="sem">{tx('Sem forma · {0}', valorDaForma('sem'))}</option>}
-                </select>
+                <Seletor className={`lc-select ${forma !== 'todos' ? 'ativo' : ''}`} valor={forma} rotulo={tx('Forma de pagamento')}
+                  aoMudar={(v) => setForma(v as Filtro<FormaPagamento | 'sem'>)}
+                  opcoes={[
+                    { valor: 'todos', rotulo: tx('Todas as formas') },
+                    ...FORMAS.filter((f) => formasDoMes.has(f.id) || forma === f.id).map((f) => ({ valor: f.id, rotulo: f.nome, detalhe: valorDaForma(f.id), cor: f.cor })),
+                    ...((formasDoMes.has('sem') || forma === 'sem') ? [{ valor: 'sem', rotulo: tx('Sem forma'), detalhe: valorDaForma('sem') }] : []),
+                  ]} />
               )}
             </section>
           )}

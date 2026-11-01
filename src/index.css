@@ -3916,3 +3916,153 @@ body { top: 0 !important; }
   @keyframes modal-entra { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
   .config-conteudo > * { animation-duration: .4s; }
 }
+
+/* =========================================================================
+   Escolhas e avisos (components/Escolhas.tsx e Avisos.tsx): no lugar das telas
+   cinzas do navegador (select, data, mês, sugestões, alert/confirm/prompt)
+   ========================================================================= */
+.escolha-gatilho {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; height: 44px; padding: 0 12px 0 14px; cursor: pointer;
+  border: 1px solid var(--borda); border-radius: var(--raio-p); background: var(--superficie-2); color: var(--texto);
+  text-align: start; outline: none; transition: box-shadow .2s, border-color .2s, background .2s, transform .15s;
+}
+.escolha-gatilho:hover:not(:disabled) { border-color: var(--borda-forte); }
+.escolha-gatilho:focus-visible, .escolha-gatilho[aria-expanded='true'] { border-color: var(--destaque); box-shadow: 0 0 0 4px var(--foco); }
+.escolha-gatilho:active:not(:disabled) { transform: scale(.985); }
+.escolha-gatilho:disabled { opacity: .5; cursor: default; }
+.escolha-gatilho > svg { flex: none; color: var(--texto-2); transition: transform .3s var(--mola); }
+.escolha-gatilho:not(.data)[aria-expanded='true'] > svg { transform: rotate(180deg); }
+.escolha-texto { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.escolha-texto.vazio { color: var(--texto-3); }
+.escolha-detalhe { flex: none; color: var(--texto-2); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.escolha-cor { flex: none; width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 10%, transparent); }
+.escolha-obrigatorio { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
+
+/* nos lugares que já tinham um estilo próprio */
+.campo-ic .escolha-gatilho {
+  height: 56px; padding: 0 16px 0 48px; border-radius: 17px; font-size: 16px;
+  background: color-mix(in srgb, var(--superficie-2) 78%, transparent);
+}
+.campo-ic .escolha-gatilho:focus-visible, .campo-ic .escolha-gatilho[aria-expanded='true'] { border-color: var(--c, var(--destaque)); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c, var(--destaque)) 18%, transparent); }
+.campo-ic .escolha-gatilho > svg { display: none; }
+.lc-select.escolha-gatilho { width: auto; height: 38px; padding: 0 10px 0 12px; border-radius: 12px; font-size: 13px; font-weight: 500; color: var(--texto-2); }
+.lc-select.escolha-gatilho.ativo { color: var(--texto); border-color: var(--destaque); background: var(--destaque-suave); }
+.ex-banco .escolha-gatilho { width: auto; min-width: 150px; height: 34px; border-radius: 10px; font-size: 13px; }
+.escolha-gatilho.ex-cat { height: 34px; padding: 0 8px 0 10px; border-radius: 9px; font-size: 13px; }
+.dv-sem-data .escolha-gatilho { width: auto; min-width: 170px; }
+
+/* o quadro que abre preso ao campo (computador) */
+.escolha-fora { position: fixed; inset: 0; z-index: 60; }
+.escolha-quadro {
+  position: fixed; z-index: 61; display: flex; flex-direction: column; padding: 6px; border-radius: 16px; overflow: hidden;
+  background: var(--superficie-forte); border: 1px solid var(--borda-forte); box-shadow: var(--sombra-alta);
+  transform-origin: top center; animation: menu-abre .32s var(--mola-salto);
+}
+.escolha-quadro.acima { transform-origin: bottom center; animation-name: escolha-abre-acima; }
+@keyframes escolha-abre-acima { from { opacity: 0; transform: scale(.9) translateY(4px); } }
+.escolha-quadro.sugestoes { z-index: 62; }
+
+/* no celular: folha que sobe de baixo, como as janelas do app */
+.escolha-fundo {
+  position: fixed; inset: 0; z-index: 60; display: grid; place-items: end center;
+  background: rgba(3, 6, 14, .5); backdrop-filter: blur(6px); animation: aparece .25s var(--mola);
+}
+.escolha-folha {
+  display: flex; flex-direction: column; width: 100%; max-height: 78vh; padding: 10px 14px calc(16px + env(safe-area-inset-bottom));
+  border-radius: 28px 28px 0 0; background: var(--superficie-forte); border: 1px solid var(--borda-forte); border-bottom: 0;
+  box-shadow: var(--sombra-alta); animation: escolha-sobe .45s var(--mola);
+}
+.escolha-folha .alca { display: block; width: 36px; height: 5px; margin: 0 auto 8px; border-radius: 999px; background: var(--preench-1); }
+.escolha-folha-topo { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 2px 4px 10px; }
+.escolha-folha-topo strong { font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
+.escolha-folha-topo .icone-btn { width: 32px; height: 32px; }
+@keyframes escolha-sobe { from { transform: translateY(100%); } to { transform: none; } }
+
+/* lista de opções */
+.escolha-lista-caixa { display: flex; flex-direction: column; min-height: 0; }
+.escolha-busca {
+  display: flex; align-items: center; gap: 8px; height: 40px; margin-bottom: 6px; padding: 0 12px; flex: none;
+  border-radius: 11px; background: var(--preench-4); border: 1px solid var(--borda); color: var(--texto-2);
+}
+.escolha-busca:focus-within { border-color: var(--destaque); }
+.escolha-busca input { flex: 1; min-width: 0; border: 0; background: none; outline: none; color: var(--texto); font-size: 14px; }
+.escolha-lista { list-style: none; margin: 0; padding: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; outline: none; }
+.escolha-lista li {
+  display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 12px; border-radius: 10px; cursor: pointer;
+  color: var(--texto); font-size: 14px; transition: background .15s;
+}
+.escolha-lista li.realce { background: var(--preench-3); }
+.escolha-lista li.ativo { background: var(--destaque-suave); font-weight: 600; }
+.escolha-lista li.ativo.realce { background: color-mix(in srgb, var(--destaque) 22%, transparent); }
+.escolha-lista li.desativado { opacity: .45; cursor: default; }
+.escolha-lista li > svg { flex: none; color: var(--destaque); }
+.escolha-lista li small { margin-left: auto; color: var(--texto-2); font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.escolha-lista li.ativo small + svg, .escolha-lista li small ~ svg { margin-left: 0; }
+.escolha-nome { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.escolha-lista li:has(small) .escolha-nome { flex: 0 1 auto; }
+.escolha-vazio { justify-content: center; color: var(--texto-3) !important; cursor: default !important; }
+.sugestoes .escolha-lista li > svg { color: var(--texto-3); }
+.escolha-folha .escolha-lista li { min-height: 48px; font-size: 15px; }
+
+/* calendário e meses */
+.calendario { display: grid; gap: 8px; padding: 6px 6px 4px; }
+.calendario-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.calendario-topo strong { font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.calendario-topo strong span { color: var(--texto-2); font-weight: 600; }
+.calendario-topo .icone-btn { width: 34px; height: 34px; border: 0; background: var(--preench-4); }
+.calendario-topo .icone-btn:disabled { opacity: .3; }
+.calendario-semana, .calendario-dias { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.calendario-semana span { text-align: center; font-size: 11.5px; font-weight: 700; color: var(--texto-3); padding: 2px 0; }
+.calendario-dias button, .calendario-meses button {
+  position: relative; aspect-ratio: 1; min-height: 36px; border: 0; border-radius: 11px; cursor: pointer;
+  background: var(--preench-4); color: var(--texto); font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums;
+  outline: none; transition: background .15s, transform .2s var(--mola-salto), box-shadow .2s;
+}
+.calendario-dias button:hover:not(:disabled), .calendario-meses button:hover:not(:disabled) { background: var(--preench-2); transform: scale(1.06); }
+.calendario-dias button:focus-visible, .calendario-meses button:focus-visible { box-shadow: 0 0 0 2px var(--superficie-forte), 0 0 0 4px var(--foco); }
+.calendario-dias button.hoje, .calendario-meses button.hoje { box-shadow: inset 0 0 0 1.5px var(--destaque); }
+.calendario-dias button.ativo, .calendario-meses button.ativo {
+  color: var(--destaque-texto); background: var(--destaque); box-shadow: 0 6px 16px -6px var(--destaque);
+  animation: lc-pinga .35s var(--mola-salto);
+}
+.calendario-dias button:disabled, .calendario-meses button:disabled { opacity: .25; cursor: default; }
+.calendario-meses { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.calendario-meses button { aspect-ratio: auto; height: 44px; font-size: 13.5px; }
+.calendario-rodape { display: flex; align-items: center; gap: 8px; padding-top: 4px; }
+.calendario-rodape .link { margin-left: auto; font-size: 13.5px; }
+.calendario-rodape .chip { cursor: pointer; }
+.escolha-folha .calendario-dias button { min-height: 42px; font-size: 15px; }
+
+/* avisos e confirmações */
+.aviso-fundo { z-index: 70; }
+.modal.aviso { width: min(420px, 100%); display: grid; justify-items: center; gap: 10px; text-align: center; padding: 26px 24px 22px; }
+.aviso-icone {
+  display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 4px; border-radius: 17px;
+  color: var(--destaque); background: var(--destaque-suave); animation: lc-pinga .45s var(--mola-salto);
+}
+.modal.aviso.perigo .aviso-icone { color: var(--saida); background: color-mix(in srgb, var(--saida) 14%, transparent); }
+.modal.aviso h2 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -.02em; }
+.aviso-texto { margin: 0; color: var(--texto-2); font-size: 15px; line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; max-height: 50vh; overflow-y: auto; }
+.aviso-campo {
+  width: 100%; height: 48px; margin-top: 4px; padding: 0 14px; border: 1px solid var(--borda); border-radius: var(--raio-p);
+  background: var(--superficie-2); outline: none; font-size: 16px; transition: box-shadow .2s, border-color .2s;
+}
+.aviso-campo:focus { border-color: var(--destaque); box-shadow: 0 0 0 4px var(--foco); }
+.aviso-acoes { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 10px; width: 100%; margin-top: 10px; }
+.aviso-acoes .btn { height: 46px; border-radius: 14px; }
+.escolha-lista li.escolha-grupo {
+  min-height: 0; padding: 12px 12px 4px; cursor: default; background: none !important; white-space: normal;
+  color: var(--texto-3); font-size: 11.5px; font-weight: 700; letter-spacing: .02em; line-height: 1.35;
+}
+.escolha-lista li.escolha-grupo:first-child { padding-top: 6px; }
+/* dias do mês em grade, como um calendário */
+.escolha-lista.grade { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 2px; }
+.escolha-lista.grade li {
+  justify-content: center; min-height: 0; aspect-ratio: 1; padding: 0; border-radius: 11px;
+  background: var(--preench-4); font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.escolha-lista.grade li.realce { background: var(--preench-2); }
+.escolha-lista.grade li.ativo { color: var(--destaque-texto); background: var(--destaque); }
+.escolha-lista.grade li > svg, .escolha-lista.grade li .escolha-nome + small { display: none; }
+.escolha-lista.grade .escolha-nome { flex: none; text-align: center; }
+.escolha-folha .escolha-lista.grade li { min-height: 0; }

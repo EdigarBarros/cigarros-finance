@@ -29,6 +29,7 @@ import type { Ctx, Pagina } from '../pages/contexto'
 import { BlocoCartoes } from './BlocoCartoes'
 import { BlocoContasDoMes } from './BlocoContas'
 import { Kpi } from './ui'
+import { avisar, confirmar } from '../lib/avisos'
 import { BotaoIdioma } from './BotaoIdioma'
 import { Icone } from './Icone'
 import { CartaoDicas, type Dica } from './CartaoDicas'
@@ -310,9 +311,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       const { lerPlanilha, gravarImportacao } = await import('../lib/planilha')
       const meses = await lerPlanilha(f)
       if (arquivo.current) arquivo.current.value = ''
-      if (!meses.length) return alert(tx('Não encontrei abas de mês com dados nessa planilha. Cada aba precisa ter o mês e o ano no nome (ex.: OUTUBRO26 ou NOV 26) ou no título (ex.: CONTROLE FINANCEIRO JANEIRO/2024).'))
+      if (!meses.length) return avisar(tx('Não encontrei abas de mês com dados nessa planilha. Cada aba precisa ter o mês e o ano no nome (ex.: OUTUBRO26 ou NOV 26) ou no título (ex.: CONTROLE FINANCEIRO JANEIRO/2024).'), tx('Nada para importar'))
       const lista = meses.map((m) => tx('{0}/{1}: {2} lançamentos', MESES_NOME[m.mes - 1], m.ano, m.lancs.length)).join('\n')
-      if (!confirm(tx('Encontrei {0} meses:\n\n{1}\n\nOs dados desses meses no app serão substituídos pelos da planilha. Quer continuar?', meses.length, lista))) return
+      if (!(await confirmar(tx('Encontrei {0} meses:\n\n{1}\n\nOs dados desses meses no app serão substituídos pelos da planilha. Quer continuar?', meses.length, lista), { titulo: tx('Importar planilha'), botao: tx('Importar') }))) return
       setOcupado(tx('Salvando…'))
       await gravarImportacao(userId, meses)
       const ultimo = meses[meses.length - 1]
@@ -363,15 +364,17 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     if (lancIds.length) mudarPerfil({ ...perfil, dispensadas: [...new Set([...perfil.dispensadas, ...lancIds.map((id) => chaveRecusa(contaId, id))])] })
   }
 
-  const pagarConta = (s: SituacaoConta, mudancas?: { valor?: number; data?: string; cotacao?: number }) => {
+  const pagarConta = async (s: SituacaoConta, mudancas?: { valor?: number; data?: string; cotacao?: number }) => {
     if (s.baixa || baixando.current.has(s.conta.id) || esfriando.current) return
     // O dinheiro já está num lançamento (veio do extrato, ou foi lançado à mão)? Em vez de lançar de novo, usa esse.
     const sugerido = sugestoesVinculo.get(s.conta.id)
     if (sugerido && !mudancas) {
       const { lanc } = sugerido
-      const usar = confirm(s.conta.tipo === 'entrada'
-        ? tx('Já existe “{0}” de {1} em {2}.\n\nEle é o recebimento de {3}?\n\nOK: sim, usar ele (sem lançar de novo).\nCancelar: não, lançar outro.', lanc.descricao, fmtValor(lanc.valor), fmtDataCurta(lanc.data), s.conta.descricao)
-        : tx('Já existe “{0}” de {1} em {2}.\n\nEle é o pagamento de {3}?\n\nOK: sim, usar ele (sem lançar de novo).\nCancelar: não, lançar outro.', lanc.descricao, fmtValor(lanc.valor), fmtDataCurta(lanc.data), s.conta.descricao))
+      esfriando.current = true
+      const usar = await confirmar(s.conta.tipo === 'entrada'
+        ? tx('Já existe “{0}” de {1} em {2}. Ele é o recebimento de {3}?', lanc.descricao, fmtValor(lanc.valor), fmtDataCurta(lanc.data), s.conta.descricao)
+        : tx('Já existe “{0}” de {1} em {2}. Ele é o pagamento de {3}?', lanc.descricao, fmtValor(lanc.valor), fmtDataCurta(lanc.data), s.conta.descricao),
+        { titulo: tx('Já está lançado?'), botao: tx('Sim, usar este'), cancelar: tx('Não, lançar outro') })
       esfriar()
       if (usar) return ligarAConta(lanc.id, s.conta.id)
       recusarVinculos([lanc.id], s.conta.id)
@@ -746,7 +749,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         {assinatura?.status === 'past_due' && (
           <div className="alerta" role="status">
             <span>{tx('Não conseguimos cobrar seu cartão. Atualize a forma de pagamento para não perder o acesso.')}</span>
-            <button className="link" onClick={() => void irParaStripe('stripe-portal').then((m) => m && alert(m))}>{tx('Atualizar cartão')}</button>
+            <button className="link" onClick={() => void irParaStripe('stripe-portal').then((m) => m && avisar(m))}>{tx('Atualizar cartão')}</button>
           </div>
         )}
 

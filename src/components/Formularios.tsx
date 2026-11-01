@@ -20,6 +20,8 @@ import type { NovaDivida } from '../lib/useDados'
 import { CampoCotacao } from './CampoCotacao'
 import { EscolhaMoeda } from './EscolhaMoeda'
 import { Modal, Palco, Segmentado } from './ui'
+import { CampoData, CampoSugestoes, Seletor } from './Escolhas'
+import { confirmar, perguntar } from '../lib/avisos'
 import { tx } from '../lib/textos'
 
 type NovoLanc = Omit<Lancamento, 'id'>
@@ -432,16 +434,13 @@ export function FormLancamento(p: FormLancProps) {
       <form id={idForm} className="form" onSubmit={(e) => { e.preventDefault(); void salvar(false) }}>
         <label className="campo-ic">
           <Icone nome="lapis" tamanho={18} />
-          <input
-            list="sugestoes-descricao"
-            value={descricao}
-            onChange={(e) => aoDigitarDescricao(e.target.value)}
+          <CampoSugestoes
+            valor={descricao}
+            aoMudar={aoDigitarDescricao}
+            sugestoes={sugestoes}
             placeholder={tipo === 'saida' ? tx('Ex.: iFood, 99, mercado…') : tx('Ex.: salário, Pix de cliente…')}
-            aria-label={tx('Descrição')}
+            rotulo={tx('Descrição')}
           />
-          <datalist id="sugestoes-descricao">
-            {sugestoes.map((s) => <option key={s} value={s} />)}
-          </datalist>
         </label>
         {dica && (
           <div className="form-dica" role="status">
@@ -456,8 +455,8 @@ export function FormLancamento(p: FormLancProps) {
           ))}
           <label className="campo-ic">
             <Icone nome="calendario" tamanho={18} />
-            <input type="date" value={data} onChange={(e) => setData(e.target.value)} required
-              aria-label={cartao ? tx('Data da compra') : ehParcela ? tx('Vencimento da parcela') : tx('Data')} />
+            <CampoData valor={data} aoMudar={setData} obrigatorio
+              rotulo={cartao ? tx('Data da compra') : ehParcela ? tx('Vencimento da parcela') : tx('Data')} />
           </label>
         </div>
         {!ehParcela && (
@@ -497,9 +496,8 @@ export function FormLancamento(p: FormLancProps) {
         {cartao && (
           <label className="campo">
             <span className="campo-rotulo">{tx('Em quantas vezes?')}</span>
-            <select value={vezes} onChange={(e) => setVezes(Number(e.target.value))}>
-              {Array.from({ length: 24 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n === 1 ? tx('1x (à vista)') : `${n}x`}</option>)}
-            </select>
+            <Seletor valor={String(vezes)} aoMudar={(v) => setVezes(Number(v))} rotulo={tx('Em quantas vezes?')}
+              opcoes={Array.from({ length: 24 }, (_, i) => i + 1).map((n) => ({ valor: String(n), rotulo: n === 1 ? tx('1x (à vista)') : `${n}x` }))} />
             {depoisDoFechamento && (
               <span className="campo-ajuda aviso-fatura" role="note">
                 {tx('A fatura do {0} fecha dia {1}, então essa compra entra na fatura de {2}.', cartao!.nome, cartao!.dia_fechamento, nomeDaFatura(parcelas[0].ano, parcelas[0].mes, Number(data.slice(0, 4))))}
@@ -531,14 +529,15 @@ export function FormLancamento(p: FormLancProps) {
         {!cartao && contasDoTipo.length > 0 && (
           <label className="campo">
             <span className="campo-rotulo">{tipo === 'entrada' ? tx('É de uma entrada fixa?') : tx('É de uma conta do mês?')} <small>(opcional)</small></span>
-            <select value={contaEscolhida?.id ?? ''} onChange={(e) => escolherConta(e.target.value)}>
-              <option value="">{tx('Não')}</option>
-              {contasDoTipo.map((k) => (
-                <option key={k.id} value={k.id} disabled={ocupada(k.id) && k.id !== contaId}>
-                  {k.descricao}{ocupada(k.id) ? (' ' + tx('· já tem lançamento neste mês')) : ''}
-                </option>
-              ))}
-            </select>
+            <Seletor valor={contaEscolhida?.id ?? ''} aoMudar={escolherConta}
+              rotulo={tipo === 'entrada' ? tx('É de uma entrada fixa?') : tx('É de uma conta do mês?')}
+              opcoes={[
+                { valor: '', rotulo: tx('Não') },
+                ...contasDoTipo.map((k) => ({
+                  valor: k.id, rotulo: k.descricao, desativado: ocupada(k.id) && k.id !== contaId,
+                  detalhe: ocupada(k.id) ? tx('já tem lançamento neste mês') : undefined,
+                })),
+              ]} />
             {contaEscolhida && (
               <span className="campo-ajuda">
                 {tx('{0} fica como {1} neste mês, sem precisar tocar em “', contaEscolhida.descricao, tipo === 'entrada' ? tx('recebida') : tx('paga'))}{tipo === 'entrada' ? tx('Recebi') : tx('Paguei')}”.
@@ -552,29 +551,21 @@ export function FormLancamento(p: FormLancProps) {
             {(v.dividas || dividaId || novoEmprestimo || p.aoNovaDivida) && (
               <label className="campo">
                 <span className="campo-rotulo">{tx('Isso paga ou empresta para alguém?')} <small>(opcional)</small></span>
-                <select value={novoEmprestimo ? NOVO : [...devo, ...jaEmprestei].some((d) => d.id === dividaId) ? dividaId : ''}
-                  onChange={(e) => {
-                    const id = e.target.value
+                <Seletor valor={novoEmprestimo ? NOVO : [...devo, ...jaEmprestei].some((d) => d.id === dividaId) ? dividaId : ''}
+                  rotulo={tx('Isso paga ou empresta para alguém?')}
+                  aoMudar={(id) => {
                     setNovoEmprestimo(id === NOVO)
                     if (id === NOVO) { setDividaId(''); setMexeuDivida(true) } else if (jaEmprestei.some((d) => d.id === id)) { setDividaId(id); setMexeuDivida(true) } else escolherDivida(id)
-                  }}>
-                  <option value="">{tx('Nenhuma (só entra como gasto)')}</option>
-                  {p.aoNovaDivida && <option value={NOVO}>{tx('Emprestei para alguém (criar o que me devem)')}</option>}
-                  {devo.length > 0 && (
-                    <optgroup label={tx('Estou pagando uma dívida (ela diminui)')}>
-                      {devo.map((d) => (
-                        <option key={d.id} value={d.id}>{nomeComParcela(d)}</option>
-                      ))}
-                    </optgroup>
-                  )}
-                  {jaEmprestei.length > 0 && (
-                    <optgroup label={tx('Emprestei mais para quem já me devia (o que falta receber aumenta)')}>
-                      {jaEmprestei.map((d) => (
-                        <option key={d.id} value={d.id}>{d.descricao}{d.pessoa && !d.descricao.includes(d.pessoa) ? ` · ${d.pessoa}` : ''}</option>
-                      ))}
-                    </optgroup>
-                  )}
-                </select>
+                  }}
+                  opcoes={[
+                    { valor: '', rotulo: tx('Nenhuma (só entra como gasto)') },
+                    ...(p.aoNovaDivida ? [{ valor: NOVO, rotulo: tx('Emprestei para alguém (criar o que me devem)') }] : []),
+                    ...devo.map((d) => ({ valor: d.id, rotulo: nomeComParcela(d), grupo: tx('Estou pagando uma dívida (ela diminui)') })),
+                    ...jaEmprestei.map((d) => ({
+                      valor: d.id, rotulo: `${d.descricao}${d.pessoa && !d.descricao.includes(d.pessoa) ? ` · ${d.pessoa}` : ''}`,
+                      grupo: tx('Emprestei mais para quem já me devia (o que falta receber aumenta)'),
+                    })),
+                  ]} />
                 {dividaId && devo.some((d) => d.id === dividaId) && <span className="campo-ajuda">{tx('A dívida diminui sozinha com este pagamento.')}</span>}
                 {dividaId && jaEmprestei.some((d) => d.id === dividaId) && <span className="campo-ajuda">{tx('O que falta receber aumenta sozinho com este dinheiro que você emprestou.')}</span>}
                 {novoEmprestimo && (
@@ -591,30 +582,23 @@ export function FormLancamento(p: FormLancProps) {
         {tipo === 'entrada' && (v.dividas || dividaId || novoEmprestimo || p.aoNovaDivida) && (
           <label className="campo">
             <span className="campo-rotulo">{tx('Isso tem a ver com uma dívida?')} <small>(opcional)</small></span>
-            <select value={novoEmprestimo ? NOVO : [...aReceber, ...emprestimos].some((d) => d.id === dividaId) ? dividaId : ''}
-              onChange={(e) => {
-                const novo = e.target.value === NOVO
+            <Seletor valor={novoEmprestimo ? NOVO : [...aReceber, ...emprestimos].some((d) => d.id === dividaId) ? dividaId : ''}
+              rotulo={tx('Isso tem a ver com uma dívida?')}
+              aoMudar={(v) => {
+                const novo = v === NOVO
                 setNovoEmprestimo(novo)
-                setDividaId(novo ? '' : e.target.value)
+                setDividaId(novo ? '' : v)
                 setMexeuDivida(true)
-              }}>
-              <option value="">{tx('Não')}</option>
-              {p.aoNovaDivida && <option value={NOVO}>{tx('Peguei emprestado de alguém (criar dívida)')}</option>}
-              {emprestimos.length > 0 && (
-                <optgroup label={tx('Peguei emprestado (a dívida aumenta)')}>
-                  {emprestimos.map((d) => (
-                    <option key={d.id} value={d.id}>{d.descricao}{d.pessoa && !d.descricao.includes(d.pessoa) ? ` · ${d.pessoa}` : ''}</option>
-                  ))}
-                </optgroup>
-              )}
-              {aReceber.length > 0 && (
-                <optgroup label={tx('Recebi de quem me devia (o que falta receber diminui)')}>
-                  {aReceber.map((d) => (
-                    <option key={d.id} value={d.id}>{nomeComParcela(d)}</option>
-                  ))}
-                </optgroup>
-              )}
-            </select>
+              }}
+              opcoes={[
+                { valor: '', rotulo: tx('Não') },
+                ...(p.aoNovaDivida ? [{ valor: NOVO, rotulo: tx('Peguei emprestado de alguém (criar dívida)') }] : []),
+                ...emprestimos.map((d) => ({
+                  valor: d.id, rotulo: `${d.descricao}${d.pessoa && !d.descricao.includes(d.pessoa) ? ` · ${d.pessoa}` : ''}`,
+                  grupo: tx('Peguei emprestado (a dívida aumenta)'),
+                })),
+                ...aReceber.map((d) => ({ valor: d.id, rotulo: nomeComParcela(d), grupo: tx('Recebi de quem me devia (o que falta receber diminui)') })),
+              ]} />
             {dividaId && aReceber.some((d) => d.id === dividaId) && <span className="campo-ajuda">{tx('O que falta receber diminui sozinho com esta entrada.')}</span>}
             {dividaId && emprestimos.some((d) => d.id === dividaId) && <span className="campo-ajuda">{tx('A dívida aumenta sozinha com este dinheiro que você pegou.')}</span>}
             {novoEmprestimo && (
@@ -650,7 +634,10 @@ export function FormLancamento(p: FormLancProps) {
             <button
               type="button"
               className="btn perigo"
-              onClick={() => { if (confirm(ehParcela ? tx('Excluir só esta parcela? As outras continuam.') : tx('Excluir este lançamento?'))) { p.aoExcluir!(p.inicial!.id); p.aoFechar() } }}
+              onClick={async () => {
+                if (!(await confirmar(ehParcela ? tx('Excluir só esta parcela? As outras continuam.') : tx('Excluir este lançamento?'), { botao: tx('Excluir'), perigo: true }))) return
+                p.aoExcluir!(p.inicial!.id); p.aoFechar()
+              }}
             >
               <Icone nome="lixeira" tamanho={16} />{ehParcela && (p.inicial.parcelas ?? 1) > 1 ? tx('Excluir só esta parcela') : tx('Excluir')}
             </button>
@@ -659,7 +646,10 @@ export function FormLancamento(p: FormLancProps) {
             <button
               type="button"
               className="btn perigo"
-              onClick={() => { if (confirm(tx('Excluir a compra inteira "{0}"? Todas as parcelas serão apagadas.', p.inicial!.descricao))) { p.aoExcluirCompra!(p.inicial!.compra_id!); p.aoFechar() } }}
+              onClick={async () => {
+                if (!(await confirmar(tx('Excluir a compra inteira "{0}"? Todas as parcelas serão apagadas.', p.inicial!.descricao), { botao: tx('Excluir'), perigo: true }))) return
+                p.aoExcluirCompra!(p.inicial!.compra_id!); p.aoFechar()
+              }}
             >
               {tx('Excluir a compra inteira')}
             </button>
@@ -906,7 +896,7 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
         </div>
         <label className="campo">
           <span className="campo-rotulo">{tx('Quando começou?')}</span>
-          <input type="date" value={comecou} onChange={(e) => { setComecou(e.target.value); setMexeuComecou(true) }} />
+          <CampoData valor={comecou} aoMudar={(v) => { setComecou(v); setMexeuComecou(true) }} rotulo={tx('Quando começou?')} />
           <span className="campo-ajuda">{d
             ? tx('É daqui que o gráfico do ano passa a mostrar esta dívida. Os pagamentos já lançados continuam valendo.')
             : tx('Dívida de meses atrás? Coloque o dia em que ela começou: o gráfico do ano mostra ela desde lá. Depois, lance cada pagamento com a data certa.')}</span>
@@ -940,7 +930,7 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
               {!semExtras && (
                 <label className="campo">
                   <span className="campo-rotulo">{tx('A próxima vence em')}</span>
-                  <input type="date" value={proxima} onChange={(e) => setProxima(e.target.value)} />
+                  <CampoData valor={proxima} aoMudar={setProxima} rotulo={tx('A próxima vence em')} />
                 </label>
               )}
             </div>
@@ -978,7 +968,7 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
             {!semExtras && (
               <label className="campo">
                 <span className="campo-rotulo">{tx('Combinado para')} <small>(opcional)</small></span>
-                <input type="date" value={proxima} onChange={(e) => setProxima(e.target.value)} />
+                <CampoData valor={proxima} aoMudar={setProxima} rotulo={tx('Combinado para')} />
               </label>
             )}
           </div>
@@ -1010,7 +1000,7 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
         {d && (
           <label className="campo">
             <span className="campo-rotulo">{tx('Data do ajuste de saldo')}</span>
-            <input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+            <CampoData valor={data} aoMudar={setData} rotulo={tx('Data do ajuste de saldo')} />
             <span className="campo-ajuda">{recebe ? tx('Cada recebimento lançado') : tx('Os pagamentos lançados')} {tx('já abatem sozinhos. Mude o que falta só se houve juros, acordo ou se estava errado. A data é o mês em que o gráfico muda.')}</span>
           </label>
         )}
@@ -1041,7 +1031,7 @@ export function EscolhaBanco({ bancos, valor, aoMudar, aoNovoBanco, grade }: {
   grade?: boolean
 }) {
   const novo = async () => {
-    const nome = prompt(tx('Nome do banco (ex.: Nubank, Itaú, Next, Dinheiro):'))?.trim()
+    const nome = (await perguntar(tx('Nome do banco (ex.: Nubank, Itaú, Next, Dinheiro):'), { titulo: tx('Novo banco'), placeholder: 'Nubank, Itaú, Next…' }))?.trim()
     if (!nome) return
     const existente = bancos.find((b) => mesmoNome(b.nome, nome))
     if (existente) return aoMudar(existente.id)
