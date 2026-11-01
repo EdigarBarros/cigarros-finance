@@ -3840,3 +3840,61 @@ body { top: 0 !important; }
   .app:not(.trilho) .lateral .lateral-topo .marca-nome { font-size: 17px; }
   .lateral .lateral-alternar { width: 32px; height: 32px; }
 }
+
+/* ================= aparelhos de toque (tablet e celular): o que mais pesa na placa de vídeo sai ================= =
+   Desfoque do que está por trás (backdrop-filter) e filtro animado (filter: blur) são redesenhados a cada quadro; num
+   tablet isso engasga a abertura das janelas e a troca de tela. Aqui o vidro vira cor sólida (quase igual) e a entrada
+   usa só opacidade e deslocamento, que rodam na placa de vídeo. No computador, nada muda. */
+@media (pointer: coarse) {
+  .modal-fundo { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .modal-fundo.vidro { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .mais-fundo { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .lateral-fundo { -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .modal-fundo { background: rgba(3, 6, 14, .62); animation-duration: .2s; }
+  .modal-fundo.vidro { background: rgba(3, 6, 14, .5); }
+  :root[data-tema='claro'] .modal-fundo.vidro { background: rgba(20, 30, 55, .26); }
+  .encaixe-item { animation-name: surgir-sem-desfoque; animation-duration: .45s; }
+  .palco-pote { animation: none; }
+  .modal.tela {
+    backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--superficie-forte);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .08) inset, 0 24px 48px -24px rgba(0, 0, 0, .6);
+  }
+  :root[data-tema='claro'] .modal.tela { background: #fff; box-shadow: 0 24px 48px -28px rgba(20, 30, 60, .35); }
+  /* a luz de fundo passa a ser um degradê parado: sem blur de 80px nem animação infinita */
+  .tela-aurora i { filter: none; animation: none; background: radial-gradient(closest-side, var(--c), transparent); opacity: .16; }
+  .tela-aurora i:last-child { opacity: .08; }
+  /* a barra do topo deixa de desfocar o que passa por baixo (refazia o desfoque a cada rolagem e a cada troca de tela) */
+  .barra::before { backdrop-filter: none; -webkit-backdrop-filter: none; background: color-mix(in srgb, var(--fundo) 94%, transparent); }
+  /* troca de tela: entrada mais curta e escalonamento menor */
+  .pagina > *, .kpis > *, .grade-bancos > *, .grade-cartoes > *, .duas-colunas > *, .linha-fluxo > *, .linha-analise > *, .zona > * { animation-duration: .35s; }
+  .pagina > :nth-child(2) { animation-delay: 0.03s; }
+  .pagina > :nth-child(3) { animation-delay: 0.06s; }
+  .pagina > :nth-child(4) { animation-delay: 0.09s; }
+  .pagina > :nth-child(5) { animation-delay: 0.12s; }
+  .pagina > :nth-child(n+6) { animation-delay: 0.15s; }
+  .kpis > :nth-child(1), .grade-bancos > :nth-child(1), .grade-cartoes > :nth-child(1) { animation-delay: 0.04s; }
+  .kpis > :nth-child(2), .grade-bancos > :nth-child(2), .grade-cartoes > :nth-child(2), .duas-colunas > :nth-child(2), .linha-fluxo > :nth-child(2), .linha-analise > :nth-child(2), .zona > :nth-child(2) { animation-delay: 0.08s; }
+  .kpis > :nth-child(3), .grade-bancos > :nth-child(3), .grade-cartoes > :nth-child(3), .linha-analise > :nth-child(3), .zona > :nth-child(3) { animation-delay: 0.12s; }
+  .kpis > :nth-child(4), .grade-bancos > :nth-child(4), .grade-cartoes > :nth-child(4) { animation-delay: 0.16s; }
+  .kpis > :nth-child(n+5), .grade-bancos > :nth-child(n+5) { animation-delay: 0.20s; }
+}
+@keyframes modal-entra-leve { from { opacity: 0; transform: translateY(14px) scale(.98); } }
+/* tablet (o celular já tem a folha que sobe de baixo): janela entra só com opacidade e deslocamento */
+@media (pointer: coarse) and (min-width: 601px) {
+  .modal { animation: modal-entra-leve .28s var(--mola); will-change: transform, opacity; }
+}
+
+/* aparelhos de toque: as mesmas entradas, sem o desfoque animado (só opacidade e deslocamento) */
+@media (pointer: coarse) {
+  @keyframes palavra { from { opacity: 0; transform: translateY(10px); } }
+  @keyframes texto-entra { from { opacity: 0; transform: translateY(14px); } }
+  @keyframes cc-entra { from { opacity: 0; transform: translateY(26px) rotate(-4deg) scale(.94); } }
+  @keyframes qz-cena { from { opacity: 0; transform: scale(1.06); } }
+  @keyframes qz-entra { from { opacity: 0; transform: translateX(40px); } }
+  @keyframes qz-volta { from { opacity: 0; transform: translateX(-40px); } }
+  @keyframes surgir { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @keyframes dica-entra { from { opacity: 0; transform: translateY(10px); } }
+  @keyframes foto-entra { from { opacity: 0; transform: scale(1.15); } }
+  @keyframes modal-entra { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
+  .config-conteudo > * { animation-duration: .4s; }
+}

@@ -76,7 +76,8 @@ const Tour = lazy(() => import('./Tour').then((m) => ({ default: m.Tour })))
 
 /** Com o painel já na tela e o aparelho parado, baixa as outras telas e janelas para a troca de tela ser instantânea. */
 function carregarRestante() {
-  const fila = [...Object.values(paginas), ...Object.values(janelas)]
+  // Configurações e o lançamento primeiro: são o que a pessoa mais abre e não pode clicar e ver nada acontecer
+  const fila = [janelas.Configuracoes, janelas.Formularios, ...Object.values(paginas), ...Object.values(janelas)]
   const proximo = () => {
     const f = fila.shift()
     if (!f) return
@@ -87,7 +88,7 @@ function carregarRestante() {
 }
 const agendar = (f: () => void) => {
   const ric = (window as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback
-  if (ric) ric(f, { timeout: 4000 })
+  if (ric) ric(f, { timeout: 1200 })
   else setTimeout(f, 300)
 }
 
