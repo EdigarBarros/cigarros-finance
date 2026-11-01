@@ -555,7 +555,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const atrasadas = avisos.filter((s) => s.estado === 'atrasada').length
   const buscar = (q: string) => {
     setBusca(q)
-    if (paginaAtual !== 'lancamentos') irPara('lancamentos')
+    // a busca de Lançamentos e a dos Cartões são a mesma: digitar em Cartões refina o resultado de lá
+    if (paginaAtual !== 'lancamentos' && paginaAtual !== 'cartoes') irPara('lancamentos')
   }
 
   // Dicas que se revezam no pé do menu lateral: primeiro o que pede atenção, depois atalhos úteis.
@@ -763,7 +764,12 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
                 : <>{tx('Compra lançada na fatura de')} <b>{nomeDaFatura(avisoFatura.ano, avisoFatura.mes, avisoFatura.anoCompra)}</b> {tx('do {0}.', avisoFatura.cartao)}</>}
             </span>
             <span>
-              {paginaAtual !== 'cartoes' && <button className="link" onClick={() => { setAno(avisoFatura.ano); setMes(avisoFatura.mes); setAvisoFatura(null); irPara('cartoes'); setCartaoAberto(avisoFatura.cartaoId) }}>{tx('Ver fatura')}</button>}
+              {!(paginaAtual === 'cartoes' && ano === avisoFatura.ano && mes === avisoFatura.mes && cartaoAberto === avisoFatura.cartaoId) && (
+                <button className="link" onClick={() => {
+                  setAno(avisoFatura.ano); setMes(avisoFatura.mes); setAvisoFatura(null)
+                  irPara('cartoes'); setCartaoAberto(avisoFatura.cartaoId); setCompraDestacada(avisoFatura.compraId)
+                }}>{tx('Ver fatura')}</button>
+              )}
               {' '}<button className="link" onClick={() => setAvisoFatura(null)}>{tx('Fechar')}</button>
             </span>
           </div>

@@ -1,10 +1,10 @@
 import { casasDaMoeda, mascarar } from '../lib/dinheiro'
-import { useEffect, useMemo, useState } from 'react'
-import { criarBusca, semAcento } from '../lib/busca'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { criarBusca } from '../lib/busca'
 import { CATALOGO_BANCOS } from '../lib/bancos'
 import { mesEfetivo } from '../lib/calc'
 import {
-  datasDaFatura, ehCompraNoCartao, faturaDoMes, hojeLocal, nomeDaFatura, pagaComAtraso, quandoVence, renegociada, somaMeses, textoStatus,
+  casaCompraNoCartao, chaveDaCompra, datasDaFatura, ehCompraNoCartao, faturaDoMes, hojeLocal, nomeDaFatura, pagaComAtraso, quandoVence, renegociada, somaMeses, textoStatus,
   totalFaturasAPagar, totalFaturasDoMes, type CompraParcelada, type Fatura, type SituacaoCartao,
 } from '../lib/cartoes'
 import { COR } from '../lib/charts'
@@ -47,6 +47,18 @@ export function Cartoes(c: Ctx) {
   const { cartoes, faturas } = c
   const arquivados = cartoes.cartoes.filter((x) => !x.ativo)
   const s = faturas.find((x) => x.cartao.id === escolhido) ?? faturas[0]
+  // Acabou de lançar uma compra (tela Lançamentos): quando ela já está na fatura (a gravação pode demorar um pouco), rola até
+  // ela uma vez só, deixa o destaque aceso por alguns segundos e o apaga (trocar de cartão não repete nada).
+  const [destacada, setDestacada] = useState<string | null>(c.compraDestacada)
+  const jaRolou = useRef(false)
+  const apareceu = Boolean(destacada && s?.compras.some((l) => l.compra_id === destacada))
+  useEffect(() => {
+    if (!apareceu || jaRolou.current) return
+    jaRolou.current = true
+    const rolar = window.setTimeout(() => document.querySelector('.ccd-compras .compra-nova')?.scrollIntoView({ block: 'center', behavior: semMovimento() ? 'auto' : 'smooth' }), 350)
+    const apagar = window.setTimeout(() => setDestacada(null), 3600)
+    return () => { window.clearTimeout(rolar); window.clearTimeout(apagar) }
+  }, [apareceu])
   const comLimite = faturas.filter((x) => x.limiteDisponivel !== null)
   const atrasadas = faturas.flatMap((x) => [...x.atrasadas, ...(x.status === 'atrasada' ? [x] : [])])
   const emAtraso = centavos(atrasadas.reduce((a, f) => a + f.valor, 0))
@@ -110,7 +122,7 @@ export function Cartoes(c: Ctx) {
             {emAtraso > 0 && <Kpi rotulo={tx('Em atraso ({0})', atrasadas.length)} valor={emAtraso} cor={COR.saidas} icone="sino" />}
           </div>
 
-          <Detalhe key={s.cartao.id} s={s} c={c}
+          <Detalhe key={s.cartao.id} s={s} c={c} destacada={destacada}
             aoEditar={() => setEditando(s.cartao)}
             aoPagar={(f, pagamento) => setPagando({ cartao: s.cartao, f, pagamento })}
             aoRenegociar={(f) => setRenegociando({ cartao: s.cartao, f })} />
@@ -146,21 +158,22 @@ export function Cartoes(c: Ctx) {
  */
 function ResultadoDaBusca({ c }: { c: Ctx }) {
   const hoje = hojeLocal()
-  const casa = useMemo(() => criarBusca(c.busca, hoje, hojeLocal(new Date(Date.now() - 86400000))), [c.busca, hoje])
+  const casa = useMemo(() => criarBusca(c.busca, hoje, hojeLocal(new Date(Date.parse(`${hoje}T12:00:00`) - 86400000))), [c.busca, hoje])
   const achadas = useMemo(() => {
     if (!casa) return []
+    const ativos = new Set(c.cartoes.cartoes.filter((k) => k.ativo).map((k) => k.id))
     return c.cartoes.compras
-      .filter((l) => ehCompraNoCartao(l) && casa(l, semAcento([
-        l.descricao, c.categoriaDe(l)?.nome, c.cartoes.cartoes.find((k) => k.id === l.cartao_id)?.nome, (l.parcelas ?? 1) > 1 ? 'parcela parcelado' : '', 'cartao',
-      ].filter(Boolean).join(' '))))
+      .filter((l) => ehCompraNoCartao(l) && ativos.has(l.cartao_id!)
+        && casaCompraNoCartao(casa, l, c.categoriaDe(l)?.nome, c.cartoes.cartoes.find((k) => k.id === l.cartao_id)?.nome))
       .sort((a, b) => (b.data_compra ?? b.data ?? '').localeCompare(a.data_compra ?? a.data ?? ''))
   }, [casa, c.cartoes.compras, c.cartoes.cartoes, c.categorias]) // eslint-disable-line react-hooks/exhaustive-deps
+  const compras = new Set(achadas.map(chaveDaCompra)).size
   const total = centavos(achadas.reduce((a, l) => a + l.valor, 0))
   const mostradas = achadas.slice(0, 40)
   return (
     <section className="cartao cc-busca" aria-label={tx('Resultado da busca nos cartões')}>
       <h3 className="ccd-titulo ccd-compras-cab">
-        <span>{tx('Resultado da busca nos cartões')} <small>{achadas.length || ''}</small></span>
+        <span>{tx('Resultado da busca nos cartões')} <small>{compras || ''}</small></span>
         <button className="link" onClick={() => c.setBusca('')}><Icone nome="fechar" tamanho={13} /> {tx('Limpar busca')}</button>
       </h3>
       {achadas.length ? (
@@ -216,8 +229,8 @@ function SemCartoes({ aoCriar }: { aoCriar: () => void }) {
   )
 }
 
-function Detalhe({ s, c, aoEditar, aoPagar, aoRenegociar }: {
-  s: SituacaoCartao; c: Ctx; aoEditar: () => void
+function Detalhe({ s, c, destacada, aoEditar, aoPagar, aoRenegociar }: {
+  s: SituacaoCartao; c: Ctx; destacada: string | null; aoEditar: () => void
   aoPagar: (f: Fatura, pagamento?: FaturaPaga) => void
   aoRenegociar: (f: Fatura) => void
 }) {
@@ -234,13 +247,6 @@ function Detalhe({ s, c, aoEditar, aoPagar, aoRenegociar }: {
     const l = ps.find((x) => (x.parcela ?? 1) === p.atual) ?? ps[0]
     if (l) c.editarLancamento(l)
   }
-
-  // Acabou de lançar uma compra: rola até ela (a lista de compras fica abaixo da fatura e do limite)
-  useEffect(() => {
-    if (!c.compraDestacada) return
-    const t = window.setTimeout(() => document.querySelector('.ccd-compras .compra-nova')?.scrollIntoView({ block: 'center', behavior: semMovimento() ? 'auto' : 'smooth' }), 350)
-    return () => window.clearTimeout(t)
-  }, [c.compraDestacada])
 
   return (
     <div className="ccd" style={{ '--c': cartao.cor } as React.CSSProperties}>
@@ -301,7 +307,7 @@ function Detalhe({ s, c, aoEditar, aoPagar, aoRenegociar }: {
                 const k = c.categoriaDe(l) ?? SEM_CATEGORIA
                 return (
                   <li key={l.id} style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
-                    <button className={`item-lanc ${l.compra_id && l.compra_id === c.compraDestacada ? 'compra-nova' : ''}`} onClick={() => c.editarLancamento(l)}>
+                    <button className={`item-lanc ${l.compra_id && l.compra_id === destacada ? 'compra-nova' : ''}`} onClick={() => c.editarLancamento(l)}>
                       <Selo c={k} tamanho={34} />
                       <span className="item-texto">
                         <span className="item-desc">{l.descricao || tx('Compra')}</span>

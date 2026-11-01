@@ -4,6 +4,7 @@
  * Modelo: cada parcela é uma saída (lançamento) com `data` no dia do vencimento da fatura em que cai.
  * Uma fatura é identificada pelo mês e ano do vencimento. Tudo aqui é puro (sem tela nem banco).
  */
+import { semAcento } from './busca'
 import { fmtValor, MESES_NOME, noMeioDaFrase } from './format'
 import type { CartaoCredito, FaturaPaga, Lancamento } from './types'
 import { tx } from './textos'
@@ -163,6 +164,20 @@ export interface SituacaoCartao extends Fatura {
 
 /** Compra no cartão de crédito (cada parcela é uma saída com `cartao_id`): fica na tela Cartões, não em Lançamentos. */
 export const ehCompraNoCartao = (l: Pick<Lancamento, 'cartao_id' | 'tipo'>) => Boolean(l.cartao_id) && l.tipo === 'saida'
+/** Uma compra pode ter várias parcelas (uma saída cada): a chave junta as parcelas da mesma compra. */
+export const chaveDaCompra = (l: Pick<Lancamento, 'id' | 'compra_id'>) => l.compra_id ?? l.id
+/**
+ * Se a busca do topo acha esta compra no cartão. Usada pelas telas Lançamentos (a faixa que avisa) e Cartões (os resultados),
+ * para as duas contarem as mesmas compras. A data buscada é o dia da compra, não o vencimento da fatura.
+ */
+export function casaCompraNoCartao(
+  casa: (l: Lancamento, texto: string) => boolean, l: Lancamento, categoria?: string, cartao?: string,
+) {
+  const texto = semAcento([
+    l.descricao, categoria, cartao ? `cartao ${cartao}` : 'cartao', 'credito', 'saida saidas gasto', (l.parcelas ?? 1) > 1 ? 'parcela parcelado' : '',
+  ].filter(Boolean).join(' '))
+  return casa({ ...l, data: l.data_compra ?? l.data }, texto)
+}
 const doCartao = (c: CartaoCredito, lancs: Lancamento[]) => lancs.filter((l) => l.cartao_id === c.id && l.tipo === 'saida')
 const dataDaCompra = (l: Lancamento) => l.data_compra ?? l.data ?? ''
 

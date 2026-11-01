@@ -386,7 +386,8 @@ ano aberto vêm de `lancsRecentes` em `useDados`.
   compra" lança no cartão. A busca do topo, quando alguém digita nela, abre **Resultado da busca nos cartões** (todos os
   cartões e meses). Lançar a compra pela tela Lançamentos (forma "Crédito") também vale: ao **fechar** o formulário
   (com "Salvar e lançar outro" ele fica aberto), o painel leva para Cartões, no cartão e no mês da fatura em que a compra
-  caiu (`cartaoAberto`, `compraDestacada` no `Ctx`), rola até a compra e a destaca por um instante. Só no cartão existe
+  caiu (`cartaoAberto`, `compraDestacada` no `Ctx`); quando a compra aparece na fatura (a gravação pode demorar), a tela
+  rola até ela uma vez e a destaca por alguns segundos. Se a gravação falhar, o formulário continua aberto e nada redireciona. Só no cartão existe
   esse tipo de lançamento: compra no cartão é sempre saída.
 
 ### 4.12 Foto de perfil
@@ -469,10 +470,13 @@ Duas colunas no computador. A lista com selos redondos saiu; cada lançamento ag
 - Tablet: o resumo vai para o topo e o calendário e as categorias ficam lado a lado embaixo dele. Celular: tudo em uma
   coluna (resumo, calendário, categorias, filtros, lista) e o cartão fica numa linha só, com o valor à direita.
 - `ItemLancamento` (lista com selo e etiquetas) continua na Início e no Dinheiro guardado.
-- **Sem as compras no cartão** (com o módulo de cartões ligado): elas ficam na tela Cartões (4.11) para não se misturar com
-  o que entrou e saiu da conta. O resumo, o calendário e as categorias desta página não as contam. Uma faixa avisa
-  "N compras no cartão em outubro (R$ …) ficam na tela Cartões" com o botão "Ver em Cartões"; com algo digitado na busca,
-  ela diz quantas compras do cartão combinam. O total do mês na Início (Saiu) continua contando as parcelas da fatura.
+- **Sem as compras no cartão de cartões ativos** (com o módulo de cartões ligado): elas ficam na tela Cartões (4.11) para
+  não se misturar com o que entrou e saiu da conta. A compra de um cartão que a pessoa deixou de usar continua aqui, porque
+  a tela Cartões só mostra os ativos. O resumo, o calendário e as categorias desta página não contam o que saiu daqui. Uma
+  faixa avisa "N compras no cartão na fatura de outubro (R$ …) ficam na tela Cartões" com o botão "Ver em Cartões"; com algo
+  digitado na busca, ela diz quantas compras (não parcelas) combinam, com o mesmo texto de busca da tela Cartões
+  (`casaCompraNoCartao`, que procura a data pelo dia da compra). O total do mês na Início (Saiu) continua contando as
+  parcelas da fatura.
 
 ### 4.17 Contas do mês (boletos)
 
