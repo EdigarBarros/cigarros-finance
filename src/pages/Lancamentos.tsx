@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { hojeLocal } from '../lib/cartoes'
+import { casaCompraNoCartao, chaveDaCompra, ehCompraNoCartao, hojeLocal } from '../lib/cartoes'
 import { COR } from '../lib/charts'
 import { SEM_CATEGORIA } from '../lib/categorias'
 import { formaDe, FORMAS, infoForma, type FormaPagamento } from '../lib/formas'
@@ -49,8 +49,16 @@ export function Lancamentos(c: Ctx) {
 
   // Com algo digitado na busca, ela procura no ano inteiro (o lançamento que você quer pode estar em outro mês).
   const pesquisando = busca.trim().length > 0
-  const origem = pesquisando ? c.lancsAno : c.lancsMes
+  // As compras no cartão ficam na tela Cartões (aqui só se vê o que entrou e saiu da conta); sem o módulo de cartões, tudo aparece.
+  // Só as de cartão ativo: a tela Cartões mostra os cartões ativos, e a compra de um cartão que a pessoa deixou de usar não pode sumir.
+  const separaCartao = c.v.cartoes && !c.cartoes.semTabela
+  const cartoesAtivos = useMemo(() => new Set(c.cartoes.cartoes.filter((k) => k.ativo).map((k) => k.id)), [c.cartoes.cartoes])
+  const naTelaCartoes = (l: Lancamento) => separaCartao && ehCompraNoCartao(l) && (!c.cartoes.carregado || cartoesAtivos.has(l.cartao_id!))
+  const doPeriodo = pesquisando ? c.lancsAno : c.lancsMes
+  const origem = useMemo(() => doPeriodo.filter((l) => !naTelaCartoes(l)), [doPeriodo, separaCartao, cartoesAtivos, c.cartoes.carregado]) // eslint-disable-line react-hooks/exhaustive-deps
   const casa = useMemo(() => criarBusca(busca, hoje, somaDias(hoje, -1)), [busca, hoje])
+  /** O mês aberto tem algum lançamento aqui (fora as compras no cartão)? */
+  const temNoMes = c.lancsMes.some((l) => !naTelaCartoes(l))
   // o que o lançamento "diz", sem acento: nome, categoria, banco, cartão, forma, dívida e se é entrada ou saída
   const textoDe = (l: Lancamento) => {
     const f = formaDe(l)
@@ -62,6 +70,15 @@ export function Lancamentos(c: Ctx) {
       l.tipo === 'entrada' ? 'entrada entradas recebido' : 'saida saidas gasto', (l.parcelas ?? 1) > 1 ? 'parcela parcelado' : '',
     ].filter(Boolean).join(' '))
   }
+
+  // compras no cartão deste mês (ou da busca, em todos os anos, como a tela Cartões) que ficaram de fora desta lista: o aviso leva para lá
+  const noCartao = useMemo(
+    () => (pesquisando && casa ? c.cartoes.compras : c.lancsMes)
+      .filter((l) => naTelaCartoes(l) && (!casa || casaCompraNoCartao(casa, l, c.categoriaDe(l)?.nome, c.cartoes.cartoes.find((k) => k.id === l.cartao_id)?.nome))),
+    [pesquisando, casa, c.cartoes.compras, c.lancsMes, c.categorias, cartoesAtivos, separaCartao, c.cartoes.carregado], // eslint-disable-line react-hooks/exhaustive-deps
+  )
+  const comprasNoCartao = new Set(noCartao.map(chaveDaCompra)).size
+  const totalNoCartao = noCartao.reduce((a, l) => a + l.valor, 0)
 
   // tudo menos a categoria e o dia: base para os chips de categoria e para o calendário
   const base = useMemo(() => {
@@ -158,8 +175,20 @@ export function Lancamentos(c: Ctx) {
         </div>
       </header>
 
-      <div className={`lc-grade ${c.lancsMes.length === 0 ? 'sem-lado' : ''}`}>
-        {c.lancsMes.length > 0 && (
+      {noCartao.length > 0 && (
+        <section className="lc-nota-cartao" aria-label={tx('Compras no cartão')}>
+          <Icone nome="cartao" tamanho={18} />
+          <span>
+            {pesquisando
+              ? (comprasNoCartao === 1 ? tx('1 compra no cartão combina com a busca.') : tx('{0} compras no cartão combinam com a busca.', comprasNoCartao))
+              : (comprasNoCartao === 1 ? tx('1 compra no cartão na fatura de {0} ({1}) fica na tela Cartões.', noMeioDaFrase(MESES_NOME[c.mes - 1]), fmtValor(totalNoCartao)) : tx('{0} compras no cartão na fatura de {1} ({2}) ficam na tela Cartões.', comprasNoCartao, noMeioDaFrase(MESES_NOME[c.mes - 1]), fmtValor(totalNoCartao)))}
+          </span>
+          <button className="btn" onClick={() => c.irPara('cartoes')}>{tx('Ver em Cartões')} <Icone nome="seta" tamanho={14} /></button>
+        </section>
+      )}
+
+      <div className={`lc-grade ${temNoMes ? '' : 'sem-lado'}`}>
+        {temNoMes && (
           <aside className="lc-lado">
             <CalorDoMes ano={c.ano} mes={c.mes} lancs={semDia} dia={dia} hoje={hoje} aoEscolher={(d) => setDia(d === dia ? null : d)} />
 
@@ -215,7 +244,7 @@ export function Lancamentos(c: Ctx) {
             )}
           </section>
 
-          {(c.lancsMes.length > 0 || filtrando) && (
+          {(temNoMes || filtrando) && (
             <section className="lc-barra">
               <label className="busca">
                 <Icone nome="busca" tamanho={16} />
