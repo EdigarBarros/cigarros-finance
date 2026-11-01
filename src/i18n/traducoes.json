@@ -6686,5 +6686,9 @@
   "{0} de {1} (data com ano)": {
     "en": "{0}, {1}",
     "es": "{0} de {1}"
+  },
+  "Sem lançamentos neste mês.": {
+    "en": "No entries this month.",
+    "es": "Sin movimientos este mes."
   }
 }
