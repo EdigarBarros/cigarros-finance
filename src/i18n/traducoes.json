@@ -6374,5 +6374,21 @@
   "A busca olha {0} inteiro: nome, valor (150 ou 150,40) ou data (25/10, outubro, 2025). Para outro ano, troque o ano no topo.": {
     "en": "The search covers all of {0}: name, amount (150 or 150.40) or date (25/10, October, 2025). For another year, change the year at the top.",
     "es": "La búsqueda abarca todo {0}: nombre, valor (150 o 150,40) o fecha (25/10, octubre, 2025). Para otro año, cambia el año arriba."
+  },
+  "Mostrar o menu": {
+    "en": "Show the menu",
+    "es": "Mostrar el menú"
+  },
+  "Esconder o menu": {
+    "en": "Hide the menu",
+    "es": "Ocultar el menú"
+  },
+  "Mostrar a barra de baixo": {
+    "en": "Show the bottom bar",
+    "es": "Mostrar la barra de abajo"
+  },
+  "Esconder a barra de baixo": {
+    "en": "Hide the bottom bar",
+    "es": "Ocultar la barra de abajo"
   }
 }

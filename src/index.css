@@ -3746,3 +3746,82 @@ body { top: 0 !important; }
 /* seletor de moeda acima do gráfico do ano */
 .grafico-moeda { display: flex; justify-content: flex-end; margin-bottom: 12px; }
 .grafico-moeda-inicio { padding: 0 22px 6px; margin-bottom: 0; }
+
+/* ================= Menu que se esconde (computador, tablet e celular) ================= */
+.lateral-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.lateral .lateral-alternar {
+  flex: none; width: 36px; height: 36px; padding: 0; justify-content: center; border-radius: 10px; color: var(--texto-3);
+  border: 1px solid var(--borda); background: var(--superficie);
+}
+.lateral .lateral-alternar:hover { color: var(--texto); border-color: var(--borda-forte); }
+.lateral .rotulo { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lateral-fundo, .abas-alca { display: none; }
+
+/* faixa só de ícones */
+@media (min-width: 601px) {
+  .app { transition: grid-template-columns .4s var(--mola); }
+  .app.trilho { grid-template-columns: 76px minmax(0, 1fr); }
+  .app.trilho .lateral { padding: 22px 12px 20px; gap: 18px; overflow-x: hidden; }
+  .app.trilho .lateral-topo { flex-direction: column; gap: 14px; }
+  .app.trilho .lateral .marca { padding: 0; justify-content: center; }
+  .app.trilho .lateral .marca-nome, .app.trilho .lateral .rotulo, .app.trilho .lateral-rodape { display: none; }
+  .app.trilho .lateral nav button { justify-content: center; padding: 13px 0; }
+  .app.trilho .lateral nav .lente::before { top: 12px; bottom: 12px; }
+}
+
+/* tablet em pé: a faixa de ícones fica sempre à vista; o menu completo abre por cima do conteúdo */
+@media (min-width: 601px) and (max-width: 860px) {
+  .app, .app.trilho { grid-template-columns: 76px minmax(0, 1fr); }
+  .lateral { display: flex; grid-column: 1; grid-row: 1; z-index: 30; }
+  .conteudo { grid-column: 2; grid-row: 1; padding: 0 20px 96px; }
+  .abas-movel { display: none; }
+  .barra > .marca { display: none; }
+  .fab { bottom: calc(24px + env(safe-area-inset-bottom)); right: 24px; }
+  .app:not(.trilho) .lateral {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 264px; height: 100dvh; padding: 26px 18px 20px;
+    box-shadow: var(--sombra-alta); animation: lateral-abre .4s var(--mola);
+  }
+  .lateral-fundo { display: block; position: fixed; inset: 0; z-index: 29; background: rgba(3, 6, 14, .4); backdrop-filter: blur(4px); animation: aparece .25s var(--mola); }
+  .data-hoje { display: flex; }
+}
+@keyframes lateral-abre { from { transform: translateX(-24px); opacity: 0; } }
+
+/* celular: a barra de abas de baixo se esconde e deixa só uma alça para trazer de volta */
+@media (max-width: 600px) {
+  .abas-movel { transition: transform .45s var(--mola); }
+  .abas-movel .abas-alca {
+    display: grid; place-items: center; position: absolute; left: 50%; top: -22px; translate: -50% 0; width: 52px; height: 22px; padding: 0;
+    border-radius: 12px 12px 0 0; border: 1px solid var(--borda-forte); border-bottom: 0; background: var(--vidro); backdrop-filter: var(--desfoque); color: var(--texto-2);
+  }
+  .app.abas-ocultas .abas-movel { transform: translateY(calc(100% + 12px + env(safe-area-inset-bottom))); }
+  .app.abas-ocultas .abas-movel button:not(.abas-alca) { visibility: hidden; transition: visibility 0s .45s; }
+  .app.abas-ocultas .fab { bottom: calc(40px + env(safe-area-inset-bottom)); }
+  .app.abas-ocultas .conteudo { padding-bottom: 88px; }
+  .fab { transition: transform .35s var(--mola-salto), bottom .45s var(--mola); }
+}
+
+/* toque: alvos maiores nas telas de tablet */
+@media (pointer: coarse) and (min-width: 601px) {
+  .icone-btn { width: 44px; height: 44px; }
+  .seletor-mes .icone-btn { width: 40px; height: 40px; }
+  .lateral nav button { min-height: 48px; }
+}
+
+/* tablet deitado: 7 indicadores em 2 + 3 + 2, sem cartão sozinho na última linha */
+@media (min-width: 861px) and (max-width: 1100px) {
+  .kpis:has(> :nth-child(7)):not(:has(> :nth-child(8))) { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  .kpis:has(> :nth-child(7)):not(:has(> :nth-child(8))) > * { grid-column: span 4; }
+  .kpis:has(> :nth-child(7)):not(:has(> :nth-child(8))) > :nth-child(-n+2), .kpis:has(> :nth-child(7)):not(:has(> :nth-child(8))) > :nth-child(n+6) { grid-column: span 6; }
+}
+
+/* mini-gráfico só quando cabe ao lado do texto do cartão (antes batia no "que em out" nos cartões estreitos) */
+.kpis > .kpi { container-type: inline-size; }
+@container (max-width: 300px) { .kpi-faisca { display: none; } }
+
+/* lateral de 236px: o logo encolhe para o botão de recolher caber ao lado */
+@media (min-width: 861px) and (max-width: 1280px) {
+  .app:not(.trilho) .lateral .lateral-topo .marca { min-width: 0; padding: 0 0 0 4px; gap: 8px; }
+  .app:not(.trilho) .lateral .lateral-topo .marca-simbolo { width: 38px; }
+  .app:not(.trilho) .lateral .lateral-topo .marca-nome { font-size: 17px; }
+  .lateral .lateral-alternar { width: 32px; height: 32px; }
+}
