@@ -90,7 +90,7 @@ const comAlfa = (hex: string, a: number) => `${hex}${Math.round(a * 255).toStrin
 const linhaSuave = (label: string, cor: string, data: (number | null)[], fundo: string, compacto?: boolean, area?: boolean) =>
   linha(label, cor, data, fundo, compacto, {
     borderWidth: area ? 2 : 1.5, pointRadius: 0, pointHoverRadius: 5,
-    ...(area ? { fill: 'origin', backgroundColor: comAlfa(cor, 0.16) } : {}),
+    ...(area ? { fill: 'origin', backgroundColor: comAlfa(cor, 0.11) } : {}),
   })
 
 /** Opções comuns: eixo em reais (aceita negativos), meses embaixo, legenda com o desenho de cada série. */
