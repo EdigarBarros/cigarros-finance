@@ -1,3 +1,7 @@
+-- ATENÇÃO: só para banco NOVO. Rodar de novo num banco que já tem a cobrança apaga a política "dono" das tabelas e a recria SEM
+-- tem_acesso(): o bloqueio de quem não pagou deixa de valer. Se rodar, rode a migração 20 em seguida.
+-- Este arquivo não cria a cobrança (assinaturas, tem_acesso, teste_cartoes, erros_app) nem tem os campos das migrações 9, 10, 11, 14 e 15.
+-- Num banco novo, depois dele rode as migrações 9 a 20 em ordem (veja o README).
 -- Schema do Controle Financeiro.
 -- Rode isto uma vez no Supabase: Dashboard > SQL Editor > New query > colar > Run.
 

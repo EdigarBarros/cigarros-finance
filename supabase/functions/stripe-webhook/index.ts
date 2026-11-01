@@ -51,27 +51,38 @@ Deno.serve(async (req) => {
     const evento = await r.json()
     if (!EVENTOS.includes(evento.type)) return new Response('ignorado')
 
-    const sub = evento.data.object
+    // O corpo do evento é uma foto do momento em que ele aconteceu. Avisos chegam fora de ordem (um "created" incompleto depois de um
+    // "updated" ativo) e o Stripe reenvia avisos velhos; gravar a foto deixaria quem paga trancado para fora, ou quem cancelou com acesso.
+    // Por isso o evento só diz QUAL assinatura mudou: o estado gravado é o de agora, lido do Stripe.
+    const doEvento = evento.data.object
     const servico = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 
-    let userId: string | undefined = sub.metadata?.supabase_user_id
+    let userId: string | undefined = doEvento.metadata?.supabase_user_id
     if (!userId) {
-      const { data } = await servico.from('assinaturas').select('user_id').eq('stripe_customer_id', sub.customer).maybeSingle()
+      const { data } = await servico.from('assinaturas').select('user_id').eq('stripe_customer_id', doEvento.customer).maybeSingle()
       userId = data?.user_id
     }
     if (!userId) return new Response('sem usuário', { status: 200 })
 
+    const rs = await fetch(`${STRIPE}/subscriptions/${doEvento.id}`, { headers: cab() })
+    let sub: Record<string, any>
+    if (rs.status === 404) sub = { ...doEvento, status: 'canceled' } // a assinatura não existe mais: vale como cancelada
+    else if (!rs.ok) return new Response('não foi possível ler a assinatura', { status: 500 }) // o Stripe tenta de novo
+    else sub = await rs.json()
+
     // evento fora de ordem: se a assinatura já é outra (mais nova), não sobrescreve
     const { data: atual } = await servico.from('assinaturas').select('status, stripe_subscription_id').eq('user_id', userId).maybeSingle()
     if (atual?.status === 'cortesia') return new Response('cortesia')
-    if (evento.type === 'customer.subscription.deleted' && atual?.stripe_subscription_id && atual.stripe_subscription_id !== sub.id) return new Response('antiga')
+    const outra = Boolean(atual?.stripe_subscription_id) && atual?.stripe_subscription_id !== sub.id
+    const encerrada = sub.status === 'canceled' || sub.status === 'incomplete_expired'
+    if (outra && (evento.type === 'customer.subscription.deleted' || encerrada)) return new Response('antiga')
 
-    if (sub.status === 'trialing' && evento.type !== 'customer.subscription.deleted') await conferirCartaoDoTeste(servico, sub, userId)
+    if (sub.status === 'trialing') await conferirCartaoDoTeste(servico, sub, userId)
 
     const fim = sub.current_period_end ?? sub.items?.data?.[0]?.current_period_end
     const { error } = await servico.from('assinaturas').upsert({
       user_id: userId,
-      status: evento.type === 'customer.subscription.deleted' ? 'canceled' : sub.status,
+      status: sub.status,
       stripe_customer_id: sub.customer,
       stripe_subscription_id: sub.id,
       teste_fim: iso(sub.trial_end),
@@ -80,6 +91,8 @@ Deno.serve(async (req) => {
       moeda: sub.currency,
       atualizado_em: new Date().toISOString(),
     })
+    // 23503: a conta já foi excluída (a chave de assinaturas.user_id não existe mais). Não há o que gravar; 200 para o Stripe parar de reenviar.
+    if (error?.code === '23503') return new Response('conta excluída')
     if (error) return new Response(error.message, { status: 500 })
     return new Response('ok')
   } catch (e) {

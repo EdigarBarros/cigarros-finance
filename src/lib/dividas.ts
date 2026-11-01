@@ -1,6 +1,7 @@
 import { fmtMoeda, fmtValor, moedaAtual } from './format'
 import type { Taxas } from './moedas'
 import type { Divida, Pagamento, SaldoDivida } from './types'
+import { tx } from './textos'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 export const fimDoMes = (ano: number, mes: number) => `${ano}-${pad(mes)}-${pad(new Date(ano, mes, 0).getDate())}`
@@ -19,6 +20,11 @@ export interface SituacaoDivida {
   moeda: string | null
   /** Quanto 1 unidade da moeda da dívida vale na principal (1 se a dívida é na principal). */
   taxa: number
+  /**
+   * Dívida em outra moeda sem cotação (nem do dia, nem em cache): os valores ficam na moeda da dívida (taxa 1 só para os
+   * números não serem inventados) e não valem como moeda principal. Fica de fora dos totais convertidos.
+   */
+  semCotacao: boolean
   /** Saldo devedor no fim do mês. */
   restante: number
   /** Saldo no fim do mês anterior (null se a dívida ainda não existia). */
@@ -84,7 +90,8 @@ export const moedaDaDivida = (d: Pick<Divida, 'moeda'>) => (d.moeda && d.moeda !
 /** Um valor (na moeda principal) desta dívida, no jeito dela: "US$ 5,00" numa dívida em dólar, "R$ 26,75" numa em real. */
 export const fmtDiv = (s: Pick<SituacaoDivida, 'moeda' | 'taxa'>, valor: number) => (s.moeda ? fmtMoeda(centavosDe(valor / s.taxa), s.moeda) : fmtValor(valor))
 /** "≈ R$ 26,75" para dívida em outra moeda (vazio quando é na principal). */
-export const aproxDiv = (s: Pick<SituacaoDivida, 'moeda' | 'taxa'>, valor: number) => (s.moeda ? `≈ ${fmtValor(valor)}` : '')
+export const aproxDiv = (s: Pick<SituacaoDivida, 'moeda' | 'taxa'> & { semCotacao?: boolean }, valor: number) =>
+  (s.moeda ? (s.semCotacao ? tx('sem cotação') : `≈ ${fmtValor(valor)}`) : '')
 /** O valor na moeda da dívida, como número (para preencher campos). */
 export const nativoDiv = (s: Pick<SituacaoDivida, 'moeda' | 'taxa'>, valor: number) => (s.moeda ? centavosDe(valor / s.taxa) : valor)
 
@@ -100,7 +107,9 @@ export function situacaoDividas(
     // Dívida em outra moeda: parcela, saldos e pagamentos passam para a moeda principal pela cotação do dia, e tudo abaixo
     // (restante, parcelas, calendário) é calculado numa unidade só. Pagamento lançado nessa moeda vale o valor original.
     const moeda = moedaDaDivida(original)
-    const taxa = moeda ? taxas[moeda] ?? 1 : 1
+    // Sem cotação da moeda: não converte (taxa 1 deixa os números na moeda da dívida) e marca `semCotacao`.
+    const semCotacao = moeda !== null && !taxas[moeda]
+    const taxa = moeda ? taxas[moeda] || 1 : 1
     const d: Divida = moeda ? { ...original, valor_parcela: original.valor_parcela == null ? null : centavosDe(original.valor_parcela * taxa) } : original
     const saldosD = moeda ? saldos.filter((x) => x.divida_id === d.id).map((x) => ({ ...x, saldo: centavosDe(x.saldo * taxa) })) : saldos
     // Valor positivo abate a dívida; negativo (empréstimo a mais) aumenta.
@@ -140,7 +149,7 @@ export function situacaoDividas(
       if (Math.abs(dif) >= 0.005) ajustes.push({ data: m.data, valor: dif })
     })
     lista.push({
-      divida: d, original, moeda, taxa,
+      divida: d, original, moeda, taxa, semCotacao,
       inicioEm: marcos[0]?.data ?? null,
       ajustes,
       ajusteNoMes: centavosDe(ajustes.filter((a) => a.data >= ini && a.data <= fim).reduce((t, a) => t + a.valor, 0)),
@@ -190,7 +199,7 @@ export function parcelasDe(s: SituacaoDivida): Parcelas | null {
   const p = s.divida.valor_parcela
   if (!p || p <= 0) return null
   const faltam = s.restante > 0 ? Math.ceil(s.restante / p - 0.001) : 0
-  const total = Math.max(faltam, Math.round(s.saldoInicial / p))
+  const total = Math.max(faltam, parcelasDoSaldo(s.saldoInicial, p))
   const pagas = total - faltam
   return { total, pagas, faltam, proxima: Math.min(total, pagas + 1) }
 }
@@ -260,11 +269,14 @@ export function somaMesesData(iso: string, n: number) {
   return `${ano}-${doisDig(mes)}-${doisDig(Math.min(d, new Date(ano, mes, 0).getDate()))}`
 }
 
+/** Quantas parcelas cabem num saldo: a última pode ser menor que as outras (o que sobra). */
+const parcelasDoSaldo = (saldo: number, parcela: number) => Math.max(1, Math.ceil(saldo / parcela - 0.001))
+
 /** Quantas parcelas a dívida tem ao todo: a informada ou a que sai do valor e da parcela. */
 export function totalDeParcelas(s: SituacaoDivida) {
   const vp = s.divida.valor_parcela
   if (!vp || vp <= 0) return 1
-  return s.divida.total_parcelas ?? Math.max(1, Math.round(s.saldoInicial / vp))
+  return s.divida.total_parcelas ?? parcelasDoSaldo(s.saldoInicial, vp)
 }
 
 /**
@@ -282,8 +294,10 @@ export function calendarioDe(s: SituacaoDivida, ref: string): Calendario | null 
   let pago = centavos(Math.max(0, s.saldoInicial - s.restante))
   const parcelas: ParcelaDivida[] = []
   for (let i = 0; i < n; i++) {
-    // a última leva a diferença (juros, centavos) para o total bater com o maior saldo
-    const valor = i === n - 1 ? centavos(Math.max(vp, s.saldoInicial - vp * (n - 1))) : vp
+    // A última leva a diferença para o total bater com o maior saldo. Com o número de parcelas informado, ela absorve juros e
+    // centavos (pode ser maior que as outras); sem ele, é só o que sobra do saldo (pode ser menor), e as parcelas somam o saldo.
+    const resto = s.saldoInicial - vp * (n - 1)
+    const valor = i === n - 1 ? centavos(d.total_parcelas != null ? Math.max(vp, resto) : resto) : vp
     const cobre = centavos(Math.min(valor, pago))
     pago = centavos(pago - cobre)
     const vencimento = somaMesesData(d.inicio, i)

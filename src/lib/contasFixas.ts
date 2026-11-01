@@ -26,8 +26,13 @@ export interface SituacaoConta {
   valor: number
   /** Moeda da conta quando não é a principal. */
   moeda: string | null
-  /** Quanto 1 unidade da moeda da conta vale na principal (1 se a conta é na principal). */
+  /** Quanto 1 unidade da moeda da conta vale na principal (1 se a conta é na principal; 0 se ainda não há cotação). */
   taxa: number
+  /**
+   * Conta em outra moeda, ainda sem baixa, sem cotação combinada e sem cotação do dia: não dá para converter. `valor` fica 0
+   * (fora dos totais) e a baixa de um clique não vale, porque precisa da cotação.
+   */
+  semCotacao: boolean
   /** O mesmo valor na moeda da conta (o que a pessoa lançou ou combinou). */
   valorNativo: number
 }
@@ -56,20 +61,35 @@ export function valeNoMes(c: ContaFixa, ano: number, mes: number) {
 /** A moeda da conta, ou null quando é a principal. */
 export const moedaDaConta = (c: Pick<ContaFixa, 'moeda'>) => (c.moeda && c.moeda !== moedaAtual() ? c.moeda : null)
 
+/**
+ * Quanto 1 unidade da moeda da conta vale na principal: a cotação combinada na conta ou, sem ela, a do dia.
+ * 1 se a conta é na principal; null quando não há cotação nenhuma (nunca se assume 1 por 1 numa moeda de fora).
+ */
+export function taxaDaConta(c: Pick<ContaFixa, 'moeda' | 'cotacao'>, taxas: Taxas): number | null {
+  const moeda = moedaDaConta(c)
+  return moeda ? c.cotacao || taxas[moeda] || null : 1
+}
+
 export function situacaoDaConta(c: ContaFixa, lancs: Lancamento[], ano: number, mes: number, hoje = hojeLocal(), taxas: Taxas = {}): SituacaoConta {
   const dia = diaNoMes(c.dia, ano, mes)
   const vencimento = `${ano}-${dois(mes)}-${dois(dia)}`
   const baixa = lancs.find((l) => l.conta_fixa_id === c.id && l.ano === ano && l.mes === mes) ?? null
   const moeda = moedaDaConta(c)
-  // a cotação que a pessoa combinou para a conta; sem ela, a do dia
-  const taxa = moeda ? c.cotacao ?? taxas[moeda] ?? 1 : 1
+  // a cotação que a pessoa combinou para a conta; sem ela, a do dia; sem nenhuma, não dá para converter (nunca vale 1 por 1)
+  const taxaConhecida = taxaDaConta(c, taxas)
+  const taxa = taxaConhecida ?? 0
+  const semCotacao = moeda !== null && taxaConhecida === null
   // o valor de costume numa moeda de fora entra nos totais convertido por ela
-  const estimado = moeda ? centavos(c.valor * taxa) : c.valor
-  const base = { conta: c, dia, vencimento, baixa, valor: estimado, moeda, taxa, valorNativo: c.valor, diasRestantes: null, diasAtraso: null }
+  const estimado = !moeda ? c.valor : semCotacao ? 0 : centavos(c.valor * taxa)
+  const base = { conta: c, dia, vencimento, baixa, valor: estimado, moeda, taxa, semCotacao, valorNativo: c.valor, diasRestantes: null, diasAtraso: null }
   // Uma baixa já dada vale mesmo que a conta tenha sido pausada ou mudado de datas depois.
   if (baixa) {
-    const nativo = !moeda ? baixa.valor : baixa.moeda_original === moeda && baixa.valor_original ? baixa.valor_original : centavos(baixa.valor / taxa)
-    return { ...base, estado: 'paga', valor: baixa.valor, valorNativo: nativo }
+    const doAcordo = { ...base, estado: 'paga' as const, valor: baixa.valor, semCotacao: false }
+    if (!moeda) return { ...doAcordo, valorNativo: baixa.valor }
+    if (baixa.moeda_original === moeda && baixa.valor_original) return { ...doAcordo, valorNativo: baixa.valor_original }
+    // baixa lançada na moeda principal e sem cotação para voltar à da conta: mostra como foi lançada
+    if (!taxaConhecida) return { ...doAcordo, moeda: null, taxa: 1, valorNativo: baixa.valor }
+    return { ...doAcordo, valorNativo: centavos(baixa.valor / taxaConhecida) }
   }
   if (!valeNoMes(c, ano, mes)) return { ...base, estado: 'fora' }
   if (vencimento < hoje) return { ...base, estado: 'atrasada', diasAtraso: diasEntre(vencimento, hoje) }
@@ -165,10 +185,11 @@ export function dataDaBaixa(c: ContaFixa, ano: number, mes: number, hoje = hojeL
 /**
  * O lançamento que "Paguei" / "Recebi" cria. O valor (na moeda da conta) e a data podem ser trocados (a conta de luz muda).
  * Conta em outra moeda: o lançamento guarda o valor original e a conversão pela cotação (a do dia ou a que a pessoa informou).
+ * Devolve null quando a conta é em outra moeda e não há cotação nenhuma.
  */
 export function lancamentoDaBaixa(
   c: ContaFixa, ano: number, mes: number, mudancas: { valor?: number; data?: string; cotacao?: number } = {}, taxas: Taxas = {},
-): Omit<Lancamento, 'id'> {
+): Omit<Lancamento, 'id'> | null {
   const moeda = moedaDaConta(c)
   const nativo = mudancas.valor ?? c.valor
   const base = {
@@ -177,14 +198,16 @@ export function lancamentoDaBaixa(
     categoria_id: c.categoria_id, banco_id: c.banco_id, conta_fixa_id: c.id,
   }
   if (!moeda) return { ...base, valor: nativo }
-  const taxa = mudancas.cotacao ?? c.cotacao ?? taxas[moeda] ?? 1
+  const taxa = mudancas.cotacao || taxaDaConta(c, taxas)
+  // sem cotação combinada nem do dia, não há como converter: quem chama pede a cotação (nunca grava 1 por 1)
+  if (!taxa) return null
   return { ...base, valor: centavos(nativo * taxa), valor_original: nativo, moeda_original: moeda }
 }
 
 /** O valor da conta no jeito que a pessoa combinou (na moeda dela), para mostrar nas telas. */
 export const fmtConta = (s: SituacaoConta) => (s.moeda ? fmtMoeda(s.valorNativo, s.moeda) : fmtValor(s.valor))
-/** "≈ R$ 267,50" quando a conta é em outra moeda (para somar de cabeça com o resto); vazio quando é na principal. */
-export const aproxConta = (s: SituacaoConta) => (s.moeda ? `≈ ${fmtValor(s.valor)}` : '')
+/** "≈ R$ 267,50" quando a conta é em outra moeda (para somar de cabeça com o resto); "sem cotação" se não dá para converter; vazio na principal. */
+export const aproxConta = (s: SituacaoConta) => (s.semCotacao ? tx('sem cotação') : s.moeda ? `≈ ${fmtValor(s.valor)}` : '')
 
 const normal = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim()
 
@@ -215,8 +238,10 @@ export function memoriaDasContas(contas: ContaFixa[], ligados: Pick<Lancamento, 
   const m = new Map<string, MemoriaConta>()
   for (const c of contas) {
     const moeda = moedaDaConta(c)
-    const costume = moeda ? centavos(c.valor * (c.cotacao ?? taxas[moeda] ?? 1)) : c.valor
-    m.set(c.id, { nomes: new Set([normal(c.descricao)].filter(Boolean)), palavras: new Set(palavras(c.descricao)), valores: [costume] })
+    // sem cotação, o valor de costume não serve para reconhecer lançamentos (não vale 1 por 1): fica só o nome
+    const taxa = taxaDaConta(c, taxas)
+    const valores = !moeda ? [c.valor] : taxa ? [centavos(c.valor * taxa)] : []
+    m.set(c.id, { nomes: new Set([normal(c.descricao)].filter(Boolean)), palavras: new Set(palavras(c.descricao)), valores })
   }
   for (const l of ligados) {
     const mem = l.conta_fixa_id ? m.get(l.conta_fixa_id) : undefined

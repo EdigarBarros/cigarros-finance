@@ -24,7 +24,7 @@ const mesCurto = (iso: string) => `${noMeioDaFrase(MESES_CURTO[Number(iso.slice(
 /** Situação resumida de uma dívida, para o selo e para ordenar a lista. */
 function estadoDe(s: SituacaoDivida, cal: Calendario | null) {
   if (s.restante <= 0) return { id: 'quitada', texto: tx('Quitada'), ordem: 4 }
-  if (cal?.atrasadas.length) return { id: 'atrasada', texto: cal.atrasadas.length === 1 ? tx('1 atrasada') : `${cal.atrasadas.length} atrasadas`, ordem: 0 }
+  if (cal?.atrasadas.length) return { id: 'atrasada', texto: cal.atrasadas.length === 1 ? tx('1 atrasada') : tx('{0} atrasadas', cal.atrasadas.length), ordem: 0 }
   if (cal?.parcelas.some((p) => p.estado === 'vence_hoje')) return { id: 'vence_hoje', texto: tx('Vence hoje'), ordem: 1 }
   if (cal) return { id: 'em_dia', texto: tx('Em dia'), ordem: 2 }
   return { id: 'sem_data', texto: tx('Sem data'), ordem: 3 }
@@ -147,7 +147,7 @@ export function Dividas(c: Ctx) {
               {contasEntrada.map((s) => (
                 <li key={s.conta.id}>
                   <span className={`dv-todo-dia ${s.estado}`}><b>{String(s.dia).padStart(2, '0')}</b><small>{noMeioDaFrase(MESES_CURTO[c.mes - 1])}</small></span>
-                  <span className="dv-todo-texto"><strong>{s.conta.descricao}</strong><small>{s.estado === 'paga' ? 'recebido' : s.estado === 'atrasada' ? tx('atrasado {0} dias', s.diasAtraso) : s.estado === 'vence_hoje' ? tx('cai hoje') : tx('cai em {0} dias', s.diasRestantes)}</small></span>
+                  <span className="dv-todo-texto"><strong>{s.conta.descricao}</strong><small>{s.estado === 'paga' ? tx('recebido') : s.estado === 'atrasada' ? tx('atrasado {0} dias', s.diasAtraso) : s.estado === 'vence_hoje' ? tx('cai hoje') : tx('cai em {0} dias', s.diasRestantes)}</small></span>
                   <span className="dv-todo-valor">{fmtConta(s)}</span>
                   {s.estado === 'paga'
                     ? <span className="chip-estado paga">{tx('Recebido')}</span>
@@ -325,7 +325,7 @@ function Barras({ valores, recebe }: { valores: { ano: number; mes: number; valo
 }
 
 const ROTULO_PARCELA: Record<ParcelaDivida['estado'], string> = {
-  paga: 'paga', parcial: tx('pela metade'), atrasada: 'atrasada', vence_hoje: tx('vence hoje'), a_vencer: tx('a vencer'),
+  paga: tx('paga'), parcial: tx('pela metade'), atrasada: tx('atrasada'), vence_hoje: tx('vence hoje'), a_vencer: tx('a vencer'),
 }
 
 /**
@@ -384,7 +384,7 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
                   <span className="dv-cal-n">{cal.parcelas.length > 1 ? `${x.n}ª` : <Icone nome="calendario" tamanho={13} />}</span>
                   <span className="dv-cal-mes">{mesCurto(x.vencimento)}</span>
                   <span className="dv-cal-valor">{x.estado === 'paga' ? <Icone nome="check" tamanho={14} /> : fmtDiv(s, x.falta).replace(/,00$/, '')}</span>
-                  <span className="dv-cal-estado">{x.pago > 0 && x.estado !== 'paga' ? `${fmtDiv(s, x.pago).replace(/,00$/, '')} ${recebe ? 'recebido' : 'pago'}` : ROTULO_PARCELA[x.estado]}</span>
+                  <span className="dv-cal-estado">{x.pago > 0 && x.estado !== 'paga' ? (recebe ? tx('{0} recebido', fmtDiv(s, x.pago).replace(/,00$/, '')) : tx('{0} pago', fmtDiv(s, x.pago).replace(/,00$/, ''))) : ROTULO_PARCELA[x.estado]}</span>
                 </li>
               ))}
             </ol>

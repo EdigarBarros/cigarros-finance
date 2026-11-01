@@ -1,3 +1,5 @@
+-- ATENÇÃO: NÃO rode esta migração de novo depois da 17 ou da 18: o item 1 volta tem_acesso() para uma versão sem o teste grátis
+-- (status teste) e tranca quem está no teste. Se rodar, rode a migração 20 logo em seguida.
 -- Migração 16: carência quando o cartão falha, teste grátis uma vez por CARTÃO, registro de erros do app e função fechada para anônimos.
 -- Supabase > SQL Editor > New query > colar > Run. Só acrescenta e pode ser rodada de novo sem problema.
 -- Não mexe em ninguém que tem 'cortesia'.

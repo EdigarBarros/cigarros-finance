@@ -12,9 +12,11 @@ import { tx } from '../lib/textos'
 export function Ano(c: Ctx) {
   const meses = c.porMes.filter((r): r is Resumo => r !== null)
   const soma = (k: 'entradas' | 'saidas' | 'fluxo') => meses.reduce((a, r) => a + r[k], 0)
-  const mediaGasto = meses.length ? soma('saidas') / meses.length : 0
+  // A média só conta os meses em que saiu dinheiro: mês com caixa herdado ou dívida, sem lançamentos, não é um mês de gasto zero.
+  const mesesComGasto = meses.filter((r) => r.saidas > 0).length
+  const mediaGasto = mesesComGasto ? soma('saidas') / mesesComGasto : 0
   const abrirMes = (m: number) => { c.irParaMes(m); c.irPara('inicio') }
-  const melhor = c.porMes.reduce<number | null>((b, r, i) => (r && (b === null || r.fluxo > c.porMes[b]!.fluxo) ? i : b), null)
+  const melhor = c.porMes.reduce<number | null>((b, r, i) => (r && (r.entradas > 0 || r.saidas > 0) && (b === null || r.fluxo > c.porMes[b]!.fluxo) ? i : b), null)
 
   return (
     <div className="pagina">
@@ -41,6 +43,7 @@ export function Ano(c: Ctx) {
         <Kpi rotulo={tx('Saiu no ano')} valor={fmtValor(soma('saidas'))} cor={COR.saidas} />
         <Kpi rotulo={tx('Sobrou no ano')} valor={fmtValor(soma('fluxo'))} cor={COR.caixa} />
         <Kpi rotulo={tx('Gasto médio por mês')} valor={fmtValor(mediaGasto)} cor={COR.divida}>
+          {mesesComGasto > 0 && <span className="kpi-sub">{mesesComGasto === 1 ? tx('em 1 mês com gastos') : tx('em {0} meses com gastos', mesesComGasto)}</span>}
           {melhor !== null && <span className="kpi-delta">{tx('Melhor mês: {0}', MESES_NOME[melhor])}</span>}
         </Kpi>
       </div>
