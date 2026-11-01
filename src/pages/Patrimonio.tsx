@@ -1,8 +1,9 @@
 import { CenaCofre } from '../components/Vazios'
 import { useState } from 'react'
-import { caixaDoBanco, somaCaixa } from '../lib/calc'
+import { caixaDoBanco } from '../lib/calc'
 import { COR } from '../lib/charts'
-import { fmtValor, MESES_CURTO, MESES_NOME, simbolo, noMeioDaFrase, mesEAno } from '../lib/format'
+import { fmtValor, LOCAL_DAS_DATAS, MESES_CURTO, MESES_NOME, simbolo, noMeioDaFrase, mesEAno } from '../lib/format'
+import { fmtTaxa } from '../lib/dinheiro'
 import { converter, infoMoeda } from '../lib/moedas'
 import { CATALOGO_BANCOS, PALETA_BANCOS } from '../lib/bancos'
 import { mesmoNome, NOME_TIPO_CAIXA } from '../lib/rotulos'
@@ -18,6 +19,8 @@ import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 
 const SEM_BANCO = 'sem'
+/** Meses de reserva com uma casa decimal, no jeito da língua da tela (6,5 · 6.5). */
+const fmtMeses = (n: number) => n.toLocaleString(LOCAL_DAS_DATAS, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 const semAcento = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 const contem = (nome: string, busca: string) => semAcento(nome).includes(semAcento(busca.trim()))
 
@@ -124,7 +127,7 @@ export function Patrimonio(c: Ctx) {
               {ls.map((l) => <ItemLancamento key={l.id} l={l} categoria={c.categoriaDe(l)} aoClicar={() => c.editarLancamento(l)} />)}
             </ul>
           ) : (
-            <Vazio>{tx('Nenhum lançamento')} {banco ? `no ${nome}` : tx('sem banco')} {tx('neste mês.')}</Vazio>
+            <Vazio>{banco ? tx('Nenhum lançamento no {0} neste mês.', nome) : tx('Nenhum lançamento sem banco neste mês.')}</Vazio>
           )}
         </Cartao>
         {gerenciar && <FormBanco c={c} banco={gerenciar === 'novo' ? undefined : gerenciar} aoFechar={() => setGerenciar(null)} aoExcluir={() => setAberto(null)} />}
@@ -137,7 +140,8 @@ export function Patrimonio(c: Ctx) {
   const porTipo = Object.fromEntries(TIPOS_CAIXA.map((t) => [t, bancos.reduce((a, b) => a + (caixa[b.id]?.[t] ?? 0), 0)])) as Record<TipoCaixa, number>
   const investido = v.investimentos ? c.r.investimentos : 0
   const emMoedas = v.moedas ? c.r.moedasConvertido : 0
-  const emBancos = v.bancos ? somaCaixa(caixa) : 0
+  // só os bancos que ainda existem (excluir um banco não limpa o que ficou guardado nele), como em porTipo
+  const emBancos = v.bancos ? bancos.reduce((a, b) => a + caixaDoBanco(caixa, b.id), 0) : 0
   const total = emBancos + investido + emMoedas
   const valorDe = (x: NonNullable<Ctx['porMes'][number]>) => (v.bancos ? x.caixa : 0) + (v.investimentos ? x.investimentos : 0) + (v.moedas ? x.moedasConvertido : 0)
   const anterior = c.anterior ? valorDe(c.anterior) : 0
@@ -202,11 +206,11 @@ export function Patrimonio(c: Ctx) {
             <h3 className="ccd-titulo"><Icone nome="escudo" tamanho={18} /> {tx('Reserva de emergência')}</h3>
             <div className="gd-reserva-corpo">
               <Anel valor={Math.min(1, mesesReserva / 6)} cor={mesesReserva >= 6 ? COR.entradas : mesesReserva >= 3 ? COR.caixa : COR.divida} tamanho={104}>
-                <span className="gd-reserva-meses"><b>{mesesReserva >= 10 ? Math.round(mesesReserva) : mesesReserva.toFixed(1).replace('.', ',')}</b><small>{tx('meses')}</small></span>
+                <span className="gd-reserva-meses"><b>{mesesReserva >= 10 ? Math.round(mesesReserva) : fmtMeses(mesesReserva)}</b><small>{tx('meses')}</small></span>
               </Anel>
               <span className="gd-reserva-texto">
                 <span>{reserva > 0
-                  ? <>{tx('Sua reserva de')} <b>{fmtValor(reserva)}</b> {tx('cobre')} {mesesReserva >= 6 ? (tx('mais de') + ' ') : ''}<b>{tx('{0} meses', mesesReserva.toFixed(1).replace('.', ','))}</b> {tx('do que você gasta.')}</>
+                  ? <>{tx('Sua reserva de')} <b>{fmtValor(reserva)}</b> {tx('cobre')} {mesesReserva >= 6 ? (tx('mais de') + ' ') : ''}<b>{tx('{0} meses', fmtMeses(mesesReserva))}</b> {tx('do que você gasta.')}</>
                   : <>{tx('Marque em cada banco quanto é')} <b>{tx('reserva')}</b>{tx(': o app mostra quantos meses de gastos ela cobre.')}</>}</span>
                 <small>{gastoMedio > 0 ? tx('O ideal são 6 meses: {0}.', fmtValor(gastoMedio * 6)) : tx('Lance seus gastos para o app calcular.')}</small>
                 {v.metas && reserva < gastoMedio * 6 && gastoMedio > 0 && (
@@ -292,7 +296,7 @@ export function Patrimonio(c: Ctx) {
                       <CampoValor rotulo={infoMoeda(m).nome} prefixo={simbolo(m)} moeda={m} valor={c.mesEf.moedas[m] ?? 0} aoSalvar={(valor) => salvarMoeda(m, valor)} />
                       <span className="gd-moeda-conv">
                         <b>{conv === null ? '—' : `≈ ${fmtValor(conv)}`}</b>
-                        <small>{c.taxas[m] ? `1 ${m} = ${fmtValor(c.taxas[m])}` : tx('sem cotação agora')}</small>
+                        <small>{c.taxas[m] ? (c.taxas[m] < 0.2 ? `1 ${simbolo()} = ${fmtTaxa(1 / c.taxas[m])} ${m}` : `1 ${m} = ${fmtTaxa(c.taxas[m])} ${simbolo()}`) : tx('sem cotação agora')}</small>
                       </span>
                     </li>
                   )

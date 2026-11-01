@@ -5,7 +5,7 @@ import {
   agruparContas, aproxConta, dataDaBaixa, fmtConta, fraseDaSituacao, hojeLocal, inicioDoMes, mesesComAtraso, totaisDoMes, type SituacaoConta,
 } from '../lib/contasFixas'
 import { casasDaMoeda, mascarar, paraCampoMoeda } from '../lib/dinheiro'
-import { fmtDataCurta, fmtMoeda, fmtValor, MESES_NOME, parseNumero, simbolo, noMeioDaFrase } from '../lib/format'
+import { fmtDataCurta, fmtMesAno, fmtMoeda, fmtValor, MESES_NOME, parseNumero, simbolo, noMeioDaFrase } from '../lib/format'
 import { moedasUsaveis } from '../lib/moedas'
 import { mesmoNome } from '../lib/rotulos'
 import type { ContaFixa, Tipo } from '../lib/types'
@@ -36,7 +36,7 @@ const EXEMPLOS: { nome: string; tipo: Tipo; icone: string; dica: string; categor
 type Modelo = Pick<(typeof EXEMPLOS)[number], 'nome' | 'tipo' | 'categoria'>
 
 const mesDe = (iso: string | null) => (iso ? iso.slice(0, 7) : '')
-const quando = (iso: string) => `${noMeioDaFrase(MESES_NOME[Number(iso.slice(5, 7)) - 1])}/${iso.slice(0, 4)}`
+const quando = (iso: string) => fmtMesAno(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)))
 
 const MES_CURTO = (m: number) => MESES_NOME[m - 1].slice(0, 3).toLowerCase()
 
@@ -66,10 +66,14 @@ export function Contas(c: Ctx) {
     )
   }
 
+  // o total do grupo é só o das contas a pagar (o mesmo do pote ao lado); o que entra aparece separado, com "+"
   const grupo = (titulo: string, itens: SituacaoConta[], icone: string) => itens.length > 0 && (
     <section className="ct-grupo">
       <h2 className="ct-grupo-titulo"><Icone nome={icone} tamanho={18} /> {titulo}
-        <small>{itens.length} · {fmtValor(itens.reduce((a, s) => a + s.valor, 0))}</small></h2>
+        <small>
+          {itens.length} · {fmtValor(itens.filter((s) => s.conta.tipo === 'saida').reduce((a, s) => a + s.valor, 0))}
+          {itens.some((s) => s.conta.tipo === 'entrada') && ` · +${fmtValor(itens.filter((s) => s.conta.tipo === 'entrada').reduce((a, s) => a + s.valor, 0))}`}
+        </small></h2>
       <div className="ct-boletos">
         {itens.map((s, i) => (
           <Boleto key={s.conta.id} s={s} c={c} indice={i} aoEditar={() => setEditando(s.conta)} aoOutroValor={() => setOutroValor(s)} />
@@ -109,7 +113,7 @@ export function Contas(c: Ctx) {
               <span className="chips-info">
                 {t.faltaPagar > 0 && <span className="chip-info">{tx('falta {0}', fmtValor(t.faltaPagar))}</span>}
                 {t.qtdAtrasadas > 0 && <span className="chip-info ruim">{tx('{0} atrasada{1}', t.qtdAtrasadas, t.qtdAtrasadas > 1 ? 's' : '')}</span>}
-                {t.temEntradas && <span className="chip-info bom">{t.aReceber > 0 ? tx('a receber {0}', fmtValor(t.aReceber)) : `recebido ${fmtValor(t.jaRecebido)}`}</span>}
+                {t.temEntradas && <span className="chip-info bom">{t.aReceber > 0 ? tx('a receber {0}', fmtValor(t.aReceber)) : tx('recebido {0}', fmtValor(t.jaRecebido))}</span>}
                 {t.faltaPagar === 0 && totalSaidas > 0 && <span className="chip-info bom">{tx('tudo pago 🎉')}</span>}
               </span>
             </span>
@@ -138,8 +142,8 @@ export function Contas(c: Ctx) {
                       <strong>{x.descricao}{!x.ativa && <span className="conta-etiqueta">{tx('pausada')}</span>}</strong>
                       <small>
                         {tx('{0} todo dia {1}', x.tipo === 'entrada' ? tx('cai') : tx('vence'), x.dia)}
-                        {x.fim ? ` · até ${quando(x.fim)}` : ''}
-                        {x.inicio > inicioDoMes(c.ano, c.mes) ? ` · começa em ${quando(x.inicio)}` : ''}
+                        {x.fim ? ` · ${tx('até {0}', quando(x.fim))}` : ''}
+                        {x.inicio > inicioDoMes(c.ano, c.mes) ? ` · ${tx('começa em {0}', quando(x.inicio))}` : ''}
                       </small>
                     </span>
                     <span className={`conta-valor ${x.tipo === 'entrada' ? 'entrada' : ''}`}>{x.tipo === 'entrada' ? '+' : ''}{fmtValor(x.valor)}</span>
@@ -315,7 +319,10 @@ function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () 
     const n = parseNumero(valor)
     if (!n || n <= 0) return setErro(tx('Informe um valor maior que zero.'))
     if (!data || data.slice(0, 7) !== `${c.ano}-${mm}`) return setErro(tx('Escolha uma data dentro de {0}.', noMeioDaFrase(MESES_NOME[c.mes - 1])))
-    c.pagarConta(s, { valor: n, data, ...(s.moeda && cotacao ? { cotacao } : {}) })
+    // campo de cotação vazio = a de hoje, a mesma que a tela mostra (senão cairia na combinada da conta sem ninguém ver)
+    const taxa = s.moeda ? cotacao ?? c.taxas[s.moeda] : undefined
+    if (s.moeda && !taxa) return setErro(tx('Não há cotação de hoje para {0}. Informe a cotação que você pagou.', s.moeda))
+    c.pagarConta(s, { valor: n, data, ...(s.moeda && taxa ? { cotacao: taxa } : {}) })
     aoFechar()
   }
 
@@ -328,7 +335,7 @@ function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () 
         </label>
         {s.moeda && (
           <div className="cotacao">
-            <CampoCotacao moeda={s.moeda} principal={c.perfil.moeda} taxaDia={c.taxas[s.moeda]} valor={cotacao} aoMudar={setCotacao} />
+            <CampoCotacao moeda={s.moeda} principal={c.perfil.moeda} taxaDia={c.taxas[s.moeda]} valor={cotacao} aoMudar={(t) => { setCotacao(t); setErro(null) }} />
             <span className="campo-ajuda">
               {parseNumero(valor) && (cotacao ?? c.taxas[s.moeda]) ? <>≈ <b>{fmtValor(parseNumero(valor)! * (cotacao ?? c.taxas[s.moeda]))}</b> {tx('na sua moeda.')} </> : null}
               {s.conta.cotacao && cotacao === s.conta.cotacao ? tx('Cotação combinada na conta; troque se pagou por outra.') : cotacao ? tx('Cotação que você informou.') : tx('Cotação de hoje; troque se pagou por outra.')}

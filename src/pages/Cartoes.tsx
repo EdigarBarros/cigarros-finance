@@ -1,6 +1,7 @@
 import { casasDaMoeda, mascarar } from '../lib/dinheiro'
 import { useState } from 'react'
 import { CATALOGO_BANCOS } from '../lib/bancos'
+import { mesEfetivo } from '../lib/calc'
 import {
   datasDaFatura, faturaDoMes, hojeLocal, nomeDaFatura, pagaComAtraso, quandoVence, renegociada, somaMeses, textoStatus,
   totalFaturasAPagar, totalFaturasDoMes, type CompraParcelada, type Fatura, type SituacaoCartao,
@@ -161,6 +162,7 @@ function Detalhe({ s, c, aoEditar, aoPagar, aoRenegociar }: {
   const historico = c.cartoes.faturasPagas
     .filter((p) => p.cartao_id === cartao.id)
     .sort((a, b) => b.ano * 12 + b.mes - (a.ano * 12 + a.mes))
+  const [verTodas, setVerTodas] = useState(false)
   const faturaDe = (p: FaturaPaga) => faturaDoMes(cartao, c.cartoes.compras, c.cartoes.faturasPagas, p.ano, p.mes)
   const banco = c.d.bancos.find((b) => b.id === cartao.banco_id)
   /** Abre uma parcela da compra para editar ou excluir, esteja ela na fatura que está na tela ou não. */
@@ -263,7 +265,7 @@ function Detalhe({ s, c, aoEditar, aoPagar, aoRenegociar }: {
           <h3 className="ccd-titulo">{tx('Faturas resolvidas')} <small>{tx('toque para ajeitar')}</small></h3>
           {historico.length ? (
             <ul className="ccd-historico">
-              {historico.slice(0, 8).map((p) => {
+              {historico.slice(0, verTodas ? undefined : 8).map((p) => {
                 const f = faturaDe(p)
                 const reneg = renegociada(p)
                 const atraso = pagaComAtraso(p, f.vencimento)
@@ -277,7 +279,7 @@ function Detalhe({ s, c, aoEditar, aoPagar, aoRenegociar }: {
                         <strong>{MESES_NOME[p.mes - 1]}{p.ano !== c.ano ? `/${p.ano}` : ''}</strong>
                         <small>
                           {reneg ? tx('renegociada') : tx('paga em {0}', fmtDataCurta(p.pago_em))}
-                          {atraso && ` · ${dias(f.vencimento, p.pago_em)} dias de atraso`}
+                          {atraso && ` · ${dias(f.vencimento, p.pago_em) === 1 ? tx('1 dia de atraso') : tx('{0} dias de atraso', dias(f.vencimento, p.pago_em))}`}
                           {(p.juros ?? 0) > 0 && ` · ${reneg ? tx('acréscimo') : tx('juros')} ${fmtValor(p.juros!)}`}
                         </small>
                       </span>
@@ -290,6 +292,9 @@ function Detalhe({ s, c, aoEditar, aoPagar, aoRenegociar }: {
             </ul>
           ) : (
             <p className="quadro-vazio">{tx('Quando você marcar uma fatura como paga ou renegociada, ela aparece aqui.')}</p>
+          )}
+          {historico.length > 8 && (
+            <button type="button" className="link" onClick={() => setVerTodas(!verTodas)}>{verTodas ? tx('Ver menos') : tx('Ver todas ({0})', historico.length)}</button>
           )}
         </section>
       </div>
@@ -324,7 +329,7 @@ function FaturaDoMes({ s, c, aoPagar, aoRenegociar }: {
           <i className="ccd-tempo-cheio" style={{ width: `${pos(hoje)}%` }} />
           <i className="ccd-tempo-marco" style={{ left: `${pos(s.fechamento)}%` }} />
           <i className="ccd-tempo-marco fim" style={{ left: '100%' }} />
-          {hoje >= abriu && hoje <= s.vencimento && <i className="ccd-tempo-hoje" style={{ left: `${pos(hoje)}%` }} title="hoje" />}
+          {hoje >= abriu && hoje <= s.vencimento && <i className="ccd-tempo-hoje" style={{ left: `${pos(hoje)}%` }} title={tx('hoje')} />}
         </div>
         <div className="ccd-tempo-rotulos">
           <span>{tx('abriu')}<b>{fmtDataCurta(abriu)}</b></span>
@@ -502,9 +507,13 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
   const [garantido, setGarantido] = useState(cartao?.limite_garantido ? paraCampo(cartao.limite_garantido) : '')
   const [erro, setErro] = useState<string | null>(null)
   const [confirmar, setConfirmar] = useState(false)
+  const [salvando, setSalvando] = useState(false)
   const bancos = c.d.bancos
   const sugestoes = CATALOGO_BANCOS.filter((b) => !b.nome.startsWith(tx('Carteira'))).slice(0, 12)
-  const caixinha = bancoId ? c.mesEf.caixa[bancoId]?.caixinha ?? 0 : 0
+  // a caixinha que vale no limite é a de hoje (como no Painel), não a do mês aberto na tela
+  const hojeIso = hojeLocal()
+  const caixaHoje = mesEfetivo(c.d.meses, Number(hojeIso.slice(0, 4)), Number(hojeIso.slice(5, 7))).caixa
+  const caixinha = bancoId ? caixaHoje[bancoId]?.caixinha ?? 0 : 0
   const podeCaixinha = c.v.bancos && Boolean(bancoId)
 
   const escolherSugestao = (b: (typeof sugestoes)[number]) => {
@@ -519,16 +528,21 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
     if (!fecha || !vence) return setErro(tx('Escolha o dia em que a fatura fecha e o dia em que vence.'))
     const lim = limite.trim() ? parseNumero(limite) : null
     if (limite.trim() && (!lim || lim <= 0)) return setErro(tx('Limite inválido.'))
-    const gar = comGarantia && !daCaixinha && garantido.trim() ? parseNumero(garantido) : 0
+    // o campo "Quanto está na caixinha" aparece quando o valor é fixo ou não dá para ligar à caixinha do banco
+    const ligadoAoBanco = daCaixinha && podeCaixinha
+    const gar = comGarantia && !ligadoAoBanco && garantido.trim() ? parseNumero(garantido) : 0
     if (gar == null || gar < 0) return setErro(tx('Valor da caixinha inválido.'))
     const dados = {
       nome: nome.trim(), cor, banco_id: bancoId || null, limite: lim,
       dia_fechamento: Number(fecha), dia_vencimento: Number(vence), ativo,
-      limite_garantido: gar, garantia_caixinha: comGarantia && daCaixinha && podeCaixinha,
+      limite_garantido: gar, garantia_caixinha: comGarantia && ligadoAoBanco,
     }
-    if (cartao) await c.cartoes.updCartao(cartao.id, dados)
-    else await c.cartoes.addCartao(dados)
-    aoFechar()
+    setSalvando(true)
+    const gravou = cartao ? await c.cartoes.updCartao(cartao.id, dados) : Boolean(await c.cartoes.addCartao(dados))
+    setSalvando(false)
+    // se não gravou (nome repetido, internet), o formulário fica aberto para a pessoa ajeitar sem perder o que digitou
+    if (gravou) aoFechar()
+    else setErro(tx('Não deu para salvar o cartão. Veja o aviso na tela, ajuste e tente de novo.'))
   }
 
   return (
@@ -644,11 +658,15 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
           {cartao && (
             confirmar
               ? <button type="button" className="btn perigo" onClick={() => { void c.cartoes.delCartao(cartao.id); aoFechar() }}>{tx('Excluir mesmo')}</button>
-              : <button type="button" className="btn perigo" onClick={() => setConfirmar(true)}>{tx('Excluir')}</button>
+              : <button type="button" className="btn perigo" onClick={() => {
+                // fatura renegociada virou dívida: excluir o cartão faria as compras dela contarem de novo nas saídas
+                if (c.cartoes.temRenegociada(cartao.id)) setErro(tx('Este cartão tem uma fatura renegociada. Desfaça a renegociação antes de excluir, ou desligue "Ainda uso este cartão".'))
+                else setConfirmar(true)
+              }}>{tx('Excluir')}</button>
           )}
           <span className="espaco" />
           <button type="button" className="btn" onClick={aoFechar}>{tx('Cancelar')}</button>
-          <button type="submit" className="btn primario">{cartao ? tx('Salvar') : tx('Criar cartão')}</button>
+          <button type="submit" className="btn primario" disabled={salvando}>{cartao ? tx('Salvar') : tx('Criar cartão')}</button>
         </div>
         {confirmar && <span className="campo-ajuda">{tx('As compras continuam nas suas saídas, só deixam de ser ligadas a este cartão. As faturas marcadas como pagas são esquecidas.')}</span>}
       </form>
@@ -679,10 +697,12 @@ function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: 
   const bancos = c.v.bancos ? c.d.bancos : []
   const atraso = data > f.vencimento ? dias(f.vencimento, data) : 0
   const semExtras = c.cartoes.semExtras
+  // o campo de juros só aparece com atraso (ou se já havia juros); escondido, o que foi digitado antes não vale
+  const mostraJuros = !semExtras && (atraso > 0 || (pagamento?.juros ?? 0) > 0)
 
   const salvar = async () => {
     const v = parseNumero(valor)
-    const j = juros.trim() ? parseNumero(juros) : 0
+    const j = mostraJuros && juros.trim() ? parseNumero(juros) : 0
     if (!v || v <= 0) return setErro(tx('Valor inválido.'))
     if (j == null || j < 0) return setErro(tx('Juros inválidos.'))
     const pagoEm = data || hojeLocal()
@@ -742,7 +762,7 @@ function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: 
             <span>{tx('Pago')} <b>{tx('{0} {1} depois', atraso, atraso === 1 ? tx('dia') : tx('dias'))}</b> {tx('do vencimento.')}{!semExtras && (' ' + tx('Se teve juros ou multa, coloque aqui: eles entram como uma saída do mês do pagamento.'))}</span>
           </div>
         )}
-        {!semExtras && (atraso > 0 || (pagamento?.juros ?? 0) > 0) && (
+        {mostraJuros && (
           <label className="campo">
             <span className="campo-rotulo">{tx('Juros e multa')} <small>(opcional)</small></span>
             <span className="campo-caixa">
