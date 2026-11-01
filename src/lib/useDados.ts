@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CATEGORIAS_ANTIGAS } from './categorias'
 import { normPerfil } from './perfil'
 import { lerTudo, supabase } from './supabase'
@@ -362,6 +362,19 @@ export function useDados(userId: string, ano: number) {
     return null
   }
 
+  /**
+   * Os meses como as telas usam: o caixa só com os bancos que existem. Excluir um banco não apaga o que ficou guardado nele
+   * nos meses (o JSON `caixa`), e sem este filtro esse dinheiro continuaria nos totais, no patrimônio e no conselheiro sem
+   * nenhum banco na tela para explicar ou zerar. Bancos e meses são lidos juntos (erro em um, nenhum é trocado).
+   */
+  const mesesDosBancos = useMemo(() => {
+    const ids = new Set(bancos.map((b) => b.id))
+    return meses.map((m) => {
+      const chaves = Object.keys(m.caixa ?? {})
+      return chaves.every((k) => ids.has(k)) ? m : { ...m, caixa: Object.fromEntries(Object.entries(m.caixa).filter(([k]) => ids.has(k))) }
+    })
+  }, [meses, bancos])
+
   const salvarMes = async (anoMes: number, mes: number, patch: Partial<Omit<Mes, 'ano' | 'mes'>>) => {
     const atual = meses.find((m) => m.ano === anoMes && m.mes === mes) ?? {
       ano: anoMes, mes, investimentos: 0, moedas: {}, meta_usd: 0, caixa: {},
@@ -519,7 +532,7 @@ export function useDados(userId: string, ano: number) {
     dividasSemExtras,
     dividasSemMoeda,
     dividasSemJuros,
-    lancs, lancsRecentes, meses, dividas, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,
+    lancs, lancsRecentes, meses: mesesDosBancos, dividas, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,
     addLanc, addLancs, renomearLancs, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, ajustarValorDivida, moverInicioDivida, salvarMes,
   }
 }

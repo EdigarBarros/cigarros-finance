@@ -112,7 +112,7 @@ export function Contas(c: Ctx) {
               <small>{tx('de {0}', fmtValor(totalSaidas))}</small>
               <span className="chips-info">
                 {t.faltaPagar > 0 && <span className="chip-info">{tx('falta {0}', fmtValor(t.faltaPagar))}</span>}
-                {t.qtdAtrasadas > 0 && <span className="chip-info ruim">{tx('{0} atrasada{1}', t.qtdAtrasadas, t.qtdAtrasadas > 1 ? 's' : '')}</span>}
+                {t.qtdAtrasadas > 0 && <span className="chip-info ruim">{(t.qtdAtrasadas === 1 ? tx('1 atrasada') : tx('{0} atrasadas', t.qtdAtrasadas))}</span>}
                 {t.temEntradas && <span className="chip-info bom">{t.aReceber > 0 ? tx('a receber {0}', fmtValor(t.aReceber)) : tx('recebido {0}', fmtValor(t.jaRecebido))}</span>}
                 {t.faltaPagar === 0 && totalSaidas > 0 && <span className="chip-info bom">{tx('tudo pago 🎉')}</span>}
               </span>

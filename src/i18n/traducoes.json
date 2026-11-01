@@ -827,10 +827,6 @@
     "en": "available {0}",
     "es": "disponible {0}"
   },
-  "{0} vencida{1} · falta pagar": {
-    "en": "{0} overdue · to pay",
-    "es": "{0} vencida{1} · por pagar"
-  },
   "falta pagar": {
     "en": "to pay",
     "es": "por pagar"
@@ -2027,10 +2023,6 @@
     "en": "{0} stays {1} this month, no need to tap “",
     "es": "{0} queda como {1} este mes, sin necesidad de tocar “"
   },
-  "Qual dívida você está pagando?": {
-    "en": "Which debt are you paying?",
-    "es": "¿Qué deuda estás pagando?"
-  },
   "Nenhuma (só entra como gasto)": {
     "en": "None (just counts as an expense)",
     "es": "Ninguna (solo cuenta como gasto)"
@@ -2038,10 +2030,6 @@
   "A dívida diminui sozinha com este pagamento.": {
     "en": "The debt goes down on its own with this payment.",
     "es": "La deuda baja sola con este pago."
-  },
-  "É de alguém que te devia?": {
-    "en": "Is it from someone who owed you?",
-    "es": "¿Es de alguien que te debía?"
   },
   "O que falta receber diminui sozinho com esta entrada.": {
     "en": "What's left to receive goes down on its own with this income.",
@@ -2247,10 +2235,6 @@
     "en": "Agreed for",
     "es": "Acordado para"
   },
-  "Valor atualizado em": {
-    "en": "Amount updated on",
-    "es": "Valor actualizado el"
-  },
   "Cada recebimento lançado": {
     "en": "Every payment you add",
     "es": "Cada cobro que registras"
@@ -2258,10 +2242,6 @@
   "Os pagamentos lançados": {
     "en": "The payments you add",
     "es": "Los pagos que registras"
-  },
-  "já abatem sozinhos. Mude o que falta só se houve juros, acordo ou se estava errado.": {
-    "en": "reduce it on their own. Change what's left only if there was interest, an agreement, or a mistake.",
-    "es": "lo reducen solos. Cambia lo que falta solo si hubo intereses, un acuerdo o un error."
   },
   "Excluir mesmo": {
     "en": "Delete anyway",
@@ -2478,10 +2458,6 @@
   "Páginas": {
     "en": "Pages",
     "es": "Páginas"
-  },
-  "Busque por lançamentos ou categorias…": {
-    "en": "Search transactions or categories…",
-    "es": "Busca movimientos o categorías…"
   },
   "Buscar lançamentos": {
     "en": "Search transactions",
@@ -3623,10 +3599,6 @@
     "en": "{0} to go",
     "es": "falta {0}"
   },
-  "{0} atrasada{1}": {
-    "en": "{0} overdue",
-    "es": "{0} atrasada{1}"
-  },
   "a receber {0}": {
     "en": "{0} to receive",
     "es": "{0} por recibir"
@@ -4279,10 +4251,6 @@
     "en": "PDF, CSV, Excel, Word or OFX from your bank",
     "es": "PDF, CSV, Excel, Word u OFX de tu banco"
   },
-  "Buscar descrição ou categoria": {
-    "en": "Search description or category",
-    "es": "Buscar descripción o categoría"
-  },
   "Todos": {
     "en": "All",
     "es": "Todos"
@@ -4674,18 +4642,6 @@
   "Lançamentos ({0})": {
     "en": "Transactions ({0})",
     "es": "Movimientos ({0})"
-  },
-  "Nenhum lançamento": {
-    "en": "No transactions",
-    "es": "Ningún movimiento"
-  },
-  "sem banco": {
-    "en": "without a bank",
-    "es": "sin banco"
-  },
-  "neste mês.": {
-    "en": "this month.",
-    "es": "este mes."
   },
   "Investimentos": {
     "en": "Investments",
@@ -5935,10 +5891,6 @@
     "en": "I couldn't create the debt. Try again.",
     "es": "No pude crear la deuda. Inténtalo de nuevo."
   },
-  "Isso paga alguma dívida?": {
-    "en": "Does this pay off a debt?",
-    "es": "¿Esto paga alguna deuda?"
-  },
   "Peguei emprestado de alguém (criar dívida)": {
     "en": "I borrowed from someone (create debt)",
     "es": "Me prestó alguien (crear deuda)"
@@ -6374,5 +6326,121 @@
   "A busca olha {0} inteiro: nome, valor (150 ou 150,40) ou data (25/10, outubro, 2025). Para outro ano, troque o ano no topo.": {
     "en": "The search covers all of {0}: name, amount (150 or 150.40) or date (25/10, October, 2025). For another year, change the year at the top.",
     "es": "La búsqueda abarca todo {0}: nombre, valor (150 o 150,40) o fecha (25/10, octubre, 2025). Para otro año, cambia el año arriba."
+  },
+  "sem cotação": {
+    "en": "no exchange rate",
+    "es": "sin cotización"
+  },
+  "Ainda não temos a cotação de {0}. Toque no lápis (“Outro valor ou outra data”) e informe a cotação do pagamento.": {
+    "en": "We don't have the {0} exchange rate yet. Tap the pencil (“Other amount or date”) and enter the rate you paid.",
+    "es": "Aún no tenemos la cotización de {0}. Toca el lápiz (“Otro valor u otra fecha”) e informa la cotización del pago."
+  },
+  "Ver todas ({0})": {
+    "en": "See all ({0})",
+    "es": "Ver todas ({0})"
+  },
+  "Ver menos": {
+    "en": "See less",
+    "es": "Ver menos"
+  },
+  "1 dia de atraso": {
+    "en": "1 day overdue",
+    "es": "1 día de atraso"
+  },
+  "{0} atrasadas": {
+    "en": "{0} overdue",
+    "es": "{0} atrasadas"
+  },
+  "recebido {0}": {
+    "en": "received {0}",
+    "es": "recibido {0}"
+  },
+  "começa em {0}": {
+    "en": "starts in {0}",
+    "es": "empieza en {0}"
+  },
+  "{0} recebido": {
+    "en": "{0} received",
+    "es": "{0} recibido"
+  },
+  "{0} pago": {
+    "en": "{0} paid",
+    "es": "{0} pagado"
+  },
+  "Nenhum lançamento no {0} neste mês.": {
+    "en": "No transactions in {0} this month.",
+    "es": "Ningún movimiento en {0} este mes."
+  },
+  "Nenhum lançamento sem banco neste mês.": {
+    "en": "No transactions without a bank this month.",
+    "es": "Ningún movimiento sin banco este mes."
+  },
+  "Não há cotação de hoje para {0}. Informe a cotação que você pagou.": {
+    "en": "There is no rate for {0} today. Enter the rate you paid.",
+    "es": "No hay cotización de hoy para {0}. Indica la cotización que pagaste."
+  },
+  "Não deu para salvar o cartão. Veja o aviso na tela, ajuste e tente de novo.": {
+    "en": "We couldn't save the card. Check the notice on screen, adjust and try again.",
+    "es": "No se pudo guardar la tarjeta. Mira el aviso en pantalla, ajusta y vuelve a intentarlo."
+  },
+  "Este cartão tem uma fatura renegociada. Desfaça a renegociação antes de excluir, ou desligue \"Ainda uso este cartão\".": {
+    "en": "This card has a renegotiated bill. Undo the renegotiation before deleting, or turn off \"I still use this card\".",
+    "es": "Esta tarjeta tiene una factura renegociada. Deshaz la renegociación antes de eliminar, o desactiva \"Todavía uso esta tarjeta\"."
+  },
+  "Não consegui conferir os lançamentos de {0}. Confira se o que é desse ano já não foi lançado antes de importar.": {
+    "en": "I couldn't check the entries for {0}. Make sure what belongs to that year wasn't already added before you import.",
+    "es": "No pude revisar los movimientos de {0}. Verifica que lo de ese año no se haya registrado antes de importar."
+  },
+  "{0} · parcela {1}": {
+    "en": "{0} · installment {1}",
+    "es": "{0} · cuota {1}"
+  },
+  "Esse valor é grande demais. Use menos de 10 bilhões.": {
+    "en": "That amount is too large. Use less than 10 billion.",
+    "es": "Ese valor es demasiado grande. Usa menos de 10 mil millones."
+  },
+  "Use uma data entre {0} e {1}.": {
+    "en": "Use a date between {0} and {1}.",
+    "es": "Usa una fecha entre {0} y {1}."
+  },
+  "Débito": {
+    "en": "Debit",
+    "es": "Débito"
+  },
+  "Crédito": {
+    "en": "Credit",
+    "es": "Crédito"
+  },
+  "Dinheiro": {
+    "en": "Cash",
+    "es": "Efectivo"
+  },
+  "Boleto": {
+    "en": "Bank slip (boleto)",
+    "es": "Boleto bancario"
+  },
+  "Transferência": {
+    "en": "Transfer",
+    "es": "Transferencia"
+  },
+  "em 1 mês com gastos": {
+    "en": "over 1 month with spending",
+    "es": "en 1 mes con gastos"
+  },
+  "em {0} meses com gastos": {
+    "en": "over {0} months with spending",
+    "es": "en {0} meses con gastos"
+  },
+  "retirado": {
+    "en": "withdrawn",
+    "es": "retirado"
+  },
+  "1 vencida · falta pagar": {
+    "en": "1 overdue · left to pay",
+    "es": "1 vencida · falta pagar"
+  },
+  "{0} vencidas · falta pagar": {
+    "en": "{0} overdue · left to pay",
+    "es": "{0} vencidas · falta pagar"
   }
 }

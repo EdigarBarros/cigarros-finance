@@ -31,7 +31,7 @@ export function BlocoContasDoMes({ situacoes, aoAbrir, aoPagar, completo }: {
         <h2>{tx('Contas do mês')}</h2>
         {situacoes.length > 0 && (
           <span className="bloco-cab-valor">
-            <small style={qtdAtrasadas ? { color: COR.saidas } : undefined}>{qtdAtrasadas ? tx('{0} vencida{1} · falta pagar', qtdAtrasadas, qtdAtrasadas > 1 ? 's' : '') : tx('falta pagar')}</small>
+            <small style={qtdAtrasadas ? { color: COR.saidas } : undefined}>{qtdAtrasadas ? (qtdAtrasadas === 1 ? tx('1 vencida · falta pagar') : tx('{0} vencidas · falta pagar', qtdAtrasadas)) : tx('falta pagar')}</small>
             <strong>{fmtValor(faltaPagar)}</strong>
           </span>
         )}
