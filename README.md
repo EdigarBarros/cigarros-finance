@@ -62,12 +62,12 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
 - **Tutorial guiado**: depois das perguntas iniciais, o painel escurece e destaca, um por vez, onde fica cada coisa (lançar, resumo,
   lançamentos, importar extrato, e só as abas que a pessoa ligou). Um passo oferece ligar abas que ela não tinha escolhido.
   Dá para pular a qualquer momento (botão, X ou Esc) e rever em Configurações → Conta → Ver o tutorial, ou no menu da conta
-- **Assinatura (Stripe)**: conta nova ganha 7 dias grátis **sem cartão** (a [migração 17](supabase/migracao-17-teste-sem-cartao.sql) cria o teste no cadastro); o cartão só é pedido ao assinar, por R$ 9,99
+- **Assinatura (Stripe)**: conta nova ganha 7 dias grátis **sem cartão** (o teste começa quando a pessoa escolhe o plano: [migração 17](supabase/migracao-17-teste-sem-cartao.sql) e [18](supabase/migracao-18-teste-ao-escolher-plano.sql)); o cartão só é pedido ao assinar, por R$ 9,99
   por mês (ou o equivalente em USD, EUR, ARS, CLP, UYU, COP, PEN, MXN, CAD, AUD, CHF, GBP, conforme a moeda da pessoa).
-  Teste acabou, cancelou ou o cartão falhou: o painel fica bloqueado. Contas que já existiam entram como `cortesia`. Peças:
+  Teste acabou, cancelou ou o cartão falhou: o painel fica bloqueado. Quem deve ter acesso sem cobrança recebe `cortesia` (veja `supabase/dar-cortesia.sql`). Peças:
   tabela `assinaturas` ([migração 12](supabase/migracao-12-assinaturas.sql)), funções `stripe-checkout`, `stripe-portal` e
   `stripe-webhook` em `supabase/functions/` (segredo `STRIPE_SECRET_KEY` no Supabase, nunca no código) e, para o bloqueio valer
-  também no banco, a [migração 13](supabase/migracao-13-bloqueio-no-banco.sql), que só deve ser rodada depois de testar o fluxo
+  também no banco, a [migração 20](supabase/migracao-20-acesso-no-banco-definitivo.sql) (a 13 antiga), que liga o bloqueio: teste o fluxo de assinatura com uma conta nova logo depois de rodá-la
 - **Forma de pagamento**: todo lançamento tem "Como pagou?" (Pix, débito, crédito, dinheiro, boleto) ou "Como recebeu?" (Pix,
   transferência, dinheiro). O app lembra a forma que você usou para cada descrição e reconhece "Pix" escrito no texto (e
   no extrato importado). **Crédito** leva ao cartão e às parcelas e a compra entra na fatura e no limite da aba Cartões;
@@ -97,6 +97,14 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
 
 1. Entre em <https://supabase.com> → **New project** (plano Free). Anote a senha do banco.
 2. No projeto: **SQL Editor** → **New query** → cole o conteúdo de [`supabase/schema.sql`](supabase/schema.sql) → **Run**.
+   Depois, uma consulta por vez e **nesta ordem**, rode as migrações [`09`](supabase/migracao-09-cartoes-extras.sql),
+   [`10`](supabase/migracao-10-dividas-e-a-receber.sql), [`11`](supabase/migracao-11-forma-de-pagamento.sql),
+   [`12`](supabase/migracao-12-assinaturas.sql), [`14`](supabase/migracao-14-moeda-em-contas-e-dividas.sql),
+   [`15`](supabase/migracao-15-cotacao-da-conta.sql), [`16`](supabase/migracao-16-acesso-teste-e-erros.sql),
+   [`17`](supabase/migracao-17-teste-sem-cartao.sql), [`18`](supabase/migracao-18-teste-ao-escolher-plano.sql),
+   [`19`](supabase/migracao-19-juros-das-dividas.sql) e, **por último**, a [`20`](supabase/migracao-20-acesso-no-banco-definitivo.sql).
+   O `schema.sql` sozinho **não** tem cobrança nem bloqueio: sem a 12 e a 20 o painel abre para qualquer conta, paga ou não.
+   Não rode as migrações 02 a 08 num banco novo (o `schema.sql` já inclui o que elas fazem) nem a 13 (a 20 a substitui).
 3. Em **Project Settings → API** (ou botão **Connect**), copie:
    - **Project URL** → vai em `VITE_SUPABASE_URL`
    - **anon / publishable key** → vai em `VITE_SUPABASE_ANON_KEY`
@@ -108,10 +116,15 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
 
 **Netlify:** <https://app.netlify.com/start> → importe este repositório (o `netlify.toml` já configura o build) → *Site configuration → Environment variables* → adicione as duas variáveis → **Deploy**.
 
-> **Já tinha o banco criado antes?** Rode também as migrações que faltarem, em ordem, no SQL Editor (de
-> [`migracao-02`](supabase/migracao-02-dividas-interligadas.sql) até a [`migracao-19`](supabase/migracao-19-juros-das-dividas.sql)).
-> Todas só acrescentam, não apagam nada. A 12 (assinaturas) e a 13 (bloqueio no banco) só servem se você cobra assinatura; a 16 acrescenta
-> carência no cartão recusado, teste grátis por cartão e o registro de erros; a 19 acrescenta os juros por mês das dívidas (opcional).
+> **Já tinha o banco criado antes?** Rode as migrações que faltarem, em ordem, no SQL Editor (de
+> [`migracao-02`](supabase/migracao-02-dividas-interligadas.sql) até a [`migracao-20`](supabase/migracao-20-acesso-no-banco-definitivo.sql)),
+> e a 20 sempre por último. A maioria só acrescenta, não apaga nada. A 12 (assinaturas) e a 20 (bloqueio no banco) só servem se você cobra
+> assinatura; a 16 acrescenta carência no cartão recusado, teste grátis por cartão e o registro de erros; a 19 acrescenta os juros por mês
+> das dívidas (opcional).
+>
+> **Não rode de novo** o `schema.sql` nem as migrações 04 a 08, 13 e 16 num banco que já tem cobrança: elas apagam as regras de acesso
+> (política `dono` sem `tem_acesso()`, ou a função sem o teste grátis) e o bloqueio de quem não pagou deixa de valer. Se isso
+> acontecer, rode a [`migracao-20`](supabase/migracao-20-acesso-no-banco-definitivo.sql), que é segura de rodar quantas vezes precisar.
 
 ### 2b. Cobrança (Stripe) e contas de cortesia
 

@@ -61,7 +61,10 @@ Deno.serve(async (req) => {
     try { origem = new URL(String(retorno)).origin } catch { return resposta({ erro: 'Endereço de retorno inválido.' }, 400, req) }
 
     const { data: atual } = await servico.from('assinaturas').select('*').eq('user_id', user.id).maybeSingle()
-    if (atual && ['trialing', 'active', 'past_due', 'cortesia'].includes(atual.status)) return resposta({ erro: 'ja_ativa' }, 409, req)
+    if (atual && ['trialing', 'active', 'cortesia'].includes(atual.status)) return resposta({ erro: 'ja_ativa' }, 409, req)
+    // Já existe uma assinatura no Stripe com pagamento por resolver (cobrança recusada, pendente ou parada): uma segunda assinatura
+    // cobraria em dobro. O app manda a pessoa para o portal, onde ela acerta o cartão da assinatura que já existe.
+    if (atual && ['past_due', 'unpaid', 'incomplete', 'paused'].includes(atual.status)) return resposta({ erro: 'pagamento_pendente' }, 409, req)
 
     let cliente: string | null = atual?.stripe_customer_id ?? null
     if (!cliente) {
