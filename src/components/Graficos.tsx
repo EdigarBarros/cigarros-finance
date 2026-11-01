@@ -80,6 +80,19 @@ const linha = (label: string, cor: string, data: (number | null)[], fundo: strin
   ...extra,
 })
 
+/** Cor com transparência (as cores da paleta são #rrggbb). */
+const comAlfa = (hex: string, a: number) => `${hex}${Math.round(a * 255).toString(16).padStart(2, '0')}`
+
+/**
+ * Linha do Mês a mês: fina, sem bolinhas (a bolinha só aparece ao tocar ou passar o mouse). Com `area`, ganha uma sombra
+ * leve até a base, que mostra o tamanho do que se acumula (a dívida).
+ */
+const linhaSuave = (label: string, cor: string, data: (number | null)[], fundo: string, compacto?: boolean, area?: boolean) =>
+  linha(label, cor, data, fundo, compacto, {
+    borderWidth: area ? 2 : 1.5, pointRadius: 0, pointHoverRadius: 5,
+    ...(area ? { fill: 'origin', backgroundColor: comAlfa(cor, 0.16) } : {}),
+  })
+
 /** Opções comuns: eixo em reais (aceita negativos), meses embaixo, legenda com o desenho de cada série. */
 function opcoes(c: ReturnType<typeof useCoresDoGrafico>, {
   rotulos, mesDoIndice, mesAtual, compacto, legenda = true, eixoDireito, destacar, formatar = fmtValor,
@@ -229,8 +242,8 @@ export function GraficoAnual({ porMes, mesAtual, altura = 400, compacto, v }: {
         datasets: [
           barra(tx('Entrou'), PALETA.entradas, serie(porMes, (r) => r.entradasMoeda[moeda] ?? 0), compacto),
           barra(tx('Saiu'), PALETA.saidas, serie(porMes, (r) => r.saidasMoeda[moeda] ?? 0), compacto),
-          ...(algum((r) => r.moedas[moeda] ?? 0) ? [linha(tx('Guardado em {0}', moeda), PALETA.caixa, serie(porMes, (r) => (r.moedas[moeda] ?? null) as number), c.fundo, compacto)] : []),
-          ...(algum((r) => r.dividaMoeda[moeda] ?? 0) ? [linha(tx('Dívidas em {0}', moeda), PALETA.divida, serie(porMes, (r) => r.dividaMoeda[moeda] ?? 0), c.fundo, compacto)] : []),
+          ...(algum((r) => r.moedas[moeda] ?? 0) ? [linhaSuave(tx('Guardado em {0}', moeda), PALETA.caixa, serie(porMes, (r) => (r.moedas[moeda] ?? null) as number), c.fundo, compacto)] : []),
+          ...(algum((r) => r.dividaMoeda[moeda] ?? 0) ? [linhaSuave(tx('Dívidas em {0}', moeda), PALETA.divida, serie(porMes, (r) => r.dividaMoeda[moeda] ?? 0), c.fundo, compacto, true)] : []),
         ],
       }
     : {
@@ -238,13 +251,15 @@ export function GraficoAnual({ porMes, mesAtual, altura = 400, compacto, v }: {
         datasets: [
           barra(tx('Entrou'), PALETA.entradas, serie(porMes, (r) => r.entradas), compacto),
           barra(tx('Saiu'), PALETA.saidas, serie(porMes, (r) => r.saidas), compacto),
-          ...(v.bancos ? [linha(tx('Guardado nas contas'), PALETA.caixa, serie(porMes, (r) => r.caixa), c.fundo, compacto)] : []),
-          ...(v.dividas ? [linha(tx('Dívidas'), PALETA.divida, serie(porMes, (r) => r.divida), c.fundo, compacto)] : []),
-          ...(v.investimentos ? [linha(tx('Investido'), PALETA.investimentos, serie(porMes, (r) => r.investimentos), c.fundo, compacto)] : []),
-          ...(v.moedas ? [linha(tx('Em outras moedas'), PALETA.usd, serie(porMes, (r) => r.moedasConvertido), c.fundo, compacto)] : []),
+          ...(v.bancos ? [linhaSuave(tx('Guardado nas contas'), PALETA.caixa, serie(porMes, (r) => r.caixa), c.fundo, compacto)] : []),
+          ...(v.dividas ? [linhaSuave(tx('Dívidas'), PALETA.divida, serie(porMes, (r) => r.divida), c.fundo, compacto, true)] : []),
+          ...(v.investimentos ? [linhaSuave(tx('Investido'), PALETA.investimentos, serie(porMes, (r) => r.investimentos), c.fundo, compacto)] : []),
+          ...(v.moedas ? [linhaSuave(tx('Em outras moedas'), PALETA.usd, serie(porMes, (r) => r.moedasConvertido), c.fundo, compacto)] : []),
         ],
       }) as unknown as ChartData<'bar'>
-  const base = opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual, compacto, destacar: true, formatar: fora ? (n) => fmtMoeda(n, moeda) : fmtValor })
+  const opcoesBase = opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual, compacto, destacar: true, formatar: fora ? (n) => fmtMoeda(n, moeda) : fmtValor })
+  // a sombra da dívida é desenhada antes de qualquer série: fica atrás das barras, que continuam nítidas
+  const base: ChartOptions<'bar'> = { ...opcoesBase, plugins: { ...opcoesBase.plugins, filler: { drawTime: 'beforeDatasetsDraw' } } }
   return (
     <>
       {extras.length > 0 && (
