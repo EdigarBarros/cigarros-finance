@@ -42,11 +42,13 @@ export function situacaoMeta(meta: Meta, todos: MovimentoMeta[], hoje = hojeIso(
   }
 
   // Ritmo: o que entrou nos últimos 3 meses (ou desde o primeiro aporte, se for mais recente), por mês.
+  // Aporte com data de mês futuro ainda não aconteceu: não entra no ritmo (e a janela nunca fica com zero meses).
   let ritmo: number | null = null
-  const primeiro = movimentos[movimentos.length - 1]
+  const passados = movimentos.filter((m) => chaveMes(m.data) <= agora)
+  const primeiro = passados[passados.length - 1]
   if (primeiro) {
     const janela = Math.min(3, agora - chaveMes(primeiro.data) + 1)
-    const soma = movimentos.filter((m) => agora - chaveMes(m.data) < janela).reduce((a, m) => a + m.valor, 0)
+    const soma = passados.filter((m) => agora - chaveMes(m.data) < janela).reduce((a, m) => a + m.valor, 0)
     ritmo = soma > 0 ? soma / janela : null
   }
   let previsao: [number, number] | null = null

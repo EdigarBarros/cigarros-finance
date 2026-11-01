@@ -18,7 +18,12 @@ export interface MesEfetivo extends Mes {
   herdadoDe: [number, number] | null
 }
 
-const temMoedas = (m: Record<string, number>) => Object.values(m).some((v) => v > 0)
+// "Zerei de propósito" x "nunca preenchi": o banco guarda os saldos por chave (banco/tipo e moeda), e só quem digitou
+// (ou confirmou o mês) cria a chave; a planilha importada e o mês novo não gravam zeros. Então chave presente, mesmo com 0,
+// é valor informado e não herda do mês anterior. Os investimentos são uma coluna número (0 por padrão): lá o 0 de quem
+// nunca preencheu e o de quem zerou são iguais, e separar os dois pede uma migração no banco.
+const caixaInformado = (c?: Caixa) => Object.values(c ?? {}).some((b) => TIPOS_CAIXA.some((t) => typeof b?.[t] === 'number'))
+const moedasInformadas = (m?: Record<string, number>) => Object.values(m ?? {}).some((v) => typeof v === 'number')
 
 /**
  * Caixa, investimentos, outras moedas e meta passam de um mês para o outro até você atualizar.
@@ -35,15 +40,15 @@ export function mesEfetivo(meses: Mes[], ano: number, mes: number, hoje = new Da
   let herdadoDe: [number, number] | null = null
   let caixa = base.caixa ?? {}
   let moedas = base.moedas ?? {}
-  if (podeHerdar && !somaCaixa(caixa)) {
-    const m = ultimoCom((x) => somaCaixa(x.caixa) > 0)
+  if (podeHerdar && !caixaInformado(caixa)) {
+    const m = ultimoCom((x) => caixaInformado(x.caixa))
     if (m) {
       caixa = m.caixa
       herdadoDe = [m.ano, m.mes]
     }
   }
-  if (podeHerdar && !temMoedas(moedas)) {
-    const m = ultimoCom((x) => temMoedas(x.moedas))
+  if (podeHerdar && !moedasInformadas(moedas)) {
+    const m = ultimoCom((x) => moedasInformadas(x.moedas))
     if (m) {
       moedas = m.moedas
       herdadoDe ??= [m.ano, m.mes]
@@ -83,12 +88,14 @@ export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: M
     gastosPorCategoria[k] = (gastosPorCategoria[k] ?? 0) + l.valor
   }
 
+  // Dívida em outra moeda sem cotação não entra nos totais na moeda principal (só em `dividaMoeda`, na moeda dela).
+  const convertidas = dividas.filter((d) => !d.semCotacao)
   return {
     entradas,
     saidas,
     fluxo: entradas - saidas,
     caixa: totalCaixa(mes),
-    divida: soma(dividas.map((d) => d.restante)),
+    divida: soma(convertidas.map((d) => d.restante)),
     /** Em outra moeda, no valor que a pessoa digitou (sem conversão): entradas, saídas e dívidas de cada moeda. */
     entradasMoeda: nativoPorMoeda(lancs.filter((l) => l.tipo === 'entrada')),
     saidasMoeda: nativoPorMoeda(saidasLista),
@@ -97,11 +104,11 @@ export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: M
       return r
     }, {}),
     /** De onde veio a variação das dívidas no mês: nasceram, foram pagas, aumentaram (empréstimo) ou foram ajustadas (juros, acordo). */
-    dividaNovas: soma(dividas.map((d) => d.novaNoMes)),
-    dividaPagos: soma(dividas.map((d) => d.pagoNoMes)),
-    dividaAumentos: soma(dividas.map((d) => d.aumentoNoMes)),
-    dividaAjustes: soma(dividas.map((d) => d.ajusteNoMes)),
-    parcelasMensais: soma(dividas.filter((d) => d.restante > 0).map((d) => d.divida.valor_parcela ?? 0)),
+    dividaNovas: soma(convertidas.map((d) => d.novaNoMes)),
+    dividaPagos: soma(convertidas.map((d) => d.pagoNoMes)),
+    dividaAumentos: soma(convertidas.map((d) => d.aumentoNoMes)),
+    dividaAjustes: soma(convertidas.map((d) => d.ajusteNoMes)),
+    parcelasMensais: soma(convertidas.filter((d) => d.restante > 0).map((d) => d.divida.valor_parcela ?? 0)),
     investimentos: mes?.investimentos ?? 0,
     moedas: mes?.moedas ?? {},
     /** Outras moedas somadas, na moeda principal (cotação de hoje). */

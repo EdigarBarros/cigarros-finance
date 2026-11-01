@@ -290,7 +290,7 @@ function Boleto({ s, c, indice, aoEditar, aoOutroValor }: { s: SituacaoConta; c:
             </>
           ) : (
             <>
-              <button className="btn primario conta-paguei" onClick={() => c.pagarConta(s)}>
+              <button className="btn primario conta-paguei" onClick={() => (s.semCotacao ? aoOutroValor() : c.pagarConta(s))}>
                 <Icone nome={entrada ? 'receber' : 'check'} tamanho={16} /> {entrada ? tx('Recebi') : tx('Paguei')}
               </button>
               <button className="icone-btn" onClick={aoOutroValor} title={tx('Outro valor ou outra data')} aria-label={tx('Outro valor ou outra data')}><Icone nome="lapis" tamanho={16} /></button>
@@ -338,7 +338,7 @@ function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () 
             <CampoCotacao moeda={s.moeda} principal={c.perfil.moeda} taxaDia={c.taxas[s.moeda]} valor={cotacao} aoMudar={(t) => { setCotacao(t); setErro(null) }} />
             <span className="campo-ajuda">
               {parseNumero(valor) && (cotacao ?? c.taxas[s.moeda]) ? <>≈ <b>{fmtValor(parseNumero(valor)! * (cotacao ?? c.taxas[s.moeda]))}</b> {tx('na sua moeda.')} </> : null}
-              {s.conta.cotacao && cotacao === s.conta.cotacao ? tx('Cotação combinada na conta; troque se pagou por outra.') : cotacao ? tx('Cotação que você informou.') : tx('Cotação de hoje; troque se pagou por outra.')}
+              {s.conta.cotacao && cotacao === s.conta.cotacao ? tx('Cotação combinada na conta; troque se pagou por outra.') : cotacao ? tx('Cotação que você informou.') : c.taxas[s.moeda] ? tx('Cotação de hoje; troque se pagou por outra.') : tx('Sem cotação automática agora: informe a que você pagou.')}
             </span>
           </div>
         )}
