@@ -6442,5 +6442,69 @@
   "{0} vencidas · falta pagar": {
     "en": "{0} overdue · left to pay",
     "es": "{0} vencidas · falta pagar"
+  },
+  "{0} vencida{1} · falta pagar": {
+    "en": "{0} overdue · to pay",
+    "es": "{0} vencida{1} · por pagar"
+  },
+  "Qual dívida você está pagando?": {
+    "en": "Which debt are you paying?",
+    "es": "¿Qué deuda estás pagando?"
+  },
+  "É de alguém que te devia?": {
+    "en": "Is it from someone who owed you?",
+    "es": "¿Es de alguien que te debía?"
+  },
+  "Valor atualizado em": {
+    "en": "Amount updated on",
+    "es": "Valor actualizado el"
+  },
+  "já abatem sozinhos. Mude o que falta só se houve juros, acordo ou se estava errado.": {
+    "en": "reduce it on their own. Change what's left only if there was interest, an agreement, or a mistake.",
+    "es": "lo reducen solos. Cambia lo que falta solo si hubo intereses, un acuerdo o un error."
+  },
+  "Busque por lançamentos ou categorias…": {
+    "en": "Search transactions or categories…",
+    "es": "Busca movimientos o categorías…"
+  },
+  "{0} atrasada{1}": {
+    "en": "{0} overdue",
+    "es": "{0} atrasada{1}"
+  },
+  "Buscar descrição ou categoria": {
+    "en": "Search description or category",
+    "es": "Buscar descripción o categoría"
+  },
+  "Nenhum lançamento": {
+    "en": "No transactions",
+    "es": "Ningún movimiento"
+  },
+  "sem banco": {
+    "en": "without a bank",
+    "es": "sin banco"
+  },
+  "neste mês.": {
+    "en": "this month.",
+    "es": "este mes."
+  },
+  "Isso paga alguma dívida?": {
+    "en": "Does this pay off a debt?",
+    "es": "¿Esto paga alguna deuda?"
+  },
+  "Mostrar o menu": {
+    "en": "Show the menu",
+    "es": "Mostrar el menú"
+  },
+  "Esconder o menu": {
+    "en": "Hide the menu",
+    "es": "Ocultar el menú"
+  },
+  "Mostrar a barra de baixo": {
+    "en": "Show the bottom bar",
+    "es": "Mostrar la barra de abajo"
+  },
+  "Esconder a barra de baixo": {
+    "en": "Hide the bottom bar",
+    "es": "Ocultar la barra de abajo"
   }
 }

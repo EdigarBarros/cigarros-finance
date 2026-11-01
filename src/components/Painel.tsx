@@ -16,6 +16,7 @@ import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
 import { supabase } from '../lib/supabase'
 import type { Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 import { useMobile } from '../lib/useMobile'
+import { useBarraLateral } from '../lib/useBarraLateral'
 import { estiloLente, useLente } from '../lib/useLente'
 import { definirTema, semMovimento, useTema } from '../lib/tema'
 import { ehErroDeVersao, lembrarMes, mesAntesDeAtualizar } from '../lib/atualizacao'
@@ -116,6 +117,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const baixando = useRef(new Set<string>())
   const esfriando = useRef(false)
   const mobile = useMobile()
+  const barra = useBarraLateral()
 
   // Quem já tinha dados antes das perguntas existirem ganha um perfil com o que já usa, sem questionário.
   const temDados = d.lancs.length > 0 || d.bancos.length > 0 || d.dividas.length > 0 || d.meses.length > 0
@@ -155,8 +157,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     window.addEventListener('hashchange', aoMudar)
     return () => window.removeEventListener('hashchange', aoMudar)
   }, [])
-  const lenteNav = useLente(refNav, 'button.ativo', `${paginaAtual}|${paginas.length}|${noPainel}`)
-  const lenteAbas = useLente(refAbas, 'button.ativo', `${paginaAtual}|${mobile}|${paginas.length}|${noPainel}`)
+  const lenteNav = useLente(refNav, 'button.ativo', `${paginaAtual}|${paginas.length}|${noPainel}|${barra.trilho}|${barra.retrato}`)
+  const lenteAbas = useLente(refAbas, 'button.ativo', `${paginaAtual}|${mobile}|${paginas.length}|${noPainel}|${barra.abasOcultas}`)
   const abas = paginas.length <= MAX_ABAS ? paginas : paginas.slice(0, MAX_ABAS - 1)
   const naMais = paginas.slice(abas.length)
 
@@ -183,6 +185,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     setBancoAberto(null)
     setMais(false)
     setMenu(false)
+    barra.fechar()
     location.hash = `/${p}`
     setPagina(p)
     window.scrollTo({ top: 0 })
@@ -567,17 +570,28 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   )
 
   return (
-    <div className="app">
+    <div className={`app ${barra.trilho ? 'trilho' : ''} ${barra.retrato ? 'retrato' : ''} ${barra.abasOcultas ? 'abas-ocultas' : ''}`}>
+      {barra.retrato && !barra.trilho && <div className="lateral-fundo" onClick={barra.fechar} aria-hidden="true" />}
       <aside className="lateral">
-        <Marca />
+        <div className="lateral-topo">
+          <Marca />
+          <button className="lateral-alternar" onClick={barra.alternarLateral}
+            aria-expanded={!barra.trilho} aria-label={barra.trilho ? tx('Mostrar o menu') : tx('Esconder o menu')}
+            title={barra.trilho ? tx('Mostrar o menu') : tx('Esconder o menu')}>
+            <Icone nome={barra.trilho ? 'dir' : 'esq'} tamanho={18} />
+          </button>
+        </div>
         <nav ref={refNav} aria-label={tx('Páginas')}>
           {lenteNav && <span className="lente" aria-hidden="true" style={estiloLente(lenteNav)} />}
           {paginas.map((p) => (
-            <button key={p.id} data-tour={`nav-${p.id}`} className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)} aria-current={paginaAtual === p.id ? 'page' : undefined}>
-              <Icone nome={p.icone} /> {p.nome}
+            <button key={p.id} data-tour={`nav-${p.id}`} className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}
+              aria-current={paginaAtual === p.id ? 'page' : undefined} aria-label={p.nome} title={barra.trilho ? p.nome : undefined}>
+              <Icone nome={p.icone} /> <span className="rotulo">{p.nome}</span>
             </button>
           ))}
-          <button data-tour="nav-config" onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> {tx('Configurações')}</button>
+          <button data-tour="nav-config" onClick={() => { barra.fechar(); setAjustes(true) }} aria-label={tx('Configurações')} title={barra.trilho ? tx('Configurações') : undefined}>
+            <Icone nome="engrenagem" /> <span className="rotulo">{tx('Configurações')}</span>
+          </button>
         </nav>
         <div className="lateral-rodape">
           <CartaoDicas dicas={dicas} />
@@ -721,6 +735,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       <button className="fab" data-tour="lancar" onClick={() => setForm({})} aria-label={tx('Novo lançamento')}><Icone nome="mais" tamanho={26} /></button>
 
       <nav className="abas-movel" ref={refAbas}>
+        <button className="abas-alca" onClick={barra.alternarAbas} aria-expanded={!barra.abasOcultas}
+          aria-label={barra.abasOcultas ? tx('Mostrar a barra de baixo') : tx('Esconder a barra de baixo')}>
+          <Icone nome={barra.abasOcultas ? 'cima' : 'abaixo'} tamanho={16} />
+        </button>
         {lenteAbas && <span className="lente" aria-hidden="true" style={estiloLente(lenteAbas)} />}
         {abas.map((p) => (
           <button key={p.id} data-tour={`nav-${p.id}`} className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}>
