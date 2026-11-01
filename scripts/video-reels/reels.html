@@ -41,7 +41,7 @@
   .gancho { position: absolute; left: 0; right: 0; top: 560px; text-align: center; transform-style: preserve-3d; }
   .gancho div { font-size: 128px; font-weight: 800; line-height: 1.08; letter-spacing: -.03em; transform-origin: 50% 100%; }
   .anel { position: absolute; left: 540px; top: 1060px; transform-style: preserve-3d; }
-  .mini { position: absolute; left: -215px; top: -466px; width: 430px; height: 932px; border-radius: 40px; background-size: 430px auto;
+  .mini { backface-visibility: hidden; position: absolute; left: -215px; top: -466px; width: 430px; height: 932px; border-radius: 40px; background-size: 430px auto;
     background-repeat: no-repeat; box-shadow: 0 0 0 2px rgba(148, 163, 196, .25), 0 30px 80px rgba(0, 0, 0, .6); }
   .mini i { position: absolute; left: 14px; top: 856px; width: 402px; height: 64px; background-size: 100% 100%; }
   .fim { position: absolute; left: 0; right: 0; top: 560px; text-align: center; }
@@ -214,7 +214,7 @@ const minis = CENAS.map((c, i) => {
   el('i', '', m, { backgroundImage: img('nav_' + c.pg) })
   return m
 })
-const legFinal = montarLegenda({ chip: 'OpusCash', h: 'Tudo num lugar só', p: 'Seu dinheiro organizado, do jeito que deveria ser.' })
+const legFinal = montarLegenda({ chip: 'OpusCash', h: 'Tudo num lugar só', p: 'Do jeito que deveria ser.' })
 const fim = el('div', 'fim', palco)
 fim.innerHTML = '<img src="cap/logo-opuscash.webp"><h2>Seu dinheiro, organizado.</h2><div class="cta">Teste grátis por 7 dias</div><div class="site">opuscash.com.br</div>'
 const fimPartes = [...fim.children]
@@ -320,11 +320,12 @@ function desenhar(T) {
     const ent = suave(-.6, .9, tf), rec = suave(3.4, 4.6, tf)
     const giro = -20 - tf * 52
     por(anel, 'transform', `translate3d(0, ${(rec * 330).toFixed(1)}px, ${(-1800 * (1 - ent) - 600 - rec * 900).toFixed(1)}px) rotateX(${(-8 + rec * 14).toFixed(2)}deg) rotateY(${giro.toFixed(2)}deg)`)
-    por(anel, 'opacity', (ent * (1 - .78 * rec)).toFixed(3))
+    const op = ent * (1 - .78 * rec)
     minis.forEach((m, i) => {
       const ang = i * 45, a = ((ang + giro) % 360 + 360) % 360, frente = (Math.cos(a * Math.PI / 180) + 1) / 2
       por(m, 'transform', `rotateY(${ang}deg) translateZ(820px)`)
       por(m, 'filter', `brightness(${(.35 + .65 * frente).toFixed(3)})`)
+      por(m, 'opacity', op.toFixed(3))
     })
   }
   legenda(legFinal, tf, .2, 3.5)

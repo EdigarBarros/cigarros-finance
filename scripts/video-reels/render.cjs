@@ -1,4 +1,4 @@
-// uso: node render.cjs previa 1,4,6.5   |   node render.cjs video [fps]
+// uso: node render.cjs previa 1,4,6.5   |   node render.cjs video [fps] [a partir do segundo, refaz só o fim]
 const { chromium } = require('playwright'), fs = require('fs'), path = require('path')
 ;(async () => {
   const [modo, arg] = process.argv.slice(2)
@@ -19,9 +19,10 @@ const { chromium } = require('playwright'), fs = require('fs'), path = require('
     }
   } else {
     const fps = Number(arg || 30), total = await p.evaluate(() => window.TOTAL), n = Math.round(total * fps)
-    process.chdir(__dirname); fs.rmSync('quadros', { recursive: true, force: true }); fs.mkdirSync('quadros')
+    process.chdir(__dirname); if (!process.argv[4]) fs.rmSync('quadros', { recursive: true, force: true }); fs.mkdirSync('quadros', { recursive: true })
     const t0 = Date.now()
-    for (let i = 0; i < n; i++) {
+    const desde = Math.round(Number(process.argv[4] || 0) * fps)
+    for (let i = desde; i < n; i++) {
       await p.evaluate((t) => window.desenhar(t), i / fps)
       await p.screenshot({ path: `quadros/q${String(i).padStart(5, '0')}.jpg`, type: 'jpeg', quality: 94 })
       if (i % 150 === 0) console.log(i, '/', n, ((Date.now() - t0) / 1000).toFixed(0) + 's')
