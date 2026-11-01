@@ -2346,6 +2346,8 @@ button.ex-tipo:hover { transform: scale(1.1); }
 }
 @media (max-width: 440px) {
   .barra .marca .marca-nome { display: none; }
+  /* tema e configurações já estão no menu ⋮: sem eles o cabeçalho cabe e o menu não fica cortado */
+  .barra .tema-btn, .barra .ajustes-btn { display: none; }
 }
 
 /* ---------- Início: encaixe sem buracos ---------- */
