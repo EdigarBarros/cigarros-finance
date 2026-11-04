@@ -97,10 +97,10 @@
 .an-mudou li.ruim svg { color: var(--saida); }
 
 /* ---------- 2. faça agora ---------- */
-.an-agora { --c: var(--caixa); display: grid; gap: 12px; padding: 18px 20px; border-color: color-mix(in srgb, var(--c) 35%, var(--borda)); animation: vis-aparece .4s var(--mola); }
-.an-agora.urgente { --c: var(--saida); }
-.an-agora.importante { --c: var(--divida); }
-.an-agora.bom { --c: var(--entrada); grid-auto-flow: column; justify-content: start; align-items: center; }
+.an-agora { --c: var(--caixa); display: grid !important; grid-auto-flow: row; flex-direction: column; gap: 12px; padding: 18px 20px; border-color: color-mix(in srgb, var(--c) 35%, var(--borda)); animation: vis-aparece .4s var(--mola); }
+.an-agora.nivel-urgente { --c: var(--saida); }
+.an-agora.nivel-importante { --c: var(--divida); }
+.an-agora.nivel-tudo-certo { --c: var(--entrada); grid-auto-flow: column; justify-content: start; align-items: center; }
 .an-agora-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .an-agora-titulo { font-size: 12.5px; font-weight: 700; color: color-mix(in srgb, var(--c) 75%, var(--texto)); text-transform: none; }
 .an-agora-nav { display: inline-flex; align-items: center; gap: 6px; }
@@ -110,7 +110,7 @@
 .an-pontos i.atual { width: 16px; background: var(--c); }
 .an-agora-passo { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 14px; align-items: center; }
 .an-agora-icone { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
-.an-agora-passo strong, .an-agora.bom strong { font-size: 18px; font-weight: 700; line-height: 1.3; letter-spacing: -.015em; }
+.an-agora-passo strong, .an-agora.nivel-tudo-certo strong { font-size: 18px; font-weight: 700; line-height: 1.3; letter-spacing: -.015em; }
 .an-impacto {
   justify-self: start; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px;
   font-size: 14px; font-weight: 700; color: color-mix(in srgb, var(--entrada) 80%, var(--texto)); background: color-mix(in srgb, var(--entrada) 14%, transparent);

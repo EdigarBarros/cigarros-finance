@@ -130,7 +130,7 @@ function FacaAgora({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
   const acoes = a.acoes
   if (!acoes.length) {
     return (
-      <section className="cartao an-agora bom">
+      <section className="cartao an-agora nivel-tudo-certo">
         <span className="an-agora-icone"><Icone nome="check" tamanho={24} /></span>
         <strong>{tx('Nada pedindo ação agora.')}</strong>
       </section>
@@ -138,7 +138,7 @@ function FacaAgora({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
   }
   const x = acoes[Math.min(i, acoes.length - 1)]
   return (
-    <section className={`cartao an-agora ${x.urgencia}`} key={x.id}>
+    <section className={`cartao an-agora nivel-${x.urgencia}`} key={x.id}>
       <div className="an-agora-cab">
         <span className="an-agora-titulo">{tx('Faça agora')}</span>
         {acoes.length > 1 && (
