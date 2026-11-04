@@ -78,7 +78,7 @@ const nativoPorMoeda = (ls: Lancamento[]) => {
   return r
 }
 
-export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: Mes | undefined, taxas: Taxas, categoriaDo: CategoriaDoLanc) {
+export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: Mes | undefined, taxas: Taxas, categoriaDo: CategoriaDoLanc, saldoDesconhecido = false) {
   const entradas = soma(lancs.filter((l) => l.tipo === 'entrada').map((l) => l.valor))
   const saidasLista = lancs.filter((l) => l.tipo === 'saida')
   const saidas = soma(saidasLista.map((l) => l.valor))
@@ -95,6 +95,8 @@ export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: M
     saidas,
     fluxo: entradas - saidas,
     caixa: totalCaixa(mes),
+    /** Mês futuro em que ninguém informou o saldo: guardado, investido e outras moedas não são zero, são desconhecidos (os gráficos deixam em branco). */
+    saldoDesconhecido,
     /** Quanto se deve: no mês de hoje, já com os juros de atraso estimados. */
     divida: soma(convertidas.map((d) => d.restanteHoje)),
     /** Em outra moeda, no valor que a pessoa digitou (sem conversão): entradas, saídas e dívidas de cada moeda. */

@@ -7,6 +7,7 @@ import type { Conselho } from '../lib/conselheiro'
 import type { MemoriaConta, SituacaoConta, SugestaoVinculo } from '../lib/contasFixas'
 import type { SituacaoDivida } from '../lib/dividas'
 import type { Taxas } from '../lib/moedas'
+import type { PrevisaoMes } from '../lib/previsao'
 import type { Visao } from '../lib/perfil'
 import type { DadosCartoes } from '../lib/useCartoes'
 import type { ContasFixas } from '../lib/useContasFixas'
@@ -42,6 +43,8 @@ export interface Ctx {
   /** Resumo do mês anterior (só dentro do mesmo ano) para comparar. */
   anterior: Resumo | null
   porMes: (Resumo | null)[]
+  /** Por mês do ano: o que já aconteceu e o que ainda vem (gráficos de fluxo). */
+  previsto: PrevisaoMes[]
   mobile: boolean
   perfil: Perfil
   /** O que aparece na tela, conforme o perfil. */
