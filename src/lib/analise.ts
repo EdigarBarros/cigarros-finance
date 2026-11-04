@@ -524,6 +524,8 @@ const RE_DIVIDA = /divida|parcela|emprestimo|financiamento|consignado|\bdebt|\bl
 const RE_ESTILO = /lazer|assinatura|compra|cuidado|beleza|estetica|restaurante|delivery|ifood|viage|presente|roupa|vestu|entretenimento|diversao|hobby|\bbar\b|festa|streaming|shopping|leisure|subscription|entertainment|travel|gift|cloth|beauty|personal|ocio|suscripc|viaje|regalo|ropa|belleza/
 const RE_ESSENCIAL = /moradia|aluguel|condominio|\bcasa\b|\bluz\b|energia|\bagua\b|\bgas\b|internet|telefon|celular|aliment|mercado|feira|transporte|combustivel|gasolina|onibus|saude|farmacia|remedio|medic|educa|escola|faculdade|curso|imposto|taxa|tributo|seguro|\bpets?\b|creche|housing|\brent\b|utilit|grocer|\bfood|transport|health|tax|insurance|vivienda|alquiler|comida|salud|impuesto|servicio/
 const RE_ASSINATURA = /assinatura|netflix|spotify|prime video|amazon prime|disney|hbo|\bmax\b|youtube|deezer|globoplay|paramount|apple|icloud|google one|chatgpt|openai|academia|smartfit|gympass|wellhub|streaming|subscription|suscripc/
+/** Dinheiro mudando de bolso (para a própria conta, caixinha, poupança, aplicação): não é gasto do dia a dia nem gasto formiga. */
+const RE_MESMO_DONO = /conta propria|contas proprias|mesma titularidade|entre contas|minha conta|propria conta|caixinha|cofrinho|poupanca|aplicacao|aplicar|investimento|resgate|reserva|own account|savings|transfer to self|cuenta propia|ahorro/
 const RE_JUROS = /\bjuros\b|\bmulta\b|\bmora\b|\biof\b|encargo|tarifa|anuidade|cheque especial|rotativo|\binterest\b|late fee|recargo|interes/
 
 function grupoDa(c: Categoria | undefined): Grupo {
@@ -761,6 +763,7 @@ function recorrencias(
 ) {
   const nomesDasContas = contas.filter((c) => c.ativa && c.tipo === tipo).map((c) => chaveDescricao(c.descricao))
   const janela = lancs.filter((l) => l.tipo === tipo && l.valor > 0 && !l.divida_id && (l.parcelas ?? 1) <= 1
+    && !(tipo === 'saida' && RE_MESMO_DONO.test(normal(l.descricao)))
     && chaveMes(l.ano, l.mes) >= atual - 6 && chaveMes(l.ano, l.mes) < atual)
   const mesesComAlgo = new Set(janela.map((l) => chaveMes(l.ano, l.mes))).size
   const minimo = mesesComAlgo >= 4 ? RECORRENTE_MESES : 2
@@ -791,6 +794,7 @@ function gastosFormiga(lancs: Lancamento[], atual: number, renda: number, gastoM
   const teto = renda > 0 ? renda * FORMIGA_VALOR : gastoMedio * 0.02
   if (teto <= 0) return []
   const janela = lancs.filter((l) => l.tipo === 'saida' && l.valor > 0 && l.valor <= teto && !l.divida_id && !l.conta_fixa_id
+    && !RE_MESMO_DONO.test(normal(l.descricao))
     && (l.parcelas ?? 1) <= 1 && chaveMes(l.ano, l.mes) >= atual - MESES_NA_MEDIA && chaveMes(l.ano, l.mes) < atual)
   const meses = Math.max(1, new Set(janela.map((l) => chaveMes(l.ano, l.mes))).size)
   return agrupar(janela)
@@ -833,6 +837,7 @@ export function analisar(e: EntradaAnalise): Analise {
   const chavesRecorrentes = new Set(recSaidas.map((r) => r.chave))
   /** Gasto do dia a dia: o que não é conta do mês, cartão, dívida nem algo que se repete todo mês. */
   const ehDiaADia = (l: Lancamento) => l.tipo === 'saida' && !l.conta_fixa_id && !l.cartao_id && !l.divida_id && !chavesRecorrentes.has(chaveDescricao(l.descricao))
+    && !RE_MESMO_DONO.test(normal(l.descricao))
 
   // ----- série mês a mês -----
   interface Bruto {
