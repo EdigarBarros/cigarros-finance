@@ -227,6 +227,32 @@ os **detalhes que pouca gente percebe**:
 - **Vencimentos amontoados** na mesma semana.
 - **Última parcela chegando**: dinheiro que volta a ser seu, e a sugestão de decidir antes para onde ele vai.
 
+**Planejador de pagamentos** (`lib/planejador.ts`). Anda dia a dia pela agenda e decide, para cada conta, parcela e
+fatura, com qual dinheiro e em que dia pagar:
+- **Vence antes de o dinheiro chegar**: estima a multa e os juros até o dia em que dá para pagar. Usa os juros informados na
+  dívida; sem eles, a regra comum de contas (multa de 2% e 1% ao mês). Fatura atrasada vai para o rotativo, cerca de 15% ao mês.
+- **O dinheiro não dá para tudo**: paga primeiro o que fica mais caro atrasar e diz quanto o outro vai custar quando chegar a
+  vez dele.
+- **Dívida que corre juros todo dia** (sem parcela, como cheque especial): aponta em que dia a sobra de uma entrada dá para
+  quitar ou adiantar.
+
+As dicas viram passos do plano de ação. Uma entrada nova refaz o plano, e o aviso de reanálise diz "Agora dá para pagar X em
+tal dia". O gráfico **De onde sai o dinheiro** mostra cada entrada e o que ela paga.
+
+**Hoje você pode gastar.** O cartão logo abaixo do "Como estou" mostra:
+- o limite do dia a dia: o que entra até o fim do mês, menos as contas, parcelas e faturas que faltam e a sobra que o plano
+  guarda, dividido pelos dias que restam;
+- quanto já foi hoje e quanto ainda dá.
+
+É refeito a cada lançamento: quem gasta menos hoje ganha mais amanhã. Não conta renda extra não lançada.
+
+**Cada pessoa tem a sua tela.**
+- **Perfil** (`perfilFinanceiro` em `lib/visuais.ts`): o motor lê o jeito da pessoa nos números (gasta mais do que entra,
+  controlado, muitas parcelas, renda que varia, vive no cartão, poupador, mês apertado, começando agora). Mostra os traços no
+  topo e puxa para cima os gráficos que servem a cada um.
+- **Uso** (`usePreferenciasVisuais` em `pages/analiseApoio.ts`, guardado no navegador): a estrela leva um gráfico para o topo,
+  o "x" esconde, e os gráficos em que a pessoa mais mexe sobem sozinhos.
+
 **Gráficos no lugar de texto.** A aba é feita de gráficos, com pouco texto e linguagem simples: cada cartão tem título de
 até 5 palavras e uma frase só. Explicação longa fica atrás de "Por quê?".
 

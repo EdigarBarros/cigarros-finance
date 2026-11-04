@@ -496,7 +496,9 @@ function Fluxo({ grupos }: { grupos: Extract<Visual, { tipo: 'fluxo' }>['grupos'
         </li>
       ))}
     </ol>
-    {total > NO_FLUXO && vistos.length < grupos.length && <button className="quadro-ver" onClick={() => setTodos(true)}>{tx('Ver os {0} compromissos', total)}</button>}
+    {total > NO_FLUXO && (todos || vistos.length < grupos.length) && (
+      <button className="quadro-ver" onClick={() => setTodos(!todos)}>{todos ? tx('Mostrar menos') : tx('Ver os {0} compromissos', total)}</button>
+    )}
     </>
   )
 }

@@ -163,9 +163,12 @@ export function planejar(e: EntradaPlanejador): PlanoDePagamentos {
       id: `pagar-em:${pior.descricao}`, icone: 'relogio', tom: 'medio', data: pior.pagarEm!,
       titulo: tx('Pague {0} em {1}, com {2}.', pior.descricao, fmtDataCurta(pior.pagarEm!), pior.fonte ?? tx('o próximo dinheiro')),
       porque: pior.custo >= 0.01
-        ? tx('Ela vence em {0}, mas o dinheiro só dá em {1}. Com {2} dias de atraso, vai custar cerca de {3} ({4} a mais de multa e juros{5}).',
-          fmtDataCurta(pior.vence), fmtDataCurta(pior.pagarEm!), pior.atraso, fmtValor(pior.valor + pior.custo), fmtValor(pior.custo), pior.estimada ? tx(', numa estimativa') : '')
-        : tx('Ela vence em {0}, mas o dinheiro só dá em {1}.', fmtDataCurta(pior.vence), fmtDataCurta(pior.pagarEm!)),
+        ? pior.estimada
+          ? tx('{0} vence em {1}, mas o dinheiro só dá em {2}. Com {3} dias de atraso, vai custar cerca de {4} ({5} a mais de multa e juros, numa estimativa).',
+            pior.descricao, fmtDataCurta(pior.vence), fmtDataCurta(pior.pagarEm!), pior.atraso, fmtValor(pior.valor + pior.custo), fmtValor(pior.custo))
+          : tx('{0} vence em {1}, mas o dinheiro só dá em {2}. Com {3} dias de atraso, vai custar cerca de {4} ({5} a mais de multa e juros).',
+            pior.descricao, fmtDataCurta(pior.vence), fmtDataCurta(pior.pagarEm!), pior.atraso, fmtValor(pior.valor + pior.custo), fmtValor(pior.custo))
+        : tx('{0} vence em {1}, mas o dinheiro só dá em {2}.', pior.descricao, fmtDataCurta(pior.vence), fmtDataCurta(pior.pagarEm!)),
     })
   }
 
@@ -191,8 +194,8 @@ export function planejar(e: EntradaPlanejador): PlanoDePagamentos {
       titulo: paga >= ab.saldo - 0.005
         ? tx('Dá para quitar {0} em {1}.', ab.nome, fmtDataCurta(livre.data))
         : tx('Dá para adiantar {0} de {1} em {2}.', fmtValor(paga), ab.nome, fmtDataCurta(livre.data)),
-      porque: tx('Ela cobra {0}% ao mês, todo dia. Quando entrar {1}, sobram {2} depois de pagar as contas; usando {3} nela, você evita cerca de {4} de juros por mês.',
-        fmtTaxa(ab.juros), livre.fonte, fmtValor(livre.livre), fmtValor(paga), fmtValor(evita)),
+      porque: tx('{0} cobra {1}% ao mês, e os juros correm todo dia. Quando entrar {2}, sobram {3} depois de pagar as contas; usando {4} para pagar a dívida, você evita cerca de {5} de juros por mês.',
+        ab.nome, fmtTaxa(ab.juros), livre.fonte, fmtValor(livre.livre), fmtValor(paga), fmtValor(evita)),
     })
   }
 
