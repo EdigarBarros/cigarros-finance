@@ -328,7 +328,7 @@ export function conselhos(e: EntradaConselheiro): Conselho[] {
     nova({
       id: 'pagar-a-mais-cara', gravidade: 'atencao', prioridade: 80, icone: 'divida', destino: 'dividas', botao: tx('Ver dívidas'),
       titulo: tx('Se sobrar dinheiro, adiante primeiro {0}.', maisCara.divida.descricao),
-      porque: tx('Ela cobra {0}% ao mês, a mais cara das suas dívidas (a próxima cobra {1}%). Dinheiro pago nela evita mais juros do que o mesmo valor pago nas outras.',
+      porque: tx('Essa dívida cobra {0}% ao mês, a mais cara das suas (a próxima cobra {1}%). Dinheiro pago nela evita mais juros do que o mesmo valor pago nas outras.',
         fmtTaxa(maisCara.divida.juros_mes!), fmtTaxa(segunda.divida.juros_mes!)),
     })
   }

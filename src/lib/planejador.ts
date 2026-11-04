@@ -229,7 +229,7 @@ export function planejar(e: EntradaPlanejador): Plano {
       id: `pagar-em:${pior.descricao}`, icone: 'relogio', tom: 'medio', data: pior.pagarEm!,
       titulo: tx('Pague {0} em {1}, com {2}.', pior.descricao, fmtDataCurta(pior.pagarEm!), pior.fonte ?? tx('o próximo dinheiro')),
       porque: [
-        tx('Ela vence em {0}, mas o dinheiro só dá em {1}.', fmtDataCurta(pior.vence), fmtDataCurta(pior.pagarEm!)),
+        tx('{0} vence em {1}, mas o dinheiro só dá em {2}.', pior.descricao, fmtDataCurta(pior.vence), fmtDataCurta(pior.pagarEm!)),
         pior.custo < 0.01 ? ''
           : pior.atraso === 1
             ? tx('Com 1 dia de atraso, vai custar cerca de {0} ({1} a mais de multa e juros).', fmtValor(pior.valor + pior.custo), fmtValor(pior.custo))
@@ -265,8 +265,8 @@ export function planejar(e: EntradaPlanejador): Plano {
       titulo: paga >= ab.saldo - 0.005
         ? tx('Dá para quitar {0} em {1}.', ab.nome, fmtDataCurta(livre.data))
         : tx('Dá para adiantar {0} de {1} em {2}.', fmtValor(paga), ab.nome, fmtDataCurta(livre.data)),
-      porque: tx('Ela cobra {0}% ao mês, todo dia. Quando entrar {1} e as contas forem pagas, sobram {2}; usando {3} nela, você evita cerca de {4} de juros por mês.',
-        fmtTaxa(ab.juros), livre.fonte, fmtValor(livre.livre), fmtValor(paga), fmtValor(evita)),
+      porque: tx('{0} cobra {1}% ao mês, e os juros correm todo dia. Quando entrar {2} e as contas forem pagas, sobram {3}; usando {4} para pagar essa dívida, você evita cerca de {5} de juros por mês.',
+        ab.nome, fmtTaxa(ab.juros), livre.fonte, fmtValor(livre.livre), fmtValor(paga), fmtValor(evita)),
     })
   }
 
