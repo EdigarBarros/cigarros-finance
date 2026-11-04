@@ -562,6 +562,37 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
   parcela, o vencimento da primeira que falta e "da parcela X até a Y" (`gerarParcelasDaParte`), mostrando antes o que vai
   criar. No calendário da ficha, dívida com partes mostra o dia ("2 de mar"), não só o mês. Sem a migração 21, a ficha
   mostra o aviso e o resto funciona como antes (`partesSemTabela`).
+- **Juros de atraso (a dívida cresce sozinha)**: com a migração 22 (`supabase/migracao-22-juros-de-atraso.sql`), cada
+  dívida "Eu devo" pode ter a regra do credor para o atraso: `atraso_juros_mes` (% ao mês no atraso, diferente de
+  `juros_mes`, que é o do contrato), `atraso_tipo` (`simples` ou `composto`), `atraso_multa` (% uma vez, padrão 2),
+  `atraso_base` (`parcela`: cada parcela atrasada cresce; `saldo`: o saldo inteiro cresce, como num cartão) e
+  `conferido_em` (dia em que os valores batiam com o banco). Em `divida_partes`, `valor_original` é o valor da parcela no
+  contrato, base dos juros simples.
+  - **Motor**: `jurosDoAtraso(s, cal, hoje)` em `lib/jurosAtraso.ts` (função pura, data injetada). Só parcela atrasada e com
+    algo faltando cresce; cada uma conta a partir de `max(conferido_em, vencimento)`; a multa entra uma vez na parcela que
+    venceu no dia da conferência ou depois; simples = `base × taxa/30 × dias` (base = `valor_original` proporcional ao que
+    falta); composto = `falta × ((1 + taxa)^(dias/30) − 1)`; base `saldo` aplica sobre o `restante` desde a primeira parcela
+    atrasada. Devolve o total, o detalhe por parcela (`porParcela`) e por parte (`porParte`) e quanto cresce por dia.
+  - **Onde entra**: `situacaoDividas(…, hoje)` não muda `restante` (é o valor registrado, que o pagamento cobre parcela por
+    parcela). Só no mês que contém hoje, acrescenta `jurosAtraso`, `restanteHoje = restante + jurosAtraso` e `atraso` (o
+    detalhe). Meses passados ficam como foram registrados. "Quanto deve agora" usa `restanteHoje`: KPIs da página, `r.divida`
+    do resumo (e a origem "juros do atraso (estimado)" no gráfico), Início, "Para fazer", Consultor e planejador. O custo do
+    atraso usa `jurosQuePesam(s)`: o juro do atraso quando a dívida está atrasada e tem a regra, senão `juros_mes`.
+  - **Telas**: cartão e ficha mostram "falta pagar hoje", o selo "com juros, estimado" e "cresce ~R$ X por dia"; o
+    calendário mostra cada parcela atrasada com os juros ("atrasada, com juros"); "Do que é feita" mostra o valor de hoje com
+    o registrado riscado. O botão "Pagar" sugere o atrasado com juros (`sugeridoParaPagar`).
+  - **Conferi com o banco** (`ConferirComBanco`, `conferirDivida` em `useDados`): pede "Quanto o banco mostra hoje?", já com o
+    estimado. Com partes, a diferença é repartida entre as parcelas atrasadas pelo juro estimado de cada uma (`updPartes`, um
+    acerto de saldo só) e o valor antigo vira `valor_original` se estiver vazio; sem partes, vira um ajuste de saldo no dia.
+    Nos dois casos `conferido_em = hoje`.
+  - **Pagamento com juros** (`salvarLancamento` no Painel): antes de gravar o pagamento de uma dívida com juros estimados, os
+    juros até o dia do pagamento viram valor real. Com partes, entram nas parcelas (como no "Conferi"); com parcela fixa (o
+    calendário não tem onde guardar juros de uma parcela), os juros pagos viram uma saída à parte ("Juros do atraso –
+    Dívida", sem dívida ligada, como os juros de fatura) e só o resto abate a dívida.
+  - **Formulário**: seção "Se atrasar" no `FormDivida`, só para "Eu devo", recolhida até a pessoa abrir: juros do atraso,
+    multa, "Como cresce" ("Só sobre o valor devido" × "Juros sobre juros"), "Cresce sobre" ("Cada parcela atrasada" × "O
+    saldo inteiro") e "Valores conferidos em" (abre com hoje). Só aparece com `semAtraso={c.d.dividasSemAtraso}`; sem a
+    migração 22 os campos somem e as dívidas não crescem sozinhas.
 
 ### 4.14 Metas (potes)
 

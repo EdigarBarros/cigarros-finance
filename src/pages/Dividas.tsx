@@ -2,7 +2,7 @@ import { CenaDividas } from '../components/Vazios'
 import { useState } from 'react'
 import { COR } from '../lib/charts'
 import {
-  aproxDiv, aumentaDivida, calendarioDe, fmtDiv, gruposDasPartes, inicioPelaProxima, meDevem, parcelasDe, projecaoMensal, tomarLadoDividas, totalDeParcelas,
+  aproxDiv, atrasadoHoje, aumentaDivida, calendarioDe, sugeridoParaPagar, fmtDiv, gruposDasPartes, inicioPelaProxima, meDevem, parcelasDe, projecaoMensal, tomarLadoDividas, totalDeParcelas,
   type Calendario, type ParcelaDivida, type SituacaoDivida,
 } from '../lib/dividas'
 import { fmtConta } from '../lib/contasFixas'
@@ -11,6 +11,8 @@ import { fmtDataCurta, fmtDataLonga, fmtMesAno, fmtMoeda, fmtTaxa, fmtValor, MES
 import { BancoIcone } from '../components/BancoIcone'
 import { FormDivida } from '../components/Formularios'
 import { PartesDaDivida } from '../components/PartesDaDivida'
+import { ConferirComBanco, SeloJuros } from '../components/JurosDoAtraso'
+import { regraDoAtraso, temJurosDeAtraso } from '../lib/jurosAtraso'
 import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
 import { Anel, Kpi, Modal } from '../components/ui'
@@ -41,6 +43,8 @@ export function Dividas(c: Ctx) {
   const [lado, setLado] = useState<Lado>(tomarLadoDividas)
   const [editando, setEditando] = useState<SituacaoDivida | 'nova' | null>(null)
   const [aberta, setAberta] = useState<string | null>(null)
+  // a ficha abre já no "Conferi com o banco" quando o botão do cartão é usado
+  const [conferindo, setConferindo] = useState(false)
   const recebe = lado === 'me_devem'
   const lista = recebe ? c.aReceber : c.situacao
   const comCal = lista.map((s) => ({ s, cal: calendarioDe(s, c.diaRef) }))
@@ -50,9 +54,11 @@ export function Dividas(c: Ctx) {
     .sort((a, b) => a.estado.ordem - b.estado.ordem || (b.cal?.emAtraso ?? 0) - (a.cal?.emAtraso ?? 0)
       || (a.cal?.proxima?.vencimento ?? '9').localeCompare(b.cal?.proxima?.vencimento ?? '9') || b.s.restante - a.s.restante)
   const quitadas = comCal.filter((x) => x.s.quitadaNoMes)
-  const falta = lista.reduce((a, s) => a + s.restante, 0)
+  // quanto se deve hoje: com os juros de atraso estimados
+  const falta = lista.reduce((a, s) => a + s.restanteHoje, 0)
+  const registrado = lista.reduce((a, s) => a + s.restante, 0)
   const inicial = lista.reduce((a, s) => a + s.saldoInicial, 0)
-  const emAtraso = comCal.reduce((a, x) => a + (x.cal?.emAtraso ?? 0), 0)
+  const emAtraso = comCal.reduce((a, x) => a + atrasadoHoje(x.s, x.cal), 0)
   const nAtraso = comCal.reduce((a, x) => a + (x.cal?.atrasadas.length ?? 0), 0)
   const noMes = lista.reduce((a, s) => a + s.pagoNoMes, 0)
   const porMes = lista.filter((s) => s.restante > 0).reduce((a, s) => a + (s.divida.valor_parcela ?? 0), 0)
@@ -65,7 +71,7 @@ export function Dividas(c: Ctx) {
     .sort((a, b) => b[0] * 12 + b[1] - (a[0] * 12 + a[1]))[0] ?? null
   const aberto = comCal.find((x) => x.s.divida.id === aberta)
   const contasEntrada = c.situacoesContas.filter((s) => s.conta.tipo === 'entrada' && s.estado !== 'fora')
-  const pct = inicial > 0 ? (inicial - falta) / inicial : 0
+  const pct = inicial > 0 ? (inicial - registrado) / inicial : 0
 
   return (
     <div className="pagina pg-dividas">
@@ -119,7 +125,7 @@ export function Dividas(c: Ctx) {
             </Anel>
             <span className="dv-progresso-texto">
               <small>{recebe ? tx('já recebido') : tx('já pago')}</small>
-              <strong><Numero valor={inicial - falta} formato={fmtValor} /></strong>
+              <strong><Numero valor={inicial - registrado} formato={fmtValor} /></strong>
               <small>{tx('de {0}', fmtValor(inicial))}</small>
               {falta > 0 && fim && <span className="chip-info"><Icone nome="calendario" tamanho={13} /> {recebe ? tx('tudo recebido em') : tx('livre em')} {fmtMesAno(fim[0], fim[1])}</span>}
               {falta <= 0 && <span className="chip-info bom"><Icone nome="check" tamanho={13} /> {recebe ? tx('tudo recebido') : tx('sem dívidas')}</span>}
@@ -136,7 +142,8 @@ export function Dividas(c: Ctx) {
         <div className="dv-grade" key={`g-${lado}`}>
           {itens.map((x, i) => (
             <CartaoDivida key={x.s.divida.id} s={x.s} cal={x.cal} estado={x.estado} recebe={recebe} indice={i}
-              aoAbrir={() => setAberta(x.s.divida.id)} aoPagar={() => c.pagarDivida(x.s)} />
+              aoAbrir={() => { setConferindo(false); setAberta(x.s.divida.id) }} aoPagar={() => c.pagarDivida(x.s)}
+              aoConferir={() => { setConferindo(true); setAberta(x.s.divida.id) }} />
           ))}
         </div>
       )}
@@ -172,14 +179,14 @@ export function Dividas(c: Ctx) {
           <div className="dv-grade">
             {quitadas.map((x, i) => (
               <CartaoDivida key={x.s.divida.id} s={x.s} cal={x.cal} estado={estadoDe(x.s, x.cal)} recebe={recebe} indice={i}
-                aoAbrir={() => setAberta(x.s.divida.id)} aoPagar={() => c.pagarDivida(x.s)} />
+                aoAbrir={() => { setConferindo(false); setAberta(x.s.divida.id) }} aoPagar={() => c.pagarDivida(x.s)} />
             ))}
           </div>
         </section>
       )}
 
       {aberto && (
-        <Ficha c={c} s={aberto.s} cal={aberto.cal} recebe={recebe} aoFechar={() => setAberta(null)}
+        <Ficha c={c} s={aberto.s} cal={aberto.cal} recebe={recebe} conferir={conferindo} aoFechar={() => setAberta(null)}
           aoEditar={() => { setAberta(null); setEditando(aberto.s) }} />
       )}
 
@@ -193,6 +200,7 @@ export function Dividas(c: Ctx) {
           perfil={c.perfil}
           semMoeda={c.d.dividasSemMoeda}
           semJuros={c.d.dividasSemJuros}
+          semAtraso={c.d.dividasSemAtraso}
           aoCriar={async (d) => {
             if (d.sentido && d.sentido !== lado) setLado(d.sentido)
             return c.d.addDivida(d)
@@ -243,17 +251,18 @@ const jurosDaDivida = (s: SituacaoDivida) => {
   return !meDevem(s.divida) && s.restante > 0 && typeof j === 'number' && j > 0 ? tx('{0}% ao mês', fmtTaxa(j)) : null
 }
 
-function CartaoDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar }: {
+function CartaoDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar, aoConferir }: {
   s: SituacaoDivida; cal: Calendario | null; estado: ReturnType<typeof estadoDe>; recebe: boolean; indice: number
-  aoAbrir: () => void; aoPagar: () => void
+  aoAbrir: () => void; aoPagar: () => void; aoConferir?: () => void
 }) {
   const p = parcelasDe(s)
   const nPartes = s.divida.partes?.length ? gruposDasPartes(s.divida.partes).length : 0
   const pct = s.saldoInicial > 0 ? (s.saldoInicial - s.restante) / s.saldoInicial : 1
   const quitada = s.restante <= 0
-  // sem parcela nem data, não há valor certo a sugerir: a pessoa digita quanto pagou
-  const sugerido = cal?.sugerido || (s.divida.valor_parcela ? Math.min(s.divida.valor_parcela, s.restante) : 0)
+  // sem parcela nem data, não há valor certo a sugerir: a pessoa digita quanto pagou; atrasada, já vem com os juros
+  const sugerido = sugeridoParaPagar(s, cal)
   const verbo = recebe ? tx('Receber') : tx('Pagar')
+  const comJuros = s.jurosAtraso > 0
   return (
     <article className={`cartao dv-cartao ${estado.id}`} style={{ animationDelay: `${Math.min(indice, 8) * 60}ms` }}>
       <button className="dv-cartao-corpo" onClick={aoAbrir} aria-label={tx('Ver {0}', s.divida.descricao)}>
@@ -267,9 +276,10 @@ function CartaoDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar }: {
         </header>
         <div className="dv-cartao-meio">
           <span>
-            <small>{quitada ? (recebe ? tx('recebido') : tx('quitada')) : recebe ? tx('falta receber') : tx('falta pagar')}</small>
-            <strong>{quitada ? fmtDiv(s, s.saldoInicial) : <Numero valor={s.restante} formato={(n) => fmtDiv(s, n)} />}</strong>
-            {s.moeda && !quitada && <small className="dv-aprox">{aproxDiv(s, s.restante)}</small>}
+            <small>{quitada ? (recebe ? tx('recebido') : tx('quitada')) : recebe ? tx('falta receber') : comJuros ? tx('falta pagar hoje') : tx('falta pagar')}</small>
+            <strong>{quitada ? fmtDiv(s, s.saldoInicial) : <Numero valor={s.restanteHoje} formato={(n) => fmtDiv(s, n)} />}</strong>
+            {s.moeda && !quitada && <small className="dv-aprox">{aproxDiv(s, s.restanteHoje)}</small>}
+            {!quitada && <SeloJuros s={s} />}
           </span>
           <Anel valor={pct} cor={quitada ? COR.entradas : recebe ? COR.entradas : COR.caixa} tamanho={54}>{Math.round(pct * 100)}%</Anel>
         </div>
@@ -280,7 +290,7 @@ function CartaoDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar }: {
         )}
         <p className="dv-cartao-linha">
           {quitada ? <>{tx('Tudo {0}. 🎉', recebe ? tx('recebido') : tx('pago'))}</>
-            : cal?.atrasadas.length ? <><b className="ruim">{fmtDiv(s, cal.emAtraso)}</b> {tx('vencido desde {0}', fmtDataCurta(cal.atrasadas[0].vencimento))}</>
+            : cal?.atrasadas.length ? <><b className="ruim">{fmtDiv(s, atrasadoHoje(s, cal))}</b> {tx('vencido desde {0}', fmtDataCurta(cal.atrasadas[0].vencimento))}</>
               : cal?.proxima ? <>{tx('Próxima:')} <b>{fmtDataCurta(cal.proxima.vencimento)}</b> · {fmtDiv(s, cal.proxima.falta)}{cal.proxima.pago > 0 && ' (resto)'}</>
                 : s.divida.valor_parcela ? <>{tx('{0} por mês', fmtDiv(s, s.divida.valor_parcela))}{s.quitacao && <> {tx('· até {0}', fmtMesAno(s.quitacao[0], s.quitacao[1]))}</>}</>
                   : <>{recebe ? tx('Recebe') : tx('Paga')} {tx('quanto e quando puder')}</>}
@@ -290,6 +300,9 @@ function CartaoDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar }: {
         <button className={`btn ${estado.id === 'atrasada' ? 'perigo-forte' : 'primario'} dv-cartao-botao`} onClick={aoPagar}>
           <Icone nome={recebe ? 'receber' : 'check'} tamanho={16} /> {sugerido ? `${verbo} ${fmtDiv(s, sugerido)}` : recebe ? tx('Lançar recebimento') : tx('Lançar pagamento')}
         </button>
+      )}
+      {!quitada && comJuros && aoConferir && (
+        <button className="link dv-cartao-conferir" onClick={aoConferir}><Icone nome="check" tamanho={14} /> {tx('Conferi com o banco')}</button>
       )}
     </article>
   )
@@ -335,10 +348,13 @@ const ROTULO_PARCELA: Record<ParcelaDivida['estado'], string> = {
  * Tudo de uma dívida: quanto falta, cada parcela com a situação, o que já foi pago ou recebido e o botão de pagar.
  * Dívida sem vencimento pede só "quando vence a próxima?" para montar o calendário.
  */
-function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
-  c: Ctx; s: SituacaoDivida; cal: Calendario | null; recebe: boolean; aoFechar: () => void; aoEditar: () => void
+function Ficha({ c, s, cal, recebe, conferir, aoFechar, aoEditar }: {
+  c: Ctx; s: SituacaoDivida; cal: Calendario | null; recebe: boolean; conferir?: boolean; aoFechar: () => void; aoEditar: () => void
 }) {
   const [proxima, setProxima] = useState('')
+  const [conferindo, setConferindo] = useState(Boolean(conferir))
+  const comJuros = s.jurosAtraso > 0
+  const regra = regraDoAtraso(s.divida)
   const p = parcelasDe(s)
   const lancs = c.d.lancs.filter((l) => l.divida_id === s.divida.id)
   const outrosAnos = c.d.pagamentos.filter((x) => x.divida_id === s.divida.id && !lancs.some((l) => l.id === x.id))
@@ -349,7 +365,7 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
     ...s.ajustes.map((a) => ({ id: `aj-${a.data}-${a.valor}`, data: a.data, texto: fmtDiv(s, Math.abs(a.valor)), descricao: tx('ajuste de saldo'), lanc: null, aumenta: a.valor > 0, sinal: a.valor > 0 ? '+ ' : '− ' })),
   ].sort((a, b) => (b.data ?? '').localeCompare(a.data ?? ''))
   const quitada = s.restante <= 0
-  const sugerido = cal?.sugerido || (s.divida.valor_parcela ? Math.min(s.divida.valor_parcela, s.restante) : 0)
+  const sugerido = sugeridoParaPagar(s, cal)
   const definirVencimento = () => {
     if (!proxima) return
     void c.d.updDivida(s.divida.id, {
@@ -371,23 +387,37 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
         </header>
 
         <div className="dv-ficha-numeros">
-          <span><small>{recebe ? tx('falta receber') : tx('falta pagar')}</small><strong>{fmtDiv(s, s.restante)}</strong>{s.moeda && <small className="dv-aprox">{aproxDiv(s, s.restante)}</small>}</span>
+          <span><small>{recebe ? tx('falta receber') : comJuros ? tx('falta pagar hoje') : tx('falta pagar')}</small><strong>{fmtDiv(s, s.restanteHoje)}</strong>{s.moeda && <small className="dv-aprox">{aproxDiv(s, s.restanteHoje)}</small>}<SeloJuros s={s} /></span>
           <span><small>{recebe ? tx('já recebido') : tx('já pago')}</small><strong className="bom">{fmtDiv(s, Math.max(0, s.saldoInicial - s.restante))}</strong></span>
           <span><small>{s.divida.valor_parcela ? tx('parcela') : tx('total')}</small><strong>{fmtDiv(s, s.divida.valor_parcela ?? s.saldoInicial)}</strong></span>
         </div>
 
+        {!recebe && !quitada && temJurosDeAtraso(s.divida) && !c.d.dividasSemAtraso && (
+          <section className="dv-atraso">
+            <p className="campo-ajuda">
+              <Icone nome="relogio" tamanho={14} /> {regra}
+              {comJuros && <> · {tx('{0} de juros estimados até hoje (registrado: {1})', fmtDiv(s, s.jurosAtraso), fmtDiv(s, s.restante))}</>}
+            </p>
+            {conferindo
+              ? <ConferirComBanco s={s} cal={cal} d={c.d} aoFechar={() => setConferindo(false)} />
+              : <button className="btn" onClick={() => setConferindo(true)}><Icone nome="check" tamanho={15} /> {tx('Conferi com o banco')}</button>}
+          </section>
+        )}
+
         {cal ? (
           <section>
             <h4 className="dv-ficha-titulo">{cal.parcelas.length > 1 ? tx('Parcelas') : tx('Combinado')}
-              {cal.atrasadas.length > 0 && <span className="chip-estado dv atrasada">{tx('{0} atrasado', fmtDiv(s, cal.emAtraso))}</span>}
+              {cal.atrasadas.length > 0 && <span className="chip-estado dv atrasada">{tx('{0} atrasado', fmtDiv(s, atrasadoHoje(s, cal)))}</span>}
             </h4>
             <ol className="dv-calendario">
               {cal.parcelas.map((x, i) => (
                 <li key={x.n} className={x.estado} style={{ '--p': `${(x.pago / x.valor) * 100}%`, animationDelay: `${Math.min(i, 24) * 25}ms` } as React.CSSProperties}>
                   <span className="dv-cal-n">{cal.parcelas.length > 1 ? `${x.n}ª` : <Icone nome="calendario" tamanho={13} />}</span>
                   <span className="dv-cal-mes">{s.divida.partes?.length ? fmtDataCurta(x.vencimento) : mesCurto(x.vencimento)}</span>
-                  <span className="dv-cal-valor">{x.estado === 'paga' ? <Icone nome="check" tamanho={14} /> : fmtDiv(s, x.falta).replace(/,00$/, '')}</span>
-                  <span className="dv-cal-estado">{x.pago > 0 && x.estado !== 'paga' ? (recebe ? tx('{0} recebido', fmtDiv(s, x.pago).replace(/,00$/, '')) : tx('{0} pago', fmtDiv(s, x.pago).replace(/,00$/, ''))) : ROTULO_PARCELA[x.estado]}</span>
+                  <span className="dv-cal-valor">{x.estado === 'paga' ? <Icone nome="check" tamanho={14} /> : fmtDiv(s, x.falta + (s.atraso?.porParcela.get(x.n) ?? 0)).replace(/,00$/, '')}</span>
+                  <span className="dv-cal-estado">{s.atraso?.porParcela.get(x.n)
+                    ? (x.pago > 0 ? tx('{0} pago, com juros', fmtDiv(s, x.pago).replace(/,00$/, '')) : tx('atrasada, com juros'))
+                    : x.pago > 0 && x.estado !== 'paga' ? (recebe ? tx('{0} recebido', fmtDiv(s, x.pago).replace(/,00$/, '')) : tx('{0} pago', fmtDiv(s, x.pago).replace(/,00$/, ''))) : ROTULO_PARCELA[x.estado]}</span>
                 </li>
               ))}
             </ol>

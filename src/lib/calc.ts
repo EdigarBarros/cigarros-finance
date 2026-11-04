@@ -95,12 +95,13 @@ export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: M
     saidas,
     fluxo: entradas - saidas,
     caixa: totalCaixa(mes),
-    divida: soma(convertidas.map((d) => d.restante)),
+    /** Quanto se deve: no mês de hoje, já com os juros de atraso estimados. */
+    divida: soma(convertidas.map((d) => d.restanteHoje)),
     /** Em outra moeda, no valor que a pessoa digitou (sem conversão): entradas, saídas e dívidas de cada moeda. */
     entradasMoeda: nativoPorMoeda(lancs.filter((l) => l.tipo === 'entrada')),
     saidasMoeda: nativoPorMoeda(saidasLista),
     dividaMoeda: dividas.reduce<Record<string, number>>((r, d) => {
-      if (d.moeda && d.restante > 0) r[d.moeda] = Math.round(((r[d.moeda] ?? 0) + d.restante / d.taxa) * 100) / 100
+      if (d.moeda && d.restante > 0) r[d.moeda] = Math.round(((r[d.moeda] ?? 0) + d.restanteHoje / d.taxa) * 100) / 100
       return r
     }, {}),
     /** De onde veio a variação das dívidas no mês: nasceram, foram pagas, aumentaram (empréstimo) ou foram ajustadas (juros, acordo). */
@@ -108,6 +109,8 @@ export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: M
     dividaPagos: soma(convertidas.map((d) => d.pagoNoMes)),
     dividaAumentos: soma(convertidas.map((d) => d.aumentoNoMes)),
     dividaAjustes: soma(convertidas.map((d) => d.ajusteNoMes)),
+    /** Juros de atraso estimados (ainda não conferidos com o banco). */
+    dividaJuros: soma(convertidas.map((d) => d.jurosAtraso)),
     parcelasMensais: soma(convertidas.filter((d) => d.restante > 0).map((d) => d.divida.valor_parcela ?? 0)),
     investimentos: mes?.investimentos ?? 0,
     moedas: mes?.moedas ?? {},

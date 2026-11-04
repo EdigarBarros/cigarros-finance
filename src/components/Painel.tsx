@@ -10,7 +10,8 @@ import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes 
 import { COR } from '../lib/charts'
 import { analisar, compararRetratos, retratoDe, type Reanalise, type Retrato } from '../lib/analise'
 import { avisosDispensadosNoMes, conselhos as conselhosDe, dispensarPorUmMes, faltamDadosParaConselhos } from '../lib/conselheiro'
-import { calendarioDe, fimDoMes, inicioDaDivida, meDevem, saldoMaisRecenteDaDivida, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
+import { jurosDoAtraso } from '../lib/jurosAtraso'
+import { atrasadoHoje, aumentaDivida, calendarioDe, sugeridoParaPagar, fimDoMes, inicioDaDivida, meDevem, saldoMaisRecenteDaDivida, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
 import { definirMoedaPrincipal, definirValoresOcultos, fmtDataCurta, fmtValor, MESES_CURTO, MESES_NOME, useValoresOcultos } from '../lib/format'
 import { useCambio } from '../lib/moedas'
 import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
@@ -262,13 +263,15 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const dividasDevo = useMemo(() => d.dividas.filter((x) => !meDevem(x)), [d.dividas])
   const dividasMeDevem = useMemo(() => d.dividas.filter(meDevem), [d.dividas])
 
+  // Dia que vale para dizer o que está atrasado: hoje, ou o fim do mês aberto quando ele já passou.
+  const hojeIso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
   // Cada mês é calculado com dívidas e caixa contínuos: nada precisa ser copiado à mão.
   const porMesCompleto = useMemo(() => {
     const agora = hoje.getFullYear() * 12 + hoje.getMonth() + 1
     return MESES_NOME.map((_, i) => {
       const m = i + 1
       const l = lancsContados.filter((x) => x.mes === m && x.ano === ano)
-      const sit = situacaoDividas(dividasDevo, d.saldos, d.pagamentos, ano, m, taxas)
+      const sit = situacaoDividas(dividasDevo, d.saldos, d.pagamentos, ano, m, taxas, hojeIso)
       const ef = mesEfetivo(d.meses, ano, m)
       const temProprio = d.meses.some((x) => x.ano === ano && x.mes === m)
       // Meses futuros sem lançamentos ficam em branco, como na planilha.
@@ -281,11 +284,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const lancsMes = lancsContados.filter((l) => l.mes === mes && l.ano === ano)
   const { sit: situacao, ef: mesEf } = porMesCompleto[mes - 1]
   const aReceber = useMemo(
-    () => situacaoDividas(dividasMeDevem, d.saldos, d.pagamentos, ano, mes, taxas),
-    [dividasMeDevem, d.saldos, d.pagamentos, ano, mes, taxas],
+    () => situacaoDividas(dividasMeDevem, d.saldos, d.pagamentos, ano, mes, taxas, hojeIso),
+    [dividasMeDevem, d.saldos, d.pagamentos, ano, mes, taxas, hojeIso],
   )
-  // Dia que vale para dizer o que está atrasado: hoje, ou o fim do mês aberto quando ele já passou.
-  const hojeIso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
   const diaRef = fimDoMes(ano, mes) < hojeIso ? fimDoMes(ano, mes) : hojeIso
   // as dívidas como foram cadastradas (parcela na moeda delas), para as listas dos formulários
   const dividasAbertas = [...situacao, ...aReceber].filter((s) => s.restante > 0).map((s) => s.original)
@@ -459,7 +460,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   // Pagar (o que você deve) ou receber (o que te devem): o valor sugerido é o atrasado ou a próxima parcela.
   const pagarDivida = (s: SituacaoDivida, valor?: number) => {
     // sem calendário nem parcela fixa, o valor fica em branco: a pessoa paga quanto puder
-    const sugerido = valor ?? calendarioDe(s, diaRef)?.sugerido ?? (s.divida.valor_parcela ? Math.min(s.divida.valor_parcela, s.restante) : undefined)
+    // com juros de atraso estimados, o atrasado já vem com os juros
+    const sugerido = valor ?? (sugeridoParaPagar(s, calendarioDe(s, diaRef)) || undefined)
     const recebe = meDevem(s.divida)
     setForm({
       preset: {
@@ -498,7 +500,32 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     const antes = id ? d.lancs.find((x) => x.id === id) : undefined
     const lancs = d.lancs
     let salvo: Lancamento | undefined
-    if (!id) salvo = await d.addLanc(l)
+    // Pagamento de dívida com juros de atraso estimados: antes de gravar, os juros até o dia do pagamento viram valor real
+    // (senão o pagamento abateria só o valor sem juros e o atraso pareceria pago).
+    // (os juros só existem na situação do mês de hoje, que pode não ser o mês aberto)
+    const situacaoHoje = ano === hoje.getFullYear() ? porMesCompleto[hoje.getMonth()].sit : []
+    const sd = !id && l.divida_id && l.data ? situacaoHoje.find((x) => x.divida.id === l.divida_id) : undefined
+    let lanc: Omit<Lancamento, 'id'> | null = l
+    if (sd?.atraso && l.data && !aumentaDivida(l.tipo, sd.divida) && (!sd.divida.conferido_em || l.data > sd.divida.conferido_em)) {
+      const quando = l.data < hojeIso ? l.data : hojeIso
+      const cal = calendarioDe(sd, quando)
+      const juros = quando === hojeIso ? sd.jurosAtraso : jurosDoAtraso(sd, cal, quando).total
+      if (juros >= 0.01 && (sd.divida.partes?.length || sd.moeda)) {
+        // com partes, os juros entram no valor de cada parcela atrasada (o calendário sai delas) e o pagamento abate tudo
+        await d.conferirDivida(sd, cal, sd.restante + juros, quando, 'pagar')
+      } else if (juros >= 0.01) {
+        // Parcela fixa: o calendário não tem onde guardar juros de uma parcela. Os juros pagos viram uma saída à parte (como os
+        // juros de fatura) e só o resto abate a dívida; o que ficar de juros sem pagar entra no saldo.
+        const pagoDeJuros = Math.min(l.valor, Math.round(juros * 100) / 100)
+        const resto = Math.round((l.valor - pagoDeJuros) * 100) / 100
+        salvo = await d.addLanc({ ...l, divida_id: null, valor: pagoDeJuros, valor_original: null, moeda_original: null, descricao: tx('Juros do atraso – {0}', sd.divida.descricao) })
+        const semPagar = Math.round((juros - pagoDeJuros) * 100) / 100
+        if (semPagar >= 0.01) await d.ajustarValorDivida(sd.divida.id, semPagar)
+        await d.updDivida(sd.divida.id, { conferido_em: quando })
+        lanc = resto >= 0.01 ? { ...l, valor: resto } : null
+      }
+    }
+    if (!id) { if (lanc) salvo = await d.addLanc(lanc) }
     else {
       await d.updLanc(id, l)
       if (antes) salvo = { ...antes, ...l }
@@ -606,8 +633,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   }
 
   // Dicas que se revezam no pé do menu lateral: primeiro o que pede atenção, depois atalhos úteis.
-  const faltaDividas = situacao.reduce((a, s) => a + s.restante, 0)
-  const atrasoDevo = situacao.reduce((a, s) => a + (calendarioDe(s, diaRef)?.emAtraso ?? 0), 0)
+  const faltaDividas = situacao.reduce((a, s) => a + s.restanteHoje, 0)
+  const atrasoDevo = situacao.reduce((a, s) => a + atrasadoHoje(s, calendarioDe(s, diaRef)), 0)
   const atrasoReceber = aReceber.reduce((a, s) => a + (calendarioDe(s, diaRef)?.emAtraso ?? 0), 0)
   // Primeiro os alertas de hoje (contas, faturas, parcelas atrasadas); depois até 3 conselhos do conselheiro (lib/conselheiro.ts);
   // as dicas genéricas só aparecem enquanto o conselheiro não tem nada a dizer.

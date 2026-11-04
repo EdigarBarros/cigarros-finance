@@ -82,7 +82,9 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   conselheiro do menu diz qual dívida pagar primeiro (a que cobra mais) e avisa quando os juros são muito altos.
   Uma dívida feita de várias compras (o crédito de uma loja, por exemplo) pode ser dividida em **partes**, cada uma com
   as suas parcelas, valores e datas ([migração 21](supabase/migracao-21-partes-da-divida.sql)): o calendário e o atraso
-  saem delas
+  saem delas. Com a regra de **juros de atraso** do credor ([migração 22](supabase/migracao-22-juros-de-atraso.sql)), a
+  dívida atrasada cresce sozinha dia a dia, como no banco ("falta pagar hoje", estimado), e o botão **Conferi com o banco**
+  acerta o valor real quando você quiser
 - **Consultor**: uma aba com a análise completa do seu dinheiro, refeita a cada lançamento, compra no cartão ou dívida nova.
   Nota de 0 a 100 por pilares (sobra, reserva, dívidas, cartão, controle dos gastos, metas), a fase em que você está (do
   "sair do vermelho" ao "fazer o dinheiro crescer"), previsão de como o mês fecha e quanto dá para gastar por dia, tendência de
@@ -111,7 +113,8 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
    [`12`](supabase/migracao-12-assinaturas.sql), [`14`](supabase/migracao-14-moeda-em-contas-e-dividas.sql),
    [`15`](supabase/migracao-15-cotacao-da-conta.sql), [`16`](supabase/migracao-16-acesso-teste-e-erros.sql),
    [`17`](supabase/migracao-17-teste-sem-cartao.sql), [`18`](supabase/migracao-18-teste-ao-escolher-plano.sql),
-   [`19`](supabase/migracao-19-juros-das-dividas.sql), [`21`](supabase/migracao-21-partes-da-divida.sql) e, **por último**, a
+   [`19`](supabase/migracao-19-juros-das-dividas.sql), [`21`](supabase/migracao-21-partes-da-divida.sql),
+   [`22`](supabase/migracao-22-juros-de-atraso.sql) e, **por último**, a
    [`20`](supabase/migracao-20-acesso-no-banco-definitivo.sql).
    O `schema.sql` sozinho **não** tem cobrança nem bloqueio: sem a 12 e a 20 o painel abre para qualquer conta, paga ou não.
    Não rode as migrações 02 a 08 num banco novo (o `schema.sql` já inclui o que elas fazem) nem a 13 (a 20 a substitui).

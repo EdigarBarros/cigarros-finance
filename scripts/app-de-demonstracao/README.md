@@ -18,6 +18,7 @@ await t.fechar()
 ```
 
 `semColunas: { dividas: ['juros_mes'] }` simula uma migração que ainda não rodou (ler ou gravar a coluna dá o mesmo erro do Supabase).
+Para os juros de atraso (migração 22): `semColunas: { dividas: ['atraso_juros_mes'] }`.
 
 `toque: true` abre como celular com tela de toque (para testar `page.touchscreen.tap`).
 

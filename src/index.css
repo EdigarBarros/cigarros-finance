@@ -2063,6 +2063,26 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .chip-estado.dv.vence_hoje { color: var(--divida); background: color-mix(in srgb, var(--divida) 14%, transparent); }
 .chip-estado.dv.em_dia, .chip-estado.dv.quitada { color: var(--entrada); background: color-mix(in srgb, var(--entrada) 12%, transparent); }
 .chip-estado.dv.sem_data { color: var(--texto-2); }
+/* juros de atraso estimados (migração 22) */
+.chip-estado.dv.juros { justify-self: start; margin-top: 4px; color: var(--divida); background: color-mix(in srgb, var(--divida) 14%, transparent); }
+.dv-cresce { font-size: 12px; color: var(--texto-2); }
+/* na ficha o selo fica dentro da caixa do número, que estiliza todo span: volta ao jeito de selo */
+.dv-ficha-numeros span.chip-estado.dv.juros { display: inline-flex; height: auto; min-height: 21px; padding: 2px 8px; border: 0; border-radius: 999px; animation: none; white-space: normal; line-height: 1.25; }
+.dv-cartao-conferir { justify-content: center; margin-top: -6px; font-size: 13px; }
+.dv-atraso { display: grid; gap: 10px; padding: 12px 14px; border-radius: var(--raio-m); background: color-mix(in srgb, var(--divida) 7%, var(--superficie-2)); border: 1px solid color-mix(in srgb, var(--divida) 25%, var(--borda)); }
+.dv-atraso > p { margin: 0; }
+.dv-atraso > p svg { vertical-align: -2px; color: var(--divida); }
+.dv-atraso > .btn { justify-self: start; }
+.dv-conferir { display: grid; gap: 10px; }
+.dp-valor s, .dp-parte-valor s { color: var(--texto-3); font-weight: 500; margin-right: 4px; }
+.form-atraso { border: 1px solid var(--borda); border-radius: var(--raio-m); background: var(--superficie-2); overflow: hidden; }
+.form-atraso-cab { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 14px; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; }
+.form-atraso-cab > span { flex: 1; min-width: 0; }
+.form-atraso-cab small { color: var(--texto-2); font-weight: 400; }
+.form-atraso-cab > svg:first-child { color: var(--divida); }
+.form-atraso-cab > svg:last-child { color: var(--texto-3); transition: transform .25s var(--mola); }
+.form-atraso.aberto .form-atraso-cab > svg:last-child { transform: rotate(180deg); }
+.form-atraso-corpo { display: grid; gap: 14px; padding: 0 14px 14px; }
 
 /* um tracinho por parcela */
 .dv-pips { display: flex; gap: 3px; height: 9px; }
