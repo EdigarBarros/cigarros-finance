@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useMemo, useState, type CSSProperties } from 'react'
 import { COR, PALETA } from '../lib/charts'
 import { calendarioDe, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
 import { fmtMoeda, fmtValor, MESES_CURTO, moedaAtual, MESES_NOME, variacao, LOCAL_DAS_DATAS, noMeioDaFrase } from '../lib/format'
@@ -7,7 +7,8 @@ import {
   Bloco, BlocoDinheiro, BlocoDividas, BlocoGastos, BlocoLancamentos, BlocoMetas,
 } from '../components/Blocos'
 import { FormDivida } from '../components/Formularios'
-import { GraficoFluxo, moedasDoAno } from '../components/Graficos'
+import { GraficoFluxo, moedasDoAno, SeletorDoModo } from '../components/Graficos'
+import { useModoDoGrafico } from '../lib/modoDoGrafico'
 import { Icone } from '../components/Icone'
 import { BannerCarrossel, type Slide } from '../components/BannerCarrossel'
 import { ConviteImportar } from '../components/ConviteImportar'
@@ -52,6 +53,7 @@ export function Inicio(c: Ctx) {
   const [divida, setDivida] = useState<SituacaoDivida | 'nova' | null>(null)
   // gráfico de fluxo em outra moeda (só há escolha quando existe algo em outra moeda no ano)
   const moedasFora = useMemo(() => moedasDoAno(c.porMes), [c.porMes])
+  const [modoDoGrafico, setModoDoGrafico] = useModoDoGrafico()
   const [moedaEscolhida, setMoedaFluxo] = useState(moedaAtual())
   const moedaFluxo = moedasFora.includes(moedaEscolhida) ? moedaEscolhida : moedaAtual()
 
@@ -64,6 +66,11 @@ export function Inicio(c: Ctx) {
   const situacaoMetas = c.d.metas.map((m) => situacaoMeta(m, c.d.movimentosMeta))
   const mesVazio = c.lancsMes.length === 0
   const haAno = c.porMes.some(Boolean)
+  // os 6 meses que o gráfico de fluxo mostra (mesma conta do GraficoFluxo)
+  const inicioDoFluxo = Math.max(0, Math.min(c.mes - 6, 6))
+  const janelaDoFluxo = c.previsto.slice(inicioDoFluxo, inicioDoFluxo + 6)
+  // modo "O que vem aí" com saídas previstas e nenhuma entrada prevista: avisa por que não há barra verde
+  const semRecebimentoPrevisto = modoDoGrafico === 'previsto' && moedaFluxo === moedaAtual() && c.v.contas && janelaDoFluxo.some((p) => p.vaiSair > 0) && !janelaDoFluxo.some((p) => p.vaiEntrar > 0)
 
   // ---------- 0. Saudação ----------
   const sobrou = r.fluxo >= 0
@@ -197,19 +204,30 @@ export function Inicio(c: Ctx) {
         <span className="legenda-topo">
           <span><i className="legenda-barra" style={{ background: PALETA.entradas[0] }} />{tx('Entrou')}</span>
           <span><i className="legenda-barra" style={{ background: PALETA.saidas[0] }} />{tx('Saiu')}</span>
+          {modoDoGrafico === 'previsto' && moedaFluxo === moedaAtual() && (
+            <>
+              <span><i className="legenda-barra listrada" style={{ '--cor': PALETA.entradas[0] } as CSSProperties} />{tx('Vai entrar')}</span>
+              <span><i className="legenda-barra listrada" style={{ '--cor': PALETA.saidas[0] } as CSSProperties} />{tx('Vai sair')}</span>
+            </>
+          )}
           <span><i className="legenda-linha" style={{ background: PALETA.sobrou }} />{tx('Sobrou')}</span>
+          {modoDoGrafico === 'previsto' && moedaFluxo === moedaAtual() && (
+            <span><i className="legenda-linha" style={{ background: `repeating-linear-gradient(90deg, ${PALETA.sobrou} 0 5px, transparent 5px 8px)` }} />{tx('Vai sobrar')}</span>
+          )}
         </span>
       }>
       {/* o gráfico ocupa a altura que sobrar no cartão, para ficar da mesma altura que os lançamentos ao lado */}
       {/* só aparece quando há algo em outra moeda; a visão padrão é a da moeda principal */}
-      {moedasFora.length > 0 && (
-        <div className="grafico-moeda grafico-moeda-inicio">
+      <div className="grafico-moeda grafico-moeda-inicio">
+        {moedaFluxo === moedaAtual() && <SeletorDoModo modo={modoDoGrafico} aoMudar={setModoDoGrafico} />}
+        {moedasFora.length > 0 && (
           <Segmentado rotulo={tx('Ver o gráfico em')} valor={moedaFluxo} aoMudar={setMoedaFluxo}
             opcoes={[moedaAtual(), ...moedasFora].map((m) => ({ id: m, nome: m }))} />
-        </div>
-      )}
+        )}
+      </div>
+      {semRecebimentoPrevisto && <p className="campo-ajuda aviso-previsao">{tx('Nenhum dinheiro previsto para entrar. Cadastre o seu salário em Contas fixas para ele aparecer aqui.')}</p>}
       <div className="bloco-corpo grafico-esticado">
-        <GraficoFluxo porMes={c.porMes} mesAtual={c.mes} compacto={mobile} moeda={moedaFluxo} />
+        <GraficoFluxo porMes={c.porMes} previsto={c.previsto} modo={modoDoGrafico} mesAtual={c.mes} compacto={mobile} moeda={moedaFluxo} />
       </div>
       {/* escolher o mês aqui troca a página inteira, como o seletor do topo */}
       <ReguaMeses mes={c.mes} comDados={c.porMes.map(Boolean)} aoEscolher={c.irParaMes} />

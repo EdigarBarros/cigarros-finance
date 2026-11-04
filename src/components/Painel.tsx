@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { sugestoes, type Sugestao } from '../lib/adaptacao'
-import { mesEfetivo, resumoMes } from '../lib/calc'
+import { mesEfetivo, resumoMes, saldoInformado } from '../lib/calc'
 import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
 import {
   chaveRecusa, faltaPagarNoMes, lancamentoDaBaixa, memoriaDasContas, parecidosNosOutrosMeses, situacoesDoMes, sugestoesDoMes,
@@ -24,6 +24,7 @@ import { definirTema, semMovimento, useTema } from '../lib/tema'
 import { ehErroDeVersao, lembrarMes, mesAntesDeAtualizar } from '../lib/atualizacao'
 import { irParaStripe, type Assinatura } from '../lib/assinatura'
 import { AvisoTeste } from './AvisoTeste'
+import { previsaoDoAno } from '../lib/previsao'
 import { useCartoes } from '../lib/useCartoes'
 import { useContasFixas } from '../lib/useContasFixas'
 import { useDados } from '../lib/useDados'
@@ -276,10 +277,20 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       const temProprio = d.meses.some((x) => x.ano === ano && x.mes === m)
       // Meses futuros sem lançamentos ficam em branco, como na planilha.
       const vazio = !l.length && !temProprio && (ano * 12 + m > agora || (!sit.length && !ef.herdadoDe))
-      return { sit, ef, resumo: vazio ? null : resumoMes(l, sit, ef, taxas, idCategoria) }
+      // Mês futuro sem saldo informado: o saldo é desconhecido, não zero (a linha do gráfico para em vez de despencar).
+      return { sit, ef, resumo: vazio ? null : resumoMes(l, sit, ef, taxas, idCategoria, ano * 12 + m > agora && !saldoInformado(ef)) }
     })
   }, [lancsContados, dividasDevo, d.saldos, d.pagamentos, d.meses, ano, taxas, d.categorias, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
   const porMes = porMesCompleto.map((x) => x.resumo)
+  // O que já aconteceu e o que ainda vem em cada mês (gráficos de fluxo).
+  const { contas: contasFixas, semTabela: contasSemTabela } = contas
+  const { faturasPagas } = cartoes
+  const contasNaPrevisao = Boolean(v.contas) && !contasSemTabela
+  const comFaturasNaPrevisao = Boolean(comFaturas)
+  const previsto = useMemo(
+    () => previsaoDoAno({ lancs: lancsContados, lancsBaixas: d.lancs, faturasPagas, comFaturas: comFaturasNaPrevisao, contas: contasNaPrevisao ? contasFixas : [], ano, taxas, hoje }),
+    [lancsContados, d.lancs, faturasPagas, comFaturasNaPrevisao, contasNaPrevisao, contasFixas, ano, taxas, hoje],
+  )
 
   const lancsMes = lancsContados.filter((l) => l.mes === mes && l.ano === ano)
   const { sit: situacao, ef: mesEf } = porMesCompleto[mes - 1]
@@ -559,7 +570,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       cartoes: comCartoes ? <BlocoCartoes situacoes={faturas} aoAbrir={() => irPara('cartoes')} /> : undefined,
     },
     busca, setBusca,
-    ano, mes, d, cartoes, faturas, lancsMes, lancsAno: lancsContados, situacao, aReceber, diaRef, mesEf, porMes, mobile,
+    ano, mes, d, cartoes, faturas, lancsMes, lancsAno: lancsContados, situacao, aReceber, diaRef, mesEf, porMes, previsto, mobile,
     perfil, v, taxas, sugestao,
     aceitarSugestao: (s: Sugestao) => mudarPerfil(s.aplicar(perfil)),
     recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),

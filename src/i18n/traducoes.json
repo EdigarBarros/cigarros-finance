@@ -8474,5 +8474,41 @@
   "Juros do atraso – {0}": {
     "en": "Late interest – {0}",
     "es": "Intereses por atraso – {0}"
+  },
+  "O que mostrar no gráfico": {
+    "en": "What to show on the chart",
+    "es": "Qué mostrar en el gráfico"
+  },
+  "Já aconteceu": {
+    "en": "Already happened",
+    "es": "Ya pasó"
+  },
+  "O que vem aí": {
+    "en": "Coming up",
+    "es": "Lo que viene"
+  },
+  "Vai entrar": {
+    "en": "Money coming in",
+    "es": "Va a entrar"
+  },
+  "Vai sair": {
+    "en": "Money going out",
+    "es": "Va a salir"
+  },
+  "Vai sobrar": {
+    "en": "Will be left over",
+    "es": "Va a sobrar"
+  },
+  "Vai faltar": {
+    "en": "Will fall short",
+    "es": "Va a faltar"
+  },
+  "Nenhum dinheiro previsto para entrar neste mês.": {
+    "en": "No money expected to come in this month.",
+    "es": "No hay dinero previsto para entrar este mes."
+  },
+  "Nenhum dinheiro previsto para entrar. Cadastre o seu salário em Contas fixas para ele aparecer aqui.": {
+    "en": "No money expected to come in. Add your salary under Recurring bills so it shows up here.",
+    "es": "No hay dinero previsto para entrar. Registra tu sueldo en Cuentas fijas para que aparezca aquí."
   }
 }

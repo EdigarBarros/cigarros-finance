@@ -49,7 +49,7 @@ export function Ano(c: Ctx) {
       </div>
 
       <Cartao titulo={tx('Mês a mês')} acao={<span className="dica-cab so-desktop">{tx('toque na legenda para esconder ou mostrar uma série')}</span>}>
-        <GraficoAnual porMes={c.porMes} mesAtual={c.mes} altura={c.mobile ? 320 : 420} compacto={c.mobile} v={c.v} />
+        <GraficoAnual porMes={c.porMes} previsto={c.previsto} mesAtual={c.mes} altura={c.mobile ? 320 : 420} compacto={c.mobile} v={c.v} />
       </Cartao>
 
       <Cartao titulo={tx('Números de cada mês')}>

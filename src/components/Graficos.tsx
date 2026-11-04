@@ -1,6 +1,8 @@
 import type { Chart as ChartJS, ChartData, ChartEvent, ChartOptions, Plugin, ScriptableContext } from 'chart.js'
 import { Chart as Misto, Doughnut } from 'react-chartjs-2'
 import type { Resumo } from '../lib/calc'
+import { temPrevisao, type PrevisaoMes } from '../lib/previsao'
+import { useModoDoGrafico, type ModoDoGrafico } from '../lib/modoDoGrafico'
 import { PALETA, useCoresDoGrafico } from '../lib/charts'
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, moedaAtual, valoresEstaoOcultos } from '../lib/format'
@@ -64,10 +66,35 @@ const degradeBarra = ([topo, base]: readonly [string, string]) => (ctx: Scriptab
   return g
 }
 
-const barra = (label: string, cores: readonly [string, string], data: (number | null)[], compacto?: boolean) => ({
-  type: 'bar' as const, label, data, order: 2,
+const barra = (label: string, cores: readonly [string, string], data: (number | null)[], compacto?: boolean, stack?: string) => ({
+  type: 'bar' as const, label, data, order: 2, ...(stack ? { stack } : {}),
   backgroundColor: degradeBarra(cores), hoverBackgroundColor: cores[0],
   borderRadius: compacto ? 3 : 5, borderSkipped: 'start' as const,
+  maxBarThickness: compacto ? 10 : 20, categoryPercentage: 0.64, barPercentage: 0.84,
+})
+
+/** Fundo listrado na cor da barra: o que ainda não aconteceu (o desenho avisa, sem depender só da cor). */
+const listrado = (cor: string) => (ctx: ScriptableContext<'bar'>) => {
+  const alvo = ctx.chart.ctx
+  const tela = document.createElement('canvas')
+  tela.width = tela.height = 8
+  const t = tela.getContext('2d')
+  if (!alvo || !t) return comAlfa(cor, 0.3)
+  t.fillStyle = comAlfa(cor, 0.16)
+  t.fillRect(0, 0, 8, 8)
+  t.strokeStyle = comAlfa(cor, 0.85)
+  t.lineWidth = 2
+  t.beginPath()
+  for (const d of [-8, 0, 8]) { t.moveTo(d, 8); t.lineTo(d + 8, 0) }
+  t.stroke()
+  return alvo.createPattern(tela, 'repeat') ?? comAlfa(cor, 0.3)
+}
+
+/** Barra do que ainda vem (Vai entrar / Vai sair): listrada, empilhada em cima da barra do que já aconteceu. */
+const barraPrevista = (label: string, cor: string, data: (number | null)[], compacto: boolean | undefined, stack: string) => ({
+  type: 'bar' as const, label, data, order: 2, stack, previsto: true,
+  backgroundColor: listrado(cor), hoverBackgroundColor: cor, borderColor: cor, borderWidth: 1.5,
+  borderRadius: compacto ? 3 : 5, borderSkipped: false as const,
   maxBarThickness: compacto ? 10 : 20, categoryPercentage: 0.64, barPercentage: 0.84,
 })
 
@@ -126,9 +153,11 @@ function opcoes(c: ReturnType<typeof useCoresDoGrafico>, {
             const linhaSerie = (d as { type?: string }).type === 'line'
             const hover = d.hoverBackgroundColor as string | string[]
             const cor = linhaSerie ? (d.borderColor as string) : Array.isArray(hover) ? PALETA.entradas[0] : hover
+            const prevista = Boolean((d as { previsto?: boolean }).previsto)
             return {
               text: d.label ?? '', datasetIndex: i, hidden: !chart.isDatasetVisible(i), fontColor: c.texto,
-              fillStyle: cor, strokeStyle: cor, lineWidth: linhaSerie ? 3 : 0, pointStyle: linhaSerie ? 'line' : 'rectRounded',
+              fillStyle: prevista ? comAlfa(cor, 0.35) : cor, strokeStyle: cor, lineWidth: linhaSerie ? 3 : prevista ? 1.5 : 0,
+              pointStyle: linhaSerie ? 'line' : 'rectRounded',
             }
           }),
         },
@@ -162,13 +191,52 @@ function opcoes(c: ReturnType<typeof useCoresDoGrafico>, {
 }
 
 const serie = (meses: (Resumo | null)[], f: (r: Resumo) => number) => meses.map((r) => (r ? f(r) : null))
+/** Saldo de mês futuro que ninguém informou é desconhecido, não zero: a linha para em vez de despencar. */
+const saldo = (meses: (Resumo | null)[], f: (r: Resumo) => number) => meses.map((r) => (r && !r.saldoDesconhecido ? f(r) : null))
+const centavos = (n: number) => Math.round(n * 100) / 100
+
+/**
+ * O que cada mês mostra nas barras, conforme o modo: o que já aconteceu (mês futuro sem nada acontecido fica em branco) e,
+ * no modo "O que vem aí", também o que ainda vai entrar e sair (um mês só com previsão também aparece).
+ */
+function fluxoDosMeses(porMes: (Resumo | null)[], previsto: PrevisaoMes[], modo: ModoDoGrafico) {
+  const vazio = (i: number) => !porMes[i] || (previsto[i].futuro && previsto[i].entrou === 0 && previsto[i].saiu === 0)
+  const aparece = (i: number) => !vazio(i) || (modo === 'previsto' && temPrevisao(previsto[i]))
+  const pegar = (f: (p: PrevisaoMes) => number) => previsto.map((p, i) => (aparece(i) ? f(p) : null))
+  return {
+    entrou: pegar((p) => p.entrou),
+    saiu: pegar((p) => p.saiu),
+    vaiEntrar: pegar((p) => p.vaiEntrar),
+    vaiSair: pegar((p) => p.vaiSair),
+    sobrou: previsto.map((p, i) => (vazio(i) ? null : centavos(p.entrou - p.saiu))),
+    vaiSobrar: previsto.map((p) => (temPrevisao(p) ? centavos(p.entrou + p.vaiEntrar - p.saiu - p.vaiSair) : null)),
+  }
+}
+
+/** Com barras empilhadas (o que já aconteceu + o que vem aí), cada linha leva a sua própria pilha, para não somar uma na outra. */
+function empilhar<T extends { type?: string }>(datasets: T[], opcoesBase: ChartOptions<'bar'>) {
+  return {
+    datasets: datasets.map((d, i) => (d.type === 'line' ? { ...d, stack: `linha${i}` } : d)),
+    opcoes: { ...opcoesBase, scales: { ...opcoesBase.scales, x: { ...opcoesBase.scales?.x, stacked: true }, y: { ...opcoesBase.scales?.y, stacked: true } } } as ChartOptions<'bar'>,
+  }
+}
+
+/** Escolha do que os gráficos de fluxo mostram. */
+export function SeletorDoModo({ modo, aoMudar }: { modo: ModoDoGrafico; aoMudar: (m: ModoDoGrafico) => void }) {
+  return (
+    <Segmentado rotulo={tx('O que mostrar no gráfico')} valor={modo} aoMudar={aoMudar}
+      opcoes={[{ id: 'feito', nome: tx('Já aconteceu') }, { id: 'previsto', nome: tx('O que vem aí') }]} />
+  )
+}
 
 /**
  * Fluxo financeiro da Início: Entrou e Saiu em barras lado a lado e a linha brilhante do que sobrou, nos 6 meses até o
  * aberto (de jan a jun quando o mês aberto é antes de junho). Mês sem dados fica em branco.
  */
-export function GraficoFluxo({ porMes, mesAtual, altura, compacto, moeda }: {
+export function GraficoFluxo({ porMes, previsto, modo = 'feito', mesAtual, altura, compacto, moeda }: {
   porMes: (Resumo | null)[]; mesAtual: number
+  /** O que já aconteceu e o que ainda vem em cada mês do ano. */
+  previsto: PrevisaoMes[]; modo?: ModoDoGrafico
   /** Outra moeda (valores como foram lançados, sem conversão); sem ela, a moeda principal. */
   moeda?: string
   /** Sem altura, ocupa a caixa em que está (veja .grafico-esticado). */
@@ -180,18 +248,32 @@ export function GraficoFluxo({ porMes, mesAtual, altura, compacto, moeda }: {
   const fora = Boolean(moeda) && moeda !== moedaAtual()
   const entrou = (r: Resumo) => (fora ? r.entradasMoeda[moeda!] ?? 0 : r.entradas)
   const saiu = (r: Resumo) => (fora ? r.saidasMoeda[moeda!] ?? 0 : r.saidas)
-  const data = {
-    labels: MESES_CURTO.slice(inicio, inicio + 6),
-    datasets: [
-      barra(tx('Entrou'), PALETA.entradas, serie(meses, entrou), compacto),
-      barra(tx('Saiu'), PALETA.saidas, serie(meses, saiu), compacto),
-      linha(tx('Sobrou'), PALETA.sobrou, serie(meses, (r) => (fora ? Math.round((entrou(r) - saiu(r)) * 100) / 100 : r.fluxo)), c.fundo, compacto),
-    ],
-  } as unknown as ChartData<'bar'>
+  // Na moeda principal o gráfico segue o modo; em outra moeda os valores são os lançados, sem previsão.
+  const f = fluxoDosMeses(porMes, previsto, fora ? 'feito' : modo)
+  const janela = <T,>(xs: T[]) => xs.slice(inicio, inicio + 6)
+  const comPrevisao = !fora && modo === 'previsto'
+  const base = opcoes(c, { rotulos: MESES_CURTO.slice(inicio, inicio + 6), mesDoIndice: (i) => inicio + i + 1, mesAtual, compacto, legenda: false, destacar: true, formatar: fora ? (n) => fmtMoeda(n, moeda!) : fmtValor })
+  const series = fora
+    ? [
+        barra(tx('Entrou'), PALETA.entradas, serie(meses, entrou), compacto),
+        barra(tx('Saiu'), PALETA.saidas, serie(meses, saiu), compacto),
+        linha(tx('Sobrou'), PALETA.sobrou, serie(meses, (r) => Math.round((entrou(r) - saiu(r)) * 100) / 100), c.fundo, compacto),
+      ]
+    : [
+        barra(tx('Entrou'), PALETA.entradas, janela(f.entrou), compacto, comPrevisao ? 'entrou' : undefined),
+        barra(tx('Saiu'), PALETA.saidas, janela(f.saiu), compacto, comPrevisao ? 'saiu' : undefined),
+        ...(comPrevisao ? [
+          barraPrevista(tx('Vai entrar'), PALETA.entradas[0], janela(f.vaiEntrar), compacto, 'entrou'),
+          barraPrevista(tx('Vai sair'), PALETA.saidas[0], janela(f.vaiSair), compacto, 'saiu'),
+        ] : []),
+        linha(tx('Sobrou'), PALETA.sobrou, janela(f.sobrou), c.fundo, compacto),
+        ...(comPrevisao ? [linha(tx('Vai sobrar'), PALETA.sobrou, janela(f.vaiSobrar), c.fundo, compacto, { borderDash: [5, 4] })] : []),
+      ]
+  const { datasets, opcoes: opcoesFinais } = comPrevisao ? empilhar(series, base) : { datasets: series, opcoes: base }
+  const data = { labels: MESES_CURTO.slice(inicio, inicio + 6), datasets } as unknown as ChartData<'bar'>
   return (
     <CaixaDoGrafico style={altura ? { height: altura } : undefined}>
-      <Misto type="bar" key={c.tema + c.ocultos + (fora ? moeda : '')} data={data}
-        options={opcoes(c, { rotulos: MESES_CURTO.slice(inicio, inicio + 6), mesDoIndice: (i) => inicio + i + 1, mesAtual, compacto, legenda: false, destacar: true, formatar: fora ? (n) => fmtMoeda(n, moeda!) : fmtValor })} />
+      <Misto type="bar" key={c.tema + c.ocultos + (fora ? moeda : '') + modo} data={data} options={opcoesFinais} />
     </CaixaDoGrafico>
   )
 }
@@ -216,13 +298,20 @@ function origensDaDivida(r: Resumo | null | undefined): [string, number][] {
  * Resumo do mês escolhido no gráfico, num painel fixo (ao lado do gráfico em tela larga, embaixo em tela estreita).
  * Substitui o card que abria em cima do gráfico e escondia as barras e a linha.
  */
-function PainelDoMes({ indice, r, v, fora, moeda, aoMudar }: {
+function PainelDoMes({ indice, r, v, fora, moeda, aoMudar, p, modo }: {
   indice: number; r: Resumo | null; v: Visao; fora: boolean; moeda: string; aoMudar: (i: number) => void
+  /** O que já aconteceu e o que ainda vem neste mês; com o modo, diz o que o painel mostra. */
+  p?: PrevisaoMes; modo: ModoDoGrafico
 }) {
+  const comPrevisao = !fora && modo === 'previsto' && temPrevisao(p)
+  // mesmo critério do gráfico: mês futuro em que nada aconteceu ainda fica em branco
+  const semNadaFeito = !fora && !comPrevisao && Boolean(p?.futuro) && p!.entrou === 0 && p!.saiu === 0
   const fmt = fora ? (n: number) => fmtMoeda(n, moeda) : fmtValor
   const sinal = (n: number) => `${n < 0 ? '−' : '+'}${fmt(Math.abs(n))}`
-  const entrou = r ? (fora ? (r.entradasMoeda[moeda] ?? 0) : r.entradas) : 0
-  const saiu = r ? (fora ? (r.saidasMoeda[moeda] ?? 0) : r.saidas) : 0
+  // Na moeda principal o painel mostra o que já aconteceu (a fatura em aberto só entra em "Vai sair").
+  const entrou = r ? (fora ? (r.entradasMoeda[moeda] ?? 0) : p ? p.entrou : r.entradas) : 0
+  const saiu = r ? (fora ? (r.saidasMoeda[moeda] ?? 0) : p ? p.saiu : r.saidas) : 0
+  const semSaldo = !fora && Boolean(r?.saldoDesconhecido)
   const dif = Math.round((entrou - saiu) * 100) / 100
   const guardado = r ? (fora ? (r.moedas[moeda] ?? 0) : r.caixa) : 0
   const divida = r ? (fora ? (r.dividaMoeda[moeda] ?? 0) : r.divida) : 0
@@ -237,21 +326,33 @@ function PainelDoMes({ indice, r, v, fora, moeda, aoMudar }: {
         <h3>{MESES_NOME[indice]}</h3>
         <button className="pm-nav" onClick={() => aoMudar(indice + 1)} disabled={indice >= 11} aria-label={tx('Próximo mês')}><Icone nome="dir" tamanho={16} /></button>
       </div>
-      {!r ? <p className="pm-vazio">{tx('Sem lançamentos neste mês.')}</p> : (
+      {(!r || semNadaFeito) && !comPrevisao ? <p className="pm-vazio">{tx('Sem lançamentos neste mês.')}</p> : (
         <>
           {linha(tx('Entrou'), fmt(entrou), 'entrou')}
           {linha(tx('Saiu'), fmt(saiu), 'saiu')}
           {linha(dif >= 0 ? tx('Sobrou') : tx('Faltou'), fmt(Math.abs(dif)), dif >= 0 ? 'entrou' : 'saiu')}
-          {((fora ? guardado > 0 : v.bancos) || (fora ? divida > 0 : v.dividas) || (!fora && (v.investimentos || v.moedas))) && <hr className="pm-sep" />}
-          {(fora ? guardado > 0 : v.bancos) && linha(fora ? tx('Guardado em {0}', moeda) : tx('Guardado nas contas'), fmt(guardado), 'caixa')}
-          {(fora ? divida > 0 : v.dividas) && linha(fora ? tx('Dívidas em {0}', moeda) : tx('Dívidas'), fmt(divida), 'divida')}
+          {comPrevisao && p && (() => {
+            const vai = centavos(entrou + p.vaiEntrar - saiu - p.vaiSair)
+            return (
+              <>
+                <hr className="pm-sep" />
+                {linha(tx('Vai entrar'), fmt(p.vaiEntrar), 'entrou')}
+                {linha(tx('Vai sair'), fmt(p.vaiSair), 'saiu')}
+                {linha(vai >= 0 ? tx('Vai sobrar') : tx('Vai faltar'), fmt(Math.abs(vai)), vai >= 0 ? 'entrou' : 'saiu')}
+                {p.vaiEntrar === 0 && <p className="pm-aviso">{tx('Nenhum dinheiro previsto para entrar neste mês.')}</p>}
+              </>
+            )
+          })()}
+          {r && ((fora ? guardado > 0 : v.bancos && !semSaldo) || (fora ? divida > 0 : v.dividas) || (!fora && ((v.investimentos || v.moedas) && !semSaldo))) && <hr className="pm-sep" />}
+          {r && (fora ? guardado > 0 : v.bancos && !semSaldo) && linha(fora ? tx('Guardado em {0}', moeda) : tx('Guardado nas contas'), fmt(guardado), 'caixa')}
+          {r && (fora ? divida > 0 : v.dividas) && linha(fora ? tx('Dívidas em {0}', moeda) : tx('Dívidas'), fmt(divida), 'divida')}
           {origens.length > 0 && (
             <ul className="pm-origem">
               {origens.map(([nome, valor]) => <li key={nome}><span>{nome}</span><b>{sinal(valor)}</b></li>)}
             </ul>
           )}
-          {!fora && v.investimentos && linha(tx('Investido'), fmt(r.investimentos), 'invest')}
-          {!fora && v.moedas && linha(tx('Em outras moedas'), fmt(r.moedasConvertido), 'usd')}
+          {r && !fora && v.investimentos && !semSaldo && linha(tx('Investido'), fmt(r.investimentos), 'invest')}
+          {r && !fora && v.moedas && !semSaldo && linha(tx('Em outras moedas'), fmt(r.moedasConvertido), 'usd')}
         </>
       )}
     </aside>
@@ -270,8 +371,10 @@ export function moedasDoAno(porMes: (Resumo | null)[]) {
   return [...achadas].sort()
 }
 
-export function GraficoAnual({ porMes, mesAtual, altura = 400, compacto, v }: {
+export function GraficoAnual({ porMes, previsto, mesAtual, altura = 400, compacto, v }: {
   porMes: (Resumo | null)[]; mesAtual: number; altura?: number; v: Visao
+  /** O que já aconteceu e o que ainda vem em cada mês. */
+  previsto: PrevisaoMes[]
   /** Celular: eixo em "mil" e legenda menor. */
   compacto?: boolean
 }) {
@@ -282,12 +385,15 @@ export function GraficoAnual({ porMes, mesAtual, altura = 400, compacto, v }: {
   // Só aparece o seletor quando há algo em outra moeda; a visão padrão é a da moeda principal, igual a antes.
   const moeda = extras.includes(escolhida) ? escolhida : principal
   const fora = moeda !== principal
+  const [modo, setModo] = useModoDoGrafico()
   const temDividaFora = porMes.some((r) => r && Object.keys(r.dividaMoeda).length > 0)
   const algum = (f: (r: Resumo) => number) => porMes.some((r) => r && f(r) > 0)
   // O mês do painel: o aberto no app, até a pessoa tocar em outro mês do gráfico (valendo só enquanto o mês aberto não mudar).
   const [escolha, setEscolha] = useState<{ ref: number; indice: number } | null>(null)
   const indice = escolha && escolha.ref === mesAtual ? escolha.indice : Math.min(11, Math.max(0, mesAtual - 1))
   const escolher = (i: number) => setEscolha({ ref: mesAtual, indice: Math.min(11, Math.max(0, i)) })
+  const comPrevisao = !fora && modo === 'previsto'
+  const f = fluxoDosMeses(porMes, previsto, fora ? 'feito' : modo)
   const data = (fora
     ? {
         labels: MESES_CURTO,
@@ -301,12 +407,16 @@ export function GraficoAnual({ porMes, mesAtual, altura = 400, compacto, v }: {
     : {
         labels: MESES_CURTO,
         datasets: [
-          barra(tx('Entrou'), PALETA.entradas, serie(porMes, (r) => r.entradas), compacto),
-          barra(tx('Saiu'), PALETA.saidas, serie(porMes, (r) => r.saidas), compacto),
-          ...(v.bancos ? [linhaSuave(tx('Guardado nas contas'), PALETA.caixa, serie(porMes, (r) => r.caixa), c.fundo, compacto)] : []),
+          barra(tx('Entrou'), PALETA.entradas, f.entrou, compacto, comPrevisao ? 'entrou' : undefined),
+          barra(tx('Saiu'), PALETA.saidas, f.saiu, compacto, comPrevisao ? 'saiu' : undefined),
+          ...(comPrevisao ? [
+            barraPrevista(tx('Vai entrar'), PALETA.entradas[0], f.vaiEntrar, compacto, 'entrou'),
+            barraPrevista(tx('Vai sair'), PALETA.saidas[0], f.vaiSair, compacto, 'saiu'),
+          ] : []),
+          ...(v.bancos ? [linhaSuave(tx('Guardado nas contas'), PALETA.caixa, saldo(porMes, (r) => r.caixa), c.fundo, compacto)] : []),
           ...(v.dividas ? [linhaSuave(tx('Dívidas'), PALETA.divida, serie(porMes, (r) => r.divida), c.fundo, compacto, true)] : []),
-          ...(v.investimentos ? [linhaSuave(tx('Investido'), PALETA.investimentos, serie(porMes, (r) => r.investimentos), c.fundo, compacto)] : []),
-          ...(v.moedas ? [linhaSuave(tx('Em outras moedas'), PALETA.usd, serie(porMes, (r) => r.moedasConvertido), c.fundo, compacto)] : []),
+          ...(v.investimentos ? [linhaSuave(tx('Investido'), PALETA.investimentos, saldo(porMes, (r) => r.investimentos), c.fundo, compacto)] : []),
+          ...(v.moedas ? [linhaSuave(tx('Em outras moedas'), PALETA.usd, saldo(porMes, (r) => r.moedasConvertido), c.fundo, compacto)] : []),
         ],
       }) as unknown as ChartData<'bar'>
   const opcoesBase = opcoes(c, { rotulos: MESES_CURTO, mesDoIndice: (i) => i + 1, mesAtual: indice + 1, compacto, destacar: true, formatar: fora ? (n) => fmtMoeda(n, moeda) : fmtValor })
@@ -325,20 +435,25 @@ export function GraficoAnual({ porMes, mesAtual, altura = 400, compacto, v }: {
     },
     plugins: { ...opcoesBase.plugins, tooltip: { enabled: false }, filler: { drawTime: 'beforeDatasetsDraw' } },
   }
+  const { datasets: seriesFinais, opcoes: opcoesFinais } = comPrevisao
+    ? empilhar(data.datasets as { type?: string }[], base)
+    : { datasets: data.datasets, opcoes: base }
+  const dadosFinais = { ...data, datasets: seriesFinais } as unknown as ChartData<'bar'>
   return (
     <>
-      {extras.length > 0 && (
-        <div className="grafico-moeda">
+      <div className="grafico-moeda">
+        {!fora && <SeletorDoModo modo={modo} aoMudar={setModo} />}
+        {extras.length > 0 && (
           <Segmentado rotulo={tx('Ver o gráfico em')} valor={moeda} aoMudar={setEscolhida}
             opcoes={[principal, ...extras].map((m) => ({ id: m, nome: m }))} />
-        </div>
-      )}
+        )}
+      </div>
       <div className="grafico-com-painel">
         <div className="gcp">
           <CaixaDoGrafico style={{ height: altura }}>
-            <Misto type="bar" key={c.tema + c.ocultos + moeda} data={data} options={base} />
+            <Misto type="bar" key={c.tema + c.ocultos + moeda + modo} data={dadosFinais} options={opcoesFinais} />
           </CaixaDoGrafico>
-          <PainelDoMes indice={indice} r={porMes[indice] ?? null} v={v} fora={fora} moeda={moeda} aoMudar={escolher} />
+          <PainelDoMes indice={indice} r={porMes[indice] ?? null} v={v} fora={fora} moeda={moeda} aoMudar={escolher} p={previsto[indice]} modo={modo} />
         </div>
       </div>
       {fora

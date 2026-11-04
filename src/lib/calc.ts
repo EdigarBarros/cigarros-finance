@@ -24,6 +24,8 @@ export interface MesEfetivo extends Mes {
 // nunca preencheu e o de quem zerou são iguais, e separar os dois pede uma migração no banco.
 const caixaInformado = (c?: Caixa) => Object.values(c ?? {}).some((b) => TIPOS_CAIXA.some((t) => typeof b?.[t] === 'number'))
 const moedasInformadas = (m?: Record<string, number>) => Object.values(m ?? {}).some((v) => typeof v === 'number')
+/** O mês tem algum saldo (guardado, outras moedas ou investido), próprio ou herdado? */
+export const saldoInformado = (m: Pick<Mes, 'caixa' | 'moedas' | 'investimentos'>) => caixaInformado(m.caixa) || moedasInformadas(m.moedas) || m.investimentos > 0
 
 /**
  * Caixa, investimentos, outras moedas e meta passam de um mês para o outro até você atualizar.
@@ -78,7 +80,7 @@ const nativoPorMoeda = (ls: Lancamento[]) => {
   return r
 }
 
-export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: Mes | undefined, taxas: Taxas, categoriaDo: CategoriaDoLanc) {
+export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: Mes | undefined, taxas: Taxas, categoriaDo: CategoriaDoLanc, saldoDesconhecido = false) {
   const entradas = soma(lancs.filter((l) => l.tipo === 'entrada').map((l) => l.valor))
   const saidasLista = lancs.filter((l) => l.tipo === 'saida')
   const saidas = soma(saidasLista.map((l) => l.valor))
@@ -95,6 +97,8 @@ export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: M
     saidas,
     fluxo: entradas - saidas,
     caixa: totalCaixa(mes),
+    /** Mês futuro em que ninguém informou o saldo: guardado, investido e outras moedas não são zero, são desconhecidos (os gráficos deixam em branco). */
+    saldoDesconhecido,
     /** Quanto se deve: no mês de hoje, já com os juros de atraso estimados. */
     divida: soma(convertidas.map((d) => d.restanteHoje)),
     /** Em outra moeda, no valor que a pessoa digitou (sem conversão): entradas, saídas e dívidas de cada moeda. */
