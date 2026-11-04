@@ -65,6 +65,23 @@ export interface Divida {
   /** Juros da dívida em % ao mês (migração 19): 2.5 = 2,5% ao mês; null = não informado. Só faz sentido em dívida que você deve. */
   juros_mes?: number | null
   obs?: string | null
+  /**
+   * Partes da dívida (migração 21), já em ordem de vencimento: as mini-dívidas que formam uma dívida maior, uma linha por
+   * parcela de cada parte. Não é coluna de `dividas`: o app junta da tabela divida_partes. Com partes, o calendário sai delas.
+   */
+  partes?: ParteDivida[]
+}
+
+/** Uma parcela de uma parte da dívida: "Microfone, parcela 2 de 6, R$ 78,50, vence 02/03" (migração 21). */
+export interface ParteDivida {
+  id: string
+  divida_id: string
+  /** De que é a parte: "Microfone", "Mouse sem fio". */
+  nome: string
+  valor: number
+  vencimento: string
+  parcela: number | null
+  parcelas: number | null
 }
 
 /** "Em tal data, o saldo devedor era X" (informado por você ou vindo da planilha). */

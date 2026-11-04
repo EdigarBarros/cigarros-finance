@@ -3,7 +3,7 @@ import { CATEGORIAS_ANTIGAS } from './categorias'
 import { normPerfil } from './perfil'
 import { lerTudo, supabase } from './supabase'
 import type { EscolhaZerar, ParteZerar } from './zerar'
-import type { Banco, Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida } from './types'
+import type { Banco, Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, ParteDivida, Perfil, SaldoDivida } from './types'
 import { fmtDataLonga } from './format'
 import { mesesDaAnalise } from './conselheiro'
 import { tx } from './textos'
@@ -18,6 +18,10 @@ const normDiv = (r: Divida): Divida => ({
   ...('juros_mes' in r ? { juros_mes: r.juros_mes == null ? null : num(r.juros_mes) } : {}),
 })
 const normSaldo = (r: SaldoDivida): SaldoDivida => ({ ...r, saldo: num(r.saldo) })
+const normParte = (r: ParteDivida): ParteDivida => ({ ...r, valor: num(r.valor) })
+const centavos = (n: number) => Math.round(n * 100) / 100
+/** Dia de hoje (AAAA-MM-DD) no fuso do aparelho. */
+const hojeIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 const normMeta = (r: Meta): Meta => ({ ...r, alvo: num(r.alvo) })
 const normMovMeta = (r: MovimentoMeta): MovimentoMeta => ({ ...r, valor: num(r.valor) })
 const normMes = (r: Mes & { usd?: number }): Mes => {
@@ -52,6 +56,10 @@ const semExtrasDivida = <T extends object>(o: T) =>
 const semMoedaDivida = <T extends object>(o: T) => { const { moeda: _m, ...resto } = o as T & { moeda?: unknown }; return resto as T }
 /** Sem a migração 19 a coluna `juros_mes` não existe. */
 const semJurosDivida = <T extends object>(o: T) => { const { juros_mes: _j, ...resto } = o as T & { juros_mes?: unknown }; return resto as T }
+/** `partes` vem de outra tabela (divida_partes): nunca vai junto quando a dívida é gravada. */
+const semPartes = <T extends object>(o: T) => { const { partes: _p, ...resto } = o as T & { partes?: unknown }; return resto as T }
+/** Parte nova de uma dívida, antes de ganhar id. */
+export type NovaParte = Omit<ParteDivida, 'id' | 'divida_id'>
 export type NovaDivida = Pick<Divida, 'descricao' | 'valor_parcela'> & Partial<Pick<Divida, (typeof EXTRAS_DIVIDA)[number] | 'moeda' | 'juros_mes'>>
 
 /**
@@ -80,6 +88,10 @@ export function useDados(userId: string, ano: number) {
   const [meses, setMeses] = useState<Mes[]>([])
   const [dividas, setDividas] = useState<Divida[]>([])
   const [saldos, setSaldos] = useState<SaldoDivida[]>([])
+  /** Partes das dívidas (migração 21), de todas as dívidas. */
+  const [partes, setPartes] = useState<ParteDivida[]>([])
+  /** Sem a migração 21: não há onde guardar as partes de uma dívida. */
+  const [partesSemTabela, setPartesSemTabela] = useState(false)
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
   const [bancos, setBancos] = useState<Banco[]>([])
   /** undefined = carregando; null = a pessoa ainda não tem perfil salvo. */
@@ -113,7 +125,7 @@ export function useDados(userId: string, ano: number) {
   const recarregar = useCallback(async () => {
     const meu = ++pedidoAtual.current
     setCarregando(true)
-    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, xj, vc, rc] = await Promise.all([
+    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, xj, vc, rc, pt] = await Promise.all([
       // as tabelas que crescem sem parar são lidas em páginas (lerTudo): o Supabase corta em 1000 linhas
       lerTudo(() => supabase.from('lancamentos').select('*').eq('ano', ano).order('data').order('created_at').order('id')),
       lerTudo(() => supabase.from('meses').select('*').order('ano').order('mes')),
@@ -130,6 +142,7 @@ export function useDados(userId: string, ano: number) {
       supabase.from('dividas').select('juros_mes').limit(1),
       lerTudo(() => supabase.from('lancamentos').select('id, conta_fixa_id, descricao, valor').not('conta_fixa_id', 'is', null).neq('ano', ano).order('id')),
       lancamentosRecentes(ano),
+      lerTudo(() => supabase.from('divida_partes').select('*').order('vencimento').order('id')),
     ])
     // Conta nova: ganha as categorias padrão (definidas no banco, migração 5). Isso precisa acontecer ANTES de qualquer setState:
     // um await no meio fazia o React desenhar o painel de verdade (perfil já lido, "carregando" ainda ligado) e só depois as
@@ -157,6 +170,9 @@ export function useDados(userId: string, ano: number) {
     marcarFalta(xd, setDividasSemExtras)
     marcarFalta(xm, setDividasSemMoeda)
     marcarFalta(xj, setDividasSemJuros)
+    // sem a migração 21 a tabela não existe: as dívidas funcionam como antes, sem partes
+    if (pt.error && faltaTabela(pt.error)) { setPartesSemTabela(true); setPartes([]) }
+    else if (!pt.error) { setPartesSemTabela(false); setPartes((pt.data as ParteDivida[]).map(normParte)) }
     // sem a migração 7 a coluna não existe: o app só não aprende com os outros anos
     setVinculosOutrosAnos(vc.error ? [] : (vc.data as Pick<Lancamento, 'id' | 'conta_fixa_id' | 'descricao' | 'valor'>[]).map((x) => ({ ...x, valor: num(x.valor) })))
     const e = l.error ?? m.error ?? d.error ?? s.error ?? p.error ?? b.error
@@ -238,7 +254,7 @@ export function useDados(userId: string, ano: number) {
   const semMoedaSeFalta = <T extends object>(o: T) => (dividasSemMoeda ? semMoedaDivida(o) : o)
   const semJurosSeFalta = <T extends object>(o: T) => (dividasSemJuros ? semJurosDivida(o) : o)
   /** Tira da dívida o que o banco ainda não tem (migrações 10, 14 e 19 pendentes) antes de gravar. */
-  const paraBancoDivida = <T extends object>(o: T) => semJurosSeFalta(semMoedaSeFalta(dividasSemExtras ? semExtrasDivida(o) : o))
+  const paraBancoDivida = <T extends object>(o: T) => semPartes(semJurosSeFalta(semMoedaSeFalta(dividasSemExtras ? semExtrasDivida(o) : o)))
   const addLanc = async (novo: Omit<Lancamento, 'id'>): Promise<Lancamento | undefined> => {
     const { data, error } = await gravar(() => supabase.from('lancamentos').insert(paraBanco(novo)).select().single())
     if (error) {
@@ -318,6 +334,7 @@ export function useDados(userId: string, ano: number) {
   const delDivida = async (id: string) => {
     setDividas((xs) => xs.filter((x) => x.id !== id))
     setSaldos((xs) => xs.filter((x) => x.divida_id !== id))
+    setPartes((xs) => xs.filter((x) => x.divida_id !== id))
     setPagamentos((xs) => xs.filter((x) => x.divida_id !== id))
     setLancs((xs) => xs.map((x) => (x.divida_id === id ? { ...x, divida_id: null } : x)))
     const { error } = await supabase.from('dividas').delete().eq('id', id)
@@ -362,6 +379,65 @@ export function useDados(userId: string, ano: number) {
     }
     return null
   }
+
+  /**
+   * Depois de mudar as partes de uma dívida, o saldo dela acompanha a soma das partes: com saldo já registrado, soma a
+   * diferença em todos os saldos (como mudar o valor total da dívida); sem saldo, a dívida nasce com a soma, no dia mais
+   * cedo entre hoje e o primeiro vencimento (dívida de parcelas já vencidas existia desde antes delas).
+   */
+  const acertarSaldoDasPartes = async (divida_id: string, antes: ParteDivida[], depois: ParteDivida[]) => {
+    const somaAntes = centavos(antes.reduce((a, p) => a + p.valor, 0))
+    const somaDepois = centavos(depois.reduce((a, p) => a + p.valor, 0))
+    const delta = centavos(somaDepois - somaAntes)
+    if (!delta) return
+    if (saldos.some((s) => s.divida_id === divida_id)) return ajustarValorDivida(divida_id, delta)
+    const primeira = depois.reduce((m, p) => (p.vencimento < m ? p.vencimento : m), hojeIso())
+    if (somaDepois > 0) await addSaldo(divida_id, primeira, somaDepois)
+  }
+  const partesDa = (divida_id: string) => partes.filter((p) => p.divida_id === divida_id)
+
+  /** Acrescenta partes (uma linha por parcela) a uma dívida. */
+  const addPartes = async (divida_id: string, novas: NovaParte[]) => {
+    if (!novas.length) return
+    const antes = partesDa(divida_id)
+    const { data, error } = await supabase.from('divida_partes').insert(novas.map((n) => ({ ...n, divida_id }))).select()
+    if (error) return falhou(error.message)
+    const criadas = (data as ParteDivida[]).map(normParte)
+    setPartes((xs) => [...xs, ...criadas])
+    await acertarSaldoDasPartes(divida_id, antes, [...antes, ...criadas])
+  }
+  /** Muda uma parcela de uma parte (valor, vencimento, nome). */
+  const updParte = async (id: string, patch: Partial<NovaParte>) => {
+    const atual = partes.find((p) => p.id === id)
+    if (!atual) return
+    const antes = partesDa(atual.divida_id)
+    const depois = antes.map((p) => (p.id === id ? { ...p, ...patch } : p))
+    setPartes((xs) => xs.map((p) => (p.id === id ? { ...p, ...patch } : p)))
+    const { error } = await supabase.from('divida_partes').update(patch).eq('id', id)
+    if (error) return falhou(error.message)
+    await acertarSaldoDasPartes(atual.divida_id, antes, depois)
+  }
+  /** Apaga parcelas de partes (uma, ou todas de uma parte). */
+  const delPartes = async (ids: string[]) => {
+    const alvo = partes.find((p) => ids.includes(p.id))
+    if (!alvo) return
+    const antes = partesDa(alvo.divida_id)
+    setPartes((xs) => xs.filter((p) => !ids.includes(p.id)))
+    const { error } = await supabase.from('divida_partes').delete().in('id', ids)
+    if (error) return falhou(error.message)
+    await acertarSaldoDasPartes(alvo.divida_id, antes, antes.filter((p) => !ids.includes(p.id)))
+  }
+
+  /** As dívidas como as telas usam: cada uma com as suas partes (em ordem de vencimento), quando tem. */
+  const dividasComPartes = useMemo(() => {
+    if (!partes.length) return dividas
+    const por = new Map<string, ParteDivida[]>()
+    for (const p of partes) por.set(p.divida_id, [...(por.get(p.divida_id) ?? []), p])
+    return dividas.map((d) => {
+      const ps = por.get(d.id)
+      return ps ? { ...d, partes: [...ps].sort((a, b) => a.vencimento.localeCompare(b.vencimento) || a.nome.localeCompare(b.nome)) } : d
+    })
+  }, [dividas, partes])
 
   /**
    * Os meses como as telas usam: o caixa só com os bancos que existem. Excluir um banco não apaga o que ficou guardado nele
@@ -518,7 +594,7 @@ export function useDados(userId: string, ano: number) {
     if (tem('saidas')) await apagar('lancamentos', ['tipo', 'saida'])
     if (tem('contas')) await apagar('contas_fixas')
     if (tem('cartoes')) await apagar('cartoes')
-    if (tem('dividas')) { await apagar('divida_saldos'); await apagar('dividas') }
+    if (tem('dividas')) { await apagar('divida_partes'); await apagar('divida_saldos'); await apagar('dividas') }
     if (todo) await apagar('meses')
     else if (e.guardado) checar((await tab('meses').update({ investimentos: 0, moedas: {}, caixa: {} }).eq('user_id', userId)).error)
     if (todo) for (const t of ['bancos', 'categorias', 'perfis']) await apagar(t)
@@ -533,7 +609,8 @@ export function useDados(userId: string, ano: number) {
     dividasSemExtras,
     dividasSemMoeda,
     dividasSemJuros,
-    lancs, lancsRecentes, meses: mesesDosBancos, dividas, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,
+    partesSemTabela, addPartes, updParte, delPartes,
+    lancs, lancsRecentes, meses: mesesDosBancos, dividas: dividasComPartes, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,
     addLanc, addLancs, renomearLancs, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, ajustarValorDivida, moverInicioDivida, salvarMes,
   }
 }
