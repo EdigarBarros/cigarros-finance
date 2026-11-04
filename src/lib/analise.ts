@@ -267,6 +267,8 @@ export interface MetaNoPlano {
   icone: string
   moeda: string
   falta: number
+  alvo: number
+  guardado: number
   /** Na moeda da meta. */
   porMes: number | null
   ritmo: number
@@ -339,6 +341,8 @@ export interface Percepcao {
   tom: Tom
   titulo: string
   porque: string
+  /** O dia de que ela fala (marcado no calendário do mês). */
+  data?: string
 }
 
 /**
@@ -355,6 +359,8 @@ export interface Agenda {
   /** O dia em que a conta fica mais baixa. */
   menorSaldo: { data: string; valor: number } | null
   percepcoes: Percepcao[]
+  /** O mês atual dia a dia: o que entrou e saiu (até hoje) e o que vai entrar e sair (daqui em diante). */
+  calendario: { ano: number; mes: number; hoje: number; dias: { dia: number; entra: number; sai: number }[] }
 }
 
 export type Urgencia = 'urgente' | 'importante' | 'sugestao'
@@ -994,7 +1000,7 @@ export function analisar(e: EntradaAnalise): Analise {
     const prazo = m.prazo ? { ano: Number(m.prazo.slice(0, 4)), mes: Number(m.prazo.slice(5, 7)) } : null
     const previsao = ritmo > 0 ? doMesChave(atual + Math.ceil(s.falta / ritmo - 1e-9)) : null
     return {
-      id: m.id, nome: m.nome, icone: m.icone, moeda: m.moeda, falta: s.falta, porMes: s.porMesNoPrazo, ritmo: centavos(ritmo), prazo, previsao,
+      id: m.id, nome: m.nome, icone: m.icone, moeda: m.moeda, falta: s.falta, alvo: m.alvo, guardado: s.guardado, porMes: s.porMesNoPrazo, ritmo: centavos(ritmo), prazo, previsao,
       noRitmo: s.porMesNoPrazo === null ? ritmo > 0 : !s.atrasada && ritmo >= s.porMesNoPrazo * 0.9,
     }
   })
@@ -1279,7 +1285,7 @@ export function analisar(e: EntradaAnalise): Analise {
               ? tx('Em {0} vencem {1}, e não há dinheiro previsto para entrar até lá. Para não atrasar, é preciso ter {2} na conta.', dia, quais, v1)
               : tx('Em {0} vence {1}, e não há dinheiro previsto para entrar até lá. Para não atrasar, é preciso ter {2} na conta.', dia, quais, v1)
         percepcoes.push({
-          id: 'aperto', peso: 100, icone: 'relogio', tom: 'ruim', porque: texto,
+          id: 'aperto', peso: 100, icone: 'relogio', tom: 'ruim', porque: texto, data: primeiroNegativo.data,
           titulo: saldoInicial !== null ? tx('Em {0}, a conta pode ficar no vermelho.', data(primeiroNegativo.data)) : tx('Tem conta vencendo antes de o dinheiro entrar.'),
         })
       }
@@ -1301,7 +1307,7 @@ export function analisar(e: EntradaAnalise): Analise {
     if (comDono) {
       const c = comDono
       percepcoes.push({
-        id: `com-dono:${c.d.data}`, peso: 90, icone: 'acordo', tom: 'medio',
+        id: `com-dono:${c.d.data}`, peso: 90, icone: 'acordo', tom: 'medio', data: c.d.data,
         titulo: tx('O dinheiro de {0} já chega com dono.', data(c.d.data)),
         porque: `${c.d.saidas.length === 1
           ? tx('{0} ({1}) cai no mesmo dia em que vence {2} ({3}). Desse dinheiro, sobram {4} para o resto.',
@@ -1315,7 +1321,7 @@ export function analisar(e: EntradaAnalise): Analise {
     if (comprometido) {
       const c = comprometido
       percepcoes.push({
-        id: `comprometido:${c.d.data}`, peso: 80, icone: 'carteira', tom: c.fracao >= 1 ? 'ruim' : 'medio',
+        id: `comprometido:${c.d.data}`, data: c.d.data, peso: 80, icone: 'carteira', tom: c.fracao >= 1 ? 'ruim' : 'medio',
         titulo: c.fracao >= 1 ? tx('O dinheiro de {0} não cobre o que vence logo depois.', data(c.d.data)) : tx('{0}% do dinheiro de {1} já tem destino.', pct(c.fracao), data(c.d.data)),
         porque: tx('Entram {0} e, até {1}, saem {2} em contas, parcelas e faturas. Sobram {3} para o dia a dia até o próximo dinheiro.',
           fmtValor(c.entra), data(c.ate), fmtValor(c.total), fmtValor(Math.max(0, centavos(c.entra - c.total)))),
@@ -1357,7 +1363,7 @@ export function analisar(e: EntradaAnalise): Analise {
     }
     if (melhor && saidas30 > 0 && melhor.total / saidas30 >= 0.6 && melhor.qtd >= 3 && melhor.de !== melhor.ate) {
       percepcoes.push({
-        id: 'amontoadas', peso: 55, icone: 'calendario', tom: melhor.entra >= melhor.total ? 'bom' : 'medio',
+        id: 'amontoadas', data: melhor.de, peso: 55, icone: 'calendario', tom: melhor.entra >= melhor.total ? 'bom' : 'medio',
         titulo: tx('{0}% das contas dos próximos 30 dias vencem entre {1} e {2}.', pct(melhor.total / saidas30), data(melhor.de), data(melhor.ate)),
         porque: melhor.entra >= melhor.total
           ? tx('O dinheiro que entra nesses dias cobre tudo: bom sinal, desde que ele caia antes dos vencimentos.')
@@ -1389,11 +1395,27 @@ export function analisar(e: EntradaAnalise): Analise {
       })
     }
 
+    const diasNoMesAtual = new Date(ano, mes, 0).getDate()
+    const cal = Array.from({ length: diasNoMesAtual }, (_, i) => ({ dia: i + 1, entra: 0, sai: 0 }))
+    for (const l of naJanela) {
+      if (l.ano !== ano || l.mes !== mes || !l.data || l.data > hojeIso) continue
+      const c = cal[diaDe(l.data) - 1]
+      if (!c) continue
+      if (l.tipo === 'entrada') c.entra += l.valor
+      else c.sai += l.valor
+    }
+    for (const ev of unicos) {
+      if (ev.data.slice(0, 7) !== hojeIso.slice(0, 7)) continue
+      const c = cal[diaDe(ev.data) - 1]
+      if (ev.tipo === 'entrada') c.entra += ev.valor
+      else c.sai += ev.valor
+    }
+    const calendario = { ano, mes, hoje: diaHoje, dias: cal.map((c) => ({ dia: c.dia, entra: centavos(c.entra), sai: centavos(c.sai) })) }
     const entradaFutura = dias.find((d) => d.entradas.length)
     const menor = dias.length ? dias.reduce((m, d) => (d.saldo < m.saldo ? d : m)) : null
-    if (unicos.length || saldoInicial !== null) {
+    if (unicos.length || saldoInicial !== null || calendario.dias.some((c) => c.entra || c.sai)) {
       agenda = {
-        dias, saldoInicial, ritmoDia,
+        dias, saldoInicial, ritmoDia, calendario,
         proximaEntrada: entradaFutura ? { data: entradaFutura.data, valor: totalDe(entradaFutura.entradas), descricao: nomesDe(entradaFutura.entradas) } : null,
         menorSaldo: menor ? { data: menor.data, valor: menor.saldo } : null,
         percepcoes: percepcoes.sort((a, b) => b.peso - a.peso).map(({ peso: _p, ...x }) => x),

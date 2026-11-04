@@ -7359,525 +7359,45 @@
     "en": "You can spend {0} a day until the end of the month (before, {1}).",
     "es": "Puedes gastar {0} por día hasta fin de mes (antes, {1})."
   },
-  "Seu consultor começa a trabalhar no primeiro lançamento": {
-    "en": "Your advisor gets to work with your first transaction",
-    "es": "Tu asesor empieza a trabajar con tu primer movimiento"
-  },
-  "A cada entrada, saída, compra no cartão ou dívida que você lançar, o app refaz a análise: quanto sobra, para onde vai o dinheiro, o que cortar, qual dívida pagar primeiro e quanto guardar.": {
-    "en": "Every time you add income, an expense, a card purchase or a debt, the app redoes the analysis: what's left over, where the money goes, what to cut, which debt to pay first and how much to save.",
-    "es": "Con cada ingreso, gasto, compra con tarjeta o deuda que registres, la app rehace el análisis: cuánto sobra, a dónde va el dinero, qué recortar, qué deuda pagar primero y cuánto ahorrar."
-  },
   "Avisar quando a análise mudar": {
     "en": "Notify me when the analysis changes",
     "es": "Avisar cuando cambie el análisis"
-  },
-  "São orientações de educação financeira calculadas com o que você lançou. Não são recomendação de investimento: para decisões grandes, converse com um profissional.": {
-    "en": "This is financial education guidance calculated from what you entered. It isn't investment advice: for big decisions, talk to a professional.",
-    "es": "Son orientaciones de educación financiera calculadas con lo que registraste. No son una recomendación de inversión: para decisiones grandes, habla con un profesional."
   },
   "Seu consultor": {
     "en": "Your advisor",
     "es": "Tu asesor"
   },
-  "A análise é refeita a cada mudança nos seus dados.": {
-    "en": "The analysis is redone every time your data changes.",
-    "es": "El análisis se rehace con cada cambio en tus datos."
-  },
-  "Analisei 1 mês dos seus lançamentos. Refaço tudo a cada mudança.": {
-    "en": "I analyzed 1 month of your transactions. I redo everything with every change.",
-    "es": "Analicé 1 mes de tus movimientos. Rehago todo con cada cambio."
-  },
-  "Analisei {0} meses dos seus lançamentos. Refaço tudo a cada mudança.": {
-    "en": "I analyzed {0} months of your transactions. I redo everything with every change.",
-    "es": "Analicé {0} meses de tus movimientos. Rehago todo con cada cambio."
-  },
-  "Fases da sua vida financeira": {
-    "en": "Stages of your financial life",
-    "es": "Fases de tu vida financiera"
-  },
-  "Nada pedindo ação agora. Continue lançando: a cada mudança, o plano é refeito.": {
-    "en": "Nothing needs action right now. Keep adding transactions: the plan is redone with every change.",
-    "es": "Nada pide acción ahora. Sigue registrando: con cada cambio, el plan se rehace."
-  },
-  "Já entrou": {
-    "en": "Already in",
-    "es": "Ya entró"
-  },
-  "Ainda deve entrar (pela sua média)": {
-    "en": "Still to come in (based on your average)",
-    "es": "Todavía debe entrar (según tu promedio)"
-  },
-  "Ainda deve entrar": {
-    "en": "Still to come in",
-    "es": "Todavía debe entrar"
-  },
   "Já saiu": {
     "en": "Already out",
     "es": "Ya salió"
-  },
-  "Contas, parcelas e faturas que ainda vêm": {
-    "en": "Bills, installments and statements still to come",
-    "es": "Cuentas, cuotas y resúmenes que todavía vienen"
-  },
-  "Gastos do dia a dia previstos": {
-    "en": "Expected day-to-day spending",
-    "es": "Gastos del día a día previstos"
   },
   "Como {0} deve fechar": {
     "en": "How {0} should end",
     "es": "Cómo debería cerrar {0}"
   },
-  "Dia {0} de {1}: conta o que já aconteceu, o que está marcado e o seu ritmo de gastos.": {
-    "en": "Day {0} of {1}: counts what already happened, what's scheduled and your spending pace.",
-    "es": "Día {0} de {1}: cuenta lo que ya pasó, lo que está agendado y tu ritmo de gastos."
-  },
-  "{0} a mais que a sua média": {
-    "en": "{0} more than your average",
-    "es": "{0} más que tu promedio"
-  },
-  "{0} a menos que a sua média": {
-    "en": "{0} less than your average",
-    "es": "{0} menos que tu promedio"
-  },
-  "Para guardar {0} neste mês, gaste até {1} por dia no dia a dia.": {
-    "en": "To save {0} this month, spend up to {1} a day on day-to-day expenses.",
-    "es": "Para ahorrar {0} este mes, gasta hasta {1} por día en el día a día."
-  },
-  "Dá para gastar até {0} por dia no dia a dia.": {
-    "en": "You can spend up to {0} a day on day-to-day expenses.",
-    "es": "Puedes gastar hasta {0} por día en el día a día."
-  },
-  "Neste mês não há espaço para gastos do dia a dia sem mexer no guardado. Segure o que não for essencial.": {
-    "en": "This month there's no room for day-to-day spending without dipping into savings. Hold off on anything that isn't essential.",
-    "es": "Este mes no hay margen para gastos del día a día sin tocar lo ahorrado. Frena lo que no sea esencial."
-  },
-  "Resultado previsto": {
-    "en": "Expected result",
-    "es": "Resultado previsto"
-  },
-  "Sem contar renda extra (freelas, vendas, bicos): nos últimos meses, ela foi de {0} por mês em média.": {
-    "en": "Not counting extra income (freelance, sales, side gigs): in recent months it averaged {0} a month.",
-    "es": "Sin contar ingresos extra (freelance, ventas, changas): en los últimos meses fueron de {0} por mes en promedio."
-  },
-  "Até o dia {0}, saíram {1}. Nos outros meses, até esse dia, saíam {2}.": {
-    "en": "By day {0}, {1} went out. In other months, by that day, {2} used to go out.",
-    "es": "Hasta el día {0}, salieron {1}. En los otros meses, hasta ese día, salían {2}."
-  },
-  "{0} já passou da média: {1} neste mês, contra {2} por mês.": {
-    "en": "{0} is already above average: {1} this month, versus {2} a month.",
-    "es": "{0} ya pasó el promedio: {1} este mes, contra {2} por mes."
-  },
-  "Adiantar dívidas": {
-    "en": "Prepay debts",
-    "es": "Adelantar deudas"
-  },
-  "Para o longo prazo": {
-    "en": "For the long term",
-    "es": "Para el largo plazo"
-  },
-  "Folga": {
-    "en": "Breathing room",
-    "es": "Margen"
-  },
-  "Primeiro o colchão: sem ele, qualquer imprevisto vira dívida nova.": {
-    "en": "Cushion first: without it, any emergency becomes new debt.",
-    "es": "Primero el colchón: sin él, cualquier imprevisto se vuelve deuda nueva."
-  },
-  "A maior parte vai para a dívida cara: cada real adiantado nela rende os juros que ela cobra.": {
-    "en": "Most goes to the expensive debt: every dollar prepaid on it earns the interest it charges.",
-    "es": "La mayor parte va a la deuda cara: cada peso adelantado en ella rinde los intereses que cobra."
-  },
-  "A maior parte completa a reserva; o resto já começa a encher as metas.": {
-    "en": "Most completes your emergency fund; the rest starts filling your goals.",
-    "es": "La mayor parte completa la reserva; el resto ya empieza a llenar las metas."
-  },
-  "A base está pronta: a sobra vai para as metas e para o longo prazo.": {
-    "en": "The foundation is ready: your surplus goes to goals and the long term.",
-    "es": "La base está lista: lo que sobra va a las metas y al largo plazo."
-  },
-  "Para onde mandar a sobra": {
-    "en": "Where to send your surplus",
-    "es": "A dónde mandar lo que sobra"
-  },
-  "Renda: poucos meses para ver o rumo.": {
-    "en": "Income: too few months to see the trend.",
-    "es": "Ingresos: pocos meses para ver el rumbo."
-  },
-  "Gastos: poucos meses para ver o rumo.": {
-    "en": "Spending: too few months to see the trend.",
-    "es": "Gastos: pocos meses para ver el rumbo."
-  },
-  "Renda: estável.": {
-    "en": "Income: stable.",
-    "es": "Ingresos: estables."
-  },
-  "Gastos: estáveis.": {
-    "en": "Spending: stable.",
-    "es": "Gastos: estables."
-  },
-  "Renda: sobe cerca de {0}% ao mês.": {
-    "en": "Income: rising about {0}% a month.",
-    "es": "Ingresos: suben cerca del {0}% al mes."
-  },
-  "Renda: cai cerca de {0}% ao mês.": {
-    "en": "Income: falling about {0}% a month.",
-    "es": "Ingresos: bajan cerca del {0}% al mes."
-  },
-  "Gastos: sobem cerca de {0}% ao mês.": {
-    "en": "Spending: rising about {0}% a month.",
-    "es": "Gastos: suben cerca del {0}% al mes."
-  },
-  "Gastos: caem cerca de {0}% ao mês.": {
-    "en": "Spending: falling about {0}% a month.",
-    "es": "Gastos: bajan cerca del {0}% al mes."
-  },
-  "Últimos 12 meses": {
-    "en": "Last 12 months",
-    "es": "Últimos 12 meses"
-  },
-  "Quanto sobrou (ou faltou) em cada mês fechado.": {
-    "en": "How much was left over (or short) in each completed month.",
-    "es": "Cuánto sobró (o faltó) en cada mes cerrado."
-  },
-  "{0}: sem entradas e saídas lançadas": {
-    "en": "{0}: no income or expenses entered",
-    "es": "{0}: sin ingresos ni gastos registrados"
-  },
-  "Ainda não há meses fechados com entradas e saídas.": {
-    "en": "There are no completed months with income and expenses yet.",
-    "es": "Todavía no hay meses cerrados con ingresos y gastos."
-  },
-  "{0}% do que entra vem de {1}.": {
-    "en": "{0}% of what comes in is from {1}.",
-    "es": "El {0}% de lo que entra viene de {1}."
-  },
-  "Depender de uma fonte só pede uma reserva mais robusta.": {
-    "en": "Relying on a single source calls for a sturdier emergency fund.",
-    "es": "Depender de una sola fuente pide una reserva más sólida."
-  },
-  "Sua renda varia bastante de um mês para o outro: por isso a reserva ideal é de 12 meses.": {
-    "en": "Your income varies a lot from month to month: that's why the ideal emergency fund is 12 months.",
-    "es": "Tus ingresos varían bastante de un mes a otro: por eso la reserva ideal es de 12 meses."
-  },
-  "Sua renda é estável de um mês para o outro.": {
-    "en": "Your income is stable from month to month.",
-    "es": "Tus ingresos son estables de un mes a otro."
-  },
   "Necessidades": {
     "en": "Needs",
     "es": "Necesidades"
-  },
-  "casa, mercado, transporte, saúde e parcelas": {
-    "en": "home, groceries, transport, health and installments",
-    "es": "casa, supermercado, transporte, salud y cuotas"
-  },
-  "até 50%": {
-    "en": "up to 50%",
-    "es": "hasta 50%"
   },
   "Estilo de vida": {
     "en": "Lifestyle",
     "es": "Estilo de vida"
   },
-  "lazer, compras, assinaturas, restaurantes": {
-    "en": "leisure, shopping, subscriptions, restaurants",
-    "es": "ocio, compras, suscripciones, restaurantes"
-  },
-  "até 30%": {
-    "en": "up to 30%",
-    "es": "hasta 30%"
-  },
-  "Futuro": {
-    "en": "Future",
-    "es": "Futuro"
-  },
-  "o que sobra para guardar e adiantar dívidas": {
-    "en": "what's left to save and prepay debts",
-    "es": "lo que sobra para ahorrar y adelantar deudas"
-  },
-  "20% ou mais": {
-    "en": "20% or more",
-    "es": "20% o más"
-  },
-  "Regra 50/30/20": {
-    "en": "50/30/20 rule",
-    "es": "Regla 50/30/20"
-  },
-  "Uma referência simples para dividir o que entra.": {
-    "en": "A simple guide for splitting what comes in.",
-    "es": "Una referencia simple para dividir lo que entra."
-  },
-  "Dentro do ideal": {
-    "en": "Within the ideal",
-    "es": "Dentro de lo ideal"
-  },
-  "Fora do ideal": {
-    "en": "Outside the ideal",
-    "es": "Fuera de lo ideal"
-  },
-  "Só as parcelas de dívidas levam {0} do que entra.": {
-    "en": "Debt installments alone take {0} of what comes in.",
-    "es": "Solo las cuotas de deudas se llevan el {0} de lo que entra."
-  },
-  "Revisão dos gastos": {
-    "en": "Spending review",
-    "es": "Revisión de gastos"
-  },
-  "O que mudou, o que se repete todo mês e onde o dinheiro escapa sem você ver.": {
-    "en": "What changed, what repeats every month and where money slips away unnoticed.",
-    "es": "Qué cambió, qué se repite todos los meses y por dónde se escapa el dinero sin que lo veas."
-  },
-  "Nada fora do lugar nos seus gastos.": {
-    "en": "Nothing out of place in your spending.",
-    "es": "Nada fuera de lugar en tus gastos."
-  },
-  "O que mais mudou nos últimos 3 meses": {
-    "en": "What changed most in the last 3 months",
-    "es": "Lo que más cambió en los últimos 3 meses"
-  },
-  "{0} por mês são parcelas no cartão": {
-    "en": "{0} a month is card installments",
-    "es": "{0} por mes son cuotas con tarjeta"
-  },
-  "antes, {0} por mês": {
-    "en": "before, {0} a month",
-    "es": "antes, {0} por mes"
-  },
-  "Contas que se repetem todo mês": {
-    "en": "Bills that repeat every month",
-    "es": "Cuentas que se repiten todos los meses"
-  },
-  "assinatura · {0} por ano": {
-    "en": "subscription · {0} a year",
-    "es": "suscripción · {0} por año"
-  },
-  "Juntas, somam {0} por mês, e as assinaturas, {1}. Revise uma vez por ano o que ainda vale a pena.": {
-    "en": "Together they add up to {0} a month, and subscriptions to {1}. Once a year, review what's still worth it.",
-    "es": "Juntas, suman {0} por mes, y las suscripciones, {1}. Revisa una vez al año lo que todavía vale la pena."
-  },
-  "Juntas, somam {0} por mês. Revise uma vez por ano o que ainda vale a pena.": {
-    "en": "Together they add up to {0} a month. Once a year, review what's still worth it.",
-    "es": "Juntas, suman {0} por mes. Revisa una vez al año lo que todavía vale la pena."
-  },
-  "Gastos formiga": {
-    "en": "Small leaks",
-    "es": "Gastos hormiga"
-  },
-  "{0} vezes por mês, {1} em média": {
-    "en": "{0} times a month, {1} on average",
-    "es": "{0} veces por mes, {1} en promedio"
-  },
-  "por ano": {
-    "en": "a year",
-    "es": "por año"
-  },
-  "Juros, multas e tarifas": {
-    "en": "Interest, late fees and bank fees",
-    "es": "Intereses, multas y comisiones"
-  },
-  "nos últimos 12 meses: dinheiro que não volta nem compra nada.": {
-    "en": "in the last 12 months: money that never comes back and buys nothing.",
-    "es": "en los últimos 12 meses: dinero que no vuelve ni compra nada."
-  },
-  "Orçamento para {0}": {
-    "en": "Budget for {0}",
-    "es": "Presupuesto para {0}"
-  },
-  "Para guardar {0}% do que entra, alguns tetos ficam abaixo da sua média. Parcelas já assumidas não entram no corte.": {
-    "en": "To save {0}% of what comes in, some caps are below your average. Installments you already committed to aren't cut.",
-    "es": "Para ahorrar el {0}% de lo que entra, algunos topes quedan por debajo de tu promedio. Las cuotas ya asumidas no entran en el recorte."
-  },
-  "Você já guarda bem: use a sua média como teto de cada categoria.": {
-    "en": "You already save well: use your average as the cap for each category.",
-    "es": "Ya ahorras bien: usa tu promedio como tope de cada categoría."
-  },
-  "Média por mês": {
-    "en": "Monthly average",
-    "es": "Promedio por mes"
-  },
-  "Teto sugerido": {
-    "en": "Suggested cap",
-    "es": "Tope sugerido"
-  },
-  "− {0}": {
-    "en": "− {0}",
-    "es": "− {0}"
-  },
-  "Total": {
-    "en": "Total",
-    "es": "Total"
-  },
   "Só as parcelas": {
     "en": "Installments only",
     "es": "Solo las cuotas"
-  },
-  "Avalanche: juros mais altos primeiro": {
-    "en": "Avalanche: highest interest first",
-    "es": "Avalancha: intereses más altos primero"
-  },
-  "Bola de neve: menor dívida primeiro": {
-    "en": "Snowball: smallest debt first",
-    "es": "Bola de nieve: deuda más pequeña primero"
-  },
-  "Plano para sair das dívidas": {
-    "en": "Plan to get out of debt",
-    "es": "Plan para salir de las deudas"
-  },
-  "Comparando com {0} a mais por mês: um exemplo, porque hoje a sobra ainda não tem espaço para isso.": {
-    "en": "Comparing with {0} more a month: an example, since your surplus doesn't have room for it yet.",
-    "es": "Comparando con {0} más por mes: un ejemplo, porque hoy lo que sobra todavía no tiene espacio para eso."
-  },
-  "Comparando com {0} a mais por mês, a parte da sua sobra que o plano separa para as dívidas.": {
-    "en": "Comparing with {0} more a month, the part of your surplus the plan sets aside for debts.",
-    "es": "Comparando con {0} más por mes, la parte de lo que sobra que el plan separa para las deudas."
-  },
-  "Você deve": {
-    "en": "You owe",
-    "es": "Debes"
-  },
-  "Juros por mês, hoje": {
-    "en": "Interest per month, today",
-    "es": "Intereses por mes, hoy"
-  },
-  "Juros que ainda estão nas parcelas": {
-    "en": "Interest still built into installments",
-    "es": "Intereses que todavía están en las cuotas"
-  },
-  "Estratégia": {
-    "en": "Strategy",
-    "es": "Estrategia"
-  },
-  "Sem dívidas em": {
-    "en": "Debt-free in",
-    "es": "Sin deudas en"
-  },
-  "Total pago": {
-    "en": "Total paid",
-    "es": "Total pagado"
-  },
-  "Economia": {
-    "en": "Savings",
-    "es": "Ahorro"
-  },
-  "Recomendada": {
-    "en": "Recommended",
-    "es": "Recomendada"
-  },
-  "Não acaba": {
-    "en": "Never ends",
-    "es": "No termina"
-  },
-  "Ordem de pagamento": {
-    "en": "Payment order",
-    "es": "Orden de pago"
-  },
-  "{0}% ao mês · falta {1}": {
-    "en": "{0}% a month · {1} left",
-    "es": "{0}% al mes · faltan {1}"
-  },
-  "juros não informados · falta {0}": {
-    "en": "interest not entered · {0} left",
-    "es": "intereses no informados · faltan {0}"
-  },
-  "em vez de {0}": {
-    "en": "instead of {0}",
-    "es": "en lugar de {0}"
-  },
-  "As contas usam as parcelas que faltam e os juros informados. Ao adiantar, peça ao credor o desconto dos juros: o valor exato é ele quem diz.": {
-    "en": "The math uses the remaining installments and the interest you entered. When prepaying, ask the lender for the interest discount: they'll tell you the exact amount.",
-    "es": "Las cuentas usan las cuotas que faltan y los intereses informados. Al adelantar, pide al acreedor el descuento de los intereses: el valor exacto lo dice él."
-  },
-  "Ideal": {
-    "en": "Ideal",
-    "es": "Ideal"
   },
   "Falta": {
     "en": "To go",
     "es": "Falta"
   },
-  "Reserva completa. Deixe esse dinheiro onde dá para tirar no mesmo dia, rendendo pelo menos a inflação.": {
-    "en": "Emergency fund complete. Keep this money where you can withdraw it the same day, earning at least inflation.",
-    "es": "Reserva completa. Deja ese dinero donde puedas sacarlo el mismo día, rindiendo al menos la inflación."
-  },
-  "Quando sobrar dinheiro no mês, comece por aqui.": {
-    "en": "When you have money left over in the month, start here.",
-    "es": "Cuando te sobre dinero en el mes, empieza por aquí."
-  },
-  "Como a sua renda varia, o ideal é ter 12 meses de gastos.": {
-    "en": "Since your income varies, the ideal is 12 months of spending.",
-    "es": "Como tus ingresos varían, lo ideal es tener 12 meses de gastos."
-  },
-  "Para renda estável, o ideal é ter 6 meses de gastos.": {
-    "en": "For stable income, the ideal is 6 months of spending.",
-    "es": "Para ingresos estables, lo ideal es tener 6 meses de gastos."
-  },
-  "Conta o que está na sua meta de reserva.": {
-    "en": "It counts what's in your emergency fund goal.",
-    "es": "Cuenta lo que está en tu meta de reserva."
-  },
-  "Pedem {0} por mês e cabem no plano.": {
-    "en": "They need {0} a month and fit the plan.",
-    "es": "Piden {0} por mes y caben en el plan."
-  },
-  "Pedem {0} por mês; pelo plano, cabem {1}.": {
-    "en": "They need {0} a month; the plan fits {1}.",
-    "es": "Piden {0} por mes; según el plan, caben {1}."
-  },
-  "Sem prazo definido: guarde um pouco todo mês.": {
-    "en": "No deadline set: save a little every month.",
-    "es": "Sin plazo definido: ahorra un poco todos los meses."
-  },
-  "pede {0} por mês · você guarda {1}": {
-    "en": "needs {0} a month · you save {1}",
-    "es": "pide {0} por mes · ahorras {1}"
-  },
-  "você guarda {0} por mês": {
-    "en": "you save {0} a month",
-    "es": "ahorras {0} por mes"
-  },
-  "nada guardado nos últimos meses": {
-    "en": "nothing saved in recent months",
-    "es": "nada ahorrado en los últimos meses"
-  },
-  "Atrasada": {
-    "en": "Behind",
-    "es": "Atrasada"
-  },
-  "prazo: {0}": {
-    "en": "deadline: {0}",
-    "es": "plazo: {0}"
-  },
   "Tudo o que é seu": {
     "en": "Your net worth",
     "es": "Todo lo que es tuyo"
   },
-  "O que você tem guardado e investido, menos o que deve.": {
-    "en": "What you have saved and invested, minus what you owe.",
-    "es": "Lo que tienes ahorrado e invertido, menos lo que debes."
-  },
-  "Tem": {
-    "en": "You have",
-    "es": "Tienes"
-  },
-  "Deve": {
-    "en": "You owe",
-    "es": "Debes"
-  },
   "Desde {0}": {
     "en": "Since {0}",
     "es": "Desde {0}"
-  },
-  "Em 12 meses, no ritmo de hoje": {
-    "en": "In 12 months, at today's pace",
-    "es": "En 12 meses, al ritmo de hoy"
-  },
-  "Em 12 meses, seguindo o orçamento": {
-    "en": "In 12 months, following the budget",
-    "es": "En 12 meses, siguiendo el presupuesto"
-  },
-  "A projeção soma a sobra de cada mês e as parcelas pagas (cada parcela paga é dívida a menos). Não conta rendimento de investimentos.": {
-    "en": "The projection adds each month's surplus and the installments paid (every installment paid is less debt). It doesn't count investment returns.",
-    "es": "La proyección suma lo que sobra cada mes y las cuotas pagadas (cada cuota pagada es deuda de menos). No cuenta el rendimiento de las inversiones."
   },
   "Analisei a mudança": {
     "en": "I analyzed the change",
@@ -8027,116 +7547,300 @@
     "en": "After that, {0} a month is yours again. Decide now where it goes (emergency fund, next debt or a goal): money without a plan vanishes into day-to-day spending.",
     "es": "Después de eso, {0} por mes vuelven a ser tuyos. Decide desde ya a dónde van (reserva, la deuda de turno o una meta): el dinero sin destino se pierde en el día a día."
   },
-  "Agenda do mês": {
-    "en": "Month calendar",
-    "es": "Agenda del mes"
+  "Sobra": {
+    "en": "Surplus",
+    "es": "Sobra"
   },
-  "Próximo dinheiro: {0} em {1}": {
-    "en": "Next money in: {0} on {1}",
-    "es": "Próximo dinero: {0} el {1}"
+  "Controle": {
+    "en": "Control",
+    "es": "Control"
   },
-  "O que entra e sai, dia a dia": {
-    "en": "What comes in and goes out, day by day",
-    "es": "Lo que entra y sale, día a día"
+  "Seu mês, dia a dia": {
+    "en": "Your month, day by day",
+    "es": "Tu mes, día a día"
   },
-  "Seus gastos": {
-    "en": "Your spending",
-    "es": "Tus gastos"
+  "Verde: dinheiro que entra. Vermelho: o que sai.": {
+    "en": "Green: money coming in. Red: money going out.",
+    "es": "Verde: dinero que entra. Rojo: lo que sale."
   },
-  "Necessidades {0} · estilo de vida {1} · sobra {2}": {
-    "en": "Needs {0} · lifestyle {1} · surplus {2}",
-    "es": "Necesidades {0} · estilo de vida {1} · sobra {2}"
+  "Quanto vai ter na conta": {
+    "en": "How much you'll have in your account",
+    "es": "Cuánto vas a tener en la cuenta"
   },
-  "Suas dívidas": {
-    "en": "Your debts",
-    "es": "Tus deudas"
+  "Como o dinheiro anda": {
+    "en": "How your money moves",
+    "es": "Cómo se mueve el dinero"
   },
-  "{0} · sem dívidas em {1}": {
-    "en": "{0} · debt-free in {1}",
-    "es": "{0} · sin deudas en {1}"
+  "Ponto mais baixo: {0} em {1}.": {
+    "en": "Lowest point: {0} on {1}.",
+    "es": "Punto más bajo: {0} el {1}."
   },
-  "Reserva e metas": {
-    "en": "Emergency fund and goals",
-    "es": "Reserva y metas"
+  "Seu dinheiro em 6 partes": {
+    "en": "Your money in 6 parts",
+    "es": "Tu dinero en 6 partes"
   },
-  "{0} de gastos guardados": {
-    "en": "{0} of spending saved",
-    "es": "{0} de gastos ahorrados"
+  "Quanto mais cheio, melhor. O ponto fraco é {0}.": {
+    "en": "The fuller, the better. The weak spot is {0}.",
+    "es": "Cuanto más lleno, mejor. El punto débil es {0}."
   },
-  "{0} de {1} metas no ritmo": {
-    "en": "{0} of {1} goals on pace",
-    "es": "{0} de {1} metas al ritmo"
+  "Necessidades: {0} (o ideal é até 50%).": {
+    "en": "Needs: {0} (ideally up to 50%).",
+    "es": "Necesidades: {0} (lo ideal es hasta el 50%)."
   },
-  "Seu futuro": {
-    "en": "Your future",
-    "es": "Tu futuro"
+  "Estilo de vida: {0} (o ideal é até 30%).": {
+    "en": "Lifestyle: {0} (ideally up to 30%).",
+    "es": "Estilo de vida: {0} (lo ideal es hasta el 30%)."
   },
-  "Hoje {0} · em 12 meses {1}": {
-    "en": "Today {0} · in 12 months {1}",
-    "es": "Hoy {0} · en 12 meses {1}"
+  "Sobra: {0} (o ideal é 20% ou mais).": {
+    "en": "Surplus: {0} (ideally 20% or more).",
+    "es": "Sobra: {0} (lo ideal es 20% o más)."
   },
-  "Fase {0} de 5: {1}": {
-    "en": "Stage {0} of 5: {1}",
-    "es": "Fase {0} de 5: {1}"
+  "Dentro do ideal 50/30/20. Muito bem.": {
+    "en": "Within the 50/30/20 ideal. Well done.",
+    "es": "Dentro del ideal 50/30/20. Muy bien."
   },
-  "O que mudou com a sua última alteração": {
-    "en": "What your last change did",
-    "es": "Qué cambió con tu último cambio"
+  "entra por mês": {
+    "en": "comes in a month",
+    "es": "entra por mes"
   },
-  "O que mudou desde {0}": {
-    "en": "What changed since {0}",
-    "es": "Qué cambió desde el {0}"
+  "Para onde vai o que entra": {
+    "en": "Where your income goes",
+    "es": "A dónde va lo que entra"
   },
-  "O que fazer agora": {
-    "en": "What to do now",
-    "es": "Qué hacer ahora"
+  "Onde mais gasta": {
+    "en": "Where you spend most",
+    "es": "Dónde más gastas"
   },
-  "Ver o outro passo": {
-    "en": "See the other step",
-    "es": "Ver el otro paso"
+  "{0} leva {1} por mês.": {
+    "en": "{0} takes {1} a month.",
+    "es": "{0} se lleva {1} por mes."
   },
-  "Ver os outros {0} passos": {
-    "en": "See the other {0} steps",
-    "es": "Ver los otros {0} pasos"
+  "O que mudou nos gastos": {
+    "en": "What changed in your spending",
+    "es": "Qué cambió en los gastos"
   },
-  "Detalhes que pouca gente percebe": {
-    "en": "Details few people notice",
-    "es": "Detalles que pocos notan"
+  "{0}: de {1} para {2} por mês.": {
+    "en": "{0}: from {1} to {2} a month.",
+    "es": "{0}: de {1} a {2} por mes."
   },
-  "Ver a agenda do mês": {
-    "en": "See the month calendar",
-    "es": "Ver la agenda del mes"
+  "Sobra mês a mês": {
+    "en": "Surplus month by month",
+    "es": "Sobra mes a mes"
   },
-  "Agenda do dinheiro": {
-    "en": "Money calendar",
-    "es": "Agenda del dinero"
+  "Nos últimos meses, sobram {0} por mês.": {
+    "en": "In recent months, {0} is left over each month.",
+    "es": "En los últimos meses, sobran {0} por mes."
   },
-  "Começa com {0} na conta corrente e desconta cerca de {1} por dia de gastos do dia a dia.": {
-    "en": "Starts with {0} in your checking account and subtracts about {1} a day for day-to-day spending.",
-    "es": "Empieza con {0} en la cuenta corriente y descuenta cerca de {1} por día de gastos del día a día."
+  "Nos últimos meses, faltam {0} por mês.": {
+    "en": "In recent months, you're {0} short each month.",
+    "es": "En los últimos meses, faltan {0} por mes."
   },
-  "Sem o saldo dos bancos, a coluna mostra quanto o dinheiro anda a partir de hoje: abaixo de zero, é o que precisa já estar na conta.": {
-    "en": "Without your bank balances, the column shows how your money moves from today: below zero is what needs to already be in your account.",
-    "es": "Sin el saldo de los bancos, la columna muestra cómo se mueve el dinero desde hoy: por debajo de cero, es lo que ya tiene que estar en la cuenta."
+  "Quando cada dívida acaba": {
+    "en": "When each debt ends",
+    "es": "Cuándo termina cada deuda"
   },
-  "Na conta": {
-    "en": "In account",
-    "es": "En la cuenta"
+  "Com o plano, sem dívidas em {0} (e não em {1}).": {
+    "en": "With the plan, debt-free in {0} (instead of {1}).",
+    "es": "Con el plan, sin deudas en {0} (y no en {1})."
   },
-  "Desde hoje": {
-    "en": "From today",
-    "es": "Desde hoy"
+  "Sem dívidas em {0}.": {
+    "en": "Debt-free in {0}.",
+    "es": "Sin deudas en {0}."
   },
-  "Nada marcado até o fim do mês que vem.": {
-    "en": "Nothing scheduled through the end of next month.",
-    "es": "Nada agendado hasta fin del mes que viene."
+  "O que você pegou": {
+    "en": "What you borrowed",
+    "es": "Lo que pediste"
   },
-  "Ver os {0} dias": {
-    "en": "See all {0} days",
-    "es": "Ver los {0} días"
+  "Juros": {
+    "en": "Interest",
+    "es": "Intereses"
   },
-  "Os números do mês": {
-    "en": "The month's numbers",
-    "es": "Los números del mes"
+  "Quanto do que deve é juros": {
+    "en": "How much of your debt is interest",
+    "es": "Cuánto de lo que debes es interés"
+  },
+  "{0} do que falta são só juros.": {
+    "en": "{0} of what's left is just interest.",
+    "es": "{0} de lo que falta son solo intereses."
+  },
+  "Com {0} a mais por mês": {
+    "en": "With {0} more a month",
+    "es": "Con {0} más por mes"
+  },
+  "Quanto você paga no total": {
+    "en": "How much you pay in total",
+    "es": "Cuánto pagas en total"
+  },
+  "Adiantando, você economiza {0}.": {
+    "en": "By prepaying, you save {0}.",
+    "es": "Adelantando, ahorras {0}."
+  },
+  "Sua reserva": {
+    "en": "Your emergency fund",
+    "es": "Tu reserva"
+  },
+  "Cobre {0} de gastos. Ideal: {1} meses.": {
+    "en": "Covers {0} of spending. Ideal: {1} months.",
+    "es": "Cubre {0} de gastos. Ideal: {1} meses."
+  },
+  "Completa: cobre {0} de gastos.": {
+    "en": "Complete: covers {0} of spending.",
+    "es": "Completa: cubre {0} de gastos."
+  },
+  "no ritmo": {
+    "en": "on pace",
+    "es": "al ritmo"
+  },
+  "parada": {
+    "en": "stalled",
+    "es": "parada"
+  },
+  "{0} de {1} no ritmo para chegar no prazo.": {
+    "en": "{0} of {1} on pace to hit the deadline.",
+    "es": "{0} de {1} al ritmo para llegar a tiempo."
+  },
+  "Gasto": {
+    "en": "Spending",
+    "es": "Gasto"
+  },
+  "Teto": {
+    "en": "Cap",
+    "es": "Tope"
+  },
+  "Teto para cada gasto": {
+    "en": "A cap for each expense",
+    "es": "Tope para cada gasto"
+  },
+  "Para guardar {0}, corte {1} por mês.": {
+    "en": "To save {0}, cut {1} a month.",
+    "es": "Para ahorrar el {0}, recorta {1} por mes."
+  },
+  "Você já guarda bem: a média é o teto.": {
+    "en": "You already save well: your average is the cap.",
+    "es": "Ya ahorras bien: el promedio es el tope."
+  },
+  "assinatura": {
+    "en": "subscription",
+    "es": "suscripción"
+  },
+  "Contas fixas no ano": {
+    "en": "Fixed bills over a year",
+    "es": "Cuentas fijas en el año"
+  },
+  "Só as assinaturas: {0} por ano.": {
+    "en": "Subscriptions alone: {0} a year.",
+    "es": "Solo las suscripciones: {0} por año."
+  },
+  "Somam {0} por ano.": {
+    "en": "They add up to {0} a year.",
+    "es": "Suman {0} por año."
+  },
+  "+12 meses": {
+    "en": "+12 months",
+    "es": "+12 meses"
+  },
+  "Hoje {0}. Em 12 meses, {1}.": {
+    "en": "Today {0}. In 12 months, {1}.",
+    "es": "Hoy {0}. En 12 meses, {1}."
+  },
+  "Entra": {
+    "en": "In",
+    "es": "Entra"
+  },
+  "Seu consultor começa no primeiro lançamento": {
+    "en": "Your advisor starts with your first transaction",
+    "es": "Tu asesor empieza con tu primer movimiento"
+  },
+  "Lance o que entra e o que sai. A cada lançamento, os gráficos se refazem sozinhos.": {
+    "en": "Add what comes in and goes out. With every transaction, the charts update on their own.",
+    "es": "Registra lo que entra y lo que sale. Con cada movimiento, los gráficos se rehacen solos."
+  },
+  "Ver mais {0} gráficos": {
+    "en": "See {0} more charts",
+    "es": "Ver {0} gráficos más"
+  },
+  "Orientações de educação financeira, feitas com o que você lançou. Não é recomendação de investimento.": {
+    "en": "Financial education guidance, based on what you entered. Not investment advice.",
+    "es": "Orientaciones de educación financiera, hechas con lo que registraste. No es una recomendación de inversión."
+  },
+  "Os gráficos se refazem a cada lançamento.": {
+    "en": "The charts update with every transaction.",
+    "es": "Los gráficos se rehacen con cada movimiento."
+  },
+  "Esconder": {
+    "en": "Hide",
+    "es": "Ocultar"
+  },
+  "Por quê?": {
+    "en": "Why?",
+    "es": "¿Por qué?"
+  },
+  "Degrau {0} de 5": {
+    "en": "Step {0} of 5",
+    "es": "Escalón {0} de 5"
+  },
+  "Nada pedindo ação agora.": {
+    "en": "Nothing needs action right now.",
+    "es": "Nada pide acción ahora."
+  },
+  "Faça agora": {
+    "en": "Do it now",
+    "es": "Hazlo ahora"
+  },
+  "Passo anterior": {
+    "en": "Previous step",
+    "es": "Paso anterior"
+  },
+  "Próximo passo": {
+    "en": "Next step",
+    "es": "Próximo paso"
+  },
+  "Pode gastar até {0} por dia": {
+    "en": "You can spend up to {0} a day",
+    "es": "Puedes gastar hasta {0} por día"
+  },
+  "Sem folga para o dia a dia": {
+    "en": "No room for day-to-day spending",
+    "es": "Sin margen para el día a día"
+  },
+  "Sem contar renda extra (em média, {0} por mês).": {
+    "en": "Not counting extra income (on average, {0} a month).",
+    "es": "Sin contar ingresos extra (en promedio, {0} por mes)."
+  },
+  "Mudou agora": {
+    "en": "Just changed",
+    "es": "Cambió ahora"
+  },
+  "Nada neste dia.": {
+    "en": "Nothing on this day.",
+    "es": "Nada este día."
+  },
+  "entra": {
+    "en": "in",
+    "es": "entra"
+  },
+  "sai": {
+    "en": "out",
+    "es": "sale"
+  },
+  "Toque num dia para ver.": {
+    "en": "Tap a day to see it.",
+    "es": "Toca un día para verlo."
+  },
+  "ideal {0}": {
+    "en": "ideal {0}",
+    "es": "ideal {0}"
+  },
+  "antes": {
+    "en": "before",
+    "es": "antes"
+  },
+  "agora": {
+    "en": "now",
+    "es": "ahora"
+  },
+  "era {0}": {
+    "en": "was {0}",
+    "es": "era {0}"
   }
 }

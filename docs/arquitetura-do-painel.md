@@ -227,17 +227,33 @@ os **detalhes que pouca gente percebe**:
 - **Vencimentos amontoados** na mesma semana.
 - **Última parcela chegando**: dinheiro que volta a ser seu, e a sugestão de decidir antes para onde ele vai.
 
-**Ordem da tela.** A tela responde três perguntas de cara e guarda o resto em gavetas fechadas:
-1. **Como estou**: a nota, a fase em uma frase com a escada em traços e os pilares em selos. Tocar num selo abre a gaveta dele.
-2. **O que fazer agora**: um passo grande, com o botão; os outros atrás de "Ver os outros N passos".
-3. **Como o mês fecha**: o número, quanto dá para gastar por dia e até 2 detalhes da agenda.
+**Gráficos no lugar de texto.** A aba é feita de gráficos, com pouco texto e linguagem simples: cada cartão tem título de
+até 5 palavras e uma frase só. Explicação longa fica atrás de "Por quê?".
 
-"O que mudou" só aparece quando algo mudou. As gavetas mostram o resumo no título: **Agenda do mês** (a agenda dia a dia e os
-números do mês), **Seus gastos** (12 meses, regra 50/30/20, revisão e orçamento), **Suas dívidas**, **Reserva e metas** (com
-para onde mandar a sobra) e **Seu futuro** (patrimônio). Por jeito de ver:
-- **Simples**: as gavetas ficam atrás de "Ver mais detalhes".
-- **Equilibrado**: as gavetas aparecem fechadas.
-- **Detalhado**: as gavetas já vêm abertas.
+**Quem escolhe os gráficos é o motor.** `lib/visuais.ts` (`visuais()`) olha a análise e decide quais visuais a pessoa
+precisa ver, em ordem de importância. Um aperto na conta, por exemplo, sobe a curva do saldo para o topo. Os 15 tipos:
+- **Como estou**: velocímetro da nota, escada das fases e radar dos 6 pilares.
+- **O mês**: cascata (entra, sai, fica), calendário do mês com o dinheiro que entra e sai e os dias marcados pela agenda, e
+  curva do saldo dia a dia.
+- **Para onde vai o dinheiro**: rosca 50/30/20 com o ideal por dentro, barras de onde mais gasta e halteres "antes × agora".
+- **O tempo**: colunas da sobra mês a mês e linha do tempo de quando cada dívida acaba, com e sem o plano.
+- **Dívidas**: rosca de quanto do que se deve é juros e barras do total pago com e sem adiantar.
+- **O que se guarda**: pote da reserva, anéis das metas, tabela de teto por gasto, barras das contas fixas no ano e curva de
+  tudo o que é seu, com 12 meses de projeção tracejados.
+
+O desenho fica em `pages/AnaliseGraficos.tsx`: SVG e HTML próprios, sem biblioteca de gráficos. O apoio (cor do tom, o
+gatilho da animação) está em `pages/analiseApoio.ts`.
+
+**Animação.** Barras crescem, linhas se desenham, a bolinha do velocímetro corre até a nota, o pote enche, o radar abre e os
+números contam. Cada animação só começa quando o cartão aparece na tela (`useEmVista`). Com Configurações → Animações:
+Reduzidas, tudo aparece pronto.
+
+**Ordem da tela.**
+1. **Como estou**: velocímetro e escada.
+2. **O que mudou**: só quando algo mudou, com até 2 linhas.
+3. **Faça agora**: um passo por vez, com setas e pontinhos para passar aos outros.
+4. **Como o mês fecha**: número grande, quanto dá para gastar por dia e a cascata.
+5. **O feed de gráficos**: no simples aparecem 2, no equilibrado 4 e no detalhado todos. O resto fica em "Ver mais N gráficos".
 
 Sem dados suficientes (menos de 2 dos 3 últimos meses com entradas e saídas), não há nota: a frase explica o que lançar e a aba
 mostra o que já dá. Conta nova vê o convite para o primeiro lançamento.
