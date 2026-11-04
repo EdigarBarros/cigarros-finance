@@ -172,7 +172,8 @@ export function Inicio(c: Ctx) {
   // Saúde do seu dinheiro: todos os conselhos ativos, logo abaixo do resumo do mês (conta nova ainda não tem o que analisar)
   const saude = !c.contaNova && (
     <BlocoConselhos conselhos={c.conselhos} semDados={c.conselhosSemDados} dispensados={c.conselhosDispensados} simples={simples}
-      aoIr={c.irPara} aoDispensar={c.dispensarConselho} />
+      aoIr={c.irPara} aoDispensar={c.dispensarConselho}
+      nota={{ valor: c.analise.nota, rotulo: c.analise.rotulo, tom: c.analise.tom }} aoAbrirAnalise={() => c.irPara('analise')} />
   )
 
   // ---------- 2. O que preciso fazer? ----------

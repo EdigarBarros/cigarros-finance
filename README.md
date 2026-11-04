@@ -80,6 +80,12 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   Com a parcela definida, o app prevê quando a dívida acaba. Juros ou acordo? Basta informar o saldo novo.
   Se você informar os **juros por mês** de cada dívida (opcional, [migração 19](supabase/migracao-19-juros-das-dividas.sql)), o
   conselheiro do menu diz qual dívida pagar primeiro (a que cobra mais) e avisa quando os juros são muito altos
+- **Consultor**: uma aba com a análise completa do seu dinheiro, refeita a cada lançamento, compra no cartão ou dívida nova.
+  Nota de 0 a 100 por pilares (sobra, reserva, dívidas, cartão, controle dos gastos, metas), a fase em que você está (do
+  "sair do vermelho" ao "fazer o dinheiro crescer"), previsão de como o mês fecha e quanto dá para gastar por dia, tendência de
+  12 meses, regra 50/30/20, assinaturas e gastos formiga, orçamento sugerido, plano das dívidas (avalanche × bola de neve, com
+  a economia de juros), reserva de emergência, metas, patrimônio e um plano de ação em ordem. Depois de cada mudança, um aviso
+  conta o que mudou na análise ([docs/arquitetura-do-painel.md](docs/arquitetura-do-painel.md), seção 4.7)
 - **Bancos**: cadastre os seus (Nubank, Itaú, Next, PicPay, dinheiro vivo…). O banco de cada entrada/saída é
   **opcional** — o app reconhece "(Next)" na descrição e lembra o banco que você usa para cada coisa. Tela de bancos
   com saldo guardado e movimento do mês de cada um, detalhe individual e bloco "Por banco" na visão geral.

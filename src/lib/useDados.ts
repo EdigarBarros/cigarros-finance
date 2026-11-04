@@ -5,7 +5,7 @@ import { lerTudo, supabase } from './supabase'
 import type { EscolhaZerar, ParteZerar } from './zerar'
 import type { Banco, Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida } from './types'
 import { fmtDataLonga } from './format'
-import { mesesDoConselheiro } from './conselheiro'
+import { mesesDaAnalise } from './conselheiro'
 import { tx } from './textos'
 
 const num = (v: unknown) => Number(v ?? 0)
@@ -55,11 +55,12 @@ const semJurosDivida = <T extends object>(o: T) => { const { juros_mes: _j, ...r
 export type NovaDivida = Pick<Divida, 'descricao' | 'valor_parcela'> & Partial<Pick<Divida, (typeof EXTRAS_DIVIDA)[number] | 'moeda' | 'juros_mes'>>
 
 /**
- * Lançamentos dos meses que o conselheiro lê (3 fechados + o atual) que caem fora do ano aberto: no começo do ano, os
- * últimos meses do anterior; com outro ano aberto, os de agora. Só consulta o que falta (em outubro, com o ano atual aberto, nada).
+ * Lançamentos dos meses que o conselheiro e a análise completa leem (12 fechados + o atual) que caem fora do ano aberto: os
+ * últimos meses do ano anterior; com outro ano aberto, os de agora. Só consulta o que falta (em dezembro, com o ano atual
+ * aberto, nada).
  */
 async function lancamentosRecentes(ano: number): Promise<Lancamento[]> {
-  const meses = mesesDoConselheiro().filter((m) => m.ano !== ano)
+  const meses = mesesDaAnalise().filter((m) => m.ano !== ano)
   const anos = [...new Set(meses.map((m) => m.ano))]
   const grupos = await Promise.all(anos.map(async (a) => {
     const doAno = meses.filter((m) => m.ano === a).map((m) => m.mes)
@@ -101,7 +102,7 @@ export function useDados(userId: string, ano: number) {
   const [dividasSemJuros, setDividasSemJuros] = useState(false)
   /** Lançamentos de outros anos ligados a uma conta do mês: ensinam ao app como cada conta aparece no extrato. */
   const [vinculosOutrosAnos, setVinculosOutrosAnos] = useState<Pick<Lancamento, 'id' | 'conta_fixa_id' | 'descricao' | 'valor'>[]>([])
-  /** Lançamentos de outros anos que o conselheiro lê (os 3 meses fechados e o atual), quando o ano aberto não cobre todos. */
+  /** Lançamentos de outros anos que o conselheiro e a análise leem (os 12 meses fechados e o atual), quando o ano aberto não cobre todos. */
   const [lancsRecentes, setLancsRecentes] = useState<Lancamento[]>([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)

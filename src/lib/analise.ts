@@ -1,0 +1,1582 @@
+/**
+ * Consultor financeiro: a análise completa do dinheiro da pessoa, refeita a cada mudança (lançamento, compra no cartão,
+ * dívida, meta, saldo de banco). Onde o conselheiro (lib/conselheiro.ts) dá avisos curtos, aqui o app faz o trabalho de
+ * quem entende de finanças: analisa, compara, revisa e planeja.
+ *
+ *  - Analisa: nota de 0 a 100 por pilares (sobra, reserva, dívidas, cartão, controle dos gastos, metas) e a fase em que a
+ *    pessoa está na escada da educação financeira (sair do vermelho → colchão → dívidas caras → reserva completa → crescer).
+ *  - Compara: o mês atual com a média e com o mesmo ponto dos outros meses, previsão de fechamento, quanto dá para gastar
+ *    por dia, tendência de 12 meses, categorias que subiram e caíram.
+ *  - Revisa: regra 50/30/20, contas que se repetem e assinaturas (custo no ano), gastos formiga, juros e multas pagos,
+ *    renda que varia, gastos sem categoria.
+ *  - Planeja: para onde mandar a sobra conforme a fase, orçamento por categoria, plano das dívidas (avalanche × bola de neve,
+ *    com a economia de juros), reserva de emergência, se as metas cabem, patrimônio em 12 meses e um plano de ação em ordem.
+ *
+ * É um motor PURO, como o conselheiro: sem React, sem banco, sem relógio escondido (a data entra por `hoje`). Os mesmos dados
+ * dão sempre a mesma análise. Fala de comportamento (gastar, dever, guardar), nunca de produto de investimento.
+ *
+ * Os limites são referências comuns de educação financeira (regra do dedão), não regra rígida.
+ */
+import { caixaDoBanco, mesEfetivo } from './calc'
+import { chaveMes, doMesChave, faturaDoMes, faturasAtrasadas, garantidoDo, hojeLocal, limiteDoCartao } from './cartoes'
+import {
+  CARTAO_ATENCAO, JUROS_ALTOS_MES, MESES_DA_ANALISE, MESES_NA_MEDIA, MIN_MESES_COM_DADOS, PARCELAS_ATENCAO, type Destino,
+} from './conselheiro'
+import { situacoesDoMes as situacoesDasContas } from './contasFixas'
+import { aumentaDivida, calendarioDe, jurosAoAno, meDevem, projecaoMensal, situacaoDividas, type SituacaoDivida } from './dividas'
+import { fmtMesAno, fmtMoeda, fmtPct, fmtTaxa, fmtTaxaAno, fmtValor, LOCAL_DAS_DATAS, MESES_NOME, noMeioDaFrase } from './format'
+import { situacaoMeta } from './metas'
+import { converter, totalConvertido, type Taxas } from './moedas'
+import { visao } from './perfil'
+import { tx } from './textos'
+import type {
+  CartaoCredito, Categoria, ContaFixa, Divida, FaturaPaga, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida,
+} from './types'
+import { TIPOS_CAIXA } from './types'
+
+// ---------- limites ----------
+
+/** Sobra ideal: 20% do que entra (a parte "futuro" da regra 50/30/20). */
+export const SOBRA_IDEAL = 0.2
+/** Regra 50/30/20: necessidades (contas da casa, mercado, transporte, saúde e parcelas) até 50% do que entra… */
+export const NECESSIDADES_IDEAL = 0.5
+/** …e estilo de vida (lazer, compras, assinaturas, restaurantes) até 30%. */
+export const ESTILO_IDEAL = 0.3
+/** Dívida cara: juros a partir de 3% ao mês (cerca de 43% ao ano). Quitar vem antes de completar a reserva. */
+export const JUROS_CARO_MES = 3
+/** Acima disso por mês, adiantar a dívida costuma render mais do que deixar o dinheiro guardado com segurança. */
+export const JUROS_MODERADO_MES = 1
+/** O colchão: 1 mês de gastos guardado, para um imprevisto não virar dívida nova. */
+export const COLCHAO_MESES = 1
+/** Reserva completa para quem tem renda estável… */
+export const RESERVA_RENDA_ESTAVEL = 6
+/** …e para quem tem renda que varia (autônomo, comissão, freela). */
+export const RESERVA_RENDA_VARIAVEL = 12
+/** A renda "varia" quando o desvio padrão passa desta fração da média (coeficiente de variação). */
+export const RENDA_VARIA_ACIMA = 0.25
+/** Uso do limite do cartão até esta fração é saudável. */
+export const LIMITE_SAUDAVEL = 0.3
+/** Um gasto se repete quando aparece em pelo menos tantos dos últimos 6 meses fechados (2 se houver poucos meses). */
+export const RECORRENTE_MESES = 3
+/** Gasto formiga: compra pequena (até esta fração do que entra por mês) que se repete muitas vezes. */
+export const FORMIGA_VALOR = 0.015
+/** E se repete pelo menos tantas vezes por mês. */
+export const FORMIGA_VEZES = 4
+/** Categoria que "subiu": pelo menos 20% acima dos meses anteriores e pesando 5% do gasto do mês. */
+export const SUBIU_ACIMA = 0.2
+export const SUBIU_RELEVANTE = 0.05
+
+/** Pesos de cada pilar na nota (os que não se aplicam saem e os outros são reponderados). */
+const PESOS = { sobra: 25, reserva: 20, dividas: 20, controle: 15, cartao: 10, metas: 10 } as const
+
+// ---------- tipos ----------
+
+export type Fase = 'vermelho' | 'colchao' | 'dividas' | 'reserva' | 'crescer'
+export const FASES: Fase[] = ['vermelho', 'colchao', 'dividas', 'reserva', 'crescer']
+export type Tom = 'bom' | 'medio' | 'ruim'
+export type Grupo = 'essencial' | 'estilo' | 'dividas' | 'outros'
+export type IdPilar = keyof typeof PESOS
+
+export interface Pilar {
+  id: IdPilar
+  nome: string
+  /** 0 a 100. */
+  nota: number
+  tom: Tom
+  /** O número que resume o pilar, já formatado ("12%", "1,5 mês"). */
+  valor: string
+  /** A referência de educação financeira com que ele se compara. */
+  referencia: string
+  /** Uma frase com o que o número quer dizer. */
+  frase: string
+  destino: Destino
+}
+
+export interface InfoFase {
+  id: Fase
+  nome: string
+  descricao: string
+}
+
+export interface MesDaSerie {
+  ano: number
+  mes: number
+  entradas: number
+  saidas: number
+  sobra: number
+  /** Teve entradas e saídas lançadas (conta nas médias). */
+  comDados: boolean
+  /** O mês atual, ainda andando. */
+  atual: boolean
+}
+
+export interface PrevisaoMes {
+  dia: number
+  diasNoMes: number
+  entrouAteAgora: number
+  saiuAteAgora: number
+  /** O que ainda deve entrar: contas a receber, entradas que se repetem e já lançadas para depois de hoje. */
+  aReceber: number
+  /** Contas do mês, parcelas de dívidas, faturas e gastos que se repetem que ainda vão sair. */
+  aPagar: number
+  /** Gasto do dia a dia que ainda deve sair, pelo ritmo do mês misturado com o de costume. */
+  diaADiaPrevisto: number
+  /** A renda ainda não lançada foi completada com a média (o salário ainda não caiu). */
+  rendaPelaMedia: boolean
+  entradasPrevistas: number
+  saidasPrevistas: number
+  resultadoPrevisto: number
+  /** Quanto o mês deve guardar pelo plano. */
+  sobraAlvo: number
+  /** Quanto dá para gastar por dia no dia a dia (de hoje até o fim do mês) e ainda guardar `sobraAlvo`. */
+  porDia: number
+  /** Até este dia, nos outros meses, saía em média (null sem histórico). */
+  ateHojeNormal: number | null
+  /** Resultado previsto menos a sobra média dos meses fechados (null sem histórico). */
+  contraMedia: number | null
+  /** Renda que não se repete (freela, venda, bico), em média por mês nos meses fechados: fica fora da previsão, por cautela. */
+  rendaExtraMedia: number
+  /** Categorias que já passaram da média neste mês. */
+  acimaDoNormal: { id: string; nome: string; icone: string; atual: number; media: number }[]
+}
+
+export interface CategoriaAnalise {
+  id: string
+  nome: string
+  icone: string
+  cor: string
+  grupo: Grupo
+  /** Média por mês nos últimos meses fechados (até 3). */
+  media: number
+  /** Média dos meses antes desses (até 9), para ver o que subiu. null sem base. */
+  antes: number | null
+  /** Variação da média contra `antes` (0,25 = 25% a mais). */
+  variacao: number | null
+  /** O que já saiu no mês atual. */
+  atual: number
+  /** Teto sugerido para o mês que vem. */
+  sugestao: number
+  /** Parte da média que é parcela de compra no cartão (já assumida: não dá para cortar agora). */
+  parcelado: number
+  /** O mesmo, nos meses de `antes`. */
+  parceladoAntes: number | null
+  /** As compras parceladas que mais pesam na categoria e quando acabam. */
+  parcelas: { descricao: string; valor: number; termina: { ano: number; mes: number } }[]
+}
+
+export interface Regra503020 {
+  renda: number
+  /** Frações do que entra. */
+  essencial: number
+  parcelas: number
+  estilo: number
+  outros: number
+  sobra: number
+}
+
+export interface Recorrente {
+  descricao: string
+  valor: number
+  meses: number
+  assinatura: boolean
+}
+
+export interface Formiga {
+  descricao: string
+  vezesPorMes: number
+  ticket: number
+  porMes: number
+  porAno: number
+}
+
+export type IdEstrategia = 'parcelas' | 'avalanche' | 'bola-de-neve'
+
+export interface Estrategia {
+  id: IdEstrategia
+  /** Meses até ficar sem dívidas (null: com dívida sem parcela, só pagando as parcelas, nunca acaba). */
+  meses: number | null
+  fim: { ano: number; mes: number } | null
+  totalPago: number
+  /** Quanto custa a menos que só pagar as parcelas (null quando só pagar as parcelas nunca acaba). */
+  economia: number | null
+}
+
+export interface DividaNoPlano {
+  id: string
+  nome: string
+  restante: number
+  parcela: number | null
+  juros: number | null
+  /** Quanto quitaria tudo hoje, com o desconto dos juros das parcelas que faltam. */
+  quitarHoje: number
+  /** Quando acaba seguindo a estratégia recomendada. */
+  quitaEm: { ano: number; mes: number } | null
+  /** Quando acaba só pagando as parcelas. */
+  quitaSemExtra: { ano: number; mes: number } | null
+}
+
+export interface PlanoDividas {
+  total: number
+  parcelasMes: number
+  /** Juros que as dívidas cobram por mês hoje (aproximado). */
+  jurosPorMes: number
+  /** Juros que ainda estão embutidos nas parcelas que faltam (o que se economiza quitando tudo hoje). */
+  jurosEmbutidos: number
+  /** Dinheiro a mais por mês usado nas estratégias. */
+  extra: number
+  /** `extra` é um exemplo (a sobra ainda não tem espaço para as dívidas). */
+  extraExemplo: boolean
+  estrategias: Estrategia[]
+  recomendada: 'avalanche' | 'bola-de-neve'
+  /** Por que a recomendada, em uma frase. */
+  porque: string
+  /** Na ordem de pagamento da recomendada. */
+  ordem: DividaNoPlano[]
+  semJuros: number
+  /** Há dívida com juros de pelo menos `JUROS_CARO_MES`. */
+  temCara: boolean
+}
+
+export interface PlanoReserva {
+  tem: number
+  /** Gasto médio por mês, a base do cálculo. */
+  base: number
+  meses: number
+  colchao: number
+  alvoMeses: number
+  alvo: number
+  falta: number
+  porMes: number
+  chegaEm: { ano: number; mes: number } | null
+  rendaVaria: boolean
+  /** De onde veio o "tem": bancos e investimentos, ou a meta de reserva. */
+  fonte: 'bancos' | 'meta'
+}
+
+export interface Alocacao {
+  sobra: number
+  reserva: number
+  dividas: number
+  metas: number
+  livre: number
+}
+
+export interface MetaNoPlano {
+  id: string
+  nome: string
+  icone: string
+  moeda: string
+  falta: number
+  /** Na moeda da meta. */
+  porMes: number | null
+  ritmo: number
+  prazo: { ano: number; mes: number } | null
+  noRitmo: boolean
+  /** Quando chega no ritmo de hoje. */
+  previsao: { ano: number; mes: number } | null
+}
+
+export interface PlanoMetas {
+  /** Quanto as metas com prazo pedem por mês, na moeda principal. */
+  necessario: number
+  disponivel: number
+  cabe: boolean
+  metas: MetaNoPlano[]
+}
+
+export interface Patrimonio {
+  hoje: number
+  ativos: number
+  dividas: number
+  serie: { ano: number; mes: number; valor: number }[]
+  /** Hoje contra o primeiro mês da série (null com 1 mês só). */
+  variacao: number | null
+  desde: { ano: number; mes: number } | null
+  /** Daqui a 12 meses, se a sobra continuar igual (as parcelas pagas também viram patrimônio). */
+  em12: number
+  /** Daqui a 12 meses, seguindo o orçamento sugerido. */
+  em12NoPlano: number
+}
+
+export interface InfoCartao {
+  usado: number
+  limite: number | null
+  uso: number | null
+  /** Parcelas já marcadas nas próximas 6 faturas. */
+  proximas: { ano: number; mes: number; valor: number }[]
+  pesoProximo: number | null
+  /** Gasto médio por mês no cartão nos meses fechados. */
+  porMes: number
+  /** Fração das saídas que passa pelo cartão. */
+  fracaoDasSaidas: number
+  atrasadas: number
+  valorAtrasado: number
+}
+
+export type Urgencia = 'urgente' | 'importante' | 'sugestao'
+
+export interface Acao {
+  /** Estável, para comparar uma análise com a outra. */
+  id: string
+  urgencia: Urgencia
+  prioridade: number
+  icone: string
+  titulo: string
+  porque: string
+  /** O ganho em dinheiro, quando dá para dizer ("+ R$ 300 por mês"). */
+  impacto?: string
+  destino: Destino
+  botao: string
+}
+
+export interface Analise {
+  /** O mês de hoje (o "mês atual" da análise). */
+  hoje: { ano: number; mes: number }
+  /** Tem pelo menos 2 dos 3 últimos meses fechados com entradas e saídas: dá para falar de sobra, média e nota. */
+  temFluxo: boolean
+  /** Meses fechados com entradas e saídas nos últimos 12. */
+  mesesAnalisados: number
+  nota: number | null
+  rotulo: string
+  tom: Tom
+  /** O resumo do consultor, em frases. */
+  resumo: string[]
+  fase: Fase
+  fases: InfoFase[]
+  porqueFase: string
+  proximoPasso: string
+  pilares: Pilar[]
+  /** Média dos últimos meses fechados. */
+  renda: number
+  gastos: number
+  sobra: number
+  sobraFracao: number
+  /** Sobra que o plano pede para os próximos meses (fração do que entra). */
+  sobraAlvo: number
+  rendaVaria: boolean
+  /** Coeficiente de variação da renda (null com menos de 3 meses). */
+  variacaoRenda: number | null
+  /** De onde vem a renda: a maior fonte e quanto ela pesa. */
+  principalFonte: { nome: string; fracao: number } | null
+  /** Tendência por mês (0,02 = sobe 2% ao mês), com pelo menos 4 meses. */
+  tendenciaGastos: number | null
+  tendenciaRenda: number | null
+  serie: MesDaSerie[]
+  mes: PrevisaoMes | null
+  categorias: CategoriaAnalise[]
+  subiram: CategoriaAnalise[]
+  cairam: CategoriaAnalise[]
+  regra: Regra503020 | null
+  recorrentes: Recorrente[]
+  assinaturasPorMes: number
+  recorrentesPorMes: number
+  formigas: Formiga[]
+  jurosPagos: number
+  semCategoria: number
+  cartao: InfoCartao | null
+  dividas: PlanoDividas | null
+  reserva: PlanoReserva | null
+  alocacao: Alocacao | null
+  metas: PlanoMetas | null
+  patrimonio: Patrimonio | null
+  /** Quanto cortar por mês para chegar na sobra-alvo (0 se já chega). */
+  corte: number
+  acoes: Acao[]
+}
+
+export interface EntradaAnalise {
+  hoje?: Date
+  /** Lançamentos dos 12 meses fechados e do atual (veja `mesesDaAnalise`), já sem as compras de fatura renegociada. */
+  lancs: Lancamento[]
+  /** Compras no cartão de todos os anos (vazio sem o módulo). */
+  compras: Lancamento[]
+  cartoes: CartaoCredito[]
+  faturasPagas: FaturaPaga[]
+  contas: ContaFixa[]
+  categorias: Categoria[]
+  /** id da categoria do lançamento ('' = sem categoria). */
+  categoriaDe: (l: Lancamento) => string
+  dividas: Divida[]
+  saldos: SaldoDivida[]
+  pagamentos: Pagamento[]
+  taxas: Taxas
+  meses: Mes[]
+  metas: Meta[]
+  movimentosMeta: MovimentoMeta[]
+  perfil: Perfil
+  /** Migração 19 pendente: não há como informar os juros, e o plano não pede. */
+  dividasSemJuros?: boolean
+}
+
+// ---------- apoio ----------
+
+const centavos = (n: number) => Math.round(n * 100) / 100
+const soma = (xs: number[]) => xs.reduce((a, b) => a + b, 0)
+const media = (xs: number[]) => (xs.length ? soma(xs) / xs.length : 0)
+const mediana = (xs: number[]) => {
+  if (!xs.length) return 0
+  const s = [...xs].sort((a, b) => a - b)
+  const m = Math.floor(s.length / 2)
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2
+}
+const desvio = (xs: number[]) => {
+  const m = media(xs)
+  return Math.sqrt(media(xs.map((x) => (x - m) ** 2)))
+}
+const limitar = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n))
+const pct = (f: number) => Math.round(f * 100)
+const decimal = new Intl.NumberFormat(LOCAL_DAS_DATAS, { maximumFractionDigits: 1 })
+/** "1,5 mês", "3 meses": arredonda para baixo (quem tem 0,96 mês não tem 1 mês). */
+export function fmtMeses(n: number) {
+  const x = Math.floor(Math.max(0, n) * 10) / 10
+  return x === 1 ? tx('1 mês') : x < 1 ? tx('{0} mês', decimal.format(x)) : tx('{0} meses', decimal.format(x))
+}
+const mesAno = (m: { ano: number; mes: number } | null) => (m ? fmtMesAno(m.ano, m.mes) : '')
+const normal = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+/** Descrição sem números, parcelas ("3/10") e pontuação: "Netflix.com 12/05" e "NETFLIX" viram a mesma coisa. */
+const chaveDescricao = (s: string) => normal(s).replace(/\d+\s*\/\s*\d+/g, ' ').replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim()
+const diaDe = (iso: string | null | undefined) => (iso ? Number(iso.slice(8, 10)) : 0)
+
+/** Inclinação da reta (mínimos quadrados) em fração da média por mês: 0,03 = sobe 3% ao mês. */
+function inclinacao(pontos: { x: number; y: number }[]): number | null {
+  if (pontos.length < 4) return null
+  const mx = media(pontos.map((p) => p.x))
+  const my = media(pontos.map((p) => p.y))
+  if (my <= 0) return null
+  const den = soma(pontos.map((p) => (p.x - mx) ** 2))
+  return den ? soma(pontos.map((p) => (p.x - mx) * (p.y - my))) / den / my : null
+}
+
+/** Um valor "redondo" de dizer: 37 → 40, 432 → 450, 1.234 → 1.300. */
+export function redondo(n: number) {
+  if (n <= 0) return 0
+  const passo = n < 100 ? 10 : n < 1000 ? 50 : n < 10000 ? 100 : 500
+  return Math.ceil(n / passo - 1e-9) * passo
+}
+
+// Grupos da regra 50/30/20 pelo nome da categoria (as categorias são da pessoa: vale o nome em português, inglês ou espanhol).
+const RE_DIVIDA = /divida|parcela|emprestimo|financiamento|consignado|\bdebt|\bloan|deuda|prestamo|cuota/
+const RE_ESTILO = /lazer|assinatura|compra|cuidado|beleza|estetica|restaurante|delivery|ifood|viage|presente|roupa|vestu|entretenimento|diversao|hobby|\bbar\b|festa|streaming|shopping|leisure|subscription|entertainment|travel|gift|cloth|beauty|personal|ocio|suscripc|viaje|regalo|ropa|belleza/
+const RE_ESSENCIAL = /moradia|aluguel|condominio|\bcasa\b|\bluz\b|energia|\bagua\b|\bgas\b|internet|telefon|celular|aliment|mercado|feira|transporte|combustivel|gasolina|onibus|saude|farmacia|remedio|medic|educa|escola|faculdade|curso|imposto|taxa|tributo|seguro|\bpets?\b|creche|housing|\brent\b|utilit|grocer|\bfood|transport|health|tax|insurance|vivienda|alquiler|comida|salud|impuesto|servicio/
+const RE_ASSINATURA = /assinatura|netflix|spotify|prime video|amazon prime|disney|hbo|\bmax\b|youtube|deezer|globoplay|paramount|apple|icloud|google one|chatgpt|openai|academia|smartfit|gympass|wellhub|streaming|subscription|suscripc/
+const RE_JUROS = /\bjuros\b|\bmulta\b|\bmora\b|\biof\b|encargo|tarifa|anuidade|cheque especial|rotativo|\binterest\b|late fee|recargo|interes/
+
+function grupoDa(c: Categoria | undefined): Grupo {
+  if (!c) return 'outros'
+  if (c.papel === 'divida') return 'dividas'
+  const n = normal(c.nome)
+  if (RE_DIVIDA.test(n)) return 'dividas'
+  if (RE_ESTILO.test(n)) return 'estilo'
+  if (RE_ESSENCIAL.test(n)) return 'essencial'
+  return 'outros'
+}
+
+const tomDa = (nota: number): Tom => (nota >= 70 ? 'bom' : nota >= 45 ? 'medio' : 'ruim')
+
+export function rotuloDaNota(nota: number) {
+  return nota >= 85 ? tx('Excelente') : nota >= 70 ? tx('Boa') : nota >= 55 ? tx('Razoável') : nota >= 40 ? tx('Frágil') : tx('Precisa de cuidado')
+}
+
+export function infoFases(alvoReserva = RESERVA_RENDA_ESTAVEL): InfoFase[] {
+  return [
+    { id: 'vermelho', nome: tx('Sair do vermelho'), descricao: tx('Fazer entrar mais do que sai, todo mês.') },
+    { id: 'colchao', nome: tx('Colchão de segurança'), descricao: tx('Ter 1 mês de gastos guardado para imprevistos.') },
+    { id: 'dividas', nome: tx('Quitar dívidas caras'), descricao: tx('Livrar-se das dívidas que cobram {0}% ao mês ou mais.', JUROS_CARO_MES) },
+    { id: 'reserva', nome: tx('Reserva completa'), descricao: tx('Juntar {0} meses de gastos para imprevistos.', alvoReserva) },
+    { id: 'crescer', nome: tx('Fazer o dinheiro crescer'), descricao: tx('Metas, futuro e o que você constrói.') },
+  ]
+}
+
+// ---------- dívidas: simulação das estratégias ----------
+
+interface DividaSim {
+  id: string
+  nome: string
+  /**
+   * Quanto falta pagar em cada mês, a partir do atual ([0] = este mês, [1] = o que vem…), tirado do calendário de parcelas
+   * da dívida (o mesmo da tela Dívidas). Vazia = dívida sem parcela fixa ("aberta"): cresce com os juros e só diminui com
+   * dinheiro a mais.
+   */
+  agenda: number[]
+  /** Saldo da dívida aberta. */
+  aberto: number
+  /** A parcela de costume: o que fica livre por mês quando a dívida acaba. */
+  parcela: number
+  /** % ao mês (null = não informado: conta como sem juros). */
+  juros: number | null
+}
+
+/** As parcelas que faltam, mês a mês, pelo calendário da dívida (ou, sem ele, uma parcela por mês a partir do que vem). */
+function agendaDa(s: SituacaoDivida, hojeIso: string, atual: number): number[] {
+  const p = s.divida.valor_parcela
+  if (!p || p <= 0) return []
+  const agenda: number[] = []
+  const cal = calendarioDe(s, hojeIso)
+  if (cal) {
+    for (const x of cal.parcelas) if (x.falta > 0) {
+      const k = Math.max(0, chaveMes(Number(x.vencimento.slice(0, 4)), Number(x.vencimento.slice(5, 7))) - atual)
+      agenda[k] = (agenda[k] ?? 0) + x.falta
+    }
+  } else {
+    let resta = s.restante
+    for (let k = 1; resta > 0.005 && k <= LIMITE_SIMULACAO; k++) {
+      agenda[k] = Math.min(p, resta)
+      resta -= agenda[k]
+    }
+  }
+  return Array.from(agenda, (x) => x ?? 0)
+}
+
+const saldoSim = (d: Pick<DividaSim, 'agenda' | 'aberto'>) => (d.agenda.length ? soma(d.agenda) : d.aberto)
+
+/**
+ * Antecipa parcelas do fim de uma dívida parcelada com `dinheiro`, no mês `t`: a parcela de daqui a k meses vale hoje
+ * parcela ÷ (1 + juros)^k. É o desconto dos juros que a lei garante a quem adianta. Devolve o que sobrou do dinheiro.
+ */
+function antecipar(d: Pick<DividaSim, 'agenda' | 'juros'>, dinheiro: number, t: number, pagar: (v: number) => void) {
+  const i = (d.juros ?? 0) / 100
+  let resta = dinheiro
+  for (let s = d.agenda.length - 1; s > t && resta > 0.005; s--) {
+    const v = d.agenda[s]
+    if (!(v > 0)) continue
+    const custo = v / Math.pow(1 + i, s - t)
+    if (resta >= custo) {
+      d.agenda[s] = 0
+      pagar(custo)
+      resta -= custo
+    } else {
+      d.agenda[s] = v * (1 - resta / custo)
+      pagar(resta)
+      resta = 0
+    }
+  }
+  return resta
+}
+
+const LIMITE_SIMULACAO = 600
+
+/**
+ * Mês a mês, a partir do atual: as dívidas abertas crescem com os juros, as parceladas pagam a parcela do mês e (nas
+ * estratégias) o dinheiro a mais vai para a dívida da vez. Quando uma dívida acaba, a parcela dela passa a reforçar a
+ * próxima (o efeito bola de neve). `meses` é o mês (0 = o atual) em que a última acaba; null = nunca acaba.
+ */
+function simular(dividas: DividaSim[], extra: number, estrategia: IdEstrategia) {
+  const ds = dividas.map((d) => ({ ...d, agenda: [...d.agenda], fim: null as number | null }))
+  const comExtra = estrategia !== 'parcelas'
+  const ordem = (a: (typeof ds)[number], b: (typeof ds)[number]) => (estrategia === 'avalanche'
+    ? (b.juros ?? -1) - (a.juros ?? -1) || saldoSim(a) - saldoSim(b)
+    : saldoSim(a) - saldoSim(b) || (b.juros ?? -1) - (a.juros ?? -1)) || a.id.localeCompare(b.id)
+  let total = 0
+  let liberado = 0
+  const pagar = (v: number) => { total += v }
+  const fins = () => new Map(ds.map((d) => [d.id, d.fim]))
+  for (let t = 0; t < LIMITE_SIMULACAO; t++) {
+    const vivas = ds.filter((d) => saldoSim(d) > 0.005)
+    // só pagando as parcelas, a dívida sem parcela nunca acaba
+    if (!comExtra && vivas.length && vivas.every((d) => !d.agenda.length)) break
+    for (const d of vivas) if (!d.agenda.length && d.juros && t > 0) d.aberto *= 1 + d.juros / 100
+    for (const d of vivas) if (d.agenda[t]) {
+      total += d.agenda[t]
+      d.agenda[t] = 0
+    }
+    if (comExtra) {
+      let resta = extra + liberado
+      for (const d of ds.filter((x) => saldoSim(x) > 0.005).sort(ordem)) {
+        if (resta <= 0.005) break
+        if (!d.agenda.length) {
+          const p = Math.min(resta, d.aberto)
+          d.aberto -= p
+          total += p
+          resta -= p
+        } else resta = antecipar(d, resta, t, pagar)
+      }
+    }
+    for (const d of ds) if (d.fim === null && saldoSim(d) <= 0.005) {
+      d.fim = t
+      d.aberto = 0
+      if (comExtra) liberado += d.parcela
+    }
+    if (ds.every((d) => d.fim !== null)) return { meses: t, total: centavos(total), fins: fins() }
+  }
+  return { meses: null, total: centavos(total), fins: fins() }
+}
+
+/** Quanto a dívida vale hoje (o que quitaria tudo agora, com o desconto dos juros das parcelas que faltam). */
+function valorHoje(d: DividaSim) {
+  if (!d.agenda.length) return d.aberto
+  const i = (d.juros ?? 0) / 100
+  return soma(d.agenda.map((v, s) => v / Math.pow(1 + i, s)))
+}
+
+function planoDasDividas(abertas: SituacaoDivida[], extraPlano: number, renda: number, atual: number, hojeIso: string): PlanoDividas | null {
+  const ds: DividaSim[] = abertas.map((s) => {
+    const agenda = agendaDa(s, hojeIso, atual)
+    const parcela = s.divida.valor_parcela && s.divida.valor_parcela > 0 ? s.divida.valor_parcela : 0
+    return {
+      id: s.divida.id, nome: s.divida.descricao, agenda, aberto: agenda.length ? 0 : s.restante, parcela,
+      juros: typeof s.divida.juros_mes === 'number' && s.divida.juros_mes >= 0 ? s.divida.juros_mes : null,
+    }
+  })
+  if (!ds.length) return null
+  const total = centavos(soma(abertas.map((s) => s.restante)))
+  const parcelasMes = centavos(soma(ds.map((d) => Math.min(d.parcela, saldoSim(d)))))
+  const jurosPorMes = centavos(soma(ds.map((d) => (d.juros ? valorHoje(d) * (d.juros / 100) : 0))))
+  const jurosEmbutidos = centavos(soma(ds.filter((d) => d.agenda.length).map((d) => saldoSim(d) - valorHoje(d))))
+  // sem espaço na sobra para as dívidas: mostra o que aconteceria com um valor pequeno a mais por mês
+  const extraExemplo = extraPlano < 1
+  const extra = extraExemplo ? Math.max(redondo(renda * 0.05), redondo(parcelasMes * 0.1), 50) : extraPlano
+  const quando = (m: number | null | undefined) => (m === null || m === undefined ? null : doMesChave(atual + m))
+  const base = simular(ds, 0, 'parcelas')
+  const avalanche = simular(ds, extra, 'avalanche')
+  const bola = simular(ds, extra, 'bola-de-neve')
+  const estrategia = (id: IdEstrategia, r: ReturnType<typeof simular>): Estrategia => ({
+    id, meses: r.meses === null ? null : r.meses + 1, fim: quando(r.meses), totalPago: r.total,
+    economia: base.meses === null || r.meses === null ? null : centavos(Math.max(0, base.total - r.total)),
+  })
+  // Avalanche (juros mais altos primeiro) economiza mais; a bola de neve (menor saldo primeiro) dá vitórias rápidas.
+  // Se a diferença for pequena, a motivação vale mais.
+  const comparavel = bola.meses !== null && avalanche.meses !== null
+  const diferenca = comparavel ? bola.total - avalanche.total : 0
+  const comJuros = ds.filter((d) => d.juros !== null).length
+  const primeiraDe = (r: ReturnType<typeof simular>) => [...ds].sort((a, b) => (r.fins.get(a.id) ?? Infinity) - (r.fins.get(b.id) ?? Infinity))[0]?.id
+  const mesmaOrdem = comparavel && primeiraDe(avalanche) === primeiraDe(bola) && Math.abs(diferenca) < 1
+  const pequena = comparavel && !mesmaOrdem && diferenca <= Math.max(1, total * 0.01)
+  const recomendada = comJuros >= 1 && !pequena ? 'avalanche' : 'bola-de-neve'
+  const escolhida = recomendada === 'avalanche' ? avalanche : bola
+  const porque = ds.length === 1 ? tx('Com uma dívida só, todo dinheiro a mais vai para ela.')
+    : mesmaOrdem && comJuros >= 1 ? tx('A dívida de juros mais altos é também a que acaba primeiro: comece por ela.')
+      : recomendada === 'avalanche'
+        ? comparavel
+          ? tx('Pagar primeiro a dívida de juros mais altos economiza {0} a mais do que começar pela menor.', fmtValor(centavos(diferenca)))
+          : tx('Pagar primeiro a dívida de juros mais altos é o que mais economiza.')
+        : comJuros === 0 ? tx('Sem os juros de cada dívida, começar pela menor dá vitórias rápidas. Informe os juros para o app comparar o custo.')
+          : tx('A diferença entre as estratégias é pequena, então começar pela menor dívida dá vitórias rápidas e ajuda a manter o ritmo.')
+  const ordem = [...ds]
+    .sort((a, b) => (escolhida.fins.get(a.id) ?? Infinity) - (escolhida.fins.get(b.id) ?? Infinity) || a.id.localeCompare(b.id))
+    .map((d): DividaNoPlano => ({
+      id: d.id, nome: d.nome, restante: centavos(saldoSim(d)), parcela: d.parcela || null, juros: d.juros, quitarHoje: centavos(valorHoje(d)),
+      quitaEm: quando(escolhida.fins.get(d.id)),
+      quitaSemExtra: quando(base.fins.get(d.id)),
+    }))
+  return {
+    total, parcelasMes, jurosPorMes, jurosEmbutidos, extra, extraExemplo, recomendada, porque, ordem,
+    estrategias: [estrategia('parcelas', base), estrategia('avalanche', avalanche), estrategia('bola-de-neve', bola)],
+    semJuros: ds.filter((d) => d.juros === null).length,
+    temCara: ds.some((d) => (d.juros ?? 0) >= JUROS_CARO_MES),
+  }
+}
+
+// ---------- recorrências e gastos formiga ----------
+
+interface Grupo3 { chave: string; ls: Lancamento[] }
+
+function agrupar(ls: Lancamento[]): Grupo3[] {
+  const m = new Map<string, Lancamento[]>()
+  for (const l of ls) {
+    const k = chaveDescricao(l.descricao)
+    if (k.length < 3) continue
+    m.set(k, [...(m.get(k) ?? []), l])
+  }
+  return [...m].map(([chave, ls]) => ({ chave, ls }))
+}
+
+/**
+ * O que se repete todo mês (uma vez por mês, valor parecido): aluguel, assinaturas, salário. `tipo` escolhe saídas ou
+ * entradas. Olha os 6 meses fechados; vale a partir de 3 meses (2, se a pessoa tem poucos meses lançados).
+ */
+/** "Plano de internet" é a conta "Internet": todas as palavras do nome mais curto estão no mais comprido. */
+function mesmoNome(a: string, b: string) {
+  const [curto, longo] = a.length <= b.length ? [a, b] : [b, a]
+  const palavras = new Set(longo.split(' '))
+  return curto.length >= 3 && curto.split(' ').every((p) => palavras.has(p))
+}
+
+function recorrencias(
+  lancs: Lancamento[], atual: number, tipo: 'entrada' | 'saida', nomeCat: (l: Lancamento) => string, contas: ContaFixa[],
+) {
+  const nomesDasContas = contas.filter((c) => c.ativa && c.tipo === tipo).map((c) => chaveDescricao(c.descricao))
+  const janela = lancs.filter((l) => l.tipo === tipo && l.valor > 0 && !l.divida_id && (l.parcelas ?? 1) <= 1
+    && chaveMes(l.ano, l.mes) >= atual - 6 && chaveMes(l.ano, l.mes) < atual)
+  const mesesComAlgo = new Set(janela.map((l) => chaveMes(l.ano, l.mes))).size
+  const minimo = mesesComAlgo >= 4 ? RECORRENTE_MESES : 2
+  const achados: (Recorrente & { chave: string; dia: number; contaFixa: boolean; noCartao: boolean })[] = []
+  for (const { chave, ls } of agrupar(janela)) {
+    const porMes = new Map<number, number>()
+    for (const l of ls) porMes.set(chaveMes(l.ano, l.mes), (porMes.get(chaveMes(l.ano, l.mes)) ?? 0) + 1)
+    if (porMes.size < minimo || [...porMes.values()].some((n) => n > 1)) continue
+    // todo mês, e ainda de pé: o bimestral (3 vezes em 5 meses) e o que parou há meses não contam
+    const chaves = [...porMes.keys()]
+    if (porMes.size < 0.75 * (Math.max(...chaves) - Math.min(...chaves) + 1) || Math.max(...chaves) < atual - 2) continue
+    const valores = ls.map((l) => l.valor)
+    const maior = Math.max(...valores)
+    if ((maior - Math.min(...valores)) / maior > 0.35) continue
+    const ultimo = [...ls].sort((a, b) => chaveMes(b.ano, b.mes) - chaveMes(a.ano, a.mes))[0]
+    achados.push({
+      chave, descricao: ultimo.descricao.trim(), valor: ultimo.valor, meses: porMes.size,
+      assinatura: tipo === 'saida' && (RE_ASSINATURA.test(normal(ultimo.descricao)) || RE_ASSINATURA.test(normal(nomeCat(ultimo)))),
+      dia: Math.round(mediana(ls.map((l) => diaDe(l.data)).filter(Boolean))) || 0,
+      contaFixa: ls.some((l) => l.conta_fixa_id) || nomesDasContas.some((n) => mesmoNome(n, chave)), noCartao: ls.some((l) => l.cartao_id),
+    })
+  }
+  return achados.sort((a, b) => b.valor - a.valor)
+}
+
+/** Compras pequenas que se repetem muitas vezes no mês ("gastos formiga"), nos 3 meses fechados. */
+function gastosFormiga(lancs: Lancamento[], atual: number, renda: number, gastoMedio: number): Formiga[] {
+  const teto = renda > 0 ? renda * FORMIGA_VALOR : gastoMedio * 0.02
+  if (teto <= 0) return []
+  const janela = lancs.filter((l) => l.tipo === 'saida' && l.valor > 0 && l.valor <= teto && !l.divida_id && !l.conta_fixa_id
+    && (l.parcelas ?? 1) <= 1 && chaveMes(l.ano, l.mes) >= atual - MESES_NA_MEDIA && chaveMes(l.ano, l.mes) < atual)
+  const meses = Math.max(1, new Set(janela.map((l) => chaveMes(l.ano, l.mes))).size)
+  return agrupar(janela)
+    .map(({ ls }) => {
+      const total = soma(ls.map((l) => l.valor))
+      const porMes = centavos(total / meses)
+      return { descricao: ls[ls.length - 1].descricao.trim(), vezesPorMes: ls.length / meses, ticket: centavos(total / ls.length), porMes, porAno: centavos(porMes * 12) }
+    })
+    .filter((f) => f.vezesPorMes >= FORMIGA_VEZES && f.porMes >= (renda > 0 ? renda : gastoMedio) * 0.015)
+    .sort((a, b) => b.porMes - a.porMes)
+    .slice(0, 3)
+}
+
+// ---------- o motor ----------
+
+export function analisar(e: EntradaAnalise): Analise {
+  const hoje = e.hoje ?? new Date()
+  const hojeIso = hojeLocal(hoje)
+  const v = visao(e.perfil)
+  const ano = hoje.getFullYear()
+  const mes = hoje.getMonth() + 1
+  const atual = chaveMes(ano, mes)
+  const fechados = Array.from({ length: MESES_DA_ANALISE }, (_, i) => atual - MESES_DA_ANALISE + i)
+  const catPorId = new Map(e.categorias.map((c) => [c.id, c]))
+  const nomeCat = (l: Lancamento) => catPorId.get(e.categoriaDe(l))?.nome ?? ''
+  const dividaPorId = new Map(e.dividas.map((d) => [d.id, d]))
+  const ehEmprestimo = (l: Lancamento) => {
+    const d = l.divida_id ? dividaPorId.get(l.divida_id) : undefined
+    return Boolean(d && aumentaDivida(l.tipo, d))
+  }
+  const naJanela = e.lancs.filter((l) => {
+    const k = chaveMes(l.ano, l.mes)
+    return k >= atual - MESES_DA_ANALISE && k <= atual && l.valor > 0 && !ehEmprestimo(l)
+  })
+
+  // ----- recorrências (o que se repete todo mês): serve para a revisão e para prever o resto do mês -----
+  const contasAtivas = v.contas ? e.contas : []
+  const recSaidas = recorrencias(naJanela, atual, 'saida', nomeCat, contasAtivas)
+  const recEntradas = recorrencias(naJanela, atual, 'entrada', nomeCat, contasAtivas)
+  const chavesRecorrentes = new Set(recSaidas.map((r) => r.chave))
+  /** Gasto do dia a dia: o que não é conta do mês, cartão, dívida nem algo que se repete todo mês. */
+  const ehDiaADia = (l: Lancamento) => l.tipo === 'saida' && !l.conta_fixa_id && !l.cartao_id && !l.divida_id && !chavesRecorrentes.has(chaveDescricao(l.descricao))
+
+  // ----- série mês a mês -----
+  interface Bruto {
+    entradas: number; saidas: number; porCategoria: Map<string, number>; parcelado: Map<string, number>; porFonte: Map<string, number>
+    cartao: number; ateDia: number; rendaExtra: number
+  }
+  const novo = (): Bruto => ({ entradas: 0, saidas: 0, porCategoria: new Map(), parcelado: new Map(), porFonte: new Map(), cartao: 0, ateDia: 0, rendaExtra: 0 })
+  const chavesEntradasFixas = new Set(recEntradas.map((r) => r.chave))
+  const brutos = new Map<number, Bruto>([...fechados, atual].map((k) => [k, novo()]))
+  const diaHoje = hoje.getDate()
+  for (const l of naJanela) {
+    const b = brutos.get(chaveMes(l.ano, l.mes))!
+    const k = e.categoriaDe(l)
+    if (l.tipo === 'entrada') {
+      b.entradas += l.valor
+      b.porFonte.set(k, (b.porFonte.get(k) ?? 0) + l.valor)
+      if (!l.conta_fixa_id && !chavesEntradasFixas.has(chaveDescricao(l.descricao))) b.rendaExtra += l.valor
+    } else {
+      b.saidas += l.valor
+      b.porCategoria.set(k, (b.porCategoria.get(k) ?? 0) + l.valor)
+      if (l.cartao_id && (l.parcelas ?? 1) > 1) b.parcelado.set(k, (b.parcelado.get(k) ?? 0) + l.valor)
+      if (l.cartao_id) b.cartao += l.valor
+      if (diaDe(l.data) && diaDe(l.data) <= diaHoje) b.ateDia += l.valor
+    }
+  }
+  const serie: MesDaSerie[] = [...fechados, atual].map((k) => {
+    const b = brutos.get(k)!
+    const { ano: a, mes: m } = doMesChave(k)
+    return { ano: a, mes: m, entradas: centavos(b.entradas), saidas: centavos(b.saidas), sobra: centavos(b.entradas - b.saidas), comDados: k !== atual && b.entradas > 0 && b.saidas > 0, atual: k === atual }
+  })
+  const chavesComDados = fechados.filter((k) => { const b = brutos.get(k)!; return b.entradas > 0 && b.saidas > 0 })
+  // O mesmo critério do conselheiro: os últimos 3 meses fechados, com entradas e saídas.
+  const recentes = chavesComDados.filter((k) => k >= atual - MESES_NA_MEDIA)
+  const temFluxo = recentes.length >= MIN_MESES_COM_DADOS
+  const rec = recentes.map((k) => brutos.get(k)!)
+  const renda = temFluxo ? centavos(media(rec.map((b) => b.entradas))) : 0
+  const gastos = temFluxo ? centavos(media(rec.map((b) => b.saidas))) : 0
+  const sobra = centavos(renda - gastos)
+  const sobraFracao = renda > 0 ? sobra / renda : 0
+  const todos = chavesComDados.map((k) => brutos.get(k)!)
+  const variacaoRenda = todos.length >= 3 ? desvio(todos.map((b) => b.entradas)) / media(todos.map((b) => b.entradas)) : null
+  const rendaVaria = (variacaoRenda ?? 0) > RENDA_VARIA_ACIMA
+  const tendenciaGastos = inclinacao(chavesComDados.map((k) => ({ x: k, y: brutos.get(k)!.saidas })))
+  const tendenciaRenda = inclinacao(chavesComDados.map((k) => ({ x: k, y: brutos.get(k)!.entradas })))
+  const variacaoGastos = todos.length >= 3 ? desvio(todos.map((b) => b.saidas)) / media(todos.map((b) => b.saidas)) : null
+
+  // de onde vem a renda
+  const fontes = new Map<string, number>()
+  for (const b of rec) for (const [k, x] of b.porFonte) fontes.set(k, (fontes.get(k) ?? 0) + x)
+  const totalFontes = soma([...fontes.values()])
+  const maiorFonte = [...fontes].sort((a, b) => b[1] - a[1])[0]
+  const principalFonte = maiorFonte && totalFontes > 0
+    ? { nome: catPorId.get(maiorFonte[0])?.nome ?? tx('Sem categoria'), fracao: maiorFonte[1] / totalFontes }
+    : null
+
+  // ----- categorias -----
+  const idsCategorias = new Set<string>()
+  for (const k of chavesComDados) for (const id of brutos.get(k)!.porCategoria.keys()) idsCategorias.add(id)
+  for (const id of brutos.get(atual)!.porCategoria.keys()) idsCategorias.add(id)
+  const anteriores = chavesComDados.filter((k) => k < atual - MESES_NA_MEDIA)
+  // compras parceladas que ainda têm parcelas daqui em diante, por categoria (para dizer o que pesa e quando acaba)
+  const fimDaCompra = new Map<string, number>()
+  for (const l of e.compras) if (l.compra_id && (l.parcelas ?? 1) > 1) fimDaCompra.set(l.compra_id, Math.max(fimDaCompra.get(l.compra_id) ?? 0, chaveMes(l.ano, l.mes)))
+  const parcelasPorCategoria = new Map<string, Map<string, { descricao: string; valor: number; termina: number }>>()
+  for (const l of e.compras) {
+    const k = chaveMes(l.ano, l.mes)
+    if (!l.compra_id || (l.parcelas ?? 1) <= 1 || (k !== atual && k !== atual + 1)) continue
+    const termina = fimDaCompra.get(l.compra_id)!
+    const cat = e.categoriaDe(l)
+    const m = parcelasPorCategoria.get(cat) ?? new Map<string, { descricao: string; valor: number; termina: number }>()
+    m.set(l.compra_id, { descricao: l.descricao, valor: l.valor, termina })
+    parcelasPorCategoria.set(cat, m)
+  }
+  const categorias: CategoriaAnalise[] = [...idsCategorias].map((id) => {
+    const c = catPorId.get(id)
+    const mediaRec = rec.length ? media(rec.map((b) => b.porCategoria.get(id) ?? 0)) : 0
+    const antes = anteriores.length >= 2 ? media(anteriores.map((k) => brutos.get(k)!.porCategoria.get(id) ?? 0)) : null
+    const parcelado = rec.length ? media(rec.map((b) => b.parcelado.get(id) ?? 0)) : 0
+    return {
+      id, nome: c?.nome ?? tx('Sem categoria'), icone: c?.icone ?? '·', cor: c?.cor ?? '#55555f', grupo: grupoDa(c),
+      media: centavos(mediaRec), antes: antes === null ? null : centavos(antes),
+      variacao: antes && antes > 0 ? (mediaRec - antes) / antes : null,
+      atual: centavos(brutos.get(atual)!.porCategoria.get(id) ?? 0), sugestao: centavos(mediaRec),
+      parcelado: centavos(parcelado),
+      parceladoAntes: anteriores.length >= 2 ? centavos(media(anteriores.map((k) => brutos.get(k)!.parcelado.get(id) ?? 0))) : null,
+      parcelas: [...(parcelasPorCategoria.get(id)?.values() ?? [])].sort((a, b) => b.valor - a.valor).slice(0, 2)
+        .map((x) => ({ descricao: x.descricao, valor: x.valor, termina: doMesChave(x.termina) })),
+    }
+  }).filter((c) => c.media > 0 || c.atual > 0).sort((a, b) => b.media - a.media || b.atual - a.atual)
+  const relevante = gastos * SUBIU_RELEVANTE
+  const subiram = categorias
+    .filter((c) => c.grupo !== 'dividas' && c.antes !== null && c.variacao !== null && c.variacao >= SUBIU_ACIMA && c.media - c.antes >= relevante)
+    .sort((a, b) => (b.media - b.antes!) - (a.media - a.antes!)).slice(0, 3)
+  const cairam = categorias
+    .filter((c) => c.antes !== null && c.variacao !== null && c.variacao <= -SUBIU_ACIMA && c.antes - c.media >= relevante)
+    .sort((a, b) => (b.antes! - b.media) - (a.antes! - a.media)).slice(0, 3)
+  const semCategoria = gastos > 0 ? (categorias.find((c) => c.id === '')?.media ?? 0) / gastos : 0
+
+  // ----- regra 50/30/20 -----
+  const porGrupo = (g: Grupo) => soma(categorias.filter((c) => c.grupo === g).map((c) => c.media))
+  const regra: Regra503020 | null = temFluxo && renda > 0 ? {
+    renda, essencial: porGrupo('essencial') / renda, parcelas: porGrupo('dividas') / renda, estilo: porGrupo('estilo') / renda,
+    outros: porGrupo('outros') / renda, sobra: Math.max(0, sobraFracao),
+  } : null
+
+  // ----- revisão: recorrentes, assinaturas, formigas, juros pagos -----
+  const recorrentes: Recorrente[] = recSaidas.map(({ descricao, valor, meses, assinatura }) => ({ descricao, valor, meses, assinatura }))
+  const assinaturasPorMes = centavos(soma(recorrentes.filter((r) => r.assinatura).map((r) => r.valor)))
+  const recorrentesPorMes = centavos(soma(recorrentes.map((r) => r.valor)))
+  const formigas = temFluxo ? gastosFormiga(naJanela, atual, renda, gastos) : []
+  const lancsDeJurosDeFatura = new Set(e.faturasPagas.map((f) => f.juros_lanc_id).filter(Boolean))
+  const jurosDeFatura = soma(e.faturasPagas.filter((f) => chaveMes(f.ano, f.mes) >= atual - MESES_DA_ANALISE).map((f) => f.juros ?? 0))
+  const jurosLancados = soma(naJanela.filter((l) => l.tipo === 'saida' && !lancsDeJurosDeFatura.has(l.id) && RE_JUROS.test(normal(l.descricao))).map((l) => l.valor))
+  const jurosPagos = centavos(jurosDeFatura + jurosLancados)
+
+  // ----- dívidas -----
+  const devo = e.dividas.filter((d) => !meDevem(d))
+  const dividasHoje = v.dividas ? situacaoDividas(devo, e.saldos, e.pagamentos, ano, mes, e.taxas) : []
+  const abertas = dividasHoje.filter((s) => s.restante > 0 && !s.semCotacao)
+  const dividaTotal = centavos(soma(abertas.map((s) => s.restante)))
+  const parcelasMes = centavos(soma(abertas.map((s) => Math.min(s.divida.valor_parcela ?? 0, s.restante))))
+  const atrasoDividas = centavos(soma(abertas.map((s) => calendarioDe(s, hojeIso)?.emAtraso ?? 0)))
+  const jurosMax = Math.max(0, ...abertas.map((s) => s.divida.juros_mes ?? 0))
+  const maisCara = [...abertas].filter((s) => typeof s.divida.juros_mes === 'number').sort((a, b) => b.divida.juros_mes! - a.divida.juros_mes!)[0]
+  const temCara = jurosMax >= JUROS_CARO_MES
+  const temModerada = abertas.some((s) => (s.divida.juros_mes ?? 0) >= JUROS_MODERADO_MES)
+  // há 3 meses, as mesmas dívidas
+  const tresAtras = doMesChave(atual - 3)
+  const antesDividas = v.dividas ? situacaoDividas(devo, e.saldos, e.pagamentos, tresAtras.ano, tresAtras.mes, e.taxas).filter((s) => s.restante > 0 && !s.semCotacao) : []
+  const totalAntes = soma(antesDividas.map((s) => s.restante))
+  const restanteHoje = new Map(abertas.map((s) => [s.divida.id, s.restante]))
+  const dividaCresceu = totalAntes > 0 && soma(antesDividas.map((s) => restanteHoje.get(s.divida.id) ?? 0)) > totalAntes * 1.02
+
+  // ----- reserva -----
+  const ef = mesEfetivo(e.meses, ano, mes, hoje)
+  const preencheuBancos = Object.values(ef.caixa).some((b) => TIPOS_CAIXA.some((t) => typeof b?.[t] === 'number'))
+  const investido = v.investimentos ? Math.max(0, ef.investimentos || 0) : 0
+  const guardadoBancos = centavos(Math.max(0, soma(Object.keys(ef.caixa).map((id) => caixaDoBanco(ef.caixa, id))) + investido))
+  const naPrincipal = (valor: number, moeda: string) => (moeda === e.perfil.moeda ? valor : converter(valor, moeda, e.taxas) ?? 0)
+  const metaReserva = v.metas ? e.metas.find((m) => /reserva|emergenc|emergency|imprevist/.test(normal(m.nome))) : undefined
+  const guardadoMeta = metaReserva ? naPrincipal(situacaoMeta(metaReserva, e.movimentosMeta, hojeIso).guardado, metaReserva.moeda) : 0
+  const conheceReserva = (v.bancos && preencheuBancos) || investido > 0 || guardadoMeta > 0
+  const tem = (v.bancos && preencheuBancos) || investido > 0 ? guardadoBancos : guardadoMeta
+  const alvoMeses = rendaVaria ? RESERVA_RENDA_VARIAVEL : RESERVA_RENDA_ESTAVEL
+  const mesesReserva = gastos > 0 ? tem / gastos : 0
+
+  // ----- fase -----
+  const fase: Fase = temFluxo && sobra < 0 ? 'vermelho'
+    : conheceReserva && gastos > 0 && mesesReserva < COLCHAO_MESES ? 'colchao'
+      : temCara ? 'dividas'
+        : !conheceReserva || (gastos > 0 && mesesReserva < alvoMeses) ? 'reserva'
+          : 'crescer'
+
+  // ----- metas -----
+  const metasAtivas = v.metas ? e.metas.map((m) => ({ m, s: situacaoMeta(m, e.movimentosMeta, hojeIso) })).filter(({ s }) => !s.batida) : []
+  const ritmoFechado = (movs: MovimentoMeta[]) => {
+    const chaves = movs.map((x) => chaveMes(Number(x.data.slice(0, 4)), Number(x.data.slice(5, 7))))
+    if (!chaves.length) return 0
+    const janela = Math.min(MESES_NA_MEDIA, atual - Math.min(...chaves))
+    if (janela <= 0) return 0
+    return Math.max(0, soma(movs.filter((_, i) => atual - chaves[i] >= 1 && atual - chaves[i] <= janela).map((x) => x.valor)) / janela)
+  }
+  const metasNoPlano: MetaNoPlano[] = metasAtivas.map(({ m, s }) => {
+    const ritmo = Math.max(ritmoFechado(s.movimentos), s.ritmo ?? 0)
+    const prazo = m.prazo ? { ano: Number(m.prazo.slice(0, 4)), mes: Number(m.prazo.slice(5, 7)) } : null
+    const previsao = ritmo > 0 ? doMesChave(atual + Math.ceil(s.falta / ritmo - 1e-9)) : null
+    return {
+      id: m.id, nome: m.nome, icone: m.icone, moeda: m.moeda, falta: s.falta, porMes: s.porMesNoPrazo, ritmo: centavos(ritmo), prazo, previsao,
+      noRitmo: s.porMesNoPrazo === null ? ritmo > 0 : !s.atrasada && ritmo >= s.porMesNoPrazo * 0.9,
+    }
+  })
+  const necessarioMetas = centavos(soma(metasNoPlano.map((m) => naPrincipal(m.porMes ?? 0, m.moeda))))
+
+  // ----- para onde mandar a sobra (conforme a fase) -----
+  let alocacao: Alocacao | null = null
+  if (temFluxo && sobra > 0) {
+    const temMetas = metasNoPlano.length > 0
+    const partes: Partial<Record<'reserva' | 'dividas' | 'metas', number>> =
+      fase === 'colchao' ? (temCara ? { reserva: 0.6, dividas: 0.4 } : temMetas ? { reserva: 0.8, metas: 0.2 } : { reserva: 1 })
+        : fase === 'dividas' ? { dividas: 0.8, reserva: 0.2 }
+          : fase === 'reserva' ? (temMetas ? { reserva: 0.7, metas: 0.3 } : temModerada ? { reserva: 0.7, dividas: 0.3 } : { reserva: 1 })
+            : fase === 'crescer' ? (temMetas ? { metas: necessarioMetas > 0 ? Math.min(1, necessarioMetas / sobra) : 0.5 } : temModerada ? { dividas: 0.5 } : {})
+              : {}
+    // valores de dizer (múltiplos de 10), o resto fica livre
+    const parte = (k: 'reserva' | 'dividas' | 'metas') => (sobra >= 200 ? Math.floor((sobra * (partes[k] ?? 0)) / 10) * 10 : centavos(sobra * (partes[k] ?? 0)))
+    const reserva = parte('reserva')
+    const dividas = abertas.length ? parte('dividas') : 0
+    const metas = parte('metas')
+    alocacao = { sobra, reserva, dividas, metas, livre: centavos(Math.max(0, sobra - reserva - dividas - metas)) }
+  }
+
+  // ----- plano das dívidas -----
+  const dividas = abertas.length ? planoDasDividas(abertas, alocacao?.dividas ?? 0, renda, atual, hojeIso) : null
+
+  // ----- plano da reserva -----
+  let reserva: PlanoReserva | null = null
+  if (conheceReserva && gastos > 0) {
+    const alvo = centavos(alvoMeses * gastos)
+    const falta = centavos(Math.max(0, alvo - tem))
+    const porMes = alocacao?.reserva ?? 0
+    reserva = {
+      tem, base: gastos, meses: mesesReserva, colchao: centavos(COLCHAO_MESES * gastos), alvoMeses, alvo, falta, porMes, rendaVaria,
+      chegaEm: falta > 0 && porMes > 0 ? doMesChave(atual + Math.ceil(falta / porMes - 1e-9)) : null,
+      fonte: (v.bancos && preencheuBancos) || investido > 0 ? 'bancos' : 'meta',
+    }
+  }
+
+  // ----- plano das metas -----
+  const disponivelMetas = alocacao ? centavos(alocacao.metas + (fase === 'crescer' ? alocacao.livre : 0)) : 0
+  const metas: PlanoMetas | null = metasNoPlano.length
+    ? { necessario: necessarioMetas, disponivel: disponivelMetas, cabe: necessarioMetas <= disponivelMetas + 0.5, metas: metasNoPlano }
+    : null
+
+  // ----- orçamento: quanto cortar para chegar na sobra-alvo -----
+  const sobraAlvo = !temFluxo ? SOBRA_IDEAL : sobraFracao < 0 ? 0.05 : sobraFracao < 0.1 ? 0.1 : sobraFracao < SOBRA_IDEAL ? SOBRA_IDEAL : Math.min(sobraFracao, 0.3)
+  const corte = temFluxo ? centavos(Math.max(0, sobraAlvo * renda - sobra)) : 0
+  if (corte > 0) {
+    // corta primeiro o estilo de vida (até 35%), depois o que não tem grupo (até 25%) e, se ainda faltar, um pouco do essencial (8%)
+    let falta = corte
+    for (const [grupo, teto] of [['estilo', 0.35], ['outros', 0.25], ['essencial', 0.08]] as const) {
+      const cortavel = (c: CategoriaAnalise) => Math.max(0, c.media - c.parcelado)
+      const doGrupo = categorias.filter((c) => c.grupo === grupo && cortavel(c) > 0)
+      const base = soma(doGrupo.map(cortavel))
+      if (falta <= 0 || base <= 0) continue
+      const fracao = Math.min(teto, falta / base)
+      for (const c of doGrupo) c.sugestao = centavos(Math.max(0, c.media - cortavel(c) * fracao))
+      falta -= base * fracao
+    }
+  }
+
+  // ----- patrimônio -----
+  let patrimonio: Patrimonio | null = null
+  const temAtivos = e.meses.some((m) => Object.values(m.caixa ?? {}).some((b) => TIPOS_CAIXA.some((t) => typeof b?.[t] === 'number')) || (v.investimentos && m.investimentos > 0))
+  if (temAtivos && (v.bancos || v.investimentos || v.moedas)) {
+    const pontos = [...fechados, atual].map((k) => {
+      const { ano: a, mes: m } = doMesChave(k)
+      const efk = mesEfetivo(e.meses, a, m, hoje)
+      const ativos = soma(Object.keys(efk.caixa).map((id) => caixaDoBanco(efk.caixa, id))) + (v.investimentos ? efk.investimentos || 0 : 0) + (v.moedas ? totalConvertido(efk.moedas, e.taxas) : 0)
+      const passivo = v.dividas ? soma(situacaoDividas(devo, e.saldos, e.pagamentos, a, m, e.taxas).filter((s) => !s.semCotacao).map((s) => Math.max(0, s.restante))) : 0
+      const informado = Object.values(efk.caixa).some((b) => TIPOS_CAIXA.some((t) => typeof b?.[t] === 'number')) || efk.investimentos > 0
+      return { ano: a, mes: m, valor: centavos(ativos - passivo), ativos, passivo, informado }
+    }).filter((p) => p.informado)
+    const ultimo = pontos[pontos.length - 1]
+    if (ultimo) {
+      const parcelas12 = v.dividas ? soma(projecaoMensal(abertas, hojeIso, 12).map((p) => p.valor)) : 0
+      const hojeValor = ultimo.valor
+      patrimonio = {
+        hoje: hojeValor, ativos: centavos(ultimo.ativos), dividas: centavos(ultimo.passivo),
+        serie: pontos.map(({ ano: a, mes: m, valor }) => ({ ano: a, mes: m, valor })),
+        variacao: pontos.length > 1 ? centavos(hojeValor - pontos[0].valor) : null,
+        desde: pontos.length > 1 ? { ano: pontos[0].ano, mes: pontos[0].mes } : null,
+        em12: centavos(hojeValor + (temFluxo ? sobra * 12 : 0) + parcelas12),
+        em12NoPlano: centavos(hojeValor + (temFluxo ? (sobra + corte) * 12 : 0) + parcelas12),
+      }
+    }
+  }
+
+  // ----- cartão -----
+  let cartao: InfoCartao | null = null
+  const ativos = v.cartoes ? e.cartoes.filter((c) => c.ativo) : []
+  if (ativos.length) {
+    let usado = 0
+    let limite = 0
+    let algumLimite = false
+    let atrasadas = 0
+    let valorAtrasado = 0
+    for (const c of ativos) {
+      const l = limiteDoCartao(c, e.compras, e.faturasPagas, hojeIso, garantidoDo(c, c.banco_id ? ef.caixa[c.banco_id]?.caixinha : 0))
+      usado += l.usado
+      if (l.total !== null) { limite += l.total; algumLimite = true }
+      const vencidas = [...faturasAtrasadas(c, e.compras, e.faturasPagas, ano, mes, hojeIso), faturaDoMes(c, e.compras, e.faturasPagas, ano, mes, hojeIso)]
+        .filter((f) => f.status === 'atrasada')
+      atrasadas += vencidas.length
+      valorAtrasado += soma(vencidas.map((f) => f.valor))
+    }
+    const deCartao = new Set(ativos.map((c) => c.id))
+    const proximas = [1, 2, 3, 4, 5, 6].map((i) => {
+      const k = doMesChave(atual + i)
+      return { ...k, valor: centavos(soma(e.compras.filter((l) => l.cartao_id && deCartao.has(l.cartao_id) && l.ano === k.ano && l.mes === k.mes && l.valor > 0).map((l) => l.valor))) }
+    })
+    const porMes = rec.length ? centavos(media(rec.map((b) => b.cartao))) : 0
+    cartao = {
+      usado: centavos(usado), limite: algumLimite ? centavos(limite) : null, uso: algumLimite && limite > 0 ? usado / limite : null,
+      proximas, pesoProximo: renda > 0 ? proximas[0].valor / renda : null, porMes,
+      fracaoDasSaidas: gastos > 0 ? porMes / gastos : 0, atrasadas, valorAtrasado: centavos(valorAtrasado),
+    }
+  }
+
+  // ----- previsão do mês atual -----
+  let previsao: PrevisaoMes | null = null
+  {
+    const doMes = naJanela.filter((l) => l.ano === ano && l.mes === mes)
+    const ate = (l: Lancamento) => !l.data || l.data <= hojeIso
+    const entrouAteAgora = centavos(soma(doMes.filter((l) => l.tipo === 'entrada' && ate(l)).map((l) => l.valor)))
+    const saiuAteAgora = centavos(soma(doMes.filter((l) => l.tipo === 'saida' && ate(l)).map((l) => l.valor)))
+    const entradasDepois = soma(doMes.filter((l) => l.tipo === 'entrada' && !ate(l)).map((l) => l.valor))
+    const saidasDepois = soma(doMes.filter((l) => l.tipo === 'saida' && !ate(l)).map((l) => l.valor))
+    const sits = v.contas ? situacoesDasContas(e.contas, e.lancs, ano, mes, hojeIso, e.taxas) : []
+    const contasPagar = soma(sits.filter((s) => s.conta.tipo === 'saida' && s.estado !== 'paga' && s.estado !== 'fora').map((s) => s.valor))
+    const contasReceber = soma(sits.filter((s) => s.conta.tipo === 'entrada' && s.estado !== 'paga' && s.estado !== 'fora').map((s) => s.valor))
+    const ini = `${hojeIso.slice(0, 7)}-01`
+    const fim = `${hojeIso.slice(0, 7)}-31`
+    const parcelasPendentes = soma(abertas.map((s) => soma((calendarioDe(s, hojeIso)?.parcelas ?? [])
+      .filter((p) => p.vencimento >= ini && p.vencimento <= fim && p.falta > 0).map((p) => p.falta))))
+    const jaNoMes = (r: { chave: string }) => doMes.some((l) => chaveDescricao(l.descricao) === r.chave)
+    const recorrentesPagar = soma(recSaidas.filter((r) => !r.contaFixa && !r.noCartao && !jaNoMes(r)).map((r) => r.valor))
+    const recorrentesReceber = soma(recEntradas.filter((r) => !r.contaFixa && !jaNoMes(r)).map((r) => r.valor))
+    const diasNoMes = new Date(ano, mes, 0).getDate()
+    const diaADiaAgora = soma(doMes.filter((l) => ate(l) && ehDiaADia(l)).map((l) => l.valor))
+    const diaADiaNormal = rec.length
+      ? media(recentes.map((k) => soma(naJanela.filter((l) => chaveMes(l.ano, l.mes) === k && ehDiaADia(l)).map((l) => l.valor)))) / 30.4
+      : null
+    // Duas leituras do resto do mês: pelo ritmo deste mês (B) e pelo costume, descontando o que já saiu (A: quem fez a
+    // compra grande do mercado no dia 3 não vai repetir todo dia). No começo do mês pesa o costume; no fim, o ritmo.
+    const diasRestantes = diasNoMes - diaHoje
+    const peloRitmo = (diaADiaAgora / diaHoje) * diasRestantes
+    const peloCostume = diaADiaNormal === null ? peloRitmo
+      : Math.max(diaADiaNormal * diasRestantes * 0.3, diaADiaNormal * diasNoMes - diaADiaAgora)
+    const peso = diaHoje / diasNoMes
+    const diaADiaPrevisto = centavos(peso * peloRitmo + (1 - peso) * peloCostume)
+    const aPagar = centavos(saidasDepois + contasPagar + parcelasPendentes + recorrentesPagar)
+    const aReceberConhecido = entradasDepois + contasReceber + recorrentesReceber
+    // O salário ainda não caiu e não está em lugar nenhum? Conta a média, avisando.
+    const rendaPelaMedia = temFluxo && entrouAteAgora + aReceberConhecido < renda * 0.5
+    const aReceber = centavos(rendaPelaMedia ? Math.max(0, renda - entrouAteAgora) : aReceberConhecido)
+    const entradasPrevistas = centavos(entrouAteAgora + aReceber)
+    const saidasPrevistas = centavos(saiuAteAgora + aPagar + diaADiaPrevisto)
+    const resultadoPrevisto = centavos(entradasPrevistas - saidasPrevistas)
+    const sobraAlvoMes = centavos(Math.max(0, sobraAlvo * entradasPrevistas))
+    const porDia = centavos((entradasPrevistas - sobraAlvoMes - saiuAteAgora - aPagar) / (diasNoMes - diaHoje + 1))
+    const ateHojeNormal = rec.length ? centavos(media(rec.map((b) => b.ateDia))) : null
+    const acimaDoNormal = categorias
+      .filter((c) => c.grupo !== 'dividas' && c.media > 0 && c.atual > c.media * 1.05 && c.atual - c.media >= gastos * 0.02)
+      .sort((a, b) => (b.atual - b.media) - (a.atual - a.media)).slice(0, 3)
+      .map(({ id, nome, icone, atual: at, media: me }) => ({ id, nome, icone, atual: at, media: me }))
+    if (doMes.length || temFluxo) {
+      previsao = {
+        dia: diaHoje, diasNoMes, entrouAteAgora, saiuAteAgora, aReceber, aPagar, diaADiaPrevisto, rendaPelaMedia,
+        entradasPrevistas, saidasPrevistas, resultadoPrevisto, sobraAlvo: sobraAlvoMes, porDia, ateHojeNormal,
+        contraMedia: temFluxo ? centavos(resultadoPrevisto - sobra) : null, acimaDoNormal,
+        rendaExtraMedia: rendaPelaMedia || !rec.length ? 0 : centavos(media(rec.map((b) => b.rendaExtra))),
+      }
+    }
+  }
+
+  // ----- pilares -----
+  const pilares: Pilar[] = []
+  if (temFluxo) {
+    const nota = sobraFracao < 0 ? Math.max(0, 20 + sobraFracao * 100)
+      : sobraFracao < SOBRA_IDEAL ? 20 + (sobraFracao / SOBRA_IDEAL) * 65
+        : 85 + Math.min(15, ((sobraFracao - SOBRA_IDEAL) / 0.1) * 15)
+    pilares.push({
+      id: 'sobra', nome: tx('Sobra do mês'), nota, tom: tomDa(nota), valor: fmtPct(sobraFracao), destino: 'lancamentos',
+      referencia: tx('Ideal: guardar 20% ou mais do que entra'),
+      frase: sobra < 0 ? tx('Sai {0} a mais do que entra, por mês.', fmtValor(-sobra))
+        : sobraFracao < 0.1 ? tx('Sobram {0} por mês: pouco espaço para imprevistos.', fmtValor(sobra))
+          : sobraFracao < SOBRA_IDEAL ? tx('Sobram {0} por mês. Falta pouco para os 20%.', fmtValor(sobra))
+            : tx('Sobram {0} por mês. Muito bem.', fmtValor(sobra)),
+    })
+  }
+  if (reserva) {
+    const nota = 100 * Math.pow(Math.min(1, reserva.meses / reserva.alvoMeses), 0.6)
+    pilares.push({
+      id: 'reserva', nome: tx('Reserva para imprevistos'), nota, tom: tomDa(nota), valor: fmtMeses(reserva.meses), destino: 'patrimonio',
+      referencia: rendaVaria ? tx('Ideal para renda que varia: {0} meses de gastos', alvoMeses) : tx('Ideal: {0} meses de gastos', alvoMeses),
+      frase: reserva.tem <= 0 ? tx('Você ainda não tem dinheiro guardado para imprevistos.')
+        : reserva.meses < COLCHAO_MESES ? tx('Um imprevisto maior que {0} já vira dívida.', fmtValor(reserva.tem))
+          : reserva.falta > 0 ? tx('Faltam {0} para completar a reserva.', fmtValor(reserva.falta))
+            : tx('Sua reserva está completa.'),
+    })
+  }
+  if (v.dividas) {
+    const peso = renda > 0 ? parcelasMes / renda : null
+    let nota = !abertas.length ? 100
+      : peso === null ? 70
+        : peso <= 0.1 ? 100 : peso <= 0.3 ? 100 - ((peso - 0.1) / 0.2) * 35 : peso <= 0.5 ? 65 - ((peso - 0.3) / 0.2) * 40 : Math.max(0, 25 - (peso - 0.5) * 100)
+    if (jurosMax >= JUROS_ALTOS_MES) nota = Math.min(nota, 35)
+    else if (jurosMax >= JUROS_CARO_MES) nota = Math.min(nota, 60)
+    if (dividaCresceu) nota -= 15
+    if (atrasoDividas > 0) nota -= 20
+    nota = limitar(nota, 0, 100)
+    const fimDividas = dividas?.estrategias[0].fim
+    pilares.push({
+      id: 'dividas', nome: tx('Dívidas'), nota, tom: tomDa(nota), destino: 'dividas',
+      valor: !abertas.length ? tx('Nenhuma') : peso !== null && parcelasMes > 0 ? fmtPct(peso) : fmtValor(dividaTotal),
+      referencia: tx('Parcelas: ideal abaixo de {0}% do que entra', pct(PARCELAS_ATENCAO)),
+      frase: !abertas.length ? tx('Você não tem dívidas.')
+        : atrasoDividas > 0 ? tx('Há {0} em parcelas atrasadas.', fmtValor(atrasoDividas))
+          : jurosMax >= JUROS_CARO_MES && maisCara ? tx('{0} cobra {1}% ao mês: é a primeira a quitar.', maisCara.divida.descricao, fmtTaxa(jurosMax))
+            : peso !== null && peso > PARCELAS_ATENCAO ? tx('As parcelas levam {0}% do que você recebe.', pct(peso))
+              : dividaCresceu ? tx('O total das dívidas cresceu nos últimos 3 meses.')
+                : fimDividas ? tx('As parcelas cabem no orçamento. Sem dívidas em {0}.', mesAno(fimDividas))
+                  : tx('As parcelas cabem no orçamento.'),
+    })
+  }
+  if (cartao) {
+    const u = cartao.uso
+    let nota = u === null ? 85 : u <= LIMITE_SAUDAVEL ? 100 : u <= 0.6 ? 100 - ((u - LIMITE_SAUDAVEL) / 0.3) * 35 : u <= 0.9 ? 65 - ((u - 0.6) / 0.3) * 35 : 15
+    if (cartao.pesoProximo !== null && cartao.pesoProximo > 0.5) nota -= 35
+    else if (cartao.pesoProximo !== null && cartao.pesoProximo > CARTAO_ATENCAO) nota -= 20
+    if (jurosDeFatura > 0) nota -= 15
+    if (cartao.atrasadas > 0) nota = Math.min(nota - 25, 40)
+    nota = limitar(nota, 0, 100)
+    pilares.push({
+      id: 'cartao', nome: tx('Cartão de crédito'), nota, tom: tomDa(nota), destino: 'cartoes',
+      valor: u !== null ? fmtPct(u) : fmtValor(cartao.proximas[0].valor),
+      referencia: u !== null ? tx('Ideal: usar até {0}% do limite', pct(LIMITE_SAUDAVEL)) : tx('Parcelas já marcadas na próxima fatura'),
+      frase: cartao.atrasadas > 0 ? tx('Há fatura vencida sem pagar: {0}.', fmtValor(cartao.valorAtrasado))
+        : jurosDeFatura > 0 ? tx('Você pagou {0} de juros no cartão em 12 meses.', fmtValor(centavos(jurosDeFatura)))
+          : cartao.pesoProximo !== null && cartao.pesoProximo > CARTAO_ATENCAO ? tx('A próxima fatura já tem {0} em parcelas, {1}% do que você recebe.', fmtValor(cartao.proximas[0].valor), pct(cartao.pesoProximo))
+            : u !== null && u > 0.6 ? tx('Você já usa {0}% do limite.', pct(u))
+              : tx('O cartão está sob controle.'),
+    })
+  }
+  if (temFluxo) {
+    let nota = 100
+    const t = tendenciaGastos ?? 0
+    nota -= Math.min(35, Math.max(0, t * 100 - 1) * 8)
+    nota -= Math.min(25, Math.max(0, (variacaoGastos ?? 0) - 0.15) * 100)
+    nota -= Math.min(20, Math.max(0, semCategoria - 0.1) * 100)
+    const ritmoAlto = previsao !== null && previsao.ateHojeNormal !== null && previsao.saiuAteAgora > previsao.ateHojeNormal * 1.25 && diaHoje >= 7
+    if (ritmoAlto) nota -= 10
+    nota = limitar(nota, 0, 100)
+    pilares.push({
+      id: 'controle', nome: tx('Controle dos gastos'), nota, tom: tomDa(nota), destino: 'lancamentos',
+      valor: tendenciaGastos === null ? tx('Estável') : tendenciaGastos > 0.01 ? tx('Subindo') : tendenciaGastos < -0.01 ? tx('Caindo') : tx('Estável'),
+      referencia: tx('Gastos estáveis, todos com categoria'),
+      frase: t > 0.02 ? tx('Seus gastos sobem cerca de {0}% ao mês nos últimos {1} meses.', decimal.format(t * 100), chavesComDados.length)
+        : (variacaoGastos ?? 0) > 0.3 ? tx('Seus gastos mudam muito de um mês para o outro.')
+          : semCategoria > 0.1 ? tx('{0}% dos gastos estão sem categoria.', pct(semCategoria))
+            : ritmoAlto ? tx('Neste mês, você está gastando mais rápido que o normal.')
+              : t < -0.01 ? tx('Seus gastos estão caindo. Muito bem.')
+                : tx('Seus gastos estão estáveis e organizados.'),
+    })
+  }
+  if (metas) {
+    const comPrazo = metas.metas.filter((m) => m.porMes !== null)
+    const razoes = metas.metas.map((m) => (m.porMes ? Math.min(1, m.ritmo / m.porMes) : m.ritmo > 0 ? 1 : 0.4))
+    const nota = 100 * media(razoes)
+    const atrasada = comPrazo.filter((m) => !m.noRitmo).sort((a, b) => (b.porMes! - b.ritmo) - (a.porMes! - a.ritmo))[0]
+    const noRitmo = metas.metas.filter((m) => m.noRitmo).length
+    pilares.push({
+      id: 'metas', nome: tx('Metas'), nota, tom: tomDa(nota), destino: 'metas',
+      valor: tx('{0} de {1}', noRitmo, metas.metas.length),
+      referencia: tx('Metas no ritmo para chegar no prazo'),
+      frase: atrasada ? tx('“{0}” pede {1} por mês e recebe {2}.', atrasada.nome, fmtMoeda(atrasada.porMes!, atrasada.moeda), fmtMoeda(atrasada.ritmo, atrasada.moeda))
+        : noRitmo === metas.metas.length ? tx('Todas as metas estão no ritmo.')
+          : tx('Guarde um pouco todo mês nas metas paradas.'),
+    })
+  }
+
+  const somaPesos = soma(pilares.map((p) => PESOS[p.id]))
+  const nota = temFluxo && somaPesos > 0 ? Math.round(soma(pilares.map((p) => p.nota * PESOS[p.id])) / somaPesos) : null
+  for (const p of pilares) {
+    p.nota = Math.round(p.nota)
+    p.tom = tomDa(p.nota)
+  }
+
+  // ----- plano de ação -----
+  const acoes: Acao[] = []
+  const nova = (a: Acao) => acoes.push(a)
+  const cortavel = (c: CategoriaAnalise) => centavos(Math.max(0, c.media - c.parcelado))
+  const estilo = categorias.filter((c) => (c.grupo === 'estilo' || c.grupo === 'outros') && cortavel(c) > 0)
+
+  // atrasos: parcelas, contas do mês e faturas vencidas
+  const contasAtrasadas = v.contas ? situacoesDasContas(e.contas, e.lancs, ano, mes, hojeIso, e.taxas).filter((s) => s.conta.tipo === 'saida' && s.estado === 'atrasada') : []
+  const atrasoContas = soma(contasAtrasadas.map((s) => s.valor))
+  const atrasoCartao = cartao?.valorAtrasado ?? 0
+  const totalAtraso = centavos(atrasoDividas + atrasoContas + atrasoCartao)
+  if (totalAtraso > 0) {
+    const maior = Math.max(atrasoDividas, atrasoContas, atrasoCartao)
+    nova({
+      id: 'atrasos', urgencia: 'urgente', prioridade: 100, icone: 'relogio',
+      destino: maior === atrasoCartao ? 'cartoes' : maior === atrasoContas ? 'contas' : 'dividas',
+      botao: maior === atrasoCartao ? tx('Ver cartões') : maior === atrasoContas ? tx('Ver contas') : tx('Ver dívidas'),
+      titulo: tx('Coloque em dia o que está atrasado: {0}.', fmtValor(totalAtraso)),
+      porque: tx('Conta atrasada cobra multa e juros todo dia, e é o dinheiro mais caro que existe. Antes de qualquer outro passo, pague o que venceu.'),
+    })
+  }
+  if (fase === 'vermelho') {
+    const top = [...estilo].sort((a, b) => cortavel(b) - cortavel(a)).slice(0, 2)
+    nova({
+      id: 'vermelho', urgencia: 'urgente', prioridade: 95, icone: 'desce', destino: 'lancamentos', botao: tx('Ver gastos'),
+      titulo: tx('Feche o buraco de {0} por mês.', fmtValor(-sobra)),
+      porque: top.length === 2
+        ? tx('Nos últimos meses saiu mais do que entrou. Onde mais dá para cortar: {0} ({1} por mês) e {2} ({3} por mês).', top[0].nome, fmtValor(cortavel(top[0])), top[1].nome, fmtValor(cortavel(top[1])))
+        : tx('Nos últimos meses saiu mais do que entrou. Corte primeiro o que não é essencial (lazer, compras, assinaturas) até o mês fechar no azul.'),
+      impacto: tx('Meta: guardar {0} por mês', fmtValor(redondo(renda * 0.05))),
+    })
+  }
+  // Reserva gorda e dívida cara ao mesmo tempo: o dinheiro guardado rende menos do que a dívida cobra. Quitar com parte dele,
+  // deixando pelo menos 3 meses de gastos guardados, é o conselho de quem entende de juros.
+  const cara = dividas?.ordem.filter((d) => (d.juros ?? 0) >= JUROS_CARO_MES).sort((a, b) => b.juros! - a.juros!)[0]
+  const usaReserva = Boolean(cara && reserva && reserva.fonte === 'bancos' && gastos > 0 && reserva.tem - cara.quitarHoje >= 3 * gastos)
+  if (maisCara && jurosMax >= JUROS_ALTOS_MES && !(usaReserva && cara?.id === maisCara.divida.id)) {
+    const j = maisCara.divida.juros_mes!
+    nova({
+      id: `juros-altos:${maisCara.divida.id}`, urgencia: 'urgente', prioridade: 92, icone: 'divida', destino: 'dividas', botao: tx('Ver dívidas'),
+      titulo: tx('Troque ou renegocie {0}.', maisCara.divida.descricao),
+      porque: tx('Ela cobra {0}% ao mês, cerca de {1}% ao ano: em 12 meses, cada {2} devidos viram {3}. Peça uma taxa menor ou troque por um empréstimo mais barato para quitar esta.',
+        fmtTaxa(j), fmtTaxaAno(jurosAoAno(j)), fmtValor(1000), fmtValor(centavos(1000 * Math.pow(1 + j / 100, 12)))),
+    })
+  }
+  if (fase === 'colchao' && reserva) {
+    const porMes = reserva.porMes
+    const falta = Math.max(0, reserva.colchao - reserva.tem)
+    const chega = porMes > 0 ? doMesChave(atual + Math.ceil(falta / porMes - 1e-9)) : null
+    nova({
+      id: 'colchao', urgencia: 'importante', prioridade: 85, icone: 'escudo', destino: v.metas ? 'metas' : 'patrimonio', botao: v.metas ? tx('Ver metas') : tx('Ver o guardado'),
+      titulo: tx('Junte um colchão de {0}.', fmtValor(redondo(reserva.colchao))),
+      porque: chega
+        ? tx('É 1 mês dos seus gastos. Hoje você tem {0}. Guardando {1} por mês, chega em {2}. Com ele, um imprevisto não vira dívida.', fmtValor(reserva.tem), fmtValor(porMes), mesAno(chega))
+        : tx('É 1 mês dos seus gastos. Hoje você tem {0}. Com ele, um imprevisto não vira dívida.', fmtValor(reserva.tem)),
+      impacto: porMes > 0 ? tx('{0} por mês', fmtValor(porMes)) : undefined,
+    })
+  }
+  if (cara && reserva && usaReserva) {
+    const fica = fmtMeses((reserva.tem - cara.quitarHoje) / gastos)
+    const economia = centavos(cara.restante - cara.quitarHoje)
+    const jurosDoMes = centavos(cara.quitarHoje * (cara.juros! / 100))
+    nova({
+      id: `quitar-com-reserva:${cara.id}`, urgencia: 'importante', prioridade: 84, icone: 'cofre', destino: 'dividas', botao: tx('Ver dívidas'),
+      titulo: tx('Use {0} do guardado para quitar {1}.', fmtValor(cara.quitarHoje), cara.nome),
+      porque: cara.parcela
+        ? tx('Ela cobra {0}% ao mês, mais do que qualquer aplicação segura rende. Quitando hoje (pedindo o desconto dos juros das parcelas que faltam), você deixa de pagar {1} e libera {2} por mês. Ainda ficam {3} de reserva; reponha com a parcela liberada.',
+          fmtTaxa(cara.juros!), fmtValor(economia), fmtValor(cara.parcela), fica)
+        : tx('Ela cobra {0}% ao mês, mais do que qualquer aplicação segura rende: só de juros, são cerca de {1} por mês. Quitando hoje, esse custo some, e ainda ficam {2} de reserva.',
+          fmtTaxa(cara.juros!), fmtValor(jurosDoMes), fica),
+      impacto: cara.parcela ? tx('{0} a menos de juros', fmtValor(economia)) : tx('{0} por mês a menos de juros', fmtValor(jurosDoMes)),
+    })
+  }
+  if (dividas && !usaReserva && (fase === 'dividas' || (fase === 'colchao' && dividas.temCara) || (alocacao?.dividas ?? 0) > 0)) {
+    const alvo = dividas.ordem[0]
+    const recom = dividas.estrategias.find((x) => x.id === dividas.recomendada)!
+    const base = dividas.estrategias[0]
+    const ganho = recom.economia !== null && recom.economia > 0 && base.fim && recom.fim
+      ? dividas.extraExemplo
+        ? tx('Com {0} a mais por mês, você fica sem dívidas em {1} (e não em {2}) e deixa de pagar cerca de {3} em juros.', fmtValor(dividas.extra), mesAno(recom.fim), mesAno(base.fim), fmtValor(recom.economia))
+        : tx('Assim você fica sem dívidas em {0} (e não em {1}) e deixa de pagar cerca de {2} em juros.', mesAno(recom.fim), mesAno(base.fim), fmtValor(recom.economia))
+      : recom.fim ? tx('Assim você fica sem dívidas em {0}.', mesAno(recom.fim)) : ''
+    nova({
+      id: 'adiantar-divida', urgencia: 'importante', prioridade: dividas.temCara ? 82 : 66, icone: 'divida', destino: 'dividas', botao: tx('Ver dívidas'),
+      titulo: dividas.extraExemplo ? tx('Quando sobrar, adiante primeiro {0}.', alvo.nome) : tx('Adiante {0} com {1} por mês.', alvo.nome, fmtValor(dividas.extra)),
+      porque: `${alvo.juros !== null ? tx('Ela é a primeira da fila: cobra {0}% ao mês.', fmtTaxa(alvo.juros)) : tx('Ela é a primeira da fila.')} ${ganho}`.trim(),
+      impacto: recom.economia ? tx('{0} a menos de juros', fmtValor(recom.economia)) : undefined,
+    })
+  }
+  if (corte > 0 && fase !== 'vermelho') {
+    const cortes = categorias.filter((c) => c.media - c.sugestao >= 1).sort((a, b) => (b.media - b.sugestao) - (a.media - a.sugestao)).slice(0, 2)
+    nova({
+      id: 'corte', urgencia: 'importante', prioridade: 70, icone: 'carteira', destino: 'lancamentos', botao: tx('Ver gastos'),
+      titulo: tx('Corte {0} por mês para guardar {1}% do que entra.', fmtValor(redondo(corte)), pct(sobraAlvo)),
+      porque: cortes.length === 2
+        ? tx('Hoje sobram {0}%. Tirando {1} de {2} e {3} de {4}, você chega lá.', Math.max(0, pct(sobraFracao)), fmtValor(redondo(cortes[0].media - cortes[0].sugestao)), cortes[0].nome, fmtValor(redondo(cortes[1].media - cortes[1].sugestao)), cortes[1].nome)
+        : tx('Hoje sobram {0}%. O orçamento sugerido mais abaixo mostra quanto tirar de cada categoria.', Math.max(0, pct(sobraFracao))),
+      impacto: tx('{0} por ano', fmtValor(redondo(corte) * 12)),
+    })
+  }
+  if (temFluxo && renda > 0 && parcelasMes / renda > PARCELAS_ATENCAO && dividas) {
+    const primeira = dividas.ordem.map((d) => ({ d, fim: d.quitaSemExtra })).filter((x) => x.fim).sort((a, b) => chaveMes(a.fim!.ano, a.fim!.mes) - chaveMes(b.fim!.ano, b.fim!.mes))[0]
+    nova({
+      id: 'sem-novas-parcelas', urgencia: 'importante', prioridade: 72, icone: 'acordo', destino: 'dividas', botao: tx('Ver dívidas'),
+      titulo: tx('Não faça novas parcelas por enquanto.'),
+      porque: primeira && primeira.d.parcela
+        ? tx('As parcelas levam {0}% do que você recebe (o ideal é até {1}%). Em {2} acaba {3}, e o peso cai para {4}%.', pct(parcelasMes / renda), pct(PARCELAS_ATENCAO), mesAno(primeira.fim), primeira.d.nome, pct(Math.max(0, parcelasMes - primeira.d.parcela) / renda))
+        : tx('As parcelas levam {0}% do que você recebe (o ideal é até {1}%).', pct(parcelasMes / renda), pct(PARCELAS_ATENCAO)),
+    })
+  }
+  if (cartao && ((cartao.pesoProximo ?? 0) > CARTAO_ATENCAO || (cartao.uso ?? 0) > 0.6)) {
+    const comprometido = soma(cartao.proximas.map((p) => p.valor))
+    nova({
+      id: 'cartao', urgencia: 'importante', prioridade: 65, icone: 'cartao', destino: 'cartoes', botao: tx('Ver cartões'),
+      titulo: tx('Dê um tempo nas compras parceladas no cartão.'),
+      porque: cartao.uso !== null
+        ? tx('As próximas 6 faturas já têm {0} em parcelas, e você usa {1}% do limite (o saudável é até {2}%).', fmtValor(comprometido), pct(cartao.uso), pct(LIMITE_SAUDAVEL))
+        : tx('As próximas 6 faturas já têm {0} em parcelas.', fmtValor(comprometido)),
+    })
+  }
+  if (jurosPagos > 0) {
+    nova({
+      id: 'juros-pagos', urgencia: 'importante', prioridade: 60, icone: 'historico', destino: cartao && jurosDeFatura > 0 ? 'cartoes' : 'lancamentos',
+      botao: cartao && jurosDeFatura > 0 ? tx('Ver cartões') : tx('Ver lançamentos'),
+      titulo: tx('Você pagou {0} em juros, multas e tarifas em 12 meses.', fmtValor(jurosPagos)),
+      porque: tx('É dinheiro que não volta nem compra nada. Pagar a fatura inteira e as contas no dia zera esse custo, e tarifa de banco quase sempre dá para cancelar.'),
+      impacto: tx('{0} por mês de volta', fmtValor(centavos(jurosPagos / 12))),
+    })
+  }
+  if (fase === 'reserva' && reserva && reserva.falta > 0) {
+    nova({
+      id: 'reserva', urgencia: 'importante', prioridade: 62, icone: 'escudo', destino: v.metas ? 'metas' : 'patrimonio', botao: v.metas ? tx('Ver metas') : tx('Ver o guardado'),
+      titulo: tx('Complete a reserva: faltam {0}.', fmtValor(reserva.falta)),
+      porque: `${rendaVaria
+        ? tx('Como a sua renda varia de um mês para o outro, o ideal são {0} meses de gastos ({1}).', alvoMeses, fmtValor(reserva.alvo))
+        : tx('O ideal são {0} meses de gastos ({1}).', alvoMeses, fmtValor(reserva.alvo))} ${reserva.chegaEm
+        ? tx('Guardando {0} por mês, você chega lá em {1}.', fmtValor(reserva.porMes), mesAno(reserva.chegaEm))
+        : tx('Deixe esse dinheiro onde dá para tirar no mesmo dia.')}`,
+      impacto: reserva.porMes > 0 ? tx('{0} por mês', fmtValor(reserva.porMes)) : undefined,
+    })
+  }
+  if (!conheceReserva && temFluxo) {
+    nova({
+      id: 'informar-guardado', urgencia: 'sugestao', prioridade: 45, icone: 'carteira', destino: v.bancos || v.investimentos ? 'patrimonio' : 'metas',
+      botao: v.bancos || v.investimentos ? tx('Informar o guardado') : tx('Criar a reserva'),
+      titulo: tx('Conte quanto você tem guardado.'),
+      porque: tx('Sem isso, não dá para saber quantos meses a sua reserva aguenta. Informe o saldo dos bancos ou crie uma meta “Reserva de emergência”.'),
+    })
+  }
+  if (subiram[0]) {
+    const c = subiram[0]
+    const diferenca = centavos(c.media - c.antes!)
+    const dasParcelas = c.parcelado - (c.parceladoAntes ?? 0)
+    if (dasParcelas >= diferenca * 0.5 && c.parcelas.length) {
+      const [p1, p2] = c.parcelas
+      const termina = c.parcelas.reduce((m, x) => (chaveMes(x.termina.ano, x.termina.mes) > chaveMes(m.ano, m.mes) ? x.termina : m), p1.termina)
+      nova({
+        id: `subiu:${c.id}`, urgencia: 'sugestao', prioridade: 55, icone: 'cartao', destino: v.cartoes ? 'cartoes' : 'lancamentos',
+        botao: v.cartoes ? tx('Ver cartões') : tx('Ver lançamentos'),
+        titulo: tx('{0} subiu por causa de compras parceladas.', c.nome),
+        porque: tx('Passou de {0} para {1} por mês, e {2} disso são parcelas de {3}, que vão até {4}. Até lá, evite parcelar mais nessa categoria.',
+          fmtValor(c.antes!), fmtValor(c.media), fmtValor(centavos(dasParcelas)), p2 ? tx('{0} e {1}', p1.descricao, p2.descricao) : p1.descricao, mesAno(termina)),
+      })
+    } else nova({
+      id: `subiu:${c.id}`, urgencia: 'sugestao', prioridade: 55, icone: 'sobe', destino: 'lancamentos', botao: tx('Ver lançamentos'),
+      titulo: tx('{0} subiu {1}% nos últimos 3 meses.', c.nome, pct(c.variacao!)),
+      porque: tx('Passou de {0} para {1} por mês. Voltando ao que era, sobram {2} por mês, {3} por ano.', fmtValor(c.antes!), fmtValor(c.media), fmtValor(diferenca), fmtValor(centavos(diferenca * 12))),
+      impacto: tx('{0} por ano', fmtValor(centavos(diferenca * 12))),
+    })
+  }
+  const assinaturas = recorrentes.filter((r) => r.assinatura)
+  if (assinaturas.length >= 2) {
+    nova({
+      id: 'assinaturas', urgencia: 'sugestao', prioridade: 50, icone: 'calendario', destino: 'lancamentos', botao: tx('Ver lançamentos'),
+      titulo: tx('Revise suas {0} assinaturas.', assinaturas.length),
+      porque: tx('Somam {0} por mês, {1} por ano. Cancele as que você não usou no último mês; dá para assinar de novo quando quiser.', fmtValor(assinaturasPorMes), fmtValor(centavos(assinaturasPorMes * 12))),
+      impacto: tx('{0} por ano', fmtValor(centavos(assinaturasPorMes * 12))),
+    })
+  }
+  if (formigas[0]) {
+    const f = formigas[0]
+    nova({
+      id: `formiga:${chaveDescricao(f.descricao)}`, urgencia: 'sugestao', prioridade: 48, icone: 'lista', destino: 'lancamentos', botao: tx('Ver lançamentos'),
+      titulo: tx('{0}: {1} vezes por mês.', f.descricao, Math.round(f.vezesPorMes)),
+      porque: tx('Parece pouco ({0} em média), mas soma {1} por mês e {2} por ano. Cortar metade já faz diferença.', fmtValor(f.ticket), fmtValor(f.porMes), fmtValor(f.porAno)),
+      impacto: tx('{0} por ano', fmtValor(centavos(f.porAno / 2))),
+    })
+  }
+  if (temFluxo && metas && !metas.cabe && metas.necessario > 0) {
+    const maior = [...metas.metas].filter((m) => m.porMes).sort((a, b) => naPrincipal(b.porMes!, b.moeda) - naPrincipal(a.porMes!, a.moeda))[0]
+    nova({
+      id: 'metas', urgencia: 'sugestao', prioridade: 58, icone: 'meta', destino: 'metas', botao: tx('Ver metas'),
+      titulo: tx('Suas metas pedem {0} por mês.', fmtValor(metas.necessario)),
+      porque: metas.disponivel > 0
+        ? tx('Pelo plano, sobram {0} por mês para elas. Para caber, estique o prazo de “{1}” ou aumente a sobra.', fmtValor(metas.disponivel), maior?.nome ?? '')
+        : tx('Hoje a sobra vai antes para a segurança (reserva e dívidas). Estique o prazo de “{0}” para ele caber depois.', maior?.nome ?? ''),
+    })
+  }
+  if (fase === 'crescer' && alocacao) {
+    nova({
+      id: 'crescer', urgencia: 'sugestao', prioridade: 40, icone: 'investir', destino: v.metas ? 'metas' : 'patrimonio', botao: v.metas ? tx('Ver metas') : tx('Ver o guardado'),
+      titulo: tx('Faça a sobra trabalhar por você.'),
+      porque: tx('Reserva completa e nenhuma dívida cara: os {0} que sobram por mês podem ir para objetivos de longo prazo, como aposentadoria ou a casa própria. Em 10 anos, são {1} só do que você guardar.', fmtValor(sobra), fmtValor(centavos(sobra * 120))),
+    })
+  }
+  if (!e.dividasSemJuros && dividas && dividas.semJuros > 0) {
+    nova({
+      id: 'informe-juros', urgencia: 'sugestao', prioridade: 25, icone: 'divida', destino: 'dividas', botao: tx('Informar os juros'),
+      titulo: dividas.semJuros === 1 ? tx('Informe os juros de 1 dívida.') : tx('Informe os juros de {0} dívidas.', dividas.semJuros),
+      porque: tx('Com os juros, o plano mostra qual dívida pagar primeiro e quanto você economiza adiantando.'),
+    })
+  }
+  if (temFluxo && semCategoria > 0.1) {
+    nova({
+      id: 'categorizar', urgencia: 'sugestao', prioridade: 24, icone: 'lista', destino: 'lancamentos', botao: tx('Ver lançamentos'),
+      titulo: tx('Dê categoria aos gastos que estão sem.'),
+      porque: tx('{0}% do que sai está sem categoria. Com categoria, a análise mostra onde dá para economizar.', pct(semCategoria)),
+    })
+  }
+  if (v.bancos && preencheuBancos && ef.herdadoDe && atual - chaveMes(ef.herdadoDe[0], ef.herdadoDe[1]) >= 2) {
+    nova({
+      id: 'atualizar-saldos', urgencia: 'sugestao', prioridade: 22, icone: 'carteira', destino: 'patrimonio', botao: tx('Atualizar saldos'),
+      titulo: tx('Atualize quanto você tem nos bancos.'),
+      porque: tx('O último saldo informado é de {0}. Com o saldo de hoje, a reserva e o quanto é seu ficam certos.', mesAno({ ano: ef.herdadoDe[0], mes: ef.herdadoDe[1] })),
+    })
+  }
+  acoes.sort((a, b) => b.prioridade - a.prioridade || a.id.localeCompare(b.id))
+
+  // ----- fase: por que e o próximo passo -----
+  const fases = infoFases(alvoMeses)
+  const porqueFase = !temFluxo && (fase === 'reserva' || fase === 'crescer')
+    ? tx('Ainda faltam meses lançados para saber se o seu mês fecha no azul. Com 2 meses completos, a fase fica certa.')
+    : fase === 'vermelho' ? tx('Nos últimos meses saiu mais do que entrou. Enquanto isso acontecer, o resto não se sustenta.')
+    : fase === 'colchao' ? tx('O que você tem guardado não cobre 1 mês de gastos: qualquer imprevisto vira dívida.')
+      : fase === 'dividas' ? tx('{0} cobra {1}% ao mês. Nenhum investimento seguro rende isso, então quitar vem primeiro.', maisCara?.divida.descricao ?? '', fmtTaxa(jurosMax))
+        : fase === 'reserva' ? (conheceReserva ? tx('O mês fecha no azul e você tem um colchão. Agora é completar {0} meses de gastos guardados.', alvoMeses) : tx('O mês fecha no azul. Informe quanto você tem guardado para o app saber se a sua reserva já está completa.'))
+          : tx('Mês no azul, reserva completa e nenhuma dívida cara. A base está pronta para o dinheiro crescer.')
+  const proximoPasso = fase === 'vermelho' ? tx('Próximo passo: fechar o mês com sobra.')
+    : fase === 'colchao' ? tx('Próximo passo: guardar {0}.', fmtValor(redondo(gastos)))
+      : fase === 'dividas' ? tx('Próximo passo: quitar as dívidas acima de {0}% ao mês.', JUROS_CARO_MES)
+        : fase === 'reserva' ? (reserva ? tx('Próximo passo: chegar a {0} guardados.', fmtValor(reserva.alvo)) : tx('Próximo passo: informar o seu dinheiro guardado.'))
+          : tx('Próximo passo: definir metas de longo prazo e mantê-las.')
+
+  // ----- resumo do consultor -----
+  const resumo: string[] = []
+  if (temFluxo) {
+    resumo.push(`${tx('Nos últimos {0} meses fechados, entraram em média {1} por mês e saíram {2}.', recentes.length, fmtValor(renda), fmtValor(gastos))} ${sobra < 0
+      ? tx('Faltaram {0} por mês.', fmtValor(-sobra))
+      : sobraFracao < SOBRA_IDEAL ? tx('Sobraram {0} por mês ({1}%); o recomendado é guardar pelo menos 20%.', fmtValor(sobra), pct(sobraFracao))
+        : tx('Sobraram {0} por mês ({1}%), acima dos 20% recomendados.', fmtValor(sobra), pct(sobraFracao))}`)
+    const ordenados = [...pilares].sort((a, b) => a.nota - b.nota)
+    const pior = ordenados[0]
+    const melhor = ordenados[ordenados.length - 1]
+    if (pior && pior.nota < 70) resumo.push(tx('O ponto que mais pede atenção é “{0}”: {1}', pior.nome, pior.frase))
+    if (melhor && melhor.nota >= 70 && melhor !== pior) resumo.push(tx('Seu ponto forte é “{0}” ({1}).', melhor.nome, melhor.valor))
+    if (tendenciaGastos !== null && tendenciaRenda !== null && tendenciaGastos - tendenciaRenda > 0.015) {
+      resumo.push(tx('Atenção ao rumo: nos últimos {0} meses, os gastos crescem mais rápido que a renda.', chavesComDados.length))
+    }
+  } else {
+    resumo.push(tx('Para a análise completa, lance as entradas e as saídas de pelo menos 2 dos últimos 3 meses. Enquanto isso, olho o que já dá: dívidas, cartão, metas e o mês atual.'))
+  }
+  if (acoes[0]) resumo.push(tx('Primeiro passo: {0}', acoes[0].titulo))
+
+  return {
+    hoje: { ano, mes }, temFluxo, mesesAnalisados: chavesComDados.length, nota, rotulo: nota === null ? tx('Sem nota ainda') : rotuloDaNota(nota),
+    tom: nota === null ? 'medio' : tomDa(nota), resumo, fase, fases, porqueFase, proximoPasso, pilares,
+    renda, gastos, sobra, sobraFracao, sobraAlvo, rendaVaria, variacaoRenda, principalFonte, tendenciaGastos, tendenciaRenda,
+    serie, mes: previsao, categorias, subiram, cairam, regra, recorrentes, assinaturasPorMes, recorrentesPorMes, formigas,
+    jurosPagos, semCategoria, cartao, dividas, reserva, alocacao, metas, patrimonio, corte, acoes,
+  }
+}
+
+// ---------- o que mudou de uma análise para a outra ----------
+
+/** O essencial de uma análise, para comparar com a próxima (cabe no navegador). */
+export interface Retrato {
+  em: string
+  nota: number | null
+  fase: Fase
+  resultadoMes: number | null
+  porDia: number | null
+  reservaMeses: number | null
+  dividas: number
+  semDividasEm: number | null
+  acoes: { id: string; titulo: string }[]
+}
+
+export function retratoDe(a: Analise, hoje = new Date()): Retrato {
+  const fim = a.dividas?.estrategias.find((x) => x.id === a.dividas!.recomendada)?.fim
+  return {
+    em: hoje.toISOString(), nota: a.nota, fase: a.fase,
+    resultadoMes: a.mes?.resultadoPrevisto ?? null, porDia: a.mes?.porDia ?? null,
+    reservaMeses: a.reserva ? Math.floor(a.reserva.meses * 10) / 10 : null,
+    dividas: a.dividas?.total ?? 0, semDividasEm: fim ? chaveMes(fim.ano, fim.mes) : null,
+    acoes: a.acoes.map(({ id, titulo }) => ({ id, titulo })),
+  }
+}
+
+export interface Mudanca {
+  texto: string
+  tom: 'bom' | 'ruim' | 'neutro'
+}
+
+/** A última vez que uma mudança nos dados mexeu na análise (guardada pelo Painel enquanto a aba está aberta). */
+export interface Reanalise {
+  em: Date
+  mudancas: Mudanca[]
+  nota: number | null
+  notaAntes: number | null
+}
+
+/** O que mudou de `antes` para `depois`, do mais para o menos importante. */
+export function compararRetratos(antes: Retrato, depois: Retrato): Mudanca[] {
+  const lista: Mudanca[] = []
+  const fases = infoFases()
+  const nomeFase = (f: Fase) => fases.find((x) => x.id === f)?.nome ?? f
+  if (antes.nota !== null && depois.nota !== null && antes.nota !== depois.nota) {
+    lista.push({ texto: tx('Sua nota foi de {0} para {1}.', antes.nota, depois.nota), tom: depois.nota > antes.nota ? 'bom' : 'ruim' })
+  }
+  if (antes.fase !== depois.fase) {
+    const avancou = FASES.indexOf(depois.fase) > FASES.indexOf(antes.fase)
+    lista.push({ texto: avancou ? tx('Você avançou para a fase “{0}”.', nomeFase(depois.fase)) : tx('Você voltou para a fase “{0}”.', nomeFase(depois.fase)), tom: avancou ? 'bom' : 'ruim' })
+  }
+  if (antes.resultadoMes !== null && depois.resultadoMes !== null && Math.abs(depois.resultadoMes - antes.resultadoMes) >= 0.01) {
+    lista.push({
+      texto: tx('A previsão do mês foi de {0} para {1}.', fmtValor(antes.resultadoMes), fmtValor(depois.resultadoMes)),
+      tom: depois.resultadoMes > antes.resultadoMes ? 'bom' : 'ruim',
+    })
+  }
+  if (Math.abs(depois.dividas - antes.dividas) >= 0.01) {
+    lista.push({ texto: tx('Suas dívidas foram de {0} para {1}.', fmtValor(antes.dividas), fmtValor(depois.dividas)), tom: depois.dividas < antes.dividas ? 'bom' : 'ruim' })
+  }
+  if (antes.semDividasEm !== null && depois.semDividasEm !== null && antes.semDividasEm !== depois.semDividasEm) {
+    const a = doMesChave(antes.semDividasEm)
+    const d = doMesChave(depois.semDividasEm)
+    lista.push({ texto: tx('Sem dívidas em {0} (antes, {1}).', mesAno(d), mesAno(a)), tom: depois.semDividasEm < antes.semDividasEm ? 'bom' : 'ruim' })
+  }
+  if (antes.reservaMeses !== null && depois.reservaMeses !== null && antes.reservaMeses !== depois.reservaMeses) {
+    lista.push({ texto: tx('Sua reserva foi de {0} para {1} de gastos.', fmtMeses(antes.reservaMeses), fmtMeses(depois.reservaMeses)), tom: depois.reservaMeses > antes.reservaMeses ? 'bom' : 'ruim' })
+  }
+  const idsAntes = new Set(antes.acoes.map((x) => x.id))
+  const idsDepois = new Set(depois.acoes.map((x) => x.id))
+  for (const x of depois.acoes) if (!idsAntes.has(x.id)) lista.push({ texto: tx('Entrou no plano: {0}', x.titulo), tom: 'neutro' })
+  for (const x of antes.acoes) if (!idsDepois.has(x.id)) lista.push({ texto: tx('Saiu do plano: {0}', x.titulo), tom: 'bom' })
+  const porDiaAntes = Math.max(0, antes.porDia ?? 0)
+  const porDiaDepois = Math.max(0, depois.porDia ?? 0)
+  if (antes.porDia !== null && depois.porDia !== null && Math.abs(porDiaDepois - porDiaAntes) >= 0.01) {
+    lista.push({ texto: tx('Dá para gastar {0} por dia até o fim do mês (antes, {1}).', fmtValor(porDiaDepois), fmtValor(porDiaAntes)), tom: porDiaDepois > porDiaAntes ? 'bom' : 'ruim' })
+  }
+  return lista
+}
+
+/** O mês por extenso no meio da frase ("em novembro"), para os textos da página. */
+export const nomeDoMes = (m: number) => noMeioDaFrase(MESES_NOME[m - 1])

@@ -1,0 +1,47 @@
+/* =========================================================================
+   "Analisei a mudança": aviso que o consultor mostra depois de cada alteração (components/AvisoReanalise.tsx).
+   Computador: canto de baixo à direita. Tablet: à esquerda do botão "+". Celular: acima do "+" e da barra de abas.
+   ========================================================================= */
+
+.reanalise {
+  position: fixed; z-index: 26; right: 24px; bottom: 24px; width: min(390px, calc(100vw - 32px));
+  display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 12px; align-items: start;
+  padding: 14px 12px 14px 14px; border-radius: var(--raio-m);
+  background: var(--superficie-forte); border: 1px solid color-mix(in srgb, var(--destaque) 30%, var(--borda-forte));
+  box-shadow: var(--sombra-alta); animation: reanalise-entra .45s var(--mola);
+}
+@keyframes reanalise-entra { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
+
+.reanalise-icone {
+  display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%;
+  color: var(--destaque); background: var(--destaque-suave);
+}
+.reanalise-texto { display: grid; gap: 6px; min-width: 0; }
+.reanalise-texto strong { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 15px; font-weight: 650; letter-spacing: -.01em; }
+.reanalise-nota {
+  display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 650; color: var(--texto-2); background: var(--preench-3); font-variant-numeric: tabular-nums;
+}
+.reanalise-nota.bom { color: var(--entrada); background: color-mix(in srgb, var(--entrada) 14%, transparent); }
+.reanalise-nota.ruim { color: var(--saida); background: color-mix(in srgb, var(--saida) 14%, transparent); }
+.reanalise-texto ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.reanalise-texto li { font-size: 13.5px; line-height: 1.45; color: var(--texto-2); }
+.reanalise-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: 4px; }
+.reanalise-acoes .btn { height: 34px; padding: 0 14px; font-size: 13.5px; }
+.reanalise-acoes .link { font-size: 13px; color: var(--texto-2); font-weight: 500; }
+.reanalise-fechar {
+  display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 50%;
+  background: none; color: var(--texto-3); transition: background .2s, color .2s;
+}
+.reanalise-fechar:hover { color: var(--texto); background: var(--preench-3); }
+
+/* tablet em pé: o "+" fica no canto de baixo à direita */
+@media (min-width: 601px) and (max-width: 860px) {
+  .reanalise { right: 100px; }
+}
+/* celular: acima do "+" e da barra de abas, de ponta a ponta */
+@media (max-width: 600px) {
+  .reanalise { left: 12px; right: 12px; width: auto; bottom: calc(164px + env(safe-area-inset-bottom)); }
+  .app.abas-ocultas .reanalise { bottom: calc(110px + env(safe-area-inset-bottom)); }
+  .reanalise-acoes .btn { height: 40px; }
+}
