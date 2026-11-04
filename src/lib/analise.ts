@@ -28,6 +28,7 @@ import { fmtDataCurta, fmtMesAno, fmtMoeda, fmtPct, fmtTaxa, fmtTaxaAno, fmtValo
 import { situacaoMeta } from './metas'
 import { converter, totalConvertido, type Taxas } from './moedas'
 import { visao } from './perfil'
+import { planejar, type Plano } from './planejador'
 import { tx } from './textos'
 import type {
   CartaoCredito, Categoria, ContaFixa, Divida, FaturaPaga, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida,
@@ -324,6 +325,10 @@ export interface Evento {
   origem: 'lancamento' | 'conta' | 'parcela' | 'cartao' | 'recorrente'
   /** Venceu antes de hoje e ainda não foi paga (aparece no dia de hoje). */
   atrasada?: boolean
+  /** O vencimento de verdade (a atrasada aparece hoje em `data`, mas o atraso conta daqui). */
+  vence?: string
+  /** Juros da dívida em % ao mês, quando a pessoa informou (parcelas). */
+  jurosMes?: number | null
 }
 
 export interface DiaDaAgenda {
@@ -430,6 +435,8 @@ export interface Analise {
   metas: PlanoMetas | null
   patrimonio: Patrimonio | null
   agenda: Agenda | null
+  /** O plano de pagamentos: de qual dinheiro sai cada conta, em que dia, e quanto custa o atraso (lib/planejador.ts). */
+  plano: Plano | null
   /** Quanto cortar por mês para chegar na sobra-alvo (0 se já chega). */
   corte: number
   acoes: Acao[]
@@ -1189,6 +1196,7 @@ export function analisar(e: EntradaAnalise): Analise {
   // a conta que vence antes de o dinheiro entrar, os vencimentos amontoados, a parcela que está acabando e o mês que vem
   // mais pesado que este.
   let agenda: Agenda | null = null
+  let plano: Plano | null = null
   {
     const prox = doMesChave(atual + 1)
     const fimJanela = isoDoDia(prox.ano, prox.mes, 31)
@@ -1217,13 +1225,16 @@ export function analisar(e: EntradaAnalise): Analise {
     const sitsProx = contasDoMes(prox)
     for (const sc of [...sitsAtual, ...sitsProx]) {
       if (sc.estado === 'paga' || sc.estado === 'fora' || sc.semCotacao || !(sc.valor > 0) || sc.vencimento > fimJanela) continue
-      eventos.push({ data: noDia(sc.vencimento), tipo: sc.conta.tipo, descricao: sc.conta.descricao, valor: sc.valor, origem: 'conta', atrasada: sc.vencimento < hojeIso })
+      eventos.push({ data: noDia(sc.vencimento), vence: sc.vencimento, tipo: sc.conta.tipo, descricao: sc.conta.descricao, valor: sc.valor, origem: 'conta', atrasada: sc.vencimento < hojeIso })
     }
     // parcelas das dívidas, pelo calendário de cada uma
     const calendarios = abertas.map((sd) => ({ sd, cal: calendarioDe(sd, hojeIso) }))
     for (const { sd, cal } of calendarios) for (const pc of cal?.parcelas ?? []) {
       if (pc.falta <= 0 || pc.vencimento > fimJanela) continue
-      eventos.push({ data: noDia(pc.vencimento), tipo: 'saida', descricao: sd.divida.descricao, valor: pc.falta, origem: 'parcela', atrasada: pc.vencimento < hojeIso })
+      eventos.push({
+        data: noDia(pc.vencimento), vence: pc.vencimento, tipo: 'saida', descricao: sd.divida.descricao, valor: pc.falta, origem: 'parcela',
+        atrasada: pc.vencimento < hojeIso, jurosMes: sd.divida.juros_mes ?? null,
+      })
     }
     // o que se repete todo mês e ainda não veio (este mês, se o dia não passou faz tempo) ou virá (o mês que vem)
     const jaVeio = (chave: string, m: { ano: number; mes: number }) => e.lancs.some((l) => l.ano === m.ano && l.mes === m.mes && chaveDescricao(l.descricao) === chave)
@@ -1418,6 +1429,17 @@ export function analisar(e: EntradaAnalise): Analise {
     const calendario = { ano, mes, hoje: diaHoje, dias: cal.map((c) => ({ dia: c.dia, entra: centavos(c.entra), sai: centavos(c.sai) })) }
     const entradaFutura = dias.find((d) => d.entradas.length)
     const menor = dias.length ? dias.reduce((m, d) => (d.saldo < m.saldo ? d : m)) : null
+    // o planejador: de qual dinheiro sai cada conta e em que dia pagar
+    plano = planejar({
+      hoje: hojeIso, fim: fimJanela, saldoInicial, ritmoDia, porDiaDoMes: previsao?.porDia ?? null,
+      gastouHoje: centavos(soma(naJanela.filter((l) => l.data === hojeIso && ehDiaADia(l)).map((l) => l.valor))),
+      entradas: dias.filter((d) => d.entradas.length).map((d) => ({ data: d.data, valor: totalDe(d.entradas), descricao: nomesDe(d.entradas) })),
+      compromissos: unicos.filter((ev) => ev.tipo === 'saida').map((ev) => ({
+        descricao: ev.descricao, valor: ev.valor, vence: ev.vence ?? ev.data, origem: ev.origem, jurosMes: ev.jurosMes ?? null,
+      })),
+      abertas: abertas.filter((sd) => !(sd.divida.valor_parcela && sd.divida.valor_parcela > 0) && (sd.divida.juros_mes ?? 0) > 0)
+        .map((sd) => ({ nome: sd.divida.descricao, saldo: sd.restante, juros: sd.divida.juros_mes! })),
+    })
     if (unicos.length || saldoInicial !== null || calendario.dias.some((c) => c.entra || c.sai)) {
       agenda = {
         dias, saldoInicial, ritmoDia, calendario,
@@ -1562,7 +1584,18 @@ export function analisar(e: EntradaAnalise): Analise {
       porque: tx('Conta atrasada cobra multa e juros todo dia, e é o dinheiro mais caro que existe. Antes de qualquer outro passo, pague o que venceu.'),
     })
   }
-  const aperto = agenda?.percepcoes.find((x) => x.id === 'aperto')
+  // O planejador diz o que fazer com cada conta que não cabe no dia: isso vale mais que o aviso genérico de aperto.
+  const doPlano = plano?.dicas ?? []
+  for (const d of doPlano) {
+    const divida = d.id.startsWith('adiantar-aberta:')
+    nova({
+      id: `plano:${d.id}`, urgencia: d.tom === 'ruim' ? 'urgente' : d.tom === 'medio' ? 'importante' : 'sugestao',
+      prioridade: d.tom === 'ruim' ? 98 : d.tom === 'medio' ? 96 : 70, icone: d.icone,
+      destino: divida ? 'dividas' : v.contas ? 'contas' : 'lancamentos',
+      botao: divida ? tx('Ver dívidas') : v.contas ? tx('Ver contas') : tx('Ver lançamentos'), titulo: d.titulo, porque: d.porque,
+    })
+  }
+  const aperto = doPlano.some((d) => d.tom !== 'bom') ? undefined : agenda?.percepcoes.find((x) => x.id === 'aperto')
   if (aperto) {
     nova({
       id: 'aperto', urgencia: 'urgente', prioridade: 97, icone: 'relogio', destino: v.contas ? 'contas' : 'lancamentos',
@@ -1816,7 +1849,7 @@ export function analisar(e: EntradaAnalise): Analise {
     tom: nota === null ? 'medio' : tomDa(nota), resumo, fase, fases, porqueFase, proximoPasso, pilares,
     renda, gastos, sobra, sobraFracao, sobraAlvo, rendaVaria, variacaoRenda, principalFonte, tendenciaGastos, tendenciaRenda,
     serie, mes: previsao, categorias, subiram, cairam, regra, recorrentes, assinaturasPorMes, recorrentesPorMes, formigas,
-    jurosPagos, semCategoria, cartao, dividas, reserva, alocacao, metas, patrimonio, agenda, corte, acoes,
+    jurosPagos, semCategoria, cartao, dividas, reserva, alocacao, metas, patrimonio, agenda, plano, corte, acoes,
   }
 }
 
@@ -1833,6 +1866,8 @@ export interface Retrato {
   dividas: number
   semDividasEm: number | null
   acoes: { id: string; titulo: string }[]
+  /** O dia planejado para cada pagamento (`descrição|vencimento` → dia, ou null sem dinheiro). Falta em retratos antigos. */
+  pagamentos?: Record<string, string | null>
 }
 
 export function retratoDe(a: Analise, hoje = new Date()): Retrato {
@@ -1843,6 +1878,7 @@ export function retratoDe(a: Analise, hoje = new Date()): Retrato {
     reservaMeses: a.reserva ? Math.floor(a.reserva.meses * 10) / 10 : null,
     dividas: a.dividas?.total ?? 0, semDividasEm: fim ? chaveMes(fim.ano, fim.mes) : null,
     acoes: a.acoes.map(({ id, titulo }) => ({ id, titulo })),
+    pagamentos: a.plano ? Object.fromEntries([...a.plano.pagamentos, ...a.plano.semDinheiro].map((p) => [`${p.descricao}|${p.vence}`, p.pagarEm])) : undefined,
   }
 }
 
@@ -1862,6 +1898,20 @@ export interface Reanalise {
 /** O que mudou de `antes` para `depois`, do mais para o menos importante. */
 export function compararRetratos(antes: Retrato, depois: Retrato): Mudanca[] {
   const lista: Mudanca[] = []
+  // O plano de pagamentos mudou de dia: é o que a pessoa mais quer saber depois de lançar uma entrada nova.
+  if (antes.pagamentos && depois.pagamentos) {
+    for (const [chave, dia] of Object.entries(depois.pagamentos)) {
+      if (!(chave in antes.pagamentos)) continue
+      const era = antes.pagamentos[chave]
+      if (era === dia) continue
+      const nome = chave.slice(0, chave.lastIndexOf('|'))
+      if (dia && (!era || dia < era)) {
+        lista.push({ texto: era ? tx('Agora dá para pagar {0} em {1} (antes, {2}).', nome, fmtDataCurta(dia), fmtDataCurta(era)) : tx('Agora dá para pagar {0} em {1}.', nome, fmtDataCurta(dia)), tom: 'bom' })
+      } else {
+        lista.push({ texto: dia ? tx('{0} passou para {1} (antes, {2}).', nome, fmtDataCurta(dia), fmtDataCurta(era!)) : tx('{0} ficou sem dinheiro até o fim do mês que vem.', nome), tom: 'ruim' })
+      }
+    }
+  }
   const fases = infoFases()
   const nomeFase = (f: Fase) => fases.find((x) => x.id === f)?.nome ?? f
   if (antes.nota !== null && depois.nota !== null && antes.nota !== depois.nota) {

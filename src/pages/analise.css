@@ -31,11 +31,44 @@
 .vis-cab h3 { margin: 0; font-size: 16.5px; font-weight: 700; letter-spacing: -.015em; }
 .vis-ir { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 0; color: var(--texto-2); background: var(--preench-3); transition: background .2s, color .2s; }
 .vis-ir:hover { color: var(--texto); background: var(--preench-2); }
+.vis-botoes { display: flex; align-items: center; gap: 6px; flex: none; }
+.vis-fav.ligado { color: var(--divida); background: color-mix(in srgb, var(--divida) 16%, transparent); }
+.vis-fav.ligado svg path { fill: currentColor; }
+.vis.fav { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--divida) 35%, transparent); }
 .vis-frase { margin: 0; font-size: 14px; line-height: 1.45; color: var(--texto-2); }
 .vis-corpo { margin-top: 8px; min-width: 0; }
 .an-feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 16px; align-items: start; }
 .an-mais { justify-self: center; height: 46px; padding: 0 22px; font-size: 15px; }
 .an-nota-fraca { margin: 10px 0 0; font-size: 12.5px; color: var(--texto-3); }
+
+/* ---------- seu jeito ---------- */
+.an-jeito { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.an-jeito-titulo { font-size: 13px; font-weight: 650; color: var(--texto-2); }
+.an-jeito-lista { display: flex; flex-wrap: wrap; gap: 8px; }
+.an-traco { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 13px; border: 0; border-radius: 999px; font: inherit; font-size: 13.5px; font-weight: 650; color: var(--texto); background: var(--preench-3); cursor: pointer; transition: background .2s; }
+.an-traco svg { color: var(--destaque); }
+.an-traco:hover, .an-traco.aberto { background: var(--preench-2); }
+.an-jeito-porque { flex-basis: 100%; margin: 0; font-size: 13.5px; line-height: 1.45; color: var(--texto-2); }
+
+/* ---------- hoje você pode gastar ---------- */
+.an-hoje { gap: 4px; padding: 22px 22px 18px; }
+.an-hoje-rotulo { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 650; color: var(--texto-2); }
+.an-hoje-rotulo svg { color: var(--c); }
+.an-hoje-valor { font-family: var(--fonte-numeros); font-size: 46px; font-weight: 800; letter-spacing: -.045em; line-height: 1.05; color: color-mix(in srgb, var(--c) 78%, var(--texto)); }
+.an-hoje-ate { font-size: 14px; color: var(--texto-2); }
+.an-hoje-trilho { height: 10px; margin-top: 12px; border-radius: 10px; background: var(--preench-4); overflow: hidden; }
+.an-hoje-trilho i { display: block; height: 100%; width: calc(var(--cheio) * 100%); min-width: 0; border-radius: inherit; background: var(--c); transform-origin: left; animation: vis-cresce-x .9s var(--mola) .15s backwards; }
+.vis:not(.vivo) .an-hoje-trilho i { animation-play-state: paused; }
+.an-hoje-pe { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13.5px; color: var(--texto-2); }
+.an-hoje-pe b { color: var(--texto); font-variant-numeric: tabular-nums; }
+.an-hoje-pe b.ruim { color: var(--saida); }
+
+/* ---------- gráficos escondidos ---------- */
+.an-escondidos { display: grid; gap: 10px; justify-items: center; }
+.an-escondidos > .link { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+.an-escondidos ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; width: min(100%, 520px); }
+.an-escondidos li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 14px; background: var(--preench-4); font-size: 14px; font-weight: 600; }
+.an-escondidos li .btn { height: 34px; padding: 0 12px; font-size: 13px; }
 
 /* ---------- 1. como estou ---------- */
 .an-como { padding-bottom: 14px; }
@@ -123,9 +156,6 @@
 .an-mes-numero { display: grid; gap: 2px; justify-items: start; }
 .an-mes-numero small { font-size: 13px; font-weight: 650; color: var(--texto-2); }
 .an-mes-numero strong { font-family: var(--fonte-numeros); font-size: 36px; font-weight: 800; letter-spacing: -.04em; line-height: 1.05; color: color-mix(in srgb, var(--tom) 82%, var(--texto)); }
-.an-dia { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; height: 30px; padding: 0 12px; border-radius: 999px; font-size: 13.5px; font-weight: 650; color: var(--texto); background: var(--preench-3); }
-.an-dia svg { color: var(--destaque); }
-.an-dia.sem svg { color: var(--divida); }
 .analise .bom { --tom: var(--entrada); }
 .analise .ruim { --tom: var(--saida); }
 
@@ -212,6 +242,31 @@
 .vis:not(.vivo) .radar-valor, .vis:not(.vivo) .radar-ponto { animation-play-state: paused; }
 .radar-rotulo { font-size: 13px; font-weight: 600; fill: var(--texto-2); }
 .radar-nota { font-weight: 800; fill: var(--texto); }
+
+/* ---------- de onde sai o dinheiro ---------- */
+.fluxo { display: grid; gap: 16px; }
+.fluxo-grupo { display: grid; gap: 7px; animation: vis-aparece .45s var(--mola) calc(var(--i, 0) * 90ms) backwards; }
+.fluxo-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13.5px; }
+.fluxo-fonte { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.fluxo-fonte svg { flex: none; color: var(--entrada); }
+.fluxo-fonte b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fluxo-fonte small { flex: none; color: var(--texto-3); font-size: 12.5px; }
+.fluxo-cab > b { font-variant-numeric: tabular-nums; }
+.fluxo-barra { display: flex; gap: 2px; height: 12px; border-radius: 12px; background: var(--preench-4); overflow: hidden; }
+.fluxo-barra i { display: block; height: 100%; background: var(--caixa); transform-origin: left; animation: vis-cresce-x .8s var(--mola) calc(var(--k, 0) * 80ms + .1s) backwards; }
+.fluxo-barra i.atrasa { background: var(--divida); }
+.fluxo-barra i.sobra { background: color-mix(in srgb, var(--entrada) 45%, transparent); }
+.fluxo-itens { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.fluxo-itens li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 10px; font-size: 13px; }
+.fluxo-itens li > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fluxo-itens li::before { content: none; }
+.fluxo-itens li > b { grid-column: 2; grid-row: 1; font-variant-numeric: tabular-nums; font-weight: 600; }
+.fluxo-itens small { grid-column: 1 / -1; font-size: 12px; font-weight: 600; color: color-mix(in srgb, var(--divida) 80%, var(--texto)); }
+.fluxo-itens li.atrasa > span { font-weight: 650; }
+.fluxo-sobra, .fluxo-mais { color: var(--texto-2); }
+.fluxo-grupo.falta .fluxo-fonte svg { color: var(--saida); }
+.fluxo-grupo.falta .fluxo-itens li > span { color: var(--saida); }
+.vis:not(.vivo) .fluxo-grupo, .vis:not(.vivo) .fluxo-barra i { animation-play-state: paused; }
 
 /* ---------- barras ---------- */
 .barras { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
@@ -339,6 +394,9 @@ li.caiu .halteres-agora { background: var(--entrada); }
   .an-agora-passo strong { font-size: 16.5px; }
   .an-agora-pe .btn { flex: 1 1 100%; height: 46px; }
   .an-mes-numero strong { font-size: 32px; }
+  .an-hoje { padding: 18px 16px 16px; }
+  .an-hoje-valor { font-size: 40px; }
+  .vis-botoes .vis-ir { width: 32px; height: 32px; }
   .cascata { gap: 6px; }
   .cascata-area { height: 130px; }
   .cascata-area b { font-size: 11px; }

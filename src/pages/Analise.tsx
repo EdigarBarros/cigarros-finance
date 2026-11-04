@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { compararRetratos, retratoDe, type Analise as DadosAnalise, type Mudanca, type Retrato } from '../lib/analise'
-import { cascataDoMes, visuais } from '../lib/visuais'
+import { cascataDoMes, visuais, type Visual } from '../lib/visuais'
+import { tracosDe, type Traco } from '../lib/jeito'
 import { fmtDataCurta, fmtValor, MESES_NOME, noMeioDaFrase } from '../lib/format'
 import { useMovimento } from '../lib/tema'
 import { Icone } from '../components/Icone'
 import { Interruptor } from '../components/ui'
 import { Numero } from '../components/Numero'
-import { CartaoVisual, Escada, Grafico, Medidor } from './AnaliseGraficos'
+import { CartaoVisual, Escada, Grafico, Medidor, type AcoesDoCartao } from './AnaliseGraficos'
 import { COR_DO_TOM, useEmVista } from './analiseApoio'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
@@ -28,8 +29,11 @@ export function Analise(c: Ctx) {
   const [todos, setTodos] = useState(c.perfil.detalhe === 'detalhado')
   const desdeAVisita = useDesdeAUltimaVisita(c.idUsuario, a)
   const lista = useMemo(() => visuais(a), [a])
-  const naFrente = GRAFICOS_NA_FRENTE[c.perfil.detalhe]
-  const vistos = todos ? lista : lista.slice(0, naFrente)
+  const tracos = useMemo(() => tracosDe(a), [a])
+  const feed = useFeed(c.idUsuario, lista)
+  const [verEscondidos, setVerEscondidos] = useState(false)
+  const naFrente = Math.max(GRAFICOS_NA_FRENTE[c.perfil.detalhe], feed.favoritos)
+  const vistos = todos ? feed.mostrados : feed.mostrados.slice(0, naFrente)
 
   if (c.contaNova) {
     return (
@@ -51,21 +55,42 @@ export function Analise(c: Ctx) {
   return (
     <div className={`pagina analise ${movimento === 'reduzido' ? 'parado' : ''}`}>
       <Cabecalho />
-      <ComoEstou a={a} />
+      <SeuJeito tracos={tracos} />
+      <HojePodeGastar a={a} />
       <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} />
       <FacaAgora a={a} aoIr={c.irPara} />
+      <ComoEstou a={a} />
       {a.mes && <SeuMes a={a} />}
 
       <div className="an-feed">
         {vistos.map((v) => (
-          <CartaoVisual key={v.id} v={v} aoIr={c.irPara}><Grafico v={v} /></CartaoVisual>
+          <CartaoVisual key={v.id} v={v} aoIr={c.irPara} acoes={feed.acoes(v.id)}><Grafico v={v} /></CartaoVisual>
         ))}
       </div>
-      {lista.length > naFrente && (
+      {feed.mostrados.length > naFrente && (
         <button className="btn an-mais" onClick={() => setTodos(!todos)}>
           <Icone nome={todos ? 'cima' : 'ano'} tamanho={17} />
-          {todos ? tx('Mostrar menos') : tx('Ver mais {0} gráficos', lista.length - naFrente)}
+          {todos ? tx('Mostrar menos') : tx('Ver mais {0} gráficos', feed.mostrados.length - naFrente)}
         </button>
+      )}
+      {feed.escondidos.length > 0 && (
+        <section className="an-escondidos">
+          <button className="link" onClick={() => setVerEscondidos(!verEscondidos)} aria-expanded={verEscondidos}>
+            <Icone nome="olho-fechado" tamanho={15} />
+            {feed.escondidos.length === 1 ? tx('1 gráfico escondido') : tx('{0} gráficos escondidos', feed.escondidos.length)}
+            <Icone nome={verEscondidos ? 'cima' : 'abaixo'} tamanho={14} />
+          </button>
+          {verEscondidos && (
+            <ul>
+              {feed.escondidos.map((v) => (
+                <li key={v.id}>
+                  <span>{v.titulo}</span>
+                  <button className="btn" onClick={() => feed.mostrar(v.id)}><Icone nome="olho" tamanho={15} /> {tx('Mostrar de novo')}</button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       )}
 
       <footer className="an-rodape">
@@ -101,6 +126,72 @@ function PorQue({ texto }: { texto: string }) {
       </button>
       {aberto && <p>{texto}</p>}
     </div>
+  )
+}
+
+/** Os traços do jeito da pessoa (lib/jeito.ts): tocar mostra por que o motor leu assim. */
+function SeuJeito({ tracos }: { tracos: Traco[] }) {
+  const [aberto, setAberto] = useState<string | null>(null)
+  if (!tracos.length) return null
+  const t = tracos.find((x) => x.id === aberto)
+  return (
+    <section className="an-jeito" aria-label={tx('Seu jeito com o dinheiro')}>
+      <span className="an-jeito-titulo">{tx('Seu jeito')}</span>
+      <div className="an-jeito-lista">
+        {tracos.map((x) => (
+          <button key={x.id} className={`an-traco ${aberto === x.id ? 'aberto' : ''}`} onClick={() => setAberto(aberto === x.id ? null : x.id)} aria-expanded={aberto === x.id}>
+            <Icone nome={x.icone} tamanho={14} /> {x.nome}
+          </button>
+        ))}
+      </div>
+      {t && <p className="an-jeito-porque">{t.porque} {tx('Os gráficos abaixo estão na ordem que mais serve a esse jeito.')}</p>}
+    </section>
+  )
+}
+
+/**
+ * Hoje você pode gastar: o menor entre o que o mês aguenta (guardando a sobra-alvo) e o que o saldo aguenta sem atrasar
+ * nenhuma conta até o próximo dinheiro entrar (lib/planejador.ts). Mostra quanto já saiu hoje e quanto ainda dá.
+ */
+function HojePodeGastar({ a }: { a: DadosAnalise }) {
+  const [ref, vivo] = useEmVista<HTMLElement>()
+  const h = a.plano?.hoje
+  if (!h) return null
+  const passou = h.resta < 0
+  const cheio = h.pode > 0 ? Math.min(1, h.gastou / h.pode) : h.gastou > 0 ? 1 : 0
+  const tom = h.pode <= 0 || passou ? 'ruim' : cheio >= 0.8 ? 'medio' : 'bom'
+  const ate = h.ate ? tx('até {0}, quando entra {1}', fmtDataCurta(h.ate.data), h.ate.descricao) : tx('até o fim do mês que vem')
+  const semFolga = h.motivo === 'mes'
+    ? tx('Pela previsão, o mês já fecha no vermelho: não há folga para o dia a dia. Segure o que der.')
+    : h.ate
+      ? tx('Até {0}, quando entra {1}, as contas já levam o dinheiro da conta. Segure o que der.', fmtDataCurta(h.ate.data), h.ate.descricao)
+      : tx('Até o fim do mês que vem, as contas já levam o dinheiro da conta. Segure o que der.')
+  const porque = [
+    h.motivo === 'caixa'
+      ? h.ate
+        ? tx('Até {0}, quando entra {1}, vencem {2} em contas. Com o saldo de hoje, sobram {3} por dia sem atrasar nada.', fmtDataCurta(h.ate.data), h.ate.descricao, fmtValor(h.antesDoDinheiro), fmtValor(h.porDiaDoCaixa!))
+        : tx('Não há dinheiro previsto para entrar até o fim do mês que vem. Com o saldo de hoje e {0} em contas até lá, sobram {1} por dia.', fmtValor(h.antesDoDinheiro), fmtValor(h.porDiaDoCaixa!))
+      : h.pode > 0
+        ? tx('Pela previsão do mês: tirando as contas e guardando {0}, o que sobra dividido pelos dias que faltam dá {1} por dia.', fmtValor(a.mes?.sobraAlvo ?? 0), fmtValor(h.porDiaDoMes ?? 0))
+        : tx('Pela previsão do mês, depois das contas e do que é para guardar ({0}), não sobra nada para os dias que faltam.', fmtValor(a.mes?.sobraAlvo ?? 0)),
+    h.motivo === 'caixa' && h.porDiaDoMes !== null && h.porDiaDoMes > (h.porDiaDoCaixa ?? 0)
+      ? tx('Pelo mês inteiro daria {0} por dia, mas as contas vencem antes de o dinheiro chegar: por isso o número de hoje é menor.', fmtValor(Math.floor(h.porDiaDoMes)))
+      : '',
+    h.porDiaDoCaixa === null ? tx('Informe o saldo dos bancos para eu conferir também se o dinheiro chega antes das contas.') : '',
+    tx('O número vale se o que entra e sai estiver lançado, e se refaz a cada lançamento. Renda extra não entra na conta.'),
+  ].filter(Boolean).join(' ')
+  return (
+    <section ref={ref} className={`cartao vis an-hoje ${vivo ? 'vivo' : ''}`} style={{ '--c': COR_DO_TOM[tom], '--cheio': cheio } as CSSProperties}>
+      <span className="an-hoje-rotulo"><Icone nome="carteira" tamanho={16} /> {tx('Hoje você pode gastar')}</span>
+      <strong className="an-hoje-valor"><Numero valor={Math.max(0, h.pode)} formato={fmtValor} /></strong>
+      <span className="an-hoje-ate">{h.pode > 0 ? tx('por dia, {0}', ate) : semFolga}</span>
+      <div className="an-hoje-trilho" aria-hidden="true"><i /></div>
+      <div className="an-hoje-pe">
+        <span>{tx('Já gastou hoje: {0}', fmtValor(h.gastou))}</span>
+        <b className={passou ? 'ruim' : ''}>{passou ? tx('Passou {0}', fmtValor(-h.resta)) : tx('Ainda dá {0}', fmtValor(h.resta))}</b>
+      </div>
+      <PorQue texto={porque} />
+    </section>
   )
 }
 
@@ -174,10 +265,6 @@ function SeuMes({ a }: { a: DadosAnalise }) {
       <div className={`an-mes-numero ${sobra ? 'bom' : 'ruim'}`}>
         <small>{sobra ? tx('Deve sobrar') : tx('Pode faltar')}</small>
         <strong><Numero valor={Math.abs(m.resultadoPrevisto)} formato={fmtValor} /></strong>
-        <span className={`an-dia ${m.porDia > 0 ? '' : 'sem'}`}>
-          <Icone nome={m.porDia > 0 ? 'carteira' : 'escudo'} tamanho={15} />
-          {m.porDia > 0 ? tx('Pode gastar até {0} por dia', fmtValor(Math.floor(m.porDia))) : tx('Sem folga para o dia a dia')}
-        </span>
       </div>
       <Grafico v={{ id: 'cascata', tipo: 'cascata', prioridade: 0, titulo: '', frase: '', passos }} />
       {m.rendaExtraMedia > 0 && <p className="an-nota-fraca">{tx('Sem contar renda extra (em média, {0} por mês).', fmtValor(m.rendaExtraMedia))}</p>}
@@ -224,4 +311,42 @@ function OQueMudou({ reanalise, desdeAVisita }: { reanalise: Ctx['reanalise']; d
       </ul>
     </section>
   )
+}
+
+interface MemoriaDoFeed { fav: string[]; oculto: string[]; toques: Record<string, number> }
+
+/**
+ * O feed aprende com o uso: favoritos vão para o topo, escondidos saem da frente e cada toque num gráfico o sobe um pouco.
+ * A memória fica no navegador (por pessoa); sem armazenamento, o feed segue só a ordem do motor.
+ */
+function useFeed(idUsuario: string, lista: Visual[]) {
+  const chave = `opuscash:feed:${idUsuario}`
+  const [m, setM] = useState<MemoriaDoFeed>(() => {
+    try {
+      const lido = JSON.parse(localStorage.getItem(chave) ?? 'null') as Partial<MemoriaDoFeed> | null
+      return { fav: lido?.fav ?? [], oculto: lido?.oculto ?? [], toques: lido?.toques ?? {} }
+    } catch { return { fav: [], oculto: [], toques: {} } }
+  })
+  const mudar = (f: (x: MemoriaDoFeed) => MemoriaDoFeed) => setM((antes) => {
+    const novo = f(antes)
+    try { localStorage.setItem(chave, JSON.stringify(novo)) } catch { /* sem armazenamento */ }
+    return novo
+  })
+  // A ordem pelo uso é a da abertura da aba: um toque não faz o cartão pular de lugar debaixo do dedo.
+  const [toquesDaAbertura] = useState(m.toques)
+  const ordem = useMemo(() => {
+    const peso = (v: Visual) => v.prioridade + Math.min(12, (toquesDaAbertura[v.id] ?? 0) * 2)
+    const visiveis = lista.filter((v) => !m.oculto.includes(v.id))
+    const favs = m.fav.map((id) => visiveis.find((v) => v.id === id)).filter((v): v is Visual => Boolean(v))
+    const resto = visiveis.filter((v) => !m.fav.includes(v.id)).sort((x, y) => peso(y) - peso(x))
+    return { mostrados: [...favs, ...resto], favoritos: favs.length, escondidos: lista.filter((v) => m.oculto.includes(v.id)) }
+  }, [lista, m, toquesDaAbertura])
+  const acoes = (id: string): AcoesDoCartao => ({
+    fav: m.fav.includes(id),
+    aoFavoritar: () => mudar((x) => ({ ...x, fav: x.fav.includes(id) ? x.fav.filter((f) => f !== id) : [...x.fav, id] })),
+    aoEsconder: () => mudar((x) => ({ ...x, oculto: [...x.oculto.filter((o) => o !== id), id], fav: x.fav.filter((f) => f !== id) })),
+    aoTocar: () => mudar((x) => ({ ...x, toques: { ...x.toques, [id]: Math.min(50, (x.toques[id] ?? 0) + 1) } })),
+  })
+  const mostrar = (id: string) => mudar((x) => ({ ...x, oculto: x.oculto.filter((o) => o !== id) }))
+  return { ...ordem, acoes, mostrar }
 }
