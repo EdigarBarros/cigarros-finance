@@ -91,6 +91,7 @@ conselhos: com dados, "Tudo em ordem por aqui." (e, se a pessoa escondeu avisos 
 vem); sem dados (menos de 2 meses fechados com entradas e saídas, `faltamDadosParaConselhos` em `lib/conselheiro.ts`, com o mesmo critério do motor), a frase
 que explica o que lançar. Conta nova não vê o bloco. O rodapé diz, em palavras simples, que são orientações gerais calculadas
 com o que foi lançado, e não recomendação de investimento.
+No canto do cabeçalho do bloco, o selo com a **nota do consultor** (ex.: "66 Razoável", na cor do tom) leva à aba Consultor (4.7).
 
 O resultado do mês deixou de ser um "hero" separado: virou o primeiro cartão, em destaque, mantendo a frase de ancoragem.
 O gráfico de 12 meses com as linhas extras continua na página **Resumo do ano**.
@@ -183,6 +184,42 @@ Saíram da Início: quadros de Entradas e Saídas (a página **Lançamentos** li
 - **Conta nova** (sem nenhum dado): cabeçalho, cartão "Tudo pronto para começar" (com os botões), e só os blocos de módulos ligados com o primeiro passo ("Adicionar dívida", "Criar a primeira meta"). Sem indicadores zerados, sem rosca, sem gráfico.
 - **Mês sem lançamentos** (conta antiga): resultado com "Nada lançado em outubro ainda", indicadores só se houver `kpisExtras`, cartão único com os botões no lugar de "Para onde foi" e "Últimos".
 - **Resultado negativo**: número em coral (não vermelho puro), "Faltou", frase "Saiu R$ X a mais do que entrou" e atalho "Ver para onde foi".
+
+### 4.7 Consultor (a aba de análise financeira)
+
+A aba **Consultor** (`pages/Analise.tsx`, estilos em `pages/analise.css`) é a análise completa do dinheiro da pessoa, como
+alguém que cuida de tudo e entende de finanças. Vem no menu logo depois de Lançamentos (lançar e consultar andam juntos),
+em todos os jeitos de ver e sem depender de módulo.
+
+**O motor** (`lib/analise.ts`, `analisar()`) é puro como o conselheiro: sem React, sem banco, com a data entrando por `hoje`.
+Lê os **12 meses fechados e o atual** (`mesesDaAnalise` em `lib/conselheiro.ts`; `useDados` carrega os meses de outros anos
+que faltam), mais compras no cartão, faturas, contas do mês, dívidas, metas e saldos dos bancos. Faz quatro coisas:
+
+| Etapa | O que calcula |
+| --- | --- |
+| Analisar | Nota de 0 a 100 pela média ponderada de 6 pilares (sobra 25, reserva 20, dívidas 20, controle 15, cartão 10, metas 10; o que não se aplica sai e os pesos se refazem). Fase na escada: sair do vermelho → colchão de 1 mês → quitar dívidas acima de 3% ao mês → reserva completa (6 meses, ou 12 com renda que varia) → fazer o dinheiro crescer |
+| Comparar | Previsão de como o mês fecha (o que entrou e saiu, contas e parcelas pendentes, faturas, gastos que se repetem e o dia a dia, misturando o costume com o ritmo do mês), quanto dá para gastar por dia guardando a sobra-alvo, o mesmo ponto dos outros meses, tendência de 12 meses (reta de mínimos quadrados) e categorias que subiram ou caíram |
+| Revisar | Regra 50/30/20 pelo nome das categorias, gastos que se repetem todo mês e assinaturas (custo no ano), gastos formiga, juros e tarifas pagos, renda que varia e a principal fonte, gastos sem categoria. Parcela de compra no cartão já assumida nunca entra como "dá para cortar" |
+| Planejar | Para onde mandar a sobra conforme a fase, orçamento por categoria para o mês que vem, plano das dívidas (só parcelas × avalanche × bola de neve, simulado mês a mês pelo calendário de parcelas, com o desconto dos juros ao adiantar), reserva, se as metas cabem, patrimônio daqui a 12 meses e o **plano de ação** em ordem de prioridade |
+
+O plano de ação segue a escada: atrasos primeiro, depois sair do vermelho, dívida de juros muito altos, usar parte de uma reserva
+gorda para quitar dívida cara (sempre deixando 3 meses guardados), colchão, adiantar a dívida da vez, corte para a sobra-alvo,
+parcelas e cartão, reserva, metas e, por último, os ajustes de dados (informar juros, dar categoria, atualizar saldos).
+
+**Reanálise a cada mudança.** O Painel calcula a análise num `useMemo` sobre os dados: qualquer lançamento, compra, dívida, conta,
+meta ou saldo novo refaz tudo. Depois de cada mudança, `retratoDe` + `compararRetratos` dizem o que mudou (nota, fase, previsão do
+mês, dívidas, data sem dívidas, reserva, passos que entraram ou saíram do plano). A pessoa vê isso em dois lugares: o aviso
+"Analisei a mudança" no canto (`components/AvisoReanalise.tsx`; some sozinho, "Não avisar mais" grava `aviso-reanalise` em
+`perfil.dispensadas`, e o interruptor no pé da aba liga de novo) e o bloco "O que mudou" no topo da aba. Troca de ano, virada do
+dia, cotação nova e dados chegando do banco não contam como mudança: só renovam a base de comparação. Sem mudança nesta visita,
+"O que mudou" compara com o retrato da última visita (guardado no navegador, só números).
+
+**Ordem da tela** (de decisão): diagnóstico (nota, resumo do consultor e a escada das fases) → o que mudou → plano de ação → como
+o mês deve fechar → os pilares → a análise completa (para onde mandar a sobra, últimos 12 meses e regra 50/30/20 lado a lado,
+revisão dos gastos, orçamento, plano das dívidas, reserva e metas lado a lado, patrimônio). No jeito **simples**, o plano mostra 3
+passos e a análise completa fica atrás de "Ver a análise completa". Sem dados suficientes (menos de 2 dos 3 últimos meses com
+entradas e saídas), não há nota: o resumo explica o que lançar e a aba mostra o que já dá (dívidas, cartão, metas, o mês).
+Conta nova vê o convite para o primeiro lançamento.
 
 ## 5. Guia de linguagem
 

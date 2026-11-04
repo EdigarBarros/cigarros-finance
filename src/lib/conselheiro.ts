@@ -71,7 +71,7 @@ export const JUROS_DIFERENCA_MIN = 0.5
 
 export type Gravidade = 'urgente' | 'atencao' | 'elogio'
 /** Página do painel para onde o botão leva (mesmos ids de `Pagina` em pages/contexto.ts). */
-export type Destino = 'inicio' | 'lancamentos' | 'contas' | 'cartoes' | 'dividas' | 'metas' | 'patrimonio' | 'ano'
+export type Destino = 'inicio' | 'lancamentos' | 'analise' | 'contas' | 'cartoes' | 'dividas' | 'metas' | 'patrimonio' | 'ano'
 
 export interface Conselho {
   /**
@@ -132,6 +132,18 @@ const numeroDecimal = new Intl.NumberFormat(LOCAL_DAS_DATAS, { maximumFractionDi
 export function mesesDoConselheiro(hoje = new Date()) {
   const atual = chaveMes(hoje.getFullYear(), hoje.getMonth() + 1)
   return Array.from({ length: MESES_NA_MEDIA + 1 }, (_, i) => doMesChave(atual - MESES_NA_MEDIA + i))
+}
+
+/** Quantos meses fechados a análise completa (lib/analise.ts) lê para ver tendência, recorrências e o ano inteiro. */
+export const MESES_DA_ANALISE = 12
+
+/**
+ * Os meses que a análise completa lê: os 12 fechados e o atual (inclui os do conselheiro). É o que `useDados` carrega
+ * além do ano aberto.
+ */
+export function mesesDaAnalise(hoje = new Date()) {
+  const atual = chaveMes(hoje.getFullYear(), hoje.getMonth() + 1)
+  return Array.from({ length: MESES_DA_ANALISE + 1 }, (_, i) => doMesChave(atual - MESES_DA_ANALISE + i))
 }
 
 /** Marca de "agora não" para um conselho: vale só no mês dela, depois o conselho pode voltar (se ainda for verdade). */

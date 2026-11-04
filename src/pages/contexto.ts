@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import type { Sugestao } from '../lib/adaptacao'
 import type { MesEfetivo, Resumo } from '../lib/calc'
 import type { SituacaoCartao } from '../lib/cartoes'
+import type { Analise, Reanalise } from '../lib/analise'
 import type { Conselho } from '../lib/conselheiro'
 import type { MemoriaConta, SituacaoConta, SugestaoVinculo } from '../lib/contasFixas'
 import type { SituacaoDivida } from '../lib/dividas'
@@ -12,7 +13,7 @@ import type { ContasFixas } from '../lib/useContasFixas'
 import type { Dados } from '../lib/useDados'
 import type { Categoria, Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 
-export type Pagina = 'inicio' | 'lancamentos' | 'contas' | 'cartoes' | 'dividas' | 'metas' | 'patrimonio' | 'ano'
+export type Pagina = 'inicio' | 'lancamentos' | 'analise' | 'contas' | 'cartoes' | 'dividas' | 'metas' | 'patrimonio' | 'ano'
 
 /** Tudo que as páginas precisam do mês aberto. */
 export interface Ctx {
@@ -62,6 +63,15 @@ export interface Ctx {
   conselhosSemDados: boolean
   /** Quantos conselhos a pessoa escondeu até o mês que vem. */
   conselhosDispensados: number
+  /** A análise completa do consultor (lib/analise.ts), refeita a cada mudança nos dados. */
+  analise: Analise
+  /** O que a última mudança nos dados fez com a análise (null até a primeira mudança desta visita). */
+  reanalise: Reanalise | null
+  /** Para guardar no navegador o retrato da última visita à aba Consultor. */
+  idUsuario: string
+  /** O aviso "Analisei a mudança" está ligado. */
+  avisosDaAnalise: boolean
+  mudarAvisosDaAnalise: (ligado: boolean) => void
   categorias: Categoria[]
   /** Categoria de um lançamento (undefined = sem categoria). */
   categoriaDe: (l: Lancamento) => Categoria | undefined

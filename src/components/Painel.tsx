@@ -1,4 +1,4 @@
-import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes } from '../lib/calc'
 import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
@@ -8,6 +8,7 @@ import {
 } from '../lib/contasFixas'
 import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
 import { COR } from '../lib/charts'
+import { analisar, compararRetratos, retratoDe, type Reanalise, type Retrato } from '../lib/analise'
 import { avisosDispensadosNoMes, conselhos as conselhosDe, dispensarPorUmMes, faltamDadosParaConselhos } from '../lib/conselheiro'
 import { calendarioDe, fimDoMes, inicioDaDivida, meDevem, saldoMaisRecenteDaDivida, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
 import { definirMoedaPrincipal, definirValoresOcultos, fmtDataCurta, fmtValor, MESES_CURTO, MESES_NOME, useValoresOcultos } from '../lib/format'
@@ -36,12 +37,14 @@ import { CartaoDicas, type Dica } from './CartaoDicas'
 import { Marca } from './Marca'
 import { tx } from '../lib/textos'
 import { useHoje } from '../lib/useHoje'
+import { AvisoReanalise } from './AvisoReanalise'
 
 // Cada tela e cada janela vira um pedaço à parte: o painel abre só com o que a pessoa vê e o resto chega sob demanda
 // (e é baixado em segundo plano logo depois, veja `carregarRestante`).
 const paginas = {
   Inicio: () => import('../pages/Inicio'),
   Lancamentos: () => import('../pages/Lancamentos'),
+  Analise: () => import('../pages/Analise'),
   Contas: () => import('../pages/Contas'),
   Cartoes: () => import('../pages/Cartoes'),
   Dividas: () => import('../pages/Dividas'),
@@ -51,6 +54,7 @@ const paginas = {
 }
 const Inicio = lazy(() => paginas.Inicio().then((m) => ({ default: m.Inicio })))
 const Lancamentos = lazy(() => paginas.Lancamentos().then((m) => ({ default: m.Lancamentos })))
+const PaginaAnalise = lazy(() => paginas.Analise().then((m) => ({ default: m.Analise })))
 const Contas = lazy(() => paginas.Contas().then((m) => ({ default: m.Contas })))
 const Cartoes = lazy(() => paginas.Cartoes().then((m) => ({ default: m.Cartoes })))
 const Dividas = lazy(() => paginas.Dividas().then((m) => ({ default: m.Dividas })))
@@ -97,11 +101,13 @@ const agendar = (f: () => void) => {
  * A ordem daqui é a do menu e também a prioridade nas abas do celular (veja docs/arquitetura-do-painel.md):
  * o que se usa todo dia, depois o que tem prazo (do mais próximo ao mais distante), depois o que se constrói,
  * e por fim a retrospectiva.
- * As páginas `contas` ("Contas do mês") e `cartoes` ("Cartões") entram entre `lancamentos` e `dividas`.
+ * O Consultor (`analise`) vem logo depois de Lançamentos: é a aba que cuida de tudo, e lançar e consultar andam juntos.
+ * As páginas `contas` ("Contas do mês") e `cartoes` ("Cartões") entram entre `analise` e `dividas`.
  */
 const PAGINAS: { id: Pagina; nome: string; curto: string; icone: string }[] = [
   { id: 'inicio', nome: tx('Início'), curto: tx('Início'), icone: 'inicio' },
   { id: 'lancamentos', nome: tx('Lançamentos'), curto: tx('Lançamentos'), icone: 'lista' },
+  { id: 'analise', nome: tx('Consultor'), curto: tx('Consultor'), icone: 'bussola' },
   { id: 'contas', nome: tx('Contas do mês'), curto: tx('Contas'), icone: 'calendario' },
   { id: 'cartoes', nome: tx('Cartões'), curto: tx('Cartões'), icone: 'cartao' },
   { id: 'dividas', nome: tx('Dívidas'), curto: tx('Dívidas'), icone: 'divida' },
@@ -414,6 +420,42 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   // "Agora não": o conselho some até o mês que vem (se ainda for verdade, volta).
   const dispensarConselho = (id: string) => mudarPerfil({ ...perfil, dispensadas: dispensarPorUmMes(perfil.dispensadas, id, hoje) })
 
+  // Consultor (lib/analise.ts): a análise completa, refeita sempre que qualquer dado muda (lançamento, compra no cartão,
+  // dívida, conta do mês, meta, saldo de banco). Lê os 12 meses fechados e o atual, sem depender do mês aberto na tela.
+  const comContasFixas = v.contas && !contas.semTabela
+  const analise = useMemo(() => analisar({
+    hoje, lancs: lancsDosConselhos, categorias: d.categorias, categoriaDe: idCategoria, dividas: d.dividas, saldos: d.saldos,
+    pagamentos: d.pagamentos, taxas, meses: d.meses, metas: d.metas, movimentosMeta: d.movimentosMeta, perfil,
+    dividasSemJuros: d.dividasSemJuros, contas: comContasFixas ? contas.contas : [],
+    compras: comFaturas ? cartoes.compras.filter(contaNasSaidas(cartoes.faturasPagas)) : [],
+    cartoes: comFaturas ? cartoes.cartoes : [], faturasPagas: comFaturas ? cartoes.faturasPagas : [],
+  }), [lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, d.meses, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.moeda, comFaturas, cartoes.compras, cartoes.cartoes, cartoes.faturasPagas, comContasFixas, contas.contas, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reanálise: a cada mudança feita pela pessoa, compara com a análise anterior e conta o que mudou (aviso no canto e
+  // "O que mudou" na aba). Troca de ano, virada do dia, cotação nova e dados chegando não são mudança da pessoa: só
+  // renovam a base de comparação (a chave abaixo muda e nada é avisado).
+  const ultimoRetrato = useRef<{ r: Retrato; chave: string } | null>(null)
+  const [reanalise, setReanalise] = useState<Reanalise | null>(null)
+  const [avisoReanalise, setAvisoReanalise] = useState(false)
+  const avisosDaAnalise = !perfil.dispensadas.includes('aviso-reanalise')
+  const chaveDaBase = `${ano}|${hojeIso}|${JSON.stringify(taxas)}|${cartoes.carregado}|${contas.carregando}|${JSON.stringify(perfil.modulos)}|${perfil.moeda}`
+  useEffect(() => {
+    if (d.carregando || !noPainel) return
+    const r = retratoDe(analise)
+    const antes = ultimoRetrato.current
+    ultimoRetrato.current = { r, chave: chaveDaBase }
+    if (!antes || antes.chave !== chaveDaBase) return
+    const mudancas = compararRetratos(antes.r, r)
+    if (!mudancas.length) return
+    // o aviso vem do que a pessoa acabou de fazer: só aqui, depois da mudança nos dados, o estado é atualizado
+    setReanalise({ em: new Date(), mudancas, nota: r.nota, notaAntes: antes.r.nota })
+    setAvisoReanalise(true)
+  }, [analise, chaveDaBase, d.carregando, noPainel])
+  const fecharAvisoReanalise = useCallback(() => setAvisoReanalise(false), [])
+  const mudarAvisosDaAnalise = (ligado: boolean) => mudarPerfil({
+    ...perfil, dispensadas: ligado ? perfil.dispensadas.filter((x) => x !== 'aviso-reanalise') : [...new Set([...perfil.dispensadas, 'aviso-reanalise'])],
+  })
+
   // Pagar (o que você deve) ou receber (o que te devem): o valor sugerido é o atrasado ou a próxima parcela.
   const pagarDivida = (s: SituacaoDivida, valor?: number) => {
     // sem calendário nem parcela fixa, o valor fica em branco: a pessoa paga quanto puder
@@ -498,6 +540,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     conselhos, dispensarConselho,
     conselhosSemDados: faltamDadosParaConselhos({ lancs: lancsDosConselhos, dividas: d.dividas, hoje }),
     conselhosDispensados: avisosDispensadosNoMes(perfil.dispensadas, hoje),
+    analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise,
     ligarModulo,
     personalizar: () => setAjustes('painel'),
     categorias: d.categorias,
@@ -788,6 +831,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         <Suspense fallback={null}>
         {paginaMostrada === 'inicio' && <Inicio {...ctx} />}
         {paginaMostrada === 'lancamentos' && <Lancamentos {...ctx} />}
+        {paginaMostrada === 'analise' && <PaginaAnalise {...ctx} />}
         {paginaMostrada === 'contas' && <Contas {...ctx} />}
         {paginaMostrada === 'cartoes' && <Cartoes key={cartaoAberto ?? 'todos'} {...ctx} />}
         {paginaMostrada === 'dividas' && <Dividas {...ctx} />}
@@ -798,6 +842,12 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       </div>
 
       <button className="fab" data-tour="lancar" onClick={() => setForm({})} aria-label={tx('Novo lançamento')}><Icone nome="mais" tamanho={26} /></button>
+
+      {avisoReanalise && reanalise && avisosDaAnalise && paginaAtual !== 'analise' && noPainel && (
+        <AvisoReanalise r={reanalise} aoFechar={fecharAvisoReanalise}
+          aoVer={() => { setAvisoReanalise(false); irPara('analise') }}
+          aoDesligar={() => { setAvisoReanalise(false); mudarAvisosDaAnalise(false) }} />
+      )}
 
       <nav className="abas-movel" ref={refAbas}>
         <button className="abas-alca" onClick={barra.alternarAbas} aria-expanded={!barra.abasOcultas}
