@@ -8126,5 +8126,41 @@
   "Pela previsão do mês, depois das contas e do que é para guardar ({0}), não sobra nada para os dias que faltam.": {
     "en": "By the month's forecast, after bills and what you set aside ({0}), nothing is left for the remaining days.",
     "es": "Según la previsión del mes, después de las cuentas y de lo que hay que ahorrar ({0}), no sobra nada para los días que faltan."
+  },
+  "{0}% deste dinheiro já tem destino ({1}). Sobram {2} livres.": {
+    "en": "{0}% of this money is already spoken for ({1}). {2} is left free.",
+    "es": "El {0}% de este dinero ya tiene destino ({1}). Quedan {2} libres."
+  },
+  "Todo este dinheiro já tem destino ({0}). Não sobra nada livre.": {
+    "en": "All of this money is already spoken for ({0}). Nothing is left free.",
+    "es": "Todo este dinero ya tiene destino ({0}). No queda nada libre."
+  },
+  "Desse total, {0} vai para contas que já estarão atrasadas.": {
+    "en": "Of that, {0} goes to bills that will already be late.",
+    "es": "De ese total, {0} va a cuentas que ya estarán atrasadas."
+  },
+  "Já tem destino (paga no prazo)": {
+    "en": "Already spoken for (paid on time)",
+    "es": "Ya tiene destino (se paga a tiempo)"
+  },
+  "Paga com atraso (custa mais)": {
+    "en": "Paid late (costs more)",
+    "es": "Se paga con atraso (cuesta más)"
+  },
+  "Livre para você": {
+    "en": "Free for you",
+    "es": "Libre para ti"
+  },
+  "Falta dinheiro": {
+    "en": "Not enough money",
+    "es": "Falta dinero"
+  },
+  "Pagando só as parcelas": {
+    "en": "Paying only the installments",
+    "es": "Pagando solo las cuotas"
+  },
+  "Com o plano (acaba antes)": {
+    "en": "With the plan (ends sooner)",
+    "es": "Con el plan (termina antes)"
   }
 }

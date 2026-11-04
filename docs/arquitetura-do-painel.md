@@ -260,6 +260,13 @@ escondidos", no fim, com "Mostrar de novo"). Cada toque num cartão sobe um pouc
 cartão não pular debaixo do dedo). A memória fica no navegador, por pessoa (`opuscash:feed:<id>`); sem armazenamento, vale só a
 ordem do motor.
 
+**As cores da aba** (definidas em `.analise`, `pages/analise.css`) têm um significado só cada, igual em todos os gráficos:
+**verde** = dinheiro livre ou está bem; **azul** = dinheiro que já tem destino (conta no prazo); **laranja** = atenção, sai com
+atraso e custa mais; **vermelho** = falta, problema; **cinza** = referência neutra. Não há amarelo (ele se confundia com o laranja e
+com a cor de dívida do resto do app). Quem usa mais de uma cor mostra a legenda embaixo, e nenhum número depende só da cor:
+"De onde sai o dinheiro" diz em palavras quanto de cada entrada já tem destino, quanto sobra livre e quanto vai para contas
+atrasadas, com as atrasadas no topo da lista.
+
 **Gráficos no lugar de texto.** A aba é feita de gráficos, com pouco texto e linguagem simples: cada cartão tem título de
 até 5 palavras e uma frase só. Explicação longa fica atrás de "Por quê?".
 

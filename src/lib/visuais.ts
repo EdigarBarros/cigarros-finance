@@ -26,7 +26,7 @@ import { bonusDoJeito, tracosDe } from './jeito'
 import { tx } from './textos'
 
 export const COR = {
-  entrada: 'var(--entrada)', saida: 'var(--saida)', divida: 'var(--divida)', caixa: 'var(--caixa)', violeta: 'var(--violeta)',
+  entrada: 'var(--an-bom)', saida: 'var(--an-ruim)', divida: 'var(--an-atencao)', caixa: 'var(--an-destino)', violeta: 'var(--violeta)',
   neutro: 'var(--preench-1)', destaque: 'var(--destaque)',
 } as const
 
@@ -128,7 +128,9 @@ export function visuais(a: Analise): Visual[] {
   if (pl && pl.pagamentos.length + pl.semDinheiro.length >= 2) {
     const grupos: GrupoDoFluxo[] = pl.fontes.map((f, i) => ({
       fonte: i === 0 && pl.comSaldo ? tx('Saldo de hoje') : f.descricao, data: f.data, valor: f.valor,
-      itens: pl.pagamentos.filter((p) => p.fonteData === f.data).map((p) => ({ rotulo: p.descricao, valor: p.valor + p.custo, atraso: p.atraso, custo: p.custo })),
+      // as que atrasam vêm primeiro: são as que pedem atenção
+      itens: pl.pagamentos.filter((p) => p.fonteData === f.data).sort((x, y) => y.atraso - x.atraso)
+        .map((p) => ({ rotulo: p.descricao, valor: p.valor + p.custo, atraso: p.atraso, custo: p.custo })),
     })).filter((x) => x.itens.length)
     const escolha = pl.dicas.find((x) => x.id.startsWith('escolha:') || x.id.startsWith('pagar-em:'))
     const antesDoDinheiro = pl.pagamentos.some((p) => p.fonteData && p.vence < p.fonteData)

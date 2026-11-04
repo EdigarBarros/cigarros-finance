@@ -59,7 +59,7 @@ export function Grafico({ v }: { v: Visual }) {
   switch (v.tipo) {
     case 'cascata': return <Cascata passos={v.passos} />
     case 'calendario': return <Calendario v={v} />
-    case 'curva': return <Curva pontos={v.pontos} zero={v.zero} tracejadoDesde={v.tracejadoDesde} cor={v.tom ? COR_DO_TOM[v.tom] : 'var(--caixa)'} />
+    case 'curva': return <Curva pontos={v.pontos} zero={v.zero} tracejadoDesde={v.tracejadoDesde} cor={v.tom ? COR_DO_TOM[v.tom] : 'var(--an-destino)'} />
     case 'rosca': return <Rosca fatias={v.fatias} ideal={v.ideal} centro={v.centro} />
     case 'radar': return <Radar eixos={v.eixos} />
     case 'barras': return <Barras barras={v.barras} />
@@ -312,7 +312,7 @@ function Barras({ barras }: { barras: { rotulo: string; valor: number; cor?: str
   return (
     <ul className="barras">
       {barras.map((b, i) => (
-        <li key={b.rotulo} style={{ '--i': i, '--c': b.cor ?? 'var(--caixa)' } as CSSProperties}>
+        <li key={b.rotulo} style={{ '--i': i, '--c': b.cor ?? 'var(--an-destino)' } as CSSProperties}>
           <span className="barras-rotulo">{b.icone && <span className="barras-icone">{b.icone}</span>}<span>{b.rotulo}</span>{b.nota && <small>{b.nota}</small>}</span>
           <span className="barras-trilho"><i style={{ width: `${(b.valor / max) * 100}%` }} /></span>
           <b>{fmtCurto(b.valor)}</b>
@@ -333,6 +333,7 @@ function Fluxo({ grupos, semDinheiro }: { grupos: GrupoDoFluxo[]; semDinheiro: {
         const usado = g.itens.reduce((s, x) => s + x.valor, 0)
         const base = Math.max(g.valor, usado, 1)
         const sobra = Math.max(0, g.valor - usado)
+        const atrasa = g.itens.filter((x) => x.atraso > 0).reduce((s, x) => s + x.valor, 0)
         return (
           <div key={g.data} className="fluxo-grupo" style={{ '--i': i } as CSSProperties}>
             <div className="fluxo-cab">
@@ -345,16 +346,18 @@ function Fluxo({ grupos, semDinheiro }: { grupos: GrupoDoFluxo[]; semDinheiro: {
               ))}
               {sobra > 0.5 && <i className="sobra" style={{ width: `${(sobra / base) * 100}%` }} />}
             </div>
+            <p className="fluxo-resumo">{resumoDoGrupo(g.valor, usado, atrasa)}</p>
             <ul className="fluxo-itens">
               {g.itens.slice(0, MAX_ITENS).map((x, k) => (
                 <li key={k} className={x.atraso > 0 ? 'atrasa' : ''}>
+                  <i aria-hidden="true" />
                   <span>{x.rotulo}</span>
                   {x.atraso > 0 && <small>{x.atraso === 1 ? tx('1 dia de atraso, +{0}', fmtValor(x.custo)) : tx('{0} dias de atraso, +{1}', x.atraso, fmtValor(x.custo))}</small>}
                   <b>{fmtCurto(x.valor)}</b>
                 </li>
               ))}
               {g.itens.length > MAX_ITENS && <li className="fluxo-mais"><span>{tx('e mais {0}', g.itens.length - MAX_ITENS)}</span></li>}
-              {sobra > 0.5 && <li className="fluxo-sobra"><span>{tx('Sobra para o dia a dia')}</span><b>{fmtCurto(sobra)}</b></li>}
+              {sobra > 0.5 && <li className="fluxo-sobra"><i aria-hidden="true" /><span>{tx('Sobra para o dia a dia')}</span><b>{fmtCurto(sobra)}</b></li>}
             </ul>
           </div>
         )
@@ -363,11 +366,36 @@ function Fluxo({ grupos, semDinheiro }: { grupos: GrupoDoFluxo[]; semDinheiro: {
         <div className="fluxo-grupo falta">
           <div className="fluxo-cab"><span className="fluxo-fonte"><Icone nome="escudo" tamanho={15} /> <b>{tx('Sem dinheiro até o fim do mês que vem')}</b></span></div>
           <ul className="fluxo-itens">
-            {semDinheiro.map((x, k) => <li key={k} className="atrasa"><span>{x.rotulo}</span><b>{fmtCurto(x.valor)}</b></li>)}
+            {semDinheiro.map((x, k) => <li key={k} className="atrasa"><i aria-hidden="true" /><span>{x.rotulo}</span><b>{fmtCurto(x.valor)}</b></li>)}
           </ul>
         </div>
       )}
+      <Legenda itens={[
+        { cor: 'var(--an-destino)', rotulo: tx('Já tem destino (paga no prazo)') },
+        ...(grupos.some((g) => g.itens.some((x) => x.atraso > 0)) ? [{ cor: 'var(--an-atencao)', rotulo: tx('Paga com atraso (custa mais)') }] : []),
+        { cor: 'var(--an-bom)', rotulo: tx('Livre para você') },
+        ...(semDinheiro.length ? [{ cor: 'var(--an-ruim)', rotulo: tx('Falta dinheiro') }] : []),
+      ]} />
     </div>
+  )
+}
+
+/** "De R$ 1.200, R$ 900 já têm destino (75%) e sobram R$ 300 livres." */
+function resumoDoGrupo(valor: number, usado: number, atrasa: number) {
+  const pct = valor > 0 ? Math.min(100, Math.round((usado / valor) * 100)) : 100
+  const livre = Math.max(0, valor - usado)
+  const base = livre >= 0.5
+    ? tx('{0}% deste dinheiro já tem destino ({1}). Sobram {2} livres.', pct, fmtValor(usado), fmtValor(livre))
+    : tx('Todo este dinheiro já tem destino ({0}). Não sobra nada livre.', fmtValor(usado))
+  return atrasa > 0 ? `${base} ${tx('Desse total, {0} vai para contas que já estarão atrasadas.', fmtValor(atrasa))}` : base
+}
+
+/** A legenda das cores: cada cor com o que ela quer dizer, em palavras. */
+function Legenda({ itens }: { itens: { cor: string; rotulo: string }[] }) {
+  return (
+    <ul className="legenda">
+      {itens.map((x) => <li key={x.rotulo}><i style={{ '--c': x.cor } as CSSProperties} />{x.rotulo}</li>)}
+    </ul>
   )
 }
 
@@ -440,6 +468,10 @@ function LinhaDoTempo({ v }: { v: Extract<Visual, { tipo: 'linhaDoTempo' }> }) {
         </div>
       ))}
       <div className="tempo-eixo"><span>{tx('Hoje')}</span><span>{mes(v.fim)}</span></div>
+      <Legenda itens={[
+        { cor: 'var(--an-neutro)', rotulo: tx('Pagando só as parcelas') },
+        ...(v.itens.some((x) => x.fimComPlano !== null && x.fimComPlano < x.fim) ? [{ cor: 'var(--an-bom)', rotulo: tx('Com o plano (acaba antes)') }] : []),
+      ]} />
     </div>
   )
 }
