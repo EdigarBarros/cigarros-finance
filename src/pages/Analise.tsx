@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import {
-  compararRetratos, fmtMeses, redondo, retratoDe, type Acao, type Analise as DadosAnalise, type Mudanca, type Pilar, type Retrato, type Tom,
+  compararRetratos, fmtMeses, redondo, retratoDe, type Acao, type Analise as DadosAnalise, type IdPilar, type Mudanca, type Percepcao,
+  type Retrato, type Tom,
 } from '../lib/analise'
 import { fmtDataCurta, fmtMesAno, fmtMoeda, fmtPct, fmtTaxa, fmtValor, LOCAL_DAS_DATAS, MESES_CURTO, MESES_NOME, mesEAno, noMeioDaFrase } from '../lib/format'
 import { chaveMes, doMesChave } from '../lib/cartoes'
@@ -12,24 +13,43 @@ import { tx } from '../lib/textos'
 import './analise.css'
 
 const COR_DO_TOM: Record<Tom, string> = { bom: 'var(--entrada)', medio: 'var(--divida)', ruim: 'var(--saida)' }
-const URGENCIA = { urgente: () => tx('Importante'), importante: () => tx('Faça logo'), sugestao: () => tx('Sugestão') }
-/** No jeito simples, o plano mostra os 3 primeiros passos (o resto atrás de "Ver todos"). */
-const PASSOS_SIMPLES = 3
+/** Os detalhes do mês que aparecem logo de cara (o resto fica na gaveta da agenda). */
+const DETALHES_NA_FRENTE = 2
 
 const mesAno = (m: { ano: number; mes: number } | null | undefined) => (m ? fmtMesAno(m.ano, m.mes) : '—')
 const sinal = (n: number) => (n > 0 ? `+${fmtValor(n)}` : fmtValor(n))
 
+type IdGaveta = 'agenda' | 'gastos' | 'dividas' | 'reserva' | 'futuro'
+/** Tocar no selo de um pilar abre a gaveta onde ele é explicado. */
+const GAVETA_DO_PILAR: Record<IdPilar, IdGaveta> = {
+  sobra: 'gastos', controle: 'gastos', cartao: 'gastos', dividas: 'dividas', reserva: 'reserva', metas: 'reserva',
+}
+
 /**
- * Consultor financeiro: a análise completa de lib/analise.ts numa aba só, como alguém que cuida de tudo. O Painel refaz a
- * análise a cada mudança nos dados; aqui ela aparece em ordem de decisão: diagnóstico e fase, o que mudou, o plano de ação,
- * o mês atual, os pilares e, depois, a análise completa (sobra, tendência, regra 50/30/20, revisão dos gastos, orçamento,
- * dívidas, reserva, metas e patrimônio). Veja docs/arquitetura-do-painel.md, seção 4.7.
+ * Consultor financeiro: a análise de lib/analise.ts, refeita a cada mudança nos dados. A tela responde três perguntas logo
+ * de cara (como estou, o que faço agora, como o mês fecha) e guarda o resto em gavetas fechadas por assunto, cada uma com
+ * o resumo no título. No jeito simples as gavetas ficam atrás de "Ver mais detalhes"; no detalhado, já abertas.
+ * Veja docs/arquitetura-do-painel.md, seção 4.7.
  */
 export function Analise(c: Ctx) {
   const a = c.analise
   const simples = c.perfil.detalhe === 'simples'
-  const [completa, setCompleta] = useState(!simples)
+  const [comGavetas, setComGavetas] = useState(!simples)
+  const [abertas, setAbertas] = useState<Set<IdGaveta>>(
+    () => new Set(c.perfil.detalhe === 'detalhado' ? ['agenda', 'gastos', 'dividas', 'reserva', 'futuro'] : []))
   const desdeAVisita = useDesdeAUltimaVisita(c.idUsuario, a)
+  const mudar = (id: IdGaveta, aberta: boolean) => setAbertas((s) => {
+    if (s.has(id) === aberta) return s
+    const n = new Set(s)
+    if (aberta) n.add(id)
+    else n.delete(id)
+    return n
+  })
+  const abrir = (id: IdGaveta) => {
+    setComGavetas(true)
+    mudar(id, true)
+    window.setTimeout(() => document.getElementById(`gaveta-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60)
+  }
 
   if (c.contaNova) {
     return (
@@ -48,39 +68,84 @@ export function Analise(c: Ctx) {
     )
   }
 
+  const pilar = (id: IdPilar) => a.pilares.find((p) => p.id === id)
+  const frasesDosPilares = (ids: IdPilar[]) => {
+    const ps = ids.map(pilar).filter((p) => p !== undefined)
+    return ps.length > 0 && (
+      <ul className="an-frases">
+        {ps.map((p) => <li key={p.id} className={p.tom}><b>{p.nome}</b> <span>{p.frase}</span></li>)}
+      </ul>
+    )
+  }
+  const r = a.regra
+  const fimDividas = a.dividas?.estrategias.find((x) => x.id === a.dividas!.recomendada)?.fim
+  const metasNoRitmo = a.metas ? a.metas.metas.filter((m) => m.noRitmo).length : 0
+
   return (
     <div className="pagina analise">
       <Cabecalho a={a} />
-      <Diagnostico a={a} />
+      <Diagnostico a={a} aoPilar={(id) => abrir(GAVETA_DO_PILAR[id])} />
       <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} />
-      <PlanoDeAcao acoes={a.acoes} simples={simples} aoIr={c.irPara} />
-      {a.mes && <EsteMes a={a} />}
-      {a.pilares.length > 0 && <Pilares pilares={a.pilares} aoIr={c.irPara} />}
+      <OQueFazer acoes={a.acoes} aoIr={c.irPara} />
+      {a.mes && <SeuMes a={a} aoAgenda={() => abrir('agenda')} />}
 
-      {!completa ? (
-        <button className="btn an-ver-completa" onClick={() => setCompleta(true)}>
-          <Icone nome="relatorio" tamanho={17} /> {tx('Ver a análise completa')}
+      {!comGavetas ? (
+        <button className="btn an-ver-completa" onClick={() => setComGavetas(true)}>
+          <Icone nome="relatorio" tamanho={17} /> {tx('Ver mais detalhes')}
         </button>
       ) : (
-        <>
-          {a.alocacao && <ParaOndeASobra a={a} />}
+        <div className="an-gavetas">
+          {(a.agenda || a.mes) && (
+            <Gaveta id="agenda" icone="calendario" titulo={tx('Agenda do mês')} aberta={abertas.has('agenda')} aoMudar={mudar}
+              resumo={a.agenda?.proximaEntrada
+                ? tx('Próximo dinheiro: {0} em {1}', fmtValor(a.agenda.proximaEntrada.valor), fmtDataCurta(a.agenda.proximaEntrada.data))
+                : tx('O que entra e sai, dia a dia')}>
+              {a.agenda && <AgendaDoMes a={a} />}
+              {a.mes && <EsteMes a={a} />}
+            </Gaveta>
+          )}
           {a.temFluxo && (
-            <div className="an-duas">
-              <Tendencia a={a} />
-              {a.regra && <Regra a={a} />}
-            </div>
+            <Gaveta id="gastos" icone="lista" titulo={tx('Seus gastos')} aberta={abertas.has('gastos')} aoMudar={mudar}
+              resumo={r ? tx('Necessidades {0} · estilo de vida {1} · sobra {2}', fmtPct(r.essencial + r.parcelas), fmtPct(r.estilo + r.outros), fmtPct(r.sobra)) : ''}>
+              {frasesDosPilares(['sobra', 'controle', 'cartao'])}
+              <div className="an-duas">
+                <Tendencia a={a} />
+                {a.regra && <Regra a={a} />}
+              </div>
+              <Revisao a={a} />
+              <Orcamento a={a} />
+            </Gaveta>
           )}
-          {a.temFluxo && <Revisao a={a} />}
-          {a.temFluxo && <Orcamento a={a} />}
-          {a.dividas && <Dividas a={a} aoIr={() => c.irPara('dividas')} />}
-          {(a.reserva || a.metas) && (
-            <div className="an-duas">
-              {a.reserva && <Reserva a={a} />}
-              {a.metas && <Metas a={a} aoIr={() => c.irPara('metas')} />}
-            </div>
+          {a.dividas && (
+            <Gaveta id="dividas" icone="divida" titulo={tx('Suas dívidas')} aberta={abertas.has('dividas')} aoMudar={mudar}
+              resumo={fimDividas ? tx('{0} · sem dívidas em {1}', fmtValor(a.dividas.total), mesAno(fimDividas)) : fmtValor(a.dividas.total)}>
+              {frasesDosPilares(['dividas'])}
+              <Dividas a={a} aoIr={() => c.irPara('dividas')} />
+            </Gaveta>
           )}
-          {a.patrimonio && <Patrimonio a={a} />}
-        </>
+          {(a.reserva || a.metas || a.alocacao) && (
+            <Gaveta id="reserva" icone="escudo" titulo={tx('Reserva e metas')} aberta={abertas.has('reserva')} aoMudar={mudar}
+              resumo={[
+                a.reserva ? tx('{0} de gastos guardados', fmtMeses(a.reserva.meses)) : '',
+                a.metas ? tx('{0} de {1} metas no ritmo', metasNoRitmo, a.metas.metas.length) : '',
+              ].filter(Boolean).join(' · ')}>
+              {frasesDosPilares(['reserva', 'metas'])}
+              {a.alocacao && <ParaOndeASobra a={a} />}
+              {(a.reserva || a.metas) && (
+                <div className="an-duas">
+                  {a.reserva && <Reserva a={a} />}
+                  {a.metas && <Metas a={a} aoIr={() => c.irPara('metas')} />}
+                </div>
+              )}
+            </Gaveta>
+          )}
+          {a.patrimonio && (
+            <Gaveta id="futuro" icone="investir" titulo={tx('Seu futuro')} aberta={abertas.has('futuro')} aoMudar={mudar}
+              resumo={tx('Hoje {0} · em 12 meses {1}', fmtValor(a.patrimonio.hoje), fmtValor(a.patrimonio.em12))}>
+              <Patrimonio a={a} />
+            </Gaveta>
+          )}
+        </div>
       )}
 
       <footer className="an-rodape">
@@ -109,41 +174,42 @@ function Cabecalho({ a }: { a: DadosAnalise }) {
   )
 }
 
-/** Nota, resumo do consultor e a escada das fases. */
-function Diagnostico({ a }: { a: DadosAnalise }) {
+/** 1. Como estou: a nota, a fase em uma frase e os pilares em selos (cada um abre a sua gaveta). */
+function Diagnostico({ a, aoPilar }: { a: DadosAnalise; aoPilar: (id: IdPilar) => void }) {
   const iFase = a.fases.findIndex((f) => f.id === a.fase)
   return (
     <section className="cartao an-diag" style={{ '--c': COR_DO_TOM[a.tom] } as CSSProperties}>
-      <div className="an-diag-topo">
-        <div className="an-nota">
-          {a.nota !== null ? (
-            <Anel valor={a.nota / 100} cor={COR_DO_TOM[a.tom]} tamanho={128}>
-              <strong>{a.nota}</strong>
-              <small>{tx('de 100')}</small>
-            </Anel>
-          ) : (
-            <span className="an-nota-vazia"><Icone nome="bussola" tamanho={36} /></span>
-          )}
+      <div className="an-diag-linha">
+        {a.nota !== null ? (
+          <Anel valor={a.nota / 100} cor={COR_DO_TOM[a.tom]} tamanho={92}>
+            <strong>{a.nota}</strong>
+          </Anel>
+        ) : (
+          <span className="an-nota-vazia"><Icone nome="bussola" tamanho={30} /></span>
+        )}
+        <div className="an-diag-texto">
           <span className="an-nota-rotulo">{a.rotulo}</span>
-        </div>
-        <div className="an-resumo">
-          <span className="an-selo">{tx('Resumo do consultor')}</span>
-          {a.resumo.map((p, i) => <p key={i}>{p}</p>)}
+          <h2>{tx('Fase {0} de 5: {1}', iFase + 1, a.fases[iFase].nome)}</h2>
+          <p>{a.temFluxo ? a.porqueFase : a.resumo[0]}</p>
+          <ol className="an-degraus" aria-label={tx('Fases da sua vida financeira')}>
+            {a.fases.map((f, i) => (
+              <li key={f.id} title={f.nome} className={i < iFase ? 'feita' : i === iFase ? 'atual' : ''} aria-current={i === iFase ? 'step' : undefined}>
+                <span className="sr">{f.nome}</span>
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
-      <div className="an-fases">
-        <ol className="an-escada" aria-label={tx('Fases da sua vida financeira')}>
-          {a.fases.map((f, i) => (
-            <li key={f.id} className={i < iFase ? 'feita' : i === iFase ? 'atual' : ''} aria-current={i === iFase ? 'step' : undefined}>
-              <span className="an-degrau">{i < iFase ? <Icone nome="check" tamanho={14} /> : i + 1}</span>
-              <span className="an-degrau-nome">{f.nome}</span>
-            </li>
+      {a.pilares.length > 0 && (
+        <div className="an-selos">
+          {a.pilares.map((p) => (
+            <button key={p.id} className={`an-selo-pilar ${p.tom}`} style={{ '--c': COR_DO_TOM[p.tom] } as CSSProperties}
+              onClick={() => aoPilar(p.id)} title={p.frase}>
+              {p.nome} <b>{p.nota}</b>
+            </button>
           ))}
-        </ol>
-        <p className="an-fase-texto">
-          <b>{tx('Você está na fase {0} de 5: {1}.', iFase + 1, a.fases[iFase].nome)}</b> {a.porqueFase} <span>{a.proximoPasso}</span>
-        </p>
-      </div>
+        </div>
+      )}
     </section>
   )
 }
@@ -170,7 +236,7 @@ function useDesdeAUltimaVisita(id: string, a: DadosAnalise) {
 function ListaMudancas({ mudancas }: { mudancas: Mudanca[] }) {
   return (
     <ul className="an-mudancas">
-      {mudancas.slice(0, 6).map((m, i) => (
+      {mudancas.slice(0, 3).map((m, i) => (
         <li key={i} className={m.tom}>
           <Icone nome={m.tom === 'bom' ? 'sobe' : m.tom === 'ruim' ? 'desce' : 'seta'} tamanho={15} />
           <span>{m.texto}</span>
@@ -180,55 +246,167 @@ function ListaMudancas({ mudancas }: { mudancas: Mudanca[] }) {
   )
 }
 
+/** Só aparece quando algo mudou de fato. */
 function OQueMudou({ reanalise, desdeAVisita }: { reanalise: Ctx['reanalise']; desdeAVisita: { em: string; mudancas: Mudanca[] } | null }) {
-  if (reanalise?.mudancas.length) {
-    return (
-      <Bloco titulo={tx('O que mudou')} className="an-mudou"
-        sub={tx('Refeito às {0}, depois da sua última alteração.', reanalise.em.toLocaleTimeString(LOCAL_DAS_DATAS, { hour: '2-digit', minute: '2-digit' }))}>
-        <div className="bloco-corpo"><ListaMudancas mudancas={reanalise.mudancas} /></div>
-      </Bloco>
-    )
-  }
-  if (desdeAVisita?.mudancas.length) {
-    return (
-      <Bloco titulo={tx('O que mudou')} className="an-mudou" sub={tx('Desde a sua última visita, em {0}.', fmtDataCurta(desdeAVisita.em.slice(0, 10)))}>
-        <div className="bloco-corpo"><ListaMudancas mudancas={desdeAVisita.mudancas} /></div>
-      </Bloco>
-    )
-  }
-  return null
+  const lista = reanalise?.mudancas.length ? reanalise.mudancas : desdeAVisita?.mudancas ?? []
+  if (!lista.length) return null
+  return (
+    <section className="cartao an-mudou">
+      <span className="an-selo"><Icone nome="historico" tamanho={13} />
+        {reanalise?.mudancas.length
+          ? tx('O que mudou com a sua última alteração')
+          : tx('O que mudou desde {0}', fmtDataCurta(desdeAVisita!.em.slice(0, 10)))}
+      </span>
+      <ListaMudancas mudancas={lista} />
+    </section>
+  )
 }
 
-function PlanoDeAcao({ acoes, simples, aoIr }: { acoes: Acao[]; simples: boolean; aoIr: Ctx['irPara'] }) {
-  const [todos, setTodos] = useState(false)
-  const visiveis = simples && !todos ? acoes.slice(0, PASSOS_SIMPLES) : acoes
+/** 2. O que fazer agora: um passo grande; os outros, atrás de um toque. */
+function OQueFazer({ acoes, aoIr }: { acoes: Acao[]; aoIr: Ctx['irPara'] }) {
+  const [outros, setOutros] = useState(false)
+  const [primeiro, ...resto] = acoes
   return (
-    <Bloco titulo={tx('Plano de ação')} className="an-plano" sub={acoes.length > 1 ? tx('Em ordem: comece pelo primeiro passo.') : undefined}>
-      {acoes.length ? (
+    <section className={`cartao an-agora ${primeiro?.urgencia ?? ''}`}>
+      <span className="an-selo"><Icone nome="seta" tamanho={13} /> {tx('O que fazer agora')}</span>
+      {primeiro ? (
         <>
-          <ol className="an-acoes">
-            {visiveis.map((x, i) => (
-              <li key={x.id} className={`an-acao ${x.urgencia}`}>
-                <span className="an-acao-n" aria-hidden="true">{i + 1}</span>
-                <div className="an-acao-texto">
-                  <span className="an-acao-selo"><Icone nome={x.icone} tamanho={13} /> {URGENCIA[x.urgencia]()}</span>
-                  <strong>{x.titulo}</strong>
-                  <p>{x.porque}</p>
-                  <div className="an-acao-pe">
-                    {x.impacto && <span className="an-impacto"><Icone nome="sobe" tamanho={13} /> {x.impacto}</span>}
-                    <button className="btn" onClick={() => aoIr(x.destino)}>{x.botao} <Icone nome="seta" tamanho={15} /></button>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ol>
-          {simples && acoes.length > PASSOS_SIMPLES && (
-            <button className="quadro-ver" onClick={() => setTodos(!todos)}>{todos ? tx('Mostrar menos') : tx('Ver todos os {0} passos', acoes.length)}</button>
+          <div className="an-agora-passo">
+            <span className="an-agora-icone" aria-hidden="true"><Icone nome={primeiro.icone} tamanho={22} /></span>
+            <div>
+              <strong>{primeiro.titulo}</strong>
+              <p>{primeiro.porque}</p>
+            </div>
+          </div>
+          <div className="an-acao-pe">
+            {primeiro.impacto && <span className="an-impacto"><Icone nome="sobe" tamanho={13} /> {primeiro.impacto}</span>}
+            <button className="btn primario" onClick={() => aoIr(primeiro.destino)}>{primeiro.botao} <Icone nome="seta" tamanho={15} /></button>
+          </div>
+          {resto.length > 0 && (
+            <>
+              {outros && (
+                <ol className="an-outros" start={2}>
+                  {resto.map((x) => (
+                    <li key={x.id} className={x.urgencia}>
+                      <div>
+                        <strong>{x.titulo}</strong>
+                        <p>{x.porque}</p>
+                      </div>
+                      <button className="btn" onClick={() => aoIr(x.destino)}>{x.botao}</button>
+                    </li>
+                  ))}
+                </ol>
+              )}
+              <button className="quadro-ver" onClick={() => setOutros(!outros)}>
+                {outros ? tx('Mostrar menos') : resto.length === 1 ? tx('Ver o outro passo') : tx('Ver os outros {0} passos', resto.length)}
+              </button>
+            </>
           )}
         </>
       ) : (
         <p className="an-tudo-certo"><Icone nome="check" tamanho={18} /> {tx('Nada pedindo ação agora. Continue lançando: a cada mudança, o plano é refeito.')}</p>
       )}
+    </section>
+  )
+}
+
+/** 3. Como o mês fecha: um número, quanto dá para gastar por dia e os detalhes que pouca gente percebe. */
+function SeuMes({ a, aoAgenda }: { a: DadosAnalise; aoAgenda: () => void }) {
+  const m = a.mes!
+  const sobra = m.resultadoPrevisto >= 0
+  const detalhes = (a.agenda?.percepcoes ?? []).filter((x) => x.id !== 'aperto').slice(0, DETALHES_NA_FRENTE)
+  return (
+    <section className="cartao an-seu-mes">
+      <span className="an-selo"><Icone nome="calendario" tamanho={13} /> {tx('Como {0} deve fechar', noMeioDaFrase(MESES_NOME[a.hoje.mes - 1]))}</span>
+      <div className="an-seu-mes-linha">
+        <div className={`an-seu-mes-total ${sobra ? 'bom' : 'ruim'}`}>
+          <small>{sobra ? tx('Deve sobrar') : tx('Pode faltar')}</small>
+          <strong>{fmtValor(Math.abs(m.resultadoPrevisto))}</strong>
+        </div>
+        <p className={`an-por-dia ${m.porDia > 0 ? '' : 'sem'}`}>
+          <Icone nome={m.porDia > 0 ? 'carteira' : 'escudo'} tamanho={18} />
+          <span>
+            {m.porDia > 0
+              ? m.sobraAlvo > 0
+                ? tx('Para guardar {0} neste mês, gaste até {1} por dia no dia a dia.', fmtValor(redondo(m.sobraAlvo)), fmtValor(Math.floor(m.porDia)))
+                : tx('Dá para gastar até {0} por dia no dia a dia.', fmtValor(Math.floor(m.porDia)))
+              : tx('Neste mês não há espaço para gastos do dia a dia sem mexer no guardado. Segure o que não for essencial.')}
+          </span>
+        </p>
+      </div>
+      {detalhes.length > 0 && (
+        <div className="an-detalhes">
+          <span className="an-detalhes-titulo">{tx('Detalhes que pouca gente percebe')}</span>
+          <ListaPercepcoes lista={detalhes} />
+        </div>
+      )}
+      <button className="link an-ver-agenda" onClick={aoAgenda}>{tx('Ver a agenda do mês')} <Icone nome="seta" tamanho={14} /></button>
+    </section>
+  )
+}
+
+function ListaPercepcoes({ lista }: { lista: Percepcao[] }) {
+  return (
+    <ul className="an-percepcoes">
+      {lista.map((x) => (
+        <li key={x.id} className={x.tom} style={{ '--c': COR_DO_TOM[x.tom] } as CSSProperties}>
+          <span className="an-percepcao-icone" aria-hidden="true"><Icone nome={x.icone} tamanho={16} /></span>
+          <div><strong>{x.titulo}</strong><p>{x.porque}</p></div>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** Uma gaveta da análise completa: o título com o resumo, e o conteúdo só quando aberta. */
+function Gaveta({ id, icone, titulo, resumo, aberta, aoMudar, children }: {
+  id: IdGaveta; icone: string; titulo: string; resumo: string; aberta: boolean; aoMudar: (id: IdGaveta, aberta: boolean) => void; children: ReactNode
+}) {
+  return (
+    <details className="cartao an-gaveta" id={`gaveta-${id}`} open={aberta} onToggle={(e) => aoMudar(id, (e.currentTarget as HTMLDetailsElement).open)}>
+      <summary>
+        <span className="an-gaveta-icone" aria-hidden="true"><Icone nome={icone} tamanho={18} /></span>
+        <span className="an-gaveta-texto"><b>{titulo}</b>{resumo && <small>{resumo}</small>}</span>
+        <span className="an-gaveta-seta" aria-hidden="true"><Icone nome="abaixo" tamanho={18} /></span>
+      </summary>
+      {aberta && <div className="an-gaveta-corpo">{children}</div>}
+    </details>
+  )
+}
+
+/** A agenda do dinheiro: dia a dia, o que entra e sai e quanto deve ter na conta. */
+function AgendaDoMes({ a }: { a: DadosAnalise }) {
+  const g = a.agenda!
+  const [tudo, setTudo] = useState(false)
+  const dias = tudo ? g.dias : g.dias.slice(0, 10)
+  return (
+    <Bloco titulo={tx('Agenda do dinheiro')} className="an-agenda"
+      sub={g.saldoInicial !== null
+        ? tx('Começa com {0} na conta corrente e desconta cerca de {1} por dia de gastos do dia a dia.', fmtValor(g.saldoInicial), fmtValor(g.ritmoDia))
+        : tx('Sem o saldo dos bancos, a coluna mostra quanto o dinheiro anda a partir de hoje: abaixo de zero, é o que precisa já estar na conta.')}>
+      <div className="bloco-corpo">
+        {g.percepcoes.length > 0 && <ListaPercepcoes lista={g.percepcoes} />}
+        {dias.length ? (
+          <ol className="an-dias">
+            <li className="an-dias-cab" aria-hidden="true"><span /><span /><span>{g.saldoInicial !== null ? tx('Na conta') : tx('Desde hoje')}</span></li>
+            {dias.map((d) => (
+              <li key={d.data} className={d.saldo < 0 ? 'negativo' : ''}>
+                <span className="an-dia-data">{fmtDataCurta(d.data)}</span>
+                <span className="an-dia-eventos">
+                  {d.entradas.map((x, i) => <span key={`e${i}`} className="entra">+ {x.descricao} <b>{fmtValor(x.valor)}</b></span>)}
+                  {d.saidas.map((x, i) => (
+                    <span key={`s${i}`} className={`sai ${x.atrasada ? 'atrasada' : ''}`}>
+                      − {x.descricao} <b>{fmtValor(x.valor)}</b>{x.atrasada && <small>{tx('atrasada')}</small>}
+                    </span>
+                  ))}
+                </span>
+                <span className="an-dia-saldo">{fmtValor(d.saldo)}</span>
+              </li>
+            ))}
+          </ol>
+        ) : <p className="vazio">{tx('Nada marcado até o fim do mês que vem.')}</p>}
+        {g.dias.length > 10 && <button className="quadro-ver" onClick={() => setTudo(!tudo)}>{tudo ? tx('Mostrar menos') : tx('Ver os {0} dias', g.dias.length)}</button>}
+      </div>
     </Bloco>
   )
 }
@@ -236,7 +414,6 @@ function PlanoDeAcao({ acoes, simples, aoIr }: { acoes: Acao[]; simples: boolean
 /** Comparar: o mês atual, previsão de fechamento e quanto dá para gastar por dia. */
 function EsteMes({ a }: { a: DadosAnalise }) {
   const m = a.mes!
-  const nomeMes = MESES_NOME[a.hoje.mes - 1]
   const sobra = m.resultadoPrevisto >= 0
   const linhas: { rotulo: string; valor: number; tipo: 'entrada' | 'saida' }[] = [
     { rotulo: tx('Já entrou'), valor: m.entrouAteAgora, tipo: 'entrada' },
@@ -246,7 +423,7 @@ function EsteMes({ a }: { a: DadosAnalise }) {
     { rotulo: tx('Gastos do dia a dia previstos'), valor: m.diaADiaPrevisto, tipo: 'saida' },
   ]
   return (
-    <Bloco titulo={tx('Como {0} deve fechar', noMeioDaFrase(nomeMes))} className="an-mes"
+    <Bloco titulo={tx('Os números do mês')} className="an-mes"
       sub={tx('Dia {0} de {1}: conta o que já aconteceu, o que está marcado e o seu ritmo de gastos.', m.dia, m.diasNoMes)}>
       <div className="bloco-corpo an-mes-grade">
         <div className={`an-mes-total ${sobra ? 'bom' : 'ruim'}`}>
@@ -257,16 +434,6 @@ function EsteMes({ a }: { a: DadosAnalise }) {
               {m.contraMedia >= 0 ? tx('{0} a mais que a sua média', fmtValor(m.contraMedia)) : tx('{0} a menos que a sua média', fmtValor(-m.contraMedia))}
             </span>
           )}
-          <div className={`an-por-dia ${m.porDia > 0 ? '' : 'sem'}`}>
-            <Icone nome={m.porDia > 0 ? 'carteira' : 'escudo'} tamanho={18} />
-            <span>
-              {m.porDia > 0
-                ? m.sobraAlvo > 0
-                  ? tx('Para guardar {0} neste mês, gaste até {1} por dia no dia a dia.', fmtValor(redondo(m.sobraAlvo)), fmtValor(Math.floor(m.porDia)))
-                  : tx('Dá para gastar até {0} por dia no dia a dia.', fmtValor(Math.floor(m.porDia)))
-                : tx('Neste mês não há espaço para gastos do dia a dia sem mexer no guardado. Segure o que não for essencial.')}
-            </span>
-          </div>
         </div>
         <div className="an-mes-linhas">
           <dl>
@@ -293,27 +460,6 @@ function EsteMes({ a }: { a: DadosAnalise }) {
             ))}
           </ul>
         </div>
-      </div>
-    </Bloco>
-  )
-}
-
-function Pilares({ pilares, aoIr }: { pilares: Pilar[]; aoIr: Ctx['irPara'] }) {
-  return (
-    <Bloco titulo={tx('Como está cada parte')} className="an-pilares" sub={tx('A nota é a média destes pilares, pesando mais a sobra, a reserva e as dívidas.')}>
-      <div className="an-pilares-grade">
-        {pilares.map((p) => (
-          <button key={p.id} className={`an-pilar ${p.tom}`} style={{ '--c': COR_DO_TOM[p.tom] } as CSSProperties} onClick={() => aoIr(p.destino)}>
-            <span className="an-pilar-topo">
-              <span className="an-pilar-nome">{p.nome}</span>
-              <span className="an-pilar-nota"><b>{p.nota}</b>/100</span>
-            </span>
-            <span className="an-barra" aria-hidden="true"><i style={{ width: `${p.nota}%` }} /></span>
-            <strong className="an-pilar-valor">{p.valor}</strong>
-            <span className="an-pilar-ref">{p.referencia}</span>
-            <span className="an-pilar-frase">{p.frase}</span>
-          </button>
-        ))}
       </div>
     </Bloco>
   )

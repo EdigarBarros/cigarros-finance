@@ -7359,14 +7359,6 @@
     "en": "You can spend {0} a day until the end of the month (before, {1}).",
     "es": "Puedes gastar {0} por día hasta fin de mes (antes, {1})."
   },
-  "Faça logo": {
-    "en": "Do it soon",
-    "es": "Hazlo pronto"
-  },
-  "Sugestão": {
-    "en": "Suggestion",
-    "es": "Sugerencia"
-  },
   "Seu consultor começa a trabalhar no primeiro lançamento": {
     "en": "Your advisor gets to work with your first transaction",
     "es": "Tu asesor empieza a trabajar con tu primer movimiento"
@@ -7374,10 +7366,6 @@
   "A cada entrada, saída, compra no cartão ou dívida que você lançar, o app refaz a análise: quanto sobra, para onde vai o dinheiro, o que cortar, qual dívida pagar primeiro e quanto guardar.": {
     "en": "Every time you add income, an expense, a card purchase or a debt, the app redoes the analysis: what's left over, where the money goes, what to cut, which debt to pay first and how much to save.",
     "es": "Con cada ingreso, gasto, compra con tarjeta o deuda que registres, la app rehace el análisis: cuánto sobra, a dónde va el dinero, qué recortar, qué deuda pagar primero y cuánto ahorrar."
-  },
-  "Ver a análise completa": {
-    "en": "See the full analysis",
-    "es": "Ver el análisis completo"
   },
   "Avisar quando a análise mudar": {
     "en": "Notify me when the analysis changes",
@@ -7403,45 +7391,9 @@
     "en": "I analyzed {0} months of your transactions. I redo everything with every change.",
     "es": "Analicé {0} meses de tus movimientos. Rehago todo con cada cambio."
   },
-  "de 100": {
-    "en": "out of 100",
-    "es": "de 100"
-  },
-  "Resumo do consultor": {
-    "en": "Advisor's summary",
-    "es": "Resumen del asesor"
-  },
   "Fases da sua vida financeira": {
     "en": "Stages of your financial life",
     "es": "Fases de tu vida financiera"
-  },
-  "Você está na fase {0} de 5: {1}.": {
-    "en": "You're at stage {0} of 5: {1}.",
-    "es": "Estás en la fase {0} de 5: {1}."
-  },
-  "O que mudou": {
-    "en": "What changed",
-    "es": "Qué cambió"
-  },
-  "Refeito às {0}, depois da sua última alteração.": {
-    "en": "Redone at {0}, after your last change.",
-    "es": "Rehecho a las {0}, después de tu último cambio."
-  },
-  "Desde a sua última visita, em {0}.": {
-    "en": "Since your last visit, on {0}.",
-    "es": "Desde tu última visita, el {0}."
-  },
-  "Plano de ação": {
-    "en": "Action plan",
-    "es": "Plan de acción"
-  },
-  "Em ordem: comece pelo primeiro passo.": {
-    "en": "In order: start with the first step.",
-    "es": "En orden: empieza por el primer paso."
-  },
-  "Ver todos os {0} passos": {
-    "en": "See all {0} steps",
-    "es": "Ver los {0} pasos"
   },
   "Nada pedindo ação agora. Continue lançando: a cada mudança, o plano é refeito.": {
     "en": "Nothing needs action right now. Keep adding transactions: the plan is redone with every change.",
@@ -7514,14 +7466,6 @@
   "{0} já passou da média: {1} neste mês, contra {2} por mês.": {
     "en": "{0} is already above average: {1} this month, versus {2} a month.",
     "es": "{0} ya pasó el promedio: {1} este mes, contra {2} por mes."
-  },
-  "Como está cada parte": {
-    "en": "How each part is doing",
-    "es": "Cómo está cada parte"
-  },
-  "A nota é a média destes pilares, pesando mais a sobra, a reserva e as dívidas.": {
-    "en": "The score is the average of these pillars, weighing surplus, emergency fund and debts the most.",
-    "es": "La nota es el promedio de estos pilares, con más peso en lo que sobra, la reserva y las deudas."
   },
   "Adiantar dívidas": {
     "en": "Prepay debts",
@@ -7966,5 +7910,233 @@
   "Consultor": {
     "en": "Advisor",
     "es": "Asesor"
+  },
+  "{0}, {1} e {2}": {
+    "en": "{0}, {1} and {2}",
+    "es": "{0}, {1} y {2}"
+  },
+  "{0}, {1} e mais {2}": {
+    "en": "{0}, {1} and {2} more",
+    "es": "{0}, {1} y {2} más"
+  },
+  "Fatura do {0}": {
+    "en": "{0} statement",
+    "es": "Resumen de {0}"
+  },
+  "Em {0} vencem {1}, mas o próximo dinheiro só entra em {2}. Pelo saldo de hoje e pelo seu gasto do dia a dia, faltam cerca de {3} até lá.": {
+    "en": "On {0}, {1} are due, but the next money only comes in on {2}. Based on today's balance and your day-to-day spending, you'll be about {3} short until then.",
+    "es": "El {0} vencen {1}, pero el próximo dinero recién entra el {2}. Según el saldo de hoy y tu gasto del día a día, faltan cerca de {3} hasta entonces."
+  },
+  "Em {0} vence {1}, mas o próximo dinheiro só entra em {2}. Pelo saldo de hoje e pelo seu gasto do dia a dia, faltam cerca de {3} até lá.": {
+    "en": "On {0}, {1} is due, but the next money only comes in on {2}. Based on today's balance and your day-to-day spending, you'll be about {3} short until then.",
+    "es": "El {0} vence {1}, pero el próximo dinero recién entra el {2}. Según el saldo de hoy y tu gasto del día a día, faltan cerca de {3} hasta entonces."
+  },
+  "Em {0} vencem {1}, e não há dinheiro previsto para entrar até lá. Pelo saldo de hoje e pelo seu gasto do dia a dia, faltam cerca de {2}.": {
+    "en": "On {0}, {1} are due, and no money is expected to come in before then. Based on today's balance and your day-to-day spending, you'll be about {2} short.",
+    "es": "El {0} vencen {1}, y no hay dinero previsto para entrar antes. Según el saldo de hoy y tu gasto del día a día, faltan cerca de {2}."
+  },
+  "Em {0} vence {1}, e não há dinheiro previsto para entrar até lá. Pelo saldo de hoje e pelo seu gasto do dia a dia, faltam cerca de {2}.": {
+    "en": "On {0}, {1} is due, and no money is expected to come in before then. Based on today's balance and your day-to-day spending, you'll be about {2} short.",
+    "es": "El {0} vence {1}, y no hay dinero previsto para entrar antes. Según el saldo de hoy y tu gasto del día a día, faltan cerca de {2}."
+  },
+  "Em {0} vencem {1}, mas o próximo dinheiro só entra em {2}. Para não atrasar, é preciso ter {3} na conta até lá.": {
+    "en": "On {0}, {1} are due, but the next money only comes in on {2}. To avoid paying late, you need {3} in your account by then.",
+    "es": "El {0} vencen {1}, pero el próximo dinero recién entra el {2}. Para no atrasarte, necesitas tener {3} en la cuenta hasta entonces."
+  },
+  "Em {0} vence {1}, mas o próximo dinheiro só entra em {2}. Para não atrasar, é preciso ter {3} na conta até lá.": {
+    "en": "On {0}, {1} is due, but the next money only comes in on {2}. To avoid paying late, you need {3} in your account by then.",
+    "es": "El {0} vence {1}, pero el próximo dinero recién entra el {2}. Para no atrasarte, necesitas tener {3} en la cuenta hasta entonces."
+  },
+  "Em {0} vencem {1}, e não há dinheiro previsto para entrar até lá. Para não atrasar, é preciso ter {2} na conta.": {
+    "en": "On {0}, {1} are due, and no money is expected to come in before then. To avoid paying late, you need {2} in your account.",
+    "es": "El {0} vencen {1}, y no hay dinero previsto para entrar antes. Para no atrasarte, necesitas tener {2} en la cuenta."
+  },
+  "Em {0} vence {1}, e não há dinheiro previsto para entrar até lá. Para não atrasar, é preciso ter {2} na conta.": {
+    "en": "On {0}, {1} is due, and no money is expected to come in before then. To avoid paying late, you need {2} in your account.",
+    "es": "El {0} vence {1}, y no hay dinero previsto para entrar antes. Para no atrasarte, necesitas tener {2} en la cuenta."
+  },
+  "Em {0}, a conta pode ficar no vermelho.": {
+    "en": "On {0}, your account may go into the red.",
+    "es": "El {0}, la cuenta puede quedar en rojo."
+  },
+  "Tem conta vencendo antes de o dinheiro entrar.": {
+    "en": "There are bills due before your money comes in.",
+    "es": "Hay cuentas que vencen antes de que entre el dinero."
+  },
+  "O dinheiro de {0} já chega com dono.": {
+    "en": "The money coming in on {0} is already spoken for.",
+    "es": "El dinero del {0} ya llega con dueño."
+  },
+  "{0} ({1}) cai no mesmo dia em que vence {2} ({3}). Desse dinheiro, sobram {4} para o resto.": {
+    "en": "{0} ({1}) comes in on the same day {2} ({3}) is due. Of that money, {4} is left for everything else.",
+    "es": "{0} ({1}) entra el mismo día en que vence {2} ({3}). De ese dinero, sobran {4} para lo demás."
+  },
+  "{0} ({1}) cai no mesmo dia em que vencem {2}: {3} no total. Desse dinheiro, sobram {4} para o resto.": {
+    "en": "{0} ({1}) comes in on the same day {2} are due: {3} in total. Of that money, {4} is left for everything else.",
+    "es": "{0} ({1}) entra el mismo día en que vencen {2}: {3} en total. De ese dinero, sobran {4} para lo demás."
+  },
+  "Se foi de propósito, boa ideia: o dinheiro entra e já sai para onde deve. Mas, se ele atrasar um dia, tudo atrasa junto, com multa. Ter esse valor na conta um dia antes, ou passar os vencimentos para 2 ou 3 dias depois, tira esse risco.": {
+    "en": "If that was on purpose, good idea: the money comes in and goes straight where it should. But if it's a day late, everything is late with it, with late fees. Having this amount in your account a day earlier, or moving the due dates 2 or 3 days later, removes that risk.",
+    "es": "Si fue a propósito, buena idea: el dinero entra y ya sale a donde debe. Pero, si se atrasa un día, todo se atrasa junto, con multa. Tener ese valor en la cuenta un día antes, o pasar los vencimientos 2 o 3 días después, quita ese riesgo."
+  },
+  "O dinheiro de {0} não cobre o que vence logo depois.": {
+    "en": "The money coming in on {0} doesn't cover what's due right after.",
+    "es": "El dinero del {0} no cubre lo que vence justo después."
+  },
+  "{0}% do dinheiro de {1} já tem destino.": {
+    "en": "{0}% of the money coming in on {1} is already spoken for.",
+    "es": "El {0}% del dinero del {1} ya tiene destino."
+  },
+  "Entram {0} e, até {1}, saem {2} em contas, parcelas e faturas. Sobram {3} para o dia a dia até o próximo dinheiro.": {
+    "en": "{0} comes in and, by {1}, {2} goes out in bills, installments and statements. {3} is left for day-to-day spending until the next money.",
+    "es": "Entran {0} y, hasta el {1}, salen {2} en cuentas, cuotas y resúmenes. Sobran {3} para el día a día hasta el próximo dinero."
+  },
+  "{0} já começa {1} mais pesado que {2}.": {
+    "en": "{0} already starts {1} heavier than {2}.",
+    "es": "{0} ya empieza {1} más pesado que {2}."
+  },
+  "Entre faturas, parcelas e contas, já estão marcados {0} para {1}, contra {2} neste mês. Segure compras novas agora para não chegar apertado.": {
+    "en": "Between statements, installments and bills, {0} is already scheduled for {1}, versus {2} this month. Hold off on new purchases now so you don't arrive stretched thin.",
+    "es": "Entre resúmenes, cuotas y cuentas, ya hay {0} agendados para {1}, contra {2} este mes. Frena las compras nuevas ahora para no llegar apretado."
+  },
+  "{0} vem {1} mais leve.": {
+    "en": "{0} will be {1} lighter.",
+    "es": "{0} viene {1} más liviano."
+  },
+  "Já estão marcados {0} para {1}, contra {2} neste mês. Decida antes para onde vai essa diferença, senão ela some no dia a dia.": {
+    "en": "{0} is already scheduled for {1}, versus {2} this month. Decide ahead of time where that difference goes, or it'll vanish into day-to-day spending.",
+    "es": "Ya hay {0} agendados para {1}, contra {2} este mes. Decide antes a dónde va esa diferencia, o se perderá en el día a día."
+  },
+  "{0}% das contas dos próximos 30 dias vencem entre {1} e {2}.": {
+    "en": "{0}% of the bills in the next 30 days are due between {1} and {2}.",
+    "es": "El {0}% de las cuentas de los próximos 30 días vence entre el {1} y el {2}."
+  },
+  "O dinheiro que entra nesses dias cobre tudo: bom sinal, desde que ele caia antes dos vencimentos.": {
+    "en": "The money coming in on those days covers it all: a good sign, as long as it arrives before the due dates.",
+    "es": "El dinero que entra esos días cubre todo: buena señal, siempre que llegue antes de los vencimientos."
+  },
+  "Nesses dias saem {0} e entram {1}. Separe o dinheiro antes, ou peça para mudar alguns vencimentos de data.": {
+    "en": "On those days {0} goes out and {1} comes in. Set the money aside beforehand, or ask to move some due dates.",
+    "es": "Esos días salen {0} y entran {1}. Separa el dinero antes, o pide cambiar algunos vencimientos de fecha."
+  },
+  "Em {0} vence a última parcela de {1}.": {
+    "en": "The last installment of {1} is due in {0}.",
+    "es": "En {0} vence la última cuota de {1}."
+  },
+  "Depois disso, {0} por mês voltam a ser seus. Decida desde já para onde vão (reserva, dívida da vez ou meta): dinheiro sem destino some no dia a dia.": {
+    "en": "After that, {0} a month is yours again. Decide now where it goes (emergency fund, next debt or a goal): money without a plan vanishes into day-to-day spending.",
+    "es": "Después de eso, {0} por mes vuelven a ser tuyos. Decide desde ya a dónde van (reserva, la deuda de turno o una meta): el dinero sin destino se pierde en el día a día."
+  },
+  "Agenda do mês": {
+    "en": "Month calendar",
+    "es": "Agenda del mes"
+  },
+  "Próximo dinheiro: {0} em {1}": {
+    "en": "Next money in: {0} on {1}",
+    "es": "Próximo dinero: {0} el {1}"
+  },
+  "O que entra e sai, dia a dia": {
+    "en": "What comes in and goes out, day by day",
+    "es": "Lo que entra y sale, día a día"
+  },
+  "Seus gastos": {
+    "en": "Your spending",
+    "es": "Tus gastos"
+  },
+  "Necessidades {0} · estilo de vida {1} · sobra {2}": {
+    "en": "Needs {0} · lifestyle {1} · surplus {2}",
+    "es": "Necesidades {0} · estilo de vida {1} · sobra {2}"
+  },
+  "Suas dívidas": {
+    "en": "Your debts",
+    "es": "Tus deudas"
+  },
+  "{0} · sem dívidas em {1}": {
+    "en": "{0} · debt-free in {1}",
+    "es": "{0} · sin deudas en {1}"
+  },
+  "Reserva e metas": {
+    "en": "Emergency fund and goals",
+    "es": "Reserva y metas"
+  },
+  "{0} de gastos guardados": {
+    "en": "{0} of spending saved",
+    "es": "{0} de gastos ahorrados"
+  },
+  "{0} de {1} metas no ritmo": {
+    "en": "{0} of {1} goals on pace",
+    "es": "{0} de {1} metas al ritmo"
+  },
+  "Seu futuro": {
+    "en": "Your future",
+    "es": "Tu futuro"
+  },
+  "Hoje {0} · em 12 meses {1}": {
+    "en": "Today {0} · in 12 months {1}",
+    "es": "Hoy {0} · en 12 meses {1}"
+  },
+  "Fase {0} de 5: {1}": {
+    "en": "Stage {0} of 5: {1}",
+    "es": "Fase {0} de 5: {1}"
+  },
+  "O que mudou com a sua última alteração": {
+    "en": "What your last change did",
+    "es": "Qué cambió con tu último cambio"
+  },
+  "O que mudou desde {0}": {
+    "en": "What changed since {0}",
+    "es": "Qué cambió desde el {0}"
+  },
+  "O que fazer agora": {
+    "en": "What to do now",
+    "es": "Qué hacer ahora"
+  },
+  "Ver o outro passo": {
+    "en": "See the other step",
+    "es": "Ver el otro paso"
+  },
+  "Ver os outros {0} passos": {
+    "en": "See the other {0} steps",
+    "es": "Ver los otros {0} pasos"
+  },
+  "Detalhes que pouca gente percebe": {
+    "en": "Details few people notice",
+    "es": "Detalles que pocos notan"
+  },
+  "Ver a agenda do mês": {
+    "en": "See the month calendar",
+    "es": "Ver la agenda del mes"
+  },
+  "Agenda do dinheiro": {
+    "en": "Money calendar",
+    "es": "Agenda del dinero"
+  },
+  "Começa com {0} na conta corrente e desconta cerca de {1} por dia de gastos do dia a dia.": {
+    "en": "Starts with {0} in your checking account and subtracts about {1} a day for day-to-day spending.",
+    "es": "Empieza con {0} en la cuenta corriente y descuenta cerca de {1} por día de gastos del día a día."
+  },
+  "Sem o saldo dos bancos, a coluna mostra quanto o dinheiro anda a partir de hoje: abaixo de zero, é o que precisa já estar na conta.": {
+    "en": "Without your bank balances, the column shows how your money moves from today: below zero is what needs to already be in your account.",
+    "es": "Sin el saldo de los bancos, la columna muestra cómo se mueve el dinero desde hoy: por debajo de cero, es lo que ya tiene que estar en la cuenta."
+  },
+  "Na conta": {
+    "en": "In account",
+    "es": "En la cuenta"
+  },
+  "Desde hoje": {
+    "en": "From today",
+    "es": "Desde hoy"
+  },
+  "Nada marcado até o fim do mês que vem.": {
+    "en": "Nothing scheduled through the end of next month.",
+    "es": "Nada agendado hasta fin del mes que viene."
+  },
+  "Ver os {0} dias": {
+    "en": "See all {0} days",
+    "es": "Ver los {0} días"
+  },
+  "Os números do mês": {
+    "en": "The month's numbers",
+    "es": "Los números del mes"
   }
 }

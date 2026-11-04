@@ -4,7 +4,7 @@ import { nativo, tx } from './textos'
 
 /** Em português e maiúsculas: é como a planilha de importação escreve os meses (lib/planilha.ts). */
 export const MESES = [
-  'JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
+  'JANEIRO', 'FEVEREIRO', tx('MARÇO'), 'ABRIL', 'MAIO', 'JUNHO',
   'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO',
 ]
 

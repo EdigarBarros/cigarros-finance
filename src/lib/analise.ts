@@ -24,7 +24,7 @@ import {
 } from './conselheiro'
 import { situacoesDoMes as situacoesDasContas } from './contasFixas'
 import { aumentaDivida, calendarioDe, jurosAoAno, meDevem, projecaoMensal, situacaoDividas, type SituacaoDivida } from './dividas'
-import { fmtMesAno, fmtMoeda, fmtPct, fmtTaxa, fmtTaxaAno, fmtValor, LOCAL_DAS_DATAS, MESES_NOME, noMeioDaFrase } from './format'
+import { fmtDataCurta, fmtMesAno, fmtMoeda, fmtPct, fmtTaxa, fmtTaxaAno, fmtValor, LOCAL_DAS_DATAS, MESES_NOME, noMeioDaFrase } from './format'
 import { situacaoMeta } from './metas'
 import { converter, totalConvertido, type Taxas } from './moedas'
 import { visao } from './perfil'
@@ -313,6 +313,50 @@ export interface InfoCartao {
   valorAtrasado: number
 }
 
+/** Algo que entra ou sai num dia certo: conta do mês, parcela, fatura, salário, o que se repete todo mês. */
+export interface Evento {
+  data: string
+  tipo: 'entrada' | 'saida'
+  descricao: string
+  valor: number
+  origem: 'lancamento' | 'conta' | 'parcela' | 'cartao' | 'recorrente'
+  /** Venceu antes de hoje e ainda não foi paga (aparece no dia de hoje). */
+  atrasada?: boolean
+}
+
+export interface DiaDaAgenda {
+  data: string
+  entradas: Evento[]
+  saidas: Evento[]
+  /** Quanto deve ter na conta no fim do dia (com saldo conhecido) ou quanto o dinheiro andou desde hoje (sem ele). */
+  saldo: number
+}
+
+/** Um detalhe que pouca gente percebe, tirado da agenda do dinheiro. */
+export interface Percepcao {
+  id: string
+  icone: string
+  tom: Tom
+  titulo: string
+  porque: string
+}
+
+/**
+ * A agenda do dinheiro: dia a dia, de hoje até o fim do mês que vem, o que entra e o que sai, e o que isso revela
+ * (dinheiro que já chega com dono, conta que vence antes de o dinheiro entrar, vencimentos amontoados…).
+ */
+export interface Agenda {
+  dias: DiaDaAgenda[]
+  /** O que está na conta corrente hoje (null quando a pessoa não informa o saldo dos bancos). */
+  saldoInicial: number | null
+  /** Gasto do dia a dia por dia, descontado do saldo entre um evento e outro (só com saldo conhecido). */
+  ritmoDia: number
+  proximaEntrada: { data: string; valor: number; descricao: string } | null
+  /** O dia em que a conta fica mais baixa. */
+  menorSaldo: { data: string; valor: number } | null
+  percepcoes: Percepcao[]
+}
+
 export type Urgencia = 'urgente' | 'importante' | 'sugestao'
 
 export interface Acao {
@@ -379,6 +423,7 @@ export interface Analise {
   alocacao: Alocacao | null
   metas: PlanoMetas | null
   patrimonio: Patrimonio | null
+  agenda: Agenda | null
   /** Quanto cortar por mês para chegar na sobra-alvo (0 se já chega). */
   corte: number
   acoes: Acao[]
@@ -436,6 +481,20 @@ const normal = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/
 /** Descrição sem números, parcelas ("3/10") e pontuação: "Netflix.com 12/05" e "NETFLIX" viram a mesma coisa. */
 const chaveDescricao = (s: string) => normal(s).replace(/\d+\s*\/\s*\d+/g, ' ').replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim()
 const diaDe = (iso: string | null | undefined) => (iso ? Number(iso.slice(8, 10)) : 0)
+const dois = (n: number) => String(n).padStart(2, '0')
+/** Dia `d` do mês (31 em mês de 30 vira 30). */
+const isoDoDia = (a: number, m: number, d: number) => `${a}-${dois(m)}-${dois(Math.min(d, new Date(a, m, 0).getDate()))}`
+const utc = (iso: string) => Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1, Number(iso.slice(8, 10)))
+const diasEntre = (de: string, ate: string) => Math.round((utc(ate) - utc(de)) / 86400000)
+const maisDias = (iso: string, n: number) => {
+  const d = new Date(utc(iso) + n * 86400000)
+  return `${d.getUTCFullYear()}-${dois(d.getUTCMonth() + 1)}-${dois(d.getUTCDate())}`
+}
+/** "Aluguel", "Aluguel e Luz", "Aluguel, Luz e mais 2": frases inteiras, para cada idioma ter a sua. */
+const listaDeNomes = (nomes: string[]) => (nomes.length <= 1 ? nomes[0] ?? ''
+  : nomes.length === 2 ? tx('{0} e {1}', nomes[0], nomes[1])
+    : nomes.length === 3 ? tx('{0}, {1} e {2}', nomes[0], nomes[1], nomes[2])
+      : tx('{0}, {1} e mais {2}', nomes[0], nomes[1], nomes.length - 2))
 
 /** Inclinação da reta (mínimos quadrados) em fração da média por mês: 0,03 = sobe 3% ao mês. */
 function inclinacao(pontos: { x: number; y: number }[]): number | null {
@@ -1113,6 +1172,235 @@ export function analisar(e: EntradaAnalise): Analise {
     }
   }
 
+  // ----- agenda do dinheiro: dia a dia, de hoje até o fim do mês que vem -----
+  // Junta o que tem data certa (contas do mês, parcelas, faturas, lançamentos marcados para depois e o que se repete todo
+  // mês) e procura o que pouca gente percebe: o dinheiro que já chega com dono (a parcela marcada para o dia do salário),
+  // a conta que vence antes de o dinheiro entrar, os vencimentos amontoados, a parcela que está acabando e o mês que vem
+  // mais pesado que este.
+  let agenda: Agenda | null = null
+  {
+    const prox = doMesChave(atual + 1)
+    const fimJanela = isoDoDia(prox.ano, prox.mes, 31)
+    const noDia = (data: string) => (data < hojeIso ? hojeIso : data)
+    const eventos: Evento[] = []
+    // lançamentos já marcados para depois de hoje (o cartão entra como fatura, mais abaixo)
+    for (const l of e.lancs) {
+      if (!l.data || l.data <= hojeIso || l.data > fimJanela || l.cartao_id || !(l.valor > 0) || ehEmprestimo(l)) continue
+      eventos.push({ data: l.data, tipo: l.tipo, descricao: l.descricao.trim(), valor: l.valor, origem: 'lancamento' })
+    }
+    // faturas: as parcelas de cada cartão somadas no vencimento (fatura já paga fica de fora)
+    const faturas = new Map<string, Evento>()
+    for (const l of e.compras) {
+      if (!l.cartao_id || !l.data || l.data <= hojeIso || l.data > fimJanela || !(l.valor > 0)) continue
+      if (e.faturasPagas.some((f) => f.cartao_id === l.cartao_id && f.ano === l.ano && f.mes === l.mes)) continue
+      const chave = `${l.cartao_id}|${l.data}`
+      const nome = e.cartoes.find((c) => c.id === l.cartao_id)?.nome
+      const f = faturas.get(chave) ?? { data: l.data, tipo: 'saida' as const, descricao: nome ? tx('Fatura do {0}', nome) : tx('Fatura do cartão'), valor: 0, origem: 'cartao' as const }
+      f.valor = centavos(f.valor + l.valor)
+      faturas.set(chave, f)
+    }
+    eventos.push(...faturas.values())
+    // contas do mês (este e o próximo) ainda em aberto; as atrasadas entram hoje
+    const contasDoMes = (m: { ano: number; mes: number }) => (v.contas ? situacoesDasContas(e.contas, e.lancs, m.ano, m.mes, hojeIso, e.taxas) : [])
+    const sitsAtual = contasDoMes({ ano, mes })
+    const sitsProx = contasDoMes(prox)
+    for (const sc of [...sitsAtual, ...sitsProx]) {
+      if (sc.estado === 'paga' || sc.estado === 'fora' || sc.semCotacao || !(sc.valor > 0) || sc.vencimento > fimJanela) continue
+      eventos.push({ data: noDia(sc.vencimento), tipo: sc.conta.tipo, descricao: sc.conta.descricao, valor: sc.valor, origem: 'conta', atrasada: sc.vencimento < hojeIso })
+    }
+    // parcelas das dívidas, pelo calendário de cada uma
+    const calendarios = abertas.map((sd) => ({ sd, cal: calendarioDe(sd, hojeIso) }))
+    for (const { sd, cal } of calendarios) for (const pc of cal?.parcelas ?? []) {
+      if (pc.falta <= 0 || pc.vencimento > fimJanela) continue
+      eventos.push({ data: noDia(pc.vencimento), tipo: 'saida', descricao: sd.divida.descricao, valor: pc.falta, origem: 'parcela', atrasada: pc.vencimento < hojeIso })
+    }
+    // o que se repete todo mês e ainda não veio (este mês, se o dia não passou faz tempo) ou virá (o mês que vem)
+    const jaVeio = (chave: string, m: { ano: number; mes: number }) => e.lancs.some((l) => l.ano === m.ano && l.mes === m.mes && chaveDescricao(l.descricao) === chave)
+    for (const [lista, tipo] of [[recSaidas, 'saida'], [recEntradas, 'entrada']] as const) {
+      for (const r of lista) {
+        if (r.contaFixa || r.noCartao || !r.dia) continue
+        if (r.dia >= diaHoje - 5 && !jaVeio(r.chave, { ano, mes })) eventos.push({ data: noDia(isoDoDia(ano, mes, r.dia)), tipo, descricao: r.descricao, valor: r.valor, origem: 'recorrente' })
+        if (!jaVeio(r.chave, prox)) eventos.push({ data: isoDoDia(prox.ano, prox.mes, r.dia), tipo, descricao: r.descricao, valor: r.valor, origem: 'recorrente' })
+      }
+    }
+    // a mesma parcela cadastrada como conta do mês e como dívida conta uma vez só
+    const unicos = eventos.filter((ev) => ev.origem !== 'conta' || !eventos.some((o) => o.origem === 'parcela' && o.data.slice(0, 7) === ev.data.slice(0, 7)
+      && Math.abs(o.valor - ev.valor) <= ev.valor * 0.05 && (o.data === ev.data || mesmoNome(chaveDescricao(o.descricao), chaveDescricao(ev.descricao)))))
+    unicos.sort((a, b) => a.data.localeCompare(b.data) || (a.tipo === b.tipo ? b.valor - a.valor : a.tipo === 'entrada' ? -1 : 1))
+
+    // saldo dia a dia: com o saldo da conta corrente, conta também o gasto do dia a dia entre um dia e outro
+    const ccInformado = v.bancos && Object.values(ef.caixa).some((b) => typeof b?.cc === 'number')
+    const saldoInicial = ccInformado ? centavos(soma(Object.values(ef.caixa).map((b) => b?.cc ?? 0))) : null
+    const ritmoDia = saldoInicial !== null && rec.length
+      ? centavos(media(recentes.map((k) => soma(naJanela.filter((l) => chaveMes(l.ano, l.mes) === k && ehDiaADia(l)).map((l) => l.valor)))) / 30.4)
+      : 0
+    const porData = new Map<string, Evento[]>()
+    for (const ev of unicos) porData.set(ev.data, [...(porData.get(ev.data) ?? []), ev])
+    let saldoCorrente = saldoInicial ?? 0
+    let cursor = hojeIso
+    const dias: DiaDaAgenda[] = [...porData].map(([data, evs]) => {
+      saldoCorrente -= ritmoDia * diasEntre(cursor, data)
+      cursor = data
+      const entradas = evs.filter((x) => x.tipo === 'entrada')
+      const saidas = evs.filter((x) => x.tipo === 'saida')
+      saldoCorrente += soma(entradas.map((x) => x.valor)) - soma(saidas.map((x) => x.valor))
+      return { data, entradas, saidas, saldo: centavos(saldoCorrente) }
+    })
+    const totalDe = (xs: Evento[]) => centavos(soma(xs.map((x) => x.valor)))
+    const nomesDe = (xs: Evento[]) => listaDeNomes([...xs].sort((a, b) => b.valor - a.valor).map((x) => x.descricao))
+    const data = (iso: string) => fmtDataCurta(iso)
+    const percepcoes: (Percepcao & { peso: number })[] = []
+    const minimoRelevante = Math.max(1, (renda || gastos) * 0.02)
+
+    // 1. Aperto: conta que vence antes de o dinheiro entrar
+    const primeiroNegativo = dias.find((d) => d.saldo < -0.5 && d.saidas.length)
+    if (primeiroNegativo) {
+      const depois = dias.find((d) => d.data > primeiroNegativo.data && d.entradas.length)
+      const falta = centavos(-Math.min(...dias.filter((d) => d.data >= primeiroNegativo.data && (!depois || d.data < depois.data)).map((d) => d.saldo)))
+      const quais = nomesDe(primeiroNegativo.saidas)
+      if (falta >= minimoRelevante) {
+        const dia = data(primeiroNegativo.data)
+        const varias = primeiroNegativo.saidas.length > 1
+        const ate = depois ? data(depois.data) : ''
+        const v1 = fmtValor(falta)
+        const texto = saldoInicial !== null
+          ? depois
+            ? varias
+              ? tx('Em {0} vencem {1}, mas o próximo dinheiro só entra em {2}. Pelo saldo de hoje e pelo seu gasto do dia a dia, faltam cerca de {3} até lá.', dia, quais, ate, v1)
+              : tx('Em {0} vence {1}, mas o próximo dinheiro só entra em {2}. Pelo saldo de hoje e pelo seu gasto do dia a dia, faltam cerca de {3} até lá.', dia, quais, ate, v1)
+            : varias
+              ? tx('Em {0} vencem {1}, e não há dinheiro previsto para entrar até lá. Pelo saldo de hoje e pelo seu gasto do dia a dia, faltam cerca de {2}.', dia, quais, v1)
+              : tx('Em {0} vence {1}, e não há dinheiro previsto para entrar até lá. Pelo saldo de hoje e pelo seu gasto do dia a dia, faltam cerca de {2}.', dia, quais, v1)
+          : depois
+            ? varias
+              ? tx('Em {0} vencem {1}, mas o próximo dinheiro só entra em {2}. Para não atrasar, é preciso ter {3} na conta até lá.', dia, quais, ate, v1)
+              : tx('Em {0} vence {1}, mas o próximo dinheiro só entra em {2}. Para não atrasar, é preciso ter {3} na conta até lá.', dia, quais, ate, v1)
+            : varias
+              ? tx('Em {0} vencem {1}, e não há dinheiro previsto para entrar até lá. Para não atrasar, é preciso ter {2} na conta.', dia, quais, v1)
+              : tx('Em {0} vence {1}, e não há dinheiro previsto para entrar até lá. Para não atrasar, é preciso ter {2} na conta.', dia, quais, v1)
+        percepcoes.push({
+          id: 'aperto', peso: 100, icone: 'relogio', tom: 'ruim', porque: texto,
+          titulo: saldoInicial !== null ? tx('Em {0}, a conta pode ficar no vermelho.', data(primeiroNegativo.data)) : tx('Tem conta vencendo antes de o dinheiro entrar.'),
+        })
+      }
+    }
+
+    // 2. Dinheiro que já chega com dono: as saídas do mesmo dia e dos dias seguintes, até a próxima entrada grande
+    const limiar = Math.max(1, renda * 0.1)
+    const grandes = dias.filter((d) => totalDe(d.entradas) >= limiar)
+    const casamentos = grandes.map((d, i) => {
+      const proxima = grandes[i + 1]?.data
+      const ate = [maisDias(d.data, 7), proxima ? maisDias(proxima, -1) : fimJanela].sort()[0]
+      const depoisDele = dias.filter((x) => x.data > d.data && x.data <= ate).flatMap((x) => x.saidas)
+      const entra = totalDe(d.entradas)
+      const mesmoDia = totalDe(d.saidas)
+      const total = centavos(mesmoDia + totalDe(depoisDele))
+      return { d, ate, entra, mesmoDia, total, depoisDele, fracao: entra > 0 ? total / entra : 0 }
+    })
+    const comDono = casamentos.find((c) => c.d.saidas.length >= 2 || (c.mesmoDia >= c.entra * 0.25 && c.mesmoDia >= minimoRelevante))
+    if (comDono) {
+      const c = comDono
+      percepcoes.push({
+        id: `com-dono:${c.d.data}`, peso: 90, icone: 'acordo', tom: 'medio',
+        titulo: tx('O dinheiro de {0} já chega com dono.', data(c.d.data)),
+        porque: `${c.d.saidas.length === 1
+          ? tx('{0} ({1}) cai no mesmo dia em que vence {2} ({3}). Desse dinheiro, sobram {4} para o resto.',
+            nomesDe(c.d.entradas), fmtValor(c.entra), nomesDe(c.d.saidas), fmtValor(c.mesmoDia), fmtValor(centavos(c.entra - c.mesmoDia)))
+          : tx('{0} ({1}) cai no mesmo dia em que vencem {2}: {3} no total. Desse dinheiro, sobram {4} para o resto.',
+            nomesDe(c.d.entradas), fmtValor(c.entra), nomesDe(c.d.saidas), fmtValor(c.mesmoDia), fmtValor(centavos(c.entra - c.mesmoDia)))} ${
+          tx('Se foi de propósito, boa ideia: o dinheiro entra e já sai para onde deve. Mas, se ele atrasar um dia, tudo atrasa junto, com multa. Ter esse valor na conta um dia antes, ou passar os vencimentos para 2 ou 3 dias depois, tira esse risco.')}`,
+      })
+    }
+    const comprometido = casamentos.find((c) => c.fracao >= 0.7 && c.total >= minimoRelevante && c !== comDono)
+    if (comprometido) {
+      const c = comprometido
+      percepcoes.push({
+        id: `comprometido:${c.d.data}`, peso: 80, icone: 'carteira', tom: c.fracao >= 1 ? 'ruim' : 'medio',
+        titulo: c.fracao >= 1 ? tx('O dinheiro de {0} não cobre o que vence logo depois.', data(c.d.data)) : tx('{0}% do dinheiro de {1} já tem destino.', pct(c.fracao), data(c.d.data)),
+        porque: tx('Entram {0} e, até {1}, saem {2} em contas, parcelas e faturas. Sobram {3} para o dia a dia até o próximo dinheiro.',
+          fmtValor(c.entra), data(c.ate), fmtValor(c.total), fmtValor(Math.max(0, centavos(c.entra - c.total)))),
+      })
+    }
+
+    // 3. O mês que vem mais pesado (ou mais leve) que este: faturas, parcelas e contas já marcadas
+    const marcadoNoMes = (m: { ano: number; mes: number }, sits: typeof sitsAtual) => centavos(
+      soma(e.compras.filter((l) => l.cartao_id && l.ano === m.ano && l.mes === m.mes && l.valor > 0).map((l) => l.valor))
+      + soma(calendarios.flatMap(({ cal }) => (cal?.parcelas ?? []).filter((pc) => pc.vencimento.slice(0, 7) === `${m.ano}-${dois(m.mes)}`).map((pc) => pc.valor)))
+      + soma(sits.filter((sc) => sc.conta.tipo === 'saida' && sc.estado !== 'fora').map((sc) => sc.valor)))
+    const esteMes = marcadoNoMes({ ano, mes }, sitsAtual)
+    const proxMes = marcadoNoMes(prox, sitsProx)
+    const nomeProx = noMeioDaFrase(MESES_NOME[prox.mes - 1])
+    const nomeAtual = noMeioDaFrase(MESES_NOME[mes - 1])
+    if (esteMes > 0 && proxMes - esteMes >= Math.max(minimoRelevante * 2.5, esteMes * 0.15)) {
+      percepcoes.push({
+        id: 'mes-que-vem-pesado', peso: 70, icone: 'sobe', tom: 'medio',
+        titulo: tx('{0} já começa {1} mais pesado que {2}.', MESES_NOME[prox.mes - 1], fmtValor(centavos(proxMes - esteMes)), nomeAtual),
+        porque: tx('Entre faturas, parcelas e contas, já estão marcados {0} para {1}, contra {2} neste mês. Segure compras novas agora para não chegar apertado.', fmtValor(proxMes), nomeProx, fmtValor(esteMes)),
+      })
+    } else if (esteMes > 0 && esteMes - proxMes >= Math.max(minimoRelevante * 2.5, esteMes * 0.15)) {
+      percepcoes.push({
+        id: 'mes-que-vem-leve', peso: 40, icone: 'desce', tom: 'bom',
+        titulo: tx('{0} vem {1} mais leve.', MESES_NOME[prox.mes - 1], fmtValor(centavos(esteMes - proxMes))),
+        porque: tx('Já estão marcados {0} para {1}, contra {2} neste mês. Decida antes para onde vai essa diferença, senão ela some no dia a dia.', fmtValor(proxMes), nomeProx, fmtValor(esteMes)),
+      })
+    }
+
+    // 4. Vencimentos amontoados: a semana que leva a maior parte das contas dos próximos 30 dias
+    const em30 = dias.filter((d) => d.data <= maisDias(hojeIso, 30))
+    const saidas30 = totalDe(em30.flatMap((d) => d.saidas))
+    let melhor: { de: string; ate: string; total: number; qtd: number; entra: number } | null = null
+    for (const d of em30) {
+      const fim = maisDias(d.data, 6)
+      const semana = em30.filter((x) => x.data >= d.data && x.data <= fim)
+      const total = totalDe(semana.flatMap((x) => x.saidas))
+      if (!melhor || total > melhor.total) melhor = { de: d.data, ate: [...semana].reverse().find((x) => x.saidas.length)?.data ?? d.data, total, qtd: semana.flatMap((x) => x.saidas).length, entra: totalDe(semana.flatMap((x) => x.entradas)) }
+    }
+    if (melhor && saidas30 > 0 && melhor.total / saidas30 >= 0.6 && melhor.qtd >= 3 && melhor.de !== melhor.ate) {
+      percepcoes.push({
+        id: 'amontoadas', peso: 55, icone: 'calendario', tom: melhor.entra >= melhor.total ? 'bom' : 'medio',
+        titulo: tx('{0}% das contas dos próximos 30 dias vencem entre {1} e {2}.', pct(melhor.total / saidas30), data(melhor.de), data(melhor.ate)),
+        porque: melhor.entra >= melhor.total
+          ? tx('O dinheiro que entra nesses dias cobre tudo: bom sinal, desde que ele caia antes dos vencimentos.')
+          : tx('Nesses dias saem {0} e entram {1}. Separe o dinheiro antes, ou peça para mudar alguns vencimentos de data.', fmtValor(melhor.total), fmtValor(melhor.entra)),
+      })
+    }
+
+    // 5. A parcela que está acabando: dinheiro que volta a ser seu
+    const acabando: { descricao: string; valor: number; fim: number }[] = []
+    for (const { sd, cal } of calendarios) {
+      const ultima = cal?.parcelas.filter((pc) => pc.falta > 0).pop()
+      if (ultima && sd.divida.valor_parcela) acabando.push({ descricao: sd.divida.descricao, valor: sd.divida.valor_parcela, fim: chaveMes(Number(ultima.vencimento.slice(0, 4)), Number(ultima.vencimento.slice(5, 7))) })
+    }
+    const ultimaDaCompra = new Map<string, Lancamento>()
+    for (const l of e.compras) if (l.compra_id && (l.parcelas ?? 1) > 1) {
+      const u = ultimaDaCompra.get(l.compra_id)
+      if (!u || chaveMes(l.ano, l.mes) > chaveMes(u.ano, u.mes)) ultimaDaCompra.set(l.compra_id, l)
+    }
+    for (const l of ultimaDaCompra.values()) acabando.push({ descricao: l.descricao, valor: l.valor, fim: chaveMes(l.ano, l.mes) })
+    const logo = acabando.filter((x) => x.fim >= atual && x.fim <= atual + 3 && x.valor >= minimoRelevante).sort((a, b) => a.fim - b.fim || b.valor - a.valor)
+    if (logo.length) {
+      const fim = logo[0].fim
+      const doMesmo = logo.filter((x) => x.fim === fim)
+      const valor = centavos(soma(doMesmo.map((x) => x.valor)))
+      percepcoes.push({
+        id: `acabando:${fim}`, peso: 50, icone: 'check', tom: 'bom',
+        titulo: tx('Em {0} vence a última parcela de {1}.', mesAno(doMesChave(fim)), listaDeNomes(doMesmo.map((x) => x.descricao))),
+        porque: tx('Depois disso, {0} por mês voltam a ser seus. Decida desde já para onde vão (reserva, dívida da vez ou meta): dinheiro sem destino some no dia a dia.', fmtValor(valor)),
+      })
+    }
+
+    const entradaFutura = dias.find((d) => d.entradas.length)
+    const menor = dias.length ? dias.reduce((m, d) => (d.saldo < m.saldo ? d : m)) : null
+    if (unicos.length || saldoInicial !== null) {
+      agenda = {
+        dias, saldoInicial, ritmoDia,
+        proximaEntrada: entradaFutura ? { data: entradaFutura.data, valor: totalDe(entradaFutura.entradas), descricao: nomesDe(entradaFutura.entradas) } : null,
+        menorSaldo: menor ? { data: menor.data, valor: menor.saldo } : null,
+        percepcoes: percepcoes.sort((a, b) => b.peso - a.peso).map(({ peso: _p, ...x }) => x),
+      }
+    }
+  }
+
   // ----- pilares -----
   const pilares: Pilar[] = []
   if (temFluxo) {
@@ -1245,6 +1533,13 @@ export function analisar(e: EntradaAnalise): Analise {
       botao: maior === atrasoCartao ? tx('Ver cartões') : maior === atrasoContas ? tx('Ver contas') : tx('Ver dívidas'),
       titulo: tx('Coloque em dia o que está atrasado: {0}.', fmtValor(totalAtraso)),
       porque: tx('Conta atrasada cobra multa e juros todo dia, e é o dinheiro mais caro que existe. Antes de qualquer outro passo, pague o que venceu.'),
+    })
+  }
+  const aperto = agenda?.percepcoes.find((x) => x.id === 'aperto')
+  if (aperto) {
+    nova({
+      id: 'aperto', urgencia: 'urgente', prioridade: 97, icone: 'relogio', destino: v.contas ? 'contas' : 'lancamentos',
+      botao: v.contas ? tx('Ver contas') : tx('Ver lançamentos'), titulo: aperto.titulo, porque: aperto.porque,
     })
   }
   if (fase === 'vermelho') {
@@ -1494,7 +1789,7 @@ export function analisar(e: EntradaAnalise): Analise {
     tom: nota === null ? 'medio' : tomDa(nota), resumo, fase, fases, porqueFase, proximoPasso, pilares,
     renda, gastos, sobra, sobraFracao, sobraAlvo, rendaVaria, variacaoRenda, principalFonte, tendenciaGastos, tendenciaRenda,
     serie, mes: previsao, categorias, subiram, cairam, regra, recorrentes, assinaturasPorMes, recorrentesPorMes, formigas,
-    jurosPagos, semCategoria, cartao, dividas, reserva, alocacao, metas, patrimonio, corte, acoes,
+    jurosPagos, semCategoria, cartao, dividas, reserva, alocacao, metas, patrimonio, agenda, corte, acoes,
   }
 }
 

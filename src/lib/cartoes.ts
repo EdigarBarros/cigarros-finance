@@ -174,7 +174,7 @@ export function casaCompraNoCartao(
   casa: (l: Lancamento, texto: string) => boolean, l: Lancamento, categoria?: string, cartao?: string,
 ) {
   const texto = semAcento([
-    l.descricao, categoria, cartao ? `cartao ${cartao}` : 'cartao', 'credito', 'saida saidas gasto', (l.parcelas ?? 1) > 1 ? 'parcela parcelado' : '',
+    l.descricao, categoria, cartao ? `cartao ${cartao}` : 'cartao', 'credito', tx('saida saidas gasto'), (l.parcelas ?? 1) > 1 ? tx('parcela parcelado') : '',
   ].filter(Boolean).join(' '))
   return casa({ ...l, data: l.data_compra ?? l.data }, texto)
 }
