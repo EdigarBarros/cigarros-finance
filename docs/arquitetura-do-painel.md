@@ -214,12 +214,33 @@ mês, dívidas, data sem dívidas, reserva, passos que entraram ou saíram do pl
 dia, cotação nova e dados chegando do banco não contam como mudança: só renovam a base de comparação. Sem mudança nesta visita,
 "O que mudou" compara com o retrato da última visita (guardado no navegador, só números).
 
-**Ordem da tela** (de decisão): diagnóstico (nota, resumo do consultor e a escada das fases) → o que mudou → plano de ação → como
-o mês deve fechar → os pilares → a análise completa (para onde mandar a sobra, últimos 12 meses e regra 50/30/20 lado a lado,
-revisão dos gastos, orçamento, plano das dívidas, reserva e metas lado a lado, patrimônio). No jeito **simples**, o plano mostra 3
-passos e a análise completa fica atrás de "Ver a análise completa". Sem dados suficientes (menos de 2 dos 3 últimos meses com
-entradas e saídas), não há nota: o resumo explica o que lançar e a aba mostra o que já dá (dívidas, cartão, metas, o mês).
-Conta nova vê o convite para o primeiro lançamento.
+**Agenda do dinheiro.** O motor também monta, dia a dia, de hoje até o fim do mês que vem, o que tem data certa: contas do mês,
+parcelas das dívidas (pelo calendário de cada uma), faturas de cada cartão, lançamentos marcados para depois e o que se repete
+todo mês. Com o saldo da conta corrente informado, desconta também o gasto do dia a dia entre um dia e outro. Dessa agenda saem
+os **detalhes que pouca gente percebe**:
+- **Dinheiro que já chega com dono**: a entrada cai no mesmo dia em que vencem parcelas ou contas. Pode ser de propósito ou
+  coincidência, e o texto diz isso: é boa ideia, mas um dia de atraso no dinheiro atrasa tudo junto.
+- **Quanto do dinheiro já tem destino** até a próxima entrada.
+- **Aperto**: conta que vence antes de o dinheiro entrar, com quanto precisa ter na conta até lá. Também vira passo do plano,
+  logo depois dos atrasos.
+- **Mês que vem mais pesado ou mais leve** que este.
+- **Vencimentos amontoados** na mesma semana.
+- **Última parcela chegando**: dinheiro que volta a ser seu, e a sugestão de decidir antes para onde ele vai.
+
+**Ordem da tela.** A tela responde três perguntas de cara e guarda o resto em gavetas fechadas:
+1. **Como estou**: a nota, a fase em uma frase com a escada em traços e os pilares em selos. Tocar num selo abre a gaveta dele.
+2. **O que fazer agora**: um passo grande, com o botão; os outros atrás de "Ver os outros N passos".
+3. **Como o mês fecha**: o número, quanto dá para gastar por dia e até 2 detalhes da agenda.
+
+"O que mudou" só aparece quando algo mudou. As gavetas mostram o resumo no título: **Agenda do mês** (a agenda dia a dia e os
+números do mês), **Seus gastos** (12 meses, regra 50/30/20, revisão e orçamento), **Suas dívidas**, **Reserva e metas** (com
+para onde mandar a sobra) e **Seu futuro** (patrimônio). Por jeito de ver:
+- **Simples**: as gavetas ficam atrás de "Ver mais detalhes".
+- **Equilibrado**: as gavetas aparecem fechadas.
+- **Detalhado**: as gavetas já vêm abertas.
+
+Sem dados suficientes (menos de 2 dos 3 últimos meses com entradas e saídas), não há nota: a frase explica o que lançar e a aba
+mostra o que já dá. Conta nova vê o convite para o primeiro lançamento.
 
 ## 5. Guia de linguagem
 

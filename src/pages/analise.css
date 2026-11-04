@@ -25,102 +25,144 @@
 .an-vazio-icone { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; color: var(--destaque); background: var(--destaque-suave); }
 .an-vazio-acoes { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 6px; }
 
-/* ---------- diagnóstico ---------- */
+/* ---------- 1. como estou ---------- */
 .an-diag {
-  display: grid; gap: 22px; padding: 24px 24px 20px; overflow: hidden;
+  display: grid; gap: 16px; padding: 20px 22px; overflow: hidden;
   background:
-    radial-gradient(110% 130% at 0% 0%, color-mix(in srgb, var(--c) 13%, transparent), transparent 58%),
+    radial-gradient(110% 130% at 0% 0%, color-mix(in srgb, var(--c) 12%, transparent), transparent 58%),
     var(--superficie);
 }
-.an-diag-topo { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 28px; align-items: center; }
-.an-nota { display: grid; justify-items: center; gap: 10px; }
-.an-nota .anel circle { stroke-width: 2.6; }
-.an-nota .anel-meio { display: grid; justify-items: center; line-height: 1; }
-.an-nota .anel-meio strong { font-family: var(--fonte-numeros); font-size: 42px; font-weight: 750; letter-spacing: -.04em; color: var(--texto); }
-.an-nota .anel-meio small { margin-top: 4px; font-size: 12px; font-weight: 550; color: var(--texto-3); }
-.an-nota-vazia { display: grid; place-items: center; width: 128px; height: 128px; border-radius: 50%; color: var(--texto-3); background: var(--preench-4); border: 2px dashed var(--preench-2); }
+.an-diag-linha { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 20px; align-items: center; }
+.an-diag .anel circle { stroke-width: 2.8; }
+.an-diag .anel-meio strong { font-family: var(--fonte-numeros); font-size: 32px; font-weight: 750; letter-spacing: -.04em; color: var(--texto); }
+.an-nota-vazia { display: grid; place-items: center; width: 92px; height: 92px; border-radius: 50%; color: var(--texto-3); background: var(--preench-4); border: 2px dashed var(--preench-2); }
+.an-diag-texto { display: grid; gap: 6px; justify-items: start; min-width: 0; }
+.an-diag-texto h2 { margin: 0; font-size: 18px; font-weight: 650; letter-spacing: -.02em; line-height: 1.3; }
+.an-diag-texto p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--texto-2); }
 .an-nota-rotulo {
-  display: inline-flex; align-items: center; height: 26px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 650;
+  display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 12.5px; font-weight: 650;
   color: color-mix(in srgb, var(--c) 78%, var(--texto)); background: color-mix(in srgb, var(--c) 15%, transparent);
 }
-.an-resumo { display: grid; gap: 8px; justify-items: start; min-width: 0; }
-.an-selo {
-  display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 999px;
-  font-size: 12px; font-weight: 650; color: var(--destaque); background: var(--destaque-suave);
+.an-degraus { list-style: none; margin: 4px 0 0; padding: 0; display: flex; gap: 5px; }
+.an-degraus li { width: 26px; height: 6px; border-radius: 6px; background: var(--preench-2); }
+.an-degraus li.feita { background: var(--entrada); }
+.an-degraus li.atual { width: 40px; background: var(--destaque); }
+.an-degraus .sr, .analise .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.an-selos { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 14px; border-top: 1px solid var(--separador); }
+.an-selo-pilar {
+  display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 6px 0 12px; border-radius: 999px;
+  font-size: 13px; font-weight: 550; color: var(--texto); background: var(--superficie-2); border: 1px solid var(--borda);
+  transition: border-color .2s, transform .3s var(--mola);
 }
-.an-resumo p { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--texto-2); }
-.an-resumo p:first-of-type { font-size: 16px; color: var(--texto); font-weight: 500; }
-
-.an-fases { display: grid; gap: 12px; padding-top: 18px; border-top: 1px solid var(--separador); }
-.an-escada { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
-.an-escada li { position: relative; display: grid; justify-items: center; gap: 7px; text-align: center; }
-/* o trilho entre os degraus */
-.an-escada li + li::before {
-  content: ''; position: absolute; top: 15px; right: calc(50% + 19px); width: calc(100% - 38px + 4px); height: 2px;
-  border-radius: 2px; background: var(--preench-2);
+.an-selo-pilar:hover { border-color: color-mix(in srgb, var(--c) 50%, var(--borda)); }
+.an-selo-pilar:active { transform: scale(.96); }
+.an-selo-pilar b {
+  display: grid; place-items: center; min-width: 24px; height: 22px; padding: 0 5px; border-radius: 999px; font-size: 12px;
+  color: color-mix(in srgb, var(--c) 82%, var(--texto)); background: color-mix(in srgb, var(--c) 16%, transparent); font-variant-numeric: tabular-nums;
 }
-.an-escada li.feita + li::before { background: var(--entrada); }
-.an-degrau {
-  position: relative; z-index: 1; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
-  font-size: 13px; font-weight: 700; color: var(--texto-3); background: var(--preench-3); border: 1.5px solid var(--preench-2);
-}
-.an-escada li.feita .an-degrau { color: #fff; background: var(--entrada); border-color: transparent; }
-.an-escada li.atual .an-degrau {
-  color: var(--destaque-texto); background: var(--destaque); border-color: transparent;
-  box-shadow: 0 0 0 5px color-mix(in srgb, var(--destaque) 22%, transparent);
-}
-.an-degrau-nome { font-size: 12.5px; line-height: 1.3; color: var(--texto-3); font-weight: 550; }
-.an-escada li.feita .an-degrau-nome { color: var(--texto-2); }
-.an-escada li.atual .an-degrau-nome { color: var(--texto); font-weight: 650; }
-.an-fase-texto { margin: 0; font-size: 14px; line-height: 1.55; color: var(--texto-2); }
-.an-fase-texto b { color: var(--texto); font-weight: 650; }
-.an-fase-texto span { color: var(--destaque); font-weight: 600; }
 
 /* ---------- o que mudou ---------- */
-.an-mudou { border-color: color-mix(in srgb, var(--destaque) 26%, var(--borda)); }
-.an-mudancas { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.an-mudancas li { display: flex; align-items: flex-start; gap: 10px; font-size: 14.5px; line-height: 1.45; }
+.an-mudou { display: grid; gap: 10px; padding: 16px 20px; border-color: color-mix(in srgb, var(--destaque) 26%, var(--borda)); }
+.an-mudancas { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.an-mudancas li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; line-height: 1.45; }
 .an-mudancas li svg { flex: none; margin-top: 2px; color: var(--texto-3); }
 .an-mudancas li.bom svg { color: var(--entrada); }
 .an-mudancas li.ruim svg { color: var(--saida); }
 
-/* ---------- plano de ação ---------- */
-.an-acoes { list-style: none; margin: 0; padding: 4px 14px 6px; display: grid; gap: 10px; }
-.an-acao {
-  --c: var(--caixa);
-  position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 14px; padding: 16px 16px 14px;
-  border-radius: var(--raio-m); background: color-mix(in srgb, var(--c) 5%, var(--superficie)); border: 1px solid color-mix(in srgb, var(--c) 22%, var(--borda));
-}
-.an-acao.urgente { --c: var(--saida); }
-.an-acao.importante { --c: var(--divida); }
-.an-acao-n {
-  display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%;
-  font-family: var(--fonte-numeros); font-size: 15px; font-weight: 750; color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent);
-}
-:root[data-tema='claro'] .an-acao.importante .an-acao-n { color: color-mix(in srgb, var(--divida) 55%, var(--texto)); }
-.an-acao-texto { display: grid; gap: 5px; justify-items: start; min-width: 0; }
-.an-acao-selo { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 650; color: var(--texto-2); }
-.an-acao-selo svg { color: var(--c); }
-.an-acao-texto strong { font-size: 15.5px; font-weight: 650; line-height: 1.35; letter-spacing: -.01em; }
-.an-acao-texto p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--texto-2); }
-.an-acao-pe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 6px; width: 100%; }
-.an-acao-pe .btn { height: 36px; padding: 0 14px; font-size: 13.5px; margin-left: auto; }
+/* ---------- 2. o que fazer agora ---------- */
+.an-agora { --c: var(--caixa); display: grid; gap: 12px; padding: 20px 22px 8px; border-color: color-mix(in srgb, var(--c) 30%, var(--borda)); }
+.an-agora.urgente { --c: var(--saida); }
+.an-agora.importante { --c: var(--divida); }
+.an-agora-passo { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 14px; align-items: start; }
+.an-agora-icone { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); }
+.an-agora-passo strong { display: block; font-size: 17px; font-weight: 650; line-height: 1.35; letter-spacing: -.015em; }
+.an-agora-passo p { margin: 6px 0 0; font-size: 14px; line-height: 1.55; color: var(--texto-2); }
+.an-acao-pe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.an-acao-pe .btn { height: 40px; padding: 0 16px; font-size: 14px; margin-left: auto; }
 .an-impacto {
   display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 999px;
   font-size: 12.5px; font-weight: 650; color: color-mix(in srgb, var(--entrada) 80%, var(--texto)); background: color-mix(in srgb, var(--entrada) 13%, transparent);
 }
-.an-tudo-certo { display: flex; align-items: center; gap: 10px; margin: 0; padding: 14px 22px 16px; color: var(--texto-2); line-height: 1.5; }
+.an-outros { margin: 4px 0 0; padding: 0 0 0 22px; display: grid; gap: 0; }
+.an-outros li { padding: 12px 0; border-top: 1px solid var(--separador); }
+.an-outros li::marker { font-weight: 700; color: var(--texto-3); }
+.an-outros li > div { display: grid; gap: 3px; }
+.an-outros strong { font-size: 14.5px; font-weight: 600; line-height: 1.4; }
+.an-outros p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--texto-2); }
+.an-outros .btn { height: 34px; margin-top: 8px; padding: 0 12px; font-size: 13px; }
+.an-agora .quadro-ver { padding: 10px; }
+.an-tudo-certo { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; color: var(--texto-2); line-height: 1.5; }
 .an-tudo-certo svg { flex: none; color: var(--entrada); }
+
+/* ---------- 3. como o mês fecha ---------- */
+.an-seu-mes { display: grid; gap: 14px; padding: 20px 22px 16px; }
+.an-seu-mes-linha { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 18px; align-items: center; }
+.an-seu-mes-total { display: grid; gap: 2px; }
+.an-seu-mes-total small { font-size: 13px; font-weight: 600; color: var(--texto-2); }
+.an-seu-mes-total strong { font-family: var(--fonte-numeros); font-size: 32px; font-weight: 750; letter-spacing: -.035em; line-height: 1.05; color: color-mix(in srgb, var(--tom) 80%, var(--texto)); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.an-por-dia { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 12px 14px; border-radius: var(--raio-p); background: var(--superficie-2); font-size: 14px; line-height: 1.5; border: 1px solid var(--borda); }
+.an-por-dia svg { flex: none; margin-top: 1px; color: var(--destaque); }
+.an-por-dia.sem svg { color: var(--divida); }
+.an-detalhes { display: grid; gap: 8px; }
+.an-detalhes-titulo { font-size: 12.5px; font-weight: 650; color: var(--texto-3); }
+.an-percepcoes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.an-percepcoes li {
+  display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; padding: 12px 14px; border-radius: var(--raio-p);
+  background: color-mix(in srgb, var(--c) 6%, var(--superficie)); border: 1px solid color-mix(in srgb, var(--c) 22%, var(--borda));
+}
+.an-percepcao-icone { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); }
+:root[data-tema='claro'] .an-percepcoes li.medio .an-percepcao-icone { color: color-mix(in srgb, var(--divida) 55%, var(--texto)); }
+.an-percepcoes strong { font-size: 14.5px; font-weight: 650; line-height: 1.35; }
+.an-percepcoes p { margin: 4px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--texto-2); }
+.an-ver-agenda { justify-self: start; font-size: 14px; }
 .an-ver-completa { justify-self: center; height: 46px; padding: 0 22px; font-size: 15px; }
 
-/* ---------- este mês ---------- */
+/* ---------- gavetas ---------- */
+.an-gavetas { display: grid; gap: 12px; }
+.an-gaveta { padding: 0; overflow: hidden; }
+.an-gaveta > summary {
+  display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 16px 18px;
+  cursor: pointer; list-style: none; user-select: none;
+}
+.an-gaveta > summary::-webkit-details-marker { display: none; }
+.an-gaveta > summary:hover { background: var(--preench-4); }
+.an-gaveta-icone { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: var(--destaque); background: var(--destaque-suave); }
+.an-gaveta-texto { display: grid; gap: 2px; min-width: 0; }
+.an-gaveta-texto b { font-size: 16px; font-weight: 650; letter-spacing: -.01em; }
+.an-gaveta-texto small { font-size: 13px; color: var(--texto-2); overflow-wrap: anywhere; }
+.an-gaveta-seta { color: var(--texto-3); transition: transform .3s var(--mola); }
+.an-gaveta[open] .an-gaveta-seta { transform: rotate(180deg); }
+.an-gaveta-corpo { display: grid; gap: 4px; padding: 0 4px 8px; border-top: 1px solid var(--separador); }
+/* dentro da gaveta, os blocos viram seções planas (a gaveta já é o cartão) */
+.an-gaveta-corpo .bloco { background: none; border: 0; box-shadow: none; border-radius: 0; }
+.an-gaveta-corpo .bloco + .bloco, .an-gaveta-corpo .an-duas + .bloco, .an-gaveta-corpo .bloco + .an-duas { border-top: 1px solid var(--separador); }
+.an-gaveta-corpo .an-duas { gap: 0; }
+.an-frases { list-style: none; margin: 0; padding: 16px 22px 4px; display: grid; gap: 6px; font-size: 14px; line-height: 1.5; color: var(--texto-2); }
+.an-frases li { padding-left: 12px; border-left: 3px solid var(--preench-2); }
+.an-frases li.bom { border-left-color: var(--entrada); }
+.an-frases li.medio { border-left-color: var(--divida); }
+.an-frases li.ruim { border-left-color: var(--saida); }
+.an-frases b { color: var(--texto); font-weight: 600; }
+
+/* ---------- agenda ---------- */
+.an-agenda .an-percepcoes { margin-bottom: 14px; }
+.an-dias { list-style: none; margin: 0; padding: 0; display: grid; }
+.an-dias li { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 10px 0; border-bottom: 1px solid var(--separador); font-size: 13.5px; }
+.an-dias li.an-dias-cab { padding: 0 0 6px; font-size: 12px; font-weight: 600; color: var(--texto-3); text-align: right; }
+.an-dia-data { font-weight: 650; color: var(--texto-2); }
+.an-dia-eventos { display: grid; gap: 3px; min-width: 0; }
+.an-dia-eventos span { overflow-wrap: anywhere; color: var(--texto-2); }
+.an-dia-eventos b { font-family: var(--fonte-numeros); font-weight: 650; color: var(--texto); font-variant-numeric: tabular-nums; }
+.an-dia-eventos .entra b { color: color-mix(in srgb, var(--entrada) 80%, var(--texto)); }
+.an-dia-eventos small { margin-left: 6px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 650; color: var(--alerta-texto); background: color-mix(in srgb, var(--saida) 14%, transparent); }
+.an-dia-saldo { font-family: var(--fonte-numeros); font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.an-dias li.negativo .an-dia-saldo { color: color-mix(in srgb, var(--saida) 85%, var(--texto)); }
+
+/* ---------- os números do mês (gaveta da agenda) ---------- */
 .an-mes-grade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 22px; align-items: start; }
 .an-mes-total { display: grid; gap: 8px; justify-items: start; padding: 18px; border-radius: var(--raio-m); background: color-mix(in srgb, var(--tom) 7%, var(--superficie-2)); border: 1px solid color-mix(in srgb, var(--tom) 22%, var(--borda)); }
 .an-mes-total small { font-size: 13px; font-weight: 600; color: var(--texto-2); }
-.an-mes-total > strong { font-family: var(--fonte-numeros); font-size: 34px; font-weight: 750; letter-spacing: -.035em; line-height: 1.05; color: color-mix(in srgb, var(--tom) 80%, var(--texto)); font-variant-numeric: tabular-nums; }
-.an-por-dia { display: flex; align-items: flex-start; gap: 10px; margin-top: 6px; padding: 12px; border-radius: var(--raio-p); background: var(--superficie); font-size: 14px; line-height: 1.5; border: 1px solid var(--borda); }
-.an-por-dia svg { flex: none; margin-top: 1px; color: var(--destaque); }
-.an-por-dia.sem svg { color: var(--divida); }
+.an-mes-total > strong { font-family: var(--fonte-numeros); font-size: 30px; font-weight: 750; letter-spacing: -.035em; line-height: 1.05; color: color-mix(in srgb, var(--tom) 80%, var(--texto)); font-variant-numeric: tabular-nums; }
 .an-mes-linhas dl { margin: 0; display: grid; }
 .an-mes-linhas dl > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--separador); font-size: 14px; }
 .an-mes-linhas dt { color: var(--texto-2); }
@@ -131,24 +173,6 @@
 .an-mes-linhas .total dd { font-size: 16px; font-weight: 700; }
 .an-notas { margin: 12px 0 0; padding-left: 18px; display: grid; gap: 5px; font-size: 13px; line-height: 1.5; color: var(--texto-2); }
 .an-notas:empty { display: none; }
-
-/* ---------- pilares ---------- */
-.an-pilares-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 12px; padding: 4px 14px 6px; }
-.an-pilar {
-  display: grid; gap: 7px; align-content: start; justify-items: start; text-align: left; padding: 16px; border-radius: var(--raio-m);
-  background: var(--superficie-2); border: 1px solid var(--borda); color: inherit; transition: border-color .2s, transform .3s var(--mola);
-}
-.an-pilar:hover { border-color: color-mix(in srgb, var(--c) 45%, var(--borda)); }
-.an-pilar:active { transform: scale(.985); }
-.an-pilar-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; width: 100%; }
-.an-pilar-nome { font-size: 14px; font-weight: 650; }
-.an-pilar-nota { font-size: 12px; color: var(--texto-3); font-variant-numeric: tabular-nums; }
-.an-pilar-nota b { font-size: 15px; color: color-mix(in srgb, var(--c) 80%, var(--texto)); }
-.an-barra { display: block; width: 100%; height: 6px; border-radius: 6px; background: var(--preench-3); overflow: hidden; }
-.an-barra i { display: block; height: 100%; border-radius: inherit; background: var(--c); transition: width .8s var(--mola); }
-.an-pilar-valor { font-family: var(--fonte-numeros); font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
-.an-pilar-ref { font-size: 12px; color: var(--texto-3); }
-.an-pilar-frase { font-size: 13.5px; line-height: 1.45; color: var(--texto-2); }
 
 /* ---------- barras empilhadas e legendas ---------- */
 .an-pilha { display: flex; gap: 3px; height: 14px; border-radius: 8px; overflow: hidden; }
@@ -247,18 +271,23 @@
 .an-rodape p { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--texto-3); }
 
 @media (max-width: 860px) {
-  .an-diag { padding: 20px 16px 16px; gap: 18px; }
-  .an-diag-topo { grid-template-columns: 1fr; gap: 16px; justify-items: center; text-align: center; }
-  .an-resumo { justify-items: center; }
+  .an-diag { padding: 18px 16px; }
+  .an-diag-linha { grid-template-columns: 72px minmax(0, 1fr); gap: 14px; align-items: start; }
+  .an-diag .anel { width: 72px !important; height: 72px !important; }
+  .an-diag .anel-meio strong { font-size: 26px; }
+  .an-nota-vazia { width: 72px; height: 72px; }
+  .an-diag-texto h2 { font-size: 16px; }
+  .an-agora, .an-seu-mes { padding: 18px 16px 10px; }
+  .an-agora-passo { grid-template-columns: 38px minmax(0, 1fr); gap: 12px; }
+  .an-agora-icone { width: 38px; height: 38px; }
+  .an-agora-passo strong { font-size: 16px; }
+  .an-acao-pe .btn { flex: 1 1 auto; height: 44px; margin-left: 0; }
+  .an-seu-mes-linha { grid-template-columns: 1fr; gap: 12px; }
   .an-mes-grade { grid-template-columns: 1fr; }
-  .an-acoes { padding: 2px 12px 4px; }
-  .an-acao { grid-template-columns: 28px minmax(0, 1fr); gap: 10px; padding: 14px 14px 12px; }
-  .an-acao-n { width: 28px; height: 28px; font-size: 13.5px; }
-  .an-acao-pe .btn { flex: 1 1 auto; height: 42px; margin-left: 0; }
-  .an-pilares-grade { padding: 2px 12px 4px; }
-  .an-degrau-nome { font-size: 11px; }
-  .an-escada li + li::before { right: calc(50% + 17px); width: calc(100% - 34px + 4px); top: 14px; }
-  .an-degrau { width: 28px; height: 28px; font-size: 12px; }
+  .an-gaveta > summary { padding: 14px; gap: 10px; grid-template-columns: 34px minmax(0, 1fr) auto; }
+  .an-gaveta-icone { width: 34px; height: 34px; }
+  .an-frases { padding: 14px 16px 2px; }
+  .an-dias li { grid-template-columns: 58px minmax(0, 1fr) auto; gap: 8px; font-size: 13px; }
   .an-tabela { font-size: 13px; }
   .an-estrategias th:nth-child(3), .an-estrategias td:nth-child(3) { display: none; }
 }

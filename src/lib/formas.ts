@@ -8,7 +8,7 @@ export type FormaGravada = Exclude<FormaPagamento, 'credito'>
 
 /** `id` é o que fica gravado; `nome` é só o rótulo e sai no idioma da pessoa (o idioma é lido uma vez ao abrir, então tx aqui no módulo vale). */
 export const FORMAS: { id: FormaPagamento; nome: string; icone: string; cor: string; tipos: Tipo[] }[] = [
-  { id: 'pix', nome: 'Pix', icone: 'enviar', cor: '#2bb5a0', tipos: ['saida', 'entrada'] },
+  { id: 'pix', nome: tx('Pix'), icone: 'enviar', cor: '#2bb5a0', tipos: ['saida', 'entrada'] },
   { id: 'debito', nome: tx('Débito'), icone: 'cartao', cor: '#4a8dff', tipos: ['saida'] },
   { id: 'credito', nome: tx('Crédito'), icone: 'cartao', cor: '#9d6bff', tipos: ['saida'] },
   { id: 'dinheiro', nome: tx('Dinheiro'), icone: 'carteira', cor: '#6bbf59', tipos: ['saida', 'entrada'] },

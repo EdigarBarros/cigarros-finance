@@ -225,7 +225,7 @@ const SEMANA = Array.from({ length: 7 }, (_, i) =>
 /** "2 de outubro" no ano corrente; "2 de outubro de 2025" (ou "October 2, 2025") nos outros. */
 function textoDaData(iso: string) {
   const ano = Number(iso.slice(0, 4))
-  return ano === new Date().getFullYear() ? fmtDataLonga(iso) : tx('{0} de {1} (data com ano)', fmtDataLonga(iso), ano).replace(' (data com ano)', '')
+  return ano === new Date().getFullYear() ? fmtDataLonga(iso) : tx('{0} de {1} (data com ano)', fmtDataLonga(iso), ano).replace((' ' + tx('(data com ano)')), '')
 }
 
 /**

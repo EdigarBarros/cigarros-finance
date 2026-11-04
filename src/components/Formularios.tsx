@@ -1031,7 +1031,7 @@ export function EscolhaBanco({ bancos, valor, aoMudar, aoNovoBanco, grade }: {
   grade?: boolean
 }) {
   const novo = async () => {
-    const nome = (await perguntar(tx('Nome do banco (ex.: Nubank, Itaú, Next, Dinheiro):'), { titulo: tx('Novo banco'), placeholder: 'Nubank, Itaú, Next…' }))?.trim()
+    const nome = (await perguntar(tx('Nome do banco (ex.: Nubank, Itaú, Next, Dinheiro):'), { titulo: tx('Novo banco'), placeholder: tx('Nubank, Itaú, Next…') }))?.trim()
     if (!nome) return
     const existente = bancos.find((b) => mesmoNome(b.nome, nome))
     if (existente) return aoMudar(existente.id)

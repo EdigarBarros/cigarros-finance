@@ -67,7 +67,7 @@ export function Lancamentos(c: Ctx) {
       l.descricao, c.categoriaDe(l)?.nome, c.d.bancos.find((b) => b.id === l.banco_id)?.nome,
       l.cartao_id ? `cartao ${c.cartoes.cartoes.find((k) => k.id === l.cartao_id)?.nome ?? ''}` : '',
       f ? infoForma(f).nome : '', div ? `${div.descricao} ${div.pessoa ?? ''}` : '',
-      l.tipo === 'entrada' ? 'entrada entradas recebido' : 'saida saidas gasto', (l.parcelas ?? 1) > 1 ? 'parcela parcelado' : '',
+      l.tipo === 'entrada' ? tx('entrada entradas recebido') : tx('saida saidas gasto'), (l.parcelas ?? 1) > 1 ? tx('parcela parcelado') : '',
     ].filter(Boolean).join(' '))
   }
 
