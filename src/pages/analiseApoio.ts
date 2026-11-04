@@ -4,7 +4,8 @@ export { fmtCurto } from '../lib/visuais'
 
 /** Apoio dos gráficos do consultor (pages/AnaliseGraficos.tsx): cor de cada tom, valor curto e o gatilho da animação. */
 
-export const COR_DO_TOM: Record<Tom, string> = { bom: 'var(--entrada)', medio: 'var(--divida)', ruim: 'var(--saida)' }
+/** Verde = está bem, laranja = atenção, vermelho = problema (as cores ficam em pages/analise.css, `.analise`). */
+export const COR_DO_TOM: Record<Tom, string> = { bom: 'var(--an-bom)', medio: 'var(--an-atencao)', ruim: 'var(--an-ruim)' }
 
 /** true quando o elemento entra na tela (uma vez só): é a deixa para a animação começar. */
 export function useEmVista<T extends Element>() {
