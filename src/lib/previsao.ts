@@ -25,13 +25,19 @@ const centavos = (n: number) => Math.round(n * 100) / 100
 const soma = (xs: number[]) => centavos(xs.reduce((a, n) => a + n, 0))
 const chaveFatura = (cartao: string, ano: number, mes: number) => `${cartao}|${ano}|${mes}`
 
-/** Compra no cartão cuja fatura ainda não foi paga (só vale quando o módulo de cartões está ligado). */
-export const faturaEmAberto = (l: Lancamento, pagas: Set<string>, comFaturas: boolean) =>
-  comFaturas && l.tipo === 'saida' && Boolean(l.cartao_id) && !pagas.has(chaveFatura(l.cartao_id!, l.ano, l.mes))
+/**
+ * Compra no cartão cuja fatura ainda não foi paga (só vale com o módulo de cartões ligado). Só conta como "ainda vem" a fatura
+ * do mês de hoje em diante: de meses que já passaram o gasto continua valendo como saída, mesmo que a pessoa nunca tenha
+ * marcado a fatura como paga (senão o histórico de quem não usa o botão sumiria).
+ */
+export const faturaEmAberto = (l: Lancamento, pagas: Set<string>, comFaturas: boolean, agora: number) =>
+  comFaturas && l.tipo === 'saida' && Boolean(l.cartao_id) && l.ano * 12 + l.mes >= agora && !pagas.has(chaveFatura(l.cartao_id!, l.ano, l.mes))
 
-export function previsaoDoAno({ lancs, faturasPagas, comFaturas, contas, ano, taxas, hoje = new Date() }: {
+export function previsaoDoAno({ lancs, lancsBaixas = lancs, faturasPagas, comFaturas, contas, ano, taxas, hoje = new Date() }: {
   /** Lançamentos do ano (já sem as compras de fatura renegociada). */
   lancs: Lancamento[]
+  /** Onde procurar a baixa ("Paguei" / "Recebi") das contas fixas: todos os lançamentos, como no resto do app. */
+  lancsBaixas?: Lancamento[]
   faturasPagas: FaturaPaga[]
   comFaturas: boolean
   contas: ContaFixa[]
@@ -45,9 +51,9 @@ export function previsaoDoAno({ lancs, faturasPagas, comFaturas, contas, ano, ta
   return Array.from({ length: 12 }, (_, i) => {
     const mes = i + 1
     const doMes = lancs.filter((l) => l.ano === ano && l.mes === mes)
-    const emAberto = doMes.filter((l) => faturaEmAberto(l, pagas, comFaturas))
+    const emAberto = doMes.filter((l) => faturaEmAberto(l, pagas, comFaturas, agora))
     const feitas = doMes.filter((l) => !emAberto.includes(l))
-    const sits = situacoesDoMes(contas, lancs, ano, mes, iso, taxas).filter((s) => s.estado !== 'paga')
+    const sits = situacoesDoMes(contas, lancsBaixas, ano, mes, iso, taxas).filter((s) => s.estado !== 'paga')
     return {
       entrou: soma(feitas.filter((l) => l.tipo === 'entrada').map((l) => l.valor)),
       saiu: soma(feitas.filter((l) => l.tipo === 'saida').map((l) => l.valor)),

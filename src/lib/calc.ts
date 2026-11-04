@@ -24,6 +24,8 @@ export interface MesEfetivo extends Mes {
 // nunca preencheu e o de quem zerou são iguais, e separar os dois pede uma migração no banco.
 const caixaInformado = (c?: Caixa) => Object.values(c ?? {}).some((b) => TIPOS_CAIXA.some((t) => typeof b?.[t] === 'number'))
 const moedasInformadas = (m?: Record<string, number>) => Object.values(m ?? {}).some((v) => typeof v === 'number')
+/** O mês tem algum saldo (guardado, outras moedas ou investido), próprio ou herdado? */
+export const saldoInformado = (m: Pick<Mes, 'caixa' | 'moedas' | 'investimentos'>) => caixaInformado(m.caixa) || moedasInformadas(m.moedas) || m.investimentos > 0
 
 /**
  * Caixa, investimentos, outras moedas e meta passam de um mês para o outro até você atualizar.

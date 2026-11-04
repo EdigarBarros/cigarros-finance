@@ -304,6 +304,8 @@ function PainelDoMes({ indice, r, v, fora, moeda, aoMudar, p, modo }: {
   p?: PrevisaoMes; modo: ModoDoGrafico
 }) {
   const comPrevisao = !fora && modo === 'previsto' && temPrevisao(p)
+  // mesmo critério do gráfico: mês futuro em que nada aconteceu ainda fica em branco
+  const semNadaFeito = !fora && !comPrevisao && Boolean(p?.futuro) && p!.entrou === 0 && p!.saiu === 0
   const fmt = fora ? (n: number) => fmtMoeda(n, moeda) : fmtValor
   const sinal = (n: number) => `${n < 0 ? '−' : '+'}${fmt(Math.abs(n))}`
   // Na moeda principal o painel mostra o que já aconteceu (a fatura em aberto só entra em "Vai sair").
@@ -324,7 +326,7 @@ function PainelDoMes({ indice, r, v, fora, moeda, aoMudar, p, modo }: {
         <h3>{MESES_NOME[indice]}</h3>
         <button className="pm-nav" onClick={() => aoMudar(indice + 1)} disabled={indice >= 11} aria-label={tx('Próximo mês')}><Icone nome="dir" tamanho={16} /></button>
       </div>
-      {!r && !comPrevisao ? <p className="pm-vazio">{tx('Sem lançamentos neste mês.')}</p> : (
+      {(!r || semNadaFeito) && !comPrevisao ? <p className="pm-vazio">{tx('Sem lançamentos neste mês.')}</p> : (
         <>
           {linha(tx('Entrou'), fmt(entrou), 'entrou')}
           {linha(tx('Saiu'), fmt(saiu), 'saiu')}
@@ -343,7 +345,7 @@ function PainelDoMes({ indice, r, v, fora, moeda, aoMudar, p, modo }: {
           })()}
           {r && ((fora ? guardado > 0 : v.bancos && !semSaldo) || (fora ? divida > 0 : v.dividas) || (!fora && ((v.investimentos || v.moedas) && !semSaldo))) && <hr className="pm-sep" />}
           {r && (fora ? guardado > 0 : v.bancos && !semSaldo) && linha(fora ? tx('Guardado em {0}', moeda) : tx('Guardado nas contas'), fmt(guardado), 'caixa')}
-          {(fora ? divida > 0 : v.dividas) && linha(fora ? tx('Dívidas em {0}', moeda) : tx('Dívidas'), fmt(divida), 'divida')}
+          {r && (fora ? divida > 0 : v.dividas) && linha(fora ? tx('Dívidas em {0}', moeda) : tx('Dívidas'), fmt(divida), 'divida')}
           {origens.length > 0 && (
             <ul className="pm-origem">
               {origens.map(([nome, valor]) => <li key={nome}><span>{nome}</span><b>{sinal(valor)}</b></li>)}

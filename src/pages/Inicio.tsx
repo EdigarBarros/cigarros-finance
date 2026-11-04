@@ -66,8 +66,11 @@ export function Inicio(c: Ctx) {
   const situacaoMetas = c.d.metas.map((m) => situacaoMeta(m, c.d.movimentosMeta))
   const mesVazio = c.lancsMes.length === 0
   const haAno = c.porMes.some(Boolean)
+  // os 6 meses que o gráfico de fluxo mostra (mesma conta do GraficoFluxo)
+  const inicioDoFluxo = Math.max(0, Math.min(c.mes - 6, 6))
+  const janelaDoFluxo = c.previsto.slice(inicioDoFluxo, inicioDoFluxo + 6)
   // modo "O que vem aí" com saídas previstas e nenhuma entrada prevista: avisa por que não há barra verde
-  const semRecebimentoPrevisto = modoDoGrafico === 'previsto' && moedaFluxo === moedaAtual() && c.previsto.some((p) => p.vaiSair > 0) && !c.previsto.some((p) => p.vaiEntrar > 0)
+  const semRecebimentoPrevisto = modoDoGrafico === 'previsto' && moedaFluxo === moedaAtual() && c.v.contas && janelaDoFluxo.some((p) => p.vaiSair > 0) && !janelaDoFluxo.some((p) => p.vaiEntrar > 0)
 
   // ---------- 0. Saudação ----------
   const sobrou = r.fluxo >= 0
