@@ -70,7 +70,50 @@ export type Visual = Base & (
   | { tipo: 'pote'; atual: number; maximo: number; marcos: { rotulo: string; valor: number }[] }
   | { tipo: 'aneis'; itens: { rotulo: string; icone: string; progresso: number; legenda: string; tom: Tom }[] }
   | { tipo: 'tabela'; colunas: string[]; linhas: { icone: string; rotulo: string; valores: number[]; corta: boolean }[] }
+  | { tipo: 'fluxo'; grupos: { data: string | null; fonte: string; pagamentos: { descricao: string; valor: number; vence: string; atraso: number; custo: number }[] }[] }
 )
+
+/** Traço do jeito de cada pessoa lidar com dinheiro: muda a ordem dos gráficos e aparece no topo da tela. */
+export type Traco = 'gasta-mais' | 'controlado' | 'endividado' | 'renda-varia' | 'cartao' | 'poupador' | 'apertado' | 'comecando'
+
+export interface PerfilFinanceiro {
+  tracos: Traco[]
+  /** O traço principal em palavras ("Você é do tipo controlado"). */
+  rotulos: string[]
+}
+
+const ROTULO_DO_TRACO: Record<Traco, () => string> = {
+  'gasta-mais': () => tx('Gasta mais do que entra'), controlado: () => tx('Controlado'), endividado: () => tx('Muitas parcelas'),
+  'renda-varia': () => tx('Renda que varia'), cartao: () => tx('Vive no cartão'), poupador: () => tx('Poupador'),
+  apertado: () => tx('Mês apertado'), comecando: () => tx('Começando agora'),
+}
+
+/** O jeito da pessoa com dinheiro, lido dos números (não de perguntas): é o que deixa a tela de cada um diferente. */
+export function perfilFinanceiro(a: Analise): PerfilFinanceiro {
+  const t: Traco[] = []
+  if (a.mesesAnalisados < 3) t.push('comecando')
+  if (a.temFluxo && a.sobra < 0) t.push('gasta-mais')
+  else if (a.temFluxo && a.sobraFracao < 0.05) t.push('apertado')
+  if (a.dividas && (a.dividas.temCara || (a.renda > 0 && a.dividas.parcelasMes / a.renda > 0.3))) t.push('endividado')
+  if (a.rendaVaria) t.push('renda-varia')
+  if (a.cartao && a.cartao.fracaoDasSaidas > 0.4) t.push('cartao')
+  const controle = a.pilares.find((p) => p.id === 'controle')
+  if (a.temFluxo && a.sobraFracao >= 0.15 && (controle?.nota ?? 0) >= 70) t.push('controlado')
+  if (a.reserva && a.reserva.falta <= 0) t.push('poupador')
+  return { tracos: t, rotulos: t.map((x) => ROTULO_DO_TRACO[x]()) }
+}
+
+/** Quanto cada traço puxa cada gráfico para cima (somado à prioridade do motor). */
+const PUXA: Record<Traco, Partial<Record<string, number>>> = {
+  'gasta-mais': { categorias: 18, halteres: 16, 'tabela-orcamento': 16, 'rosca-503020': 10, 'barras-fixas': 10 },
+  apertado: { 'curva-saldo': 16, calendario: 14, 'tabela-orcamento': 12, plano: 12 },
+  endividado: { 'linha-dividas': 18, 'rosca-juros': 16, 'barras-estrategias': 16, plano: 12 },
+  'renda-varia': { 'curva-saldo': 16, calendario: 14, 'colunas-sobra': 12, 'pote-reserva': 10 },
+  cartao: { categorias: 10, 'barras-fixas': 8, plano: 8 },
+  controlado: { 'curva-patrimonio': 20, 'aneis-metas': 18, radar: 10, 'pote-reserva': 8 },
+  poupador: { 'curva-patrimonio': 22, 'aneis-metas': 16 },
+  comecando: { calendario: 12, categorias: 10, radar: -20, 'colunas-sobra': -20 },
+}
 
 /** Os nomes curtos dos pilares, para caber num gráfico. */
 export const NOME_CURTO: Record<IdPilar, () => string> = {
@@ -291,6 +334,33 @@ export function visuais(a: Analise): Visual[] {
     })
   }
 
+  // ---- de onde sai o dinheiro de cada conta (planejador) ----
+  const plano = a.agenda?.plano
+  if (plano && plano.pagamentos.length) {
+    const grupos: Extract<Visual, { tipo: 'fluxo' }>['grupos'] = []
+    for (const pg of plano.pagamentos.filter((x) => x.pagarEm).sort((x, y) => x.pagarEm!.localeCompare(y.pagarEm!)).slice(0, 12)) {
+      const ultimo = grupos[grupos.length - 1]
+      const item = { descricao: pg.descricao, valor: pg.valor, vence: pg.vence, atraso: pg.atraso, custo: pg.custo }
+      if (ultimo && ultimo.data === pg.pagarEm && ultimo.fonte === (pg.fonte ?? '')) ultimo.pagamentos.push(item)
+      else grupos.push({ data: pg.pagarEm, fonte: pg.fonte ?? '', pagamentos: [item] })
+    }
+    if (plano.semDinheiro.length) {
+      grupos.push({ data: null, fonte: tx('Ainda sem dinheiro'), pagamentos: plano.semDinheiro.map((x) => ({ descricao: x.descricao, valor: x.valor, vence: x.vence, atraso: x.atraso, custo: x.custo })) })
+    }
+    v.push({
+      id: 'plano', tipo: 'fluxo', prioridade: plano.atrasos ? 93 : 57, destino: 'contas', grupos, tom: plano.atrasos ? 'medio' : 'bom',
+      titulo: tx('De onde sai o dinheiro'),
+      frase: plano.atrasos
+        ? plano.custoTotal >= 0.01
+          ? tx('{0} vão atrasar: cerca de {1} de multa e juros.', plano.atrasos, fmtValor(plano.custoTotal))
+          : tx('{0} vão atrasar.', plano.atrasos)
+        : tx('Tudo pago em dia com o que vai entrar.'),
+    })
+  }
+
+  // o jeito da pessoa puxa os gráficos que mais servem para ela
+  const { tracos } = perfilFinanceiro(a)
+  for (const x of v) x.prioridade += tracos.reduce((s, t) => s + (PUXA[t][x.id] ?? 0), 0)
   return v.sort((x, y) => y.prioridade - x.prioridade)
 }
 

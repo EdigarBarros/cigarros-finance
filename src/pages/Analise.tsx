@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { compararRetratos, retratoDe, type Analise as DadosAnalise, type Mudanca, type Retrato } from '../lib/analise'
-import { cascataDoMes, visuais } from '../lib/visuais'
+import { cascataDoMes, perfilFinanceiro, visuais } from '../lib/visuais'
 import { fmtDataCurta, fmtValor, MESES_NOME, noMeioDaFrase } from '../lib/format'
 import { useMovimento } from '../lib/tema'
 import { Icone } from '../components/Icone'
 import { Interruptor } from '../components/ui'
 import { Numero } from '../components/Numero'
 import { CartaoVisual, Escada, Grafico, Medidor } from './AnaliseGraficos'
-import { COR_DO_TOM, useEmVista } from './analiseApoio'
+import { COR_DO_TOM, useEmVista, usePreferenciasVisuais } from './analiseApoio'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 import './analise.css'
@@ -27,8 +27,14 @@ export function Analise(c: Ctx) {
   const movimento = useMovimento()
   const [todos, setTodos] = useState(c.perfil.detalhe === 'detalhado')
   const desdeAVisita = useDesdeAUltimaVisita(c.idUsuario, a)
-  const lista = useMemo(() => visuais(a), [a])
-  const naFrente = GRAFICOS_NA_FRENTE[c.perfil.detalhe]
+  const prefs = usePreferenciasVisuais(c.idUsuario)
+  // a ordem é do motor (importância e o jeito da pessoa), mais o uso: favoritos no topo, o que ela mais toca sobe
+  const lista = useMemo(() => visuais(a)
+    .filter((v) => !prefs.escondidos.includes(v.id))
+    .map((v) => ({ v, nota: v.prioridade + prefs.peso(v.id) }))
+    .sort((x, y) => y.nota - x.nota)
+    .map(({ v }) => v), [a, prefs]) // eslint-disable-line react-hooks/exhaustive-deps
+  const naFrente = Math.max(GRAFICOS_NA_FRENTE[c.perfil.detalhe], prefs.favoritos.filter((f) => lista.some((v) => v.id === f)).length)
   const vistos = todos ? lista : lista.slice(0, naFrente)
 
   if (c.contaNova) {
@@ -52,19 +58,28 @@ export function Analise(c: Ctx) {
     <div className={`pagina analise ${movimento === 'reduzido' ? 'parado' : ''}`}>
       <Cabecalho />
       <ComoEstou a={a} />
+      {a.mes && <HojePodeGastar a={a} />}
       <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} />
       <FacaAgora a={a} aoIr={c.irPara} />
       {a.mes && <SeuMes a={a} />}
 
       <div className="an-feed">
         {vistos.map((v) => (
-          <CartaoVisual key={v.id} v={v} aoIr={c.irPara}><Grafico v={v} /></CartaoVisual>
+          <CartaoVisual key={v.id} v={v} aoIr={c.irPara}
+            prefs={{ favorito: prefs.favoritos.includes(v.id), aoFavoritar: () => prefs.favoritar(v.id), aoEsconder: () => prefs.esconder(v.id), aoTocar: () => prefs.tocar(v.id) }}>
+            <Grafico v={v} />
+          </CartaoVisual>
         ))}
       </div>
       {lista.length > naFrente && (
         <button className="btn an-mais" onClick={() => setTodos(!todos)}>
           <Icone nome={todos ? 'cima' : 'ano'} tamanho={17} />
           {todos ? tx('Mostrar menos') : tx('Ver mais {0} gráficos', lista.length - naFrente)}
+        </button>
+      )}
+      {prefs.escondidos.length > 0 && (
+        <button className="link an-escondidos" onClick={prefs.mostrarTodos}>
+          {prefs.escondidos.length === 1 ? tx('Mostrar o gráfico escondido') : tx('Mostrar os {0} gráficos escondidos', prefs.escondidos.length)}
         </button>
       )}
 
@@ -108,6 +123,7 @@ function PorQue({ texto }: { texto: string }) {
 function ComoEstou({ a }: { a: DadosAnalise }) {
   const [ref, vivo] = useEmVista<HTMLElement>()
   const iFase = a.fases.findIndex((f) => f.id === a.fase)
+  const tracos = perfilFinanceiro(a).rotulos
   return (
     <section ref={ref} className={`cartao vis an-como ${vivo ? 'vivo' : ''}`} style={{ '--c': COR_DO_TOM[a.tom] } as CSSProperties}>
       <div className="an-como-topo">
@@ -119,7 +135,52 @@ function ComoEstou({ a }: { a: DadosAnalise }) {
         </div>
       </div>
       <Escada fases={a.fases} atual={iFase} />
+      {tracos.length > 0 && (
+        <div className="an-tracos" aria-label={tx('Seu jeito com o dinheiro')}>
+          {tracos.map((t) => <span key={t}>{t}</span>)}
+        </div>
+      )}
       <PorQue texto={a.temFluxo ? a.porqueFase : a.resumo[0]} />
+    </section>
+  )
+}
+
+/**
+ * Hoje você pode gastar: o orçamento do dia a dia, refeito todo dia e a cada lançamento. É o que sobra do mês depois das
+ * contas, parcelas, faturas e da sobra que o plano guarda, dividido pelos dias que faltam; a barra mostra quanto já foi.
+ */
+function HojePodeGastar({ a }: { a: DadosAnalise }) {
+  const [ref, vivo] = useEmVista<HTMLElement>()
+  const m = a.mes!
+  const limite = Math.max(0, Math.floor(m.porDia))
+  const gasto = m.gastoHoje
+  const resta = Math.max(0, limite - gasto)
+  const passou = limite > 0 && gasto > limite
+  const p = limite > 0 ? Math.min(1, gasto / limite) : 1
+  return (
+    <section ref={ref} className={`cartao vis an-hoje ${vivo ? 'vivo' : ''} ${limite <= 0 ? 'sem' : passou ? 'passou' : ''}`}>
+      <div className="an-hoje-topo">
+        <span className="an-hoje-icone" aria-hidden="true"><Icone nome="carteira" tamanho={22} /></span>
+        <div>
+          <small>{limite > 0 ? tx('Hoje você pode gastar') : tx('Hoje')}</small>
+          <strong>{limite > 0 ? <Numero valor={limite} formato={fmtValor} /> : tx('Segure os gastos')}</strong>
+        </div>
+      </div>
+      {limite > 0 && (
+        <>
+          <div className="an-hoje-barra" role="img" aria-label={tx('Já foram {0} de {1}', fmtValor(gasto), fmtValor(limite))}>
+            <i style={{ width: `${p * 100}%` }} />
+          </div>
+          <div className="an-hoje-linha">
+            <span>{tx('Já foram {0}', fmtValor(gasto))}</span>
+            <b>{passou ? tx('Passou {0}', fmtValor(gasto - limite)) : tx('Ainda dá {0}', fmtValor(resta))}</b>
+          </div>
+        </>
+      )}
+      <PorQue texto={limite > 0
+        ? tx('Do que entra até o fim do mês, já tirei as contas, parcelas e faturas que ainda vêm e {0} para guardar. O resto, dividido pelos {1} dias que faltam, dá {2} por dia para Uber, café, mercado e o resto do dia a dia. Gastou menos hoje? Amanhã o valor sobe. Não conta renda extra que ainda não foi lançada.',
+          fmtValor(m.sobraAlvo), m.diasNoMes - m.dia + 1, fmtValor(limite))
+        : tx('O que entra até o fim do mês mal cobre as contas, parcelas e faturas que ainda vêm. Cada gasto do dia a dia agora sai do que estava guardado ou vira atraso.')} />
     </section>
   )
 }

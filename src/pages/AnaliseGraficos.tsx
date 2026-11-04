@@ -15,14 +15,36 @@ import { tx } from '../lib/textos'
  * começa quando o cartão aparece na tela (classe "vivo"). Com "Animações reduzidas" (Configurações), tudo aparece pronto.
  */
 
-/** O cartão de um visual: título curto, uma frase, o desenho e, se houver, o atalho para a tela certa. */
-export function CartaoVisual({ v, aoIr, children }: { v: Pick<Visual, 'id' | 'titulo' | 'frase' | 'tom' | 'destino'>; aoIr?: (d: Destino) => void; children: ReactNode }) {
+/**
+ * O cartão de um visual: título curto, uma frase, o desenho e, se houver, o atalho para a tela certa. Com `prefs`, ganha a
+ * estrela (favorito: vai para o topo) e o "esconder", e conta os toques (o que a pessoa mais usa sobe sozinho).
+ */
+export function CartaoVisual({ v, aoIr, prefs, children }: {
+  v: Pick<Visual, 'id' | 'titulo' | 'frase' | 'tom' | 'destino'>
+  aoIr?: (d: Destino) => void
+  prefs?: { favorito: boolean; aoFavoritar: () => void; aoEsconder: () => void; aoTocar: () => void }
+  children: ReactNode
+}) {
   const [ref, vivo] = useEmVista<HTMLElement>()
   return (
-    <section ref={ref} className={`cartao vis ${vivo ? 'vivo' : ''}`} style={{ '--c': v.tom ? COR_DO_TOM[v.tom] : 'var(--destaque)' } as CSSProperties}>
+    <section ref={ref} className={`cartao vis ${vivo ? 'vivo' : ''} ${prefs?.favorito ? 'favorito' : ''}`} onClickCapture={prefs?.aoTocar}
+      style={{ '--c': v.tom ? COR_DO_TOM[v.tom] : 'var(--destaque)' } as CSSProperties}>
       <header className="vis-cab">
         <h3>{v.titulo}</h3>
-        {v.destino && aoIr && <button className="vis-ir" onClick={() => aoIr(v.destino!)} aria-label={tx('Abrir')}><Icone nome="dir" tamanho={18} /></button>}
+        <span className="vis-botoes">
+          {prefs && (
+            <>
+              <button className={`vis-ir vis-estrela ${prefs.favorito ? 'ligada' : ''}`} onClick={prefs.aoFavoritar} aria-pressed={prefs.favorito}
+                aria-label={prefs.favorito ? tx('Tirar dos favoritos') : tx('Favoritar: este gráfico fica no topo')} title={prefs.favorito ? tx('Tirar dos favoritos') : tx('Favoritar: este gráfico fica no topo')}>
+                <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" /></svg>
+              </button>
+              <button className="vis-ir" onClick={prefs.aoEsconder} aria-label={tx('Esconder este gráfico')} title={tx('Esconder este gráfico')}>
+                <Icone nome="fechar" tamanho={15} />
+              </button>
+            </>
+          )}
+          {v.destino && aoIr && <button className="vis-ir" onClick={() => aoIr(v.destino!)} aria-label={tx('Abrir')}><Icone nome="dir" tamanho={18} /></button>}
+        </span>
       </header>
       {v.frase && <p className="vis-frase">{v.frase}</p>}
       <div className="vis-corpo">{children}</div>
@@ -44,6 +66,7 @@ export function Grafico({ v }: { v: Visual }) {
     case 'pote': return <Pote atual={v.atual} maximo={v.maximo} marcos={v.marcos} />
     case 'aneis': return <Aneis itens={v.itens} />
     case 'tabela': return <Tabela colunas={v.colunas} linhas={v.linhas} />
+    case 'fluxo': return <Fluxo grupos={v.grupos} />
   }
 }
 
@@ -428,5 +451,52 @@ function Tabela({ colunas, linhas }: { colunas: string[]; linhas: { icone: strin
         ))}
       </tbody>
     </table>
+  )
+}
+
+// ---------- de onde sai o dinheiro (planejador) ----------
+
+/** Quantos compromissos aparecem antes de "Ver todos" (os que não têm dinheiro sempre aparecem). */
+const NO_FLUXO = 8
+
+function Fluxo({ grupos }: { grupos: Extract<Visual, { tipo: 'fluxo' }>['grupos'] }) {
+  const [todos, setTodos] = useState(false)
+  const total = grupos.reduce((s, g) => s + g.pagamentos.length, 0)
+  // corta pelo número de compromissos, mantendo os grupos inteiros e sempre o "ainda sem dinheiro"
+  let conta = 0
+  const vistos = todos ? grupos : grupos.filter((g) => {
+    if (!g.data) return true
+    conta += g.pagamentos.length
+    return conta - g.pagamentos.length < NO_FLUXO
+  })
+  return (
+    <>
+    <ol className="fluxo">
+      {vistos.map((g, i) => (
+        <li key={`${g.data}${g.fonte}${i}`} className={g.data ? '' : 'falta'} style={{ '--i': i } as CSSProperties}>
+          <span className="fluxo-no" aria-hidden="true"><Icone nome={g.data ? 'receber' : 'escudo'} tamanho={14} /></span>
+          <div className="fluxo-cab">
+            <b>{g.data ? fmtDataCurta(g.data) : g.fonte}</b>
+            {g.data && g.fonte && <span>{tx('com {0}', g.fonte)}</span>}
+          </div>
+          <ul>
+            {g.pagamentos.map((p, k) => (
+              <li key={`${p.descricao}${k}`} className={p.atraso > 0 || !g.data ? 'atrasa' : 'em-dia'}>
+                <span className="fluxo-nome">{p.descricao}</span>
+                <b>{fmtCurto(p.valor + p.custo)}</b>
+                <small>
+                  {!g.data ? tx('vence {0}', fmtDataCurta(p.vence))
+                    : p.atraso === 1 ? (p.custo >= 0.01 ? tx('1 dia de atraso · +{0}', fmtValor(p.custo)) : tx('1 dia de atraso'))
+                      : p.atraso > 1 ? (p.custo >= 0.01 ? tx('{0} dias de atraso · +{1}', p.atraso, fmtValor(p.custo)) : tx('{0} dias de atraso', p.atraso))
+                      : tx('em dia')}
+                </small>
+              </li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </ol>
+    {total > NO_FLUXO && vistos.length < grupos.length && <button className="quadro-ver" onClick={() => setTodos(true)}>{tx('Ver os {0} compromissos', total)}</button>}
+    </>
   )
 }

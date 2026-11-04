@@ -87,6 +87,27 @@
 .an-porque .link { font-size: 13.5px; }
 .an-porque p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--texto-2); animation: vis-aparece .35s var(--mola); }
 
+/* traços do jeito da pessoa com dinheiro */
+.an-tracos { display: flex; flex-wrap: wrap; gap: 6px; }
+.an-tracos span { display: inline-flex; align-items: center; height: 26px; padding: 0 11px; border-radius: 999px; font-size: 12.5px; font-weight: 650; color: var(--texto-2); background: var(--preench-3); border: 1px solid var(--borda); }
+
+/* ---------- hoje você pode gastar ---------- */
+.an-hoje { --c: var(--destaque); gap: 12px; border-color: color-mix(in srgb, var(--destaque) 35%, var(--borda)); background: radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--destaque) 12%, transparent), transparent 55%), var(--superficie); }
+.an-hoje.passou { --c: var(--divida); }
+.an-hoje.sem { --c: var(--saida); }
+.an-hoje-topo { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 14px; align-items: center; }
+.an-hoje-icone { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
+.an-hoje-topo small { display: block; font-size: 13px; font-weight: 650; color: var(--texto-2); }
+.an-hoje-topo strong { display: block; font-family: var(--fonte-numeros); font-size: 34px; font-weight: 800; letter-spacing: -.035em; line-height: 1.05; color: color-mix(in srgb, var(--c) 82%, var(--texto)); }
+.an-hoje-barra { height: 14px; border-radius: 10px; background: var(--preench-3); overflow: hidden; }
+.an-hoje-barra i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--destaque), var(--c)); transform-origin: left; animation: vis-cresce-x 1s var(--mola) .2s backwards; }
+.an-hoje.passou .an-hoje-barra i { background: var(--divida); }
+.vis:not(.vivo) .an-hoje-barra i { animation-play-state: paused; }
+.an-hoje-linha { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; color: var(--texto-2); }
+.an-hoje-linha b { color: var(--texto); }
+.an-hoje.sem .an-hoje-topo strong { font-size: 22px; letter-spacing: -.02em; }
+.an-hoje.passou .an-hoje-linha b { color: color-mix(in srgb, var(--divida) 70%, var(--texto)); }
+
 /* ---------- o que mudou ---------- */
 .an-mudou { display: grid; gap: 8px; padding: 14px 18px; border-color: color-mix(in srgb, var(--destaque) 30%, var(--borda)); animation: vis-aparece .45s var(--mola); }
 .an-mudou-titulo { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--destaque); }
@@ -314,6 +335,33 @@ li.caiu .halteres-agora { background: var(--entrada); }
 .tabela-vis tr.corta td:last-child { color: color-mix(in srgb, var(--entrada) 80%, var(--texto)); font-weight: 700; }
 .tabela-vis td:last-child svg { vertical-align: -2px; margin-right: 3px; }
 .tabela-icone { margin-right: 4px; }
+
+/* ---------- favoritos e escondidos ---------- */
+.vis-botoes { display: inline-flex; gap: 6px; flex: none; }
+.vis-estrela svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; transition: transform .3s var(--mola-salto); }
+.vis-estrela.ligada { color: var(--divida); }
+.vis-estrela.ligada svg { fill: currentColor; transform: scale(1.1); }
+.vis.favorito { border-color: color-mix(in srgb, var(--divida) 35%, var(--borda)); }
+.an-escondidos { justify-self: center; font-size: 13.5px; }
+
+/* ---------- de onde sai o dinheiro ---------- */
+.fluxo { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.fluxo > li { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 2px 12px; padding-bottom: 12px; animation: vis-aparece .45s var(--mola) calc(var(--i) * 90ms) backwards; }
+.vis:not(.vivo) .fluxo > li { animation-play-state: paused; }
+.fluxo > li::before { content: ''; position: absolute; left: 13px; top: 28px; bottom: 0; width: 2px; background: var(--borda-forte); }
+.fluxo > li:last-child::before { display: none; }
+.fluxo-no { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: #fff; background: var(--entrada); z-index: 1; }
+.fluxo > li.falta .fluxo-no { background: var(--saida); }
+.fluxo-cab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; padding-top: 4px; }
+.fluxo-cab b { font-size: 14px; }
+.fluxo-cab span { font-size: 12.5px; color: var(--texto-3); }
+.fluxo ul { grid-column: 2; list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 6px; }
+.fluxo ul li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 10px; padding: 8px 10px; border-radius: 10px; background: var(--superficie-2); border: 1px solid var(--borda); border-left: 3px solid var(--entrada); }
+.fluxo ul li.atrasa { border-left-color: var(--saida); }
+.fluxo-nome { font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fluxo ul li b { font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.fluxo ul li small { grid-column: 1 / -1; font-size: 12px; color: color-mix(in srgb, var(--entrada) 80%, var(--texto)); }
+.fluxo ul li.atrasa small { color: color-mix(in srgb, var(--saida) 85%, var(--texto)); }
 
 /* ---------- conta nova e rodapé ---------- */
 .an-vazio { display: grid; justify-items: center; gap: 12px; text-align: center; padding: 40px 24px; }

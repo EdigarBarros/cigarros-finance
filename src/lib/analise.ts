@@ -27,6 +27,7 @@ import { aumentaDivida, calendarioDe, jurosAoAno, meDevem, projecaoMensal, situa
 import { fmtDataCurta, fmtMesAno, fmtMoeda, fmtPct, fmtTaxa, fmtTaxaAno, fmtValor, LOCAL_DAS_DATAS, MESES_NOME, noMeioDaFrase } from './format'
 import { situacaoMeta } from './metas'
 import { converter, totalConvertido, type Taxas } from './moedas'
+import { planejar, type PlanoDePagamentos } from './planejador'
 import { visao } from './perfil'
 import { tx } from './textos'
 import type {
@@ -134,6 +135,8 @@ export interface PrevisaoMes {
   ateHojeNormal: number | null
   /** Resultado previsto menos a sobra média dos meses fechados (null sem histórico). */
   contraMedia: number | null
+  /** O que já saiu hoje no dia a dia (para o orçamento do dia). */
+  gastoHoje: number
   /** Renda que não se repete (freela, venda, bico), em média por mês nos meses fechados: fica fora da previsão, por cautela. */
   rendaExtraMedia: number
   /** Categorias que já passaram da média neste mês. */
@@ -324,6 +327,10 @@ export interface Evento {
   origem: 'lancamento' | 'conta' | 'parcela' | 'cartao' | 'recorrente'
   /** Venceu antes de hoje e ainda não foi paga (aparece no dia de hoje). */
   atrasada?: boolean
+  /** O vencimento de verdade (o atrasado aparece no dia de hoje, mas venceu antes). */
+  vence?: string
+  /** Juros da dívida em % ao mês, quando informados (o planejador usa para o custo do atraso). */
+  juros?: number | null
 }
 
 export interface DiaDaAgenda {
@@ -359,6 +366,8 @@ export interface Agenda {
   /** O dia em que a conta fica mais baixa. */
   menorSaldo: { data: string; valor: number } | null
   percepcoes: Percepcao[]
+  /** Com qual dinheiro e em que dia pagar cada compromisso (lib/planejador.ts). */
+  plano: PlanoDePagamentos
   /** O mês atual dia a dia: o que entrou e saiu (até hoje) e o que vai entrar e sair (daqui em diante). */
   calendario: { ano: number; mes: number; hoje: number; dias: { dia: number; entra: number; sai: number }[] }
 }
@@ -1179,6 +1188,7 @@ export function analisar(e: EntradaAnalise): Analise {
         entradasPrevistas, saidasPrevistas, resultadoPrevisto, sobraAlvo: sobraAlvoMes, porDia, ateHojeNormal,
         contraMedia: temFluxo ? centavos(resultadoPrevisto - sobra) : null, acimaDoNormal,
         rendaExtraMedia: rendaPelaMedia || !rec.length ? 0 : centavos(media(rec.map((b) => b.rendaExtra))),
+        gastoHoje: centavos(soma(doMes.filter((l) => l.data === hojeIso && ehDiaADia(l)).map((l) => l.valor))),
       }
     }
   }
@@ -1217,13 +1227,13 @@ export function analisar(e: EntradaAnalise): Analise {
     const sitsProx = contasDoMes(prox)
     for (const sc of [...sitsAtual, ...sitsProx]) {
       if (sc.estado === 'paga' || sc.estado === 'fora' || sc.semCotacao || !(sc.valor > 0) || sc.vencimento > fimJanela) continue
-      eventos.push({ data: noDia(sc.vencimento), tipo: sc.conta.tipo, descricao: sc.conta.descricao, valor: sc.valor, origem: 'conta', atrasada: sc.vencimento < hojeIso })
+      eventos.push({ data: noDia(sc.vencimento), vence: sc.vencimento, tipo: sc.conta.tipo, descricao: sc.conta.descricao, valor: sc.valor, origem: 'conta', atrasada: sc.vencimento < hojeIso })
     }
     // parcelas das dívidas, pelo calendário de cada uma
     const calendarios = abertas.map((sd) => ({ sd, cal: calendarioDe(sd, hojeIso) }))
     for (const { sd, cal } of calendarios) for (const pc of cal?.parcelas ?? []) {
       if (pc.falta <= 0 || pc.vencimento > fimJanela) continue
-      eventos.push({ data: noDia(pc.vencimento), tipo: 'saida', descricao: sd.divida.descricao, valor: pc.falta, origem: 'parcela', atrasada: pc.vencimento < hojeIso })
+      eventos.push({ data: noDia(pc.vencimento), vence: pc.vencimento, tipo: 'saida', descricao: sd.divida.descricao, valor: pc.falta, origem: 'parcela', atrasada: pc.vencimento < hojeIso, juros: sd.divida.juros_mes ?? null })
     }
     // o que se repete todo mês e ainda não veio (este mês, se o dia não passou faz tempo) ou virá (o mês que vem)
     const jaVeio = (chave: string, m: { ano: number; mes: number }) => e.lancs.some((l) => l.ano === m.ano && l.mes === m.mes && chaveDescricao(l.descricao) === chave)
@@ -1419,8 +1429,13 @@ export function analisar(e: EntradaAnalise): Analise {
     const entradaFutura = dias.find((d) => d.entradas.length)
     const menor = dias.length ? dias.reduce((m, d) => (d.saldo < m.saldo ? d : m)) : null
     if (unicos.length || saldoInicial !== null || calendario.dias.some((c) => c.entra || c.sai)) {
+      const plano = planejar({
+        hoje: hojeIso, fim: fimJanela, eventos: unicos, saldoInicial, ritmoDia,
+        abertas: abertas.filter((sd) => !(sd.divida.valor_parcela && sd.divida.valor_parcela > 0) && (sd.divida.juros_mes ?? 0) > 0)
+          .map((sd) => ({ nome: sd.divida.descricao, saldo: sd.restante, juros: sd.divida.juros_mes! })),
+      })
       agenda = {
-        dias, saldoInicial, ritmoDia, calendario,
+        dias, saldoInicial, ritmoDia, calendario, plano,
         proximaEntrada: entradaFutura ? { data: entradaFutura.data, valor: totalDe(entradaFutura.entradas), descricao: nomesDe(entradaFutura.entradas) } : null,
         menorSaldo: menor ? { data: menor.data, valor: menor.saldo } : null,
         percepcoes: percepcoes.sort((a, b) => b.peso - a.peso).map(({ peso: _p, ...x }) => x),
@@ -1562,8 +1577,15 @@ export function analisar(e: EntradaAnalise): Analise {
       porque: tx('Conta atrasada cobra multa e juros todo dia, e é o dinheiro mais caro que existe. Antes de qualquer outro passo, pague o que venceu.'),
     })
   }
+  const prioridadeDaDica: Record<string, [Urgencia, number]> = {
+    escolha: ['urgente', 96], 'sem-dinheiro': ['urgente', 94], 'pagar-em': ['importante', 88], 'adiantar-aberta': ['importante', 83],
+  }
+  for (const d of agenda?.plano.dicas ?? []) {
+    const [urgencia, prioridade] = prioridadeDaDica[d.id.split(':')[0]] ?? ['sugestao', 50]
+    nova({ id: `plano-${d.id}`, urgencia, prioridade, icone: d.icone, titulo: d.titulo, porque: d.porque, destino: v.contas ? 'contas' : 'dividas', botao: v.contas ? tx('Ver contas') : tx('Ver dívidas') })
+  }
   const aperto = agenda?.percepcoes.find((x) => x.id === 'aperto')
-  if (aperto) {
+  if (aperto && !agenda?.plano.dicas.some((d) => d.id.startsWith('pagar-em') || d.id.startsWith('escolha'))) {
     nova({
       id: 'aperto', urgencia: 'urgente', prioridade: 97, icone: 'relogio', destino: v.contas ? 'contas' : 'lancamentos',
       botao: v.contas ? tx('Ver contas') : tx('Ver lançamentos'), titulo: aperto.titulo, porque: aperto.porque,
@@ -1833,6 +1855,8 @@ export interface Retrato {
   dividas: number
   semDividasEm: number | null
   acoes: { id: string; titulo: string }[]
+  /** Em que dia cada compromisso será pago (null = sem dinheiro), pelo planejador. */
+  pagamentos?: { descricao: string; vence: string; pagarEm: string | null }[]
 }
 
 export function retratoDe(a: Analise, hoje = new Date()): Retrato {
@@ -1843,6 +1867,7 @@ export function retratoDe(a: Analise, hoje = new Date()): Retrato {
     reservaMeses: a.reserva ? Math.floor(a.reserva.meses * 10) / 10 : null,
     dividas: a.dividas?.total ?? 0, semDividasEm: fim ? chaveMes(fim.ano, fim.mes) : null,
     acoes: a.acoes.map(({ id, titulo }) => ({ id, titulo })),
+    pagamentos: a.agenda?.plano.pagamentos.map(({ descricao, vence, pagarEm }) => ({ descricao, vence, pagarEm })),
   }
 }
 
@@ -1887,6 +1912,16 @@ export function compararRetratos(antes: Retrato, depois: Retrato): Mudanca[] {
   }
   if (antes.reservaMeses !== null && depois.reservaMeses !== null && antes.reservaMeses !== depois.reservaMeses) {
     lista.push({ texto: tx('Sua reserva foi de {0} para {1} de gastos.', fmtMeses(antes.reservaMeses), fmtMeses(depois.reservaMeses)), tom: depois.reservaMeses > antes.reservaMeses ? 'bom' : 'ruim' })
+  }
+  // o plano de pagamentos mudou (entrou dinheiro novo, saiu uma conta): diz o que agora dá para pagar antes
+  for (const p of depois.pagamentos ?? []) {
+    const a = antes.pagamentos?.find((x) => x.descricao === p.descricao && x.vence === p.vence)
+    if (!a || a.pagarEm === p.pagarEm) continue
+    if (p.pagarEm && (!a.pagarEm || p.pagarEm < a.pagarEm)) {
+      lista.unshift({ texto: a.pagarEm ? tx('Agora dá para pagar {0} em {1} (antes, {2}).', p.descricao, fmtDataCurta(p.pagarEm), fmtDataCurta(a.pagarEm)) : tx('Agora dá para pagar {0} em {1}.', p.descricao, fmtDataCurta(p.pagarEm)), tom: 'bom' })
+    } else if (a.pagarEm && (!p.pagarEm || p.pagarEm > a.pagarEm)) {
+      lista.push({ texto: p.pagarEm ? tx('{0} passou para {1} (antes, {2}).', p.descricao, fmtDataCurta(p.pagarEm), fmtDataCurta(a.pagarEm)) : tx('{0} ficou sem dinheiro para pagar.', p.descricao), tom: 'ruim' })
+    }
   }
   const idsAntes = new Set(antes.acoes.map((x) => x.id))
   const idsDepois = new Set(depois.acoes.map((x) => x.id))
