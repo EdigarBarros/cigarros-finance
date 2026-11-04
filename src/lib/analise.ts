@@ -1622,7 +1622,7 @@ export function analisar(e: EntradaAnalise): Analise {
     nova({
       id: `juros-altos:${maisCara.divida.id}`, urgencia: 'urgente', prioridade: 92, icone: 'divida', destino: 'dividas', botao: tx('Ver dívidas'),
       titulo: tx('Troque ou renegocie {0}.', maisCara.divida.descricao),
-      porque: tx('Ela cobra {0}% ao mês, cerca de {1}% ao ano: em 12 meses, cada {2} devidos viram {3}. Peça uma taxa menor ou troque por um empréstimo mais barato para quitar esta.',
+      porque: tx('Essa dívida cobra {0}% ao mês, cerca de {1}% ao ano: em 12 meses, cada {2} devidos viram {3}. Peça uma taxa menor ou troque por um empréstimo mais barato para quitá-la.',
         fmtTaxa(j), fmtTaxaAno(jurosAoAno(j)), fmtValor(1000), fmtValor(centavos(1000 * Math.pow(1 + j / 100, 12)))),
     })
   }
@@ -1647,9 +1647,9 @@ export function analisar(e: EntradaAnalise): Analise {
       id: `quitar-com-reserva:${cara.id}`, urgencia: 'importante', prioridade: 84, icone: 'cofre', destino: 'dividas', botao: tx('Ver dívidas'),
       titulo: tx('Use {0} do guardado para quitar {1}.', fmtValor(cara.quitarHoje), cara.nome),
       porque: cara.parcela
-        ? tx('Ela cobra {0}% ao mês, mais do que qualquer aplicação segura rende. Quitando hoje (pedindo o desconto dos juros das parcelas que faltam), você deixa de pagar {1} e libera {2} por mês. Ainda ficam {3} de reserva; reponha com a parcela liberada.',
+        ? tx('Essa dívida cobra {0}% ao mês, mais do que qualquer aplicação segura rende. Quitando hoje (pedindo o desconto dos juros das parcelas que faltam), você deixa de pagar {1} e libera {2} por mês. Ainda ficam {3} de reserva; reponha com a parcela liberada.',
           fmtTaxa(cara.juros!), fmtValor(economia), fmtValor(cara.parcela), fica)
-        : tx('Ela cobra {0}% ao mês, mais do que qualquer aplicação segura rende: só de juros, são cerca de {1} por mês. Quitando hoje, esse custo some, e ainda ficam {2} de reserva.',
+        : tx('Essa dívida cobra {0}% ao mês, mais do que qualquer aplicação segura rende: só de juros, são cerca de {1} por mês. Quitando hoje, esse custo some, e ainda ficam {2} de reserva.',
           fmtTaxa(cara.juros!), fmtValor(jurosDoMes), fica),
       impacto: cara.parcela ? tx('{0} a menos de juros', fmtValor(economia)) : tx('{0} por mês a menos de juros', fmtValor(jurosDoMes)),
     })
@@ -1666,7 +1666,7 @@ export function analisar(e: EntradaAnalise): Analise {
     nova({
       id: 'adiantar-divida', urgencia: 'importante', prioridade: dividas.temCara ? 82 : 66, icone: 'divida', destino: 'dividas', botao: tx('Ver dívidas'),
       titulo: dividas.extraExemplo ? tx('Quando sobrar, adiante primeiro {0}.', alvo.nome) : tx('Adiante {0} com {1} por mês.', alvo.nome, fmtValor(dividas.extra)),
-      porque: `${alvo.juros !== null ? tx('Ela é a primeira da fila: cobra {0}% ao mês.', fmtTaxa(alvo.juros)) : tx('Ela é a primeira da fila.')} ${ganho}`.trim(),
+      porque: `${alvo.juros !== null ? tx('É a primeira da fila: cobra {0}% ao mês.', fmtTaxa(alvo.juros)) : tx('É a primeira da fila.')} ${ganho}`.trim(),
       impacto: recom.economia ? tx('{0} a menos de juros', fmtValor(recom.economia)) : undefined,
     })
   }

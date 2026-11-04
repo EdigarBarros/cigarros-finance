@@ -6271,10 +6271,6 @@
     "en": "If you have money left over, pay ahead on {0} first.",
     "es": "Si te sobra dinero, adelanta primero {0}."
   },
-  "Ela cobra {0}% ao mês, a mais cara das suas dívidas (a próxima cobra {1}%). Dinheiro pago nela evita mais juros do que o mesmo valor pago nas outras.": {
-    "en": "It charges {0}% a month, the most expensive of your debts (the next one charges {1}%). Money paid on it saves more interest than the same amount paid on the others.",
-    "es": "Cobra {0}% al mes, la más cara de tus deudas (la siguiente cobra {1}%). El dinero que pagas en ella evita más intereses que el mismo valor pagado en las otras."
-  },
   "Informar os juros": {
     "en": "Add the interest",
     "es": "Informar los intereses"
@@ -6987,10 +6983,6 @@
     "en": "Swap or renegotiate {0}.",
     "es": "Cambia o renegocia {0}."
   },
-  "Ela cobra {0}% ao mês, cerca de {1}% ao ano: em 12 meses, cada {2} devidos viram {3}. Peça uma taxa menor ou troque por um empréstimo mais barato para quitar esta.": {
-    "en": "It charges {0}% a month, about {1}% a year: in 12 months, every {2} owed becomes {3}. Ask for a lower rate or take a cheaper loan to pay this one off.",
-    "es": "Cobra {0}% al mes, cerca del {1}% al año: en 12 meses, cada {2} adeudados se vuelven {3}. Pide una tasa menor o cámbiala por un préstamo más barato para saldar esta."
-  },
   "Junte um colchão de {0}.": {
     "en": "Build a {0} cushion.",
     "es": "Junta un colchón de {0}."
@@ -7006,14 +6998,6 @@
   "Use {0} do guardado para quitar {1}.": {
     "en": "Use {0} of your savings to pay off {1}.",
     "es": "Usa {0} de lo ahorrado para saldar {1}."
-  },
-  "Ela cobra {0}% ao mês, mais do que qualquer aplicação segura rende. Quitando hoje (pedindo o desconto dos juros das parcelas que faltam), você deixa de pagar {1} e libera {2} por mês. Ainda ficam {3} de reserva; reponha com a parcela liberada.": {
-    "en": "It charges {0}% a month, more than any safe investment earns. Paying it off today (asking for the interest discount on the remaining installments), you avoid paying {1} and free up {2} a month. You still keep {3} of savings; refill them with the freed-up installment.",
-    "es": "Cobra {0}% al mes, más de lo que rinde cualquier inversión segura. Saldándola hoy (pidiendo el descuento de los intereses de las cuotas que faltan), dejas de pagar {1} y liberas {2} por mes. Todavía te quedan {3} de reserva; repónla con la cuota liberada."
-  },
-  "Ela cobra {0}% ao mês, mais do que qualquer aplicação segura rende: só de juros, são cerca de {1} por mês. Quitando hoje, esse custo some, e ainda ficam {2} de reserva.": {
-    "en": "It charges {0}% a month, more than any safe investment earns: interest alone is about {1} a month. Paying it off today, that cost disappears, and you still keep {2} of savings.",
-    "es": "Cobra {0}% al mes, más de lo que rinde cualquier inversión segura: solo de intereses, son cerca de {1} por mes. Saldándola hoy, ese costo desaparece, y todavía te quedan {2} de reserva."
   },
   "{0} a menos de juros": {
     "en": "{0} less in interest",
@@ -7042,14 +7026,6 @@
   "Adiante {0} com {1} por mês.": {
     "en": "Prepay {0} with {1} a month.",
     "es": "Adelanta {0} con {1} por mes."
-  },
-  "Ela é a primeira da fila: cobra {0}% ao mês.": {
-    "en": "It's first in line: it charges {0}% a month.",
-    "es": "Es la primera de la fila: cobra {0}% al mes."
-  },
-  "Ela é a primeira da fila.": {
-    "en": "It's first in line.",
-    "es": "Es la primera de la fila."
   },
   "Corte {0} por mês para guardar {1}% do que entra.": {
     "en": "Cut {0} a month to save {1}% of what comes in.",
@@ -7875,10 +7851,6 @@
     "en": "the next money in",
     "es": "el próximo dinero"
   },
-  "Ela vence em {0}, mas o dinheiro só dá em {1}.": {
-    "en": "It's due on {0}, but the money only covers it on {1}.",
-    "es": "Vence el {0}, pero el dinero solo alcanza el {1}."
-  },
   "Com 1 dia de atraso, vai custar cerca de {0} ({1} a mais de multa e juros).": {
     "en": "1 day late, it will cost about {0} ({1} more in fees and interest).",
     "es": "Con 1 día de atraso, costará cerca de {0} ({1} más de multa e intereses)."
@@ -7910,10 +7882,6 @@
   "Dá para adiantar {0} de {1} em {2}.": {
     "en": "You can pay {0} of {1} early on {2}.",
     "es": "Puedes adelantar {0} de {1} el {2}."
-  },
-  "Ela cobra {0}% ao mês, todo dia. Quando entrar {1} e as contas forem pagas, sobram {2}; usando {3} nela, você evita cerca de {4} de juros por mês.": {
-    "en": "It charges {0}% a month, every day. Once {1} comes in and the bills are paid, {2} is left; putting {3} into it saves about {4} in interest a month.",
-    "es": "Cobra {0}% al mes, todos los días. Cuando entre {1} y se paguen las cuentas, sobran {2}; usando {3} en ella, evitas cerca de {4} de intereses al mes."
   },
   "Começando agora": {
     "en": "Just starting",
@@ -8162,5 +8130,45 @@
   "Com o plano (acaba antes)": {
     "en": "With the plan (ends sooner)",
     "es": "Con el plan (termina antes)"
+  },
+  "Essa dívida cobra {0}% ao mês, cerca de {1}% ao ano: em 12 meses, cada {2} devidos viram {3}. Peça uma taxa menor ou troque por um empréstimo mais barato para quitá-la.": {
+    "en": "This debt charges {0}% a month, about {1}% a year: in 12 months, every {2} owed becomes {3}. Ask for a lower rate or take a cheaper loan to pay it off.",
+    "es": "Esta deuda cobra {0}% al mes, cerca del {1}% al año: en 12 meses, cada {2} adeudados se vuelven {3}. Pide una tasa menor o cámbiala por un préstamo más barato para saldarla."
+  },
+  "Essa dívida cobra {0}% ao mês, mais do que qualquer aplicação segura rende. Quitando hoje (pedindo o desconto dos juros das parcelas que faltam), você deixa de pagar {1} e libera {2} por mês. Ainda ficam {3} de reserva; reponha com a parcela liberada.": {
+    "en": "This debt charges {0}% a month, more than any safe investment earns. Paying it off today (asking for the interest discount on the remaining installments), you avoid paying {1} and free up {2} a month. You still keep {3} of savings; refill them with the freed-up installment.",
+    "es": "Esta deuda cobra {0}% al mes, más de lo que rinde cualquier inversión segura. Saldándola hoy (pidiendo el descuento de los intereses de las cuotas que faltan), dejas de pagar {1} y liberas {2} por mes. Todavía te quedan {3} de reserva; repónla con la cuota liberada."
+  },
+  "Essa dívida cobra {0}% ao mês, mais do que qualquer aplicação segura rende: só de juros, são cerca de {1} por mês. Quitando hoje, esse custo some, e ainda ficam {2} de reserva.": {
+    "en": "This debt charges {0}% a month, more than any safe investment earns: interest alone is about {1} a month. Paying it off today, that cost disappears, and you still keep {2} of savings.",
+    "es": "Esta deuda cobra {0}% al mes, más de lo que rinde cualquier inversión segura: solo de intereses, son cerca de {1} por mes. Saldándola hoy, ese costo desaparece, y todavía te quedan {2} de reserva."
+  },
+  "É a primeira da fila: cobra {0}% ao mês.": {
+    "en": "It's first in line: it charges {0}% a month.",
+    "es": "Es la primera de la fila: cobra {0}% al mes."
+  },
+  "É a primeira da fila.": {
+    "en": "It's first in line.",
+    "es": "Es la primera de la fila."
+  },
+  "{0} vence em {1}, mas o dinheiro só dá em {2}.": {
+    "en": "{0} is due on {1}, but the money is only there on {2}.",
+    "es": "{0} vence el {1}, pero el dinero recién alcanza el {2}."
+  },
+  "{0} cobra {1}% ao mês, e os juros correm todo dia. Quando entrar {2} e as contas forem pagas, sobram {3}; usando {4} para pagar essa dívida, você evita cerca de {5} de juros por mês.": {
+    "en": "{0} charges {1}% a month, and interest builds every day. When {2} comes in and the bills are paid, {3} is left; putting {4} toward this debt saves about {5} in interest a month.",
+    "es": "{0} cobra {1}% al mes, y los intereses corren todos los días. Cuando entre {2} y se paguen las cuentas, sobran {3}; usando {4} para pagar esta deuda, evitas cerca de {5} de intereses por mes."
+  },
+  "Essa dívida cobra {0}% ao mês, a mais cara das suas (a próxima cobra {1}%). Dinheiro pago nela evita mais juros do que o mesmo valor pago nas outras.": {
+    "en": "This debt charges {0}% a month, the most expensive of yours (the next one charges {1}%). Money paid on it saves more interest than the same amount paid on the others.",
+    "es": "Esta deuda cobra {0}% al mes, la más cara de las tuyas (la siguiente cobra {1}%). El dinero pagado en ella evita más intereses que el mismo valor pagado en las otras."
+  },
+  "Ver as {0} entradas": {
+    "en": "See all {0} incomes",
+    "es": "Ver los {0} ingresos"
+  },
+  "Ver tudo": {
+    "en": "See everything",
+    "es": "Ver todo"
   }
 }

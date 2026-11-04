@@ -326,10 +326,14 @@ function Barras({ barras }: { barras: { rotulo: string; valor: number; cor?: str
 
 /** Cada dinheiro que entra vira uma barra dividida no que ele paga; o atraso aparece em laranja, com o custo. */
 function Fluxo({ grupos, semDinheiro }: { grupos: GrupoDoFluxo[]; semDinheiro: { rotulo: string; valor: number; custo: number }[] }) {
-  const MAX_ITENS = 5
+  // no começo, 4 entradas e 5 compromissos em cada; "Ver tudo" abre o resto (antes ficava escondido sem aviso)
+  const [tudo, setTudo] = useState(false)
+  const MAX_GRUPOS = 4
+  const MAX_ITENS = tudo ? Infinity : 5
+  const cortou = grupos.length > MAX_GRUPOS || grupos.some((g) => g.itens.length > 5)
   return (
     <div className="fluxo">
-      {grupos.slice(0, 4).map((g, i) => {
+      {(tudo ? grupos : grupos.slice(0, MAX_GRUPOS)).map((g, i) => {
         const usado = g.itens.reduce((s, x) => s + x.valor, 0)
         const base = Math.max(g.valor, usado, 1)
         const sobra = Math.max(0, g.valor - usado)
@@ -362,6 +366,11 @@ function Fluxo({ grupos, semDinheiro }: { grupos: GrupoDoFluxo[]; semDinheiro: {
           </div>
         )
       })}
+      {cortou && (
+        <button className="quadro-ver" onClick={() => setTudo(!tudo)}>
+          {tudo ? tx('Mostrar menos') : grupos.length > MAX_GRUPOS ? tx('Ver as {0} entradas', grupos.length) : tx('Ver tudo')}
+        </button>
+      )}
       {semDinheiro.length > 0 && (
         <div className="fluxo-grupo falta">
           <div className="fluxo-cab"><span className="fluxo-fonte"><Icone nome="escudo" tamanho={15} /> <b>{tx('Sem dinheiro até o fim do mês que vem')}</b></span></div>
