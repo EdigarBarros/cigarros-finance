@@ -548,6 +548,20 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
   migração 19 (`supabase/migracao-19-juros-das-dividas.sql`) o campo some e nada mais muda. O `FormDivida` só mostra o campo
   quando recebe `semJuros={c.d.dividasSemJuros}`.
 - A renegociação de fatura do cartão cria a dívida já com o banco, o total de parcelas e o vencimento da 1ª parcela.
+- **Partes da dívida (mini-dívidas)**: uma dívida pode ser feita de várias partes, cada uma com as suas parcelas de valores e
+  datas diferentes (o crédito de uma loja com várias compras parceladas: mouse 5x, microfone 6x, cabo 6x). Tabela
+  `divida_partes` (migração 21), uma linha por parcela de cada parte (`nome`, `valor`, `vencimento`, `parcela`, `parcelas`);
+  `useDados` junta as partes em `divida.partes`. Com partes, `calendarioDe` monta o calendário delas: uma parcela por **dia
+  de vencimento**, que soma as partes daquele dia (`ParcelaDivida.partes`), e o que foi pago cobre os dias do mais antigo
+  para o mais novo, como nas outras. Por isso atraso, botão "Pagar", Início, "Para fazer", Consultor e o planejador de
+  pagamentos já enxergam as partes sem mudar nada. O **saldo** continua em `divida_saldos`: ao acrescentar, corrigir ou
+  apagar partes (`addPartes`, `updParte`, `delPartes`), o saldo acompanha a diferença da soma (`ajustarValorDivida`); dívida
+  sem saldo nasce com a soma, no dia mais cedo entre hoje e o primeiro vencimento. Na ficha, **Do que é feita**
+  (`PartesDaDivida`) lista cada parte com o total e, aberta, as parcelas com a situação do dia em que vencem; o lápis corrige
+  valor e data de uma parcela (o credor costuma somar juros e multa) e "Adicionar parte" pede o nome, o valor de cada
+  parcela, o vencimento da primeira que falta e "da parcela X até a Y" (`gerarParcelasDaParte`), mostrando antes o que vai
+  criar. No calendário da ficha, dívida com partes mostra o dia ("2 de mar"), não só o mês. Sem a migração 21, a ficha
+  mostra o aviso e o resto funciona como antes (`partesSemTabela`).
 
 ### 4.14 Metas (potes)
 

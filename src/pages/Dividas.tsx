@@ -2,7 +2,7 @@ import { CenaDividas } from '../components/Vazios'
 import { useState } from 'react'
 import { COR } from '../lib/charts'
 import {
-  aproxDiv, aumentaDivida, calendarioDe, fmtDiv, inicioPelaProxima, meDevem, parcelasDe, projecaoMensal, tomarLadoDividas, totalDeParcelas,
+  aproxDiv, aumentaDivida, calendarioDe, fmtDiv, gruposDasPartes, inicioPelaProxima, meDevem, parcelasDe, projecaoMensal, tomarLadoDividas, totalDeParcelas,
   type Calendario, type ParcelaDivida, type SituacaoDivida,
 } from '../lib/dividas'
 import { fmtConta } from '../lib/contasFixas'
@@ -10,6 +10,7 @@ import { estiloDoBanco } from '../lib/estiloBanco'
 import { fmtDataCurta, fmtDataLonga, fmtMesAno, fmtMoeda, fmtTaxa, fmtValor, MESES_CURTO, noMeioDaFrase } from '../lib/format'
 import { BancoIcone } from '../components/BancoIcone'
 import { FormDivida } from '../components/Formularios'
+import { PartesDaDivida } from '../components/PartesDaDivida'
 import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
 import { Anel, Kpi, Modal } from '../components/ui'
@@ -247,6 +248,7 @@ function CartaoDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar }: {
   aoAbrir: () => void; aoPagar: () => void
 }) {
   const p = parcelasDe(s)
+  const nPartes = s.divida.partes?.length ? gruposDasPartes(s.divida.partes).length : 0
   const pct = s.saldoInicial > 0 ? (s.saldoInicial - s.restante) / s.saldoInicial : 1
   const quitada = s.restante <= 0
   // sem parcela nem data, não há valor certo a sugerir: a pessoa digita quanto pagou
@@ -259,7 +261,7 @@ function CartaoDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar }: {
           <Quem s={s} />
           <span className="dv-cartao-nome">
             <strong>{s.divida.descricao}</strong>
-            <small>{[s.divida.pessoa, p && !quitada ? tx('parcela {0} de {1}', p.proxima, totalDeParcelas(s)) : null, jurosDaDivida(s)].filter(Boolean).join(' · ') || (s.divida.valor_parcela ? tx('parcelado') : tx('valor único'))}</small>
+            <small>{[s.divida.pessoa, nPartes ? (nPartes === 1 ? tx('1 parte') : tx('{0} partes', nPartes)) : null, p && !quitada ? tx('parcela {0} de {1}', p.proxima, totalDeParcelas(s)) : null, jurosDaDivida(s)].filter(Boolean).join(' · ') || (s.divida.valor_parcela ? tx('parcelado') : tx('valor único'))}</small>
           </span>
           <span className={`chip-estado dv ${estado.id}`}>{estado.texto}</span>
         </header>
@@ -383,7 +385,7 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
               {cal.parcelas.map((x, i) => (
                 <li key={x.n} className={x.estado} style={{ '--p': `${(x.pago / x.valor) * 100}%`, animationDelay: `${Math.min(i, 24) * 25}ms` } as React.CSSProperties}>
                   <span className="dv-cal-n">{cal.parcelas.length > 1 ? `${x.n}ª` : <Icone nome="calendario" tamanho={13} />}</span>
-                  <span className="dv-cal-mes">{mesCurto(x.vencimento)}</span>
+                  <span className="dv-cal-mes">{s.divida.partes?.length ? fmtDataCurta(x.vencimento) : mesCurto(x.vencimento)}</span>
                   <span className="dv-cal-valor">{x.estado === 'paga' ? <Icone nome="check" tamanho={14} /> : fmtDiv(s, x.falta).replace(/,00$/, '')}</span>
                   <span className="dv-cal-estado">{x.pago > 0 && x.estado !== 'paga' ? (recebe ? tx('{0} recebido', fmtDiv(s, x.pago).replace(/,00$/, '')) : tx('{0} pago', fmtDiv(s, x.pago).replace(/,00$/, ''))) : ROTULO_PARCELA[x.estado]}</span>
                 </li>
@@ -391,7 +393,7 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
             </ol>
             <p className="campo-ajuda">{(recebe ? tx('O que você recebe cobre as parcelas da mais antiga para a mais nova: pagou metade, a parcela fica pela metade; pagou a mais, adianta as próximas.') : tx('O que você paga cobre as parcelas da mais antiga para a mais nova: pagou metade, a parcela fica pela metade; pagou a mais, adianta as próximas.'))}</p>
           </section>
-        ) : !c.d.dividasSemExtras && !quitada ? (
+        ) : !c.d.dividasSemExtras && !quitada && !s.divida.partes?.length ? (
           <section className="dv-sem-data">
             <Icone nome="calendario" tamanho={20} />
             <span>
@@ -402,6 +404,8 @@ function Ficha({ c, s, cal, recebe, aoFechar, aoEditar }: {
             <button className="btn" onClick={definirVencimento} disabled={!proxima}>{tx('Salvar')}</button>
           </section>
         ) : null}
+
+        {!c.d.dividasSemExtras && <PartesDaDivida s={s} cal={cal} d={c.d} recebe={recebe} />}
 
         <section>
           <h4 className="dv-ficha-titulo">{recebe ? tx('Recebimentos') : tx('Pagamentos')} <small>{movimentos.length || ''}</small></h4>

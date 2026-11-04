@@ -12,7 +12,7 @@ const body0=r=>{try{return r.postDataJSON()}catch{return null}}
 exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,semSessao=false,assinatura=null,funcoes={},dpr=1,toque=false,semColunas={}}={}){
   const db={assinaturas:[{user_id:uid,status:'cortesia',teste_fim:null,periodo_fim:null,cancela_no_fim:false,moeda:null}],
     perfis:[{user_id:uid,nome:'Teste',moeda:'BRL',moedas:[],detalhe:'detalhado',modulos:{dividas:true,contas:true,cartoes:true,bancos:true,investimentos:true,moedas:false,metas:true},dispensadas:['tour','importar'],onboarding_em:'2026-01-01T00:00:00Z',...perfil}],
-    categorias:[],lancamentos:[],meses:[],dividas:[],divida_saldos:[],bancos:[],metas:[],meta_movimentos:[],contas_fixas:[],cartoes:[],faturas_pagas:[],erros_app:[],...dados}
+    categorias:[],lancamentos:[],meses:[],dividas:[],divida_saldos:[],bancos:[],metas:[],meta_movimentos:[],contas_fixas:[],cartoes:[],faturas_pagas:[],divida_partes:[],erros_app:[],...dados}
   const cats=[['saida','Alimentação'],['saida','Moradia'],['saida','Outros'],['saida','Dívidas e parcelas'],['entrada','Salário'],['entrada','Outros']]
   const srv=http.createServer((q,r)=>{let p=path.join(root,q.url.split('?')[0]);if(!fs.existsSync(p)||fs.statSync(p).isDirectory())p=path.join(root,'index.html');r.writeHead(200,{'content-type':mime[path.extname(p)]||'text/plain','content-security-policy':CSP});fs.createReadStream(p).pipe(r)})
   await new Promise(r=>srv.listen(porta,r))
@@ -48,7 +48,7 @@ exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,se
       if(u.searchParams.get('on_conflict')||/merge-duplicates/.test(req.headers()['prefer']||'')){const i=db[t].findIndex(x=>x.user_id===uid);if(i>=0&&t==='perfis'){db[t][i]={...db[t][i],...novos[0],id:undefined};return route.fulfill({status:201,headers:h,body:'[]'})}}
       db[t].push(...novos);log.push(['POST',t,novos]);return route.fulfill({status:201,headers:h,body:JSON.stringify(single?novos[0]:novos)})}
     if(m==='PATCH'){const id=(u.searchParams.get('id')||'').replace('eq.','');const rows=db[t].filter(x=>!id||x.id===id||t==='perfis');rows.forEach(x=>Object.assign(x,body));log.push(['PATCH',t,body]);return route.fulfill({status:200,headers:h,body:JSON.stringify(rows)})}
-    if(m==='DELETE'){const id=(u.searchParams.get('id')||'').replace('eq.','');db[t]=db[t].filter(x=>id&&x.id!==id);log.push(['DELETE',t,id]);return route.fulfill({status:204,headers:h,body:''})}
+    if(m==='DELETE'){const id=(u.searchParams.get('id')||'').replace('eq.','');const ids=/^in\.\(/.test(id)?id.slice(4,-1).split(',').map(x=>x.replace(/"/g,'')):[id];db[t]=db[t].filter(x=>id&&!ids.includes(x.id));log.push(['DELETE',t,id]);return route.fulfill({status:204,headers:h,body:''})}
     route.fulfill({status:200,headers:h,body:'[]'})
   })
   const page=await ctx.newPage()

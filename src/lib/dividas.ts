@@ -1,6 +1,6 @@
 import { fmtMoeda, fmtValor, moedaAtual } from './format'
 import type { Taxas } from './moedas'
-import type { Divida, Pagamento, SaldoDivida } from './types'
+import type { Divida, Pagamento, ParteDivida, SaldoDivida } from './types'
 import { tx } from './textos'
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -245,6 +245,8 @@ export interface ParcelaDivida {
   pago: number
   falta: number
   estado: EstadoParcela
+  /** Dívida com partes: as partes que vencem neste dia (a parcela é a soma delas). */
+  partes?: ParteDivida[]
 }
 
 export interface Calendario {
@@ -288,6 +290,7 @@ export function totalDeParcelas(s: SituacaoDivida) {
  */
 export function calendarioDe(s: SituacaoDivida, ref: string): Calendario | null {
   const d = s.divida
+  if (d.partes?.length) return calendarioDasPartes(s, d.partes, ref)
   if (!d.inicio || s.saldoInicial <= 0) return null
   const vp = d.valor_parcela && d.valor_parcela > 0 ? d.valor_parcela : s.saldoInicial
   const n = d.valor_parcela ? totalDeParcelas(s) : 1
@@ -302,20 +305,91 @@ export function calendarioDe(s: SituacaoDivida, ref: string): Calendario | null 
     pago = centavos(pago - cobre)
     const vencimento = somaMesesData(d.inicio, i)
     const falta = centavos(valor - cobre)
-    const estado: EstadoParcela = falta <= 0.004 ? 'paga'
-      : vencimento < ref ? 'atrasada'
-        : vencimento === ref ? 'vence_hoje'
-          : cobre > 0 ? 'parcial' : 'a_vencer'
-    parcelas.push({ n: i + 1, vencimento, valor, pago: cobre, falta, estado })
+    parcelas.push({ n: i + 1, vencimento, valor, pago: cobre, falta, estado: estadoDaParcela(falta, cobre, vencimento, ref) })
   }
+  return fecharCalendario(parcelas, s.restante)
+}
+
+/** Estado de uma parcela pelo que falta dela e pelo vencimento. */
+const estadoDaParcela = (falta: number, cobre: number, vencimento: string, ref: string): EstadoParcela =>
+  falta <= 0.004 ? 'paga' : vencimento < ref ? 'atrasada' : vencimento === ref ? 'vence_hoje' : cobre > 0 ? 'parcial' : 'a_vencer'
+
+/** Fecha o calendário: atrasadas, a próxima e o valor sugerido no botão de pagar. */
+function fecharCalendario(parcelas: ParcelaDivida[], restante: number): Calendario {
   // dívida quitada antes do fim (acordo, desconto): nada fica para trás
-  if (s.restante <= 0) for (const p of parcelas) if (p.estado !== 'paga') Object.assign(p, { estado: 'paga', pago: p.valor, falta: 0 })
+  if (restante <= 0) for (const p of parcelas) if (p.estado !== 'paga') Object.assign(p, { estado: 'paga', pago: p.valor, falta: 0 })
   const atrasadas = parcelas.filter((p) => p.estado === 'atrasada')
   const emAtraso = centavos(atrasadas.reduce((a, p) => a + p.falta, 0))
   const proxima = parcelas.find((p) => p.falta > 0) ?? null
   const hoje = parcelas.filter((p) => p.estado === 'vence_hoje').reduce((a, p) => a + p.falta, 0)
   const sugerido = centavos(emAtraso + hoje > 0 ? emAtraso + hoje : proxima?.falta ?? 0)
-  return { parcelas, atrasadas, emAtraso, proxima, sugerido: Math.min(sugerido, s.restante) }
+  return { parcelas, atrasadas, emAtraso, proxima, sugerido: Math.min(sugerido, restante) }
+}
+
+/**
+ * Calendário de uma dívida com partes (mini-dívidas): uma parcela por dia de vencimento, que soma as partes daquele dia.
+ * O que já foi pago (soma das partes − o que falta) cobre os dias do mais antigo para o mais novo, como nas outras dívidas.
+ * Se o saldo passou da soma das partes (juros e multa lançados como ajuste), nada conta como pago e o excesso fica no saldo.
+ */
+function calendarioDasPartes(s: SituacaoDivida, partes: ParteDivida[], ref: string): Calendario {
+  const porDia = new Map<string, ParteDivida[]>()
+  for (const p of [...partes].sort((a, b) => a.vencimento.localeCompare(b.vencimento) || a.nome.localeCompare(b.nome))) {
+    porDia.set(p.vencimento, [...(porDia.get(p.vencimento) ?? []), p])
+  }
+  const total = centavos(partes.reduce((a, p) => a + p.valor, 0))
+  let pago = centavos(Math.max(0, total - s.restante))
+  const parcelas: ParcelaDivida[] = [...porDia].map(([vencimento, doDia], i) => {
+    const valor = centavos(doDia.reduce((a, p) => a + p.valor, 0))
+    const cobre = centavos(Math.min(valor, pago))
+    pago = centavos(pago - cobre)
+    const falta = centavos(valor - cobre)
+    return { n: i + 1, vencimento, valor, pago: cobre, falta, estado: estadoDaParcela(falta, cobre, vencimento, ref), partes: doDia }
+  })
+  return fecharCalendario(parcelas, s.restante)
+}
+
+/** Uma parte da dívida com todas as parcelas dela: "Microfone · 5 parcelas · R$ 331,68". */
+export interface GrupoDeParte {
+  nome: string
+  parcelas: ParteDivida[]
+  total: number
+  /** "de 6" quando as parcelas dizem o total; null quando não dizem. */
+  de: number | null
+  primeira: string
+  ultima: string
+}
+
+/** As partes agrupadas pelo nome (cada grupo em ordem de vencimento), da que vence primeiro para a última. */
+export function gruposDasPartes(partes: ParteDivida[]): GrupoDeParte[] {
+  const grupos = new Map<string, ParteDivida[]>()
+  for (const p of partes) {
+    const chave = p.nome.trim().toLowerCase()
+    grupos.set(chave, [...(grupos.get(chave) ?? []), p])
+  }
+  return [...grupos.values()].map((ps) => {
+    const parcelas = [...ps].sort((a, b) => a.vencimento.localeCompare(b.vencimento) || (a.parcela ?? 0) - (b.parcela ?? 0))
+    return {
+      nome: parcelas[0].nome,
+      parcelas,
+      total: centavos(parcelas.reduce((a, p) => a + p.valor, 0)),
+      de: parcelas.reduce<number | null>((m, p) => (p.parcelas ? Math.max(m ?? 0, p.parcelas) : m), null),
+      primeira: parcelas[0].vencimento,
+      ultima: parcelas[parcelas.length - 1].vencimento,
+    }
+  }).sort((a, b) => a.primeira.localeCompare(b.primeira) || a.nome.localeCompare(b.nome))
+}
+
+/**
+ * As parcelas de uma parte nova, a partir do que a pessoa sabe: o valor, o vencimento da primeira que falta e "da parcela
+ * 2 até a 6". Sem parcelamento (até vazio), é uma linha só. Cada parcela vence no mesmo dia dos meses seguintes.
+ */
+export function gerarParcelasDaParte(p: { nome: string; valor: number; vencimento: string; da?: number | null; ate?: number | null }) {
+  const da = p.da && p.da > 0 ? Math.floor(p.da) : 1
+  const ate = p.ate && p.ate >= da ? Math.floor(p.ate) : null
+  if (!ate) return [{ nome: p.nome.trim(), valor: centavos(p.valor), vencimento: p.vencimento, parcela: null, parcelas: null }]
+  return Array.from({ length: ate - da + 1 }, (_, i) => ({
+    nome: p.nome.trim(), valor: centavos(p.valor), vencimento: somaMesesData(p.vencimento, i), parcela: da + i, parcelas: ate,
+  }))
 }
 
 /**

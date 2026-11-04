@@ -8170,5 +8170,125 @@
   "Ver tudo": {
     "en": "See everything",
     "es": "Ver todo"
+  },
+  "Para dividir uma dívida em partes (as compras dentro de um crédito, por exemplo), rode": {
+    "en": "To split a debt into parts (the purchases inside a store credit line, for example), run",
+    "es": "Para dividir una deuda en partes (las compras dentro de un crédito, por ejemplo), ejecuta"
+  },
+  "Do que é feita": {
+    "en": "What it is made of",
+    "es": "De qué está hecha"
+  },
+  "1 parte": {
+    "en": "1 part",
+    "es": "1 parte"
+  },
+  "{0} partes": {
+    "en": "{0} parts",
+    "es": "{0} partes"
+  },
+  "Sem nome": {
+    "en": "No name",
+    "es": "Sin nombre"
+  },
+  "{0} a {1}": {
+    "en": "{0} to {1}",
+    "es": "{0} a {1}"
+  },
+  "Essa dívida junta várias compras ou contas, cada uma com as suas parcelas? Adicione cada parte: o calendário e o atraso passam a sair delas.": {
+    "en": "Does this debt bundle several purchases or bills, each with its own installments? Add each part: the schedule and what is overdue will come from them.",
+    "es": "¿Esta deuda junta varias compras o cuentas, cada una con sus cuotas? Agrega cada parte: el calendario y lo atrasado saldrán de ellas."
+  },
+  "Adicionar parte": {
+    "en": "Add part",
+    "es": "Agregar parte"
+  },
+  "parcelas {0} a {1} de {2}": {
+    "en": "installments {0} to {1} of {2}",
+    "es": "cuotas {0} a {1} de {2}"
+  },
+  "1 parcela": {
+    "en": "1 installment",
+    "es": "1 cuota"
+  },
+  "{0} parcelas": {
+    "en": "{0} installments",
+    "es": "{0} cuotas"
+  },
+  "Corrigir parcela": {
+    "en": "Fix installment",
+    "es": "Corregir cuota"
+  },
+  "Apagar esta parte e as {0} parcelas dela?": {
+    "en": "Delete this part and its {0} installments?",
+    "es": "¿Borrar esta parte y sus {0} cuotas?"
+  },
+  "Manter": {
+    "en": "Keep",
+    "es": "Mantener"
+  },
+  "Apagar parte": {
+    "en": "Delete part",
+    "es": "Borrar parte"
+  },
+  "Apagar esta parte": {
+    "en": "Delete this part",
+    "es": "Borrar esta parte"
+  },
+  "Apagar parcela": {
+    "en": "Delete installment",
+    "es": "Borrar cuota"
+  },
+  "A última parcela não pode vir antes da primeira.": {
+    "en": "The last installment can't come before the first.",
+    "es": "La última cuota no puede ir antes de la primera."
+  },
+  "De que é": {
+    "en": "What it is for",
+    "es": "De qué es"
+  },
+  "Ex.: Microfone": {
+    "en": "E.g.: Microphone",
+    "es": "Ej.: Micrófono"
+  },
+  "Valor de cada parcela": {
+    "en": "Amount of each installment",
+    "es": "Valor de cada cuota"
+  },
+  "Vencimento da primeira que falta": {
+    "en": "Due date of the first unpaid one",
+    "es": "Vencimiento de la primera que falta"
+  },
+  "Da parcela": {
+    "en": "From installment",
+    "es": "Desde la cuota"
+  },
+  "Ex.: 2": {
+    "en": "E.g.: 2",
+    "es": "Ej.: 2"
+  },
+  "Até a parcela": {
+    "en": "To installment",
+    "es": "Hasta la cuota"
+  },
+  "Ex.: 6": {
+    "en": "E.g.: 6",
+    "es": "Ej.: 6"
+  },
+  "Vai criar {0} parcelas de {1}, de {2} a {3}. Depois dá para corrigir o valor de cada uma.": {
+    "en": "This will create {0} installments of {1}, from {2} to {3}. You can fix each amount afterwards.",
+    "es": "Se crearán {0} cuotas de {1}, de {2} a {3}. Después puedes corregir el valor de cada una."
+  },
+  "Vai criar 1 parcela de {0}, em {1}.": {
+    "en": "This will create 1 installment of {0}, on {1}.",
+    "es": "Se creará 1 cuota de {0}, el {1}."
+  },
+  "Sem parcelas? Deixe \"da\" e \"até\" vazios: vira um valor só.": {
+    "en": "No installments? Leave \"from\" and \"to\" empty: it becomes a single amount.",
+    "es": "¿Sin cuotas? Deja \"desde\" y \"hasta\" vacíos: queda un solo valor."
+  },
+  "Adicionar": {
+    "en": "Add",
+    "es": "Agregar"
   }
 }
