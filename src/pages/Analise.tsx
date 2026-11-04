@@ -56,11 +56,14 @@ export function Analise(c: Ctx) {
     <div className={`pagina analise ${movimento === 'reduzido' ? 'parado' : ''}`}>
       <Cabecalho />
       <SeuJeito tracos={tracos} />
-      <HojePodeGastar a={a} />
       <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} />
-      <FacaAgora a={a} aoIr={c.irPara} />
-      <ComoEstou a={a} />
-      {a.mes && <SeuMes a={a} />}
+      {/* no computador, os quatro cartões do topo ficam em grade 2 × 2; no celular, um embaixo do outro */}
+      <div className={`an-topo ${a.mes ? '' : 'sem-mes'}`}>
+        <div className="an-topo-hoje"><HojePodeGastar a={a} /></div>
+        <div className="an-topo-agora"><FacaAgora a={a} aoIr={c.irPara} /></div>
+        <div className="an-topo-como"><ComoEstou a={a} /></div>
+        {a.mes && <div className="an-topo-mes"><SeuMes a={a} /></div>}
+      </div>
 
       <div className="an-feed">
         {vistos.map((v) => (

@@ -295,6 +295,15 @@ Reduzidas, tudo aparece pronto.
 4. **Como o mês fecha**: número grande, quanto dá para gastar por dia e a cascata.
 5. **O feed de gráficos**: no simples aparecem 2, no equilibrado 4 e no detalhado todos. O resto fica em "Ver mais N gráficos".
 
+**No computador** (a partir de 1100 px):
+- Os quatro cartões do topo ficam em grade 2 × 2: "Hoje você pode gastar" e "Faça agora" em cima, "Como estou" e "Como o mês
+  fecha" embaixo, cada linha com a mesma altura.
+- O feed encaixa os cartões em colunas (2, ou 3 a partir de 1600 px), sem buracos embaixo do mais baixo.
+- O dia do calendário fica achatado.
+
+No celular, tudo fica numa coluna só, na mesma ordem. Na cascata, o espaço acima das barras é dos rótulos, para o valor da
+primeira não encostar no número grande do cartão.
+
 Sem dados suficientes (menos de 2 dos 3 últimos meses com entradas e saídas), não há nota: a frase explica o que lançar e a aba
 mostra o que já dá. Conta nova vê o convite para o primeiro lançamento.
 

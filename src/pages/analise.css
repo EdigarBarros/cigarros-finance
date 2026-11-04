@@ -46,7 +46,31 @@
 .vis.fav { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--destaque) 35%, transparent); }
 .vis-frase { margin: 0; font-size: 14px; line-height: 1.45; color: var(--texto-2); }
 .vis-corpo { margin-top: 8px; min-width: 0; }
-.an-feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 16px; align-items: start; }
+.an-feed { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.an-topo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.an-topo > div { display: grid; min-width: 0; }
+.an-topo > div > * { min-width: 0; }
+
+/* computador: os cartões do topo em grade 2 × 2 (cada linha com a mesma altura) e o feed encaixado em colunas,
+   sem os buracos que a grade deixava embaixo do cartão mais baixo */
+@media (min-width: 1100px) {
+  .an-topo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: 'hoje agora' 'como mes'; align-items: stretch; }
+  .an-topo.sem-mes { grid-template-areas: 'hoje agora' 'como como'; }
+  .an-topo-hoje { grid-area: hoje; }
+  .an-topo-agora { grid-area: agora; }
+  .an-topo-como { grid-area: como; }
+  .an-topo-mes { grid-area: mes; }
+  .an-topo .escada { padding-top: 26px; }
+  .an-topo .escada-degrau { height: calc(var(--h) * .8); }
+  .an-topo .cascata-area { height: 120px; }
+  .an-feed { display: block; columns: 2; column-gap: 16px; }
+  .an-feed > * { break-inside: avoid; margin-bottom: 16px; }
+  /* no computador, o dia do calendário não precisa ser quadrado: achatado, o cartão não vira uma torre */
+  .analise .calendario-dia { aspect-ratio: auto; min-height: 44px; }
+}
+@media (min-width: 1600px) {
+  .an-feed { columns: 3; }
+}
 .an-mais { justify-self: center; height: 46px; padding: 0 22px; font-size: 15px; }
 .an-nota-fraca { margin: 10px 0 0; font-size: 12.5px; color: var(--texto-3); }
 
@@ -169,16 +193,17 @@
 .analise .ruim { --tom: var(--an-ruim); }
 
 /* cascata */
-.cascata { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 10px; margin-top: 14px; }
+/* o espaço de cima é dos rótulos das barras: sem ele, o valor da primeira encosta no número grande do cartão */
+.cascata { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 10px; margin-top: 30px; }
 .cascata-col { display: grid; gap: 6px; justify-items: center; }
 .cascata-area { position: relative; width: 100%; height: 150px; }
 .cascata-area::after { content: ''; position: absolute; left: -5px; right: -5px; bottom: var(--zero); height: 1px; background: var(--borda-forte); }
-.cascata-area i { position: absolute; left: 14%; right: 14%; border-radius: 8px; transform-origin: bottom; background: var(--an-ruim); animation: vis-cresce-y .7s var(--mola) calc(var(--i) * 140ms) backwards; }
+.cascata-area i { position: absolute; left: 50%; width: min(72%, 92px); translate: -50% 0; border-radius: 8px; transform-origin: bottom; background: var(--an-ruim); animation: vis-cresce-y .7s var(--mola) calc(var(--i) * 140ms) backwards; }
 .cascata-col.entra i { background: var(--an-bom); }
 .cascata-col.sai i { background: color-mix(in srgb, var(--an-ruim) 85%, var(--superficie)); }
 .cascata-col.fica i { background: var(--destaque); box-shadow: 0 8px 20px -10px var(--destaque); }
 .cascata-col.fica.negativo i { background: var(--an-ruim); }
-.cascata-area b { position: absolute; left: -10px; right: -10px; text-align: center; font-size: 12px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; animation: vis-surge .4s ease calc(var(--i) * 140ms + .4s) backwards; }
+.cascata-area b { position: absolute; left: 0; right: 0; text-align: center; font-size: 12px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; animation: vis-surge .4s ease calc(var(--i) * 140ms + .4s) backwards; }
 .cascata small { font-size: 12px; color: var(--texto-2); text-align: center; line-height: 1.2; }
 .vis:not(.vivo) .cascata-area i, .vis:not(.vivo) .cascata-area b { animation-play-state: paused; }
 
