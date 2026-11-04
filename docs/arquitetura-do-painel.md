@@ -227,6 +227,39 @@ os **detalhes que pouca gente percebe**:
 - **Vencimentos amontoados** na mesma semana.
 - **Última parcela chegando**: dinheiro que volta a ser seu, e a sugestão de decidir antes para onde ele vai.
 
+**Planejador de pagamentos** (`lib/planejador.ts`, `planejar()`, puro como o motor). Pega cada conta, parcela e fatura da
+agenda, com o **vencimento de verdade** (a atrasada aparece hoje na agenda, mas o atraso conta do dia em que venceu) e os juros,
+e anda dia a dia, do saldo de hoje até o fim do mês que vem, decidindo **de qual dinheiro sai cada uma e em que dia pagar**:
+- No dia em que o dinheiro entra, paga o que já venceu, primeiro o que cobra mais caro pelo atraso. Guarda para o que vence
+  antes do próximo dinheiro e cobra mais caro (não paga a luz hoje se isso fizer o empréstimo de 8% atrasar amanhã).
+- O custo do atraso é a multa uma vez mais os juros proporcionais aos dias. Juros informados na dívida (`juros_mes`) valem; sem
+  eles, estima: 2% de multa (o máximo do CDC) mais 1% ao mês em contas e boletos, ou 14% ao mês em fatura de cartão (rotativo).
+  A estimativa é dita no texto.
+- Saem quatro dicas, que viram passos do plano de ação (no lugar do aviso genérico de aperto): **qual pagar primeiro** quando o
+  dinheiro não dá para as duas, e quanto a outra vai valer quando chegar a vez dela; **em que dia pagar** a que vence antes de o
+  dinheiro chegar, e quanto vai custar; **falta dinheiro** até o fim do mês que vem; e **quitar ou adiantar** a dívida aberta mais
+  cara com a sobra que fica livre de uma entrada (a sobra só é livre se o caixa não precisar dela depois).
+- Uma entrada nova refaz o plano. O retrato (`retratoDe`) guarda o dia planejado de cada pagamento, e "O que mudou" mostra
+  "Agora dá para pagar Empréstimo em 20/nov (antes, 25/nov)".
+- **Hoje você pode gastar** (`plano.hoje`): o menor entre o que o mês aguenta (`mes.porDia`, guardando a sobra-alvo) e o que o
+  saldo aguenta por dia sem atrasar nenhuma conta até o próximo dinheiro. É o primeiro cartão da aba, com quanto já saiu hoje
+  (gasto do dia a dia lançado hoje) e quanto ainda dá. O "Por quê?" diz qual dos dois mandou no número e lembra que ele vale se o
+  que entra e sai estiver lançado.
+
+**O jeito de cada pessoa** (`lib/jeito.ts`, `tracosDe()`). Lê os números e dá traços: começando agora, gasta bastante,
+controlado, com dívidas pesando, renda que varia, usa muito o cartão. Aparecem no topo da aba ("Seu jeito", tocar mostra o
+porquê) e cada traço soma pontos à prioridade dos gráficos que mais servem a ele (`bonusDoJeito`): quem gasta bastante vê
+primeiro onde gasta e o teto de cada gasto; quem está endividado, o fluxo e as dívidas; quem é controlado, reserva, metas e
+patrimônio. Os traços mudam sozinhos com os lançamentos.
+
+**De onde sai o dinheiro** (visual `fluxo`): cada dinheiro que entra (e o saldo de hoje) vira uma barra dividida no que ele
+paga, com o atraso em laranja e o custo; o que não tem dinheiro fica em vermelho no fim. Sobe para o topo quando há atraso.
+
+**O feed aprende com o uso.** Cada gráfico tem estrela (favorito: vai para o topo) e olho (esconder: vai para "N gráficos
+escondidos", no fim, com "Mostrar de novo"). Cada toque num cartão sobe um pouco o gráfico na próxima visita (não na hora, para o
+cartão não pular debaixo do dedo). A memória fica no navegador, por pessoa (`opuscash:feed:<id>`); sem armazenamento, vale só a
+ordem do motor.
+
 **Gráficos no lugar de texto.** A aba é feita de gráficos, com pouco texto e linguagem simples: cada cartão tem título de
 até 5 palavras e uma frase só. Explicação longa fica atrás de "Por quê?".
 

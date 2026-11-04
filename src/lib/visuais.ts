@@ -22,6 +22,7 @@ import { fmtMeses } from './analise'
 import { doMesChave, chaveMes } from './cartoes'
 import type { Destino } from './conselheiro'
 import { fmtDataCurta, fmtMesAno, fmtPct, fmtValor, LOCAL_DAS_DATAS, MESES_CURTO, moedaAtual, valoresEstaoOcultos } from './format'
+import { bonusDoJeito, tracosDe } from './jeito'
 import { tx } from './textos'
 
 export const COR = {
@@ -70,7 +71,16 @@ export type Visual = Base & (
   | { tipo: 'pote'; atual: number; maximo: number; marcos: { rotulo: string; valor: number }[] }
   | { tipo: 'aneis'; itens: { rotulo: string; icone: string; progresso: number; legenda: string; tom: Tom }[] }
   | { tipo: 'tabela'; colunas: string[]; linhas: { icone: string; rotulo: string; valores: number[]; corta: boolean }[] }
+  | { tipo: 'fluxo'; grupos: GrupoDoFluxo[]; semDinheiro: { rotulo: string; valor: number; custo: number }[] }
 )
+
+/** Um dinheiro que entra (ou o saldo de hoje) e o que ele paga, com o atraso de cada um. */
+export interface GrupoDoFluxo {
+  fonte: string
+  data: string
+  valor: number
+  itens: { rotulo: string; valor: number; atraso: number; custo: number }[]
+}
 
 /** Os nomes curtos dos pilares, para caber num gráfico. */
 export const NOME_CURTO: Record<IdPilar, () => string> = {
@@ -111,6 +121,26 @@ export function visuais(a: Analise): Visual[] {
           : g.menorSaldo ? tx('Ponto mais baixo: {0} em {1}.', fmtValor(g.menorSaldo.valor), fmtDataCurta(g.menorSaldo.data)) : '',
       })
     }
+  }
+
+  // ---- de onde sai o dinheiro (o plano de pagamentos) ----
+  const pl = a.plano
+  if (pl && pl.pagamentos.length + pl.semDinheiro.length >= 2) {
+    const grupos: GrupoDoFluxo[] = pl.fontes.map((f, i) => ({
+      fonte: i === 0 && pl.comSaldo ? tx('Saldo de hoje') : f.descricao, data: f.data, valor: f.valor,
+      itens: pl.pagamentos.filter((p) => p.fonteData === f.data).map((p) => ({ rotulo: p.descricao, valor: p.valor + p.custo, atraso: p.atraso, custo: p.custo })),
+    })).filter((x) => x.itens.length)
+    const escolha = pl.dicas.find((x) => x.id.startsWith('escolha:') || x.id.startsWith('pagar-em:'))
+    const antesDoDinheiro = pl.pagamentos.some((p) => p.fonteData && p.vence < p.fonteData)
+    v.push({
+      id: 'fluxo', tipo: 'fluxo', prioridade: pl.atrasos ? 94 : antesDoDinheiro ? 86 : 55, destino: 'contas', grupos,
+      semDinheiro: pl.semDinheiro.map((p) => ({ rotulo: p.descricao, valor: p.valor, custo: p.custo })),
+      titulo: tx('De onde sai o dinheiro'), tom: pl.semDinheiro.length ? 'ruim' : pl.atrasos ? 'medio' : 'bom',
+      frase: pl.semDinheiro.length ? (pl.dicas.find((x) => x.id === 'sem-dinheiro')?.titulo ?? '')
+        : escolha ? escolha.titulo
+          : pl.comSaldo ? tx('Tudo o que vence até o fim do mês que vem cabe no dinheiro que entra.')
+            : tx('As contas com data cabem no dinheiro que entra. O gasto do dia a dia fica de fora: informe o saldo dos bancos para eu contar com ele.'),
+    })
   }
 
   // ---- os 6 pilares ----
@@ -291,6 +321,9 @@ export function visuais(a: Analise): Visual[] {
     })
   }
 
+  // O jeito da pessoa (lib/jeito.ts) sobe o que mais serve a ela: quem gasta muito vê primeiro onde gasta.
+  const tracos = tracosDe(a)
+  for (const x of v) x.prioridade += bonusDoJeito(tracos, x.id)
   return v.sort((x, y) => y.prioridade - x.prioridade)
 }
 

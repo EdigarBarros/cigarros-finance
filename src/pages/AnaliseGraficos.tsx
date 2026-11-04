@@ -4,7 +4,7 @@ import type { Destino } from '../lib/conselheiro'
 import { doMesChave } from '../lib/cartoes'
 import { fmtDataCurta, fmtMesAno, fmtPct, fmtValor, LOCAL_DAS_DATAS } from '../lib/format'
 import { COR_DO_TOM, fmtCurto, useEmVista } from './analiseApoio'
-import type { Visual } from '../lib/visuais'
+import type { GrupoDoFluxo, Visual } from '../lib/visuais'
 import { Anel } from '../components/ui'
 import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
@@ -15,14 +15,39 @@ import { tx } from '../lib/textos'
  * começa quando o cartão aparece na tela (classe "vivo"). Com "Animações reduzidas" (Configurações), tudo aparece pronto.
  */
 
+/** O que a pessoa pode fazer com um gráfico do feed: favoritar (vai para o topo) ou esconder. */
+export interface AcoesDoCartao {
+  fav: boolean
+  aoFavoritar: () => void
+  aoEsconder: () => void
+  /** Cada toque no cartão conta como uso: o que a pessoa mais usa sobe no feed. */
+  aoTocar: () => void
+}
+
 /** O cartão de um visual: título curto, uma frase, o desenho e, se houver, o atalho para a tela certa. */
-export function CartaoVisual({ v, aoIr, children }: { v: Pick<Visual, 'id' | 'titulo' | 'frase' | 'tom' | 'destino'>; aoIr?: (d: Destino) => void; children: ReactNode }) {
+export function CartaoVisual({ v, aoIr, acoes, children }: {
+  v: Pick<Visual, 'id' | 'titulo' | 'frase' | 'tom' | 'destino'>; aoIr?: (d: Destino) => void; acoes?: AcoesDoCartao; children: ReactNode
+}) {
   const [ref, vivo] = useEmVista<HTMLElement>()
   return (
-    <section ref={ref} className={`cartao vis ${vivo ? 'vivo' : ''}`} style={{ '--c': v.tom ? COR_DO_TOM[v.tom] : 'var(--destaque)' } as CSSProperties}>
+    <section ref={ref} className={`cartao vis ${vivo ? 'vivo' : ''} ${acoes?.fav ? 'fav' : ''}`} style={{ '--c': v.tom ? COR_DO_TOM[v.tom] : 'var(--destaque)' } as CSSProperties}
+      onPointerUp={acoes?.aoTocar}>
       <header className="vis-cab">
         <h3>{v.titulo}</h3>
-        {v.destino && aoIr && <button className="vis-ir" onClick={() => aoIr(v.destino!)} aria-label={tx('Abrir')}><Icone nome="dir" tamanho={18} /></button>}
+        <span className="vis-botoes">
+          {acoes && (
+            <>
+              <button className={`vis-ir vis-fav ${acoes.fav ? 'ligado' : ''}`} onClick={acoes.aoFavoritar} aria-pressed={acoes.fav}
+                aria-label={acoes.fav ? tx('Tirar dos favoritos') : tx('Favoritar: fica no topo')} title={acoes.fav ? tx('Tirar dos favoritos') : tx('Favoritar: fica no topo')}>
+                <Icone nome="estrela" tamanho={16} />
+              </button>
+              <button className="vis-ir" onClick={acoes.aoEsconder} aria-label={tx('Esconder este gráfico')} title={tx('Esconder este gráfico')}>
+                <Icone nome="olho-fechado" tamanho={16} />
+              </button>
+            </>
+          )}
+          {v.destino && aoIr && <button className="vis-ir" onClick={() => aoIr(v.destino!)} aria-label={tx('Abrir')}><Icone nome="dir" tamanho={18} /></button>}
+        </span>
       </header>
       {v.frase && <p className="vis-frase">{v.frase}</p>}
       <div className="vis-corpo">{children}</div>
@@ -44,6 +69,7 @@ export function Grafico({ v }: { v: Visual }) {
     case 'pote': return <Pote atual={v.atual} maximo={v.maximo} marcos={v.marcos} />
     case 'aneis': return <Aneis itens={v.itens} />
     case 'tabela': return <Tabela colunas={v.colunas} linhas={v.linhas} />
+    case 'fluxo': return <Fluxo grupos={v.grupos} semDinheiro={v.semDinheiro} />
   }
 }
 
@@ -293,6 +319,55 @@ function Barras({ barras }: { barras: { rotulo: string; valor: number; cor?: str
         </li>
       ))}
     </ul>
+  )
+}
+
+// ---------- de onde sai o dinheiro ----------
+
+/** Cada dinheiro que entra vira uma barra dividida no que ele paga; o atraso aparece em laranja, com o custo. */
+function Fluxo({ grupos, semDinheiro }: { grupos: GrupoDoFluxo[]; semDinheiro: { rotulo: string; valor: number; custo: number }[] }) {
+  const MAX_ITENS = 5
+  return (
+    <div className="fluxo">
+      {grupos.slice(0, 4).map((g, i) => {
+        const usado = g.itens.reduce((s, x) => s + x.valor, 0)
+        const base = Math.max(g.valor, usado, 1)
+        const sobra = Math.max(0, g.valor - usado)
+        return (
+          <div key={g.data} className="fluxo-grupo" style={{ '--i': i } as CSSProperties}>
+            <div className="fluxo-cab">
+              <span className="fluxo-fonte"><Icone nome="receber" tamanho={15} /> <b>{g.fonte}</b> <small>{fmtDataCurta(g.data)}</small></span>
+              <b>{fmtCurto(g.valor)}</b>
+            </div>
+            <div className="fluxo-barra" role="img" aria-label={tx('{0} paga {1} de {2}', g.fonte, fmtValor(usado), fmtValor(g.valor))}>
+              {g.itens.map((x, k) => (
+                <i key={k} className={x.atraso > 0 ? 'atrasa' : ''} style={{ width: `${(x.valor / base) * 100}%`, '--k': k } as CSSProperties} />
+              ))}
+              {sobra > 0.5 && <i className="sobra" style={{ width: `${(sobra / base) * 100}%` }} />}
+            </div>
+            <ul className="fluxo-itens">
+              {g.itens.slice(0, MAX_ITENS).map((x, k) => (
+                <li key={k} className={x.atraso > 0 ? 'atrasa' : ''}>
+                  <span>{x.rotulo}</span>
+                  {x.atraso > 0 && <small>{x.atraso === 1 ? tx('1 dia de atraso, +{0}', fmtValor(x.custo)) : tx('{0} dias de atraso, +{1}', x.atraso, fmtValor(x.custo))}</small>}
+                  <b>{fmtCurto(x.valor)}</b>
+                </li>
+              ))}
+              {g.itens.length > MAX_ITENS && <li className="fluxo-mais"><span>{tx('e mais {0}', g.itens.length - MAX_ITENS)}</span></li>}
+              {sobra > 0.5 && <li className="fluxo-sobra"><span>{tx('Sobra para o dia a dia')}</span><b>{fmtCurto(sobra)}</b></li>}
+            </ul>
+          </div>
+        )
+      })}
+      {semDinheiro.length > 0 && (
+        <div className="fluxo-grupo falta">
+          <div className="fluxo-cab"><span className="fluxo-fonte"><Icone nome="escudo" tamanho={15} /> <b>{tx('Sem dinheiro até o fim do mês que vem')}</b></span></div>
+          <ul className="fluxo-itens">
+            {semDinheiro.map((x, k) => <li key={k} className="atrasa"><span>{x.rotulo}</span><b>{fmtCurto(x.valor)}</b></li>)}
+          </ul>
+        </div>
+      )}
+    </div>
   )
 }
 
