@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js'
 import { lazy, Suspense, useEffect, useReducer, useState } from 'react'
+import { Analytics } from '@vercel/analytics/react'
 import { BotaoIdioma } from './components/BotaoIdioma'
 import { Carregando } from './components/Carregando'
 import { Configuracao, Login, NovaSenha } from './components/Entrada'
@@ -57,19 +58,19 @@ export default function App() {
     return () => window.removeEventListener('hashchange', aoMudar)
   }, [])
 
-  if (doc) return comIdioma(<PaginaLegal doc={doc} />, false)
-  if (!configurado) return comIdioma(<Configuracao />)
-  if (sessao === undefined) return <Carregando />
+  if (doc) return <>{comIdioma(<PaginaLegal doc={doc} />, false)}<Analytics /></>
+  if (!configurado) return <>{comIdioma(<Configuracao />)}<Analytics /></>
+  if (sessao === undefined) return <><Carregando /><Analytics /></>
 
   // o link de "Esqueci minha senha" cria uma sessão: a tela de nova senha vem antes de qualquer outra
-  if (recuperando) return comIdioma(<NovaSenha aoConcluir={() => setRecuperando(false)} />)
+  if (recuperando) return <>{comIdioma(<NovaSenha aoConcluir={() => setRecuperando(false)} />)}<Analytics /></>
   if (!sessao) {
     // Landing page por padrão; o login (ou o cadastro) abre quando a pessoa clica
-    if (login) return comIdioma(<Login inicial={login} />)
-    return comIdioma(<Apresentacao onLogin={() => setLogin('entrar')} onSignup={() => setLogin('criar')} />)
+    if (login) return <>{comIdioma(<Login inicial={login} />)}<Analytics /></>
+    return <>{comIdioma(<Apresentacao onLogin={() => setLogin('entrar')} onSignup={() => setLogin('criar')} />)}<Analytics /></>
   }
 
-  return <ComAcesso userId={sessao.user.id} email={sessao.user.email ?? ''} nome={sessao.user.user_metadata?.nome} />
+  return <><ComAcesso userId={sessao.user.id} email={sessao.user.email ?? ''} nome={sessao.user.user_metadata?.nome} /><Analytics /></>
 }
 
 /** Só abre o painel para quem está no teste grátis, com a assinatura em dia ou com a conta liberada. */
