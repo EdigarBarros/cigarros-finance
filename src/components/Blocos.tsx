@@ -163,9 +163,11 @@ export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTod
   aReceber?: { falta: number; atrasado: number; quantos: number }
   aoVerReceber?: () => void
 }) {
-  const total = itens.reduce((a, s) => a + s.restante, 0)
+  // o que se deve hoje já leva os juros de atraso estimados; o "já pago" é o que foi pago do valor registrado
+  const total = itens.reduce((a, s) => a + s.restanteHoje, 0)
+  const registrado = itens.reduce((a, s) => a + s.restante, 0)
   const inicial = itens.reduce((a, s) => a + s.saldoInicial, 0)
-  const pagoPct = inicial > 0 ? Math.round(((inicial - total) / inicial) * 100) : 0
+  const pagoPct = inicial > 0 ? Math.round(((inicial - registrado) / inicial) * 100) : 0
   // Só dá para prever o fim quando toda dívida em aberto tem parcela definida.
   const semParcela = itens.some((s) => s.restante > 0 && !s.quitacao)
   const fim = semParcela ? null : itens.map((s) => s.quitacao).filter((q): q is [number, number] => q !== null)
@@ -184,7 +186,7 @@ export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTod
               <Anel valor={pagoPct / 100} cor={COR.entradas} tamanho={58}>{pagoPct}%</Anel>
               <span className="divida-resumo-texto">
                 <small>{tx('já pago')}</small>
-                <b>{fmtValor(inicial - total)}</b>
+                <b>{fmtValor(inicial - registrado)}</b>
               </span>
               {fim && <span className="chip-info"><Icone nome="calendario" tamanho={13} /> {tx('livre em')} {quando(fim)}</span>}
             </div>
@@ -194,7 +196,7 @@ export function BlocoDividas({ itens, nivel, aoEditar, aoPagar, aoNova, aoVerTod
             <div key={s.divida.id} className={`divida-linha ${s.quitadaNoMes ? 'quitada' : ''}`}>
               <button className="divida-linha-info" onClick={() => aoEditar(s)}>
                 <span className="divida-linha-nome">{s.divida.descricao}</span>
-                <span className="divida-linha-valor">{s.quitadaNoMes ? tx('Quitada ✓') : fmtDiv(s, s.restante)}</span>
+                <span className="divida-linha-valor">{s.quitadaNoMes ? tx('Quitada ✓') : fmtDiv(s, s.restanteHoje)}</span>
                 <Progresso valor={s.saldoInicial - s.restante} total={s.saldoInicial} cor={COR.entradas} />
                 {(() => {
                   // chips curtos no lugar da frase: parcela, valor por mês, quando acaba, pago no mês

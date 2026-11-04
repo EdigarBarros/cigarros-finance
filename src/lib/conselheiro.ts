@@ -267,7 +267,7 @@ export function conselhos(e: EntradaConselheiro): Conselho[] {
 
   // 3. Parcelas das dívidas pesando (só dívidas que a pessoa deve)
   const devo = e.dividas.filter((d) => !meDevem(d))
-  const dividasHoje = v.dividas ? situacaoDividas(devo, e.saldos, e.pagamentos, hoje.getFullYear(), hoje.getMonth() + 1, e.taxas) : []
+  const dividasHoje = v.dividas ? situacaoDividas(devo, e.saldos, e.pagamentos, hoje.getFullYear(), hoje.getMonth() + 1, e.taxas, hojeLocal(hoje)) : []
   if (v.dividas && temFluxo && entradasMedia > 0) {
     const parcelas = centavos(soma(dividasHoje.filter((s) => s.restante > 0).map((s) => s.divida.valor_parcela ?? 0)))
     const peso = parcelas / entradasMedia
@@ -285,9 +285,10 @@ export function conselhos(e: EntradaConselheiro): Conselho[] {
   // 4. Dívida crescendo: o que se devia há 3 meses (só as dívidas que já existiam) contra hoje
   if (v.dividas) {
     const k = doMesChave(atual - MESES_DA_DIVIDA)
-    const antes = situacaoDividas(devo, e.saldos, e.pagamentos, k.ano, k.mes, e.taxas).filter((s) => s.restante > 0)
+    const antes = situacaoDividas(devo, e.saldos, e.pagamentos, k.ano, k.mes, e.taxas, hojeLocal(hoje)).filter((s) => s.restante > 0)
     const totalAntes = centavos(soma(antes.map((s) => s.restante)))
-    const restanteHoje = new Map(dividasHoje.map((s) => [s.divida.id, s.restante]))
+    // hoje: com os juros de atraso estimados (a dívida que cresce no atraso também conta como aumento)
+    const restanteHoje = new Map(dividasHoje.map((s) => [s.divida.id, s.restanteHoje]))
     const totalHoje = centavos(soma(antes.map((s) => restanteHoje.get(s.divida.id) ?? 0)))
     if (totalAntes > 0 && totalHoje > totalAntes * (1 + DIVIDA_CRESCEU_MIN)) {
       nova({

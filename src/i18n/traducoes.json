@@ -8290,5 +8290,189 @@
   "Adicionar": {
     "en": "Add",
     "es": "Agregar"
+  },
+  "Digite os juros do atraso por mês de 0 a 100 (ex.: 13), ou deixe em branco.": {
+    "en": "Enter the late interest per month from 0 to 100 (e.g. 13), or leave it blank.",
+    "es": "Escribe los intereses por atraso al mes de 0 a 100 (ej.: 13), o déjalo en blanco."
+  },
+  "Digite a multa de 0 a 100 (ex.: 2).": {
+    "en": "Enter the late fee from 0 to 100 (e.g. 2).",
+    "es": "Escribe la multa de 0 a 100 (ej.: 2)."
+  },
+  "Escolha o dia em que os valores foram conferidos com o banco.": {
+    "en": "Choose the day the amounts were checked with the bank.",
+    "es": "Elige el día en que los valores se comprobaron con el banco."
+  },
+  "Se atrasar": {
+    "en": "If it's late",
+    "es": "Si se atrasa"
+  },
+  "cresce {0}% ao mês": {
+    "en": "grows {0}% a month",
+    "es": "crece {0}% al mes"
+  },
+  "(opcional)": {
+    "en": "(optional)",
+    "es": "(opcional)"
+  },
+  "Com isto, o app aumenta a dívida sozinho enquanto ela está atrasada, igual ao banco. É uma estimativa: quando quiser, confira o valor real na ficha da dívida.": {
+    "en": "With this, the app grows the debt on its own while it's late, just like the bank. It's an estimate: whenever you like, check the real amount on the debt's page.",
+    "es": "Con esto, la app aumenta la deuda sola mientras está atrasada, igual que el banco. Es una estimación: cuando quieras, comprueba el valor real en la ficha de la deuda."
+  },
+  "Juros do atraso (% ao mês)": {
+    "en": "Late interest (% a month)",
+    "es": "Intereses por atraso (% al mes)"
+  },
+  "Ex.: 13": {
+    "en": "E.g. 13",
+    "es": "Ej.: 13"
+  },
+  "Quanto a dívida cresce por mês enquanto está atrasada (no contrato: \"juros de mora\" ou \"encargos de atraso\"). Em branco, ela não cresce sozinha.": {
+    "en": "How much the debt grows each month while it's late (in the contract: \"late interest\" or \"late charges\"). Blank means it doesn't grow on its own.",
+    "es": "Cuánto crece la deuda al mes mientras está atrasada (en el contrato: \"intereses moratorios\" o \"cargos por atraso\"). En blanco, no crece sola."
+  },
+  "Multa (%)": {
+    "en": "Late fee (%)",
+    "es": "Multa (%)"
+  },
+  "Cobrada uma vez, quando a parcela vence sem ser paga. O comum é 2%.": {
+    "en": "Charged once, when an installment is due and not paid. The usual is 2%.",
+    "es": "Se cobra una vez, cuando la cuota vence sin pagarse. Lo común es 2%."
+  },
+  "Como cresce": {
+    "en": "How it grows",
+    "es": "Cómo crece"
+  },
+  "Só sobre o valor devido": {
+    "en": "Only on the amount owed",
+    "es": "Solo sobre lo debido"
+  },
+  "Juros sobre juros": {
+    "en": "Interest on interest",
+    "es": "Interés sobre interés"
+  },
+  "Ex.: R$ 100 atrasados com 10% ao mês viram R$ 120 depois de 2 meses.": {
+    "en": "E.g. R$ 100 overdue at 10% a month becomes R$ 120 after 2 months.",
+    "es": "Ej.: R$ 100 atrasados al 10% al mes se vuelven R$ 120 después de 2 meses."
+  },
+  "Ex.: R$ 100 atrasados com 10% ao mês viram R$ 121 depois de 2 meses (os juros também rendem juros).": {
+    "en": "E.g. R$ 100 overdue at 10% a month becomes R$ 121 after 2 months (the interest also earns interest).",
+    "es": "Ej.: R$ 100 atrasados al 10% al mes se vuelven R$ 121 después de 2 meses (los intereses también generan intereses)."
+  },
+  "Cresce sobre": {
+    "en": "Grows on",
+    "es": "Crece sobre"
+  },
+  "Cada parcela atrasada": {
+    "en": "Each late installment",
+    "es": "Cada cuota atrasada"
+  },
+  "O saldo inteiro": {
+    "en": "The whole balance",
+    "es": "El saldo entero"
+  },
+  "Só o que venceu e não foi pago cresce (empréstimos, crediários, Pix parcelado).": {
+    "en": "Only what's due and unpaid grows (loans, store credit, installment Pix).",
+    "es": "Solo crece lo que venció y no se pagó (préstamos, créditos de tienda, Pix en cuotas)."
+  },
+  "A dívida toda cresce, como num cartão de crédito em atraso.": {
+    "en": "The whole debt grows, like an overdue credit card.",
+    "es": "Toda la deuda crece, como una tarjeta de crédito atrasada."
+  },
+  "Valores conferidos em": {
+    "en": "Amounts checked on",
+    "es": "Valores comprobados el"
+  },
+  "Dia em que o valor da dívida no app estava igual ao do banco. Os juros contam a partir dele.": {
+    "en": "The day the debt in the app matched the bank. Interest counts from then on.",
+    "es": "Día en que el valor de la deuda en la app coincidía con el del banco. Los intereses cuentan desde ese día."
+  },
+  "Estimativa de hoje, com os juros do atraso. Registrado: {0}": {
+    "en": "Today's estimate, with late interest. Recorded: {0}",
+    "es": "Estimación de hoy, con los intereses por atraso. Registrado: {0}"
+  },
+  "juros do atraso (estimado)": {
+    "en": "late interest (estimated)",
+    "es": "intereses por atraso (estimado)"
+  },
+  "Estimativa pela regra de juros do atraso. Confira com o banco para acertar.": {
+    "en": "Estimated with the late-interest rule. Check with the bank to set it right.",
+    "es": "Estimación según la regla de intereses por atraso. Compruébalo con el banco para ajustarlo."
+  },
+  "com juros, estimado": {
+    "en": "with interest, estimated",
+    "es": "con intereses, estimado"
+  },
+  "cresce ~{0} por dia": {
+    "en": "grows ~{0} a day",
+    "es": "crece ~{0} por día"
+  },
+  "Quanto o banco mostra hoje?": {
+    "en": "How much does the bank show today?",
+    "es": "¿Cuánto muestra el banco hoy?"
+  },
+  "{0} a mais que a estimativa do app.": {
+    "en": "{0} more than the app's estimate.",
+    "es": "{0} más que la estimación de la app."
+  },
+  "{0} a menos que a estimativa do app.": {
+    "en": "{0} less than the app's estimate.",
+    "es": "{0} menos que la estimación de la app."
+  },
+  "O valor digitado vira o valor real da dívida, e os juros do atraso voltam a contar a partir de hoje.": {
+    "en": "The amount you type becomes the debt's real amount, and late interest starts counting again from today.",
+    "es": "El valor que escribas se vuelve el valor real de la deuda, y los intereses por atraso vuelven a contar desde hoy."
+  },
+  "Salvar valor do banco": {
+    "en": "Save the bank's amount",
+    "es": "Guardar el valor del banco"
+  },
+  "No atraso: {0}% ao mês, juros sobre juros, sobre o saldo inteiro": {
+    "en": "When late: {0}% a month, interest on interest, on the whole balance",
+    "es": "En atraso: {0}% al mes, interés sobre interés, sobre el saldo entero"
+  },
+  "No atraso: {0}% ao mês sobre o saldo inteiro": {
+    "en": "When late: {0}% a month on the whole balance",
+    "es": "En atraso: {0}% al mes sobre el saldo entero"
+  },
+  "No atraso: {0}% ao mês, juros sobre juros, em cada parcela atrasada": {
+    "en": "When late: {0}% a month, interest on interest, on each late installment",
+    "es": "En atraso: {0}% al mes, interés sobre interés, en cada cuota atrasada"
+  },
+  "No atraso: {0}% ao mês sobre cada parcela atrasada": {
+    "en": "When late: {0}% a month on each late installment",
+    "es": "En atraso: {0}% al mes sobre cada cuota atrasada"
+  },
+  "multa de {0}%": {
+    "en": "{0}% late fee",
+    "es": "multa de {0}%"
+  },
+  "conferido em {0}": {
+    "en": "checked on {0}",
+    "es": "comprobado el {0}"
+  },
+  "falta pagar hoje": {
+    "en": "left to pay today",
+    "es": "falta pagar hoy"
+  },
+  "Conferi com o banco": {
+    "en": "I checked with the bank",
+    "es": "Lo comprobé con el banco"
+  },
+  "{0} de juros estimados até hoje (registrado: {1})": {
+    "en": "{0} of estimated interest so far (recorded: {1})",
+    "es": "{0} de intereses estimados hasta hoy (registrado: {1})"
+  },
+  "{0} pago, com juros": {
+    "en": "{0} paid, with interest",
+    "es": "{0} pagado, con intereses"
+  },
+  "atrasada, com juros": {
+    "en": "late, with interest",
+    "es": "atrasada, con intereses"
+  },
+  "Juros do atraso – {0}": {
+    "en": "Late interest – {0}",
+    "es": "Intereses por atraso – {0}"
   }
 }

@@ -90,7 +90,8 @@ export function tarefasDoMes({ ano, mes, contas, faturas, dividas, diaRef, aoPag
     const cal = calendarioDe(s, diaRef)
     const doMes = cal?.parcelas.filter((p) => p.falta > 0 && p.vencimento <= fim) ?? []
     if (!doMes.length) continue
-    const falta = doMes.reduce((a, p) => a + p.falta, 0)
+    // parcela atrasada já leva os juros de atraso estimados
+    const falta = doMes.reduce((a, p) => a + p.falta + (s.atraso?.porParcela.get(p.n) ?? 0), 0)
     parcelas += falta
     const venc = doMes[0].vencimento
     lista.push({

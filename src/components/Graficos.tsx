@@ -207,6 +207,7 @@ function origensDaDivida(r: Resumo | null | undefined): [string, number][] {
   if (r.dividaNovas) l.push([tx('nova dívida'), r.dividaNovas])
   if (r.dividaAumentos) l.push([tx('emprestado a mais'), r.dividaAumentos])
   if (r.dividaAjustes) l.push([tx('ajuste de saldo'), r.dividaAjustes])
+  if (r.dividaJuros) l.push([tx('juros do atraso (estimado)'), r.dividaJuros])
   if (r.dividaPagos) l.push([tx('pagamentos'), -r.dividaPagos])
   return l
 }

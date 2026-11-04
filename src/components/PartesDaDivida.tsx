@@ -37,6 +37,8 @@ export function PartesDaDivida({ s, cal, d, recebe }: {
   // situação de cada dia de vencimento, tirada do calendário da dívida (o pagamento cobre os dias do mais antigo para o mais novo)
   const estadoDoDia = new Map((cal?.parcelas ?? []).map((p) => [p.vencimento, p.estado]))
   const total = grupos.reduce((a, g) => a + g.total, 0)
+  // juros de atraso estimados de cada parcela (por id da parte), só no mês de hoje
+  const jurosDe = (id: string) => s.atraso?.porParte.get(id) ?? 0
 
   return (
     <section className="dp">
@@ -47,6 +49,7 @@ export function PartesDaDivida({ s, cal, d, recebe }: {
         <ul className="dp-lista">
           {grupos.map((g, i) => {
             const atrasadas = g.parcelas.filter((p) => estadoDoDia.get(p.vencimento) === 'atrasada').length
+            const jurosDoGrupo = g.parcelas.reduce((a, p) => a + jurosDe(p.id), 0)
             const pagas = g.parcelas.filter((p) => estadoDoDia.get(p.vencimento) === 'paga').length
             const chave = g.nome.toLowerCase()
             const abertaAqui = aberta === chave
@@ -59,11 +62,11 @@ export function PartesDaDivida({ s, cal, d, recebe }: {
                   </span>
                   {atrasadas > 0 ? <span className="chip-estado dv atrasada">{atrasadas === 1 ? tx('1 atrasada') : tx('{0} atrasadas', atrasadas)}</span>
                     : pagas === g.parcelas.length ? <span className="chip-estado dv quitada">{recebe ? tx('Recebido') : tx('Quitada')}</span> : null}
-                  <span className="dp-parte-valor">{fmtValor(g.total)}</span>
+                  <span className="dp-parte-valor">{jurosDoGrupo > 0 ? <><s>{fmtValor(g.total)}</s> {fmtValor(g.total + jurosDoGrupo)}</> : fmtValor(g.total)}</span>
                   <Icone nome="abaixo" tamanho={16} />
                 </button>
                 {abertaAqui && (
-                  <Parcelas parcelas={g.parcelas} estadoDoDia={estadoDoDia} d={d} />
+                  <Parcelas parcelas={g.parcelas} estadoDoDia={estadoDoDia} d={d} jurosDe={jurosDe} />
                 )}
               </li>
             )
@@ -91,8 +94,8 @@ function resumoDoGrupo(parcelas: ParteDivida[], de: number | null) {
 }
 
 /** As parcelas de uma parte, cada uma com a situação e o lápis para corrigir valor e data. */
-function Parcelas({ parcelas, estadoDoDia, d }: {
-  parcelas: ParteDivida[]; estadoDoDia: Map<string, EstadoParcela>; d: Pick<Dados, 'updParte' | 'delPartes'>
+function Parcelas({ parcelas, estadoDoDia, d, jurosDe }: {
+  parcelas: ParteDivida[]; estadoDoDia: Map<string, EstadoParcela>; d: Pick<Dados, 'updParte' | 'delPartes'>; jurosDe: (id: string) => number
 }) {
   const [editando, setEditando] = useState<string | null>(null)
   const [apagar, setApagar] = useState(false)
@@ -110,7 +113,9 @@ function Parcelas({ parcelas, estadoDoDia, d }: {
               <span className="dp-n">{p.parcela && p.parcelas ? tx('{0} de {1}', p.parcela, p.parcelas) : <Icone nome="calendario" tamanho={13} />}</span>
               <span className="dp-data">{fmtDataCurta(p.vencimento)}</span>
               <span className="dp-estado">{ROTULO[estado]}</span>
-              <span className="dp-valor">{fmtValor(p.valor)}</span>
+              <span className="dp-valor">{jurosDe(p.id) > 0
+                ? <span title={tx('Estimativa de hoje, com os juros do atraso. Registrado: {0}', fmtValor(p.valor))}><s>{fmtValor(p.valor)}</s> {fmtValor(p.valor + jurosDe(p.id))}</span>
+                : fmtValor(p.valor)}</span>
               <button className="icone-btn" onClick={() => setEditando(p.id)} aria-label={tx('Corrigir parcela')}><Icone nome="lapis" tamanho={14} /></button>
             </li>
           )

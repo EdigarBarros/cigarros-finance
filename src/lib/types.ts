@@ -64,6 +64,19 @@ export interface Divida {
   moeda?: string | null
   /** Juros da dívida em % ao mês (migração 19): 2.5 = 2,5% ao mês; null = não informado. Só faz sentido em dívida que você deve. */
   juros_mes?: number | null
+  /**
+   * Juros de atraso (migração 22): quanto a dívida cresce por mês ENQUANTO ESTÁ ATRASADA, em %. null = não cresce sozinha.
+   * É diferente de `juros_mes`, que é o do contrato.
+   */
+  atraso_juros_mes?: number | null
+  /** 'simples': juros só sobre o valor da parcela; 'composto': juros sobre juros. */
+  atraso_tipo?: 'simples' | 'composto' | null
+  /** Multa em % cobrada uma vez quando a parcela vence sem ser paga. */
+  atraso_multa?: number | null
+  /** 'parcela': cada parcela atrasada cresce; 'saldo': o saldo inteiro cresce (cartão). */
+  atraso_base?: 'parcela' | 'saldo' | null
+  /** Dia em que os valores foram conferidos com o banco: os juros de atraso contam a partir dele. */
+  conferido_em?: string | null
   obs?: string | null
   /**
    * Partes da dívida (migração 21), já em ordem de vencimento: as mini-dívidas que formam uma dívida maior, uma linha por
@@ -82,6 +95,8 @@ export interface ParteDivida {
   vencimento: string
   parcela: number | null
   parcelas: number | null
+  /** Valor da parcela no contrato, base dos juros de atraso simples (migração 22). null/ausente = usar `valor`. */
+  valor_original?: number | null
 }
 
 /** "Em tal data, o saldo devedor era X" (informado por você ou vindo da planilha). */

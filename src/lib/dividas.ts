@@ -2,8 +2,11 @@ import { fmtMoeda, fmtValor, moedaAtual } from './format'
 import type { Taxas } from './moedas'
 import type { Divida, Pagamento, ParteDivida, SaldoDivida } from './types'
 import { tx } from './textos'
+import { jurosDoAtraso, type JurosDoAtraso } from './jurosAtraso'
 
 const pad = (n: number) => String(n).padStart(2, '0')
+/** Hoje (AAAA-MM-DD) no fuso do aparelho. */
+const hojeDoAparelho = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` }
 export const fimDoMes = (ano: number, mes: number) => `${ano}-${pad(mes)}-${pad(new Date(ano, mes, 0).getDate())}`
 export const inicioDoMes = (ano: number, mes: number) => `${ano}-${pad(mes)}-01`
 const mesAnterior = (ano: number, mes: number): [number, number] => (mes === 1 ? [ano - 1, 12] : [ano, mes - 1])
@@ -49,6 +52,15 @@ export interface SituacaoDivida {
   /** [ano, mes] previsto para quitar. */
   quitacao: [number, number] | null
   quitadaNoMes: boolean
+  /**
+   * Juros de atraso estimados até hoje (migração 22), só no mês que contém hoje (nos outros, 0). Não entram em `restante`
+   * (que é o valor registrado, e que o pagamento cobre parcela por parcela): somam em `restanteHoje`.
+   */
+  jurosAtraso: number
+  /** Quanto falta pagar hoje: `restante` + os juros de atraso estimados. É o "quanto deve agora". */
+  restanteHoje: number
+  /** O detalhe dos juros de atraso (por parcela, por parte, por dia); null quando não há. */
+  atraso: JurosDoAtraso | null
 }
 
 /** Entrada numa dívida sua (empréstimo recebido) ou saída em "me devem" (empréstimo feito): a dívida cresce em vez de diminuir. */
@@ -95,9 +107,12 @@ export const aproxDiv = (s: Pick<SituacaoDivida, 'moeda' | 'taxa'> & { semCotaca
 /** O valor na moeda da dívida, como número (para preencher campos). */
 export const nativoDiv = (s: Pick<SituacaoDivida, 'moeda' | 'taxa'>, valor: number) => (s.moeda ? centavosDe(valor / s.taxa) : valor)
 
-/** Dívidas que aparecem no mês: as que existiam e não estavam quitadas antes dele. `taxas` converte as dívidas em outra moeda. */
+/**
+ * Dívidas que aparecem no mês: as que existiam e não estavam quitadas antes dele. `taxas` converte as dívidas em outra moeda.
+ * `hoje` (AAAA-MM-DD): no mês que o contém, cada dívida atrasada ganha os juros de atraso estimados até ele.
+ */
 export function situacaoDividas(
-  dividas: Divida[], saldos: SaldoDivida[], pagamentos: Pagamento[], ano: number, mes: number, taxas: Taxas = {},
+  dividas: Divida[], saldos: SaldoDivida[], pagamentos: Pagamento[], ano: number, mes: number, taxas: Taxas = {}, hoje: string = hojeDoAparelho(),
 ): SituacaoDivida[] {
   const fim = fimDoMes(ano, mes)
   const ini = inicioDoMes(ano, mes)
@@ -148,7 +163,7 @@ export function situacaoDividas(
       const dif = centavosDe(m.saldo - esperado)
       if (Math.abs(dif) >= 0.005) ajustes.push({ data: m.data, valor: dif })
     })
-    lista.push({
+    const sit: SituacaoDivida = {
       divida: d, original, moeda, taxa, semCotacao,
       inicioEm: marcos[0]?.data ?? null,
       ajustes,
@@ -164,9 +179,18 @@ export function situacaoDividas(
       mesesRestantes,
       quitacao,
       quitadaNoMes: restante <= 0,
-    })
+      jurosAtraso: 0,
+      restanteHoje: restante,
+      atraso: null,
+    }
+    // juros de atraso: só no mês de hoje (meses que passaram ficam como foram registrados)
+    if (hoje >= ini && hoje <= fim && restante > 0) {
+      const j = jurosDoAtraso(sit, calendarioDe(sit, hoje), hoje)
+      if (j.total > 0 || j.diario > 0) Object.assign(sit, { jurosAtraso: j.total, restanteHoje: centavosDe(restante + j.total), atraso: j })
+    }
+    lista.push(sit)
   }
-  return lista.sort((a, b) => b.restante - a.restante)
+  return lista.sort((a, b) => b.restanteHoje - a.restanteHoje)
 }
 
 /** Acha a dívida citada na descrição de uma saída ("Notebook – parcela" -> dívida "Notebook (Eduardo)"). */
@@ -325,6 +349,30 @@ function fecharCalendario(parcelas: ParcelaDivida[], restante: number): Calendar
   const sugerido = centavos(emAtraso + hoje > 0 ? emAtraso + hoje : proxima?.falta ?? 0)
   return { parcelas, atrasadas, emAtraso, proxima, sugerido: Math.min(sugerido, restante) }
 }
+
+/**
+ * Valor sugerido no botão de pagar: o do calendário (atrasado + o que vence hoje, ou a próxima) ou a parcela, mais os juros
+ * de atraso estimados quando há parcela atrasada. 0 = sem valor certo (a pessoa digita).
+ */
+export function sugeridoParaPagar(s: SituacaoDivida, cal: Calendario | null) {
+  const base = cal?.sugerido || (s.divida.valor_parcela ? Math.min(s.divida.valor_parcela, s.restante) : 0)
+  if (!base || !s.jurosAtraso || !cal?.atrasadas.length) return base
+  return Math.min(centavos(base + s.jurosAtraso), s.restanteHoje)
+}
+
+/**
+ * Juros que pesam nessa dívida agora (% ao mês): atrasada e com regra de atraso, o do atraso; senão o do contrato.
+ * null = não informado.
+ */
+export function jurosQuePesam(s: SituacaoDivida): number | null {
+  const a = s.divida.atraso_juros_mes
+  if (s.atraso && typeof a === 'number' && a >= 0) return a
+  const j = s.divida.juros_mes
+  return typeof j === 'number' && j >= 0 ? j : null
+}
+
+/** Quanto do atraso é juros estimado: o atrasado registrado + os juros (0 sem atraso). */
+export const atrasadoHoje = (s: SituacaoDivida, cal: Calendario | null) => (cal?.emAtraso ? centavos(cal.emAtraso + s.jurosAtraso) : 0)
 
 /**
  * Calendário de uma dívida com partes (mini-dívidas): uma parcela por dia de vencimento, que soma as partes daquele dia.

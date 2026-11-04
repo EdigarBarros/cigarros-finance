@@ -23,7 +23,7 @@ import {
   CARTAO_ATENCAO, JUROS_ALTOS_MES, MESES_DA_ANALISE, MESES_NA_MEDIA, MIN_MESES_COM_DADOS, PARCELAS_ATENCAO, type Destino,
 } from './conselheiro'
 import { situacoesDoMes as situacoesDasContas } from './contasFixas'
-import { aumentaDivida, calendarioDe, jurosAoAno, meDevem, projecaoMensal, situacaoDividas, type SituacaoDivida } from './dividas'
+import { atrasadoHoje, aumentaDivida, calendarioDe, jurosAoAno, jurosQuePesam, meDevem, projecaoMensal, situacaoDividas, type SituacaoDivida } from './dividas'
 import { fmtDataCurta, fmtMesAno, fmtMoeda, fmtPct, fmtTaxa, fmtTaxaAno, fmtValor, LOCAL_DAS_DATAS, MESES_NOME, noMeioDaFrase } from './format'
 import { situacaoMeta } from './metas'
 import { converter, totalConvertido, type Taxas } from './moedas'
@@ -589,10 +589,11 @@ function agendaDa(s: SituacaoDivida, hojeIso: string, atual: number): number[] {
   if (cal) {
     for (const x of cal.parcelas) if (x.falta > 0) {
       const k = Math.max(0, chaveMes(Number(x.vencimento.slice(0, 4)), Number(x.vencimento.slice(5, 7))) - atual)
-      agenda[k] = (agenda[k] ?? 0) + x.falta
+      // a atrasada já leva os juros de atraso estimados
+      agenda[k] = (agenda[k] ?? 0) + x.falta + (s.atraso?.porParcela.get(x.n) ?? 0)
     }
   } else {
-    let resta = s.restante
+    let resta = s.restanteHoje
     for (let k = 1; resta > 0.005 && k <= LIMITE_SIMULACAO; k++) {
       agenda[k] = Math.min(p, resta)
       resta -= agenda[k]
@@ -687,12 +688,13 @@ function planoDasDividas(abertas: SituacaoDivida[], extraPlano: number, renda: n
     const agenda = agendaDa(s, hojeIso, atual)
     const parcela = s.divida.valor_parcela && s.divida.valor_parcela > 0 ? s.divida.valor_parcela : 0
     return {
-      id: s.divida.id, nome: s.divida.descricao, agenda, aberto: agenda.length ? 0 : s.restante, parcela,
-      juros: typeof s.divida.juros_mes === 'number' && s.divida.juros_mes >= 0 ? s.divida.juros_mes : null,
+      id: s.divida.id, nome: s.divida.descricao, agenda, aberto: agenda.length ? 0 : s.restanteHoje, parcela,
+      // atrasada com regra de atraso: pesa o juro do atraso (é o que ela está cobrando agora)
+      juros: jurosQuePesam(s),
     }
   })
   if (!ds.length) return null
-  const total = centavos(soma(abertas.map((s) => s.restante)))
+  const total = centavos(soma(abertas.map((s) => s.restanteHoje)))
   const parcelasMes = centavos(soma(ds.map((d) => Math.min(d.parcela, saldoSim(d)))))
   const jurosPorMes = centavos(soma(ds.map((d) => (d.juros ? valorHoje(d) * (d.juros / 100) : 0))))
   const jurosEmbutidos = centavos(soma(ds.filter((d) => d.agenda.length).map((d) => saldoSim(d) - valorHoje(d))))
@@ -962,20 +964,21 @@ export function analisar(e: EntradaAnalise): Analise {
 
   // ----- dívidas -----
   const devo = e.dividas.filter((d) => !meDevem(d))
-  const dividasHoje = v.dividas ? situacaoDividas(devo, e.saldos, e.pagamentos, ano, mes, e.taxas) : []
+  const dividasHoje = v.dividas ? situacaoDividas(devo, e.saldos, e.pagamentos, ano, mes, e.taxas, hojeIso) : []
   const abertas = dividasHoje.filter((s) => s.restante > 0 && !s.semCotacao)
-  const dividaTotal = centavos(soma(abertas.map((s) => s.restante)))
+  // quanto se deve agora: com os juros de atraso estimados
+  const dividaTotal = centavos(soma(abertas.map((s) => s.restanteHoje)))
   const parcelasMes = centavos(soma(abertas.map((s) => Math.min(s.divida.valor_parcela ?? 0, s.restante))))
-  const atrasoDividas = centavos(soma(abertas.map((s) => calendarioDe(s, hojeIso)?.emAtraso ?? 0)))
+  const atrasoDividas = centavos(soma(abertas.map((s) => atrasadoHoje(s, calendarioDe(s, hojeIso)))))
   const jurosMax = Math.max(0, ...abertas.map((s) => s.divida.juros_mes ?? 0))
   const maisCara = [...abertas].filter((s) => typeof s.divida.juros_mes === 'number').sort((a, b) => b.divida.juros_mes! - a.divida.juros_mes!)[0]
   const temCara = jurosMax >= JUROS_CARO_MES
   const temModerada = abertas.some((s) => (s.divida.juros_mes ?? 0) >= JUROS_MODERADO_MES)
   // há 3 meses, as mesmas dívidas
   const tresAtras = doMesChave(atual - 3)
-  const antesDividas = v.dividas ? situacaoDividas(devo, e.saldos, e.pagamentos, tresAtras.ano, tresAtras.mes, e.taxas).filter((s) => s.restante > 0 && !s.semCotacao) : []
+  const antesDividas = v.dividas ? situacaoDividas(devo, e.saldos, e.pagamentos, tresAtras.ano, tresAtras.mes, e.taxas, hojeIso).filter((s) => s.restante > 0 && !s.semCotacao) : []
   const totalAntes = soma(antesDividas.map((s) => s.restante))
-  const restanteHoje = new Map(abertas.map((s) => [s.divida.id, s.restante]))
+  const restanteHoje = new Map(abertas.map((s) => [s.divida.id, s.restanteHoje]))
   const dividaCresceu = totalAntes > 0 && soma(antesDividas.map((s) => restanteHoje.get(s.divida.id) ?? 0)) > totalAntes * 1.02
 
   // ----- reserva -----
@@ -1083,7 +1086,7 @@ export function analisar(e: EntradaAnalise): Analise {
       const { ano: a, mes: m } = doMesChave(k)
       const efk = mesEfetivo(e.meses, a, m, hoje)
       const ativos = soma(Object.keys(efk.caixa).map((id) => caixaDoBanco(efk.caixa, id))) + (v.investimentos ? efk.investimentos || 0 : 0) + (v.moedas ? totalConvertido(efk.moedas, e.taxas) : 0)
-      const passivo = v.dividas ? soma(situacaoDividas(devo, e.saldos, e.pagamentos, a, m, e.taxas).filter((s) => !s.semCotacao).map((s) => Math.max(0, s.restante))) : 0
+      const passivo = v.dividas ? soma(situacaoDividas(devo, e.saldos, e.pagamentos, a, m, e.taxas, hojeIso).filter((s) => !s.semCotacao).map((s) => Math.max(0, s.restanteHoje))) : 0
       const informado = Object.values(efk.caixa).some((b) => TIPOS_CAIXA.some((t) => typeof b?.[t] === 'number')) || efk.investimentos > 0
       return { ano: a, mes: m, valor: centavos(ativos - passivo), ativos, passivo, informado }
     }).filter((p) => p.informado)
@@ -1232,8 +1235,10 @@ export function analisar(e: EntradaAnalise): Analise {
     for (const { sd, cal } of calendarios) for (const pc of cal?.parcelas ?? []) {
       if (pc.falta <= 0 || pc.vencimento > fimJanela) continue
       eventos.push({
-        data: noDia(pc.vencimento), vence: pc.vencimento, tipo: 'saida', descricao: sd.divida.descricao, valor: pc.falta, origem: 'parcela',
-        atrasada: pc.vencimento < hojeIso, jurosMes: sd.divida.juros_mes ?? null,
+        data: noDia(pc.vencimento), vence: pc.vencimento, tipo: 'saida', descricao: sd.divida.descricao,
+        valor: centavos(pc.falta + (sd.atraso?.porParcela.get(pc.n) ?? 0)), origem: 'parcela',
+        // atrasada: o custo de esperar é o juro do atraso, quando a dívida tem essa regra
+        atrasada: pc.vencimento < hojeIso, jurosMes: pc.vencimento < hojeIso ? jurosQuePesam(sd) : sd.divida.juros_mes ?? null,
       })
     }
     // o que se repete todo mês e ainda não veio (este mês, se o dia não passou faz tempo) ou virá (o mês que vem)
@@ -1438,7 +1443,7 @@ export function analisar(e: EntradaAnalise): Analise {
         descricao: ev.descricao, valor: ev.valor, vence: ev.vence ?? ev.data, origem: ev.origem, jurosMes: ev.jurosMes ?? null,
       })),
       abertas: abertas.filter((sd) => !(sd.divida.valor_parcela && sd.divida.valor_parcela > 0) && (sd.divida.juros_mes ?? 0) > 0)
-        .map((sd) => ({ nome: sd.divida.descricao, saldo: sd.restante, juros: sd.divida.juros_mes! })),
+        .map((sd) => ({ nome: sd.divida.descricao, saldo: sd.restanteHoje, juros: sd.divida.juros_mes! })),
     })
     if (unicos.length || saldoInicial !== null || calendario.dias.some((c) => c.entra || c.sai)) {
       agenda = {

@@ -6,6 +6,7 @@ import type { EscolhaZerar, ParteZerar } from './zerar'
 import type { Banco, Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, ParteDivida, Perfil, SaldoDivida } from './types'
 import { fmtDataLonga } from './format'
 import { mesesDaAnalise } from './conselheiro'
+import { moedaDaDivida, nativoDiv, type Calendario, type SituacaoDivida } from './dividas'
 import { tx } from './textos'
 
 const num = (v: unknown) => Number(v ?? 0)
@@ -16,9 +17,13 @@ const normLanc = (r: Lancamento): Lancamento => ({
 const normDiv = (r: Divida): Divida => ({
   ...r, valor_parcela: r.valor_parcela == null ? null : num(r.valor_parcela),
   ...('juros_mes' in r ? { juros_mes: r.juros_mes == null ? null : num(r.juros_mes) } : {}),
+  ...('atraso_juros_mes' in r ? { atraso_juros_mes: r.atraso_juros_mes == null ? null : num(r.atraso_juros_mes) } : {}),
+  ...('atraso_multa' in r ? { atraso_multa: r.atraso_multa == null ? null : num(r.atraso_multa) } : {}),
 })
 const normSaldo = (r: SaldoDivida): SaldoDivida => ({ ...r, saldo: num(r.saldo) })
-const normParte = (r: ParteDivida): ParteDivida => ({ ...r, valor: num(r.valor) })
+const normParte = (r: ParteDivida): ParteDivida => ({
+  ...r, valor: num(r.valor), ...('valor_original' in r ? { valor_original: r.valor_original == null ? null : num(r.valor_original) } : {}),
+})
 const centavos = (n: number) => Math.round(n * 100) / 100
 /** Dia de hoje (AAAA-MM-DD) no fuso do aparelho. */
 const hojeIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
@@ -56,11 +61,15 @@ const semExtrasDivida = <T extends object>(o: T) =>
 const semMoedaDivida = <T extends object>(o: T) => { const { moeda: _m, ...resto } = o as T & { moeda?: unknown }; return resto as T }
 /** Sem a migração 19 a coluna `juros_mes` não existe. */
 const semJurosDivida = <T extends object>(o: T) => { const { juros_mes: _j, ...resto } = o as T & { juros_mes?: unknown }; return resto as T }
+/** Campos de juros de atraso, que só existem com a migração 22. */
+const CAMPOS_ATRASO = ['atraso_juros_mes', 'atraso_tipo', 'atraso_multa', 'atraso_base', 'conferido_em'] as const
+const semAtrasoDivida = <T extends object>(o: T) =>
+  Object.fromEntries(Object.entries(o).filter(([k]) => !(CAMPOS_ATRASO as readonly string[]).includes(k))) as T
 /** `partes` vem de outra tabela (divida_partes): nunca vai junto quando a dívida é gravada. */
 const semPartes = <T extends object>(o: T) => { const { partes: _p, ...resto } = o as T & { partes?: unknown }; return resto as T }
 /** Parte nova de uma dívida, antes de ganhar id. */
 export type NovaParte = Omit<ParteDivida, 'id' | 'divida_id'>
-export type NovaDivida = Pick<Divida, 'descricao' | 'valor_parcela'> & Partial<Pick<Divida, (typeof EXTRAS_DIVIDA)[number] | 'moeda' | 'juros_mes'>>
+export type NovaDivida = Pick<Divida, 'descricao' | 'valor_parcela'> & Partial<Pick<Divida, (typeof EXTRAS_DIVIDA)[number] | 'moeda' | 'juros_mes' | (typeof CAMPOS_ATRASO)[number]>>
 
 /**
  * Lançamentos dos meses que o conselheiro e a análise completa leem (12 fechados + o atual) que caem fora do ano aberto: os
@@ -112,6 +121,8 @@ export function useDados(userId: string, ano: number) {
   const [dividasSemMoeda, setDividasSemMoeda] = useState(false)
   /** Sem a migração 19: dívidas sem os juros por mês (o campo some e os conselhos de juros ficam calados). */
   const [dividasSemJuros, setDividasSemJuros] = useState(false)
+  /** Sem a migração 22: as dívidas não crescem sozinhas com o atraso (a seção "Se atrasar" some). */
+  const [dividasSemAtraso, setDividasSemAtraso] = useState(false)
   /** Lançamentos de outros anos ligados a uma conta do mês: ensinam ao app como cada conta aparece no extrato. */
   const [vinculosOutrosAnos, setVinculosOutrosAnos] = useState<Pick<Lancamento, 'id' | 'conta_fixa_id' | 'descricao' | 'valor'>[]>([])
   /** Lançamentos de outros anos que o conselheiro e a análise leem (os 12 meses fechados e o atual), quando o ano aberto não cobre todos. */
@@ -125,7 +136,7 @@ export function useDados(userId: string, ano: number) {
   const recarregar = useCallback(async () => {
     const meu = ++pedidoAtual.current
     setCarregando(true)
-    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, xj, vc, rc, pt] = await Promise.all([
+    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, xj, vc, rc, pt, xa] = await Promise.all([
       // as tabelas que crescem sem parar são lidas em páginas (lerTudo): o Supabase corta em 1000 linhas
       lerTudo(() => supabase.from('lancamentos').select('*').eq('ano', ano).order('data').order('created_at').order('id')),
       lerTudo(() => supabase.from('meses').select('*').order('ano').order('mes')),
@@ -143,6 +154,7 @@ export function useDados(userId: string, ano: number) {
       lerTudo(() => supabase.from('lancamentos').select('id, conta_fixa_id, descricao, valor').not('conta_fixa_id', 'is', null).neq('ano', ano).order('id')),
       lancamentosRecentes(ano),
       lerTudo(() => supabase.from('divida_partes').select('*').order('vencimento').order('id')),
+      supabase.from('dividas').select('atraso_juros_mes').limit(1),
     ])
     // Conta nova: ganha as categorias padrão (definidas no banco, migração 5). Isso precisa acontecer ANTES de qualquer setState:
     // um await no meio fazia o React desenhar o painel de verdade (perfil já lido, "carregando" ainda ligado) e só depois as
@@ -170,6 +182,7 @@ export function useDados(userId: string, ano: number) {
     marcarFalta(xd, setDividasSemExtras)
     marcarFalta(xm, setDividasSemMoeda)
     marcarFalta(xj, setDividasSemJuros)
+    marcarFalta(xa, setDividasSemAtraso)
     // sem a migração 21 a tabela não existe: as dívidas funcionam como antes, sem partes
     if (pt.error && faltaTabela(pt.error)) { setPartesSemTabela(true); setPartes([]) }
     else if (!pt.error) { setPartesSemTabela(false); setPartes((pt.data as ParteDivida[]).map(normParte)) }
@@ -253,8 +266,9 @@ export function useDados(userId: string, ano: number) {
   }
   const semMoedaSeFalta = <T extends object>(o: T) => (dividasSemMoeda ? semMoedaDivida(o) : o)
   const semJurosSeFalta = <T extends object>(o: T) => (dividasSemJuros ? semJurosDivida(o) : o)
-  /** Tira da dívida o que o banco ainda não tem (migrações 10, 14 e 19 pendentes) antes de gravar. */
-  const paraBancoDivida = <T extends object>(o: T) => semPartes(semJurosSeFalta(semMoedaSeFalta(dividasSemExtras ? semExtrasDivida(o) : o)))
+  const semAtrasoSeFalta = <T extends object>(o: T) => (dividasSemAtraso ? semAtrasoDivida(o) : o)
+  /** Tira da dívida o que o banco ainda não tem (migrações 10, 14, 19 e 22 pendentes) antes de gravar. */
+  const paraBancoDivida = <T extends object>(o: T) => semPartes(semAtrasoSeFalta(semJurosSeFalta(semMoedaSeFalta(dividasSemExtras ? semExtrasDivida(o) : o))))
   const addLanc = async (novo: Omit<Lancamento, 'id'>): Promise<Lancamento | undefined> => {
     const { data, error } = await gravar(() => supabase.from('lancamentos').insert(paraBanco(novo)).select().single())
     if (error) {
@@ -328,7 +342,9 @@ export function useDados(userId: string, ano: number) {
   }
   const updDivida = async (id: string, patch: Partial<Divida>) => {
     setDividas((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
-    const { error } = await supabase.from('dividas').update(paraBancoDivida(patch)).eq('id', id)
+    const linha = paraBancoDivida(patch)
+    if (!Object.keys(linha).length) return
+    const { error } = await supabase.from('dividas').update(linha).eq('id', id)
     if (error) falhou(error.message)
   }
   const delDivida = async (id: string) => {
@@ -417,6 +433,57 @@ export function useDados(userId: string, ano: number) {
     if (error) return falhou(error.message)
     await acertarSaldoDasPartes(atual.divida_id, antes, depois)
   }
+  /** Muda várias parcelas de uma dívida de uma vez (um acerto de saldo só, com a soma das mudanças). */
+  const updPartes = async (lista: { id: string; patch: Partial<NovaParte> }[]) => {
+    const primeira = partes.find((p) => p.id === lista[0]?.id)
+    if (!primeira) return
+    const mudancas = new Map(lista.map((x) => [x.id, dividasSemAtraso ? (({ valor_original: _v, ...resto }) => resto)(x.patch) : x.patch]))
+    const antes = partesDa(primeira.divida_id)
+    const depois = antes.map((p) => (mudancas.has(p.id) ? { ...p, ...mudancas.get(p.id) } : p))
+    setPartes((xs) => xs.map((p) => (mudancas.has(p.id) ? { ...p, ...mudancas.get(p.id) } : p)))
+    const res = await Promise.all([...mudancas].map(([id, patch]) => supabase.from('divida_partes').update(patch).eq('id', id)))
+    const e = res.find((r) => r.error)?.error
+    if (e) return falhou(e.message)
+    await acertarSaldoDasPartes(primeira.divida_id, antes, depois)
+  }
+
+  /**
+   * "Conferi com o banco": grava o valor de hoje (`valor`, na moeda principal) como o valor real da dívida e marca o dia da
+   * conferência (os juros de atraso voltam a contar a partir dele).
+   * - Com partes: a diferença para o registrado é repartida entre as parcelas atrasadas (pelo juro estimado de cada uma, ou
+   *   pelo valor dela) e o valor antigo fica como `valor_original`, se ainda não houver; o saldo acompanha a soma das partes.
+   * - Sem partes: vira um ajuste de saldo no dia (`modo: 'conferir'`) ou, antes de lançar um pagamento (`modo: 'pagar'`),
+   *   soma a diferença em todos os saldos, para o pagamento do mesmo dia continuar abatendo.
+   */
+  const conferirDivida = async (s: SituacaoDivida, cal: Calendario | null, valor: number, data: string, modo: 'conferir' | 'pagar' = 'conferir') => {
+    const id = s.divida.id
+    const dif = centavos(valor - s.restante)
+    const doBanco = partesDa(id)
+    if (doBanco.length && Math.abs(dif) >= 0.005) {
+      const atrasadas = (cal?.atrasadas.length ? cal.atrasadas : cal?.proxima ? [cal.proxima] : []).flatMap((p) => p.partes ?? [])
+      const alvo = atrasadas.length ? atrasadas : doBanco
+      const pesoJuros = alvo.reduce((a, p) => a + (s.atraso?.porParte.get(p.id) ?? 0), 0)
+      const peso = (p: ParteDivida) => (pesoJuros > 0 ? s.atraso?.porParte.get(p.id) ?? 0 : p.valor)
+      const somaPeso = alvo.reduce((a, p) => a + peso(p), 0) || 1
+      let resta = dif
+      const lista = alvo.map((p, i) => {
+        const parte = i === alvo.length - 1 ? resta : centavos((dif * peso(p)) / somaPeso)
+        resta = centavos(resta - parte)
+        const atual = doBanco.find((x) => x.id === p.id) ?? p
+        return {
+          id: p.id,
+          patch: { valor: Math.max(0.01, centavos(atual.valor + parte)), ...(atual.valor_original == null ? { valor_original: atual.valor } : {}) },
+        }
+      })
+      await updPartes(lista)
+    } else if (!doBanco.length && Math.abs(dif) >= 0.005) {
+      const nativo = moedaDaDivida(s.original) ? nativoDiv(s, valor) : valor
+      if (modo === 'conferir') await addSaldo(id, data, centavos(nativo))
+      else await ajustarValorDivida(id, centavos(moedaDaDivida(s.original) ? nativoDiv(s, dif) : dif))
+    }
+    if (!dividasSemAtraso) await updDivida(id, { conferido_em: data })
+  }
+
   /** Apaga parcelas de partes (uma, ou todas de uma parte). */
   const delPartes = async (ids: string[]) => {
     const alvo = partes.find((p) => ids.includes(p.id))
@@ -609,7 +676,8 @@ export function useDados(userId: string, ano: number) {
     dividasSemExtras,
     dividasSemMoeda,
     dividasSemJuros,
-    partesSemTabela, addPartes, updParte, delPartes,
+    dividasSemAtraso, conferirDivida,
+    partesSemTabela, addPartes, updParte, updPartes, delPartes,
     lancs, lancsRecentes, meses: mesesDosBancos, dividas: dividasComPartes, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,
     addLanc, addLancs, renomearLancs, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, ajustarValorDivida, moverInicioDivida, salvarMes,
   }
