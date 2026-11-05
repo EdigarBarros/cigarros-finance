@@ -8331,10 +8331,6 @@
     "en": "{0} goals",
     "es": "{0} metas"
   },
-  "Dias {0} a {1}": {
-    "en": "Days {0} to {1}",
-    "es": "Días {0} a {1}"
-  },
   "Gastando menos que em {0}": {
     "en": "Spending less than in {0}",
     "es": "Gastando menos que en {0}"
@@ -8362,18 +8358,6 @@
   "Deve faltar": {
     "en": "Should be short",
     "es": "Debería faltar"
-  },
-  "Saldo do mês": {
-    "en": "Month balance",
-    "es": "Saldo del mes"
-  },
-  "Ainda vem": {
-    "en": "Still to come",
-    "es": "Aún por venir"
-  },
-  "Parcelas de dívida": {
-    "en": "Debt installments",
-    "es": "Cuotas de deudas"
   },
   "no dia {0}": {
     "en": "on day {0}",
@@ -8672,15 +8656,43 @@
     "es": "Los meses de {0}"
   },
   "Nubank, Itaú, Next…": {
-    "en": "",
-    "es": ""
+    "en": "Nubank, Itaú, Next…",
+    "es": "Nubank, Itaú, Next…"
   },
   "(data com ano)": {
-    "en": "",
-    "es": ""
+    "en": "(date with year)",
+    "es": "(fecha con año)"
   },
   "Pix": {
-    "en": "",
-    "es": ""
+    "en": "Pix",
+    "es": "Pix"
+  },
+  "Dia anterior": {
+    "en": "Previous day",
+    "es": "Día anterior"
+  },
+  "Hoje, {0}": {
+    "en": "Today, {0}",
+    "es": "Hoy, {0}"
+  },
+  "Próximo dia": {
+    "en": "Next day",
+    "es": "Día siguiente"
+  },
+  "Nada entrou nem saiu neste dia.": {
+    "en": "Nothing came in or went out on this day.",
+    "es": "No entró ni salió nada este día."
+  },
+  "Nada previsto para este dia.": {
+    "en": "Nothing expected for this day.",
+    "es": "Nada previsto para este día."
+  },
+  "Sobrou no mês até aqui": {
+    "en": "Left over in the month so far",
+    "es": "Sobró en el mes hasta aquí"
+  },
+  "Faltou no mês até aqui": {
+    "en": "Short in the month so far",
+    "es": "Faltó en el mes hasta aquí"
   }
 }
