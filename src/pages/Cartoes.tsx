@@ -15,11 +15,12 @@ import { CORES_LIVRES, mesmoNome } from '../lib/rotulos'
 import { semMovimento } from '../lib/tema'
 import type { CartaoCredito, FaturaPaga } from '../lib/types'
 import { BancoIcone } from '../components/BancoIcone'
+import { Rosquinha, Vitrine, type Nivel } from '../components/Vitrine'
 import { CartaoIlustrado } from '../components/CartaoIlustrado'
 import { Selo } from '../components/Categorias'
 import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
-import { Cartao, Interruptor, Kpi, Modal, Vazio } from '../components/ui'
+import { Cartao, Interruptor, Modal, Vazio } from '../components/ui'
 import { confirmar } from '../lib/avisos'
 import { CampoData, Seletor } from '../components/Escolhas'
 import type { Ctx } from './contexto'
@@ -65,6 +66,7 @@ export function Cartoes(c: Ctx) {
   const atrasadas = faturas.flatMap((x) => [...x.atrasadas, ...(x.status === 'atrasada' ? [x] : [])])
   const emAtraso = centavos(atrasadas.reduce((a, f) => a + f.valor, 0))
   const nomeMes = noMeioDaFrase(MESES_NOME[c.mes - 1])
+  const nivel = c.perfil.detalhe
 
   if (cartoes.semTabela) {
     return (
@@ -98,6 +100,20 @@ export function Cartoes(c: Ctx) {
 
       {faturas.length > 0 && s && (
         <>
+          <Vitrine cor="var(--violeta)" className="cc-vitrine"
+            visual={
+              <Rosquinha tamanho={c.mobile ? 130 : 150} partes={faturas.map((x) => ({ rotulo: x.cartao.nome, valor: x.valor, cor: x.cartao.cor }))}>
+                <b>{faturas.length === 1 ? tx('1 cartão') : tx('{0} cartões', faturas.length)}</b>
+              </Rosquinha>
+            }
+            rotulo={<><Icone nome="cartao" tamanho={16} /> {tx('Faturas de {0}', nomeMes)}</>}
+            valor={totalFaturasDoMes(faturas)} formato={fmtValor}
+            pilulas={[
+              { icone: 'relogio', rotulo: tx('Falta pagar'), valor: fmtValor(totalFaturasAPagar(faturas)), cor: 'var(--divida)' },
+              ...(comLimite.length > 0 ? [{ icone: 'escudo', rotulo: tx('Limite livre'), valor: fmtValor(comLimite.reduce((a, x) => a + Math.max(0, x.limiteDisponivel!), 0)), cor: 'var(--caixa)' }] : []),
+              ...(emAtraso > 0 ? [{ icone: 'sino', rotulo: tx('Em atraso ({0})', atrasadas.length), valor: fmtValor(emAtraso), cor: 'var(--saida)', tom: 'ruim' as const }] : []),
+            ]} />
+
           <section className="cc-carteira" aria-label={tx('Seus cartões')}>
             {faturas.map((x, i) => (
               <div key={x.cartao.id} className="cc-carteira-item" style={{ animationDelay: `${i * 70}ms` }}>
@@ -115,16 +131,27 @@ export function Cartoes(c: Ctx) {
             </button>
           </section>
 
-          <div className="kpis">
-            <Kpi rotulo={tx('Faturas de {0}', nomeMes)} valor={totalFaturasDoMes(faturas)} cor={COR.saidas} icone="cartao" />
-            <Kpi rotulo={tx('Falta pagar')} valor={totalFaturasAPagar(faturas)} cor={COR.divida} icone="relogio" />
-            {comLimite.length > 0 && (
-              <Kpi rotulo={tx('Limite livre')} valor={comLimite.reduce((a, x) => a + Math.max(0, x.limiteDisponivel!), 0)} cor={COR.caixa} icone="escudo" />
-            )}
-            {emAtraso > 0 && <Kpi rotulo={tx('Em atraso ({0})', atrasadas.length)} valor={emAtraso} cor={COR.saidas} icone="sino" />}
-          </div>
+          {nivel === 'detalhado' && comLimite.length > 1 && (
+            <section className="cartao vt-cartao">
+              <h3><Icone nome="escudo" tamanho={17} /> {tx('Quanto do limite cada cartão usa')}</h3>
+              <ul className="cc-usos">
+                {comLimite.map((x, i) => {
+                  const lim = x.limiteTotal ?? 0
+                  const p = lim > 0 ? Math.min(1, Math.max(0, x.limiteUsado / lim)) : 0
+                  return (
+                    <li key={x.cartao.id} style={{ '--c': x.cartao.cor, '--i': i } as React.CSSProperties}>
+                      <BancoIcone nome={x.cartao.nome} cor={x.cartao.cor} tamanho={28} />
+                      <span className="cc-usos-nome">{x.cartao.nome}</span>
+                      <span className="cc-usos-trilho"><i style={{ width: `${p * 100}%` }} /></span>
+                      <b className={p >= 0.9 ? 'ruim' : p >= 0.7 ? 'atencao' : ''}>{Math.round(p * 100)}%</b>
+                    </li>
+                  )
+                })}
+              </ul>
+            </section>
+          )}
 
-          <Detalhe key={s.cartao.id} s={s} c={c} destacada={destacada}
+          <Detalhe key={s.cartao.id} s={s} c={c} destacada={destacada} nivel={nivel}
             aoEditar={() => setEditando(s.cartao)}
             aoPagar={(f, pagamento) => setPagando({ cartao: s.cartao, f, pagamento })}
             aoRenegociar={(f) => setRenegociando({ cartao: s.cartao, f })} />
@@ -231,8 +258,8 @@ function SemCartoes({ aoCriar }: { aoCriar: () => void }) {
   )
 }
 
-function Detalhe({ s, c, destacada, aoEditar, aoPagar, aoRenegociar }: {
-  s: SituacaoCartao; c: Ctx; destacada: string | null; aoEditar: () => void
+function Detalhe({ s, c, destacada, nivel, aoEditar, aoPagar, aoRenegociar }: {
+  s: SituacaoCartao; c: Ctx; destacada: string | null; nivel: Nivel; aoEditar: () => void
   aoPagar: (f: Fatura, pagamento?: FaturaPaga) => void
   aoRenegociar: (f: Fatura) => void
 }) {
@@ -292,12 +319,12 @@ function Detalhe({ s, c, destacada, aoEditar, aoPagar, aoRenegociar }: {
         </section>
       )}
 
-      <div className="ccd-linha">
+      <div className={`ccd-linha ${nivel === 'simples' ? 'so-uma' : ''}`}>
         <FaturaDoMes s={s} c={c} aoPagar={aoPagar} aoRenegociar={aoRenegociar} />
-        <Limite s={s} c={c} aoEditar={aoEditar} />
+        {nivel !== 'simples' && <Limite s={s} c={c} aoEditar={aoEditar} />}
       </div>
 
-      <div className="ccd-linha">
+      <div className={`ccd-linha ${nivel === 'simples' ? 'so-uma' : ''}`}>
         <section className="cartao ccd-compras">
           <h3 className="ccd-titulo ccd-compras-cab">
             <span>{tx('Compras desta fatura')} <small>{s.compras.length || ''}</small></span>
@@ -328,10 +355,10 @@ function Detalhe({ s, c, destacada, aoEditar, aoPagar, aoRenegociar }: {
             <p className="quadro-vazio">{tx('Nenhuma compra nesta fatura. Toque em “Nova compra” e escolha este cartão.')}</p>
           )}
         </section>
-        <Proximas s={s} c={c} />
+        {nivel !== 'simples' && <Proximas s={s} c={c} />}
       </div>
 
-      <div className="ccd-linha">
+      {nivel === 'detalhado' && <div className="ccd-linha">
         <section className="cartao">
           <h3 className="ccd-titulo">{tx('Parceladas em andamento')} <small>{s.parceladas.length || ''}</small></h3>
           {s.parceladas.length ? (
@@ -378,7 +405,22 @@ function Detalhe({ s, c, destacada, aoEditar, aoPagar, aoRenegociar }: {
             <button type="button" className="link" onClick={() => setVerTodas(!verTodas)}>{verTodas ? tx('Ver menos') : tx('Ver todas ({0})', historico.length)}</button>
           )}
         </section>
-      </div>
+      </div>}
+
+      {nivel === 'equilibrado' && s.parceladas.length > 0 && (
+        <section className="cartao vt-cartao">
+          <h3>{tx('Parceladas em andamento')} <small>{s.parceladas.length}</small></h3>
+          <ul className="ccd-parceladas">
+            {s.parceladas.map((p) => <Parcelada key={p.compra_id} p={p} aoAbrir={() => abrirCompra(p)} />)}
+          </ul>
+        </section>
+      )}
+
+      {nivel === 'simples' && (
+        <button className="vt-mais-detalhe" onClick={c.personalizar}>
+          <Icone nome="ano" tamanho={16} /> {tx('Quer ver limite, parcelas e próximas faturas? Mudar o jeito de ver')}
+        </button>
+      )}
     </div>
   )
 }

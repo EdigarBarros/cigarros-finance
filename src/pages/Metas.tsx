@@ -11,7 +11,8 @@ import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
 import { PoteMeta } from '../components/PoteMeta'
 import { CartaoModelo } from '../components/CenaMeta'
-import { Anel, Cartao, Modal, Segmentado, Vazio } from '../components/ui'
+import { Cartao, Modal, Segmentado, Vazio } from '../components/ui'
+import { BarraDividida, LinhaDoTempo, Vitrine } from '../components/Vitrine'
 import { confirmar } from '../lib/avisos'
 import { CampoData, CampoMes } from '../components/Escolhas'
 import type { Ctx } from './contexto'
@@ -61,6 +62,8 @@ export function Metas(c: Ctx) {
   const gastoMedio = comDados.length ? comDados.reduce((a, r) => a + r.saidas, 0) / comDados.length : 0
   const sobra = Math.max(0, c.r.fluxo)
   const aberto = sits.find((s) => s.meta.id === aberta)
+  const nivel = c.perfil.detalhe
+  const chegadas = linhasDeChegada(ativas)
   const novaDoModelo = (m: (typeof MODELOS)[number]) => {
     setModelo({ nome: m.nome, icone: m.icone, cor: m.cor, alvo: m.reserva && gastoMedio ? Math.round(gastoMedio * 6) : undefined })
     setEditando('nova')
@@ -99,49 +102,51 @@ export function Metas(c: Ctx) {
       </header>
 
       {sits.length > 0 && (
-        <section className="mt-topo">
-          <div className="cartao mt-resumo">
-            <Anel valor={alvoTotal ? guardado / alvoTotal : 0} cor={COR.entradas} tamanho={108}>
-              <span className="mt-resumo-pct">{alvoTotal ? Math.round((guardado / alvoTotal) * 100) : 0}%</span>
-            </Anel>
-            <span className="mt-resumo-texto">
-              <small>{tx('guardado nas metas')}</small>
-              <strong><Numero valor={guardado} formato={fmtValor} /></strong>
-              <small>{tx('de {0}', fmtValor(alvoTotal))}</small>
-              <span className="chips-info">
-                {falta > 0 && <span className="chip-info">{tx('faltam {0}', fmtValor(falta))}</span>}
-                {porMes > 0 && <span className="chip-info"><Icone nome="calendario" tamanho={12} /> {tx('{0}/mês', fmtValor(porMes))}</span>}
-                <span className="chip-info bom">{tx('{0} de {1} batidas', batidas.length, sits.length)}</span>
-              </span>
-            </span>
+        <Vitrine cor="var(--entrada)" className="mt-vitrine"
+          visual={<span className="mt-vitrine-pote"><PoteMeta progresso={alvoTotal ? guardado / alvoTotal : 0} cor="#30d158" icone="🎯" tamanho={c.mobile ? 110 : 140} /><b>{alvoTotal ? Math.round((guardado / alvoTotal) * 100) : 0}%</b></span>}
+          rotulo={<><Icone nome="meta" tamanho={16} /> {tx('Guardado nas metas')}</>}
+          valor={guardado} formato={fmtValor}
+          sub={<>{tx('de {0}', fmtValor(alvoTotal))}</>}
+          pilulas={[
+            ...(falta > 0 ? [{ icone: 'meta', rotulo: tx('Faltam'), valor: fmtValor(falta), cor: 'var(--caixa)' }] : []),
+            ...(porMes > 0 && nivel !== 'simples' ? [{ icone: 'calendario', rotulo: tx('Guardar por mês'), valor: fmtValor(porMes), cor: 'var(--divida)' }] : []),
+            { icone: 'check', rotulo: tx('Batidas'), valor: tx('{0} de {1}', batidas.length, sits.length), cor: 'var(--entrada)', tom: batidas.length ? 'bom' as const : undefined },
+          ]} />
+      )}
+
+      {sits.length > 0 && sobra > 0 && ativas.length > 0 && (
+        <div className="cartao mt-sobra">
+          <span className="mt-sobra-icone"><Icone nome="cofre" tamanho={26} /></span>
+          <span className="mt-sobra-texto">
+            <small>{tx('sobrou em {0}', noMeioDaFrase(MESES_NOME[c.mes - 1]))}</small>
+            <strong>{fmtValor(sobra)}</strong>
+            <span>{tx('Guardar numa meta?')}</span>
+          </span>
+          <span className="mt-sobra-metas">
+            {ativas.slice(0, 4).map((s) => (
+              <button key={s.meta.id} className="mt-sobra-meta" style={{ '--c': s.meta.cor } as React.CSSProperties}
+                onClick={() => guardar(s.meta, Math.min(sobra, naPrincipal(s.falta, s.meta.moeda)))} disabled={s.meta.moeda !== c.perfil.moeda} title={s.meta.nome}>
+                <IconeCategoria emoji={s.meta.icone} tamanho={16} /><span>{s.meta.nome}</span>
+              </button>
+            ))}
+          </span>
+        </div>
+      )}
+
+      {nivel === 'detalhado' && ativas.length > 0 && (
+        <section className="vt-grade-2">
+          <div className="cartao vt-cartao">
+            <h3><Icone nome="historico" tamanho={17} /> {tx('Quando cada meta chega')}</h3>
+            {chegadas.itens.length
+              ? <LinhaDoTempo itens={chegadas.itens} eixo={chegadas.eixo} />
+              : <p className="quadro-vazio">{tx('Pôr um prazo na meta mostra quando ela chega.')}</p>}
           </div>
-          {sobra > 0 && ativas.length > 0 ? (
-            <div className="cartao mt-sobra">
-              <span className="mt-sobra-icone"><Icone nome="cofre" tamanho={26} /></span>
-              <span className="mt-sobra-texto">
-                <small>{tx('sobrou em {0}', noMeioDaFrase(MESES_NOME[c.mes - 1]))}</small>
-                <strong>{fmtValor(sobra)}</strong>
-                <span>{tx('Guardar numa meta?')}</span>
-              </span>
-              <span className="mt-sobra-metas">
-                {ativas.slice(0, 4).map((s) => (
-                  <button key={s.meta.id} className="mt-sobra-meta" style={{ '--c': s.meta.cor } as React.CSSProperties}
-                    onClick={() => guardar(s.meta, Math.min(sobra, naPrincipal(s.falta, s.meta.moeda)))} disabled={s.meta.moeda !== c.perfil.moeda} title={s.meta.nome}>
-                    <IconeCategoria emoji={s.meta.icone} tamanho={16} /><span>{s.meta.nome}</span>
-                  </button>
-                ))}
-              </span>
-            </div>
-          ) : (
-            <div className="cartao mt-sobra calma">
-              <span className="mt-sobra-icone"><Icone nome="ideia" tamanho={24} /></span>
-              <span className="mt-sobra-texto">
-                <small>{tx('dica')}</small>
-                <strong>{porMes > 0 ? tx('Guarde {0} por mês', fmtValor(porMes)) : tx('Guarde um pouco todo mês')}</strong>
-                <span>{porMes > 0 ? tx('É o que falta, por mês, para bater todas as metas no prazo.') : tx('Pôr um prazo na meta mostra quanto guardar por mês.')}</span>
-              </span>
-            </div>
-          )}
+          <div className="cartao vt-cartao">
+            <h3><Icone nome="calendario" tamanho={17} /> {tx('Quanto guardar por mês')} {porMes > 0 && <small>{fmtValor(porMes)}</small>}</h3>
+            {porMes > 0
+              ? <BarraDividida formato={fmtValor} partes={ativas.filter((x) => (x.porMesNoPrazo ?? 0) > 0).map((x) => ({ rotulo: x.meta.nome, valor: naPrincipal(x.porMesNoPrazo ?? 0, x.meta.moeda), cor: x.meta.cor, icone: <IconeCategoria emoji={x.meta.icone} tamanho={14} /> }))} />
+              : <p className="quadro-vazio">{tx('Pôr um prazo na meta mostra quanto guardar por mês.')}</p>}
+          </div>
         </section>
       )}
 
@@ -158,7 +163,15 @@ export function Metas(c: Ctx) {
         </section>
       )}
 
-      {ativas.length > 0 && (
+      {ativas.length > 0 && nivel === 'simples' && (
+        <div className="vt-tiles mt-potes">
+          {ativas.map((s, i) => (
+            <PoteGrande key={s.meta.id} s={s} indice={i} aoAbrir={() => setAberta(s.meta.id)} aoGuardar={() => guardar(s.meta)} />
+          ))}
+        </div>
+      )}
+
+      {ativas.length > 0 && nivel !== 'simples' && (
         <div className="mt-grade">
           {ativas.map((s, i) => (
             <CartaoMeta key={s.meta.id} s={s} c={c} indice={i} aoAbrir={() => setAberta(s.meta.id)}
@@ -179,6 +192,12 @@ export function Metas(c: Ctx) {
         </>
       )}
 
+      {nivel === 'simples' && sits.length > 0 && (
+        <button className="vt-mais-detalhe" onClick={c.personalizar}>
+          <Icone nome="ano" tamanho={16} /> {tx('Quer ver quando cada meta chega? Mudar o jeito de ver')}
+        </button>
+      )}
+
       {aberto && (
         <FichaMeta s={aberto} c={c} aoFechar={() => setAberta(null)}
           aoEditar={() => { setAberta(null); setEditando(aberto.meta) }}
@@ -191,6 +210,42 @@ export function Metas(c: Ctx) {
       {movendo && <FormMovimento c={c} meta={movendo.meta} retirar={movendo.retirar} valorInicial={movendo.valor} aoFechar={() => setMovendo(null)} />}
     </div>
   )
+}
+
+/** Jeito simples: um pote grande por meta, o quanto já tem e um botão só. */
+function PoteGrande({ s, indice, aoAbrir, aoGuardar }: { s: SituacaoMeta; indice: number; aoAbrir: () => void; aoGuardar: () => void }) {
+  const { meta } = s
+  return (
+    <article className="vt-tile mt-pote-tile" style={{ '--c': meta.cor, '--i': indice } as React.CSSProperties}>
+      <button className="mt-pote-corpo" onClick={aoAbrir} aria-label={tx('Ver {0}', meta.nome)}>
+        <PoteMeta progresso={s.progresso} cor={meta.cor} icone={meta.icone} tamanho={120} />
+        <strong>{meta.nome}</strong>
+        <b className="vt-tile-valor"><Numero valor={s.guardado} formato={(n) => fmtMoeda(n, meta.moeda)} /></b>
+        <span className="mt-pote-pct"><i style={{ width: `${s.progresso * 100}%` }} /><small>{tx('{0}% de {1}', Math.round(s.progresso * 100), fmtMoeda(meta.alvo, meta.moeda))}</small></span>
+      </button>
+      <button className="btn primario" onClick={aoGuardar}><Icone nome="mais" tamanho={16} /> {tx('Guardar')}</button>
+    </article>
+  )
+}
+
+/** As barras de "Quando cada meta chega": de hoje até o prazo (ou a previsão no ritmo), pintadas até onde já foi guardado. */
+function linhasDeChegada(ativas: SituacaoMeta[]) {
+  const [a0, m0] = hoje().split('-').map(Number)
+  const agora = a0 * 12 + m0 - 1
+  const fins = ativas.map((s) => {
+    const f = s.meta.prazo ? [Number(s.meta.prazo.slice(0, 4)), Number(s.meta.prazo.slice(5, 7))] as [number, number] : s.previsao
+    return f ? { s, k: f[0] * 12 + f[1] - 1, f } : null
+  }).filter((x): x is { s: SituacaoMeta; k: number; f: [number, number] } => Boolean(x) && x!.k >= agora)
+  if (!fins.length) return { itens: [], eixo: ['', ''] as [string, string] }
+  const ultimo = Math.max(...fins.map((x) => x.k))
+  const total = Math.max(1, ultimo - agora)
+  return {
+    eixo: [tx('Hoje'), quando([Math.floor(ultimo / 12), (ultimo % 12) + 1])] as [string, string],
+    itens: fins.sort((x, y) => x.k - y.k).map((x) => ({
+      rotulo: x.s.meta.nome, icone: <IconeCategoria emoji={x.s.meta.icone} tamanho={16} />, cor: x.s.meta.cor, de: 0,
+      ate: Math.max(0.04, (x.k - agora) / total), hoje: Math.max(0.04, (x.k - agora) / total) * x.s.progresso, fim: quando(x.f),
+    })),
+  }
 }
 
 function CartaoMeta({ s, c, indice, aoAbrir, aoGuardar, aoRetirar }: {
