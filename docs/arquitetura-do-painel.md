@@ -82,7 +82,7 @@ Para o detalhado não virar uma parede de cartões e frases, a tela se lê olhan
 
 | Parte | O que mostra |
 | --- | --- |
-| Cartão do mês | **Sobrou/Faltou até hoje** em número grande, **Previsto no dia 30** e o saldo do mês **dia a dia**: linha cheia até hoje (o que já aconteceu), tracejada amarela depois (o que vem, se nada mudar), marca em "hoje" |
+| Cartão do mês | **Sobrou/Faltou até hoje** em número grande, **Previsto no dia 30** e o **gráfico do mês** (`GraficoDoMes`), o mesmo do Resumo do ano só que semana a semana (dias 1–7, 8–14…; uma última semana de 1 ou 2 dias se junta à anterior): Entrou e Saiu em barras, Vai entrar e Vai sair listrados em cima, a linha do que sobrou até a semana de hoje (destacada) e a tracejada do que vai sobrar |
 | Números | **Entrou**, **Saiu** (até hoje) e **Gasto por dia** (com as compras no cartão, como o antigo "Gasto médio por dia") |
 | O que vem aí | Até 4 contas, faturas e parcelas na ordem do vencimento (atrasadas primeiro), de `tarefasDoMes` |
 | Mosaico | Peças **Gastos do mês, Contas do mês, Cartões, Dívidas, Dinheiro guardado, Metas** (só as ligadas), cada uma com ícone, número e bolinha: verde tudo certo, amarela pede atenção, vermelha precisa de você. Tocar abre o bloco completo logo abaixo (Gastos abre categorias e lançamentos), tocar de novo fecha |

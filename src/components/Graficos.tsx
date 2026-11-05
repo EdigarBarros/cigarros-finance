@@ -1,7 +1,7 @@
 import type { Chart as ChartJS, ChartData, ChartEvent, ChartOptions, Plugin, ScriptableContext } from 'chart.js'
 import { Chart as Misto, Doughnut } from 'react-chartjs-2'
 import type { Resumo } from '../lib/calc'
-import { temPrevisao, type PrevisaoMes } from '../lib/previsao'
+import { temPrevisao, type DiaADia, type PrevisaoMes } from '../lib/previsao'
 import { useModoDoGrafico, type ModoDoGrafico } from '../lib/modoDoGrafico'
 import { PALETA, useCoresDoGrafico } from '../lib/charts'
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
@@ -274,6 +274,58 @@ export function GraficoFluxo({ porMes, previsto, modo = 'feito', mesAtual, altur
   return (
     <CaixaDoGrafico style={altura ? { height: altura } : undefined}>
       <Misto type="bar" key={c.tema + c.ocultos + (fora ? moeda : '') + modo} data={data} options={opcoesFinais} />
+    </CaixaDoGrafico>
+  )
+}
+
+/**
+ * O gráfico do Resumo do ano, só que de um mês, semana a semana (dias 1 a 7, 8 a 14…): Entrou e Saiu em barras, o que
+ * ainda vem listrado em cima, a linha do que sobrou até ali e a tracejada de como o mês termina se nada mudar.
+ */
+export function GraficoDoMes({ dd, altura, compacto }: { dd: DiaADia; altura?: number; compacto?: boolean }) {
+  const c = useCoresDoGrafico()
+  const semanas = Array.from({ length: Math.ceil(dd.dias / 7) }, (_, i) => [i * 7 + 1, Math.min(dd.dias, i * 7 + 7)] as const)
+  // as duas últimas semanas se juntam quando a última teria só 1 ou 2 dias (29 a 30): barra quase vazia confunde
+  if (semanas.length > 4 && semanas[4][1] - semanas[4][0] < 2) semanas.splice(3, 2, [semanas[3][0], dd.dias])
+  const rotulos = semanas.map(([a, b]) => `${a}–${b}`)
+  const somaDe = (xs: number[]) => semanas.map(([a, b]) => centavos(xs.slice(a - 1, b).reduce((t, n) => t + n, 0)))
+  const entrou = somaDe(dd.entrouDia), saiu = somaDe(dd.saiuDia), vaiEntrar = somaDe(dd.vaiEntrarDia), vaiSair = somaDe(dd.vaiSairDia)
+  // semana de hoje (-1 se o mês ainda não começou)
+  const semanaHoje = dd.hoje === 0 ? -1 : semanas.findIndex(([a, b]) => dd.hoje >= a && dd.hoje <= b)
+  const temVem = vaiEntrar.some(Boolean) || vaiSair.some(Boolean)
+  let acum = 0, acumVem = 0
+  const sobrou = semanas.map((_, i) => { acum += entrou[i] - saiu[i]; return i <= semanaHoje ? centavos(acum) : null })
+  const vaiSobrar = semanas.map((_, i) => {
+    acumVem += entrou[i] - saiu[i] + vaiEntrar[i] - vaiSair[i]
+    // começa na semana anterior à de hoje, emendada na linha do que sobrou
+    if (!temVem && semanaHoje === semanas.length - 1) return null
+    if (i === semanaHoje - 1) return sobrou[i]
+    return i >= Math.max(0, semanaHoje) ? centavos(acumVem) : null
+  })
+  const nulo = (xs: number[]) => xs.map((n) => n || null)
+  const series = [
+    barra(tx('Entrou'), PALETA.entradas, nulo(entrou), compacto, 'entrou'),
+    barra(tx('Saiu'), PALETA.saidas, nulo(saiu), compacto, 'saiu'),
+    ...(temVem ? [
+      barraPrevista(tx('Vai entrar'), PALETA.entradas[0], nulo(vaiEntrar), compacto, 'entrou'),
+      barraPrevista(tx('Vai sair'), PALETA.saidas[0], nulo(vaiSair), compacto, 'saiu'),
+    ] : []),
+    ...(semanaHoje >= 0 ? [linha(tx('Sobrou'), PALETA.sobrou, sobrou, c.fundo, compacto)] : []),
+    ...(vaiSobrar.some((v) => v !== null) ? [linha(tx('Vai sobrar'), PALETA.sobrou, vaiSobrar, c.fundo, compacto, { borderDash: [5, 4] })] : []),
+  ]
+  const base = opcoes(c, { rotulos, mesDoIndice: (i) => i + 1, mesAtual: semanaHoje + 1, compacto, destacar: semanaHoje >= 0 })
+  const comTitulo: ChartOptions<'bar'> = {
+    ...base,
+    plugins: {
+      ...base.plugins,
+      tooltip: { ...base.plugins?.tooltip, callbacks: { ...base.plugins?.tooltip?.callbacks, title: (i) => tx('Dias {0} a {1}', semanas[i[0].dataIndex][0], semanas[i[0].dataIndex][1]) } },
+    },
+  }
+  const { datasets, opcoes: opcoesFinais } = empilhar(series, comTitulo)
+  const data = { labels: rotulos, datasets } as unknown as ChartData<'bar'>
+  return (
+    <CaixaDoGrafico style={altura ? { height: altura } : undefined}>
+      <Misto type="bar" key={c.tema + c.ocultos + dd.dias} data={data} options={opcoesFinais} />
     </CaixaDoGrafico>
   )
 }

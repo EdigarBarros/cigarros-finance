@@ -1,5 +1,5 @@
 /**
- * Peças da Início no jeito detalhado: o mês num gráfico dia a dia (em cima) e um mosaico de peças (embaixo), cada uma com
+ * Peças da Início no jeito detalhado: o mês num gráfico semana a semana, como o do Resumo do ano (em cima) e um mosaico de peças (embaixo), cada uma com
  * ícone, um número e uma bolinha de cor. Tocar numa peça abre o bloco completo dela logo abaixo, então o detalhe continua
  * todo lá, só que um toque adiante (veja docs/arquitetura-do-painel.md).
  */
@@ -8,6 +8,7 @@ import type { DiaADia } from '../lib/previsao'
 import type { Tarefa } from '../lib/paraFazer'
 import { fmtValor, MESES_CURTO } from '../lib/format'
 import { Icone } from './Icone'
+import { GraficoDoMes } from './Graficos'
 import { tx } from '../lib/textos'
 import './inicio-detalhado.css'
 
@@ -20,54 +21,8 @@ const NOME_DO_SINAL: Record<Sinal, () => string> = {
 }
 
 // ---------- o mês num gráfico ----------
-const L = 300, A = 100, MARGEM = 8
-
-/** Saldo acumulado dia a dia: a linha cheia vai até hoje, a tracejada mostra como o mês termina se nada mudar. */
-function GraficoDoMes({ dd, positivo }: { dd: DiaADia; positivo: boolean }) {
-  // saldo acumulado: feito[d] é o saldo ao fim do dia d (feito[0] = 0, antes do dia 1)
-  const feito = dd.aconteceu.reduce((acc, v) => [...acc, acc[acc.length - 1] + v], [0])
-  const ateHoje = feito[dd.hoje]
-  // do dia de hoje em diante: o que vem (o que já devia ter acontecido e não aconteceu cai no próprio dia de hoje)
-  const tracejada: [number, number][] = []
-  if (dd.hoje < dd.dias || dd.vem.some((v) => v !== 0)) {
-    let s = ateHoje
-    tracejada.push([dd.hoje, s])
-    if (dd.hoje > 0 && dd.vem[dd.hoje - 1]) tracejada.push([dd.hoje, (s += dd.vem[dd.hoje - 1])])
-    for (let d = dd.hoje + 1; d <= dd.dias; d++) tracejada.push([d, (s += dd.vem[d - 1] + dd.aconteceu[d - 1])])
-  }
-  const valores = [...feito.slice(0, dd.hoje + 1), ...tracejada.map(([, v]) => v), 0]
-  const min = Math.min(...valores), max = Math.max(...valores)
-  const faixa = max - min || 1
-  const x = (dia: number) => (dia / dd.dias) * L
-  const y = (v: number) => MARGEM + (1 - (v - min) / faixa) * (A - 2 * MARGEM)
-  const linha = (pts: [number, number][]) => pts.map(([d, v], i) => `${i ? 'L' : 'M'}${x(d).toFixed(1)} ${y(v).toFixed(1)}`).join(' ')
-  const cheia = feito.slice(0, dd.hoje + 1).map((v, d) => [d, v] as [number, number])
-  const cor = positivo ? 'var(--entrada)' : 'var(--saida)'
-  const marcas = [1, 8, 15, 22, dd.dias]
-  const pctHoje = (dd.hoje / dd.dias) * 100
-  return (
-    <div className="idet-graf">
-      <svg viewBox={`0 0 ${L} ${A}`} preserveAspectRatio="none" aria-hidden="true">
-        <line className="idet-zero" x1={0} x2={L} y1={y(0)} y2={y(0)} vectorEffect="non-scaling-stroke" />
-        {cheia.length > 1 && (
-          <>
-            <path d={`${linha(cheia)} L${x(dd.hoje).toFixed(1)} ${y(0).toFixed(1)} L0 ${y(0).toFixed(1)}Z`} fill={cor} opacity={0.14} />
-            <path d={linha(cheia)} fill="none" stroke={cor} strokeWidth={2.5} strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-          </>
-        )}
-        {tracejada.length > 1 && (
-          <path d={linha(tracejada)} fill="none" stroke="var(--divida)" strokeWidth={2} strokeDasharray="5 4" vectorEffect="non-scaling-stroke" />
-        )}
-        {dd.hoje > 0 && dd.hoje < dd.dias && <line className="idet-hoje" x1={x(dd.hoje)} x2={x(dd.hoje)} y1={0} y2={A} vectorEffect="non-scaling-stroke" />}
-      </svg>
-      {dd.hoje > 0 && dd.hoje < dd.dias && <span className="idet-hoje-rot" style={{ left: `${pctHoje}%` }}>{tx('hoje')}</span>}
-      <div className="idet-eixo">{marcas.map((d) => <span key={d} style={{ left: `${(d / dd.dias) * 100}%` }}>{d}</span>)}</div>
-    </div>
-  )
-}
-
 /** O cartão do mês: quanto sobrou até hoje, como o mês deve terminar e o gráfico dia a dia. */
-export function CartaoDoMes({ dd, nomeMes }: { dd: DiaADia; nomeMes: string }) {
+export function CartaoDoMes({ dd, nomeMes, compacto }: { dd: DiaADia; nomeMes: string; compacto?: boolean }) {
   const futuro = dd.hoje === 0
   const acabou = dd.hoje === dd.dias
   const ateHoje = dd.entrou - dd.saiu
@@ -92,11 +47,7 @@ export function CartaoDoMes({ dd, nomeMes }: { dd: DiaADia; nomeMes: string }) {
           </div>
         )}
       </div>
-      <GraficoDoMes dd={dd} positivo={positivo} />
-      <div className="idet-legenda">
-        {!futuro && <span><i style={{ background: positivo ? 'var(--entrada)' : 'var(--saida)' }} />{tx('Já aconteceu')}</span>}
-        {(temPrevisao || !acabou) && <span><i className="tracejado" />{tx('O que vem, se nada mudar')}</span>}
-      </div>
+      <GraficoDoMes dd={dd} compacto={compacto} altura={compacto ? 230 : 280} />
     </section>
   )
 }
