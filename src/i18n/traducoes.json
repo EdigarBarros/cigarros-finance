@@ -8539,10 +8539,6 @@
     "en": "Expected by day {0}",
     "es": "Previsto el día {0}"
   },
-  "O que vem, se nada mudar": {
-    "en": "What's coming, if nothing changes",
-    "es": "Lo que viene, si nada cambia"
-  },
   "Gasto por dia": {
     "en": "Spent per day",
     "es": "Gasto por día"
@@ -8610,5 +8606,9 @@
   "{0} metas": {
     "en": "{0} goals",
     "es": "{0} metas"
+  },
+  "Dias {0} a {1}": {
+    "en": "Days {0} to {1}",
+    "es": "Días {0} a {1}"
   }
 }

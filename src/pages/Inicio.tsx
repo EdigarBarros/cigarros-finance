@@ -471,7 +471,7 @@ export function Inicio(c: Ctx) {
         {sugestao}
         {semNada ? lancamentos : (
           <div className="idet-cima">
-            <CartaoDoMes dd={dd} nomeMes={nomeMes} />
+            <CartaoDoMes dd={dd} nomeMes={nomeMes} compacto={mobile} />
             <div className="idet-lado">
               <NumerosDoMes dd={dd} porDia={saidasContadas(c.mes) / decorridos} />
               <VemAi tarefas={proximas} />

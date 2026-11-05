@@ -72,10 +72,12 @@ export interface DiaADia {
   dias: number
   /** Dia de hoje dentro do mês: 0 se o mês ainda não começou, `dias` se já acabou. */
   hoje: number
-  /** Saldo do dia (entrou menos saiu) do que já aconteceu, por dia (índice 0 = dia 1). */
-  aconteceu: number[]
-  /** Saldo do dia do que ainda vem, por dia. O que já devia ter acontecido e não aconteceu cai no dia de hoje. */
-  vem: number[]
+  /** Por dia (índice 0 = dia 1): o que já entrou e já saiu. */
+  entrouDia: number[]
+  saiuDia: number[]
+  /** Por dia: o que ainda vai entrar e sair. O que já devia ter acontecido e não aconteceu cai no dia de hoje. */
+  vaiEntrarDia: number[]
+  vaiSairDia: number[]
   /** Totais do que já aconteceu e do que ainda vem. */
   entrou: number
   saiu: number
@@ -105,8 +107,8 @@ export function diaADiaDoMes({ lancs, lancsBaixas = lancs, faturasPagas, comFatu
   const dias = new Date(ano, mes, 0).getDate()
   const este = ano * 12 + mes
   const diaHoje = este < agora ? dias : este > agora ? 0 : hoje.getDate()
-  const aconteceu = Array<number>(dias).fill(0)
-  const vem = Array<number>(dias).fill(0)
+  const zeros = () => Array<number>(dias).fill(0)
+  const entrouDia = zeros(), saiuDia = zeros(), vaiEntrarDia = zeros(), vaiSairDia = zeros()
   let entrou = 0, saiu = 0, vaiEntrar = 0, vaiSair = 0
   // o que ainda vem e já devia ter acontecido fica no dia de hoje (ou no dia 1, se o mês ainda não começou)
   const diaDoQueVem = (d: number) => Math.min(dias, Math.max(d, diaHoje, 1)) - 1
@@ -117,21 +119,21 @@ export function diaADiaDoMes({ lancs, lancsBaixas = lancs, faturasPagas, comFatu
     const dia = diaDe(l.data)
     const jaFoi = !faturaEmAberto(l, pagas, comFaturas, agora) && (!l.data || l.data <= iso)
     if (jaFoi) {
-      aconteceu[dia - 1] += sinal * l.valor
-      if (sinal > 0) entrou += l.valor; else saiu += l.valor
+      if (sinal > 0) { entrou += l.valor; entrouDia[dia - 1] += l.valor } else { saiu += l.valor; saiuDia[dia - 1] += l.valor }
     } else {
-      vem[diaDoQueVem(dia)] += sinal * l.valor
-      if (sinal > 0) vaiEntrar += l.valor; else vaiSair += l.valor
+      const d = diaDoQueVem(dia)
+      if (sinal > 0) { vaiEntrar += l.valor; vaiEntrarDia[d] += l.valor } else { vaiSair += l.valor; vaiSairDia[d] += l.valor }
     }
   }
   for (const s of situacoesDoMes(contas, lancsBaixas, ano, mes, iso, taxas)) {
     if (s.estado === 'paga') continue
     const sinal = s.conta.tipo === 'entrada' ? 1 : -1
-    vem[diaDoQueVem(s.dia)] += sinal * s.valor
-    if (sinal > 0) vaiEntrar += s.valor; else vaiSair += s.valor
+    const d = diaDoQueVem(s.dia)
+    if (sinal > 0) { vaiEntrar += s.valor; vaiEntrarDia[d] += s.valor } else { vaiSair += s.valor; vaiSairDia[d] += s.valor }
   }
   return {
-    dias, hoje: diaHoje, aconteceu: aconteceu.map(centavos), vem: vem.map(centavos),
+    dias, hoje: diaHoje,
+    entrouDia: entrouDia.map(centavos), saiuDia: saiuDia.map(centavos), vaiEntrarDia: vaiEntrarDia.map(centavos), vaiSairDia: vaiSairDia.map(centavos),
     entrou: centavos(entrou), saiu: centavos(saiu), vaiEntrar: centavos(vaiEntrar), vaiSair: centavos(vaiSair),
   }
 }

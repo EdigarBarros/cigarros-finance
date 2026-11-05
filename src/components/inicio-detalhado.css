@@ -14,19 +14,6 @@
 .idet-grande.ruim, .idet-prev strong.ruim { color: var(--saida); }
 .idet-prev { text-align: right; }
 .idet-prev strong { display: block; margin-top: 4px; font-family: var(--fonte-numeros); font-size: 19px; font-weight: 700; color: var(--divida); font-variant-numeric: tabular-nums; }
-.idet-graf { position: relative; padding-top: 14px; }
-.idet-graf svg { display: block; width: 100%; height: 130px; overflow: visible; }
-.idet-zero { stroke: var(--borda-forte); stroke-width: 1; }
-.idet-hoje { stroke: var(--texto-3); stroke-width: 1; }
-.idet-hoje-rot { position: absolute; top: 0; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--texto-2); }
-.idet-eixo { position: relative; height: 16px; margin-top: 4px; font-size: 11px; color: var(--texto-3); font-variant-numeric: tabular-nums; }
-.idet-eixo span { position: absolute; transform: translateX(-50%); }
-.idet-eixo span:first-child { transform: none; }
-.idet-eixo span:last-child { transform: translateX(-100%); }
-.idet-legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--texto-2); }
-.idet-legenda span { display: inline-flex; align-items: center; gap: 6px; }
-.idet-legenda i { width: 16px; height: 3px; border-radius: 2px; }
-.idet-legenda i.tracejado { background: repeating-linear-gradient(90deg, var(--divida) 0 5px, transparent 5px 8px); }
 
 /* entrou, saiu, por dia */
 .idet-numeros { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; gap: 10px; }
@@ -79,16 +66,14 @@
 /* tablet */
 @container (min-width: 640px) {
   .idet-grande { font-size: 40px; }
-  .idet-graf svg { height: 160px; }
-  .idet-mosaico { grid-template-columns: repeat(var(--meio), minmax(0, 1fr)); }
+    .idet-mosaico { grid-template-columns: repeat(var(--meio), minmax(0, 1fr)); }
   .idet-mosaico.impar > :last-child { grid-column: auto; }
   .idet-detalhe-duas { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
 }
 /* computador */
 @container (min-width: 1000px) {
   .idet-cima { grid-template-columns: minmax(0, 2.2fr) minmax(280px, 1fr); align-items: start; }
-  .idet-graf svg { height: 200px; }
-  .idet-numeros { grid-auto-flow: row; grid-template-columns: 1fr; }
+    .idet-numeros { grid-auto-flow: row; grid-template-columns: 1fr; }
   .idet-num { display: flex; justify-content: space-between; align-items: center; }
   .idet-mosaico { grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
 }
