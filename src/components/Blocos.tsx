@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { caixaDoBanco, type Resumo } from '../lib/calc'
+import { totalGuardado } from '../lib/guardado'
 import { COR } from '../lib/charts'
 import { ehEmprestimo, fmtDiv, parcelasDe, type SituacaoDivida } from '../lib/dividas'
 import { fmtMoeda, fmtMesAno, fmtPct, fmtValor, MESES_CURTO, MESES_NOME, noMeioDaFrase } from '../lib/format'
@@ -243,7 +244,7 @@ export function BlocoDinheiro({ v, nivel, bancos, caixa, investimentos, moedas, 
 }) {
   const totalCaixa = bancos.reduce((a, b) => a + caixaDoBanco(caixa, b.id), 0)
   const totalMoedas = lista.reduce((a, m) => a + (converter(moedas[m] ?? 0, m, taxas) ?? 0), 0)
-  const total = (v.bancos ? totalCaixa : 0) + (v.investimentos ? investimentos : 0) + (v.moedas ? totalMoedas : 0)
+  const total = totalGuardado({ v, bancos, caixa, investimentos, moedas, lista, taxas })
   const abrir = nivel !== 'simples'
   const linha = (chave: string, nome: ReactNode, valor: string, sub: ReactNode, onClick: () => void) => (
     <button key={chave} className="banco-linha" onClick={onClick}>

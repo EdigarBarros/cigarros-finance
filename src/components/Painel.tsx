@@ -24,7 +24,7 @@ import { definirTema, semMovimento, useTema } from '../lib/tema'
 import { ehErroDeVersao, lembrarMes, mesAntesDeAtualizar } from '../lib/atualizacao'
 import { irParaStripe, type Assinatura } from '../lib/assinatura'
 import { AvisoTeste } from './AvisoTeste'
-import { previsaoDoAno } from '../lib/previsao'
+import { diaADiaDoMes, previsaoDoAno } from '../lib/previsao'
 import { useCartoes } from '../lib/useCartoes'
 import { useContasFixas } from '../lib/useContasFixas'
 import { useDados } from '../lib/useDados'
@@ -290,6 +290,12 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const previsto = useMemo(
     () => previsaoDoAno({ lancs: lancsContados, lancsBaixas: d.lancs, faturasPagas, comFaturas: comFaturasNaPrevisao, contas: contasNaPrevisao ? contasFixas : [], ano, taxas, hoje }),
     [lancsContados, d.lancs, faturasPagas, comFaturasNaPrevisao, contasNaPrevisao, contasFixas, ano, taxas, hoje],
+  )
+
+  // o mês aberto dia a dia (gráfico do mês na Início): o que já aconteceu até hoje e o que ainda vem
+  const diaADia = useMemo(
+    () => diaADiaDoMes({ lancs: lancsContados, lancsBaixas: d.lancs, faturasPagas, comFaturas: comFaturasNaPrevisao, contas: contasNaPrevisao ? contasFixas : [], ano, mes, taxas, hoje }),
+    [lancsContados, d.lancs, faturasPagas, comFaturasNaPrevisao, contasNaPrevisao, contasFixas, ano, mes, taxas, hoje],
   )
 
   const lancsMes = lancsContados.filter((l) => l.mes === mes && l.ano === ano)
@@ -570,7 +576,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       cartoes: comCartoes ? <BlocoCartoes situacoes={faturas} aoAbrir={() => irPara('cartoes')} /> : undefined,
     },
     busca, setBusca,
-    ano, mes, d, cartoes, faturas, lancsMes, lancsAno: lancsContados, situacao, aReceber, diaRef, mesEf, porMes, previsto, mobile,
+    ano, mes, d, cartoes, faturas, lancsMes, lancsAno: lancsContados, situacao, aReceber, diaRef, mesEf, porMes, previsto, diaADia, mobile,
     perfil, v, taxas, sugestao,
     aceitarSugestao: (s: Sugestao) => mudarPerfil(s.aplicar(perfil)),
     recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),

@@ -8510,5 +8510,105 @@
   "Nenhum dinheiro previsto para entrar. Cadastre o seu salário em Contas fixas para ele aparecer aqui.": {
     "en": "No money expected to come in. Add your salary under Recurring bills so it shows up here.",
     "es": "No hay dinero previsto para entrar. Registra tu sueldo en Cuentas fijas para que aparezca aquí."
+  },
+  "Tudo certo": {
+    "en": "All good",
+    "es": "Todo bien"
+  },
+  "Pede atenção": {
+    "en": "Needs attention",
+    "es": "Requiere atención"
+  },
+  "Precisa de você": {
+    "en": "Needs you",
+    "es": "Te necesita"
+  },
+  "Previsto para {0}": {
+    "en": "Expected for {0}",
+    "es": "Previsto para {0}"
+  },
+  "Sobrou até hoje": {
+    "en": "Left so far",
+    "es": "Sobró hasta hoy"
+  },
+  "Faltou até hoje": {
+    "en": "Short so far",
+    "es": "Faltó hasta hoy"
+  },
+  "Previsto no dia {0}": {
+    "en": "Expected by day {0}",
+    "es": "Previsto el día {0}"
+  },
+  "O que vem, se nada mudar": {
+    "en": "What's coming, if nothing changes",
+    "es": "Lo que viene, si nada cambia"
+  },
+  "Gasto por dia": {
+    "en": "Spent per day",
+    "es": "Gasto por día"
+  },
+  "Entrou até hoje": {
+    "en": "In so far",
+    "es": "Entró hasta hoy"
+  },
+  "Saiu até hoje": {
+    "en": "Out so far",
+    "es": "Salió hasta hoy"
+  },
+  "Gastos do mês": {
+    "en": "Spending this month",
+    "es": "Gastos del mes"
+  },
+  "gastando menos que em {0}": {
+    "en": "spending less than in {0}",
+    "es": "gastando menos que en {0}"
+  },
+  "gastando mais que em {0}": {
+    "en": "spending more than in {0}",
+    "es": "gastando más que en {0}"
+  },
+  "tudo pago": {
+    "en": "all paid",
+    "es": "todo pagado"
+  },
+  "1 fatura atrasada": {
+    "en": "1 overdue bill",
+    "es": "1 factura atrasada"
+  },
+  "{0} faturas atrasadas": {
+    "en": "{0} overdue bills",
+    "es": "{0} facturas atrasadas"
+  },
+  "fatura do mês": {
+    "en": "this month's bill",
+    "es": "factura del mes"
+  },
+  "1 em dia": {
+    "en": "1 up to date",
+    "es": "1 al día"
+  },
+  "{0} em dia": {
+    "en": "{0} up to date",
+    "es": "{0} al día"
+  },
+  "nenhuma em aberto": {
+    "en": "none open",
+    "es": "ninguna pendiente"
+  },
+  "em 1 banco": {
+    "en": "in 1 bank",
+    "es": "en 1 banco"
+  },
+  "em {0} bancos": {
+    "en": "in {0} banks",
+    "es": "en {0} bancos"
+  },
+  "1 meta": {
+    "en": "1 goal",
+    "es": "1 meta"
+  },
+  "{0} metas": {
+    "en": "{0} goals",
+    "es": "{0} metas"
   }
 }
