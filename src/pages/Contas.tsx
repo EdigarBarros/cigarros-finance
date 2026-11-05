@@ -14,9 +14,9 @@ import { CampoCotacao } from '../components/CampoCotacao'
 import { EscolhaMoeda } from '../components/EscolhaMoeda'
 import { EscolhaBanco } from '../components/Formularios'
 import { Icone } from '../components/Icone'
-import { Numero } from '../components/Numero'
 import { PoteMeta } from '../components/PoteMeta'
 import { Cartao, Modal, Palco, Segmentado, Vazio } from '../components/ui'
+import { BarraDividida, Rosquinha, Vitrine } from '../components/Vitrine'
 import { confirmar } from '../lib/avisos'
 import { CampoData, CampoMes, Seletor } from '../components/Escolhas'
 import type { Ctx } from './contexto'
@@ -58,6 +58,15 @@ export function Contas(c: Ctx) {
   const anteriores = mesesComAtraso(contas, c.d.lancs, c.ano, c.mes)
   const nova = (m?: Modelo) => { setModelo(m); setEditando('nova') }
   const totalSaidas = t.jaPago + t.faltaPagar
+  const nivel = c.perfil.detalhe
+  const [verTodas, setVerTodas] = useState(false)
+  // as contas a pagar do mês somadas por categoria (rosca do detalhado)
+  const porCategoria = Object.values(sits.filter((x) => x.conta.tipo === 'saida').reduce<Record<string, { rotulo: string; valor: number; cor: string }>>((acc, x) => {
+    const cat = c.categorias.find((k) => k.id === x.conta.categoria_id)
+    const chave = cat?.id ?? 'sem'
+    acc[chave] = { rotulo: cat?.nome ?? tx('Sem categoria'), cor: cat?.cor ?? '#8e8e93', valor: (acc[chave]?.valor ?? 0) + x.valor }
+    return acc
+  }, {})).sort((x, y) => y.valor - x.valor)
 
   if (c.contas.semTabela) {
     return (
@@ -105,22 +114,31 @@ export function Contas(c: Ctx) {
       {!contas.length && <SemContas aoNova={nova} />}
 
       {sits.length > 0 && (
-        <section className="ct-topo">
-          <div className="cartao ct-pote">
-            <PoteMeta progresso={totalSaidas ? t.jaPago / totalSaidas : t.temEntradas ? 1 : 0} cor={COR.entradas} icone="🧾" tamanho={112} />
-            <span className="ct-pote-texto">
-              <small>{tx('pago em {0}', nomeMes)}</small>
-              <strong><Numero valor={t.jaPago} formato={fmtValor} /></strong>
-              <small>{tx('de {0}', fmtValor(totalSaidas))}</small>
-              <span className="chips-info">
-                {t.faltaPagar > 0 && <span className="chip-info">{tx('falta {0}', fmtValor(t.faltaPagar))}</span>}
-                {t.qtdAtrasadas > 0 && <span className="chip-info ruim">{(t.qtdAtrasadas === 1 ? tx('1 atrasada') : tx('{0} atrasadas', t.qtdAtrasadas))}</span>}
-                {t.temEntradas && <span className="chip-info bom">{t.aReceber > 0 ? tx('a receber {0}', fmtValor(t.aReceber)) : tx('recebido {0}', fmtValor(t.jaRecebido))}</span>}
-                {t.faltaPagar === 0 && totalSaidas > 0 && <span className="chip-info bom">{tx('tudo pago 🎉')}</span>}
-              </span>
-            </span>
-          </div>
+        <Vitrine cor={t.qtdAtrasadas ? 'var(--saida)' : 'var(--entrada)'} className="ct-vitrine"
+          visual={<span className="mt-vitrine-pote"><PoteMeta progresso={totalSaidas ? t.jaPago / totalSaidas : t.temEntradas ? 1 : 0} cor={COR.entradas} icone="🧾" tamanho={c.mobile ? 104 : 130} />
+            <b>{totalSaidas ? Math.round((t.jaPago / totalSaidas) * 100) : 100}%</b></span>}
+          rotulo={<><Icone nome="calendario" tamanho={16} /> {tx('Pago em {0}', nomeMes)}</>}
+          valor={t.jaPago} formato={fmtValor}
+          sub={<>{tx('de {0}', fmtValor(totalSaidas))}</>}
+          pilulas={[
+            ...(t.faltaPagar > 0 ? [{ icone: 'relogio', rotulo: tx('Falta pagar'), valor: fmtValor(t.faltaPagar), cor: 'var(--divida)' }] : [{ icone: 'check', rotulo: tx('Tudo pago'), valor: '🎉', cor: 'var(--entrada)' }]),
+            ...(t.qtdAtrasadas > 0 ? [{ icone: 'sino', rotulo: tx('Atrasadas'), valor: String(t.qtdAtrasadas), cor: 'var(--saida)', tom: 'ruim' as const }] : []),
+            ...(t.temEntradas ? [{ icone: 'receber', rotulo: t.aReceber > 0 ? tx('A receber') : tx('Recebido'), valor: fmtValor(t.aReceber > 0 ? t.aReceber : t.jaRecebido), cor: 'var(--entrada)', tom: 'bom' as const }] : []),
+          ]} />
+      )}
+
+      {sits.length > 0 && nivel !== 'simples' && (
+        <section className={nivel === 'detalhado' ? 'vt-grade-2 ct-graficos' : 'ct-graficos'}>
           <LinhaDoMes c={c} sits={sits} />
+          {nivel === 'detalhado' && porCategoria.length > 0 && (
+            <div className="cartao vt-cartao">
+              <h3><Icone nome="relatorio" tamanho={17} /> {tx('Para onde vão as contas')}</h3>
+              <div className="dv-composicao">
+                <Rosquinha tamanho={c.mobile ? 120 : 130} partes={porCategoria}><b>{fmtValor(totalSaidas).replace(/,\d\d$/, '')}</b><small>{tx('por mês')}</small></Rosquinha>
+                <BarraDividida partes={porCategoria} formato={fmtValor} legenda />
+              </div>
+            </div>
+          )}
         </section>
       )}
 
@@ -131,7 +149,13 @@ export function Contas(c: Ctx) {
       {/* uma grade só, da mais urgente para a já paga: o selo de cada boleto diz a situação */}
       {grupo(tx('Contas de {0}', nomeMes), [...g.atrasadas, ...g.estaSemana, ...g.maisAFrente, ...g.pagas], 'calendario')}
 
-      {contas.length > 0 && (
+      {contas.length > 0 && nivel !== 'detalhado' && !verTodas && (
+        <button className="vt-mais-detalhe" onClick={() => setVerTodas(true)}>
+          <Icone nome="lista" tamanho={16} /> {tx('Ver e editar todas as contas fixas ({0})', contas.length)}
+        </button>
+      )}
+
+      {contas.length > 0 && (nivel === 'detalhado' || verTodas) && (
         <Cartao titulo={tx('Suas contas fixas')} acao={<span className="conta-grupo-total">{contas.length}</span>}>
           <ul className="conta-gerenciar">
             {contas.map((x) => {

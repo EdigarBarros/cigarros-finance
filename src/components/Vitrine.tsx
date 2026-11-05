@@ -141,12 +141,12 @@ export function Colunas({ itens, cor, altura = 150, formato, rotuloDoValor = tru
   const [ref, vivo] = useEmVista<HTMLDivElement>()
   const maior = Math.max(1, ...itens.map((x) => x.valor))
   return (
-    <div ref={ref} className={`vt-colunas ${vivo ? 'vivo' : ''}`} style={{ '--c': cor, '--alt': `${altura}px`, '--n': itens.length } as CSSProperties}>
+    <div ref={ref} className={`vt-colunas ${vivo ? 'vivo' : ''} ${itens.length > 8 ? 'muitas' : ''}`} style={{ '--c': cor, '--alt': `${altura}px`, '--n': itens.length } as CSSProperties}>
       {itens.map((x, i) => (
         <div key={`${x.rotulo}${i}`} className={`vt-col ${x.destaque ? 'destaque' : ''} ${x.valor ? '' : 'vazia'} ${x.listrado ? 'listrado' : ''}`} title={x.titulo}
           style={{ '--i': i, ...(x.cor ? { '--c': x.cor } : {}) } as CSSProperties}>
           {/* com muitas colunas, o valor aparece só na de destaque e na maior (o resto fica no toque) */}
-          {rotuloDoValor && <b>{x.valor && (itens.length <= 7 || x.destaque || x.valor === maior) ? formato(x.valor) : '\u00a0'}</b>}
+          {rotuloDoValor && <b>{x.valor && (itens.length <= 4 || x.destaque || x.valor === maior) ? formato(x.valor) : '\u00a0'}</b>}
           <span className="vt-col-trilho"><i style={{ height: `${x.valor ? Math.max(5, (x.valor / maior) * 100) : 0}%` }} /></span>
           <small>{x.rotulo}</small>
         </div>

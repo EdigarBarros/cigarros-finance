@@ -15,6 +15,8 @@ import { Bandeira } from '../components/Bandeira'
 import { CartaoIlustrado } from '../components/CartaoIlustrado'
 import { Numero } from '../components/Numero'
 import { Anel, CampoValor, Cartao, Faisca, Kpi, Modal, Vazio, Palco } from '../components/ui'
+import { BarraDividida, Colunas, Rosquinha, Vitrine } from '../components/Vitrine'
+import { fmtCurto } from '../lib/visuais'
 import { confirmar } from '../lib/avisos'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
@@ -165,6 +167,7 @@ export function Patrimonio(c: Ctx) {
   const gastoMedio = comDados.length ? comDados.reduce((a, r) => a + r!.saidas, 0) / comDados.length : 0
   const reserva = porTipo.reserva
   const mesesReserva = gastoMedio > 0 ? reserva / gastoMedio : 0
+  const nivel = c.perfil.detalhe
   const cartoesBanco = [
     ...bancos.map((b) => ({ id: b.id, nome: b.nome, cor: b.cor, guardado: caixaDoBanco(caixa, b.id), ls: lancsDe(b.id) })),
     ...(semBanco.length ? [{ id: SEM_BANCO, nome: tx('Sem banco'), cor: '#6b7a99', guardado: null as number | null, ls: semBanco }] : []),
@@ -180,35 +183,20 @@ export function Patrimonio(c: Ctx) {
         {v.bancos && <button className="btn primario" onClick={() => setGerenciar('novo')}><Icone nome="mais" tamanho={16} /> {tx('Adicionar banco')}</button>}
       </header>
 
-      <section className="gd-topo">
-        <div className="cartao gd-total">
-          <span className="gd-total-cab">
-            <span className="gd-total-icone"><Icone nome="carteira" tamanho={22} /></span>
-            <span><small>{tx('tudo o que você tem')}</small><strong><Numero valor={total} formato={fmtValor} /></strong></span>
-            {tendencia.valores.filter((x) => x !== null).length > 1 && <span className="gd-faisca"><Faisca {...tendencia} cor={COR.caixa} /></span>}
-          </span>
-          {anterior > 0 && Math.abs(total - anterior) < 0.01 && <span className="chip-info">{tx('igual a {0}', noMeioDaFrase(MESES_CURTO[c.mes - 2]))}</span>}
-          {anterior > 0 && Math.abs(total - anterior) >= 0.01 && (
-            <span className={`chip-info ${total > anterior ? 'bom' : 'ruim'}`}>
-              <Icone nome={total > anterior ? 'sobe' : 'desce'} tamanho={12} />
-              {fmtValor(Math.abs(total - anterior))} {total > anterior ? tx('a mais') : tx('a menos')} {tx('que em {0}', noMeioDaFrase(MESES_CURTO[c.mes - 2]))}
-            </span>
-          )}
-          {partes.length > 0 ? (
-            <>
-              <span className="gd-composicao" aria-hidden="true">
-                {partes.map((p, i) => <i key={p.id} style={{ flexGrow: p.valor, background: p.cor, animationDelay: `${200 + i * 90}ms` }} />)}
-              </span>
-              <ul className="gd-legenda">
-                {partes.map((p) => (
-                  <li key={p.id}><i style={{ background: p.cor }} />{p.nome}<b>{fmtValor(p.valor)}</b><small>{total ? Math.round((p.valor / total) * 100) : 0}%</small></li>
-                ))}
-              </ul>
-            </>
-          ) : (
-            <p className="quadro-vazio">{tx('Atualize os saldos abaixo para ver tudo junto aqui.')}</p>
-          )}
-        </div>
+      <Vitrine cor="var(--caixa)" className="gd-vitrine"
+        visual={partes.length > 0 ? (
+          <Rosquinha tamanho={c.mobile ? 130 : 150} partes={partes.map((p) => ({ rotulo: p.nome, valor: p.valor, cor: p.cor }))}>
+            <Icone nome="carteira" tamanho={22} /><small>{partes.length === 1 ? tx('1 lugar') : tx('{0} lugares', partes.length)}</small>
+          </Rosquinha>
+        ) : undefined}
+        rotulo={<><Icone nome="carteira" tamanho={16} /> {tx('Tudo o que você tem')}</>}
+        valor={total} formato={fmtValor}
+        sub={anterior > 0 && Math.abs(total - anterior) >= 0.01
+          ? <span className={`gd-variacao ${total > anterior ? 'bom' : 'ruim'}`}><Icone nome={total > anterior ? 'sobe' : 'desce'} tamanho={13} /> {fmtValor(Math.abs(total - anterior))} {total > anterior ? tx('a mais') : tx('a menos')} {tx('que em {0}', noMeioDaFrase(MESES_CURTO[c.mes - 2]))}</span>
+          : partes.length === 0 ? tx('Atualize os saldos abaixo para ver tudo junto aqui.') : null}
+        pilulas={partes.map((p) => ({ icone: p.id === 'inv' ? 'investir' : p.id === 'moedas' ? 'globo' : ICONE_TIPO[p.id as TipoCaixa], rotulo: p.nome, valor: fmtValor(p.valor), cor: p.cor }))} />
+
+      <section className="vt-grade gd-graficos">
         {v.bancos && (
           <div className="cartao gd-reserva">
             <h3 className="ccd-titulo"><Icone nome="escudo" tamanho={18} /> {tx('Reserva de emergência')}</h3>
@@ -229,6 +217,19 @@ export function Patrimonio(c: Ctx) {
                 )}
               </span>
             </div>
+          </div>
+        )}
+        {nivel !== 'simples' && tendencia.valores.filter((x) => x !== null).length > 1 && (
+          <div className="cartao vt-cartao">
+            <h3><Icone nome="ano" tamanho={17} /> {tx('Como tem mudado')}</h3>
+            <Colunas cor="var(--caixa)" altura={c.mobile ? 110 : 130} formato={fmtCurto}
+              itens={janela.map((m, i) => ({ rotulo: noMeioDaFrase(MESES_CURTO[m - 1]).slice(0, 3), valor: Math.max(0, tendencia.valores[i] ?? 0), destaque: m === c.mes }))} />
+          </div>
+        )}
+        {nivel === 'detalhado' && partes.length > 1 && (
+          <div className="cartao vt-cartao">
+            <h3><Icone nome="relatorio" tamanho={17} /> {tx('Onde está cada parte')}</h3>
+            <BarraDividida partes={partes.map((p) => ({ rotulo: p.nome, valor: p.valor, cor: p.cor }))} formato={fmtValor} />
           </div>
         )}
       </section>
