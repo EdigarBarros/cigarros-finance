@@ -1,13 +1,14 @@
 import { Fragment, useMemo, useState, type CSSProperties } from 'react'
-import { COR, PALETA } from '../lib/charts'
-import { calendarioDe, dividaDiaADia, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
-import { fmtMoeda, fmtValor, MESES_CURTO, moedaAtual, MESES_NOME, variacao, LOCAL_DAS_DATAS, noMeioDaFrase } from '../lib/format'
+import { PALETA } from '../lib/charts'
+import { calendarioDe, dividaDiaADia, parcelasPorDia, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
+import { fmtValor, MESES_CURTO, moedaAtual, MESES_NOME, LOCAL_DAS_DATAS, noMeioDaFrase } from '../lib/format'
 import { situacaoMeta } from '../lib/metas'
 import {
   Bloco, BlocoDinheiro, BlocoDividas, BlocoGastos, BlocoLancamentos, BlocoMetas,
 } from '../components/Blocos'
 import { totalGuardado } from '../lib/guardado'
 import { CartaoDoMes, Mosaico, NumerosDoMes, VemAi, type Peca, type Sinal } from '../components/InicioDetalhado'
+import { MesEquilibrado, ResumosComAnel, type ResumoAnel } from '../components/InicioEquilibrado'
 import { FormDivida } from '../components/Formularios'
 import { GraficoFluxo, moedasDoAno, SeletorDoModo } from '../components/Graficos'
 import { useModoDoGrafico } from '../lib/modoDoGrafico'
@@ -16,7 +17,7 @@ import { BannerCarrossel, type Slide } from '../components/BannerCarrossel'
 import { ConviteImportar } from '../components/ConviteImportar'
 import { CartaoAcompanhar, CartaoSugestao } from '../components/Configuracoes'
 import { Encaixe, type ItemEncaixe } from '../components/Encaixe'
-import { Kpi, Progresso, ReguaMeses, Segmentado, type Tendencia } from '../components/ui'
+import { ReguaMeses, Segmentado } from '../components/ui'
 import { BlocoParaFazer, ResumoSimples } from '../components/Simples'
 import { BlocoConselhos } from '../components/BlocoConselhos'
 import { tarefasDoMes } from '../lib/paraFazer'
@@ -64,7 +65,6 @@ export function Inicio(c: Ctx) {
   const nomeMes = noMeioDaFrase(MESES_NOME[c.mes - 1])
   // Comparação só dentro do mesmo ano (em janeiro não há mês anterior).
   const mesAnt = c.mes > 1 ? noMeioDaFrase(MESES_CURTO[c.mes - 2]) : undefined
-  const delta = (atual: number, antes: number | undefined) => (v.comparacao ? variacao(atual, antes) : null)
   const situacaoMetas = c.d.metas.map((m) => situacaoMeta(m, c.d.movimentosMeta))
   const mesVazio = c.lancsMes.length === 0
   const haAno = c.porMes.some(Boolean)
@@ -78,10 +78,17 @@ export function Inicio(c: Ctx) {
   // No mês de hoje os números contam só o que já aconteceu: parcela de cartão e conta com data mais para a frente ainda
   // não saíram do bolso (senão, no dia 4, o mês já aparece com as contas do dia 20 e um "faltou" que não aconteceu).
   const mesDeHoje = c.ano === hoje.getFullYear() && c.mes === hoje.getMonth() + 1
-  const entrouMes = mesDeHoje ? c.diaADia.entrou : r.entradas
-  const saiuMes = mesDeHoje ? c.diaADia.saiu : r.saidas
+  // O mês dia a dia com as parcelas de dívida que ainda vencem nele: as três telas preveem o fim do mês com a mesma conta.
+  const ddMes = useMemo(() => {
+    const dd = c.diaADia
+    if (!v.dividas) return dd
+    const parcelas = parcelasPorDia({ situacao: c.situacao, ano: c.ano, mes: c.mes, dias: dd.dias, hoje: dd.hoje, diaRef: c.diaRef })
+    const total = parcelas.reduce((t, n) => t + n, 0)
+    return total ? { ...dd, vaiSair: Math.round((dd.vaiSair + total) * 100) / 100, vaiSairDia: dd.vaiSairDia.map((n, i) => n + parcelas[i]) } : dd
+  }, [c.diaADia, c.situacao, c.ano, c.mes, c.diaRef, v.dividas])
+  const entrouMes = mesDeHoje ? ddMes.entrou : r.entradas
+  const saiuMes = mesDeHoje ? ddMes.saiu : r.saidas
   const fluxoMes = entrouMes - saiuMes
-  const sobrou = fluxoMes >= 0
   const animo = c.contaNova || mesVazio || simples ? '' : fluxoMes > 0 ? (' ' + tx('Você está no caminho certo! 🚀')) : fluxoMes < 0 ? (' ' + tx('Vale olhar para onde foi.')) : ''
   const botoes = (
     <>
@@ -108,78 +115,14 @@ export function Inicio(c: Ctx) {
     </header>
   )
 
-  // ---------- 1. Como estou este mês? ----------
-  // Minilinha com os valores reais dos últimos 6 meses até o aberto (a partir do equilibrado).
-  const janela = Array.from({ length: Math.min(6, c.mes) }, (_, i) => c.mes - Math.min(6, c.mes) + i + 1)
-  const serie = (f: (m: number) => number | null): Tendencia | undefined =>
-    v.comparacao ? { valores: janela.map(f), meses: janela.map((m) => MESES_CURTO[m - 1]) } : undefined
-  const tendencia = (f: (x: NonNullable<Ctx['porMes'][number]>) => number) => serie((m) => { const x = c.porMes[m - 1]; return x ? f(x) : null })
-
-  // até hoje contra o mês passado inteiro não seria justo: no mês de hoje a comparação some
-  const difAnterior = v.comparacao && !mesDeHoje && !mesVazio && a && (a.entradas || a.saidas) ? r.fluxo - a.fluxo : null
+  // ---------- 1. Como estou este mês? (cada jeito tem o seu resumo do mês) ----------
   const irParaGastos = () => document.getElementById('para-onde-foi')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  const fraseResultado = mesVazio ? tx('Nada lançado em {0} ainda.', nomeMes)
-    : fluxoMes < 0 ? <>{tx('Saiu {0} a mais.', fmtValor(-fluxoMes))} <button className="link" onClick={irParaGastos}>{tx('Ver para onde foi')}</button></>
-    : fluxoMes === 0 ? tx('Entrou e saiu o mesmo valor.')
-    : tx('Você ficou com {0}% do que entrou.', Math.round((fluxoMes / entrouMes) * 100))
-  const resultado = (
-    <Kpi rotulo={mesDeHoje ? (sobrou ? tx('Sobrou até hoje') : tx('Faltou até hoje')) : sobrou ? tx('Sobrou em {0}', nomeMes) : tx('Faltou em {0}', nomeMes)} valor={Math.abs(fluxoMes)} icone="carteira" destaque
-      cor={sobrou ? COR.entradas : COR.saidas} tendencia={tendencia((x) => x.fluxo)}>
-      {difAnterior !== null && Math.abs(difAnterior) >= 0.5 ? (
-        <span className={`kpi-delta ${difAnterior > 0 ? 'bom' : 'ruim'}`}>
-          <Icone nome={difAnterior > 0 ? 'sobe' : 'desce'} tamanho={13} />
-          {fmtValor(Math.abs(difAnterior))} {difAnterior > 0 ? tx('a mais') : tx('a menos')}<span>{tx('que em')} {mesAnt}</span>
-        </span>
-      ) : <span className="kpi-sub">{fraseResultado}</span>}
-    </Kpi>
-  )
-
-  // Média por dia: mês aberto até hoje; mês passado inteiro.
+  // Gasto por dia: no mês de hoje, só as saídas até hoje (parcela de cartão e conta com data futura ainda não saíram do bolso)
   const diasNoMes = new Date(c.ano, c.mes, 0).getDate()
-  const decorridos = c.ano === hoje.getFullYear() && c.mes === hoje.getMonth() + 1 ? hoje.getDate() : diasNoMes
-  // No mês de hoje só contam as saídas até hoje: parcela de cartão e conta com data futura ainda não saíram do bolso.
-  const noMesDeHoje = (m: number) => c.ano === hoje.getFullYear() && m === hoje.getMonth() + 1
-  const saidasAteHoje = (m: number) => c.lancsAno.reduce((t, l) => (l.mes === m && l.tipo === 'saida' && (!l.data || l.data <= hojeIso) ? t + l.valor : t), 0)
-  const saidasContadas = (m: number) => (noMesDeHoje(m) ? saidasAteHoje(m) : c.porMes[m - 1]?.saidas ?? 0)
-  const maiorSaida = c.lancsMes.filter((l) => l.tipo === 'saida').sort((x, y) => y.valor - x.valor)[0]
-  const diasDe = (m: number) => (noMesDeHoje(m) ? hoje.getDate() : new Date(c.ano, m, 0).getDate())
-  const tendMedia = serie((m) => { const x = c.porMes[m - 1]; return x ? saidasContadas(m) / diasDe(m) : null })
-  const tendMaior = serie((m) => {
-    const saidas = c.d.lancs.filter((l) => l.mes === m && l.tipo === 'saida')
-    return saidas.length ? Math.max(...saidas.map((l) => l.valor)) : null
-  })
-  const indicadores = [
-    resultado,
-    !mesVazio && <Kpi key="entrou" rotulo={mesDeHoje ? tx('Entrou até hoje') : tx('Entrou no mês')} valor={entrouMes} icone="receber" cor={COR.caixa} tendencia={tendencia((x) => x.entradas)} delta={mesDeHoje ? null : delta(r.entradas, a?.entradas)} contra={mesAnt && tx('em {0}', mesAnt)} />,
-    !mesVazio && <Kpi key="saiu" rotulo={mesDeHoje ? tx('Saiu até hoje') : tx('Saiu no mês')} valor={saiuMes} icone="enviar" cor={COR.despesas} tendencia={tendencia((x) => x.saidas)} delta={mesDeHoje ? null : delta(r.saidas, a?.saidas)} menorMelhor contra={mesAnt && tx('em {0}', mesAnt)} />,
-    c.kpisExtras,
-    detalhado && !mesVazio && (
-      <Kpi key="media" rotulo={tx('Gasto médio por dia')} valor={saidasContadas(c.mes) / decorridos} cor={COR.fluxo} icone="ano" tendencia={tendMedia}>
-        <span className="kpi-sub">{tx('em {0} {1}', decorridos, decorridos === 1 ? tx('dia') : tx('dias'))}</span>
-      </Kpi>
-    ),
-    detalhado && maiorSaida && (
-      <Kpi key="maior" rotulo={tx('Maior saída')} valor={maiorSaida.valor} cor={COR.saidas} icone="desce" tendencia={tendMaior}>
-        <span className="kpi-sub">{maiorSaida.descricao || tx('Sem descrição')}</span>
-      </Kpi>
-    ),
-  ]
-  // A meta mais adiantada ocupa o 4º cartão quando sobra lugar na linha (como "Meta de economia" no layout).
-  const metaDestaque = v.metas && !c.d.metasSemTabela
-    ? situacaoMetas.filter((s) => !s.batida).sort((x, y) => y.progresso - x.progresso)[0] : undefined
-  const ocupados = 1 + (mesVazio ? 0 : 2) + (c.kpisExtras ? 1 : 0)
-  if (metaDestaque && ocupados < 4) {
-    indicadores.push(
-      <Kpi key="meta" rotulo={tx('Meta: {0}', metaDestaque.meta.nome)} valor={fmtMoeda(metaDestaque.meta.alvo, metaDestaque.meta.moeda)}
-        icone="meta" cor={metaDestaque.meta.cor} aoClicar={() => c.irPara('metas')}>
-        <span className="kpi-meta">
-          <Progresso valor={metaDestaque.guardado} total={metaDestaque.meta.alvo} cor={metaDestaque.meta.cor} />
-          <small>{Math.round(metaDestaque.progresso * 100)}%</small>
-        </span>
-      </Kpi>,
-    )
-  }
-  const kpis = <div className="kpis">{zona(indicadores)}</div>
+  const decorridos = mesDeHoje ? hoje.getDate() : diasNoMes
+  const saidasContadas = (m: number) => (c.ano === hoje.getFullYear() && m === hoje.getMonth() + 1
+    ? c.lancsAno.reduce((t, l) => (l.mes === m && l.tipo === 'saida' && (!l.data || l.data <= hojeIso) ? t + l.valor : t), 0)
+    : c.porMes[m - 1]?.saidas ?? 0)
 
   const sugestao = c.sugestao && (
     <CartaoSugestao s={c.sugestao} aoAceitar={() => c.aceitarSugestao(c.sugestao!)} aoRecusar={() => c.recusarSugestao(c.sugestao!)} />
@@ -331,6 +274,10 @@ export function Inicio(c: Ctx) {
     />
   )
 
+  // ritmo do gasto: por dia até hoje, comparado com o mês passado inteiro (1 = igual; null sem com o que comparar)
+  const diasAnt = c.mes > 1 ? new Date(c.ano, c.mes - 1, 0).getDate() : 0
+  const ritmoDoGasto = c.mes > 1 && a && a.saidas > 0 && ddMes.hoje > 0 ? (saidasContadas(c.mes) / decorridos) / (a.saidas / diasAnt) : null
+
   // ---------- Jeito simples: a própria tela ----------
   if (simples) {
     const contasDoMes = v.contas ? c.situacoesContas : []
@@ -343,9 +290,13 @@ export function Inicio(c: Ctx) {
     // só aparece quem tem algo cadastrado: sem contas, cartões nem dívidas, não há o que fazer
     const comParaFazer = contasDoMes.length > 0 || faturas.length > 0 || dividasAbertas.length > 0
     const mesAtual = c.ano === hoje.getFullYear() && c.mes === hoje.getMonth() + 1
-    const contasTot = totaisDoMes(contasDoMes)
-    const faltaPagar = Math.round((contasTot.faltaPagar + tarefas.parcelas) * 100) / 100
-    const previsao = mesAtual && !mesVazio && (faltaPagar > 0 || contasTot.aReceber > 0) ? { faltaPagar, faltaReceber: contasTot.aReceber } : null
+    // No mês de hoje, só o que já aconteceu: parcela de cartão e conta com data mais para a frente vão para o "falta pagar"
+    // (senão, no dia 5, o mês já aparece no vermelho com as parcelas do dia 27).
+    const dd = ddMes
+    const rSimples = mesAtual ? { ...r, entradas: dd.entrou, saidas: dd.saiu, fluxo: Math.round((dd.entrou - dd.saiu) * 100) / 100 } : r
+    const faltaPagar = dd.vaiSair
+    const faltaReceber = dd.vaiEntrar
+    const previsao = mesAtual && !mesVazio && (faltaPagar > 0 || faltaReceber > 0) ? { faltaPagar, faltaReceber } : null
     const dividasResumo = v.dividas && (
       <BlocoDividas itens={c.situacao} nivel={nivel} resumo aoNova={novaDivida} aoEditar={abrirDivida} aoPagar={c.pagarDivida} aoVerTodas={() => c.irPara('dividas')} />
     )
@@ -367,8 +318,8 @@ export function Inicio(c: Ctx) {
     return (
       <div className="pagina inicio inicio-simples">
         {saudacao}
-        <ResumoSimples r={r} nomeMes={nomeMes} vazio={mesVazio} futuro={c.ano * 12 + c.mes > hoje.getFullYear() * 12 + hoje.getMonth() + 1} previsao={previsao}
-          comCartao={tarefas.lista.some((t) => t.chave.startsWith('fatura:'))} acoes={botoes} aoVerGastos={irParaGastos} />
+        <ResumoSimples r={rSimples} nomeMes={nomeMes} vazio={mesVazio} futuro={c.ano * 12 + c.mes > hoje.getFullYear() * 12 + hoje.getMonth() + 1} previsao={previsao}
+          ateHoje={mesAtual} comCartao={!mesAtual && tarefas.lista.some((t) => t.chave.startsWith('fatura:'))} acoes={botoes} aoVerGastos={irParaGastos} />
         {convite}
         {sugestao}
         {saude}
@@ -383,9 +334,83 @@ export function Inicio(c: Ctx) {
     )
   }
 
+  // ---------- Jeito equilibrado: o mês num olhar, os próximos 7 dias e o essencial do resto ----------
+  if (nivel === 'equilibrado' && !c.contaNova) {
+    const dd = ddMes
+    const tarefas = tarefasDoMes({
+      ano: c.ano, mes: c.mes, contas: v.contas ? c.situacoesContas : [], faturas: v.cartoes ? c.faturas : [],
+      dividas: v.dividas ? c.situacao.filter((s) => s.restante > 0) : [],
+      diaRef: c.diaRef, aoPagarConta: c.pagarConta, aoPagarDivida: c.pagarDivida, aoVerCartoes: () => c.irPara('cartoes'),
+    })
+    const comAgenda = (v.contas && c.situacoesContas.length > 0) || (v.cartoes && c.faturas.length > 0) || (v.dividas && c.situacao.some((s) => s.restante > 0))
+    // no mês de hoje, só o que vence até daqui a 7 dias (o atrasado entra); nos outros meses, tudo o que está em aberto
+    const daquiA7 = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 7)
+    const limite7 = `${daquiA7.getFullYear()}-${String(daquiA7.getMonth() + 1).padStart(2, '0')}-${String(daquiA7.getDate()).padStart(2, '0')}`
+    const agenda = comAgenda && (mesDeHoje
+      ? <BlocoParaFazer tarefas={tarefas.lista.filter((t) => t.vencimento <= limite7)} titulo={tx('Próximos 7 dias')} vazio={tx('Nada vence nos próximos 7 dias.')}
+          aoVerTudo={v.contas ? () => c.irPara('contas') : undefined} />
+      : <BlocoParaFazer tarefas={tarefas.lista} aoVerTudo={v.contas ? () => c.irPara('contas') : undefined} />)
+
+    const resumos: ResumoAnel[] = []
+    if (v.dividas) {
+      const abertas = c.situacao.filter((s) => s.restante > 0 && !s.semCotacao)
+      if (abertas.length) {
+        const falta = abertas.reduce((t, s) => t + s.restante, 0)
+        const base = abertas.reduce((t, s) => t + Math.max(s.saldoInicial, s.restante), 0)
+        resumos.push({
+          chave: 'dividas', rotulo: tx('Dívidas'), valor: fmtValor(falta), cor: 'var(--divida)', icone: 'divida',
+          progresso: base > 0 ? 1 - falta / base : 0, sub: tx('já pago'), aoAbrir: () => c.irPara('dividas'),
+        })
+      }
+    }
+    if (metas && situacaoMetas.length) {
+      const media = situacaoMetas.reduce((t, s) => t + Math.min(1, s.progresso), 0) / situacaoMetas.length
+      const frente = situacaoMetas.filter((s) => !s.batida).sort((x, y) => y.progresso - x.progresso)[0]
+      resumos.push({
+        chave: 'metas', rotulo: tx('Metas'), valor: situacaoMetas.length === 1 ? tx('1 meta') : tx('{0} metas', situacaoMetas.length),
+        cor: 'var(--violeta)', icone: 'meta', progresso: media,
+        sub: frente ? tx('{0} na frente', frente.meta.nome) : tx('Todas batidas'), aoAbrir: () => c.irPara('metas'),
+      })
+    }
+    if (dinheiro) {
+      const nb = c.d.bancos.length
+      resumos.push({
+        chave: 'guardado', rotulo: tx('Dinheiro guardado'), cor: 'var(--caixa)', icone: 'cofre',
+        valor: fmtValor(totalGuardado({ v, bancos: c.d.bancos, caixa: c.mesEf.caixa, investimentos: r.investimentos, moedas: c.mesEf.moedas, lista: c.perfil.moedas, taxas: c.taxas })),
+        sub: v.bancos && nb ? (nb === 1 ? tx('em 1 banco') : tx('em {0} bancos', nb)) : undefined, aoAbrir: () => c.irPara('patrimonio'),
+      })
+    }
+    const gastosEq = !mesVazio && (
+      <BlocoGastos r={r} anterior={a} categorias={c.categorias} nivel="simples" mesAnterior={mesAnt} aoEditar={c.gerenciarCategorias} />
+    )
+    const conselhoEq = (
+      <BlocoConselhos conselhos={c.conselhos} semDados={c.conselhosSemDados} dispensados={c.conselhosDispensados} simples={false} limite={1}
+        aoIr={c.irPara} aoDispensar={c.dispensarConselho}
+        nota={{ valor: c.analise.nota, rotulo: c.analise.rotulo, tom: c.analise.tom }} aoAbrirAnalise={() => c.irPara('analise')} />
+    )
+    const semNada = mesVazio && !dd.vaiEntrar && !dd.vaiSair
+    return (
+      <div className="pagina inicio inicio-eq">
+        {saudacao}
+        {convite}
+        {sugestao}
+        <div className="ieq-cima">
+          {semNada ? lancamentos : <MesEquilibrado dd={dd} nomeMes={nomeMes} ritmo={ritmoDoGasto} mesAnterior={mesAnt} />}
+          {agenda}
+        </div>
+        <ResumosComAnel itens={resumos} />
+        <div className="ieq-baixo">
+          {gastosEq}
+          {conselhoEq}
+        </div>
+        {formDivida}
+      </div>
+    )
+  }
+
   // ---------- Jeito detalhado: o mês em gráfico em cima, o mosaico de peças embaixo ----------
   if (detalhado && !c.contaNova) {
-    const dd = c.diaADia
+    const dd = ddMes
     const contasDoMes = v.contas ? c.situacoesContas : []
     const tarefas = tarefasDoMes({
       ano: c.ano, mes: c.mes, contas: contasDoMes, faturas: v.cartoes ? c.faturas : [], dividas: v.dividas ? c.situacao.filter((s) => s.restante > 0) : [],
@@ -397,8 +422,7 @@ export function Inicio(c: Ctx) {
 
     if (!mesVazio) {
       // ritmo do gasto: por dia até hoje, comparado com o mês passado inteiro
-      const diasAnt = c.mes > 1 ? new Date(c.ano, c.mes - 1, 0).getDate() : 0
-      const ritmo = c.mes > 1 && a && a.saidas > 0 && dd.hoje > 0 ? (saidasContadas(c.mes) / decorridos) / (a.saidas / diasAnt) : null
+      const ritmo = ritmoDoGasto
       pecas.push({
         chave: 'gastos', icone: 'enviar', cor: 'var(--saida)', rotulo: tx('Gastos do mês'), valor: fmtValor(r.saidas),
         sub: ritmo === null ? undefined : ritmo <= 1 ? tx('gastando menos que em {0}', mesAnt) : tx('gastando mais que em {0}', mesAnt),
@@ -502,7 +526,7 @@ export function Inicio(c: Ctx) {
             <div className="hero-acoes boas-vindas-acoes" data-tour="lancar">{botoes}</div>
           </div>
         </section>
-      ) : kpis}
+      ) : null}
 
       {!c.contaNova && convite}
 

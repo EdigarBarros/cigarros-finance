@@ -22,13 +22,15 @@ const SELO: Record<Gravidade, () => string> = {
  * botão para a tela certa e o "Agora não". Os urgentes vêm primeiro (o motor já ordena). Sem conselhos, diz se está tudo
  * em ordem ou se faltam dados. No jeito simples mostra só os 2 primeiros. Veja docs/arquitetura-do-painel.md, seção 4.0.
  */
-export function BlocoConselhos({ conselhos, semDados, dispensados, simples, aoIr, aoDispensar, nota, aoAbrirAnalise }: {
+export function BlocoConselhos({ conselhos, semDados, dispensados, simples, limite, aoIr, aoDispensar, nota, aoAbrirAnalise }: {
   conselhos: Conselho[]
   /** Poucos meses com entradas e saídas: o conselheiro não tem base para opinar. */
   semDados: boolean
   /** Quantos avisos a pessoa escondeu até o mês que vem. */
   dispensados: number
   simples: boolean
+  /** Quantos aparecem antes do "Ver todos" (no simples, o padrão dele; nos outros, todos). */
+  limite?: number
   aoIr: (destino: Conselho['destino']) => void
   aoDispensar: (id: string) => void
   /** A nota do consultor (lib/analise.ts): vira um selo que abre a aba Consultor. */
@@ -36,8 +38,9 @@ export function BlocoConselhos({ conselhos, semDados, dispensados, simples, aoIr
   aoAbrirAnalise?: () => void
 }) {
   const [todos, setTodos] = useState(false)
-  const recortar = simples && !todos && conselhos.length > LIMITE_SIMPLES
-  const visiveis = recortar ? conselhos.slice(0, LIMITE_SIMPLES) : conselhos
+  const teto = limite ?? (simples ? LIMITE_SIMPLES : Infinity)
+  const recortar = !todos && conselhos.length > teto
+  const visiveis = recortar ? conselhos.slice(0, teto) : conselhos
   const urgentes = conselhos.filter((c) => c.gravidade === 'urgente').length
 
   return (
@@ -74,7 +77,7 @@ export function BlocoConselhos({ conselhos, semDados, dispensados, simples, aoIr
               </li>
             ))}
           </ul>
-          {simples && conselhos.length > LIMITE_SIMPLES && (
+          {conselhos.length > teto && (
             <button className="quadro-ver" onClick={() => setTodos(!todos)}>
               {todos ? tx('Mostrar menos') : tx('Ver todos')}
             </button>

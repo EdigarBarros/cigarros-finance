@@ -15,14 +15,18 @@ import './simples.css'
 const LIMITE = 5
 
 /** "Para fazer": uma lista só, com o dia do vencimento em destaque e a ação a um toque. */
-export function BlocoParaFazer({ tarefas, aoVerTudo }: { tarefas: Tarefa[]; aoVerTudo?: () => void }) {
+export function BlocoParaFazer({ tarefas, aoVerTudo, titulo, vazio }: {
+  tarefas: Tarefa[]; aoVerTudo?: () => void
+  /** Outro título e outra frase para a lista vazia (o equilibrado mostra só os próximos 7 dias). */
+  titulo?: string; vazio?: string
+}) {
   const [todas, setTodas] = useState(false)
   const atrasadas = tarefas.filter((t) => t.estado === 'atrasada').length
   const visiveis = todas ? tarefas : tarefas.slice(0, LIMITE)
   return (
     <section className="bloco para-fazer">
       <header className="bloco-cab">
-        <h2>{tx('Para fazer')}</h2>
+        <h2>{titulo ?? tx('Para fazer')}</h2>
         {tarefas.length > 0 && (
           <span className={`para-fazer-conta ${atrasadas ? 'atrasada' : ''}`}>
             {atrasadas
@@ -32,7 +36,7 @@ export function BlocoParaFazer({ tarefas, aoVerTudo }: { tarefas: Tarefa[]; aoVe
         )}
       </header>
       {!tarefas.length ? (
-        <p className="para-fazer-vazio"><Icone nome="check" tamanho={18} /> {tx('Tudo em dia neste mês! 🎉')}</p>
+        <p className="para-fazer-vazio"><Icone nome="check" tamanho={18} /> {vazio ?? tx('Tudo em dia neste mês! 🎉')}</p>
       ) : (
         <ul className="afazeres">
           {visiveis.map((t) => (
@@ -75,8 +79,10 @@ export interface Previsao {
  * O mês numa olhada, para quem não quer gráfico: quanto sobrou (ou faltou), um selo em palavras, uma barra do que
  * entrou contra o que saiu e, no mês atual, quanto deve sobrar depois de pagar o que falta.
  */
-export function ResumoSimples({ r, nomeMes, vazio, futuro, previsao, comCartao, acoes, aoVerGastos }: {
+export function ResumoSimples({ r, nomeMes, vazio, futuro, ateHoje, previsao, comCartao, acoes, aoVerGastos }: {
   r: Resumo
+  /** Mês de hoje: os números contam só o que já aconteceu até hoje (o resto está na previsão do fim do mês). */
+  ateHoje?: boolean
   /** Mês que ainda não começou: não dá para dizer se foi bom ou ruim, só o que já está lançado para ele. */
   futuro?: boolean
   /** "outubro" */
@@ -110,10 +116,11 @@ export function ResumoSimples({ r, nomeMes, vazio, futuro, previsao, comCartao, 
     <section className={`resumo-simples ${estado ?? 'sem-dados'}`}>
       <div className="rs-principal">
         {estado && estado !== 'futuro' && <span className="rs-selo"><i />{selo}</span>}
-        <p className="rs-rotulo">{vazio ? tx('Seu mês') : futuro ? (sobrou ? tx('Deve sobrar em {0}', nomeMes) : tx('Já sai em {0}', nomeMes)) : sobrou ? tx('Sobrou em {0}', nomeMes) : tx('Faltou em {0}', nomeMes)}</p>
+        <p className="rs-rotulo">{vazio ? tx('Seu mês') : futuro ? (sobrou ? tx('Deve sobrar em {0}', nomeMes) : tx('Já sai em {0}', nomeMes)) : ateHoje ? (sobrou ? tx('Sobrou até hoje') : tx('Faltou até hoje')) : sobrou ? tx('Sobrou em {0}', nomeMes) : tx('Faltou em {0}', nomeMes)}</p>
         {!vazio && <strong className="rs-valor"><Numero valor={Math.abs(r.fluxo)} formato={fmtValor} /></strong>}
         <p className="rs-frase">{frase}</p>
-        {!vazio && !futuro && (
+        {/* com entrou e saiu zerados (no começo do mês) a barra sairia inteira verde, como se tivesse sobrado tudo */}
+        {!vazio && !futuro && (r.entradas > 0 || r.saidas > 0) && (
           <div className="rs-barra-caixa">
             <div className="rs-numeros">
               <span><i className="entrou" />{tx('Entrou')} <b>{fmtValor(r.entradas)}</b></span>

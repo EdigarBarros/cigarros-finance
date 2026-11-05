@@ -1,0 +1,65 @@
+/* Início no jeito equilibrado. Celular: uma coluna. A partir de 700px: o mês ao lado dos próximos 7 dias, os resumos
+   lado a lado e, embaixo, para onde foi o dinheiro ao lado do conselho. */
+.inicio-eq { container-type: inline-size; }
+.ieq-cima, .ieq-baixo { display: grid; gap: 16px; align-items: start; }
+.ieq-cima { align-items: stretch; }
+.ieq-cima > .para-fazer { align-self: start; }
+.ieq-rot { display: block; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--texto-2); }
+
+.ieq-mes { display: flex; flex-direction: column; gap: 12px; }
+/* quando o cartão do mês fica mais alto que o conteúdo (ao lado dos próximos 7 dias), o "até o fim do mês" desce para o pé */
+.ieq-fim { margin-top: auto; display: grid; gap: 8px; padding: 14px 16px; border-radius: 14px; background: var(--superficie-2); border: 1px solid var(--borda); }
+.ieq-fim p { margin: 0; display: flex; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--texto-2); }
+.ieq-fim b { font-family: var(--fonte-numeros); color: var(--texto); font-variant-numeric: tabular-nums; }
+.ieq-fim b.bom { color: var(--entrada); }
+.ieq-fim b.ruim { color: var(--saida); }
+.ieq-fim-total { padding-top: 8px; border-top: 1px solid var(--borda); }
+.ieq-fim-total span { color: var(--texto); font-weight: 650; }
+.ieq-fim-total b { font-size: 18px; }
+.ieq-grande { font-family: var(--fonte-numeros); font-size: 38px; font-weight: 750; letter-spacing: -.035em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.ieq-grande.bom { color: var(--entrada); }
+.ieq-grande.ruim { color: var(--saida); }
+.ieq-barras { display: grid; gap: 6px; }
+.ieq-linha { display: block; height: 12px; border-radius: 9px; background: var(--superficie-2); overflow: hidden; }
+.ieq-linha i { display: block; height: 100%; border-radius: 9px; transition: width .6s var(--mola, ease); }
+.ieq-linha i.entrou { background: var(--entrada); }
+.ieq-linha i.saiu { background: var(--saida); }
+.ieq-lados { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 14px; color: var(--texto-2); }
+.ieq-lados b { font-family: var(--fonte-numeros); font-variant-numeric: tabular-nums; margin-left: 4px; }
+.ieq-lados b.bom { color: var(--entrada); }
+.ieq-lados b.ruim { color: var(--saida); }
+.ieq-pilulas { display: flex; flex-wrap: wrap; gap: 8px; }
+.ieq-pilula {
+  --c: var(--entrada);
+  display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; font-size: 13px; font-weight: 550;
+  background: color-mix(in srgb, var(--c) 12%, transparent); color: var(--texto);
+}
+.ieq-pilula i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; }
+.ieq-pilula b { font-family: var(--fonte-numeros); color: var(--c); font-variant-numeric: tabular-nums; }
+.ieq-pilula.atencao { --c: var(--divida); }
+.ieq-pilula.ruim { --c: var(--saida); }
+
+.ieq-resumos { display: grid; gap: 12px; grid-template-columns: 1fr; }
+.ieq-resumo {
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px; text-align: left; color: inherit; font: inherit; cursor: pointer;
+  transition: transform .18s, border-color .18s;
+}
+.ieq-resumo > svg { margin-left: auto; color: var(--texto-3); flex: none; }
+.ieq-resumo-texto { display: grid; gap: 2px; min-width: 0; }
+.ieq-resumo-texto strong { font-family: var(--fonte-numeros); font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ieq-resumo-texto small { font-size: 12.5px; color: var(--texto-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ieq-anel-pct { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ieq-icone {
+  width: 52px; height: 52px; flex: none; display: grid; place-items: center; border-radius: 50%; color: var(--c);
+  background: color-mix(in srgb, var(--c) 14%, transparent); box-shadow: inset 0 0 0 5px color-mix(in srgb, var(--c) 30%, transparent);
+}
+.ieq-resumo:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .ieq-resumo:hover { transform: translateY(-3px); border-color: var(--borda-forte); } }
+@media (prefers-reduced-motion: reduce) { .ieq-resumo, .ieq-linha i { transition: none; } }
+
+@container (min-width: 700px) {
+  .ieq-grande { font-size: 46px; }
+  .ieq-cima { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+  .ieq-resumos { grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
+  .ieq-baixo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

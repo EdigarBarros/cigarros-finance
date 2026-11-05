@@ -49,7 +49,7 @@ Por que essa ordem: a primeira pergunta é a que a pessoa abre o app para respon
 
 ### 4.0 Layout OpusCash (grade da Início)
 
-A grade abaixo vale para o **equilibrado** (o detalhado tem a própria tela, em 4.0.1). A ordem das perguntas continua a mesma; a grade segue o layout do OpusCash:
+A grade abaixo é a da **conta nova** (boas-vindas e blocos); cada jeito tem a sua tela: simples (seção 5), equilibrado (4.0.2) e detalhado (4.0.1). A ordem das perguntas continua a mesma; a grade segue o layout do OpusCash:
 
 | Linha | Computador | Celular |
 | --- | --- | --- |
@@ -69,12 +69,29 @@ de itens, para nada pular de lugar enquanto a pessoa mexe. O gráfico de fluxo e
 Na Início as listas têm teto (dívidas: 3 no simples, 4 nos outros; lançamentos: 5, ou 7 no detalhado) e "Ver todas" leva à página
 completa. Com 5 ou 6 indicadores, os cartões ficam mais baixos, 3 por linha.
 
-**Mês de hoje conta só até hoje.** Nos indicadores do equilibrado e no cartão do mês do detalhado, o mês que está correndo
+**Mês de hoje conta só até hoje.** Nos três jeitos (o resumo do simples, o cartão do mês do equilibrado e do detalhado), o mês que está correndo
 mostra **Sobrou/Faltou até hoje**, **Entrou até hoje** e **Saiu até hoje**: lançamento com data depois de hoje (parcela de
 cartão, conta lançada antes de vencer), fatura em aberto e conta fixa sem a baixa ainda não aconteceram (`diaADiaDoMes` em
 `lib/previsao.ts`, mesma regra do "Já aconteceu" dos gráficos). Antes, no dia 4 o mês já aparecia com as contas do dia 20 e
 um "Faltou" que não tinha acontecido. A comparação com o mês passado some no mês de hoje (até hoje contra o mês inteiro não é
 justo).
+
+### 4.0.2 Equilibrado: o mês num olhar (`components/InicioEquilibrado.tsx`)
+
+O meio-termo: tem visual, mas sem gráfico com eixo e sem lista comprida.
+
+| Parte | O que mostra |
+| --- | --- |
+| O mês | **Sobrou/Faltou até hoje** em número grande, duas barras (entrou e saiu), a pílula do ritmo (gastando menos ou mais que no mês passado) e o quadro **Até o fim do mês** (falta pagar, falta receber, deve sobrar) |
+| Próximos 7 dias | O `BlocoParaFazer` do simples só com o que vence até daqui a 7 dias (o atrasado entra), com Paguei/Recebi na linha. Em outro mês, tudo o que está em aberto |
+| Resumos com anel | **Dívidas** (quanto já foi pago), **Metas** (média do progresso e a que está na frente) e **Dinheiro guardado**. Tocar leva para a página |
+| Embaixo | **Para onde foi o dinheiro** (barras, como no simples) e **Saúde do seu dinheiro** só com o conselho mais importante ("Ver todos" abre o resto) |
+
+Saíram do equilibrado: os indicadores com minilinha, os blocos completos de contas, cartões e dívidas, o fluxo de 6 meses, os
+últimos lançamentos, o banner e o "Acompanhe mais".
+
+**A previsão do fim do mês é a mesma nos três jeitos**: o que ainda vai entrar e sair (`diaADiaDoMes`) mais as parcelas de
+dívida que vencem no mês, com as atrasadas e os juros de atraso (`parcelasPorDia`).
 
 ### 4.0.1 Detalhado: o mês em gráfico e o mosaico (`components/InicioDetalhado.tsx`)
 
