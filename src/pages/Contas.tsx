@@ -128,7 +128,7 @@ export function Contas(c: Ctx) {
       )}
 
       {sits.length > 0 && nivel !== 'simples' && (
-        <section className={nivel === 'detalhado' ? 'vt-grade-2 ct-graficos' : 'ct-graficos'}>
+        <section className={`ct-graficos ${nivel === 'detalhado' ? 'vt-grade-2' : ''}`}>
           <LinhaDoMes c={c} sits={sits} />
           {nivel === 'detalhado' && porCategoria.length > 0 && (
             <div className="cartao vt-cartao">

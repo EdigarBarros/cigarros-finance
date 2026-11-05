@@ -5,7 +5,7 @@
  *
  * Tudo anima ao aparecer na tela (classe "vivo", via useEmVista) e para quando Configurações → Animações está em Reduzidas.
  * Cada tela escolhe quanto mostrar conforme o jeito de ver (simples, equilibrado ou detalhado): veja
- * docs/arquitetura-do-painel.md, seção 4.8.
+ * docs/arquitetura-do-painel.md, seção 4.21.
  */
 import { useId, type CSSProperties, type ReactNode } from 'react'
 import type { Detalhe } from '../lib/types'

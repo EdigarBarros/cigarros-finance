@@ -408,7 +408,7 @@ function TileDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar }: {
         {atrasada && cal && <span className="dv-tile-data ruim"><Icone nome="relogio" tamanho={14} /> {tx('desde {0}', fmtDataCurta(cal.atrasadas[0].vencimento))}</span>}
       </button>
       <button className={`btn ${atrasada ? 'perigo-forte' : 'primario'}`} onClick={aoPagar}>
-        <Icone nome={recebe ? 'receber' : 'check'} tamanho={16} /> {sugerido ? `${recebe ? tx('Receber') : tx('Pagar')} ${fmtDiv(s, sugerido)}` : recebe ? tx('Lançar recebimento') : tx('Lançar pagamento')}
+        <Icone nome={recebe ? 'receber' : 'check'} tamanho={16} /> {sugerido ? (recebe ? tx('Receber {0}', fmtDiv(s, sugerido)) : tx('Pagar {0}', fmtDiv(s, sugerido))) : recebe ? tx('Lançar recebimento') : tx('Lançar pagamento')}
       </button>
     </article>
   )

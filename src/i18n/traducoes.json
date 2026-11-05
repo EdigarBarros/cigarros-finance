@@ -2955,17 +2955,9 @@
     "en": "Spent this year",
     "es": "Salió en el año"
   },
-  "Sobrou no ano": {
-    "en": "Left over this year",
-    "es": "Sobró en el año"
-  },
   "Gasto médio por mês": {
     "en": "Average spent per month",
     "es": "Gasto medio por mes"
-  },
-  "Melhor mês: {0}": {
-    "en": "Best month: {0}",
-    "es": "Mejor mes: {0}"
   },
   "Mês a mês": {
     "en": "Month by month",
@@ -3595,18 +3587,6 @@
     "en": "paid on {0}",
     "es": "pagado el {0}"
   },
-  "falta {0}": {
-    "en": "{0} to go",
-    "es": "falta {0}"
-  },
-  "a receber {0}": {
-    "en": "{0} to receive",
-    "es": "{0} por recibir"
-  },
-  "tudo pago 🎉": {
-    "en": "all paid 🎉",
-    "es": "todo pagado 🎉"
-  },
   "Nenhuma conta vale em {0} de {1}. Confira abaixo o mês em que cada uma começa.": {
     "en": "No bill applies in {0} {1}. Check below for the month each one starts.",
     "es": "No hay ninguna cuenta vigente en {0} de {1}. Mira abajo el mes en que empieza cada una."
@@ -3803,14 +3783,6 @@
     "en": "Until when?",
     "es": "¿Hasta cuándo?"
   },
-  "A conta aparece todo mês a partir daí. Se já {0} neste mês, é só tocar em “": {
-    "en": "The bill shows up every month from then on. If you already {0} this month, just tap “",
-    "es": "La cuenta aparece cada mes desde ahí. Si ya {0} este mes, solo toca “"
-  },
-  "” depois. Deixe o “até quando” em branco se ela não tem data para acabar.": {
-    "en": "” later. Leave “Until when” blank if it has no end date.",
-    "es": "” después. Deja “Hasta cuándo” en blanco si no tiene fecha de fin."
-  },
   "Pausar": {
     "en": "Pause",
     "es": "Pausar"
@@ -3894,18 +3866,6 @@
   "já recebido": {
     "en": "already received",
     "es": "ya recibido"
-  },
-  "tudo recebido em": {
-    "en": "all received by",
-    "es": "todo recibido en"
-  },
-  "tudo recebido": {
-    "en": "all received",
-    "es": "todo recibido"
-  },
-  "sem dívidas": {
-    "en": "no debts",
-    "es": "sin deudas"
   },
   "Quanto entra nos próximos meses": {
     "en": "How much comes in over the coming months",
@@ -4095,14 +4055,6 @@
     "en": "Summary for {0} {1}.{2}",
     "es": "Resumen de {0} de {1}.{2}"
   },
-  "Nada lançado em {0} ainda.": {
-    "en": "Nothing added in {0} yet.",
-    "es": "Nada registrado en {0} todavía."
-  },
-  "Saiu {0} a mais.": {
-    "en": "{0} more went out than came in.",
-    "es": "Salió {0} más de lo que entró."
-  },
   "Ver para onde foi": {
     "en": "See where it went",
     "es": "Ver a dónde fue"
@@ -4118,30 +4070,6 @@
   "Faltou": {
     "en": "Short",
     "es": "Faltó"
-  },
-  "que em": {
-    "en": "than in",
-    "es": "que en"
-  },
-  "Gasto médio por dia": {
-    "en": "Average spend per day",
-    "es": "Gasto promedio por día"
-  },
-  "em {0} {1}": {
-    "en": "over {0} {1}",
-    "es": "en {0} {1}"
-  },
-  "Maior saída": {
-    "en": "Largest expense",
-    "es": "Mayor gasto"
-  },
-  "Sem descrição": {
-    "en": "No description",
-    "es": "Sin descripción"
-  },
-  "Meta: {0}": {
-    "en": "Goal: {0}",
-    "es": "Meta: {0}"
   },
   "Fluxo financeiro": {
     "en": "Cash flow",
@@ -4275,10 +4203,6 @@
     "en": "All methods",
     "es": "Todos los métodos"
   },
-  "Sem forma · {0}": {
-    "en": "No method · {0}",
-    "es": "Sin método · {0}"
-  },
   "Limpar filtros": {
     "en": "Clear filters",
     "es": "Limpiar filtros"
@@ -4387,14 +4311,6 @@
     "en": "saved in goals",
     "es": "ahorrado en metas"
   },
-  "faltam {0}": {
-    "en": "{0} to go",
-    "es": "faltan {0}"
-  },
-  "{0} de {1} batidas": {
-    "en": "{0} of {1} reached",
-    "es": "{0} de {1} logradas"
-  },
   "sobrou em {0}": {
     "en": "left over in {0}",
     "es": "sobró en {0}"
@@ -4402,18 +4318,6 @@
   "Guardar numa meta?": {
     "en": "Save toward a goal?",
     "es": "¿Ahorrar para una meta?"
-  },
-  "Guarde {0} por mês": {
-    "en": "Save {0} a month",
-    "es": "Ahorra {0} al mes"
-  },
-  "Guarde um pouco todo mês": {
-    "en": "Save a little every month",
-    "es": "Ahorra un poco cada mes"
-  },
-  "É o que falta, por mês, para bater todas as metas no prazo.": {
-    "en": "It's what's missing each month to hit every goal on time.",
-    "es": "Es lo que falta cada mes para cumplir todas las metas a tiempo."
   },
   "Pôr um prazo na meta mostra quanto guardar por mês.": {
     "en": "Set a deadline on the goal to see how much to save each month.",
@@ -4655,14 +4559,6 @@
     "en": "Add bank",
     "es": "Agregar banco"
   },
-  "tudo o que você tem": {
-    "en": "everything you have",
-    "es": "todo lo que tienes"
-  },
-  "igual a {0}": {
-    "en": "same as in {0}",
-    "es": "igual que en {0}"
-  },
   "que em {0}": {
     "en": "than in {0}",
     "es": "que en {0}"
@@ -4679,25 +4575,9 @@
     "en": "months",
     "es": "meses"
   },
-  "Sua reserva de": {
-    "en": "Your emergency fund of",
-    "es": "Tu fondo de reserva de"
-  },
   "{0} meses": {
     "en": "{0} months",
     "es": "{0} meses"
-  },
-  "do que você gasta.": {
-    "en": "of what you spend.",
-    "es": "de lo que gastas."
-  },
-  "Marque em cada banco quanto é": {
-    "en": "On each bank, mark how much is",
-    "es": "En cada banco, marca cuánto es"
-  },
-  ": o app mostra quantos meses de gastos ela cobre.": {
-    "en": ": the app shows how many months of spending it covers.",
-    "es": ": la app muestra cuántos meses de gastos cubre."
   },
   "O ideal são 6 meses: {0}.": {
     "en": "The ideal is 6 months: {0}.",
@@ -5311,10 +5191,6 @@
     "en": "income",
     "es": "ingresos"
   },
-  "· já tem lançamento neste mês": {
-    "en": "· already has a transaction this month",
-    "es": "· ya tiene un movimiento este mes"
-  },
   "Depois o app procura os parecidos dos outros meses.": {
     "en": "Afterwards the app finds similar ones from other months.",
     "es": "Después la app busca los parecidos de otros meses."
@@ -5383,10 +5259,6 @@
     "en": "Tap a bank to see just that one.",
     "es": "Toca un banco para ver solo ese."
   },
-  "mais de": {
-    "en": "more than",
-    "es": "más de"
-  },
   "Falta receber {0} ({1} × {2}) · última parcela em {3}": {
     "en": "{0} left to receive ({1} × {2}) · last installment in {3}",
     "es": "Falta recibir {0} ({1} × {2}) · última cuota en {3}"
@@ -5402,14 +5274,6 @@
   "{0} lançamentos importados": {
     "en": "{0} transactions imported",
     "es": "{0} movimientos importados"
-  },
-  "Já existe “{0}” de {1} em {2}.\n\nEle é o recebimento de {3}?\n\nOK: sim, usar ele (sem lançar de novo).\nCancelar: não, lançar outro.": {
-    "en": "There's already “{0}” for {1} on {2}.\n\nIs it the income from {3}?\n\nOK: yes, use it (don't add it again).\nCancel: no, add another one.",
-    "es": "Ya existe “{0}” de {1} el {2}.\n\n¿Es el ingreso de {3}?\n\nAceptar: sí, usar ese (sin registrar de nuevo).\nCancelar: no, registrar otro."
-  },
-  "Já existe “{0}” de {1} em {2}.\n\nEle é o pagamento de {3}?\n\nOK: sim, usar ele (sem lançar de novo).\nCancelar: não, lançar outro.": {
-    "en": "There's already “{0}” for {1} on {2}.\n\nIs it the payment for {3}?\n\nOK: yes, use it (don't add it again).\nCancel: no, add another one.",
-    "es": "Ya existe “{0}” de {1} el {2}.\n\n¿Es el pago de {3}?\n\nAceptar: sí, usar ese (sin registrar de nuevo).\nCancelar: no, registrar otro."
   },
   "{0} – recebido": {
     "en": "{0} – received",
@@ -5531,14 +5395,6 @@
     "en": "comes in",
     "es": "entra"
   },
-  "recebeu": {
-    "en": "received it",
-    "es": "la recibiste"
-  },
-  "pagou": {
-    "en": "paid it",
-    "es": "la pagaste"
-  },
   "parcela": {
     "en": "installment",
     "es": "cuota"
@@ -5562,10 +5418,6 @@
   "O que você paga cobre as parcelas da mais antiga para a mais nova: pagou metade, a parcela fica pela metade; pagou a mais, adianta as próximas.": {
     "en": "What you pay covers the installments from oldest to newest: if you paid half, the installment stays half paid; if you paid extra, it moves the next ones up.",
     "es": "Lo que pagas cubre las cuotas de la más antigua a la más nueva: si pagaste la mitad, la cuota queda a medias; si pagaste de más, adelanta las siguientes."
-  },
-  "em {0}": {
-    "en": "in {0}",
-    "es": "en {0}"
   },
   "chega em {0}": {
     "en": "reached in {0}",
@@ -5639,10 +5491,6 @@
     "en": "statement",
     "es": "resumen"
   },
-  "cobre": {
-    "en": "covers",
-    "es": "cubre"
-  },
   "reserva": {
     "en": "emergency fund",
     "es": "fondo de emergencia"
@@ -5662,10 +5510,6 @@
   "possibilidades": {
     "en": "possibilities",
     "es": "posibilidades"
-  },
-  "dica": {
-    "en": "tip",
-    "es": "consejo"
   },
   "total": {
     "en": "total",
@@ -5690,14 +5534,6 @@
   "Ver todas as {0}": {
     "en": "See all {0}",
     "es": "Ver las {0}"
-  },
-  "Saiu {0}% do que entrou": {
-    "en": "{0}% of what came in went out",
-    "es": "Salió el {0}% de lo que entró"
-  },
-  "Nada entrou com esses filtros": {
-    "en": "Nothing came in with these filters",
-    "es": "No entró nada con estos filtros"
   },
   "Por dia": {
     "en": "By day",
@@ -6347,10 +6183,6 @@
     "en": "{0} overdue",
     "es": "{0} atrasadas"
   },
-  "recebido {0}": {
-    "en": "received {0}",
-    "es": "recibido {0}"
-  },
   "começa em {0}": {
     "en": "starts in {0}",
     "es": "empieza en {0}"
@@ -6419,14 +6251,6 @@
     "en": "Transfer",
     "es": "Transferencia"
   },
-  "em 1 mês com gastos": {
-    "en": "over 1 month with spending",
-    "es": "en 1 mes con gastos"
-  },
-  "em {0} meses com gastos": {
-    "en": "over {0} months with spending",
-    "es": "en {0} meses con gastos"
-  },
   "retirado": {
     "en": "withdrawn",
     "es": "retirado"
@@ -6438,54 +6262,6 @@
   "{0} vencidas · falta pagar": {
     "en": "{0} overdue · left to pay",
     "es": "{0} vencidas · falta pagar"
-  },
-  "{0} vencida{1} · falta pagar": {
-    "en": "{0} overdue · to pay",
-    "es": "{0} vencida{1} · por pagar"
-  },
-  "Qual dívida você está pagando?": {
-    "en": "Which debt are you paying?",
-    "es": "¿Qué deuda estás pagando?"
-  },
-  "É de alguém que te devia?": {
-    "en": "Is it from someone who owed you?",
-    "es": "¿Es de alguien que te debía?"
-  },
-  "Valor atualizado em": {
-    "en": "Amount updated on",
-    "es": "Valor actualizado el"
-  },
-  "já abatem sozinhos. Mude o que falta só se houve juros, acordo ou se estava errado.": {
-    "en": "reduce it on their own. Change what's left only if there was interest, an agreement, or a mistake.",
-    "es": "lo reducen solos. Cambia lo que falta solo si hubo intereses, un acuerdo o un error."
-  },
-  "Busque por lançamentos ou categorias…": {
-    "en": "Search transactions or categories…",
-    "es": "Busca movimientos o categorías…"
-  },
-  "{0} atrasada{1}": {
-    "en": "{0} overdue",
-    "es": "{0} atrasada{1}"
-  },
-  "Buscar descrição ou categoria": {
-    "en": "Search description or category",
-    "es": "Buscar descripción o categoría"
-  },
-  "Nenhum lançamento": {
-    "en": "No transactions",
-    "es": "Ningún movimiento"
-  },
-  "sem banco": {
-    "en": "without a bank",
-    "es": "sin banco"
-  },
-  "neste mês.": {
-    "en": "this month.",
-    "es": "este mes."
-  },
-  "Isso paga alguma dívida?": {
-    "en": "Does this pay off a debt?",
-    "es": "¿Esto paga alguna deuda?"
   },
   "Mostrar o menu": {
     "en": "Show the menu",
@@ -8027,18 +7803,6 @@
     "en": "a day, {0}",
     "es": "por día, {0}"
   },
-  "Já gastou hoje: {0}": {
-    "en": "Spent today: {0}",
-    "es": "Ya gastaste hoy: {0}"
-  },
-  "Passou {0}": {
-    "en": "Over by {0}",
-    "es": "Te pasaste {0}"
-  },
-  "Ainda dá {0}": {
-    "en": "{0} left",
-    "es": "Aún quedan {0}"
-  },
   "Tirar dos favoritos": {
     "en": "Remove from favorites",
     "es": "Quitar de favoritos"
@@ -8063,10 +7827,6 @@
     "en": "{0} days late, +{1}",
     "es": "{0} días de atraso, +{1}"
   },
-  "e mais {0}": {
-    "en": "and {0} more",
-    "es": "y {0} más"
-  },
   "Sobra para o dia a dia": {
     "en": "Left for everyday spending",
     "es": "Sobra para el día a día"
@@ -8075,18 +7835,6 @@
     "en": "No money until the end of next month",
     "es": "Sin dinero hasta fin del mes que viene"
   },
-  "Pela previsão, o mês já fecha no vermelho: não há folga para o dia a dia. Segure o que der.": {
-    "en": "By the forecast, the month already ends in the red: there is no room for everyday spending. Hold back what you can.",
-    "es": "Según la previsión, el mes ya cierra en rojo: no hay margen para el día a día. Aguanta lo que puedas."
-  },
-  "Até {0}, quando entra {1}, as contas já levam o dinheiro da conta. Segure o que der.": {
-    "en": "Until {0}, when {1} comes in, the bills already take the money in your account. Hold back what you can.",
-    "es": "Hasta el {0}, cuando entra {1}, las cuentas ya se llevan el dinero de la cuenta. Aguanta lo que puedas."
-  },
-  "Até o fim do mês que vem, as contas já levam o dinheiro da conta. Segure o que der.": {
-    "en": "Until the end of next month, the bills already take the money in your account. Hold back what you can.",
-    "es": "Hasta fin del mes que viene, las cuentas ya se llevan el dinero de la cuenta. Aguanta lo que puedas."
-  },
   "As contas com data cabem no dinheiro que entra. O gasto do dia a dia fica de fora: informe o saldo dos bancos para eu contar com ele.": {
     "en": "The bills with due dates fit in the money coming in. Everyday spending is left out: add your bank balances so I can count it.",
     "es": "Las cuentas con fecha caben en el dinero que entra. El gasto del día a día queda fuera: informa el saldo de los bancos para que lo cuente."
@@ -8094,18 +7842,6 @@
   "Pela previsão do mês, depois das contas e do que é para guardar ({0}), não sobra nada para os dias que faltam.": {
     "en": "By the month's forecast, after bills and what you set aside ({0}), nothing is left for the remaining days.",
     "es": "Según la previsión del mes, después de las cuentas y de lo que hay que ahorrar ({0}), no sobra nada para los días que faltan."
-  },
-  "{0}% deste dinheiro já tem destino ({1}). Sobram {2} livres.": {
-    "en": "{0}% of this money is already spoken for ({1}). {2} is left free.",
-    "es": "El {0}% de este dinero ya tiene destino ({1}). Quedan {2} libres."
-  },
-  "Todo este dinheiro já tem destino ({0}). Não sobra nada livre.": {
-    "en": "All of this money is already spoken for ({0}). Nothing is left free.",
-    "es": "Todo este dinero ya tiene destino ({0}). No queda nada libre."
-  },
-  "Desse total, {0} vai para contas que já estarão atrasadas.": {
-    "en": "Of that, {0} goes to bills that will already be late.",
-    "es": "De ese total, {0} va a cuentas que ya estarán atrasadas."
   },
   "Já tem destino (paga no prazo)": {
     "en": "Already spoken for (paid on time)",
@@ -8166,10 +7902,6 @@
   "Ver as {0} entradas": {
     "en": "See all {0} incomes",
     "es": "Ver los {0} ingresos"
-  },
-  "Ver tudo": {
-    "en": "See everything",
-    "es": "Ver todo"
   },
   "Para dividir uma dívida em partes (as compras dentro de um crédito, por exemplo), rode": {
     "en": "To split a debt into parts (the purchases inside a store credit line, for example), run",
@@ -8543,14 +8275,6 @@
     "en": "Spent per day",
     "es": "Gasto por día"
   },
-  "Entrou até hoje": {
-    "en": "In so far",
-    "es": "Entró hasta hoy"
-  },
-  "Saiu até hoje": {
-    "en": "Out so far",
-    "es": "Salió hasta hoy"
-  },
   "Gastos do mês": {
     "en": "Spending this month",
     "es": "Gastos del mes"
@@ -8654,5 +8378,309 @@
   "no dia {0}": {
     "en": "on day {0}",
     "es": "el día {0}"
+  },
+  "O mês": {
+    "en": "The month",
+    "es": "El mes"
+  },
+  "Gastos": {
+    "en": "Spending",
+    "es": "Gastos"
+  },
+  "Como estou": {
+    "en": "How I am doing",
+    "es": "Cómo estoy"
+  },
+  "Quer ver todos os gráficos? Mudar o jeito de ver": {
+    "en": "Want to see every chart? Change the view",
+    "es": "¿Quieres ver todos los gráficos? Cambiar la vista"
+  },
+  "O que importa hoje, num olhar.": {
+    "en": "What matters today, at a glance.",
+    "es": "Lo que importa hoy, de un vistazo."
+  },
+  "Pela previsão, o mês já fecha no vermelho. Segure o que der.": {
+    "en": "By the forecast, the month already ends in the red. Hold back what you can.",
+    "es": "Según la previsión, el mes ya cierra en rojo. Frena lo que puedas."
+  },
+  "As contas já levam o dinheiro da conta. Segure o que der.": {
+    "en": "Your bills already take the money in your account. Hold back what you can.",
+    "es": "Las cuentas ya se llevan el dinero de tu cuenta. Frena lo que puedas."
+  },
+  "Já gastou hoje": {
+    "en": "Spent today",
+    "es": "Gastado hoy"
+  },
+  "Passou": {
+    "en": "Over by",
+    "es": "Te pasaste"
+  },
+  "Ainda dá": {
+    "en": "Still left",
+    "es": "Todavía queda"
+  },
+  "Mês deve sobrar": {
+    "en": "Month should leave",
+    "es": "El mes dejaría"
+  },
+  "Mês pode faltar": {
+    "en": "Month may fall short",
+    "es": "Al mes le puede faltar"
+  },
+  "Pelo mês inteiro": {
+    "en": "For the whole month",
+    "es": "Por el mes entero"
+  },
+  "{0}/dia": {
+    "en": "{0}/day",
+    "es": "{0}/día"
+  },
+  "do dia já foi": {
+    "en": "of today is gone",
+    "es": "del día ya se fue"
+  },
+  "sem folga": {
+    "en": "no room left",
+    "es": "sin margen"
+  },
+  "Como está seu dinheiro": {
+    "en": "How your money is doing",
+    "es": "Cómo está tu dinero"
+  },
+  "Sua nota": {
+    "en": "Your score",
+    "es": "Tu nota"
+  },
+  "Seu plano de ação": {
+    "en": "Your action plan",
+    "es": "Tu plan de acción"
+  },
+  "1 passo": {
+    "en": "1 step",
+    "es": "1 paso"
+  },
+  "{0} passos": {
+    "en": "{0} steps",
+    "es": "{0} pasos"
+  },
+  "Seus gráficos": {
+    "en": "Your charts",
+    "es": "Tus gráficos"
+  },
+  "Assunto": {
+    "en": "Topic",
+    "es": "Tema"
+  },
+  "Favoritos": {
+    "en": "Favorites",
+    "es": "Favoritos"
+  },
+  "Assuntos": {
+    "en": "Topics",
+    "es": "Temas"
+  },
+  "{0}% com destino": {
+    "en": "{0}% already assigned",
+    "es": "{0}% con destino"
+  },
+  "{0} livre": {
+    "en": "{0} free",
+    "es": "{0} libre"
+  },
+  "Você deve no total": {
+    "en": "You owe in total",
+    "es": "Debes en total"
+  },
+  "Tudo recebido. 🎉": {
+    "en": "All received. 🎉",
+    "es": "Todo recibido. 🎉"
+  },
+  "Sem dívidas. 🎉": {
+    "en": "No debts. 🎉",
+    "es": "Sin deudas. 🎉"
+  },
+  "Tudo recebido em": {
+    "en": "All received by",
+    "es": "Todo recibido en"
+  },
+  "Sem dívidas em": {
+    "en": "Debt-free by",
+    "es": "Sin deudas en"
+  },
+  "Já recebido": {
+    "en": "Received so far",
+    "es": "Ya recibido"
+  },
+  "Já pago": {
+    "en": "Paid so far",
+    "es": "Ya pagado"
+  },
+  "Começo": {
+    "en": "Start",
+    "es": "Inicio"
+  },
+  "Tudo recebido": {
+    "en": "All received",
+    "es": "Todo recibido"
+  },
+  "Do que é feita a sua dívida": {
+    "en": "What your debt is made of",
+    "es": "De qué está hecha tu deuda"
+  },
+  "Quando cada uma termina de entrar": {
+    "en": "When each one finishes coming in",
+    "es": "Cuándo termina de entrar cada una"
+  },
+  "Cada valor a receber": {
+    "en": "Each amount to receive",
+    "es": "Cada monto por cobrar"
+  },
+  "Cada dívida": {
+    "en": "Each debt",
+    "es": "Cada deuda"
+  },
+  "Quer ver gráficos e quando cada dívida acaba? Mudar o jeito de ver": {
+    "en": "Want charts and when each debt ends? Change the view",
+    "es": "¿Quieres ver gráficos y cuándo termina cada deuda? Cambiar la vista"
+  },
+  "desde {0}": {
+    "en": "since {0}",
+    "es": "desde {0}"
+  },
+  "Receber {0}": {
+    "en": "Receive {0}",
+    "es": "Cobrar {0}"
+  },
+  "Pagar {0}": {
+    "en": "Pay {0}",
+    "es": "Pagar {0}"
+  },
+  "Guardado nas metas": {
+    "en": "Saved in goals",
+    "es": "Ahorrado en metas"
+  },
+  "Guardar por mês": {
+    "en": "Save per month",
+    "es": "Ahorrar por mes"
+  },
+  "Batidas": {
+    "en": "Reached",
+    "es": "Cumplidas"
+  },
+  "Quando cada meta chega": {
+    "en": "When each goal arrives",
+    "es": "Cuándo llega cada meta"
+  },
+  "Pôr um prazo na meta mostra quando ela chega.": {
+    "en": "Giving a goal a deadline shows when it arrives.",
+    "es": "Ponerle plazo a la meta muestra cuándo llega."
+  },
+  "Quanto guardar por mês": {
+    "en": "How much to save per month",
+    "es": "Cuánto ahorrar por mes"
+  },
+  "Quer ver quando cada meta chega? Mudar o jeito de ver": {
+    "en": "Want to see when each goal arrives? Change the view",
+    "es": "¿Quieres ver cuándo llega cada meta? Cambiar la vista"
+  },
+  "{0}% de {1}": {
+    "en": "{0}% of {1}",
+    "es": "{0}% de {1}"
+  },
+  "1 cartão": {
+    "en": "1 card",
+    "es": "1 tarjeta"
+  },
+  "{0} cartões": {
+    "en": "{0} cards",
+    "es": "{0} tarjetas"
+  },
+  "Quanto do limite cada cartão usa": {
+    "en": "How much of the limit each card uses",
+    "es": "Cuánto del límite usa cada tarjeta"
+  },
+  "Quer ver limite, parcelas e próximas faturas? Mudar o jeito de ver": {
+    "en": "Want limits, installments and upcoming bills? Change the view",
+    "es": "¿Quieres ver límite, cuotas y próximas facturas? Cambiar la vista"
+  },
+  "Pago em {0}": {
+    "en": "Paid in {0}",
+    "es": "Pagado en {0}"
+  },
+  "Tudo pago": {
+    "en": "All paid",
+    "es": "Todo pagado"
+  },
+  "Atrasadas": {
+    "en": "Overdue",
+    "es": "Atrasadas"
+  },
+  "Para onde vão as contas": {
+    "en": "Where your bills go",
+    "es": "Adónde van las cuentas"
+  },
+  "Ver e editar todas as contas fixas ({0})": {
+    "en": "See and edit all recurring bills ({0})",
+    "es": "Ver y editar todas las cuentas fijas ({0})"
+  },
+  "entrada entradas recebido": {
+    "en": "income incomes received",
+    "es": "entrada entradas recibido"
+  },
+  "saida saidas gasto": {
+    "en": "expense expenses spent",
+    "es": "salida salidas gasto"
+  },
+  "parcela parcelado": {
+    "en": "installment installments",
+    "es": "cuota cuotas"
+  },
+  "do que entrou saiu": {
+    "en": "of income went out",
+    "es": "de lo que entró salió"
+  },
+  "1 lugar": {
+    "en": "1 place",
+    "es": "1 lugar"
+  },
+  "{0} lugares": {
+    "en": "{0} places",
+    "es": "{0} lugares"
+  },
+  "Tudo o que você tem": {
+    "en": "Everything you have",
+    "es": "Todo lo que tienes"
+  },
+  "Como tem mudado": {
+    "en": "How it has changed",
+    "es": "Cómo ha cambiado"
+  },
+  "Onde está cada parte": {
+    "en": "Where each part is",
+    "es": "Dónde está cada parte"
+  },
+  "do que entrou ficou": {
+    "en": "of income was kept",
+    "es": "de lo que entró quedó"
+  },
+  "Melhor mês": {
+    "en": "Best month",
+    "es": "Mejor mes"
+  },
+  "Os meses de {0}": {
+    "en": "The months of {0}",
+    "es": "Los meses de {0}"
+  },
+  "Nubank, Itaú, Next…": {
+    "en": "",
+    "es": ""
+  },
+  "(data com ano)": {
+    "en": "",
+    "es": ""
+  },
+  "Pix": {
+    "en": "",
+    "es": ""
   }
 }
