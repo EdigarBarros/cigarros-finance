@@ -22,7 +22,7 @@ const NOME_DO_SINAL: Record<Sinal, () => string> = {
 
 // ---------- o mês num gráfico ----------
 /** O cartão do mês: quanto sobrou até hoje, como o mês deve terminar e o gráfico dia a dia. */
-export function CartaoDoMes({ dd, nomeMes, compacto }: { dd: DiaADia; nomeMes: string; compacto?: boolean }) {
+export function CartaoDoMes({ dd, nomeMes, compacto, divida }: { dd: DiaADia; nomeMes: string; compacto?: boolean; divida?: number[] }) {
   const futuro = dd.hoje === 0
   const acabou = dd.hoje === dd.dias
   const ateHoje = dd.entrou - dd.saiu
@@ -47,7 +47,7 @@ export function CartaoDoMes({ dd, nomeMes, compacto }: { dd: DiaADia; nomeMes: s
           </div>
         )}
       </div>
-      <GraficoDoMes dd={dd} compacto={compacto} altura={compacto ? 230 : 280} />
+      <GraficoDoMes dd={dd} divida={divida} compacto={compacto} altura={compacto ? 230 : 280} />
     </section>
   )
 }
