@@ -501,17 +501,32 @@ export function dividaDiaADia({ situacao, pagamentos, ano, mes, dias, hoje, diaR
   let depois = 0
   for (let d = dias; d >= 1; d--) { saldo[d - 1] = fimDoMesDivida - depois; depois += mexeu[d] }
   if (hoje >= dias) return saldo.map(centavosDe)
-  // daqui para a frente: as parcelas que ainda faltam pagar, no dia em que vencem
-  const vence = Array<number>(dias + 1).fill(0)
-  for (const s of devo) {
+  // daqui para a frente: as parcelas que ainda faltam pagar, no dia em que vencem (as atrasadas, amanhã)
+  const vence = parcelasPorDia({ situacao: devo, ano, mes, dias, hoje, diaRef, atrasadasEm: hoje + 1 })
+  const base = hoje > 0 ? saldo[hoje - 1] : fimDoMesDivida - depois
+  let pago = 0
+  for (let d = hoje + 1; d <= dias; d++) { pago += vence[d - 1]; saldo[d - 1] = Math.max(0, base - pago) }
+  return saldo.map(centavosDe)
+}
+
+/**
+ * O que falta pagar das parcelas de dívida em cada dia do mês (índice 0 = dia 1), como no "Para fazer": a parcela no dia em
+ * que vence e a atrasada (de qualquer mês) no dia `atrasadasEm`. Dívida sem cotação fica de fora.
+ */
+export function parcelasPorDia({ situacao, ano, mes, dias, hoje, diaRef, atrasadasEm = Math.max(hoje, 1) }: {
+  situacao: SituacaoDivida[]; ano: number; mes: number; dias: number; hoje: number; diaRef: string; atrasadasEm?: number
+}): number[] {
+  const prefixo = `${ano}-${String(mes).padStart(2, '0')}`
+  const vence = Array<number>(dias).fill(0)
+  if (hoje >= dias) return vence
+  for (const s of situacao) {
+    if (s.semCotacao || s.restante <= 0) continue
     for (const p of calendarioDe(s, diaRef)?.parcelas ?? []) {
       if (p.falta <= 0 || p.vencimento > `${prefixo}-31`) continue
       const dia = p.vencimento.startsWith(prefixo) ? +p.vencimento.slice(8, 10) : 0
-      vence[Math.max(dia, hoje + 1)] += p.falta
+      // parcela atrasada leva os juros de atraso estimados, como no "Para fazer"
+      vence[Math.min(dias, Math.max(dia > hoje ? dia : atrasadasEm, 1)) - 1] += p.falta + (s.atraso?.porParcela.get(p.n) ?? 0)
     }
   }
-  const base = hoje > 0 ? saldo[hoje - 1] : fimDoMesDivida - depois
-  let pago = 0
-  for (let d = hoje + 1; d <= dias; d++) { pago += vence[d]; saldo[d - 1] = Math.max(0, base - pago) }
-  return saldo.map(centavosDe)
+  return vence.map(centavosDe)
 }

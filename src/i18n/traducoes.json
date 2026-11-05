@@ -8614,5 +8614,33 @@
   "Vai dever": {
     "en": "Will owe",
     "es": "Deberá"
+  },
+  "Gastando menos que em {0}": {
+    "en": "Spending less than in {0}",
+    "es": "Gastando menos que en {0}"
+  },
+  "Gastando mais que em {0}": {
+    "en": "Spending more than in {0}",
+    "es": "Gastando más que en {0}"
+  },
+  "Próximos 7 dias": {
+    "en": "Next 7 days",
+    "es": "Próximos 7 días"
+  },
+  "Nada vence nos próximos 7 dias.": {
+    "en": "Nothing is due in the next 7 days.",
+    "es": "Nada vence en los próximos 7 días."
+  },
+  "{0} na frente": {
+    "en": "{0} is ahead",
+    "es": "{0} va adelante"
+  },
+  "Todas batidas": {
+    "en": "All reached",
+    "es": "Todas cumplidas"
+  },
+  "Deve faltar": {
+    "en": "Should be short",
+    "es": "Debería faltar"
   }
 }
