@@ -1,6 +1,6 @@
 import { Fragment, useMemo, useState, type CSSProperties } from 'react'
 import { COR, PALETA } from '../lib/charts'
-import { calendarioDe, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
+import { calendarioDe, dividaDiaADia, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
 import { fmtMoeda, fmtValor, MESES_CURTO, moedaAtual, MESES_NOME, variacao, LOCAL_DAS_DATAS, noMeioDaFrase } from '../lib/format'
 import { situacaoMeta } from '../lib/metas'
 import {
@@ -471,7 +471,8 @@ export function Inicio(c: Ctx) {
         {sugestao}
         {semNada ? lancamentos : (
           <div className="idet-cima">
-            <CartaoDoMes dd={dd} nomeMes={nomeMes} compacto={mobile} />
+            <CartaoDoMes dd={dd} nomeMes={nomeMes} compacto={mobile}
+              divida={v.dividas ? dividaDiaADia({ situacao: c.situacao, pagamentos: c.d.pagamentos, ano: c.ano, mes: c.mes, dias: dd.dias, hoje: dd.hoje, diaRef: c.diaRef }) : undefined} />
             <div className="idet-lado">
               <NumerosDoMes dd={dd} porDia={saidasContadas(c.mes) / decorridos} />
               <VemAi tarefas={proximas} />

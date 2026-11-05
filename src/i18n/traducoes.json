@@ -8610,5 +8610,9 @@
   "Dias {0} a {1}": {
     "en": "Days {0} to {1}",
     "es": "Días {0} a {1}"
+  },
+  "Vai dever": {
+    "en": "Will owe",
+    "es": "Deberá"
   }
 }

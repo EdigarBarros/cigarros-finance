@@ -282,7 +282,11 @@ export function GraficoFluxo({ porMes, previsto, modo = 'feito', mesAtual, altur
  * O gráfico do Resumo do ano, só que de um mês, semana a semana (dias 1 a 7, 8 a 14…): Entrou e Saiu em barras, o que
  * ainda vem listrado em cima, a linha do que sobrou até ali e a tracejada de como o mês termina se nada mudar.
  */
-export function GraficoDoMes({ dd, altura, compacto }: { dd: DiaADia; altura?: number; compacto?: boolean }) {
+export function GraficoDoMes({ dd, divida, altura, compacto }: {
+  dd: DiaADia; altura?: number; compacto?: boolean
+  /** Quanto se deve ao fim de cada dia (com o módulo de dívidas ligado): vira a linha das dívidas, no eixo da direita. */
+  divida?: number[]
+}) {
   const c = useCoresDoGrafico()
   const semanas = Array.from({ length: Math.ceil(dd.dias / 7) }, (_, i) => [i * 7 + 1, Math.min(dd.dias, i * 7 + 7)] as const)
   // as duas últimas semanas se juntam quando a última teria só 1 ou 2 dias (29 a 30): barra quase vazia confunde
@@ -303,6 +307,25 @@ export function GraficoDoMes({ dd, altura, compacto }: { dd: DiaADia; altura?: n
     return i >= Math.max(0, semanaHoje) ? centavos(acumVem) : null
   })
   const nulo = (xs: number[]) => xs.map((n) => n || null)
+  // a linha do que sobrou tem a cor do que mostra: verde enquanto sobra, vermelha quando falta (bolinha e trecho da linha)
+  const VERDE = PALETA.entradas[1], VERMELHO = PALETA.saidas[1]
+  const corDoSaldo = {
+    pointBackgroundColor: (x: ScriptableContext<'line'>) => ((x.raw as number | null) ?? 0) < 0 ? VERMELHO : VERDE,
+    pointHoverBackgroundColor: (x: ScriptableContext<'line'>) => ((x.raw as number | null) ?? 0) < 0 ? VERMELHO : VERDE,
+    segment: { borderColor: (x: { p1: { parsed: { y: number } } }) => (x.p1.parsed.y < 0 ? VERMELHO : VERDE) },
+  }
+  // dívidas: quanto se deve no fim de cada semana (até hoje, o que aconteceu; dali em diante, com as parcelas pagas em dia)
+  const linhasDaDivida = () => {
+    if (!divida?.length || !divida.some((v) => v > 0)) return []
+    const noDia = (d: number) => divida[Math.min(dd.dias, Math.max(1, d)) - 1]
+    const feita = semanas.map(([, b], i) => (i <= semanaHoje ? noDia(Math.min(b, dd.hoje)) : null))
+    const prevista = semanas.map(([, b], i) => (dd.hoje >= dd.dias ? null : i === semanaHoje - 1 ? feita[i] : i >= Math.max(0, semanaHoje) ? noDia(b) : null))
+    const eixo = { yAxisID: 'y1' }
+    return [
+      ...(feita.some((v) => v !== null) ? [linha(tx('Dívidas'), PALETA.divida, feita, c.fundo, compacto, eixo)] : []),
+      ...(prevista.some((v) => v !== null) ? [linha(tx('Vai dever'), PALETA.divida, prevista, c.fundo, compacto, { ...eixo, borderDash: [5, 4] })] : []),
+    ]
+  }
   const series = [
     barra(tx('Entrou'), PALETA.entradas, nulo(entrou), compacto, 'entrou'),
     barra(tx('Saiu'), PALETA.saidas, nulo(saiu), compacto, 'saiu'),
@@ -310,10 +333,11 @@ export function GraficoDoMes({ dd, altura, compacto }: { dd: DiaADia; altura?: n
       barraPrevista(tx('Vai entrar'), PALETA.entradas[0], nulo(vaiEntrar), compacto, 'entrou'),
       barraPrevista(tx('Vai sair'), PALETA.saidas[0], nulo(vaiSair), compacto, 'saiu'),
     ] : []),
-    ...(semanaHoje >= 0 ? [linha(tx('Sobrou'), PALETA.sobrou, sobrou, c.fundo, compacto)] : []),
-    ...(vaiSobrar.some((v) => v !== null) ? [linha(tx('Vai sobrar'), PALETA.sobrou, vaiSobrar, c.fundo, compacto, { borderDash: [5, 4] })] : []),
+    ...(semanaHoje >= 0 ? [linha(tx('Sobrou'), VERDE, sobrou, c.fundo, compacto, corDoSaldo)] : []),
+    ...(vaiSobrar.some((v) => v !== null) ? [linha(tx('Vai sobrar'), VERDE, vaiSobrar, c.fundo, compacto, { ...corDoSaldo, borderDash: [5, 4] })] : []),
+    ...linhasDaDivida(),
   ]
-  const base = opcoes(c, { rotulos, mesDoIndice: (i) => i + 1, mesAtual: semanaHoje + 1, compacto, destacar: semanaHoje >= 0 })
+  const base = opcoes(c, { rotulos, mesDoIndice: (i) => i + 1, mesAtual: semanaHoje + 1, compacto, destacar: semanaHoje >= 0, eixoDireito: divida ? PALETA.divida : undefined })
   const comTitulo: ChartOptions<'bar'> = {
     ...base,
     plugins: {
