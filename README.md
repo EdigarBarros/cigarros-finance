@@ -181,6 +181,18 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
 - Faça **Exportar backup** de vez em quando.
 - Este repositório é público: nunca coloque aqui a planilha nem o arquivo `.env` (o `.gitignore` já bloqueia `*.xlsx` e `.env`).
 
+## App Android (Play Store)
+
+O app da Play Store é o próprio site aberto em tela cheia (Trusted Web Activity), gerado no
+[PWABuilder](https://www.pwabuilder.com) com o pacote `br.com.opuscash.www.twa`. Nada do app fica neste repositório: a chave
+de assinatura (`signing.keystore`) e a senha ficam só com o dono do projeto, fora daqui (o repositório é público).
+
+- `public/.well-known/assetlinks.json` prova ao Android que o app e o site são do mesmo dono; sem ele, o app abre com barra de
+  endereço. Leva a impressão digital (SHA-256) da chave de upload e também a da **chave de assinatura do app** do Google
+  (Play Console → Testar e lançar → Configuração → Integridade do app → Assinatura de apps). Trocou a chave? Atualize o arquivo.
+- `public/sw.js` e `public/offline.html`: a tela "sem internet" do app instalado.
+- Atualizar o app na loja só é preciso para mudar nome, ícone ou cores: o conteúdo vem do site e se atualiza sozinho.
+
 ## Rodar no computador
 
 ```bash
