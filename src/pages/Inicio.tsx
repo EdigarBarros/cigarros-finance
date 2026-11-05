@@ -79,16 +79,13 @@ export function Inicio(c: Ctx) {
   // não saíram do bolso (senão, no dia 4, o mês já aparece com as contas do dia 20 e um "faltou" que não aconteceu).
   const mesDeHoje = c.ano === hoje.getFullYear() && c.mes === hoje.getMonth() + 1
   // O mês dia a dia com as parcelas de dívida que ainda vencem nele: as três telas preveem o fim do mês com a mesma conta.
-  const { ddMes, parcelasMes } = useMemo(() => {
+  const ddMes = useMemo(() => {
     const dd = c.diaADia
-    if (!v.dividas) return { ddMes: dd, parcelasMes: undefined }
+    if (!v.dividas) return dd
     const parcelas = parcelasPorDia({ situacao: c.situacao, ano: c.ano, mes: c.mes, dias: dd.dias, hoje: dd.hoje, diaRef: c.diaRef })
     const total = parcelas.reduce((t, n) => t + n, 0)
-    if (!total) return { ddMes: dd, parcelasMes: undefined }
-    return {
-      ddMes: { ...dd, vaiSair: Math.round((dd.vaiSair + total) * 100) / 100, vaiSairDia: dd.vaiSairDia.map((n, i) => n + parcelas[i]) },
-      parcelasMes: parcelas,
-    }
+    if (!total) return dd
+    return { ...dd, vaiSair: Math.round((dd.vaiSair + total) * 100) / 100, vaiSairDia: dd.vaiSairDia.map((n, i) => n + parcelas[i]) }
   }, [c.diaADia, c.situacao, c.ano, c.mes, c.diaRef, v.dividas])
   const entrouMes = mesDeHoje ? ddMes.entrou : r.entradas
   const saiuMes = mesDeHoje ? ddMes.saiu : r.saidas
@@ -499,7 +496,7 @@ export function Inicio(c: Ctx) {
         {sugestao}
         {semNada ? lancamentos : (
           <div className="idet-cima">
-            <CartaoDoMes dd={dd} nomeMes={nomeMes} compacto={mobile} parcelasDia={parcelasMes}
+            <CartaoDoMes dd={dd} ano={c.ano} mes={c.mes} nomeMes={nomeMes} compacto={mobile}
               divida={v.dividas ? dividaDiaADia({ situacao: c.situacao, pagamentos: c.d.pagamentos, ano: c.ano, mes: c.mes, dias: dd.dias, hoje: dd.hoje, diaRef: c.diaRef }) : undefined} />
             <div className="idet-lado">
               <NumerosDoMes dd={dd} porDia={saidasContadas(c.mes) / decorridos} />

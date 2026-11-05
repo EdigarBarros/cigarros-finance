@@ -2,10 +2,11 @@ import type { Chart as ChartJS, ChartData, ChartEvent, ChartOptions, Plugin, Scr
 import { Chart as Misto, Doughnut } from 'react-chartjs-2'
 import type { Resumo } from '../lib/calc'
 import { temPrevisao, type DiaADia, type PrevisaoMes } from '../lib/previsao'
+import { hojeLocal } from '../lib/cartoes'
 import { useModoDoGrafico, type ModoDoGrafico } from '../lib/modoDoGrafico'
 import { PALETA, useCoresDoGrafico } from '../lib/charts'
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
-import { fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, moedaAtual, valoresEstaoOcultos } from '../lib/format'
+import { fmtDataCurta, fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, moedaAtual, valoresEstaoOcultos } from '../lib/format'
 import { Icone } from './Icone'
 import { Segmentado } from './ui'
 import type { Visao } from '../lib/perfil'
@@ -279,80 +280,165 @@ export function GraficoFluxo({ porMes, previsto, modo = 'feito', mesAtual, altur
 }
 
 /**
- * O gráfico do Resumo do ano, só que de um mês, semana a semana (dias 1 a 7, 8 a 14…), num eixo só: Entrou e Saiu em barras,
- * o que ainda vem listrado em cima (as parcelas de dívida em amarelo, dentro da saída) e uma linha só, a do saldo do mês:
- * cheia até a semana de hoje, tracejada dali em diante; verde enquanto sobra, vermelha quando falta.
+ * O gráfico do Resumo do ano, só que de um mês: um ponto por dia no lugar de um por mês. Entrou e Saiu em barras (com "O que
+ * vem aí", o que ainda vai entrar e sair listrado em cima), as linhas suaves do que sobrou no mês até cada dia e das dívidas
+ * (com a sombra leve, como no ano), e o painel do dia ao lado: tocar ou passar o mouse num dia escolhe o dia do painel.
  */
-export function GraficoDoMes({ dd, parcelasDia, altura, compacto }: {
-  dd: DiaADia; altura?: number; compacto?: boolean
-  /** Parcelas de dívida que ainda vencem em cada dia (já somadas em `vaiSairDia`): pintadas à parte, em amarelo. */
-  parcelasDia?: number[]
+export function GraficoDoMes({ dd, ano, mes, divida, altura = 300, compacto }: {
+  dd: DiaADia; ano: number; mes: number; altura?: number; compacto?: boolean
+  /** Quanto se deve ao fim de cada dia (sem o módulo de dívidas, não vem). */
+  divida?: number[]
 }) {
   const c = useCoresDoGrafico()
-  const semanas = Array.from({ length: Math.ceil(dd.dias / 7) }, (_, i) => [i * 7 + 1, Math.min(dd.dias, i * 7 + 7)] as const)
-  // as duas últimas semanas se juntam quando a última teria só 1 ou 2 dias (29 a 30): barra quase vazia confunde
-  if (semanas.length > 4 && semanas[4][1] - semanas[4][0] < 2) semanas.splice(3, 2, [semanas[3][0], dd.dias])
-  const rotulos = semanas.map(([a, b]) => `${a}–${b}`)
-  const somaDe = (xs: number[]) => semanas.map(([a, b]) => centavos(xs.slice(a - 1, b).reduce((t, n) => t + n, 0)))
-  const entrou = somaDe(dd.entrouDia), saiu = somaDe(dd.saiuDia), vaiEntrar = somaDe(dd.vaiEntrarDia)
-  const parcelas = parcelasDia ? somaDe(parcelasDia) : semanas.map(() => 0)
-  const vaiSair = somaDe(dd.vaiSairDia).map((v, i) => centavos(Math.max(0, v - parcelas[i])))
-  // semana de hoje (-1 se o mês ainda não começou)
-  const semanaHoje = dd.hoje === 0 ? -1 : semanas.findIndex(([a, b]) => dd.hoje >= a && dd.hoje <= b)
-  // saldo do mês no fim de cada semana: até a semana de hoje, o que aconteceu; dali em diante, somando o que ainda vem
-  let feito = 0, vem = 0
-  const saldo = semanas.map((_, i) => {
-    feito += entrou[i] - saiu[i]
-    vem += vaiEntrar[i] - vaiSair[i] - parcelas[i]
-    return centavos(i <= semanaHoje ? feito : feito + vem)
+  const [modo, setModo] = useModoDoGrafico()
+  const temVem = dd.vaiEntrar > 0 || dd.vaiSair > 0
+  const comPrevisao = temVem && modo === 'previsto'
+  // até onde as séries do que já aconteceu vão: o mês que ainda não começou não tem nada; o que já acabou vai até o fim
+  const ultimoFeito = dd.hoje
+  const dias = Array.from({ length: dd.dias }, (_, i) => i + 1)
+  const rotulos = dias.map(String)
+  const nulo = (n: number) => (n ? centavos(n) : null)
+  const entrou = dias.map((d) => (d <= ultimoFeito ? nulo(dd.entrouDia[d - 1]) : null))
+  const saiu = dias.map((d) => (d <= ultimoFeito ? nulo(dd.saiuDia[d - 1]) : null))
+  const vaiEntrar = dias.map((d) => nulo(dd.vaiEntrarDia[d - 1]))
+  const vaiSair = dias.map((d) => nulo(dd.vaiSairDia[d - 1]))
+  // o que sobrou no mês até cada dia; com "O que vem aí", somando também o que ainda vem
+  let feito = 0, comVem = 0
+  const acumulado = dias.map((d) => {
+    feito += dd.entrouDia[d - 1] - dd.saiuDia[d - 1]
+    comVem += dd.entrouDia[d - 1] - dd.saiuDia[d - 1] + dd.vaiEntrarDia[d - 1] - dd.vaiSairDia[d - 1]
+    return { feito: centavos(feito), comVem: centavos(comVem) }
   })
-  const nulo = (xs: number[]) => xs.map((n) => n || null)
-  const VERDE = PALETA.entradas[1], VERMELHO = PALETA.saidas[1]
-  const corDe = (v: number | null | undefined) => ((v ?? 0) < 0 ? VERMELHO : VERDE)
-  const linhaDoSaldo = linha(tx('Saldo do mês'), VERDE, saldo, c.fundo, compacto, {
-    pointBackgroundColor: (x: ScriptableContext<'line'>) => corDe(x.raw as number | null),
-    pointHoverBackgroundColor: (x: ScriptableContext<'line'>) => corDe(x.raw as number | null),
-    segment: {
-      borderColor: (x: { p1: { parsed: { y: number } } }) => corDe(x.p1.parsed.y),
-      borderDash: (x: { p1DataIndex: number }) => (x.p1DataIndex > semanaHoje ? [5, 4] : undefined),
-    },
-  })
-  const temVem = vaiEntrar.some(Boolean) || vaiSair.some(Boolean)
-  const temParcelas = parcelas.some(Boolean)
+  const sobrou = dias.map((d, i) => (d <= ultimoFeito ? acumulado[i].feito : comPrevisao ? acumulado[i].comVem : null))
+  const dividas = divida ? dias.map((d, i) => (d <= ultimoFeito || comPrevisao ? centavos(divida[i]) : null)) : null
+  // o dia do painel: hoje, até a pessoa escolher outro (vale enquanto o mês aberto não mudar)
+  // no mês que já acabou, o último dia que teve movimento (o último dia do mês costuma vir vazio)
+  const ultimoComMovimento = dias.filter((d) => d <= dd.hoje && (dd.entrouDia[d - 1] || dd.saiuDia[d - 1])).at(-1)
+  const padrao = (dd.hoje === dd.dias && ultimoComMovimento ? ultimoComMovimento : Math.min(dd.dias, Math.max(1, dd.hoje || 1))) - 1
+  const [escolha, setEscolha] = useState<{ ref: string; indice: number } | null>(null)
+  const ref = `${ano}-${mes}`
+  const indice = escolha && escolha.ref === ref ? escolha.indice : padrao
+  const escolher = (i: number) => setEscolha({ ref, indice: Math.min(dd.dias - 1, Math.max(0, i)) })
   const series = [
-    barra(tx('Entrou'), PALETA.entradas, nulo(entrou), compacto, 'entrou'),
-    barra(tx('Saiu'), PALETA.saidas, nulo(saiu), compacto, 'saiu'),
-    ...(temVem ? [
-      barraPrevista(tx('Vai entrar'), PALETA.entradas[0], nulo(vaiEntrar), compacto, 'entrou'),
-      barraPrevista(tx('Vai sair'), PALETA.saidas[0], nulo(vaiSair), compacto, 'saiu'),
+    barra(tx('Entrou'), PALETA.entradas, entrou, compacto, comPrevisao ? 'entrou' : undefined),
+    barra(tx('Saiu'), PALETA.saidas, saiu, compacto, comPrevisao ? 'saiu' : undefined),
+    ...(comPrevisao ? [
+      barraPrevista(tx('Vai entrar'), PALETA.entradas[0], vaiEntrar, compacto, 'entrou'),
+      barraPrevista(tx('Vai sair'), PALETA.saidas[0], vaiSair, compacto, 'saiu'),
     ] : []),
-    ...(temParcelas ? [barraPrevista(tx('Parcelas de dívida'), PALETA.divida, nulo(parcelas), compacto, 'saiu')] : []),
-    linhaDoSaldo,
-  ]
-  const base = opcoes(c, { rotulos, mesDoIndice: (i) => i + 1, mesAtual: semanaHoje + 1, compacto, legenda: false, destacar: semanaHoje >= 0 })
-  const comTitulo: ChartOptions<'bar'> = {
-    ...base,
-    plugins: {
-      ...base.plugins,
-      tooltip: { ...base.plugins?.tooltip, callbacks: { ...base.plugins?.tooltip?.callbacks, title: (i) => tx('Dias {0} a {1}', semanas[i[0].dataIndex][0], semanas[i[0].dataIndex][1]) } },
+    {
+      ...linhaSuave(tx('Sobrou no mês'), PALETA.sobrou, sobrou, c.fundo, compacto),
+      // reta de um dia para o outro: a curva suave subia antes de o dinheiro entrar
+      cubicInterpolationMode: 'default' as const, tension: 0,
+      // depois de hoje, tracejada: é o que ainda vem
+      segment: { borderDash: (x: { p1DataIndex: number }) => (x.p1DataIndex >= ultimoFeito ? [5, 4] : undefined) },
     },
+    // a dívida é muito maior que o dia a dia e achataria as barras: começa escondida, um toque na legenda mostra
+    ...(dividas ? [{ ...linhaSuave(tx('Dívidas'), PALETA.divida, dividas, c.fundo, compacto, true), hidden: true }] : []),
+  ].map((x) => (x.type === 'bar' ? { ...x, categoryPercentage: 0.82, barPercentage: 0.92 } : x))
+  const opcoesBase = opcoes(c, { rotulos, mesDoIndice: (i) => i + 1, mesAtual: indice + 1, compacto, destacar: true })
+  // no eixo, só alguns dias (1, 5, 10…) e o de hoje; o resto aparece no painel
+  const folga = compacto ? 3 : 2
+  const mostra = (i: number) => {
+    const d = i + 1
+    if (d === 1 || d === dd.dias || (d === dd.hoje && dd.hoje < dd.dias)) return true
+    // os redondos (5, 10…) saem quando ficam colados no último dia ou no de hoje
+    const perto = (x: number) => Math.abs(d - x) < folga
+    return (compacto ? d % 10 === 0 : d % 5 === 0) && !perto(dd.dias) && !(dd.hoje < dd.dias && perto(dd.hoje)) && d > folga
   }
-  const { datasets, opcoes: opcoesFinais } = empilhar(series, comTitulo)
+  const base: ChartOptions<'bar'> = {
+    ...opcoesBase,
+    onClick: (e: ChartEvent, _: unknown, chart: ChartJS) => {
+      const i = chart.getElementsAtEventForMode(e as unknown as Event, 'index', { intersect: false }, true)[0]?.index
+      if (i !== undefined && i !== indice) escolher(i)
+    },
+    onHover: (e: ChartEvent, _: unknown, chart: ChartJS) => {
+      if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return
+      const i = chart.getElementsAtEventForMode(e as unknown as Event, 'index', { intersect: false }, true)[0]?.index
+      if (i !== undefined && i !== indice) escolher(i)
+    },
+    plugins: { ...opcoesBase.plugins, tooltip: { enabled: false }, filler: { drawTime: 'beforeDatasetsDraw' } },
+    scales: {
+      ...opcoesBase.scales,
+      x: {
+        ...opcoesBase.scales?.x,
+        ticks: {
+          ...opcoesBase.scales?.x?.ticks,
+          color: (t: { index: number }) => (t.index === dd.hoje - 1 || t.index === indice ? c.textoForte : c.texto),
+          font: (t: { index: number }) => ({ weight: t.index === indice ? 800 : 600, size: compacto ? 9 : 11 }),
+          callback: (_v: string | number, i: number) => (mostra(i) ? rotulos[i] : ''),
+        },
+      },
+    } as ChartOptions<'bar'>['scales'],
+  }
+  const { datasets, opcoes: opcoesFinais } = comPrevisao ? empilhar(series as { type?: string }[], base) : { datasets: series, opcoes: base }
   const data = { labels: rotulos, datasets } as unknown as ChartData<'bar'>
   return (
     <>
-      <CaixaDoGrafico style={altura ? { height: altura } : undefined}>
-        <Misto type="bar" key={c.tema + c.ocultos + dd.dias} data={data} options={opcoesFinais} />
-      </CaixaDoGrafico>
-      {/* legenda curta: o listrado vale para tudo que ainda vem, e a linha é uma só */}
-      <div className="legenda-mes">
-        <span><i className="legenda-barra" style={{ background: PALETA.entradas[0] }} />{tx('Entrou')}</span>
-        <span><i className="legenda-barra" style={{ background: PALETA.saidas[0] }} />{tx('Saiu')}</span>
-        {temVem && <span><i className="legenda-barra listrada" style={{ '--cor': '#8e98ae' } as CSSProperties} />{tx('Ainda vem')}</span>}
-        {temParcelas && <span><i className="legenda-barra listrada" style={{ '--cor': PALETA.divida } as CSSProperties} />{tx('Parcelas de dívida')}</span>}
-        <span><i className="legenda-linha" style={{ background: VERDE }} />{tx('Saldo do mês')}</span>
+      {temVem && <div className="grafico-moeda"><SeletorDoModo modo={modo} aoMudar={setModo} /></div>}
+      <div className="grafico-com-painel">
+        <div className="gcp">
+          <CaixaDoGrafico style={{ height: altura }}>
+            <Misto type="bar" key={c.tema + c.ocultos + modo + dd.dias} data={data} options={opcoesFinais} />
+          </CaixaDoGrafico>
+          <PainelDoDia indice={indice} dd={dd} ano={ano} mes={mes} aoMudar={escolher} comPrevisao={comPrevisao}
+            sobrou={acumulado[indice]} divida={divida?.[indice]} />
+        </div>
       </div>
     </>
+  )
+}
+
+/** O painel do dia escolhido no gráfico do mês, com as setas para andar de um dia para o outro (o mesmo do painel do ano). */
+function PainelDoDia({ indice, dd, ano, mes, aoMudar, comPrevisao, sobrou, divida }: {
+  indice: number; dd: DiaADia; ano: number; mes: number; aoMudar: (i: number) => void; comPrevisao: boolean
+  sobrou: { feito: number; comVem: number }; divida?: number
+}) {
+  const d = indice + 1
+  const iso = `${ano}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+  const aconteceu = d <= dd.hoje
+  const entrou = aconteceu ? dd.entrouDia[indice] : 0
+  const saiu = aconteceu ? dd.saiuDia[indice] : 0
+  const vaiEntrar = dd.vaiEntrarDia[indice]
+  const vaiSair = dd.vaiSairDia[indice]
+  const mostraVem = comPrevisao && (vaiEntrar > 0 || vaiSair > 0)
+  const nada = !entrou && !saiu && !mostraVem
+  const ate = aconteceu || !comPrevisao ? sobrou.feito : sobrou.comVem
+  const linha = (nome: string, valor: string, tom: string) => (
+    <div className="pm-linha"><span>{nome}</span><b className={`pm-valor ${tom}`}>{valor}</b></div>
+  )
+  return (
+    <aside className="painel-mes" aria-live="polite">
+      <div className="pm-topo">
+        <button className="pm-nav" onClick={() => aoMudar(indice - 1)} disabled={indice <= 0} aria-label={tx('Dia anterior')}><Icone nome="esq" tamanho={16} /></button>
+        <h3>{iso === hojeLocal() ? tx('Hoje, {0}', fmtDataCurta(iso)) : fmtDataCurta(iso)}</h3>
+        <button className="pm-nav" onClick={() => aoMudar(indice + 1)} disabled={indice >= dd.dias - 1} aria-label={tx('Próximo dia')}><Icone nome="dir" tamanho={16} /></button>
+      </div>
+      {nada ? <p className="pm-vazio">{aconteceu ? tx('Nada entrou nem saiu neste dia.') : tx('Nada previsto para este dia.')}</p> : (
+        <>
+          {(entrou > 0 || saiu > 0) && (
+            <>
+              {linha(tx('Entrou'), fmtValor(entrou), 'entrou')}
+              {linha(tx('Saiu'), fmtValor(saiu), 'saiu')}
+            </>
+          )}
+          {mostraVem && (
+            <>
+              {(entrou > 0 || saiu > 0) && <hr className="pm-sep" />}
+              {linha(tx('Vai entrar'), fmtValor(vaiEntrar), 'entrou')}
+              {linha(tx('Vai sair'), fmtValor(vaiSair), 'saiu')}
+            </>
+          )}
+        </>
+      )}
+      {(aconteceu || comPrevisao) && (
+        <>
+          <hr className="pm-sep" />
+          {linha(ate >= 0 ? tx('Sobrou no mês até aqui') : tx('Faltou no mês até aqui'), fmtValor(Math.abs(ate)), ate >= 0 ? 'entrou' : 'saiu')}
+          {divida !== undefined && linha(tx('Dívidas'), fmtValor(divida), 'divida')}
+        </>
+      )}
+    </aside>
   )
 }
 
