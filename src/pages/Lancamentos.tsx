@@ -8,9 +8,9 @@ import { criarBusca, semAcento } from '../lib/busca'
 import { ehEmprestimo } from '../lib/dividas'
 import type { Banco, Categoria, Lancamento, Tipo } from '../lib/types'
 import { Icone } from '../components/Icone'
-import { Numero } from '../components/Numero'
 import { CenaLancamentos } from '../components/Vazios'
 import { Segmentado } from '../components/ui'
+import { AnelVivo, Vitrine } from '../components/Vitrine'
 import { Seletor } from '../components/Escolhas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
@@ -157,6 +157,7 @@ export function Lancamentos(c: Ctx) {
   const comBancos = c.v.bancos && c.d.bancos.length > 0
   const comFormas = formasDoMes.size > 1 || forma !== 'todos'
   const parteSaiu = entrou > 0 ? Math.min(1, saiu / entrou) : saiu > 0 ? 1 : 0
+  const nivel = c.perfil.detalhe
 
   return (
     <div className="pagina pg-lanc">
@@ -187,8 +188,8 @@ export function Lancamentos(c: Ctx) {
         </section>
       )}
 
-      <div className={`lc-grade ${temNoMes ? '' : 'sem-lado'}`}>
-        {temNoMes && (
+      <div className={`lc-grade ${temNoMes && nivel !== 'simples' ? '' : 'sem-lado'}`}>
+        {temNoMes && nivel !== 'simples' && (
           <aside className="lc-lado">
             <CalorDoMes ano={c.ano} mes={c.mes} lancs={semDia} dia={dia} hoje={hoje} aoEscolher={(d) => setDia(d === dia ? null : d)} />
 
@@ -221,28 +222,19 @@ export function Lancamentos(c: Ctx) {
         )}
 
         <div className="lc-principal">
-          <section className="cartao lc-resumo">
-            <div className="lc-resumo-numeros">
-              {[
-                { id: 'entrou', rotulo: tx('Entrou'), valor: entrou, cor: COR.entradas },
-                { id: 'saiu', rotulo: tx('Saiu'), valor: saiu, cor: COR.saidas },
-                { id: 'sobrou', rotulo: entrou - saiu < 0 ? tx('Faltou') : tx('Sobrou'), valor: entrou - saiu, cor: entrou - saiu < 0 ? COR.saidas : COR.caixa },
-              ].map((t) => (
-                <div key={t.id} className="lc-resumo-item" style={{ '--c': t.cor } as React.CSSProperties}>
-                  <small>{t.rotulo}</small>
-                  <strong><Numero valor={Math.abs(t.valor)} formato={fmtValor} /></strong>
-                </div>
-              ))}
-            </div>
-            {(entrou > 0 || saiu > 0) && (
-              <div className="lc-resumo-regua">
-                <span className="lc-resumo-trilho"><i style={{ width: `${parteSaiu * 100}%` }} /></span>
-                <small>{entrou > 0
-                  ? tx('Saiu {0}% do que entrou', Math.round((saiu / entrou) * 100))
-                  : tx('Nada entrou com esses filtros')}</small>
-              </div>
-            )}
-          </section>
+          {(entrou > 0 || saiu > 0 || filtrando) && <Vitrine cor={entrou - saiu < 0 ? 'var(--saida)' : 'var(--entrada)'} className="lc-vitrine"
+            visual={(entrou > 0 || saiu > 0) ? (
+              <AnelVivo valor={parteSaiu} cor={parteSaiu >= 1 ? 'var(--saida)' : parteSaiu >= 0.85 ? 'var(--divida)' : 'var(--caixa)'} cor2="var(--entrada)" tamanho={c.mobile ? 118 : 132} espessura={12}>
+                <b>{entrou > 0 ? `${Math.round((saiu / entrou) * 100)}%` : '—'}</b><small>{tx('do que entrou saiu')}</small>
+              </AnelVivo>
+            ) : undefined}
+            rotulo={<><Icone nome={entrou - saiu < 0 ? 'desce' : 'sobe'} tamanho={16} /> {entrou - saiu < 0 ? tx('Faltou') : tx('Sobrou')}</>}
+            valor={Math.abs(entrou - saiu)} formato={fmtValor}
+            pilulas={[
+              { icone: 'receber', rotulo: tx('Entrou'), valor: fmtValor(entrou), cor: 'var(--entrada)', tom: 'bom' },
+              { icone: 'enviar', rotulo: tx('Saiu'), valor: fmtValor(saiu), cor: 'var(--saida)' },
+              ...(nivel === 'detalhado' && filtrados.length ? [{ icone: 'lista', rotulo: tx('Lançamentos'), valor: String(filtrados.length), cor: 'var(--violeta)' }] : []),
+            ]} />}
 
           {(temNoMes || filtrando) && (
             <section className="lc-barra">
@@ -252,9 +244,11 @@ export function Lancamentos(c: Ctx) {
               </label>
               <Segmentado rotulo={tx('Tipo')} valor={tipo} aoMudar={(t) => { setTipo(t); setCategoria('todos') }}
                 opcoes={[{ id: 'todos', nome: tx('Todos') }, { id: 'entrada', nome: tx('Entradas'), cor: COR.entradas }, { id: 'saida', nome: tx('Saídas'), cor: COR.saidas }]} />
-              <Segmentado rotulo={tx('Ordem')} valor={ordem} aoMudar={setOrdem}
-                opcoes={[{ id: 'data', nome: tx('Por dia') }, { id: 'valor', nome: tx('Maiores') }]} />
-              {comBancos && (
+              {nivel !== 'simples' && (
+                <Segmentado rotulo={tx('Ordem')} valor={ordem} aoMudar={setOrdem}
+                  opcoes={[{ id: 'data', nome: tx('Por dia') }, { id: 'valor', nome: tx('Maiores') }]} />
+              )}
+              {nivel === 'detalhado' && comBancos && (
                 <Seletor className={`lc-select ${banco !== 'todos' ? 'ativo' : ''}`} valor={banco} aoMudar={setBanco} rotulo={tx('Banco')}
                   opcoes={[
                     { valor: 'todos', rotulo: tx('Todos os bancos') },
@@ -262,7 +256,7 @@ export function Lancamentos(c: Ctx) {
                     { valor: 'sem', rotulo: tx('Sem banco') },
                   ]} />
               )}
-              {comFormas && (
+              {nivel === 'detalhado' && comFormas && (
                 <Seletor className={`lc-select ${forma !== 'todos' ? 'ativo' : ''}`} valor={forma} rotulo={tx('Forma de pagamento')}
                   aoMudar={(v) => setForma(v as Filtro<FormaPagamento | 'sem'>)}
                   opcoes={[

@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { compararRetratos, retratoDe, type Analise as DadosAnalise, type Mudanca, type Retrato } from '../lib/analise'
-import { cascataDoMes, visuais, type Visual } from '../lib/visuais'
+import { cascataDoMes, fmtCurto, visuais, type Visual } from '../lib/visuais'
 import { tracosDe, type Traco } from '../lib/jeito'
 import { fmtDataCurta, fmtValor, MESES_NOME, noMeioDaFrase } from '../lib/format'
 import { useMovimento } from '../lib/tema'
 import { Icone } from '../components/Icone'
 import { Interruptor } from '../components/ui'
 import { Numero } from '../components/Numero'
+import { Velocimetro, Vitrine, type Nivel, type Pilula } from '../components/Vitrine'
 import { CartaoVisual, Escada, Grafico, Medidor, type AcoesDoCartao } from './AnaliseGraficos'
 import { COR_DO_TOM, useEmVista } from './analiseApoio'
 import type { Ctx } from './contexto'
@@ -14,31 +15,46 @@ import { tx } from '../lib/textos'
 import './analise.css'
 
 /** Quantos gráficos aparecem antes de "Ver mais gráficos" (no jeito simples, menos). */
-const GRAFICOS_NA_FRENTE = { simples: 2, equilibrado: 4, detalhado: 8 } as const
+const GRAFICOS_NA_FRENTE = { simples: 2, equilibrado: 4, detalhado: 99 } as const
+
+/** Os assuntos do feed: cada gráfico mora num deles (as abas do equilibrado e as seções do detalhado). */
+type Assunto = 'mes' | 'gastos' | 'dividas' | 'guardado' | 'como'
+const ASSUNTO_DO_VISUAL: Record<string, Assunto> = {
+  calendario: 'mes', 'curva-saldo': 'mes', fluxo: 'mes', 'colunas-sobra': 'mes',
+  'rosca-503020': 'gastos', categorias: 'gastos', halteres: 'gastos', 'tabela-orcamento': 'gastos', 'barras-fixas': 'gastos',
+  'linha-dividas': 'dividas', 'rosca-juros': 'dividas', 'barras-estrategias': 'dividas',
+  'pote-reserva': 'guardado', 'aneis-metas': 'guardado', 'curva-patrimonio': 'guardado',
+  radar: 'como',
+}
+const ASSUNTOS: { id: Assunto; icone: string; nome: () => string }[] = [
+  { id: 'mes', icone: 'calendario', nome: () => tx('O mês') },
+  { id: 'gastos', icone: 'carteira', nome: () => tx('Gastos') },
+  { id: 'dividas', icone: 'divida', nome: () => tx('Dívidas') },
+  { id: 'guardado', icone: 'cofre', nome: () => tx('Guardado') },
+  { id: 'como', icone: 'bussola', nome: () => tx('Como estou') },
+]
+const assuntoDe = (v: Visual): Assunto => ASSUNTO_DO_VISUAL[v.id] ?? 'como'
 
 /**
  * Consultor financeiro: a análise de lib/analise.ts em forma de gráficos, refeita a cada mudança nos dados.
- * No topo, três cartões respondem: como estou (velocímetro e escada das fases), o que fazer agora (um passo por vez) e
- * como o mês fecha (cascata). Depois vem o feed de gráficos que lib/visuais.ts escolhe para a pessoa, do mais para o
- * menos importante. Pouco texto: título curto, uma frase e, quando precisa, "Por quê?" para a explicação.
- * Veja docs/arquitetura-do-painel.md, seção 4.7.
+ * Cada jeito de ver tem a sua montagem (veja docs/arquitetura-do-painel.md, seção 4.7):
+ * - simples: a vitrine do "hoje você pode gastar", um passo por vez, nota e mês em dois quadros e 2 gráficos;
+ * - equilibrado: a vitrine com velocímetro, os três quadros (como estou, faça agora, o mês) e o feed em abas por assunto;
+ * - detalhado: tudo isso, o plano de ação inteiro em lista e o feed inteiro, dividido em seções por assunto.
  */
 export function Analise(c: Ctx) {
   const a = c.analise
+  const nivel = c.perfil.detalhe
   const movimento = useMovimento()
-  const [todos, setTodos] = useState(c.perfil.detalhe === 'detalhado')
   const desdeAVisita = useDesdeAUltimaVisita(c.idUsuario, a)
   const lista = useMemo(() => visuais(a), [a])
   const tracos = useMemo(() => tracosDe(a), [a])
   const feed = useFeed(c.idUsuario, lista)
-  const [verEscondidos, setVerEscondidos] = useState(false)
-  const naFrente = Math.max(GRAFICOS_NA_FRENTE[c.perfil.detalhe], feed.favoritos)
-  const vistos = todos ? feed.mostrados : feed.mostrados.slice(0, naFrente)
 
   if (c.contaNova) {
     return (
       <div className="pagina analise">
-        <Cabecalho />
+        <Cabecalho nivel={nivel} />
         <section className="cartao an-vazio">
           <span className="an-vazio-icone"><Icone nome="bussola" tamanho={30} /></span>
           <h2>{tx('Seu consultor começa no primeiro lançamento')}</h2>
@@ -53,47 +69,39 @@ export function Analise(c: Ctx) {
   }
 
   return (
-    <div className={`pagina analise ${movimento === 'reduzido' ? 'parado' : ''}`}>
-      <Cabecalho />
-      <SeuJeito tracos={tracos} />
-      <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} />
-      {/* no computador, os quatro cartões do topo ficam em grade 2 × 2; no celular, um embaixo do outro */}
-      <div className={`an-topo ${a.mes ? '' : 'sem-mes'}`}>
-        <div className="an-topo-hoje"><HojePodeGastar a={a} /></div>
-        <div className="an-topo-agora"><FacaAgora a={a} aoIr={c.irPara} /></div>
-        <div className="an-topo-como"><ComoEstou a={a} /></div>
-        {a.mes && <div className="an-topo-mes"><SeuMes a={a} /></div>}
-      </div>
+    <div className={`pagina analise an-${nivel} ${movimento === 'reduzido' ? 'parado' : ''}`}>
+      <Cabecalho nivel={nivel} tracos={nivel === 'simples' ? undefined : tracos} />
+      <HojePodeGastar a={a} nivel={nivel} />
+      <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 2} />
 
-      <div className="an-feed">
-        {vistos.map((v) => (
-          <CartaoVisual key={v.id} v={v} aoIr={c.irPara} acoes={feed.acoes(v.id)}><Grafico v={v} /></CartaoVisual>
-        ))}
-      </div>
-      {feed.mostrados.length > naFrente && (
-        <button className="btn an-mais" onClick={() => setTodos(!todos)}>
-          <Icone nome={todos ? 'cima' : 'ano'} tamanho={17} />
-          {todos ? tx('Mostrar menos') : tx('Ver mais {0} gráficos', feed.mostrados.length - naFrente)}
-        </button>
+      {nivel === 'simples' ? (
+        <div className="an-quadros simples">
+          <FacaAgora a={a} aoIr={c.irPara} />
+          <div className="an-dupla">
+            <NotaCurta a={a} />
+            {a.mes && <MesNaBalanca a={a} />}
+          </div>
+        </div>
+      ) : (
+        <div className={`an-quadros ${a.mes ? '' : 'sem-mes'}`}>
+          <ComoEstou a={a} />
+          {nivel === 'equilibrado' ? <FacaAgora a={a} aoIr={c.irPara} /> : null}
+          {a.mes && <SeuMes a={a} />}
+        </div>
       )}
-      {feed.escondidos.length > 0 && (
-        <section className="an-escondidos">
-          <button className="link" onClick={() => setVerEscondidos(!verEscondidos)} aria-expanded={verEscondidos}>
-            <Icone nome="olho-fechado" tamanho={15} />
-            {feed.escondidos.length === 1 ? tx('1 gráfico escondido') : tx('{0} gráficos escondidos', feed.escondidos.length)}
-            <Icone nome={verEscondidos ? 'cima' : 'abaixo'} tamanho={14} />
-          </button>
-          {verEscondidos && (
-            <ul>
-              {feed.escondidos.map((v) => (
-                <li key={v.id}>
-                  <span>{v.titulo}</span>
-                  <button className="btn" onClick={() => feed.mostrar(v.id)}><Icone nome="olho" tamanho={15} /> {tx('Mostrar de novo')}</button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+
+      {nivel === 'detalhado' && <PlanoDeAcao a={a} aoIr={c.irPara} />}
+
+      {nivel === 'detalhado'
+        ? <FeedEmSecoes feed={feed} aoIr={c.irPara} />
+        : <FeedEmAbas feed={feed} aoIr={c.irPara} nivel={nivel} />}
+
+      <Escondidos feed={feed} />
+
+      {nivel === 'simples' && (
+        <button className="vt-mais-detalhe" onClick={c.personalizar}>
+          <Icone nome="ano" tamanho={16} /> {tx('Quer ver todos os gráficos? Mudar o jeito de ver')}
+        </button>
       )}
 
       <footer className="an-rodape">
@@ -107,13 +115,14 @@ export function Analise(c: Ctx) {
   )
 }
 
-function Cabecalho() {
+function Cabecalho({ nivel, tracos }: { nivel: Nivel; tracos?: Traco[] }) {
   return (
-    <header className="pagina-topo">
+    <header className="pagina-topo an-cabecalho">
       <div>
         <h1>{tx('Seu consultor')}</h1>
-        <p className="sub">{tx('Os gráficos se refazem a cada lançamento.')}</p>
+        <p className="sub">{nivel === 'simples' ? tx('O que importa hoje, num olhar.') : tx('Os gráficos se refazem a cada lançamento.')}</p>
       </div>
+      {tracos && tracos.length > 0 && <SeuJeito tracos={tracos} />}
     </header>
   )
 }
@@ -135,7 +144,6 @@ function PorQue({ texto }: { texto: string }) {
 /** Os traços do jeito da pessoa (lib/jeito.ts): tocar mostra por que o motor leu assim. */
 function SeuJeito({ tracos }: { tracos: Traco[] }) {
   const [aberto, setAberto] = useState<string | null>(null)
-  if (!tracos.length) return null
   const t = tracos.find((x) => x.id === aberto)
   return (
     <section className="an-jeito" aria-label={tx('Seu jeito com o dinheiro')}>
@@ -154,21 +162,19 @@ function SeuJeito({ tracos }: { tracos: Traco[] }) {
 
 /**
  * Hoje você pode gastar: o menor entre o que o mês aguenta (guardando a sobra-alvo) e o que o saldo aguenta sem atrasar
- * nenhuma conta até o próximo dinheiro entrar (lib/planejador.ts). Mostra quanto já saiu hoje e quanto ainda dá.
+ * nenhuma conta até o próximo dinheiro entrar (lib/planejador.ts). Vira a vitrine da aba: o velocímetro mostra quanto do
+ * dia já foi; as pílulas, quanto já saiu, quanto ainda dá e (fora do simples) a nota e o fim do mês.
  */
-function HojePodeGastar({ a }: { a: DadosAnalise }) {
-  const [ref, vivo] = useEmVista<HTMLElement>()
+function HojePodeGastar({ a, nivel }: { a: DadosAnalise; nivel: Nivel }) {
   const h = a.plano?.hoje
-  if (!h) return null
+  if (!h) return <VitrineSemPlano a={a} />
   const passou = h.resta < 0
-  const cheio = h.pode > 0 ? Math.min(1, h.gastou / h.pode) : h.gastou > 0 ? 1 : 0
+  const cheio = h.pode > 0 ? Math.min(1, h.gastou / h.pode) : 1
   const tom = h.pode <= 0 || passou ? 'ruim' : cheio >= 0.8 ? 'medio' : 'bom'
   const ate = h.ate ? tx('até {0}, quando entra {1}', fmtDataCurta(h.ate.data), h.ate.descricao) : tx('até o fim do mês que vem')
   const semFolga = h.motivo === 'mes'
-    ? tx('Pela previsão, o mês já fecha no vermelho: não há folga para o dia a dia. Segure o que der.')
-    : h.ate
-      ? tx('Até {0}, quando entra {1}, as contas já levam o dinheiro da conta. Segure o que der.', fmtDataCurta(h.ate.data), h.ate.descricao)
-      : tx('Até o fim do mês que vem, as contas já levam o dinheiro da conta. Segure o que der.')
+    ? tx('Pela previsão, o mês já fecha no vermelho. Segure o que der.')
+    : tx('As contas já levam o dinheiro da conta. Segure o que der.')
   const porque = [
     h.motivo === 'caixa'
       ? h.ate
@@ -183,31 +189,55 @@ function HojePodeGastar({ a }: { a: DadosAnalise }) {
     h.porDiaDoCaixa === null ? tx('Informe o saldo dos bancos para eu conferir também se o dinheiro chega antes das contas.') : '',
     tx('O número vale se o que entra e sai estiver lançado, e se refaz a cada lançamento. Renda extra não entra na conta.'),
   ].filter(Boolean).join(' ')
+  const pilulas: Pilula[] = [
+    { icone: 'enviar', rotulo: tx('Já gastou hoje'), valor: fmtValor(h.gastou), cor: 'var(--an-ruim)' },
+    { icone: passou ? 'desce' : 'check', rotulo: passou ? tx('Passou') : tx('Ainda dá'), valor: fmtValor(Math.abs(h.resta)), cor: COR_DO_TOM[passou ? 'ruim' : 'bom'], tom: passou ? 'ruim' : 'bom' },
+  ]
+  if (nivel !== 'simples' && a.mes) {
+    const sobra = a.mes.resultadoPrevisto >= 0
+    pilulas.push({ icone: 'calendario', rotulo: sobra ? tx('Mês deve sobrar') : tx('Mês pode faltar'), valor: fmtValor(Math.abs(a.mes.resultadoPrevisto)), cor: COR_DO_TOM[sobra ? 'bom' : 'ruim'], tom: sobra ? 'bom' : 'ruim' })
+  }
+  if (nivel === 'detalhado' && h.porDiaDoMes !== null) {
+    pilulas.push({ icone: 'ano', rotulo: tx('Pelo mês inteiro'), valor: tx('{0}/dia', fmtValor(Math.max(0, Math.floor(h.porDiaDoMes)))), cor: 'var(--an-destino)' })
+  }
   return (
-    <section ref={ref} className={`cartao vis an-hoje ${vivo ? 'vivo' : ''}`} style={{ '--c': COR_DO_TOM[tom], '--cheio': cheio } as CSSProperties}>
-      <span className="an-hoje-rotulo"><Icone nome="carteira" tamanho={16} /> {tx('Hoje você pode gastar')}</span>
-      <strong className="an-hoje-valor"><Numero valor={Math.max(0, h.pode)} formato={fmtValor} /></strong>
-      <span className="an-hoje-ate">{h.pode > 0 ? tx('por dia, {0}', ate) : semFolga}</span>
-      <div className="an-hoje-trilho" aria-hidden="true"><i /></div>
-      <div className="an-hoje-pe">
-        <span>{tx('Já gastou hoje: {0}', fmtValor(h.gastou))}</span>
-        <b className={passou ? 'ruim' : ''}>{passou ? tx('Passou {0}', fmtValor(-h.resta)) : tx('Ainda dá {0}', fmtValor(h.resta))}</b>
-      </div>
-      <PorQue texto={porque} />
-    </section>
+    <Vitrine cor={COR_DO_TOM[tom]} className="an-vitrine"
+      visual={
+        <Velocimetro valor={cheio} cor={COR_DO_TOM[tom]}>
+          <b className="an-vel-pct">{h.pode > 0 ? `${Math.round(cheio * 100)}%` : <Icone nome="escudo" tamanho={26} />}</b>
+          <small className="an-vel-rot">{h.pode > 0 ? tx('do dia já foi') : tx('sem folga')}</small>
+        </Velocimetro>
+      }
+      rotulo={<><Icone nome="carteira" tamanho={16} /> {tx('Hoje você pode gastar')}</>}
+      valor={Math.max(0, h.pode)} formato={fmtValor}
+      sub={h.pode > 0 ? tx('por dia, {0}', ate) : semFolga}
+      pilulas={pilulas}>
+      <div className="an-vitrine-porque"><PorQue texto={porque} /></div>
+    </Vitrine>
   )
 }
 
-/** 1. Como estou: velocímetro da nota e a escada das fases. */
+/** Sem o plano (falta saldo e agenda): a vitrine mostra a nota no lugar. */
+function VitrineSemPlano({ a }: { a: DadosAnalise }) {
+  return (
+    <Vitrine cor={COR_DO_TOM[a.tom]} className="an-vitrine"
+      visual={<div className="an-vitrine-medidor"><Medidor valor={a.nota} tom={a.tom} /></div>}
+      rotulo={<><Icone nome="bussola" tamanho={16} /> {tx('Como está seu dinheiro')}</>}
+      texto={a.rotulo}
+      sub={a.resumo[0]} />
+  )
+}
+
+/** Como estou: velocímetro da nota e a escada das fases. */
 function ComoEstou({ a }: { a: DadosAnalise }) {
   const [ref, vivo] = useEmVista<HTMLElement>()
   const iFase = a.fases.findIndex((f) => f.id === a.fase)
   return (
     <section ref={ref} className={`cartao vis an-como ${vivo ? 'vivo' : ''}`} style={{ '--c': COR_DO_TOM[a.tom] } as CSSProperties}>
+      <header className="vis-cab"><h3>{tx('Como estou')}</h3><span className="an-rotulo">{a.rotulo}</span></header>
       <div className="an-como-topo">
         <Medidor valor={a.nota} tom={a.tom} />
         <div className="an-como-texto">
-          <span className="an-rotulo">{a.rotulo}</span>
           <strong>{tx('Degrau {0} de 5', iFase + 1)}</strong>
           <span>{a.fases[iFase].nome}</span>
         </div>
@@ -218,7 +248,44 @@ function ComoEstou({ a }: { a: DadosAnalise }) {
   )
 }
 
-/** 2. Faça agora: um passo por vez, com o ganho em destaque; as setas passam para o próximo. */
+/** No simples: a nota e o degrau num quadro pequeno, sem a escada inteira. */
+function NotaCurta({ a }: { a: DadosAnalise }) {
+  const [ref, vivo] = useEmVista<HTMLElement>()
+  const iFase = a.fases.findIndex((f) => f.id === a.fase)
+  return (
+    <section ref={ref} className={`cartao vis an-nota ${vivo ? 'vivo' : ''}`} style={{ '--c': COR_DO_TOM[a.tom] } as CSSProperties}>
+      <header className="vis-cab"><h3>{tx('Sua nota')}</h3><span className="an-rotulo">{a.rotulo}</span></header>
+      <Medidor valor={a.nota} tom={a.tom} />
+      <ol className="an-degraus" aria-label={tx('Degrau {0} de 5', iFase + 1)}>
+        {a.fases.map((f, i) => <li key={f.id} className={i < iFase ? 'feito' : i === iFase ? 'atual' : ''} style={{ '--i': i } as CSSProperties} title={f.nome} />)}
+      </ol>
+      <span className="an-nota-fase">{a.fases[iFase].nome}</span>
+    </section>
+  )
+}
+
+/** No simples: como o mês fecha numa balança de duas barras (entra × sai) e o número do que fica. */
+function MesNaBalanca({ a }: { a: DadosAnalise }) {
+  const [ref, vivo] = useEmVista<HTMLElement>()
+  const m = a.mes!
+  const sobra = m.resultadoPrevisto >= 0
+  const maior = Math.max(1, m.entradasPrevistas, m.saidasPrevistas)
+  return (
+    <section ref={ref} className={`cartao vis an-balanca ${vivo ? 'vivo' : ''}`} style={{ '--c': COR_DO_TOM[sobra ? 'bom' : 'ruim'] } as CSSProperties}>
+      <header className="vis-cab"><h3>{tx('Como {0} deve fechar', noMeioDaFrase(MESES_NOME[a.hoje.mes - 1]))}</h3></header>
+      <div className={`an-mes-numero ${sobra ? 'bom' : 'ruim'}`}>
+        <small>{sobra ? tx('Deve sobrar') : tx('Pode faltar')}</small>
+        <strong><Numero valor={Math.abs(m.resultadoPrevisto)} formato={fmtValor} /></strong>
+      </div>
+      <div className="an-balanca-barras">
+        <span className="entra"><Icone nome="receber" tamanho={15} /><i style={{ width: `${(m.entradasPrevistas / maior) * 100}%` }} /><b>{fmtCurto(m.entradasPrevistas)}</b></span>
+        <span className="sai"><Icone nome="enviar" tamanho={15} /><i style={{ width: `${(m.saidasPrevistas / maior) * 100}%` }} /><b>{fmtCurto(m.saidasPrevistas)}</b></span>
+      </div>
+    </section>
+  )
+}
+
+/** Faça agora: um passo por vez, com o ganho em destaque; as setas passam para o próximo. */
 function FacaAgora({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
   const [i, setI] = useState(0)
   const acoes = a.acoes
@@ -232,9 +299,9 @@ function FacaAgora({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
   }
   const x = acoes[Math.min(i, acoes.length - 1)]
   return (
-    <section className={`cartao an-agora nivel-${x.urgencia}`} key={x.id}>
+    <section className={`cartao an-agora nivel-${x.urgencia}`}>
       <div className="an-agora-cab">
-        <span className="an-agora-titulo">{tx('Faça agora')}</span>
+        <span className="an-agora-titulo"><Icone nome="ideia" tamanho={15} /> {tx('Faça agora')}</span>
         {acoes.length > 1 && (
           <span className="an-agora-nav">
             <button className="icone-btn" onClick={() => setI((i - 1 + acoes.length) % acoes.length)} aria-label={tx('Passo anterior')}><Icone nome="esq" tamanho={16} /></button>
@@ -245,8 +312,8 @@ function FacaAgora({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
           </span>
         )}
       </div>
-      <div className="an-agora-passo">
-        <span className="an-agora-icone" aria-hidden="true"><Icone nome={x.icone} tamanho={24} /></span>
+      <div className="an-agora-passo" key={x.id}>
+        <span className="an-agora-icone" aria-hidden="true"><Icone nome={x.icone} tamanho={26} /></span>
         <strong>{x.titulo}</strong>
       </div>
       {x.impacto && <span className="an-impacto"><Icone nome="sobe" tamanho={14} /> {x.impacto}</span>}
@@ -258,7 +325,43 @@ function FacaAgora({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
   )
 }
 
-/** 3. Como o mês fecha: o número grande e a cascata (entra, sai, fica). */
+/** No detalhado: o plano de ação inteiro, em ordem, com o ganho de cada passo e o atalho. */
+function PlanoDeAcao({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
+  const [aberto, setAberto] = useState<string | null>(null)
+  const [ref, vivo] = useEmVista<HTMLElement>()
+  if (!a.acoes.length) {
+    return (
+      <section className="cartao an-agora nivel-tudo-certo">
+        <span className="an-agora-icone"><Icone nome="check" tamanho={24} /></span>
+        <strong>{tx('Nada pedindo ação agora.')}</strong>
+      </section>
+    )
+  }
+  return (
+    <section ref={ref} className={`cartao an-plano ${vivo ? 'vivo' : ''}`}>
+      <header className="vis-cab">
+        <h3><Icone nome="ideia" tamanho={17} /> {tx('Seu plano de ação')}</h3>
+        <span className="an-plano-conta">{a.acoes.length === 1 ? tx('1 passo') : tx('{0} passos', a.acoes.length)}</span>
+      </header>
+      <ol>
+        {a.acoes.map((x, i) => (
+          <li key={x.id} className={`nivel-${x.urgencia} ${aberto === x.id ? 'aberto' : ''}`} style={{ '--i': i } as CSSProperties}>
+            <span className="an-plano-n">{i + 1}</span>
+            <span className="an-plano-ic"><Icone nome={x.icone} tamanho={18} /></span>
+            <button className="an-plano-texto" onClick={() => setAberto(aberto === x.id ? null : x.id)} aria-expanded={aberto === x.id}>
+              <strong>{x.titulo}</strong>
+              {x.impacto && <small className="an-plano-ganho"><Icone nome="sobe" tamanho={12} /> {x.impacto}</small>}
+              {aberto === x.id && <span className="an-plano-porque">{x.porque}</span>}
+            </button>
+            <button className="btn" onClick={() => aoIr(x.destino)}>{x.botao} <Icone nome="seta" tamanho={14} /></button>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}
+
+/** Como o mês fecha: o número grande e a cascata (entra, sai, fica). */
 function SeuMes({ a }: { a: DadosAnalise }) {
   const m = a.mes!
   const passos = cascataDoMes(a)!
@@ -272,6 +375,107 @@ function SeuMes({ a }: { a: DadosAnalise }) {
       <Grafico v={{ id: 'cascata', tipo: 'cascata', prioridade: 0, titulo: '', frase: '', passos }} />
       {m.rendaExtraMedia > 0 && <p className="an-nota-fraca">{tx('Sem contar renda extra (em média, {0} por mês).', fmtValor(m.rendaExtraMedia))}</p>}
     </CartaoVisual>
+  )
+}
+
+type Feed = ReturnType<typeof useFeed>
+
+/** Simples e equilibrado: os gráficos na ordem do motor, com abas por assunto (no equilibrado) e "Ver mais". */
+function FeedEmAbas({ feed, aoIr, nivel }: { feed: Feed; aoIr: Ctx['irPara']; nivel: Nivel }) {
+  const [assunto, setAssunto] = useState<Assunto | 'tudo'>('tudo')
+  const [todos, setTodos] = useState(false)
+  const naFrente = Math.max(GRAFICOS_NA_FRENTE[nivel], feed.favoritos)
+  const doAssunto = assunto === 'tudo' ? feed.mostrados : feed.mostrados.filter((v) => assuntoDe(v) === assunto)
+  const vistos = todos || assunto !== 'tudo' ? doAssunto : doAssunto.slice(0, naFrente)
+  const temAssunto = (id: Assunto) => feed.mostrados.some((v) => assuntoDe(v) === id)
+  if (!feed.mostrados.length) return null
+  return (
+    <section className="an-feed-area">
+      <div className="an-feed-cab">
+        <h2 className="vt-secao"><span className="vt-secao-ic"><Icone nome="relatorio" tamanho={16} /></span><span>{tx('Seus gráficos')}</span></h2>
+        {nivel !== 'simples' && (
+          <div className="an-abas" role="tablist" aria-label={tx('Assunto')}>
+            <button role="tab" aria-selected={assunto === 'tudo'} className={assunto === 'tudo' ? 'ativo' : ''} onClick={() => setAssunto('tudo')}>{tx('Tudo')}</button>
+            {ASSUNTOS.filter((s) => temAssunto(s.id)).map((s) => (
+              <button key={s.id} role="tab" aria-selected={assunto === s.id} className={assunto === s.id ? 'ativo' : ''} onClick={() => setAssunto(s.id)}>
+                <Icone nome={s.icone} tamanho={14} /> {s.nome()}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="an-feed" key={assunto}>
+        {vistos.map((v) => (
+          <CartaoVisual key={v.id} v={v} aoIr={aoIr} acoes={feed.acoes(v.id)}><Grafico v={v} /></CartaoVisual>
+        ))}
+      </div>
+      {assunto === 'tudo' && doAssunto.length > naFrente && (
+        <button className="btn an-mais" onClick={() => setTodos(!todos)}>
+          <Icone nome={todos ? 'cima' : 'ano'} tamanho={17} />
+          {todos ? tx('Mostrar menos') : tx('Ver mais {0} gráficos', doAssunto.length - naFrente)}
+        </button>
+      )}
+    </section>
+  )
+}
+
+/** Detalhado: todos os gráficos, em seções por assunto, com um índice no topo para pular direto a uma delas. */
+function FeedEmSecoes({ feed, aoIr }: { feed: Feed; aoIr: Ctx['irPara'] }) {
+  const favoritos = feed.mostrados.slice(0, feed.favoritos)
+  const resto = feed.mostrados.slice(feed.favoritos)
+  // a seção sobe conforme o gráfico mais importante dela (a ordem do motor e do uso)
+  const secoes = ASSUNTOS
+    .map((s) => ({ ...s, itens: resto.filter((v) => assuntoDe(v) === s.id), primeiro: resto.findIndex((v) => assuntoDe(v) === s.id) }))
+    .filter((s) => s.itens.length)
+    .sort((x, y) => x.primeiro - y.primeiro)
+  const grupos: { id: string; icone: string; nome: string; itens: Visual[] }[] = [
+    ...(favoritos.length ? [{ id: 'fav', icone: 'estrela', nome: tx('Favoritos'), itens: favoritos }] : []),
+    ...secoes.map((s) => ({ id: s.id, icone: s.icone, nome: s.nome(), itens: s.itens })),
+  ]
+  const ir = (id: string) => document.getElementById(`an-secao-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  if (!grupos.length) return null
+  return (
+    <section className="an-feed-area">
+      <nav className="an-indice" aria-label={tx('Assuntos')}>
+        {grupos.map((g) => (
+          <button key={g.id} onClick={() => ir(g.id)}><Icone nome={g.icone} tamanho={15} /> {g.nome} <small>{g.itens.length}</small></button>
+        ))}
+      </nav>
+      {grupos.map((g) => (
+        <div key={g.id} id={`an-secao-${g.id}`} className="an-secao">
+          <h2 className="vt-secao"><span className="vt-secao-ic"><Icone nome={g.icone} tamanho={16} /></span><span>{g.nome}</span></h2>
+          <div className="an-feed">
+            {g.itens.map((v) => (
+              <CartaoVisual key={v.id} v={v} aoIr={aoIr} acoes={feed.acoes(v.id)}><Grafico v={v} /></CartaoVisual>
+            ))}
+          </div>
+        </div>
+      ))}
+    </section>
+  )
+}
+
+function Escondidos({ feed }: { feed: Feed }) {
+  const [ver, setVer] = useState(false)
+  if (!feed.escondidos.length) return null
+  return (
+    <section className="an-escondidos">
+      <button className="link" onClick={() => setVer(!ver)} aria-expanded={ver}>
+        <Icone nome="olho-fechado" tamanho={15} />
+        {feed.escondidos.length === 1 ? tx('1 gráfico escondido') : tx('{0} gráficos escondidos', feed.escondidos.length)}
+        <Icone nome={ver ? 'cima' : 'abaixo'} tamanho={14} />
+      </button>
+      {ver && (
+        <ul>
+          {feed.escondidos.map((v) => (
+            <li key={v.id}>
+              <span>{v.titulo}</span>
+              <button className="btn" onClick={() => feed.mostrar(v.id)}><Icone nome="olho" tamanho={15} /> {tx('Mostrar de novo')}</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
 
@@ -294,8 +498,8 @@ function useDesdeAUltimaVisita(id: string, a: DadosAnalise) {
   return useMemo(() => (antes ? { em: antes.em, mudancas: compararRetratos(antes, retratoDe(a)) } : null), [antes, a])
 }
 
-/** Só aparece quando algo mudou de fato: até 2 linhas, com seta para cima ou para baixo. */
-function OQueMudou({ reanalise, desdeAVisita }: { reanalise: Ctx['reanalise']; desdeAVisita: { em: string; mudancas: Mudanca[] } | null }) {
+/** Só aparece quando algo mudou de fato: uma faixa com setas para cima ou para baixo. */
+function OQueMudou({ reanalise, desdeAVisita, max }: { reanalise: Ctx['reanalise']; desdeAVisita: { em: string; mudancas: Mudanca[] } | null; max: number }) {
   const lista = reanalise?.mudancas.length ? reanalise.mudancas : desdeAVisita?.mudancas ?? []
   if (!lista.length) return null
   return (
@@ -305,9 +509,9 @@ function OQueMudou({ reanalise, desdeAVisita }: { reanalise: Ctx['reanalise']; d
         {reanalise?.mudancas.length ? tx('Mudou agora') : tx('Desde {0}', fmtDataCurta(desdeAVisita!.em.slice(0, 10)))}
       </span>
       <ul>
-        {lista.slice(0, 2).map((m, i) => (
-          <li key={i} className={m.tom}>
-            <Icone nome={m.tom === 'bom' ? 'sobe' : m.tom === 'ruim' ? 'desce' : 'seta'} tamanho={15} />
+        {lista.slice(0, max).map((m, i) => (
+          <li key={i} className={m.tom} style={{ '--i': i } as CSSProperties}>
+            <span className="an-mudou-seta"><Icone nome={m.tom === 'bom' ? 'sobe' : m.tom === 'ruim' ? 'desce' : 'seta'} tamanho={14} /></span>
             <span>{m.texto}</span>
           </li>
         ))}
@@ -353,3 +557,4 @@ function useFeed(idUsuario: string, lista: Visual[]) {
   const mostrar = (id: string) => mudar((x) => ({ ...x, oculto: x.oculto.filter((o) => o !== id) }))
   return { ...ordem, acoes, mostrar }
 }
+

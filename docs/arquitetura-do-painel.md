@@ -331,18 +331,24 @@ gatilho da animação) está em `pages/analiseApoio.ts`.
 números contam. Cada animação só começa quando o cartão aparece na tela (`useEmVista`). Com Configurações → Animações:
 Reduzidas, tudo aparece pronto.
 
-**Ordem da tela.**
-1. **Como estou**: velocímetro e escada.
-2. **O que mudou**: só quando algo mudou, com até 2 linhas.
-3. **Faça agora**: um passo por vez, com setas e pontinhos para passar aos outros.
-4. **Como o mês fecha**: número grande, quanto dá para gastar por dia e a cascata.
-5. **O feed de gráficos**: no simples aparecem 2, no equilibrado 4 e no detalhado todos. O resto fica em "Ver mais N gráficos".
+**Cada jeito de ver tem a sua montagem.** Em todos, o topo é a **vitrine** "Hoje você pode gastar" (`components/Vitrine.tsx`):
+o velocímetro mostra quanto do dia já foi, o número grande é o que dá para gastar e as pílulas dizem quanto já saiu hoje e
+quanto ainda dá. Sem o plano (falta saldo ou agenda), a vitrine mostra a nota no lugar.
 
-**No computador** (a partir de 1100 px):
-- Os quatro cartões do topo ficam em grade 2 × 2: "Hoje você pode gastar" e "Faça agora" em cima, "Como estou" e "Como o mês
-  fecha" embaixo, cada linha com a mesma altura.
-- O feed encaixa os cartões em colunas (2, ou 3 a partir de 1600 px), sem buracos embaixo do mais baixo.
-- O dia do calendário fica achatado.
+| Jeito | Montagem |
+| --- | --- |
+| Simples | Vitrine; **Faça agora** (um passo por vez) ao lado de dois quadros pequenos: **Sua nota** (velocímetro e os 5 degraus em tracinhos) e **Como o mês fecha** numa balança de duas barras (entra × sai); 2 gráficos e "Ver mais"; no fim, o convite para mudar o jeito de ver. Sem "Seu jeito" |
+| Equilibrado | Vitrine com a pílula do fim do mês; três quadros lado a lado (**Como estou** com a escada, **Faça agora**, **Como o mês fecha** com a cascata); o feed com **abas por assunto** (Tudo, O mês, Gastos, Dívidas, Guardado, Como estou), 4 gráficos na frente em "Tudo" |
+| Detalhado | Vitrine com mais pílulas (fim do mês e o quanto daria pelo mês inteiro); **Como estou** e **Como o mês fecha** lado a lado; o **plano de ação inteiro** em lista numerada (cor pela urgência, ganho em verde, tocar mostra o porquê, botão com verbo); o feed inteiro em **seções por assunto**, com um índice preso no topo para pular direto (favoritos primeiro, e cada seção sobe pelo gráfico mais importante dela) |
+
+"O que mudou" aparece como uma faixa logo abaixo da vitrine (até 2 mudanças; 4 no detalhado), com setas em bolinhas coloridas.
+
+"De onde sai o dinheiro" ficou visual: cada entrada mostra a barra e três etiquetas (quanto tem destino, quanto fica livre,
+quanto vai com atraso); a lista do que ela paga abre ao tocar.
+
+**No computador**, o feed encaixa os cartões em colunas (2; 3 no detalhado a partir de 1600 px), sem buracos embaixo do mais
+baixo, e o dia do calendário fica achatado. "Como estou" se arruma pela própria largura (container query): estreito, o
+velocímetro fica em cima do degrau.
 
 No celular, tudo fica numa coluna só, na mesma ordem. Na cascata, o espaço acima das barras é dos rótulos, para o valor da
 primeira não encostar no número grande do cartão.
@@ -757,3 +763,29 @@ Duas colunas no computador. A lista com selos redondos saiu; cada lançamento ag
   com olho para mostrar e, no cadastro, medidor de força. O nome do cadastro vai em `user_metadata.nome` e já aparece
   preenchido na primeira pergunta do painel.
 - **Celular:** o painel vira uma faixa diagonal no alto e só o formulário troca.
+
+### 4.21 As telas em cada jeito de ver (a vitrine)
+
+Todas as telas seguem a mesma ideia da Início: **um desenho grande no topo, menos frase e mais sinal**. O topo é a
+**vitrine** (`components/Vitrine.tsx`, estilos em `components/vitrine.css`): um desenho (anel, pote, rosca ou velocímetro), o
+rótulo, um número só e **pílulas** (ícone, nome curto e valor). Embaixo, os gráficos pequenos que se repetem pelas telas, todos
+em SVG e HTML próprios: `Colunas` (meses, com a de agora brilhando; com muitas colunas, o valor aparece só na de destaque e na
+maior), `Trilha` (o caminho até a chegada, com a bolinha de hoje e a bandeira no fim), `LinhaDoTempo` (uma barra por item, do
+começo ao fim), `BarraDividida` (as partes de um todo, com legenda), `Rosquinha` e `AnelVivo`. Tudo anima ao aparecer na tela
+(`useEmVista`) e para com Configurações → Animações: Reduzidas.
+
+| Tela | Simples | Equilibrado | Detalhado |
+| --- | --- | --- | --- |
+| **Dívidas** | Vitrine (anel do quanto já foi pago, quanto deve, "Sem dívidas em", parcelas por mês e o atrasado se houver) e cada dívida num quadro grande com um botão só ("Pagar R$ X") | + a **trilha** até ficar livre dentro da vitrine, **Quanto sai nos próximos meses** (colunas) e **Do que é feita a sua dívida** (rosca e barra dividida, na cor do banco), e os cartões completos de cada dívida | + **Quando cada dívida acaba** (linha do tempo, pintada até o que já foi pago) e a pílula do total já pago |
+| **Metas** | Vitrine (pote de todas as metas) e um **pote grande por meta** com "Guardar" | Vitrine com "Guardar por mês" e os cartões completos (Guardar e Retirar) | + **Quando cada meta chega** (linha do tempo até o prazo ou a previsão) e **Quanto guardar por mês** (barra dividida por meta) |
+| **Cartões** | Vitrine (rosca das faturas por cartão, falta pagar, limite livre, em atraso), a carteira e, do cartão escolhido, só a fatura e as compras | + limite e próximas faturas, e as parceladas | + **Quanto do limite cada cartão usa** (com 2 cartões ou mais), as parceladas e as faturas resolvidas |
+| **Contas do mês** | Vitrine (pote do que já foi pago, falta pagar, atrasadas, a receber) e os boletos | + a linha do mês | + **Para onde vão as contas** (rosca e barra por categoria) e a lista de contas fixas aberta |
+| **Lançamentos** | Vitrine (anel do quanto do que entrou já saiu, sobrou, entrou e saiu), só busca e tipo nos filtros, sem a coluna do lado | + o calendário de calor e as categorias ao lado, e a ordem (por dia ou maiores) | + filtros de banco e de forma de pagamento e a pílula com o número de lançamentos |
+| **Dinheiro guardado** | Vitrine (rosca de onde está o dinheiro e uma pílula por parte) e a reserva | + **Como tem mudado** (colunas dos últimos meses) | + **Onde está cada parte** (barra dividida) |
+| **Resumo do ano** | Vitrine (anel do quanto do que entrou ficou) e os **12 meses em quadros** (verde sobrou, vermelho faltou, mais forte quanto maior; tocar abre o mês) | + o gráfico mês a mês | + a tabela de cada mês e o gráfico do que sobrou |
+
+No simples, as listas de contas fixas viram um botão "Ver e editar todas as contas fixas (N)" e o fim de cada tela traz o
+convite para mudar o jeito de ver.
+
+A vitrine tomou o lugar dos indicadores e do quadro do topo descritos em 4.11 (Cartões), 4.13 (Dívidas), 4.14 (Metas),
+4.15 (Dinheiro guardado), 4.16 (Lançamentos) e 4.17 (Contas do mês); o resto de cada tela segue como lá.

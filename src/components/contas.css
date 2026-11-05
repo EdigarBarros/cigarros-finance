@@ -59,15 +59,6 @@
 /* ---------- redesenho: pote do mês, linha do mês e boletos ---------- */
 .conta-aviso > svg { flex: none; }
 .conta-valor.entrada { color: var(--entrada); }
-.ct-topo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 16px; }
-.ct-pote {
-  display: flex; align-items: center; gap: 20px;
-  background: radial-gradient(110% 100% at 0% 100%, color-mix(in srgb, var(--entrada) 13%, transparent), transparent 60%), var(--superficie);
-}
-.ct-pote-texto { display: grid; gap: 2px; justify-items: start; min-width: 0; }
-.ct-pote-texto > small { font-size: 12.5px; color: var(--texto-2); }
-.ct-pote-texto strong { font-family: var(--fonte-numeros); font-size: 28px; font-weight: 700; letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
-.ct-pote-texto .chips-info { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 
 .ct-linha { display: grid; gap: 8px; align-content: start; }
 .ct-linha .ccd-titulo { margin: 0; }
@@ -184,7 +175,6 @@
 .ct-modelos { max-width: 900px; }
 
 @media (max-width: 1000px) {
-  .ct-topo { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 860px) {
   .ct-boletos { grid-template-columns: minmax(0, 1fr); }

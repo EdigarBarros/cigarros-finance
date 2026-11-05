@@ -324,13 +324,14 @@ function Barras({ barras }: { barras: { rotulo: string; valor: number; cor?: str
 
 // ---------- de onde sai o dinheiro ----------
 
-/** Cada dinheiro que entra vira uma barra dividida no que ele paga; o atraso aparece em laranja, com o custo. */
+/**
+ * Cada dinheiro que entra vira uma barra dividida no que ele paga; o atraso aparece em laranja, com o custo. Fechado, cada
+ * entrada mostra só a barra e três etiquetas (com destino, livre, com atraso); tocar abre a lista do que ela paga.
+ */
 function Fluxo({ grupos, semDinheiro }: { grupos: GrupoDoFluxo[]; semDinheiro: { rotulo: string; valor: number; custo: number }[] }) {
-  // no começo, 4 entradas e 5 compromissos em cada; "Ver tudo" abre o resto (antes ficava escondido sem aviso)
   const [tudo, setTudo] = useState(false)
+  const [aberto, setAberto] = useState<string | null>(null)
   const MAX_GRUPOS = 4
-  const MAX_ITENS = tudo ? Infinity : 5
-  const cortou = grupos.length > MAX_GRUPOS || grupos.some((g) => g.itens.length > 5)
   return (
     <div className="fluxo">
       {(tudo ? grupos : grupos.slice(0, MAX_GRUPOS)).map((g, i) => {
@@ -338,45 +339,57 @@ function Fluxo({ grupos, semDinheiro }: { grupos: GrupoDoFluxo[]; semDinheiro: {
         const base = Math.max(g.valor, usado, 1)
         const sobra = Math.max(0, g.valor - usado)
         const atrasa = g.itens.filter((x) => x.atraso > 0).reduce((s, x) => s + x.valor, 0)
+        const pct = g.valor > 0 ? Math.min(100, Math.round((usado / g.valor) * 100)) : 100
+        const chave = `${g.data}${i}`
+        const esta = aberto === chave
         return (
-          <div key={g.data} className="fluxo-grupo" style={{ '--i': i } as CSSProperties}>
-            <div className="fluxo-cab">
-              <span className="fluxo-fonte"><Icone nome="receber" tamanho={15} /> <b>{g.fonte}</b> <small>{fmtDataCurta(g.data)}</small></span>
-              <b>{fmtCurto(g.valor)}</b>
-            </div>
-            <div className="fluxo-barra" role="img" aria-label={tx('{0} paga {1} de {2}', g.fonte, fmtValor(usado), fmtValor(g.valor))}>
-              {g.itens.map((x, k) => (
-                <i key={k} className={x.atraso > 0 ? 'atrasa' : ''} style={{ width: `${(x.valor / base) * 100}%`, '--k': k } as CSSProperties} />
-              ))}
-              {sobra > 0.5 && <i className="sobra" style={{ width: `${(sobra / base) * 100}%` }} />}
-            </div>
-            <p className="fluxo-resumo">{resumoDoGrupo(g.valor, usado, atrasa)}</p>
-            <ul className="fluxo-itens">
-              {g.itens.slice(0, MAX_ITENS).map((x, k) => (
-                <li key={k} className={x.atraso > 0 ? 'atrasa' : ''}>
-                  <i aria-hidden="true" />
-                  <span>{x.rotulo}</span>
-                  {x.atraso > 0 && <small>{x.atraso === 1 ? tx('1 dia de atraso, +{0}', fmtValor(x.custo)) : tx('{0} dias de atraso, +{1}', x.atraso, fmtValor(x.custo))}</small>}
-                  <b>{fmtCurto(x.valor)}</b>
-                </li>
-              ))}
-              {g.itens.length > MAX_ITENS && <li className="fluxo-mais"><span>{tx('e mais {0}', g.itens.length - MAX_ITENS)}</span></li>}
-              {sobra > 0.5 && <li className="fluxo-sobra"><i aria-hidden="true" /><span>{tx('Sobra para o dia a dia')}</span><b>{fmtCurto(sobra)}</b></li>}
-            </ul>
+          <div key={chave} className={`fluxo-grupo ${esta ? 'aberto' : ''}`} style={{ '--i': i } as CSSProperties}>
+            <button className="fluxo-topo" onClick={() => setAberto(esta ? null : chave)} aria-expanded={esta}>
+              <span className="fluxo-cab">
+                <span className="fluxo-fonte"><Icone nome="receber" tamanho={15} /> <b>{g.fonte}</b> <small>{fmtDataCurta(g.data)}</small></span>
+                <b>{fmtCurto(g.valor)}</b>
+                <Icone nome={esta ? 'cima' : 'abaixo'} tamanho={14} />
+              </span>
+              <span className="fluxo-barra" role="img" aria-label={tx('{0} paga {1} de {2}', g.fonte, fmtValor(usado), fmtValor(g.valor))}>
+                {g.itens.map((x, k) => (
+                  <i key={k} className={x.atraso > 0 ? 'atrasa' : ''} style={{ width: `${(x.valor / base) * 100}%`, '--k': k } as CSSProperties} />
+                ))}
+                {sobra > 0.5 && <i className="sobra" style={{ width: `${(sobra / base) * 100}%` }} />}
+              </span>
+              <span className="fluxo-etiquetas">
+                <span className="destino">{tx('{0}% com destino', pct)}</span>
+                {sobra >= 0.5 && <span className="livre">{tx('{0} livre', fmtCurto(sobra))}</span>}
+                {atrasa > 0 && <span className="atrasa">{tx('{0} com atraso', fmtCurto(atrasa))}</span>}
+              </span>
+            </button>
+            {esta && (
+              <ul className="fluxo-itens">
+                {g.itens.map((x, k) => (
+                  <li key={k} className={x.atraso > 0 ? 'atrasa' : ''}>
+                    <i aria-hidden="true" />
+                    <span>{x.rotulo}</span>
+                    {x.atraso > 0 && <small>{x.atraso === 1 ? tx('1 dia de atraso, +{0}', fmtValor(x.custo)) : tx('{0} dias de atraso, +{1}', x.atraso, fmtValor(x.custo))}</small>}
+                    <b>{fmtCurto(x.valor)}</b>
+                  </li>
+                ))}
+                {sobra > 0.5 && <li className="fluxo-sobra"><i aria-hidden="true" /><span>{tx('Sobra para o dia a dia')}</span><b>{fmtCurto(sobra)}</b></li>}
+              </ul>
+            )}
           </div>
         )
       })}
-      {cortou && (
+      {grupos.length > MAX_GRUPOS && (
         <button className="quadro-ver" onClick={() => setTudo(!tudo)}>
-          {tudo ? tx('Mostrar menos') : grupos.length > MAX_GRUPOS ? tx('Ver as {0} entradas', grupos.length) : tx('Ver tudo')}
+          {tudo ? tx('Mostrar menos') : tx('Ver as {0} entradas', grupos.length)}
         </button>
       )}
       {semDinheiro.length > 0 && (
         <div className="fluxo-grupo falta">
-          <div className="fluxo-cab"><span className="fluxo-fonte"><Icone nome="escudo" tamanho={15} /> <b>{tx('Sem dinheiro até o fim do mês que vem')}</b></span></div>
-          <ul className="fluxo-itens">
-            {semDinheiro.map((x, k) => <li key={k} className="atrasa"><i aria-hidden="true" /><span>{x.rotulo}</span><b>{fmtCurto(x.valor)}</b></li>)}
-          </ul>
+          <div className="fluxo-cab"><span className="fluxo-fonte"><Icone nome="escudo" tamanho={15} /> <b>{tx('Sem dinheiro até o fim do mês que vem')}</b></span>
+            <b>{fmtCurto(semDinheiro.reduce((a, x) => a + x.valor, 0))}</b></div>
+          <span className="fluxo-etiquetas">
+            {semDinheiro.map((x, k) => <span key={k} className="falta">{x.rotulo}</span>)}
+          </span>
         </div>
       )}
       <Legenda itens={[
@@ -387,16 +400,6 @@ function Fluxo({ grupos, semDinheiro }: { grupos: GrupoDoFluxo[]; semDinheiro: {
       ]} />
     </div>
   )
-}
-
-/** "De R$ 1.200, R$ 900 já têm destino (75%) e sobram R$ 300 livres." */
-function resumoDoGrupo(valor: number, usado: number, atrasa: number) {
-  const pct = valor > 0 ? Math.min(100, Math.round((usado / valor) * 100)) : 100
-  const livre = Math.max(0, valor - usado)
-  const base = livre >= 0.5
-    ? tx('{0}% deste dinheiro já tem destino ({1}). Sobram {2} livres.', pct, fmtValor(usado), fmtValor(livre))
-    : tx('Todo este dinheiro já tem destino ({0}). Não sobra nada livre.', fmtValor(usado))
-  return atrasa > 0 ? `${base} ${tx('Desse total, {0} vai para contas que já estarão atrasadas.', fmtValor(atrasa))}` : base
 }
 
 /** A legenda das cores: cada cor com o que ela quer dizer, em palavras. */
@@ -490,14 +493,14 @@ function LinhaDoTempo({ v }: { v: Extract<Visual, { tipo: 'linhaDoTempo' }> }) {
 function Pote({ atual, maximo, marcos }: { atual: number; maximo: number; marcos: { rotulo: string; valor: number }[] }) {
   const p = Math.min(1, atual / Math.max(1, maximo))
   return (
-    <div className="pote">
-      <div className="pote-vidro" style={{ '--n': `${p * 100}%` } as CSSProperties}>
-        <i className="pote-agua" />
+    <div className="rsv">
+      <div className="rsv-vidro" style={{ '--n': `${p * 100}%` } as CSSProperties}>
+        <i className="rsv-agua" />
         {marcos.map((m) => (
-          <span key={m.rotulo} className="pote-marco" style={{ bottom: `${Math.min(100, (m.valor / Math.max(1, maximo)) * 100)}%` }}><small>{m.rotulo}</small></span>
+          <span key={m.rotulo} className="rsv-marco" style={{ bottom: `${Math.min(100, (m.valor / Math.max(1, maximo)) * 100)}%` }}><small>{m.rotulo}</small></span>
         ))}
       </div>
-      <div className="pote-numeros">
+      <div className="rsv-numeros">
         <strong><Numero valor={atual} formato={fmtValor} /></strong>
         <small>{tx('guardado')}</small>
         {marcos.map((m) => (

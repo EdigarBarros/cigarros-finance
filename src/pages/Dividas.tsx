@@ -15,7 +15,9 @@ import { ConferirComBanco, SeloJuros } from '../components/JurosDoAtraso'
 import { regraDoAtraso, temJurosDeAtraso } from '../lib/jurosAtraso'
 import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
-import { Anel, Kpi, Modal } from '../components/ui'
+import { Anel, Modal } from '../components/ui'
+import { AnelVivo, BarraDividida, Colunas, LinhaDoTempo, Rosquinha, TituloDaSecao, Trilha, Vitrine } from '../components/Vitrine'
+import { fmtCurto } from '../lib/visuais'
 import { CampoData } from '../components/Escolhas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
@@ -23,6 +25,35 @@ import { tx } from '../lib/textos'
 type Lado = 'devo' | 'me_devem'
 const CORES_PESSOA = ['#4c8dff', '#e255a1', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444', '#22c55e', '#0ea5e9']
 const hash = (s: string) => [...s].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7)
+/** A cor de cada dívida nos gráficos: a do banco quando é um banco conhecido; senão uma da paleta, sempre a mesma pelo nome. */
+const corDe = (s: SituacaoDivida) => estiloDoBanco(s.divida.pessoa || s.divida.descricao)?.fundo[0] ?? estiloDoBanco(s.divida.descricao)?.fundo[0]
+  ?? CORES_PESSOA[hash(s.divida.pessoa || s.divida.descricao) % CORES_PESSOA.length]
+const chaveDoMes = (iso: string) => Number(iso.slice(0, 4)) * 12 + Number(iso.slice(5, 7)) - 1
+
+/** As barras da linha do tempo: da primeira à última parcela de cada dívida, com o pedaço já pago até hoje. */
+function linhasDoTempo(lista: { s: SituacaoDivida; cal: Calendario | null }[], diaRef: string) {
+  const com = lista.filter((x) => x.cal && x.cal.parcelas.length)
+  if (!com.length) return { itens: [], eixo: ['', ''] as [string, string] }
+  const ini = Math.min(...com.map((x) => chaveDoMes(x.cal!.parcelas[0].vencimento)))
+  const fimK = Math.max(...com.map((x) => chaveDoMes(x.cal!.parcelas.at(-1)!.vencimento)))
+  const total = Math.max(1, fimK - ini)
+  const hoje = (chaveDoMes(diaRef) - ini) / total
+  const nome = (k: number) => fmtMesAno(Math.floor(k / 12), (k % 12) + 1)
+  return {
+    eixo: [nome(ini), nome(fimK)] as [string, string],
+    itens: com.map((x) => {
+      const ps = x.cal!.parcelas
+      const pagas = ps.filter((p) => p.estado === 'paga').length / ps.length
+      const de = (chaveDoMes(ps[0].vencimento) - ini) / total
+      const ate = (chaveDoMes(ps.at(-1)!.vencimento) - ini) / total
+      return {
+        rotulo: x.s.divida.descricao, cor: corDe(x.s), de, ate, hoje: Math.min(hoje, de + (ate - de) * Math.max(pagas, 0.001)),
+        fim: nome(chaveDoMes(ps.at(-1)!.vencimento)),
+      }
+    }).sort((a, b) => a.ate - b.ate),
+  }
+}
+
 const mesCurto = (iso: string) => `${noMeioDaFrase(MESES_CURTO[Number(iso.slice(5, 7)) - 1])}/${iso.slice(2, 4)}`
 
 /** Situação resumida de uma dívida, para o selo e para ordenar a lista. */
@@ -72,6 +103,11 @@ export function Dividas(c: Ctx) {
   const aberto = comCal.find((x) => x.s.divida.id === aberta)
   const contasEntrada = c.situacoesContas.filter((s) => s.conta.tipo === 'entrada' && s.estado !== 'fora')
   const pct = inicial > 0 ? (inicial - registrado) / inicial : 0
+  const nivel = c.perfil.detalhe
+  const composicao = lista.filter((s) => s.restanteHoje > 0)
+    .sort((a, b) => b.restanteHoje - a.restanteHoje)
+    .map((s) => ({ rotulo: s.divida.descricao, valor: s.restanteHoje, cor: corDe(s) }))
+  const linhas = linhasDoTempo(comCal.filter((x) => x.s.restante > 0), c.diaRef)
 
   return (
     <div className="pagina pg-dividas">
@@ -103,49 +139,84 @@ export function Dividas(c: Ctx) {
         </p>
       )}
 
-      {lista.length > 0 && (
-        <div className="kpis" key={lado}>
-          <Kpi rotulo={recebe ? tx('Falta receber') : tx('Falta pagar')} valor={falta} cor={recebe ? COR.entradas : COR.divida} icone={recebe ? 'receber' : 'divida'}
-            delta={!recebe && c.anterior?.divida ? (c.r.divida - c.anterior.divida) / c.anterior.divida : null} menorMelhor
-            contra={c.mes > 1 ? tx('em {0}', noMeioDaFrase(MESES_CURTO[c.mes - 2])) : undefined} />
-          <Kpi rotulo={recebe ? tx('Entra por mês') : tx('Parcelas por mês')} valor={porMes} cor={COR.caixa} icone="calendario" />
-          <Kpi rotulo={nAtraso ? tx('Atrasado ({0} {1})', nAtraso, nAtraso === 1 ? tx('parcela') : tx('parcelas')) : tx('Atrasado')} valor={emAtraso}
-            cor={emAtraso ? COR.saidas : COR.entradas} icone="relogio" />
-          <Kpi rotulo={recebe ? tx('Recebido no mês') : tx('Pago no mês')} valor={noMes} cor={COR.entradas} icone="check" />
-        </div>
-      )}
-
       {!lista.length ? (
         <VazioLado recebe={recebe} aoNova={() => setEditando('nova')} />
       ) : (
-        <section className="dv-visao" key={`v-${lado}`}>
-          <div className="cartao dv-progresso">
-            <Anel valor={pct} cor={recebe ? COR.entradas : COR.entradas} tamanho={112}>
-              <span className="dv-progresso-pct">{Math.round(pct * 100)}%</span>
-            </Anel>
-            <span className="dv-progresso-texto">
+        <Vitrine key={`v-${lado}`} cor={recebe ? 'var(--entrada)' : falta > 0 ? 'var(--divida)' : 'var(--entrada)'} className="dv-vitrine"
+          visual={
+            <AnelVivo valor={pct} cor={recebe ? 'var(--entrada)' : 'var(--entrada)'} cor2={recebe ? 'var(--caixa)' : 'var(--divida)'} tamanho={c.mobile ? 136 : 168} espessura={11}>
+              <b><Numero valor={Math.round(pct * 100)} formato={(n) => `${Math.round(n)}%`} /></b>
               <small>{recebe ? tx('já recebido') : tx('já pago')}</small>
-              <strong><Numero valor={inicial - registrado} formato={fmtValor} /></strong>
-              <small>{tx('de {0}', fmtValor(inicial))}</small>
-              {falta > 0 && fim && <span className="chip-info"><Icone nome="calendario" tamanho={13} /> {recebe ? tx('tudo recebido em') : tx('livre em')} {fmtMesAno(fim[0], fim[1])}</span>}
-              {falta <= 0 && <span className="chip-info bom"><Icone nome="check" tamanho={13} /> {recebe ? tx('tudo recebido') : tx('sem dívidas')}</span>}
-            </span>
+            </AnelVivo>
+          }
+          rotulo={<><Icone nome={recebe ? 'receber' : 'divida'} tamanho={16} /> {recebe ? tx('Falta receber') : tx('Você deve no total')}</>}
+          valor={falta} formato={fmtValor}
+          sub={falta <= 0 ? (recebe ? tx('Tudo recebido. 🎉') : tx('Sem dívidas. 🎉')) : fim ? <>{recebe ? tx('Tudo recebido em') : tx('Sem dívidas em')} <b>{fmtMesAno(fim[0], fim[1])}</b></> : null}
+          pilulas={[
+            { icone: 'calendario', rotulo: recebe ? tx('Entra por mês') : tx('Parcelas por mês'), valor: fmtValor(porMes), cor: 'var(--caixa)' },
+            ...(emAtraso > 0 || nivel !== 'simples' ? [{ icone: 'relogio', rotulo: nAtraso ? tx('Atrasado ({0} {1})', nAtraso, nAtraso === 1 ? tx('parcela') : tx('parcelas')) : tx('Atrasado'), valor: fmtValor(emAtraso), cor: emAtraso ? 'var(--saida)' : 'var(--entrada)', tom: emAtraso ? 'ruim' as const : 'bom' as const }] : []),
+            ...(nivel !== 'simples' ? [{ icone: 'check', rotulo: recebe ? tx('Recebido no mês') : tx('Pago no mês'), valor: fmtValor(noMes), cor: 'var(--entrada)' }] : []),
+            ...(nivel === 'detalhado' ? [{ icone: 'historico', rotulo: recebe ? tx('Já recebido') : tx('Já pago'), valor: fmtValor(inicial - registrado), cor: 'var(--violeta)' }] : []),
+          ]}>
+          {falta > 0 && fim && nivel !== 'simples' && (
+            <div className="dv-vitrine-trilha">
+              <Trilha progresso={pct} cor={recebe ? 'var(--entrada)' : 'var(--entrada)'}
+                inicio={<>{tx('Começo')} <b>{fmtValor(inicial)}</b></>}
+                fim={<>{recebe ? tx('Tudo recebido') : tx('Livre')} <b>{fmtMesAno(fim[0], fim[1])}</b></>}
+                marcos={[{ em: 0.25, rotulo: '25%' }, { em: 0.5, rotulo: '50%' }, { em: 0.75, rotulo: '75%' }]} />
+            </div>
+          )}
+        </Vitrine>
+      )}
+
+      {lista.length > 0 && nivel !== 'simples' && falta > 0 && (
+        <section className="vt-grade-2" key={`g2-${lado}`}>
+          <div className="cartao vt-cartao">
+            <h3><Icone nome="calendario" tamanho={17} /> {recebe ? tx('Quanto entra nos próximos meses') : tx('Quanto sai nos próximos meses')}</h3>
+            {projecao.some((v) => v.valor > 0)
+              ? <Colunas cor={recebe ? 'var(--entrada)' : 'var(--divida)'} altura={c.mobile ? 110 : 140} formato={fmtCurto}
+                  itens={projecao.map((v, i) => ({ rotulo: noMeioDaFrase(MESES_CURTO[v.mes - 1]).slice(0, 3), valor: v.valor, destaque: i === 0, titulo: `${fmtMesAno(v.ano, v.mes)}: ${fmtValor(v.valor)}` }))} />
+              : <p className="quadro-vazio">{tx('Nada com data marcada pela frente.')}</p>}
           </div>
-          <div className="cartao dv-meses">
-            <h3 className="ccd-titulo">{recebe ? tx('Quanto entra nos próximos meses') : tx('Quanto sai nos próximos meses')}</h3>
-            <Barras valores={projecao} recebe={recebe} />
+          <div className="cartao vt-cartao">
+            <h3><Icone nome="relatorio" tamanho={17} /> {recebe ? tx('Quem te deve') : tx('Do que é feita a sua dívida')}</h3>
+            <div className="dv-composicao">
+              <Rosquinha tamanho={c.mobile ? 120 : 140} partes={composicao}>
+                <b>{fmtCurto(falta)}</b><small>{recebe ? tx('a receber') : tx('falta pagar')}</small>
+              </Rosquinha>
+              <BarraDividida partes={composicao} formato={fmtCurto} />
+            </div>
           </div>
         </section>
       )}
 
-      {itens.length > 0 && (
-        <div className="dv-grade" key={`g-${lado}`}>
+      {nivel === 'detalhado' && linhas.itens.length > 0 && (
+        <section className="cartao vt-cartao" key={`t-${lado}`}>
+          <h3><Icone nome="historico" tamanho={17} /> {recebe ? tx('Quando cada uma termina de entrar') : tx('Quando cada dívida acaba')}</h3>
+          <LinhaDoTempo itens={linhas.itens} eixo={linhas.eixo} />
+        </section>
+      )}
+
+      {itens.length > 0 && nivel === 'simples' && (
+        <div className="vt-tiles" key={`s-${lado}`}>
           {itens.map((x, i) => (
-            <CartaoDivida key={x.s.divida.id} s={x.s} cal={x.cal} estado={x.estado} recebe={recebe} indice={i}
-              aoAbrir={() => { setConferindo(false); setAberta(x.s.divida.id) }} aoPagar={() => c.pagarDivida(x.s)}
-              aoConferir={() => { setConferindo(true); setAberta(x.s.divida.id) }} />
+            <TileDivida key={x.s.divida.id} s={x.s} cal={x.cal} estado={x.estado} recebe={recebe} indice={i}
+              aoAbrir={() => { setConferindo(false); setAberta(x.s.divida.id) }} aoPagar={() => c.pagarDivida(x.s)} />
           ))}
         </div>
+      )}
+
+      {itens.length > 0 && nivel !== 'simples' && (
+        <>
+          <TituloDaSecao icone="lista">{recebe ? tx('Cada valor a receber') : tx('Cada dívida')}</TituloDaSecao>
+          <div className="dv-grade" key={`g-${lado}`}>
+            {itens.map((x, i) => (
+              <CartaoDivida key={x.s.divida.id} s={x.s} cal={x.cal} estado={x.estado} recebe={recebe} indice={i}
+                aoAbrir={() => { setConferindo(false); setAberta(x.s.divida.id) }} aoPagar={() => c.pagarDivida(x.s)}
+                aoConferir={() => { setConferindo(true); setAberta(x.s.divida.id) }} />
+            ))}
+          </div>
+        </>
       )}
 
       {recebe && (
@@ -171,6 +242,12 @@ export function Dividas(c: Ctx) {
             {contasEntrada.length ? tx('Ver em Contas do mês') : tx('Cadastrar um recebimento mensal')} <Icone nome="seta" tamanho={14} />
           </button>
         </section>
+      )}
+
+      {nivel === 'simples' && lista.length > 0 && (
+        <button className="vt-mais-detalhe" onClick={c.personalizar}>
+          <Icone nome="ano" tamanho={16} /> {tx('Quer ver gráficos e quando cada dívida acaba? Mudar o jeito de ver')}
+        </button>
       )}
 
       {quitadas.length > 0 && (
@@ -308,6 +385,35 @@ function CartaoDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar, aoConf
   )
 }
 
+/** Jeito simples: a dívida num quadro grande, com o selo de quem, quanto falta, a barra do que já foi e um botão só. */
+function TileDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar }: {
+  s: SituacaoDivida; cal: Calendario | null; estado: ReturnType<typeof estadoDe>; recebe: boolean; indice: number; aoAbrir: () => void; aoPagar: () => void
+}) {
+  const pct = s.saldoInicial > 0 ? (s.saldoInicial - s.restante) / s.saldoInicial : 1
+  const sugerido = sugeridoParaPagar(s, cal)
+  const atrasada = estado.id === 'atrasada'
+  return (
+    <article className={`vt-tile dv-tile ${estado.id}`} style={{ '--c': atrasada ? 'var(--saida)' : corDe(s), '--i': indice } as React.CSSProperties}>
+      <button className="dv-tile-corpo" onClick={aoAbrir} aria-label={tx('Ver {0}', s.divida.descricao)}>
+        <span className="vt-tile-topo">
+          <Quem s={s} tamanho={44} />
+          <span><strong>{s.divida.descricao}</strong><small>{estado.texto}</small></span>
+          <Anel valor={pct} cor="var(--entrada)" tamanho={46}>{Math.round(pct * 100)}%</Anel>
+        </span>
+        <span className="dv-tile-valor">
+          <small>{recebe ? tx('falta receber') : tx('falta pagar')}</small>
+          <b className="vt-tile-valor"><Numero valor={s.restanteHoje} formato={(n) => fmtDiv(s, n)} /></b>
+        </span>
+        {cal?.proxima && !atrasada && <span className="dv-tile-data"><Icone nome="calendario" tamanho={14} /> {fmtDataCurta(cal.proxima.vencimento)}</span>}
+        {atrasada && cal && <span className="dv-tile-data ruim"><Icone nome="relogio" tamanho={14} /> {tx('desde {0}', fmtDataCurta(cal.atrasadas[0].vencimento))}</span>}
+      </button>
+      <button className={`btn ${atrasada ? 'perigo-forte' : 'primario'}`} onClick={aoPagar}>
+        <Icone nome={recebe ? 'receber' : 'check'} tamanho={16} /> {sugerido ? (recebe ? tx('Receber {0}', fmtDiv(s, sugerido)) : tx('Pagar {0}', fmtDiv(s, sugerido))) : recebe ? tx('Lançar recebimento') : tx('Lançar pagamento')}
+      </button>
+    </article>
+  )
+}
+
 /** Um tracinho por parcela, pintado conforme a situação; a parcial enche até onde foi paga. */
 function Pips({ parcelas }: { parcelas: ParcelaDivida[] }) {
   if (parcelas.length > 36) {
@@ -320,23 +426,6 @@ function Pips({ parcelas }: { parcelas: ParcelaDivida[] }) {
         <i key={p.n} className={p.estado} style={{ '--p': `${(p.pago / p.valor) * 100}%`, animationDelay: `${150 + i * 22}ms` } as React.CSSProperties} />
       ))}
     </span>
-  )
-}
-
-/** Barras dos próximos 12 meses (atrasados entram no mês atual). */
-function Barras({ valores, recebe }: { valores: { ano: number; mes: number; valor: number }[]; recebe: boolean }) {
-  const maior = Math.max(1, ...valores.map((v) => v.valor))
-  if (!valores.some((v) => v.valor > 0)) return <p className="quadro-vazio">{tx('Nada com data marcada pela frente.')}</p>
-  return (
-    <div className={`dv-barras ${recebe ? 'recebe' : ''}`}>
-      {valores.map((v, i) => (
-        <div key={`${v.ano}-${v.mes}`} className={`ccd-barra ${i === 0 ? 'atual' : ''} ${v.valor ? '' : 'vazia'}`} title={`${fmtMesAno(v.ano, v.mes)}: ${fmtValor(v.valor)}`}>
-          <span className="ccd-barra-valor">{v.valor ? fmtValor(v.valor).replace(/,\d\d$/, '') : '—'}</span>
-          <span className="ccd-barra-trilho"><i style={{ height: `${Math.max(v.valor ? 6 : 0, (v.valor / maior) * 100)}%`, animationDelay: `${i * 45}ms` }} /></span>
-          <span className="ccd-barra-mes">{noMeioDaFrase(MESES_CURTO[v.mes - 1])}</span>
-        </div>
-      ))}
-    </div>
   )
 }
 

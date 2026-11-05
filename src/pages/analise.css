@@ -47,29 +47,118 @@
 .vis-frase { margin: 0; font-size: 14px; line-height: 1.45; color: var(--texto-2); }
 .vis-corpo { margin-top: 8px; min-width: 0; }
 .an-feed { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.an-topo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.an-topo > div { display: grid; min-width: 0; }
-.an-topo > div > * { min-width: 0; }
+/* ---------- montagem por jeito de ver ----------
+   simples: vitrine, "Faça agora" e a dupla nota + balança; equilibrado: vitrine e três quadros lado a lado;
+   detalhado: vitrine, dois quadros, o plano de ação em lista e o feed em seções */
+.an-cabecalho { align-items: flex-end; }
+.an-cabecalho .an-jeito { justify-content: flex-end; max-width: 60%; }
+.an-quadros { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: stretch; }
+.an-quadros > * { min-width: 0; }
+.an-dupla { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (min-width: 900px) {
+  .an-dupla { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .an-detalhado .an-quadros { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .an-detalhado .an-quadros.sem-mes { grid-template-columns: minmax(0, 1fr); }
+}
+@media (min-width: 1180px) {
+  .an-equilibrado .an-quadros { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr); }
+  .an-equilibrado .an-quadros.sem-mes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .an-simples .an-quadros.simples { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
+  .an-simples .an-quadros.simples .an-dupla { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+/* com três quadros na linha, a escada e a cascata ficam mais baixas */
+.an-quadros .escada { padding-top: 26px; }
+.an-quadros .escada-degrau { height: calc(var(--h) * .8); }
+.an-quadros .cascata-area { height: 120px; }
 
-/* computador: os cartões do topo em grade 2 × 2 (cada linha com a mesma altura) e o feed encaixado em colunas,
-   sem os buracos que a grade deixava embaixo do cartão mais baixo */
+/* a vitrine do "Hoje você pode gastar" */
+.an-vitrine { grid-template-columns: minmax(200px, 280px) minmax(0, 1fr); }
+.an-vitrine .velocimetro { max-width: 280px; }
+.an-vel-pct { font-family: var(--fonte-numeros); font-size: 30px; font-weight: 800; letter-spacing: -.03em; color: color-mix(in srgb, var(--c) 75%, var(--texto)); }
+.an-vel-rot { font-size: 12px; font-weight: 600; color: var(--texto-3); }
+.an-vitrine-porque { grid-column: 1 / -1; }
+.an-vitrine-medidor { width: 220px; }
+@media (max-width: 860px) {
+  .an-vitrine { grid-template-columns: minmax(0, 1fr); }
+  .an-vitrine .velocimetro { max-width: 230px; }
+  .an-vitrine-porque { justify-self: center; }
+  .an-vitrine-porque .an-porque { justify-items: center; }
+  .an-cabecalho .an-jeito { max-width: none; justify-content: flex-start; }
+}
+
+/* nota curta (simples) */
+.an-nota { justify-items: center; text-align: center; }
+.an-nota .vis-cab { width: 100%; }
+.an-nota .medidor { max-width: 230px; }
+.an-degraus { list-style: none; margin: 6px 0 0; padding: 0; display: flex; gap: 6px; }
+.an-degraus li { width: 30px; height: 8px; border-radius: 8px; background: var(--preench-2); animation: vis-escala .4s var(--mola) calc(var(--i) * 90ms + .4s) backwards; }
+.an-degraus li.feito { background: var(--an-bom); }
+.an-degraus li.atual { width: 46px; background: var(--destaque); box-shadow: 0 0 12px -2px var(--destaque); }
+.vis:not(.vivo) .an-degraus li { animation-play-state: paused; }
+.an-nota-fase { font-size: 14px; font-weight: 650; color: var(--texto-2); }
+
+/* balança do mês (simples) */
+.an-balanca-barras { display: grid; gap: 10px; margin-top: 10px; }
+.an-balanca-barras > span { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.an-balanca-barras svg { color: var(--an-bom); }
+.an-balanca-barras .sai svg { color: var(--an-ruim); }
+.an-balanca-barras i { display: block; height: 16px; border-radius: 16px; background: linear-gradient(90deg, color-mix(in srgb, var(--an-bom) 55%, transparent), var(--an-bom)); transform-origin: left; animation: vis-cresce-x 1s var(--mola) .15s backwards; }
+.an-balanca-barras .sai i { background: linear-gradient(90deg, color-mix(in srgb, var(--an-ruim) 55%, transparent), var(--an-ruim)); animation-delay: .35s; }
+.an-balanca-barras b { font-size: 14px; font-variant-numeric: tabular-nums; }
+.vis:not(.vivo) .an-balanca-barras i { animation-play-state: paused; }
+
+/* plano de ação (detalhado) */
+.an-plano { display: grid; gap: 12px; padding: 18px 20px; }
+.an-plano .vis-cab h3 { display: inline-flex; align-items: center; gap: 8px; }
+.an-plano .vis-cab h3 svg { color: var(--destaque); }
+.an-plano-conta { font-size: 13px; font-weight: 650; color: var(--texto-3); }
+.an-plano ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: passo; }
+.an-plano li {
+  --c: var(--an-destino);
+  display: grid; grid-template-columns: 26px 40px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 16px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 9%, transparent), transparent 60%); border: 1px solid color-mix(in srgb, var(--c) 18%, var(--borda));
+  animation: vis-aparece .45s var(--mola) calc(var(--i) * 60ms) backwards;
+}
+.an-plano li.nivel-urgente { --c: var(--an-ruim); }
+.an-plano li.nivel-importante { --c: var(--an-atencao); }
+.an-plano:not(.vivo) li { animation-play-state: paused; }
+.an-plano-n { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-size: 13px; font-weight: 800; color: var(--superficie); background: var(--c); }
+.an-plano-ic { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); }
+.an-plano-texto { display: grid; gap: 4px; justify-items: start; min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.an-plano-texto strong { font-size: 14.5px; font-weight: 650; line-height: 1.35; }
+.an-plano-ganho { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 700; color: color-mix(in srgb, var(--an-bom) 80%, var(--texto)); }
+.an-plano-porque { font-size: 13.5px; line-height: 1.5; color: var(--texto-2); animation: vis-aparece .3s var(--mola); }
+.an-plano li .btn { height: 38px; padding: 0 14px; font-size: 13.5px; white-space: nowrap; }
+@media (max-width: 700px) {
+  .an-plano li { grid-template-columns: 26px minmax(0, 1fr); }
+  .an-plano-ic { display: none; }
+  .an-plano li .btn { grid-column: 1 / -1; width: 100%; }
+}
+
+/* o feed */
+.an-feed-area { display: grid; gap: 16px; }
+.an-feed-cab { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px 16px; }
+.an-feed-cab .vt-secao { margin: 0; }
+.an-abas { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; border-radius: 999px; background: var(--preench-3); }
+.an-abas button { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: var(--texto-2); font-size: 13.5px; font-weight: 650; transition: background .2s, color .2s; }
+.an-abas button.ativo { color: var(--texto); background: var(--superficie); box-shadow: var(--sombra); }
+.an-abas button svg { color: var(--destaque); }
+.an-indice { position: sticky; top: 74px; z-index: 3; display: flex; gap: 8px; overflow-x: auto; padding: 8px; margin: 0 -8px; border-radius: 999px; background: color-mix(in srgb, var(--fundo) 80%, transparent); backdrop-filter: blur(10px); scrollbar-width: none; }
+.an-indice button { flex: none; display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px; border: 1px solid var(--borda); border-radius: 999px; background: var(--superficie); color: var(--texto); font-size: 13.5px; font-weight: 650; }
+.an-indice button svg { color: var(--destaque); }
+.an-indice small { font-size: 12px; color: var(--texto-3); }
+.an-secao { display: grid; gap: 14px; scroll-margin-top: 140px; }
+.an-feed { animation: vis-aparece .4s var(--mola); }
+
+/* computador: o feed encaixado em colunas, sem os buracos que a grade deixava embaixo do cartão mais baixo */
 @media (min-width: 1100px) {
-  .an-topo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: 'hoje agora' 'como mes'; align-items: stretch; }
-  .an-topo.sem-mes { grid-template-areas: 'hoje agora' 'como como'; }
-  .an-topo-hoje { grid-area: hoje; }
-  .an-topo-agora { grid-area: agora; }
-  .an-topo-como { grid-area: como; }
-  .an-topo-mes { grid-area: mes; }
-  .an-topo .escada { padding-top: 26px; }
-  .an-topo .escada-degrau { height: calc(var(--h) * .8); }
-  .an-topo .cascata-area { height: 120px; }
   .an-feed { display: block; columns: 2; column-gap: 16px; }
   .an-feed > * { break-inside: avoid; margin-bottom: 16px; }
   /* no computador, o dia do calendário não precisa ser quadrado: achatado, o cartão não vira uma torre */
   .analise .calendario-dia { aspect-ratio: auto; min-height: 44px; }
 }
 @media (min-width: 1600px) {
-  .an-feed { columns: 3; }
+  .an-detalhado .an-feed { columns: 3; }
 }
 .an-mais { justify-self: center; height: 46px; padding: 0 22px; font-size: 15px; }
 .an-nota-fraca { margin: 10px 0 0; font-size: 12.5px; color: var(--texto-3); }
@@ -83,19 +172,6 @@
 .an-traco:hover, .an-traco.aberto { background: var(--preench-2); }
 .an-jeito-porque { flex-basis: 100%; margin: 0; font-size: 13.5px; line-height: 1.45; color: var(--texto-2); }
 
-/* ---------- hoje você pode gastar ---------- */
-.an-hoje { gap: 4px; padding: 22px 22px 18px; }
-.an-hoje-rotulo { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 650; color: var(--texto-2); }
-.an-hoje-rotulo svg { color: var(--c); }
-.an-hoje-valor { font-family: var(--fonte-numeros); font-size: 46px; font-weight: 800; letter-spacing: -.045em; line-height: 1.05; color: color-mix(in srgb, var(--c) 78%, var(--texto)); }
-.an-hoje-ate { font-size: 14px; color: var(--texto-2); }
-.an-hoje-trilho { height: 10px; margin-top: 12px; border-radius: 10px; background: var(--preench-4); overflow: hidden; }
-.an-hoje-trilho i { display: block; height: 100%; width: calc(var(--cheio) * 100%); min-width: 0; border-radius: inherit; background: var(--c); transform-origin: left; animation: vis-cresce-x .9s var(--mola) .15s backwards; }
-.vis:not(.vivo) .an-hoje-trilho i { animation-play-state: paused; }
-.an-hoje-pe { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13.5px; color: var(--texto-2); }
-.an-hoje-pe b { color: var(--texto); font-variant-numeric: tabular-nums; }
-.an-hoje-pe b.ruim { color: var(--an-ruim); }
-
 /* ---------- gráficos escondidos ---------- */
 .an-escondidos { display: grid; gap: 10px; justify-items: center; }
 .an-escondidos > .link { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
@@ -104,10 +180,10 @@
 .an-escondidos li .btn { height: 34px; padding: 0 12px; font-size: 13px; }
 
 /* ---------- 1. como estou ---------- */
-.an-como { padding-bottom: 14px; }
+.an-como { padding-bottom: 14px; container-type: inline-size; }
 .an-como-topo { display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr); gap: 18px; align-items: center; }
 .an-como-texto { display: grid; gap: 4px; justify-items: start; }
-.an-como-texto strong { font-size: 22px; font-weight: 750; letter-spacing: -.02em; }
+.an-como-texto strong { font-size: 21px; font-weight: 750; letter-spacing: -.02em; }
 .an-como-texto > span:last-child { font-size: 15px; color: var(--texto-2); }
 .an-rotulo {
   display: inline-flex; align-items: center; height: 26px; padding: 0 11px; border-radius: 999px; font-size: 13px; font-weight: 700;
@@ -208,9 +284,9 @@
 .vis:not(.vivo) .cascata-area i, .vis:not(.vivo) .cascata-area b { animation-play-state: paused; }
 
 /* ---------- calendário ---------- */
-.calendario { display: grid; gap: 10px; }
+.vis .calendario { display: grid; gap: 10px; }
 .calendario-grade { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
-.calendario-semana { text-align: center; font-size: 11px; font-weight: 700; color: var(--texto-3); padding-bottom: 2px; }
+.vis .calendario-semana { text-align: center; font-size: 11px; font-weight: 700; color: var(--texto-3); padding-bottom: 2px; }
 .calendario-dia {
   --m: transparent; position: relative; display: grid; align-content: space-between; justify-items: center; gap: 2px; aspect-ratio: 1; min-height: 38px;
   padding: 5px 2px; border-radius: 10px; border: 1px solid var(--borda); background: var(--superficie-2); color: var(--texto); font-size: 12.5px; font-weight: 650;
@@ -370,29 +446,29 @@ li.caiu .halteres-agora { background: var(--an-bom); }
 .tempo-eixo { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--texto-3); border-top: 1px dashed var(--borda-forte); padding-top: 6px; }
 
 /* ---------- pote (reserva) ---------- */
-.pote { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 22px; align-items: center; }
-.pote-vidro {
+.rsv { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 22px; align-items: center; }
+.rsv-vidro {
   position: relative; height: 170px; border-radius: 16px 16px 26px 26px; overflow: visible;
   border: 3px solid var(--borda-forte); border-top-width: 6px; background: var(--preench-4);
 }
-.pote-agua {
+.rsv-agua {
   position: absolute; left: 0; right: 0; bottom: 0; height: var(--n); border-radius: 0 0 22px 22px;
   background: linear-gradient(180deg, color-mix(in srgb, var(--an-destino) 75%, #fff), var(--an-destino));
   animation: vis-enche 1.6s var(--mola) .1s backwards;
 }
-.pote-agua::before {
+.rsv-agua::before {
   content: ''; position: absolute; left: 0; right: 0; top: -6px; height: 12px; border-radius: 50%;
   background: color-mix(in srgb, var(--an-destino) 60%, #fff); opacity: .8;
 }
-.vis:not(.vivo) .pote-agua { animation-play-state: paused; }
-.pote-marco { position: absolute; left: -6px; right: -6px; height: 0; border-top: 2px dashed var(--texto-3); }
-.pote-marco small { position: absolute; right: calc(100% + 6px); top: -9px; font-size: 11px; font-weight: 650; color: var(--texto-2); white-space: nowrap; }
-.pote-numeros { display: grid; gap: 6px; justify-items: start; }
-.pote-numeros strong { font-family: var(--fonte-numeros); font-size: 26px; font-weight: 800; letter-spacing: -.03em; }
-.pote-numeros > small { margin-top: -6px; font-size: 12.5px; color: var(--texto-3); }
-.pote-numeros span { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--texto-2); }
-.pote-numeros span.ok { color: color-mix(in srgb, var(--an-bom) 80%, var(--texto)); font-weight: 650; }
-.pote { padding-left: 58px; }
+.vis:not(.vivo) .rsv-agua { animation-play-state: paused; }
+.rsv-marco { position: absolute; left: -6px; right: -6px; height: 0; border-top: 2px dashed var(--texto-3); }
+.rsv-marco small { position: absolute; right: calc(100% + 6px); top: -9px; font-size: 11px; font-weight: 650; color: var(--texto-2); white-space: nowrap; }
+.rsv-numeros { display: grid; gap: 6px; justify-items: start; }
+.rsv-numeros strong { font-family: var(--fonte-numeros); font-size: 26px; font-weight: 800; letter-spacing: -.03em; }
+.rsv-numeros > small { margin-top: -6px; font-size: 12.5px; color: var(--texto-3); }
+.rsv-numeros span { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--texto-2); }
+.rsv-numeros span.ok { color: color-mix(in srgb, var(--an-bom) 80%, var(--texto)); font-weight: 650; }
+.rsv { padding-left: 58px; }
 
 /* ---------- anéis (metas) ---------- */
 .aneis { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 16px 10px; }
@@ -440,8 +516,6 @@ li.caiu .halteres-agora { background: var(--an-bom); }
   .an-agora-passo strong { font-size: 16.5px; }
   .an-agora-pe .btn { flex: 1 1 100%; height: 46px; }
   .an-mes-numero strong { font-size: 32px; }
-  .an-hoje { padding: 18px 16px 16px; }
-  .an-hoje-valor { font-size: 40px; }
   .vis-botoes .vis-ir { width: 32px; height: 32px; }
   .cascata { gap: 6px; }
   .cascata-area { height: 130px; }
@@ -450,6 +524,57 @@ li.caiu .halteres-agora { background: var(--an-bom); }
   .rosca { grid-template-columns: 130px minmax(0, 1fr); gap: 14px; }
   .calendario-grade { gap: 4px; }
   .calendario-dia { min-height: 34px; border-radius: 8px; font-size: 11.5px; }
-  .pote { grid-template-columns: 84px minmax(0, 1fr); padding-left: 58px; gap: 16px; }
-  .pote-vidro { height: 150px; }
+  .rsv { grid-template-columns: 84px minmax(0, 1fr); padding-left: 58px; gap: 16px; }
+  .rsv-vidro { height: 150px; }
 }
+
+/* ---------- toques visuais do redesenho ---------- */
+/* faça agora: fundo na cor da urgência e ícone grande com brilho */
+.an-agora { background: radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, var(--c) 13%, transparent), transparent 60%), var(--superficie); }
+.an-agora-titulo { display: inline-flex; align-items: center; gap: 6px; }
+.an-agora-passo { animation: vis-aparece .4s var(--mola); }
+.an-agora-icone { position: relative; box-shadow: 0 10px 26px -12px var(--c); }
+.an-agora-icone::after { content: ''; position: absolute; inset: -4px; border-radius: 19px; border: 2px solid color-mix(in srgb, var(--c) 30%, transparent); animation: vt-pulso-borda 2.4s ease-out infinite; }
+@keyframes vt-pulso-borda { 0% { opacity: 1; transform: scale(.92); } 100% { opacity: 0; transform: scale(1.18); } }
+.an-agora.nivel-tudo-certo .an-agora-icone::after { animation: none; }
+
+/* o que mudou: uma faixa com setas em bolinhas coloridas */
+.an-mudou { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 16px; }
+.an-mudou ul { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.an-mudou li { align-items: center; animation: vis-aparece .4s var(--mola) calc(var(--i) * 80ms) backwards; }
+.an-mudou-seta { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 50%; color: var(--texto-2); background: var(--preench-3); }
+.an-mudou li.bom .an-mudou-seta { color: var(--an-bom); background: color-mix(in srgb, var(--an-bom) 15%, transparent); }
+.an-mudou li.ruim .an-mudou-seta { color: var(--an-ruim); background: color-mix(in srgb, var(--an-ruim) 15%, transparent); }
+.an-mudou li svg { margin: 0; color: inherit !important; }
+@media (max-width: 700px) { .an-mudou { grid-template-columns: minmax(0, 1fr); } }
+
+/* cartões dos gráficos: leve elevação ao passar o ponteiro */
+@media (hover: hover) and (pointer: fine) {
+  .vis { transition: transform .2s var(--mola), box-shadow .2s; }
+  .an-feed .vis:hover { transform: translateY(-3px); box-shadow: var(--sombra), 0 18px 40px -26px var(--c); }
+}
+
+/* "Como estou" estreito (três quadros na linha, celular): o velocímetro em cima, o degrau embaixo */
+@container (max-width: 400px) {
+  .an-como-topo { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; gap: 4px; }
+  .an-como-topo .medidor { max-width: 210px; }
+  .an-como-texto { justify-items: center; }
+}
+
+/* "De onde sai o dinheiro" fechado: barra e etiquetas; tocar abre a lista */
+.fluxo { gap: 10px; }
+.fluxo-grupo { gap: 0; border-radius: 16px; background: var(--preench-4); }
+.fluxo-grupo.falta { padding: 12px 14px; gap: 8px; background: color-mix(in srgb, var(--an-ruim) 8%, transparent); }
+.fluxo-topo { display: grid; gap: 8px; width: 100%; padding: 12px 14px; border: 0; border-radius: 16px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.fluxo-topo:hover { background: var(--preench-4); }
+.fluxo-cab > svg { flex: none; color: var(--texto-3); }
+.fluxo-cab > b { margin-left: auto; }
+.fluxo-etiquetas { display: flex; flex-wrap: wrap; gap: 6px; }
+.fluxo-etiquetas span { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.fluxo-etiquetas .destino { color: color-mix(in srgb, var(--an-destino) 80%, var(--texto)); background: color-mix(in srgb, var(--an-destino) 13%, transparent); }
+.fluxo-etiquetas .livre { color: color-mix(in srgb, var(--an-bom) 80%, var(--texto)); background: color-mix(in srgb, var(--an-bom) 13%, transparent); }
+.fluxo-etiquetas .atrasa { color: color-mix(in srgb, var(--an-atencao) 85%, var(--texto)); background: color-mix(in srgb, var(--an-atencao) 14%, transparent); }
+.fluxo-etiquetas .falta { color: color-mix(in srgb, var(--an-ruim) 85%, var(--texto)); background: color-mix(in srgb, var(--an-ruim) 13%, transparent); }
+.fluxo-grupo.aberto .fluxo-itens { padding: 0 14px 12px; animation: vis-aparece .3s var(--mola); }
+.an-quadros .an-agora { align-content: start; }
+.an-quadros .an-agora .an-agora-pe { margin-top: auto; }
