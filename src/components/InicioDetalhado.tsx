@@ -22,7 +22,15 @@ const NOME_DO_SINAL: Record<Sinal, () => string> = {
 
 // ---------- o mês num gráfico ----------
 /** O cartão do mês: quanto sobrou até hoje, como o mês deve terminar e o gráfico dia a dia. */
-export function CartaoDoMes({ dd, nomeMes, compacto, divida }: { dd: DiaADia; nomeMes: string; compacto?: boolean; divida?: number[] }) {
+export function CartaoDoMes({ dd, nomeMes, compacto, divida, parcelasDia }: {
+  dd: DiaADia; nomeMes: string; compacto?: boolean
+  /** Quanto se deve ao fim de cada dia: vira a linha "Dívidas: hoje → no dia 30" do topo. */
+  divida?: number[]
+  /** Parcelas de dívida que ainda vencem em cada dia: amarelas no gráfico. */
+  parcelasDia?: number[]
+}) {
+  const dividaHoje = divida?.length ? divida[Math.max(1, Math.min(dd.dias, dd.hoje)) - 1] : 0
+  const dividaFim = divida?.length ? divida[dd.dias - 1] : 0
   const futuro = dd.hoje === 0
   const acabou = dd.hoje === dd.dias
   const ateHoje = dd.entrou - dd.saiu
@@ -47,7 +55,13 @@ export function CartaoDoMes({ dd, nomeMes, compacto, divida }: { dd: DiaADia; no
           </div>
         )}
       </div>
-      <GraficoDoMes dd={dd} divida={divida} compacto={compacto} altura={compacto ? 230 : 280} />
+      {dividaHoje > 0 && (
+        <p className="idet-divida">
+          <i />{tx('Dívidas')} <b>{fmtValor(dividaHoje)}</b>
+          {!acabou && Math.abs(dividaFim - dividaHoje) >= 0.5 && <span className="idet-divida-fim">{'→ '}<b>{fmtValor(dividaFim)}</b> {tx('no dia {0}', dd.dias)}</span>}
+        </p>
+      )}
+      <GraficoDoMes dd={dd} parcelasDia={parcelasDia} compacto={compacto} altura={compacto ? 230 : 280} />
     </section>
   )
 }

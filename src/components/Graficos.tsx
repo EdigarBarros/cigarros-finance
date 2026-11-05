@@ -279,13 +279,14 @@ export function GraficoFluxo({ porMes, previsto, modo = 'feito', mesAtual, altur
 }
 
 /**
- * O gráfico do Resumo do ano, só que de um mês, semana a semana (dias 1 a 7, 8 a 14…): Entrou e Saiu em barras, o que
- * ainda vem listrado em cima, a linha do que sobrou até ali e a tracejada de como o mês termina se nada mudar.
+ * O gráfico do Resumo do ano, só que de um mês, semana a semana (dias 1 a 7, 8 a 14…), num eixo só: Entrou e Saiu em barras,
+ * o que ainda vem listrado em cima (as parcelas de dívida em amarelo, dentro da saída) e uma linha só, a do saldo do mês:
+ * cheia até a semana de hoje, tracejada dali em diante; verde enquanto sobra, vermelha quando falta.
  */
-export function GraficoDoMes({ dd, divida, altura, compacto }: {
+export function GraficoDoMes({ dd, parcelasDia, altura, compacto }: {
   dd: DiaADia; altura?: number; compacto?: boolean
-  /** Quanto se deve ao fim de cada dia (com o módulo de dívidas ligado): vira a linha das dívidas, no eixo da direita. */
-  divida?: number[]
+  /** Parcelas de dívida que ainda vencem em cada dia (já somadas em `vaiSairDia`): pintadas à parte, em amarelo. */
+  parcelasDia?: number[]
 }) {
   const c = useCoresDoGrafico()
   const semanas = Array.from({ length: Math.ceil(dd.dias / 7) }, (_, i) => [i * 7 + 1, Math.min(dd.dias, i * 7 + 7)] as const)
@@ -293,39 +294,31 @@ export function GraficoDoMes({ dd, divida, altura, compacto }: {
   if (semanas.length > 4 && semanas[4][1] - semanas[4][0] < 2) semanas.splice(3, 2, [semanas[3][0], dd.dias])
   const rotulos = semanas.map(([a, b]) => `${a}–${b}`)
   const somaDe = (xs: number[]) => semanas.map(([a, b]) => centavos(xs.slice(a - 1, b).reduce((t, n) => t + n, 0)))
-  const entrou = somaDe(dd.entrouDia), saiu = somaDe(dd.saiuDia), vaiEntrar = somaDe(dd.vaiEntrarDia), vaiSair = somaDe(dd.vaiSairDia)
+  const entrou = somaDe(dd.entrouDia), saiu = somaDe(dd.saiuDia), vaiEntrar = somaDe(dd.vaiEntrarDia)
+  const parcelas = parcelasDia ? somaDe(parcelasDia) : semanas.map(() => 0)
+  const vaiSair = somaDe(dd.vaiSairDia).map((v, i) => centavos(Math.max(0, v - parcelas[i])))
   // semana de hoje (-1 se o mês ainda não começou)
   const semanaHoje = dd.hoje === 0 ? -1 : semanas.findIndex(([a, b]) => dd.hoje >= a && dd.hoje <= b)
-  const temVem = vaiEntrar.some(Boolean) || vaiSair.some(Boolean)
-  let acum = 0, acumVem = 0
-  const sobrou = semanas.map((_, i) => { acum += entrou[i] - saiu[i]; return i <= semanaHoje ? centavos(acum) : null })
-  const vaiSobrar = semanas.map((_, i) => {
-    acumVem += entrou[i] - saiu[i] + vaiEntrar[i] - vaiSair[i]
-    // começa na semana anterior à de hoje, emendada na linha do que sobrou
-    if (!temVem && semanaHoje === semanas.length - 1) return null
-    if (i === semanaHoje - 1) return sobrou[i]
-    return i >= Math.max(0, semanaHoje) ? centavos(acumVem) : null
+  // saldo do mês no fim de cada semana: até a semana de hoje, o que aconteceu; dali em diante, somando o que ainda vem
+  let feito = 0, vem = 0
+  const saldo = semanas.map((_, i) => {
+    feito += entrou[i] - saiu[i]
+    vem += vaiEntrar[i] - vaiSair[i] - parcelas[i]
+    return centavos(i <= semanaHoje ? feito : feito + vem)
   })
   const nulo = (xs: number[]) => xs.map((n) => n || null)
-  // a linha do que sobrou tem a cor do que mostra: verde enquanto sobra, vermelha quando falta (bolinha e trecho da linha)
   const VERDE = PALETA.entradas[1], VERMELHO = PALETA.saidas[1]
-  const corDoSaldo = {
-    pointBackgroundColor: (x: ScriptableContext<'line'>) => ((x.raw as number | null) ?? 0) < 0 ? VERMELHO : VERDE,
-    pointHoverBackgroundColor: (x: ScriptableContext<'line'>) => ((x.raw as number | null) ?? 0) < 0 ? VERMELHO : VERDE,
-    segment: { borderColor: (x: { p1: { parsed: { y: number } } }) => (x.p1.parsed.y < 0 ? VERMELHO : VERDE) },
-  }
-  // dívidas: quanto se deve no fim de cada semana (até hoje, o que aconteceu; dali em diante, com as parcelas pagas em dia)
-  const linhasDaDivida = () => {
-    if (!divida?.length || !divida.some((v) => v > 0)) return []
-    const noDia = (d: number) => divida[Math.min(dd.dias, Math.max(1, d)) - 1]
-    const feita = semanas.map(([, b], i) => (i <= semanaHoje ? noDia(Math.min(b, dd.hoje)) : null))
-    const prevista = semanas.map(([, b], i) => (dd.hoje >= dd.dias ? null : i === semanaHoje - 1 ? feita[i] : i >= Math.max(0, semanaHoje) ? noDia(b) : null))
-    const eixo = { yAxisID: 'y1' }
-    return [
-      ...(feita.some((v) => v !== null) ? [linha(tx('Dívidas'), PALETA.divida, feita, c.fundo, compacto, eixo)] : []),
-      ...(prevista.some((v) => v !== null) ? [linha(tx('Vai dever'), PALETA.divida, prevista, c.fundo, compacto, { ...eixo, borderDash: [5, 4] })] : []),
-    ]
-  }
+  const corDe = (v: number | null | undefined) => ((v ?? 0) < 0 ? VERMELHO : VERDE)
+  const linhaDoSaldo = linha(tx('Saldo do mês'), VERDE, saldo, c.fundo, compacto, {
+    pointBackgroundColor: (x: ScriptableContext<'line'>) => corDe(x.raw as number | null),
+    pointHoverBackgroundColor: (x: ScriptableContext<'line'>) => corDe(x.raw as number | null),
+    segment: {
+      borderColor: (x: { p1: { parsed: { y: number } } }) => corDe(x.p1.parsed.y),
+      borderDash: (x: { p1DataIndex: number }) => (x.p1DataIndex > semanaHoje ? [5, 4] : undefined),
+    },
+  })
+  const temVem = vaiEntrar.some(Boolean) || vaiSair.some(Boolean)
+  const temParcelas = parcelas.some(Boolean)
   const series = [
     barra(tx('Entrou'), PALETA.entradas, nulo(entrou), compacto, 'entrou'),
     barra(tx('Saiu'), PALETA.saidas, nulo(saiu), compacto, 'saiu'),
@@ -333,11 +326,10 @@ export function GraficoDoMes({ dd, divida, altura, compacto }: {
       barraPrevista(tx('Vai entrar'), PALETA.entradas[0], nulo(vaiEntrar), compacto, 'entrou'),
       barraPrevista(tx('Vai sair'), PALETA.saidas[0], nulo(vaiSair), compacto, 'saiu'),
     ] : []),
-    ...(semanaHoje >= 0 ? [linha(tx('Sobrou'), VERDE, sobrou, c.fundo, compacto, corDoSaldo)] : []),
-    ...(vaiSobrar.some((v) => v !== null) ? [linha(tx('Vai sobrar'), VERDE, vaiSobrar, c.fundo, compacto, { ...corDoSaldo, borderDash: [5, 4] })] : []),
-    ...linhasDaDivida(),
+    ...(temParcelas ? [barraPrevista(tx('Parcelas de dívida'), PALETA.divida, nulo(parcelas), compacto, 'saiu')] : []),
+    linhaDoSaldo,
   ]
-  const base = opcoes(c, { rotulos, mesDoIndice: (i) => i + 1, mesAtual: semanaHoje + 1, compacto, destacar: semanaHoje >= 0, eixoDireito: divida ? PALETA.divida : undefined })
+  const base = opcoes(c, { rotulos, mesDoIndice: (i) => i + 1, mesAtual: semanaHoje + 1, compacto, legenda: false, destacar: semanaHoje >= 0 })
   const comTitulo: ChartOptions<'bar'> = {
     ...base,
     plugins: {
@@ -348,9 +340,19 @@ export function GraficoDoMes({ dd, divida, altura, compacto }: {
   const { datasets, opcoes: opcoesFinais } = empilhar(series, comTitulo)
   const data = { labels: rotulos, datasets } as unknown as ChartData<'bar'>
   return (
-    <CaixaDoGrafico style={altura ? { height: altura } : undefined}>
-      <Misto type="bar" key={c.tema + c.ocultos + dd.dias} data={data} options={opcoesFinais} />
-    </CaixaDoGrafico>
+    <>
+      <CaixaDoGrafico style={altura ? { height: altura } : undefined}>
+        <Misto type="bar" key={c.tema + c.ocultos + dd.dias} data={data} options={opcoesFinais} />
+      </CaixaDoGrafico>
+      {/* legenda curta: o listrado vale para tudo que ainda vem, e a linha é uma só */}
+      <div className="legenda-mes">
+        <span><i className="legenda-barra" style={{ background: PALETA.entradas[0] }} />{tx('Entrou')}</span>
+        <span><i className="legenda-barra" style={{ background: PALETA.saidas[0] }} />{tx('Saiu')}</span>
+        {temVem && <span><i className="legenda-barra listrada" style={{ '--cor': '#8e98ae' } as CSSProperties} />{tx('Ainda vem')}</span>}
+        {temParcelas && <span><i className="legenda-barra listrada" style={{ '--cor': PALETA.divida } as CSSProperties} />{tx('Parcelas de dívida')}</span>}
+        <span><i className="legenda-linha" style={{ background: VERDE }} />{tx('Saldo do mês')}</span>
+      </div>
+    </>
   )
 }
 
