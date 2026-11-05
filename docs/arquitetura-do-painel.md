@@ -49,7 +49,7 @@ Por que essa ordem: a primeira pergunta é a que a pessoa abre o app para respon
 
 ### 4.0 Layout OpusCash (grade da Início)
 
-A ordem das perguntas continua a mesma; a grade segue o layout do OpusCash:
+A grade abaixo vale para o **equilibrado** (o detalhado tem a própria tela, em 4.0.1). A ordem das perguntas continua a mesma; a grade segue o layout do OpusCash:
 
 | Linha | Computador | Celular |
 | --- | --- | --- |
@@ -68,6 +68,32 @@ desligados em blocos com ícone, que crescem junto). Os blocos só trocam de col
 de itens, para nada pular de lugar enquanto a pessoa mexe. O gráfico de fluxo estica até a altura dos lançamentos ao lado.
 Na Início as listas têm teto (dívidas: 3 no simples, 4 nos outros; lançamentos: 5, ou 7 no detalhado) e "Ver todas" leva à página
 completa. Com 5 ou 6 indicadores, os cartões ficam mais baixos, 3 por linha.
+
+**Mês de hoje conta só até hoje.** Nos indicadores do equilibrado e no cartão do mês do detalhado, o mês que está correndo
+mostra **Sobrou/Faltou até hoje**, **Entrou até hoje** e **Saiu até hoje**: lançamento com data depois de hoje (parcela de
+cartão, conta lançada antes de vencer), fatura em aberto e conta fixa sem a baixa ainda não aconteceram (`diaADiaDoMes` em
+`lib/previsao.ts`, mesma regra do "Já aconteceu" dos gráficos). Antes, no dia 4 o mês já aparecia com as contas do dia 20 e
+um "Faltou" que não tinha acontecido. A comparação com o mês passado some no mês de hoje (até hoje contra o mês inteiro não é
+justo).
+
+### 4.0.1 Detalhado: o mês em gráfico e o mosaico (`components/InicioDetalhado.tsx`)
+
+Para o detalhado não virar uma parede de cartões e frases, a tela se lê olhando: ícone, número e cor.
+
+| Parte | O que mostra |
+| --- | --- |
+| Cartão do mês | **Sobrou/Faltou até hoje** em número grande, **Previsto no dia 30** e o saldo do mês **dia a dia**: linha cheia até hoje (o que já aconteceu), tracejada amarela depois (o que vem, se nada mudar), marca em "hoje" |
+| Números | **Entrou**, **Saiu** (até hoje) e **Gasto por dia** (com as compras no cartão, como o antigo "Gasto médio por dia") |
+| O que vem aí | Até 4 contas, faturas e parcelas na ordem do vencimento (atrasadas primeiro), de `tarefasDoMes` |
+| Mosaico | Peças **Gastos do mês, Contas do mês, Cartões, Dívidas, Dinheiro guardado, Metas** (só as ligadas), cada uma com ícone, número e bolinha: verde tudo certo, amarela pede atenção, vermelha precisa de você. Tocar abre o bloco completo logo abaixo (Gastos abre categorias e lançamentos), tocar de novo fecha |
+| Saúde do seu dinheiro | Igual aos outros jeitos |
+
+Bolinhas: Gastos compara o gasto por dia com o do mês passado (até igual: verde; até 20% a mais: amarela; mais: vermelha).
+Contas e Cartões: vermelha com algo atrasado, amarela vencendo em até 3 dias. Dívidas: vermelha com parcela atrasada.
+
+Arrumação (por largura do conteúdo, com container query): **celular** uma coluna e peças 2 por linha; **tablet** gráfico na
+largura toda e peças 3 por linha; **computador** gráfico à esquerda, números e "o que vem aí" à direita, peças numa fileira só.
+O **Fluxo financeiro** de 6 meses, o banner e o "Acompanhe mais" saíram do detalhado: o fluxo do ano fica no Resumo do ano.
 
 Menos texto, mais sinais: minilinha com os valores reais dos últimos 6 meses nos indicadores (Sobrou, Entrou, Saiu e, no
 detalhado, Gasto médio por dia e Maior saída; passando o ponteiro ou o dedo aparece o valor de cada mês), anel com quanto das dívidas já foi
