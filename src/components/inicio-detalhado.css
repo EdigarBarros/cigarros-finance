@@ -13,6 +13,12 @@
 .idet-grande.bom { color: var(--entrada); }
 .idet-grande.ruim, .idet-prev strong.ruim { color: var(--saida); }
 .idet-prev { text-align: right; }
+.idet-divida { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; font-size: 13.5px; color: var(--texto-2); }
+.idet-divida i { width: 9px; height: 9px; border-radius: 50%; background: var(--divida); margin-right: 2px; }
+.idet-divida-fim { white-space: nowrap; }
+.idet-divida b { font-family: var(--fonte-numeros); color: var(--texto); font-variant-numeric: tabular-nums; }
+.legenda-mes { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; font-size: 12.5px; color: var(--texto-2); }
+.legenda-mes span { display: inline-flex; align-items: center; }
 .idet-prev strong { display: block; margin-top: 4px; font-family: var(--fonte-numeros); font-size: 19px; font-weight: 700; color: var(--divida); font-variant-numeric: tabular-nums; }
 
 /* entrou, saiu, por dia */
