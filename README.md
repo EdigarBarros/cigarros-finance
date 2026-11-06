@@ -203,6 +203,10 @@ de assinatura (`signing.keystore`) e a senha ficam só com o dono do projeto, fo
   endereço. Leva a impressão digital (SHA-256) da chave de upload e também a da **chave de assinatura do app** do Google
   (Play Console → Testar e lançar → Configuração → Integridade do app → Assinatura de apps). Trocou a chave? Atualize o arquivo.
 - `public/sw.js` e `public/offline.html`: a tela "sem internet" do app instalado.
+- `src/lib/appAndroid.ts`: dentro do app o Google não deixa levar a pessoa a outro meio de pagamento (o Stripe). Lá, o site
+  abre direto no login (sem a página de propaganda) e somem os preços e os botões de assinar, gerenciar a assinatura e
+  atualizar o cartão. O teste grátis continua, e quem assinou pelo site entra normalmente. No navegador nada muda. Para ver o
+  modo app no computador, abra o site com `?app=android`.
 - Atualizar o app na loja só é preciso para mudar nome, ícone ou cores: o conteúdo vem do site e se atualiza sozinho.
 
 ## Rodar no computador

@@ -5,6 +5,7 @@ import { Carregando } from './components/Carregando'
 import { Configuracao, Login, NovaSenha } from './components/Entrada'
 import { TelaAssinatura } from './components/Assinatura'
 import { PaginaLegal } from './components/Legal'
+import { noAppAndroid } from './lib/appAndroid'
 import { documentoDoHash } from './lib/legal'
 import { nativo } from './lib/textos'
 import { temAcesso, useAssinatura } from './lib/assinatura'
@@ -64,8 +65,9 @@ export default function App() {
   // o link de "Esqueci minha senha" cria uma sessão: a tela de nova senha vem antes de qualquer outra
   if (recuperando) return comIdioma(<NovaSenha aoConcluir={() => setRecuperando(false)} />)
   if (!sessao) {
-    // Landing page por padrão; o login (ou o cadastro) abre quando a pessoa clica
-    if (login) return comIdioma(<Login inicial={login} />)
+    // Landing page por padrão; o login (ou o cadastro) abre quando a pessoa clica. No app da Play Store, que já foi instalado,
+    // a propaganda (com o preço) não faz sentido: abre direto no login.
+    if (login || noAppAndroid) return comIdioma(<Login inicial={login ?? 'entrar'} />)
     return comIdioma(<Apresentacao onLogin={() => setLogin('entrar')} onSignup={() => setLogin('criar')} />)
   }
 

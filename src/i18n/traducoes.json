@@ -9078,5 +9078,29 @@
   "Qual é o seu objetivo?": {
     "en": "What's your goal?",
     "es": "¿Cuál es tu objetivo?"
+  },
+  "Use o OpusCash completo por 7 dias, sem pagar nada.": {
+    "en": "Use the full OpusCash for 7 days, free of charge.",
+    "es": "Usa OpusCash completo durante 7 días, sin pagar nada."
+  },
+  "Para voltar ao painel, esta conta precisa de uma assinatura ativa. Não é possível assinar pelo app. Seus dados continuam guardados.": {
+    "en": "To get back to your dashboard, this account needs an active subscription. You can't subscribe in the app. Your data is still saved.",
+    "es": "Para volver al panel, esta cuenta necesita una suscripción activa. No es posible suscribirse desde la app. Tus datos siguen guardados."
+  },
+  "Esta conta ainda não tem uma assinatura ativa.": {
+    "en": "This account doesn't have an active subscription yet.",
+    "es": "Esta cuenta todavía no tiene una suscripción activa."
+  },
+  "Conferindo…": {
+    "en": "Checking…",
+    "es": "Comprobando…"
+  },
+  "Conferir minha assinatura": {
+    "en": "Check my subscription",
+    "es": "Comprobar mi suscripción"
+  },
+  "O teste grátis já foi usado nesta conta.": {
+    "en": "The free trial has already been used on this account.",
+    "es": "La prueba gratis ya se usó en esta cuenta."
   }
 }

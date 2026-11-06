@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { noAppAndroid } from '../lib/appAndroid'
 import { diasDeTeste, emTeste, irParaStripe, type Assinatura } from '../lib/assinatura'
 import { Icone } from './Icone'
 import { avisar } from '../lib/avisos'
@@ -18,6 +19,7 @@ const marcarVisto = (userId: string) => {
 /**
  * Lembrete do teste grátis, em forma de notificação: aparece no canto, some sozinho (ou ao fechar) e só volta no dia seguinte.
  * Não fica fixo no topo da tela. `adiar` segura o aviso enquanto outra coisa ocupa a tela (o passeio guiado, por exemplo).
+ * No app da Play Store só conta os dias: sem preço e sem botão de assinar (lib/appAndroid.ts).
  */
 export function AvisoTeste({ assinatura, userId, moeda, adiar }: { assinatura: Assinatura | null; userId: string; moeda: string; adiar?: boolean }) {
   const [visivel, setVisivel] = useState(false)
@@ -46,11 +48,15 @@ export function AvisoTeste({ assinatura, userId, moeda, adiar }: { assinatura: A
       <span className="aviso-teste-icone"><Icone nome="relogio" tamanho={20} /></span>
       <div className="aviso-teste-texto">
         <strong>{tx('Teste grátis:')} {dias === 1 ? tx('falta 1 dia') : tx('faltam {0} dias', dias)}</strong>
-        <p>{tx('Quando acabar, é só assinar por R$ 9,99 por mês para continuar de onde parou.')}</p>
-        <button type="button" className="aviso-teste-assinar"
-          onClick={() => void irParaStripe('stripe-checkout', moeda).then((m) => m && avisar(m))}>
-          {tx('Assinar agora')} <Icone nome="seta" tamanho={14} />
-        </button>
+        {!noAppAndroid && (
+          <>
+            <p>{tx('Quando acabar, é só assinar por R$ 9,99 por mês para continuar de onde parou.')}</p>
+            <button type="button" className="aviso-teste-assinar"
+              onClick={() => void irParaStripe('stripe-checkout', moeda).then((m) => m && avisar(m))}>
+              {tx('Assinar agora')} <Icone nome="seta" tamanho={14} />
+            </button>
+          </>
+        )}
       </div>
       <button type="button" className="aviso-teste-fechar" onClick={fechar} aria-label={tx('Fechar aviso')}><Icone nome="fechar" tamanho={16} /></button>
       <i className="aviso-teste-barra" style={{ animationDuration: `${DURACAO}ms` }} onAnimationEnd={fechar} aria-hidden="true" />

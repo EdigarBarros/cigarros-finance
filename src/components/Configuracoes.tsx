@@ -1,3 +1,4 @@
+import { noAppAndroid } from '../lib/appAndroid'
 import { diasDeTeste, emTeste, excluirConta, irParaStripe, type Assinatura } from '../lib/assinatura'
 import { useRef, useState } from 'react'
 import type { Sugestao } from '../lib/adaptacao'
@@ -235,7 +236,8 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
               <div className="cfg-acoes">
                 {aoTour && <CartaoAcao icone="ideia" titulo={tx('Ver o tutorial')} texto={tx('Um passeio rápido pelo painel, mostrando onde fica cada coisa e como ligar mais abas.')} aoClicar={aoTour} />}
                 <CartaoAcao icone="ajustes" titulo={tx('Refazer as perguntas')} texto={tx('Responda de novo as perguntas iniciais para reajustar o painel.')} aoClicar={aoRefazer} />
-                {assinatura && assinatura.status !== 'cortesia' && (
+                {/* no app da Play Store não há link para pagamento (lib/appAndroid.ts): a assinatura se gerencia pelo site */}
+                {assinatura && assinatura.status !== 'cortesia' && !noAppAndroid && (
                   emTeste(assinatura)
                     ? <CartaoAcao icone="cartao" titulo={tx('Assinar o OpusCash')} texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-checkout', perfil.moeda).then((m) => m && avisar(m))} />
                     : <CartaoAcao icone="cartao" titulo={tx('Gerenciar assinatura')} texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-portal').then((m) => m && avisar(m))} />

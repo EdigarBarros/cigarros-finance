@@ -24,6 +24,7 @@ import { useBarraLateral } from '../lib/useBarraLateral'
 import { estiloLente, useLente } from '../lib/useLente'
 import { definirTema, semMovimento, useTema } from '../lib/tema'
 import { ehErroDeVersao, lembrarMes, mesAntesDeAtualizar } from '../lib/atualizacao'
+import { noAppAndroid } from '../lib/appAndroid'
 import { irParaStripe, type Assinatura } from '../lib/assinatura'
 import { AvisoTeste } from './AvisoTeste'
 import { diaADiaDoMes, previsaoDoAno } from '../lib/previsao'
@@ -877,7 +878,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
 
         <AvisoTeste assinatura={assinatura ?? null} userId={userId} moeda={perfil.moeda} adiar={tour} />
 
-        {assinatura?.status === 'past_due' && (
+        {/* no app da Play Store não há link para pagamento (lib/appAndroid.ts) */}
+        {assinatura?.status === 'past_due' && !noAppAndroid && (
           <div className="alerta" role="status">
             <span>{tx('Não conseguimos cobrar seu cartão. Atualize a forma de pagamento para não perder o acesso.')}</span>
             <button className="link" onClick={() => void irParaStripe('stripe-portal').then((m) => m && avisar(m))}>{tx('Atualizar cartão')}</button>
