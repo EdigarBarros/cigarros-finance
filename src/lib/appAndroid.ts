@@ -9,7 +9,7 @@
  * localStorage: o app divide o armazenamento com o Chrome do celular, e o site aberto no navegador passaria a se achar app.
  * Para ver o modo app no computador: abra o site com ?app=android.
  */
-const PACOTE = 'br.com.opuscash.www.twa'
+const PACOTE = 'br.com.opuscash.app'
 const CHAVE = 'opuscash.app-android'
 
 function detectar(): boolean {
