@@ -7047,6 +7047,10 @@
     "en": "{0} was left over each month ({1}%), above the recommended 20%.",
     "es": "Sobraron {0} por mes ({1}%), por encima del 20% recomendado."
   },
+  "Os {0} por mês que você passou para a caixinha, a poupança ou investimentos não entram nos gastos: dinheiro guardado não é gasto.": {
+    "en": "The {0} a month you moved to savings, a savings box or investments are not counted as spending: money you save is not money you spend.",
+    "es": "Los {0} al mes que pasaste a la cajita, al ahorro o a inversiones no cuentan como gasto: el dinero ahorrado no es gasto."
+  },
   "O ponto que mais pede atenção é “{0}”: {1}": {
     "en": "What needs the most attention is “{0}”: {1}",
     "es": "Lo que más pide atención es “{0}”: {1}"

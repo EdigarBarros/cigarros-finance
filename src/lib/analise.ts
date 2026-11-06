@@ -26,6 +26,8 @@ import { situacoesDoMes as situacoesDasContas } from './contasFixas'
 import { atrasadoHoje, aumentaDivida, calendarioDe, jurosAoAno, jurosQuePesam, meDevem, projecaoMensal, situacaoDividas, type SituacaoDivida } from './dividas'
 import { fmtDataCurta, fmtMesAno, fmtMoeda, fmtPct, fmtTaxa, fmtTaxaAno, fmtValor, LOCAL_DAS_DATAS, MESES_NOME, noMeioDaFrase } from './format'
 import { situacaoMeta } from './metas'
+import { ehGuardado } from './guardado'
+import { mudaDeBolso } from './mudaDeBolso'
 import { converter, totalConvertido, type Taxas } from './moedas'
 import { visao } from './perfil'
 import { planejar, type Plano } from './planejador'
@@ -406,6 +408,8 @@ export interface Analise {
   gastos: number
   sobra: number
   sobraFracao: number
+  /** Quanto, por mês, foi passado para a caixinha, poupança ou investimentos (já está na sobra, não nos gastos). */
+  guardando: number
   /** Sobra que o plano pede para os próximos meses (fração do que entra). */
   sobraAlvo: number
   rendaVaria: boolean
@@ -531,8 +535,6 @@ const RE_DIVIDA = /divida|parcela|emprestimo|financiamento|consignado|\bdebt|\bl
 const RE_ESTILO = /lazer|assinatura|compra|cuidado|beleza|estetica|restaurante|delivery|ifood|viage|presente|roupa|vestu|entretenimento|diversao|hobby|\bbar\b|festa|streaming|shopping|leisure|subscription|entertainment|travel|gift|cloth|beauty|personal|ocio|suscripc|viaje|regalo|ropa|belleza/
 const RE_ESSENCIAL = /moradia|aluguel|condominio|\bcasa\b|\bluz\b|energia|\bagua\b|\bgas\b|internet|telefon|celular|aliment|mercado|feira|transporte|combustivel|gasolina|onibus|saude|farmacia|remedio|medic|educa|escola|faculdade|curso|imposto|taxa|tributo|seguro|\bpets?\b|creche|housing|\brent\b|utilit|grocer|\bfood|transport|health|tax|insurance|vivienda|alquiler|comida|salud|impuesto|servicio/
 const RE_ASSINATURA = /assinatura|netflix|spotify|prime video|amazon prime|disney|hbo|\bmax\b|youtube|deezer|globoplay|paramount|apple|icloud|google one|chatgpt|openai|academia|smartfit|gympass|wellhub|streaming|subscription|suscripc/
-/** Dinheiro mudando de bolso (para a própria conta, caixinha, poupança, aplicação): não é gasto do dia a dia nem gasto formiga. */
-const RE_MESMO_DONO = /conta propria|contas proprias|mesma titularidade|entre contas|minha conta|propria conta|caixinha|cofrinho|poupanca|aplicacao|aplicar|investimento|resgate|reserva|own account|savings|transfer to self|cuenta propia|ahorro/
 const RE_JUROS = /\bjuros\b|\bmulta\b|\bmora\b|\biof\b|encargo|tarifa|anuidade|cheque especial|rotativo|\binterest\b|late fee|recargo|interes/
 
 function grupoDa(c: Categoria | undefined): Grupo {
@@ -767,35 +769,73 @@ function mesmoNome(a: string, b: string) {
   return curto.length >= 3 && curto.split(' ').every((p) => palavras.has(p))
 }
 
+/**
+ * Uma recorrência encontrada. `partes` são as vezes em que ela cai no mês, em ordem de dia: uma só para o aluguel, duas
+ * para o salário pago em adiantamento e salário (dia 5 e dia 20). `valor` é o total do mês.
+ */
+interface Achado extends Recorrente {
+  chave: string
+  partes: { dia: number; valor: number }[]
+  contaFixa: boolean
+  noCartao: boolean
+}
+
+/**
+ * A mesma conta cadastrada em dois lugares (como dívida e como conta do mês): vence no mesmo mês, com valor até 5%
+ * diferente, e no mesmo dia ou com o mesmo nome. Conta uma vez só, na previsão e na agenda.
+ */
+function mesmoCompromisso(a: { descricao: string; valor: number; vencimento: string }, b: { descricao: string; valor: number; vencimento: string }) {
+  return a.vencimento.slice(0, 7) === b.vencimento.slice(0, 7) && Math.abs(a.valor - b.valor) <= a.valor * 0.05
+    && (a.vencimento === b.vencimento || mesmoNome(chaveDescricao(a.descricao), chaveDescricao(b.descricao)))
+}
+
 function recorrencias(
   lancs: Lancamento[], atual: number, tipo: 'entrada' | 'saida', nomeCat: (l: Lancamento) => string, contas: ContaFixa[],
-) {
+): Achado[] {
   const nomesDasContas = contas.filter((c) => c.ativa && c.tipo === tipo).map((c) => chaveDescricao(c.descricao))
   const janela = lancs.filter((l) => l.tipo === tipo && l.valor > 0 && !l.divida_id && (l.parcelas ?? 1) <= 1
-    && !(tipo === 'saida' && RE_MESMO_DONO.test(normal(l.descricao)))
     && chaveMes(l.ano, l.mes) >= atual - 6 && chaveMes(l.ano, l.mes) < atual)
   const mesesComAlgo = new Set(janela.map((l) => chaveMes(l.ano, l.mes))).size
   const minimo = mesesComAlgo >= 4 ? RECORRENTE_MESES : 2
-  const achados: (Recorrente & { chave: string; dia: number; contaFixa: boolean; noCartao: boolean })[] = []
+  // Entrada pode cair duas vezes no mês (adiantamento e salário); saída que cai duas vezes é do dia a dia (o mercado).
+  const maxVezes = tipo === 'entrada' ? 2 : 1
+  const achados: Achado[] = []
   for (const { chave, ls } of agrupar(janela)) {
-    const porMes = new Map<number, number>()
-    for (const l of ls) porMes.set(chaveMes(l.ano, l.mes), (porMes.get(chaveMes(l.ano, l.mes)) ?? 0) + 1)
-    if (porMes.size < minimo || [...porMes.values()].some((n) => n > 1)) continue
+    const porMes = new Map<number, Lancamento[]>()
+    for (const l of ls) porMes.set(chaveMes(l.ano, l.mes), [...(porMes.get(chaveMes(l.ano, l.mes)) ?? []), l])
+    const vezes = Math.max(...[...porMes.values()].map((x) => x.length))
+    if (porMes.size < minimo || vezes > maxVezes) continue
     // todo mês, e ainda de pé: o bimestral (3 vezes em 5 meses) e o que parou há meses não contam
     const chaves = [...porMes.keys()]
     if (porMes.size < 0.75 * (Math.max(...chaves) - Math.min(...chaves) + 1) || Math.max(...chaves) < atual - 2) continue
-    const valores = ls.map((l) => l.valor)
-    const maior = Math.max(...valores)
-    if ((maior - Math.min(...valores)) / maior > 0.35) continue
+    // o valor parecido vale para o total do mês (com duas partes, as duas somadas)
+    const totais = [...porMes.values()].map((x) => soma(x.map((l) => l.valor)))
+    const maior = Math.max(...totais)
+    if ((maior - Math.min(...totais)) / maior > 0.35) continue
+    const completos = [...porMes].filter(([, x]) => x.length === vezes).sort((a, b) => b[0] - a[0])
+    // com duas partes, cada uma precisa aparecer na maioria dos meses (senão é coincidência, não um salário dividido)
+    if (vezes > 1 && completos.length < Math.max(2, porMes.size * 0.6)) continue
     const ultimo = [...ls].sort((a, b) => chaveMes(b.ano, b.mes) - chaveMes(a.ano, a.mes))[0]
+    const emOrdem = completos.map(([, x]) => [...x].sort((a, b) => diaDe(a.data) - diaDe(b.data)))
+    const partes = vezes === 1
+      ? [{ dia: Math.round(mediana(ls.map((l) => diaDe(l.data)).filter(Boolean))) || 0, valor: ultimo.valor }]
+      : Array.from({ length: vezes }, (_, i) => ({
+        dia: Math.round(mediana(emOrdem.map((x) => diaDe(x[i].data)).filter(Boolean))) || 0,
+        valor: emOrdem[0][i].valor,
+      }))
     achados.push({
-      chave, descricao: ultimo.descricao.trim(), valor: ultimo.valor, meses: porMes.size,
+      chave, descricao: ultimo.descricao.trim(), valor: centavos(soma(partes.map((p) => p.valor))), meses: porMes.size, partes,
       assinatura: tipo === 'saida' && (RE_ASSINATURA.test(normal(ultimo.descricao)) || RE_ASSINATURA.test(normal(nomeCat(ultimo)))),
-      dia: Math.round(mediana(ls.map((l) => diaDe(l.data)).filter(Boolean))) || 0,
       contaFixa: ls.some((l) => l.conta_fixa_id) || nomesDasContas.some((n) => mesmoNome(n, chave)), noCartao: ls.some((l) => l.cartao_id),
     })
   }
   return achados.sort((a, b) => b.valor - a.valor)
+}
+
+/** O que ainda falta de uma recorrência num mês: as partes que não vieram (o adiantamento caiu, falta o salário). */
+function faltaDa(r: Achado, tipo: 'entrada' | 'saida', lancsDoMes: Lancamento[]) {
+  const vieram = lancsDoMes.filter((l) => l.tipo === tipo && chaveDescricao(l.descricao) === r.chave).length
+  return r.partes.slice(Math.min(vieram, r.partes.length))
 }
 
 /** Compras pequenas que se repetem muitas vezes no mês ("gastos formiga"), nos 3 meses fechados. */
@@ -803,7 +843,6 @@ function gastosFormiga(lancs: Lancamento[], atual: number, renda: number, gastoM
   const teto = renda > 0 ? renda * FORMIGA_VALOR : gastoMedio * 0.02
   if (teto <= 0) return []
   const janela = lancs.filter((l) => l.tipo === 'saida' && l.valor > 0 && l.valor <= teto && !l.divida_id && !l.conta_fixa_id
-    && !RE_MESMO_DONO.test(normal(l.descricao))
     && (l.parcelas ?? 1) <= 1 && chaveMes(l.ano, l.mes) >= atual - MESES_NA_MEDIA && chaveMes(l.ano, l.mes) < atual)
   const meses = Math.max(1, new Set(janela.map((l) => chaveMes(l.ano, l.mes))).size)
   return agrupar(janela)
@@ -834,10 +873,20 @@ export function analisar(e: EntradaAnalise): Analise {
     const d = l.divida_id ? dividaPorId.get(l.divida_id) : undefined
     return Boolean(d && aumentaDivida(l.tipo, d))
   }
-  const naJanela = e.lancs.filter((l) => {
+  /** Passar dinheiro para a caixinha, a poupança, um investimento ou outra conta sua (e o resgate): não é renda nem gasto. */
+  // marcada pela pessoa ("Foi guardar dinheiro?") ou reconhecida pela descrição
+  const ehDeBolso = (l: Lancamento) => ehGuardado(l) || (!l.cartao_id && !l.divida_id && mudaDeBolso(l.descricao, nomeCat(l)))
+  const daJanela = e.lancs.filter((l) => {
     const k = chaveMes(l.ano, l.mes)
     return k >= atual - MESES_DA_ANALISE && k <= atual && l.valor > 0 && !ehEmprestimo(l)
   })
+  const naJanela = daJanela.filter((l) => !ehDeBolso(l))
+  /** Quanto foi guardado (passado para a caixinha, poupança, investimento) menos o resgatado, por mês. */
+  const guardadoNoMes = new Map<number, number>()
+  for (const l of daJanela) if (ehDeBolso(l)) {
+    const k = chaveMes(l.ano, l.mes)
+    guardadoNoMes.set(k, (guardadoNoMes.get(k) ?? 0) + (l.tipo === 'saida' ? l.valor : -l.valor))
+  }
 
   // ----- recorrências (o que se repete todo mês): serve para a revisão e para prever o resto do mês -----
   const contasAtivas = v.contas ? e.contas : []
@@ -846,7 +895,6 @@ export function analisar(e: EntradaAnalise): Analise {
   const chavesRecorrentes = new Set(recSaidas.map((r) => r.chave))
   /** Gasto do dia a dia: o que não é conta do mês, cartão, dívida nem algo que se repete todo mês. */
   const ehDiaADia = (l: Lancamento) => l.tipo === 'saida' && !l.conta_fixa_id && !l.cartao_id && !l.divida_id && !chavesRecorrentes.has(chaveDescricao(l.descricao))
-    && !RE_MESMO_DONO.test(normal(l.descricao))
 
   // ----- série mês a mês -----
   interface Bruto {
@@ -869,7 +917,10 @@ export function analisar(e: EntradaAnalise): Analise {
       b.porCategoria.set(k, (b.porCategoria.get(k) ?? 0) + l.valor)
       if (l.cartao_id && (l.parcelas ?? 1) > 1) b.parcelado.set(k, (b.parcelado.get(k) ?? 0) + l.valor)
       if (l.cartao_id) b.cartao += l.valor
-      if (diaDe(l.data) && diaDe(l.data) <= diaHoje) b.ateDia += l.valor
+      // Até este dia do mês. O lançamento sem data entra pela parte do mês que já passou: no mês atual ele conta inteiro
+      // (já aconteceu), e sem o rateio os outros meses pareceriam mais leves e o "gastando mais rápido" seria falso.
+      if (!l.data) b.ateDia += l.valor * Math.min(1, diaHoje / new Date(l.ano, l.mes, 0).getDate())
+      else if (diaDe(l.data) <= diaHoje) b.ateDia += l.valor
     }
   }
   const serie: MesDaSerie[] = [...fechados, atual].map((k) => {
@@ -886,6 +937,7 @@ export function analisar(e: EntradaAnalise): Analise {
   const gastos = temFluxo ? centavos(media(rec.map((b) => b.saidas))) : 0
   const sobra = centavos(renda - gastos)
   const sobraFracao = renda > 0 ? sobra / renda : 0
+  const guardando = temFluxo ? centavos(media(recentes.map((k) => guardadoNoMes.get(k) ?? 0))) : 0
   const todos = chavesComDados.map((k) => brutos.get(k)!)
   const variacaoRenda = todos.length >= 3 ? desvio(todos.map((b) => b.entradas)) / media(todos.map((b) => b.entradas)) : null
   const rendaVaria = (variacaoRenda ?? 0) > RENDA_VARIA_ACIMA
@@ -981,11 +1033,93 @@ export function analisar(e: EntradaAnalise): Analise {
   const restanteHoje = new Map(abertas.map((s) => [s.divida.id, s.restanteHoje]))
   const dividaCresceu = totalAntes > 0 && soma(antesDividas.map((s) => restanteHoje.get(s.divida.id) ?? 0)) > totalAntes * 1.02
 
+  // ----- sobra-alvo: quanto o plano pede para guardar -----
+  const sobraAlvo = !temFluxo ? SOBRA_IDEAL : sobraFracao < 0 ? 0.05 : sobraFracao < 0.1 ? 0.1 : sobraFracao < SOBRA_IDEAL ? SOBRA_IDEAL : Math.min(sobraFracao, 0.3)
+
+  // ----- previsão do mês atual -----
+  let previsao: PrevisaoMes | null = null
+  /** O gasto do dia a dia lançado hoje. */
+  let gastoDeHojeNoDiaADia = 0
+  /** O que ainda vai sair da conta até o fim do mês, descontado o que ainda entra (0 se o que entra cobre tudo). */
+  let comprometidoNoMes = 0
+  {
+    const doMes = naJanela.filter((l) => l.ano === ano && l.mes === mes)
+    const ate = (l: Lancamento) => !l.data || l.data <= hojeIso
+    const entrouAteAgora = centavos(soma(doMes.filter((l) => l.tipo === 'entrada' && ate(l)).map((l) => l.valor)))
+    const saiuAteAgora = centavos(soma(doMes.filter((l) => l.tipo === 'saida' && ate(l)).map((l) => l.valor)))
+    const entradasDepois = soma(doMes.filter((l) => l.tipo === 'entrada' && !ate(l)).map((l) => l.valor))
+    const saidasDepois = soma(doMes.filter((l) => l.tipo === 'saida' && !ate(l)).map((l) => l.valor))
+    const fim = `${hojeIso.slice(0, 7)}-31`
+    // Parcelas das dívidas até o fim do mês, inclusive as atrasadas de meses anteriores (com os juros de atraso): vão ter
+    // de sair deste dinheiro, como na agenda.
+    const parcelasDoMes = abertas.flatMap((s) => (calendarioDe(s, hojeIso)?.parcelas ?? [])
+      .filter((p) => p.vencimento <= fim && p.falta > 0)
+      .map((p) => ({ descricao: s.divida.descricao, vencimento: p.vencimento, valor: p.falta + (s.atraso?.porParcela.get(p.n) ?? 0) })))
+    const parcelasPendentes = soma(parcelasDoMes.map((p) => p.valor))
+    const sits = v.contas ? situacoesDasContas(e.contas, e.lancs, ano, mes, hojeIso, e.taxas) : []
+    const abertasDoMes = sits.filter((s) => s.estado !== 'paga' && s.estado !== 'fora' && !s.semCotacao)
+    // a parcela cadastrada também como conta do mês sai uma vez só
+    const contasPagar = soma(abertasDoMes.filter((s) => s.conta.tipo === 'saida'
+      && !parcelasDoMes.some((p) => mesmoCompromisso({ descricao: s.conta.descricao, valor: s.valor, vencimento: s.vencimento }, p))).map((s) => s.valor))
+    const contasReceber = soma(abertasDoMes.filter((s) => s.conta.tipo === 'entrada').map((s) => s.valor))
+    // o que se repete e ainda não veio (com o salário em duas partes, só a parte que falta)
+    const faltaRecorrente = (lista: Achado[], tipo: 'entrada' | 'saida') => soma(lista
+      .filter((r) => !r.contaFixa && !r.noCartao).flatMap((r) => faltaDa(r, tipo, doMes)).map((p) => p.valor))
+    const recorrentesPagar = faltaRecorrente(recSaidas, 'saida')
+    const recorrentesReceber = faltaRecorrente(recEntradas, 'entrada')
+    const diasNoMes = new Date(ano, mes, 0).getDate()
+    const diaADiaAgora = soma(doMes.filter((l) => ate(l) && ehDiaADia(l)).map((l) => l.valor))
+    const diaADiaNormal = rec.length
+      ? media(recentes.map((k) => soma(naJanela.filter((l) => chaveMes(l.ano, l.mes) === k && ehDiaADia(l)).map((l) => l.valor)))) / 30.4
+      : null
+    // Duas leituras do resto do mês: pelo ritmo deste mês (B) e pelo costume, descontando o que já saiu (A: quem fez a
+    // compra grande do mercado no dia 3 não vai repetir todo dia). No começo do mês pesa o costume; no fim, o ritmo.
+    const diasRestantes = diasNoMes - diaHoje
+    const peloRitmo = (diaADiaAgora / diaHoje) * diasRestantes
+    const peloCostume = diaADiaNormal === null ? peloRitmo
+      : Math.max(diaADiaNormal * diasRestantes * 0.3, diaADiaNormal * diasNoMes - diaADiaAgora)
+    const peso = diaHoje / diasNoMes
+    const diaADiaPrevisto = centavos(peso * peloRitmo + (1 - peso) * peloCostume)
+    const aPagar = centavos(saidasDepois + contasPagar + parcelasPendentes + recorrentesPagar)
+    const aReceberConhecido = entradasDepois + contasReceber + recorrentesReceber
+    // O salário ainda não caiu e não está em lugar nenhum? Conta a média, avisando.
+    const rendaPelaMedia = temFluxo && entrouAteAgora + aReceberConhecido < renda * 0.5
+    const aReceber = centavos(rendaPelaMedia ? Math.max(0, renda - entrouAteAgora) : aReceberConhecido)
+    const entradasPrevistas = centavos(entrouAteAgora + aReceber)
+    const saidasPrevistas = centavos(saiuAteAgora + aPagar + diaADiaPrevisto)
+    const resultadoPrevisto = centavos(entradasPrevistas - saidasPrevistas)
+    const sobraAlvoMes = centavos(Math.max(0, sobraAlvo * entradasPrevistas))
+    // O que já foi para a caixinha/poupança neste mês conta para a sobra-alvo (e já não está na conta para gastar).
+    const guardadoAteHoje = soma(daJanela.filter((l) => l.ano === ano && l.mes === mes && ate(l) && ehDeBolso(l)).map((l) => (l.tipo === 'saida' ? l.valor : -l.valor)))
+    // Por dia a partir de hoje, contando hoje: o gasto do dia a dia de hoje fica de fora aqui porque o "quanto dá hoje"
+    // (planejador) desconta ele depois; sem isso, o que a pessoa gasta hoje era descontado duas vezes.
+    gastoDeHojeNoDiaADia = centavos(soma(doMes.filter((l) => l.data === hojeIso && ehDiaADia(l)).map((l) => l.valor)))
+    const porDia = centavos((entradasPrevistas - Math.max(sobraAlvoMes, guardadoAteHoje) - (saiuAteAgora - gastoDeHojeNoDiaADia) - aPagar) / (diasNoMes - diaHoje + 1))
+    comprometidoNoMes = centavos(Math.max(0, aPagar + diaADiaPrevisto - aReceber))
+    const ateHojeNormal = rec.length ? centavos(media(rec.map((b) => b.ateDia))) : null
+    const acimaDoNormal = categorias
+      .filter((c) => c.grupo !== 'dividas' && c.media > 0 && c.atual > c.media * 1.05 && c.atual - c.media >= gastos * 0.02)
+      .sort((a, b) => (b.atual - b.media) - (a.atual - a.media)).slice(0, 3)
+      .map(({ id, nome, icone, atual: at, media: me }) => ({ id, nome, icone, atual: at, media: me }))
+    if (doMes.length || temFluxo) {
+      previsao = {
+        dia: diaHoje, diasNoMes, entrouAteAgora, saiuAteAgora, aReceber, aPagar, diaADiaPrevisto, rendaPelaMedia,
+        entradasPrevistas, saidasPrevistas, resultadoPrevisto, sobraAlvo: sobraAlvoMes, porDia, ateHojeNormal,
+        contraMedia: temFluxo ? centavos(resultadoPrevisto - sobra) : null, acimaDoNormal,
+        rendaExtraMedia: rendaPelaMedia || !rec.length ? 0 : centavos(media(rec.map((b) => b.rendaExtra))),
+      }
+    }
+  }
+
   // ----- reserva -----
   const ef = mesEfetivo(e.meses, ano, mes, hoje)
   const preencheuBancos = Object.values(ef.caixa).some((b) => TIPOS_CAIXA.some((t) => typeof b?.[t] === 'number'))
   const investido = v.investimentos ? Math.max(0, ef.investimentos || 0) : 0
-  const guardadoBancos = centavos(Math.max(0, soma(Object.keys(ef.caixa).map((id) => caixaDoBanco(ef.caixa, id))) + investido))
+  // A conta corrente guarda também o dinheiro das contas que ainda vencem no mês: só o que sobra depois delas é reserva
+  // (no dia em que o salário cai, a conta cheia não é 1 mês a mais de reserva). Caixinha, reserva e investido contam inteiros.
+  const naConta = soma(Object.values(ef.caixa).map((b) => b?.cc ?? 0))
+  const foraDaConta = soma(Object.keys(ef.caixa).map((id) => caixaDoBanco(ef.caixa, id))) - naConta
+  const guardadoBancos = centavos(Math.max(0, foraDaConta + investido + Math.min(naConta, Math.max(0, naConta - comprometidoNoMes))))
   const naPrincipal = (valor: number, moeda: string) => (moeda === e.perfil.moeda ? valor : converter(valor, moeda, e.taxas) ?? 0)
   const metaReserva = v.metas ? e.metas.find((m) => /reserva|emergenc|emergency|imprevist/.test(normal(m.nome))) : undefined
   const guardadoMeta = metaReserva ? naPrincipal(situacaoMeta(metaReserva, e.movimentosMeta, hojeIso).guardado, metaReserva.moeda) : 0
@@ -1062,7 +1196,6 @@ export function analisar(e: EntradaAnalise): Analise {
     : null
 
   // ----- orçamento: quanto cortar para chegar na sobra-alvo -----
-  const sobraAlvo = !temFluxo ? SOBRA_IDEAL : sobraFracao < 0 ? 0.05 : sobraFracao < 0.1 ? 0.1 : sobraFracao < SOBRA_IDEAL ? SOBRA_IDEAL : Math.min(sobraFracao, 0.3)
   const corte = temFluxo ? centavos(Math.max(0, sobraAlvo * renda - sobra)) : 0
   if (corte > 0) {
     // corta primeiro o estilo de vida (até 35%), depois o que não tem grupo (até 25%) e, se ainda faltar, um pouco do essencial (8%)
@@ -1124,72 +1257,20 @@ export function analisar(e: EntradaAnalise): Analise {
       valorAtrasado += soma(vencidas.map((f) => f.valor))
     }
     const deCartao = new Set(ativos.map((c) => c.id))
-    const proximas = [1, 2, 3, 4, 5, 6].map((i) => {
+    // As próximas faturas a vencer: a deste mês entra quando ainda tem fatura por vencer nele (cartão que vence dia 27,
+    // hoje dia 18); a que já venceu ou foi paga, não.
+    const aVencer = (l: Lancamento) => Boolean(l.cartao_id && deCartao.has(l.cartao_id) && l.valor > 0 && (!l.data || l.data > hojeIso)
+      && !e.faturasPagas.some((f) => f.cartao_id === l.cartao_id && f.ano === l.ano && f.mes === l.mes))
+    const meses7 = [0, 1, 2, 3, 4, 5, 6].map((i) => {
       const k = doMesChave(atual + i)
-      return { ...k, valor: centavos(soma(e.compras.filter((l) => l.cartao_id && deCartao.has(l.cartao_id) && l.ano === k.ano && l.mes === k.mes && l.valor > 0).map((l) => l.valor))) }
+      return { ...k, valor: centavos(soma(e.compras.filter((l) => l.ano === k.ano && l.mes === k.mes && aVencer(l)).map((l) => l.valor))) }
     })
+    const proximas = meses7[0].valor > 0 ? meses7.slice(0, 6) : meses7.slice(1)
     const porMes = rec.length ? centavos(media(rec.map((b) => b.cartao))) : 0
     cartao = {
       usado: centavos(usado), limite: algumLimite ? centavos(limite) : null, uso: algumLimite && limite > 0 ? usado / limite : null,
       proximas, pesoProximo: renda > 0 ? proximas[0].valor / renda : null, porMes,
       fracaoDasSaidas: gastos > 0 ? porMes / gastos : 0, atrasadas, valorAtrasado: centavos(valorAtrasado),
-    }
-  }
-
-  // ----- previsão do mês atual -----
-  let previsao: PrevisaoMes | null = null
-  {
-    const doMes = naJanela.filter((l) => l.ano === ano && l.mes === mes)
-    const ate = (l: Lancamento) => !l.data || l.data <= hojeIso
-    const entrouAteAgora = centavos(soma(doMes.filter((l) => l.tipo === 'entrada' && ate(l)).map((l) => l.valor)))
-    const saiuAteAgora = centavos(soma(doMes.filter((l) => l.tipo === 'saida' && ate(l)).map((l) => l.valor)))
-    const entradasDepois = soma(doMes.filter((l) => l.tipo === 'entrada' && !ate(l)).map((l) => l.valor))
-    const saidasDepois = soma(doMes.filter((l) => l.tipo === 'saida' && !ate(l)).map((l) => l.valor))
-    const sits = v.contas ? situacoesDasContas(e.contas, e.lancs, ano, mes, hojeIso, e.taxas) : []
-    const contasPagar = soma(sits.filter((s) => s.conta.tipo === 'saida' && s.estado !== 'paga' && s.estado !== 'fora').map((s) => s.valor))
-    const contasReceber = soma(sits.filter((s) => s.conta.tipo === 'entrada' && s.estado !== 'paga' && s.estado !== 'fora').map((s) => s.valor))
-    const ini = `${hojeIso.slice(0, 7)}-01`
-    const fim = `${hojeIso.slice(0, 7)}-31`
-    const parcelasPendentes = soma(abertas.map((s) => soma((calendarioDe(s, hojeIso)?.parcelas ?? [])
-      .filter((p) => p.vencimento >= ini && p.vencimento <= fim && p.falta > 0).map((p) => p.falta))))
-    const jaNoMes = (r: { chave: string }) => doMes.some((l) => chaveDescricao(l.descricao) === r.chave)
-    const recorrentesPagar = soma(recSaidas.filter((r) => !r.contaFixa && !r.noCartao && !jaNoMes(r)).map((r) => r.valor))
-    const recorrentesReceber = soma(recEntradas.filter((r) => !r.contaFixa && !jaNoMes(r)).map((r) => r.valor))
-    const diasNoMes = new Date(ano, mes, 0).getDate()
-    const diaADiaAgora = soma(doMes.filter((l) => ate(l) && ehDiaADia(l)).map((l) => l.valor))
-    const diaADiaNormal = rec.length
-      ? media(recentes.map((k) => soma(naJanela.filter((l) => chaveMes(l.ano, l.mes) === k && ehDiaADia(l)).map((l) => l.valor)))) / 30.4
-      : null
-    // Duas leituras do resto do mês: pelo ritmo deste mês (B) e pelo costume, descontando o que já saiu (A: quem fez a
-    // compra grande do mercado no dia 3 não vai repetir todo dia). No começo do mês pesa o costume; no fim, o ritmo.
-    const diasRestantes = diasNoMes - diaHoje
-    const peloRitmo = (diaADiaAgora / diaHoje) * diasRestantes
-    const peloCostume = diaADiaNormal === null ? peloRitmo
-      : Math.max(diaADiaNormal * diasRestantes * 0.3, diaADiaNormal * diasNoMes - diaADiaAgora)
-    const peso = diaHoje / diasNoMes
-    const diaADiaPrevisto = centavos(peso * peloRitmo + (1 - peso) * peloCostume)
-    const aPagar = centavos(saidasDepois + contasPagar + parcelasPendentes + recorrentesPagar)
-    const aReceberConhecido = entradasDepois + contasReceber + recorrentesReceber
-    // O salário ainda não caiu e não está em lugar nenhum? Conta a média, avisando.
-    const rendaPelaMedia = temFluxo && entrouAteAgora + aReceberConhecido < renda * 0.5
-    const aReceber = centavos(rendaPelaMedia ? Math.max(0, renda - entrouAteAgora) : aReceberConhecido)
-    const entradasPrevistas = centavos(entrouAteAgora + aReceber)
-    const saidasPrevistas = centavos(saiuAteAgora + aPagar + diaADiaPrevisto)
-    const resultadoPrevisto = centavos(entradasPrevistas - saidasPrevistas)
-    const sobraAlvoMes = centavos(Math.max(0, sobraAlvo * entradasPrevistas))
-    const porDia = centavos((entradasPrevistas - sobraAlvoMes - saiuAteAgora - aPagar) / (diasNoMes - diaHoje + 1))
-    const ateHojeNormal = rec.length ? centavos(media(rec.map((b) => b.ateDia))) : null
-    const acimaDoNormal = categorias
-      .filter((c) => c.grupo !== 'dividas' && c.media > 0 && c.atual > c.media * 1.05 && c.atual - c.media >= gastos * 0.02)
-      .sort((a, b) => (b.atual - b.media) - (a.atual - a.media)).slice(0, 3)
-      .map(({ id, nome, icone, atual: at, media: me }) => ({ id, nome, icone, atual: at, media: me }))
-    if (doMes.length || temFluxo) {
-      previsao = {
-        dia: diaHoje, diasNoMes, entrouAteAgora, saiuAteAgora, aReceber, aPagar, diaADiaPrevisto, rendaPelaMedia,
-        entradasPrevistas, saidasPrevistas, resultadoPrevisto, sobraAlvo: sobraAlvoMes, porDia, ateHojeNormal,
-        contraMedia: temFluxo ? centavos(resultadoPrevisto - sobra) : null, acimaDoNormal,
-        rendaExtraMedia: rendaPelaMedia || !rec.length ? 0 : centavos(media(rec.map((b) => b.rendaExtra))),
-      }
     }
   }
 
@@ -1242,17 +1323,23 @@ export function analisar(e: EntradaAnalise): Analise {
       })
     }
     // o que se repete todo mês e ainda não veio (este mês, se o dia não passou faz tempo) ou virá (o mês que vem)
-    const jaVeio = (chave: string, m: { ano: number; mes: number }) => e.lancs.some((l) => l.ano === m.ano && l.mes === m.mes && chaveDescricao(l.descricao) === chave)
+    // (o salário em duas partes vira dois eventos, cada um no seu dia; se o adiantamento já caiu, só o salário)
+    const doMesDe = (m: { ano: number; mes: number }) => e.lancs.filter((l) => l.ano === m.ano && l.mes === m.mes)
     for (const [lista, tipo] of [[recSaidas, 'saida'], [recEntradas, 'entrada']] as const) {
       for (const r of lista) {
-        if (r.contaFixa || r.noCartao || !r.dia) continue
-        if (r.dia >= diaHoje - 5 && !jaVeio(r.chave, { ano, mes })) eventos.push({ data: noDia(isoDoDia(ano, mes, r.dia)), tipo, descricao: r.descricao, valor: r.valor, origem: 'recorrente' })
-        if (!jaVeio(r.chave, prox)) eventos.push({ data: isoDoDia(prox.ano, prox.mes, r.dia), tipo, descricao: r.descricao, valor: r.valor, origem: 'recorrente' })
+        if (r.contaFixa || r.noCartao) continue
+        for (const p of faltaDa(r, tipo, doMesDe({ ano, mes }))) {
+          if (p.dia && p.dia >= diaHoje - 5) eventos.push({ data: noDia(isoDoDia(ano, mes, p.dia)), tipo, descricao: r.descricao, valor: p.valor, origem: 'recorrente' })
+        }
+        for (const p of faltaDa(r, tipo, doMesDe(prox))) {
+          if (p.dia) eventos.push({ data: isoDoDia(prox.ano, prox.mes, p.dia), tipo, descricao: r.descricao, valor: p.valor, origem: 'recorrente' })
+        }
       }
     }
     // a mesma parcela cadastrada como conta do mês e como dívida conta uma vez só
-    const unicos = eventos.filter((ev) => ev.origem !== 'conta' || !eventos.some((o) => o.origem === 'parcela' && o.data.slice(0, 7) === ev.data.slice(0, 7)
-      && Math.abs(o.valor - ev.valor) <= ev.valor * 0.05 && (o.data === ev.data || mesmoNome(chaveDescricao(o.descricao), chaveDescricao(ev.descricao)))))
+    const vencimentoDe = (ev: Evento) => ({ descricao: ev.descricao, valor: ev.valor, vencimento: ev.vence ?? ev.data })
+    const unicos = eventos.filter((ev) => ev.origem !== 'conta' || ev.tipo !== 'saida'
+      || !eventos.some((o) => o.origem === 'parcela' && mesmoCompromisso(vencimentoDe(ev), vencimentoDe(o))))
     unicos.sort((a, b) => a.data.localeCompare(b.data) || (a.tipo === b.tipo ? b.valor - a.valor : a.tipo === 'entrada' ? -1 : 1))
 
     // saldo dia a dia: com o saldo da conta corrente, conta também o gasto do dia a dia entre um dia e outro
@@ -1437,7 +1524,7 @@ export function analisar(e: EntradaAnalise): Analise {
     // o planejador: de qual dinheiro sai cada conta e em que dia pagar
     plano = planejar({
       hoje: hojeIso, fim: fimJanela, saldoInicial, ritmoDia, porDiaDoMes: previsao?.porDia ?? null,
-      gastouHoje: centavos(soma(naJanela.filter((l) => l.data === hojeIso && ehDiaADia(l)).map((l) => l.valor))),
+      gastouHoje: gastoDeHojeNoDiaADia,
       entradas: dias.filter((d) => d.entradas.length).map((d) => ({ data: d.data, valor: totalDe(d.entradas), descricao: nomesDe(d.entradas) })),
       compromissos: unicos.filter((ev) => ev.tipo === 'saida').map((ev) => ({
         descricao: ev.descricao, valor: ev.valor, vence: ev.vence ?? ev.data, origem: ev.origem, jurosMes: ev.jurosMes ?? null,
@@ -1835,7 +1922,9 @@ export function analisar(e: EntradaAnalise): Analise {
     resumo.push(`${tx('Nos últimos {0} meses fechados, entraram em média {1} por mês e saíram {2}.', recentes.length, fmtValor(renda), fmtValor(gastos))} ${sobra < 0
       ? tx('Faltaram {0} por mês.', fmtValor(-sobra))
       : sobraFracao < SOBRA_IDEAL ? tx('Sobraram {0} por mês ({1}%); o recomendado é guardar pelo menos 20%.', fmtValor(sobra), pct(sobraFracao))
-        : tx('Sobraram {0} por mês ({1}%), acima dos 20% recomendados.', fmtValor(sobra), pct(sobraFracao))}`)
+        : tx('Sobraram {0} por mês ({1}%), acima dos 20% recomendados.', fmtValor(sobra), pct(sobraFracao))}${guardando >= 1
+      ? ` ${tx('Os {0} por mês que você passou para a caixinha, a poupança ou investimentos não entram nos gastos: dinheiro guardado não é gasto.', fmtValor(guardando))}`
+      : ''}`)
     const ordenados = [...pilares].sort((a, b) => a.nota - b.nota)
     const pior = ordenados[0]
     const melhor = ordenados[ordenados.length - 1]
@@ -1852,7 +1941,7 @@ export function analisar(e: EntradaAnalise): Analise {
   return {
     hoje: { ano, mes }, temFluxo, mesesAnalisados: chavesComDados.length, nota, rotulo: nota === null ? tx('Sem nota ainda') : rotuloDaNota(nota),
     tom: nota === null ? 'medio' : tomDa(nota), resumo, fase, fases, porqueFase, proximoPasso, pilares,
-    renda, gastos, sobra, sobraFracao, sobraAlvo, rendaVaria, variacaoRenda, principalFonte, tendenciaGastos, tendenciaRenda,
+    renda, gastos, sobra, sobraFracao, guardando, sobraAlvo, rendaVaria, variacaoRenda, principalFonte, tendenciaGastos, tendenciaRenda,
     serie, mes: previsao, categorias, subiram, cairam, regra, recorrentes, assinaturasPorMes, recorrentesPorMes, formigas,
     jurosPagos, semCategoria, cartao, dividas, reserva, alocacao, metas, patrimonio, agenda, plano, corte, acoes,
   }

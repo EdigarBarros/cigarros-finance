@@ -429,10 +429,11 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
 
   // Conselheiro: lê os últimos meses fechados (de qualquer ano) e o mês atual, sem depender do mês que está aberto na tela.
   const lancsDosConselhos = useMemo(() => {
-    const abertos = new Set(lancsContados.map((l) => l.id))
+    const abertos = new Set(lancsComGuardados.map((l) => l.id))
     const outros = d.lancsRecentes.filter((l) => !abertos.has(l.id))
-    return [...lancsContados, ...(comFaturas && chaveRenegociadas ? outros.filter(contaNasSaidas(cartoes.faturasPagas)) : outros).filter((l) => !ehGuardado(l))]
-  }, [lancsContados, d.lancsRecentes, chaveRenegociadas, comFaturas]) // eslint-disable-line react-hooks/exhaustive-deps
+    // os guardados vão junto: o conselheiro e o consultor os reconhecem (não são gasto) e o consultor conta quanto foi guardado
+    return [...lancsComGuardados, ...(comFaturas && chaveRenegociadas ? outros.filter(contaNasSaidas(cartoes.faturasPagas)) : outros)]
+  }, [lancsComGuardados, d.lancsRecentes, chaveRenegociadas, comFaturas]) // eslint-disable-line react-hooks/exhaustive-deps
   const conselhos = useMemo(() => conselhosDe({
     hoje, lancs: lancsDosConselhos, categorias: d.categorias, categoriaDe: idCategoria, dividas: d.dividas, saldos: d.saldos,
     pagamentos: d.pagamentos, taxas, meses: d.meses, metas: d.metas, movimentosMeta: d.movimentosMeta, perfil,
