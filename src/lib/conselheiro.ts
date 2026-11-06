@@ -26,6 +26,7 @@ import { aumentaDivida, jurosAoAno, meDevem, situacaoDividas } from './dividas'
 import { fmtMesAno, fmtMoeda, fmtTaxa, fmtTaxaAno, fmtValor, LOCAL_DAS_DATAS, MESES_NOME, noMeioDaFrase } from './format'
 import type { Taxas } from './moedas'
 import { situacaoMeta } from './metas'
+import { ehGuardado } from './guardado'
 import { mudaDeBolso } from './mudaDeBolso'
 import { visao } from './perfil'
 import { tx } from './textos'
@@ -181,7 +182,7 @@ function analisarMeses(
     const d = l.divida_id ? dividaPorId.get(l.divida_id) : undefined
     if (d && aumentaDivida(l.tipo, d)) continue // dinheiro emprestado a mais: não é renda nem gasto
     // passar para a caixinha, poupança ou investimento (e resgatar): dinheiro guardado não é gasto, nem renda
-    if (!l.cartao_id && !l.divida_id && mudaDeBolso(l.descricao, nomePorId.get(categoriaDe(l)) ?? '')) continue
+    if (ehGuardado(l) || (!l.cartao_id && !l.divida_id && mudaDeBolso(l.descricao, nomePorId.get(categoriaDe(l)) ?? ''))) continue
     if (l.tipo === 'entrada') m.entradas += l.valor
     else {
       m.saidas += l.valor

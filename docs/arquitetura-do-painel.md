@@ -708,7 +708,8 @@ Duas colunas no computador. A lista com selos redondos saiu; cada lançamento ag
   `lib/guardado.ts`): na saída, "Foi guardar dinheiro?" liga o lançamento a um banco de destino (`guardado_banco_id`) e ao
   lugar onde fica (`guardado_tipo`: conta, caixinha = porquinho ou reserva). Digitar "Porquinho PicPay" (ou repetir uma
   descrição já usada assim) já preenche. Essa saída **não é gasto**: `Painel` a tira de `lancsContados` (resumo do mês,
-  previsão, dia a dia, conselhos e consultor) e só `lancsComGuardados` (`lancsMesComGuardados`/`lancsAnoComGuardados` no
+  previsão, dia a dia); o conselheiro e o consultor a recebem e a reconhecem (`ehGuardado`), para contar quanto foi guardado;
+  e só `lancsComGuardados` (`lancsMesComGuardados`/`lancsAnoComGuardados` no
   `Ctx`) a mostra na lista de Lançamentos, onde as somas, o calendário, as categorias e o saldo do dia a ignoram. O card
   mostra "Guardado em PicPay (caixinha)" com o valor em azul.
 - **Saldos acertados sozinhos:** com "Acertar os saldos sozinho" ligado (padrão), `ajustarSaldos` (`Painel`) soma o valor

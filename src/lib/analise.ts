@@ -26,6 +26,7 @@ import { situacoesDoMes as situacoesDasContas } from './contasFixas'
 import { atrasadoHoje, aumentaDivida, calendarioDe, jurosAoAno, jurosQuePesam, meDevem, projecaoMensal, situacaoDividas, type SituacaoDivida } from './dividas'
 import { fmtDataCurta, fmtMesAno, fmtMoeda, fmtPct, fmtTaxa, fmtTaxaAno, fmtValor, LOCAL_DAS_DATAS, MESES_NOME, noMeioDaFrase } from './format'
 import { situacaoMeta } from './metas'
+import { ehGuardado } from './guardado'
 import { mudaDeBolso } from './mudaDeBolso'
 import { converter, totalConvertido, type Taxas } from './moedas'
 import { visao } from './perfil'
@@ -873,7 +874,8 @@ export function analisar(e: EntradaAnalise): Analise {
     return Boolean(d && aumentaDivida(l.tipo, d))
   }
   /** Passar dinheiro para a caixinha, a poupança, um investimento ou outra conta sua (e o resgate): não é renda nem gasto. */
-  const ehDeBolso = (l: Lancamento) => !l.cartao_id && !l.divida_id && mudaDeBolso(l.descricao, nomeCat(l))
+  // marcada pela pessoa ("Foi guardar dinheiro?") ou reconhecida pela descrição
+  const ehDeBolso = (l: Lancamento) => ehGuardado(l) || (!l.cartao_id && !l.divida_id && mudaDeBolso(l.descricao, nomeCat(l)))
   const daJanela = e.lancs.filter((l) => {
     const k = chaveMes(l.ano, l.mes)
     return k >= atual - MESES_DA_ANALISE && k <= atual && l.valor > 0 && !ehEmprestimo(l)
