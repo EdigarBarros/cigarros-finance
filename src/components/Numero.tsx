@@ -1,19 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
-import { semMovimento } from '../lib/tema'
+import { animarEntrada, semMovimento } from '../lib/tema'
 
 const suave = (t: number) => 1 - Math.pow(1 - t, 4)
 
 /**
  * Número que conta até o valor (como os saldos do vídeo de referência): na primeira vez parte do zero,
- * depois anda do valor anterior até o novo, ao trocar de mês ou lançar algo.
+ * depois anda do valor anterior até o novo, ao trocar de mês ou lançar algo. No app, numa aba aberta depois da primeira,
+ * já nasce no valor (lib/tema.ts, animarEntrada).
  */
 export function Numero({ valor, formato, duracao = 1200 }: { valor: number; formato: (n: number) => string; duracao?: number }) {
   const [parado] = useState(semMovimento)
-  const [mostrado, setMostrado] = useState(0)
-  const atual = useRef(0)
+  const [inicial] = useState(() => (animarEntrada() ? 0 : valor))
+  const [mostrado, setMostrado] = useState(inicial)
+  const atual = useRef(inicial)
   useEffect(() => {
     if (parado) return
     const de = atual.current
+    if (de === valor) return
     const inicio = performance.now()
     let quadro = requestAnimationFrame(function passo(agora) {
       const t = Math.min(1, (agora - inicio) / duracao)

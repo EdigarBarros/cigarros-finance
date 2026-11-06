@@ -9106,5 +9106,41 @@
   "Backup do OpusCash": {
     "en": "OpusCash backup",
     "es": "Copia de seguridad de OpusCash"
+  },
+  "Você está sem internet": {
+    "en": "You're offline",
+    "es": "No tienes conexión a internet"
+  },
+  "Não foi possível acessar o painel": {
+    "en": "We couldn't open your dashboard",
+    "es": "No se pudo abrir el panel"
+  },
+  "Não foi possível acessar o painel. Assim que a conexão voltar, ele abre sozinho. Seus lançamentos continuam guardados.": {
+    "en": "We couldn't open your dashboard. As soon as you're back online, it opens by itself. Your entries are still saved.",
+    "es": "No se pudo abrir el panel. Cuando vuelva la conexión, se abre solo. Tus registros siguen guardados."
+  },
+  "Confira sua internet. Assim que der, o painel abre sozinho. Seus lançamentos continuam guardados.": {
+    "en": "Check your internet connection. As soon as it works, the dashboard opens by itself. Your entries are still saved.",
+    "es": "Revisa tu conexión a internet. Cuando funcione, el panel se abre solo. Tus registros siguen guardados."
+  },
+  "Tentando…": {
+    "en": "Trying…",
+    "es": "Intentando…"
+  },
+  "Tentar de novo": {
+    "en": "Try again",
+    "es": "Intentar de nuevo"
+  },
+  "Você está sem internet.": {
+    "en": "You're offline.",
+    "es": "No tienes conexión a internet."
+  },
+  "Dá para ver o que já estava carregado, mas nada é salvo até a conexão voltar.": {
+    "en": "You can see what was already loaded, but nothing is saved until you're back online.",
+    "es": "Puedes ver lo que ya estaba cargado, pero nada se guarda hasta que vuelva la conexión."
+  },
+  "Sem internet. Confira sua conexão e tente de novo.": {
+    "en": "No internet connection. Check it and try again.",
+    "es": "Sin conexión a internet. Revísala e inténtalo de nuevo."
   }
 }

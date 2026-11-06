@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes, saldoInformado } from '../lib/calc'
 import { ajustarMeses, ehGuardado } from '../lib/guardado'
@@ -22,11 +22,12 @@ import type { Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 import { useMobile } from '../lib/useMobile'
 import { useBarraLateral } from '../lib/useBarraLateral'
 import { estiloLente, useLente } from '../lib/useLente'
-import { definirTema, semMovimento, useTema } from '../lib/tema'
+import { animarEntrada, definirTema, marcarEntradaFeita, semMovimento, useTema } from '../lib/tema'
 import { ehErroDeVersao, lembrarMes, mesAntesDeAtualizar } from '../lib/atualizacao'
 import { noAppAndroid } from '../lib/appAndroid'
 import { irParaStripe, type Assinatura } from '../lib/assinatura'
 import { AvisoTeste } from './AvisoTeste'
+import { FaixaSemInternet } from './SemInternet'
 import { diaADiaDoMes, previsaoDoAno } from '../lib/previsao'
 import { useCartoes } from '../lib/useCartoes'
 import { useContasFixas } from '../lib/useContasFixas'
@@ -242,6 +243,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   }, [mes, ano])
 
   const irPara = (p: Pagina) => {
+    marcarEntradaFeita()
     setBancoAberto(null)
     setCartaoAberto(null)
     setCompraDestacada(null)
@@ -911,6 +913,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           </div>
         )}
 
+        <FaixaSemInternet />
+
         {d.erro && (
           <div className="alerta" role="alert">
             <span>{tx('Não deu certo. Tente de novo.')} <small>{tx('Detalhe: {0}', d.erro)}</small></span>
@@ -928,6 +932,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         {paginaMostrada === 'metas' && <Metas {...ctx} />}
         {paginaMostrada === 'patrimonio' && <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />}
         {paginaMostrada === 'ano' && <Ano {...ctx} />}
+        <PaginaPronta pagina={paginaMostrada} />
         </Suspense>
       </div>
 
@@ -1131,4 +1136,22 @@ function Esqueleto() {
       </div>
     </div>
   )
+}
+
+/**
+ * No app, depois da primeira troca de aba (lib/tema.ts, animarEntrada), as animações de entrada da página que acabou de
+ * aparecer vão direto para o fim: os blocos subindo, as réguas e as barras crescendo, os marcadores deslizando. A página
+ * surge pronta. As que repetem para sempre (ícones flutuando, pulsos) continuam.
+ */
+function PaginaPronta({ pagina }: { pagina: string }) {
+  useLayoutEffect(() => {
+    if (animarEntrada()) return
+    const raiz = document.querySelector('.pagina')
+    if (!raiz) return
+    // primeiro escolhe, depois termina: terminar uma animação muda o estilo, e cada consulta seguinte obrigava o navegador
+    // a recalcular a tela inteira de novo (medido: mais de 1 s somando as trocas de aba, com o processador 4x mais lento)
+    const deEntrada = raiz.getAnimations({ subtree: true }).filter((a) => a instanceof CSSAnimation && a.effect?.getTiming().iterations !== Infinity)
+    for (const a of deEntrada) a.finish()
+  }, [pagina])
+  return null
 }

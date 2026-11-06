@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Perfil } from './types'
 import { tx } from './textos'
 
@@ -84,7 +84,10 @@ export function useCambio(base: string, ativo: boolean) {
     return () => { vivo = false }
   }, [base, ativo])
 
-  const taxas: Taxas = cotacao && cotacao.taxas[base] === 1 ? cotacao.taxas : { [base]: 1 }
+  // Sempre o mesmo objeto enquanto nada muda: o painel refaz tudo (análise, previsão do ano, os 12 meses) quando as
+  // taxas mudam, e um { [base]: 1 } novo a cada desenho fazia isso a cada toque, mesmo sem cotação nenhuma.
+  const soBase = useMemo<Taxas>(() => ({ [base]: 1 }), [base])
+  const taxas: Taxas = cotacao && cotacao.taxas[base] === 1 ? cotacao.taxas : soBase
   return { taxas, atualizadaEm: cotacao?.em ?? null, falhou }
 }
 

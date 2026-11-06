@@ -1012,9 +1012,19 @@ button.cc-plastico:not(.ativo):hover { filter: none; }
 .ccd-tempo-marco.fim { border-color: var(--divida); }
 .ccd-tempo-hoje {
   position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--c);
-  border: 3px solid var(--superficie); box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 50%, transparent); animation: cc-pulso 2.4s 1.2s infinite;
+  border: 3px solid var(--superficie);
 }
-@keyframes cc-pulso { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 45%, transparent); } 70%, 100% { box-shadow: 0 0 0 10px transparent; } }
+.ccd-tempo-hoje::after {
+  content: ''; position: absolute; inset: -3px; border-radius: 50%; pointer-events: none;
+  border: 3px solid color-mix(in srgb, var(--c) 50%, transparent); --anel-escala: 2.25; animation: anel-pulso 2.4s ease-out 1.2s infinite backwards;
+}
+/*
+ * Pulso em anel: um círculo que cresce e some em volta de um ponto (o "hoje" da fatura, o "você está aqui", o botão +).
+ * Só transform e opacity, que a placa de vídeo anima sozinha. Antes era box-shadow, que obrigava a repintar a tela a cada
+ * quadro, para sempre: numa aba com um ponto desses, o app ficava 35% a 55% ocupado mesmo parado, e os toques esperavam.
+ * Cada ponto diz até onde o anel cresce (--anel-escala) e de que cor ele é (--anel-cor).
+ */
+@keyframes anel-pulso { from { transform: scale(1); opacity: 1; } 70%, to { transform: scale(var(--anel-escala, 1.9)); opacity: 0; } }
 .ccd-tempo-rotulos { display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; color: var(--texto-3); }
 .ccd-tempo-rotulos span { display: grid; }
 .ccd-tempo-rotulos span:nth-child(2) { text-align: center; }
@@ -3065,8 +3075,9 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .pl-planos h1 { margin: 0; font-family: var(--fonte-titulo); font-size: clamp(26px, 2.6vw, 34px); font-weight: 600; letter-spacing: -.03em; }
 .pl-sub { margin: 0; color: var(--texto-2); font-size: 15px; line-height: 1.5; }
 .pl-card { position: relative; width: 100%; display: grid; justify-items: center; gap: 16px; padding: 34px 26px 24px; border-radius: 28px; text-align: center; background: var(--superficie); }
-.pl-card.destaque { background: linear-gradient(var(--superficie), var(--superficie)) padding-box, var(--gradiente) border-box; border: 2px solid transparent; box-shadow: var(--sombra-alta); animation: pl-brilho 4s ease-in-out infinite; }
-@keyframes pl-brilho { 0%, 100% { box-shadow: var(--sombra-alta), 0 0 0 0 rgba(31, 209, 160, 0); } 50% { box-shadow: var(--sombra-alta), 0 0 44px -6px rgba(31, 209, 160, .35); } }
+.pl-card.destaque { background: linear-gradient(var(--superficie), var(--superficie)) padding-box, var(--gradiente) border-box; border: 2px solid transparent; box-shadow: var(--sombra-alta); }
+.pl-card.destaque::after { content: ''; position: absolute; inset: -2px; border-radius: inherit; pointer-events: none; box-shadow: 0 0 44px -6px rgba(31, 209, 160, .35); opacity: 0; animation: pl-brilho 4s ease-in-out infinite; }
+@keyframes pl-brilho { 50% { opacity: 1; } }
 .pl-card h1 { margin: 0; }
 .pl-selo { position: absolute; top: -13px; left: 50%; display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; color: #fff; background: var(--gradiente); transform: translateX(-50%); }
 .pl-faixa { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; animation: pl-entra .7s .2s var(--mola) both; }
@@ -3358,7 +3369,7 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .vz-cena { position: relative; width: min(100%, 360px); margin: 0 auto; user-select: none; pointer-events: none; }
 @keyframes vz-entra { from { opacity: 0; transform: translateY(26px) scale(.94); } }
 @keyframes vz-flutua { 0%, 100% { translate: 0 0; } 50% { translate: 0 -5px; } }
-@keyframes vz-pulsa { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--destaque) 45%, transparent); } 50% { transform: scale(1.08); box-shadow: 0 0 0 12px transparent; } }
+@keyframes vz-pulsa { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
 
 /* lançamentos */
 .vz-lanc { display: grid; gap: 10px; padding: 6px 0 14px; }
@@ -3379,6 +3390,10 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .vz-mais {
   position: absolute; right: -6px; bottom: -6px; display: grid; place-items: center; width: 50px; height: 50px; border-radius: 50%; color: #fff; background: var(--gradiente);
   animation: vz-entra .8s .6s var(--mola) backwards, vz-pulsa 2.6s 1.6s ease-in-out infinite;
+}
+.vz-mais::after {
+  content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  border: 3px solid color-mix(in srgb, var(--destaque) 45%, transparent); --anel-escala: 1.5; animation: anel-pulso 2.6s ease-out 1.6s infinite backwards;
 }
 
 /* dívidas */
@@ -4117,3 +4132,18 @@ body { top: 0 !important; }
 }
 /* celular: uma coluna só, para os nomes não quebrarem nem os valores ficarem cortados */
 @container (max-width: 519px) { .painel-mes { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- sem internet (components/SemInternet.tsx) ---------- */
+/* no lugar do painel, quando ele não consegue abrir */
+.sem-internet { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; text-align: center; background: var(--fundo); }
+.sem-internet-caixa { display: grid; justify-items: center; gap: 14px; max-width: 400px; }
+.sem-internet-icone {
+  display: grid; place-items: center; width: 72px; height: 72px; margin-top: 18px; border-radius: 50%; color: var(--saida);
+  background: color-mix(in srgb, var(--saida) 12%, var(--superficie)); border: 1px solid color-mix(in srgb, var(--saida) 30%, transparent);
+}
+.sem-internet h1 { margin: 4px 0 0; font-size: 1.4rem; }
+.sem-internet p { margin: 0 0 6px; color: var(--texto-2); line-height: 1.55; }
+.sem-internet .btn { min-width: 200px; justify-content: center; }
+/* faixa no topo do painel, quando a internet cai com ele aberto */
+.faixa-sem-internet span { display: inline; line-height: 1.5; }
+.faixa-sem-internet svg { vertical-align: -3px; margin-right: 4px; }
