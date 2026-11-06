@@ -1,4 +1,7 @@
 import * as XLSX from 'xlsx'
+import { noAppNativo } from './appAndroid'
+import { compartilharArquivo } from './arquivoNoApp'
+import { tx } from './textos'
 import { MESES, parseNumero } from './format'
 import { lerTudo, supabase } from './supabase'
 import { inicioDoMes } from './dividas'
@@ -329,5 +332,8 @@ export async function exportarBackup() {
     }))),
     'Meses',
   )
-  XLSX.writeFile(wb, `backup-financas-${new Date().toLocaleDateString('sv-SE')}.xlsx`)
+  const nome = `backup-financas-${new Date().toLocaleDateString('sv-SE')}.xlsx`
+  // no app Android não há download: o arquivo vai para o compartilhar do Android (lib/arquivoNoApp.ts)
+  if (noAppNativo) return compartilharArquivo(nome, XLSX.write(wb, { bookType: 'xlsx', type: 'base64' }) as string, tx('Backup do OpusCash'))
+  XLSX.writeFile(wb, nome)
 }

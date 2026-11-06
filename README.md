@@ -195,34 +195,43 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
 
 ## App Android (Play Store)
 
-O app da Play Store é o próprio site aberto em tela cheia (Trusted Web Activity). O projeto Android está em `android/`
-(gerado com o Bubblewrap por `scripts/app-android/gerar.cjs`): pacote **`br.com.opuscash.app`**, Android 7 ou mais novo,
-feito para o Android 16. O conteúdo vem do site e se atualiza sozinho; uma versão nova na loja só é preciso para mudar
-nome, ícone, cores ou quando a Play Store exigir um Android mais novo.
+O app da Play Store é feito com o [Capacitor](https://capacitorjs.com): o código deste site vai **dentro do APK** (pasta
+`android/`) e conversa direto com o Supabase. Ele não abre o site, não depende do Chrome e não tem barra de endereço.
+Pacote **`br.com.opuscash.app`**, Android 7 ou mais novo, feito para o Android 16, em celular e tablet.
+
+**O app não se atualiza sozinho com o site.** O código vai junto do APK, então mudança de tela, texto ou regra só chega
+ao app numa versão nova enviada à loja. Mudança no banco (migração) que quebre o código antigo também pede versão nova do
+app no mesmo dia.
+
+Como o app difere do site (`src/lib/appAndroid.ts`, montado no modo `app`):
+- abre direto no login, sem a página de propaganda, e não mostra preço nem botão de assinar, gerenciar a assinatura ou
+  atualizar o cartão (a política de pagamentos do Google Play não deixa levar a pessoa ao Stripe). O teste grátis continua,
+  e quem assinou pelo site entra normalmente;
+- os e-mails de confirmar a conta e de criar senha nova levam ao site (dentro do app a página é `https://localhost`);
+- o backup em planilha abre o compartilhar do Android (salvar no Drive, em Arquivos, mandar no WhatsApp), em vez de baixar;
+- a página fica entre a barra de status e a de navegação (sem `viewport-fit=cover`), com o fundo azul-escuro atrás delas.
+
+O endereço e a chave **pública** do Supabase do app ficam em `.env.app` (os mesmos que o site publica no navegador).
 
 **A chave de assinatura não fica aqui** (o repositório é público). O arquivo `opuscash-upload.keystore` e a senha ficam com
-o dono do projeto, com uma cópia no Google Drive dele. É a *chave de upload*: se ela se perder depois do primeiro envio, o
-Play Console deixa trocar (na mesma página da Assinatura de Apps do Google Play, abaixo → pedir redefinição da chave de
-upload).
+o dono do projeto, com uma cópia no Google Drive dele. É a *chave de upload*: se ela se perder, o Play Console deixa trocar
+(Protegido com o Google Play → Proteção da Google Play Store → Gerencie a Assinatura de Apps do Google Play → pedir
+redefinição da chave de upload).
 
-- `public/.well-known/assetlinks.json` prova ao Android que o app e o site são do mesmo dono; sem ele, o app abre com barra de
-  endereço. Leva a impressão digital (SHA-256) da **chave de assinatura do app** que o Google guarda (são duas: a tradicional,
-  RSA, que o Android confere hoje, e a pós-quântica, ML-DSA) e a da nossa chave de upload. Onde ver as do Google: Play Console
-  → Protegido com o Google Play → Proteção da Google Play Store → Gerencie a Assinatura de Apps do Google Play (ou baixe o
-  `certificates.zip` de lá). Trocou alguma chave? Atualize o arquivo.
-- `public/sw.js` e `public/offline.html`: a tela "sem internet" do app instalado.
-- `src/lib/appAndroid.ts`: dentro do app o Google não deixa levar a pessoa a outro meio de pagamento (o Stripe). Lá, o site
-  abre direto no login (sem a página de propaganda) e somem os preços e os botões de assinar, gerenciar a assinatura e
-  atualizar o cartão. O teste grátis continua, e quem assinou pelo site entra normalmente. No navegador nada muda. Para ver o
-  modo app no computador, abra o site com `?app=android`.
+Para gerar uma versão nova (precisa do JDK 21 e do Android SDK, com `sdk.dir` em `android/local.properties`):
 
-Para gerar uma versão nova (precisa do JDK 17 ou mais novo e do Android SDK, com `sdk.dir` em `android/local.properties`):
-
-1. Aumente `versionCode` (sempre +1) e `versionName` em `android/app/build.gradle` e em `android/twa-manifest.json`.
-2. `cd android && ./gradlew bundleRelease`
-3. Assine com a chave: `jarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore opuscash-upload.keystore
+1. Aumente `versionCode` (sempre +1) e `versionName` em `android/app/build.gradle`.
+2. `npm run app` (monta o código no modo `app` e copia para `android/`).
+3. `cd android && ./gradlew bundleRelease`
+4. Assine com a chave: `jarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore opuscash-upload.keystore
    app/build/outputs/bundle/release/app-release.aab opuscash`
-4. Envie o `app-release.aab` no Play Console.
+5. Envie o `app-release.aab` no Play Console.
+
+Ícones e abertura saem de `public/simbolo.webp` e `public/icone-512.png`: `python3 scripts/app-android/icones.py`.
+
+As versões 1.0.x do app abriam o site pelo Chrome (Trusted Web Activity). Delas ficaram `public/.well-known/assetlinks.json`
+(liga o pacote ao site, com as chaves do Google e a de upload; serve também se um dia o app abrir links do site) e a leitura
+de `?app=android` em `src/lib/appAndroid.ts`.
 
 ## Rodar no computador
 

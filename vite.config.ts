@@ -15,9 +15,18 @@ const arquivoDeVersao = (): Plugin => ({
   },
 })
 
+/**
+ * Código para o app Android (npm run app, modo `app`): sem viewport-fit=cover, o Capacitor põe a página entre a barra de
+ * status e a de navegação do Android, como num app comum. No site (e no iPhone), a página continua de ponta a ponta.
+ */
+const htmlDoApp = (): Plugin => ({
+  name: 'html-do-app',
+  transformIndexHtml: (html) => html.replace(', viewport-fit=cover', ''),
+})
+
 // https://vite.dev/config/
-export default defineConfig(({ command }) => ({
-  plugins: [react(), arquivoDeVersao()],
+export default defineConfig(({ command, mode }) => ({
+  plugins: [react(), arquivoDeVersao(), ...(mode === 'app' ? [htmlDoApp()] : [])],
   build: {
     rolldownOptions: {
       output: {

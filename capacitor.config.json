@@ -1,0 +1,12 @@
+{
+  "appId": "br.com.opuscash.app",
+  "appName": "OpusCash",
+  "webDir": "dist",
+  "backgroundColor": "#090d18",
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "style": "DARK"
+    }
+  }
+}

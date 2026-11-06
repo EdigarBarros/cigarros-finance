@@ -12,6 +12,10 @@ Toda alteração pedida vai direto para o site, sem perguntar antes:
 4. Acompanhe o deploy na Vercel (projeto `cigarros-finance`) até ficar `READY` e confira em
    `https://www.opuscash.com.br/versao.json` que o commit publicado é o novo.
 
+O app Android (`android/`, Capacitor) leva o código do site dentro dele e **não** recebe o que vai para o site. Mudou tela,
+texto ou banco de um jeito que o app precise? Gere a versão nova do app (README → App Android), aumentando o `versionCode`,
+entregue o `.aab` assinado ao dono e diga que ele precisa enviar à loja.
+
 Antes do merge, confira se o branch de produção andou (outra sessão pode ter publicado) e traga as mudanças para o seu
 branch. Mudanças no banco (arquivos em `supabase/`) não se aplicam sozinhas: avise quais migrações rodar no Supabase.
 
