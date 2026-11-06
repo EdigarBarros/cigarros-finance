@@ -9078,5 +9078,9 @@
   "Qual é o seu objetivo?": {
     "en": "What's your goal?",
     "es": "¿Cuál es tu objetivo?"
+  },
+  "{0}, mês a mês": {
+    "en": "{0}, month by month",
+    "es": "{0}, mes a mes"
   }
 }
