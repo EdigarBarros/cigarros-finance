@@ -78,6 +78,12 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   mas não conta como gasto (fica fora de Saiu, Faltou e Para onde foi); o app tira o valor da conta de origem e soma na
   caixinha de destino do mês (e o limite garantido do cartão que usa essa caixinha sobe junto). Editar ou apagar o
   lançamento desfaz o ajuste ([migração 23](supabase/migracao-23-guardado-em-banco.sql); sem ela o app funciona e avisa)
+- **Consultor que aprende com você**: a aba Consultor pergunta o seu objetivo (sair das dívidas, fechar o mês sem aperto,
+  juntar dinheiro, saber para onde vai o dinheiro, gastar sem culpa, fazer render) e muda a ordem do plano e o que diz.
+  Cada passo que dá para medir é conferido quando o mês fecha: deu certo, vira vitória; não deu, o próximo vem menor;
+  duas vezes sem dar, ele para de insistir. Também lê o seu jeito (guarda muito, usa crédito com controle, orçamento
+  justo, estável, anota tudo) e fala com cada um de um jeito ([migração 24](supabase/migracao-24-memoria-do-consultor.sql);
+  sem ela, a memória fica só no aparelho)
 - **Lançamentos**: lista por dia com busca e filtros; formulário rápido com "salvar e lançar outro",
   sugestão de descrição e categoria automática pelo histórico (digitou "iFood", já vem Alimentação)
 - **Dívidas interligadas**: cada dívida existe ao longo dos meses. Ao lançar uma saída de dívida, você escolhe
@@ -119,7 +125,8 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
    [`15`](supabase/migracao-15-cotacao-da-conta.sql), [`16`](supabase/migracao-16-acesso-teste-e-erros.sql),
    [`17`](supabase/migracao-17-teste-sem-cartao.sql), [`18`](supabase/migracao-18-teste-ao-escolher-plano.sql),
    [`19`](supabase/migracao-19-juros-das-dividas.sql), [`21`](supabase/migracao-21-partes-da-divida.sql),
-   [`22`](supabase/migracao-22-juros-de-atraso.sql), [`23`](supabase/migracao-23-guardado-em-banco.sql) e, **por último**, a
+   [`22`](supabase/migracao-22-juros-de-atraso.sql), [`23`](supabase/migracao-23-guardado-em-banco.sql),
+   [`24`](supabase/migracao-24-memoria-do-consultor.sql) e, **por último**, a
    [`20`](supabase/migracao-20-acesso-no-banco-definitivo.sql).
    O `schema.sql` sozinho **não** tem cobrança nem bloqueio: sem a 12 e a 20 o painel abre para qualquer conta, paga ou não.
    Não rode as migrações 02 a 08 num banco novo (o `schema.sql` já inclui o que elas fazem) nem a 13 (a 20 a substitui).

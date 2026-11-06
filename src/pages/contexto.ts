@@ -3,6 +3,7 @@ import type { Sugestao } from '../lib/adaptacao'
 import type { MesEfetivo, Resumo } from '../lib/calc'
 import type { SituacaoCartao } from '../lib/cartoes'
 import type { Analise, Reanalise } from '../lib/analise'
+import type { MemoriaConsultor, Objetivo } from '../lib/memoria'
 import type { Conselho } from '../lib/conselheiro'
 import type { MemoriaConta, SituacaoConta, SugestaoVinculo } from '../lib/contasFixas'
 import type { SituacaoDivida } from '../lib/dividas'
@@ -73,6 +74,10 @@ export interface Ctx {
   conselhosDispensados: number
   /** A análise completa do consultor (lib/analise.ts), refeita a cada mudança nos dados. */
   analise: Analise
+  /** O que o consultor aprendeu com a pessoa: o objetivo e os passos acompanhados (lib/memoria.ts). */
+  memoria: MemoriaConsultor
+  /** Escolhe (ou tira, com null) o objetivo que guia o consultor. */
+  escolherObjetivo: (o: Objetivo | null) => void
   /** O que a última mudança nos dados fez com a análise (null até a primeira mudança desta visita). */
   reanalise: Reanalise | null
   /** Para guardar no navegador o retrato da última visita à aba Consultor. */

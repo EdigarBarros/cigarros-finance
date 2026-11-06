@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CATEGORIAS_ANTIGAS } from './categorias'
 import { normPerfil } from './perfil'
+import { MEMORIA_VAZIA, normMemoria, type MemoriaConsultor } from './memoria'
 import { lerTudo, supabase } from './supabase'
 import type { EscolhaZerar, ParteZerar } from './zerar'
 import type { Banco, Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, ParteDivida, Perfil, SaldoDivida } from './types'
@@ -43,6 +44,17 @@ const faltaTabela = (e: { code?: string; message: string }) =>
 const faltaColuna = (e: { code?: string; message: string }) =>
   e.code === '42703' || e.code === 'PGRST204' || /column .*does not exist|could not find .*column/i.test(e.message)
 const chaveFoto = (userId: string) => `opuscash-foto-${userId}`
+/** A memória do consultor (lib/memoria.ts) também fica no aparelho: vale sem a migração 24 e enquanto a rede falha. */
+const chaveMemoria = (userId: string) => `opuscash-consultor-${userId}`
+const memoriaLocal = (userId: string): MemoriaConsultor => {
+  try {
+    const t = localStorage.getItem(chaveMemoria(userId))
+    return t ? normMemoria(JSON.parse(t)) : MEMORIA_VAZIA
+  } catch {
+    return MEMORIA_VAZIA
+  }
+}
+const temAlgo = (m: MemoriaConsultor) => m.objetivo !== null || m.acompanhados.length > 0
 const fotoLocal = (userId: string) => {
   try {
     return localStorage.getItem(chaveFoto(userId))
@@ -108,6 +120,7 @@ export function useDados(userId: string, ano: number) {
   const [perfilSemTabela, setPerfilSemTabela] = useState(false)
   /** Foto de perfil: do banco (migração 9) ou, sem a coluna, guardada só neste aparelho. */
   const [foto, setFoto] = useState<string | null>(() => fotoLocal(userId))
+  const [memoria, setMemoria] = useState<MemoriaConsultor>(() => memoriaLocal(userId))
   const [categorias, setCategorias] = useState<Categoria[]>([])
   /** Sem a migração 5: usa as 4 categorias antigas. */
   const [categoriasAntigas, setCategoriasAntigas] = useState(false)
@@ -205,6 +218,9 @@ export function useDados(userId: string, ano: number) {
     else {
       setPerfil(pf.data ? normPerfil(pf.data as Perfil) : null)
       if (pf.data && 'foto' in pf.data) setFoto((pf.data as Perfil).foto ?? fotoLocal(userId))
+      // a do banco vale mais (vem de qualquer aparelho); vazia lá (coluna recém-criada), fica a deste aparelho
+      const doBanco = pf.data && 'consultor' in pf.data ? normMemoria((pf.data as { consultor?: unknown }).consultor) : null
+      if (doBanco && temAlgo(doBanco)) setMemoria(doBanco)
     }
     const em = mt.error ?? mv.error
     if (em && faltaTabela(em)) setMetasSemTabela(true)
@@ -567,7 +583,9 @@ export function useDados(userId: string, ano: number) {
   const salvarPerfil = async (novo: Perfil) => {
     setPerfil(novo)
     if (perfilSemTabela) return
-    const { foto: _foto, ...semFoto } = novo
+    // a foto e a memória do consultor são gravadas à parte (sem a coluna, o perfil inteiro falharia; e uma cópia velha da
+    // memória que veio junto no perfil apagaria a nova)
+    const { foto: _foto, consultor: _consultor, ...semFoto } = novo as Perfil & { consultor?: unknown }
     const { error } = await supabase.from('perfis').upsert({ ...semFoto, user_id: userId, updated_at: new Date().toISOString() })
     if (error) return falhou(error.message)
     // Foto escolhida antes de o perfil existir (perguntas do primeiro acesso): só agora há uma linha para recebê-la.
@@ -586,6 +604,20 @@ export function useDados(userId: string, ano: number) {
     if (perfilSemTabela) return
     const { error } = await supabase.from('perfis').update({ foto: nova }).eq('user_id', userId)
     if (error && !faltaTabela(error) && error.code !== '42703' && error.code !== 'PGRST204') falhou(error.message)
+  }
+
+  /**
+   * Grava o que o consultor aprendeu (objetivo e passos acompanhados). Fica sempre no aparelho e, com a migração 24,
+   * também no banco. Sem a coluna, o erro é engolido: a cópia do aparelho já vale.
+   */
+  const salvarMemoria = async (nova: MemoriaConsultor) => {
+    setMemoria(nova)
+    try {
+      localStorage.setItem(chaveMemoria(userId), JSON.stringify(nova))
+    } catch { /* sem armazenamento: vale até recarregar */ }
+    if (perfilSemTabela || !perfil) return
+    const { error } = await supabase.from('perfis').update({ consultor: nova }).eq('user_id', userId)
+    if (error && !faltaTabela(error) && !faltaColuna(error)) falhou(error.message)
   }
 
   const addCategoria = async (c: Omit<Categoria, 'id' | 'ordem'>): Promise<Categoria | undefined> => {
@@ -671,13 +703,18 @@ export function useDados(userId: string, ano: number) {
     if (todo) await apagar('meses')
     else if (e.guardado) checar((await tab('meses').update({ investimentos: 0, moedas: {}, caixa: {} }).eq('user_id', userId)).error)
     if (todo) for (const t of ['bancos', 'categorias', 'perfis']) await apagar(t)
+    // o que o consultor aprendeu sai junto com os dados (o banco já foi com a linha do perfil)
+    if (todo) {
+      setMemoria(MEMORIA_VAZIA)
+      try { localStorage.removeItem(chaveMemoria(userId)) } catch { /* nada guardado */ }
+    }
   }
 
   return {
     zerarDados,
     metas, movimentosMeta, metasSemTabela, addMeta, updMeta, delMeta, addMovimentoMeta, delMovimentoMeta,
     categorias, categoriasAntigas, addCategoria, updCategoria, delCategoria,
-    perfil, perfilSemTabela, salvarPerfil, foto, salvarFoto,
+    perfil, perfilSemTabela, salvarPerfil, foto, salvarFoto, memoria, salvarMemoria,
     bancos, addBanco, updBanco, delBanco,
     dividasSemExtras,
     dividasSemMoeda,

@@ -262,6 +262,25 @@ Regras de precisão (para os números não mentirem):
 - **Até este dia nos outros meses**: lançamento sem data entra pela parte do mês que já tinha passado.
 - **Próxima fatura** é a que ainda vai vencer, mesmo que seja a deste mês.
 
+**Um consultor que aprende com a pessoa** (para ajudar, nunca para prendê-la no app). Três partes:
+
+- **Objetivo** (`lib/memoria.ts`, `OBJETIVOS`): o quadro "O que você quer agora?" aparece até a pessoa escolher (sair
+  das dívidas, fechar o mês sem aperto, juntar dinheiro, saber para onde vai o dinheiro, gastar sem culpa, fazer render).
+  O objetivo sobe no plano os passos que o aproximam (`PESO_DO_OBJETIVO` em `lib/analise.ts`; o urgente, como atraso,
+  continua na frente) e ganha uma frase no resumo dizendo onde a pessoa está em relação a ele. "Trocar" pergunta de novo.
+- **Memória** (`atualizarMemoria`): cada passo que dá para medir (corte, sair do vermelho, categoria que subiu, reserva,
+  adiantar dívida, cartão, atrasos, assinaturas, pode gastar…) é anotado com o número do dia. Quando o mês que decide
+  fecha (o mesmo mês se sugerido até o dia 10; senão, o seguinte), o app confere. Deu certo: vira vitória no quadro "O que
+  aprendi". Não deu: o passo seguinte pede a metade. Duas vezes seguidas sem dar: vira sugestão e sai do caminho, com
+  uma frase dizendo que ele não vai insistir. Parcela já assumida nunca é cobrada. A memória fica em `perfis.consultor`
+  (migração 24) e no aparelho; o Painel só atualiza com tudo carregado, para não medir dados pela metade.
+- **Jeito** (`JeitoFinanceiro`, mostrado em `lib/jeito.ts`): além dos traços de antes, **guarda muito** (sobra de 30% ou
+  mais, pouco estilo de vida, base em dia: ganha "pode gastar R$ X a mais sem culpa" em vez de corte), **usa crédito com
+  controle** (parcelas baratas até 30% do que entra, sem atraso: sem sermão, com o limite seguro), **orçamento justo**
+  (quase tudo vai para o essencial: a meta vira 5% e o conselho de investir some), **estável** (o resumo avisa que vai
+  falar pouco) e **anota tudo** (os gráficos de detalhe sobem). Dinheiro parado na conta corrente além de 2 meses de
+  gastos também ganha aviso.
+
 O plano de ação segue a escada: atrasos primeiro, depois sair do vermelho, dívida de juros muito altos, usar parte de uma reserva
 gorda para quitar dívida cara (sempre deixando 3 meses guardados), colchão, adiantar a dívida da vez, corte para a sobra-alvo,
 parcelas e cartão, reserva, metas e, por último, os ajustes de dados (informar juros, dar categoria, atualizar saldos).

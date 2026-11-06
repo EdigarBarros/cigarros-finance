@@ -8758,5 +8758,277 @@
   "O lançamento foi salvo, mas não consegui acertar os saldos em Dinheiro guardado. Confira lá.": {
     "en": "The entry was saved, but I couldn't update the balances in Saved money. Please check there.",
     "es": "El movimiento se guardó, pero no pude ajustar los saldos en Dinero guardado. Revísalos allí."
+  },
+  "Sair das dívidas": {
+    "en": "Get out of debt",
+    "es": "Salir de las deudas"
+  },
+  "Quitar o que devo, começando pelo que custa mais.": {
+    "en": "Pay off what I owe, starting with what costs the most.",
+    "es": "Pagar lo que debo, empezando por lo que más cuesta."
+  },
+  "Fechar o mês sem aperto": {
+    "en": "End the month without a squeeze",
+    "es": "Cerrar el mes sin aprietos"
+  },
+  "Chegar ao fim do mês sem faltar dinheiro.": {
+    "en": "Reach the end of the month without running short.",
+    "es": "Llegar a fin de mes sin que falte dinero."
+  },
+  "Juntar dinheiro": {
+    "en": "Save money",
+    "es": "Ahorrar dinero"
+  },
+  "Ter uma reserva e guardar todo mês.": {
+    "en": "Have an emergency fund and save every month.",
+    "es": "Tener un fondo de emergencia y ahorrar cada mes."
+  },
+  "Saber para onde vai o dinheiro": {
+    "en": "Know where my money goes",
+    "es": "Saber a dónde va mi dinero"
+  },
+  "Ver cada gasto e onde dá para melhorar.": {
+    "en": "See every expense and where I can do better.",
+    "es": "Ver cada gasto y dónde puedo mejorar."
+  },
+  "Gastar sem culpa": {
+    "en": "Spend without guilt",
+    "es": "Gastar sin culpa"
+  },
+  "Saber quanto posso aproveitar sem me prejudicar.": {
+    "en": "Know how much I can enjoy without hurting myself.",
+    "es": "Saber cuánto puedo disfrutar sin perjudicarme."
+  },
+  "Fazer o dinheiro render": {
+    "en": "Make my money grow",
+    "es": "Hacer que mi dinero rinda"
+  },
+  "Pôr o que sobra para trabalhar pelo futuro.": {
+    "en": "Put what's left over to work for the future.",
+    "es": "Poner lo que sobra a trabajar por el futuro."
+  },
+  "Em {0} você gastou {1} a menos do que costumava. Deu certo.": {
+    "en": "In {0} you spent {1} less than usual. It worked.",
+    "es": "En {0} gastaste {1} menos de lo habitual. Funcionó."
+  },
+  "{0} fechou com {1} de sobra.": {
+    "en": "{0} ended with {1} left over.",
+    "es": "{0} cerró con {1} de sobra."
+  },
+  "Em {0} você se permitiu gastar {1} a mais, sem sair do plano.": {
+    "en": "In {0} you allowed yourself to spend {1} more, without leaving the plan.",
+    "es": "En {0} te permitiste gastar {1} más, sin salirte del plan."
+  },
+  "Sua reserva cresceu {0} desde a sugestão.": {
+    "en": "Your emergency fund grew {0} since the suggestion.",
+    "es": "Tu fondo de emergencia creció {0} desde la sugerencia."
+  },
+  "Suas dívidas caíram {0} desde a sugestão, mais do que só as parcelas.": {
+    "en": "Your debts dropped {0} since the suggestion, more than the installments alone.",
+    "es": "Tus deudas bajaron {0} desde la sugerencia, más que solo las cuotas."
+  },
+  "O que estava atrasado foi colocado em dia.": {
+    "en": "What was overdue is now up to date.",
+    "es": "Lo que estaba atrasado quedó al día."
+  },
+  "Deu certo: {0}": {
+    "en": "It worked: {0}",
+    "es": "Funcionó: {0}"
+  },
+  "Em {0} o gasto não caiu como o combinado.": {
+    "en": "In {0} spending didn't drop as planned.",
+    "es": "En {0} el gasto no bajó como lo acordado."
+  },
+  "{0} ainda fechou no vermelho.": {
+    "en": "{0} still ended in the red.",
+    "es": "{0} todavía cerró en rojo."
+  },
+  "Ainda não aconteceu: {0}": {
+    "en": "Not yet: {0}",
+    "es": "Todavía no pasó: {0}"
+  },
+  "Comece cortando {0} por mês.": {
+    "en": "Start by cutting {0} a month.",
+    "es": "Empieza recortando {0} al mes."
+  },
+  "Da última vez, o corte inteiro ({0}) não coube na sua rotina. Metade já faz diferença: depois que virar costume, dá para ir até {1}% do que entra.": {
+    "en": "Last time, the full cut ({0}) didn't fit your routine. Half already makes a difference: once it becomes a habit, you can go up to {1}% of what comes in.",
+    "es": "La última vez, el recorte completo ({0}) no cupo en tu rutina. La mitad ya hace diferencia: cuando se vuelva costumbre, puedes llegar al {1}% de lo que entra."
+  },
+  "Passou de {0} para {1} por mês. Voltar ao que era não coube da última vez; tente voltar só a metade: {2} a menos por mês.": {
+    "en": "It went from {0} to {1} a month. Going back to what it was didn't fit last time; try going back only halfway: {2} less a month.",
+    "es": "Pasó de {0} a {1} al mes. Volver a lo que era no cupo la última vez; intenta volver solo la mitad: {2} menos al mes."
+  },
+  "Você pode gastar {0} a mais por mês, sem culpa.": {
+    "en": "You can spend {0} more a month, guilt-free.",
+    "es": "Puedes gastar {0} más al mes, sin culpa."
+  },
+  "Você guarda {0}% do que entra e a sua base está em dia. Mesmo gastando {1} a mais com você, ainda guarda {2}% por mês. Dinheiro também é para viver.": {
+    "en": "You save {0}% of what comes in and your foundation is in place. Even spending {1} more on yourself, you still save {2}% a month. Money is also for living.",
+    "es": "Ahorras el {0}% de lo que entra y tu base está al día. Aun gastando {1} más en ti, sigues ahorrando el {2}% al mes. El dinero también es para vivir."
+  },
+  "{0} estão parados na conta corrente.": {
+    "en": "{0} is sitting idle in your checking account.",
+    "es": "{0} están parados en la cuenta corriente."
+  },
+  "Na conta corrente você tem mais de 2 meses dos seus gastos. Ali o dinheiro costuma não render e perde para a inflação. Deixando 1 mês de gastos na conta, o resto pode ir para um lugar que renda e que dê para tirar no mesmo dia.": {
+    "en": "Your checking account holds more than 2 months of your spending. Money there usually earns nothing and loses to inflation. Keeping 1 month of spending in the account, the rest can go somewhere that earns interest and that you can withdraw the same day.",
+    "es": "En la cuenta corriente tienes más de 2 meses de tus gastos. Ahí el dinero suele no rendir y pierde contra la inflación. Dejando 1 mes de gastos en la cuenta, el resto puede ir a un lugar que rinda y del que puedas sacarlo el mismo día."
+  },
+  "Você usa crédito com controle.": {
+    "en": "You use credit with control.",
+    "es": "Usas el crédito con control."
+  },
+  "As parcelas levam {0}% do que entra e nenhuma é cara. O limite seguro é {1}%: dá para assumir até {2} a mais por mês em parcelas sem apertar. Passando disso, o crédito começa a mandar no seu mês.": {
+    "en": "Installments take {0}% of what comes in and none is expensive. The safe limit is {1}%: you can take on up to {2} more a month in installments without a squeeze. Beyond that, credit starts running your month.",
+    "es": "Las cuotas se llevan el {0}% de lo que entra y ninguna es cara. El límite seguro es el {1}%: puedes asumir hasta {2} más al mes en cuotas sin apretarte. Pasando de eso, el crédito empieza a mandar en tu mes."
+  },
+  "As parcelas levam {0}% do que entra e nenhuma é cara, mas você já está no limite seguro de {1}%. Espere uma acabar antes de assumir outra.": {
+    "en": "Installments take {0}% of what comes in and none is expensive, but you're already at the safe limit of {1}%. Wait for one to end before taking on another.",
+    "es": "Las cuotas se llevan el {0}% de lo que entra y ninguna es cara, pero ya estás en el límite seguro del {1}%. Espera que una termine antes de asumir otra."
+  },
+  "Já sugeri isso {0} vezes e não encaixou na sua rotina. Fica aqui, mas sem insistir.": {
+    "en": "I've suggested this {0} times and it didn't fit your routine. It stays here, but I won't insist.",
+    "es": "Ya sugerí esto {0} veces y no encajó en tu rutina. Queda aquí, pero sin insistir."
+  },
+  "Da última vez deu certo.": {
+    "en": "It worked last time.",
+    "es": "La última vez funcionó."
+  },
+  "Sobraram {0} por mês ({1}%). Com o orçamento tão justo, o primeiro passo é fechar o mês sem faltar; guardar vem depois.": {
+    "en": "{0} a month was left over ({1}%). With such a tight budget, the first step is ending the month without running short; saving comes later.",
+    "es": "Sobraron {0} al mes ({1}%). Con un presupuesto tan justo, el primer paso es cerrar el mes sin que falte; ahorrar viene después."
+  },
+  "Suas contas estão em ordem: vou falar pouco e avisar quando algo fugir do normal.": {
+    "en": "Your finances are in order: I'll say little and let you know when something is out of the ordinary.",
+    "es": "Tus cuentas están en orden: hablaré poco y avisaré cuando algo se salga de lo normal."
+  },
+  "Seu objetivo é sair das dívidas, e hoje você não tem nenhuma aberta. Objetivo cumprido.": {
+    "en": "Your goal is to get out of debt, and today you have none open. Goal reached.",
+    "es": "Tu objetivo es salir de las deudas, y hoy no tienes ninguna abierta. Objetivo cumplido."
+  },
+  "Seu objetivo é sair das dívidas: faltam {0}, e seguindo o plano você fica livre delas em {1}.": {
+    "en": "Your goal is to get out of debt: {0} to go, and following the plan you'll be free of it by {1}.",
+    "es": "Tu objetivo es salir de las deudas: faltan {0}, y siguiendo el plan quedas libre de ellas en {1}."
+  },
+  "Seu objetivo é sair das dívidas: faltam {0}.": {
+    "en": "Your goal is to get out of debt: {0} to go.",
+    "es": "Tu objetivo es salir de las deudas: faltan {0}."
+  },
+  "Seu objetivo é fechar o mês sem aperto. Lance o que entra e o que sai neste mês para eu prever como ele fecha.": {
+    "en": "Your goal is to end the month without a squeeze. Log what comes in and goes out this month so I can predict how it ends.",
+    "es": "Tu objetivo es cerrar el mes sin aprietos. Registra lo que entra y sale este mes para que prevea cómo cierra."
+  },
+  "Seu objetivo é fechar o mês sem aperto: pela previsão, {0} fecha com {1} de sobra.": {
+    "en": "Your goal is to end the month without a squeeze: by the forecast, {0} ends with {1} left over.",
+    "es": "Tu objetivo es cerrar el mes sin aprietos: según la previsión, {0} cierra con {1} de sobra."
+  },
+  "Seu objetivo é fechar o mês sem aperto: pela previsão, em {0} podem faltar {1}. O plano abaixo começa por aí.": {
+    "en": "Your goal is to end the month without a squeeze: by the forecast, you may be {1} short in {0}. The plan below starts there.",
+    "es": "Tu objetivo es cerrar el mes sin aprietos: según la previsión, en {0} pueden faltar {1}. El plan de abajo empieza por ahí."
+  },
+  "Seu objetivo é juntar dinheiro: você tem {0} guardados, {1} dos seus gastos.": {
+    "en": "Your goal is to save money: you have {0} saved, {1} of your spending.",
+    "es": "Tu objetivo es ahorrar dinero: tienes {0} ahorrados, {1} de tus gastos."
+  },
+  "Seu objetivo é juntar dinheiro. Informe quanto você já tem guardado para eu acompanhar o quanto ele cresce.": {
+    "en": "Your goal is to save money. Tell me how much you already have saved so I can track how it grows.",
+    "es": "Tu objetivo es ahorrar dinero. Indica cuánto ya tienes ahorrado para que siga cuánto crece."
+  },
+  "Seu objetivo é saber para onde vai o dinheiro: você lança cerca de {0} coisas por mês, e {1}% dos gastos têm categoria.": {
+    "en": "Your goal is to know where your money goes: you log about {0} items a month, and {1}% of your spending has a category.",
+    "es": "Tu objetivo es saber a dónde va tu dinero: registras unas {0} cosas al mes, y el {1}% de los gastos tiene categoría."
+  },
+  "Seu objetivo é saber para onde vai o dinheiro. Lance tudo o que entra e sai por 2 meses e eu mostro o caminho de cada real.": {
+    "en": "Your goal is to know where your money goes. Log everything that comes in and goes out for 2 months and I'll show you where every penny goes.",
+    "es": "Tu objetivo es saber a dónde va tu dinero. Registra todo lo que entra y sale durante 2 meses y te muestro el camino de cada peso."
+  },
+  "Seu objetivo é gastar sem culpa: dá para gastar {0} a mais por mês sem mexer no que você guarda.": {
+    "en": "Your goal is to spend without guilt: you can spend {0} more a month without touching what you save.",
+    "es": "Tu objetivo es gastar sin culpa: puedes gastar {0} más al mes sin tocar lo que ahorras."
+  },
+  "Seu objetivo é gastar sem culpa. Hoje ainda não sobra folga para isso; seguindo o plano abaixo, ela aparece.": {
+    "en": "Your goal is to spend without guilt. Today there's no room for it yet; following the plan below, it will appear.",
+    "es": "Tu objetivo es gastar sin culpa. Hoy todavía no sobra margen para eso; siguiendo el plan de abajo, aparece."
+  },
+  "Seu objetivo é fazer o dinheiro render: no ritmo de hoje, o que é seu chega a {0} em 12 meses.": {
+    "en": "Your goal is to make your money grow: at today's pace, your net worth reaches {0} in 12 months.",
+    "es": "Tu objetivo es hacer que tu dinero rinda: al ritmo de hoy, tu patrimonio llega a {0} en 12 meses."
+  },
+  "Seu objetivo é fazer o dinheiro render. Antes de investir, a base precisa estar pronta: veja em que degrau você está.": {
+    "en": "Your goal is to make your money grow. Before investing, the foundation has to be ready: see which step you're on.",
+    "es": "Tu objetivo es hacer que tu dinero rinda. Antes de invertir, la base tiene que estar lista: mira en qué escalón estás."
+  },
+  "Guarda muito": {
+    "en": "Saves a lot",
+    "es": "Ahorra mucho"
+  },
+  "Você guarda {0} do que entra e gasta pouco com você. Não precisa cortar mais: o consultor mostra quanto dá para aproveitar sem culpa.": {
+    "en": "You save {0} of what comes in and spend little on yourself. No need to cut more: the advisor shows how much you can enjoy guilt-free.",
+    "es": "Ahorras {0} de lo que entra y gastas poco en ti. No hace falta recortar más: el asesor muestra cuánto puedes disfrutar sin culpa."
+  },
+  "Orçamento justo": {
+    "en": "Tight budget",
+    "es": "Presupuesto justo"
+  },
+  "Quase tudo o que entra vai para o essencial e as parcelas. O foco agora é fechar o mês sem faltar, não guardar 20%.": {
+    "en": "Almost everything that comes in goes to essentials and installments. The focus now is ending the month without running short, not saving 20%.",
+    "es": "Casi todo lo que entra va a lo esencial y a las cuotas. El foco ahora es cerrar el mes sin que falte, no ahorrar el 20%."
+  },
+  "O mês fecha no azul, sem atraso nem dívida cara. O consultor fala pouco e avisa quando algo fugir do normal.": {
+    "en": "The month ends in the black, with nothing overdue and no expensive debt. The advisor says little and lets you know when something is out of the ordinary.",
+    "es": "El mes cierra en azul, sin atrasos ni deuda cara. El asesor habla poco y avisa cuando algo se sale de lo normal."
+  },
+  "Usa crédito com controle": {
+    "en": "Uses credit with control",
+    "es": "Usa el crédito con control"
+  },
+  "Você tem parcelas, mas baratas e dentro do limite seguro, sem atraso. Sem sermão: o consultor só mostra até onde dá para ir.": {
+    "en": "You have installments, but cheap ones, within the safe limit and never late. No lecture: the advisor just shows how far you can go.",
+    "es": "Tienes cuotas, pero baratas y dentro del límite seguro, sin atrasos. Sin sermones: el asesor solo muestra hasta dónde puedes llegar."
+  },
+  "Anota tudo": {
+    "en": "Logs everything",
+    "es": "Anota todo"
+  },
+  "Você lança cerca de {0} coisas por mês, quase todas com categoria. Os gráficos de detalhe vêm primeiro.": {
+    "en": "You log about {0} items a month, almost all with a category. The detailed charts come first.",
+    "es": "Registras unas {0} cosas al mes, casi todas con categoría. Los gráficos de detalle vienen primero."
+  },
+  "O que você quer agora?": {
+    "en": "What do you want right now?",
+    "es": "¿Qué quieres ahora?"
+  },
+  "Escolha o que mais importa para você hoje. O consultor muda a ordem do plano e o que ele fala. Dá para trocar quando quiser.": {
+    "en": "Choose what matters most to you today. The advisor changes the order of the plan and what it says. You can change it whenever you like.",
+    "es": "Elige lo que más te importa hoy. El asesor cambia el orden del plan y lo que dice. Puedes cambiarlo cuando quieras."
+  },
+  "Trocar": {
+    "en": "Change",
+    "es": "Cambiar"
+  },
+  "O que deu certo": {
+    "en": "What worked",
+    "es": "Lo que funcionó"
+  },
+  "O que não deu certo": {
+    "en": "What didn't work",
+    "es": "Lo que no funcionó"
+  },
+  "O próximo passo vem menor.": {
+    "en": "The next step will be smaller.",
+    "es": "El próximo paso será más pequeño."
+  },
+  "Acompanhando 1 passo do plano": {
+    "en": "Tracking 1 step of the plan",
+    "es": "Siguiendo 1 paso del plan"
+  },
+  "Acompanhando {0} passos do plano": {
+    "en": "Tracking {0} steps of the plan",
+    "es": "Siguiendo {0} pasos del plan"
+  },
+  "{0} Confiro quando {1} fechar.": {
+    "en": "{0} I'll check when {1} closes.",
+    "es": "{0} Lo reviso cuando cierre {1}."
   }
 }

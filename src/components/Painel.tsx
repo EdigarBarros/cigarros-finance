@@ -10,6 +10,7 @@ import {
 import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
 import { COR } from '../lib/charts'
 import { analisar, compararRetratos, retratoDe, type Reanalise, type Retrato } from '../lib/analise'
+import { atualizarMemoria, type Objetivo } from '../lib/memoria'
 import { avisosDispensadosNoMes, conselhos as conselhosDe, dispensarPorUmMes, faltamDadosParaConselhos } from '../lib/conselheiro'
 import { jurosDoAtraso } from '../lib/jurosAtraso'
 import { atrasadoHoje, aumentaDivida, calendarioDe, sugeridoParaPagar, fimDoMes, inicioDaDivida, meDevem, saldoMaisRecenteDaDivida, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
@@ -453,7 +454,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     dividasSemJuros: d.dividasSemJuros, contas: comContasFixas ? contas.contas : [],
     compras: comFaturas ? cartoes.compras.filter(contaNasSaidas(cartoes.faturasPagas)) : [],
     cartoes: comFaturas ? cartoes.cartoes : [], faturasPagas: comFaturas ? cartoes.faturasPagas : [],
-  }), [lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, d.meses, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.moeda, comFaturas, cartoes.compras, cartoes.cartoes, cartoes.faturasPagas, comContasFixas, contas.contas, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
+    memoria: d.memoria,
+  }), [d.memoria, lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, d.meses, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.moeda, comFaturas, cartoes.compras, cartoes.cartoes, cartoes.faturasPagas, comContasFixas, contas.contas, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reanálise: a cada mudança feita pela pessoa, compara com a análise anterior e conta o que mudou (aviso no canto e
   // "O que mudou" na aba). Troca de ano, virada do dia, cotação nova e dados chegando não são mudança da pessoa: só
@@ -476,6 +478,16 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     setAvisoReanalise(true)
   }, [analise, chaveDaBase, d.carregando, noPainel])
   const fecharAvisoReanalise = useCallback(() => setAvisoReanalise(false), [])
+
+  // Memória do consultor (lib/memoria.ts): a cada análise, confere os passos cujo mês fechou e começa a acompanhar os novos.
+  // Só com tudo carregado (cartões e contas também): um número tirado de dados pela metade daria um "não deu certo" falso.
+  const tudoCarregado = !d.carregando && Boolean(d.perfil) && (!comFaturas || cartoes.carregado) && !contas.carregando
+  useEffect(() => {
+    if (!tudoCarregado) return
+    const nova = atualizarMemoria(d.memoria, analise, hoje)
+    if (nova !== d.memoria) void d.salvarMemoria(nova)
+  }, [analise, tudoCarregado]) // eslint-disable-line react-hooks/exhaustive-deps
+  const escolherObjetivo = (o: Objetivo | null) => void d.salvarMemoria({ ...d.memoria, objetivo: o, objetivoEm: o ? new Date().toISOString() : null })
   const mudarAvisosDaAnalise = (ligado: boolean) => mudarPerfil({
     ...perfil, dispensadas: ligado ? perfil.dispensadas.filter((x) => x !== 'aviso-reanalise') : [...new Set([...perfil.dispensadas, 'aviso-reanalise'])],
   })
@@ -616,7 +628,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     conselhos, dispensarConselho,
     conselhosSemDados: faltamDadosParaConselhos({ lancs: lancsDosConselhos, dividas: d.dividas, hoje }),
     conselhosDispensados: avisosDispensadosNoMes(perfil.dispensadas, hoje),
-    analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise,
+    analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise, memoria: d.memoria, escolherObjetivo,
     ligarModulo,
     personalizar: () => setAjustes('painel'),
     categorias: d.categorias,
