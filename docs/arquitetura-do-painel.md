@@ -245,6 +245,23 @@ que faltam), mais compras no cartão, faturas, contas do mês, dívidas, metas e
 | Revisar | Regra 50/30/20 pelo nome das categorias, gastos que se repetem todo mês e assinaturas (custo no ano), gastos formiga, juros e tarifas pagos, renda que varia e a principal fonte, gastos sem categoria. Parcela de compra no cartão já assumida nunca entra como "dá para cortar" |
 | Planejar | Para onde mandar a sobra conforme a fase, orçamento por categoria para o mês que vem, plano das dívidas (só parcelas × avalanche × bola de neve, simulado mês a mês pelo calendário de parcelas, com o desconto dos juros ao adiantar), reserva, se as metas cabem, patrimônio daqui a 12 meses e o **plano de ação** em ordem de prioridade |
 
+Regras de precisão (para os números não mentirem):
+
+- **Guardar não é gastar.** Passar dinheiro para a caixinha, a poupança, um investimento ou outra conta sua (e o resgate) não
+  entra como renda nem como gasto, no Consultor e no conselheiro (`lib/mudaDeBolso.ts`). O reconhecimento é estrito:
+  "Reserva do hotel" e "Aplicação de botox" continuam sendo gasto. O resumo diz quanto foi guardado por mês, porque a Início
+  conta essas transferências como saída. No mês atual, o que já foi guardado conta para a sobra-alvo do "por dia".
+- **Salário em duas partes** (adiantamento e salário, mesma descrição): a recorrência de entrada aceita até 2 vezes no mês;
+  a previsão espera só a parte que ainda não caiu, e a agenda põe cada parte no seu dia.
+- **Reserva**: caixinha, reserva e investido contam inteiros; a conta corrente só pelo que sobra depois do que ainda vence no
+  mês (contas, parcelas, faturas e o dia a dia previsto, menos o que ainda entra).
+- **Sem duplicata**: a parcela cadastrada como dívida e também como conta do mês sai uma vez só, na previsão e na agenda; as
+  parcelas atrasadas de meses anteriores (com o juro do atraso) entram no que falta pagar.
+- **Gasto de hoje uma vez só**: o "por dia" do mês conta a partir do começo de hoje, e o "quanto dá hoje" desconta o que já
+  saiu hoje.
+- **Até este dia nos outros meses**: lançamento sem data entra pela parte do mês que já tinha passado.
+- **Próxima fatura** é a que ainda vai vencer, mesmo que seja a deste mês.
+
 O plano de ação segue a escada: atrasos primeiro, depois sair do vermelho, dívida de juros muito altos, usar parte de uma reserva
 gorda para quitar dívida cara (sempre deixando 3 meses guardados), colchão, adiantar a dívida da vez, corte para a sobra-alvo,
 parcelas e cartão, reserva, metas e, por último, os ajustes de dados (informar juros, dar categoria, atualizar saldos).

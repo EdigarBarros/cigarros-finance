@@ -16,6 +16,8 @@
  *  - Cada regra fica calada quando falta o dado de que precisa (sem saldo de banco, sem dívida, sem meta com prazo…).
  *  - Dinheiro emprestado a mais (empréstimo recebido, ou emprestado a alguém) não entra como entrada nem como saída:
  *    não é renda nem gasto.
+ *  - Dinheiro que só muda de bolso (caixinha, poupança, investimento, outra conta sua, resgate) também não: guardar não é gastar
+ *    (lib/mudaDeBolso.ts).
  *  - Regras de módulos desligados no perfil (dívidas, cartões, bancos, metas) não falam.
  */
 import { caixaDoBanco, mesEfetivo } from './calc'
@@ -24,6 +26,7 @@ import { aumentaDivida, jurosAoAno, meDevem, situacaoDividas } from './dividas'
 import { fmtMesAno, fmtMoeda, fmtTaxa, fmtTaxaAno, fmtValor, LOCAL_DAS_DATAS, MESES_NOME, noMeioDaFrase } from './format'
 import type { Taxas } from './moedas'
 import { situacaoMeta } from './metas'
+import { mudaDeBolso } from './mudaDeBolso'
 import { visao } from './perfil'
 import { tx } from './textos'
 import type { Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida } from './types'
@@ -167,8 +170,9 @@ interface MesAnalisado {
 
 /** Entradas, saídas e saídas por categoria de cada mês pedido (chave = `chaveMes`). Empréstimo não conta. */
 function analisarMeses(
-  lancs: Lancamento[], dividas: Divida[], categoriaDe: (l: Lancamento) => string, chaves: number[],
+  lancs: Lancamento[], dividas: Divida[], categoriaDe: (l: Lancamento) => string, chaves: number[], categorias: Categoria[] = [],
 ): Map<number, MesAnalisado> {
+  const nomePorId = new Map(categorias.map((c) => [c.id, c.nome]))
   const mapa = new Map(chaves.map((k) => [k, { entradas: 0, saidas: 0, porCategoria: {} } as MesAnalisado]))
   const dividaPorId = new Map(dividas.map((d) => [d.id, d]))
   for (const l of lancs) {
@@ -176,6 +180,8 @@ function analisarMeses(
     if (!m || !(l.valor > 0)) continue
     const d = l.divida_id ? dividaPorId.get(l.divida_id) : undefined
     if (d && aumentaDivida(l.tipo, d)) continue // dinheiro emprestado a mais: não é renda nem gasto
+    // passar para a caixinha, poupança ou investimento (e resgatar): dinheiro guardado não é gasto, nem renda
+    if (!l.cartao_id && !l.divida_id && mudaDeBolso(l.descricao, nomePorId.get(categoriaDe(l)) ?? '')) continue
     if (l.tipo === 'entrada') m.entradas += l.valor
     else {
       m.saidas += l.valor
@@ -233,7 +239,7 @@ export function conselhos(e: EntradaConselheiro): Conselho[] {
   const v = visao(e.perfil)
   const atual = chaveMes(hoje.getFullYear(), hoje.getMonth() + 1)
   const fechados = fechadosAte(atual)
-  const analise = analisarMeses(e.lancs, e.dividas, e.categoriaDe, [...fechados, atual])
+  const analise = analisarMeses(e.lancs, e.dividas, e.categoriaDe, [...fechados, atual], e.categorias)
 
   // Meses fechados com entradas E saídas: a base de toda regra de fluxo.
   const comDados = mesesComDados(analise, fechados)
