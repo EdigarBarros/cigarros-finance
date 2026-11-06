@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { noAppAndroid } from '../lib/appAndroid'
 import { iniciarTesteGratis, irParaStripe, podeTestar, type Assinatura } from '../lib/assinatura'
 import { supabase } from '../lib/supabase'
 import { Icone } from './Icone'
@@ -10,7 +11,8 @@ import { tx } from '../lib/textos'
 const ETAPAS = [
   { icone: 'calendario', cor: 'var(--entrada)', titulo: tx('Hoje'), texto: tx('Seu teste começa na hora. Acesso completo, sem cartão.') },
   { icone: 'relogio', cor: '#f5a524', titulo: tx('Dia 7'), texto: tx('O teste termina e o painel fica bloqueado. Seus dados continuam guardados.') },
-  { icone: 'cartao', cor: 'var(--destaque)', titulo: tx('Para continuar'), texto: tx('Assine por R$ 9,99 por mês. Sem fidelidade, cancele quando quiser.') },
+  // no app da Play Store não se fala de preço nem de como assinar (lib/appAndroid.ts)
+  ...(noAppAndroid ? [] : [{ icone: 'cartao', cor: 'var(--destaque)', titulo: tx('Para continuar'), texto: tx('Assine por R$ 9,99 por mês. Sem fidelidade, cancele quando quiser.') }]),
 ]
 
 const SEGURANCA = [
@@ -24,10 +26,12 @@ const SEGURANCA = [
  * teste que acabou, assinatura cancelada ou cobrança que falhou. O teste grátis de 7 dias começa quando ela clica no plano, sem
  * cartão; o cartão só é pedido ao assinar, na página do Stripe. Voltando da página de pagamento, espera o Stripe avisar o
  * servidor e entra sozinha.
+ * No app da Play Store (lib/appAndroid.ts) não há preço nem botão de assinar: a conta nova começa o teste grátis, e quem está
+ * sem acesso só confere de novo se a assinatura já está ativa.
  */
 export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura: Assinatura | null; email: string; aoAtualizar: () => Promise<unknown> }) {
   const voltou = new URLSearchParams(window.location.search).get('assinatura') === 'ok'
-  const [ocupado, setOcupado] = useState<'teste' | 'assinar' | null>(null)
+  const [ocupado, setOcupado] = useState<'teste' | 'assinar' | 'conferir' | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [esperando, setEsperando] = useState(voltou)
   const [saindo, setSaindo] = useState(false)
@@ -74,13 +78,23 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
     const msg = await irParaStripe('stripe-checkout', (data as { moeda?: string } | null)?.moeda)
     if (msg) { setErro(msg); setOcupado(null) }
   }
+  // no app: lê a assinatura de novo; se ela estiver ativa, o painel abre sozinho no lugar desta tela
+  const conferir = async () => {
+    setOcupado('conferir')
+    setErro(null)
+    await aoAtualizar()
+    setOcupado(null)
+    setErro(tx('Esta conta ainda não tem uma assinatura ativa.'))
+  }
 
   const titulo = esperando ? tx('Confirmando seu pagamento…')
     : novo ? tx('Comece com 7 dias grátis')
     : testeAcabou ? tx('Seu teste grátis acabou')
     : assinatura?.status === 'past_due' || assinatura?.status === 'unpaid' ? tx('Não conseguimos cobrar seu cartão')
     : tx('Sua assinatura terminou')
-  const sub = novo ? tx('Use o OpusCash completo por 7 dias, sem pagar nada. Se quiser continuar depois, são R$ 9,99 por mês.')
+  const sub = noAppAndroid ? (novo ? tx('Use o OpusCash completo por 7 dias, sem pagar nada.')
+    : tx('Para voltar ao painel, esta conta precisa de uma assinatura ativa. Não é possível assinar pelo app. Seus dados continuam guardados.'))
+    : novo ? tx('Use o OpusCash completo por 7 dias, sem pagar nada. Se quiser continuar depois, são R$ 9,99 por mês.')
     : testeAcabou ? tx('Seus 7 dias grátis terminaram. Assine para continuar de onde parou. Seus dados continuam guardados.')
     : tx('Assine para voltar ao seu painel. Seus dados continuam guardados.')
 
@@ -124,8 +138,7 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
                     <h1>{titulo}</h1>
                     <div className="pl-faixa">
                       <span><strong>{tx('7 dias')}</strong> {tx('grátis')}</span>
-                      <Icone nome="seta" tamanho={16} />
-                      <span><strong>R$ 9,99</strong> {tx('por mês')}</span>
+                      {!noAppAndroid && <><Icone nome="seta" tamanho={16} /><span><strong>R$ 9,99</strong> {tx('por mês')}</span></>}
                     </div>
                     <p className="pl-sub">{sub}</p>
                     <ol className="pl-linha">
@@ -136,6 +149,11 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
                         </li>
                       ))}
                     </ol>
+                  </>
+                ) : noAppAndroid ? (
+                  <>
+                    <h1>{titulo}</h1>
+                    <p className="pl-sub">{sub}</p>
                   </>
                 ) : (
                   <>
@@ -154,15 +172,21 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
                   <button className="btn gradiente pl-botao" onClick={comecarTeste} disabled={ocupado !== null}>
                     {ocupado === 'teste' ? tx('Preparando seu painel…') : <>{tx('Começar meus 7 dias grátis')} <Icone nome="seta" tamanho={17} /></>}
                   </button>
+                ) : noAppAndroid ? (
+                  <button className="btn gradiente pl-botao" onClick={conferir} disabled={ocupado !== null}>
+                    {ocupado === 'conferir' ? tx('Conferindo…') : tx('Conferir minha assinatura')}
+                  </button>
                 ) : (
                   <button className="btn gradiente pl-botao" onClick={assinar} disabled={ocupado !== null}>
                     {ocupado === 'assinar' ? tx('Abrindo o pagamento…') : tx('Assinar por R$ 9,99/mês')}
                   </button>
                 )}
-                <small className="pl-nota">
-                  {novo ? tx('Depois dos 7 dias, para continuar usando o painel: R$ 9,99 por mês. O cartão só é pedido nessa hora, na página segura do Stripe.')
-                    : tx('O pagamento é feito na página segura do Stripe. Cancele quando quiser, sem multa.')}
-                </small>
+                {!noAppAndroid && (
+                  <small className="pl-nota">
+                    {novo ? tx('Depois dos 7 dias, para continuar usando o painel: R$ 9,99 por mês. O cartão só é pedido nessa hora, na página segura do Stripe.')
+                      : tx('O pagamento é feito na página segura do Stripe. Cancele quando quiser, sem multa.')}
+                  </small>
+                )}
               </article>
               <small className="pl-nota">{tx('Ao continuar, você concorda com os')} <a href="#/termos">{tx('Termos de uso')}</a> {tx('e a')} <a href="#/privacidade">{tx('Política de privacidade')}</a>.</small>
             </>

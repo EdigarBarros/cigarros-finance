@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { noAppAndroid } from './appAndroid'
 import { supabase } from './supabase'
 import { tx } from './textos'
 
@@ -29,7 +30,8 @@ export const podeTestar = (a: Assinatura | null) => !a || (a.status === 'sem_ass
 export async function iniciarTesteGratis(): Promise<string | null> {
   const { data, error } = await supabase.rpc('iniciar_teste_gratis')
   if (error) return tx('Não foi possível começar o teste agora. Tente de novo.')
-  return data ? null : tx('O teste grátis já foi usado nesta conta. Assine para continuar.')
+  if (data) return null
+  return noAppAndroid ? tx('O teste grátis já foi usado nesta conta.') : tx('O teste grátis já foi usado nesta conta. Assine para continuar.')
 }
 
 const faltaTabela = (e: { code?: string; message: string }) =>
