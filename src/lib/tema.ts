@@ -1,4 +1,3 @@
-import { noAppNativo } from './appAndroid'
 import { useSyncExternalStore } from 'react'
 
 /** O que a pessoa escolheu. 'sistema' segue o claro/escuro do aparelho. */
@@ -73,19 +72,6 @@ export function definirMovimento(m: Movimento) {
   aplicarMovimento()
 }
 
-/*
- * Entrada das páginas no app Android: os números contando do zero, os gráficos crescendo e os blocos subindo tocam quando
- * o app abre. Depois, ao trocar de aba, a página já aparece pronta. Refazer a entrada a cada toque pesava num tablet
- * comum (medido com o processador 4x mais lento: até meio segundo de espera por toque, trocando rápido). O que muda de
- * valor (outro mês, um lançamento novo) continua animando. No site nada muda.
- */
-let entradaFeita = false
-/** A página que vai aparecer agora deve fazer a animação de entrada? */
-export const animarEntrada = () => !semMovimento() && !entradaFeita
-/** A primeira troca de aba no app: daqui para a frente as páginas aparecem prontas. */
-export function marcarEntradaFeita() {
-  if (noAppNativo) entradaFeita = true
-}
 
 /**
  * Contorno de uma mancha de tinta: um círculo com a borda ondulada que muda de forma enquanto cresce
