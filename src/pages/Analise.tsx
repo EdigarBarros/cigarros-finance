@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { compararRetratos, retratoDe, type Analise as DadosAnalise, type Mudanca, type Retrato } from '../lib/analise'
 import { visuais, type Visual } from '../lib/visuais'
 import { fmtDataCurta } from '../lib/format'
@@ -151,6 +151,42 @@ function PlanoDeAcao({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
 
 type Feed = ReturnType<typeof useFeed>
 
+/** Altura de cada "linha" da grade do mosaico, em px: cada cartão ocupa quantas couberem na altura dele. */
+const LINHA_DO_MOSAICO = 2
+
+/**
+ * Os gráficos em mosaico: cada cartão mede a própria altura e ocupa só as linhas de que precisa na grade, então o mais
+ * baixo não deixa buraco embaixo (as colunas de CSS deixavam, quando um cartão era bem mais alto que os outros). A
+ * quantidade de colunas acompanha a de cartões: dois gráficos ocupam duas colunas largas, não três com uma vazia.
+ * Refaz a conta quando um cartão muda de altura (abriu uma lista, o gráfico terminou de animar, a fonte carregou).
+ */
+function Mosaico({ itens, aoIr, feed }: { itens: Visual[]; aoIr: Ctx['irPara']; feed: Feed }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const grade = ref.current
+    if (!grade) return
+    const arrumar = () => {
+      const espaco = parseFloat(getComputedStyle(grade).getPropertyValue('--espaco')) || 16
+      for (const el of Array.from(grade.children) as HTMLElement[]) {
+        const alto = el.getBoundingClientRect().height
+        el.style.gridRowEnd = `span ${Math.max(1, Math.ceil((alto + espaco) / LINHA_DO_MOSAICO))}`
+      }
+    }
+    arrumar()
+    if (typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(arrumar)
+    for (const el of Array.from(grade.children)) ro.observe(el)
+    return () => ro.disconnect()
+  }, [itens])
+  return (
+    <div ref={ref} className="an-feed" data-n={Math.min(itens.length, 3)}>
+      {itens.map((v) => (
+        <CartaoVisual key={v.id} v={v} aoIr={aoIr} acoes={feed.acoes(v.id)}><Grafico v={v} /></CartaoVisual>
+      ))}
+    </div>
+  )
+}
+
 /** Simples e equilibrado: os gráficos na ordem do motor, com abas por assunto (no equilibrado) e "Ver mais". */
 function FeedEmAbas({ feed, aoIr, nivel }: { feed: Feed; aoIr: Ctx['irPara']; nivel: Nivel }) {
   const [assunto, setAssunto] = useState<Assunto | 'tudo'>('tudo')
@@ -175,11 +211,7 @@ function FeedEmAbas({ feed, aoIr, nivel }: { feed: Feed; aoIr: Ctx['irPara']; ni
           </div>
         )}
       </div>
-      <div className="an-feed" key={assunto}>
-        {vistos.map((v) => (
-          <CartaoVisual key={v.id} v={v} aoIr={aoIr} acoes={feed.acoes(v.id)}><Grafico v={v} /></CartaoVisual>
-        ))}
-      </div>
+      <Mosaico key={assunto} itens={vistos} aoIr={aoIr} feed={feed} />
       {assunto === 'tudo' && doAssunto.length > naFrente && (
         <button className="btn an-mais" onClick={() => setTodos(!todos)}>
           <Icone nome={todos ? 'cima' : 'ano'} tamanho={17} />
@@ -215,11 +247,7 @@ function FeedEmSecoes({ feed, aoIr }: { feed: Feed; aoIr: Ctx['irPara'] }) {
       {grupos.map((g) => (
         <div key={g.id} id={`an-secao-${g.id}`} className="an-secao">
           <h2 className="vt-secao"><span className="vt-secao-ic"><Icone nome={g.icone} tamanho={16} /></span><span>{g.nome}</span></h2>
-          <div className="an-feed">
-            {g.itens.map((v) => (
-              <CartaoVisual key={v.id} v={v} aoIr={aoIr} acoes={feed.acoes(v.id)}><Grafico v={v} /></CartaoVisual>
-            ))}
-          </div>
+          <Mosaico itens={g.itens} aoIr={aoIr} feed={feed} />
         </div>
       ))}
     </section>
