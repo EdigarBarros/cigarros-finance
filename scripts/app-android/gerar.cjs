@@ -18,7 +18,7 @@ const fs = require('fs')
     host: 'www.opuscash.com.br',
     name: 'OpusCash',
     launcherName: 'OpusCash',
-    startUrl: '/',
+    startUrl: '/?app=android', // o site sabe que está no app sem depender do navegador (src/lib/appAndroid.ts)
     appVersionCode: 1,
     appVersionName: '1.0.0',
     enableNotifications: false,
