@@ -78,12 +78,13 @@ justo).
 
 ### 4.0.2 Equilibrado: o mês num olhar (`components/InicioEquilibrado.tsx`)
 
-O meio-termo: tem visual, mas sem gráfico com eixo e sem lista comprida.
+O meio-termo: tem visual e um gráfico só, o do ano, sem lista comprida.
 
 | Parte | O que mostra |
 | --- | --- |
 | O mês | **Sobrou/Faltou até hoje** em número grande, duas barras (entrou e saiu), a pílula do ritmo (gastando menos ou mais que no mês passado) e o quadro **Até o fim do mês** (falta pagar, falta receber, deve sobrar) |
 | Próximos 7 dias | O `BlocoParaFazer` do simples só com o que vence até daqui a 7 dias (o atrasado entra), com Paguei/Recebi na linha. Em outro mês, tudo o que está em aberto |
+| O ano, mês a mês | O mesmo gráfico do Resumo do ano (`GraficoAnual`: entrou e saiu em barras, guardado, dívidas e investido em linhas, "Já aconteceu / O que vem aí" e o quadro do mês tocado ao lado), com o atalho "Resumo do ano". Igual no detalhado, logo abaixo do mês. Não aparece no simples (sem gráficos) nem sem nenhum mês lançado |
 | Resumos com anel | **Dívidas** (quanto já foi pago), **Metas** (média do progresso e a que está na frente) e **Dinheiro guardado**. Tocar leva para a página |
 | Embaixo | **Para onde foi o dinheiro** (barras, como no simples) e **Saúde do seu dinheiro** só com o conselho mais importante ("Ver todos" abre o resto) |
 

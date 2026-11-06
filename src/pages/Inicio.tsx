@@ -10,14 +10,14 @@ import { totalGuardado } from '../lib/guardado'
 import { CartaoDoMes, Mosaico, NumerosDoMes, VemAi, type Peca, type Sinal } from '../components/InicioDetalhado'
 import { MesEquilibrado, ResumosComAnel, type ResumoAnel } from '../components/InicioEquilibrado'
 import { FormDivida } from '../components/Formularios'
-import { GraficoFluxo, moedasDoAno, SeletorDoModo } from '../components/Graficos'
+import { GraficoAnual, GraficoFluxo, moedasDoAno, SeletorDoModo } from '../components/Graficos'
 import { useModoDoGrafico } from '../lib/modoDoGrafico'
 import { Icone } from '../components/Icone'
 import { BannerCarrossel, type Slide } from '../components/BannerCarrossel'
 import { ConviteImportar } from '../components/ConviteImportar'
 import { CartaoAcompanhar, CartaoSugestao } from '../components/Configuracoes'
 import { Encaixe, type ItemEncaixe } from '../components/Encaixe'
-import { ReguaMeses, Segmentado } from '../components/ui'
+import { Cartao, ReguaMeses, Segmentado } from '../components/ui'
 import { BlocoParaFazer, ResumoSimples } from '../components/Simples'
 import { BlocoConselhos } from '../components/BlocoConselhos'
 import { tarefasDoMes } from '../lib/paraFazer'
@@ -335,6 +335,16 @@ export function Inicio(c: Ctx) {
     )
   }
 
+  // O ano mês a mês (o mesmo gráfico do Resumo do ano): logo abaixo do mês, no equilibrado e no detalhado. Tocar num mês
+  // mostra os números dele no quadro ao lado. Sem nenhum mês com lançamento, não aparece.
+  const anoComDados = c.porMes.some((x) => x && (x.entradas > 0 || x.saidas > 0))
+  const anoMesAMes = anoComDados && (
+    <Cartao className="inicio-ano" titulo={tx('{0}, mês a mês', c.ano)}
+      acao={<button className="link" onClick={() => c.irPara('ano')}>{tx('Resumo do ano')} <Icone nome="dir" tamanho={14} /></button>}>
+      <GraficoAnual porMes={c.porMes} previsto={c.previsto} mesAtual={c.mes} altura={mobile ? 300 : 360} compacto={mobile} v={v} />
+    </Cartao>
+  )
+
   // ---------- Jeito equilibrado: o mês num olhar, os próximos 7 dias e o essencial do resto ----------
   if (nivel === 'equilibrado' && !c.contaNova) {
     const dd = ddMes
@@ -399,6 +409,7 @@ export function Inicio(c: Ctx) {
           {semNada ? lancamentos : <MesEquilibrado dd={dd} nomeMes={nomeMes} ritmo={ritmoDoGasto} mesAnterior={mesAnt} />}
           {agenda}
         </div>
+        {anoMesAMes}
         <ResumosComAnel itens={resumos} />
         <div className="ieq-baixo">
           {gastosEq}
@@ -504,6 +515,7 @@ export function Inicio(c: Ctx) {
             </div>
           </div>
         )}
+        {anoMesAMes}
         <Mosaico pecas={pecas} />
         {saude}
         {formDivida}
