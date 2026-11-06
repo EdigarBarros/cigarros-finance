@@ -28,3 +28,11 @@ dist-ssr
 *.xlsx
 .netlify
 
+
+# app Android: o que o Gradle gera e a chave de assinatura (fica só com o dono, nunca aqui)
+android/.gradle
+android/build
+android/app/build
+android/local.properties
+*.keystore
+*.jks

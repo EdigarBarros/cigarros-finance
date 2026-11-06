@@ -3,9 +3,9 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "br.com.opuscash.www.twa",
+      "package_name": "br.com.opuscash.app",
       "sha256_cert_fingerprints": [
-        "08:14:DC:84:39:B2:F8:EA:A7:FA:6D:E6:C6:24:00:5F:C4:AF:E4:CA:E5:8D:21:46:0C:51:0D:38:02:12:5F:2A"
+        "A7:07:94:02:48:57:E3:59:81:81:0D:51:05:ED:F2:E2:20:CB:DE:51:56:61:A9:34:C2:07:96:58:A3:65:5D:9D"
       ]
     }
   }

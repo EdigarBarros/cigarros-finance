@@ -195,9 +195,14 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
 
 ## App Android (Play Store)
 
-O app da Play Store é o próprio site aberto em tela cheia (Trusted Web Activity), gerado no
-[PWABuilder](https://www.pwabuilder.com) com o pacote `br.com.opuscash.www.twa`. Nada do app fica neste repositório: a chave
-de assinatura (`signing.keystore`) e a senha ficam só com o dono do projeto, fora daqui (o repositório é público).
+O app da Play Store é o próprio site aberto em tela cheia (Trusted Web Activity). O projeto Android está em `android/`
+(gerado com o Bubblewrap por `scripts/app-android/gerar.cjs`): pacote **`br.com.opuscash.app`**, Android 7 ou mais novo,
+feito para o Android 16. O conteúdo vem do site e se atualiza sozinho; uma versão nova na loja só é preciso para mudar
+nome, ícone, cores ou quando a Play Store exigir um Android mais novo.
+
+**A chave de assinatura não fica aqui** (o repositório é público). O arquivo `opuscash-upload.keystore` e a senha ficam com
+o dono do projeto, com uma cópia no Google Drive dele. É a *chave de upload*: se ela se perder depois do primeiro envio, o
+Play Console deixa trocar (Integridade do app → Assinatura de apps → pedir redefinição da chave de upload).
 
 - `public/.well-known/assetlinks.json` prova ao Android que o app e o site são do mesmo dono; sem ele, o app abre com barra de
   endereço. Leva a impressão digital (SHA-256) da chave de upload e também a da **chave de assinatura do app** do Google
@@ -207,7 +212,14 @@ de assinatura (`signing.keystore`) e a senha ficam só com o dono do projeto, fo
   abre direto no login (sem a página de propaganda) e somem os preços e os botões de assinar, gerenciar a assinatura e
   atualizar o cartão. O teste grátis continua, e quem assinou pelo site entra normalmente. No navegador nada muda. Para ver o
   modo app no computador, abra o site com `?app=android`.
-- Atualizar o app na loja só é preciso para mudar nome, ícone ou cores: o conteúdo vem do site e se atualiza sozinho.
+
+Para gerar uma versão nova (precisa do JDK 17 ou mais novo e do Android SDK, com `sdk.dir` em `android/local.properties`):
+
+1. Aumente `versionCode` (sempre +1) e `versionName` em `android/app/build.gradle` e em `android/twa-manifest.json`.
+2. `cd android && ./gradlew bundleRelease`
+3. Assine com a chave: `jarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore opuscash-upload.keystore
+   app/build/outputs/bundle/release/app-release.aab opuscash`
+4. Envie o `app-release.aab` no Play Console.
 
 ## Rodar no computador
 
