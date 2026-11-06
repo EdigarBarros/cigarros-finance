@@ -78,13 +78,12 @@ justo).
 
 ### 4.0.2 Equilibrado: o mês num olhar (`components/InicioEquilibrado.tsx`)
 
-O meio-termo: tem visual e um gráfico só, o do ano, sem lista comprida.
+O meio-termo: tem visual, mas sem gráfico com eixo e sem lista comprida.
 
 | Parte | O que mostra |
 | --- | --- |
 | O mês | **Sobrou/Faltou até hoje** em número grande, duas barras (entrou e saiu), a pílula do ritmo (gastando menos ou mais que no mês passado) e o quadro **Até o fim do mês** (falta pagar, falta receber, deve sobrar) |
 | Próximos 7 dias | O `BlocoParaFazer` do simples só com o que vence até daqui a 7 dias (o atrasado entra), com Paguei/Recebi na linha. Em outro mês, tudo o que está em aberto |
-| O ano, mês a mês | O mesmo gráfico do Resumo do ano (`GraficoAnual`: entrou e saiu em barras, guardado, dívidas e investido em linhas, "Já aconteceu / O que vem aí" e o quadro do mês tocado ao lado), com o atalho "Resumo do ano". Igual no detalhado, logo abaixo do mês. Não aparece no simples (sem gráficos) nem sem nenhum mês lançado |
 | Resumos com anel | **Dívidas** (quanto já foi pago), **Metas** (média do progresso e a que está na frente) e **Dinheiro guardado**. Tocar leva para a página |
 | Embaixo | **Para onde foi o dinheiro** (barras, como no simples) e **Saúde do seu dinheiro** só com o conselho mais importante ("Ver todos" abre o resto) |
 
@@ -100,7 +99,7 @@ Para o detalhado não virar uma parede de cartões e frases, a tela se lê olhan
 
 | Parte | O que mostra |
 | --- | --- |
-| Cartão do mês | **Sobrou/Faltou até hoje** em número grande, **Previsto no dia 30**, a linha **Dívidas: hoje → no dia 30** e o **gráfico do mês** (`GraficoDoMes`): o mesmo gráfico do Resumo do ano, só que com um ponto por **dia** no lugar de um por mês. Entrou e Saiu em barras; a chave **Já aconteceu / O que vem aí** (a mesma do ano, só aparece quando há algo previsto) põe o que ainda vai entrar e sair listrado em cima (as parcelas de dívida já estão em "Vai sair"); a linha **Sobrou no mês** (o que sobrou até cada dia, reta de um dia para o outro, tracejada depois de hoje) e a linha **Dívidas** com a sombra, que começa **escondida** (é muito maior que o dia a dia e achataria as barras; um toque na legenda mostra). Sem balão: tocar (ou passar o mouse) num dia escolhe o dia do **painel ao lado** (embaixo em tela estreita), com setas para andar de um dia para o outro: Entrou, Saiu, Vai entrar, Vai sair, quanto sobrou no mês até ali e as dívidas. Abre em hoje; num mês que já acabou, no último dia com movimento. No eixo, só o dia 1, os redondos (5, 10…; no celular 10, 20…), hoje e o último dia. |
+| Cartão do mês | **Sobrou/Faltou até hoje** em número grande, **Previsto no dia 30**, a linha **Dívidas: hoje → no dia 30** e, embaixo, o **gráfico do ano mês a mês** (`GraficoAnual`, o mesmo do Resumo do ano: entrou e saiu em barras, guardado, dívidas e investido em linhas, "Já aconteceu / O que vem aí" e o quadro do mês tocado). Ele substituiu o antigo gráfico do mês dia a dia (`GraficoDoMes`), que ficava quase vazio no começo do mês |
 | Números | **Entrou**, **Saiu** (até hoje) e **Gasto por dia** (com as compras no cartão, como o antigo "Gasto médio por dia") |
 | O que vem aí | Até 4 contas, faturas e parcelas na ordem do vencimento (atrasadas primeiro), de `tarefasDoMes` |
 | Mosaico | Peças **Gastos do mês, Contas do mês, Cartões, Dívidas, Dinheiro guardado, Metas** (só as ligadas), cada uma com ícone, número e bolinha: verde tudo certo, amarela pede atenção, vermelha precisa de você. Tocar abre o bloco completo logo abaixo (Gastos abre categorias e lançamentos), tocar de novo fecha |

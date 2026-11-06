@@ -1,5 +1,5 @@
 /**
- * Peças da Início no jeito detalhado: o mês num gráfico semana a semana, como o do Resumo do ano (em cima) e um mosaico de peças (embaixo), cada uma com
+ * Peças da Início no jeito detalhado: o mês com o gráfico do ano mês a mês, o mesmo do Resumo do ano (em cima), e um mosaico de peças (embaixo), cada uma com
  * ícone, um número e uma bolinha de cor. Tocar numa peça abre o bloco completo dela logo abaixo, então o detalhe continua
  * todo lá, só que um toque adiante (veja docs/arquitetura-do-painel.md).
  */
@@ -8,7 +8,6 @@ import type { DiaADia } from '../lib/previsao'
 import type { Tarefa } from '../lib/paraFazer'
 import { fmtValor, MESES_CURTO } from '../lib/format'
 import { Icone } from './Icone'
-import { GraficoDoMes } from './Graficos'
 import { tx } from '../lib/textos'
 import './inicio-detalhado.css'
 
@@ -21,9 +20,11 @@ const NOME_DO_SINAL: Record<Sinal, () => string> = {
 }
 
 // ---------- o mês num gráfico ----------
-/** O cartão do mês: quanto sobrou até hoje, como o mês deve terminar e o gráfico dia a dia. */
-export function CartaoDoMes({ dd, ano, mes, nomeMes, compacto, divida }: {
-  dd: DiaADia; ano: number; mes: number; nomeMes: string; compacto?: boolean
+/** O cartão do mês: quanto sobrou até hoje, como o mês deve terminar e, embaixo, o gráfico do ano mês a mês (`grafico`). */
+export function CartaoDoMes({ dd, nomeMes, divida, grafico }: {
+  dd: DiaADia; nomeMes: string
+  /** O gráfico do cartão: o ano mês a mês (o mesmo do Resumo do ano), no lugar do antigo dia a dia. */
+  grafico?: ReactNode
   /** Quanto se deve ao fim de cada dia: vira a linha "Dívidas: hoje → no dia 30" do topo. */
   divida?: number[]
 }) {
@@ -59,7 +60,7 @@ export function CartaoDoMes({ dd, ano, mes, nomeMes, compacto, divida }: {
           {!acabou && Math.abs(dividaFim - dividaHoje) >= 0.5 && <span className="idet-divida-fim">{'→ '}<b>{fmtValor(dividaFim)}</b> {tx('no dia {0}', dd.dias)}</span>}
         </p>
       )}
-      <GraficoDoMes dd={dd} ano={ano} mes={mes} divida={divida} compacto={compacto} altura={compacto ? 260 : 300} />
+      {grafico}
     </section>
   )
 }
