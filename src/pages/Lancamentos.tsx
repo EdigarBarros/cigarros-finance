@@ -345,7 +345,7 @@ function CartaoLancamento({ l, banco, categoria, cartao, emprestimo, guardadoEm,
   const parcelado = Boolean(l.compra_id && (l.parcelas ?? 1) > 1)
   const etiquetas = [
     banco && { id: 'bc', texto: banco.nome, cor: banco.cor },
-    l.guardado_banco_id && { id: 'gd', texto: guardadoEm ? tx('Guardado no {0} ({1})', guardadoEm.nome, NOME_TIPO_CAIXA[l.guardado_tipo ?? 'caixinha'].toLowerCase()) : tx('Guardado'), cor: guardadoEm?.cor, classe: 'guardado-em' },
+    l.guardado_banco_id && { id: 'gd', texto: guardadoEm ? tx('Guardado em {0} ({1})', guardadoEm.nome, NOME_TIPO_CAIXA[l.guardado_tipo ?? 'caixinha'].toLowerCase()) : tx('Guardado'), cor: guardadoEm?.cor, classe: 'guardado-em' },
     l.cartao_id && { id: 'cc', texto: cartao ? tx('Cartão {0}', cartao.nome) : tx('Cartão'), cor: cartao?.cor },
     parcelado && { id: 'pc', texto: tx('Parcela {0} de {1}', l.parcela, l.parcelas) },
     !l.cartao_id && l.forma && { id: 'fp', texto: infoForma(l.forma).nome },

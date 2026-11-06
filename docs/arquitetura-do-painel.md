@@ -693,10 +693,13 @@ Duas colunas no computador. A lista com selos redondos saiu; cada lançamento ag
   descrição já usada assim) já preenche. Essa saída **não é gasto**: `Painel` a tira de `lancsContados` (resumo do mês,
   previsão, dia a dia, conselhos e consultor) e só `lancsComGuardados` (`lancsMesComGuardados`/`lancsAnoComGuardados` no
   `Ctx`) a mostra na lista de Lançamentos, onde as somas, o calendário, as categorias e o saldo do dia a ignoram. O card
-  mostra "Guardado no PicPay (caixinha)" com o valor em azul.
+  mostra "Guardado em PicPay (caixinha)" com o valor em azul.
 - **Saldos acertados sozinhos:** com "Acertar os saldos sozinho" ligado (padrão), `ajustarSaldos` (`Painel`) soma o valor
   no tipo de saldo do banco de destino e tira da **conta corrente** do banco de origem (`banco_id`), no mês do lançamento,
-  gravando o mês com `salvarMes` (o que o mês herdou passa a ser dele). `guardado_saldo` marca que o app mexeu, para
+  gravando o mês com `salvarMes` (o que o mês herdou passa a ser dele). Os meses são refeitos em ordem, um sobre o
+  resultado do outro (`ajustarMeses`, `lib/guardado.ts`): mudar a data do lançamento para um mês que herda do mês antigo
+  não conta duas vezes. As gravações ficam numa fila (uma por vez) e, se gravar o saldo falhar, o lançamento é salvo com
+  `guardado_saldo` falso e o app avisa. `guardado_saldo` marca que o app mexeu, para
   editar e apagar desfazerem exatamente isso (desfaz o antes e aplica o depois no mesmo `salvarMes`). A prévia do
   formulário mostra o antes e o depois de cada saldo e, quando o banco de destino tem um cartão com limite garantido pela
   caixinha, quanto o limite sobe. Mês que ainda não chegou não mexe em saldo (lá o saldo é desconhecido, não zero). Quem

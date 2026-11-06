@@ -48,7 +48,8 @@ interface FormLancProps {
   bancos: Banco[]
   aoNovoBanco: (nome: string, cor: string) => Promise<Banco | undefined>
   /** Saldos guardados (conta, caixinha e reserva de cada banco) como valem no mês: para mostrar o antes e o depois de "guardei no…". */
-  saldoDoMes?: (ano: number, mes: number) => Caixa
+  /** `sem`: este lançamento já gravado, com o que ele fez nos saldos desfeito (para a prévia do "antes" ao editar). */
+  saldoDoMes?: (ano: number, mes: number, sem?: Lancamento) => Caixa
   aoSalvar: (l: NovoLanc, id?: string) => void
   /** Cria a dívida de um empréstimo recebido ("quem emprestou") e devolve ela, para ligar à entrada. */
   /** Dia em que a dívida começou, para avisar quando o lançamento ligado a ela é de antes. */
@@ -259,15 +260,17 @@ export function FormLancamento(p: FormLancProps) {
       if (sugerida) setCategoriaId(sugerida)
     }
     // Banco: o que estiver escrito na descrição, "(Next)", ou o que você usou da última vez.
+    let origem = bancoId
     if (!mexeuBanco && v.bancos) {
       const escrito = bancoNaDescricao(texto, p.bancos)
       const doNome = escrito ? p.bancos.find((b) => mesmoNome(b.nome, escrito)) : undefined
-      setBancoId(doNome?.id ?? anterior?.banco_id ?? '')
+      origem = doNome?.id ?? anterior?.banco_id ?? ''
+      setBancoId(origem)
     }
     // "Porquinho PicPay" (ou o que você fez da última vez com essa descrição): já marca como dinheiro guardado.
     if (!mexeuGuardado && tipo === 'saida' && v.bancos) {
       const daMemoria = anterior && anterior.tipo === 'saida' && anterior.guardado_banco_id && p.bancos.some((b) => b.id === anterior.guardado_banco_id) ? anterior : undefined
-      const escrito = daMemoria ? null : guardadoPelaDescricao(texto, p.bancos, bancoId || undefined)
+      const escrito = daMemoria ? null : guardadoPelaDescricao(texto, p.bancos, origem || undefined)
       setGuardadoBanco(daMemoria?.guardado_banco_id ?? escrito?.banco.id ?? '')
       if (daMemoria?.guardado_tipo || escrito) setGuardadoTipo(daMemoria?.guardado_tipo ?? escrito!.tipo)
     }
@@ -290,14 +293,12 @@ export function FormLancamento(p: FormLancProps) {
   const mesChegou = mesJaChegou(anoData, mesData)
   const valorGuardado = numero && numero > 0 ? (estrangeira ? (taxa ? Math.round(numero * taxa * 100) / 100 : 0) : numero) : 0
   // Antes e depois dos saldos do mês: o "antes" não conta o que este mesmo lançamento já tinha feito (ao editar).
-  const previa = useMemo(() => {
+  const previa = (() => {
     if (!bancoGuardado || !p.saldoDoMes || !acertarSaldos || !mesChegou || valorGuardado <= 0) return null
-    let antes = p.saldoDoMes(anoData, mesData)
-    if (p.inicial?.guardado_saldo && p.inicial.ano === anoData && p.inicial.mes === mesData) antes = aplicarEfeitos(antes, efeitosNoSaldo(p.inicial), -1)
+    const antes = p.saldoDoMes(anoData, mesData, p.inicial?.guardado_saldo ? p.inicial : undefined)
     const efeitos = efeitosNoSaldo({ valor: valorGuardado, banco_id: bancoId || null, guardado_banco_id: bancoGuardado.id, guardado_tipo: guardadoTipo, guardado_saldo: true })
-    const depois = aplicarEfeitos(antes, efeitos)
-    return { antes, depois, efeitos }
-  }, [bancoGuardado, p.saldoDoMes, acertarSaldos, mesChegou, valorGuardado, anoData, mesData, bancoId, guardadoTipo, p.inicial]) // eslint-disable-line react-hooks/exhaustive-deps
+    return { antes, depois: aplicarEfeitos(antes, efeitos), efeitos }
+  })()
   // O cartão do banco que usa a caixinha como limite garantido: o limite sobe junto.
   const cartaoDoLimite = bancoGuardado && guardadoTipo === 'caixinha' ? (p.cartoes ?? []).find((c) => c.ativo && c.banco_id === bancoGuardado.id && c.garantia_caixinha) : undefined
   const saldoDe = (c: Caixa | undefined, id: string, t: TipoCaixa) => c?.[id]?.[t] ?? 0
@@ -401,6 +402,8 @@ export function FormLancamento(p: FormLancProps) {
     setMexeuDivida(false)
     setMexeuGuardado(false)
     setGuardadoBanco('')
+    setGuardadoTipo('caixinha')
+    setAcertarSaldos(true)
     setErro(null)
     setSalvos((s) => s + 1)
     campoValor.current?.focus()
@@ -626,7 +629,7 @@ export function FormLancamento(p: FormLancProps) {
               aoMudar={(id) => { setGuardadoBanco(id); setMexeuGuardado(true) }}
               opcoes={[
                 { valor: '', rotulo: tx('Não, foi um gasto') },
-                ...p.bancos.map((b) => ({ valor: b.id, rotulo: tx('Guardei no {0}', b.nome), cor: b.cor })),
+                ...p.bancos.map((b) => ({ valor: b.id, rotulo: tx('Guardei em {0}', b.nome), cor: b.cor })),
               ]} />
             {bancoGuardado && (
               <>

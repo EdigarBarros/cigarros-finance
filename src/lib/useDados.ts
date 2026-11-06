@@ -536,6 +536,7 @@ export function useDados(userId: string, ano: number) {
       .from('meses')
       .upsert({ ...linha, usd: moedas.USD ?? 0, user_id: userId }, { onConflict: 'user_id,ano,mes' })
     if (error) falhou(error.message)
+    return !error
   }
 
   const addBanco = async (nome: string, cor: string): Promise<Banco | undefined> => {
@@ -556,7 +557,8 @@ export function useDados(userId: string, ano: number) {
   /** Os lançamentos do banco continuam existindo, só ficam "sem banco". */
   const delBanco = async (id: string) => {
     setBancos((xs) => xs.filter((x) => x.id !== id))
-    setLancs((xs) => xs.map((x) => (x.banco_id === id ? { ...x, banco_id: null } : x)))
+    // o banco do lançamento e o de destino do dinheiro guardado também se soltam (no banco isso é automático)
+    setLancs((xs) => xs.map((x) => (x.banco_id === id || x.guardado_banco_id === id ? { ...x, banco_id: x.banco_id === id ? null : x.banco_id, guardado_banco_id: x.guardado_banco_id === id ? null : x.guardado_banco_id } : x)))
     const { error } = await supabase.from('bancos').delete().eq('id', id)
     if (error) falhou(error.message)
   }

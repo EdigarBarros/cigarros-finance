@@ -1,7 +1,7 @@
-import { caixaDoBanco } from './calc'
+import { caixaDoBanco, mesEfetivo } from './calc'
 import { converter, type Taxas } from './moedas'
 import type { Visao } from './perfil'
-import type { Banco, Caixa, Lancamento, TipoCaixa } from './types'
+import type { Banco, Caixa, Lancamento, Mes, TipoCaixa } from './types'
 
 /** Quanto há guardado somando o que está ligado: contas dos bancos, investimentos e outras moedas (na moeda principal). */
 export function totalGuardado({ v, bancos, caixa, investimentos, moedas, lista, taxas }: {
@@ -45,11 +45,43 @@ export function aplicarEfeitos(caixa: Caixa, efeitos: EfeitoNoSaldo[], sinal: 1 
   return novo
 }
 
+/**
+ * Os meses depois de desfazer o que `antes` fez nos saldos e aplicar o que `depois` faz. Os meses são refeitos em ordem, cada
+ * um sobre o resultado do anterior: um mês sem saldo próprio herda o do mês de antes, que já está acertado (sem isso, mudar
+ * a data do lançamento para um mês que herda do mês antigo contaria o valor duas vezes). `mudados` são os meses a gravar.
+ */
+export function ajustarMeses(meses: Mes[], antes?: Lancamento, depois?: Lancamento, hoje = new Date()): { meses: Mes[]; mudados: Mes[] } {
+  const porMes = new Map<string, { ano: number; mes: number; efeitos: EfeitoNoSaldo[] }>()
+  const somar = (l: Lancamento | undefined, sinal: 1 | -1) => {
+    if (!l || !mesJaChegou(l.ano, l.mes, hoje)) return
+    const efeitos = efeitosNoSaldo(l).map((e) => ({ ...e, delta: e.delta * sinal }))
+    if (!efeitos.length) return
+    const k = `${l.ano}-${l.mes}`
+    const g = porMes.get(k) ?? { ano: l.ano, mes: l.mes, efeitos: [] }
+    g.efeitos.push(...efeitos)
+    porMes.set(k, g)
+  }
+  somar(antes, -1)
+  somar(depois, 1)
+  let lista = meses
+  const mudados: Mes[] = []
+  for (const g of [...porMes.values()].sort((a, b) => a.ano * 12 + a.mes - (b.ano * 12 + b.mes))) {
+    const ef = mesEfetivo(lista, g.ano, g.mes, hoje)
+    const atual = lista.find((m) => m.ano === g.ano && m.mes === g.mes) ?? { ano: g.ano, mes: g.mes, investimentos: 0, moedas: {}, meta_usd: 0, caixa: {} }
+    // o que o mês herdou passa a ser dele ao gravar (como na tela Dinheiro guardado)
+    const novo: Mes = { ...atual, caixa: aplicarEfeitos(ef.caixa, g.efeitos), moedas: ef.moedas }
+    lista = [...lista.filter((m) => !(m.ano === g.ano && m.mes === g.mes)), novo]
+    mudados.push(novo)
+  }
+  return { meses: lista, mudados }
+}
+
 /** Só mexe nos saldos de um mês que já chegou: nos futuros o saldo ainda é desconhecido, não zero. */
 export const mesJaChegou = (ano: number, mes: number, hoje = new Date()) => ano * 12 + mes <= hoje.getFullYear() * 12 + hoje.getMonth() + 1
 
 const normal = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-const PALAVRA_DE_GUARDAR = /\b(porquinho|porco|cofrinho|cofre|caixinha|guardar|guardei|guardando|poupanca|reserva)\b/
+// "porco" e "reserva" sozinhos ficam de fora: "Lombo de porco (Nubank)" e "Reserva do hotel (Itaú)" são compras
+const PALAVRA_DE_GUARDAR = /\b(porquinho|cofrinho|cofre|caixinha|guardar|guardei|guardando|poupanca)\b/
 
 /**
  * "Porquinho PicPay", "Guardar no Inter", "Itaú para PicPay (porquinho)": acha o banco que recebeu o dinheiro (o último

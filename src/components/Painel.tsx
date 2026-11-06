@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes, saldoInformado } from '../lib/calc'
-import { aplicarEfeitos, efeitosNoSaldo, ehGuardado, mesJaChegou, type EfeitoNoSaldo } from '../lib/guardado'
+import { ajustarMeses, ehGuardado } from '../lib/guardado'
 import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
 import {
   chaveRecusa, faltaPagarNoMes, lancamentoDaBaixa, memoriaDasContas, parecidosNosOutrosMeses, situacoesDoMes, sugestoesDoMes,
@@ -522,24 +522,22 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
    * Saída guardada (Itaú → porquinho do PicPay): o saldo do banco de destino sobe e o da conta de origem desce, no mês do
    * lançamento. Desfaz o que o lançamento de antes tinha feito e aplica o de agora, então editar ou apagar também acerta.
    */
-  const ajustarSaldos = async (antes?: Lancamento, depois?: Lancamento) => {
-    const porMes = new Map<string, { ano: number; mes: number; efeitos: EfeitoNoSaldo[] }>()
-    const somar = (l: Lancamento | undefined, sinal: 1 | -1) => {
-      if (!l || !mesJaChegou(l.ano, l.mes)) return
-      const k = `${l.ano}-${l.mes}`
-      const g = porMes.get(k) ?? { ano: l.ano, mes: l.mes, efeitos: [] }
-      g.efeitos.push(...efeitosNoSaldo(l).map((e) => ({ ...e, delta: e.delta * sinal })))
-      porMes.set(k, g)
+  // Os meses como estão agora, mesmo entre uma gravação e a tela refazer (a fila de gravações abaixo parte sempre deste valor).
+  const mesesAgora = useRef(d.meses)
+  useEffect(() => { mesesAgora.current = d.meses }, [d.meses])
+  const ajustarSaldos = async (antes?: Lancamento, depois?: Lancamento): Promise<boolean> => {
+    let ok = true
+    const r = ajustarMeses(mesesAgora.current, antes, depois)
+    mesesAgora.current = r.meses
+    for (const m of r.mudados) {
+      if (!(await d.salvarMes(m.ano, m.mes, { caixa: m.caixa, moedas: m.moedas }))) ok = false
     }
-    somar(antes, -1)
-    somar(depois, 1)
-    for (const g of porMes.values()) {
-      if (!g.efeitos.length) continue
-      const ef = mesEfetivo(d.meses, g.ano, g.mes)
-      // o que o mês herdou passa a ser dele ao gravar (como na tela Dinheiro guardado)
-      await d.salvarMes(g.ano, g.mes, { caixa: aplicarEfeitos(ef.caixa, g.efeitos), moedas: ef.moedas })
-    }
+    if (!ok) d.setErro(tx('O lançamento foi salvo, mas não consegui acertar os saldos em Dinheiro guardado. Confira lá.'))
+    return ok
   }
+  // Uma gravação por vez: "Salvar e lançar outro" ou duas edições seguidas não podem partir dos mesmos saldos.
+  const fila = useRef<Promise<unknown>>(Promise.resolve())
+  const emFila = (fazer: () => Promise<unknown>) => { fila.current = fila.current.then(fazer, fazer).catch(() => undefined) }
 
   const salvarLancamento = async (l: Omit<Lancamento, 'id'>, id?: string) => {
     const antes = id ? d.lancs.find((x) => x.id === id) : undefined
@@ -573,7 +571,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     if (!id) {
       if (lanc) salvo = await d.addLanc(lanc)
       // só mexe nos saldos depois de o lançamento estar gravado (com o vínculo, para poder desfazer)
-      if (salvo) await ajustarSaldos(undefined, salvo)
+      // se os saldos não gravarem, o lançamento diz que não mexeu neles (senão apagar depois desfaria o que nunca foi feito)
+      if (salvo && !(await ajustarSaldos(undefined, salvo)) && salvo.guardado_saldo) await d.updLanc(salvo.id, { guardado_saldo: false })
     } else {
       const gravou = await d.updLanc(id, l)
       if (antes) salvo = { ...antes, ...l }
@@ -980,12 +979,14 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           aoNovaCategoria={d.categoriasAntigas ? undefined : d.addCategoria}
           bancos={d.bancos}
           aoNovoBanco={d.addBanco}
-          saldoDoMes={(a, m) => mesEfetivo(d.meses, a, m).caixa}
-          aoSalvar={(l, id) => void salvarLancamento(l, id)}
+          // `sem`: o lançamento aberto, com o que ele já fez nos saldos desfeito (para a prévia do antes e depois ao editar)
+          saldoDoMes={(a, m, sem) => mesEfetivo(sem ? ajustarMeses(d.meses, sem, undefined).meses : d.meses, a, m).caixa}
+          aoSalvar={(l, id) => emFila(() => salvarLancamento(l, id))}
           aoExcluir={(id) => {
             // a parcela de cartão apagada também sai dos totais dos outros anos, que só são lidos de novo ao recarregar
             const apagado = d.lancs.find((x) => x.id === id)
-            void Promise.resolve(d.delLanc(id)).then(async (apagou) => {
+            emFila(async () => {
+              const apagou = await d.delLanc(id)
               if (apagou && apagado) await ajustarSaldos(apagado, undefined)
               if (!apagado || apagado.cartao_id) await cartoes.recarregar()
             })

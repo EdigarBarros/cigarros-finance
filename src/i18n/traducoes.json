@@ -8703,10 +8703,6 @@
     "en": "No, it was an expense",
     "es": "No, fue un gasto"
   },
-  "Guardei no {0}": {
-    "en": "Saved in {0}",
-    "es": "Guardé en {0}"
-  },
   "Onde fica": {
     "en": "Where it goes",
     "es": "Dónde queda"
@@ -8743,12 +8739,20 @@
     "en": "This month hasn't arrived yet: the app only records it and doesn't touch the balances.",
     "es": "Este mes aún no llegó: la app solo lo registra y no toca los saldos."
   },
-  "Guardado no {0} ({1})": {
-    "en": "Saved in {0} ({1})",
-    "es": "Guardado en {0} ({1})"
-  },
   "Para marcar uma saída como “guardado”, falta rodar a migração 23 no Supabase. Nada foi mudado.": {
     "en": "To mark an expense as “saved”, migration 23 still needs to run in Supabase. Nothing was changed.",
     "es": "Para marcar una salida como “guardado”, falta ejecutar la migración 23 en Supabase. No se cambió nada."
+  },
+  "Guardei em {0}": {
+    "en": "Saved in {0}",
+    "es": "Guardé en {0}"
+  },
+  "Guardado em {0} ({1})": {
+    "en": "Saved in {0} ({1})",
+    "es": "Guardado en {0} ({1})"
+  },
+  "O lançamento foi salvo, mas não consegui acertar os saldos em Dinheiro guardado. Confira lá.": {
+    "en": "The entry was saved, but I couldn't update the balances in Saved money. Please check there.",
+    "es": "El movimiento se guardó, pero no pude ajustar los saldos en Dinero guardado. Revísalos allí."
   }
 }
