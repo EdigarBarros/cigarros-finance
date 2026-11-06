@@ -82,9 +82,9 @@ button.pilula > svg { color: var(--texto-3); }
 .anel-vivo-fundo { stroke: var(--preench-3); }
 .anel-vivo-arco { stroke-linecap: round; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 45%, transparent)); animation: vt-arco 1.5s var(--mola) .1s backwards; }
 .anel-vivo-ponta { fill: #fff; opacity: .95; animation: vt-aparece .4s ease 1.3s backwards; }
-.anel-vivo-meio { position: relative; display: grid; place-items: center; text-align: center; line-height: 1.1; }
+.anel-vivo-meio { position: relative; display: grid; place-items: center; text-align: center; line-height: 1.1; max-width: 64%; }
 .anel-vivo-meio b { font-family: var(--fonte-numeros); font-size: 28px; font-weight: 800; letter-spacing: -.03em; }
-.anel-vivo-meio small { font-size: 11.5px; font-weight: 600; color: var(--texto-3); }
+.anel-vivo-meio small { font-size: 10.5px; font-weight: 600; color: var(--texto-3); text-wrap: balance; line-height: 1.15; margin-top: 1px; }
 .vitrine:not(.vivo) .anel-vivo-arco, .vitrine:not(.vivo) .anel-vivo-ponta { animation-play-state: paused; }
 
 /* ---------- velocímetro ---------- */
