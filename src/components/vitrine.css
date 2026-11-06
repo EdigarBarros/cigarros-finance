@@ -50,6 +50,7 @@
   font-family: var(--fonte-numeros); font-size: clamp(34px, 4.2vw, 50px); font-weight: 800; letter-spacing: -.045em; line-height: 1.02;
   font-variant-numeric: tabular-nums; color: color-mix(in srgb, var(--c) 70%, var(--texto)); max-width: 100%; overflow-wrap: anywhere;
 }
+:root[data-tema='claro'] .vitrine-valor { color: color-mix(in srgb, var(--c) 88%, var(--texto)); }
 .vitrine-sub { font-size: 14.5px; color: var(--texto-2); }
 .vitrine-sub b { color: var(--texto); }
 .vitrine-acoes { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
@@ -81,6 +82,10 @@ button.pilula > svg { color: var(--texto-3); }
 .anel-vivo circle { fill: none; }
 .anel-vivo-fundo { stroke: var(--preench-3); }
 .anel-vivo-arco { stroke-linecap: round; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 45%, transparent)); animation: vt-arco 1.5s var(--mola) .1s backwards; }
+.anel-vivo-meio-cor { stop-color: color-mix(in srgb, var(--c2) 50%, var(--c)); }
+/* modo claro: o meio do degradê passa pelo matiz (verde → âmbar → vermelho) em vez de um cinza-oliva */
+:root[data-tema='claro'] .anel-vivo-meio-cor { stop-color: color-mix(in oklch, var(--c2) 50%, var(--c)); }
+:root[data-tema='claro'] .anel-vivo-arco { filter: none; }
 .anel-vivo-ponta { fill: #fff; opacity: .95; animation: vt-aparece .4s ease 1.3s backwards; }
 .anel-vivo-meio { position: relative; display: grid; place-items: center; text-align: center; line-height: 1.1; max-width: 64%; }
 .anel-vivo-meio b { font-family: var(--fonte-numeros); font-size: 28px; font-weight: 800; letter-spacing: -.03em; }
