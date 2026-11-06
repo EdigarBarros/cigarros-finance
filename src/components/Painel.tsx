@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes, saldoInformado } from '../lib/calc'
+import { aplicarEfeitos, efeitosNoSaldo, ehGuardado, mesJaChegou, type EfeitoNoSaldo } from '../lib/guardado'
 import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
 import {
   chaveRecusa, faltaPagarNoMes, lancamentoDaBaixa, memoriaDasContas, parecidosNosOutrosMeses, situacoesDoMes, sugestoesDoMes,
@@ -255,10 +256,13 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const comFaturas = v.cartoes && !cartoes.semTabela
   // só as renegociações mudam a conta: a chave evita refazer tudo a cada fatura marcada como paga
   const chaveRenegociadas = cartoes.faturasPagas.filter(renegociada).map((p) => `${p.cartao_id}${p.ano}${p.mes}`).join()
-  const lancsContados = useMemo(
+  const lancsComGuardados = useMemo(
     () => (comFaturas && chaveRenegociadas ? d.lancs.filter(contaNasSaidas(cartoes.faturasPagas)) : d.lancs),
     [d.lancs, chaveRenegociadas, comFaturas], // eslint-disable-line react-hooks/exhaustive-deps
   )
+  // Saída que é dinheiro indo para o seu dinheiro guardado (Itaú → porquinho do PicPay) só muda de lugar: aparece na lista de
+  // Lançamentos (`lancsComGuardados`), mas fica fora de tudo o que soma o que entrou e o que saiu.
+  const lancsContados = useMemo(() => lancsComGuardados.filter((l) => !ehGuardado(l)), [lancsComGuardados])
 
   // O que você deve entra nas contas do mês; o que te devem fica à parte (só vira entrada quando você recebe).
   const dividasDevo = useMemo(() => d.dividas.filter((x) => !meDevem(x)), [d.dividas])
@@ -299,6 +303,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   )
 
   const lancsMes = lancsContados.filter((l) => l.mes === mes && l.ano === ano)
+  const lancsMesComGuardados = lancsComGuardados.filter((l) => l.mes === mes && l.ano === ano)
   const { sit: situacao, ef: mesEf } = porMesCompleto[mes - 1]
   const aReceber = useMemo(
     () => situacaoDividas(dividasMeDevem, d.saldos, d.pagamentos, ano, mes, taxas, hojeIso),
@@ -426,7 +431,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const lancsDosConselhos = useMemo(() => {
     const abertos = new Set(lancsContados.map((l) => l.id))
     const outros = d.lancsRecentes.filter((l) => !abertos.has(l.id))
-    return [...lancsContados, ...(comFaturas && chaveRenegociadas ? outros.filter(contaNasSaidas(cartoes.faturasPagas)) : outros)]
+    return [...lancsContados, ...(comFaturas && chaveRenegociadas ? outros.filter(contaNasSaidas(cartoes.faturasPagas)) : outros).filter((l) => !ehGuardado(l))]
   }, [lancsContados, d.lancsRecentes, chaveRenegociadas, comFaturas]) // eslint-disable-line react-hooks/exhaustive-deps
   const conselhos = useMemo(() => conselhosDe({
     hoje, lancs: lancsDosConselhos, categorias: d.categorias, categoriaDe: idCategoria, dividas: d.dividas, saldos: d.saldos,
@@ -513,6 +518,29 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     })
   }
 
+  /**
+   * Saída guardada (Itaú → porquinho do PicPay): o saldo do banco de destino sobe e o da conta de origem desce, no mês do
+   * lançamento. Desfaz o que o lançamento de antes tinha feito e aplica o de agora, então editar ou apagar também acerta.
+   */
+  const ajustarSaldos = async (antes?: Lancamento, depois?: Lancamento) => {
+    const porMes = new Map<string, { ano: number; mes: number; efeitos: EfeitoNoSaldo[] }>()
+    const somar = (l: Lancamento | undefined, sinal: 1 | -1) => {
+      if (!l || !mesJaChegou(l.ano, l.mes)) return
+      const k = `${l.ano}-${l.mes}`
+      const g = porMes.get(k) ?? { ano: l.ano, mes: l.mes, efeitos: [] }
+      g.efeitos.push(...efeitosNoSaldo(l).map((e) => ({ ...e, delta: e.delta * sinal })))
+      porMes.set(k, g)
+    }
+    somar(antes, -1)
+    somar(depois, 1)
+    for (const g of porMes.values()) {
+      if (!g.efeitos.length) continue
+      const ef = mesEfetivo(d.meses, g.ano, g.mes)
+      // o que o mês herdou passa a ser dele ao gravar (como na tela Dinheiro guardado)
+      await d.salvarMes(g.ano, g.mes, { caixa: aplicarEfeitos(ef.caixa, g.efeitos), moedas: ef.moedas })
+    }
+  }
+
   const salvarLancamento = async (l: Omit<Lancamento, 'id'>, id?: string) => {
     const antes = id ? d.lancs.find((x) => x.id === id) : undefined
     const lancs = d.lancs
@@ -542,10 +570,14 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         lanc = resto >= 0.01 ? { ...l, valor: resto } : null
       }
     }
-    if (!id) { if (lanc) salvo = await d.addLanc(lanc) }
-    else {
-      await d.updLanc(id, l)
+    if (!id) {
+      if (lanc) salvo = await d.addLanc(lanc)
+      // só mexe nos saldos depois de o lançamento estar gravado (com o vínculo, para poder desfazer)
+      if (salvo) await ajustarSaldos(undefined, salvo)
+    } else {
+      const gravou = await d.updLanc(id, l)
       if (antes) salvo = { ...antes, ...l }
+      if (gravou) await ajustarSaldos(antes, salvo)
       if (antes?.cartao_id) await cartoes.recarregar()
     }
     if (salvo?.conta_fixa_id && salvo.conta_fixa_id !== antes?.conta_fixa_id) {
@@ -576,7 +608,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       cartoes: comCartoes ? <BlocoCartoes situacoes={faturas} aoAbrir={() => irPara('cartoes')} /> : undefined,
     },
     busca, setBusca,
-    ano, mes, d, cartoes, faturas, lancsMes, lancsAno: lancsContados, situacao, aReceber, diaRef, mesEf, porMes, previsto, diaADia, mobile,
+    ano, mes, d, cartoes, faturas, lancsMes, lancsAno: lancsContados, lancsMesComGuardados, lancsAnoComGuardados: lancsComGuardados, situacao, aReceber, diaRef, mesEf, porMes, previsto, diaADia, mobile,
     perfil, v, taxas, sugestao,
     aceitarSugestao: (s: Sugestao) => mudarPerfil(s.aplicar(perfil)),
     recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),
@@ -948,11 +980,15 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           aoNovaCategoria={d.categoriasAntigas ? undefined : d.addCategoria}
           bancos={d.bancos}
           aoNovoBanco={d.addBanco}
+          saldoDoMes={(a, m) => mesEfetivo(d.meses, a, m).caixa}
           aoSalvar={(l, id) => void salvarLancamento(l, id)}
           aoExcluir={(id) => {
             // a parcela de cartão apagada também sai dos totais dos outros anos, que só são lidos de novo ao recarregar
             const apagado = d.lancs.find((x) => x.id === id)
-            void Promise.resolve(d.delLanc(id)).then(() => (!apagado || apagado.cartao_id ? cartoes.recarregar() : undefined))
+            void Promise.resolve(d.delLanc(id)).then(async (apagou) => {
+              if (apagou && apagado) await ajustarSaldos(apagado, undefined)
+              if (!apagado || apagado.cartao_id) await cartoes.recarregar()
+            })
           }}
           cartoes={v.cartoes && !cartoes.semTabela ? cartoes.cartoes : undefined}
           cartaoInicial={form.cartaoId}

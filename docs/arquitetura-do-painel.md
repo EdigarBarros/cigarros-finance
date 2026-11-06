@@ -687,6 +687,21 @@ Duas colunas no computador. A lista com selos redondos saiu; cada lançamento ag
 - Tablet: o resumo vai para o topo e o calendário e as categorias ficam lado a lado embaixo dele. Celular: tudo em uma
   coluna (resumo, calendário, categorias, filtros, lista) e o cartão fica numa linha só, com o valor à direita.
 - `ItemLancamento` (lista com selo e etiquetas) continua na Início e no Dinheiro guardado.
+- **Saída que é dinheiro guardado** (migração 23; `ehGuardado`, `efeitosNoSaldo` e `guardadoPelaDescricao` em
+  `lib/guardado.ts`): na saída, "Foi guardar dinheiro?" liga o lançamento a um banco de destino (`guardado_banco_id`) e ao
+  lugar onde fica (`guardado_tipo`: conta, caixinha = porquinho ou reserva). Digitar "Porquinho PicPay" (ou repetir uma
+  descrição já usada assim) já preenche. Essa saída **não é gasto**: `Painel` a tira de `lancsContados` (resumo do mês,
+  previsão, dia a dia, conselhos e consultor) e só `lancsComGuardados` (`lancsMesComGuardados`/`lancsAnoComGuardados` no
+  `Ctx`) a mostra na lista de Lançamentos, onde as somas, o calendário, as categorias e o saldo do dia a ignoram. O card
+  mostra "Guardado no PicPay (caixinha)" com o valor em azul.
+- **Saldos acertados sozinhos:** com "Acertar os saldos sozinho" ligado (padrão), `ajustarSaldos` (`Painel`) soma o valor
+  no tipo de saldo do banco de destino e tira da **conta corrente** do banco de origem (`banco_id`), no mês do lançamento,
+  gravando o mês com `salvarMes` (o que o mês herdou passa a ser dele). `guardado_saldo` marca que o app mexeu, para
+  editar e apagar desfazerem exatamente isso (desfaz o antes e aplica o depois no mesmo `salvarMes`). A prévia do
+  formulário mostra o antes e o depois de cada saldo e, quando o banco de destino tem um cartão com limite garantido pela
+  caixinha, quanto o limite sobe. Mês que ainda não chegou não mexe em saldo (lá o saldo é desconhecido, não zero). Quem
+  já digitou o saldo à mão desliga a opção para não somar duas vezes. Sem a migração, a gravação falha com um aviso e nada
+  muda (nem o saldo).
 - **Sem as compras no cartão de cartões ativos** (com o módulo de cartões ligado): elas ficam na tela Cartões (4.11) para
   não se misturar com o que entrou e saiu da conta. A compra de um cartão que a pessoa deixou de usar continua aqui, porque
   a tela Cartões só mostra os ativos. O resumo, o calendário e as categorias desta página não contam o que saiu daqui. Uma

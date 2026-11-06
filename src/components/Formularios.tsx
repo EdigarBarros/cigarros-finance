@@ -1,7 +1,8 @@
 import { useId, useMemo, useRef, useState } from 'react'
 import { dicaDaDescricao } from '../lib/adaptacao'
 import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
-import { gerarParcelas, hojeLocal, nomeDaFatura, textoParcelamento } from '../lib/cartoes'
+import { gerarParcelas, garantidoDo, hojeLocal, nomeDaFatura, textoParcelamento } from '../lib/cartoes'
+import { aplicarEfeitos, efeitosNoSaldo, guardadoPelaDescricao, mesJaChegou } from '../lib/guardado'
 import { formaDe, formaPelaDescricao, formasDoTipo, type FormaPagamento } from '../lib/formas'
 import { COR } from '../lib/charts'
 import { calendarioDe, dividaPelaDescricao, inicioPelaProxima, jurosAoAno, meDevem, mesesAntes, nativoDiv, parcelasDe, somaMesesData, type SituacaoDivida } from '../lib/dividas'
@@ -9,9 +10,9 @@ import { dataPadrao, fmtDataLonga, fmtMesAno, fmtMoeda, fmtTaxa, fmtTaxaAno, fmt
 import { casasDaMoeda, dataPlausivel, erroDataFora, erroValorGrande, mascarar, paraCampoMoeda, valorGrandeDemais } from '../lib/dinheiro'
 import { infoMoeda, moedasUsaveis, type Taxas } from '../lib/moedas'
 import { visao } from '../lib/perfil'
-import { bancoConhecido, bancoNaDescricao, CORES_LIVRES, mesmoNome } from '../lib/rotulos'
+import { bancoConhecido, bancoNaDescricao, CORES_LIVRES, mesmoNome, NOME_TIPO_CAIXA } from '../lib/rotulos'
 import { contaPeloNome, type MemoriaConta } from '../lib/contasFixas'
-import type { Banco, CartaoCredito, Categoria, ContaFixa, Divida, Lancamento, Pagamento, Perfil, Tipo } from '../lib/types'
+import { TIPOS_CAIXA, type Banco, type Caixa, type CartaoCredito, type Categoria, type ContaFixa, type Divida, type Lancamento, type Pagamento, type Perfil, type Tipo, type TipoCaixa } from '../lib/types'
 import { EscolhaCategoria } from './Categorias'
 import { IconeCategoria } from './IconeCategoria'
 import { Icone } from './Icone'
@@ -46,6 +47,8 @@ interface FormLancProps {
   aoNovaCategoria?: (c: Omit<Categoria, 'id' | 'ordem'>) => Promise<Categoria | undefined>
   bancos: Banco[]
   aoNovoBanco: (nome: string, cor: string) => Promise<Banco | undefined>
+  /** Saldos guardados (conta, caixinha e reserva de cada banco) como valem no mês: para mostrar o antes e o depois de "guardei no…". */
+  saldoDoMes?: (ano: number, mes: number) => Caixa
   aoSalvar: (l: NovoLanc, id?: string) => void
   /** Cria a dívida de um empréstimo recebido ("quem emprestou") e devolve ela, para ligar à entrada. */
   /** Dia em que a dívida começou, para avisar quando o lançamento ligado a ela é de antes. */
@@ -91,6 +94,12 @@ export function FormLancamento(p: FormLancProps) {
   const [data, setData] = useState(ini.data ?? dataPadrao(p.ano, p.mes))
   const [bancoId, setBancoId] = useState<string>(ini.banco_id ?? '')
   const [mexeuBanco, setMexeuBanco] = useState(Boolean(p.inicial))
+  // Saída que é dinheiro indo para o seu dinheiro guardado (Itaú → porquinho do PicPay): banco que recebeu, onde fica e se o app
+  // acerta os saldos sozinho.
+  const [guardadoBanco, setGuardadoBanco] = useState<string>(ini.guardado_banco_id ?? '')
+  const [guardadoTipo, setGuardadoTipo] = useState<TipoCaixa>(ini.guardado_tipo ?? 'caixinha')
+  const [acertarSaldos, setAcertarSaldos] = useState(p.inicial ? Boolean(p.inicial.guardado_saldo) : true)
+  const [mexeuGuardado, setMexeuGuardado] = useState(Boolean(p.inicial || p.preset))
   // Sem escolha, a categoria fica em "Outros" (se a pessoa tiver uma com esse nome).
   const outrosDe = (t: Tipo) => p.categorias.find((c) => c.tipo === t && /^outros$/i.test(c.nome))?.id ?? ''
   const catDivida = p.categorias.find((c) => c.tipo === 'saida' && c.papel === 'divida')
@@ -255,6 +264,13 @@ export function FormLancamento(p: FormLancProps) {
       const doNome = escrito ? p.bancos.find((b) => mesmoNome(b.nome, escrito)) : undefined
       setBancoId(doNome?.id ?? anterior?.banco_id ?? '')
     }
+    // "Porquinho PicPay" (ou o que você fez da última vez com essa descrição): já marca como dinheiro guardado.
+    if (!mexeuGuardado && tipo === 'saida' && v.bancos) {
+      const daMemoria = anterior && anterior.tipo === 'saida' && anterior.guardado_banco_id && p.bancos.some((b) => b.id === anterior.guardado_banco_id) ? anterior : undefined
+      const escrito = daMemoria ? null : guardadoPelaDescricao(texto, p.bancos, bancoId || undefined)
+      setGuardadoBanco(daMemoria?.guardado_banco_id ?? escrito?.banco.id ?? '')
+      if (daMemoria?.guardado_tipo || escrito) setGuardadoTipo(daMemoria?.guardado_tipo ?? escrito!.tipo)
+    }
     // "Pix de João Silva" já ligado antes à pensão: escolhe a conta sozinho (se ela ainda não tem lançamento neste mês).
     if (!mexeuConta && p.contasFixas && p.memoriaContas) {
       const k = contaPeloNome(texto, tipo, p.contasFixas, p.memoriaContas)
@@ -267,6 +283,24 @@ export function FormLancamento(p: FormLancProps) {
       if (d && !mexeuCategoria && catDivida) setCategoriaId(catDivida.id)
     }
   }
+
+  // "Guardei no PicPay": só vale numa saída comum (sem cartão e sem dívida) e com o banco de destino ainda existindo.
+  const bancoGuardado = tipo === 'saida' && !cartao && !dividaId && !novoEmprestimo ? p.bancos.find((b) => b.id === guardadoBanco) : undefined
+  const bancoOrigem = p.bancos.find((b) => b.id === bancoId)
+  const mesChegou = mesJaChegou(anoData, mesData)
+  const valorGuardado = numero && numero > 0 ? (estrangeira ? (taxa ? Math.round(numero * taxa * 100) / 100 : 0) : numero) : 0
+  // Antes e depois dos saldos do mês: o "antes" não conta o que este mesmo lançamento já tinha feito (ao editar).
+  const previa = useMemo(() => {
+    if (!bancoGuardado || !p.saldoDoMes || !acertarSaldos || !mesChegou || valorGuardado <= 0) return null
+    let antes = p.saldoDoMes(anoData, mesData)
+    if (p.inicial?.guardado_saldo && p.inicial.ano === anoData && p.inicial.mes === mesData) antes = aplicarEfeitos(antes, efeitosNoSaldo(p.inicial), -1)
+    const efeitos = efeitosNoSaldo({ valor: valorGuardado, banco_id: bancoId || null, guardado_banco_id: bancoGuardado.id, guardado_tipo: guardadoTipo, guardado_saldo: true })
+    const depois = aplicarEfeitos(antes, efeitos)
+    return { antes, depois, efeitos }
+  }, [bancoGuardado, p.saldoDoMes, acertarSaldos, mesChegou, valorGuardado, anoData, mesData, bancoId, guardadoTipo, p.inicial]) // eslint-disable-line react-hooks/exhaustive-deps
+  // O cartão do banco que usa a caixinha como limite garantido: o limite sobe junto.
+  const cartaoDoLimite = bancoGuardado && guardadoTipo === 'caixinha' ? (p.cartoes ?? []).find((c) => c.ativo && c.banco_id === bancoGuardado.id && c.garantia_caixinha) : undefined
+  const saldoDe = (c: Caixa | undefined, id: string, t: TipoCaixa) => c?.[id]?.[t] ?? 0
 
   const salvar = async (continuar: boolean) => {
     if (trava.current) return
@@ -341,6 +375,10 @@ export function FormLancamento(p: FormLancProps) {
           categoria_id: categoriaId || null,
           divida_id: ligada,
           forma: forma && forma !== 'credito' ? forma : null,
+          // os campos só vão quando usados (ou para limpar o que havia): sem a migração 23 o banco não tem essas colunas
+          ...(bancoGuardado
+            ? { guardado_banco_id: bancoGuardado.id, guardado_tipo: guardadoTipo, guardado_saldo: acertarSaldos && mesChegou && Boolean(p.saldoDoMes) }
+            : ini.guardado_banco_id ? { guardado_banco_id: null, guardado_tipo: null, guardado_saldo: false } : {}),
           // sem o módulo de contas o campo não aparece: o vínculo que já existia fica como está
           ...(p.contasFixas ? { conta_fixa_id: contaEscolhida?.id ?? null } : {}),
           ...moedaOriginal,
@@ -361,6 +399,8 @@ export function FormLancamento(p: FormLancProps) {
     setMexeuBanco(false)
     setMexeuForma(false)
     setMexeuDivida(false)
+    setMexeuGuardado(false)
+    setGuardadoBanco('')
     setErro(null)
     setSalvos((s) => s + 1)
     campoValor.current?.focus()
@@ -578,6 +618,56 @@ export function FormLancamento(p: FormLancProps) {
               </label>
             )}
           </>
+        )}
+        {tipo === 'saida' && !cartao && !ehParcela && !dividaId && !novoEmprestimo && v.bancos && p.bancos.length > 0 && (
+          <div className="campo lf-guardado">
+            <span className="campo-rotulo"><Icone nome="cofre" tamanho={15} />{tx('Foi guardar dinheiro?')} <small>(opcional)</small></span>
+            <Seletor valor={bancoGuardado?.id ?? ''} rotulo={tx('Foi guardar dinheiro?')}
+              aoMudar={(id) => { setGuardadoBanco(id); setMexeuGuardado(true) }}
+              opcoes={[
+                { valor: '', rotulo: tx('Não, foi um gasto') },
+                ...p.bancos.map((b) => ({ valor: b.id, rotulo: tx('Guardei no {0}', b.nome), cor: b.cor })),
+              ]} />
+            {bancoGuardado && (
+              <>
+                <Segmentado rotulo={tx('Onde fica')} valor={guardadoTipo} aoMudar={(t) => { setGuardadoTipo(t); setMexeuGuardado(true) }}
+                  opcoes={TIPOS_CAIXA.map((t) => ({ id: t, nome: t === 'caixinha' ? tx('Porquinho (caixinha)') : NOME_TIPO_CAIXA[t] }))} />
+                <span className="campo-ajuda">
+                  {tx('Não conta como gasto: o dinheiro só mudou de lugar.')}
+                  {!bancoOrigem && (' ' + tx('Escolha de qual banco saiu para o app tirar de lá também.'))}
+                </span>
+                {p.saldoDoMes && (mesChegou ? (
+                  <>
+                    <label className="lf-acertar">
+                      <input type="checkbox" checked={acertarSaldos} onChange={(e) => setAcertarSaldos(e.target.checked)} />
+                      <span>{tx('Acertar os saldos sozinho')}</span>
+                    </label>
+                    {previa && (
+                      <ul className="lf-previa" aria-label={tx('Como ficam os saldos')}>
+                        {previa.efeitos.map((e) => {
+                          const b = p.bancos.find((x) => x.id === e.banco)
+                          return (
+                            <li key={`${e.banco}-${e.tipo}`}>
+                              <b>{b?.nome}</b> · {NOME_TIPO_CAIXA[e.tipo].toLowerCase()}: {fmtValor(saldoDe(previa.antes, e.banco, e.tipo))} → <b>{fmtValor(saldoDe(previa.depois, e.banco, e.tipo))}</b>
+                            </li>
+                          )
+                        })}
+                        {cartaoDoLimite && (
+                          <li className="lf-previa-limite">
+                            {tx('O limite garantido do cartão {0} sobe de {1} para {2}.', cartaoDoLimite.nome,
+                              fmtValor(garantidoDo(cartaoDoLimite, saldoDe(previa.antes, bancoGuardado.id, 'caixinha'))), fmtValor(garantidoDo(cartaoDoLimite, saldoDe(previa.depois, bancoGuardado.id, 'caixinha'))))}
+                          </li>
+                        )}
+                      </ul>
+                    )}
+                    {acertarSaldos && <span className="campo-ajuda">{tx('Se apagar ou mudar este lançamento, o saldo volta sozinho. Se você já digitou o saldo novo à mão, desligue acima para não somar duas vezes.')}</span>}
+                  </>
+                ) : (
+                  <span className="campo-ajuda">{tx('Este mês ainda não chegou: o app só registra e não mexe nos saldos.')}</span>
+                ))}
+              </>
+            )}
+          </div>
         )}
         {tipo === 'entrada' && (v.dividas || dividaId || novoEmprestimo || p.aoNovaDivida) && (
           <label className="campo">

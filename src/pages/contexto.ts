@@ -31,6 +31,9 @@ export interface Ctx {
   lancsMes: Lancamento[]
   /** Todos os lançamentos do ano aberto (a busca procura no ano inteiro). */
   lancsAno: Lancamento[]
+  /** Os mesmos, mais as saídas que são dinheiro indo para o seu dinheiro guardado (para a lista; elas não entram nas somas). */
+  lancsMesComGuardados: Lancamento[]
+  lancsAnoComGuardados: Lancamento[]
   /** Dívidas como estão neste mês (saldo calculado com os pagamentos). */
   situacao: SituacaoDivida[]
   /** Dinheiro que te devem (dívidas com sentido 'me_devem') como está neste mês. Fica fora de `r.divida`. */

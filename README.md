@@ -73,6 +73,11 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   no extrato importado). **Crédito** leva ao cartão e às parcelas e a compra entra na fatura e no limite da aba Cartões;
   Pix e débito saem do banco escolhido. Na lista, um filtro por forma mostra quanto foi gasto em cada uma (migração 11;
   sem ela o app funciona, só não guarda Pix/débito/dinheiro)
+- **Dinheiro guardado ligado ao lançamento**: numa saída, "Foi guardar dinheiro?" liga o lançamento ao banco e ao lugar
+  onde o dinheiro foi (conta, caixinha/porquinho ou reserva). Ex.: Itaú → porquinho do PicPay. A saída continua na lista,
+  mas não conta como gasto (fica fora de Saiu, Faltou e Para onde foi); o app tira o valor da conta de origem e soma na
+  caixinha de destino do mês (e o limite garantido do cartão que usa essa caixinha sobe junto). Editar ou apagar o
+  lançamento desfaz o ajuste ([migração 23](supabase/migracao-23-guardado-em-banco.sql); sem ela o app funciona e avisa)
 - **Lançamentos**: lista por dia com busca e filtros; formulário rápido com "salvar e lançar outro",
   sugestão de descrição e categoria automática pelo histórico (digitou "iFood", já vem Alimentação)
 - **Dívidas interligadas**: cada dívida existe ao longo dos meses. Ao lançar uma saída de dívida, você escolhe
@@ -114,7 +119,7 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
    [`15`](supabase/migracao-15-cotacao-da-conta.sql), [`16`](supabase/migracao-16-acesso-teste-e-erros.sql),
    [`17`](supabase/migracao-17-teste-sem-cartao.sql), [`18`](supabase/migracao-18-teste-ao-escolher-plano.sql),
    [`19`](supabase/migracao-19-juros-das-dividas.sql), [`21`](supabase/migracao-21-partes-da-divida.sql),
-   [`22`](supabase/migracao-22-juros-de-atraso.sql) e, **por último**, a
+   [`22`](supabase/migracao-22-juros-de-atraso.sql), [`23`](supabase/migracao-23-guardado-em-banco.sql) e, **por último**, a
    [`20`](supabase/migracao-20-acesso-no-banco-definitivo.sql).
    O `schema.sql` sozinho **não** tem cobrança nem bloqueio: sem a 12 e a 20 o painel abre para qualquer conta, paga ou não.
    Não rode as migrações 02 a 08 num banco novo (o `schema.sql` já inclui o que elas fazem) nem a 13 (a 20 a substitui).

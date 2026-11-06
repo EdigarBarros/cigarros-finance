@@ -6,6 +6,8 @@ import { formaDe, FORMAS, infoForma, type FormaPagamento } from '../lib/formas'
 import { fmtDataCurta, fmtDataLonga, fmtMoeda, fmtValor, MESES_NOME, noMeioDaFrase } from '../lib/format'
 import { criarBusca, semAcento } from '../lib/busca'
 import { ehEmprestimo } from '../lib/dividas'
+import { ehGuardado } from '../lib/guardado'
+import { NOME_TIPO_CAIXA } from '../lib/rotulos'
 import type { Banco, Categoria, Lancamento, Tipo } from '../lib/types'
 import { Icone } from '../components/Icone'
 import { CenaLancamentos } from '../components/Vazios'
@@ -19,7 +21,8 @@ type Filtro<T> = T | 'todos'
 const SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', tx('sáb')]
 const SEMANA_LETRA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
 const doisDig = (n: number) => String(n).padStart(2, '0')
-const somaTipo = (ls: Lancamento[], t: Tipo) => ls.filter((l) => l.tipo === t).reduce((a, l) => a + l.valor, 0)
+// A saída guardada (dinheiro indo para o porquinho) aparece na lista mas não é gasto: fica fora de todas as somas.
+const somaTipo = (ls: Lancamento[], t: Tipo) => ls.filter((l) => l.tipo === t && !ehGuardado(l)).reduce((a, l) => a + l.valor, 0)
 
 /**
  * Lançamentos do mês em duas colunas. À esquerda, presa ao rolar: o calendário do mês (cada dia mais forte quanto mais
@@ -54,11 +57,11 @@ export function Lancamentos(c: Ctx) {
   const separaCartao = c.v.cartoes && !c.cartoes.semTabela
   const cartoesAtivos = useMemo(() => new Set(c.cartoes.cartoes.filter((k) => k.ativo).map((k) => k.id)), [c.cartoes.cartoes])
   const naTelaCartoes = (l: Lancamento) => separaCartao && ehCompraNoCartao(l) && (!c.cartoes.carregado || cartoesAtivos.has(l.cartao_id!))
-  const doPeriodo = pesquisando ? c.lancsAno : c.lancsMes
+  const doPeriodo = pesquisando ? c.lancsAnoComGuardados : c.lancsMesComGuardados
   const origem = useMemo(() => doPeriodo.filter((l) => !naTelaCartoes(l)), [doPeriodo, separaCartao, cartoesAtivos, c.cartoes.carregado]) // eslint-disable-line react-hooks/exhaustive-deps
   const casa = useMemo(() => criarBusca(busca, hoje, somaDias(hoje, -1)), [busca, hoje])
   /** O mês aberto tem algum lançamento aqui (fora as compras no cartão)? */
-  const temNoMes = c.lancsMes.some((l) => !naTelaCartoes(l))
+  const temNoMes = c.lancsMesComGuardados.some((l) => !naTelaCartoes(l))
   // o que o lançamento "diz", sem acento: nome, categoria, banco, cartão, forma, dívida e se é entrada ou saída
   const textoDe = (l: Lancamento) => {
     const f = formaDe(l)
@@ -107,7 +110,7 @@ export function Lancamentos(c: Ctx) {
   const tipoChips: Tipo = tipo === 'entrada' ? 'entrada' : 'saida'
   const chips = useMemo(() => {
     const m = new Map<string, { id: string; nome: string; icone: string; cor: string; total: number; n: number }>()
-    for (const l of base.filter((x) => x.tipo === tipoChips && (!dia || x.data === dia))) {
+    for (const l of base.filter((x) => x.tipo === tipoChips && !ehGuardado(x) && (!dia || x.data === dia))) {
       const k = c.categoriaDe(l)
       const id = k?.id ?? 'sem'
       const g = m.get(id) ?? { id, nome: k?.nome ?? SEM_CATEGORIA.nome, icone: k?.icone ?? SEM_CATEGORIA.icone, cor: k?.cor ?? SEM_CATEGORIA.cor, total: 0, n: 0 }
@@ -131,6 +134,7 @@ export function Lancamentos(c: Ctx) {
       if (banco !== 'todos' && (banco === 'sem' ? l.banco_id : l.banco_id !== banco)) continue
       if (!daCategoria(l) || (dia && l.data !== dia)) continue
       if (casa && !casa(l, textoDe(l))) continue
+      if (ehGuardado(l)) continue
       const f = formaDe(l) ?? 'sem'
       const g = m.get(f) ?? { entrou: 0, saiu: 0 }
       if (l.tipo === 'entrada') g.entrou += l.valor
@@ -152,7 +156,7 @@ export function Lancamentos(c: Ctx) {
   const chipsVisiveis = todasCategorias || chips.length <= 6 ? chips : chips.slice(0, 5)
   const cartao = (l: Lancamento, i: number, mostrarData: boolean) => (
     <CartaoLancamento key={l.id} l={l} indice={i} categoria={c.categoriaDe(l)} banco={bancoDe(l)} cartao={cartaoDe(l)} emprestimo={ehEmprestimo(l, c.d.dividas)}
-      mostrarData={mostrarData} aoClicar={() => c.editarLancamento(l)} />
+      guardadoEm={ehGuardado(l) ? c.d.bancos.find((b) => b.id === l.guardado_banco_id) : undefined} mostrarData={mostrarData} aoClicar={() => c.editarLancamento(l)} />
   )
   const comBancos = c.v.bancos && c.d.bancos.length > 0
   const comFormas = formasDoMes.size > 1 || forma !== 'todos'
@@ -300,7 +304,7 @@ export function Lancamentos(c: Ctx) {
           ) : (
             <div className="lc-linha-tempo">
               {grupos.map(([d, itens], gi) => {
-                const saldo = itens.reduce((a, l) => a + (l.tipo === 'entrada' ? l.valor : -l.valor), 0)
+                const saldo = itens.filter((l) => !ehGuardado(l)).reduce((a, l) => a + (l.tipo === 'entrada' ? l.valor : -l.valor), 0)
                 const data = d ? new Date(`${d}T12:00:00`) : null
                 const ontem = data && d === somaDias(hoje, -1)
                 return (
@@ -332,8 +336,8 @@ export function Lancamentos(c: Ctx) {
  * Um lançamento como cartão: a categoria em cima, na cor dela (sem selo), a descrição, o valor grande e, embaixo, em
  * texto, o que ele é além de um gasto comum (banco, forma, cartão e parcela, dívida, conta do mês, outra moeda).
  */
-function CartaoLancamento({ l, banco, categoria, cartao, emprestimo, aoClicar, mostrarData, indice }: {
-  l: Lancamento; banco?: Banco; categoria?: Categoria; cartao?: { nome: string; cor: string }; emprestimo?: boolean
+function CartaoLancamento({ l, banco, categoria, cartao, emprestimo, guardadoEm, aoClicar, mostrarData, indice }: {
+  l: Lancamento; banco?: Banco; categoria?: Categoria; cartao?: { nome: string; cor: string }; emprestimo?: boolean; guardadoEm?: Banco
   aoClicar: () => void; mostrarData: boolean; indice: number
 }) {
   const entrada = l.tipo === 'entrada'
@@ -341,14 +345,15 @@ function CartaoLancamento({ l, banco, categoria, cartao, emprestimo, aoClicar, m
   const parcelado = Boolean(l.compra_id && (l.parcelas ?? 1) > 1)
   const etiquetas = [
     banco && { id: 'bc', texto: banco.nome, cor: banco.cor },
+    l.guardado_banco_id && { id: 'gd', texto: guardadoEm ? tx('Guardado no {0} ({1})', guardadoEm.nome, NOME_TIPO_CAIXA[l.guardado_tipo ?? 'caixinha'].toLowerCase()) : tx('Guardado'), cor: guardadoEm?.cor, classe: 'guardado-em' },
     l.cartao_id && { id: 'cc', texto: cartao ? tx('Cartão {0}', cartao.nome) : tx('Cartão'), cor: cartao?.cor },
     parcelado && { id: 'pc', texto: tx('Parcela {0} de {1}', l.parcela, l.parcelas) },
     !l.cartao_id && l.forma && { id: 'fp', texto: infoForma(l.forma).nome },
     l.divida_id && { id: 'dv', texto: emprestimo ? (entrada ? tx('Dinheiro emprestado') : tx('Empréstimo que você fez')) : entrada ? tx('Recebido de quem devia') : tx('Pagamento de dívida') },
     l.conta_fixa_id && { id: 'cf', texto: tx('Todo mês') },
-  ].filter(Boolean) as { id: string; texto: string; cor?: string }[]
+  ].filter(Boolean) as { id: string; texto: string; cor?: string; classe?: string }[]
   return (
-    <button className={`lc-card ${entrada ? 'entrada' : ''}`} onClick={aoClicar}
+    <button className={`lc-card ${entrada ? 'entrada' : ''} ${ehGuardado(l) ? 'guardado' : ''}`} onClick={aoClicar}
       style={{ '--c': k.cor, animationDelay: `${Math.min(indice, 12) * 30}ms` } as React.CSSProperties}>
       <span className="lc-card-topo">
         <span className="lc-card-cat">{k.nome}</span>
@@ -361,7 +366,7 @@ function CartaoLancamento({ l, banco, categoria, cartao, emprestimo, aoClicar, m
       </span>
       {etiquetas.length > 0 && (
         <span className="lc-card-etiquetas">
-          {etiquetas.map((e) => <span key={e.id} style={e.cor ? ({ '--e': e.cor } as React.CSSProperties) : undefined} className={e.cor ? 'com-cor' : ''}>{e.texto}</span>)}
+          {etiquetas.map((e) => <span key={e.id} style={e.cor ? ({ '--e': e.cor } as React.CSSProperties) : undefined} className={`${e.cor ? 'com-cor' : ''} ${e.classe ?? ''}`}>{e.texto}</span>)}
         </span>
       )}
     </button>

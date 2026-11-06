@@ -45,6 +45,13 @@ export interface Lancamento {
   data_compra?: string | null
   /** Pix, débito, dinheiro, boleto ou transferência (migração 11). Compra no cartão não usa: veja `formaDe`. */
   forma?: 'pix' | 'debito' | 'dinheiro' | 'boleto' | 'transferencia' | null
+  /**
+   * Saída que é dinheiro indo para o seu dinheiro guardado (migração 23): o banco que recebeu e onde fica (conta, caixinha ou
+   * reserva). Não conta como gasto. `guardado_saldo`: o app já somou ao saldo guardado e tirou da conta de origem (`banco_id`).
+   */
+  guardado_banco_id?: string | null
+  guardado_tipo?: TipoCaixa | null
+  guardado_saldo?: boolean | null
   created_at?: string
 }
 
