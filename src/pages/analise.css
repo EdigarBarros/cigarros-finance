@@ -238,6 +238,31 @@
 .an-mudou li.bom svg { color: var(--an-bom); }
 .an-mudou li.ruim svg { color: var(--an-ruim); }
 
+/* ---------- objetivo e o que o consultor aprendeu (lib/memoria.ts) ---------- */
+.an-objetivo { display: grid; gap: 14px; padding: 18px 20px; border-color: color-mix(in srgb, var(--destaque) 35%, var(--borda)); animation: vis-aparece .45s var(--mola); }
+.an-objetivo-cab { display: flex; gap: 12px; align-items: flex-start; }
+.an-objetivo-cab h2 { margin: 0 0 4px; font-size: 17px; }
+.an-objetivo-cab p { margin: 0; color: var(--texto-2); font-size: 14px; line-height: 1.45; }
+.an-objetivo-icone { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 12px; color: var(--destaque); background: color-mix(in srgb, var(--destaque) 14%, transparent); }
+.an-objetivo-opcoes { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
+.an-objetivo-opcao { display: flex; gap: 10px; align-items: flex-start; min-height: 44px; padding: 12px 14px; text-align: left; border-radius: 14px; border: 1px solid var(--borda-forte); background: transparent; color: var(--texto); cursor: pointer; transition: border-color .2s, transform .2s var(--mola); }
+.an-objetivo-opcao svg { flex: none; margin-top: 2px; color: var(--destaque); }
+.an-objetivo-opcao span { display: grid; gap: 2px; }
+.an-objetivo-opcao small { color: var(--texto-2); font-size: 12.5px; line-height: 1.35; }
+.an-objetivo-opcao:hover, .an-objetivo-opcao:focus-visible { border-color: var(--destaque); transform: translateY(-1px); }
+.an-aprendi { display: grid; gap: 10px; padding: 14px 18px; border-color: color-mix(in srgb, var(--destaque) 30%, var(--borda)); animation: vis-aparece .45s var(--mola); }
+.an-aprendi-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.an-aprendi-objetivo { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--destaque); }
+.an-aprendi-frase { margin: 0; font-size: 15px; line-height: 1.45; }
+.an-aprendi-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; line-height: 1.4; }
+.an-aprendi-lista li { display: flex; gap: 8px; align-items: flex-start; }
+.an-aprendi-lista svg { flex: none; margin-top: 2px; }
+.an-aprendi-lista.bom svg { color: var(--an-bom); }
+.an-aprendi-lista.medio svg { color: var(--an-atencao); }
+.an-aprendi-acompanha { font-size: 13.5px; color: var(--texto-2); }
+.an-aprendi-acompanha summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; }
+.an-aprendi-acompanha ul { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+
 /* ---------- 2. faça agora ---------- */
 .an-agora { --c: var(--an-destino); display: grid !important; grid-auto-flow: row; flex-direction: column; gap: 12px; padding: 18px 20px; border-color: color-mix(in srgb, var(--c) 35%, var(--borda)); animation: vis-aparece .4s var(--mola); }
 .an-agora.nivel-urgente { --c: var(--an-ruim); }

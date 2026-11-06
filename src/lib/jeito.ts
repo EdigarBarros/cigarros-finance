@@ -10,6 +10,7 @@ import { fmtPct, fmtValor } from './format'
 import { tx } from './textos'
 
 export type IdTraco = 'iniciante' | 'gastador' | 'controlado' | 'endividado' | 'renda-varia' | 'cartao'
+  | 'poupador' | 'credito' | 'apertado' | 'estavel' | 'minucioso'
 
 export interface Traco {
   id: IdTraco
@@ -31,8 +32,14 @@ export function tracosDe(a: Analise): Traco[] {
       porque: a.sobra < 0 ? tx('Nos últimos meses saíram {0} a mais do que entrou, por mês.', fmtValor(-a.sobra))
         : tx('{0} do que entra vai para estilo de vida (o ideal é até 30%).', fmtPct(estilo)),
     })
+  } else if (a.jeito.poupador) {
+    t.push({ id: 'poupador', icone: 'cofre', nome: tx('Guarda muito'), porque: tx('Você guarda {0} do que entra e gasta pouco com você. Não precisa cortar mais: o consultor mostra quanto dá para aproveitar sem culpa.', fmtPct(a.sobraFracao)) })
   } else if (a.temFluxo && a.sobraFracao >= 0.15) {
     t.push({ id: 'controlado', icone: 'escudo', nome: tx('Controlado'), porque: tx('Você guarda {0} do que entra, por mês.', fmtPct(a.sobraFracao)) })
+  } else if (a.jeito.apertado) {
+    t.push({ id: 'apertado', icone: 'calendario', nome: tx('Orçamento justo'), porque: tx('Quase tudo o que entra vai para o essencial e as parcelas. O foco agora é fechar o mês sem faltar, não guardar 20%.') })
+  } else if (a.jeito.estavel) {
+    t.push({ id: 'estavel', icone: 'check', nome: tx('Estável'), porque: tx('O mês fecha no azul, sem atraso nem dívida cara. O consultor fala pouco e avisa quando algo fugir do normal.') })
   }
   const d = a.dividas
   if (d && d.total > 0 && (d.temCara || (a.renda > 0 && d.parcelasMes / a.renda >= 0.25) || (a.renda > 0 && d.total >= a.renda * 3))) {
@@ -40,6 +47,12 @@ export function tracosDe(a: Analise): Traco[] {
       id: 'endividado', icone: 'divida', nome: tx('Com dívidas pesando'),
       porque: a.renda > 0 && d.parcelasMes > 0 ? tx('As parcelas levam {0} do que entra por mês.', fmtPct(d.parcelasMes / a.renda)) : tx('Você deve {0} no total.', fmtValor(d.total)),
     })
+  }
+  if (a.jeito.credito) {
+    t.push({ id: 'credito', icone: 'acordo', nome: tx('Usa crédito com controle'), porque: tx('Você tem parcelas, mas baratas e dentro do limite seguro, sem atraso. Sem sermão: o consultor só mostra até onde dá para ir.') })
+  }
+  if (a.jeito.minucioso) {
+    t.push({ id: 'minucioso', icone: 'lista', nome: tx('Anota tudo'), porque: tx('Você lança cerca de {0} coisas por mês, quase todas com categoria. Os gráficos de detalhe vêm primeiro.', a.lancamentosPorMes) })
   }
   if (a.rendaVaria) {
     t.push({ id: 'renda-varia', icone: 'ano', nome: tx('Renda que varia'), porque: tx('O que entra muda bastante de um mês para o outro: vale olhar o caixa dia a dia.') })
@@ -58,6 +71,11 @@ const BONUS: Record<IdTraco, Record<string, number>> = {
   endividado: { fluxo: 12, 'linha-dividas': 14, 'rosca-juros': 12, 'barras-estrategias': 12 },
   'renda-varia': { 'curva-saldo': 14, fluxo: 10, 'colunas-sobra': 12, calendario: 6 },
   cartao: { calendario: 8, fluxo: 8, 'barras-fixas': 6, categorias: 6 },
+  poupador: { 'curva-patrimonio': 16, 'aneis-metas': 14, 'pote-reserva': 8, 'colunas-sobra': 8 },
+  credito: { 'linha-dividas': 10, calendario: 8, 'barras-fixas': 8 },
+  apertado: { calendario: 16, 'curva-saldo': 14, fluxo: 10, 'rosca-503020': 6, 'curva-patrimonio': -12, 'aneis-metas': -8 },
+  estavel: { 'colunas-sobra': 8, 'curva-patrimonio': 8 },
+  minucioso: { categorias: 12, 'tabela-orcamento': 12, halteres: 10, radar: 8 },
 }
 
 export function bonusDoJeito(tracos: Traco[], idVisual: string) {

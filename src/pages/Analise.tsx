@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { compararRetratos, retratoDe, type Analise as DadosAnalise, type Mudanca, type Retrato } from '../lib/analise'
 import { cascataDoMes, fmtCurto, visuais, type Visual } from '../lib/visuais'
 import { tracosDe, type Traco } from '../lib/jeito'
+import { OBJETIVOS } from '../lib/memoria'
 import { fmtDataCurta, fmtValor, MESES_NOME, noMeioDaFrase } from '../lib/format'
 import { useMovimento } from '../lib/tema'
 import { Icone } from '../components/Icone'
@@ -73,6 +74,9 @@ export function Analise(c: Ctx) {
       <Cabecalho nivel={nivel} tracos={nivel === 'simples' ? undefined : tracos} />
       <HojePodeGastar a={a} nivel={nivel} />
       <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 2} />
+      {c.memoria.objetivo === null
+        ? <EscolherObjetivo aoEscolher={c.escolherObjetivo} />
+        : <OQueAprendi a={a} nivel={nivel} aoTrocar={() => c.escolherObjetivo(null)} />}
 
       {nivel === 'simples' ? (
         <div className="an-quadros simples">
@@ -496,6 +500,67 @@ function useDesdeAUltimaVisita(id: string, a: DadosAnalise) {
     return () => { guardar(); window.removeEventListener('pagehide', guardar) }
   }, [chave])
   return useMemo(() => (antes ? { em: antes.em, mudancas: compararRetratos(antes, retratoDe(a)) } : null), [antes, a])
+}
+
+/**
+ * "O que você quer agora?": o objetivo guia o consultor (a ordem do plano e o resumo). Aparece até a pessoa escolher, e
+ * volta quando ela toca em "Trocar".
+ */
+function EscolherObjetivo({ aoEscolher }: { aoEscolher: Ctx['escolherObjetivo'] }) {
+  return (
+    <section className="cartao an-objetivo">
+      <div className="an-objetivo-cab">
+        <span className="an-objetivo-icone"><Icone nome="bussola" tamanho={20} /></span>
+        <div>
+          <h2>{tx('O que você quer agora?')}</h2>
+          <p>{tx('Escolha o que mais importa para você hoje. O consultor muda a ordem do plano e o que ele fala. Dá para trocar quando quiser.')}</p>
+        </div>
+      </div>
+      <div className="an-objetivo-opcoes">
+        {OBJETIVOS.map((o) => (
+          <button key={o.id} className="an-objetivo-opcao" onClick={() => aoEscolher(o.id)}>
+            <Icone nome={o.icone} tamanho={18} />
+            <span><strong>{o.nome()}</strong><small>{o.descricao()}</small></span>
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/** O objetivo escolhido, onde a pessoa está em relação a ele e o que o consultor aprendeu conferindo os passos do plano. */
+function OQueAprendi({ a, nivel, aoTrocar }: { a: DadosAnalise; nivel: Nivel; aoTrocar: () => void }) {
+  const ap = a.aprendizado
+  if (!ap.objetivo) return null
+  const objetivo = OBJETIVOS.find((o) => o.id === ap.objetivo)
+  const detalhes = nivel !== 'simples'
+  return (
+    <section className="cartao an-aprendi">
+      <div className="an-aprendi-cab">
+        <span className="an-aprendi-objetivo"><Icone nome={objetivo?.icone ?? 'bussola'} tamanho={14} /> {objetivo?.nome()}</span>
+        <button className="link" onClick={aoTrocar}>{tx('Trocar')}</button>
+      </div>
+      {ap.frase && <p className="an-aprendi-frase">{ap.frase}</p>}
+      {ap.vitorias.length > 0 && (
+        <ul className="an-aprendi-lista bom" aria-label={tx('O que deu certo')}>
+          {ap.vitorias.map((t, i) => <li key={i}><Icone nome="check" tamanho={14} /> {t}</li>)}
+        </ul>
+      )}
+      {detalhes && ap.ajustes.length > 0 && (
+        <ul className="an-aprendi-lista medio" aria-label={tx('O que não deu certo')}>
+          {ap.ajustes.map((t, i) => <li key={i}><Icone nome="desfazer" tamanho={14} /> {t} {tx('O próximo passo vem menor.')}</li>)}
+        </ul>
+      )}
+      {detalhes && ap.acompanhando.length > 0 && (
+        <details className="an-aprendi-acompanha">
+          <summary>{ap.acompanhando.length === 1 ? tx('Acompanhando 1 passo do plano') : tx('Acompanhando {0} passos do plano', ap.acompanhando.length)}</summary>
+          <ul>
+            {ap.acompanhando.map((x, i) => <li key={i}>{tx('{0} Confiro quando {1} fechar.', x.titulo, noMeioDaFrase(MESES_NOME[x.mes - 1]))}</li>)}
+          </ul>
+        </details>
+      )}
+    </section>
+  )
 }
 
 /** Só aparece quando algo mudou de fato: uma faixa com setas para cima ou para baixo. */
