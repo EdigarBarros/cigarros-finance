@@ -5,6 +5,8 @@
       "namespace": "android_app",
       "package_name": "br.com.opuscash.app",
       "sha256_cert_fingerprints": [
+        "0E:B5:BA:B7:D6:15:D3:F2:7F:A3:5D:0D:06:AF:3A:D6:E0:A7:19:7D:3F:FD:98:80:D9:45:7F:D3:DC:25:BE:DB",
+        "EC:92:0E:E9:A4:87:1F:E1:26:15:51:F4:0F:7D:48:72:3A:DF:48:BE:C2:55:79:BF:B8:D5:A3:EB:13:95:33:6C",
         "A7:07:94:02:48:57:E3:59:81:81:0D:51:05:ED:F2:E2:20:CB:DE:51:56:61:A9:34:C2:07:96:58:A3:65:5D:9D"
       ]
     }
