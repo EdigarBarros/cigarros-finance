@@ -202,11 +202,14 @@ nome, ícone, cores ou quando a Play Store exigir um Android mais novo.
 
 **A chave de assinatura não fica aqui** (o repositório é público). O arquivo `opuscash-upload.keystore` e a senha ficam com
 o dono do projeto, com uma cópia no Google Drive dele. É a *chave de upload*: se ela se perder depois do primeiro envio, o
-Play Console deixa trocar (Integridade do app → Assinatura de apps → pedir redefinição da chave de upload).
+Play Console deixa trocar (na mesma página da Assinatura de Apps do Google Play, abaixo → pedir redefinição da chave de
+upload).
 
 - `public/.well-known/assetlinks.json` prova ao Android que o app e o site são do mesmo dono; sem ele, o app abre com barra de
-  endereço. Leva a impressão digital (SHA-256) da chave de upload e também a da **chave de assinatura do app** do Google
-  (Play Console → Testar e lançar → Configuração → Integridade do app → Assinatura de apps). Trocou a chave? Atualize o arquivo.
+  endereço. Leva a impressão digital (SHA-256) da **chave de assinatura do app** que o Google guarda (são duas: a tradicional,
+  RSA, que o Android confere hoje, e a pós-quântica, ML-DSA) e a da nossa chave de upload. Onde ver as do Google: Play Console
+  → Protegido com o Google Play → Proteção da Google Play Store → Gerencie a Assinatura de Apps do Google Play (ou baixe o
+  `certificates.zip` de lá). Trocou alguma chave? Atualize o arquivo.
 - `public/sw.js` e `public/offline.html`: a tela "sem internet" do app instalado.
 - `src/lib/appAndroid.ts`: dentro do app o Google não deixa levar a pessoa a outro meio de pagamento (o Stripe). Lá, o site
   abre direto no login (sem a página de propaganda) e somem os preços e os botões de assinar, gerenciar a assinatura e
