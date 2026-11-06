@@ -96,11 +96,12 @@ export function AnelVivo({ valor, cor, cor2, tamanho = 150, espessura = 12, chil
   const x = 50 + r * Math.cos((ang * Math.PI) / 180)
   const y = 50 + r * Math.sin((ang * Math.PI) / 180)
   return (
-    <span className="anel-vivo" style={{ width: tamanho, height: tamanho, '--c': cor, '--p': p } as CSSProperties} role="img" aria-label={`${Math.round(p * 100)}%`}>
+    <span className="anel-vivo" style={{ width: tamanho, height: tamanho, '--c': cor, '--c2': cor2 ?? cor, '--p': p } as CSSProperties} role="img" aria-label={`${Math.round(p * 100)}%`}>
       <svg viewBox="0 0 100 100" aria-hidden="true">
         <defs>
           <linearGradient id={`${id}-g`} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stopColor={cor2 ?? cor} />
+            <stop offset=".5" className="anel-vivo-meio-cor" stopColor={cor2 ?? cor} />
             <stop offset="1" stopColor={cor} />
           </linearGradient>
         </defs>
