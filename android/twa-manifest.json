@@ -12,7 +12,7 @@
   "navigationDividerColorDark": "#090D18",
   "backgroundColor": "#090D18",
   "enableNotifications": false,
-  "startUrl": "/",
+  "startUrl": "/?app=android",
   "iconUrl": "https://www.opuscash.com.br/icone-512.png",
   "maskableIconUrl": "https://www.opuscash.com.br/icone-512.png",
   "splashScreenFadeOutDuration": 300,
@@ -20,8 +20,8 @@
     "path": "./opuscash-upload.keystore",
     "alias": "opuscash"
   },
-  "appVersionName": "1.0.0",
-  "appVersionCode": 1,
+  "appVersionName": "1.0.1",
+  "appVersionCode": 2,
   "shortcuts": [],
   "generatorApp": "bubblewrap-core",
   "webManifestUrl": "https://www.opuscash.com.br/manifest.webmanifest",
@@ -43,5 +43,5 @@
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "1.0.0"
+  "appVersion": "1.0.1"
 }

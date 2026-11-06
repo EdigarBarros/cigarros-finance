@@ -23,7 +23,7 @@ plugins {
 def twaManifest = [
     applicationId: 'br.com.opuscash.app',
     hostName: 'www.opuscash.com.br', // The domain being opened in the TWA.
-    launchUrl: '/', // The start path for the TWA. Must be relative to the domain.
+    launchUrl: '/?app=android', // The start path for the TWA. Must be relative to the domain. ?app=android: o site sabe que está no app (src/lib/appAndroid.ts)
     name: 'OpusCash', // The application name.
     launcherName: 'OpusCash', // The name shown on the Android Launcher.
     themeColor: '#090D18', // The color used for the status bar.
@@ -57,8 +57,8 @@ android {
         applicationId "br.com.opuscash.app"
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 1
-        versionName "1.0.0"
+        versionCode 2
+        versionName "1.0.1"
 
         // The name for the application
         resValue "string", "appName", twaManifest.name
