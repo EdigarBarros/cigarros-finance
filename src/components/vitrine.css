@@ -28,6 +28,9 @@
     var(--superficie);
   border-color: color-mix(in srgb, var(--c) 22%, var(--borda));
 }
+/* Lançamentos, modo claro: card liso, sem o véu colorido (rosado quando falta, verde quando sobra) */
+:root[data-tema='claro'] .vitrine.lc-vitrine { background: var(--superficie); border-color: var(--borda); }
+:root[data-tema='claro'] .vitrine.lc-vitrine .vitrine-luz { display: none; }
 .vitrine.sem-visual { grid-template-columns: minmax(0, 1fr); }
 .vitrine-luz { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
 .vitrine-luz i {
