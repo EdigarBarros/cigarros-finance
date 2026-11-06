@@ -398,8 +398,12 @@ Reduzidas, tudo aparece pronto.
 "De onde sai o dinheiro" ficou visual: cada entrada mostra a barra e três etiquetas (quanto tem destino, quanto fica livre,
 quanto vai com atraso); a lista do que ela paga abre ao tocar.
 
-**No computador**, o feed encaixa os cartões em colunas (2; 3 no detalhado a partir de 1600 px), sem buracos embaixo do mais
-baixo, e o dia do calendário fica achatado.
+**No computador**, o feed é um mosaico (`Mosaico` em `pages/Analise.tsx`): a grade tem linhas de 2 px e cada cartão
+mede a própria altura e ocupa só as linhas de que precisa, então o mais baixo não deixa buraco embaixo (refaz a conta
+quando um cartão muda de altura). São 2 colunas a partir de 1100 px e 3 a partir de 1600 px, nunca mais colunas do que
+gráficos: uma seção com 2 gráficos ocupa 2 colunas largas. O plano de ação inteiro fica em 2 colunas a partir de 1400 px.
+Em "De onde sai o dinheiro", a mesma conta sem dinheiro vira uma etiqueta só ("Atlética Yawara ×11"), as que mais pesam
+primeiro, e passando de 6 o resto fica num "+N". O dia do calendário fica achatado.
 
 No celular, tudo fica numa coluna só, na mesma ordem. Na cascata, o espaço acima das barras é dos rótulos, para o valor da
 primeira não encostar no número grande do cartão.

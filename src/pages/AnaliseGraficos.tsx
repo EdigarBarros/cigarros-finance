@@ -328,6 +328,34 @@ function Barras({ barras }: { barras: { rotulo: string; valor: number; cor?: str
  * Cada dinheiro que entra vira uma barra dividida no que ele paga; o atraso aparece em laranja, com o custo. Fechado, cada
  * entrada mostra só a barra e três etiquetas (com destino, livre, com atraso); tocar abre a lista do que ela paga.
  */
+/**
+ * O que fica sem dinheiro, em etiquetas: a mesma conta repetida vira uma só ("Atlética Yawara ×18"), as que mais pesam
+ * vêm primeiro e, passando de 6, o resto fica num "+N" que abre. Sem isso, 40 compromissos viravam um paredão.
+ */
+function EtiquetasDaFalta({ itens }: { itens: { rotulo: string; valor: number }[] }) {
+  const [tudo, setTudo] = useState(false)
+  const juntos = [...itens.reduce((m, x) => {
+    const g = m.get(x.rotulo) ?? { rotulo: x.rotulo, valor: 0, vezes: 0 }
+    g.valor += x.valor
+    g.vezes++
+    return m.set(x.rotulo, g)
+  }, new Map<string, { rotulo: string; valor: number; vezes: number }>()).values()].sort((a, b) => b.valor - a.valor)
+  const MAX = 6
+  const vistos = tudo ? juntos : juntos.slice(0, MAX)
+  return (
+    <span className="fluxo-etiquetas">
+      {vistos.map((x) => (
+        <span key={x.rotulo} className="falta" title={fmtValor(x.valor)}>{x.rotulo}{x.vezes > 1 && <small className="fluxo-vezes">×{x.vezes}</small>}</span>
+      ))}
+      {juntos.length > MAX && (
+        <button className="fluxo-mais" onClick={() => setTudo(!tudo)} aria-expanded={tudo}>
+          {tudo ? tx('Mostrar menos') : `+${juntos.length - MAX}`}
+        </button>
+      )}
+    </span>
+  )
+}
+
 function Fluxo({ grupos, semDinheiro }: { grupos: GrupoDoFluxo[]; semDinheiro: { rotulo: string; valor: number; custo: number }[] }) {
   const [tudo, setTudo] = useState(false)
   const [aberto, setAberto] = useState<string | null>(null)
@@ -387,9 +415,7 @@ function Fluxo({ grupos, semDinheiro }: { grupos: GrupoDoFluxo[]; semDinheiro: {
         <div className="fluxo-grupo falta">
           <div className="fluxo-cab"><span className="fluxo-fonte"><Icone nome="escudo" tamanho={15} /> <b>{tx('Sem dinheiro até o fim do mês que vem')}</b></span>
             <b>{fmtCurto(semDinheiro.reduce((a, x) => a + x.valor, 0))}</b></div>
-          <span className="fluxo-etiquetas">
-            {semDinheiro.map((x, k) => <span key={k} className="falta">{x.rotulo}</span>)}
-          </span>
+          <EtiquetasDaFalta itens={semDinheiro} />
         </div>
       )}
       <Legenda itens={[

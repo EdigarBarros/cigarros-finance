@@ -45,7 +45,8 @@
 .vis.fav { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--destaque) 35%, transparent); }
 .vis-frase { margin: 0; font-size: 14px; line-height: 1.45; color: var(--texto-2); }
 .vis-corpo { margin-top: 8px; min-width: 0; }
-.an-feed { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+/* o mosaico (Mosaico em pages/Analise.tsx): linhas de 2 px e cada cartão ocupa as que a altura dele pede */
+.an-feed { --espaco: 16px; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: 2px; column-gap: var(--espaco); align-items: start; }
 .an-cabecalho { align-items: flex-end; }
 
 .an-vel-pct { font-family: var(--fonte-numeros); font-size: 30px; font-weight: 800; letter-spacing: -.03em; color: color-mix(in srgb, var(--c) 75%, var(--texto)); }
@@ -100,15 +101,18 @@
 .an-secao { display: grid; gap: 14px; scroll-margin-top: 140px; }
 .an-feed { animation: vis-aparece .4s var(--mola); }
 
-/* computador: o feed encaixado em colunas, sem os buracos que a grade deixava embaixo do cartão mais baixo */
+/* computador: 2 colunas (3 nas telas largas), nunca mais colunas do que gráficos */
 @media (min-width: 1100px) {
-  .an-feed { display: block; columns: 2; column-gap: 16px; }
-  .an-feed > * { break-inside: avoid; margin-bottom: 16px; }
+  .an-feed { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   /* no computador, o dia do calendário não precisa ser quadrado: achatado, o cartão não vira uma torre */
   .analise .calendario-dia { aspect-ratio: auto; min-height: 44px; }
 }
 @media (min-width: 1600px) {
-  .an-detalhado .an-feed { columns: 3; }
+  .an-feed { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .analise .an-feed[data-n='2'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1100px) {
+  .analise .an-feed[data-n='1'] { grid-template-columns: minmax(0, 1fr); }
 }
 .an-mais { justify-self: center; height: 46px; padding: 0 22px; font-size: 15px; }
 
@@ -460,3 +464,13 @@ li.caiu .halteres-agora { background: var(--an-bom); }
 .fluxo-etiquetas .atrasa { color: color-mix(in srgb, var(--an-atencao) 85%, var(--texto)); background: color-mix(in srgb, var(--an-atencao) 14%, transparent); }
 .fluxo-etiquetas .falta { color: color-mix(in srgb, var(--an-ruim) 85%, var(--texto)); background: color-mix(in srgb, var(--an-ruim) 13%, transparent); }
 .fluxo-grupo.aberto .fluxo-itens { padding: 0 14px 12px; animation: vis-aparece .3s var(--mola); }
+
+/* a mesma conta repetida vira uma etiqueta com a contagem; o resto fica no "+N" */
+.fluxo-vezes { margin-left: 5px; font-size: 11px; font-weight: 800; opacity: .8; }
+.fluxo-mais { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border: 0; border-radius: 999px; font: inherit; font-size: 12px; font-weight: 700; color: var(--texto); background: var(--preench-3); cursor: pointer; }
+.fluxo-mais:hover { background: var(--preench-2); }
+
+/* o plano de ação inteiro (detalhado): em telas largas, duas colunas em vez de linhas compridas e vazias no meio */
+@media (min-width: 1400px) {
+  .an-plano ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
+}
