@@ -8694,5 +8694,65 @@
   "Faltou no mês até aqui": {
     "en": "Short in the month so far",
     "es": "Faltó en el mes hasta aquí"
+  },
+  "Foi guardar dinheiro?": {
+    "en": "Were you saving money?",
+    "es": "¿Fue para ahorrar dinero?"
+  },
+  "Não, foi um gasto": {
+    "en": "No, it was an expense",
+    "es": "No, fue un gasto"
+  },
+  "Onde fica": {
+    "en": "Where it goes",
+    "es": "Dónde queda"
+  },
+  "Porquinho (caixinha)": {
+    "en": "Piggy bank (savings pot)",
+    "es": "Alcancía (cajita)"
+  },
+  "Não conta como gasto: o dinheiro só mudou de lugar.": {
+    "en": "It doesn't count as spending: the money just moved.",
+    "es": "No cuenta como gasto: el dinero solo cambió de lugar."
+  },
+  "Escolha de qual banco saiu para o app tirar de lá também.": {
+    "en": "Pick the bank it came from so the app takes it out of there too.",
+    "es": "Elige de qué banco salió para que la app también lo reste de allí."
+  },
+  "Acertar os saldos sozinho": {
+    "en": "Update the balances automatically",
+    "es": "Ajustar los saldos automáticamente"
+  },
+  "Como ficam os saldos": {
+    "en": "How the balances end up",
+    "es": "Cómo quedan los saldos"
+  },
+  "O limite garantido do cartão {0} sobe de {1} para {2}.": {
+    "en": "The guaranteed limit of the {0} card goes from {1} to {2}.",
+    "es": "El límite garantizado de la tarjeta {0} sube de {1} a {2}."
+  },
+  "Se apagar ou mudar este lançamento, o saldo volta sozinho. Se você já digitou o saldo novo à mão, desligue acima para não somar duas vezes.": {
+    "en": "If you delete or change this entry, the balance goes back by itself. If you already typed the new balance by hand, turn this off so it isn't counted twice.",
+    "es": "Si borras o cambias este movimiento, el saldo vuelve solo. Si ya escribiste el saldo nuevo a mano, desactiva esto para no sumarlo dos veces."
+  },
+  "Este mês ainda não chegou: o app só registra e não mexe nos saldos.": {
+    "en": "This month hasn't arrived yet: the app only records it and doesn't touch the balances.",
+    "es": "Este mes aún no llegó: la app solo lo registra y no toca los saldos."
+  },
+  "Para marcar uma saída como “guardado”, falta rodar a migração 23 no Supabase. Nada foi mudado.": {
+    "en": "To mark an expense as “saved”, migration 23 still needs to run in Supabase. Nothing was changed.",
+    "es": "Para marcar una salida como “guardado”, falta ejecutar la migración 23 en Supabase. No se cambió nada."
+  },
+  "Guardei em {0}": {
+    "en": "Saved in {0}",
+    "es": "Guardé en {0}"
+  },
+  "Guardado em {0} ({1})": {
+    "en": "Saved in {0} ({1})",
+    "es": "Guardado en {0} ({1})"
+  },
+  "O lançamento foi salvo, mas não consegui acertar os saldos em Dinheiro guardado. Confira lá.": {
+    "en": "The entry was saved, but I couldn't update the balances in Saved money. Please check there.",
+    "es": "El movimiento se guardó, pero no pude ajustar los saldos en Dinero guardado. Revísalos allí."
   }
 }

@@ -232,7 +232,9 @@ export function useDados(userId: string, ano: number) {
     (msg: string) => {
       setErro(/lancamentos_conta_fixa_mes/.test(msg)
         ? tx('Essa conta do mês já tem um lançamento ligado nesse mês (cada conta tem um por mês). Nada foi mudado.')
-        : msg)
+        : /guardado_/.test(msg) && /column|schema cache/i.test(msg)
+          ? tx('Para marcar uma saída como “guardado”, falta rodar a migração 23 no Supabase. Nada foi mudado.')
+          : msg)
       void recarregar()
     },
     [recarregar],
@@ -312,12 +314,14 @@ export function useDados(userId: string, ano: number) {
     if (novo) sincronizarPagamento(id, novo)
     const { error } = await gravar(() => supabase.from('lancamentos').update(paraBanco(mudancas)).eq('id', id))
     if (error) falhou(error.message)
+    return !error
   }
   const delLanc = async (id: string) => {
     setLancs((xs) => xs.filter((x) => x.id !== id))
     sincronizarPagamento(id, null)
     const { error } = await supabase.from('lancamentos').delete().eq('id', id)
     if (error) falhou(error.message)
+    return !error
   }
 
   /**
@@ -532,6 +536,7 @@ export function useDados(userId: string, ano: number) {
       .from('meses')
       .upsert({ ...linha, usd: moedas.USD ?? 0, user_id: userId }, { onConflict: 'user_id,ano,mes' })
     if (error) falhou(error.message)
+    return !error
   }
 
   const addBanco = async (nome: string, cor: string): Promise<Banco | undefined> => {
@@ -552,7 +557,8 @@ export function useDados(userId: string, ano: number) {
   /** Os lançamentos do banco continuam existindo, só ficam "sem banco". */
   const delBanco = async (id: string) => {
     setBancos((xs) => xs.filter((x) => x.id !== id))
-    setLancs((xs) => xs.map((x) => (x.banco_id === id ? { ...x, banco_id: null } : x)))
+    // o banco do lançamento e o de destino do dinheiro guardado também se soltam (no banco isso é automático)
+    setLancs((xs) => xs.map((x) => (x.banco_id === id || x.guardado_banco_id === id ? { ...x, banco_id: x.banco_id === id ? null : x.banco_id, guardado_banco_id: x.guardado_banco_id === id ? null : x.guardado_banco_id } : x)))
     const { error } = await supabase.from('bancos').delete().eq('id', id)
     if (error) falhou(error.message)
   }
