@@ -12,7 +12,7 @@ declare module 'chart.js' {
   }
 }
 import { useValoresOcultos } from './format'
-import { animarEntrada, coresDoGrafico, semMovimento, useTema, type Tema } from './tema'
+import { coresDoGrafico, semMovimento, useTema, type Tema } from './tema'
 
 type ComRevelar = Chart & { $revelarInicio?: number; $revelado?: boolean; $quadro?: number; $recortou?: boolean }
 const suaveVaiVolta = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
@@ -65,38 +65,9 @@ const destaqueMes: Plugin = {
   },
 }
 
-type SemEntrada = Chart & { $cresceu?: boolean; $revelado?: boolean; $animacaoGuardada?: { tinha: boolean; valor: unknown } }
-
-/**
- * Gráfico que nasce pronto, sem a entrada animada (lib/tema.ts, animarEntrada: no app, depois da primeira troca de aba).
- * O primeiro desenho sai com `animation: false` (o jeito do próprio Chart.js de desenhar direto no estado final) e, logo
- * depois, a opção volta a ser a que era: trocar de mês continua animando. Marca $cresceu e $revelado, que as animações
- * de entrada das barras (Graficos.tsx) e das linhas (revelar) usam para saber que a entrada já aconteceu.
- */
-const semEntrada: Plugin = {
-  id: 'semEntrada',
-  beforeInit(chart) {
-    if (animarEntrada()) return
-    const c = chart as SemEntrada
-    const opcoes = chart.config.options as Record<string, unknown>
-    c.$animacaoGuardada = { tinha: Object.prototype.hasOwnProperty.call(opcoes, 'animation'), valor: opcoes.animation }
-    opcoes.animation = false
-    c.$cresceu = true
-    c.$revelado = true
-    // o primeiro desenho acontece ainda dentro do new Chart(); depois dele, devolve a animação
-    setTimeout(() => {
-      const guardada = c.$animacaoGuardada
-      if (!guardada) return
-      c.$animacaoGuardada = undefined
-      if (guardada.tinha) opcoes.animation = guardada.valor
-      else delete opcoes.animation
-    })
-  },
-}
-
 Chart.register(
   ArcElement, BarController, BarElement, CategoryScale, Filler, Legend, LinearScale,
-  LineController, LineElement, PointElement, Tooltip, revelar, destaqueMes, semEntrada,
+  LineController, LineElement, PointElement, Tooltip, revelar, destaqueMes,
 )
 Chart.defaults.font.family = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif'
 Chart.defaults.font.size = 11

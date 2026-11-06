@@ -12,7 +12,9 @@
 @keyframes vt-pinga { from { opacity: 0; transform: scale(.4); } }
 @keyframes vt-flutua { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(14px, -10px) scale(1.08); } }
 @keyframes vt-brilha { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
-@keyframes vt-anda { from { left: 0; } }
+/* o "você está aqui" desliza do começo do caminho até o lugar dele: translate (a placa de vídeo anima sozinha), medido na
+   largura do caminho (100cqw); animar left refazia o layout da página a cada quadro */
+@keyframes vt-anda { from { translate: calc(var(--p) * -100cqw) 0; } }
 @keyframes vt-acena { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(8deg); } }
 
 /* ---------- vitrine (o topo da tela) ---------- */
@@ -124,7 +126,7 @@ button.pilula > svg { color: var(--texto-3); }
 
 /* ---------- trilha até a chegada ---------- */
 .vt-trilha { display: grid; gap: 8px; padding-top: 6px; }
-.vt-trilha-caminho { position: relative; height: 14px; margin: 0 14px 0 8px; border-radius: 14px; background: repeating-linear-gradient(90deg, var(--preench-2) 0 10px, transparent 10px 16px); }
+.vt-trilha-caminho { position: relative; container-type: inline-size; height: 14px; margin: 0 14px 0 8px; border-radius: 14px; background: repeating-linear-gradient(90deg, var(--preench-2) 0 10px, transparent 10px 16px); }
 .vt-trilha-feito {
   position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--p) * 100%); border-radius: inherit; transform-origin: left;
   background: linear-gradient(90deg, color-mix(in srgb, var(--c) 45%, transparent), var(--c)); animation: vt-cresce-x 1.4s var(--mola) .1s backwards;

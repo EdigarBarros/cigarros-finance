@@ -8,7 +8,8 @@
 @keyframes an-flutua { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 @keyframes an-surge { from { transform: scale(.5); opacity: 0; } }
 @keyframes an-respira { 0%, 100% { opacity: .75; transform: scale(1); } 50% { opacity: 1; transform: scale(1.08); } }
-@keyframes an-desliza { from { left: 0; } }
+/* o ponto desliza do começo da régua até o lugar dele: translate medido na largura da régua (100cqw), como o vt-anda */
+@keyframes an-desliza { from { translate: calc(var(--v) * (20px - 100cqw)) 0; } }
 
 .analise { gap: 14px; }
 
@@ -70,7 +71,7 @@
 .an-regua-cab { grid-area: cab; display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--texto-2); }
 .an-regua-cab svg { color: var(--t); }
 .an-regua-cab b { margin-left: auto; font-size: 13px; font-weight: 750; color: color-mix(in srgb, var(--t) 78%, var(--texto)); white-space: nowrap; }
-.an-regua-trilho { grid-area: trilho; position: relative; height: 10px; border-radius: 10px; background: var(--preench-3); }
+.an-regua-trilho { grid-area: trilho; position: relative; container-type: inline-size; height: 10px; border-radius: 10px; background: var(--preench-3); }
 .an-regua-feito {
   position: absolute; inset: 0 auto 0 0; width: calc(10px + var(--v) * (100% - 20px)); border-radius: inherit; transform-origin: left;
   background: linear-gradient(90deg, color-mix(in srgb, var(--t) 12%, transparent), color-mix(in srgb, var(--t) 62%, transparent));

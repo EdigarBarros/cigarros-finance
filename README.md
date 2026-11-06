@@ -210,8 +210,6 @@ Como o app difere do site (`src/lib/appAndroid.ts`, montado no modo `app`):
 - os e-mails de confirmar a conta e de criar senha nova levam ao site (dentro do app a página é `https://localhost`);
 - o backup em planilha abre o compartilhar do Android (salvar no Drive, em Arquivos, mandar no WhatsApp), em vez de baixar;
 - a página fica entre a barra de status e a de navegação (sem `viewport-fit=cover`), com o fundo azul-escuro atrás delas.
-- trocar de aba mostra a página pronta: os números contando, os gráficos crescendo e os blocos subindo tocam só quando o
-  app abre (`animarEntrada` em `src/lib/tema.ts`), porque refazer a entrada a cada toque pesava num tablet comum.
 
 Sem internet (no site e no app): se o painel não consegue abrir, aparece o aviso de sem internet no lugar do carregando,
 e ele abre sozinho quando a conexão volta; com o painel aberto, uma faixa avisa que nada é salvo até a conexão voltar
