@@ -17,7 +17,6 @@
 :root[data-tema='claro'] .analise { --an-bom: #0d9f77; --an-destino: #1e78e0; --an-atencao: #d9640a; --an-ruim: #e0435f; --an-neutro: rgba(71, 85, 105, .32); }
 .analise.parado *, .analise.parado *::before, .analise.parado *::after { animation: none !important; transition: none !important; }
 
-
 @keyframes vis-cresce-y { from { transform: scaleY(0); } }
 @keyframes vis-cresce-x { from { transform: scaleX(0); } }
 @keyframes vis-desenha { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
@@ -47,65 +46,16 @@
 .vis-frase { margin: 0; font-size: 14px; line-height: 1.45; color: var(--texto-2); }
 .vis-corpo { margin-top: 8px; min-width: 0; }
 .an-feed { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-/* ---------- montagem por jeito de ver ----------
-   simples: vitrine, "Faça agora" e a dupla nota + balança; equilibrado: vitrine e três quadros lado a lado;
-   detalhado: vitrine, dois quadros, o plano de ação em lista e o feed em seções */
 .an-cabecalho { align-items: flex-end; }
-.an-cabecalho .an-jeito { justify-content: flex-end; max-width: 60%; }
-.an-quadros { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: stretch; }
-.an-quadros > * { min-width: 0; }
-.an-dupla { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-@media (min-width: 900px) {
-  .an-dupla { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .an-detalhado .an-quadros { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .an-detalhado .an-quadros.sem-mes { grid-template-columns: minmax(0, 1fr); }
-}
-@media (min-width: 1180px) {
-  .an-equilibrado .an-quadros { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1fr); }
-  .an-equilibrado .an-quadros.sem-mes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .an-simples .an-quadros.simples { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
-  .an-simples .an-quadros.simples .an-dupla { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-}
-/* com três quadros na linha, a escada e a cascata ficam mais baixas */
-.an-quadros .escada { padding-top: 26px; }
-.an-quadros .escada-degrau { height: calc(var(--h) * .8); }
-.an-quadros .cascata-area { height: 120px; }
 
-/* a vitrine do "Hoje você pode gastar" */
-.an-vitrine { grid-template-columns: minmax(200px, 280px) minmax(0, 1fr); }
-.an-vitrine .velocimetro { max-width: 280px; }
 .an-vel-pct { font-family: var(--fonte-numeros); font-size: 30px; font-weight: 800; letter-spacing: -.03em; color: color-mix(in srgb, var(--c) 75%, var(--texto)); }
 .an-vel-rot { font-size: 12px; font-weight: 600; color: var(--texto-3); }
-.an-vitrine-porque { grid-column: 1 / -1; }
-.an-vitrine-medidor { width: 220px; }
-@media (max-width: 860px) {
-  .an-vitrine { grid-template-columns: minmax(0, 1fr); }
-  .an-vitrine .velocimetro { max-width: 230px; }
-  .an-vitrine-porque { justify-self: center; }
-  .an-vitrine-porque .an-porque { justify-items: center; }
-  .an-cabecalho .an-jeito { max-width: none; justify-content: flex-start; }
-}
 
-/* nota curta (simples) */
-.an-nota { justify-items: center; text-align: center; }
-.an-nota .vis-cab { width: 100%; }
-.an-nota .medidor { max-width: 230px; }
 .an-degraus { list-style: none; margin: 6px 0 0; padding: 0; display: flex; gap: 6px; }
 .an-degraus li { width: 30px; height: 8px; border-radius: 8px; background: var(--preench-2); animation: vis-escala .4s var(--mola) calc(var(--i) * 90ms + .4s) backwards; }
 .an-degraus li.feito { background: var(--an-bom); }
 .an-degraus li.atual { width: 46px; background: var(--destaque); box-shadow: 0 0 12px -2px var(--destaque); }
 .vis:not(.vivo) .an-degraus li { animation-play-state: paused; }
-.an-nota-fase { font-size: 14px; font-weight: 650; color: var(--texto-2); }
-
-/* balança do mês (simples) */
-.an-balanca-barras { display: grid; gap: 10px; margin-top: 10px; }
-.an-balanca-barras > span { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 10px; }
-.an-balanca-barras svg { color: var(--an-bom); }
-.an-balanca-barras .sai svg { color: var(--an-ruim); }
-.an-balanca-barras i { display: block; height: 16px; border-radius: 16px; background: linear-gradient(90deg, color-mix(in srgb, var(--an-bom) 55%, transparent), var(--an-bom)); transform-origin: left; animation: vis-cresce-x 1s var(--mola) .15s backwards; }
-.an-balanca-barras .sai i { background: linear-gradient(90deg, color-mix(in srgb, var(--an-ruim) 55%, transparent), var(--an-ruim)); animation-delay: .35s; }
-.an-balanca-barras b { font-size: 14px; font-variant-numeric: tabular-nums; }
-.vis:not(.vivo) .an-balanca-barras i { animation-play-state: paused; }
 
 /* plano de ação (detalhado) */
 .an-plano { display: grid; gap: 12px; padding: 18px 20px; }
@@ -161,16 +111,6 @@
   .an-detalhado .an-feed { columns: 3; }
 }
 .an-mais { justify-self: center; height: 46px; padding: 0 22px; font-size: 15px; }
-.an-nota-fraca { margin: 10px 0 0; font-size: 12.5px; color: var(--texto-3); }
-
-/* ---------- seu jeito ---------- */
-.an-jeito { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
-.an-jeito-titulo { font-size: 13px; font-weight: 650; color: var(--texto-2); }
-.an-jeito-lista { display: flex; flex-wrap: wrap; gap: 8px; }
-.an-traco { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 13px; border: 0; border-radius: 999px; font: inherit; font-size: 13.5px; font-weight: 650; color: var(--texto); background: var(--preench-3); cursor: pointer; transition: background .2s; }
-.an-traco svg { color: var(--destaque); }
-.an-traco:hover, .an-traco.aberto { background: var(--preench-2); }
-.an-jeito-porque { flex-basis: 100%; margin: 0; font-size: 13.5px; line-height: 1.45; color: var(--texto-2); }
 
 /* ---------- gráficos escondidos ---------- */
 .an-escondidos { display: grid; gap: 10px; justify-items: center; }
@@ -178,17 +118,6 @@
 .an-escondidos ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; width: min(100%, 520px); }
 .an-escondidos li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 14px; background: var(--preench-4); font-size: 14px; font-weight: 600; }
 .an-escondidos li .btn { height: 34px; padding: 0 12px; font-size: 13px; }
-
-/* ---------- 1. como estou ---------- */
-.an-como { padding-bottom: 14px; container-type: inline-size; }
-.an-como-topo { display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr); gap: 18px; align-items: center; }
-.an-como-texto { display: grid; gap: 4px; justify-items: start; }
-.an-como-texto strong { font-size: 21px; font-weight: 750; letter-spacing: -.02em; }
-.an-como-texto > span:last-child { font-size: 15px; color: var(--texto-2); }
-.an-rotulo {
-  display: inline-flex; align-items: center; height: 26px; padding: 0 11px; border-radius: 999px; font-size: 13px; font-weight: 700;
-  color: color-mix(in srgb, var(--c) 78%, var(--texto)); background: color-mix(in srgb, var(--c) 16%, transparent);
-}
 
 .medidor { position: relative; width: 100%; }
 .medidor svg { display: block; width: 100%; overflow: visible; }
@@ -238,58 +167,11 @@
 .an-mudou li.bom svg { color: var(--an-bom); }
 .an-mudou li.ruim svg { color: var(--an-ruim); }
 
-/* ---------- objetivo e o que o consultor aprendeu (lib/memoria.ts) ---------- */
-.an-objetivo { display: grid; gap: 14px; padding: 18px 20px; border-color: color-mix(in srgb, var(--destaque) 35%, var(--borda)); animation: vis-aparece .45s var(--mola); }
-.an-objetivo-cab { display: flex; gap: 12px; align-items: flex-start; }
-.an-objetivo-cab h2 { margin: 0 0 4px; font-size: 17px; }
-.an-objetivo-cab p { margin: 0; color: var(--texto-2); font-size: 14px; line-height: 1.45; }
-.an-objetivo-icone { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 12px; color: var(--destaque); background: color-mix(in srgb, var(--destaque) 14%, transparent); }
-.an-objetivo-opcoes { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
-.an-objetivo-opcao { display: flex; gap: 10px; align-items: flex-start; min-height: 44px; padding: 12px 14px; text-align: left; border-radius: 14px; border: 1px solid var(--borda-forte); background: transparent; color: var(--texto); cursor: pointer; transition: border-color .2s, transform .2s var(--mola); }
-.an-objetivo-opcao svg { flex: none; margin-top: 2px; color: var(--destaque); }
-.an-objetivo-opcao span { display: grid; gap: 2px; }
-.an-objetivo-opcao small { color: var(--texto-2); font-size: 12.5px; line-height: 1.35; }
-.an-objetivo-opcao:hover, .an-objetivo-opcao:focus-visible { border-color: var(--destaque); transform: translateY(-1px); }
-.an-aprendi { display: grid; gap: 10px; padding: 14px 18px; border-color: color-mix(in srgb, var(--destaque) 30%, var(--borda)); animation: vis-aparece .45s var(--mola); }
-.an-aprendi-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.an-aprendi-objetivo { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--destaque); }
-.an-aprendi-frase { margin: 0; font-size: 15px; line-height: 1.45; }
-.an-aprendi-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; line-height: 1.4; }
-.an-aprendi-lista li { display: flex; gap: 8px; align-items: flex-start; }
-.an-aprendi-lista svg { flex: none; margin-top: 2px; }
-.an-aprendi-lista.bom svg { color: var(--an-bom); }
-.an-aprendi-lista.medio svg { color: var(--an-atencao); }
-.an-aprendi-acompanha { font-size: 13.5px; color: var(--texto-2); }
-.an-aprendi-acompanha summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; }
-.an-aprendi-acompanha ul { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 4px; }
-
-/* ---------- 2. faça agora ---------- */
-.an-agora { --c: var(--an-destino); display: grid !important; grid-auto-flow: row; flex-direction: column; gap: 12px; padding: 18px 20px; border-color: color-mix(in srgb, var(--c) 35%, var(--borda)); animation: vis-aparece .4s var(--mola); }
-.an-agora.nivel-urgente { --c: var(--an-ruim); }
-.an-agora.nivel-importante { --c: var(--an-atencao); }
-.an-agora.nivel-tudo-certo { --c: var(--an-bom); grid-auto-flow: column; justify-content: start; align-items: center; }
-.an-agora-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.an-agora-titulo { font-size: 12.5px; font-weight: 700; color: color-mix(in srgb, var(--c) 75%, var(--texto)); text-transform: none; }
-.an-agora-nav { display: inline-flex; align-items: center; gap: 6px; }
-.an-agora-nav .icone-btn { width: 32px; height: 32px; }
-.an-pontos { display: inline-flex; gap: 4px; }
-.an-pontos i { width: 6px; height: 6px; border-radius: 6px; background: var(--preench-1); transition: width .3s var(--mola), background .3s; }
-.an-pontos i.atual { width: 16px; background: var(--c); }
-.an-agora-passo { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 14px; align-items: center; }
-.an-agora-icone { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
-.an-agora-passo strong, .an-agora.nivel-tudo-certo strong { font-size: 18px; font-weight: 700; line-height: 1.3; letter-spacing: -.015em; }
 .an-impacto {
   justify-self: start; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px;
   font-size: 14px; font-weight: 700; color: color-mix(in srgb, var(--an-bom) 80%, var(--texto)); background: color-mix(in srgb, var(--an-bom) 14%, transparent);
 }
-.an-agora-pe { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px 14px; }
-.an-agora-pe .an-porque { flex: 1 1 260px; }
-.an-agora-pe .btn { height: 42px; padding: 0 18px; }
 
-/* ---------- 3. seu mês ---------- */
-.an-mes-numero { display: grid; gap: 2px; justify-items: start; }
-.an-mes-numero small { font-size: 13px; font-weight: 650; color: var(--texto-2); }
-.an-mes-numero strong { font-family: var(--fonte-numeros); font-size: 36px; font-weight: 800; letter-spacing: -.04em; line-height: 1.05; color: color-mix(in srgb, var(--tom) 82%, var(--texto)); }
 .analise .bom { --tom: var(--an-bom); }
 .analise .ruim { --tom: var(--an-ruim); }
 
@@ -529,18 +411,9 @@ li.caiu .halteres-agora { background: var(--an-bom); }
 
 @media (max-width: 860px) {
   .vis { padding: 16px; }
-  .an-como-topo { grid-template-columns: minmax(130px, 46%) minmax(0, 1fr); gap: 12px; }
-  .an-como-texto strong { font-size: 19px; }
-  .an-como-texto > span:last-child { font-size: 14px; }
   .medidor-valor { font-size: 28px; }
   .escada { gap: 4px; }
   .escada small { font-size: 10px; }
-  .an-agora { padding: 16px; }
-  .an-agora-passo { grid-template-columns: 42px minmax(0, 1fr); gap: 12px; }
-  .an-agora-icone { width: 42px; height: 42px; }
-  .an-agora-passo strong { font-size: 16.5px; }
-  .an-agora-pe .btn { flex: 1 1 100%; height: 46px; }
-  .an-mes-numero strong { font-size: 32px; }
   .vis-botoes .vis-ir { width: 32px; height: 32px; }
   .cascata { gap: 6px; }
   .cascata-area { height: 130px; }
@@ -554,14 +427,7 @@ li.caiu .halteres-agora { background: var(--an-bom); }
 }
 
 /* ---------- toques visuais do redesenho ---------- */
-/* faça agora: fundo na cor da urgência e ícone grande com brilho */
-.an-agora { background: radial-gradient(120% 120% at 0% 0%, color-mix(in srgb, var(--c) 13%, transparent), transparent 60%), var(--superficie); }
-.an-agora-titulo { display: inline-flex; align-items: center; gap: 6px; }
-.an-agora-passo { animation: vis-aparece .4s var(--mola); }
-.an-agora-icone { position: relative; box-shadow: 0 10px 26px -12px var(--c); }
-.an-agora-icone::after { content: ''; position: absolute; inset: -4px; border-radius: 19px; border: 2px solid color-mix(in srgb, var(--c) 30%, transparent); animation: vt-pulso-borda 2.4s ease-out infinite; }
 @keyframes vt-pulso-borda { 0% { opacity: 1; transform: scale(.92); } 100% { opacity: 0; transform: scale(1.18); } }
-.an-agora.nivel-tudo-certo .an-agora-icone::after { animation: none; }
 
 /* o que mudou: uma faixa com setas em bolinhas coloridas */
 .an-mudou { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 16px; }
@@ -579,13 +445,6 @@ li.caiu .halteres-agora { background: var(--an-bom); }
   .an-feed .vis:hover { transform: translateY(-3px); box-shadow: var(--sombra), 0 18px 40px -26px var(--c); }
 }
 
-/* "Como estou" estreito (três quadros na linha, celular): o velocímetro em cima, o degrau embaixo */
-@container (max-width: 400px) {
-  .an-como-topo { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; gap: 4px; }
-  .an-como-topo .medidor { max-width: 210px; }
-  .an-como-texto { justify-items: center; }
-}
-
 /* "De onde sai o dinheiro" fechado: barra e etiquetas; tocar abre a lista */
 .fluxo { gap: 10px; }
 .fluxo-grupo { gap: 0; border-radius: 16px; background: var(--preench-4); }
@@ -601,5 +460,3 @@ li.caiu .halteres-agora { background: var(--an-bom); }
 .fluxo-etiquetas .atrasa { color: color-mix(in srgb, var(--an-atencao) 85%, var(--texto)); background: color-mix(in srgb, var(--an-atencao) 14%, transparent); }
 .fluxo-etiquetas .falta { color: color-mix(in srgb, var(--an-ruim) 85%, var(--texto)); background: color-mix(in srgb, var(--an-ruim) 13%, transparent); }
 .fluxo-grupo.aberto .fluxo-itens { padding: 0 14px 12px; animation: vis-aparece .3s var(--mola); }
-.an-quadros .an-agora { align-content: start; }
-.an-quadros .an-agora .an-agora-pe { margin-top: auto; }

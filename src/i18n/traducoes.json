@@ -7755,26 +7755,6 @@
     "en": "Show again",
     "es": "Mostrar de nuevo"
   },
-  "Seu jeito com o dinheiro": {
-    "en": "Your way with money",
-    "es": "Tu forma con el dinero"
-  },
-  "Seu jeito": {
-    "en": "Your style",
-    "es": "Tu estilo"
-  },
-  "Os gráficos abaixo estão na ordem que mais serve a esse jeito.": {
-    "en": "The charts below are in the order that best fits this style.",
-    "es": "Los gráficos de abajo están en el orden que mejor sirve a ese estilo."
-  },
-  "até {0}, quando entra {1}": {
-    "en": "until {0}, when {1} comes in",
-    "es": "hasta el {0}, cuando entra {1}"
-  },
-  "até o fim do mês que vem": {
-    "en": "until the end of next month",
-    "es": "hasta fin del mes que viene"
-  },
   "Até {0}, quando entra {1}, vencem {2} em contas. Com o saldo de hoje, sobram {3} por dia sem atrasar nada.": {
     "en": "Until {0}, when {1} comes in, {2} in bills are due. With today's balance, {3} a day is left without making anything late.",
     "es": "Hasta el {0}, cuando entra {1}, vencen {2} en cuentas. Con el saldo de hoy, sobran {3} por día sin atrasar nada."
@@ -7787,10 +7767,6 @@
     "en": "From the month's forecast: after bills and saving {0}, what's left split over the remaining days comes to {1} a day.",
     "es": "Según la previsión del mes: quitando las cuentas y ahorrando {0}, lo que sobra dividido por los días que faltan da {1} por día."
   },
-  "Pelo mês inteiro daria {0} por dia, mas as contas vencem antes de o dinheiro chegar: por isso o número de hoje é menor.": {
-    "en": "Over the whole month it would be {0} a day, but bills are due before the money arrives: that's why today's number is lower.",
-    "es": "Por el mes entero daría {0} por día, pero las cuentas vencen antes de que llegue el dinero: por eso el número de hoy es menor."
-  },
   "Informe o saldo dos bancos para eu conferir também se o dinheiro chega antes das contas.": {
     "en": "Add your bank balances so I can also check whether the money arrives before the bills.",
     "es": "Informa el saldo de los bancos para que también verifique si el dinero llega antes de las cuentas."
@@ -7802,10 +7778,6 @@
   "Hoje você pode gastar": {
     "en": "Today you can spend",
     "es": "Hoy puedes gastar"
-  },
-  "por dia, {0}": {
-    "en": "a day, {0}",
-    "es": "por día, {0}"
   },
   "Tirar dos favoritos": {
     "en": "Remove from favorites",
@@ -8387,42 +8359,6 @@
     "en": "What matters today, at a glance.",
     "es": "Lo que importa hoy, de un vistazo."
   },
-  "Pela previsão, o mês já fecha no vermelho. Segure o que der.": {
-    "en": "By the forecast, the month already ends in the red. Hold back what you can.",
-    "es": "Según la previsión, el mes ya cierra en rojo. Frena lo que puedas."
-  },
-  "As contas já levam o dinheiro da conta. Segure o que der.": {
-    "en": "Your bills already take the money in your account. Hold back what you can.",
-    "es": "Las cuentas ya se llevan el dinero de tu cuenta. Frena lo que puedas."
-  },
-  "Já gastou hoje": {
-    "en": "Spent today",
-    "es": "Gastado hoy"
-  },
-  "Passou": {
-    "en": "Over by",
-    "es": "Te pasaste"
-  },
-  "Ainda dá": {
-    "en": "Still left",
-    "es": "Todavía queda"
-  },
-  "Mês deve sobrar": {
-    "en": "Month should leave",
-    "es": "El mes dejaría"
-  },
-  "Mês pode faltar": {
-    "en": "Month may fall short",
-    "es": "Al mes le puede faltar"
-  },
-  "Pelo mês inteiro": {
-    "en": "For the whole month",
-    "es": "Por el mes entero"
-  },
-  "{0}/dia": {
-    "en": "{0}/day",
-    "es": "{0}/día"
-  },
   "do dia já foi": {
     "en": "of today is gone",
     "es": "del día ya se fue"
@@ -8430,10 +8366,6 @@
   "sem folga": {
     "en": "no room left",
     "es": "sin margen"
-  },
-  "Como está seu dinheiro": {
-    "en": "How your money is doing",
-    "es": "Cómo está tu dinero"
   },
   "Sua nota": {
     "en": "Your score",
@@ -8995,14 +8927,6 @@
     "en": "You log about {0} items a month, almost all with a category. The detailed charts come first.",
     "es": "Registras unas {0} cosas al mes, casi todas con categoría. Los gráficos de detalle vienen primero."
   },
-  "O que você quer agora?": {
-    "en": "What do you want right now?",
-    "es": "¿Qué quieres ahora?"
-  },
-  "Escolha o que mais importa para você hoje. O consultor muda a ordem do plano e o que ele fala. Dá para trocar quando quiser.": {
-    "en": "Choose what matters most to you today. The advisor changes the order of the plan and what it says. You can change it whenever you like.",
-    "es": "Elige lo que más te importa hoy. El asesor cambia el orden del plan y lo que dice. Puedes cambiarlo cuando quieras."
-  },
   "Trocar": {
     "en": "Change",
     "es": "Cambiar"
@@ -9030,5 +8954,129 @@
   "{0} Confiro quando {1} fechar.": {
     "en": "{0} I'll check when {1} closes.",
     "es": "{0} Lo reviso cuando cierre {1}."
+  },
+  "1 mês completo lançado": {
+    "en": "1 full month logged",
+    "es": "1 mes completo registrado"
+  },
+  "{0} meses completos lançados": {
+    "en": "{0} full months logged",
+    "es": "{0} meses completos registrados"
+  },
+  "Sai {0} a mais do que entra": {
+    "en": "{0} more goes out than comes in",
+    "es": "Sale {0} más de lo que entra"
+  },
+  "{0} do que entra vai para estilo de vida": {
+    "en": "{0} of income goes to lifestyle",
+    "es": "{0} de lo que entra va a estilo de vida"
+  },
+  "Guarda {0} do que entra": {
+    "en": "Saves {0} of income",
+    "es": "Ahorra {0} de lo que entra"
+  },
+  "O essencial leva {0} do que entra": {
+    "en": "Essentials take {0} of income",
+    "es": "Lo esencial se lleva {0} de lo que entra"
+  },
+  "Mês no azul, sem sustos": {
+    "en": "Month in the black, no surprises",
+    "es": "Mes en azul, sin sobresaltos"
+  },
+  "Parcelas levam {0} do que entra": {
+    "en": "Installments take {0} of income",
+    "es": "Las cuotas se llevan {0} de lo que entra"
+  },
+  "Deve {0} no total": {
+    "en": "Owes {0} in total",
+    "es": "Debe {0} en total"
+  },
+  "Parcelas baratas e em dia": {
+    "en": "Cheap installments, paid on time",
+    "es": "Cuotas baratas y al día"
+  },
+  "Cerca de {0} lançamentos por mês": {
+    "en": "About {0} entries a month",
+    "es": "Unos {0} registros al mes"
+  },
+  "A renda muda de um mês para o outro": {
+    "en": "Income changes from month to month",
+    "es": "El ingreso cambia de un mes a otro"
+  },
+  "{0} do que sai passa pelo cartão": {
+    "en": "{0} of spending goes on the card",
+    "es": "{0} de lo que sale pasa por la tarjeta"
+  },
+  "Gasta tudo": {
+    "en": "Spends it all",
+    "es": "Gasta todo"
+  },
+  "falta {0}": {
+    "en": "short {0}",
+    "es": "falta {0}"
+  },
+  "guarda {0}": {
+    "en": "saves {0}",
+    "es": "ahorra {0}"
+  },
+  "Sem dívidas": {
+    "en": "No debt",
+    "es": "Sin deudas"
+  },
+  "Dívidas pesadas": {
+    "en": "Heavy debt",
+    "es": "Deudas pesadas"
+  },
+  "parcelas: {0}": {
+    "en": "installments: {0}",
+    "es": "cuotas: {0}"
+  },
+  "nenhuma": {
+    "en": "none",
+    "es": "ninguna"
+  },
+  "Anota pouco": {
+    "en": "Logs little",
+    "es": "Anota poco"
+  },
+  "Renda varia": {
+    "en": "Income varies",
+    "es": "Ingreso variable"
+  },
+  "Renda estável": {
+    "en": "Steady income",
+    "es": "Ingreso estable"
+  },
+  "muda bastante": {
+    "en": "changes a lot",
+    "es": "cambia bastante"
+  },
+  "quase igual": {
+    "en": "almost the same",
+    "es": "casi igual"
+  },
+  "Seu perfil": {
+    "en": "Your profile",
+    "es": "Tu perfil"
+  },
+  "Passou {0} hoje": {
+    "en": "{0} over today",
+    "es": "Te pasaste {0} hoy"
+  },
+  "Ainda dá {0} hoje": {
+    "en": "{0} still left today",
+    "es": "Todavía quedan {0} hoy"
+  },
+  "por dia, até {0}": {
+    "en": "per day, until {0}",
+    "es": "por día, hasta {0}"
+  },
+  "por dia": {
+    "en": "per day",
+    "es": "por día"
+  },
+  "Qual é o seu objetivo?": {
+    "en": "What's your goal?",
+    "es": "¿Cuál es tu objetivo?"
   }
 }

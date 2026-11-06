@@ -326,10 +326,14 @@ e anda dia a dia, do saldo de hoje até o fim do mês que vem, decidindo **de qu
   que entra e sai estiver lançado.
 
 **O jeito de cada pessoa** (`lib/jeito.ts`, `tracosDe()`). Lê os números e dá traços: começando agora, gasta bastante,
-controlado, com dívidas pesando, renda que varia, usa muito o cartão. Aparecem no topo da aba ("Seu jeito", tocar mostra o
-porquê) e cada traço soma pontos à prioridade dos gráficos que mais servem a ele (`bonusDoJeito`): quem gasta bastante vê
+controlado, com dívidas pesando, renda que varia, usa muito o cartão (e guarda muito, usa crédito com controle, orçamento
+justo, estável, anota tudo). `perfilDe()` escolhe o que mais diz sobre a pessoa (começando agora > dívidas pesando > gasta
+bastante > orçamento justo > guarda muito > crédito com controle > controlado > estável…) para o topo da aba, e
+`reguasDe()` põe a pessoa em quatro réguas (gasta tudo ↔ guarda muito, sem dívidas ↔ dívidas pesadas, anota pouco ↔ anota
+tudo, renda varia ↔ renda estável; só as que os números permitem medir). Cada traço soma pontos à prioridade dos gráficos que mais servem a ele (`bonusDoJeito`): quem gasta bastante vê
 primeiro onde gasta e o teto de cada gasto; quem está endividado, o fluxo e as dívidas; quem é controlado, reserva, metas e
-patrimônio. Os traços mudam sozinhos com os lançamentos.
+patrimônio. O objetivo escolhido soma mais (`BONUS_DO_OBJETIVO` em `lib/visuais.ts`): quem quer saber para onde vai o
+dinheiro vê categorias primeiro; quem quer sair das dívidas, a linha das dívidas. Os traços mudam sozinhos com os lançamentos.
 
 **De onde sai o dinheiro** (visual `fluxo`): cada dinheiro que entra (e o saldo de hoje) vira uma barra dividida no que ele
 paga, com o atraso em laranja e o custo; o que não tem dinheiro fica em vermelho no fim. Sobe para o topo quando há atraso.
@@ -367,24 +371,35 @@ gatilho da animação) está em `pages/analiseApoio.ts`.
 números contam. Cada animação só começa quando o cartão aparece na tela (`useEmVista`). Com Configurações → Animações:
 Reduzidas, tudo aparece pronto.
 
-**Cada jeito de ver tem a sua montagem.** Em todos, o topo é a **vitrine** "Hoje você pode gastar" (`components/Vitrine.tsx`):
-o velocímetro mostra quanto do dia já foi, o número grande é o que dá para gastar e as pílulas dizem quanto já saiu hoje e
-quanto ainda dá. Sem o plano (falta saldo ou agenda), a vitrine mostra a nota no lugar.
+**A tela é a mesma nos três jeitos, mudando só o quanto mostra** (`pages/AnaliseTopo.tsx`, estilos em
+`pages/analiseTopo.css`). De cima para baixo, quase sem texto:
 
-| Jeito | Montagem |
+1. **Seu perfil**: o emblema animado (anel girando, miolo flutuando) na cor do perfil, o nome dele grande ("Com dívidas
+   pesando", "Guarda muito"…), o número que o resume e as réguas, com a bolinha deslizando até o lugar. Tocar no emblema
+   ou num traço mostra o porquê.
+2. **Agora**: três blocos do mesmo tamanho, lado a lado: **Hoje você pode gastar** (velocímetro do dia), **Sua nota**
+   (medidor e os 5 degraus) e **Como o mês fecha** (duas barras, entra × sai, e o número). Sem o plano (falta saldo ou
+   agenda), o primeiro bloco some. No celular ficam dois por linha; com número ímpar, o primeiro ocupa a linha deitado
+   (desenho à esquerda, número à direita).
+3. **Próximo passo**: uma faixa com um passo por vez (ícone pulsando na cor da urgência, ganho em verde, setas e botão).
+   No detalhado, no lugar dela, o plano de ação inteiro em lista.
+4. **Objetivo**: seis ícones para escolher; escolhido, uma faixa com o caminho até ele e contadores (deu certo, ajustado,
+   acompanhando) que abrem a lista.
+5. **Seus gráficos**: o feed, ordenado pelo perfil e pelo objetivo.
+
+| Jeito | O que muda |
 | --- | --- |
-| Simples | Vitrine; **Faça agora** (um passo por vez) ao lado de dois quadros pequenos: **Sua nota** (velocímetro e os 5 degraus em tracinhos) e **Como o mês fecha** numa balança de duas barras (entra × sai); 2 gráficos e "Ver mais"; no fim, o convite para mudar o jeito de ver. Sem "Seu jeito" |
-| Equilibrado | Vitrine com a pílula do fim do mês; três quadros lado a lado (**Como estou** com a escada, **Faça agora**, **Como o mês fecha** com a cascata); o feed com **abas por assunto** (Tudo, O mês, Gastos, Dívidas, Guardado, Como estou), 4 gráficos na frente em "Tudo" |
-| Detalhado | Vitrine com mais pílulas (fim do mês e o quanto daria pelo mês inteiro); **Como estou** e **Como o mês fecha** lado a lado; o **plano de ação inteiro** em lista numerada (cor pela urgência, ganho em verde, tocar mostra o porquê, botão com verbo); o feed inteiro em **seções por assunto**, com um índice preso no topo para pular direto (favoritos primeiro, e cada seção sobe pelo gráfico mais importante dela) |
+| Simples | 2 réguas, sem os outros traços; 2 gráficos e "Ver mais"; no fim, o convite para mudar o jeito de ver |
+| Equilibrado | 4 réguas e os outros traços em fichas; feed com **abas por assunto** (Tudo, O mês, Gastos, Dívidas, Guardado, Como estou), 4 gráficos na frente |
+| Detalhado | O de cima mais o **plano de ação inteiro** em lista numerada no lugar da faixa; o feed inteiro em **seções por assunto**, com um índice preso no topo |
 
-"O que mudou" aparece como uma faixa logo abaixo da vitrine (até 2 mudanças; 4 no detalhado), com setas em bolinhas coloridas.
+"O que mudou" aparece como uma faixa logo abaixo do perfil (até 2 mudanças; 4 no detalhado), com setas em bolinhas coloridas.
 
 "De onde sai o dinheiro" ficou visual: cada entrada mostra a barra e três etiquetas (quanto tem destino, quanto fica livre,
 quanto vai com atraso); a lista do que ela paga abre ao tocar.
 
 **No computador**, o feed encaixa os cartões em colunas (2; 3 no detalhado a partir de 1600 px), sem buracos embaixo do mais
-baixo, e o dia do calendário fica achatado. "Como estou" se arruma pela própria largura (container query): estreito, o
-velocímetro fica em cima do degrau.
+baixo, e o dia do calendário fica achatado.
 
 No celular, tudo fica numa coluna só, na mesma ordem. Na cascata, o espaço acima das barras é dos rótulos, para o valor da
 primeira não encostar no número grande do cartão.

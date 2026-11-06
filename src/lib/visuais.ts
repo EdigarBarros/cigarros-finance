@@ -23,6 +23,7 @@ import { doMesChave, chaveMes } from './cartoes'
 import type { Destino } from './conselheiro'
 import { fmtDataCurta, fmtMesAno, fmtPct, fmtValor, LOCAL_DAS_DATAS, MESES_CURTO, moedaAtual, valoresEstaoOcultos } from './format'
 import { bonusDoJeito, tracosDe } from './jeito'
+import type { Objetivo } from './memoria'
 import { tx } from './textos'
 
 export const COR = {
@@ -91,6 +92,16 @@ export const NOME_CURTO: Record<IdPilar, () => string> = {
 const mesCurto = (k: number) => {
   const { mes } = doMesChave(k)
   return MESES_CURTO[mes - 1].slice(0, 3)
+}
+
+/** Quanto cada objetivo sobe cada gráfico do feed. */
+const BONUS_DO_OBJETIVO: Record<Objetivo, Record<string, number>> = {
+  dividas: { 'linha-dividas': 40, 'barras-estrategias': 36, 'rosca-juros': 30, fluxo: 10 },
+  'fechar-mes': { calendario: 34, 'curva-saldo': 34, fluxo: 28, 'tabela-orcamento': 14 },
+  guardar: { 'pote-reserva': 42, 'aneis-metas': 32, 'colunas-sobra': 26, 'tabela-orcamento': 10 },
+  controle: { categorias: 42, 'tabela-orcamento': 34, halteres: 30, 'rosca-503020': 24, 'barras-fixas': 16 },
+  tranquilo: { 'colunas-sobra': 30, 'pote-reserva': 22, 'aneis-metas': 18, calendario: 8 },
+  crescer: { 'curva-patrimonio': 44, 'aneis-metas': 26, 'pote-reserva': 14, 'colunas-sobra': 14 },
 }
 
 export function visuais(a: Analise): Visual[] {
@@ -326,6 +337,9 @@ export function visuais(a: Analise): Visual[] {
   // O jeito da pessoa (lib/jeito.ts) sobe o que mais serve a ela: quem gasta muito vê primeiro onde gasta.
   const tracos = tracosDe(a)
   for (const x of v) x.prioridade += bonusDoJeito(tracos, x.id)
+  // E o objetivo que ela escolheu (lib/memoria.ts) sobe os gráficos que mostram o caminho até ele.
+  const objetivo = a.aprendizado.objetivo
+  if (objetivo) for (const x of v) x.prioridade += BONUS_DO_OBJETIVO[objetivo][x.id] ?? 0
   return v.sort((x, y) => y.prioridade - x.prioridade)
 }
 
