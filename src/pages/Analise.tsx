@@ -1,16 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { compararRetratos, retratoDe, type Analise as DadosAnalise, type Mudanca, type Retrato } from '../lib/analise'
-import { cascataDoMes, fmtCurto, visuais, type Visual } from '../lib/visuais'
-import { tracosDe, type Traco } from '../lib/jeito'
-import { OBJETIVOS } from '../lib/memoria'
-import { fmtDataCurta, fmtValor, MESES_NOME, noMeioDaFrase } from '../lib/format'
+import { visuais, type Visual } from '../lib/visuais'
+import { fmtDataCurta } from '../lib/format'
 import { useMovimento } from '../lib/tema'
 import { Icone } from '../components/Icone'
 import { Interruptor } from '../components/ui'
-import { Numero } from '../components/Numero'
-import { Velocimetro, Vitrine, type Nivel, type Pilula } from '../components/Vitrine'
-import { CartaoVisual, Escada, Grafico, Medidor, type AcoesDoCartao } from './AnaliseGraficos'
-import { COR_DO_TOM, useEmVista } from './analiseApoio'
+import { type Nivel } from '../components/Vitrine'
+import { CartaoVisual, Grafico, type AcoesDoCartao } from './AnaliseGraficos'
+import { useEmVista } from './analiseApoio'
+import { Agora, Objetivo, ProximoPasso, SeuPerfil } from './AnaliseTopo'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 import './analise.css'
@@ -49,13 +47,12 @@ export function Analise(c: Ctx) {
   const movimento = useMovimento()
   const desdeAVisita = useDesdeAUltimaVisita(c.idUsuario, a)
   const lista = useMemo(() => visuais(a), [a])
-  const tracos = useMemo(() => tracosDe(a), [a])
   const feed = useFeed(c.idUsuario, lista)
 
   if (c.contaNova) {
     return (
       <div className="pagina analise">
-        <Cabecalho nivel={nivel} />
+        <header className="pagina-topo an-cabecalho"><div><h1>{tx('Seu consultor')}</h1></div></header>
         <section className="cartao an-vazio">
           <span className="an-vazio-icone"><Icone nome="bussola" tamanho={30} /></span>
           <h2>{tx('Seu consultor começa no primeiro lançamento')}</h2>
@@ -71,30 +68,17 @@ export function Analise(c: Ctx) {
 
   return (
     <div className={`pagina analise an-${nivel} ${movimento === 'reduzido' ? 'parado' : ''}`}>
-      <Cabecalho nivel={nivel} tracos={nivel === 'simples' ? undefined : tracos} />
-      <HojePodeGastar a={a} nivel={nivel} />
+      <header className="pagina-topo an-cabecalho">
+        <div>
+          <h1>{tx('Seu consultor')}</h1>
+          <p className="sub">{nivel === 'simples' ? tx('O que importa hoje, num olhar.') : tx('Os gráficos se refazem a cada lançamento.')}</p>
+        </div>
+      </header>
+      <SeuPerfil a={a} nivel={nivel} />
       <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 2} />
-      {c.memoria.objetivo === null
-        ? <EscolherObjetivo aoEscolher={c.escolherObjetivo} />
-        : <OQueAprendi a={a} nivel={nivel} aoTrocar={() => c.escolherObjetivo(null)} />}
-
-      {nivel === 'simples' ? (
-        <div className="an-quadros simples">
-          <FacaAgora a={a} aoIr={c.irPara} />
-          <div className="an-dupla">
-            <NotaCurta a={a} />
-            {a.mes && <MesNaBalanca a={a} />}
-          </div>
-        </div>
-      ) : (
-        <div className={`an-quadros ${a.mes ? '' : 'sem-mes'}`}>
-          <ComoEstou a={a} />
-          {nivel === 'equilibrado' ? <FacaAgora a={a} aoIr={c.irPara} /> : null}
-          {a.mes && <SeuMes a={a} />}
-        </div>
-      )}
-
-      {nivel === 'detalhado' && <PlanoDeAcao a={a} aoIr={c.irPara} />}
+      <Agora a={a} nivel={nivel} />
+      {nivel === 'detalhado' ? <PlanoDeAcao a={a} aoIr={c.irPara} /> : <ProximoPasso a={a} aoIr={c.irPara} />}
+      <Objetivo a={a} memoria={c.memoria} nivel={nivel} aoEscolher={c.escolherObjetivo} />
 
       {nivel === 'detalhado'
         ? <FeedEmSecoes feed={feed} aoIr={c.irPara} />
@@ -119,215 +103,14 @@ export function Analise(c: Ctx) {
   )
 }
 
-function Cabecalho({ nivel, tracos }: { nivel: Nivel; tracos?: Traco[] }) {
-  return (
-    <header className="pagina-topo an-cabecalho">
-      <div>
-        <h1>{tx('Seu consultor')}</h1>
-        <p className="sub">{nivel === 'simples' ? tx('O que importa hoje, num olhar.') : tx('Os gráficos se refazem a cada lançamento.')}</p>
-      </div>
-      {tracos && tracos.length > 0 && <SeuJeito tracos={tracos} />}
-    </header>
-  )
-}
 
-/** "Por quê?": a explicação fica escondida até a pessoa pedir. */
-function PorQue({ texto }: { texto: string }) {
-  const [aberto, setAberto] = useState(false)
-  if (!texto) return null
-  return (
-    <div className={`an-porque ${aberto ? 'aberto' : ''}`}>
-      <button className="link" onClick={() => setAberto(!aberto)} aria-expanded={aberto}>
-        {aberto ? tx('Esconder') : tx('Por quê?')} <Icone nome={aberto ? 'cima' : 'abaixo'} tamanho={14} />
-      </button>
-      {aberto && <p>{texto}</p>}
-    </div>
-  )
-}
 
-/** Os traços do jeito da pessoa (lib/jeito.ts): tocar mostra por que o motor leu assim. */
-function SeuJeito({ tracos }: { tracos: Traco[] }) {
-  const [aberto, setAberto] = useState<string | null>(null)
-  const t = tracos.find((x) => x.id === aberto)
-  return (
-    <section className="an-jeito" aria-label={tx('Seu jeito com o dinheiro')}>
-      <span className="an-jeito-titulo">{tx('Seu jeito')}</span>
-      <div className="an-jeito-lista">
-        {tracos.map((x) => (
-          <button key={x.id} className={`an-traco ${aberto === x.id ? 'aberto' : ''}`} onClick={() => setAberto(aberto === x.id ? null : x.id)} aria-expanded={aberto === x.id}>
-            <Icone nome={x.icone} tamanho={14} /> {x.nome}
-          </button>
-        ))}
-      </div>
-      {t && <p className="an-jeito-porque">{t.porque} {tx('Os gráficos abaixo estão na ordem que mais serve a esse jeito.')}</p>}
-    </section>
-  )
-}
 
-/**
- * Hoje você pode gastar: o menor entre o que o mês aguenta (guardando a sobra-alvo) e o que o saldo aguenta sem atrasar
- * nenhuma conta até o próximo dinheiro entrar (lib/planejador.ts). Vira a vitrine da aba: o velocímetro mostra quanto do
- * dia já foi; as pílulas, quanto já saiu, quanto ainda dá e (fora do simples) a nota e o fim do mês.
- */
-function HojePodeGastar({ a, nivel }: { a: DadosAnalise; nivel: Nivel }) {
-  const h = a.plano?.hoje
-  if (!h) return <VitrineSemPlano a={a} />
-  const passou = h.resta < 0
-  const cheio = h.pode > 0 ? Math.min(1, h.gastou / h.pode) : 1
-  const tom = h.pode <= 0 || passou ? 'ruim' : cheio >= 0.8 ? 'medio' : 'bom'
-  const ate = h.ate ? tx('até {0}, quando entra {1}', fmtDataCurta(h.ate.data), h.ate.descricao) : tx('até o fim do mês que vem')
-  const semFolga = h.motivo === 'mes'
-    ? tx('Pela previsão, o mês já fecha no vermelho. Segure o que der.')
-    : tx('As contas já levam o dinheiro da conta. Segure o que der.')
-  const porque = [
-    h.motivo === 'caixa'
-      ? h.ate
-        ? tx('Até {0}, quando entra {1}, vencem {2} em contas. Com o saldo de hoje, sobram {3} por dia sem atrasar nada.', fmtDataCurta(h.ate.data), h.ate.descricao, fmtValor(h.antesDoDinheiro), fmtValor(h.porDiaDoCaixa!))
-        : tx('Não há dinheiro previsto para entrar até o fim do mês que vem. Com o saldo de hoje e {0} em contas até lá, sobram {1} por dia.', fmtValor(h.antesDoDinheiro), fmtValor(h.porDiaDoCaixa!))
-      : h.pode > 0
-        ? tx('Pela previsão do mês: tirando as contas e guardando {0}, o que sobra dividido pelos dias que faltam dá {1} por dia.', fmtValor(a.mes?.sobraAlvo ?? 0), fmtValor(h.porDiaDoMes ?? 0))
-        : tx('Pela previsão do mês, depois das contas e do que é para guardar ({0}), não sobra nada para os dias que faltam.', fmtValor(a.mes?.sobraAlvo ?? 0)),
-    h.motivo === 'caixa' && h.porDiaDoMes !== null && h.porDiaDoMes > (h.porDiaDoCaixa ?? 0)
-      ? tx('Pelo mês inteiro daria {0} por dia, mas as contas vencem antes de o dinheiro chegar: por isso o número de hoje é menor.', fmtValor(Math.floor(h.porDiaDoMes)))
-      : '',
-    h.porDiaDoCaixa === null ? tx('Informe o saldo dos bancos para eu conferir também se o dinheiro chega antes das contas.') : '',
-    tx('O número vale se o que entra e sai estiver lançado, e se refaz a cada lançamento. Renda extra não entra na conta.'),
-  ].filter(Boolean).join(' ')
-  const pilulas: Pilula[] = [
-    { icone: 'enviar', rotulo: tx('Já gastou hoje'), valor: fmtValor(h.gastou), cor: 'var(--an-ruim)' },
-    { icone: passou ? 'desce' : 'check', rotulo: passou ? tx('Passou') : tx('Ainda dá'), valor: fmtValor(Math.abs(h.resta)), cor: COR_DO_TOM[passou ? 'ruim' : 'bom'], tom: passou ? 'ruim' : 'bom' },
-  ]
-  if (nivel !== 'simples' && a.mes) {
-    const sobra = a.mes.resultadoPrevisto >= 0
-    pilulas.push({ icone: 'calendario', rotulo: sobra ? tx('Mês deve sobrar') : tx('Mês pode faltar'), valor: fmtValor(Math.abs(a.mes.resultadoPrevisto)), cor: COR_DO_TOM[sobra ? 'bom' : 'ruim'], tom: sobra ? 'bom' : 'ruim' })
-  }
-  if (nivel === 'detalhado' && h.porDiaDoMes !== null) {
-    pilulas.push({ icone: 'ano', rotulo: tx('Pelo mês inteiro'), valor: tx('{0}/dia', fmtValor(Math.max(0, Math.floor(h.porDiaDoMes)))), cor: 'var(--an-destino)' })
-  }
-  return (
-    <Vitrine cor={COR_DO_TOM[tom]} className="an-vitrine"
-      visual={
-        <Velocimetro valor={cheio} cor={COR_DO_TOM[tom]}>
-          <b className="an-vel-pct">{h.pode > 0 ? `${Math.round(cheio * 100)}%` : <Icone nome="escudo" tamanho={26} />}</b>
-          <small className="an-vel-rot">{h.pode > 0 ? tx('do dia já foi') : tx('sem folga')}</small>
-        </Velocimetro>
-      }
-      rotulo={<><Icone nome="carteira" tamanho={16} /> {tx('Hoje você pode gastar')}</>}
-      valor={Math.max(0, h.pode)} formato={fmtValor}
-      sub={h.pode > 0 ? tx('por dia, {0}', ate) : semFolga}
-      pilulas={pilulas}>
-      <div className="an-vitrine-porque"><PorQue texto={porque} /></div>
-    </Vitrine>
-  )
-}
 
-/** Sem o plano (falta saldo e agenda): a vitrine mostra a nota no lugar. */
-function VitrineSemPlano({ a }: { a: DadosAnalise }) {
-  return (
-    <Vitrine cor={COR_DO_TOM[a.tom]} className="an-vitrine"
-      visual={<div className="an-vitrine-medidor"><Medidor valor={a.nota} tom={a.tom} /></div>}
-      rotulo={<><Icone nome="bussola" tamanho={16} /> {tx('Como está seu dinheiro')}</>}
-      texto={a.rotulo}
-      sub={a.resumo[0]} />
-  )
-}
 
-/** Como estou: velocímetro da nota e a escada das fases. */
-function ComoEstou({ a }: { a: DadosAnalise }) {
-  const [ref, vivo] = useEmVista<HTMLElement>()
-  const iFase = a.fases.findIndex((f) => f.id === a.fase)
-  return (
-    <section ref={ref} className={`cartao vis an-como ${vivo ? 'vivo' : ''}`} style={{ '--c': COR_DO_TOM[a.tom] } as CSSProperties}>
-      <header className="vis-cab"><h3>{tx('Como estou')}</h3><span className="an-rotulo">{a.rotulo}</span></header>
-      <div className="an-como-topo">
-        <Medidor valor={a.nota} tom={a.tom} />
-        <div className="an-como-texto">
-          <strong>{tx('Degrau {0} de 5', iFase + 1)}</strong>
-          <span>{a.fases[iFase].nome}</span>
-        </div>
-      </div>
-      <Escada fases={a.fases} atual={iFase} />
-      <PorQue texto={a.temFluxo ? a.porqueFase : a.resumo[0]} />
-    </section>
-  )
-}
 
-/** No simples: a nota e o degrau num quadro pequeno, sem a escada inteira. */
-function NotaCurta({ a }: { a: DadosAnalise }) {
-  const [ref, vivo] = useEmVista<HTMLElement>()
-  const iFase = a.fases.findIndex((f) => f.id === a.fase)
-  return (
-    <section ref={ref} className={`cartao vis an-nota ${vivo ? 'vivo' : ''}`} style={{ '--c': COR_DO_TOM[a.tom] } as CSSProperties}>
-      <header className="vis-cab"><h3>{tx('Sua nota')}</h3><span className="an-rotulo">{a.rotulo}</span></header>
-      <Medidor valor={a.nota} tom={a.tom} />
-      <ol className="an-degraus" aria-label={tx('Degrau {0} de 5', iFase + 1)}>
-        {a.fases.map((f, i) => <li key={f.id} className={i < iFase ? 'feito' : i === iFase ? 'atual' : ''} style={{ '--i': i } as CSSProperties} title={f.nome} />)}
-      </ol>
-      <span className="an-nota-fase">{a.fases[iFase].nome}</span>
-    </section>
-  )
-}
 
-/** No simples: como o mês fecha numa balança de duas barras (entra × sai) e o número do que fica. */
-function MesNaBalanca({ a }: { a: DadosAnalise }) {
-  const [ref, vivo] = useEmVista<HTMLElement>()
-  const m = a.mes!
-  const sobra = m.resultadoPrevisto >= 0
-  const maior = Math.max(1, m.entradasPrevistas, m.saidasPrevistas)
-  return (
-    <section ref={ref} className={`cartao vis an-balanca ${vivo ? 'vivo' : ''}`} style={{ '--c': COR_DO_TOM[sobra ? 'bom' : 'ruim'] } as CSSProperties}>
-      <header className="vis-cab"><h3>{tx('Como {0} deve fechar', noMeioDaFrase(MESES_NOME[a.hoje.mes - 1]))}</h3></header>
-      <div className={`an-mes-numero ${sobra ? 'bom' : 'ruim'}`}>
-        <small>{sobra ? tx('Deve sobrar') : tx('Pode faltar')}</small>
-        <strong><Numero valor={Math.abs(m.resultadoPrevisto)} formato={fmtValor} /></strong>
-      </div>
-      <div className="an-balanca-barras">
-        <span className="entra"><Icone nome="receber" tamanho={15} /><i style={{ width: `${(m.entradasPrevistas / maior) * 100}%` }} /><b>{fmtCurto(m.entradasPrevistas)}</b></span>
-        <span className="sai"><Icone nome="enviar" tamanho={15} /><i style={{ width: `${(m.saidasPrevistas / maior) * 100}%` }} /><b>{fmtCurto(m.saidasPrevistas)}</b></span>
-      </div>
-    </section>
-  )
-}
 
-/** Faça agora: um passo por vez, com o ganho em destaque; as setas passam para o próximo. */
-function FacaAgora({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
-  const [i, setI] = useState(0)
-  const acoes = a.acoes
-  if (!acoes.length) {
-    return (
-      <section className="cartao an-agora nivel-tudo-certo">
-        <span className="an-agora-icone"><Icone nome="check" tamanho={24} /></span>
-        <strong>{tx('Nada pedindo ação agora.')}</strong>
-      </section>
-    )
-  }
-  const x = acoes[Math.min(i, acoes.length - 1)]
-  return (
-    <section className={`cartao an-agora nivel-${x.urgencia}`}>
-      <div className="an-agora-cab">
-        <span className="an-agora-titulo"><Icone nome="ideia" tamanho={15} /> {tx('Faça agora')}</span>
-        {acoes.length > 1 && (
-          <span className="an-agora-nav">
-            <button className="icone-btn" onClick={() => setI((i - 1 + acoes.length) % acoes.length)} aria-label={tx('Passo anterior')}><Icone nome="esq" tamanho={16} /></button>
-            <span className="an-pontos" aria-label={tx('Passo {0} de {1}', i + 1, acoes.length)}>
-              {acoes.map((p, k) => <i key={p.id} className={k === i ? 'atual' : ''} />)}
-            </span>
-            <button className="icone-btn" onClick={() => setI((i + 1) % acoes.length)} aria-label={tx('Próximo passo')}><Icone nome="dir" tamanho={16} /></button>
-          </span>
-        )}
-      </div>
-      <div className="an-agora-passo" key={x.id}>
-        <span className="an-agora-icone" aria-hidden="true"><Icone nome={x.icone} tamanho={26} /></span>
-        <strong>{x.titulo}</strong>
-      </div>
-      {x.impacto && <span className="an-impacto"><Icone nome="sobe" tamanho={14} /> {x.impacto}</span>}
-      <div className="an-agora-pe">
-        <PorQue texto={x.porque} />
-        <button className="btn primario" onClick={() => aoIr(x.destino)}>{x.botao} <Icone nome="seta" tamanho={15} /></button>
-      </div>
-    </section>
-  )
-}
 
 /** No detalhado: o plano de ação inteiro, em ordem, com o ganho de cada passo e o atalho. */
 function PlanoDeAcao({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
@@ -365,22 +148,6 @@ function PlanoDeAcao({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
   )
 }
 
-/** Como o mês fecha: o número grande e a cascata (entra, sai, fica). */
-function SeuMes({ a }: { a: DadosAnalise }) {
-  const m = a.mes!
-  const passos = cascataDoMes(a)!
-  const sobra = m.resultadoPrevisto >= 0
-  return (
-    <CartaoVisual v={{ id: 'mes', titulo: tx('Como {0} deve fechar', noMeioDaFrase(MESES_NOME[a.hoje.mes - 1])), frase: '', tom: sobra ? 'bom' : 'ruim' }}>
-      <div className={`an-mes-numero ${sobra ? 'bom' : 'ruim'}`}>
-        <small>{sobra ? tx('Deve sobrar') : tx('Pode faltar')}</small>
-        <strong><Numero valor={Math.abs(m.resultadoPrevisto)} formato={fmtValor} /></strong>
-      </div>
-      <Grafico v={{ id: 'cascata', tipo: 'cascata', prioridade: 0, titulo: '', frase: '', passos }} />
-      {m.rendaExtraMedia > 0 && <p className="an-nota-fraca">{tx('Sem contar renda extra (em média, {0} por mês).', fmtValor(m.rendaExtraMedia))}</p>}
-    </CartaoVisual>
-  )
-}
 
 type Feed = ReturnType<typeof useFeed>
 
@@ -502,66 +269,7 @@ function useDesdeAUltimaVisita(id: string, a: DadosAnalise) {
   return useMemo(() => (antes ? { em: antes.em, mudancas: compararRetratos(antes, retratoDe(a)) } : null), [antes, a])
 }
 
-/**
- * "O que você quer agora?": o objetivo guia o consultor (a ordem do plano e o resumo). Aparece até a pessoa escolher, e
- * volta quando ela toca em "Trocar".
- */
-function EscolherObjetivo({ aoEscolher }: { aoEscolher: Ctx['escolherObjetivo'] }) {
-  return (
-    <section className="cartao an-objetivo">
-      <div className="an-objetivo-cab">
-        <span className="an-objetivo-icone"><Icone nome="bussola" tamanho={20} /></span>
-        <div>
-          <h2>{tx('O que você quer agora?')}</h2>
-          <p>{tx('Escolha o que mais importa para você hoje. O consultor muda a ordem do plano e o que ele fala. Dá para trocar quando quiser.')}</p>
-        </div>
-      </div>
-      <div className="an-objetivo-opcoes">
-        {OBJETIVOS.map((o) => (
-          <button key={o.id} className="an-objetivo-opcao" onClick={() => aoEscolher(o.id)}>
-            <Icone nome={o.icone} tamanho={18} />
-            <span><strong>{o.nome()}</strong><small>{o.descricao()}</small></span>
-          </button>
-        ))}
-      </div>
-    </section>
-  )
-}
 
-/** O objetivo escolhido, onde a pessoa está em relação a ele e o que o consultor aprendeu conferindo os passos do plano. */
-function OQueAprendi({ a, nivel, aoTrocar }: { a: DadosAnalise; nivel: Nivel; aoTrocar: () => void }) {
-  const ap = a.aprendizado
-  if (!ap.objetivo) return null
-  const objetivo = OBJETIVOS.find((o) => o.id === ap.objetivo)
-  const detalhes = nivel !== 'simples'
-  return (
-    <section className="cartao an-aprendi">
-      <div className="an-aprendi-cab">
-        <span className="an-aprendi-objetivo"><Icone nome={objetivo?.icone ?? 'bussola'} tamanho={14} /> {objetivo?.nome()}</span>
-        <button className="link" onClick={aoTrocar}>{tx('Trocar')}</button>
-      </div>
-      {ap.frase && <p className="an-aprendi-frase">{ap.frase}</p>}
-      {ap.vitorias.length > 0 && (
-        <ul className="an-aprendi-lista bom" aria-label={tx('O que deu certo')}>
-          {ap.vitorias.map((t, i) => <li key={i}><Icone nome="check" tamanho={14} /> {t}</li>)}
-        </ul>
-      )}
-      {detalhes && ap.ajustes.length > 0 && (
-        <ul className="an-aprendi-lista medio" aria-label={tx('O que não deu certo')}>
-          {ap.ajustes.map((t, i) => <li key={i}><Icone nome="desfazer" tamanho={14} /> {t} {tx('O próximo passo vem menor.')}</li>)}
-        </ul>
-      )}
-      {detalhes && ap.acompanhando.length > 0 && (
-        <details className="an-aprendi-acompanha">
-          <summary>{ap.acompanhando.length === 1 ? tx('Acompanhando 1 passo do plano') : tx('Acompanhando {0} passos do plano', ap.acompanhando.length)}</summary>
-          <ul>
-            {ap.acompanhando.map((x, i) => <li key={i}>{tx('{0} Confiro quando {1} fechar.', x.titulo, noMeioDaFrase(MESES_NOME[x.mes - 1]))}</li>)}
-          </ul>
-        </details>
-      )}
-    </section>
-  )
-}
 
 /** Só aparece quando algo mudou de fato: uma faixa com setas para cima ou para baixo. */
 function OQueMudou({ reanalise, desdeAVisita, max }: { reanalise: Ctx['reanalise']; desdeAVisita: { em: string; mudancas: Mudanca[] } | null; max: number }) {
