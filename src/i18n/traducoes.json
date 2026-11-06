@@ -9102,5 +9102,9 @@
   "O teste grátis já foi usado nesta conta.": {
     "en": "The free trial has already been used on this account.",
     "es": "La prueba gratis ya se usó en esta cuenta."
+  },
+  "Backup do OpusCash": {
+    "en": "OpusCash backup",
+    "es": "Copia de seguridad de OpusCash"
   }
 }

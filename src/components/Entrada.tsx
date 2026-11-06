@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ENDERECO_DO_SITE } from '../lib/appAndroid'
 import { supabase } from '../lib/supabase'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
@@ -32,14 +33,14 @@ export function Login({ inicial = 'entrar' }: { inicial?: Modo }) {
 
   const esqueci = async (email: string) => {
     setOcupado(true); setAviso(null)
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: ENDERECO_DO_SITE })
     setOcupado(false)
     setAviso(error ? { texto: traduzir(error.message) } : { texto: tx('Se esse e-mail tiver conta, enviamos um link para criar uma senha nova. Olhe também o spam.'), ok: true })
   }
 
   const reenviar = async (email: string) => {
     setOcupado(true); setAviso(null)
-    const { error } = await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: window.location.origin } })
+    const { error } = await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: ENDERECO_DO_SITE } })
     setOcupado(false)
     setAviso(error ? { texto: traduzir(error.message) } : { texto: tx('Reenviamos o e-mail de confirmação. Pode levar alguns minutos; olhe também o spam.'), ok: true })
   }
@@ -47,7 +48,7 @@ export function Login({ inicial = 'entrar' }: { inicial?: Modo }) {
   const cadastrar = async (nome: string, email: string, senha: string) => {
     setOcupado(true); setAviso(null)
     // o nome vai junto e já aparece preenchido na primeira pergunta do painel
-    const { data, error } = await supabase.auth.signUp({ email, password: senha, options: { data: nome ? { nome } : undefined, emailRedirectTo: window.location.origin } })
+    const { data, error } = await supabase.auth.signUp({ email, password: senha, options: { data: nome ? { nome } : undefined, emailRedirectTo: ENDERECO_DO_SITE } })
     setOcupado(false)
     if (error) setAviso({ texto: traduzir(error.message) })
     else if (!data.session) setAviso({ texto: tx('Conta criada! Confirme pelo link que chegou no seu e-mail e depois entre.'), ok: true })
