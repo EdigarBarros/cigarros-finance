@@ -12,7 +12,6 @@
 @keyframes vt-pinga { from { opacity: 0; transform: scale(.4); } }
 @keyframes vt-flutua { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(14px, -10px) scale(1.08); } }
 @keyframes vt-brilha { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
-@keyframes vt-pulso { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 50%, transparent); } 80%, 100% { box-shadow: 0 0 0 12px transparent; } }
 @keyframes vt-anda { from { left: 0; } }
 @keyframes vt-acena { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(8deg); } }
 
@@ -134,7 +133,12 @@ button.pilula > svg { color: var(--texto-3); }
 .vt-trilha-caminho em.passou { border-color: var(--c); background: var(--c); }
 .vt-trilha-voce {
   position: absolute; top: 50%; left: calc(var(--p) * 100%); width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%;
-  background: var(--superficie); border: 5px solid var(--c); animation: vt-anda 1.4s var(--mola) .1s backwards, vt-pulso 2.2s ease-out 1.6s infinite;
+  background: var(--superficie); border: 5px solid var(--c); animation: vt-anda 1.4s var(--mola) .1s backwards;
+}
+/* o pulso em volta do "você está aqui": anel-pulso (index.css) */
+.vt-trilha-voce::after {
+  content: ''; position: absolute; inset: -5px; border-radius: 50%; pointer-events: none;
+  border: 3px solid color-mix(in srgb, var(--c) 50%, transparent); --anel-escala: 2.1; animation: anel-pulso 2.2s ease-out 1.6s infinite backwards;
 }
 .vt-trilha-bandeira {
   position: absolute; right: -16px; top: 50%; display: grid; place-items: center; width: 32px; height: 32px; margin-top: -16px; border-radius: 50%;
@@ -144,7 +148,7 @@ button.pilula > svg { color: var(--texto-3); }
 .vt-trilha-rotulos { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--texto-3); }
 .vt-trilha-rotulos span:last-child { text-align: right; }
 .vt-trilha-rotulos b { color: var(--texto); }
-.vt-trilha:not(.vivo) .vt-trilha-feito, .vt-trilha:not(.vivo) .vt-trilha-voce { animation-play-state: paused; }
+.vt-trilha:not(.vivo) .vt-trilha-feito, .vt-trilha:not(.vivo) .vt-trilha-voce, .vt-trilha:not(.vivo) .vt-trilha-voce::after { animation-play-state: paused; }
 
 /* ---------- linha do tempo ---------- */
 .vt-tempo { display: grid; gap: 8px; }

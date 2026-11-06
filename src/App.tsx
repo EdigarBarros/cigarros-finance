@@ -4,12 +4,14 @@ import { BotaoIdioma } from './components/BotaoIdioma'
 import { Carregando } from './components/Carregando'
 import { Configuracao, Login, NovaSenha } from './components/Entrada'
 import { TelaAssinatura } from './components/Assinatura'
+import { TelaSemInternet } from './components/SemInternet'
 import { PaginaLegal } from './components/Legal'
 import { noAppAndroid } from './lib/appAndroid'
 import { documentoDoHash } from './lib/legal'
 import { nativo } from './lib/textos'
 import { temAcesso, useAssinatura } from './lib/assinatura'
 import { configurado, supabase } from './lib/supabase'
+import { useSemInternet } from './lib/conexao'
 import { Apresentacao } from './pages/Apresentacao'
 import './pages/apresentacao.css'
 
@@ -76,7 +78,8 @@ export default function App() {
 
 /** Só abre o painel para quem está no teste grátis, com a assinatura em dia ou com a conta liberada. */
 function ComAcesso({ userId, email, nome }: { userId: string; email: string; nome?: string }) {
-  const { assinatura, carregando, cobranca, recarregar } = useAssinatura(userId)
+  const { assinatura, carregando, cobranca, erro, recarregar } = useAssinatura(userId)
+  const semInternet = useSemInternet()
   // Quando o teste grátis acaba com o painel aberto, a tela de assinatura entra na hora (sem esperar a pessoa recarregar).
   const [, reavaliar] = useReducer((n: number) => n + 1, 0)
   const fimDoTeste = assinatura?.status === 'teste' && assinatura.teste_fim ? new Date(assinatura.teste_fim).getTime() : null
@@ -87,7 +90,8 @@ function ComAcesso({ userId, email, nome }: { userId: string; email: string; nom
     const t = window.setTimeout(reavaliar, falta + 500)
     return () => window.clearTimeout(t)
   }, [fimDoTeste])
-  if (carregando) return <Carregando />
+  // sem internet (ou sem resposta do servidor) antes de o painel abrir: avisa, em vez do carregando para sempre
+  if (carregando) return semInternet || erro ? comIdioma(<TelaSemInternet aoTentar={recarregar} />) : <Carregando />
   if (cobranca && !temAcesso(assinatura)) return comIdioma(<TelaAssinatura assinatura={assinatura} email={email} aoAtualizar={recarregar} />)
   return (
     <Suspense fallback={<Carregando />}>

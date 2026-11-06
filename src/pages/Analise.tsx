@@ -167,10 +167,11 @@ function Mosaico({ itens, aoIr, feed }: { itens: Visual[]; aoIr: Ctx['irPara']; 
     if (!grade) return
     const arrumar = () => {
       const espaco = parseFloat(getComputedStyle(grade).getPropertyValue('--espaco')) || 16
-      for (const el of Array.from(grade.children) as HTMLElement[]) {
-        const alto = el.getBoundingClientRect().height
-        el.style.gridRowEnd = `span ${Math.max(1, Math.ceil((alto + espaco) / LINHA_DO_MOSAICO))}`
-      }
+      const cartoes = Array.from(grade.children) as HTMLElement[]
+      // primeiro mede todos, depois escreve (e só o que mudou): medir e escrever alternados obrigava o navegador a refazer
+      // o layout da página a cada cartão, e a aba do Consultor demorava a abrir no celular
+      const linhas = cartoes.map((el) => `span ${Math.max(1, Math.ceil((el.getBoundingClientRect().height + espaco) / LINHA_DO_MOSAICO))}`)
+      cartoes.forEach((el, i) => { if (el.style.gridRowEnd !== linhas[i]) el.style.gridRowEnd = linhas[i] })
     }
     arrumar()
     if (typeof ResizeObserver === 'undefined') return

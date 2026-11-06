@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { noAppAndroid } from './appAndroid'
+import { aoMudarConexao } from './conexao'
 import { supabase } from './supabase'
 import { tx } from './textos'
 
@@ -75,16 +76,28 @@ export function useAssinatura(userId: string) {
     let cancelado = false
     let timer: ReturnType<typeof setTimeout> | undefined
     let tentativa = 0
+    let lendo = false
     const rodar = async () => {
+      if (lendo) return // uma leitura de cada vez (a volta da conexão pode chegar no meio de uma)
+      lendo = true
       const ok = await recarregar()
+      lendo = false
       if (!ok && !cancelado) timer = setTimeout(() => void rodar(), Math.min(2000 * 2 ** tentativa++, 30_000))
     }
     void rodar()
+    // a conexão voltou: tenta na hora, sem esperar a próxima tentativa (que pode estar a até 30 s)
+    const pararDeOuvir = aoMudarConexao((semInternet) => {
+      if (semInternet || cancelado || leuPara.current === userId) return
+      clearTimeout(timer)
+      tentativa = 0
+      void rodar()
+    })
     return () => {
       cancelado = true
       clearTimeout(timer)
+      pararDeOuvir()
     }
-  }, [recarregar])
+  }, [recarregar, userId])
 
   return { assinatura, carregando, cobranca, erro, recarregar }
 }

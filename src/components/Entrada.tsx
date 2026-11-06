@@ -179,6 +179,8 @@ function BotaoEnviar({ ocupado, children }: { ocupado: boolean; children: React.
 }
 
 function traduzir(m: string) {
+  // sem internet, o Supabase devolve o erro do navegador ("Failed to fetch", "Load failed", "NetworkError…")
+  if (/failed to fetch|load failed|networkerror|network request failed/i.test(m)) return tx('Sem internet. Confira sua conexão e tente de novo.')
   if (/invalid login/i.test(m)) return tx('E-mail ou senha incorretos.')
   if (/email not confirmed/i.test(m)) return tx('Confirme seu e-mail pelo link que chegou na caixa de entrada.')
   if (/already registered/i.test(m)) return tx('Esse e-mail já tem conta. Toque em "Entrar".')
