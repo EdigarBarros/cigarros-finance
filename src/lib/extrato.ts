@@ -64,6 +64,9 @@ const LOJAS: [RegExp, string][] = [
 
 /** O que a linha é, pelo começo da descrição (a ordem importa: o mais específico primeiro). */
 const TIPOS_DE_LINHA: { re: RegExp; tipo?: Tipo; /** Pix ou transferência: o que vem depois é uma pessoa (ou loja) do outro lado. */ pessoa?: boolean; nome: (resto: string, tipo: Tipo) => string }[] = [
+  // Bradesco: "TRANSFERENCIA PIX" e, na linha de baixo, "REM: FULANO" (quem mandou) ou "DES: FULANO" (para quem foi)
+  { pessoa: true, re: /^((transf(erencia)?\.?|ted|doc)\s+)?(pix\s+)?rem:\s*/, tipo: 'entrada', nome: (r) => r || 'Pix recebido' },
+  { pessoa: true, re: /^((transf(erencia)?\.?|ted|doc)\s+)?(pix\s+)?des:\s*/, tipo: 'saida', nome: (r) => r || 'Pix enviado' },
   { pessoa: true, re: /^(transf(erencia)?\.?\s+)?(pix\s+)?(recebid[oa]|recebimento)(\s+(pelo|via|por)\s+pix)?\s*(de|-|:)?\s*/, tipo: 'entrada', nome: (r) => r || 'Pix recebido' },
   { pessoa: true, re: /^(transf(erencia)?\.?\s+)?(pix\s+)?(enviad[oa]|envio)(\s+(pelo|via|por)\s+pix)?\s*(para|-|:)?\s*/, tipo: 'saida', nome: (r) => r || 'Pix enviado' },
   { pessoa: true, re: /^pix\s+de\s+/, tipo: 'entrada', nome: (r) => r || 'Pix recebido' },
@@ -294,11 +297,12 @@ export function acharValores(s: string): { valor: number; sinal: -1 | 0 | 1; tre
   return lista
 }
 
-const PISTA_ENTRADA = /recebid|recebimento|credito|deposito|estorno|rendimento|salario|reembolso|cashback|devolucao|entrada/
-const PISTA_SAIDA = /enviad|pagamento|pgto|compra|debito|saque|tarifa|boleto|fatura|envio|saida|transferencia para/
+// "Rem:" (remetente) e "Des:" (destinatário) são como o Bradesco diz de quem veio e para quem foi o Pix
+const PISTA_ENTRADA = /recebid|recebimento|credito|deposito|estorno|rendimento|salario|reembolso|cashback|devolucao|entrada|\brem:/
+const PISTA_SAIDA = /enviad|pagamento|pgto|compra|debito|saque|tarifa|boleto|fatura|envio|saida|transferencia para|\bdes:/
 const IGNORAR = /^(data\b|lancamentos?\b|periodo|extrato|movimentac)/
 /** O que vem depois de "Saldo"/"Total" nas linhas de resumo ("Saldo do dia", "Total da fatura"). */
-const RESUMO_DEPOIS = /^((do|da|de|dos|das)\s+(dia|mes|periodo|fatura|conta|extrato|cartao|compras|pagamentos|lancamentos|entradas|saidas|creditos|debitos|despesas|receitas|limite|investimentos|aplicacoes)|anterior|final|inicial|atual|disponivel|bloqueado|parcial|geral|liquido|bruto|em\s+(conta|c\/?c)|apos|a\s+(pagar|receber)|pago|devedor|credor|fatura|compras|entradas|saidas|creditos|debitos|despesas|receitas|gastos?|lancamentos|pagamentos|periodo|mes|dia|conta|limite|cartao|c\/c|cc)\b/
+const RESUMO_DEPOIS = /^((do|da|de|dos|das)\s+(dia|mes|periodo|fatura|conta|extrato|cartao|compras|pagamentos|lancamentos|entradas|saidas|creditos|debitos|despesas|receitas|limite|investimentos|aplicacoes)|anterior|final|inicial|atual|disponivel|bloqueado|parcial|geral|liquido|bruto|em\s+(conta|c\/?c)|apos|a\s+(pagar|receber)|pago|devedor|credor|fatura|compras|entradas|saidas|creditos|debitos|despesas|receitas|gastos?|lancamentos|pagamentos|periodo|mes|dia|conta|limite|cartao|c\/c|cc|invest\w*|aplica\w*|poupanca)\b/
 
 /**
  * Linha de resumo do extrato, que não é lançamento: "Saldo", "Saldo do dia", "Total da fatura", cabeçalho, período.
@@ -332,6 +336,15 @@ function montar(data: string, desc: string, valor: number, sinal: -1 | 0 | 1, ex
 // ---------- texto corrido (PDF, Word, TXT) ----------
 
 /** Rodapé e cabeçalho que o PDF repete em toda página (e que não são parte do nome de nenhum lançamento). */
+/**
+ * Cabeçalho de página com a data em que o extrato foi gerado ("Banco Bradesco S/A … 08/11/2026", "Emitido em 08/11"). Essa
+ * data não é de lançamento: se virasse o dia dos próximos, o primeiro lançamento de cada página ia para o dia da emissão.
+ */
+const CABECALHO_DE_PAGINA = /^banco\s+[a-z ]{2,30}?\s+s\.?\s*\/?\s*a\b|^(emitido|emissao|gerado|impresso|consultado|data (de |da )?(emissao|impressao|consulta))\b/
+
+/** Saldo da conta numa linha de resumo ("Saldo anterior", "Saldo do dia"): serve para descobrir se cada lançamento entrou ou saiu. */
+const SALDO_DA_CONTA = /^saldo( (anterior|inicial|final|do dia|atual|disponivel|em conta( corrente)?|em c\/?c))?$/
+
 const RUIDO_DE_PAGINA = /\bpagina\s+\d+\s*(de|\/)\s*\d+|\bpag\.?\s*\d+\s*(de|\/)\s*\d+|\bouvidoria\b|\bsac\b|\b0800\b|\bcnpj\b|\bwww\.|https?:|\S+@\S+\.\w+|\bfale conosco|\bcentral de (atendimento|relacionamento)|\bdeficiente (auditivo|de fala)|\btel(efone)?s?\.?:?\s*\(?\d|\(\d{2}\)\s*\d{4,5}-?\d{4}/
 
 /**
@@ -348,6 +361,10 @@ export function deTexto(linhas: string[], anoPadrao: number): LinhaExtrato[] {
   let ultimo: { l: LinhaExtrato; bruta: string; sinal: -1 | 0 | 1 } | null = null
   // linha com data e descrição mas sem valor: o valor vem na linha seguinte ("15/10 PIX RECEBIDO" + "MARIA … R$ 1.200,00")
   let pendente: { data: string; texto: string; semAno: boolean } | null = null
+  /** Saldos lidos, com a posição em `saida`: `antes` = lançamentos lidos até ele (extrato do mais antigo para o mais novo), `depois` = no do mais novo para o mais antigo. */
+  const saldos: { antes: number; depois: number; valor: number }[] = []
+  /** O texto de cada lançamento e se o sinal veio escrito, para refazer o tipo pelo saldo no fim. */
+  const fontes: { bruta: string; sinal: -1 | 0 | 1 }[] = []
   for (const bruta of linhas) {
     const linha = bruta.replace(/\s+/g, ' ').trim()
     if (!linha) continue
@@ -358,8 +375,15 @@ export function deTexto(linhas: string[], anoPadrao: number): LinhaExtrato[] {
     if (!valores.length && RUIDO_DE_PAGINA.test(n)) continue
     // a descrição sem a data e os valores: é ela que diz se a linha é um resumo ("Saldo do dia") ou uma loja ("Saldo Farma")
     const semDataEValor = [d?.trecho, ...valores.map((v) => v.trecho)].reduce<string>((x, t) => (t ? x.replace(t.toLowerCase(), ' ') : x), n).replace(/\s+/g, ' ').trim()
-    if (ehResumo(n) || ehResumo(semDataEValor) || /\bsaldo\b/.test(n) && !/^(saldo|total)\b/.test(semDataEValor) && valores.length <= 1 && !/pix|transf|compra|pagamento/.test(n)) { ultimo = null; continue }
-    if (d && !valores.length) {
+    if (!valores.length && CABECALHO_DE_PAGINA.test(semDataEValor)) { ultimo = null; continue }
+    if (ehResumo(n) || ehResumo(semDataEValor) || /\bsaldo\b/.test(n) && !/^(saldo|total)\b/.test(semDataEValor) && valores.length <= 1 && !/pix|transf|compra|pagamento/.test(n)) {
+      if (valores.length === 1 && SALDO_DA_CONTA.test(semDataEValor)) saldos.push({ antes: saida.length, depois: saida.length, valor: comSinal(valores[0]) })
+      ultimo = null
+      continue
+    }
+    // "REM: FULANO 01/10" (Bradesco): a data no fim de uma linha sem valor é parte do nome do lançamento de cima, não um dia novo
+    const dataNoFim = Boolean(d && !valores.length && ultimo && !n.startsWith(d.trecho) && n.endsWith(d.trecho) && /^\d{1,2}\/\d{1,2}(\/\d{2,4})?$/.test(d.trecho))
+    if (d && !valores.length && !dataNoFim) {
       const resto = semRuido(linha.replace(d.trecho, ''))
       if (resto.replace(/[^A-Za-zÀ-ÿ]/g, '').length < 4) { diaAtual = d.data; diaSemAno = Boolean(d.semAno); ultimo = null; pendente = null; continue }
       pendente = { data: d.data, texto: linha.replace(d.trecho, ' '), semAno: Boolean(d.semAno) }
@@ -373,6 +397,8 @@ export function deTexto(linhas: string[], anoPadrao: number): LinhaExtrato[] {
       let desc = (!d && pendente ? `${pendente.texto} ` : '') + linha.replace(v.trecho, ' ')
       const adivinhada = d ? Boolean(d.semAno) : pendente ? pendente.semAno : diaSemAno
       pendente = null
+      // os próximos lançamentos sem data (extrato que só escreve a data no primeiro do dia) são deste dia
+      if (d) { diaAtual = d.data; diaSemAno = Boolean(d.semAno) }
       if (d) desc = desc.replace(new RegExp(d.trecho.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&'), 'i'), ' ')
       for (const x of valores.slice(1)) desc = desc.replace(x.trecho, ' ')
       // fatura de cartão em PDF: o pagamento da fatura vem com sinal de menos, mas é dinheiro que entrou no cartão
@@ -380,22 +406,71 @@ export function deTexto(linhas: string[], anoPadrao: number): LinhaExtrato[] {
       const sinal = pagouFatura ? 1 : v.sinal
       const l = montar(data, desc, v.valor, sinal)
       if (pagouFatura) Object.assign(l, { pagamentoDaFatura: true, revisar: l.revisar ?? 'pagamento da fatura: já está no extrato da conta' })
+      // com dois valores, o último é o saldo depois deste lançamento
+      if (valores.length >= 2) saldos.push({ antes: saida.length + 1, depois: saida.length, valor: comSinal(valores[valores.length - 1]) })
       saida.push(l)
       semAno.push(adivinhada)
+      fontes.push({ bruta: desc, sinal })
       ultimo = { l, bruta: desc, sinal }
       continue
     }
     // continuação do nome do lançamento anterior
-    if (ultimo && !d && !valores.length && linha.length < 60) {
-      const junto: string = `${ultimo.bruta} ${linha}`
+    if (ultimo && (!d || dataNoFim) && !valores.length && linha.length < 60) {
+      const junto: string = `${ultimo.bruta} ${d && dataNoFim ? linha.replace(new RegExp(d.trecho.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&'), 'i'), ' ').trim() : linha}`
       // refaz como o lançamento nasceu (mesmo sinal), para o tipo, a forma e o aviso "confira se entrou ou saiu" acompanharem o nome inteiro
       const novo = montar(ultimo.l.data, junto, ultimo.l.valor, ultimo.sinal)
       Object.assign(ultimo.l, { descricao: novo.descricao, original: novo.original, revisar: ultimo.l.pagamentoDaFatura ? ultimo.l.revisar : novo.revisar, tipo: novo.tipo, forma: novo.forma })
       ultimo = { l: ultimo.l, bruta: junto, sinal: ultimo.sinal }
+      fontes[saida.indexOf(ultimo.l)].bruta = junto
     }
   }
+  tipoPeloSaldo(saida, fontes, saldos)
   ajustarVirada(saida, semAno)
   return saida
+}
+
+const comSinal = (v: { valor: number; sinal: -1 | 0 | 1 }) => (v.sinal < 0 ? -v.valor : v.valor)
+
+/**
+ * Extrato em PDF com colunas Crédito e Débito (Bradesco e outros): no texto as duas colunas viram só um número, sem dizer
+ * se entrou ou saiu. O saldo diz: entre dois saldos, os lançamentos somam a diferença. Para cada trecho entre saldos,
+ * procura o jeito (entrou/saiu) de cada lançamento sem sinal que fecha a conta; só usa quando há um jeito só. Testa o
+ * extrato lido do mais antigo para o mais novo e ao contrário, e fica com o sentido que explica mais lançamentos.
+ */
+function tipoPeloSaldo(saida: LinhaExtrato[], fontes: { bruta: string; sinal: -1 | 0 | 1 }[], saldos: { antes: number; depois: number; valor: number }[]) {
+  if (saldos.length < 2) return
+  const cent = (v: number) => Math.round(v * 100)
+  const resolver = (pos: 'antes' | 'depois', inverte: boolean) => {
+    const achados = new Map<number, 1 | -1>()
+    const marcos = [...saldos].sort((a, b) => a[pos] - b[pos])
+    for (let k = 1; k < marcos.length; k++) {
+      const de = marcos[k - 1][pos], ate = marcos[k][pos]
+      if (ate <= de) continue
+      let falta = cent(marcos[k].valor - marcos[k - 1].valor) * (inverte ? -1 : 1)
+      const livres: number[] = []
+      for (let i = de; i < ate; i++) {
+        if (fontes[i].sinal) falta -= fontes[i].sinal * cent(saida[i].valor)
+        else livres.push(i)
+      }
+      if (!livres.length || livres.length > 14) continue
+      let achado = -1, quantos = 0
+      for (let m = 0; m < 1 << livres.length && quantos < 2; m++) {
+        let soma = 0
+        livres.forEach((i, b) => { soma += (m >> b & 1 ? 1 : -1) * cent(saida[i].valor) })
+        if (soma === falta) { achado = m; quantos++ }
+      }
+      if (quantos === 1) livres.forEach((i, b) => achados.set(i, achado >> b & 1 ? 1 : -1))
+    }
+    return achados
+  }
+  const doMaisAntigo = resolver('antes', false)
+  const doMaisNovo = resolver('depois', true)
+  const melhor = doMaisNovo.size > doMaisAntigo.size ? doMaisNovo : doMaisAntigo
+  for (const [i, sinal] of melhor) {
+    const l = saida[i]
+    const novo = montar(l.data, fontes[i].bruta, l.valor, sinal)
+    Object.assign(l, { tipo: novo.tipo, descricao: novo.descricao, forma: novo.forma, revisar: l.pagamentoDaFatura ? l.revisar : novo.revisar })
+  }
 }
 
 // ---------- tabelas (CSV, Excel, tabelas do Word) ----------
