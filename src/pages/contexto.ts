@@ -4,6 +4,7 @@ import type { MesEfetivo, Resumo } from '../lib/calc'
 import type { SituacaoCartao } from '../lib/cartoes'
 import type { Analise, Reanalise } from '../lib/analise'
 import type { MemoriaConsultor, Objetivo } from '../lib/memoria'
+import type { Gosto } from '../lib/gosto'
 import type { Conselho } from '../lib/conselheiro'
 import type { MemoriaConta, SituacaoConta, SugestaoVinculo } from '../lib/contasFixas'
 import type { SituacaoDivida } from '../lib/dividas'
@@ -76,6 +77,9 @@ export interface Ctx {
   analise: Analise
   /** O que o consultor aprendeu com a pessoa: o objetivo e os passos acompanhados (lib/memoria.ts). */
   memoria: MemoriaConsultor
+  /** O que a tela do Consultor aprendeu com o uso (lib/gosto.ts): desenhos e assuntos preferidos, favoritos e escondidos. */
+  gosto: Gosto
+  salvarGosto: (g: Gosto) => void
   /** Escolhe (ou tira, com null) o objetivo que guia o consultor. */
   escolherObjetivo: (o: Objetivo | null) => void
   /** O que a última mudança nos dados fez com a análise (null até a primeira mudança desta visita). */
