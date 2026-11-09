@@ -54,6 +54,26 @@ export interface Achado {
   dado: Dado
 }
 
+/**
+ * Informação financeira importante: um problema (vermelho) ou conta que vai atrasar. O gosto da pessoa nunca rebaixa uma
+ * descoberta assim, e ela não fica escondida (lib/composicao.ts).
+ */
+export const importante = (a: Achado) => a.tom === 'ruim' || (a.id === 'fluxo' && a.tom === 'medio')
+
+/** O número principal de uma descoberta (undefined nas que só têm desenho próprio): é por ele que se mede se ela mudou. */
+export function medidaDe(d: Dado): number | undefined {
+  switch (d.forma) {
+    case 'partes': return Math.max(0, ...d.partes.map((p) => p.valor)) / (d.partes.reduce((s, p) => s + Math.max(0, p.valor), 0) || 1)
+    case 'serie': return d.pontos[d.pontos.length - 1]?.valor
+    case 'ranking': return d.itens[0]?.valor
+    case 'comparacao': return d.agora.valor
+    case 'pares': return d.itens[0]?.agora
+    case 'progresso': return d.atual
+    case 'numero': return d.valor
+    default: return undefined
+  }
+}
+
 const TEMA_DO_VISUAL: Record<string, Tema> = {
   calendario: 'mes', 'curva-saldo': 'mes', fluxo: 'mes', 'colunas-sobra': 'mes',
   'rosca-503020': 'gastos', categorias: 'gastos', halteres: 'gastos', 'tabela-orcamento': 'gastos', 'barras-fixas': 'gastos',

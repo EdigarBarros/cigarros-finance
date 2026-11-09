@@ -351,18 +351,30 @@ e `pages/AnaliseTela.tsx` só mostra e anota:
   subiu mês a mês, pequenos gastos que somam, juros pagos em 12 meses, quanto se guarda por mês, de onde vem a renda,
   quanto do limite do cartão está tomado, a meta que está mais perto e o melhor mês. `forca` diz quanto vale a pena
   mostrar (a prioridade do motor, com os bônus do jeito e do objetivo).
-- **Compositor** (`lib/composicao.ts`): decide a ordem, o desenho e o tamanho.
-  - *Ordem* (`compor`): força + gosto pelo assunto + novidade (mudou desde a última vez: +10; nunca viu: +6) − hábito (a
-    mesma versão vista em mais de 2 dias perde 3 pontos por dia, até 18; o que tem força 80 ou mais não cansa) + um acaso
-    que muda a cada dia. Favoritos na frente. A primeira vira a **manchete** (das 3 primeiras, a que cabe num olhar:
-    calendário, tabela e "de onde sai o dinheiro" ficam logo abaixo).
+- **Compositor** (`lib/composicao.ts`): decide a ordem, o desenho e o tamanho. Segue três regras:
+  1. **Só componentes prontos.** Ele não inventa desenho: escolhe do catálogo de `pages/AnaliseGraficos.tsx` (o tipo
+     `Visual`), e só depois de `valido()` conferir que o dado serve para o componente (números de verdade, o mínimo de
+     itens de cada um). Descoberta sem nenhum desenho válido não entra na tela. Cada desenho fica dentro de um
+     `DesenhoSeguro`: se um falhar, só aquele cartão mostra um aviso, o erro é registrado e o resto continua.
+  2. **Nada muda sem motivo.** Não há acaso nem rodízio. A tela parte da ordem da última visita (`gosto.ordem`) e um
+     cartão só passa à frente do vizinho quando ganha dele por `MARGEM` (8 pontos). O desenho da última visita
+     (`gosto.desenhos`) continua; só troca se deixar de servir ao dado, se o gosto por outro ficar bem maior ou se a pessoa
+     pedir. Mesma lista de cartões, mesma diagramação.
+  3. **O importante não some.** `importante()` (lib/achados.ts): descoberta em vermelho, ou conta que vai atrasar. O gosto
+     nunca a rebaixa, ela não tem botão de esconder e volta à tela mesmo que tenha sido escondida antes de ficar
+     importante. Ganha o selo "Importante".
+  - *Ordem* (`compor`): pontos = força + gosto pelo assunto × 20 + 10 se o número mudou de verdade. O que faz um cartão
+    subir: ficou importante, mudou, ou a pessoa passou a olhar muito aquele assunto. Favoritos na frente. A primeira vira
+    a **manchete** (das 3 primeiras, a que cabe num olhar: calendário, tabela e "de onde sai o dinheiro" ficam logo abaixo).
+  - *Novidade*: "Mudou" só quando o título ou o tom mudam, ou o número principal da descoberta (`medidaDe`) anda 10% ou
+    mais desde a última vez que a pessoa viu (`mesmaVersao`, `MUDANCA_RELEVANTE`); mudanças pequenas se somam até lá.
+    "Novo" é o cartão que não estava na tela da última visita.
   - *Desenho* (`candidatos`): cada formato tem mais de um desenho, cada um com a sua **aptidão** para aquele dado. Partes:
     rosca, 100 quadradinhos (2 a 4 partes, nenhuma menor que 2%) ou uma barra só (melhor quando uma parte passa de 70%).
     Série: curva ou colunas (projeção tracejada e séries de mais de 14 pontos só em curva). Ranking: barras ou pódio (3 ou
     mais itens). Comparação: duelo. Pares: antes × agora (ou duelo, com um par só). Progresso: pote ou trilha (limite de
-    cartão só em trilha: um limite não "enche"). Número: número grande, com a história em colunas pequenas. A nota de cada
-    desenho é aptidão × 30 + gosto × 10 + acaso do dia − 7 por repetição na tela − 5 se foi o desenho de ontem. Se a pessoa
-    escolheu um desenho, vale o dela.
+    cartão só em trilha: um limite não "enche"). Número: número grande, com a história em colunas pequenas. Na primeira
+    vez, a nota é aptidão × 30 + gosto × 10 − 7 por repetição na tela; depois, o desenho da última visita ganha 9 pontos.
   - *Tamanho* (`diagramar`): no computador a tela tem 6 colunas e cada faixa soma 6: três compactos (2+2+2), dois iguais
     (3+3), largo com compacto (4+2 ou 2+4) ou um sozinho (6; se for compacto, deita: texto de um lado, desenho do outro).
     Largos: calendário, fluxo, tabela, linha do tempo, antes × agora, curva, radar, colunas com mais de 6 e barras com mais
@@ -370,19 +382,19 @@ e `pages/AnaliseTela.tsx` só mostra e anota:
 - **Gosto** (`lib/gosto.ts`): o que a tela aprende. Por desenho e por assunto, um placar [viu, interessou, rejeitou]. Sinais:
   viu (o desenho ficou 1,2 s na tela), tocou (+0,5), abriu a tela de destino (+1 no desenho, +1,5 no assunto), favoritou
   (+1,5 e +2), escondeu (rejeita 1,5 no assunto e 0,5 no desenho) e trocou o desenho (rejeita o que saiu, +1 no escolhido).
-  `afinidade` é a média do que deu certo (ver sem tocar conta como um "não" bem fraco) mais um empurrão para o que foi
-  pouco visto, para a tela experimentar. Passando de 60 exibições, o placar cai pela metade: o gosto pode mudar. Por
-  descoberta, guarda a versão vista (a frase), em quantos dias, o último desenho e o desenho escolhido. Fica em
+  `afinidade` é a média do que deu certo (ver sem tocar conta como um "não" bem fraco) mais um empurrão pequeno para o
+  que foi pouco visto. Quem abre sempre o fluxo de caixa e ignora as categorias vê o primeiro subir e as outras descerem,
+  aos poucos. Passando de 60 exibições, o placar cai pela metade: o gosto pode mudar. Guarda também a ordem e o desenho
+  dos cartões da última visita e, por descoberta, o que ela dizia e o número principal quando a pessoa viu. Fica em
   `perfis.consultor.gosto` (a mesma coluna da memória, migração 24: quem grava um leva o outro) e no aparelho
-  (`opuscash-gosto-<id>`); entre as duas cópias vale a que tem mais sinais. São só contagens, nenhum valor em dinheiro.
+  (`opuscash-gosto-<id>`); entre as duas cópias vale a que tem mais sinais.
 
-A tela não muda debaixo do dedo: o gosto usado na montagem é o da abertura da aba, e os sinais são gravados ao sair dela
-(ou ao fechar o app). No mesmo dia, com os mesmos dados, a tela é a mesma; ela muda quando os dados mudam, quando o dia
-vira e conforme o gosto aprende. Favoritar, esconder e "Outro jeito" valem na hora. Quando o gosto por um assunto já é
-claro (3 ou mais interesses), o cabeçalho da seção diz "Aprendi que você olha mais: Gastos".
+A tela não muda debaixo do dedo: o gosto usado na montagem é o da abertura da aba, e os sinais (e a ordem da visita) são
+gravados ao sair dela ou ao fechar o app. Favoritar, esconder e "Outro jeito" valem na hora. Quando o gosto por um assunto
+já é claro (3 ou mais interesses), o cabeçalho da seção diz "Aprendi que você olha mais: Gastos".
 
-Cada cartão tem, no pé, **Outro jeito** (passa para o próximo desenho possível; some quando só há um), estrela e olho; a
-seta do topo leva à tela de que ele fala. Selos: "Novo" (a pessoa ainda não viu) e "Mudou" (viu com outros números).
+Cada cartão tem, no pé, **Outro jeito** (passa para o próximo desenho possível; some quando só há um), estrela e olho (o
+olho não aparece no que é importante); a seta do topo leva à tela de que ele fala.
 Favoritos e escondidos do feed antigo (`opuscash:feed:<id>`) entram no gosto na primeira visita.
 
 **As cores da aba** (definidas em `.analise`, `pages/analise.css`) têm um significado só cada, igual em todos os gráficos:
