@@ -802,16 +802,40 @@ Duas colunas no computador. A lista com selos redondos saiu; cada lançamento ag
 
 - **Importar extrato** (Lançamentos, menu do avatar e Configurações → Dados): PDF, CSV/TXT, Excel (.xlsx/.xls/.ods), Word
   (.docx) e OFX. `lib/extrato.ts` acha em cada linha a data, o valor e se entrou ou saiu (sinal, "C"/"D", colunas de
-  crédito/débito ou palavras como "recebido"/"enviado"), ignora linhas de saldo e junta nomes quebrados em duas linhas.
-  - PDF: texto pelo pdf.js, carregado da CDN (cdnjs, versão fixa) só quando alguém importa um PDF; as palavras são
-    agrupadas por linha na página. PDF com senha pede para exportar sem senha.
+  crédito/débito, saldo ou palavras como "recebido"/"enviado"), ignora linhas de saldo e junta nomes quebrados em duas
+  linhas. Tudo por regras, no aparelho da pessoa: o extrato não sai dele.
+  - PDF: pdf.js, carregado da CDN (cdnjs, versão fixa) só quando alguém importa um PDF. PDF com senha pede para
+    exportar sem senha. São duas leituras; vale a das colunas quando ela acha pelo menos 60% dos lançamentos que o texto
+    corrido acha (o texto corrido costuma contar sujeira a mais), e o texto corrido quando o PDF não tem tabela:
+    - **pelas colunas**: acha a linha de cabeçalho (Data | Histórico | Crédito | Débito | Saldo…, de novo em cada página)
+      e põe cada número na coluna embaixo da qual ele está. Assim crédito, débito, valor e saldo não se misturam, coisa
+      que o texto corrido perde (o Bradesco junta Crédito e Débito num número só). Texto vai para a última coluna que
+      começa antes dele; texto que começa antes da coluna de nome ou atravessa os números é aviso ou rodapé.
+    - **pelo texto corrido**: cada linha com data e valor é um lançamento; linha só com data é o dia dos de baixo;
+      "Total de entradas"/"Total de saídas" (Nubank) dizem o tipo dos de baixo; fatura de cartão (fatura + vencimento no
+      topo): compra sem sinal é gasto e com menos é pagamento ou estorno.
+    - Nos dois: linha sem valor debaixo de um lançamento completa o nome dele ("REM: FULANO 01/10" do Bradesco: a data
+      no fim não abre dia novo); cabeçalho de página ("Banco Bradesco S/A 08/11/2026") não vira dia; "Saldo Invest
+      Fácil" e "Opening balance" não são lançamento; PDF que vem letra por letra é juntado antes.
   - Word: `lib/zip.ts` abre o .docx com o `DecompressionStream` do navegador (sem biblioteca) e lê tabelas e parágrafos.
-  - Excel: a biblioteca de planilhas que já existe, com as células cruas (datas e números).
-  - Tabelas: o cabeçalho é reconhecido ("Data", "Descrição"/"Histórico", "Valor", "Crédito"/"Débito", "Tipo",
-    "Tipo de transação", "Movimentação"); sem cabeçalho, as colunas são adivinhadas pelo conteúdo.
-  - Entrou ou saiu: um número sem sinal ("40.90") não diz nada sozinho. Se a coluna de valor tem negativos, o sem sinal é
-    entrada; se não tem, decide a coluna "Tipo" ("D", "Débito", "Saída", "Compra no débito"…) ou o texto da linha. "-1.200"
-    é mil e duzentos.
+  - Excel: a biblioteca de planilhas que já existe, com as células cruas (datas e números); fica a aba que rende mais
+    lançamentos. CSV: se o separador da primeira linha não render nada, tenta `;`, `,` e tab.
+  - Tabelas: o cabeçalho é reconhecido em português, inglês e espanhol ("Data"/"Date"/"Fecha", "Histórico"/"Concepto",
+    "Valor"/"Amount"/"Importe", "Crédito"/"Entrada"/"Credit", "Débito"/"Saída"/"Debit", "Saldo"/"Balance", "Tipo", "Docto"),
+    cada nome valendo para uma coisa só ("Valor crédito" é crédito). Sem cabeçalho, as colunas vêm do conteúdo: a data é
+    a de mais datas, o saldo é a coluna que muda exatamente o valor de outra a cada linha, duas colunas de número que
+    nunca vêm cheias juntas são crédito e débito, uma coluna só de C/D é o tipo, e código comprido ("81234567890") não é
+    valor. Linha sem data herda o dia de cima.
+  - Datas: 01/10/2026, 2026-10-01, 2026/10/01, "01 OUT", "1 de outubro de 2026", "Oct 1, 2026", "01-oct-2026". Mês/dia
+    americano (10/15/2026) quando os números provam ou quando o cabeçalho é em inglês com centavos depois de ponto. Mês
+    por extenso só com o nome inteiro ou abreviado ("2 dicas" não é 2 de dezembro).
+  - Entrou ou saiu: um número sem sinal ("40.90") não diz nada sozinho. Vale, nesta ordem: o sinal escrito ("-", "D",
+    "C"), a coluna (crédito/débito), a coluna "Tipo", e o texto da linha ("recebido", "REM:"/"DES:"). Se a coluna de valor
+    tem negativos, o sem sinal é entrada. **O saldo confere tudo**: entre dois saldos (o de cada linha, "Saldo anterior",
+    "Saldo do dia"), os lançamentos somam a diferença; quando há um só jeito de fechar a conta, ele decide entrou/saiu
+    (do mais antigo para o mais novo ou ao contrário). "-1.200" é mil e duzentos.
+  - Testes: `node scripts/extrato/testar.mjs` lê os exemplos de `scripts/extrato/casos.ts` (um de cada banco e formato) e
+    diz o que errou. Achou um extrato que o leitor erra? Monte um caso parecido lá (sem dados reais) antes de consertar.
   - Contas do mês (só no ano aberto): a linha que parece ser de uma conta sem baixa no mês vem ligada a ela (etiqueta com a
     conta, toque para desligar) e vira a baixa ao importar; a que repete uma baixa já dada vem desmarcada.
 - **Limpeza dos nomes** (`limparDescricao`): tira CPF/CNPJ (inclusive a raiz de CNPJ de MEI, "51.365.272 Fulano"),
