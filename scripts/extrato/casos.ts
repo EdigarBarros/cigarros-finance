@@ -238,6 +238,17 @@ Pix recebido ANA 70,00`),
     esperado: [['2026-10-01', 's', 114, 'Matheus'], ['2026-10-01', 'e', 120, 'Beatriz'], ['2026-10-02', 's', 42.79, 'Pastelloco']],
   },
   {
+    nome: 'nubank conta csv (boleto efetuado)',
+    ler: doArquivo('NU_123_01OUT2026_31OUT2026.csv', `Data,Valor,Identificador,Descrição
+05/10/2026,-187.40,6514a1b2-0000-4000-8000-000000000011,Pagamento de boleto efetuado - ENEL
+06/10/2026,-203.15,6514a1b2-0000-4000-8000-000000000012,Pagamento de boleto efetuado - ENEL DISTRIBUICAO SAO PAULO
+07/10/2026,-99.90,6514a1b2-0000-4000-8000-000000000013,Pagamento de boleto efetuado - VIVO FIBRA
+08/10/2026,-350.00,6514a1b2-0000-4000-8000-000000000014,Pagamento de boleto efetuado - CONDOMINIO RESIDENCIAL AURORA
+09/10/2026,-60.00,6514a1b2-0000-4000-8000-000000000015,Pagamento de boleto efetuado`),
+    esperado: [['2026-10-05', 's', 187.4, 'Enel'], ['2026-10-06', 's', 203.15, 'Enel'], ['2026-10-07', 's', 99.9, 'Vivo'],
+      ['2026-10-08', 's', 350, 'Condominio Residencial Aurora'], ['2026-10-09', 's', 60, 'Boleto']],
+  },
+  {
     nome: 'nubank cartão csv (compra positiva)',
     ler: doArquivo('nubank-2026-10.csv', `date,category,title,amount
 2026-10-01,restaurante,Pastelloco,42.79
