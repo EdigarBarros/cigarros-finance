@@ -9347,10 +9347,6 @@
     "en": "Built for you",
     "es": "Armado para ti"
   },
-  "Esta tela é só sua: muda com os seus números e com o que você mais olha.": {
-    "en": "This screen is yours alone: it changes with your numbers and with what you look at most.",
-    "es": "Esta pantalla es solo tuya: cambia con tus números y con lo que más miras."
-  },
   "Aprendi que você olha mais: {0}": {
     "en": "I've learned you look most at: {0}",
     "es": "Aprendí que miras más: {0}"
@@ -9366,5 +9362,13 @@
   "Uma tela montada para você, refeita a cada lançamento.": {
     "en": "A screen built for you, redone with every entry.",
     "es": "Una pantalla armada para ti, rehecha con cada registro."
+  },
+  "Não deu para desenhar este gráfico agora. O resto da tela continua valendo.": {
+    "en": "This chart could not be drawn right now. The rest of the screen is still valid.",
+    "es": "No se pudo dibujar este gráfico ahora. El resto de la pantalla sigue valiendo."
+  },
+  "Esta tela é só sua. Cada coisa fica no seu lugar e só muda quando há novidade nos seus números.": {
+    "en": "This screen is yours alone. Everything stays in its place and only changes when there is news in your numbers.",
+    "es": "Esta pantalla es solo tuya. Cada cosa queda en su lugar y solo cambia cuando hay novedad en tus números."
   }
 }

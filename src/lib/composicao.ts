@@ -1,29 +1,30 @@
 /**
  * O compositor da tela do Consultor: pega as descobertas da pessoa (lib/achados.ts) e monta a tela dela.
  *
- * Três decisões, todas tomadas aqui e nenhuma fixa:
+ * Ele não inventa desenho nenhum: escolhe entre os componentes já prontos e testados de pages/AnaliseGraficos.tsx
+ * (o catálogo é o tipo `Visual`), e só usa um componente depois de conferir que o dado serve para ele (`valido`).
  *
- * 1. **O que vem primeiro.** A força de cada descoberta (o motor), mais o quanto a pessoa se interessa pelo assunto
- *    (lib/gosto.ts), mais a novidade (o que mudou desde a última vez sobe; o que ela já viu igual por vários dias cede o
- *    lugar, a não ser que seja urgente), mais um pouco de acaso que muda a cada dia.
- * 2. **Como desenhar cada uma.** Cada formato de dado tem mais de um desenho possível (`candidatos`): um todo dividido
- *    pode ser rosca, 100 quadradinhos ou uma barra só; dois valores podem ser um duelo ou um "antes × agora". Cada desenho
- *    recebe uma nota pela **aptidão** para aquele dado (quadradinhos não servem com 7 fatias; pódio pede 3 itens), pelo
- *    gosto da pessoa por ele, pela variedade (o mesmo desenho duas vezes na tela perde pontos) e pela rotação (o desenho de
- *    ontem perde um pouco hoje). Se a pessoa escolheu um desenho ("Ver de outro jeito"), vale o dela.
+ * Três decisões:
+ *
+ * 1. **O que vem primeiro.** A força de cada descoberta (o motor) mais o quanto a pessoa se interessa pelo assunto
+ *    (lib/gosto.ts). A tela **parte da ordem da última visita**: um cartão só passa à frente do vizinho quando ganha dele
+ *    por uma margem (`MARGEM`). Diferença pequena não troca nada de lugar, e não há acaso: a pessoa aprende onde cada
+ *    coisa fica. O que faz um cartão subir: ficou importante, o número dele mudou de verdade (`mesmaVersao`, 10%) ou a
+ *    pessoa passou a olhar muito aquele assunto. O gosto nunca rebaixa o que é importante (`importante`).
+ * 2. **Como desenhar cada uma.** Cada formato de dado tem mais de um desenho possível (`candidatos`), com uma nota de
+ *    **aptidão** para aquele dado. O desenho em que a pessoa viu da última vez **continua**; ele só troca se deixar de
+ *    servir ao dado ou se o gosto por outro desenho ficar bem maior. Se a pessoa escolheu um ("Outro jeito"), vale o dela.
  * 3. **Onde fica cada cartão.** A primeira descoberta vira a manchete. As outras entram em faixas de 6 colunas, e o
- *    tamanho de cada cartão sai do desenho escolhido: os largos (calendário, curva, tabela) pedem meia tela ou mais, os
- *    compactos (número grande, duelo, pote) cabem em um terço (`diagramar`).
+ *    tamanho de cada cartão sai do desenho escolhido (`diagramar`): mesma lista, mesma diagramação.
  *
- * A tela não muda debaixo do dedo: dentro do mesmo dia, com os mesmos dados, a montagem é a mesma. Ela muda quando os
- * dados mudam, quando o dia vira e conforme o gosto aprende.
+ * O que é importante não some: uma descoberta importante aparece mesmo que a pessoa a tenha escondido antes.
  *
  * É puro: mesmas entradas, mesma tela.
  */
 import type { Tom } from './analise'
-import type { Achado, Dado } from './achados'
+import { importante, medidaDe, type Achado, type Dado } from './achados'
 import { fmtPct } from './format'
-import { acaso, afinidade, diaDe, type Gosto } from './gosto'
+import { acaso, afinidade, mesmaVersao, type Gosto } from './gosto'
 import { tx } from './textos'
 import { COR, type Visual } from './visuais'
 
@@ -39,8 +40,41 @@ interface Candidato {
 
 const TOM_COR: Record<Tom, string> = { bom: COR.entrada, medio: COR.divida, ruim: COR.saida }
 
-/** Os desenhos possíveis para um dado, cada um com a sua aptidão. Sempre devolve pelo menos um. */
+/** Todo número do desenho é um número de verdade (nada de NaN ou infinito chegando a um gráfico). */
+function numerosSaos(x: unknown): boolean {
+  if (typeof x === 'number') return Number.isFinite(x)
+  if (Array.isArray(x)) return x.every(numerosSaos)
+  if (x && typeof x === 'object') return Object.values(x).every(numerosSaos)
+  return true
+}
+
+/** O dado serve para este componente? Cada um tem o mínimo de que precisa para se desenhar direito. */
+export function valido(d: Desenho): boolean {
+  if (!numerosSaos(d)) return false
+  const soma = (fs: { valor: number }[]) => fs.reduce((s, f) => s + Math.max(0, f.valor), 0)
+  switch (d.tipo) {
+    case 'rosca': case 'quadradinhos': case 'faixa': return d.fatias.length >= 1 && soma(d.fatias) > 0
+    case 'curva': return d.pontos.length >= 2
+    case 'colunas': return d.colunas.length >= 1
+    case 'barras': return d.barras.length >= 1
+    case 'podio': return d.itens.length >= 3
+    case 'halteres': case 'aneis': return d.itens.length >= 1
+    case 'radar': return d.eixos.length >= 3
+    case 'cascata': return d.passos.length >= 2
+    case 'calendario': return d.dias.length >= 28
+    case 'linhaDoTempo': return d.itens.length >= 1 && d.fim >= d.inicio
+    case 'tabela': return d.linhas.length >= 1
+    case 'pote': case 'trilha': return d.maximo > 0
+    default: return true
+  }
+}
+
+/** Os desenhos que servem a um dado (já conferidos por `valido`), cada um com a sua aptidão. Vazio: nada a desenhar. */
 export function candidatos(dado: Dado): Candidato[] {
+  return todos(dado).filter((c) => valido(c.desenho))
+}
+
+function todos(dado: Dado): Candidato[] {
   switch (dado.forma) {
     case 'pronto': {
       const { id: _i, prioridade: _p, titulo: _t, frase: _f, tom: _o, destino: _d, ...desenho } = dado.visual
@@ -125,9 +159,13 @@ export interface Peca {
   /** Todos os desenhos que servem a esta descoberta, na ordem em que "Ver de outro jeito" passa por eles. */
   formas: Visual['tipo'][]
   largo: boolean
-  /** A versão da descoberta (muda quando a frase muda). */
+  /** O que a descoberta diz (o título e o tom; a frase, nas que não têm um número só). */
   versao: string
-  /** A pessoa ainda não viu ('novo') ou viu com outros números ('mudou'). */
+  /** O número principal dela: com `versao`, diz se houve mudança relevante desde a última vez. */
+  medida?: number
+  /** Informação financeira importante: não dá para esconder e o gosto não rebaixa. */
+  importante: boolean
+  /** A pessoa ainda não viu ('novo') ou o número mudou de verdade desde a última vez ('mudou'). */
   novidade: 'novo' | 'mudou' | null
 }
 
@@ -137,6 +175,10 @@ export interface Tela {
   /** Quantas das primeiras são favoritas. */
   favoritos: number
   escondidos: Achado[]
+  /** Os cartões (sem os favoritos) na ordem desta montagem: é o que a próxima visita usa como ponto de partida. */
+  ordem: string[]
+  /** O desenho de cada cartão nesta montagem. */
+  desenhos: Record<string, string>
 }
 
 export interface Escolhas {
@@ -146,83 +188,103 @@ export interface Escolhas {
   formas: Record<string, string>
 }
 
-const versaoDe = (a: Achado) => Math.round(acaso(`${a.titulo}|${a.frase}`) * 1e5).toString(36)
+/** Com número principal, a versão é o título e o tom (o número é comparado à parte); sem ele, a frase inteira. */
+const versaoDe = (a: Achado) => Math.round(acaso(medidaDe(a.dado) === undefined ? `${a.titulo}|${a.frase}` : `${a.titulo}|${a.tom ?? ''}`) * 1e5).toString(36)
 
 const visualDe = (a: Achado, c: Candidato): Visual =>
   ({ ...c.desenho, id: a.id, prioridade: a.forca, titulo: a.titulo, frase: a.frase, tom: a.tom, destino: a.destino }) as Visual
 
-/** Uma descoberta já com o desenho pedido (ou o mais apto, se o pedido não serve para ela). */
-export function pecaCom(a: Achado, forma: string | undefined, novidade: Peca['novidade'] = null): Peca {
+/** Uma descoberta já com o desenho pedido (ou o mais apto, se o pedido não serve para ela). null: nenhum desenho serve. */
+export function pecaCom(a: Achado, forma: string | undefined, novidade: Peca['novidade'] = null): Peca | null {
   const c = candidatos(a.dado).sort((x, y) => y.aptidao - x.aptidao)
+  if (!c.length) return null
   const visual = visualDe(a, c.find((x) => x.forma === forma) ?? c[0])
-  return { achado: a, visual, formas: c.map((x) => x.forma), largo: largo(visual), versao: versaoDe(a), novidade }
+  return { achado: a, visual, formas: c.map((x) => x.forma), largo: largo(visual), versao: versaoDe(a), medida: medidaDe(a.dado), novidade, importante: importante(a) }
 }
+
+/** Quanto o gosto pelo assunto pode somar ou tirar de um cartão (de −20 a +20). */
+const PESO_DO_GOSTO = 20
+/** Quantos pontos um cartão precisa ter a mais que o vizinho de cima para passar à frente dele. */
+export const MARGEM = 8
+/** Quanto o desenho da última vez vale a mais na escolha: é o que o mantém no lugar. */
+const FICA = 9
 
 /**
  * Monta a tela: a ordem das descobertas e o desenho de cada uma.
  * @param g o gosto como estava ao abrir a aba (a tela não se reordena a cada toque)
- * @param semente muda a cada dia e a cada pessoa (ex.: "id|2026-11-09")
  */
-export function compor(lista: Achado[], g: Gosto, escolhas: Escolhas, semente: string, hoje = new Date()): Tela {
-  const dia = diaDe(hoje)
-  const visiveis = lista.filter((a) => !escolhas.oculto.includes(a.id))
+export function compor(lista: Achado[], g: Gosto, escolhas: Escolhas): Tela {
+  // o importante aparece mesmo que tenha sido escondido antes, quando ainda não era
+  const escondido = (a: Achado) => escolhas.oculto.includes(a.id) && !importante(a)
+  const visiveis = lista.filter((a) => !escondido(a) && candidatos(a.dado).length > 0)
   const novidadeDe = (a: Achado): Peca['novidade'] => {
     const l = g.achados[a.id]
-    // quem está começando não vê tudo marcado como novo
-    if (!l) return g.total > 0 ? 'novo' : null
-    return l.s !== versaoDe(a) ? 'mudou' : null
+    // "novo" é o que não estava na tela da última visita (quem está começando não vê tudo marcado como novo)
+    if (!l) return g.ordem.length > 0 && !(a.id in g.desenhos) ? 'novo' : null
+    return mesmaVersao(l, versaoDe(a), medidaDe(a.dado)) ? null : 'mudou'
   }
-  const pontos = (a: Achado) => {
-    const l = g.achados[a.id]
-    const novidade = novidadeDe(a)
-    const mesma = l && l.s === versaoDe(a)
-    // o que já foi visto igual por vários dias cede o lugar; o urgente, não
-    const habito = mesma && a.forca < 80 ? Math.min(18, Math.max(0, l.n - 2) * 3) : 0
-    return a.forca + afinidade(g.temas, a.tema) * 10 + (novidade === 'mudou' ? 10 : novidade === 'novo' ? 6 : 0) - habito + acaso(`${semente}|${a.id}`) * 6
-  }
+  const pontos = new Map(visiveis.map((a) => {
+    const gosto = afinidade(g.temas, a.tema)
+    // o gosto sobe o que a pessoa olha e desce o que ela ignora, mas nunca desce o que é importante
+    return [a.id, a.forca + (importante(a) ? Math.max(0, gosto) : gosto) * PESO_DO_GOSTO + (novidadeDe(a) === 'mudou' ? 10 : 0)] as const
+  }))
+  const p = (a: Achado) => pontos.get(a.id)!
   const favs = escolhas.fav.map((id) => visiveis.find((a) => a.id === id)).filter((a): a is Achado => Boolean(a))
-  const resto = visiveis.filter((a) => !escolhas.fav.includes(a.id)).map((a) => ({ a, p: pontos(a) })).sort((x, y) => y.p - x.p).map((x) => x.a)
+  const soltos = visiveis.filter((a) => !escolhas.fav.includes(a.id))
+
+  // A ordem parte da última visita. Quem já estava na tela fica onde estava; quem é novo entra pelo lugar que os pontos
+  // dele pedem. Depois, cada cartão só sobe enquanto ganhar do de cima pela margem.
+  const lugar = new Map(g.ordem.map((id, i) => [id, i]))
+  const resto: Achado[] = soltos.filter((a) => lugar.has(a.id)).sort((x, y) => lugar.get(x.id)! - lugar.get(y.id)!)
+  for (const a of soltos.filter((x) => !lugar.has(x.id)).sort((x, y) => p(y) - p(x) || (x.id < y.id ? -1 : 1))) {
+    const i = resto.findIndex((x) => p(x) < p(a))
+    resto.splice(i < 0 ? resto.length : i, 0, a)
+  }
+  for (let i = 1; i < resto.length; i++) {
+    let k = i
+    while (k > 0 && p(resto[k]) >= p(resto[k - 1]) + MARGEM) {
+      [resto[k - 1], resto[k]] = [resto[k], resto[k - 1]]
+      k--
+    }
+  }
 
   const usados = new Map<string, number>()
   const pecas = [...favs, ...resto].map((a) => {
     const l = g.achados[a.id]
     const pedida = escolhas.formas[a.id] ?? l?.e
     const c = candidatos(a.dado)
-    let forma = c.find((x) => x.forma === pedida)?.forma
-    if (!forma) {
-      const mesmaDeOntem = l && l.s === versaoDe(a) && l.d !== dia ? l.f : undefined
-      forma = c.map((x) => ({
-        forma: x.forma,
-        p: x.aptidao * 30 + afinidade(g.formas, x.forma) * 10 + acaso(`${semente}|${a.id}|${x.forma}`) * 8
-          - (usados.get(x.forma) ?? 0) * 7 - (x.forma === mesmaDeOntem ? 5 : 0),
-      })).sort((x, y) => y.p - x.p)[0].forma
-    }
+    const forma = c.find((x) => x.forma === pedida)?.forma ?? c.map((x) => ({
+      forma: x.forma,
+      p: x.aptidao * 30 + afinidade(g.formas, x.forma) * 10 - (usados.get(x.forma) ?? 0) * 7 + (x.forma === (g.desenhos[a.id] ?? l?.f) ? FICA : 0),
+    })).sort((x, y) => y.p - x.p || (x.forma < y.forma ? -1 : 1))[0].forma
     usados.set(forma, (usados.get(forma) ?? 0) + 1)
-    return pecaCom(a, forma, novidadeDe(a))
+    return pecaCom(a, forma, novidadeDe(a))!
   })
   // a manchete é a primeira que cabe num olhar: listas compridas e calendário não viram manchete (ficam logo abaixo)
   if (!favs.length) {
-    const i = pecas.slice(0, 3).findIndex((p) => !COMPRIDOS.has(p.visual.tipo))
+    const i = pecas.slice(0, 3).findIndex((x) => !COMPRIDOS.has(x.visual.tipo))
     if (i > 0) pecas.unshift(...pecas.splice(i, 1))
   }
-  return { pecas, favoritos: favs.length, escondidos: lista.filter((a) => escolhas.oculto.includes(a.id)) }
+  return {
+    pecas, favoritos: favs.length, escondidos: lista.filter(escondido), ordem: resto.map((a) => a.id),
+    desenhos: Object.fromEntries(pecas.map((x) => [x.achado.id, x.visual.tipo])),
+  }
 }
 
 /**
  * Quantas das 6 colunas cada cartão ocupa (no computador), na ordem recebida. Cada faixa soma 6:
  * três compactos (2+2+2), dois iguais (3+3), um largo com um compacto (4+2 ou 2+4) ou um sozinho (6).
  */
-export function diagramar(pecas: Pick<Peca, 'largo'>[], semente: string): number[] {
+export function diagramar(pecas: Pick<Peca, 'largo'>[]): number[] {
   const larguras: number[] = []
   let i = 0
-  let faixa = 0
   while (i < pecas.length) {
     const falta = pecas.length - i
     const [a, b, c] = [pecas[i], pecas[i + 1], pecas[i + 2]]
     if (falta === 1) {
       larguras.push(6)
       i += 1
-    } else if (falta >= 3 && !a.largo && !b.largo && !c.largo && (falta !== 4 || pecas[i + 3].largo) && acaso(`${semente}|faixa${faixa}`) < 0.75) {
+    } else if (falta >= 3 && !a.largo && !b.largo && !c.largo && (falta !== 4 || pecas[i + 3].largo)) {
       // (com 4 restando e o quarto compacto também, 3+1 deixaria um compacto sozinho na faixa: melhor 2+2)
       larguras.push(2, 2, 2)
       i += 3
@@ -239,7 +301,6 @@ export function diagramar(pecas: Pick<Peca, 'largo'>[], semente: string): number
       larguras.push(3, 3)
       i += 2
     }
-    faixa++
   }
   return larguras
 }

@@ -4,23 +4,26 @@
  * A tela é montada por lib/composicao.ts a partir das descobertas de lib/achados.ts. A cada visita, este arquivo anota:
  *  - por **desenho** (rosca, quadradinhos, duelo…) e por **assunto** (o mês, gastos, dívidas…): quantas vezes a pessoa viu,
  *    quantas se interessou (tocou, abriu a tela, favoritou, escolheu aquele desenho) e quantas rejeitou (escondeu, trocou);
- *  - por **descoberta**: a última versão que ela viu (para saber o que é novidade), em quantos dias já viu a mesma coisa
- *    (o que não muda vai cansando e cede o lugar) e o desenho que ela escolheu, se escolheu.
+ *  - por **descoberta**: a última versão que ela viu (para saber quando há novidade de verdade), o desenho em que viu (ele
+ *    continua o mesmo na próxima visita) e o desenho que ela escolheu, se escolheu;
+ *  - a **ordem** em que os cartões estavam na última visita: a tela parte dela, e um cartão só troca de lugar com motivo.
  *
  * Com isso, `afinidade` devolve quanto a pessoa gosta de um desenho ou assunto: a média do que deu certo, com um empurrão
  * para o que ela ainda viu pouco (para a tela experimentar, e não ficar presa ao primeiro acerto). O que é antigo pesa
  * cada vez menos: o gosto muda, e a memória acompanha.
  *
  * É puro: `registrar` recebe o gosto e devolve o gosto novo. Nada sai do aparelho além da cópia no perfil da própria
- * pessoa (`perfis.consultor.gosto`), e são só contagens: nenhum valor em dinheiro fica aqui.
+ * pessoa (`perfis.consultor.gosto`): contagens, a ordem dos cartões e o número de cada descoberta na última vez.
  */
 
 /** [quantas vezes viu, quanto se interessou, quanto rejeitou] */
 export type Placar = [number, number, number]
 
 export interface LembrancaDoAchado {
-  /** A versão da descoberta que a pessoa viu por último (muda quando os números mudam). */
+  /** O que a descoberta dizia quando a pessoa viu (o título e o tom; a frase, para as que não têm um número só). */
   s: string
+  /** O número principal dela nesse dia: só uma mudança relevante nele conta como novidade (`mesmaVersao`). */
+  m?: number
   /** O último dia em que viu (dias desde 1970). */
   d: number
   /** Em quantos dias diferentes viu a mesma versão. */
@@ -37,11 +40,15 @@ export interface Gosto {
   achados: Record<string, LembrancaDoAchado>
   fav: string[]
   oculto: string[]
+  /** Os cartões na ordem em que estavam na última visita: a próxima tela parte daqui. */
+  ordem: string[]
+  /** O desenho de cada cartão na última visita (mesmo dos que a pessoa não chegou a ler): ele continua o mesmo. */
+  desenhos: Record<string, string>
   /** Quantos sinais já foram anotados: entre a cópia do aparelho e a do banco, vale a que sabe mais. */
   total: number
 }
 
-export const GOSTO_VAZIO: Gosto = { formas: {}, temas: {}, achados: {}, fav: [], oculto: [], total: 0 }
+export const GOSTO_VAZIO: Gosto = { formas: {}, temas: {}, achados: {}, fav: [], oculto: [], ordem: [], desenhos: {}, total: 0 }
 
 /** Passando disso, as contagens caem pela metade: o que é antigo pesa menos e o gosto pode mudar. */
 const MEMORIA_CHEIA = 60
@@ -66,10 +73,15 @@ export function normGosto(x: unknown): Gosto {
   if (g.achados && typeof g.achados === 'object') {
     for (const [k, v] of Object.entries(g.achados as Record<string, Partial<LembrancaDoAchado> | null>).slice(0, MAX_ACHADOS * 2)) {
       if (!v || typeof v.s !== 'string') continue
-      achados[k] = { s: v.s, d: numero(v.d), n: numero(v.n), ...(typeof v.f === 'string' ? { f: v.f } : {}), ...(typeof v.e === 'string' ? { e: v.e } : {}) }
+      achados[k] = { s: v.s, d: numero(v.d), n: numero(v.n), ...(typeof v.m === 'number' && Number.isFinite(v.m) ? { m: v.m } : {}), ...(typeof v.f === 'string' ? { f: v.f } : {}), ...(typeof v.e === 'string' ? { e: v.e } : {}) }
     }
   }
-  return { formas: placares(g.formas), temas: placares(g.temas), achados, fav: textos(g.fav), oculto: textos(g.oculto), total: numero(g.total) }
+  return { formas: placares(g.formas), temas: placares(g.temas), achados, fav: textos(g.fav), oculto: textos(g.oculto), ordem: textos(g.ordem),
+    desenhos: g.desenhos && typeof g.desenhos === 'object'
+      ? Object.fromEntries(Object.entries(g.desenhos as Record<string, unknown>).filter((x): x is [string, string] => typeof x[1] === 'string').slice(0, 100))
+      : {},
+    total: numero(g.total),
+  }
 }
 
 /** O dia de hoje como número (dias desde 1970, no fuso da pessoa). */
@@ -94,7 +106,22 @@ export interface Evento {
   forma: string
   /** A versão da descoberta que estava na tela. */
   versao: string
+  /** O número principal dela (quando tem um). */
+  medida?: number
   para?: string
+}
+
+/** A partir de quanto o número principal precisa mudar para a descoberta contar como "mudou" (0,1 = 10%). */
+export const MUDANCA_RELEVANTE = 0.1
+
+/**
+ * A descoberta diz o mesmo que da última vez? Muda quando o título ou o tom mudam ("mês mais caro" virou "mais leve") ou
+ * quando o número principal anda pelo menos `MUDANCA_RELEVANTE`. Centavos de diferença não são novidade.
+ */
+export function mesmaVersao(l: LembrancaDoAchado | undefined, versao: string, medida?: number): boolean {
+  if (!l || l.s !== versao) return false
+  if (medida === undefined || l.m === undefined) return true
+  return Math.abs(medida - l.m) < Math.max(Math.abs(l.m) * MUDANCA_RELEVANTE, 0.005)
 }
 
 const somar = (m: Record<string, Placar>, k: string, viu: number, bom: number, ruim: number): Record<string, Placar> => {
@@ -113,10 +140,13 @@ export function registrar(g: Gosto, e: Evento, hoje = new Date()): Gosto {
     case 'viu': {
       formas = somar(formas, e.forma, 1, 0, 0)
       temas = somar(temas, e.tema, 1, 0, 0)
-      const mesma = lembranca?.s === e.versao
+      const mesma = mesmaVersao(lembranca, e.versao, e.medida)
       achados = {
         ...achados,
-        [e.achado]: { ...lembranca, s: e.versao, d: dia, f: e.forma, n: mesma ? lembranca.n + (lembranca.d === dia ? 0 : 1) : 1 },
+        // enquanto a mudança é pequena, o número guardado é o da última novidade: assim a soma de várias pequenas conta
+        [e.achado]: mesma
+          ? { ...lembranca!, d: dia, f: e.forma, n: lembranca!.n + (lembranca!.d === dia ? 0 : 1) }
+          : { ...lembranca, s: e.versao, ...(e.medida !== undefined ? { m: e.medida } : {}), d: dia, f: e.forma, n: 1 },
       }
       break
     }
@@ -157,7 +187,13 @@ export function registrar(g: Gosto, e: Evento, hoje = new Date()): Gosto {
     const ficam = chaves.sort((a, b) => achados[b].d - achados[a].d).slice(0, MAX_ACHADOS)
     achados = Object.fromEntries(ficam.map((k) => [k, achados[k]]))
   }
-  return { formas, temas, achados, fav, oculto, total: g.total + 1 }
+  return { formas, temas, achados, fav, oculto, ordem: g.ordem, desenhos: g.desenhos, total: g.total + 1 }
+}
+
+/** Guarda a ordem e o desenho dos cartões desta visita (o mesmo objeto, se nada mudou). */
+export function comOrdem(g: Gosto, ordem: string[], desenhos: Record<string, string>): Gosto {
+  if (ordem.join() === g.ordem.join() && JSON.stringify(desenhos) === JSON.stringify(g.desenhos)) return g
+  return { ...g, ordem: ordem.slice(0, 100), desenhos, total: g.total + 1 }
 }
 
 /** Volta a mostrar uma descoberta escondida. */
@@ -177,7 +213,7 @@ export function afinidade(m: Record<string, Placar>, k: string): number {
   return Math.max(-1, Math.min(1, (media - 0.5) * 2 + curiosidade))
 }
 
-/** Um número de 0 a 1 que só depende do texto: o mesmo texto dá sempre o mesmo número (o "acaso" de cada dia). */
+/** Um número de 0 a 1 que só depende do texto: o mesmo texto dá sempre o mesmo número (serve de impressão digital). */
 export function acaso(texto: string): number {
   let h = 2166136261
   for (let i = 0; i < texto.length; i++) {
