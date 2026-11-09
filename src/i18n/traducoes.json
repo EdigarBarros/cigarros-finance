@@ -9142,5 +9142,229 @@
   "Sem internet. Confira sua conexão e tente de novo.": {
     "en": "No internet connection. Check it and try again.",
     "es": "Sin conexión a internet. Revísala e inténtalo de nuevo."
+  },
+  "Mês mais caro que o costume": {
+    "en": "A pricier month than usual",
+    "es": "Un mes más caro de lo habitual"
+  },
+  "Mês mais leve que o costume": {
+    "en": "A lighter month than usual",
+    "es": "Un mes más ligero de lo habitual"
+  },
+  "Até hoje saíram {0}. Nos outros meses, até este dia, costumam sair {1}.": {
+    "en": "So far {0} has gone out. In other months, by this day, it's usually {1}.",
+    "es": "Hasta hoy salieron {0}. En otros meses, hasta este día, suelen salir {1}."
+  },
+  "Até hoje saíram {0}: menos que os {1} de costume até este dia.": {
+    "en": "So far {0} has gone out: less than the usual {1} by this day.",
+    "es": "Hasta hoy salieron {0}: menos que los {1} habituales hasta este día."
+  },
+  "De costume": {
+    "en": "Usually",
+    "es": "Lo habitual"
+  },
+  "Este mês": {
+    "en": "This month",
+    "es": "Este mes"
+  },
+  "Já passou do normal": {
+    "en": "Already above normal",
+    "es": "Ya pasó de lo normal"
+  },
+  "{0}: {1} este mês. O costume é {2} no mês inteiro.": {
+    "en": "{0}: {1} this month. It's usually {2} for the whole month.",
+    "es": "{0}: {1} este mes. Lo habitual es {2} en todo el mes."
+  },
+  "Meses seguidos no azul": {
+    "en": "Months in a row in the black",
+    "es": "Meses seguidos en positivo"
+  },
+  "Meses seguidos no vermelho": {
+    "en": "Months in a row in the red",
+    "es": "Meses seguidos en rojo"
+  },
+  "{0} meses seguidos fechando com sobra. O último: {1}.": {
+    "en": "{0} months in a row with money left over. The latest: {1}.",
+    "es": "{0} meses seguidos cerrando con sobrante. El último: {1}."
+  },
+  "{0} meses seguidos saindo mais do que entra. O último: {1} a menos.": {
+    "en": "{0} months in a row spending more than comes in. The latest: {1} short.",
+    "es": "{0} meses seguidos saliendo más de lo que entra. El último: {1} de menos."
+  },
+  "meses seguidos com sobra": {
+    "en": "months in a row with money left over",
+    "es": "meses seguidos con sobrante"
+  },
+  "meses seguidos faltando": {
+    "en": "months in a row falling short",
+    "es": "meses seguidos con faltante"
+  },
+  "Seus gastos estão subindo": {
+    "en": "Your spending is rising",
+    "es": "Tus gastos están subiendo"
+  },
+  "Seus gastos estão caindo": {
+    "en": "Your spending is falling",
+    "es": "Tus gastos están bajando"
+  },
+  "Em média, sobem {0} a cada mês.": {
+    "en": "On average, it rises {0} each month.",
+    "es": "En promedio, suben {0} cada mes."
+  },
+  "Em média, caem {0} a cada mês.": {
+    "en": "On average, it falls {0} each month.",
+    "es": "En promedio, bajan {0} cada mes."
+  },
+  "{0}, mês a mês": {
+    "en": "{0}, month by month",
+    "es": "{0}, mes a mes"
+  },
+  "Subiu {0}: hoje leva {1} por mês.": {
+    "en": "Up {0}: it now takes {1} a month.",
+    "es": "Subió {0}: hoy se lleva {1} al mes."
+  },
+  "Pequenos gastos que somam": {
+    "en": "Small expenses that add up",
+    "es": "Pequeños gastos que suman"
+  },
+  "{0}: cerca de {1} vezes por mês. No ano, {2}.": {
+    "en": "{0}: about {1} times a month. Over a year, {2}.",
+    "es": "{0}: unas {1} veces al mes. En el año, {2}."
+  },
+  "no ano": {
+    "en": "a year",
+    "es": "al año"
+  },
+  "por ano em {0}": {
+    "en": "a year on {0}",
+    "es": "al año en {0}"
+  },
+  "Dinheiro que foi em juros": {
+    "en": "Money lost to interest",
+    "es": "Dinero que se fue en intereses"
+  },
+  "Em 12 meses: {0} em juros, multas e tarifas.": {
+    "en": "In 12 months: {0} in interest, penalties and fees.",
+    "es": "En 12 meses: {0} en intereses, multas y comisiones."
+  },
+  "em juros, multas e tarifas em 12 meses": {
+    "en": "in interest, penalties and fees over 12 months",
+    "es": "en intereses, multas y comisiones en 12 meses"
+  },
+  "Você guarda todo mês": {
+    "en": "You save every month",
+    "es": "Ahorras todos los meses"
+  },
+  "Cerca de {0} por mês vão para o que é seu: {1} do que entra.": {
+    "en": "About {0} a month goes to what's yours: {1} of what comes in.",
+    "es": "Unos {0} al mes van a lo que es tuyo: {1} de lo que entra."
+  },
+  "guardados em um ano, nesse ritmo": {
+    "en": "saved in a year, at this pace",
+    "es": "ahorrados en un año, a este ritmo"
+  },
+  "De onde vem o que entra": {
+    "en": "Where your income comes from",
+    "es": "De dónde viene lo que entra"
+  },
+  "{0} do que entra vem de {1}.": {
+    "en": "{0} of what comes in is from {1}.",
+    "es": "{0} de lo que entra viene de {1}."
+  },
+  "Outras fontes": {
+    "en": "Other sources",
+    "es": "Otras fuentes"
+  },
+  "Quanto do limite está tomado": {
+    "en": "How much of your limit is used",
+    "es": "Cuánto del límite está usado"
+  },
+  "{0} do limite dos cartões já está usado.": {
+    "en": "{0} of your cards' limit is already used.",
+    "es": "{0} del límite de las tarjetas ya está usado."
+  },
+  "Até 30% é saudável": {
+    "en": "Up to 30% is healthy",
+    "es": "Hasta 30% es saludable"
+  },
+  "usado": {
+    "en": "used",
+    "es": "usado"
+  },
+  "Falta pouco: {0}": {
+    "en": "Almost there: {0}",
+    "es": "Falta poco: {0}"
+  },
+  "Já tem {0} da meta. No ritmo de hoje, chega em {1}.": {
+    "en": "You already have {0} of the goal. At today's pace, you get there in {1}.",
+    "es": "Ya tienes {0} de la meta. Al ritmo de hoy, llegas en {1}."
+  },
+  "Já tem {0} da meta.": {
+    "en": "You already have {0} of the goal.",
+    "es": "Ya tienes {0} de la meta."
+  },
+  "da meta {0}": {
+    "en": "of the goal {0}",
+    "es": "de la meta {0}"
+  },
+  "Seu melhor mês": {
+    "en": "Your best month",
+    "es": "Tu mejor mes"
+  },
+  "Em {0}, sobraram {1}. Dá para repetir.": {
+    "en": "In {0}, you had {1} left over. You can do it again.",
+    "es": "En {0}, sobraron {1}. Se puede repetir."
+  },
+  "Média de hoje": {
+    "en": "Today's average",
+    "es": "Promedio de hoy"
+  },
+  "Destaque de hoje": {
+    "en": "Today's highlight",
+    "es": "Lo destacado de hoy"
+  },
+  "Novo": {
+    "en": "New",
+    "es": "Nuevo"
+  },
+  "Mudou": {
+    "en": "Changed",
+    "es": "Cambió"
+  },
+  "Ver de perto": {
+    "en": "Take a closer look",
+    "es": "Ver de cerca"
+  },
+  "Mostrar este dado em outro desenho": {
+    "en": "Show this in a different chart",
+    "es": "Mostrar este dato en otro gráfico"
+  },
+  "Outro jeito": {
+    "en": "Another view",
+    "es": "Otra forma"
+  },
+  "Montado para você": {
+    "en": "Built for you",
+    "es": "Armado para ti"
+  },
+  "Esta tela é só sua: muda com os seus números e com o que você mais olha.": {
+    "en": "This screen is yours alone: it changes with your numbers and with what you look at most.",
+    "es": "Esta pantalla es solo tuya: cambia con tus números y con lo que más miras."
+  },
+  "Aprendi que você olha mais: {0}": {
+    "en": "I've learned you look most at: {0}",
+    "es": "Aprendí que miras más: {0}"
+  },
+  "Ver mais 1 descoberta": {
+    "en": "See 1 more finding",
+    "es": "Ver 1 hallazgo más"
+  },
+  "Ver mais {0} descobertas": {
+    "en": "See {0} more findings",
+    "es": "Ver {0} hallazgos más"
+  },
+  "Uma tela montada para você, refeita a cada lançamento.": {
+    "en": "A screen built for you, redone with every entry.",
+    "es": "Una pantalla armada para ti, rehecha con cada registro."
   }
 }

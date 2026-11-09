@@ -630,7 +630,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     conselhos, dispensarConselho,
     conselhosSemDados: faltamDadosParaConselhos({ lancs: lancsDosConselhos, dividas: d.dividas, hoje }),
     conselhosDispensados: avisosDispensadosNoMes(perfil.dispensadas, hoje),
-    analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise, memoria: d.memoria, escolherObjetivo,
+    analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise, memoria: d.memoria, escolherObjetivo, gosto: d.gosto, salvarGosto: d.salvarGosto,
     ligarModulo,
     personalizar: () => setAjustes('painel'),
     categorias: d.categorias,

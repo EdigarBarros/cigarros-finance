@@ -45,8 +45,6 @@
 .vis.fav { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--destaque) 35%, transparent); }
 .vis-frase { margin: 0; font-size: 14px; line-height: 1.45; color: var(--texto-2); }
 .vis-corpo { margin-top: 8px; min-width: 0; }
-/* o mosaico (Mosaico em pages/Analise.tsx): linhas de 2 px e cada cartão ocupa as que a altura dele pede */
-.an-feed { --espaco: 16px; display: grid; grid-template-columns: minmax(0, 1fr); grid-auto-rows: 2px; column-gap: var(--espaco); align-items: start; }
 .an-cabecalho { align-items: flex-end; }
 
 .an-vel-pct { font-family: var(--fonte-numeros); font-size: 30px; font-weight: 800; letter-spacing: -.03em; color: color-mix(in srgb, var(--c) 75%, var(--texto)); }
@@ -94,26 +92,6 @@
 .an-abas button { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: var(--texto-2); font-size: 13.5px; font-weight: 650; transition: background .2s, color .2s; }
 .an-abas button.ativo { color: var(--texto); background: var(--superficie); box-shadow: var(--sombra); }
 .an-abas button svg { color: var(--destaque); }
-.an-indice { position: sticky; top: 74px; z-index: 3; display: flex; gap: 8px; overflow-x: auto; padding: 8px; margin: 0 -8px; border-radius: 999px; background: color-mix(in srgb, var(--fundo) 80%, transparent); backdrop-filter: blur(10px); scrollbar-width: none; }
-.an-indice button { flex: none; display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 14px; border: 1px solid var(--borda); border-radius: 999px; background: var(--superficie); color: var(--texto); font-size: 13.5px; font-weight: 650; }
-.an-indice button svg { color: var(--destaque); }
-.an-indice small { font-size: 12px; color: var(--texto-3); }
-.an-secao { display: grid; gap: 14px; scroll-margin-top: 140px; }
-.an-feed { animation: vis-aparece .4s var(--mola); }
-
-/* computador: 2 colunas (3 nas telas largas), nunca mais colunas do que gráficos */
-@media (min-width: 1100px) {
-  .an-feed { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  /* no computador, o dia do calendário não precisa ser quadrado: achatado, o cartão não vira uma torre */
-  .analise .calendario-dia { aspect-ratio: auto; min-height: 44px; }
-}
-@media (min-width: 1600px) {
-  .an-feed { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .analise .an-feed[data-n='2'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-@media (min-width: 1100px) {
-  .analise .an-feed[data-n='1'] { grid-template-columns: minmax(0, 1fr); }
-}
 .an-mais { justify-self: center; height: 46px; padding: 0 22px; font-size: 15px; }
 
 /* ---------- gráficos escondidos ---------- */
@@ -265,8 +243,8 @@
 .radar-nota { font-weight: 800; fill: var(--texto); }
 
 /* ---------- de onde sai o dinheiro ---------- */
-.fluxo { display: grid; gap: 16px; }
-.fluxo-grupo { display: grid; gap: 7px; animation: vis-aparece .45s var(--mola) calc(var(--i, 0) * 90ms) backwards; }
+.fluxo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.fluxo-grupo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 7px; animation: vis-aparece .45s var(--mola) calc(var(--i, 0) * 90ms) backwards; }
 .fluxo-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13.5px; }
 .fluxo-fonte { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
 .fluxo-fonte svg { flex: none; color: var(--an-bom); }
@@ -446,7 +424,7 @@ li.caiu .halteres-agora { background: var(--an-bom); }
 /* cartões dos gráficos: leve elevação ao passar o ponteiro */
 @media (hover: hover) and (pointer: fine) {
   .vis { transition: transform .2s var(--mola), box-shadow .2s; }
-  .an-feed .vis:hover { transform: translateY(-3px); box-shadow: var(--sombra), 0 18px 40px -26px var(--c); }
+  .an-tela .vis:hover { transform: translateY(-3px); box-shadow: var(--sombra), 0 18px 40px -26px var(--c); }
 }
 
 /* "De onde sai o dinheiro" fechado: barra e etiquetas; tocar abre a lista */
@@ -474,3 +452,155 @@ li.caiu .halteres-agora { background: var(--an-bom); }
 @media (min-width: 1400px) {
   .an-plano ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; }
 }
+
+/* =========================================================================
+   A tela viva (pages/AnaliseTela.tsx): a manchete e as faixas de cartões que o compositor monta para cada pessoa
+   (lib/composicao.ts). No computador, 6 colunas e cada cartão ocupa quantas o desenho dele pede (--l); os cartões da
+   mesma faixa ficam da mesma altura. No celular, uma coluna só, na mesma ordem.
+   ========================================================================= */
+.an-tela { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (min-width: 1100px) {
+  .an-tela { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .an-tela > .peca { grid-column: span var(--l); }
+}
+.an-tela-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: -8px 0 0; font-size: 13.5px; line-height: 1.45; color: var(--texto-3); }
+.an-tela-aprendi { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 700; color: color-mix(in srgb, var(--an-bom) 80%, var(--texto)); background: color-mix(in srgb, var(--an-bom) 13%, transparent); }
+
+/* o cartão: texto em cima, o desenho no meio (centrado quando o vizinho é mais alto) e as ações no pé */
+.peca { display: flex; flex-direction: column; gap: 6px; animation: vis-aparece .5s var(--mola) calc(var(--i) * 55ms) backwards; }
+.peca-texto { display: grid; gap: 6px; min-width: 0; }
+.peca .vis-cab { align-items: flex-start; }
+.peca .vis-cab h3 { overflow-wrap: anywhere; padding-top: 5px; }
+.peca .vis-corpo { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; margin-top: 10px; container-type: inline-size; }
+.peca-selos { display: flex; flex-wrap: wrap; gap: 6px; }
+.peca-selo { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 11.5px; font-weight: 750; letter-spacing: .01em; color: color-mix(in srgb, var(--c) 78%, var(--texto)); background: color-mix(in srgb, var(--c) 15%, transparent); }
+.peca-selo.destaque { color: var(--destaque-texto); background: var(--destaque); }
+.peca-pe { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 30px; margin-top: 10px; }
+.peca-acoes { display: flex; gap: 6px; margin-left: auto; }
+.peca-pe .vis-ir { width: 30px; height: 30px; background: none; color: var(--texto-3); }
+.peca-pe .vis-ir:hover { background: var(--preench-3); color: var(--texto); }
+.peca-pe .vis-fav.ligado { color: var(--destaque); background: color-mix(in srgb, var(--destaque) 16%, transparent); }
+.peca-trocar { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px 0 10px; border: 0; border-radius: 999px; font: inherit; font-size: 12.5px; font-weight: 650; color: var(--texto-2); background: var(--preench-3); cursor: pointer; transition: background .2s, color .2s, transform .3s var(--mola-salto); }
+.peca-trocar:hover { color: var(--texto); background: var(--preench-2); }
+.peca-trocar:active { transform: scale(.95); }
+.peca-trocar svg { color: var(--destaque); transition: transform .5s var(--mola-salto); }
+.peca-trocar:hover svg { transform: rotate(180deg); }
+/* o desenho que entra depois de "Outro jeito" */
+.peca .vis-corpo > * { animation: peca-troca .45s var(--mola) backwards; }
+@keyframes peca-troca { from { opacity: 0; transform: scale(.96); } }
+
+/* deitado (a manchete, e o cartão compacto que ficou sozinho na faixa): texto de um lado, desenho do outro */
+@media (min-width: 760px) {
+  .peca.deitado { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: 1fr auto; column-gap: 28px; align-items: center; }
+  .peca.deitado .peca-texto { grid-column: 1; grid-row: 1; align-content: center; }
+  .peca.deitado .vis-corpo { grid-column: 2; grid-row: 1 / span 2; margin-top: 0; width: 100%; max-width: 460px; justify-self: center; }
+  .peca.deitado .peca-pe { grid-column: 1; grid-row: 2; }
+  .peca.deitado.largo .vis-corpo { max-width: none; }
+}
+
+/* a manchete */
+.an-manchete { position: relative; padding: 24px 26px; background: linear-gradient(135deg, color-mix(in srgb, var(--c) 13%, var(--superficie)), var(--superficie) 62%); border: 1px solid color-mix(in srgb, var(--c) 30%, var(--borda)); }
+.an-manchete-luz { position: absolute; inset: -40% auto auto -10%; width: 55%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--c) 26%, transparent), transparent 65%); pointer-events: none; animation: an-respira-luz 7s ease-in-out infinite; }
+@keyframes an-respira-luz { 0%, 100% { opacity: .7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.12) translate(3%, 4%); } }
+.an-manchete > :not(.an-manchete-luz) { position: relative; }
+.an-manchete .vis-cab h3 { padding-top: 0; font-size: clamp(22px, 2.6vw, 30px); font-weight: 800; letter-spacing: -.03em; line-height: 1.12; color: color-mix(in srgb, var(--c) 55%, var(--texto)); }
+.an-manchete .vis-frase { font-size: 16px; color: var(--texto); }
+.an-manchete .peca-texto { gap: 10px; }
+.peca-abrir { justify-self: start; height: 42px; padding: 0 18px; margin-top: 4px; }
+@media (max-width: 759px) {
+  .an-manchete { padding: 18px 16px; }
+  .an-manchete .vis-frase { font-size: 15px; }
+}
+
+/* ---------- desenhos em cartão estreito (um terço da tela, ou celular pequeno) ---------- */
+@container (max-width: 330px) {
+  .rosca { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .rosca-desenho { width: min(100%, 170px); }
+  .rosca-legenda { width: 100%; }
+}
+@container (max-width: 300px) {
+  .quadradinhos { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .rosca-desenho { width: min(100%, 170px); }
+  .rosca-legenda { width: 100%; }
+  .rsv { grid-template-columns: 76px minmax(0, 1fr); gap: 14px; padding-left: 50px; }
+  .rsv-numeros strong { font-size: 21px; }
+}
+
+@container (max-width: 350px) {
+  .quadradinhos { grid-template-columns: 124px minmax(0, 1fr); gap: 14px; }
+}
+/* ---------- 100 quadradinhos ---------- */
+.quadradinhos { display: grid; grid-template-columns: minmax(120px, 168px) minmax(0, 1fr); gap: 18px; align-items: center; }
+.quadradinhos-grade { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; width: 100%; max-width: 168px; aspect-ratio: 1; }
+.quadradinhos-grade i { border-radius: 3px; animation: vis-escala .35s var(--mola-salto) calc(var(--i) * 9ms) backwards; }
+.vis:not(.vivo) .quadradinhos-grade i { animation-play-state: paused; }
+
+/* ---------- uma barra só ---------- */
+.faixa { display: grid; gap: 16px; }
+.faixa-barra { display: flex; gap: 3px; height: 38px; }
+.faixa-barra i { font-style: normal; display: grid; place-items: center; min-width: 4px; border-radius: 9px; transform-origin: left; animation: vis-cresce-x .8s var(--mola) calc(var(--i) * 140ms) backwards; }
+.faixa-barra b { font-size: 12.5px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .28); }
+.vis:not(.vivo) .faixa-barra i { animation-play-state: paused; }
+.partes-legenda { width: 100%; }
+
+/* ---------- duelo ---------- */
+.duelo { position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 26px; max-width: 320px; width: 100%; margin: 0 auto; }
+.duelo-lado { display: grid; justify-items: center; gap: 6px; min-width: 0; }
+.duelo-lado b { font-family: var(--fonte-numeros); font-size: 17px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; animation: vis-surge .4s ease calc(var(--i) * 180ms + .5s) backwards; }
+.duelo-coluna { display: flex; align-items: flex-end; width: min(100%, 86px); height: 132px; border-radius: 14px; background: var(--preench-4); overflow: hidden; }
+.duelo-coluna i { display: block; width: 100%; border-radius: 14px 14px 0 0; background: var(--c); transform-origin: bottom; animation: vis-cresce-y .9s var(--mola) calc(var(--i) * 180ms) backwards; }
+.duelo-lado small { font-size: 12.5px; font-weight: 600; color: var(--texto-2); text-align: center; line-height: 1.25; overflow-wrap: anywhere; }
+.duelo-selo { position: absolute; left: 50%; top: 46%; translate: -50% -50%; padding: 5px 10px; border-radius: 999px; font-family: var(--fonte-numeros); font-size: 13px; font-weight: 800; white-space: nowrap; color: color-mix(in srgb, var(--c) 80%, var(--texto)); background: color-mix(in srgb, var(--c) 16%, var(--superficie)); box-shadow: 0 0 0 3px var(--superficie); animation: vis-escala .5s var(--mola-salto) .9s backwards; }
+.vis:not(.vivo) :is(.duelo-lado b, .duelo-coluna i, .duelo-selo) { animation-play-state: paused; }
+
+/* ---------- número grande ---------- */
+.numerao { display: grid; justify-items: center; gap: 6px; text-align: center; padding: 6px 0; }
+.numerao strong { font-family: var(--fonte-numeros); font-size: clamp(34px, 15cqw, 56px); font-weight: 800; letter-spacing: -.04em; line-height: 1.02; font-variant-numeric: tabular-nums; color: color-mix(in srgb, var(--c) 70%, var(--texto)); animation: vis-aparece .6s var(--mola) backwards; }
+.numerao > span:not(.numerao-barra) { max-width: 30ch; font-size: 13.5px; line-height: 1.4; color: var(--texto-2); }
+.numerao-barra { width: min(100%, 260px); height: 10px; margin-top: 6px; border-radius: 10px; background: var(--preench-4); overflow: hidden; }
+.numerao-barra i { display: block; height: 100%; border-radius: inherit; background: var(--c); transform-origin: left; animation: vis-cresce-x 1.2s var(--mola) .2s backwards; }
+.numerao-faisca { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 5px; width: min(100%, 300px); height: 62px; margin: 12px 0 18px; }
+.numerao-faisca span { position: relative; display: flex; align-items: flex-end; height: 100%; }
+.numerao-faisca i { display: block; width: 100%; border-radius: 5px; background: var(--an-bom); transform-origin: bottom; animation: vis-cresce-y .6s var(--mola) calc(var(--i) * 70ms + .2s) backwards; }
+.numerao-faisca .neg i { background: var(--an-ruim); }
+.numerao-faisca small { position: absolute; top: calc(100% + 4px); left: 50%; translate: -50% 0; font-size: 10.5px; color: var(--texto-3); white-space: nowrap; }
+.vis:not(.vivo) :is(.numerao strong, .numerao-barra i, .numerao-faisca i) { animation-play-state: paused; }
+
+/* ---------- pódio ---------- */
+.podio { display: grid; gap: 14px; }
+.podio-degraus { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; align-items: end; height: 190px; }
+.podio-lugar { display: grid; grid-template-rows: auto auto 1fr; justify-items: center; gap: 3px; height: 100%; min-width: 0; text-align: center; }
+.podio-nome { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; align-self: end; font-size: 12.5px; font-weight: 650; line-height: 1.2; overflow-wrap: anywhere; }
+.podio-lugar b { font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.podio-lugar > i { align-self: end; display: grid; place-items: start center; width: 100%; padding-top: 6px; border-radius: 12px 12px 4px 4px; background: color-mix(in srgb, var(--an-destino) 55%, var(--superficie)); transform-origin: bottom; animation: vis-cresce-y .8s var(--mola-salto) calc(var(--i) * 160ms) backwards; }
+.podio-lugar { grid-template-rows: minmax(0, auto) auto minmax(0, 1fr); }
+.podio-lugar.lugar-1 > i { background: var(--destaque); box-shadow: 0 10px 24px -14px var(--destaque); }
+.podio-lugar.lugar-3 > i { background: color-mix(in srgb, var(--an-destino) 32%, var(--superficie)); }
+.podio-lugar em { font-style: normal; font-family: var(--fonte-numeros); font-size: 15px; font-weight: 800; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .25); }
+.podio-resto { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.podio-resto li { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--texto-2); }
+.podio-resto b { color: var(--texto); font-variant-numeric: tabular-nums; }
+.vis:not(.vivo) .podio-lugar > i { animation-play-state: paused; }
+
+/* ---------- trilha ---------- */
+.trilha { display: grid; gap: 14px; }
+.trilha-numeros { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.trilha-numeros strong { font-family: var(--fonte-numeros); font-size: 26px; font-weight: 800; letter-spacing: -.03em; }
+.trilha-valor { display: grid; gap: 1px; }
+.trilha-valor small { font-size: 12.5px; color: var(--texto-3); }
+.trilha-numeros > span:last-child { font-family: var(--fonte-numeros); font-size: 16px; font-weight: 800; color: color-mix(in srgb, var(--c) 75%, var(--texto)); }
+.trilha-barra { position: relative; height: 14px; margin: 4px 9px; border-radius: 14px; background: var(--preench-4); }
+.trilha-feito { position: absolute; inset: 0 auto 0 0; width: calc(var(--p) * 100%); border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--c) 55%, transparent), var(--c)); transform-origin: left; animation: vis-cresce-x 1.3s var(--mola) .1s backwards; }
+.trilha-marco { position: absolute; top: -4px; bottom: -4px; width: 3px; margin-left: -1.5px; border-radius: 3px; background: var(--texto-3); }
+.trilha-marco.ok { background: var(--an-bom); }
+.trilha-ponto { position: absolute; top: 50%; left: calc(var(--p) * 100%); width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; background: var(--superficie); border: 5px solid var(--c); box-shadow: 0 3px 8px rgba(0, 0, 0, .22); animation: trilha-anda 1.3s var(--mola) .1s backwards; }
+@keyframes trilha-anda { from { left: 0; } }
+.trilha-marcos { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.trilha-marcos li { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--texto-2); }
+.trilha-marcos li.ok { color: color-mix(in srgb, var(--an-bom) 80%, var(--texto)); font-weight: 650; }
+.vis:not(.vivo) :is(.trilha-feito, .trilha-ponto) { animation-play-state: paused; }
+
+/* no celular, o título de "sem dinheiro" quebra a linha em vez de empurrar o cartão para fora da tela */
+.fluxo-grupo.falta .fluxo-fonte { align-items: flex-start; }
+.fluxo-grupo.falta .fluxo-fonte b { white-space: normal; }
+.fluxo-grupo.falta .fluxo-cab > b { white-space: nowrap; }

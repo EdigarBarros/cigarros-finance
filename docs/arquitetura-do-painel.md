@@ -338,10 +338,52 @@ dinheiro vê categorias primeiro; quem quer sair das dívidas, a linha das dívi
 **De onde sai o dinheiro** (visual `fluxo`): cada dinheiro que entra (e o saldo de hoje) vira uma barra dividida no que ele
 paga, com o atraso em laranja e o custo; o que não tem dinheiro fica em vermelho no fim. Sobe para o topo quando há atraso.
 
-**O feed aprende com o uso.** Cada gráfico tem estrela (favorito: vai para o topo) e olho (esconder: vai para "N gráficos
-escondidos", no fim, com "Mostrar de novo"). Cada toque num cartão sobe um pouco o gráfico na próxima visita (não na hora, para o
-cartão não pular debaixo do dedo). A memória fica no navegador, por pessoa (`opuscash:feed:<id>`); sem armazenamento, vale só a
-ordem do motor.
+**A tela viva: cada pessoa tem a sua.** A parte de gráficos da aba não é mais uma lista fixa. Três arquivos puros a montam,
+e `pages/AnaliseTela.tsx` só mostra e anota:
+
+- **Descobertas** (`lib/achados.ts`, `achados()`): o que a análise tem a dizer para esta pessoa, hoje. Cada uma é uma
+  mensagem (título de até 5 palavras e uma frase com o número) com o **dado** que a sustenta, descrito pelo formato e não
+  pelo desenho: `partes` (um todo dividido), `serie` (um valor no tempo), `ranking`, `comparacao` (dois valores), `pares`
+  (vários antes × agora), `progresso` (até um alvo), `numero` (um número que fala sozinho) e `pronto` (o que só tem um
+  desenho: calendário, de onde sai o dinheiro, radar, linha do tempo, tabela, anéis). Os gráficos antigos de
+  `lib/visuais.ts` viram descobertas com o mesmo id; as novas saem só quando os números sustentam: ritmo do mês contra o
+  costume, o que já passou do normal, meses seguidos no azul ou no vermelho, gastos subindo ou caindo, a categoria que mais
+  subiu mês a mês, pequenos gastos que somam, juros pagos em 12 meses, quanto se guarda por mês, de onde vem a renda,
+  quanto do limite do cartão está tomado, a meta que está mais perto e o melhor mês. `forca` diz quanto vale a pena
+  mostrar (a prioridade do motor, com os bônus do jeito e do objetivo).
+- **Compositor** (`lib/composicao.ts`): decide a ordem, o desenho e o tamanho.
+  - *Ordem* (`compor`): força + gosto pelo assunto + novidade (mudou desde a última vez: +10; nunca viu: +6) − hábito (a
+    mesma versão vista em mais de 2 dias perde 3 pontos por dia, até 18; o que tem força 80 ou mais não cansa) + um acaso
+    que muda a cada dia. Favoritos na frente. A primeira vira a **manchete** (das 3 primeiras, a que cabe num olhar:
+    calendário, tabela e "de onde sai o dinheiro" ficam logo abaixo).
+  - *Desenho* (`candidatos`): cada formato tem mais de um desenho, cada um com a sua **aptidão** para aquele dado. Partes:
+    rosca, 100 quadradinhos (2 a 4 partes, nenhuma menor que 2%) ou uma barra só (melhor quando uma parte passa de 70%).
+    Série: curva ou colunas (projeção tracejada e séries de mais de 14 pontos só em curva). Ranking: barras ou pódio (3 ou
+    mais itens). Comparação: duelo. Pares: antes × agora (ou duelo, com um par só). Progresso: pote ou trilha (limite de
+    cartão só em trilha: um limite não "enche"). Número: número grande, com a história em colunas pequenas. A nota de cada
+    desenho é aptidão × 30 + gosto × 10 + acaso do dia − 7 por repetição na tela − 5 se foi o desenho de ontem. Se a pessoa
+    escolheu um desenho, vale o dela.
+  - *Tamanho* (`diagramar`): no computador a tela tem 6 colunas e cada faixa soma 6: três compactos (2+2+2), dois iguais
+    (3+3), largo com compacto (4+2 ou 2+4) ou um sozinho (6; se for compacto, deita: texto de um lado, desenho do outro).
+    Largos: calendário, fluxo, tabela, linha do tempo, antes × agora, curva, radar, colunas com mais de 6 e barras com mais
+    de 4. Os cartões da mesma faixa ficam da mesma altura. Abaixo de 1100 px, uma coluna só, na mesma ordem.
+- **Gosto** (`lib/gosto.ts`): o que a tela aprende. Por desenho e por assunto, um placar [viu, interessou, rejeitou]. Sinais:
+  viu (o desenho ficou 1,2 s na tela), tocou (+0,5), abriu a tela de destino (+1 no desenho, +1,5 no assunto), favoritou
+  (+1,5 e +2), escondeu (rejeita 1,5 no assunto e 0,5 no desenho) e trocou o desenho (rejeita o que saiu, +1 no escolhido).
+  `afinidade` é a média do que deu certo (ver sem tocar conta como um "não" bem fraco) mais um empurrão para o que foi
+  pouco visto, para a tela experimentar. Passando de 60 exibições, o placar cai pela metade: o gosto pode mudar. Por
+  descoberta, guarda a versão vista (a frase), em quantos dias, o último desenho e o desenho escolhido. Fica em
+  `perfis.consultor.gosto` (a mesma coluna da memória, migração 24: quem grava um leva o outro) e no aparelho
+  (`opuscash-gosto-<id>`); entre as duas cópias vale a que tem mais sinais. São só contagens, nenhum valor em dinheiro.
+
+A tela não muda debaixo do dedo: o gosto usado na montagem é o da abertura da aba, e os sinais são gravados ao sair dela
+(ou ao fechar o app). No mesmo dia, com os mesmos dados, a tela é a mesma; ela muda quando os dados mudam, quando o dia
+vira e conforme o gosto aprende. Favoritar, esconder e "Outro jeito" valem na hora. Quando o gosto por um assunto já é
+claro (3 ou mais interesses), o cabeçalho da seção diz "Aprendi que você olha mais: Gastos".
+
+Cada cartão tem, no pé, **Outro jeito** (passa para o próximo desenho possível; some quando só há um), estrela e olho; a
+seta do topo leva à tela de que ele fala. Selos: "Novo" (a pessoa ainda não viu) e "Mudou" (viu com outros números).
+Favoritos e escondidos do feed antigo (`opuscash:feed:<id>`) entram no gosto na primeira visita.
 
 **As cores da aba** (definidas em `.analise`, `pages/analise.css`) têm um significado só cada, igual em todos os gráficos:
 **verde** = dinheiro livre ou está bem; **azul** = dinheiro que já tem destino (conta no prazo); **laranja** = atenção, sai com
@@ -353,16 +395,10 @@ atrasadas, com as atrasadas no topo da lista.
 **Gráficos no lugar de texto.** A aba é feita de gráficos, com pouco texto e linguagem simples: cada cartão tem título de
 até 5 palavras e uma frase só. Explicação longa fica atrás de "Por quê?".
 
-**Quem escolhe os gráficos é o motor.** `lib/visuais.ts` (`visuais()`) olha a análise e decide quais visuais a pessoa
-precisa ver, em ordem de importância. Um aperto na conta, por exemplo, sobe a curva do saldo para o topo. Os 15 tipos:
-- **Como estou**: velocímetro da nota, escada das fases e radar dos 6 pilares.
-- **O mês**: cascata (entra, sai, fica), calendário do mês com o dinheiro que entra e sai e os dias marcados pela agenda, e
-  curva do saldo dia a dia.
-- **Para onde vai o dinheiro**: rosca 50/30/20 com o ideal por dentro, barras de onde mais gasta e halteres "antes × agora".
-- **O tempo**: colunas da sobra mês a mês e linha do tempo de quando cada dívida acaba, com e sem o plano.
-- **Dívidas**: rosca de quanto do que se deve é juros e barras do total pago com e sem adiantar.
-- **O que se guarda**: pote da reserva, anéis das metas, tabela de teto por gasto, barras das contas fixas no ano e curva de
-  tudo o que é seu, com 12 meses de projeção tracejados.
+**Os desenhos.** Os 15 de antes (velocímetro, escada, radar, cascata, calendário, curva, rosca, barras, halteres, colunas,
+linha do tempo, pote, anéis, tabela e fluxo) e os 6 que o compositor usa quando o dado pede: **quadradinhos** (100
+quadradinhos, um por 1%), **faixa** (uma barra só, dividida), **duelo** (duas colunas e a diferença no meio), **número
+grande** (conta até o valor), **pódio** (os 3 maiores) e **trilha** (de 0 ao alvo, com os marcos).
 
 O desenho fica em `pages/AnaliseGraficos.tsx`: SVG e HTML próprios, sem biblioteca de gráficos. O apoio (cor do tom, o
 gatilho da animação) está em `pages/analiseApoio.ts`.
@@ -385,25 +421,26 @@ Reduzidas, tudo aparece pronto.
    No detalhado, no lugar dela, o plano de ação inteiro em lista.
 4. **Objetivo**: seis ícones para escolher; escolhido, uma faixa com o caminho até ele e contadores (deu certo, ajustado,
    acompanhando) que abrem a lista.
-5. **Seus gráficos**: o feed, ordenado pelo perfil e pelo objetivo.
+5. **Montado para você**: a tela viva (acima).
+
+Antes de tudo isso, logo abaixo do título da aba, vem a **manchete**: a descoberta mais importante de hoje, grande, com o
+selo "Destaque de hoje" e o botão "Ver de perto".
 
 | Jeito | O que muda |
 | --- | --- |
-| Simples | 2 réguas, sem os outros traços; 2 gráficos e "Ver mais"; no fim, o convite para mudar o jeito de ver |
-| Equilibrado | 4 réguas e os outros traços em fichas; feed com **abas por assunto** (Tudo, O mês, Gastos, Dívidas, Guardado, Como estou), 4 gráficos na frente |
-| Detalhado | O de cima mais o **plano de ação inteiro** em lista numerada no lugar da faixa; o feed inteiro em **seções por assunto**, com um índice preso no topo |
+| Simples | 2 réguas, sem os outros traços; manchete e 2 cartões, com "Ver mais"; no fim, o convite para mudar o jeito de ver |
+| Equilibrado | 4 réguas e os outros traços em fichas; manchete e 5 cartões, com **abas por assunto** (Tudo, O mês, Gastos, Dívidas, Guardado, Como estou) |
+| Detalhado | O de cima mais o **plano de ação inteiro** em lista numerada no lugar da faixa, e todos os cartões |
 
 "O que mudou" aparece como uma faixa logo abaixo do perfil (até 2 mudanças; 4 no detalhado), com setas em bolinhas coloridas.
 
 "De onde sai o dinheiro" ficou visual: cada entrada mostra a barra e três etiquetas (quanto tem destino, quanto fica livre,
 quanto vai com atraso); a lista do que ela paga abre ao tocar.
 
-**No computador**, o feed é um mosaico (`Mosaico` em `pages/Analise.tsx`): a grade tem linhas de 2 px e cada cartão
-mede a própria altura e ocupa só as linhas de que precisa, então o mais baixo não deixa buraco embaixo (refaz a conta
-quando um cartão muda de altura). São 2 colunas a partir de 1100 px e 3 a partir de 1600 px, nunca mais colunas do que
-gráficos: uma seção com 2 gráficos ocupa 2 colunas largas. O plano de ação inteiro fica em 2 colunas a partir de 1400 px.
-Em "De onde sai o dinheiro", a mesma conta sem dinheiro vira uma etiqueta só ("Atlética Yawara ×11"), as que mais pesam
-primeiro, e passando de 6 o resto fica num "+N". O dia do calendário fica achatado.
+**No computador**, os cartões entram em faixas de 6 colunas (veja "Tamanho", acima). O plano de ação inteiro fica em 2
+colunas a partir de 1400 px. Em "De onde sai o dinheiro", a mesma conta sem dinheiro vira uma etiqueta só ("Atlética
+Yawara ×11"), as que mais pesam primeiro, e passando de 6 o resto fica num "+N". O dia do calendário fica achatado. Em
+cartão estreito (um terço da tela ou celular pequeno), rosca e quadradinhos põem a legenda embaixo do desenho.
 
 No celular, tudo fica numa coluna só, na mesma ordem. Na cascata, o espaço acima das barras é dos rótulos, para o valor da
 primeira não encostar no número grande do cartão.

@@ -1,53 +1,31 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { compararRetratos, retratoDe, type Analise as DadosAnalise, type Mudanca, type Retrato } from '../lib/analise'
-import { visuais, type Visual } from '../lib/visuais'
 import { fmtDataCurta } from '../lib/format'
 import { useMovimento } from '../lib/tema'
 import { Icone } from '../components/Icone'
 import { Interruptor } from '../components/ui'
-import { type Nivel } from '../components/Vitrine'
-import { CartaoVisual, Grafico, type AcoesDoCartao } from './AnaliseGraficos'
 import { useEmVista } from './analiseApoio'
 import { Agora, Objetivo, ProximoPasso, SeuPerfil } from './AnaliseTopo'
+import { Faixas, Manchete, useTelaViva } from './AnaliseTela'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 import './analise.css'
 
-/** Quantos gráficos aparecem antes de "Ver mais gráficos" (no jeito simples, menos). */
-const GRAFICOS_NA_FRENTE = { simples: 2, equilibrado: 4, detalhado: 99 } as const
-
-/** Os assuntos do feed: cada gráfico mora num deles (as abas do equilibrado e as seções do detalhado). */
-type Assunto = 'mes' | 'gastos' | 'dividas' | 'guardado' | 'como'
-const ASSUNTO_DO_VISUAL: Record<string, Assunto> = {
-  calendario: 'mes', 'curva-saldo': 'mes', fluxo: 'mes', 'colunas-sobra': 'mes',
-  'rosca-503020': 'gastos', categorias: 'gastos', halteres: 'gastos', 'tabela-orcamento': 'gastos', 'barras-fixas': 'gastos',
-  'linha-dividas': 'dividas', 'rosca-juros': 'dividas', 'barras-estrategias': 'dividas',
-  'pote-reserva': 'guardado', 'aneis-metas': 'guardado', 'curva-patrimonio': 'guardado',
-  radar: 'como',
-}
-const ASSUNTOS: { id: Assunto; icone: string; nome: () => string }[] = [
-  { id: 'mes', icone: 'calendario', nome: () => tx('O mês') },
-  { id: 'gastos', icone: 'carteira', nome: () => tx('Gastos') },
-  { id: 'dividas', icone: 'divida', nome: () => tx('Dívidas') },
-  { id: 'guardado', icone: 'cofre', nome: () => tx('Guardado') },
-  { id: 'como', icone: 'bussola', nome: () => tx('Como estou') },
-]
-const assuntoDe = (v: Visual): Assunto => ASSUNTO_DO_VISUAL[v.id] ?? 'como'
-
 /**
  * Consultor financeiro: a análise de lib/analise.ts em forma de gráficos, refeita a cada mudança nos dados.
- * Cada jeito de ver tem a sua montagem (veja docs/arquitetura-do-painel.md, seção 4.7):
- * - simples: a vitrine do "hoje você pode gastar", um passo por vez, nota e mês em dois quadros e 2 gráficos;
- * - equilibrado: a vitrine com velocímetro, os três quadros (como estou, faça agora, o mês) e o feed em abas por assunto;
- * - detalhado: tudo isso, o plano de ação inteiro em lista e o feed inteiro, dividido em seções por assunto.
+ * No topo, a manchete: a descoberta mais importante de hoje para esta pessoa. Depois, os blocos de sempre (perfil, agora,
+ * próximo passo, objetivo) e a tela viva: as outras descobertas, com o desenho e o tamanho que o compositor escolheu
+ * (pages/AnaliseTela.tsx; veja docs/arquitetura-do-painel.md, seção 4.7). O jeito de ver muda o quanto aparece:
+ * - simples: 2 cartões depois da manchete e "Ver mais", sem abas;
+ * - equilibrado: 5 cartões, abas por assunto;
+ * - detalhado: todos, o plano de ação inteiro em lista.
  */
 export function Analise(c: Ctx) {
   const a = c.analise
   const nivel = c.perfil.detalhe
   const movimento = useMovimento()
   const desdeAVisita = useDesdeAUltimaVisita(c.idUsuario, a)
-  const lista = useMemo(() => visuais(a), [a])
-  const feed = useFeed(c.idUsuario, lista)
+  const tela = useTelaViva(c, a)
 
   if (c.contaNova) {
     return (
@@ -71,20 +49,17 @@ export function Analise(c: Ctx) {
       <header className="pagina-topo an-cabecalho">
         <div>
           <h1>{tx('Seu consultor')}</h1>
-          <p className="sub">{nivel === 'simples' ? tx('O que importa hoje, num olhar.') : tx('Os gráficos se refazem a cada lançamento.')}</p>
+          <p className="sub">{nivel === 'simples' ? tx('O que importa hoje, num olhar.') : tx('Uma tela montada para você, refeita a cada lançamento.')}</p>
         </div>
       </header>
+      <Manchete t={tela} aoIr={c.irPara} />
       <SeuPerfil a={a} nivel={nivel} />
       <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 2} />
       <Agora a={a} nivel={nivel} />
       {nivel === 'detalhado' ? <PlanoDeAcao a={a} aoIr={c.irPara} /> : <ProximoPasso a={a} aoIr={c.irPara} />}
       <Objetivo a={a} memoria={c.memoria} nivel={nivel} aoEscolher={c.escolherObjetivo} />
 
-      {nivel === 'detalhado'
-        ? <FeedEmSecoes feed={feed} aoIr={c.irPara} />
-        : <FeedEmAbas feed={feed} aoIr={c.irPara} nivel={nivel} />}
-
-      <Escondidos feed={feed} />
+      <Faixas t={tela} aoIr={c.irPara} nivel={nivel} />
 
       {nivel === 'simples' && (
         <button className="vt-mais-detalhe" onClick={c.personalizar}>
@@ -102,15 +77,6 @@ export function Analise(c: Ctx) {
     </div>
   )
 }
-
-
-
-
-
-
-
-
-
 
 /** No detalhado: o plano de ação inteiro, em ordem, com o ganho de cada passo e o atalho. */
 function PlanoDeAcao({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
@@ -149,136 +115,6 @@ function PlanoDeAcao({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
 }
 
 
-type Feed = ReturnType<typeof useFeed>
-
-/** Altura de cada "linha" da grade do mosaico, em px: cada cartão ocupa quantas couberem na altura dele. */
-const LINHA_DO_MOSAICO = 2
-
-/**
- * Os gráficos em mosaico: cada cartão mede a própria altura e ocupa só as linhas de que precisa na grade, então o mais
- * baixo não deixa buraco embaixo (as colunas de CSS deixavam, quando um cartão era bem mais alto que os outros). A
- * quantidade de colunas acompanha a de cartões: dois gráficos ocupam duas colunas largas, não três com uma vazia.
- * Refaz a conta quando um cartão muda de altura (abriu uma lista, o gráfico terminou de animar, a fonte carregou).
- */
-function Mosaico({ itens, aoIr, feed }: { itens: Visual[]; aoIr: Ctx['irPara']; feed: Feed }) {
-  const ref = useRef<HTMLDivElement>(null)
-  useLayoutEffect(() => {
-    const grade = ref.current
-    if (!grade) return
-    const arrumar = () => {
-      const espaco = parseFloat(getComputedStyle(grade).getPropertyValue('--espaco')) || 16
-      const cartoes = Array.from(grade.children) as HTMLElement[]
-      // primeiro mede todos, depois escreve (e só o que mudou): medir e escrever alternados obrigava o navegador a refazer
-      // o layout da página a cada cartão, e a aba do Consultor demorava a abrir no celular
-      const linhas = cartoes.map((el) => `span ${Math.max(1, Math.ceil((el.getBoundingClientRect().height + espaco) / LINHA_DO_MOSAICO))}`)
-      cartoes.forEach((el, i) => { if (el.style.gridRowEnd !== linhas[i]) el.style.gridRowEnd = linhas[i] })
-    }
-    arrumar()
-    if (typeof ResizeObserver === 'undefined') return
-    const ro = new ResizeObserver(arrumar)
-    for (const el of Array.from(grade.children)) ro.observe(el)
-    return () => ro.disconnect()
-  }, [itens])
-  return (
-    <div ref={ref} className="an-feed" data-n={Math.min(itens.length, 3)}>
-      {itens.map((v) => (
-        <CartaoVisual key={v.id} v={v} aoIr={aoIr} acoes={feed.acoes(v.id)}><Grafico v={v} /></CartaoVisual>
-      ))}
-    </div>
-  )
-}
-
-/** Simples e equilibrado: os gráficos na ordem do motor, com abas por assunto (no equilibrado) e "Ver mais". */
-function FeedEmAbas({ feed, aoIr, nivel }: { feed: Feed; aoIr: Ctx['irPara']; nivel: Nivel }) {
-  const [assunto, setAssunto] = useState<Assunto | 'tudo'>('tudo')
-  const [todos, setTodos] = useState(false)
-  const naFrente = Math.max(GRAFICOS_NA_FRENTE[nivel], feed.favoritos)
-  const doAssunto = assunto === 'tudo' ? feed.mostrados : feed.mostrados.filter((v) => assuntoDe(v) === assunto)
-  const vistos = todos || assunto !== 'tudo' ? doAssunto : doAssunto.slice(0, naFrente)
-  const temAssunto = (id: Assunto) => feed.mostrados.some((v) => assuntoDe(v) === id)
-  if (!feed.mostrados.length) return null
-  return (
-    <section className="an-feed-area">
-      <div className="an-feed-cab">
-        <h2 className="vt-secao"><span className="vt-secao-ic"><Icone nome="relatorio" tamanho={16} /></span><span>{tx('Seus gráficos')}</span></h2>
-        {nivel !== 'simples' && (
-          <div className="an-abas" role="tablist" aria-label={tx('Assunto')}>
-            <button role="tab" aria-selected={assunto === 'tudo'} className={assunto === 'tudo' ? 'ativo' : ''} onClick={() => setAssunto('tudo')}>{tx('Tudo')}</button>
-            {ASSUNTOS.filter((s) => temAssunto(s.id)).map((s) => (
-              <button key={s.id} role="tab" aria-selected={assunto === s.id} className={assunto === s.id ? 'ativo' : ''} onClick={() => setAssunto(s.id)}>
-                <Icone nome={s.icone} tamanho={14} /> {s.nome()}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      <Mosaico key={assunto} itens={vistos} aoIr={aoIr} feed={feed} />
-      {assunto === 'tudo' && doAssunto.length > naFrente && (
-        <button className="btn an-mais" onClick={() => setTodos(!todos)}>
-          <Icone nome={todos ? 'cima' : 'ano'} tamanho={17} />
-          {todos ? tx('Mostrar menos') : tx('Ver mais {0} gráficos', doAssunto.length - naFrente)}
-        </button>
-      )}
-    </section>
-  )
-}
-
-/** Detalhado: todos os gráficos, em seções por assunto, com um índice no topo para pular direto a uma delas. */
-function FeedEmSecoes({ feed, aoIr }: { feed: Feed; aoIr: Ctx['irPara'] }) {
-  const favoritos = feed.mostrados.slice(0, feed.favoritos)
-  const resto = feed.mostrados.slice(feed.favoritos)
-  // a seção sobe conforme o gráfico mais importante dela (a ordem do motor e do uso)
-  const secoes = ASSUNTOS
-    .map((s) => ({ ...s, itens: resto.filter((v) => assuntoDe(v) === s.id), primeiro: resto.findIndex((v) => assuntoDe(v) === s.id) }))
-    .filter((s) => s.itens.length)
-    .sort((x, y) => x.primeiro - y.primeiro)
-  const grupos: { id: string; icone: string; nome: string; itens: Visual[] }[] = [
-    ...(favoritos.length ? [{ id: 'fav', icone: 'estrela', nome: tx('Favoritos'), itens: favoritos }] : []),
-    ...secoes.map((s) => ({ id: s.id, icone: s.icone, nome: s.nome(), itens: s.itens })),
-  ]
-  const ir = (id: string) => document.getElementById(`an-secao-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  if (!grupos.length) return null
-  return (
-    <section className="an-feed-area">
-      <nav className="an-indice" aria-label={tx('Assuntos')}>
-        {grupos.map((g) => (
-          <button key={g.id} onClick={() => ir(g.id)}><Icone nome={g.icone} tamanho={15} /> {g.nome} <small>{g.itens.length}</small></button>
-        ))}
-      </nav>
-      {grupos.map((g) => (
-        <div key={g.id} id={`an-secao-${g.id}`} className="an-secao">
-          <h2 className="vt-secao"><span className="vt-secao-ic"><Icone nome={g.icone} tamanho={16} /></span><span>{g.nome}</span></h2>
-          <Mosaico itens={g.itens} aoIr={aoIr} feed={feed} />
-        </div>
-      ))}
-    </section>
-  )
-}
-
-function Escondidos({ feed }: { feed: Feed }) {
-  const [ver, setVer] = useState(false)
-  if (!feed.escondidos.length) return null
-  return (
-    <section className="an-escondidos">
-      <button className="link" onClick={() => setVer(!ver)} aria-expanded={ver}>
-        <Icone nome="olho-fechado" tamanho={15} />
-        {feed.escondidos.length === 1 ? tx('1 gráfico escondido') : tx('{0} gráficos escondidos', feed.escondidos.length)}
-        <Icone nome={ver ? 'cima' : 'abaixo'} tamanho={14} />
-      </button>
-      {ver && (
-        <ul>
-          {feed.escondidos.map((v) => (
-            <li key={v.id}>
-              <span>{v.titulo}</span>
-              <button className="btn" onClick={() => feed.mostrar(v.id)}><Icone nome="olho" tamanho={15} /> {tx('Mostrar de novo')}</button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  )
-}
-
 /**
  * O que a última mudança fez com a análise ou, sem mudança nesta visita, o que mudou desde a anterior. O retrato da visita
  * fica no navegador (só números), para comparar na próxima.
@@ -297,8 +133,6 @@ function useDesdeAUltimaVisita(id: string, a: DadosAnalise) {
   }, [chave])
   return useMemo(() => (antes ? { em: antes.em, mudancas: compararRetratos(antes, retratoDe(a)) } : null), [antes, a])
 }
-
-
 
 /** Só aparece quando algo mudou de fato: uma faixa com setas para cima ou para baixo. */
 function OQueMudou({ reanalise, desdeAVisita, max }: { reanalise: Ctx['reanalise']; desdeAVisita: { em: string; mudancas: Mudanca[] } | null; max: number }) {
@@ -321,42 +155,3 @@ function OQueMudou({ reanalise, desdeAVisita, max }: { reanalise: Ctx['reanalise
     </section>
   )
 }
-
-interface MemoriaDoFeed { fav: string[]; oculto: string[]; toques: Record<string, number> }
-
-/**
- * O feed aprende com o uso: favoritos vão para o topo, escondidos saem da frente e cada toque num gráfico o sobe um pouco.
- * A memória fica no navegador (por pessoa); sem armazenamento, o feed segue só a ordem do motor.
- */
-function useFeed(idUsuario: string, lista: Visual[]) {
-  const chave = `opuscash:feed:${idUsuario}`
-  const [m, setM] = useState<MemoriaDoFeed>(() => {
-    try {
-      const lido = JSON.parse(localStorage.getItem(chave) ?? 'null') as Partial<MemoriaDoFeed> | null
-      return { fav: lido?.fav ?? [], oculto: lido?.oculto ?? [], toques: lido?.toques ?? {} }
-    } catch { return { fav: [], oculto: [], toques: {} } }
-  })
-  const mudar = (f: (x: MemoriaDoFeed) => MemoriaDoFeed) => setM((antes) => {
-    const novo = f(antes)
-    try { localStorage.setItem(chave, JSON.stringify(novo)) } catch { /* sem armazenamento */ }
-    return novo
-  })
-  // A ordem pelo uso é a da abertura da aba: um toque não faz o cartão pular de lugar debaixo do dedo.
-  const [toquesDaAbertura] = useState(m.toques)
-  const ordem = useMemo(() => {
-    const peso = (v: Visual) => v.prioridade + Math.min(12, (toquesDaAbertura[v.id] ?? 0) * 2)
-    const visiveis = lista.filter((v) => !m.oculto.includes(v.id))
-    const favs = m.fav.map((id) => visiveis.find((v) => v.id === id)).filter((v): v is Visual => Boolean(v))
-    const resto = visiveis.filter((v) => !m.fav.includes(v.id)).sort((x, y) => peso(y) - peso(x))
-    return { mostrados: [...favs, ...resto], favoritos: favs.length, escondidos: lista.filter((v) => m.oculto.includes(v.id)) }
-  }, [lista, m, toquesDaAbertura])
-  const acoes = (id: string): AcoesDoCartao => ({
-    fav: m.fav.includes(id),
-    aoFavoritar: () => mudar((x) => ({ ...x, fav: x.fav.includes(id) ? x.fav.filter((f) => f !== id) : [...x.fav, id] })),
-    aoEsconder: () => mudar((x) => ({ ...x, oculto: [...x.oculto.filter((o) => o !== id), id], fav: x.fav.filter((f) => f !== id) })),
-    aoTocar: () => mudar((x) => ({ ...x, toques: { ...x.toques, [id]: Math.min(50, (x.toques[id] ?? 0) + 1) } })),
-  })
-  const mostrar = (id: string) => mudar((x) => ({ ...x, oculto: x.oculto.filter((o) => o !== id) }))
-  return { ...ordem, acoes, mostrar }
-}
-

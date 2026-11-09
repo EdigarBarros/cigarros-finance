@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CATEGORIAS_ANTIGAS } from './categorias'
 import { normPerfil } from './perfil'
 import { MEMORIA_VAZIA, normMemoria, type MemoriaConsultor } from './memoria'
+import { GOSTO_VAZIO, normGosto, type Gosto } from './gosto'
 import { lerTudo, supabase } from './supabase'
 import type { EscolhaZerar, ParteZerar } from './zerar'
 import type { Banco, Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, ParteDivida, Perfil, SaldoDivida } from './types'
@@ -52,6 +53,16 @@ const memoriaLocal = (userId: string): MemoriaConsultor => {
     return t ? normMemoria(JSON.parse(t)) : MEMORIA_VAZIA
   } catch {
     return MEMORIA_VAZIA
+  }
+}
+/** O gosto da pessoa na tela do Consultor (lib/gosto.ts): no aparelho e, com a migração 24, junto da memória no banco. */
+const chaveGosto = (userId: string) => `opuscash-gosto-${userId}`
+const gostoLocal = (userId: string): Gosto => {
+  try {
+    const t = localStorage.getItem(chaveGosto(userId))
+    return t ? normGosto(JSON.parse(t)) : GOSTO_VAZIO
+  } catch {
+    return GOSTO_VAZIO
   }
 }
 const temAlgo = (m: MemoriaConsultor) => m.objetivo !== null || m.acompanhados.length > 0
@@ -121,6 +132,10 @@ export function useDados(userId: string, ano: number) {
   /** Foto de perfil: do banco (migração 9) ou, sem a coluna, guardada só neste aparelho. */
   const [foto, setFoto] = useState<string | null>(() => fotoLocal(userId))
   const [memoria, setMemoria] = useState<MemoriaConsultor>(() => memoriaLocal(userId))
+  const [gosto, setGosto] = useState<Gosto>(() => gostoLocal(userId))
+  // memória e gosto moram na mesma coluna (perfis.consultor): quem grava um leva o outro junto, sempre o mais recente
+  const memoriaAgora = useRef(memoria)
+  const gostoAgora = useRef(gosto)
   const [categorias, setCategorias] = useState<Categoria[]>([])
   /** Sem a migração 5: usa as 4 categorias antigas. */
   const [categoriasAntigas, setCategoriasAntigas] = useState(false)
@@ -220,7 +235,10 @@ export function useDados(userId: string, ano: number) {
       if (pf.data && 'foto' in pf.data) setFoto((pf.data as Perfil).foto ?? fotoLocal(userId))
       // a do banco vale mais (vem de qualquer aparelho); vazia lá (coluna recém-criada), fica a deste aparelho
       const doBanco = pf.data && 'consultor' in pf.data ? normMemoria((pf.data as { consultor?: unknown }).consultor) : null
-      if (doBanco && temAlgo(doBanco)) setMemoria(doBanco)
+      if (doBanco && temAlgo(doBanco)) { memoriaAgora.current = doBanco; setMemoria(doBanco) }
+      // o gosto que sabe mais vale (o do aparelho pode estar na frente: nem toda saída da aba chega ao banco)
+      const gostoDoBanco = pf.data && 'consultor' in pf.data ? normGosto((pf.data as { consultor?: { gosto?: unknown } | null }).consultor?.gosto) : null
+      if (gostoDoBanco && gostoDoBanco.total > gostoAgora.current.total) { gostoAgora.current = gostoDoBanco; setGosto(gostoDoBanco) }
     }
     const em = mt.error ?? mv.error
     if (em && faltaTabela(em)) setMetasSemTabela(true)
@@ -611,13 +629,30 @@ export function useDados(userId: string, ano: number) {
    * também no banco. Sem a coluna, o erro é engolido: a cópia do aparelho já vale.
    */
   const salvarMemoria = async (nova: MemoriaConsultor) => {
+    memoriaAgora.current = nova
     setMemoria(nova)
     try {
       localStorage.setItem(chaveMemoria(userId), JSON.stringify(nova))
     } catch { /* sem armazenamento: vale até recarregar */ }
     if (perfilSemTabela || !perfil) return
-    const { error } = await supabase.from('perfis').update({ consultor: nova }).eq('user_id', userId)
+    const { error } = await supabase.from('perfis').update({ consultor: { ...nova, gosto: gostoAgora.current } }).eq('user_id', userId)
     if (error && !faltaTabela(error) && !faltaColuna(error)) falhou(error.message)
+  }
+
+  /**
+   * Grava o gosto da pessoa na tela do Consultor (lib/gosto.ts). Como a memória: sempre no aparelho e, com a coluna, no
+   * banco. Falha de rede aqui não vira aviso: é só preferência de tela, e a cópia do aparelho já vale.
+   */
+  const salvarGosto = async (novo: Gosto) => {
+    gostoAgora.current = novo
+    setGosto(novo)
+    try {
+      localStorage.setItem(chaveGosto(userId), JSON.stringify(novo))
+    } catch { /* sem armazenamento: vale até recarregar */ }
+    if (perfilSemTabela || !perfil) return
+    try {
+      await supabase.from('perfis').update({ consultor: { ...memoriaAgora.current, gosto: novo } }).eq('user_id', userId)
+    } catch { /* sem rede: fica a cópia do aparelho */ }
   }
 
   const addCategoria = async (c: Omit<Categoria, 'id' | 'ordem'>): Promise<Categoria | undefined> => {
@@ -705,8 +740,11 @@ export function useDados(userId: string, ano: number) {
     if (todo) for (const t of ['bancos', 'categorias', 'perfis']) await apagar(t)
     // o que o consultor aprendeu sai junto com os dados (o banco já foi com a linha do perfil)
     if (todo) {
+      memoriaAgora.current = MEMORIA_VAZIA
+      gostoAgora.current = GOSTO_VAZIO
       setMemoria(MEMORIA_VAZIA)
-      try { localStorage.removeItem(chaveMemoria(userId)) } catch { /* nada guardado */ }
+      setGosto(GOSTO_VAZIO)
+      try { localStorage.removeItem(chaveMemoria(userId)); localStorage.removeItem(chaveGosto(userId)) } catch { /* nada guardado */ }
     }
   }
 
@@ -714,7 +752,7 @@ export function useDados(userId: string, ano: number) {
     zerarDados,
     metas, movimentosMeta, metasSemTabela, addMeta, updMeta, delMeta, addMovimentoMeta, delMovimentoMeta,
     categorias, categoriasAntigas, addCategoria, updCategoria, delCategoria,
-    perfil, perfilSemTabela, salvarPerfil, foto, salvarFoto, memoria, salvarMemoria,
+    perfil, perfilSemTabela, salvarPerfil, foto, salvarFoto, memoria, salvarMemoria, gosto, salvarGosto,
     bancos, addBanco, updBanco, delBanco,
     dividasSemExtras,
     dividasSemMoeda,

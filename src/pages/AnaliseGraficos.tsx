@@ -1,10 +1,9 @@
-import { useState, type CSSProperties, type ReactNode } from 'react'
+import { useState, type CSSProperties } from 'react'
 import type { Tom } from '../lib/analise'
-import type { Destino } from '../lib/conselheiro'
 import { doMesChave } from '../lib/cartoes'
 import { fmtDataCurta, fmtMesAno, fmtPct, fmtValor, LOCAL_DAS_DATAS } from '../lib/format'
-import { COR_DO_TOM, fmtCurto, useEmVista } from './analiseApoio'
-import type { GrupoDoFluxo, Visual } from '../lib/visuais'
+import { COR_DO_TOM, fmtCurto } from './analiseApoio'
+import type { Fatia, FormatoDoNumero, GrupoDoFluxo, LadoDoDuelo, Ponto, Visual } from '../lib/visuais'
 import { Anel } from '../components/ui'
 import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
@@ -14,46 +13,6 @@ import { tx } from '../lib/textos'
  * Os desenhos do consultor: cada tipo de visual de lib/visuais.ts vira um gráfico em SVG ou HTML, com animação que só
  * começa quando o cartão aparece na tela (classe "vivo"). Com "Animações reduzidas" (Configurações), tudo aparece pronto.
  */
-
-/** O que a pessoa pode fazer com um gráfico do feed: favoritar (vai para o topo) ou esconder. */
-export interface AcoesDoCartao {
-  fav: boolean
-  aoFavoritar: () => void
-  aoEsconder: () => void
-  /** Cada toque no cartão conta como uso: o que a pessoa mais usa sobe no feed. */
-  aoTocar: () => void
-}
-
-/** O cartão de um visual: título curto, uma frase, o desenho e, se houver, o atalho para a tela certa. */
-export function CartaoVisual({ v, aoIr, acoes, children }: {
-  v: Pick<Visual, 'id' | 'titulo' | 'frase' | 'tom' | 'destino'>; aoIr?: (d: Destino) => void; acoes?: AcoesDoCartao; children: ReactNode
-}) {
-  const [ref, vivo] = useEmVista<HTMLElement>()
-  return (
-    <section ref={ref} className={`cartao vis ${vivo ? 'vivo' : ''} ${acoes?.fav ? 'fav' : ''}`} style={{ '--c': v.tom ? COR_DO_TOM[v.tom] : 'var(--destaque)' } as CSSProperties}
-      onPointerUp={acoes?.aoTocar}>
-      <header className="vis-cab">
-        <h3>{v.titulo}</h3>
-        <span className="vis-botoes">
-          {acoes && (
-            <>
-              <button className={`vis-ir vis-fav ${acoes.fav ? 'ligado' : ''}`} onClick={acoes.aoFavoritar} aria-pressed={acoes.fav}
-                aria-label={acoes.fav ? tx('Tirar dos favoritos') : tx('Favoritar: fica no topo')} title={acoes.fav ? tx('Tirar dos favoritos') : tx('Favoritar: fica no topo')}>
-                <Icone nome="estrela" tamanho={16} />
-              </button>
-              <button className="vis-ir" onClick={acoes.aoEsconder} aria-label={tx('Esconder este gráfico')} title={tx('Esconder este gráfico')}>
-                <Icone nome="olho-fechado" tamanho={16} />
-              </button>
-            </>
-          )}
-          {v.destino && aoIr && <button className="vis-ir" onClick={() => aoIr(v.destino!)} aria-label={tx('Abrir')}><Icone nome="dir" tamanho={18} /></button>}
-        </span>
-      </header>
-      {v.frase && <p className="vis-frase">{v.frase}</p>}
-      <div className="vis-corpo">{children}</div>
-    </section>
-  )
-}
 
 export function Grafico({ v }: { v: Visual }) {
   switch (v.tipo) {
@@ -66,10 +25,16 @@ export function Grafico({ v }: { v: Visual }) {
     case 'halteres': return <Halteres itens={v.itens} />
     case 'colunas': return <Colunas colunas={v.colunas} />
     case 'linhaDoTempo': return <LinhaDoTempo v={v} />
-    case 'pote': return <Pote atual={v.atual} maximo={v.maximo} marcos={v.marcos} />
+    case 'pote': return <Pote atual={v.atual} maximo={v.maximo} marcos={v.marcos} legenda={v.legenda ?? tx('guardado')} />
     case 'aneis': return <Aneis itens={v.itens} />
     case 'tabela': return <Tabela colunas={v.colunas} linhas={v.linhas} />
     case 'fluxo': return <Fluxo grupos={v.grupos} semDinheiro={v.semDinheiro} />
+    case 'quadradinhos': return <Quadradinhos fatias={v.fatias} ideal={v.ideal} />
+    case 'faixa': return <Faixa fatias={v.fatias} ideal={v.ideal} />
+    case 'duelo': return <Duelo lados={v.lados} selo={v.selo} tom={v.seloTom} />
+    case 'numerao': return <Numerao valor={v.valor} formato={v.formato} legenda={v.legenda} faisca={v.faisca} cor={v.tom ? COR_DO_TOM[v.tom] : 'var(--destaque)'} />
+    case 'podio': return <Podio itens={v.itens} />
+    case 'trilha': return <Trilha atual={v.atual} maximo={v.maximo} marcos={v.marcos} legenda={v.legenda} cor={v.tom ? COR_DO_TOM[v.tom] : 'var(--an-destino)'} />
   }
 }
 
@@ -516,7 +481,7 @@ function LinhaDoTempo({ v }: { v: Extract<Visual, { tipo: 'linhaDoTempo' }> }) {
 
 // ---------- pote (reserva) ----------
 
-function Pote({ atual, maximo, marcos }: { atual: number; maximo: number; marcos: { rotulo: string; valor: number }[] }) {
+function Pote({ atual, maximo, marcos, legenda }: { atual: number; maximo: number; marcos: { rotulo: string; valor: number }[]; legenda: string }) {
   const p = Math.min(1, atual / Math.max(1, maximo))
   return (
     <div className="rsv">
@@ -528,7 +493,7 @@ function Pote({ atual, maximo, marcos }: { atual: number; maximo: number; marcos
       </div>
       <div className="rsv-numeros">
         <strong><Numero valor={atual} formato={fmtValor} /></strong>
-        <small>{tx('guardado')}</small>
+        <small>{legenda}</small>
         {marcos.map((m) => (
           <span key={m.rotulo} className={atual >= m.valor ? 'ok' : ''}>
             <Icone nome={atual >= m.valor ? 'check' : 'meta'} tamanho={14} /> {m.rotulo}: {fmtCurto(m.valor)}
@@ -573,5 +538,164 @@ function Tabela({ colunas, linhas }: { colunas: string[]; linhas: { icone: strin
         ))}
       </tbody>
     </table>
+  )
+}
+
+// ---------- os desenhos que o compositor escolhe (lib/composicao.ts) ----------
+
+/** As partes em porcentagens inteiras que somam 100 (o que sobra do arredondamento vai para quem perdeu mais). */
+function porCento(fatias: Fatia[]): number[] {
+  const total = fatias.reduce((s, f) => s + Math.max(0, f.valor), 0)
+  if (total <= 0) return fatias.map(() => 0)
+  const exatos = fatias.map((f) => (Math.max(0, f.valor) / total) * 100)
+  const inteiros = exatos.map(Math.floor)
+  let falta = 100 - inteiros.reduce((s, n) => s + n, 0)
+  const ordem = exatos.map((x, i) => ({ i, resto: x - Math.floor(x) })).sort((a, b) => b.resto - a.resto)
+  for (const { i } of ordem) {
+    if (falta <= 0) break
+    inteiros[i]++
+    falta--
+  }
+  return inteiros
+}
+
+function LegendaDasPartes({ fatias, pcts, ideal }: { fatias: Fatia[]; pcts: number[]; ideal?: Fatia[] }) {
+  return (
+    <ul className="rosca-legenda partes-legenda">
+      {fatias.map((f, i) => (
+        <li key={f.rotulo}>
+          <i style={{ background: f.cor }} />
+          <span>{f.rotulo}</span>
+          <b>{pcts[i]}%</b>
+          {ideal && <small>{tx('ideal {0}', fmtPct(ideal[i]?.valor ?? 0))}</small>}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+/** 100 quadradinhos: cada um é 1% do todo. Enchem em onda, uma cor de cada vez. */
+function Quadradinhos({ fatias, ideal }: { fatias: Fatia[]; ideal?: Fatia[] }) {
+  const pcts = porCento(fatias)
+  const cores = pcts.flatMap((n, i) => Array.from({ length: n }, () => fatias[i].cor))
+  return (
+    <div className="quadradinhos">
+      <div className="quadradinhos-grade" role="img" aria-label={fatias.map((f, i) => `${f.rotulo}: ${pcts[i]}%`).join(', ')}>
+        {Array.from({ length: 100 }, (_, i) => <i key={i} style={{ '--i': i, background: cores[i] ?? 'var(--preench-3)' } as CSSProperties} />)}
+      </div>
+      <LegendaDasPartes fatias={fatias} pcts={pcts} ideal={ideal} />
+    </div>
+  )
+}
+
+/** Uma barra só, dividida nas partes; a legenda diz quanto é cada uma. */
+function Faixa({ fatias, ideal }: { fatias: Fatia[]; ideal?: Fatia[] }) {
+  const pcts = porCento(fatias)
+  return (
+    <div className="faixa">
+      <div className="faixa-barra" role="img" aria-label={fatias.map((f, i) => `${f.rotulo}: ${pcts[i]}%`).join(', ')}>
+        {fatias.map((f, i) => pcts[i] > 0 && (
+          <i key={f.rotulo} style={{ '--i': i, flexGrow: pcts[i], background: f.cor } as CSSProperties}>{pcts[i] >= 12 && <b>{pcts[i]}%</b>}</i>
+        ))}
+      </div>
+      <LegendaDasPartes fatias={fatias} pcts={pcts} ideal={ideal} />
+    </div>
+  )
+}
+
+/** Dois valores frente a frente: duas colunas que sobem e, no meio, a diferença. */
+function Duelo({ lados, selo, tom }: { lados: [LadoDoDuelo, LadoDoDuelo]; selo: string; tom: Tom }) {
+  const max = Math.max(1, ...lados.map((l) => Math.abs(l.valor)))
+  return (
+    <div className="duelo">
+      {lados.map((l, i) => (
+        <div key={i} className="duelo-lado" style={{ '--i': i, '--c': l.cor } as CSSProperties}>
+          <b>{fmtCurto(l.valor)}</b>
+          <span className="duelo-coluna"><i style={{ height: `${Math.max(3, (Math.abs(l.valor) / max) * 100)}%` }} /></span>
+          <small>{l.rotulo}</small>
+        </div>
+      ))}
+      {selo && <span className="duelo-selo" style={{ '--c': COR_DO_TOM[tom] } as CSSProperties}>{selo}</span>}
+    </div>
+  )
+}
+
+const FORMATO: Record<FormatoDoNumero, (n: number) => string> = {
+  dinheiro: fmtValor,
+  pct: (n) => fmtPct(n),
+  inteiro: (n) => String(Math.round(n)),
+}
+
+/** Um número só, bem grande, contando até o valor; embaixo, a história dele em colunas pequenas (se houver). */
+function Numerao({ valor, formato, legenda, faisca, cor }: { valor: number; formato: FormatoDoNumero; legenda: string; faisca?: Ponto[]; cor: string }) {
+  const max = Math.max(1, ...(faisca ?? []).map((p) => Math.abs(p.valor)))
+  return (
+    <div className="numerao" style={{ '--c': cor } as CSSProperties}>
+      <strong><Numero valor={valor} formato={FORMATO[formato]} duracao={1600} /></strong>
+      <span>{legenda}</span>
+      {formato === 'pct' && <span className="numerao-barra"><i style={{ width: `${Math.max(0, Math.min(1, valor)) * 100}%` }} /></span>}
+      {faisca && faisca.length >= 2 && (
+        <div className="numerao-faisca" aria-hidden="true">
+          {faisca.map((p, i) => (
+            <span key={i} className={p.valor >= 0 ? 'pos' : 'neg'} style={{ '--i': i } as CSSProperties} title={`${p.rotulo}: ${fmtValor(p.valor)}`}>
+              <i style={{ height: `${Math.max(8, (Math.abs(p.valor) / max) * 100)}%` }} />
+              <small>{p.rotulo}</small>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Os três maiores num pódio (o maior no meio); do quarto em diante, em linha. */
+function Podio({ itens }: { itens: { rotulo: string; valor: number; icone?: string }[] }) {
+  const tres = itens.slice(0, 3)
+  const max = Math.max(1, tres[0]?.valor ?? 1)
+  // a ordem do pódio na tela: 2º, 1º, 3º
+  const ordem = [1, 0, 2].filter((i) => tres[i])
+  return (
+    <div className="podio">
+      <div className="podio-degraus">
+        {ordem.map((i) => (
+          <div key={i} className={`podio-lugar lugar-${i + 1}`} style={{ '--i': i } as CSSProperties}>
+            <span className="podio-nome">{tres[i].icone && <span>{tres[i].icone}</span>} {tres[i].rotulo}</span>
+            <b>{fmtCurto(tres[i].valor)}</b>
+            <i style={{ height: `${Math.max(28, (tres[i].valor / max) * 100)}%` }}><em>{i + 1}</em></i>
+          </div>
+        ))}
+      </div>
+      {itens.length > 3 && (
+        <ul className="podio-resto">
+          {itens.slice(3).map((x, i) => <li key={`${x.rotulo}${i}`}><span>{i + 4}. {x.rotulo}</span><b>{fmtCurto(x.valor)}</b></li>)}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+/** Uma trilha de 0 ao alvo: a barra anda até onde a pessoa está e os marcos ficam no caminho. */
+function Trilha({ atual, maximo, marcos, legenda, cor }: { atual: number; maximo: number; marcos: { rotulo: string; valor: number }[]; legenda: string; cor: string }) {
+  const base = Math.max(1, maximo)
+  const p = Math.max(0, Math.min(1, atual / base))
+  return (
+    <div className="trilha" style={{ '--c': cor, '--p': p } as CSSProperties}>
+      <div className="trilha-numeros">
+        <span className="trilha-valor"><strong><Numero valor={atual} formato={fmtValor} /></strong><small>{legenda}</small></span>
+        <span>{fmtPct(p)}</span>
+      </div>
+      <div className="trilha-barra">
+        <i className="trilha-feito" />
+        {marcos.map((m) => <i key={m.rotulo} className={`trilha-marco ${atual >= m.valor ? 'ok' : ''}`} style={{ left: `${Math.max(0, Math.min(1, m.valor / base)) * 100}%` }} />)}
+        <i className="trilha-ponto" />
+      </div>
+      <ul className="trilha-marcos">
+        {marcos.map((m) => (
+          <li key={m.rotulo} className={atual >= m.valor ? 'ok' : ''}>
+            <Icone nome={atual >= m.valor ? 'check' : 'meta'} tamanho={14} /> {m.rotulo}: {fmtCurto(m.valor)}
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

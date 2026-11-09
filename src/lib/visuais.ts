@@ -1,5 +1,5 @@
 /**
- * Gerador de visuais do consultor: olha a análise (lib/analise.ts) e decide quais gráficos, tabelas e medidores a pessoa
+ * Gerador de visuais do consultor (a base das descobertas de lib/achados.ts): olha a análise (lib/analise.ts) e decide quais gráficos, tabelas e medidores a pessoa
  * precisa ver, em ordem de importância, cada um com um título curto e uma frase só, em palavras simples.
  *
  * É puro como o motor: só monta os dados de cada visual. Quem desenha (e anima) é pages/AnaliseGraficos.tsx.
@@ -69,11 +69,27 @@ export type Visual = Base & (
   | { tipo: 'halteres'; itens: { rotulo: string; icone: string; antes: number; agora: number }[] }
   | { tipo: 'colunas'; colunas: Ponto[] }
   | { tipo: 'linhaDoTempo'; inicio: number; fim: number; itens: { rotulo: string; fim: number; fimComPlano: number | null }[] }
-  | { tipo: 'pote'; atual: number; maximo: number; marcos: { rotulo: string; valor: number }[] }
+  | { tipo: 'pote'; atual: number; maximo: number; marcos: { rotulo: string; valor: number }[]; /** O que o número é ("guardado" quando não vem). */ legenda?: string }
   | { tipo: 'aneis'; itens: { rotulo: string; icone: string; progresso: number; legenda: string; tom: Tom }[] }
   | { tipo: 'tabela'; colunas: string[]; linhas: { icone: string; rotulo: string; valores: number[]; corta: boolean }[] }
   | { tipo: 'fluxo'; grupos: GrupoDoFluxo[]; semDinheiro: { rotulo: string; valor: number; custo: number }[] }
+  // ---- os desenhos que o compositor (lib/composicao.ts) escolhe conforme o dado ----
+  /** 100 quadradinhos: "de cada 100 que entram, tantos vão para…". */
+  | { tipo: 'quadradinhos'; fatias: Fatia[]; ideal?: Fatia[] }
+  /** Uma barra só, dividida nas partes. */
+  | { tipo: 'faixa'; fatias: Fatia[]; ideal?: Fatia[] }
+  /** Dois valores frente a frente, com a diferença no meio. */
+  | { tipo: 'duelo'; lados: [LadoDoDuelo, LadoDoDuelo]; selo: string; seloTom: Tom }
+  /** Um número só, bem grande, com (se houver) a história dele em colunas pequenas. */
+  | { tipo: 'numerao'; valor: number; formato: FormatoDoNumero; legenda: string; faisca?: Ponto[] }
+  /** Os três maiores num pódio; o resto, em linha. */
+  | { tipo: 'podio'; itens: { rotulo: string; valor: number; icone?: string }[] }
+  /** Uma trilha de 0 ao alvo, com os marcos no caminho. */
+  | { tipo: 'trilha'; atual: number; maximo: number; marcos: { rotulo: string; valor: number }[]; legenda: string }
 )
+
+export interface LadoDoDuelo { rotulo: string; valor: number; cor: string }
+export type FormatoDoNumero = 'dinheiro' | 'pct' | 'inteiro'
 
 /** Um dinheiro que entra (ou o saldo de hoje) e o que ele paga, com o atraso de cada um. */
 export interface GrupoDoFluxo {
