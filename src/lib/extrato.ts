@@ -78,7 +78,8 @@ const TIPOS_DE_LINHA: { re: RegExp; tipo?: Tipo; /** Pix ou transferência: o qu
   { pessoa: true, re: /^(ted|doc|transferencia|transf\.?)\s+enviad[oa]\s*(para|-|:)?\s*/, tipo: 'saida', nome: (r) => r || 'Transferência enviada' },
   { pessoa: true, re: /^pix\s*(transf(erencia)?\.?|qr[sc]?(\s*code)?|copia e cola|agendado)?\s*(-|:)?\s*/, nome: (r, t) => r || (t === 'entrada' ? 'Pix recebido' : 'Pix enviado') },
   { pessoa: true, re: /^(ted|doc|transferencia|transf\.?)\s*(-|:)?\s*/, nome: (r, t) => r || (t === 'entrada' ? 'Transferência recebida' : 'Transferência enviada') },
-  { re: /^((pagamento|pgto|pag\.?)\s+(de\s+)?)?(boleto|titulo)\s*(-|:)?\s*/, tipo: 'saida', nome: (r) => r || 'Boleto' },
+  // Nubank: "Pagamento de boleto efetuado - ENEL" (o "efetuado" não é nome)
+  { re: /^((pagamento|pgto|pag\.?)\s+(de\s+)?)?(boleto|titulo)(\s+(efetuado|realizado|pago|agendado))?\s*(-|:)?\s*/, tipo: 'saida', nome: (r) => r || 'Boleto' },
   { re: /^((pagamento|pgto)\s+(de\s+)?)?fatura\s*(do\s+cartao)?\s*(-|:)?\s*/, tipo: 'saida', nome: (r) => (r ? `Fatura ${r}` : 'Fatura do cartão') },
   { re: /^(compra (com |no |de )?cart[aã]o( de debito| de credito| deb| cred)?( mc| visa| elo)?|compra no debito|compra no credito|compra|debito|cartao)\s*(-|:|em)?\s*/, tipo: 'saida', nome: (r) => r || 'Compra' },
   { re: /^(saque)\b\s*(-|:)?\s*/, tipo: 'saida', nome: () => 'Saque' },
