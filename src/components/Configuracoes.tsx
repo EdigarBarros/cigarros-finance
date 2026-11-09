@@ -312,7 +312,15 @@ export function ZerarDados({ contagem, aoBaixarBackup, aoZerar, aoFechar }: {
         </button>
         <label className="campo">
           <span className="campo-rotulo">{tx('Para confirmar, digite')} <b>{tx('ZERAR')}</b></span>
-          <input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={tx('ZERAR')} autoComplete="off" autoCapitalize="characters" />
+          {/* no celular o teclado cobre o botão: o "Ir" do teclado também confirma, e o botão sobe para a vista */}
+          <input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={tx('ZERAR')} autoComplete="off" autoCapitalize="characters" enterKeyHint="go"
+            onFocus={(e) => { const alvo = e.currentTarget; setTimeout(() => alvo.closest('.form')?.querySelector('.form-acoes')?.scrollIntoView({ block: 'end', behavior: 'smooth' }), 350) }}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter') return
+              e.preventDefault()
+              if (pode) zerar()
+              else if (!algum) setErro(tx('Marque o que quer apagar.'))
+            }} />
         </label>
         {erro && <p className="form-erro">{erro}</p>}
         <div className="form-acoes">
