@@ -9402,5 +9402,93 @@
   "dinheiro que cai todo mês": {
     "en": "money that comes in every month",
     "es": "dinero que entra todos los meses"
+  },
+  "1 lançamento feito neste dia, logo abaixo.": {
+    "en": "1 entry on this day, right below.",
+    "es": "1 movimiento en este día, justo abajo."
+  },
+  "Ainda não lançado": {
+    "en": "Not entered yet",
+    "es": "Aún sin registrar"
+  },
+  "Amanhã": {
+    "en": "Tomorrow",
+    "es": "Mañana"
+  },
+  "Daqui a {0} dias": {
+    "en": "In {0} days",
+    "es": "Dentro de {0} días"
+  },
+  "Entra {0}, sai {1}": {
+    "en": "In {0}, out {1}",
+    "es": "Entra {0}, sale {1}"
+  },
+  "Há {0} dias": {
+    "en": "{0} days ago",
+    "es": "Hace {0} días"
+  },
+  "Nada lançado ainda neste dia.": {
+    "en": "Nothing entered on this day yet.",
+    "es": "Nada registrado aún en este día."
+  },
+  "Nada lançado nem previsto para este dia.": {
+    "en": "Nothing entered or expected on this day.",
+    "es": "Nada registrado ni previsto para este día."
+  },
+  "No dia, entra o mesmo que sai": {
+    "en": "On this day, the same comes in as goes out",
+    "es": "Ese día entra lo mismo que sale"
+  },
+  "No dia, entra {0} a mais do que sai": {
+    "en": "On this day, {0} more comes in than goes out",
+    "es": "Ese día entra {0} más de lo que sale"
+  },
+  "No dia, sai {0} a mais do que entra": {
+    "en": "On this day, {0} more goes out than comes in",
+    "es": "Ese día sale {0} más de lo que entra"
+  },
+  "O dia {0}": {
+    "en": "The day {0}",
+    "es": "El día {0}"
+  },
+  "Parcela {0} da dívida": {
+    "en": "Debt installment {0}",
+    "es": "Cuota {0} de la deuda"
+  },
+  "Parcela {0} de quem te deve": {
+    "en": "Installment {0} from who owes you",
+    "es": "Cuota {0} de quien te debe"
+  },
+  "Toque num dia para ver": {
+    "en": "Tap a day to see",
+    "es": "Toca un día para ver"
+  },
+  "Ver o mês todo": {
+    "en": "See the whole month",
+    "es": "Ver todo el mes"
+  },
+  "não caiu": {
+    "en": "didn't arrive",
+    "es": "no llegó"
+  },
+  "vai entrar": {
+    "en": "coming in",
+    "es": "va a entrar"
+  },
+  "vai entrar {0}": {
+    "en": "{0} coming in",
+    "es": "va a entrar {0}"
+  },
+  "vai sair": {
+    "en": "going out",
+    "es": "va a salir"
+  },
+  "vai sair {0}": {
+    "en": "{0} going out",
+    "es": "va a salir {0}"
+  },
+  "{0} lançamentos feitos neste dia, logo abaixo.": {
+    "en": "{0} entries on this day, right below.",
+    "es": "{0} movimientos en este día, justo abajo."
   }
 }
