@@ -16,6 +16,7 @@ import { AnelVivo, Vitrine } from '../components/Vitrine'
 import { Seletor } from '../components/Escolhas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
+import { previstosDoMes, somaPrevistos, type Previsto } from '../lib/previstos'
 
 type Filtro<T> = T | 'todos'
 const SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', tx('sáb')]
@@ -62,6 +63,14 @@ export function Lancamentos(c: Ctx) {
   const casa = useMemo(() => criarBusca(busca, hoje, somaDias(hoje, -1)), [busca, hoje])
   /** O mês aberto tem algum lançamento aqui (fora as compras no cartão)? */
   const temNoMes = c.lancsMesComGuardados.some((l) => !naTelaCartoes(l))
+  // o que ainda vem no mês (contas sem baixa, parcelas de dívida e do que te devem), por dia, para o calendário
+  const previstos = useMemo(() => previstosDoMes({
+    ano: c.ano, mes: c.mes, hoje, diaRef: c.diaRef,
+    contas: c.v.contas ? c.situacoesContas : [],
+    dividas: c.v.dividas ? [...c.situacao, ...c.aReceber] : [],
+    faturas: c.faturas,
+  }), [c.ano, c.mes, hoje, c.diaRef, c.v.contas, c.v.dividas, c.situacoesContas, c.situacao, c.aReceber, c.faturas])
+  const comCalendario = (temNoMes || previstos.size > 0) && c.perfil.detalhe !== 'simples'
   // o que o lançamento "diz", sem acento: nome, categoria, banco, cartão, forma, dívida e se é entrada ou saída
   const textoDe = (l: Lancamento) => {
     const f = formaDe(l)
@@ -192,10 +201,10 @@ export function Lancamentos(c: Ctx) {
         </section>
       )}
 
-      <div className={`lc-grade ${temNoMes && nivel !== 'simples' ? '' : 'sem-lado'}`}>
-        {temNoMes && nivel !== 'simples' && (
+      <div className={`lc-grade ${comCalendario ? '' : 'sem-lado'}`}>
+        {comCalendario && (
           <aside className="lc-lado">
-            <CalorDoMes ano={c.ano} mes={c.mes} lancs={semDia} dia={dia} hoje={hoje} aoEscolher={(d) => setDia(d === dia ? null : d)} />
+            <CalorDoMes ano={c.ano} mes={c.mes} lancs={semDia} previstos={previstos} dia={dia} hoje={hoje} aoEscolher={(d) => setDia(d === dia ? null : d)} />
 
             {chips.length > 0 && (
               <section className="cartao lc-cats" aria-label={tx('Categorias')}>
@@ -226,7 +235,11 @@ export function Lancamentos(c: Ctx) {
         )}
 
         <div className="lc-principal">
-          {(entrou > 0 || saiu > 0 || filtrando) && <Vitrine cor={entrou - saiu < 0 ? 'var(--saida)' : 'var(--entrada)'} className="lc-vitrine"
+          {dia && comCalendario && (
+            <NoDia dia={dia} hoje={hoje} lancs={semDia.filter((l) => l.data === dia)} previstos={previstos.get(dia) ?? []} aoFechar={() => setDia(null)}
+              aoAbrir={(p) => c.irPara(p.origem === 'conta' ? 'contas' : p.origem === 'cartao' ? 'cartoes' : 'dividas')} />
+          )}
+          {(entrou > 0 || saiu > 0 || filtrando) && !(dia && comCalendario) && <Vitrine cor={entrou - saiu < 0 ? 'var(--saida)' : 'var(--entrada)'} className="lc-vitrine"
             visual={(entrou > 0 || saiu > 0) ? (
               <AnelVivo valor={parteSaiu} cor={parteSaiu >= 1 ? 'var(--saida)' : parteSaiu >= 0.85 ? 'var(--divida)' : 'var(--caixa)'} cor2="var(--entrada)" tamanho={c.mobile ? 118 : 132} espessura={12}>
                 <b>{entrou > 0 ? `${Math.round((saiu / entrou) * 100)}%` : '—'}</b><small>{tx('do que entrou saiu')}</small>
@@ -282,7 +295,7 @@ export function Lancamentos(c: Ctx) {
             </div>
           )}
 
-          {!filtrados.length ? (
+          {!filtrados.length && dia && comCalendario ? null : !filtrados.length ? (
             <section className={`cartao ${filtrando ? 'lc-vazio' : tx('lc-vazio vz-vazio')}`}>
               {filtrando ? <span className="lc-vazio-icone"><Icone nome="busca" tamanho={30} /></span> : <CenaLancamentos />}
               {filtrando
@@ -383,15 +396,16 @@ function somaDias(iso: string, n: number) {
  * Calendário do mês: cada dia pinta mais forte quanto mais saiu nele, com um pontinho verde quando entrou dinheiro.
  * Tocar num dia mostra só os lançamentos dele (tocar de novo volta a mostrar todos).
  */
-function CalorDoMes({ ano, mes, lancs, dia, hoje, aoEscolher }: {
-  ano: number; mes: number; lancs: Lancamento[]; dia: string | null; hoje: string; aoEscolher: (d: string) => void
+function CalorDoMes({ ano, mes, lancs, previstos, dia, hoje, aoEscolher }: {
+  ano: number; mes: number; lancs: Lancamento[]; previstos: Map<string, Previsto[]>; dia: string | null; hoje: string; aoEscolher: (d: string) => void
 }) {
   const total = new Date(ano, mes, 0).getDate()
   const offset = new Date(ano, mes - 1, 1).getDay()
   const porDia = Array.from({ length: total }, (_, i) => {
     const d = `${ano}-${doisDig(mes)}-${doisDig(i + 1)}`
     const ls = lancs.filter((l) => l.data === d)
-    return { d, n: i + 1, saiu: somaTipo(ls, 'saida'), entrou: somaTipo(ls, 'entrada'), qtd: ls.length }
+    const ps = previstos.get(d)
+    return { d, n: i + 1, saiu: somaTipo(ls, 'saida'), entrou: somaTipo(ls, 'entrada'), qtd: ls.length, vaiSair: somaPrevistos(ps, 'saida'), vaiEntrar: somaPrevistos(ps, 'entrada') }
   })
   const maior = Math.max(1, ...porDia.map((x) => x.saiu))
   const pico = porDia.reduce((a, x) => (x.saiu > a.saiu ? x : a), porDia[0])
@@ -406,16 +420,114 @@ function CalorDoMes({ ano, mes, lancs, dia, hoje, aoEscolher }: {
         {Array.from({ length: offset }, (_, i) => <span key={`v${i}`} />)}
         {porDia.map((x, i) => (
           <button key={x.d} role="gridcell"
-            className={`lc-calor-dia ${x.d === hoje ? 'hoje' : ''} ${x.d === dia ? 'ativo' : ''} ${x.qtd ? '' : 'vazio'} ${x.d > hoje ? 'futuro' : ''}`}
+            className={`lc-calor-dia ${x.d === hoje ? 'hoje' : ''} ${x.d === dia ? 'ativo' : ''} ${x.qtd ? '' : 'vazio'} ${x.d > hoje ? 'futuro' : ''} ${x.vaiSair || x.vaiEntrar ? 'previsto' : ''}`}
             style={{ '--i': x.saiu / maior, animationDelay: `${i * 12}ms` } as React.CSSProperties}
-            title={x.qtd ? tx('{0}: saiu {1}', x.n, fmtValor(x.saiu)) + (x.entrou ? tx(', entrou {0}', fmtValor(x.entrou)) : '') : tx('{0}: nada lançado', x.n)}
-            onClick={() => aoEscolher(x.d)} disabled={!x.qtd}>
+            title={[
+              x.qtd ? tx('{0}: saiu {1}', x.n, fmtValor(x.saiu)) + (x.entrou ? tx(', entrou {0}', fmtValor(x.entrou)) : '') : tx('{0}: nada lançado', x.n),
+              x.vaiSair ? tx('vai sair {0}', fmtValor(x.vaiSair)) : '',
+              x.vaiEntrar ? tx('vai entrar {0}', fmtValor(x.vaiEntrar)) : '',
+            ].filter(Boolean).join(' · ')}
+            onClick={() => aoEscolher(x.d)} aria-pressed={x.d === dia}>
             {x.n}
             {x.entrou > 0 && <i className="lc-calor-entrou" />}
+            {(x.vaiSair > 0 || x.vaiEntrar > 0) && (
+              <span className="lc-calor-prev" aria-hidden="true">
+                {x.vaiEntrar > 0 && <i className="entra" />}
+                {x.vaiSair > 0 && <i className="sai" />}
+              </span>
+            )}
           </button>
         ))}
       </div>
       <span className="lc-calor-legenda"><small>{tx('menos')}</small><i /><i /><i /><i /><small>{tx('mais gasto')}</small><i className="entrou" /><small>{tx('entrou')}</small></span>
+      {previstos.size > 0 && (
+        <span className="lc-calor-legenda lc-calor-legenda-prev">
+          <i className="prev-entra" /><small>{tx('vai entrar')}</small><i className="prev-sai" /><small>{tx('vai sair')}</small>
+          <small className="lc-calor-dica">{tx('Toque num dia para ver')}</small>
+        </span>
+      )}
     </div>
+  )
+}
+
+/**
+ * O dia escolhido no calendário: quanto entra e quanto sai nele (o que já foi lançado mais o que ainda vem), numa barra que
+ * mostra qual lado pesa mais, e a lista do que está previsto e ainda não foi lançado (contas do mês e parcelas).
+ */
+function NoDia({ dia, hoje, lancs, previstos, aoFechar, aoAbrir }: {
+  dia: string; hoje: string; lancs: Lancamento[]; previstos: Previsto[]; aoFechar: () => void; aoAbrir: (p: Previsto) => void
+}) {
+  const passou = dia < hoje
+  const entra = Math.round((somaTipo(lancs, 'entrada') + somaPrevistos(previstos, 'entrada')) * 100) / 100
+  const sai = Math.round((somaTipo(lancs, 'saida') + somaPrevistos(previstos, 'saida')) * 100) / 100
+  const saldo = entra - sai
+  const total = entra + sai
+  const data = new Date(`${dia}T12:00:00`)
+  const distancia = Math.round((data.getTime() - new Date(`${hoje}T12:00:00`).getTime()) / 86400000)
+  const quando = distancia === 0 ? tx('Hoje') : distancia === 1 ? tx('Amanhã') : distancia === -1 ? tx('Ontem')
+    : distancia > 1 ? tx('Daqui a {0} dias', distancia) : tx('Há {0} dias', -distancia)
+  const ordenados = [...previstos].sort((a, b) => Number(b.atrasado) - Number(a.atrasado) || (a.tipo === b.tipo ? b.valor - a.valor : a.tipo === 'entrada' ? -1 : 1))
+  const origem = (p: Previsto) => p.origem === 'cartao' ? tx('Fatura do cartão') : p.origem === 'conta'
+    ? (p.tipo === 'entrada' ? tx('Entrada fixa') : tx('Conta do mês'))
+    : p.origem === 'receber'
+      ? (p.detalhe ? tx('Parcela {0} de quem te deve', p.detalhe) : tx('Quem te deve'))
+      : (p.detalhe ? tx('Parcela {0} da dívida', p.detalhe) : tx('Dívida'))
+  return (
+    <section className="cartao lc-nodia" aria-label={tx('O dia {0}', fmtDataLonga(dia))}>
+      <header className="lc-nodia-cab">
+        <span className="lc-nodia-data">
+          <b>{doisDig(data.getDate())}</b>
+          <small>{SEMANA[data.getDay()]}</small>
+        </span>
+        <span className="lc-nodia-titulo">
+          <strong>{fmtDataLonga(dia)}</strong>
+          <small>{quando}</small>
+        </span>
+        <button className="icone-btn" onClick={aoFechar} aria-label={tx('Ver o mês todo')} title={tx('Ver o mês todo')}><Icone nome="fechar" tamanho={16} /></button>
+      </header>
+
+      <div className="lc-nodia-numeros">
+        <span className="lc-nodia-num entra">
+          <small><Icone nome="receber" tamanho={14} /> {passou ? tx('Entrou') : tx('Vai entrar')}</small>
+          <b>+ {fmtValor(entra)}</b>
+        </span>
+        <span className="lc-nodia-num sai">
+          <small><Icone nome="enviar" tamanho={14} /> {passou ? tx('Saiu') : tx('Vai sair')}</small>
+          <b>− {fmtValor(sai)}</b>
+        </span>
+      </div>
+      {total > 0 && (
+        <div className="lc-nodia-balanca">
+          <span className="lc-nodia-barra" role="img" aria-label={tx('Entra {0}, sai {1}', fmtValor(entra), fmtValor(sai))}>
+            <i className="entra" style={{ flexGrow: entra }} />
+            <i className="sai" style={{ flexGrow: sai }} />
+          </span>
+          <small className={saldo < 0 ? 'negativo' : 'positivo'}>
+            {saldo < 0 ? tx('No dia, sai {0} a mais do que entra', fmtValor(-saldo)) : saldo > 0 ? tx('No dia, entra {0} a mais do que sai', fmtValor(saldo)) : tx('No dia, entra o mesmo que sai')}
+          </small>
+        </div>
+      )}
+
+      {ordenados.length > 0 && (
+        <div className="lc-nodia-lista">
+          <h4>{tx('Ainda não lançado')}</h4>
+          {ordenados.map((p) => (
+            <button key={p.chave} type="button" className={`lc-nodia-item ${p.tipo}`} onClick={() => aoAbrir(p)}>
+              <span className="lc-nodia-icone"><Icone nome={p.origem === 'conta' ? 'calendario' : p.origem === 'receber' ? 'receber' : p.origem === 'cartao' ? 'cartao' : 'divida'} tamanho={16} /></span>
+              <span className="lc-nodia-nome">
+                <strong>{p.nome}</strong>
+                <small>{origem(p)}{p.atrasado && <em>{p.tipo === 'entrada' ? tx('não caiu') : tx('atrasada')}</em>}</small>
+              </span>
+              <span className="lc-nodia-valor">{p.tipo === 'entrada' ? '+' : '−'} {fmtValor(p.valor)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      <p className="lc-nodia-rodape">
+        {lancs.length
+          ? (lancs.length === 1 ? tx('1 lançamento feito neste dia, logo abaixo.') : tx('{0} lançamentos feitos neste dia, logo abaixo.', lancs.length))
+          : ordenados.length ? tx('Nada lançado ainda neste dia.') : tx('Nada lançado nem previsto para este dia.')}
+      </p>
+    </section>
   )
 }
