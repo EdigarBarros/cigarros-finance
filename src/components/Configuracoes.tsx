@@ -6,7 +6,7 @@ import { reduzirFoto } from '../lib/foto'
 import { MOEDAS } from '../lib/moedas'
 import { DETALHES, MODULOS } from '../lib/perfil'
 import { definirMovimento, definirTema, useMovimento, useTema, type Movimento, type PreferenciaTema } from '../lib/tema'
-import type { Categoria, Modulo, Perfil } from '../lib/types'
+import type { Categoria, Modulo, Perfil, SaldoInicial } from '../lib/types'
 import { estiloLente, useLente } from '../lib/useLente'
 import { Bandeira } from './Bandeira'
 import { PreviaDetalhe, PreviaTema } from './Previas'
@@ -15,7 +15,7 @@ import { PARTES_ZERAR, type EscolhaZerar, type ParteZerar } from '../lib/zerar'
 import { Icone } from './Icone'
 import { Interruptor, Modal, Opcao } from './ui'
 import { avisar } from '../lib/avisos'
-import { LOCAL_DAS_DATAS } from '../lib/format'
+import { fmtValor, LOCAL_DAS_DATAS, mesEAno } from '../lib/format'
 import { tx } from '../lib/textos'
 
 type Secao = 'perfil' | 'aparencia' | 'painel' | 'categorias' | 'dados' | 'conta'
@@ -41,7 +41,7 @@ function CartaoAcao({ icone, titulo, texto, aoClicar, perigo }: { icone: string;
 }
 
 /** Configurações em tela cheia: menu de seções à esquerda e cartões à direita. Cada mudança vale na hora. */
-export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoExtrato, aoOrganizar, aoZerar, aoSair, aoExcluirConta, aoFechar, assinatura, aoTour, secaoInicial = 'perfil' }: {
+export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoExtrato, aoOrganizar, aoZerar, aoSair, aoExcluirConta, aoFechar, assinatura, aoTour, saldoInicial, aoSaldoInicial, secaoInicial = 'perfil' }: {
   /** Seção que abre primeiro ("Personalizar" abre direto em Painel). */
   secaoInicial?: Secao
   perfil: Perfil; email: string; aoMudar: (p: Perfil) => void; aoRefazer: () => void; aoCategorias: () => void
@@ -60,6 +60,9 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
   assinatura?: Assinatura | null
   /** Abre o tutorial guiado do painel. */
   aoTour?: () => void
+  /** O ponto de partida do saldo de um mês para o outro e como abrir o formulário dele. */
+  saldoInicial?: SaldoInicial | null
+  aoSaldoInicial?: () => void
 }) {
   const [secao, setSecao] = useState<Secao>(secaoInicial)
   const [nome, setNome] = useState(perfil.nome)
@@ -190,6 +193,21 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
                   ))}
                 </div>
               </section>
+              {aoSaldoInicial && (
+                <section className="cfg-bloco">
+                  <h4>
+                    {tx('Saldo de um mês para o outro')}
+                    <small>
+                      {saldoInicial
+                        ? tx('Começa em {0} com {1}. Cada mês começa com o que sobrou do anterior.', mesEAno(Number(saldoInicial.mes.slice(0, 4)), Number(saldoInicial.mes.slice(5, 7))), `${saldoInicial.valor < 0 ? '− ' : ''}${fmtValor(Math.abs(saldoInicial.valor))}`)
+                        : tx('Diga quanto você tinha no começo de um mês e veja, em cada mês, com quanto ele começou e com quanto fechou.')}
+                    </small>
+                  </h4>
+                  <button type="button" className="btn cfg-saldo-btn" onClick={aoSaldoInicial}>
+                    <Icone nome={saldoInicial ? 'lapis' : 'mais'} tamanho={16} />{saldoInicial ? tx('Mudar o ponto de partida') : tx('Informar o saldo')}
+                  </button>
+                </section>
+              )}
               <section className="cfg-bloco">
                 <h4>{tx('O que aparece no seu painel')} <small>{tx('entradas e saídas estão sempre ligadas: são a base de tudo')}</small></h4>
                 <div className="cfg-modulos">

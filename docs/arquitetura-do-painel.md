@@ -772,6 +772,27 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
 - Investimentos passam a valer de um mês para o outro até serem atualizados (como caixa e moedas, em `mesEfetivo`):
   sem isso, o patrimônio parecia cair a zero em todo mês novo.
 
+### 4.15.1 Saldo de um mês para o outro (`lib/saldoCorrido.ts`, migração 27)
+
+O quadro do mês ("Entrou, Saiu, Sobrou") conta só o próprio mês. Quem quer ver o dinheiro passando de um mês para o outro,
+como numa poupança, informa **uma vez** quanto tinha no começo de um mês (`SaldoInicial`: `valor`, que pode ser negativo, e
+`mes` "AAAA-MM", em `perfis.saldo_inicial`; sem a migração, só no aparelho). Não vira lançamento (o "Entrou" do primeiro mês
+continua limpo) e **não mexe no saldo dos bancos** de Dinheiro guardado: é um número à parte, calculado.
+
+- **A conta** (`saldosDoAno`): cada mês começa com o fim do anterior e soma o mesmo "Sobrou/Faltou" do quadro, o que já
+  entrou menos o que já saiu (`previsaoDoAno`, sem o dinheiro só guardado nem compras de fatura renegociada). Meses que
+  passaram contam só o que aconteceu (conta não paga não entra). No mês de hoje: "Saldo até hoje" e, no modo "O que vem
+  aí", "Vai ficar no fim de …" com as contas e a fatura que ainda vêm; o mês seguinte começa desse previsto. Mês futuro só
+  aparece no modo "O que vem aí". Antes do mês de partida, nada.
+- **Anos anteriores ao aberto:** `useDados` lê só `ano, mes, tipo, valor, cartao_id, guardado_banco_id` dos anos entre a
+  partida e o aberto (`lancsAntesDoAno`) e `sobrasPorMes` soma com a mesma regra.
+- **Onde aparece:** no painel do mês do gráfico "Mês a mês" (Início detalhada e Resumo do ano): "Você tinha no começo"
+  (no primeiro mês, tocar abre o formulário) ou "Veio de …", e "Saldo no fim de …". Sem ponto de partida, o painel mostra
+  o convite "Ver o saldo de um mês para o outro". No Resumo do ano, a linha "Acumulado no ano" (que parte do zero) vira
+  "Saldo no fim do mês". Em Configurações → Painel, "Saldo de um mês para o outro" informa ou muda o ponto de partida.
+- Só na moeda principal. Se a pessoa esquecer de lançar algo, o saldo do app se afasta do banco: o "acertar com o banco"
+  fica para depois.
+
 ### 4.16 Lançamentos
 
 Duas colunas no computador. A lista com selos redondos saiu; cada lançamento agora é um **cartão**.

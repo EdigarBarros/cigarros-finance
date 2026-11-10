@@ -60,7 +60,7 @@ export function Ano(c: Ctx) {
 
       {nivel !== 'simples' && (
         <Cartao titulo={tx('Mês a mês')} acao={<span className="dica-cab so-desktop">{tx('toque na legenda para esconder ou mostrar uma série')}</span>}>
-          <GraficoAnual porMes={c.porMes} previsto={c.previsto} mesAtual={c.mes} altura={c.mobile ? 320 : 420} compacto={c.mobile} v={c.v} />
+          <GraficoAnual porMes={c.porMes} previsto={c.previsto} mesAtual={c.mes} altura={c.mobile ? 320 : 420} compacto={c.mobile} v={c.v} saldoCorrido={c.saldoCorrido} ano={c.ano} />
         </Cartao>
       )}
 
@@ -72,7 +72,7 @@ export function Ano(c: Ctx) {
 
       {nivel === 'detalhado' && (
         <Cartao titulo={tx('Quanto sobrou em cada mês')}>
-          <GraficoSaldo porMes={c.porMes} mesAtual={c.mes} compacto={c.mobile} />
+          <GraficoSaldo porMes={c.porMes} mesAtual={c.mes} compacto={c.mobile} saldos={c.saldoCorrido.porMes} />
         </Cartao>
       )}
       </>)}

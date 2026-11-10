@@ -9730,5 +9730,81 @@
   "A cotação parece estar ao contrário (o valor ficaria centenas de vezes maior ou menor). Toque em “Desvirar” ou confira.": {
     "en": "The exchange rate looks reversed (the amount would be hundreds of times bigger or smaller). Tap “Flip it” or check it.",
     "es": "La cotización parece estar al revés (el valor quedaría cientos de veces mayor o menor). Toca “Darla vuelta” o revísala."
+  },
+  "Digite quanto você tinha (pode ser 0).": {
+    "en": "Enter how much you had (it can be 0).",
+    "es": "Escribe cuánto tenías (puede ser 0)."
+  },
+  "Escolha o mês.": {
+    "en": "Choose the month.",
+    "es": "Elige el mes."
+  },
+  "Saldo de um mês para o outro": {
+    "en": "Balance from one month to the next",
+    "es": "Saldo de un mes al otro"
+  },
+  "Diga quanto você tinha no começo de um mês. A partir dele, cada mês começa com o que sobrou do anterior: o que sobra soma, o que falta tira.": {
+    "en": "Tell us how much you had at the start of a month. From then on, each month starts with what was left from the one before: what's left over adds up, what's short takes away.",
+    "es": "Dinos cuánto tenías al comienzo de un mes. Desde ahí, cada mes empieza con lo que quedó del anterior: lo que sobra suma, lo que falta resta."
+  },
+  "Quanto você tinha no começo do mês": {
+    "en": "How much you had at the start of the month",
+    "es": "Cuánto tenías al comienzo del mes"
+  },
+  "Estava no negativo (cheque especial)": {
+    "en": "I was in the red (overdraft)",
+    "es": "Estaba en negativo (descubierto)"
+  },
+  "Some o que estava nas contas e na carteira nesse dia. Não vira lançamento e não muda o saldo dos bancos.": {
+    "en": "Add up what was in your accounts and wallet that day. It doesn't become an entry and doesn't change your bank balances.",
+    "es": "Suma lo que había en tus cuentas y en la billetera ese día. No se vuelve un movimiento ni cambia el saldo de los bancos."
+  },
+  "Tirar o saldo": {
+    "en": "Remove the balance",
+    "es": "Quitar el saldo"
+  },
+  "Ver o saldo de um mês para o outro": {
+    "en": "See the balance from one month to the next",
+    "es": "Ver el saldo de un mes al otro"
+  },
+  "Mudar o ponto de partida": {
+    "en": "Change the starting point",
+    "es": "Cambiar el punto de partida"
+  },
+  "Você tinha no começo": {
+    "en": "You had at the start",
+    "es": "Tenías al comienzo"
+  },
+  "Veio de {0}": {
+    "en": "Carried over from {0}",
+    "es": "Vino de {0}"
+  },
+  "Saldo no fim de {0}": {
+    "en": "Balance at the end of {0}",
+    "es": "Saldo al final de {0}"
+  },
+  "Saldo até hoje": {
+    "en": "Balance so far",
+    "es": "Saldo hasta hoy"
+  },
+  "Vai ficar no fim de {0}": {
+    "en": "Expected at the end of {0}",
+    "es": "Quedará al final de {0}"
+  },
+  "Saldo no fim do mês": {
+    "en": "Balance at the end of the month",
+    "es": "Saldo al final del mes"
+  },
+  "Começa em {0} com {1}. Cada mês começa com o que sobrou do anterior.": {
+    "en": "Starts in {0} with {1}. Each month starts with what was left from the one before.",
+    "es": "Empieza en {0} con {1}. Cada mes empieza con lo que quedó del anterior."
+  },
+  "Diga quanto você tinha no começo de um mês e veja, em cada mês, com quanto ele começou e com quanto fechou.": {
+    "en": "Tell us how much you had at the start of a month and see, for every month, how much it started and ended with.",
+    "es": "Dinos cuánto tenías al comienzo de un mes y mira, en cada mes, con cuánto empezó y con cuánto cerró."
+  },
+  "Informar o saldo": {
+    "en": "Enter the balance",
+    "es": "Informar el saldo"
   }
 }
