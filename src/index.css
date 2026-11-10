@@ -4196,3 +4196,30 @@ body { top: 0 !important; }
 .lc-nodia-valor { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--c); white-space: nowrap; }
 .lc-nodia-rodape { margin: 0; font-size: 12.5px; color: var(--texto-3); }
 @media (max-width: 1180px) { .lc-principal > .lc-nodia { order: 1; } }
+
+/* Dívidas: promessas de pagamento ("prometeu pagar amanhã"), no cartão e na ficha */
+.dv-promessa-linha { display: flex; align-items: flex-start; gap: 7px; margin: 0; padding: 8px 10px; border-radius: 10px; font-size: 13px; color: var(--texto-2); background: color-mix(in srgb, var(--caixa) 12%, transparent); }
+.dv-promessa-linha svg { flex: none; margin-top: 1px; color: var(--caixa); }
+.dv-promessa-linha b { color: var(--texto); font-weight: 700; }
+.dv-promessa-linha small { font-size: 12px; color: var(--texto-2); }
+.dv-promessas { display: grid; gap: 10px; }
+.dv-promessas .dv-ficha-titulo { margin: 0; }
+.dv-promessas-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.dv-promessa { --c: var(--texto-3); display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 10px 10px 12px; border: 1px solid var(--borda); border-radius: var(--raio-m); background: var(--superficie-2); animation: surgir-sem-desfoque .4s var(--mola) backwards; }
+.dv-promessa.cumprida { --c: var(--entrada); }
+.dv-promessa.nao_cumprida { --c: var(--saida); }
+.dv-promessa.em_parte, .dv-promessa.pagou_depois { --c: var(--divida); }
+.dv-promessa.aguardando, .dv-promessa.hoje { --c: var(--caixa); }
+.dv-promessa.ativa { border-color: color-mix(in srgb, var(--caixa) 55%, transparent); background: color-mix(in srgb, var(--caixa) 8%, var(--superficie-2)); }
+.dv-promessa.trocada { opacity: .7; }
+.dv-promessa-marco { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); }
+.dv-promessa-corpo { display: grid; gap: 2px; min-width: 0; }
+.dv-promessa-topo { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.dv-promessa-topo strong { font-size: 14px; }
+.dv-promessa.nao_cumprida .dv-promessa-topo strong, .dv-promessa.trocada .dv-promessa-topo strong { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--c) 70%, transparent); }
+.dv-promessa-estado { font-size: 12px; font-weight: 700; color: var(--c); }
+.dv-promessa-corpo small { font-size: 12px; color: var(--texto-2); }
+.dv-promessa-corpo em { font-size: 12.5px; color: var(--texto-2); }
+.dv-promessa .icone-btn { width: 30px; height: 30px; }
+.dv-promessa-apagar { display: flex; gap: 6px; }
+.dv-promessa-atalhos { display: flex; gap: 6px; margin-bottom: 6px; }

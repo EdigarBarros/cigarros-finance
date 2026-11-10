@@ -1,6 +1,7 @@
 import type { SituacaoCartao } from './cartoes'
 import type { SituacaoConta } from './contasFixas'
-import { calendarioDe, meDevem, type SituacaoDivida } from './dividas'
+import { calendarioDe, meDevem, promessasDe, type SituacaoDivida } from './dividas'
+import type { Pagamento } from './types'
 
 /** Algo que ainda vai entrar ou sair num dia do mês e ainda não foi lançado. */
 export interface Previsto {
@@ -15,6 +16,8 @@ export interface Previsto {
   atrasado: boolean
   /** "Parcela 2 de 5", para dívidas com parcelas. */
   detalhe?: string
+  /** Veio de uma promessa de pagamento (o atrasado foi para o dia prometido). */
+  prometido?: boolean
 }
 
 /**
@@ -22,8 +25,11 @@ export interface Previsto {
  * faltam das dívidas e do que te devem, e a fatura do cartão em aberto, cada uma no dia em que vence. Lançamento já feito
  * não entra aqui (ele está na lista).
  */
-export function previstosDoMes({ ano, mes, contas, dividas, faturas = [], diaRef, hoje }: {
-  ano: number; mes: number; contas: SituacaoConta[]; dividas: SituacaoDivida[]; faturas?: SituacaoCartao[]; diaRef: string; hoje: string
+export function previstosDoMes({ ano, mes, contas, dividas, faturas = [], pagamentos = [], diaRef, hoje }: {
+  ano: number; mes: number; contas: SituacaoConta[]; dividas: SituacaoDivida[]; faturas?: SituacaoCartao[]
+  /** Para ver se a promessa de pagamento de cada dívida ainda vale. */
+  pagamentos?: Pagamento[]
+  diaRef: string; hoje: string
 }): Map<string, Previsto[]> {
   const prefixo = `${ano}-${String(mes).padStart(2, '0')}`
   const porDia = new Map<string, Previsto[]>()
@@ -40,11 +46,25 @@ export function previstosDoMes({ ano, mes, contas, dividas, faturas = [], diaRef
     const recebe = meDevem(s.divida)
     const cal = calendarioDe(s, diaRef)
     const total = cal?.parcelas.length ?? 0
+    const nome = s.divida.pessoa && !s.divida.descricao.includes(s.divida.pessoa) ? `${s.divida.descricao} · ${s.divida.pessoa}` : s.divida.descricao
+    // com promessa de pagamento de pé, o que está atrasado vai para o dia prometido (o valor prometido, se tiver)
+    const ativa = promessasDe(s, pagamentos, hoje).ativa
+    if (ativa) {
+      const atrasado = (cal?.parcelas ?? []).filter((p) => p.falta > 0 && p.vencimento < hoje).reduce((t, p) => t + p.falta, 0)
+      const valor = ativa.valor ?? atrasado
+      if (valor > 0 && ativa.promessa.data.startsWith(prefixo)) {
+        por(ativa.promessa.data, {
+          chave: `pr-${ativa.promessa.id}`, nome, valor: Math.round(valor * 100) / 100, tipo: recebe ? 'entrada' : 'saida',
+          origem: recebe ? 'receber' : 'divida', atrasado: false, prometido: true,
+        })
+      }
+    }
     for (const p of cal?.parcelas ?? []) {
       if (p.falta <= 0 || !p.vencimento.startsWith(prefixo)) continue
+      if (ativa && p.vencimento < hoje) continue
       por(p.vencimento, {
         chave: `d-${s.divida.id}-${p.n}`,
-        nome: s.divida.pessoa && !s.divida.descricao.includes(s.divida.pessoa) ? `${s.divida.descricao} · ${s.divida.pessoa}` : s.divida.descricao,
+        nome,
         valor: Math.round(p.falta * 100) / 100, tipo: recebe ? 'entrada' : 'saida', origem: recebe ? 'receber' : 'divida',
         atrasado: p.vencimento < hoje,
         detalhe: total > 1 ? `${p.n}/${total}` : undefined,
