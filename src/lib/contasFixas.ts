@@ -3,7 +3,7 @@
  * Aqui só há cálculo: dado as contas e os lançamentos do ano, diz o que venceu, o que vence e o que já foi pago.
  */
 import { fmtDataCurta, fmtMoeda, fmtValor, moedaAtual } from './format'
-import type { Taxas } from './moedas'
+import { cotacaoNoSentidoCerto, type Taxas } from './moedas'
 import type { ContaFixa, Lancamento } from './types'
 import { tx } from './textos'
 
@@ -67,7 +67,9 @@ export const moedaDaConta = (c: Pick<ContaFixa, 'moeda'>) => (c.moeda && c.moeda
  */
 export function taxaDaConta(c: Pick<ContaFixa, 'moeda' | 'cotacao'>, taxas: Taxas): number | null {
   const moeda = moedaDaConta(c)
-  return moeda ? c.cotacao || taxas[moeda] || null : 1
+  if (!moeda) return 1
+  // cotação combinada gravada ao contrário ("1 ARS = 280 R$"): o aluguel de 600 mil pesos virava 167 milhões de reais
+  return c.cotacao ? cotacaoNoSentidoCerto(c.cotacao, moeda, moedaAtual(), taxas) : taxas[moeda] || null
 }
 
 export function situacaoDaConta(c: ContaFixa, lancs: Lancamento[], ano: number, mes: number, hoje = hojeLocal(), taxas: Taxas = {}): SituacaoConta {
@@ -198,7 +200,7 @@ export function lancamentoDaBaixa(
     categoria_id: c.categoria_id, banco_id: c.banco_id, conta_fixa_id: c.id,
   }
   if (!moeda) return { ...base, valor: nativo }
-  const taxa = mudancas.cotacao || taxaDaConta(c, taxas)
+  const taxa = mudancas.cotacao ? cotacaoNoSentidoCerto(mudancas.cotacao, moeda, moedaAtual(), taxas) : taxaDaConta(c, taxas)
   // sem cotação combinada nem do dia, não há como converter: quem chama pede a cotação (nunca grava 1 por 1)
   if (!taxa) return null
   return { ...base, valor: centavos(nativo * taxa), valor_original: nativo, moeda_original: moeda }

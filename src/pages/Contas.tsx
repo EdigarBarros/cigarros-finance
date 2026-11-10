@@ -6,7 +6,7 @@ import {
 } from '../lib/contasFixas'
 import { casasDaMoeda, mascarar, paraCampoMoeda } from '../lib/dinheiro'
 import { fmtDataCurta, fmtMesAno, fmtMoeda, fmtValor, MESES_NOME, parseNumero, simbolo, noMeioDaFrase } from '../lib/format'
-import { moedasUsaveis } from '../lib/moedas'
+import { cotacaoInvertida, moedasUsaveis } from '../lib/moedas'
 import { mesmoNome } from '../lib/rotulos'
 import type { ContaFixa, Tipo } from '../lib/types'
 import { EscolhaCategoria, Selo } from '../components/Categorias'
@@ -368,6 +368,7 @@ function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () 
     // campo de cotação vazio = a de hoje, a mesma que a tela mostra (senão cairia na combinada da conta sem ninguém ver)
     const taxa = s.moeda ? cotacao ?? c.taxas[s.moeda] : undefined
     if (s.moeda && !taxa) return setErro(tx('Não há cotação de hoje para {0}. Informe a cotação que você pagou.', s.moeda))
+    if (s.moeda && cotacaoInvertida(taxa, s.moeda, c.perfil.moeda, c.taxas)) return setErro(tx('A cotação parece estar ao contrário (o valor ficaria centenas de vezes maior ou menor). Toque em “Desvirar” ou confira.'))
     c.pagarConta(s, { valor: n, data, ...(s.moeda && taxa ? { cotacao: taxa } : {}) })
     aoFechar()
   }
@@ -451,6 +452,7 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
     if (!dia) return setErro(entrada ? tx('Escolha o dia em que o dinheiro cai.') : tx('Escolha o dia do vencimento.'))
     if (!inicio) return setErro(tx('Escolha a partir de qual mês vale.'))
     if (fim && fim < inicio) return setErro(tx('O último mês não pode ser antes do primeiro.'))
+    if (moeda !== c.perfil.moeda && cotacaoInvertida(cotacao, moeda, c.perfil.moeda, c.taxas)) return setErro(tx('A cotação parece estar ao contrário (o valor ficaria centenas de vezes maior ou menor). Toque em “Desvirar” ou confira.'))
     const dados = {
       tipo, descricao: nome.trim(), valor: n, dia: Number(dia), moeda: moeda === c.perfil.moeda ? null : moeda, cotacao: moeda === c.perfil.moeda ? null : cotacao,
       categoria_id: categoriaId || null, banco_id: bancoId || null,
