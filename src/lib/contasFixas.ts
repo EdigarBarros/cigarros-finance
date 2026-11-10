@@ -413,3 +413,18 @@ export function fraseDaSituacao(s: SituacaoConta) {
     default: return ''
   }
 }
+
+/** Pedido de abrir o cadastro de uma entrada fixa na próxima vez que Contas do mês abrir (vem do formulário de lançamento). */
+let entradaFixaPedida = false
+/** Evento para a página Contas do mês, quando ela já está aberta. */
+export const ENTRADA_FIXA_PEDIDA = 'opuscash:entrada-fixa'
+export const pedirEntradaFixa = () => {
+  entradaFixaPedida = true
+  // depois de trocar de página: se Contas já estava aberta, ela abre o cadastro; se não, abre ao montar
+  setTimeout(() => window.dispatchEvent(new Event(ENTRADA_FIXA_PEDIDA)), 0)
+}
+export const tomarEntradaFixa = () => {
+  const p = entradaFixaPedida
+  entradaFixaPedida = false
+  return p
+}

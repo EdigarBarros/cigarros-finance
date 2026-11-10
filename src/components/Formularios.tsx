@@ -71,6 +71,10 @@ interface FormLancProps {
   /** Avisa em que fatura a compra caiu (principalmente quando já passou do fechamento). */
   aoCompraSalva?: (aviso: { compraId: string; cartaoId: string; cartao: string; fechamento: number; depoisDoFechamento: boolean; ano: number; mes: number; anoCompra: number }) => void
   aoNovoCartao?: () => void
+  /** Abre o cadastro de uma entrada fixa (Contas do mês), para o que cai todo mês. */
+  aoEntradaFixa?: () => void
+  /** Abre Dívidas em "Me devem", para quem vai pagar parcelado. */
+  aoAReceberParcelado?: () => void
   /** Contas do mês (só com o módulo ligado): o lançamento pode ser a baixa de uma delas ("este Pix é a pensão"). */
   contasFixas?: ContaFixa[]
   /** Nomes que a pessoa já ligou a cada conta, para escolher a conta sozinho ao digitar a descrição. */
@@ -485,6 +489,16 @@ export function FormLancamento(p: FormLancProps) {
             rotulo={tx('Descrição')}
           />
         </label>
+        {tipo === 'entrada' && !p.inicial && !p.preset?.divida_id && (p.aoEntradaFixa || p.aoAReceberParcelado) && (
+          <div className="form-dica lf-recorrente" role="note">
+            <Icone nome="calendario" tamanho={16} />
+            <span>
+              {p.aoEntradaFixa && <><b>{tx('Vai receber isso todo mês?')}</b> <button type="button" className="link" onClick={p.aoEntradaFixa}>{tx('Cadastrar como entrada fixa')}</button></>}
+              {p.aoEntradaFixa && p.aoAReceberParcelado && <br />}
+              {p.aoAReceberParcelado && <><b>{tx('Alguém vai te pagar parcelado?')}</b> <button type="button" className="link" onClick={p.aoAReceberParcelado}>{tx('Cadastrar o que te devem')}</button></>}
+            </span>
+          </div>
+        )}
         {dica && (
           <div className="form-dica" role="status">
             <Icone nome="ideia" tamanho={16} />

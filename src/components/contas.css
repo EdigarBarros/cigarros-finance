@@ -203,3 +203,7 @@
 .vinculo-nome small { font-size: 11.5px; color: var(--divida); }
 .vinculo-valor { font-family: var(--fonte-numeros); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .vinculo-valor.entrada { color: var(--entrada); }
+
+/* Topo: entrada fixa ao lado de "Nova conta a pagar", para quem vai receber todo mês achar */
+.ct-topo-acoes { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.ct-btn-entrada { color: var(--entrada); border-color: color-mix(in srgb, var(--entrada) 45%, transparent); }
