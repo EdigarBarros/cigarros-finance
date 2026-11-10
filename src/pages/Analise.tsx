@@ -52,14 +52,14 @@ export function Analise(c: Ctx) {
           <p className="sub">{nivel === 'simples' ? tx('O que importa hoje, num olhar.') : tx('Uma tela montada para você, refeita a cada lançamento.')}</p>
         </div>
       </header>
-      <Manchete t={tela} aoIr={c.irPara} />
+      <Manchete t={tela} aoIr={(x) => x.destino && c.irPara(x.destino)} />
       <SeuPerfil a={a} nivel={nivel} />
       <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 2} />
       <Agora a={a} nivel={nivel} />
       {nivel === 'detalhado' ? <PlanoDeAcao a={a} aoIr={c.irPara} /> : <ProximoPasso a={a} aoIr={c.irPara} />}
       <Objetivo a={a} memoria={c.memoria} nivel={nivel} aoEscolher={c.escolherObjetivo} />
 
-      <Faixas t={tela} aoIr={c.irPara} nivel={nivel} />
+      <Faixas t={tela} aoIr={(x) => x.destino && c.irPara(x.destino)} nivel={nivel} />
 
       {nivel === 'simples' && (
         <button className="vt-mais-detalhe" onClick={c.personalizar}>

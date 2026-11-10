@@ -12,7 +12,7 @@
  */
 import { Component, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import type { Analise } from '../lib/analise'
-import { achados, type Tema } from '../lib/achados'
+import { achados, type Achado, type Tema } from '../lib/achados'
 import { compor, diagramar, type Escolhas, type Peca } from '../lib/composicao'
 import { registrarErro } from '../lib/erros'
 import { afinidade, comOrdem, mostrarDeNovo, registrar, type Gosto, type Sinal } from '../lib/gosto'
@@ -26,7 +26,9 @@ import type { Ctx } from './contexto'
 /** Quantos cartões aparecem depois da manchete, antes de "Ver mais". */
 const NA_FRENTE = { simples: 2, equilibrado: 5, detalhado: 99 } as const
 
-const TEMAS: { id: Tema; icone: string; nome: () => string }[] = [
+export interface TemaDaTela { id: Tema; icone: string; nome: () => string }
+
+const TEMAS: TemaDaTela[] = [
   { id: 'mes', icone: 'calendario', nome: () => tx('O mês') },
   { id: 'gastos', icone: 'carteira', nome: () => tx('Gastos') },
   { id: 'dividas', icone: 'divida', nome: () => tx('Dívidas') },
@@ -48,9 +50,19 @@ function doFeedAntigo(idUsuario: string): { fav: string[]; oculto: string[] } {
  * agora vale na hora só para o que ela mesma pediu (favoritar, esconder, trocar o desenho) e é gravado ao sair.
  */
 export function useTelaViva(c: Ctx, a: Analise) {
-  const [base] = useState<Gosto>(() => {
+  const lista = useMemo(() => achados(a), [a])
+  return useTelaVivaDe({ lista, gosto: c.gosto, salvar: c.salvarGosto, temas: TEMAS, antigo: () => doFeedAntigo(c.idUsuario) })
+}
+
+/**
+ * A mesma tela viva para qualquer lista de descobertas (o Invest usa esta, com o gosto e os assuntos dele).
+ * `antigo`: favoritos e escondidos de uma versão anterior, para quem ainda não tem gosto anotado.
+ */
+export function useTelaVivaDe(o: { lista: Achado[]; gosto: Gosto; salvar: (g: Gosto) => void; temas: TemaDaTela[]; antigo?: () => { fav: string[]; oculto: string[] } }) {
+  const c = { gosto: o.gosto, salvarGosto: o.salvar }
+  const [base, setBase] = useState<Gosto>(() => {
     if (c.gosto.total > 0) return c.gosto
-    const antigo = doFeedAntigo(c.idUsuario)
+    const antigo = o.antigo?.() ?? { fav: [], oculto: [] }
     return antigo.fav.length || antigo.oculto.length ? { ...c.gosto, ...antigo } : c.gosto
   })
   const vivo = useRef(base)
@@ -84,7 +96,7 @@ export function useTelaViva(c: Ctx, a: Analise) {
     }
   }, [])
 
-  const lista = useMemo(() => achados(a), [a])
+  const lista = o.lista
   const tela = useMemo(() => compor(lista, base, escolhas), [lista, base, escolhas])
   useEffect(() => { telaAgora.current = tela }, [tela])
 
@@ -106,15 +118,27 @@ export function useTelaViva(c: Ctx, a: Analise) {
     setEscolhas((e) => ({ ...e, oculto: vivo.current.oculto }))
   }
   /** O assunto de que a pessoa mais gosta, quando já dá para dizer. */
+  const temas = o.temas
   const preferido = useMemo(() => {
-    const melhor = TEMAS.map((t) => ({ t, af: afinidade(base.temas, t.id), bom: base.temas[t.id]?.[1] ?? 0 }))
+    const melhor = temas.map((t) => ({ t, af: afinidade(base.temas, t.id), bom: base.temas[t.id]?.[1] ?? 0 }))
       .filter((x) => x.bom >= 3 && x.af >= 0.3).sort((x, y) => y.af - x.af)[0]
     return melhor?.t ?? null
-  }, [base])
-  return { tela, anotar, mostrar, preferido }
+  }, [base, temas])
+  /** Volta a uma organização guardada (ordem, desenhos, favoritos e escondidos), na hora. */
+  const restaurar = (x: { ordem: string[]; desenhos: Record<string, string>; fav: string[]; oculto: string[] }) => {
+    vivo.current = { ...vivo.current, ...x, total: vivo.current.total + 1 }
+    sujo.current = false
+    telaAgora.current = { ordem: x.ordem, desenhos: x.desenhos }
+    salvar.current(vivo.current)
+    setBase(vivo.current)
+    setEscolhas({ fav: x.fav, oculto: x.oculto, formas: {} })
+  }
+  return { tela, anotar, mostrar, preferido, temas, restaurar }
 }
 
-type Tela = ReturnType<typeof useTelaViva>
+export type Tela = ReturnType<typeof useTelaVivaDe>
+/** Para onde a seta de um cartão leva (e o que o "Por quê?" abre): quem usa a tela decide. */
+export interface AcoesDaTela { aoIr: (a: Achado) => void; aoExplicar?: (a: Achado) => void }
 
 /** Chama `aoVer` quando o desenho fica na tela por um instante (tempo de ler), uma vez só. */
 function useVisto<T extends Element>(aoVer: () => void) {
@@ -155,13 +179,14 @@ class DesenhoSeguro extends Component<{ id: string; children: ReactNode }, { que
 }
 
 /** Um cartão da tela: a descoberta, o desenho escolhido e o que dá para fazer com ele. */
-function Cartao({ p, largura, indice, manchete, t, aoIr }: { p: Peca; largura: number; indice: number; manchete?: boolean; t: Tela; aoIr: Ctx['irPara'] }) {
+function Cartao({ p, largura, indice, manchete, t, aoIr, aoExplicar }: { p: Peca; largura: number; indice: number; manchete?: boolean; t: Tela } & AcoesDaTela) {
   const [refVivo, vivo] = useEmVista<HTMLElement>()
   const refVisto = useVisto<HTMLDivElement>(() => t.anotar('viu', p))
   const fav = t.tela.pecas.indexOf(p) < t.tela.favoritos
   const a = p.achado
   const proxima = p.formas.length > 1 ? p.formas[(p.formas.indexOf(p.visual.tipo) + 1) % p.formas.length] : null
-  const abrir = () => { t.anotar('abriu', p); aoIr(a.destino!) }
+  const temDestino = Boolean(a.destino || a.porQue?.acao)
+  const abrir = () => { t.anotar('abriu', p); aoIr(a) }
   // um cartão compacto sozinho na faixa deita: texto de um lado, desenho do outro
   const deitado = manchete || (largura === 6 && !p.largo)
   return (
@@ -178,10 +203,10 @@ function Cartao({ p, largura, indice, manchete, t, aoIr }: { p: Peca; largura: n
         )}
         <header className="vis-cab">
           <h3>{a.titulo}</h3>
-          {a.destino && !manchete && <button className="vis-ir" onClick={abrir} aria-label={tx('Abrir')}><Icone nome="dir" tamanho={18} /></button>}
+          {temDestino && !manchete && <button className="vis-ir" onClick={abrir} aria-label={a.porQue?.acao?.rotulo ?? tx('Abrir')} title={a.porQue?.acao?.rotulo}><Icone nome="dir" tamanho={18} /></button>}
         </header>
         {a.frase && <p className="vis-frase">{a.frase}</p>}
-        {manchete && a.destino && <button className="btn primario peca-abrir" onClick={abrir}>{tx('Ver de perto')} <Icone nome="seta" tamanho={15} /></button>}
+        {manchete && temDestino && <button className="btn primario peca-abrir" onClick={abrir}>{a.porQue?.acao?.rotulo ?? tx('Ver de perto')} <Icone nome="seta" tamanho={15} /></button>}
       </div>
       <div ref={refVisto} className="vis-corpo" onPointerUp={() => t.anotar('tocou', p)}>
         <DesenhoSeguro key={p.visual.tipo} id={`${a.id}:${p.visual.tipo}`}><Grafico v={p.visual} /></DesenhoSeguro>
@@ -190,6 +215,11 @@ function Cartao({ p, largura, indice, manchete, t, aoIr }: { p: Peca; largura: n
         {proxima && (
           <button className="peca-trocar" onClick={() => t.anotar('trocou', p, proxima)} title={tx('Mostrar este dado em outro desenho')}>
             <Icone nome="trocar" tamanho={14} /> {tx('Outro jeito')}
+          </button>
+        )}
+        {a.porQue && aoExplicar && (
+          <button className="peca-trocar peca-porque" onClick={() => { t.anotar('tocou', p); aoExplicar(a) }}>
+            <Icone nome="ideia" tamanho={14} /> {tx('Por que estou vendo isso?')}
           </button>
         )}
         <span className="peca-acoes">
@@ -210,14 +240,14 @@ function Cartao({ p, largura, indice, manchete, t, aoIr }: { p: Peca; largura: n
 }
 
 /** A descoberta mais importante de hoje, grande, no topo da aba. */
-export function Manchete({ t, aoIr }: { t: Tela; aoIr: Ctx['irPara'] }) {
+export function Manchete({ t, aoIr, aoExplicar }: { t: Tela } & AcoesDaTela) {
   const p = t.tela.pecas[0]
   if (!p) return null
-  return <Cartao key={p.achado.id} p={p} largura={6} indice={0} manchete t={t} aoIr={aoIr} />
+  return <Cartao key={p.achado.id} p={p} largura={6} indice={0} manchete t={t} aoIr={aoIr} aoExplicar={aoExplicar} />
 }
 
 /** As outras descobertas, em faixas de cartões de larguras diferentes, com as abas por assunto e "Ver mais". */
-export function Faixas({ t, aoIr, nivel }: { t: Tela; aoIr: Ctx['irPara']; nivel: Nivel }) {
+export function Faixas({ t, aoIr, aoExplicar, nivel, depois }: { t: Tela; nivel: Nivel; /** Um atalho no fim da seção (o Invest põe o "desfazer a reorganização"). */ depois?: ReactNode } & AcoesDaTela) {
   const [tema, setTema] = useState<Tema | 'tudo'>('tudo')
   const [todos, setTodos] = useState(false)
   // em "Tudo", a primeira já está no topo da aba (a manchete); num assunto, aparecem todas as dele
@@ -239,7 +269,7 @@ export function Faixas({ t, aoIr, nivel }: { t: Tela; aoIr: Ctx['irPara']; nivel
         {nivel !== 'simples' && t.tela.pecas.length > 2 && (
           <div className="an-abas" role="tablist" aria-label={tx('Assunto')}>
             <button role="tab" aria-selected={tema === 'tudo'} className={tema === 'tudo' ? 'ativo' : ''} onClick={() => setTema('tudo')}>{tx('Tudo')}</button>
-            {TEMAS.filter((s) => temTema(s.id)).map((s) => (
+            {t.temas.filter((s) => temTema(s.id)).map((s) => (
               <button key={s.id} role="tab" aria-selected={tema === s.id} className={tema === s.id ? 'ativo' : ''} onClick={() => setTema(s.id)}>
                 <Icone nome={s.icone} tamanho={14} /> {s.nome()}
               </button>
@@ -253,7 +283,7 @@ export function Faixas({ t, aoIr, nivel }: { t: Tela; aoIr: Ctx['irPara']; nivel
       </p>
       {vistos.length > 0 && (
         <div className="an-tela" key={tema}>
-          {vistos.map((p, i) => <Cartao key={p.achado.id} p={p} largura={larguras[i] ?? 6} indice={i} t={t} aoIr={aoIr} />)}
+          {vistos.map((p, i) => <Cartao key={p.achado.id} p={p} largura={larguras[i] ?? 6} indice={i} t={t} aoIr={aoIr} aoExplicar={aoExplicar} />)}
         </div>
       )}
       {tema === 'tudo' && doTema.length > naFrente && (
@@ -263,6 +293,7 @@ export function Faixas({ t, aoIr, nivel }: { t: Tela; aoIr: Ctx['irPara']; nivel
         </button>
       )}
       <Escondidos t={t} />
+      {depois}
     </section>
   )
 }

@@ -839,7 +839,7 @@ export interface ItemTexto { str: string; transform: number[]; width: number; he
 export interface ItemPdf { str: string; x: number; y: number; w: number; h: number }
 
 /** Os pedaços de texto de cada página do PDF (pdf.js). */
-async function itensDoPdf(dados: ArrayBuffer): Promise<ItemPdf[][]> {
+export async function itensDoPdf(dados: ArrayBuffer): Promise<ItemPdf[][]> {
   let pdfjs: { getDocument: (o: object) => { promise: Promise<{ numPages: number; getPage: (n: number) => Promise<{ getTextContent: () => Promise<{ items: ItemTexto[] }> }> }> }; GlobalWorkerOptions: { workerSrc: string } }
   try {
     pdfjs = await import(/* @vite-ignore */ `${PDFJS}/pdf.min.mjs`)

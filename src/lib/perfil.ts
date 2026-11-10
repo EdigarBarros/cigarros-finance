@@ -20,7 +20,7 @@ export const MODULOS: { id: Modulo; nome: string; pergunta: string; descricao: s
   {
     id: 'investimentos', nome: tx('Investimentos'), icone: 'investir',
     pergunta: tx('Invisto ou guardo dinheiro rendendo'),
-    descricao: tx('Quanto você tem investido, mês a mês.'),
+    descricao: tx('A sua carteira no Invest: cada investimento, quanto rendeu de verdade, proventos, vencimentos e o plano de aportes.'),
   },
   {
     id: 'moedas', nome: tx('Outras moedas'), icone: 'globo',

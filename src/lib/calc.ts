@@ -58,7 +58,7 @@ export function mesEfetivo(meses: Mes[], ano: number, mes: number, hoje = new Da
   }
   // investimento que você não atualizou continua lá (senão o patrimônio parece cair a zero no mês novo)
   let investimentos = base.investimentos
-  if (podeHerdar && !investimentos) {
+  if (podeHerdar && !investimentos && !base.investimentosDaCarteira) {
     const m = ultimoCom((x) => x.investimentos > 0)
     if (m) {
       investimentos = m.investimentos

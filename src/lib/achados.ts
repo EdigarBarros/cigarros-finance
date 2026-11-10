@@ -24,7 +24,28 @@ import type { Objetivo } from './memoria'
 import { tx } from './textos'
 import { COR, visuais, type Fatia, type FormatoDoNumero, type Ponto, type Visual } from './visuais'
 
-export type Tema = 'mes' | 'gastos' | 'dividas' | 'guardado' | 'como'
+/** Os assuntos das descobertas do Invest (lib/invest/descobertas.ts), que usam o mesmo compositor. */
+export type TemaInvest = 'carteira' | 'risco' | 'renda' | 'prazos' | 'plano' | 'dados'
+export type Tema = 'mes' | 'gastos' | 'dividas' | 'guardado' | 'como' | TemaInvest
+
+/** "Por que estou vendo isso?": o que foi detectado, com que números, de quando e com que confiança. */
+export interface PorQue {
+  /** O que aconteceu e por que merece atenção. */
+  explicacao: string
+  /** Os números que sustentam a conclusão. */
+  dados: { rotulo: string; valor: string }[]
+  /** O período que foi olhado. */
+  periodo: string
+  confianca: 'alta' | 'media' | 'baixa'
+  /** Por que a confiança não é alta (preços antigos, pouco histórico…). */
+  ressalva?: string
+  /** De onde vieram os números. */
+  fonte: string
+  /** AAAA-MM-DD */
+  atualizadoEm: string
+  /** O que dá para fazer a respeito (quem mostra a descoberta sabe para onde `ir` leva). */
+  acao?: { rotulo: string; ir: string }
+}
 
 export interface ItemDoRanking { rotulo: string; valor: number; cor?: string; icone?: string; nota?: string }
 export interface Par { rotulo: string; icone: string; antes: number; agora: number }
@@ -52,13 +73,17 @@ export interface Achado {
   tom?: Tom
   destino?: Destino
   dado: Dado
+  /** A explicação completa, para "Por que estou vendo isso?". */
+  porQue?: PorQue
+  /** Informação que a pessoa não pode deixar de ver mesmo sem ser um problema em vermelho (um título que venceu, por exemplo). */
+  essencial?: boolean
 }
 
 /**
  * Informação financeira importante: um problema (vermelho) ou conta que vai atrasar. O gosto da pessoa nunca rebaixa uma
  * descoberta assim, e ela não fica escondida (lib/composicao.ts).
  */
-export const importante = (a: Achado) => a.tom === 'ruim' || (a.id === 'fluxo' && a.tom === 'medio')
+export const importante = (a: Achado) => a.tom === 'ruim' || Boolean(a.essencial) || (a.id === 'fluxo' && a.tom === 'medio')
 
 /** O número principal de uma descoberta (undefined nas que só têm desenho próprio): é por ele que se mede se ela mudou. */
 export function medidaDe(d: Dado): number | undefined {
