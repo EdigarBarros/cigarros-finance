@@ -9646,5 +9646,77 @@
   "Sem valor, vale o que estiver atrasado. Se foi cumprida o app vê sozinho, pelo que você lançar até o dia. Promessas antigas também podem ser anotadas.": {
     "en": "With no amount, it means whatever is overdue. The app checks by itself whether it was kept, from what you enter up to that day. Old promises can be noted too.",
     "es": "Sin valor, vale lo que esté atrasado. La app ve sola si se cumplió, por lo que registres hasta ese día. También puedes anotar promesas antiguas."
+  },
+  "Combinado pagar em": {
+    "en": "Agreed to pay on",
+    "es": "Acordado pagar el"
+  },
+  "Combinado receber em": {
+    "en": "Agreed to receive on",
+    "es": "Acordado recibir el"
+  },
+  "Começou em {0}": {
+    "en": "Started on {0}",
+    "es": "Empezó el {0}"
+  },
+  "Como é": {
+    "en": "Type",
+    "es": "Tipo"
+  },
+  "Diga até qual parcela vai.": {
+    "en": "Say which installment it goes up to.",
+    "es": "Di hasta qué cuota va."
+  },
+  "Ex.: 1": {
+    "en": "E.g.: 1",
+    "es": "Ej.: 1"
+  },
+  "Ex.: Pão, Uber, empréstimo": {
+    "en": "E.g.: Bread, Uber, loan",
+    "es": "Ej.: Pan, Uber, préstamo"
+  },
+  "Ex.: comprou em 6 vezes e já pagou 1? Da parcela 2 até a 6, com o vencimento da 2ª.": {
+    "en": "E.g.: bought in 6 installments and paid 1 already? From installment 2 to 6, with the due date of the 2nd.",
+    "es": "Ej.: ¿compraste en 6 cuotas y ya pagaste 1? De la cuota 2 a la 6, con el vencimiento de la 2ª."
+  },
+  "O dia de pagar não pode vir antes do dia em que começou.": {
+    "en": "The payment day cannot be before the day it started.",
+    "es": "El día de pago no puede ser antes del día en que empezó."
+  },
+  "Parcelado": {
+    "en": "In installments",
+    "es": "En cuotas"
+  },
+  "Quando começou": {
+    "en": "When it started",
+    "es": "Cuándo empezó"
+  },
+  "Quando começou? Toque para dizer": {
+    "en": "When did it start? Tap to set",
+    "es": "¿Cuándo empezó? Toca para decirlo"
+  },
+  "Se o dia combinado passar, anote a nova promessa em \"Promessas de pagamento\".": {
+    "en": "If the agreed day passes, note the new promise in \"Payment promises\".",
+    "es": "Si pasa el día acordado, anota la nueva promesa en \"Promesas de pago\"."
+  },
+  "Vai criar {0} para pagar até {1}.": {
+    "en": "Will create {0} to pay by {1}.",
+    "es": "Va a crear {0} para pagar hasta el {1}."
+  },
+  "Vai criar {0} para receber até {1}.": {
+    "en": "Will create {0} to receive by {1}.",
+    "es": "Va a crear {0} para recibir hasta el {1}."
+  },
+  "Valor único": {
+    "en": "Single amount",
+    "es": "Valor único"
+  },
+  "pagar até {0}": {
+    "en": "pay by {0}",
+    "es": "pagar hasta el {0}"
+  },
+  "receber até {0}": {
+    "en": "receive by {0}",
+    "es": "recibir hasta el {0}"
   }
 }

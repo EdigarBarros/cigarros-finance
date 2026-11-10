@@ -121,6 +121,8 @@ export interface ParteDivida {
   parcelas: number | null
   /** Valor da parcela no contrato, base dos juros de atraso simples (migração 22). null/ausente = usar `valor`. */
   valor_original?: number | null
+  /** Quando a parte começou: o dia da compra ou do empréstimo (migração 26). O vencimento é o dia combinado para pagar. */
+  inicio?: string | null
 }
 
 /** "Em tal data, o saldo devedor era X" (informado por você ou vindo da planilha). */

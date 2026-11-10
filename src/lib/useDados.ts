@@ -158,6 +158,8 @@ export function useDados(userId: string, ano: number) {
   const [dividasSemJuros, setDividasSemJuros] = useState(false)
   /** Sem a migração 22: as dívidas não crescem sozinhas com o atraso (a seção "Se atrasar" some). */
   const [dividasSemAtraso, setDividasSemAtraso] = useState(false)
+  /** Sem a migração 26: as partes não guardam quando começaram. */
+  const [partesSemInicio, setPartesSemInicio] = useState(false)
   /** Lançamentos de outros anos ligados a uma conta do mês: ensinam ao app como cada conta aparece no extrato. */
   const [vinculosOutrosAnos, setVinculosOutrosAnos] = useState<Pick<Lancamento, 'id' | 'conta_fixa_id' | 'descricao' | 'valor'>[]>([])
   /** Lançamentos de outros anos que o conselheiro e a análise leem (os 12 meses fechados e o atual), quando o ano aberto não cobre todos. */
@@ -171,7 +173,7 @@ export function useDados(userId: string, ano: number) {
   const recarregar = useCallback(async () => {
     const meu = ++pedidoAtual.current
     setCarregando(true)
-    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, xj, vc, rc, pt, xa, pr] = await Promise.all([
+    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, xj, vc, rc, pt, xa, pr, xi] = await Promise.all([
       // as tabelas que crescem sem parar são lidas em páginas (lerTudo): o Supabase corta em 1000 linhas
       lerTudo(() => supabase.from('lancamentos').select('*').eq('ano', ano).order('data').order('created_at').order('id')),
       lerTudo(() => supabase.from('meses').select('*').order('ano').order('mes')),
@@ -191,6 +193,7 @@ export function useDados(userId: string, ano: number) {
       lerTudo(() => supabase.from('divida_partes').select('*').order('vencimento').order('id')),
       supabase.from('dividas').select('atraso_juros_mes').limit(1),
       lerTudo(() => supabase.from('divida_promessas').select('*').order('created_at').order('id')),
+      supabase.from('divida_partes').select('inicio').limit(1),
     ])
     // Conta nova: ganha as categorias padrão (definidas no banco, migração 5). Isso precisa acontecer ANTES de qualquer setState:
     // um await no meio fazia o React desenhar o painel de verdade (perfil já lido, "carregando" ainda ligado) e só depois as
@@ -219,6 +222,7 @@ export function useDados(userId: string, ano: number) {
     marcarFalta(xm, setDividasSemMoeda)
     marcarFalta(xj, setDividasSemJuros)
     marcarFalta(xa, setDividasSemAtraso)
+    marcarFalta(xi, setPartesSemInicio)
     // sem a migração 21 a tabela não existe: as dívidas funcionam como antes, sem partes
     if (pt.error && faltaTabela(pt.error)) { setPartesSemTabela(true); setPartes([]) }
     else if (!pt.error) { setPartesSemTabela(false); setPartes((pt.data as ParteDivida[]).map(normParte)) }
@@ -462,11 +466,13 @@ export function useDados(userId: string, ano: number) {
   }
   const partesDa = (divida_id: string) => partes.filter((p) => p.divida_id === divida_id)
 
+  /** Sem a migração 26 a coluna `inicio` não existe: a parte vai sem ela. */
+  const semInicioSeFalta = <T extends Partial<NovaParte>>(o: T): T => (partesSemInicio ? (({ inicio: _i, ...resto }) => resto as T)(o) : o)
   /** Acrescenta partes (uma linha por parcela) a uma dívida. */
   const addPartes = async (divida_id: string, novas: NovaParte[]) => {
     if (!novas.length) return
     const antes = partesDa(divida_id)
-    const { data, error } = await supabase.from('divida_partes').insert(novas.map((n) => ({ ...n, divida_id }))).select()
+    const { data, error } = await supabase.from('divida_partes').insert(novas.map((n) => ({ ...semInicioSeFalta(n), divida_id }))).select()
     if (error) return falhou(error.message)
     const criadas = (data as ParteDivida[]).map(normParte)
     setPartes((xs) => [...xs, ...criadas])
@@ -479,7 +485,7 @@ export function useDados(userId: string, ano: number) {
     const antes = partesDa(atual.divida_id)
     const depois = antes.map((p) => (p.id === id ? { ...p, ...patch } : p))
     setPartes((xs) => xs.map((p) => (p.id === id ? { ...p, ...patch } : p)))
-    const { error } = await supabase.from('divida_partes').update(patch).eq('id', id)
+    const { error } = await supabase.from('divida_partes').update(semInicioSeFalta(patch)).eq('id', id)
     if (error) return falhou(error.message)
     await acertarSaldoDasPartes(atual.divida_id, antes, depois)
   }
@@ -491,7 +497,7 @@ export function useDados(userId: string, ano: number) {
     const antes = partesDa(primeira.divida_id)
     const depois = antes.map((p) => (mudancas.has(p.id) ? { ...p, ...mudancas.get(p.id) } : p))
     setPartes((xs) => xs.map((p) => (mudancas.has(p.id) ? { ...p, ...mudancas.get(p.id) } : p)))
-    const res = await Promise.all([...mudancas].map(([id, patch]) => supabase.from('divida_partes').update(patch).eq('id', id)))
+    const res = await Promise.all([...mudancas].map(([id, patch]) => supabase.from('divida_partes').update(semInicioSeFalta(patch)).eq('id', id)))
     const e = res.find((r) => r.error)?.error
     if (e) return falhou(e.message)
     await acertarSaldoDasPartes(primeira.divida_id, antes, depois)
@@ -791,7 +797,7 @@ export function useDados(userId: string, ano: number) {
     dividasSemMoeda,
     dividasSemJuros,
     dividasSemAtraso, conferirDivida,
-    partesSemTabela, addPartes, updParte, updPartes, delPartes,
+    partesSemTabela, partesSemInicio, addPartes, updParte, updPartes, delPartes,
     promessasSemTabela, addPromessa, delPromessa,
     lancs, lancsRecentes, meses: mesesDosBancos, dividas: dividasComPartes, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,
     addLanc, addLancs, renomearLancs, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, ajustarValorDivida, moverInicioDivida, salvarMes,
