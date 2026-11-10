@@ -4241,3 +4241,36 @@ body { top: 0 !important; }
 .dp-inicio.editando .btn { justify-self: start; }
 @media (min-width: 520px) { .dp-inicio.editando { grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; } }
 .dp-nova .segmentado { justify-self: start; }
+
+/* ---------- app na tela de início (iPhone): áreas seguras ----------
+   O site pede a tela inteira (viewport-fit=cover e barra de status translúcida no index.html). Aberto pela tela de início do
+   iPhone, ele começa atrás do relógio e da ilha, e deitado, atrás do recorte da câmera. env(safe-area-inset-*) é 0 no
+   navegador comum e no Android (lá o sistema já tira a barra de status), então nada disto muda nada fora do iPhone. */
+:root { --seguro-topo: env(safe-area-inset-top, 0px); --seguro-esq: env(safe-area-inset-left, 0px); --seguro-dir: env(safe-area-inset-right, 0px); }
+/* a faixa do relógio fica sempre na cor da marca (o relógio do iPhone é branco: num fundo claro sumiria). É a mesma cor que o
+   Android pinta na barra de status (theme-color) */
+:root::before {
+  content: ''; position: fixed; z-index: 9990; top: 0; left: 0; right: 0; height: var(--seguro-topo);
+  background: #090d18; pointer-events: none;
+}
+#root { padding-top: var(--seguro-topo); }
+.app { padding-left: var(--seguro-esq); padding-right: var(--seguro-dir); }
+/* a barra do topo gruda logo abaixo do relógio */
+.barra { top: var(--seguro-topo); }
+/* a lateral do computador também gruda abaixo dele */
+.lateral { top: var(--seguro-topo); height: calc(100vh - var(--seguro-topo)); }
+@media (max-width: 860px) {
+  .abas-movel { left: calc(14px + var(--seguro-esq)); right: calc(14px + var(--seguro-dir)); }
+  /* janelas que sobem de baixo não passam por trás do relógio; as de tela cheia começam abaixo dele */
+  .modal { max-height: calc(94vh - var(--seguro-topo)); }
+  .modal.grande { max-height: none; height: calc(100dvh - var(--seguro-topo)); margin-top: var(--seguro-topo); }
+  .modal.tela { height: calc(100dvh - var(--seguro-topo)); margin-top: var(--seguro-topo); }
+  .modal.tela .modal-topo { padding-top: 12px; }
+}
+@media (max-width: 600px) { .fab { right: calc(18px + var(--seguro-dir)); } }
+@media (min-width: 601px) and (max-width: 860px) {
+  .app:not(.trilho) .lateral { top: var(--seguro-topo); height: calc(100dvh - var(--seguro-topo)); }
+}
+@media (max-width: 560px) {
+  .barra-direita .idioma-menu { top: calc(70px + var(--seguro-topo)); }
+}
