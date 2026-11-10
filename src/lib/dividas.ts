@@ -405,6 +405,8 @@ export interface GrupoDeParte {
   de: number | null
   primeira: string
   ultima: string
+  /** Quando a parte começou (a mais antiga das parcelas), se foi dito. */
+  inicio: string | null
 }
 
 /** As partes agrupadas pelo nome (cada grupo em ordem de vencimento), da que vence primeiro para a última. */
@@ -423,6 +425,7 @@ export function gruposDasPartes(partes: ParteDivida[]): GrupoDeParte[] {
       de: parcelas.reduce<number | null>((m, p) => (p.parcelas ? Math.max(m ?? 0, p.parcelas) : m), null),
       primeira: parcelas[0].vencimento,
       ultima: parcelas[parcelas.length - 1].vencimento,
+      inicio: parcelas.reduce<string | null>((m, p) => (p.inicio && (!m || p.inicio < m) ? p.inicio : m), null),
     }
   }).sort((a, b) => a.primeira.localeCompare(b.primeira) || a.nome.localeCompare(b.nome))
 }
@@ -431,12 +434,14 @@ export function gruposDasPartes(partes: ParteDivida[]): GrupoDeParte[] {
  * As parcelas de uma parte nova, a partir do que a pessoa sabe: o valor, o vencimento da primeira que falta e "da parcela
  * 2 até a 6". Sem parcelamento (até vazio), é uma linha só. Cada parcela vence no mesmo dia dos meses seguintes.
  */
-export function gerarParcelasDaParte(p: { nome: string; valor: number; vencimento: string; da?: number | null; ate?: number | null }) {
+export function gerarParcelasDaParte(p: { nome: string; valor: number; vencimento: string; da?: number | null; ate?: number | null; inicio?: string | null }) {
   const da = p.da && p.da > 0 ? Math.floor(p.da) : 1
   const ate = p.ate && p.ate >= da ? Math.floor(p.ate) : null
-  if (!ate) return [{ nome: p.nome.trim(), valor: centavos(p.valor), vencimento: p.vencimento, parcela: null, parcelas: null }]
+  // quando começou só vai quando foi dito (sem a migração 26 o campo nem existe)
+  const inicio = p.inicio ? { inicio: p.inicio } : {}
+  if (!ate) return [{ nome: p.nome.trim(), valor: centavos(p.valor), vencimento: p.vencimento, parcela: null, parcelas: null, ...inicio }]
   return Array.from({ length: ate - da + 1 }, (_, i) => ({
-    nome: p.nome.trim(), valor: centavos(p.valor), vencimento: somaMesesData(p.vencimento, i), parcela: da + i, parcelas: ate,
+    nome: p.nome.trim(), valor: centavos(p.valor), vencimento: somaMesesData(p.vencimento, i), parcela: da + i, parcelas: ate, ...inicio,
   }))
 }
 

@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { gerarParcelasDaParte, gruposDasPartes, type Calendario, type EstadoParcela, type SituacaoDivida } from '../lib/dividas'
 import { mascarar, paraCampoMoeda } from '../lib/dinheiro'
-import { fmtDataCurta, fmtValor, MESES_CURTO, noMeioDaFrase, parseNumero } from '../lib/format'
+import { fmtDataCurta, fmtDataLonga, fmtValor, MESES_CURTO, noMeioDaFrase, parseNumero } from '../lib/format'
 import type { Dados, NovaParte } from '../lib/useDados'
 import type { ParteDivida } from '../lib/types'
 import { CampoData } from './Escolhas'
 import { Icone } from './Icone'
+import { Segmentado } from './ui'
 import { tx } from '../lib/textos'
 
 const ROTULO: Record<EstadoParcela, string> = {
@@ -20,7 +21,7 @@ const mesAno = (iso: string) => `${noMeioDaFrase(MESES_CURTO[Number(iso.slice(5,
  * ou a data de uma parcela (juros e multa já somados pelo credor) e acrescentar partes novas.
  */
 export function PartesDaDivida({ s, cal, d, recebe }: {
-  s: SituacaoDivida; cal: Calendario | null; d: Pick<Dados, 'partesSemTabela' | 'addPartes' | 'updParte' | 'delPartes'>; recebe: boolean
+  s: SituacaoDivida; cal: Calendario | null; d: Pick<Dados, 'partesSemTabela' | 'partesSemInicio' | 'addPartes' | 'updParte' | 'updPartes' | 'delPartes'>; recebe: boolean
 }) {
   const partes = s.divida.partes ?? []
   const [aberta, setAberta] = useState<string | null>(null)
@@ -58,7 +59,12 @@ export function PartesDaDivida({ s, cal, d, recebe }: {
                 <button className="dp-parte-cab" onClick={() => setAberta(abertaAqui ? null : chave)} aria-expanded={abertaAqui}>
                   <span className="dp-parte-nome">
                     <strong>{g.nome || tx('Sem nome')}</strong>
-                    <small>{resumoDoGrupo(g.parcelas, g.de)} · {mesAno(g.primeira) === mesAno(g.ultima) ? mesAno(g.primeira) : tx('{0} a {1}', mesAno(g.primeira), mesAno(g.ultima))}</small>
+                    <small>
+                      {g.parcelas.length === 1 && !g.de
+                        ? <>{tx('valor único')} · {recebe ? tx('receber até {0}', fmtDataCurta(g.primeira)) : tx('pagar até {0}', fmtDataCurta(g.primeira))}</>
+                        : <>{resumoDoGrupo(g.parcelas, g.de)} · {mesAno(g.primeira) === mesAno(g.ultima) ? mesAno(g.primeira) : tx('{0} a {1}', mesAno(g.primeira), mesAno(g.ultima))}</>}
+                      {g.inicio && <> · {tx('desde {0}', fmtDataCurta(g.inicio))}</>}
+                    </small>
                   </span>
                   {atrasadas > 0 ? <span className="chip-estado dv atrasada">{atrasadas === 1 ? tx('1 atrasada') : tx('{0} atrasadas', atrasadas)}</span>
                     : pagas === g.parcelas.length ? <span className="chip-estado dv quitada">{recebe ? tx('Recebido') : tx('Quitada')}</span> : null}
@@ -66,7 +72,7 @@ export function PartesDaDivida({ s, cal, d, recebe }: {
                   <Icone nome="abaixo" tamanho={16} />
                 </button>
                 {abertaAqui && (
-                  <Parcelas parcelas={g.parcelas} estadoDoDia={estadoDoDia} d={d} jurosDe={jurosDe} />
+                  <Parcelas parcelas={g.parcelas} estadoDoDia={estadoDoDia} d={d} jurosDe={jurosDe} recebe={recebe} inicio={g.inicio} />
                 )}
               </li>
             )
@@ -76,7 +82,7 @@ export function PartesDaDivida({ s, cal, d, recebe }: {
         <p className="campo-ajuda">{tx('Essa dívida junta várias compras ou contas, cada uma com as suas parcelas? Adicione cada parte: o calendário e o atraso passam a sair delas.')}</p>
       )}
       {nova
-        ? <NovaParteForm aoSalvar={async (ps) => { await d.addPartes(s.divida.id, ps); setNova(false) }} aoCancelar={() => setNova(false)} />
+        ? <NovaParteForm comInicio={!d.partesSemInicio} recebe={recebe} aoSalvar={async (ps) => { await d.addPartes(s.divida.id, ps); setNova(false) }} aoCancelar={() => setNova(false)} />
         : <button className="btn dp-adicionar" onClick={() => setNova(true)}><Icone nome="mais" tamanho={15} /> {tx('Adicionar parte')}</button>}
     </section>
   )
@@ -94,18 +100,39 @@ function resumoDoGrupo(parcelas: ParteDivida[], de: number | null) {
 }
 
 /** As parcelas de uma parte, cada uma com a situação e o lápis para corrigir valor e data. */
-function Parcelas({ parcelas, estadoDoDia, d, jurosDe }: {
-  parcelas: ParteDivida[]; estadoDoDia: Map<string, EstadoParcela>; d: Pick<Dados, 'updParte' | 'delPartes'>; jurosDe: (id: string) => number
+function Parcelas({ parcelas, estadoDoDia, d, jurosDe, recebe, inicio }: {
+  parcelas: ParteDivida[]; estadoDoDia: Map<string, EstadoParcela>; d: Pick<Dados, 'partesSemInicio' | 'updParte' | 'updPartes' | 'delPartes'>
+  jurosDe: (id: string) => number; recebe: boolean; inicio: string | null
 }) {
   const [editando, setEditando] = useState<string | null>(null)
   const [apagar, setApagar] = useState(false)
+  const [mudandoInicio, setMudandoInicio] = useState(false)
+  const [novoInicio, setNovoInicio] = useState(inicio ?? '')
+  const unico = parcelas.length === 1 && !parcelas[0].parcelas
   return (
     <div className="dp-parcelas">
+      {!d.partesSemInicio && (mudandoInicio ? (
+        <div className="dp-inicio editando">
+          <span className="campo-rotulo">{tx('Quando começou')}</span>
+          <CampoData valor={novoInicio} aoMudar={setNovoInicio} rotulo={tx('Quando começou')} />
+          <button className="btn" onClick={() => setMudandoInicio(false)}>{tx('Cancelar')}</button>
+          <button className="btn primario" onClick={async () => {
+            await d.updPartes(parcelas.map((p) => ({ id: p.id, patch: { inicio: novoInicio || null } })))
+            setMudandoInicio(false)
+          }}>{tx('Salvar')}</button>
+        </div>
+      ) : (
+        <button className="dp-inicio" onClick={() => { setNovoInicio(inicio ?? ''); setMudandoInicio(true) }}>
+          <Icone nome="historico" tamanho={14} />
+          <span>{inicio ? tx('Começou em {0}', fmtDataLonga(inicio)) : tx('Quando começou? Toque para dizer')}</span>
+          <Icone nome="lapis" tamanho={13} />
+        </button>
+      ))}
       <ol>
         {parcelas.map((p) => {
           const estado = estadoDoDia.get(p.vencimento) ?? 'a_vencer'
           return editando === p.id ? (
-            <EditarParcela key={p.id} p={p} aoFechar={() => setEditando(null)}
+            <EditarParcela key={p.id} p={p} rotuloData={unico ? (recebe ? tx('Combinado receber em') : tx('Combinado pagar em')) : tx('Vencimento')} aoFechar={() => setEditando(null)}
               aoSalvar={async (patch) => { await d.updParte(p.id, patch); setEditando(null) }}
               aoExcluir={async () => { await d.delPartes([p.id]); setEditando(null) }} />
           ) : (
@@ -137,8 +164,8 @@ function Parcelas({ parcelas, estadoDoDia, d, jurosDe }: {
 }
 
 /** Corrige uma parcela: o valor (o credor costuma somar juros e multa) e o vencimento. */
-function EditarParcela({ p, aoSalvar, aoExcluir, aoFechar }: {
-  p: ParteDivida; aoSalvar: (patch: Partial<NovaParte>) => Promise<void>; aoExcluir: () => Promise<void>; aoFechar: () => void
+function EditarParcela({ p, rotuloData, aoSalvar, aoExcluir, aoFechar }: {
+  p: ParteDivida; rotuloData: string; aoSalvar: (patch: Partial<NovaParte>) => Promise<void>; aoExcluir: () => Promise<void>; aoFechar: () => void
 }) {
   const [valor, setValor] = useState(paraCampoMoeda(p.valor, 'BRL'))
   const [data, setData] = useState(p.vencimento)
@@ -152,8 +179,8 @@ function EditarParcela({ p, aoSalvar, aoExcluir, aoFechar }: {
         </span>
       </label>
       <div className="campo">
-        <span className="campo-rotulo">{tx('Vencimento')}</span>
-        <CampoData valor={data} aoMudar={setData} rotulo={tx('Vencimento')} />
+        <span className="campo-rotulo">{rotuloData}</span>
+        <CampoData valor={data} aoMudar={setData} rotulo={rotuloData} />
       </div>
       <div className="dp-editar-acoes">
         <button className="link perigo" onClick={() => void aoExcluir()}><Icone nome="lixeira" tamanho={14} /> {tx('Apagar parcela')}</button>
@@ -166,22 +193,30 @@ function EditarParcela({ p, aoSalvar, aoExcluir, aoFechar }: {
 }
 
 /**
- * Parte nova: o nome, o valor de cada parcela, o vencimento da primeira que falta e, se for parcelada, "da parcela X até a Y".
- * Mostra antes o que vai ser criado ("5 parcelas de R$ 46,63, de mar/26 a jul/26").
+ * Parte nova, de dois jeitos. Valor único: o nome, quanto é, quando começou e o dia combinado para pagar. Parcelado: o valor
+ * de cada parcela, o vencimento da primeira que falta e "da parcela X até a Y". Mostra antes o que vai ser criado.
  */
-function NovaParteForm({ aoSalvar, aoCancelar }: { aoSalvar: (ps: NovaParte[]) => Promise<void>; aoCancelar: () => void }) {
+function NovaParteForm({ comInicio, recebe, aoSalvar, aoCancelar }: {
+  comInicio: boolean; recebe: boolean; aoSalvar: (ps: NovaParte[]) => Promise<void>; aoCancelar: () => void
+}) {
+  const [jeito, setJeito] = useState<'unico' | 'parcelado'>('unico')
   const [nome, setNome] = useState('')
   const [valor, setValor] = useState('')
+  const [inicio, setInicio] = useState(hojeIso())
   const [data, setData] = useState('')
   const [da, setDa] = useState('')
   const [ate, setAte] = useState('')
   const [salvando, setSalvando] = useState(false)
+  const unico = jeito === 'unico'
   const n = parseNumero(valor)
-  const nDa = Number(da) || null
-  const nAte = Number(ate) || null
-  const erroParcelas = nAte != null && nDa != null && nAte < nDa ? tx('A última parcela não pode vir antes da primeira.') : null
-  const pronto = nome.trim() && n && n > 0 && data && !erroParcelas
-  const geradas = pronto ? gerarParcelasDaParte({ nome, valor: n!, vencimento: data, da: nDa, ate: nAte }) : []
+  const nDa = unico ? null : Number(da) || null
+  const nAte = unico ? null : Number(ate) || null
+  const erroParcelas = nAte != null && nDa != null && nAte < nDa ? tx('A última parcela não pode vir antes da primeira.')
+    : !unico && !nAte && (da || ate) ? tx('Diga até qual parcela vai.') : null
+  const erroDatas = comInicio && inicio && data && data < inicio ? (unico ? tx('O dia de pagar não pode vir antes do dia em que começou.') : null) : null
+  const pronto = nome.trim() && n && n > 0 && data && !erroParcelas && !erroDatas && (unico || nAte)
+  const geradas = pronto ? gerarParcelasDaParte({ nome, valor: n!, vencimento: data, da: nDa, ate: nAte, inicio: comInicio ? inicio || null : null }) : []
+  const rotuloData = unico ? (recebe ? tx('Combinado receber em') : tx('Combinado pagar em')) : tx('Vencimento da primeira que falta')
   return (
     <form className="dp-nova" onSubmit={async (e) => {
       e.preventDefault()
@@ -190,37 +225,48 @@ function NovaParteForm({ aoSalvar, aoCancelar }: { aoSalvar: (ps: NovaParte[]) =
       await aoSalvar(geradas)
       setSalvando(false)
     }}>
+      <Segmentado rotulo={tx('Como é')} valor={jeito} aoMudar={setJeito}
+        opcoes={[{ id: 'unico', nome: tx('Valor único') }, { id: 'parcelado', nome: tx('Parcelado') }]} />
       <label className="campo">
         <span className="campo-rotulo">{tx('De que é')}</span>
-        <input autoFocus value={nome} maxLength={80} onChange={(e) => setNome(e.target.value)} placeholder={tx('Ex.: Microfone')} />
+        <input autoFocus value={nome} maxLength={80} onChange={(e) => setNome(e.target.value)} placeholder={unico ? tx('Ex.: Pão, Uber, empréstimo') : tx('Ex.: Microfone')} />
       </label>
       <div className="form-linha">
         <label className="campo">
-          <span className="campo-rotulo">{tx('Valor de cada parcela')}</span>
+          <span className="campo-rotulo">{unico ? tx('Valor') : tx('Valor de cada parcela')}</span>
           <span className="campo-caixa"><span className="prefixo">R$</span>
             <input inputMode="decimal" value={valor} onChange={(e) => setValor(mascarar(e.target.value))} placeholder="0,00" />
           </span>
         </label>
-        <div className="campo">
-          <span className="campo-rotulo">{tx('Vencimento da primeira que falta')}</span>
-          <CampoData valor={data} aoMudar={setData} rotulo={tx('Vencimento')} />
+        {comInicio && (
+          <div className="campo">
+            <span className="campo-rotulo">{tx('Quando começou')}</span>
+            <CampoData valor={inicio} aoMudar={setInicio} rotulo={tx('Quando começou')} />
+          </div>
+        )}
+      </div>
+      <div className="campo">
+        <span className="campo-rotulo">{rotuloData}</span>
+        <CampoData valor={data} aoMudar={setData} rotulo={rotuloData} />
+      </div>
+      {!unico && (
+        <div className="form-linha">
+          <label className="campo">
+            <span className="campo-rotulo">{tx('Da parcela')}</span>
+            <input inputMode="numeric" value={da} maxLength={3} onChange={(e) => setDa(e.target.value.replace(/\D/g, ''))} placeholder={tx('Ex.: 1')} />
+          </label>
+          <label className="campo">
+            <span className="campo-rotulo">{tx('Até a parcela')}</span>
+            <input inputMode="numeric" value={ate} maxLength={3} onChange={(e) => setAte(e.target.value.replace(/\D/g, ''))} placeholder={tx('Ex.: 6')} />
+          </label>
         </div>
-      </div>
-      <div className="form-linha">
-        <label className="campo">
-          <span className="campo-rotulo">{tx('Da parcela')}</span>
-          <input inputMode="numeric" value={da} maxLength={3} onChange={(e) => setDa(e.target.value.replace(/\D/g, ''))} placeholder={tx('Ex.: 2')} />
-        </label>
-        <label className="campo">
-          <span className="campo-rotulo">{tx('Até a parcela')}</span>
-          <input inputMode="numeric" value={ate} maxLength={3} onChange={(e) => setAte(e.target.value.replace(/\D/g, ''))} placeholder={tx('Ex.: 6')} />
-        </label>
-      </div>
-      <p className={`campo-ajuda ${erroParcelas ? 'erro' : ''}`}>
-        {erroParcelas ?? (geradas.length > 1
+      )}
+      <p className={`campo-ajuda ${erroParcelas || erroDatas ? 'erro' : ''}`}>
+        {erroParcelas ?? erroDatas ?? (geradas.length > 1
           ? tx('Vai criar {0} parcelas de {1}, de {2} a {3}. Depois dá para corrigir o valor de cada uma.', geradas.length, fmtValor(n!), mesAno(geradas[0].vencimento), mesAno(geradas[geradas.length - 1].vencimento))
-          : geradas.length === 1 ? tx('Vai criar 1 parcela de {0}, em {1}.', fmtValor(n!), fmtDataCurta(geradas[0].vencimento))
-            : tx('Sem parcelas? Deixe "da" e "até" vazios: vira um valor só.'))}
+          : geradas.length === 1 ? (recebe ? tx('Vai criar {0} para receber até {1}.', fmtValor(n!), fmtDataCurta(geradas[0].vencimento)) : tx('Vai criar {0} para pagar até {1}.', fmtValor(n!), fmtDataCurta(geradas[0].vencimento)))
+            : unico ? tx('Se o dia combinado passar, anote a nova promessa em "Promessas de pagamento".')
+              : tx('Ex.: comprou em 6 vezes e já pagou 1? Da parcela 2 até a 6, com o vencimento da 2ª.'))}
       </p>
       <div className="form-acoes">
         <span className="espaco" />
@@ -230,3 +276,5 @@ function NovaParteForm({ aoSalvar, aoCancelar }: { aoSalvar: (ps: NovaParte[]) =
     </form>
   )
 }
+
+const hojeIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }

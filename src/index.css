@@ -4223,3 +4223,11 @@ body { top: 0 !important; }
 .dv-promessa .icone-btn { width: 30px; height: 30px; }
 .dv-promessa-apagar { display: flex; gap: 6px; }
 .dv-promessa-atalhos { display: flex; gap: 6px; margin-bottom: 6px; }
+/* parte da dívida: quando começou (toque para mudar) */
+.dp-inicio { display: flex; align-items: center; gap: 7px; width: 100%; padding: 8px 10px; border: 1px dashed var(--borda-forte); border-radius: 10px; background: none; color: var(--texto-2); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+.dp-inicio > span { flex: 1; }
+.dp-inicio:hover { background: var(--preench-4); }
+.dp-inicio.editando { display: grid; grid-template-columns: 1fr; gap: 8px; cursor: default; border-style: solid; }
+.dp-inicio.editando .btn { justify-self: start; }
+@media (min-width: 520px) { .dp-inicio.editando { grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; } }
+.dp-nova .segmentado { justify-self: start; }

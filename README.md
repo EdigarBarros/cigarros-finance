@@ -92,8 +92,9 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   Se você informar os **juros por mês** de cada dívida (opcional, [migração 19](supabase/migracao-19-juros-das-dividas.sql)), o
   conselheiro do menu diz qual dívida pagar primeiro (a que cobra mais) e avisa quando os juros são muito altos.
   Uma dívida feita de várias compras (o crédito de uma loja, por exemplo) pode ser dividida em **partes**, cada uma com
-  as suas parcelas, valores e datas ([migração 21](supabase/migracao-21-partes-da-divida.sql)): o calendário e o atraso
-  saem delas. Com a regra de **juros de atraso** do credor ([migração 22](supabase/migracao-22-juros-de-atraso.sql)), a
+  as suas parcelas, valores e datas ([migração 21](supabase/migracao-21-partes-da-divida.sql)), ou ser um valor único
+  com o dia em que começou e o dia combinado para pagar ([migração 26](supabase/migracao-26-inicio-da-parte.sql)): o
+  calendário e o atraso saem delas. Com a regra de **juros de atraso** do credor ([migração 22](supabase/migracao-22-juros-de-atraso.sql)), a
   dívida atrasada cresce sozinha dia a dia, como no banco ("falta pagar hoje", estimado), e o botão **Conferi com o banco**
   acerta o valor real quando você quiser. Atrasou e prometeu pagar outro dia? Anote as **promessas de pagamento**
   ([migração 25](supabase/migracao-25-promessas-de-pagamento.sql)): o cartão mostra "prometeu pagar amanhã", o calendário
@@ -128,7 +129,8 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
    [`17`](supabase/migracao-17-teste-sem-cartao.sql), [`18`](supabase/migracao-18-teste-ao-escolher-plano.sql),
    [`19`](supabase/migracao-19-juros-das-dividas.sql), [`21`](supabase/migracao-21-partes-da-divida.sql),
    [`22`](supabase/migracao-22-juros-de-atraso.sql), [`23`](supabase/migracao-23-guardado-em-banco.sql),
-   [`24`](supabase/migracao-24-memoria-do-consultor.sql), [`25`](supabase/migracao-25-promessas-de-pagamento.sql) e, **por último**, a
+   [`24`](supabase/migracao-24-memoria-do-consultor.sql), [`25`](supabase/migracao-25-promessas-de-pagamento.sql),
+   [`26`](supabase/migracao-26-inicio-da-parte.sql) e, **por último**, a
    [`20`](supabase/migracao-20-acesso-no-banco-definitivo.sql).
    O `schema.sql` sozinho **não** tem cobrança nem bloqueio: sem a 12 e a 20 o painel abre para qualquer conta, paga ou não.
    Não rode as migrações 02 a 08 num banco novo (o `schema.sql` já inclui o que elas fazem) nem a 13 (a 20 a substitui).
