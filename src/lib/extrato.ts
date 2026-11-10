@@ -8,6 +8,7 @@ import type { Tipo } from './types'
 import { formaPelaDescricao, type FormaGravada } from './formas'
 import { lerDoZip } from './zip'
 import { lerTudo, supabase } from './supabase'
+import { registrarErro } from './erros'
 
 export interface LinhaExtrato {
   /** AAAA-MM-DD */
@@ -831,7 +832,7 @@ export function deOfx(texto: string): LinhaExtrato[] {
 // ---------- arquivos ----------
 
 /** Leitor de PDF (pdf.js), baixado só quando alguém importa um PDF. */
-const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168'
+const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38'
 
 export interface ItemTexto { str: string; transform: number[]; width: number; height?: number }
 
@@ -847,11 +848,20 @@ async function itensDoPdf(dados: ArrayBuffer): Promise<ItemPdf[][]> {
     throw new Error('Não consegui carregar o leitor de PDF (precisa de internet). Tente exportar o extrato em CSV ou Excel.')
   }
   pdfjs.GlobalWorkerOptions.workerSrc = `${PDFJS}/pdf.worker.min.mjs`
+  // Cada tentativa recebe uma cópia: o pdf.js leva os bytes para o worker e o original fica vazio.
+  const abrir = (opcoes: object) => pdfjs.getDocument({ data: new Uint8Array(dados.slice(0)), ...opcoes }).promise
   let doc
   try {
-    doc = await pdfjs.getDocument({ data: new Uint8Array(dados) }).promise
-  } catch (e) {
-    throw new Error(/password/i.test(String(e)) ? 'Esse PDF tem senha. Abra no app do banco e exporte sem senha (ou em CSV).' : 'Não consegui abrir esse PDF.')
+    doc = await abrir({})
+  } catch (primeiro) {
+    if (/password/i.test(String(primeiro))) throw new Error('Esse PDF tem senha. Abra no app do banco e exporte sem senha (ou em CSV).')
+    // PDF meio torto (comum em extrato gerado por sistema de banco): tenta de novo sem as partes que costumam quebrar
+    try {
+      doc = await abrir({ isEvalSupported: false, disableFontFace: true, useSystemFonts: false, stopAtErrors: false })
+    } catch (e) {
+      registrarErro(e, `extrato PDF (${dados.byteLength} bytes): ${String(primeiro).slice(0, 200)}`)
+      throw new Error('Não consegui abrir esse PDF. Ele pode estar corrompido: baixe de novo pelo app do banco ou exporte em CSV, Excel ou OFX.')
+    }
   }
   const paginas: ItemPdf[][] = []
   for (let p = 1; p <= doc.numPages; p++) {
@@ -1148,6 +1158,12 @@ export async function buscarJaLancados(linhas: { data: string }[], anoAberto: nu
   return { lancs, anosComErro: anosComErro.sort() }
 }
 
+/** Todo PDF começa com "%PDF" (às vezes depois de alguns bytes de lixo, que os leitores toleram). */
+export function pareceUmPdf(dados: ArrayBuffer) {
+  return new TextDecoder('latin1').decode(dados.slice(0, 1024)).includes('%PDF-')
+}
+const pareceUmaPagina = (dados: ArrayBuffer) => /<(!doctype html|html|head|body)\b/i.test(new TextDecoder('latin1').decode(dados.slice(0, 2048)))
+
 /** Lê o arquivo do extrato e devolve os lançamentos encontrados (do mais antigo para o mais novo). */
 export async function lerExtrato(arquivo: File, anoPadrao = new Date().getFullYear()): Promise<ExtratoLido> {
   const nome = arquivo.name.toLowerCase()
@@ -1157,6 +1173,11 @@ export async function lerExtrato(arquivo: File, anoPadrao = new Date().getFullYe
   let formato = ext.toUpperCase()
   let cabecalho = ''
   if (ext === 'pdf') {
+    if (!pareceUmPdf(dados)) {
+      throw new Error(pareceUmaPagina(dados)
+        ? 'Esse arquivo é uma página da internet salva com o nome .pdf, não o extrato. No app ou site do banco, use “Exportar” ou “Baixar PDF”.'
+        : 'Esse arquivo não é um PDF de verdade (só o nome termina em .pdf). Baixe o extrato de novo pelo app do banco ou exporte em CSV, Excel ou OFX.')
+    }
     const pdf = lerPaginasPdf(await itensDoPdf(dados), anoPadrao)
     cabecalho = cabecalhoDe(pdf.texto)
     linhas = pdf.linhas

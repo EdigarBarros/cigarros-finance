@@ -97,6 +97,42 @@ export function converter(valor: number, moeda: string, taxas: Taxas): number | 
   return t ? Math.round(valor * t * 100) / 100 : null
 }
 
+/**
+ * Ordem de grandeza de cada moeda (quantas unidades valem 1 dólar, novembro de 2026). Só serve quando ainda não há cotação do
+ * dia, para saber o jeito natural de escrever a cotação ("1 R$ = 280 ARS") e para notar uma cotação escrita ao contrário.
+ * Não precisa ser exata: o peso argentino pode dobrar de valor que a conferência continua certa.
+ */
+const POR_DOLAR: Record<string, number> = {
+  BRL: 5.5, USD: 1, EUR: 0.89, GBP: 0.75, ARS: 1545, CLP: 976, UYU: 40, PYG: 6266, COP: 3242, PEN: 3.42, MXN: 18.6,
+  CAD: 1.41, AUD: 1.45, CHF: 0.82, JPY: 158, CNY: 6.7, AOA: 917, MZN: 64,
+}
+
+/** Quanto 1 da moeda vale na principal: a cotação do dia ou, sem ela, a ordem de grandeza (null se nem isso). */
+export function taxaAproximada(moeda: string, principal: string, taxas: Taxas): number | null {
+  if (taxas[moeda]) return taxas[moeda]
+  const [a, b] = [POR_DOLAR[moeda], POR_DOLAR[principal]]
+  return a && b ? b / a : null
+}
+
+/** Uma cotação mais de 8 vezes longe da de hoje não é diferença de câmbio: é engano de digitação ou cotação virada. */
+const LONGE = 8
+const distancia = (a: number, b: number) => Math.abs(Math.log(a / b))
+
+/**
+ * A cotação foi escrita ao contrário? ("1 ARS = 280 R$" quando o certo é "1 R$ = 280 ARS".) Só diz que sim quando a cotação
+ * está muito longe da de hoje e o inverso dela está perto: aí o valor convertido sairia centenas de vezes maior ou menor.
+ */
+export function cotacaoInvertida(taxa: number | null | undefined, moeda: string, principal: string, taxas: Taxas): boolean {
+  if (!taxa || taxa <= 0 || moeda === principal) return false
+  const ref = taxaAproximada(moeda, principal, taxas)
+  if (!ref) return false
+  return distancia(taxa, ref) > Math.log(LONGE) && distancia(1 / taxa, ref) < distancia(taxa, ref)
+}
+
+/** A cotação no sentido certo (1 da moeda em moeda principal): desvira a que foi escrita ao contrário. */
+export const cotacaoNoSentidoCerto = (taxa: number, moeda: string, principal: string, taxas: Taxas) =>
+  (cotacaoInvertida(taxa, moeda, principal, taxas) ? 1 / taxa : taxa)
+
 /** Total das outras moedas convertido para a principal (as sem cotação ficam de fora). */
 export const totalConvertido = (moedas: Record<string, number>, taxas: Taxas) =>
   Object.entries(moedas).reduce((a, [m, v]) => a + (converter(v, m, taxas) ?? 0), 0)

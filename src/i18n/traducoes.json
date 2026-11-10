@@ -9718,5 +9718,17 @@
   "receber até {0}": {
     "en": "receive by {0}",
     "es": "recibir hasta el {0}"
+  },
+  "Essa cotação parece estar ao contrário: hoje 1 {0} vale cerca de {1} {2}.": {
+    "en": "This exchange rate looks reversed: today 1 {0} is worth about {1} {2}.",
+    "es": "Esta cotización parece estar al revés: hoy 1 {0} vale cerca de {1} {2}."
+  },
+  "Desvirar": {
+    "en": "Flip it",
+    "es": "Darla vuelta"
+  },
+  "A cotação parece estar ao contrário (o valor ficaria centenas de vezes maior ou menor). Toque em “Desvirar” ou confira.": {
+    "en": "The exchange rate looks reversed (the amount would be hundreds of times bigger or smaller). Tap “Flip it” or check it.",
+    "es": "La cotización parece estar al revés (el valor quedaría cientos de veces mayor o menor). Toca “Darla vuelta” o revísala."
   }
 }
