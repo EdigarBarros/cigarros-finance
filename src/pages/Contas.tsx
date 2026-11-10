@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
 import { COR } from '../lib/charts'
 import {
-  agruparContas, aproxConta, dataDaBaixa, fmtConta, fraseDaSituacao, hojeLocal, inicioDoMes, mesesComAtraso, totaisDoMes, type SituacaoConta,
+  agruparContas, aproxConta, dataDaBaixa, fmtConta, fraseDaSituacao, hojeLocal, inicioDoMes, mesesComAtraso, tomarEntradaFixa, totaisDoMes, ENTRADA_FIXA_PEDIDA, type SituacaoConta,
 } from '../lib/contasFixas'
 import { casasDaMoeda, mascarar, paraCampoMoeda } from '../lib/dinheiro'
 import { fmtDataCurta, fmtMesAno, fmtMoeda, fmtValor, MESES_NOME, parseNumero, simbolo, noMeioDaFrase } from '../lib/format'
@@ -36,6 +36,8 @@ const EXEMPLOS: { nome: string; tipo: Tipo; icone: string; dica: string; categor
 ]
 
 type Modelo = Pick<(typeof EXEMPLOS)[number], 'nome' | 'tipo' | 'categoria'>
+/** Entrada fixa em branco: o formulário já abre em "Entrada fixa". */
+const ENTRADA_FIXA: Modelo = { nome: '', tipo: 'entrada', categoria: '' }
 
 const mesDe = (iso: string | null) => (iso ? iso.slice(0, 7) : '')
 const quando = (iso: string) => fmtMesAno(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)))
@@ -47,8 +49,16 @@ const MES_CURTO = (m: number) => MESES_NOME[m - 1].slice(0, 3).toLowerCase()
  * e cada conta é um boleto que ganha o carimbo "pago" com um toque em "Paguei" (o app lança por você).
  */
 export function Contas(c: Ctx) {
-  const [editando, setEditando] = useState<ContaFixa | 'nova' | null>(null)
-  const [modelo, setModelo] = useState<Modelo | undefined>()
+  // vindo do "Cadastrar como entrada fixa" do lançamento: já abre o cadastro como entrada
+  const [pedida] = useState(tomarEntradaFixa)
+  const [editando, setEditando] = useState<ContaFixa | 'nova' | null>(pedida ? 'nova' : null)
+  const [modelo, setModelo] = useState<Modelo | undefined>(pedida ? ENTRADA_FIXA : undefined)
+  // pedido feito com a página já aberta
+  useEffect(() => {
+    const abrir = () => { if (tomarEntradaFixa()) { setModelo(ENTRADA_FIXA); setEditando('nova') } }
+    window.addEventListener(ENTRADA_FIXA_PEDIDA, abrir)
+    return () => window.removeEventListener(ENTRADA_FIXA_PEDIDA, abrir)
+  }, [])
   const [outroValor, setOutroValor] = useState<SituacaoConta | null>(null)
   const { contas } = c.contas
   const sits = c.situacoesContas
@@ -100,7 +110,12 @@ export function Contas(c: Ctx) {
           <h1>{tx('Contas do mês')}</h1>
           <p className="sub">{contas.length ? tx('O que vence em {0}. Toque em “Paguei” e o app lança por você.', nomeMes) : tx('Nunca mais esqueça uma conta.')}</p>
         </div>
-        {contas.length > 0 && <button className="btn primario" onClick={() => nova()}><Icone nome="mais" tamanho={16} /> {tx('Nova conta')}</button>}
+        {contas.length > 0 && (
+          <div className="ct-topo-acoes">
+            <button className="btn ct-btn-entrada" onClick={() => nova(ENTRADA_FIXA)}><Icone nome="receber" tamanho={16} /> {tx('Nova entrada fixa')}</button>
+            <button className="btn primario" onClick={() => nova()}><Icone nome="mais" tamanho={16} /> {tx('Nova conta a pagar')}</button>
+          </div>
+        )}
       </header>
 
       {anteriores.length > 0 && (
@@ -229,6 +244,11 @@ function SemContas({ aoNova }: { aoNova: (m?: Modelo) => void }) {
           <span className="mt-modelo-icone"><Icone nome="mais" tamanho={22} /></span>
           <strong>{tx('Outra conta')}</strong>
           <small>{tx('do seu jeito')}</small>
+        </button>
+        <button type="button" className="mt-modelo" style={{ '--c': '#30d158' } as React.CSSProperties} onClick={() => aoNova(ENTRADA_FIXA)}>
+          <span className="mt-modelo-icone"><Icone nome="receber" tamanho={22} /></span>
+          <strong>{tx('Outra entrada')}</strong>
+          <small>{tx('dinheiro que cai todo mês')}</small>
         </button>
       </div>
     </section>
@@ -458,7 +478,7 @@ function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; 
           opcoes={[{ id: 'saida', nome: tx('Conta a pagar'), cor: COR.saidas }, { id: 'entrada', nome: tx('Entrada fixa'), cor: COR.entradas }]} />
         <label className="campo">
           <span className="campo-rotulo">{tx('Nome')}</span>
-          <input autoFocus={!modelo && !conta} value={nome} onChange={(e) => aoDigitarNome(e.target.value)} maxLength={40}
+          <input autoFocus={!modelo?.nome && !conta} value={nome} onChange={(e) => aoDigitarNome(e.target.value)} maxLength={40}
             placeholder={entrada ? tx('Ex.: Salário, Aluguel recebido…') : tx('Ex.: Aluguel, Luz, Internet, Academia…')} />
         </label>
         {moedas.length > 1 && !c.contas.semMoeda && (

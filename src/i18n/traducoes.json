@@ -9370,5 +9370,37 @@
   "Esta tela é só sua. Cada coisa fica no seu lugar e só muda quando há novidade nos seus números.": {
     "en": "This screen is yours alone. Everything stays in its place and only changes when there is news in your numbers.",
     "es": "Esta pantalla es solo tuya. Cada cosa queda en su lugar y solo cambia cuando hay novedad en tus números."
+  },
+  "Vai receber isso todo mês?": {
+    "en": "Will you receive this every month?",
+    "es": "¿Vas a recibir esto todos los meses?"
+  },
+  "Cadastrar como entrada fixa": {
+    "en": "Add as recurring income",
+    "es": "Registrar como ingreso fijo"
+  },
+  "Alguém vai te pagar parcelado?": {
+    "en": "Is someone paying you in installments?",
+    "es": "¿Alguien te va a pagar en cuotas?"
+  },
+  "Cadastrar o que te devem": {
+    "en": "Add what they owe you",
+    "es": "Registrar lo que te deben"
+  },
+  "Nova entrada fixa": {
+    "en": "New recurring income",
+    "es": "Nuevo ingreso fijo"
+  },
+  "Nova conta a pagar": {
+    "en": "New bill to pay",
+    "es": "Nueva cuenta a pagar"
+  },
+  "Outra entrada": {
+    "en": "Other income",
+    "es": "Otro ingreso"
+  },
+  "dinheiro que cai todo mês": {
+    "en": "money that comes in every month",
+    "es": "dinero que entra todos los meses"
   }
 }

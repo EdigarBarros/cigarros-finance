@@ -4143,3 +4143,4 @@ body { top: 0 !important; }
 /* faixa no topo do painel, quando a internet cai com ele aberto */
 .faixa-sem-internet span { display: inline; line-height: 1.5; }
 .faixa-sem-internet svg { vertical-align: -3px; margin-right: 4px; }
+.lf-recorrente span { line-height: 1.6; }

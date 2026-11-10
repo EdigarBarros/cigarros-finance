@@ -4,7 +4,7 @@ import { mesEfetivo, resumoMes, saldoInformado } from '../lib/calc'
 import { ajustarMeses, ehGuardado } from '../lib/guardado'
 import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
 import {
-  chaveRecusa, faltaPagarNoMes, lancamentoDaBaixa, memoriaDasContas, parecidosNosOutrosMeses, situacoesDoMes, sugestoesDoMes,
+  chaveRecusa, faltaPagarNoMes, pedirEntradaFixa, lancamentoDaBaixa, memoriaDasContas, parecidosNosOutrosMeses, situacoesDoMes, sugestoesDoMes,
   type SituacaoConta, type SugestaoVinculo,
 } from '../lib/contasFixas'
 import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
@@ -13,7 +13,7 @@ import { analisar, compararRetratos, retratoDe, type Reanalise, type Retrato } f
 import { atualizarMemoria, type Objetivo } from '../lib/memoria'
 import { avisosDispensadosNoMes, conselhos as conselhosDe, dispensarPorUmMes, faltamDadosParaConselhos } from '../lib/conselheiro'
 import { jurosDoAtraso } from '../lib/jurosAtraso'
-import { atrasadoHoje, aumentaDivida, calendarioDe, sugeridoParaPagar, fimDoMes, inicioDaDivida, meDevem, saldoMaisRecenteDaDivida, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
+import { atrasadoHoje, aumentaDivida, calendarioDe, pedirLadoDividas, sugeridoParaPagar, fimDoMes, inicioDaDivida, meDevem, saldoMaisRecenteDaDivida, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
 import { definirMoedaPrincipal, definirValoresOcultos, fmtDataCurta, fmtValor, MESES_CURTO, MESES_NOME, useValoresOcultos } from '../lib/format'
 import { useCambio } from '../lib/moedas'
 import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
@@ -1020,6 +1020,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
             if (paginaAtual === 'lancamentos') idaParaCartao.current = { ano: a.ano, mes: a.mes, cartaoId: a.cartaoId, compraId: a.compraId }
           }}
           aoNovoCartao={() => { setForm(null); irPara('cartoes') }}
+          aoEntradaFixa={comContas ? () => { setForm(null); pedirEntradaFixa(); irPara('contas') } : undefined}
+          aoAReceberParcelado={v.dividas ? () => { setForm(null); pedirLadoDividas('me_devem'); irPara('dividas') } : undefined}
           contasFixas={comContas ? contas.contas : undefined}
           memoriaContas={memoriaContas}
           aoFechar={() => {
