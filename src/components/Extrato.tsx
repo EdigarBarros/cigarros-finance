@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
 import { parecencaComConta, situacoesDoMes, sugestoesDoMes } from '../lib/contasFixas'
 import { buscarJaLancados, chaveDeRepetido, lerExtrato, limparDescricao, type LinhaExtrato } from '../lib/extrato'
+import { registrarErro } from '../lib/erros'
 import { infoForma } from '../lib/formas'
 import { fmtValor, MESES_NOME, noMeioDaFrase } from '../lib/format'
 import { mesmoNome } from '../lib/rotulos'
@@ -124,7 +125,11 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
       setBancoId(meu?.id ?? '')
       setEtapa('revisar')
     } catch (e) {
-      setErro(e instanceof Error ? e.message : String(e))
+      const msg = e instanceof Error ? e.message : String(e)
+      // fica registrado para entender o que falhou: só o tipo e o tamanho do arquivo, nunca o conteúdo do extrato
+      // (o PDF que não abre já foi registrado com o erro do leitor, em lib/extrato.ts)
+      if (!msg.startsWith('Não consegui abrir esse PDF')) registrarErro(e, `importar extrato .${(f.name.split('.').pop() ?? '').toLowerCase().slice(0, 8)} (${f.size} bytes)`)
+      setErro(msg)
       setEtapa('escolher')
     } finally {
       if (entrada.current) entrada.current.value = ''
