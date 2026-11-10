@@ -9490,5 +9490,161 @@
   "{0} lançamentos feitos neste dia, logo abaixo.": {
     "en": "{0} entries on this day, right below.",
     "es": "{0} movimientos en este día, justo abajo."
+  },
+  ", 1 não cumprida": {
+    "en": ", 1 broken",
+    "es": ", 1 incumplida"
+  },
+  ", {0} não cumpridas": {
+    "en": ", {0} broken",
+    "es": ", {0} incumplidas"
+  },
+  "1 não cumprida": {
+    "en": "1 broken",
+    "es": "1 incumplida"
+  },
+  "Anotar": {
+    "en": "Save",
+    "es": "Anotar"
+  },
+  "Anotar nova promessa": {
+    "en": "Add new promise",
+    "es": "Anotar nueva promesa"
+  },
+  "Anotar promessa": {
+    "en": "Add promise",
+    "es": "Anotar promesa"
+  },
+  "Anotação": {
+    "en": "Note",
+    "es": "Nota"
+  },
+  "Apagar": {
+    "en": "Delete",
+    "es": "Borrar"
+  },
+  "Apagar promessa": {
+    "en": "Delete promise",
+    "es": "Borrar promesa"
+  },
+  "Combinou pagar em": {
+    "en": "Agreed to pay on",
+    "es": "Acordaste pagar el"
+  },
+  "Combinou pagar num dia? Anote cada promessa: o app mostra o dia combinado, avisa no cartão e diz se foi cumprida.": {
+    "en": "Agreed to pay on a certain day? Note each promise: the app shows the agreed day, flags it on the card and tells whether it was kept.",
+    "es": "¿Acordaste pagar un día? Anota cada promesa: la app muestra el día acordado, avisa en la tarjeta y dice si se cumplió."
+  },
+  "Dia prometido": {
+    "en": "Promised day",
+    "es": "Día prometido"
+  },
+  "Ex.: combinei pelo WhatsApp": {
+    "en": "E.g.: agreed on WhatsApp",
+    "es": "Ej.: lo acordé por WhatsApp"
+  },
+  "Ex.: disse que paga quando o cliente pagar ele": {
+    "en": "E.g.: said they will pay when their client pays them",
+    "es": "Ej.: dijo que paga cuando su cliente le pague"
+  },
+  "Ficou de te pagar num dia e não pagou? Anote cada promessa: o app mostra o dia prometido, avisa no cartão e diz se foi cumprida.": {
+    "en": "Someone promised to pay you on a day and didn't? Note each promise: the app shows the promised day, flags it on the card and tells whether it was kept.",
+    "es": "¿Quedó en pagarte un día y no pagó? Anota cada promesa: la app muestra el día prometido, avisa en la tarjeta y dice si se cumplió."
+  },
+  "Para anotar promessas de pagamento, rode": {
+    "en": "To note payment promises, run",
+    "es": "Para anotar promesas de pago, ejecuta"
+  },
+  "Promessas de pagamento": {
+    "en": "Payment promises",
+    "es": "Promesas de pago"
+  },
+  "Prometeu pagar em": {
+    "en": "Promised to pay on",
+    "es": "Prometió pagar el"
+  },
+  "Prometeu pagar neste dia": {
+    "en": "Promised to pay on this day",
+    "es": "Prometió pagar este día"
+  },
+  "Prometeu pagar {0}": {
+    "en": "Promised to pay {0}",
+    "es": "Prometió pagar {0}"
+  },
+  "Quanto": {
+    "en": "How much",
+    "es": "Cuánto"
+  },
+  "Você combinou pagar neste dia": {
+    "en": "You agreed to pay on this day",
+    "es": "Acordaste pagar este día"
+  },
+  "Você combinou pagar {0}": {
+    "en": "You agreed to pay {0}",
+    "es": "Acordaste pagar {0}"
+  },
+  "aguardando": {
+    "en": "waiting",
+    "es": "esperando"
+  },
+  "amanhã": {
+    "en": "tomorrow",
+    "es": "mañana"
+  },
+  "cumprida": {
+    "en": "kept",
+    "es": "cumplida"
+  },
+  "cumprida em parte": {
+    "en": "partly kept",
+    "es": "cumplida en parte"
+  },
+  "em {0}": {
+    "en": "on {0}",
+    "es": "el {0}"
+  },
+  "em {0} dias": {
+    "en": "in {0} days",
+    "es": "en {0} días"
+  },
+  "não cumprida": {
+    "en": "broken",
+    "es": "incumplida"
+  },
+  "opcional": {
+    "en": "optional",
+    "es": "opcional"
+  },
+  "pagou depois do dia": {
+    "en": "paid after the day",
+    "es": "pagó después del día"
+  },
+  "prometido {0}": {
+    "en": "promised {0}",
+    "es": "prometido {0}"
+  },
+  "trocada por outra": {
+    "en": "replaced by another",
+    "es": "cambiada por otra"
+  },
+  "veio {0}": {
+    "en": "{0} came in",
+    "es": "llegó {0}"
+  },
+  "{0} não cumpridas": {
+    "en": "{0} broken",
+    "es": "{0} incumplidas"
+  },
+  "{0}ª promessa": {
+    "en": "promise #{0}",
+    "es": "{0}ª promesa"
+  },
+  "é hoje": {
+    "en": "it's today",
+    "es": "es hoy"
+  },
+  "Sem valor, vale o que estiver atrasado. Se foi cumprida o app vê sozinho, pelo que você lançar até o dia. Promessas antigas também podem ser anotadas.": {
+    "en": "With no amount, it means whatever is overdue. The app checks by itself whether it was kept, from what you enter up to that day. Old promises can be noted too.",
+    "es": "Sin valor, vale lo que esté atrasado. La app ve sola si se cumplió, por lo que registres hasta ese día. También puedes anotar promesas antiguas."
   }
 }

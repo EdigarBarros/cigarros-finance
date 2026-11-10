@@ -2,15 +2,16 @@ import { CenaDividas } from '../components/Vazios'
 import { useState } from 'react'
 import { COR } from '../lib/charts'
 import {
-  aproxDiv, atrasadoHoje, aumentaDivida, calendarioDe, sugeridoParaPagar, fmtDiv, gruposDasPartes, inicioPelaProxima, meDevem, parcelasDe, projecaoMensal, tomarLadoDividas, totalDeParcelas,
-  type Calendario, type ParcelaDivida, type SituacaoDivida,
+  aproxDiv, atrasadoHoje, aumentaDivida, calendarioDe, sugeridoParaPagar, fmtDiv, gruposDasPartes, inicioPelaProxima, meDevem, parcelasDe, projecaoMensal, promessasDe, tomarLadoDividas, totalDeParcelas,
+  type Calendario, type ParcelaDivida, type Promessas, type SituacaoDivida,
 } from '../lib/dividas'
-import { fmtConta } from '../lib/contasFixas'
+import { fmtConta, hojeLocal } from '../lib/contasFixas'
 import { estiloDoBanco } from '../lib/estiloBanco'
 import { fmtDataCurta, fmtDataLonga, fmtMesAno, fmtMoeda, fmtTaxa, fmtValor, MESES_CURTO, noMeioDaFrase } from '../lib/format'
 import { BancoIcone } from '../components/BancoIcone'
 import { FormDivida } from '../components/Formularios'
 import { PartesDaDivida } from '../components/PartesDaDivida'
+import { LinhaDaPromessa, PromessasDaDivida } from '../components/PromessasDaDivida'
 import { ConferirComBanco, SeloJuros } from '../components/JurosDoAtraso'
 import { regraDoAtraso, temJurosDeAtraso } from '../lib/jurosAtraso'
 import { Icone } from '../components/Icone'
@@ -212,6 +213,7 @@ export function Dividas(c: Ctx) {
           <div className="dv-grade" key={`g-${lado}`}>
             {itens.map((x, i) => (
               <CartaoDivida key={x.s.divida.id} s={x.s} cal={x.cal} estado={x.estado} recebe={recebe} indice={i}
+                prom={promessasDe(x.s, c.d.pagamentos, hojeLocal())}
                 aoAbrir={() => { setConferindo(false); setAberta(x.s.divida.id) }} aoPagar={() => c.pagarDivida(x.s)}
                 aoConferir={() => { setConferindo(true); setAberta(x.s.divida.id) }} />
             ))}
@@ -328,8 +330,10 @@ const jurosDaDivida = (s: SituacaoDivida) => {
   return !meDevem(s.divida) && s.restante > 0 && typeof j === 'number' && j > 0 ? tx('{0}% ao mês', fmtTaxa(j)) : null
 }
 
-function CartaoDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar, aoConferir }: {
+function CartaoDivida({ s, cal, estado, recebe, indice, prom, aoAbrir, aoPagar, aoConferir }: {
   s: SituacaoDivida; cal: Calendario | null; estado: ReturnType<typeof estadoDe>; recebe: boolean; indice: number
+  /** Promessas de pagamento: a que vale agora aparece embaixo da linha do atraso. */
+  prom?: Promessas
   aoAbrir: () => void; aoPagar: () => void; aoConferir?: () => void
 }) {
   const p = parcelasDe(s)
@@ -372,6 +376,7 @@ function CartaoDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar, aoConf
                 : s.divida.valor_parcela ? <>{tx('{0} por mês', fmtDiv(s, s.divida.valor_parcela))}{s.quitacao && <> {tx('· até {0}', fmtMesAno(s.quitacao[0], s.quitacao[1]))}</>}</>
                   : <>{recebe ? tx('Recebe') : tx('Paga')} {tx('quanto e quando puder')}</>}
         </p>
+        {prom && !quitada && <LinhaDaPromessa s={s} p={prom} recebe={recebe} hoje={hojeLocal()} />}
       </button>
       {!quitada && (
         <button className={`btn ${estado.id === 'atrasada' ? 'perigo-forte' : 'primario'} dv-cartao-botao`} onClick={aoPagar}>
@@ -523,6 +528,8 @@ function Ficha({ c, s, cal, recebe, conferir, aoFechar, aoEditar }: {
             <button className="btn" onClick={definirVencimento} disabled={!proxima}>{tx('Salvar')}</button>
           </section>
         ) : null}
+
+        {!c.d.dividasSemExtras && <PromessasDaDivida s={s} p={promessasDe(s, c.d.pagamentos, hojeLocal())} d={c.d} recebe={recebe} hoje={hojeLocal()} />}
 
         {!c.d.dividasSemExtras && <PartesDaDivida s={s} cal={cal} d={c.d} recebe={recebe} />}
 

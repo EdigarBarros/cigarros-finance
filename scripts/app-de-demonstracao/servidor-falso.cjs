@@ -12,7 +12,7 @@ const body0=r=>{try{return r.postDataJSON()}catch{return null}}
 exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,semSessao=false,assinatura=null,funcoes={},dpr=1,toque=false,semColunas={}}={}){
   const db={assinaturas:[{user_id:uid,status:'cortesia',teste_fim:null,periodo_fim:null,cancela_no_fim:false,moeda:null}],
     perfis:[{user_id:uid,nome:'Teste',moeda:'BRL',moedas:[],detalhe:'detalhado',modulos:{dividas:true,contas:true,cartoes:true,bancos:true,investimentos:true,moedas:false,metas:true},dispensadas:['tour','importar'],onboarding_em:'2026-01-01T00:00:00Z',...perfil}],
-    categorias:[],lancamentos:[],meses:[],dividas:[],divida_saldos:[],bancos:[],metas:[],meta_movimentos:[],contas_fixas:[],cartoes:[],faturas_pagas:[],divida_partes:[],erros_app:[],...dados}
+    categorias:[],lancamentos:[],meses:[],dividas:[],divida_saldos:[],bancos:[],metas:[],meta_movimentos:[],contas_fixas:[],cartoes:[],faturas_pagas:[],divida_partes:[],divida_promessas:[],erros_app:[],...dados}
   const cats=[['saida','Alimentação'],['saida','Moradia'],['saida','Outros'],['saida','Dívidas e parcelas'],['entrada','Salário'],['entrada','Outros']]
   const srv=http.createServer((q,r)=>{let p=path.join(root,q.url.split('?')[0]);if(!fs.existsSync(p)||fs.statSync(p).isDirectory())p=path.join(root,'index.html');r.writeHead(200,{'content-type':mime[path.extname(p)]||'text/plain','content-security-policy':CSP});fs.createReadStream(p).pipe(r)})
   await new Promise(r=>srv.listen(porta,r))

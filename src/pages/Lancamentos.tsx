@@ -69,7 +69,8 @@ export function Lancamentos(c: Ctx) {
     contas: c.v.contas ? c.situacoesContas : [],
     dividas: c.v.dividas ? [...c.situacao, ...c.aReceber] : [],
     faturas: c.faturas,
-  }), [c.ano, c.mes, hoje, c.diaRef, c.v.contas, c.v.dividas, c.situacoesContas, c.situacao, c.aReceber, c.faturas])
+    pagamentos: c.d.pagamentos,
+  }), [c.ano, c.mes, hoje, c.diaRef, c.v.contas, c.v.dividas, c.situacoesContas, c.situacao, c.aReceber, c.faturas, c.d.pagamentos])
   const comCalendario = (temNoMes || previstos.size > 0) && c.perfil.detalhe !== 'simples'
   // o que o lançamento "diz", sem acento: nome, categoria, banco, cartão, forma, dívida e se é entrada ou saída
   const textoDe = (l: Lancamento) => {
@@ -467,7 +468,8 @@ function NoDia({ dia, hoje, lancs, previstos, aoFechar, aoAbrir }: {
   const quando = distancia === 0 ? tx('Hoje') : distancia === 1 ? tx('Amanhã') : distancia === -1 ? tx('Ontem')
     : distancia > 1 ? tx('Daqui a {0} dias', distancia) : tx('Há {0} dias', -distancia)
   const ordenados = [...previstos].sort((a, b) => Number(b.atrasado) - Number(a.atrasado) || (a.tipo === b.tipo ? b.valor - a.valor : a.tipo === 'entrada' ? -1 : 1))
-  const origem = (p: Previsto) => p.origem === 'cartao' ? tx('Fatura do cartão') : p.origem === 'conta'
+  const origem = (p: Previsto) => p.prometido ? (p.origem === 'receber' ? tx('Prometeu pagar neste dia') : tx('Você combinou pagar neste dia'))
+    : p.origem === 'cartao' ? tx('Fatura do cartão') : p.origem === 'conta'
     ? (p.tipo === 'entrada' ? tx('Entrada fixa') : tx('Conta do mês'))
     : p.origem === 'receber'
       ? (p.detalhe ? tx('Parcela {0} de quem te deve', p.detalhe) : tx('Quem te deve'))
@@ -513,7 +515,7 @@ function NoDia({ dia, hoje, lancs, previstos, aoFechar, aoAbrir }: {
           <h4>{tx('Ainda não lançado')}</h4>
           {ordenados.map((p) => (
             <button key={p.chave} type="button" className={`lc-nodia-item ${p.tipo}`} onClick={() => aoAbrir(p)}>
-              <span className="lc-nodia-icone"><Icone nome={p.origem === 'conta' ? 'calendario' : p.origem === 'receber' ? 'receber' : p.origem === 'cartao' ? 'cartao' : 'divida'} tamanho={16} /></span>
+              <span className="lc-nodia-icone"><Icone nome={p.prometido ? 'acordo' : p.origem === 'conta' ? 'calendario' : p.origem === 'receber' ? 'receber' : p.origem === 'cartao' ? 'cartao' : 'divida'} tamanho={16} /></span>
               <span className="lc-nodia-nome">
                 <strong>{p.nome}</strong>
                 <small>{origem(p)}{p.atrasado && <em>{p.tipo === 'entrada' ? tx('não caiu') : tx('atrasada')}</em>}</small>

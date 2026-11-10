@@ -1,6 +1,6 @@
 import { fmtMoeda, fmtValor, moedaAtual } from './format'
 import type { Taxas } from './moedas'
-import type { Divida, Pagamento, ParteDivida, SaldoDivida } from './types'
+import type { Divida, Pagamento, ParteDivida, PromessaDivida, SaldoDivida } from './types'
 import { tx } from './textos'
 import { jurosDoAtraso, type JurosDoAtraso } from './jurosAtraso'
 
@@ -529,4 +529,69 @@ export function parcelasPorDia({ situacao, ano, mes, dias, hoje, diaRef, atrasad
     }
   }
   return vence.map(centavosDe)
+}
+
+// ---------- promessas de pagamento (migração 25) ----------
+
+export type EstadoPromessa = 'aguardando' | 'hoje' | 'cumprida' | 'em_parte' | 'pagou_depois' | 'nao_cumprida' | 'trocada'
+
+export interface SituacaoPromessa {
+  promessa: PromessaDivida
+  /** 1 a N, na ordem em que foram feitas. */
+  n: number
+  estado: EstadoPromessa
+  /** O valor prometido na moeda principal (null = o que estiver atrasado). */
+  valor: number | null
+  /** Quanto entrou (ou foi pago) entre a promessa anterior e o dia prometido. */
+  pagoAte: number
+}
+
+export interface Promessas {
+  lista: SituacaoPromessa[]
+  /** A promessa que vale agora: a mais nova, se o dia dela ainda não passou e a dívida não acabou. */
+  ativa: SituacaoPromessa | null
+  /** Quantas já passaram sem ser cumpridas (nem em parte). */
+  quebradas: number
+}
+
+/** Dia (AAAA-MM-DD) n dias antes. */
+const diasAntes = (iso: string, n: number) => {
+  const d = new Date(`${iso}T12:00:00`)
+  d.setDate(d.getDate() - n)
+  return `${d.getFullYear()}-${doisDig(d.getMonth() + 1)}-${doisDig(d.getDate())}`
+}
+
+/**
+ * O que aconteceu com cada promessa, pelos pagamentos lançados: cumprida (pagou até o dia, o valor prometido ou, sem valor,
+ * qualquer valor), em parte, pagou depois do dia, não cumprida ou trocada por uma promessa mais nova antes do dia chegar.
+ * Cada promessa olha os pagamentos desde o dia da anterior (a primeira, desde uma semana antes do dia prometido ou de
+ * quando foi anotada).
+ */
+export function promessasDe(s: Pick<SituacaoDivida, 'divida' | 'original' | 'taxa' | 'restante'>, pagamentos: Pagamento[], hoje: string): Promessas {
+  const ps = s.divida.promessas ?? []
+  if (!ps.length) return { lista: [], ativa: null, quebradas: 0 }
+  const abatem = pagamentos
+    .filter((p) => p.divida_id === s.divida.id && p.data && !aumentaDivida(p.tipo, s.original))
+    .map((p) => ({ data: p.data!, valor: p.valor }))
+  const soma = (de: string, ate: string) => centavos(abatem.filter((p) => p.data > de && p.data <= ate).reduce((t, p) => t + p.valor, 0))
+  const lista: SituacaoPromessa[] = ps.map((promessa, i) => {
+    const anterior = ps[i - 1]
+    const proxima = ps[i + 1]
+    const anotada = promessa.created_at.slice(0, 10)
+    const de = anterior ? (anterior.data < promessa.data ? anterior.data : diasAntes(promessa.data, 1)) : diasAntes(anotada < promessa.data ? anotada : promessa.data, 7)
+    const valor = promessa.valor == null ? null : centavos(promessa.valor * s.taxa)
+    const pagoAte = soma(de, promessa.data)
+    const alvo = valor ?? 0.01
+    let estado: EstadoPromessa
+    if (pagoAte >= alvo - 0.005) estado = 'cumprida'
+    // trocada: uma promessa nova foi anotada antes do dia desta chegar
+    else if (proxima && proxima.created_at.slice(0, 10) < promessa.data) estado = 'trocada'
+    else if (promessa.data >= hoje) estado = promessa.data === hoje ? 'hoje' : 'aguardando'
+    else if (pagoAte > 0) estado = 'em_parte'
+    else estado = soma(promessa.data, proxima ? proxima.data : hoje) > 0 ? 'pagou_depois' : 'nao_cumprida'
+    return { promessa, n: i + 1, estado, valor, pagoAte }
+  })
+  const ultima = lista[lista.length - 1]
+  const ativa = s.restante > 0 && (ultima.estado === 'aguardando' || ultima.estado === 'hoje') ? ultima : null
+  return { lista, ativa, quebradas: lista.filter((x) => x.estado === 'nao_cumprida').length }
 }

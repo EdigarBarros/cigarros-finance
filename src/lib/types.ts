@@ -90,6 +90,23 @@ export interface Divida {
    * parcela de cada parte. Não é coluna de `dividas`: o app junta da tabela divida_partes. Com partes, o calendário sai delas.
    */
   partes?: ParteDivida[]
+  /**
+   * Promessas de pagamento (migração 25), da mais antiga para a mais nova. Não é coluna de `dividas`: o app junta da tabela
+   * divida_promessas.
+   */
+  promessas?: PromessaDivida[]
+}
+
+/** "Ficou de pagar dia 30", "agora paga amanhã" (migração 25). Se foi cumprida o app vê pelos pagamentos, não guarda. */
+export interface PromessaDivida {
+  id: string
+  divida_id: string
+  /** O dia prometido. */
+  data: string
+  /** Quanto ficou de pagar, na moeda da dívida; null = o que estiver atrasado. */
+  valor: number | null
+  obs: string | null
+  created_at: string
 }
 
 /** Uma parcela de uma parte da dívida: "Microfone, parcela 2 de 6, R$ 78,50, vence 02/03" (migração 21). */
