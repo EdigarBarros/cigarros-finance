@@ -5,11 +5,12 @@ import { MEMORIA_VAZIA, normMemoria, type MemoriaConsultor } from './memoria'
 import { GOSTO_VAZIO, normGosto, type Gosto } from './gosto'
 import { lerTudo, supabase } from './supabase'
 import type { EscolhaZerar, ParteZerar } from './zerar'
-import type { Banco, Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, ParteDivida, Perfil, PromessaDivida, SaldoDivida } from './types'
+import type { Banco, Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, ParteDivida, Perfil, PromessaDivida, SaldoDivida, SaldoInicial } from './types'
 import { fmtDataLonga } from './format'
 import { mesesDaAnalise } from './conselheiro'
 import { moedaDaDivida, nativoDiv, type Calendario, type SituacaoDivida } from './dividas'
 import { tx } from './textos'
+import { normSaldoInicial } from './saldoCorrido'
 
 const num = (v: unknown) => Number(v ?? 0)
 
@@ -45,6 +46,18 @@ const faltaTabela = (e: { code?: string; message: string }) =>
 const faltaColuna = (e: { code?: string; message: string }) =>
   e.code === '42703' || e.code === 'PGRST204' || /column .*does not exist|could not find .*column/i.test(e.message)
 const chaveFoto = (userId: string) => `opuscash-foto-${userId}`
+/** O ponto de partida do saldo de um mês para o outro também fica no aparelho: vale sem a migração 27. */
+const chaveSaldoInicial = (userId: string) => `opuscash-saldo-inicial-${userId}`
+const saldoInicialLocal = (userId: string): SaldoInicial | null => {
+  try {
+    const t = localStorage.getItem(chaveSaldoInicial(userId))
+    return t ? normSaldoInicial(JSON.parse(t)) : null
+  } catch {
+    return null
+  }
+}
+/** O mínimo de cada lançamento para somar o que sobrou nos meses de outros anos (saldo de um mês para o outro). */
+export type LancParaSaldo = Pick<Lancamento, 'ano' | 'mes' | 'tipo' | 'valor' | 'cartao_id' | 'guardado_banco_id'>
 /** A memória do consultor (lib/memoria.ts) também fica no aparelho: vale sem a migração 24 e enquanto a rede falha. */
 const chaveMemoria = (userId: string) => `opuscash-consultor-${userId}`
 const memoriaLocal = (userId: string): MemoriaConsultor => {
@@ -140,6 +153,10 @@ export function useDados(userId: string, ano: number) {
   const [foto, setFoto] = useState<string | null>(() => fotoLocal(userId))
   const [memoria, setMemoria] = useState<MemoriaConsultor>(() => memoriaLocal(userId))
   const [gosto, setGosto] = useState<Gosto>(() => gostoLocal(userId))
+  /** De onde parte o saldo de um mês para o outro (migração 27; sem ela, só neste aparelho). */
+  const [saldoInicial, setSaldoInicial] = useState<SaldoInicial | null>(() => saldoInicialLocal(userId))
+  /** Lançamentos dos anos entre o ponto de partida e o ano aberto, só com o que a conta do saldo precisa. */
+  const [lancsAntesDoAno, setLancsAntesDoAno] = useState<LancParaSaldo[]>([])
   // memória e gosto moram na mesma coluna (perfis.consultor): quem grava um leva o outro junto, sempre o mais recente
   const memoriaAgora = useRef(memoria)
   const gostoAgora = useRef(gosto)
@@ -254,6 +271,14 @@ export function useDados(userId: string, ano: number) {
       // o gosto que sabe mais vale (o do aparelho pode estar na frente: nem toda saída da aba chega ao banco)
       const gostoDoBanco = pf.data && 'consultor' in pf.data ? normGosto((pf.data as { consultor?: { gosto?: unknown } | null }).consultor?.gosto) : null
       if (gostoDoBanco && gostoDoBanco.total > gostoAgora.current.total) { gostoAgora.current = gostoDoBanco; setGosto(gostoDoBanco) }
+      // o do banco vale (vem de qualquer aparelho); vazio lá (migração recém-rodada ou nunca informado), fica o deste aparelho
+      const saldoDoBanco = pf.data && 'saldo_inicial' in pf.data ? normSaldoInicial((pf.data as { saldo_inicial?: unknown }).saldo_inicial) : null
+      if (saldoDoBanco) setSaldoInicial(saldoDoBanco)
+      else if (pf.data && 'saldo_inicial' in pf.data) {
+        // informado antes da migração: agora que a coluna existe, sobe a cópia do aparelho para valer nos outros
+        const local = saldoInicialLocal(userId)
+        if (local) void supabase.from('perfis').update({ saldo_inicial: local }).eq('user_id', userId).then(() => {}, () => {})
+      }
     }
     const em = mt.error ?? mv.error
     if (em && faltaTabela(em)) setMetasSemTabela(true)
@@ -275,6 +300,22 @@ export function useDados(userId: string, ano: number) {
   useEffect(() => {
     void recarregar()
   }, [recarregar])
+
+  // Saldo de um mês para o outro com ponto de partida num ano anterior ao aberto: lê o que sobrou nesses anos (só as colunas
+  // da conta). Sem a migração 23 não há a coluna do dinheiro guardado: lê sem ela.
+  const anoDaPartida = saldoInicial ? Number(saldoInicial.mes.slice(0, 4)) : null
+  useEffect(() => {
+    if (anoDaPartida === null || anoDaPartida >= ano) { queueMicrotask(() => setLancsAntesDoAno([])); return }
+    let vivo = true
+    const ler = (colunas: string) => lerTudo(() => supabase.from('lancamentos').select(colunas).gte('ano', anoDaPartida).lt('ano', ano).order('id'))
+    void (async () => {
+      let r = await ler('id, ano, mes, tipo, valor, cartao_id, guardado_banco_id')
+      if (r.error && faltaColuna(r.error)) r = await ler('id, ano, mes, tipo, valor, cartao_id')
+      if (!vivo) return
+      setLancsAntesDoAno(r.error ? [] : (r.data as unknown as LancParaSaldo[]).map((l) => ({ ...l, valor: num(l.valor), guardado_banco_id: l.guardado_banco_id ?? null })))
+    })()
+    return () => { vivo = false }
+  }, [anoDaPartida, ano, userId])
 
   // Toda falha de gravação mostra o erro e recarrega do banco, para a tela nunca mentir.
   const falhou = useCallback(
@@ -642,7 +683,7 @@ export function useDados(userId: string, ano: number) {
     if (perfilSemTabela) return
     // a foto e a memória do consultor são gravadas à parte (sem a coluna, o perfil inteiro falharia; e uma cópia velha da
     // memória que veio junto no perfil apagaria a nova)
-    const { foto: _foto, consultor: _consultor, ...semFoto } = novo as Perfil & { consultor?: unknown }
+    const { foto: _foto, consultor: _consultor, saldo_inicial: _saldo, ...semFoto } = novo as Perfil & { consultor?: unknown; saldo_inicial?: unknown }
     const { error } = await supabase.from('perfis').upsert({ ...semFoto, user_id: userId, updated_at: new Date().toISOString() })
     if (error) return falhou(error.message)
     // Foto escolhida antes de o perfil existir (perguntas do primeiro acesso): só agora há uma linha para recebê-la.
@@ -661,6 +702,21 @@ export function useDados(userId: string, ano: number) {
     if (perfilSemTabela) return
     const { error } = await supabase.from('perfis').update({ foto: nova }).eq('user_id', userId)
     if (error && !faltaTabela(error) && error.code !== '42703' && error.code !== 'PGRST204') falhou(error.message)
+  }
+
+  /**
+   * Grava (ou tira, com null) o ponto de partida do saldo de um mês para o outro. Fica sempre no aparelho e, com a migração
+   * 27, também no banco. Sem a coluna, o erro é engolido: a cópia do aparelho já vale.
+   */
+  const salvarSaldoInicial = async (novo: SaldoInicial | null) => {
+    setSaldoInicial(novo)
+    try {
+      if (novo) localStorage.setItem(chaveSaldoInicial(userId), JSON.stringify(novo))
+      else localStorage.removeItem(chaveSaldoInicial(userId))
+    } catch { /* sem armazenamento: vale até recarregar */ }
+    if (perfilSemTabela || !perfil) return
+    const { error } = await supabase.from('perfis').update({ saldo_inicial: novo }).eq('user_id', userId)
+    if (error && !faltaTabela(error) && !faltaColuna(error)) falhou(error.message)
   }
 
   /**
@@ -783,7 +839,8 @@ export function useDados(userId: string, ano: number) {
       gostoAgora.current = GOSTO_VAZIO
       setMemoria(MEMORIA_VAZIA)
       setGosto(GOSTO_VAZIO)
-      try { localStorage.removeItem(chaveMemoria(userId)); localStorage.removeItem(chaveGosto(userId)) } catch { /* nada guardado */ }
+      setSaldoInicial(null)
+      try { localStorage.removeItem(chaveMemoria(userId)); localStorage.removeItem(chaveGosto(userId)); localStorage.removeItem(chaveSaldoInicial(userId)) } catch { /* nada guardado */ }
     }
   }
 
@@ -792,6 +849,7 @@ export function useDados(userId: string, ano: number) {
     metas, movimentosMeta, metasSemTabela, addMeta, updMeta, delMeta, addMovimentoMeta, delMovimentoMeta,
     categorias, categoriasAntigas, addCategoria, updCategoria, delCategoria,
     perfil, perfilSemTabela, salvarPerfil, foto, salvarFoto, memoria, salvarMemoria, gosto, salvarGosto,
+    saldoInicial, salvarSaldoInicial, lancsAntesDoAno,
     bancos, addBanco, updBanco, delBanco,
     dividasSemExtras,
     dividasSemMoeda,

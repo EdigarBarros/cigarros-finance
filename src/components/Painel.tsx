@@ -1,4 +1,6 @@
 import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { saldosDoAno, sobrasPorMes } from '../lib/saldoCorrido'
+import { FormSaldoInicial } from './SaldoInicial'
 import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes, saldoInformado } from '../lib/calc'
 import { ajustarMeses, ehGuardado } from '../lib/guardado'
@@ -18,7 +20,7 @@ import { definirMoedaPrincipal, definirValoresOcultos, fmtDataCurta, fmtValor, M
 import { useCambio } from '../lib/moedas'
 import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
 import { supabase } from '../lib/supabase'
-import type { Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
+import type { Lancamento, Modulo, Perfil, SaldoInicial, Tipo } from '../lib/types'
 import { useMobile } from '../lib/useMobile'
 import { useBarraLateral } from '../lib/useBarraLateral'
 import { estiloLente, useLente } from '../lib/useLente'
@@ -162,6 +164,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const [quadroMeses, setQuadroMeses] = useState(false)
   const [busca, setBusca] = useState('')
   const [extrato, setExtrato] = useState(false)
+  const [editandoSaldoInicial, setEditandoSaldoInicial] = useState(false)
   const [organizar, setOrganizar] = useState(false)
   /** "Esses também são da pensão?": aberto depois de ligar um lançamento a uma conta do mês. */
   const [parecidos, setParecidos] = useState<{ modelo: Lancamento; itens: SugestaoVinculo[] } | null>(null)
@@ -298,6 +301,14 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     () => previsaoDoAno({ lancs: lancsContados, lancsBaixas: d.lancs, faturasPagas, comFaturas: comFaturasNaPrevisao, contas: contasNaPrevisao ? contasFixas : [], ano, taxas, hoje }),
     [lancsContados, d.lancs, faturasPagas, comFaturasNaPrevisao, contasNaPrevisao, contasFixas, ano, taxas, hoje],
   )
+
+  // O saldo que passa de um mês para o outro: parte do que a pessoa informou e soma o que sobrou em cada mês até o aberto.
+  const sobrasAntes = useMemo(() => sobrasPorMes(d.lancsAntesDoAno, comFaturas ? faturasPagas : []), [d.lancsAntesDoAno, comFaturas, faturasPagas])
+  const saldoCorrido = useMemo(() => ({
+    porMes: saldosDoAno({ inicial: d.saldoInicial, ano, previsto, antes: sobrasAntes, hoje }),
+    inicial: d.saldoInicial,
+    salvar: (novo: SaldoInicial | null) => void d.salvarSaldoInicial(novo),
+  }), [d.saldoInicial, ano, previsto, sobrasAntes, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // o mês aberto dia a dia (gráfico do mês na Início): o que já aconteceu até hoje e o que ainda vem
   const diaADia = useMemo(
@@ -622,6 +633,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       cartoes: comCartoes ? <BlocoCartoes situacoes={faturas} aoAbrir={() => irPara('cartoes')} /> : undefined,
     },
     busca, setBusca,
+    saldoCorrido,
     ano, mes, d, cartoes, faturas, lancsMes, lancsAno: lancsContados, lancsMesComGuardados, lancsAnoComGuardados: lancsComGuardados, situacao, aReceber, diaRef, mesEf, porMes, previsto, diaADia, mobile,
     perfil, v, taxas, sugestao,
     aceitarSugestao: (s: Sugestao) => mudarPerfil(s.aplicar(perfil)),
@@ -1068,6 +1080,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           aoMudar={mudarPerfil}
           aoRefazer={() => { setAjustes(false); setRefazendo(true) }}
           aoTour={() => { setAjustes(false); setTour(true) }}
+          saldoInicial={d.saldoInicial}
+          aoSaldoInicial={() => { setAjustes(false); setEditandoSaldoInicial(true) }}
           aoCategorias={() => { setAjustes(false); ctx.gerenciarCategorias() }}
           aoBackup={() => tarefa(tx('Preparando o backup…'), async () => (await import('../lib/planilha')).exportarBackup())}
           aoImportar={() => { setAjustes(false); arquivo.current?.click() }}
@@ -1082,6 +1096,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       )}
 
       {extrato && <ImportarExtrato c={ctx} aoFechar={() => setExtrato(false)} />}
+      {editandoSaldoInicial && (
+        <FormSaldoInicial inicial={d.saldoInicial} mesSugerido={`${ano}-${String(Math.max(0, porMes.findIndex(Boolean)) + 1).padStart(2, '0')}`}
+          aoSalvar={(novo) => void d.salvarSaldoInicial(novo)} aoFechar={() => setEditandoSaldoInicial(false)} />
+      )}
       {tour && !form && !ajustes && !extrato && !organizar && (
         <Tour perfil={perfil} v={v} nome={perfil.nome.trim()} mobile={mobile} aoLigar={ligarModulo} aoIrPara={irPara}
           aoTerminar={() => { setTour(false); if (!perfil.dispensadas.includes('tour')) ctx.dispensar('tour') }} />

@@ -6,9 +6,11 @@ import { hojeLocal } from '../lib/cartoes'
 import { useModoDoGrafico, type ModoDoGrafico } from '../lib/modoDoGrafico'
 import { PALETA, useCoresDoGrafico } from '../lib/charts'
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
-import { fmtDataCurta, fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, moedaAtual, valoresEstaoOcultos } from '../lib/format'
+import { fmtDataCurta, fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, moedaAtual, noMeioDaFrase, valoresEstaoOcultos } from '../lib/format'
 import { Icone } from './Icone'
 import { Segmentado } from './ui'
+import { FormSaldoInicial } from './SaldoInicial'
+import type { SaldoCorrido, SaldoDoMes } from '../lib/saldoCorrido'
 import type { Visao } from '../lib/perfil'
 import { tx } from '../lib/textos'
 
@@ -462,10 +464,16 @@ function origensDaDivida(r: Resumo | null | undefined): [string, number][] {
  * Resumo do mês escolhido no gráfico, num painel fixo (ao lado do gráfico em tela larga, embaixo em tela estreita).
  * Substitui o card que abria em cima do gráfico e escondia as barras e a linha.
  */
-function PainelDoMes({ indice, r, v, fora, moeda, aoMudar, p, modo }: {
+function PainelDoMes({ indice, r, v, fora, moeda, aoMudar, p, modo, saldo, temSaldoInicial, aoInformarSaldo }: {
   indice: number; r: Resumo | null; v: Visao; fora: boolean; moeda: string; aoMudar: (i: number) => void
   /** O que já aconteceu e o que ainda vem neste mês; com o modo, diz o que o painel mostra. */
   p?: PrevisaoMes; modo: ModoDoGrafico
+  /** O saldo que passa de um mês para o outro, neste mês (null antes do ponto de partida ou sem ele). */
+  saldo?: SaldoDoMes | null
+  /** Já há ponto de partida: sem ele, o painel convida a informar. */
+  temSaldoInicial?: boolean
+  /** Abre o formulário do ponto de partida (sem isso, o painel não mostra o saldo). */
+  aoInformarSaldo?: () => void
 }) {
   const comPrevisao = !fora && modo === 'previsto' && temPrevisao(p)
   // mesmo critério do gráfico: mês futuro em que nada aconteceu ainda fica em branco
@@ -519,7 +527,47 @@ function PainelDoMes({ indice, r, v, fora, moeda, aoMudar, p, modo }: {
           {r && !fora && v.moedas && !semSaldo && linha(tx('Em outras moedas'), fmt(r.moedasConvertido), 'usd')}
         </>
       )}
+      {!fora && aoInformarSaldo && (saldo
+        ? <LinhasDoSaldo saldo={saldo} indice={indice} comPrevisao={modo === 'previsto'} aoMudar={aoInformarSaldo} />
+        : !temSaldoInicial && r && (
+          <button type="button" className="link pm-saldo-convite" onClick={aoInformarSaldo}>
+            <Icone nome="mais" tamanho={14} />{tx('Ver o saldo de um mês para o outro')}
+          </button>
+        ))}
     </aside>
+  )
+}
+
+/**
+ * O saldo que passa de um mês para o outro no painel do mês: com quanto o mês começou e com quanto fechou. No mês de hoje,
+ * o saldo até agora e, no modo "O que vem aí", quanto deve ficar no fim. Mês futuro só aparece no modo "O que vem aí".
+ */
+function LinhasDoSaldo({ saldo, indice, comPrevisao, aoMudar }: { saldo: SaldoDoMes; indice: number; comPrevisao: boolean; aoMudar: () => void }) {
+  if (saldo.quando === 'futuro' && !comPrevisao) return null
+  const nome = noMeioDaFrase(MESES_NOME[indice])
+  const anterior = noMeioDaFrase(MESES_NOME[(indice + 11) % 12])
+  const valor = (n: number) => `${n < 0 ? '− ' : ''}${fmtValor(Math.abs(n))}`
+  const tom = (n: number) => (n < 0 ? 'saiu' : 'saldo')
+  const linha = (nome: string, n: number, forte = false) => (
+    <div className={`pm-linha ${forte ? 'pm-forte' : ''}`}><span>{nome}</span><b className={`pm-valor ${tom(n)}`}>{valor(n)}</b></div>
+  )
+  return (
+    <>
+      <hr className="pm-sep" />
+      {saldo.primeiro
+        ? (
+          <div className="pm-linha">
+            <button type="button" className="link pm-saldo-mudar" onClick={aoMudar} title={tx('Mudar o ponto de partida')}>
+              {tx('Você tinha no começo')} <Icone nome="lapis" tamanho={12} />
+            </button>
+            <b className={`pm-valor ${tom(saldo.inicio)}`}>{valor(saldo.inicio)}</b>
+          </div>
+        )
+        : linha(tx('Veio de {0}', anterior), saldo.inicio)}
+      {saldo.quando === 'passado' && linha(tx('Saldo no fim de {0}', nome), saldo.fim, true)}
+      {saldo.quando === 'hoje' && linha(tx('Saldo até hoje'), saldo.fim, !comPrevisao)}
+      {saldo.quando !== 'passado' && comPrevisao && saldo.fimPrevisto !== null && linha(tx('Vai ficar no fim de {0}', nome), saldo.fimPrevisto, true)}
+    </>
   )
 }
 
@@ -535,8 +583,12 @@ export function moedasDoAno(porMes: (Resumo | null)[]) {
   return [...achadas].sort()
 }
 
-export function GraficoAnual({ porMes, previsto, mesAtual, altura = 400, compacto, v }: {
+export function GraficoAnual({ porMes, previsto, mesAtual, altura = 400, compacto, v, saldoCorrido, ano }: {
   porMes: (Resumo | null)[]; mesAtual: number; altura?: number; v: Visao
+  /** O saldo que passa de um mês para o outro (sem isso, o painel não fala dele). */
+  saldoCorrido?: SaldoCorrido
+  /** Ano aberto: para sugerir o mês do ponto de partida. */
+  ano?: number
   /** O que já aconteceu e o que ainda vem em cada mês. */
   previsto: PrevisaoMes[]
   /** Celular: eixo em "mil" e legenda menor. */
@@ -550,6 +602,10 @@ export function GraficoAnual({ porMes, previsto, mesAtual, altura = 400, compact
   const moeda = extras.includes(escolhida) ? escolhida : principal
   const fora = moeda !== principal
   const [modo, setModo] = useModoDoGrafico()
+  const [editandoSaldo, setEditandoSaldo] = useState(false)
+  // o ponto de partida sugerido: o primeiro mês do ano aberto com lançamentos
+  const primeiroComDados = Math.max(0, porMes.findIndex(Boolean))
+  const mesSugerido = `${ano ?? new Date().getFullYear()}-${String(primeiroComDados + 1).padStart(2, '0')}`
   const temDividaFora = porMes.some((r) => r && Object.keys(r.dividaMoeda).length > 0)
   const algum = (f: (r: Resumo) => number) => porMes.some((r) => r && f(r) > 0)
   // O mês do painel: o aberto no app, até a pessoa tocar em outro mês do gráfico (valendo só enquanto o mês aberto não mudar).
@@ -617,9 +673,13 @@ export function GraficoAnual({ porMes, previsto, mesAtual, altura = 400, compact
           <CaixaDoGrafico style={{ height: altura }}>
             <Misto type="bar" key={c.tema + c.ocultos + moeda + modo} data={dadosFinais} options={opcoesFinais} />
           </CaixaDoGrafico>
-          <PainelDoMes indice={indice} r={porMes[indice] ?? null} v={v} fora={fora} moeda={moeda} aoMudar={escolher} p={previsto[indice]} modo={modo} />
+          <PainelDoMes indice={indice} r={porMes[indice] ?? null} v={v} fora={fora} moeda={moeda} aoMudar={escolher} p={previsto[indice]} modo={modo}
+            saldo={saldoCorrido?.porMes[indice]} temSaldoInicial={Boolean(saldoCorrido?.inicial)} aoInformarSaldo={saldoCorrido ? () => setEditandoSaldo(true) : undefined} />
         </div>
       </div>
+      {editandoSaldo && saldoCorrido && (
+        <FormSaldoInicial inicial={saldoCorrido.inicial} mesSugerido={mesSugerido} aoSalvar={saldoCorrido.salvar} aoFechar={() => setEditandoSaldo(false)} />
+      )}
       {fora
         ? <p className="campo-ajuda">{tx('Valores em {0}, como você lançou: sem conversão. Entrou, Saiu e Dívidas só desta moeda.', moeda)}</p>
         : temDividaFora && <p className="campo-ajuda">{tx('As dívidas em outras moedas entram aqui pela cotação de hoje. Para ver os valores exatos, escolha a moeda acima.')}</p>}
@@ -631,8 +691,10 @@ export function GraficoAnual({ porMes, previsto, mesAtual, altura = 400, compact
  * Quanto sobrou em cada mês: barra verde quando sobrou e vermelha quando faltou, e a linha brilhante do acumulado no
  * ano (quanto já sobrou somando os meses até ali).
  */
-export function GraficoSaldo({ porMes, mesAtual, compacto }: {
+export function GraficoSaldo({ porMes, mesAtual, compacto, saldos }: {
   porMes: (Resumo | null)[]; mesAtual?: number; compacto?: boolean
+  /** O saldo de um mês para o outro: com ele, a linha mostra o saldo no fim de cada mês em vez do acumulado do ano. */
+  saldos?: (SaldoDoMes | null)[]
 }) {
   const c = useCoresDoGrafico()
   const principal = moedaAtual()
@@ -645,6 +707,9 @@ export function GraficoSaldo({ porMes, mesAtual, compacto }: {
   // acumulado no ano: soma do que sobrou até cada mês (meses sem dados ficam em branco)
   const acumulado = porMes.map((r, i) => (r ? porMes.slice(0, i + 1).reduce((a, x) => a + (x ? fluxoDe(x) : 0), 0) : null))
   const sobrou = serie(porMes, fluxoDe)
+  // com o ponto de partida, a linha é o saldo de verdade (até o mês de hoje); sem ele, o acumulado do ano, que parte do zero
+  const comSaldo = !fora && Boolean(saldos?.some(Boolean))
+  const saldoNoFim = (saldos ?? []).map((x) => (x && x.quando !== 'futuro' ? x.fim : null))
   const data = {
     labels: MESES_CURTO,
     datasets: [
@@ -658,7 +723,9 @@ export function GraficoSaldo({ porMes, mesAtual, compacto }: {
         hoverBackgroundColor: sobrou.map((v) => ((v ?? 0) >= 0 ? PALETA.entradas[0] : PALETA.saidas[0])),
         maxBarThickness: compacto ? 14 : 26,
       },
-      linha(tx('Acumulado no ano'), PALETA.acumulado, acumulado, c.fundo, compacto, { yAxisID: 'y1' }),
+      comSaldo
+        ? linha(tx('Saldo no fim do mês'), PALETA.acumulado, saldoNoFim, c.fundo, compacto, { yAxisID: 'y1' })
+        : linha(tx('Acumulado no ano'), PALETA.acumulado, acumulado, c.fundo, compacto, { yAxisID: 'y1' }),
     ],
   } as unknown as ChartData<'bar'>
   return (

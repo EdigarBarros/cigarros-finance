@@ -498,7 +498,7 @@ export function Inicio(c: Ctx) {
           <div className="idet-cima">
             {/* o gráfico do cartão é o do ano mês a mês, o mesmo do Resumo do ano (tocar num mês mostra os números dele) */}
             <CartaoDoMes dd={dd} nomeMes={nomeMes}
-              grafico={<GraficoAnual porMes={c.porMes} previsto={c.previsto} mesAtual={c.mes} altura={mobile ? 260 : 300} compacto={mobile} v={v} />}
+              grafico={<GraficoAnual porMes={c.porMes} previsto={c.previsto} mesAtual={c.mes} altura={mobile ? 260 : 300} compacto={mobile} v={v} saldoCorrido={c.saldoCorrido} ano={c.ano} />}
               divida={v.dividas ? dividaDiaADia({ situacao: c.situacao, pagamentos: c.d.pagamentos, ano: c.ano, mes: c.mes, dias: dd.dias, hoje: dd.hoje, diaRef: c.diaRef }) : undefined} />
             <div className="idet-lado">
               <NumerosDoMes dd={dd} porDia={saidasContadas(c.mes) / decorridos} />
