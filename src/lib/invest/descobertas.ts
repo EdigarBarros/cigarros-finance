@@ -252,7 +252,7 @@ export function descobertas(e: EntradaDoAnalista): Achado[] {
           : tx('Você pôs {0} e hoje vale {1}: {2} a menos.', fmtValor(c.aportadoLiquido), fmtValor(c.valor), fmtValor(-ganho)),
         dado: positivo
           ? { forma: 'partes', centro: { valor: fmtPct(ganho / c.valor), rotulo: tx('é rendimento') }, partes: [
-            { rotulo: tx('Você aportou'), valor: c.aportadoLiquido, cor: COR.caixa }, { rotulo: tx('Rendeu'), valor: ganho, cor: COR.entrada },
+            { rotulo: tx('Aportes'), valor: c.aportadoLiquido, cor: COR.caixa }, { rotulo: tx('Rendimento'), valor: ganho, cor: COR.entrada },
           ] }
           : { forma: 'comparacao', antes: { rotulo: tx('Você pôs'), valor: c.aportadoLiquido }, agora: { rotulo: tx('Vale hoje'), valor: c.valor }, subirEBom: true },
         porQue: porQue({
@@ -360,7 +360,7 @@ export function descobertas(e: EntradaDoAnalista): Achado[] {
         frase: variou > 0
           ? tx('Nos últimos 3 meses você recebeu {0}: {1} a mais que nos 3 anteriores.', fmtValor(tres), fmtPct(variou))
           : tx('Nos últimos 3 meses você recebeu {0}: {1} a menos que nos 3 anteriores.', fmtValor(tres), fmtPct(-variou)),
-        dado: { forma: 'serie', pontos: meses.slice(-12).map((m) => ({ rotulo: mesCurto(m.mes), valor: m.valor })), continua: false },
+        dado: { forma: 'serie', pontos: fechados.slice(-12).map((m) => ({ rotulo: mesCurto(m.mes), valor: m.valor })), continua: false },
         porQue: porQue({
           explicacao: tx('Compara o que entrou de dividendos, rendimentos e juros nos três últimos meses fechados com os três anteriores. Proventos variam com o calendário de cada empresa e fundo: um trimestre não faz tendência sozinho, mas mostra a direção.'),
           dados: [
@@ -555,16 +555,16 @@ export function descobertas(e: EntradaDoAnalista): Achado[] {
 
   // ---------- de onde vem o resultado ----------
   const partes = [
-    { rotulo: tx('Valorização do que você tem'), valor: c.naoRealizado, cor: COR.entrada },
-    { rotulo: tx('Ganho no que já vendeu'), valor: c.realizado, cor: COR.caixa },
-    { rotulo: tx('Proventos e juros'), valor: c.proventos, cor: COR.violeta },
+    { rotulo: tx('Valorização'), valor: c.naoRealizado, cor: COR.entrada },
+    { rotulo: tx('Já vendido'), valor: c.realizado, cor: COR.caixa },
+    { rotulo: tx('Proventos'), valor: c.proventos, cor: COR.violeta },
   ].filter((x) => x.valor > 0.5)
   if (partes.length >= 2 && c.resultado > 0) {
     const maiorParte = [...partes].sort((a, b) => b.valor - a.valor)[0]
     lista.push({
       ...base('carteira', 'inv-resultado', 38),
       titulo: tx('De onde vem o seu ganho'),
-      frase: tx('Do resultado de {0}, a maior parte é {1}.', fmtValor(c.resultado), maiorParte.rotulo.toLowerCase()),
+      frase: tx('Do resultado de {0}, a maior parte vem de: {1}.', fmtValor(c.resultado), maiorParte.rotulo.toLowerCase()),
       dado: { forma: 'partes', centro: { valor: fmtValor(c.resultado), rotulo: tx('resultado') }, partes },
       porQue: porQue({
         explicacao: tx('O resultado de uma carteira tem três partes: o quanto o que você ainda tem vale acima do custo (só vira dinheiro se vender), o que você ganhou ou perdeu no que já vendeu ou resgatou, e os proventos e juros recebidos em dinheiro.'),

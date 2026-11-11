@@ -47,6 +47,10 @@ function Campo({ rotulo, ajuda, opcional, children }: { rotulo: string; ajuda?: 
     </label>
   )
 }
+/** O interruptor com o texto ao lado (o do app só tem o rótulo para leitor de tela). */
+const Chave = ({ ligado, aoMudar, rotulo }: { ligado: boolean; aoMudar: (v: boolean) => void; rotulo: string }) => (
+  <span className="inv-chave"><Interruptor ligado={ligado} aoMudar={aoMudar} rotulo={rotulo} /><span onClick={() => aoMudar(!ligado)}>{rotulo}</span></span>
+)
 const CampoDinheiro = ({ valor, aoMudar, prefixo, placeholder = '0,00' }: { valor: string; aoMudar: (v: string) => void; prefixo: string; placeholder?: string }) => (
   <span className="campo-caixa"><span className="prefixo">{prefixo}</span><input inputMode="decimal" value={valor} onChange={(e) => aoMudar(mascarar(e.target.value))} placeholder={placeholder} /></span>
 )
@@ -146,7 +150,7 @@ export function FormAtivo({ c, ativo, aoFechar, aoCriar, aoExcluir }: { c: Ctx; 
         </div>
         {(classe === 'fundo' || classe === 'outro' || classe === 'previdencia') && (
           <div className="campo">
-            <Interruptor ligado={!porValor} aoMudar={(v) => !temOperacoes && setPorValor(!v)} rotulo={tx('Acompanhar por quantidade de cotas e preço')} />
+            <Chave ligado={!porValor} aoMudar={(v) => !temOperacoes && setPorValor(!v)} rotulo={tx('Acompanhar por quantidade de cotas e preço')} />
             <span className="campo-ajuda">{temOperacoes ? tx('Não dá para trocar depois que há operações.') : tx('Desligado, você informa só o valor aplicado e o saldo de vez em quando.')}</span>
           </div>
         )}
@@ -420,7 +424,7 @@ export function FormOperacao({ c, op, ativoId, tipoInicial, pendente, aoFechar, 
             </select>
             {bancoId && mesAberto && (
               <>
-                <Interruptor ligado={mexeSaldo} aoMudar={setMexeSaldo} rotulo={tipo === 'compra' || tipo === 'taxa' || tipo === 'imposto' ? tx('Tirar do saldo dessa conta em Dinheiro guardado') : tx('Somar ao saldo dessa conta em Dinheiro guardado')} />
+                <Chave ligado={mexeSaldo} aoMudar={setMexeSaldo} rotulo={tipo === 'compra' || tipo === 'taxa' || tipo === 'imposto' ? tx('Tirar do saldo dessa conta em Dinheiro guardado') : tx('Somar ao saldo dessa conta em Dinheiro guardado')} />
                 <span className="campo-ajuda">{tx('Ligue se o saldo que você informou em {0} ainda não considera esta operação. Assim o dinheiro só muda de lugar e o patrimônio não conta em dobro.', mesEAno(anoOp, mesOp))}</span>
               </>
             )}
@@ -428,7 +432,7 @@ export function FormOperacao({ c, op, ativoId, tipoInicial, pendente, aoFechar, 
         )}
         {ehRenda && (
           <div className="campo">
-            <Interruptor ligado={comoEntrada} aoMudar={setComoEntrada} rotulo={tx('Contar também como entrada do mês')} />
+            <Chave ligado={comoEntrada} aoMudar={setComoEntrada} rotulo={tx('Contar também como entrada do mês')} />
             <span className="campo-ajuda">{tx('Cria um lançamento de entrada com o valor líquido. Deixe desligado se esse dinheiro já entra pelo extrato do banco.')}</span>
           </div>
         )}
@@ -565,7 +569,7 @@ export function FormPlano({ c, legado, aoFechar }: { c: Ctx; legado: { valor: nu
         </div>
         {legado && (
           <div className="campo">
-            <Interruptor ligado={somar} aoMudar={setSomar} rotulo={tx('Somar à carteira os {0} que eu informava à mão', fmtValor(legado.valor))} />
+            <Chave ligado={somar} aoMudar={setSomar} rotulo={tx('Somar à carteira os {0} que eu informava à mão', fmtValor(legado.valor))} />
             <span className="campo-ajuda">{tx('Ligue só se aquele valor (de {0}) é de investimentos que você não cadastrou aqui. Desligado, o patrimônio usa só a carteira, e o valor antigo fica como histórico.', mesEAno(legado.ano, legado.mes))}</span>
           </div>
         )}

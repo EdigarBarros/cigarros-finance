@@ -483,7 +483,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const [reanalise, setReanalise] = useState<Reanalise | null>(null)
   const [avisoReanalise, setAvisoReanalise] = useState(false)
   const avisosDaAnalise = !perfil.dispensadas.includes('aviso-reanalise')
-  const chaveDaBase = `${ano}|${hojeIso}|${JSON.stringify(taxas)}|${cartoes.carregado}|${contas.carregando}|${JSON.stringify(perfil.modulos)}|${perfil.moeda}`
+  const chaveDaBase = `${ano}|${hojeIso}|${JSON.stringify(taxas)}|${cartoes.carregado}|${contas.carregando}|${JSON.stringify(perfil.modulos)}|${perfil.moeda}|${investDados.carregado}|${invest.indices?.baixadoEm ?? 0}`
   useEffect(() => {
     if (d.carregando || !noPainel) return
     const r = retratoDe(analise)
@@ -500,7 +500,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
 
   // Memória do consultor (lib/memoria.ts): a cada análise, confere os passos cujo mês fechou e começa a acompanhar os novos.
   // Só com tudo carregado (cartões e contas também): um número tirado de dados pela metade daria um "não deu certo" falso.
-  const tudoCarregado = !d.carregando && Boolean(d.perfil) && (!comFaturas || cartoes.carregado) && !contas.carregando
+  const tudoCarregado = !d.carregando && Boolean(d.perfil) && (!comFaturas || cartoes.carregado) && !contas.carregando && (!v.investimentos || investDados.carregado || investDados.semTabela)
   useEffect(() => {
     if (!tudoCarregado) return
     const nova = atualizarMemoria(d.memoria, analise, hoje)

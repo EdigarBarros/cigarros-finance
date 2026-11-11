@@ -175,6 +175,8 @@ async function serieDoBC(codigo: number, de: string, ate: string): Promise<[stri
   for (let a = de; a <= ate; a = somarDias(somarMeses(a, 108), 1)) {
     const b = somarMeses(a, 108) < ate ? somarMeses(a, 108) : ate
     const r = await fetch(`https://api.bcb.gov.br/dados/serie/bcdata.sgs.${codigo}/dados?formato=json&dataInicial=${isoParaBr(a)}&dataFinal=${isoParaBr(b)}`)
+    // sem nenhum valor no período, o Banco Central responde 404: é série vazia, não falha
+    if (r.status === 404) continue
     if (!r.ok) throw new Error(`BCB ${codigo}: ${r.status}`)
     const j = (await r.json()) as { data?: string; valor?: string }[]
     if (!Array.isArray(j)) throw new Error(`BCB ${codigo}: resposta inesperada`)
@@ -209,7 +211,9 @@ export function useIndices(desde: string | null) {
     if (!desde) return
     // nunca mais que 10 anos para trás: é o que uma consulta cobre, e o que a tela mostra
     const hoje = iso(new Date())
-    const inicio = desde < somarMeses(hoje, -119) ? somarMeses(hoje, -119) : `${desde.slice(0, 7)}-01`
+    // pelo menos 3 meses para trás: o IPCA do mês só sai no mês seguinte, e um período sem nenhum valor volta como erro
+    const pedido = desde < somarMeses(hoje, -3) ? desde : somarMeses(hoje, -3)
+    const inicio = pedido < somarMeses(hoje, -119) ? somarMeses(hoje, -119) : `${pedido.slice(0, 7)}-01`
     const g = lerGuardado()
     if (g && g.desde <= inicio && Date.now() - g.em < VALIDADE) return
     let vivo = true

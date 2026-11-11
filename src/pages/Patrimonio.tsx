@@ -287,13 +287,24 @@ export function Patrimonio(c: Ctx) {
           {v.investimentos && (
             <section className="cartao gd-extra" style={{ '--c': COR.investimentos } as React.CSSProperties}>
               <h3 className="ccd-titulo"><span className="gd-extra-icone"><Icone nome="investir" tamanho={18} /></span> {tx('Investimentos')}</h3>
-              <CampoValor rotulo={tx('Quanto você tem investido neste mês')} prefixo={simbolo()} valor={c.r.investimentos}
-                aoSalvar={(investimentos) => c.d.salvarMes(c.ano, c.mes, { investimentos })} />
+              {c.mesEf.investimentosDaCarteira ? (
+                // com operações no Invest, o valor vem da carteira: digitar aqui contaria o mesmo dinheiro duas vezes
+                <div className="gd-extra-invest">
+                  <strong>{fmtValor(c.r.investimentos)}</strong>
+                  <small>{tx('Vem da sua carteira no Invest, pelo valor no fim do mês.')}</small>
+                  <button className="btn" onClick={() => c.irPara('invest')}><Icone nome="investir" tamanho={15} /> {tx('Abrir o Invest')}</button>
+                </div>
+              ) : (
+                <CampoValor rotulo={tx('Quanto você tem investido neste mês')} prefixo={simbolo()} valor={c.r.investimentos}
+                  aoSalvar={(investimentos) => c.d.salvarMes(c.ano, c.mes, { investimentos })} />
+              )}
               {(() => {
                 const serie = { valores: janela.map((m) => c.porMes[m - 1]?.investimentos ?? null), meses: janela.map((m) => MESES_CURTO[m - 1]) }
                 return serie.valores.filter((x) => x).length > 1 ? <span className="gd-extra-faisca"><Faisca {...serie} cor={COR.investimentos} /></span> : null
               })()}
-              <p className="dica">{tx('Aceita contas:')} <code>=1500+320</code></p>
+              {c.mesEf.investimentosDaCarteira
+                ? null
+                : <p className="dica">{tx('Aceita contas:')} <code>=1500+320</code> · <button className="link" onClick={() => c.irPara('invest')}>{tx('Detalhar no Invest')}</button></p>}
             </section>
           )}
           {v.moedas && (

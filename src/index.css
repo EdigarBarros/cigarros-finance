@@ -4231,3 +4231,8 @@ body { top: 0 !important; }
 .dp-inicio.editando .btn { justify-self: start; }
 @media (min-width: 520px) { .dp-inicio.editando { grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; } }
 .dp-nova .segmentado { justify-self: start; }
+
+/* Dinheiro guardado: o investido que vem da carteira */
+.gd-extra-invest { display: grid; justify-items: start; gap: 6px; }
+.gd-extra-invest strong { font-family: var(--fonte-numeros); font-size: 24px; font-variant-numeric: tabular-nums; }
+.gd-extra-invest small { color: var(--texto-3); }

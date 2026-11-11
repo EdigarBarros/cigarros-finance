@@ -122,9 +122,8 @@ export function GraficoDeLinhas({ series, rotulos, formato, altura = 220, legend
               const ultimo = vs.length - 1 - [...vs].reverse().findIndex((v) => v !== null)
               return primeiro >= 0 && <path key={i} className="inv-grafico-fundo" d={`${caminho(vs)}L${x(ultimo).toFixed(1)} ${A}L${x(primeiro).toFixed(1)} ${A}Z`} fill={`url(#${id}-g${i})`} />
             })}
-            {series.map((s, i) => (
-              <path key={s.nome} className={`inv-grafico-linha ${s.tracejada ? 'tracejada' : ''}`} d={caminho(s.valores)} stroke={s.cor} pathLength={s.tracejada ? undefined : 1}
-                style={{ '--i': i } as CSSProperties} vectorEffect="non-scaling-stroke" />
+            {series.map((s) => (
+              <path key={s.nome} className={`inv-grafico-linha ${s.tracejada ? 'tracejada' : ''}`} d={caminho(s.valores)} stroke={s.cor} vectorEffect="non-scaling-stroke" />
             ))}
           </svg>
           {foco !== null && (

@@ -101,7 +101,7 @@ export function Planejamento({ c, acoes }: { c: Ctx; acoes: AcoesInvest }) {
         </Quadro>
         <Quadro icone="ano" titulo={tx('Aportes nos últimos 12 meses')}>
           {aportes.some((m) => m.valor > 0) ? (
-            <Colunas cor="var(--destaque)" altura={c.mobile ? 110 : 130} formato={fmtCurto}
+            <Colunas cor="var(--destaque)" altura={c.mobile ? 110 : 130} formato={fmtCurto} rotuloDoValor={false}
               itens={aportes.map((m, i) => ({ rotulo: MESES_CURTO[Number(m.mes.slice(5, 7)) - 1].slice(0, 3), valor: Math.max(0, m.valor), destaque: i === aportes.length - 1, titulo: fmtValor(m.valor) }))} />
           ) : <p className="quadro-vazio">{tx('Nenhum aporte nos últimos 12 meses.')}</p>}
           {aportes.some((m) => m.valor < 0) && <p className="inv-nota">{tx('Meses em que saiu mais do que entrou aparecem zerados no gráfico.')}</p>}
