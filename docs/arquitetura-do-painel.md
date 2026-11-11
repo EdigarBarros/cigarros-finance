@@ -874,9 +874,23 @@ Duas colunas no computador. A lista com selos redondos saiu; cada lançamento ag
   (.docx) e OFX. `lib/extrato.ts` acha em cada linha a data, o valor e se entrou ou saiu (sinal, "C"/"D", colunas de
   crédito/débito, saldo ou palavras como "recebido"/"enviado"), ignora linhas de saldo e junta nomes quebrados em duas
   linhas. Tudo por regras, no aparelho da pessoa: o extrato não sai dele.
-  - PDF: pdf.js, carregado da CDN (cdnjs, versão fixa) só quando alguém importa um PDF. PDF com senha pede para
-    exportar sem senha. São duas leituras; vale a das colunas quando ela acha pelo menos 60% dos lançamentos que o texto
-    corrido acha (o texto corrido costuma contar sujeira a mais), e o texto corrido quando o PDF não tem tabela:
+  - O arquivo é reconhecido pelo conteúdo, não pelo nome: o ".xls" de vários bancos (Itaú, Caixa) é uma página HTML ou um
+    texto com tab, e ler isso como planilha trocava vírgula por ponto (R$ 114,00 virava R$ 11.400,00) e dia por mês. PDF
+    começa com `%PDF`, planilha de verdade é zip ou OLE, o resto é texto (UTF-8, UTF-16 ou Latin-1): OFX, tabela HTML,
+    CSV ou texto corrido.
+  - PDF: pdf.js (`lib/pdfjs.ts`, pacote `pdfjs-dist`, versão "legacy" para celular antigo), que vem junto do app em
+    arquivos à parte, baixados só quando alguém importa um PDF. Nada vem de outro site. PDF com senha pede para exportar
+    sem senha; PDF sem texto (foto, escaneado) avisa que é foto; página que não dá para ler não derruba as outras.
+    Antes de ler, as linhas do papel são arrumadas (`linhasDasPaginas`):
+    - **lado a lado**: fatura com dois lançamentos por linha (Itaú) é cortada onde a segunda data se repete; primeiro o
+      lado esquerdo inteiro, depois o direito.
+    - **lançamento em várias linhas**: a linha que tem o valor é o lançamento; as linhas só de texto mais juntas dela (em
+      cima ou embaixo) entram nele, cada trecho na coluna de texto em que está. Rodapé na margem, cabeçalho, resumo,
+      título de dia e texto comprido não entram.
+    - cada linha vira pedaços (data, valor, texto) pela mesma regra de valor do resto do leitor: "-R$ 114,00",
+      "R$ -114,00", "- R$ 114,00", "114,00 D", "42,79-".
+    Depois são duas leituras; vale a das colunas quando ela acha pelo menos 60% dos lançamentos que o texto corrido acha
+    (o texto corrido costuma contar sujeira a mais), e o texto corrido quando o PDF não tem tabela:
     - **pelas colunas**: acha a linha de cabeçalho (Data | Histórico | Crédito | Débito | Saldo…, de novo em cada página)
       e põe cada número na coluna embaixo da qual ele está. Assim crédito, débito, valor e saldo não se misturam, coisa
       que o texto corrido perde (o Bradesco junta Crédito e Débito num número só). Texto vai para a última coluna que
@@ -888,8 +902,9 @@ Duas colunas no computador. A lista com selos redondos saiu; cada lançamento ag
       no fim não abre dia novo); cabeçalho de página ("Banco Bradesco S/A 08/11/2026") não vira dia; "Saldo Invest
       Fácil" e "Opening balance" não são lançamento; PDF que vem letra por letra é juntado antes.
   - Word: `lib/zip.ts` abre o .docx com o `DecompressionStream` do navegador (sem biblioteca) e lê tabelas e parágrafos.
-  - Excel: a biblioteca de planilhas que já existe, com as células cruas (datas e números); fica a aba que rende mais
-    lançamentos. CSV: se o separador da primeira linha não render nada, tenta `;`, `,` e tab.
+  - Excel: a biblioteca de planilhas que já existe, lendo célula por célula (`linhasDaAba`): a data sai do número que o
+    Excel guarda, sem passar por fuso horário, e número fica número; fica a aba que rende mais lançamentos. CSV: o
+    separador (`;` `,` tab ou `|`) é o que rende mais lançamentos lidos como tabela; o título de cima não decide.
   - Tabelas: o cabeçalho é reconhecido em português, inglês e espanhol ("Data"/"Date"/"Fecha", "Histórico"/"Concepto",
     "Valor"/"Amount"/"Importe", "Crédito"/"Entrada"/"Credit", "Débito"/"Saída"/"Debit", "Saldo"/"Balance", "Tipo", "Docto"),
     cada nome valendo para uma coisa só ("Valor crédito" é crédito). Sem cabeçalho, as colunas vêm do conteúdo: a data é
@@ -898,7 +913,11 @@ Duas colunas no computador. A lista com selos redondos saiu; cada lançamento ag
     valor. Linha sem data herda o dia de cima.
   - Datas: 01/10/2026, 2026-10-01, 2026/10/01, "01 OUT", "1 de outubro de 2026", "Oct 1, 2026", "01-oct-2026". Mês/dia
     americano (10/15/2026) quando os números provam ou quando o cabeçalho é em inglês com centavos depois de ponto. Mês
-    por extenso só com o nome inteiro ou abreviado ("2 dicas" não é 2 de dezembro).
+    por extenso só com o nome inteiro ou abreviado ("2 dicas" não é 2 de dezembro). "PARC 2/3" é parcela, não data; o
+    período ("01/10/2026 a 31/10/2026") não é lançamento.
+  - Ano das datas sem ano ("28/12", "03 JAN"), em `ajustarAno`: a virada (dez → jan) soma um ano; depois valem as datas
+    com ano escritas em qualquer lugar do arquivo (período, vencimento, emissão): a fatura que vence em 10/01/2026 tem
+    as compras de dezembro de 2025. Sem nenhum ano no arquivo, lançamento não cai no futuro.
   - Entrou ou saiu: um número sem sinal ("40.90") não diz nada sozinho. Vale, nesta ordem: o sinal escrito ("-", "D",
     "C"), a coluna (crédito/débito), a coluna "Tipo", e o texto da linha ("recebido", "REM:"/"DES:"). Se a coluna de valor
     tem negativos, o sem sinal é entrada. **O saldo confere tudo**: entre dois saldos (o de cada linha, "Saldo anterior",
@@ -906,6 +925,7 @@ Duas colunas no computador. A lista com selos redondos saiu; cada lançamento ag
     (do mais antigo para o mais novo ou ao contrário). "-1.200" é mil e duzentos.
   - Testes: `node scripts/extrato/testar.mjs` lê os exemplos de `scripts/extrato/casos.ts` (um de cada banco e formato) e
     diz o que errou. Achou um extrato que o leitor erra? Monte um caso parecido lá (sem dados reais) antes de consertar.
+    Rode sempre antes de publicar qualquer mudança em `lib/extrato.ts`.
   - Contas do mês (só no ano aberto): a linha que parece ser de uma conta sem baixa no mês vem ligada a ela (etiqueta com a
     conta, toque para desligar) e vira a baixa ao importar; a que repete uma baixa já dada vem desmarcada.
 - **Limpeza dos nomes** (`limparDescricao`): tira CPF/CNPJ (inclusive a raiz de CNPJ de MEI, "51.365.272 Fulano"),
