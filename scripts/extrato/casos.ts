@@ -5,7 +5,7 @@
  * Achou um extrato que o leitor erra? Monte um caso parecido aqui (sem dados reais de ninguém) antes de consertar.
  */
 import * as XLSX from 'xlsx'
-import { deTabela, deTexto, lerCsv, lerExtrato, lerPaginasPdf, type ItemPdf, type LinhaExtrato } from '../../src/lib/extrato'
+import { deTabela, deTexto, lerCsv, lerExtrato, lerPaginasPdf, relogio, type ItemPdf, type LinhaExtrato } from '../../src/lib/extrato'
 
 type Esperado = [data: string, tipo: 'e' | 's', valor: number, nome?: string]
 interface Caso { nome: string; ler: () => LinhaExtrato[] | Promise<LinhaExtrato[]>; esperado: Esperado[] }
@@ -37,6 +37,12 @@ const daTabela = (linhas: string[][]) => () => deTabela(linhas, ANO)
 /** Como o site lê um arquivo de texto (CSV, TXT, OFX). */
 const doArquivo = (nome: string, conteudo: string) => async () => (await lerExtrato(new File([conteudo], nome), ANO)).linhas
 const csv = (texto: string) => () => deTabela(lerCsv(texto), ANO)
+/** Arquivo pelos bytes (para testar Latin-1, UTF-16 e planilhas de verdade); `ano` é o ano aberto no app. */
+const dosBytes = (nome: string, bytes: Uint8Array | ArrayBuffer, ano = ANO) => async () => (await lerExtrato(new File([bytes as BlobPart], nome), ano)).linhas
+const latin1 = (t: string) => Uint8Array.from(t, (c) => c.charCodeAt(0))
+const utf16 = (t: string) => { const b = new Uint8Array(2 + t.length * 2); b[0] = 0xff; b[1] = 0xfe; for (let i = 0; i < t.length; i++) { b[2 + i * 2] = t.charCodeAt(i) & 255; b[3 + i * 2] = t.charCodeAt(i) >> 8 } return b }
+/** Os três lançamentos que quase todo exemplo traz. */
+const TRES: Esperado[] = [['2026-10-01', 's', 114, 'Matheus'], ['2026-10-01', 'e', 120, 'Beatriz'], ['2026-10-02', 's', 42.79, 'Pastelloco']]
 
 const BRADESCO_PDF = `Banco Bradesco S/A                                                    08/11/2026 - 21:03
 Extrato de: Agência: 1234 | Conta: 56789-0           Movimentação entre: 30/09/2026 e 08/11/2026
@@ -393,6 +399,173 @@ Data;Descrição;Valor
 </BANKTRANLIST></STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>`),
     esperado: [['2026-10-01', 's', 114, 'Matheus'], ['2026-10-01', 'e', 120, 'Beatriz']],
   },
+  // ---------- o que os extratos de verdade mostraram (novembro de 2026) ----------
+  {
+    nome: 'pdf com -R$ antes do valor (inter, c6) e descrição neutra',
+    ler: doPdf(`Data        Descrição                                 Valor            Saldo
+01/10/2026  MATHEUS EWERTON                         -R$ 114,00       R$ 886,00
+01/10/2026  BEATRIZ MIRANDA                          R$ 120,00     R$ 1.006,00
+02/10/2026  PASTELLOCO                               -R$ 42,79       R$ 963,21`),
+    esperado: TRES,
+  },
+  {
+    nome: 'mercado pago pdf (R$ -114,00, data colada no nome, rodapé com data)',
+    ler: doPdf(`Mercado Pago   EXTRATO DE CONTA   Periodo: De 01-10-2026 a 31-10-2026
+Saldo inicial: R$ 1.000,00  Entradas: R$ 120,00  Saidas: R$ -156,79  Saldo final: R$ 963,21
+Data       Descrição                                   ID da operação       Valor            Saldo
+01-10-2026 Transferência Pix enviada MATHEUS EWERTON   81234567890      R$ -114,00       R$ 886,00
+01-10-2026 Transferência Pix recebida BEATRIZ MIRANDA  81234567891       R$ 120,00     R$ 1.006,00
+02-10-2026 Pagamento PASTELLOCO                        81234567892       R$ -42,79       R$ 963,21
+Data de geração: 08-11-2026           1/1`),
+    esperado: TRES,
+  },
+  {
+    nome: 'picpay pdf (- R$ 114,00, hora debaixo da data, dois saldos)',
+    ler: async () => {
+      const linhas = await doPdf(`Data/Hora    Descrição das movimentações        Valor           Saldo      Saldo Sacável
+01/10/2026   Pix enviado                   - R$ 114,00       R$ 886,00       R$ 886,00
+10:12:44     MATHEUS EWERTON
+01/10/2026   Pix recebido                  + R$ 120,00     R$ 1.006,00     R$ 1.006,00
+11:00:01     BEATRIZ MIRANDA
+02/10/2026   Compra realizada               - R$ 42,79       R$ 963,21       R$ 963,21
+13:22:10     PASTELLOCO`)()
+      // o segundo saldo não pode ir parar no nome
+      return linhas.map((l) => ({ ...l, descricao: /\d/.test(l.descricao) ? 'NÚMERO NO NOME' : l.descricao }))
+    },
+    esperado: TRES,
+  },
+  {
+    nome: 'nubank conta pdf (tipo numa coluna e nome em outra, os dois quebrados em linhas)',
+    ler: doPdf(`Movimentações
+01 OUT 2026   Total de entradas                                                          + 120,00
+              Transferência        BEATRIZ MIRANDA DOS SANTOS                              120,00
+              recebida pelo Pix    - •••.654.321-•• - NU PAGAMENTOS
+                                   - IP (0260) Agência: 1 Conta:
+                                   7654321-0
+              Total de saídas                                                            - 114,00
+              Transferência        MATHEUS EWERTON DE                                      114,00
+              enviada pelo Pix     ALMEIDA - •••.123.456-•• - BCO
+                                   BRADESCO S.A. (0237) Agência:
+02 OUT 2026   Total de saídas                                                             - 42,79
+              Compra no débito     PASTELLOCO                                               42,79
+Tem alguma dúvida? Mande uma mensagem para nosso time de atendimento pelo chat do app ou ligue 4020 0185.`),
+    esperado: [['2026-10-01', 's', 114, 'Matheus Ewerton de Almeida'], ['2026-10-01', 'e', 120, 'Beatriz Miranda dos Santos'], ['2026-10-02', 's', 42.79, 'Pastelloco']],
+  },
+  {
+    nome: 'fatura em duas colunas lado a lado (itaú)',
+    ler: doPdf(`Itaú Cartões     Vencimento: 10/11/2026     Total desta fatura 454,19
+Lançamentos: compras e saques
+DATA   ESTABELECIMENTO          VALOR EM R$       DATA   ESTABELECIMENTO          VALOR EM R$
+01/10  PASTELLOCO                     42,79       04/10  DROGASIL                       30,00
+02/10  UBER *TRIP                     18,90       05/10  POSTO SHELL                   100,00
+03/10  MAGAZINE LUIZA 02/10          250,00       06/10  PADARIA DO ZE                  12,50`),
+    esperado: [['2026-10-01', 's', 42.79, 'Pastelloco'], ['2026-10-02', 's', 18.9, 'Uber'], ['2026-10-03', 's', 250, 'Magazine'],
+      ['2026-10-04', 's', 30, 'Drogasil'], ['2026-10-05', 's', 100, 'Shell'], ['2026-10-06', 's', 12.5, 'Padaria']],
+  },
+  {
+    nome: 'fatura que vence em janeiro: as compras de dezembro são do ano anterior',
+    ler: async () => (await doPdf(`Olá, Edigar. Esta é a sua fatura de janeiro, no valor de R$ 311,69
+Data de vencimento: 10 JAN 2026     Período vigente: 03 DEZ a 02 JAN
+Limite total do cartão de crédito: R$ 5.000,00
+TRANSAÇÕES DE 03 DEZ A 02 JAN
+28 DEZ     •••• 1234     Pastelloco                               R$ 42,79
+29 DEZ     •••• 1234     Magazine Luiza - Parcela 2/10           R$ 250,00
+30 DEZ                   Pagamento em 30 DEZ                    −R$ 500,00
+02 JAN     •••• 1234     Uber *Trip                               R$ 18,90`)()).filter((l) => !l.pagamentoDaFatura),
+    esperado: [['2025-12-28', 's', 42.79, 'Pastelloco'], ['2025-12-29', 's', 250, 'Magazine Luiza'], ['2026-01-02', 's', 18.9, 'Uber']],
+  },
+  {
+    nome: 'datas sem ano e sem nenhum ano no arquivo: lançamento não cai no futuro',
+    ler: doTexto(`27/12  SALDO ANTERIOR  1.000,00
+28/12  PIX ENVIADO MATHEUS  -114,00  886,00
+29/12  PIX RECEBIDO BEATRIZ  120,00  1.006,00
+02/01  PASTELLOCO  -42,79  963,21`),
+    esperado: [['2025-12-28', 's', 114, 'Matheus'], ['2025-12-29', 'e', 120, 'Beatriz'], ['2026-01-02', 's', 42.79, 'Pastelloco']],
+  },
+  {
+    nome: 'texto: parcela 2/3 e dia da compra no meio da linha não são a data',
+    ler: doTexto(`Extrato de 01/10/2026 a 31/10/2026   Entradas R$ 0,00   Saídas R$ 80,00
+15/10/2026
+Compra parcelada Loja Azul parc 2/3 50,00
+Compra Loja Verde 3/10 30,00`),
+    esperado: [['2026-10-15', 's', 50, 'Loja Azul'], ['2026-10-15', 's', 30, 'Loja Verde']],
+  },
+  {
+    nome: 'sicoob pdf (114,00D e o nome nas linhas de baixo)',
+    ler: doPdf(`SICOOB    EXTRATO CONTA CORRENTE    PERÍODO: 01/10/2026 - 31/10/2026
+DATA     HISTÓRICO                                   VALOR
+30/09    SALDO ANTERIOR                          1.000,00C
+01/10    PIX EMITIDO OUTRA IF                      114,00D
+         Pagamento Pix
+         MATHEUS EWERTON
+         DOC.: Pix
+01/10    PIX RECEBIDO - OUTRA IF                   120,00C
+         Recebimento Pix
+         BEATRIZ MIRANDA
+         DOC.: Pix
+02/10    COMPRA NACIONAL CARTAO DEBITO              42,79D
+         PASTELLOCO
+02/10    SALDO DO DIA                              963,21C`),
+    esperado: TRES,
+  },
+  {
+    nome: '.xls que é uma página HTML (itaú, caixa): vírgula é centavo e 01/10 é 1º de outubro',
+    ler: dosBytes('extrato.xls', new TextEncoder().encode(`<html><head><meta charset="utf-8"></head><body><table><tr><td colspan=4>Extrato Conta Corrente</td></tr>
+<tr><th>Data</th><th>Lançamento</th><th>Valor (R$)</th><th>Saldo (R$)</th></tr>
+<tr><td>01/10/2026</td><td>PIX ENVIADO MATHEUS</td><td>-114,00</td><td>886,00</td></tr>
+<tr><td>01/10/2026</td><td>PIX RECEBIDO BEATRIZ</td><td>1.120,00</td><td>2.006,00</td></tr>
+<tr><td>02/10/2026</td><td>PASTELLOCO &amp; CIA</td><td>-42,79</td><td>1.963,21</td></tr></table></body></html>`)),
+    esperado: [['2026-10-01', 's', 114, 'Matheus'], ['2026-10-01', 'e', 1120, 'Beatriz'], ['2026-10-02', 's', 42.79, 'Pastelloco']],
+  },
+  {
+    nome: '.xls que é texto separado por tab, em Latin-1',
+    ler: dosBytes('extrato.xls', latin1(`Data\tHist\xf3rico\tValor\tSaldo\r\n01/10/2026\tPIX ENVIADO MATHEUS\t-114,00\t886,00\r\n01/10/2026\tPIX RECEBIDO BEATRIZ\t1.120,00\t2.006,00\r\n02/10/2026\tPASTELLOCO\t-42,79\t1.963,21\r\n`)),
+    esperado: [['2026-10-01', 's', 114, 'Matheus'], ['2026-10-01', 'e', 1120, 'Beatriz'], ['2026-10-02', 's', 42.79, 'Pastelloco']],
+  },
+  {
+    nome: 'excel com datas e números de verdade (a data não escorrega para a véspera)',
+    ler: async () => {
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Data', 'Histórico', 'Valor', 'Saldo'], [new Date(2026, 9, 1), 'PIX ENVIADO MATHEUS', -114, 886],
+        [new Date(2026, 9, 1), 'PIX RECEBIDO BEATRIZ', 120, 1006], [new Date(2026, 9, 2), 'PASTELLOCO', -42.79, 963.21]], { cellDates: true }), 'Extrato')
+      return dosBytes('extrato.xlsx', XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer)()
+    },
+    esperado: TRES,
+  },
+  {
+    nome: 'csv em UTF-16 (como o Excel salva "texto Unicode")',
+    ler: dosBytes('extrato.csv', utf16(`Data;Descrição;Valor\r\n01/10/2026;PIX ENVIADO MATHEUS;-114,00\r\n01/10/2026;PIX RECEBIDO BEATRIZ;120,00\r\n02/10/2026;PASTELLOCO;-42,79\r\n`)),
+    esperado: TRES,
+  },
+  {
+    nome: 'banco do brasil csv (nome em "Detalhes", linhas de saldo com data 00/00/0000)',
+    ler: dosBytes('extrato.csv', latin1(`"Data","Lan\xe7amento","Detalhes","N\xb0 documento","Valor","Tipo Lan\xe7amento"\n"30/09/2026","Saldo Anterior","","","1.000,00",""\n"01/10/2026","Pix - Enviado","01/10 10:12 Matheus Ewerton","100101","-114,00","Sa\xedda"\n"01/10/2026","Pix - Recebido","01/10 11:00 Beatriz Miranda","100102","120,00","Entrada"\n"02/10/2026","Compra com Cart\xe3o","01/10 13:22 PASTELLOCO","200201","-42,79","Sa\xedda"\n"00/00/0000","Saldo do dia","","","963,21",""\n"00/00/0000","S A L D O","","","963,21",""\n`)),
+    esperado: [['2026-10-01', 's', 114, 'Matheus Ewerton'], ['2026-10-01', 'e', 120, 'Beatriz Miranda'], ['2026-10-02', 's', 42.79, 'Pastelloco']],
+  },
+  {
+    nome: 'bradesco csv (título com |, duas tabelas, totais e aviso no fim)',
+    ler: dosBytes('Bradesco_08112026.csv', latin1(`Extrato de: Ag: 1234 | Conta: 56789-0 | Entre 30/09/2026 e 08/11/2026\r\nData;Hist\xf3rico;Docto.;Cr\xe9dito (R$);D\xe9bito (R$);Saldo (R$);\r\n30/09/26; SALDO ANTERIOR;;;;1.000,00;\r\n01/10/26;TRANSFERENCIA PIX DES: MATHEUS EWERTON 01/10;1234567;;-114,00;886,00;\r\n01/10/26;TRANSFERENCIA PIX REM: BEATRIZ MIRANDA 01/10;7654321;120,00;;1.006,00;\r\n02/10/26;VISA ELECTRON PASTELLOCO 01/10;2222;;-42,79;963,21;\r\n;Total;;120,00;-156,79;963,21;\r\n\r\n\xdaltimos Lan\xe7amentos\r\nData;Hist\xf3rico;Docto.;Cr\xe9dito (R$);D\xe9bito (R$);Saldo (R$);\r\n08/11/26;PIX QR CODE DINAMICO DES: FULANO 08/11;3333;;-27,90;935,31;\r\n;Total;;0,00;-27,90;;\r\nOs dados acima t\xeam como base as informa\xe7\xf5es dispon\xedveis at\xe9 este instante, e poder\xe3o sofrer altera\xe7\xf5es.\r\n`)),
+    esperado: [...TRES, ['2026-11-08', 's', 27.9, 'Fulano']],
+  },
+  {
+    nome: 'csv: título com vírgulas e ponto e vírgula antes da tabela com vírgula',
+    ler: doArquivo('extrato.csv', `Extrato; conta 1,2,3; de 01/10/2026 a 31/10/2026, emitido em 08/11/2026, 21:03
+
+Data,Descrição,Valor
+01/10/2026,PIX ENVIADO MATHEUS,-114.00
+01/10/2026,PIX RECEBIDO BEATRIZ,120.00
+02/10/2026,PASTELLOCO,-42.79`),
+    esperado: TRES,
+  },
+  {
+    nome: 'ofx de cartão (nome repetido no memo, pagamento da fatura fora)',
+    ler: async () => (await doArquivo('fatura.ofx', `OFXHEADER:100
+<OFX><CREDITCARDMSGSRSV1><CCSTMTTRNRS><CCSTMTRS><BANKTRANLIST>
+<STMTTRN><TRNTYPE>DEBIT<DTPOSTED>20261001<TRNAMT>-42,79<FITID>1<NAME>PASTELLOCO<MEMO>PASTELLOCO</STMTTRN>
+<STMTTRN><TRNTYPE>CREDIT<DTPOSTED>20261005<TRNAMT>500.00<FITID>3<MEMO>Pagamento recebido</STMTTRN>
+</BANKTRANLIST></CCSTMTRS></CCSTMTTRNRS></CREDITCARDMSGSRSV1></OFX>`)()).filter((l) => !l.pagamentoDaFatura),
+    esperado: [['2026-10-01', 's', 42.79, 'Pastelloco']],
+  },
 ]
 
 const fmt = (l: { data: string; tipo: string; valor: number; descricao: string }) =>
@@ -400,6 +573,8 @@ const fmt = (l: { data: string; tipo: string; valor: number; descricao: string }
 
 /** Roda os casos; com `filtro`, mostra o que foi lido nos casos cujo nome tem o filtro. Devolve quantos falharam. */
 export async function rodar(filtro?: string): Promise<number> {
+  // os exemplos são de 2026: "hoje" fica parado para as datas sem ano não mudarem conforme o dia em que o teste roda
+  relogio.hoje = () => new Date(2026, 10, 11)
   let falhas = 0
   for (const c of CASOS) {
     if (filtro && !c.nome.includes(filtro)) continue
