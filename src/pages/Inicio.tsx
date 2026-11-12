@@ -82,7 +82,7 @@ export function Inicio(c: Ctx) {
   const ddMes = useMemo(() => {
     const dd = c.diaADia
     if (!v.dividas) return dd
-    const parcelas = parcelasPorDia({ situacao: c.situacao, ano: c.ano, mes: c.mes, dias: dd.dias, hoje: dd.hoje, diaRef: c.diaRef })
+    const parcelas = parcelasPorDia({ situacao: c.situacao, ano: c.ano, mes: c.mes, dias: dd.dias, hoje: dd.hoje, diaRef: c.diaRef, soDoMes: dd.hoje === 0 })
     const total = parcelas.reduce((t, n) => t + n, 0)
     if (!total) return dd
     return { ...dd, vaiSair: Math.round((dd.vaiSair + total) * 100) / 100, vaiSairDia: dd.vaiSairDia.map((n, i) => n + parcelas[i]) }
@@ -121,9 +121,11 @@ export function Inicio(c: Ctx) {
   // Gasto por dia: no mês de hoje, só as saídas até hoje (parcela de cartão e conta com data futura ainda não saíram do bolso)
   const diasNoMes = new Date(c.ano, c.mes, 0).getDate()
   const decorridos = mesDeHoje ? hoje.getDate() : diasNoMes
-  const saidasContadas = (m: number) => (c.ano === hoje.getFullYear() && m === hoje.getMonth() + 1
-    ? c.lancsAno.reduce((t, l) => (l.mes === m && l.tipo === 'saida' && (!l.data || l.data <= hojeIso) ? t + l.valor : t), 0)
-    : c.porMes[m - 1]?.saidas ?? 0)
+  // (no mês aberto vale o mesmo "Saiu" do quadro: compra em fatura ainda aberta não saiu do bolso)
+  const saidasContadas = (m: number) => (mesDeHoje && m === c.mes ? ddMes.saiu
+    : c.ano === hoje.getFullYear() && m === hoje.getMonth() + 1
+      ? c.lancsAno.reduce((t, l) => (l.mes === m && l.tipo === 'saida' && (!l.data || l.data <= hojeIso) ? t + l.valor : t), 0)
+      : c.porMes[m - 1]?.saidas ?? 0)
 
   const sugestao = c.sugestao && (
     <CartaoSugestao s={c.sugestao} aoAceitar={() => c.aceitarSugestao(c.sugestao!)} aoRecusar={() => c.recusarSugestao(c.sugestao!)} />
@@ -425,7 +427,9 @@ export function Inicio(c: Ctx) {
       // ritmo do gasto: por dia até hoje, comparado com o mês passado inteiro
       const ritmo = ritmoDoGasto
       pecas.push({
-        chave: 'gastos', icone: 'enviar', cor: 'var(--saida)', rotulo: tx('Gastos do mês'), valor: fmtValor(r.saidas),
+        // o mesmo "Saiu" do quadro do mês: compra em fatura aberta e conta com data mais para a frente ainda vêm (num mês que
+        // já acabou é tudo o que saiu; num que ainda não começou, nada saiu)
+        chave: 'gastos', icone: 'enviar', cor: 'var(--saida)', rotulo: tx('Gastos do mês'), valor: fmtValor(ddMes.saiu),
         sub: ritmo === null ? undefined : ritmo <= 1 ? tx('gastando menos que em {0}', mesAnt) : tx('gastando mais que em {0}', mesAnt),
         sinal: ritmo === null ? undefined : ritmo <= 1 ? 'bom' : ritmo <= 1.2 ? 'atencao' : 'ruim',
         detalhe: <div className="idet-detalhe-duas">{gastos}{lancamentos}</div>,

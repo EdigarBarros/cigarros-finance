@@ -478,3 +478,18 @@ export function conselhos(e: EntradaConselheiro): Conselho[] {
     .filter((c) => !dispensadas.has(c.id) && !dispensadas.has(chaveDeDispensaDoMes(c.id, hoje)))
     .sort((a, b) => b.prioridade - a.prioridade || a.id.localeCompare(b.id))
 }
+
+/**
+ * Gasto de um mês típico, para a reserva de emergência (Dinheiro guardado, Metas): a mesma régua do Consultor, a média do
+ * que saiu nos últimos `MESES_NA_MEDIA` meses fechados (antes do mês de hoje) em que entrou e saiu dinheiro. Com menos de
+ * `MIN_MESES_COM_DADOS` deles, vale a média dos meses fechados com gasto e, sem nenhum fechado, a dos meses com gasto.
+ * `porMes`: o resumo de cada mês do ano aberto (índice 0 = janeiro).
+ */
+export function gastoMensalMedio(porMes: ({ entradas: number; saidas: number } | null)[], ano: number, hoje = new Date()): number {
+  const atual = hoje.getFullYear() * 12 + hoje.getMonth() + 1
+  const meses = porMes.map((r, i) => ({ r, k: ano * 12 + i + 1 })).filter((x): x is { r: { entradas: number; saidas: number }; k: number } => Boolean(x.r && x.r.saidas > 0))
+  const fechados = meses.filter((x) => x.k < atual)
+  const recentes = fechados.filter((x) => x.r.entradas > 0 && x.k >= atual - MESES_NA_MEDIA)
+  const base = recentes.length >= MIN_MESES_COM_DADOS ? recentes : fechados.length ? fechados : meses
+  return base.length ? Math.round(base.reduce((a, x) => a + x.r.saidas, 0) / base.length * 100) / 100 : 0
+}

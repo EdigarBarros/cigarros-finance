@@ -288,17 +288,21 @@ export async function gravarImportacao(userId: string, meses: MesImportado[]) {
   }
 }
 
-async function buscarTudo<T>(tabela: string): Promise<T[]> {
+/** Todas as linhas de uma tabela, de mil em mil, em ordem fixa (sem ordem, uma página podia repetir ou pular linhas). */
+async function buscarTudo<T>(tabela: string, ordem = 'id'): Promise<T[]> {
   const linhas: T[] = []
   for (let de = 0; ; de += 1000) {
-    const { data, error } = await supabase.from(tabela).select('*').range(de, de + 999)
+    const { data, error } = await supabase.from(tabela).select('*').order(ordem).range(de, de + 999)
     if (error) throw error
     linhas.push(...(data as T[]))
     if (data.length < 1000) return linhas
   }
 }
 
-/** Backup completo em .xlsx, uma aba por tabela. */
+/**
+ * Backup completo em .xlsx, uma aba por tabela: tudo o que a pessoa cadastrou (é o que o app oferece antes de "Zerar dados"
+ * e "Excluir conta"). Os vínculos saem com o nome (cartão, dívida, meta, banco, conta do mês), não com o código.
+ */
 export async function exportarBackup() {
   const [lancs, dividas, saldos, meses, bancos] = await Promise.all([
     buscarTudo<Lancamento>('lancamentos'),
@@ -312,16 +316,37 @@ export async function exportarBackup() {
   const nomeCategoria = new Map(categorias.map((c) => [c.id, c.nome]))
   const nomeBanco = new Map(bancos.map((b) => [b.id, b.nome]))
   const nomeDivida = new Map(dividas.map((d) => [d.id, d.descricao]))
+  // O resto do que a pessoa cadastrou (cada parte veio numa migração: sem a tabela, a aba não sai)
+  const outra = (t: string) => buscarTudo<Record<string, unknown>>(t).catch(() => [] as Record<string, unknown>[])
+  const [cartoes, faturasPagas, contasFixas, metas, movimentos, partes, promessas] = await Promise.all(
+    ['cartoes', 'faturas_pagas', 'contas_fixas', 'metas', 'meta_movimentos', 'divida_partes', 'divida_promessas'].map(outra))
+  const perfil = await buscarTudo<Record<string, unknown>>('perfis', 'user_id').catch(() => [] as Record<string, unknown>[])
+  const nomes = (xs: Record<string, unknown>[], campo: string) => new Map(xs.map((x) => [String(x.id), String(x[campo] ?? '')]))
+  const nomeCartao = nomes(cartoes, 'nome')
+  const nomeConta = nomes(contasFixas, 'descricao')
+  const nomeMeta = nomes(metas, 'nome')
+  const nomeParte = nomes(partes, 'descricao')
+  /** Cada código de vínculo vira o nome do que ele aponta; lista e objeto (jsonb) viram texto. */
+  const VINCULOS: Record<string, [string, Map<string, string>]> = {
+    cartao_id: ['cartao', nomeCartao], divida_id: ['divida', nomeDivida], meta_id: ['meta', nomeMeta], banco_id: ['banco', nomeBanco],
+    conta_fixa_id: ['conta do mês', nomeConta], categoria_id: ['categoria', nomeCategoria], parte_id: ['parte', nomeParte],
+  }
+  const plano = (x: Record<string, unknown>) => Object.fromEntries(Object.entries(x).map(([k, v]) => [k, v !== null && typeof v === 'object' ? JSON.stringify(v) : v]))
+  const legivel = (xs: Record<string, unknown>[]) => xs.map((x) => plano(Object.fromEntries(Object.entries(x)
+    .filter(([k]) => !['id', 'user_id', 'created_at', 'lancamento_id'].includes(k))
+    .map(([k, v]) => (VINCULOS[k] ? [VINCULOS[k][0], v ? VINCULOS[k][1].get(String(v)) ?? '' : ''] : [k, v])))))
   const wb = XLSX.utils.book_new()
   const semIds = <T extends object>(xs: T[]) =>
     xs.map((x) => Object.fromEntries(Object.entries(x).filter(([k]) => !['id', 'user_id', 'created_at'].includes(k))))
   XLSX.utils.book_append_sheet(
     wb,
-    XLSX.utils.json_to_sheet(semIds(lancs).map(({ divida_id, banco_id, categoria_id, categoria, conta: _conta, conta_fixa_id: _contaFixa, ...l }) => ({
-      ...l,
+    XLSX.utils.json_to_sheet(semIds(lancs).map(({ divida_id, banco_id, categoria_id, categoria, conta: _conta, conta_fixa_id, cartao_id, ...l }) => ({
+      ...plano(l),
       categoria: categoria_id ? nomeCategoria.get(String(categoria_id)) : categorias.length ? '' : categoria,
       banco: banco_id ? nomeBanco.get(String(banco_id)) : '',
       divida: divida_id ? nomeDivida.get(String(divida_id)) : '',
+      cartao: cartao_id ? nomeCartao.get(String(cartao_id)) ?? '' : '',
+      'conta do mês': conta_fixa_id ? nomeConta.get(String(conta_fixa_id)) ?? '' : '',
     }))),
     'Lançamentos',
   )
@@ -343,6 +368,11 @@ export async function exportarBackup() {
     }))),
     'Meses',
   )
+  const abas: [string, Record<string, unknown>[]][] = [
+    ['Partes das dívidas', partes], ['Promessas de pagamento', promessas], ['Cartões', cartoes], ['Faturas pagas', faturasPagas],
+    ['Contas do mês', contasFixas], ['Metas', metas], ['Metas - movimentos', movimentos], ['Preferências', perfil],
+  ]
+  for (const [aba, xs] of abas) if (xs.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(legivel(xs)), aba)
   // A carteira do Invest (migração 28): sem as tabelas, o backup sai como antes.
   const linhas = (t: string) => buscarTudo<Record<string, unknown>>(t).catch(() => [] as Record<string, unknown>[])
   const [ativos, operacoes, precos] = await Promise.all([linhas('invest_ativos'), linhas('invest_operacoes'), linhas('invest_precos')])

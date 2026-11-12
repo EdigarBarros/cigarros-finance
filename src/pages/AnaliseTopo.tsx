@@ -175,7 +175,11 @@ function BlocoMes({ a }: { a: Analise }) {
       </div>
       <strong className={`an-bloco-numero ${sobra ? 'bom' : 'ruim'}`}><Numero valor={Math.abs(m.resultadoPrevisto)} formato={fmtValor} /></strong>
       <span className="an-bloco-pe">{sobra ? tx('Deve sobrar') : tx('Pode faltar')}</span>
-      {m.rendaExtraMedia > 0 && <PorQue texto={tx('Sem contar renda extra (em média, {0} por mês).', fmtValor(m.rendaExtraMedia))} />}
+      {/* A Início prevê o fim do mês só com o que já está marcado; aqui entra também o gasto do dia a dia que ainda deve vir. */}
+      {(m.rendaExtraMedia > 0 || m.diaADiaPrevisto > 0) && <PorQue texto={[
+        m.diaADiaPrevisto > 0 ? tx('Conta {0} de gasto do dia a dia até o fim do mês, pelo seu costume. A previsão da Início usa só o que já está marcado.', fmtValor(m.diaADiaPrevisto)) : '',
+        m.rendaExtraMedia > 0 ? tx('Sem contar renda extra (em média, {0} por mês).', fmtValor(m.rendaExtraMedia)) : '',
+      ].filter(Boolean).join(' ')} />}
     </section>
   )
 }

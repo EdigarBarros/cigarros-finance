@@ -516,10 +516,17 @@ export function dividaDiaADia({ situacao, pagamentos, ano, mes, dias, hoje, diaR
 
 /**
  * O que falta pagar das parcelas de dívida em cada dia do mês (índice 0 = dia 1), como no "Para fazer": a parcela no dia em
- * que vence e a atrasada (de qualquer mês) no dia `atrasadasEm`. Dívida sem cotação fica de fora.
+ * que vence e a atrasada (de qualquer mês) no dia `atrasadasEm` (com `soDoMes`, sem as atrasadas). Dívida sem cotação
+ * fica de fora.
  */
-export function parcelasPorDia({ situacao, ano, mes, dias, hoje, diaRef, atrasadasEm = Math.max(hoje, 1) }: {
+export function parcelasPorDia({ situacao, ano, mes, dias, hoje, diaRef, atrasadasEm = Math.max(hoje, 1), soDoMes = false }: {
   situacao: SituacaoDivida[]; ano: number; mes: number; dias: number; hoje: number; diaRef: string; atrasadasEm?: number
+  /**
+   * Só as parcelas que vencem neste mês, sem as atrasadas. Para o dinheiro de um mês que ainda não começou: a atrasada já
+   * sai no mês de hoje, e contar de novo punha em dezembro as parcelas de novembro uma segunda vez ("2 parcelas" de cada
+   * dívida). O saldo da dívida dia a dia continua descontando a atrasada antes do mês começar.
+   */
+  soDoMes?: boolean
 }): number[] {
   const prefixo = `${ano}-${String(mes).padStart(2, '0')}`
   const vence = Array<number>(dias).fill(0)
@@ -529,6 +536,8 @@ export function parcelasPorDia({ situacao, ano, mes, dias, hoje, diaRef, atrasad
     for (const p of calendarioDe(s, diaRef)?.parcelas ?? []) {
       if (p.falta <= 0 || p.vencimento > `${prefixo}-31`) continue
       const dia = p.vencimento.startsWith(prefixo) ? +p.vencimento.slice(8, 10) : 0
+      // `soDoMes`: só as que vencem neste mês (a atrasada já entrou no dinheiro do mês de hoje)
+      if (!dia && soDoMes) continue
       // parcela atrasada leva os juros de atraso estimados, como no "Para fazer"
       vence[Math.min(dias, Math.max(dia > hoje ? dia : atrasadasEm, 1)) - 1] += p.falta + (s.atraso?.porParcela.get(p.n) ?? 0)
     }

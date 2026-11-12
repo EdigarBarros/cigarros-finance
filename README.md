@@ -122,7 +122,7 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   com saldo guardado e movimento do mês de cada um, detalhe individual e bloco "Por banco" na visão geral.
   Saldos, US$ e meta passam automaticamente para os meses seguintes até você atualizar
 - **Ano**: totais do ano, gráficos de saldo e evolução de caixa, dívida, investimentos e dólar, tabela mês a mês
-- **Importar planilha (.xlsx)** com os meses e categorias da planilha antiga; **exportar backup (.xlsx)**
+- **Importar planilha (.xlsx)** com os meses e categorias da planilha antiga; **baixar backup (.xlsx)** com tudo o que você cadastrou (lançamentos, dívidas e as partes e promessas delas, cartões e faturas, contas do mês, metas, bancos, investimentos e preferências)
 - Valores aceitam `1.234,56` e contas como `=105,53-60,02`
 - Celular em modo leitura: resumo, gráficos e listas recolhidas; editar continua a um toque (botão + e tocando nos itens)
 
@@ -207,7 +207,7 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
 ## Bom saber
 
 - No plano grátis, o Supabase **pausa o projeto depois de 7 dias sem uso**. Os dados não se perdem: é só entrar no painel do Supabase e clicar em *Restore*. Usando o site toda semana, não pausa.
-- Faça **Exportar backup** de vez em quando.
+- Faça **Baixar backup** (Configurações → Dados) de vez em quando.
 - Este repositório é público: nunca coloque aqui a planilha nem o arquivo `.env` (o `.gitignore` já bloqueia `*.xlsx` e `.env`).
 
 ## App Android (Play Store)
