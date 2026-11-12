@@ -1079,3 +1079,23 @@ migração num Postgres local e confere que uma pessoa não lê nem grava nada d
 
 **O que ainda não tem**: cotação automática de ações (os preços são informados ou importados), imposto de renda calculado
 (só o que a pessoa informa como retido), e leitura completa de notas de corretagem em PDF.
+
+### 4.23 Assinatura e Pix de 30 dias (`lib/assinatura.ts`, `components/Assinatura.tsx`, migração 29)
+
+- **Por que existe:** a conta do Stripe não tem o Pix Automático (Pix recorrente), então o Pix não aparece em assinatura. O Pix entra como
+  **pagamento único**, alternativa ao cartão, só para quem usa reais (`aceitaPix(moeda)`). No app da Play Store não há botão (política de pagamentos).
+- **Como a pessoa vê:** na tela de assinatura (conta com o teste acabado ou assinatura terminada), quem usa reais vê **duas metades lado a lado**,
+  separadas por uma faixa diagonal em gradiente com um "ou" (o mesmo fio da lâmina do login; no celular elas empilham e a faixa fica inclinada): à
+  esquerda a **assinatura no cartão** ("Renova sozinha todo mês", R$ 9,99 por mês), à direita o **Pix de 30 dias** ("Pagamento único, sem cartão", R$ 9,99
+  por 30 dias, com o aviso amarelo "Não renova sozinho: quando acabar, você paga o Pix de novo"). Dizer essa diferença na cara é o ponto da tela. Quem
+  usa outra moeda, quem tem uma assinatura de cartão com pagamento por resolver (`past_due`, `unpaid`, `incomplete`, `paused`: o servidor manda acertar no
+  portal) e o app da Play Store veem a tela de sempre, só com o cartão. Em Configurações → Conta, quem está no teste grátis vê também "Pagar 30 dias com Pix",
+  e quem está no Pix vê "Renovar com Pix" com a data. Nos últimos 5 dias aparece um aviso no painel, porque o Pix **não renova sozinho**. Vencido, volta à
+  tela de assinatura ("Seu Pix de 30 dias terminou"); com o painel aberto, o `App.tsx` troca a tela na hora em que vence.
+- **Regra de acesso:** status `pix` com `periodo_fim` no futuro (`emPix`, `temAcesso` e `tem_acesso()` no banco). Pagar antes de vencer soma 30 dias ao que
+  sobrou. Um aviso antigo de assinatura cancelada não tira o Pix vigente (`stripe-webhook`); uma assinatura nova em teste ou ativa assume o lugar.
+- **Fluxo:** `stripe-checkout` com `tipo: 'pix'` cria um checkout de pagamento único em BRL, só Pix, com o preço no próprio código (R$ 9,99, `PIX_VALOR`).
+  O `stripe-webhook` relê a sessão no Stripe, confere tipo, moeda e valor e chama `registrar_pix` (migração 29), que grava em `pagamentos_pix` e libera o
+  acesso numa transação só. A chave é o id da sessão: o Stripe reenvia avisos e o mesmo Pix nunca soma 30 dias duas vezes.
+- **Valor/dias:** estão em `PIX_VALOR`/`PIX_DIAS` nas duas funções e em `registrar_pix`. Mudou o preço? Mude nos dois lugares e nos textos (`tx`).
+

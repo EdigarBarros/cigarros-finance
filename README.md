@@ -68,6 +68,14 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   tabela `assinaturas` ([migração 12](supabase/migracao-12-assinaturas.sql)), funções `stripe-checkout`, `stripe-portal` e
   `stripe-webhook` em `supabase/functions/` (segredo `STRIPE_SECRET_KEY` no Supabase, nunca no código) e, para o bloqueio valer
   também no banco, a [migração 20](supabase/migracao-20-acesso-no-banco-definitivo.sql) (a 13 antiga), que liga o bloqueio: teste o fluxo de assinatura com uma conta nova logo depois de rodá-la
+  - **Pix de 30 dias** ([migração 29](supabase/migracao-29-pix-30-dias.sql)): a conta do Stripe não tem o Pix recorrente (Pix Automático), então
+    o Pix não cabe em assinatura. Em reais, quem prefere Pix paga **R$ 9,99 de uma vez** (checkout avulso, só Pix) e ganha 30 dias de acesso
+    (status `pix`, vale até `periodo_fim`; não renova sozinho, e pagar antes de vencer soma 30 dias ao que sobrou). O `stripe-webhook` ouve
+    `checkout.session.completed` e `.async_payment_succeeded`, confere a sessão no Stripe e chama a função `registrar_pix` do banco, que registra o
+    pagamento (`pagamentos_pix`, chave = id da sessão: aviso repetido não soma de novo) e libera o acesso na mesma transação.
+    Quem paga o Pix durante o teste grátis não perde o que sobrou do teste (os 30 dias começam depois). Pix pago por quem já tinha cortesia ou
+    assinatura ativa (uma corrida rara) fica registrado sem crédito: `select * from pagamentos_pix where not creditado;` mostra os que precisam de reembolso.
+    Reembolso ou estorno de um Pix **não** tira o acesso sozinho: ajuste `assinaturas.periodo_fim` à mão.
 - **Forma de pagamento**: todo lançamento tem "Como pagou?" (Pix, débito, crédito, dinheiro, boleto) ou "Como recebeu?" (Pix,
   transferência, dinheiro). O app lembra a forma que você usou para cada descrição e reconhece "Pix" escrito no texto (e
   no extrato importado). **Crédito** leva ao cartão e às parcelas e a compra entra na fatura e no limite da aba Cartões;
@@ -143,7 +151,7 @@ Tudo grátis: o site fica na **Vercel** e os dados no **Supabase** (Postgres), p
    [`22`](supabase/migracao-22-juros-de-atraso.sql), [`23`](supabase/migracao-23-guardado-em-banco.sql),
    [`24`](supabase/migracao-24-memoria-do-consultor.sql), [`25`](supabase/migracao-25-promessas-de-pagamento.sql),
    [`26`](supabase/migracao-26-inicio-da-parte.sql), [`27`](supabase/migracao-27-saldo-de-um-mes-para-o-outro.sql),
-   [`28`](supabase/migracao-28-invest.sql) e, **por último**, a
+   [`28`](supabase/migracao-28-invest.sql), [`29`](supabase/migracao-29-pix-30-dias.sql) e, **por último**, a
    [`20`](supabase/migracao-20-acesso-no-banco-definitivo.sql).
    O `schema.sql` sozinho **não** tem cobrança nem bloqueio: sem a 12 e a 20 o painel abre para qualquer conta, paga ou não.
    Não rode as migrações 02 a 08 num banco novo (o `schema.sql` já inclui o que elas fazem) nem a 13 (a 20 a substitui).
@@ -172,7 +180,10 @@ Tudo grátis: o site fica na **Vercel** e os dados no **Supabase** (Postgres), p
 1. No Stripe, crie o produto com preço mensal e `lookup_key = opuscash_mensal` (em reais e nas outras moedas aceitas).
 2. Supabase → **Edge Functions**: publique `stripe-checkout`, `stripe-portal`, `excluir-conta` (com verificação de JWT) e `stripe-webhook`
    (**sem** verificação de JWT). Em **Secrets**, defina `STRIPE_SECRET_KEY`.
-3. Stripe → Webhooks: aponte para a função `stripe-webhook` com os eventos `customer.subscription.created`, `.updated` e `.deleted`.
+3. Stripe → Webhooks: aponte para a função `stripe-webhook` com os eventos `customer.subscription.created`, `.updated` e `.deleted` e, para o Pix de 30 dias,
+   `checkout.session.completed` e `checkout.session.async_payment_succeeded`. Ordem para publicar o Pix: migração 29, depois as funções `stripe-webhook` e
+   `stripe-checkout`, depois os eventos no Stripe, e só então o site (sem isso a pessoa pagaria e não receberia o acesso). O Pix precisa estar ativo em
+   Configurações → Métodos de pagamento do Stripe.
 4. **Cortesia** (acesso liberado, sem cobrança, nunca revogado pelo Stripe): rode [`supabase/dar-cortesia.sql`](supabase/dar-cortesia.sql)
    com os e-mails escolhidos. Rodar as migrações **não** dá cortesia a ninguém.
 5. Na hospedagem (Vercel), defina `VITE_EMAIL_SUPORTE` e `VITE_RESPONSAVEL`: aparecem nos Termos e na Privacidade.

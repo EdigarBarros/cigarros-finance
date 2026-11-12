@@ -27,14 +27,19 @@ Deno.serve(async (req) => {
     // Cancela a cobrança antes de apagar: sem isso o Stripe continuaria cobrando um cliente que não existe mais aqui.
     const { data: ass } = await servico.from('assinaturas').select('stripe_subscription_id, status').eq('user_id', user.id).maybeSingle()
     if (ass?.stripe_subscription_id && ass.status !== 'cortesia' && !['canceled', 'incomplete_expired'].includes(ass.status)) {
-      const r = await fetch(`https://api.stripe.com/v1/subscriptions/${ass.stripe_subscription_id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${Deno.env.get('STRIPE_SECRET_KEY')}` },
-      })
-      // 404 = o Stripe já não conhece essa assinatura: segue em frente. Qualquer outro erro para tudo (não apaga sem cancelar).
-      if (!r.ok && r.status !== 404) {
-        const j = await r.json().catch(() => null)
-        return resposta({ erro: j?.error?.message ?? 'Não foi possível cancelar a assinatura. Tente de novo.' }, 502)
+      const cab = { Authorization: `Bearer ${Deno.env.get('STRIPE_SECRET_KEY')}` }
+      const url_sub = `https://api.stripe.com/v1/subscriptions/${ass.stripe_subscription_id}`
+      // Quem pagou o Pix de 30 dias guarda o id de uma assinatura de cartão antiga, já cancelada: lê o estado de verdade antes de cancelar.
+      const rs = await fetch(url_sub, { headers: cab })
+      if (!rs.ok && rs.status !== 404) return resposta({ erro: 'Não foi possível conferir a assinatura. Tente de novo.' }, 502)
+      const viva = rs.ok && !['canceled', 'incomplete_expired'].includes((await rs.json()).status)
+      if (viva) {
+        const r = await fetch(url_sub, { method: 'DELETE', headers: cab })
+        // 404 = o Stripe já não conhece essa assinatura: segue em frente. Qualquer outro erro para tudo (não apaga sem cancelar).
+        if (!r.ok && r.status !== 404) {
+          const j = await r.json().catch(() => null)
+          return resposta({ erro: j?.error?.message ?? 'Não foi possível cancelar a assinatura. Tente de novo.' }, 502)
+        }
       }
     }
 

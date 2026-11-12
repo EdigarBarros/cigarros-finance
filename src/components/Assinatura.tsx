@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { noAppAndroid } from '../lib/appAndroid'
-import { iniciarTesteGratis, irParaStripe, podeTestar, type Assinatura } from '../lib/assinatura'
+import { aceitaPix, iniciarTesteGratis, irParaStripe, pixAcabou, podeTestar, type Assinatura } from '../lib/assinatura'
 import { supabase } from '../lib/supabase'
 import { Icone } from './Icone'
 import { LinksLegais } from './Legal'
@@ -14,6 +14,9 @@ const ETAPAS = [
   // no app da Play Store não se fala de preço nem de como assinar (lib/appAndroid.ts)
   ...(noAppAndroid ? [] : [{ icone: 'cartao', cor: 'var(--destaque)', titulo: tx('Para continuar'), texto: tx('Assine por R$ 9,99 por mês. Sem fidelidade, cancele quando quiser.') }]),
 ]
+
+/** Já existe uma assinatura de cartão com pagamento por resolver: o servidor manda acertar no portal (um Pix em cima cobraria em dobro). */
+const PAGAMENTO_POR_RESOLVER = ['past_due', 'unpaid', 'incomplete', 'paused']
 
 const SEGURANCA = [
   { icone: 'escudo', titulo: tx('Conexão criptografada'), texto: tx('Tudo o que você digita viaja protegido (HTTPS) entre o seu aparelho e o OpusCash.') },
@@ -31,7 +34,10 @@ const SEGURANCA = [
  */
 export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura: Assinatura | null; email: string; aoAtualizar: () => Promise<unknown> }) {
   const voltou = new URLSearchParams(window.location.search).get('assinatura') === 'ok'
-  const [ocupado, setOcupado] = useState<'teste' | 'assinar' | 'conferir' | null>(null)
+  const [ocupado, setOcupado] = useState<'teste' | 'assinar' | 'pix' | 'conferir' | null>(null)
+  // undefined = ainda não leu (o botão do Pix espera, para não piscar); null = sem perfil ainda (vale como real)
+  const [moedaPerfil, setMoedaPerfil] = useState<string | null | undefined>(undefined)
+  const [lendoMoeda, setLendoMoeda] = useState(!noAppAndroid) // enquanto lê, mostra o carregando (não troca a tela de repente)
   const [erro, setErro] = useState<string | null>(null)
   const [esperando, setEsperando] = useState(voltou)
   const [saindo, setSaindo] = useState(false)
@@ -48,6 +54,15 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
     }, 2000)
     return () => window.clearInterval(t)
   }, [esperando, aoAtualizar])
+
+  // o Pix de 30 dias só existe em reais: o botão aparece para quem usa o real (ou ainda não escolheu a moeda)
+  useEffect(() => {
+    if (noAppAndroid) return
+    void supabase.from('perfis').select('moeda').maybeSingle().then(({ data, error }) => {
+      if (!error) setMoedaPerfil((data as { moeda?: string } | null)?.moeda ?? null)
+      setLendoMoeda(false) // com erro de leitura a moeda fica desconhecida: vale a tela só com o cartão
+    })
+  }, [])
 
   const novo = podeTestar(assinatura)
   const testeAcabou = assinatura?.status === 'teste'
@@ -78,6 +93,12 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
     const msg = await irParaStripe('stripe-checkout', (data as { moeda?: string } | null)?.moeda)
     if (msg) { setErro(msg); setOcupado(null) }
   }
+  const pagarComPix = async () => {
+    setOcupado('pix')
+    setErro(null)
+    const msg = await irParaStripe('stripe-checkout', 'BRL', 'pix')
+    if (msg) { setErro(msg); setOcupado(null) }
+  }
   // no app: lê a assinatura de novo; se ela estiver ativa, o painel abre sozinho no lugar desta tela
   const conferir = async () => {
     setOcupado('conferir')
@@ -87,11 +108,17 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
     setErro(tx('Esta conta ainda não tem uma assinatura ativa.'))
   }
 
+  // Duas formas de pagar lado a lado (cartão que renova sozinho x Pix de 30 dias): só em reais, no site, e sem assinatura de cartão por resolver
+  const carregandoMoeda = lendoMoeda && !esperando && !novo && !noAppAndroid
+  const escolha = !esperando && !novo && !noAppAndroid && moedaPerfil !== undefined && aceitaPix(moedaPerfil) && !PAGAMENTO_POR_RESOLVER.includes(assinatura?.status ?? '')
+
   const titulo = esperando ? tx('Confirmando seu pagamento…')
     : novo ? tx('Comece com 7 dias grátis')
     : testeAcabou ? tx('Seu teste grátis acabou')
     : assinatura?.status === 'past_due' || assinatura?.status === 'unpaid' ? tx('Não conseguimos cobrar seu cartão')
+    : pixAcabou(assinatura) ? tx('Seu Pix de 30 dias terminou')
     : tx('Sua assinatura terminou')
+  const subEscolha = tx('Escolha como prefere pagar. Seus dados continuam guardados.')
   const sub = noAppAndroid ? (novo ? tx('Use o OpusCash completo por 7 dias, sem pagar nada.')
     : tx('Para voltar ao painel, esta conta precisa de uma assinatura ativa. Não é possível assinar pelo app. Seus dados continuam guardados.'))
     : novo ? tx('Use o OpusCash completo por 7 dias, sem pagar nada. Se quiser continuar depois, são R$ 9,99 por mês.')
@@ -99,7 +126,7 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
     : tx('Assine para voltar ao seu painel. Seus dados continuam guardados.')
 
   return (
-    <main className={`pl ${saindo ? 'saindo' : ''}`}>
+    <main className={`pl ${saindo ? 'saindo' : ''} ${escolha ? 'escolha' : ''}`}>
       <section className="pl-lado">
         <div className="pl-orbe pl-orbe-a" aria-hidden="true" />
         <div className="pl-orbe pl-orbe-b" aria-hidden="true" />
@@ -123,13 +150,57 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
 
       <section className="pl-planos">
         <div className="pl-planos-miolo">
-          {esperando ? (
+          {carregandoMoeda ? (
+            <>
+              <h1>{titulo}</h1>
+              <div className="pl-carregando" aria-hidden="true"><i /><i /><i /></div>
+            </>
+          ) : esperando ? (
             <>
               <h1>{titulo}</h1>
               <div className="pl-carregando" aria-hidden="true"><i /><i /><i /></div>
               <p className="pl-sub">{tx('Isso leva só alguns segundos. Você entra sozinho assim que o pagamento for confirmado.')}</p>
             </>
           ) : (
+            escolha ? (
+            <>
+              <h1>{titulo}</h1>
+              <p className="pl-sub">{subEscolha}</p>
+              <div className="pl-duas" role="group" aria-label={tx('Formas de pagar')}>
+                <section className="pl-opcao cartao">
+                  <span className="pl-opcao-selo">{tx('Mais prático')}</span>
+                  <h2>{tx('Assinatura no cartão')}</h2>
+                  <div className="pl-preco"><strong>R$ 9,99</strong><span>{tx('por mês')}</span></div>
+                  <p className="pl-tag"><Icone nome="trocar" tamanho={15} />{tx('Renova sozinha todo mês')}</p>
+                  <ul className="pl-pontos">
+                    <li><Icone nome="check" tamanho={15} />{tx('O cartão é cobrado todo mês, automaticamente')}</li>
+                    <li><Icone nome="check" tamanho={15} />{tx('Você não precisa lembrar de nada')}</li>
+                    <li><Icone nome="check" tamanho={15} />{tx('Cancele quando quiser, sem multa')}</li>
+                  </ul>
+                  <button className="btn gradiente pl-botao" onClick={assinar} disabled={ocupado !== null}>
+                    {ocupado === 'assinar' ? tx('Abrindo o pagamento…') : tx('Assinar por R$ 9,99/mês')}
+                  </button>
+                </section>
+                <span className="pl-ou" aria-hidden="true">{tx('ou')}</span>
+                <section className="pl-opcao pix">
+                  <h2>{tx('Pix de 30 dias')}</h2>
+                  <div className="pl-preco"><strong>R$ 9,99</strong><span>{tx('por 30 dias')}</span></div>
+                  <p className="pl-tag"><Icone nome="relogio" tamanho={15} />{tx('Pagamento único, sem cartão')}</p>
+                  <ul className="pl-pontos">
+                    <li><Icone nome="check" tamanho={15} />{tx('Você paga uma vez e usa por 30 dias')}</li>
+                    <li className="aviso"><Icone nome="sino" tamanho={15} />{tx('Não renova sozinho: quando acabar, você paga o Pix de novo')}</li>
+                    <li><Icone nome="check" tamanho={15} />{tx('Avisamos nos últimos 5 dias para você renovar')}</li>
+                  </ul>
+                  <button className="btn pl-botao pl-botao-pix" onClick={pagarComPix} disabled={ocupado !== null}>
+                    {ocupado === 'pix' ? tx('Abrindo o Pix…') : tx('Pagar R$ 9,99 com Pix')}
+                  </button>
+                </section>
+              </div>
+              {erro && <p className="form-erro" role="alert">{erro}</p>}
+              <small className="pl-nota">{tx('O pagamento é feito na página segura do Stripe. No cartão, você cancela quando quiser, sem multa.')}</small>
+              <small className="pl-nota">{tx('Ao continuar, você concorda com os')} <a href="#/termos">{tx('Termos de uso')}</a> {tx('e a')} <a href="#/privacidade">{tx('Política de privacidade')}</a>.</small>
+            </>
+            ) : (
             <>
               <article className="pl-card destaque">
                 {novo ? (
@@ -190,6 +261,7 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
               </article>
               <small className="pl-nota">{tx('Ao continuar, você concorda com os')} <a href="#/termos">{tx('Termos de uso')}</a> {tx('e a')} <a href="#/privacidade">{tx('Política de privacidade')}</a>.</small>
             </>
+            )
           )}
           <LinksLegais />
           <button className="link pl-sair" onClick={() => supabase.auth.signOut()}>{tx('Sair ({0})', email)}</button>

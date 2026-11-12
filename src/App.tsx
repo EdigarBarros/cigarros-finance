@@ -80,16 +80,18 @@ export default function App() {
 function ComAcesso({ userId, email, nome }: { userId: string; email: string; nome?: string }) {
   const { assinatura, carregando, cobranca, erro, recarregar } = useAssinatura(userId)
   const semInternet = useSemInternet()
-  // Quando o teste grátis acaba com o painel aberto, a tela de assinatura entra na hora (sem esperar a pessoa recarregar).
+  // Quando o teste grátis (ou o Pix de 30 dias) acaba com o painel aberto, a tela de assinatura entra na hora (sem esperar a pessoa recarregar).
   const [, reavaliar] = useReducer((n: number) => n + 1, 0)
-  const fimDoTeste = assinatura?.status === 'teste' && assinatura.teste_fim ? new Date(assinatura.teste_fim).getTime() : null
+  const fimDoAcesso = assinatura?.status === 'teste' && assinatura.teste_fim ? new Date(assinatura.teste_fim).getTime()
+    : assinatura?.status === 'pix' && assinatura.periodo_fim ? new Date(assinatura.periodo_fim).getTime()
+    : null
   useEffect(() => {
-    if (!fimDoTeste) return
-    const falta = fimDoTeste - Date.now()
+    if (!fimDoAcesso) return
+    const falta = fimDoAcesso - Date.now()
     if (falta <= 0 || falta > 2_000_000_000) return // já acabou, ou longe demais para um timer
     const t = window.setTimeout(reavaliar, falta + 500)
     return () => window.clearTimeout(t)
-  }, [fimDoTeste])
+  }, [fimDoAcesso])
   // sem internet (ou sem resposta do servidor) antes de o painel abrir: avisa, em vez do carregando para sempre
   if (carregando) return semInternet || erro ? comIdioma(<TelaSemInternet aoTentar={recarregar} />) : <Carregando />
   if (cobranca && !temAcesso(assinatura)) return comIdioma(<TelaAssinatura assinatura={assinatura} email={email} aoAtualizar={recarregar} />)
