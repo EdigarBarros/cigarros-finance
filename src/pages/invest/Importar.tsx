@@ -47,7 +47,7 @@ export function ImportarArquivo({ c, aoFechar, aoVerPendencias }: { c: Ctx; aoFe
       setClasses({})
       setPasso({ em: 'previa', lido, nome: f.name.slice(0, 200) })
     } catch (e) {
-      registrarErro(e, tx('invest importar'))
+      registrarErro(e, 'invest importar')
       setPasso({ em: 'escolher' })
       setErro(e instanceof Error ? e.message : tx('Não consegui ler esse arquivo.'))
     }
@@ -129,7 +129,7 @@ export function ImportarArquivo({ c, aoFechar, aoVerPendencias }: { c: Ctx; aoFe
       void inv.updImportacao(imp.id, { importadas: r.gravadas.length, repetidas })
       setPasso({ em: 'pronto', importadas: r.gravadas.length, repetidas, pendentes: pendentes.length, precos, ativos: criados.size })
     } catch (e) {
-      registrarErro(e, tx('invest gravar importacao'))
+      registrarErro(e, 'invest gravar importacao')
       setErro(e instanceof Error ? e.message : String(e))
       setPasso({ em: 'previa', lido, nome })
       void inv.recarregar()

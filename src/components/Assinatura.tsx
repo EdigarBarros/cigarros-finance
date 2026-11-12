@@ -37,6 +37,7 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
   const [ocupado, setOcupado] = useState<'teste' | 'assinar' | 'pix' | 'conferir' | null>(null)
   // undefined = ainda não leu (o botão do Pix espera, para não piscar); null = sem perfil ainda (vale como real)
   const [moedaPerfil, setMoedaPerfil] = useState<string | null | undefined>(undefined)
+  const [lendoMoeda, setLendoMoeda] = useState(!noAppAndroid) // enquanto lê, mostra o carregando (não troca a tela de repente)
   const [erro, setErro] = useState<string | null>(null)
   const [esperando, setEsperando] = useState(voltou)
   const [saindo, setSaindo] = useState(false)
@@ -57,7 +58,10 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
   // o Pix de 30 dias só existe em reais: o botão aparece para quem usa o real (ou ainda não escolheu a moeda)
   useEffect(() => {
     if (noAppAndroid) return
-    void supabase.from('perfis').select('moeda').maybeSingle().then(({ data, error }) => { if (!error) setMoedaPerfil((data as { moeda?: string } | null)?.moeda ?? null) })
+    void supabase.from('perfis').select('moeda').maybeSingle().then(({ data, error }) => {
+      if (!error) setMoedaPerfil((data as { moeda?: string } | null)?.moeda ?? null)
+      setLendoMoeda(false) // com erro de leitura a moeda fica desconhecida: vale a tela só com o cartão
+    })
   }, [])
 
   const novo = podeTestar(assinatura)
@@ -105,6 +109,7 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
   }
 
   // Duas formas de pagar lado a lado (cartão que renova sozinho x Pix de 30 dias): só em reais, no site, e sem assinatura de cartão por resolver
+  const carregandoMoeda = lendoMoeda && !esperando && !novo && !noAppAndroid
   const escolha = !esperando && !novo && !noAppAndroid && moedaPerfil !== undefined && aceitaPix(moedaPerfil) && !PAGAMENTO_POR_RESOLVER.includes(assinatura?.status ?? '')
 
   const titulo = esperando ? tx('Confirmando seu pagamento…')
@@ -145,7 +150,12 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
 
       <section className="pl-planos">
         <div className="pl-planos-miolo">
-          {esperando ? (
+          {carregandoMoeda ? (
+            <>
+              <h1>{titulo}</h1>
+              <div className="pl-carregando" aria-hidden="true"><i /><i /><i /></div>
+            </>
+          ) : esperando ? (
             <>
               <h1>{titulo}</h1>
               <div className="pl-carregando" aria-hidden="true"><i /><i /><i /></div>

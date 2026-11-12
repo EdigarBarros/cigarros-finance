@@ -3167,14 +3167,16 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .pl-tag { display: inline-flex; align-items: center; gap: 7px; width: fit-content; margin: 0; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; }
 .pl-opcao.cartao .pl-tag { color: var(--marca-2); background: color-mix(in srgb, var(--marca-2) 14%, transparent); }
 .pl-opcao.pix .pl-tag { color: var(--entrada); background: color-mix(in srgb, var(--entrada) 14%, transparent); }
+:root[data-tema='claro'] .pl-opcao.cartao .pl-tag { color: #1558b8; } /* contraste AA sobre o fundo claro (5,7:1) */
+:root[data-tema='claro'] .pl-opcao.pix .pl-tag { color: #0a7456; }
 .pl-opcao .pl-pontos { flex: 1; }
 .pl-opcao .pl-pontos li.aviso { padding: 8px 10px; border-radius: 12px; font-weight: 600; background: color-mix(in srgb, #f5a524 15%, transparent); }
 .pl-opcao .pl-pontos li.aviso svg { color: #f5a524; }
 .pl-opcao .pl-botao { margin-top: 4px; }
-.pl-botao-pix { color: #fff; border: 0; background: linear-gradient(90deg, #0f9d76, #14c9a0); box-shadow: 0 10px 26px -10px rgba(20, 201, 160, .7); }
+.pl-botao-pix { color: #fff; border: 0; background: linear-gradient(90deg, #0a6e52, #0b7a5c); box-shadow: 0 10px 26px -10px rgba(11, 122, 92, .75); } /* branco sobre este verde: 5,3:1 ou mais (AA) */
 .pl-botao-pix::after { display: none; }
 .pl-botao-pix:hover:not(:disabled) { filter: brightness(1.06); }
-@media (hover: hover) and (min-width: 641px) {
+@media (hover: hover) and (min-width: 761px) {
   .pl-duas:has(.cartao:hover), .pl-duas:has(.cartao:focus-within) { grid-template-columns: 1.12fr .88fr; }
   .pl-duas:has(.pix:hover), .pl-duas:has(.pix:focus-within) { grid-template-columns: .88fr 1.12fr; }
 }
@@ -3185,7 +3187,7 @@ button.ex-tipo:hover { transform: scale(1.1); }
   .pl.escolha .pl-planos-miolo { animation-name: pl-vem-baixo; }
 }
 /* celular: as metades empilham e o fio fica na horizontal, inclinado */
-@media (max-width: 640px) {
+@media (max-width: 760px) {
   .pl-duas { grid-template-columns: 1fr; }
   .pl-opcao.cartao { padding: 32px 22px 44px; }
   .pl-opcao.pix { grid-column: 1; grid-row: 2; margin: -20px 0 0; padding: 40px 22px 24px; clip-path: polygon(0 20px, 100% 0, 100% 100%, 0 100%); }

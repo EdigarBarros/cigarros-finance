@@ -31,6 +31,8 @@ create table if not exists public.pagamentos_pix (
   creditado boolean not null default true, -- false: o Pix foi pago mas a pessoa já tinha acesso por outro meio (veja registrar_pix)
   pago_em timestamptz not null default now()
 );
+-- (a versão anterior desta migração não tinha a coluna creditado: quem já a rodou ganha a coluna aqui)
+alter table public.pagamentos_pix add column if not exists creditado boolean not null default true;
 create index if not exists pagamentos_pix_user_idx on public.pagamentos_pix (user_id);
 alter table public.pagamentos_pix enable row level security;
 revoke all on public.pagamentos_pix from anon, authenticated;
@@ -42,6 +44,8 @@ revoke all on public.pagamentos_pix from anon, authenticated;
 --    cartão). Nesse caso o Pix fica registrado com creditado = false para o dono achar e reembolsar:
 --      select * from pagamentos_pix where not creditado;
 --    Pix pago antes de vencer soma 30 dias ao que sobrou; no teste grátis, soma depois do que sobrou do teste.
+-- (a versão anterior devolvia timestamptz; o Postgres não deixa trocar o tipo de retorno com create or replace)
+drop function if exists public.registrar_pix(text, uuid, integer, text, text, integer);
 create or replace function public.registrar_pix(p_sessao text, p_user uuid, p_valor integer, p_moeda text, p_customer text, p_dias integer default 30)
 returns jsonb
 language plpgsql security definer set search_path = public as $$
