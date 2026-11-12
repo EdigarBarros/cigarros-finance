@@ -16,7 +16,8 @@ import { Numero } from '../../components/Numero'
 import { Rosquinha } from '../../components/Vitrine'
 import type { Ctx } from '../contexto'
 import { amostrar } from './analista'
-import { Fatia, fmtQtd, fmtVariacao, fonteDoValor, GraficoDeLinhas, Quadro, SeloDoValor, tomDoNumero, type AcoesInvest } from './apoio'
+import { Fatia, GraficoDeLinhas, Quadro, SeloDoValor, type AcoesInvest } from './apoio'
+import { fmtQtd, fmtVariacao, fonteDoValor, tomDoNumero } from './formatos'
 
 type Ordem = 'valor' | 'resultado' | 'nome' | 'vencimento'
 const POR_PAGINA = 30
@@ -37,7 +38,7 @@ export function Carteira({ c, acoes }: { c: Ctx; acoes: AcoesInvest }) {
   const comOperacao = k.posicoes.filter((p) => p.taxa !== null)
   const fechadas = comOperacao.filter((p) => !p.aberta)
   const classes = CLASSES.filter((x) => comOperacao.some((p) => p.ativo.classe === x.id && (p.aberta || encerrados)))
-  const lista = useMemo(() => {
+  const lista = (() => {
     const q = semAcento(busca.trim())
     const base = comOperacao.filter((p) => (p.aberta || encerrados)
       && (classe === 'todos' || p.ativo.classe === classe)
@@ -49,7 +50,7 @@ export function Carteira({ c, acoes }: { c: Ctx; acoes: AcoesInvest }) {
       vencimento: (a, b) => (a.ativo.vencimento ?? '9999').localeCompare(b.ativo.vencimento ?? '9999'),
     }
     return base.sort((a, b) => Number(b.aberta) - Number(a.aberta) || por[ordem](a, b))
-  }, [comOperacao, busca, classe, ordem, encerrados]) // eslint-disable-line react-hooks/exhaustive-deps
+  })()
   const visiveis = lista.slice(0, pagina * POR_PAGINA)
 
   return (

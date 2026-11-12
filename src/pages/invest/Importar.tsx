@@ -18,7 +18,8 @@ import { CampoData } from '../../components/Escolhas'
 import { Icone } from '../../components/Icone'
 import { Modal } from '../../components/ui'
 import type { Ctx } from '../contexto'
-import { fmtQtd, type AcoesInvest } from './apoio'
+import { type AcoesInvest } from './apoio'
+import { fmtQtd } from './formatos'
 
 type Passo = { em: 'escolher' } | { em: 'lendo' } | { em: 'previa'; lido: ArquivoLido & { hash: string }; nome: string } | { em: 'gravando' }
   | { em: 'pronto'; importadas: number; repetidas: number; pendentes: number; precos: number; ativos: number }

@@ -373,7 +373,7 @@ export function descobertas(e: EntradaDoAnalista): Achado[] {
     }
     lista.push({
       ...base('renda', 'inv-proventos', 42 + 10 * peso(doze / c.valor, 0.08)), tom: 'bom',
-      titulo: tx('O que a carteira já paga'),
+      titulo: tx('Renda que já entra'),
       frase: tx('Em 12 meses: {0} em proventos e juros, cerca de {1} por mês.', fmtValor(doze), fmtValor(renda.mediaMensal)),
       dado: { forma: 'numero', valor: doze, formato: 'dinheiro', legenda: tx('recebidos em 12 meses'), historia: meses.slice(-8).map((m) => ({ rotulo: mesCurto(m.mes), valor: m.valor })) },
       porQue: porQue({
@@ -563,7 +563,7 @@ export function descobertas(e: EntradaDoAnalista): Achado[] {
     const maiorParte = [...partes].sort((a, b) => b.valor - a.valor)[0]
     lista.push({
       ...base('carteira', 'inv-resultado', 38),
-      titulo: tx('De onde vem o seu ganho'),
+      titulo: tx('De onde vem o ganho'),
       frase: tx('Do resultado de {0}, a maior parte vem de: {1}.', fmtValor(c.resultado), maiorParte.rotulo.toLowerCase()),
       dado: { forma: 'partes', centro: { valor: fmtValor(c.resultado), rotulo: tx('resultado') }, partes },
       porQue: porQue({

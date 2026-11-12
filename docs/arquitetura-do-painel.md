@@ -936,3 +936,94 @@ convite para mudar o jeito de ver.
 
 A vitrine tomou o lugar dos indicadores e do quadro do topo descritos em 4.11 (Cartões), 4.13 (Dívidas), 4.14 (Metas),
 4.15 (Dinheiro guardado), 4.16 (Lançamentos) e 4.17 (Contas do mês); o resto de cada tela segue como lá.
+
+### 4.22 Invest (a área de investimentos)
+
+A aba **Invest** (`pages/Invest.tsx`, telas em `pages/invest/`, estilos em `pages/invest.css`) aparece no menu logo depois do
+Consultor, só com o módulo **Investimentos** ligado. Precisa da **migração 27** (`supabase/migracao-27-invest.sql`); sem ela a
+aba avisa e o resto do app segue igual.
+
+**A regra que organiza tudo: as operações são a fonte dos saldos.** Nada de quantidade, custo ou resultado fica gravado: tudo
+é refeito das operações, toda vez que uma muda.
+
+| Tabela | O que guarda |
+| --- | --- |
+| `invest_ativos` | Cada investimento: classe (renda fixa, ação, FII, ETF, fundo, exterior, previdência, cripto, outro), se é acompanhado **por valor** (CDB, Tesouro) ou por **quantidade × preço** (ações), instituição, moeda, emissor, setor e, na renda fixa, indexador, taxa, vencimento e liquidez |
+| `invest_operacoes` | Compra/aplicação, venda/resgate, provento, juros, amortização, taxa, imposto, desdobramento, grupamento, bonificação, transferência, vencimento e ajuste, com data, quantidade, preço, valor, taxas, imposto retido, cotação do dia, a conta de onde o dinheiro saiu, a origem (digitada, importada, posição inicial) e a `chave` contra repetição |
+| `invest_precos` | O que cada ativo valia num dia, dito por alguém: preço da cota ou saldo da aplicação, com fonte e data de referência |
+| `invest_importacoes` | Cada arquivo importado, com a impressão digital e as linhas que ficaram **pendentes** |
+| `invest_config` | Uma linha por pessoa: o plano e o gosto da tela |
+
+Todas com a política "dono" (só a própria pessoa, e só com acesso). Operação e preço só podem apontar para um ativo da
+mesma pessoa (chave estrangeira composta com `user_id`).
+
+**O motor** (`lib/invest/`, puro como o do Consultor: sem React, sem banco, a data entra por `hoje`):
+
+- `carteira.ts`: reproduz as operações de cada ativo em ordem. **Custo médio**; venda parcial baixa o custo na proporção; a
+  diferença para o que entrou no bolso é o **realizado**. Valor de hoje: ações e cotas = quantidade × último preço conhecido
+  (informado, importado ou o da última compra/venda); títulos por valor = último saldo informado mais o que entrou e saiu
+  depois, com o rendimento **estimado** pela taxa quando há taxa e índice. Cada valor carrega a natureza (`cotado`,
+  `informado`, `estimado`, `custo`), a fonte, a data e a situação (`em-dia`, `antigo`, `sem-preco`). **O app nunca inventa
+  preço**: sem informação nova, mostra a última e diz de quando é.
+- **Aporte não é rentabilidade.** `linhaDoTempo` mede a rentabilidade ponderada pelo tempo: a cada dia com entrada ou saída
+  de dinheiro, `r = (valor − aporte do dia + renda do dia) / valor anterior − 1`, e os períodos se encadeiam. Quem tinha
+  10 mil e aplicou mais 5 mil tem rentabilidade zero. `taxaInterna` dá a taxa ponderada pelo dinheiro.
+- **Moedas**: cada ativo fica na moeda dele; o custo na moeda principal usa a cotação de cada operação e o valor usa a de
+  hoje. O que vem só do câmbio aparece separado (`cambialP`). A linha do tempo usa a cotação de hoje do começo ao fim, para
+  mostrar o ativo e não o câmbio.
+- `indices.ts`: CDI, Selic e IPCA das séries abertas do Banco Central (12, 11 e 433), guardadas no navegador por 12 h. Só a
+  data inicial vai na consulta. Servem para estimar renda fixa e comparar com o CDI. Sem a série, nada é estimado.
+- `plano.ts`: valor futuro, meses até a meta, aporte necessário, três cenários e a renda dos investimentos. Tudo com a
+  hipótese à vista: são contas, não previsões.
+- `importar.ts`: lê Movimentação, Negociação e Posição da B3, tabelas comuns com cabeçalho e, em PDF, só a linha completa
+  (data, operação, código e valores). O que não entende vira **pendente** com o texto original e o motivo; nada some. Cada
+  operação lida ganha uma `chave` pelo conteúdo: o mesmo arquivo de novo dá as mesmas chaves e o banco recusa (índice
+  único). `conciliar` acha o ativo de cada linha, marca o repetido e o parecido e avisa de venda sem posição. O conteúdo do
+  arquivo é só dado: textos cortados no tamanho do campo, sem caractere de controle, nada é executado.
+- `descobertas.ts`: o analista. Devolve `Achado`s (o mesmo formato do Consultor), cada um com o `porQue`: explicação, os
+  números que sustentam, período, confiança, fonte e a ação possível. Só sai o que os números sustentam; nada de recomendar
+  compra ou venda; o app não deduz o risco que a pessoa aceita (só compara com o limite que ela informou no plano).
+- `saldos.ts`: a ponte com o resto do app (abaixo).
+
+**O mesmo dinheiro não conta duas vezes** (`lib/invest/saldos.ts`):
+
+1. O número que a pessoa digitava em Dinheiro guardado (`meses.investimentos`) **não é apagado nem vira ativo inventado**:
+   vale como histórico até o mês anterior ao da primeira operação. Dali em diante, `mesesComCarteira` põe no lugar o valor
+   da carteira no fim de cada mês (ou soma os dois, se a pessoa disser no plano que o número antigo é de outros
+   investimentos). Nada é gravado em `meses`: é só o que o Painel, o Consultor e o Dinheiro guardado leem. O campo
+   `investimentosDaCarteira` marca esses meses (zero é zero, não herda o mês anterior), e a tela Dinheiro guardado mostra o
+   valor sem campo de digitar.
+2. Uma operação pode dizer de que conta o dinheiro saiu. Com "tirar do saldo dessa conta" ligado, o saldo do banco anda no
+   sentido contrário (`efeitosDaOperacao`, pela mesma fila de `ajustarMeses`): aplicar R$ 1.000 tira 1.000 da conta e põe
+   1.000 na carteira. Editar ou apagar desfaz certinho. Importação nunca mexe em saldo.
+3. Provento pode (se a pessoa quiser) virar também uma entrada do mês, ligada à operação.
+
+**As quatro abas** (iguais nos três jeitos de ver, mudando o quanto mostram):
+
+| Aba | O que tem |
+| --- | --- |
+| Visão geral | Investido hoje, rentabilidade do período (6 meses, 12 meses, tudo) com o CDI ao lado, aportado × resultado, o gráfico **Vale × Você aportou**, a divisão por tipo, a descoberta em destaque, o que vem pela frente (vencimentos e proventos anunciados), proventos recebidos, a meta e onde está |
+| Carteira | Busca, filtro por tipo, ordenação, cada ativo com valor, fatia, resultado e o selo da idade do valor; o **detalhe do ativo** ("Como chegamos a esses números", características, evolução, operações e valores informados); todas as movimentações, de 30 em 30 |
+| Análises | A manchete, **O retrato da carteira** (maior ativo, renda variável, resgate a qualquer hora, valores em dia) e os cartões montados pelo compositor do Consultor, com "Por que estou vendo isso?" em cada um |
+| Planejamento | O plano, o aporte do mês contra o planejado e a sobra do orçamento, 12 meses de aportes, a projeção em três cenários com as hipóteses escritas, a simulação "e se eu aportar outro valor", a renda dos investimentos e os objetivos (as metas do OpusCash, por prazo) |
+
+De propósito **não há nota da carteira**: uma nota diria se a carteira é boa, e isso depende do objetivo e do risco de cada
+pessoa. No lugar, medidas que qualquer um confere.
+
+**A tela adaptativa é a do Consultor.** `pages/AnaliseTela.tsx` ganhou `useTelaVivaDe` (a mesma tela viva para qualquer
+lista de descobertas), e o Invest a usa com os assuntos dele (Carteira, Concentração, Renda, Prazos, Plano, Seus dados) e um
+**gosto próprio** (`invest_config.gosto` e `opuscash-invest-gosto-<id>` no aparelho). Valem as mesmas três regras: só
+componentes prontos e conferidos, nada muda sem motivo (margem de 8 pontos, novidade só com 10% de mudança) e o importante
+não some (`essencial`: título vencido, vencimento em até 7 dias). A mais: descoberta vista em vários dias sem mudar perde até
+15 pontos (`pages/invest/analista.ts`), o foco declarado no plano sobe o assunto dele, e "Voltar os cartões para a
+organização de antes" restaura a ordem anterior.
+
+**Estados**: sem a migração; carregando; sem nenhum investimento (o próximo passo, não zeros); moeda sem cotação (fica fora
+dos totais, com aviso); valores antigos (selo em cada ativo e chip no topo); linhas pendentes de importação (faixa com
+"Revisar"); título vencido; índices fora do ar.
+
+**Testes**: `node scripts/invest/testar.mjs` (os cenários financeiros, feitos à mão) e `scripts/invest/isolamento.sh` (roda a
+migração num Postgres local e confere que uma pessoa não lê nem grava nada de outra).
+
+**O que ainda não tem**: cotação automática de ações (os preços são informados ou importados), imposto de renda calculado
+(só o que a pessoa informa como retido), e leitura completa de notas de corretagem em PDF.

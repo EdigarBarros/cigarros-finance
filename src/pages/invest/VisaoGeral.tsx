@@ -18,7 +18,8 @@ import { BarraDividida, Rosquinha } from '../../components/Vitrine'
 import { COR_DO_TOM } from '../analiseApoio'
 import type { Ctx } from '../contexto'
 import { amostrar, inicioDoPeriodo, useDescobertas, type Periodo } from './analista'
-import { fmtVariacao, GraficoDeLinhas, Quadro, tomDoNumero, type AcoesInvest } from './apoio'
+import { GraficoDeLinhas, Quadro, type AcoesInvest } from './apoio'
+import { fmtVariacao, tomDoNumero } from './formatos'
 
 export function VisaoGeral({ c, acoes }: { c: Ctx; acoes: AcoesInvest }) {
   const inv = c.invest

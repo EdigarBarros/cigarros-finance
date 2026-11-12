@@ -24,7 +24,7 @@ import { Icone } from '../../components/Icone'
 import { Interruptor, Modal, Palco } from '../../components/ui'
 import { COR_DO_TOM } from '../analiseApoio'
 import type { Ctx } from '../contexto'
-import { fmtQtd, fonteDoValor } from './apoio'
+import { fmtQtd, fonteDoValor } from './formatos'
 
 const texto = (s: string, max: number) => s.replace(/\s+/g, ' ').trim().slice(0, max) || null
 /** Quantidade e preço aceitam até 8 casas ("0,00012345"); dinheiro continua com 2. */
