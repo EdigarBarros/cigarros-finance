@@ -309,8 +309,8 @@ export function useDados(userId: string, ano: number) {
     let vivo = true
     const ler = (colunas: string) => lerTudo(() => supabase.from('lancamentos').select(colunas).gte('ano', anoDaPartida).lt('ano', ano).order('id'))
     void (async () => {
-      let r = await ler('id, ano, mes, tipo, valor, cartao_id, guardado_banco_id')
-      if (r.error && faltaColuna(r.error)) r = await ler('id, ano, mes, tipo, valor, cartao_id')
+      let r = await ler(tx('id, ano, mes, tipo, valor, cartao_id, guardado_banco_id'))
+      if (r.error && faltaColuna(r.error)) r = await ler(tx('id, ano, mes, tipo, valor, cartao_id'))
       if (!vivo) return
       setLancsAntesDoAno(r.error ? [] : (r.data as unknown as LancParaSaldo[]).map((l) => ({ ...l, valor: num(l.valor), guardado_banco_id: l.guardado_banco_id ?? null })))
     })()

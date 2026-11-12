@@ -27,7 +27,8 @@ language sql stable security definer set search_path = public as $$
   select exists (
     select 1 from public.assinaturas a
     where a.user_id = auth.uid()
-      and (a.status in ('trialing', 'active', 'past_due', 'cortesia') or (a.status = 'teste' and a.teste_fim > now()))
+      and (a.status in ('trialing', 'active', 'past_due', 'cortesia') or (a.status = 'teste' and a.teste_fim > now())
+        or (a.status = 'pix' and a.periodo_fim > now()))
   );
 $$;
 revoke all on function public.tem_acesso() from public, anon;

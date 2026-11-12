@@ -128,7 +128,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
       const msg = e instanceof Error ? e.message : String(e)
       // fica registrado para entender o que falhou: só o tipo e o tamanho do arquivo, nunca o conteúdo do extrato
       // (o PDF que não abre já foi registrado com o erro do leitor, em lib/extrato.ts)
-      if (!msg.startsWith('Não consegui abrir esse PDF')) registrarErro(e, `importar extrato .${(f.name.split('.').pop() ?? '').toLowerCase().slice(0, 8)} (${f.size} bytes)`)
+      if (!msg.startsWith(tx('Não consegui abrir esse PDF'))) registrarErro(e, tx('importar extrato .{0} ({1} bytes)', (f.name.split('.').pop() ?? '').toLowerCase().slice(0, 8), f.size))
       setErro(msg)
       setEtapa('escolher')
     } finally {

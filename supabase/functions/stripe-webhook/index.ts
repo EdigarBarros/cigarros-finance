@@ -60,7 +60,11 @@ async function liberarPix(sessaoId: unknown): Promise<Response> {
   const s = await rs.json()
   if (s.mode !== 'payment' || s.metadata?.tipo !== PIX_TIPO) return new Response('ignorado') // não é um Pix nosso
   if (s.payment_status !== 'paid') return new Response('ainda não pago') // o aviso async_payment_succeeded chega quando pagar
-  if (s.currency !== PIX_MOEDA || s.amount_total !== PIX_VALOR) return new Response('valor inesperado')
+  if (s.currency !== PIX_MOEDA || s.amount_total !== PIX_VALOR) {
+    // dinheiro recebido que não bate com o preço esperado (preço mudado só em stripe-checkout?): não libera, mas deixa rastro
+    console.error(`Pix ${s.id}: valor inesperado (${s.amount_total} ${s.currency}); acesso NÃO liberado`)
+    return new Response('valor inesperado')
+  }
   const userId: string | undefined = s.metadata?.supabase_user_id
   if (!userId) return new Response('sem usuário')
 
@@ -72,7 +76,13 @@ async function liberarPix(sessaoId: unknown): Promise<Response> {
   // 23503: a conta já foi excluída. Não há a quem liberar; 200 para o Stripe parar de reenviar.
   if (error?.code === '23503') return new Response('conta excluída')
   if (error) return new Response(error.message, { status: 500 })
-  return new Response(data ? 'ok' : 'já registrado')
+  if (data?.repetido) return new Response('já registrado')
+  if (data?.creditado === false) {
+    // a pessoa pagou o Pix já tendo acesso (cortesia ou assinatura ativa): fica em pagamentos_pix com creditado = false para reembolso
+    console.error(`Pix ${s.id}: pago por quem já tinha acesso; sem crédito (pagamentos_pix.creditado = false)`)
+    return new Response('pago sem crédito')
+  }
+  return new Response('ok')
 }
 
 Deno.serve(async (req) => {

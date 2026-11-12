@@ -3120,8 +3120,7 @@ button.ex-tipo:hover { transform: scale(1.1); }
 @keyframes pl-brilha { 0% { transform: translateX(-120%); } 45%, 100% { transform: translateX(120%); } }
 .pl-botao:disabled::after { display: none; }
 .pl-botao svg { transition: transform .25s var(--mola); }
-.pl-botao-pix { height: 48px; margin-top: 10px; font-size: 15px; background: transparent; border: 1px solid var(--borda-forte); color: var(--texto); }
-.pl-botao-pix::after { display: none; }
+
 .pl-botao:hover:not(:disabled) svg { transform: translateX(4px); }
 .pl-carregando { display: flex; gap: 8px; }
 .pl-carregando i { width: 12px; height: 12px; border-radius: 50%; background: var(--destaque); animation: pl-pulo 1s ease-in-out infinite; }
@@ -3141,6 +3140,59 @@ button.ex-tipo:hover { transform: scale(1.1); }
 @media (prefers-reduced-motion: reduce) {
   .pl *, .pl *::before, .pl *::after { animation: none !important; }
 }
+
+/* tela de assinatura com duas formas de pagar lado a lado: cartão (renova sozinho) x Pix de 30 dias (paga de novo à mão).
+   Uma faixa diagonal em gradiente divide as metades, como a lâmina do login; a metade em que o mouse está cresce um pouco. */
+.pl.escolha { grid-template-columns: minmax(0, .9fr) minmax(0, 1.4fr); }
+.pl.escolha .pl-planos-miolo { width: min(780px, 100%); }
+.pl-duas { position: relative; width: 100%; display: grid; grid-template-columns: 1fr 1fr; text-align: left; overflow: hidden; border-radius: 28px;
+  background: var(--superficie); border: 1px solid var(--borda-forte); box-shadow: var(--sombra-alta); transition: grid-template-columns .55s var(--mola); }
+.pl-opcao { position: relative; display: flex; flex-direction: column; gap: 14px; min-width: 0; padding: 32px 26px 26px; }
+.pl-opcao h2 { margin: 0; font-family: var(--fonte-titulo); font-size: 21px; font-weight: 600; letter-spacing: -.02em; }
+.pl-opcao.cartao { grid-column: 1; grid-row: 1; z-index: 1; padding-right: 46px;
+  background: radial-gradient(90% 60% at 0% 0%, color-mix(in srgb, var(--marca-1) 16%, transparent), transparent 70%), var(--superficie); }
+.pl-opcao.pix { grid-column: 2; grid-row: 1; z-index: 2; margin-left: -28px; padding-left: 54px; clip-path: polygon(28px 0, 100% 0, 100% 100%, 0 100%);
+  background: radial-gradient(90% 60% at 100% 0%, color-mix(in srgb, var(--marca-3) 20%, transparent), transparent 70%), var(--superficie); }
+/* o fio diagonal em gradiente (a mesma cor do fio do login) */
+.pl-opcao.pix::before { content: ''; position: absolute; inset: 0; pointer-events: none; clip-path: polygon(28px 0, 33px 0, 5px 100%, 0 100%);
+  background: linear-gradient(180deg, var(--marca-3), var(--marca-2) 50%, var(--marca-1)); }
+/* o "ou" fica no meio do fio: é filho da coluna 1, então acompanha quando as metades mudam de tamanho */
+.pl-ou { grid-column: 1; grid-row: 1; z-index: 3; align-self: center; justify-self: end; transform: translateX(5px); display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%;
+  background: var(--superficie); border: 2px solid var(--marca-2); color: var(--texto-2); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .02em; box-shadow: 0 6px 18px -6px rgba(31, 142, 241, .45); }
+.pl-opcao-selo { align-self: flex-start; display: inline-flex; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; color: #fff; background: var(--gradiente); }
+.pl-opcao.cartao h2 { margin-top: -4px; }
+.pl-preco { display: flex; align-items: baseline; gap: 6px; }
+.pl-preco strong { font-family: var(--fonte-titulo); font-size: 38px; font-weight: 700; letter-spacing: -.04em; line-height: 1; }
+.pl-preco span { color: var(--texto-2); font-size: 14px; }
+.pl-tag { display: inline-flex; align-items: center; gap: 7px; width: fit-content; margin: 0; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+.pl-opcao.cartao .pl-tag { color: var(--marca-2); background: color-mix(in srgb, var(--marca-2) 14%, transparent); }
+.pl-opcao.pix .pl-tag { color: var(--entrada); background: color-mix(in srgb, var(--entrada) 14%, transparent); }
+.pl-opcao .pl-pontos { flex: 1; }
+.pl-opcao .pl-pontos li.aviso { padding: 8px 10px; border-radius: 12px; font-weight: 600; background: color-mix(in srgb, #f5a524 15%, transparent); }
+.pl-opcao .pl-pontos li.aviso svg { color: #f5a524; }
+.pl-opcao .pl-botao { margin-top: 4px; }
+.pl-botao-pix { color: #fff; border: 0; background: linear-gradient(90deg, #0f9d76, #14c9a0); box-shadow: 0 10px 26px -10px rgba(20, 201, 160, .7); }
+.pl-botao-pix::after { display: none; }
+.pl-botao-pix:hover:not(:disabled) { filter: brightness(1.06); }
+@media (hover: hover) and (min-width: 641px) {
+  .pl-duas:has(.cartao:hover), .pl-duas:has(.cartao:focus-within) { grid-template-columns: 1.12fr .88fr; }
+  .pl-duas:has(.pix:hover), .pl-duas:has(.pix:focus-within) { grid-template-columns: .88fr 1.12fr; }
+}
+@media (max-width: 1100px) {
+  .pl.escolha { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+  .pl.escolha .pl-lado { padding: 28px 20px 32px; }
+  .pl.escolha .pl-planos { align-items: start; padding: 28px 16px 36px; }
+  .pl.escolha .pl-planos-miolo { animation-name: pl-vem-baixo; }
+}
+/* celular: as metades empilham e o fio fica na horizontal, inclinado */
+@media (max-width: 640px) {
+  .pl-duas { grid-template-columns: 1fr; }
+  .pl-opcao.cartao { padding: 32px 22px 44px; }
+  .pl-opcao.pix { grid-column: 1; grid-row: 2; margin: -20px 0 0; padding: 40px 22px 24px; clip-path: polygon(0 20px, 100% 0, 100% 100%, 0 100%); }
+  .pl-opcao.pix::before { clip-path: polygon(0 20px, 100% 0, 100% 5px, 0 25px); }
+  .pl-ou { grid-column: 1; grid-row: 2; align-self: start; justify-self: center; transform: translateY(-50%); margin-top: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .pl-duas { transition: none; } }
 
 /* cortina e saída da tela de planos: ao criar a conta, a marca fica parada (Carregando) e a cortina sobe revelando os planos */
 .splash, .pl::before { background: linear-gradient(155deg, #0b1330 0%, #0a1d3d 55%, #07262f 100%); }

@@ -73,6 +73,9 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
     (status `pix`, vale até `periodo_fim`; não renova sozinho, e pagar antes de vencer soma 30 dias ao que sobrou). O `stripe-webhook` ouve
     `checkout.session.completed` e `.async_payment_succeeded`, confere a sessão no Stripe e chama a função `registrar_pix` do banco, que registra o
     pagamento (`pagamentos_pix`, chave = id da sessão: aviso repetido não soma de novo) e libera o acesso na mesma transação.
+    Quem paga o Pix durante o teste grátis não perde o que sobrou do teste (os 30 dias começam depois). Pix pago por quem já tinha cortesia ou
+    assinatura ativa (uma corrida rara) fica registrado sem crédito: `select * from pagamentos_pix where not creditado;` mostra os que precisam de reembolso.
+    Reembolso ou estorno de um Pix **não** tira o acesso sozinho: ajuste `assinaturas.periodo_fim` à mão.
 - **Forma de pagamento**: todo lançamento tem "Como pagou?" (Pix, débito, crédito, dinheiro, boleto) ou "Como recebeu?" (Pix,
   transferência, dinheiro). O app lembra a forma que você usou para cada descrição e reconhece "Pix" escrito no texto (e
   no extrato importado). **Crédito** leva ao cartão e às parcelas e a compra entra na fatura e no limite da aba Cartões;

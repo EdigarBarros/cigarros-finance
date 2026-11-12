@@ -954,7 +954,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         {/* o Pix de 30 dias não renova sozinho: avisa nos últimos dias */}
         {emPix(assinatura ?? null) && diasDePix(assinatura ?? null) <= 5 && !noAppAndroid && (
           <div className="alerta" role="status">
-            <span>{diasDePix(assinatura ?? null) === 1 ? tx('Seu acesso por Pix termina amanhã. Renove para não perder o acesso.') : tx('Seu acesso por Pix termina em {0} dias. Renove para não perder o acesso.', diasDePix(assinatura ?? null))}</span>
+            <span>{diasDePix(assinatura ?? null) === 1 ? tx('Seu acesso por Pix termina em menos de 1 dia. Renove para não perder o acesso.') : tx('Seu acesso por Pix termina em {0} dias. Renove para não perder o acesso.', diasDePix(assinatura ?? null))}</span>
             <button className="link" onClick={() => void irParaStripe('stripe-checkout', 'BRL', 'pix').then((m) => m && avisar(m))}>{tx('Renovar com Pix')}</button>
           </div>
         )}

@@ -12631,10 +12631,6 @@
     "en": "Your 30-day Pix period has ended. Pay again to get back to your dashboard.",
     "es": "Tu período de 30 días con Pix terminó. Paga de nuevo para volver al panel."
   },
-  "Seu acesso por Pix termina amanhã. Renove para não perder o acesso.": {
-    "en": "Your Pix access ends tomorrow. Renew so you don't lose access.",
-    "es": "Tu acceso por Pix termina mañana. Renueva para no perder el acceso."
-  },
   "Seu acesso por Pix termina em {0} dias. Renove para não perder o acesso.": {
     "en": "Your Pix access ends in {0} days. Renew so you don't lose access.",
     "es": "Tu acceso por Pix termina en {0} días. Renueva para no perder el acceso."
@@ -12647,8 +12643,76 @@
     "en": "Opening Pix…",
     "es": "Abriendo Pix…"
   },
-  "Ou pague 30 dias com Pix (R$ 9,99)": {
-    "en": "Or pay 30 days with Pix (R$ 9.99)",
-    "es": "O paga 30 días con Pix (R$ 9,99)"
+  "Seu acesso por Pix termina em menos de 1 dia. Renove para não perder o acesso.": {
+    "en": "Your Pix access ends in less than 1 day. Renew so you don't lose access.",
+    "es": "Tu acceso por Pix termina en menos de 1 día. Renueva para no perder el acceso."
+  },
+  "Escolha como prefere pagar. Seus dados continuam guardados.": {
+    "en": "Choose how you prefer to pay. Your data stays safe.",
+    "es": "Elige cómo prefieres pagar. Tus datos siguen guardados."
+  },
+  "Formas de pagar": {
+    "en": "Ways to pay",
+    "es": "Formas de pagar"
+  },
+  "Mais prático": {
+    "en": "Most convenient",
+    "es": "Más práctico"
+  },
+  "Assinatura no cartão": {
+    "en": "Card subscription",
+    "es": "Suscripción con tarjeta"
+  },
+  "por 30 dias": {
+    "en": "for 30 days",
+    "es": "por 30 días"
+  },
+  "Renova sozinha todo mês": {
+    "en": "Renews by itself every month",
+    "es": "Se renueva sola cada mes"
+  },
+  "O cartão é cobrado todo mês, automaticamente": {
+    "en": "Your card is charged every month, automatically",
+    "es": "Se cobra tu tarjeta cada mes, automáticamente"
+  },
+  "Você não precisa lembrar de nada": {
+    "en": "You don't have to remember anything",
+    "es": "No necesitas acordarte de nada"
+  },
+  "Cancele quando quiser, sem multa": {
+    "en": "Cancel anytime, no penalty",
+    "es": "Cancela cuando quieras, sin multa"
+  },
+  "ou": {
+    "en": "or",
+    "es": "o"
+  },
+  "Pix de 30 dias": {
+    "en": "30-day Pix",
+    "es": "Pix de 30 días"
+  },
+  "Pagamento único, sem cartão": {
+    "en": "One-time payment, no card",
+    "es": "Pago único, sin tarjeta"
+  },
+  "Você paga uma vez e usa por 30 dias": {
+    "en": "You pay once and use it for 30 days",
+    "es": "Pagas una vez y lo usas por 30 días"
+  },
+  "Não renova sozinho: quando acabar, você paga o Pix de novo": {
+    "en": "It doesn't renew by itself: when it ends, you pay the Pix again",
+    "es": "No se renueva solo: cuando termine, pagas el Pix de nuevo"
+  },
+  "Avisamos nos últimos 5 dias para você renovar": {
+    "en": "We remind you in the last 5 days so you can renew",
+    "es": "Te avisamos en los últimos 5 días para que renueves"
+  },
+  "Pagar R$ 9,99 com Pix": {
+    "en": "Pay R$ 9.99 with Pix",
+    "es": "Pagar R$ 9,99 con Pix"
+  },
+  "O pagamento é feito na página segura do Stripe. No cartão, você cancela quando quiser, sem multa.": {
+    "en": "Payment is made on Stripe's secure page. With the card, you can cancel anytime, no penalty.",
+    "es": "El pago se hace en la página segura de Stripe. Con tarjeta, cancelas cuando quieras, sin multa."
   }
 }
