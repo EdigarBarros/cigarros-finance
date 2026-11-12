@@ -16,7 +16,7 @@
  *     texto original e o motivo, e fica guardada até a pessoa resolver.
  *  2. **Repetido não entra duas vezes.** Cada operação lida ganha uma `chave` que depende só do conteúdo dela (dia, tipo,
  *     ativo, quantidade, valor e a ordem entre as idênticas do arquivo). O mesmo arquivo importado de novo dá as mesmas
- *     chaves, e o banco recusa a repetida (índice único da migração 27).
+ *     chaves, e o banco recusa a repetida (índice único da migração 28).
  *  3. **O arquivo é dado, não instrução.** Só viram texto os nomes de ativo e instituição, cortados no tamanho do campo e
  *     sem caracteres de controle; nada do arquivo é executado nem interpretado como comando.
  *

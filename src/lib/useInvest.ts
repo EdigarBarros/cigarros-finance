@@ -18,7 +18,7 @@ const normOp = (r: Operacao): Operacao => ({
 const normPreco = (r: PrecoInvest): PrecoInvest => ({ ...r, valor: num(r.valor) })
 const normImportacao = (r: Importacao): Importacao => ({ ...r, pendentes: Array.isArray(r.pendentes) ? r.pendentes : [] })
 
-/** Tabela ainda não criada (migração 27 pendente). */
+/** Tabela ainda não criada (migração 28 pendente). */
 const faltaTabela = (e: { code?: string; message: string }) =>
   e.code === '42P01' || e.code === 'PGRST205' || /does not exist|schema cache/i.test(e.message)
 
@@ -45,7 +45,7 @@ const gostoLocal = (userId: string): Gosto => {
 }
 
 /**
- * Os dados do Invest (tabelas da migração 27): ativos, operações, preços, importações e a configuração da pessoa (o plano e
+ * Os dados do Invest (tabelas da migração 28): ativos, operações, preços, importações e a configuração da pessoa (o plano e
  * o que a tela aprendeu). Só carrega com o módulo de investimentos ligado. Toda gravação que falha mostra o erro e
  * recarrega do banco, para a tela nunca mostrar um saldo que não foi salvo.
  */

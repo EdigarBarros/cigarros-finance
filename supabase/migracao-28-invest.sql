@@ -1,4 +1,4 @@
--- Migração 27: OpusCash Invest (a carteira de investimentos: ativos, operações, preços, importações e o plano).
+-- Migração 28: OpusCash Invest (a carteira de investimentos: ativos, operações, preços, importações e o plano).
 -- Supabase > SQL Editor > New query > colar > Run. Só acrescenta e pode ser rodada de novo sem problema.
 --
 -- Até aqui o app guardava só um número por mês (meses.investimentos). Ele continua lá, intocado: é o histórico "não

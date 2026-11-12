@@ -981,7 +981,7 @@ A vitrine tomou o lugar dos indicadores e do quadro do topo descritos em 4.11 (C
 ### 4.22 Invest (a área de investimentos)
 
 A aba **Invest** (`pages/Invest.tsx`, telas em `pages/invest/`, estilos em `pages/invest.css`) aparece no menu logo depois do
-Consultor, só com o módulo **Investimentos** ligado. Precisa da **migração 27** (`supabase/migracao-27-invest.sql`); sem ela a
+Consultor, só com o módulo **Investimentos** ligado. Precisa da **migração 28** (`supabase/migracao-28-invest.sql`); sem ela a
 aba avisa e o resto do app segue igual.
 
 **A regra que organiza tudo: as operações são a fonte dos saldos.** Nada de quantidade, custo ou resultado fica gravado: tudo

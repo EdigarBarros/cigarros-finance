@@ -1,4 +1,4 @@
--- Teste de isolamento do Invest (cenário 8): roda a migração 27 num Postgres de teste com o mesmo esquema de acesso do
+-- Teste de isolamento do Invest (cenário 8): roda a migração 28 num Postgres de teste com o mesmo esquema de acesso do
 -- Supabase (auth.uid(), papel authenticated, tem_acesso()) e confere que uma pessoa não lê, não grava e não apaga nada
 -- da carteira de outra, e que quem não tem acesso (assinatura vencida) não lê nem a própria.
 -- Rodar: scripts/invest/isolamento.sh (precisa de um Postgres local; nada aqui toca o banco de verdade).
@@ -19,9 +19,9 @@ create function public.tem_acesso() returns boolean language sql stable security
   select exists (select 1 from public.assinaturas a where a.user_id = auth.uid()
     and (a.status in ('trialing', 'active', 'past_due', 'cortesia') or (a.status = 'teste' and a.teste_fim > now())));
 $$;
-\i supabase/migracao-27-invest.sql
+\i supabase/migracao-28-invest.sql
 -- rodar de novo não pode dar erro (a migração é feita para isso)
-\i supabase/migracao-27-invest.sql
+\i supabase/migracao-28-invest.sql
 
 insert into auth.users values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'), ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'), ('cccccccc-cccc-4ccc-8ccc-cccccccccccc');
 insert into public.assinaturas values ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'active', null), ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'cortesia', null),
