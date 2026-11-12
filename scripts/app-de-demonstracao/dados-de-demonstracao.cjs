@@ -115,5 +115,41 @@ cartoes.forEach((c)=>{
     if(valor>0) faturas_pagas.push({id:id('q',faturas_pagas.length+1),user_id:U,cartao_id:c.id,ano:ANO,mes:m,valor,pago_em:venc,banco_id:c.banco_id,tipo:'paga',juros:0})
   }
 })
+// carteira do Invest (migração 27): seis investimentos, com aportes, proventos, uma venda parcial e preços recentes
+const hojeDemo=new Date(), isoDemo=(d)=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+const diasAtras=(n)=>{const d=new Date(hojeDemo);d.setDate(d.getDate()-n);return isoDemo(d)}
+const A=(n,x)=>({id:id('a',n),user_id:U,codigo:null,subclasse:null,por_valor:false,instituicao:null,banco_id:null,moeda:null,emissor:null,setor:null,indexador:null,taxa:null,vencimento:null,liquidez:null,liquidez_dias:null,obs:null,created_at:'2026-01-01T00:00:00Z',...x})
+const invest_ativos=[
+ A(1,{nome:'CDB Itaú 2029',classe:'renda_fixa',subclasse:'cdb',por_valor:true,instituicao:'Itaú',emissor:'Itaú',indexador:'pre',taxa:12.5,vencimento:'2029-03-15',liquidez:'vencimento'}),
+ A(2,{nome:'Tesouro Selic 2029',classe:'renda_fixa',subclasse:'tesouro_selic',por_valor:true,instituicao:'XP Investimentos',liquidez:'diaria',vencimento:'2029-03-01'}),
+ A(3,{nome:'Petrobras',codigo:'PETR4',classe:'acao',instituicao:'XP Investimentos',setor:'Petróleo e gás'}),
+ A(4,{nome:'Itaúsa',codigo:'ITSA4',classe:'acao',instituicao:'XP Investimentos',setor:'Bancos'}),
+ A(5,{nome:'Maxi Renda',codigo:'MXRF11',classe:'fii',instituicao:'NuInvest',setor:'Recebíveis'}),
+ A(6,{nome:'iShares S&P 500',codigo:'IVVB11',classe:'etf',instituicao:'NuInvest'}),
+ A(7,{nome:'LCI Banco Inter',classe:'renda_fixa',subclasse:'lci',por_valor:true,instituicao:'Inter',emissor:'Inter',vencimento:diasAtras(-40),liquidez:'vencimento'})]
+let oseq=0
+const O=(a,tipo,data,x)=>({id:id('o',++oseq),user_id:U,ativo_id:id('a',a),tipo,subtipo:null,data,quantidade:null,preco:null,valor:0,custos:0,impostos:0,fator:null,moeda:null,cotacao:null,banco_id:null,mexe_saldo:false,lancamento_id:null,origem:'manual',importacao_id:null,chave:null,obs:null,created_at:`${data}T12:00:${pad(oseq%60)}Z`,atualizado_em:null,...x})
+const CP=(a,data,q,pr,x={})=>O(a,'compra',data,{quantidade:q,preco:pr,valor:Math.round(q*pr*100)/100,...x})
+const invest_operacoes=[
+ O(1,'compra','2026-01-12',{valor:10000}),O(1,'compra','2026-05-11',{valor:4000}),
+ O(2,'compra','2026-02-03',{valor:8000}),O(2,'compra','2026-07-06',{valor:3000}),O(2,'venda','2026-09-14',{valor:1200,impostos:18}),
+ CP(3,'2026-01-20',100,36.2,{custos:4.9}),CP(3,'2026-06-18',50,37.8,{custos:4.9}),O(3,'venda','2026-08-21',{quantidade:30,preco:40.1,valor:1203,custos:4.9}),
+ CP(4,'2026-03-10',300,9.7),CP(4,'2026-08-10',200,10.4),
+ CP(5,'2026-02-12',400,10.05),CP(5,'2026-06-12',280,9.9),
+ CP(6,'2026-04-15',12,318),CP(6,'2026-09-15',6,341),
+ O(7,'compra','2026-03-02',{valor:5000}),
+ ...[3,4,5,6,7,8,9,10].map((m)=>O(5,'provento',`2026-${pad(m)}-14`,{subtipo:'rendimento',valor:m<7?40:68})),
+ O(3,'provento','2026-05-20',{subtipo:'dividendo',valor:96}),O(3,'provento','2026-08-20',{subtipo:'jcp',valor:104,impostos:15.6}),
+ O(4,'provento','2026-07-01',{subtipo:'jcp',valor:42,impostos:6.3}),O(4,'provento','2026-10-01',{subtipo:'dividendo',valor:71}),
+ O(5,'provento',diasAtras(-4),{subtipo:'rendimento',valor:68,obs:'anunciado'})]
+let pseq=0
+const P=(a,data,valor,natureza='preco')=>({id:id('p',++pseq),user_id:U,ativo_id:id('a',a),data,natureza,valor,moeda:null,fonte:'manual',referencia:`${data}T18:00:00Z`,created_at:`${data}T18:00:00Z`})
+const invest_precos=[
+ P(3,'2026-03-31',38.1),P(3,'2026-06-30',37.2),P(3,'2026-09-30',40.6),P(3,diasAtras(1),41.35),
+ P(4,'2026-06-30',10.1),P(4,'2026-09-30',10.75),P(4,diasAtras(1),11.02),
+ P(5,'2026-06-30',9.95),P(5,diasAtras(1),10.12),
+ P(6,'2026-06-30',326),P(6,'2026-09-30',343),P(6,diasAtras(26),349.5),
+ P(2,'2026-06-30',8410,'saldo'),P(2,diasAtras(2),10980,'saldo')]
+const invest_config=[{user_id:U,plano:{foco:'crescer',maxRendaVariavel:null,metaPatrimonio:100000,metaPrazo:'2029-12',aporteMensal:1500,rendaAlvo:600,cenarios:{pessimista:6,base:9,otimista:12},legado:'substituir'},gosto:{},updated_at:'2026-01-01T00:00:00Z'}]
 module.exports={perfil:{nome:'Marina',moeda:'BRL',moedas:[],detalhe:'detalhado',modulos:{dividas:true,contas:true,cartoes:true,bancos:true,investimentos:true,moedas:false,metas:true},dispensadas:['tour','importar','investir','moedas','bancos','cartoes','dividas','metas','contas','parcelas'],onboarding_em:'2026-01-02T00:00:00Z'},
- dados:{categorias,bancos,cartoes,lancamentos:lanc,contas_fixas,dividas,divida_saldos,metas,meta_movimentos:mov,meses,faturas_pagas}}
+ dados:{categorias,bancos,cartoes,lancamentos:lanc,contas_fixas,dividas,divida_saldos,metas,meta_movimentos:mov,meses,faturas_pagas,invest_ativos,invest_operacoes,invest_precos,invest_importacoes:[],invest_config}}

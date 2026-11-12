@@ -51,29 +51,38 @@ export function aplicarEfeitos(caixa: Caixa, efeitos: EfeitoNoSaldo[], sinal: 1 
  * a data do lançamento para um mês que herda do mês antigo contaria o valor duas vezes). `mudados` são os meses a gravar.
  */
 export function ajustarMeses(meses: Mes[], antes?: Lancamento, depois?: Lancamento, hoje = new Date()): { meses: Mes[]; mudados: Mes[] } {
-  const porMes = new Map<string, { ano: number; mes: number; efeitos: EfeitoNoSaldo[] }>()
-  const somar = (l: Lancamento | undefined, sinal: 1 | -1) => {
-    if (!l || !mesJaChegou(l.ano, l.mes, hoje)) return
-    const efeitos = efeitosNoSaldo(l).map((e) => ({ ...e, delta: e.delta * sinal }))
-    if (!efeitos.length) return
-    const k = `${l.ano}-${l.mes}`
-    const g = porMes.get(k) ?? { ano: l.ano, mes: l.mes, efeitos: [] }
-    g.efeitos.push(...efeitos)
+  const datados = (l: Lancamento | undefined, sinal: 1 | -1): EfeitoDatado[] =>
+    l ? [{ ano: l.ano, mes: l.mes, efeitos: efeitosNoSaldo(l).map((e) => ({ ...e, delta: e.delta * sinal })) }] : []
+  return ajustarMesesComEfeitos(meses, [...datados(antes, -1), ...datados(depois, 1)], hoje)
+}
+
+/** O que mexe nos saldos de um mês (um lançamento guardado, uma aplicação que saiu da conta). */
+export interface EfeitoDatado { ano: number; mes: number; efeitos: EfeitoNoSaldo[] }
+
+/**
+ * Aplica efeitos nos saldos, cada um no seu mês (só nos meses que já chegaram). É a base de `ajustarMeses` e também do que as
+ * operações de investimento fazem na conta de onde o dinheiro saiu (lib/invest/saldos.ts).
+ */
+export function ajustarMesesComEfeitos(meses: Mes[], lista: EfeitoDatado[], hoje = new Date()): { meses: Mes[]; mudados: Mes[] } {
+  const porMes = new Map<string, EfeitoDatado>()
+  for (const x of lista) {
+    if (!x.efeitos.length || !mesJaChegou(x.ano, x.mes, hoje)) continue
+    const k = `${x.ano}-${x.mes}`
+    const g = porMes.get(k) ?? { ano: x.ano, mes: x.mes, efeitos: [] }
+    g.efeitos.push(...x.efeitos)
     porMes.set(k, g)
   }
-  somar(antes, -1)
-  somar(depois, 1)
-  let lista = meses
+  let atualizados = meses
   const mudados: Mes[] = []
   for (const g of [...porMes.values()].sort((a, b) => a.ano * 12 + a.mes - (b.ano * 12 + b.mes))) {
-    const ef = mesEfetivo(lista, g.ano, g.mes, hoje)
-    const atual = lista.find((m) => m.ano === g.ano && m.mes === g.mes) ?? { ano: g.ano, mes: g.mes, investimentos: 0, moedas: {}, meta_usd: 0, caixa: {} }
+    const ef = mesEfetivo(atualizados, g.ano, g.mes, hoje)
+    const atual = atualizados.find((m) => m.ano === g.ano && m.mes === g.mes) ?? { ano: g.ano, mes: g.mes, investimentos: 0, moedas: {}, meta_usd: 0, caixa: {} }
     // o que o mês herdou passa a ser dele ao gravar (como na tela Dinheiro guardado)
     const novo: Mes = { ...atual, caixa: aplicarEfeitos(ef.caixa, g.efeitos), moedas: ef.moedas }
-    lista = [...lista.filter((m) => !(m.ano === g.ano && m.mes === g.mes)), novo]
+    atualizados = [...atualizados.filter((m) => !(m.ano === g.ano && m.mes === g.mes)), novo]
     mudados.push(novo)
   }
-  return { meses: lista, mudados }
+  return { meses: atualizados, mudados }
 }
 
 /** Só mexe nos saldos de um mês que já chegou: nos futuros o saldo ainda é desconhecido, não zero. */

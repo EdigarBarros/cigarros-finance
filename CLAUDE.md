@@ -23,6 +23,9 @@ branch. Mudanças no banco (arquivos em `supabase/`) não se aplicam sozinhas: a
 
 - `README.md`: o que o app faz e como colocar no ar.
 - `docs/arquitetura-do-painel.md`: a lógica de cada tela e o guia de linguagem (textos sem jargão, botões com verbo).
+- Invest (seção 4.22 do mesmo documento): o motor fica em `src/lib/invest/` (puro) e tem testes próprios. Mexeu em conta
+  de carteira, rentabilidade, importação ou saldo? Rode `node scripts/invest/testar.mjs` e, se mexeu na migração,
+  `scripts/invest/isolamento.sh`.
 
 ## Idiomas
 

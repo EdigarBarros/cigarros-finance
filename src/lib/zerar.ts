@@ -1,6 +1,6 @@
 import { tx } from './textos'
 /** O que dá para apagar em "Zerar dados". `tudo` deixa a conta como nova (inclui bancos, categorias e preferências). */
-export type ParteZerar = 'tudo' | 'entradas' | 'saidas' | 'dividas' | 'cartoes' | 'contas' | 'metas' | 'guardado'
+export type ParteZerar = 'tudo' | 'entradas' | 'saidas' | 'dividas' | 'cartoes' | 'contas' | 'metas' | 'guardado' | 'investimentos'
 export type EscolhaZerar = Partial<Record<ParteZerar, boolean>>
 
 export const PARTES_ZERAR: { id: ParteZerar; nome: string; texto: string }[] = [
@@ -12,4 +12,5 @@ export const PARTES_ZERAR: { id: ParteZerar; nome: string; texto: string }[] = [
   { id: 'contas', nome: tx('Contas fixas'), texto: tx('As contas que se repetem todo mês. Os lançamentos já feitos ficam.') },
   { id: 'metas', nome: tx('Metas'), texto: tx('As metas e o histórico de dinheiro guardado nelas.') },
   { id: 'guardado', nome: tx('Dinheiro guardado'), texto: tx('Saldos por banco, investimentos e moedas de cada mês.') },
+  { id: 'investimentos', nome: tx('Carteira do Invest'), texto: tx('Os investimentos cadastrados no Invest, com as operações, os valores informados, os arquivos importados e o plano.') },
 ]

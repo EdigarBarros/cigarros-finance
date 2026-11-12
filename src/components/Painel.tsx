@@ -3,7 +3,7 @@ import { saldosDoAno, sobrasPorMes } from '../lib/saldoCorrido'
 import { FormSaldoInicial } from './SaldoInicial'
 import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes, saldoInformado } from '../lib/calc'
-import { ajustarMeses, ehGuardado } from '../lib/guardado'
+import { ajustarMeses, ajustarMesesComEfeitos, ehGuardado } from '../lib/guardado'
 import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
 import {
   chaveRecusa, faltaPagarNoMes, pedirEntradaFixa, lancamentoDaBaixa, memoriaDasContas, parecidosNosOutrosMeses, situacoesDoMes, sugestoesDoMes,
@@ -34,6 +34,9 @@ import { diaADiaDoMes, previsaoDoAno } from '../lib/previsao'
 import { useCartoes } from '../lib/useCartoes'
 import { useContasFixas } from '../lib/useContasFixas'
 import { useDados } from '../lib/useDados'
+import { useCarteira, useInvestDados } from '../lib/useInvest'
+import { efeitosDaOperacao, mesesComCarteira } from '../lib/invest/saldos'
+import type { Operacao } from '../lib/invest/tipos'
 import type { Ctx, Pagina } from '../pages/contexto'
 import { BlocoCartoes } from './BlocoCartoes'
 import { BlocoContasDoMes } from './BlocoContas'
@@ -53,6 +56,7 @@ const paginas = {
   Inicio: () => import('../pages/Inicio'),
   Lancamentos: () => import('../pages/Lancamentos'),
   Analise: () => import('../pages/Analise'),
+  Invest: () => import('../pages/Invest'),
   Contas: () => import('../pages/Contas'),
   Cartoes: () => import('../pages/Cartoes'),
   Dividas: () => import('../pages/Dividas'),
@@ -63,6 +67,7 @@ const paginas = {
 const Inicio = lazy(() => paginas.Inicio().then((m) => ({ default: m.Inicio })))
 const Lancamentos = lazy(() => paginas.Lancamentos().then((m) => ({ default: m.Lancamentos })))
 const PaginaAnalise = lazy(() => paginas.Analise().then((m) => ({ default: m.Analise })))
+const PaginaInvest = lazy(() => paginas.Invest().then((m) => ({ default: m.Invest })))
 const Contas = lazy(() => paginas.Contas().then((m) => ({ default: m.Contas })))
 const Cartoes = lazy(() => paginas.Cartoes().then((m) => ({ default: m.Cartoes })))
 const Dividas = lazy(() => paginas.Dividas().then((m) => ({ default: m.Dividas })))
@@ -111,11 +116,13 @@ const agendar = (f: () => void) => {
  * e por fim a retrospectiva.
  * O Consultor (`analise`) vem logo depois de Lançamentos: é a aba que cuida de tudo, e lançar e consultar andam juntos.
  * As páginas `contas` ("Contas do mês") e `cartoes` ("Cartões") entram entre `analise` e `dividas`.
+ * O Invest (`invest`, só com o módulo de investimentos ligado) vem logo depois do Consultor: é a outra tela de análise.
  */
 const PAGINAS: { id: Pagina; nome: string; curto: string; icone: string }[] = [
   { id: 'inicio', nome: tx('Início'), curto: tx('Início'), icone: 'inicio' },
   { id: 'lancamentos', nome: tx('Lançamentos'), curto: tx('Lançamentos'), icone: 'lista' },
   { id: 'analise', nome: tx('Consultor'), curto: tx('Consultor'), icone: 'bussola' },
+  { id: 'invest', nome: tx('Invest'), curto: tx('Invest'), icone: 'investir' },
   { id: 'contas', nome: tx('Contas do mês'), curto: tx('Contas'), icone: 'calendario' },
   { id: 'cartoes', nome: tx('Cartões'), curto: tx('Cartões'), icone: 'cartao' },
   { id: 'dividas', nome: tx('Dívidas'), curto: tx('Dívidas'), icone: 'divida' },
@@ -200,10 +207,20 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     ativo: v.cartoes, ano, lancsDoAno: d.lancs, categoriasAntigas: d.categoriasAntigas,
     recarregarLancs: d.recarregar, aoErro: d.setErro,
   })
+  const investDados = useInvestDados({ ativo: v.investimentos, userId, aoErro: d.setErro })
   const { taxas } = useCambio(perfil.moeda, v.moedas || d.lancs.some((l) => l.moeda_original) || d.metas.some((m) => m.moeda !== perfil.moeda)
+    || investDados.ativos.some((x) => x.moeda && x.moeda !== perfil.moeda)
     || d.dividas.some((x) => x.moeda && x.moeda !== perfil.moeda) || contas.contas.some((x) => x.moeda && x.moeda !== perfil.moeda))
+  // A carteira do Invest, e os meses como o painel deve ler: do mês da primeira operação em diante, o valor investido sai da
+  // carteira no lugar do número digitado (lib/invest/saldos.ts), para o mesmo dinheiro não contar duas vezes.
+  const invest = useCarteira(investDados, perfil.moeda, taxas, hoje)
+  const legadoDoInvest = investDados.plano.legado
+  const mesesVistos = useMemo(
+    () => (v.investimentos && invest.valoresPorMes.size ? mesesComCarteira(d.meses, invest.valoresPorMes, legadoDoInvest) : d.meses),
+    [d.meses, invest.valoresPorMes, legadoDoInvest, v.investimentos],
+  )
   const paginas = PAGINAS.filter((p) =>
-    p.id === 'contas' ? v.contas : p.id === 'cartoes' ? v.cartoes : p.id === 'dividas' ? v.dividas : p.id === 'metas' ? v.metas : p.id === 'patrimonio' ? v.bancos || v.investimentos || v.moedas : p.id === 'ano' ? v.paginaAno : true,
+    p.id === 'invest' ? v.investimentos : p.id === 'contas' ? v.contas : p.id === 'cartoes' ? v.cartoes : p.id === 'dividas' ? v.dividas : p.id === 'metas' ? v.metas : p.id === 'patrimonio' ? v.bancos || v.investimentos || v.moedas : p.id === 'ano' ? v.paginaAno : true,
   )
   const paginaAtual = paginas.some((p) => p.id === pagina) ? pagina : 'inicio'
   // O menu muda na hora; a página nova é montada em segundo plano (em pedaços), sem congelar a animação do menu.
@@ -283,14 +300,14 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       const m = i + 1
       const l = lancsContados.filter((x) => x.mes === m && x.ano === ano)
       const sit = situacaoDividas(dividasDevo, d.saldos, d.pagamentos, ano, m, taxas, hojeIso)
-      const ef = mesEfetivo(d.meses, ano, m)
+      const ef = mesEfetivo(mesesVistos, ano, m)
       const temProprio = d.meses.some((x) => x.ano === ano && x.mes === m)
       // Meses futuros sem lançamentos ficam em branco, como na planilha.
       const vazio = !l.length && !temProprio && (ano * 12 + m > agora || (!sit.length && !ef.herdadoDe))
       // Mês futuro sem saldo informado: o saldo é desconhecido, não zero (a linha do gráfico para em vez de despencar).
       return { sit, ef, resumo: vazio ? null : resumoMes(l, sit, ef, taxas, idCategoria, ano * 12 + m > agora && !saldoInformado(ef)) }
     })
-  }, [lancsContados, dividasDevo, d.saldos, d.pagamentos, d.meses, ano, taxas, d.categorias, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lancsContados, dividasDevo, d.saldos, d.pagamentos, d.meses, mesesVistos, ano, taxas, d.categorias, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
   const porMes = porMesCompleto.map((x) => x.resumo)
   // O que já aconteceu e o que ainda vem em cada mês (gráficos de fluxo).
   const { contas: contasFixas, semTabela: contasSemTabela } = contas
@@ -450,10 +467,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   }, [lancsComGuardados, d.lancsRecentes, chaveRenegociadas, comFaturas]) // eslint-disable-line react-hooks/exhaustive-deps
   const conselhos = useMemo(() => conselhosDe({
     hoje, lancs: lancsDosConselhos, categorias: d.categorias, categoriaDe: idCategoria, dividas: d.dividas, saldos: d.saldos,
-    pagamentos: d.pagamentos, taxas, meses: d.meses, metas: d.metas, movimentosMeta: d.movimentosMeta, perfil,
+    pagamentos: d.pagamentos, taxas, meses: mesesVistos, metas: d.metas, movimentosMeta: d.movimentosMeta, perfil,
     dividasSemJuros: d.dividasSemJuros,
     compras: comFaturas ? cartoes.compras.filter(contaNasSaidas(cartoes.faturasPagas)) : [],
-  }), [lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, d.meses, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.dispensadas, comFaturas, cartoes.compras, chaveRenegociadas]) // eslint-disable-line react-hooks/exhaustive-deps
+  }), [lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, mesesVistos, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.dispensadas, comFaturas, cartoes.compras, chaveRenegociadas]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // "Agora não": o conselho some até o mês que vem (se ainda for verdade, volta).
   const dispensarConselho = (id: string) => mudarPerfil({ ...perfil, dispensadas: dispensarPorUmMes(perfil.dispensadas, id, hoje) })
@@ -463,12 +480,12 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const comContasFixas = v.contas && !contas.semTabela
   const analise = useMemo(() => analisar({
     hoje, lancs: lancsDosConselhos, categorias: d.categorias, categoriaDe: idCategoria, dividas: d.dividas, saldos: d.saldos,
-    pagamentos: d.pagamentos, taxas, meses: d.meses, metas: d.metas, movimentosMeta: d.movimentosMeta, perfil,
+    pagamentos: d.pagamentos, taxas, meses: mesesVistos, metas: d.metas, movimentosMeta: d.movimentosMeta, perfil,
     dividasSemJuros: d.dividasSemJuros, contas: comContasFixas ? contas.contas : [],
     compras: comFaturas ? cartoes.compras.filter(contaNasSaidas(cartoes.faturasPagas)) : [],
     cartoes: comFaturas ? cartoes.cartoes : [], faturasPagas: comFaturas ? cartoes.faturasPagas : [],
     memoria: d.memoria,
-  }), [d.memoria, lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, d.meses, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.moeda, comFaturas, cartoes.compras, cartoes.cartoes, cartoes.faturasPagas, comContasFixas, contas.contas, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
+  }), [d.memoria, lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, mesesVistos, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.moeda, comFaturas, cartoes.compras, cartoes.cartoes, cartoes.faturasPagas, comContasFixas, contas.contas, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reanálise: a cada mudança feita pela pessoa, compara com a análise anterior e conta o que mudou (aviso no canto e
   // "O que mudou" na aba). Troca de ano, virada do dia, cotação nova e dados chegando não são mudança da pessoa: só
@@ -477,7 +494,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const [reanalise, setReanalise] = useState<Reanalise | null>(null)
   const [avisoReanalise, setAvisoReanalise] = useState(false)
   const avisosDaAnalise = !perfil.dispensadas.includes('aviso-reanalise')
-  const chaveDaBase = `${ano}|${hojeIso}|${JSON.stringify(taxas)}|${cartoes.carregado}|${contas.carregando}|${JSON.stringify(perfil.modulos)}|${perfil.moeda}`
+  const chaveDaBase = `${ano}|${hojeIso}|${JSON.stringify(taxas)}|${cartoes.carregado}|${contas.carregando}|${JSON.stringify(perfil.modulos)}|${perfil.moeda}|${investDados.carregado}|${invest.indices?.baixadoEm ?? 0}`
   useEffect(() => {
     if (d.carregando || !noPainel) return
     const r = retratoDe(analise)
@@ -494,7 +511,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
 
   // Memória do consultor (lib/memoria.ts): a cada análise, confere os passos cujo mês fechou e começa a acompanhar os novos.
   // Só com tudo carregado (cartões e contas também): um número tirado de dados pela metade daria um "não deu certo" falso.
-  const tudoCarregado = !d.carregando && Boolean(d.perfil) && (!comFaturas || cartoes.carregado) && !contas.carregando
+  const tudoCarregado = !d.carregando && Boolean(d.perfil) && (!comFaturas || cartoes.carregado) && !contas.carregando && (!v.investimentos || investDados.carregado || investDados.semTabela)
   useEffect(() => {
     if (!tudoCarregado) return
     const nova = atualizarMemoria(d.memoria, analise, hoje)
@@ -564,6 +581,22 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   // Uma gravação por vez: "Salvar e lançar outro" ou duas edições seguidas não podem partir dos mesmos saldos.
   const fila = useRef<Promise<unknown>>(Promise.resolve())
   const emFila = (fazer: () => Promise<unknown>) => { fila.current = fila.current.then(fazer, fazer).catch(() => undefined) }
+  /**
+   * Operação de investimento ligada a uma conta (lib/invest/saldos.ts): aplicar tira o dinheiro da conta, resgatar e receber
+   * provento põem de volta. Desfaz o que a operação de antes tinha feito e aplica o de agora, na mesma fila dos lançamentos.
+   */
+  const ajustarSaldosDaOperacao = (antes?: Operacao, depois?: Operacao) => emFila(async () => {
+    const cotacao = (o: Operacao) => (o.moeda && o.moeda !== perfil.moeda ? taxas[o.moeda] ?? 1 : 1)
+    const efeitos = [...(antes ? efeitosDaOperacao(antes, -1, cotacao(antes)) : []), ...(depois ? efeitosDaOperacao(depois, 1, cotacao(depois)) : [])]
+    if (!efeitos.length) return
+    const r = ajustarMesesComEfeitos(mesesAgora.current, efeitos)
+    mesesAgora.current = r.meses
+    let ok = true
+    for (const m of r.mudados) {
+      if (!(await d.salvarMes(m.ano, m.mes, { caixa: m.caixa, moedas: m.moedas }))) ok = false
+    }
+    if (!ok) d.setErro(tx('A operação foi salva, mas não consegui acertar o saldo da conta em Dinheiro guardado. Confira lá.'))
+  })
 
   const salvarLancamento = async (l: Omit<Lancamento, 'id'>, id?: string) => {
     const antes = id ? d.lancs.find((x) => x.id === id) : undefined
@@ -642,6 +675,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     conselhos, dispensarConselho,
     conselhosSemDados: faltamDadosParaConselhos({ lancs: lancsDosConselhos, dividas: d.dividas, hoje }),
     conselhosDispensados: avisosDispensadosNoMes(perfil.dispensadas, hoje),
+    invest, ajustarSaldosDaOperacao,
     analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise, memoria: d.memoria, escolherObjetivo, gosto: d.gosto, salvarGosto: d.salvarGosto,
     ligarModulo,
     personalizar: () => setAjustes('painel'),
@@ -937,6 +971,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         {paginaMostrada === 'inicio' && <Inicio {...ctx} />}
         {paginaMostrada === 'lancamentos' && <Lancamentos {...ctx} />}
         {paginaMostrada === 'analise' && <PaginaAnalise {...ctx} />}
+        {paginaMostrada === 'invest' && <PaginaInvest {...ctx} />}
         {paginaMostrada === 'contas' && <Contas {...ctx} />}
         {paginaMostrada === 'cartoes' && <Cartoes key={cartaoAberto ?? 'todos'} {...ctx} />}
         {paginaMostrada === 'dividas' && <Dividas {...ctx} />}
@@ -1117,10 +1152,11 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
             saidas: d.lancs.filter((l) => l.tipo === 'saida').length,
             dividas: d.dividas.length, cartoes: cartoes.cartoes.length, contas: contas.contas.length, metas: d.metas.length,
             guardado: d.meses.filter((m) => m.investimentos || Object.keys(m.moedas ?? {}).length || Object.keys(m.caixa ?? {}).length).length,
+            investimentos: investDados.ativos.length,
           }}
           aoBaixarBackup={async () => (await import('../lib/planilha')).exportarBackup()}
           // depois de apagar, recarrega a página: todos os dados e o perfil voltam do zero
-          aoZerar={async (escolha) => { await d.zerarDados(escolha); location.hash = '/inicio'; location.reload() }}
+          aoZerar={async (escolha) => { if (escolha.tudo || escolha.investimentos) await investDados.zerar(); await d.zerarDados(escolha); location.hash = '/inicio'; location.reload() }}
           aoFechar={() => setZerando(false)}
         />
       )}

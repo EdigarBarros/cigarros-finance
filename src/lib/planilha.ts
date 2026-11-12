@@ -343,6 +343,16 @@ export async function exportarBackup() {
     }))),
     'Meses',
   )
+  // A carteira do Invest (migração 27): sem as tabelas, o backup sai como antes.
+  const linhas = (t: string) => buscarTudo<Record<string, unknown>>(t).catch(() => [] as Record<string, unknown>[])
+  const [ativos, operacoes, precos] = await Promise.all([linhas('invest_ativos'), linhas('invest_operacoes'), linhas('invest_precos')])
+  if (ativos.length) {
+    const nomeAtivo = new Map(ativos.map((a) => [String(a.id), String(a.codigo ?? a.nome)]))
+    const comAtivo = (xs: Record<string, unknown>[]) => semIds(xs).map(({ ativo_id, banco_id: _b, lancamento_id: _l, importacao_id: _i, ...x }) => ({ ativo: nomeAtivo.get(String(ativo_id)) ?? '', ...x }))
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(semIds(ativos).map(({ banco_id: _b, ...a }) => a)), 'Invest - ativos')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(comAtivo(operacoes)), 'Invest - operações')
+    if (precos.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(comAtivo(precos)), 'Invest - valores')
+  }
   const nome = `backup-financas-${new Date().toLocaleDateString('sv-SE')}.xlsx`
   // no app Android não há download: o arquivo vai para o compartilhar do Android (lib/arquivoNoApp.ts)
   if (noAppNativo) return compartilharArquivo(nome, XLSX.write(wb, { bookType: 'xlsx', type: 'base64' }) as string, tx('Backup do OpusCash'))

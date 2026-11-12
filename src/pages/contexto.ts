@@ -16,8 +16,10 @@ import type { DadosCartoes } from '../lib/useCartoes'
 import type { ContasFixas } from '../lib/useContasFixas'
 import type { Dados } from '../lib/useDados'
 import type { Categoria, Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
+import type { Invest } from '../lib/useInvest'
+import type { Operacao } from '../lib/invest/tipos'
 
-export type Pagina = 'inicio' | 'lancamentos' | 'analise' | 'contas' | 'cartoes' | 'dividas' | 'metas' | 'patrimonio' | 'ano'
+export type Pagina = 'inicio' | 'lancamentos' | 'analise' | 'invest' | 'contas' | 'cartoes' | 'dividas' | 'metas' | 'patrimonio' | 'ano'
 
 /** Tudo que as páginas precisam do mês aberto. */
 export interface Ctx {
@@ -74,6 +76,10 @@ export interface Ctx {
   conselhosSemDados: boolean
   /** Quantos conselhos a pessoa escondeu até o mês que vem. */
   conselhosDispensados: number
+  /** A carteira de investimentos (lib/useInvest.ts): dados, posições, linha do tempo e índices. Vazia sem o módulo. */
+  invest: Invest
+  /** Acerta o saldo da conta ligada a uma operação de investimento: desfaz o que `antes` fez e aplica o que `depois` faz. */
+  ajustarSaldosDaOperacao: (antes?: Operacao, depois?: Operacao) => void
   /** A análise completa do consultor (lib/analise.ts), refeita a cada mudança nos dados. */
   analise: Analise
   /** O saldo que passa de um mês para o outro (lib/saldoCorrido.ts): o de cada mês do ano aberto e o ponto de partida. */

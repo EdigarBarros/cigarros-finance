@@ -163,6 +163,11 @@ export interface Mes {
   ano: number
   mes: number
   investimentos: number
+  /**
+   * O valor de `investimentos` saiu da carteira do Invest (lib/invest/saldos.ts) e não do que a pessoa digitou: zero quer
+   * dizer zero mesmo, e não "ainda não informei" (o mês não herda o do mês anterior). Nunca é gravado no banco.
+   */
+  investimentosDaCarteira?: boolean
   /** Saldo guardado em cada outra moeda, pelo código ({ USD: 1200, EUR: 300 }). */
   moedas: Record<string, number>
   meta_usd: number

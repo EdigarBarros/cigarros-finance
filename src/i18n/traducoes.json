@@ -9806,5 +9806,2717 @@
   "Informar o saldo": {
     "en": "Enter the balance",
     "es": "Informar el saldo"
+  },
+  "Invest": {
+    "en": "Invest",
+    "es": "Invest"
+  },
+  "A operação foi salva, mas não consegui acertar o saldo da conta em Dinheiro guardado. Confira lá.": {
+    "en": "The transaction was saved, but I couldn't adjust the account balance in Savings. Check it there.",
+    "es": "La operación se guardó, pero no pude ajustar el saldo de la cuenta en Dinero guardado. Revísalo allí."
+  },
+  "{0} da carteira está com valor antigo ou sem atualização: os números podem estar defasados.": {
+    "en": "{0} of the portfolio has an old value or hasn't been updated: the numbers may be out of date.",
+    "es": "{0} de la cartera tiene un valor antiguo o sin actualizar: los números pueden estar desfasados."
+  },
+  "Suas operações e os valores informados no Invest": {
+    "en": "Your transactions and the values entered in Invest",
+    "es": "Tus operaciones y los valores informados en Invest"
+  },
+  "Posição de hoje": {
+    "en": "Today's position",
+    "es": "Posición de hoy"
+  },
+  "Vendeu mais do que tinha": {
+    "en": "Sold more than you had",
+    "es": "Vendiste más de lo que tenías"
+  },
+  "{0} tem uma venda maior que a quantidade comprada. Falta alguma compra?": {
+    "en": "{0} has a sale larger than the quantity bought. Is a purchase missing?",
+    "es": "{0} tiene una venta mayor que la cantidad comprada. ¿Falta alguna compra?"
+  },
+  "{0} ativos têm venda maior que a quantidade comprada.": {
+    "en": "{0} assets have sales larger than the quantity bought.",
+    "es": "{0} activos tienen ventas mayores que la cantidad comprada."
+  },
+  "ativo com operações que não fecham": {
+    "en": "asset with transactions that don't add up",
+    "es": "activo con operaciones que no cuadran"
+  },
+  "ativos com operações que não fecham": {
+    "en": "assets with transactions that don't add up",
+    "es": "activos con operaciones que no cuadran"
+  },
+  "Pelas operações cadastradas, em algum momento foi vendido mais do que havia. Quase sempre falta uma compra antiga (ou uma bonificação), ou uma venda entrou duas vezes. Enquanto isso, a quantidade, o custo e o resultado desses ativos não são confiáveis.": {
+    "en": "According to the recorded transactions, at some point more was sold than was held. Almost always an old purchase (or a bonus share) is missing, or a sale was entered twice. Until then, the quantity, cost and result of these assets are not reliable.",
+    "es": "Según las operaciones registradas, en algún momento se vendió más de lo que había. Casi siempre falta una compra antigua (o una bonificación), o una venta entró dos veces. Mientras tanto, la cantidad, el costo y el resultado de estos activos no son confiables."
+  },
+  "{0} operações": {
+    "en": "{0} transactions",
+    "es": "{0} operaciones"
+  },
+  "Todas as operações": {
+    "en": "All transactions",
+    "es": "Todas las operaciones"
+  },
+  "Conferir as operações": {
+    "en": "Check the transactions",
+    "es": "Revisar las operaciones"
+  },
+  "Título vencido na carteira": {
+    "en": "Matured bond still in portfolio",
+    "es": "Título vencido en la cartera"
+  },
+  "{0} venceu em {1}. Registre o vencimento para o saldo ficar certo.": {
+    "en": "{0} matured on {1}. Record the maturity so the balance is right.",
+    "es": "{0} venció el {1}. Registra el vencimiento para que el saldo quede bien."
+  },
+  "{0} títulos já venceram e continuam na carteira.": {
+    "en": "{0} bonds have already matured and are still in the portfolio.",
+    "es": "{0} títulos ya vencieron y siguen en la cartera."
+  },
+  "No vencimento, o dinheiro de um título volta para a conta. Aqui ele ainda aparece investido, então o total da carteira (e o do seu patrimônio) pode estar contando um dinheiro que já está na conta.": {
+    "en": "At maturity, a bond's money goes back to the account. Here it still shows as invested, so the portfolio total (and your net worth) may be counting money that is already in the account.",
+    "es": "Al vencimiento, el dinero de un título vuelve a la cuenta. Aquí todavía aparece invertido, así que el total de la cartera (y el de tu patrimonio) puede estar contando dinero que ya está en la cuenta."
+  },
+  "Registrar o vencimento": {
+    "en": "Record the maturity",
+    "es": "Registrar el vencimiento"
+  },
+  "Linhas esperando revisão": {
+    "en": "Lines waiting for review",
+    "es": "Líneas esperando revisión"
+  },
+  "1 linha de um arquivo importado não foi entendida e ficou guardada.": {
+    "en": "1 line from an imported file wasn't understood and was kept.",
+    "es": "1 línea de un archivo importado no se entendió y quedó guardada."
+  },
+  "{0} linhas de arquivos importados não foram entendidas e ficaram guardadas.": {
+    "en": "{0} lines from imported files weren't understood and were kept.",
+    "es": "{0} líneas de archivos importados no se entendieron y quedaron guardadas."
+  },
+  "linha para revisar": {
+    "en": "line to review",
+    "es": "línea por revisar"
+  },
+  "linhas para revisar": {
+    "en": "lines to review",
+    "es": "líneas por revisar"
+  },
+  "Na importação, o que o app entende entra na carteira e o que ele não entende fica guardado, sem sumir. Enquanto essas linhas não forem resolvidas ou descartadas, pode faltar alguma operação na carteira.": {
+    "en": "On import, what the app understands goes into the portfolio and what it doesn't is kept, never dropped. Until these lines are resolved or discarded, a transaction may be missing from the portfolio.",
+    "es": "Al importar, lo que la app entiende entra en la cartera y lo que no entiende queda guardado, sin perderse. Mientras estas líneas no se resuelvan o descarten, puede faltar alguna operación en la cartera."
+  },
+  "{0} pendentes": {
+    "en": "{0} pending",
+    "es": "{0} pendientes"
+  },
+  "Arquivos importados": {
+    "en": "Imported files",
+    "es": "Archivos importados"
+  },
+  "Revisar as linhas": {
+    "en": "Review the lines",
+    "es": "Revisar las líneas"
+  },
+  "Valores desatualizados": {
+    "en": "Outdated values",
+    "es": "Valores desactualizados"
+  },
+  "{0} está com valor de {1} dias atrás: {2} da carteira.": {
+    "en": "{0} has a value from {1} days ago: {2} of the portfolio.",
+    "es": "{0} tiene un valor de hace {1} días: {2} de la cartera."
+  },
+  "{0} ativos estão sem valor recente: {1} da carteira.": {
+    "en": "{0} assets have no recent value: {1} of the portfolio.",
+    "es": "{0} activos no tienen valor reciente: {1} de la cartera."
+  },
+  "em dia": {
+    "en": "up to date",
+    "es": "al día"
+  },
+  "Antigo ou sem valor": {
+    "en": "Old or no value",
+    "es": "Antiguo o sin valor"
+  },
+  "O valor de cada ativo vem do último preço ou saldo que alguém informou. O app não busca cotação sozinho nem inventa preço: quando a informação é antiga, ele mostra a última conhecida e avisa. Patrimônio, resultado e rentabilidade ficam tão atuais quanto esses valores.": {
+    "en": "Each asset's value comes from the last price or balance someone entered. The app doesn't fetch quotes on its own and never makes up a price: when the information is old, it shows the last known one and says so. Net worth, result and return are only as current as these values.",
+    "es": "El valor de cada activo viene del último precio o saldo que alguien informó. La app no busca cotizaciones por su cuenta ni inventa precios: cuando la información es antigua, muestra la última conocida y avisa. Patrimonio, resultado y rentabilidad están tan actualizados como esos valores."
+  },
+  "sem valor informado": {
+    "en": "no value entered",
+    "es": "sin valor informado"
+  },
+  "há {0} dias": {
+    "en": "{0} days ago",
+    "es": "hace {0} días"
+  },
+  "Atualizar os valores": {
+    "en": "Update the values",
+    "es": "Actualizar los valores"
+  },
+  "O mais antigo: {0}": {
+    "en": "The oldest: {0}",
+    "es": "El más antiguo: {0}"
+  },
+  "Muito num ativo só": {
+    "en": "A lot in one asset",
+    "es": "Mucho en un solo activo"
+  },
+  "{0} é {1} da carteira ({2}).": {
+    "en": "{0} is {1} of the portfolio ({2}).",
+    "es": "{0} es {1} de la cartera ({2})."
+  },
+  "O resto da carteira": {
+    "en": "The rest of the portfolio",
+    "es": "El resto de la cartera"
+  },
+  "Quando um único investimento pesa muito, o que acontecer com ele decide o resultado da carteira inteira. Isso pode ser exatamente o que você quer (uma reserva num CDB, por exemplo); a descoberta só mostra o tamanho, e a decisão é sua.": {
+    "en": "When a single investment weighs a lot, whatever happens to it decides the result of the whole portfolio. That may be exactly what you want (an emergency fund in one deposit, for example); this finding only shows the size, and the decision is yours.",
+    "es": "Cuando una sola inversión pesa mucho, lo que le pase decide el resultado de toda la cartera. Puede ser justo lo que quieres (una reserva en un depósito, por ejemplo); el hallazgo solo muestra el tamaño, y la decisión es tuya."
+  },
+  "Ver a carteira": {
+    "en": "See the portfolio",
+    "es": "Ver la cartera"
+  },
+  "Quase tudo num tipo só": {
+    "en": "Almost all in one type",
+    "es": "Casi todo en un solo tipo"
+  },
+  "{0} da carteira está em {1}.": {
+    "en": "{0} of the portfolio is in {1}.",
+    "es": "{0} de la cartera está en {1}."
+  },
+  "A carteira está concentrada num tipo de investimento. Tipos diferentes costumam reagir de formas diferentes ao que acontece na economia; se a concentração é o que você planejou para o seu prazo e objetivo, está tudo certo.": {
+    "en": "The portfolio is concentrated in one type of investment. Different types tend to react differently to what happens in the economy; if the concentration is what you planned for your time frame and goal, all is well.",
+    "es": "La cartera está concentrada en un tipo de inversión. Los distintos tipos suelen reaccionar de forma diferente a lo que pasa en la economía; si la concentración es lo que planeaste para tu plazo y objetivo, está todo bien."
+  },
+  "Acima do seu limite": {
+    "en": "Above your limit",
+    "es": "Por encima de tu límite"
+  },
+  "Renda variável é {0} da carteira. Você disse querer no máximo {1}%.": {
+    "en": "Equities are {0} of the portfolio. You said you want at most {1}%.",
+    "es": "La renta variable es {0} de la cartera. Dijiste que quieres como máximo {1}%."
+  },
+  "em renda variável": {
+    "en": "in equities",
+    "es": "en renta variable"
+  },
+  "Seu limite": {
+    "en": "Your limit",
+    "es": "Tu límite"
+  },
+  "Você informou no planejamento quanto, no máximo, quer ter em renda variável (ações, fundos imobiliários, ETFs e parecidos). A carteira passou desse limite, seja porque esses ativos subiram, seja pelos últimos aportes. O limite é seu: dá para ajustar a carteira ou o próprio limite.": {
+    "en": "In your plan you said how much, at most, you want in equities (stocks, real estate funds, ETFs and the like). The portfolio went past that limit, either because those assets rose or because of your latest contributions. The limit is yours: you can adjust the portfolio or the limit itself.",
+    "es": "En la planificación indicaste cuánto, como máximo, quieres tener en renta variable (acciones, fondos inmobiliarios, ETF y similares). La cartera pasó ese límite, ya sea porque esos activos subieron o por los últimos aportes. El límite es tuyo: puedes ajustar la cartera o el propio límite."
+  },
+  "Em renda variável": {
+    "en": "In equities",
+    "es": "En renta variable"
+  },
+  "Rever o limite": {
+    "en": "Review the limit",
+    "es": "Revisar el límite"
+  },
+  "Acima da cobertura do FGC": {
+    "en": "Above FGC coverage",
+    "es": "Por encima de la cobertura del FGC"
+  },
+  "{0} em títulos do {1}: a garantia do FGC vai até {2} por instituição.": {
+    "en": "{0} in securities from {1}: the FGC guarantee goes up to {2} per institution.",
+    "es": "{0} en títulos de {1}: la garantía del FGC llega hasta {2} por institución."
+  },
+  "no {0}": {
+    "en": "at {0}",
+    "es": "en {0}"
+  },
+  "Coberto pelo FGC": {
+    "en": "Covered by the FGC",
+    "es": "Cubierto por el FGC"
+  },
+  "Aplicado": {
+    "en": "Invested",
+    "es": "Invertido"
+  },
+  "CDB, LCI, LCA e poupança têm a garantia do Fundo Garantidor de Créditos até R$ 250 mil por pessoa em cada instituição emissora (com um teto global por período). O que passa disso, na mesma instituição, fica sem essa garantia. A conta usa o emissor (ou a instituição) que você informou em cada título.": {
+    "en": "CDB, LCI, LCA and savings accounts are guaranteed by Brazil's Credit Guarantee Fund (FGC) up to R$ 250 thousand per person at each issuing institution (with an overall cap per period). Anything above that, at the same institution, has no such guarantee. The calculation uses the issuer (or institution) you entered for each security.",
+    "es": "CDB, LCI, LCA y cuentas de ahorro tienen la garantía del Fondo de Garantía de Créditos de Brasil (FGC) hasta R$ 250 mil por persona en cada institución emisora (con un tope global por período). Lo que pasa de eso, en la misma institución, queda sin esa garantía. El cálculo usa el emisor (o la institución) que indicaste en cada título."
+  },
+  "acima": {
+    "en": "above",
+    "es": "por encima"
+  },
+  "Suas operações no Invest e a regra pública do FGC": {
+    "en": "Your transactions in Invest and the public FGC rule",
+    "es": "Tus operaciones en Invest y la regla pública del FGC"
+  },
+  "Um setor pesa mais": {
+    "en": "One sector weighs more",
+    "es": "Un sector pesa más"
+  },
+  "{0} da sua renda variável está em {1}.": {
+    "en": "{0} of your equities is in {1}.",
+    "es": "{0} de tu renta variable está en {1}."
+  },
+  "Empresas e fundos do mesmo setor costumam subir e cair juntos. A conta usa só os ativos de renda variável em que você informou o setor.": {
+    "en": "Companies and funds in the same sector tend to rise and fall together. The calculation only uses the equity assets where you entered the sector.",
+    "es": "Las empresas y fondos del mismo sector suelen subir y bajar juntos. El cálculo solo usa los activos de renta variable en los que indicaste el sector."
+  },
+  "Renda variável com setor informado": {
+    "en": "Equities with a sector entered",
+    "es": "Renta variable con sector informado"
+  },
+  "Aportes e rendimento": {
+    "en": "Contributions and return",
+    "es": "Aportes y rendimiento"
+  },
+  "Vale menos do que você pôs": {
+    "en": "Worth less than you put in",
+    "es": "Vale menos de lo que pusiste"
+  },
+  "Dos {0} de hoje, {1} você aportou e {2} é rendimento.": {
+    "en": "Of today's {0}, {1} is what you contributed and {2} is return.",
+    "es": "De los {0} de hoy, {1} son aportes tuyos y {2} es rendimiento."
+  },
+  "Você pôs {0} e hoje vale {1}: {2} a menos.": {
+    "en": "You put in {0} and today it's worth {1}: {2} less.",
+    "es": "Pusiste {0} y hoy vale {1}: {2} menos."
+  },
+  "é rendimento": {
+    "en": "is return",
+    "es": "es rendimiento"
+  },
+  "Aportes": {
+    "en": "Contributions",
+    "es": "Aportes"
+  },
+  "Rendimento": {
+    "en": "Return",
+    "es": "Rendimiento"
+  },
+  "Você pôs": {
+    "en": "You put in",
+    "es": "Pusiste"
+  },
+  "Vale hoje": {
+    "en": "Worth today",
+    "es": "Vale hoy"
+  },
+  "A carteira cresce de dois jeitos: quando você põe dinheiro nela e quando ela rende. Só o segundo é ganho. Aqui os dois aparecem separados: o que você aportou (já descontado o que tirou) e a diferença para o que ela vale hoje. Os proventos pagos em dinheiro não estão nessa diferença: eles já saíram da carteira.": {
+    "en": "A portfolio grows in two ways: when you put money in and when it earns. Only the second is a gain. Here the two are shown apart: what you contributed (net of what you took out) and the difference to what it is worth today. Income paid out in cash is not in that difference: it has already left the portfolio.",
+    "es": "La cartera crece de dos maneras: cuando le pones dinero y cuando rinde. Solo lo segundo es ganancia. Aquí aparecen por separado: lo que aportaste (ya descontado lo que sacaste) y la diferencia con lo que vale hoy. Los rendimientos pagados en efectivo no están en esa diferencia: ya salieron de la cartera."
+  },
+  "Aportado (menos o que tirou)": {
+    "en": "Contributed (minus what you took out)",
+    "es": "Aportado (menos lo que sacaste)"
+  },
+  "Diferença": {
+    "en": "Difference",
+    "es": "Diferencia"
+  },
+  "Proventos recebidos em dinheiro": {
+    "en": "Income received in cash",
+    "es": "Rendimientos recibidos en efectivo"
+  },
+  "Quanto a carteira rendeu": {
+    "en": "How much the portfolio earned",
+    "es": "Cuánto rindió la cartera"
+  },
+  "Rendeu {0} desde {1}. No mesmo período, o CDI rendeu {2}.": {
+    "en": "It returned {0} since {1}. Over the same period, the CDI returned {2}.",
+    "es": "Rindió {0} desde {1}. En el mismo período, el CDI rindió {2}."
+  },
+  "Rendeu {0} desde {1}, já descontados os aportes.": {
+    "en": "It returned {0} since {1}, net of contributions.",
+    "es": "Rindió {0} desde {1}, ya descontados los aportes."
+  },
+  "de rentabilidade; o CDI rendeu {0}": {
+    "en": "return; the CDI returned {0}",
+    "es": "de rentabilidad; el CDI rindió {0}"
+  },
+  "de rentabilidade no período": {
+    "en": "return over the period",
+    "es": "de rentabilidad en el período"
+  },
+  "Rentabilidade é o quanto o dinheiro rendeu, não o quanto o saldo cresceu: aporte não conta como ganho. A conta é ponderada pelo tempo: a cada dia em que entrou ou saiu dinheiro, mede o rendimento desde a última vez, tirando o que entrou. Vale o preço ou saldo conhecido em cada dia, então meses sem atualização aparecem \"parados\" e o ganho deles cai todo no dia da atualização. O CDI é só uma referência de renda fixa, sem imposto dos dois lados.": {
+    "en": "Return is how much the money earned, not how much the balance grew: a contribution doesn't count as a gain. The calculation is time-weighted: on each day money came in or went out, it measures the return since the last time, leaving out what came in. It uses the price or balance known on each day, so months without updates look \"flat\" and their gain lands all at once on the update day. The CDI is only a fixed-income benchmark, before tax on both sides.",
+    "es": "La rentabilidad es cuánto rindió el dinero, no cuánto creció el saldo: un aporte no cuenta como ganancia. El cálculo es ponderado por el tiempo: cada día en que entró o salió dinero, mide el rendimiento desde la última vez, sin contar lo que entró. Usa el precio o saldo conocido en cada día, así que los meses sin actualización se ven \"quietos\" y su ganancia cae toda el día de la actualización. El CDI es solo una referencia de renta fija, sin impuestos en ambos lados."
+  },
+  "Rentabilidade (ponderada pelo tempo)": {
+    "en": "Return (time-weighted)",
+    "es": "Rentabilidad (ponderada por el tiempo)"
+  },
+  "Retorno do seu dinheiro (considera quando você aportou)": {
+    "en": "Return on your money (considers when you contributed)",
+    "es": "Retorno de tu dinero (considera cuándo aportaste)"
+  },
+  "CDI no período": {
+    "en": "CDI over the period",
+    "es": "CDI en el período"
+  },
+  "CDI até {0}": {
+    "en": "CDI until {0}",
+    "es": "CDI hasta {0}"
+  },
+  "Ganho em dinheiro": {
+    "en": "Gain in money",
+    "es": "Ganancia en dinero"
+  },
+  "Aportes no período": {
+    "en": "Contributions in the period",
+    "es": "Aportes en el período"
+  },
+  "De {0} a {1}": {
+    "en": "From {0} to {1}",
+    "es": "Del {0} al {1}"
+  },
+  "Suas operações no Invest e o CDI do Banco Central": {
+    "en": "Your transactions in Invest and the Central Bank's CDI",
+    "es": "Tus operaciones en Invest y el CDI del Banco Central"
+  },
+  "Vencimento chegando": {
+    "en": "Maturity coming up",
+    "es": "Vencimiento cercano"
+  },
+  "{0} vence hoje: {1} voltam para a conta.": {
+    "en": "{0} matures today: {1} goes back to the account.",
+    "es": "{0} vence hoy: {1} vuelven a la cuenta."
+  },
+  "{0} vence em {1} dias ({2}): {3} voltam para a conta.": {
+    "en": "{0} matures in {1} days ({2}): {3} goes back to the account.",
+    "es": "{0} vence en {1} días ({2}): {3} vuelven a la cuenta."
+  },
+  "{0} vencem em até 90 dias, em {1} títulos. O primeiro: {2}.": {
+    "en": "{0} matures within 90 days, across {1} bonds. The first: {2}.",
+    "es": "{0} vencen en hasta 90 días, en {1} títulos. El primero: {2}."
+  },
+  "No vencimento o dinheiro volta para a conta e para de render do jeito que rendia. Saber antes dá tempo de decidir o destino dele, em vez de deixá-lo parado.": {
+    "en": "At maturity the money goes back to the account and stops earning the way it did. Knowing ahead gives you time to decide where it goes, instead of leaving it idle.",
+    "es": "Al vencimiento el dinero vuelve a la cuenta y deja de rendir como rendía. Saberlo antes da tiempo de decidir su destino, en vez de dejarlo parado."
+  },
+  "Próximos 90 dias": {
+    "en": "Next 90 days",
+    "es": "Próximos 90 días"
+  },
+  "Ver os títulos": {
+    "en": "See the bonds",
+    "es": "Ver los títulos"
+  },
+  "Em quanto tempo vira dinheiro": {
+    "en": "How fast it turns into cash",
+    "es": "En cuánto tiempo se vuelve dinero"
+  },
+  "{0} dá para resgatar a qualquer hora: cobre {1} meses dos seus gastos.": {
+    "en": "{0} can be withdrawn at any time: it covers {1} months of your spending.",
+    "es": "{0} se puede rescatar en cualquier momento: cubre {1} meses de tus gastos."
+  },
+  "{0} da carteira dá para resgatar a qualquer hora.": {
+    "en": "{0} of the portfolio can be withdrawn at any time.",
+    "es": "{0} de la cartera se puede rescatar en cualquier momento."
+  },
+  "a qualquer hora": {
+    "en": "at any time",
+    "es": "en cualquier momento"
+  },
+  "Liquidez é a rapidez com que um investimento vira dinheiro na conta. O que se negocia na bolsa conta como resgate rápido (mas o preço do dia pode ser ruim para vender); nos títulos, vale o que você informou: liquidez diária, só no vencimento ou um prazo depois do pedido.": {
+    "en": "Liquidity is how quickly an investment turns into money in your account. What trades on the exchange counts as quick to withdraw (though the day's price may be a bad one to sell at); for bonds, it's what you entered: daily liquidity, only at maturity, or a number of days after the request.",
+    "es": "La liquidez es la rapidez con que una inversión se convierte en dinero en la cuenta. Lo que se negocia en bolsa cuenta como rescate rápido (aunque el precio del día puede ser malo para vender); en los títulos vale lo que indicaste: liquidez diaria, solo al vencimiento o un plazo después de la solicitud."
+  },
+  "Seus gastos por mês (média)": {
+    "en": "Your spending per month (average)",
+    "es": "Tus gastos por mes (promedio)"
+  },
+  "{0} está em investimentos sem liquidez nem vencimento informados.": {
+    "en": "{0} is in investments with no liquidity or maturity entered.",
+    "es": "{0} está en inversiones sin liquidez ni vencimiento informados."
+  },
+  "Proventos em alta": {
+    "en": "Income on the rise",
+    "es": "Rendimientos en alza"
+  },
+  "Proventos em queda": {
+    "en": "Income falling",
+    "es": "Rendimientos en baja"
+  },
+  "Nos últimos 3 meses você recebeu {0}: {1} a mais que nos 3 anteriores.": {
+    "en": "In the last 3 months you received {0}: {1} more than in the 3 before.",
+    "es": "En los últimos 3 meses recibiste {0}: {1} más que en los 3 anteriores."
+  },
+  "Nos últimos 3 meses você recebeu {0}: {1} a menos que nos 3 anteriores.": {
+    "en": "In the last 3 months you received {0}: {1} less than in the 3 before.",
+    "es": "En los últimos 3 meses recibiste {0}: {1} menos que en los 3 anteriores."
+  },
+  "Compara o que entrou de dividendos, rendimentos e juros nos três últimos meses fechados com os três anteriores. Proventos variam com o calendário de cada empresa e fundo: um trimestre não faz tendência sozinho, mas mostra a direção.": {
+    "en": "Compares what came in as dividends, distributions and interest in the last three closed months with the three before. Income varies with each company's and fund's calendar: one quarter doesn't make a trend, but it shows the direction.",
+    "es": "Compara lo que entró en dividendos, rendimientos e intereses en los tres últimos meses cerrados con los tres anteriores. Los rendimientos varían con el calendario de cada empresa y fondo: un trimestre no hace tendencia por sí solo, pero muestra la dirección."
+  },
+  "Últimos 3 meses": {
+    "en": "Last 3 months",
+    "es": "Últimos 3 meses"
+  },
+  "3 meses anteriores": {
+    "en": "Previous 3 months",
+    "es": "3 meses anteriores"
+  },
+  "Em 12 meses": {
+    "en": "In 12 months",
+    "es": "En 12 meses"
+  },
+  "Últimos 6 meses fechados": {
+    "en": "Last 6 closed months",
+    "es": "Últimos 6 meses cerrados"
+  },
+  "Em 12 meses: {0} em proventos e juros, cerca de {1} por mês.": {
+    "en": "In 12 months: {0} in income and interest, about {1} per month.",
+    "es": "En 12 meses: {0} en rendimientos e intereses, unos {1} por mes."
+  },
+  "recebidos em 12 meses": {
+    "en": "received in 12 months",
+    "es": "recibidos en 12 meses"
+  },
+  "Soma os proventos (dividendos, juros sobre capital e rendimentos) e os juros recebidos em dinheiro nos últimos 12 meses, já sem o imposto retido que você informou. É renda que saiu da carteira para a sua conta: se você reinvestiu, o valor voltou como uma nova compra, e não é contado duas vezes.": {
+    "en": "Adds up the income (dividends, interest on equity and distributions) and the interest received in cash over the last 12 months, net of the withholding tax you entered. It is income that left the portfolio for your account: if you reinvested, the amount came back as a new purchase and is not counted twice.",
+    "es": "Suma los rendimientos (dividendos, intereses sobre capital y distribuciones) y los intereses recibidos en efectivo en los últimos 12 meses, ya sin el impuesto retenido que indicaste. Es renta que salió de la cartera hacia tu cuenta: si reinvertiste, el valor volvió como una compra nueva y no se cuenta dos veces."
+  },
+  "Recebido em 12 meses": {
+    "en": "Received in 12 months",
+    "es": "Recibido en 12 meses"
+  },
+  "Média por mês": {
+    "en": "Average per month",
+    "es": "Promedio por mes"
+  },
+  "Sobre o valor da carteira hoje": {
+    "en": "On the portfolio's value today",
+    "es": "Sobre el valor de la cartera hoy"
+  },
+  "{0} ao ano": {
+    "en": "{0} per year",
+    "es": "{0} al año"
+  },
+  "Últimos 12 meses": {
+    "en": "Last 12 months",
+    "es": "Últimos 12 meses"
+  },
+  "Ver o planejamento": {
+    "en": "See the plan",
+    "es": "Ver la planificación"
+  },
+  "Sua renda dos investimentos": {
+    "en": "Your investment income",
+    "es": "Tu renta de las inversiones"
+  },
+  "A carteira paga em média {0} por mês: {1} dos {2} que você quer.": {
+    "en": "The portfolio pays {0} per month on average: {1} of the {2} you want.",
+    "es": "La cartera paga en promedio {0} por mes: {1} de los {2} que quieres."
+  },
+  "por mês, em média": {
+    "en": "per month, on average",
+    "es": "por mes, en promedio"
+  },
+  "Sua meta de renda": {
+    "en": "Your income goal",
+    "es": "Tu meta de renta"
+  },
+  "Compara a média mensal do que a carteira pagou nos últimos 12 meses com a renda mensal que você definiu no planejamento. A projeção do patrimônio necessário supõe que o retorno em proventos continue como foi nos últimos 12 meses, o que não é garantido.": {
+    "en": "Compares the monthly average of what the portfolio paid over the last 12 months with the monthly income you set in your plan. The projection of the net worth needed assumes the income yield stays as it was over the last 12 months, which is not guaranteed.",
+    "es": "Compara el promedio mensual de lo que pagó la cartera en los últimos 12 meses con la renta mensual que definiste en la planificación. La proyección del patrimonio necesario supone que el retorno en rendimientos siga como fue en los últimos 12 meses, lo que no está garantizado."
+  },
+  "Média por mês (12 meses)": {
+    "en": "Average per month (12 months)",
+    "es": "Promedio por mes (12 meses)"
+  },
+  "Renda que você quer": {
+    "en": "Income you want",
+    "es": "Renta que quieres"
+  },
+  "Patrimônio para isso, no retorno de hoje": {
+    "en": "Net worth needed, at today's yield",
+    "es": "Patrimonio para eso, con el retorno de hoy"
+  },
+  "É uma conta com o que já aconteceu: proventos futuros podem ser maiores ou menores.": {
+    "en": "It's a calculation with what has already happened: future income may be higher or lower.",
+    "es": "Es un cálculo con lo que ya pasó: los rendimientos futuros pueden ser mayores o menores."
+  },
+  "Parte em outra moeda": {
+    "en": "Part in another currency",
+    "es": "Parte en otra moneda"
+  },
+  "{0} da carteira está em outras moedas. O câmbio já somou {1} ao resultado.": {
+    "en": "{0} of the portfolio is in other currencies. Exchange rates have added {1} to the result.",
+    "es": "{0} de la cartera está en otras monedas. El tipo de cambio ya sumó {1} al resultado."
+  },
+  "{0} da carteira está em outras moedas. O câmbio já tirou {1} do resultado.": {
+    "en": "{0} of the portfolio is in other currencies. Exchange rates have taken {1} off the result.",
+    "es": "{0} de la cartera está en otras monedas. El tipo de cambio ya restó {1} al resultado."
+  },
+  "{0} da carteira está em outras moedas.": {
+    "en": "{0} of the portfolio is in other currencies.",
+    "es": "{0} de la cartera está en otras monedas."
+  },
+  "em outras moedas": {
+    "en": "in other currencies",
+    "es": "en otras monedas"
+  },
+  "O valor desses investimentos na sua moeda muda com a cotação, mesmo que o ativo fique parado. O resultado separa as duas coisas: quanto o ativo rendeu na moeda dele e quanto veio só do câmbio (a diferença entre a cotação de hoje e a de cada compra). Operações sem cotação informada usam a cotação de hoje, e o câmbio delas fica zerado.": {
+    "en": "The value of these investments in your currency changes with the exchange rate, even if the asset stands still. The result separates the two: how much the asset earned in its own currency and how much came only from the exchange rate (the difference between today's rate and each purchase's). Transactions with no rate entered use today's rate, and their currency effect is zero.",
+    "es": "El valor de estas inversiones en tu moneda cambia con la cotización, aunque el activo no se mueva. El resultado separa las dos cosas: cuánto rindió el activo en su moneda y cuánto vino solo del tipo de cambio (la diferencia entre la cotización de hoy y la de cada compra). Las operaciones sin cotización informada usan la de hoy, y su efecto cambiario queda en cero."
+  },
+  "Resultado só do câmbio": {
+    "en": "Result from exchange rate only",
+    "es": "Resultado solo del tipo de cambio"
+  },
+  "Suas operações no Invest e a cotação do dia": {
+    "en": "Your transactions in Invest and today's exchange rate",
+    "es": "Tus operaciones en Invest y la cotización del día"
+  },
+  "A carteira mudou de cara": {
+    "en": "The portfolio changed shape",
+    "es": "La cartera cambió de forma"
+  },
+  "{0} foi de {1} para {2} da carteira em 90 dias.": {
+    "en": "{0} went from {1} to {2} of the portfolio in 90 days.",
+    "es": "{0} pasó de {1} a {2} de la cartera en 90 días."
+  },
+  "Compara a divisão da carteira por tipo de investimento hoje com a de 90 dias atrás. A fatia de um tipo muda quando você aporta ou resgata nele, e também quando ele rende mais ou menos que o resto.": {
+    "en": "Compares the portfolio's split by investment type today with that of 90 days ago. A type's share changes when you add to or withdraw from it, and also when it earns more or less than the rest.",
+    "es": "Compara la división de la cartera por tipo de inversión hoy con la de hace 90 días. La porción de un tipo cambia cuando aportas o rescatas en él, y también cuando rinde más o menos que el resto."
+  },
+  "Aportes abaixo do plano": {
+    "en": "Contributions below plan",
+    "es": "Aportes por debajo del plan"
+  },
+  "Aportes no ritmo do plano": {
+    "en": "Contributions on plan",
+    "es": "Aportes al ritmo del plan"
+  },
+  "Seu ritmo de aportes": {
+    "en": "Your contribution pace",
+    "es": "Tu ritmo de aportes"
+  },
+  "Você tem aportado {0} por mês. O plano é {1}.": {
+    "en": "You've been contributing {0} per month. The plan is {1}.",
+    "es": "Has aportado {0} por mes. El plan es {1}."
+  },
+  "Você aportou em {0} dos últimos 6 meses: {1} por mês, em média.": {
+    "en": "You contributed in {0} of the last 6 months: {1} per month, on average.",
+    "es": "Aportaste en {0} de los últimos 6 meses: {1} por mes, en promedio."
+  },
+  "Aporte é dinheiro novo entrando na carteira: compras e aplicações, menos vendas e resgates. A média olha os últimos meses fechados e deixa de fora o mês em que a carteira foi cadastrada, que costuma trazer tudo de uma vez.": {
+    "en": "A contribution is new money going into the portfolio: purchases and deposits, minus sales and withdrawals. The average looks at the last closed months and leaves out the month the portfolio was set up, which usually brings everything in at once.",
+    "es": "Un aporte es dinero nuevo que entra en la cartera: compras y aplicaciones, menos ventas y rescates. El promedio mira los últimos meses cerrados y deja fuera el mes en que se registró la cartera, que suele traer todo de una vez."
+  },
+  "Meses com aporte (últimos 6)": {
+    "en": "Months with a contribution (last 6)",
+    "es": "Meses con aporte (últimos 6)"
+  },
+  "{0} de 6": {
+    "en": "{0} of 6",
+    "es": "{0} de 6"
+  },
+  "Este mês até agora": {
+    "en": "This month so far",
+    "es": "Este mes hasta ahora"
+  },
+  "Aporte planejado": {
+    "en": "Planned contribution",
+    "es": "Aporte planificado"
+  },
+  "Definir um aporte por mês": {
+    "en": "Set a monthly contribution",
+    "es": "Definir un aporte por mes"
+  },
+  "O aporte passa da sobra": {
+    "en": "Contribution exceeds what's left",
+    "es": "El aporte supera lo que sobra"
+  },
+  "O aporte é de {0} por mês, mas costuma sobrar {1}.": {
+    "en": "The contribution is {0} per month, but usually {1} is left over.",
+    "es": "El aporte es de {0} por mes, pero suele sobrar {1}."
+  },
+  "Sobra por mês": {
+    "en": "Left over per month",
+    "es": "Sobra por mes"
+  },
+  "Aporte por mês": {
+    "en": "Contribution per month",
+    "es": "Aporte por mes"
+  },
+  "Pelo seu orçamento no OpusCash (as entradas e saídas lançadas), a sobra média do mês é menor que o aporte. A diferença sai de algum lugar: de dinheiro que já estava guardado, ou de gastos e entradas que não foram lançados.": {
+    "en": "By your OpusCash budget (the income and expenses you entered), the month's average surplus is smaller than the contribution. The difference comes from somewhere: money already saved, or expenses and income that weren't entered.",
+    "es": "Según tu presupuesto en OpusCash (los ingresos y gastos registrados), el sobrante promedio del mes es menor que el aporte. La diferencia sale de algún lado: de dinero que ya estaba guardado, o de gastos e ingresos que no se registraron."
+  },
+  "Entra por mês (média)": {
+    "en": "Comes in per month (average)",
+    "es": "Entra por mes (promedio)"
+  },
+  "Sai por mês (média)": {
+    "en": "Goes out per month (average)",
+    "es": "Sale por mes (promedio)"
+  },
+  "Aporte médio": {
+    "en": "Average contribution",
+    "es": "Aporte promedio"
+  },
+  "Depende de as entradas e saídas do mês estarem lançadas.": {
+    "en": "Depends on the month's income and expenses being entered.",
+    "es": "Depende de que los ingresos y gastos del mes estén registrados."
+  },
+  "Média dos últimos meses": {
+    "en": "Average of the last months",
+    "es": "Promedio de los últimos meses"
+  },
+  "Seus lançamentos no OpusCash e suas operações no Invest": {
+    "en": "Your entries in OpusCash and your transactions in Invest",
+    "es": "Tus movimientos en OpusCash y tus operaciones en Invest"
+  },
+  "Meta de patrimônio batida": {
+    "en": "Net worth goal reached",
+    "es": "Meta de patrimonio alcanzada"
+  },
+  "Sua meta de patrimônio": {
+    "en": "Your net worth goal",
+    "es": "Tu meta de patrimonio"
+  },
+  "A carteira chegou a {0}, a meta que você definiu.": {
+    "en": "The portfolio reached {0}, the goal you set.",
+    "es": "La cartera llegó a {0}, la meta que definiste."
+  },
+  "{0} da meta. Nesse ritmo e rendendo {1}% ao ano, chega em {2}, depois do prazo ({3}).": {
+    "en": "{0} of the goal. At this pace and earning {1}% a year, it gets there in {2}, after the deadline ({3}).",
+    "es": "{0} de la meta. A este ritmo y rindiendo {1}% al año, llega en {2}, después del plazo ({3})."
+  },
+  "{0} da meta. Nesse ritmo e rendendo {1}% ao ano, chega em {2}.": {
+    "en": "{0} of the goal. At this pace and earning {1}% a year, it gets there in {2}.",
+    "es": "{0} de la meta. A este ritmo y rindiendo {1}% al año, llega en {2}."
+  },
+  "{0} da meta de {1}.": {
+    "en": "{0} of the {1} goal.",
+    "es": "{0} de la meta de {1}."
+  },
+  "investidos": {
+    "en": "invested",
+    "es": "invertidos"
+  },
+  "Meta": {
+    "en": "Goal",
+    "es": "Meta"
+  },
+  "Mostra o quanto do patrimônio investido que você quer já está na carteira. A data de chegada é uma projeção: usa o aporte por mês e a hipótese de rendimento do cenário base do seu planejamento. Não é promessa: se render menos ou os aportes mudarem, a data muda.": {
+    "en": "Shows how much of the invested net worth you want is already in the portfolio. The arrival date is a projection: it uses the monthly contribution and the return assumption of your plan's base scenario. It is not a promise: if it earns less or contributions change, the date changes.",
+    "es": "Muestra cuánto del patrimonio invertido que quieres ya está en la cartera. La fecha de llegada es una proyección: usa el aporte por mes y la hipótesis de rendimiento del escenario base de tu planificación. No es una promesa: si rinde menos o los aportes cambian, la fecha cambia."
+  },
+  "Carteira hoje": {
+    "en": "Portfolio today",
+    "es": "Cartera hoy"
+  },
+  "Aporte usado na conta": {
+    "en": "Contribution used in the calculation",
+    "es": "Aporte usado en el cálculo"
+  },
+  "Hipótese de rendimento": {
+    "en": "Return assumption",
+    "es": "Hipótesis de rendimiento"
+  },
+  "{0}% ao ano": {
+    "en": "{0}% per year",
+    "es": "{0}% al año"
+  },
+  "Para chegar no prazo": {
+    "en": "To get there on time",
+    "es": "Para llegar a tiempo"
+  },
+  "Projeção com hipóteses: o resultado de verdade pode ser diferente.": {
+    "en": "Projection based on assumptions: the real result may differ.",
+    "es": "Proyección con hipótesis: el resultado real puede ser distinto."
+  },
+  "De hoje até a meta": {
+    "en": "From today to the goal",
+    "es": "De hoy hasta la meta"
+  },
+  "Valendo menos que o custo": {
+    "en": "Worth less than cost",
+    "es": "Vale menos que el costo"
+  },
+  "{0} vale {1} e custou {2}.": {
+    "en": "{0} is worth {1} and cost {2}.",
+    "es": "{0} vale {1} y costó {2}."
+  },
+  "{0} ativos valem menos do que custaram. O maior: {1}.": {
+    "en": "{0} assets are worth less than they cost. The largest: {1}.",
+    "es": "{0} activos valen menos de lo que costaron. El mayor: {1}."
+  },
+  "Compara o custo de aquisição do que você ainda tem (custo médio, com as taxas) com o valor pelo último preço conhecido. É uma perda só no papel enquanto você não vende, e não conta os proventos que o ativo já pagou.": {
+    "en": "Compares the acquisition cost of what you still hold (average cost, with fees) with the value at the last known price. It is only a paper loss while you don't sell, and it doesn't count the income the asset has already paid.",
+    "es": "Compara el costo de adquisición de lo que aún tienes (costo promedio, con las comisiones) con el valor al último precio conocido. Es una pérdida solo en el papel mientras no vendas, y no cuenta los rendimientos que el activo ya pagó."
+  },
+  "Ver o ativo": {
+    "en": "See the asset",
+    "es": "Ver el activo"
+  },
+  "Valorização": {
+    "en": "Appreciation",
+    "es": "Valorización"
+  },
+  "Já vendido": {
+    "en": "Already sold",
+    "es": "Ya vendido"
+  },
+  "Proventos": {
+    "en": "Income",
+    "es": "Rendimientos"
+  },
+  "Do resultado de {0}, a maior parte vem de: {1}.": {
+    "en": "Of the {0} result, most comes from: {1}.",
+    "es": "Del resultado de {0}, la mayor parte viene de: {1}."
+  },
+  "resultado": {
+    "en": "result",
+    "es": "resultado"
+  },
+  "O resultado de uma carteira tem três partes: o quanto o que você ainda tem vale acima do custo (só vira dinheiro se vender), o que você ganhou ou perdeu no que já vendeu ou resgatou, e os proventos e juros recebidos em dinheiro.": {
+    "en": "A portfolio's result has three parts: how much what you still hold is worth above its cost (it only becomes money if you sell), what you gained or lost on what you already sold or withdrew, and the income and interest received in cash.",
+    "es": "El resultado de una cartera tiene tres partes: cuánto vale lo que aún tienes por encima del costo (solo se vuelve dinero si vendes), lo que ganaste o perdiste en lo que ya vendiste o rescataste, y los rendimientos e intereses recibidos en efectivo."
+  },
+  "Valorização do que você tem": {
+    "en": "Appreciation of what you hold",
+    "es": "Valorización de lo que tienes"
+  },
+  "Ganho no que já vendeu": {
+    "en": "Gain on what you sold",
+    "es": "Ganancia en lo que ya vendiste"
+  },
+  "Proventos e juros": {
+    "en": "Income and interest",
+    "es": "Rendimientos e intereses"
+  },
+  "Resultado total": {
+    "en": "Total result",
+    "es": "Resultado total"
+  },
+  "Parte do valor é estimativa": {
+    "en": "Part of the value is an estimate",
+    "es": "Parte del valor es una estimación"
+  },
+  "{0} da carteira é estimado pela taxa de cada título, antes do imposto.": {
+    "en": "{0} of the portfolio is estimated from each bond's rate, before tax.",
+    "es": "{0} de la cartera se estima por la tasa de cada título, antes de impuestos."
+  },
+  "estimado": {
+    "en": "estimated",
+    "es": "estimado"
+  },
+  "Estimado pela taxa": {
+    "en": "Estimated from the rate",
+    "es": "Estimado por la tasa"
+  },
+  "Preço ou saldo informado": {
+    "en": "Price or balance entered",
+    "es": "Precio o saldo informado"
+  },
+  "Quando um título tem a taxa informada (prefixado, % do CDI, IPCA+), o app calcula quanto ele rendeu desde a aplicação com os índices oficiais do Banco Central. É uma boa aproximação do valor bruto, mas não é o saldo da corretora: não desconta imposto nem considera a marcação a mercado. Informar o saldo de vez em quando corrige a conta.": {
+    "en": "When a bond has its rate entered (fixed rate, % of CDI, IPCA+), the app works out how much it has earned since the deposit using the Central Bank's official indices. It's a good approximation of the gross value, but it is not the broker's balance: it doesn't deduct tax or consider mark-to-market. Entering the balance now and then corrects the calculation.",
+    "es": "Cuando un título tiene la tasa informada (prefijado, % del CDI, IPCA+), la app calcula cuánto rindió desde la aplicación con los índices oficiales del Banco Central. Es una buena aproximación del valor bruto, pero no es el saldo del bróker: no descuenta impuestos ni considera la valoración a mercado. Informar el saldo de vez en cuando corrige el cálculo."
+  },
+  "Valores brutos, antes do imposto de renda.": {
+    "en": "Gross values, before income tax.",
+    "es": "Valores brutos, antes del impuesto a la renta."
+  },
+  "Suas operações no Invest e os índices do Banco Central": {
+    "en": "Your transactions in Invest and the Central Bank's indices",
+    "es": "Tus operaciones en Invest y los índices del Banco Central"
+  },
+  "Informar os saldos": {
+    "en": "Enter the balances",
+    "es": "Informar los saldos"
+  },
+  "Seu valor antigo foi mantido": {
+    "en": "Your old value was kept",
+    "es": "Tu valor anterior se mantuvo"
+  },
+  "Os {0} que você informava à mão continuam somados à carteira.": {
+    "en": "The {0} you used to enter by hand is still added to the portfolio.",
+    "es": "Los {0} que informabas a mano siguen sumados a la cartera."
+  },
+  "Os {0} que você informava à mão ficaram como histórico até {1}.": {
+    "en": "The {0} you used to enter by hand was kept as history until {1}.",
+    "es": "Los {0} que informabas a mano quedaron como historial hasta {1}."
+  },
+  "informados à mão em {0}": {
+    "en": "entered by hand in {0}",
+    "es": "informados a mano en {0}"
+  },
+  "Antes do Invest, o valor investido era um número só, digitado por mês. Você disse que ele é de investimentos que não estão cadastrados aqui, então o patrimônio soma os dois.": {
+    "en": "Before Invest, the invested amount was a single number, typed in each month. You said it belongs to investments that aren't registered here, so your net worth adds the two.",
+    "es": "Antes de Invest, el valor invertido era un solo número, escrito cada mes. Dijiste que es de inversiones que no están registradas aquí, así que el patrimonio suma los dos."
+  },
+  "Antes do Invest, o valor investido era um número só, digitado por mês. Ele não foi apagado nem virou um investimento inventado: vale como histórico até o mês anterior à sua primeira operação. A partir daí, o patrimônio usa a carteira, para o mesmo dinheiro não contar duas vezes. Se aquele número é de outros investimentos, dá para somar os dois no planejamento.": {
+    "en": "Before Invest, the invested amount was a single number, typed in each month. It wasn't deleted or turned into a made-up investment: it stands as history up to the month before your first transaction. From then on, net worth uses the portfolio, so the same money isn't counted twice. If that number belongs to other investments, you can add the two in the plan.",
+    "es": "Antes de Invest, el valor invertido era un solo número, escrito cada mes. No se borró ni se convirtió en una inversión inventada: vale como historial hasta el mes anterior a tu primera operación. Desde ahí, el patrimonio usa la cartera, para que el mismo dinero no se cuente dos veces. Si ese número es de otras inversiones, puedes sumar los dos en la planificación."
+  },
+  "Último valor digitado": {
+    "en": "Last value typed",
+    "es": "Último valor escrito"
+  },
+  "O que você informava em Dinheiro guardado": {
+    "en": "What you used to enter in Savings",
+    "es": "Lo que informabas en Dinero guardado"
+  },
+  "Escolher como contar": {
+    "en": "Choose how to count it",
+    "es": "Elegir cómo contarlo"
+  },
+  "Movimentação da B3": {
+    "en": "B3 transactions statement",
+    "es": "Movimientos de la B3"
+  },
+  "Negociação da B3": {
+    "en": "B3 trades statement",
+    "es": "Negociación de la B3"
+  },
+  "Posição": {
+    "en": "Position",
+    "es": "Posición"
+  },
+  "Tabela de operações": {
+    "en": "Transactions table",
+    "es": "Tabla de operaciones"
+  },
+  "{0}, linha {1}": {
+    "en": "{0}, line {1}",
+    "es": "{0}, línea {1}"
+  },
+  "Linha {0}": {
+    "en": "Line {0}",
+    "es": "Línea {0}"
+  },
+  "Não achei o valor desta posição.": {
+    "en": "I couldn't find this position's value.",
+    "es": "No encontré el valor de esta posición."
+  },
+  "Não entendi a data desta linha.": {
+    "en": "I couldn't understand this line's date.",
+    "es": "No entendí la fecha de esta línea."
+  },
+  "O app ainda não entende a movimentação “{0}”.": {
+    "en": "The app doesn't understand the “{0}” entry yet.",
+    "es": "La app todavía no entiende el movimiento “{0}”."
+  },
+  "A linha não diz se é compra, venda ou outro tipo de operação.": {
+    "en": "The line doesn't say whether it's a purchase, a sale or another type of transaction.",
+    "es": "La línea no dice si es compra, venta u otro tipo de operación."
+  },
+  "Falta a quantidade desta operação.": {
+    "en": "This transaction's quantity is missing.",
+    "es": "Falta la cantidad de esta operación."
+  },
+  "Não achei o valor desta operação.": {
+    "en": "I couldn't find this transaction's amount.",
+    "es": "No encontré el valor de esta operación."
+  },
+  "Não reconhecido": {
+    "en": "Not recognized",
+    "es": "No reconocido"
+  },
+  "Não achei o código do ativo nesta linha.": {
+    "en": "I couldn't find the asset's ticker on this line.",
+    "es": "No encontré el código del activo en esta línea."
+  },
+  "Quantidade, preço e valor desta linha não fecham entre si.": {
+    "en": "Quantity, price and amount on this line don't add up.",
+    "es": "Cantidad, precio y valor de esta línea no cuadran entre sí."
+  },
+  "PDF (leitura parcial)": {
+    "en": "PDF (partial reading)",
+    "es": "PDF (lectura parcial)"
+  },
+  "Venda maior que a posição conhecida: pode faltar uma compra anterior ao período deste arquivo.": {
+    "en": "Sale larger than the known position: a purchase from before this file's period may be missing.",
+    "es": "Venta mayor que la posición conocida: puede faltar una compra anterior al período de este archivo."
+  },
+  "Esse arquivo passa de 15 MB. Exporte um período menor.": {
+    "en": "This file is over 15 MB. Export a shorter period.",
+    "es": "Este archivo supera los 15 MB. Exporta un período más corto."
+  },
+  "Esse tipo de arquivo ainda não dá para ler. Use Excel (.xlsx), CSV ou PDF.": {
+    "en": "This file type can't be read yet. Use Excel (.xlsx), CSV or PDF.",
+    "es": "Este tipo de archivo aún no se puede leer. Usa Excel (.xlsx), CSV o PDF."
+  },
+  "Renda fixa": {
+    "en": "Fixed income",
+    "es": "Renta fija"
+  },
+  "Ações": {
+    "en": "Stocks",
+    "es": "Acciones"
+  },
+  "Fundos imobiliários": {
+    "en": "Real estate funds",
+    "es": "Fondos inmobiliarios"
+  },
+  "ETFs": {
+    "en": "ETFs",
+    "es": "ETF"
+  },
+  "Fundos de investimento": {
+    "en": "Investment funds",
+    "es": "Fondos de inversión"
+  },
+  "Investimentos no exterior": {
+    "en": "Investments abroad",
+    "es": "Inversiones en el exterior"
+  },
+  "Previdência": {
+    "en": "Pension plan",
+    "es": "Plan de pensiones"
+  },
+  "Criptoativos": {
+    "en": "Crypto",
+    "es": "Criptoactivos"
+  },
+  "Outros": {
+    "en": "Other",
+    "es": "Otros"
+  },
+  "Tesouro Selic": {
+    "en": "Tesouro Selic",
+    "es": "Tesouro Selic"
+  },
+  "Tesouro Prefixado": {
+    "en": "Tesouro Prefixado",
+    "es": "Tesouro Prefixado"
+  },
+  "Tesouro IPCA+": {
+    "en": "Tesouro IPCA+",
+    "es": "Tesouro IPCA+"
+  },
+  "Debênture": {
+    "en": "Debenture",
+    "es": "Debenture"
+  },
+  "Poupança": {
+    "en": "Savings account",
+    "es": "Cuenta de ahorro"
+  },
+  "Outro título": {
+    "en": "Other bond",
+    "es": "Otro título"
+  },
+  "Prefixado": {
+    "en": "Fixed rate",
+    "es": "Tasa fija"
+  },
+  "% do CDI": {
+    "en": "% of CDI",
+    "es": "% del CDI"
+  },
+  "% da Selic": {
+    "en": "% of Selic",
+    "es": "% de la Selic"
+  },
+  "IPCA +": {
+    "en": "IPCA +",
+    "es": "IPCA +"
+  },
+  "Aplicação": {
+    "en": "Deposit",
+    "es": "Aplicación"
+  },
+  "Resgate": {
+    "en": "Withdrawal",
+    "es": "Rescate"
+  },
+  "Venda": {
+    "en": "Sale",
+    "es": "Venta"
+  },
+  "Provento": {
+    "en": "Income",
+    "es": "Rendimiento"
+  },
+  "Juros recebidos": {
+    "en": "Interest received",
+    "es": "Intereses recibidos"
+  },
+  "Amortização": {
+    "en": "Capital return",
+    "es": "Amortización"
+  },
+  "Taxa": {
+    "en": "Fee",
+    "es": "Comisión"
+  },
+  "Imposto": {
+    "en": "Tax",
+    "es": "Impuesto"
+  },
+  "Desdobramento": {
+    "en": "Stock split",
+    "es": "Desdoblamiento"
+  },
+  "Grupamento": {
+    "en": "Reverse split",
+    "es": "Agrupamiento"
+  },
+  "Bonificação": {
+    "en": "Bonus shares",
+    "es": "Bonificación"
+  },
+  "Transferência de instituição": {
+    "en": "Transfer between institutions",
+    "es": "Traspaso de institución"
+  },
+  "Ajuste": {
+    "en": "Adjustment",
+    "es": "Ajuste"
+  },
+  "Dividendo": {
+    "en": "Dividend",
+    "es": "Dividendo"
+  },
+  "Juros sobre capital próprio": {
+    "en": "Interest on equity",
+    "es": "Intereses sobre capital propio"
+  },
+  "Outro": {
+    "en": "Other",
+    "es": "Otro"
+  },
+  "A sua carteira no Invest: cada investimento, quanto rendeu de verdade, proventos, vencimentos e o plano de aportes.": {
+    "en": "Your portfolio in Invest: each investment, how much it really earned, income, maturities and the contribution plan.",
+    "es": "Tu cartera en Invest: cada inversión, cuánto rindió de verdad, rendimientos, vencimientos y el plan de aportes."
+  },
+  "Sem instituição": {
+    "en": "No institution",
+    "es": "Sin institución"
+  },
+  "A qualquer hora": {
+    "en": "At any time",
+    "es": "En cualquier momento"
+  },
+  "Em até 30 dias": {
+    "en": "Within 30 days",
+    "es": "En hasta 30 días"
+  },
+  "Em até 1 ano": {
+    "en": "Within 1 year",
+    "es": "En hasta 1 año"
+  },
+  "Mais de 1 ano": {
+    "en": "More than 1 year",
+    "es": "Más de 1 año"
+  },
+  "Sem prazo informado": {
+    "en": "No term entered",
+    "es": "Sin plazo informado"
+  },
+  "Carteira do Invest": {
+    "en": "Invest portfolio",
+    "es": "Cartera de Invest"
+  },
+  "Os investimentos cadastrados no Invest, com as operações, os valores informados, os arquivos importados e o plano.": {
+    "en": "The investments registered in Invest, with their transactions, entered values, imported files and the plan.",
+    "es": "Las inversiones registradas en Invest, con las operaciones, los valores informados, los archivos importados y el plan."
+  },
+  "Por que estou vendo isso?": {
+    "en": "Why am I seeing this?",
+    "es": "¿Por qué veo esto?"
+  },
+  "Visão geral": {
+    "en": "Overview",
+    "es": "Resumen"
+  },
+  "Análises": {
+    "en": "Insights",
+    "es": "Análisis"
+  },
+  "Planejamento": {
+    "en": "Planning",
+    "es": "Planificación"
+  },
+  "Importar arquivo": {
+    "en": "Import file",
+    "es": "Importar archivo"
+  },
+  "Novo investimento": {
+    "en": "New investment",
+    "es": "Nueva inversión"
+  },
+  "A sua carteira de investimentos.": {
+    "en": "Your investment portfolio.",
+    "es": "Tu cartera de inversiones."
+  },
+  "Para usar o Invest, falta atualizar o banco de dados: rode": {
+    "en": "To use Invest, the database needs updating: run",
+    "es": "Para usar Invest, falta actualizar la base de datos: ejecuta"
+  },
+  "Abrindo a sua carteira…": {
+    "en": "Opening your portfolio…",
+    "es": "Abriendo tu cartera…"
+  },
+  "Comece pelo primeiro investimento": {
+    "en": "Start with your first investment",
+    "es": "Empieza por tu primera inversión"
+  },
+  "Cadastre um CDB, um título do Tesouro, uma ação ou um fundo e registre o que você aplicou. Daí em diante o app acompanha quanto vale, quanto rendeu de verdade e o que vem pela frente.": {
+    "en": "Register a CDB, a Treasury bond, a stock or a fund and record what you invested. From then on the app tracks how much it's worth, how much it really earned and what's ahead.",
+    "es": "Registra un CDB, un título del Tesoro, una acción o un fondo y anota lo que invertiste. Desde ahí la app sigue cuánto vale, cuánto rindió de verdad y lo que viene."
+  },
+  "Cadastrar um investimento": {
+    "en": "Add an investment",
+    "es": "Registrar una inversión"
+  },
+  "Importar um arquivo da corretora": {
+    "en": "Import a file from your broker",
+    "es": "Importar un archivo del bróker"
+  },
+  "Aporte não é rendimento: o app separa o que você pôs do que o dinheiro rendeu.": {
+    "en": "A contribution is not a return: the app separates what you put in from what the money earned.",
+    "es": "Un aporte no es rendimiento: la app separa lo que pusiste de lo que rindió el dinero."
+  },
+  "O valor investido entra no seu patrimônio uma vez só, sem contar o mesmo dinheiro em dobro.": {
+    "en": "The invested amount goes into your net worth only once, without counting the same money twice.",
+    "es": "El valor invertido entra en tu patrimonio una sola vez, sin contar el mismo dinero dos veces."
+  },
+  "É para acompanhar e entender. O OpusCash não compra, não vende e não recomenda investimentos.": {
+    "en": "It's for tracking and understanding. OpusCash doesn't buy, sell or recommend investments.",
+    "es": "Es para seguir y entender. OpusCash no compra, no vende ni recomienda inversiones."
+  },
+  "Os {0} que você informou como investido em {1} continuam valendo até você cadastrar a primeira operação aqui.": {
+    "en": "The {0} you entered as invested in {1} still stands until you record your first transaction here.",
+    "es": "Los {0} que informaste como invertido en {1} siguen valiendo hasta que registres la primera operación aquí."
+  },
+  "Quanto você tem, quanto rendeu de verdade e o que vem pela frente.": {
+    "en": "How much you have, how much it really earned and what's ahead.",
+    "es": "Cuánto tienes, cuánto rindió de verdad y lo que viene."
+  },
+  "Seções do Invest": {
+    "en": "Invest sections",
+    "es": "Secciones de Invest"
+  },
+  "1 linha de um arquivo importado ficou para você revisar.": {
+    "en": "1 line from an imported file is waiting for your review.",
+    "es": "1 línea de un archivo importado quedó para que la revises."
+  },
+  "{0} linhas de arquivos importados ficaram para você revisar.": {
+    "en": "{0} lines from imported files are waiting for your review.",
+    "es": "{0} líneas de archivos importados quedaron para que las revises."
+  },
+  "Revisar": {
+    "en": "Review",
+    "es": "Revisar"
+  },
+  "Ainda não temos a cotação de {0}: os investimentos nessa moeda ficam fora dos totais por enquanto.": {
+    "en": "We don't have the exchange rate for {0} yet: investments in that currency are left out of the totals for now.",
+    "es": "Todavía no tenemos la cotización de {0}: las inversiones en esa moneda quedan fuera de los totales por ahora."
+  },
+  "O Invest serve para acompanhar e entender os seus investimentos. Não é recomendação de compra ou venda, e projeções não são garantia de resultado.": {
+    "en": "Invest is for tracking and understanding your investments. It is not a recommendation to buy or sell, and projections are no guarantee of results.",
+    "es": "Invest sirve para seguir y entender tus inversiones. No es una recomendación de compra o venta, y las proyecciones no garantizan resultados."
+  },
+  "Vem da sua carteira no Invest, pelo valor no fim do mês.": {
+    "en": "Comes from your portfolio in Invest, at its month-end value.",
+    "es": "Viene de tu cartera en Invest, por el valor al fin del mes."
+  },
+  "Abrir o Invest": {
+    "en": "Open Invest",
+    "es": "Abrir Invest"
+  },
+  "Detalhar no Invest": {
+    "en": "Detail it in Invest",
+    "es": "Detallar en Invest"
+  },
+  "Concentração": {
+    "en": "Concentration",
+    "es": "Concentración"
+  },
+  "Renda": {
+    "en": "Income",
+    "es": "Renta"
+  },
+  "Prazos": {
+    "en": "Terms",
+    "es": "Plazos"
+  },
+  "Plano": {
+    "en": "Plan",
+    "es": "Plan"
+  },
+  "Maior ativo": {
+    "en": "Largest asset",
+    "es": "Mayor activo"
+  },
+  "Resgate a qualquer hora": {
+    "en": "Withdraw at any time",
+    "es": "Rescate en cualquier momento"
+  },
+  "Valores em dia": {
+    "en": "Values up to date",
+    "es": "Valores al día"
+  },
+  "os números de hoje são confiáveis": {
+    "en": "today's numbers are reliable",
+    "es": "los números de hoy son confiables"
+  },
+  "atualize para os números ficarem certos": {
+    "en": "update so the numbers are right",
+    "es": "actualiza para que los números queden bien"
+  },
+  "O retrato da carteira": {
+    "en": "The portfolio at a glance",
+    "es": "El retrato de la cartera"
+  },
+  "Atualizar valores": {
+    "en": "Update values",
+    "es": "Actualizar valores"
+  },
+  "Ainda não há o que analisar": {
+    "en": "Nothing to analyze yet",
+    "es": "Todavía no hay qué analizar"
+  },
+  "As análises aparecem conforme você registra operações e atualiza os valores. Só sai o que os seus números sustentam.": {
+    "en": "Insights appear as you record transactions and update values. Only what your numbers support is shown.",
+    "es": "Los análisis aparecen a medida que registras operaciones y actualizas los valores. Solo sale lo que tus números respaldan."
+  },
+  "Voltar os cartões para a organização de antes": {
+    "en": "Put the cards back the way they were",
+    "es": "Volver las tarjetas a la organización anterior"
+  },
+  "Não deu para atualizar o CDI e a inflação agora: as estimativas e a comparação usam o que já estava guardado.": {
+    "en": "Couldn't update the CDI and inflation right now: estimates and the comparison use what was already stored.",
+    "es": "No se pudo actualizar el CDI y la inflación ahora: las estimaciones y la comparación usan lo que ya estaba guardado."
+  },
+  "Investido hoje": {
+    "en": "Invested today",
+    "es": "Invertido hoy"
+  },
+  "em 1 ativo": {
+    "en": "in 1 asset",
+    "es": "en 1 activo"
+  },
+  "em {0} ativos": {
+    "en": "in {0} assets",
+    "es": "en {0} activos"
+  },
+  "Você aportou": {
+    "en": "You contributed",
+    "es": "Aportaste"
+  },
+  "o que pôs, menos o que tirou": {
+    "en": "what you put in, minus what you took out",
+    "es": "lo que pusiste, menos lo que sacaste"
+  },
+  "Resultado até hoje": {
+    "en": "Result to date",
+    "es": "Resultado hasta hoy"
+  },
+  "{0} no que você tem, {1} já no bolso": {
+    "en": "{0} on what you hold, {1} already in your pocket",
+    "es": "{0} en lo que tienes, {1} ya en el bolsillo"
+  },
+  "Buscar por nome, código ou instituição": {
+    "en": "Search by name, ticker or institution",
+    "es": "Buscar por nombre, código o institución"
+  },
+  "Buscar investimento": {
+    "en": "Search investment",
+    "es": "Buscar inversión"
+  },
+  "Tipo de investimento": {
+    "en": "Investment type",
+    "es": "Tipo de inversión"
+  },
+  "Minha carteira": {
+    "en": "My portfolio",
+    "es": "Mi cartera"
+  },
+  "1 ativo": {
+    "en": "1 asset",
+    "es": "1 activo"
+  },
+  "{0} ativos": {
+    "en": "{0} assets",
+    "es": "{0} activos"
+  },
+  "Ordenar por": {
+    "en": "Sort by",
+    "es": "Ordenar por"
+  },
+  "Maior valor": {
+    "en": "Highest value",
+    "es": "Mayor valor"
+  },
+  "Maior resultado": {
+    "en": "Highest result",
+    "es": "Mayor resultado"
+  },
+  "Vencimento mais próximo": {
+    "en": "Nearest maturity",
+    "es": "Vencimiento más cercano"
+  },
+  "confira as operações": {
+    "en": "check the transactions",
+    "es": "revisa las operaciones"
+  },
+  "Encerrado": {
+    "en": "Closed",
+    "es": "Cerrado"
+  },
+  "da carteira": {
+    "en": "of the portfolio",
+    "es": "de la cartera"
+  },
+  "Nenhum investimento com esse filtro.": {
+    "en": "No investment matches this filter.",
+    "es": "Ninguna inversión con ese filtro."
+  },
+  "Nenhum investimento em aberto.": {
+    "en": "No open investments.",
+    "es": "Ninguna inversión abierta."
+  },
+  "Mostrar mais {0}": {
+    "en": "Show {0} more",
+    "es": "Mostrar {0} más"
+  },
+  "Esconder os encerrados": {
+    "en": "Hide closed ones",
+    "es": "Ocultar las cerradas"
+  },
+  "Mostrar 1 investimento encerrado": {
+    "en": "Show 1 closed investment",
+    "es": "Mostrar 1 inversión cerrada"
+  },
+  "Mostrar {0} investimentos encerrados": {
+    "en": "Show {0} closed investments",
+    "es": "Mostrar {0} inversiones cerradas"
+  },
+  "Registrar operação": {
+    "en": "Record transaction",
+    "es": "Registrar operación"
+  },
+  "Distribuição": {
+    "en": "Breakdown",
+    "es": "Distribución"
+  },
+  "Corretoras e bancos": {
+    "en": "Brokers and banks",
+    "es": "Brókers y bancos"
+  },
+  "Apagar esta operação? A posição, o custo e o resultado de {0} serão refeitos sem ela.": {
+    "en": "Delete this transaction? The position, cost and result of {0} will be recalculated without it.",
+    "es": "¿Borrar esta operación? La posición, el costo y el resultado de {0} se recalcularán sin ella."
+  },
+  "Apagar operação": {
+    "en": "Delete transaction",
+    "es": "Borrar operación"
+  },
+  "Movimentações": {
+    "en": "Transactions",
+    "es": "Movimientos"
+  },
+  "Buscar operação": {
+    "en": "Search transaction",
+    "es": "Buscar operación"
+  },
+  "{0} × {1}": {
+    "en": "{0} × {1}",
+    "es": "{0} × {1}"
+  },
+  "fator {0}": {
+    "en": "factor {0}",
+    "es": "factor {0}"
+  },
+  "taxas {0}": {
+    "en": "fees {0}",
+    "es": "comisiones {0}"
+  },
+  "imposto {0}": {
+    "en": "tax {0}",
+    "es": "impuesto {0}"
+  },
+  "previsto": {
+    "en": "expected",
+    "es": "previsto"
+  },
+  "importado": {
+    "en": "imported",
+    "es": "importado"
+  },
+  "posição inicial": {
+    "en": "opening position",
+    "es": "posición inicial"
+  },
+  "corrigido": {
+    "en": "corrected",
+    "es": "corregido"
+  },
+  "Corrigir operação": {
+    "en": "Correct transaction",
+    "es": "Corregir operación"
+  },
+  "Nenhuma operação por aqui.": {
+    "en": "No transactions here.",
+    "es": "Ninguna operación por aquí."
+  },
+  "Como rende": {
+    "en": "How it earns",
+    "es": "Cómo rinde"
+  },
+  "IPCA + {0}% ao ano": {
+    "en": "IPCA + {0}% per year",
+    "es": "IPCA + {0}% al año"
+  },
+  "{0}{1}": {
+    "en": "{0}{1}",
+    "es": "{0}{1}"
+  },
+  "Liquidez": {
+    "en": "Liquidity",
+    "es": "Liquidez"
+  },
+  "Todo dia": {
+    "en": "Every day",
+    "es": "Todos los días"
+  },
+  "Só no vencimento": {
+    "en": "Only at maturity",
+    "es": "Solo al vencimiento"
+  },
+  "{0} dias depois do pedido": {
+    "en": "{0} days after the request",
+    "es": "{0} días después de la solicitud"
+  },
+  "Instituição": {
+    "en": "Institution",
+    "es": "Institución"
+  },
+  "Emissor": {
+    "en": "Issuer",
+    "es": "Emisor"
+  },
+  "Setor": {
+    "en": "Sector",
+    "es": "Sector"
+  },
+  "{0} (1 = {1} hoje)": {
+    "en": "{0} (1 = {1} today)",
+    "es": "{0} (1 = {1} hoy)"
+  },
+  "Apagar {0} com todas as operações e valores informados? Isso não pode ser desfeito.": {
+    "en": "Delete {0} with all its transactions and entered values? This can't be undone.",
+    "es": "¿Borrar {0} con todas las operaciones y valores informados? Esto no se puede deshacer."
+  },
+  "Apagar investimento": {
+    "en": "Delete investment",
+    "es": "Borrar inversión"
+  },
+  "Apagar tudo": {
+    "en": "Delete everything",
+    "es": "Borrar todo"
+  },
+  "Toda a carteira": {
+    "en": "Whole portfolio",
+    "es": "Toda la cartera"
+  },
+  "Informar saldo": {
+    "en": "Enter balance",
+    "es": "Informar saldo"
+  },
+  "Informar preço": {
+    "en": "Enter price",
+    "es": "Informar precio"
+  },
+  "Pelas operações cadastradas, foi vendido mais do que havia. Confira se falta alguma compra (ou bonificação) ou se uma venda entrou duas vezes: até lá, quantidade, custo e resultado não são confiáveis.": {
+    "en": "According to the recorded transactions, more was sold than was held. Check whether a purchase (or bonus share) is missing or a sale was entered twice: until then, quantity, cost and result are not reliable.",
+    "es": "Según las operaciones registradas, se vendió más de lo que había. Revisa si falta alguna compra (o bonificación) o si una venta entró dos veces: hasta entonces, cantidad, costo y resultado no son confiables."
+  },
+  "Este título venceu em {0}. Registre o vencimento com o valor que voltou para a conta.": {
+    "en": "This bond matured on {0}. Record the maturity with the amount that went back to the account.",
+    "es": "Este título venció el {0}. Registra el vencimiento con el valor que volvió a la cuenta."
+  },
+  "Encerrada": {
+    "en": "Closed",
+    "es": "Cerrada"
+  },
+  "Custo do que você tem": {
+    "en": "Cost of what you hold",
+    "es": "Costo de lo que tienes"
+  },
+  "{0} × {1} de custo médio": {
+    "en": "{0} × {1} average cost",
+    "es": "{0} × {1} de costo promedio"
+  },
+  "aplicado {0}, retirado {1}": {
+    "en": "invested {0}, withdrawn {1}",
+    "es": "aplicado {0}, retirado {1}"
+  },
+  "Resultado": {
+    "en": "Result",
+    "es": "Resultado"
+  },
+  "{0} de rentabilidade": {
+    "en": "{0} return",
+    "es": "{0} de rentabilidad"
+  },
+  "Na carteira": {
+    "en": "In the portfolio",
+    "es": "En la cartera"
+  },
+  "Como chegamos a esses números": {
+    "en": "How we got these numbers",
+    "es": "Cómo llegamos a estos números"
+  },
+  "Quantidade": {
+    "en": "Quantity",
+    "es": "Cantidad"
+  },
+  "Preço usado": {
+    "en": "Price used",
+    "es": "Precio usado"
+  },
+  "De onde vem o valor": {
+    "en": "Where the value comes from",
+    "es": "De dónde viene el valor"
+  },
+  "Tudo o que você pôs": {
+    "en": "Everything you put in",
+    "es": "Todo lo que pusiste"
+  },
+  "Tudo o que voltou (vendas, resgates)": {
+    "en": "Everything that came back (sales, withdrawals)",
+    "es": "Todo lo que volvió (ventas, rescates)"
+  },
+  "Ganho no que ainda tem": {
+    "en": "Gain on what you still hold",
+    "es": "Ganancia en lo que aún tienes"
+  },
+  "Ganho no que já vendeu ou resgatou": {
+    "en": "Gain on what you sold or withdrew",
+    "es": "Ganancia en lo que ya vendiste o rescataste"
+  },
+  "Proventos e juros recebidos": {
+    "en": "Income and interest received",
+    "es": "Rendimientos e intereses recibidos"
+  },
+  "Taxas e impostos informados": {
+    "en": "Fees and taxes entered",
+    "es": "Comisiones e impuestos informados"
+  },
+  "O saldo parte do último valor informado e soma o que entrou e saiu depois. Com a taxa do título preenchida, o app estima o rendimento pelos índices oficiais (valor bruto).": {
+    "en": "The balance starts from the last value entered and adds what came in and went out afterwards. With the bond's rate filled in, the app estimates the return using official indices (gross value).",
+    "es": "El saldo parte del último valor informado y suma lo que entró y salió después. Con la tasa del título completada, la app estima el rendimiento con los índices oficiales (valor bruto)."
+  },
+  "O custo usa o preço médio das compras, com as taxas. O valor é a quantidade vezes o último preço conhecido: o app não busca cotação sozinho.": {
+    "en": "Cost uses the average purchase price, with fees. Value is the quantity times the last known price: the app doesn't fetch quotes on its own.",
+    "es": "El costo usa el precio promedio de las compras, con las comisiones. El valor es la cantidad por el último precio conocido: la app no busca cotizaciones por su cuenta."
+  },
+  "Sobre este investimento": {
+    "en": "About this investment",
+    "es": "Sobre esta inversión"
+  },
+  "Preencha taxa, vencimento, liquidez e setor em Editar: as análises ficam mais completas.": {
+    "en": "Fill in rate, maturity, liquidity and sector under Edit: the insights get more complete.",
+    "es": "Completa tasa, vencimiento, liquidez y sector en Editar: los análisis quedan más completos."
+  },
+  "Evolução": {
+    "en": "Evolution",
+    "es": "Evolución"
+  },
+  "Vale": {
+    "en": "Worth",
+    "es": "Vale"
+  },
+  "Saldos informados": {
+    "en": "Balances entered",
+    "es": "Saldos informados"
+  },
+  "Preços informados": {
+    "en": "Prices entered",
+    "es": "Precios informados"
+  },
+  "Saldo": {
+    "en": "Balance",
+    "es": "Saldo"
+  },
+  "Preço": {
+    "en": "Price",
+    "es": "Precio"
+  },
+  "informado por você": {
+    "en": "entered by you",
+    "es": "informado por ti"
+  },
+  "arquivo importado": {
+    "en": "imported file",
+    "es": "archivo importado"
+  },
+  "Apagar este valor": {
+    "en": "Delete this value",
+    "es": "Borrar este valor"
+  },
+  "Apagar este investimento": {
+    "en": "Delete this investment",
+    "es": "Borrar esta inversión"
+  },
+  "Não encontrei operações nem posições nesse arquivo. O app lê os extratos de Movimentação, Negociação e Posição da B3 e planilhas com as colunas data, operação, ativo, quantidade, preço e valor.": {
+    "en": "I found no transactions or positions in this file. The app reads B3's Transactions, Trades and Position statements and spreadsheets with the columns date, transaction, asset, quantity, price and amount.",
+    "es": "No encontré operaciones ni posiciones en este archivo. La app lee los extractos de Movimientos, Negociación y Posición de la B3 y hojas de cálculo con las columnas fecha, operación, activo, cantidad, precio y valor."
+  },
+  "Não consegui ler esse arquivo.": {
+    "en": "I couldn't read this file.",
+    "es": "No pude leer este archivo."
+  },
+  "Diga de que dia é a posição (não pode ser no futuro).": {
+    "en": "Say which day the position is from (it can't be in the future).",
+    "es": "Indica de qué día es la posición (no puede ser futura)."
+  },
+  "Não consegui criar {0}. Nada mais foi gravado.": {
+    "en": "I couldn't create {0}. Nothing else was saved.",
+    "es": "No pude crear {0}. No se guardó nada más."
+  },
+  "Você deixou esta linha de fora ao importar.": {
+    "en": "You left this line out when importing.",
+    "es": "Dejaste esta línea fuera al importar."
+  },
+  "Não consegui registrar a importação. Nenhuma operação foi gravada.": {
+    "en": "I couldn't record the import. No transaction was saved.",
+    "es": "No pude registrar la importación. No se guardó ninguna operación."
+  },
+  "Posição inicial pelo arquivo: o custo de aquisição é o valor do dia, não o que você pagou.": {
+    "en": "Opening position from the file: the acquisition cost is that day's value, not what you paid.",
+    "es": "Posición inicial por el archivo: el costo de adquisición es el valor del día, no lo que pagaste."
+  },
+  "Importar investimentos": {
+    "en": "Import investments",
+    "es": "Importar inversiones"
+  },
+  "Traga as operações de uma vez, em vez de digitar uma a uma. O app lê:": {
+    "en": "Bring your transactions in at once instead of typing them one by one. The app reads:",
+    "es": "Trae las operaciones de una vez, en lugar de escribirlas una por una. La app lee:"
+  },
+  "Extratos da B3 (Área do Investidor): Movimentação, Negociação e Posição, em Excel.": {
+    "en": "B3 statements (Investor Area): Transactions, Trades and Position, in Excel.",
+    "es": "Extractos de la B3 (Área del Inversor): Movimientos, Negociación y Posición, en Excel."
+  },
+  "Planilha ou CSV com as colunas data, operação, ativo, quantidade, preço e valor.": {
+    "en": "Spreadsheet or CSV with the columns date, transaction, asset, quantity, price and amount.",
+    "es": "Hoja de cálculo o CSV con las columnas fecha, operación, activo, cantidad, precio y valor."
+  },
+  "PDF: leitura parcial. Só entra a linha que traz data, operação, código e valores juntos; o resto fica para você revisar.": {
+    "en": "PDF: partial reading. Only lines with date, transaction, ticker and amounts together are imported; the rest is left for you to review.",
+    "es": "PDF: lectura parcial. Solo entra la línea que trae fecha, operación, código y valores juntos; el resto queda para que lo revises."
+  },
+  "Você confere tudo antes de gravar. O mesmo arquivo importado duas vezes não duplica nada, e o que o app não entender fica guardado, sem sumir.": {
+    "en": "You check everything before saving. The same file imported twice duplicates nothing, and what the app doesn't understand is kept, never dropped.",
+    "es": "Revisas todo antes de guardar. El mismo archivo importado dos veces no duplica nada, y lo que la app no entienda queda guardado, sin perderse."
+  },
+  "Escolher o arquivo": {
+    "en": "Choose the file",
+    "es": "Elegir el archivo"
+  },
+  "Lendo o arquivo…": {
+    "en": "Reading the file…",
+    "es": "Leyendo el archivo…"
+  },
+  "Gravando…": {
+    "en": "Saving…",
+    "es": "Guardando…"
+  },
+  "Este mesmo arquivo já foi importado em {0}. O que já entrou aparece como repetido e não será gravado de novo.": {
+    "en": "This same file was already imported on {0}. What already went in shows as repeated and won't be saved again.",
+    "es": "Este mismo archivo ya se importó el {0}. Lo que ya entró aparece como repetido y no se guardará de nuevo."
+  },
+  "1 investimento novo será criado": {
+    "en": "1 new investment will be created",
+    "es": "Se creará 1 inversión nueva"
+  },
+  "{0} investimentos novos serão criados": {
+    "en": "{0} new investments will be created",
+    "es": "Se crearán {0} inversiones nuevas"
+  },
+  "Confira o tipo de cada um: o app só consegue deduzir pelo nome.": {
+    "en": "Check each one's type: the app can only guess from the name.",
+    "es": "Revisa el tipo de cada una: la app solo puede deducirlo por el nombre."
+  },
+  "Tipo de {0}": {
+    "en": "Type of {0}",
+    "es": "Tipo de {0}"
+  },
+  "Operações ({0})": {
+    "en": "Transactions ({0})",
+    "es": "Operaciones ({0})"
+  },
+  "já importada": {
+    "en": "already imported",
+    "es": "ya importada"
+  },
+  "parece repetida: já existe uma operação igual": {
+    "en": "looks repeated: an identical transaction already exists",
+    "es": "parece repetida: ya existe una operación igual"
+  },
+  "Posição ({0})": {
+    "en": "Position ({0})",
+    "es": "Posición ({0})"
+  },
+  "A posição é de que dia?": {
+    "en": "Which day is the position from?",
+    "es": "¿De qué día es la posición?"
+  },
+  "Dia da posição": {
+    "en": "Position date",
+    "es": "Día de la posición"
+  },
+  "atualiza o valor deste investimento": {
+    "en": "updates this investment's value",
+    "es": "actualiza el valor de esta inversión"
+  },
+  "cria o investimento com esta posição inicial (custo = valor do dia)": {
+    "en": "creates the investment with this opening position (cost = that day's value)",
+    "es": "crea la inversión con esta posición inicial (costo = valor del día)"
+  },
+  "1 linha não foi entendida": {
+    "en": "1 line wasn't understood",
+    "es": "1 línea no se entendió"
+  },
+  "{0} linhas não foram entendidas": {
+    "en": "{0} lines weren't understood",
+    "es": "{0} líneas no se entendieron"
+  },
+  "Elas não entram agora, mas ficam guardadas em \"linhas para revisar\": você registra à mão ou descarta depois.": {
+    "en": "They don't go in now, but they're kept under \"lines to review\": you record them by hand or discard them later.",
+    "es": "No entran ahora, pero quedan guardadas en \"líneas por revisar\": las registras a mano o las descartas después."
+  },
+  "E mais {0}.": {
+    "en": "And {0} more.",
+    "es": "Y {0} más."
+  },
+  "Escolher outro arquivo": {
+    "en": "Choose another file",
+    "es": "Elegir otro archivo"
+  },
+  "Importar 1 linha": {
+    "en": "Import 1 line",
+    "es": "Importar 1 línea"
+  },
+  "Importar {0} linhas": {
+    "en": "Import {0} lines",
+    "es": "Importar {0} líneas"
+  },
+  "Guardar só as pendentes": {
+    "en": "Keep only the pending ones",
+    "es": "Guardar solo las pendientes"
+  },
+  "Importação concluída": {
+    "en": "Import finished",
+    "es": "Importación terminada"
+  },
+  "Operações gravadas": {
+    "en": "Transactions saved",
+    "es": "Operaciones guardadas"
+  },
+  "Investimentos criados": {
+    "en": "Investments created",
+    "es": "Inversiones creadas"
+  },
+  "Valores atualizados": {
+    "en": "Values updated",
+    "es": "Valores actualizados"
+  },
+  "Repetidas, não gravadas de novo": {
+    "en": "Repeated, not saved again",
+    "es": "Repetidas, no guardadas de nuevo"
+  },
+  "Guardadas para revisar": {
+    "en": "Kept for review",
+    "es": "Guardadas para revisar"
+  },
+  "Revisar as pendentes": {
+    "en": "Review the pending ones",
+    "es": "Revisar las pendientes"
+  },
+  "Descartar as {0} linhas pendentes deste arquivo? Elas saem da lista e não viram operação.": {
+    "en": "Discard the {0} pending lines from this file? They leave the list and don't become transactions.",
+    "es": "¿Descartar las {0} líneas pendientes de este archivo? Salen de la lista y no se convierten en operaciones."
+  },
+  "Descartar pendentes": {
+    "en": "Discard pending lines",
+    "es": "Descartar pendientes"
+  },
+  "Descartar": {
+    "en": "Discard",
+    "es": "Descartar"
+  },
+  "Linhas para revisar": {
+    "en": "Lines to review",
+    "es": "Líneas por revisar"
+  },
+  "Nada pendente: tudo o que foi importado está resolvido.": {
+    "en": "Nothing pending: everything imported is resolved.",
+    "es": "Nada pendiente: todo lo importado está resuelto."
+  },
+  "Registrar à mão": {
+    "en": "Record by hand",
+    "es": "Registrar a mano"
+  },
+  "Descartar todas deste arquivo": {
+    "en": "Discard all from this file",
+    "es": "Descartar todas las de este archivo"
+  },
+  "Dê um nome para o investimento.": {
+    "en": "Give the investment a name.",
+    "es": "Dale un nombre a la inversión."
+  },
+  "Confira a taxa: use um número como 12,5 ou 110.": {
+    "en": "Check the rate: use a number like 12.5 or 110.",
+    "es": "Revisa la tasa: usa un número como 12,5 o 110."
+  },
+  "Informe a taxa (ou deixe \"como rende\" em branco).": {
+    "en": "Enter the rate (or leave \"how it earns\" blank).",
+    "es": "Informa la tasa (o deja \"cómo rinde\" en blanco)."
+  },
+  "Diga em quantos dias o dinheiro cai na conta depois do pedido.": {
+    "en": "Say how many days after the request the money reaches your account.",
+    "es": "Indica en cuántos días llega el dinero a la cuenta después de la solicitud."
+  },
+  "Editar investimento": {
+    "en": "Edit investment",
+    "es": "Editar inversión"
+  },
+  "Que tipo de investimento é?": {
+    "en": "What type of investment is it?",
+    "es": "¿Qué tipo de inversión es?"
+  },
+  "Qual título?": {
+    "en": "Which bond?",
+    "es": "¿Qué título?"
+  },
+  "Título de renda fixa": {
+    "en": "Fixed-income bond",
+    "es": "Título de renta fija"
+  },
+  "Código de negociação": {
+    "en": "Ticker",
+    "es": "Código de negociación"
+  },
+  "Como aparece na corretora: PETR4, MXRF11…": {
+    "en": "As it appears at the broker: PETR4, MXRF11…",
+    "es": "Como aparece en el bróker: PETR4, MXRF11…"
+  },
+  "Ex.: CDB Banco X 2029": {
+    "en": "E.g. Bank X CDB 2029",
+    "es": "Ej.: CDB Banco X 2029"
+  },
+  "Ex.: Petrobras": {
+    "en": "E.g. Petrobras",
+    "es": "Ej.: Petrobras"
+  },
+  "Acompanhar por quantidade de cotas e preço": {
+    "en": "Track by number of shares and price",
+    "es": "Seguir por cantidad de cuotas y precio"
+  },
+  "Não dá para trocar depois que há operações.": {
+    "en": "Can't be changed once there are transactions.",
+    "es": "No se puede cambiar después de que hay operaciones."
+  },
+  "Desligado, você informa só o valor aplicado e o saldo de vez em quando.": {
+    "en": "When off, you only enter the amount invested and the balance now and then.",
+    "es": "Apagado, solo informas el valor aplicado y el saldo de vez en cuando."
+  },
+  "Corretora ou banco": {
+    "en": "Broker or bank",
+    "es": "Bróker o banco"
+  },
+  "Onde está o investimento": {
+    "en": "Where the investment is held",
+    "es": "Dónde está la inversión"
+  },
+  "O banco que emitiu o título (para a conta do FGC).": {
+    "en": "The bank that issued the bond (for the FGC calculation).",
+    "es": "El banco que emitió el título (para el cálculo del FGC)."
+  },
+  "Bancos, energia, logística… Serve para ver a concentração.": {
+    "en": "Banks, energy, logistics… Used to show concentration.",
+    "es": "Bancos, energía, logística… Sirve para ver la concentración."
+  },
+  "Não sei / outro": {
+    "en": "Don't know / other",
+    "es": "No sé / otro"
+  },
+  "Com a taxa, o app estima o rendimento pelos índices oficiais. Sem ela, você informa o saldo de vez em quando.": {
+    "en": "With the rate, the app estimates the return using official indices. Without it, you enter the balance now and then.",
+    "es": "Con la tasa, la app estima el rendimiento con los índices oficiales. Sin ella, informas el saldo de vez en cuando."
+  },
+  "Taxa ao ano (%)": {
+    "en": "Rate per year (%)",
+    "es": "Tasa al año (%)"
+  },
+  "Taxa acima da inflação, ao ano (%)": {
+    "en": "Rate above inflation, per year (%)",
+    "es": "Tasa sobre la inflación, al año (%)"
+  },
+  "Quanto do índice (%)": {
+    "en": "How much of the index (%)",
+    "es": "Cuánto del índice (%)"
+  },
+  "Quando dá para tirar o dinheiro": {
+    "en": "When you can take the money out",
+    "es": "Cuándo se puede sacar el dinero"
+  },
+  "Não informar": {
+    "en": "Don't say",
+    "es": "No informar"
+  },
+  "Dias depois do pedido": {
+    "en": "Days after the request",
+    "es": "Días después de la solicitud"
+  },
+  "Quantos dias": {
+    "en": "How many days",
+    "es": "Cuántos días"
+  },
+  "Salvar e registrar a aplicação": {
+    "en": "Save and record the deposit",
+    "es": "Guardar y registrar la aplicación"
+  },
+  "Devolução de parte do que você aplicou: baixa o custo, não é ganho.": {
+    "en": "Return of part of what you invested: it lowers the cost, it's not a gain.",
+    "es": "Devolución de parte de lo que invertiste: baja el costo, no es ganancia."
+  },
+  "O título venceu: informe o valor que voltou para a conta. A posição é encerrada.": {
+    "en": "The bond matured: enter the amount that went back to the account. The position is closed.",
+    "es": "El título venció: informa el valor que volvió a la cuenta. La posición se cierra."
+  },
+  "Taxa cobrada à parte (custódia, administração).": {
+    "en": "Fee charged separately (custody, management).",
+    "es": "Comisión cobrada aparte (custodia, administración)."
+  },
+  "Imposto pago à parte (come-cotas, DARF). O imposto retido numa venda vai no campo próprio da venda.": {
+    "en": "Tax paid separately. Tax withheld on a sale goes in the sale's own field.",
+    "es": "Impuesto pagado aparte. El impuesto retenido en una venta va en el campo propio de la venta."
+  },
+  "Cotas recebidas sem pagar: informe quantas e, se a empresa informou, o custo atribuído.": {
+    "en": "Shares received without paying: enter how many and, if the company stated it, the assigned cost.",
+    "es": "Cuotas recibidas sin pagar: informa cuántas y, si la empresa lo indicó, el costo atribuido."
+  },
+  "Cada cota virou várias: informe por quanto a quantidade foi multiplicada (2 = cada 1 virou 2).": {
+    "en": "Each share became several: enter what the quantity was multiplied by (2 = each 1 became 2).",
+    "es": "Cada cuota se volvió varias: informa por cuánto se multiplicó la cantidad (2 = cada 1 se volvió 2)."
+  },
+  "Várias cotas viraram uma: informe o fator (0,1 = cada 10 viraram 1).": {
+    "en": "Several shares became one: enter the factor (0.1 = every 10 became 1).",
+    "es": "Varias cuotas se volvieron una: informa el factor (0,1 = cada 10 se volvieron 1)."
+  },
+  "Só um registro de que o investimento mudou de instituição. Não mexe em quantidade nem em custo.": {
+    "en": "Just a record that the investment moved to another institution. It doesn't change quantity or cost.",
+    "es": "Solo un registro de que la inversión cambió de institución. No cambia cantidad ni costo."
+  },
+  "Correção ou posição inicial: soma (ou tira, com sinal de menos) quantidade e custo. Fica marcada como ajuste.": {
+    "en": "Correction or opening position: adds (or removes, with a minus sign) quantity and cost. It stays marked as an adjustment.",
+    "es": "Corrección o posición inicial: suma (o resta, con signo menos) cantidad y costo. Queda marcada como ajuste."
+  },
+  "Escolha o investimento.": {
+    "en": "Choose the investment.",
+    "es": "Elige la inversión."
+  },
+  "Informe a quantidade.": {
+    "en": "Enter the quantity.",
+    "es": "Informa la cantidad."
+  },
+  "Informe o fator.": {
+    "en": "Enter the factor.",
+    "es": "Informa el factor."
+  },
+  "Informe o valor.": {
+    "en": "Enter the amount.",
+    "es": "Informa el valor."
+  },
+  "Informe a quantidade ou o valor do ajuste.": {
+    "en": "Enter the adjustment's quantity or amount.",
+    "es": "Informa la cantidad o el valor del ajuste."
+  },
+  "Taxas e imposto não podem passar do valor da operação.": {
+    "en": "Fees and tax can't exceed the transaction amount.",
+    "es": "Las comisiones y el impuesto no pueden superar el valor de la operación."
+  },
+  "Confira a cotação.": {
+    "en": "Check the exchange rate.",
+    "es": "Revisa la cotización."
+  },
+  "Você tem {0} e está vendendo {1}. Registrar mesmo assim? O app vai apontar que as operações não fecham.": {
+    "en": "You hold {0} and are selling {1}. Record it anyway? The app will flag that the transactions don't add up.",
+    "es": "Tienes {0} y estás vendiendo {1}. ¿Registrar igual? La app indicará que las operaciones no cuadran."
+  },
+  "Venda maior que a posição": {
+    "en": "Sale larger than the position",
+    "es": "Venta mayor que la posición"
+  },
+  "Registrar assim": {
+    "en": "Record it like this",
+    "es": "Registrar así"
+  },
+  "Hoje: {0}": {
+    "en": "Today: {0}",
+    "es": "Hoy: {0}"
+  },
+  "Hoje: {0} cotas": {
+    "en": "Today: {0} shares",
+    "es": "Hoy: {0} cuotas"
+  },
+  "Linha do arquivo:": {
+    "en": "Line from the file:",
+    "es": "Línea del archivo:"
+  },
+  "Investimento": {
+    "en": "Investment",
+    "es": "Inversión"
+  },
+  "Cadastrar outro investimento": {
+    "en": "Add another investment",
+    "es": "Registrar otra inversión"
+  },
+  "O que aconteceu?": {
+    "en": "What happened?",
+    "es": "¿Qué pasó?"
+  },
+  "Tipo de operação": {
+    "en": "Transaction type",
+    "es": "Tipo de operación"
+  },
+  "Outros…": {
+    "en": "Others…",
+    "es": "Otros…"
+  },
+  "Data futura: fica como previsto e só passa a contar quando o dia chegar.": {
+    "en": "Future date: it stays as expected and only counts when the day comes.",
+    "es": "Fecha futura: queda como previsto y solo cuenta cuando llegue el día."
+  },
+  "Dia da operação": {
+    "en": "Transaction date",
+    "es": "Día de la operación"
+  },
+  "Preço de cada uma": {
+    "en": "Price of each",
+    "es": "Precio de cada una"
+  },
+  "Fator": {
+    "en": "Factor",
+    "es": "Factor"
+  },
+  "Custo atribuído": {
+    "en": "Assigned cost",
+    "es": "Costo atribuido"
+  },
+  "Custo a somar": {
+    "en": "Cost to add",
+    "es": "Costo a sumar"
+  },
+  "Valor bruto": {
+    "en": "Gross amount",
+    "es": "Valor bruto"
+  },
+  "Valor total": {
+    "en": "Total amount",
+    "es": "Valor total"
+  },
+  "Taxas e corretagem": {
+    "en": "Fees and brokerage",
+    "es": "Comisiones y corretaje"
+  },
+  "Imposto retido": {
+    "en": "Tax withheld",
+    "es": "Impuesto retenido"
+  },
+  "Que provento?": {
+    "en": "Which income?",
+    "es": "¿Qué rendimiento?"
+  },
+  "Tipo de provento": {
+    "en": "Income type",
+    "es": "Tipo de rendimiento"
+  },
+  "Cotação do dia: 1 {0} em {1}": {
+    "en": "Rate on the day: 1 {0} in {1}",
+    "es": "Cotización del día: 1 {0} en {1}"
+  },
+  "Em branco, vale a de hoje ({0}) e o resultado do câmbio desta operação fica zerado.": {
+    "en": "If blank, today's ({0}) is used and this transaction's currency result is zero.",
+    "es": "En blanco, vale la de hoy ({0}) y el resultado cambiario de esta operación queda en cero."
+  },
+  "Sem cotação, esta operação fica fora dos totais na sua moeda.": {
+    "en": "Without a rate, this transaction is left out of the totals in your currency.",
+    "es": "Sin cotización, esta operación queda fuera de los totales en tu moneda."
+  },
+  "De que conta o dinheiro saiu?": {
+    "en": "Which account did the money leave from?",
+    "es": "¿De qué cuenta salió el dinero?"
+  },
+  "Em que conta o dinheiro caiu?": {
+    "en": "Which account did the money land in?",
+    "es": "¿En qué cuenta cayó el dinero?"
+  },
+  "Tirar do saldo dessa conta em Dinheiro guardado": {
+    "en": "Take it off this account's balance in Savings",
+    "es": "Restar del saldo de esa cuenta en Dinero guardado"
+  },
+  "Somar ao saldo dessa conta em Dinheiro guardado": {
+    "en": "Add it to this account's balance in Savings",
+    "es": "Sumar al saldo de esa cuenta en Dinero guardado"
+  },
+  "Ligue se o saldo que você informou em {0} ainda não considera esta operação. Assim o dinheiro só muda de lugar e o patrimônio não conta em dobro.": {
+    "en": "Turn on if the balance you entered for {0} doesn't reflect this transaction yet. That way the money only changes place and net worth isn't counted twice.",
+    "es": "Actívalo si el saldo que informaste en {0} aún no considera esta operación. Así el dinero solo cambia de lugar y el patrimonio no se cuenta dos veces."
+  },
+  "Contar também como entrada do mês": {
+    "en": "Also count as income for the month",
+    "es": "Contar también como ingreso del mes"
+  },
+  "Cria um lançamento de entrada com o valor líquido. Deixe desligado se esse dinheiro já entra pelo extrato do banco.": {
+    "en": "Creates an income entry with the net amount. Leave it off if this money already comes in through your bank statement.",
+    "es": "Crea un ingreso con el valor neto. Déjalo apagado si ese dinero ya entra por el extracto del banco."
+  },
+  "Para qual instituição foi": {
+    "en": "Which institution it moved to",
+    "es": "A qué institución fue"
+  },
+  "O dia do valor não pode ser no futuro.": {
+    "en": "The value's date can't be in the future.",
+    "es": "El día del valor no puede ser futuro."
+  },
+  "Confira os valores: use só números, como 38,20.": {
+    "en": "Check the values: use numbers only, like 38.20.",
+    "es": "Revisa los valores: usa solo números, como 38,20."
+  },
+  "Informe o preço de fechamento de cada cota ou o saldo de cada aplicação, como aparece na corretora. Deixe em branco o que não mudou. O app guarda quem informou e de que dia é o valor.": {
+    "en": "Enter each share's closing price or each deposit's balance, as shown at your broker. Leave blank what hasn't changed. The app keeps who entered the value and which day it's from.",
+    "es": "Informa el precio de cierre de cada cuota o el saldo de cada aplicación, como aparece en el bróker. Deja en blanco lo que no cambió. La app guarda quién informó y de qué día es el valor."
+  },
+  "Os valores são de que dia?": {
+    "en": "Which day are the values from?",
+    "es": "¿De qué día son los valores?"
+  },
+  "Dia dos valores": {
+    "en": "Date of the values",
+    "es": "Día de los valores"
+  },
+  "Preço da cota": {
+    "en": "Share price",
+    "es": "Precio de la cuota"
+  },
+  "Valor de {0}": {
+    "en": "Value of {0}",
+    "es": "Valor de {0}"
+  },
+  "Nenhum investimento em aberto para atualizar.": {
+    "en": "No open investments to update.",
+    "es": "Ninguna inversión abierta para actualizar."
+  },
+  "Salvar os valores": {
+    "en": "Save the values",
+    "es": "Guardar los valores"
+  },
+  "Fazer o patrimônio crescer": {
+    "en": "Grow my net worth",
+    "es": "Hacer crecer el patrimonio"
+  },
+  "Viver de renda aos poucos": {
+    "en": "Gradually live off income",
+    "es": "Vivir de renta poco a poco"
+  },
+  "Ter dinheiro à mão e seguro": {
+    "en": "Keep money safe and at hand",
+    "es": "Tener el dinero a mano y seguro"
+  },
+  "Só acompanhar": {
+    "en": "Just keep track",
+    "es": "Solo seguir"
+  },
+  "Confira os valores: use números maiores que zero.": {
+    "en": "Check the values: use numbers greater than zero.",
+    "es": "Revisa los valores: usa números mayores que cero."
+  },
+  "O limite de renda variável vai de 0 a 100%.": {
+    "en": "The equities limit goes from 0 to 100%.",
+    "es": "El límite de renta variable va de 0 a 100%."
+  },
+  "Confira as hipóteses de rendimento ao ano.": {
+    "en": "Check the yearly return assumptions.",
+    "es": "Revisa las hipótesis de rendimiento al año."
+  },
+  "O cenário pessimista não pode render mais que o base, nem o base mais que o otimista.": {
+    "en": "The pessimistic scenario can't earn more than the base one, nor the base more than the optimistic.",
+    "es": "El escenario pesimista no puede rendir más que el base, ni el base más que el optimista."
+  },
+  "Não deu para salvar o plano agora. Tente de novo.": {
+    "en": "Couldn't save the plan right now. Try again.",
+    "es": "No se pudo guardar el plan ahora. Inténtalo de nuevo."
+  },
+  "Seu plano de investimentos": {
+    "en": "Your investment plan",
+    "es": "Tu plan de inversiones"
+  },
+  "O plano é seu: o app só acompanha.": {
+    "en": "The plan is yours: the app only keeps track.",
+    "es": "El plan es tuyo: la app solo lo sigue."
+  },
+  "O que você mais quer com os investimentos?": {
+    "en": "What do you want most from your investments?",
+    "es": "¿Qué es lo que más quieres de tus inversiones?"
+  },
+  "Foco": {
+    "en": "Focus",
+    "es": "Enfoque"
+  },
+  "As análises desse assunto aparecem primeiro. Nada fica escondido.": {
+    "en": "Insights on this subject come first. Nothing is hidden.",
+    "es": "Los análisis de ese tema aparecen primero. Nada queda oculto."
+  },
+  "Renda por mês que você quer": {
+    "en": "Monthly income you want",
+    "es": "Renta por mes que quieres"
+  },
+  "Meta de patrimônio investido": {
+    "en": "Invested net worth goal",
+    "es": "Meta de patrimonio invertido"
+  },
+  "Quanto, no máximo, você quer ter em renda variável?": {
+    "en": "How much, at most, do you want in equities?",
+    "es": "¿Cuánto, como máximo, quieres tener en renta variable?"
+  },
+  "Ações, fundos imobiliários, ETFs e parecidos. O app não decide isso por você: só avisa se a carteira passar do limite que você escolher.": {
+    "en": "Stocks, real estate funds, ETFs and the like. The app doesn't decide this for you: it only warns if the portfolio goes past the limit you choose.",
+    "es": "Acciones, fondos inmobiliarios, ETF y similares. La app no lo decide por ti: solo avisa si la cartera supera el límite que elijas."
+  },
+  "Hipóteses de rendimento ao ano": {
+    "en": "Yearly return assumptions",
+    "es": "Hipótesis de rendimiento al año"
+  },
+  "Pessimista": {
+    "en": "Pessimistic",
+    "es": "Pesimista"
+  },
+  "Base": {
+    "en": "Base",
+    "es": "Base"
+  },
+  "Otimista": {
+    "en": "Optimistic",
+    "es": "Optimista"
+  },
+  "São suposições suas para as projeções, não previsões. Ninguém sabe quanto os investimentos vão render.": {
+    "en": "These are your assumptions for the projections, not forecasts. Nobody knows how much investments will earn.",
+    "es": "Son suposiciones tuyas para las proyecciones, no pronósticos. Nadie sabe cuánto van a rendir las inversiones."
+  },
+  "Somar à carteira os {0} que eu informava à mão": {
+    "en": "Add to the portfolio the {0} I used to enter by hand",
+    "es": "Sumar a la cartera los {0} que informaba a mano"
+  },
+  "Ligue só se aquele valor (de {0}) é de investimentos que você não cadastrou aqui. Desligado, o patrimônio usa só a carteira, e o valor antigo fica como histórico.": {
+    "en": "Turn on only if that amount (from {0}) belongs to investments you haven't registered here. When off, net worth uses only the portfolio, and the old amount stays as history.",
+    "es": "Actívalo solo si ese valor (de {0}) es de inversiones que no registraste aquí. Apagado, el patrimonio usa solo la cartera, y el valor anterior queda como historial."
+  },
+  "Salvar o plano": {
+    "en": "Save the plan",
+    "es": "Guardar el plan"
+  },
+  "Alta": {
+    "en": "High",
+    "es": "Alta"
+  },
+  "Média": {
+    "en": "Medium",
+    "es": "Media"
+  },
+  "Baixa": {
+    "en": "Low",
+    "es": "Baja"
+  },
+  "Os números por trás": {
+    "en": "The numbers behind it",
+    "es": "Los números detrás"
+  },
+  "Período": {
+    "en": "Period",
+    "es": "Período"
+  },
+  "De onde vêm os dados": {
+    "en": "Where the data comes from",
+    "es": "De dónde vienen los datos"
+  },
+  "Confiança": {
+    "en": "Confidence",
+    "es": "Confianza"
+  },
+  "Calculado em": {
+    "en": "Calculated on",
+    "es": "Calculado el"
+  },
+  "Esta análise descreve a sua carteira com os dados que você informou. Não é recomendação de investimento.": {
+    "en": "This insight describes your portfolio with the data you entered. It is not investment advice.",
+    "es": "Este análisis describe tu cartera con los datos que informaste. No es una recomendación de inversión."
+  },
+  "Curto prazo": {
+    "en": "Short term",
+    "es": "Corto plazo"
+  },
+  "Médio prazo": {
+    "en": "Medium term",
+    "es": "Mediano plazo"
+  },
+  "Longo prazo": {
+    "en": "Long term",
+    "es": "Largo plazo"
+  },
+  "Monte o seu plano": {
+    "en": "Build your plan",
+    "es": "Arma tu plan"
+  },
+  "Diga quanto quer aportar por mês, quanto quer ter investido e até quando. O app acompanha o ritmo e mostra o caminho em três cenários.": {
+    "en": "Say how much you want to contribute per month, how much you want invested and by when. The app tracks the pace and shows the path in three scenarios.",
+    "es": "Indica cuánto quieres aportar por mes, cuánto quieres tener invertido y hasta cuándo. La app sigue el ritmo y muestra el camino en tres escenarios."
+  },
+  "Montar o plano": {
+    "en": "Build the plan",
+    "es": "Armar el plan"
+  },
+  "Seu plano": {
+    "en": "Your plan",
+    "es": "Tu plan"
+  },
+  "Editar o plano": {
+    "en": "Edit the plan",
+    "es": "Editar el plan"
+  },
+  "Meta de patrimônio": {
+    "en": "Net worth goal",
+    "es": "Meta de patrimonio"
+  },
+  "O que você mais quer": {
+    "en": "What you want most",
+    "es": "Lo que más quieres"
+  },
+  "Máximo em renda variável": {
+    "en": "Maximum in equities",
+    "es": "Máximo en renta variable"
+  },
+  "hoje: {0}": {
+    "en": "today: {0}",
+    "es": "hoy: {0}"
+  },
+  "Aporte deste mês": {
+    "en": "This month's contribution",
+    "es": "Aporte de este mes"
+  },
+  "Aportado no mês": {
+    "en": "Contributed this month",
+    "es": "Aportado en el mes"
+  },
+  "Falta para o plano": {
+    "en": "Left to reach the plan",
+    "es": "Falta para el plan"
+  },
+  "Sobra por mês no orçamento": {
+    "en": "Left over per month in the budget",
+    "es": "Sobra por mes en el presupuesto"
+  },
+  "O aporte passa do que costuma sobrar no mês, pelos seus lançamentos. A diferença sai de dinheiro já guardado ou de entradas não lançadas.": {
+    "en": "The contribution is more than what's usually left over in the month, by your entries. The difference comes from money already saved or from income that wasn't entered.",
+    "es": "El aporte supera lo que suele sobrar en el mes, según tus movimientos. La diferencia sale de dinero ya guardado o de ingresos no registrados."
+  },
+  "Registrar aporte": {
+    "en": "Record contribution",
+    "es": "Registrar aporte"
+  },
+  "Aportes nos últimos 12 meses": {
+    "en": "Contributions in the last 12 months",
+    "es": "Aportes en los últimos 12 meses"
+  },
+  "Nenhum aporte nos últimos 12 meses.": {
+    "en": "No contributions in the last 12 months.",
+    "es": "Ningún aporte en los últimos 12 meses."
+  },
+  "Meses em que saiu mais do que entrou aparecem zerados no gráfico.": {
+    "en": "Months when more went out than came in show as zero in the chart.",
+    "es": "Los meses en que salió más de lo que entró aparecen en cero en el gráfico."
+  },
+  "Projeção do patrimônio": {
+    "en": "Net worth projection",
+    "es": "Proyección del patrimonio"
+  },
+  "Hipóteses desta conta:": {
+    "en": "Assumptions in this calculation:",
+    "es": "Hipótesis de este cálculo:"
+  },
+  "aporte de {0} por mês (o seu plano)": {
+    "en": "contribution of {0} per month (your plan)",
+    "es": "aporte de {0} por mes (tu plan)"
+  },
+  "aporte de {0} por mês (a sua média)": {
+    "en": "contribution of {0} per month (your average)",
+    "es": "aporte de {0} por mes (tu promedio)"
+  },
+  "sem novos aportes": {
+    "en": "no new contributions",
+    "es": "sin nuevos aportes"
+  },
+  "Mudar as hipóteses": {
+    "en": "Change the assumptions",
+    "es": "Cambiar las hipótesis"
+  },
+  "Já chegou": {
+    "en": "Already there",
+    "es": "Ya llegó"
+  },
+  "Chega em {0}": {
+    "en": "Gets there in {0}",
+    "es": "Llega en {0}"
+  },
+  "Não chega nesse ritmo": {
+    "en": "Doesn't get there at this pace",
+    "es": "No llega a este ritmo"
+  },
+  "Com uma meta de patrimônio, a projeção diz quando você chega em cada cenário.": {
+    "en": "With a net worth goal, the projection says when you get there in each scenario.",
+    "es": "Con una meta de patrimonio, la proyección dice cuándo llegas en cada escenario."
+  },
+  "Definir a meta": {
+    "en": "Set the goal",
+    "es": "Definir la meta"
+  },
+  "Para chegar a {0} até {1} no cenário base, o aporte precisa ser de {2} por mês.": {
+    "en": "To reach {0} by {1} in the base scenario, the contribution needs to be {2} per month.",
+    "es": "Para llegar a {0} hasta {1} en el escenario base, el aporte debe ser de {2} por mes."
+  },
+  "No cenário base, o que você já tem chega a {0} até {1} mesmo sem novos aportes.": {
+    "en": "In the base scenario, what you already have reaches {0} by {1} even with no new contributions.",
+    "es": "En el escenario base, lo que ya tienes llega a {0} hasta {1} incluso sin nuevos aportes."
+  },
+  "É uma conta, não uma previsão: rendimentos passados não garantem os futuros, e a projeção não desconta imposto nem inflação.": {
+    "en": "It's a calculation, not a forecast: past returns don't guarantee future ones, and the projection doesn't deduct tax or inflation.",
+    "es": "Es un cálculo, no un pronóstico: los rendimientos pasados no garantizan los futuros, y la proyección no descuenta impuestos ni inflación."
+  },
+  "E se eu aportar outro valor?": {
+    "en": "What if I contribute a different amount?",
+    "es": "¿Y si aporto otro valor?"
+  },
+  "Aporte por mês para simular": {
+    "en": "Monthly contribution to simulate",
+    "es": "Aporte por mes para simular"
+  },
+  "Com {0} por mês": {
+    "en": "With {0} per month",
+    "es": "Con {0} por mes"
+  },
+  "não chega": {
+    "en": "doesn't get there",
+    "es": "no llega"
+  },
+  "{0} meses antes": {
+    "en": "{0} months earlier",
+    "es": "{0} meses antes"
+  },
+  "{0} meses depois": {
+    "en": "{0} months later",
+    "es": "{0} meses después"
+  },
+  "Simulação no cenário base ({0}% ao ano). Nada é gravado.": {
+    "en": "Simulation in the base scenario ({0}% per year). Nothing is saved.",
+    "es": "Simulación en el escenario base ({0}% al año). No se guarda nada."
+  },
+  "Defina uma meta de patrimônio para simular em quanto tempo você chega com outro aporte.": {
+    "en": "Set a net worth goal to simulate how long it takes with a different contribution.",
+    "es": "Define una meta de patrimonio para simular en cuánto tiempo llegas con otro aporte."
+  },
+  "Renda dos investimentos": {
+    "en": "Investment income",
+    "es": "Renta de las inversiones"
+  },
+  "Sobre o valor da carteira": {
+    "en": "On the portfolio's value",
+    "es": "Sobre el valor de la cartera"
+  },
+  "Renda que você quer: {0} por mês": {
+    "en": "Income you want: {0} per month",
+    "es": "Renta que quieres: {0} por mes"
+  },
+  "Mantido o retorno dos últimos 12 meses (hipótese), seriam precisos {0} investidos.": {
+    "en": "Keeping the last 12 months' yield (an assumption), you'd need {0} invested.",
+    "es": "Manteniendo el retorno de los últimos 12 meses (hipótesis), se necesitarían {0} invertidos."
+  },
+  "Quer acompanhar uma renda mensal?": {
+    "en": "Want to track a monthly income?",
+    "es": "¿Quieres seguir una renta mensual?"
+  },
+  "Definir a renda que você quer": {
+    "en": "Set the income you want",
+    "es": "Definir la renta que quieres"
+  },
+  "Seus objetivos": {
+    "en": "Your goals",
+    "es": "Tus objetivos"
+  },
+  "Ver as metas": {
+    "en": "See the goals",
+    "es": "Ver las metas"
+  },
+  "Os objetivos são as suas metas do OpusCash (viagem, reserva, casa…). Crie uma e ela aparece aqui, por prazo.": {
+    "en": "The goals here are your OpusCash goals (trip, emergency fund, home…). Create one and it shows up here, by time frame.",
+    "es": "Los objetivos son tus metas de OpusCash (viaje, reserva, casa…). Crea una y aparece aquí, por plazo."
+  },
+  "Rentabilidade no período, já descontados os aportes": {
+    "en": "Return over the period, net of contributions",
+    "es": "Rentabilidad en el período, ya descontados los aportes"
+  },
+  "Quanto o CDI rendeu no mesmo período": {
+    "en": "How much the CDI returned over the same period",
+    "es": "Cuánto rindió el CDI en el mismo período"
+  },
+  "CDI: {0}": {
+    "en": "CDI: {0}",
+    "es": "CDI: {0}"
+  },
+  "{0} com valor antigo": {
+    "en": "{0} with an old value",
+    "es": "{0} con valor antiguo"
+  },
+  "12 meses": {
+    "en": "12 months",
+    "es": "12 meses"
+  },
+  "valorização, vendas e proventos": {
+    "en": "appreciation, sales and income",
+    "es": "valorización, ventas y rendimientos"
+  },
+  "Ganho no período": {
+    "en": "Gain in the period",
+    "es": "Ganancia en el período"
+  },
+  "Proventos em 12 meses": {
+    "en": "Income in 12 months",
+    "es": "Rendimientos en 12 meses"
+  },
+  "sem contar {0} de aportes": {
+    "en": "not counting {0} in contributions",
+    "es": "sin contar {0} de aportes"
+  },
+  "dividendos, rendimentos e juros": {
+    "en": "dividends, distributions and interest",
+    "es": "dividendos, rendimientos e intereses"
+  },
+  "O gráfico da evolução aparece a partir da segunda movimentação ou do segundo dia.": {
+    "en": "The evolution chart appears from the second transaction or the second day on.",
+    "es": "El gráfico de la evolución aparece a partir del segundo movimiento o del segundo día."
+  },
+  "A distância entre as duas linhas é o que o dinheiro rendeu e ainda está na carteira. Aporte não entra como ganho.": {
+    "en": "The gap between the two lines is what the money earned and is still in the portfolio. Contributions don't count as gains.",
+    "es": "La distancia entre las dos líneas es lo que rindió el dinero y sigue en la cartera. Los aportes no cuentan como ganancia."
+  },
+  "Como está dividido": {
+    "en": "How it's split",
+    "es": "Cómo está dividido"
+  },
+  "Precisa da sua atenção": {
+    "en": "Needs your attention",
+    "es": "Necesita tu atención"
+  },
+  "Análise em destaque": {
+    "en": "Featured insight",
+    "es": "Análisis destacado"
+  },
+  "Ver as análises": {
+    "en": "See the insights",
+    "es": "Ver los análisis"
+  },
+  "Com mais operações e valores atualizados, as análises da sua carteira aparecem aqui.": {
+    "en": "With more transactions and updated values, your portfolio's insights show up here.",
+    "es": "Con más operaciones y valores actualizados, los análisis de tu cartera aparecen aquí."
+  },
+  "O que vem pela frente": {
+    "en": "What's ahead",
+    "es": "Lo que viene"
+  },
+  "Nada com data marcada: nenhum título vence nos próximos 6 meses e não há proventos anunciados.": {
+    "en": "Nothing scheduled: no bond matures in the next 6 months and no income has been announced.",
+    "es": "Nada con fecha marcada: ningún título vence en los próximos 6 meses y no hay rendimientos anunciados."
+  },
+  "{0} em 12 meses": {
+    "en": "{0} in 12 months",
+    "es": "{0} en 12 meses"
+  },
+  "Quando um investimento pagar dividendo, rendimento ou juros, registre aqui para acompanhar a sua renda.": {
+    "en": "When an investment pays a dividend, distribution or interest, record it here to track your income.",
+    "es": "Cuando una inversión pague dividendo, rendimiento o intereses, regístralo aquí para seguir tu renta."
+  },
+  "Registrar provento": {
+    "en": "Record income",
+    "es": "Registrar rendimiento"
+  },
+  "Meta: {0}": {
+    "en": "Goal: {0}",
+    "es": "Meta: {0}"
+  },
+  "Diga quanto você quer ter investido e, se quiser, até quando. O app mostra o caminho em três cenários.": {
+    "en": "Say how much you want invested and, if you like, by when. The app shows the path in three scenarios.",
+    "es": "Indica cuánto quieres tener invertido y, si quieres, hasta cuándo. La app muestra el camino en tres escenarios."
+  },
+  "Onde está": {
+    "en": "Where it is",
+    "es": "Dónde está"
+  },
+  "Os {0} que você informava à mão continuam somados à carteira no seu patrimônio.": {
+    "en": "The {0} you used to enter by hand is still added to the portfolio in your net worth.",
+    "es": "Los {0} que informabas a mano siguen sumados a la cartera en tu patrimonio."
+  },
+  "Os {0} que você informava à mão ficaram como histórico: desde {1}, o seu patrimônio usa a carteira.": {
+    "en": "The {0} you used to enter by hand was kept as history: since {1}, your net worth uses the portfolio.",
+    "es": "Los {0} que informabas a mano quedaron como historial: desde {1}, tu patrimonio usa la cartera."
+  },
+  "Mudar": {
+    "en": "Change",
+    "es": "Cambiar"
+  },
+  "Estimado pela taxa do título (bruto, antes do imposto)": {
+    "en": "Estimated from the bond's rate (gross, before tax)",
+    "es": "Estimado por la tasa del título (bruto, antes de impuestos)"
+  },
+  "Sem valor informado: vale o que foi aplicado": {
+    "en": "No value entered: worth what was invested",
+    "es": "Sin valor informado: vale lo que se aplicó"
+  },
+  "Posição encerrada": {
+    "en": "Position closed",
+    "es": "Posición cerrada"
+  },
+  "preço da última compra ou venda": {
+    "en": "price of the last purchase or sale",
+    "es": "precio de la última compra o venta"
+  },
+  "Saldo de {0} ({1})": {
+    "en": "Balance from {0} ({1})",
+    "es": "Saldo del {0} ({1})"
+  },
+  "Preço de {0} ({1})": {
+    "en": "Price from {0} ({1})",
+    "es": "Precio del {0} ({1})"
+  },
+  "sem valor atual": {
+    "en": "no current value",
+    "es": "sin valor actual"
+  },
+  "estimado até {0}": {
+    "en": "estimated until {0}",
+    "es": "estimado hasta {0}"
+  },
+  "ontem": {
+    "en": "yesterday",
+    "es": "ayer"
+  },
+  "Renda que já entra": {
+    "en": "Income already coming in",
+    "es": "Renta que ya entra"
+  },
+  "De onde vem o ganho": {
+    "en": "Where your gain comes from",
+    "es": "De dónde viene tu ganancia"
   }
 }

@@ -4242,6 +4242,10 @@ body { top: 0 !important; }
 @media (min-width: 520px) { .dp-inicio.editando { grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; } }
 .dp-nova .segmentado { justify-self: start; }
 
+/* Dinheiro guardado: o investido que vem da carteira */
+.gd-extra-invest { display: grid; justify-items: start; gap: 6px; }
+.gd-extra-invest strong { font-family: var(--fonte-numeros); font-size: 24px; font-variant-numeric: tabular-nums; }
+.gd-extra-invest small { color: var(--texto-3); }
 /* ---------- app na tela de início (iPhone): áreas seguras ----------
    O site pede a tela inteira (viewport-fit=cover e barra de status translúcida no index.html). Aberto pela tela de início do
    iPhone, ele começa atrás do relógio e da ilha, e deitado, atrás do recorte da câmera. env(safe-area-inset-*) é 0 no
