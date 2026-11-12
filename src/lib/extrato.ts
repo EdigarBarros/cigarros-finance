@@ -8,6 +8,7 @@ import type { Tipo } from './types'
 import { formaPelaDescricao, type FormaGravada } from './formas'
 import { lerDoZip } from './zip'
 import { lerTudo, supabase } from './supabase'
+import { registrarErro } from './erros'
 
 export interface LinhaExtrato {
   /** AAAA-MM-DD */
@@ -68,8 +69,8 @@ const TIPOS_DE_LINHA: { re: RegExp; tipo?: Tipo; /** Pix ou transferência: o qu
   // (o que vem antes, "TRANSFERENCIA PIX", "PIX QR CODE DINAMICO", é só o jeito)
   { pessoa: true, re: /^(.*?\s)?rem:\s*/, tipo: 'entrada', nome: (r) => r || 'Pix recebido' },
   { pessoa: true, re: /^(.*?\s)?des:\s*/, tipo: 'saida', nome: (r) => r || 'Pix enviado' },
-  { pessoa: true, re: /^(transf(erencia)?\.?\s+)?(pix\s+)?(recebid[oa]|recebimento)(\s+(pelo|via|por)\s+pix)?\s*(de|-|:)?\s*/, tipo: 'entrada', nome: (r) => r || 'Pix recebido' },
-  { pessoa: true, re: /^(transf(erencia)?\.?\s+)?(pix\s+)?(enviad[oa]|envio)(\s+(pelo|via|por)\s+pix)?\s*(para|-|:)?\s*/, tipo: 'saida', nome: (r) => r || 'Pix enviado' },
+  { pessoa: true, re: /^(transf(erencia)?\.?\s+)?(pix\s+(?:[-–]\s+)?)?(recebid[oa]|recebimento)(\s+(pelo|via|por)\s+pix)?\s*(de|-|:)?\s*/, tipo: 'entrada', nome: (r) => r || 'Pix recebido' },
+  { pessoa: true, re: /^(transf(erencia)?\.?\s+)?(pix\s+(?:[-–]\s+)?)?(enviad[oa]|envio|emitid[oa])(\s+(pelo|via|por)\s+pix)?\s*(para|-|:)?\s*/, tipo: 'saida', nome: (r) => r || 'Pix enviado' },
   { pessoa: true, re: /^pix\s+de\s+/, tipo: 'entrada', nome: (r) => r || 'Pix recebido' },
   { pessoa: true, re: /^pix\s+para\s+/, tipo: 'saida', nome: (r) => r || 'Pix enviado' },
   { pessoa: true, re: /^(transferencia|transf\.?)\s+de\s+/, tipo: 'entrada', nome: (r) => r || 'Transferência recebida' },
@@ -81,7 +82,7 @@ const TIPOS_DE_LINHA: { re: RegExp; tipo?: Tipo; /** Pix ou transferência: o qu
   // Nubank: "Pagamento de boleto efetuado - ENEL" (o "efetuado" não é nome)
   { re: /^((pagamento|pgto|pag\.?)\s+(de\s+)?)?(boleto|titulo)(\s+(efetuado|realizado|pago|agendado))?\s*(-|:)?\s*/, tipo: 'saida', nome: (r) => r || 'Boleto' },
   { re: /^((pagamento|pgto)\s+(de\s+)?)?fatura\s*(do\s+cartao)?\s*(-|:)?\s*/, tipo: 'saida', nome: (r) => (r ? `Fatura ${r}` : 'Fatura do cartão') },
-  { re: /^(compra (com |no |de )?cart[aã]o( de debito| de credito| deb| cred)?( mc| visa| elo)?|compra no debito|compra no credito|compra|debito|cartao)\s*(-|:|em)?\s*/, tipo: 'saida', nome: (r) => r || 'Compra' },
+  { re: /^(visa electron|maestro|(elo|mastercard|master|visa) d[eé]bito|compra parcelad[ao]|compra (com |no |de )?cart[aã]o( de debito| de credito| deb| cred)?( mc| visa| elo)?|compra no debito|compra no credito|compra|debito|cartao)\s*(-|:|em)?\s*/, tipo: 'saida', nome: (r) => r || 'Compra' },
   { re: /^(saque)\b\s*(-|:)?\s*/, tipo: 'saida', nome: () => 'Saque' },
   { re: /^(tarifa|taxa|iof|juros|multa)\b/, tipo: 'saida', nome: (r) => r || 'Tarifa do banco' },
   { re: /^(rendimento|rend\.?\s+pago|juros sobre|remuneracao)/, tipo: 'entrada', nome: () => 'Rendimento' },
@@ -103,6 +104,7 @@ function semDocumentos(s: string) {
 /** Pedaços que nunca são nome: documentos, códigos, horários, datas, valores, agência/conta. */
 function semRuido(s: string) {
   return semDocumentos(s)
+    .replace(/\b(outra|mesma)\s+(if|institui[cç][aã]o|titularidade)\b|\bdoc\.\s*:\s*\S+|\b(pagamento|recebimento)\s+pix\b/gi, ' ') // Sicoob: "PIX EMITIDO OUTRA IF … DOC.: Pix"
     .replace(/["“”]+/g, ' ') // Inter: Pix enviado: "Cp :60746948-FULANO"
     .replace(/\bcp\s*:\s*\d*\s*-?/gi, ' ')
     .replace(/(^|\s)(ag([eê]ncia)?|conta|cc|c\/c|banco|inst(itui[cç][aã]o)?|id|doc|nsu|aut(oriza[cç][aã]o)?|c[oó]d(igo)?)\.?\s*:?\s*[\w-]*\d[\w-]*/gi, ' ')
@@ -110,7 +112,7 @@ function semRuido(s: string) {
     .replace(/\b\d{1,2}:\d{2}(:\d{2})?\b/g, ' ') // horário
     .replace(/(?<=[a-z])\d{1,2}\/\d{1,2}\b/gi, ' ') // data grudada no nome (Itaú: "JOSE A16/10")
     .replace(/\b\d{1,2}[/.-]\d{1,2}([/.-]\d{2,4})?\b/g, ' ') // data
-    .replace(/[-+−]?\s*r\$\s*[\d.,]+/gi, ' ')
+    .replace(/[-+−]?\s*r\$\s*[-+−]?[\d.,]*/gi, ' ')
     .replace(/\b\d+([.,]\d+)*\b/g, (m) => (m.replace(/\D/g, '').length >= 4 ? ' ' : m)) // números soltos longos
     .replace(/[|•*_#]+/g, ' ')
     .replace(/\s+/g, ' ')
@@ -219,7 +221,9 @@ function limparSemForma(bruta: string, tipoAtual?: Tipo): { descricao: string; t
  * nome (só números, cortado ou com letra que não deu para ler).
  */
 export function limparDescricao(bruta: string, tipoAtual?: Tipo): { descricao: string; tipo?: Tipo; revisar?: string; forma?: FormaGravada | null } {
-  const { texto, ilegivel } = consertarTexto(bruta)
+  const { texto: comParcela, ilegivel } = consertarTexto(bruta)
+  // "LOJA - Parcela 2/10", "LOJA PARC 02/10": a parcela não é parte do nome (e o "2/10" não é data)
+  const texto = comParcela.replace(/\s*[-–(]?\s*\b(parcela|parc\.?|pcl\.?)\s*\d{1,2}\s*(\/|de)\s*\d{1,2}\)?/gi, ' ')
   const r = limparSemForma(texto, tipoAtual)
   const forma = formaPelaDescricao(texto, r.tipo ?? tipoAtual ?? 'saida')
   return { ...r, forma, revisar: r.revisar ?? (ilegivel ? 'tinha letra que não deu para ler: confira o nome' : undefined) }
@@ -239,12 +243,17 @@ const MESES_INTEIROS = new Set(('janeiro fevereiro marco abril maio junho julho 
   'enero febrero marzo mayo junio julio septiembre setiembre octubre noviembre diciembre').split(' '))
 const ehMes = (palavra: string) => palavra.replace(/\.$/, '').length === 3 || MESES_INTEIROS.has(palavra.replace(/\.$/, ''))
 const dois = (n: number) => String(n).padStart(2, '0')
+/** Que dia é hoje (os testes trocam, para não dependerem do dia em que rodam). */
+export const relogio = { hoje: () => new Date() }
 /** Dia que existe no calendário: 31/02 e 29/02 de ano comum não valem (o banco recusa a data e derruba o lote inteiro). */
 const valida = (a: number, m: number, d: number) => m >= 1 && m <= 12 && d >= 1 && a >= 2000 && a <= 2100 && d <= new Date(Date.UTC(a, m, 0)).getUTCDate()
 
+/** O que vem logo antes de "2/3" quando é a parcela ("PARC 2/3", "Parcela 02/10", "3x 1/3"). */
+const PARCELA_ANTES = /(\bparc(ela(s|do|da|mento)?)?\.?|\bpcl\.?|\bprc\.?|\b\d{1,2}\s?x)\s*$/
+
 /**
  * Acha uma data no texto (vários formatos). `anoPadrao` para "12/10" e "12 out". Devolve a data, onde ela estava e, nas
- * que não trazem o ano, `semAno` (o ano é um palpite: ver `ajustarVirada`).
+ * que não trazem o ano, `semAno` (o ano é um palpite: ver `ajustarAno`).
  */
 export function acharData(s: string, anoPadrao: number, mesPrimeiro = false): { data: string; trecho: string; semAno?: boolean } | null {
   const t = normal(s)
@@ -271,8 +280,11 @@ export function acharData(s: string, anoPadrao: number, mesPrimeiro = false): { 
     const [trecho, , mes, dia, ano] = americano
     if (valida(+ano, MESES_NOMES[mes], +dia)) return { data: `${ano}-${dois(MESES_NOMES[mes])}-${dois(+dia)}`, trecho }
   }
-  m = t.match(/(^|\s)(\d{1,2})\/(\d{1,2})(\s|$)/)
-  if (m && valida(anoPadrao, +m[3], +m[2])) return { data: `${anoPadrao}-${dois(+m[3])}-${dois(+m[2])}`, trecho: m[0].trim(), semAno: true }
+  // "12/10" solto; "parc 2/3", "parcela 02/10" e "3x 1/3" são a parcela, não um dia
+  for (const c of t.matchAll(/(?<=^|\s)(\d{1,2})\/(\d{1,2})(?=\s|$)/g)) {
+    if (PARCELA_ANTES.test(t.slice(0, c.index))) continue
+    if (valida(anoPadrao, +c[2], +c[1])) return { data: `${anoPadrao}-${dois(+c[2])}-${dois(+c[1])}`, trecho: c[0], semAno: true }
+  }
   return null
 }
 
@@ -294,51 +306,100 @@ function mesVemPrimeiro(textos: string[], nomes: string[] = []): boolean {
 }
 
 /**
- * Datas sem ano ("28/12", "03/01") ganham o ano aberto; num extrato que atravessa a virada do ano isso põe janeiro antes
- * de dezembro. Quando os meses dão a volta (dez → jan, ou jan → dez nos extratos que começam pelo mais novo), o que
- * vem depois da volta é do ano seguinte. `semAno` diz quais linhas tiveram a data adivinhada; as com ano escrito ficam.
+ * As datas escritas com o ano em qualquer lugar do arquivo (período do extrato, vencimento da fatura, dia da emissão, os
+ * próprios lançamentos): é por elas que as datas sem ano ("28/12") descobrem de que ano são.
  */
-function ajustarVirada(linhas: LinhaExtrato[], semAno: boolean[]) {
+export function datasComAno(textos: string[]): string[] {
+  const achadas: string[] = []
+  const poe = (a: number, m: number, d: number) => { if (valida(a, m, d)) achadas.push(`${a}-${dois(m)}-${dois(d)}`) }
+  const extenso = new RegExp(`\\b(\\d{1,2})\\s*(?:de\\s+|-|/)?((${MES})[a-zç]*)\\.?\\s*(?:de\\s+|-|/|,\\s*)?(\\d{4})\\b`, 'g')
+  const mesEAno = new RegExp(`(?<!\\d\\s?(?:de\\s)?)\\b((${MES})[a-zç]*)\\.?\\s*(?:de\\s+|/|-)?\\s*(20\\d{2})\\b`, 'g')
+  for (const bruto of textos) {
+    const t = normal(bruto)
+    if (!/\d{4}|\d\/\d{2}\b/.test(t)) continue
+    for (const m of t.matchAll(/(?<![\d/.-])(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(?![\d/.-])/g)) poe(+m[1], +m[2], +m[3])
+    for (const m of t.matchAll(/(?<![\d/.-])(\d{1,2})[/.-](\d{1,2})[/.-](\d{4}|\d{2})(?![\d/.-])/g)) {
+      const a = m[3].length === 2 ? 2000 + +m[3] : +m[3]
+      if (+m[2] > 12) poe(a, +m[1], +m[2]); else poe(a, +m[2], +m[1])
+    }
+    for (const m of t.matchAll(extenso)) if (ehMes(m[2])) poe(+m[4], MESES_NOMES[m[3]], +m[1])
+    for (const m of t.matchAll(mesEAno)) if (ehMes(m[1])) poe(+m[3], MESES_NOMES[m[2]], 15)
+  }
+  return achadas
+}
+
+const DIA = 86400000
+const emDias = (iso: string) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / DIA
+
+/**
+ * O ano das datas que vieram sem ele ("28/12", "03 JAN"), que nascem com o ano aberto no app:
+ * 1. Num extrato que atravessa a virada, os meses dão a volta (dez → jan, ou jan → dez nos que começam pelo mais novo):
+ *    o que vem depois da volta é do ano seguinte.
+ * 2. O arquivo quase sempre escreve o ano em algum lugar (período, vencimento, emissão): as datas sem ano vão para o ano
+ *    que as deixa dentro (ou mais perto) dessas datas. A fatura que vence em 10/01/2026 tem as compras de dezembro de 2025.
+ * 3. Sem nenhum ano no arquivo, lançamento não cai no futuro: extrato de dezembro importado em janeiro é do ano passado.
+ * `semAno` diz quais linhas tiveram o ano adivinhado; as que trazem o ano escrito ficam como estão.
+ */
+function ajustarAno(linhas: LinhaExtrato[], semAno: boolean[], referencias: string[]) {
   const ix = linhas.map((_, i) => i).filter((i) => semAno[i])
-  if (ix.length < 2) return
+  if (!ix.length) return
+  const poeAno = (i: number, mais: number) => {
+    const l = linhas[i]
+    const a = Number(l.data.slice(0, 4)) + mais, m = Number(l.data.slice(5, 7)), d = Number(l.data.slice(8, 10))
+    // 29/02 num ano que não é bissexto: fica 28/02
+    l.data = `${a}-${dois(m)}-${dois(valida(a, m, d) ? d : d - 1)}`
+  }
   const mes = (i: number) => Number(linhas[i].data.slice(5, 7))
   const saltos = ix.slice(1).map((i, k) => mes(i) - mes(ix[k]))
   const adiante = saltos.some((d) => d <= -7) // dez → jan: o mais antigo vem primeiro
   const atras = saltos.some((d) => d >= 7) // jan → dez: o mais novo vem primeiro
-  if (adiante === atras) return
-  const poeAno = (i: number, mais: number) => { linhas[i].data = `${Number(linhas[i].data.slice(0, 4)) + mais}${linhas[i].data.slice(4)}` }
-  let mais = 0
-  if (adiante) {
-    saltos.forEach((d, k) => { if (d <= -7) mais++; if (mais) poeAno(ix[k + 1], mais) })
-  } else {
-    for (let k = saltos.length - 1; k >= 0; k--) { if (saltos[k] >= 7) mais++; if (mais) poeAno(ix[k], mais) }
+  if (adiante !== atras) {
+    let mais = 0
+    if (adiante) saltos.forEach((d, k) => { if (d <= -7) mais++; if (mais) poeAno(ix[k + 1], mais) })
+    else for (let k = saltos.length - 1; k >= 0; k--) { if (saltos[k] >= 7) mais++; if (mais) poeAno(ix[k], mais) }
   }
+  const hoje = relogio.hoje()
+  const limite = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()) / DIA
+  const refs = referencias.map(emDias).filter((d) => d <= limite + 400)
+  const dias = ix.map((i) => emDias(linhas[i].data))
+  let melhor = 0
+  if (refs.length) {
+    const de = Math.min(...refs), ate = Math.max(...refs)
+    const longe = (k: number) => dias.reduce((s, d) => { const x = d + k * 365.25; return s + (x < de ? de - x : x > ate ? x - ate : 0) }, 0)
+    // empate (todas dentro do período): fica o ano aberto e, depois, o mais novo
+    let nota = longe(0)
+    for (const k of [1, -1, -2, -3, -4, -5]) { const n = longe(k); if (n < nota - 0.5) { nota = n; melhor = k } }
+  } else {
+    while (melhor > -5 && Math.max(...dias) + melhor * 365.25 > limite + 10) melhor--
+  }
+  if (melhor) for (const i of ix) poeAno(i, melhor)
 }
 
 /**
- * Valores em reais no texto, na ordem: "- R$ 1.234,56", "1234.56", "(50,00)", "30,00 D", "30,00 CR", "100,00D".
+ * Valores em reais no texto, na ordem: "- R$ 1.234,56", "R$ -1.234,56", "1234.56", "(50,00)", "30,00 D", "30,00 CR", "100,00D", "42,79-".
  * O "-" só é sinal quando está colado no número (ou antes do R$): o " - " com espaço dos dois lados é separador
  * ("15/10 PIX RECEBIDO MARIA - 1.200,00" é entrada).
  */
-export function acharValores(s: string): { valor: number; sinal: -1 | 0 | 1; trecho: string }[] {
-  // o número tem que estar inteiro: "51.365.272" (raiz de CNPJ) não pode virar R$ 51,36
-  const re = /([-+−](?:\s*(?=r\$)|(?!\s)))?(r\$\s*)?(\(?)(?<![\d.,])(\d{1,3}(?:\.\d{3})+,\d{2}|\d+,\d{2}|\d{1,3}(?:,\d{3})+\.\d{2}|\d+\.\d{2})(?![\d.,]*\d)(\)?)([-+](?!\s*\d)|\s*(?:cr|db|d|c)(?![\w/.]))?/gi
-  const lista: { valor: number; sinal: -1 | 0 | 1; trecho: string }[] = []
-  for (const m of s.matchAll(re)) {
-    const num = m[4]
-    const br = /,\d{2}$/.test(num)
-    const valor = Number(br ? num.replace(/\./g, '').replace(',', '.') : num.replace(/,/g, ''))
+export function acharValores(s: string): { valor: number; sinal: -1 | 0 | 1; trecho: string; pos: number }[] {
+  const lista: { valor: number; sinal: -1 | 0 | 1; trecho: string; pos: number }[] = []
+  for (const m of s.matchAll(RE_VALOR)) {
+    const g = m.groups!
+    const br = /,\d{2}$/.test(g.num)
+    const valor = Number(br ? g.num.replace(/\./g, '').replace(',', '.') : g.num.replace(/,/g, ''))
     if (!Number.isFinite(valor) || valor === 0) continue
-    const fim = (m[6] ?? '').trim().toLowerCase()
-    const sinal: -1 | 0 | 1 = m[1]?.match(/[-−]/) || (m[3] && m[5]) || fim === '-' || fim === 'd' || fim === 'db' ? -1 : m[1]?.includes('+') || fim === '+' || fim === 'c' || fim === 'cr' ? 1 : 0
-    lista.push({ valor, sinal, trecho: m[0] })
+    const fim = (g.fim ?? '').trim().toLowerCase()
+    const antes = `${g.s1 ?? ''}${g.s2 ?? ''}`
+    const sinal: -1 | 0 | 1 = /[-−]/.test(antes) || (g.abre && g.fecha) || fim === '-' || fim === 'd' || fim === 'db' || fim === 'dr' ? -1 : antes.includes('+') || fim === '+' || fim === 'c' || fim === 'cr' ? 1 : 0
+    lista.push({ valor, sinal, trecho: m[0], pos: m.index })
   }
   return lista
 }
+// o número tem que estar inteiro: "51.365.272" (raiz de CNPJ) não pode virar R$ 51,36
+const RE_VALOR = /(?<s1>[-+−](?:\s*(?=r\$)|(?!\s)))?(?:r\$\s*(?<s2>[-+−]\s?)?)?(?<abre>\(?)(?<![\d.,])(?<num>\d{1,3}(?:\.\d{3})+,\d{2}|\d+,\d{2}|\d{1,3}(?:,\d{3})+\.\d{2}|\d+\.\d{2})(?![\d.,]*\d)(?<fecha>\)?)(?<fim>[-+](?!\s*\d)|\s*(?:cr|db|dr|d|c)(?![\w/.&'-]))?/gi
 
 // "Rem:" (remetente) e "Des:" (destinatário) são como o Bradesco diz de quem veio e para quem foi o Pix
 const PISTA_ENTRADA = /recebid|recebimento|credito|deposito|estorno|rendimento|salario|reembolso|cashback|devolucao|entrada|\brem:/
-const PISTA_SAIDA = /enviad|pagamento|pgto|compra|debito|saque|tarifa|boleto|fatura|envio|saida|transferencia para|\bdes:/
+const PISTA_SAIDA = /enviad|emitid|pagamento|pgto|compra|debito|saque|tarifa|boleto|fatura|envio|saida|transferencia para|\bdes:/
 const IGNORAR = /^(data\b|lancamentos?\b|periodo|extrato|movimentac)/
 /** O que vem depois de "Saldo"/"Total" nas linhas de resumo ("Saldo do dia", "Total da fatura"). */
 const RESUMO_DEPOIS = /^((do|da|de|dos|das)\s+(dia|mes|periodo|fatura|conta|extrato|cartao|compras|pagamentos|lancamentos|entradas|saidas|creditos|debitos|despesas|receitas|limite|investimentos|aplicacoes)|anterior|final|inicial|atual|disponivel|bloqueado|parcial|geral|liquido|bruto|em\s+(conta|c\/?c)|apos|a\s+(pagar|receber)|pago|devedor|credor|fatura|compras|entradas|saidas|creditos|debitos|despesas|receitas|gastos?|lancamentos|pagamentos|periodo|mes|dia|conta|limite|cartao|c\/c|cc|invest\w*|aplica\w*|poupanca)\b/
@@ -348,8 +409,11 @@ const RESUMO_DEPOIS = /^((do|da|de|dos|das)\s+(dia|mes|periodo|fatura|conta|extr
  * "Saldo"/"Total" sozinhos ou seguidos de número ou de uma palavra de resumo; "Saldo Farma", "Total Express" e
  * "TotalPass" são lojas e seguem como lançamento.
  */
-function ehResumo(n: string) {
+function ehResumo(texto: string) {
+  // "S A L D O" (Banco do Brasil) é "saldo"
+  const n = /^(\S\s)+\S$/.test(texto.trim()) ? texto.replace(/\s/g, '') : texto
   if (/^limite (total|disponivel|de credito|utilizado|da conta)\b|^(opening|closing|beginning|ending|previous|available|current|starting) balance\b|^balance (brought|carried) forward\b|^saldo (inicial|final|anterior)\b/.test(n.trim())) return true
+  if (/^(total (de |das |dos )?)?(entradas|saidas|creditos|debitos|rendimentos?( liquidos?)?)\s*:?\s*[-+−]?\s*(r\$|\d)/.test(n.trim())) return true
   const m = /^(saldo|total)\b\s*(.*)$/.exec(n.trim())
   if (!m) return IGNORAR.test(n.trim())
   return !/^[a-z]/.test(m[2]) || /^r\$/.test(m[2]) || RESUMO_DEPOIS.test(m[2])
@@ -385,6 +449,14 @@ const CABECALHO_DE_PAGINA = /^banco\s+[a-z ]{2,30}?\s+s\.?\s*\/?\s*a\b|^(emitido
 /** Saldo da conta numa linha de resumo ("Saldo anterior", "Saldo do dia"): serve para descobrir se cada lançamento entrou ou saiu. */
 const SALDO_DA_CONTA = /^saldo( (anterior|inicial|final|do dia|atual|disponivel|em conta( corrente)?|em c\/?c))?$|^(opening|closing|beginning|ending|previous|starting) balance$|^balance (brought|carried) forward$/
 
+/** "01/10/2026 a 31/10/2026", "DE 03 DEZ A 02 JAN", "1 de outubro de 2026 até 31 de outubro de 2026": o período do extrato, não um lançamento. */
+const UMA_DATA = `(?:\\d{1,2}[/.-]\\d{1,2}(?:[/.-]\\d{2,4})?|\\d{1,2}\\s*(?:de\\s+)?(?:${MES})[a-z]*\\.?(?:\\s*(?:de\\s+)?\\d{4})?)`
+const PERIODO = new RegExp(`(?<![\\d/.-])${UMA_DATA}\\s*(?:\\ba\\b|\\bate\\b|\\bto\\b|\\be\\b|[-–])\\s*${UMA_DATA}(?![\\d/.-])`)
+/** Fatura de cartão: a compra vem sem sinal (é gasto) e o que vem com menos é pagamento ou estorno (entrou no cartão). */
+const pareceFatura = (linhas: string[]) => { const topo = normal(linhas.slice(0, 40).join(' ')); return /\bfatura\b/.test(topo) && /\bvencimento\b/.test(topo) }
+
+const RESUMO_DA_FATURA = /\b(total (desta|da|dessa|a|de) (fatura|pagar)|valor (total )?(desta|da|dessa) fatura|pagamento minimo|melhor (dia|data) (de|para) compra|limite (total|disponivel|de credito|utilizado)|(data (de|do) )?vencimento\s*:?\s*\d)/
+
 const RUIDO_DE_PAGINA = /\bpagina\s+\d+\s*(de|\/)\s*\d+|\bpag\.?\s*\d+\s*(de|\/)\s*\d+|\bouvidoria\b|\bsac\b|\b0800\b|\bcnpj\b|\bwww\.|https?:|\S+@\S+\.\w+|\bfale conosco|\bcentral de (atendimento|relacionamento)|\bdeficiente (auditivo|de fala)|\btel(efone)?s?\.?:?\s*\(?\d|\(\d{2}\)\s*\d{4,5}-?\d{4}/
 
 /**
@@ -392,18 +464,18 @@ const RUIDO_DE_PAGINA = /\bpagina\s+\d+\s*(de|\/)\s*\d+|\bpag\.?\s*\d+\s*(de|\/)
  * próximos (extratos que agrupam por dia); linha sem data nem valor logo depois de um lançamento completa a descrição
  * dele (nome quebrado em duas linhas).
  */
-export function deTexto(linhas: string[], anoPadrao: number): LinhaExtrato[] {
+export function deTexto(linhas: string[], anoPadrao: number, opcoes: { referencias?: string[] } = {}): LinhaExtrato[] {
   const mesPrimeiro = mesVemPrimeiro(linhas)
-  // fatura de cartão: a compra vem sem sinal (é gasto) e o que vem com menos é pagamento ou estorno (entrou no cartão)
-  const topo = normal(linhas.slice(0, 40).join(' '))
-  const ehFatura = /\bfatura\b/.test(topo) && /\bvencimento\b/.test(topo)
+  const ehFatura = pareceFatura(linhas)
   /** "Total de entradas" / "Total de saídas" (Nubank): as linhas de baixo, até o próximo total ou dia, são desse tipo. */
   let secao: 1 | -1 | null = null
   const saida: LinhaExtrato[] = []
-  /** Para cada linha de `saida`: a data veio sem ano (ver `ajustarVirada`). */
+  /** Para cada linha de `saida`: a data veio sem ano (ver `ajustarAno`). */
   const semAno: boolean[] = []
   let diaAtual: string | null = null
   let diaSemAno = false
+  /** O dia atual veio de uma data que abre a linha (título do dia ou primeira coluna). */
+  let diaNoComeco = false
   let ultimo: { l: LinhaExtrato; bruta: string; sinal: -1 | 0 | 1 } | null = null
   // linha com data e descrição mas sem valor: o valor vem na linha seguinte ("15/10 PIX RECEBIDO" + "MARIA … R$ 1.200,00")
   let pendente: { data: string; texto: string; semAno: boolean } | null = null
@@ -415,19 +487,27 @@ export function deTexto(linhas: string[], anoPadrao: number): LinhaExtrato[] {
     const linha = bruta.replace(/\s+/g, ' ').trim()
     if (!linha) continue
     const n = normal(linha)
-    const d = acharData(linha, anoPadrao, mesPrimeiro)
+    let d = acharData(linha, anoPadrao, mesPrimeiro)
     const valores = acharValores(linha)
+    // o período do extrato ("01/10/2026 a 31/10/2026", sozinho ou com os totais ao lado) não é lançamento
+    const periodo = PERIODO.exec(n)
+    if (periodo && (!d || n.indexOf(d.trecho) >= periodo.index)) { ultimo = null; pendente = null; continue }
+    // "Compra Loja 3/10  30,00" debaixo do dia: quando os dias do extrato abrem a linha, um "3/10" no meio dela é o dia da
+    // compra ou a parcela, não a data do lançamento
+    if (d?.semAno && diaAtual && diaNoComeco && valores.length && /^\d{1,2}\/\d{1,2}$/.test(d.trecho) && !n.startsWith(d.trecho)) d = null
     // rodapé e cabeçalho de página ("Página 1 de 3", "Ouvidoria 0800…", CNPJ, site): nem lançamento, nem continuação de nome
     if (!valores.length && RUIDO_DE_PAGINA.test(n)) continue
     // a descrição sem a data e os valores: é ela que diz se a linha é um resumo ("Saldo do dia") ou uma loja ("Saldo Farma")
     const semDataEValor = [d?.trecho, ...valores.map((v) => v.trecho)].reduce<string>((x, t) => (t ? x.replace(t.toLowerCase(), ' ') : x), n).replace(/\s+/g, ' ').trim()
     if (!valores.length && CABECALHO_DE_PAGINA.test(semDataEValor)) { ultimo = null; continue }
+    // "Vencimento: 10/11/2026  Total desta fatura 311,69", "Pagamento mínimo R$ 46,75": resumo da fatura
+    if (RESUMO_DA_FATURA.test(n)) { ultimo = null; pendente = null; continue }
     if (ehResumo(n) || ehResumo(semDataEValor) || /\bsaldo\b/.test(n) && !/^(saldo|total)\b/.test(semDataEValor) && valores.length <= 1 && !/pix|transf|compra|pagamento/.test(n)) {
       const resumo = semDataEValor.replace(/[^a-z/ ]/g, ' ').replace(/\s+/g, ' ').trim()
       if (valores.length === 1 && SALDO_DA_CONTA.test(resumo)) saldos.push({ antes: saida.length, depois: saida.length, valor: comSinal(valores[0]) })
       // "01 OUT 2026  Total de entradas" e "1 de Outubro  Saldo do dia": o dia dos lançamentos de baixo
       // (só quando a data abre a linha: "Data de vencimento: 10 NOV" não é dia de lançamento)
-      if (d && n.startsWith(d.trecho)) { diaAtual = d.data; diaSemAno = Boolean(d.semAno); secao = null }
+      if (d && n.startsWith(d.trecho)) { diaAtual = d.data; diaSemAno = Boolean(d.semAno); diaNoComeco = true; secao = null }
       if (/^(total (de |das |dos )?)?(entradas|creditos|recebimentos)$/.test(resumo)) secao = 1
       else if (/^(total (de |das |dos )?)?(saidas|debitos|pagamentos|gastos|despesas)$/.test(resumo)) secao = -1
       ultimo = null
@@ -438,7 +518,7 @@ export function deTexto(linhas: string[], anoPadrao: number): LinhaExtrato[] {
     const dataNoFim = Boolean(d && !valores.length && ultimo && !n.startsWith(d.trecho) && n.endsWith(d.trecho) && /^\d{1,2}\/\d{1,2}(\/\d{2,4})?$/.test(d.trecho))
     if (d && !valores.length && !dataNoFim) {
       const resto = semRuido(linha.replace(d.trecho, ''))
-      if (resto.replace(/[^A-Za-zÀ-ÿ]/g, '').length < 4) { diaAtual = d.data; diaSemAno = Boolean(d.semAno); ultimo = null; pendente = null; secao = null; continue }
+      if (resto.replace(/[^A-Za-zÀ-ÿ]/g, '').length < 4) { diaAtual = d.data; diaSemAno = Boolean(d.semAno); diaNoComeco = n.startsWith(d.trecho); ultimo = null; pendente = null; secao = null; continue }
       pendente = { data: d.data, texto: linha.replace(d.trecho, ' '), semAno: Boolean(d.semAno) }
       ultimo = null
       continue
@@ -452,7 +532,7 @@ export function deTexto(linhas: string[], anoPadrao: number): LinhaExtrato[] {
       pendente = null
       // os próximos lançamentos sem data (extrato que só escreve a data no primeiro do dia) são deste dia
       if (d && d.data !== diaAtual) secao = null
-      if (d) { diaAtual = d.data; diaSemAno = Boolean(d.semAno) }
+      if (d) { diaAtual = d.data; diaSemAno = Boolean(d.semAno); diaNoComeco = n.startsWith(d.trecho) }
       if (d) desc = desc.replace(new RegExp(d.trecho.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&'), 'i'), ' ')
       for (const x of valores.slice(1)) desc = desc.replace(x.trecho, ' ')
       // fatura de cartão em PDF: o pagamento da fatura vem com sinal de menos, mas é dinheiro que entrou no cartão
@@ -479,7 +559,7 @@ export function deTexto(linhas: string[], anoPadrao: number): LinhaExtrato[] {
     }
   }
   tipoPeloSaldo(saida, fontes, saldos)
-  ajustarVirada(saida, semAno)
+  ajustarAno(saida, semAno, opcoes.referencias ?? datasComAno(linhas))
   return saida
 }
 
@@ -536,7 +616,7 @@ const COLUNAS = {
   valor: /^(valor|amount|quantia|montante|importe|monto|value|r\$)\b|\bamount\b/,
   credito: /^(credito|creditos|entradas?|valor (de |do )?credito|credits?|deposits?|money in|paid in|abonos?|ingresos?|haber)\b|\bcredits?$/,
   debito: /^(debito|debitos|saidas?|valor (de |do )?debito|debits?|withdrawals?|money out|paid out|cargos?|egresos?|debe)\b|\bdebits?$/,
-  tipo: /^(tipo|natureza|d\/c|c\/d|e\/s|dc|cd|operacao|movimentacao|entrada\/saida|credito\/debito|debito\/credito|type|dr\/cr|cr\/dr|sinal)( de (transacao|lancamento|movimentacao|operacao))?$/,
+  tipo: /^(tipo|natureza|d\/c|c\/d|e\/s|dc|cd|operacao|movimentacao|entrada\/saida|credito\/debito|debito\/credito|type|dr\/cr|cr\/dr|sinal)( (de |do |da )?(transacao|lancamento|movimentacao|movimento|operacao))?$/,
   saldo: /^(saldo|balance|running balance|partial balance)\b|\bbalance$/,
   doc: /^(dcto|docto|documento|doc|n[o°º]?\s*(do\s+)?doc(umento)?|nr\.?\s*doc(umento)?|num(ero)?(\s+do)?\s*doc(umento)?|referencia|ref|reference( id)?|id|identificador|nsu|autenticacao|lote|ag\.?\s*origem|agencia)\.?$/,
 }
@@ -672,7 +752,7 @@ function colunasPeloConteudo(rows: string[][], anoPadrao: number): Colunas | nul
 }
 
 /** Lê as linhas de uma tabela de colunas já conhecidas. `cab`: os nomes das colunas (vazio quando foram adivinhadas). */
-function lerLinhasDaTabela(corpo: string[][], col: Colunas, cab: string[], anoPadrao: number): LinhaExtrato[] {
+function lerLinhasDaTabela(corpo: string[][], col: Colunas, cab: string[], anoPadrao: number, opcoes: { referencias: string[]; fatura?: boolean }): LinhaExtrato[] {
   // Coluna de valor com sinal (as saídas vêm negativas): nela, o valor sem sinal é entrada. Sem nenhum negativo na coluna,
   // o número sozinho não diz nada e quem decide é a coluna "Tipo", o saldo ou o texto da linha.
   const colComSinal = col.valor !== undefined && corpo.some((r) => valorDaCelula(r[col.valor!] ?? '')?.sinal === -1)
@@ -681,15 +761,18 @@ function lerLinhasDaTabela(corpo: string[][], col: Colunas, cab: string[], anoPa
   const nomes = cab.map(nomeDeColuna)
   const textoDaLinha = (r: string[]) => normal(col.desc !== undefined ? r[col.desc] ?? '' : r.join(' '))
   const fatura = col.valor !== undefined && col.saldo === undefined && (
-    ['date', 'category', 'title', 'amount'].every((h) => nomes.includes(h)) ||
+    Boolean(opcoes.fatura) || ['date', 'category', 'title', 'amount'].every((h) => nomes.includes(h)) ||
     corpo.some((r) => valorDaCelula(r[col.valor!] ?? '')?.sinal === -1 && /^pagamento recebido/.test(textoDaLinha(r)))
   )
   // a categoria do cartão ("restaurante") não é parte do nome
   const colCategoria = nomes.findIndex((c) => /^(category|categoria)$/.test(c))
   const usadas = new Set([col.data, col.valor, col.credito, col.debito, col.tipo, col.saldo, col.doc, colCategoria >= 0 ? colCategoria : undefined].filter((x) => x !== undefined))
+  // colunas repetidas ("Data contábil", "Saldo sacável", "Valor em dólar") também não são nome
+  cab.forEach((c, j) => { const k = chaveDaColuna(c); if (k && k !== 'desc') usadas.add(j) })
   // outras colunas de texto, menos as que são código (sem espaço, com número: "abc-123", ids), na ordem das colunas,
   // para "Pix recebido" + "Fulano" virar "Pix de Fulano" (Inter: "Histórico" + "Descrição")
-  const ehTexto = (c: string) => c && /[A-Za-zÀ-ÿ]/.test(c) && !acharData(c, anoPadrao) && !(/\d/.test(c) && !/\s/.test(c.trim()))
+  const soData = (c: string) => { const d = acharData(c, anoPadrao); return Boolean(d) && normal(c).replace(d!.trecho, ' ').replace(/[^a-z]/g, '').length < 4 }
+  const ehTexto = (c: string) => c && /[A-Za-zÀ-ÿ]/.test(c) && !soData(c) && !(/\d/.test(c) && !/\s/.test(c.trim())) && !ehValorNaTabela(c, anoPadrao)
   const descDa = (r: string[]) => r.filter((c, j) => (j === col.desc ? Boolean(c?.trim()) : !usadas.has(j) && ehTexto(c))).map((c) => c.trim()).join(' - ')
 
   const mesPrimeiro = mesVemPrimeiro(corpo.map((r) => r.join(" ")), cab)
@@ -705,7 +788,11 @@ function lerLinhasDaTabela(corpo: string[][], col: Colunas, cab: string[], anoPa
   let pendente: string | null = null
   for (const r of corpo) {
     if (!r.length) { ultimo = null; pendente = null; continue } // quebra (rodapé, fim da tabela na página)
-    const d = col.data !== undefined ? acharData(r[col.data] ?? '', anoPadrao, mesPrimeiro) : null
+    let d = col.data !== undefined ? acharData(r[col.data] ?? '', anoPadrao, mesPrimeiro) : null
+    // "Data de geração: 08-11-2026" na coluna da data é rodapé, não o dia de um lançamento
+    if (d && normal(r[col.data!]).replace(d.trecho, ' ').replace(/[^a-z]/g, '').length > 6) d = null
+    // "00/00/0000" (linha de saldo do Banco do Brasil): tem cara de data e não é dia nenhum
+    if (!d && col.data !== undefined && /^\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}$/.test((r[col.data] ?? '').trim())) { ultimo = null; pendente = null; continue }
     const desc = descDa(r)
     const nd = normal(desc)
     if (r.some((c, j) => j !== col.data && ehResumo(normal(c)))) {
@@ -727,6 +814,7 @@ function lerLinhasDaTabela(corpo: string[][], col: Colunas, cab: string[], anoPa
     if (!valor) {
       if (!desc || RUIDO_DE_PAGINA.test(nd) || CABECALHO_DE_PAGINA.test(nd)) { if (desc) { ultimo = null; pendente = null } if (d) dia = d; continue }
       // só texto: completa o nome do lançamento de cima (mesmo dia) ou, com data e sem ninguém em cima, é o nome do de baixo
+      if (!/[A-Za-zÀ-ÿ]{2}/.test(desc)) continue
       if (ultimo !== null && (!d || d.data === saida[ultimo].data) && desc.length < 80) {
         const f = fontes[ultimo]
         f.bruta = `${f.bruta} ${desc}`
@@ -745,7 +833,7 @@ function lerLinhasDaTabela(corpo: string[][], col: Colunas, cab: string[], anoPa
     if (!sinal && !extraTipo && colComSinal) sinal = 1
     const l = montar(data.data, texto, valor, sinal, extraTipo)
     // o pagamento da fatura sai da conta e já está no extrato dela: importar de novo contaria em dobro
-    if (fatura && sinal === 1 && /^pagamento recebido/.test(normal(texto))) Object.assign(l, { pagamentoDaFatura: true, revisar: l.revisar ?? 'pagamento da fatura: já está no extrato da conta' })
+    if (fatura && sinal === 1 && /^pagamento recebido|^pagamento\b.*\b(fatura|efetuado|em \d)|^pagamento$|^pagto\b/.test(normal(texto).trim())) Object.assign(l, { pagamentoDaFatura: true, revisar: l.revisar ?? 'pagamento da fatura: já está no extrato da conta' })
     if (col.saldo !== undefined) { const s = valorComSinal(r[col.saldo] ?? ''); if (s !== null) saldos.push({ antes: saida.length + 1, depois: saida.length, valor: s }) }
     saida.push(l)
     semAno.push(Boolean(data.semAno))
@@ -753,26 +841,40 @@ function lerLinhasDaTabela(corpo: string[][], col: Colunas, cab: string[], anoPa
     ultimo = saida.length - 1
   }
   tipoPeloSaldo(saida, fontes, saldos)
-  ajustarVirada(saida, semAno)
+  ajustarAno(saida, semAno, opcoes.referencias)
   return saida
 }
 
 /** Linhas de uma tabela → lançamentos. Acha o cabeçalho (ou adivinha as colunas pelo conteúdo). */
-export function deTabela(linhas: string[][], anoPadrao: number): LinhaExtrato[] {
+export function deTabela(linhas: string[][], anoPadrao: number, opcoes: { /** sem cair no texto corrido quando não acha as colunas */ soTabela?: boolean } = {}): LinhaExtrato[] {
   const rows = linhas.map((r) => r.map((c) => String(c ?? '').trim())).filter((r) => r.some(Boolean))
   if (!rows.length) return []
+  const referencias = datasComAno(rows.map((r) => r.join('  ')))
   for (let i = 0; i < Math.min(rows.length, 40); i++) {
     const col = colunasDoCabecalho(rows[i])
-    if (col) return lerLinhasDaTabela(rows.slice(i + 1), col, rows[i], anoPadrao)
+    if (col) return lerLinhasDaTabela(rows.slice(i + 1), col, rows[i], anoPadrao, { referencias })
   }
   const col = colunasPeloConteudo(rows, anoPadrao)
-  return col ? lerLinhasDaTabela(rows, col, [], anoPadrao) : deTexto(rows.map((r) => r.join('  ')), anoPadrao)
+  return col ? lerLinhasDaTabela(rows, col, [], anoPadrao, { referencias }) : opcoes.soTabela ? [] : deTexto(rows.map((r) => r.join('  ')), anoPadrao, { referencias })
 }
 
-/** CSV com aspas e separador adivinhado (; , ou tab), ou o separador dado. */
+/**
+ * Os separadores que o CSV pode ter, do mais provável para o menos: o que aparece o mesmo tanto de vezes (duas ou mais)
+ * em mais linhas. O título de cima ("Extrato, conta 1,2,3") não decide sozinho.
+ */
+export function separadoresDoCsv(texto: string): string[] {
+  const linhas = texto.split(/\r\n|\r|\n/).filter((l) => l.trim()).slice(0, 200)
+  const nota = (sep: string) => {
+    const vezes = new Map<number, number>()
+    for (const l of linhas) { const n = l.replace(/"[^"]*"/g, '').split(sep).length - 1; if (n >= 2) vezes.set(n, (vezes.get(n) ?? 0) + 1) }
+    return Math.max(0, ...vezes.values())
+  }
+  return [';', '\t', '|', ','].map((sep) => ({ sep, n: nota(sep) })).filter((x) => x.n).sort((a, b) => b.n - a.n).map((x) => x.sep)
+}
+
+/** CSV com aspas e separador adivinhado (; , tab ou |), ou o separador dado. */
 export function lerCsv(texto: string, separador?: string): string[][] {
-  const primeira = texto.split(/\r?\n/).find((l) => l.trim()) ?? ''
-  const sep = separador ?? [';', '\t', ','].sort((a, b) => primeira.split(b).length - primeira.split(a).length)[0]
+  const sep = separador ?? separadoresDoCsv(texto)[0] ?? ';'
   const linhas: string[][] = []
   let campo = ''
   let linha: string[] = []
@@ -817,54 +919,84 @@ const entidades = (s: string) =>
 export function deOfx(texto: string): LinhaExtrato[] {
   const campo = (bloco: string, nome: string) => entidades(bloco.match(new RegExp(`<${nome}>([^<\\r\\n]*)`, 'i'))?.[1]?.trim() ?? '')
   const saida: LinhaExtrato[] = []
+  const cartao = /<CREDITCARDMSGSRSV1>|<CCSTMTRS>/i.test(texto)
   for (const m of texto.matchAll(/<STMTTRN>([\s\S]*?)(<\/STMTTRN>|(?=<STMTTRN>)|<\/BANKTRANLIST>)/gi)) {
     const b = m[1]
     const d = campo(b, 'DTPOSTED')
     const v = numeroOfx(campo(b, 'TRNAMT'))
     if (d.length < 8 || !v) continue
-    const desc = [campo(b, 'NAME'), campo(b, 'MEMO')].filter(Boolean).join(' - ')
-    saida.push(montar(`${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`, desc, v, v < 0 ? -1 : 1))
+    // muitos bancos repetem o mesmo texto no nome e no memo
+    const nome = campo(b, 'NAME'), memo = campo(b, 'MEMO')
+    const desc = [nome, normal(memo).includes(normal(nome)) ? '' : memo].filter(Boolean).join(' - ') || memo
+    const l = montar(`${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`, desc, v, v < 0 ? -1 : 1)
+    // fatura de cartão: o pagamento dela já está no extrato da conta
+    if (cartao && v > 0 && /^pagamento\b|^pagto\b/.test(normal(desc).trim())) Object.assign(l, { pagamentoDaFatura: true, revisar: l.revisar ?? 'pagamento da fatura: já está no extrato da conta' })
+    saida.push(l)
   }
   return saida
 }
 
 // ---------- arquivos ----------
 
-/** Leitor de PDF (pdf.js), baixado só quando alguém importa um PDF. */
-const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168'
-
 export interface ItemTexto { str: string; transform: number[]; width: number; height?: number }
 
 /** Um pedaço de texto do PDF e onde ele está na página (x da esquerda, y de baixo para cima, largura e altura da letra). */
 export interface ItemPdf { str: string; x: number; y: number; w: number; h: number }
 
+/** O que o leitor usa do pdf.js (em `lib/pdfjs.ts`; os testes passam o deles). */
+export interface LeitorDePdf {
+  getDocument: (o: object) => { promise: Promise<{ numPages: number; getPage: (n: number) => Promise<{ getTextContent: (o?: object) => Promise<{ items: unknown[] }> }> }> }
+}
+
 /** Os pedaços de texto de cada página do PDF (pdf.js). */
-export async function itensDoPdf(dados: ArrayBuffer): Promise<ItemPdf[][]> {
-  let pdfjs: { getDocument: (o: object) => { promise: Promise<{ numPages: number; getPage: (n: number) => Promise<{ getTextContent: () => Promise<{ items: ItemTexto[] }> }> }> }; GlobalWorkerOptions: { workerSrc: string } }
+export async function itensDoPdf(dados: ArrayBuffer, leitor?: LeitorDePdf): Promise<ItemPdf[][]> {
+  let pdfjs: LeitorDePdf
   try {
-    pdfjs = await import(/* @vite-ignore */ `${PDFJS}/pdf.min.mjs`)
-  } catch {
-    throw new Error('Não consegui carregar o leitor de PDF (precisa de internet). Tente exportar o extrato em CSV ou Excel.')
+    pdfjs = leitor ?? (await import('./pdfjs')).pdfjs
+  } catch (e) {
+    registrarErro(e, 'carregar o leitor de PDF')
+    throw new Error('Não consegui carregar o leitor de PDF. Confira a internet e tente de novo, ou exporte o extrato em CSV, Excel ou OFX.')
   }
-  pdfjs.GlobalWorkerOptions.workerSrc = `${PDFJS}/pdf.worker.min.mjs`
+  // Cada tentativa recebe uma cópia: o pdf.js leva os bytes para o worker e o original fica vazio.
+  const abrir = (opcoes: object) => pdfjs.getDocument({ data: new Uint8Array(dados.slice(0)), ...opcoes }).promise
   let doc
   try {
-    doc = await pdfjs.getDocument({ data: new Uint8Array(dados) }).promise
-  } catch (e) {
-    throw new Error(/password/i.test(String(e)) ? 'Esse PDF tem senha. Abra no app do banco e exporte sem senha (ou em CSV).' : 'Não consegui abrir esse PDF.')
+    doc = await abrir({})
+  } catch (primeiro) {
+    if (/password/i.test(String(primeiro))) throw new Error('Esse PDF tem senha. Abra no app do banco e exporte sem senha (ou em CSV).')
+    // PDF meio torto (comum em extrato gerado por sistema de banco): tenta de novo sem as partes que costumam quebrar
+    try {
+      doc = await abrir({ isEvalSupported: false, disableFontFace: true, useSystemFonts: false, stopAtErrors: false })
+    } catch (e) {
+      registrarErro(e, `extrato PDF (${dados.byteLength} bytes): ${String(primeiro).slice(0, 200)}`)
+      throw new Error('Não consegui abrir esse PDF. Ele pode estar corrompido: baixe de novo pelo app do banco ou exporte em CSV, Excel ou OFX.')
+    }
   }
   const paginas: ItemPdf[][] = []
+  let comErro = 0
   for (let p = 1; p <= doc.numPages; p++) {
-    const page = await doc.getPage(p)
-    const { items } = await page.getTextContent()
-    paginas.push(itensDaPagina(items))
+    // uma página que não dá para ler não derruba as outras
+    try {
+      const page = await doc.getPage(p)
+      const { items } = await page.getTextContent()
+      paginas.push(itensDaPagina(items as ItemTexto[]))
+    } catch (e) {
+      comErro++
+      registrarErro(e, `extrato PDF: página ${p} de ${doc.numPages}`)
+      paginas.push([])
+    }
+  }
+  if (comErro === doc.numPages) throw new Error('Não consegui ler o texto desse PDF. Baixe de novo pelo app do banco ou exporte em CSV, Excel ou OFX.')
+  // PDF sem texto nenhum: é foto ou papel escaneado
+  if (paginas.reduce((n, p) => n + p.reduce((k, it) => k + it.str.replace(/\s/g, '').length, 0), 0) < 20) {
+    throw new Error('Esse PDF é uma foto do extrato (escaneado ou print): não tem texto para ler. Baixe o extrato pelo app ou site do banco, em PDF, CSV, Excel ou OFX.')
   }
   return paginas
 }
 
 /** Os pedaços de uma página como o pdf.js entrega (`getTextContent().items`) → texto e posição. */
 export function itensDaPagina(items: ItemTexto[]): ItemPdf[] {
-  return items.filter((it) => it.str?.trim()).map((it) => ({
+  return items.filter((it) => it.str?.trim() && Array.isArray(it.transform)).map((it) => ({
     str: it.str, x: it.transform[4], y: it.transform[5], w: it.width ?? 0,
     h: Math.abs(it.transform[3]) || it.height || Math.hypot(it.transform[0], it.transform[1]) || 10,
   }))
@@ -882,6 +1014,7 @@ function linhasDasPaginas(paginas: ItemPdf[][]): ItemPdf[][] {
       else grupos.push({ y: it.y, itens: [it] })
     }
     grupos.sort((a, b) => b.y - a.y)
+    const daPagina: ItemPdf[][] = []
     for (const g of grupos) {
       // PDF que vem letra por letra (ou sílaba por sílaba): pedaços colados viram uma palavra só
       const juntos: ItemPdf[] = []
@@ -892,8 +1025,9 @@ function linhasDasPaginas(paginas: ItemPdf[][]): ItemPdf[][] {
           juntos[juntos.length - 1] = { ...ant, str: ant.str + it.str, w: it.x + it.w - ant.x }
         } else juntos.push({ ...it })
       }
-      linhas.push(juntos)
+      daPagina.push(juntos)
     }
+    linhas.push(...juntarLinhasQuebradas(separarLadoALado(daPagina)))
   }
   return linhas
 }
@@ -914,43 +1048,87 @@ interface Pedaco { texto: string; x0: number; x1: number; tipo: 'data' | 'valor'
 
 // "4.50" é valor, não dia 4 do mês 50: com ponto ou traço, a data precisa do ano
 const PALAVRA_DATA = /^(\d{1,2}\/\d{1,2}(\/\d{2,4})?|\d{1,2}[.-]\d{1,2}[.-]\d{2,4}|\d{4}[-/.]\d{1,2}[-/.]\d{1,2})$/
-const PALAVRA_VALOR = /^[-+−(]?(r\$)?[-+−]?\(?(\d{1,3}(\.\d{3})+,\d{2}|\d+,\d{2}|\d{1,3}(,\d{3})+\.\d{2}|\d+\.\d{2})\)?[-+]?$/i
-/** O que gruda num valor: "R$" e "-" antes, "D", "C", "CR", "DB" e "-" depois. */
-const ANTES_DO_VALOR = /^(r\$|[-+−])$/i
-const DEPOIS_DO_VALOR = /^(d|c|cr|db|dr|[-+])$/i
+/** Vão entre colunas, no texto da linha (um caractere que nenhuma regra de data ou valor atravessa). */
+const VAO = '\u0001'
 
 /**
- * Uma linha do PDF em pedaços: cada palavra ganha a posição dela (proporcional dentro do trecho que o pdf.js entregou);
- * palavras vizinhas da mesma espécie se juntam, e um vão maior que uma letra e meia separa colunas. Uma data colada no
- * fim de um texto ("PASTELLOCO 01/10") fica no texto.
+ * Uma linha do PDF em pedaços. A linha vira um texto só, com a posição de cada letra (proporcional dentro do trecho que o
+ * pdf.js entregou) e uma marca onde há um vão maior que uma letra e meia (entre colunas). Os valores são achados nesse
+ * texto pela mesma regra do resto do leitor ("-R$ 114,00", "R$ -114,00", "- R$ 114,00", "114,00 D", "42,79-"); o que sobra
+ * entre eles e os vãos é texto, ou data quando o trecho é (ou começa por) uma data. Uma data colada no fim de um texto
+ * ("PASTELLOCO 01/10") fica no texto; se uma data é mesmo a do lançamento, quem decide é a coluna em que ela está.
  */
 function pedacosDaLinha(itens: ItemPdf[]): Pedaco[] {
-  const palavras: { texto: string; x0: number; x1: number; letra: number }[] = []
+  let texto = ''
+  const x0: number[] = [], x1: number[] = [], larg: number[] = []
+  let fim = -Infinity
+  const poe = (ch: string, a: number, b: number, letra: number) => { texto += ch; x0.push(a); x1.push(b); larg.push(letra) }
   for (const it of itens) {
     const str = it.str
     const letra = str.length ? (it.w || str.length * it.h * 0.5) / str.length : it.h * 0.5
-    for (const m of str.matchAll(/\S+/g)) palavras.push({ texto: m[0], x0: it.x + m.index * letra, x1: it.x + (m.index + m[0].length) * letra, letra })
+    for (const m of str.matchAll(/\S+/g)) {
+      const a = it.x + m.index * letra
+      if (texto) poe(a - fim > letra * 1.5 ? VAO : ' ', fim, a, letra)
+      for (let k = 0; k < m[0].length; k++) poe(m[0][k], a + k * letra, a + (k + 1) * letra, letra)
+      fim = a + m[0].length * letra
+    }
   }
   const pedacos: Pedaco[] = []
-  for (let i = 0; i < palavras.length; i++) {
-    const p = palavras[i]
-    const ant = pedacos[pedacos.length - 1]
-    const perto = ant && p.x0 - ant.x1 <= p.letra * 1.5
-    let tipo: Pedaco['tipo'] = PALAVRA_DATA.test(p.texto) ? 'data' : PALAVRA_VALOR.test(p.texto) ? 'valor' : 'texto'
-    // "R$ 1.234,56", "- 500,00", "114,00 D"
-    if (tipo === 'texto' && ANTES_DO_VALOR.test(p.texto) && palavras[i + 1] && PALAVRA_VALOR.test(palavras[i + 1].texto) && palavras[i + 1].x0 - p.x1 <= p.letra * 1.5) {
-      const prox = palavras[++i]
-      pedacos.push({ texto: `${p.texto}${p.texto.length > 1 ? ' ' : ''}${prox.texto}`, x0: p.x0, x1: prox.x1, tipo: 'valor', letra: p.letra })
-      continue
+  const trecho = (de: number, ate: number, valor: boolean) => {
+    // sem os espaços e vãos das pontas
+    while (de < ate && /[\s\u0001]/.test(texto[de])) de++
+    while (ate > de && /[\s\u0001]/.test(texto[ate - 1])) ate--
+    if (ate <= de) return
+    const t = texto.slice(de, ate)
+    // "01-10-2026 Transferência Pix" (colunas apertadas): a data que abre o trecho é um pedaço e o resto é outro
+    const abre = valor ? null : /^(\S+)\s+\S/.exec(t)
+    if (abre && PALAVRA_DATA.test(abre[1])) {
+      pedacos.push({ texto: abre[1], x0: x0[de], x1: x1[de + abre[1].length - 1], letra: larg[de], tipo: 'data' })
+      return trecho(de + abre[1].length, ate, false)
     }
-    if (perto && ant.tipo === 'valor' && tipo === 'texto' && DEPOIS_DO_VALOR.test(p.texto)) { ant.texto += ` ${p.texto}`; ant.x1 = p.x1; continue }
-    if (perto && ant.tipo === 'texto' && tipo === 'data') tipo = 'texto'
-    if (perto && ant.tipo === 'texto' && tipo === 'texto') { ant.texto += ` ${p.texto}`; ant.x1 = p.x1; continue }
-    // data seguida de horário ou de texto colado ("01/10 10:12 Fulano"): fica junto, quem decide é a coluna
-    if (perto && ant.tipo === 'data' && tipo === 'texto') { ant.texto += ` ${p.texto}`; ant.x1 = p.x1; ant.tipo = 'texto'; continue }
-    pedacos.push({ texto: p.texto, x0: p.x0, x1: p.x1, tipo, letra: p.letra })
+    pedacos.push({ texto: t, x0: x0[de], x1: x1[ate - 1], letra: larg[de], tipo: valor ? 'valor' : PALAVRA_DATA.test(t) ? 'data' : 'texto' })
   }
+  const textoAte = (de: number, ate: number) => {
+    let i = de
+    for (let k = de; k < ate; k++) if (texto[k] === VAO) { trecho(i, k, false); i = k + 1 }
+    trecho(i, ate, false)
+  }
+  let pos = 0
+  for (const m of texto.matchAll(RE_VALOR)) {
+    textoAte(pos, m.index)
+    trecho(m.index, m.index + m[0].length, true)
+    pos = m.index + m[0].length
+  }
+  textoAte(pos, texto.length)
   return pedacos
+}
+
+/** Começo de lançamento: "01/10", "01/10/2026", "01 OUT". */
+const COMECA_COM_DATA = new RegExp(`^(\\d{1,2}/\\d{1,2}(/\\d{2,4})?|\\d{1,2}\\s(${MES})\\b)`, 'i')
+
+/**
+ * Fatura com os lançamentos em duas colunas lado a lado (Itaú e outros): cada linha do papel traz dois lançamentos
+ * ("01/10 LOJA A 42,79     04/10 LOJA B 30,00"). Quando várias linhas da página repetem esse desenho com a segunda data
+ * sempre no mesmo lugar, a página é cortada ali: primeiro o lado esquerdo inteiro, depois o direito.
+ */
+function separarLadoALado(linhas: ItemPdf[][]): ItemPdf[][] {
+  const cortes: number[] = []
+  let comValor = 0
+  for (const itens of linhas) {
+    const p = pedacosDaLinha(itens)
+    const v = p.findIndex((x) => x.tipo === 'valor')
+    if (v < 0) continue
+    comValor++
+    const d = p.findIndex((x, i) => i > v && x.tipo !== 'valor' && COMECA_COM_DATA.test(x.texto))
+    if (d > 0 && p.some((x, i) => i > d && x.tipo === 'valor')) cortes.push(p[d].x0)
+  }
+  if (cortes.length < 2 || cortes.length < comValor * 0.4) return linhas
+  const meio = [...cortes].sort((a, b) => a - b)[Math.floor(cortes.length / 2)]
+  const perto = cortes.filter((x) => Math.abs(x - meio) < 12)
+  if (perto.length < cortes.length * 0.7) return linhas
+  const corte = Math.min(...perto) - 3
+  const lado = (direito: boolean) => linhas.map((l) => l.filter((it) => (it.x >= corte) === direito)).filter((l) => l.length)
+  return [...lado(false), ...lado(true)]
 }
 
 /** Coluna do cabeçalho de um PDF: o nome, o que ela é e de onde até onde vai. */
@@ -980,11 +1158,98 @@ function colunaDoPedaco(p: Pedaco, cols: ColunaPdf[]): number {
 }
 
 /**
+ * Lançamento que ocupa várias linhas do papel (o nome quebrado em duas ou três, o tipo numa coluna e a pessoa em outra)
+ * vira uma linha só. A linha que tem o valor é o lançamento; as linhas só de texto coladas nela (em cima ou embaixo, pela
+ * distância: dentro do mesmo lançamento as linhas ficam mais juntas do que entre um lançamento e outro) entram nele, cada
+ * trecho na coluna de texto em que está. Assim "Transferência | BEATRIZ … | 120,00" + "recebida pelo Pix | NU PAGAMENTOS"
+ * sai "Transferência recebida pelo Pix | BEATRIZ … NU PAGAMENTOS | 120,00", e não as duas colunas misturadas.
+ * Rodapé, cabeçalho, resumo, título de dia e texto comprido não entram em lançamento nenhum.
+ */
+function juntarLinhasQuebradas(linhas: ItemPdf[][]): ItemPdf[][] {
+  const info = linhas.map((itens) => {
+    const p = pedacosDaLinha(itens)
+    const texto = p.map((x) => x.texto).join(' ')
+    const n = normal(texto)
+    const temValor = p.some((x) => x.tipo === 'valor')
+    const d = temValor ? null : acharData(texto, 2000)
+    let solta = !temValor && p.length > 0 && texto.length <= 90 && !RUIDO_DE_PAGINA.test(n) && !CABECALHO_DE_PAGINA.test(n) && !RESUMO_DA_FATURA.test(n) && !ehResumo(n) && !PERIODO.test(n)
+    if (solta && (colunasDoCabecalho(p.map((x) => x.texto)) || cabecalhoApertado(p))) solta = false
+    // só a data (título do dia) não completa ninguém
+    if (solta && d && semRuido(texto.replace(new RegExp(d.trecho.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&'), 'i'), ' ')).replace(/[^A-Za-zÀ-ÿ]/g, '').length < 4) solta = false
+    return { itens, p, solta, temValor, y: itens[0]?.y ?? 0, h: Math.max(1, ...itens.map((i) => i.h)), x0: Math.min(...itens.map((i) => i.x)), comecaComData: Boolean(d && n.startsWith(d.trecho)) }
+  })
+  const dono = info.map(() => -1)
+  for (let i = 0; i < info.length; i++) {
+    if (!info[i].solta) continue
+    let j = i
+    while (j + 1 < info.length && info[j + 1].solta && info[j + 1].y < info[j].y) j++
+    const cima = i > 0 && info[i - 1].temValor && info[i - 1].y > info[i].y ? i - 1 : -1
+    const baixo = j + 1 < info.length && info[j + 1].temValor && info[j + 1].y < info[j].y ? j + 1 : -1
+    const vao = (k: number) => info[k].y - info[k + 1].y // entre a linha k e a de baixo
+    const vaos: number[] = []
+    for (let k = cima >= 0 ? cima : i; k < (baixo >= 0 ? baixo : j); k++) vaos.push(vao(k))
+    const menor = Math.min(...vaos)
+    // junto = quase o menor vão do trecho (um ponto de folga) e nunca mais que duas linhas e meia de distância
+    const perto = (v: number, h: number) => v <= menor + Math.max(1, h * 0.12) && v <= h * 2.5
+    // a linha que começa pela data, no lugar da data do lançamento, é outro lançamento (o valor vem na de baixo) ou o título do dia
+    // nem a que começa antes do texto do lançamento (aviso ou rodapé na margem), a não ser a hora debaixo da data ("10:12:44")
+    const cabe = (k: number, a: number) => {
+      if (info[k].comecaComData && info[k].x0 <= info[a].x0 + info[k].h) return false
+      const texto = info[a].p.find((x) => x.tipo === 'texto')
+      return !texto || info[k].x0 >= texto.x0 - info[k].h || info[k].p.map((x) => x.texto).join('').replace(/[^A-Za-zÀ-ÿ]/g, '').length < 4
+    }
+    let k = i
+    if (cima >= 0) while (k <= j && perto(vao(k - 1), info[k].h) && cabe(k, cima)) dono[k++] = cima
+    if (baixo >= 0) for (let m = j; m >= k && perto(vao(m), info[m].h) && cabe(m, baixo); m--) dono[m] = baixo
+    i = j
+  }
+  if (!dono.some((a) => a >= 0)) return linhas
+  const saida: ItemPdf[][] = []
+  info.forEach((L, a) => {
+    if (dono[a] >= 0) return
+    const minhas = dono.map((x, k) => (x === a ? k : -1)).filter((k) => k >= 0)
+    if (!minhas.length) { saida.push(L.itens); return }
+    const cols = L.p.map((c) => ({ ...c, antes: [] as string[], depois: [] as string[] }))
+    for (const k of minhas) {
+      for (const q of info[k].p) {
+        // a coluna de texto do lançamento que começa antes (ou junto) deste trecho; sem nenhuma, ele fica onde está
+        let col = cols.filter((c) => c.tipo === 'texto' && c.x0 <= q.x0 + q.letra * 2).sort((x, y) => y.x0 - x.x0)[0]
+        if (!col) { col = { ...q, texto: '', tipo: 'texto', antes: [], depois: [] }; cols.push(col) }
+        ;(k < a ? col.antes : col.depois).push(q.texto)
+      }
+    }
+    saida.push(cols.sort((x, y) => x.x0 - y.x0).map((c) => ({ str: [...c.antes, c.texto, ...c.depois].filter(Boolean).join(' '), x: c.x0, y: L.y, w: c.x1 - c.x0, h: L.h })))
+  })
+  return saida
+}
+
+/**
+ * Cabeçalho com os nomes das colunas tão juntos que parecem um texto só ("DATA ESTABELECIMENTO VALOR EM R$"): cada palavra
+ * que é nome de coluna abre uma coluna e as outras ("EM", "(R$)") ficam na de trás. Só vale com data, nome e valor.
+ */
+function cabecalhoApertado(pedacos: Pedaco[]): Pedaco[] | null {
+  const cols: Pedaco[] = []
+  for (const p of pedacos) {
+    let x = p.x0
+    for (const palavra of p.texto.split(' ')) {
+      const fim = x + palavra.length * p.letra
+      const ant = cols[cols.length - 1]
+      if (chaveDaColuna(palavra) || !ant) cols.push({ texto: palavra, x0: x, x1: fim, tipo: 'texto', letra: p.letra })
+      else { ant.texto += ` ${palavra}`; ant.x1 = fim }
+      x = fim + p.letra
+    }
+  }
+  const chaves = cols.map((c) => chaveDaColuna(c.texto))
+  const tem = (k: Chave) => chaves.includes(k)
+  return cols.length > pedacos.length && tem('data') && tem('desc') && (tem('valor') || tem('credito') || tem('debito')) ? cols : null
+}
+
+/**
  * PDF com tabela (Data | Histórico | Crédito | Débito | Saldo): cada número vai para a coluna embaixo da qual está, então
  * dá para saber se é crédito, débito, valor ou saldo, coisa que o texto corrido perde. O cabeçalho é procurado de novo em
  * cada página; as linhas fora da tabela (título, rodapé, aviso do banco) separam os lançamentos e não viram nome.
  */
-function dePdfPelasColunas(linhas: ItemPdf[][], anoPadrao: number): LinhaExtrato[] {
+function dePdfPelasColunas(linhas: ItemPdf[][], anoPadrao: number, opcoes: { referencias: string[]; fatura?: boolean }): LinhaExtrato[] {
   /** As colunas da página atual (onde cada uma está) e, para cada uma, a posição dela na tabela da primeira página. */
   let cols: ColunaPdf[] | null = null
   let mapa: number[] = []
@@ -994,8 +1259,9 @@ function dePdfPelasColunas(linhas: ItemPdf[][], anoPadrao: number): LinhaExtrato
     const pedacos = pedacosDaLinha(itens)
     if (!pedacos.length) continue
     // cabeçalho: só texto, com a data e algum valor entre os nomes
-    if (pedacos.every((p) => p.tipo === 'texto') && colunasDoCabecalho(pedacos.map((p) => p.texto))) {
-      cols = pedacos.map((p) => ({ nome: p.texto, chave: chaveDaColuna(p.texto), x0: p.x0, x1: p.x1 }))
+    const cabecalho = pedacos.every((p) => p.tipo === 'texto') ? (colunasDoCabecalho(pedacos.map((p) => p.texto)) ? pedacos : cabecalhoApertado(pedacos)) : null
+    if (cabecalho) {
+      cols = cabecalho.map((p) => ({ nome: p.texto, chave: chaveDaColuna(p.texto), x0: p.x0, x1: p.x1 }))
       if (!nomes) nomes = cols.map((c) => c.nome)
       // a mesma tabela em outra página (talvez com uma coluna a mais ou a menos): cada coluna vai para a de mesmo nome
       // ou de mesma espécie da primeira página; a que não existe lá fica de fora
@@ -1019,7 +1285,11 @@ function dePdfPelasColunas(linhas: ItemPdf[][], anoPadrao: number): LinhaExtrato
       if (j < 0) continue
       // data solta que não está embaixo da coluna Data ("REM: FULANO  01/10"): é texto
       if (p.tipo === 'data' && cols[j].chave !== 'data') p.tipo = 'texto'
-      if (p.tipo === 'texto' && cols[j].chave === 'data' && !acharData(p.texto, anoPadrao)) j = desc >= 0 ? desc : j
+      if (p.tipo === 'texto' && cols[j].chave === 'data' && !acharData(p.texto, anoPadrao)) {
+        // debaixo da data, a hora ou o dia da semana ("10:12:44", "seg") não é nome de ninguém
+        if (p.texto.replace(/[^A-Za-zÀ-ÿ]/g, '').length < 4) continue
+        j = desc >= 0 ? desc : j
+      }
       const col = cols[j]
       // texto que começa bem antes da coluna de nome ou atravessa a tabela: é aviso, título ou rodapé
       if (p.tipo === 'texto' && col.chave === 'desc' && (p.x0 < col.x0 - p.letra * 3 || p.x1 > inicioDosNumeros + p.letra * 2)) fora = true
@@ -1030,7 +1300,7 @@ function dePdfPelasColunas(linhas: ItemPdf[][], anoPadrao: number): LinhaExtrato
   }
   if (!nomes) return []
   const col = colunasDoCabecalho(nomes)
-  return col ? lerLinhasDaTabela(tabela, col, nomes, anoPadrao) : []
+  return col ? lerLinhasDaTabela(tabela, col, nomes, anoPadrao, opcoes) : []
 }
 
 /**
@@ -1041,8 +1311,9 @@ function dePdfPelasColunas(linhas: ItemPdf[][], anoPadrao: number): LinhaExtrato
 export function lerPaginasPdf(paginas: ItemPdf[][], anoPadrao: number): { linhas: LinhaExtrato[]; texto: string[] } {
   const linhas = linhasDasPaginas(paginas)
   const texto = linhas.map(textoDaLinhaPdf)
-  const peloTexto = deTexto(texto, anoPadrao)
-  const pelasColunas = dePdfPelasColunas(linhas, anoPadrao)
+  const referencias = datasComAno(texto)
+  const peloTexto = deTexto(texto, anoPadrao, { referencias })
+  const pelasColunas = dePdfPelasColunas(linhas, anoPadrao, { referencias, fatura: pareceFatura(texto) })
   return { linhas: pelasColunas.length && pelasColunas.length >= peloTexto.length * 0.6 ? pelasColunas : peloTexto, texto }
 }
 
@@ -1148,55 +1419,141 @@ export async function buscarJaLancados(linhas: { data: string }[], anoAberto: nu
   return { lancs, anosComErro: anosComErro.sort() }
 }
 
+/** Todo PDF começa com "%PDF" (às vezes depois de alguns bytes de lixo, que os leitores toleram). */
+export function pareceUmPdf(dados: ArrayBuffer) {
+  return new TextDecoder('latin1').decode(dados.slice(0, 1024)).includes('%PDF-')
+}
+const pareceUmaPagina = (dados: ArrayBuffer) => /<(!doctype html|html|head|body)\b/i.test(new TextDecoder('latin1').decode(dados.slice(0, 2048)))
+
+/** Texto de um arquivo: UTF-16 (com ou sem a marca no começo), UTF-8 e, com caracteres quebrados, Latin-1 (comum nos bancos). */
+export function decodificar(dados: ArrayBuffer): string {
+  const b = new Uint8Array(dados)
+  if (b[0] === 0xff && b[1] === 0xfe) return new TextDecoder('utf-16le').decode(dados)
+  if (b[0] === 0xfe && b[1] === 0xff) return new TextDecoder('utf-16be').decode(dados)
+  // sem a marca: no UTF-16 um byte sim, um não é zero
+  const amostra = b.subarray(0, 400)
+  const zeros = (resto: number) => amostra.filter((x, i) => i % 2 === resto && x === 0).length
+  if (amostra.length >= 8 && zeros(1) > amostra.length * 0.3) return new TextDecoder('utf-16le').decode(dados)
+  if (amostra.length >= 8 && zeros(0) > amostra.length * 0.3) return new TextDecoder('utf-16be').decode(dados)
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(dados) } catch { return new TextDecoder('windows-1252').decode(dados) }
+}
+
+/** As tabelas de uma página HTML (o ".xls" que vários bancos exportam é uma página assim), linha por linha. */
+export function tabelasDoHtml(html: string): string[][] {
+  const limpa = (c: string) => entidades(c.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '')).replace(/[\s\u00a0]+/g, ' ').trim()
+  const linhas: string[][] = []
+  for (const tr of html.replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, '').matchAll(/<tr\b[^>]*>([\s\S]*?)(?=<\/tr>|<tr\b|<\/table>|$)/gi)) {
+    const celulas: string[] = []
+    for (const c of tr[1].matchAll(/<t[dh]\b([^>]*)>([\s\S]*?)(?=<\/t[dh]>|<t[dh]\b|$)/gi)) {
+      celulas.push(limpa(c[2]))
+      // célula que ocupa várias colunas: as outras ficam vazias, para as colunas de baixo continuarem alinhadas
+      const largura = Math.min(Number(/colspan\s*=\s*["']?(\d+)/i.exec(c[1])?.[1] ?? 1), 50)
+      for (let k = 1; k < largura; k++) celulas.push('')
+    }
+    if (celulas.length) linhas.push(celulas)
+  }
+  return linhas
+}
+
+type Planilhas = typeof import('xlsx')
+
+/**
+ * As células de uma aba, como texto. Data vira AAAA-MM-DD pelo número que o Excel guarda (sem passar por fuso horário,
+ * que em alguns aparelhos jogava o lançamento para a véspera) e número fica número ("-80.5": formatado perderia o jeito
+ * de valor). As linhas e colunas vêm das células que existem, não do tamanho que a aba diz ter.
+ */
+function linhasDaAba(ws: import('xlsx').WorkSheet, XLSX: Planilhas): string[][] {
+  const linhas: string[][] = []
+  for (const ref in ws) {
+    if (ref[0] === '!') continue
+    const c = ws[ref] as import('xlsx').CellObject
+    const { r, c: j } = XLSX.utils.decode_cell(ref)
+    if (r > 50000 || j > 100 || c.v === undefined || c.v === null) continue
+    let v = ''
+    if (c.v instanceof Date) v = `${c.v.getUTCFullYear()}-${dois(c.v.getUTCMonth() + 1)}-${dois(c.v.getUTCDate())}`
+    else if (c.t === 'n' && typeof c.v === 'number') {
+      const d = c.z && XLSX.SSF.is_date(String(c.z)) && c.v >= 1 ? XLSX.SSF.parse_date_code(c.v) : null
+      // só a hora (0,43) ou formato de data num número que não é data: fica o número
+      v = d && d.y >= 1990 && d.y <= 2100 ? `${d.y}-${dois(d.m)}-${dois(d.d)}` : String(c.v)
+    } else if (c.t !== 'e' && c.t !== 'z') v = String(c.v)
+    if (!v.trim()) continue
+    const linha = (linhas[r] ??= [])
+    linha[j] = v
+  }
+  // as que não existem viram vazias (uma linha vazia separa uma tabela da outra)
+  return Array.from(linhas, (l) => Array.from(l ?? [], (x) => x ?? ''))
+}
+
+/** O que o arquivo é de verdade, pelo começo dele: o nome engana (".xls" que é página, ".csv" que é planilha, ".txt" que é PDF). */
+function especieDoArquivo(dados: ArrayBuffer, ext: string): 'pdf' | 'zip' | 'ole' | 'texto' {
+  const b = new Uint8Array(dados.slice(0, 8))
+  if (b[0] === 0x50 && b[1] === 0x4b && (b[2] === 3 || b[2] === 5)) return 'zip'
+  if (b[0] === 0xd0 && b[1] === 0xcf && b[2] === 0x11 && b[3] === 0xe0) return 'ole'
+  // com outro nome, só é PDF se começa mesmo por "%PDF" (um texto pode citar "%PDF-" lá pelo meio)
+  return pareceUmPdf(dados) && (ext === 'pdf' || new TextDecoder('latin1').decode(dados.slice(0, 1024)).indexOf('%PDF-') < 64) ? 'pdf' : 'texto'
+}
+
 /** Lê o arquivo do extrato e devolve os lançamentos encontrados (do mais antigo para o mais novo). */
-export async function lerExtrato(arquivo: File, anoPadrao = new Date().getFullYear()): Promise<ExtratoLido> {
+export async function lerExtrato(arquivo: File, anoPadrao = new Date().getFullYear(), leitorDePdf?: LeitorDePdf): Promise<ExtratoLido> {
   const nome = arquivo.name.toLowerCase()
   const ext = nome.split('.').pop() ?? ''
   const dados = await arquivo.arrayBuffer()
+  if (!dados.byteLength) throw new Error('Esse arquivo está vazio. Baixe o extrato de novo pelo app ou site do banco.')
+  const especie = especieDoArquivo(dados, ext)
   let linhas: LinhaExtrato[] = []
   let formato = ext.toUpperCase()
   let cabecalho = ''
-  if (ext === 'pdf') {
-    const pdf = lerPaginasPdf(await itensDoPdf(dados), anoPadrao)
+  if (especie === 'pdf') {
+    const pdf = lerPaginasPdf(await itensDoPdf(dados, leitorDePdf), anoPadrao)
     cabecalho = cabecalhoDe(pdf.texto)
     linhas = pdf.linhas
-  } else if (ext === 'docx') {
+    formato = 'PDF'
+  } else if (ext === 'pdf') {
+    throw new Error(pareceUmaPagina(dados)
+      ? 'Esse arquivo é uma página da internet salva com o nome .pdf, não o extrato. No app ou site do banco, use “Exportar” ou “Baixar PDF”.'
+      : 'Esse arquivo não é um PDF de verdade (só o nome termina em .pdf). Baixe o extrato de novo pelo app do banco ou exporte em CSV, Excel ou OFX.')
+  } else if (especie === 'zip' && (ext === 'docx' || (ext !== 'xlsx' && ext !== 'ods' && await lerDoZip(dados, 'word/document.xml').catch(() => null)))) {
     const w = await linhasDoWord(dados)
     cabecalho = cabecalhoDe(w.texto)
     linhas = w.tabela.length > 2 ? deTabela(w.tabela, anoPadrao) : []
     if (!linhas.length) linhas = deTexto([...w.texto, ...w.tabela.map((r) => r.join('  '))], anoPadrao)
     formato = 'Word'
-  } else if (ext === 'xlsx' || ext === 'xls' || ext === 'ods') {
+  } else if (especie === 'ole' && ext === 'doc') {
+    throw new Error('Arquivos .doc antigos não dão para ler. Abra no Word e salve como .docx (ou exporte o extrato em PDF/CSV).')
+  } else if (especie === 'zip' || especie === 'ole') {
     const XLSX = await import('xlsx')
-    const wb = XLSX.read(dados, { type: 'array', cellDates: true })
-    // células cruas: data vira AAAA-MM-DD e número fica número (formatado, "-80.5" perderia o jeito de valor)
-    const celula = (v: unknown) => (v instanceof Date ? `${v.getFullYear()}-${dois(v.getMonth() + 1)}-${dois(v.getDate())}` : String(v ?? ''))
-    const folhas = wb.SheetNames.map((s) => XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[s], { header: 1, raw: true, defval: '' }).map((r) => r.map(celula)))
+    let wb: import('xlsx').WorkBook
+    try {
+      wb = XLSX.read(dados, { type: 'array', cellDates: false, cellNF: true, cellText: false })
+    } catch (e) {
+      if (/password|encrypt/i.test(String(e))) throw new Error('Essa planilha tem senha. Abra no Excel, salve sem senha e envie de novo (ou exporte o extrato em CSV).')
+      throw new Error('Não consegui abrir essa planilha. Abra no Excel ou no Google Planilhas, salve de novo como .xlsx (ou .csv) e envie de novo.')
+    }
+    const folhas = wb.SheetNames.map((s) => linhasDaAba(wb.Sheets[s], XLSX))
     // a aba que rende mais lançamentos (não a mais comprida: pode ser um resumo ou uma lista de categorias)
     const melhor = folhas.map((f) => ({ f, l: deTabela(f, anoPadrao) })).sort((a, b) => b.l.length - a.l.length || b.f.length - a.f.length)[0]
     cabecalho = cabecalhoDe((melhor?.f ?? []).map((r) => r.join(' ')))
     linhas = melhor?.l ?? []
     formato = 'Excel'
-  } else if (ext === 'doc') {
-    throw new Error('Arquivos .doc antigos não dão para ler. Abra no Word e salve como .docx (ou exporte o extrato em PDF/CSV).')
   } else {
-    // CSV, TXT, OFX: texto (tenta UTF-8 e, com caracteres quebrados, Latin-1, comum nos bancos)
-    let texto: string
-    try { texto = new TextDecoder('utf-8', { fatal: true }).decode(dados) } catch { texto = new TextDecoder('windows-1252').decode(dados) }
-    if (/<OFX>|<STMTTRN>/i.test(texto)) { cabecalho = texto.split(/<STMTTRN>/i)[0].slice(0, 3000); linhas = deOfx(texto); formato = 'OFX' } else {
-      cabecalho = cabecalhoDe(texto.split(/\r?\n/))
-      const tabela = lerCsv(texto)
-      linhas = tabela.some((r) => r.length >= 3) ? deTabela(tabela, anoPadrao) : []
-      // o separador da primeira linha pode enganar (título antes da tabela): tenta os outros
-      if (!linhas.length) {
-        for (const sep of [';', ',', '\t']) {
-          const t = lerCsv(texto, sep)
-          const l = t.some((r) => r.length >= 3) ? deTabela(t, anoPadrao) : []
-          if (l.length > linhas.length) linhas = l
-        }
+    // texto: OFX, página HTML (o ".xls" de vários bancos), CSV ou texto corrido
+    const texto = decodificar(dados).replace(/^\ufeff/, '')
+    if (/<OFX>|<STMTTRN>/i.test(texto)) { cabecalho = texto.split(/<STMTTRN>/i)[0].slice(0, 3000); linhas = deOfx(texto); formato = 'OFX' } else if (/<table\b/i.test(texto) && /<t[dh]\b/i.test(texto)) {
+      const tabela = tabelasDoHtml(texto)
+      cabecalho = cabecalhoDe(tabela.map((r) => r.join(' ')))
+      linhas = deTabela(tabela, anoPadrao)
+      formato = ext === 'xls' || ext === 'xlsx' ? 'Excel' : 'HTML'
+    } else {
+      const porLinha = texto.split(/\r\n|\r|\n/)
+      cabecalho = cabecalhoDe(porLinha)
+      // o separador (; , tab ou |) é o que rende mais lançamentos: a primeira linha pode ser um título e enganar
+      for (const sep of separadoresDoCsv(texto)) {
+        const t = lerCsv(texto, sep)
+        const l = t.some((r) => r.length >= 3) ? deTabela(t, anoPadrao, { soTabela: true }) : []
+        if (l.length > linhas.length) linhas = l
       }
-      if (!linhas.length) linhas = deTexto(texto.split(/\r?\n/), anoPadrao)
-      formato = ext === 'csv' ? 'CSV' : 'Texto'
+      if (!linhas.length) linhas = deTexto(porLinha, anoPadrao)
+      formato = ext === 'csv' ? 'CSV' : ext === 'xls' || ext === 'xlsx' ? 'Excel' : 'Texto'
     }
   }
   linhas.sort((a, b) => a.data.localeCompare(b.data))

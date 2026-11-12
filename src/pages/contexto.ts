@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import type { SaldoCorrido } from '../lib/saldoCorrido'
 import type { Sugestao } from '../lib/adaptacao'
 import type { MesEfetivo, Resumo } from '../lib/calc'
 import type { SituacaoCartao } from '../lib/cartoes'
@@ -81,6 +82,8 @@ export interface Ctx {
   ajustarSaldosDaOperacao: (antes?: Operacao, depois?: Operacao) => void
   /** A análise completa do consultor (lib/analise.ts), refeita a cada mudança nos dados. */
   analise: Analise
+  /** O saldo que passa de um mês para o outro (lib/saldoCorrido.ts): o de cada mês do ano aberto e o ponto de partida. */
+  saldoCorrido: SaldoCorrido
   /** O que o consultor aprendeu com a pessoa: o objetivo e os passos acompanhados (lib/memoria.ts). */
   memoria: MemoriaConsultor
   /** O que a tela do Consultor aprendeu com o uso (lib/gosto.ts): desenhos e assuntos preferidos, favoritos e escondidos. */

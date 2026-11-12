@@ -8,7 +8,7 @@ import { COR } from '../lib/charts'
 import { calendarioDe, dividaPelaDescricao, inicioPelaProxima, jurosAoAno, meDevem, mesesAntes, nativoDiv, parcelasDe, somaMesesData, type SituacaoDivida } from '../lib/dividas'
 import { dataPadrao, fmtDataLonga, fmtMesAno, fmtMoeda, fmtTaxa, fmtTaxaAno, fmtValor, parseNumero, simbolo } from '../lib/format'
 import { casasDaMoeda, dataPlausivel, erroDataFora, erroValorGrande, mascarar, paraCampoMoeda, valorGrandeDemais } from '../lib/dinheiro'
-import { infoMoeda, moedasUsaveis, type Taxas } from '../lib/moedas'
+import { cotacaoInvertida, infoMoeda, moedasUsaveis, type Taxas } from '../lib/moedas'
 import { visao } from '../lib/perfil'
 import { bancoConhecido, bancoNaDescricao, CORES_LIVRES, mesmoNome, NOME_TIPO_CAIXA } from '../lib/rotulos'
 import { contaPeloNome, type MemoriaConta } from '../lib/contasFixas'
@@ -218,7 +218,7 @@ export function FormLancamento(p: FormLancProps) {
     const pf = p.perfil
     if (dica.modulo === 'moedas' && dica.moeda) {
       p.aoMudarPerfil({ ...pf, moedas: [...new Set([...pf.moedas, dica.moeda])], modulos: { ...pf.modulos, moedas: true } })
-      setMoeda(dica.moeda)
+      setMoeda(dica.moeda); setCotacao(null)
     } else {
       p.aoMudarPerfil({ ...pf, modulos: { ...pf.modulos, [dica.modulo]: true } })
     }
@@ -326,6 +326,7 @@ export function FormLancamento(p: FormLancProps) {
     if (!dataPlausivel(data)) return setErro(erroDataFora())
     if (forma === 'credito' && !p.inicial && !cartao) return setErro(tx('Escolha o cartão de crédito da compra.'))
     if (estrangeira && (!taxa || taxa <= 0)) return setErro(tx('Digite quanto vale 1 {0} em {1}.', infoMoeda(moeda).nome.toLowerCase(), simbolo(principal)))
+    if (estrangeira && cotacaoInvertida(taxa, moeda, principal, p.taxas)) return setErro(tx('A cotação parece estar ao contrário (o valor ficaria centenas de vezes maior ou menor). Toque em “Desvirar” ou confira.'))
     if (estrangeira && valorGrandeDemais(Math.round(n * taxa! * 100) / 100)) return setErro(erroValorGrande())
     if (contaEscolhida && !cartao && ocupada(contaEscolhida.id)) {
       return setErro(tx('{0} já tem um lançamento neste mês. Escolha “Não” ou mude a data.', contaEscolhida.descricao))

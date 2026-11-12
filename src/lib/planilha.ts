@@ -53,12 +53,23 @@ const numero = (ws: XLSX.WorkSheet, ref: string) => {
 
 function data(ws: XLSX.WorkSheet, ref: string, ano: number, mes: number): string | null {
   const v = valorCelula(ws, ref)
+  const iso = (dia: number) => `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
+  // data escrita como texto ("05/10/2026", "05/10", "5-10-26") ou só o dia ("5")
+  if (typeof v === 'string') {
+    const t = /^(\d{1,2})(?:\s*[/.-]\s*(\d{1,2})(?:\s*[/.-]\s*(\d{2,4}))?)?$/.exec(v.trim())
+    if (!t) return null
+    const dia = Number(t[1]), m = t[2] ? Number(t[2]) : mes, a = t[3] ? (t[3].length === 2 ? 2000 + Number(t[3]) : Number(t[3])) : ano
+    const cabe = dia >= 1 && dia <= new Date(ano, mes, 0).getDate()
+    return iso(m === mes && a === ano && cabe ? dia : 1)
+  }
   if (typeof v !== 'number') return null
+  // só o dia do mês digitado como número (5), sem formato de data
+  if (Number.isInteger(v) && v >= 1 && v <= new Date(ano, mes, 0).getDate()) return iso(v)
   const d = XLSX.SSF.parse_date_code(v)
   if (!d) return null
   // Se a data caiu em outro mês por engano, mantém o lançamento no mês da aba.
   const dia = d.y === ano && d.m === mes ? d.d : 1
-  return `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
+  return iso(dia)
 }
 
 /** Linhas citadas numa fórmula de métrica, ex.: "=L5+L23+L25" -> {5, 23, 25}. */

@@ -2684,6 +2684,7 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .cfg-bloco { display: grid; gap: 14px; }
 .cfg-bloco h4 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
 .cfg-bloco h4 small { display: block; margin-top: 3px; font-size: 13px; font-weight: 500; color: var(--texto-2); letter-spacing: 0; }
+.cfg-saldo-btn { justify-self: start; }
 
 /* marca de escolhido (canto do cartão) */
 .cfg-marca {
@@ -3519,7 +3520,9 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .moeda-pilula.ativo .moeda-pilula-texto small { color: var(--destaque); }
 .moeda-escolha { display: block; }
 .conta-aprox, .dv-aprox { display: block; font-size: 11px; font-weight: 500; color: var(--texto-3); font-variant-numeric: tabular-nums; }
-.campo-cotacao { display: flex; align-items: center; gap: 8px; }
+.campo-cotacao { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.campo-cotacao-aviso { flex-basis: 100%; margin: 0; font-size: 0.85rem; color: var(--saida); }
+.campo-cotacao-aviso .link { font-weight: 600; }
 .campo-cotacao .campo-caixa { flex: 1; min-width: 0; }
 .campo-cotacao-inverter { flex: none; }
 .campo-cotacao .prefixo { white-space: nowrap; }
@@ -4132,11 +4135,18 @@ body { top: 0 !important; }
 .pm-origem li { display: flex; justify-content: space-between; gap: 12px; }
 .pm-origem b { font-weight: 600; color: var(--texto-2); font-variant-numeric: tabular-nums; }
 .pm-vazio { margin: 0; font-size: 13px; color: var(--texto-2); }
+/* saldo que passa de um mês para o outro */
+.pm-valor.saldo { color: var(--texto); }
+.pm-forte { color: var(--texto); font-weight: 600; }
+.pm-forte .pm-valor { font-size: 15px; font-weight: 700; }
+.pm-saldo-mudar { font-size: 14px; font-weight: 500; color: var(--texto-2); gap: 5px; }
+.pm-saldo-mudar:hover { color: var(--texto); opacity: 1; }
+.pm-saldo-convite { justify-self: start; font-size: 13px; }
 /* tela larga (computador, tablet deitado): painel ao lado; estreita (tablet em pé, celular): embaixo, em duas colunas */
 @container (min-width: 720px) { .gcp { grid-template-columns: minmax(0, 1fr) 260px; align-items: start; } }
 @container (max-width: 719px) {
   .painel-mes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 22px; }
-  .pm-topo, .pm-sep, .pm-origem, .pm-vazio { grid-column: 1 / -1; }
+  .pm-topo, .pm-sep, .pm-origem, .pm-vazio, .pm-saldo-convite { grid-column: 1 / -1; }
 }
 /* celular: uma coluna só, para os nomes não quebrarem nem os valores ficarem cortados */
 @container (max-width: 519px) { .painel-mes { grid-template-columns: minmax(0, 1fr); } }
@@ -4236,3 +4246,35 @@ body { top: 0 !important; }
 .gd-extra-invest { display: grid; justify-items: start; gap: 6px; }
 .gd-extra-invest strong { font-family: var(--fonte-numeros); font-size: 24px; font-variant-numeric: tabular-nums; }
 .gd-extra-invest small { color: var(--texto-3); }
+/* ---------- app na tela de início (iPhone): áreas seguras ----------
+   O site pede a tela inteira (viewport-fit=cover e barra de status translúcida no index.html). Aberto pela tela de início do
+   iPhone, ele começa atrás do relógio e da ilha, e deitado, atrás do recorte da câmera. env(safe-area-inset-*) é 0 no
+   navegador comum e no Android (lá o sistema já tira a barra de status), então nada disto muda nada fora do iPhone. */
+:root { --seguro-topo: env(safe-area-inset-top, 0px); --seguro-esq: env(safe-area-inset-left, 0px); --seguro-dir: env(safe-area-inset-right, 0px); }
+/* a faixa do relógio fica sempre na cor da marca (o relógio do iPhone é branco: num fundo claro sumiria). É a mesma cor que o
+   Android pinta na barra de status (theme-color) */
+:root::before {
+  content: ''; position: fixed; z-index: 9990; top: 0; left: 0; right: 0; height: var(--seguro-topo);
+  background: #090d18; pointer-events: none;
+}
+#root { padding-top: var(--seguro-topo); }
+.app { padding-left: var(--seguro-esq); padding-right: var(--seguro-dir); }
+/* a barra do topo gruda logo abaixo do relógio */
+.barra { top: var(--seguro-topo); }
+/* a lateral do computador também gruda abaixo dele */
+.lateral { top: var(--seguro-topo); height: calc(100vh - var(--seguro-topo)); }
+@media (max-width: 860px) {
+  .abas-movel { left: calc(14px + var(--seguro-esq)); right: calc(14px + var(--seguro-dir)); }
+  /* janelas que sobem de baixo não passam por trás do relógio; as de tela cheia começam abaixo dele */
+  .modal { max-height: calc(94vh - var(--seguro-topo)); }
+  .modal.grande { max-height: none; height: calc(100dvh - var(--seguro-topo)); margin-top: var(--seguro-topo); }
+  .modal.tela { height: calc(100dvh - var(--seguro-topo)); margin-top: var(--seguro-topo); }
+  .modal.tela .modal-topo { padding-top: 12px; }
+}
+@media (max-width: 600px) { .fab { right: calc(18px + var(--seguro-dir)); } }
+@media (min-width: 601px) and (max-width: 860px) {
+  .app:not(.trilho) .lateral { top: var(--seguro-topo); height: calc(100dvh - var(--seguro-topo)); }
+}
+@media (max-width: 560px) {
+  .barra-direita .idioma-menu { top: calc(70px + var(--seguro-topo)); }
+}

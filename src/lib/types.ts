@@ -197,6 +197,17 @@ export interface Perfil {
   foto?: string | null
 }
 
+/**
+ * De onde parte o saldo que passa de um mês para o outro (migração 27): quanto a pessoa tinha no começo de um mês. Não é um
+ * lançamento. Daí em diante, cada mês começa com o saldo do fim do anterior (lib/saldoCorrido.ts).
+ */
+export interface SaldoInicial {
+  /** Quanto ela tinha, na moeda principal (negativo: estava no cheque especial). */
+  valor: number
+  /** O mês em que começa a conta, "AAAA-MM". */
+  mes: string
+}
+
 /** Objetivo para juntar dinheiro (viagem, reserva de emergência, carro…), na moeda que a pessoa escolher. */
 export interface Meta {
   id: string
