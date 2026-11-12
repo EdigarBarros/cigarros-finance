@@ -215,7 +215,7 @@ export function juntarDividas(meses: MesImportado[]): DividaImportada[] {
   return [...mapa.values()].map(({ descricao, valor_parcela, saldos }) => ({ descricao, valor_parcela, saldos }))
 }
 
-/** Substitui no banco os meses que vieram na planilha (e as dívidas com o mesmo nome). */
+/** Substitui no banco os meses que vieram na planilha e atualiza as dívidas com o mesmo nome (sem apagá-las). */
 export async function gravarImportacao(userId: string, meses: MesImportado[]) {
   // Garante que os bancos citados na planilha existam e pega o id de cada um.
   const { data: jaTem, error: e0 } = await supabase.from('bancos').select('*')
@@ -271,18 +271,22 @@ export async function gravarImportacao(userId: string, meses: MesImportado[]) {
   if (!novas.length) return
   const { data: existentes, error: e2 } = await supabase.from('dividas').select('id, descricao')
   if (e2) throw e2
-  const repetidas = (existentes as { id: string; descricao: string }[])
-    .filter((x) => novas.some((n) => chaveDivida(n.descricao) === chaveDivida(x.descricao)))
-    .map((x) => x.id)
-  if (repetidas.length) {
-    const { error } = await supabase.from('dividas').delete().in('id', repetidas)
-    if (error) throw error
-  }
   for (const n of novas) {
-    const { data, error } = await supabase
-      .from('dividas').insert({ descricao: n.descricao, valor_parcela: n.valor_parcela }).select('id').single()
-    if (error) throw error
-    const id = (data as { id: string }).id
+    // A dívida com o mesmo nome é atualizada, não apagada: as partes, promessas, juros e pagamentos ligados a ela ficam.
+    // Só os saldos dos meses que vieram na planilha (dia 1 de cada um) são trocados pelos da planilha.
+    const ja = (existentes as { id: string; descricao: string }[]).find((x) => chaveDivida(x.descricao) === chaveDivida(n.descricao))
+    let id = ja?.id
+    if (id) {
+      const { error } = await supabase.from('dividas').update({ valor_parcela: n.valor_parcela }).eq('id', id)
+      if (error) throw error
+      const { error: e1 } = await supabase.from('divida_saldos').delete().eq('divida_id', id).in('data', n.saldos.map((x) => x.data))
+      if (e1) throw e1
+    } else {
+      const { data, error } = await supabase
+        .from('dividas').insert({ descricao: n.descricao, valor_parcela: n.valor_parcela }).select('id').single()
+      if (error) throw error
+      id = (data as { id: string }).id
+    }
     const { error: e3 } = await supabase.from('divida_saldos').insert(n.saldos.map((s) => ({ ...s, divida_id: id })))
     if (e3) throw e3
   }

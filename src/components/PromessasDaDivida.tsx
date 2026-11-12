@@ -103,10 +103,10 @@ function ItemPromessa({ x, s, ativa, indice, hoje, aoApagar }: {
       {apagar ? (
         <span className="dv-promessa-apagar">
           <button className="btn" onClick={() => setApagar(false)}>{tx('Manter')}</button>
-          <button className="btn perigo" onClick={aoApagar}>{tx('Apagar')}</button>
+          <button className="btn perigo" onClick={aoApagar}>{tx('Excluir')}</button>
         </span>
       ) : (
-        <button className="icone-btn" onClick={() => setApagar(true)} aria-label={tx('Apagar promessa')} title={tx('Apagar promessa')}><Icone nome="lixeira" tamanho={14} /></button>
+        <button className="icone-btn" onClick={() => setApagar(true)} aria-label={tx('Excluir promessa')} title={tx('Excluir promessa')}><Icone nome="lixeira" tamanho={14} /></button>
       )}
     </li>
   )

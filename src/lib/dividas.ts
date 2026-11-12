@@ -80,17 +80,22 @@ export function saldoMaisRecenteDaDivida(saldos: SaldoDivida[], dividaId: string
   return achado
 }
 
+/** Saldos da mesma dívida em ordem: pela data e, no mesmo dia, pelo que foi informado por último (o que vale). */
+const ordemDosSaldos = (a: SaldoDivida, b: SaldoDivida) => a.data.localeCompare(b.data) || (a.created_at ?? '').localeCompare(b.created_at ?? '') || a.id.localeCompare(b.id)
+
 /** Saldo devedor numa data: último saldo informado até ela, menos os pagamentos (e mais os aumentos, que valem negativo) feitos depois dele. */
 export function saldoEm(divida: Divida, saldos: SaldoDivida[], pagamentos: Pagamento[], ate: string): number | null {
-  const marcos = saldos.filter((s) => s.divida_id === divida.id && s.data <= ate).sort((a, b) => a.data.localeCompare(b.data))
+  const marcos = saldos.filter((s) => s.divida_id === divida.id && s.data <= ate).sort(ordemDosSaldos)
   const marco = marcos[marcos.length - 1]
   if (!marco) return null
   // No saldo mais antigo (o dia em que a dívida começou), o pagamento do próprio dia conta: a dívida começou e foi paga nesse dia.
-  // Nos ajustes de saldo, o do dia já está incluído no valor informado.
+  // Nos ajustes de saldo, o pagamento do dia lançado antes do ajuste já está incluído no valor informado; o lançado depois
+  // abate (quem confere o saldo de manhã e paga à tarde). Sem a hora de um dos dois, vale o ajuste.
   const primeiraData = saldos.reduce((m, s) => (s.divida_id === divida.id && (m === null || s.data < m) ? s.data : m), null as string | null)
   const origem = marco.data === primeiraData
+  const depoisDoAjuste = (p: Pagamento) => Boolean(p.created_at && marco.created_at && p.created_at > marco.created_at)
   const pagoDepois = pagamentos
-    .filter((p) => p.divida_id === divida.id && p.data && (origem ? p.data >= marco.data : p.data > marco.data) && p.data <= ate)
+    .filter((p) => p.divida_id === divida.id && p.data && (origem || p.data > marco.data || (p.data === marco.data && depoisDoAjuste(p))) && p.data >= marco.data && p.data <= ate)
     .reduce((a, p) => a + p.valor, 0)
   return Math.max(0, Math.round((marco.saldo - pagoDepois) * 100) / 100)
 }
@@ -155,7 +160,7 @@ export function situacaoDividas(
     const saldoInicial = Math.max(restante, ...saldosD.filter((s) => s.divida_id === d.id && s.data <= fim)
       .map((s) => s.saldo + aumentos.filter((a) => a.data! > s.data).reduce((t, a) => t - a.valor, 0)))
     // Ajustes: cada saldo informado depois do primeiro vale quanto era esperado (saldo anterior menos pagamentos) mais a diferença.
-    const marcos = saldosD.filter((x) => x.divida_id === d.id).sort((a, b) => a.data.localeCompare(b.data) || a.id.localeCompare(b.id))
+    const marcos = saldosD.filter((x) => x.divida_id === d.id).sort(ordemDosSaldos)
     const ajustes: { data: string; valor: number }[] = []
     marcos.forEach((m, i) => {
       if (i === 0) return
@@ -182,6 +187,12 @@ export function situacaoDividas(
       jurosAtraso: 0,
       restanteHoje: restante,
       atraso: null,
+    }
+    // Com o dia do vencimento, a quitação é o vencimento da última parcela que falta pagar (a conta pelos meses restantes
+    // contava a partir do mês aberto e ficava um mês à frente quando a parcela do mês ainda não estava paga).
+    if (restante > 0 && d.inicio && d.valor_parcela) {
+      const ultima = calendarioDe(sit, hoje < ini ? ini : hoje)?.parcelas.filter((p) => p.falta > 0).at(-1)
+      if (ultima) sit.quitacao = [+ultima.vencimento.slice(0, 4), +ultima.vencimento.slice(5, 7)]
     }
     // juros de atraso: só no mês de hoje (meses que passaram ficam como foram registrados)
     if (hoje >= ini && hoje <= fim && restante > 0) {

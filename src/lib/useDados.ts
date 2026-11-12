@@ -88,7 +88,7 @@ const fotoLocal = (userId: string) => {
 }
 /** Lançamento ligado a uma dívida: saída que paga o que você deve e entrada que recebe de quem te deve abatem; entrada que é empréstimo recebido (ou saída que empresta mais) aumenta. */
 const paraPagamento = (l: Lancamento): Pagamento | null =>
-  l.divida_id ? { id: l.id, divida_id: l.divida_id, data: l.data, valor: l.valor, tipo: l.tipo, valor_original: l.valor_original ?? null, moeda_original: l.moeda_original ?? null } : null
+  l.divida_id ? { id: l.id, divida_id: l.divida_id, data: l.data, valor: l.valor, tipo: l.tipo, valor_original: l.valor_original ?? null, moeda_original: l.moeda_original ?? null, created_at: l.created_at ?? null } : null
 /** Campos de dívida que só existem com a migração 10. */
 const EXTRAS_DIVIDA = ['sentido', 'pessoa', 'inicio', 'total_parcelas', 'obs'] as const
 const semExtrasDivida = <T extends object>(o: T) =>
@@ -196,7 +196,7 @@ export function useDados(userId: string, ano: number) {
       lerTudo(() => supabase.from('meses').select('*').order('ano').order('mes')),
       supabase.from('dividas').select('*').order('created_at'),
       lerTudo(() => supabase.from('divida_saldos').select('*').order('data').order('id')),
-      lerTudo(() => supabase.from('lancamentos').select('id, divida_id, tipo, data, valor, valor_original, moeda_original').not('divida_id', 'is', null).order('id')),
+      lerTudo(() => supabase.from('lancamentos').select('id, divida_id, tipo, data, valor, valor_original, moeda_original, created_at').not('divida_id', 'is', null).order('id')),
       supabase.from('bancos').select('*').order('ordem').order('created_at'),
       supabase.from('perfis').select('*').maybeSingle(),
       supabase.from('categorias').select('*').order('ordem').order('nome'),

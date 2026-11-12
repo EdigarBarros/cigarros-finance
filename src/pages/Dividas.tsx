@@ -229,7 +229,7 @@ export function Dividas(c: Ctx) {
               {contasEntrada.map((s) => (
                 <li key={s.conta.id}>
                   <span className={`dv-todo-dia ${s.estado}`}><b>{String(s.dia).padStart(2, '0')}</b><small>{noMeioDaFrase(MESES_CURTO[c.mes - 1])}</small></span>
-                  <span className="dv-todo-texto"><strong>{s.conta.descricao}</strong><small>{s.estado === 'paga' ? tx('recebido') : s.estado === 'atrasada' ? tx('atrasado {0} dias', s.diasAtraso) : s.estado === 'vence_hoje' ? tx('cai hoje') : tx('cai em {0} dias', s.diasRestantes)}</small></span>
+                  <span className="dv-todo-texto"><strong>{s.conta.descricao}</strong><small>{s.estado === 'paga' ? tx('recebido') : s.estado === 'atrasada' ? (s.diasAtraso === 1 ? tx('atrasado 1 dia') : tx('atrasado {0} dias', s.diasAtraso)) : s.estado === 'vence_hoje' ? tx('cai hoje') : (s.diasRestantes === 1 ? tx('cai amanhã') : tx('cai em {0} dias', s.diasRestantes))}</small></span>
                   <span className="dv-todo-valor">{fmtConta(s)}</span>
                   {s.estado === 'paga'
                     ? <span className="chip-estado paga">{tx('Recebido')}</span>

@@ -4,6 +4,10 @@ import { supabase } from '../lib/supabase'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
 import { tx } from '../lib/textos'
+import { EMAIL_SUPORTE } from '../lib/legal'
+
+/** Tamanho mínimo da senha: o mesmo que o README manda configurar no Supabase ("Passwords", em Authentication). */
+const SENHA_MINIMA = 8
 
 type Modo = 'entrar' | 'criar'
 type Aviso = { texto: string; ok?: boolean } | null
@@ -121,7 +125,7 @@ function FormCriar({ ativo, ocupado, aviso, aoEnviar, aoReenviar, aoTrocar }: Pr
   const [nome, setNome] = useState('')
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
-  const forca = Math.min(4, (senha.length >= 6 ? 1 : 0) + (senha.length >= 10 ? 1 : 0) + (/\d/.test(senha) ? 1 : 0) + (/[^a-z0-9]/i.test(senha) ? 1 : 0))
+  const forca = Math.min(4, (senha.length >= SENHA_MINIMA ? 1 : 0) + (senha.length >= 10 ? 1 : 0) + (/\d/.test(senha) ? 1 : 0) + (/[^a-z0-9]/i.test(senha) ? 1 : 0))
   return (
     <form className={`en-form criar ${ativo ? 'ativo' : ''}`} inert={!ativo} aria-hidden={!ativo}
       onSubmit={(e) => { e.preventDefault(); aoEnviar(nome.trim(), email, senha) }}>
@@ -132,7 +136,7 @@ function FormCriar({ ativo, ocupado, aviso, aoEnviar, aoReenviar, aoTrocar }: Pr
       <CampoSenha valor={senha} mudar={setSenha} completar="new-password" />
       <div className={`en-forca f${senha ? forca : 0}`} aria-hidden="true">
         <span><i /><i /><i /><i /></span>
-        <small>{!senha ? tx('Use 6 caracteres ou mais') : senha.length < 6 ? tx('Faltam {0}', 6 - senha.length) : ['', tx('Senha fraca'), tx('Senha razoável'), tx('Senha boa'), tx('Senha forte')][forca]}</small>
+        <small>{!senha ? tx('Use {0} caracteres ou mais', SENHA_MINIMA) : senha.length < SENHA_MINIMA ? tx('Faltam {0}', SENHA_MINIMA - senha.length) : ['', tx('Senha fraca'), tx('Senha razoável'), tx('Senha boa'), tx('Senha forte')][forca]}</small>
       </div>
       <BotaoEnviar ocupado={ocupado}>{tx('Criar conta')}</BotaoEnviar>
       {aviso && <p className={`en-aviso ${aviso.ok ? 'ok' : ''}`} role="alert">{aviso.texto}</p>}
@@ -150,7 +154,7 @@ function Campo({ rotulo, icone, tipo = 'text', valor, mudar, completar, obrigato
 }) {
   return (
     <label className="en-campo">
-      <input type={tipo} placeholder=" " required={obrigatorio} minLength={tipo === 'password' ? 6 : undefined}
+      <input type={tipo} placeholder=" " required={obrigatorio} minLength={tipo === 'password' ? SENHA_MINIMA : undefined}
         value={valor} onChange={(e) => mudar(e.target.value)} autoComplete={completar} />
       <span className="en-rotulo">{rotulo}</span>
       {children ?? <span className="en-icone"><Icone nome={icone} tamanho={17} /></span>}
@@ -186,11 +190,13 @@ function traduzir(m: string) {
   if (/already registered/i.test(m)) return tx('Esse e-mail já tem conta. Toque em "Entrar".')
   if (/signups not allowed/i.test(m)) return tx('Cadastro de novas contas está desativado.')
   if (/not authorized|sending confirmation|sending.*email/i.test(m))
-    return tx('Não foi possível enviar o e-mail de confirmação. Avise o dono do site para liberar o cadastro.')
+    return EMAIL_SUPORTE
+      ? tx('Não consegui enviar o e-mail de confirmação agora. Tente de novo em alguns minutos; se continuar, escreva para {0}.', EMAIL_SUPORTE)
+      : tx('Não consegui enviar o e-mail de confirmação agora. Tente de novo em alguns minutos.')
   if (/weak|pwned|compromised|easy to guess/i.test(m)) return tx('Essa senha é muito comum ou já vazou em algum site. Escolha outra.')
   if (/same.*password|different from the old/i.test(m)) return tx('A senha nova precisa ser diferente da antiga.')
   if (/rate limit|too many/i.test(m)) return tx('Muitas tentativas seguidas. Espere alguns minutos e tente de novo.')
-  if (/password should be at least/i.test(m)) return tx('A senha precisa ter pelo menos 6 caracteres.')
+  if (/password should be at least/i.test(m)) return tx('A senha precisa ter pelo menos {0} caracteres.', /at least (\d+)/i.exec(m)?.[1] ?? SENHA_MINIMA)
   if (/invalid.*email|unable to validate email/i.test(m)) return tx('Esse e-mail não parece válido.')
   return m
 }
