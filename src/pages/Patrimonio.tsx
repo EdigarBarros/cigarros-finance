@@ -1,6 +1,7 @@
 import { CenaCofre } from '../components/Vazios'
 import { useState } from 'react'
 import { caixaDoBanco } from '../lib/calc'
+import { gastoMensalMedio } from '../lib/conselheiro'
 import { COR } from '../lib/charts'
 import { fmtValor, LOCAL_DAS_DATAS, MESES_CURTO, MESES_NOME, simbolo, noMeioDaFrase, mesEAno } from '../lib/format'
 import { fmtTaxa } from '../lib/dinheiro'
@@ -162,9 +163,9 @@ export function Patrimonio(c: Ctx) {
     ...(v.investimentos ? [{ id: 'inv', nome: tx('Investimentos'), valor: investido, cor: COR.investimentos }] : []),
     ...(v.moedas ? [{ id: 'moedas', nome: tx('Outras moedas'), valor: emMoedas, cor: COR.usd }] : []),
   ].filter((p) => p.valor > 0)
-  // Reserva de emergência: quantos meses de gastos ela cobre (média das saídas dos meses com dados).
-  const comDados = c.porMes.filter((r) => r && r.saidas > 0)
-  const gastoMedio = comDados.length ? comDados.reduce((a, r) => a + r!.saidas, 0) / comDados.length : 0
+  // Reserva de emergência: quantos meses de gastos ela cobre. O gasto do mês é o mesmo do Consultor: a média dos últimos
+  // meses fechados (antes do mês de hoje) em que entrou e saiu dinheiro; sem eles, a média dos meses com gasto.
+  const gastoMedio = gastoMensalMedio(c.porMes, c.ano)
   const reserva = porTipo.reserva
   const mesesReserva = gastoMedio > 0 ? reserva / gastoMedio : 0
   const nivel = c.perfil.detalhe

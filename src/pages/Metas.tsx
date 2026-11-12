@@ -3,6 +3,7 @@ import { COR } from '../lib/charts'
 import { casasDaMoeda, dataPlausivel, erroDataFora, erroValorGrande, mascarar, paraCampoMoeda, valorGrandeDemais } from '../lib/dinheiro'
 import { fmtDataLonga, fmtMoeda, fmtValor, MESES_NOME, parseNumero, paraCampo, simbolo, noMeioDaFrase, mesEAno } from '../lib/format'
 import { situacaoMeta, MODELOS, type SituacaoMeta } from '../lib/metas'
+import { gastoMensalMedio } from '../lib/conselheiro'
 import { hojeLocal } from '../lib/cartoes'
 import { converter, MOEDAS } from '../lib/moedas'
 import type { Meta } from '../lib/types'
@@ -52,14 +53,8 @@ export function Metas(c: Ctx) {
   const alvoTotal = sits.reduce((a, s) => a + naPrincipal(s.meta.alvo, s.meta.moeda), 0)
   const falta = ativas.reduce((a, s) => a + naPrincipal(s.falta, s.meta.moeda), 0)
   const porMes = ativas.reduce((a, s) => a + naPrincipal(s.porMesNoPrazo ?? 0, s.meta.moeda), 0)
-  // Para a reserva de emergência: média do que saiu nos meses com dados.
-  // Só meses que já fecharam: o que ainda está correndo e os futuros (com contas fixas já lançadas) puxariam a média
-  // para baixo. Sem nenhum mês fechado, vale o que houver.
-  const [anoHoje, mesHoje] = hoje().split('-').map(Number)
-  const meses = c.porMes.map((r, i) => (r && r.saidas > 0 ? { r, i } : null)).filter((x) => x !== null)
-  const fechados = meses.filter((x) => c.ano < anoHoje || (c.ano === anoHoje && x.i < mesHoje - 1))
-  const comDados = (fechados.length ? fechados : meses).map((x) => x.r)
-  const gastoMedio = comDados.length ? comDados.reduce((a, r) => a + r.saidas, 0) / comDados.length : 0
+  // Para a reserva de emergência: o gasto de um mês típico, pela mesma régua do Consultor e do Dinheiro guardado.
+  const gastoMedio = gastoMensalMedio(c.porMes, c.ano)
   const sobra = Math.max(0, c.r.fluxo)
   const aberto = sits.find((s) => s.meta.id === aberta)
   const nivel = c.perfil.detalhe

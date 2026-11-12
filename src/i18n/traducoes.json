@@ -12518,5 +12518,29 @@
   "De onde vem o ganho": {
     "en": "Where your gain comes from",
     "es": "De dónde viene tu ganancia"
+  },
+  "Dinheiro para imprevistos": {
+    "en": "Money for emergencies",
+    "es": "Dinero para imprevistos"
+  },
+  "A meta de reserva cobre {0} de gastos. Ideal: {1} meses.": {
+    "en": "Your emergency fund goal covers {0} of expenses. Ideal: {1} months.",
+    "es": "Tu meta de reserva cubre {0} de gastos. Ideal: {1} meses."
+  },
+  "A meta de reserva está completa: cobre {0} de gastos.": {
+    "en": "Your emergency fund goal is complete: it covers {0} of expenses.",
+    "es": "Tu meta de reserva está completa: cubre {0} de gastos."
+  },
+  "Bancos e investimentos cobrem {0} de gastos. Ideal: {1} meses.": {
+    "en": "Banks and investments cover {0} of expenses. Ideal: {1} months.",
+    "es": "Bancos e inversiones cubren {0} de gastos. Ideal: {1} meses."
+  },
+  "Bancos e investimentos cobrem {0} de gastos: completo.": {
+    "en": "Banks and investments cover {0} of expenses: complete.",
+    "es": "Bancos e inversiones cubren {0} de gastos: completo."
+  },
+  "Conta {0} de gasto do dia a dia até o fim do mês, pelo seu costume. A previsão da Início usa só o que já está marcado.": {
+    "en": "Includes {0} of everyday spending until the end of the month, based on your habits. The forecast on Home only uses what is already scheduled.",
+    "es": "Incluye {0} de gastos del día a día hasta fin de mes, según tu costumbre. La previsión de Inicio usa solo lo que ya está marcado."
   }
 }

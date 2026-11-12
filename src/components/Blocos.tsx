@@ -330,7 +330,10 @@ export function TabelaAnual({ porMes, mesAtual, aoClicarMes, v }: {
   useEffect(() => {
     const el = caixa.current
     const col = el?.querySelector('thead th.atual') as HTMLElement | null
-    if (el && col && el.scrollWidth > el.clientWidth) el.scrollTo({ left: col.offsetLeft - el.clientWidth / 2 + col.clientWidth, behavior: 'smooth' })
+    // a coluna dos rótulos fica parada por cima: o mês é centralizado no espaço à direita dela (sem isso, no celular ela
+    // cobria o começo da coluna do mês, e o "−" de um valor negativo sumia)
+    const fixa = (el?.querySelector('thead th') as HTMLElement | null)?.offsetWidth ?? 0
+    if (el && col && el.scrollWidth > el.clientWidth) el.scrollTo({ left: Math.max(0, col.offsetLeft - fixa - (el.clientWidth - fixa - col.offsetWidth) / 2), behavior: 'smooth' })
   }, [mesAtual])
   return (
     <div className="tabela-rolagem" ref={caixa}>
