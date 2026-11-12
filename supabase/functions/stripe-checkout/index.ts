@@ -1,5 +1,5 @@
 // Cria a página de pagamento do Stripe e devolve o endereço dela. O teste grátis de 7 dias é do OpusCash (sem cartão, migração 17):
-// aqui a cobrança começa assim que a pessoa assina.
+// aqui a cobrança começa assim que a pessoa assina. Com tipo 'pix' cria, em vez disso, um pagamento único de 30 dias só com Pix.
 // Segredo necessário: STRIPE_SECRET_KEY. O resto (SUPABASE_URL, chaves) o Supabase já fornece.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
@@ -19,6 +19,11 @@ const getCorsHeaders = (req: Request) => {
     'Access-Control-Allow-Origin': isAllowed ? origin : '*',
   }
 }
+
+// Pix de 30 dias: o stripe-webhook confere estes mesmos valores antes de liberar o acesso.
+const PIX_MOEDA = 'brl'
+const PIX_VALOR = 999 // centavos: R$ 9,99
+const PIX_TIPO = 'pix_30_dias'
 
 const MOEDAS = ['brl', 'usd', 'eur', 'gbp', 'ars', 'clp', 'uyu', 'cop', 'pen', 'mxn', 'cad', 'aud', 'chf']
 
@@ -56,7 +61,8 @@ Deno.serve(async (req) => {
     if (!user) return resposta({ erro: 'Entre na sua conta para assinar.' }, 401, req)
     const servico = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 
-    const { retorno, moeda } = await req.json().catch(() => ({}))
+    const { retorno, moeda, tipo } = await req.json().catch(() => ({}))
+    const ehPix = tipo === 'pix'
     let origem: string
     try { origem = new URL(String(retorno)).origin } catch { return resposta({ erro: 'Endereço de retorno inválido.' }, 400, req) }
 
@@ -71,6 +77,25 @@ Deno.serve(async (req) => {
       const c = await stripe('customers', { email: user.email, metadata: { supabase_user_id: user.id } })
       cliente = c.id as string
       await servico.from('assinaturas').upsert({ user_id: user.id, stripe_customer_id: cliente, atualizado_em: new Date().toISOString() })
+    }
+
+    // Pix de 30 dias: pagamento ÚNICO em reais (a conta não tem o Pix Automático, então o Pix não cabe em assinatura). Quando o Stripe
+    // avisa que foi pago, o stripe-webhook dá 30 dias de acesso (status 'pix'). O preço vai aqui mesmo, sem produto cadastrado.
+    if (ehPix) {
+      const sessaoPix = await stripe('checkout/sessions', {
+        mode: 'payment',
+        customer: cliente,
+        client_reference_id: user.id,
+        line_items: [{ price_data: { currency: PIX_MOEDA, unit_amount: PIX_VALOR, product_data: { name: 'OpusCash: 30 dias de acesso (Pix)' } }, quantity: 1 }],
+        payment_method_types: ['pix'],
+        payment_method_options: { pix: { expires_after_seconds: 3600 } },
+        metadata: { supabase_user_id: user.id, tipo: PIX_TIPO },
+        payment_intent_data: { metadata: { supabase_user_id: user.id, tipo: PIX_TIPO } },
+        locale: 'pt-BR',
+        success_url: `${origem}/?assinatura=ok`,
+        cancel_url: `${origem}/?assinatura=cancelada`,
+      })
+      return resposta({ url: sessaoPix.url }, 200, req)
     }
 
     const precos = await stripe('prices?lookup_keys[]=opuscash_mensal&active=true')

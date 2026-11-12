@@ -27,7 +27,7 @@ import { estiloLente, useLente } from '../lib/useLente'
 import { definirTema, semMovimento, useTema } from '../lib/tema'
 import { ehErroDeVersao, lembrarMes, mesAntesDeAtualizar } from '../lib/atualizacao'
 import { noAppAndroid } from '../lib/appAndroid'
-import { irParaStripe, type Assinatura } from '../lib/assinatura'
+import { diasDePix, emPix, irParaStripe, type Assinatura } from '../lib/assinatura'
 import { AvisoTeste } from './AvisoTeste'
 import { FaixaSemInternet } from './SemInternet'
 import { diaADiaDoMes, faturaEmAberto, previsaoDoAno } from '../lib/previsao'
@@ -948,6 +948,14 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           <div className="alerta" role="status">
             <span>{tx('Não conseguimos cobrar seu cartão. Atualize a forma de pagamento para não perder o acesso.')}</span>
             <button className="link" onClick={() => void irParaStripe('stripe-portal').then((m) => m && avisar(m))}>{tx('Atualizar cartão')}</button>
+          </div>
+        )}
+
+        {/* o Pix de 30 dias não renova sozinho: avisa nos últimos dias */}
+        {emPix(assinatura ?? null) && diasDePix(assinatura ?? null) <= 5 && !noAppAndroid && (
+          <div className="alerta" role="status">
+            <span>{diasDePix(assinatura ?? null) === 1 ? tx('Seu acesso por Pix termina amanhã. Renove para não perder o acesso.') : tx('Seu acesso por Pix termina em {0} dias. Renove para não perder o acesso.', diasDePix(assinatura ?? null))}</span>
+            <button className="link" onClick={() => void irParaStripe('stripe-checkout', 'BRL', 'pix').then((m) => m && avisar(m))}>{tx('Renovar com Pix')}</button>
           </div>
         )}
 

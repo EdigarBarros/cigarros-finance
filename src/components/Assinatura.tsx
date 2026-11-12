@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { noAppAndroid } from '../lib/appAndroid'
-import { iniciarTesteGratis, irParaStripe, podeTestar, type Assinatura } from '../lib/assinatura'
+import { aceitaPix, iniciarTesteGratis, irParaStripe, pixAcabou, podeTestar, type Assinatura } from '../lib/assinatura'
 import { supabase } from '../lib/supabase'
 import { Icone } from './Icone'
 import { LinksLegais } from './Legal'
@@ -31,7 +31,8 @@ const SEGURANCA = [
  */
 export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura: Assinatura | null; email: string; aoAtualizar: () => Promise<unknown> }) {
   const voltou = new URLSearchParams(window.location.search).get('assinatura') === 'ok'
-  const [ocupado, setOcupado] = useState<'teste' | 'assinar' | 'conferir' | null>(null)
+  const [ocupado, setOcupado] = useState<'teste' | 'assinar' | 'pix' | 'conferir' | null>(null)
+  const [moedaPerfil, setMoedaPerfil] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [esperando, setEsperando] = useState(voltou)
   const [saindo, setSaindo] = useState(false)
@@ -48,6 +49,12 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
     }, 2000)
     return () => window.clearInterval(t)
   }, [esperando, aoAtualizar])
+
+  // o Pix de 30 dias só existe em reais: o botão aparece para quem usa o real (ou ainda não escolheu a moeda)
+  useEffect(() => {
+    if (noAppAndroid) return
+    void supabase.from('perfis').select('moeda').maybeSingle().then(({ data }) => setMoedaPerfil((data as { moeda?: string } | null)?.moeda ?? null))
+  }, [])
 
   const novo = podeTestar(assinatura)
   const testeAcabou = assinatura?.status === 'teste'
@@ -78,6 +85,12 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
     const msg = await irParaStripe('stripe-checkout', (data as { moeda?: string } | null)?.moeda)
     if (msg) { setErro(msg); setOcupado(null) }
   }
+  const pagarComPix = async () => {
+    setOcupado('pix')
+    setErro(null)
+    const msg = await irParaStripe('stripe-checkout', 'BRL', 'pix')
+    if (msg) { setErro(msg); setOcupado(null) }
+  }
   // no app: lê a assinatura de novo; se ela estiver ativa, o painel abre sozinho no lugar desta tela
   const conferir = async () => {
     setOcupado('conferir')
@@ -91,6 +104,7 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
     : novo ? tx('Comece com 7 dias grátis')
     : testeAcabou ? tx('Seu teste grátis acabou')
     : assinatura?.status === 'past_due' || assinatura?.status === 'unpaid' ? tx('Não conseguimos cobrar seu cartão')
+    : pixAcabou(assinatura) ? tx('Seu Pix de 30 dias terminou')
     : tx('Sua assinatura terminou')
   const sub = noAppAndroid ? (novo ? tx('Use o OpusCash completo por 7 dias, sem pagar nada.')
     : tx('Para voltar ao painel, esta conta precisa de uma assinatura ativa. Não é possível assinar pelo app. Seus dados continuam guardados.'))
@@ -179,6 +193,11 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
                 ) : (
                   <button className="btn gradiente pl-botao" onClick={assinar} disabled={ocupado !== null}>
                     {ocupado === 'assinar' ? tx('Abrindo o pagamento…') : tx('Assinar por R$ 9,99/mês')}
+                  </button>
+                )}
+                {!noAppAndroid && !novo && aceitaPix(moedaPerfil) && (
+                  <button type="button" className="btn pl-botao pl-botao-pix" onClick={pagarComPix} disabled={ocupado !== null}>
+                    {ocupado === 'pix' ? tx('Abrindo o Pix…') : tx('Ou pague 30 dias com Pix (R$ 9,99)')}
                   </button>
                 )}
                 {!noAppAndroid && (

@@ -5,7 +5,7 @@
 -- 1) Novo status 'teste': teste grátis do OpusCash (sem Stripe). Vale enquanto teste_fim estiver no futuro.
 alter table public.assinaturas drop constraint if exists assinaturas_status_check;
 alter table public.assinaturas add constraint assinaturas_status_check check (status in (
-  'sem_assinatura', 'teste', 'trialing', 'active', 'past_due', 'canceled', 'unpaid', 'incomplete', 'incomplete_expired', 'paused', 'cortesia'));
+  'sem_assinatura', 'teste', 'trialing', 'active', 'past_due', 'canceled', 'unpaid', 'incomplete', 'incomplete_expired', 'paused', 'cortesia', 'pix'));
 
 -- 2) Conta nova ganha o teste na hora do cadastro (quem grava é o banco, não o navegador).
 create or replace function public.iniciar_teste() returns trigger

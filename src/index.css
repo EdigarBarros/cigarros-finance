@@ -3120,6 +3120,8 @@ button.ex-tipo:hover { transform: scale(1.1); }
 @keyframes pl-brilha { 0% { transform: translateX(-120%); } 45%, 100% { transform: translateX(120%); } }
 .pl-botao:disabled::after { display: none; }
 .pl-botao svg { transition: transform .25s var(--mola); }
+.pl-botao-pix { height: 48px; margin-top: 10px; font-size: 15px; background: transparent; border: 1px solid var(--borda-forte); color: var(--texto); }
+.pl-botao-pix::after { display: none; }
 .pl-botao:hover:not(:disabled) svg { transform: translateX(4px); }
 .pl-carregando { display: flex; gap: 8px; }
 .pl-carregando i { width: 12px; height: 12px; border-radius: 50%; background: var(--destaque); animation: pl-pulo 1s ease-in-out infinite; }

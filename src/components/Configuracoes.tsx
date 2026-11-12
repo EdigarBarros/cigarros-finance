@@ -1,5 +1,5 @@
 import { noAppAndroid } from '../lib/appAndroid'
-import { diasDeTeste, emTeste, excluirConta, irParaStripe, type Assinatura } from '../lib/assinatura'
+import { aceitaPix, diasDePix, diasDeTeste, emPix, emTeste, excluirConta, irParaStripe, type Assinatura } from '../lib/assinatura'
 import { useRef, useState } from 'react'
 import type { Sugestao } from '../lib/adaptacao'
 import { reduzirFoto } from '../lib/foto'
@@ -256,9 +256,14 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
                 <CartaoAcao icone="ajustes" titulo={tx('Refazer as perguntas')} texto={tx('Responda de novo as perguntas iniciais para reajustar o painel.')} aoClicar={aoRefazer} />
                 {/* no app da Play Store não há link para pagamento (lib/appAndroid.ts): a assinatura se gerencia pelo site */}
                 {assinatura && assinatura.status !== 'cortesia' && !noAppAndroid && (
-                  emTeste(assinatura)
-                    ? <CartaoAcao icone="cartao" titulo={tx('Assinar o OpusCash')} texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-checkout', perfil.moeda).then((m) => m && avisar(m))} />
-                    : <CartaoAcao icone="cartao" titulo={tx('Gerenciar assinatura')} texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-portal').then((m) => m && avisar(m))} />
+                  assinatura.status === 'pix'
+                    ? <CartaoAcao icone="cartao" titulo={tx('Renovar com Pix')} texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-checkout', 'BRL', 'pix').then((m) => m && avisar(m))} />
+                    : emTeste(assinatura)
+                      ? <CartaoAcao icone="cartao" titulo={tx('Assinar o OpusCash')} texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-checkout', perfil.moeda).then((m) => m && avisar(m))} />
+                      : <CartaoAcao icone="cartao" titulo={tx('Gerenciar assinatura')} texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-portal').then((m) => m && avisar(m))} />
+                )}
+                {assinatura && emTeste(assinatura) && !noAppAndroid && aceitaPix(perfil.moeda) && (
+                  <CartaoAcao icone="cartao" titulo={tx('Pagar 30 dias com Pix')} texto={tx('R$ 9,99 de uma vez, sem cartão e sem renovação automática.')} aoClicar={() => void irParaStripe('stripe-checkout', 'BRL', 'pix').then((m) => m && avisar(m))} />
                 )}
                 <CartaoAcao icone="sair" titulo={tx('Sair')} texto={tx('Encerra a sessão neste aparelho.')} aoClicar={aoSair} />
                 {aoExcluirConta && <CartaoAcao icone="lixeira" titulo={tx('Excluir minha conta')} texto={tx('Apaga seu login e todos os seus dados de vez e cancela a assinatura.')} aoClicar={aoExcluirConta} perigo />}
@@ -442,6 +447,11 @@ export function FotoPerfil({ foto, iniciais, aoMudar }: { foto: string | null; i
 
 const dataAssinatura = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString(LOCAL_DAS_DATAS) : '')
 function textoAssinatura(a: Assinatura) {
+  if (a.status === 'pix') return emPix(a)
+    ? (diasDePix(a) === 1
+      ? tx('Acesso por Pix até {0} (falta 1 dia). Pague de novo para somar mais 30 dias.', dataAssinatura(a.periodo_fim))
+      : tx('Acesso por Pix até {0} (faltam {1} dias). Pague de novo para somar mais 30 dias.', dataAssinatura(a.periodo_fim), diasDePix(a)))
+    : tx('Seu Pix de 30 dias terminou. Pague de novo para voltar ao painel.')
   if (emTeste(a)) return diasDeTeste(a) === 1
     ? tx('Teste grátis até {0} (falta 1 dia). O cartão só é pedido quando você assinar.', dataAssinatura(a.teste_fim))
     : tx('Teste grátis até {0} (faltam {1} dias). O cartão só é pedido quando você assinar.', dataAssinatura(a.teste_fim), diasDeTeste(a))

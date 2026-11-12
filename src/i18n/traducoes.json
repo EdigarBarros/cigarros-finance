@@ -12606,5 +12606,49 @@
   "Atrasada": {
     "en": "Overdue",
     "es": "Atrasado"
+  },
+  "Pagar 30 dias com Pix": {
+    "en": "Pay 30 days with Pix",
+    "es": "Pagar 30 días con Pix"
+  },
+  "R$ 9,99 de uma vez, sem cartão e sem renovação automática.": {
+    "en": "R$ 9.99 at once, no card and no automatic renewal.",
+    "es": "R$ 9,99 de una vez, sin tarjeta y sin renovación automática."
+  },
+  "Renovar com Pix": {
+    "en": "Renew with Pix",
+    "es": "Renovar con Pix"
+  },
+  "Acesso por Pix até {0} (falta 1 dia). Pague de novo para somar mais 30 dias.": {
+    "en": "Pix access until {0} (1 day left). Pay again to add 30 more days.",
+    "es": "Acceso por Pix hasta {0} (falta 1 día). Paga de nuevo para sumar 30 días más."
+  },
+  "Acesso por Pix até {0} (faltam {1} dias). Pague de novo para somar mais 30 dias.": {
+    "en": "Pix access until {0} ({1} days left). Pay again to add 30 more days.",
+    "es": "Acceso por Pix hasta {0} (faltan {1} días). Paga de nuevo para sumar 30 días más."
+  },
+  "Seu Pix de 30 dias terminou. Pague de novo para voltar ao painel.": {
+    "en": "Your 30-day Pix period has ended. Pay again to get back to your dashboard.",
+    "es": "Tu período de 30 días con Pix terminó. Paga de nuevo para volver al panel."
+  },
+  "Seu acesso por Pix termina amanhã. Renove para não perder o acesso.": {
+    "en": "Your Pix access ends tomorrow. Renew so you don't lose access.",
+    "es": "Tu acceso por Pix termina mañana. Renueva para no perder el acceso."
+  },
+  "Seu acesso por Pix termina em {0} dias. Renove para não perder o acesso.": {
+    "en": "Your Pix access ends in {0} days. Renew so you don't lose access.",
+    "es": "Tu acceso por Pix termina en {0} días. Renueva para no perder el acceso."
+  },
+  "Seu Pix de 30 dias terminou": {
+    "en": "Your 30-day Pix period has ended",
+    "es": "Tu período de 30 días con Pix terminó"
+  },
+  "Abrindo o Pix…": {
+    "en": "Opening Pix…",
+    "es": "Abriendo Pix…"
+  },
+  "Ou pague 30 dias com Pix (R$ 9,99)": {
+    "en": "Or pay 30 days with Pix (R$ 9.99)",
+    "es": "O paga 30 días con Pix (R$ 9,99)"
   }
 }

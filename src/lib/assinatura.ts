@@ -5,7 +5,7 @@ import { supabase } from './supabase'
 import { tx } from './textos'
 
 export type StatusAssinatura =
-  | 'sem_assinatura' | 'teste' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid' | 'incomplete' | 'incomplete_expired' | 'paused' | 'cortesia'
+  | 'sem_assinatura' | 'teste' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid' | 'incomplete' | 'incomplete_expired' | 'paused' | 'cortesia' | 'pix'
 
 export interface Assinatura {
   status: StatusAssinatura
@@ -21,8 +21,20 @@ export const emTeste = (a: Assinatura | null) => Boolean(a && a.status === 'test
 /** Dias que faltam do teste grátis sem cartão (arredonda para cima; 0 se acabou). */
 export const diasDeTeste = (a: Assinatura | null) => (emTeste(a) ? Math.max(1, Math.ceil((new Date(a!.teste_fim!).getTime() - Date.now()) / 86_400_000)) : 0)
 
-/** Teste grátis, assinatura em dia, conta liberada, ou cobrança recusada ainda em nova tentativa (past_due): entram no painel. */
-export const temAcesso = (a: Assinatura | null) => Boolean(a && (['trialing', 'active', 'past_due', 'cortesia'].includes(a.status) || emTeste(a)))
+/** Pix de 30 dias (pagamento único): vale até periodo_fim. Não renova sozinho; a pessoa paga de novo. */
+export const emPix = (a: Assinatura | null) => Boolean(a && a.status === 'pix' && a.periodo_fim && new Date(a.periodo_fim).getTime() > Date.now())
+
+/** Dias que faltam do Pix (arredonda para cima; 0 se acabou). */
+export const diasDePix = (a: Assinatura | null) => (emPix(a) ? Math.max(1, Math.ceil((new Date(a!.periodo_fim!).getTime() - Date.now()) / 86_400_000)) : 0)
+
+/** O Pix de 30 dias venceu (a conta voltou a precisar de pagamento). */
+export const pixAcabou = (a: Assinatura | null) => Boolean(a && a.status === 'pix' && !emPix(a))
+
+/** O Pix só existe em reais: é a moeda do checkout avulso. */
+export const aceitaPix = (moeda?: string | null) => (moeda ?? 'BRL').toUpperCase() === 'BRL'
+
+/** Teste grátis, assinatura em dia, conta liberada, Pix de 30 dias valendo, ou cobrança recusada ainda em nova tentativa (past_due): entram no painel. */
+export const temAcesso = (a: Assinatura | null) => Boolean(a && (['trialing', 'active', 'past_due', 'cortesia'].includes(a.status) || emTeste(a) || emPix(a)))
 
 /** Ainda não usou o teste grátis (conta nova que não escolheu plano): pode começar o teste sem cartão. */
 export const podeTestar = (a: Assinatura | null) => !a || (a.status === 'sem_assinatura' && !a.teste_fim)
@@ -103,8 +115,8 @@ export function useAssinatura(userId: string) {
 }
 
 /** Abre a página de pagamento (cartão só aqui, ao assinar) ou o portal de gerenciar a assinatura, e leva a pessoa até lá. */
-export async function irParaStripe(funcao: 'stripe-checkout' | 'stripe-portal', moeda?: string): Promise<string | null> {
-  const { data: ok, error } = await supabase.functions.invoke(funcao, { body: { retorno: window.location.origin, moeda } })
+export async function irParaStripe(funcao: 'stripe-checkout' | 'stripe-portal', moeda?: string, tipo?: 'pix'): Promise<string | null> {
+  const { data: ok, error } = await supabase.functions.invoke(funcao, { body: { retorno: window.location.origin, moeda, tipo } })
   // Resposta que não é 2xx (ex.: 409 "ja_ativa") chega como erro, com o corpo em error.context: lê de lá.
   let data: { url?: string; erro?: string } | null = ok
   const resposta = (error as { context?: unknown } | null)?.context

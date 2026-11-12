@@ -19,13 +19,15 @@ begin
 end $$;
 
 -- 1) Quem tem acesso: teste grátis do OpusCash enquanto vale (migração 17/18), teste do Stripe, assinatura em dia, cobrança recusada
---    ainda em nova tentativa (past_due, migração 16) e cortesia. A função só é chamada pelas políticas de quem está logado.
+--    ainda em nova tentativa (past_due, migração 16), cortesia e Pix de 30 dias enquanto vale (migração 29). A função só é chamada pelas políticas de quem está logado.
 create or replace function public.tem_acesso() returns boolean
 language sql stable security definer set search_path = public as $$
   select exists (
     select 1 from public.assinaturas a
     where a.user_id = auth.uid()
-      and (a.status in ('trialing', 'active', 'past_due', 'cortesia') or (a.status = 'teste' and a.teste_fim > now()))
+      and (a.status in ('trialing', 'active', 'past_due', 'cortesia')
+        or (a.status = 'teste' and a.teste_fim > now())
+        or (a.status = 'pix' and a.periodo_fim > now()))
   );
 $$;
 revoke all on function public.tem_acesso() from public, anon;
