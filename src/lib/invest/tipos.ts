@@ -1,5 +1,5 @@
 /**
- * OpusCash Invest: os tipos da carteira de investimentos (tabelas da migração 27) e o catálogo das classes.
+ * OpusCash Invest: os tipos da carteira de investimentos (tabelas da migração 28) e o catálogo das classes.
  *
  * A regra que organiza tudo: **as operações são a fonte dos saldos**. Quantidade, custo, resultado e valor de cada ativo são
  * refeitos a partir delas (lib/invest/carteira.ts); nada disso é guardado no banco. O que o ativo vale hoje vem do último

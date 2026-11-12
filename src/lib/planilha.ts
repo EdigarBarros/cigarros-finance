@@ -343,7 +343,7 @@ export async function exportarBackup() {
     }))),
     'Meses',
   )
-  // A carteira do Invest (migração 27): sem as tabelas, o backup sai como antes.
+  // A carteira do Invest (migração 28): sem as tabelas, o backup sai como antes.
   const linhas = (t: string) => buscarTudo<Record<string, unknown>>(t).catch(() => [] as Record<string, unknown>[])
   const [ativos, operacoes, precos] = await Promise.all([linhas('invest_ativos'), linhas('invest_operacoes'), linhas('invest_precos')])
   if (ativos.length) {

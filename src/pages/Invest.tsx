@@ -127,7 +127,7 @@ export function Invest(c: Ctx) {
     return (
       <div className="pagina">
         {topo(tx('A sua carteira de investimentos.'), false)}
-        <Cartao><Vazio>{tx('Para usar o Invest, falta atualizar o banco de dados: rode')} <code>supabase/migracao-27-invest.sql</code> {tx('no SQL Editor do Supabase.')}</Vazio></Cartao>
+        <Cartao><Vazio>{tx('Para usar o Invest, falta atualizar o banco de dados: rode')} <code>supabase/migracao-28-invest.sql</code> {tx('no SQL Editor do Supabase.')}</Vazio></Cartao>
       </div>
     )
   }

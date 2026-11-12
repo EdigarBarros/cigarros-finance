@@ -102,7 +102,7 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   acerta o valor real quando você quiser. Atrasou e prometeu pagar outro dia? Anote as **promessas de pagamento**
   ([migração 25](supabase/migracao-25-promessas-de-pagamento.sql)): o cartão mostra "prometeu pagar amanhã", o calendário
   de Lançamentos põe o atrasado no dia prometido e o app diz, pelos pagamentos, se cada promessa foi cumprida
-- **Invest** ([migração 27](supabase/migracao-27-invest.sql)): a carteira de investimentos. Cada investimento (CDB, LCI, LCA,
+- **Invest** ([migração 28](supabase/migracao-28-invest.sql)): a carteira de investimentos. Cada investimento (CDB, LCI, LCA,
   Tesouro, ações, fundos imobiliários, ETFs, fundos) com as operações dele (aplicação, resgate, venda parcial, proventos,
   amortização, desdobramento…), de onde o app refaz quantidade, custo médio, resultado e a **rentabilidade de verdade**
   (aporte não conta como ganho). O valor de cada ativo vem do preço ou saldo que você informa ou importa, sempre com a data
@@ -142,11 +142,8 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
    [`19`](supabase/migracao-19-juros-das-dividas.sql), [`21`](supabase/migracao-21-partes-da-divida.sql),
    [`22`](supabase/migracao-22-juros-de-atraso.sql), [`23`](supabase/migracao-23-guardado-em-banco.sql),
    [`24`](supabase/migracao-24-memoria-do-consultor.sql), [`25`](supabase/migracao-25-promessas-de-pagamento.sql),
-<<<<<<< HEAD
-   [`26`](supabase/migracao-26-inicio-da-parte.sql), [`27`](supabase/migracao-27-invest.sql) e, **por último**, a
-=======
-   [`26`](supabase/migracao-26-inicio-da-parte.sql), [`27`](supabase/migracao-27-saldo-de-um-mes-para-o-outro.sql) e, **por último**, a
->>>>>>> origin/claude/practical-mccarthy-qt2qoa
+   [`26`](supabase/migracao-26-inicio-da-parte.sql), [`27`](supabase/migracao-27-saldo-de-um-mes-para-o-outro.sql),
+   [`28`](supabase/migracao-28-invest.sql) e, **por último**, a
    [`20`](supabase/migracao-20-acesso-no-banco-definitivo.sql).
    O `schema.sql` sozinho **não** tem cobrança nem bloqueio: sem a 12 e a 20 o painel abre para qualquer conta, paga ou não.
    Não rode as migrações 02 a 08 num banco novo (o `schema.sql` já inclui o que elas fazem) nem a 13 (a 20 a substitui).
