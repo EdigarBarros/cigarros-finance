@@ -2,6 +2,8 @@ import { CenaCofre } from '../components/Vazios'
 import { useState } from 'react'
 import { caixaDoBanco } from '../lib/calc'
 import { gastoMensalMedio } from '../lib/conselheiro'
+import { faturaEmAberto } from '../lib/previsao'
+import { hojeLocal } from '../lib/cartoes'
 import { COR } from '../lib/charts'
 import { fmtValor, LOCAL_DAS_DATAS, MESES_CURTO, MESES_NOME, simbolo, noMeioDaFrase, mesEAno } from '../lib/format'
 import { fmtTaxa } from '../lib/dinheiro'
@@ -60,8 +62,19 @@ export function Patrimonio(c: Ctx) {
     c.d.salvarMes(c.ano, c.mes, { caixa, moedas: { ...c.mesEf.moedas, [m]: valor } })
   const confirmar = () => c.d.salvarMes(c.ano, c.mes, { caixa, moedas: c.mesEf.moedas })
 
+  // Compra no cartão não tem banco no lançamento: vale o banco que pagou a fatura (ou, sem ele, o banco do cartão). Compra em
+  // fatura ainda aberta não saiu de banco nenhum: fica de fora, como no "Saiu" da Início (`faturaEmAberto`).
+  const pagasCartao = new Set(c.cartoes.faturasPagas.map((p) => `${p.cartao_id}|${p.ano}|${p.mes}`))
+  const [anoHoje, mesHoje] = hojeLocal().split('-').map(Number)
+  const agoraMes = anoHoje * 12 + mesHoje
+  const bancoDe = (l: (typeof c.lancsMes)[number]) => {
+    if (l.banco_id || !l.cartao_id) return l.banco_id ?? null
+    const paga = c.cartoes.faturasPagas.find((p) => p.cartao_id === l.cartao_id && p.ano === l.ano && p.mes === l.mes)
+    return paga?.banco_id ?? c.cartoes.cartoes.find((k) => k.id === l.cartao_id)?.banco_id ?? null
+  }
+  const doMes = c.lancsMes.filter((l) => !faturaEmAberto(l, pagasCartao, Boolean(c.v.cartoes), agoraMes))
   const lancsDe = (id: string) =>
-    c.lancsMes.filter((l) => (id === SEM_BANCO ? !l.banco_id || !bancos.some((b) => b.id === l.banco_id) : l.banco_id === id))
+    doMes.filter((l) => { const b = bancoDe(l); return id === SEM_BANCO ? !b || !bancos.some((x) => x.id === b) : b === id })
   const soma = (ls: typeof c.lancsMes, t: 'entrada' | 'saida') => ls.filter((l) => l.tipo === t).reduce((a, l) => a + l.valor, 0)
   // Caixinha que vira limite de cartão (limite garantido ligado à caixinha do banco).
   const garantias = (bancoId: string) => c.cartoes.cartoes.filter((k) => k.ativo && k.garantia_caixinha && k.banco_id === bancoId)
@@ -203,14 +216,14 @@ export function Patrimonio(c: Ctx) {
             <h3 className="ccd-titulo"><Icone nome="escudo" tamanho={18} /> {tx('Reserva de emergência')}</h3>
             <div className="gd-reserva-corpo">
               <Anel valor={Math.min(1, mesesReserva / 6)} cor={mesesReserva >= 6 ? COR.entradas : mesesReserva >= 3 ? COR.caixa : COR.divida} tamanho={104}>
-                <span className="gd-reserva-meses"><b>{mesesReserva >= 10 ? Math.round(mesesReserva) : fmtMeses(mesesReserva)}</b><small>{tx('meses')}</small></span>
+                <span className="gd-reserva-meses"><b>{mesesReserva >= 10 ? Math.round(mesesReserva) : fmtMeses(mesesReserva)}</b><small>{fmtMeses(mesesReserva) === fmtMeses(1) ? tx('mês') : tx('meses')}</small></span>
               </Anel>
               <span className="gd-reserva-texto">
                 <span>{reserva > 0
                   ? comNegrito(mesesReserva >= 6
                     ? tx('Sua reserva de {0} cobre mais de {1} do que você gasta.', NEGRITO[0], NEGRITO[1])
                     : tx('Sua reserva de {0} cobre {1} do que você gasta.', NEGRITO[0], NEGRITO[1]),
-                  fmtValor(reserva), tx('{0} meses', fmtMeses(mesesReserva)))
+                  fmtValor(reserva), fmtMeses(mesesReserva) === fmtMeses(1) ? tx('1 mês') : tx('{0} meses', fmtMeses(mesesReserva)))
                   : comNegrito(tx('Marque em cada banco quanto é {0}: o app mostra quantos meses de gastos ela cobre.', NEGRITO[0]), tx('reserva'))}</span>
                 <small>{gastoMedio > 0 ? tx('O ideal são 6 meses: {0}.', fmtValor(gastoMedio * 6)) : tx('Lance seus gastos para o app calcular.')}</small>
                 {v.metas && reserva < gastoMedio * 6 && gastoMedio > 0 && (

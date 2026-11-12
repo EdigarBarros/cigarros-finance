@@ -151,12 +151,12 @@ function Parcelas({ parcelas, estadoDoDia, d, jurosDe, recebe, inicio }: {
       <div className="dp-parcelas-acoes">
         {apagar ? (
           <>
-            <span>{tx('Apagar esta parte e as {0} parcelas dela?', parcelas.length)}</span>
+            <span>{(parcelas.length === 1 ? tx('Excluir esta parte e a parcela dela?') : tx('Excluir esta parte e as {0} parcelas dela?', parcelas.length))}</span>
             <button className="btn" onClick={() => setApagar(false)}>{tx('Manter')}</button>
-            <button className="btn perigo" onClick={() => void d.delPartes(parcelas.map((p) => p.id))}>{tx('Apagar parte')}</button>
+            <button className="btn perigo" onClick={() => void d.delPartes(parcelas.map((p) => p.id))}>{tx('Excluir parte')}</button>
           </>
         ) : (
-          <button className="link perigo" onClick={() => setApagar(true)}><Icone nome="lixeira" tamanho={14} /> {tx('Apagar esta parte')}</button>
+          <button className="link perigo" onClick={() => setApagar(true)}><Icone nome="lixeira" tamanho={14} /> {tx('Excluir esta parte')}</button>
         )}
       </div>
     </div>
@@ -183,7 +183,7 @@ function EditarParcela({ p, rotuloData, aoSalvar, aoExcluir, aoFechar }: {
         <CampoData valor={data} aoMudar={setData} rotulo={rotuloData} />
       </div>
       <div className="dp-editar-acoes">
-        <button className="link perigo" onClick={() => void aoExcluir()}><Icone nome="lixeira" tamanho={14} /> {tx('Apagar parcela')}</button>
+        <button className="link perigo" onClick={() => void aoExcluir()}><Icone nome="lixeira" tamanho={14} /> {tx('Excluir parcela')}</button>
         <span className="espaco" />
         <button className="btn" onClick={aoFechar}>{tx('Cancelar')}</button>
         <button className="btn primario" disabled={!n || n <= 0 || !data} onClick={() => n && void aoSalvar({ valor: n, vencimento: data })}>{tx('Salvar')}</button>

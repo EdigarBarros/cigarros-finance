@@ -387,8 +387,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       const meses = await lerPlanilha(f)
       if (arquivo.current) arquivo.current.value = ''
       if (!meses.length) return avisar(tx('Não encontrei abas de mês com dados nessa planilha. Cada aba precisa ter o mês e o ano no nome (ex.: OUTUBRO26 ou NOV 26) ou no título (ex.: CONTROLE FINANCEIRO JANEIRO/2024).'), tx('Nada para importar'))
-      const lista = meses.map((m) => tx('{0}/{1}: {2} lançamentos', MESES_NOME[m.mes - 1], m.ano, m.lancs.length)).join('\n')
-      if (!(await confirmar(tx('Encontrei {0} meses:\n\n{1}\n\nOs dados desses meses no app serão substituídos pelos da planilha. Quer continuar?', meses.length, lista), { titulo: tx('Importar planilha'), botao: tx('Importar') }))) return
+      const lista = meses.map((m) => (m.lancs.length === 1 ? tx('{0}/{1}: 1 lançamento', MESES_NOME[m.mes - 1], m.ano) : tx('{0}/{1}: {2} lançamentos', MESES_NOME[m.mes - 1], m.ano, m.lancs.length))).join('\n')
+      if (!(await confirmar(meses.length === 1
+        ? tx('Encontrei 1 mês:\n\n{0}\n\nOs dados desse mês no app serão substituídos pelos da planilha. Quer continuar?', lista)
+        : tx('Encontrei {0} meses:\n\n{1}\n\nOs dados desses meses no app serão substituídos pelos da planilha. Quer continuar?', meses.length, lista), { titulo: tx('Importar planilha'), botao: tx('Importar') }))) return
       setOcupado(tx('Salvando…'))
       await gravarImportacao(userId, meses)
       const ultimo = meses[meses.length - 1]
@@ -619,8 +621,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     let salvo: Lancamento | undefined
     // Pagamento de dívida com juros de atraso estimados: antes de gravar, os juros até o dia do pagamento viram valor real
     // (senão o pagamento abateria só o valor sem juros e o atraso pareceria pago).
-    // (os juros só existem na situação do mês de hoje, que pode não ser o mês aberto)
-    const situacaoHoje = ano === hoje.getFullYear() ? porMesCompleto[hoje.getMonth()].sit : []
+    // (os juros só existem na situação do mês de hoje, que pode não ser o mês aberto nem do ano aberto)
+    const situacaoHoje = ano === hoje.getFullYear() ? porMesCompleto[hoje.getMonth()].sit
+      : situacaoDividas(dividasDevo, d.saldos, d.pagamentos, hoje.getFullYear(), hoje.getMonth() + 1, taxas, hojeIso)
     const sd = !id && l.divida_id && l.data ? situacaoHoje.find((x) => x.divida.id === l.divida_id) : undefined
     let lanc: Omit<Lancamento, 'id'> | null = l
     if (sd?.atraso && l.data && !aumentaDivida(l.tipo, sd.divida) && (!sd.divida.conferido_em || l.data > sd.divida.conferido_em)) {

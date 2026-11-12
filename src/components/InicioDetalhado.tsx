@@ -104,7 +104,7 @@ export function VemAi({ tarefas }: { tarefas: Tarefa[] }) {
             <span className="idet-ic" style={{ '--c': corDaTarefa(t) } as CSSProperties}><Icone nome={iconeDaTarefa(t)} tamanho={18} /></span>
             <span className="idet-vem-nome">
               {t.titulo}
-              {t.estado === 'atrasada' && <small>{tx('atrasada')}</small>}
+              {t.estado === 'atrasada' && <small>{t.entrada ? tx('não caiu') : tx('atrasada')}</small>}
               {t.estado === 'vence_hoje' && <small>{tx('vence hoje')}</small>}
             </span>
             <strong className={t.entrada ? 'bom' : undefined}>{t.valor}</strong>

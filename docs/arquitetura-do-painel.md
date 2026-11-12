@@ -125,7 +125,7 @@ detalhado, Gasto médio por dia e Maior saída; passando o ponteiro ou o dedo ap
 pago, parcela/valor/fim de cada dívida em selos curtos, o dia do vencimento das contas em bloco colorido pela situação, um
 cartãozinho na cor de cada cartão de crédito e a variação de cada categoria num selo ao lado do nome.
 
-Animações: o app tem a própria escolha (Configurações → Painel → Aparência → Animações: Completas ou Reduzidas). O "reduzir
+Animações: o app tem a própria escolha (Configurações → Aparência → Animações: Completas ou Reduzidas). O "reduzir
 movimento" do sistema não desliga mais as animações sozinho. A troca de tema espalha o tema novo como uma mancha de tinta de borda
 ondulada a partir do botão (View Transitions; sem elas, uma camada da cor do tema novo faz o mesmo caminho).
 
@@ -556,7 +556,7 @@ Ordem dos itens (computador), por frequência e por pergunta respondida:
 
 Justificativa: o que se usa todo dia primeiro (Início, Lançamentos); depois o que tem prazo, do mais próximo para o mais distante (contas, cartões, dívidas); depois o que se constrói (metas, dinheiro guardado); a retrospectiva por último, porque é a menos urgente.
 
-**Celular (barra de abas, no máximo 5)**: se houver até 5 páginas, aparecem todas. Com mais de 5, aparecem as **4 primeiras** da ordem acima e a quinta aba é **Mais**, que abre uma folha com as demais. A ordem do menu é também a prioridade das abas, então Dívidas e Contas ganham lugar antes de Resumo do ano. "Mais" fica ativa quando a página aberta está dentro dela. Configurações (Personalizar painel, Importar, Baixar backup, Sair) continuam no menu do topo.
+**Celular (barra de abas, no máximo 5)**: se houver até 5 páginas, aparecem todas. Com mais de 5, aparecem as **4 primeiras** da ordem acima e a quinta aba é **Mais**, que abre uma folha com as demais. A ordem do menu é também a prioridade das abas, então Dívidas e Contas ganham lugar antes de Resumo do ano. "Mais" fica ativa quando a página aberta está dentro dela. Configurações (Personalizar, Importar, Baixar backup, Sair) continuam no menu do topo.
 
 | Quem liga o quê | Abas |
 | --- | --- |
