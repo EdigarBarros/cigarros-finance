@@ -15,7 +15,7 @@ import { analisar, compararRetratos, retratoDe, type Reanalise, type Retrato } f
 import { atualizarMemoria, type Objetivo } from '../lib/memoria'
 import { avisosDispensadosNoMes, conselhos as conselhosDe, dispensarPorUmMes, faltamDadosParaConselhos } from '../lib/conselheiro'
 import { jurosDoAtraso } from '../lib/jurosAtraso'
-import { atrasadoHoje, aumentaDivida, calendarioDe, pedirLadoDividas, sugeridoParaPagar, fimDoMes, inicioDaDivida, meDevem, saldoMaisRecenteDaDivida, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
+import { atrasadoHoje, aumentaDivida, calendarioDe, parcelasPorDia, pedirLadoDividas, sugeridoParaPagar, fimDoMes, inicioDaDivida, meDevem, saldoMaisRecenteDaDivida, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
 import { definirMoedaPrincipal, definirValoresOcultos, fmtDataCurta, fmtValor, MESES_CURTO, MESES_NOME, useValoresOcultos } from '../lib/format'
 import { useCambio } from '../lib/moedas'
 import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
@@ -30,7 +30,7 @@ import { noAppAndroid } from '../lib/appAndroid'
 import { irParaStripe, type Assinatura } from '../lib/assinatura'
 import { AvisoTeste } from './AvisoTeste'
 import { FaixaSemInternet } from './SemInternet'
-import { diaADiaDoMes, previsaoDoAno } from '../lib/previsao'
+import { diaADiaDoMes, faturaEmAberto, previsaoDoAno } from '../lib/previsao'
 import { useCartoes } from '../lib/useCartoes'
 import { useContasFixas } from '../lib/useContasFixas'
 import { useDados } from '../lib/useDados'
@@ -294,11 +294,15 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   // Dia que vale para dizer o que está atrasado: hoje, ou o fim do mês aberto quando ele já passou.
   const hojeIso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
   // Cada mês é calculado com dívidas e caixa contínuos: nada precisa ser copiado à mão.
+  // Compra em fatura ainda aberta (do mês de hoje em diante) não saiu: ela "vem aí" (`previsaoDoAno`). Sem isto, o Resumo
+  // do ano, a média de gasto da reserva e o "Gastos do mês" contavam como gasto a fatura de novembro e dezembro, que a
+  // Início do mesmo mês mostra como R$ 0 saído.
   const porMesCompleto = useMemo(() => {
     const agora = hoje.getFullYear() * 12 + hoje.getMonth() + 1
+    const pagas = new Set(cartoes.faturasPagas.map((p) => `${p.cartao_id}|${p.ano}|${p.mes}`))
     return MESES_NOME.map((_, i) => {
       const m = i + 1
-      const l = lancsContados.filter((x) => x.mes === m && x.ano === ano)
+      const l = lancsContados.filter((x) => x.mes === m && x.ano === ano && !faturaEmAberto(x, pagas, Boolean(comFaturas), agora))
       const sit = situacaoDividas(dividasDevo, d.saldos, d.pagamentos, ano, m, taxas, hojeIso)
       const ef = mesEfetivo(mesesVistos, ano, m)
       const temProprio = d.meses.some((x) => x.ano === ano && x.mes === m)
@@ -307,17 +311,28 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       // Mês futuro sem saldo informado: o saldo é desconhecido, não zero (a linha do gráfico para em vez de despencar).
       return { sit, ef, resumo: vazio ? null : resumoMes(l, sit, ef, taxas, idCategoria, ano * 12 + m > agora && !saldoInformado(ef)) }
     })
-  }, [lancsContados, dividasDevo, d.saldos, d.pagamentos, d.meses, mesesVistos, ano, taxas, d.categorias, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lancsContados, dividasDevo, d.saldos, d.pagamentos, d.meses, mesesVistos, ano, taxas, d.categorias, hoje, cartoes.faturasPagas, comFaturas]) // eslint-disable-line react-hooks/exhaustive-deps
   const porMes = porMesCompleto.map((x) => x.resumo)
   // O que já aconteceu e o que ainda vem em cada mês (gráficos de fluxo).
   const { contas: contasFixas, semTabela: contasSemTabela } = contas
   const { faturasPagas } = cartoes
   const contasNaPrevisao = Boolean(v.contas) && !contasSemTabela
   const comFaturasNaPrevisao = Boolean(comFaturas)
-  const previsto = useMemo(
-    () => previsaoDoAno({ lancs: lancsContados, lancsBaixas: d.lancs, faturasPagas, comFaturas: comFaturasNaPrevisao, contas: contasNaPrevisao ? contasFixas : [], ano, taxas, hoje }),
-    [lancsContados, d.lancs, faturasPagas, comFaturasNaPrevisao, contasNaPrevisao, contasFixas, ano, taxas, hoje],
-  )
+  const previsto = useMemo(() => {
+    const p = previsaoDoAno({ lancs: lancsContados, lancsBaixas: d.lancs, faturasPagas, comFaturas: comFaturasNaPrevisao, contas: contasNaPrevisao ? contasFixas : [], ano, taxas, hoje })
+    if (!v.dividas) return p
+    // As parcelas de dívida que ainda vão sair (do mês de hoje em diante), como no "Previsto no dia 30" da Início: sem
+    // elas, o "Vai sobrar" do quadro do mês e o saldo de fim de mês ficavam maiores que a previsão da própria Início.
+    const agora = hoje.getFullYear() * 12 + hoje.getMonth() + 1
+    return p.map((x, i) => {
+      const este = ano * 12 + i + 1
+      if (este < agora) return x
+      const dias = new Date(ano, i + 1, 0).getDate()
+      const parcelas = parcelasPorDia({ situacao: porMesCompleto[i].sit, ano, mes: i + 1, dias, hoje: este === agora ? hoje.getDate() : 0, diaRef: hojeIso, soDoMes: este > agora })
+      const total = parcelas.reduce((t, n) => t + n, 0)
+      return total ? { ...x, vaiSair: Math.round((x.vaiSair + total) * 100) / 100 } : x
+    })
+  }, [lancsContados, d.lancs, faturasPagas, comFaturasNaPrevisao, contasNaPrevisao, contasFixas, ano, taxas, hoje, v.dividas, porMesCompleto, hojeIso])
 
   // O saldo que passa de um mês para o outro: parte do que a pessoa informou e soma o que sobrou em cada mês até o aberto.
   const sobrasAntes = useMemo(() => sobrasPorMes(d.lancsAntesDoAno, comFaturas ? faturasPagas : []), [d.lancsAntesDoAno, comFaturas, faturasPagas])
@@ -372,8 +387,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       const meses = await lerPlanilha(f)
       if (arquivo.current) arquivo.current.value = ''
       if (!meses.length) return avisar(tx('Não encontrei abas de mês com dados nessa planilha. Cada aba precisa ter o mês e o ano no nome (ex.: OUTUBRO26 ou NOV 26) ou no título (ex.: CONTROLE FINANCEIRO JANEIRO/2024).'), tx('Nada para importar'))
-      const lista = meses.map((m) => tx('{0}/{1}: {2} lançamentos', MESES_NOME[m.mes - 1], m.ano, m.lancs.length)).join('\n')
-      if (!(await confirmar(tx('Encontrei {0} meses:\n\n{1}\n\nOs dados desses meses no app serão substituídos pelos da planilha. Quer continuar?', meses.length, lista), { titulo: tx('Importar planilha'), botao: tx('Importar') }))) return
+      const lista = meses.map((m) => (m.lancs.length === 1 ? tx('{0}/{1}: 1 lançamento', MESES_NOME[m.mes - 1], m.ano) : tx('{0}/{1}: {2} lançamentos', MESES_NOME[m.mes - 1], m.ano, m.lancs.length))).join('\n')
+      if (!(await confirmar(meses.length === 1
+        ? tx('Encontrei 1 mês:\n\n{0}\n\nOs dados desse mês no app serão substituídos pelos da planilha. Quer continuar?', lista)
+        : tx('Encontrei {0} meses:\n\n{1}\n\nOs dados desses meses no app serão substituídos pelos da planilha. Quer continuar?', meses.length, lista), { titulo: tx('Importar planilha'), botao: tx('Importar') }))) return
       setOcupado(tx('Salvando…'))
       await gravarImportacao(userId, meses)
       const ultimo = meses[meses.length - 1]
@@ -604,8 +621,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
     let salvo: Lancamento | undefined
     // Pagamento de dívida com juros de atraso estimados: antes de gravar, os juros até o dia do pagamento viram valor real
     // (senão o pagamento abateria só o valor sem juros e o atraso pareceria pago).
-    // (os juros só existem na situação do mês de hoje, que pode não ser o mês aberto)
-    const situacaoHoje = ano === hoje.getFullYear() ? porMesCompleto[hoje.getMonth()].sit : []
+    // (os juros só existem na situação do mês de hoje, que pode não ser o mês aberto nem do ano aberto)
+    const situacaoHoje = ano === hoje.getFullYear() ? porMesCompleto[hoje.getMonth()].sit
+      : situacaoDividas(dividasDevo, d.saldos, d.pagamentos, hoje.getFullYear(), hoje.getMonth() + 1, taxas, hojeIso)
     const sd = !id && l.divida_id && l.data ? situacaoHoje.find((x) => x.divida.id === l.divida_id) : undefined
     let lanc: Omit<Lancamento, 'id'> | null = l
     if (sd?.atraso && l.data && !aumentaDivida(l.tipo, sd.divida) && (!sd.divida.conferido_em || l.data > sd.divida.conferido_em)) {

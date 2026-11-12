@@ -215,7 +215,7 @@ export function juntarDividas(meses: MesImportado[]): DividaImportada[] {
   return [...mapa.values()].map(({ descricao, valor_parcela, saldos }) => ({ descricao, valor_parcela, saldos }))
 }
 
-/** Substitui no banco os meses que vieram na planilha (e as dívidas com o mesmo nome). */
+/** Substitui no banco os meses que vieram na planilha e atualiza as dívidas com o mesmo nome (sem apagá-las). */
 export async function gravarImportacao(userId: string, meses: MesImportado[]) {
   // Garante que os bancos citados na planilha existam e pega o id de cada um.
   const { data: jaTem, error: e0 } = await supabase.from('bancos').select('*')
@@ -271,34 +271,42 @@ export async function gravarImportacao(userId: string, meses: MesImportado[]) {
   if (!novas.length) return
   const { data: existentes, error: e2 } = await supabase.from('dividas').select('id, descricao')
   if (e2) throw e2
-  const repetidas = (existentes as { id: string; descricao: string }[])
-    .filter((x) => novas.some((n) => chaveDivida(n.descricao) === chaveDivida(x.descricao)))
-    .map((x) => x.id)
-  if (repetidas.length) {
-    const { error } = await supabase.from('dividas').delete().in('id', repetidas)
-    if (error) throw error
-  }
   for (const n of novas) {
-    const { data, error } = await supabase
-      .from('dividas').insert({ descricao: n.descricao, valor_parcela: n.valor_parcela }).select('id').single()
-    if (error) throw error
-    const id = (data as { id: string }).id
+    // A dívida com o mesmo nome é atualizada, não apagada: as partes, promessas, juros e pagamentos ligados a ela ficam.
+    // Só os saldos dos meses que vieram na planilha (dia 1 de cada um) são trocados pelos da planilha.
+    const ja = (existentes as { id: string; descricao: string }[]).find((x) => chaveDivida(x.descricao) === chaveDivida(n.descricao))
+    let id = ja?.id
+    if (id) {
+      const { error } = await supabase.from('dividas').update({ valor_parcela: n.valor_parcela }).eq('id', id)
+      if (error) throw error
+      const { error: e1 } = await supabase.from('divida_saldos').delete().eq('divida_id', id).in('data', n.saldos.map((x) => x.data))
+      if (e1) throw e1
+    } else {
+      const { data, error } = await supabase
+        .from('dividas').insert({ descricao: n.descricao, valor_parcela: n.valor_parcela }).select('id').single()
+      if (error) throw error
+      id = (data as { id: string }).id
+    }
     const { error: e3 } = await supabase.from('divida_saldos').insert(n.saldos.map((s) => ({ ...s, divida_id: id })))
     if (e3) throw e3
   }
 }
 
-async function buscarTudo<T>(tabela: string): Promise<T[]> {
+/** Todas as linhas de uma tabela, de mil em mil, em ordem fixa (sem ordem, uma página podia repetir ou pular linhas). */
+async function buscarTudo<T>(tabela: string, ordem = 'id'): Promise<T[]> {
   const linhas: T[] = []
   for (let de = 0; ; de += 1000) {
-    const { data, error } = await supabase.from(tabela).select('*').range(de, de + 999)
+    const { data, error } = await supabase.from(tabela).select('*').order(ordem).range(de, de + 999)
     if (error) throw error
     linhas.push(...(data as T[]))
     if (data.length < 1000) return linhas
   }
 }
 
-/** Backup completo em .xlsx, uma aba por tabela. */
+/**
+ * Backup completo em .xlsx, uma aba por tabela: tudo o que a pessoa cadastrou (é o que o app oferece antes de "Zerar dados"
+ * e "Excluir conta"). Os vínculos saem com o nome (cartão, dívida, meta, banco, conta do mês), não com o código.
+ */
 export async function exportarBackup() {
   const [lancs, dividas, saldos, meses, bancos] = await Promise.all([
     buscarTudo<Lancamento>('lancamentos'),
@@ -312,16 +320,37 @@ export async function exportarBackup() {
   const nomeCategoria = new Map(categorias.map((c) => [c.id, c.nome]))
   const nomeBanco = new Map(bancos.map((b) => [b.id, b.nome]))
   const nomeDivida = new Map(dividas.map((d) => [d.id, d.descricao]))
+  // O resto do que a pessoa cadastrou (cada parte veio numa migração: sem a tabela, a aba não sai)
+  const outra = (t: string) => buscarTudo<Record<string, unknown>>(t).catch(() => [] as Record<string, unknown>[])
+  const [cartoes, faturasPagas, contasFixas, metas, movimentos, partes, promessas] = await Promise.all(
+    ['cartoes', 'faturas_pagas', 'contas_fixas', 'metas', 'meta_movimentos', 'divida_partes', 'divida_promessas'].map(outra))
+  const perfil = await buscarTudo<Record<string, unknown>>('perfis', 'user_id').catch(() => [] as Record<string, unknown>[])
+  const nomes = (xs: Record<string, unknown>[], campo: string) => new Map(xs.map((x) => [String(x.id), String(x[campo] ?? '')]))
+  const nomeCartao = nomes(cartoes, 'nome')
+  const nomeConta = nomes(contasFixas, 'descricao')
+  const nomeMeta = nomes(metas, 'nome')
+  const nomeParte = nomes(partes, 'descricao')
+  /** Cada código de vínculo vira o nome do que ele aponta; lista e objeto (jsonb) viram texto. */
+  const VINCULOS: Record<string, [string, Map<string, string>]> = {
+    cartao_id: ['cartao', nomeCartao], divida_id: ['divida', nomeDivida], meta_id: ['meta', nomeMeta], banco_id: ['banco', nomeBanco],
+    conta_fixa_id: ['conta do mês', nomeConta], categoria_id: ['categoria', nomeCategoria], parte_id: ['parte', nomeParte],
+  }
+  const plano = (x: Record<string, unknown>) => Object.fromEntries(Object.entries(x).map(([k, v]) => [k, v !== null && typeof v === 'object' ? JSON.stringify(v) : v]))
+  const legivel = (xs: Record<string, unknown>[]) => xs.map((x) => plano(Object.fromEntries(Object.entries(x)
+    .filter(([k]) => !['id', 'user_id', 'created_at', 'lancamento_id'].includes(k))
+    .map(([k, v]) => (VINCULOS[k] ? [VINCULOS[k][0], v ? VINCULOS[k][1].get(String(v)) ?? '' : ''] : [k, v])))))
   const wb = XLSX.utils.book_new()
   const semIds = <T extends object>(xs: T[]) =>
     xs.map((x) => Object.fromEntries(Object.entries(x).filter(([k]) => !['id', 'user_id', 'created_at'].includes(k))))
   XLSX.utils.book_append_sheet(
     wb,
-    XLSX.utils.json_to_sheet(semIds(lancs).map(({ divida_id, banco_id, categoria_id, categoria, conta: _conta, conta_fixa_id: _contaFixa, ...l }) => ({
-      ...l,
+    XLSX.utils.json_to_sheet(semIds(lancs).map(({ divida_id, banco_id, categoria_id, categoria, conta: _conta, conta_fixa_id, cartao_id, ...l }) => ({
+      ...plano(l),
       categoria: categoria_id ? nomeCategoria.get(String(categoria_id)) : categorias.length ? '' : categoria,
       banco: banco_id ? nomeBanco.get(String(banco_id)) : '',
       divida: divida_id ? nomeDivida.get(String(divida_id)) : '',
+      cartao: cartao_id ? nomeCartao.get(String(cartao_id)) ?? '' : '',
+      'conta do mês': conta_fixa_id ? nomeConta.get(String(conta_fixa_id)) ?? '' : '',
     }))),
     'Lançamentos',
   )
@@ -343,6 +372,11 @@ export async function exportarBackup() {
     }))),
     'Meses',
   )
+  const abas: [string, Record<string, unknown>[]][] = [
+    ['Partes das dívidas', partes], ['Promessas de pagamento', promessas], ['Cartões', cartoes], ['Faturas pagas', faturasPagas],
+    ['Contas do mês', contasFixas], ['Metas', metas], ['Metas - movimentos', movimentos], ['Preferências', perfil],
+  ]
+  for (const [aba, xs] of abas) if (xs.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(legivel(xs)), aba)
   // A carteira do Invest (migração 28): sem as tabelas, o backup sai como antes.
   const linhas = (t: string) => buscarTudo<Record<string, unknown>>(t).catch(() => [] as Record<string, unknown>[])
   const [ativos, operacoes, precos] = await Promise.all([linhas('invest_ativos'), linhas('invest_operacoes'), linhas('invest_precos')])

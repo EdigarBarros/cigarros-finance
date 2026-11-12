@@ -296,8 +296,12 @@ export function visuais(a: Analise): Visual[] {
       id: 'pote-reserva', tipo: 'pote', prioridade: res.meses < 1 ? 78 : res.falta > 0 ? 64 : 38, destino: 'patrimonio',
       atual: res.tem, maximo: Math.max(res.alvo, res.tem),
       marcos: [{ rotulo: tx('1 mês'), valor: res.colchao }, { rotulo: tx('{0} meses', res.alvoMeses), valor: res.alvo }],
-      titulo: tx('Sua reserva'), tom: res.meses < 1 ? 'ruim' : res.falta > 0 ? 'medio' : 'bom',
-      frase: res.falta > 0 ? tx('Cobre {0} de gastos. Ideal: {1} meses.', fmtMeses(res.meses), res.alvoMeses) : tx('Completa: cobre {0} de gastos.', fmtMeses(res.meses)),
+      // O Consultor soma tudo o que dá para usar num imprevisto (bancos e investimentos, ou a meta de reserva); o "Reserva de
+      // emergência" do Dinheiro guardado conta só o que está marcado como reserva. Nomes diferentes para números diferentes.
+      titulo: tx('Dinheiro para imprevistos'), tom: res.meses < 1 ? 'ruim' : res.falta > 0 ? 'medio' : 'bom',
+      frase: res.fonte === 'meta'
+        ? (res.falta > 0 ? tx('A meta de reserva cobre {0} de gastos. Ideal: {1} meses.', fmtMeses(res.meses), res.alvoMeses) : tx('A meta de reserva está completa: cobre {0} de gastos.', fmtMeses(res.meses)))
+        : (res.falta > 0 ? tx('Bancos e investimentos cobrem {0} de gastos. Ideal: {1} meses.', fmtMeses(res.meses), res.alvoMeses) : tx('Bancos e investimentos cobrem {0} de gastos: completo.', fmtMeses(res.meses))),
     })
   }
 

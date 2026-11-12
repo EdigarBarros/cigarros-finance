@@ -131,6 +131,8 @@ export interface SaldoDivida {
   divida_id: string
   data: string
   saldo: number
+  /** Quando foi informado: desempata dois saldos do mesmo dia e diz se um pagamento do dia veio antes ou depois. */
+  created_at?: string
 }
 
 /** Saída ligada a uma dívida (de qualquer ano). */
@@ -145,6 +147,8 @@ export interface Pagamento {
   /** Pago em outra moeda: o valor original (migração 4). */
   valor_original?: number | null
   moeda_original?: string | null
+  /** Quando foi lançado (para saber se veio antes ou depois de um ajuste de saldo do mesmo dia). */
+  created_at?: string | null
 }
 
 /** Banco cadastrado por você (Nubank, Itaú, Next, dinheiro vivo…). */

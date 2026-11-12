@@ -1,3 +1,4 @@
+import { converter } from '../lib/moedas'
 import { Fragment, useMemo, useState, type CSSProperties } from 'react'
 import { PALETA } from '../lib/charts'
 import { calendarioDe, dividaDiaADia, parcelasPorDia, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
@@ -66,6 +67,10 @@ export function Inicio(c: Ctx) {
   // Comparação só dentro do mesmo ano (em janeiro não há mês anterior).
   const mesAnt = c.mes > 1 ? noMeioDaFrase(MESES_CURTO[c.mes - 2]) : undefined
   const situacaoMetas = c.d.metas.map((m) => situacaoMeta(m, c.d.movimentosMeta))
+  // o mesmo número da tela Metas: tudo o que foi guardado sobre o total das metas (na moeda principal), não a média das metas
+  const naPrincipal = (valor: number, moeda: string) => converter(valor, moeda, c.taxas) ?? 0
+  const alvoDasMetas = situacaoMetas.reduce((t, s) => t + naPrincipal(s.meta.alvo, s.meta.moeda), 0)
+  const progressoDasMetas = alvoDasMetas > 0 ? Math.min(1, situacaoMetas.reduce((t, s) => t + naPrincipal(s.guardado, s.meta.moeda), 0) / alvoDasMetas) : 0
   const mesVazio = c.lancsMes.length === 0
   const haAno = c.porMes.some(Boolean)
   // os 6 meses que o gráfico de fluxo mostra (mesma conta do GraficoFluxo)
@@ -82,7 +87,7 @@ export function Inicio(c: Ctx) {
   const ddMes = useMemo(() => {
     const dd = c.diaADia
     if (!v.dividas) return dd
-    const parcelas = parcelasPorDia({ situacao: c.situacao, ano: c.ano, mes: c.mes, dias: dd.dias, hoje: dd.hoje, diaRef: c.diaRef })
+    const parcelas = parcelasPorDia({ situacao: c.situacao, ano: c.ano, mes: c.mes, dias: dd.dias, hoje: dd.hoje, diaRef: c.diaRef, soDoMes: dd.hoje === 0 })
     const total = parcelas.reduce((t, n) => t + n, 0)
     if (!total) return dd
     return { ...dd, vaiSair: Math.round((dd.vaiSair + total) * 100) / 100, vaiSairDia: dd.vaiSairDia.map((n, i) => n + parcelas[i]) }
@@ -121,9 +126,11 @@ export function Inicio(c: Ctx) {
   // Gasto por dia: no mês de hoje, só as saídas até hoje (parcela de cartão e conta com data futura ainda não saíram do bolso)
   const diasNoMes = new Date(c.ano, c.mes, 0).getDate()
   const decorridos = mesDeHoje ? hoje.getDate() : diasNoMes
-  const saidasContadas = (m: number) => (c.ano === hoje.getFullYear() && m === hoje.getMonth() + 1
-    ? c.lancsAno.reduce((t, l) => (l.mes === m && l.tipo === 'saida' && (!l.data || l.data <= hojeIso) ? t + l.valor : t), 0)
-    : c.porMes[m - 1]?.saidas ?? 0)
+  // (no mês aberto vale o mesmo "Saiu" do quadro: compra em fatura ainda aberta não saiu do bolso)
+  const saidasContadas = (m: number) => (mesDeHoje && m === c.mes ? ddMes.saiu
+    : c.ano === hoje.getFullYear() && m === hoje.getMonth() + 1
+      ? c.lancsAno.reduce((t, l) => (l.mes === m && l.tipo === 'saida' && (!l.data || l.data <= hojeIso) ? t + l.valor : t), 0)
+      : c.porMes[m - 1]?.saidas ?? 0)
 
   const sugestao = c.sugestao && (
     <CartaoSugestao s={c.sugestao} aoAceitar={() => c.aceitarSugestao(c.sugestao!)} aoRecusar={() => c.recusarSugestao(c.sugestao!)} />
@@ -152,7 +159,7 @@ export function Inicio(c: Ctx) {
 
   // ---------- 3. Para onde está indo? ----------
   const fluxo = v.graficoAno && haAno && (
-    <Bloco titulo={tx('Fluxo financeiro')} className="bloco-esticado"
+    <Bloco titulo={tx('Entrou e saiu nos últimos meses')} className="bloco-esticado"
       acao={
         <span className="legenda-topo">
           <span><i className="legenda-barra" style={{ background: PALETA.entradas[0] }} />{tx('Entrou')}</span>
@@ -178,7 +185,7 @@ export function Inicio(c: Ctx) {
             opcoes={[moedaAtual(), ...moedasFora].map((m) => ({ id: m, nome: m }))} />
         )}
       </div>
-      {semRecebimentoPrevisto && <p className="campo-ajuda aviso-previsao">{tx('Nenhum dinheiro previsto para entrar. Cadastre o seu salário em Contas fixas para ele aparecer aqui.')}</p>}
+      {semRecebimentoPrevisto && <p className="campo-ajuda aviso-previsao">{tx('Nenhum dinheiro previsto para entrar. Cadastre o seu salário em Contas do mês para ele aparecer aqui.')}</p>}
       <div className="bloco-corpo grafico-esticado">
         <GraficoFluxo porMes={c.porMes} previsto={c.previsto} modo={modoDoGrafico} mesAtual={c.mes} compacto={mobile} moeda={moedaFluxo} />
       </div>
@@ -365,7 +372,7 @@ export function Inicio(c: Ctx) {
       }
     }
     if (metas && situacaoMetas.length) {
-      const media = situacaoMetas.reduce((t, s) => t + Math.min(1, s.progresso), 0) / situacaoMetas.length
+      const media = progressoDasMetas
       const frente = situacaoMetas.filter((s) => !s.batida).sort((x, y) => y.progresso - x.progresso)[0]
       resumos.push({
         chave: 'metas', rotulo: tx('Metas'), valor: situacaoMetas.length === 1 ? tx('1 meta') : tx('{0} metas', situacaoMetas.length),
@@ -425,7 +432,9 @@ export function Inicio(c: Ctx) {
       // ritmo do gasto: por dia até hoje, comparado com o mês passado inteiro
       const ritmo = ritmoDoGasto
       pecas.push({
-        chave: 'gastos', icone: 'enviar', cor: 'var(--saida)', rotulo: tx('Gastos do mês'), valor: fmtValor(r.saidas),
+        // o mesmo "Saiu" do quadro do mês: compra em fatura aberta e conta com data mais para a frente ainda vêm (num mês que
+        // já acabou é tudo o que saiu; num que ainda não começou, nada saiu)
+        chave: 'gastos', icone: 'enviar', cor: 'var(--saida)', rotulo: tx('Gastos do mês'), valor: fmtValor(ddMes.saiu),
         sub: ritmo === null ? undefined : ritmo <= 1 ? tx('gastando menos que em {0}', mesAnt) : tx('gastando mais que em {0}', mesAnt),
         sinal: ritmo === null ? undefined : ritmo <= 1 ? 'bom' : ritmo <= 1.2 ? 'atencao' : 'ruim',
         detalhe: <div className="idet-detalhe-duas">{gastos}{lancamentos}</div>,
@@ -445,7 +454,8 @@ export function Inicio(c: Ctx) {
     }
     if (c.blocos?.cartoes) {
       const abertas = c.faturas.filter((f) => !f.paga)
-      const atrasadas = c.faturas.reduce((t, f) => t + f.atrasadas.length, 0)
+      // como o "Em atraso" da tela Cartões: as de meses anteriores e a do próprio mês, se já venceu
+      const atrasadas = c.faturas.reduce((t, f) => t + f.atrasadas.length + (f.status === 'atrasada' ? 1 : 0), 0)
       const perto = abertas.some((f) => f.valor > 0 && f.diasParaVencer >= 0 && f.diasParaVencer <= 3)
       pecas.push({
         chave: 'cartoes', icone: 'cartao', cor: 'var(--caixa)', rotulo: tx('Cartões'),
@@ -478,7 +488,7 @@ export function Inicio(c: Ctx) {
       })
     }
     if (metas && situacaoMetas.length) {
-      const media = situacaoMetas.reduce((t, s) => t + Math.min(1, s.progresso), 0) / situacaoMetas.length
+      const media = progressoDasMetas
       const n = situacaoMetas.length
       pecas.push({
         chave: 'metas', icone: 'meta', cor: 'var(--violeta)', rotulo: tx('Metas'), valor: `${Math.round(media * 100)}%`,

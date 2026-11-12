@@ -84,7 +84,7 @@ export function Cartoes(c: Ctx) {
           <h1>{tx('Cartões')}</h1>
           <p className="sub">{tx('Faturas de {0}/{1}, limite e parcelas de cada cartão.', nomeMes, c.ano)}</p>
         </div>
-        {cartoes.cartoes.length > 0 && <button className="btn primario" onClick={() => setEditando('novo')}><Icone nome="mais" tamanho={16} /> {tx('Novo cartão')}</button>}
+        {cartoes.cartoes.length > 0 && <button className="btn primario" onClick={() => setEditando('novo')}><Icone nome="mais" tamanho={16} /> {tx('Adicionar cartão')}</button>}
       </header>
 
       {cartoes.semExtras && cartoes.carregado && cartoes.cartoes.length > 0 && (
@@ -127,7 +127,7 @@ export function Cartoes(c: Ctx) {
               </div>
             ))}
             <button className="cc-carteira-novo" onClick={() => setEditando('novo')}>
-              <span><Icone nome="mais" tamanho={22} /></span>{tx('Novo cartão')}
+              <span><Icone nome="mais" tamanho={22} /></span>{tx('Adicionar cartão')}
             </button>
           </section>
 
@@ -474,14 +474,15 @@ function FaturaDoMes({ s, c, aoPagar, aoRenegociar }: {
           </span>
         </div>
       ) : s.valor > 0 && s.status !== 'futura' ? (
-        <p className="ccd-quando">{s.status === 'atrasada' ? tx('Já venceu') : tx('Para pagar')}: <b>{quandoVence(s)}</b></p>
+        <p className="ccd-quando">{s.status === 'atrasada' ? tx('Atrasada') : tx('Para pagar')}: <b>{quandoVence(s)}</b></p>
       ) : null}
 
       <PorCategoria s={s} c={c} />
 
       <div className="ccd-acoes">
         {podeResolver && <button className="btn primario" onClick={() => aoPagar(s)}><Icone nome="check" tamanho={16} /> {tx('Paguei a fatura')}</button>}
-        {podeResolver && (
+        {/* só fatura fechada ou vencida: renegociada ainda aberta, as compras que caíssem nela depois sumiriam das saídas */}
+        {podeResolver && s.status !== 'aberta' && (
           <button className="btn" onClick={() => aoRenegociar(s)} disabled={c.cartoes.semExtras}
             title={c.cartoes.semExtras ? tx('Falta rodar a migração 9') : tx('O banco parcelou a fatura')}>
             <Icone nome="acordo" tamanho={16} /> {tx('Renegociar')}
@@ -783,7 +784,7 @@ function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; a
           )}
           <span className="espaco" />
           <button type="button" className="btn" onClick={aoFechar}>{tx('Cancelar')}</button>
-          <button type="submit" className="btn primario" disabled={salvando}>{cartao ? tx('Salvar') : tx('Criar cartão')}</button>
+          <button type="submit" className="btn primario" disabled={salvando}>{cartao ? tx('Salvar') : tx('Adicionar cartão')}</button>
         </div>
         {confirmar && <span className="campo-ajuda">{tx('As compras continuam nas suas saídas, só deixam de ser ligadas a este cartão. As faturas marcadas como pagas são esquecidas.')}</span>}
       </form>
@@ -811,6 +812,7 @@ function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: 
   const [bancoId, setBancoId] = useState(pagamento?.banco_id ?? cartao.banco_id ?? '')
   const [erro, setErro] = useState<string | null>(null)
   const [desfazer, setDesfazer] = useState(false)
+  const [salvando, setSalvando] = useState(false)
   const bancos = c.v.bancos ? c.d.bancos : []
   const atraso = data > f.vencimento ? dias(f.vencimento, data) : 0
   const semExtras = c.cartoes.semExtras
@@ -823,15 +825,27 @@ function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: 
     if (!v || v <= 0) return setErro(tx('Valor inválido.'))
     if (j == null || j < 0) return setErro(tx('Juros inválidos.'))
     const pagoEm = data || hojeLocal()
-    aoFechar()
+    if (salvando) return
     if (!pagamento) {
-      const lanc = j > 0 && !semExtras ? await c.d.addLanc(lancamentoDosJuros(c, cartao, f, j, pagoEm, bancoId || null)) : undefined
-      await c.cartoes.pagarFatura({
+      // Grava com a janela aberta: a saída dos juros e o pagamento andam juntos. Se o pagamento não grava, a saída dos juros
+      // é desfeita (senão sobrava um gasto de juros sem fatura paga) e a janela fica, com o aviso.
+      setSalvando(true)
+      const comJuros = j > 0 && !semExtras
+      const lanc = comJuros ? await c.d.addLanc(lancamentoDosJuros(c, cartao, f, j, pagoEm, bancoId || null)) : undefined
+      if (comJuros && !lanc) { setSalvando(false); return setErro(tx('Não consegui salvar os juros. Nada foi gravado: tente de novo.')) }
+      const nova = await c.cartoes.pagarFatura({
         cartao_id: cartao.id, ano: f.ano, mes: f.mes, valor: v, pago_em: pagoEm, banco_id: bancoId || null,
         tipo: 'paga', juros: j, juros_lanc_id: lanc?.id ?? null,
       })
+      if (!nova) {
+        if (lanc) await c.d.delLanc(lanc.id)
+        setSalvando(false)
+        return setErro(tx('Não consegui marcar a fatura como paga. Nada foi gravado: tente de novo.'))
+      }
+      aoFechar()
       return
     }
+    aoFechar()
     // ajeitando: a saída dos juros acompanha o que mudou
     let jurosLanc = pagamento.juros_lanc_id ?? null
     if (!semExtras) {
@@ -905,7 +919,7 @@ function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: 
             : <button type="button" className="btn perigo" onClick={() => setDesfazer(true)}><Icone nome="desfazer" tamanho={15} /> {tx('Desfazer')}</button>)}
           <span className="espaco" />
           <button type="button" className="btn" onClick={aoFechar}>{tx('Cancelar')}</button>
-          <button type="submit" className="btn primario">{pagamento ? tx('Salvar') : tx('Marcar como paga')}</button>
+          <button type="submit" className="btn primario" disabled={salvando}>{pagamento ? tx('Salvar') : tx('Marcar como paga')}</button>
         </div>
       </form>
     </Modal>
@@ -926,6 +940,7 @@ function FormRenegociar({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: (
   const [data, setData] = useState(hojeLocal())
   const [erro, setErro] = useState<string | null>(null)
   const [desfazer, setDesfazer] = useState(false)
+  const [salvando, setSalvando] = useState(false)
   const tot = parseNumero(total) ?? 0
   const parcelas = Math.max(1, Math.min(120, Number(n) || 1))
   const parcela = centavos(tot / parcelas)
@@ -933,7 +948,10 @@ function FormRenegociar({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: (
 
   const salvar = async () => {
     if (!tot || tot <= 0) return setErro(tx('Valor total inválido.'))
-    aoFechar()
+    if (salvando) return
+    // Grava com a janela aberta: dívida criada sem a fatura marcada contaria as compras e a dívida em dobro, então se a
+    // fatura não grava a dívida é apagada e a janela fica, com o aviso.
+    setSalvando(true)
     if (!c.v.dividas) c.ligarModulo('dividas')
     const d = await c.d.addDivida({
       descricao: tx('Fatura {0} de {1} (renegociada)', cartao.nome, nomeDaFatura(f.ano, f.mes)),
@@ -942,11 +960,17 @@ function FormRenegociar({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: (
       sentido: 'devo', pessoa: cartao.nome, total_parcelas: parcelas,
       inicio: somaMesesData(`${(data || hojeLocal()).slice(0, 8)}${String(Math.min(cartao.dia_vencimento, 28)).padStart(2, '0')}`, 1),
     })
-    if (!d) return
-    await c.cartoes.pagarFatura({
+    if (!d) { setSalvando(false); return setErro(tx('Não consegui criar a dívida do acordo. Nada foi gravado: tente de novo.')) }
+    const nova = await c.cartoes.pagarFatura({
       cartao_id: cartao.id, ano: f.ano, mes: f.mes, valor: f.valor, pago_em: data || hojeLocal(),
       tipo: 'renegociada', divida_id: d.id, juros: acrescimo,
     })
+    if (!nova) {
+      await c.d.delDivida(d.id)
+      setSalvando(false)
+      return setErro(tx('Não consegui marcar a fatura como renegociada. Nada foi gravado: tente de novo.'))
+    }
+    aoFechar()
   }
 
   const desfazerAcordo = async () => {
@@ -1022,7 +1046,7 @@ function FormRenegociar({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: (
         <div className="form-acoes">
           <span className="espaco" />
           <button type="button" className="btn" onClick={aoFechar}>{tx('Cancelar')}</button>
-          <button type="submit" className="btn primario"><Icone nome="acordo" tamanho={16} /> {tx('Renegociar')}</button>
+          <button type="submit" className="btn primario" disabled={salvando}><Icone nome="acordo" tamanho={16} /> {tx('Renegociar')}</button>
         </div>
       </form>
     </Modal>

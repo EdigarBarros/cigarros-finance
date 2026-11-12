@@ -80,17 +80,22 @@ export function saldoMaisRecenteDaDivida(saldos: SaldoDivida[], dividaId: string
   return achado
 }
 
+/** Saldos da mesma dívida em ordem: pela data e, no mesmo dia, pelo que foi informado por último (o que vale). */
+const ordemDosSaldos = (a: SaldoDivida, b: SaldoDivida) => a.data.localeCompare(b.data) || (a.created_at ?? '').localeCompare(b.created_at ?? '') || a.id.localeCompare(b.id)
+
 /** Saldo devedor numa data: último saldo informado até ela, menos os pagamentos (e mais os aumentos, que valem negativo) feitos depois dele. */
 export function saldoEm(divida: Divida, saldos: SaldoDivida[], pagamentos: Pagamento[], ate: string): number | null {
-  const marcos = saldos.filter((s) => s.divida_id === divida.id && s.data <= ate).sort((a, b) => a.data.localeCompare(b.data))
+  const marcos = saldos.filter((s) => s.divida_id === divida.id && s.data <= ate).sort(ordemDosSaldos)
   const marco = marcos[marcos.length - 1]
   if (!marco) return null
   // No saldo mais antigo (o dia em que a dívida começou), o pagamento do próprio dia conta: a dívida começou e foi paga nesse dia.
-  // Nos ajustes de saldo, o do dia já está incluído no valor informado.
+  // Nos ajustes de saldo, o pagamento do dia lançado antes do ajuste já está incluído no valor informado; o lançado depois
+  // abate (quem confere o saldo de manhã e paga à tarde). Sem a hora de um dos dois, vale o ajuste.
   const primeiraData = saldos.reduce((m, s) => (s.divida_id === divida.id && (m === null || s.data < m) ? s.data : m), null as string | null)
   const origem = marco.data === primeiraData
+  const depoisDoAjuste = (p: Pagamento) => Boolean(p.created_at && marco.created_at && p.created_at > marco.created_at)
   const pagoDepois = pagamentos
-    .filter((p) => p.divida_id === divida.id && p.data && (origem ? p.data >= marco.data : p.data > marco.data) && p.data <= ate)
+    .filter((p) => p.divida_id === divida.id && p.data && (origem || p.data > marco.data || (p.data === marco.data && depoisDoAjuste(p))) && p.data >= marco.data && p.data <= ate)
     .reduce((a, p) => a + p.valor, 0)
   return Math.max(0, Math.round((marco.saldo - pagoDepois) * 100) / 100)
 }
@@ -155,7 +160,7 @@ export function situacaoDividas(
     const saldoInicial = Math.max(restante, ...saldosD.filter((s) => s.divida_id === d.id && s.data <= fim)
       .map((s) => s.saldo + aumentos.filter((a) => a.data! > s.data).reduce((t, a) => t - a.valor, 0)))
     // Ajustes: cada saldo informado depois do primeiro vale quanto era esperado (saldo anterior menos pagamentos) mais a diferença.
-    const marcos = saldosD.filter((x) => x.divida_id === d.id).sort((a, b) => a.data.localeCompare(b.data) || a.id.localeCompare(b.id))
+    const marcos = saldosD.filter((x) => x.divida_id === d.id).sort(ordemDosSaldos)
     const ajustes: { data: string; valor: number }[] = []
     marcos.forEach((m, i) => {
       if (i === 0) return
@@ -182,6 +187,12 @@ export function situacaoDividas(
       jurosAtraso: 0,
       restanteHoje: restante,
       atraso: null,
+    }
+    // Com o dia do vencimento, a quitação é o vencimento da última parcela que falta pagar (a conta pelos meses restantes
+    // contava a partir do mês aberto e ficava um mês à frente quando a parcela do mês ainda não estava paga).
+    if (restante > 0 && d.inicio && d.valor_parcela) {
+      const ultima = calendarioDe(sit, hoje < ini ? ini : hoje)?.parcelas.filter((p) => p.falta > 0).at(-1)
+      if (ultima) sit.quitacao = [+ultima.vencimento.slice(0, 4), +ultima.vencimento.slice(5, 7)]
     }
     // juros de atraso: só no mês de hoje (meses que passaram ficam como foram registrados)
     if (hoje >= ini && hoje <= fim && restante > 0) {
@@ -516,10 +527,17 @@ export function dividaDiaADia({ situacao, pagamentos, ano, mes, dias, hoje, diaR
 
 /**
  * O que falta pagar das parcelas de dívida em cada dia do mês (índice 0 = dia 1), como no "Para fazer": a parcela no dia em
- * que vence e a atrasada (de qualquer mês) no dia `atrasadasEm`. Dívida sem cotação fica de fora.
+ * que vence e a atrasada (de qualquer mês) no dia `atrasadasEm` (com `soDoMes`, sem as atrasadas). Dívida sem cotação
+ * fica de fora.
  */
-export function parcelasPorDia({ situacao, ano, mes, dias, hoje, diaRef, atrasadasEm = Math.max(hoje, 1) }: {
+export function parcelasPorDia({ situacao, ano, mes, dias, hoje, diaRef, atrasadasEm = Math.max(hoje, 1), soDoMes = false }: {
   situacao: SituacaoDivida[]; ano: number; mes: number; dias: number; hoje: number; diaRef: string; atrasadasEm?: number
+  /**
+   * Só as parcelas que vencem neste mês, sem as atrasadas. Para o dinheiro de um mês que ainda não começou: a atrasada já
+   * sai no mês de hoje, e contar de novo punha em dezembro as parcelas de novembro uma segunda vez ("2 parcelas" de cada
+   * dívida). O saldo da dívida dia a dia continua descontando a atrasada antes do mês começar.
+   */
+  soDoMes?: boolean
 }): number[] {
   const prefixo = `${ano}-${String(mes).padStart(2, '0')}`
   const vence = Array<number>(dias).fill(0)
@@ -529,6 +547,8 @@ export function parcelasPorDia({ situacao, ano, mes, dias, hoje, diaRef, atrasad
     for (const p of calendarioDe(s, diaRef)?.parcelas ?? []) {
       if (p.falta <= 0 || p.vencimento > `${prefixo}-31`) continue
       const dia = p.vencimento.startsWith(prefixo) ? +p.vencimento.slice(8, 10) : 0
+      // `soDoMes`: só as que vencem neste mês (a atrasada já entrou no dinheiro do mês de hoje)
+      if (!dia && soDoMes) continue
       // parcela atrasada leva os juros de atraso estimados, como no "Para fazer"
       vence[Math.min(dias, Math.max(dia > hoje ? dia : atrasadasEm, 1)) - 1] += p.falta + (s.atraso?.porParcela.get(p.n) ?? 0)
     }

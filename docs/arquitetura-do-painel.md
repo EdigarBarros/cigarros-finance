@@ -91,7 +91,15 @@ Saíram do equilibrado: os indicadores com minilinha, os blocos completos de con
 últimos lançamentos, o banner e o "Acompanhe mais".
 
 **A previsão do fim do mês é a mesma nos três jeitos**: o que ainda vai entrar e sair (`diaADiaDoMes`) mais as parcelas de
-dívida que vencem no mês, com as atrasadas e os juros de atraso (`parcelasPorDia`).
+dívida que vencem no mês, com as atrasadas e os juros de atraso (`parcelasPorDia`). A previsão do ano (`previsto`, no
+`Painel`) leva as mesmas parcelas, então o "Vai sobrar" do quadro do mês e o saldo de fim de mês dão o mesmo número que o
+"Previsto no dia 30". Num mês que ainda não começou entram só as parcelas que vencem nele (`soDoMes`): a atrasada já sai no
+mês de hoje. O Consultor prevê o fechamento do mês somando também o gasto do dia a dia que ainda deve vir, pelo costume
+da pessoa, e diz isso no "Por quê?".
+
+**Fatura em aberto não é "saiu"** em nenhuma soma: a compra no cartão cuja fatura ainda não foi paga, do mês de hoje em
+diante, "vem aí" (`faturaEmAberto`, em `lib/previsao.ts`). Vale para o Resumo do ano, a média de gasto, o "Gastos do mês"
+e o "Gasto por dia" da Início. O "Para onde foi" continua mostrando as compras no cartão por categoria.
 
 ### 4.0.1 Detalhado: o mês em gráfico e o mosaico (`components/InicioDetalhado.tsx`)
 
@@ -100,7 +108,7 @@ Para o detalhado não virar uma parede de cartões e frases, a tela se lê olhan
 | Parte | O que mostra |
 | --- | --- |
 | Cartão do mês | **Sobrou/Faltou até hoje** em número grande, **Previsto no dia 30**, a linha **Dívidas: hoje → no dia 30** e, embaixo, o **gráfico do ano mês a mês** (`GraficoAnual`, o mesmo do Resumo do ano: entrou e saiu em barras, guardado, dívidas e investido em linhas, "Já aconteceu / O que vem aí" e o quadro do mês tocado). Ele substituiu o antigo gráfico do mês dia a dia (`GraficoDoMes`), que ficava quase vazio no começo do mês |
-| Números | **Entrou**, **Saiu** (até hoje) e **Gasto por dia** (com as compras no cartão, como o antigo "Gasto médio por dia") |
+| Números | **Entrou**, **Saiu** (até hoje) e **Gasto por dia** (o "Saiu" dividido pelos dias que já passaram) |
 | O que vem aí | Até 4 contas, faturas e parcelas na ordem do vencimento (atrasadas primeiro), de `tarefasDoMes` |
 | Mosaico | Peças **Gastos do mês, Contas do mês, Cartões, Dívidas, Dinheiro guardado, Metas** (só as ligadas), cada uma com ícone, número e bolinha: verde tudo certo, amarela pede atenção, vermelha precisa de você. Tocar abre o bloco completo logo abaixo (Gastos abre categorias e lançamentos), tocar de novo fecha |
 | Saúde do seu dinheiro | Igual aos outros jeitos |
@@ -117,7 +125,7 @@ detalhado, Gasto médio por dia e Maior saída; passando o ponteiro ou o dedo ap
 pago, parcela/valor/fim de cada dívida em selos curtos, o dia do vencimento das contas em bloco colorido pela situação, um
 cartãozinho na cor de cada cartão de crédito e a variação de cada categoria num selo ao lado do nome.
 
-Animações: o app tem a própria escolha (Configurações → Painel → Aparência → Animações: Completas ou Reduzidas). O "reduzir
+Animações: o app tem a própria escolha (Configurações → Aparência → Animações: Completas ou Reduzidas). O "reduzir
 movimento" do sistema não desliga mais as animações sozinho. A troca de tema espalha o tema novo como uma mancha de tinta de borda
 ondulada a partir do botão (View Transitions; sem elas, uma camada da cor do tema novo faz o mesmo caminho).
 
@@ -548,7 +556,7 @@ Ordem dos itens (computador), por frequência e por pergunta respondida:
 
 Justificativa: o que se usa todo dia primeiro (Início, Lançamentos); depois o que tem prazo, do mais próximo para o mais distante (contas, cartões, dívidas); depois o que se constrói (metas, dinheiro guardado); a retrospectiva por último, porque é a menos urgente.
 
-**Celular (barra de abas, no máximo 5)**: se houver até 5 páginas, aparecem todas. Com mais de 5, aparecem as **4 primeiras** da ordem acima e a quinta aba é **Mais**, que abre uma folha com as demais. A ordem do menu é também a prioridade das abas, então Dívidas e Contas ganham lugar antes de Resumo do ano. "Mais" fica ativa quando a página aberta está dentro dela. Configurações (Personalizar painel, Importar, Baixar backup, Sair) continuam no menu do topo.
+**Celular (barra de abas, no máximo 5)**: se houver até 5 páginas, aparecem todas. Com mais de 5, aparecem as **4 primeiras** da ordem acima e a quinta aba é **Mais**, que abre uma folha com as demais. A ordem do menu é também a prioridade das abas, então Dívidas e Contas ganham lugar antes de Resumo do ano. "Mais" fica ativa quando a página aberta está dentro dela. Configurações (Personalizar, Importar, Baixar backup, Sair) continuam no menu do topo.
 
 | Quem liga o quê | Abas |
 | --- | --- |
@@ -643,7 +651,8 @@ ano aberto vêm de `lancsRecentes` em `useDados`.
   ser escolhido. No celular os cartões deslizam de lado. Tocar num cartão abre o detalhe dele.
 - **Detalhe do cartão:** faturas que venceram sem pagar (até 12 meses para trás, com "Paguei", "Renegociei" e "Já paguei
   todas"), fatura do mês (valor que conta, linha do tempo abriu → fecha → vence com o "hoje" pulsando, divisão por
-  categoria, ações), anel do limite (usado na cor do cartão; o garantido num arco dourado por fora), barras das próximas
+  categoria, ações), anel do limite (usado na cor do cartão; o garantido num arco dourado por fora; o usado soma as faturas
+  do mês de hoje em diante e as anteriores ainda não pagas, fechadas ou vencidas, como faz o banco), barras das próximas
   faturas, parceladas com um tracinho por parcela e o histórico das faturas resolvidas (toque para ajeitar).
 - **Pagar / ajeitar:** dia, valor, banco e juros/multa. Pago depois do vencimento aparece "com N dias de atraso"; os
   juros viram uma saída na categoria de dívidas, no mês do pagamento (`juros_lanc_id`). Ajeitar atualiza, cria ou apaga
@@ -763,8 +772,10 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
 
 - **Tudo o que você tem:** bancos + investimentos + outras moedas (convertidas), com a comparação com o mês anterior, a
   minilinha dos últimos meses e a barra de composição (conta corrente, caixinha, reserva, investimentos, moedas).
-- **Reserva de emergência:** quantos meses de gastos a reserva cobre (média das saídas), num anel com o ideal de 6
-  meses; abaixo disso, atalho para criar a meta.
+- **Reserva de emergência:** quantos meses de gastos cobre o que está marcado como reserva nos bancos, num anel com o
+  ideal de 6 meses; abaixo disso, atalho para criar a meta. O gasto de um mês é `gastoMensalMedio` (`lib/conselheiro.ts`):
+  a média dos últimos 3 meses fechados com entrada e saída, a mesma régua do Consultor e das Metas. O Consultor chama de
+  **Dinheiro para imprevistos** a conta dele, que soma bancos e investimentos (ou a meta de reserva).
 - Bancos com o selo (`BancoIcone`), o guardado, a divisão conta/caixinha/reserva numa barrinha, entrou/saiu no mês e,
   quando a caixinha é limite garantido de um cartão, o aviso "caixinha vira limite no …". No detalhe do banco, cada tipo
   de saldo é um cartão com ícone e campo, e aparecem os cartões de crédito daquele banco (desenhados, com a fatura).

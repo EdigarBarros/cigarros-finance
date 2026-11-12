@@ -209,17 +209,23 @@ export const garantidoDo = (c: CartaoCredito, caixinha?: number) =>
   centavos(Math.max(0, c.garantia_caixinha ? caixinha ?? 0 : c.limite_garantido ?? 0))
 
 /**
- * Limite usado e disponível: o que ainda falta pagar, das faturas do mês atual em diante. O limite total é o do banco
- * mais o garantido (dinheiro na caixinha que vira limite); sem nenhum dos dois, não há limite para mostrar.
+ * Limite usado e disponível: o que ainda falta pagar, das faturas do mês atual em diante e das anteriores ainda não pagas,
+ * fechadas ou vencidas (o banco só devolve o limite quando a fatura é paga; sem elas, o "livre" aparecia maior que o real). O limite
+ * total é o do banco mais o garantido (dinheiro na caixinha que vira limite); sem nenhum dos dois, não há limite.
  */
 export function limiteDoCartao(c: CartaoCredito, lancs: Lancamento[], pagas: FaturaPaga[], hoje = hojeLocal(), garantido = garantidoDo(c)) {
   const [ha, hm] = partes(hoje)
   const agora = chaveMes(ha, hm)
-  const usado = soma(
+  const daqui = soma(
     doCartao(c, lancs)
       .filter((l) => chaveMes(l.ano, l.mes) >= agora && !pagas.some((p) => p.cartao_id === c.id && p.ano === l.ano && p.mes === l.mes))
       .map((l) => l.valor),
   )
+  // de meses anteriores: a fatura fechada que ainda vai vencer e a que venceu sem pagar (as mesmas do "Em atraso")
+  const anteriores = new Set(doCartao(c, lancs).map((l) => chaveMes(l.ano, l.mes)).filter((k) => k < agora && k >= agora - 12))
+  const naoPagas = [...anteriores].map(doMesChave).map((m) => faturaDoMes(c, lancs, pagas, m.ano, m.mes, hoje))
+    .filter((f) => f.status === 'fechada' || f.status === 'atrasada')
+  const usado = centavos(daqui + soma(naoPagas.map((f) => f.valor)))
   const total = c.limite == null && !garantido ? null : centavos((c.limite ?? 0) + garantido)
   return { usado, total, garantido, disponivel: total == null ? null : centavos(total - usado) }
 }

@@ -6,11 +6,11 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
 - **Visual OpusCash, claro e escuro**: menu lateral com a marca, barra de busca, seletor de mês, sino de contas e
   perfil no topo; na Início, saudação, cartões de indicadores, fluxo financeiro dos últimos 6 meses, últimos
   lançamentos, rosca por categoria, metas e um convite para planejar. As cores vêm do símbolo (índigo → azul →
-  verde-água). O tema segue o aparelho ou é escolhido no botão ☀/☾ do topo e em **Configurações → Painel → Aparência**
+  verde-água). O tema segue o aparelho ou é escolhido no botão ☀/☾ do topo e em **Configurações → Aparência**
 - **Animações**: blocos que saem do desfoque um após o outro, números que contam até o valor, gráficos que crescem
   da base, barras de progresso que enchem, pílula do menu que desliza até a página aberta e cartões que sobem sob o
   ponteiro. A troca de tema espalha o tema novo como uma mancha de tinta a partir do botão. Quem quiser menos movimento
-  escolhe **Animações: Reduzidas** em Configurações → Painel → Aparência
+  escolhe **Animações: Reduzidas** em Configurações → Aparência
 - **Qualquer idioma**: o botão 文A (no topo do painel; nas outras telas, preso no canto de cima) abre a lista de mais de
   100 idiomas, cada um escrito nele mesmo, com busca. O app é escrito em português. Inglês e espanhol têm tradução nossa
   (`lib/textos.ts` e `src/i18n/traducoes.json`, no app inteiro menos as páginas legais); os outros idiomas são a
@@ -18,13 +18,13 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   A política de segurança (`vercel.json`) libera o tradutor do Google; se ele mudar o script que roda na barra dele, o hash
   `sha256-…` do `script-src` precisa ser atualizado (o console do navegador mostra o novo)
 
-- **Painel que se adapta a cada pessoa**: no primeiro acesso, 4 perguntas rápidas (moeda, outras moedas, o que faz
+- **Painel que se adapta a cada pessoa**: no primeiro acesso, o seu nome e 4 perguntas rápidas (moeda, outras moedas, o que faz
   parte da vida financeira, jeito de ver) montam o painel só com o que faz sentido. Dívidas, bancos, investimentos e
   outras moedas são módulos que ligam e desligam; o jeito de ver vai de **simples** (só o essencial) a **detalhado**
   (todas as categorias, lançamentos do mês e mais indicadores). Depois disso o app continua se adaptando: percebe pelos lançamentos que a pessoa
   começou a investir, paga parcelas, mexe com dólar ou usa vários bancos e sugere ligar (sem insistir se ela recusar).
   No formulário, uma dica aparece enquanto ela digita ("Aporte no CDB" → acompanhar investimentos). Tudo pode ser mudado
-  em **Personalizar painel**, ou com um toque em "+ Investimentos" no fim da visão geral
+  em **Personalizar** (Configurações → Painel), ou com um toque em "+ Investimentos" no fim da visão geral
 - **Qualquer moeda**: a moeda principal define todos os totais (real, dólar, euro, peso…). Lançamentos podem ser feitos
   em outra moeda com a cotação do dia (editável); o valor original fica guardado e o total entra convertido
 - **Categorias suas**: toda conta começa com categorias que servem para qualquer pessoa (moradia, saúde, lazer,
@@ -39,7 +39,7 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   esta semana**, o que vem depois e o que já foi **pago**. Nada é lançado sozinho: você toca em **Paguei** (ou **Recebi**)
   e o app cria o lançamento com 1 toque, com a opção de trocar o valor (a conta de luz muda) ou a data; dá para desfazer.
   O app também sugere transformar em conta fixa o que você paga todo mês. Módulo "Contas do mês", ligado nas perguntas
-  iniciais ou em Personalizar painel
+  iniciais ou em Personalizar (Configurações → Painel)
 - **Cartão de crédito**: cadastre cada cartão com o dia em que a fatura fecha, o dia em que vence e o limite. Ao lançar uma
   saída, escolha "Como pagou?" e em quantas vezes: cada parcela cai na fatura certa (compra depois do fechamento vai para o
   mês seguinte) e conta como saída no mês em que você de fato paga. A página Cartões mostra a fatura de cada mês com situação
@@ -93,7 +93,7 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   qual dívida ela abate (ou o app reconhece pela descrição) e o saldo cai sozinho em todos os meses seguintes.
   Com a parcela definida, o app prevê quando a dívida acaba. Juros ou acordo? Basta informar o saldo novo.
   Se você informar os **juros por mês** de cada dívida (opcional, [migração 19](supabase/migracao-19-juros-das-dividas.sql)), o
-  conselheiro do menu diz qual dívida pagar primeiro (a que cobra mais) e avisa quando os juros são muito altos.
+  Consultor diz qual dívida pagar primeiro (a que cobra mais) e avisa quando os juros são muito altos.
   Uma dívida feita de várias compras (o crédito de uma loja, por exemplo) pode ser dividida em **partes**, cada uma com
   as suas parcelas, valores e datas ([migração 21](supabase/migracao-21-partes-da-divida.sql)), ou ser um valor único
   com o dia em que começou e o dia combinado para pagar ([migração 26](supabase/migracao-26-inicio-da-parte.sql)): o
@@ -122,11 +122,11 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   com saldo guardado e movimento do mês de cada um, detalhe individual e bloco "Por banco" na visão geral.
   Saldos, US$ e meta passam automaticamente para os meses seguintes até você atualizar
 - **Ano**: totais do ano, gráficos de saldo e evolução de caixa, dívida, investimentos e dólar, tabela mês a mês
-- **Importar planilha (.xlsx)** com os meses e categorias da planilha antiga; **exportar backup (.xlsx)**
+- **Importar planilha (.xlsx)** com os meses e categorias da planilha antiga; **baixar backup (.xlsx)** com tudo o que você cadastrou (lançamentos, dívidas e as partes e promessas delas, cartões e faturas, contas do mês, metas, bancos, investimentos e preferências)
 - Valores aceitam `1.234,56` e contas como `=105,53-60,02`
 - Celular em modo leitura: resumo, gráficos e listas recolhidas; editar continua a um toque (botão + e tocando nos itens)
 
-Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase** (Postgres), protegidos por login.
+Tudo grátis: o site fica na **Vercel** e os dados no **Supabase** (Postgres), protegidos por login.
 
 ## Como colocar no ar (≈15 min)
 
@@ -156,7 +156,6 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
 
 **Vercel:** <https://vercel.com/new> → importe este repositório → em *Environment Variables* adicione as duas variáveis acima → **Deploy**.
 
-**Netlify:** <https://app.netlify.com/start> → importe este repositório (o `netlify.toml` já configura o build) → *Site configuration → Environment variables* → adicione as duas variáveis → **Deploy**.
 
 > **Já tinha o banco criado antes?** Rode as migrações que faltarem, em ordem, no SQL Editor (de
 > [`migracao-02`](supabase/migracao-02-dividas-interligadas.sql) até a [`migracao-20`](supabase/migracao-20-acesso-no-banco-definitivo.sql)),
@@ -200,14 +199,14 @@ Tudo grátis: o site fica na **Vercel** ou **Netlify** e os dados no **Supabase*
 
 ### 3. Primeiro acesso
 
-1. Abra o site → **Primeiro acesso? Criar conta** → confirme pelo e-mail.
-2. Menu **☰ → Importar planilha (.xlsx)** e escolha sua planilha. Os meses que vierem nela substituem os do site.
+1. Abra o site → **Novo no OpusCash? Criar conta** → confirme pelo e-mail.
+2. **Configurações → Dados → Importar planilha (.xlsx)** e escolha sua planilha. Os meses que vierem nela substituem os do site; as dívidas com o mesmo nome são atualizadas (as partes, promessas e pagamentos delas ficam).
 3. Se o site for **só seu** (sem cobrança), desligue **Allow new users to sign up** em **Authentication → Sign In / Providers**. Se for aberto ao público, deixe ligado.
 
 ## Bom saber
 
 - No plano grátis, o Supabase **pausa o projeto depois de 7 dias sem uso**. Os dados não se perdem: é só entrar no painel do Supabase e clicar em *Restore*. Usando o site toda semana, não pausa.
-- Faça **Exportar backup** de vez em quando.
+- Faça **Baixar backup** (Configurações → Dados) de vez em quando.
 - Este repositório é público: nunca coloque aqui a planilha nem o arquivo `.env` (o `.gitignore` já bloqueia `*.xlsx` e `.env`).
 
 ## App Android (Play Store)

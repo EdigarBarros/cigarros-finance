@@ -2216,8 +2216,8 @@
     "es": "Si sabes el total, la app muestra cuánto ya se pagó (\"cuota 4 de 12\")."
   },
   "Com o vencimento, o app mostra cada parcela {0}, pela metade ou atrasada.": {
-    "en": "Once due, the app shows each installment as {0}, partly {0}, or overdue.",
-    "es": "Al vencer, la app muestra cada cuota como {0}, a medias o atrasada."
+    "en": "With the due date, the app shows each installment as {0}, half paid or overdue.",
+    "es": "Con la fecha de vencimiento, la app muestra cada cuota como {0}, a medias o atrasada."
   },
   "Quanto falta receber": {
     "en": "How much is left to receive",
@@ -5656,8 +5656,8 @@
     "es": "Las compras con tarjeta ya cuentan en lo que salió."
   },
   "Fatura do cartão {0}": {
-    "en": "{0} card bill",
-    "es": "Factura de la tarjeta {0}"
+    "en": "{0} card statement",
+    "es": "Resumen de la tarjeta {0}"
   },
   "{0}: {1} parcelas": {
     "en": "{0}: {1} installments",
@@ -6212,8 +6212,8 @@
     "es": "No se pudo guardar la tarjeta. Mira el aviso en pantalla, ajusta y vuelve a intentarlo."
   },
   "Este cartão tem uma fatura renegociada. Desfaça a renegociação antes de excluir, ou desligue \"Ainda uso este cartão\".": {
-    "en": "This card has a renegotiated bill. Undo the renegotiation before deleting, or turn off \"I still use this card\".",
-    "es": "Esta tarjeta tiene una factura renegociada. Deshaz la renegociación antes de eliminar, o desactiva \"Todavía uso esta tarjeta\"."
+    "en": "This card has a renegotiated statement. Undo the renegotiation before deleting, or turn off \"I still use this card\".",
+    "es": "Esta tarjeta tiene un resumen renegociado. Deshaz la renegociación antes de eliminar, o desactiva \"Todavía uso esta tarjeta\"."
   },
   "Não consegui conferir os lançamentos de {0}. Confira se o que é desse ano já não foi lançado antes de importar.": {
     "en": "I couldn't check the entries for {0}. Make sure what belongs to that year wasn't already added before you import.",
@@ -6328,8 +6328,8 @@
     "es": "revisa si entró o salió"
   },
   "pagamento da fatura: já está no extrato da conta": {
-    "en": "card bill payment: already in your bank statement",
-    "es": "pago de la factura: ya está en el extracto de la cuenta"
+    "en": "card statement payment: already in your bank statement",
+    "es": "pago del resumen: ya está en el extracto de la cuenta"
   },
   "Compras no cartão": {
     "en": "Card purchases",
@@ -6368,12 +6368,12 @@
     "es": "{0} compras con tarjeta coinciden con tu búsqueda."
   },
   "1 compra no cartão na fatura de {0} ({1}) fica na tela Cartões.": {
-    "en": "1 card purchase on the {0} bill ({1}) is on the Cards screen.",
-    "es": "1 compra con tarjeta en la factura de {0} ({1}) está en la pantalla Tarjetas."
+    "en": "1 card purchase on the {0} statement ({1}) is on the Cards screen.",
+    "es": "1 compra con tarjeta en el resumen de {0} ({1}) está en la pantalla Tarjetas."
   },
   "{0} compras no cartão na fatura de {1} ({2}) ficam na tela Cartões.": {
-    "en": "{0} card purchases on the {1} bill ({2}) are on the Cards screen.",
-    "es": "{0} compras con tarjeta en la factura de {1} ({2}) están en la pantalla Tarjetas."
+    "en": "{0} card purchases on the {1} statement ({2}) are on the Cards screen.",
+    "es": "{0} compras con tarjeta en el resumen de {1} ({2}) están en la pantalla Tarjetas."
   },
   "Buscar": {
     "en": "Search",
@@ -8268,16 +8268,16 @@
     "es": "todo pagado"
   },
   "1 fatura atrasada": {
-    "en": "1 overdue bill",
-    "es": "1 factura atrasada"
+    "en": "1 overdue statement",
+    "es": "1 resumen atrasado"
   },
   "{0} faturas atrasadas": {
-    "en": "{0} overdue bills",
-    "es": "{0} facturas atrasadas"
+    "en": "{0} overdue statements",
+    "es": "{0} resúmenes atrasados"
   },
   "fatura do mês": {
-    "en": "this month's bill",
-    "es": "factura del mes"
+    "en": "this month's statement",
+    "es": "resumen del mes"
   },
   "1 em dia": {
     "en": "1 up to date",
@@ -8520,8 +8520,8 @@
     "es": "Cuánto del límite usa cada tarjeta"
   },
   "Quer ver limite, parcelas e próximas faturas? Mudar o jeito de ver": {
-    "en": "Want limits, installments and upcoming bills? Change the view",
-    "es": "¿Quieres ver límite, cuotas y próximas facturas? Cambiar la vista"
+    "en": "Want limits, installments and upcoming statements? Change the view",
+    "es": "¿Quieres ver límite, cuotas y próximos resúmenes? Cambiar la vista"
   },
   "Pago em {0}": {
     "en": "Paid in {0}",
@@ -12518,5 +12518,93 @@
   "De onde vem o ganho": {
     "en": "Where your gain comes from",
     "es": "De dónde viene tu ganancia"
+  },
+  "Dinheiro para imprevistos": {
+    "en": "Money for emergencies",
+    "es": "Dinero para imprevistos"
+  },
+  "A meta de reserva cobre {0} de gastos. Ideal: {1} meses.": {
+    "en": "Your emergency fund goal covers {0} of expenses. Ideal: {1} months.",
+    "es": "Tu meta de reserva cubre {0} de gastos. Ideal: {1} meses."
+  },
+  "A meta de reserva está completa: cobre {0} de gastos.": {
+    "en": "Your emergency fund goal is complete: it covers {0} of expenses.",
+    "es": "Tu meta de reserva está completa: cubre {0} de gastos."
+  },
+  "Bancos e investimentos cobrem {0} de gastos. Ideal: {1} meses.": {
+    "en": "Banks and investments cover {0} of expenses. Ideal: {1} months.",
+    "es": "Bancos e inversiones cubren {0} de gastos. Ideal: {1} meses."
+  },
+  "Bancos e investimentos cobrem {0} de gastos: completo.": {
+    "en": "Banks and investments cover {0} of expenses: complete.",
+    "es": "Bancos e inversiones cubren {0} de gastos: completo."
+  },
+  "Conta {0} de gasto do dia a dia até o fim do mês, pelo seu costume. A previsão da Início usa só o que já está marcado.": {
+    "en": "Includes {0} of everyday spending until the end of the month, based on your habits. The forecast on Home only uses what is already scheduled.",
+    "es": "Incluye {0} de gastos del día a día hasta fin de mes, según tu costumbre. La previsión de Inicio usa solo lo que ya está marcado."
+  },
+  "Use {0} caracteres ou mais": {
+    "en": "Use {0} or more characters",
+    "es": "Usa {0} caracteres o más"
+  },
+  "A senha precisa ter pelo menos {0} caracteres.": {
+    "en": "The password needs at least {0} characters.",
+    "es": "La contraseña necesita al menos {0} caracteres."
+  },
+  "atrasado 1 dia": {
+    "en": "1 day late",
+    "es": "1 día de atraso"
+  },
+  "{0}/{1}: 1 lançamento": {
+    "en": "{0}/{1}: 1 transaction",
+    "es": "{0}/{1}: 1 movimiento"
+  },
+  "Encontrei 1 mês:\n\n{0}\n\nOs dados desse mês no app serão substituídos pelos da planilha. Quer continuar?": {
+    "en": "I found 1 month:\n\n{0}\n\nThe data for this month in the app will be replaced by the spreadsheet's. Do you want to continue?",
+    "es": "Encontré 1 mes:\n\n{0}\n\nLos datos de ese mes en la app se reemplazarán por los de la planilla. ¿Quieres continuar?"
+  },
+  "Excluir esta parte e a parcela dela?": {
+    "en": "Delete this part and its installment?",
+    "es": "¿Eliminar esta parte y su cuota?"
+  },
+  "Excluir esta parte e as {0} parcelas dela?": {
+    "en": "Delete this part and its {0} installments?",
+    "es": "¿Eliminar esta parte y sus {0} cuotas?"
+  },
+  "Excluir parte": {
+    "en": "Delete part",
+    "es": "Eliminar parte"
+  },
+  "Excluir esta parte": {
+    "en": "Delete this part",
+    "es": "Eliminar esta parte"
+  },
+  "Excluir parcela": {
+    "en": "Delete installment",
+    "es": "Eliminar cuota"
+  },
+  "Excluir promessa": {
+    "en": "Delete promise",
+    "es": "Eliminar promesa"
+  },
+  "Não consegui enviar o e-mail de confirmação agora. Tente de novo em alguns minutos; se continuar, escreva para {0}.": {
+    "en": "I couldn't send the confirmation email right now. Try again in a few minutes; if it keeps happening, write to {0}.",
+    "es": "No pude enviar el correo de confirmación ahora. Inténtalo de nuevo en unos minutos; si sigue pasando, escribe a {0}."
+  },
+  "Não consegui enviar o e-mail de confirmação agora. Tente de novo em alguns minutos.": {
+    "en": "I couldn't send the confirmation email right now. Try again in a few minutes.",
+    "es": "No pude enviar el correo de confirmación ahora. Inténtalo de nuevo en unos minutos."
+  },
+  "Entrou e saiu nos últimos meses": {
+    "en": "Money in and out in recent months",
+    "es": "Lo que entró y salió en los últimos meses"
+  },
+  "Nenhum dinheiro previsto para entrar. Cadastre o seu salário em Contas do mês para ele aparecer aqui.": {
+    "en": "No money expected to come in. Add your salary in Monthly bills for it to show up here.",
+    "es": "No hay dinero previsto para entrar. Registra tu salario en Cuentas del mes para que aparezca aquí."
+  },
+  "Atrasada": {
+    "en": "Overdue",
+    "es": "Atrasado"
   }
 }
