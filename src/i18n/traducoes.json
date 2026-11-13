@@ -12722,5 +12722,21 @@
   "Esse arquivo é um comprovante (de um pagamento só), não o extrato. No app ou site do banco, abra o extrato da conta e use “Exportar” ou “Baixar PDF”, ou envie em CSV, Excel ou OFX.": {
     "en": "This file is a receipt (for a single payment), not the bank statement. In your bank app or website, open the account statement and use “Export” or “Download PDF”, or send it as CSV, Excel or OFX.",
     "es": "Este archivo es un comprobante (de un solo pago), no el extracto. En la app o el sitio del banco, abre el extracto de la cuenta y usa “Exportar” o “Descargar PDF”, o envíalo en CSV, Excel u OFX."
+  },
+  "Novidade": {
+    "en": "New",
+    "es": "Novedad"
+  },
+  "Ver agora": {
+    "en": "See it now",
+    "es": "Ver ahora"
+  },
+  "Legal!": {
+    "en": "Nice!",
+    "es": "¡Genial!"
+  },
+  "Depois": {
+    "en": "Later",
+    "es": "Después"
   }
 }
