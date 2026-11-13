@@ -13614,5 +13614,25 @@
   "Extrato lido no seu aparelho": {
     "en": "Statement read on your device",
     "es": "Extracto leído en tu dispositivo"
+  },
+  "o ano": {
+    "en": "the year",
+    "es": "el año"
+  },
+  "melhor mês": {
+    "en": "best month",
+    "es": "mejor mes"
+  },
+  "saiu mais que entrou": {
+    "en": "more went out than came in",
+    "es": "salió más de lo que entró"
+  },
+  "Análise pronta": {
+    "en": "Analysis ready",
+    "es": "Análisis listo"
+  },
+  "Plano de ação": {
+    "en": "Action plan",
+    "es": "Plan de acción"
   }
 }
