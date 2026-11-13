@@ -49,8 +49,10 @@ export function ligarRolagemSuave(): () => void {
     const fator = Math.exp(-ATRITO * dt)
     atual += (vel / ATRITO) * (1 - fator)
     vel *= fator
+    // bateu numa ponta indo na direção dela: para ali. (Saindo da ponta, segue: no topo girando para baixo, o primeiro
+    // quadro ainda está em 0, e isso não pode zerar o empurrão.)
     const max = maximo()
-    if (atual <= 0 || atual >= max) { atual = Math.max(0, Math.min(max, atual)); vel = 0 }
+    if ((atual <= 0 && vel < 0) || (atual >= max && vel > 0)) { atual = Math.max(0, Math.min(max, atual)); vel = 0 }
     posta = Math.round(atual)
     window.scrollTo({ top: atual, behavior: 'instant' })
     quadro = Math.abs(vel) > 8 ? requestAnimationFrame(passo) : 0
