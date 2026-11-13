@@ -132,10 +132,12 @@
   width: 96cqw;
   height: auto;
   max-width: none;
-  /* corta embaixo, rente ao cartão (a foto é mais alta que ele) */
-  clip-path: inset(-10% 0 calc(100% - 123cqw) 0 round 0 0 28px 28px);
+  /* corta embaixo, rente ao cartão (a foto é mais alta que ele). O corte anda junto com a foto, por isso ela só se
+     mexe para os lados: se descesse, vazaria por baixo do cartão. (Moldura com overflow: hidden deixou a página em
+     branco num Chrome com placa de vídeo; não use.) */
+  clip-path: inset(-10% 0 calc(100% - 123cqw + 1px) 0 round 0 0 28px 28px);
   filter: drop-shadow(0 24px 30px rgba(0, 0, 0, .5));
-  translate: calc(var(--px) * 10px) calc(var(--py) * 6px);
+  translate: calc(var(--px) * 10px) 0;
   transition: translate .7s cubic-bezier(.2, .8, .2, 1);
 }
 
