@@ -1,5 +1,6 @@
 import { useEffect, useRef, type CSSProperties, type PointerEvent } from 'react'
 import { tx } from '../lib/textos'
+import { FundoOpus } from './FundoOpus'
 import './fundadores.css'
 
 /**
@@ -73,6 +74,7 @@ export function Fundadores() {
   return (
     <section className="fd" ref={ref} aria-labelledby="fd-titulo">
       <div className="fd-luzes" aria-hidden="true"><i /><i /></div>
+      <FundoOpus onde="fundadores" />
       <header className="fd-topo">
         <span className="fd-rotulo">{tx('Os idealizadores')}</span>
         <h2 id="fd-titulo">{tx('Quem faz o OpusCash')}</h2>

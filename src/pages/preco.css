@@ -1,0 +1,196 @@
+/* =========================================================================
+   Fim da página inicial (Preco.tsx): o plano num cartão de vidro em 3D, as formas de pagar e o que vem junto.
+   O cartão inclina com o mouse (--rx/--ry) e o brilho segue o ponteiro (--lx/--ly).
+   ========================================================================= */
+.pr {
+  position: relative; overflow: hidden;
+  min-height: 100vh; display: grid; align-items: center;
+  padding: 120px clamp(18px, 4vw, 48px) 130px;
+}
+
+.pr-luzes { position: absolute; inset: 0; pointer-events: none; }
+.pr-luzes i { position: absolute; border-radius: 50%; }
+.pr-luzes i:nth-child(1) {
+  width: 820px; height: 820px; right: -6%; top: 50%; margin-top: -410px;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--marca-1) 26%, transparent), transparent);
+}
+.pr-luzes i:nth-child(2) {
+  width: 640px; height: 640px; left: -10%; top: -10%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--marca-3) 14%, transparent), transparent);
+}
+.pr-luzes i:nth-child(3) {
+  width: 520px; height: 520px; left: 30%; bottom: -24%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--marca-2) 14%, transparent), transparent);
+}
+
+.pr-grade {
+  position: relative; z-index: 1;
+  width: min(1180px, 100%); margin: 0 auto;
+  display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr); gap: clamp(36px, 5vw, 72px); align-items: center;
+}
+
+/* ─── o texto e as vantagens ─── */
+.pr-rotulo {
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 16px; border-radius: 99px;
+  font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--destaque);
+  background: var(--destaque-suave); border: 1px solid color-mix(in srgb, var(--destaque) 35%, transparent);
+}
+.pr-rotulo::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px color-mix(in srgb, var(--destaque) 25%, transparent); animation: pr-pulsar 2.4s ease-in-out infinite; }
+@keyframes pr-pulsar { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--destaque) 0%, transparent); } }
+.pr-titulo {
+  font-family: var(--fonte-titulo); font-size: clamp(2.2rem, 4.4vw, 3.5rem); font-weight: 700;
+  letter-spacing: -.035em; line-height: 1.04; margin: 20px 0 18px;
+}
+.pr-titulo em { font-style: normal; display: block; background: var(--gradiente); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.pr-sub { color: var(--texto-2); font-size: 1.08rem; line-height: 1.6; margin: 0 0 30px; max-width: 46ch; }
+
+.pr-vantagens { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.pr-vantagens li {
+  display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 18px;
+  background: color-mix(in srgb, var(--superficie) 95%, transparent); border: 1px solid var(--borda);
+  transition: border-color .35s var(--mola), transform .35s var(--mola), background .35s;
+}
+.pr-vantagens li:hover { border-color: color-mix(in srgb, var(--c) 55%, transparent); transform: translateY(-3px); background: color-mix(in srgb, var(--c) 7%, var(--superficie)); }
+.pr-vantagens li > i { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 12px; color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); }
+.pr-vantagens li > span { display: grid; gap: 3px; }
+.pr-vantagens b { font-size: .95rem; }
+.pr-vantagens small { font-size: .82rem; line-height: 1.45; color: var(--texto-2); }
+
+/* ─── o palco do plano ─── */
+.pr-palco { position: relative; display: grid; place-items: center; min-height: 720px; perspective: 1300px; }
+.pr-orbita { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.pr-orbita i { position: absolute; border-radius: 50%; }
+.pr-orbita i:first-child {
+  width: 500px; height: 500px; border: 1px dashed color-mix(in srgb, var(--marca-3) 32%, transparent);
+  animation: pr-girar 60s linear infinite;
+}
+.pr-orbita i:first-child::after {
+  content: ''; position: absolute; top: -6px; left: 50%; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%;
+  background: var(--marca-3); box-shadow: 0 0 18px var(--marca-3);
+}
+.pr-orbita i:last-child {
+  width: 640px; height: 640px; border: 1px solid color-mix(in srgb, var(--marca-1) 22%, transparent);
+  animation: pr-girar 90s linear infinite reverse;
+}
+.pr-orbita i:last-child::after {
+  content: ''; position: absolute; bottom: 18%; right: 4%; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--marca-1); box-shadow: 0 0 16px var(--marca-1);
+}
+@keyframes pr-girar { to { transform: rotate(360deg); } }
+
+.pr-plano {
+  position: relative; z-index: 1; width: min(410px, 100%);
+  transform-style: preserve-3d;
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform .6s cubic-bezier(.22, 1, .36, 1);
+}
+.pr-plano-corpo {
+  position: relative; padding: 30px 30px 24px; border-radius: 30px; overflow: hidden;
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--superficie) 97%, transparent), color-mix(in srgb, var(--superficie) 88%, var(--fundo))) padding-box,
+    linear-gradient(140deg, var(--marca-1), var(--marca-3) 55%, color-mix(in srgb, var(--marca-2) 40%, transparent)) border-box;
+  box-shadow:
+    0 50px 90px -40px color-mix(in srgb, var(--marca-1) 55%, transparent),
+    0 30px 60px -36px rgba(0, 0, 0, .6);
+  animation: pr-boiar 7s ease-in-out infinite;
+}
+@keyframes pr-boiar { 50% { transform: translateY(-12px); } }
+.pr-reflexo {
+  position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: radial-gradient(circle at var(--lx, 25%) var(--ly, 0%), rgba(255, 255, 255, .13), transparent 46%);
+}
+/* um brilho que atravessa o cartão de tempos em tempos */
+.pr-reflexo::after {
+  content: ''; position: absolute; top: -40%; bottom: -40%; left: 0; width: 34%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .1), transparent);
+  transform: translateX(-160%) skewX(-18deg);
+  animation: pr-brilho 7s ease-in-out 1.8s infinite;
+}
+@keyframes pr-brilho { 0%, 70% { transform: translateX(-160%) skewX(-18deg); } 100% { transform: translateX(420%) skewX(-18deg); } }
+
+.pr-plano-topo { position: relative; display: flex; justify-content: space-between; align-items: center; }
+.pr-selo { display: inline-flex; align-items: center; gap: 6px; padding: 6px 13px; border-radius: 99px; font-size: .78rem; font-weight: 700; color: #fff; background: var(--gradiente); box-shadow: 0 8px 20px -8px var(--marca-3); }
+.pr-nome { font-family: var(--fonte-titulo); font-weight: 700; font-size: .95rem; color: var(--texto-2); letter-spacing: -.01em; }
+.pr-valor { position: relative; display: flex; align-items: baseline; gap: 4px; margin: 22px 0 6px; }
+.pr-valor small { font-size: 1.4rem; color: var(--texto-2); font-weight: 600; }
+.pr-valor strong {
+  font-family: var(--fonte-numeros); font-size: 5.2rem; font-weight: 800; line-height: .95; letter-spacing: -.04em;
+  background: var(--gradiente); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.pr-valor span { font-size: 1.15rem; color: var(--texto-2); }
+.pr-nota { position: relative; font-size: .84rem; line-height: 1.5; color: var(--texto-3); margin: 0; }
+
+.pr-formas { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 22px 0 18px; }
+.pr-forma { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 16px; background: var(--preench-4); border: 1px solid var(--borda); }
+.pr-forma > i { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 11px; }
+.pr-forma.cartao > i { color: #fff; background: linear-gradient(135deg, #a136f5, #5b0aa6); }
+.pr-forma.pix > i { color: #32bcad; background: color-mix(in srgb, #32bcad 16%, transparent); }
+.pr-forma > span { display: grid; gap: 1px; min-width: 0; }
+.pr-forma b { font-size: .92rem; }
+.pr-forma small { font-size: .72rem; line-height: 1.3; color: var(--texto-3); }
+
+.pr-inclui { position: relative; list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+.pr-inclui li { display: flex; align-items: center; gap: 9px; font-size: .9rem; color: var(--texto-2); }
+.pr-inclui svg { flex: none; color: var(--destaque); }
+
+.pr-botao { position: relative; width: 100%; justify-content: center; margin-top: 24px; }
+.pr-entrar {
+  position: relative; display: block; margin: 12px auto 0; padding: 6px 10px; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: .9rem; font-weight: 600; color: var(--texto-2);
+}
+.pr-entrar:hover { color: var(--texto); text-decoration: underline; text-underline-offset: 4px; }
+.pr-seguro { position: relative; display: flex; align-items: center; justify-content: center; gap: 6px; margin: 10px 0 0; font-size: .76rem; color: var(--texto-3); }
+
+/* selos que boiam em volta do cartão */
+.pr-flutua {
+  position: absolute; z-index: 2; display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px 7px 7px; border-radius: 99px;
+  font-size: .84rem; font-weight: 600; white-space: nowrap;
+  background: color-mix(in srgb, var(--superficie) 94%, transparent); border: 1px solid var(--borda-forte);
+  box-shadow: 0 18px 34px -18px rgba(0, 0, 0, .6);
+  animation: pr-boiar 6s ease-in-out infinite;
+}
+.pr-flutua > i { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; }
+.pr-flutua.a { top: 0; left: 2%; animation-delay: -1s; }
+.pr-flutua.a > i { color: #22b8f0; background: color-mix(in srgb, #22b8f0 16%, transparent); }
+.pr-flutua.b { bottom: 0; right: 0; animation-delay: -3s; }
+.pr-flutua.b > i { color: #32bcad; background: color-mix(in srgb, #32bcad 16%, transparent); }
+.pr-flutua.c { top: 1%; right: 0; animation-delay: -4.5s; }
+.pr-flutua.c > i { color: var(--destaque); background: var(--destaque-suave); }
+
+/* entradas: quando a seção aparece, o texto sobe, as vantagens vêm uma a uma e o cartão se ergue */
+.pr-texto > *, .pr-vantagens li, .pr-plano, .pr-flutua { opacity: 0; }
+.pr-visto .pr-texto > * { opacity: 1; animation: pr-subir .9s cubic-bezier(.22, 1, .36, 1) backwards; }
+.pr-visto .pr-titulo { animation-delay: .08s; }
+.pr-visto .pr-sub { animation-delay: .16s; }
+.pr-visto .pr-vantagens { animation: none; }
+/* backwards (e não both): depois da entrada, o hover e a inclinação voltam a mexer no transform */
+.pr-visto .pr-vantagens li { opacity: 1; animation: pr-subir .8s cubic-bezier(.22, 1, .36, 1) backwards; animation-delay: calc(.25s + var(--i) * .07s); }
+@keyframes pr-subir { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+.pr-visto .pr-plano { opacity: 1; animation: pr-erguer 1.3s cubic-bezier(.16, 1, .3, 1) .15s backwards; }
+@keyframes pr-erguer { from { opacity: 0; transform: translateY(60px) rotateX(24deg) scale(.92); } to { opacity: 1; transform: none; } }
+.pr-visto .pr-flutua { opacity: 1; transition: opacity .8s ease .9s; }
+
+@media (max-width: 960px) {
+  .pr { padding: 96px 18px 110px; }
+  .pr-grade { grid-template-columns: 1fr; }
+  .pr-texto { text-align: center; }
+  .pr-sub { margin-inline: auto; }
+  .pr-palco { min-height: 0; padding: 40px 0 20px; }
+  .pr-orbita i:first-child { width: 380px; height: 380px; }
+  .pr-orbita i:last-child { width: 480px; height: 480px; }
+  .pr-palco { padding: 64px 0 56px; }
+  .pr-flutua.a { left: 0; top: 0; }
+  .pr-flutua.b { right: 0; bottom: 0; }
+  .pr-flutua.c { display: none; }
+}
+@media (max-width: 560px) {
+  .pr-vantagens { grid-template-columns: 1fr; text-align: left; }
+  .pr-plano-corpo { padding: 24px 20px 20px; }
+  .pr-valor strong { font-size: 4.2rem; }
+}
+
+/* animações reduzidas nas Configurações do OpusCash */
+:root[data-movimento='reduzido'] .pr :is(.pr-plano-corpo, .pr-flutua, .pr-orbita i) { animation: none; }
+:root[data-movimento='reduzido'] .pr .pr-reflexo::after, :root[data-movimento='reduzido'] .pr .pr-rotulo::before { animation: none; }
+:root[data-movimento='reduzido'] .pr :is(.pr-texto > *, .pr-vantagens li, .pr-plano, .pr-flutua) { animation: none; opacity: 1; }

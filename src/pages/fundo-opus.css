@@ -1,0 +1,171 @@
+/* =========================================================================
+   Fundo da página inicial (FundoOpus.tsx): peças do OpusCash flutuando em 3D atrás do texto.
+   Por peça: --x/--y (lugar em %), --z (profundidade), --s (tamanho), --rx/--ry/--rz (inclinação), --t/--ax/--ay/--ar
+   (o passeio), --p (quanto o mouse empurra), --o (opacidade), --i (ordem da entrada).
+   O mouse escreve --mx/--my (de -0,5 a 0,5) no .fo.
+   ========================================================================= */
+.fo {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+  perspective: 1100px; perspective-origin: 50% 46%;
+  --mx: 0; --my: 0;
+}
+
+.fo-lugar {
+  position: absolute; left: calc(var(--x) * 1%); top: calc(var(--y) * 1%);
+  transform-style: preserve-3d;
+  transform:
+    translate(-50%, -50%)
+    translate3d(calc(var(--mx) * var(--p) * -46px), calc(var(--my) * var(--p) * -32px), var(--z))
+    scale(var(--s));
+  transition: transform .9s cubic-bezier(.22, 1, .36, 1);
+}
+
+/* a entrada: cada peça sai do meio da seção, perto de quem olha, e é lançada para o fundo até o seu lugar */
+.fo-entra { transform-style: preserve-3d; opacity: 0; }
+.fo-solto .fo-entra { animation: fo-lancar 2.1s cubic-bezier(.16, 1, .3, 1) both; animation-delay: calc(var(--i) * 75ms + 120ms); }
+@keyframes fo-lancar {
+  0% {
+    opacity: 0;
+    transform: translate3d(calc((50 - var(--x)) * 1vw), calc((46 - var(--y)) * 1vh), 640px) rotateX(-24deg) rotateY(calc(var(--ry) * -1.6)) rotateZ(calc(var(--rz) * -3)) scale(.3);
+  }
+  18% { opacity: 1; }
+  100% { opacity: 1; transform: none; }
+}
+
+/* o passeio: vai e volta devagar, cada peça no seu ritmo (o atraso negativo desencontra umas das outras) */
+.fo-vaga {
+  transform-style: preserve-3d;
+  animation: fo-vagar var(--t) ease-in-out infinite alternate;
+  animation-delay: calc(var(--i) * -2.7s);
+}
+@keyframes fo-vagar {
+  from { transform: translate3d(0, 0, 0) rotateY(0) rotateZ(0); }
+  to { transform: translate3d(var(--ax), var(--ay), 40px) rotateY(calc(var(--ar) * 2)) rotateZ(var(--ar)); }
+}
+.fo-parado .fo-vaga { animation-play-state: paused; }
+
+.fo-peca {
+  transform: rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz));
+  opacity: var(--o);
+  /* sem desfoque: filtro em camada que se move pesa a cada quadro; a distância já aparece no tamanho e na opacidade */
+}
+
+/* animações reduzidas nas Configurações do OpusCash: as peças ficam paradas no lugar */
+:root[data-movimento='reduzido'] .fo .fo-entra { animation: none; opacity: 1; }
+:root[data-movimento='reduzido'] .fo .fo-vaga { animation: none; }
+:root[data-movimento='reduzido'] .fo-lugar { transition: none; }
+/* a onda do pote ficaria redesenhando a peça desfocada a cada quadro */
+.fo .tm-onda { animation: none; }
+
+@media (max-width: 760px) {
+  .fo-so-largo { display: none; }
+  /* na tela estreita as peças vão para as faixas de cima e de baixo, mais rasas (a perspectiva puxaria para o meio,
+     em cima do texto) e mais apagadas */
+  .fo-lugar {
+    left: calc(var(--xm) * 1%); top: calc(var(--ym) * 1%);
+    transform: translate(-50%, -50%) translate3d(0, 0, calc(var(--z) * .25)) scale(calc(var(--s) * .62));
+  }
+  .fo-peca { opacity: calc(var(--o) * .75); }
+  .fo { perspective: 900px; }
+}
+
+/* ─────────── as peças ─────────── */
+.fo-card {
+  font-family: var(--fonte); color: var(--texto); font-size: 12px;
+  background: color-mix(in srgb, var(--superficie) 94%, transparent);
+  border: 1px solid var(--borda); border-radius: 16px; padding: 12px 14px;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--texto) 7%, transparent) inset, 0 22px 36px -22px rgba(0, 0, 0, .65);
+  white-space: nowrap;
+}
+.fo-card > header { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 12px; color: var(--texto-2); margin-bottom: 8px; }
+.fo-card small { color: var(--texto-3); }
+
+.fo-grafico svg { display: block; }
+.fo-grafico .e { fill: #2fca8a; }
+.fo-grafico .s { fill: #ef5468; }
+.fo-grafico .divida { fill: none; stroke: #ffc000; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+.fo-pote { display: flex; align-items: center; gap: 12px; padding: 12px 16px 12px 12px; }
+.fo-pote .tm-pote { width: 58px; }
+.fo-pote .tm-vidro { height: 70px; }
+.fo-pote > span { display: grid; gap: 2px; }
+.fo-pote > span b { font-family: var(--fonte-numeros); font-size: 22px; color: var(--c); }
+
+.fo-plastico {
+  position: relative; width: 214px; height: 132px; border-radius: 16px; padding: 13px 15px; color: #fff; overflow: hidden;
+  display: grid; grid-template-rows: auto 1fr auto; font-family: var(--fonte);
+  background:
+    repeating-linear-gradient(115deg, transparent 0 60px, rgba(255, 255, 255, .08) 60px 96px),
+    linear-gradient(135deg, var(--c1), var(--c2));
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .15) inset, 0 24px 40px -20px color-mix(in srgb, var(--c2) 80%, #000);
+}
+.fo-plastico-nome { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.fo-plastico-meio { display: flex; align-items: center; gap: 12px; }
+.fo-plastico-meio .tc-chip { width: 32px; height: 24px; }
+.fo-plastico-meio span { display: grid; }
+.fo-plastico-meio small { font-size: 9.5px; opacity: .85; }
+.fo-plastico-meio b { font-family: var(--fonte-numeros); font-size: 19px; }
+.fo-plastico-rodape { text-align: right; font-size: 9.5px; letter-spacing: .16em; opacity: .9; }
+
+.fo-linha { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.fo-dia { display: grid; justify-items: center; width: 38px; padding: 4px 0; border-radius: 10px; font-weight: 800; font-size: 15px; line-height: 1.05; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
+.fo-dia small { font-size: 9px; font-weight: 600; color: inherit; }
+.fo-texto { display: grid; }
+.fo-texto b { font-size: 13px; }
+.fo-valor { font-family: var(--fonte-numeros); font-size: 13px; margin-left: 8px; }
+.fo-ok { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; color: var(--destaque-texto); background: var(--entrada); }
+
+.fo-lanc { position: relative; display: grid; gap: 1px; padding: 10px 16px 11px 18px; background: linear-gradient(120deg, color-mix(in srgb, var(--c) 12%, var(--superficie)), var(--superficie) 70%); }
+.fo-lanc::before { content: ''; position: absolute; left: 7px; top: 11px; bottom: 11px; width: 3px; border-radius: 3px; background: var(--c); }
+.fo-lanc small { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--c); }
+.fo-lanc b { font-size: 13px; }
+.fo-lanc strong { font-family: var(--fonte-numeros); font-size: 17px; color: var(--saida); }
+.fo-tags { display: flex; gap: 5px; margin-top: 3px; }
+.fo-tags i { font-style: normal; font-size: 9.5px; padding: 2px 7px; border-radius: 99px; background: var(--preench-4); color: var(--texto-2); }
+
+.fo-aro { --tam: 46px; position: relative; display: grid; place-items: center; width: var(--tam); height: var(--tam); flex: none; }
+.fo-aro::before {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(var(--c) calc(var(--v) * 360deg), var(--preench-3) 0);
+  -webkit-mask: radial-gradient(circle, transparent 60%, #000 61%); mask: radial-gradient(circle, transparent 60%, #000 61%);
+}
+.fo-aro b { position: relative; font-family: var(--fonte-numeros); font-size: 12px; }
+.fo-divida-meio, .fo-aro-card { display: flex; align-items: center; gap: 12px; }
+.fo-divida-meio > span:last-child { display: grid; }
+.fo-divida-meio b { font-family: var(--fonte-numeros); font-size: 17px; }
+.fo-trilho { display: flex; gap: 3px; margin-top: 10px; }
+.fo-trilho i { width: 12px; height: 6px; border-radius: 9px; background: var(--preench-3); }
+.fo-trilho i.ja { background: var(--entrada); }
+.fo-aro.grande { --tam: 60px; }
+.fo-aro.grande b { font-size: 15px; }
+.fo-aro-card { flex-direction: column; gap: 6px; padding: 14px 16px; }
+
+.fo-guardado { display: grid; gap: 6px; min-width: 190px; }
+.fo-guardado > header { margin-bottom: 0; }
+.fo-guardado > strong { font-family: var(--fonte-numeros); font-size: 20px; color: var(--caixa); }
+.fo-banco { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.fo-banco b { margin-left: auto; font-family: var(--fonte-numeros); }
+
+.fo-invest svg { display: block; }
+.fo-invest .linha { fill: none; stroke: #c45cf0; stroke-width: 2.4; stroke-linecap: round; }
+.fo-sobe { margin-left: 10px; color: var(--entrada); font-family: var(--fonte-numeros); }
+
+.fo-consultor { display: flex; align-items: center; gap: 10px; padding: 11px 14px; }
+.fo-icone { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; color: var(--destaque); background: var(--destaque-suave); }
+.fo-consultor > span { display: grid; gap: 1px; }
+.fo-consultor b { font-size: 13px; }
+
+.fo-config { display: grid; gap: 8px; min-width: 170px; }
+.fo-config > header { margin-bottom: 0; }
+.fo-chave { display: flex; align-items: center; justify-content: space-between; gap: 14px; font-size: 12px; }
+.fo-chave i { position: relative; width: 30px; height: 17px; border-radius: 99px; background: var(--preench-3); }
+.fo-chave i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: #fff; }
+.fo-chave i.liga { background: var(--destaque); }
+.fo-chave i.liga::after { left: 15px; }
+
+.fo-cal > div { display: grid; grid-template-columns: repeat(7, 18px); gap: 4px; }
+.fo-cal i { height: 16px; border-radius: 5px; background: var(--preench-4); }
+.fo-cal i.n1 { background: color-mix(in srgb, var(--saida) 18%, var(--superficie)); }
+.fo-cal i.n2 { background: color-mix(in srgb, var(--saida) 36%, var(--superficie)); }
+.fo-cal i.n3 { background: color-mix(in srgb, var(--saida) 60%, var(--superficie)); }
+.fo-cal i.n4 { background: var(--saida); }

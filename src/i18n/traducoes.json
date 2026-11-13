@@ -187,25 +187,9 @@
     "en": "Sign in",
     "es": "Iniciar sesión"
   },
-  "Cartões, faturas e parcelas": {
-    "en": "Cards, statements and installments",
-    "es": "Tarjetas, resúmenes y cuotas"
-  },
-  "Metas, dívidas e contas do mês": {
-    "en": "Goals, debts and monthly bills",
-    "es": "Metas, deudas y cuentas del mes"
-  },
   "Qualquer moeda, com a cotação do dia": {
     "en": "Any currency, at today's rate",
     "es": "Cualquier moneda, con la cotización del día"
-  },
-  "Importa extrato do banco e planilhas": {
-    "en": "Imports bank statements and spreadsheets",
-    "es": "Importa extractos bancarios y planillas"
-  },
-  "Conexão e dados criptografados, só você enxerga os seus": {
-    "en": "Encrypted connection and data, only you see yours",
-    "es": "Conexión y datos cifrados, solo tú ves los tuyos"
   },
   "© {0} OpusCash · Todos os direitos reservados": {
     "en": "© {0} OpusCash · All rights reserved",
@@ -13378,5 +13362,97 @@
   "Entradas, saídas e a linha da sua dívida, mês a mês.": {
     "en": "Money in, money out and your debt line, month by month.",
     "es": "Entradas, salidas y la línea de tu deuda, mes a mes."
+  },
+  "Financiamento do carro": {
+    "en": "Car loan",
+    "es": "Financiamiento del auto"
+  },
+  "Adiante primeiro a dívida mais cara.": {
+    "en": "Pay off the most expensive debt first.",
+    "es": "Adelanta primero la deuda más cara."
+  },
+  "Conexão segura e dados protegidos. Só você enxerga os seus.": {
+    "en": "Secure connection and protected data. Only you can see yours.",
+    "es": "Conexión segura y datos protegidos. Solo tú ves los tuyos."
+  },
+  "Consultor inteligente": {
+    "en": "Smart advisor",
+    "es": "Asesor inteligente"
+  },
+  "Um algoritmo analisa as suas finanças e mostra o que fazer primeiro.": {
+    "en": "An algorithm analyzes your finances and shows what to do first.",
+    "es": "Un algoritmo analiza tus finanzas y muestra qué hacer primero."
+  },
+  "Traga tudo de uma vez": {
+    "en": "Bring everything at once",
+    "es": "Trae todo de una vez"
+  },
+  "Importa o extrato do banco e planilhas em segundos.": {
+    "en": "Imports your bank statement and spreadsheets in seconds.",
+    "es": "Importa el extracto del banco y planillas en segundos."
+  },
+  "Cartões e parcelas": {
+    "en": "Cards and installments",
+    "es": "Tarjetas y cuotas"
+  },
+  "Fatura, limite e parcelas de cada cartão, no dia certo.": {
+    "en": "Statement, limit and installments for every card, right on time.",
+    "es": "Resumen, límite y cuotas de cada tarjeta, en el día justo."
+  },
+  "Metas e dívidas": {
+    "en": "Goals and debts",
+    "es": "Metas y deudas"
+  },
+  "Veja quando cada meta chega e quando você fica livre das dívidas.": {
+    "en": "See when each goal arrives and when you'll be debt-free.",
+    "es": "Mira cuándo llega cada meta y cuándo quedas libre de deudas."
+  },
+  "Qualquer moeda": {
+    "en": "Any currency",
+    "es": "Cualquier moneda"
+  },
+  "Lance em qualquer moeda, com a cotação do dia.": {
+    "en": "Log in any currency, at the day's exchange rate.",
+    "es": "Registra en cualquier moneda, con la cotización del día."
+  },
+  "Comece hoje, sem cartão. Em poucos minutos o seu dinheiro está organizado, e o consultor já mostra o que fazer primeiro.": {
+    "en": "Start today, no card needed. In a few minutes your money is organized, and the advisor already shows what to do first.",
+    "es": "Empieza hoy, sin tarjeta. En pocos minutos tu dinero está organizado, y el asesor ya muestra qué hacer primero."
+  },
+  "7 dias grátis": {
+    "en": "7 days free",
+    "es": "7 días gratis"
+  },
+  "Renova sozinho todo mês": {
+    "en": "Renews automatically every month",
+    "es": "Se renueva solo cada mes"
+  },
+  "30 dias, sem cartão": {
+    "en": "30 days, no card",
+    "es": "30 días, sin tarjeta"
+  },
+  "Todas as telas e recursos": {
+    "en": "Every screen and feature",
+    "es": "Todas las pantallas y funciones"
+  },
+  "Consultor e Resumo do ano": {
+    "en": "Advisor and Year summary",
+    "es": "Asesor y Resumen del año"
+  },
+  "Pagamento na página segura do Stripe": {
+    "en": "Payment on Stripe's secure page",
+    "es": "Pago en la página segura de Stripe"
+  },
+  "Criptografado": {
+    "en": "Encrypted",
+    "es": "Cifrado"
+  },
+  "Pix ou cartão": {
+    "en": "Pix or card",
+    "es": "Pix o tarjeta"
+  },
+  "Consultor incluso": {
+    "en": "Advisor included",
+    "es": "Asesor incluido"
   }
 }
