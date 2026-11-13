@@ -299,10 +299,9 @@
   .fd-socio:nth-child(2) { margin-top: 0; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .fd-socio { opacity: 1; translate: none; transition: none; }
-  .fd-nome, .fd-sobrenome { clip-path: none; animation: none !important; }
-  .fd-papel { opacity: 1; letter-spacing: .22em; transition: none; }
-  .fd-cartao, .fd-visto .fd-cartao { transform: none; animation: none; transition: none; }
-  .fd-reflexo::before { display: none; }
-}
+/* animações reduzidas nas Configurações do OpusCash (o "menos movimento" do Windows não conta, como no resto do app) */
+:root[data-movimento='reduzido'] .fd-socio { opacity: 1; translate: none; transition: none; }
+:root[data-movimento='reduzido'] :is(.fd-nome, .fd-sobrenome) { clip-path: none; animation: none !important; }
+:root[data-movimento='reduzido'] .fd-papel { opacity: 1; letter-spacing: .22em; transition: none; }
+:root[data-movimento='reduzido'] .fd-cartao { transform: none; animation: none; transition: none; }
+:root[data-movimento='reduzido'] .fd-reflexo::before { display: none; }

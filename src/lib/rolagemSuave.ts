@@ -12,7 +12,8 @@ import { semMovimento } from './tema'
  *
  * Fica de fora (o navegador cuida, como antes): toque, touchpad (já manda movimentos pequenos e suaves), Ctrl + rodinha
  * (zoom), rolagem lateral, listas com rolagem própria (menu de idioma), teclado, barra de rolagem e quem pediu menos
- * movimento (no sistema ou nas Configurações do OpusCash).
+ * movimento nas Configurações do OpusCash (o "menos movimento" do Windows não conta, como no resto do app: muita gente
+ * tem as animações do Windows desligadas sem saber).
  *
  * Devolve a função que desliga.
  */
@@ -68,7 +69,7 @@ export function ligarRolagemSuave(): () => void {
   }
 
   const aoGirar = (e: WheelEvent) => {
-    if (e.defaultPrevented || e.ctrlKey || semMovimento() || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (e.defaultPrevented || e.ctrlKey || semMovimento()) return
     if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return
     const dy = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY
     // touchpad: movimentos pequenos e contínuos, que o navegador já desenha suaves
