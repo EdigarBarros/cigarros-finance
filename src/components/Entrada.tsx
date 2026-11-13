@@ -19,7 +19,7 @@ type Aviso = { texto: string; ok?: boolean } | null
  * cobre a tela levando a logo junto, o formulário troca por baixo e a cortina sobe de volta inclinada para o outro lado.
  * Cada pessoa tem seus próprios dados (protegidos no banco por RLS).
  */
-export function Login({ inicial = 'entrar' }: { inicial?: Modo }) {
+export function Login({ inicial = 'entrar', aoVoltar }: { inicial?: Modo; aoVoltar?: () => void }) {
   const [modo, setModo] = useState<Modo>(inicial)
   const [aviso, setAviso] = useState<Aviso>(null)
   const [ocupado, setOcupado] = useState(false)
@@ -60,6 +60,11 @@ export function Login({ inicial = 'entrar' }: { inicial?: Modo }) {
 
   return (
     <div className="en">
+      {aoVoltar && (
+        <button type="button" className="en-voltar" onClick={aoVoltar}>
+          <Icone nome="esq" tamanho={18} /> {tx('Início')}
+        </button>
+      )}
       <div className={`en-cartao ${modo} ${trocou ? 'trocou' : ''}`}>
         <FormEntrar ativo={!criar} ocupado={ocupado} aviso={!criar ? aviso : null} aoEnviar={entrar} aoEsqueci={esqueci} aoReenviar={reenviar} aoTrocar={() => trocar('criar')} />
         <FormCriar ativo={criar} ocupado={ocupado} aviso={criar ? aviso : null} aoEnviar={cadastrar} aoReenviar={reenviar} aoTrocar={() => trocar('entrar')} />
