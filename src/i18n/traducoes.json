@@ -13255,8 +13255,8 @@
     "en": "Founder",
     "es": "Fundador"
   },
-  "Sócio": {
-    "en": "Partner",
-    "es": "Socio"
+  "Sócio-fundador": {
+    "en": "Founding partner",
+    "es": "Socio fundador"
   }
 }

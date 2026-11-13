@@ -6,14 +6,14 @@ import './fundadores.css'
  * "Quem faz o OpusCash": os dois sócios, logo antes do teste grátis da página de apresentação.
  * Cada um é um cartão de estúdio em camadas (fundo, primeiro nome gigante atrás, foto, sobrenome de vidro na frente),
  * que inclina com o mouse; as camadas ficam em profundidades diferentes, daí o efeito 3D.
- * O papel (Fundador, Sócio) vai grande e fino no rodapé.
+ * O papel (Fundador, Sócio-fundador) vai fino e espaçado no rodapé.
  * `tam` e `tamSob`: tamanho da letra (em % da largura do cartão) para o nome ocupar a largura certa em Montserrat 800.
  */
 const SOCIOS = [
   { primeiro: 'EDIGAR', sobrenome: 'BARROS', nome: 'Edigar Barros', foto: '/fundadores/edigar.webp', alt: 900 / 1561,
     papel: tx('Fundador'), tam: 22.7, tamSob: 15.4 },
   { primeiro: 'EDUARDO', sobrenome: 'MATOS', nome: 'Eduardo Matos', foto: '/fundadores/eduardo.webp', alt: 900 / 1565,
-    papel: tx('Sócio'), tam: 17.2, tamSob: 18.3 },
+    papel: tx('Sócio-fundador'), tam: 17.2, tamSob: 18.3 },
 ]
 
 function Cartao({ s, i }: { s: (typeof SOCIOS)[number]; i: number }) {
