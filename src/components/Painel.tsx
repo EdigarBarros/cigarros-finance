@@ -49,6 +49,7 @@ import { Marca } from './Marca'
 import { tx } from '../lib/textos'
 import { useHoje } from '../lib/useHoje'
 import { AvisoReanalise } from './AvisoReanalise'
+import { marcarTela, marcarUso } from '../lib/uso'
 
 // Cada tela e cada janela vira um pedaço à parte: o painel abre só com o que a pessoa vê e o resto chega sob demanda
 // (e é baixado em segundo plano logo depois, veja `carregarRestante`).
@@ -225,6 +226,12 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const paginaAtual = paginas.some((p) => p.id === pagina) ? pagina : 'inicio'
   // O menu muda na hora; a página nova é montada em segundo plano (em pedaços), sem congelar a animação do menu.
   const paginaMostrada = useDeferredValue(paginaAtual)
+  // a tela que a pessoa está vendo, para a medição de uso (lib/uso.ts): janelas abertas contam como telas próprias
+  const telaDeUso = carregandoPerfil ? 'carregando' : perguntar ? (refazendo ? 'questionario_refazer' : 'questionario')
+    : tour ? 'tutorial' : form ? (form.inicial ? 'editar_lancamento' : 'lancar') : extrato ? 'importar'
+    : editarCategorias ? 'categorias' : ajustes ? 'configuracoes' : excluindo ? 'excluir_conta' : zerando ? 'zerar_dados'
+    : quadroMeses ? 'meses' : paginaAtual
+  useEffect(() => marcarTela(telaDeUso), [telaDeUso])
   // Quem terminou as perguntas há pouco e ainda não viu (nem pulou) o tutorial recebe o convite sozinho, uma vez por abertura.
   useEffect(() => {
     const recemChegou = perfil.onboarding_em ? Date.now() - new Date(perfil.onboarding_em).getTime() < 3 * 86400000 : false
@@ -737,6 +744,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
         foto={d.foto}
         aoMudarFoto={(f) => void d.salvarFoto(f)}
         aoConcluir={(p, importar) => {
+          marcarUso(refazendo ? 'questionario_refez' : 'questionario_terminou', { modo: p.detalhe })
           mudarPerfil(p); setRefazendo(false); irPara('inicio')
           if (importar) setExtrato(true)
           else if (!perfil.dispensadas.includes('tour')) window.setTimeout(() => setTour(true), 700)
@@ -1163,7 +1171,12 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       )}
       {tour && !form && !ajustes && !extrato && !organizar && (
         <Tour perfil={perfil} v={v} nome={perfil.nome.trim()} mobile={mobile} aoLigar={ligarModulo} aoIrPara={irPara}
-          aoTerminar={() => { setTour(false); if (!perfil.dispensadas.includes('tour')) ctx.dispensar('tour') }} />
+          aoTerminar={(como, passo, total) => {
+            setTour(false)
+            marcarUso(perfil.dispensadas.includes('tour') ? 'tutorial_reviu' : como === 'terminou' ? 'tutorial_terminou' : 'tutorial_pulou',
+              { como, passo, total })
+            if (!perfil.dispensadas.includes('tour')) ctx.dispensar('tour')
+          }} />
       )}
       {organizar && <OrganizarNomes c={ctx} aoFechar={() => setOrganizar(false)} />}
 

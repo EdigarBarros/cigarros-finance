@@ -59,6 +59,11 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   verdade, "1 R$ = 290 ARS", com botão para inverter): o valor da conta em reais passa a ser exato e a mesma cotação já vem
   preenchida no "Paguei". Pedem a [migração 14](supabase/migracao-14-moeda-em-contas-e-dividas.sql) e a
   [15](supabase/migracao-15-cotacao-da-conta.sql)
+- **Medição de uso** ([migração 30](supabase/migracao-30-uso-do-app.sql), `lib/uso.ts`): com a pessoa logada, o app manda a cada minuto (e ao
+  trocar de tela ou sair) em qual tela ela está, quanto tempo ficou em cada uma, **quantos** toques e teclas deu (nunca o que digitou),
+  o idioma, se é o site ou o app Android e a versão. Também registra se ela pulou o tutorial (em qual passo) ou viu inteiro, e quando
+  respondeu as perguntas iniciais. Nada do que ela lança ou escreve sai daí. Quem lê é só o painel de suporte (repositório
+  `painel-opus-cash`), pela chave de serviço: as tabelas `uso_*` não abrem para ninguém pelo navegador
 - **Tutorial guiado**: depois das perguntas iniciais, o painel escurece e destaca, um por vez, onde fica cada coisa (lançar, resumo,
   lançamentos, importar extrato, e só as abas que a pessoa ligou). Um passo oferece ligar abas que ela não tinha escolhido.
   Dá para pular a qualquer momento (botão, X ou Esc) e rever em Configurações → Conta → Ver o tutorial, ou no menu da conta

@@ -12,6 +12,7 @@ import { nativo } from './lib/textos'
 import { temAcesso, useAssinatura } from './lib/assinatura'
 import { configurado, supabase } from './lib/supabase'
 import { useSemInternet } from './lib/conexao'
+import { iniciarUso, marcarTela } from './lib/uso'
 import { Apresentacao } from './pages/Apresentacao'
 import './pages/apresentacao.css'
 
@@ -92,6 +93,10 @@ function ComAcesso({ userId, email, nome }: { userId: string; email: string; nom
     const t = window.setTimeout(reavaliar, falta + 500)
     return () => window.clearTimeout(t)
   }, [fimDoAcesso])
+  // medição de uso (telas, tempo, idioma: nunca o conteúdo) para o painel de suporte; desliga ao sair da conta
+  useEffect(() => iniciarUso(), [userId])
+  const naAssinatura = !carregando && cobranca && !temAcesso(assinatura)
+  useEffect(() => { if (naAssinatura) marcarTela('assinatura') }, [naAssinatura])
   // sem internet (ou sem resposta do servidor) antes de o painel abrir: avisa, em vez do carregando para sempre
   if (carregando) return semInternet || erro ? comIdioma(<TelaSemInternet aoTentar={recarregar} />) : <Carregando />
   if (cobranca && !temAcesso(assinatura)) return comIdioma(<TelaAssinatura assinatura={assinatura} email={email} aoAtualizar={recarregar} />)
