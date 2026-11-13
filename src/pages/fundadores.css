@@ -125,12 +125,6 @@
   transition: translate .7s cubic-bezier(.2, .8, .2, 1);
 }
 
-.fd-moldura {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  overflow: hidden;
-}
 .fd-foto {
   position: absolute;
   left: 2cqw;
@@ -138,6 +132,8 @@
   width: 96cqw;
   height: auto;
   max-width: none;
+  /* corta embaixo, rente ao cartão (a foto é mais alta que ele) */
+  clip-path: inset(-10% 0 calc(100% - 123cqw) 0 round 0 0 28px 28px);
   filter: drop-shadow(0 24px 30px rgba(0, 0, 0, .5));
   translate: calc(var(--px) * 10px) calc(var(--py) * 6px);
   transition: translate .7s cubic-bezier(.2, .8, .2, 1);
