@@ -5,7 +5,7 @@ import { tx } from './textos'
 import { aparelho, telaAtual } from './uso'
 
 /*
- * Suporte dentro do app (migração 32): a pessoa abre um pedido de ajuda de qualquer tela e conversa com o suporte por ele.
+ * Suporte dentro do app (migração 33): a pessoa abre um pedido de ajuda de qualquer tela e conversa com o suporte por ele.
  * Ela só vê os próprios pedidos (RLS) e só age pelas funções suporte_* do banco. O suporte responde pelo painel de suporte.
  */
 

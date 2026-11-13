@@ -64,7 +64,10 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   tinha conta, com o botão "Ver agora" levando à tela nova. É criado e publicado no painel de suporte (tela Novidades), sem versão nova do
   site nem do app. Só a mais recente publicada aparece; quem viu fica marcado em `perfis.dispensadas` (`novidade:<id>`), em qualquer aparelho.
   Quem cria a conta depois da publicação não vê (tem o tutorial)
-- **Suporte dentro do app** ([migração 32](supabase/migracao-32-suporte.sql), `components/Suporte.tsx`, `lib/suporte.ts`): de qualquer tela
+  - A novidade pode ter uma **arte livre** ([migração 32](supabase/migracao-32-arte-das-novidades.sql), `components/ArteNovidade.tsx` e `arte.css`),
+    montada no editor do painel com os elementos da marca (cartão, gráficos, moedas, selos, textos). O app só desenha a arte guardada em
+    `novidades.arte`; o mesmo arquivo é copiado no painel para a prévia ser idêntica (mudou aqui, copie para lá)
+- **Suporte dentro do app** ([migração 33](supabase/migracao-33-suporte.sql), `components/Suporte.tsx`, `lib/suporte.ts`): de qualquer tela
   (botão de conversa no topo e "Suporte" no menu da conta), a pessoa pede ajuda escolhendo o assunto (pagamento e assinatura, algo não funciona,
   minha conta, dúvida, sugestão, outro), acompanha a conversa e vê só os próprios pedidos, separados em andamento e resolvidos. Vão junto a tela,
   o aparelho e a versão (nada dos lançamentos). O suporte responde pelo painel de suporte; a resposta aparece com um aviso no botão. Detalhes na

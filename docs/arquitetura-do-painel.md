@@ -1100,7 +1100,7 @@ migração num Postgres local e confere que uma pessoa não lê nem grava nada d
 - **Valor/dias:** estão em `PIX_VALOR`/`PIX_DIAS` nas duas funções e em `registrar_pix`. Mudou o preço? Mude nos dois lugares e nos textos (`tx`).
 
 
-### 4.24 Suporte dentro do app (`components/Suporte.tsx`, `lib/suporte.ts`, migração 32)
+### 4.24 Suporte dentro do app (`components/Suporte.tsx`, `lib/suporte.ts`, migração 33)
 
 - **Por que existe:** a pessoa precisa pedir ajuda sem sair do app (pagamento, algo que não funciona, conta, dúvida), e o suporte precisa ver e
   responder num lugar só, com o contexto do problema.
@@ -1114,7 +1114,7 @@ migração num Postgres local e confere que uma pessoa não lê nem grava nada d
     aparelho e a versão do app, "nada dos seus lançamentos".
   - *Conversa:* balões (os dela à direita, em verde; os do suporte à esquerda, com o símbolo do OpusCash), atualizada sozinha a cada 15 s. "Meu problema
     foi resolvido" encerra; escrever num pedido resolvido reabre.
-- **Regras (no banco, migração 32):** a pessoa só **lê os próprios** pedidos (RLS por `auth.uid()`) e só age pelas funções `suporte_abrir`,
+- **Regras (no banco, migração 33):** a pessoa só **lê os próprios** pedidos (RLS por `auth.uid()`) e só age pelas funções `suporte_abrir`,
   `suporte_responder`, `suporte_lido` e `suporte_encerrar`. No máximo 5 pedidos em andamento, 20 mensagens a cada 10 minutos, 4000 letras por mensagem.
 - **O suporte:** responde pelo painel de suporte (repositório `painel-opus-cash`, tela Suporte), pela chave de serviço. Tudo fica no registro do suporte.
 - **No app Android:** o botão só chega numa versão nova do app enviada à loja.

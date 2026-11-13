@@ -176,7 +176,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const [quadroMeses, setQuadroMeses] = useState(false)
   const [busca, setBusca] = useState('')
   const [extrato, setExtrato] = useState(false)
-  // suporte (migração 32): a janela abre de qualquer tela; o aviso conta as respostas do suporte ainda não vistas
+  // suporte (migração 33): a janela abre de qualquer tela; o aviso conta as respostas do suporte ainda não vistas
   const [suporte, setSuporte] = useState<false | 'lista' | 'novo'>(false)
   const [respostasNovas, conferirRespostas] = useRespostasNovas()
   const [editandoSaldoInicial, setEditandoSaldoInicial] = useState(false)

@@ -10,7 +10,7 @@ import { Marca } from './Marca'
 import { Modal, Opcao, Segmentado } from './ui'
 
 /*
- * Suporte (migração 32): de qualquer tela, a pessoa abre um pedido de ajuda, acompanha a conversa e vê só os pedidos dela.
+ * Suporte (migração 33): de qualquer tela, a pessoa abre um pedido de ajuda, acompanha a conversa e vê só os pedidos dela.
  * Três vistas na mesma janela: a lista de pedidos, o pedido novo e a conversa de um pedido.
  */
 

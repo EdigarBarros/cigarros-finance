@@ -4335,7 +4335,7 @@ body { top: 0 !important; }
   .barra-direita .idioma-menu { top: calc(70px + var(--seguro-topo)); }
 }
 
-/* ---------- suporte (components/Suporte.tsx, migração 32) ---------- */
+/* ---------- suporte (components/Suporte.tsx, migração 33) ---------- */
 .menu-aviso { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; display: grid; place-items: center; font-size: 11.5px; font-weight: 700; color: var(--destaque-texto); background: var(--destaque); }
 .sp-vista { display: grid; gap: 14px; animation: surgir-sem-desfoque .45s var(--mola) backwards; }
 .sp-lista, .sp-form, .sp-conversa { display: grid; gap: 14px; }

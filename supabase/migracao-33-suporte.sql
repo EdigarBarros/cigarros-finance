@@ -1,4 +1,4 @@
--- Migração 32: suporte dentro do app (pedidos de ajuda, como tickets). Rodável de novo.
+-- Migração 33: suporte dentro do app (pedidos de ajuda, como tickets). Rodável de novo.
 -- Supabase > SQL Editor > New query > colar > Run.
 --
 -- COMO FUNCIONA

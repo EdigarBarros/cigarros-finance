@@ -29,7 +29,7 @@ exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,se
     if(m==='OPTIONS')return route.fulfill({status:204,headers:h})
     const t=u.pathname.split('/').pop()
     if(u.pathname.includes('/rpc/')&&t.startsWith('suporte_')){
-      // suporte (migração 32), como as funções do banco: abrir, responder, marcar lido e encerrar, sempre na conta logada
+      // suporte (migração 33), como as funções do banco: abrir, responder, marcar lido e encerrar, sempre na conta logada
       const b=body0(req)||{},agora=new Date().toISOString(),tk=db.suporte_tickets.find(x=>x.id===b.p_ticket)
       const msg=(id,autor,texto)=>db.suporte_mensagens.push({id:db.suporte_mensagens.length+1,ticket_id:id,autor,texto,criado_em:agora})
       if(t==='suporte_abrir'){const id=crypto.randomUUID();db.suporte_tickets.push({id,user_id:uid,categoria:b.p_categoria,assunto:(b.p_assunto||'').trim()||String(b.p_texto).slice(0,80),status:'aberto',tela:b.p_tela,versao:b.p_versao,aparelho:b.p_aparelho,idioma:b.p_idioma,criado_em:agora,atualizado_em:agora,ultima_mensagem_em:agora,ultima_mensagem_de:'pessoa',lido_pela_pessoa_em:agora,lido_pelo_suporte_em:null,resolvido_em:null});msg(id,'pessoa',b.p_texto);log.push(['RPC',t,b]);return route.fulfill({status:200,headers:h,body:JSON.stringify(id)})}
