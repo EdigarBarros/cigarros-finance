@@ -19,13 +19,13 @@
 
 /* ─── os cartões por cima (o componente escreve transform, opacidade e visibilidade) ─── */
 .ag-sobre { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
-.ag-entrada, .ag-compara, .ag-saida {
+.ag-entrada, .ag-compara, .ag-tela {
   position: absolute; left: 0; top: 0; visibility: hidden; will-change: transform, opacity;
   color: var(--tinta); background: rgba(22, 14, 5, .8); border: 1px solid rgba(255, 190, 90, .45);
   box-shadow: 0 0 0 4px rgba(255, 170, 60, .07), 0 0 34px -8px rgba(255, 160, 40, .55), 0 18px 34px -20px rgba(0, 0, 0, .8);
 }
-.ag-entrada small, .ag-compara small, .ag-saida small { color: rgba(255, 225, 180, .62); }
-.ag-entrada > i, .ag-saida > i { display: grid; place-items: center; flex: none; color: var(--ouro); background: rgba(255, 170, 60, .14); box-shadow: inset 0 0 0 1px rgba(255, 190, 90, .3); }
+.ag-entrada small, .ag-compara small, .ag-tela small { color: rgba(255, 225, 180, .62); }
+.ag-entrada > i, .ag-tela header > i { display: grid; place-items: center; flex: none; color: var(--ouro); background: rgba(255, 170, 60, .14); box-shadow: inset 0 0 0 1px rgba(255, 190, 90, .3); }
 
 .ag-entrada { display: inline-flex; align-items: center; gap: 9px; padding: 7px 13px 7px 7px; border-radius: 13px; white-space: nowrap; }
 .ag-entrada > i { width: 28px; height: 28px; border-radius: 9px; }
@@ -39,11 +39,38 @@
 .ag-compara b { font-size: 13.5px; color: var(--ouro); }
 .ag-compara.bom b { color: #9df5c9; }
 
-.ag-saida { display: flex; align-items: center; gap: 10px; width: 236px; padding: 9px 12px 9px 9px; border-radius: 15px; transform-origin: 0 50%; }
-.ag-saida > i { width: 32px; height: 32px; border-radius: 10px; }
-.ag-saida > span { display: grid; gap: 1px; min-width: 0; }
-.ag-saida b { font-size: 13px; line-height: 1.25; }
-.ag-saida small { font-size: 11px; }
+/* a tela da cena 4: vidro dourado do tamanho da moldura de fragmentos (o componente dá largura e altura) */
+.ag-tela {
+  display: grid; grid-template-rows: auto 1fr; gap: 18px; padding: 22px 26px; border-radius: 22px; overflow: hidden;
+  background: linear-gradient(160deg, rgba(40, 24, 6, .82), rgba(14, 9, 3, .88));
+  border-color: rgba(255, 200, 110, .6);
+  box-shadow: 0 0 0 6px rgba(255, 170, 60, .08), 0 0 80px -10px rgba(255, 160, 40, .5), inset 0 0 60px -20px rgba(255, 170, 60, .35);
+}
+.ag-tela header { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 190, 90, .3); }
+.ag-tela header > i { width: 34px; height: 34px; border-radius: 11px; }
+.ag-tela header b { font-family: var(--fonte-titulo); font-size: 19px; }
+.ag-pronta { margin-left: auto; display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: #9df5c9; }
+.ag-pronta i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 10px currentColor; }
+.ag-tela-meio { display: grid; grid-template-columns: 160px 1fr; gap: 26px; align-items: start; }
+.ag-nota { position: relative; width: 140px; height: 140px; display: grid; place-content: center; text-align: center; margin-top: 18px; }
+.ag-nota svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.ag-nota circle { fill: none; stroke-width: 8; }
+.ag-nota .fundo { stroke: rgba(255, 190, 90, .18); }
+.ag-nota .cheio { stroke: var(--ouro); stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: calc(1 - .72 * var(--f, 1)); filter: drop-shadow(0 0 6px rgba(255, 170, 60, .8)); }
+.ag-nota b { font-family: var(--fonte-numeros); font-size: 44px; line-height: 1; text-shadow: 0 0 20px rgba(255, 170, 60, .7); }
+.ag-nota small { font-size: 13px; font-weight: 700; color: #9df5c9 !important; }
+.ag-tela-dir { display: grid; gap: 10px; }
+.ag-tela-dir > strong { font-size: 13px; color: var(--tinta-2); margin-top: 4px; }
+.ag-pilares { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+.ag-pilares li { display: grid; grid-template-columns: 58px 1fr; align-items: center; gap: 8px; font-size: 12px; color: var(--tinta-2); }
+.ag-pilares li > i { height: 6px; border-radius: 99px; background: rgba(255, 190, 90, .14); overflow: hidden; }
+.ag-pilares li > i b { display: block; height: 100%; border-radius: inherit; background: var(--c); transform-origin: left; transform: scaleX(calc(var(--v) * clamp(0, var(--f, 1) * 2 - var(--i) * .1, 1))); box-shadow: 0 0 8px var(--c); }
+.ag-plano { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.ag-plano li { display: flex; gap: 11px; align-items: center; padding: 8px 11px; border-radius: 12px; background: rgba(255, 170, 60, .07); border: 1px solid rgba(255, 190, 90, .22); }
+.ag-plano li > span { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 8px; font-weight: 800; font-size: 12.5px; color: #1d1205; background: linear-gradient(135deg, #ffe2a6, var(--ouro-forte)); }
+.ag-plano li > div { display: grid; gap: 1px; }
+.ag-plano b { font-size: 13px; }
+.ag-plano small { font-size: 11px; }
 
 /* contador da cena 2 */
 .ag-hud {
@@ -102,14 +129,20 @@
   .ag-legenda h2 { font-size: 1.6rem; }
   .ag-legenda p { margin-inline: auto; font-size: .95rem; max-width: 34ch; }
   .ag-sticky::after { background: linear-gradient(180deg, rgba(6, 4, 3, .9) 0, rgba(6, 4, 3, .75) min(250px, 30vh), transparent min(320px, 38vh)); -webkit-mask-image: none; mask-image: none; }
-  .ag-saida { width: min(46vw, 200px); padding: 7px 9px 7px 7px; gap: 8px; }
-  .ag-saida > i { width: 26px; height: 26px; }
-  .ag-saida b { font-size: 11.5px; }
-  .ag-saida small { font-size: 10px; }
   .ag-entrada { padding: 5px 10px 5px 5px; }
   .ag-entrada b { font-size: 11.5px; }
   .ag-compara { padding: 6px 10px; }
   .ag-compara b { font-size: 12px; }
+  /* a tela em pé: a nota em cima, os pilares e o plano embaixo */
+  .ag-tela { padding: 16px 16px; gap: 12px; border-radius: 18px; }
+  .ag-tela-meio { grid-template-columns: 1fr; gap: 12px; justify-items: center; }
+  .ag-nota { width: 112px; height: 112px; margin-top: 2px; }
+  .ag-nota b { font-size: 36px; }
+  .ag-tela-dir { width: 100%; }
+  .ag-pilares li { grid-template-columns: 52px 1fr; font-size: 11px; }
+  .ag-plano li { padding: 7px 9px; }
+  .ag-plano b { font-size: 12px; }
+  .ag-plano small { font-size: 10.5px; }
   .ag-hud { right: 50%; transform: translate(50%, calc((1 - var(--p1, 0)) * 16px)); justify-items: center; bottom: 24px; }
   .ag-hud b { font-size: 30px; }
   .ag-selos { left: 16px; right: 16px; justify-content: center; bottom: 18px; }
