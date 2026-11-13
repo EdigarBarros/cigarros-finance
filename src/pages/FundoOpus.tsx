@@ -218,8 +218,8 @@ const PECAS_TOPO: Peca[] = [
   { p: 'invest', x: 70, y: 9, z: -380, ry: -14, rz: -3, t: 20, ax: -22, ay: 14, ar: -2, celular: false },
   { p: 'consultor', x: 96, y: 38, z: -300, ry: -30, rz: 2, t: 22, ax: -14, ay: 18, ar: 2, celular: false },
   { p: 'config', x: 4, y: 36, z: -340, ry: 30, rz: -3, t: 23, ax: 16, ay: -16, ar: -2, celular: false },
-  { p: 'itau', x: 63, y: 95, z: -480, ry: -10, rx: -14, rz: -10, t: 24, ax: -14, ay: -10, ar: 4, celular: false },
-  { p: 'aro', x: 40, y: 95, z: -520, ry: 10, rx: -12, t: 22, ax: 14, ay: -12, ar: -3, celular: false },
+  { p: 'itau', x: 63, y: 90, z: -480, ry: -10, rx: -14, rz: -10, t: 24, ax: -14, ay: -10, ar: 4, celular: false },
+  { p: 'aro', x: 40, y: 90, z: -520, ry: 10, rx: -12, t: 22, ax: 14, ay: -12, ar: -3, celular: false },
 ]
 
 const PECAS_FUNDADORES: Peca[] = [
@@ -227,18 +227,18 @@ const PECAS_FUNDADORES: Peca[] = [
   { p: 'invest', x: 93, y: 16, z: -300, ry: -24, rz: 4, t: 22, ax: -18, ay: 14, ar: -3, celular: false },
   { p: 'pote2', x: 5, y: 74, z: -200, ry: 22, rz: 5, t: 18, ax: 16, ay: -18, ar: 3, celular: false },
   { p: 'divida', x: 94, y: 70, z: -240, ry: -22, rz: -4, t: 21, ax: -16, ay: -16, ar: -3, celular: false },
-  { p: 'consultor', x: 50, y: 97, z: -520, rx: -16, t: 24, ax: 16, ay: -8, ar: 2, celular: false },
+  { p: 'consultor', x: 50, y: 92, z: -520, rx: -16, t: 24, ax: 16, ay: -8, ar: 2, celular: false },
 ]
 
 const PECAS_PRECO: Peca[] = [
   // nos cantos e nas faixas de cima e de baixo: o meio da seção é do texto e do plano. Pouca profundidade, porque a
   // perspectiva puxa para o meio o que fica longe
-  { p: 'itau', x: 1, y: 1, z: -140, ry: 26, rz: 8, t: 19, ax: 14, ay: 10, ar: 4, xm: 6, ym: 0 },
-  { p: 'grafico', x: 47, y: 0, z: -360, rx: 14, t: 23, ax: 16, ay: 6, ar: 2, celular: false },
-  { p: 'guardado', x: 99, y: 2, z: -180, ry: -24, rz: -3, t: 22, ax: -12, ay: 10, ar: -3, celular: false },
-  { p: 'conta', x: 2, y: 99, z: -150, ry: 22, rz: 3, t: 20, ax: 12, ay: -8, ar: -2, celular: false },
-  { p: 'aro', x: 52, y: 100, z: -340, rx: -14, t: 17, ax: 12, ay: -6, ar: 3, celular: false },
-  { p: 'lanc', x: 98, y: 99, z: -170, rx: -12, ry: -16, rz: -4, t: 21, ax: -12, ay: -8, ar: -3, xm: 92, ym: 100 },
+  { p: 'itau', x: 2, y: 5, z: -110, s: .74, ry: 26, rz: 8, t: 19, ax: 14, ay: 10, ar: 4, xm: 8, ym: 6 },
+  { p: 'grafico', x: 47, y: 5, z: -360, s: .85, rx: 14, t: 23, ax: 16, ay: 6, ar: 2, celular: false },
+  { p: 'guardado', x: 98, y: 5, z: -150, s: .8, ry: -24, rz: -3, t: 22, ax: -12, ay: 10, ar: -3, celular: false },
+  { p: 'conta', x: 3, y: 93, z: -150, ry: 22, rz: 3, t: 20, ax: 12, ay: -8, ar: -2, celular: false },
+  { p: 'aro', x: 52, y: 94, z: -340, rx: -14, t: 17, ax: 12, ay: -6, ar: 3, celular: false },
+  { p: 'lanc', x: 97, y: 93, z: -170, rx: -12, ry: -16, rz: -4, t: 21, ax: -12, ay: -8, ar: -3, xm: 92, ym: 95 },
 ]
 
 const ONDE = { topo: PECAS_TOPO, fundadores: PECAS_FUNDADORES, preco: PECAS_PRECO }

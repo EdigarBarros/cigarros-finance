@@ -28,6 +28,14 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  /* as luzes somem antes da borda de baixo: a seção corta o que passa dela, e o corte aparecia como uma linha */
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 97%);
+  mask-image: linear-gradient(to bottom, #000 55%, transparent 97%);
+}
+/* as peças do fundo também somem na borda de baixo, em vez de serem cortadas */
+.ap-hero .fo {
+  -webkit-mask-image: linear-gradient(to bottom, #000 86%, transparent);
+  mask-image: linear-gradient(to bottom, #000 86%, transparent);
 }
 
 .ap-orb {
@@ -244,6 +252,9 @@
   background:
     radial-gradient(46% 58% at 70% 42%, color-mix(in srgb, var(--marca-3) 20%, transparent), transparent 70%),
     radial-gradient(40% 52% at 34% 72%, color-mix(in srgb, var(--marca-1) 20%, transparent), transparent 72%);
+  /* a luz some em cima e embaixo: quando o palco chega ao fim e sobe, a borda dele não vira uma linha na tela */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 68%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 68%, transparent);
 }
 
 .ap-palco-cena {
@@ -350,12 +361,18 @@
 .ap-logo-claro { display: none; }
 :root[data-tema='claro'] .ap-logo-flutuante img.ap-logo-escuro { display: none; }
 :root[data-tema='claro'] .ap-logo-claro { display: block; animation: logo-float 6s ease-in-out infinite; }
-.ap-logo-claro .marca { gap: 18px; padding: 0; }
-.ap-logo-claro .marca-simbolo { width: 128px; filter: drop-shadow(0 18px 40px rgba(31, 209, 160, .35)); }
-.ap-logo-claro .marca-nome { font-size: 56px; }
+/* a marca desenhada copia a imagem do tema escuro: símbolo à esquerda e o nome ao lado, na mesma caixa (320 x 110,
+   ou 220 de largura no celular), para a troca de tema não mexer no logo. --e é a escala da caixa */
+.ap-logo-claro { --e: 1; }
+.ap-logo-claro .marca.grande {
+  flex-direction: row; justify-content: center; gap: calc(6px * var(--e)); padding: 0;
+  width: calc(320px * var(--e)); height: calc(110px * var(--e));
+}
+.ap-logo-claro .marca.grande .marca-simbolo { width: calc(129px * var(--e)); animation: none; filter: drop-shadow(0 18px 40px rgba(31, 209, 160, .35)); }
+.ap-logo-claro .marca.grande .marca-nome { font-size: calc(30px * var(--e)); font-weight: 800; letter-spacing: 0; }
+.ap-logo-claro .marca.grande .marca-nome b { font-weight: 800; }
 @media (max-width: 768px) {
-  .ap-logo-claro .marca-simbolo { width: 84px; }
-  .ap-logo-claro .marca-nome { font-size: 36px; }
+  .ap-logo-claro { --e: .6875; }
 }
 
 /* ── rodapé centralizado (a marca ficava colada à esquerda) ── */

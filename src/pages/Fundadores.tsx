@@ -29,8 +29,6 @@ function Cartao({ s, i }: { s: (typeof SOCIOS)[number]; i: number }) {
     const y = (e.clientY - r.top) / r.height - 0.5
     el.style.setProperty('--ry', `${(x * 14).toFixed(2)}deg`)
     el.style.setProperty('--rx', `${(y * -10).toFixed(2)}deg`)
-    el.style.setProperty('--lx', `${((x + 0.5) * 100).toFixed(1)}%`)
-    el.style.setProperty('--ly', `${((y + 0.5) * 100).toFixed(1)}%`)
     el.style.setProperty('--px', x.toFixed(3))
     el.style.setProperty('--py', y.toFixed(3))
     el.classList.add('mexendo')

@@ -1,6 +1,6 @@
 /* =========================================================================
    Fim da página inicial (Preco.tsx): o plano num cartão de vidro em 3D, as formas de pagar e o que vem junto.
-   O cartão inclina com o mouse (--rx/--ry) e o brilho segue o ponteiro (--lx/--ly).
+   O cartão inclina com o mouse (--rx/--ry); um brilho atravessa o cartão de tempos em tempos.
    ========================================================================= */
 .pr {
   position: relative; overflow: hidden;
@@ -8,7 +8,12 @@
   padding: 120px clamp(18px, 4vw, 48px) 130px;
 }
 
-.pr-luzes { position: absolute; inset: 0; pointer-events: none; }
+.pr-luzes {
+  position: absolute; inset: 0; pointer-events: none;
+  /* some em cima e embaixo: a borda da seção corta o que passa dela, e o corte aparecia como uma linha */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 78%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 78%, transparent);
+}
 .pr-luzes i { position: absolute; border-radius: 50%; }
 .pr-luzes i:nth-child(1) {
   width: 820px; height: 820px; right: -6%; top: 50%; margin-top: -410px;
@@ -97,8 +102,7 @@
 }
 @keyframes pr-boiar { 50% { transform: translateY(-12px); } }
 .pr-reflexo {
-  position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
-  background: radial-gradient(circle at var(--lx, 25%) var(--ly, 0%), rgba(255, 255, 255, .13), transparent 46%);
+  position: absolute; inset: 0; pointer-events: none; border-radius: inherit; overflow: hidden;
 }
 /* um brilho que atravessa o cartão de tempos em tempos */
 .pr-reflexo::after {

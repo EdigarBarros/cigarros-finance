@@ -41,7 +41,7 @@ export function Preco({ onLogin, onSignup }: { onLogin: () => void; onSignup: ()
     return () => obs.disconnect()
   }, [])
 
-  // o cartão do plano inclina acompanhando o mouse, e o brilho segue o ponteiro
+  // o cartão do plano inclina acompanhando o mouse
   const mover = (e: PointerEvent<HTMLDivElement>) => {
     if (e.pointerType === 'touch') return
     const el = plano.current
@@ -50,13 +50,11 @@ export function Preco({ onLogin, onSignup }: { onLogin: () => void; onSignup: ()
     const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5
     el.style.setProperty('--ry', `${(x * 12).toFixed(2)}deg`)
     el.style.setProperty('--rx', `${(y * -9).toFixed(2)}deg`)
-    el.style.setProperty('--lx', `${((x + 0.5) * 100).toFixed(1)}%`)
-    el.style.setProperty('--ly', `${((y + 0.5) * 100).toFixed(1)}%`)
   }
   const soltar = () => {
     const el = plano.current
     if (!el) return
-    for (const v of ['--ry', '--rx', '--lx', '--ly']) el.style.removeProperty(v)
+    for (const v of ['--ry', '--rx']) el.style.removeProperty(v)
   }
 
   return (

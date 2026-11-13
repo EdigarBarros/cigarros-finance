@@ -8,6 +8,9 @@
   position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
   perspective: 1100px; perspective-origin: 50% 46%;
   --mx: 0; --my: 0;
+  /* as peças somem perto das bordas da seção, em vez de serem cortadas em linha reta */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
 }
 
 .fo-lugar {
