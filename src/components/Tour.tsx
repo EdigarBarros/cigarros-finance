@@ -46,7 +46,8 @@ export function Tour({ perfil, v, nome, mobile, aoLigar, aoIrPara, aoTerminar }:
   perfil: Perfil; v: Visao; nome: string; mobile: boolean
   aoLigar: (m: Modulo) => void
   aoIrPara: (pagina: 'inicio') => void
-  aoTerminar: () => void
+  /** Como acabou ('pulou' ou 'terminou'), em qual passo (1, 2…) e de quantos: vai para a medição de uso. */
+  aoTerminar: (como: 'pulou' | 'terminou', passo: number, total: number) => void
 }) {
   const [i, setI] = useState(0)
   const [rect, setRect] = useState<DOMRect | null>(null)
@@ -149,11 +150,12 @@ export function Tour({ perfil, v, nome, mobile, aoLigar, aoIrPara, aoTerminar }:
   }, [passo.id, nota, oferta.length, rect])
   useEffect(() => { principal.current?.focus() }, [i])
 
-  const seguir = () => (ultimo ? aoTerminar() : setI(i + 1))
+  const pular = () => aoTerminar('pulou', i + 1, passos.length)
+  const seguir = () => (ultimo ? aoTerminar('terminou', i + 1, passos.length) : setI(i + 1))
   const voltar = () => setI(Math.max(0, i - 1))
   useEffect(() => {
     const tecla = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') aoTerminar()
+      if (e.key === 'Escape') pular()
       else if (e.key === 'ArrowRight' && !(e.target instanceof HTMLInputElement)) seguir()
       else if (e.key === 'ArrowLeft') voltar()
     }
@@ -181,7 +183,7 @@ export function Tour({ perfil, v, nome, mobile, aoLigar, aoIrPara, aoTerminar }:
     <div className="tour" role="dialog" aria-modal="true" aria-label={tx('Tutorial do painel')}>
       {foco ? <span className="tour-foco" style={foco} aria-hidden="true" /> : <span className="tour-escuro" aria-hidden="true" />}
       <div ref={cartao} className="tour-cartao" style={{ ...pos, width: w }} key={passo.id}>
-        <button className="tour-x" onClick={aoTerminar} aria-label={tx('Pular tutorial')} title={tx('Pular tutorial')}><Icone nome="fechar" tamanho={16} /></button>
+        <button className="tour-x" onClick={pular} aria-label={tx('Pular tutorial')} title={tx('Pular tutorial')}><Icone nome="fechar" tamanho={16} /></button>
         <span className="tour-icone" aria-hidden="true"><Icone nome={passo.icone} tamanho={22} /></span>
         <h2>{passo.titulo}</h2>
         <p>{passo.texto}{nota && <> <b>{nota}</b></>}</p>
@@ -215,7 +217,7 @@ export function Tour({ perfil, v, nome, mobile, aoLigar, aoIrPara, aoTerminar }:
             {passos.map((p, k) => <i key={p.id} className={k === i ? 'ativo' : k < i ? 'feito' : ''} />)}
           </span>
           <div className="tour-acoes">
-            {!ultimo && <button type="button" className="link tour-pular" onClick={aoTerminar}>{tx('Pular tutorial')}</button>}
+            {!ultimo && <button type="button" className="link tour-pular" onClick={pular}>{tx('Pular tutorial')}</button>}
             <span className="espaco" />
             {!primeiro && <button type="button" className="btn" onClick={voltar}>{tx('Voltar')}</button>}
             <button ref={principal} type="button" className="btn primario" onClick={seguir}>
