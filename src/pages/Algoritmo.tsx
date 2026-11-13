@@ -5,16 +5,20 @@ import { semMovimento } from '../lib/tema'
 import { tx } from '../lib/textos'
 import { ANO } from './apresentacaoCena'
 import { alturaIdeal, desenharTela, type TelaPronta } from './algoritmoTela'
+import { desenharDocs, desenharLancamento, LIDAS_PDF, LIDAS_PLANILHA, type DocPronto, type LinhaLida } from './algoritmoDocs'
 import './algoritmo.css'
 
 /**
- * "O motor do OpusCash": uma esfera holográfica feita de fragmentos dourados (pedacinhos de circuito, blocos e traços
- * que piscam), presa na tela enquanto a pessoa rola. É uma transformação só, do começo ao fim:
- *   1. os dados entram: fragmentos soltos chegam de todo lado e se juntam até formar a esfera;
+ * "O motor do OpusCash": começa na tela do Consultor, que se desmonta em pedaços e mostra o que estava rodando atrás
+ * dela, uma esfera holográfica feita de fragmentos dourados (pedacinhos de circuito, blocos e traços que piscam),
+ * presa na tela enquanto a pessoa rola:
+ *   0. por trás do Consultor: a tela se desmonta e revela a esfera, que já estava girando atrás;
+ *   1. lê o extrato e a planilha: uma luz passa por um PDF do banco e por uma planilha, e cada linha sai como um
+ *      lançamento limpo que entra na esfera (algoritmoDocs.ts);
  *   2. o motor calcula: a esfera gira, se deforma em ondas e acelera;
  *   3. compara: ela se desmancha e os fragmentos se arrumam num gráfico 3D dos meses (entrou × saiu, com a média);
  *   4. responde: os fragmentos pousam nos traços da tela do Consultor (as letras, o círculo da nota, as barras) e ela
- *      acende de cima para baixo no lugar deles, no mesmo <canvas> (algoritmoTela.ts).
+ *      acende de cima para baixo no lugar deles (algoritmoTela.ts). Termina onde começou.
  *
  * Cada fragmento tem um lugar em cada forma; o desenho mistura as formas conforme o scroll, com um atraso por fragmento
  * (a mudança passa como uma onda) e um redemoinho no meio do caminho. Tudo num <canvas> somando luz.
@@ -23,21 +27,12 @@ import './algoritmo.css'
  * finanças, então os textos falam em cruzar e comparar, nunca em "inteligência artificial".
  */
 const CENAS = [
-  { titulo: tx('Seus dados entram'), texto: tx('Lançamentos, cartões, dívidas, metas, saldos e o extrato do banco: tudo vira informação para o motor.') },
+  { titulo: tx('Por trás de cada conselho'), texto: tx('A tela do Consultor é só a ponta. Por baixo dela, um motor trabalha o tempo todo com os seus números.') },
+  { titulo: tx('Lê seu extrato e sua planilha'), texto: tx('Mande o PDF do banco ou a planilha: o motor acha a data, o valor e o nome de cada linha, tira os códigos do banco e vira lançamento.') },
   { titulo: tx('A rede cruza tudo'), texto: tx('Cada número é ligado aos outros: o gasto de hoje com o mês, o mês com o ano, a dívida com o que sobra.') },
   { titulo: tx('Compara cada detalhe'), texto: tx('Seu mês com a sua média, os juros com a reserva, o ritmo de cada meta com o prazo dela.') },
   { titulo: tx('E diz o que fazer'), texto: tx('Uma nota para o seu dinheiro e um plano de ação na ordem certa, refeito a cada lançamento.') },
 ] as const
-
-/** Os dados que entram, cada um vindo de um lado até a esfera. */
-const ENTRADAS = [
-  { icone: 'lista', rotulo: tx('Mercado'), valor: '− R$ 334,00' },
-  { icone: 'cartao', rotulo: tx('Fatura Nubank'), valor: 'R$ 960,00' },
-  { icone: 'divida', rotulo: tx('Empréstimo'), valor: tx('4,2% ao mês') },
-  { icone: 'meta', rotulo: tx('Viagem ao Japão'), valor: '32%' },
-  { icone: 'carteira', rotulo: tx('Saldo guardado'), valor: 'R$ 25.290,00' },
-  { icone: 'relatorio', rotulo: tx('extrato.pdf'), valor: tx('42 linhas') },
-]
 
 // ─── o gráfico da cena 3: os meses do Resumo do ano (entrou e saiu) e a média do que saiu ───
 const MESES = ANO.entrou.length
@@ -63,7 +58,6 @@ const RAIO = 250
 const BASE_GRAF = 170, ALTO_GRAF = 330, LARGO_GRAF = 640
 
 interface Frag {
-  solto: V3 // de onde vem (cena 1)
   esfera: V3 // na esfera: [teta, fi, raio]
   barra: V3 // lugar no gráfico
   tela: V3 // lugar na tela
@@ -98,9 +92,6 @@ function montar(N: number, pontos: Float32Array, k4: number, oy: number) {
     else if (tipo < 0.6) { teta = (Math.floor(r() * 7) / 7) * Math.PI * 2 + (r() - 0.5) * 0.02; fi = r() * Math.PI }
     else if (tipo < 0.82) { raio = RAIO * (0.94 + r() * 0.12) }
     else { raio = RAIO * (0.42 + r() * 0.4) }
-    // solto: longe, em volta (de onde os dados chegam)
-    const ang = r() * Math.PI * 2, longe = 700 + r() * 600
-    const solto: V3 = [Math.cos(ang) * longe, (r() - 0.5) * 900, Math.sin(ang) * longe * 0.6]
     // gráfico: 82% nas colunas (proporcional à altura), o resto na linha da média e no chão
     let barra: V3, cat = 3
     const q = r()
@@ -120,7 +111,7 @@ function montar(N: number, pontos: Float32Array, k4: number, oy: number) {
     const tela: V3 = [pontos[i * 2] / k4, pontos[i * 2 + 1] / k4 + oy, 0]
     fr.push({
       // a maioria são traços e pontos; uns 12% são placas maiores (os blocos de dados do holograma)
-      solto, esfera: [teta, fi, raio], barra, tela, atraso: r() * 0.35,
+      esfera: [teta, fi, raio], barra, tela, atraso: r() * 0.35,
       ...(r() < 0.12 ? { w: 6 + r() * 9, h: 2 + r() * 2.5 } : { w: 1 + r() * 4.5, h: 1 + r() * 1.4 }),
       brilho: Math.min(4, Math.floor(Math.pow(r(), 1.15) * 5)), fase: r() * 10, cat,
     })
@@ -128,13 +119,32 @@ function montar(N: number, pontos: Float32Array, k4: number, oy: number) {
   return fr
 }
 
-/** Câmera em cada cena: giro e inclinação (rad), aproximação. Na última fica de frente: a tela encaixa na tela. */
+/** Câmera em cada cena: giro e inclinação (rad), aproximação. Na primeira e na última fica de frente: a tela encaixa na tela. */
 const CAM = [
-  { yaw: -0.3, pitch: 0.18, zoom: 0.95 },
+  { yaw: 0, pitch: 0, zoom: 1.08 },
+  { yaw: -0.3, pitch: 0.18, zoom: 0.8 },
   { yaw: 0.35, pitch: 0.3, zoom: 1.05 },
   { yaw: 0.26, pitch: 0.12, zoom: 1.0 },
   { yaw: 0, pitch: 0, zoom: 1.08 },
 ]
+const ZOOM_TELA = CAM[CAM.length - 1].zoom
+
+/** Um pedaço da tela do Consultor quando ela se desmonta (cena 0): o recorte, para onde voa e quando. */
+interface Peca { x: number; y: number; w: number; h: number; dx: number; dy: number; giro: number; atraso: number }
+function pecas(w: number, h: number, colunas: number) {
+  const r = sorteio(11), linhas = Math.max(4, Math.round((colunas * h) / w)), pw = w / colunas, ph = h / linhas
+  const lista: Peca[] = []
+  for (let l = 0; l < linhas; l++) for (let c = 0; c < colunas; c++) {
+    const x = c * pw, y = l * ph
+    const nx = (x + pw / 2 - w / 2) / (w / 2), ny = (y + ph / 2 - h / 2) / (h / 2)
+    // as do meio saem primeiro (abrem o buraco por onde o motor aparece) e voam para fora, na direção em que estão
+    let dx = nx + (r() - 0.5) * 0.7, dy = ny + (r() - 0.5) * 0.7
+    const d = Math.hypot(dx, dy) || 1
+    dx /= d; dy /= d
+    lista.push({ x, y, w: pw, h: ph, dx, dy, giro: (r() - 0.5) * 1.8, atraso: Math.min(1, Math.hypot(nx, ny) / 1.41) * 0.38 + r() * 0.17 })
+  }
+  return lista
+}
 
 /** Brilho redondo pronto (desenhado uma vez e carimbado): bem mais barato que desfoque a cada quadro. */
 function brilho(tam: number, paradas: [number, string][]) {
@@ -178,7 +188,6 @@ export function Algoritmo() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     const n = CENAS.length
-    const entradas = [...sticky.querySelectorAll<HTMLElement>('.ag-entrada')]
     const comparas = [...sticky.querySelectorAll<HTMLElement>('.ag-compara')]
     const contador = sticky.querySelector<HTMLElement>('[data-relacoes]')
     const sprHalo = brilho(256, [[0, 'rgba(255,200,110,0.55)'], [0.25, 'rgba(255,150,40,0.22)'], [0.6, 'rgba(255,120,20,0.06)'], [1, 'rgba(255,100,10,0)']])
@@ -189,10 +198,14 @@ export function Algoritmo() {
     let fr: Frag[] = [], chaveTela = ''
     // a tela do Consultor (cena 4): desenhada em px de CSS, centrada em (cx, yTela). No computador fica no lugar da
     // esfera; no celular, entre o texto e os selos
-    let tela: TelaPronta | null = null, yTela = 0
+    let tela: TelaPronta | null = null, yTela = 0, pedacos: Peca[] = []
+    // a leitura (cena 1): o documento fica em (docX, docY) e a esfera anda (desX, desY) para dar lugar a ele
+    let docs: { pdf: DocPronto; planilha: DocPronto } | null = null, docX = 0, docY = 0, desX = 0, desY = 0, chaveDocs = ''
     const texto = sticky.querySelector<HTMLElement>('.ag-texto')!, selos = sticky.querySelector<HTMLElement>('.ag-selos')!
     const estilo = getComputedStyle(document.documentElement)
     const fonte = (v: string, padrao: string) => estilo.getPropertyValue(v).trim() || padrao
+    const fontes = () => ({ texto: fonte('--fonte', 'Inter, sans-serif'), titulo: fonte('--fonte-titulo', 'Inter, sans-serif'), numeros: fonte('--fonte-numeros', 'Inter, sans-serif') })
+    let letras = fontes()
     const medir = () => {
       reduzir = semMovimento()
       W = sticky.clientWidth; H = sticky.clientHeight; celular = W <= 900
@@ -218,17 +231,34 @@ export function Algoritmo() {
         tw = Math.min(aw * 0.92, 700); th = Math.min(alturaIdeal(tw), H * 0.8); yTela = cy
       }
       tw = Math.round(tw); th = Math.round(th)
-      const k4 = esc * CAM[3].zoom
+      const k4 = esc * ZOOM_TELA
       const chave = `${N}|${tw}|${th}|${yTela.toFixed(0)}|${k4.toFixed(4)}|${document.documentElement.lang}`
       if (chave !== chaveTela) {
         chaveTela = chave
         const q = Math.min(window.devicePixelRatio || 1, 2)
-        tela = desenharTela(tw, th, q, N, { texto: fonte('--fonte', 'Inter, sans-serif'), titulo: fonte('--fonte-titulo', 'Inter, sans-serif'), numeros: fonte('--fonte-numeros', 'Inter, sans-serif') }, sorteio(7))
+        letras = fontes()
+        tela = desenharTela(tw, th, q, N, letras, sorteio(7))
         fr = montar(N, tela.pontos, k4, (yTela - cy) / k4)
+        pedacos = pecas(tw, th, celular ? 6 : 10)
       }
+      let dw: number, dh: number
+      if (celular) {
+        const topo = texto.getBoundingClientRect().bottom - sticky.getBoundingClientRect().top + 10
+        dw = Math.min(W - 56, 290); dh = 196
+        docX = W / 2; docY = topo + dh / 2
+        desX = 0; desY = (docY + dh / 2 + H - 24) / 2 - cy
+      } else {
+        const esq = Math.min(460, W * 0.36), aw = W - esq - 40
+        dw = Math.min(320, aw * 0.42); dh = dw * 1.2
+        docX = Math.max(esq + 16 + dw / 2, esq + aw * 0.22); docY = cy
+        desX = aw * 0.2; desY = 0
+      }
+      dw = Math.round(dw); dh = Math.round(dh)
+      const chaveD = `${dw}|${dh}|${document.documentElement.lang}`
+      if (chaveD !== chaveDocs) { chaveDocs = chaveD; docs = desenharDocs(dw, dh, Math.min(window.devicePixelRatio || 1, 2), letras) }
     }
 
-    let yaw = 0, pitch = 0, zoom = 1
+    let yaw = 0, pitch = 0, zoom = 1, offX = 0, offY = 0
     const F = 1150
     const proj = (x: number, y: number, z: number) => {
       const cyw = Math.cos(yaw), syw = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch)
@@ -237,7 +267,7 @@ export function Algoritmo() {
       const Y = y * cp - Z * sp
       Z = y * sp + Z * cp
       const s = F / Math.max(150, F + Z)
-      return { x: cx + X * s * esc * zoom, y: cy + Y * s * esc * zoom, s }
+      return { x: cx + offX + X * s * esc * zoom, y: cy + offY + Y * s * esc * zoom, s }
     }
 
     const ultimo = new Map<string, string>()
@@ -254,34 +284,37 @@ export function Algoritmo() {
       }
       const fpos = limitar(p * n - 0.5, 0, n - 1), i0 = Math.floor(fpos), i1 = Math.min(n - 1, i0 + 1), f = suave(0, 1, fpos - i0)
       const t = reduzir ? 0 : tempo, s = t / 1000
-      // a câmera para de balançar na última cena: a tela fica de frente, no plano dela
-      const bal = 1 - pres[3]
+      // a câmera para de balançar na primeira e na última cena: a tela fica de frente, no plano dela
+      const bal = limitar(1 - pres[0] - pres[n - 1])
       yaw = mistura(CAM[i0].yaw, CAM[i1].yaw, f) + Math.sin(t * 0.00023) * 0.1 * bal
       pitch = mistura(CAM[i0].pitch, CAM[i1].pitch, f) + Math.cos(t * 0.00017) * 0.05 * bal
       zoom = mistura(CAM[i0].zoom, CAM[i1].zoom, f)
+      // na leitura a esfera chega para o lado e o documento fica no lugar dela
+      offX = desX * pres[1]; offY = desY * pres[1]
+      // cena 0: a tela se desmonta (desm) e a esfera, escondida atrás dela, cresce e acende (oculto vai a 0)
+      const desm = suave(0.03, 0.16, p), oculto = 1 - suave(0.05, 0.17, p)
+      const u1 = limitar((p - 0.2) / 0.2) // o andamento da leitura
       // a esfera gira; calculando (cena 2), gira mais rápido
       const dt = antesGiro ? Math.min(0.05, (tempo - antesGiro) / 1000) : 0
       antesGiro = tempo
-      if (!reduzir) giro += dt * (0.25 + 0.9 * pres[1] + 0.2 * pres[0])
-      const calc = pres[1] // o quanto a esfera está "calculando" (ondas na casca)
+      if (!reduzir) giro += dt * (0.25 + 0.9 * pres[2] + 0.3 * pres[1])
+      const calc = pres[2] // o quanto a esfera está "calculando" (ondas na casca)
 
-      // as quatro formas ao longo do scroll: solto → esfera → gráfico → tela. Cada fragmento muda com um atraso
-      const e0 = and[0] * 1.05, g0 = limitar((p - 0.47) / 0.18), v0 = limitar((p - 0.72) / 0.16)
+      // as formas ao longo do scroll: esfera → gráfico → tela. Cada fragmento muda com um atraso
+      const g0 = limitar((p - 0.576) / 0.144), v0 = limitar((p - 0.776) / 0.128), raioK = 1 - 0.42 * oculto
       const forma = (fx: Frag, i: number): V3 => {
         const [teta, fi, raio] = fx.esfera
         const onda = 1 + calc * 0.13 * Math.sin(3 * fi + s * 2.3) * Math.cos(2 * teta - s * 1.7)
         const tt = teta + giro
-        const sf = Math.sin(fi) * raio * onda
-        const ex = sf * Math.cos(tt), ey = Math.cos(fi) * raio * onda, ez = sf * Math.sin(tt)
-        const e = suave(fx.atraso * 0.8, fx.atraso * 0.8 + 0.55, e0)
+        const sf = Math.sin(fi) * raio * onda * raioK
+        const ex = sf * Math.cos(tt), ey = Math.cos(fi) * raio * onda * raioK, ez = sf * Math.sin(tt)
         const g = suave(fx.atraso, fx.atraso + 0.55, g0)
         const v = suave(fx.atraso, fx.atraso + 0.55, v0)
         vs[i] = v
-        let x = mistura(fx.solto[0], ex, e), y = mistura(fx.solto[1], ey, e), z = mistura(fx.solto[2], ez, e)
-        x = mistura(x, fx.barra[0], g); y = mistura(y, fx.barra[1], g); z = mistura(z, fx.barra[2], g)
+        let x = mistura(ex, fx.barra[0], g), y = mistura(ey, fx.barra[1], g), z = mistura(ez, fx.barra[2], g)
         x = mistura(x, fx.tela[0], v); y = mistura(y, fx.tela[1], v); z = mistura(z, fx.tela[2], v)
         // redemoinho no meio de cada viagem: o fragmento faz uma curva em vez de ir reto
-        const meio = Math.sin(Math.PI * g) + Math.sin(Math.PI * v) + Math.sin(Math.PI * e) * 0.6
+        const meio = Math.sin(Math.PI * g) + Math.sin(Math.PI * v)
         if (meio > 0.01) {
           const a = fx.fase + s * 0.8
           x += Math.cos(a) * 90 * meio; y += Math.sin(a * 1.3) * 60 * meio; z += Math.sin(a) * 90 * meio
@@ -295,9 +328,27 @@ export function Algoritmo() {
 
       // névoa de luz atrás (mais forte com a esfera inteira)
       const centro = proj(0, 0, 0)
-      const esferaCheia = suave(0.3, 0.9, and[0]) * (1 - suave(0.47, 0.6, p))
+      const esferaCheia = (1 - suave(0.576, 0.68, p)) * (1 - oculto)
+      // a leitura: onde está a luz em cada documento e os lançamentos no ar; cada um que chega acende a esfera
+      let chegada = 0, bPdf = 0, bPla = 0
+      const lidos: { l: LinhaLida; doc: DocPronto; i: number; c: number }[] = []
+      if (docs && pres[1] > 0.01) {
+        const leitura = (doc: DocPronto, lista: LinhaLida[], ini: number, dur: number) => {
+          const b = mistura(-0.05, 1.4, limitar((u1 - ini) / dur))
+          lista.forEach((l, i) => {
+            const t0 = (doc.linhas[i] - doc.topoLinhas) / (doc.fimLinhas - doc.topoLinhas)
+            const c = limitar((b - t0) / 0.42)
+            if (c > 0 && c < 1) lidos.push({ l, doc, i, c })
+            chegada += Math.max(0, 1 - Math.abs(c - 0.97) / 0.06)
+          })
+          return b
+        }
+        bPdf = leitura(docs.pdf, LIDAS_PDF, 0.08, 0.36)
+        bPla = leitura(docs.planilha, LIDAS_PLANILHA, 0.56, 0.33)
+      }
+      chegada = Math.min(1, chegada) * pres[1]
       const th = (720 + 160 * calc) * esc * zoom
-      ctx.globalAlpha = 0.25 + 0.55 * esferaCheia + 0.3 * pres[3]
+      ctx.globalAlpha = Math.min(1, 0.25 + 0.55 * esferaCheia + 0.3 * pres[n - 1] + 0.3 * pres[0] + 0.5 * chegada)
       ctx.drawImage(sprHalo, centro.x - th / 2, centro.y - th / 2, th, th)
       ctx.globalAlpha = 1
 
@@ -327,9 +378,9 @@ export function Algoritmo() {
 
       // a tela acende de cima para baixo depois que os fragmentos pousam: acima da linha de luz já é a tela; os
       // fragmentos que ficaram para trás dela somem, os que estão logo abaixo da linha brilham mais
-      const kT = esc * zoom / (esc * CAM[3].zoom)
-      const tlx = cx - (tela ? tela.w : 0) * kT / 2, tly = yTela + (centro.y - cy) - (tela ? tela.h : 0) * kT / 2
-      const acende = suave(0.885, 0.96, p)
+      const kT = zoom / ZOOM_TELA
+      const tlx = cx - (tela ? tela.w : 0) * kT / 2, tly = yTela + (centro.y - cy - offY) - (tela ? tela.h : 0) * kT / 2
+      const acende = suave(0.908, 0.968, p)
       const yLuz = tela ? tly - 30 + acende * (tela.h * kT + 60) : -1e9
 
       // os fragmentos: projeta todos, depois pinta por tom (menos trocas de cor)
@@ -342,7 +393,7 @@ export function Algoritmo() {
       const pisca = Math.floor(s * 7)
       // a cor do gráfico: depois que as colunas se formam, a cor varre o gráfico da esquerda para a direita (o mês de
       // janeiro troca primeiro) e volta ao dourado quando ele vira a tela
-      const fimTela = suave(0.72, 0.8, p)
+      const fimTela = suave(0.776, 0.84, p)
       const grupos = new Map<string, number[]>()
       for (let i = 0; i < N; i++) {
         const fx = fr[i]
@@ -354,8 +405,8 @@ export function Algoritmo() {
         }
         let chave = `d${tom}`
         if (fx.cat < 3) {
-          const ini = 0.585 + (fx.barra[0] / LARGO_GRAF + 0.5) * 0.06 + fx.atraso * 0.03
-          const c = suave(ini, ini + 0.035, p) * (1 - fimTela)
+          const ini = 0.668 + (fx.barra[0] / LARGO_GRAF + 0.5) * 0.048 + fx.atraso * 0.024
+          const c = suave(ini, ini + 0.028, p) * (1 - fimTela)
           const passo = Math.round(c * (PASSOS - 1))
           if (passo > 0) chave = `${fx.cat}.${tom}.${passo}`
         }
@@ -363,6 +414,8 @@ export function Algoritmo() {
         if (!g) { g = []; grupos.set(chave, g) }
         g.push(i)
       }
+      // escondidos atrás da tela no começo, os fragmentos ficam apagados
+      ctx.globalAlpha = 1 - 0.85 * oculto
       grupos.forEach((idx, chave) => {
         if (chave[0] === 'd') ctx.fillStyle = TONS[Number(chave.slice(1))]
         else { const [c, tom, passo] = chave.split('.').map(Number); ctx.fillStyle = PALETA[c][tom][passo] }
@@ -373,7 +426,7 @@ export function Algoritmo() {
         }
       })
       // pontos mais quentes com brilho (um a cada 14 fragmentos)
-      ctx.globalAlpha = 0.6
+      ctx.globalAlpha = 0.6 * (1 - 0.85 * oculto)
       for (let i = 0; i < N; i += 14) {
         if (acende > 0 && vs[i] > 0.98 && ys[i] < yLuz - 3) continue
         const tam = (10 + 8 * Math.sin(s * 2 + fr[i].fase)) * ss[i] * esc
@@ -383,12 +436,102 @@ export function Algoritmo() {
 
       // o centro da esfera: um anel de luz aceso
       if (esferaCheia > 0.02) {
-        const tn = (110 + 20 * Math.sin(s * 3)) * esc * zoom
+        const tn = (110 + 20 * Math.sin(s * 3) + 120 * chegada) * esc * zoom
         ctx.globalAlpha = esferaCheia
         ctx.drawImage(sprPonto, centro.x - tn / 2, centro.y - tn / 2, tn, tn)
         ctx.strokeStyle = `rgba(255,220,150,${0.8 * esferaCheia})`; ctx.lineWidth = 2
         ctx.beginPath(); ctx.ellipse(centro.x, centro.y, 34 * esc * zoom, 30 * esc * zoom, 0, 0, Math.PI * 2); ctx.stroke()
         ctx.globalAlpha = 1
+      }
+
+      // cena 0: a tela inteira e, rolando, os pedaços dela voando para fora (e para perto de quem olha)
+      if (tela && desm < 1 && pres[0] > 0) {
+        const tw = tela.w * kT, th = tela.h * kT, m = tela.m * kT, k = tela.q
+        ctx.globalCompositeOperation = 'source-over'
+        if (desm <= 0) ctx.drawImage(tela.img, tlx - m, tly - m, tw + m * 2, th + m * 2)
+        else {
+          const bordas: [number, number, number, number, number, number, number][] = []
+          for (const pc of pedacos) {
+            const u = suave(pc.atraso, pc.atraso + 0.45, desm)
+            const a = 1 - suave(0.25, 0.85, u)
+            if (a <= 0.01) continue
+            const voo = u * u
+            const x = tlx + (pc.x + pc.w / 2) * kT + pc.dx * voo * W * 0.42
+            const y = tly + (pc.y + pc.h / 2) * kT + pc.dy * voo * H * 0.42 - u * 30
+            const e = 1 + 1.1 * u
+            ctx.save()
+            ctx.globalAlpha = a
+            ctx.translate(x, y); ctx.rotate(pc.giro * u); ctx.scale(e, e)
+            ctx.drawImage(tela.img, (pc.x + tela.m) * k, (pc.y + tela.m) * k, pc.w * k, pc.h * k, (-pc.w * kT) / 2, (-pc.h * kT) / 2, pc.w * kT, pc.h * kT)
+            ctx.restore()
+            if (u > 0) bordas.push([x, y, pc.giro * u, e, pc.w * kT, pc.h * kT, a * Math.min(1, u * 5) * (1 - u)])
+          }
+          // a quebra brilha nas bordas dos pedaços
+          ctx.globalCompositeOperation = 'lighter'
+          ctx.strokeStyle = 'rgba(255,200,110,0.55)'; ctx.lineWidth = 1
+          for (const [x, y, gi, e, w, h, a] of bordas) {
+            ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y); ctx.rotate(gi); ctx.scale(e, e)
+            ctx.strokeRect(-w / 2, -h / 2, w, h); ctx.restore()
+          }
+        }
+        ctx.globalAlpha = 1
+        ctx.globalCompositeOperation = 'lighter'
+      }
+
+      // cena 1: o documento (o PDF, que gira e vira a planilha), a luz que lê as linhas e os lançamentos que saem
+      if (docs && pres[1] > 0.01) {
+        const vira = limitar((u1 - 0.47) / 0.08)
+        const doc = vira < 0.5 ? docs.pdf : docs.planilha
+        const b = vira < 0.5 ? bPdf : bPla
+        const chegaDoc = suave(0, 0.08, u1), saiDoc = suave(0.9, 0.99, u1)
+        const a = pres[1] * chegaDoc * (1 - saiDoc)
+        const e = mistura(0.9, 1, chegaDoc) * (1 - 0.12 * saiDoc), ex = Math.abs(Math.cos(Math.PI * vira))
+        if (a > 0.01) {
+          ctx.save()
+          ctx.translate(docX, docY); ctx.scale(e * Math.max(0.02, ex), e)
+          ctx.globalAlpha = a
+          ctx.globalCompositeOperation = 'source-over'
+          ctx.drawImage(doc.img, -doc.w / 2 - doc.m, -doc.h / 2 - doc.m, doc.w + doc.m * 2, doc.h + doc.m * 2)
+          ctx.globalCompositeOperation = 'lighter'
+          // as linhas já lidas ficam marcadas de dourado
+          const passo = (doc.fimLinhas - doc.topoLinhas) / doc.linhas.length
+          for (const ly of doc.linhas) {
+            const lida = limitar((b - (ly - doc.topoLinhas) / (doc.fimLinhas - doc.topoLinhas)) * 8)
+            if (lida > 0) { ctx.fillStyle = `rgba(255,170,60,${(0.2 * lida).toFixed(3)})`; ctx.fillRect(-doc.w / 2 + 8, ly - doc.h / 2 - passo / 2 + 1, doc.w - 16, passo - 2) }
+          }
+          if (b > 0 && b < 1) {
+            const yb = doc.topoLinhas + b * (doc.fimLinhas - doc.topoLinhas) - doc.h / 2
+            const rastro = ctx.createLinearGradient(0, yb - 40, 0, yb)
+            rastro.addColorStop(0, 'rgba(255,170,60,0)'); rastro.addColorStop(1, 'rgba(255,180,70,0.35)')
+            ctx.fillStyle = rastro; ctx.fillRect(-doc.w / 2, yb - 40, doc.w, 40)
+            ctx.fillStyle = 'rgba(255,215,140,0.95)'; ctx.fillRect(-doc.w / 2 - 14, yb - 1, doc.w + 28, 2)
+            ctx.globalAlpha = a * 0.45; ctx.fillRect(-doc.w / 2 - 14, yb - 5, doc.w + 28, 10)
+          }
+          ctx.restore()
+        }
+        // cada linha lida vira um lançamento que voa até a esfera, com um rastro de faíscas
+        for (const { l, doc: dl, i, c } of lidos) {
+          const ry = docY + (dl.linhas[i] - dl.h / 2) * e
+          const sx = celular ? docX : docX + dl.w * 0.32, sy = ry
+          const kx = celular ? docX + (i % 2 ? 80 : -80) : (sx + centro.x) / 2, ky = celular ? (sy + centro.y) / 2 : Math.min(sy, centro.y) - 80
+          const ponto = (t: number) => [(1 - t) * (1 - t) * sx + 2 * (1 - t) * t * kx + t * t * centro.x, (1 - t) * (1 - t) * sy + 2 * (1 - t) * t * ky + t * t * centro.y]
+          const tb = suave(0.12, 1, c)
+          ctx.globalCompositeOperation = 'lighter'
+          for (let k = 1; k <= 5; k++) {
+            const t = tb - k * 0.035
+            if (t <= 0) break
+            const [x, y] = ponto(t), tam = (16 - k * 2) * (celular ? 0.8 : 1)
+            ctx.globalAlpha = pres[1] * 0.7 * (1 - k / 6)
+            ctx.drawImage(sprPonto, x - tam / 2, y - tam / 2, tam, tam)
+          }
+          ctx.globalAlpha = 1
+          ctx.globalCompositeOperation = 'source-over'
+          const [x, y] = ponto(tb)
+          const tam = (celular ? 0.82 : 1) * (c < 0.12 ? mistura(0.7, 1, c / 0.12) : mistura(1, 0.1, suave(0.45, 1, c)))
+          desenharLancamento(ctx, l, x, y, tam, pres[1] * suave(0, 0.06, c) * (1 - suave(0.86, 1, c)), letras)
+        }
+        ctx.globalAlpha = 1
+        ctx.globalCompositeOperation = 'lighter'
       }
 
       // a tela do Consultor: a parte já acesa (acima da linha de luz), a linha e o rastro dourado logo acima dela
@@ -439,21 +582,8 @@ export function Algoritmo() {
       ctx.globalCompositeOperation = 'source-over'
 
       // ─── por cima ───
-      // cena 1: os dados vêm de longe até a esfera e entram nela
-      const chegou = ENTRADAS.map((_, i) => limitar(and[0] * 2.1 - i * 0.22 + 0.05))
-      entradas.forEach((el, i) => {
-        const fi = chegou[i], ang = (-50 + i * 20) * (Math.PI / 180)
-        const d = mistura(celular ? 330 : 700, 40, fi)
-        const P = proj(Math.cos(ang) * d, Math.sin(ang) * d, -80)
-        const o = pres[0] * suave(0, 0.2, fi) * (1 - suave(0.75, 1, fi))
-        por(`e${i}`, `${P.x.toFixed(1)},${P.y.toFixed(1)},${o.toFixed(3)}`, () => {
-          el.style.transform = `translate3d(${P.x.toFixed(1)}px, ${P.y.toFixed(1)}px, 0) translate(${celular ? '-80%' : '-50%'}, -50%) scale(${(Math.min(1.1, P.s) * (1 - suave(0.6, 1, fi) * 0.7)).toFixed(3)})`
-          el.style.opacity = o.toFixed(3)
-          el.style.visibility = o < 0.01 ? 'hidden' : 'visible'
-        })
-      })
       // cena 3: etiquetas em cima das colunas dos meses
-      const fc = COMPARA.map((_, i) => pres[2] * limitar(and[2] * 2.4 - 0.7 - i * 0.28))
+      const fc = COMPARA.map((_, i) => pres[3] * limitar(and[3] * 2.4 - 0.7 - i * 0.28))
       COMPARA.forEach((c, i) => {
         const x = (c.mes / (MESES - 1) - 0.5) * LARGO_GRAF, alto = (Math.max(ANO.entrou[c.mes], ANO.saiu[c.mes]) / TETO) * ALTO_GRAF
         const P0 = proj(x, BASE_GRAF - alto - 24, 0)
@@ -466,7 +596,7 @@ export function Algoritmo() {
         })
       })
       pres.forEach((v, i) => por(`p${i}`, v.toFixed(3), () => sticky.style.setProperty(`--p${i}`, v.toFixed(3))))
-      const rel = Math.round(2418 * limitar(and[1] * 1.3))
+      const rel = Math.round(2418 * limitar(and[2] * 1.3))
       if (contador) por('rel', String(rel), () => { contador.textContent = rel.toLocaleString('pt-BR') })
 
       const qual = Math.min(n - 1, Math.floor(p * n))
@@ -520,11 +650,6 @@ export function Algoritmo() {
         <canvas className="ag-rede" ref={telaRef} aria-hidden="true" />
 
         <div className="ag-sobre" aria-hidden="true">
-          {ENTRADAS.map((e) => (
-            <span key={e.rotulo} className="ag-entrada">
-              <i><Icone nome={e.icone} tamanho={14} /></i><span><small>{e.rotulo}</small><b>{e.valor}</b></span>
-            </span>
-          ))}
           {COMPARA.map((c) => (
             <span key={c.r} className={`ag-compara ${c.bom ? 'bom' : ''}`}>
               <span><small>{c.x}</small><em>×</em><small>{c.y}</small></span><b>{c.r}</b>

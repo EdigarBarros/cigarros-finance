@@ -13479,14 +13479,6 @@
     "en": "Parts of the OpusCash engine",
     "es": "Partes del motor de OpusCash"
   },
-  "Seus dados entram": {
-    "en": "Your data comes in",
-    "es": "Tus datos entran"
-  },
-  "Lançamentos, cartões, dívidas, metas, saldos e o extrato do banco: tudo vira informação para o motor.": {
-    "en": "Entries, cards, debts, goals, balances and your bank statement: everything becomes information for the engine.",
-    "es": "Movimientos, tarjetas, deudas, metas, saldos y el extracto del banco: todo se vuelve información para el motor."
-  },
   "A rede cruza tudo": {
     "en": "The network cross-checks everything",
     "es": "La red cruza todo"
@@ -13511,29 +13503,13 @@
     "en": "A score for your money and an action plan in the right order, redone with every entry.",
     "es": "Una nota para tu dinero y un plan de acción en el orden correcto, rehecho con cada movimiento."
   },
-  "Fatura Nubank": {
-    "en": "Nubank statement",
-    "es": "Resumen Nubank"
-  },
   "Empréstimo": {
     "en": "Loan",
     "es": "Préstamo"
   },
-  "4,2% ao mês": {
-    "en": "4.2% a month",
-    "es": "4,2% al mes"
-  },
   "Saldo guardado": {
     "en": "Saved balance",
     "es": "Saldo guardado"
-  },
-  "extrato.pdf": {
-    "en": "statement.pdf",
-    "es": "extracto.pdf"
-  },
-  "42 linhas": {
-    "en": "42 lines",
-    "es": "42 líneas"
   },
   "sua média": {
     "en": "your average",
@@ -13634,5 +13610,29 @@
   "Plano de ação": {
     "en": "Action plan",
     "es": "Plan de acción"
+  },
+  "Por trás de cada conselho": {
+    "en": "Behind every piece of advice",
+    "es": "Detrás de cada consejo"
+  },
+  "A tela do Consultor é só a ponta. Por baixo dela, um motor trabalha o tempo todo com os seus números.": {
+    "en": "The Advisor screen is just the tip. Underneath it, an engine works with your numbers all the time.",
+    "es": "La pantalla del Consultor es solo la punta. Debajo de ella, un motor trabaja todo el tiempo con tus números."
+  },
+  "Lê seu extrato e sua planilha": {
+    "en": "Reads your statement and your spreadsheet",
+    "es": "Lee tu extracto y tu planilla"
+  },
+  "Mande o PDF do banco ou a planilha: o motor acha a data, o valor e o nome de cada linha, tira os códigos do banco e vira lançamento.": {
+    "en": "Send the bank PDF or the spreadsheet: the engine finds the date, amount and name on each line, strips the bank codes and turns it into a transaction.",
+    "es": "Envía el PDF del banco o la planilla: el motor encuentra la fecha, el valor y el nombre de cada línea, quita los códigos del banco y lo convierte en movimiento."
+  },
+  "Extrato da conta corrente": {
+    "en": "Checking account statement",
+    "es": "Extracto de la cuenta corriente"
+  },
+  "Saldo do dia": {
+    "en": "Balance for the day",
+    "es": "Saldo del día"
   }
 }

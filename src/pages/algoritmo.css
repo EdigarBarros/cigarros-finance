@@ -1,13 +1,13 @@
 /* =========================================================================
    O motor do OpusCash (Algoritmo.tsx): o núcleo holográfico dourado num <canvas> e, por cima, os cartões que o
-   componente põe no lugar a cada quadro (transform e opacidade escritos por ele). No .ag-sticky ficam --p0..--p3:
+   componente põe no lugar a cada quadro (transform e opacidade escritos por ele). No .ag-sticky ficam --p0..--p4:
    quanto cada cena está na tela (0 a 1), para o contador e os selos.
    A seção é escura nos dois temas (a luz dourada só brilha no escuro): o fundo vem da cor da página, escurece e volta
    para ela no fim, sem linha nas emendas.
    ========================================================================= */
 .ag {
   --ouro: #ffc46b; --ouro-forte: #ffb04a; --tinta: #fff2dc; --tinta-2: rgba(255, 236, 210, .7); --breu: #060403;
-  position: relative; height: 560vh; color: var(--tinta);
+  position: relative; height: 700vh; color: var(--tinta);
   background: linear-gradient(var(--fundo), var(--breu) 32vh, var(--breu) calc(100% - 32vh), var(--fundo));
 }
 .ag-sticky { position: sticky; top: 0; height: 100vh; height: 100dvh; overflow: hidden; }
@@ -19,19 +19,13 @@
 
 /* ─── os cartões por cima (o componente escreve transform, opacidade e visibilidade) ─── */
 .ag-sobre { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
-.ag-entrada, .ag-compara {
+.ag-compara {
   position: absolute; left: 0; top: 0; visibility: hidden; will-change: transform, opacity;
   color: var(--tinta); background: rgba(22, 14, 5, .8); border: 1px solid rgba(255, 190, 90, .45);
   box-shadow: 0 0 0 4px rgba(255, 170, 60, .07), 0 0 34px -8px rgba(255, 160, 40, .55), 0 18px 34px -20px rgba(0, 0, 0, .8);
 }
-.ag-entrada small, .ag-compara small { color: rgba(255, 225, 180, .62); }
-.ag-entrada > i { display: grid; place-items: center; flex: none; color: var(--ouro); background: rgba(255, 170, 60, .14); box-shadow: inset 0 0 0 1px rgba(255, 190, 90, .3); }
+.ag-compara small { color: rgba(255, 225, 180, .62); }
 
-.ag-entrada { display: inline-flex; align-items: center; gap: 9px; padding: 7px 13px 7px 7px; border-radius: 13px; white-space: nowrap; }
-.ag-entrada > i { width: 28px; height: 28px; border-radius: 9px; }
-.ag-entrada > span { display: grid; line-height: 1.2; }
-.ag-entrada small { font-size: 10.5px; }
-.ag-entrada b { font-size: 13px; font-family: var(--fonte-numeros); }
 
 .ag-compara { display: grid; justify-items: center; gap: 2px; padding: 8px 13px; border-radius: 13px; white-space: nowrap; text-align: center; }
 .ag-compara > span { display: flex; align-items: baseline; gap: 6px; font-size: 11.5px; }
@@ -40,10 +34,10 @@
 .ag-compara.bom b { color: #9df5c9; }
 
 
-/* contador da cena 2 */
+/* contador da cena 3 (o motor calculando) */
 .ag-hud {
   position: absolute; right: clamp(20px, 4vw, 56px); bottom: clamp(28px, 8vh, 80px); display: grid; justify-items: end; gap: 2px;
-  opacity: var(--p1, 0); transform: translateY(calc((1 - var(--p1, 0)) * 16px));
+  opacity: var(--p2, 0); transform: translateY(calc((1 - var(--p2, 0)) * 16px));
 }
 .ag-hud > span { display: inline-flex; align-items: center; gap: 8px; font-size: 11.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ouro); }
 .ag-hud > span i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 12px currentColor; animation: ag-piscar 1.4s ease-in-out infinite; }
@@ -51,10 +45,10 @@
 .ag-hud small { font-size: 12px; color: var(--tinta-2); }
 @keyframes ag-piscar { 50% { opacity: .3; } }
 
-/* selos da cena 4 */
+/* selos da última cena */
 .ag-selos {
   position: absolute; right: clamp(20px, 4vw, 56px); bottom: clamp(24px, 6vh, 64px); display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px;
-  max-width: 560px; opacity: var(--p3, 0); transform: translateY(calc((1 - var(--p3, 0)) * 16px));
+  max-width: 560px; opacity: var(--p4, 0); transform: translateY(calc((1 - var(--p4, 0)) * 16px));
 }
 .ag-selos span {
   display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: 99px; font-size: 12.5px; font-weight: 600; color: var(--tinta-2);
@@ -90,18 +84,16 @@
 
 /* celular: texto em cima, o núcleo embaixo, as respostas numa grade embaixo dele */
 @media (max-width: 900px) {
-  .ag { height: 520vh; }
+  .ag { height: 660vh; }
   .ag-texto { left: 0; right: 0; top: clamp(56px, 9vh, 90px); transform: none; width: auto; padding: 0 22px; text-align: center; justify-items: center; gap: 14px; }
   .ag-rotulo { justify-self: center; }
   .ag-pilha { min-height: 128px; }
   .ag-legenda h2 { font-size: 1.6rem; }
   .ag-legenda p { margin-inline: auto; font-size: .95rem; max-width: 34ch; }
   .ag-sticky::after { background: linear-gradient(180deg, rgba(6, 4, 3, .9) 0, rgba(6, 4, 3, .75) min(250px, 30vh), transparent min(320px, 38vh)); -webkit-mask-image: none; mask-image: none; }
-  .ag-entrada { padding: 5px 10px 5px 5px; }
-  .ag-entrada b { font-size: 11.5px; }
   .ag-compara { padding: 6px 10px; }
   .ag-compara b { font-size: 12px; }
-  .ag-hud { right: 50%; transform: translate(50%, calc((1 - var(--p1, 0)) * 16px)); justify-items: center; bottom: 24px; }
+  .ag-hud { right: 50%; transform: translate(50%, calc((1 - var(--p2, 0)) * 16px)); justify-items: center; bottom: 24px; }
   .ag-hud b { font-size: 30px; }
   .ag-selos { left: 16px; right: 16px; justify-content: center; bottom: 18px; }
   .ag-selos span { font-size: 11px; padding: 6px 10px; }
