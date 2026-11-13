@@ -148,6 +148,11 @@
   .ag-selos { left: 16px; right: 16px; justify-content: center; bottom: 18px; }
   .ag-selos span { font-size: 11px; padding: 6px 10px; }
 }
+/* celular estreito: os três selos em duas linhas */
+@media (max-width: 400px) {
+  .ag-selos { gap: 6px; left: 10px; right: 10px; }
+  .ag-selos span { font-size: 10px; padding: 5px 8px; gap: 5px; }
+}
 
 /* animações reduzidas nas Configurações do OpusCash */
 :root[data-movimento='reduzido'] .ag :is(.ag-hud > span i, .ag-rotulo i, .ag-legenda) { animation: none; transition: none; }
