@@ -427,9 +427,8 @@
   .ap-cena-label p { margin-inline: auto; font-size: .95rem; max-width: 32ch; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .ap-cena-label, .ap-trilho-ponto { transition: none; }
-}
+/* animações reduzidas nas Configurações do OpusCash (o "menos movimento" do Windows não conta, como no resto do app) */
+:root[data-movimento='reduzido'] :is(.ap-cena-label, .ap-trilho-ponto) { transition: none; }
 
 /* =========================================================================
    CTA FINAL

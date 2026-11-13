@@ -3,6 +3,7 @@ import { Icone } from '../components/Icone'
 import { Marca } from '../components/Marca'
 import { tx } from '../lib/textos'
 import { ligarRolagemSuave } from '../lib/rolagemSuave'
+import { semMovimento } from '../lib/tema'
 import { Fundadores } from './Fundadores'
 
 /**
@@ -259,7 +260,8 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
     const medir = () => {
       const w = sticky.clientWidth, h = sticky.clientHeight
       const celular = w <= 900
-      reduzir = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      // a escolha de animações do OpusCash (Configurações); o "menos movimento" do Windows não conta, como no resto do app
+      reduzir = semMovimento()
       giroMax = reduzir ? 0 : celular ? 0.6 : 1 // tela estreita: ângulos mais contidos, senão o bloco em foco sai pela lateral
       if (celular) {
         const topo = Math.min(250, h * 0.3)
