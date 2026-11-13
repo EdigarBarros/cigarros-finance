@@ -27,7 +27,7 @@ let desligado = false
 const visivel = () => document.visibilityState === 'visible'
 const conta = (t: string) => (acumulado[t] ??= { s: 0, i: 0, v: 0 })
 
-const aparelho = () => {
+export const aparelho = () => {
   if (noAppNativo) return 'app_android'
   try {
     return window.matchMedia('(pointer: coarse)').matches ? 'site_celular' : 'site_computador'
@@ -65,6 +65,9 @@ function enviar(saiu = false) {
     }, () => {})
   } catch { /* nunca atrapalha */ }
 }
+
+/** A tela em que a pessoa está agora (o pedido de ajuda leva junto, para o suporte saber de onde veio). */
+export const telaAtual = () => tela
 
 /** A tela que a pessoa está vendo agora ("inicio", "lancar", "configuracoes", "tutorial"...). */
 export function marcarTela(nova: string) {

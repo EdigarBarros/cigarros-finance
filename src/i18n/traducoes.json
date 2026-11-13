@@ -12723,6 +12723,246 @@
     "en": "This file is a receipt (for a single payment), not the bank statement. In your bank app or website, open the account statement and use “Export” or “Download PDF”, or send it as CSV, Excel or OFX.",
     "es": "Este archivo es un comprobante (de un solo pago), no el extracto. En la app o el sitio del banco, abre el extracto de la cuenta y usa “Exportar” o “Descargar PDF”, o envíalo en CSV, Excel u OFX."
   },
+  "há {0} min": {
+    "en": "{0} min ago",
+    "es": "hace {0} min"
+  },
+  "há {0} h": {
+    "en": "{0} h ago",
+    "es": "hace {0} h"
+  },
+  "Resolvido": {
+    "en": "Resolved",
+    "es": "Resuelto"
+  },
+  "Respondido": {
+    "en": "Answered",
+    "es": "Respondido"
+  },
+  "Esperando o suporte": {
+    "en": "Waiting for support",
+    "es": "Esperando al soporte"
+  },
+  "Pedir ajuda": {
+    "en": "Ask for help",
+    "es": "Pedir ayuda"
+  },
+  "Pagamento, algo que não funciona, sua conta ou uma dúvida: a gente responde por aqui.": {
+    "en": "Payment, something not working, your account or a question: we'll answer right here.",
+    "es": "Pago, algo que no funciona, tu cuenta o una duda: te respondemos por aquí."
+  },
+  "Meus pedidos": {
+    "en": "My requests",
+    "es": "Mis solicitudes"
+  },
+  "Em andamento ({0})": {
+    "en": "In progress ({0})",
+    "es": "En curso ({0})"
+  },
+  "Resolvidos ({0})": {
+    "en": "Resolved ({0})",
+    "es": "Resueltas ({0})"
+  },
+  "Nenhum pedido ainda": {
+    "en": "No requests yet",
+    "es": "Aún no hay solicitudes"
+  },
+  "Quando precisar, peça ajuda aqui. Você recebe a resposta nesta mesma tela.": {
+    "en": "Whenever you need, ask for help here. You'll get the answer on this same screen.",
+    "es": "Cuando lo necesites, pide ayuda aquí. Recibirás la respuesta en esta misma pantalla."
+  },
+  "Nenhum pedido em andamento.": {
+    "en": "No requests in progress.",
+    "es": "No hay solicitudes en curso."
+  },
+  "Nenhum pedido resolvido ainda.": {
+    "en": "No resolved requests yet.",
+    "es": "Aún no hay solicitudes resueltas."
+  },
+  "Resposta nova": {
+    "en": "New reply",
+    "es": "Respuesta nueva"
+  },
+  "Sobre o que é?": {
+    "en": "What is it about?",
+    "es": "¿Sobre qué es?"
+  },
+  "Ex.: a tela de metas fica em branco": {
+    "en": "E.g.: the goals screen is blank",
+    "es": "Ej.: la pantalla de metas queda en blanco"
+  },
+  "Ex.: paguei o Pix e não liberou": {
+    "en": "E.g.: I paid with Pix and access wasn't released",
+    "es": "Ej.: pagué con Pix y no se liberó"
+  },
+  "Em poucas palavras": {
+    "en": "In a few words",
+    "es": "En pocas palabras"
+  },
+  "Conte o que aconteceu": {
+    "en": "Tell us what happened",
+    "es": "Cuéntanos qué pasó"
+  },
+  "O que você fez, o que esperava e o que apareceu. Quanto mais detalhe, mais rápido a gente resolve.": {
+    "en": "What you did, what you expected and what showed up. The more detail, the faster we can fix it.",
+    "es": "Qué hiciste, qué esperabas y qué apareció. Cuanto más detalle, más rápido lo resolvemos."
+  },
+  "Escreva com suas palavras.": {
+    "en": "Write it in your own words.",
+    "es": "Escríbelo con tus palabras."
+  },
+  "Vai junto, para ajudar: a tela em que você estava ({0}), o aparelho ({1}) e a versão do app ({2}). Nada dos seus lançamentos.": {
+    "en": "Sent along to help: the screen you were on ({0}), the device ({1}) and the app version ({2}). Nothing from your transactions.",
+    "es": "Se envía junto, para ayudar: la pantalla en la que estabas ({0}), el dispositivo ({1}) y la versión de la app ({2}). Nada de tus movimientos."
+  },
+  "Enviando…": {
+    "en": "Sending…",
+    "es": "Enviando…"
+  },
+  "Mandar pedido": {
+    "en": "Send request",
+    "es": "Enviar solicitud"
+  },
+  "aberto em {0}": {
+    "en": "opened on {0}",
+    "es": "abierta el {0}"
+  },
+  "Suporte OpusCash": {
+    "en": "OpusCash Support",
+    "es": "Soporte OpusCash"
+  },
+  "Recebemos seu pedido. A resposta aparece aqui; você também vê um aviso no botão de suporte.": {
+    "en": "We got your request. The reply shows up here, and you'll also see a sign on the support button.",
+    "es": "Recibimos tu solicitud. La respuesta aparece aquí; también verás un aviso en el botón de soporte."
+  },
+  "Este pedido foi resolvido. Se precisar de mais alguma coisa, é só escrever: ele volta a ficar aberto.": {
+    "en": "This request was resolved. If you need anything else, just write: it opens again.",
+    "es": "Esta solicitud fue resuelta. Si necesitas algo más, solo escribe: vuelve a abrirse."
+  },
+  "Escreva sua mensagem…": {
+    "en": "Write your message…",
+    "es": "Escribe tu mensaje…"
+  },
+  "Mensagem": {
+    "en": "Message",
+    "es": "Mensaje"
+  },
+  "Mandar": {
+    "en": "Send",
+    "es": "Enviar"
+  },
+  "Meu problema foi resolvido": {
+    "en": "My problem was solved",
+    "es": "Mi problema se resolvió"
+  },
+  "Suporte": {
+    "en": "Support",
+    "es": "Soporte"
+  },
+  "Pagamento e assinatura": {
+    "en": "Payment and subscription",
+    "es": "Pago y suscripción"
+  },
+  "Cobrança, Pix, cartão, acesso liberado": {
+    "en": "Charges, Pix, card, access released",
+    "es": "Cobros, Pix, tarjeta, acceso liberado"
+  },
+  "Algo não funciona": {
+    "en": "Something isn't working",
+    "es": "Algo no funciona"
+  },
+  "Tela com erro, botão que não responde, valor errado": {
+    "en": "Screen with an error, button that doesn't respond, wrong amount",
+    "es": "Pantalla con error, botón que no responde, valor equivocado"
+  },
+  "Minha conta": {
+    "en": "My account",
+    "es": "Mi cuenta"
+  },
+  "Login, senha, e-mail, apagar a conta": {
+    "en": "Login, password, email, deleting the account",
+    "es": "Inicio de sesión, contraseña, correo, borrar la cuenta"
+  },
+  "Dúvida de como usar": {
+    "en": "How-to question",
+    "es": "Duda de cómo usar"
+  },
+  "Como fazer alguma coisa no OpusCash": {
+    "en": "How to do something in OpusCash",
+    "es": "Cómo hacer algo en OpusCash"
+  },
+  "Sugestão": {
+    "en": "Suggestion",
+    "es": "Sugerencia"
+  },
+  "Uma ideia para melhorar o app": {
+    "en": "An idea to improve the app",
+    "es": "Una idea para mejorar la app"
+  },
+  "Outro assunto": {
+    "en": "Something else",
+    "es": "Otro asunto"
+  },
+  "Qualquer outra coisa": {
+    "en": "Anything else",
+    "es": "Cualquier otra cosa"
+  },
+  "Você já tem 5 pedidos em andamento. Responda ou encerre um deles antes de abrir outro.": {
+    "en": "You already have 5 requests in progress. Reply to or close one of them before opening another.",
+    "es": "Ya tienes 5 solicitudes en curso. Responde o cierra una de ellas antes de abrir otra."
+  },
+  "Muitas mensagens em pouco tempo. Espere alguns minutos e mande de novo.": {
+    "en": "Too many messages in a short time. Wait a few minutes and send again.",
+    "es": "Demasiados mensajes en poco tiempo. Espera unos minutos y vuelve a enviar."
+  },
+  "Escreva a mensagem.": {
+    "en": "Write the message.",
+    "es": "Escribe el mensaje."
+  },
+  "Escreva um pouco mais sobre o assunto.": {
+    "en": "Write a bit more about the subject.",
+    "es": "Escribe un poco más sobre el asunto."
+  },
+  "O suporte não está disponível agora. Tente de novo em alguns minutos.": {
+    "en": "Support isn't available right now. Try again in a few minutes.",
+    "es": "El soporte no está disponible ahora. Inténtalo de nuevo en unos minutos."
+  },
+  "Não deu para mandar agora. Confira a internet e tente de novo.": {
+    "en": "Couldn't send it now. Check your internet and try again.",
+    "es": "No se pudo enviar ahora. Revisa tu internet e inténtalo de nuevo."
+  },
+  "site no computador": {
+    "en": "website on a computer",
+    "es": "sitio en la computadora"
+  },
+  "site no celular": {
+    "en": "website on a phone",
+    "es": "sitio en el celular"
+  },
+  "app Android": {
+    "en": "Android app",
+    "es": "app de Android"
+  },
+  "site": {
+    "en": "website",
+    "es": "sitio"
+  },
+  "Suporte: 1 resposta nova": {
+    "en": "Support: 1 new reply",
+    "es": "Soporte: 1 respuesta nueva"
+  },
+  "Suporte: {0} respostas novas": {
+    "en": "Support: {0} new replies",
+    "es": "Soporte: {0} respuestas nuevas"
+  },
+  "O suporte respondeu": {
+    "en": "Support replied",
+    "es": "El soporte respondió"
+  },
+  "Suporte: peça ajuda": {
+    "en": "Support: ask for help",
+    "es": "Soporte: pide ayuda"
+  },
   "Novidade": {
     "en": "New",
     "es": "Novedad"

@@ -1,4 +1,6 @@
 const CAMINHOS: Record<string, string> = {
+  inseto: 'M9 7a3 3 0 0 1 6 0M8 9h8a1 1 0 0 1 1 1v4a5 5 0 0 1-10 0v-4a1 1 0 0 1 1-1zM12 9v10M3 13h4M17 13h4M4 8l3 2M20 8l-3 2M4 19l3-2.5M20 19l-3-2.5',
+  conversa: 'M4 4h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H9l-5 4v-4H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1zM8 9h8M8 12.5h5',
   inicio: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
   lista: 'M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01',
   divida: 'M3 6h18v12H3zM3 10h18M7 15h4',

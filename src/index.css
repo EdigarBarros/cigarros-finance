@@ -4334,3 +4334,86 @@ body { top: 0 !important; }
 @media (max-width: 560px) {
   .barra-direita .idioma-menu { top: calc(70px + var(--seguro-topo)); }
 }
+
+/* ---------- suporte (components/Suporte.tsx, migração 33) ---------- */
+.menu-aviso { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; display: grid; place-items: center; font-size: 11.5px; font-weight: 700; color: var(--destaque-texto); background: var(--destaque); }
+.sp-vista { display: grid; gap: 14px; animation: surgir-sem-desfoque .45s var(--mola) backwards; }
+.sp-lista, .sp-form, .sp-conversa { display: grid; gap: 14px; }
+.sp-novo {
+  display: flex; align-items: center; gap: 14px; width: 100%; padding: 16px; border-radius: 18px; text-align: left; color: var(--texto);
+  border: 1px solid color-mix(in srgb, var(--destaque) 40%, transparent);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--destaque) 16%, transparent), transparent 70%), var(--superficie-2);
+  transition: transform .45s var(--mola-salto), border-color .25s;
+}
+.sp-novo:hover { transform: translateY(-2px); border-color: var(--destaque); }
+.sp-novo:active { transform: scale(.98); }
+.sp-novo > span:nth-child(2) { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.sp-novo strong { font-size: 16px; }
+.sp-novo small { font-size: 13px; color: var(--texto-2); line-height: 1.4; }
+.sp-novo > svg { color: var(--texto-3); flex: none; }
+.sp-novo-icone { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 14px; color: var(--destaque-texto); background: var(--destaque); box-shadow: 0 10px 22px -12px var(--destaque); }
+.sp-pedidos { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.sp-pedidos li { --c: var(--destaque); animation: surgir-sem-desfoque .45s var(--mola) backwards; animation-delay: calc(var(--i, 0) * 35ms); }
+.sp-pedidos button {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; border-radius: 16px; text-align: left; color: var(--texto);
+  border: 1px solid var(--borda); background: var(--superficie-2); transition: border-color .25s, background .25s;
+}
+.sp-pedidos button:hover { border-color: color-mix(in srgb, var(--c) 45%, var(--borda)); }
+.sp-pedidos button.nova { border-color: color-mix(in srgb, var(--destaque) 55%, transparent); background: color-mix(in srgb, var(--destaque) 8%, var(--superficie-2)); }
+.sp-cat-icone { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 13px; color: var(--c); background: color-mix(in srgb, var(--c) 15%, var(--superficie)); }
+.sp-pedido-texto { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.sp-pedido-texto strong { font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-pedido-texto small { font-size: 12.5px; color: var(--texto-3); }
+.sp-situacao { flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.sp-situacao.aberto { color: var(--aviso-texto); background: color-mix(in srgb, var(--divida) 15%, transparent); }
+.sp-situacao.respondido { color: var(--caixa); background: color-mix(in srgb, var(--caixa) 14%, transparent); }
+.sp-situacao.resolvido { color: var(--entrada); background: color-mix(in srgb, var(--entrada) 14%, transparent); }
+.sp-nova { flex: none; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--destaque-texto); background: var(--destaque); animation: sp-pulsa 2.4s ease-in-out infinite; }
+@keyframes sp-pulsa { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--destaque) 20%, transparent); } }
+.sp-vazio { display: grid; justify-items: center; gap: 6px; padding: 20px 8px 8px; text-align: center; color: var(--texto-2); }
+.sp-vazio strong { color: var(--texto); font-size: 16px; }
+.sp-vazio p { margin: 0; max-width: 340px; font-size: 14px; line-height: 1.5; }
+.sp-vazio-icone { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; color: var(--destaque); background: var(--destaque-suave); animation: dv-flutua 3.2s ease-in-out infinite; }
+.sp-nada { margin: 0; padding: 10px 2px; color: var(--texto-3); font-size: 14px; }
+.sp-voltar { justify-self: start; font-size: 14px; }
+.sp-rotulo { margin: 0; font-size: 13px; font-weight: 600; color: var(--texto-2); }
+.sp-categorias { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.sp-categorias .opcao { padding: 10px 12px; }
+.sp-categorias .opcao small { font-size: 12px; line-height: 1.35; }
+.sp-campos { display: grid; gap: 12px; animation: surgir-sem-desfoque .4s var(--mola) backwards; }
+.sp-campos label { display: grid; gap: 6px; font-size: 13px; font-weight: 500; color: var(--texto-2); }
+.sp-campos label small { color: var(--texto-3); font-weight: 400; }
+.sp-campos input, .sp-campos textarea, .sp-escrever textarea {
+  width: 100%; padding: 12px 14px; border-radius: var(--raio-p); border: 1px solid var(--borda); background: var(--superficie-2);
+  color: var(--texto); font: inherit; outline: none; resize: vertical; transition: border-color .2s, box-shadow .2s;
+}
+.sp-campos input:focus, .sp-campos textarea:focus, .sp-escrever textarea:focus { border-color: var(--destaque); box-shadow: 0 0 0 4px var(--foco); }
+.sp-contexto { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: 12px; font-size: 12.5px; line-height: 1.45; color: var(--texto-2); background: var(--preench-4); }
+.sp-contexto svg { flex: none; margin-top: 1px; color: var(--destaque); }
+.sp-enviar { justify-self: end; }
+.sp-conversa-topo { display: flex; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--separador); }
+.sp-conversa-topo > div { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.sp-conversa-topo strong { font-size: 15.5px; overflow-wrap: anywhere; }
+.sp-conversa-topo small { font-size: 12.5px; color: var(--texto-3); }
+.sp-mensagens { display: grid; gap: 10px; max-height: min(46vh, 420px); overflow-y: auto; padding: 4px 2px; overscroll-behavior: contain; }
+.sp-msg { display: flex; gap: 8px; align-items: flex-end; animation: sp-balao .45s var(--mola-salto) backwards; animation-delay: calc(var(--i, 0) * 40ms); }
+@keyframes sp-balao { from { opacity: 0; transform: translateY(8px) scale(.96); } }
+.sp-msg.pessoa { justify-content: flex-end; }
+.sp-msg-quem .marca { padding: 0; }
+.sp-msg-quem .marca-nome { display: none; }
+.sp-msg-quem .marca-simbolo { width: 30px; }
+.sp-balao { max-width: 82%; padding: 10px 14px; border-radius: 18px; background: var(--superficie-2); border: 1px solid var(--borda); }
+.sp-msg.suporte .sp-balao { border-bottom-left-radius: 6px; }
+.sp-msg.pessoa .sp-balao { border-bottom-right-radius: 6px; color: var(--destaque-texto); background: var(--destaque); border-color: transparent; }
+.sp-balao p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14.5px; line-height: 1.45; }
+.sp-balao small { display: block; margin-top: 4px; font-size: 11px; opacity: .7; }
+.sp-aguarde, .sp-resolvido { display: flex; gap: 8px; align-items: center; margin: 4px 0 0; padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.4; color: var(--texto-2); background: var(--preench-4); }
+.sp-resolvido { color: var(--entrada); background: color-mix(in srgb, var(--entrada) 10%, transparent); }
+.sp-escrever { display: flex; gap: 8px; align-items: flex-end; }
+.sp-escrever textarea { flex: 1; min-height: 48px; max-height: 160px; }
+.sp-escrever .btn { height: 48px; width: 48px; padding: 0; flex: none; }
+.sp-encerrar { justify-self: center; font-size: 13.5px; }
+@media (max-width: 560px) {
+  .sp-categorias { grid-template-columns: 1fr; }
+  .sp-mensagens { max-height: 52vh; }
+}
