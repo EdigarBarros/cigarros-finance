@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Icone } from '../components/Icone'
 import { MESES_NOME } from '../lib/format'
 import { semMovimento } from '../lib/tema'
 import { tx } from '../lib/textos'
 import { ANO } from './apresentacaoCena'
+import { alturaIdeal, desenharTela, type TelaPronta } from './algoritmoTela'
 import './algoritmo.css'
 
 /**
@@ -12,7 +13,8 @@ import './algoritmo.css'
  *   1. os dados entram: fragmentos soltos chegam de todo lado e se juntam até formar a esfera;
  *   2. o motor calcula: a esfera gira, se deforma em ondas e acelera;
  *   3. compara: ela se desmancha e os fragmentos se arrumam num gráfico 3D dos meses (entrou × saiu, com a média);
- *   4. responde: os fragmentos viram a própria tela do Consultor, com a nota e o plano de ação.
+ *   4. responde: os fragmentos pousam nos traços da tela do Consultor (as letras, o círculo da nota, as barras) e ela
+ *      acende de cima para baixo no lugar deles, no mesmo <canvas> (algoritmoTela.ts).
  *
  * Cada fragmento tem um lugar em cada forma; o desenho mistura as formas conforme o scroll, com um atraso por fragmento
  * (a mudança passa como uma onda) e um redemoinho no meio do caminho. Tudo num <canvas> somando luz.
@@ -48,29 +50,6 @@ const COMPARA: { mes: number; x: string; y: string; r: string; bom?: boolean }[]
   { mes: 8, x: MESES_NOME[8], y: tx('sua média'), r: tx('saiu mais que entrou') },
 ]
 
-/** A tela do fim (cena 4): a mesma caixa onde os fragmentos se juntam (px de desenho). */
-const TELA = { w: 620, h: 400 }
-/**
- * O molde da tela para os fragmentos (px de desenho, a partir do centro; oy desloca tudo em y): a moldura, a linha
- * embaixo do cabeçalho, o círculo da nota e as linhas (pilares e plano). No computador é fixo; no celular sai das
- * medidas da tela de verdade, que lá se ajusta ao espaço que sobra.
- */
-interface Molde { w: number; h: number; oy: number; nota: [number, number, number]; faixa: number; linhas: { y: number; x0: number; x1: number }[] }
-const MOLDE_PC: Molde = {
-  w: TELA.w, h: TELA.h, oy: 0, nota: [-TELA.w / 2 + 84, -50, 56], faixa: -TELA.h / 2 + 50,
-  linhas: Array.from({ length: 6 }, (_, i) => ({ y: -TELA.h / 2 + 96 + i * 46, x0: -TELA.w / 2 + 230, x1: -TELA.w / 2 + 590 })),
-}
-const PILARES = [
-  { nome: tx('Sobra'), v: 0.78, c: '#9df5c9' }, { nome: tx('Reserva'), v: 0.52, c: '#7cc8ff' },
-  { nome: tx('Dívidas'), v: 0.44, c: '#ffc46b' }, { nome: tx('Cartão'), v: 0.81, c: '#d7a6ff' },
-  { nome: tx('Gastos'), v: 0.67, c: '#ff9a8a' }, { nome: tx('Metas'), v: 0.71, c: '#9df5c9' },
-]
-const PLANO = [
-  { t: tx('Adiante o Empréstimo pessoal'), d: tx('a dívida mais cara') },
-  { t: tx('Vai sobrar R$ 1.937'), d: tx('previsão para o dia 31') },
-  { t: tx('Cancele 3 assinaturas'), d: tx('R$ 418 a mais no ano') },
-]
-
 type V3 = [number, number, number]
 /** Sorteio sempre igual (a cena é a mesma a cada visita). */
 function sorteio(semente: number) {
@@ -96,7 +75,7 @@ interface Frag {
 }
 
 /** Os fragmentos e o lugar de cada um em cada forma. */
-function montar(N: number, M: Molde) {
+function montar(N: number, pontos: Float32Array, k4: number, oy: number) {
   const r = sorteio(31)
   const fr: Frag[] = []
   // gráfico: colunas de fragmentos, uma por mês e por série (entrou na frente, saiu atrás), mais a linha da média
@@ -137,23 +116,8 @@ function montar(N: number, M: Molde) {
     } else {
       barra = [(r() - 0.5) * (LARGO_GRAF + 60), BASE_GRAF + 6 + r() * 4, (r() - 0.5) * 120]
     }
-    // tela: a moldura, a faixa do topo, o círculo da nota à esquerda e as linhas do plano à direita
-    let tela: V3
-    const t = r(), W = M.w / 2, H = M.h / 2
-    if (t < 0.34) {
-      const p = r() * 2 * (M.w + M.h)
-      tela = p < M.w ? [p - W, -H, 0] : p < M.w + M.h ? [W, p - M.w - H, 0] : p < 2 * M.w + M.h ? [W - (p - M.w - M.h), H, 0] : [-W, H - (p - 2 * M.w - M.h), 0]
-    } else if (t < 0.46) {
-      tela = [-W + 20 + r() * (M.w - 40), M.faixa + (r() - 0.5) * 2, 0]
-    } else if (t < 0.66) {
-      // o círculo da nota, no mesmo lugar e tamanho do círculo da tela de verdade, que aparece por cima
-      const a = r() * Math.PI * 2, [nx, ny, nr] = M.nota
-      tela = [nx + Math.cos(a) * nr, ny + Math.sin(a) * nr, 0]
-    } else {
-      const l = M.linhas[Math.floor(r() * M.linhas.length)]
-      tela = [l.x0 + r() * (l.x1 - l.x0), l.y + (r() - 0.5) * 2, 0]
-    }
-    tela[1] += M.oy
+    // tela: um ponto dos traços da tela do Consultor (sorteados em algoritmoTela.ts), em px de desenho
+    const tela: V3 = [pontos[i * 2] / k4, pontos[i * 2 + 1] / k4 + oy, 0]
     fr.push({
       // a maioria são traços e pontos; uns 12% são placas maiores (os blocos de dados do holograma)
       solto, esfera: [teta, fi, raio], barra, tela, atraso: r() * 0.35,
@@ -216,38 +180,19 @@ export function Algoritmo() {
     const n = CENAS.length
     const entradas = [...sticky.querySelectorAll<HTMLElement>('.ag-entrada')]
     const comparas = [...sticky.querySelectorAll<HTMLElement>('.ag-compara')]
-    const painel = sticky.querySelector<HTMLElement>('.ag-tela')!
     const contador = sticky.querySelector<HTMLElement>('[data-relacoes]')
     const sprHalo = brilho(256, [[0, 'rgba(255,200,110,0.55)'], [0.25, 'rgba(255,150,40,0.22)'], [0.6, 'rgba(255,120,20,0.06)'], [1, 'rgba(255,100,10,0)']])
     const sprPonto = brilho(48, [[0, 'rgba(255,248,225,1)'], [0.2, 'rgba(255,200,90,0.9)'], [0.55, 'rgba(255,150,40,0.22)'], [1, 'rgba(255,130,20,0)']])
     const sprBokeh = brilho(96, [[0, 'rgba(255,170,50,0.18)'], [0.7, 'rgba(255,165,45,0.22)'], [0.86, 'rgba(255,195,90,0.3)'], [1, 'rgba(255,140,30,0)']])
 
     let W = 0, H = 0, dpr = 1, cx = 0, cy = 0, esc = 1, celular = false, reduzir = false
-    let fr: Frag[] = [], molde = MOLDE_PC, chaveMolde = ''
-    // no celular a tela de verdade tem largura fixa (LARG_CEL) e é escalada (escTela) para caber entre o texto e os
-    // selos, com o centro em yTela
-    const LARG_CEL = 340
-    let escTela = 1, yTela = 0
+    let fr: Frag[] = [], chaveTela = ''
+    // a tela do Consultor (cena 4): desenhada em px de CSS, centrada em (cx, yTela). No computador fica no lugar da
+    // esfera; no celular, entre o texto e os selos
+    let tela: TelaPronta | null = null, yTela = 0
     const texto = sticky.querySelector<HTMLElement>('.ag-texto')!, selos = sticky.querySelector<HTMLElement>('.ag-selos')!
-    const moldeDoCelular = (): Molde => {
-      painel.style.width = `${LARG_CEL}px`; painel.style.height = 'auto'
-      const w0 = painel.offsetWidth, h0 = painel.offsetHeight
-      const topo = texto.getBoundingClientRect().bottom - sticky.getBoundingClientRect().top + 14
-      const fundo = H - selos.offsetHeight - 30
-      escTela = Math.min((W - 24) / w0, (fundo - topo) / h0, 1.2)
-      yTela = (topo + fundo) / 2
-      const k4 = esc * CAM[3].zoom, d = escTela / k4
-      const meio = (el: HTMLElement) => [(el.offsetLeft + el.offsetWidth / 2 - w0 / 2) * d, (el.offsetTop + el.offsetHeight / 2 - h0 / 2) * d] as const
-      const nota = painel.querySelector<HTMLElement>('.ag-nota')!, cab = painel.querySelector<HTMLElement>('header')!
-      const [nx, ny] = meio(nota)
-      return {
-        w: w0 * d, h: h0 * d, oy: (yTela - cy) / k4, nota: [nx, ny, (nota.offsetWidth / 2) * 0.92 * d],
-        faixa: (cab.offsetTop + cab.offsetHeight - h0 / 2) * d,
-        linhas: [...painel.querySelectorAll<HTMLElement>('.ag-pilares li, .ag-plano li')].map((el) => ({
-          y: (el.offsetTop + el.offsetHeight / 2 - h0 / 2) * d, x0: (el.offsetLeft - w0 / 2) * d, x1: (el.offsetLeft + el.offsetWidth - w0 / 2) * d,
-        })),
-      }
-    }
+    const estilo = getComputedStyle(document.documentElement)
+    const fonte = (v: string, padrao: string) => estilo.getPropertyValue(v).trim() || padrao
     const medir = () => {
       reduzir = semMovimento()
       W = sticky.clientWidth; H = sticky.clientHeight; celular = W <= 900
@@ -263,10 +208,24 @@ export function Algoritmo() {
       }
       // menos fragmentos em tela pequena (desenha menos e fica igual de denso)
       const N = celular ? 1100 : 1700
-      molde = celular ? moldeDoCelular() : MOLDE_PC
-      if (!celular) { painel.style.width = ''; painel.style.height = '' }
-      const chave = `${N}|${molde.w.toFixed(0)}|${molde.h.toFixed(0)}|${molde.oy.toFixed(0)}`
-      if (chave !== chaveMolde) { chaveMolde = chave; fr = montar(N, molde) }
+      let tw: number, th: number
+      if (celular) {
+        const topo = texto.getBoundingClientRect().bottom - sticky.getBoundingClientRect().top + 14
+        const fundo = H - selos.offsetHeight - 30
+        tw = Math.min(W - 24, 420); th = Math.max(300, Math.min(fundo - topo, alturaIdeal(tw))); yTela = (topo + fundo) / 2
+      } else {
+        const esq = Math.min(460, W * 0.36), aw = W - esq - 40
+        tw = Math.min(aw * 0.92, 700); th = Math.min(alturaIdeal(tw), H * 0.8); yTela = cy
+      }
+      tw = Math.round(tw); th = Math.round(th)
+      const k4 = esc * CAM[3].zoom
+      const chave = `${N}|${tw}|${th}|${yTela.toFixed(0)}|${k4.toFixed(4)}|${document.documentElement.lang}`
+      if (chave !== chaveTela) {
+        chaveTela = chave
+        const q = Math.min(window.devicePixelRatio || 1, 2)
+        tela = desenharTela(tw, th, q, N, { texto: fonte('--fonte', 'Inter, sans-serif'), titulo: fonte('--fonte-titulo', 'Inter, sans-serif'), numeros: fonte('--fonte-numeros', 'Inter, sans-serif') }, sorteio(7))
+        fr = montar(N, tela.pontos, k4, (yTela - cy) / k4)
+      }
     }
 
     let yaw = 0, pitch = 0, zoom = 1
@@ -284,7 +243,7 @@ export function Algoritmo() {
     const ultimo = new Map<string, string>()
     const por = (k: string, v: string, f: () => void) => { if (ultimo.get(k) !== v) { ultimo.set(k, v); f() } }
     let cenaAtual = -1, giro = 0, antesGiro = 0
-    const xs = new Float32Array(2000), ys = new Float32Array(2000), ss = new Float32Array(2000)
+    const xs = new Float32Array(2000), ys = new Float32Array(2000), ss = new Float32Array(2000), vs = new Float32Array(2000)
 
     const desenhar = (p: number, tempo: number) => {
       const pres: number[] = [], and: number[] = []
@@ -295,8 +254,8 @@ export function Algoritmo() {
       }
       const fpos = limitar(p * n - 0.5, 0, n - 1), i0 = Math.floor(fpos), i1 = Math.min(n - 1, i0 + 1), f = suave(0, 1, fpos - i0)
       const t = reduzir ? 0 : tempo, s = t / 1000
-      // a câmera balança menos na última cena: a tela precisa ficar de frente
-      const bal = 1 - pres[3] * 0.92
+      // a câmera para de balançar na última cena: a tela fica de frente, no plano dela
+      const bal = 1 - pres[3]
       yaw = mistura(CAM[i0].yaw, CAM[i1].yaw, f) + Math.sin(t * 0.00023) * 0.1 * bal
       pitch = mistura(CAM[i0].pitch, CAM[i1].pitch, f) + Math.cos(t * 0.00017) * 0.05 * bal
       zoom = mistura(CAM[i0].zoom, CAM[i1].zoom, f)
@@ -308,7 +267,7 @@ export function Algoritmo() {
 
       // as quatro formas ao longo do scroll: solto → esfera → gráfico → tela. Cada fragmento muda com um atraso
       const e0 = and[0] * 1.05, g0 = limitar((p - 0.47) / 0.18), v0 = limitar((p - 0.72) / 0.16)
-      const forma = (fx: Frag): V3 => {
+      const forma = (fx: Frag, i: number): V3 => {
         const [teta, fi, raio] = fx.esfera
         const onda = 1 + calc * 0.13 * Math.sin(3 * fi + s * 2.3) * Math.cos(2 * teta - s * 1.7)
         const tt = teta + giro
@@ -317,6 +276,7 @@ export function Algoritmo() {
         const e = suave(fx.atraso * 0.8, fx.atraso * 0.8 + 0.55, e0)
         const g = suave(fx.atraso, fx.atraso + 0.55, g0)
         const v = suave(fx.atraso, fx.atraso + 0.55, v0)
+        vs[i] = v
         let x = mistura(fx.solto[0], ex, e), y = mistura(fx.solto[1], ey, e), z = mistura(fx.solto[2], ez, e)
         x = mistura(x, fx.barra[0], g); y = mistura(y, fx.barra[1], g); z = mistura(z, fx.barra[2], g)
         x = mistura(x, fx.tela[0], v); y = mistura(y, fx.tela[1], v); z = mistura(z, fx.tela[2], v)
@@ -365,10 +325,17 @@ export function Algoritmo() {
         anel(RAIO * 0.62, 0.6, 0.9, -giro * 1.3, 0.75 * esferaCheia, 2.4, true)
       }
 
+      // a tela acende de cima para baixo depois que os fragmentos pousam: acima da linha de luz já é a tela; os
+      // fragmentos que ficaram para trás dela somem, os que estão logo abaixo da linha brilham mais
+      const kT = esc * zoom / (esc * CAM[3].zoom)
+      const tlx = cx - (tela ? tela.w : 0) * kT / 2, tly = yTela + (centro.y - cy) - (tela ? tela.h : 0) * kT / 2
+      const acende = suave(0.885, 0.96, p)
+      const yLuz = tela ? tly - 30 + acende * (tela.h * kT + 60) : -1e9
+
       // os fragmentos: projeta todos, depois pinta por tom (menos trocas de cor)
       const N = fr.length
       for (let i = 0; i < N; i++) {
-        const [x, y, z] = forma(fr[i])
+        const [x, y, z] = forma(fr[i], i)
         const P = proj(x, y, z)
         xs[i] = P.x; ys[i] = P.y; ss[i] = P.s
       }
@@ -380,7 +347,11 @@ export function Algoritmo() {
       for (let i = 0; i < N; i++) {
         const fx = fr[i]
         // alguns piscam (como no holograma): sobem de tom de tempos em tempos
-        const tom = reduzir ? fx.brilho : Math.min(4, fx.brilho + ((i * 7 + pisca) % 11 === 0 ? 2 : 0))
+        let tom = reduzir ? fx.brilho : Math.min(4, fx.brilho + ((i * 7 + pisca) % 11 === 0 ? 2 : 0))
+        if (acende > 0 && vs[i] > 0.98) {
+          if (ys[i] < yLuz - 3) continue
+          if (ys[i] < yLuz + 34) tom = 4
+        }
         let chave = `d${tom}`
         if (fx.cat < 3) {
           const ini = 0.585 + (fx.barra[0] / LARGO_GRAF + 0.5) * 0.06 + fx.atraso * 0.03
@@ -396,13 +367,15 @@ export function Algoritmo() {
         if (chave[0] === 'd') ctx.fillStyle = TONS[Number(chave.slice(1))]
         else { const [c, tom, passo] = chave.split('.').map(Number); ctx.fillStyle = PALETA[c][tom][passo] }
         for (const i of idx) {
-          const fx = fr[i], k = ss[i] * esc * zoom
+          // pousados na tela, ficam menores (viram os traços das letras)
+          const fx = fr[i], k = ss[i] * esc * zoom * (1 - 0.35 * vs[i])
           ctx.fillRect(xs[i] - (fx.w * k) / 2, ys[i] - (fx.h * k) / 2, fx.w * k + 0.6, fx.h * k + 0.6)
         }
       })
       // pontos mais quentes com brilho (um a cada 14 fragmentos)
       ctx.globalAlpha = 0.6
       for (let i = 0; i < N; i += 14) {
+        if (acende > 0 && vs[i] > 0.98 && ys[i] < yLuz - 3) continue
         const tam = (10 + 8 * Math.sin(s * 2 + fr[i].fase)) * ss[i] * esc
         ctx.drawImage(sprPonto, xs[i] - tam / 2, ys[i] - tam / 2, tam, tam)
       }
@@ -416,6 +389,43 @@ export function Algoritmo() {
         ctx.strokeStyle = `rgba(255,220,150,${0.8 * esferaCheia})`; ctx.lineWidth = 2
         ctx.beginPath(); ctx.ellipse(centro.x, centro.y, 34 * esc * zoom, 30 * esc * zoom, 0, 0, Math.PI * 2); ctx.stroke()
         ctx.globalAlpha = 1
+      }
+
+      // a tela do Consultor: a parte já acesa (acima da linha de luz), a linha e o rastro dourado logo acima dela
+      if (tela && acende > 0) {
+        const tw = tela.w * kT, th = tela.h * kT, m = tela.m * kT
+        const corte = Math.min(yLuz, tly + th + m)
+        ctx.globalCompositeOperation = 'source-over'
+        ctx.save()
+        ctx.beginPath(); ctx.rect(tlx - m, tly - m, tw + m * 2, corte - (tly - m)); ctx.clip()
+        ctx.drawImage(tela.img, tlx - m, tly - m, tw + m * 2, th + m * 2)
+        ctx.restore()
+        ctx.globalCompositeOperation = 'lighter'
+        if (acende < 1) {
+          const y0 = Math.max(tly, yLuz - 70), y1 = Math.min(tly + th, yLuz)
+          if (y1 > y0) {
+            const rastro = ctx.createLinearGradient(0, yLuz - 70, 0, yLuz)
+            rastro.addColorStop(0, 'rgba(255,170,60,0)'); rastro.addColorStop(1, 'rgba(255,190,90,0.38)')
+            ctx.fillStyle = rastro; ctx.fillRect(tlx, y0, tw, y1 - y0)
+          }
+          if (yLuz > tly - 10 && yLuz < tly + th + 10) {
+            const lado = ctx.createLinearGradient(tlx - 40, 0, tlx + tw + 40, 0)
+            lado.addColorStop(0, 'rgba(255,200,110,0)'); lado.addColorStop(0.15, 'rgba(255,220,150,0.95)')
+            lado.addColorStop(0.85, 'rgba(255,220,150,0.95)'); lado.addColorStop(1, 'rgba(255,200,110,0)')
+            ctx.fillStyle = lado; ctx.fillRect(tlx - 40, yLuz - 1.5, tw + 80, 3)
+            ctx.globalAlpha = 0.5; ctx.fillRect(tlx - 40, yLuz - 6, tw + 80, 12); ctx.globalAlpha = 1
+          }
+        } else if (!reduzir) {
+          // pronta: de tempos em tempos um reflexo atravessa o vidro
+          const ciclo = (s % 5.5) / 1.6
+          if (ciclo < 1) {
+            const x = tlx - tw * 0.4 + ciclo * tw * 1.8
+            const reflexo = ctx.createLinearGradient(x - 120, tly, x + 120, tly + th)
+            reflexo.addColorStop(0, 'rgba(255,220,160,0)'); reflexo.addColorStop(0.5, 'rgba(255,220,160,0.07)'); reflexo.addColorStop(1, 'rgba(255,220,160,0)')
+            ctx.save(); ctx.beginPath(); ctx.roundRect(tlx, tly, tw, th, 20 * kT); ctx.clip()
+            ctx.fillStyle = reflexo; ctx.fillRect(tlx, tly, tw, th); ctx.restore()
+          }
+        }
       }
 
       // bokeh por cima, poucos e grandes
@@ -454,22 +464,6 @@ export function Algoritmo() {
           comparas[i].style.opacity = fc[i].toFixed(3)
           comparas[i].style.visibility = fc[i] < 0.01 ? 'hidden' : 'visible'
         })
-      })
-      // cena 4: a tela de verdade aparece por cima da moldura de fragmentos, do mesmo tamanho
-      const ft = suave(0.86, 0.95, p)
-      // a tela tem o tamanho da moldura na tela (largura e altura de verdade, sem escalar as letras)
-      const k = centro.s * esc * zoom
-      por('tela', `${centro.x.toFixed(1)},${centro.y.toFixed(1)},${k.toFixed(4)},${ft.toFixed(3)},${escTela},${yTela}`, () => {
-        if (celular) {
-          // celular: largura fixa, altura do conteúdo, escalada para caber (não corta)
-          painel.style.transform = `translate3d(${(W / 2).toFixed(1)}px, ${yTela.toFixed(1)}px, 0) translate(-50%, -50%) scale(${escTela.toFixed(4)})`
-        } else {
-          painel.style.width = `${(TELA.w * k).toFixed(1)}px`; painel.style.height = `${(TELA.h * k).toFixed(1)}px`
-          painel.style.transform = `translate3d(${centro.x.toFixed(1)}px, ${centro.y.toFixed(1)}px, 0) translate(-50%, -50%)`
-        }
-        painel.style.opacity = ft.toFixed(3)
-        painel.style.visibility = ft < 0.01 ? 'hidden' : 'visible'
-        painel.style.setProperty('--f', ft.toFixed(3))
       })
       pres.forEach((v, i) => por(`p${i}`, v.toFixed(3), () => sticky.style.setProperty(`--p${i}`, v.toFixed(3))))
       const rel = Math.round(2418 * limitar(and[1] * 1.3))
@@ -536,25 +530,6 @@ export function Algoritmo() {
               <span><small>{c.x}</small><em>×</em><small>{c.y}</small></span><b>{c.r}</b>
             </span>
           ))}
-          {/* a tela em que os fragmentos se transformam (cena 4) */}
-          <div className="ag-tela">
-            <header><i><Icone nome="bussola" tamanho={16} /></i><b>{tx('Consultor')}</b><span className="ag-pronta"><i />{tx('Análise pronta')}</span></header>
-            <div className="ag-tela-meio">
-              <div className="ag-nota">
-                <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="42" className="fundo" /><circle cx="50" cy="50" r="42" pathLength={1} className="cheio" /></svg>
-                <b>72</b><small>{tx('Boa')}</small>
-              </div>
-              <div className="ag-tela-dir">
-                <ul className="ag-pilares">
-                  {PILARES.map((p, i) => <li key={p.nome} style={{ '--c': p.c, '--v': p.v, '--i': i } as CSSProperties}><span>{p.nome}</span><i><b /></i></li>)}
-                </ul>
-                <strong>{tx('Plano de ação')}</strong>
-                <ol className="ag-plano">
-                  {PLANO.map((p, i) => <li key={p.t} style={{ '--i': i } as CSSProperties}><span>{i + 1}</span><div><b>{p.t}</b><small>{p.d}</small></div></li>)}
-                </ol>
-              </div>
-            </div>
-          </div>
           <div className="ag-hud">
             <span><i />{tx('Cruzando dados')}</span>
             <b data-relacoes>0</b><small>{tx('relações')}</small>
