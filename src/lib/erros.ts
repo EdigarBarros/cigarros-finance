@@ -1,4 +1,4 @@
-import { VERSAO } from './atualizacao'
+import { ehErroDeVersao, VERSAO, versaoNovaNecessaria } from './atualizacao'
 import { supabase } from './supabase'
 
 /**
@@ -10,6 +10,12 @@ const vistos = new Set<string>()
 export function registrarErro(erro: unknown, onde: string) {
   try {
     const e = erro instanceof Error ? erro : new Error(String(erro))
+    // saiu versão nova e esta aba ainda pedia um pedaço da antiga (em qualquer lugar, não só nas telas): não é defeito,
+    // é só atualizar. O app recarrega na hora certa (lib/atualizacao.ts).
+    if (ehErroDeVersao(e)) { versaoNovaNecessaria(); return }
+    // "Script error." é o navegador escondendo um erro de um script de outro site (o tradutor do Google, por exemplo):
+    // não traz mensagem, linha nem arquivo, então não há o que consertar aqui
+    if (/^script error\.?$/i.test(e.message.trim())) return
     const mensagem = e.message.slice(0, 500) || 'erro sem mensagem'
     if (vistos.size >= 5 || vistos.has(mensagem)) return
     vistos.add(mensagem)

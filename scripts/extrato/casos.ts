@@ -599,7 +599,21 @@ export async function rodar(filtro?: string): Promise<number> {
       if (filtro) for (const l of lidas) console.log(`      · ${fmt(l)}${l.revisar ? `  [${l.revisar}]` : ''}`)
     }
   }
+  // pistas de quando nada é lido (lib/extrato.ts → pistasDoTexto): comprovante não é extrato; documento qualquer não é comprovante
+  let pistasCertas = 0
+  const PISTAS: [string, string, boolean][] = [
+    ['comprovante de Pix', 'Comprovante de transferência\nPix enviado\nData e hora: 12/11/2026 14:32\nValor: R$ 150,00\nDestino: Fulano de Tal\nInstituição: Banco Exemplo\nID da transação: E000000000000', true],
+    ['documento sem lançamentos', 'Contrato de prestação de serviços\nAs partes acima qualificadas\nresolvem firmar o presente contrato\nCláusula primeira: do objeto', false],
+  ]
+  for (const [nome, texto, comprovante] of PISTAS) {
+    if (filtro && !`pistas ${nome}`.includes(filtro)) continue
+    const r = await lerExtrato(new File([texto], 'arquivo.txt'), ANO)
+    const certo = r.linhas.length === 0 && r.pistas.comprovante === comprovante
+    if (certo) pistasCertas++
+    else { falhas++; console.log(`✗ pistas ${nome}: leu ${r.linhas.length} lançamentos, comprovante=${r.pistas.comprovante} (esperava ${comprovante})`) }
+  }
   const total = CASOS.filter((c) => !filtro || c.nome.includes(filtro)).length
-  console.log(`\n${total - falhas} de ${total} casos certos`)
+  const erradosDasPistas = PISTAS.length - pistasCertas
+  console.log(`\n${total - (falhas - erradosDasPistas)} de ${total} casos certos · pistas: ${pistasCertas} de ${PISTAS.length}`)
   return falhas
 }

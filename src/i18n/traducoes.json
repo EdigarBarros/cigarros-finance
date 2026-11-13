@@ -12714,5 +12714,13 @@
   "O pagamento é feito na página segura do Stripe. No cartão, você cancela quando quiser, sem multa.": {
     "en": "Payment is made on Stripe's secure page. With the card, you can cancel anytime, no penalty.",
     "es": "El pago se hace en la página segura de Stripe. Con tarjeta, cancelas cuando quieras, sin multa."
+  },
+  "Não achei lançamentos nesse arquivo. Confira se é o extrato (com data e valor de cada movimentação).": {
+    "en": "I couldn't find any transactions in this file. Check that it's the bank statement (with the date and amount of each transaction).",
+    "es": "No encontré movimientos en este archivo. Revisa que sea el extracto (con la fecha y el valor de cada movimiento)."
+  },
+  "Esse arquivo é um comprovante (de um pagamento só), não o extrato. No app ou site do banco, abra o extrato da conta e use “Exportar” ou “Baixar PDF”, ou envie em CSV, Excel ou OFX.": {
+    "en": "This file is a receipt (for a single payment), not the bank statement. In your bank app or website, open the account statement and use “Export” or “Download PDF”, or send it as CSV, Excel or OFX.",
+    "es": "Este archivo es un comprobante (de un solo pago), no el extracto. En la app o el sitio del banco, abre el extracto de la cuenta y usa “Exportar” o “Descargar PDF”, o envíalo en CSV, Excel u OFX."
   }
 }

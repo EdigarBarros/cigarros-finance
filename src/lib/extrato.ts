@@ -34,6 +34,38 @@ export interface ExtratoLido {
   formato: string
   /** Banco reconhecido no arquivo (nome do catálogo). */
   banco?: string
+  /** Quantidades sobre o texto do arquivo (nunca o conteúdo): explicam por que nada foi lido. */
+  pistas: PistasDoTexto
+}
+
+export interface PistasDoTexto {
+  /** linhas com algum texto */
+  linhas: number
+  /** linhas com data, com valor e com os dois */
+  comData: number
+  comValor: number
+  comDataEValor: number
+  /** parece comprovante de um pagamento só (Pix, TED, boleto), não um extrato */
+  comprovante: boolean
+}
+
+/**
+ * O que o texto do arquivo tem, em quantidades: quantas linhas, quantas com data, com valor, com os dois e se parece um
+ * comprovante. Serve para explicar por que nada virou lançamento sem guardar nada do que está escrito.
+ */
+export function pistasDoTexto(textos: string[], anoPadrao = new Date().getFullYear()): PistasDoTexto {
+  const linhas = textos.map((t) => t.trim()).filter(Boolean)
+  let comData = 0, comValor = 0, comDataEValor = 0
+  for (const t of linhas) {
+    const d = Boolean(acharData(t, anoPadrao))
+    const v = acharValores(t).length > 0
+    if (d) comData++
+    if (v) comValor++
+    if (d && v) comDataEValor++
+  }
+  const tudo = normal(linhas.slice(0, 80).join(' '))
+  const comprovante = /\b(comprovante|recibo)\b/.test(tudo) && comDataEValor <= 2 && linhas.length <= 80
+  return { linhas: linhas.length, comData, comValor, comDataEValor, comprovante }
 }
 
 // ---------- limpeza da descrição ----------
@@ -1503,10 +1535,13 @@ export async function lerExtrato(arquivo: File, anoPadrao = new Date().getFullYe
   let linhas: LinhaExtrato[] = []
   let formato = ext.toUpperCase()
   let cabecalho = ''
+  /** o texto do arquivo, linha por linha (só para as pistas de quando nada é lido) */
+  let textoTodo: string[] = []
   if (especie === 'pdf') {
     const pdf = lerPaginasPdf(await itensDoPdf(dados, leitorDePdf), anoPadrao)
     cabecalho = cabecalhoDe(pdf.texto)
     linhas = pdf.linhas
+    textoTodo = pdf.texto
     formato = 'PDF'
   } else if (ext === 'pdf') {
     throw new Error(pareceUmaPagina(dados)
@@ -1516,7 +1551,8 @@ export async function lerExtrato(arquivo: File, anoPadrao = new Date().getFullYe
     const w = await linhasDoWord(dados)
     cabecalho = cabecalhoDe(w.texto)
     linhas = w.tabela.length > 2 ? deTabela(w.tabela, anoPadrao) : []
-    if (!linhas.length) linhas = deTexto([...w.texto, ...w.tabela.map((r) => r.join('  '))], anoPadrao)
+    textoTodo = [...w.texto, ...w.tabela.map((r) => r.join('  '))]
+    if (!linhas.length) linhas = deTexto(textoTodo, anoPadrao)
     formato = 'Word'
   } else if (especie === 'ole' && ext === 'doc') {
     throw new Error('Arquivos .doc antigos não dão para ler. Abra no Word e salve como .docx (ou exporte o extrato em PDF/CSV).')
@@ -1534,17 +1570,20 @@ export async function lerExtrato(arquivo: File, anoPadrao = new Date().getFullYe
     const melhor = folhas.map((f) => ({ f, l: deTabela(f, anoPadrao) })).sort((a, b) => b.l.length - a.l.length || b.f.length - a.f.length)[0]
     cabecalho = cabecalhoDe((melhor?.f ?? []).map((r) => r.join(' ')))
     linhas = melhor?.l ?? []
+    textoTodo = (melhor?.f ?? []).map((r) => r.join('  '))
     formato = 'Excel'
   } else {
     // texto: OFX, página HTML (o ".xls" de vários bancos), CSV ou texto corrido
     const texto = decodificar(dados).replace(/^\ufeff/, '')
-    if (/<OFX>|<STMTTRN>/i.test(texto)) { cabecalho = texto.split(/<STMTTRN>/i)[0].slice(0, 3000); linhas = deOfx(texto); formato = 'OFX' } else if (/<table\b/i.test(texto) && /<t[dh]\b/i.test(texto)) {
+    if (/<OFX>|<STMTTRN>/i.test(texto)) { cabecalho = texto.split(/<STMTTRN>/i)[0].slice(0, 3000); linhas = deOfx(texto); textoTodo = texto.split(/\r\n|\r|\n/); formato = 'OFX' } else if (/<table\b/i.test(texto) && /<t[dh]\b/i.test(texto)) {
       const tabela = tabelasDoHtml(texto)
       cabecalho = cabecalhoDe(tabela.map((r) => r.join(' ')))
       linhas = deTabela(tabela, anoPadrao)
+      textoTodo = tabela.map((r) => r.join('  '))
       formato = ext === 'xls' || ext === 'xlsx' ? 'Excel' : 'HTML'
     } else {
       const porLinha = texto.split(/\r\n|\r|\n/)
+      textoTodo = porLinha
       cabecalho = cabecalhoDe(porLinha)
       // o separador (; , tab ou |) é o que rende mais lançamentos: a primeira linha pode ser um título e enganar
       for (const sep of separadoresDoCsv(texto)) {
@@ -1557,5 +1596,7 @@ export async function lerExtrato(arquivo: File, anoPadrao = new Date().getFullYe
     }
   }
   linhas.sort((a, b) => a.data.localeCompare(b.data))
-  return { linhas, formato, banco: bancoDoExtrato(arquivo.name, cabecalho) }
+  // as pistas só importam quando nada foi lido (contar linhas de um extrato grande à toa custaria tempo)
+  const pistas = linhas.length ? { linhas: 0, comData: 0, comValor: 0, comDataEValor: 0, comprovante: false } : pistasDoTexto(textoTodo, anoPadrao)
+  return { linhas, formato, banco: bancoDoExtrato(arquivo.name, cabecalho), pistas }
 }
