@@ -3,41 +3,21 @@
     "en": "Everything at a glance",
     "es": "Todo de un vistazo"
   },
-  "Quanto sobrou, quanto entrou e quanto saiu. Logo ao abrir.": {
-    "en": "What's left, what came in and what went out. Right when you open it.",
-    "es": "Cuánto sobró, cuánto entró y cuánto salió. Apenas lo abres."
-  },
   "O ano inteiro": {
     "en": "The whole year",
     "es": "Todo el año"
-  },
-  "Para onde foi o dinheiro, mês a mês.": {
-    "en": "Where your money went, month by month.",
-    "es": "A dónde fue tu dinero, mes a mes."
   },
   "Cartões sob controle": {
     "en": "Cards under control",
     "es": "Tarjetas bajo control"
   },
-  "Fatura, parcelas e limite de cada cartão, no dia certo.": {
-    "en": "Statement, installments and limit for every card, right on time.",
-    "es": "Resumen, cuotas y límite de cada tarjeta, en el día justo."
-  },
   "Contas do mês": {
     "en": "Monthly bills",
     "es": "Cuentas del mes"
   },
-  "Aluguel, luz, internet. Toque em “Paguei” e pronto.": {
-    "en": "Rent, power, internet. Tap “Paid” and you're done.",
-    "es": "Alquiler, luz, internet. Toca “Pagué” y listo."
-  },
   "Metas que enchem": {
     "en": "Goals that fill up",
     "es": "Metas que se llenan"
-  },
-  "Cada pote enche conforme você guarda.": {
-    "en": "Each jar fills up as you save.",
-    "es": "Cada frasco se llena a medida que ahorras."
   },
   "Tudo em um só lugar": {
     "en": "All in one place",
@@ -47,29 +27,9 @@
     "en": "Your money organized, the way it should be.",
     "es": "Tu dinero organizado, como debería ser."
   },
-  "Sobrou em outubro": {
-    "en": "Left over in October",
-    "es": "Sobró en octubre"
-  },
-  "R$ 209,60 a mais que em set": {
-    "en": "R$ 209,60 more than in Sep",
-    "es": "R$ 209,60 más que en sep"
-  },
-  "Entrou no mês": {
-    "en": "Income this month",
-    "es": "Entró en el mes"
-  },
-  "11% a mais que em set": {
-    "en": "11% more than in Sep",
-    "es": "11% más que en sep"
-  },
   "Saiu no mês": {
     "en": "Spent this month",
     "es": "Salió en el mes"
-  },
-  "10% a mais que em set": {
-    "en": "10% more than in Sep",
-    "es": "10% más que en sep"
   },
   "Aluguel": {
     "en": "Rent",
@@ -91,25 +51,13 @@
     "en": "Trip",
     "es": "Viaje"
   },
-  "faltam R$ 840": {
-    "en": "R$ 840 to go",
-    "es": "faltan R$ 840"
-  },
   "Reserva": {
     "en": "Emergency fund",
     "es": "Fondo de reserva"
   },
-  "faltam R$ 5.200": {
-    "en": "R$ 5.200 to go",
-    "es": "faltan R$ 5.200"
-  },
   "Notebook": {
     "en": "Laptop",
     "es": "Portátil"
-  },
-  "faltam R$ 380": {
-    "en": "R$ 380 to go",
-    "es": "faltan R$ 380"
   },
   "Início": {
     "en": "Home",
@@ -163,10 +111,6 @@
     "en": "Out",
     "es": "Salió"
   },
-  "faturas R$ 2.190,00": {
-    "en": "statements R$ 2.190,00",
-    "es": "resúmenes R$ 2.190,00"
-  },
   "Nubank": {
     "en": "Nubank",
     "es": "Nubank"
@@ -190,22 +134,6 @@
   "livre R$ 4.520,00": {
     "en": "available R$ 4.520,00",
     "es": "disponible R$ 4.520,00"
-  },
-  "falta pagar R$ 2.202,20": {
-    "en": "R$ 2.202,20 left to pay",
-    "es": "falta pagar R$ 2.202,20"
-  },
-  "3 potes enchendo": {
-    "en": "3 jars filling up",
-    "es": "3 frascos llenándose"
-  },
-  "falta pagar {0}": {
-    "en": "{0} left to pay",
-    "es": "falta pagar {0}"
-  },
-  "tudo pago ✓": {
-    "en": "all paid ✓",
-    "es": "todo pagado ✓"
   },
   "OpusCash": {
     "en": "OpusCash",
@@ -13258,5 +13186,197 @@
   "Sócio-fundador": {
     "en": "Founding partner",
     "es": "Socio fundador"
+  },
+  "em 3 dias": {
+    "en": "in 3 days",
+    "es": "en 3 días"
+  },
+  "Seguro do carro": {
+    "en": "Car insurance",
+    "es": "Seguro del auto"
+  },
+  "em 8 dias": {
+    "en": "in 8 days",
+    "es": "en 8 días"
+  },
+  "Fatura do Itaú": {
+    "en": "Itaú statement",
+    "es": "Resumen de Itaú"
+  },
+  "fecha dia 20": {
+    "en": "closes on the 20th",
+    "es": "cierra el día 20"
+  },
+  "8% menos que em set": {
+    "en": "8% less than in Sep",
+    "es": "8% menos que en sep"
+  },
+  "3 para pagar": {
+    "en": "3 to pay",
+    "es": "3 por pagar"
+  },
+  "2 faturas abertas": {
+    "en": "2 open statements",
+    "es": "2 resúmenes abiertos"
+  },
+  "tudo em dia": {
+    "en": "all up to date",
+    "es": "todo al día"
+  },
+  "em 3 bancos": {
+    "en": "in 3 banks",
+    "es": "en 3 bancos"
+  },
+  "no dia 31": {
+    "en": "on the 31st",
+    "es": "el día 31"
+  },
+  "Previsto no dia 31": {
+    "en": "Expected on the 31st",
+    "es": "Previsto para el día 31"
+  },
+  "4 metas": {
+    "en": "4 goals",
+    "es": "4 metas"
+  },
+  "Boa! Se sobrar dinheiro, adiante primeiro o Empréstimo pessoal: é a dívida mais cara.": {
+    "en": "Nice! If you have money left over, pay ahead on the Personal loan first: it's your most expensive debt.",
+    "es": "¡Bien! Si te sobra dinero, adelanta primero el Préstamo personal: es la deuda más cara."
+  },
+  "Resumo de 2026": {
+    "en": "2026 summary",
+    "es": "Resumen de 2026"
+  },
+  "10 meses com dados · toque num mês para abrir": {
+    "en": "10 months with data · tap a month to open it",
+    "es": "10 meses con datos · toca un mes para abrirlo"
+  },
+  "Sobrou em 2026": {
+    "en": "Left over in 2026",
+    "es": "Sobró en 2026"
+  },
+  "Faturas de outubro, limite e parcelas de cada cartão.": {
+    "en": "October statements, limit and installments for every card.",
+    "es": "Resúmenes de octubre, límite y cuotas de cada tarjeta."
+  },
+  "2 cartões": {
+    "en": "2 cards",
+    "es": "2 tarjetas"
+  },
+  "Faturas de outubro": {
+    "en": "October statements",
+    "es": "Resúmenes de octubre"
+  },
+  "Em atraso": {
+    "en": "Overdue",
+    "es": "Atrasado"
+  },
+  "fecha dia 25 · vence dia 2": {
+    "en": "closes on the 25th · due on the 2nd",
+    "es": "cierra el día 25 · vence el día 2"
+  },
+  "Aberta · fecha em 8 dias": {
+    "en": "Open · closes in 8 days",
+    "es": "Abierto · cierra en 8 días"
+  },
+  "fecha dia 20 · vence dia 27": {
+    "en": "closes on the 20th · due on the 27th",
+    "es": "cierra el día 20 · vence el día 27"
+  },
+  "Fecha em 3 dias": {
+    "en": "Closes in 3 days",
+    "es": "Cierra en 3 días"
+  },
+  "Fatura de outubro": {
+    "en": "October statement",
+    "es": "Resumen de octubre"
+  },
+  "Ver compras": {
+    "en": "See purchases",
+    "es": "Ver compras"
+  },
+  "Renda extra": {
+    "en": "Extra income",
+    "es": "Ingreso extra"
+  },
+  "Cinema e jantar": {
+    "en": "Movies and dinner",
+    "es": "Cine y cena"
+  },
+  "Condomínio": {
+    "en": "HOA fee",
+    "es": "Expensas"
+  },
+  "Parcela do empréstimo": {
+    "en": "Loan installment",
+    "es": "Cuota del préstamo"
+  },
+  "Música": {
+    "en": "Music",
+    "es": "Música"
+  },
+  "Freela de design": {
+    "en": "Design freelance",
+    "es": "Freelance de diseño"
+  },
+  "Outubro de 2026 · 15 lançamentos": {
+    "en": "October 2026 · 15 entries",
+    "es": "Octubre de 2026 · 15 movimientos"
+  },
+  "dia que mais saiu: 5": {
+    "en": "biggest spending day: 5",
+    "es": "día de más gasto: 5"
+  },
+  "Notebook novo": {
+    "en": "New laptop",
+    "es": "Notebook nueva"
+  },
+  "Viagem ao Japão": {
+    "en": "Trip to Japan",
+    "es": "Viaje a Japón"
+  },
+  "Entrada do apartamento": {
+    "en": "Apartment down payment",
+    "es": "Entrada del departamento"
+  },
+  "No seu ritmo, chega em {0}": {
+    "en": "At your pace, you'll get there in {0}",
+    "es": "A tu ritmo, llegas en {0}"
+  },
+  "Guarde {0}/mês até {1}": {
+    "en": "Save {0}/month until {1}",
+    "es": "Guarda {0}/mes hasta {1}"
+  },
+  "Quase lá": {
+    "en": "Almost there",
+    "es": "Casi listo"
+  },
+  "0 de 4": {
+    "en": "0 of 4",
+    "es": "0 de 4"
+  },
+  "Quanto sobrou, o que vem aí e como anda cada parte do seu dinheiro. Logo ao abrir.": {
+    "en": "What's left, what's coming up and how every part of your money is doing. Right when you open it.",
+    "es": "Cuánto sobró, lo que viene y cómo va cada parte de tu dinero. Apenas lo abres."
+  },
+  "Entradas, saídas e a linha da sua dívida descendo, mês a mês.": {
+    "en": "Money in, money out and your debt line going down, month by month.",
+    "es": "Entradas, salidas y la línea de tu deuda bajando, mes a mes."
+  },
+  "Fatura, limite e parcelas de cada cartão, sem surpresa no fim do mês.": {
+    "en": "Statement, limit and installments for every card, with no end-of-month surprises.",
+    "es": "Resumen, límite y cuotas de cada tarjeta, sin sorpresas a fin de mes."
+  },
+  "Cada lançamento no lugar": {
+    "en": "Every entry in its place",
+    "es": "Cada movimiento en su lugar"
+  },
+  "Dia a dia e por categoria, com quanto sobrou no mês.": {
+    "en": "Day by day and by category, with what was left over in the month.",
+    "es": "Día a día y por categoría, con cuánto sobró en el mes."
+  },
+  "Cada pote enche conforme você guarda e mostra quando a meta chega.": {
+    "en": "Each jar fills up as you save and shows when you'll reach the goal.",
+    "es": "Cada frasco se llena a medida que ahorras y muestra cuándo llegas a la meta."
   }
 }

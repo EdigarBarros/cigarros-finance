@@ -16,6 +16,7 @@ import { useSemInternet } from './lib/conexao'
 import { iniciarUso, marcarTela } from './lib/uso'
 import { Apresentacao } from './pages/Apresentacao'
 import './pages/apresentacao.css'
+import './pages/apresentacao-telas.css'
 
 /**
  * Telas sem a barra do painel: os botões de tema e de idioma ficam presos no canto de cima (no painel, ficam na barra).
