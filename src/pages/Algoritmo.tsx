@@ -5,6 +5,7 @@ import { semMovimento } from '../lib/tema'
 import { tx } from '../lib/textos'
 import { ANO } from './apresentacaoCena'
 import { alturaIdeal, desenharTela, type TelaPronta } from './algoritmoTela'
+import { ajustarConsultor, carregarConsultor, desenharConsultor, idiomaDasFotos, type ConsultorReal } from './algoritmoConsultor'
 import { desenharDocs, desenharLancamento, LIDAS_PDF, LIDAS_PLANILHA, type DocPronto, type LinhaLida } from './algoritmoDocs'
 import './algoritmo.css'
 
@@ -12,7 +13,8 @@ import './algoritmo.css'
  * "O motor do OpusCash": começa na tela do Consultor, que se desmonta em pedaços e mostra o que estava rodando atrás
  * dela, uma esfera holográfica feita de fragmentos dourados (pedacinhos de circuito, blocos e traços que piscam),
  * presa na tela enquanto a pessoa rola:
- *   0. por trás do Consultor: a tela se desmonta e revela a esfera, que já estava girando atrás;
+ *   0. por trás do Consultor: a tela de verdade do Consultor (fotos do app, algoritmoConsultor.ts) se desmonta peça por
+ *      peça e revela a esfera, que já estava girando atrás;
  *   1. lê o extrato e a planilha: uma luz passa por um PDF do banco e por uma planilha, e cada linha sai como um
  *      lançamento limpo que entra na esfera (algoritmoDocs.ts);
  *   2. o motor calcula: a esfera gira, se deforma em ondas e acelera;
@@ -129,23 +131,6 @@ const CAM = [
 ]
 const ZOOM_TELA = CAM[CAM.length - 1].zoom
 
-/** Um pedaço da tela do Consultor quando ela se desmonta (cena 0): o recorte, para onde voa e quando. */
-interface Peca { x: number; y: number; w: number; h: number; dx: number; dy: number; giro: number; atraso: number }
-function pecas(w: number, h: number, colunas: number) {
-  const r = sorteio(11), linhas = Math.max(4, Math.round((colunas * h) / w)), pw = w / colunas, ph = h / linhas
-  const lista: Peca[] = []
-  for (let l = 0; l < linhas; l++) for (let c = 0; c < colunas; c++) {
-    const x = c * pw, y = l * ph
-    const nx = (x + pw / 2 - w / 2) / (w / 2), ny = (y + ph / 2 - h / 2) / (h / 2)
-    // as do meio saem primeiro (abrem o buraco por onde o motor aparece) e voam para fora, na direção em que estão
-    let dx = nx + (r() - 0.5) * 0.7, dy = ny + (r() - 0.5) * 0.7
-    const d = Math.hypot(dx, dy) || 1
-    dx /= d; dy /= d
-    lista.push({ x, y, w: pw, h: ph, dx, dy, giro: (r() - 0.5) * 1.8, atraso: Math.min(1, Math.hypot(nx, ny) / 1.41) * 0.38 + r() * 0.17 })
-  }
-  return lista
-}
-
 /** Brilho redondo pronto (desenhado uma vez e carimbado): bem mais barato que desfoque a cada quadro. */
 function brilho(tam: number, paradas: [number, string][]) {
   const c = document.createElement('canvas')
@@ -198,7 +183,16 @@ export function Algoritmo() {
     let fr: Frag[] = [], chaveTela = ''
     // a tela do Consultor (cena 4): desenhada em px de CSS, centrada em (cx, yTela). No computador fica no lugar da
     // esfera; no celular, entre o texto e os selos
-    let tela: TelaPronta | null = null, yTela = 0, pedacos: Peca[] = []
+    let tela: TelaPronta | null = null, yTela = 0
+    // a abertura: a foto do Consultor de verdade (carrega quando a seção chega perto), em (realX, realY) com escala realS
+    let real: ConsultorReal | null = null, chaveReal = '', realX = 0, realY = 0, realS = 1
+    const pedirReal = () => {
+      const chave = `${celular ? 'cel' : 'pc'}-${idiomaDasFotos()}`
+      if (chave === chaveReal) return
+      chaveReal = chave
+      carregarConsultor(celular ? 'cel' : 'pc', idiomaDasFotos()).then((r) => { if (chaveReal === chave) { real = r; medir(); desenhar(atual, performance.now()) } }).catch(() => { chaveReal = '' })
+    }
+    let perto = false
     // a leitura (cena 1): o documento fica em (docX, docY) e a esfera anda (desX, desY) para dar lugar a ele
     let docs: { pdf: DocPronto; planilha: DocPronto } | null = null, docX = 0, docY = 0, desX = 0, desY = 0, chaveDocs = ''
     const texto = sticky.querySelector<HTMLElement>('.ag-texto')!, selos = sticky.querySelector<HTMLElement>('.ag-selos')!
@@ -239,7 +233,20 @@ export function Algoritmo() {
         letras = fontes()
         tela = desenharTela(tw, th, q, N, letras, sorteio(7))
         fr = montar(N, tela.pontos, k4, (yTela - cy) / k4)
-        pedacos = pecas(tw, th, celular ? 6 : 10)
+      }
+      if (perto) pedirReal()
+      if (real) {
+        if (celular) {
+          const topo = texto.getBoundingClientRect().bottom - sticky.getBoundingClientRect().top + 16, fundo = H - 20
+          realS = Math.min((fundo - topo) / real.h, (W * 0.78) / real.w)
+          realX = (W - real.w * realS) / 2; realY = (topo + fundo) / 2 - (real.h * realS) / 2
+          ajustarConsultor(real, realS * dpr)
+        } else {
+          const esq = Math.min(460, W * 0.36), aw = W - esq - 40
+          realS = Math.min(aw / real.w, (H * 0.8) / real.h)
+          realX = esq + 20 + (aw - real.w * realS) / 2; realY = (H - real.h * realS) / 2
+        }
+        ajustarConsultor(real, realS * dpr)
       }
       let dw: number, dh: number
       if (celular) {
@@ -292,7 +299,7 @@ export function Algoritmo() {
       // na leitura a esfera chega para o lado e o documento fica no lugar dela
       offX = desX * pres[1]; offY = desY * pres[1]
       // cena 0: a tela se desmonta (desm) e a esfera, escondida atrás dela, cresce e acende (oculto vai a 0)
-      const desm = suave(0.03, 0.16, p), oculto = 1 - suave(0.05, 0.17, p)
+      const desm = suave(0.025, 0.175, p), oculto = real ? 1 - suave(0.08, 0.18, p) : 0
       const u1 = limitar((p - 0.2) / 0.2) // o andamento da leitura
       // a esfera gira; calculando (cena 2), gira mais rápido
       const dt = antesGiro ? Math.min(0.05, (tempo - antesGiro) / 1000) : 0
@@ -444,35 +451,22 @@ export function Algoritmo() {
         ctx.globalAlpha = 1
       }
 
-      // cena 0: a tela inteira e, rolando, os pedaços dela voando para fora (e para perto de quem olha)
-      if (tela && desm < 1 && pres[0] > 0) {
-        const tw = tela.w * kT, th = tela.h * kT, m = tela.m * kT, k = tela.q
-        ctx.globalCompositeOperation = 'source-over'
-        if (desm <= 0) ctx.drawImage(tela.img, tlx - m, tly - m, tw + m * 2, th + m * 2)
-        else {
-          const bordas: [number, number, number, number, number, number, number][] = []
-          for (const pc of pedacos) {
-            const u = suave(pc.atraso, pc.atraso + 0.45, desm)
-            const a = 1 - suave(0.25, 0.85, u)
-            if (a <= 0.01) continue
-            const voo = u * u
-            const x = tlx + (pc.x + pc.w / 2) * kT + pc.dx * voo * W * 0.42
-            const y = tly + (pc.y + pc.h / 2) * kT + pc.dy * voo * H * 0.42 - u * 30
-            const e = 1 + 1.1 * u
-            ctx.save()
-            ctx.globalAlpha = a
-            ctx.translate(x, y); ctx.rotate(pc.giro * u); ctx.scale(e, e)
-            ctx.drawImage(tela.img, (pc.x + tela.m) * k, (pc.y + tela.m) * k, pc.w * k, pc.h * k, (-pc.w * kT) / 2, (-pc.h * kT) / 2, pc.w * kT, pc.h * kT)
-            ctx.restore()
-            if (u > 0) bordas.push([x, y, pc.giro * u, e, pc.w * kT, pc.h * kT, a * Math.min(1, u * 5) * (1 - u)])
-          }
-          // a quebra brilha nas bordas dos pedaços
+      // cena 0: a tela do Consultor de verdade e, rolando, ela se desmontando peça por peça
+      if (real && desm < 1 && pres[0] > 0) {
+        const rw = real.w * realS, rh = real.h * realS, raio = celular ? 26 * realS * 1.6 : 12
+        // a moldura dourada em volta da tela (some quando ela começa a se desmontar)
+        const moldura = 1 - suave(0, 0.15, desm)
+        if (moldura > 0) {
           ctx.globalCompositeOperation = 'lighter'
-          ctx.strokeStyle = 'rgba(255,200,110,0.55)'; ctx.lineWidth = 1
-          for (const [x, y, gi, e, w, h, a] of bordas) {
-            ctx.save(); ctx.globalAlpha = a; ctx.translate(x, y); ctx.rotate(gi); ctx.scale(e, e)
-            ctx.strokeRect(-w / 2, -h / 2, w, h); ctx.restore()
-          }
+          ctx.globalAlpha = 0.55 * moldura
+          ctx.drawImage(sprHalo, realX - rw * 0.2, realY - rh * 0.25, rw * 1.4, rh * 1.5)
+          ctx.globalAlpha = 1
+        }
+        desenharConsultor(ctx, real, realX, realY, realS, desm, W, H, raio)
+        if (moldura > 0) {
+          ctx.globalCompositeOperation = 'lighter'
+          ctx.strokeStyle = `rgba(255,200,110,${(0.6 * moldura).toFixed(3)})`; ctx.lineWidth = 1.5
+          ctx.beginPath(); ctx.roundRect(realX - 0.75, realY - 0.75, rw + 1.5, rh + 1.5, raio); ctx.stroke()
         }
         ctx.globalAlpha = 1
         ctx.globalCompositeOperation = 'lighter'
@@ -572,7 +566,8 @@ export function Algoritmo() {
       }
 
       // bokeh por cima, poucos e grandes
-      ctx.globalAlpha = 0.28
+      // por cima da tela do Consultor inteira o bokeh atrapalharia a leitura
+      ctx.globalAlpha = 0.28 * (real ? 1 - pres[0] * (1 - desm) : 1)
       for (let i = 0; i < 14; i++) {
         const a = i * 2.39 + s * 0.05, rr = (380 + (i % 4) * 120) * esc
         const x = cx + Math.cos(a) * rr * 1.3, y = cy + Math.sin(a * 1.2) * rr * 0.75, tam = (60 + (i % 5) * 26) * esc
@@ -615,6 +610,8 @@ export function Algoritmo() {
       desenhar(atual, agora)
       quadro = visivel ? requestAnimationFrame(laco) : 0
     }
+    const chegando = new IntersectionObserver(([e]) => { if (e.isIntersecting && !perto) { perto = true; pedirReal() } }, { rootMargin: '1500px 0px' })
+    chegando.observe(secao)
     const obs = new IntersectionObserver(([e]) => {
       visivel = e.isIntersecting
       sticky.classList.toggle('ag-parado', !visivel)
@@ -631,7 +628,7 @@ export function Algoritmo() {
     window.addEventListener('scroll', aoScroll, { passive: true })
     window.addEventListener('resize', aoRedim)
     return () => {
-      obs.disconnect(); tamanhos.disconnect()
+      obs.disconnect(); chegando.disconnect(); tamanhos.disconnect()
       window.removeEventListener('scroll', aoScroll); window.removeEventListener('resize', aoRedim)
       if (quadro) cancelAnimationFrame(quadro)
     }
