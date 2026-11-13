@@ -8,6 +8,9 @@
 
 :root {
   color-scheme: dark;
+  /* Muda o conteúdo (e o nome) do CSS publicado. Subiu o número quando um CDN guardou uma resposta ruim de um nome
+     antigo (13/11/2026: um 404 guardado por um ano deixou o site sem estilo para quem o recebeu). */
+  --versao-css: 2;
 
   /* superfícies e texto (escuro: o padrão do layout) */
   --fundo: #070b14;
