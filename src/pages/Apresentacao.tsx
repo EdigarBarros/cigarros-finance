@@ -18,7 +18,7 @@ import { BLOCOS, DH, DW, TELAS, ZONAS, dividaEm, escalonar, formatar, type Forma
  */
 const CENAS = [
   { titulo: tx('Tudo num relance'), texto: tx('Quanto sobrou, o que vem aí e como anda cada parte do seu dinheiro. Logo ao abrir.'), p: 0.09 },
-  { titulo: tx('O ano inteiro'), texto: tx('Entradas, saídas e a linha da sua dívida descendo, mês a mês.'), p: 0.315 },
+  { titulo: tx('O ano inteiro'), texto: tx('Entradas, saídas e a linha da sua dívida, mês a mês.'), p: 0.315 },
   { titulo: tx('Cartões sob controle'), texto: tx('Fatura, limite e parcelas de cada cartão, sem surpresa no fim do mês.'), p: 0.5 },
   { titulo: tx('Cada lançamento no lugar'), texto: tx('Dia a dia e por categoria, com quanto sobrou no mês.'), p: 0.685 },
   { titulo: tx('Metas que enchem'), texto: tx('Cada pote enche conforme você guarda e mostra quando a meta chega.'), p: 0.86 },

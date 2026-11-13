@@ -13247,10 +13247,6 @@
     "en": "2026 summary",
     "es": "Resumen de 2026"
   },
-  "10 meses com dados · toque num mês para abrir": {
-    "en": "10 months with data · tap a month to open it",
-    "es": "10 meses con datos · toca un mes para abrirlo"
-  },
   "Sobrou em 2026": {
     "en": "Left over in 2026",
     "es": "Sobró en 2026"
@@ -13359,10 +13355,6 @@
     "en": "What's left, what's coming up and how every part of your money is doing. Right when you open it.",
     "es": "Cuánto sobró, lo que viene y cómo va cada parte de tu dinero. Apenas lo abres."
   },
-  "Entradas, saídas e a linha da sua dívida descendo, mês a mês.": {
-    "en": "Money in, money out and your debt line going down, month by month.",
-    "es": "Entradas, salidas y la línea de tu deuda bajando, mes a mes."
-  },
   "Fatura, limite e parcelas de cada cartão, sem surpresa no fim do mês.": {
     "en": "Statement, limit and installments for every card, with no end-of-month surprises.",
     "es": "Resumen, límite y cuotas de cada tarjeta, sin sorpresas a fin de mes."
@@ -13378,5 +13370,13 @@
   "Cada pote enche conforme você guarda e mostra quando a meta chega.": {
     "en": "Each jar fills up as you save and shows when you'll reach the goal.",
     "es": "Cada frasco se llena a medida que ahorras y muestra cuándo llegas a la meta."
+  },
+  "11 meses com dados · toque num mês para abrir": {
+    "en": "11 months with data · tap a month to open it",
+    "es": "11 meses con datos · toca un mes para abrirlo"
+  },
+  "Entradas, saídas e a linha da sua dívida, mês a mês.": {
+    "en": "Money in, money out and your debt line, month by month.",
+    "es": "Entradas, salidas y la línea de tu deuda, mes a mes."
   }
 }

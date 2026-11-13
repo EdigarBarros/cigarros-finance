@@ -68,9 +68,24 @@ export const TETO = 80
 
 /** Tamanho da área do gráfico grande (as camadas 3D têm esse tamanho). */
 export const PLOT = { w: 640, h: 270 }
+// ─── Resumo do ano: os números do gráfico Mês a mês (reais), de janeiro a novembro de 2026 ───
+export const ANO = {
+  entrou: [9874.36, 1925.6, 2757.75, 1770.31, 1421.47, 2671.97, 5186.14, 3054.32, 5233.7, 4978, 5364.04],
+  saiu: [8060.26, 2721.51, 1837.5, 1558.97, 1589.33, 2648.64, 5530.98, 2969.82, 5676.49, 4692.47, 5151.37],
+  divida: [3075, 3075, 3720.79, 3120.79, 2520.79, 2020.79, 2214.44, 2582.37, 2584.26, 3342.58, 3402.08],
+  guardado: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 454.15],
+  investido: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+}
+/** O mês aberto no Resumo do ano (novembro) e até onde vai o eixo do gráfico. */
+export const MES_ANO = 10
+export const TETO_ANO = 12000
+/** As cores do gráfico do app (lib/charts.ts, PALETA): as mesmas no tema claro e no escuro. */
+export const CORES_ANO = { entradas: ['#5ee08f', '#14b88a'], saidas: ['#ff6b6b', '#e0435f'], divida: '#ffc000', caixa: '#22b8f0', investido: '#c45cf0' } as const
+
 /** Valor da dívida (em reais) num ponto x da área do gráfico grande: o rótulo que acompanha a linha. */
 export function dividaEm(x: number) {
-  const i = Math.min(OUTUBRO, Math.max(0, (x / PLOT.w) * 12 - 0.5))
+  const d = ANO.divida
+  const i = Math.min(MES_ANO, Math.max(0, (x / PLOT.w) * 12 - 0.5))
   const a = Math.floor(i), t = i - a
-  return moedaRedonda.format((DIVIDA[a] + ((DIVIDA[Math.min(OUTUBRO, a + 1)] ?? DIVIDA[a]) - DIVIDA[a]) * t) * 1000)
+  return moedaRedonda.format(d[a] + ((d[Math.min(MES_ANO, a + 1)] ?? d[a]) - d[a]) * t)
 }

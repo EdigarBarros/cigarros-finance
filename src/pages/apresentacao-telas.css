@@ -198,37 +198,31 @@
 .ta-plot .linha { fill: none; stroke-linecap: round; }
 .ta-plot .grossa { stroke-width: 3.4; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--k-ano, 1)); }
 .ta-plot .projecao { stroke-width: 2.4; stroke-dasharray: 5 6; opacity: calc(var(--k-faixa, 1) * .8); }
-.ta-plot .halo { fill: var(--divida); opacity: .25; }
-.ta-plot .ponto { fill: var(--divida); stroke: var(--superficie); stroke-width: 3; }
-/* o ponto e o nome no fim das linhas só aparecem quando a linha chega lá */
+.ta-plot .halo { opacity: .25; }
+.ta-plot .ponto { stroke: var(--superficie); stroke-width: 3; }
+/* o ponto no fim das linhas só aparece quando a linha chega lá */
 .ta-plot .fim { stroke: var(--superficie); stroke-width: 2.5; opacity: clamp(0, calc(var(--k-ano, 1) * 12 - 11), 1); }
-.ta-plot .fim.guardado { fill: var(--caixa); }
-.ta-plot .fim.investido { fill: var(--violeta); }
 .ta-tag {
   position: absolute; left: 0; top: 0; margin: -42px 0 0 14px; padding: 5px 11px; border-radius: 10px; white-space: nowrap;
   font-family: var(--fonte-numeros); font-size: 13.5px; font-weight: 800; color: #1f1500; background: var(--divida);
   box-shadow: 0 8px 16px -8px rgba(0, 0, 0, .55);
 }
-/* nome no fim das linhas de guardado e investido (a do investido fica embaixo do ponto: ali perto passa a da dívida) */
-.ta-fim-nome {
-  position: absolute; margin-left: 12px; transform: translateY(-50%); padding: 2px 9px; border-radius: 99px; white-space: nowrap;
-  font-size: 11.5px; font-weight: 700; color: var(--c); background: color-mix(in srgb, var(--c) 15%, var(--superficie));
-  opacity: clamp(0, calc(var(--k-ano, 1) * 12 - 11), 1);
-}
-.ta-camada:last-child .ta-fim-nome { margin: 12px 0 0; transform: translateX(-50%); }
 .ta-meses-eixo { position: absolute; left: 86px; top: 344px; width: 640px; display: grid; grid-template-columns: repeat(12, 1fr); text-align: center; }
 .ta-meses-eixo small { font-size: 11.5px; color: var(--texto-3); }
 .ta-meses-eixo small.atual { color: var(--texto); font-weight: 700; }
 .ta-graf .td-legenda { position: absolute; left: 86px; width: 640px; bottom: 18px; }
 .ta-lado {
-  position: absolute; right: 20px; top: 62px; width: 222px; padding: 14px 16px; border-radius: 16px; display: grid; gap: 9px;
+  position: absolute; right: 20px; top: 62px; width: 222px; padding: 14px 16px; border-radius: 16px; display: grid; gap: 7px;
   background: color-mix(in srgb, var(--fundo) 55%, var(--superficie)); border: 1px solid var(--borda);
 }
 .ta-lado strong { text-align: center; font-size: 15px; margin-bottom: 2px; }
 .ta-lado span { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .ta-lado small { font-size: 12.5px; color: var(--texto-2); }
 .ta-lado b { font-size: 13.5px; color: var(--c); font-family: var(--fonte-numeros); font-variant-numeric: tabular-nums; }
-.ta-lado span.linha { border-top: 1px solid var(--borda); padding-top: 10px; margin-top: 3px; }
+.ta-lado span.linha { border-top: 1px solid var(--borda); padding-top: 9px; margin-top: 2px; }
+/* de onde veio a mudança da dívida: linhas pequenas embaixo de Dívidas */
+.ta-lado span.ta-parte { padding-left: 10px; margin: -4px 0 -3px; }
+.ta-lado span.ta-parte small { font-size: 10.5px; color: var(--texto-3); }
 
 /* ─────────────── CARTÕES ─────────────── */
 .tc-rosca { position: relative; width: 122px; height: 122px; flex: none; display: grid; place-items: center; }
