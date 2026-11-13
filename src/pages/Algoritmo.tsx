@@ -1,316 +1,330 @@
-import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Icone } from '../components/Icone'
+import { MESES_NOME } from '../lib/format'
 import { semMovimento } from '../lib/tema'
 import { tx } from '../lib/textos'
 import './algoritmo.css'
 
 /**
- * "O motor do OpusCash": depois das telas, uma seção presa na tela enquanto a pessoa rola, com um núcleo em 3D (o
- * algoritmo) e cinco cenas:
- *   1. o motor rodando por baixo do painel, puxando os dados pela rede;
- *   2. o Consultor: nota por pilar, plano de ação;
- *   3. a tela se montando e se adaptando a cada pessoa (Simples, Equilibrado, Detalhado);
- *   4. o leitor de extrato: PDF, planilha e OFX passando pelo scanner e virando lançamentos;
- *   5. a proteção: conexão e dados criptografados, cada conta só vê os próprios dados.
+ * "O motor do OpusCash": uma rede neural em 3D, presa na tela enquanto a pessoa rola, que mostra o motor do app
+ * trabalhando em quatro passos: os dados entram, a rede cruza tudo, compara cada detalhe e diz o que fazer.
  *
- * O palco é desenhado em PW x PH px e escalado para caber. O componente escreve, a cada quadro, a câmera e o núcleo
- * (transform) e as variáveis de cada cena: --aN (quanto a cena N está na tela, 0 a 1) e --tN (o andamento dela, 0 a 1).
- * Tudo o mais é CSS em cima dessas variáveis.
+ * A rede (neurônios em camadas, ligações, sinais correndo pelos fios) é desenhada num <canvas> com projeção 3D feita à
+ * mão: centenas de linhas em HTML/3D pesariam demais. Os cartões por cima (dados entrando, comparações, respostas) são
+ * HTML posicionados a cada quadro no ponto da tela onde está o neurônio deles.
+ *
+ * É uma imagem do que o motor faz, não um retrato técnico dele: o Consultor (lib/analise.ts) é feito de regras de
+ * finanças, então os textos falam em algoritmo, cruzar e comparar, nunca em "inteligência artificial".
  */
-const PW = 960, PH = 680
-
 const CENAS = [
-  { titulo: tx('Um motor por trás de cada número'), texto: tx('Por baixo de cada tela, um algoritmo próprio cruza lançamentos, cartões, dívidas e metas, e refaz a análise a cada mudança.') },
-  { titulo: tx('Um consultor que pensa por você'), texto: tx('Nota de 0 a 100 em cada pilar, previsão do mês, assinaturas esquecidas e um plano de ação na ordem certa.') },
-  { titulo: tx('Uma tela que se monta para você'), texto: tx('O painel se adapta a cada pessoa: mais simples ou mais detalhado, só com o que você usa.') },
-  { titulo: tx('Lê o extrato de qualquer banco'), texto: tx('PDF, Excel, CSV, Word e OFX viram lançamentos em segundos. Tudo conferido pelo saldo e lido no seu aparelho.') },
-  { titulo: tx('Seus dados, trancados'), texto: tx('Conexão criptografada, dados guardados com criptografia e cada conta só enxerga os próprios dados.') },
+  { titulo: tx('Seus dados entram'), texto: tx('Lançamentos, cartões, dívidas, metas, saldos e o extrato do banco: tudo vira informação para o motor.') },
+  { titulo: tx('A rede cruza tudo'), texto: tx('Cada número é ligado aos outros: o gasto de hoje com o mês, o mês com o ano, a dívida com o que sobra.') },
+  { titulo: tx('Compara cada detalhe'), texto: tx('Seu mês com a sua média, os juros com a reserva, o ritmo de cada meta com o prazo dela.') },
+  { titulo: tx('E diz o que fazer'), texto: tx('Uma nota para o seu dinheiro e um plano de ação na ordem certa, refeito a cada lançamento.') },
 ] as const
 
-/** Onde a câmera fica em cada cena (graus) e onde o núcleo vai (px no palco, escala). */
-const ROTEIRO = [
-  { rx: 18, ry: -14, nx: 0, ny: 150, ns: 0.9 },
-  { rx: 10, ry: 16, nx: -330, ny: 210, ns: 0.5 },
-  { rx: 14, ry: -18, nx: -320, ny: 240, ns: 0.46 },
-  { rx: 8, ry: 12, nx: 0, ny: -262, ns: 0.44 },
-  { rx: 12, ry: -10, nx: 0, ny: 20, ns: 1.05 },
+/** Os dados que entram, um por neurônio de entrada. */
+const ENTRADAS = [
+  { icone: 'lista', rotulo: tx('Mercado'), valor: '− R$ 334,00', c: '#f07a12' },
+  { icone: 'cartao', rotulo: tx('Fatura Nubank'), valor: 'R$ 960,00', c: '#a855f7' },
+  { icone: 'divida', rotulo: tx('Empréstimo'), valor: tx('4,2% ao mês'), c: '#ffc000' },
+  { icone: 'meta', rotulo: tx('Viagem ao Japão'), valor: '32%', c: '#38bdf8' },
+  { icone: 'carteira', rotulo: tx('Saldo guardado'), valor: 'R$ 25.290,00', c: '#22b8f0' },
+  { icone: 'relatorio', rotulo: tx('extrato.pdf'), valor: tx('42 linhas'), c: '#ef4a6a' },
 ]
+/** As comparações: dois neurônios do meio (camada, índice) e o que sai de comparar um com o outro. */
+const COMPARA: { a: [number, number]; b: [number, number]; x: string; y: string; r: string; bom?: boolean }[] = [
+  { a: [1, 4], b: [2, 0], x: MESES_NOME[9], y: tx('sua média'), r: tx('8% menos'), bom: true },
+  { a: [2, 5], b: [3, 4], x: tx('Juros 4,2%'), y: tx('reserva 0,8%'), r: tx('adiante a dívida') },
+  { a: [1, 10], b: [2, 7], x: tx('Ritmo da meta'), y: tx('prazo'), r: tx('2 meses atrás') },
+  { a: [2, 11], b: [3, 8], x: tx('Assinaturas'), y: tx('uso'), r: tx('3 paradas') },
+]
+/** O que sai: um cartão por neurônio de saída. */
+const SAIDAS = [
+  { icone: 'estrela', t: tx('Nota 72 · Boa'), d: tx('6 pilares analisados'), c: '#1fd1a0' },
+  { icone: 'divida', t: tx('Adiante o Empréstimo pessoal'), d: tx('a dívida mais cara'), c: '#ffc000' },
+  { icone: 'ano', t: tx('Vai sobrar R$ 1.937'), d: tx('previsão para o dia 31'), c: '#22b8f0' },
+  { icone: 'calendario', t: tx('Cancele 3 assinaturas'), d: tx('R$ 418 a mais no ano'), c: '#a855f7' },
+]
+
+// ─── a rede: camadas ao longo de x. Entrada e saída são colunas (os cartões encostam nelas); as do meio são grades
+//     em y/z, e por isso a rede mostra profundidade quando a câmera gira ───
+/** Cada camada: quantas linhas (y) e quantas colunas de profundidade (z). */
+const CAMADAS: [number, number][] = [[6, 1], [4, 3], [4, 3], [3, 3], [4, 1]]
+const XS = [-390, -195, 0, 195, 390]
+interface No { x: number; y: number; z: number; camada: number; i: number }
+interface Liga { a: number; b: number; camada: number; cruza?: boolean }
+/** Sorteio sempre igual (a rede é a mesma a cada visita). */
+function sorteio(semente: number) {
+  let s = semente
+  return () => { s = (s * 1664525 + 1013904223) % 4294967296; return s / 4294967296 }
+}
+function montarRede() {
+  const nos: No[] = [], ini: number[] = [], tam: number[] = []
+  const r = sorteio(11)
+  CAMADAS.forEach(([linhas, cols], c) => {
+    ini.push(nos.length)
+    const alto = c === 0 ? 440 : c === CAMADAS.length - 1 ? 330 : 360, fundo = 230
+    let i = 0
+    for (let k = 0; k < cols; k++) for (let j = 0; j < linhas; j++) {
+      const y = (linhas === 1 ? 0 : j / (linhas - 1) - 0.5) * alto + (cols > 1 ? (k - 1) * 22 : 0)
+      const z = (cols === 1 ? 0 : k / (cols - 1) - 0.5) * fundo
+      // um leve desalinho: rede de verdade não é grade de planilha
+      nos.push({ x: XS[c] + (cols > 1 ? (r() - 0.5) * 30 : 0), y: y + (cols > 1 ? (r() - 0.5) * 24 : 0), z, camada: c, i: i++ })
+    }
+    tam.push(linhas * cols)
+  })
+  const ligas: Liga[] = []
+  for (let c = 0; c < CAMADAS.length - 1; c++) {
+    const chance = c === 0 ? 0.55 : c === CAMADAS.length - 2 ? 0.8 : 0.36
+    for (let i = 0; i < tam[c]; i++) for (let j = 0; j < tam[c + 1]; j++) {
+      if (r() < chance) ligas.push({ a: ini[c] + i, b: ini[c + 1] + j, camada: c })
+    }
+  }
+  // ligações que pulam uma camada: os dados "cruzando"
+  for (let k = 0; k < 16; k++) {
+    const c = k % 3, i = Math.floor(r() * tam[c]), j = Math.floor(r() * tam[c + 2])
+    ligas.push({ a: ini[c] + i, b: ini[c + 2] + j, camada: c, cruza: true })
+  }
+  return { nos, ligas, ini }
+}
 
 const limitar = (n: number, a = 0, b = 1) => Math.min(b, Math.max(a, n))
 const suave = (a: number, b: number, x: number) => { const t = limitar((x - a) / (b - a)); return t * t * (3 - 2 * t) }
 const mistura = (a: number, b: number, t: number) => a + (b - a) * t
 
-/** Os nós da rede em volta do núcleo (px no palco, a partir do centro) e o rótulo de alguns deles. */
-const NOS: [number, number, string?][] = [
-  [-400, -230, tx('lançamentos')], [-250, -290], [-60, -310, tx('cartões')], [150, -295], [330, -250, tx('dívidas')], [430, -110],
-  [440, 90, tx('metas')], [330, 250], [140, 300, tx('saldos')], [-80, 310], [-290, 270, tx('categorias')], [-440, 110], [-450, -60],
-  [-190, -160], [200, -150], [250, 120], [-220, 140], [20, -190],
-]
-/** Ligações: entre nós vizinhos e de cada nó de dentro até o núcleo (índice -1). */
-const LIGA: [number, number][] = [
-  [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9], [9, 10], [10, 11], [11, 12], [12, 0],
-  [0, 13], [1, 13], [2, 17], [3, 14], [4, 14], [5, 15], [6, 15], [7, 15], [8, 16], [9, 16], [10, 16], [11, 16], [12, 13],
-  [13, -1], [14, -1], [15, -1], [16, -1], [17, -1], [13, 17], [17, 14],
+/** Câmera em cada cena: giro (rad), inclinação (rad), zoom. */
+/** dx: quanto a rede anda para a direita (px de desenho); na cena 1, para os cartões de dados caberem à esquerda dela. */
+const CAM = [
+  { yaw: -0.36, pitch: 0.14, zoom: 0.9, dx: 150 },
+  { yaw: 0.5, pitch: 0.26, zoom: 1.02, dx: 0 },
+  { yaw: 0.22, pitch: 0.08, zoom: 1.1, dx: 0 },
+  { yaw: -0.18, pitch: 0.14, zoom: 0.98, dx: 0 },
 ]
 
-function Rede() {
-  const ponto = (i: number) => (i < 0 ? [0, 0] : [NOS[i][0], NOS[i][1]])
-  return (
-    <svg className="ag-rede" viewBox={`${-PW / 2} ${-PH / 2} ${PW} ${PH}`} aria-hidden="true">
-      <defs>
-        <linearGradient id="ag-fio" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="var(--marca-1)" /><stop offset="1" stopColor="var(--marca-3)" />
-        </linearGradient>
-      </defs>
-      {LIGA.map(([a, b], i) => {
-        const [x1, y1] = ponto(a), [x2, y2] = ponto(b)
-        const d = `M${x1} ${y1} L${x2} ${y2}`
-        return (
-          <g key={i}>
-            <path d={d} className="ag-fio" />
-            {/* pulso só nas ligações até o núcleo e em algumas da borda: cada pulso redesenha a rede a cada quadro */}
-            {(b === -1 || i % 4 === 0) && <path d={d} className="ag-pulso" style={{ animationDelay: `${(i * 0.37) % 3}s`, animationDuration: `${2.4 + (i % 5) * 0.5}s` }} />}
-          </g>
-        )
-      })}
-      {NOS.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={i > 12 ? 4 : 5.5} className={i % 3 === 0 ? 'ag-no aceso' : 'ag-no'} />)}
-    </svg>
-  )
-}
-
-/** O núcleo: esfera de luz com anéis girando em planos diferentes. */
-function Nucleo({ refEl }: { refEl: RefObject<HTMLDivElement | null> }) {
-  return (
-    <div className="ag-nucleo" ref={refEl} aria-hidden="true">
-      {/* no plano do núcleo vale a ordem do HTML: o brilho atrás, dois anéis atrás da esfera e um na frente */}
-      <i className="ag-halo" />
-      <i className="ag-anel c" /><i className="ag-anel b" />
-      <i className="ag-esfera" />
-      <i className="ag-anel a" />
-    </div>
-  )
-}
-
-/** Cena 1: o painel de vidro deitado sobre o núcleo, com feixes de luz subindo. */
-function CenaPainel() {
-  return (
-    <div className="ag-cena ag-c1" style={{ '--a': 'var(--a0)', '--t': 'var(--t0)' } as CSSProperties}>
-      <div className="ag-painel">
-        <div className="ag-painel-topo"><b>{tx('Olá, Marina!')}</b><span /><span /></div>
-        <div className="ag-painel-kpis">{[0, 1, 2].map((i) => <span key={i} style={{ '--i': i } as CSSProperties}><i /><b /></span>)}</div>
-        <div className="ag-painel-graf">{Array.from({ length: 12 }, (_, i) => <i key={i} style={{ '--h': [40, 55, 48, 70, 62, 80, 66, 74, 90, 72, 84, 96][i], '--i': i } as CSSProperties} />)}</div>
-      </div>
-      {[-180, -60, 60, 180].map((x, i) => <i key={i} className="ag-feixe" style={{ '--x': `${x}px`, '--i': i } as CSSProperties} />)}
-      {NOS.filter((no) => no[2]).map(([x, y, rotulo], i) => (
-        <span key={rotulo} className="ag-dado" style={{ left: PW / 2 + x, top: PH / 2 + y, '--i': i } as CSSProperties}>{rotulo}</span>
-      ))}
-    </div>
-  )
-}
-
-/** Cena 2: o Consultor analisando. */
-function CenaConsultor() {
-  const pilares = [
-    { nome: tx('Sobra'), v: 0.78, c: '#22c55e' }, { nome: tx('Reserva'), v: 0.52, c: '#22b8f0' },
-    { nome: tx('Dívidas'), v: 0.44, c: '#ffc000' }, { nome: tx('Cartão'), v: 0.81, c: '#a855f7' },
-    { nome: tx('Gastos'), v: 0.67, c: '#ef4a6a' }, { nome: tx('Metas'), v: 0.71, c: '#1fd1a0' },
-  ]
-  const plano = [
-    { t: tx('Adiante o Empréstimo pessoal'), d: tx('a dívida mais cara: 4,2% ao mês') },
-    { t: tx('Cancele 3 assinaturas paradas'), d: tx('R$ 418 a mais no ano') },
-    { t: tx('Guarde R$ 650 por mês'), d: tx('a reserva fica pronta em agosto') },
-  ]
-  return (
-    <div className="ag-cena ag-c2" style={{ '--a': 'var(--a1)', '--t': 'var(--t1)' } as CSSProperties}>
-      <div className="ag-consultor">
-        <header><i><Icone nome="bussola" tamanho={16} /></i><b>{tx('Consultor')}</b><span className="ag-status"><i />{tx('Análise pronta')}</span></header>
-        <div className="ag-consultor-meio">
-          <div className="ag-nota"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="42" className="fundo" /><circle cx="50" cy="50" r="42" pathLength={1} className="cheio" /></svg><b data-conta="72">72</b><small>{tx('Boa')}</small></div>
-          <ul className="ag-pilares">
-            {pilares.map((p, i) => <li key={p.nome} style={{ '--c': p.c, '--v': p.v, '--i': i } as CSSProperties}><span>{p.nome}</span><i><b /></i></li>)}
-          </ul>
-        </div>
-        <strong className="ag-plano-titulo">{tx('Plano de ação')}</strong>
-        <ol className="ag-plano">
-          {plano.map((p, i) => <li key={p.t} style={{ '--i': i } as CSSProperties}><span>{i + 1}</span><div><b>{p.t}</b><small>{p.d}</small></div></li>)}
-        </ol>
-      </div>
-      {[tx('Previsão do mês'), tx('Regra 50/30/20'), tx('Gastos formiga'), tx('Avalanche × bola de neve'), tx('Ritmo das metas')].map((c, i) => (
-        <span key={c} className="ag-chip" style={{ '--i': i } as CSSProperties}><i />{c}</span>
-      ))}
-    </div>
-  )
-}
-
-/** Cena 3: a tela se montando (linhas de código, blocos em arame que se enchem) e mudando de jeito. */
-function CenaTela() {
-  // posição de cada bloco (% do quadro) em cada jeito: Simples, Equilibrado, Detalhado
-  const blocos: [number, number, number, number][][] = [
-    [[0, 0, 100, 46], [0, 0, 100, 34], [0, 0, 64, 30]],
-    [[0, 52, 48, 48], [0, 40, 32, 22], [68, 0, 32, 30]],
-    [[52, 52, 48, 48], [34, 40, 32, 22], [0, 35, 32, 30]],
-    [[50, 100, 0, 0], [68, 40, 32, 22], [34, 35, 32, 30]],
-    [[50, 100, 0, 0], [0, 68, 100, 32], [68, 35, 32, 30]],
-    [[50, 100, 0, 0], [50, 100, 0, 0], [0, 70, 100, 30]],
-  ]
-  const codigo = [
-    "perfil.detalhe = 'equilibrado'",
-    'modulos = { cartoes: true, metas: true }',
-    'montar(inicio, perfil)',
-    'prioridade(dividas.maisCara)',
-  ]
-  return (
-    <div className="ag-cena ag-c3" style={{ '--a': 'var(--a2)', '--t': 'var(--t2)' } as CSSProperties}>
-      <div className="ag-codigo" translate="no">{codigo.map((l, i) => <span key={i} style={{ '--i': i } as CSSProperties}>{l}</span>)}</div>
-      <div className="ag-tela">
-        <div className="ag-modos">
-          <span className="m0">{tx('Simples')}</span><span className="m1">{tx('Equilibrado')}</span><span className="m2">{tx('Detalhado')}</span><i className="ag-modo-marca" />
-        </div>
-        <div className="ag-quadro">
-          {blocos.map((b, i) => (
-            <div key={i} className="ag-bloco" style={{
-              '--i': i,
-              '--x0': b[0][0], '--y0': b[0][1], '--w0': b[0][2], '--h0': b[0][3],
-              '--x1': b[1][0], '--y1': b[1][1], '--w1': b[1][2], '--h1': b[1][3],
-              '--x2': b[2][0], '--y2': b[2][1], '--w2': b[2][2], '--h2': b[2][3],
-            } as CSSProperties}>
-              <i /><b /><b />
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/** Cena 4: os arquivos passam pelo scanner e saem como lançamentos. */
-function CenaExtrato() {
-  const docs = [
-    { tipo: 'PDF', c: '#ef4a6a' }, { tipo: 'XLSX', c: '#22c55e' }, { tipo: 'OFX', c: '#22b8f0' },
-  ]
-  const linhas = [
-    { d: '05/11', n: tx('Salário'), v: '+ R$ 6.500,00', e: true, c: '#14b8a6' },
-    { d: '05/11', n: tx('Aluguel'), v: '− R$ 1.800,00', c: '#3b9cff' },
-    { d: '08/11', n: tx('Mercado'), v: '− R$ 408,00', c: '#f07a12' },
-    { d: '09/11', n: tx('Internet'), v: '− R$ 119,90', c: '#3b9cff' },
-    { d: '12/11', n: tx('Freela de design'), v: '+ R$ 2.400,00', e: true, c: '#14b8a6' },
-    { d: '14/11', n: tx('Streaming'), v: '− R$ 55,90', c: '#a855f7' },
-  ]
-  return (
-    <div className="ag-cena ag-c4" style={{ '--a': 'var(--a3)', '--t': 'var(--t3)' } as CSSProperties}>
-      {docs.map((d, i) => (
-        <div key={d.tipo} className="ag-doc" style={{ '--c': d.c, '--i': i } as CSSProperties}>
-          <span className="ag-doc-tipo" translate="no">{d.tipo}</span>
-          {Array.from({ length: 7 }, (_, k) => <i key={k} style={{ '--k': k } as CSSProperties} />)}
-        </div>
-      ))}
-      <div className="ag-scanner"><i className="ag-laser" /></div>
-      <div className="ag-linhas">
-        <header><Icone nome="lista" tamanho={14} /> {tx('Lançamentos reconhecidos')}</header>
-        {linhas.map((l, i) => (
-          <span key={i} className="ag-linha" style={{ '--i': i, '--c': l.c } as CSSProperties}>
-            <small>{l.d}</small><b>{l.n}</b><strong className={l.e ? 'entra' : 'sai'}>{l.v}</strong>
-          </span>
-        ))}
-        <span className="ag-confere"><Icone nome="check" tamanho={13} /> {tx('Conferido pelo saldo')}</span>
-      </div>
-    </div>
-  )
-}
-
-/** Cena 5: o cadeado, os pacotes passando cifrados e as garantias. */
-function CenaCripto() {
-  const selos = [
-    { icone: 'globo', t: tx('Conexão criptografada') },
-    { icone: 'cofre', t: tx('Dados guardados com criptografia') },
-    { icone: 'pessoa', t: tx('Cada conta só vê os próprios dados') },
-  ]
-  const cifra = ['9f2c·a71e·04bd·e5c3', '7d10·c9aa·3f6e·b204', 'e83b·5c0f·d19a·62c7', '1a4e·f7b3·8c25·d0e9', 'b6c1·2e8f·74ad·0953']
-  return (
-    <div className="ag-cena ag-c5" style={{ '--a': 'var(--a4)', '--t': 'var(--t4)' } as CSSProperties}>
-      <div className="ag-trilha">
-        {Array.from({ length: 6 }, (_, i) => <i key={i} className="ag-pacote" style={{ '--i': i } as CSSProperties}><b /></i>)}
-      </div>
-      <div className="ag-cifra" translate="no">{cifra.map((c, i) => <span key={i} style={{ '--i': i } as CSSProperties}>{c}</span>)}</div>
-      <div className="ag-cadeado" aria-hidden="true">
-        <svg viewBox="0 0 120 140">
-          <defs>
-            <linearGradient id="ag-cad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="var(--marca-1)" /><stop offset="1" stopColor="var(--marca-3)" /></linearGradient>
-          </defs>
-          <path d="M30 62 V44 a30 30 0 0 1 60 0 V62" className="arco" />
-          <rect x="14" y="60" width="92" height="72" rx="18" fill="url(#ag-cad)" />
-          <circle cx="60" cy="92" r="10" fill="#fff" fillOpacity=".92" />
-          <rect x="56" y="96" width="8" height="18" rx="4" fill="#fff" fillOpacity=".92" />
-        </svg>
-      </div>
-      <div className="ag-selos">
-        {selos.map((s, i) => <span key={s.t} style={{ '--i': i } as CSSProperties}><i><Icone nome={s.icone} tamanho={15} /></i>{s.t}</span>)}
-      </div>
-    </div>
-  )
+/** Brilho redondo pronto (desenhado uma vez e carimbado): bem mais barato que desfoque a cada quadro. */
+function brilho(cor: [number, number, number], tam = 64) {
+  const c = document.createElement('canvas')
+  c.width = c.height = tam
+  const g = c.getContext('2d')!
+  const [r, gr, b] = cor
+  const rad = g.createRadialGradient(tam / 2, tam / 2, 0, tam / 2, tam / 2, tam / 2)
+  rad.addColorStop(0, 'rgba(255,255,255,1)')
+  rad.addColorStop(0.18, `rgba(${r},${gr},${b},0.95)`)
+  rad.addColorStop(0.5, `rgba(${r},${gr},${b},0.25)`)
+  rad.addColorStop(1, `rgba(${r},${gr},${b},0)`)
+  g.fillStyle = rad
+  g.fillRect(0, 0, tam, tam)
+  return c
 }
 
 export function Algoritmo() {
   const secaoRef = useRef<HTMLElement>(null)
   const stickyRef = useRef<HTMLDivElement>(null)
-  const palcoRef = useRef<HTMLDivElement>(null)
-  const mundoRef = useRef<HTMLDivElement>(null)
-  const nucleoRef = useRef<HTMLDivElement>(null)
+  const telaRef = useRef<HTMLCanvasElement>(null)
   const [cena, setCena] = useState(0)
 
   useEffect(() => {
-    const secao = secaoRef.current, sticky = stickyRef.current, palco = palcoRef.current, mundo = mundoRef.current, nucleo = nucleoRef.current
-    if (!secao || !sticky || !palco || !mundo || !nucleo) return
-    const n = CENAS.length
-    let reduzir = semMovimento()
-    const cenas = [...mundo.querySelectorAll<HTMLElement>('.ag-cena')]
+    const secao = secaoRef.current, sticky = stickyRef.current, tela = telaRef.current
+    if (!secao || !sticky || !tela) return
+    const ctx = tela.getContext('2d')
+    if (!ctx) return
+    const { nos, ligas, ini } = montarRede()
+    const n = CENAS.length, L = CAMADAS.length
+    const entradas = [...sticky.querySelectorAll<HTMLElement>('.ag-entrada')]
+    const comparas = [...sticky.querySelectorAll<HTMLElement>('.ag-compara')]
+    const saidas = [...sticky.querySelectorAll<HTMLElement>('.ag-saida')]
+    const contador = sticky.querySelector<HTMLElement>('[data-relacoes]')
 
-    // o palco desenhado em PW x PH cabe na área livre (à direita do texto no computador; embaixo dele no celular)
+    let W = 0, H = 0, dpr = 1, cx = 0, cy = 0, esc = 1, celular = false, reduzir = false, claro = false
+    let sprA = brilho([31, 209, 160]), sprB = brilho([110, 124, 255]), sprW = brilho([180, 255, 235], 32)
+    const cores = () => {
+      claro = document.documentElement.dataset.tema === 'claro'
+      sprA = brilho(claro ? [13, 159, 128] : [31, 209, 160])
+      sprB = brilho(claro ? [61, 75, 224] : [110, 124, 255])
+      sprW = brilho(claro ? [13, 159, 128] : [180, 255, 235], 32)
+    }
     const medir = () => {
       reduzir = semMovimento()
-      const w = sticky.clientWidth, h = sticky.clientHeight, celular = w <= 900
-      let cx: number, cy: number, aw: number, ah: number
-      if (celular) { const topo = Math.min(260, h * 0.32); cx = w / 2; cy = topo + (h - topo) / 2; aw = w * 0.98; ah = h - topo - 16 }
-      else { const esq = Math.min(460, w * 0.38); cx = esq + (w - esq) / 2; cy = h / 2; aw = w - esq - 30; ah = h * 0.9 }
-      const s = Math.min(aw / PW, ah / PH) * (celular ? 1.24 : 1) // no celular pode vazar um pouco das bordas (a rede e as pontas), senão fica pequeno demais
-      // a escala parte do canto de cima (transform-origin 0 0): o canto vai para o centro menos meia largura já escalada
-      palco.style.transform = `translate(${(cx - (PW * s) / 2).toFixed(1)}px, ${(cy - (PH * s) / 2).toFixed(1)}px) scale(${s.toFixed(4)})`
+      W = sticky.clientWidth; H = sticky.clientHeight; celular = W <= 900
+      dpr = Math.min(window.devicePixelRatio || 1, 1.75)
+      tela.width = Math.round(W * dpr); tela.height = Math.round(H * dpr)
+      tela.style.width = `${W}px`; tela.style.height = `${H}px`
+      // a área da rede: à direita do texto no computador (com folga para os cartões de resposta), embaixo no celular
+      if (celular) {
+        const topo = Math.min(270, H * 0.33), ah = H - topo - 20
+        cx = W / 2; cy = topo + ah * 0.4; esc = Math.min((W * 0.92) / 860, (ah * 0.62) / 560)
+      } else {
+        const esq = Math.min(460, W * 0.36), aw = W - esq - 270
+        cx = esq + aw / 2 + 10; cy = H * 0.5; esc = Math.min(aw / 860, (H * 0.78) / 560)
+      }
+      cores()
+    }
+
+    // projeção: gira em volta do eixo y (giro), depois do x (inclinação), e põe em perspectiva
+    let yaw = 0, pitch = 0, zoom = 1, dx = 0
+    const F = 1500
+    const proj = (x: number, y: number, z: number) => {
+      const cyw = Math.cos(yaw), syw = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch)
+      const X = x * cyw + z * syw
+      let Z = -x * syw + z * cyw
+      const Y = y * cp - Z * sp
+      Z = y * sp + Z * cp
+      const s = F / (F + Z)
+      return { x: cx + (X * s * zoom + dx) * esc, y: cy + Y * s * esc * zoom, s, z: Z }
     }
 
     const ultimo = new Map<string, string>()
     const por = (k: string, v: string, f: () => void) => { if (ultimo.get(k) !== v) { ultimo.set(k, v); f() } }
     let cenaAtual = -1
+    const pos: ReturnType<typeof proj>[] = new Array(nos.length)
+    const atv = new Float32Array(nos.length)
+
     const desenhar = (p: number, tempo: number) => {
-      // cada cena ocupa 1/n do caminho; a vizinha entra enquanto a outra sai
-      const pos = p * n - 0.5 // posição contínua no roteiro (0 = meio da cena 1)
-      const i0 = Math.max(0, Math.min(n - 1, Math.floor(pos))), i1 = Math.min(n - 1, i0 + 1)
-      const f = suave(0, 1, pos - i0)
-      const a = ROTEIRO[i0], b = ROTEIRO[i1]
-      const bal = reduzir ? 0 : 1
-      const rx = mistura(a.rx, b.rx, f) * bal + (reduzir ? 0 : Math.sin(tempo * 0.0005) * 1.6)
-      const ry = mistura(a.ry, b.ry, f) * bal + (reduzir ? 0 : Math.cos(tempo * 0.0004) * 2.2)
-      mundo.style.transform = `rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`
-      nucleo.style.transform = `translate3d(${mistura(a.nx, b.nx, f).toFixed(1)}px, ${mistura(a.ny, b.ny, f).toFixed(1)}px, -40px) scale(${mistura(a.ns, b.ns, f).toFixed(3)})`
+      // presença de cada cena (0 a 1) e o andamento dela
+      const pres: number[] = [], and: number[] = []
       for (let i = 0; i < n; i++) {
-        const ini = i / n, fim = (i + 1) / n
-        const entra = i === 0 ? 1 : suave(ini - 0.035, ini + 0.035, p)
-        const sai = i === n - 1 ? 0 : suave(fim - 0.035, fim + 0.035, p)
-        const ac = (entra * (1 - sai)).toFixed(3), t = limitar((p - ini) / (fim - ini) * 1.15).toFixed(3)
-        por(`a${i}`, ac, () => mundo.style.setProperty(`--a${i}`, ac))
-        por(`t${i}`, t, () => mundo.style.setProperty(`--t${i}`, t))
+        const a = i / n, b = (i + 1) / n
+        pres.push((i === 0 ? 1 : suave(a - 0.04, a + 0.04, p)) * (i === n - 1 ? 1 : 1 - suave(b - 0.04, b + 0.04, p)))
+        and.push(limitar(((p - a) / (b - a)) * 1.15))
       }
-      // cena 3: a tela se monta no jeito Equilibrado, vira Simples e depois Detalhado (--m de 0 a 2; --q0..2 são os pesos)
-      const t2 = limitar((p - 2 / n) / (1 / n) * 1.15)
-      const m = t2 < 0.5 ? 1 : t2 < 0.66 ? 1 - suave(0.5, 0.66, t2) : suave(0.72, 0.92, t2) * 2
-      const pesos = [Math.max(0, 1 - m), Math.max(0, 1 - Math.abs(m - 1)), Math.max(0, m - 1)]
-      por('m', m.toFixed(3), () => {
-        mundo.style.setProperty('--m', m.toFixed(3))
-        pesos.forEach((q, k) => mundo.style.setProperty(`--q${k}`, q.toFixed(3)))
+      // câmera: mistura das cenas, com um balanço leve que nunca para
+      const fpos = limitar(p * n - 0.5, 0, n - 1), i0 = Math.floor(fpos), i1 = Math.min(n - 1, i0 + 1), f = suave(0, 1, fpos - i0)
+      const t = reduzir ? 0 : tempo
+      yaw = mistura(CAM[i0].yaw, CAM[i1].yaw, f) + Math.sin(t * 0.00028) * 0.09
+      pitch = mistura(CAM[i0].pitch, CAM[i1].pitch, f) + Math.cos(t * 0.00021) * 0.04
+      zoom = mistura(CAM[i0].zoom, CAM[i1].zoom, f)
+      dx = mistura(CAM[i0].dx, CAM[i1].dx, f) * (celular ? 0 : 1)
+
+      // ativação: (1) a onda que passa sozinha de tempos em tempos; (2) a onda da cena 2, levada pelo scroll;
+      // (3) entradas acesas quando o dado chega; (4) as comparações e as saídas
+      const ondaSozinha = reduzir ? -9 : ((t / 1000) % 3.4) / 3.4 * (L + 1.2) - 0.6
+      const ondaScroll = and[1] * (L + 0.6) - 0.3
+      const chegou = ENTRADAS.map((_, i) => limitar(and[0] * 1.6 - i * 0.12 + 0.05))
+      nos.forEach((no, k) => {
+        const c = no.camada
+        let a = 0.12 + 0.5 * Math.exp(-((c - ondaSozinha) ** 2) / 0.35)
+        a = Math.max(a, pres[1] * Math.exp(-((c - ondaScroll) ** 2) / 0.25))
+        if (c === 0) a = Math.max(a, (chegou[no.i] ?? 0) * pres[0] + 0.35 * (1 - pres[0]))
+        if (c === L - 1) a = Math.max(a, pres[3] * limitar(and[3] * 2.4 - no.i * 0.25))
+        atv[k] = Math.min(1, a)
+        pos[k] = proj(no.x, no.y, no.z)
       })
-      const enche = suave(0.14, 0.34, t2).toFixed(3)
-      por('enche', enche, () => mundo.style.setProperty('--enche', enche))
-      // cena que não está na tela nem é pintada
-      cenas.forEach((el, i) => { const fora = Number(ultimo.get(`a${i}`) ?? 0) < 0.002; por(`v${i}`, fora ? 'hidden' : '', () => { el.style.visibility = fora ? 'hidden' : '' }) })
+      // comparações: os dois neurônios de cada par acendem
+      const fc = COMPARA.map((_, i) => pres[2] * limitar(and[2] * 2.2 - i * 0.32 - 0.1))
+      COMPARA.forEach((cp, i) => {
+        const ka = ini[cp.a[0]] + cp.a[1], kb = ini[cp.b[0]] + cp.b[1]
+        atv[ka] = Math.max(atv[ka], fc[i]); atv[kb] = Math.max(atv[kb], fc[i])
+      })
+
+      // ─── desenho ───
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.clearRect(0, 0, W, H)
+      // no escuro a luz soma (brilha); no claro, a tinta pinta por cima
+      ctx.globalCompositeOperation = claro ? 'source-over' : 'lighter'
+      ctx.lineCap = 'round'
+      // ligações: mais fortes quando as duas pontas estão acesas, mais apagadas quando ficam lá atrás
+      for (const l of ligas) {
+        const A = pos[l.a], B = pos[l.b]
+        const acesa = (atv[l.a] + atv[l.b]) / 2
+        const fundo = limitar(0.55 + (A.s + B.s - 2) * 1.6, 0.25, 1)
+        const alfa = (l.cruza ? 0.06 + 0.4 * acesa * pres[1] : 0.07 + 0.42 * acesa) * fundo * (claro ? 1.3 : 1)
+        if (alfa < 0.01) continue
+        ctx.strokeStyle = l.camada % 2
+          ? (claro ? `rgba(61,75,224,${alfa})` : `rgba(110,124,255,${alfa})`)
+          : (claro ? `rgba(13,159,128,${alfa})` : `rgba(31,209,160,${alfa})`)
+        ctx.lineWidth = (l.cruza ? 1 : 0.9 + acesa * 1.4) * ((A.s + B.s) / 2)
+        ctx.beginPath()
+        if (l.cruza) {
+          // as que cruzam uma camada fazem uma curva por cima
+          ctx.moveTo(A.x, A.y); ctx.quadraticCurveTo((A.x + B.x) / 2, Math.min(A.y, B.y) - 70 * esc, B.x, B.y)
+        } else { ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y) }
+        ctx.stroke()
+      }
+      // comparações: o par ligado por um fio forte, tracejado e andando
+      COMPARA.forEach((cp, i) => {
+        if (fc[i] < 0.01) return
+        const A = pos[ini[cp.a[0]] + cp.a[1]], B = pos[ini[cp.b[0]] + cp.b[1]]
+        ctx.strokeStyle = claro ? `rgba(13,159,128,${0.85 * fc[i]})` : `rgba(160,255,230,${0.9 * fc[i]})`
+        ctx.lineWidth = 2.2
+        ctx.setLineDash([6, 6]); ctx.lineDashOffset = -t * 0.03
+        ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke()
+        ctx.setLineDash([])
+      })
+      // sinais correndo pelos fios: onde a onda está passando, um ponto de luz vai da camada c para a c+1
+      const ondas: [number, number][] = [[ondaSozinha, 0.75], [ondaScroll, pres[1]]]
+      for (let k = 0; k < ligas.length; k++) {
+        const l = ligas[k]
+        if (l.cruza) continue
+        for (const [onda, forca] of ondas) {
+          const q = onda - l.camada
+          if (forca < 0.02 || q <= 0 || q >= 1 || (forca < 0.9 && k % 2)) continue
+          const A = pos[l.a], B = pos[l.b]
+          const x = mistura(A.x, B.x, q), y = mistura(A.y, B.y, q), s = mistura(A.s, B.s, q)
+          const tam = 14 * s * esc * forca + 4
+          ctx.globalAlpha = 0.9 * forca
+          ctx.drawImage(sprW, x - tam / 2, y - tam / 2, tam, tam)
+        }
+      }
+      ctx.globalAlpha = 1
+      // neurônios: brilho carimbado, maior e mais forte quando acesos; os de trás primeiro e menores
+      const ordem = nos.map((_, k) => k).sort((a, b) => pos[b].z - pos[a].z)
+      for (const k of ordem) {
+        const P = pos[k], a = atv[k]
+        const tam = (30 + 46 * a) * P.s * esc
+        ctx.globalAlpha = limitar(0.45 + 0.55 * a) * limitar(0.55 + (P.s - 1) * 2.4, 0.4, 1)
+        ctx.drawImage(nos[k].camada % 2 ? sprB : sprA, P.x - tam / 2, P.y - tam / 2, tam, tam)
+        ctx.globalAlpha = 1
+        ctx.fillStyle = claro ? (a > 0.5 ? '#0d9f80' : '#7fcfbd') : (a > 0.5 ? '#ffffff' : '#9fe8d2')
+        ctx.beginPath(); ctx.arc(P.x, P.y, (3 + 3.2 * a) * P.s * esc, 0, Math.PI * 2); ctx.fill()
+      }
+      ctx.globalCompositeOperation = 'source-over'
+
+      // ─── cartões por cima ───
+      // cena 1: cada dado vem da esquerda (no celular, de baixo) e é engolido pelo neurônio de entrada
+      // (o cartão chega até encostar no neurônio, fica um instante e é puxado para dentro dele, encolhendo)
+      entradas.forEach((el, i) => {
+        const P = pos[ini[0] + i], fi = chegou[i]
+        const vem = suave(0, 0.35, fi), entra = suave(0.62, 1, fi)
+        // no celular não cabe nada à esquerda da rede: os cartões surgem numa grade embaixo dela e sobem voando
+        const gx = cx + (i % 2 ? 1 : -1) * Math.min(96, W * 0.24), gy = cy + 205 * esc + 24 + Math.floor(i / 2) * 46
+        const x = celular ? mistura(gx, P.x, entra) : P.x - 16 - (1 - vem) * 70 + entra * 16
+        const y = celular ? mistura(gy + (1 - vem) * 24, P.y, entra) : P.y
+        const o = pres[0] * vem * (1 - entra)
+        por(`e${i}`, `${x.toFixed(1)},${y.toFixed(1)},${o.toFixed(3)}`, () => {
+          el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(${celular ? '-50%' : '-100%'}, -50%) scale(${(1 - entra * 0.75).toFixed(3)})`
+          el.style.opacity = o.toFixed(3)
+          el.style.visibility = o < 0.01 ? 'hidden' : 'visible'
+        })
+      })
+      // cena 3: a etiqueta de cada comparação fica em cima do meio do par
+      COMPARA.forEach((cp, i) => {
+        const el = comparas[i], A = pos[ini[cp.a[0]] + cp.a[1]], B = pos[ini[cp.b[0]] + cp.b[1]]
+        const x = (A.x + B.x) / 2, y = (A.y + B.y) / 2
+        por(`c${i}`, `${x.toFixed(1)},${y.toFixed(1)},${fc[i].toFixed(3)}`, () => {
+          el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -125%) scale(${(0.85 + 0.15 * fc[i]).toFixed(3)})`
+          el.style.opacity = fc[i].toFixed(3)
+          el.style.visibility = fc[i] < 0.01 ? 'hidden' : 'visible'
+        })
+      })
+      // cena 4: as respostas saem dos neurônios de saída (no celular, numa grade embaixo da rede)
+      SAIDAS.forEach((_, i) => {
+        const el = saidas[i], P = pos[ini[L - 1] + i]
+        const fs = pres[3] * limitar(and[3] * 2.4 - i * 0.25)
+        const x = celular ? cx + (i % 2 ? 5 : -5) : P.x + 26, y = celular ? cy + 200 * esc + 18 + Math.floor(i / 2) * 62 : P.y
+        por(`s${i}`, `${x.toFixed(1)},${y.toFixed(1)},${fs.toFixed(3)}`, () => {
+          el.style.transform = celular
+            ? `translate3d(${x.toFixed(1)}px, ${(y + (1 - fs) * 20).toFixed(1)}px, 0) translate(${i % 2 ? '0' : '-100%'}, 0)`
+            : `translate3d(${(x + (1 - fs) * -30).toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(0, -50%)`
+          el.style.opacity = fs.toFixed(3)
+          el.style.visibility = fs < 0.01 ? 'hidden' : 'visible'
+        })
+      })
+      // presença das cenas para o CSS (o painel de contagem e os selos do fim)
+      pres.forEach((v, i) => por(`p${i}`, v.toFixed(3), () => sticky.style.setProperty(`--p${i}`, v.toFixed(3))))
+      const rel = Math.round(2418 * limitar(and[1] * 1.3))
+      if (contador) por('rel', String(rel), () => { contador.textContent = rel.toLocaleString('pt-BR') })
+
       const qual = Math.min(n - 1, Math.floor(p * n))
       if (qual !== cenaAtual) { cenaAtual = qual; setCena(qual) }
     }
@@ -322,8 +336,7 @@ export function Algoritmo() {
     }
     const laco = (agora: number) => {
       const dt = Math.min(0.05, (agora - (antes || agora)) / 1000); antes = agora
-      // o desenhado persegue o scroll suavemente (um tempo de resposta de ~0,2 s), sem pular etapas num scroll rápido
-      atual = reduzir ? alvo : atual + (alvo - atual) * (1 - Math.exp(-dt * 7))
+      atual = reduzir ? alvo : atual + (alvo - atual) * (1 - Math.exp(-dt * 6))
       if (Math.abs(alvo - atual) < 0.0002) atual = alvo
       desenhar(atual, agora)
       quadro = visivel ? requestAnimationFrame(laco) : 0
@@ -334,37 +347,61 @@ export function Algoritmo() {
       if (visivel && !quadro) { lerScroll(); antes = 0; quadro = requestAnimationFrame(laco) }
     })
     obs.observe(secao)
+    // troca de tema: as cores do desenho vêm dele
+    const tema = new MutationObserver(() => { cores(); desenhar(atual, performance.now()) })
+    tema.observe(document.documentElement, { attributes: true, attributeFilter: ['data-tema'] })
     const aoScroll = () => lerScroll()
     const aoRedim = () => { medir(); lerScroll(); desenhar(atual, performance.now()) }
     medir(); lerScroll(); atual = alvo; desenhar(atual, performance.now())
     window.addEventListener('scroll', aoScroll, { passive: true })
     window.addEventListener('resize', aoRedim)
-    return () => { obs.disconnect(); window.removeEventListener('scroll', aoScroll); window.removeEventListener('resize', aoRedim); if (quadro) cancelAnimationFrame(quadro) }
+    return () => {
+      obs.disconnect(); tema.disconnect()
+      window.removeEventListener('scroll', aoScroll); window.removeEventListener('resize', aoRedim)
+      if (quadro) cancelAnimationFrame(quadro)
+    }
   }, [])
 
   const irPara = (i: number) => {
     const el = secaoRef.current
     if (!el) return
     const topo = el.getBoundingClientRect().top + window.scrollY, total = el.offsetHeight - window.innerHeight
-    window.scrollTo({ top: topo + total * ((i + 0.5) / CENAS.length), behavior: 'smooth' })
+    window.scrollTo({ top: topo + total * ((i + 0.55) / CENAS.length), behavior: 'smooth' })
   }
 
   return (
     <section className="ag" ref={secaoRef} aria-labelledby="ag-titulo">
       <div className="ag-sticky" ref={stickyRef}>
         <div className="ag-luz" aria-hidden="true" />
-        <div className="ag-chao" aria-hidden="true" />
-        <div className="ag-palco" ref={palcoRef} style={{ width: PW, height: PH }} aria-hidden="true">
-          <div className="ag-mundo" ref={mundoRef}>
-            <Rede />
-            <Nucleo refEl={nucleoRef} />
-            <CenaPainel />
-            <CenaConsultor />
-            <CenaTela />
-            <CenaExtrato />
-            <CenaCripto />
+        <canvas className="ag-rede" ref={telaRef} aria-hidden="true" />
+
+        <div className="ag-sobre" aria-hidden="true">
+          {ENTRADAS.map((e) => (
+            <span key={e.rotulo} className="ag-entrada" style={{ '--c': e.c } as CSSProperties}>
+              <i><Icone nome={e.icone} tamanho={14} /></i><span><small>{e.rotulo}</small><b>{e.valor}</b></span>
+            </span>
+          ))}
+          {COMPARA.map((c) => (
+            <span key={c.x} className={`ag-compara ${c.bom ? 'bom' : ''}`}>
+              <span><small>{c.x}</small><em>×</em><small>{c.y}</small></span><b>{c.r}</b>
+            </span>
+          ))}
+          {SAIDAS.map((s) => (
+            <span key={s.t} className="ag-saida" style={{ '--c': s.c } as CSSProperties}>
+              <i><Icone nome={s.icone} tamanho={15} /></i><span><b>{s.t}</b><small>{s.d}</small></span>
+            </span>
+          ))}
+          <div className="ag-hud">
+            <span><i />{tx('Cruzando dados')}</span>
+            <b data-relacoes>0</b><small>{tx('relações')}</small>
+          </div>
+          <div className="ag-selos">
+            <span><Icone nome="trocar" tamanho={13} /> {tx('Refeito a cada lançamento')}</span>
+            <span><Icone nome="escudo" tamanho={13} /> {tx('Dados criptografados')}</span>
+            <span><Icone nome="relatorio" tamanho={13} /> {tx('Extrato lido no seu aparelho')}</span>
           </div>
         </div>
+
         <div className="ag-texto">
           <span className="ag-rotulo" id="ag-titulo"><i />{tx('O motor do OpusCash')}</span>
           <div className="ag-pilha" aria-live="polite">

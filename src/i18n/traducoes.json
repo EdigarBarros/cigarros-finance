@@ -13455,137 +13455,21 @@
     "en": "Advisor included",
     "es": "Asesor incluido"
   },
-  "Um motor por trás de cada número": {
-    "en": "An engine behind every number",
-    "es": "Un motor detrás de cada número"
-  },
-  "Por baixo de cada tela, um algoritmo próprio cruza lançamentos, cartões, dívidas e metas, e refaz a análise a cada mudança.": {
-    "en": "Under every screen, our own algorithm cross-checks entries, cards, debts and goals, and redoes the analysis with every change.",
-    "es": "Debajo de cada pantalla, un algoritmo propio cruza movimientos, tarjetas, deudas y metas, y rehace el análisis con cada cambio."
-  },
-  "Um consultor que pensa por você": {
-    "en": "An advisor that thinks for you",
-    "es": "Un asesor que piensa por ti"
-  },
-  "Nota de 0 a 100 em cada pilar, previsão do mês, assinaturas esquecidas e um plano de ação na ordem certa.": {
-    "en": "A 0 to 100 score for each pillar, a forecast for the month, forgotten subscriptions and an action plan in the right order.",
-    "es": "Nota de 0 a 100 en cada pilar, previsión del mes, suscripciones olvidadas y un plan de acción en el orden correcto."
-  },
-  "Uma tela que se monta para você": {
-    "en": "A screen that builds itself for you",
-    "es": "Una pantalla que se arma para ti"
-  },
-  "O painel se adapta a cada pessoa: mais simples ou mais detalhado, só com o que você usa.": {
-    "en": "The dashboard adapts to each person: simpler or more detailed, with only what you use.",
-    "es": "El panel se adapta a cada persona: más simple o más detallado, solo con lo que usas."
-  },
-  "Lê o extrato de qualquer banco": {
-    "en": "Reads statements from any bank",
-    "es": "Lee el extracto de cualquier banco"
-  },
-  "PDF, Excel, CSV, Word e OFX viram lançamentos em segundos. Tudo conferido pelo saldo e lido no seu aparelho.": {
-    "en": "PDF, Excel, CSV, Word and OFX become entries in seconds. Everything checked against the balance and read on your device.",
-    "es": "PDF, Excel, CSV, Word y OFX se vuelven movimientos en segundos. Todo verificado con el saldo y leído en tu dispositivo."
-  },
-  "Seus dados, trancados": {
-    "en": "Your data, locked",
-    "es": "Tus datos, bajo llave"
-  },
-  "Conexão criptografada, dados guardados com criptografia e cada conta só enxerga os próprios dados.": {
-    "en": "Encrypted connection, data stored with encryption, and each account only sees its own data.",
-    "es": "Conexión cifrada, datos guardados con cifrado y cada cuenta solo ve sus propios datos."
-  },
-  "cartões": {
-    "en": "cards",
-    "es": "tarjetas"
-  },
-  "dívidas": {
-    "en": "debts",
-    "es": "deudas"
-  },
   "metas": {
     "en": "goals",
     "es": "metas"
-  },
-  "saldos": {
-    "en": "balances",
-    "es": "saldos"
   },
   "categorias": {
     "en": "categories",
     "es": "categorías"
   },
-  "Olá, Marina!": {
-    "en": "Hi, Marina!",
-    "es": "¡Hola, Marina!"
-  },
   "Adiante o Empréstimo pessoal": {
     "en": "Pay ahead on the Personal loan",
     "es": "Adelanta el Préstamo personal"
   },
-  "a dívida mais cara: 4,2% ao mês": {
-    "en": "the most expensive debt: 4.2% a month",
-    "es": "la deuda más cara: 4,2% al mes"
-  },
-  "Cancele 3 assinaturas paradas": {
-    "en": "Cancel 3 unused subscriptions",
-    "es": "Cancela 3 suscripciones sin uso"
-  },
   "R$ 418 a mais no ano": {
     "en": "R$ 418 more per year",
     "es": "R$ 418 más al año"
-  },
-  "Guarde R$ 650 por mês": {
-    "en": "Save R$ 650 a month",
-    "es": "Guarda R$ 650 al mes"
-  },
-  "a reserva fica pronta em agosto": {
-    "en": "your emergency fund is ready in August",
-    "es": "la reserva queda lista en agosto"
-  },
-  "Análise pronta": {
-    "en": "Analysis ready",
-    "es": "Análisis listo"
-  },
-  "Plano de ação": {
-    "en": "Action plan",
-    "es": "Plan de acción"
-  },
-  "Previsão do mês": {
-    "en": "Month forecast",
-    "es": "Previsión del mes"
-  },
-  "Regra 50/30/20": {
-    "en": "50/30/20 rule",
-    "es": "Regla 50/30/20"
-  },
-  "Gastos formiga": {
-    "en": "Small leaks",
-    "es": "Gastos hormiga"
-  },
-  "Avalanche × bola de neve": {
-    "en": "Avalanche × snowball",
-    "es": "Avalancha × bola de nieve"
-  },
-  "Ritmo das metas": {
-    "en": "Goal pace",
-    "es": "Ritmo de las metas"
-  },
-  "Lançamentos reconhecidos": {
-    "en": "Recognized entries",
-    "es": "Movimientos reconocidos"
-  },
-  "Conferido pelo saldo": {
-    "en": "Checked against the balance",
-    "es": "Verificado con el saldo"
-  },
-  "Dados guardados com criptografia": {
-    "en": "Data stored with encryption",
-    "es": "Datos guardados con cifrado"
-  },
-  "Cada conta só vê os próprios dados": {
-    "en": "Each account only sees its own data",
-    "es": "Cada cuenta solo ve sus propios datos"
   },
   "O motor do OpusCash": {
     "en": "The OpusCash engine",
@@ -13594,5 +13478,141 @@
   "Partes do motor do OpusCash": {
     "en": "Parts of the OpusCash engine",
     "es": "Partes del motor de OpusCash"
+  },
+  "Seus dados entram": {
+    "en": "Your data comes in",
+    "es": "Tus datos entran"
+  },
+  "Lançamentos, cartões, dívidas, metas, saldos e o extrato do banco: tudo vira informação para o motor.": {
+    "en": "Entries, cards, debts, goals, balances and your bank statement: everything becomes information for the engine.",
+    "es": "Movimientos, tarjetas, deudas, metas, saldos y el extracto del banco: todo se vuelve información para el motor."
+  },
+  "A rede cruza tudo": {
+    "en": "The network cross-checks everything",
+    "es": "La red cruza todo"
+  },
+  "Cada número é ligado aos outros: o gasto de hoje com o mês, o mês com o ano, a dívida com o que sobra.": {
+    "en": "Every number is linked to the others: today's spending to the month, the month to the year, the debt to what's left over.",
+    "es": "Cada número se conecta con los demás: el gasto de hoy con el mes, el mes con el año, la deuda con lo que sobra."
+  },
+  "Compara cada detalhe": {
+    "en": "Compares every detail",
+    "es": "Compara cada detalle"
+  },
+  "Seu mês com a sua média, os juros com a reserva, o ritmo de cada meta com o prazo dela.": {
+    "en": "Your month against your average, interest against your savings, each goal's pace against its deadline.",
+    "es": "Tu mes con tu promedio, los intereses con la reserva, el ritmo de cada meta con su plazo."
+  },
+  "E diz o que fazer": {
+    "en": "And tells you what to do",
+    "es": "Y te dice qué hacer"
+  },
+  "Uma nota para o seu dinheiro e um plano de ação na ordem certa, refeito a cada lançamento.": {
+    "en": "A score for your money and an action plan in the right order, redone with every entry.",
+    "es": "Una nota para tu dinero y un plan de acción en el orden correcto, rehecho con cada movimiento."
+  },
+  "Fatura Nubank": {
+    "en": "Nubank statement",
+    "es": "Resumen Nubank"
+  },
+  "Empréstimo": {
+    "en": "Loan",
+    "es": "Préstamo"
+  },
+  "4,2% ao mês": {
+    "en": "4.2% a month",
+    "es": "4,2% al mes"
+  },
+  "Saldo guardado": {
+    "en": "Saved balance",
+    "es": "Saldo guardado"
+  },
+  "extrato.pdf": {
+    "en": "statement.pdf",
+    "es": "extracto.pdf"
+  },
+  "42 linhas": {
+    "en": "42 lines",
+    "es": "42 líneas"
+  },
+  "sua média": {
+    "en": "your average",
+    "es": "tu promedio"
+  },
+  "8% menos": {
+    "en": "8% less",
+    "es": "8% menos"
+  },
+  "Juros 4,2%": {
+    "en": "Interest 4.2%",
+    "es": "Intereses 4,2%"
+  },
+  "reserva 0,8%": {
+    "en": "savings 0.8%",
+    "es": "reserva 0,8%"
+  },
+  "adiante a dívida": {
+    "en": "pay the debt early",
+    "es": "adelanta la deuda"
+  },
+  "Ritmo da meta": {
+    "en": "Goal pace",
+    "es": "Ritmo de la meta"
+  },
+  "prazo": {
+    "en": "deadline",
+    "es": "plazo"
+  },
+  "2 meses atrás": {
+    "en": "2 months behind",
+    "es": "2 meses atrasada"
+  },
+  "uso": {
+    "en": "usage",
+    "es": "uso"
+  },
+  "3 paradas": {
+    "en": "3 unused",
+    "es": "3 sin uso"
+  },
+  "Nota 72 · Boa": {
+    "en": "Score 72 · Good",
+    "es": "Nota 72 · Buena"
+  },
+  "6 pilares analisados": {
+    "en": "6 pillars analyzed",
+    "es": "6 pilares analizados"
+  },
+  "a dívida mais cara": {
+    "en": "your most expensive debt",
+    "es": "la deuda más cara"
+  },
+  "Vai sobrar R$ 1.937": {
+    "en": "R$ 1,937 will be left over",
+    "es": "Van a sobrar R$ 1.937"
+  },
+  "previsão para o dia 31": {
+    "en": "forecast for the 31st",
+    "es": "previsión para el día 31"
+  },
+  "Cancele 3 assinaturas": {
+    "en": "Cancel 3 subscriptions",
+    "es": "Cancela 3 suscripciones"
+  },
+  "Cruzando dados": {
+    "en": "Cross-checking data",
+    "es": "Cruzando datos"
+  },
+  "relações": {
+    "en": "connections",
+    "es": "relaciones"
+  },
+  "Refeito a cada lançamento": {
+    "en": "Redone with every entry",
+    "es": "Rehecho con cada movimiento"
+  },
+  "Extrato lido no seu aparelho": {
+    "en": "Statement read on your device",
+    "es": "Extracto leído en tu dispositivo"
   }
 }
