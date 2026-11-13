@@ -4,7 +4,7 @@ import './fundadores.css'
 
 /**
  * "Quem faz o OpusCash": os dois sócios, logo antes do teste grátis da página de apresentação.
- * Cada um é um cartão de estúdio em camadas (fundo, primeiro nome gigante atrás, foto, sobrenome vazado na frente),
+ * Cada um é um cartão de estúdio em camadas (fundo, primeiro nome gigante atrás, foto, sobrenome de vidro na frente),
  * que inclina com o mouse; as camadas ficam em profundidades diferentes, daí o efeito 3D.
  * `tam` e `tamSob`: tamanho da letra (em % da largura do cartão) para o nome ocupar a largura certa em Montserrat 800.
  */
@@ -45,8 +45,8 @@ function Cartao({ s, i }: { s: (typeof SOCIOS)[number]; i: number }) {
         <div className="fd-fundo" />
         <span className="fd-nome" aria-hidden="true" style={{ '--tam': s.tam } as CSSProperties}>{s.primeiro}</span>
         <img className="fd-foto" src={s.foto} alt={s.nome} width={900} height={Math.round(900 / s.alt)} loading="lazy" decoding="async" />
-        <span className="fd-sobrenome" aria-hidden="true" style={{ '--tam': s.tamSob } as CSSProperties}>{s.sobrenome}</span>
         <div className="fd-chao" />
+        <span className="fd-sobrenome" aria-hidden="true" style={{ '--tam': s.tamSob } as CSSProperties}>{s.sobrenome}</span>
         <div className="fd-info">
           <h3>{s.nome}</h3>
           <p><i />{s.cargo}</p>
@@ -74,9 +74,9 @@ export function Fundadores() {
     <section className="fd" ref={ref} aria-labelledby="fd-titulo">
       <div className="fd-luzes" aria-hidden="true"><i /><i /></div>
       <header className="fd-topo">
-        <span className="fd-rotulo">{tx('Os fundadores')}</span>
+        <span className="fd-rotulo">{tx('Os idealizadores')}</span>
         <h2 id="fd-titulo">{tx('Quem faz o OpusCash')}</h2>
-        <p>{tx('Tudo começou com um painel que o Edigar desenvolveu. O Eduardo viu, acreditou na ideia e entrou como sócio para levar o projeto adiante.')}</p>
+        <p>{tx('Uma ideia que saiu do papel e virou realidade. Dois sócios com a mão na massa para você cuidar do seu dinheiro com clareza.')}</p>
       </header>
       <div className="fd-grade">
         {SOCIOS.map((s, i) => <Cartao key={s.nome} s={s} i={i} />)}

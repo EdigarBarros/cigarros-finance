@@ -1,7 +1,7 @@
 /* ─── QUEM FAZ O OPUSCASH ───
    Cartões de estúdio: o fundo imita o cinza das fotos e vai escurecendo até o azul do site. Por dentro do cartão as
    cores são fixas (o estúdio é escuro nos dois temas); fora dele, o texto segue o tema.
-   Camadas: fundo → primeiro nome gigante (o cabelo encosta nele) → foto → sobrenome vazado → chão → nome e cargo.
+   Camadas: fundo → primeiro nome gigante (o cabelo encosta nele) → foto → sobrenome de vidro → chão → nome e cargo.
    Ao mexer o mouse, o cartão gira e cada camada se desloca num ritmo diferente (--px/--py, de -0,5 a 0,5). */
 .fd {
   position: relative;
@@ -139,11 +139,14 @@
   transition: translate .7s cubic-bezier(.2, .8, .2, 1);
 }
 
-/* sobrenome vazado, na frente: atravessa o terno */
+/* sobrenome de vidro, na frente: atravessa o terno */
 .fd-sobrenome {
   top: 96cqw;
-  color: transparent;
-  -webkit-text-stroke: 1.4px rgba(230, 238, 250, .62);
+  /* vidro fosco: letra cheia e translúcida, mais clara em cima (contorno mostraria as emendas internas da fonte) */
+  background: linear-gradient(180deg, rgba(255, 255, 255, .62) 0%, rgba(214, 226, 245, .3) 55%, rgba(159, 233, 214, .14) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
   letter-spacing: .02em;
   translate: calc(var(--px) * 24px) calc(var(--py) * 14px);
   transition: translate .7s cubic-bezier(.2, .8, .2, 1);
