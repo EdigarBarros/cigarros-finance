@@ -13239,14 +13239,6 @@
     "en": "Checking your payment… If you just paid, the new days show up here in a few seconds.",
     "es": "Comprobando tu pago… Si acabas de pagar, los días nuevos aparecen aquí en unos segundos."
   },
-  "Fundador · Produto e Tecnologia": {
-    "en": "Founder · Product and Technology",
-    "es": "Fundador · Producto y Tecnología"
-  },
-  "Sócio · Estratégia e Negócios": {
-    "en": "Partner · Strategy and Business",
-    "es": "Socio · Estrategia y Negocios"
-  },
   "Quem faz o OpusCash": {
     "en": "The people behind OpusCash",
     "es": "Quién hace OpusCash"
@@ -13258,5 +13250,13 @@
   "Uma ideia que saiu do papel e virou realidade. Dois sócios com a mão na massa para você cuidar do seu dinheiro com clareza.": {
     "en": "An idea that left the drawing board and became real. Two partners rolling up their sleeves so you can manage your money with clarity.",
     "es": "Una idea que salió del papel y se hizo realidad. Dos socios manos a la obra para que cuides tu dinero con claridad."
+  },
+  "Fundador": {
+    "en": "Founder",
+    "es": "Fundador"
+  },
+  "Sócio": {
+    "en": "Partner",
+    "es": "Socio"
   }
 }
