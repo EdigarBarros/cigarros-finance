@@ -86,6 +86,10 @@ const dataCurta = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
  * mostra tudo para revisar antes de gravar: nome (com o original embaixo), entrada ou saída, categoria sugerida e os
  * que parecem repetidos (já lançados) vêm desmarcados.
  */
+/** O arquivo abriu, mas não tem lançamentos (comprovante, outro documento): é o arquivo errado, não defeito do app. */
+class ArquivoSemLancamentos extends Error {}
+const extensao = (nome: string) => (nome.split('.').pop() ?? '').toLowerCase().slice(0, 8)
+
 export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void }) {
   const [etapa, setEtapa] = useState<'escolher' | 'lendo' | 'revisar' | 'gravando' | 'pronto'>('escolher')
   const [erro, setErro] = useState<string | null>(null)
@@ -109,7 +113,18 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
     setEtapa('lendo')
     try {
       const r = await lerExtrato(f, c.ano)
-      if (!r.linhas.length) throw new Error('Não achei lançamentos nesse arquivo. Confira se é o extrato (com data e valor de cada movimentação).')
+      if (!r.linhas.length) {
+        const p = r.pistas
+        // só é defeito do leitor se o arquivo tem cara de extrato (várias linhas com data e valor) e nada foi lido: aí fica
+        // registrado, com as quantidades (nunca o conteúdo). Comprovante ou arquivo sem lançamentos é só o arquivo errado.
+        if (!p.comprovante && p.comDataEValor >= 3) {
+          registrarErro(new Error('Extrato com datas e valores, mas nenhum lançamento lido'),
+            `importar extrato .${extensao(f.name)} (${f.size} bytes) · ${p.linhas} linhas, ${p.comData} com data, ${p.comValor} com valor, ${p.comDataEValor} com os dois`)
+        }
+        throw new ArquivoSemLancamentos(p.comprovante
+          ? tx('Esse arquivo é um comprovante (de um pagamento só), não o extrato. No app ou site do banco, abra o extrato da conta e use “Exportar” ou “Baixar PDF”, ou envie em CSV, Excel ou OFX.')
+          : tx('Não achei lançamentos nesse arquivo. Confira se é o extrato (com data e valor de cada movimentação).'))
+      }
       // só o ano aberto está carregado: num extrato que cruza a virada (dez–jan), os dias do outro ano são buscados no banco
       const outros = await buscarJaLancados(r.linhas, c.ano)
       if (outros.anosComErro.length) setAviso(tx('Não consegui conferir os lançamentos de {0}. Confira se o que é desse ano já não foi lançado antes de importar.', outros.anosComErro.join(', ')))
@@ -128,7 +143,8 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
       const msg = e instanceof Error ? e.message : String(e)
       // fica registrado para entender o que falhou: só o tipo e o tamanho do arquivo, nunca o conteúdo do extrato
       // (o PDF que não abre já foi registrado com o erro do leitor, em lib/extrato.ts)
-      if (!msg.startsWith('Não consegui abrir esse PDF')) registrarErro(e, `importar extrato .${(f.name.split('.').pop() ?? '').toLowerCase().slice(0, 8)} (${f.size} bytes)`)
+      // (arquivo sem lançamentos já decidiu acima se era defeito do leitor)
+      if (!msg.startsWith('Não consegui abrir esse PDF') && !(e instanceof ArquivoSemLancamentos)) registrarErro(e, `importar extrato .${extensao(f.name)} (${f.size} bytes)`)
       setErro(msg)
       setEtapa('escolher')
     } finally {
