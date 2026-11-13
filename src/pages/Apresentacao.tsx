@@ -5,6 +5,8 @@ import { tx } from '../lib/textos'
 import { ligarRolagemSuave } from '../lib/rolagemSuave'
 import { semMovimento } from '../lib/tema'
 import { Fundadores } from './Fundadores'
+import { FundoOpus } from './FundoOpus'
+import { Preco } from './Preco'
 import { TelaDaApresentacao } from './ApresentacaoTelas'
 import { BLOCOS, DH, DW, TELAS, ZONAS, dividaEm, escalonar, formatar, type Formato, type Ret, type Tela } from './apresentacaoCena'
 
@@ -342,6 +344,8 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
           <i className="ap-orb ap-orb-b" />
           <i className="ap-orb ap-orb-c" />
         </div>
+        {/* peças do OpusCash lançadas para o fundo, vagando atrás do texto */}
+        <FundoOpus onde="topo" mouse />
         <div className="ap-hero-centro">
           <div className="ap-logo-flutuante">
             {/* o logo em imagem tem "OPUS" branco: no tema claro entra a marca desenhada */}
@@ -412,40 +416,8 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
       {/* ─── QUEM FAZ O OPUSCASH ─── */}
       <Fundadores />
 
-      {/* ─── CTA FINAL ─── */}
-      <section className="ap-cta-final">
-        <div className="ap-cta-orbs">
-          <i className="ap-orb ap-orb-d" />
-          <i className="ap-orb ap-orb-e" />
-        </div>
-        <div className="ap-cta-centro">
-          <div className="ap-preco">
-            <span className="ap-preco-tag">{tx('Teste grátis por 7 dias')}</span>
-            <div className="ap-preco-valor">
-              <small>R$</small>
-              <strong>9,99</strong>
-              <span>{tx('/mês')}</span>
-            </div>
-            <p className="ap-preco-nota">{tx('Sem cartão para começar. Só pedimos o cartão se você decidir assinar.')}</p>
-          </div>
-          <h2 className="ap-cta-titulo">{tx('Pronto para transformar')}<br />{tx('suas finanças?')}</h2>
-          <div className="ap-botoes">
-            <button className="ap-btn ap-btn-cta ap-btn-grande" onClick={onSignup}>
-              {tx('Criar conta grátis')} <Icone nome="seta" tamanho={17} />
-            </button>
-            <button className="ap-btn ap-btn-ghost" onClick={onLogin}>
-              {tx('Entrar')}
-            </button>
-          </div>
-          <ul className="ap-features-mini">
-            <li><Icone nome="check" tamanho={14} /> {tx('Cartões, faturas e parcelas')}</li>
-            <li><Icone nome="check" tamanho={14} /> {tx('Metas, dívidas e contas do mês')}</li>
-            <li><Icone nome="check" tamanho={14} /> {tx('Qualquer moeda, com a cotação do dia')}</li>
-            <li><Icone nome="check" tamanho={14} /> {tx('Importa extrato do banco e planilhas')}</li>
-            <li><Icone nome="escudo" tamanho={14} /> {tx('Conexão e dados criptografados, só você enxerga os seus')}</li>
-          </ul>
-        </div>
-      </section>
+      {/* ─── O PLANO ─── */}
+      <Preco onLogin={onLogin} onSignup={onSignup} />
 
       {/* ─── FOOTER ─── */}
       <footer className="ap-footer">
