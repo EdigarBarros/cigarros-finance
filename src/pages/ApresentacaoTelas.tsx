@@ -5,7 +5,8 @@ import { Marca } from '../components/Marca'
 import { LOCAL_DAS_DATAS, MESES_CURTO, MESES_NOME, fmtDataCurta, fmtDataLonga, fmtMesAno } from '../lib/format'
 import { tx } from '../lib/textos'
 import {
-  BLOCOS, DIVIDA, ENTROU, dividaEm, GUARDADO, INVESTIDO, OUTUBRO, PLOT, R, SAIU, TETO, compacto, formatar, type Formato, type Ret, type Tela,
+  ANO, BLOCOS, CORES_ANO, DIVIDA, ENTROU, dividaEm, GUARDADO, INVESTIDO, MES_ANO, OUTUBRO, PLOT, R, SAIU, TETO, TETO_ANO, compacto,
+  formatar, type Formato, type Ret, type Tela,
 } from './apresentacaoCena'
 
 /**
@@ -122,14 +123,18 @@ function GraficoInicio() {
   )
 }
 
-function Legenda() {
+/** Legenda do gráfico do ano; `paleta` usa as cores fixas do gráfico do app (as do Resumo do ano). */
+function Legenda({ paleta }: { paleta?: boolean }) {
+  const c = paleta
+    ? { e: CORES_ANO.entradas[1], s: CORES_ANO.saidas[1], g: CORES_ANO.caixa, d: CORES_ANO.divida, i: CORES_ANO.investido }
+    : { e: 'var(--entrada)', s: 'var(--saida)', g: 'var(--caixa)', d: 'var(--divida)', i: 'var(--violeta)' }
   return (
     <div className="td-legenda">
-      <span style={cor('var(--entrada)')}><i />{tx('Entrou')}</span>
-      <span style={cor('var(--saida)')}><i />{tx('Saiu')}</span>
-      <span style={cor('var(--caixa)')}><i className="traco" />{tx('Guardado nas contas')}</span>
-      <span style={cor('var(--divida)')}><i className="traco" />{tx('Dívidas')}</span>
-      <span style={cor('var(--violeta)')}><i className="traco" />{tx('Investido')}</span>
+      <span style={cor(c.e)}><i />{tx('Entrou')}</span>
+      <span style={cor(c.s)}><i />{tx('Saiu')}</span>
+      <span style={cor(c.g)}><i className="traco" />{tx('Guardado nas contas')}</span>
+      <span style={cor(c.d)}><i className="traco" />{tx('Dívidas')}</span>
+      <span style={cor(c.i)}><i className="traco" />{tx('Investido')}</span>
     </div>
   )
 }
@@ -235,108 +240,130 @@ function TelaInicio() {
 
 // ─────────────────────────────── RESUMO DO ANO ───────────────────────────────
 
+/**
+ * Curva monotônica (a cubicInterpolationMode: 'monotone' do Chart.js, que o app usa): passa por todos os pontos e
+ * nunca inventa um pico ou um vale entre dois meses.
+ */
+function curvaMonotona(pts: Pt[]) {
+  const f = (n: number) => n.toFixed(1)
+  const n = pts.length
+  const d = pts.slice(0, -1).map((p, i) => (pts[i + 1][1] - p[1]) / (pts[i + 1][0] - p[0]))
+  const m = pts.map((_, i) => (i === 0 ? d[0] : i === n - 1 ? d[n - 2] : d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2))
+  d.forEach((di, i) => {
+    if (di === 0) { m[i] = 0; m[i + 1] = 0; return }
+    const a = m[i] / di, b = m[i + 1] / di, h = a * a + b * b
+    if (h > 9) { const t = 3 / Math.sqrt(h); m[i] = t * a * di; m[i + 1] = t * b * di }
+  })
+  let c = `M${f(pts[0][0])} ${f(pts[0][1])}`
+  for (let i = 0; i < n - 1; i++) {
+    const dx = (pts[i + 1][0] - pts[i][0]) / 3
+    c += ` C${f(pts[i][0] + dx)} ${f(pts[i][1] + m[i] * dx)} ${f(pts[i + 1][0] - dx)} ${f(pts[i + 1][1] - m[i + 1] * dx)} ${f(pts[i + 1][0])} ${f(pts[i + 1][1])}`
+  }
+  return c
+}
+
+/** Mês a mês do Resumo do ano, com os números e as cores do gráfico do app, em planos que se separam em 3D. */
 function GraficoAno() {
   const { w: W, h: H } = PLOT
-  const { x, y, serie } = escala(W, H)
-  const div = serie(DIVIDA, 0, OUTUBRO + 1)
-  const area = `${curvaSvg(div)} L${x(OUTUBRO)} ${H} L${x(0)} ${H} Z`
-  const projecao = curvaSvg(serie(DIVIDA, OUTUBRO))
-  const bw = 15
-  const ponta = (vs: number[]) => [x(OUTUBRO), y(vs[OUTUBRO])] as const
-  const camada = (d: number, c: string, rotulo: string | null, filhos: ReactNode, extra = '') => (
+  const x = (i: number) => (W * (i + 0.5)) / 12
+  const y = (v: number) => H * (1 - v / TETO_ANO)
+  const serie = (vs: number[]) => vs.map((v, i): Pt => [x(i), y(v)])
+  const div = serie(ANO.divida)
+  const area = `${curvaMonotona(div)} L${x(MES_ANO)} ${H} L${x(0)} ${H} Z`
+  const bw = 16
+  const ponta = (vs: number[]) => [x(MES_ANO), y(vs[MES_ANO])] as const
+  const camada = (d: number, c: string, rotulo: string | null, filhos: ReactNode, extra = '', nomeA = -14) => (
     <div className={`ta-camada ${extra}`} style={{ '--d': d, '--c': c } as CSSProperties}>
-      {rotulo && <span className="ta-camada-nome">{rotulo}</span>}
+      {rotulo && <span className="ta-camada-nome" style={{ right: nomeA }}>{rotulo}</span>}
       {filhos}
     </div>
   )
-  const [gx, gy] = ponta(GUARDADO), [ix, iy] = ponta(INVESTIDO)
+  const [gx, gy] = ponta(ANO.guardado), [ix, iy] = ponta(ANO.investido)
   return (
     <div className="ta-plot" style={{ width: W, height: H }}>
       {camada(0, 'var(--texto-3)', null, (
         <svg width={W} height={H} aria-hidden="true">
-          {[0, 0.25, 0.5, 0.75, 1].map((g) => <line key={g} x1="0" x2={W} y1={H * g} y2={H * g} className="grade" />)}
-          <rect x={x(OUTUBRO) - 26} y="0" width="52" height={H} rx="12" className="faixa" />
+          {[0, 1, 2, 3, 4, 5, 6].map((g) => <line key={g} x1="0" x2={W} y1={(H * g) / 6} y2={(H * g) / 6} className="grade" />)}
+          <rect x={x(MES_ANO) - 26} y="0" width="52" height={H} rx="12" className="faixa" />
         </svg>
       ), 'base')}
-      {camada(24, 'var(--entrada)', null, (
+      {camada(24, CORES_ANO.entradas[1], null, (
         <svg width={W} height={H} aria-hidden="true">
-          {ENTROU.map((v, i) => (
+          <defs>
+            <linearGradient id="ta-entrou" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={CORES_ANO.entradas[0]} /><stop offset="1" stopColor={CORES_ANO.entradas[1]} /></linearGradient>
+            <linearGradient id="ta-saiu" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={CORES_ANO.saidas[0]} /><stop offset="1" stopColor={CORES_ANO.saidas[1]} /></linearGradient>
+          </defs>
+          {ANO.entrou.map((v, i) => (
             <g key={i} style={{ '--i': i } as CSSProperties}>
-              <rect x={x(i) - bw - 1.5} y={y(v)} width={bw} height={H - y(v)} rx="4" className="barra e" />
-              <rect x={x(i) + 1.5} y={y(SAIU[i])} width={bw} height={H - y(SAIU[i])} rx="4" className="barra s" />
+              <rect x={x(i) - bw - 1.5} y={y(v)} width={bw} height={H - y(v)} rx="5" fill="url(#ta-entrou)" className="barra" />
+              <rect x={x(i) + 1.5} y={y(ANO.saiu[i])} width={bw} height={H - y(ANO.saiu[i])} rx="5" fill="url(#ta-saiu)" className="barra" />
             </g>
           ))}
         </svg>
       ))}
-      {camada(90, 'var(--divida)', tx('Dívidas'), (
+      {camada(90, CORES_ANO.divida, tx('Dívidas'), (
         <>
           <svg width={W} height={H} aria-hidden="true">
-            <defs>
-              <linearGradient id="ta-area" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="var(--divida)" stopOpacity=".34" />
-                <stop offset="1" stopColor="var(--divida)" stopOpacity=".02" />
-              </linearGradient>
-            </defs>
-            <path d={area} fill="url(#ta-area)" className="area" />
-            <path d={projecao} className="linha divida projecao" />
-            <path d={curvaSvg(div)} pathLength={1} className="linha divida grossa" data-divida />
+            <path d={area} fill={CORES_ANO.divida} fillOpacity=".11" className="area" />
+            <path d={curvaMonotona(div)} pathLength={1} stroke={CORES_ANO.divida} className="linha grossa" data-divida />
             <g data-divida-ponto>
-              <circle r="15" className="halo" />
-              <circle r="6.5" className="ponto" />
+              <circle r="15" fill={CORES_ANO.divida} className="halo" />
+              <circle r="6.5" fill={CORES_ANO.divida} className="ponto" />
             </g>
           </svg>
-          <span className="ta-tag" data-divida-tag>{dividaEm(W)}</span>
+          <span className="ta-tag" style={{ background: CORES_ANO.divida }} data-divida-tag>{dividaEm(W)}</span>
         </>
       ))}
-      {camada(150, 'var(--caixa)', null, (
-        <>
-          <svg width={W} height={H} aria-hidden="true">
-            <path d={curvaSvg(serie(GUARDADO, 0, OUTUBRO + 1))} pathLength={1} className="linha guardado grossa" />
-            <circle cx={gx} cy={gy} r="5.5" className="fim guardado" />
-          </svg>
-          <span className="ta-fim-nome" style={{ left: gx, top: gy }}>{tx('Guardado nas contas')}</span>
-        </>
-      ))}
-      {camada(210, 'var(--violeta)', null, (
-        <>
-          <svg width={W} height={H} aria-hidden="true">
-            <path d={curvaSvg(serie(INVESTIDO, 0, OUTUBRO + 1))} pathLength={1} className="linha investido grossa" />
-            <circle cx={ix} cy={iy} r="5.5" className="fim investido" />
-          </svg>
-          <span className="ta-fim-nome" style={{ left: ix, top: iy }}>{tx('Investido')}</span>
-        </>
-      ))}
+      {camada(150, CORES_ANO.caixa, tx('Guardado nas contas'), (
+        <svg width={W} height={H} aria-hidden="true">
+          <path d={curvaMonotona(serie(ANO.guardado))} pathLength={1} stroke={CORES_ANO.caixa} className="linha grossa" />
+          <circle cx={gx} cy={gy} r="5.5" fill={CORES_ANO.caixa} className="fim" />
+        </svg>
+      ), '', 96)}
+      {camada(210, CORES_ANO.investido, tx('Investido'), (
+        <svg width={W} height={H} aria-hidden="true">
+          <path d={curvaMonotona(serie(ANO.investido))} pathLength={1} stroke={CORES_ANO.investido} className="linha grossa" />
+          <circle cx={ix} cy={iy} r="5.5" fill={CORES_ANO.investido} className="fim" />
+        </svg>
+      ), '', 290)}
     </div>
   )
 }
 
 function TelaAno() {
   const t = 'ano'
-  const sobrou = ENTROU.map((e, i) => e - SAIU[i])
+  const sobrou = ANO.entrou.map((e, i) => e - ANO.saiu[i])
+  const soma = (vs: number[]) => vs.reduce((a, b) => a + b, 0)
+  const entrouAno = soma(ANO.entrou), saiuAno = soma(ANO.saiu), sobrouAno = entrouAno - saiuAno
+  const melhor = sobrou.indexOf(Math.max(...sobrou))
   const numeros = [
-    { rot: tx('Entrou'), v: 8900, c: 'var(--entrada)' },
-    { rot: tx('Saiu'), v: 5663.1, c: 'var(--saida)' },
-    { rot: tx('Sobrou'), v: 3236.9, c: 'var(--entrada)' },
-    { rot: tx('Guardado nas contas'), v: 24080, c: 'var(--caixa)', linha: true },
-    { rot: tx('Dívidas'), v: 56430, c: 'var(--divida)' },
-    { rot: tx('Investido'), v: 53785.97, c: 'var(--violeta)' },
+    { rot: tx('Entrou'), v: ANO.entrou[MES_ANO], c: 'var(--entrada)' },
+    { rot: tx('Saiu'), v: ANO.saiu[MES_ANO], c: 'var(--saida)' },
+    { rot: tx('Sobrou'), v: sobrou[MES_ANO], c: 'var(--entrada)' },
+    { rot: tx('Guardado nas contas'), v: ANO.guardado[MES_ANO], c: CORES_ANO.caixa, linha: true },
+    { rot: tx('Dívidas'), v: ANO.divida[MES_ANO], c: 'var(--divida)' },
+  ]
+  // de onde veio a mudança da dívida no mês (o detalhe que o app mostra embaixo de Dívidas)
+  const partesDaDivida: [string, number][] = [
+    [tx('nova dívida'), 12], [tx('emprestado a mais'), 384], [tx('ajuste de saldo'), -142],
+    [tx('juros do atraso (estimado)'), 15.5], [tx('pagamentos'), -210],
   ]
   return (
     <>
       <Lateral ativo={9} />
       <B t={t} id="topo" z={80} className="td-topo">
-        <Topo titulo={tx('Resumo de 2026')} sub={tx('10 meses com dados · toque num mês para abrir')} />
+        <Topo titulo={tx('Resumo de 2026')} sub={tx('11 meses com dados · toque num mês para abrir')} />
       </B>
       <B t={t} id="hero" z={150} className="td-hero" style={cor('var(--caixa)')}>
-        <Aro v={0.19} k="anoh" c="var(--caixa)" tam={104}><b>19%</b><small>{tx('do que entrou ficou')}</small></Aro>
+        <Aro v={sobrouAno / entrouAno} k="anoh" c="var(--caixa)" tam={104}><b>{Math.round((sobrouAno / entrouAno) * 100)}%</b><small>{tx('do que entrou ficou')}</small></Aro>
         <div className="td-hero-texto">
           <small className="td-hero-rotulo"><Icone nome="ano" tamanho={14} /> {tx('Sobrou em 2026')}</small>
-          <N v={14096.2} k="anoh" className="td-hero-valor" />
+          <N v={sobrouAno} k="anoh" className="td-hero-valor" />
           <div className="td-chips">
-            <Chip icone="receber" c="var(--entrada)" rotulo={tx('Entrou no ano')}><b>{R(75350)}</b></Chip>
-            <Chip icone="enviar" c="var(--saida)" rotulo={tx('Saiu no ano')}><b>{R(61253.8)}</b></Chip>
-            <Chip icone="carteira" c="var(--divida)" rotulo={tx('Gasto médio por mês')}><b>{R(6125.38)}</b></Chip>
-            <Chip icone="estrela" c="var(--violeta)" rotulo={tx('Melhor mês')}><b>{MESES_NOME[OUTUBRO]}</b></Chip>
+            <Chip icone="receber" c="var(--entrada)" rotulo={tx('Entrou no ano')}><b>{R(entrouAno)}</b></Chip>
+            <Chip icone="enviar" c="var(--saida)" rotulo={tx('Saiu no ano')}><b>{R(saiuAno)}</b></Chip>
+            <Chip icone="carteira" c="var(--divida)" rotulo={tx('Gasto médio por mês')}><b>{R(saiuAno / ANO.saiu.length)}</b></Chip>
+            <Chip icone="estrela" c="var(--violeta)" rotulo={tx('Melhor mês')}><b>{MESES_NOME[melhor]}</b></Chip>
           </div>
         </div>
       </B>
@@ -344,10 +371,10 @@ function TelaAno() {
         {MESES_CURTO.map((m, i) => {
           const s = sobrou[i]
           return (
-            <span key={i} className={`ta-mes ${s === undefined ? 'vazio' : s < 0 ? 'neg' : ''} ${i === OUTUBRO ? 'atual' : ''}`} style={{ '--i': i } as CSSProperties}>
+            <span key={i} className={`ta-mes ${s === undefined ? 'vazio' : s < 0 ? 'neg' : ''} ${i === MES_ANO ? 'atual' : ''}`} style={{ '--i': i } as CSSProperties}>
               <small>{m}</small>
-              <b>{s === undefined ? '—' : `${s < 0 ? '−' : '+'}R$ ${compacto.format(Math.abs(s) * 1000)}`}</b>
-              {s !== undefined && <i style={{ '--v': SAIU[i] / ENTROU[i] } as CSSProperties} />}
+              <b>{s === undefined ? '—' : `${s < 0 ? '−' : '+'}R$ ${compacto.format(Math.abs(s))}`}</b>
+              {s !== undefined && <i style={{ '--v': Math.min(1, ANO.saiu[i] / ANO.entrou[i]) } as CSSProperties} />}
             </span>
           )
         })}
@@ -358,16 +385,20 @@ function TelaAno() {
           <div className="td-abas"><span className="ativo">{tx('Já aconteceu')}</span><span>{tx('O que vem aí')}</span></div>
         </header>
         <div className="ta-eixo">
-          {[80, 60, 40, 20, 0].map((v) => <small key={v}>{v ? `R$ ${v}.000` : 'R$ 0'}</small>)}
+          {[12, 10, 8, 6, 4, 2, 0].map((v) => <small key={v}>{v ? `R$ ${v}.000` : 'R$ 0'}</small>)}
         </div>
         <GraficoAno />
-        <div className="ta-meses-eixo">{MESES_CURTO.map((m, i) => <small key={i} className={i === OUTUBRO ? 'atual' : ''}>{m}</small>)}</div>
-        <Legenda />
+        <div className="ta-meses-eixo">{MESES_CURTO.map((m, i) => <small key={i} className={i === MES_ANO ? 'atual' : ''}>{m}</small>)}</div>
+        <Legenda paleta />
         <div className="ta-lado">
-          <strong>{MESES_NOME[OUTUBRO]}</strong>
+          <strong>{MESES_NOME[MES_ANO]}</strong>
           {numeros.map((n) => (
             <span key={n.rot} className={n.linha ? 'linha' : ''} style={cor(n.c)}><small>{n.rot}</small><N v={n.v} k="ano" /></span>
           ))}
+          {partesDaDivida.map(([rot, v]) => (
+            <span key={rot} className="ta-parte"><small>{rot}</small><small>{v < 0 ? `−${R(-v)}` : `+${R(v)}`}</small></span>
+          ))}
+          <span style={cor(CORES_ANO.investido)}><small>{tx('Investido')}</small><N v={ANO.investido[MES_ANO]} k="ano" /></span>
         </div>
       </B>
     </>

@@ -1,6 +1,7 @@
 // Servidor estático do dist + Supabase falso em memória, para testar o app no Chromium.
 const http=require('http'),fs=require('fs'),path=require('path'),crypto=require('crypto')
-const CSP=JSON.parse(fs.readFileSync(path.join(__dirname,'..','..','vercel.json'))).headers[0].headers.find(h=>h.key==='Content-Security-Policy').value
+// a política de segurança do site (vercel.json: na rota que vale para tudo)
+const CSP=JSON.parse(fs.readFileSync(path.join(__dirname,'..','..','vercel.json'))).routes.find(r=>r.headers&&r.headers['Content-Security-Policy']).headers['Content-Security-Policy']
 const root=path.join(__dirname,'..','..','dist')
 const mime={'.js':'text/javascript','.css':'text/css','.html':'text/html','.png':'image/png','.webp':'image/webp','.webmanifest':'application/json','.mjs':'text/javascript'}
 const uid='11111111-1111-4111-8111-111111111111'
