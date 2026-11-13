@@ -9,7 +9,12 @@
   overflow: hidden;
 }
 
-.fd-luzes { position: absolute; inset: 0; pointer-events: none; }
+.fd-luzes {
+  position: absolute; inset: 0; pointer-events: none;
+  /* some em cima e embaixo: a borda da seção corta o que passa dela, e o corte aparecia como uma linha */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 78%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 78%, transparent);
+}
 .fd-luzes i { position: absolute; border-radius: 50%; }
 .fd-luzes i:first-child {
   width: 900px; height: 700px; left: 50%; top: 18%; margin-left: -450px;
@@ -230,16 +235,6 @@
   background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .13) 45%, rgba(255, 255, 255, .03) 60%, transparent);
   transform: skewX(-16deg);
 }
-/* luz que segue o mouse */
-.fd-reflexo::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(45% 35% at var(--lx, 50%) var(--ly, 30%), rgba(255, 255, 255, .09), transparent 70%);
-  opacity: 0;
-  transition: opacity .4s;
-}
-.fd-cartao.mexendo .fd-reflexo::after { opacity: 1; }
 
 /* ─── tema claro: estúdio cinza ───
    Fundo branco brigava com o terno preto. Fotógrafo usa cinza atrás de terno escuro (é o fundo original das fotos):
