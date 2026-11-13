@@ -13234,5 +13234,9 @@
   "Esta troca ainda está sendo preparada. Tente de novo daqui a pouco, seus dias de Pix estão guardados.": {
     "en": "This switch is still being set up. Try again in a little while, your Pix days are safe.",
     "es": "Este cambio todavía se está preparando. Inténtalo de nuevo en un rato, tus días de Pix están guardados."
+  },
+  "Conferindo seu pagamento… Se você acabou de pagar, os dias novos aparecem aqui em alguns segundos.": {
+    "en": "Checking your payment… If you just paid, the new days show up here in a few seconds.",
+    "es": "Comprobando tu pago… Si acabas de pagar, los días nuevos aparecen aquí en unos segundos."
   }
 }

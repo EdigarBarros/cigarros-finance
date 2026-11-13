@@ -38,7 +38,7 @@ function cabecalho(r: ResumoAssinatura, a: Assinatura): { selo: string; frase: s
  * cartão, ver faturas, cancelar ou reativar. Cartão, faturas e cancelamento são do portal do Stripe (stripe-portal); o Pix e a
  * assinatura nova são o checkout (stripe-checkout). Não aparece no app da Play Store (lib/appAndroid.ts) nem em conta sem cobrança.
  */
-export function SecaoAssinatura({ assinatura, moeda, aoSuporte }: { assinatura: Assinatura; moeda: string; aoSuporte?: () => void }) {
+export function SecaoAssinatura({ assinatura, moeda, confirmando, aoSuporte }: { assinatura: Assinatura; moeda: string; confirmando?: boolean; aoSuporte?: () => void }) {
   const [ocupado, setOcupado] = useState<string | null>(null)
   /** Explicação aberta antes de seguir: "Passar para o cartão" (de quem está no Pix) ou "Trocar para Pix" (de quem está no cartão). */
   const [painel, setPainel] = useState<'cartao' | 'pix' | null>(null)
@@ -106,6 +106,9 @@ export function SecaoAssinatura({ assinatura, moeda, aoSuporte }: { assinatura: 
 
   return (
     <>
+      {confirmando && (
+        <p className="ass-alerta tom-neutro" role="status"><Icone nome="relogio" tamanho={16} /><span>{tx('Conferindo seu pagamento… Se você acabou de pagar, os dias novos aparecem aqui em alguns segundos.')}</span></p>
+      )}
       <section className={`cfg-cartao ass-resumo tom-${tom}`} aria-label={tx('Resumo da assinatura')}>
         <header className="ass-topo">
           <span className="ass-icone"><Icone nome="cartao" tamanho={22} /></span>
