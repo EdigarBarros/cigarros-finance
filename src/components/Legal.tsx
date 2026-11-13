@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { EMAIL_SUPORTE, RESPONSAVEL, type Documento } from '../lib/legal'
 import { Marca } from './Marca'
 
-const ATUALIZADO = '30 de outubro de 2026'
+const ATUALIZADO = '13 de novembro de 2026'
 const contato = EMAIL_SUPORTE
   ? <a href={`mailto:${EMAIL_SUPORTE}`}>{EMAIL_SUPORTE}</a>
   : 'o e-mail de suporte indicado no aplicativo'
@@ -101,6 +101,7 @@ function Privacidade() {
         <li><strong>O que você registra:</strong> lançamentos, categorias, bancos, cartões, dívidas, metas, contas do mês, saldos guardados e preferências, além da foto de perfil, se você colocar. Tudo isso é informado por você e pode incluir dados financeiros sensíveis para você; por isso o acesso é restrito à sua conta.</li>
         <li><strong>Assinatura:</strong> situação do plano (teste, ativa, cancelada), datas e moeda. Os dados do cartão e de cobrança ficam com o Stripe; nós não vemos nem guardamos o número do cartão. Guardamos apenas uma identificação irreversível do cartão (fingerprint, calculada pelo Stripe), junto do código interno da conta que recebeu o teste (sem e-mail nem nome), para impedir que o mesmo cartão receba o teste grátis mais de uma vez; ela não permite descobrir o número.</li>
         <li><strong>Dados técnicos:</strong> o navegador guarda no seu aparelho algumas preferências (tema, última cotação). Quando uma tela do app falha, registramos a mensagem de erro, a tela em que ocorreu e o seu identificador de conta, para consertar o problema (sem os valores dos seus lançamentos). Não usamos cookies de publicidade nem rastreadores de terceiros.</li>
+        <li><strong>Uso do app:</strong> para entender como o OpusCash é usado e melhorá-lo, registramos, enquanto você está logado: em quais telas você entra, quanto tempo fica em cada uma, quantos toques e teclas você dá (só a quantidade, nunca o que você digita), quando abriu o app pela última vez e se está com ele aberto agora, o idioma escolhido, se usa o site ou o app Android e a versão, e etapas como responder as perguntas iniciais e ver ou pular o tutorial. Também contamos quantos itens você cadastrou em cada parte do app (por exemplo, "120 lançamentos, 2 metas"), <strong>sem ver o conteúdo deles</strong>: valores, descrições e nomes não entram nessa medição. Esses registros ficam no nosso próprio banco de dados, não vão para empresas de análise ou publicidade.</li>
       </ul>
 
       <h2>2. Para que usamos</h2>
@@ -109,8 +110,9 @@ function Privacidade() {
         <li>Cobrar a assinatura, controlar teste e acesso, e emitir comprovantes (execução do contrato e obrigações legais).</li>
         <li>Responder seus pedidos de suporte e avisar sobre mudanças importantes.</li>
         <li>Manter a segurança, corrigir erros e prevenir fraudes e abusos, como o uso repetido do teste grátis (legítimo interesse).</li>
+        <li>Entender como o app é usado (quais telas ajudam, onde as pessoas têm dificuldade, se o tutorial é útil) para melhorá-lo e dar um suporte melhor (legítimo interesse).</li>
       </ul>
-      <p>Não vendemos seus dados nem os usamos para publicidade. Não lemos seus lançamentos, exceto, com sua autorização, para resolver um problema de suporte.</p>
+      <p>Não vendemos seus dados nem os usamos para publicidade. Não lemos seus lançamentos, exceto, com sua autorização, para resolver um problema de suporte. A equipe de suporte vê seu nome, e-mail, foto de perfil, a situação da assinatura e os dados de uso descritos acima, mas não o conteúdo do que você registra.</p>
 
       <h2>3. Com quem compartilhamos</h2>
       <ul>
@@ -125,7 +127,7 @@ function Privacidade() {
       <p>Esses fornecedores podem tratar dados em outros países. Escolhemos serviços com medidas de segurança adequadas e contratos de proteção de dados. Usuários de outros países, como a Argentina, também têm os direitos da legislação local de proteção de dados pessoais.</p>
 
       <h2>5. Por quanto tempo guardamos</h2>
-      <p>Seus dados ficam enquanto sua conta existir. Você pode excluir a conta a qualquer momento dentro do app: o login e todos os seus dados são apagados na hora e a assinatura é cancelada. Fica apenas o que a lei nos obrigue a guardar (por exemplo, registros de cobrança no Stripe) e a identificação irreversível do cartão, com o código interno da conta, usada contra repetição do teste grátis. Contas sem assinatura e sem uso por muito tempo podem ser apagadas, com aviso prévio por e-mail.</p>
+      <p>Seus dados ficam enquanto sua conta existir. Você pode excluir a conta a qualquer momento dentro do app: o login e todos os seus dados são apagados na hora e a assinatura é cancelada. Os dados de uso são apagados junto com a conta. Fica apenas o que a lei nos obrigue a guardar (por exemplo, registros de cobrança no Stripe) e a identificação irreversível do cartão, com o código interno da conta, usada contra repetição do teste grátis. Contas sem assinatura e sem uso por muito tempo podem ser apagadas, com aviso prévio por e-mail.</p>
 
       <h2>6. Seus direitos</h2>
       <p>Você pode pedir: confirmação de que tratamos seus dados, acesso, correção, anonimização ou eliminação, portabilidade, informações sobre compartilhamento e a revogação de consentimentos. Dentro do app você já consegue <strong>exportar um backup</strong> dos seus dados, <strong>apagá-los</strong> e <strong>excluir a conta</strong> (Configurações). Para qualquer pedido, escreva para {contato}. Também é possível reclamar à Autoridade Nacional de Proteção de Dados (ANPD).</p>
