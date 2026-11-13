@@ -1106,7 +1106,9 @@ migração num Postgres local e confere que uma pessoa não lê nem grava nada d
 - **Do Pix para o cartão sem perder dias:** o `stripe-checkout` lê o fim do Pix no banco e, se faltarem mais de 50 h (`PIX_MINIMO_PARA_ESPERAR_MS`; o Stripe só aceita
   `trial_end` com 48 h), cria a assinatura com `trial_end` = fim do Pix: o cartão só cobra depois dele. A assinatura leva `depois_do_pix` nos metadados e o
   `stripe-webhook` não a trata como teste grátis (não confere o cartão contra outras contas). Com menos de 50 h sobrando, o cartão cobra na hora e a tela avisa
-  que os dias que sobraram não são somados. Mudou o limite? Mude em `lib/assinatura.ts` e na função.
+  que os dias que sobraram não são somados. O `stripe-checkout` responde `espera: true` nesse caso: o app (`irParaStripe(..., exigirEspera)`) só abre a página de pagamento se
+  receber isso, para um servidor antigo não cobrar na hora e comer os dias pagos. Se a assinatura nascida do Pix for encerrada antes do fim do trial, o `stripe-webhook`
+  devolve a linha para `pix` até o fim dos dias pagos. Ordem de publicação: webhook, checkout, site (README 2b). Mudou o limite? Mude em `lib/assinatura.ts` e na função.
 - **Regra de acesso:** status `pix` com `periodo_fim` no futuro (`emPix`, `temAcesso` e `tem_acesso()` no banco). Pagar antes de vencer soma 30 dias ao que
   sobrou. Um aviso antigo de assinatura cancelada não tira o Pix vigente (`stripe-webhook`); uma assinatura nova em teste ou ativa assume o lugar.
 - **Fluxo:** `stripe-checkout` com `tipo: 'pix'` cria um checkout de pagamento único em BRL, só Pix, com o preço no próprio código (R$ 9,99, `PIX_VALOR`).

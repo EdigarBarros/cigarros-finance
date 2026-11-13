@@ -131,7 +131,9 @@ Deno.serve(async (req) => {
       success_url: `${origem}/?assinatura=ok`,
       cancel_url: `${origem}/?assinatura=cancelada`,
     })
-    return resposta({ url: sessao.url }, 200, req)
+    // espera: o app só leva a pessoa ao pagamento de "Passar do Pix para o cartão" se o servidor confirma que respeita os dias de Pix
+    // (um servidor mais antigo não manda este campo e cobraria na hora)
+    return resposta({ url: sessao.url, espera: esperarPeloPix }, 200, req)
   } catch (e) {
     return resposta({ erro: e instanceof Error ? e.message : 'Erro inesperado.' }, 500, req)
   }

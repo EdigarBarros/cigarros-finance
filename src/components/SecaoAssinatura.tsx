@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { aceitaPix, irParaStripe, pixComSobra, resumoDaAssinatura, type Assinatura, type ResumoAssinatura } from '../lib/assinatura'
 import { avisar } from '../lib/avisos'
 import { LOCAL_DAS_DATAS } from '../lib/format'
@@ -43,6 +43,9 @@ export function SecaoAssinatura({ assinatura, moeda, aoSuporte }: { assinatura: 
   /** Explicação aberta antes de seguir: "Passar para o cartão" (de quem está no Pix) ou "Trocar para Pix" (de quem está no cartão). */
   const [painel, setPainel] = useState<'cartao' | 'pix' | null>(null)
   const r = resumoDaAssinatura(assinatura)
+  const aberto = useRef<HTMLElement>(null)
+  // a explicação abre abaixo dos cartões: no celular isso pode ficar fora da tela, então leva a vista até ela
+  useEffect(() => { if (painel) aberto.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }) }, [painel])
 
   // voltar da página de pagamento pelo botão "voltar" do aparelho traz esta tela de volta como estava: destrava os botões
   useEffect(() => {
@@ -60,7 +63,7 @@ export function SecaoAssinatura({ assinatura, moeda, aoSuporte }: { assinatura: 
     if (msg) { setOcupado(null); void avisar(msg) }
   }
   const portal = (chave: string) => () => void ir(chave, () => irParaStripe('stripe-portal'))
-  const assinarNoCartao = (chave: string) => () => void ir(chave, () => irParaStripe('stripe-checkout', moeda))
+  const assinarNoCartao = (chave: string, exigirEspera = false) => () => void ir(chave, () => irParaStripe('stripe-checkout', moeda, undefined, exigirEspera))
   const pagarComPix = (chave: string) => () => void ir(chave, () => irParaStripe('stripe-checkout', 'BRL', 'pix'))
 
   const { selo, frase, tom } = cabecalho(r, assinatura)
@@ -163,16 +166,16 @@ export function SecaoAssinatura({ assinatura, moeda, aoSuporte }: { assinatura: 
       )}
 
       {painel === 'cartao' && (
-        <section className="cfg-cartao ass-confirma" aria-label={tx('Passar para o cartão')}>
+        <section ref={aberto} className="cfg-cartao ass-confirma" aria-label={tx('Passar para o cartão')}>
           <h4>{tx('Passar para o cartão')}</h4>
           <p>
             {pixComSobra(assinatura)
               ? tx('Seus dias de Pix continuam valendo: o cartão só começa a ser cobrado em {0}. Depois disso, renova sozinha todo mês e você cancela quando quiser. A página de pagamento mostra a data antes de você confirmar.', fim)
-              : tx('O cartão é cobrado hoje e depois renova sozinha todo mês. Como faltam menos de 2 dias de Pix, eles não são somados. Você cancela quando quiser.')}
+              : tx('Como seu Pix acaba em {0}, o cartão é cobrado hoje e os dias que sobraram não são somados. Depois renova sozinha todo mês e você cancela quando quiser.', fim)}
           </p>
           <div className="ass-confirma-acoes">
             <button type="button" className="btn" onClick={() => setPainel(null)} disabled={ocupado !== null}>{tx('Agora não')}</button>
-            <button type="button" className="btn gradiente" onClick={assinarNoCartao('cartao-pix')} disabled={ocupado !== null}>
+            <button type="button" className="btn gradiente" onClick={assinarNoCartao('cartao-pix', pixComSobra(assinatura))} disabled={ocupado !== null}>
               {ocupado === 'cartao-pix' ? tx('Abrindo o pagamento…') : tx('Continuar para o pagamento')}
             </button>
           </div>
@@ -180,7 +183,7 @@ export function SecaoAssinatura({ assinatura, moeda, aoSuporte }: { assinatura: 
       )}
 
       {painel === 'pix' && (
-        <section className="cfg-cartao ass-confirma" aria-label={tx('Trocar para Pix')}>
+        <section ref={aberto} className="cfg-cartao ass-confirma" aria-label={tx('Trocar para Pix')}>
           <h4>{tx('Trocar para Pix')}</h4>
           <p>{tx('O Pix é um pagamento único de 30 dias e não renova sozinho. Para trocar, são dois passos:')}</p>
           <ol>

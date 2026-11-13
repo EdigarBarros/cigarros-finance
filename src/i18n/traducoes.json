@@ -13179,10 +13179,6 @@
     "en": "Your Pix days still count: the card is only charged starting {0}. After that, it renews on its own every month and you can cancel anytime. The payment page shows the date before you confirm.",
     "es": "Tus días de Pix siguen valiendo: la tarjeta solo se cobra a partir del {0}. Después, se renueva sola cada mes y cancelas cuando quieras. La página de pago muestra la fecha antes de que confirmes."
   },
-  "O cartão é cobrado hoje e depois renova sozinha todo mês. Como faltam menos de 2 dias de Pix, eles não são somados. Você cancela quando quiser.": {
-    "en": "The card is charged today and then renews on its own every month. Since less than 2 days of Pix are left, they aren't added. You can cancel anytime.",
-    "es": "La tarjeta se cobra hoy y luego se renueva sola cada mes. Como faltan menos de 2 días de Pix, no se suman. Cancelas cuando quieras."
-  },
   "Continuar para o pagamento": {
     "en": "Continue to payment",
     "es": "Continuar al pago"
@@ -13230,5 +13226,13 @@
   "Teste de 7 dias": {
     "en": "7-day trial",
     "es": "Prueba de 7 días"
+  },
+  "Como seu Pix acaba em {0}, o cartão é cobrado hoje e os dias que sobraram não são somados. Depois renova sozinha todo mês e você cancela quando quiser.": {
+    "en": "Since your Pix ends on {0}, the card is charged today and the days you had left aren't added. After that it renews on its own every month and you can cancel anytime.",
+    "es": "Como tu Pix termina el {0}, la tarjeta se cobra hoy y los días que sobraron no se suman. Después se renueva sola cada mes y cancelas cuando quieras."
+  },
+  "Esta troca ainda está sendo preparada. Tente de novo daqui a pouco, seus dias de Pix estão guardados.": {
+    "en": "This switch is still being set up. Try again in a little while, your Pix days are safe.",
+    "es": "Este cambio todavía se está preparando. Inténtalo de nuevo en un rato, tus días de Pix están guardados."
   }
 }

@@ -202,6 +202,9 @@ Tudo grátis: o site fica na **Vercel** e os dados no **Supabase** (Postgres), p
    `checkout.session.completed` e `checkout.session.async_payment_succeeded`. Ordem para publicar o Pix: migração 29, depois as funções `stripe-webhook` e
    `stripe-checkout`, depois os eventos no Stripe, e só então o site (sem isso a pessoa pagaria e não receberia o acesso). O Pix precisa estar ativo em
    Configurações → Métodos de pagamento do Stripe.
+   Para **Configurações → Assinatura** (passar do Pix para o cartão sem perder os dias pagos), a ordem é: `stripe-webhook`, depois `stripe-checkout`, depois o
+   site. Se o site subir antes, o app barra a troca com um aviso (o `stripe-checkout` novo devolve `espera: true`); se o `stripe-checkout` subir antes do
+   webhook, o cartão do período de espera pode ser conferido como teste grátis de outra conta. No portal do Stripe, deixe o cancelamento **no fim do período**.
 4. **Cortesia** (acesso liberado, sem cobrança, nunca revogado pelo Stripe): rode [`supabase/dar-cortesia.sql`](supabase/dar-cortesia.sql)
    com os e-mails escolhidos. Rodar as migrações **não** dá cortesia a ninguém.
 5. Na hospedagem (Vercel), defina `VITE_EMAIL_SUPORTE` e `VITE_RESPONSAVEL`: aparecem nos Termos e na Privacidade.

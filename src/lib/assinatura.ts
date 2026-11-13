@@ -160,12 +160,15 @@ export function useAssinatura(userId: string) {
 }
 
 /** Abre a página de pagamento (cartão só aqui, ao assinar) ou o portal de gerenciar a assinatura, e leva a pessoa até lá. */
-export async function irParaStripe(funcao: 'stripe-checkout' | 'stripe-portal', moeda?: string, tipo?: 'pix'): Promise<string | null> {
+export async function irParaStripe(funcao: 'stripe-checkout' | 'stripe-portal', moeda?: string, tipo?: 'pix', exigirEspera?: boolean): Promise<string | null> {
   const { data: ok, error } = await supabase.functions.invoke(funcao, { body: { retorno: window.location.origin, moeda, tipo } })
   // Resposta que não é 2xx (ex.: 409 "ja_ativa") chega como erro, com o corpo em error.context: lê de lá.
-  let data: { url?: string; erro?: string } | null = ok
+  let data: { url?: string; erro?: string; espera?: boolean } | null = ok
   const resposta = (error as { context?: unknown } | null)?.context
   if (!data && resposta instanceof Response) data = await resposta.clone().json().catch(() => null)
+  // Pix → cartão com dias sobrando: só segue se o servidor confirmou que o cartão espera o fim do Pix. Um servidor mais antigo cobraria
+  // na hora e a pessoa perderia os dias pagos; nesse caso a página de pagamento nem é aberta.
+  if (data?.url && exigirEspera && data.espera !== true) return tx('Esta troca ainda está sendo preparada. Tente de novo daqui a pouco, seus dias de Pix estão guardados.')
   if (data?.url) {
     window.location.href = data.url as string
     return null
