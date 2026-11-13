@@ -64,6 +64,9 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   tinha conta, com o botão "Ver agora" levando à tela nova. É criado e publicado no painel de suporte (tela Novidades), sem versão nova do
   site nem do app. Só a mais recente publicada aparece; quem viu fica marcado em `perfis.dispensadas` (`novidade:<id>`), em qualquer aparelho.
   Quem cria a conta depois da publicação não vê (tem o tutorial)
+  - A novidade pode ter uma **arte livre** ([migração 32](supabase/migracao-32-arte-das-novidades.sql), `components/ArteNovidade.tsx` e `arte.css`),
+    montada no editor do painel com os elementos da marca (cartão, gráficos, moedas, selos, textos). O app só desenha a arte guardada em
+    `novidades.arte`; o mesmo arquivo é copiado no painel para a prévia ser idêntica (mudou aqui, copie para lá)
 - **Medição de uso** ([migração 30](supabase/migracao-30-uso-do-app.sql), `lib/uso.ts`): com a pessoa logada, o app manda a cada minuto (e ao
   trocar de tela ou sair) em qual tela ela está, quanto tempo ficou em cada uma, **quantos** toques e teclas deu (nunca o que digitou),
   o idioma, se é o site ou o app Android e a versão. Também registra se ela pulou o tutorial (em qual passo) ou viu inteiro, e quando
