@@ -48,9 +48,18 @@ const COMPARA: { mes: number; x: string; y: string; r: string; bom?: boolean }[]
   { mes: 8, x: MESES_NOME[8], y: tx('sua média'), r: tx('saiu mais que entrou') },
 ]
 
-/** A tela do fim (cena 4): a mesma caixa onde os fragmentos se juntam (px de desenho). No celular, em pé. */
+/** A tela do fim (cena 4): a mesma caixa onde os fragmentos se juntam (px de desenho). */
 const TELA = { w: 620, h: 400 }
-const TELA_CEL = { w: 720, h: 880 }
+/**
+ * O molde da tela para os fragmentos (px de desenho, a partir do centro; oy desloca tudo em y): a moldura, a linha
+ * embaixo do cabeçalho, o círculo da nota e as linhas (pilares e plano). No computador é fixo; no celular sai das
+ * medidas da tela de verdade, que lá se ajusta ao espaço que sobra.
+ */
+interface Molde { w: number; h: number; oy: number; nota: [number, number, number]; faixa: number; linhas: { y: number; x0: number; x1: number }[] }
+const MOLDE_PC: Molde = {
+  w: TELA.w, h: TELA.h, oy: 0, nota: [-TELA.w / 2 + 84, -50, 56], faixa: -TELA.h / 2 + 50,
+  linhas: Array.from({ length: 6 }, (_, i) => ({ y: -TELA.h / 2 + 96 + i * 46, x0: -TELA.w / 2 + 230, x1: -TELA.w / 2 + 590 })),
+}
 const PILARES = [
   { nome: tx('Sobra'), v: 0.78, c: '#9df5c9' }, { nome: tx('Reserva'), v: 0.52, c: '#7cc8ff' },
   { nome: tx('Dívidas'), v: 0.44, c: '#ffc46b' }, { nome: tx('Cartão'), v: 0.81, c: '#d7a6ff' },
@@ -86,8 +95,7 @@ interface Frag {
 }
 
 /** Os fragmentos e o lugar de cada um em cada forma. */
-function montar(N: number, TELA: { w: number; h: number }) {
-  const emPe = TELA.h > TELA.w
+function montar(N: number, M: Molde) {
   const r = sorteio(31)
   const fr: Frag[] = []
   // gráfico: colunas de fragmentos, uma por mês e por série (entrou na frente, saiu atrás), mais a linha da média
@@ -127,23 +135,21 @@ function montar(N: number, TELA: { w: number; h: number }) {
     }
     // tela: a moldura, a faixa do topo, o círculo da nota à esquerda e as linhas do plano à direita
     let tela: V3
-    const t = r(), W = TELA.w / 2, H = TELA.h / 2
+    const t = r(), W = M.w / 2, H = M.h / 2
     if (t < 0.34) {
-      const p = r() * 2 * (TELA.w + TELA.h)
-      tela = p < TELA.w ? [p - W, -H, 0] : p < TELA.w + TELA.h ? [W, p - TELA.w - H, 0] : p < 2 * TELA.w + TELA.h ? [W - (p - TELA.w - TELA.h), H, 0] : [-W, H - (p - 2 * TELA.w - TELA.h), 0]
+      const p = r() * 2 * (M.w + M.h)
+      tela = p < M.w ? [p - W, -H, 0] : p < M.w + M.h ? [W, p - M.w - H, 0] : p < 2 * M.w + M.h ? [W - (p - M.w - M.h), H, 0] : [-W, H - (p - 2 * M.w - M.h), 0]
     } else if (t < 0.46) {
-      tela = [-W + 20 + r() * (TELA.w - 40), -H + (emPe ? 90 : 50) + (r() - 0.5) * 2, 0]
+      tela = [-W + 20 + r() * (M.w - 40), M.faixa + (r() - 0.5) * 2, 0]
     } else if (t < 0.66) {
-      // o círculo da nota: à esquerda; em pé, em cima
-      // (no mesmo lugar e tamanho do círculo da tela de verdade, que aparece por cima)
-      const a = r() * Math.PI * 2, rc = emPe ? 120 : 56
-      tela = emPe ? [Math.cos(a) * rc, -H + 225 + Math.sin(a) * rc, 0] : [-W + 84 + Math.cos(a) * rc, -50 + Math.sin(a) * rc, 0]
+      // o círculo da nota, no mesmo lugar e tamanho do círculo da tela de verdade, que aparece por cima
+      const a = r() * Math.PI * 2, [nx, ny, nr] = M.nota
+      tela = [nx + Math.cos(a) * nr, ny + Math.sin(a) * nr, 0]
     } else {
-      const linha = Math.floor(r() * 6)
-      tela = emPe
-        ? [-W + 50 + r() * (TELA.w - 100) * (linha % 2 ? 0.55 : 1), -H + 450 + linha * 82, 0]
-        : [-W + 230 + r() * 360 * (linha % 2 ? 0.55 : 1), -H + 96 + linha * 46, 0]
+      const l = M.linhas[Math.floor(r() * M.linhas.length)]
+      tela = [l.x0 + r() * (l.x1 - l.x0), l.y + (r() - 0.5) * 2, 0]
     }
+    tela[1] += M.oy
     fr.push({
       // a maioria são traços e pontos; uns 12% são placas maiores (os blocos de dados do holograma)
       solto, esfera: [teta, fi, raio], barra, tela, atraso: r() * 0.35,
@@ -196,7 +202,31 @@ export function Algoritmo() {
     const sprBokeh = brilho(96, [[0, 'rgba(255,170,50,0.18)'], [0.7, 'rgba(255,165,45,0.22)'], [0.86, 'rgba(255,195,90,0.3)'], [1, 'rgba(255,140,30,0)']])
 
     let W = 0, H = 0, dpr = 1, cx = 0, cy = 0, esc = 1, celular = false, reduzir = false
-    let fr: Frag[] = [], tela = TELA
+    let fr: Frag[] = [], molde = MOLDE_PC, chaveMolde = ''
+    // no celular a tela de verdade tem largura fixa (LARG_CEL) e é escalada (escTela) para caber entre o texto e os
+    // selos, com o centro em yTela
+    const LARG_CEL = 340
+    let escTela = 1, yTela = 0
+    const texto = sticky.querySelector<HTMLElement>('.ag-texto')!, selos = sticky.querySelector<HTMLElement>('.ag-selos')!
+    const moldeDoCelular = (): Molde => {
+      painel.style.width = `${LARG_CEL}px`; painel.style.height = 'auto'
+      const w0 = painel.offsetWidth, h0 = painel.offsetHeight
+      const topo = texto.getBoundingClientRect().bottom - sticky.getBoundingClientRect().top + 14
+      const fundo = H - selos.offsetHeight - 30
+      escTela = Math.min((W - 24) / w0, (fundo - topo) / h0, 1.2)
+      yTela = (topo + fundo) / 2
+      const k4 = esc * CAM[3].zoom, d = escTela / k4
+      const meio = (el: HTMLElement) => [(el.offsetLeft + el.offsetWidth / 2 - w0 / 2) * d, (el.offsetTop + el.offsetHeight / 2 - h0 / 2) * d] as const
+      const nota = painel.querySelector<HTMLElement>('.ag-nota')!, cab = painel.querySelector<HTMLElement>('header')!
+      const [nx, ny] = meio(nota)
+      return {
+        w: w0 * d, h: h0 * d, oy: (yTela - cy) / k4, nota: [nx, ny, (nota.offsetWidth / 2) * 0.92 * d],
+        faixa: (cab.offsetTop + cab.offsetHeight - h0 / 2) * d,
+        linhas: [...painel.querySelectorAll<HTMLElement>('.ag-pilares li, .ag-plano li')].map((el) => ({
+          y: (el.offsetTop + el.offsetHeight / 2 - h0 / 2) * d, x0: (el.offsetLeft - w0 / 2) * d, x1: (el.offsetLeft + el.offsetWidth - w0 / 2) * d,
+        })),
+      }
+    }
     const medir = () => {
       reduzir = semMovimento()
       W = sticky.clientWidth; H = sticky.clientHeight; celular = W <= 900
@@ -212,7 +242,10 @@ export function Algoritmo() {
       }
       // menos fragmentos em tela pequena (desenha menos e fica igual de denso)
       const N = celular ? 1100 : 1700
-      if (fr.length !== N) { tela = celular ? TELA_CEL : TELA; fr = montar(N, tela) }
+      molde = celular ? moldeDoCelular() : MOLDE_PC
+      if (!celular) { painel.style.width = ''; painel.style.height = '' }
+      const chave = `${N}|${molde.w.toFixed(0)}|${molde.h.toFixed(0)}|${molde.oy.toFixed(0)}`
+      if (chave !== chaveMolde) { chaveMolde = chave; fr = montar(N, molde) }
     }
 
     let yaw = 0, pitch = 0, zoom = 1
@@ -389,9 +422,14 @@ export function Algoritmo() {
       const ft = suave(0.86, 0.95, p)
       // a tela tem o tamanho da moldura na tela (largura e altura de verdade, sem escalar as letras)
       const k = centro.s * esc * zoom
-      por('tela', `${centro.x.toFixed(1)},${centro.y.toFixed(1)},${k.toFixed(4)},${ft.toFixed(3)}`, () => {
-        painel.style.width = `${(tela.w * k).toFixed(1)}px`; painel.style.height = `${(tela.h * k).toFixed(1)}px`
-        painel.style.transform = `translate3d(${centro.x.toFixed(1)}px, ${centro.y.toFixed(1)}px, 0) translate(-50%, -50%)`
+      por('tela', `${centro.x.toFixed(1)},${centro.y.toFixed(1)},${k.toFixed(4)},${ft.toFixed(3)},${escTela},${yTela}`, () => {
+        if (celular) {
+          // celular: largura fixa, altura do conteúdo, escalada para caber (não corta)
+          painel.style.transform = `translate3d(${(W / 2).toFixed(1)}px, ${yTela.toFixed(1)}px, 0) translate(-50%, -50%) scale(${escTela.toFixed(4)})`
+        } else {
+          painel.style.width = `${(TELA.w * k).toFixed(1)}px`; painel.style.height = `${(TELA.h * k).toFixed(1)}px`
+          painel.style.transform = `translate3d(${centro.x.toFixed(1)}px, ${centro.y.toFixed(1)}px, 0) translate(-50%, -50%)`
+        }
         painel.style.opacity = ft.toFixed(3)
         painel.style.visibility = ft < 0.01 ? 'hidden' : 'visible'
         painel.style.setProperty('--f', ft.toFixed(3))
@@ -425,10 +463,14 @@ export function Algoritmo() {
     const aoScroll = () => lerScroll()
     const aoRedim = () => { medir(); lerScroll(); desenhar(atual, performance.now()) }
     medir(); lerScroll(); atual = alvo; desenhar(atual, performance.now())
+    document.fonts?.ready.then(() => { medir(); desenhar(atual, performance.now()) })
+    // o texto e os selos mudam de altura (fontes, idioma, quebra de linha): a tela do celular se mede de novo
+    const tamanhos = new ResizeObserver(() => { medir(); desenhar(atual, performance.now()) })
+    tamanhos.observe(texto); tamanhos.observe(selos)
     window.addEventListener('scroll', aoScroll, { passive: true })
     window.addEventListener('resize', aoRedim)
     return () => {
-      obs.disconnect()
+      obs.disconnect(); tamanhos.disconnect()
       window.removeEventListener('scroll', aoScroll); window.removeEventListener('resize', aoRedim)
       if (quadro) cancelAnimationFrame(quadro)
     }
@@ -457,7 +499,7 @@ export function Algoritmo() {
               <span><small>{c.x}</small><em>×</em><small>{c.y}</small></span><b>{c.r}</b>
             </span>
           ))}
-          {/* a tela em que os fragmentos se transformam (cena 4), do tamanho de TELA */}
+          {/* a tela em que os fragmentos se transformam (cena 4) */}
           <div className="ag-tela">
             <header><i><Icone nome="bussola" tamanho={16} /></i><b>{tx('Consultor')}</b><span className="ag-pronta"><i />{tx('Análise pronta')}</span></header>
             <div className="ag-tela-meio">
