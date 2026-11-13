@@ -25,6 +25,10 @@ const PIX_MOEDA = 'brl'
 const PIX_VALOR = 999 // centavos: R$ 9,99
 const PIX_TIPO = 'pix_30_dias'
 
+// Quem está no Pix e passa para o cartão não perde os dias que já pagou: o cartão só começa a cobrar quando o Pix acabar (trial_end).
+// O Stripe só aceita trial_end com pelo menos 48 h pela frente; com folga, 50 h (src/lib/assinatura.ts, PIX_MINIMO_PARA_ESPERAR_MS).
+const PIX_MINIMO_PARA_ESPERAR_MS = 50 * 3_600_000
+
 const MOEDAS = ['brl', 'usd', 'eur', 'gbp', 'ars', 'clp', 'uyu', 'cop', 'pen', 'mxn', 'cad', 'aud', 'chf']
 
 const resposta = (corpo: unknown, status = 200, req: Request) =>
@@ -105,6 +109,10 @@ Deno.serve(async (req) => {
     const preco = precos.data?.[0]?.id
     if (!preco) return resposta({ erro: 'Plano não encontrado no Stripe.' }, 500, req)
 
+    // o fim do Pix vem do banco, não do aparelho: o pedido não escolhe a data
+    const fimDoPix = atual?.status === 'pix' && atual.periodo_fim ? new Date(atual.periodo_fim).getTime() : 0
+    const esperarPeloPix = fimDoPix - Date.now() > PIX_MINIMO_PARA_ESPERAR_MS
+
     const moedaEscolhida = typeof moeda === 'string' && MOEDAS.includes(moeda.toLowerCase()) ? moeda.toLowerCase() : undefined
     const sessao = await stripe('checkout/sessions', {
       mode: 'subscription',
@@ -114,7 +122,9 @@ Deno.serve(async (req) => {
       currency: moedaEscolhida,
       payment_method_collection: 'always',
       subscription_data: {
-        metadata: { supabase_user_id: user.id },
+        // depois_do_pix: o stripe-webhook não confere o cartão como "teste grátis de outra conta" (esses dias foram pagos)
+        metadata: { supabase_user_id: user.id, ...(esperarPeloPix ? { depois_do_pix: '1' } : {}) },
+        trial_end: esperarPeloPix ? Math.floor(fimDoPix / 1000) : undefined,
       },
       allow_promotion_codes: true,
       locale: 'auto',

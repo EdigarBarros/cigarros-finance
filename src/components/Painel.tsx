@@ -166,7 +166,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const [compraDestacada, setCompraDestacada] = useState<string | null>(null)
   const [ocupado, setOcupado] = useState<string | null>(null)
   /** Configurações aberta; 'painel' abre direto na seção Painel (jeito de ver e o que aparece). */
-  const [ajustes, setAjustes] = useState<boolean | 'painel'>(false)
+  const [ajustes, setAjustes] = useState<boolean | 'painel' | 'assinatura'>(false)
   const [refazendo, setRefazendo] = useState(false)
   /** Tutorial guiado aberto. */
   const [tour, setTour] = useState(false)
@@ -841,6 +841,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const menuItens = (
     <>
       <button onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> {tx('Configurações')}</button>
+      {assinatura && !noAppAndroid && <button onClick={() => setAjustes('assinatura')}><Icone nome="cartao" /> {tx('Assinatura')}</button>}
       <button onClick={() => setSuporte('lista')}><Icone nome="conversa" /> {tx('Suporte')}{respostasNovas > 0 && <span className="menu-aviso">{respostasNovas}</span>}</button>
       <button onClick={() => setTour(true)}><Icone nome="ideia" /> {tx('Ver o tutorial')}</button>
       <button onClick={trocarTema}><Icone nome={tema === 'escuro' ? 'sol' : 'lua'} /> {tema === 'escuro' ? tx('Tema claro') : tx('Tema escuro')}</button>
@@ -991,6 +992,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           <div className="alerta" role="status">
             <span>{diasDePix(assinatura ?? null) === 1 ? tx('Seu acesso por Pix termina em menos de 1 dia. Renove para não perder o acesso.') : tx('Seu acesso por Pix termina em {0} dias. Renove para não perder o acesso.', diasDePix(assinatura ?? null))}</span>
             <button className="link" onClick={() => void irParaStripe('stripe-checkout', 'BRL', 'pix').then((m) => m && avisar(m))}>{tx('Renovar com Pix')}</button>
+            <button className="link" onClick={() => setAjustes('assinatura')}>{tx('Ver assinatura')}</button>
           </div>
         )}
 
@@ -1167,7 +1169,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
 
       {ajustes && (
         <Configuracoes
-          secaoInicial={ajustes === 'painel' ? 'painel' : undefined}
+          secaoInicial={ajustes === 'painel' || ajustes === 'assinatura' ? ajustes : undefined}
           perfil={perfil}
           email={email}
           categorias={d.categorias}
@@ -1185,6 +1187,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           aoOrganizar={() => { setAjustes(false); setOrganizar(true) }}
           aoZerar={() => { setAjustes(false); setZerando(true) }}
           assinatura={assinatura}
+          aoSuporte={() => { setAjustes(false); setSuporte('novo') }}
           aoSair={() => supabase.auth.signOut()}
           aoExcluirConta={() => { setAjustes(false); setExcluindo(true) }}
           aoFechar={() => setAjustes(false)}

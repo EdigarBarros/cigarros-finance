@@ -2799,6 +2799,53 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .cfg-acao:hover .cfg-acao-seta { transform: translateX(3px); color: var(--texto); }
 .cfg-acao.perigo .cfg-acao-icone { color: var(--saida); background: color-mix(in srgb, var(--saida) 13%, transparent); }
 .cfg-acao.perigo:hover { border-color: color-mix(in srgb, var(--saida) 45%, transparent); }
+.cfg-acao:disabled { opacity: .6; cursor: progress; transform: none; }
+
+/* assinatura: resumo, tempo que falta e o que dá para fazer */
+.ass-resumo { display: grid; gap: 18px; --tom: var(--destaque); }
+.ass-resumo.tom-aviso { --tom: var(--divida); }
+.ass-resumo.tom-perigo { --tom: var(--saida); }
+.ass-resumo.tom-neutro { --tom: var(--marca-2, var(--destaque)); }
+.ass-topo { display: flex; align-items: center; gap: 14px; }
+.ass-icone { display: grid; place-items: center; flex: none; width: 46px; height: 46px; border-radius: 14px; color: var(--tom); background: color-mix(in srgb, var(--tom) 14%, transparent); }
+.ass-nome { display: grid; min-width: 0; flex: 1; }
+.ass-nome strong { font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
+.ass-nome small { font-size: 13px; color: var(--texto-2); }
+.ass-selo { flex: none; padding: 5px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700; color: var(--tom); background: color-mix(in srgb, var(--tom) 14%, transparent); border: 1px solid color-mix(in srgb, var(--tom) 32%, transparent); }
+.ass-selo.tom-ok { --tom: var(--entrada); }
+.ass-selo.tom-aviso { --tom: var(--divida); }
+.ass-selo.tom-perigo { --tom: var(--saida); }
+.ass-selo.tom-neutro { --tom: var(--marca-2, var(--destaque)); }
+.ass-tempo { display: grid; gap: 2px; }
+.ass-tempo strong { font-size: 28px; font-weight: 700; letter-spacing: -.03em; line-height: 1.15; }
+.ass-tempo span { font-size: 14px; color: var(--texto-2); }
+.ass-barra { height: 10px; border-radius: 999px; overflow: hidden; background: color-mix(in srgb, var(--texto) 9%, transparent); }
+.ass-barra i { display: block; height: 100%; border-radius: inherit; background: var(--tom); transform-origin: left; animation: ass-barra .9s var(--mola) backwards; }
+@keyframes ass-barra { from { transform: scaleX(0); } }
+.ass-lista { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px 22px; margin: 0; padding-top: 16px; border-top: 1px solid var(--borda); }
+.ass-lista div { display: grid; gap: 2px; min-width: 0; }
+.ass-lista dt { font-size: 12.5px; color: var(--texto-2); }
+.ass-lista dd { margin: 0; font-weight: 600; }
+.ass-alerta { display: flex; align-items: flex-start; gap: 10px; margin: 0; padding: 12px 14px; border-radius: 14px; font-size: 14px; line-height: 1.45; color: var(--texto); background: color-mix(in srgb, var(--divida) 13%, transparent); border: 1px solid color-mix(in srgb, var(--divida) 32%, transparent); }
+.ass-alerta svg { flex: none; margin-top: 2px; color: var(--divida); }
+.ass-alerta.tom-perigo { background: color-mix(in srgb, var(--saida) 12%, transparent); border-color: color-mix(in srgb, var(--saida) 34%, transparent); }
+.ass-alerta.tom-perigo svg { color: var(--saida); }
+.ass-nota { margin: 0; color: var(--texto-2); line-height: 1.5; }
+.ass-acoes .cfg-acao { min-height: 128px; }
+.ass-confirma { display: grid; gap: 12px; border-color: var(--borda-forte); animation: surgir .5s var(--mola) backwards; }
+.ass-confirma h4 { margin: 0; font-size: 16px; font-weight: 700; }
+.ass-confirma p, .ass-confirma ol { margin: 0; line-height: 1.5; color: var(--texto-2); }
+.ass-confirma ol { padding-left: 20px; display: grid; gap: 6px; }
+.ass-confirma-acoes { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
+.ass-rodape { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0; font-size: 13px; line-height: 1.45; color: var(--texto-2); }
+.ass-rodape svg { flex: none; color: var(--destaque); }
+.ass-rodape span { flex: 1 1 260px; }
+@media (max-width: 860px) {
+  .ass-tempo strong { font-size: 24px; }
+  .ass-topo { flex-wrap: wrap; }
+  .ass-confirma-acoes .btn { flex: 1 1 140px; }
+}
+@media (prefers-reduced-motion: reduce) { .ass-barra i, .ass-confirma { animation: none; } }
 
 @media (max-width: 1100px) {
   .cfg-escolhas.tres { grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); }

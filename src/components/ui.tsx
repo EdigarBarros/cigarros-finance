@@ -6,6 +6,18 @@ import { Icone } from './Icone'
 import { Numero } from './Numero'
 import { tx } from '../lib/textos'
 
+/** Cartão de ação grande (Dados, Conta e Assinatura). `ocupado` trava o toque enquanto a ação abre (ex.: a página de pagamento). */
+export function CartaoAcao({ icone, titulo, texto, aoClicar, perigo, ocupado }: { icone: string; titulo: string; texto: string; aoClicar: () => void; perigo?: boolean; ocupado?: boolean }) {
+  return (
+    <button type="button" className={`cfg-acao ${perigo ? 'perigo' : ''}`} onClick={aoClicar} disabled={ocupado} aria-busy={ocupado || undefined}>
+      <span className="cfg-acao-icone"><Icone nome={icone} /></span>
+      <strong>{titulo}</strong>
+      <small>{texto}</small>
+      <span className="cfg-acao-seta"><Icone nome="seta" tamanho={16} /></span>
+    </button>
+  )
+}
+
 export function Cartao({ titulo, acao, children, className = '' }: {
   titulo?: ReactNode; acao?: ReactNode; children: ReactNode; className?: string
 }) {

@@ -30,6 +30,51 @@ export const diasDePix = (a: Assinatura | null) => (emPix(a) ? Math.max(1, Math.
 /** O Pix de 30 dias venceu (a conta voltou a precisar de pagamento). */
 export const pixAcabou = (a: Assinatura | null) => Boolean(a && a.status === 'pix' && !emPix(a))
 
+/**
+ * Quanto sobra de Pix para o cartão esperar: o Stripe só aceita começar a cobrança do cartão (`trial_end`) com pelo menos 48 h
+ * pela frente, então aqui vale 50 h. A função stripe-checkout usa a mesma conta; quem mudar uma, mude a outra.
+ */
+export const PIX_MINIMO_PARA_ESPERAR_MS = 50 * 3_600_000
+
+/** Sobra Pix suficiente para o cartão só começar a cobrar depois dele (e a pessoa não perder os dias já pagos). */
+export const pixComSobra = (a: Assinatura | null) => emPix(a) && new Date(a!.periodo_fim!).getTime() - Date.now() > PIX_MINIMO_PARA_ESPERAR_MS
+
+/** Dias inteiros até uma data (arredonda para cima; 0 se já passou). */
+export const diasAte = (iso: string | null) => (iso ? Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000)) : 0)
+
+/**
+ * O que a tela "Assinatura" (Configurações) mostra, em uma palavra:
+ *  - `teste`: teste grátis de 7 dias, sem cartão; - `pix`: Pix de 30 dias (não renova sozinho);
+ *  - `cartao`: assinatura no cartão, renovando; - `cartao-cancelada`: cancelada, vale até o fim do período já pago;
+ *  - `cartao-recusado`: o cartão foi recusado e o Stripe ainda tenta de novo (a pessoa tem acesso); - `liberada`: conta liberada por nós.
+ * Devolve null para quem não tem acesso (essas pessoas veem a tela de assinatura inteira, não o painel).
+ */
+export type TipoAssinatura = 'teste' | 'pix' | 'cartao' | 'cartao-cancelada' | 'cartao-recusado' | 'liberada'
+
+export interface ResumoAssinatura {
+  tipo: TipoAssinatura
+  /** Fim do acesso (teste e Pix), próxima cobrança (cartão) ou último dia (cancelada), em ISO. Nulo se não houver. */
+  fim: string | null
+  /** Dias que faltam para `fim`. */
+  dias: number
+  /** Duração do período inteiro, para a barra de tempo (7 no teste, 30 no Pix e no cartão). */
+  total: number
+}
+
+export function resumoDaAssinatura(a: Assinatura | null): ResumoAssinatura | null {
+  if (!a) return null
+  if (a.status === 'cortesia') return { tipo: 'liberada', fim: null, dias: 0, total: 0 }
+  if (emTeste(a)) return { tipo: 'teste', fim: a.teste_fim, dias: diasDeTeste(a), total: 7 }
+  if (emPix(a)) return { tipo: 'pix', fim: a.periodo_fim, dias: diasDePix(a), total: 30 }
+  if (a.status === 'past_due') return { tipo: 'cartao-recusado', fim: null, dias: 0, total: 0 }
+  if (a.status === 'active' || a.status === 'trialing') {
+    // no teste do Stripe (o cartão cadastrado antes da primeira cobrança) a data que vale é a do fim do teste
+    const fim = (a.status === 'trialing' ? a.teste_fim : null) ?? a.periodo_fim
+    return { tipo: a.cancela_no_fim ? 'cartao-cancelada' : 'cartao', fim, dias: diasAte(fim), total: 30 }
+  }
+  return null
+}
+
 /** O Pix só existe em reais: é a moeda do checkout avulso. */
 export const aceitaPix = (moeda?: string | null) => (moeda ?? 'BRL').toUpperCase() === 'BRL'
 

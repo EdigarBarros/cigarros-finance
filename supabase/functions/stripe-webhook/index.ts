@@ -125,7 +125,8 @@ Deno.serve(async (req) => {
     const encerrada = sub.status === 'canceled' || sub.status === 'incomplete_expired'
     if (outra && (evento.type === 'customer.subscription.deleted' || encerrada)) return new Response('antiga')
 
-    if (sub.status === 'trialing') await conferirCartaoDoTeste(servico, sub, userId)
+    // O teste que vem de dias de Pix já pagos (stripe-checkout marca depois_do_pix) não é teste grátis: não há o que conferir no cartão.
+    if (sub.status === 'trialing' && !sub.metadata?.depois_do_pix) await conferirCartaoDoTeste(servico, sub, userId)
 
     const fim = sub.current_period_end ?? sub.items?.data?.[0]?.current_period_end
     const { error } = await servico.from('assinaturas').upsert({

@@ -65,7 +65,7 @@ function Termos() {
       </ul>
 
       <h2>4. Como cancelar</h2>
-      <p>Você cancela quando quiser em <strong>Configurações → Conta → Gerenciar assinatura</strong>, sem multa e sem precisar falar com ninguém. Durante o teste grátis nada é cobrado. Depois de assinar, ao cancelar, você continua usando até o fim do período já pago e não há nova cobrança.</p>
+      <p>Você cancela quando quiser em <strong>Configurações → Assinatura</strong>, sem multa e sem precisar falar com ninguém. Durante o teste grátis nada é cobrado. Depois de assinar, ao cancelar, você continua usando até o fim do período já pago e não há nova cobrança.</p>
 
       <h2>5. Reembolso</h2>
       <p>Se você contratou pela internet no Brasil, pode desistir em até 7 dias corridos da primeira cobrança e receber o valor de volta (direito de arrependimento do Código de Defesa do Consumidor). Para pedir, escreva para {contato}. Fora desse prazo não fazemos reembolso proporcional de períodos já iniciados, salvo quando a lei exigir ou em caso de falha nossa.</p>

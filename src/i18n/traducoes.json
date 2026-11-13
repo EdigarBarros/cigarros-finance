@@ -1399,14 +1399,6 @@
     "en": "Answer the opening questions again to adjust your dashboard.",
     "es": "Responde de nuevo las preguntas iniciales para ajustar tu panel."
   },
-  "Assinar o OpusCash": {
-    "en": "Subscribe to OpusCash",
-    "es": "Suscribirse a OpusCash"
-  },
-  "Gerenciar assinatura": {
-    "en": "Manage subscription",
-    "es": "Administrar suscripción"
-  },
   "Sair": {
     "en": "Sign out",
     "es": "Salir"
@@ -1514,18 +1506,6 @@
   "Tirar": {
     "en": "Remove",
     "es": "Quitar"
-  },
-  "Teste grátis até {0}. Troque o cartão, veja as faturas ou cancele.": {
-    "en": "Free trial until {0}. Change your card, see statements or cancel.",
-    "es": "Prueba gratis hasta el {0}. Cambia la tarjeta, mira los resúmenes o cancela."
-  },
-  "Cancelada: você usa até {0}. Dá para reativar.": {
-    "en": "Canceled: you have access until {0}. You can reactivate it.",
-    "es": "Cancelada: tienes acceso hasta el {0}. Se puede reactivar."
-  },
-  "Troque o cartão, veja as faturas ou cancele a assinatura.": {
-    "en": "Change your card, see statements or cancel your subscription.",
-    "es": "Cambia la tarjeta, mira los resúmenes o cancela la suscripción."
   },
   "Sei que a exclusão é": {
     "en": "I understand that deletion is",
@@ -5298,14 +5278,6 @@
   "1 lançamento": {
     "en": "1 transaction",
     "es": "1 movimiento"
-  },
-  "Teste grátis até {0} (falta 1 dia). O cartão só é pedido quando você assinar.": {
-    "en": "Free trial until {0} (1 day left). We only ask for your card when you subscribe.",
-    "es": "Prueba gratis hasta el {0} (queda 1 día). La tarjeta solo se pide cuando te suscribas."
-  },
-  "Teste grátis até {0} (faltam {1} dias). O cartão só é pedido quando você assinar.": {
-    "en": "Free trial until {0} ({1} days left). We only ask for your card when you subscribe.",
-    "es": "Prueba gratis hasta el {0} (quedan {1} días). La tarjeta solo se pide cuando te suscribas."
   },
   "{0} a mais que em {1}": {
     "en": "{0} more than in {1}",
@@ -12619,18 +12591,6 @@
     "en": "Renew with Pix",
     "es": "Renovar con Pix"
   },
-  "Acesso por Pix até {0} (falta 1 dia). Pague de novo para somar mais 30 dias.": {
-    "en": "Pix access until {0} (1 day left). Pay again to add 30 more days.",
-    "es": "Acceso por Pix hasta {0} (falta 1 día). Paga de nuevo para sumar 30 días más."
-  },
-  "Acesso por Pix até {0} (faltam {1} dias). Pague de novo para somar mais 30 dias.": {
-    "en": "Pix access until {0} ({1} days left). Pay again to add 30 more days.",
-    "es": "Acceso por Pix hasta {0} (faltan {1} días). Paga de nuevo para sumar 30 días más."
-  },
-  "Seu Pix de 30 dias terminou. Pague de novo para voltar ao painel.": {
-    "en": "Your 30-day Pix period has ended. Pay again to get back to your dashboard.",
-    "es": "Tu período de 30 días con Pix terminó. Paga de nuevo para volver al panel."
-  },
   "Seu acesso por Pix termina em {0} dias. Renove para não perder o acesso.": {
     "en": "Your Pix access ends in {0} days. Renew so you don't lose access.",
     "es": "Tu acceso por Pix termina en {0} días. Renueva para no perder el acceso."
@@ -12978,5 +12938,297 @@
   "Depois": {
     "en": "Later",
     "es": "Después"
+  },
+  "Teste grátis": {
+    "en": "Free trial",
+    "es": "Prueba gratis"
+  },
+  "Falta 1 dia de teste grátis": {
+    "en": "1 day of free trial left",
+    "es": "Falta 1 día de prueba gratis"
+  },
+  "Faltam {0} dias de teste grátis": {
+    "en": "{0} days of free trial left",
+    "es": "Faltan {0} días de prueba gratis"
+  },
+  "Vence em breve": {
+    "en": "Ending soon",
+    "es": "Vence pronto"
+  },
+  "Pago com Pix": {
+    "en": "Paid with Pix",
+    "es": "Pagado con Pix"
+  },
+  "Falta 1 dia de acesso": {
+    "en": "1 day of access left",
+    "es": "Falta 1 día de acceso"
+  },
+  "Faltam {0} dias de acesso": {
+    "en": "{0} days of access left",
+    "es": "Faltan {0} días de acceso"
+  },
+  "Ativa": {
+    "en": "Active",
+    "es": "Activa"
+  },
+  "Primeira cobrança hoje": {
+    "en": "First charge today",
+    "es": "Primer cobro hoy"
+  },
+  "Primeira cobrança em 1 dia": {
+    "en": "First charge in 1 day",
+    "es": "Primer cobro en 1 día"
+  },
+  "Primeira cobrança em {0} dias": {
+    "en": "First charge in {0} days",
+    "es": "Primer cobro en {0} días"
+  },
+  "Renova hoje": {
+    "en": "Renews today",
+    "es": "Se renueva hoy"
+  },
+  "Renova em 1 dia": {
+    "en": "Renews in 1 day",
+    "es": "Se renueva en 1 día"
+  },
+  "Renova em {0} dias": {
+    "en": "Renews in {0} days",
+    "es": "Se renueva en {0} días"
+  },
+  "Cancelada": {
+    "en": "Canceled",
+    "es": "Cancelada"
+  },
+  "O acesso termina hoje": {
+    "en": "Your access ends today",
+    "es": "El acceso termina hoy"
+  },
+  "Cobrança recusada": {
+    "en": "Charge declined",
+    "es": "Cobro rechazado"
+  },
+  "Liberada": {
+    "en": "Unlocked",
+    "es": "Liberada"
+  },
+  "Conta liberada": {
+    "en": "Account unlocked",
+    "es": "Cuenta liberada"
+  },
+  "Nenhuma ainda": {
+    "en": "None yet",
+    "es": "Ninguna todavía"
+  },
+  "Não precisa pagar": {
+    "en": "No payment needed",
+    "es": "No necesitas pagar"
+  },
+  "Acaba sozinho, sem cobrar nada": {
+    "en": "Ends on its own, nothing is charged",
+    "es": "Termina solo, sin cobrar nada"
+  },
+  "Manual: você paga o Pix de novo": {
+    "en": "Manual: you pay the Pix again",
+    "es": "Manual: pagas el Pix de nuevo"
+  },
+  "Cancelada: não será cobrado de novo": {
+    "en": "Canceled: you won't be charged again",
+    "es": "Cancelada: no se te cobrará de nuevo"
+  },
+  "Sem renovação": {
+    "en": "No renewal",
+    "es": "Sin renovación"
+  },
+  "Automática, todo mês": {
+    "en": "Automatic, every month",
+    "es": "Automática, cada mes"
+  },
+  "R$ 9,99 a cada 30 dias": {
+    "en": "R$ 9.99 every 30 days",
+    "es": "R$ 9,99 cada 30 días"
+  },
+  "Grátis por 7 dias, depois R$ 9,99 por mês": {
+    "en": "Free for 7 days, then R$ 9.99 per month",
+    "es": "Gratis por 7 días, luego R$ 9,99 al mes"
+  },
+  "Grátis por 7 dias": {
+    "en": "Free for 7 days",
+    "es": "Gratis por 7 días"
+  },
+  "R$ 9,99 por mês": {
+    "en": "R$ 9.99 per month",
+    "es": "R$ 9,99 al mes"
+  },
+  "Cobrado na sua moeda (veja nas faturas)": {
+    "en": "Charged in your currency (see your invoices)",
+    "es": "Cobrado en tu moneda (mira las facturas)"
+  },
+  "Teste até": {
+    "en": "Trial until",
+    "es": "Prueba hasta"
+  },
+  "Acesso até": {
+    "en": "Access until",
+    "es": "Acceso hasta"
+  },
+  "Primeira cobrança": {
+    "en": "First charge",
+    "es": "Primer cobro"
+  },
+  "Próxima cobrança": {
+    "en": "Next charge",
+    "es": "Próximo cobro"
+  },
+  "Renovação": {
+    "en": "Renewal",
+    "es": "Renovación"
+  },
+  "Seu acesso por Pix termina em breve. O Pix não renova sozinho: renove para não perder o acesso.": {
+    "en": "Your Pix access ends soon. Pix doesn't renew on its own: renew so you don't lose access.",
+    "es": "Tu acceso por Pix termina pronto. El Pix no se renueva solo: renueva para no perder el acceso."
+  },
+  "O banco recusou a cobrança. Troque o cartão para manter o acesso: o Stripe tenta de novo em seguida.": {
+    "en": "The bank declined the charge. Change your card to keep your access: Stripe will try again right after.",
+    "es": "El banco rechazó el cobro. Cambia la tarjeta para mantener el acceso: Stripe lo intenta de nuevo enseguida."
+  },
+  "Você cancelou: usa o OpusCash até {0} e não será cobrado de novo. Depois disso, é só escolher Pix ou cartão na tela que aparece. Seus dados continuam guardados.": {
+    "en": "You canceled: you can use OpusCash until {0} and won't be charged again. After that, just choose Pix or card on the screen that appears. Your data stays safe.",
+    "es": "Cancelaste: usas OpusCash hasta {0} y no se te cobrará de nuevo. Después, solo elige Pix o tarjeta en la pantalla que aparece. Tus datos siguen guardados."
+  },
+  "Você cancelou: usa o OpusCash até {0} e não será cobrado de novo. Depois disso, é só assinar de novo na tela que aparece. Seus dados continuam guardados.": {
+    "en": "You canceled: you can use OpusCash until {0} and won't be charged again. After that, just subscribe again on the screen that appears. Your data stays safe.",
+    "es": "Cancelaste: usas OpusCash hasta {0} y no se te cobrará de nuevo. Después, solo suscríbete de nuevo en la pantalla que aparece. Tus datos siguen guardados."
+  },
+  "Resumo da assinatura": {
+    "en": "Subscription summary",
+    "es": "Resumen de la suscripción"
+  },
+  "Sem cobrança": {
+    "en": "No charge",
+    "es": "Sin cobro"
+  },
+  "Sua conta foi liberada pela equipe do OpusCash. Você não precisa pagar nada.": {
+    "en": "Your account was unlocked by the OpusCash team. You don't need to pay anything.",
+    "es": "Tu cuenta fue liberada por el equipo de OpusCash. No necesitas pagar nada."
+  },
+  "Assinar no cartão": {
+    "en": "Subscribe with a card",
+    "es": "Suscribirse con tarjeta"
+  },
+  "Renova sozinha todo mês, sem você precisar lembrar. Cancele quando quiser.": {
+    "en": "Renews on its own every month, no need to remember. Cancel anytime.",
+    "es": "Se renueva sola cada mes, sin que tengas que acordarte. Cancela cuando quieras."
+  },
+  "Soma mais 30 dias ao que já sobrou. Pagamento único de R$ 9,99, sem cartão.": {
+    "en": "Adds 30 more days to what you have left. One-time payment of R$ 9.99, no card.",
+    "es": "Suma 30 días más a lo que te queda. Pago único de R$ 9,99, sin tarjeta."
+  },
+  "Passar para o cartão": {
+    "en": "Switch to card",
+    "es": "Pasar a la tarjeta"
+  },
+  "Renova sozinha todo mês, sem você precisar lembrar de pagar.": {
+    "en": "Renews on its own every month, no need to remember to pay.",
+    "es": "Se renueva sola cada mes, sin que tengas que acordarte de pagar."
+  },
+  "Reativar assinatura": {
+    "en": "Reactivate subscription",
+    "es": "Reactivar suscripción"
+  },
+  "Volte a ser cobrado todo mês e fique sem interrupção.": {
+    "en": "Go back to being charged monthly and keep your access without interruption.",
+    "es": "Vuelve a pagar cada mes y sigue sin interrupciones."
+  },
+  "Trocar o cartão": {
+    "en": "Change card",
+    "es": "Cambiar la tarjeta"
+  },
+  "Atualize o cartão para a cobrança passar e o acesso continuar.": {
+    "en": "Update your card so the charge goes through and your access continues.",
+    "es": "Actualiza la tarjeta para que el cobro pase y el acceso continúe."
+  },
+  "Atualize o cartão que paga a assinatura.": {
+    "en": "Update the card that pays for your subscription.",
+    "es": "Actualiza la tarjeta que paga la suscripción."
+  },
+  "Ver faturas": {
+    "en": "See invoices",
+    "es": "Ver facturas"
+  },
+  "Recibos e cobranças anteriores.": {
+    "en": "Receipts and past charges.",
+    "es": "Recibos y cobros anteriores."
+  },
+  "Trocar para Pix": {
+    "en": "Switch to Pix",
+    "es": "Cambiar a Pix"
+  },
+  "O Pix paga 30 dias de uma vez e não renova sozinho.": {
+    "en": "Pix pays for 30 days at once and doesn't renew on its own.",
+    "es": "El Pix paga 30 días de una vez y no se renueva solo."
+  },
+  "Cancelar assinatura": {
+    "en": "Cancel subscription",
+    "es": "Cancelar suscripción"
+  },
+  "Você usa até {0} e não é cobrado de novo.": {
+    "en": "You can use it until {0} and won't be charged again.",
+    "es": "Lo usas hasta {0} y no se te cobra de nuevo."
+  },
+  "Seus dias de Pix continuam valendo: o cartão só começa a ser cobrado em {0}. Depois disso, renova sozinha todo mês e você cancela quando quiser. A página de pagamento mostra a data antes de você confirmar.": {
+    "en": "Your Pix days still count: the card is only charged starting {0}. After that, it renews on its own every month and you can cancel anytime. The payment page shows the date before you confirm.",
+    "es": "Tus días de Pix siguen valiendo: la tarjeta solo se cobra a partir del {0}. Después, se renueva sola cada mes y cancelas cuando quieras. La página de pago muestra la fecha antes de que confirmes."
+  },
+  "O cartão é cobrado hoje e depois renova sozinha todo mês. Como faltam menos de 2 dias de Pix, eles não são somados. Você cancela quando quiser.": {
+    "en": "The card is charged today and then renews on its own every month. Since less than 2 days of Pix are left, they aren't added. You can cancel anytime.",
+    "es": "La tarjeta se cobra hoy y luego se renueva sola cada mes. Como faltan menos de 2 días de Pix, no se suman. Cancelas cuando quieras."
+  },
+  "Continuar para o pagamento": {
+    "en": "Continue to payment",
+    "es": "Continuar al pago"
+  },
+  "O Pix é um pagamento único de 30 dias e não renova sozinho. Para trocar, são dois passos:": {
+    "en": "Pix is a one-time 30-day payment and doesn't renew on its own. To switch, there are two steps:",
+    "es": "El Pix es un pago único de 30 días y no se renueva solo. Para cambiar, son dos pasos:"
+  },
+  "Cancele a assinatura do cartão. Você continua com acesso até {0}.": {
+    "en": "Cancel the card subscription. You keep your access until {0}.",
+    "es": "Cancela la suscripción de la tarjeta. Sigues con acceso hasta el {0}."
+  },
+  "Quando esse prazo acabar, escolha Pix na tela que aparece e pague R$ 9,99.": {
+    "en": "When that time is up, choose Pix on the screen that appears and pay R$ 9.99.",
+    "es": "Cuando ese plazo termine, elige Pix en la pantalla que aparece y paga R$ 9,99."
+  },
+  "Abrindo…": {
+    "en": "Opening…",
+    "es": "Abriendo…"
+  },
+  "Cancelar o cartão": {
+    "en": "Cancel the card",
+    "es": "Cancelar la tarjeta"
+  },
+  "Cartão, faturas e cancelamento ficam na página segura do Stripe: o OpusCash não guarda os dados do seu cartão.": {
+    "en": "Card, invoices and cancellation live on Stripe's secure page: OpusCash doesn't store your card details.",
+    "es": "Tarjeta, facturas y cancelación están en la página segura de Stripe: OpusCash no guarda los datos de tu tarjeta."
+  },
+  "Falar com o suporte": {
+    "en": "Talk to support",
+    "es": "Hablar con soporte"
+  },
+  "Assinatura": {
+    "en": "Subscription",
+    "es": "Suscripción"
+  },
+  "Quanto tempo falta e como você paga": {
+    "en": "How much time is left and how you pay",
+    "es": "Cuánto tiempo falta y cómo pagas"
+  },
+  "Ver assinatura": {
+    "en": "See subscription",
+    "es": "Ver suscripción"
+  },
+  "Teste de 7 dias": {
+    "en": "7-day trial",
+    "es": "Prueba de 7 días"
   }
 }
