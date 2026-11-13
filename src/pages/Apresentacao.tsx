@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Icone } from '../components/Icone'
 import { Marca } from '../components/Marca'
 import { tx } from '../lib/textos'
+import { Fundadores } from './Fundadores'
 
 /**
  * Landing page do OpusCash. No meio dela, uma tela do app (montada em HTML, com dados de demonstração) flutua em 3D:
@@ -470,6 +471,9 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
           </div>
         </div>
       </section>
+
+      {/* ─── QUEM FAZ O OPUSCASH ─── */}
+      <Fundadores />
 
       {/* ─── CTA FINAL ─── */}
       <section className="ap-cta-final">
