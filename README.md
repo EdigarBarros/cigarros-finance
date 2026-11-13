@@ -59,6 +59,11 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   verdade, "1 R$ = 290 ARS", com botão para inverter): o valor da conta em reais passa a ser exato e a mesma cotação já vem
   preenchida no "Paguei". Pedem a [migração 14](supabase/migracao-14-moeda-em-contas-e-dividas.sql) e a
   [15](supabase/migracao-15-cotacao-da-conta.sql)
+- **Novidades** ([migração 31](supabase/migracao-31-novidades.sql), `components/Novidades.tsx` e `CartaoNovidade.tsx`): depois de uma
+  atualização, um pop-up rápido e visual ("Novidade": ícone grande, título curto e até 4 itens com ícone) aparece **uma vez** para quem já
+  tinha conta, com o botão "Ver agora" levando à tela nova. É criado e publicado no painel de suporte (tela Novidades), sem versão nova do
+  site nem do app. Só a mais recente publicada aparece; quem viu fica marcado em `perfis.dispensadas` (`novidade:<id>`), em qualquer aparelho.
+  Quem cria a conta depois da publicação não vê (tem o tutorial)
 - **Medição de uso** ([migração 30](supabase/migracao-30-uso-do-app.sql), `lib/uso.ts`): com a pessoa logada, o app manda a cada minuto (e ao
   trocar de tela ou sair) em qual tela ela está, quanto tempo ficou em cada uma, **quantos** toques e teclas deu (nunca o que digitou),
   o idioma, se é o site ou o app Android e a versão. Também registra se ela pulou o tutorial (em qual passo) ou viu inteiro, e quando

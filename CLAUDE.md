@@ -19,6 +19,13 @@ entregue o `.aab` assinado ao dono e diga que ele precisa enviar à loja.
 Antes do merge, confira se o branch de produção andou (outra sessão pode ter publicado) e traga as mudanças para o seu
 branch. Mudanças no banco (arquivos em `supabase/`) não se aplicam sozinhas: avise quais migrações rodar no Supabase.
 
+## Novidades (pop-up depois de uma atualização)
+
+O pop-up "Novidade" é publicado pelo dono no painel de suporte (tela Novidades); não é parte do seu trabalho. Se a mudança
+for algo novo que a pessoa vê, no fim só ofereça um rascunho pronto (não publique): um `insert` em `public.novidades` com
+`titulo`, até 4 `itens` (ícone do `components/Icone.tsx` + até 40 letras, em `pt`, `en` e `es`), `icone`, `cor` e `tela`,
+sem `publicada_em`. Ele revisa e publica pelo painel.
+
 ## Onde está cada coisa
 
 - `README.md`: o que o app faz e como colocar no ar.
