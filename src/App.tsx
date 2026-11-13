@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js'
 import { lazy, Suspense, useEffect, useReducer, useRef, useState } from 'react'
 import { BotaoIdioma } from './components/BotaoIdioma'
+import { BotaoTema } from './components/BotaoTema'
 import { Carregando } from './components/Carregando'
 import { Configuracao, Login, NovaSenha } from './components/Entrada'
 import { TelaAssinatura } from './components/Assinatura'
@@ -17,13 +18,16 @@ import { Apresentacao } from './pages/Apresentacao'
 import './pages/apresentacao.css'
 
 /**
- * Telas sem a barra do painel: o botão de idioma fica preso no canto de cima (no painel, ele fica na barra, ao lado do tema).
+ * Telas sem a barra do painel: os botões de tema e de idioma ficam presos no canto de cima (no painel, ficam na barra).
  * `traduzida`: a tela tem os textos em inglês e espanhol (lib/textos.ts); nesses idiomas o tradutor do Google não mexe nela.
  */
 const comIdioma = (tela: React.ReactNode, traduzida = true) => (
   <>
     {traduzida && nativo ? <div translate="no" className="tela-nativa">{tela}</div> : tela}
-    <BotaoIdioma flutuante />
+    <div className="topo-flutuante">
+      <BotaoTema />
+      <BotaoIdioma flutuante />
+    </div>
   </>
 )
 
@@ -44,6 +48,14 @@ export default function App() {
   const [recuperando, setRecuperando] = useState(false)
   // null = landing; senão, qual aba do login abrir (entrar ou criar conta)
   const [login, setLogin] = useState<'entrar' | 'criar' | null>(null)
+  // abrir o login entra no histórico: o "voltar" do navegador (ou o gesto de voltar do celular) traz de volta à apresentação
+  const abrirLogin = (m: 'entrar' | 'criar') => { history.pushState({ opusLogin: m }, ''); setLogin(m) }
+  const voltarAoInicio = () => { if (history.state?.opusLogin) history.back(); else setLogin(null) }
+  useEffect(() => {
+    const aoVoltar = () => setLogin(history.state?.opusLogin ?? null)
+    window.addEventListener('popstate', aoVoltar)
+    return () => window.removeEventListener('popstate', aoVoltar)
+  }, [])
 
   useEffect(() => {
     if (!configurado) return
@@ -70,8 +82,9 @@ export default function App() {
   if (!sessao) {
     // Landing page por padrão; o login (ou o cadastro) abre quando a pessoa clica. No app da Play Store, que já foi instalado,
     // a propaganda (com o preço) não faz sentido: abre direto no login.
-    if (login || noAppAndroid) return comIdioma(<Login inicial={login ?? 'entrar'} />)
-    return comIdioma(<Apresentacao onLogin={() => setLogin('entrar')} onSignup={() => setLogin('criar')} />)
+    // no app da Play Store não há apresentação para onde voltar
+    if (login || noAppAndroid) return comIdioma(<Login inicial={login ?? 'entrar'} aoVoltar={noAppAndroid ? undefined : voltarAoInicio} />)
+    return comIdioma(<Apresentacao onLogin={() => abrirLogin('entrar')} onSignup={() => abrirLogin('criar')} />)
   }
 
   return <ComAcesso userId={sessao.user.id} email={sessao.user.email ?? ''} nome={sessao.user.user_metadata?.nome} />

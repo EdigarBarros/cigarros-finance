@@ -3695,6 +3695,27 @@ button.ex-tipo:hover { transform: scale(1.1); }
   box-shadow: var(--sombra-alta);
 }
 .idioma .fora { z-index: 44; }
+
+/* telas sem a barra do painel: tema e idioma juntos no canto de cima; "Início" no canto oposto, no login */
+.topo-flutuante {
+  position: fixed; z-index: 45; top: calc(14px + env(safe-area-inset-top)); right: calc(14px + env(safe-area-inset-right));
+  display: flex; align-items: center; gap: 8px;
+}
+.topo-flutuante .idioma.flutuante { position: relative; top: auto; right: auto; }
+.tema-flutuante, .en-voltar {
+  display: inline-flex; align-items: center; justify-content: center; height: 38px; border-radius: 999px;
+  border: 1px solid var(--borda); color: var(--texto-2);
+  background: color-mix(in srgb, var(--superficie-forte) 78%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--sombra-alta);
+  transition: color .2s, border-color .2s, transform .2s var(--mola-salto);
+}
+.tema-flutuante { width: 38px; padding: 0; }
+.tema-flutuante:hover, .en-voltar:hover { color: var(--texto); border-color: var(--borda-forte); }
+.tema-flutuante:active, .en-voltar:active { transform: scale(.95); }
+.en-voltar {
+  position: fixed; z-index: 45; top: calc(14px + env(safe-area-inset-top)); left: calc(14px + env(safe-area-inset-left));
+  gap: 6px; padding: 0 15px 0 10px; font: 600 13px var(--fonte);
+}
 .idioma-menu {
   position: absolute; right: 0; top: calc(100% + 8px); z-index: 46; width: 290px; display: grid; grid-template-rows: auto minmax(0, 1fr);
   max-height: min(460px, calc(100dvh - 90px)); padding: 8px; border-radius: 18px;

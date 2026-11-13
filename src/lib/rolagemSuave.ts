@@ -20,10 +20,11 @@ import { semMovimento } from './tema'
 export function ligarRolagemSuave(): () => void {
   if (!window.matchMedia('(pointer: fine)').matches) return () => {}
 
-  /** Atrito (por segundo): quanto maior, mais cedo para. 2,2 → a velocidade cai pela metade a cada ~0,3 s. */
-  const ATRITO = 2.2
-  /** Quanto a página anda, no total, para cada pixel que a rodinha pede: um clique de 100px desliza ~450px. */
-  const ALCANCE = 4.5
+  /** Atrito (por segundo): quanto maior, mais cedo para. 1,9 → a velocidade cai pela metade a cada ~0,36 s. */
+  const ATRITO = 1.9
+  /** Quanto a página anda, no total, para cada pixel que a rodinha pede: um clique de 100px desliza ~320px, saindo a
+   *  ~610 px/s (o dono achou 4,5 × 2,2, ~990 px/s, rápido demais). */
+  const ALCANCE = 3.2
   /** Velocidade máxima (px/s), para muitos cliques seguidos não dispararem a página. */
   const VEL_MAX = 7000
 
