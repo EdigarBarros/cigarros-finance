@@ -4,6 +4,7 @@ import { Marca } from '../components/Marca'
 import { tx } from '../lib/textos'
 import { ligarRolagemSuave } from '../lib/rolagemSuave'
 import { semMovimento } from '../lib/tema'
+import { Algoritmo } from './Algoritmo'
 import { Fundadores } from './Fundadores'
 import { FundoOpus } from './FundoOpus'
 import { Preco } from './Preco'
@@ -412,6 +413,9 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
           </div>
         </div>
       </section>
+
+      {/* ─── O MOTOR: o algoritmo por trás do app ─── */}
+      <Algoritmo />
 
       {/* ─── QUEM FAZ O OPUSCASH ─── */}
       <Fundadores />
