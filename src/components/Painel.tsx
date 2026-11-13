@@ -44,6 +44,7 @@ import { Kpi } from './ui'
 import { avisar, confirmar } from '../lib/avisos'
 import { BotaoIdioma } from './BotaoIdioma'
 import { Icone } from './Icone'
+import { useRespostasNovas } from '../lib/useSuporte'
 import { CartaoDicas, type Dica } from './CartaoDicas'
 import { Marca } from './Marca'
 import { tx } from '../lib/textos'
@@ -81,6 +82,7 @@ const janelas = {
   Extrato: () => import('./Extrato'),
   Categorias: () => import('./Categorias'),
   VinculoConta: () => import('./VinculoConta'),
+  Suporte: () => import('./Suporte'),
 }
 const FormLancamento = lazy(() => janelas.Formularios().then((m) => ({ default: m.FormLancamento })))
 const Configuracoes = lazy(() => janelas.Configuracoes().then((m) => ({ default: m.Configuracoes })))
@@ -90,6 +92,7 @@ const ImportarExtrato = lazy(() => janelas.Extrato().then((m) => ({ default: m.I
 const OrganizarNomes = lazy(() => janelas.Extrato().then((m) => ({ default: m.OrganizarNomes })))
 const GerenciarCategorias = lazy(() => janelas.Categorias().then((m) => ({ default: m.GerenciarCategorias })))
 const ParecidosConta = lazy(() => janelas.VinculoConta().then((m) => ({ default: m.ParecidosConta })))
+const Suporte = lazy(() => janelas.Suporte().then((m) => ({ default: m.Suporte })))
 const Questionario = lazy(() => import('./Questionario').then((m) => ({ default: m.Questionario })))
 const Tour = lazy(() => import('./Tour').then((m) => ({ default: m.Tour })))
 
@@ -172,6 +175,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const [quadroMeses, setQuadroMeses] = useState(false)
   const [busca, setBusca] = useState('')
   const [extrato, setExtrato] = useState(false)
+  // suporte (migração 32): a janela abre de qualquer tela; o aviso conta as respostas do suporte ainda não vistas
+  const [suporte, setSuporte] = useState<false | 'lista' | 'novo'>(false)
+  const [respostasNovas, conferirRespostas] = useRespostasNovas()
   const [editandoSaldoInicial, setEditandoSaldoInicial] = useState(false)
   const [organizar, setOrganizar] = useState(false)
   /** "Esses também são da pensão?": aberto depois de ligar um lançamento a uma conta do mês. */
@@ -821,6 +827,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   const menuItens = (
     <>
       <button onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> {tx('Configurações')}</button>
+      <button onClick={() => setSuporte('lista')}><Icone nome="conversa" /> {tx('Suporte')}{respostasNovas > 0 && <span className="menu-aviso">{respostasNovas}</span>}</button>
       <button onClick={() => setTour(true)}><Icone nome="ideia" /> {tx('Ver o tutorial')}</button>
       <button onClick={trocarTema}><Icone nome={tema === 'escuro' ? 'sol' : 'lua'} /> {tema === 'escuro' ? tx('Tema claro') : tx('Tema escuro')}</button>
       <button onClick={() => setExtrato(true)}><Icone nome="relatorio" /> {tx('Importar extrato')}</button>
@@ -899,6 +906,12 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
                 </>
               )}
             </div>
+            <button className="icone-btn suporte-btn" onClick={() => setSuporte('lista')}
+              aria-label={respostasNovas ? (respostasNovas === 1 ? tx('Suporte: 1 resposta nova') : tx('Suporte: {0} respostas novas', respostasNovas)) : tx('Suporte')}
+              title={respostasNovas ? tx('O suporte respondeu') : tx('Suporte: peça ajuda')}>
+              <Icone nome="conversa" />
+              {respostasNovas > 0 && <span className="sino-ponto" />}
+            </button>
             <BotaoIdioma />
             <button className="icone-btn" onClick={() => definirValoresOcultos(!ocultos)} aria-pressed={ocultos}
               aria-label={ocultos ? tx('Mostrar valores') : tx('Ocultar valores')} title={ocultos ? tx('Mostrar valores') : tx('Ocultar valores')}>
@@ -1165,6 +1178,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
       )}
 
       {extrato && <ImportarExtrato c={ctx} aoFechar={() => setExtrato(false)} />}
+      {suporte && <Suporte inicial={suporte === 'novo' ? 'novo' : undefined} aoFechar={() => { setSuporte(false); conferirRespostas() }} aoMudar={conferirRespostas} />}
       {editandoSaldoInicial && (
         <FormSaldoInicial inicial={d.saldoInicial} mesSugerido={`${ano}-${String(Math.max(0, porMes.findIndex(Boolean)) + 1).padStart(2, '0')}`}
           aoSalvar={(novo) => void d.salvarSaldoInicial(novo)} aoFechar={() => setEditandoSaldoInicial(false)} />

@@ -12,7 +12,7 @@ const body0=r=>{try{return r.postDataJSON()}catch{return null}}
 exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,semSessao=false,assinatura=null,funcoes={},dpr=1,toque=false,semColunas={}}={}){
   const db={assinaturas:[{user_id:uid,status:'cortesia',teste_fim:null,periodo_fim:null,cancela_no_fim:false,moeda:null}],
     perfis:[{user_id:uid,nome:'Teste',moeda:'BRL',moedas:[],detalhe:'detalhado',modulos:{dividas:true,contas:true,cartoes:true,bancos:true,investimentos:true,moedas:false,metas:true},dispensadas:['tour','importar'],onboarding_em:'2026-01-01T00:00:00Z',...perfil}],
-    categorias:[],lancamentos:[],meses:[],dividas:[],divida_saldos:[],bancos:[],metas:[],meta_movimentos:[],contas_fixas:[],cartoes:[],faturas_pagas:[],divida_partes:[],divida_promessas:[],invest_ativos:[],invest_operacoes:[],invest_precos:[],invest_importacoes:[],invest_config:[],erros_app:[],...dados}
+    categorias:[],lancamentos:[],meses:[],dividas:[],divida_saldos:[],bancos:[],metas:[],meta_movimentos:[],contas_fixas:[],cartoes:[],faturas_pagas:[],divida_partes:[],divida_promessas:[],invest_ativos:[],invest_operacoes:[],invest_precos:[],invest_importacoes:[],invest_config:[],erros_app:[],suporte_tickets:[],suporte_mensagens:[],...dados}
   const cats=[['saida','Alimentação'],['saida','Moradia'],['saida','Outros'],['saida','Dívidas e parcelas'],['entrada','Salário'],['entrada','Outros']]
   const srv=http.createServer((q,r)=>{let p=path.join(root,q.url.split('?')[0]);if(!fs.existsSync(p)||fs.statSync(p).isDirectory())p=path.join(root,'index.html');r.writeHead(200,{'content-type':mime[path.extname(p)]||'text/plain','content-security-policy':CSP});fs.createReadStream(p).pipe(r)})
   await new Promise(r=>srv.listen(porta,r))
@@ -28,6 +28,15 @@ exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,se
     const h={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*','content-type':'application/json'}
     if(m==='OPTIONS')return route.fulfill({status:204,headers:h})
     const t=u.pathname.split('/').pop()
+    if(u.pathname.includes('/rpc/')&&t.startsWith('suporte_')){
+      // suporte (migração 32), como as funções do banco: abrir, responder, marcar lido e encerrar, sempre na conta logada
+      const b=body0(req)||{},agora=new Date().toISOString(),tk=db.suporte_tickets.find(x=>x.id===b.p_ticket)
+      const msg=(id,autor,texto)=>db.suporte_mensagens.push({id:db.suporte_mensagens.length+1,ticket_id:id,autor,texto,criado_em:agora})
+      if(t==='suporte_abrir'){const id=crypto.randomUUID();db.suporte_tickets.push({id,user_id:uid,categoria:b.p_categoria,assunto:(b.p_assunto||'').trim()||String(b.p_texto).slice(0,80),status:'aberto',tela:b.p_tela,versao:b.p_versao,aparelho:b.p_aparelho,idioma:b.p_idioma,criado_em:agora,atualizado_em:agora,ultima_mensagem_em:agora,ultima_mensagem_de:'pessoa',lido_pela_pessoa_em:agora,lido_pelo_suporte_em:null,resolvido_em:null});msg(id,'pessoa',b.p_texto);log.push(['RPC',t,b]);return route.fulfill({status:200,headers:h,body:JSON.stringify(id)})}
+      if(t==='suporte_responder'&&tk){msg(tk.id,'pessoa',b.p_texto);Object.assign(tk,{status:'aberto',resolvido_em:null,ultima_mensagem_em:agora,ultima_mensagem_de:'pessoa',lido_pela_pessoa_em:agora})}
+      if(t==='suporte_lido'&&tk)tk.lido_pela_pessoa_em=agora
+      if(t==='suporte_encerrar'&&tk)Object.assign(tk,{status:'resolvido',resolvido_em:agora,lido_pela_pessoa_em:agora})
+      log.push(['RPC',t,b]);return route.fulfill({status:200,headers:h,body:'null'})}
     if(u.pathname.includes('/rpc/')){ if(t==='criar_categorias_padrao'){cats.forEach(([tipo,nome],i)=>db.categorias.push({id:crypto.randomUUID(),user_id:uid,tipo,nome,icone:'🏷️',cor:'#888',papel:nome.startsWith('Dívidas')?'divida':null,ordem:i}))} return route.fulfill({status:200,headers:h,body:'null'})}
     if(u.pathname.includes('/functions/v1/')){log.push(['FUNC',t,body0(req)]);const f=funcoes[t]||{ok:true};return route.fulfill({status:200,headers:h,body:JSON.stringify(f)})}
     if(u.pathname.includes('/auth/v1/recover')||u.pathname.includes('/auth/v1/resend')||u.pathname.includes('/auth/v1/logout')){log.push(['AUTH',t,body0(req)]);return route.fulfill({status:200,headers:h,body:'{}'})}

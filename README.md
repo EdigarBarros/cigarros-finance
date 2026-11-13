@@ -59,6 +59,11 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   verdade, "1 R$ = 290 ARS", com botão para inverter): o valor da conta em reais passa a ser exato e a mesma cotação já vem
   preenchida no "Paguei". Pedem a [migração 14](supabase/migracao-14-moeda-em-contas-e-dividas.sql) e a
   [15](supabase/migracao-15-cotacao-da-conta.sql)
+- **Suporte dentro do app** ([migração 32](supabase/migracao-32-suporte.sql), `components/Suporte.tsx`, `lib/suporte.ts`): de qualquer tela
+  (botão de conversa no topo e "Suporte" no menu da conta), a pessoa pede ajuda escolhendo o assunto (pagamento e assinatura, algo não funciona,
+  minha conta, dúvida, sugestão, outro), acompanha a conversa e vê só os próprios pedidos, separados em andamento e resolvidos. Vão junto a tela,
+  o aparelho e a versão (nada dos lançamentos). O suporte responde pelo painel de suporte; a resposta aparece com um aviso no botão. Detalhes na
+  seção 4.24 de `docs/arquitetura-do-painel.md`
 - **Medição de uso** ([migração 30](supabase/migracao-30-uso-do-app.sql), `lib/uso.ts`): com a pessoa logada, o app manda a cada minuto (e ao
   trocar de tela ou sair) em qual tela ela está, quanto tempo ficou em cada uma, **quantos** toques e teclas deu (nunca o que digitou),
   o idioma, se é o site ou o app Android e a versão. Também registra se ela pulou o tutorial (em qual passo) ou viu inteiro, e quando

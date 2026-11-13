@@ -1099,3 +1099,22 @@ migração num Postgres local e confere que uma pessoa não lê nem grava nada d
   acesso numa transação só. A chave é o id da sessão: o Stripe reenvia avisos e o mesmo Pix nunca soma 30 dias duas vezes.
 - **Valor/dias:** estão em `PIX_VALOR`/`PIX_DIAS` nas duas funções e em `registrar_pix`. Mudou o preço? Mude nos dois lugares e nos textos (`tx`).
 
+
+### 4.24 Suporte dentro do app (`components/Suporte.tsx`, `lib/suporte.ts`, migração 32)
+
+- **Por que existe:** a pessoa precisa pedir ajuda sem sair do app (pagamento, algo que não funciona, conta, dúvida), e o suporte precisa ver e
+  responder num lugar só, com o contexto do problema.
+- **Onde fica:** em **qualquer tela** do painel. Botão de conversa na barra do topo (no computador e no celular, ao lado do idioma) e item "Suporte" no
+  menu da conta. Quando o suporte responde, aparece um ponto no botão e o número no menu (`lib/useSuporte.ts` confere a cada 2 minutos e ao voltar ao app).
+- **Como a pessoa usa:** a janela tem três vistas.
+  - *Meus pedidos:* "Pedir ajuda" no topo e os pedidos dela separados em **Em andamento** e **Resolvidos**, cada um com o assunto, a cor e o ícone da
+    categoria, há quanto tempo e a situação (**Esperando o suporte**, **Respondido**, **Resolvido**) ou "Resposta nova".
+  - *Pedir ajuda:* escolhe o assunto em cartões (**Pagamento e assinatura**, **Algo não funciona**, **Minha conta**, **Dúvida de como usar**,
+    **Sugestão**, **Outro assunto**), escreve (assunto opcional) e manda. Antes de mandar, a tela diz o que vai junto: a tela em que ela estava, o
+    aparelho e a versão do app, "nada dos seus lançamentos".
+  - *Conversa:* balões (os dela à direita, em verde; os do suporte à esquerda, com o símbolo do OpusCash), atualizada sozinha a cada 15 s. "Meu problema
+    foi resolvido" encerra; escrever num pedido resolvido reabre.
+- **Regras (no banco, migração 32):** a pessoa só **lê os próprios** pedidos (RLS por `auth.uid()`) e só age pelas funções `suporte_abrir`,
+  `suporte_responder`, `suporte_lido` e `suporte_encerrar`. No máximo 5 pedidos em andamento, 20 mensagens a cada 10 minutos, 4000 letras por mensagem.
+- **O suporte:** responde pelo painel de suporte (repositório `painel-opus-cash`, tela Suporte), pela chave de serviço. Tudo fica no registro do suporte.
+- **No app Android:** o botão só chega numa versão nova do app enviada à loja.
