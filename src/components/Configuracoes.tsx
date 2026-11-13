@@ -30,7 +30,7 @@ const SECOES: { id: Secao; nome: string; icone: string; sub: string }[] = [
 ]
 
 /** Configurações em tela cheia: menu de seções à esquerda e cartões à direita. Cada mudança vale na hora. */
-export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoExtrato, aoOrganizar, aoZerar, aoSair, aoExcluirConta, aoFechar, assinatura, aoSuporte, aoTour, saldoInicial, aoSaldoInicial, secaoInicial = 'perfil' }: {
+export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoExtrato, aoOrganizar, aoZerar, aoSair, aoExcluirConta, aoFechar, assinatura, confirmandoPagamento, aoSuporte, aoTour, saldoInicial, aoSaldoInicial, secaoInicial = 'perfil' }: {
   /** Seção que abre primeiro ("Personalizar" abre direto em Painel). */
   secaoInicial?: Secao
   perfil: Perfil; email: string; aoMudar: (p: Perfil) => void; aoRefazer: () => void; aoCategorias: () => void
@@ -47,6 +47,8 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
   aoFechar: () => void
   /** Situação da assinatura (null quando não há cobrança nesta conta). */
   assinatura?: Assinatura | null
+  /** Acabou de voltar da página de pagamento: o app ainda está conferindo se o pagamento já foi registrado. */
+  confirmandoPagamento?: boolean
   /** Abre o pedido de ajuda do suporte (a aba Assinatura oferece "Falar com o suporte"). */
   aoSuporte?: () => void
   /** Abre o tutorial guiado do painel. */
@@ -239,7 +241,7 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
             </div>
           )}
 
-          {secao === 'assinatura' && assinatura && <SecaoAssinatura assinatura={assinatura} moeda={perfil.moeda} aoSuporte={aoSuporte} />}
+          {secao === 'assinatura' && assinatura && <SecaoAssinatura assinatura={assinatura} moeda={perfil.moeda} confirmando={confirmandoPagamento} aoSuporte={aoSuporte} />}
 
           {secao === 'conta' && (
             <>

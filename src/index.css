@@ -2830,6 +2830,8 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .ass-alerta svg { flex: none; margin-top: 2px; color: var(--divida); }
 .ass-alerta.tom-perigo { background: color-mix(in srgb, var(--saida) 12%, transparent); border-color: color-mix(in srgb, var(--saida) 34%, transparent); }
 .ass-alerta.tom-perigo svg { color: var(--saida); }
+.ass-alerta.tom-neutro { background: color-mix(in srgb, var(--marca-2, var(--destaque)) 12%, transparent); border-color: color-mix(in srgb, var(--marca-2, var(--destaque)) 32%, transparent); }
+.ass-alerta.tom-neutro svg { color: var(--marca-2, var(--destaque)); }
 .ass-nota { margin: 0; color: var(--texto-2); line-height: 1.5; }
 .ass-acoes .cfg-acao { min-height: 128px; }
 .ass-confirma { display: grid; gap: 12px; border-color: var(--borda-forte); animation: surgir .5s var(--mola) backwards; }

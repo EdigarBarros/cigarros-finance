@@ -1,5 +1,5 @@
 import type { Session } from '@supabase/supabase-js'
-import { lazy, Suspense, useEffect, useReducer, useState } from 'react'
+import { lazy, Suspense, useEffect, useReducer, useRef, useState } from 'react'
 import { BotaoIdioma } from './components/BotaoIdioma'
 import { Carregando } from './components/Carregando'
 import { Configuracao, Login, NovaSenha } from './components/Entrada'
@@ -93,6 +93,28 @@ function ComAcesso({ userId, email, nome }: { userId: string; email: string; nom
     const t = window.setTimeout(reavaliar, falta + 500)
     return () => window.clearTimeout(t)
   }, [fimDoAcesso])
+  // Voltando da página de pagamento (?assinatura=ok) o aviso do Stripe leva alguns segundos para chegar: confere de novo a cada 2 s, por até 40 s,
+  // até a assinatura mudar (ex.: o Pix pago somou os 30 dias). Enquanto isso a aba Assinatura avisa que está conferindo.
+  const [confirmando, setConfirmando] = useState(() => new URLSearchParams(window.location.search).get('assinatura') === 'ok')
+  const chaveAtual = useRef('')
+  const chave = assinatura ? `${assinatura.status}|${assinatura.periodo_fim}|${assinatura.teste_fim}|${assinatura.cancela_no_fim}` : ''
+  useEffect(() => { chaveAtual.current = chave }, [chave])
+  useEffect(() => {
+    if (carregando || !confirmando) return
+    const inicio = chaveAtual.current
+    let tentativas = 0
+    const t = window.setInterval(() => {
+      tentativas += 1
+      if (chaveAtual.current !== inicio || tentativas > 20) {
+        window.clearInterval(t)
+        setConfirmando(false)
+        try { window.history.replaceState(null, '', window.location.pathname + window.location.hash) } catch { /* sem history: o aviso só não some da barra de endereço */ }
+        return
+      }
+      void recarregar()
+    }, 2000)
+    return () => window.clearInterval(t)
+  }, [carregando, confirmando, recarregar])
   // medição de uso (telas, tempo, idioma: nunca o conteúdo) para o painel de suporte; desliga ao sair da conta
   useEffect(() => iniciarUso(), [userId])
   const naAssinatura = !carregando && cobranca && !temAcesso(assinatura)
@@ -104,8 +126,8 @@ function ComAcesso({ userId, email, nome }: { userId: string; email: string; nom
     <Suspense fallback={<Carregando />}>
       {/* inglês e espanhol: o painel já vem traduzido (tx), o tradutor do Google não mexe */}
       {nativo
-        ? <div translate="no" className="tela-nativa"><Painel userId={userId} email={email} nome={nome} assinatura={cobranca ? assinatura : null} /></div>
-        : <Painel userId={userId} email={email} nome={nome} assinatura={cobranca ? assinatura : null} />}
+        ? <div translate="no" className="tela-nativa"><Painel userId={userId} email={email} nome={nome} assinatura={cobranca ? assinatura : null} confirmandoPagamento={confirmando} /></div>
+        : <Painel userId={userId} email={email} nome={nome} assinatura={cobranca ? assinatura : null} confirmandoPagamento={confirmando} />}
     </Suspense>
   )
 }

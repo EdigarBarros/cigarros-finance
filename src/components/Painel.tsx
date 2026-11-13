@@ -144,7 +144,7 @@ const paginaDoHash = (): Pagina => {
   return PAGINAS.some((p) => p.id === h) ? h : 'inicio'
 }
 
-export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId: string; email: string; nome?: string; assinatura?: Assinatura | null }) {
+export function Painel({ userId, email, nome: nomeConta, assinatura, confirmandoPagamento }: { userId: string; email: string; nome?: string; assinatura?: Assinatura | null; confirmandoPagamento?: boolean }) {
   // muda sozinho na virada do dia (a aba pode ficar aberta de um dia para o outro)
   const hoje = useHoje()
   const [pagina, setPagina] = useState<Pagina>(paginaDoHash)
@@ -1187,6 +1187,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           aoOrganizar={() => { setAjustes(false); setOrganizar(true) }}
           aoZerar={() => { setAjustes(false); setZerando(true) }}
           assinatura={assinatura}
+          confirmandoPagamento={confirmandoPagamento}
           aoSuporte={() => { setAjustes(false); setSuporte('novo') }}
           aoSair={() => supabase.auth.signOut()}
           aoExcluirConta={() => { setAjustes(false); setExcluindo(true) }}
