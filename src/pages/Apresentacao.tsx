@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Icone } from '../components/Icone'
 import { Marca } from '../components/Marca'
 import { tx } from '../lib/textos'
+import { ligarRolagemSuave } from '../lib/rolagemSuave'
 import { Fundadores } from './Fundadores'
 
 /**
@@ -226,6 +227,9 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
   const stickyRef = useRef<HTMLDivElement>(null)
   const telaRef = useRef<HTMLDivElement>(null)
   const [cena, setCena] = useState(0)
+
+  // rodinha do mouse com inércia, como o arrasto no celular (a animação 3D acompanha sem trancos)
+  useEffect(() => ligarRolagemSuave(), [])
 
   useEffect(() => {
     const palco = palcoRef.current, sticky = stickyRef.current, tela = telaRef.current
