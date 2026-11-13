@@ -1212,6 +1212,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
           aoVer={(tela) => {
             vistaNovidade(novidade.id)
             if (tela === 'configuracoes') setAjustes(true)
+            else if (tela === 'suporte') setSuporte('lista')
             else irPara(paginas.some((p) => p.id === tela) ? tela as Pagina : 'inicio')
           }} />
       )}
