@@ -51,6 +51,7 @@ import { tx } from '../lib/textos'
 import { useHoje } from '../lib/useHoje'
 import { AvisoReanalise } from './AvisoReanalise'
 import { marcarTela, marcarUso } from '../lib/uso'
+import { PopupNovidade, useNovidade } from './Novidades'
 
 // Cada tela e cada janela vira um pedaço à parte: o painel abre só com o que a pessoa vê e o resto chega sob demanda
 // (e é baixado em segundo plano logo depois, veja `carregarRestante`).
@@ -233,8 +234,19 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   // O menu muda na hora; a página nova é montada em segundo plano (em pedaços), sem congelar a animação do menu.
   const paginaMostrada = useDeferredValue(paginaAtual)
   // a tela que a pessoa está vendo, para a medição de uso (lib/uso.ts): janelas abertas contam como telas próprias
+  // Pop-up de novidade (publicada no painel de suporte): uma vez por pessoa, com o painel livre, depois do tutorial de quem acabou de chegar
+  const recemChegou = perfil.onboarding_em ? Date.now() - new Date(perfil.onboarding_em).getTime() < 3 * 86400000 : false
+  const novidade = useNovidade(noPainel && !d.carregando && Boolean(perfil.onboarding_em), perfil.dispensadas)
+  const [novidadeLiberada, setNovidadeLiberada] = useState(false)
+  useEffect(() => {
+    if (!novidade) return
+    const t = window.setTimeout(() => setNovidadeLiberada(true), 1500)
+    return () => window.clearTimeout(t)
+  }, [novidade])
+  const mostrarNovidade = Boolean(novidade && novidadeLiberada && !tour && !form && !ajustes && !extrato && !organizar && !editarCategorias
+    && !excluindo && !zerando && !quadroMeses && (perfil.dispensadas.includes('tour') || !recemChegou))
   const telaDeUso = carregandoPerfil ? 'carregando' : perguntar ? (refazendo ? 'questionario_refazer' : 'questionario')
-    : tour ? 'tutorial' : form ? (form.inicial ? 'editar_lancamento' : 'lancar') : extrato ? 'importar'
+    : tour ? 'tutorial' : mostrarNovidade ? 'novidade' : form ? (form.inicial ? 'editar_lancamento' : 'lancar') : extrato ? 'importar'
     : editarCategorias ? 'categorias' : ajustes ? 'configuracoes' : excluindo ? 'excluir_conta' : zerando ? 'zerar_dados'
     : quadroMeses ? 'meses' : paginaAtual
   useEffect(() => marcarTela(telaDeUso), [telaDeUso])
@@ -481,6 +493,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
   }
 
   const mudarPerfil = (p: Perfil) => void d.salvarPerfil(p)
+  /** Guarda que a pessoa viu a novidade (e, com ela, todas as anteriores): só a marca mais recente fica. */
+  const vistaNovidade = (id: number) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas.filter((x) => !x.startsWith('novidade:')), `novidade:${id}`] })
   const ligarModulo = (m: Modulo) => mudarPerfil({ ...perfil, modulos: { ...perfil.modulos, [m]: true } })
   const sugestao = useMemo(
     () => sugestoes(perfil, d.lancs, porMes.filter(Boolean).length, (l) => categoriaDe(l)?.papel === 'divida')[0] ?? null,
@@ -1190,6 +1204,15 @@ export function Painel({ userId, email, nome: nomeConta, assinatura }: { userId:
             marcarUso(perfil.dispensadas.includes('tour') ? 'tutorial_reviu' : como === 'terminou' ? 'tutorial_terminou' : 'tutorial_pulou',
               { como, passo, total })
             if (!perfil.dispensadas.includes('tour')) ctx.dispensar('tour')
+          }} />
+      )}
+      {mostrarNovidade && novidade && (
+        <PopupNovidade novidade={novidade}
+          aoFechar={() => vistaNovidade(novidade.id)}
+          aoVer={(tela) => {
+            vistaNovidade(novidade.id)
+            if (tela === 'configuracoes') setAjustes(true)
+            else irPara(paginas.some((p) => p.id === tela) ? tela as Pagina : 'inicio')
           }} />
       )}
       {organizar && <OrganizarNomes c={ctx} aoFechar={() => setOrganizar(false)} />}

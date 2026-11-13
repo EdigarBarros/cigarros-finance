@@ -59,6 +59,11 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   verdade, "1 R$ = 290 ARS", com botão para inverter): o valor da conta em reais passa a ser exato e a mesma cotação já vem
   preenchida no "Paguei". Pedem a [migração 14](supabase/migracao-14-moeda-em-contas-e-dividas.sql) e a
   [15](supabase/migracao-15-cotacao-da-conta.sql)
+- **Novidades** ([migração 31](supabase/migracao-31-novidades.sql), `components/Novidades.tsx` e `CartaoNovidade.tsx`): depois de uma
+  atualização, um pop-up rápido e visual ("Novidade": ícone grande, título curto e até 4 itens com ícone) aparece **uma vez** para quem já
+  tinha conta, com o botão "Ver agora" levando à tela nova. É criado e publicado no painel de suporte (tela Novidades), sem versão nova do
+  site nem do app. Só a mais recente publicada aparece; quem viu fica marcado em `perfis.dispensadas` (`novidade:<id>`), em qualquer aparelho.
+  Quem cria a conta depois da publicação não vê (tem o tutorial)
 - **Suporte dentro do app** ([migração 32](supabase/migracao-32-suporte.sql), `components/Suporte.tsx`, `lib/suporte.ts`): de qualquer tela
   (botão de conversa no topo e "Suporte" no menu da conta), a pessoa pede ajuda escolhendo o assunto (pagamento e assinatura, algo não funciona,
   minha conta, dúvida, sugestão, outro), acompanha a conversa e vê só os próprios pedidos, separados em andamento e resolvidos. Vão junto a tela,
