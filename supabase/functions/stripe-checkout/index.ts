@@ -41,10 +41,13 @@ function formulario(obj: Record<string, unknown>, prefixo = '', saida = new URLS
   }
   return saida
 }
-async function stripe(caminho: string, dados?: Record<string, unknown>) {
+// Versão antiga da API só para o Pix: nas versões novas o Stripe recusa `payment_method_types` ao criar a página de pagamento
+// (os meios de pagamento passam a vir do painel) e o Pix deixaria de ser a única opção da tela.
+const VERSAO_API_PIX = '2024-06-20'
+async function stripe(caminho: string, dados?: Record<string, unknown>, versao?: string) {
   const r = await fetch(`https://api.stripe.com/v1/${caminho}`, {
     method: dados ? 'POST' : 'GET',
-    headers: { Authorization: `Bearer ${Deno.env.get('STRIPE_SECRET_KEY')}`, ...(dados ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {}) },
+    headers: { Authorization: `Bearer ${Deno.env.get('STRIPE_SECRET_KEY')}`, ...(versao ? { 'Stripe-Version': versao } : {}), ...(dados ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {}) },
     body: dados ? formulario(dados) : undefined,
   })
   const j = await r.json()
@@ -94,7 +97,7 @@ Deno.serve(async (req) => {
         locale: 'pt-BR',
         success_url: `${origem}/?assinatura=ok`,
         cancel_url: `${origem}/?assinatura=cancelada`,
-      })
+      }, VERSAO_API_PIX)
       return resposta({ url: sessaoPix.url }, 200, req)
     }
 
