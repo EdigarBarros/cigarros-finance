@@ -91,6 +91,7 @@ interface Frag {
   atraso: number // a mudança de forma passa como uma onda
   w: number; h: number // tamanho do pedacinho
   brilho: number // 0 a 4 (cinco tons)
+  cat: number // no gráfico: 0 entrou, 1 saiu, 2 linha da média, 3 chão (fica dourado)
   fase: number
 }
 
@@ -102,8 +103,9 @@ function montar(N: number, M: Molde) {
   const colunas: { x: number; z: number; alto: number }[] = []
   for (let m = 0; m < MESES; m++) {
     const x = (m / (MESES - 1) - 0.5) * LARGO_GRAF
-    colunas.push({ x: x - 9, z: 30, alto: (ANO.entrou[m] / TETO) * ALTO_GRAF })
-    colunas.push({ x: x + 9, z: -30, alto: (ANO.saiu[m] / TETO) * ALTO_GRAF })
+    // lado a lado e quase no mesmo plano: com a câmera de lado, uma atrás da outra misturaria o verde e o vermelho
+    colunas.push({ x: x - 13, z: 6, alto: (ANO.entrou[m] / TETO) * ALTO_GRAF })
+    colunas.push({ x: x + 13, z: -6, alto: (ANO.saiu[m] / TETO) * ALTO_GRAF })
   }
   const somaAlto = colunas.reduce((a, c) => a + c.alto, 0)
   const yMedia = BASE_GRAF - (MEDIA_SAIU / TETO) * ALTO_GRAF
@@ -121,15 +123,17 @@ function montar(N: number, M: Molde) {
     const ang = r() * Math.PI * 2, longe = 700 + r() * 600
     const solto: V3 = [Math.cos(ang) * longe, (r() - 0.5) * 900, Math.sin(ang) * longe * 0.6]
     // gráfico: 82% nas colunas (proporcional à altura), o resto na linha da média e no chão
-    let barra: V3
+    let barra: V3, cat = 3
     const q = r()
     if (q < 0.82) {
       let alvo = r() * somaAlto, c = 0
       while (c < colunas.length - 1 && alvo > colunas[c].alto) { alvo -= colunas[c].alto; c++ }
       const col = colunas[c]
-      barra = [col.x + (r() - 0.5) * 14, BASE_GRAF - r() * col.alto, col.z + (r() - 0.5) * 14]
+      barra = [col.x + (r() - 0.5) * 16, BASE_GRAF - r() * col.alto, col.z + (r() - 0.5) * 8]
+      cat = c % 2 // as colunas vêm em pares: entrou, saiu
     } else if (q < 0.93) {
       barra = [(r() - 0.5) * (LARGO_GRAF + 50), yMedia + (r() - 0.5) * 3, 0]
+      cat = 2
     } else {
       barra = [(r() - 0.5) * (LARGO_GRAF + 60), BASE_GRAF + 6 + r() * 4, (r() - 0.5) * 120]
     }
@@ -154,7 +158,7 @@ function montar(N: number, M: Molde) {
       // a maioria são traços e pontos; uns 12% são placas maiores (os blocos de dados do holograma)
       solto, esfera: [teta, fi, raio], barra, tela, atraso: r() * 0.35,
       ...(r() < 0.12 ? { w: 6 + r() * 9, h: 2 + r() * 2.5 } : { w: 1 + r() * 4.5, h: 1 + r() * 1.4 }),
-      brilho: Math.min(4, Math.floor(Math.pow(r(), 1.15) * 5)), fase: r() * 10,
+      brilho: Math.min(4, Math.floor(Math.pow(r(), 1.15) * 5)), fase: r() * 10, cat,
     })
   }
   return fr
@@ -164,7 +168,7 @@ function montar(N: number, M: Molde) {
 const CAM = [
   { yaw: -0.3, pitch: 0.18, zoom: 0.95 },
   { yaw: 0.35, pitch: 0.3, zoom: 1.05 },
-  { yaw: 0.42, pitch: 0.16, zoom: 1.0 },
+  { yaw: 0.26, pitch: 0.12, zoom: 1.0 },
   { yaw: 0, pitch: 0, zoom: 1.08 },
 ]
 
@@ -180,6 +184,23 @@ function brilho(tam: number, paradas: [number, string][]) {
   return c
 }
 const TONS = ['rgba(180,85,10,0.6)', 'rgba(235,130,30,0.8)', 'rgba(255,170,50,0.9)', 'rgba(255,210,120,0.97)', 'rgba(255,248,222,1)']
+/**
+ * Cores do gráfico (as do app): entrou verde, saiu vermelho, a média azul-clara. Cada uma nos mesmos cinco tons do
+ * dourado. A troca de cor tem PASSOS degraus entre o dourado e a cor, e cada fragmento anda neles na sua vez.
+ */
+const PASSOS = 6
+const CORES_GRAF: [number, number, number][] = [[46, 214, 128], [255, 92, 108], [120, 196, 255]]
+const DOURADO: [number, number, number, number][] = [[180, 85, 10, 0.6], [235, 130, 30, 0.8], [255, 170, 50, 0.9], [255, 210, 120, 0.97], [255, 248, 222, 1]]
+/** PALETA[cat][tom][passo]: o fragmento da categoria cat, no tom, com passo/(PASSOS-1) da cor do gráfico. */
+const PALETA = CORES_GRAF.map((c) => DOURADO.map(([r, g, b, a], tom) => {
+  // tom 0 é a cor escura; tom 4 quase branco
+  const luz = [0.55, 0.78, 1, 1, 1][tom], branco = [0, 0, 0, 0.35, 0.75][tom]
+  const alvo = c.map((v) => Math.round(v * luz + (255 - v * luz) * branco))
+  return Array.from({ length: PASSOS }, (_, k) => {
+    const t = k / (PASSOS - 1)
+    return `rgba(${Math.round(r + (alvo[0] - r) * t)},${Math.round(g + (alvo[1] - g) * t)},${Math.round(b + (alvo[2] - b) * t)},${a})`
+  })
+}))
 
 export function Algoritmo() {
   const secaoRef = useRef<HTMLElement>(null)
@@ -352,17 +373,33 @@ export function Algoritmo() {
         xs[i] = P.x; ys[i] = P.y; ss[i] = P.s
       }
       const pisca = Math.floor(s * 7)
-      for (let tom = 0; tom < TONS.length; tom++) {
-        ctx.fillStyle = TONS[tom]
-        for (let i = 0; i < N; i++) {
-          const fx = fr[i]
-          // alguns piscam (como no holograma): sobem de tom de tempos em tempos
-          const tomAgora = reduzir ? fx.brilho : Math.min(4, fx.brilho + ((i * 7 + pisca) % 11 === 0 ? 2 : 0))
-          if (tomAgora !== tom) continue
-          const k = ss[i] * esc * zoom
+      // a cor do gráfico: depois que as colunas se formam, a cor varre o gráfico da esquerda para a direita (o mês de
+      // janeiro troca primeiro) e volta ao dourado quando ele vira a tela
+      const fimTela = suave(0.72, 0.8, p)
+      const grupos = new Map<string, number[]>()
+      for (let i = 0; i < N; i++) {
+        const fx = fr[i]
+        // alguns piscam (como no holograma): sobem de tom de tempos em tempos
+        const tom = reduzir ? fx.brilho : Math.min(4, fx.brilho + ((i * 7 + pisca) % 11 === 0 ? 2 : 0))
+        let chave = `d${tom}`
+        if (fx.cat < 3) {
+          const ini = 0.585 + (fx.barra[0] / LARGO_GRAF + 0.5) * 0.06 + fx.atraso * 0.03
+          const c = suave(ini, ini + 0.035, p) * (1 - fimTela)
+          const passo = Math.round(c * (PASSOS - 1))
+          if (passo > 0) chave = `${fx.cat}.${tom}.${passo}`
+        }
+        let g = grupos.get(chave)
+        if (!g) { g = []; grupos.set(chave, g) }
+        g.push(i)
+      }
+      grupos.forEach((idx, chave) => {
+        if (chave[0] === 'd') ctx.fillStyle = TONS[Number(chave.slice(1))]
+        else { const [c, tom, passo] = chave.split('.').map(Number); ctx.fillStyle = PALETA[c][tom][passo] }
+        for (const i of idx) {
+          const fx = fr[i], k = ss[i] * esc * zoom
           ctx.fillRect(xs[i] - (fx.w * k) / 2, ys[i] - (fx.h * k) / 2, fx.w * k + 0.6, fx.h * k + 0.6)
         }
-      }
+      })
       // pontos mais quentes com brilho (um a cada 14 fragmentos)
       ctx.globalAlpha = 0.6
       for (let i = 0; i < N; i += 14) {
