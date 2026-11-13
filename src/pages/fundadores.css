@@ -1,0 +1,306 @@
+/* ─── QUEM FAZ O OPUSCASH ───
+   Cartões de estúdio: o fundo imita o cinza das fotos e vai escurecendo até o azul do site; no tema claro o cinza é
+   mais aberto (veja o bloco do tema claro mais abaixo).
+   Camadas: fundo → primeiro nome gigante (o cabelo encosta nele) → foto → chão → sobrenome cromado → papel (fino).
+   Ao mexer o mouse, o cartão gira e cada camada se desloca num ritmo diferente (--px/--py, de -0,5 a 0,5). */
+.fd {
+  position: relative;
+  padding: 120px 16px 140px;
+  overflow: hidden;
+}
+
+.fd-luzes { position: absolute; inset: 0; pointer-events: none; }
+.fd-luzes i { position: absolute; border-radius: 50%; }
+.fd-luzes i:first-child {
+  width: 900px; height: 700px; left: 50%; top: 18%; margin-left: -450px;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--marca-2) 16%, transparent), transparent);
+}
+.fd-luzes i:last-child {
+  width: 700px; height: 600px; right: -200px; bottom: -120px;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--marca-3) 14%, transparent), transparent);
+}
+
+.fd-topo {
+  position: relative;
+  max-width: 640px;
+  margin: 0 auto 72px;
+  text-align: center;
+}
+.fd-rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--marca-3);
+}
+.fd-rotulo::before, .fd-rotulo::after { content: ''; width: 24px; height: 1px; background: currentColor; opacity: .7; }
+.fd-topo h2 {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(2rem, 4.4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -.03em;
+  line-height: 1.1;
+  margin: 14px 0 16px;
+}
+.fd-topo p { color: var(--texto-2); font-size: 1.05rem; line-height: 1.6; margin: 0; }
+
+.fd-grade {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 440px));
+  justify-content: center;
+  gap: 48px;
+}
+
+.fd-socio {
+  container-type: inline-size;
+  perspective: 1100px;
+}
+.fd-socio:nth-child(2) { margin-top: 72px; }
+
+.fd-cartao {
+  --px: 0; --py: 0;
+  position: relative;
+  aspect-ratio: 100 / 140;
+  border-radius: 28px;
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform .7s cubic-bezier(.2, .8, .2, 1);
+  will-change: transform;
+}
+.fd-cartao.mexendo { transition: transform .15s ease-out; }
+
+/* estúdio: cinza-azulado atrás da cabeça, como o fundo das fotos, com luz azul de um lado e verde do outro */
+.fd-fundo {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(70% 55% at 50% 30%, #333a48 0%, #1b212d 48%, transparent 78%),
+    radial-gradient(60% 50% at 0% 70%, rgba(61, 75, 224, .28), transparent 70%),
+    radial-gradient(60% 50% at 100% 90%, rgba(20, 201, 160, .24), transparent 70%),
+    #0b1019;
+  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .75), 0 0 0 1px rgba(255, 255, 255, .06) inset;
+}
+/* borda com o degradê da marca */
+.fd-fundo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, .22), rgba(31, 142, 241, .25) 40%, rgba(20, 201, 160, .55));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+/* primeiro nome: metal escovado com um brilho que corre pelas letras */
+.fd-nome, .fd-sobrenome {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: Montserrat, var(--fonte-titulo);
+  font-weight: 800;
+  font-size: calc(var(--tam) * 1cqw);
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+.fd-nome {
+  top: 5cqw;
+  background: linear-gradient(100deg,
+    #6f7a8c 0%, #c9d2e0 22%, #f4f7fb 30%, #8e9aae 40%, #dfe6f0 52%,
+    #ffffff 58%, #9fe9d6 63%, #7f8ba0 74%, #d6dde8 88%, #6f7a8c 100%);
+  background-size: 250% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  translate: calc(var(--px) * -12px) calc(var(--py) * -8px);
+  transition: translate .7s cubic-bezier(.2, .8, .2, 1);
+}
+
+.fd-foto {
+  position: absolute;
+  left: 2cqw;
+  top: 17cqw;
+  width: 96cqw;
+  height: auto;
+  max-width: none;
+  /* corta embaixo, rente ao cartão (a foto é mais alta que ele) */
+  clip-path: inset(-10% 0 calc(100% - 123cqw) 0 round 0 0 28px 28px);
+  filter: drop-shadow(0 24px 30px rgba(0, 0, 0, .5));
+  translate: calc(var(--px) * 10px) calc(var(--py) * 6px);
+  transition: translate .7s cubic-bezier(.2, .8, .2, 1);
+}
+
+/* sobrenome cromado, na frente: atravessa o terno */
+.fd-sobrenome {
+  top: 96cqw;
+  /* cromado: prata cheia com um brilho azul e verde da marca que passa de tempos em tempos
+     (letra cheia; contorno mostraria as emendas internas da fonte) */
+  background: linear-gradient(100deg,
+    #b9c4d6 0%, #f4f7fb 18%, #ffffff 26%, #c9d6ea 36%, #8fb8ff 46%, #7fe3c9 54%,
+    #ffffff 62%, #dfe6f0 76%, #b9c4d6 100%);
+  background-size: 250% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: .02em;
+  translate: calc(var(--px) * 24px) calc(var(--py) * 14px);
+  transition: translate .7s cubic-bezier(.2, .8, .2, 1);
+}
+.fd-cartao.mexendo :is(.fd-nome, .fd-foto, .fd-sobrenome) { transition-duration: .15s; }
+
+.fd-chao {
+  position: absolute;
+  inset: auto 0 0;
+  height: 40%;
+  border-radius: 0 0 28px 28px;
+  background: linear-gradient(to top, rgba(7, 11, 20, .96) 16%, rgba(7, 11, 20, .62) 55%, transparent);
+  pointer-events: none;
+}
+
+.fd-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* papel (Fundador, Sócio): grande, fino e espaçado, no rodapé */
+.fd-papel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 121cqw;
+  margin: 0;
+  padding-left: .22em; /* compensa o espaço depois da última letra, para centralizar */
+  text-align: center;
+  font-family: Montserrat, var(--fonte);
+  font-weight: 200;
+  font-size: 5.8cqw; /* "FOUNDING PARTNER", a mais longa, ocupa ~83% da largura */
+  line-height: 1;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgba(238, 242, 250, .92);
+  translate: calc(var(--px) * 16px) calc(var(--py) * 10px);
+  transition: translate .7s cubic-bezier(.2, .8, .2, 1);
+}
+/* filete com o degradê da marca entre o sobrenome e o papel */
+.fd-papel::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -4.4cqw;
+  width: 10cqw;
+  height: 2px;
+  margin-left: -5cqw;
+  border-radius: 2px;
+  background: var(--gradiente);
+}
+.fd-cartao.mexendo .fd-papel { transition-duration: .15s; }
+
+/* reflexo de vidro que passa pelo cartão */
+.fd-reflexo {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+.fd-reflexo::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  width: 45%;
+  left: -60%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .13) 45%, rgba(255, 255, 255, .03) 60%, transparent);
+  transform: skewX(-16deg);
+}
+/* luz que segue o mouse */
+.fd-reflexo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(45% 35% at var(--lx, 50%) var(--ly, 30%), rgba(255, 255, 255, .09), transparent 70%);
+  opacity: 0;
+  transition: opacity .4s;
+}
+.fd-cartao.mexendo .fd-reflexo::after { opacity: 1; }
+
+/* ─── tema claro: estúdio cinza ───
+   Fundo branco brigava com o terno preto. Fotógrafo usa cinza atrás de terno escuro (é o fundo original das fotos):
+   aqui o cartão vira um grafite mais claro e acetinado, que assenta bem na página branca. Nome e sobrenome seguem prata. */
+:root[data-tema='claro'] .fd-fundo {
+  background:
+    radial-gradient(70% 55% at 50% 30%, #7d8696 0%, #565f6f 42%, transparent 82%),
+    radial-gradient(60% 50% at 0% 75%, rgba(61, 75, 224, .22), transparent 70%),
+    radial-gradient(60% 50% at 100% 90%, rgba(20, 201, 160, .2), transparent 70%),
+    #343b49;
+  box-shadow: 0 44px 70px -30px rgba(20, 35, 70, .5), 0 0 0 1px rgba(255, 255, 255, .08) inset;
+}
+:root[data-tema='claro'] .fd-fundo::after {
+  background: linear-gradient(160deg, rgba(255, 255, 255, .45), rgba(31, 142, 241, .3) 45%, rgba(20, 201, 160, .6));
+}
+:root[data-tema='claro'] .fd-nome { filter: drop-shadow(0 2px 0 rgba(20, 28, 42, .18)); }
+:root[data-tema='claro'] .fd-foto { filter: drop-shadow(0 24px 30px rgba(15, 20, 32, .45)); }
+:root[data-tema='claro'] .fd-chao {
+  background: linear-gradient(to top, rgba(30, 36, 48, .96) 16%, rgba(30, 36, 48, .6) 55%, transparent);
+}
+
+/* ─── entrada (quando a seção aparece) ─── */
+.fd-socio { opacity: 0; translate: 0 60px; transition: opacity .9s ease, translate 1.1s cubic-bezier(.2, .8, .2, 1); transition-delay: calc(var(--i) * .18s); }
+.fd-nome { clip-path: inset(0 100% 0 0); }
+.fd-sobrenome { clip-path: inset(0 0 0 100%); }
+.fd-papel { opacity: 0; letter-spacing: .4em; transition: translate .7s cubic-bezier(.2, .8, .2, 1), opacity 1.2s ease, letter-spacing 1.4s cubic-bezier(.2, .8, .2, 1); }
+.fd-visto .fd-papel { opacity: 1; letter-spacing: .22em; transition-delay: 0s, calc(.9s + var(--i) * .18s), calc(.9s + var(--i) * .18s); }
+.fd-visto .fd-socio { opacity: 1; translate: 0 0; }
+.fd-visto .fd-nome {
+  animation: fd-revela 1.1s cubic-bezier(.7, 0, .2, 1) calc(.35s + var(--i) * .18s) forwards,
+    fd-brilho 7s ease-in-out calc(1.6s + var(--i) * .5s) infinite;
+}
+.fd-visto .fd-sobrenome {
+  animation: fd-revela 1.1s cubic-bezier(.7, 0, .2, 1) calc(.7s + var(--i) * .18s) forwards,
+    fd-brilho 7s ease-in-out calc(4.5s + var(--i) * .5s) infinite;
+}
+.fd-visto .fd-reflexo::before { animation: fd-reflexo 1.6s ease-in-out calc(1s + var(--i) * .18s); }
+.fd-cartao:hover .fd-reflexo::before { animation: fd-reflexo 1.3s ease-in-out; }
+
+@keyframes fd-revela { to { clip-path: inset(0 0 0 0); } }
+@keyframes fd-brilho { 0% { background-position: 100% 0; } 45%, 100% { background-position: 0 0; } }
+@keyframes fd-reflexo { from { left: -60%; } to { left: 130%; } }
+
+/* no toque não há mouse: o cartão balança de leve sozinho */
+@media (hover: none) {
+  .fd-visto .fd-cartao { animation: fd-flutua 9s ease-in-out infinite; animation-delay: calc(var(--i) * -4.5s); }
+}
+@keyframes fd-flutua {
+  0%, 100% { transform: rotateY(-5deg) rotateX(2deg); }
+  50% { transform: rotateY(5deg) rotateX(-1deg); }
+}
+
+@media (max-width: 760px) {
+  .fd { padding: 88px 16px 100px; }
+  .fd-topo { margin-bottom: 40px; }
+  .fd-grade { grid-template-columns: minmax(0, 400px); gap: 56px; }
+  .fd-socio:nth-child(2) { margin-top: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fd-socio { opacity: 1; translate: none; transition: none; }
+  .fd-nome, .fd-sobrenome { clip-path: none; animation: none !important; }
+  .fd-papel { opacity: 1; letter-spacing: .22em; transition: none; }
+  .fd-cartao, .fd-visto .fd-cartao { transform: none; animation: none; transition: none; }
+  .fd-reflexo::before { display: none; }
+}
