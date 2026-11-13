@@ -45,7 +45,10 @@ function Cartao({ s, i }: { s: (typeof SOCIOS)[number]; i: number }) {
       <div className="fd-cartao" ref={ref} onPointerMove={mover} onPointerLeave={soltar}>
         <div className="fd-fundo" />
         <span className="fd-nome" aria-hidden="true" style={{ '--tam': s.tam } as CSSProperties}>{s.primeiro}</span>
-        <img className="fd-foto" src={s.foto} alt={s.nome} width={900} height={Math.round(900 / s.alt)} loading="lazy" decoding="async" />
+        {/* a moldura corta a foto rente ao cartão: a foto se mexe (paralaxe) sem nunca vazar pela borda */}
+        <div className="fd-moldura">
+          <img className="fd-foto" src={s.foto} alt={s.nome} width={900} height={Math.round(900 / s.alt)} loading="lazy" decoding="async" />
+        </div>
         <div className="fd-chao" />
         <span className="fd-sobrenome" aria-hidden="true" style={{ '--tam': s.tamSob } as CSSProperties}>{s.sobrenome}</span>
         {/* o nome já está escrito grande (só para enfeite); aqui ele vai para leitores de tela */}
