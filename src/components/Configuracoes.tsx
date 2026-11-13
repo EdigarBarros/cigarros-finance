@@ -1,5 +1,5 @@
 import { noAppAndroid } from '../lib/appAndroid'
-import { aceitaPix, diasDePix, diasDeTeste, emPix, emTeste, excluirConta, irParaStripe, type Assinatura } from '../lib/assinatura'
+import { excluirConta, type Assinatura } from '../lib/assinatura'
 import { useRef, useState } from 'react'
 import type { Sugestao } from '../lib/adaptacao'
 import { reduzirFoto } from '../lib/foto'
@@ -13,35 +13,24 @@ import { PreviaDetalhe, PreviaTema } from './Previas'
 import { Selo } from './Categorias'
 import { PARTES_ZERAR, type EscolhaZerar, type ParteZerar } from '../lib/zerar'
 import { Icone } from './Icone'
-import { Interruptor, Modal, Opcao } from './ui'
-import { avisar } from '../lib/avisos'
-import { fmtValor, LOCAL_DAS_DATAS, mesEAno } from '../lib/format'
+import { SecaoAssinatura } from './SecaoAssinatura'
+import { CartaoAcao, Interruptor, Modal, Opcao } from './ui'
+import { fmtValor, mesEAno } from '../lib/format'
 import { tx } from '../lib/textos'
 
-type Secao = 'perfil' | 'aparencia' | 'painel' | 'categorias' | 'dados' | 'conta'
+type Secao = 'perfil' | 'aparencia' | 'painel' | 'categorias' | 'dados' | 'assinatura' | 'conta'
 const SECOES: { id: Secao; nome: string; icone: string; sub: string }[] = [
   { id: 'perfil', nome: tx('Perfil'), icone: 'carteira', sub: tx('Seu nome e as moedas que você usa') },
   { id: 'aparencia', nome: tx('Aparência'), icone: 'sol', sub: tx('Tema e animações') },
   { id: 'painel', nome: tx('Painel'), icone: 'ajustes', sub: tx('O que aparece e o jeito de ver') },
   { id: 'categorias', nome: tx('Categorias'), icone: 'lista', sub: tx('Onde cada lançamento se encaixa') },
   { id: 'dados', nome: tx('Dados'), icone: 'exportar', sub: tx('Backup, planilha e começar de novo') },
+  { id: 'assinatura', nome: tx('Assinatura'), icone: 'cartao', sub: tx('Quanto tempo falta e como você paga') },
   { id: 'conta', nome: tx('Conta'), icone: 'sair', sub: tx('Sua sessão neste aparelho') },
 ]
 
-/** Cartão de ação grande (Dados e Conta). */
-function CartaoAcao({ icone, titulo, texto, aoClicar, perigo }: { icone: string; titulo: string; texto: string; aoClicar: () => void; perigo?: boolean }) {
-  return (
-    <button type="button" className={`cfg-acao ${perigo ? 'perigo' : ''}`} onClick={aoClicar}>
-      <span className="cfg-acao-icone"><Icone nome={icone} /></span>
-      <strong>{titulo}</strong>
-      <small>{texto}</small>
-      <span className="cfg-acao-seta"><Icone nome="seta" tamanho={16} /></span>
-    </button>
-  )
-}
-
 /** Configurações em tela cheia: menu de seções à esquerda e cartões à direita. Cada mudança vale na hora. */
-export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoExtrato, aoOrganizar, aoZerar, aoSair, aoExcluirConta, aoFechar, assinatura, aoTour, saldoInicial, aoSaldoInicial, secaoInicial = 'perfil' }: {
+export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, aoMudar, aoRefazer, aoCategorias, aoBackup, aoImportar, aoExtrato, aoOrganizar, aoZerar, aoSair, aoExcluirConta, aoFechar, assinatura, aoSuporte, aoTour, saldoInicial, aoSaldoInicial, secaoInicial = 'perfil' }: {
   /** Seção que abre primeiro ("Personalizar" abre direto em Painel). */
   secaoInicial?: Secao
   perfil: Perfil; email: string; aoMudar: (p: Perfil) => void; aoRefazer: () => void; aoCategorias: () => void
@@ -58,13 +47,18 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
   aoFechar: () => void
   /** Situação da assinatura (null quando não há cobrança nesta conta). */
   assinatura?: Assinatura | null
+  /** Abre o pedido de ajuda do suporte (a aba Assinatura oferece "Falar com o suporte"). */
+  aoSuporte?: () => void
   /** Abre o tutorial guiado do painel. */
   aoTour?: () => void
   /** O ponto de partida do saldo de um mês para o outro e como abrir o formulário dele. */
   saldoInicial?: SaldoInicial | null
   aoSaldoInicial?: () => void
 }) {
-  const [secao, setSecao] = useState<Secao>(secaoInicial)
+  // no app da Play Store não há assinatura para gerenciar (lib/appAndroid.ts), e conta sem cobrança não tem o que mostrar
+  const comAssinatura = Boolean(assinatura) && !noAppAndroid
+  const secoes = SECOES.filter((x) => x.id !== 'assinatura' || comAssinatura)
+  const [secao, setSecao] = useState<Secao>(secaoInicial === 'assinatura' && !comAssinatura ? 'perfil' : secaoInicial)
   const [nome, setNome] = useState(perfil.nome)
   const { preferencia } = useTema()
   const movimento = useMovimento()
@@ -82,7 +76,7 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
   const salvarNome = () => { if (nome.trim() !== perfil.nome) aoMudar({ ...perfil, nome: nome.trim() }) }
   const fechar = () => { salvarNome(); aoFechar() }
   const iniciais = (nome.trim() || email).split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((x) => x[0]?.toUpperCase()).join('')
-  const info = SECOES.find((x) => x.id === secao)!
+  const info = secoes.find((x) => x.id === secao)!
   const trocarTema = (t: PreferenciaTema, e: React.MouseEvent) => definirTema(t, { x: e.clientX, y: e.clientY })
 
   return (
@@ -95,7 +89,7 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
           </div>
           <nav className="config-nav" aria-label={tx('Seções')} ref={nav}>
             {lente && <span className="config-lente" aria-hidden="true" style={estiloLente(lente)} />}
-            {SECOES.map((x) => (
+            {secoes.map((x) => (
               <button key={x.id} type="button" className={secao === x.id ? 'ativo' : ''} onClick={() => { salvarNome(); setSecao(x.id) }}>
                 <Icone nome={x.icone} tamanho={18} /><span>{x.nome}</span>
               </button>
@@ -245,6 +239,8 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
             </div>
           )}
 
+          {secao === 'assinatura' && assinatura && <SecaoAssinatura assinatura={assinatura} moeda={perfil.moeda} aoSuporte={aoSuporte} />}
+
           {secao === 'conta' && (
             <>
               <section className="cfg-cartao cfg-voce">
@@ -254,17 +250,6 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
               <div className="cfg-acoes">
                 {aoTour && <CartaoAcao icone="ideia" titulo={tx('Ver o tutorial')} texto={tx('Um passeio rápido pelo painel, mostrando onde fica cada coisa e como ligar mais abas.')} aoClicar={aoTour} />}
                 <CartaoAcao icone="ajustes" titulo={tx('Refazer as perguntas')} texto={tx('Responda de novo as perguntas iniciais para reajustar o painel.')} aoClicar={aoRefazer} />
-                {/* no app da Play Store não há link para pagamento (lib/appAndroid.ts): a assinatura se gerencia pelo site */}
-                {assinatura && assinatura.status !== 'cortesia' && !noAppAndroid && (
-                  assinatura.status === 'pix'
-                    ? <CartaoAcao icone="cartao" titulo={tx('Renovar com Pix')} texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-checkout', 'BRL', 'pix').then((m) => m && avisar(m))} />
-                    : emTeste(assinatura)
-                      ? <CartaoAcao icone="cartao" titulo={tx('Assinar o OpusCash')} texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-checkout', perfil.moeda).then((m) => m && avisar(m))} />
-                      : <CartaoAcao icone="cartao" titulo={tx('Gerenciar assinatura')} texto={textoAssinatura(assinatura)} aoClicar={() => void irParaStripe('stripe-portal').then((m) => m && avisar(m))} />
-                )}
-                {assinatura && emTeste(assinatura) && !noAppAndroid && aceitaPix(perfil.moeda) && (
-                  <CartaoAcao icone="cartao" titulo={tx('Pagar 30 dias com Pix')} texto={tx('R$ 9,99 de uma vez, sem cartão e sem renovação automática.')} aoClicar={() => void irParaStripe('stripe-checkout', 'BRL', 'pix').then((m) => m && avisar(m))} />
-                )}
                 <CartaoAcao icone="sair" titulo={tx('Sair')} texto={tx('Encerra a sessão neste aparelho.')} aoClicar={aoSair} />
                 {aoExcluirConta && <CartaoAcao icone="lixeira" titulo={tx('Excluir minha conta')} texto={tx('Apaga seu login e todos os seus dados de vez e cancela a assinatura.')} aoClicar={aoExcluirConta} perigo />}
               </div>
@@ -443,21 +428,6 @@ export function FotoPerfil({ foto, iniciais, aoMudar }: { foto: string | null; i
       {erro && <small className="form-erro">{erro}</small>}
     </div>
   )
-}
-
-const dataAssinatura = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString(LOCAL_DAS_DATAS) : '')
-function textoAssinatura(a: Assinatura) {
-  if (a.status === 'pix') return emPix(a)
-    ? (diasDePix(a) === 1
-      ? tx('Acesso por Pix até {0} (falta 1 dia). Pague de novo para somar mais 30 dias.', dataAssinatura(a.periodo_fim))
-      : tx('Acesso por Pix até {0} (faltam {1} dias). Pague de novo para somar mais 30 dias.', dataAssinatura(a.periodo_fim), diasDePix(a)))
-    : tx('Seu Pix de 30 dias terminou. Pague de novo para voltar ao painel.')
-  if (emTeste(a)) return diasDeTeste(a) === 1
-    ? tx('Teste grátis até {0} (falta 1 dia). O cartão só é pedido quando você assinar.', dataAssinatura(a.teste_fim))
-    : tx('Teste grátis até {0} (faltam {1} dias). O cartão só é pedido quando você assinar.', dataAssinatura(a.teste_fim), diasDeTeste(a))
-  if (a.status === 'trialing') return tx('Teste grátis até {0}. Troque o cartão, veja as faturas ou cancele.', dataAssinatura(a.teste_fim))
-  if (a.cancela_no_fim) return tx('Cancelada: você usa até {0}. Dá para reativar.', dataAssinatura(a.periodo_fim))
-  return tx('Troque o cartão, veja as faturas ou cancele a assinatura.')
 }
 
 /**

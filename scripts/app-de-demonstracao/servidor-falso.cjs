@@ -22,7 +22,7 @@ exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,se
   if(!semSessao) await ctx.addInitScript(([s])=>{try{localStorage.setItem('sb-fake-auth-token',JSON.stringify(s))}catch{}},[sessao])
   const log=[]
   if(semPerfil) db.perfis=[]
-  if(assinatura) db.assinaturas=assinatura==='nenhuma'?[]:[{user_id:uid,status:assinatura,teste_fim:null,periodo_fim:null,cancela_no_fim:false,moeda:null}]
+  if(assinatura) db.assinaturas=assinatura==='nenhuma'?[]:[{user_id:uid,teste_fim:null,periodo_fim:null,cancela_no_fim:false,moeda:null,...(typeof assinatura==='object'?assinatura:{status:assinatura})}]
   await ctx.route('https://fake.supabase.co/**',async route=>{
     const req=route.request(),u=new URL(req.url()),m=req.method()
     const h={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'*','content-type':'application/json'}

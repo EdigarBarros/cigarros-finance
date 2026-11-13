@@ -20,6 +20,8 @@ await t.fechar()
 `semColunas: { dividas: ['juros_mes'] }` simula uma migração que ainda não rodou (ler ou gravar a coluna dá o mesmo erro do Supabase).
 Para os juros de atraso (migração 22): `semColunas: { dividas: ['atraso_juros_mes'] }`.
 
+`assinatura: 'pix'` (ou outro status) muda a assinatura da conta; um objeto completo dá as datas: `assinatura: { status: 'pix', periodo_fim: '2026-12-01T00:00:00Z' }`.
+
 `toque: true` abre como celular com tela de toque (para testar `page.touchscreen.tap`).
 
 O `npm run build` acima é só para os testes; o site de verdade usa as variáveis do Supabase reais na Vercel.

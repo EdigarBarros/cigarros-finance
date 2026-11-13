@@ -1089,9 +1089,26 @@ migração num Postgres local e confere que uma pessoa não lê nem grava nada d
   esquerda a **assinatura no cartão** ("Renova sozinha todo mês", R$ 9,99 por mês), à direita o **Pix de 30 dias** ("Pagamento único, sem cartão", R$ 9,99
   por 30 dias, com o aviso amarelo "Não renova sozinho: quando acabar, você paga o Pix de novo"). Dizer essa diferença na cara é o ponto da tela. Quem
   usa outra moeda, quem tem uma assinatura de cartão com pagamento por resolver (`past_due`, `unpaid`, `incomplete`, `paused`: o servidor manda acertar no
-  portal) e o app da Play Store veem a tela de sempre, só com o cartão. Em Configurações → Conta, quem está no teste grátis vê também "Pagar 30 dias com Pix",
-  e quem está no Pix vê "Renovar com Pix" com a data. Nos últimos 5 dias aparece um aviso no painel, porque o Pix **não renova sozinho**. Vencido, volta à
-  tela de assinatura ("Seu Pix de 30 dias terminou"); com o painel aberto, o `App.tsx` troca a tela na hora em que vence.
+  portal) e o app da Play Store veem a tela de sempre, só com o cartão. Nos últimos 5 dias aparece um aviso no painel (com "Renovar com Pix" e "Ver assinatura"),
+  porque o Pix **não renova sozinho**. Vencido, volta à tela de assinatura ("Seu Pix de 30 dias terminou"); com o painel aberto, o `App.tsx` troca a tela na
+  hora em que vence.
+- **Configurações → Assinatura** (`components/SecaoAssinatura.tsx`; também no menu da conta): tudo sobre o que a pessoa paga num lugar só. Um resumo com o selo da
+  situação, a frase do tempo ("Faltam 12 dias de acesso", "Renova em 18 dias"), a barra do período e a lista (forma de pagamento, renovação, valor). Quem decide a
+  situação é `resumoDaAssinatura` (`lib/assinatura.ts`): `teste`, `pix`, `cartao`, `cartao-cancelada`, `cartao-recusado` (past_due, ainda com acesso) e `liberada`
+  (cortesia, só informa). O que dá para fazer em cada uma:
+  - *Teste grátis:* assinar no cartão ou pagar 30 dias com Pix.
+  - *Pix:* **Renovar com Pix** (soma 30 dias ao que sobrou) ou **Passar para o cartão**. A explicação abre ali mesmo, sem janela por cima.
+  - *Cartão:* **Trocar o cartão**, **Ver faturas** e **Cancelar assinatura** (os três abrem o portal do Stripe, `stripe-portal`), e **Trocar para Pix**.
+    Como o Pix é pagamento único, a troca tem dois passos que a tela explica: cancelar o cartão (o acesso vai até o fim do período já pago) e, quando acabar,
+    escolher Pix na tela de assinatura. O checkout recusa um Pix em cima de cartão ativo (`ja_ativa`), para ninguém pagar em dobro.
+  - *Cancelada:* **Reativar assinatura** (portal). *Cobrança recusada:* **Trocar o cartão**.
+  - Não aparece no app da Play Store (`noAppAndroid`) nem em conta sem cobrança. "Falar com o suporte" abre o pedido de ajuda.
+- **Do Pix para o cartão sem perder dias:** o `stripe-checkout` lê o fim do Pix no banco e, se faltarem mais de 50 h (`PIX_MINIMO_PARA_ESPERAR_MS`; o Stripe só aceita
+  `trial_end` com 48 h), cria a assinatura com `trial_end` = fim do Pix: o cartão só cobra depois dele. A assinatura leva `depois_do_pix` nos metadados e o
+  `stripe-webhook` não a trata como teste grátis (não confere o cartão contra outras contas). Com menos de 50 h sobrando, o cartão cobra na hora e a tela avisa
+  que os dias que sobraram não são somados. O `stripe-checkout` responde `espera: true` nesse caso: o app (`irParaStripe(..., exigirEspera)`) só abre a página de pagamento se
+  receber isso, para um servidor antigo não cobrar na hora e comer os dias pagos. Se a assinatura nascida do Pix for encerrada antes do fim do trial, o `stripe-webhook`
+  devolve a linha para `pix` até o fim dos dias pagos. Ordem de publicação: webhook, checkout, site (README 2b). Mudou o limite? Mude em `lib/assinatura.ts` e na função.
 - **Regra de acesso:** status `pix` com `periodo_fim` no futuro (`emPix`, `temAcesso` e `tem_acesso()` no banco). Pagar antes de vencer soma 30 dias ao que
   sobrou. Um aviso antigo de assinatura cancelada não tira o Pix vigente (`stripe-webhook`); uma assinatura nova em teste ou ativa assume o lugar.
 - **Fluxo:** `stripe-checkout` com `tipo: 'pix'` cria um checkout de pagamento único em BRL, só Pix, com o preço no próprio código (R$ 9,99, `PIX_VALOR`).

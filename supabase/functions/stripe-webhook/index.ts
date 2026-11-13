@@ -125,17 +125,21 @@ Deno.serve(async (req) => {
     const encerrada = sub.status === 'canceled' || sub.status === 'incomplete_expired'
     if (outra && (evento.type === 'customer.subscription.deleted' || encerrada)) return new Response('antiga')
 
-    if (sub.status === 'trialing') await conferirCartaoDoTeste(servico, sub, userId)
+    // O teste que vem de dias de Pix já pagos (stripe-checkout marca depois_do_pix) não é teste grátis: não há o que conferir no cartão.
+    if (sub.status === 'trialing' && !sub.metadata?.depois_do_pix) await conferirCartaoDoTeste(servico, sub, userId)
 
     const fim = sub.current_period_end ?? sub.items?.data?.[0]?.current_period_end
+    // Assinatura que nasceu dos dias de Pix (depois_do_pix) e foi encerrada ANTES do fim desses dias: quem pagou o Pix continua com o
+    // que sobrou. Volta a valer como Pix até o fim do trial (o cartão nunca chegou a cobrar).
+    const pixDevolvido = sub.status === 'canceled' && Boolean(sub.metadata?.depois_do_pix) && Number(sub.trial_end) * 1000 > Date.now()
     const { error } = await servico.from('assinaturas').upsert({
       user_id: userId,
-      status: sub.status,
+      status: pixDevolvido ? 'pix' : sub.status,
       stripe_customer_id: sub.customer,
       stripe_subscription_id: sub.id,
-      teste_fim: iso(sub.trial_end),
-      periodo_fim: iso(fim),
-      cancela_no_fim: Boolean(sub.cancel_at_period_end),
+      teste_fim: pixDevolvido ? null : iso(sub.trial_end),
+      periodo_fim: pixDevolvido ? iso(sub.trial_end) : iso(fim),
+      cancela_no_fim: pixDevolvido ? false : Boolean(sub.cancel_at_period_end),
       moeda: sub.currency,
       atualizado_em: new Date().toISOString(),
     })
