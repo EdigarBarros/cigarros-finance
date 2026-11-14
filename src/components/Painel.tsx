@@ -857,7 +857,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
       <button onClick={() => tarefa(tx('Preparando o backup…'), async () => (await import('../lib/planilha')).exportarBackup())}>
         <Icone nome="exportar" /> {tx('Baixar backup')}
       </button>
-      <button onClick={() => supabase.auth.signOut()}><Icone nome="sair" /> {tx('Sair')}</button>
+      <button onClick={() => supabase.auth.signOut({ scope: 'local' })}><Icone nome="sair" /> {tx('Sair')}</button>
     </>
   )
 
@@ -1197,7 +1197,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
           assinatura={assinatura}
           confirmandoPagamento={confirmandoPagamento}
           aoSuporte={() => { setAjustes(false); setSuporte('novo') }}
-          aoSair={() => supabase.auth.signOut()}
+          aoSair={() => supabase.auth.signOut({ scope: 'local' })}
           aoExcluirConta={() => { setAjustes(false); setExcluindo(true) }}
           aoFechar={() => setAjustes(false)}
         />
