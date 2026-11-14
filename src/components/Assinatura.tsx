@@ -264,7 +264,7 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
             )
           )}
           <LinksLegais />
-          <button className="link pl-sair" onClick={() => supabase.auth.signOut()}>{tx('Sair ({0})', email)}</button>
+          <button className="link pl-sair" onClick={() => supabase.auth.signOut({ scope: 'local' })}>{tx('Sair ({0})', email)}</button>
         </div>
       </section>
     </main>
