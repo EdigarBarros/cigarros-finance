@@ -1,4 +1,4 @@
-// Recebe os avisos do Stripe (assinou, renovou, falhou, cancelou, pagou o Pix de 30 dias) e atualiza a tabela assinaturas.
+// Recebe os avisos do Stripe (assinou, renovou, falhou, cancelou, pagou ou reembolsou o Pix de 30 dias) e atualiza a tabela assinaturas.
 // Segredo necessário: STRIPE_SECRET_KEY. Sem verificação de JWT (quem chama é o Stripe).
 //
 // Em vez de confiar no corpo recebido, a função só lê o id do evento e busca o evento de novo no Stripe com a chave secreta:
@@ -12,6 +12,8 @@ const PIX_MOEDA = 'brl'
 const PIX_VALOR = 999
 const PIX_TIPO = 'pix_30_dias'
 const PIX_DIAS = 30
+// Reembolso: tira os dias do Pix devolvido (só reembolso total; parcial não mexe no acesso)
+const EVENTOS_REEMBOLSO = ['charge.refunded']
 const STRIPE = 'https://api.stripe.com/v1'
 const cab = () => ({ Authorization: `Bearer ${Deno.env.get('STRIPE_SECRET_KEY')}` })
 const iso = (s?: number | null) => (s ? new Date(s * 1000).toISOString() : null)
@@ -85,6 +87,29 @@ async function liberarPix(sessaoId: unknown): Promise<Response> {
   return new Response('ok')
 }
 
+/**
+ * Cobrança reembolsada: se era um Pix de 30 dias nosso, tira os dias (função estornar_pix do banco, uma vez por sessão).
+ * Lê a cobrança de novo no Stripe e acha a sessão de pagamento pelo payment_intent.
+ */
+async function estornarPix(cobrancaId: unknown): Promise<Response> {
+  if (typeof cobrancaId !== 'string' || !/^(ch|py)_/.test(cobrancaId)) return new Response('ignorado')
+  const rc = await fetch(`${STRIPE}/charges/${cobrancaId}`, { headers: cab() })
+  if (!rc.ok) return new Response('não foi possível ler a cobrança', { status: rc.status === 404 ? 200 : 500 })
+  const c = await rc.json()
+  if (!c.refunded) return new Response('reembolso parcial: acesso mantido')
+  const pi = typeof c.payment_intent === 'string' ? c.payment_intent : c.payment_intent?.id
+  if (!pi) return new Response('ignorado')
+  const rs = await fetch(`${STRIPE}/checkout/sessions?payment_intent=${pi}&limit=1`, { headers: cab() })
+  if (!rs.ok) return new Response('não foi possível ler a sessão', { status: 500 })
+  const s = (await rs.json())?.data?.[0]
+  if (!s || s.metadata?.tipo !== PIX_TIPO) return new Response('ignorado') // não é um Pix nosso
+  const servico = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+  const { data, error } = await servico.rpc('estornar_pix', { p_sessao: s.id })
+  if (error) return new Response(error.message, { status: 500 })
+  if (data?.ajustar_no_stripe) console.error(`Pix ${s.id} reembolsado, mas já virou assinatura no cartão: ajuste os dias no Stripe`)
+  return new Response(JSON.stringify(data))
+}
+
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('ok')
   try {
@@ -94,6 +119,7 @@ Deno.serve(async (req) => {
     if (!r.ok) return new Response('evento não encontrado', { status: 400 })
     const evento = await r.json()
     if (EVENTOS_PIX.includes(evento.type)) return await liberarPix(evento.data.object?.id)
+    if (EVENTOS_REEMBOLSO.includes(evento.type)) return await estornarPix(evento.data.object?.id)
     if (!EVENTOS.includes(evento.type)) return new Response('ignorado')
 
     // O corpo do evento é uma foto do momento em que ele aconteceu. Avisos chegam fora de ordem (um "created" incompleto depois de um
