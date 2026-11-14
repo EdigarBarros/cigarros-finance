@@ -4819,10 +4819,6 @@
     "en": "was due to come in {0} days ago",
     "es": "debía entrar hace {0} días"
   },
-  "era para cair em {0}": {
-    "en": "was due to come in on {0}",
-    "es": "debía entrar el {0}"
-  },
   "cai amanhã": {
     "en": "comes in tomorrow",
     "es": "cae mañana"
@@ -5138,10 +5134,6 @@
   "Você está no caminho certo! 🚀": {
     "en": "You're on the right track! 🚀",
     "es": "¡Vas por buen camino! 🚀"
-  },
-  "Vale olhar para onde foi.": {
-    "en": "Worth taking a look at where it went.",
-    "es": "Vale la pena mirar a dónde fue."
   },
   "com os filtros": {
     "en": "with these filters",
@@ -8127,10 +8119,6 @@
     "en": "Short so far",
     "es": "Faltó hasta hoy"
   },
-  "Previsto no dia {0}": {
-    "en": "Expected by day {0}",
-    "es": "Previsto el día {0}"
-  },
   "Gasto por dia": {
     "en": "Spent per day",
     "es": "Gasto por día"
@@ -8138,14 +8126,6 @@
   "Gastos do mês": {
     "en": "Spending this month",
     "es": "Gastos del mes"
-  },
-  "gastando menos que em {0}": {
-    "en": "spending less than in {0}",
-    "es": "gastando menos que en {0}"
-  },
-  "gastando mais que em {0}": {
-    "en": "spending more than in {0}",
-    "es": "gastando más que en {0}"
   },
   "tudo pago": {
     "en": "all paid",
@@ -8190,14 +8170,6 @@
   "{0} metas": {
     "en": "{0} goals",
     "es": "{0} metas"
-  },
-  "Gastando menos que em {0}": {
-    "en": "Spending less than in {0}",
-    "es": "Gastando menos que en {0}"
-  },
-  "Gastando mais que em {0}": {
-    "en": "Spending more than in {0}",
-    "es": "Gastando más que en {0}"
   },
   "Próximos 7 dias": {
     "en": "Next 7 days",
@@ -13634,5 +13606,429 @@
   "Saldo do dia": {
     "en": "Balance for the day",
     "es": "Saldo del día"
+  },
+  "Contas a receber": {
+    "en": "Money to receive",
+    "es": "Cuentas por cobrar"
+  },
+  "Contas do mês sem baixa": {
+    "en": "Monthly bills not marked as paid",
+    "es": "Cuentas del mes sin marcar como pagadas"
+  },
+  "Fatura do cartão {0} (em aberto)": {
+    "en": "{0} card statement (open)",
+    "es": "Resumen de la tarjeta {0} (abierto)"
+  },
+  "Parcelas de dívidas": {
+    "en": "Debt installments",
+    "es": "Cuotas de deudas"
+  },
+  "Lançamentos com data mais à frente": {
+    "en": "Entries dated later this month",
+    "es": "Movimientos con fecha más adelante"
+  },
+  "não caiu ainda": {
+    "en": "not in yet",
+    "es": "aún no entró"
+  },
+  "já venceu": {
+    "en": "overdue",
+    "es": "ya venció"
+  },
+  "e mais {0}": {
+    "en": "and {0} more",
+    "es": "y {0} más"
+  },
+  "Entender previsão": {
+    "en": "Understand the forecast",
+    "es": "Entender la previsión"
+  },
+  "Entender o mês": {
+    "en": "Understand the month",
+    "es": "Entender el mes"
+  },
+  "Como o app decide o estado do mês": {
+    "en": "How the app decides the month's status",
+    "es": "Cómo la app decide el estado del mes"
+  },
+  "Como a previsão foi calculada": {
+    "en": "How the forecast was calculated",
+    "es": "Cómo se calculó la previsión"
+  },
+  "A conta, passo a passo": {
+    "en": "The math, step by step",
+    "es": "La cuenta, paso a paso"
+  },
+  "Entrou {0} e saiu {1} em {2} até hoje. Não é o saldo do banco: é o que entrou menos o que saiu neste mês.": {
+    "en": "{0} came in and {1} went out in {2} so far. This is not your bank balance: it is what came in minus what went out this month.",
+    "es": "Entró {0} y salió {1} en {2} hasta hoy. No es el saldo del banco: es lo que entró menos lo que salió este mes."
+  },
+  "Ainda vai entrar": {
+    "en": "Still coming in",
+    "es": "Aún va a entrar"
+  },
+  "Nenhum recebimento previsto. Cadastre o seu salário em Contas do mês para ele aparecer aqui.": {
+    "en": "No income expected. Add your salary in Monthly bills so it shows up here.",
+    "es": "Ningún ingreso previsto. Registra tu sueldo en Cuentas del mes para que aparezca aquí."
+  },
+  "Ainda vai sair": {
+    "en": "Still going out",
+    "es": "Aún va a salir"
+  },
+  "Nada a pagar previsto até o fim do mês.": {
+    "en": "Nothing left to pay this month.",
+    "es": "Nada por pagar previsto hasta fin de mes."
+  },
+  "Pode faltar no dia {0}": {
+    "en": "May fall short by day {0}",
+    "es": "Puede faltar el día {0}"
+  },
+  "Deve sobrar no dia {0}": {
+    "en": "Should be left by day {0}",
+    "es": "Debería sobrar el día {0}"
+  },
+  "{0} do que vai sair já venceu.": {
+    "en": "{0} of what is going out is already overdue.",
+    "es": "{0} de lo que va a salir ya venció."
+  },
+  "{0} do que vai entrar já devia ter caído: confira se não falta marcar \"Recebi\".": {
+    "en": "{0} of what is coming in should already be in: check whether you forgot to tap \"Received\".",
+    "es": "{0} de lo que va a entrar ya debería haber entrado: revisa si falta marcar \"Recibí\"."
+  },
+  "Como o mês fechou": {
+    "en": "How the month closed",
+    "es": "Cómo cerró el mes"
+  },
+  "Ficou em aberto neste mês: {0}.": {
+    "en": "Left unpaid this month: {0}.",
+    "es": "Quedó pendiente este mes: {0}."
+  },
+  "O que a previsão considera": {
+    "en": "What the forecast takes into account",
+    "es": "Qué considera la previsión"
+  },
+  "Só entra o que está no app: contas do mês sem baixa, parcelas de dívidas, faturas de cartão em aberto e lançamentos com data mais à frente.": {
+    "en": "Only what is in the app counts: monthly bills not marked as paid, debt installments, open card statements and entries dated later.",
+    "es": "Solo cuenta lo que está en la app: cuentas del mes sin marcar como pagadas, cuotas de deudas, resúmenes de tarjeta abiertos y movimientos con fecha más adelante."
+  },
+  "Gastos do dia a dia que ainda não foram lançados não entram. O Consultor estima esses gastos pelo seu costume.": {
+    "en": "Everyday spending you have not entered yet is not included. The Advisor estimates it from your habits.",
+    "es": "Los gastos del día a día que aún no registraste no entran. El Consultor los estima según tu costumbre."
+  },
+  "Cada valor conta uma vez só: conta paga sai da lista (já está no que saiu) e compra no cartão fica na fatura até ela ser paga.": {
+    "en": "Each amount counts only once: a paid bill leaves the list (it is already in what went out) and a card purchase stays on the statement until it is paid.",
+    "es": "Cada valor cuenta una sola vez: la cuenta pagada sale de la lista (ya está en lo que salió) y la compra con tarjeta queda en el resumen hasta que se pague."
+  },
+  "Fatura de um mês que já passou contou como saída no mês dela: mesmo atrasada, não entra de novo aqui.": {
+    "en": "A statement from a past month counted as money out in that month: even if overdue, it is not added again here.",
+    "es": "El resumen de un mes que ya pasó contó como salida en su mes: aunque esté atrasado, no entra de nuevo aquí."
+  },
+  "Valores em outra moeda usam a cotação do dia. Parcela atrasada leva os juros de atraso estimados, quando cadastrados.": {
+    "en": "Amounts in other currencies use today's rate. Overdue installments include the estimated late interest, when set up.",
+    "es": "Los valores en otra moneda usan la cotización del día. La cuota atrasada lleva los intereses de mora estimados, cuando están registrados."
+  },
+  "Nenhum gasto": {
+    "en": "No spending",
+    "es": "Ningún gasto"
+  },
+  "De 1 a {0} de {1} contra 1 a {2} de {3}.": {
+    "en": "{1} 1–{0} vs. {3} 1–{2}.",
+    "es": "Del 1 al {0} de {1} contra del 1 al {2} de {3}."
+  },
+  "O mês inteiro contra {0} inteiro.": {
+    "en": "The whole month vs. all of {0}.",
+    "es": "El mes entero contra {0} entero."
+  },
+  "{0}, até o dia {1}": {
+    "en": "{0}, through day {1}",
+    "es": "{0}, hasta el día {1}"
+  },
+  "Sem lançamentos em {0} para comparar.": {
+    "en": "No entries in {0} to compare with.",
+    "es": "Sin movimientos en {0} para comparar."
+  },
+  "Em {0}, nada tinha saído até o dia {1}; agora saiu {2}.": {
+    "en": "In {0}, nothing had gone out by day {1}; now {2} has.",
+    "es": "En {0} no había salido nada hasta el día {1}; ahora salió {2}."
+  },
+  "Em {0} não houve gastos; agora saiu {1}.": {
+    "en": "There was no spending in {0}; now {1} went out.",
+    "es": "En {0} no hubo gastos; ahora salió {1}."
+  },
+  "Nenhum gasto nos dois períodos.": {
+    "en": "No spending in either period.",
+    "es": "Ningún gasto en los dos períodos."
+  },
+  "Gastos iguais aos do mesmo período de {0}.": {
+    "en": "Spending is the same as the same period of {0}.",
+    "es": "Gastos iguales a los del mismo período de {0}."
+  },
+  "Gastos iguais aos de {0}.": {
+    "en": "Spending is the same as in {0}.",
+    "es": "Gastos iguales a los de {0}."
+  },
+  "Gastos {0}% maiores que no mesmo período de {1}.": {
+    "en": "Spending is {0}% higher than the same period of {1}.",
+    "es": "Gastos {0}% mayores que en el mismo período de {1}."
+  },
+  "Gastos {0}% maiores que em {1}.": {
+    "en": "Spending is {0}% higher than in {1}.",
+    "es": "Gastos {0}% mayores que en {1}."
+  },
+  "Gastos {0}% menores que no mesmo período de {1}.": {
+    "en": "Spending is {0}% lower than the same period of {1}.",
+    "es": "Gastos {0}% menores que en el mismo período de {1}."
+  },
+  "Gastos {0}% menores que em {1}.": {
+    "en": "Spending is {0}% lower than in {1}.",
+    "es": "Gastos {0}% menores que en {1}."
+  },
+  "Comparado com {0}": {
+    "en": "Compared with {0}",
+    "es": "Comparado con {0}"
+  },
+  "Conta as saídas lançadas, com as compras no cartão; dinheiro guardado não entra.": {
+    "en": "Counts the money-out entries, including card purchases; money set aside is not included.",
+    "es": "Cuenta las salidas registradas, con las compras con tarjeta; el dinero ahorrado no entra."
+  },
+  "1 conta vencida ainda não foi paga (ou não teve baixa): quando for, ela entra nos gastos e a comparação muda.": {
+    "en": "1 overdue bill has not been paid (or marked as paid) yet: once it is, it counts as spending and the comparison changes.",
+    "es": "1 cuenta vencida aún no se pagó (o no se marcó como pagada): cuando se pague, entra en los gastos y la comparación cambia."
+  },
+  "{0} contas vencidas ainda não foram pagas (ou não tiveram baixa): quando forem, elas entram nos gastos e a comparação muda.": {
+    "en": "{0} overdue bills have not been paid (or marked as paid) yet: once they are, they count as spending and the comparison changes.",
+    "es": "{0} cuentas vencidas aún no se pagaron (o no se marcaron como pagadas): cuando se paguen, entran en los gastos y la comparación cambia."
+  },
+  "Seus gastos com {0} aumentaram": {
+    "en": "Your {0} spending went up",
+    "es": "Tus gastos en {0} aumentaron"
+  },
+  "A maior redução foi em {0}": {
+    "en": "The biggest drop was in {0}",
+    "es": "La mayor reducción fue en {0}"
+  },
+  "Precisam de atenção": {
+    "en": "Need your attention",
+    "es": "Requieren atención"
+  },
+  "já venceram": {
+    "en": "already overdue",
+    "es": "ya vencieron"
+  },
+  "Próximos vencimentos": {
+    "en": "Coming due",
+    "es": "Próximos vencimientos"
+  },
+  "Nada vence nos próximos dias.": {
+    "en": "Nothing is due in the next few days.",
+    "es": "Nada vence en los próximos días."
+  },
+  "Mais para frente no mês": {
+    "en": "Later this month",
+    "es": "Más adelante en el mes"
+  },
+  "1 conta": {
+    "en": "1 bill",
+    "es": "1 cuenta"
+  },
+  "{0} contas": {
+    "en": "{0} bills",
+    "es": "{0} cuentas"
+  },
+  "Nada entrou nem saiu até hoje.": {
+    "en": "Nothing has come in or gone out so far.",
+    "es": "No entró ni salió nada hasta hoy."
+  },
+  "Por que este estado?": {
+    "en": "Why this status?",
+    "es": "¿Por qué este estado?"
+  },
+  "Resultado previsto no dia {0}": {
+    "en": "Expected result by day {0}",
+    "es": "Resultado previsto el día {0}"
+  },
+  "Mostrar o gráfico do ano": {
+    "en": "Show the year chart",
+    "es": "Mostrar el gráfico del año"
+  },
+  "Recolher o gráfico do ano": {
+    "en": "Collapse the year chart",
+    "es": "Ocultar el gráfico del año"
+  },
+  "Entrou até hoje": {
+    "en": "In so far",
+    "es": "Entró hasta hoy"
+  },
+  "Saiu até hoje": {
+    "en": "Out so far",
+    "es": "Salió hasta hoy"
+  },
+  "o que saiu ÷ 1 dia": {
+    "en": "money out ÷ 1 day",
+    "es": "lo que salió ÷ 1 día"
+  },
+  "o que saiu ÷ {0} dias": {
+    "en": "money out ÷ {0} days",
+    "es": "lo que salió ÷ {0} días"
+  },
+  "e mais 1 atrasada": {
+    "en": "and 1 more overdue",
+    "es": "y 1 atrasada más"
+  },
+  "e mais {0} atrasadas": {
+    "en": "and {0} more overdue",
+    "es": "y {0} atrasadas más"
+  },
+  "Ver todas as contas": {
+    "en": "See all bills",
+    "es": "Ver todas las cuentas"
+  },
+  "{0}, parcela {1}": {
+    "en": "{0}, installment {1}",
+    "es": "{0}, cuota {1}"
+  },
+  "Contas e vencimentos": {
+    "en": "Bills and due dates",
+    "es": "Cuentas y vencimientos"
+  },
+  "Sugestão de arrumação": {
+    "en": "Layout suggestion",
+    "es": "Sugerencia de organización"
+  },
+  "Você abriu “{0}” em vários dias desta quinzena. Quer que ela já apareça aberta quando você entrar?": {
+    "en": "You opened “{0}” on several days over the past two weeks. Want it to be open when you come in?",
+    "es": "Abriste “{0}” en varios días de estas dos semanas. ¿Quieres que ya aparezca abierta cuando entres?"
+  },
+  "Deixar aberta": {
+    "en": "Keep it open",
+    "es": "Dejarla abierta"
+  },
+  "Não, obrigado": {
+    "en": "No, thanks",
+    "es": "No, gracias"
+  },
+  "“{0}” abre sozinha ao entrar.": {
+    "en": "“{0}” opens on its own when you come in.",
+    "es": "“{0}” se abre sola al entrar."
+  },
+  "Você mudou a arrumação desta tela.": {
+    "en": "You changed the layout of this screen.",
+    "es": "Cambiaste la organización de esta pantalla."
+  },
+  "Restaurar a arrumação original": {
+    "en": "Restore the original layout",
+    "es": "Restaurar la organización original"
+  },
+  "Este mês ainda não começou: só aparece o que já está lançado ou previsto para ele.": {
+    "en": "This month has not started yet: only what is already entered or expected for it shows up.",
+    "es": "Este mes aún no empezó: solo aparece lo que ya está registrado o previsto para él."
+  },
+  "Ainda não há lançamentos neste mês para avaliar.": {
+    "en": "There are no entries this month to assess yet.",
+    "es": "Aún no hay movimientos este mes para evaluar."
+  },
+  "Nenhuma entrada lançada nem prevista neste mês ainda. Se você recebe salário, cadastre em Contas do mês para ele entrar na previsão.": {
+    "en": "No money in entered or expected this month yet. If you get a salary, add it in Monthly bills so it counts in the forecast.",
+    "es": "Aún no hay ingresos registrados ni previstos este mes. Si recibes sueldo, regístralo en Cuentas del mes para que entre en la previsión."
+  },
+  "As saídas previstas passam do que entrou e do que ainda vai entrar: podem faltar {0} no fim do mês.": {
+    "en": "Expected spending is more than what came in and what is still coming in: you may be {0} short at the end of the month.",
+    "es": "Las salidas previstas superan lo que entró y lo que aún va a entrar: pueden faltar {0} a fin de mes."
+  },
+  "Até hoje saiu {0} a mais do que entrou; o que ainda vai entrar deve cobrir.": {
+    "en": "So far {0} more went out than came in; what is still coming in should cover it.",
+    "es": "Hasta hoy salió {0} más de lo que entró; lo que aún va a entrar debería cubrirlo."
+  },
+  "Pelo previsto, sobra só {0}% do que entra no mês ({1}).": {
+    "en": "As forecast, only {0}% of this month's income is left ({1}).",
+    "es": "Según lo previsto, sobra solo el {0}% de lo que entra en el mes ({1})."
+  },
+  "Sobrou só {0}% do que entrou ({1}).": {
+    "en": "Only {0}% of what came in was left ({1}).",
+    "es": "Sobró solo el {0}% de lo que entró ({1})."
+  },
+  "A previsão conta com {0} que já devia ter entrado e ainda não foi marcado como recebido.": {
+    "en": "The forecast counts on {0} that should already be in and has not been marked as received.",
+    "es": "La previsión cuenta con {0} que ya debería haber entrado y aún no se marcó como recibido."
+  },
+  "Existe 1 conta vencida que precisa da sua atenção.": {
+    "en": "There is 1 overdue bill that needs your attention.",
+    "es": "Hay 1 cuenta vencida que requiere tu atención."
+  },
+  "Existem {0} contas vencidas que precisam da sua atenção.": {
+    "en": "There are {0} overdue bills that need your attention.",
+    "es": "Hay {0} cuentas vencidas que requieren tu atención."
+  },
+  "Seu resultado previsto para o fim do mês está positivo: {0}.": {
+    "en": "Your expected result for the end of the month is positive: {0}.",
+    "es": "Tu resultado previsto para fin de mes es positivo: {0}."
+  },
+  "Você conseguiu preservar {0}% da sua receita ({1}).": {
+    "en": "You kept {0}% of your income ({1}).",
+    "es": "Lograste conservar el {0}% de tus ingresos ({1})."
+  },
+  "Previsão no vermelho": {
+    "en": "Forecast in the red",
+    "es": "Previsión en negativo"
+  },
+  "Contas atrasadas": {
+    "en": "Overdue bills",
+    "es": "Cuentas atrasadas"
+  },
+  "Crítico: no mês de hoje, a previsão do fim do mês é negativa; num mês que já acabou, saiu mais do que entrou.": {
+    "en": "Critical: in the current month, the end-of-month forecast is negative; in a month that is over, more went out than came in.",
+    "es": "Crítico: en el mes actual, la previsión de fin de mes es negativa; en un mes que ya terminó, salió más de lo que entró."
+  },
+  "Atenção: sobra menos de 5% do que entra, há conta vencida em aberto, até hoje saiu mais do que entrou ou a previsão depende de um recebimento atrasado.": {
+    "en": "Attention: less than 5% of income is left, there is an unpaid overdue bill, more went out than came in so far, or the forecast depends on late income.",
+    "es": "Atención: sobra menos del 5% de lo que entra, hay una cuenta vencida pendiente, hasta hoy salió más de lo que entró o la previsión depende de un ingreso atrasado."
+  },
+  "No azul: nada disso aconteceu.": {
+    "en": "In the green: none of the above.",
+    "es": "En positivo: no pasó nada de eso."
+  },
+  "Gastos iguais aos do mesmo período de {0}": {
+    "en": "Spending same as same period of {0}",
+    "es": "Gastos iguales al mismo período de {0}"
+  },
+  "Gastos iguais aos de {0}": {
+    "en": "Spending same as {0}",
+    "es": "Gastos iguales a {0}"
+  },
+  "Gastos {0}% acima do mesmo período de {1}": {
+    "en": "Spending {0}% above the same period of {1}",
+    "es": "Gastos {0}% por encima del mismo período de {1}"
+  },
+  "Gastos {0}% acima de {1}": {
+    "en": "Spending {0}% above {1}",
+    "es": "Gastos {0}% por encima de {1}"
+  },
+  "Gastos {0}% abaixo do mesmo período de {1}": {
+    "en": "Spending {0}% below the same period of {1}",
+    "es": "Gastos {0}% por debajo del mismo período de {1}"
+  },
+  "Gastos {0}% abaixo de {1}": {
+    "en": "Spending {0}% below {1}",
+    "es": "Gastos {0}% por debajo de {1}"
+  },
+  "não caiu há 1 dia": {
+    "en": "1 day late",
+    "es": "no entró hace 1 día"
+  },
+  "não caiu há {0} dias": {
+    "en": "{0} days late",
+    "es": "no entró hace {0} días"
+  },
+  "atrasada há 1 dia": {
+    "en": "1 day overdue",
+    "es": "atrasada hace 1 día"
+  },
+  "atrasada há {0} dias": {
+    "en": "{0} days overdue",
+    "es": "atrasada hace {0} días"
+  },
+  "Dispensar sugestão": {
+    "en": "Dismiss suggestion",
+    "es": "Descartar sugerencia"
   }
 }

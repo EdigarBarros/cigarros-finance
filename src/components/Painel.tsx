@@ -22,6 +22,7 @@ import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
 import { supabase } from '../lib/supabase'
 import type { Lancamento, Modulo, Perfil, SaldoInicial, Tipo } from '../lib/types'
 import { useMobile } from '../lib/useMobile'
+import { useAcoesNaTela, useRecolherAoRolar } from '../lib/botaoMais'
 import { useBarraLateral } from '../lib/useBarraLateral'
 import { estiloLente, useLente } from '../lib/useLente'
 import { definirTema, semMovimento, useTema } from '../lib/tema'
@@ -196,6 +197,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const baixando = useRef(new Set<string>())
   const esfriando = useRef(false)
   const mobile = useMobile()
+  // o "+" do celular recolhe enquanto a pessoa rola para baixo e some quando a tela já mostra os botões de lançar
+  const recolherMais = useRecolherAoRolar(mobile)
+  const acoesNaTela = useAcoesNaTela()
+  const maisEscondido = mobile && (recolherMais || acoesNaTela)
   const barra = useBarraLateral()
 
   // Quem já tinha dados antes das perguntas existirem ganha um perfil com o que já usa, sem questionário.
@@ -509,6 +514,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     // os guardados vão junto: o conselheiro e o consultor os reconhecem (não são gasto) e o consultor conta quanto foi guardado
     return [...lancsComGuardados, ...(comFaturas && chaveRenegociadas ? outros.filter(contaNasSaidas(cartoes.faturasPagas)) : outros)]
   }, [lancsComGuardados, d.lancsRecentes, chaveRenegociadas, comFaturas]) // eslint-disable-line react-hooks/exhaustive-deps
+  // a comparação com o mês anterior (Início) lê os mesmos lançamentos, sem os guardados (não são gasto)
+  const lancsComparar = useMemo(() => lancsDosConselhos.filter((l) => !ehGuardado(l)), [lancsDosConselhos])
   const conselhos = useMemo(() => conselhosDe({
     hoje, lancs: lancsDosConselhos, categorias: d.categorias, categoriaDe: idCategoria, dividas: d.dividas, saldos: d.saldos,
     pagamentos: d.pagamentos, taxas, meses: mesesVistos, metas: d.metas, movimentosMeta: d.movimentosMeta, perfil,
@@ -712,7 +719,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     },
     busca, setBusca,
     saldoCorrido,
-    ano, mes, d, cartoes, faturas, lancsMes, lancsAno: lancsContados, lancsMesComGuardados, lancsAnoComGuardados: lancsComGuardados, situacao, aReceber, diaRef, mesEf, porMes, previsto, diaADia, mobile,
+    ano, mes, d, cartoes, faturas, lancsMes, lancsAno: lancsContados, lancsComparar, lancsMesComGuardados, lancsAnoComGuardados: lancsComGuardados, situacao, aReceber, diaRef, mesEf, porMes, previsto, diaADia, mobile,
     perfil, v, taxas, sugestao,
     aceitarSugestao: (s: Sugestao) => mudarPerfil(s.aplicar(perfil)),
     recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),
@@ -1044,7 +1051,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         </Suspense>
       </div>
 
-      <button className="fab" data-tour="lancar" onClick={() => setForm({})} aria-label={tx('Novo lançamento')}><Icone nome="mais" tamanho={26} /></button>
+      <button className={`fab${maisEscondido ? ' recolhido' : ''}`} data-tour="lancar" onClick={() => setForm({})} aria-label={tx('Novo lançamento')}
+        aria-hidden={maisEscondido || undefined} tabIndex={maisEscondido ? -1 : undefined}><Icone nome="mais" tamanho={26} /></button>
 
       {avisoReanalise && reanalise && avisosDaAnalise && paginaAtual !== 'analise' && noPainel && (
         <AvisoReanalise r={reanalise} aoFechar={fecharAvisoReanalise}

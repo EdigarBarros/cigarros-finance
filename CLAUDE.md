@@ -30,6 +30,9 @@ sem `publicada_em`. Ele revisa e publica pelo painel.
 
 - `README.md`: o que o app faz e como colocar no ar.
 - `docs/arquitetura-do-painel.md`: a lógica de cada tela e o guia de linguagem (textos sem jargão, botões com verbo).
+- Início (seção 4.0.3 do mesmo documento): estado do mês, previsão explicada, comparação com o mês anterior e contas
+  atrasadas/próximas saem de funções puras (`lib/situacaoDoMes.ts`, `lib/previsao.ts`, `lib/comparacao.ts`,
+  `lib/paraFazer.ts`). Mexeu nelas? Rode `node scripts/painel/testar.mjs`.
 - Invest (seção 4.22 do mesmo documento): o motor fica em `src/lib/invest/` (puro) e tem testes próprios. Mexeu em conta
   de carteira, rentabilidade, importação ou saldo? Rode `node scripts/invest/testar.mjs` e, se mexeu na migração,
   `scripts/invest/isolamento.sh`.

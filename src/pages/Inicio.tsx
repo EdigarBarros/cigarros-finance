@@ -1,14 +1,14 @@
 import { converter } from '../lib/moedas'
 import { Fragment, useMemo, useState, type CSSProperties } from 'react'
 import { PALETA } from '../lib/charts'
-import { calendarioDe, dividaDiaADia, parcelasPorDia, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
+import { calendarioDe, dividaDiaADia, parcelasDoMes, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
 import { fmtValor, MESES_CURTO, moedaAtual, MESES_NOME, LOCAL_DAS_DATAS, noMeioDaFrase } from '../lib/format'
 import { situacaoMeta } from '../lib/metas'
 import {
   Bloco, BlocoDinheiro, BlocoDividas, BlocoGastos, BlocoLancamentos, BlocoMetas,
 } from '../components/Blocos'
 import { totalGuardado } from '../lib/guardado'
-import { CartaoDoMes, Mosaico, NumerosDoMes, VemAi, type Peca, type Sinal } from '../components/InicioDetalhado'
+import { CartaoDoMes, GraficoRecolhivel, Mosaico, NumerosDoMes, VemAi, type Peca, type Sinal } from '../components/InicioDetalhado'
 import { MesEquilibrado, ResumosComAnel, type ResumoAnel } from '../components/InicioEquilibrado'
 import { FormDivida } from '../components/Formularios'
 import { GraficoAnual, GraficoFluxo, moedasDoAno, SeletorDoModo } from '../components/Graficos'
@@ -21,7 +21,14 @@ import { Encaixe, type ItemEncaixe } from '../components/Encaixe'
 import { ReguaMeses, Segmentado } from '../components/ui'
 import { BlocoParaFazer, ResumoSimples } from '../components/Simples'
 import { BlocoConselhos } from '../components/BlocoConselhos'
-import { tarefasDoMes } from '../lib/paraFazer'
+import { daquiA, tarefasDoMes } from '../lib/paraFazer'
+import { comporPrevisao, type DiaADia, type ItemPrevisto } from '../lib/previsao'
+import { situacaoDoMes, type Momento } from '../lib/situacaoDoMes'
+import { compararGastos, pilulaDeGastos } from '../lib/comparacao'
+import { ComparacaoMes } from '../components/ComparacaoMes'
+import { EntenderMes } from '../components/EntenderMes'
+import { arrumacaoMudou, pecaParaSugerir, useArrumacao } from '../lib/arrumacao'
+import { useAcoesDeLancar } from '../lib/botaoMais'
 import { totaisDoMes } from '../lib/contasFixas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
@@ -84,18 +91,59 @@ export function Inicio(c: Ctx) {
   // não saíram do bolso (senão, no dia 4, o mês já aparece com as contas do dia 20 e um "faltou" que não aconteceu).
   const mesDeHoje = c.ano === hoje.getFullYear() && c.mes === hoje.getMonth() + 1
   // O mês dia a dia com as parcelas de dívida que ainda vencem nele: as três telas preveem o fim do mês com a mesma conta.
-  const ddMes = useMemo(() => {
+  // As parcelas entram uma por uma (com nome) na lista do que ainda vem: o "Entender previsão" mostra a mesma conta.
+  const ddMes = useMemo((): DiaADia => {
     const dd = c.diaADia
     if (!v.dividas) return dd
-    const parcelas = parcelasPorDia({ situacao: c.situacao, ano: c.ano, mes: c.mes, dias: dd.dias, hoje: dd.hoje, diaRef: c.diaRef, soDoMes: dd.hoje === 0 })
-    const total = parcelas.reduce((t, n) => t + n, 0)
-    if (!total) return dd
-    return { ...dd, vaiSair: Math.round((dd.vaiSair + total) * 100) / 100, vaiSairDia: dd.vaiSairDia.map((n, i) => n + parcelas[i]) }
+    const parcelas = parcelasDoMes({ situacao: c.situacao, ano: c.ano, mes: c.mes, dias: dd.dias, hoje: dd.hoje, diaRef: c.diaRef, soDoMes: dd.hoje === 0 })
+    if (!parcelas.length) return dd
+    const porDia = Array<number>(dd.dias).fill(0)
+    for (const p of parcelas) porDia[p.dia - 1] += p.valor
+    const total = parcelas.reduce((t, p) => t + p.valor, 0)
+    const itens: ItemPrevisto[] = parcelas.map((p) => ({
+      origem: 'parcela', tipo: 'saida', descricao: tx('{0}, parcela {1}', p.divida.divida.descricao, p.n), valor: p.valor, data: p.vencimento, atrasado: p.atrasada,
+    }))
+    return {
+      ...dd, vaiSair: Math.round((dd.vaiSair + total) * 100) / 100,
+      vaiSairDia: dd.vaiSairDia.map((n, i) => Math.round((n + porDia[i]) * 100) / 100), pendentes: [...dd.pendentes, ...itens],
+    }
   }, [c.diaADia, c.situacao, c.ano, c.mes, c.diaRef, v.dividas])
-  const entrouMes = mesDeHoje ? ddMes.entrou : r.entradas
-  const saiuMes = mesDeHoje ? ddMes.saiu : r.saidas
-  const fluxoMes = entrouMes - saiuMes
-  const animo = c.contaNova || mesVazio || simples ? '' : fluxoMes > 0 ? (' ' + tx('Você está no caminho certo! 🚀')) : fluxoMes < 0 ? (' ' + tx('Vale olhar para onde foi.')) : ''
+  const mesFuturo = c.ano * 12 + c.mes > hoje.getFullYear() * 12 + hoje.getMonth() + 1
+  const momento: Momento = mesDeHoje ? 'atual' : mesFuturo ? 'futuro' : 'passado'
+  // Contas, faturas e parcelas do mês numa lista só (a mesma nos três jeitos): o que já venceu, o que vence logo e o resto.
+  const tarefas = tarefasDoMes({
+    ano: c.ano, mes: c.mes, contas: v.contas ? c.situacoesContas : [], faturas: v.cartoes ? c.faturas : [],
+    dividas: v.dividas ? c.situacao.filter((s) => s.restante > 0) : [],
+    diaRef: c.diaRef, aoPagarConta: c.pagarConta, aoPagarDivida: c.pagarDivida, aoVerCartoes: () => c.irPara('cartoes'),
+  })
+  // O estado do mês (favorável, atenção, crítico, sem dados), com os mesmos números nos três jeitos: o "caminho certo"
+  // não aparece mais quando a previsão do fim do mês está no vermelho (lib/situacaoDoMes.ts).
+  const composicao = useMemo(() => comporPrevisao(ddMes), [ddMes])
+  const situacao = situacaoDoMes({
+    momento, entrou: ddMes.entrou, saiu: ddMes.saiu, vaiEntrar: ddMes.vaiEntrar, vaiSair: ddMes.vaiSair,
+    atrasadas: tarefas.lista.filter((t) => t.estado === 'atrasada' && !t.entrada).length, receberAtrasado: composicao.receberAtrasado,
+  })
+  const [entender, setEntender] = useState(false)
+  const abrirEntender = () => setEntender(true)
+  const nomeDoCartao = (id?: string) => c.cartoes.cartoes.find((k) => k.id === id)?.nome ?? ''
+  const janelaEntender = entender && (
+    <EntenderMes situacao={situacao} composicao={composicao} nomeMes={nomeMes} dias={ddMes.dias} nomeDoCartao={nomeDoCartao} aoFechar={() => setEntender(false)} />
+  )
+  // Gastos contra o mesmo período do mês anterior. De outro ano, só há os últimos 12 meses fechados carregados.
+  const idxAnterior = c.ano * 12 + c.mes - 1
+  const comparavel = c.mes > 1 || idxAnterior >= hoje.getFullYear() * 12 + hoje.getMonth() + 1 - 12
+  const comparacao = useMemo(
+    () => (comparavel && !c.contaNova ? compararGastos({ lancs: c.lancsComparar, ano: c.ano, mes: c.mes, hoje: hojeIso, categoriaDe: (l) => c.categoriaDe(l)?.id }) : null),
+    [comparavel, c.contaNova, c.lancsComparar, c.ano, c.mes, hojeIso, c.categoriaDe], // eslint-disable-line react-hooks/exhaustive-deps
+  )
+  const atrasadasAPagar = tarefas.lista.filter((t) => t.estado === 'atrasada' && !t.entrada).length
+  // "gastando menos" com conta vencida sem baixa é elogio falso: a conta só não entrou nos gastos ainda
+  const pilulaBruta = pilulaDeGastos(comparacao)
+  const pilulaGastos = pilulaBruta && !(pilulaBruta.tom === 'bom' && atrasadasAPagar > 0 && momento === 'atual') ? pilulaBruta : null
+  const arrumacao = useArrumacao()
+  const refAcoes = useAcoesDeLancar<HTMLDivElement>()
+  // a frase do mês, tirada dos números (no simples ela já está no resumo, ao lado do selo)
+  const animo = c.contaNova || simples || situacao.estado === 'sem_dados' ? '' : ' ' + situacao.motivos[0].texto
   const botoes = (
     <>
       <button className="btn entrada" onClick={() => c.novoLancamento('entrada')}><Icone nome="sobe" tamanho={16} /> {tx('Lançar entrada')}</button>
@@ -200,7 +248,7 @@ export function Inicio(c: Ctx) {
     <section className="cartao vazio-mes">
       <h2>{tx('Comece por aqui')}</h2>
       <p>{tx('Lance o que entrou ou o que saiu em {0}. O resto do painel se monta sozinho.', nomeMes)}</p>
-      <div className="hero-acoes">{botoes}</div>
+      <div className="hero-acoes" ref={refAcoes}>{botoes}</div>
     </section>
   )
   const linhaFluxo = zona([fluxo, lancamentos])
@@ -282,26 +330,24 @@ export function Inicio(c: Ctx) {
     />
   )
 
-  // ritmo do gasto: por dia até hoje, comparado com o mês passado inteiro (1 = igual; null sem com o que comparar)
-  const diasAnt = c.mes > 1 ? new Date(c.ano, c.mes - 1, 0).getDate() : 0
-  const ritmoDoGasto = c.mes > 1 && a && a.saidas > 0 && ddMes.hoje > 0 ? (saidasContadas(c.mes) / decorridos) / (a.saidas / diasAnt) : null
+  // sugestões opcionais (recursos do app): sempre depois do que é informação e aviso financeiro
+  const opcionais = (convite || sugestao) && <div className="inicio-opcionais">{convite}{sugestao}</div>
 
   // ---------- Jeito simples: a própria tela ----------
   if (simples) {
     const contasDoMes = v.contas ? c.situacoesContas : []
     const faturas = v.cartoes ? c.faturas : []
     const dividasAbertas = v.dividas ? c.situacao.filter((s) => s.restante > 0) : []
-    const tarefas = tarefasDoMes({
-      ano: c.ano, mes: c.mes, contas: contasDoMes, faturas, dividas: dividasAbertas, diaRef: c.diaRef,
-      aoPagarConta: c.pagarConta, aoPagarDivida: c.pagarDivida, aoVerCartoes: () => c.irPara('cartoes'),
-    })
     // só aparece quem tem algo cadastrado: sem contas, cartões nem dívidas, não há o que fazer
     const comParaFazer = contasDoMes.length > 0 || faturas.length > 0 || dividasAbertas.length > 0
-    const mesAtual = c.ano === hoje.getFullYear() && c.mes === hoje.getMonth() + 1
-    // No mês de hoje, só o que já aconteceu: parcela de cartão e conta com data mais para a frente vão para o "falta pagar"
-    // (senão, no dia 5, o mês já aparece no vermelho com as parcelas do dia 27).
+    const mesAtual = mesDeHoje
+    // Os mesmos números dos outros jeitos (lib/previsao.ts): no mês de hoje, só o que já aconteceu (parcela de cartão e
+    // conta com data mais para a frente vão para o "falta pagar"); num mês que ainda não começou, o que está previsto
+    // para ele (antes o simples mostrava sem as contas do mês e sem a fatura, e o mesmo mês dava outro número no equilibrado).
     const dd = ddMes
-    const rSimples = mesAtual ? { ...r, entradas: dd.entrou, saidas: dd.saiu, fluxo: Math.round((dd.entrou - dd.saiu) * 100) / 100 } : r
+    const rSimples = mesFuturo
+      ? { ...r, entradas: dd.vaiEntrar, saidas: dd.vaiSair, fluxo: Math.round((dd.vaiEntrar - dd.vaiSair) * 100) / 100 }
+      : { ...r, entradas: dd.entrou, saidas: dd.saiu, fluxo: Math.round((dd.entrou - dd.saiu) * 100) / 100 }
     const faltaPagar = dd.vaiSair
     const faltaReceber = dd.vaiEntrar
     const previsao = mesAtual && !mesVazio && (faltaPagar > 0 || faltaReceber > 0) ? { faltaPagar, faltaReceber } : null
@@ -326,18 +372,19 @@ export function Inicio(c: Ctx) {
     return (
       <div className="pagina inicio inicio-simples">
         {saudacao}
-        <ResumoSimples r={rSimples} nomeMes={nomeMes} vazio={mesVazio} futuro={c.ano * 12 + c.mes > hoje.getFullYear() * 12 + hoje.getMonth() + 1} previsao={previsao}
-          ateHoje={mesAtual} comCartao={!mesAtual && tarefas.lista.some((t) => t.chave.startsWith('fatura:'))} acoes={botoes} aoVerGastos={irParaGastos} />
-        {convite}
-        {sugestao}
+        <ResumoSimples r={rSimples} nomeMes={nomeMes} vazio={mesVazio} futuro={mesFuturo} previsao={previsao}
+          ateHoje={mesAtual} comCartao={!mesAtual && tarefas.lista.some((t) => t.chave.startsWith('fatura:'))} acoes={botoes} aoVerGastos={irParaGastos}
+          situacao={situacao} aoEntender={abrirEntender} />
         {saude}
         {(esquerda.length > 0 || direita.length > 0) && (
           <div className="simples-colunas">{coluna(esquerda)}{coluna(direita)}</div>
         )}
+        {opcionais}
         <p className="simples-rodape">
           {tx('Quer ver gráficos e comparar com o mês passado?')} <button className="link" onClick={c.personalizar}>{tx('Mudar o jeito de ver')}</button>
         </p>
         {formDivida}
+        {janelaEntender}
       </div>
     )
   }
@@ -345,19 +392,13 @@ export function Inicio(c: Ctx) {
   // ---------- Jeito equilibrado: o mês num olhar, os próximos 7 dias e o essencial do resto ----------
   if (nivel === 'equilibrado' && !c.contaNova) {
     const dd = ddMes
-    const tarefas = tarefasDoMes({
-      ano: c.ano, mes: c.mes, contas: v.contas ? c.situacoesContas : [], faturas: v.cartoes ? c.faturas : [],
-      dividas: v.dividas ? c.situacao.filter((s) => s.restante > 0) : [],
-      diaRef: c.diaRef, aoPagarConta: c.pagarConta, aoPagarDivida: c.pagarDivida, aoVerCartoes: () => c.irPara('cartoes'),
-    })
     const comAgenda = (v.contas && c.situacoesContas.length > 0) || (v.cartoes && c.faturas.length > 0) || (v.dividas && c.situacao.some((s) => s.restante > 0))
-    // no mês de hoje, só o que vence até daqui a 7 dias (o atrasado entra); nos outros meses, tudo o que está em aberto
-    const daquiA7 = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + 7)
-    const limite7 = `${daquiA7.getFullYear()}-${String(daquiA7.getMonth() + 1).padStart(2, '0')}-${String(daquiA7.getDate()).padStart(2, '0')}`
+    // No mês de hoje: o que já venceu (precisa de atenção, com os dias), o que vence nos próximos 7 dias e, recolhido, o
+    // resto do mês. Antes, "Próximos 7 dias" abria com uma fatura vencida em outubro. Nos outros meses, tudo o que está em aberto.
     const agenda = comAgenda && (mesDeHoje
-      ? <BlocoParaFazer tarefas={tarefas.lista.filter((t) => t.vencimento <= limite7)} titulo={tx('Próximos 7 dias')} vazio={tx('Nada vence nos próximos 7 dias.')}
-          aoVerTudo={v.contas ? () => c.irPara('contas') : undefined} />
-      : <BlocoParaFazer tarefas={tarefas.lista} aoVerTudo={v.contas ? () => c.irPara('contas') : undefined} />)
+      ? <BlocoParaFazer tarefas={tarefas.lista} titulo={tx('Contas e vencimentos')} limite={daquiA(7, hoje)} rotuloProximas={tx('Próximos 7 dias')}
+          vazio={tx('Nada vence nos próximos 7 dias.')} aoVerTudo={v.contas ? () => c.irPara('contas') : undefined} />
+      : <BlocoParaFazer tarefas={tarefas.lista} titulo={tx('Contas e vencimentos')} aoVerTudo={v.contas ? () => c.irPara('contas') : undefined} />)
 
     const resumos: ResumoAnel[] = []
     if (v.dividas) {
@@ -397,21 +438,29 @@ export function Inicio(c: Ctx) {
         nota={{ valor: c.analise.nota, rotulo: c.analise.rotulo, tom: c.analise.tom }} aoAbrirAnalise={() => c.irPara('analise')} />
     )
     const semNada = mesVazio && !dd.vaiEntrar && !dd.vaiSair
+    const comparar = comparacao && !mesVazio && (
+      <ComparacaoMes comp={comparacao} categorias={c.categorias} atrasadas={momento === 'atual' ? atrasadasAPagar : 0} aoVerLancamentos={() => c.irPara('lancamentos')} />
+    )
+    // a ordem do equilibrado: o mês e a previsão, as contas (atrasadas e próximas), o aviso financeiro mais importante,
+    // a comparação com o mês anterior e para onde foi o dinheiro, os resumos do que você tem e, por último, as sugestões
     return (
       <div className="pagina inicio inicio-eq">
         {saudacao}
-        {convite}
-        {sugestao}
         <div className="ieq-cima">
-          {semNada ? lancamentos : <MesEquilibrado dd={dd} nomeMes={nomeMes} ritmo={ritmoDoGasto} mesAnterior={mesAnt} />}
+          {semNada ? lancamentos : <MesEquilibrado dd={dd} nomeMes={nomeMes} gastos={pilulaGastos} situacao={situacao} aoEntender={abrirEntender} />}
           {agenda}
         </div>
+        {conselhoEq}
+        {(comparar || gastosEq) && (
+          <div className="ieq-baixo">
+            {comparar}
+            {gastosEq}
+          </div>
+        )}
         <ResumosComAnel itens={resumos} />
-        <div className="ieq-baixo">
-          {gastosEq}
-          {conselhoEq}
-        </div>
+        {opcionais}
         {formDivida}
+        {janelaEntender}
       </div>
     )
   }
@@ -420,23 +469,18 @@ export function Inicio(c: Ctx) {
   if (detalhado && !c.contaNova) {
     const dd = ddMes
     const contasDoMes = v.contas ? c.situacoesContas : []
-    const tarefas = tarefasDoMes({
-      ano: c.ano, mes: c.mes, contas: contasDoMes, faturas: v.cartoes ? c.faturas : [], dividas: v.dividas ? c.situacao.filter((s) => s.restante > 0) : [],
-      diaRef: c.diaRef, aoPagarConta: c.pagarConta, aoPagarDivida: c.pagarDivida, aoVerCartoes: () => c.irPara('cartoes'),
-    })
-    // o mês que já acabou não tem "o que vem aí"
-    const proximas = dd.hoje < dd.dias ? tarefas.lista.slice(0, 4) : []
+    // o mês que já acabou não tem "o que vem aí" (o atrasado continua nas peças de contas, cartões e dívidas)
+    const proximas = dd.hoje < dd.dias ? tarefas.lista : []
     const pecas: Peca[] = []
 
     if (!mesVazio) {
-      // ritmo do gasto: por dia até hoje, comparado com o mês passado inteiro
-      const ritmo = ritmoDoGasto
+      // gasto contra o mesmo período do mês anterior (lib/comparacao.ts)
       pecas.push({
         // o mesmo "Saiu" do quadro do mês: compra em fatura aberta e conta com data mais para a frente ainda vêm (num mês que
         // já acabou é tudo o que saiu; num que ainda não começou, nada saiu)
         chave: 'gastos', icone: 'enviar', cor: 'var(--saida)', rotulo: tx('Gastos do mês'), valor: fmtValor(ddMes.saiu),
-        sub: ritmo === null ? undefined : ritmo <= 1 ? tx('gastando menos que em {0}', mesAnt) : tx('gastando mais que em {0}', mesAnt),
-        sinal: ritmo === null ? undefined : ritmo <= 1 ? 'bom' : ritmo <= 1.2 ? 'atencao' : 'ruim',
+        sub: pilulaGastos?.texto,
+        sinal: pilulaGastos ? (pilulaGastos.tom as Sinal) : undefined,
         detalhe: <div className="idet-detalhe-duas">{gastos}{lancamentos}</div>,
       })
     }
@@ -499,26 +543,60 @@ export function Inicio(c: Ctx) {
     }
 
     const semNada = mesVazio && !dd.vaiEntrar && !dd.vaiSair
+    const graficoAno = <GraficoAnual porMes={c.porMes} previsto={c.previsto} mesAtual={c.mes} altura={mobile ? 260 : 300} compacto={mobile} v={v} saldoCorrido={c.saldoCorrido} ano={c.ano} />
+    const graficoRecolhido = arrumacao.recolhida('grafico-ano')
+    const alternarGrafico = () => arrumacao.alternar('grafico-ano')
+    // a peça que a pessoa abre quase toda vez: o app pergunta (nunca muda sozinho) se ela deve abrir ao entrar
+    const pecaSugerida = pecaParaSugerir(arrumacao.a, pecas.map((p) => p.chave))
+    const nomeDaPeca = pecas.find((p) => p.chave === pecaSugerida)?.rotulo
+    const comparar = comparacao && !mesVazio && (
+      <ComparacaoMes comp={comparacao} categorias={c.categorias} detalhado atrasadas={momento === 'atual' ? atrasadasAPagar : 0} aoVerLancamentos={() => c.irPara('lancamentos')} />
+    )
     return (
       <div className="pagina inicio inicio-det">
         {saudacao}
-        {convite}
-        {sugestao}
         {semNada ? lancamentos : (
           <div className="idet-cima">
-            {/* o gráfico do cartão é o do ano mês a mês, o mesmo do Resumo do ano (tocar num mês mostra os números dele) */}
-            <CartaoDoMes dd={dd} nomeMes={nomeMes}
-              grafico={<GraficoAnual porMes={c.porMes} previsto={c.previsto} mesAtual={c.mes} altura={mobile ? 260 : 300} compacto={mobile} v={v} saldoCorrido={c.saldoCorrido} ano={c.ano} />}
+            {/* o gráfico do cartão é o do ano mês a mês, o mesmo do Resumo do ano (tocar num mês mostra os números dele). No
+                celular ele vem depois dos números e do "o que vem aí", para não empurrar o resumo para baixo */}
+            <CartaoDoMes dd={dd} nomeMes={nomeMes} situacao={situacao} aoEntender={abrirEntender}
+              grafico={mobile ? undefined : graficoAno} graficoRecolhido={graficoRecolhido} aoAlternarGrafico={alternarGrafico}
               divida={v.dividas ? dividaDiaADia({ situacao: c.situacao, pagamentos: c.d.pagamentos, ano: c.ano, mes: c.mes, dias: dd.dias, hoje: dd.hoje, diaRef: c.diaRef }) : undefined} />
             <div className="idet-lado">
-              <NumerosDoMes dd={dd} porDia={saidasContadas(c.mes) / decorridos} />
-              <VemAi tarefas={proximas} />
+              <NumerosDoMes dd={dd} porDia={saidasContadas(c.mes) / decorridos} diasContados={decorridos} />
+              <VemAi tarefas={proximas} aoVerTudo={v.contas ? () => c.irPara('contas') : undefined} />
             </div>
+            {mobile && (
+              <section className="cartao idet-grafico-solto">
+                <GraficoRecolhivel grafico={graficoAno} recolhido={graficoRecolhido} aoAlternar={alternarGrafico} />
+              </section>
+            )}
           </div>
         )}
-        <Mosaico pecas={pecas} />
+        <Mosaico key={arrumacao.a.pecaFixa ?? ''} pecas={pecas} inicial={arrumacao.a.pecaFixa} aoAbrir={arrumacao.abriuPeca} />
+        {pecaSugerida && nomeDaPeca && (
+          <section className="arrumacao-sugestao" aria-label={tx('Sugestão de arrumação')}>
+            <Icone nome="ideia" tamanho={18} />
+            <p>{tx('Você abriu “{0}” em vários dias desta quinzena. Quer que ela já apareça aberta quando você entrar?', nomeDaPeca)}</p>
+            <div>
+              <button type="button" className="btn primario" onClick={() => arrumacao.fixarPeca(pecaSugerida)}>{tx('Deixar aberta')}</button>
+              <button type="button" className="icone-btn" onClick={() => arrumacao.recusar(`peca:${pecaSugerida}`)} aria-label={tx('Não, obrigado')} title={tx('Não, obrigado')}><Icone nome="fechar" tamanho={16} /></button>
+            </div>
+          </section>
+        )}
         {saude}
+        {comparar}
+        {opcionais}
+        {arrumacaoMudou(arrumacao.a) && (
+          <p className="arrumacao-restaurar">
+            {arrumacao.a.pecaFixa
+              ? tx('“{0}” abre sozinha ao entrar.', pecas.find((p) => p.chave === arrumacao.a.pecaFixa)?.rotulo ?? '')
+              : tx('Você mudou a arrumação desta tela.')}{' '}
+            <button type="button" className="link" onClick={arrumacao.restaurar}>{tx('Restaurar a arrumação original')}</button>
+          </p>
+        )}
         {formDivida}
+        {janelaEntender}
       </div>
     )
   }
@@ -536,14 +614,10 @@ export function Inicio(c: Ctx) {
           <div>
             <h2>{tx('Tudo pronto para começar')}</h2>
             <p>{tx('Lance o que entrou e o que saiu neste mês e o painel se monta sozinho. Seus dados são só seus: ninguém mais vê o que você lança aqui.')}</p>
-            <div className="hero-acoes boas-vindas-acoes" data-tour="lancar">{botoes}</div>
+            <div className="hero-acoes boas-vindas-acoes" data-tour="lancar" ref={refAcoes}>{botoes}</div>
           </div>
         </section>
       ) : null}
-
-      {!c.contaNova && convite}
-
-      {sugestao}
 
       {saude}
 
@@ -551,6 +625,8 @@ export function Inicio(c: Ctx) {
       {oQueFazer.length > 0 && <Encaixe itens={oQueFazer} versao={versao} />}
       {linhaFluxo.length > 0 && <div className="linha-fluxo">{linhaFluxo}</div>}
       {analise.length > 0 && <Encaixe itens={analise} versao={versao} />}
+
+      {!c.contaNova && opcionais}
 
       {formDivida}
     </div>

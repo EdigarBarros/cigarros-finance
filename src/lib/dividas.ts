@@ -530,7 +530,21 @@ export function dividaDiaADia({ situacao, pagamentos, ano, mes, dias, hoje, diaR
  * que vence e a atrasada (de qualquer mês) no dia `atrasadasEm` (com `soDoMes`, sem as atrasadas). Dívida sem cotação
  * fica de fora.
  */
-export function parcelasPorDia({ situacao, ano, mes, dias, hoje, diaRef, atrasadasEm = Math.max(hoje, 1), soDoMes = false }: {
+export interface ParcelaPrevista {
+  divida: SituacaoDivida
+  /** Número da parcela. */
+  n: number
+  /** AAAA-MM-DD */
+  vencimento: string
+  /** O que falta dela, com os juros de atraso estimados quando já venceu (na moeda principal). */
+  valor: number
+  /** Venceu antes do mês aberto ou antes de hoje. */
+  atrasada: boolean
+  /** Dia do mês em que ela entra na previsão (a atrasada cai no dia de hoje). */
+  dia: number
+}
+
+type ArgsParcelas = {
   situacao: SituacaoDivida[]; ano: number; mes: number; dias: number; hoje: number; diaRef: string; atrasadasEm?: number
   /**
    * Só as parcelas que vencem neste mês, sem as atrasadas. Para o dinheiro de um mês que ainda não começou: a atrasada já
@@ -538,10 +552,16 @@ export function parcelasPorDia({ situacao, ano, mes, dias, hoje, diaRef, atrasad
    * dívida). O saldo da dívida dia a dia continua descontando a atrasada antes do mês começar.
    */
   soDoMes?: boolean
-}): number[] {
+}
+
+/**
+ * As parcelas de dívida que ainda vão sair no mês, uma por uma (a previsão do fim do mês e o "Entender previsão" usam a
+ * mesma lista, então o total explicado é sempre o total previsto). Mês que já acabou: nenhuma.
+ */
+export function parcelasDoMes({ situacao, ano, mes, dias, hoje, diaRef, atrasadasEm = Math.max(hoje, 1), soDoMes = false }: ArgsParcelas): ParcelaPrevista[] {
   const prefixo = `${ano}-${String(mes).padStart(2, '0')}`
-  const vence = Array<number>(dias).fill(0)
-  if (hoje >= dias) return vence
+  const lista: ParcelaPrevista[] = []
+  if (hoje >= dias) return lista
   for (const s of situacao) {
     if (s.semCotacao || s.restante <= 0) continue
     for (const p of calendarioDe(s, diaRef)?.parcelas ?? []) {
@@ -550,9 +570,17 @@ export function parcelasPorDia({ situacao, ano, mes, dias, hoje, diaRef, atrasad
       // `soDoMes`: só as que vencem neste mês (a atrasada já entrou no dinheiro do mês de hoje)
       if (!dia && soDoMes) continue
       // parcela atrasada leva os juros de atraso estimados, como no "Para fazer"
-      vence[Math.min(dias, Math.max(dia > hoje ? dia : atrasadasEm, 1)) - 1] += p.falta + (s.atraso?.porParcela.get(p.n) ?? 0)
+      const valor = centavosDe(p.falta + (s.atraso?.porParcela.get(p.n) ?? 0))
+      lista.push({ divida: s, n: p.n, vencimento: p.vencimento, valor, atrasada: p.vencimento < diaRef, dia: Math.min(dias, Math.max(dia > hoje ? dia : atrasadasEm, 1)) })
     }
   }
+  return lista
+}
+
+/** As mesmas parcelas de `parcelasDoMes`, somadas por dia do mês (índice 0 = dia 1). */
+export function parcelasPorDia(args: ArgsParcelas): number[] {
+  const vence = Array<number>(args.dias).fill(0)
+  for (const p of parcelasDoMes(args)) vence[p.dia - 1] += p.valor
   return vence.map(centavosDe)
 }
 

@@ -9,14 +9,22 @@ import { fmtValor } from '../lib/format'
 import { Anel } from './ui'
 import { Icone } from './Icone'
 import { tx } from '../lib/textos'
+import type { SituacaoDoMes } from '../lib/situacaoDoMes'
+import type { PilulaDeGastos } from '../lib/comparacao'
+import './entender.css'
 import './inicio-equilibrado.css'
 
-/** O mês: quanto sobrou (até hoje, no mês de hoje), a barra entrou × saiu e duas pílulas (como o mês termina e o ritmo). */
-export function MesEquilibrado({ dd, nomeMes, ritmo, mesAnterior }: {
+/**
+ * O mês: quanto sobrou (até hoje, no mês de hoje), a barra entrou × saiu, o estado do mês (a mesma conta do simples e do
+ * detalhado), a comparação dos gastos com o mesmo período do mês anterior e como o mês deve terminar.
+ */
+export function MesEquilibrado({ dd, nomeMes, gastos, situacao, aoEntender }: {
   dd: DiaADia; nomeMes: string
-  /** Gasto por dia comparado com o do mês passado (1 = igual); null quando não há com o que comparar. */
-  ritmo: number | null
-  mesAnterior?: string
+  /** Gastos contra o mesmo período do mês anterior (null sem com o que comparar). */
+  gastos: PilulaDeGastos | null
+  situacao: SituacaoDoMes
+  /** Abre o "Entender previsão". */
+  aoEntender: () => void
 }) {
   const futuro = dd.hoje === 0
   const acabou = dd.hoje === dd.dias
@@ -31,6 +39,7 @@ export function MesEquilibrado({ dd, nomeMes, ritmo, mesAnterior }: {
   const saiu = futuro ? dd.vaiSair : dd.saiu
   const topo = Math.max(entrou, saiu) || 1
   const temPrevisao = !futuro && !acabou && (dd.vaiEntrar > 0 || dd.vaiSair > 0)
+  const comSelo = situacao.estado !== 'sem_dados'
   return (
     <section className="cartao ieq-mes">
       <span className="ieq-rot">{rotulo}</span>
@@ -48,11 +57,14 @@ export function MesEquilibrado({ dd, nomeMes, ritmo, mesAnterior }: {
           </div>
         </>
       )}
-      {ritmo !== null && mesAnterior && (
+      {(comSelo || gastos) && (
         <div className="ieq-pilulas">
-          <span className={`ieq-pilula ${ritmo <= 1 ? 'bom' : ritmo <= 1.2 ? 'atencao' : 'ruim'}`}>
-            <i />{ritmo <= 1 ? tx('Gastando menos que em {0}', mesAnterior) : tx('Gastando mais que em {0}', mesAnterior)}
-          </span>
+          {comSelo && (
+            <button type="button" className={`selo-mes ${situacao.estado}`} onClick={aoEntender} title={tx('Por que este estado?')}>
+              <i aria-hidden="true" />{situacao.selo}
+            </button>
+          )}
+          {gastos && <span className={`ieq-pilula ${gastos.tom}`}><i aria-hidden="true" />{gastos.texto}</span>}
         </div>
       )}
       {temPrevisao && (
@@ -60,7 +72,8 @@ export function MesEquilibrado({ dd, nomeMes, ritmo, mesAnterior }: {
           <span className="ieq-rot">{tx('Até o fim do mês')}</span>
           {dd.vaiSair > 0 && <p><span>{tx('Ainda falta pagar')}</span><b>{fmtValor(dd.vaiSair)}</b></p>}
           {dd.vaiEntrar > 0 && <p><span>{tx('Ainda falta receber')}</span><b className="bom">{fmtValor(dd.vaiEntrar)}</b></p>}
-          <p className="ieq-fim-total"><span>{fim < 0 ? tx('Deve faltar') : tx('Deve sobrar')}</span><b className={fim < 0 ? 'ruim' : 'bom'}>{fmtValor(Math.abs(fim))}</b></p>
+          <p className="ieq-fim-total"><span>{fim < 0 ? tx('Deve faltar') : tx('Deve sobrar')}</span><b className={fim < 0 ? 'ruim' : 'bom'}>{fim < 0 ? '− ' : ''}{fmtValor(Math.abs(fim))}</b></p>
+          <button type="button" className="btn-entender" onClick={aoEntender}><Icone nome="ideia" tamanho={15} /> {tx('Entender previsão')}</button>
         </div>
       )}
     </section>

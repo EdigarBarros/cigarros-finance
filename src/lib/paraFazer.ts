@@ -5,7 +5,7 @@
 import { pendentes, fmtConta, aproxConta, fraseDaSituacao, type SituacaoConta } from './contasFixas'
 import type { SituacaoCartao } from './cartoes'
 import { calendarioDe, fimDoMes, fmtDiv, type SituacaoDivida } from './dividas'
-import { fmtDataCurta, fmtValor } from './format'
+import { fmtValor } from './format'
 import { tx } from './textos'
 
 export type Estado = 'atrasada' | 'vence_hoje' | 'a_vencer'
@@ -21,11 +21,13 @@ export interface Tarefa {
   valor: string
   aprox?: string
   entrada?: boolean
+  /** Só nas atrasadas: há quantos dias venceu (pela data do aparelho, sem fuso de servidor). */
+  diasAtraso?: number
   botao: { texto: string; acao: () => void; principal?: boolean }
 }
 
 const dois = (n: number) => String(n).padStart(2, '0')
-const hojeIso = () => { const d = new Date(); return `${d.getFullYear()}-${dois(d.getMonth() + 1)}-${dois(d.getDate())}` }
+const hojeIso = () => daquiA(0)
 const diasEntre = (de: string, ate: string) =>
   Math.round((Date.UTC(+ate.slice(0, 4), +ate.slice(5, 7) - 1, +ate.slice(8, 10)) - Date.UTC(+de.slice(0, 4), +de.slice(5, 7) - 1, +de.slice(8, 10))) / 86400000)
 const estadoDe = (venc: string, hoje: string): Estado => (venc < hoje ? 'atrasada' : venc === hoje ? 'vence_hoje' : 'a_vencer')
@@ -37,8 +39,8 @@ function frasePrazo(venc: string, hoje: string) {
   if (d === 1) return tx('vence amanhã')
   if (d > 1) return tx('vence em {0} dias', d)
   if (d === -1) return tx('venceu ontem')
-  if (d >= -30) return tx('venceu há {0} dias', -d)
-  return tx('venceu em {0}', fmtDataCurta(venc))
+  // sempre em dias, mesmo quando faz meses: "venceu em 5 de ago" escondia há quanto tempo a conta está parada
+  return tx('venceu há {0} dias', -d)
 }
 
 /**
@@ -46,15 +48,16 @@ function frasePrazo(venc: string, hoje: string) {
  * Parcelas: as que vencem até o fim do mês e ainda não foram pagas. Faturas: as do mês que ainda não foram pagas,
  * mais as de meses anteriores que venceram sem pagar.
  */
-export function tarefasDoMes({ ano, mes, contas, faturas, dividas, diaRef, aoPagarConta, aoPagarDivida, aoVerCartoes }: {
+export function tarefasDoMes({ ano, mes, contas, faturas, dividas, diaRef, aoPagarConta, aoPagarDivida, aoVerCartoes, hoje = hojeIso() }: {
   ano: number; mes: number
+  /** AAAA-MM-DD de hoje (no fuso do aparelho); só os testes trocam. */
+  hoje?: string
   contas: SituacaoConta[]; faturas: SituacaoCartao[]; dividas: SituacaoDivida[]
   diaRef: string
   aoPagarConta: (s: SituacaoConta) => void
   aoPagarDivida: (s: SituacaoDivida) => void
   aoVerCartoes: () => void
 }) {
-  const hoje = hojeIso()
   const fim = fimDoMes(ano, mes)
   const lista: Tarefa[] = []
   let parcelas = 0
@@ -102,6 +105,39 @@ export function tarefasDoMes({ ano, mes, contas, faturas, dividas, diaRef, aoPag
     })
   }
 
+  for (const t of lista) if (t.estado === 'atrasada') t.diasAtraso = Math.max(1, diasEntre(t.vencimento, hoje))
   lista.sort((a, b) => a.vencimento.localeCompare(b.vencimento) || a.titulo.localeCompare(b.titulo))
   return { lista, parcelas: Math.round(parcelas * 100) / 100 }
+}
+
+/** Data de hoje mais `dias`, como AAAA-MM-DD (no fuso do aparelho, como o resto da lista). */
+export function daquiA(dias: number, hoje = new Date()) {
+  const d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + dias)
+  return `${d.getFullYear()}-${dois(d.getMonth() + 1)}-${dois(d.getDate())}`
+}
+
+export interface GruposDeTarefas {
+  /** Já venceram e continuam em aberto (contas, faturas e parcelas de meses anteriores também). */
+  atrasadas: Tarefa[]
+  /** Vencem de hoje até `limite`. */
+  proximas: Tarefa[]
+  /** Vencem depois de `limite` (ainda dentro do mês aberto). */
+  depois: Tarefa[]
+}
+
+/**
+ * Separa a lista do mês em três grupos: o que já venceu (precisa de atenção), o que vence até `limite` e o resto. Antes, a
+ * lista "Próximos 7 dias" misturava uma fatura vencida em outubro com a conta de amanhã. Uma tarefa fica em um grupo só.
+ */
+export function agruparTarefas(lista: Tarefa[], limite: string): GruposDeTarefas {
+  const g: GruposDeTarefas = { atrasadas: [], proximas: [], depois: [] }
+  for (const t of lista) (t.estado === 'atrasada' ? g.atrasadas : t.vencimento <= limite ? g.proximas : g.depois).push(t)
+  return g
+}
+
+/** "há 3 dias", "há 98 dias": o atraso de uma tarefa para mostrar ao lado do nome. */
+export const fraseDoAtraso = (t: Pick<Tarefa, 'diasAtraso' | 'entrada'>) => {
+  const n = t.diasAtraso ?? 0
+  if (t.entrada) return n === 1 ? tx('não caiu há 1 dia') : tx('não caiu há {0} dias', n)
+  return n === 1 ? tx('atrasada há 1 dia') : tx('atrasada há {0} dias', n)
 }

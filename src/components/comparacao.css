@@ -1,0 +1,42 @@
+/* "Comparado com outubro" (components/ComparacaoMes.tsx) */
+.cmp-corpo { display: grid; gap: 10px; padding: 0 22px 16px; }
+.cmp-principal { display: flex; align-items: flex-start; gap: 8px; margin: 0; font-size: 15.5px; font-weight: 650; line-height: 1.4; color: var(--texto); }
+.cmp-principal svg { flex: none; margin-top: 3px; }
+/* gastar mais é a cor de saída; gastar menos, a de entrada (e a seta diz o mesmo sem depender da cor) */
+.cmp-principal.sobe svg { color: var(--saida); }
+.cmp-principal.desce svg { color: var(--entrada); }
+.cmp-valores { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 0; font-size: 13.5px; color: var(--texto-2); }
+.cmp-valores b { font-family: var(--fonte-numeros); font-variant-numeric: tabular-nums; color: var(--texto); margin-left: 4px; }
+.cmp-periodo { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--texto-3); }
+.cmp-aviso { display: flex; align-items: flex-start; gap: 6px; margin: 0; padding: 8px 10px; border-radius: 10px; font-size: 12.5px; line-height: 1.45; color: var(--texto); background: color-mix(in srgb, var(--divida) 11%, transparent); }
+.cmp-aviso svg { flex: none; margin-top: 2px; color: var(--aviso-texto); }
+.cmp-lista { list-style: none; margin: 4px -10px 0; padding: 0; display: grid; gap: 2px; }
+.cmp-linha-botao {
+  display: grid; grid-template-columns: 32px minmax(0, 1fr) auto 16px; align-items: center; gap: 10px; width: 100%; min-height: 48px;
+  padding: 6px 10px; border: 0; border-radius: 12px; background: none; text-align: left; font: inherit; color: var(--texto); cursor: pointer;
+}
+.cmp-linha-botao > svg { color: var(--texto-3); }
+.cmp-linha-botao:hover, .cmp-linha.aberta .cmp-linha-botao { background: var(--superficie-2); }
+.cmp-linha-botao:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; }
+.cmp-ic { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
+.cmp-nome { display: grid; gap: 1px; min-width: 0; font-size: 14px; font-weight: 600; }
+.cmp-nome small { font-size: 12px; font-weight: 500; color: var(--texto-3); font-variant-numeric: tabular-nums; }
+.cmp-dif { display: inline-flex; align-items: center; gap: 3px; font-family: var(--fonte-numeros); font-size: 13.5px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cmp-dif.sobe { color: var(--saida); }
+.cmp-dif.desce { color: var(--entrada); }
+.cmp-detalhe { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); padding: 6px 10px 12px 52px; }
+.cmp-lado { display: grid; gap: 4px; align-content: start; }
+.cmp-lado-tit { font-size: 12px; font-weight: 650; color: var(--texto-2); }
+.cmp-lado ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.cmp-lado li { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 8px; font-size: 12.5px; color: var(--texto-2); }
+.cmp-lado li b { font-family: var(--fonte-numeros); font-variant-numeric: tabular-nums; color: var(--texto); font-weight: 600; }
+.cmp-l-data { color: var(--texto-3); font-variant-numeric: tabular-nums; }
+.cmp-l-desc { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-lado li.cmp-l-mais { display: block; color: var(--texto-3); }
+.cmp-nada { margin: 0; font-size: 12.5px; color: var(--texto-3); }
+.cmp-pe { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+.cmp-pe .link { min-height: 36px; }
+@media (max-width: 860px) {
+  .cmp-corpo { padding: 0 16px 14px; }
+  .cmp-detalhe { padding-left: 10px; }
+}
