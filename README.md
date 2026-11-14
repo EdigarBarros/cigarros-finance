@@ -199,7 +199,8 @@ Tudo grátis: o site fica na **Vercel** e os dados no **Supabase** (Postgres), p
 2. Supabase → **Edge Functions**: publique `stripe-checkout`, `stripe-portal`, `excluir-conta` (com verificação de JWT) e `stripe-webhook`
    (**sem** verificação de JWT). Em **Secrets**, defina `STRIPE_SECRET_KEY`.
 3. Stripe → Webhooks: aponte para a função `stripe-webhook` com os eventos `customer.subscription.created`, `.updated` e `.deleted` e, para o Pix de 30 dias,
-   `checkout.session.completed` e `checkout.session.async_payment_succeeded`. Ordem para publicar o Pix: migração 29, depois as funções `stripe-webhook` e
+   `checkout.session.completed` e `checkout.session.async_payment_succeeded` e, para o reembolso do Pix tirar os 30 dias (migração 34),
+   `charge.refunded`. Ordem para publicar o Pix: migração 29, depois as funções `stripe-webhook` e
    `stripe-checkout`, depois os eventos no Stripe, e só então o site (sem isso a pessoa pagaria e não receberia o acesso). O Pix precisa estar ativo em
    Configurações → Métodos de pagamento do Stripe.
    Para **Configurações → Assinatura** (passar do Pix para o cartão sem perder os dias pagos), a ordem é: `stripe-webhook`, depois `stripe-checkout`, depois o
