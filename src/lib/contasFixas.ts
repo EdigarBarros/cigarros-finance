@@ -401,10 +401,9 @@ export function fraseDaSituacao(s: SituacaoConta) {
     }
     case 'atrasada': {
       const n = s.diasAtraso ?? 0
-      const d = fmtDataCurta(s.vencimento)
       if (n === 1) return entrada ? tx('era para cair ontem') : tx('venceu ontem')
-      if (n <= 30) return entrada ? tx('era para cair há {0} dias', n) : tx('venceu há {0} dias', n)
-      return entrada ? tx('era para cair em {0}', d) : tx('venceu em {0}', d)
+      // sempre em dias: a pessoa precisa saber há quanto tempo está parada (a data fica no bloco do dia, ao lado)
+      return entrada ? tx('era para cair há {0} dias', n) : tx('venceu há {0} dias', n)
     }
     case 'vence_hoje': return entrada ? tx('cai hoje') : tx('vence hoje')
     case 'a_vencer': {

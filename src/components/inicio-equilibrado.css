@@ -2,8 +2,8 @@
    lado a lado e, embaixo, para onde foi o dinheiro ao lado do conselho. */
 .inicio-eq { container-type: inline-size; }
 .ieq-cima, .ieq-baixo { display: grid; gap: 16px; align-items: start; }
-.ieq-cima { align-items: stretch; }
-.ieq-cima > .para-fazer { align-self: start; }
+/* cada coluna na sua altura: com as contas separadas em grupos a lista cresceu, e o cartão do mês esticado abria um vão */
+.ieq-cima { align-items: start; }
 .ieq-rot { display: block; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--texto-2); }
 
 .ieq-mes { display: flex; flex-direction: column; gap: 12px; }
@@ -63,3 +63,5 @@
   .ieq-resumos { grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
   .ieq-baixo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+.ieq-motivo { margin: -2px 0 0; font-size: 13.5px; line-height: 1.45; color: var(--texto-2); }
+.ieq-fim .btn-entender { justify-self: start; margin-top: 2px; }

@@ -81,3 +81,25 @@
   .idet-num { display: flex; justify-content: space-between; align-items: center; }
   .idet-mosaico { grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
 }
+
+/* estado do mês, "Entender previsão", gráfico recolhível, ajuda dos números, atrasadas e legenda das bolinhas */
+.idet-prev .btn-entender { margin-top: 2px; }
+.idet-estado { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; font-size: 13.5px; line-height: 1.4; color: var(--texto-2); }
+.idet-recolher {
+  justify-self: start; display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 10px; margin-left: -10px;
+  border: 0; border-radius: 10px; background: none; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600; color: var(--texto-2);
+}
+.idet-recolher:hover { color: var(--texto); background: var(--superficie-2); }
+.idet-recolher:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
+.idet-grafico-solto { display: grid; gap: 8px; }
+.idet-ajuda { font-size: 11.5px; color: var(--texto-3); }
+.idet-rot-atencao { color: var(--saida); }
+.idet-vem-mais { margin: -4px 0 0; font-size: 12.5px; color: var(--texto-3); }
+.idet-vem-tudo { justify-self: start; min-height: 36px; }
+.idet-legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: -6px 0 0; font-size: 12.5px; color: var(--texto-2); }
+.idet-legenda span { display: inline-flex; align-items: center; gap: 7px; }
+.idet-legenda .idet-sinal { width: 9px; height: 9px; }
+@container (min-width: 1000px) {
+  .idet-num { flex-wrap: wrap; }
+  .idet-num .idet-ajuda { flex-basis: 100%; }
+}

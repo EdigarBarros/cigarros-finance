@@ -66,6 +66,23 @@ export function previsaoDoAno({ lancs, lancsBaixas = lancs, faturasPagas, comFat
 
 export const temPrevisao = (p: PrevisaoMes | undefined) => Boolean(p && (p.vaiEntrar > 0 || p.vaiSair > 0))
 
+/** De onde vem um valor que ainda vai entrar ou sair no mês. */
+export type OrigemPrevista = 'lancamento' | 'fatura' | 'conta' | 'parcela'
+
+/** Uma linha do que ainda vem no mês (o "Entender previsão" mostra a lista; a soma é o vaiEntrar / vaiSair). */
+export interface ItemPrevisto {
+  origem: OrigemPrevista
+  tipo: 'entrada' | 'saida'
+  descricao: string
+  valor: number
+  /** AAAA-MM-DD do vencimento (ou da data do lançamento); null num lançamento sem data. */
+  data: string | null
+  /** Já devia ter acontecido (venceu antes de hoje) e continua em aberto. */
+  atrasado: boolean
+  /** Compra no cartão: o cartão (as compras da mesma fatura aparecem juntas). */
+  cartaoId?: string
+}
+
 /** O mês dia a dia: o que já aconteceu e o que ainda vem, em cada dia (para o gráfico do mês na Início). */
 export interface DiaADia {
   /** Dias do mês. */
@@ -83,6 +100,8 @@ export interface DiaADia {
   saiu: number
   vaiEntrar: number
   vaiSair: number
+  /** Cada coisa que ainda vem, com nome e valor (soma = vaiEntrar + vaiSair). */
+  pendentes: ItemPrevisto[]
 }
 
 /**
@@ -110,6 +129,7 @@ export function diaADiaDoMes({ lancs, lancsBaixas = lancs, faturasPagas, comFatu
   const zeros = () => Array<number>(dias).fill(0)
   const entrouDia = zeros(), saiuDia = zeros(), vaiEntrarDia = zeros(), vaiSairDia = zeros()
   let entrou = 0, saiu = 0, vaiEntrar = 0, vaiSair = 0
+  const pendentes: ItemPrevisto[] = []
   // o que ainda vem e já devia ter acontecido fica no dia de hoje (ou no dia 1, se o mês ainda não começou)
   const diaDoQueVem = (d: number) => Math.min(dias, Math.max(d, diaHoje, 1)) - 1
   const diaDe = (data: string | null) => (data && data.slice(0, 7) === `${ano}-${String(mes).padStart(2, '0')}` ? +data.slice(8, 10) : 1)
@@ -123,6 +143,11 @@ export function diaADiaDoMes({ lancs, lancsBaixas = lancs, faturasPagas, comFatu
     } else {
       const d = diaDoQueVem(dia)
       if (sinal > 0) { vaiEntrar += l.valor; vaiEntrarDia[d] += l.valor } else { vaiSair += l.valor; vaiSairDia[d] += l.valor }
+      const naFatura = faturaEmAberto(l, pagas, comFaturas, agora)
+      pendentes.push({
+        origem: naFatura ? 'fatura' : 'lancamento', tipo: l.tipo, descricao: l.descricao, valor: l.valor, data: l.data,
+        atrasado: Boolean(l.data && l.data < iso), cartaoId: naFatura ? l.cartao_id ?? undefined : undefined,
+      })
     }
   }
   for (const s of situacoesDoMes(contas, lancsBaixas, ano, mes, iso, taxas)) {
@@ -130,10 +155,72 @@ export function diaADiaDoMes({ lancs, lancsBaixas = lancs, faturasPagas, comFatu
     const sinal = s.conta.tipo === 'entrada' ? 1 : -1
     const d = diaDoQueVem(s.dia)
     if (sinal > 0) { vaiEntrar += s.valor; vaiEntrarDia[d] += s.valor } else { vaiSair += s.valor; vaiSairDia[d] += s.valor }
+    pendentes.push({ origem: 'conta', tipo: s.conta.tipo, descricao: s.conta.descricao, valor: s.valor, data: s.vencimento, atrasado: s.estado === 'atrasada' })
   }
   return {
     dias, hoje: diaHoje,
     entrouDia: entrouDia.map(centavos), saiuDia: saiuDia.map(centavos), vaiEntrarDia: vaiEntrarDia.map(centavos), vaiSairDia: vaiSairDia.map(centavos),
     entrou: centavos(entrou), saiu: centavos(saiu), vaiEntrar: centavos(vaiEntrar), vaiSair: centavos(vaiSair),
+    pendentes,
+  }
+}
+
+/** Um grupo da composição: as contas do mês, a fatura de um cartão, as parcelas de dívida ou os lançamentos com data à frente. */
+export interface GrupoPrevisto {
+  chave: string
+  origem: OrigemPrevista
+  cartaoId?: string
+  itens: ItemPrevisto[]
+  total: number
+}
+
+export interface ComposicaoDaPrevisao {
+  /** O ponto de partida: o que já entrou menos o que já saiu no mês (não é o saldo do banco). */
+  referencia: number
+  entrou: number
+  saiu: number
+  receber: GrupoPrevisto[]
+  pagar: GrupoPrevisto[]
+  totalReceber: number
+  totalPagar: number
+  /** referencia + totalReceber − totalPagar */
+  resultado: number
+  /** Do que ainda vai entrar, quanto já devia ter entrado (a previsão conta com ele). */
+  receberAtrasado: number
+  /** Do que ainda vai sair, quanto já venceu. */
+  pagarAtrasado: number
+}
+
+const ORDEM_DAS_ORIGENS: OrigemPrevista[] = ['conta', 'fatura', 'parcela', 'lancamento']
+
+/**
+ * Como o app chega no "Deve sobrar / Pode faltar": parte do que já entrou menos o que já saiu, soma o que ainda vai entrar e
+ * tira o que ainda vai sair. Cada valor aparece uma vez só: o que já aconteceu está em `entrou`/`saiu`; o que ainda vem está
+ * em `pendentes` (conta paga não fica pendente; compra no cartão fica na fatura até ela ser paga).
+ */
+export function comporPrevisao(dd: Pick<DiaADia, 'entrou' | 'saiu' | 'pendentes'>): ComposicaoDaPrevisao {
+  const agrupar = (tipo: 'entrada' | 'saida') => {
+    const grupos = new Map<string, GrupoPrevisto>()
+    for (const i of dd.pendentes) {
+      if (i.tipo !== tipo) continue
+      const chave = i.origem === 'fatura' ? `fatura:${i.cartaoId ?? ''}` : i.origem
+      const g = grupos.get(chave) ?? grupos.set(chave, { chave, origem: i.origem, cartaoId: i.cartaoId, itens: [], total: 0 }).get(chave)!
+      g.itens.push(i)
+      g.total += i.valor
+    }
+    return [...grupos.values()]
+      .map((g) => ({ ...g, total: centavos(g.total), itens: [...g.itens].sort((a, b) => (a.data ?? '').localeCompare(b.data ?? '') || b.valor - a.valor) }))
+      .sort((a, b) => ORDEM_DAS_ORIGENS.indexOf(a.origem) - ORDEM_DAS_ORIGENS.indexOf(b.origem) || b.total - a.total)
+  }
+  const receber = agrupar('entrada')
+  const pagar = agrupar('saida')
+  const totalReceber = soma(receber.map((g) => g.total))
+  const totalPagar = soma(pagar.map((g) => g.total))
+  const referencia = centavos(dd.entrou - dd.saiu)
+  return {
+    referencia, entrou: dd.entrou, saiu: dd.saiu, receber, pagar, totalReceber, totalPagar,
+    resultado: centavos(referencia + totalReceber - totalPagar),
+    receberAtrasado: soma(dd.pendentes.filter((i) => i.tipo === 'entrada' && i.atrasado).map((i) => i.valor)),
+    pagarAtrasado: soma(dd.pendentes.filter((i) => i.tipo === 'saida' && i.atrasado).map((i) => i.valor)),
   }
 }

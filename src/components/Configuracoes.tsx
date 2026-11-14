@@ -344,17 +344,21 @@ export function ZerarDados({ contagem, aoBaixarBackup, aoZerar, aoFechar }: {
 }
 
 /** Sugestão tirada do uso ("Começou a investir?"), com aceitar e recusar. */
+/**
+ * Sugestão de recurso (ligar um módulo, mudar o jeito de ver): uma faixa fina, sempre depois das informações do mês e dos
+ * avisos financeiros, para não disputar o olhar com eles. O "x" dispensa de vez (fica no perfil, em `dispensadas`).
+ */
 export function CartaoSugestao({ s, aoAceitar, aoRecusar }: { s: Sugestao; aoAceitar: () => void; aoRecusar: () => void }) {
   return (
-    <section className="sugestao" aria-live="polite">
-      <span className="sugestao-icone"><Icone nome={s.icone} /></span>
+    <section className="sugestao" aria-label={tx('Sugestão')}>
+      <span className="sugestao-icone" aria-hidden="true"><Icone nome={s.icone} tamanho={18} /></span>
       <div className="sugestao-texto">
         <strong>{s.titulo}</strong>
         <p>{s.texto}</p>
       </div>
       <div className="sugestao-acoes">
         <button className="btn primario" onClick={aoAceitar}>{s.botao}</button>
-        <button className="btn" onClick={aoRecusar}>{tx('Agora não')}</button>
+        <button className="icone-btn sugestao-fechar" onClick={aoRecusar} aria-label={tx('Dispensar sugestão')} title={tx('Dispensar sugestão')}><Icone nome="fechar" tamanho={16} /></button>
       </div>
     </section>
   )

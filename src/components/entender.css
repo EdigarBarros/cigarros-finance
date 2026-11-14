@@ -1,0 +1,86 @@
+/* "Entender previsão" (components/EntenderMes.tsx): a conta do mês passo a passo, numa janela. */
+.entender { display: grid; gap: 18px; padding-bottom: 6px; }
+.entender h3 { margin: 0 0 8px; font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.entender ul, .entender ol { list-style: none; margin: 0; padding: 0; }
+
+/* o estado do mês e por quê */
+.em-estado {
+  --c: var(--entrada);
+  display: grid; gap: 10px; padding: 14px 16px; border-radius: var(--raio-m);
+  background: color-mix(in srgb, var(--c) 9%, var(--superficie-2)); border: 1px solid color-mix(in srgb, var(--c) 28%, var(--borda));
+  border-left: 4px solid var(--c);
+}
+.em-estado.atencao { --c: var(--divida); }
+.em-estado.critico { --c: var(--saida); }
+.em-estado.sem_dados { --c: var(--marca-2); }
+.em-selo { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 15px; font-weight: 700; color: var(--texto); }
+.em-selo i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 22%, transparent); }
+.em-motivos { display: grid; gap: 6px; }
+.em-motivos li { position: relative; padding-left: 16px; font-size: 14px; line-height: 1.45; color: var(--texto-2); }
+.em-motivos li::before { content: ''; position: absolute; left: 2px; top: .6em; width: 6px; height: 6px; border-radius: 50%; background: var(--texto-3); }
+.em-motivos li.critico::before { background: var(--saida); }
+.em-motivos li.atencao::before { background: var(--divida); }
+.em-motivos li.favoravel::before { background: var(--entrada); }
+.em-criterios summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--destaque); min-height: 32px; display: flex; align-items: center; }
+.em-criterios summary:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; border-radius: 6px; }
+.em-criterios ul { display: grid; gap: 6px; margin-top: 4px; }
+.em-criterios li { font-size: 13px; line-height: 1.45; color: var(--texto-2); }
+
+/* a conta */
+.em-passos { display: grid; gap: 4px; }
+.em-passos > li { display: grid; gap: 6px; padding: 10px 0; border-bottom: 1px solid var(--separador); }
+.em-passos > li:last-child { border-bottom: 0; }
+.em-passo { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0; font-size: 15px; font-weight: 600; color: var(--texto); }
+.em-passo span { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.em-passo b, .em-grupo-cab b, .em-valor { font-family: var(--fonte-numeros); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.em-passo b.pos { color: var(--entrada); }
+.em-passo b.neg { color: var(--saida); }
+.em-total .em-passo { font-size: 16.5px; }
+.em-total .em-passo b { font-size: 20px; font-weight: 750; }
+.em-sinal {
+  display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 7px; font-style: normal; font-size: 15px; font-weight: 700;
+  color: var(--texto-2); background: var(--preench-3);
+}
+.em-sinal.mais { color: var(--entrada); }
+.em-sinal.menos { color: var(--saida); }
+.em-nota { display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 13px; line-height: 1.45; color: var(--texto-2); }
+.em-nota svg { flex: none; margin-top: 2px; }
+.em-nota.aviso { padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--divida) 10%, transparent); color: var(--texto); }
+.em-conta > .em-passo { padding: 6px 0; }
+.em-conta > .em-total { padding-top: 10px; border-top: 1px solid var(--separador); }
+
+/* cada grupo (contas, fatura, parcelas…) com os itens */
+.em-grupos { display: grid; gap: 10px; }
+.em-grupo { display: grid; gap: 4px; padding: 10px 12px; border-radius: 12px; background: var(--superficie-2); border: 1px solid var(--borda); }
+.em-grupo-cab { display: flex; justify-content: space-between; gap: 12px; margin: 0; font-size: 13.5px; font-weight: 650; color: var(--texto); }
+.em-itens li { display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 4px 0; font-size: 13px; color: var(--texto-2); }
+.em-data { font-variant-numeric: tabular-nums; color: var(--texto-3); }
+.em-desc { min-width: 0; overflow-wrap: anywhere; }
+.em-desc small { display: inline-block; margin-left: 6px; padding: 0 7px; border-radius: 999px; font-size: 11.5px; font-weight: 600; color: var(--saida); background: color-mix(in srgb, var(--saida) 12%, transparent); }
+.em-itens li.atrasado .em-data { color: var(--saida); }
+.em-mais { justify-self: start; font-size: 13px; min-height: 32px; }
+
+.em-premissas { padding: 12px 14px; border-radius: var(--raio-m); background: var(--superficie-2); }
+.em-premissas ul { display: grid; gap: 6px; }
+.em-premissas li { position: relative; padding-left: 14px; font-size: 13px; line-height: 1.45; color: var(--texto-2); }
+.em-premissas li::before { content: '·'; position: absolute; left: 2px; font-weight: 700; }
+
+/* o botão que abre a janela, ao lado da previsão em cada jeito */
+.btn-entender {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 2px; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: 13.5px; font-weight: 600; color: var(--destaque);
+}
+.btn-entender:hover { text-decoration: underline; }
+.btn-entender:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; border-radius: 6px; }
+
+/* o estado do mês numa pílula (equilibrado e detalhado), com o nome escrito: não depende só da cor */
+.selo-mes {
+  --c: var(--entrada);
+  display: inline-flex; align-items: center; gap: 7px; min-height: 30px; padding: 0 12px; border-radius: 999px; border: 0; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 650; color: var(--texto);
+  background: color-mix(in srgb, var(--c) 13%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 30%, transparent);
+}
+.selo-mes i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; }
+.selo-mes.atencao { --c: var(--divida); }
+.selo-mes.critico { --c: var(--saida); }
+.selo-mes:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }

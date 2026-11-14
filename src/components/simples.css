@@ -11,22 +11,28 @@
   background: linear-gradient(135deg, color-mix(in srgb, var(--c) 15%, transparent), transparent 58%), var(--superficie);
   box-shadow: var(--sombra);
 }
-.resumo-simples.aperto { --c: var(--divida); }
-.resumo-simples.ruim { --c: var(--saida); }
+.resumo-simples.atencao { --c: var(--divida); }
+.resumo-simples.critico { --c: var(--saida); }
 .resumo-simples.sem-dados, .resumo-simples.futuro { --c: var(--marca-2); }
 
 .rs-principal { display: grid; align-content: start; gap: 4px; min-width: 0; }
 .rs-selo {
-  justify-self: start; display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 12px; margin-bottom: 10px;
-  border-radius: 999px; font-size: 13.5px; font-weight: 650; color: var(--c);
+  justify-self: start; display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; margin-bottom: 10px;
+  border: 0; font: inherit; cursor: pointer;
+  /* o texto puxa para a cor do texto: o amarelo puro sobre o fundo claro não tinha contraste para ler */
+  border-radius: 999px; font-size: 13.5px; font-weight: 650; color: color-mix(in srgb, var(--c) 62%, var(--texto));
   background: color-mix(in srgb, var(--c) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c) 30%, transparent);
 }
+.rs-selo:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
 .rs-selo i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 22%, transparent); }
 .rs-rotulo { margin: 0; font-size: 16px; font-weight: 550; color: var(--texto-2); }
 .rs-valor {
   font-family: var(--fonte-numeros); font-size: 48px; font-weight: 750; letter-spacing: -.04em; line-height: 1.08;
-  font-variant-numeric: tabular-nums; color: var(--c);
+  font-variant-numeric: tabular-nums; color: var(--entrada);
 }
+/* o número tem a cor do sinal, não a do estado: sobrou é verde mesmo num mês apertado (o selo é que diz "apertado") */
+.rs-valor.neg { color: var(--saida); }
+.rs-motivo { margin: 6px 0 0; font-size: 14px; line-height: 1.45; color: var(--texto); }
 .resumo-simples.sem-dados .rs-rotulo { font-size: 22px; font-weight: 700; color: var(--texto); letter-spacing: -.02em; }
 .rs-frase { margin: 4px 0 0; font-size: 15.5px; line-height: 1.5; color: var(--texto-2); }
 .rs-frase .link { font-size: inherit; }
@@ -132,4 +138,25 @@
   .so-metas { order: 5; }
   .so-dinheiro { order: 6; }
   .inicio-simples > .simples-rodape { order: 7; }
+}
+
+/* grupos do "Para fazer": o que já venceu, o que vence logo e o que vem depois (recolhido) */
+.pf-grupo + .pf-grupo { border-top: 1px solid var(--separador); }
+.pf-grupo-tit {
+  display: flex; align-items: center; gap: 7px; margin: 0; padding: 12px 22px 2px; font-size: 13px; font-weight: 650; color: var(--texto-2);
+}
+.pf-grupo-tit small { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--texto-3); }
+.pf-grupo.atencao .pf-grupo-tit { color: var(--saida); }
+.pf-grupo.atencao .pf-grupo-tit svg { flex: none; }
+.para-fazer-vazio.pequeno { justify-content: flex-start; padding: 10px 22px 14px; font-size: 14px; }
+.pf-depois {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 48px; padding: 8px 22px; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: 14px; font-weight: 600; color: var(--texto-2); text-align: left;
+}
+.pf-depois small { margin-left: auto; font-size: 13px; font-weight: 500; color: var(--texto-3); }
+.pf-depois:hover { color: var(--texto); }
+.pf-depois:focus-visible { outline: 2px solid var(--foco); outline-offset: -2px; border-radius: 12px; }
+@media (max-width: 860px) {
+  .pf-grupo-tit { padding-left: 16px; padding-right: 16px; }
+  .pf-depois, .para-fazer-vazio.pequeno { padding-left: 16px; padding-right: 16px; }
 }

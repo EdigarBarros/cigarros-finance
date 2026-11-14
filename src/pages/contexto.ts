@@ -36,6 +36,11 @@ export interface Ctx {
   lancsMes: Lancamento[]
   /** Todos os lançamentos do ano aberto (a busca procura no ano inteiro). */
   lancsAno: Lancamento[]
+  /**
+   * Lançamentos para comparar um mês com o anterior (sem os guardados): o ano aberto e, de outros anos, os dos últimos 12
+   * meses fechados (janeiro compara com dezembro do ano anterior).
+   */
+  lancsComparar: Lancamento[]
   /** Os mesmos, mais as saídas que são dinheiro indo para o seu dinheiro guardado (para a lista; elas não entram nas somas). */
   lancsMesComGuardados: Lancamento[]
   lancsAnoComGuardados: Lancamento[]
