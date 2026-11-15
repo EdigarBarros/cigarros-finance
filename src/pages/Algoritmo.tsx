@@ -5,25 +5,27 @@ import { semMovimento } from '../lib/tema'
 import { tx } from '../lib/textos'
 import { ANO } from './apresentacaoCena'
 import { alturaIdeal, desenharTela, type TelaPronta } from './algoritmoTela'
-import { ajustarConsultor, carregarConsultor, desenharConsultor, idiomaDasFotos, type ConsultorReal } from './algoritmoConsultor'
+import { ajustarConsultor, carregarConsultor, desenharConsultor, idiomaDasFotos, mergulho, Z_REDE, type ConsultorReal } from './algoritmoConsultor'
 import { desenharDocs, desenharLancamento, LIDAS_PDF, LIDAS_PLANILHA, type DocPronto, type LinhaLida } from './algoritmoDocs'
 import './algoritmo.css'
 
 /**
- * "O motor do OpusCash": começa na tela do Consultor, que se desmonta em pedaços e mostra o que estava rodando atrás
- * dela, uma esfera holográfica feita de fragmentos dourados (pedacinhos de circuito, blocos e traços que piscam),
- * presa na tela enquanto a pessoa rola:
- *   0. por trás do Consultor: a tela de verdade do Consultor (fotos do app, algoritmoConsultor.ts) se desmonta peça por
- *      peça e revela a esfera, que já estava girando atrás;
+ * "O motor do OpusCash": começa na tela do Consultor, a câmera entra nela e chega no que roda lá no fundo, uma rede
+ * neural em 3D (camadas de nós ligados por fios, com o sinal passando da entrada para a saída), presa na tela
+ * enquanto a pessoa rola:
+ *   0. por trás do Consultor: a tela de verdade do Consultor (fotos do app, algoritmoConsultor.ts) vira um espaço com
+ *      profundidade, a câmera avança por dentro dela e chega na rede, que já estava rodando atrás;
  *   1. lê o extrato e a planilha: uma luz passa por um PDF do banco e por uma planilha, e cada linha sai como um
- *      lançamento limpo que entra na esfera (algoritmoDocs.ts);
- *   2. o motor calcula: a esfera gira, se deforma em ondas e acelera;
- *   3. compara: ela se desmancha e os fragmentos se arrumam num gráfico 3D dos meses (entrou × saiu, com a média);
+ *      lançamento limpo que entra pela primeira camada da rede (algoritmoDocs.ts);
+ *   2. o motor calcula: o sinal corre mais rápido e mais nós acendem;
+ *   3. compara: a rede se desmancha e os fragmentos se arrumam num gráfico 3D dos meses (entrou × saiu, com a média);
  *   4. responde: os fragmentos pousam nos traços da tela do Consultor (as letras, o círculo da nota, as barras) e ela
  *      acende de cima para baixo no lugar deles (algoritmoTela.ts). Termina onde começou.
  *
- * Cada fragmento tem um lugar em cada forma; o desenho mistura as formas conforme o scroll, com um atraso por fragmento
- * (a mudança passa como uma onda) e um redemoinho no meio do caminho. Tudo num <canvas> somando luz.
+ * A rede é desenhada em linhas e nós; por cima dela correm os fragmentos (a poeira de dados: uns em volta dos nós, a
+ * maioria andando pelos fios). Cada fragmento tem um lugar em cada forma; o desenho mistura as formas conforme o
+ * scroll, com um atraso por fragmento (a mudança passa como uma onda) e um redemoinho no meio do caminho. Tudo num
+ * <canvas> somando luz.
  *
  * É uma imagem do que o motor faz, não um retrato técnico dele: o Consultor (lib/analise.ts) é feito de regras de
  * finanças, então os textos falam em cruzar e comparar, nunca em "inteligência artificial".
@@ -56,11 +58,50 @@ function sorteio(semente: number) {
 const limitar = (n: number, a = 0, b = 1) => Math.min(b, Math.max(a, n))
 const suave = (a: number, b: number, x: number) => { const t = limitar((x - a) / (b - a)); return t * t * (3 - 2 * t) }
 const mistura = (a: number, b: number, t: number) => a + (b - a) * t
-const RAIO = 250
+
+// ─── a rede: camadas de nós em grade (largura × altura), da entrada (esquerda) à saída (um nó só, a resposta) ───
+const CAMADAS: [number, number][] = [[3, 4], [4, 5], [4, 6], [4, 6], [4, 5], [3, 3], [1, 1]]
+const LARGO_REDE = 680, PASSO_Y = 60, PASSO_Z = 46
+/** De quantas em quantas camadas vem uma onda de sinal. */
+const ESPACO = 4
+interface No { x: number; y: number; z: number; camada: number }
+const REDE = (() => {
+  const nos: No[] = [], elos: { a: number; b: number }[] = [], inicio: number[] = []
+  CAMADAS.forEach(([nz, ny], c) => {
+    inicio.push(nos.length)
+    const x = (c / (CAMADAS.length - 1) - 0.5) * LARGO_REDE
+    for (let j = 0; j < ny; j++) for (let k = 0; k < nz; k++) nos.push({ x, y: (j - (ny - 1) / 2) * PASSO_Y, z: (k - (nz - 1) / 2) * PASSO_Z, camada: c })
+  })
+  inicio.push(nos.length)
+  // cada nó se liga aos 4 mais próximos da camada seguinte; nenhum nó fica sem fio chegando
+  for (let c = 0; c < CAMADAS.length - 1; c++) {
+    const prox = Array.from({ length: inicio[c + 2] - inicio[c + 1] }, (_, i) => inicio[c + 1] + i)
+    const longe = (a: number, b: number) => Math.hypot(nos[a].y - nos[b].y, nos[a].z - nos[b].z)
+    const tem = new Set<number>(), feitos = new Set<string>()
+    const ligar = (a: number, b: number) => { if (!feitos.has(`${a}-${b}`)) { feitos.add(`${a}-${b}`); tem.add(b); elos.push({ a, b }) } }
+    for (let a = inicio[c]; a < inicio[c + 1]; a++) {
+      [...prox].sort((m, n) => longe(a, m) - longe(a, n)).slice(0, 4).forEach((b) => ligar(a, b))
+    }
+    for (const b of prox) if (!tem.has(b)) {
+      let perto = inicio[c]
+      for (let a = inicio[c]; a < inicio[c + 1]; a++) if (longe(a, b) < longe(perto, b)) perto = a
+      ligar(perto, b)
+    }
+  }
+  return { nos, elos, inicio, entrada: inicio[1] }
+})()
+/** A força com que o nó dispara na onda k (0 = fica quieto). Sempre a mesma para o mesmo nó e a mesma onda. */
+function forca(no: number, k: number, limiar: number) {
+  if (REDE.nos[no].camada === CAMADAS.length - 1) return 1
+  const h = Math.sin(no * 127.1 + k * 311.7) * 43758.5453, u = h - Math.floor(h)
+  return u < limiar ? 0 : 0.35 + 0.65 * ((u - limiar) / (1 - limiar))
+}
 const BASE_GRAF = 170, ALTO_GRAF = 330, LARGO_GRAF = 640
 
 interface Frag {
-  esfera: V3 // na esfera: [teta, fi, raio]
+  no: number // na rede: em volta de qual nó (-1 = anda por um fio)
+  elo: number; t0: number; vel: number // qual fio, onde começa nele e a que passo anda
+  des: V3 // o quanto fica fora do nó ou do fio
   barra: V3 // lugar no gráfico
   tela: V3 // lugar na tela
   atraso: number // a mudança de forma passa como uma onda
@@ -85,15 +126,17 @@ function montar(N: number, pontos: Float32Array, k4: number, oy: number) {
   const somaAlto = colunas.reduce((a, c) => a + c.alto, 0)
   const yMedia = BASE_GRAF - (MEDIA_SAIU / TETO) * ALTO_GRAF
   for (let i = 0; i < N; i++) {
-    // esfera com estrutura, como um holograma: faixas de latitude, meridianos, o resto espalhado na casca e um
-    // pouco numa casca de dentro
-    const k = i + 0.5
-    let fi = Math.acos(1 - (2 * k) / N), teta = Math.PI * (1 + Math.sqrt(5)) * k, raio = RAIO * (0.97 + r() * 0.06)
-    const tipo = r()
-    if (tipo < 0.42) { fi = ((Math.floor(r() * 13) + 1) / 14) * Math.PI + (r() - 0.5) * 0.03; teta = r() * Math.PI * 2 }
-    else if (tipo < 0.6) { teta = (Math.floor(r() * 7) / 7) * Math.PI * 2 + (r() - 0.5) * 0.02; fi = r() * Math.PI }
-    else if (tipo < 0.82) { raio = RAIO * (0.94 + r() * 0.12) }
-    else { raio = RAIO * (0.42 + r() * 0.4) }
+    // rede: um terço em volta dos nós (uma casquinha em cada um), o resto andando pelos fios
+    let no = -1, elo = 0, des: V3
+    if (r() < 0.22) {
+      no = Math.floor(r() * REDE.nos.length)
+      const a = r() * Math.PI * 2, b = Math.acos(1 - 2 * r()), raio = 7 + r() * 5
+      des = [Math.sin(b) * Math.cos(a) * raio, Math.cos(b) * raio, Math.sin(b) * Math.sin(a) * raio]
+    } else {
+      elo = Math.floor(r() * REDE.elos.length)
+      des = [(r() - 0.5) * 2.4, (r() - 0.5) * 2.4, (r() - 0.5) * 2.4]
+    }
+    const t0 = r(), vel = 0.05 + r() * 0.12
     // gráfico: 82% nas colunas (proporcional à altura), o resto na linha da média e no chão
     let barra: V3, cat = 3
     const q = r()
@@ -112,8 +155,8 @@ function montar(N: number, pontos: Float32Array, k4: number, oy: number) {
     // tela: um ponto dos traços da tela do Consultor (sorteados em algoritmoTela.ts), em px de desenho
     const tela: V3 = [pontos[i * 2] / k4, pontos[i * 2 + 1] / k4 + oy, 0]
     fr.push({
-      // a maioria são traços e pontos; uns 12% são placas maiores (os blocos de dados do holograma)
-      esfera: [teta, fi, raio], barra, tela, atraso: r() * 0.35,
+      // a maioria são traços e pontos; uns 12% são placas maiores (os pacotes de dados)
+      no, elo, t0, vel, des, barra, tela, atraso: r() * 0.35,
       ...(r() < 0.12 ? { w: 6 + r() * 9, h: 2 + r() * 2.5 } : { w: 1 + r() * 4.5, h: 1 + r() * 1.4 }),
       brilho: Math.min(4, Math.floor(Math.pow(r(), 1.15) * 5)), fase: r() * 10, cat,
     })
@@ -124,8 +167,8 @@ function montar(N: number, pontos: Float32Array, k4: number, oy: number) {
 /** Câmera em cada cena: giro e inclinação (rad), aproximação. Na primeira e na última fica de frente: a tela encaixa na tela. */
 const CAM = [
   { yaw: 0, pitch: 0, zoom: 1.08 },
-  { yaw: -0.3, pitch: 0.18, zoom: 0.8 },
-  { yaw: 0.35, pitch: 0.3, zoom: 1.05 },
+  { yaw: -0.14, pitch: 0.18, zoom: 0.8 },
+  { yaw: -0.22, pitch: 0.3, zoom: 1.05 },
   { yaw: 0.26, pitch: 0.12, zoom: 1.0 },
   { yaw: 0, pitch: 0, zoom: 1.08 },
 ]
@@ -177,12 +220,11 @@ export function Algoritmo() {
     const contador = sticky.querySelector<HTMLElement>('[data-relacoes]')
     const sprHalo = brilho(256, [[0, 'rgba(255,200,110,0.55)'], [0.25, 'rgba(255,150,40,0.22)'], [0.6, 'rgba(255,120,20,0.06)'], [1, 'rgba(255,100,10,0)']])
     const sprPonto = brilho(48, [[0, 'rgba(255,248,225,1)'], [0.2, 'rgba(255,200,90,0.9)'], [0.55, 'rgba(255,150,40,0.22)'], [1, 'rgba(255,130,20,0)']])
-    const sprBokeh = brilho(96, [[0, 'rgba(255,170,50,0.18)'], [0.7, 'rgba(255,165,45,0.22)'], [0.86, 'rgba(255,195,90,0.3)'], [1, 'rgba(255,140,30,0)']])
 
     let W = 0, H = 0, dpr = 1, cx = 0, cy = 0, esc = 1, celular = false, reduzir = false
     let fr: Frag[] = [], chaveTela = ''
     // a tela do Consultor (cena 4): desenhada em px de CSS, centrada em (cx, yTela). No computador fica no lugar da
-    // esfera; no celular, entre o texto e os selos
+    // rede; no celular, entre o texto e os selos
     let tela: TelaPronta | null = null, yTela = 0
     // a abertura: a foto do Consultor de verdade (carrega quando a seção chega perto), em (realX, realY) com escala realS
     let real: ConsultorReal | null = null, chaveReal = '', realX = 0, realY = 0, realS = 1
@@ -193,7 +235,7 @@ export function Algoritmo() {
       carregarConsultor(celular ? 'cel' : 'pc', idiomaDasFotos()).then((r) => { if (chaveReal === chave) { real = r; medir(); desenhar(atual, performance.now()) } }).catch(() => { chaveReal = '' })
     }
     let perto = false
-    // a leitura (cena 1): o documento fica em (docX, docY) e a esfera anda (desX, desY) para dar lugar a ele
+    // a leitura (cena 1): o documento fica em (docX, docY) e a rede anda (desX, desY) para dar lugar a ele
     let docs: { pdf: DocPronto; planilha: DocPronto } | null = null, docX = 0, docY = 0, desX = 0, desY = 0, chaveDocs = ''
     const texto = sticky.querySelector<HTMLElement>('.ag-texto')!, selos = sticky.querySelector<HTMLElement>('.ag-selos')!
     const estilo = getComputedStyle(document.documentElement)
@@ -279,8 +321,12 @@ export function Algoritmo() {
 
     const ultimo = new Map<string, string>()
     const por = (k: string, v: string, f: () => void) => { if (ultimo.get(k) !== v) { ultimo.set(k, v); f() } }
-    let cenaAtual = -1, giro = 0, antesGiro = 0
-    const xs = new Float32Array(2000), ys = new Float32Array(2000), ss = new Float32Array(2000), vs = new Float32Array(2000)
+    let cenaAtual = -1, giro = 0, antesGiro = 0, pulso = 2.6, fluxo = 0
+    // a rede a cada quadro: cada nó no espaço (já girado), na tela e o quanto está aceso
+    const NN = REDE.nos.length
+    const rx = new Float32Array(NN), ry = new Float32Array(NN), rz = new Float32Array(NN)
+    const nx = new Float32Array(NN), ny = new Float32Array(NN), ns = new Float32Array(NN), aceso = new Float32Array(NN)
+    const xs = new Float32Array(2000), ys = new Float32Array(2000), ss = new Float32Array(2000), vs = new Float32Array(2000), ms = new Float32Array(2000)
 
     const desenhar = (p: number, tempo: number) => {
       const pres: number[] = [], and: number[] = []
@@ -296,28 +342,44 @@ export function Algoritmo() {
       yaw = mistura(CAM[i0].yaw, CAM[i1].yaw, f) + Math.sin(t * 0.00023) * 0.1 * bal
       pitch = mistura(CAM[i0].pitch, CAM[i1].pitch, f) + Math.cos(t * 0.00017) * 0.05 * bal
       zoom = mistura(CAM[i0].zoom, CAM[i1].zoom, f)
-      // na leitura a esfera chega para o lado e o documento fica no lugar dela
+      // na leitura a rede chega para o lado e o documento fica no lugar dela
       offX = desX * pres[1]; offY = desY * pres[1]
-      // cena 0: a tela se desmonta (desm) e a esfera, escondida atrás dela, cresce e acende (oculto vai a 0)
-      const desm = suave(0.025, 0.175, p), oculto = real ? 1 - suave(0.08, 0.18, p) : 0
+      // cena 0: a câmera entra na tela (desm) e a rede, lá no fundo e apagada, chega perto e acende (oculto vai a 0)
+      const desm = real ? suave(0.02, 0.185, p) : 1, oculto = 1 - suave(0.12, 0.7, desm)
+      const mg = mergulho(desm)
+      // enquanto a câmera não chega, a rede fica no meio da tela do Consultor (é para lá que ela vai)
+      if (real && desm < 1) {
+        const falta = 1 - suave(0.55, 1, desm), rw = real.w * realS
+        offX += (realX + rw / 2 - cx) * falta - mg.lado * Z_REDE * rw / (1 + Z_REDE - mg.cam)
+        offY += (realY + (real.h * realS) / 2 - cy) * falta
+      }
       const u1 = limitar((p - 0.2) / 0.2) // o andamento da leitura
-      // a esfera gira; calculando (cena 2), gira mais rápido
+      // a rede balança de um lado para o outro; calculando (cena 2), o sinal corre mais rápido e mais nós disparam
       const dt = antesGiro ? Math.min(0.05, (tempo - antesGiro) / 1000) : 0
       antesGiro = tempo
-      if (!reduzir) giro += dt * (0.25 + 0.9 * pres[2] + 0.3 * pres[1])
-      const calc = pres[2] // o quanto a esfera está "calculando" (ondas na casca)
+      const calc = pres[2]
+      if (!reduzir) {
+        giro += dt * (0.25 + 0.5 * calc + 0.2 * pres[1])
+        pulso += dt * (1.5 + 2.4 * calc + 0.6 * pres[1])
+        fluxo += dt * (1 + 2.2 * calc + 0.8 * pres[1])
+      }
+      const limiar = 0.42 - 0.22 * calc
 
-      // as formas ao longo do scroll: esfera → gráfico → tela. Cada fragmento muda com um atraso
-      const g0 = limitar((p - 0.576) / 0.144), v0 = limitar((p - 0.776) / 0.128), raioK = 1 - 0.42 * oculto
+      // as formas ao longo do scroll: rede → gráfico → tela. Cada fragmento muda com um atraso
+      const g0 = limitar((p - 0.576) / 0.144), v0 = limitar((p - 0.776) / 0.128), raioK = 1 / (1 + Z_REDE - mg.cam)
       const forma = (fx: Frag, i: number): V3 => {
-        const [teta, fi, raio] = fx.esfera
-        const onda = 1 + calc * 0.13 * Math.sin(3 * fi + s * 2.3) * Math.cos(2 * teta - s * 1.7)
-        const tt = teta + giro
-        const sf = Math.sin(fi) * raio * onda * raioK
-        const ex = sf * Math.cos(tt), ey = Math.cos(fi) * raio * onda * raioK, ez = sf * Math.sin(tt)
+        let ex: number, ey: number, ez: number
+        if (fx.no >= 0) { ex = rx[fx.no]; ey = ry[fx.no]; ez = rz[fx.no] }
+        else {
+          const e = REDE.elos[fx.elo], u = fx.t0 + fluxo * fx.vel, k = u - Math.floor(u)
+          ex = mistura(rx[e.a], rx[e.b], k); ey = mistura(ry[e.a], ry[e.b], k); ez = mistura(rz[e.a], rz[e.b], k)
+        }
+        ex += fx.des[0] * raioK; ey += fx.des[1] * raioK; ez += fx.des[2] * raioK
         const g = suave(fx.atraso, fx.atraso + 0.55, g0)
         const v = suave(fx.atraso, fx.atraso + 0.55, v0)
         vs[i] = v
+        // na rede os fragmentos são poeira fina; viram peça inteira quando saem para o gráfico
+        ms[i] = 0.42 + 0.58 * Math.max(g, v)
         let x = mistura(ex, fx.barra[0], g), y = mistura(ey, fx.barra[1], g), z = mistura(ez, fx.barra[2], g)
         x = mistura(x, fx.tela[0], v); y = mistura(y, fx.tela[1], v); z = mistura(z, fx.tela[2], v)
         // redemoinho no meio de cada viagem: o fragmento faz uma curva em vez de ir reto
@@ -333,10 +395,10 @@ export function Algoritmo() {
       ctx.clearRect(0, 0, W, H)
       ctx.globalCompositeOperation = 'lighter'
 
-      // névoa de luz atrás (mais forte com a esfera inteira)
+      // névoa de luz atrás (mais forte com a rede inteira)
       const centro = proj(0, 0, 0)
-      const esferaCheia = (1 - suave(0.576, 0.68, p)) * (1 - oculto)
-      // a leitura: onde está a luz em cada documento e os lançamentos no ar; cada um que chega acende a esfera
+      const redeCheia = (1 - suave(0.576, 0.68, p)) * (1 - 0.8 * oculto)
+      // a leitura: onde está a luz em cada documento e os lançamentos no ar; cada um que chega acende a entrada da rede
       let chegada = 0, bPdf = 0, bPla = 0
       const lidos: { l: LinhaLida; doc: DocPronto; i: number; c: number }[] = []
       if (docs && pres[1] > 0.01) {
@@ -355,32 +417,79 @@ export function Algoritmo() {
       }
       chegada = Math.min(1, chegada) * pres[1]
       const th = (720 + 160 * calc) * esc * zoom
-      ctx.globalAlpha = Math.min(1, 0.25 + 0.55 * esferaCheia + 0.3 * pres[n - 1] + 0.3 * pres[0] + 0.5 * chegada)
+      ctx.globalAlpha = Math.min(1, 0.2 + 0.3 * redeCheia + 0.3 * pres[n - 1] + 0.3 * pres[0] + 0.3 * chegada)
       ctx.drawImage(sprHalo, centro.x - th / 2, centro.y - th / 2, th, th)
       ctx.globalAlpha = 1
 
-      // anéis tracejados em volta da esfera (somem quando ela vira gráfico)
-      if (esferaCheia > 0.02) {
-        const anel = (r: number, ix: number, iy: number, rot: number, alfa: number, larg: number, arco = false) => {
-          ctx.beginPath()
-          for (let k = 0; k <= (arco ? 60 : 96); k++) {
-            const a = (k / 96) * Math.PI * 2 + rot
-            const X0 = Math.cos(a) * r, Y0 = Math.sin(a) * r
-            const Y1 = Y0 * Math.cos(ix), Z1 = Y0 * Math.sin(ix)
-            const X2 = X0 * Math.cos(iy) + Z1 * Math.sin(iy), Z2 = -X0 * Math.sin(iy) + Z1 * Math.cos(iy)
-            const P = proj(X2, Y1, Z2)
-            if (arco ? k === 0 : k % 8 === 0) ctx.moveTo(P.x, P.y); else if (arco || k % 8 < 5) ctx.lineTo(P.x, P.y)
-          }
-          // passada larga e fraca (o brilho) e passada fina e forte
-          ctx.strokeStyle = `rgba(255,150,40,${alfa * 0.25})`; ctx.lineWidth = larg * 4; ctx.stroke()
-          ctx.strokeStyle = `rgba(255,205,120,${alfa})`; ctx.lineWidth = larg; ctx.stroke()
+      // a rede: onde está cada nó e o quanto está aceso (a onda de sinal passa da entrada para a saída)
+      const ang = -0.5 + 0.22 * Math.sin(giro * 0.5), ca = Math.cos(ang), sa = Math.sin(ang)
+      for (let i = 0; i < NN; i++) {
+        const no = REDE.nos[i]
+        rx[i] = (no.x * ca + no.z * sa) * raioK; ry[i] = no.y * raioK; rz[i] = (-no.x * sa + no.z * ca) * raioK
+        const P = proj(rx[i], ry[i], rz[i])
+        nx[i] = P.x; ny[i] = P.y; ns[i] = P.s * esc * zoom * raioK
+        const fase = (pulso - no.camada) / ESPACO, k = Math.floor(fase)
+        aceso[i] = forca(i, k, limiar) * Math.exp(-(fase - k) * ESPACO * 1.15)
+        if (no.camada === 0) aceso[i] = Math.max(aceso[i], chegada)
+      }
+      if (redeCheia > 0.02) {
+        // os fios: todos bem fracos (os de trás mais ainda) e, mais fortes, os que estão levando sinal agora
+        const fios = [new Path2D(), new Path2D()], vivos = new Path2D(), pontas: [number, number, number, number][] = []
+        for (const { a, b } of REDE.elos) {
+          const f = fios[rz[a] + rz[b] > 0 ? 0 : 1]
+          f.moveTo(nx[a], ny[a]); f.lineTo(nx[b], ny[b])
+          const fase = (pulso - REDE.nos[a].camada) / ESPACO, k = Math.floor(fase), u = (fase - k) * ESPACO
+          if (u >= 1.25) continue
+          const v = forca(a, k, limiar) * forca(b, k, limiar)
+          if (!v) continue
+          // o trecho aceso é um rastro curto atrás da ponta do sinal
+          const t1 = Math.min(1, u), t0 = Math.max(0, u - 0.45)
+          vivos.moveTo(mistura(nx[a], nx[b], t0), mistura(ny[a], ny[b], t0)); vivos.lineTo(mistura(nx[a], nx[b], t1), mistura(ny[a], ny[b], t1))
+          if (u < 1) pontas.push([mistura(nx[a], nx[b], u), mistura(ny[a], ny[b], u), mistura(ns[a], ns[b], u), v])
         }
-        anel(RAIO * 1.18, 1.25, 0.2, giro * 0.7, 0.55 * esferaCheia, 1.2)
-        anel(RAIO * 1.32, 0.35, -0.6, -giro * 0.5, 0.4 * esferaCheia, 1.2)
-        anel(RAIO * 0.42, 1.0, 0.4, giro * 1.6, 0.8 * esferaCheia, 1.4)
-        // arcos de luz fortes passando por dentro da esfera (como os da imagem de referência)
-        anel(RAIO * 0.78, 1.4, -0.3, giro * 1.1, 0.9 * esferaCheia, 3.2, true)
-        anel(RAIO * 0.62, 0.6, 0.9, -giro * 1.3, 0.75 * esferaCheia, 2.4, true)
+        ctx.lineWidth = 1
+        ctx.strokeStyle = `rgba(255,170,70,${(0.07 * redeCheia).toFixed(3)})`; ctx.stroke(fios[0])
+        ctx.strokeStyle = `rgba(255,185,90,${(0.16 * redeCheia).toFixed(3)})`; ctx.stroke(fios[1])
+        ctx.strokeStyle = `rgba(255,170,60,${(0.16 * redeCheia).toFixed(3)})`; ctx.lineWidth = 3; ctx.stroke(vivos)
+        ctx.strokeStyle = `rgba(255,232,180,${(0.85 * redeCheia).toFixed(3)})`; ctx.lineWidth = 1.1; ctx.stroke(vivos)
+        for (const [x, y, k, v] of pontas) {
+          const tam = (9 + 9 * v) * k
+          ctx.globalAlpha = redeCheia * (0.5 + 0.5 * v)
+          ctx.drawImage(sprPonto, x - tam / 2, y - tam / 2, tam, tam)
+        }
+        // cada camada num quadro fino, com as quinas marcadas (as fatias da rede)
+        const quadros = new Path2D(), quinas = new Path2D()
+        CAMADAS.forEach(([nz, nyy], c) => {
+          if (nz < 2) return
+          const x = REDE.nos[REDE.inicio[c]].x, my = ((nyy - 1) / 2) * PASSO_Y + 26, mz = ((nz - 1) / 2) * PASSO_Z + 22
+          const q = [[-my, -mz], [-my, mz], [my, mz], [my, -mz]].map(([y, z]) => proj((x * ca + z * sa) * raioK, y * raioK, (-x * sa + z * ca) * raioK))
+          q.forEach((P, i) => {
+            const A = q[(i + 3) % 4], B = q[(i + 1) % 4]
+            if (i === 0) quadros.moveTo(P.x, P.y); else quadros.lineTo(P.x, P.y)
+            quinas.moveTo(mistura(P.x, A.x, 0.14), mistura(P.y, A.y, 0.14)); quinas.lineTo(P.x, P.y); quinas.lineTo(mistura(P.x, B.x, 0.14), mistura(P.y, B.y, 0.14))
+          })
+          quadros.closePath()
+        })
+        ctx.globalAlpha = redeCheia
+        ctx.lineWidth = 1
+        ctx.strokeStyle = 'rgba(255,190,100,0.1)'; ctx.stroke(quadros)
+        ctx.strokeStyle = 'rgba(255,205,130,0.5)'; ctx.stroke(quinas)
+        // os nós: um halo que cresce com o sinal, um anel fino e o miolo
+        const aneis = new Path2D(), miolos = new Path2D(), cheios = new Path2D()
+        for (let i = 0; i < NN; i++) {
+          const saida = REDE.nos[i].camada === CAMADAS.length - 1, a = aceso[i], k = ns[i] * (saida ? 2.4 : 1)
+          const tam = (16 + 50 * a) * k
+          ctx.globalAlpha = redeCheia * (0.25 + 0.75 * a)
+          ctx.drawImage(sprPonto, nx[i] - tam / 2, ny[i] - tam / 2, tam, tam)
+          aneis.moveTo(nx[i] + 6 * k, ny[i]); aneis.arc(nx[i], ny[i], 6 * k, 0, Math.PI * 2)
+          const m = a > 0.45 ? cheios : miolos, rm = (2 + 2.6 * a) * k
+          m.moveTo(nx[i] + rm, ny[i]); m.arc(nx[i], ny[i], rm, 0, Math.PI * 2)
+        }
+        ctx.globalAlpha = redeCheia
+        ctx.strokeStyle = 'rgba(255,205,130,0.75)'; ctx.lineWidth = 1.1; ctx.stroke(aneis)
+        ctx.fillStyle = 'rgba(255,190,100,0.75)'; ctx.fill(miolos)
+        ctx.fillStyle = 'rgba(255,246,224,1)'; ctx.fill(cheios)
+        ctx.globalAlpha = 1
       }
 
       // a tela acende de cima para baixo depois que os fragmentos pousam: acima da linha de luz já é a tela; os
@@ -404,7 +513,7 @@ export function Algoritmo() {
       const grupos = new Map<string, number[]>()
       for (let i = 0; i < N; i++) {
         const fx = fr[i]
-        // alguns piscam (como no holograma): sobem de tom de tempos em tempos
+        // alguns piscam: sobem de tom de tempos em tempos
         let tom = reduzir ? fx.brilho : Math.min(4, fx.brilho + ((i * 7 + pisca) % 11 === 0 ? 2 : 0))
         if (acende > 0 && vs[i] > 0.98) {
           if (ys[i] < yLuz - 3) continue
@@ -428,7 +537,7 @@ export function Algoritmo() {
         else { const [c, tom, passo] = chave.split('.').map(Number); ctx.fillStyle = PALETA[c][tom][passo] }
         for (const i of idx) {
           // pousados na tela, ficam menores (viram os traços das letras)
-          const fx = fr[i], k = ss[i] * esc * zoom * (1 - 0.35 * vs[i])
+          const fx = fr[i], k = ss[i] * esc * zoom * (1 - 0.35 * vs[i]) * ms[i]
           ctx.fillRect(xs[i] - (fx.w * k) / 2, ys[i] - (fx.h * k) / 2, fx.w * k + 0.6, fx.h * k + 0.6)
         }
       })
@@ -436,25 +545,15 @@ export function Algoritmo() {
       ctx.globalAlpha = 0.6 * (1 - 0.85 * oculto)
       for (let i = 0; i < N; i += 14) {
         if (acende > 0 && vs[i] > 0.98 && ys[i] < yLuz - 3) continue
-        const tam = (10 + 8 * Math.sin(s * 2 + fr[i].fase)) * ss[i] * esc
+        const tam = (10 + 8 * Math.sin(s * 2 + fr[i].fase)) * ss[i] * esc * ms[i]
         ctx.drawImage(sprPonto, xs[i] - tam / 2, ys[i] - tam / 2, tam, tam)
       }
       ctx.globalAlpha = 1
 
-      // o centro da esfera: um anel de luz aceso
-      if (esferaCheia > 0.02) {
-        const tn = (110 + 20 * Math.sin(s * 3) + 120 * chegada) * esc * zoom
-        ctx.globalAlpha = esferaCheia
-        ctx.drawImage(sprPonto, centro.x - tn / 2, centro.y - tn / 2, tn, tn)
-        ctx.strokeStyle = `rgba(255,220,150,${0.8 * esferaCheia})`; ctx.lineWidth = 2
-        ctx.beginPath(); ctx.ellipse(centro.x, centro.y, 34 * esc * zoom, 30 * esc * zoom, 0, 0, Math.PI * 2); ctx.stroke()
-        ctx.globalAlpha = 1
-      }
-
-      // cena 0: a tela do Consultor de verdade e, rolando, ela se desmontando peça por peça
+      // cena 0: a tela do Consultor de verdade e, rolando, a câmera entrando nela
       if (real && desm < 1 && pres[0] > 0) {
         const rw = real.w * realS, rh = real.h * realS, raio = celular ? 26 * realS * 1.6 : 12
-        // a moldura dourada em volta da tela (some quando ela começa a se desmontar)
+        // a moldura dourada em volta da tela (some quando ela começa a abrir)
         const moldura = 1 - suave(0, 0.15, desm)
         if (moldura > 0) {
           ctx.globalCompositeOperation = 'lighter'
@@ -462,7 +561,7 @@ export function Algoritmo() {
           ctx.drawImage(sprHalo, realX - rw * 0.2, realY - rh * 0.25, rw * 1.4, rh * 1.5)
           ctx.globalAlpha = 1
         }
-        desenharConsultor(ctx, real, realX, realY, realS, desm, W, H, raio)
+        desenharConsultor(ctx, real, realX, realY, realS, desm, raio)
         if (moldura > 0) {
           ctx.globalCompositeOperation = 'lighter'
           ctx.strokeStyle = `rgba(255,200,110,${(0.6 * moldura).toFixed(3)})`; ctx.lineWidth = 1.5
@@ -503,12 +602,13 @@ export function Algoritmo() {
           }
           ctx.restore()
         }
-        // cada linha lida vira um lançamento que voa até a esfera, com um rastro de faíscas
+        // cada linha lida vira um lançamento que voa até um nó da entrada da rede, com um rastro de faíscas
         for (const { l, doc: dl, i, c } of lidos) {
+          const alvo = (i * 5 + (dl === docs.pdf ? 0 : 3)) % REDE.entrada, ax = nx[alvo], ay = ny[alvo]
           const ry = docY + (dl.linhas[i] - dl.h / 2) * e
           const sx = celular ? docX : docX + dl.w * 0.32, sy = ry
-          const kx = celular ? docX + (i % 2 ? 80 : -80) : (sx + centro.x) / 2, ky = celular ? (sy + centro.y) / 2 : Math.min(sy, centro.y) - 80
-          const ponto = (t: number) => [(1 - t) * (1 - t) * sx + 2 * (1 - t) * t * kx + t * t * centro.x, (1 - t) * (1 - t) * sy + 2 * (1 - t) * t * ky + t * t * centro.y]
+          const kx = celular ? docX + (i % 2 ? 80 : -80) : (sx + ax) / 2, ky = celular ? (sy + ay) / 2 : Math.min(sy, ay) - 80
+          const ponto = (t: number) => [(1 - t) * (1 - t) * sx + 2 * (1 - t) * t * kx + t * t * ax, (1 - t) * (1 - t) * sy + 2 * (1 - t) * t * ky + t * t * ay]
           const tb = suave(0.12, 1, c)
           ctx.globalCompositeOperation = 'lighter'
           for (let k = 1; k <= 5; k++) {
@@ -565,14 +665,6 @@ export function Algoritmo() {
         }
       }
 
-      // bokeh por cima, poucos e grandes
-      // por cima da tela do Consultor inteira o bokeh atrapalharia a leitura
-      ctx.globalAlpha = 0.28 * (real ? 1 - pres[0] * (1 - desm) : 1)
-      for (let i = 0; i < 14; i++) {
-        const a = i * 2.39 + s * 0.05, rr = (380 + (i % 4) * 120) * esc
-        const x = cx + Math.cos(a) * rr * 1.3, y = cy + Math.sin(a * 1.2) * rr * 0.75, tam = (60 + (i % 5) * 26) * esc
-        ctx.drawImage(sprBokeh, x - tam / 2, y - tam / 2, tam, tam)
-      }
       ctx.globalAlpha = 1
       ctx.globalCompositeOperation = 'source-over'
 

@@ -225,3 +225,20 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
   o site; a confirmação veio da Vercel.
 - Sem migração. Com isso, as pendências "Metas" e "Cartões" da análise de 14/11 estão resolvidas e publicadas no site.
 
+
+### 15/11/2026 — Claude — Motor do OpusCash: a câmera entra na tela e a esfera vira rede neural
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Pedido do Edigar: a abertura da seção "O motor do OpusCash" (a tela do Consultor virando quadradinhos) não agradou, e a
+  esfera dourada "parecia feita por IA". Ele pediu a câmera entrando na tela, como num espaço 3D, até chegar no algoritmo
+  que roda atrás dela, e um desenho com cara de rede neural.
+- `src/pages/algoritmoConsultor.ts`: as peças da foto do Consultor agora têm profundidade (o que está dentro dos cartões na
+  frente, os cartões no meio, o fundo atrás). `mergulho(desm)` dá a abertura das camadas, a posição da câmera e o olhar de
+  lado; `desenharConsultor` desenha tudo em perspectiva a partir do meio da tela, com um corredor de molduras até a rede.
+- `src/pages/Algoritmo.tsx`: a esfera, os anéis, os arcos e o bokeh saíram. No lugar, uma rede em camadas (`REDE`: 110 nós,
+  fios só entre camadas vizinhas), com ondas de sinal da entrada para a saída (`forca`, `pulso`), um quadro fino por camada e
+  os fragmentos como poeira que anda pelos fios. Os lançamentos lidos do extrato entram pelos nós da primeira camada. As
+  cenas do gráfico e da tela final seguem iguais.
+- Validação: `npx tsc -b` e build com Supabase fictício passaram; `npm run lint` sem erros; fotos no Chromium (computador
+  1440×860 e celular 390×844) em toda a rolagem, sem erro de página.
