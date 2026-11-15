@@ -108,26 +108,31 @@
 :root[data-movimento='reduzido'] .ag :is(.ag-hud > span i, .ag-rotulo i, .ag-legenda) { animation: none; transition: none; }
 
 /* ─── modo claro ───
-   O desenho do motor é feito de luz somada sobre o escuro. No claro, o canvas é invertido (invert + hue-rotate: o
-   claro vira escuro e as cores ficam no mesmo tom): o dourado que brilhava vira dourado escuro sobre creme. O que
-   precisa sair com a cor de verdade (as fotos do Consultor, o papel dos documentos, as cores de entrada, saída e
-   dívida) o componente já desenha compensado (Algoritmo.tsx, `paraClaro`). O resto aqui são as cores das peças em HTML. */
-:root[data-tema='claro'] .ag {
+   Até a fresta, a tela do Consultor aparece clara: o canvas é invertido pelo CSS (invert + hue-rotate) e a tela é
+   desenhada já compensada (Algoritmo.tsx / algoritmoConsultor.ts, `paraClaro`). Da fresta em diante a seção vira o
+   "estúdio" (.ag-estudio): grafite-azulado como o fundo dos cartões dos fundadores no claro, com luz azul de um lado e
+   verde-água do outro, e o motor desenhado como no escuro (sem inverter). A troca acontece quando a fresta, já da cor
+   do estúdio, ocupa a cena inteira; no fim da seção o grafite volta para a cor da página. */
+:root[data-tema='claro'] .ag:not(.ag-estudio) {
   --ouro: #a3600b; --ouro-forte: #c47a14; --tinta: #1d1710; --tinta-2: rgba(40, 30, 16, .72); --breu: #f6f1e8;
 }
-:root[data-tema='claro'] .ag-rede { filter: invert(1) hue-rotate(180deg); }
-:root[data-tema='claro'] .ag-sticky::after { background: linear-gradient(90deg, rgba(246, 241, 232, .94) 0%, rgba(246, 241, 232, .72) 24%, transparent 42%); }
-:root[data-tema='claro'] .ag-compara {
-  background: rgba(255, 252, 246, .92); border-color: rgba(176, 112, 20, .4);
-  box-shadow: 0 0 0 4px rgba(196, 122, 20, .06), 0 14px 30px -18px rgba(60, 40, 10, .45);
-}
-:root[data-tema='claro'] .ag-compara small { color: rgba(60, 44, 20, .62); }
-:root[data-tema='claro'] .ag-compara.bom b { color: #138a55; }
-:root[data-tema='claro'] .ag-hud b { text-shadow: none; }
-:root[data-tema='claro'] .ag-selos span { background: rgba(255, 252, 246, .9); border-color: rgba(176, 112, 20, .3); }
-:root[data-tema='claro'] .ag-rotulo { background: rgba(196, 122, 20, .08); border-color: rgba(176, 112, 20, .35); }
-:root[data-tema='claro'] .ag-trilho button { background: rgba(60, 44, 20, .18); }
-:root[data-tema='claro'] .ag-trilho button.ativo { background: linear-gradient(90deg, var(--ouro-forte), #e2a24a); box-shadow: 0 0 12px rgba(196, 122, 20, .35); }
+:root[data-tema='claro'] .ag:not(.ag-estudio) .ag-rede { filter: invert(1) hue-rotate(180deg); }
+:root[data-tema='claro'] .ag:not(.ag-estudio) .ag-sticky::after { background: linear-gradient(90deg, rgba(246, 241, 232, .94) 0%, rgba(246, 241, 232, .72) 24%, transparent 42%); }
+:root[data-tema='claro'] .ag:not(.ag-estudio) .ag-rotulo { background: rgba(196, 122, 20, .08); border-color: rgba(176, 112, 20, .35); }
+:root[data-tema='claro'] .ag:not(.ag-estudio) .ag-trilho button { background: rgba(60, 44, 20, .18); }
+:root[data-tema='claro'] .ag:not(.ag-estudio) .ag-trilho button.ativo { background: linear-gradient(90deg, var(--ouro-forte), #e2a24a); box-shadow: 0 0 12px rgba(196, 122, 20, .35); }
 @media (max-width: 900px) {
-  :root[data-tema='claro'] .ag-sticky::after { background: linear-gradient(180deg, rgba(246, 241, 232, .94) 0, rgba(246, 241, 232, .78) min(250px, 30vh), transparent min(320px, 38vh)); }
+  :root[data-tema='claro'] .ag:not(.ag-estudio) .ag-sticky::after { background: linear-gradient(180deg, rgba(246, 241, 232, .94) 0, rgba(246, 241, 232, .78) min(250px, 30vh), transparent min(320px, 38vh)); }
+}
+/* o estúdio: o fundo grafite e as luzes de estúdio atrás do motor; o véu atrás do texto no mesmo grafite */
+:root[data-tema='claro'] .ag.ag-estudio { --breu: #343b49; --tinta: #f3f5fa; --tinta-2: rgba(232, 238, 248, .76); }
+:root[data-tema='claro'] .ag.ag-estudio .ag-sticky {
+  background:
+    radial-gradient(60% 55% at 62% 45%, rgba(125, 134, 150, .55) 0%, rgba(86, 95, 111, .35) 42%, transparent 80%),
+    radial-gradient(45% 50% at 0% 75%, rgba(61, 75, 224, .2), transparent 70%),
+    radial-gradient(45% 50% at 100% 90%, rgba(20, 201, 160, .18), transparent 70%);
+}
+:root[data-tema='claro'] .ag.ag-estudio .ag-sticky::after { background: linear-gradient(90deg, rgba(52, 59, 73, .9) 0%, rgba(52, 59, 73, .62) 24%, transparent 42%); }
+@media (max-width: 900px) {
+  :root[data-tema='claro'] .ag.ag-estudio .ag-sticky::after { background: linear-gradient(180deg, rgba(52, 59, 73, .92) 0, rgba(52, 59, 73, .74) min(250px, 30vh), transparent min(320px, 38vh)); }
 }

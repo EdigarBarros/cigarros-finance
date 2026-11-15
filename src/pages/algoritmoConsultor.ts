@@ -52,6 +52,11 @@ export interface ConsultorReal {
   tira: HTMLCanvasElement | null; tiraY: number; tiraH: number
   /** a cor do fundo do painel (já compensada no modo claro) */
   corFundo: string
+  /**
+   * A tela e a cor do fundo como são (sem compensar): no modo claro, depois da fresta, o motor é desenhado sem a
+   * inversão (o estúdio grafite), e a tela presa na rede usa estas
+   */
+  iaVista: HTMLCanvasElement; corFundoVista: string
 }
 
 /** Em que ponto do mergulho a câmera atravessa a fresta (depois vêm o túnel e a saída para fora). */
@@ -151,19 +156,24 @@ export async function carregarConsultor(aparelho: 'pc' | 'cel', idioma: string, 
   // a cor do fundo: um ponto no meio da foto do fundo (lá não há cartões nem beirada apagada)
   const ponto = fundo.g.getImageData(Math.round(cw * 0.6), Math.round(ch * 0.5), 1, 1).data
   let corFundo = [ponto[0], ponto[1], ponto[2]] as [number, number, number]
+  const corFundoVista = `rgb(${corFundo.join(',')})`
+  let iaVista = ia.c
   if (claro) {
+    const copia = tela(cw, ch)
+    copia.g.drawImage(ia.c, 0, 0)
+    iaVista = copia.c
     canvasParaClaro(ia.c)
     if (tira) canvasParaClaro(tira)
     corFundo = paraClaro(...corFundo)
   }
-  return { w, h, ia: ia.c, q, fr, fx: fr[0] + fr[2] / 2, fy: fr[1] + fr[3] / 2, tira, tiraY, tiraH, corFundo: `rgb(${corFundo.join(',')})` }
+  return { w, h, ia: ia.c, q, fr, fx: fr[0] + fr[2] / 2, fy: fr[1] + fr[3] / 2, tira, tiraY, tiraH, corFundo: `rgb(${corFundo.join(',')})`, iaVista, corFundoVista }
 }
 
 /**
  * Desenha a tela com o meio da fresta em (ax, ay) e escala s (px da página por px da foto), já aumentada pelo
  * mergulho. vw × vh é o tamanho da cena (só a parte da foto que cabe nela é desenhada).
  */
-export function desenharConsultor(g: CanvasRenderingContext2D, t: ConsultorReal, ax: number, ay: number, s: number, desm: number, E: number, vw: number, vh: number) {
+export function desenharConsultor(g: CanvasRenderingContext2D, t: ConsultorReal, ax: number, ay: number, s: number, desm: number, E: number, vw: number, vh: number, corFresta = 'rgb(3,4,8)') {
   const e = aumento(Math.max(0, desm), E)
   if (!e) return
   const k = s * e
@@ -191,7 +201,7 @@ export function desenharConsultor(g: CanvasRenderingContext2D, t: ConsultorReal,
   if (escuro > 0) {
     const fx0 = ax + (t.fr[0] - t.fx) * k, fy0 = ay + (t.fr[1] - t.fy) * k, fw = t.fr[2] * k, fh = t.fr[3] * k
     g.globalAlpha = escuro
-    g.fillStyle = 'rgb(3,4,8)'; g.fillRect(fx0, fy0, fw, fh)
+    g.fillStyle = corFresta; g.fillRect(fx0, fy0, fw, fh)
     // o brilho fica do tamanho de uma luz lá no fundo (não cresce com a tela) e se apaga antes de a câmera passar: do
     // outro lado é escuro
     const raio = Math.min(Math.max(fw, fh) * 0.5, Math.min(vw, vh) * 0.35)
