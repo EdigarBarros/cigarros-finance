@@ -211,5 +211,17 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
 - Validações executadas pelo Claude: `npx tsc -b` passou; `npm run lint` sem erros (só avisos antigos); build com
   Supabase fictício passou; painel 20/20; extrato 54/54 e pistas 2/2; Invest 27/27; `testar-correcoes.cjs` no
   Chromium passou (metas com falha e nova tentativa, envio duplicado bloqueado, 1.002 faturas).
-- Publicação: registrada na entrada seguinte, depois de confirmada.
+- Publicação: veja a entrada seguinte.
+
+### 15/11/2026 — Claude — Publicação das correções do GPT/Codex
+
+**Estado:** publicado no site. O app Android ainda não recebeu (precisa de versão nova).
+
+- PR #174 (branch `claude/modest-maxwell-wbm7jl` → `claude/practical-mccarthy-qt2qoa`) mesclado por squash: commit
+  `de49acbadde8f9a373b51cb3666688a2a6e2f65f`. Antes do merge, a produção estava em `11b11ae`, sem nada a integrar, e o conteúdo
+  mesclado foi conferido igual ao revisado (`git diff` vazio).
+- Vercel: deploy de produção `dpl_9RVcQGQqYU1KBLNWaQFeUYkZmdmL` do commit `de49acb` em `READY`, com os endereços
+  `www.opuscash.com.br` e `opuscash.com.br`. O `versao.json` não foi conferido: a rede do ambiente do Claude bloqueia
+  o site; a confirmação veio da Vercel.
+- Sem migração. Com isso, as pendências "Metas" e "Cartões" da análise de 14/11 estão resolvidas e publicadas no site.
 
