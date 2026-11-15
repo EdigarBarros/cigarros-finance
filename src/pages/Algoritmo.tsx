@@ -102,14 +102,35 @@ function forca(no: number, k: number, limiar: number) {
   return u < limiar ? 0 : 0.35 + 0.65 * ((u - limiar) / (1 - limiar))
 }
 const BASE_GRAF = 170, ALTO_GRAF = 330, LARGO_GRAF = 640
-/** A largura (e a profundidade) de cada coluna e a distância entre as três de um mês. */
-const LARGO_BARRA = 15, PASSO_BARRA = 18
+/**
+ * Cada coluna é uma pilha de quadradinhos: CUBO de lado, dois por camada (a largura da coluna é 2 × CUBO), com tantas
+ * camadas quanto cabem na altura do valor. O gráfico firme tem exatamente o tamanho das pilhas.
+ */
+const CUBO = 7.5, LARGO_BARRA = CUBO * 2, PASSO_BARRA = 18
 /** O meio de cada coluna (mês m, série k). */
 const xColuna = (m: number, k: number) => (m / (MESES - 1) - 0.5) * LARGO_GRAF + (k - 1) * PASSO_BARRA
+/** Quantas camadas de quadradinhos tem a coluna do mês m na série k. */
+const camadas = (m: number, k: number) => Math.max(1, Math.round(((SERIES[k][m] / TETO) * ALTO_GRAF) / CUBO))
+/** Cada lugar das pilhas: x, y (o meio do quadradinho), a série e a camada. Os cubinhos coloridos são exatamente estes. */
+const LUGARES = (() => {
+  const l: { x: number; y: number; cat: number; camada: number }[] = []
+  for (let m = 0; m < MESES; m++) {
+    for (let k = 0; k < SERIES.length; k++) {
+      const x = xColuna(m, k)
+      for (let j = 0; j < camadas(m, k); j++) {
+        for (const q of [-0.5, 0.5]) l.push({ x: x + q * CUBO, y: BASE_GRAF - (j + 0.5) * CUBO, cat: k, camada: j })
+      }
+    }
+  }
+  return l
+})()
 
 // ─── o caminho de cada linha lida pela rede: de um nó da entrada, de fio em fio, até a saída ───
+// cada linha entra pelo nó da entrada que está na mesma altura dela no documento (a de cima no de cima): a esteira
+// sai do papel quase reta
 const CAMINHOS = LIDAS.map((_, r) => {
-  let no = (r * 5 + 2) % REDE.entrada
+  const [nz, ny] = CAMADAS[0], i = r < LIDAS_PDF.length ? r : r - LIDAS_PDF.length, qtd = r < LIDAS_PDF.length ? LIDAS_PDF.length : LIDAS.length - LIDAS_PDF.length
+  let no = Math.round((i / (qtd - 1)) * (ny - 1)) * nz + (i % nz)
   const c = [no]
   for (let k = 0; k < CAMADAS.length - 1; k++) {
     const saem = REDE.elos.filter((e) => e.a === no)
@@ -144,10 +165,7 @@ interface Frag {
 function montar(N: number, pontos: Float32Array, k4: number, oy: number) {
   const r = sorteio(31)
   const fr: Frag[] = []
-  // gráfico: uma coluna por mês e por série (entrou, saiu, dívidas, lado a lado)
-  const colunas: { x: number; alto: number; cat: number }[] = []
-  for (let m = 0; m < MESES; m++) SERIES.forEach((serie, k) => colunas.push({ x: xColuna(m, k), alto: (serie[m] / TETO) * ALTO_GRAF, cat: k }))
-  const somaAlto = colunas.reduce((a, c) => a + c.alto, 0)
+  // gráfico: os primeiros cubinhos são os quadradinhos das pilhas (coloridos); o resto, dourado, fica na média e no chão
   const yMedia = BASE_GRAF - (MEDIA_SAIU / TETO) * ALTO_GRAF
   // as linhas lidas de cada tipo (os cubinhos de uma cor nascem das linhas daquela cor, em rodízio)
   const porTipo = TIPOS.map((t) => LIDAS.flatMap((l, i) => (l.tipo === t ? [i] : [])))
@@ -164,16 +182,14 @@ function montar(N: number, pontos: Float32Array, k4: number, oy: number) {
       des = [(r() - 0.5) * 2.4, (r() - 0.5) * 2.4, (r() - 0.5) * 2.4]
     }
     const t0 = r(), vel = 0.05 + r() * 0.12
-    // gráfico: 70% nas colunas (proporcional à altura de cada uma), coloridos; o resto, dourado, na média e no chão
     let barra: V3, cat = 3, atraso = r() * 0.3, linha = -1
-    if (r() < 0.7) {
-      let alvo = r() * somaAlto, c = 0
-      while (c < colunas.length - 1 && alvo > colunas[c].alto) { alvo -= colunas[c].alto; c++ }
-      const col = colunas[c], hf = r()
-      barra = [col.x + (r() - 0.5) * LARGO_BARRA, BASE_GRAF - hf * col.alto, (r() - 0.5) * LARGO_BARRA]
-      cat = col.cat
-      // as colunas enchem de baixo para cima
-      atraso = 0.04 * r() + 0.3 * hf
+    if (i < LUGARES.length) {
+      // na frente da coluna firme (é ali que eles aparecem quando ela se desfaz)
+      const lugar = LUGARES[i]
+      barra = [lugar.x, lugar.y, -LARGO_BARRA / 2 + 0.6]
+      cat = lugar.cat
+      // as pilhas sobem de baixo para cima, camada por camada
+      atraso = 0.32 * ((lugar.camada * CUBO) / ALTO_GRAF) + 0.03 * r()
       const lista = porTipo[cat]
       linha = lista[vez[cat]++ % lista.length]
     } else if (r() < 0.4) {
@@ -196,7 +212,7 @@ function montar(N: number, pontos: Float32Array, k4: number, oy: number) {
 /** Câmera em cada cena: giro e inclinação (rad), aproximação. Na primeira e na última fica de frente: a tela encaixa na tela. */
 const CAM = [
   { yaw: 0, pitch: 0, zoom: 1.08 },
-  { yaw: -0.14, pitch: 0.18, zoom: 0.7 },
+  { yaw: -0.14, pitch: 0.18, zoom: 0.62 },
   { yaw: -0.22, pitch: 0.3, zoom: 1.05 },
   { yaw: 0.26, pitch: 0.12, zoom: 1.0 },
   { yaw: 0, pitch: 0, zoom: 1.08 },
@@ -266,8 +282,6 @@ export function Algoritmo() {
     let perto = false
     // a leitura (cena 1): o documento fica em (docX, docY) e a rede anda (desX, desY) para dar lugar a ele
     let docs: { pdf: DocPronto; planilha: DocPronto; textos: TextoLido[] } | null = null, docX = 0, docY = 0, desX = 0, desY = 0, chaveDocs = ''
-    // onde o texto de cada linha se desfaz (apagando o que já virou cubinho) antes de ir para a tela
-    const rasc = document.createElement('canvas'), rg = rasc.getContext('2d')!
     const texto = sticky.querySelector<HTMLElement>('.ag-texto')!, selos = sticky.querySelector<HTMLElement>('.ag-selos')!
     const estilo = getComputedStyle(document.documentElement)
     const fonte = (v: string, padrao: string) => estilo.getPropertyValue(v).trim() || padrao
@@ -287,7 +301,8 @@ export function Algoritmo() {
         cx = esq + aw / 2; cy = H * 0.5; esc = Math.min(aw / 860, (H * 0.86) / 700)
       }
       // menos fragmentos em tela pequena (desenha menos e fica igual de denso)
-      const N = celular ? 1100 : 1700
+      // todos os quadradinhos das pilhas e mais a poeira dourada (menos no celular: desenha menos)
+      const N = LUGARES.length + (celular ? 380 : 650)
       let tw: number, th: number
       if (celular) {
         const topo = texto.getBoundingClientRect().bottom - sticky.getBoundingClientRect().top + 14
@@ -329,17 +344,16 @@ export function Algoritmo() {
         desX = 0; desY = (docY + dh / 2 + H - 24) / 2 - cy
       } else {
         const esq = Math.min(460, W * 0.36), aw = W - esq - 40
-        dw = Math.min(420, aw * 0.44); dh = Math.min(dw * 0.95, H * 0.62)
+        dw = Math.min(380, aw * 0.4); dh = Math.min(dw * 0.95, H * 0.62)
         docX = esq + 20 + dw / 2; docY = cy
-        // a rede vai para a direita até a entrada dela ficar logo depois do documento
-        desX = docX + dw / 2 + 100 + 300 * esc * CAM[1].zoom - cx; desY = 0
+        // a rede vai para a direita: entre o documento e a entrada dela fica o espaço da esteira
+        desX = docX + dw / 2 + 170 + 300 * esc * CAM[1].zoom - cx; desY = 0
       }
       dw = Math.round(dw); dh = Math.round(dh)
       const chaveD = `${dw}|${dh}|${document.documentElement.lang}`
       if (chaveD !== chaveDocs) {
         chaveDocs = chaveD
         docs = desenharDocs(dw, dh, Math.min(window.devicePixelRatio || 1, 2), letras)
-        rasc.width = Math.max(...docs.textos.map((t) => t.img.width)); rasc.height = Math.max(...docs.textos.map((t) => t.img.height))
       }
     }
 
@@ -362,11 +376,34 @@ export function Algoritmo() {
     const NN = REDE.nos.length
     const rx = new Float32Array(NN), ry = new Float32Array(NN), rz = new Float32Array(NN)
     const nx = new Float32Array(NN), ny = new Float32Array(NN), ns = new Float32Array(NN), aceso = new Float32Array(NN)
-    const xs = new Float32Array(2000), ys = new Float32Array(2000), ss = new Float32Array(2000), vs = new Float32Array(2000), ms = new Float32Array(2000)
-    const gs = new Float32Array(2000), esconde = new Uint8Array(2000)
-    // cada linha lida: onde ela está na viagem (linhaT) e, enquanto o texto dela existe, onde ele está e de que tamanho
-    const NL = LIDAS.length
-    const linhaT = new Float32Array(NL), tX = new Float32Array(NL), tY = new Float32Array(NL), tE = new Float32Array(NL), ativo = new Uint8Array(NL)
+    const xs = new Float32Array(2600), ys = new Float32Array(2600), ss = new Float32Array(2600), vs = new Float32Array(2600), ms = new Float32Array(2600)
+    const gs = new Float32Array(2600), ts = new Float32Array(2600), esconde = new Uint8Array(2600)
+    // cada linha lida: onde ela está na viagem (linhaT) e a esteira dela, refeita a cada quadro: os pontos do caminho na
+    // tela (do papel até a saída da rede, de fio em fio) e quanto já se andou até cada um (px). sCauda é onde está o
+    // começo do texto na esteira, sCorte onde as letras se desfazem em cubinhos e eK o tamanho das letras
+    const NL = LIDAS.length, MAXP = 32
+    const linhaT = new Float32Array(NL), ativo = new Uint8Array(NL)
+    const eX = new Float32Array(NL * MAXP), eY = new Float32Array(NL * MAXP), eS = new Float32Array(NL * MAXP), eN = new Uint8Array(NL)
+    const sCauda = new Float32Array(NL), sCorte = new Float32Array(NL), sRede = new Float32Array(NL), eK = new Float32Array(NL)
+    /** Onde as curvas do papel até a rede terminam: o nó da entrada é o ponto PONTO_REDE da esteira. */
+    const PONTO_REDE = 18
+    let ex = 0, ey = 0, ea = 0
+    /** O ponto da esteira r a s px do começo, em (ex, ey), e a direção dela ali (ea). */
+    const naEsteira = (r: number, s: number) => {
+      const o = r * MAXP, n = eN[r]
+      let j = 1
+      while (j < n - 1 && eS[o + j] < s) j++
+      const s0 = eS[o + j - 1], s1 = eS[o + j], f = s1 > s0 ? limitar((s - s0) / (s1 - s0)) : 0
+      const x0 = eX[o + j - 1], y0 = eY[o + j - 1], x1 = eX[o + j], y1 = eY[o + j]
+      ex = mistura(x0, x1, f); ey = mistura(y0, y1, f); ea = Math.atan2(y1 - y0, x1 - x0)
+    }
+    /** Traça a esteira r de s0 a s1 (para o ctx.stroke). */
+    const tracar = (r: number, s0: number, s1: number) => {
+      const o = r * MAXP, n = eN[r]
+      naEsteira(r, s0); ctx.beginPath(); ctx.moveTo(ex, ey)
+      for (let j = 0; j < n; j++) if (eS[o + j] > s0 && eS[o + j] < s1) ctx.lineTo(eX[o + j], eY[o + j])
+      naEsteira(r, s1); ctx.lineTo(ex, ey)
+    }
 
     /**
      * O gráfico firme da cena 3: cada coluna uma caixa 3D (o topo mais claro, a frente na cor, os lados mais escuros),
@@ -397,7 +434,7 @@ export function Algoritmo() {
         for (let k = 0; k < SERIES.length; k++) {
           const x = xColuna(m, k), a = solido(x)
           if (a <= 0.01) continue
-          const alto = Math.max(2, (SERIES[k][m] / TETO) * ALTO_GRAF), x0 = x - LARGO_BARRA / 2, x1 = x + LARGO_BARRA / 2, y1 = y0 - alto, z0 = -LARGO_BARRA / 2, z1 = LARGO_BARRA / 2
+          const alto = camadas(m, k) * CUBO, x0 = x - LARGO_BARRA / 2, x1 = x + LARGO_BARRA / 2, y1 = y0 - alto, z0 = -LARGO_BARRA / 2, z1 = LARGO_BARRA / 2
           const c = ([[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0], [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]] as V3[]).map(([px, py, pz]) => proj(px, py, pz))
           caixas.push({ c, a, k, s: proj(x, y0 - alto / 2, 0).s })
         }
@@ -525,8 +562,11 @@ export function Algoritmo() {
         const g = suave(fx.atraso, fx.atraso + 0.55, g0)
         const v = suave(fx.atrasoTela, fx.atrasoTela + 0.55, v0)
         gs[i] = g; vs[i] = v
-        // na rede os cubinhos são poeira fina; no gráfico e na tela ficam inteiros
-        ms[i] = fx.cat < 3 ? 0.95 + 0.05 * Math.max(g, v) : 0.42 + 0.58 * Math.max(g, v)
+        // o tamanho: na rede, poeira (os coloridos um pouco maiores); no gráfico os coloridos são os quadradinhos das
+        // pilhas, encaixados um no outro; na tela, traços finos
+        const naRede = fx.w * (fx.cat < 3 ? 0.95 : 0.42), noGraf = fx.cat < 3 ? CUBO - 1 : fx.w
+        ts[i] = mistura(mistura(naRede, noGraf, g), fx.w * 0.65, v)
+        ms[i] = ts[i] / fx.w
         let x = mistura(ex, fx.barra[0], g), y = mistura(ey, fx.barra[1], g), z = mistura(ez, fx.barra[2], g)
         // para o gráfico, um arco por cima: cada cubinho sobe da rede e desce na sua coluna
         y -= Math.sin(Math.PI * g) * 70
@@ -562,30 +602,49 @@ export function Algoritmo() {
         aceso[i] = forca(i, k, limiar) * Math.exp(-(fase - k) * ESPACO * 1.15)
       }
 
-      // onde está o texto de cada linha lida: sai do documento, voa até um nó da entrada e corre pelos fios
+      // a esteira de cada linha lida: sai de baixo do papel (pela borda direita; no celular, pela de baixo), faz a curva
+      // até um nó da entrada e segue de fio em fio. O texto anda deitado nela e se desfaz no meio do primeiro fio
       for (let r = 0; r < NL; r++) {
         ativo[r] = 0
         const tr = linhaT[r]
         if (!docs || tr <= 0 || tr > 1.6) continue
-        const t = Math.min(1, tr), pdf = r < LIDAS_PDF.length, dl = pdf ? docs.pdf : docs.planilha, i = pdf ? r : r - LIDAS_PDF.length
-        const sx = docX, sy = docY + (dl.linhas[i] - dl.h / 2) * docE - 8 * suave(0, 0.12, t)
-        const cam = CAMINHOS[r]
-        let x: number, y: number, k: number
-        if (t < 0.12) { x = sx; y = sy; k = mistura(1, 1.1, t / 0.12) }
-        else if (t < 0.45) {
-          const u = suave(0.12, 0.45, t), ax = nx[cam[0]], ay = ny[cam[0]]
-          const kx = celular ? docX + (i % 2 ? 70 : -70) : (sx + ax) / 2, ky = celular ? (sy + ay) / 2 : Math.min(sy, ay) - 70
-          x = (1 - u) * (1 - u) * sx + 2 * (1 - u) * u * kx + u * u * ax
-          y = (1 - u) * (1 - u) * sy + 2 * (1 - u) * u * ky + u * u * ay
-          k = mistura(1.1, 0.95, u)
-        } else {
-          const tau = ((t - 0.45) / 0.55) * TRECHOS, j = Math.min(TRECHOS - 1, Math.floor(tau)), f = tau - j
-          x = mistura(nx[cam[j]], nx[cam[j + 1]], f); y = mistura(ny[cam[j]], ny[cam[j + 1]], f)
-          k = mistura(0.95, 0.72, (t - 0.45) / 0.55)
-          // os nós por onde ele passa acendem
-          for (let q = 0; q <= TRECHOS; q++) aceso[cam[q]] = Math.max(aceso[cam[q]], 1 - Math.abs(tau - q) / 0.7)
+        const pdf = r < LIDAS_PDF.length, dl = pdf ? docs.pdf : docs.planilha, i = pdf ? r : r - LIDAS_PDF.length
+        const T = docs.textos[r], k = celular ? 0.8 : 1, wk = T.w * k
+        const o = r * MAXP, cam = CAMINHOS[r], ax = nx[cam[0]], ay = ny[cam[0]]
+        let n = 0
+        const ponto = (x: number, y: number) => {
+          eX[o + n] = x; eY[o + n] = y
+          eS[o + n] = n ? eS[o + n - 1] + Math.hypot(x - eX[o + n - 1], y - eY[o + n - 1]) : 0
+          n++
         }
-        tX[r] = x; tY[r] = y; tE[r] = k * (celular ? 0.85 : 1); ativo[r] = 1
+        // o começo fica embaixo do papel (o texto inteiro escondido nele), depois a borda e um trecho reto para fora
+        let bx: number, by: number, c1x: number, c1y: number
+        if (celular) {
+          const x0 = docX - (dl.w / 2) * docE + 30 + (i % 3) * 24, yb = docY + (dl.h / 2) * docE
+          ponto(x0, yb - wk - 20); ponto(x0, yb - 4); ponto(x0, yb + 18)
+          bx = x0; by = yb + 18; c1x = x0; c1y = yb + 80
+        } else {
+          const xr = docX + (dl.w / 2) * docE, y = docY + (dl.linhas[i] - dl.h / 2) * docE
+          ponto(xr - wk - 20, y); ponto(xr - 4, y); ponto(xr + 30, y)
+          bx = xr + 30; by = y; c1x = bx + Math.max(40, (ax - bx) * 0.5); c1y = y
+        }
+        // a curva até o nó da entrada, suave (chega nele na direção dos fios)
+        const c2x = ax - Math.max(40, (ax - bx) * 0.5), c2y = ay
+        for (let q = 1; q <= PONTO_REDE - 2; q++) {
+          const u = q / (PONTO_REDE - 2), a = 1 - u
+          ponto(a * a * a * bx + 3 * a * a * u * c1x + 3 * a * u * u * c2x + u * u * u * ax, a * a * a * by + 3 * a * a * u * c1y + 3 * a * u * u * c2y + u * u * u * ay)
+        }
+        for (let q = 1; q < cam.length; q++) ponto(nx[cam[q]], ny[cam[q]])
+        eN[r] = n; eK[r] = k
+        sRede[r] = eS[o + PONTO_REDE]
+        sCorte[r] = mistura(eS[o + PONTO_REDE], eS[o + PONTO_REDE + 1], 0.5)
+        // a esteira começa devagar e depois anda sempre igual; o fim do texto passa do ponto do corte perto de tr = 0,95
+        const u = tr / 0.95, f = u < 0.2 ? (u * u) / 0.4 : u - 0.1
+        sCauda[r] = (f / 0.9) * sCorte[r]
+        // os nós acendem quando a frente do texto (ou dos cubinhos dele) passa
+        const frente = sCauda[r] + wk
+        for (let q = 0; q <= TRECHOS; q++) aceso[cam[q]] = Math.max(aceso[cam[q]], 1 - Math.abs(frente - eS[o + PONTO_REDE + q]) / 50)
+        ativo[r] = 1
       }
 
       if (redeCheia > 0.02) {
@@ -612,22 +671,6 @@ export function Algoritmo() {
           const tam = (9 + 9 * v) * k
           ctx.globalAlpha = redeCheia * (0.5 + 0.5 * v)
           ctx.drawImage(sprPonto, x - tam / 2, y - tam / 2, tam, tam)
-        }
-        // os fios por onde cada linha lida está passando, na cor dela
-        for (let r = 0; r < NL; r++) {
-          const tr = linhaT[r]
-          if (!ativo[r] || tr < 0.45) continue
-          const cam = CAMINHOS[r], tau = Math.min(TRECHOS, ((Math.min(1, tr) - 0.45) / 0.55) * TRECHOS), [cr, cg, cb] = docs!.textos[r].cor
-          const a = redeCheia * (1 - suave(1, 1.4, tr))
-          if (a <= 0.01) continue
-          ctx.beginPath(); ctx.moveTo(nx[cam[0]], ny[cam[0]])
-          for (let q = 1; q <= Math.ceil(tau); q++) {
-            const f = Math.min(1, tau - (q - 1))
-            ctx.lineTo(mistura(nx[cam[q - 1]], nx[cam[q]], f), mistura(ny[cam[q - 1]], ny[cam[q]], f))
-          }
-          ctx.globalAlpha = a
-          ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.22)`; ctx.lineWidth = 5; ctx.stroke()
-          ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.9)`; ctx.lineWidth = 1.4; ctx.stroke()
         }
         // os nós: um halo que cresce com o sinal, um anel fino e o miolo
         const aneis = new Path2D(), miolos = new Path2D(), cheios = new Path2D()
@@ -669,18 +712,21 @@ export function Algoritmo() {
         const [x, y, z] = forma(fx, i)
         const P = proj(x, y, z)
         xs[i] = P.x; ys[i] = P.y; ss[i] = P.s; esconde[i] = 0
-        // os que nascem de uma linha lida: só existem depois que a parte das letras deles se desfaz; saem dali e vão
-        // para o lugar deles na rede
+        // os que nascem de uma linha lida: só existem depois que a letra deles passa pelo ponto do corte; dali seguem
+        // pela esteira e, aos poucos, vão para o lugar deles na rede
         if (fx.linha >= 0 && textos) {
-          const r = fx.linha, tr = linhaT[r], T = textos[r]
-          const lx = T.pontos[fx.pt * 2], ly = T.pontos[fx.pt * 2 + 1]
-          const solta = 0.5 + 0.47 * limitar((lx + T.w / 2) / T.w)
-          if (tr < solta) { esconde[i] = 1; continue }
-          const k = suave(0, 0.55, tr - solta)
-          if (k < 1 && ativo[r]) {
-            const abre = suave(0, 0.25, tr - solta) * 14
-            const bx = tX[r] + lx * tE[r] + Math.cos(fx.fase * 7) * abre, by = tY[r] + ly * tE[r] + Math.sin(fx.fase * 5) * abre
-            xs[i] = mistura(bx, xs[i], k); ys[i] = mistura(by, ys[i], k); ss[i] = mistura(1.1, ss[i], k)
+          const r = fx.linha
+          if (linhaT[r] <= 0) { esconde[i] = 1; continue }
+          if (!ativo[r]) continue
+          const T = textos[r], k = eK[r], lx = T.pontos[fx.pt * 2], ly = T.pontos[fx.pt * 2 + 1]
+          const sp = sCauda[r] + (lx + T.w / 2) * k, d = sp - sCorte[r]
+          if (d < 0) { esconde[i] = 1; continue }
+          const kh = suave(0, 260, d)
+          if (kh < 1) {
+            naEsteira(r, sp)
+            const alt = (T.h / 2 - ly) * k, solta = suave(0, 80, d) * 12
+            const bx = ex + Math.sin(ea) * alt + Math.cos(fx.fase * 7) * solta, by = ey - Math.cos(ea) * alt + Math.sin(fx.fase * 5) * solta
+            xs[i] = mistura(bx, xs[i], kh); ys[i] = mistura(by, ys[i], kh); ss[i] = mistura(1.1, ss[i], kh)
           }
         }
       }
@@ -700,6 +746,8 @@ export function Algoritmo() {
         // no gráfico firme, os cubinhos que viraram coluna somem; os que estão na linha de luz brilham
         if (gs[i] > 0.995 && vs[i] < 0.005) {
           if (solido(fx.barra[0]) > 0.5) continue
+          // empilhados, todos no mesmo tom (a pilha fica lisa)
+          if (fx.cat < 3) tom = 3
           if (varrendo && (Math.abs(fx.barra[0] - xFaz) < 30 || Math.abs(fx.barra[0] - xDesfaz) < 30)) tom = 4
         }
         if (acende > 0 && vs[i] > 0.98) {
@@ -718,15 +766,15 @@ export function Algoritmo() {
         else { const [c, tom, passo] = chave.split('.').map(Number); ctx.fillStyle = PALETA[c][tom][passo] }
         for (const i of idx) {
           // pousados na tela, ficam menores (viram os traços das letras)
-          const fx = fr[i], k = ss[i] * esc * zoom * (1 - 0.35 * vs[i]) * ms[i]
-          ctx.fillRect(xs[i] - (fx.w * k) / 2, ys[i] - (fx.h * k) / 2, fx.w * k + 0.6, fx.h * k + 0.6)
+          const lado = ss[i] * esc * zoom * ts[i]
+          ctx.fillRect(xs[i] - lado / 2, ys[i] - lado / 2, lado + 0.4, lado + 0.4)
         }
       })
       // pontos mais quentes com brilho (um a cada 14 cubinhos)
       ctx.globalAlpha = 0.6 * (1 - 0.85 * oculto)
       for (let i = 0; i < N; i += 14) {
         if (esconde[i] || (acende > 0 && vs[i] > 0.98 && ys[i] < yLuz - 3)) continue
-        if (gs[i] > 0.995 && vs[i] < 0.005 && solido(fr[i].barra[0]) > 0.5) continue
+        if (gs[i] > 0.9 && vs[i] < 0.1 && fr[i].cat < 3) continue
         const tam = (10 + 8 * Math.sin(s * 2 + fr[i].fase)) * ss[i] * esc * ms[i]
         ctx.drawImage(sprPonto, xs[i] - tam / 2, ys[i] - tam / 2, tam, tam)
       }
@@ -743,13 +791,55 @@ export function Algoritmo() {
       // cena 1: o documento (o PDF, que gira e vira a planilha), a luz que lê as linhas e o texto de cada uma, que sai
       // dele, corre por um fio da rede e se desfaz em cubinhos
       if (docs) {
+        // as esteiras: o trilho na cor da linha, do papel até a rede, e mais forte o trecho que o texto (ou os cubinhos
+        // dele) já andou
+        const vez = Math.max(pres[1], pres[2])
+        ctx.globalCompositeOperation = 'lighter'
+        for (let r = 0; r < NL; r++) {
+          if (!ativo[r]) continue
+          const tr = linhaT[r], o = r * MAXP, [cr, cg, cb] = docs.textos[r].cor
+          const a = vez * suave(0, 0.05, tr) * (1 - suave(1, 1.4, tr))
+          if (a <= 0.01) continue
+          ctx.globalAlpha = a
+          tracar(r, eS[o + 1], sRede[r]); ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.22)`; ctx.lineWidth = 1; ctx.stroke()
+          tracar(r, eS[o + 1], Math.min(eS[o + eN[r] - 1], sCauda[r] + docs.textos[r].w * eK[r] + 24))
+          ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.2)`; ctx.lineWidth = 5; ctx.stroke()
+          ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.9)`; ctx.lineWidth = 1.4; ctx.stroke()
+        }
+        // o texto, deitado na esteira: cada letra no ponto onde está e virada na direção do trilho; no ponto do corte
+        // ela se apaga (ali nascem os cubinhos dela)
+        ctx.globalCompositeOperation = 'source-over'
+        ctx.textBaseline = 'middle'; ctx.textAlign = 'left'
+        for (let r = 0; r < NL; r++) {
+          if (!ativo[r] || sCauda[r] >= sCorte[r] + 10) continue
+          const T = docs.textos[r], k = eK[r], al = vez * suave(0, 0.03, linhaT[r]), [cr, cg, cb] = T.cor, borda = eS[r * MAXP + 1]
+          ctx.shadowColor = `rgba(${cr},${cg},${cb},0.6)`; ctx.shadowBlur = 7 * dpr
+          let fonte = ''
+          for (const gl of T.glifos) {
+            const sg = sCauda[r] + (gl.x + gl.w / 2) * k
+            // cada letra só aparece quando passa pela borda do papel (antes disso está embaixo dele)
+            const a = al * suave(borda - 4, borda + 2, sg) * (1 - suave(sCorte[r] - 3, sCorte[r] + 9, sg))
+            if (a <= 0.01) continue
+            naEsteira(r, sg)
+            const c = Math.cos(ea), sn = Math.sin(ea), alt = (T.h / 2) * k
+            ctx.setTransform(dpr * c * k, dpr * sn * k, -dpr * sn * k, dpr * c * k, dpr * (ex + sn * alt), dpr * (ey - c * alt))
+            ctx.globalAlpha = a
+            if (gl.fonte !== fonte) { fonte = gl.fonte; ctx.font = fonte }
+            ctx.fillStyle = gl.cor
+            ctx.fillText(gl.c, -gl.w / 2, 0)
+          }
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+        }
+        ctx.shadowBlur = 0
+        ctx.globalAlpha = 1
+
         const doc = vira < 0.5 ? docs.pdf : docs.planilha
         const ini = vira < 0.5 ? 0 : LIDAS_PDF.length, qtd = vira < 0.5 ? LIDAS_PDF.length : LIDAS.length - LIDAS_PDF.length
         const a = pres[1] * chegaDoc * (1 - saiDoc)
-        const ex = Math.abs(Math.cos(Math.PI * vira))
+        const largura = Math.abs(Math.cos(Math.PI * vira))
         if (a > 0.01) {
           ctx.save()
-          ctx.translate(docX, docY); ctx.scale(docE * Math.max(0.02, ex), docE)
+          ctx.translate(docX, docY); ctx.scale(docE * Math.max(0.02, largura), docE)
           ctx.globalAlpha = a
           ctx.globalCompositeOperation = 'source-over'
           ctx.drawImage(doc.img, -doc.w / 2 - doc.m, -doc.h / 2 - doc.m, doc.w + doc.m * 2, doc.h + doc.m * 2)
@@ -774,37 +864,6 @@ export function Algoritmo() {
             ctx.globalAlpha = a * 0.5; ctx.fillStyle = 'rgba(120,210,255,0.6)'; ctx.fillRect(-doc.w / 2 - 12, yb - 5, doc.w + 24, 10)
           }
           ctx.restore()
-        }
-        // o texto de cada linha: o que já virou cubinho se apaga, da esquerda para a direita
-        ctx.globalCompositeOperation = 'source-over'
-        for (let r = 0; r < NL; r++) {
-          const tr = linhaT[r]
-          if (!ativo[r] || tr >= 1) continue
-          const T = docs.textos[r], corte = limitar((tr - 0.5) / 0.47)
-          const al = suave(0, 0.06, tr) * Math.max(pres[1], pres[2])
-          if (al <= 0.01 || corte >= 1) continue
-          const iw = T.img.width, ih = T.img.height
-          rg.globalCompositeOperation = 'source-over'
-          rg.clearRect(0, 0, iw, ih)
-          rg.drawImage(T.img, 0, 0)
-          if (corte > 0) {
-            const fx = (T.m + corte * T.w) * T.q
-            const borda = rg.createLinearGradient(fx - 10 * T.q, 0, fx + 4 * T.q, 0)
-            borda.addColorStop(0, 'rgba(0,0,0,1)'); borda.addColorStop(1, 'rgba(0,0,0,0)')
-            rg.globalCompositeOperation = 'destination-out'
-            rg.fillStyle = borda; rg.fillRect(0, 0, fx + 4 * T.q, ih)
-          }
-          const k = tE[r]
-          // enquanto ainda está sobre o papel, uma plaquinha escura por baixo (branco no branco não se lê)
-          const placa = al * (1 - suave(0.3, 0.46, tr))
-          if (placa > 0.01) {
-            ctx.globalAlpha = placa
-            ctx.beginPath(); ctx.roundRect(tX[r] - (T.w / 2 + 12) * k, tY[r] - (T.h / 2 + 7) * k, (T.w + 24) * k, (T.h + 14) * k, 9 * k)
-            ctx.fillStyle = 'rgba(14,18,28,0.94)'; ctx.fill()
-            ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1; ctx.stroke()
-          }
-          ctx.globalAlpha = al
-          ctx.drawImage(rasc, 0, 0, iw, ih, tX[r] - (T.w / 2 + T.m) * k, tY[r] - (T.h / 2 + T.m) * k, (T.w + T.m * 2) * k, (T.h + T.m * 2) * k)
         }
         ctx.globalAlpha = 1
         ctx.globalCompositeOperation = 'lighter'

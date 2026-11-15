@@ -159,11 +159,15 @@ function desenharPlanilha(w: number, h: number, q: number, f: Fontes): DocPronto
   return { img: g.canvas, w, h, m, q, linhas, topoLinhas: topoLinhas * s, fimLinhas: fimLinhas * s }
 }
 
-/** O texto que sai de uma linha lida: o nome limpo e o valor, na cor do tipo, e os pontos das letras. */
+/**
+ * O texto que sai de uma linha lida: o nome limpo e o valor, na cor do tipo. Ele anda deitado sobre um fio (como numa
+ * esteira), então é desenhado letra por letra, cada uma no ponto do fio onde está e virada na direção dele.
+ */
 export interface TextoLido {
-  img: HTMLCanvasElement
-  w: number; h: number; m: number; q: number
-  /** x, y, x, y... dos pontos das letras, a partir do meio do texto (px de CSS) */
+  w: number; h: number
+  /** cada letra: o caractere, onde começa (px, da esquerda do texto), a largura, a fonte e a cor */
+  glifos: { c: string; x: number; w: number; fonte: string; cor: string }[]
+  /** x, y, x, y... dos pontos das letras, a partir do meio do texto (px de CSS): de onde nascem os cubinhos */
   pontos: Float32Array
   /** a cor do tipo (r, g, b) */
   cor: [number, number, number]
@@ -172,38 +176,40 @@ export interface TextoLido {
 export function desenharTextos(q: number, f: Fontes): TextoLido[] {
   return LIDAS.map((l, idx) => {
     const cor = COR_TIPO[l.tipo], css = `rgb(${cor.join(',')})`
-    const medir = document.createElement('canvas').getContext('2d')!
     const fNome = `700 15px ${f.texto}`, fValor = `800 15px ${f.numeros}`
     const valor = `${SINAL[l.tipo]} R$ ${l.valor}` // sem-tx
-    medir.font = fNome; const wn = medir.measureText(l.nome).width
-    medir.font = fValor; const wv = medir.measureText(valor).width
-    const w = Math.ceil(wn + 12 + wv), h = 22, m = 16
-    const img = document.createElement('canvas')
-    img.width = Math.ceil((w + m * 2) * q); img.height = Math.ceil((h + m * 2) * q)
-    const g = img.getContext('2d', { willReadFrequently: true })!
-    g.scale(q, q); g.translate(m, m)
-    g.textBaseline = 'middle'
-    const pintar = () => {
-      g.font = fNome; g.fillStyle = '#f4f7ff'; g.fillText(l.nome, 0, h / 2)
-      g.font = fValor; g.fillStyle = css; g.fillText(valor, wn + 12, h / 2)
+    const c = document.createElement('canvas'), g = c.getContext('2d', { willReadFrequently: true })!
+    // as letras, uma a uma (a largura de cada uma é o quanto o texto cresce com ela, para o espaçamento ficar certo)
+    const glifos: TextoLido['glifos'] = []
+    const partes: [string, string, string, number][] = [[l.nome, fNome, '#f4f7ff', 0]]
+    g.font = fNome
+    const wn = g.measureText(l.nome).width
+    partes.push([valor, fValor, css, wn + 12])
+    for (const [texto, fonte, cc, x0] of partes) {
+      g.font = fonte
+      const letras = [...texto]
+      letras.forEach((ch, i) => {
+        const antes = g.measureText(letras.slice(0, i).join('')).width, depois = g.measureText(letras.slice(0, i + 1).join('')).width
+        if (ch.trim()) glifos.push({ c: ch, x: x0 + antes, w: depois - antes, fonte, cor: cc })
+      })
     }
-    // os pontos das letras: o desenho sem brilho, lido ponto a ponto
-    pintar()
-    const d = g.getImageData(0, 0, img.width, img.height).data, achados: number[] = []
+    g.font = fValor
+    const w = Math.ceil(wn + 12 + g.measureText(valor).width), h = 20
+    // os pontos das letras: o texto desenhado uma vez e lido ponto a ponto
+    c.width = Math.ceil(w * q); c.height = Math.ceil(h * q)
+    g.scale(q, q); g.textBaseline = 'middle'
+    for (const gl of glifos) { g.font = gl.fonte; g.fillStyle = '#fff'; g.fillText(gl.c, gl.x, h / 2) }
+    const d = g.getImageData(0, 0, c.width, c.height).data, achados: number[] = []
     for (let i = 3; i < d.length; i += 4) if (d[i] > 140) achados.push((i - 3) / 4)
     const N = 700, pontos = new Float32Array(N * 2)
     let s = idx * 7919 + 1
     const r = () => { s = (s * 1664525 + 1013904223) % 4294967296; return s / 4294967296 }
     for (let i = 0; i < N; i++) {
       const p = achados.length ? achados[Math.floor(r() * achados.length)] : 0
-      pontos[i * 2] = (p % img.width) / q - m - w / 2
-      pontos[i * 2 + 1] = Math.floor(p / img.width) / q - m - h / 2
+      pontos[i * 2] = (p % c.width) / q - w / 2
+      pontos[i * 2 + 1] = Math.floor(p / c.width) / q - h / 2
     }
-    // por cima, o mesmo texto com um brilho da cor dele
-    g.clearRect(-m, -m, w + m * 2, h + m * 2)
-    g.save(); g.shadowColor = `rgba(${cor.join(',')},0.7)`; g.shadowBlur = 12; pintar(); g.restore()
-    pintar()
-    return { img, w, h, m, q, pontos, cor }
+    return { w, h, glifos, pontos, cor }
   })
 }
 
