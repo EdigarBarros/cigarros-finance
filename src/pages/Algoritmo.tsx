@@ -5,7 +5,7 @@ import { semMovimento } from '../lib/tema'
 import { tx } from '../lib/textos'
 import { ANO } from './apresentacaoCena'
 import { alturaIdeal, desenharTela, type TelaPronta } from './algoritmoTela'
-import { ATRAVESSA, carregarConsultor, COR_PAINEL, desenharConsultor, idiomaDasFotos, mergulho, Z_REDE, type ConsultorReal } from './algoritmoConsultor'
+import { ATRAVESSA, carregarConsultor, COR_PAINEL, desenharConsultor, idiomaDasFotos, type ConsultorReal } from './algoritmoConsultor'
 import { COR_TIPO, desenharDocs, LIDAS, LIDAS_PDF, type DocPronto, type TextoLido } from './algoritmoDocs'
 import './algoritmo.css'
 
@@ -14,7 +14,10 @@ import './algoritmo.css'
  * neural em 3D (camadas de nós ligados por fios, com o sinal passando da entrada para a saída), presa na tela
  * enquanto a pessoa rola:
  *   0. por trás do Consultor: a tela de verdade do Consultor (fotos do app, algoritmoConsultor.ts), inteira; a câmera
- *      vira para a fresta entre dois cartões, atravessa por ela e chega na rede, que já estava rodando do outro lado;
+ *      vira para a fresta entre dois cartões, que escurece conforme ela chega, e atravessa. Do outro lado ela está
+ *      dentro de um fio de dados (um túnel de anéis de quadradinhos), com as linhas do extrato vindo pelas paredes e
+ *      se desfazendo em cubinhos; depois sai do túnel e se afasta: a rede inteira, presa nas costas da tela do
+ *      Consultor por uma teia de fios;
  *   1. lê o extrato e a planilha: uma luz passa por um PDF do banco e por uma planilha; o texto de cada linha sai do
  *      documento já limpo, entra num fio da rede, corre por ele e se desfaz em cubinhos de dados na cor do que é:
  *      verde o que entrou, vermelho o que saiu, amarelo as dívidas (algoritmoDocs.ts);
@@ -211,7 +214,8 @@ function montar(N: number, pontos: Float32Array, k4: number, oy: number) {
 
 /** Câmera em cada cena: giro e inclinação (rad), aproximação. Na primeira e na última fica de frente: a tela encaixa na tela. */
 const CAM = [
-  { yaw: 0, pitch: 0, zoom: 1.08 },
+  // de lado e um pouco de cima: as costas da tela, atrás da rede, aparecem em perspectiva
+  { yaw: 0.2, pitch: 0.1, zoom: 0.95 },
   { yaw: -0.14, pitch: 0.18, zoom: 0.62 },
   { yaw: -0.22, pitch: 0.3, zoom: 1.05 },
   { yaw: 0.26, pitch: 0.12, zoom: 1.0 },
@@ -511,6 +515,133 @@ export function Algoritmo() {
       ctx.restore()
     }
 
+    /**
+     * O túnel: por dentro de um fio de dados. Anéis de quadradinhos dourados vêm da escuridão e passam pela câmera; nas
+     * paredes vêm as linhas lidas do extrato e da planilha (o nome e o valor, na cor do tipo), que perto da câmera se
+     * desfazem em cubinhos. u é o andamento (0 na entrada, 1 na saída), s o relógio (segundos).
+     */
+    const desenharTunel = (a: number, u: number, s: number) => {
+      const ox = cx, oy = cy, FZ = 420, R = Math.min(W, H) * 0.55
+      const viagem = u * 2600 + (reduzir ? 0 : s * 50)
+      const GAP = 110, NR = 22, L = GAP * NR, PERTO = 60
+      ctx.globalCompositeOperation = 'lighter'
+      // a luz no fim do túnel
+      ctx.globalAlpha = a * 0.8
+      ctx.drawImage(sprHalo, ox - 170, oy - 170, 340, 340)
+      // os anéis, do mais longe para o mais perto, e os trilhos que ligam cada anel ao seguinte (as paredes do tubo)
+      const M = 44, zs: number[] = []
+      for (let k = 0; k < NR; k++) zs.push((((k * GAP - viagem) % L) + L) % L + PERTO)
+      zs.sort((m, n) => n - m)
+      const trilhos = new Path2D()
+      zs.forEach((z, i) => {
+        const z2 = zs[i + 1]
+        if (z2 === undefined) return
+        const r1 = (R * FZ) / z, r2 = (R * FZ) / z2
+        for (let m = 0; m < M; m += 2) {
+          const ang = (m / M) * Math.PI * 2
+          trilhos.moveTo(ox + Math.cos(ang) * r1, oy + Math.sin(ang) * r1); trilhos.lineTo(ox + Math.cos(ang) * r2, oy + Math.sin(ang) * r2)
+        }
+      })
+      ctx.globalAlpha = a
+      ctx.setLineDash([2, 4]); ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(255,175,80,0.16)'; ctx.stroke(trilhos); ctx.setLineDash([])
+      for (const z of zs) {
+        const sc = FZ / z, rr = R * sc
+        const nevoa = suave(L + PERTO, L * 0.45, z) * suave(PERTO, PERTO * 2.6, z)
+        if (nevoa < 0.01) continue
+        const lado = Math.max(1.6, 8 * sc)
+        ctx.globalAlpha = a * nevoa
+        ctx.fillStyle = TONS[Math.min(4, 1 + Math.floor(nevoa * 3.2))]
+        for (let m = 0; m < M; m++) {
+          const ang = (m / M) * Math.PI * 2
+          ctx.fillRect(ox + Math.cos(ang) * rr - lado / 2, oy + Math.sin(ang) * rr - lado / 2, lado, lado)
+        }
+      }
+      if (docs) {
+        ctx.textBaseline = 'middle'; ctx.textAlign = 'left'
+        for (let i = 0; i < NL; i++) {
+          const T = docs.textos[i]
+          const z = (((i * (L / NL) - viagem * 1.25) % L) + L) % L + PERTO
+          const sc = FZ / z, ang = i * 2.39996 + 0.6, rr = R * 0.6 * sc
+          const x = ox + Math.cos(ang) * rr, y = oy + Math.sin(ang) * rr
+          const nevoa = suave(L + PERTO, L * 0.45, z)
+          const des = suave(470, 210, z), k = sc * (celular ? 1.3 : 2)
+          // de longe, o texto
+          if (des < 1) {
+            ctx.globalCompositeOperation = 'source-over'
+            ctx.globalAlpha = a * nevoa * (1 - des)
+            ctx.setTransform(dpr * k, 0, 0, dpr * k, dpr * x, dpr * y)
+            let fonte = ''
+            for (const gl of T.glifos) {
+              if (gl.fonte !== fonte) { fonte = gl.fonte; ctx.font = fonte }
+              ctx.fillStyle = gl.cor; ctx.fillText(gl.c, gl.x - T.w / 2, 0)
+            }
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+          }
+          // perto, os cubinhos que ele virou, se espalhando
+          if (des > 0) {
+            ctx.globalCompositeOperation = 'lighter'
+            const [cr, cg, cb] = T.cor
+            ctx.fillStyle = `rgb(${cr},${cg},${cb})`
+            ctx.globalAlpha = a * des * (1 - suave(170, 75, z))
+            const lado = Math.max(1.5, 2.6 * k)
+            for (let q = 0; q < 70; q++) {
+              const j = (q * 11) % 700, px = T.pontos[j * 2], py = T.pontos[j * 2 + 1]
+              const abre = 1 + des * 1.8, fora = des * 26 * k
+              ctx.fillRect(x + (px * abre + Math.cos(q * 2.1) * fora) * k * 0.6 - lado / 2, y + (py * abre + Math.sin(q * 1.7) * fora) * k * 0.6 - lado / 2, lado, lado)
+            }
+          }
+        }
+      }
+      ctx.globalAlpha = 1
+      ctx.globalCompositeOperation = 'lighter'
+    }
+
+    /**
+     * As costas da tela do Consultor, atrás da rede: a tela vista por trás (a imagem dela espelhada, bem apagada, num
+     * painel da cor do painel) e uma teia de fios que sai de vários pontos dela até os nós da rede, com dados correndo
+     * neles. cresce vai de 0 (os fios ainda presos na tela) a 1 (chegaram nos nós).
+     */
+    const desenharCostas = (t: ConsultorReal, a: number, cresce: number, s: number) => {
+      const Wp = Math.min(1000, (900 * t.w) / t.h), Hp = (Wp * t.h) / t.w, Zp = 420
+      const P = ([[-Wp / 2, -Hp / 2], [Wp / 2, -Hp / 2], [Wp / 2, Hp / 2], [-Wp / 2, Hp / 2]] as const).map(([x, y]) => proj(x, y, Zp))
+      ctx.globalCompositeOperation = 'source-over'
+      ctx.save()
+      ctx.beginPath(); P.forEach((Q, i) => (i ? ctx.lineTo(Q.x, Q.y) : ctx.moveTo(Q.x, Q.y))); ctx.closePath()
+      ctx.globalAlpha = a * 0.92; ctx.fillStyle = COR_PAINEL; ctx.fill()
+      ctx.strokeStyle = 'rgba(160,190,255,0.14)'; ctx.lineWidth = 1; ctx.stroke()
+      ctx.clip()
+      // a tela vista por trás: espelhada (a esquerda dela fica à direita), presa nos cantos do painel
+      const iw = t.ia.width, ih = t.ia.height, [A, B, C] = P
+      ctx.setTransform(dpr * (A.x - B.x) / iw, dpr * (A.y - B.y) / iw, dpr * (C.x - B.x) / ih, dpr * (C.y - B.y) / ih, dpr * B.x, dpr * B.y)
+      ctx.globalAlpha = a * 0.13
+      ctx.drawImage(t.ia, 0, 0)
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.restore()
+      // a teia: de cada ponto das costas saem dois fios para nós da rede
+      ctx.globalCompositeOperation = 'lighter'
+      const COLS = 6, LINHAS = 4, fios = new Path2D(), presos = new Path2D(), dados: [number, number][] = []
+      for (let j = 0; j < LINHAS; j++) {
+        for (let i = 0; i < COLS; i++) {
+          const k = j * COLS + i
+          const Q = proj((-0.5 + (i + 0.5) / COLS) * Wp * 0.86, (-0.5 + (j + 0.5) / LINHAS) * Hp * 0.8, Zp)
+          presos.rect(Q.x - 3.5, Q.y - 3.5, 7, 7)
+          for (const alvo of [(k * 7 + 3) % NN, (k * 11 + 5) % NN]) {
+            const fx = mistura(Q.x, nx[alvo], cresce), fy = mistura(Q.y, ny[alvo], cresce)
+            fios.moveTo(Q.x, Q.y); fios.lineTo(fx, fy)
+            // um dado correndo da tela para a rede
+            const u = ((s * 0.22 + k * 0.137 + alvo * 0.031) % 1) * cresce
+            dados.push([mistura(Q.x, nx[alvo], u), mistura(Q.y, ny[alvo], u)])
+          }
+        }
+      }
+      ctx.globalAlpha = a
+      ctx.setLineDash([2.4, 3]); ctx.lineWidth = 1.8; ctx.strokeStyle = 'rgba(255,190,100,0.62)'; ctx.stroke(fios); ctx.setLineDash([])
+      ctx.fillStyle = 'rgba(255,215,140,0.95)'; ctx.fill(presos)
+      ctx.fillStyle = 'rgba(255,246,224,1)'
+      for (const [x, y] of dados) ctx.fillRect(x - 1.8, y - 1.8, 3.6, 3.6)
+      ctx.globalAlpha = 1
+    }
+
     const desenhar = (p: number, tempo: number) => {
       const pres: number[] = [], and: number[] = []
       for (let i = 0; i < n; i++) {
@@ -527,16 +658,16 @@ export function Algoritmo() {
       zoom = mistura(CAM[i0].zoom, CAM[i1].zoom, f)
       // na leitura a rede chega para o lado e o documento fica no lugar dela
       offX = desX * pres[1]; offY = desY * pres[1]
-      // cena 0: a câmera vira para a fresta entre os dois cartões, chega perto e atravessa (desm). A rede está do outro
-      // lado: até lá só aparece pela fresta; depois a câmera segue até ela (oculto vai a 0)
-      const desm = real ? suave(0.02, 0.185, p) : 1, oculto = 1 - suave(0.3, ATRAVESSA, desm)
-      const mg = mergulho(desm, realE)
+      // cena 0 (desm): a câmera vira para a fresta entre os dois cartões, chega perto e atravessa; anda dentro do túnel;
+      // sai dele e se afasta. A rede só aparece nessa última parte (oculto vai a 0), vinda de perto (zoom maior) para o
+      // tamanho dela
+      const desm = real ? suave(0.02, 0.185, p) : 1, oculto = real ? 1 - suave(0.74, 0.92, desm) : 0
+      if (real) zoom *= 1 + 2.4 * (1 - suave(0.7, 1, desm))
       // o ponto da cena onde fica o meio da fresta: começa onde ele está na tela e vai para o meio da rede
       let alvoX = cx, alvoY = cy
       if (real && desm < 1) {
         const vira = suave(0.04, 0.9, desm / ATRAVESSA)
         alvoX = mistura(realX + real.fx * realS, cx, vira); alvoY = mistura(realY + real.fy * realS, cy, vira)
-        offX += alvoX - cx; offY += alvoY - cy
       }
       const u1 = limitar((p - 0.2) / 0.2) // o andamento da leitura
       // a rede balança de um lado para o outro; calculando (cena 2), o sinal corre mais rápido e mais nós disparam
@@ -564,7 +695,7 @@ export function Algoritmo() {
       const docE = mistura(0.92, 1, chegaDoc) * (1 - 0.12 * saiDoc)
 
       // as formas ao longo do scroll: rede → gráfico → tela. Cada cubinho muda com um atraso
-      const g0 = limitar((p - 0.58) / 0.12), v0 = limitar((p - 0.8) / 0.1), raioK = 1 / (1 + Z_REDE - mg.cam)
+      const g0 = limitar((p - 0.58) / 0.12), v0 = limitar((p - 0.8) / 0.1), raioK = 1
       const forma = (fx: Frag, i: number): V3 => {
         let ex: number, ey: number, ez: number
         if (fx.no >= 0) { ex = rx[fx.no]; ey = ry[fx.no]; ez = rz[fx.no] }
@@ -596,15 +727,15 @@ export function Algoritmo() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, W, H)
       // enquanto a câmera chega na fresta, a cena fica da cor do painel; depois de atravessar, escurece aos poucos
-      const azul = real ? suave(0.03, 0.22, desm) * (1 - suave(ATRAVESSA, 1, desm)) : 0
+      const azul = real ? suave(0.03, 0.22, desm) * (1 - suave(ATRAVESSA - 0.03, ATRAVESSA, desm)) : 0
       if (azul > 0.005) { ctx.globalAlpha = azul; ctx.fillStyle = COR_PAINEL; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1 }
       ctx.globalCompositeOperation = 'lighter'
 
       // névoa de luz atrás (mais forte com a rede inteira)
       const centro = proj(0, 0, 0)
-      const redeCheia = (1 - suave(0.58, 0.68, p)) * (1 - 0.8 * oculto)
+      const redeCheia = (1 - suave(0.58, 0.68, p)) * (1 - oculto)
       const th = (720 + 160 * calc) * esc * zoom
-      ctx.globalAlpha = Math.min(1, 0.2 + 0.3 * redeCheia + 0.3 * pres[n - 1] + 0.3 * pres[0] + 0.3 * chegada * pres[1])
+      ctx.globalAlpha = Math.min(1, 0.2 + 0.3 * redeCheia + 0.3 * pres[n - 1] + 0.3 * pres[0] + 0.3 * chegada * pres[1]) * (1 - oculto)
       ctx.drawImage(sprHalo, centro.x - th / 2, centro.y - th / 2, th, th)
       ctx.globalAlpha = 1
 
@@ -664,9 +795,14 @@ export function Algoritmo() {
         ativo[r] = 1
       }
 
+      // as costas da tela do Consultor, atrás da rede, presas nela por uma teia de fios (aparecem quando a câmera sai do
+      // túnel; somem quando o documento chega)
+      const costas = real ? suave(0.72, 0.88, desm) * (1 - suave(0.16, 0.23, p)) : 0
+      if (real && costas > 0.01) desenharCostas(real, costas, suave(0.74, 0.97, desm), s)
+
       if (g0 < 0.6) {
         // o quanto o fio (ou o nó) ainda está na rede: some junto com os cubinhos dele quando eles vão para o gráfico
-        const apagada = 1 - 0.8 * oculto
+        const apagada = 1 - oculto
         const fica = (at: number) => (1 - suave(at, at + 0.1, g0)) * apagada
         // os fios, feitos de quadradinhos em fila (tracejado de pontas retas), em seis níveis de presença; os de trás
         // mais fracos; e, mais fortes, os trechos que estão levando sinal agora
@@ -792,7 +928,7 @@ export function Algoritmo() {
         g.push(i)
       }
       // escondidos atrás da tela no começo, os cubinhos ficam apagados
-      ctx.globalAlpha = 1 - 0.85 * oculto
+      ctx.globalAlpha = 1 - oculto
       grupos.forEach((idx, chave) => {
         if (chave[0] === 'd') ctx.fillStyle = TONS[Number(chave.slice(1))]
         else { const [c, tom, passo] = chave.split('.').map(Number); ctx.fillStyle = PALETA[c][tom][passo] }
@@ -803,7 +939,7 @@ export function Algoritmo() {
         }
       })
       // pontos mais quentes com brilho (um a cada 14 cubinhos)
-      ctx.globalAlpha = 0.6 * (1 - 0.85 * oculto)
+      ctx.globalAlpha = 0.6 * (1 - oculto)
       for (let i = 0; i < N; i += 14) {
         if (esconde[i] || (acende > 0 && vs[i] > 0.98 && ys[i] < yLuz - 3)) continue
         if (gs[i] > 0.9 && vs[i] < 0.1 && fr[i].cat < 3) continue
@@ -819,6 +955,9 @@ export function Algoritmo() {
         ctx.globalAlpha = 1
         ctx.globalCompositeOperation = 'lighter'
       }
+      // do outro lado da fresta: o túnel
+      const tunel = real ? suave(ATRAVESSA, ATRAVESSA + 0.05, desm) * (1 - suave(0.68, 0.8, desm)) : 0
+      if (tunel > 0.01) desenharTunel(tunel, (desm - ATRAVESSA) / (0.8 - ATRAVESSA), s)
 
       // cena 1: o documento (o PDF, que gira e vira a planilha), a luz que lê as linhas e o texto de cada uma, que sai
       // dele, corre por um fio da rede e se desfaz em cubinhos

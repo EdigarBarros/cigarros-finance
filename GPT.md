@@ -334,3 +334,24 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
   poucos depois de atravessar.
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
   390×844) em toda a abertura, sem erro de página.
+
+### 15/11/2026 — Claude — Abertura do motor: a fresta escurece, o túnel de dados e a rede nas costas da tela
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Pedido do Edigar: a fresta já aparecia como um retângulo preto, com o algoritmo visível, antes do zoom. Ele quer a tela
+  normal, a fresta escurecendo conforme a câmera chega; do outro lado, passar por dentro de um "túnel" de informação
+  (as linhas do extrato viajando e virando dados); e depois a câmera sair e mostrar por fora que o motor está instalado
+  nas costas da tela, preso nela como uma teia.
+- `src/pages/algoritmoConsultor.ts`: a fresta não é mais aberta na foto. Ela escurece (`desm` 0,1 a 0,36) com uma luz
+  quente pequena lá dentro (do tamanho de uma luz no fundo; some antes de a câmera passar). `ATRAVESSA` passou a 0,42;
+  `mergulho` virou `aumento` (só o tamanho da tela).
+- `src/pages/Algoritmo.tsx`: `desenharTunel` (de `ATRAVESSA` a ~0,8): anéis de quadradinhos dourados e trilhos tracejados
+  entre eles vindo da escuridão; nas paredes, as linhas lidas (nome e valor, na cor do tipo), que perto da câmera se
+  desfazem em cubinhos. Depois a câmera sai: a rede aparece de perto (zoom extra que volta a 1) e `desenharCostas` mostra
+  atrás dela as costas da tela (um painel da cor do painel com a tela espelhada, bem apagada) e a teia: de 24 pontos das
+  costas saem fios até nós da rede, que crescem até eles, com dados correndo. As costas somem quando o documento chega.
+  A rede fica escondida até essa saída (`oculto`); a câmera da cena 0 olha um pouco de lado e de cima (`CAM[0]`) para as
+  costas aparecerem em perspectiva.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
+  390×844) em toda a abertura, sem erro de página.
