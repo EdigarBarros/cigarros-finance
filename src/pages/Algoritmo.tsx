@@ -223,7 +223,14 @@ const CAM = [
 ]
 const ZOOM_TELA = CAM[CAM.length - 1].zoom
 /** Na cena 0, quando a câmera sai de dentro do fio do túnel (antes disso ela anda nele; ATRAVESSA é a fresta). */
-const SAI = 0.72
+const SAI = 0.8
+/**
+ * A abertura (a fresta, o túnel e a saída) tem mais coisa que as outras cenas: ela fica com ABERTURA da rolagem (as
+ * outras dividem o resto). O desenho trabalha com o andamento "por cena" (cada uma 1/5); estas duas funções convertem.
+ */
+const ABERTURA = 0.32
+const porCena = (r: number) => (r < ABERTURA ? (r / ABERTURA) * 0.2 : 0.2 + ((r - ABERTURA) / (1 - ABERTURA)) * 0.8)
+const daRolagem = (v: number) => (v < 0.2 ? (v / 0.2) * ABERTURA : ABERTURA + ((v - 0.2) / 0.8) * (1 - ABERTURA))
 
 /** Brilho redondo pronto (desenhado uma vez e carimbado): bem mais barato que desfoque a cada quadro. */
 function brilho(tam: number, paradas: [number, string][]) {
@@ -578,39 +585,52 @@ export function Algoritmo() {
       // a luz no fim do fio: o nó da rede
       const fim = proj(Sx + dx * L, Sy + dy * L, Sz + dz * L)
       if (fim.s) { const tam = Math.min(700, 160 * pxu(fim)); ctx.globalAlpha = a * 0.75; ctx.drawImage(sprHalo, fim.x - tam / 2, fim.y - tam / 2, tam, tam) }
-      // as linhas do fio, em três faixas de distância (as de longe mais fracas)
-      const faixas = [new Path2D(), new Path2D(), new Path2D()]
+      // as paredes do fio, como os fios da rede: uma linha fraca e, em cima dela, uma fileira de quadradinhos (em
+      // perspectiva: maiores perto, menores longe)
+      const linhas = new Path2D(), Q = 5
+      const quads: [number, number, number, number][] = []
       for (let m = 0; m < M; m++) {
         const ang = (m / M) * Math.PI * 2
-        let antes = -1
-        let A = ponto(Math.max(sCam + 4, 0), ang, RT)
+        let A = ponto(sCam + 4, ang, RT)
         for (let k = 1; k <= K; k++) {
           const sv = Math.min(L, k * PASSO)
           if (sv <= sCam + 4) continue
           const B = ponto(sv, ang, RT)
-          if (A.s && B.s) {
-            const f = Math.min(2, Math.floor(((sv - sCam) / L) * 3))
-            faixas[f].moveTo(A.x, A.y); faixas[f].lineTo(B.x, B.y)
-          }
-          A = B; antes = k
+          if (A.s && B.s) { linhas.moveTo(A.x, A.y); linhas.lineTo(B.x, B.y) }
+          A = B
         }
-        void antes
+        for (let sv = Math.ceil((sCam + 6) / Q) * Q; sv <= L; sv += Q) {
+          const P = ponto(sv, ang, RT)
+          if (!P.s) continue
+          const longe = sv - sCam
+          quads.push([P.x, P.y, Math.min(14, Math.max(1.2, 1.5 * pxu(P))), suave(L * 1.05, L * 0.3, longe) * suave(6, 40, longe)])
+        }
       }
-      const brilho = [0.85, 0.5, 0.25]
-      faixas.forEach((f, i) => {
-        ctx.globalAlpha = a * brilho[i]
-        ctx.strokeStyle = 'rgba(255,170,70,0.22)'; ctx.lineWidth = 4; ctx.stroke(f)
-        ctx.strokeStyle = 'rgba(255,220,160,0.9)'; ctx.lineWidth = 1.2; ctx.stroke(f)
-      })
+      ctx.globalAlpha = a
+      ctx.strokeStyle = 'rgba(255,170,70,0.16)'; ctx.lineWidth = 1; ctx.stroke(linhas)
+      // em quatro níveis de brilho (menos trocas de cor)
+      for (let nivel = 1; nivel <= 4; nivel++) {
+        ctx.fillStyle = TONS[nivel]
+        for (const [x, y, lado, n] of quads) {
+          if (Math.min(4, Math.max(1, Math.ceil(n * 4))) !== nivel || n < 0.02) continue
+          ctx.globalAlpha = a * (0.35 + 0.65 * n)
+          ctx.fillRect(x - lado / 2, y - lado / 2, lado, lado)
+        }
+      }
       if (!docs) return
       // as linhas lidas, deitadas nas linhas do fio: andam mais rápido que a câmera (passam por ela e seguem na frente)
-      const WS = 0.42, CORTE = L * 0.8
+      // o ponto onde as letras se desfazem fica sempre a uma distância da câmera (perto o bastante para se ver)
+      const WS = 0.42, FAIXA = 40, CORTE = Math.min(L * 0.92, sCam + 62)
       ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left'
       for (let i = 0; i < NL; i++) {
         const T = docs.textos[i], ang = (Math.round((i * M) / NL) / M) * Math.PI * 2
-        const cauda = (tau * 1.75 - i * 0.085) * L - 40
-        const largura = T.w * WS
-        if (cauda > L * 1.2 || cauda + largura < sCam) continue
+        // cada linha entra logo atrás da câmera (quando chega a vez dela) e escorrega até passar inteira pelo corte,
+        // cada vez mais devagar (dá tempo de ler e de ver as letras virando cubinhos)
+        const largura = T.w * WS, vez = i * 0.066, DUR = 0.36
+        const u = (tau - vez) / DUR
+        if (u <= 0 || u >= 1.25) continue
+        const de = 0.6 * L * vez - largura - 6, ate = CORTE + FAIXA + 12
+        const cauda = mistura(de, ate, 1 - Math.pow(1 - Math.min(1, u), 2)) + Math.max(0, u - 1) * 120
         // a direção da linha na tela, no meio do texto: se ela for para a esquerda, o texto é montado ao contrário
         // (a primeira letra na frente), para ler da esquerda para a direita
         const meio = Math.max(sCam + 6, Math.min(CORTE, cauda + largura / 2))
@@ -623,7 +643,7 @@ export function Algoritmo() {
         for (const gl of T.glifos) {
           const lx = vira ? T.w - gl.x - gl.w : gl.x
           const sg = cauda + (lx + gl.w / 2) * WS
-          if (sg < sCam + 4 || sg > CORTE + 6) continue
+          if (sg < sCam + 4 || sg > CORTE + FAIXA) continue
           // a letra deitada na parede do fio: o comprimento dela ao longo do fio, a altura ao longo da volta
           const P = ponto(sg, ang, RT), Qf = ponto(sg + 1, ang, RT), Qv = ponto(sg, ang + 1 / RT, RT)
           if (!P.s || !Qf.s || !Qv.s) continue
@@ -631,7 +651,7 @@ export function Algoritmo() {
           if (vira) { ux = -ux; uy = -uy; vx = -vx; vy = -vy }
           if (ux * vy - uy * vx < 0) { vx = -vx; vy = -vy }
           if (Math.hypot(ux, uy) > 10 || Math.hypot(vx, vy) > 10) continue
-          ctx.globalAlpha = a * (1 - suave(CORTE - 4, CORTE + 6, sg)) * suave(sCam + 4, sCam + 30, sg)
+          ctx.globalAlpha = a * (1 - suave(CORTE, CORTE + FAIXA, sg)) * suave(sCam + 4, sCam + 30, sg)
           ctx.setTransform(dpr * ux, dpr * uy, dpr * vx, dpr * vy, dpr * P.x, dpr * P.y)
           if (gl.fonte !== fonte) { fonte = gl.fonte; ctx.font = fonte }
           ctx.fillStyle = gl.cor
@@ -646,8 +666,9 @@ export function Algoritmo() {
           const j = (q * 11) % 700, px0 = T.pontos[j * 2], py0 = T.pontos[j * 2 + 1]
           const lx = vira ? -px0 : px0
           const sp = cauda + (lx + T.w / 2) * WS, passou = sp - CORTE
-          if (passou < 0 || sp > L * 1.05) continue
-          const abre = Math.min(1, passou / 60)
+          // cada pedacinho da letra vira cubinho na sua vez, ao longo da faixa do corte
+          if (passou < (j % 13) / 13 * FAIXA || sp > L * 1.05) continue
+          const abre = Math.min(1, passou / (FAIXA + 50))
           const P = ponto(Math.min(sp, L), ang + (py0 / 30 + Math.sin(q * 2.3) * abre) * 0.08, RT - Math.cos(q * 1.7) * abre * 6)
           if (!P.s) continue
           ctx.globalAlpha = a * (1 - suave(L * 0.95, L * 1.05, sp))
@@ -722,7 +743,8 @@ export function Algoritmo() {
       ctx.globalCompositeOperation = 'lighter'
     }
 
-    const desenhar = (p: number, tempo: number) => {
+    const desenhar = (rolagem: number, tempo: number) => {
+      const p = porCena(rolagem)
       const pres: number[] = [], and: number[] = []
       for (let i = 0; i < n; i++) {
         const a = i / n, b = (i + 1) / n
@@ -743,7 +765,7 @@ export function Algoritmo() {
       // cena 0 (desm): a câmera vira para a fresta entre os dois cartões, chega perto e atravessa; anda dentro do túnel;
       // sai dele e se afasta. A rede só aparece nessa última parte (oculto vai a 0), vinda de perto (zoom maior) para o
       // tamanho dela
-      const desm = real ? suave(0.02, 0.185, p) : 1, oculto = real ? 1 - suave(SAI + 0.02, 0.92, desm) : 0
+      const desm = real ? limitar((p - 0.02) / 0.165) : 1, oculto = real ? 1 - suave(SAI + 0.02, 0.96, desm) : 0
       // o ponto da cena onde fica o meio da fresta: começa onde ele está na tela e vai para o meio da rede
       let alvoX = cx, alvoY = cy
       if (real && desm < 1) {
@@ -835,7 +857,7 @@ export function Algoritmo() {
         const N = REDE.nos[no], Nx = (N.x * ca + N.z * sa) * raioK, Ny = N.y * raioK, Nz = (-N.x * sa + N.z * ca) * raioK
         let dx = Nx - Sx, dy = Ny - Sy, dz = Nz - Sz
         const L = Math.hypot(dx, dy, dz); dx /= L; dy /= L; dz /= L
-        const tau = limitar((desm - ATRAVESSA) / (SAI - ATRAVESSA)), w = suave(SAI, 1, desm), sCam = 0.72 * L * tau
+        const tau = limitar((desm - ATRAVESSA) / (SAI - ATRAVESSA)), w = suave(SAI, 1, desm), sCam = 0.6 * L * tau
         Object.assign(tubo, { Sx, Sy, Sz, dx, dy, dz, L, sCam, no })
         // dentro do fio: olhando ao longo dele; fora: girando até o yaw e o pitch de sempre, afastando até F do meio
         const thT = Math.atan2(-dx, dz), phT = Math.asin(dy), DT = 30
@@ -1253,7 +1275,7 @@ export function Algoritmo() {
     const el = secaoRef.current
     if (!el) return
     const topo = el.getBoundingClientRect().top + window.scrollY, total = el.offsetHeight - window.innerHeight
-    window.scrollTo({ top: topo + total * ((i + 0.6) / CENAS.length), behavior: 'smooth' })
+    window.scrollTo({ top: topo + total * daRolagem((i + 0.6) / CENAS.length), behavior: 'smooth' })
   }
 
   return (

@@ -7,7 +7,7 @@
    ========================================================================= */
 .ag {
   --ouro: #ffc46b; --ouro-forte: #ffb04a; --tinta: #fff2dc; --tinta-2: rgba(255, 236, 210, .7); --breu: #060403;
-  position: relative; height: 700vh; color: var(--tinta);
+  position: relative; height: 820vh; color: var(--tinta);
   background: linear-gradient(var(--fundo), var(--breu) 32vh, var(--breu) calc(100% - 32vh), var(--fundo));
 }
 .ag-sticky { position: sticky; top: 0; height: 100vh; height: 100dvh; overflow: hidden; }
@@ -84,7 +84,7 @@
 
 /* celular: texto em cima, o núcleo embaixo, as respostas numa grade embaixo dele */
 @media (max-width: 900px) {
-  .ag { height: 660vh; }
+  .ag { height: 780vh; }
   .ag-texto { left: 0; right: 0; top: clamp(56px, 9vh, 90px); transform: none; width: auto; padding: 0 22px; text-align: center; justify-items: center; gap: 14px; }
   .ag-rotulo { justify-self: center; }
   .ag-pilha { min-height: 128px; }

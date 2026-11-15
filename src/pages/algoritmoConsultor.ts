@@ -31,7 +31,7 @@ export interface ConsultorReal {
 }
 
 /** Em que ponto do mergulho a câmera atravessa a fresta (depois vêm o túnel e a saída para fora). */
-export const ATRAVESSA = 0.42
+export const ATRAVESSA = 0.3
 /** A cor do fundo do painel (a da foto), para a cena ficar dela enquanto a câmera chega. */
 export const COR_PAINEL = 'rgb(7,11,20)'
 
@@ -155,7 +155,7 @@ export function desenharConsultor(g: CanvasRenderingContext2D, t: ConsultorReal,
     }
   }
   // a fresta escurece conforme a câmera chega, com um brilho quente lá dentro (algo do outro lado)
-  const escuro = suave(0.1, 0.36, desm)
+  const escuro = suave(0.07, 0.26, desm)
   if (escuro > 0) {
     const fx0 = ax + (t.fr[0] - t.fx) * k, fy0 = ay + (t.fr[1] - t.fy) * k, fw = t.fr[2] * k, fh = t.fr[3] * k
     g.globalAlpha = escuro
@@ -166,7 +166,7 @@ export function desenharConsultor(g: CanvasRenderingContext2D, t: ConsultorReal,
     const brilho = g.createRadialGradient(ax, ay, 0, ax, ay, raio)
     brilho.addColorStop(0, 'rgba(255,190,100,0.32)'); brilho.addColorStop(0.4, 'rgba(255,150,50,0.08)'); brilho.addColorStop(1, 'rgba(255,140,40,0)')
     g.save(); g.beginPath(); g.rect(fx0, fy0, fw, fh); g.clip()
-    g.globalAlpha = escuro * suave(0.16, 0.3, desm) * (1 - suave(0.33, 0.41, desm))
+    g.globalAlpha = escuro * suave(0.11, 0.21, desm) * (1 - suave(0.23, 0.29, desm))
     g.fillStyle = brilho; g.fillRect(fx0, fy0, fw, fh)
     g.restore()
     g.globalAlpha = 1
