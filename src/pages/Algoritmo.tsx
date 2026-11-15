@@ -5,7 +5,7 @@ import { semMovimento } from '../lib/tema'
 import { tx } from '../lib/textos'
 import { ANO } from './apresentacaoCena'
 import { alturaIdeal, desenharTela, type TelaPronta } from './algoritmoTela'
-import { ATRAVESSA, carregarConsultor, COR_PAINEL, desenharConsultor, idiomaDasFotos, paraClaro, type ConsultorReal } from './algoritmoConsultor'
+import { ATRAVESSA, carregarConsultor, COR_PAINEL, desenharConsultor, idiomaDasFotos, type ConsultorReal } from './algoritmoConsultor'
 import { COR_TIPO, desenharDocs, LIDAS, LIDAS_PDF, type DocPronto, type TextoLido } from './algoritmoDocs'
 import './algoritmo.css'
 
@@ -251,6 +251,18 @@ const TONS = ['rgba(180,85,10,0.6)', 'rgba(235,130,30,0.8)', 'rgba(255,170,50,0.
 const PASSOS = 6
 const CORES_GRAF: [number, number, number][] = TIPOS.map((t) => COR_TIPO[t])
 const DOURADO: [number, number, number, number][] = [[180, 85, 10, 0.6], [235, 130, 30, 0.8], [255, 170, 50, 0.9], [255, 210, 120, 0.97], [255, 248, 222, 1]]
+/** As cores de cada tipo no claro: mais fortes, para se lerem no fundo branco (o amarelo vira âmbar). */
+const CORES_GRAF_CLARO: [number, number, number][] = [[16, 185, 110], [239, 68, 68], [245, 158, 11]]
+/** A poeira de dados no claro: do azul ao verde-água da marca, os tons fortes por último (nada some no branco). */
+const TONS_CLARO = ['rgba(31,142,241,0.35)', 'rgba(31,142,241,0.55)', 'rgba(26,160,226,0.75)', 'rgba(20,184,180,0.88)', 'rgba(14,160,140,0.96)']
+/** A PALETA do claro: do tom da poeira (azul-verde) até a cor do tipo, sem clarear para o branco. */
+const PALETA_CLARO = CORES_GRAF_CLARO.map((c) => TONS_CLARO.map((tom) => {
+  const [r, g, b, a] = tom.slice(5, -1).split(',').map(Number)
+  return Array.from({ length: PASSOS }, (_, k) => {
+    const t = k / (PASSOS - 1)
+    return `rgba(${Math.round(r + (c[0] - r) * t)},${Math.round(g + (c[1] - g) * t)},${Math.round(b + (c[2] - b) * t)},${Math.max(a, 0.6 + 0.4 * t)})`
+  })
+}))
 /** PALETA[cat][tom][passo]: o fragmento da categoria cat, no tom, com passo/(PASSOS-1) da cor do gráfico. */
 const PALETA = CORES_GRAF.map((c) => DOURADO.map(([r, g, b, a], tom) => {
   // tom 0 é a cor escura; tom 4 quase branco
@@ -274,16 +286,37 @@ export function Algoritmo() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     const n = CENAS.length
-    // o tema. No claro, até a fresta o canvas é invertido pelo CSS (a tela do Consultor clara, desenhada compensada em
-    // algoritmoConsultor.ts); depois dela a seção vira o estúdio grafite (ag-estudio) e o motor é desenhado como no
-    // escuro
+    // o tema: muda as cores do desenho (P, abaixo), as fotos da tela do Consultor, os documentos e a tela final
     let claro = document.documentElement.dataset.tema === 'claro'
-    /** O grafite do estúdio (o fundo dos cartões dos fundadores no claro): a fresta chega nele antes de a câmera passar. */
-    const ESTUDIO: [number, number, number] = [52, 59, 73]
     const comparas = [...sticky.querySelectorAll<HTMLElement>('.ag-compara')]
     const contador = sticky.querySelector<HTMLElement>('[data-relacoes]')
-    const sprHalo = brilho(256, [[0, 'rgba(255,200,110,0.55)'], [0.25, 'rgba(255,150,40,0.22)'], [0.6, 'rgba(255,120,20,0.06)'], [1, 'rgba(255,100,10,0)']])
-    const sprPonto = brilho(48, [[0, 'rgba(255,248,225,1)'], [0.2, 'rgba(255,200,90,0.9)'], [0.55, 'rgba(255,150,40,0.22)'], [1, 'rgba(255,130,20,0)']])
+    /**
+     * As cores do desenho em cada tema. No escuro, luz dourada somada (composição 'lighter') sobre o preto; no claro,
+     * cores por cima do fundo claro ('source-over'): o azul e o verde-água da marca na rede, e as cores de cada tipo
+     * mais fortes. Trocou o tema, troca a paleta (e o que já foi desenhado com ela é refeito).
+     */
+    const paleta = (c: boolean) => c ? {
+      luz: 'source-over' as GlobalCompositeOperation, tons: TONS_CLARO, cubos: PALETA_CLARO, tipos: CORES_GRAF_CLARO,
+      halo: brilho(256, [[0, 'rgba(31,142,241,0.16)'], [0.3, 'rgba(20,201,160,0.08)'], [0.7, 'rgba(31,142,241,0.02)'], [1, 'rgba(31,142,241,0)']]),
+      ponto: brilho(48, [[0, 'rgba(255,255,255,1)'], [0.2, 'rgba(31,160,241,0.8)'], [0.55, 'rgba(20,201,160,0.18)'], [1, 'rgba(20,201,160,0)']]),
+      fioFundo: 'rgba(31,142,241,0.12)', fioFrente: 'rgba(31,142,241,0.3)', vivoBrilho: 'rgba(20,201,160,0.22)', vivo: 'rgba(14,160,140,0.95)',
+      anel: 'rgba(31,142,241,0.55)', cheio: 'rgba(14,170,150,1)', miolo: 'rgba(31,142,241,0.7)', dado: 'rgba(14,170,150,1)', teia: 'rgba(31,142,241,0.18)',
+      chao: 'rgba(20,33,61,0.04)', chaoBorda: 'rgba(20,33,61,0.14)', chaoMes: 'rgba(20,33,61,0.06)', media: 'rgba(31,142,241,0.9)',
+      mes: 'rgba(20,33,61,0.6)', legenda: 'rgba(20,33,61,0.82)', varre: ['rgba(31,142,241,0.3)', 'rgba(31,142,241,0)', 'rgba(31,142,241,0.95)'],
+      nomeTexto: '#14213d', fresta: 'rgb(238,243,250)', brilhoFresta: '31,142,241',
+      telaRastro: ['rgba(31,142,241,0)', 'rgba(31,142,241,0.22)'], telaLinha: ['rgba(31,142,241,0)', 'rgba(31,142,241,0.9)'], reflexo: 'rgba(255,255,255,0.4)',
+    } : {
+      luz: 'lighter' as GlobalCompositeOperation, tons: TONS, cubos: PALETA, tipos: CORES_GRAF,
+      halo: brilho(256, [[0, 'rgba(255,200,110,0.55)'], [0.25, 'rgba(255,150,40,0.22)'], [0.6, 'rgba(255,120,20,0.06)'], [1, 'rgba(255,100,10,0)']]),
+      ponto: brilho(48, [[0, 'rgba(255,248,225,1)'], [0.2, 'rgba(255,200,90,0.9)'], [0.55, 'rgba(255,150,40,0.22)'], [1, 'rgba(255,130,20,0)']]),
+      fioFundo: 'rgba(255,170,70,0.13)', fioFrente: 'rgba(255,190,100,0.3)', vivoBrilho: 'rgba(255,170,60,0.2)', vivo: 'rgba(255,232,180,0.9)',
+      anel: 'rgba(255,205,130,0.6)', cheio: 'rgba(255,246,224,1)', miolo: 'rgba(255,190,100,0.75)', dado: 'rgba(255,246,224,1)', teia: 'rgba(255,170,70,0.14)',
+      chao: 'rgba(255,255,255,0.035)', chaoBorda: 'rgba(255,255,255,0.12)', chaoMes: 'rgba(255,255,255,0.05)', media: 'rgba(255,205,130,0.9)',
+      mes: 'rgba(232,238,255,0.62)', legenda: 'rgba(240,244,255,0.82)', varre: ['rgba(255,240,210,0.5)', 'rgba(255,240,210,0)', 'rgba(255,245,225,0.95)'],
+      nomeTexto: '#f4f7ff', fresta: 'rgb(3,4,8)', brilhoFresta: '255,190,100',
+      telaRastro: ['rgba(255,170,60,0)', 'rgba(255,190,90,0.38)'], telaLinha: ['rgba(255,200,110,0)', 'rgba(255,220,150,0.95)'], reflexo: 'rgba(255,220,160,0.07)',
+    }
+    let P = paleta(claro)
 
     let W = 0, H = 0, dpr = 1, cx = 0, cy = 0, esc = 1, celular = false, reduzir = false
     let fr: Frag[] = [], chaveTela = ''
@@ -341,7 +374,7 @@ export function Algoritmo() {
         chaveTela = chave
         const q = Math.min(window.devicePixelRatio || 1, 2)
         letras = fontes()
-        tela = desenharTela(tw, th, q, N, letras, sorteio(7))
+        tela = desenharTela(tw, th, q, N, letras, sorteio(7), claro)
         fr = montar(N, tela.pontos, k4, (yTela - cy) / k4)
         // quando cada fio e cada nó saem da rede: junto com o primeiro cubinho dele que vai para o gráfico (a rede é
         // feita dos cubinhos; não fica nada para trás)
@@ -382,10 +415,10 @@ export function Algoritmo() {
         desX = docX + dw / 2 + 170 + 300 * esc * CAM[1].zoom - cx; desY = 0; desX0 = aw * 0.3
       }
       dw = Math.round(dw); dh = Math.round(dh)
-      const chaveD = `${dw}|${dh}|${document.documentElement.lang}`
+      const chaveD = `${dw}|${dh}|${document.documentElement.lang}|${claro}`
       if (chaveD !== chaveDocs) {
         chaveDocs = chaveD
-        docs = desenharDocs(dw, dh, Math.min(window.devicePixelRatio || 1, 2), letras)
+        docs = desenharDocs(dw, dh, Math.min(window.devicePixelRatio || 1, 2), letras, claro)
       }
     }
 
@@ -471,14 +504,14 @@ export function Algoritmo() {
       const chao = [[-L, -46], [L, -46], [L, 46], [-L, 46]].map(([x, z]) => proj(x, y0 + 1, z))
       ctx.globalAlpha = geral
       ctx.beginPath(); chao.forEach((P, i) => (i ? ctx.lineTo(P.x, P.y) : ctx.moveTo(P.x, P.y))); ctx.closePath()
-      ctx.fillStyle = 'rgba(255,255,255,0.035)'; ctx.fill()
-      ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1; ctx.stroke()
+      ctx.fillStyle = P.chao; ctx.fill()
+      ctx.strokeStyle = P.chaoBorda; ctx.lineWidth = 1; ctx.stroke()
       ctx.beginPath()
       for (let m = 0; m < MESES; m++) {
         const x = xColuna(m, 1), A = proj(x, y0 + 1, -46), B = proj(x, y0 + 1, 46)
         ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y)
       }
-      ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.stroke()
+      ctx.strokeStyle = P.chaoMes; ctx.stroke()
       // as colunas, da mais longe para a mais perto; em cada uma, as faces de trás antes das da frente
       const caixas: { c: { x: number; y: number; s: number }[]; a: number; k: number; s: number }[] = []
       for (let m = 0; m < MESES; m++) {
@@ -494,7 +527,7 @@ export function Algoritmo() {
       // as faces: frente, trás, esquerda, direita, topo, base; e o quanto cada uma recebe de luz (vem de cima)
       const FACES: [number[], number][] = [[[0, 1, 2, 3], 1], [[5, 4, 7, 6], 0.7], [[4, 0, 3, 7], 0.62], [[1, 5, 6, 2], 0.62], [[3, 2, 6, 7], 1.35], [[4, 5, 1, 0], 0.4]]
       for (const { c, a, k } of caixas) {
-        const [cr, cg, cb] = CORES_GRAF[k]
+        const [cr, cg, cb] = P.tipos[k]
         const faces = FACES.map(([v, luz]) => ({ v, luz, s: v.reduce((t, i) => t + c[i].s, 0) })).sort((m, n) => m.s - n.s)
         for (const { v, luz } of faces) {
           const tom = (q: number) => Math.round(luz > 1 ? q + (255 - q) * (luz - 1) : q * luz)
@@ -511,12 +544,12 @@ export function Algoritmo() {
       const yMedia = y0 - (MEDIA_SAIU / TETO) * ALTO_GRAF
       const M0 = proj(-L + 10, yMedia, -LARGO_BARRA), M1 = proj(L - 10, yMedia, -LARGO_BARRA)
       ctx.globalAlpha = geral
-      ctx.setLineDash([6, 5]); ctx.strokeStyle = 'rgba(255,205,130,0.9)'; ctx.lineWidth = 1.4
+      ctx.setLineDash([6, 5]); ctx.strokeStyle = P.media; ctx.lineWidth = 1.4
       ctx.beginPath(); ctx.moveTo(M0.x, M0.y); ctx.lineTo(M1.x, M1.y); ctx.stroke()
       ctx.setLineDash([])
       // os meses, embaixo de cada grupo
       ctx.font = `600 ${celular ? 9.5 : 11}px ${letras.texto}`; ctx.textAlign = 'center'; ctx.textBaseline = 'top'
-      ctx.fillStyle = 'rgba(232,238,255,0.62)'
+      ctx.fillStyle = P.mes
       let baixo = 0
       for (let m = 0; m < MESES; m++) {
         if (celular && m % 2) continue
@@ -529,22 +562,22 @@ export function Algoritmo() {
       ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = `600 ${celular ? 10.5 : 12}px ${letras.texto}`
       let lx = Lg.x - legenda.reduce((t, l) => t + 31 + ctx.measureText(l).width, -16) / 2
       legenda.forEach((t, k) => {
-        const [cr, cg, cb] = CORES_GRAF[k]
+        const [cr, cg, cb] = P.tipos[k]
         ctx.fillStyle = `rgb(${cr},${cg},${cb})`; ctx.beginPath(); ctx.roundRect(lx, Lg.y - 5, 10, 10, 2.5); ctx.fill()
-        ctx.fillStyle = 'rgba(240,244,255,0.82)'; ctx.fillText(t, lx + 15, Lg.y)
+        ctx.fillStyle = P.legenda; ctx.fillText(t, lx + 15, Lg.y)
         lx += 15 + ctx.measureText(t).width + 16
       })
       // a linha de luz que firma (e depois desfaz) o gráfico: um plano fino de pé, do chão até acima da coluna mais alta
-      ctx.globalCompositeOperation = 'lighter'
+      ctx.globalCompositeOperation = P.luz
       for (const [xl, f] of [[xFaz, fazendo], [xDesfaz, desfazendo]]) {
         if (f <= 0 || f >= 1) continue
         const A = proj(xl, y0 + 4, -50), B = proj(xl, y0 - ALTO_GRAF - 16, -50), C = proj(xl, y0 - ALTO_GRAF - 16, 50), D = proj(xl, y0 + 4, 50)
         const plano = ctx.createLinearGradient(A.x, A.y, B.x, B.y)
-        plano.addColorStop(0, 'rgba(255,240,210,0.5)'); plano.addColorStop(1, 'rgba(255,240,210,0)')
+        plano.addColorStop(0, P.varre[0]); plano.addColorStop(1, P.varre[1])
         ctx.globalAlpha = Math.sin(Math.PI * f)
         ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.lineTo(D.x, D.y); ctx.closePath()
         ctx.fillStyle = plano; ctx.fill()
-        ctx.strokeStyle = 'rgba(255,245,225,0.95)'; ctx.lineWidth = 1.6
+        ctx.strokeStyle = P.varre[2]; ctx.lineWidth = 1.6
         ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke()
       }
       ctx.restore()
@@ -567,10 +600,10 @@ export function Algoritmo() {
     let mini: HTMLCanvasElement | null = null, miniDe: ConsultorReal | null = null
     const miniatura = (t: ConsultorReal) => {
       if (miniDe !== t) {
-        const c = document.createElement('canvas'), k = Math.min(1, 560 / t.iaVista.width)
-        c.width = Math.round(t.iaVista.width * k); c.height = Math.round(t.iaVista.height * k)
+        const c = document.createElement('canvas'), k = Math.min(1, 560 / t.ia.width)
+        c.width = Math.round(t.ia.width * k); c.height = Math.round(t.ia.height * k)
         const g = c.getContext('2d')!
-        g.imageSmoothingQuality = 'high'; g.drawImage(t.iaVista, 0, 0, c.width, c.height)
+        g.imageSmoothingQuality = 'high'; g.drawImage(t.ia, 0, 0, c.width, c.height)
         mini = c; miniDe = t
       }
       return mini!
@@ -622,7 +655,7 @@ export function Algoritmo() {
      * 0 (os fios ainda presos na tela) a 1.
      */
     const desenharTeia = (a: number, cresce: number, s: number) => {
-      ctx.globalCompositeOperation = 'lighter'
+      ctx.globalCompositeOperation = P.luz
       const linhas = new Path2D(), dados: [number, number][] = []
       const quads: [number, number, number, number][] = []
       fiosTeia.forEach((c, k) => {
@@ -644,9 +677,9 @@ export function Algoritmo() {
         if (D.s) dados.push([D.x, D.y])
       })
       ctx.globalAlpha = a
-      ctx.strokeStyle = 'rgba(255,170,70,0.14)'; ctx.lineWidth = 1; ctx.stroke(linhas)
+      ctx.strokeStyle = P.teia; ctx.lineWidth = 1; ctx.stroke(linhas)
       for (let nivel = 1; nivel <= 4; nivel++) {
-        ctx.fillStyle = TONS[nivel]
+        ctx.fillStyle = P.tons[nivel]
         for (const [x, y, lado, n] of quads) {
           if (Math.min(4, Math.max(1, Math.ceil(n * 4))) !== nivel) continue
           ctx.globalAlpha = a * (0.45 + 0.55 * n)
@@ -654,7 +687,7 @@ export function Algoritmo() {
         }
       }
       ctx.globalAlpha = a
-      ctx.fillStyle = 'rgba(255,246,224,1)'
+      ctx.fillStyle = P.dado
       for (const [x, y] of dados) ctx.fillRect(x - 1.8, y - 1.8, 3.6, 3.6)
       ctx.globalAlpha = 1
     }
@@ -703,7 +736,7 @@ export function Algoritmo() {
         }
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
         // depois do corte, os cubinhos que as letras viraram, seguindo pelo fio e se abrindo
-        ctx.globalCompositeOperation = 'lighter'
+        ctx.globalCompositeOperation = P.luz
         const [cr, cg, cb] = T.cor
         ctx.fillStyle = `rgb(${cr},${cg},${cb})`
         for (let q = 0; q < 80; q++) {
@@ -732,7 +765,7 @@ export function Algoritmo() {
       ctx.globalCompositeOperation = 'source-over'
       ctx.globalAlpha = a
       ctx.beginPath(); ctx.moveTo(TL.x, TL.y); ctx.lineTo(TR.x, TR.y); ctx.lineTo(BR.x, BR.y); ctx.lineTo(BL.x, BL.y); ctx.closePath()
-      ctx.fillStyle = t.corFundoVista; ctx.fill()
+      ctx.fillStyle = t.corFundo; ctx.fill()
       const m = miniatura(t)  // a tela como é (o estúdio não é invertido)
       ctx.setTransform(dpr * (TR.x - TL.x) / m.width, dpr * (TR.y - TL.y) / m.width, dpr * (BL.x - TL.x) / m.height, dpr * (BL.y - TL.y) / m.height, dpr * TL.x, dpr * TL.y)
       ctx.globalAlpha = a * (deFrente ? 1 : 0.42)
@@ -741,16 +774,12 @@ export function Algoritmo() {
       ctx.globalAlpha = a
       ctx.strokeStyle = 'rgba(170,200,255,0.3)'; ctx.lineWidth = 1.2; ctx.stroke()
       ctx.globalAlpha = 1
-      ctx.globalCompositeOperation = 'lighter'
+      ctx.globalCompositeOperation = P.luz
       return deFrente
     }
 
     const desenhar = (rolagem: number, tempo: number) => {
       const p = porCena(rolagem)
-      // no claro, da fresta em diante a seção é o estúdio grafite (o canvas deixa de ser invertido); a troca acontece
-      // quando a fresta, já da cor do estúdio, ocupa a cena inteira
-      const estudio = claro && (!real || limitar((p - 0.02) / 0.165) >= ATRAVESSA)
-      por('estudio', String(estudio), () => secao.classList.toggle('ag-estudio', estudio))
       const pres: number[] = [], and: number[] = []
       for (let i = 0; i < n; i++) {
         const a = i / n, b = (i + 1) / n
@@ -838,14 +867,14 @@ export function Algoritmo() {
       // enquanto a câmera chega na fresta, a cena fica da cor do painel; depois de atravessar, escurece aos poucos
       const azul = real ? suave(0.03, 0.22, desm) * (1 - suave(ATRAVESSA - 0.03, ATRAVESSA, desm)) : 0
       if (azul > 0.005) { ctx.globalAlpha = azul; ctx.fillStyle = real?.corFundo ?? COR_PAINEL; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1 }
-      ctx.globalCompositeOperation = 'lighter'
+      ctx.globalCompositeOperation = P.luz
 
       // névoa de luz atrás (mais forte com a rede inteira)
       const centro = proj(0, 0, 0)
       const redeCheia = (1 - suave(0.58, 0.68, p)) * (1 - oculto)
       const th = (720 + 160 * calc) * esc * zoom
       ctx.globalAlpha = Math.min(1, 0.2 + 0.3 * redeCheia + 0.3 * pres[n - 1] + 0.3 * pres[0] + 0.3 * chegada * pres[1]) * (1 - oculto)
-      ctx.drawImage(sprHalo, centro.x - th / 2, centro.y - th / 2, th, th)
+      ctx.drawImage(P.halo, centro.x - th / 2, centro.y - th / 2, th, th)
       ctx.globalAlpha = 1
 
       // a rede: onde está cada nó e o quanto está aceso (a onda de sinal passa da entrada para a saída)
@@ -975,20 +1004,20 @@ export function Algoritmo() {
         ctx.setLineDash([2.2, 3.2]); ctx.lineWidth = 1.7
         for (let q = 1; q <= 5; q++) {
           ctx.globalAlpha = q / 5
-          ctx.strokeStyle = 'rgba(255,170,70,0.13)'; ctx.stroke(fios[q])
-          ctx.strokeStyle = 'rgba(255,190,100,0.3)'; ctx.stroke(fios[6 + q])
+          ctx.strokeStyle = P.fioFundo; ctx.stroke(fios[q])
+          ctx.strokeStyle = P.fioFrente; ctx.stroke(fios[6 + q])
         }
         ctx.setLineDash([2.6, 2.2])
         for (let q = 1; q <= 5; q++) {
           ctx.globalAlpha = q / 5
-          ctx.strokeStyle = 'rgba(255,170,60,0.2)'; ctx.lineWidth = 3.4; ctx.stroke(vivos[q])
-          ctx.strokeStyle = 'rgba(255,232,180,0.9)'; ctx.lineWidth = 1.7; ctx.stroke(vivos[q])
+          ctx.strokeStyle = P.vivoBrilho; ctx.lineWidth = 3.4; ctx.stroke(vivos[q])
+          ctx.strokeStyle = P.vivo; ctx.lineWidth = 1.7; ctx.stroke(vivos[q])
         }
         ctx.setLineDash([])
         for (const [x, y, k, v] of pontas) {
           const tam = (9 + 9 * v) * k
           ctx.globalAlpha = 0.5 + 0.5 * v
-          ctx.drawImage(sprPonto, x - tam / 2, y - tam / 2, tam, tam)
+          ctx.drawImage(P.ponto, x - tam / 2, y - tam / 2, tam, tam)
         }
         // os nós: um halo que cresce com o sinal, um quadradinho de contorno e o miolo (também quadrado)
         ctx.lineWidth = 1.1
@@ -998,11 +1027,11 @@ export function Algoritmo() {
           const saida = REDE.nos[i].camada === CAMADAS.length - 1, a = aceso[i], k = ns[i] * (saida ? 2.4 : 1)
           const tam = Math.min(140, (16 + 50 * a) * k)
           ctx.globalAlpha = fn * (0.25 + 0.75 * a)
-          ctx.drawImage(sprPonto, nx[i] - tam / 2, ny[i] - tam / 2, tam, tam)
+          ctx.drawImage(P.ponto, nx[i] - tam / 2, ny[i] - tam / 2, tam, tam)
           ctx.globalAlpha = fn
           const lc = 5 * k, rm = (1.8 + 2.4 * a) * k
-          ctx.strokeStyle = 'rgba(255,205,130,0.6)'; ctx.strokeRect(nx[i] - lc, ny[i] - lc, lc * 2, lc * 2)
-          ctx.fillStyle = a > 0.45 ? 'rgba(255,246,224,1)' : 'rgba(255,190,100,0.75)'; ctx.fillRect(nx[i] - rm, ny[i] - rm, rm * 2, rm * 2)
+          ctx.strokeStyle = P.anel; ctx.strokeRect(nx[i] - lc, ny[i] - lc, lc * 2, lc * 2)
+          ctx.fillStyle = a > 0.45 ? P.cheio : P.miolo; ctx.fillRect(nx[i] - rm, ny[i] - rm, rm * 2, rm * 2)
         }
         ctx.globalAlpha = 1
       }
@@ -1079,8 +1108,8 @@ export function Algoritmo() {
       // escondidos atrás da tela no começo, os cubinhos ficam apagados
       ctx.globalAlpha = 1 - oculto
       grupos.forEach((idx, chave) => {
-        if (chave[0] === 'd') ctx.fillStyle = TONS[Number(chave.slice(1))]
-        else { const [c, tom, passo] = chave.split('.').map(Number); ctx.fillStyle = PALETA[c][tom][passo] }
+        if (chave[0] === 'd') ctx.fillStyle = P.tons[Number(chave.slice(1))]
+        else { const [c, tom, passo] = chave.split('.').map(Number); ctx.fillStyle = P.cubos[c][tom][passo] }
         for (const i of idx) {
           // pousados na tela, ficam menores (viram os traços das letras)
           const lado = Math.min(24, ss[i] * esc * zoom * ts[i])
@@ -1093,16 +1122,16 @@ export function Algoritmo() {
         if (esconde[i] || (acende > 0 && vs[i] > 0.98 && ys[i] < yLuz - 3)) continue
         if (gs[i] > 0.9 && vs[i] < 0.1 && fr[i].cat < 3) continue
         const tam = Math.min(90, (10 + 8 * Math.sin(s * 2 + fr[i].fase)) * ss[i] * esc * ms[i])
-        ctx.drawImage(sprPonto, xs[i] - tam / 2, ys[i] - tam / 2, tam, tam)
+        ctx.drawImage(P.ponto, xs[i] - tam / 2, ys[i] - tam / 2, tam, tam)
       }
       ctx.globalAlpha = 1
 
       // cena 0: a tela do Consultor de verdade e, rolando, a câmera entrando nela
       if (real && desm < 1 && pres[0] > 0) {
         // sem moldura: a tela fica no plano da página, com as beiradas se apagando nela
-        desenharConsultor(ctx, real, alvoX, alvoY, realS, desm, realE, W, H, claro ? `rgb(${paraClaro(...ESTUDIO).join(',')})` : undefined)
+        desenharConsultor(ctx, real, alvoX, alvoY, realS, desm, realE, W, H, P.fresta, P.brilhoFresta)
         ctx.globalAlpha = 1
-        ctx.globalCompositeOperation = 'lighter'
+        ctx.globalCompositeOperation = P.luz
       }
       // do outro lado da fresta: o túnel
       // o fio do túnel: por dentro, e visto de fora enquanto a câmera sai (os anéis somem e ele fica um fio da teia)
@@ -1116,7 +1145,7 @@ export function Algoritmo() {
         // as esteiras: o trilho na cor da linha, do papel até a rede, e mais forte o trecho que o texto (ou os cubinhos
         // dele) já andou
         const vez = Math.max(pres[1], pres[2])
-        ctx.globalCompositeOperation = 'lighter'
+        ctx.globalCompositeOperation = P.luz
         for (let r = 0; r < NL; r++) {
           if (!ativo[r]) continue
           const tr = linhaT[r], o = r * MAXP, [cr, cg, cb] = docs.textos[r].cor
@@ -1182,13 +1211,13 @@ export function Algoritmo() {
             rastro.addColorStop(0, 'rgba(60,200,255,0)'); rastro.addColorStop(1, 'rgba(60,200,255,0.16)')
             ctx.fillStyle = rastro; ctx.fillRect(-doc.w / 2, yb - 36, doc.w, 36)
             ctx.fillStyle = 'rgba(40,170,240,0.95)'; ctx.fillRect(-doc.w / 2 - 12, yb - 1, doc.w + 24, 2)
-            ctx.globalCompositeOperation = 'lighter'
+            ctx.globalCompositeOperation = P.luz
             ctx.globalAlpha = a * 0.5; ctx.fillStyle = 'rgba(120,210,255,0.6)'; ctx.fillRect(-doc.w / 2 - 12, yb - 5, doc.w + 24, 10)
           }
           ctx.restore()
         }
         ctx.globalAlpha = 1
-        ctx.globalCompositeOperation = 'lighter'
+        ctx.globalCompositeOperation = P.luz
       }
 
       // a tela do Consultor: a parte já acesa (acima da linha de luz), a linha e o rastro dourado logo acima dela
@@ -1200,18 +1229,18 @@ export function Algoritmo() {
         ctx.beginPath(); ctx.rect(tlx - m, tly - m, tw + m * 2, corte - (tly - m)); ctx.clip()
         ctx.drawImage(tela.img, tlx - m, tly - m, tw + m * 2, th + m * 2)
         ctx.restore()
-        ctx.globalCompositeOperation = 'lighter'
+        ctx.globalCompositeOperation = P.luz
         if (acende < 1) {
           const y0 = Math.max(tly, yLuz - 70), y1 = Math.min(tly + th, yLuz)
           if (y1 > y0) {
             const rastro = ctx.createLinearGradient(0, yLuz - 70, 0, yLuz)
-            rastro.addColorStop(0, 'rgba(255,170,60,0)'); rastro.addColorStop(1, 'rgba(255,190,90,0.38)')
+            rastro.addColorStop(0, P.telaRastro[0]); rastro.addColorStop(1, P.telaRastro[1])
             ctx.fillStyle = rastro; ctx.fillRect(tlx, y0, tw, y1 - y0)
           }
           if (yLuz > tly - 10 && yLuz < tly + th + 10) {
             const lado = ctx.createLinearGradient(tlx - 40, 0, tlx + tw + 40, 0)
-            lado.addColorStop(0, 'rgba(255,200,110,0)'); lado.addColorStop(0.15, 'rgba(255,220,150,0.95)')
-            lado.addColorStop(0.85, 'rgba(255,220,150,0.95)'); lado.addColorStop(1, 'rgba(255,200,110,0)')
+            lado.addColorStop(0, P.telaLinha[0]); lado.addColorStop(0.15, P.telaLinha[1])
+            lado.addColorStop(0.85, P.telaLinha[1]); lado.addColorStop(1, P.telaLinha[0])
             ctx.fillStyle = lado; ctx.fillRect(tlx - 40, yLuz - 1.5, tw + 80, 3)
             ctx.globalAlpha = 0.5; ctx.fillRect(tlx - 40, yLuz - 6, tw + 80, 12); ctx.globalAlpha = 1
           }
@@ -1221,7 +1250,7 @@ export function Algoritmo() {
           if (ciclo < 1) {
             const x = tlx - tw * 0.4 + ciclo * tw * 1.8
             const reflexo = ctx.createLinearGradient(x - 120, tly, x + 120, tly + th)
-            reflexo.addColorStop(0, 'rgba(255,220,160,0)'); reflexo.addColorStop(0.5, 'rgba(255,220,160,0.07)'); reflexo.addColorStop(1, 'rgba(255,220,160,0)')
+            reflexo.addColorStop(0, 'rgba(255,255,255,0)'); reflexo.addColorStop(0.5, P.reflexo); reflexo.addColorStop(1, 'rgba(255,255,255,0)')
             ctx.save(); ctx.beginPath(); ctx.roundRect(tlx, tly, tw, th, 20 * kT); ctx.clip()
             ctx.fillStyle = reflexo; ctx.fillRect(tlx, tly, tw, th); ctx.restore()
           }
@@ -1271,7 +1300,7 @@ export function Algoritmo() {
     const tema = new MutationObserver(() => {
       const agora = document.documentElement.dataset.tema === 'claro'
       if (agora === claro) return
-      claro = agora; chaveDocs = ''; chaveReal = ''; real = null
+      claro = agora; P = paleta(claro); chaveDocs = ''; chaveTela = ''; chaveReal = ''; real = null
       medir(); pedirReal(); desenhar(atual, performance.now())
     })
     tema.observe(document.documentElement, { attributes: true, attributeFilter: ['data-tema'] })

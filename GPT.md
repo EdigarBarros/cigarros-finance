@@ -478,3 +478,23 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
   presa na rede usa a foto como é (`iaVista`, `corFundoVista`), já que o estúdio não é invertido.
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium nos dois temas
   (1440×860 e 390×844), sem erro de página; o escuro continua igual.
+
+### 15/11/2026 — Claude — Motor no modo claro com paleta própria (sai a inversão e o estúdio)
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Pedido do Edigar: o estúdio grafite (e o cartão final marrom-escuro) ainda era um tema escuro; ele quer um modo claro
+  de verdade, com cores bonitas e realçadas.
+- Saíram a inversão por CSS, as compensações (`paraClaro`, `canvasParaClaro`) e o estúdio (`ag-estudio`). O motor tem
+  uma paleta por tema (`paleta` em `Algoritmo.tsx`, trocada junto com o tema): no escuro, a de sempre (luz dourada
+  somada, 'lighter'); no claro, cores por cima do fundo claro ('source-over'): rede, teia e túnel no azul e verde-água da
+  marca, poeira de dados do azul ao verde-água (`TONS_CLARO`), cores de cada tipo mais fortes (`CORES_GRAF_CLARO` e
+  `COR_TIPO_CLARO`: verde, vermelho e âmbar), cubinhos sem clarear para o branco (`PALETA_CLARO`), gráfico, legenda,
+  meses, linha de luz e média nas cores do claro. A fresta clareia em vez de escurecer, com brilho azul.
+- `algoritmoTela.ts`: a tela final do Consultor tem as duas versões (`CORES`): no claro, vidro branco, texto escuro, nota
+  e números no verde-água e azul, pilares em cores fortes.
+- `algoritmoDocs.ts`: o texto das linhas lidas no claro tem o nome escuro e o valor na cor forte do tipo.
+- `algoritmo.css`: no claro, o fundo da seção é claro com toques de azul e verde-água, e as peças em HTML (rótulo,
+  trilho, etiquetas, contador, selos, véu) seguem a marca.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium nos dois temas
+  (1440×860 e 390×844), sem erro de página; o escuro continua igual.

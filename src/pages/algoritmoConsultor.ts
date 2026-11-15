@@ -20,28 +20,6 @@ const FOTOS = import.meta.glob('./motor/*.jpg', { query: '?url', import: 'defaul
 const CAMADAS = import.meta.glob('./motor/*.webp', { query: '?url', import: 'default' }) as Record<string, () => Promise<string>>
 const MAPAS = import.meta.glob('./motor/*.json', { import: 'default' }) as Record<string, () => Promise<Mapa>>
 
-/**
- * No modo claro o canvas do motor é invertido pelo CSS (invert(1) hue-rotate(180deg), algoritmo.css). O que precisa
- * aparecer com a cor de verdade é desenhado já com a conta ao contrário: a cor c vira 255 − H·c (H, a matriz do
- * hue-rotate de 180°), e o CSS a traz de volta (H·H dá a identidade).
- */
-const H180 = [[-0.574, 1.43, 0.144], [0.426, 0.43, 0.144], [0.426, 1.43, -0.856]]
-const byte = (v: number) => Math.max(0, Math.min(255, Math.round(v)))
-export function paraClaro(r: number, g: number, b: number): [number, number, number] {
-  return H180.map(([x, y, z]) => 255 - byte(x * r + y * g + z * b)) as [number, number, number]
-}
-/** A mesma conta em todos os pontos de um canvas. */
-export function canvasParaClaro(c: HTMLCanvasElement) {
-  const g = c.getContext('2d', { willReadFrequently: true })!
-  const d = g.getImageData(0, 0, c.width, c.height), D = d.data
-  for (let i = 0; i < D.length; i += 4) {
-    if (!D[i + 3]) continue
-    const [r, gg, b] = paraClaro(D[i], D[i + 1], D[i + 2])
-    D[i] = r; D[i + 1] = gg; D[i + 2] = b
-  }
-  g.putImageData(d, 0, 0)
-}
-
 export interface ConsultorReal {
   w: number; h: number
   /** a tela inteira, na densidade da foto (q pixels por px da foto), com as beiradas apagadas */
@@ -50,13 +28,8 @@ export interface ConsultorReal {
   fr: [number, number, number, number]; fx: number; fy: number
   /** a faixa nítida em volta da fresta (1 ponto de largura) e de onde até onde ela vai na foto (y, altura) */
   tira: HTMLCanvasElement | null; tiraY: number; tiraH: number
-  /** a cor do fundo do painel (já compensada no modo claro) */
+  /** a cor do fundo do painel */
   corFundo: string
-  /**
-   * A tela e a cor do fundo como são (sem compensar): no modo claro, depois da fresta, o motor é desenhado sem a
-   * inversão (o estúdio grafite), e a tela presa na rede usa estas
-   */
-  iaVista: HTMLCanvasElement; corFundoVista: string
 }
 
 /** Em que ponto do mergulho a câmera atravessa a fresta (depois vêm o túnel e a saída para fora). */
@@ -155,25 +128,15 @@ export async function carregarConsultor(aparelho: 'pc' | 'cel', idioma: string, 
   }
   // a cor do fundo: um ponto no meio da foto do fundo (lá não há cartões nem beirada apagada)
   const ponto = fundo.g.getImageData(Math.round(cw * 0.6), Math.round(ch * 0.5), 1, 1).data
-  let corFundo = [ponto[0], ponto[1], ponto[2]] as [number, number, number]
-  const corFundoVista = `rgb(${corFundo.join(',')})`
-  let iaVista = ia.c
-  if (claro) {
-    const copia = tela(cw, ch)
-    copia.g.drawImage(ia.c, 0, 0)
-    iaVista = copia.c
-    canvasParaClaro(ia.c)
-    if (tira) canvasParaClaro(tira)
-    corFundo = paraClaro(...corFundo)
-  }
-  return { w, h, ia: ia.c, q, fr, fx: fr[0] + fr[2] / 2, fy: fr[1] + fr[3] / 2, tira, tiraY, tiraH, corFundo: `rgb(${corFundo.join(',')})`, iaVista, corFundoVista }
+  const corFundo = [ponto[0], ponto[1], ponto[2]]
+  return { w, h, ia: ia.c, q, fr, fx: fr[0] + fr[2] / 2, fy: fr[1] + fr[3] / 2, tira, tiraY, tiraH, corFundo: `rgb(${corFundo.join(',')})` }
 }
 
 /**
  * Desenha a tela com o meio da fresta em (ax, ay) e escala s (px da página por px da foto), já aumentada pelo
  * mergulho. vw × vh é o tamanho da cena (só a parte da foto que cabe nela é desenhada).
  */
-export function desenharConsultor(g: CanvasRenderingContext2D, t: ConsultorReal, ax: number, ay: number, s: number, desm: number, E: number, vw: number, vh: number, corFresta = 'rgb(3,4,8)') {
+export function desenharConsultor(g: CanvasRenderingContext2D, t: ConsultorReal, ax: number, ay: number, s: number, desm: number, E: number, vw: number, vh: number, corFresta = 'rgb(3,4,8)', corBrilho = '255,190,100') {
   const e = aumento(Math.max(0, desm), E)
   if (!e) return
   const k = s * e
@@ -196,7 +159,8 @@ export function desenharConsultor(g: CanvasRenderingContext2D, t: ConsultorReal,
       g.globalAlpha = 1
     }
   }
-  // a fresta escurece conforme a câmera chega, com um brilho quente lá dentro (algo do outro lado)
+  // a fresta vai para a cor do outro lado conforme a câmera chega (no escuro, escurece; no claro, clareia), com um
+  // brilho lá dentro (algo do outro lado)
   const escuro = suave(0.07, 0.26, desm)
   if (escuro > 0) {
     const fx0 = ax + (t.fr[0] - t.fx) * k, fy0 = ay + (t.fr[1] - t.fy) * k, fw = t.fr[2] * k, fh = t.fr[3] * k
@@ -206,7 +170,7 @@ export function desenharConsultor(g: CanvasRenderingContext2D, t: ConsultorReal,
     // outro lado é escuro
     const raio = Math.min(Math.max(fw, fh) * 0.5, Math.min(vw, vh) * 0.35)
     const brilho = g.createRadialGradient(ax, ay, 0, ax, ay, raio)
-    brilho.addColorStop(0, 'rgba(255,190,100,0.32)'); brilho.addColorStop(0.4, 'rgba(255,150,50,0.08)'); brilho.addColorStop(1, 'rgba(255,140,40,0)')
+    brilho.addColorStop(0, `rgba(${corBrilho},0.32)`); brilho.addColorStop(0.4, `rgba(${corBrilho},0.08)`); brilho.addColorStop(1, `rgba(${corBrilho},0)`)
     g.save(); g.beginPath(); g.rect(fx0, fy0, fw, fh); g.clip()
     g.globalAlpha = escuro * suave(0.11, 0.21, desm) * (1 - suave(0.23, 0.29, desm))
     g.fillStyle = brilho; g.fillRect(fx0, fy0, fw, fh)
