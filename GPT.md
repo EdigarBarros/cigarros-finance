@@ -373,3 +373,22 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
   teia das costas da tela (`desenharCostas` liga a fresta ao nó). Fios e nós atrás da câmera não são desenhados.
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
   390×844) em toda a abertura, sem erro de página.
+
+### 15/11/2026 — Claude — Abertura do motor: túnel de linhas, saída sem travar e a tela na ponta da rede
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Pedido do Edigar: dentro do túnel as paredes eram quadradinhos (o fio da rede é feito de linhas, e as letras andam nelas);
+  a saída da câmera travava; e a vista de fora era confusa (a tela de costas atrás, a rede de lado na frente).
+- `src/pages/Algoritmo.tsx`: o túnel são 16 linhas contínuas ao longo do fio (mais fracas longe), e cada linha lida anda
+  em cima de uma delas. A tela do Consultor agora fica presa na ponta da entrada da rede (`X_TELA`, girando com ela):
+  a vista de fora se lê da esquerda para a direita, tela → fios → rede. Vista de frente, a tela aparece inteira e os
+  fios saem de trás dela; vista por trás (o caso da câmera de sempre), aparece pelo vidro (espelhada, suave) com a teia
+  presa nela por cima. A fresta e o fio do túnel saem da tela nesse lugar. Na saída, a câmera primeiro recua ao longo do
+  fio e depois gira (não atravessa mais a rede). Na cena 0, a rede fica mais à direita (`desX0`), com zoom menor
+  (0,75; no celular, ainda mais longe), para a tela caber.
+- Desempenho (Chromium sem placa de vídeo, 1440×860): a saída tinha quadros de 50 ms; a tela em perspectiva passou a usar
+  uma miniatura feita uma vez só (`miniatura`) e os brilhos dos nós e dos cubinhos têm tamanho máximo (perto da câmera
+  ficavam enormes). Agora 17–33 ms, como no resto da seção.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
+  390×844) em toda a abertura, sem erro de página.

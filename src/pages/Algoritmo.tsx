@@ -215,7 +215,7 @@ function montar(N: number, pontos: Float32Array, k4: number, oy: number) {
 /** Câmera em cada cena: giro e inclinação (rad), aproximação. Na primeira e na última fica de frente: a tela encaixa na tela. */
 const CAM = [
   // de lado e um pouco de cima: as costas da tela, atrás da rede, aparecem em perspectiva
-  { yaw: 0.2, pitch: 0.1, zoom: 0.95 },
+  { yaw: 0.2, pitch: 0.1, zoom: 0.75 },
   { yaw: -0.14, pitch: 0.18, zoom: 0.62 },
   { yaw: -0.22, pitch: 0.3, zoom: 1.05 },
   { yaw: 0.26, pitch: 0.12, zoom: 1.0 },
@@ -289,7 +289,8 @@ export function Algoritmo() {
     }
     let perto = false
     // a leitura (cena 1): o documento fica em (docX, docY) e a rede anda (desX, desY) para dar lugar a ele
-    let docs: { pdf: DocPronto; planilha: DocPronto; textos: TextoLido[] } | null = null, docX = 0, docY = 0, desX = 0, desY = 0, chaveDocs = ''
+    // desX0: na cena 0 a rede fica um pouco à direita, para caber a tela presa na ponta da entrada dela
+    let docs: { pdf: DocPronto; planilha: DocPronto; textos: TextoLido[] } | null = null, docX = 0, docY = 0, desX = 0, desY = 0, desX0 = 0, chaveDocs = ''
     const texto = sticky.querySelector<HTMLElement>('.ag-texto')!, selos = sticky.querySelector<HTMLElement>('.ag-selos')!
     const estilo = getComputedStyle(document.documentElement)
     const fonte = (v: string, padrao: string) => estilo.getPropertyValue(v).trim() || padrao
@@ -359,13 +360,13 @@ export function Algoritmo() {
         const topo = texto.getBoundingClientRect().bottom - sticky.getBoundingClientRect().top + 10
         dw = Math.min(W - 36, 380); dh = Math.min(dw * 0.66, H * 0.3)
         docX = W / 2; docY = topo + dh / 2
-        desX = 0; desY = (docY + dh / 2 + H - 24) / 2 - cy
+        desX = 0; desY = (docY + dh / 2 + H - 24) / 2 - cy; desX0 = W * 0.2
       } else {
         const esq = Math.min(460, W * 0.36), aw = W - esq - 40
         dw = Math.min(380, aw * 0.4); dh = Math.min(dw * 0.95, H * 0.62)
         docX = esq + 20 + dw / 2; docY = cy
         // a rede vai para a direita: entre o documento e a entrada dela fica o espaço da esteira
-        desX = docX + dw / 2 + 170 + 300 * esc * CAM[1].zoom - cx; desY = 0
+        desX = docX + dw / 2 + 170 + 300 * esc * CAM[1].zoom - cx; desY = 0; desX0 = aw * 0.24
       }
       dw = Math.round(dw); dh = Math.round(dh)
       const chaveD = `${dw}|${dh}|${document.documentElement.lang}`
@@ -536,24 +537,38 @@ export function Algoritmo() {
       ctx.restore()
     }
 
-    /** As costas da tela do Consultor no espaço da rede: atrás dela (z), do tamanho dela (largura × altura). */
-    const Z_COSTAS = 420
-    const tamCostas = (t: ConsultorReal) => { const w = Math.min(1000, (900 * t.w) / t.h); return [w, (w * t.h) / t.w] as const }
+    /**
+     * A tela do Consultor no espaço da rede: um painel em pé na ponta da entrada (em x = X_TELA, antes da primeira
+     * camada), virado para fora, girando junto com a rede. Do tamanho da altura da rede, na proporção da foto.
+     */
+    const X_TELA = -640
+    const tamTela = (t: ConsultorReal) => { const h = 360; return [Math.min(720, (h * t.w) / t.h), h] as const }
+    // a tela em miniatura (desenhar a foto inteira em perspectiva a cada quadro pesa)
+    let mini: HTMLCanvasElement | null = null, miniDe: ConsultorReal | null = null
+    const miniatura = (t: ConsultorReal) => {
+      if (miniDe !== t) {
+        const c = document.createElement('canvas'), k = Math.min(1, 560 / t.ia.width)
+        c.width = Math.round(t.ia.width * k); c.height = Math.round(t.ia.height * k)
+        const g = c.getContext('2d')!
+        g.imageSmoothingQuality = 'high'; g.drawImage(t.ia, 0, 0, c.width, c.height)
+        mini = c; miniDe = t
+      }
+      return mini!
+    }
 
     /**
-     * O túnel: por dentro do fio que liga a fresta (nas costas da tela) a um nó da entrada da rede. Anéis de quadradinhos
-     * dourados em volta do fio, ligados por trilhos tracejados (as paredes); nos trilhos andam deitadas as linhas lidas
-     * do extrato e da planilha (o nome e o valor, na cor do tipo), letra por letra na direção do trilho, como na esteira
-     * da leitura; perto da rede, num ponto fixo, cada letra se desfaz em cubinhos, que seguem pelo trilho. Tudo em 3D,
-     * visto pela câmera livre (que está dentro do fio e depois sai dele).
+     * O túnel: por dentro do fio que liga a fresta da tela a um nó da entrada da rede. As paredes são as linhas do fio
+     * (linhas contínuas, mais fracas longe); nas linhas andam deitadas as linhas lidas do extrato e da planilha (o nome e
+     * o valor, na cor do tipo), letra por letra na direção do fio, como na esteira da leitura; perto da rede, num ponto
+     * fixo, cada letra se desfaz em cubinhos, que seguem pela linha. Tudo em 3D, visto pela câmera livre.
      */
     const desenharTunel = (a: number, tau: number) => {
       const { Sx, Sy, Sz, dx, dy, dz, L, sCam } = tubo
-      // dois vetores em volta do fio (o anel fica no plano deles)
+      // dois vetores em volta do fio (as linhas ficam num círculo em volta dele)
       let e1x = -dz, e1y = 0, e1z = dx
       const n1 = Math.hypot(e1x, e1z) || 1; e1x /= n1; e1z /= n1
       const e2x = dy * e1z - dz * e1y, e2y = dz * e1x - dx * e1z, e2z = dx * e1y - dy * e1x
-      const RT = 30, GAP = 18, M = 26, K = Math.floor(L / GAP)
+      const RT = 30, M = 16, PASSO = 24, K = Math.ceil(L / PASSO)
       const ponto = (sv: number, ang: number, r: number) => {
         const co = Math.cos(ang) * r, si = Math.sin(ang) * r
         return proj(Sx + dx * sv + e1x * co + e2x * si, Sy + dy * sv + e1y * co + e2y * si, Sz + dz * sv + e1z * co + e2z * si)
@@ -563,72 +578,67 @@ export function Algoritmo() {
       // a luz no fim do fio: o nó da rede
       const fim = proj(Sx + dx * L, Sy + dy * L, Sz + dz * L)
       if (fim.s) { const tam = Math.min(700, 160 * pxu(fim)); ctx.globalAlpha = a * 0.75; ctx.drawImage(sprHalo, fim.x - tam / 2, fim.y - tam / 2, tam, tam) }
-      // os trilhos (um a cada dois pontos do anel) e os anéis
-      const trilhos = new Path2D()
-      for (let m = 0; m < M; m += 2) {
+      // as linhas do fio, em três faixas de distância (as de longe mais fracas)
+      const faixas = [new Path2D(), new Path2D(), new Path2D()]
+      for (let m = 0; m < M; m++) {
         const ang = (m / M) * Math.PI * 2
-        let antes = false
-        for (let k = 0; k <= K; k++) {
-          const P = ponto(k * GAP, ang, RT)
-          if (!P.s) { antes = false; continue }
-          if (antes) trilhos.lineTo(P.x, P.y); else trilhos.moveTo(P.x, P.y)
-          antes = true
+        let antes = -1
+        let A = ponto(Math.max(sCam + 4, 0), ang, RT)
+        for (let k = 1; k <= K; k++) {
+          const sv = Math.min(L, k * PASSO)
+          if (sv <= sCam + 4) continue
+          const B = ponto(sv, ang, RT)
+          if (A.s && B.s) {
+            const f = Math.min(2, Math.floor(((sv - sCam) / L) * 3))
+            faixas[f].moveTo(A.x, A.y); faixas[f].lineTo(B.x, B.y)
+          }
+          A = B; antes = k
         }
+        void antes
       }
-      ctx.globalAlpha = a
-      ctx.setLineDash([2, 4]); ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(255,175,80,0.2)'; ctx.stroke(trilhos); ctx.setLineDash([])
-      for (let k = 0; k <= K; k++) {
-        const sv = k * GAP, longe = sv - sCam
-        if (longe < 2) continue
-        const nevoa = suave(L * 1.1, L * 0.35, longe) * suave(4, 50, longe)
-        if (nevoa < 0.01) continue
-        ctx.globalAlpha = a * nevoa
-        ctx.fillStyle = TONS[Math.min(4, 1 + Math.floor(nevoa * 3.2))]
-        for (let m = 0; m < M; m++) {
-          const P = ponto(sv, (m / M) * Math.PI * 2, RT)
-          if (!P.s) continue
-          const lado = Math.max(1.4, 1.9 * pxu(P))
-          ctx.fillRect(P.x - lado / 2, P.y - lado / 2, lado, lado)
-        }
-      }
+      const brilho = [0.85, 0.5, 0.25]
+      faixas.forEach((f, i) => {
+        ctx.globalAlpha = a * brilho[i]
+        ctx.strokeStyle = 'rgba(255,170,70,0.22)'; ctx.lineWidth = 4; ctx.stroke(f)
+        ctx.strokeStyle = 'rgba(255,220,160,0.9)'; ctx.lineWidth = 1.2; ctx.stroke(f)
+      })
       if (!docs) return
-      // as linhas lidas, deitadas nos trilhos: andam mais rápido que a câmera (passam por ela e seguem na frente)
-      const WS = 0.42, CORTE = L * 0.8, RTX = RT * 0.86
-      ctx.textBaseline = 'middle'; ctx.textAlign = 'left'
+      // as linhas lidas, deitadas nas linhas do fio: andam mais rápido que a câmera (passam por ela e seguem na frente)
+      const WS = 0.42, CORTE = L * 0.8
+      ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left'
       for (let i = 0; i < NL; i++) {
-        const T = docs.textos[i], ang = (i / NL) * Math.PI * 2 + 0.31
+        const T = docs.textos[i], ang = (Math.round((i * M) / NL) / M) * Math.PI * 2
         const cauda = (tau * 1.75 - i * 0.085) * L - 40
         const largura = T.w * WS
         if (cauda > L * 1.2 || cauda + largura < sCam) continue
-        // a direção do trilho na tela, no meio do texto: se ela for para a esquerda, o texto é montado ao contrário
+        // a direção da linha na tela, no meio do texto: se ela for para a esquerda, o texto é montado ao contrário
         // (a primeira letra na frente), para ler da esquerda para a direita
         const meio = Math.max(sCam + 6, Math.min(CORTE, cauda + largura / 2))
-        const A = ponto(meio, ang, RTX), B = ponto(meio + 4, ang, RTX)
+        const A = ponto(meio, ang, RT), B = ponto(meio + 4, ang, RT)
         if (!A.s || !B.s) continue
         const vira = B.x < A.x
-        // as letras, antes do ponto do corte
+        // as letras, antes do ponto do corte: em pé sobre a linha (a base delas na linha)
         ctx.globalCompositeOperation = 'source-over'
         let fonte = ''
         for (const gl of T.glifos) {
           const lx = vira ? T.w - gl.x - gl.w : gl.x
           const sg = cauda + (lx + gl.w / 2) * WS
           if (sg < sCam + 4 || sg > CORTE + 6) continue
-          // a letra deitada na parede do fio: o comprimento dela ao longo do fio, a altura ao longo da volta do anel
-          const P = ponto(sg, ang, RTX), Qf = ponto(sg + 1, ang, RTX), Qv = ponto(sg, ang + 1 / RTX, RTX)
+          // a letra deitada na parede do fio: o comprimento dela ao longo do fio, a altura ao longo da volta
+          const P = ponto(sg, ang, RT), Qf = ponto(sg + 1, ang, RT), Qv = ponto(sg, ang + 1 / RT, RT)
           if (!P.s || !Qf.s || !Qv.s) continue
           let ux = (Qf.x - P.x) * WS, uy = (Qf.y - P.y) * WS, vx = (Qv.x - P.x) * WS, vy = (Qv.y - P.y) * WS
           if (vira) { ux = -ux; uy = -uy; vx = -vx; vy = -vy }
-          // sem espelhar: a letra fica de pé para quem olha
           if (ux * vy - uy * vx < 0) { vx = -vx; vy = -vy }
           if (Math.hypot(ux, uy) > 10 || Math.hypot(vx, vy) > 10) continue
           ctx.globalAlpha = a * (1 - suave(CORTE - 4, CORTE + 6, sg)) * suave(sCam + 4, sCam + 30, sg)
           ctx.setTransform(dpr * ux, dpr * uy, dpr * vx, dpr * vy, dpr * P.x, dpr * P.y)
           if (gl.fonte !== fonte) { fonte = gl.fonte; ctx.font = fonte }
           ctx.fillStyle = gl.cor
-          ctx.fillText(gl.c, -gl.w / 2, 0)
+          ctx.fillText(gl.c, -gl.w / 2, -2)
         }
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-        // depois do corte, os cubinhos que as letras viraram, seguindo pelo trilho e se abrindo
+        // depois do corte, os cubinhos que as letras viraram, seguindo pela linha e se abrindo
         ctx.globalCompositeOperation = 'lighter'
         const [cr, cg, cb] = T.cor
         ctx.fillStyle = `rgb(${cr},${cg},${cb})`
@@ -638,63 +648,78 @@ export function Algoritmo() {
           const sp = cauda + (lx + T.w / 2) * WS, passou = sp - CORTE
           if (passou < 0 || sp > L * 1.05) continue
           const abre = Math.min(1, passou / 60)
-          const P = ponto(Math.min(sp, L), ang + (py0 / 30 + Math.sin(q * 2.3) * abre) * 0.08, RTX - py0 * WS * 0.6 - Math.cos(q * 1.7) * abre * 6)
+          const P = ponto(Math.min(sp, L), ang + (py0 / 30 + Math.sin(q * 2.3) * abre) * 0.08, RT - Math.cos(q * 1.7) * abre * 6)
           if (!P.s) continue
           ctx.globalAlpha = a * (1 - suave(L * 0.95, L * 1.05, sp))
           const lado = Math.max(1.4, 1.6 * pxu(P))
           ctx.fillRect(P.x - lado / 2, P.y - lado / 2, lado, lado)
         }
       }
+      ctx.textBaseline = 'middle'
       ctx.globalAlpha = 1
     }
 
     /**
-     * As costas da tela do Consultor, atrás da rede: a tela vista por trás (a imagem dela espelhada, bem apagada, num
-     * painel da cor do painel) e uma teia de fios que sai de vários pontos dela até os nós da rede, com dados correndo
-     * neles; um dos fios é o do túnel (da fresta ao nó). cresce vai de 0 (os fios ainda presos na tela) a 1.
+     * A tela do Consultor presa na ponta da entrada da rede: de frente, a tela de verdade (em perspectiva); por trás dela
+     * saem os fios (a teia) que entram nos nós das duas primeiras camadas, com dados correndo; um deles é o do túnel
+     * (da fresta ao nó). Os fios são desenhados antes da tela: o começo deles fica escondido atrás dela. cresce vai de 0
+     * (os fios ainda presos na tela) a 1.
      */
-    const desenharCostas = (t: ConsultorReal, a: number, cresce: number, s: number) => {
-      const [Wp, Hp] = tamCostas(t), Zp = Z_COSTAS
-      const P = ([[-Wp / 2, -Hp / 2], [Wp / 2, -Hp / 2], [Wp / 2, Hp / 2], [-Wp / 2, Hp / 2]] as const).map(([x, y]) => proj(x, y, Zp))
-      if (P.some((Q) => !Q.s)) return
-      ctx.globalCompositeOperation = 'source-over'
-      ctx.save()
-      ctx.beginPath(); P.forEach((Q, i) => (i ? ctx.lineTo(Q.x, Q.y) : ctx.moveTo(Q.x, Q.y))); ctx.closePath()
-      ctx.globalAlpha = a * 0.92; ctx.fillStyle = COR_PAINEL; ctx.fill()
-      ctx.strokeStyle = 'rgba(160,190,255,0.14)'; ctx.lineWidth = 1; ctx.stroke()
-      ctx.clip()
-      // a tela vista por trás: espelhada (a esquerda dela fica à direita), presa nos cantos do painel
-      const iw = t.ia.width, ih = t.ia.height, [A, B, C] = P
-      ctx.setTransform(dpr * (A.x - B.x) / iw, dpr * (A.y - B.y) / iw, dpr * (C.x - B.x) / ih, dpr * (C.y - B.y) / ih, dpr * B.x, dpr * B.y)
-      ctx.globalAlpha = a * 0.13
-      ctx.drawImage(t.ia, 0, 0)
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      ctx.restore()
-      // a teia: de cada ponto das costas saem dois fios para nós da rede; e o fio do túnel, da fresta ao nó dele
-      ctx.globalCompositeOperation = 'lighter'
-      const COLS = 6, LINHAS = 4, fios = new Path2D(), presos = new Path2D(), dados: [number, number][] = []
-      const ligar = (Q: { x: number; y: number; s: number }, alvo: number, k: number) => {
-        if (!Q.s || !ns[alvo]) return
-        fios.moveTo(Q.x, Q.y); fios.lineTo(mistura(Q.x, nx[alvo], cresce), mistura(Q.y, ny[alvo], cresce))
-        const u = ((s * 0.22 + k * 0.137 + alvo * 0.031) % 1) * cresce
-        dados.push([mistura(Q.x, nx[alvo], u), mistura(Q.y, ny[alvo], u)])
-      }
-      for (let j = 0; j < LINHAS; j++) {
-        for (let i = 0; i < COLS; i++) {
-          const k = j * COLS + i
-          const Q = proj((-0.5 + (i + 0.5) / COLS) * Wp * 0.86, (-0.5 + (j + 0.5) / LINHAS) * Hp * 0.8, Zp)
-          presos.rect(Q.x - 3.5, Q.y - 3.5, 7, 7)
-          ligar(Q, (k * 7 + 3) % NN, k); ligar(Q, (k * 11 + 5) % NN, k + 50)
+    const desenharTelaNaRede = (t: ConsultorReal, a: number, cresce: number, s: number, ca: number, sa: number) => {
+      const [Wp, Hp] = tamTela(t)
+      const gira = (x: number, y: number, z: number) => proj(x * ca + z * sa, y, -x * sa + z * ca)
+      const TL = gira(X_TELA, -Hp / 2, Wp / 2), TR = gira(X_TELA, -Hp / 2, -Wp / 2), BR = gira(X_TELA, Hp / 2, -Wp / 2), BL = gira(X_TELA, Hp / 2, Wp / 2)
+      const inteira = TL.s && TR.s && BR.s && BL.s
+      // de frente (a imagem sem espelhar) ou por trás
+      const deFrente = inteira && (TR.x - TL.x) * (BL.y - TL.y) - (TR.y - TL.y) * (BL.x - TL.x) > 0
+      const teia = () => {
+        ctx.globalCompositeOperation = 'lighter'
+        const fios = new Path2D(), presos = new Path2D(), dados: [number, number][] = []
+        const ligar = (Q: { x: number; y: number; s: number }, alvo: number, k: number) => {
+          if (!Q.s || !ns[alvo]) return
+          fios.moveTo(Q.x, Q.y); fios.lineTo(mistura(Q.x, nx[alvo], cresce), mistura(Q.y, ny[alvo], cresce))
+          const u = ((s * 0.25 + k * 0.137) % 1) * cresce
+          dados.push([mistura(Q.x, nx[alvo], u), mistura(Q.y, ny[alvo], u)])
         }
+        const e0 = REDE.inicio[0], n0 = REDE.inicio[1] - e0, e1 = REDE.inicio[1], n1 = REDE.inicio[2] - e1
+        for (let j = 0; j < 4; j++) {
+          for (let i = 0; i < 5; i++) {
+            const k = j * 5 + i
+            const Q = gira(X_TELA + 2, (-0.5 + (j + 0.5) / 4) * Hp * 0.8, (0.5 - (i + 0.5) / 5) * Wp * 0.85)
+            if (Q.s) presos.rect(Q.x - 3, Q.y - 3, 6, 6)
+            ligar(Q, e0 + ((k * 5) % n0), k); if (k % 2) ligar(Q, e1 + ((k * 7) % n1), k + 40)
+          }
+        }
+        // o fio do túnel: da fresta ao nó dele
+        const F0 = gira(X_TELA + 2, (t.fy / t.h - 0.5) * Hp, Wp / 2 - (t.fx / t.w) * Wp)
+        if (F0.s) presos.rect(F0.x - 4, F0.y - 4, 8, 8)
+        ligar(F0, tubo.no, 99)
+        ctx.globalAlpha = a
+        ctx.setLineDash([2.4, 3]); ctx.lineWidth = 1.7; ctx.strokeStyle = 'rgba(255,190,100,0.6)'; ctx.stroke(fios); ctx.setLineDash([])
+        if (!deFrente) { ctx.fillStyle = 'rgba(255,215,140,0.95)'; ctx.fill(presos) }
+        ctx.fillStyle = 'rgba(255,246,224,1)'
+        for (const [x, y] of dados) ctx.fillRect(x - 1.8, y - 1.8, 3.6, 3.6)
       }
-      const F0 = proj(tubo.Sx, tubo.Sy, tubo.Sz)
-      if (F0.s) { presos.rect(F0.x - 4, F0.y - 4, 8, 8); ligar(F0, tubo.no, 99) }
-      ctx.globalAlpha = a
-      ctx.setLineDash([2.4, 3]); ctx.lineWidth = 1.8; ctx.strokeStyle = 'rgba(255,190,100,0.62)'; ctx.stroke(fios); ctx.setLineDash([])
-      ctx.fillStyle = 'rgba(255,215,140,0.95)'; ctx.fill(presos)
-      ctx.fillStyle = 'rgba(255,246,224,1)'
-      for (const [x, y] of dados) ctx.fillRect(x - 1.8, y - 1.8, 3.6, 3.6)
+      // de frente, os fios saem de trás da tela (desenhados antes, o começo deles fica escondido)
+      if (deFrente) teia()
+      if (inteira) {
+        ctx.globalCompositeOperation = 'source-over'
+        ctx.globalAlpha = a
+        ctx.beginPath(); ctx.moveTo(TL.x, TL.y); ctx.lineTo(TR.x, TR.y); ctx.lineTo(BR.x, BR.y); ctx.lineTo(BL.x, BL.y); ctx.closePath()
+        ctx.fillStyle = COR_PAINEL; ctx.fill()
+        // a tela: de frente, inteira; por trás, vista pelo vidro (espelhada e suave), para se reconhecer o que é
+        const m = miniatura(t)
+        ctx.setTransform(dpr * (TR.x - TL.x) / m.width, dpr * (TR.y - TL.y) / m.width, dpr * (BL.x - TL.x) / m.height, dpr * (BL.y - TL.y) / m.height, dpr * TL.x, dpr * TL.y)
+        ctx.globalAlpha = a * (deFrente ? 1 : 0.42)
+        ctx.drawImage(m, 0, 0)
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+        ctx.globalAlpha = a
+        ctx.strokeStyle = 'rgba(170,200,255,0.3)'; ctx.lineWidth = 1.2; ctx.stroke()
+      }
+      // por trás, os fios presos na tela, por cima dela
+      if (!deFrente) teia()
       ctx.globalAlpha = 1
+      ctx.globalCompositeOperation = 'lighter'
     }
 
     const desenhar = (p: number, tempo: number) => {
@@ -712,7 +737,9 @@ export function Algoritmo() {
       pitch = mistura(CAM[i0].pitch, CAM[i1].pitch, f) + Math.cos(t * 0.00017) * 0.05 * bal
       zoom = mistura(CAM[i0].zoom, CAM[i1].zoom, f)
       // na leitura a rede chega para o lado e o documento fica no lugar dela
-      offX = desX * pres[1]; offY = desY * pres[1]
+      // no celular, na cena 0, a câmera fica mais longe: a tela presa na ponta da rede tem que caber ao lado dela
+      if (celular) zoom *= 1 - 0.42 * pres[0]
+      offX = desX * pres[1] + desX0 * pres[0]; offY = desY * pres[1]
       // cena 0 (desm): a câmera vira para a fresta entre os dois cartões, chega perto e atravessa; anda dentro do túnel;
       // sai dele e se afasta. A rede só aparece nessa última parte (oculto vai a 0), vinda de perto (zoom maior) para o
       // tamanho dela
@@ -721,7 +748,7 @@ export function Algoritmo() {
       let alvoX = cx, alvoY = cy
       if (real && desm < 1) {
         const vira = suave(0.04, 0.9, desm / ATRAVESSA)
-        alvoX = mistura(realX + real.fx * realS, cx, vira); alvoY = mistura(realY + real.fy * realS, cy, vira)
+        alvoX = mistura(realX + real.fx * realS, cx + offX, vira); alvoY = mistura(realY + real.fy * realS, cy + offY, vira)
       }
       const u1 = limitar((p - 0.2) / 0.2) // o andamento da leitura
       // a rede balança de um lado para o outro; calculando (cena 2), o sinal corre mais rápido e mais nós disparam
@@ -799,11 +826,12 @@ export function Algoritmo() {
       // sai dele, dando a volta por fora até a câmera de sempre (em desm = 1 as duas são a mesma)
       livre = false
       if (real && desm > ATRAVESSA && desm < 1) {
-        const [Wp, Hp] = tamCostas(real)
-        const Sx = (0.5 - real.fx / real.w) * Wp, Sy = (real.fy / real.h - 0.5) * Hp, Sz = Z_COSTAS
-        // o nó: o da entrada mais perto da altura da fresta
+        // a fresta na tela (que fica na ponta da entrada, girando com a rede) e o nó da entrada mais perto dela
+        const [Wp, Hp] = tamTela(real)
+        const fy = (real.fy / real.h - 0.5) * Hp, fz = Wp / 2 - (real.fx / real.w) * Wp
+        const Sx = X_TELA * ca + fz * sa, Sy = fy, Sz = -X_TELA * sa + fz * ca
         let no = 0, melhor = Infinity
-        for (let i = 0; i < REDE.entrada; i++) { const d = Math.abs(REDE.nos[i].y - Sy) + Math.abs(REDE.nos[i].z) * 0.5; if (d < melhor) { melhor = d; no = i } }
+        for (let i = 0; i < REDE.entrada; i++) { const d = Math.abs(REDE.nos[i].y - fy) + Math.abs(REDE.nos[i].z - fz) * 0.5; if (d < melhor) { melhor = d; no = i } }
         const N = REDE.nos[no], Nx = (N.x * ca + N.z * sa) * raioK, Ny = N.y * raioK, Nz = (-N.x * sa + N.z * ca) * raioK
         let dx = Nx - Sx, dy = Ny - Sy, dz = Nz - Sz
         const L = Math.hypot(dx, dy, dz); dx /= L; dy /= L; dz /= L
@@ -813,8 +841,10 @@ export function Algoritmo() {
         const thT = Math.atan2(-dx, dz), phT = Math.asin(dy), DT = 30
         let dth = yaw - thT
         dth = ((dth + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI
-        const th = thT + dth * w, ph = mistura(phT, pitch, w), D = DT * Math.pow(F / DT, w)
-        const Tx = mistura(Sx + dx * (sCam + 6 + DT), 0, w), Ty = mistura(Sy + dy * (sCam + 6 + DT), 0, w), Tz = mistura(Sz + dz * (sCam + 6 + DT), 0, w)
+        // saindo: primeiro recua (para longe da rede, ao longo do fio), depois vira e o alvo vai para o meio da rede
+        const wGiro = suave(0.15, 1, w), wAlvo = suave(0.35, 1, w)
+        const th = thT + dth * wGiro, ph = mistura(phT, pitch, wGiro), D = DT * Math.pow(F / DT, Math.pow(w, 0.6))
+        const Tx = mistura(Sx + dx * (sCam + 6 + DT), 0, wAlvo), Ty = mistura(Sy + dy * (sCam + 6 + DT), 0, wAlvo), Tz = mistura(Sz + dz * (sCam + 6 + DT), 0, wAlvo)
         const b = base(th, ph)
         Object.assign(cam, { x: Tx - D * b.f[0], y: Ty - D * b.f[1], z: Tz - D * b.f[2], r: b.r, u: b.u, f: b.f, foco: F * esc * zoom })
         livre = true
@@ -875,8 +905,10 @@ export function Algoritmo() {
 
       // as costas da tela do Consultor, atrás da rede, presas nela por uma teia de fios (aparecem quando a câmera sai do
       // túnel; somem quando o documento chega)
-      const costas = real ? suave(SAI, SAI + 0.1, desm) * (1 - suave(0.16, 0.23, p)) : 0
-      if (real && costas > 0.01) desenharCostas(real, costas, suave(SAI, 0.95, desm), s)
+      // a tela presa na ponta da entrada da rede, com os fios saindo de trás dela (aparece quando a câmera sai do túnel;
+      // some quando o documento chega)
+      const naRede = real ? suave(SAI, SAI + 0.1, desm) * (1 - suave(0.16, 0.23, p)) : 0
+      if (real && naRede > 0.01) desenharTelaNaRede(real, naRede, suave(SAI, 0.95, desm), s, ca, sa)
 
       if (g0 < 0.6) {
         // o quanto o fio (ou o nó) ainda está na rede: some junto com os cubinhos dele quando eles vão para o gráfico
@@ -925,7 +957,7 @@ export function Algoritmo() {
           const fn = fica(saidaNo[i])
           if (fn <= 0.01 || !ns[i]) continue
           const saida = REDE.nos[i].camada === CAMADAS.length - 1, a = aceso[i], k = ns[i] * (saida ? 2.4 : 1)
-          const tam = (16 + 50 * a) * k
+          const tam = Math.min(140, (16 + 50 * a) * k)
           ctx.globalAlpha = fn * (0.25 + 0.75 * a)
           ctx.drawImage(sprPonto, nx[i] - tam / 2, ny[i] - tam / 2, tam, tam)
           ctx.globalAlpha = fn
@@ -1012,7 +1044,7 @@ export function Algoritmo() {
         else { const [c, tom, passo] = chave.split('.').map(Number); ctx.fillStyle = PALETA[c][tom][passo] }
         for (const i of idx) {
           // pousados na tela, ficam menores (viram os traços das letras)
-          const lado = ss[i] * esc * zoom * ts[i]
+          const lado = Math.min(24, ss[i] * esc * zoom * ts[i])
           ctx.fillRect(xs[i] - lado / 2, ys[i] - lado / 2, lado + 0.4, lado + 0.4)
         }
       })
@@ -1021,7 +1053,7 @@ export function Algoritmo() {
       for (let i = 0; i < N; i += 14) {
         if (esconde[i] || (acende > 0 && vs[i] > 0.98 && ys[i] < yLuz - 3)) continue
         if (gs[i] > 0.9 && vs[i] < 0.1 && fr[i].cat < 3) continue
-        const tam = (10 + 8 * Math.sin(s * 2 + fr[i].fase)) * ss[i] * esc * ms[i]
+        const tam = Math.min(90, (10 + 8 * Math.sin(s * 2 + fr[i].fase)) * ss[i] * esc * ms[i])
         ctx.drawImage(sprPonto, xs[i] - tam / 2, ys[i] - tam / 2, tam, tam)
       }
       ctx.globalAlpha = 1
