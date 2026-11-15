@@ -164,9 +164,16 @@ para mantê-las locais. Não há alterações de banco ou pacote Android nesta p
 - Os testes registrados na correção continuam válidos: não houve mudança no código da aplicação desde então.
 - `git fetch origin claude/practical-mccarthy-qt2qoa` confirmou produção em `11b11ae`, sem novos commits
   a integrar antes do envio.
-- A preparação do commit e do branch de correções foi iniciada. O estado de envio deve ser conferido no GitHub.
+- Correções e documentação enviadas ao branch `codex/corrige-metas-faturas`: commit
+  `0df89c447a6cb0e6451195c076f83360e083ab9b`, confirmado por `git ls-remote` após o push.
+  Uma atualização posterior deste registro documenta o resultado do envio e a tentativa de PR.
 - A API do GitHub (`api.github.com`) e a conferência do site (`www.opuscash.com.br/versao.json`) retornaram bloqueio
   da rede do ambiente. O acesso Git ao origin funcionou. Isso ainda não confirma acesso à API nem publicação.
 - Foram adicionados ao rascunho de rede os domínios `api.github.com` e `www.opuscash.com.br`, preservando
   `cdn.sheetjs.com`; aplicar as configurações é necessário para tentar abrir/mesclar o PR e verificar o site.
-- Nenhum PR, merge ou deploy foi confirmado neste registro. Não considerar a correção publicada só porque há commit.
+- A tentativa de `gh pr create` com base em `claude/practical-mccarthy-qt2qoa` foi bloqueada:
+  `Post https://api.github.com/graphql: Forbidden`. Nenhum PR, merge ou deploy foi confirmado.
+  Não considerar a correção publicada só porque há commit.
+- Próximo passo: aplicar as liberações de rede nas configurações do ambiente, depois abrir/mesclar o PR,
+  acompanhar o deploy e conferir o commit em `/versao.json`. O rascunho salvo requer revisão/salvamento
+  nas configurações e publicação do ambiente; isso é distinto de publicar o site.
