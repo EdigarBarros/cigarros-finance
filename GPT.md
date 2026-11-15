@@ -311,3 +311,26 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
   gráfico (`saidaFio`, `saidaNo`, calculados em `medir` a partir do `atraso` dos cubinhos); não sobra linha atrás.
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
   390×844) na leitura, na rede, na passagem para o gráfico e no gráfico, sem erro de página; `extrair.cjs --faltando`: 0.
+
+### 15/11/2026 — Claude — Abertura do motor: a câmera atravessa a fresta entre os cartões
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Pedido do Edigar: na abertura, a tela do Consultor ficava transparente e o fundo escurecia; ele quer a tela inteira,
+  como ela é, e a câmera passando pela fresta entre o cartão "Quando cada dívida acaba" e o "Com dívidas pesando", com o
+  algoritmo aparecendo só do outro lado. Também: tirar o quadrado em volta do emblema de "Com dívidas pesando" e
+  suavizar a passagem do azul do painel para o preto.
+- `scripts/motor/capturar-consultor.cjs`: o mapa ganhou `fresta` (entre o cartão acima de `.an-perfil` e ele); fotos
+  refeitas nos seis aparelhos/idiomas.
+- `src/pages/algoritmoConsultor.ts` reescrito: a tela é uma imagem só (fundo, blocos e peças das camadas transparentes,
+  na densidade da foto), com a fresta tirada do fundo. O mergulho aumenta a tela por potência de E (o quanto ela precisa
+  crescer para a fresta ocupar a cena) até `ATRAVESSA`; depois a câmera segue até a rede. Só a parte da foto que cabe na
+  cena é desenhada; perto da fresta entra uma faixa de um ponto de largura tirada da foto, esticada sem suavizar, para as
+  bordas dos cartões ficarem nítidas. Saíram as profundidades por peça, as sombras e a transparência. O quadrado do
+  emblema era a luz dele recortada como peça solta, maior que o cartão; com a tela inteira ela fica cortada pelo cartão,
+  como no app.
+- `src/pages/Algoritmo.tsx`: o meio da fresta vai do lugar dele na tela para o meio da rede enquanto a câmera chega; a
+  rede fica atrás da fresta. A cena é pintada com a cor do painel (`COR_PAINEL`) enquanto a câmera chega e escurece aos
+  poucos depois de atravessar.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
+  390×844) em toda a abertura, sem erro de página.
