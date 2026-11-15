@@ -1,26 +1,43 @@
 /**
  * A abertura do "motor do OpusCash" (Algoritmo.tsx): a tela do Consultor de verdade, como a pessoa vê no painel, que
- * se desmonta peça por peça e mostra o motor atrás dela.
+ * vira um espaço com profundidade: a câmera entra nela e chega no motor, que roda lá no fundo.
  *
  * As fotos saem do app de demonstração (scripts/motor/capturar-consultor.cjs): a foto inteira (a), só os blocos sem o
  * conteúdo (b), só o fundo (c) e onde fica cada bloco e cada peça. Desenhados uns sobre os outros dão a foto inteira;
- * separados, cada um voa para um lado:
- *   1. as peças de dentro (textos, gráficos, botões) se soltam dos cartões, acendem na borda e voam para perto de quem olha;
- *   2. os cartões, a barra lateral e o topo saem logo atrás;
- *   3. o fundo se apaga do meio para fora, e o que fica é a esfera.
+ * separados, cada um fica numa profundidade:
+ *   1. a tela abre: as peças de dentro (textos, gráficos, botões) ficam na frente, os cartões, a barra lateral e o
+ *      topo no meio, o fundo lá atrás, e as bordas acendem;
+ *   2. a câmera avança pelo meio: cada peça cresce, passa por ela e some;
+ *   3. depois do fundo, o corredor continua até a rede.
  */
 interface Mapa { w: number; h: number; n1: [number, number, number, number, number][]; n2: [number, number, number, number, number][] }
 
 const FOTOS = import.meta.glob('./motor/*.jpg', { query: '?url', import: 'default' }) as Record<string, () => Promise<string>>
 const MAPAS = import.meta.glob('./motor/*.json', { import: 'default' }) as Record<string, () => Promise<Mapa>>
 
-interface Pedaco { x: number; y: number; w: number; h: number; dx: number; dy: number; giro: number; atraso: number; voo: number }
+/** Um pedaço da foto e a que profundidade ele fica dentro da tela (0 é o vidro; 1 é o fundo). */
+interface Pedaco { x: number; y: number; w: number; h: number; z: number }
 export interface ConsultorReal {
   a: HTMLImageElement; b: HTMLImageElement; c: HTMLImageElement
   // as fotos já no tamanho em que aparecem (reduzir a foto grande a cada quadro pesa): k pixels por px da foto
   ia: CanvasImageSource; ib: CanvasImageSource; ic: CanvasImageSource
   w: number; h: number; k: number
-  blocos: Pedaco[]; pecas: Pedaco[]; fundo: Pedaco[]
+  blocos: Pedaco[]; pecas: Pedaco[]
+}
+
+/** A que profundidade a rede fica, atrás do fundo da tela (que fica em 1). */
+export const Z_REDE = 1.7
+/** As molduras do corredor: o vidro da tela, o meio, o fundo e mais uma, já no caminho da rede. */
+const MOLDURAS = [0, 0.5, 1, 1.35]
+
+/**
+ * O mergulho, de 0 (a tela inteira, de frente) a 1 (a câmera chegou na rede):
+ *   abre: o quanto as camadas da tela já se afastaram em profundidade (a tela vira um espaço);
+ *   cam: onde a câmera está (0 no vidro, Z_REDE na rede);
+ *   lado: a câmera olha um pouco de lado enquanto a tela abre, para a profundidade aparecer, e volta.
+ */
+export function mergulho(desm: number) {
+  return { abre: suave(0, 0.36, desm), cam: Z_REDE * suave(0.1, 1, desm), lado: Math.sin(Math.PI * limitar(desm / 0.55)) * 0.12 }
 }
 
 function sorteio(semente: number) {
@@ -53,30 +70,18 @@ export async function carregarConsultor(aparelho: 'pc' | 'cel', idioma: string):
   ])
   const r = sorteio(5)
   const { w, h } = mapa
-  // para onde cada coisa voa: para fora, a partir do centro da tela (ou do bloco), com um pouco de sorte
-  const pedaco = (x: number, y: number, pw: number, ph: number, ox: number, oy: number, atraso: number, voo: number): Pedaco => {
-    let dx = (x + pw / 2 - ox) / w + (r() - 0.5) * 0.5, dy = (y + ph / 2 - oy) / h + (r() - 0.5) * 0.5
-    const d = Math.hypot(dx, dy) || 1
-    dx /= d; dy /= d
-    return { x, y, w: pw, h: ph, dx, dy, giro: (r() - 0.5) * 1.4, atraso, voo }
-  }
-  const dist = (x: number, y: number, pw: number, ph: number) => Math.min(1, Math.hypot((x + pw / 2 - w / 2) / (w / 2), (y + ph / 2 - h / 2) / (h / 2)) / 1.2)
-  const blocos = mapa.n1.map(([x, y, pw, ph]) => pedaco(x, y, pw, ph, w / 2, h / 2, 0.2 + dist(x, y, pw, ph) * 0.18 + r() * 0.12, 0.5 + r() * 0.3))
-  // as peças voam a partir do meio do bloco delas (o gráfico sai do cartão para fora); só as que cabem no bloco
+  // de trás para a frente: os cartões, a barra e o topo no meio do caminho; o que está dentro de cada um (textos,
+  // gráficos, botões) logo na frente dele; o fundo fica em 1
+  const blocos: Pedaco[] = mapa.n1.map(([x, y, pw, ph]) => ({ x, y, w: pw, h: ph, z: 0.52 + r() * 0.3 }))
   const pecas: Pedaco[] = []
   for (const [x, y, pw, ph, pai] of mapa.n2) {
     const [bx, by, bw, bh] = mapa.n1[pai]
     if (x < bx - 4 || y < by - 4 || x + pw > bx + bw + 4 || y + ph > by + bh + 4) continue
-    const p = pedaco(x, y, pw, ph, bx + bw / 2, by + bh / 2, Math.max(0.02, blocos[pai].atraso - 0.16 - r() * 0.12), 0.6 + r() * 0.5)
-    pecas.push(p)
+    pecas.push({ x, y, w: pw, h: ph, z: blocos[pai].z - 0.16 - r() * 0.03 })
   }
-  // o fundo em placas, que se apagam do meio para fora
-  const col = aparelho === 'pc' ? 8 : 4, lin = aparelho === 'pc' ? 5 : 8, fundo: Pedaco[] = []
-  for (let l = 0; l < lin; l++) for (let c2 = 0; c2 < col; c2++) {
-    const x = (c2 * w) / col, y = (l * h) / lin, pw = w / col, ph = h / lin
-    fundo.push(pedaco(x, y, pw, ph, w / 2, h / 2, 0.3 + dist(x, y, pw, ph) * 0.35 + r() * 0.08, 0.2))
-  }
-  return { a, b, c, ia: a, ib: b, ic: c, w, h, k: a.naturalWidth / w, blocos, pecas, fundo }
+  // o que está mais fundo é desenhado primeiro
+  const ordem = (p: Pedaco[]) => p.sort((m, n) => n.z - m.z)
+  return { a, b, c, ia: a, ib: b, ic: c, w, h, k: a.naturalWidth / w, blocos: ordem(blocos), pecas: ordem(pecas) }
 }
 
 /** Prepara as fotos com k pixels por px da foto (a escala na página vezes a densidade da tela). */
@@ -95,61 +100,89 @@ export function ajustarConsultor(t: ConsultorReal, k: number) {
 }
 
 /**
- * Desenha a tela em (x0, y0) com escala s (px da tela da página por px da foto). desm vai de 0 (inteira) a 1 (só o
- * motor). W e H: o tamanho da área de desenho, para o tamanho do voo.
+ * Desenha a tela em (x0, y0) com escala s (px da tela da página por px da foto). desm vai de 0 (inteira) a 1 (a
+ * câmera já passou por tudo e chegou na rede). Tudo cresce a partir do meio da tela, que é para onde a câmera vai.
  */
-export function desenharConsultor(g: CanvasRenderingContext2D, t: ConsultorReal, x0: number, y0: number, s: number, desm: number, W: number, H: number, raio: number) {
+export function desenharConsultor(g: CanvasRenderingContext2D, t: ConsultorReal, x0: number, y0: number, s: number, desm: number, raio: number) {
   const { k } = t
+  const rw = t.w * s, rh = t.h * s, vx = x0 + rw / 2, vy = y0 + rh / 2
   g.globalCompositeOperation = 'source-over'
   if (desm <= 0) {
     g.save()
-    g.beginPath(); g.roundRect(x0, y0, t.w * s, t.h * s, raio); g.clip()
-    g.drawImage(t.ia, x0, y0, t.w * s, t.h * s)
+    g.beginPath(); g.roundRect(x0, y0, rw, rh, raio); g.clip()
+    g.drawImage(t.ia, x0, y0, rw, rh)
     g.restore()
     return
   }
-  const bordas: [number, number, number, number, number, number, number][] = []
-  const peca = (img: CanvasImageSource, p: Pedaco, fim: number, brilho: boolean) => {
-    const u = suave(p.atraso, p.atraso + fim, desm)
-    // antes de voar, a peça se solta: sobe um pouco e a borda acende
-    const solta = brilho ? suave(Math.max(0, p.atraso - 0.12), p.atraso, desm) * (1 - u) : 0
-    const a = 1 - suave(0.25, 0.75, u)
-    if (a <= 0.01) return
-    const voo = u * u * p.voo
-    const cx = x0 + (p.x + p.w / 2) * s + p.dx * voo * W * 0.6
-    const cy = y0 + (p.y + p.h / 2) * s + p.dy * voo * H * 0.6 - solta * 6
-    const e = 1 + 0.65 * u * p.voo + 0.04 * solta
-    g.save()
-    g.globalAlpha = a
-    g.translate(cx, cy); g.rotate(p.giro * u); g.scale(e, e)
-    g.drawImage(img, p.x * k, p.y * k, p.w * k, p.h * k, (-p.w * s) / 2, (-p.h * s) / 2, p.w * s, p.h * s)
-    g.restore()
-    const luz = Math.max(solta, Math.min(1, u * 4) * (1 - u)) * a
-    if (brilho && luz > 0.02) bordas.push([cx, cy, p.giro * u, e, p.w * s, p.h * s, luz])
+  const { abre, cam, lado } = mergulho(desm)
+  /** O tamanho de quem está na profundidade z (1 = no vidro, antes de a câmera andar); 0 se já ficou para trás. */
+  const escala = (z: number) => { const d = 1 + z - cam; return d > 0.14 ? 1 / d : 0 }
+  /** Perto da câmera a peça some (passou por ela). */
+  const perto = (e: number) => 1 - suave(1.5, 2.9, e)
+  const desvio = (z: number, e: number) => -lado * z * rw * e
+
+  // o fundo da tela: escurece menos conforme a tela abre (a rede aparece através dele) e some quando a câmera chega
+  const zf = abre, ef = escala(zf)
+  if (ef > 0) {
+    const a = (1 - 0.8 * abre) * perto(ef)
+    if (a > 0.01) {
+      const fx = vx - (rw / 2) * ef + desvio(zf, ef), fy = vy - (rh / 2) * ef
+      g.save()
+      g.globalAlpha = a
+      g.beginPath(); g.roundRect(fx, fy, rw * ef, rh * ef, raio * ef); g.clip()
+      g.drawImage(t.ic, fx, fy, rw * ef, rh * ef)
+      g.restore()
+    }
   }
-  // o fundo, preso no recorte da tela
-  g.save()
-  g.beginPath(); g.roundRect(x0, y0, t.w * s, t.h * s, raio); g.clip()
-  for (const p of t.fundo) {
-    const u = suave(p.atraso, p.atraso + 0.3, desm)
-    if (u >= 1) continue
-    g.globalAlpha = 1 - u
-    const e = 1 - 0.08 * u
-    const cx = x0 + (p.x + p.w / 2) * s, cy = y0 + (p.y + p.h / 2) * s
-    // +0.5 de sobra: as placas não deixam fresta entre elas
-    g.drawImage(t.ic, p.x * k, p.y * k, p.w * k, p.h * k, cx - (p.w * s * e) / 2 - 0.5, cy - (p.h * s * e) / 2 - 0.5, p.w * s * e + 1, p.h * s * e + 1)
+  const bordas: [number, number, number, number, number][] = []
+  const camada = (img: CanvasImageSource, lista: Pedaco[], luz: number, opaco: number) => {
+    for (const p of lista) {
+      const z = p.z * abre, e = escala(z)
+      if (!e) continue
+      const a = perto(e)
+      if (a <= 0.01) continue
+      const px = vx + (x0 + p.x * s - vx) * e + desvio(z, e), py = vy + (y0 + p.y * s - vy) * e
+      const pw = p.w * s * e, ph = p.h * s * e
+      if (px > g.canvas.width || py > g.canvas.height || px + pw < 0 || py + ph < 0) continue
+      g.globalAlpha = a * (1 - (1 - opaco) * abre)
+      g.drawImage(img, p.x * k, p.y * k, p.w * k, p.h * k, px, py, pw, ph)
+      if (luz) bordas.push([px, py, pw, ph, a * luz * abre])
+    }
   }
-  g.restore()
+  // os cartões ficam um pouco transparentes (a rede aparece através deles); o que está dentro, inteiro
+  camada(t.ib, t.blocos, 0.5, 0.72)
+  camada(t.ia, t.pecas, 0, 1)
   g.globalAlpha = 1
-  for (const p of t.blocos) peca(t.ib, p, 0.5, true)
-  for (const p of t.pecas) peca(t.ia, p, 0.45, true)
-  // as bordas que acendem quando as peças se soltam
+
+  // por cima, em luz: a borda de cada cartão solto e o corredor (as molduras e as quinas indo para o fundo)
   g.globalCompositeOperation = 'lighter'
-  g.strokeStyle = 'rgba(255,205,120,0.9)'; g.lineWidth = 1.2
-  for (const [cx, cy, gi, e, w, h, a] of bordas) {
-    g.save(); g.globalAlpha = a; g.translate(cx, cy); g.rotate(gi); g.scale(e, e)
-    g.strokeRect(-w / 2, -h / 2, w, h)
-    g.restore()
+  g.strokeStyle = 'rgba(255,205,120,1)'; g.lineWidth = 1
+  for (const [px, py, pw, ph, a] of bordas) { g.globalAlpha = a; g.strokeRect(px, py, pw, ph) }
+  const some = 1 - suave(0.82, 1, desm)
+  let eFrente = 0, eFundo = 0
+  MOLDURAS.forEach((z, i) => {
+    const e = escala(z)
+    if (!e) return
+    if (!eFrente) eFrente = e
+    eFundo = e
+    const a = (i === 0 ? 0.75 : 0.5) * abre * some * perto(e * 0.7)
+    if (a <= 0.01) return
+    g.globalAlpha = a
+    g.lineWidth = i === 0 ? 1.5 : 1
+    g.beginPath(); g.roundRect(vx - (rw / 2) * e + desvio(z, e), vy - (rh / 2) * e, rw * e, rh * e, raio * e); g.stroke()
+  })
+  // as quinas: quatro linhas da frente até o fundo do corredor
+  if (eFundo) {
+    const zF = MOLDURAS[MOLDURAS.length - 1], eF = escala(zF)
+    const eP = eFrente || 7, zP = 1 / eP - 1 + cam
+    g.globalAlpha = 0.32 * abre * some
+    g.lineWidth = 1
+    g.beginPath()
+    for (const [qx, qy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      g.moveTo(vx + (qx * rw / 2) * eP + desvio(zP, eP), vy + (qy * rh / 2) * eP)
+      g.lineTo(vx + (qx * rw / 2) * eF + desvio(zF, eF), vy + (qy * rh / 2) * eF)
+    }
+    g.stroke()
   }
   g.globalAlpha = 1
 }
