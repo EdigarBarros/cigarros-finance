@@ -552,21 +552,8 @@ export function Algoritmo() {
 
       // cena 0: a tela do Consultor de verdade e, rolando, a câmera entrando nela
       if (real && desm < 1 && pres[0] > 0) {
-        const rw = real.w * realS, rh = real.h * realS, raio = celular ? 26 * realS * 1.6 : 12
-        // a moldura dourada em volta da tela (some quando ela começa a abrir)
-        const moldura = 1 - suave(0, 0.15, desm)
-        if (moldura > 0) {
-          ctx.globalCompositeOperation = 'lighter'
-          ctx.globalAlpha = 0.55 * moldura
-          ctx.drawImage(sprHalo, realX - rw * 0.2, realY - rh * 0.25, rw * 1.4, rh * 1.5)
-          ctx.globalAlpha = 1
-        }
-        desenharConsultor(ctx, real, realX, realY, realS, desm, raio)
-        if (moldura > 0) {
-          ctx.globalCompositeOperation = 'lighter'
-          ctx.strokeStyle = `rgba(255,200,110,${(0.6 * moldura).toFixed(3)})`; ctx.lineWidth = 1.5
-          ctx.beginPath(); ctx.roundRect(realX - 0.75, realY - 0.75, rw + 1.5, rh + 1.5, raio); ctx.stroke()
-        }
+        // sem moldura: a tela fica no plano da página, com as beiradas se apagando nela
+        desenharConsultor(ctx, real, realX, realY, realS, desm)
         ctx.globalAlpha = 1
         ctx.globalCompositeOperation = 'lighter'
       }
