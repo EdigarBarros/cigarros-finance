@@ -7,7 +7,7 @@
  *   ...-b.webp  só os blocos (cartões, barra lateral, botões), sem o conteúdo e sem nada atrás: transparente fora
  *               deles, com as quinas redondas e a sombra de verdade;
  *   ...-p.webp  só as peças de dentro dos blocos (textos, gráficos, ícones), também transparente em volta;
- *   ...json     onde fica cada bloco (n1) e cada peça (n2), em px.
+ *   ...json     onde fica cada bloco (n1) e cada peça (n2), em px, e a fresta entre o cartão do destaque e o do perfil.
  * O fundo, os blocos e as peças desenhados uns sobre os outros dão a tela como a pessoa vê.
  *
  * A transparência sai de duas fotos da mesma camada, uma sobre preto e outra sobre branco: onde a camada é opaca as
@@ -68,10 +68,27 @@ function marcar() {
     const x0 = Math.max(0, r.left), y0 = Math.max(0, r.top), x1 = Math.min(vw, r.right), y1 = Math.min(vh, r.bottom)
     return [x0, y0, x1 - x0, y1 - y0].map((v) => Math.round(v * 10) / 10)
   }
+  // a fresta entre o cartão do destaque e o do perfil (por onde a câmera atravessa na abertura)
+  let fresta = null
+  const perfil = document.querySelector('.an-perfil')
+  if (perfil) {
+    const pr = perfil.getBoundingClientRect()
+    let acima = null
+    for (const el of document.querySelectorAll('.cartao, section, article')) {
+      if (el === perfil || el.contains(perfil) || perfil.contains(el)) continue
+      const r = el.getBoundingClientRect()
+      if (r.bottom <= pr.top + 1 && r.width > pr.width * 0.6 && (!acima || r.bottom > acima.bottom)) acima = r
+    }
+    if (acima) {
+      const x0 = Math.max(acima.left, pr.left), x1 = Math.min(acima.right, pr.right)
+      fresta = [x0, acima.bottom, x1 - x0, pr.top - acima.bottom].map((v) => Math.round(v * 10) / 10)
+    }
+  }
   return {
     w: vw, h: vh,
     n1: n1.map((el) => [...caixa(el), livres.has(el) ? 1 : 0]),
     n2: n2.map(([el, i]) => [...caixa(el), i]),
+    fresta,
   }
 }
 

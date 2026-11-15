@@ -5,7 +5,7 @@ import { semMovimento } from '../lib/tema'
 import { tx } from '../lib/textos'
 import { ANO } from './apresentacaoCena'
 import { alturaIdeal, desenharTela, type TelaPronta } from './algoritmoTela'
-import { ajustarConsultor, carregarConsultor, desenharConsultor, idiomaDasFotos, mergulho, Z_REDE, type ConsultorReal } from './algoritmoConsultor'
+import { ATRAVESSA, carregarConsultor, COR_PAINEL, desenharConsultor, idiomaDasFotos, mergulho, Z_REDE, type ConsultorReal } from './algoritmoConsultor'
 import { COR_TIPO, desenharDocs, LIDAS, LIDAS_PDF, type DocPronto, type TextoLido } from './algoritmoDocs'
 import './algoritmo.css'
 
@@ -13,8 +13,8 @@ import './algoritmo.css'
  * "O motor do OpusCash": começa na tela do Consultor, a câmera entra nela e chega no que roda lá no fundo, uma rede
  * neural em 3D (camadas de nós ligados por fios, com o sinal passando da entrada para a saída), presa na tela
  * enquanto a pessoa rola:
- *   0. por trás do Consultor: a tela de verdade do Consultor (fotos do app, algoritmoConsultor.ts) vira um espaço com
- *      profundidade, a câmera avança por dentro dela e chega na rede, que já estava rodando atrás;
+ *   0. por trás do Consultor: a tela de verdade do Consultor (fotos do app, algoritmoConsultor.ts), inteira; a câmera
+ *      vira para a fresta entre dois cartões, atravessa por ela e chega na rede, que já estava rodando do outro lado;
  *   1. lê o extrato e a planilha: uma luz passa por um PDF do banco e por uma planilha; o texto de cada linha sai do
  *      documento já limpo, entra num fio da rede, corre por ele e se desfaz em cubinhos de dados na cor do que é:
  *      verde o que entrou, vermelho o que saiu, amarelo as dívidas (algoritmoDocs.ts);
@@ -273,7 +273,8 @@ export function Algoritmo() {
     // rede; no celular, entre o texto e os selos
     let tela: TelaPronta | null = null, yTela = 0
     // a abertura: a foto do Consultor de verdade (carrega quando a seção chega perto), em (realX, realY) com escala realS
-    let real: ConsultorReal | null = null, chaveReal = '', realX = 0, realY = 0, realS = 1
+    // realE: o quanto a tela precisa crescer para a fresta ocupar a cena inteira (com o meio dela no meio da rede)
+    let real: ConsultorReal | null = null, chaveReal = '', realX = 0, realY = 0, realS = 1, realE = 100
     const pedirReal = () => {
       const chave = `${celular ? 'cel' : 'pc'}-${idiomaDasFotos()}`
       if (chave === chaveReal) return
@@ -340,13 +341,12 @@ export function Algoritmo() {
           const topo = texto.getBoundingClientRect().bottom - sticky.getBoundingClientRect().top + 16, fundo = H - 20
           realS = Math.min((fundo - topo) / real.h, (W * 0.78) / real.w)
           realX = (W - real.w * realS) / 2; realY = (topo + fundo) / 2 - (real.h * realS) / 2
-          ajustarConsultor(real, realS * dpr)
         } else {
           const esq = Math.min(460, W * 0.36), aw = W - esq - 40
           realS = Math.min(aw / real.w, (H * 0.8) / real.h)
           realX = esq + 20 + (aw - real.w * realS) / 2; realY = (H - real.h * realS) / 2
         }
-        ajustarConsultor(real, realS * dpr)
+        realE = Math.max(20, (1.3 * 2 * Math.max(cy, H - cy)) / (real.fr[3] * realS))
       }
       let dw: number, dh: number
       if (celular) {
@@ -527,14 +527,16 @@ export function Algoritmo() {
       zoom = mistura(CAM[i0].zoom, CAM[i1].zoom, f)
       // na leitura a rede chega para o lado e o documento fica no lugar dela
       offX = desX * pres[1]; offY = desY * pres[1]
-      // cena 0: a câmera entra na tela (desm) e a rede, lá no fundo e apagada, chega perto e acende (oculto vai a 0)
-      const desm = real ? suave(0.02, 0.185, p) : 1, oculto = 1 - suave(0.12, 0.7, desm)
-      const mg = mergulho(desm)
-      // enquanto a câmera não chega, a rede fica no meio da tela do Consultor (é para lá que ela vai)
+      // cena 0: a câmera vira para a fresta entre os dois cartões, chega perto e atravessa (desm). A rede está do outro
+      // lado: até lá só aparece pela fresta; depois a câmera segue até ela (oculto vai a 0)
+      const desm = real ? suave(0.02, 0.185, p) : 1, oculto = 1 - suave(0.3, ATRAVESSA, desm)
+      const mg = mergulho(desm, realE)
+      // o ponto da cena onde fica o meio da fresta: começa onde ele está na tela e vai para o meio da rede
+      let alvoX = cx, alvoY = cy
       if (real && desm < 1) {
-        const falta = 1 - suave(0.55, 1, desm), rw = real.w * realS
-        offX += (realX + rw / 2 - cx) * falta - mg.lado * Z_REDE * rw / (1 + Z_REDE - mg.cam)
-        offY += (realY + (real.h * realS) / 2 - cy) * falta
+        const vira = suave(0.04, 0.9, desm / ATRAVESSA)
+        alvoX = mistura(realX + real.fx * realS, cx, vira); alvoY = mistura(realY + real.fy * realS, cy, vira)
+        offX += alvoX - cx; offY += alvoY - cy
       }
       const u1 = limitar((p - 0.2) / 0.2) // o andamento da leitura
       // a rede balança de um lado para o outro; calculando (cena 2), o sinal corre mais rápido e mais nós disparam
@@ -593,6 +595,9 @@ export function Algoritmo() {
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, W, H)
+      // enquanto a câmera chega na fresta, a cena fica da cor do painel; depois de atravessar, escurece aos poucos
+      const azul = real ? suave(0.03, 0.22, desm) * (1 - suave(ATRAVESSA, 1, desm)) : 0
+      if (azul > 0.005) { ctx.globalAlpha = azul; ctx.fillStyle = COR_PAINEL; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1 }
       ctx.globalCompositeOperation = 'lighter'
 
       // névoa de luz atrás (mais forte com a rede inteira)
@@ -810,7 +815,7 @@ export function Algoritmo() {
       // cena 0: a tela do Consultor de verdade e, rolando, a câmera entrando nela
       if (real && desm < 1 && pres[0] > 0) {
         // sem moldura: a tela fica no plano da página, com as beiradas se apagando nela
-        desenharConsultor(ctx, real, realX, realY, realS, desm)
+        desenharConsultor(ctx, real, alvoX, alvoY, realS, desm, realE, W, H)
         ctx.globalAlpha = 1
         ctx.globalCompositeOperation = 'lighter'
       }
