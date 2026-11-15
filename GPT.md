@@ -392,3 +392,20 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
   ficavam enormes). Agora 17–33 ms, como no resto da seção.
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
   390×844) em toda a abertura, sem erro de página.
+
+### 15/11/2026 — Claude — Abertura do motor: túnel mais longo, letras legíveis e paredes de quadradinhos
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Pedido do Edigar: dentro do túnel as letras passavam rápido demais e se desfaziam sem dar para ver; as paredes eram
+  linhas lisas, diferentes dos fios da rede vistos de fora (fileiras de quadradinhos).
+- `src/pages/Algoritmo.tsx` e `algoritmo.css`: a seção cresceu (700vh → 820vh; celular 660vh → 780vh) e a abertura fica
+  com 32% da rolagem (`ABERTURA`; `porCena` e `daRolagem` convertem entre a rolagem e o andamento por cena, que o
+  desenho continua usando em quintos). `desm` passou a ser linear (o smoothstep deixava o meio, o túnel, mais rápido).
+  `ATRAVESSA` 0,3 e `SAI` 0,8: o túnel tem metade da abertura. As paredes são fileiras de quadradinhos em perspectiva
+  (a cada 5 unidades, 16 em volta) sobre uma linha fraca, como os fios da rede. Cada linha lida entra logo atrás da
+  câmera na sua vez e escorrega, desacelerando, até passar pelo corte; o corte fica a 62 unidades à frente da câmera e as
+  letras viram cubinhos ao longo de uma faixa (cada pedacinho na sua vez), não num ponto.
+- `src/pages/algoritmoConsultor.ts`: os tempos da fresta (escurecer e a luz) acompanharam o novo `ATRAVESSA`.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
+  390×844) da abertura e das outras cenas, sem erro de página; quadros do túnel em 17 ms.
