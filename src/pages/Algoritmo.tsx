@@ -5,7 +5,7 @@ import { semMovimento } from '../lib/tema'
 import { tx } from '../lib/textos'
 import { ANO } from './apresentacaoCena'
 import { alturaIdeal, desenharTela, type TelaPronta } from './algoritmoTela'
-import { ATRAVESSA, canvasParaClaro, carregarConsultor, COR_PAINEL, desenharConsultor, idiomaDasFotos, paraClaro, type ConsultorReal } from './algoritmoConsultor'
+import { ATRAVESSA, carregarConsultor, COR_PAINEL, desenharConsultor, idiomaDasFotos, paraClaro, type ConsultorReal } from './algoritmoConsultor'
 import { COR_TIPO, desenharDocs, LIDAS, LIDAS_PDF, type DocPronto, type TextoLido } from './algoritmoDocs'
 import './algoritmo.css'
 
@@ -262,28 +262,6 @@ const PALETA = CORES_GRAF.map((c) => DOURADO.map(([r, g, b, a], tom) => {
   })
 }))
 
-/**
- * A mesma PALETA para o modo claro, onde o canvas é invertido pelo CSS. Ali a poeira dourada aparece como dourado
- * escuro (o TONS invertido) e as cores do gráfico precisam aparecer como são: a mistura é feita no que se vê (do dourado
- * escuro até a cor, nos tons mais fortes primeiro, porque o quase branco some no fundo claro) e depois desfeita com
- * paraClaro, para o CSS trazer de volta.
- */
-const visto = (r: number, g: number, b: number) => paraClaro(r, g, b).map((v) => 255 - v) as [number, number, number] // o que o CSS mostra
-/**
- * As cores do gráfico no claro. O amarelo puro não sobrevive à inversão do CSS (o hue-rotate o tira do que a tela
- * mostra e ele sai bege); no claro as dívidas são amarelo-mostarda, que passa inteiro e se lê no creme.
- */
-const MOSTARDA: [number, number, number] = [182, 136, 26]
-const CORES_GRAF_CLARO: [number, number, number][] = CORES_GRAF.map((c, k) => (k === 2 ? MOSTARDA : c))
-const PALETA_CLARO = CORES_GRAF_CLARO.map((c) => DOURADO.map(([r, g, b, a], tom) => {
-  const ouro = visto(r, g, b), forca = [1, 0.92, 0.84, 0.76, 0.68][tom], alvo = c.map((v) => v * forca)
-  return Array.from({ length: PASSOS }, (_, k) => {
-    const t = k / (PASSOS - 1)
-    const [x, y, z] = paraClaro(ouro[0] + (alvo[0] - ouro[0]) * t, ouro[1] + (alvo[1] - ouro[1]) * t, ouro[2] + (alvo[2] - ouro[2]) * t)
-    return `rgba(${x},${y},${z},${a})`
-  })
-}))
-
 export function Algoritmo() {
   const secaoRef = useRef<HTMLElement>(null)
   const stickyRef = useRef<HTMLDivElement>(null)
@@ -296,10 +274,12 @@ export function Algoritmo() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     const n = CENAS.length
-    // o tema: no claro o canvas é invertido pelo CSS, e o que tem cor de verdade é desenhado compensado (paraClaro)
+    // o tema. No claro, até a fresta o canvas é invertido pelo CSS (a tela do Consultor clara, desenhada compensada em
+    // algoritmoConsultor.ts); depois dela a seção vira o estúdio grafite (ag-estudio) e o motor é desenhado como no
+    // escuro
     let claro = document.documentElement.dataset.tema === 'claro'
-    /** Uma cor para desenhar: como é no escuro; compensada no claro (para aparecer igual depois da inversão). */
-    const cor = (r: number, g: number, b: number, a = 1) => { const [x, y, z] = claro ? paraClaro(r, g, b) : [r, g, b]; return `rgba(${x},${y},${z},${a})` }
+    /** O grafite do estúdio (o fundo dos cartões dos fundadores no claro): a fresta chega nele antes de a câmera passar. */
+    const ESTUDIO: [number, number, number] = [52, 59, 73]
     const comparas = [...sticky.querySelectorAll<HTMLElement>('.ag-compara')]
     const contador = sticky.querySelector<HTMLElement>('[data-relacoes]')
     const sprHalo = brilho(256, [[0, 'rgba(255,200,110,0.55)'], [0.25, 'rgba(255,150,40,0.22)'], [0.6, 'rgba(255,120,20,0.06)'], [1, 'rgba(255,100,10,0)']])
@@ -402,19 +382,10 @@ export function Algoritmo() {
         desX = docX + dw / 2 + 170 + 300 * esc * CAM[1].zoom - cx; desY = 0; desX0 = aw * 0.3
       }
       dw = Math.round(dw); dh = Math.round(dh)
-      const chaveD = `${dw}|${dh}|${document.documentElement.lang}|${claro}`
+      const chaveD = `${dw}|${dh}|${document.documentElement.lang}`
       if (chaveD !== chaveDocs) {
         chaveDocs = chaveD
         docs = desenharDocs(dw, dh, Math.min(window.devicePixelRatio || 1, 2), letras)
-        // no claro: o papel e as cores de cada tipo compensados (o nome, claro, fica escuro com a inversão, como deve)
-        if (claro) {
-          canvasParaClaro(docs.pdf.img); canvasParaClaro(docs.planilha.img)
-          docs.textos.forEach((T, i) => {
-            const valor = `rgb(${T.cor.join(',')})`
-            T.cor = paraClaro(...(LIDAS[i].tipo === 'divida' ? MOSTARDA : T.cor))
-            for (const gl of T.glifos) if (gl.cor === valor) gl.cor = `rgb(${T.cor.join(',')})`
-          })
-        }
       }
     }
 
@@ -523,18 +494,18 @@ export function Algoritmo() {
       // as faces: frente, trás, esquerda, direita, topo, base; e o quanto cada uma recebe de luz (vem de cima)
       const FACES: [number[], number][] = [[[0, 1, 2, 3], 1], [[5, 4, 7, 6], 0.7], [[4, 0, 3, 7], 0.62], [[1, 5, 6, 2], 0.62], [[3, 2, 6, 7], 1.35], [[4, 5, 1, 0], 0.4]]
       for (const { c, a, k } of caixas) {
-        const [cr, cg, cb] = (claro ? CORES_GRAF_CLARO : CORES_GRAF)[k]
+        const [cr, cg, cb] = CORES_GRAF[k]
         const faces = FACES.map(([v, luz]) => ({ v, luz, s: v.reduce((t, i) => t + c[i].s, 0) })).sort((m, n) => m.s - n.s)
         for (const { v, luz } of faces) {
           const tom = (q: number) => Math.round(luz > 1 ? q + (255 - q) * (luz - 1) : q * luz)
           ctx.beginPath(); v.forEach((i, j) => (j ? ctx.lineTo(c[i].x, c[i].y) : ctx.moveTo(c[i].x, c[i].y))); ctx.closePath()
           ctx.globalAlpha = a * 0.94
-          ctx.fillStyle = cor(tom(cr), tom(cg), tom(cb)); ctx.fill()
+          ctx.fillStyle = `rgb(${tom(cr)},${tom(cg)},${tom(cb)})`; ctx.fill()
         }
         // a quina de cima pega a luz
         ctx.globalAlpha = a * 0.7
         ctx.beginPath(); [3, 2, 6, 7].forEach((i, j) => (j ? ctx.lineTo(c[i].x, c[i].y) : ctx.moveTo(c[i].x, c[i].y))); ctx.closePath()
-        ctx.strokeStyle = cor(255, 255, 255, 0.75); ctx.lineWidth = 1; ctx.stroke()
+        ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 1; ctx.stroke()
       }
       // a média do que saiu: tracejada, na frente das colunas
       const yMedia = y0 - (MEDIA_SAIU / TETO) * ALTO_GRAF
@@ -558,8 +529,8 @@ export function Algoritmo() {
       ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = `600 ${celular ? 10.5 : 12}px ${letras.texto}`
       let lx = Lg.x - legenda.reduce((t, l) => t + 31 + ctx.measureText(l).width, -16) / 2
       legenda.forEach((t, k) => {
-        const [cr, cg, cb] = (claro ? CORES_GRAF_CLARO : CORES_GRAF)[k]
-        ctx.fillStyle = cor(cr, cg, cb); ctx.beginPath(); ctx.roundRect(lx, Lg.y - 5, 10, 10, 2.5); ctx.fill()
+        const [cr, cg, cb] = CORES_GRAF[k]
+        ctx.fillStyle = `rgb(${cr},${cg},${cb})`; ctx.beginPath(); ctx.roundRect(lx, Lg.y - 5, 10, 10, 2.5); ctx.fill()
         ctx.fillStyle = 'rgba(240,244,255,0.82)'; ctx.fillText(t, lx + 15, Lg.y)
         lx += 15 + ctx.measureText(t).width + 16
       })
@@ -596,10 +567,10 @@ export function Algoritmo() {
     let mini: HTMLCanvasElement | null = null, miniDe: ConsultorReal | null = null
     const miniatura = (t: ConsultorReal) => {
       if (miniDe !== t) {
-        const c = document.createElement('canvas'), k = Math.min(1, 560 / t.ia.width)
-        c.width = Math.round(t.ia.width * k); c.height = Math.round(t.ia.height * k)
+        const c = document.createElement('canvas'), k = Math.min(1, 560 / t.iaVista.width)
+        c.width = Math.round(t.iaVista.width * k); c.height = Math.round(t.iaVista.height * k)
         const g = c.getContext('2d')!
-        g.imageSmoothingQuality = 'high'; g.drawImage(t.ia, 0, 0, c.width, c.height)
+        g.imageSmoothingQuality = 'high'; g.drawImage(t.iaVista, 0, 0, c.width, c.height)
         mini = c; miniDe = t
       }
       return mini!
@@ -761,8 +732,8 @@ export function Algoritmo() {
       ctx.globalCompositeOperation = 'source-over'
       ctx.globalAlpha = a
       ctx.beginPath(); ctx.moveTo(TL.x, TL.y); ctx.lineTo(TR.x, TR.y); ctx.lineTo(BR.x, BR.y); ctx.lineTo(BL.x, BL.y); ctx.closePath()
-      ctx.fillStyle = t.corFundo; ctx.fill()
-      const m = miniatura(t)
+      ctx.fillStyle = t.corFundoVista; ctx.fill()
+      const m = miniatura(t)  // a tela como é (o estúdio não é invertido)
       ctx.setTransform(dpr * (TR.x - TL.x) / m.width, dpr * (TR.y - TL.y) / m.width, dpr * (BL.x - TL.x) / m.height, dpr * (BL.y - TL.y) / m.height, dpr * TL.x, dpr * TL.y)
       ctx.globalAlpha = a * (deFrente ? 1 : 0.42)
       ctx.drawImage(m, 0, 0)
@@ -776,6 +747,10 @@ export function Algoritmo() {
 
     const desenhar = (rolagem: number, tempo: number) => {
       const p = porCena(rolagem)
+      // no claro, da fresta em diante a seção é o estúdio grafite (o canvas deixa de ser invertido); a troca acontece
+      // quando a fresta, já da cor do estúdio, ocupa a cena inteira
+      const estudio = claro && (!real || limitar((p - 0.02) / 0.165) >= ATRAVESSA)
+      por('estudio', String(estudio), () => secao.classList.toggle('ag-estudio', estudio))
       const pres: number[] = [], and: number[] = []
       for (let i = 0; i < n; i++) {
         const a = i / n, b = (i + 1) / n
@@ -1105,7 +1080,7 @@ export function Algoritmo() {
       ctx.globalAlpha = 1 - oculto
       grupos.forEach((idx, chave) => {
         if (chave[0] === 'd') ctx.fillStyle = TONS[Number(chave.slice(1))]
-        else { const [c, tom, passo] = chave.split('.').map(Number); ctx.fillStyle = (claro ? PALETA_CLARO : PALETA)[c][tom][passo] }
+        else { const [c, tom, passo] = chave.split('.').map(Number); ctx.fillStyle = PALETA[c][tom][passo] }
         for (const i of idx) {
           // pousados na tela, ficam menores (viram os traços das letras)
           const lado = Math.min(24, ss[i] * esc * zoom * ts[i])
@@ -1125,7 +1100,7 @@ export function Algoritmo() {
       // cena 0: a tela do Consultor de verdade e, rolando, a câmera entrando nela
       if (real && desm < 1 && pres[0] > 0) {
         // sem moldura: a tela fica no plano da página, com as beiradas se apagando nela
-        desenharConsultor(ctx, real, alvoX, alvoY, realS, desm, realE, W, H)
+        desenharConsultor(ctx, real, alvoX, alvoY, realS, desm, realE, W, H, claro ? `rgb(${paraClaro(...ESTUDIO).join(',')})` : undefined)
         ctx.globalAlpha = 1
         ctx.globalCompositeOperation = 'lighter'
       }
@@ -1204,11 +1179,11 @@ export function Algoritmo() {
           if (b > 0 && b < 1) {
             const yb = doc.topoLinhas + b * (doc.fimLinhas - doc.topoLinhas) - doc.h / 2
             const rastro = ctx.createLinearGradient(0, yb - 36, 0, yb)
-            rastro.addColorStop(0, cor(60, 200, 255, 0)); rastro.addColorStop(1, cor(60, 200, 255, 0.16))
+            rastro.addColorStop(0, 'rgba(60,200,255,0)'); rastro.addColorStop(1, 'rgba(60,200,255,0.16)')
             ctx.fillStyle = rastro; ctx.fillRect(-doc.w / 2, yb - 36, doc.w, 36)
-            ctx.fillStyle = cor(40, 170, 240, 0.95); ctx.fillRect(-doc.w / 2 - 12, yb - 1, doc.w + 24, 2)
+            ctx.fillStyle = 'rgba(40,170,240,0.95)'; ctx.fillRect(-doc.w / 2 - 12, yb - 1, doc.w + 24, 2)
             ctx.globalCompositeOperation = 'lighter'
-            ctx.globalAlpha = a * 0.5; ctx.fillStyle = cor(120, 210, 255, 0.6); ctx.fillRect(-doc.w / 2 - 12, yb - 5, doc.w + 24, 10)
+            ctx.globalAlpha = a * 0.5; ctx.fillStyle = 'rgba(120,210,255,0.6)'; ctx.fillRect(-doc.w / 2 - 12, yb - 5, doc.w + 24, 10)
           }
           ctx.restore()
         }

@@ -461,3 +461,20 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
   texto têm versões claras. Trocar o tema com a página aberta refaz fotos, documentos e cores (MutationObserver).
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium nos dois temas
   (1440×860 e 390×844), sem erro de página.
+
+### 15/11/2026 — Claude — Motor no modo claro: estúdio grafite depois da fresta
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Pedido do Edigar: no claro, o motor invertido (preto com laranja sobre creme) ficou feio; ele quer que, ao atravessar
+  a fresta, escureça num tom equilibrado, como o fundo dos cartões dos fundadores no claro.
+- Agora, no claro, só a abertura (a tela do Consultor até a fresta) usa a inversão com a tela compensada. Da fresta em
+  diante a seção ganha a classe `ag-estudio` (posta pelo componente quando `desm` passa de `ATRAVESSA`): o fundo vira o
+  grafite-azulado dos fundadores (`#343b49`, luz no meio, azul e verde-água nas laterais; `algoritmo.css`), o canvas
+  deixa de ser invertido e o motor é desenhado como no escuro (dourado, papel branco, verde/vermelho/amarelo). Na hora da
+  troca a fresta já está pintada no grafite (`desenharConsultor` recebe `corFresta`), então não há emenda; no fim da seção
+  o grafite volta para a cor da página pelo degradê do fundo.
+- Saíram as compensações que não são mais usadas (paleta, gráfico, documentos e o amarelo-mostarda do claro). A tela
+  presa na rede usa a foto como é (`iaVista`, `corFundoVista`), já que o estúdio não é invertido.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium nos dois temas
+  (1440×860 e 390×844), sem erro de página; o escuro continua igual.
