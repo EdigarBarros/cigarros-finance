@@ -20,6 +20,28 @@ const FOTOS = import.meta.glob('./motor/*.jpg', { query: '?url', import: 'defaul
 const CAMADAS = import.meta.glob('./motor/*.webp', { query: '?url', import: 'default' }) as Record<string, () => Promise<string>>
 const MAPAS = import.meta.glob('./motor/*.json', { import: 'default' }) as Record<string, () => Promise<Mapa>>
 
+/**
+ * No modo claro o canvas do motor é invertido pelo CSS (invert(1) hue-rotate(180deg), algoritmo.css). O que precisa
+ * aparecer com a cor de verdade é desenhado já com a conta ao contrário: a cor c vira 255 − H·c (H, a matriz do
+ * hue-rotate de 180°), e o CSS a traz de volta (H·H dá a identidade).
+ */
+const H180 = [[-0.574, 1.43, 0.144], [0.426, 0.43, 0.144], [0.426, 1.43, -0.856]]
+const byte = (v: number) => Math.max(0, Math.min(255, Math.round(v)))
+export function paraClaro(r: number, g: number, b: number): [number, number, number] {
+  return H180.map(([x, y, z]) => 255 - byte(x * r + y * g + z * b)) as [number, number, number]
+}
+/** A mesma conta em todos os pontos de um canvas. */
+export function canvasParaClaro(c: HTMLCanvasElement) {
+  const g = c.getContext('2d', { willReadFrequently: true })!
+  const d = g.getImageData(0, 0, c.width, c.height), D = d.data
+  for (let i = 0; i < D.length; i += 4) {
+    if (!D[i + 3]) continue
+    const [r, gg, b] = paraClaro(D[i], D[i + 1], D[i + 2])
+    D[i] = r; D[i + 1] = gg; D[i + 2] = b
+  }
+  g.putImageData(d, 0, 0)
+}
+
 export interface ConsultorReal {
   w: number; h: number
   /** a tela inteira, na densidade da foto (q pixels por px da foto), com as beiradas apagadas */
@@ -28,6 +50,8 @@ export interface ConsultorReal {
   fr: [number, number, number, number]; fx: number; fy: number
   /** a faixa nítida em volta da fresta (1 ponto de largura) e de onde até onde ela vai na foto (y, altura) */
   tira: HTMLCanvasElement | null; tiraY: number; tiraH: number
+  /** a cor do fundo do painel (já compensada no modo claro) */
+  corFundo: string
 }
 
 /** Em que ponto do mergulho a câmera atravessa a fresta (depois vêm o túnel e a saída para fora). */
@@ -97,8 +121,8 @@ function tela(cw: number, ch: number) {
   return { c, g: c.getContext('2d')! }
 }
 
-export async function carregarConsultor(aparelho: 'pc' | 'cel', idioma: string): Promise<ConsultorReal> {
-  const base = `./motor/consultor-${aparelho}-${idioma}`
+export async function carregarConsultor(aparelho: 'pc' | 'cel', idioma: string, claro = false): Promise<ConsultorReal> {
+  const base = `./motor/consultor-${aparelho}-${idioma}${claro ? '-claro' : ''}`
   const [mapa, c, b, p] = await Promise.all([
     MAPAS[`${base}.json`](),
     FOTOS[`${base}-c.jpg`]().then(imagem),
@@ -124,7 +148,15 @@ export async function carregarConsultor(aparelho: 'pc' | 'cel', idioma: string):
     t.g.drawImage(ia.c, Math.round((fr[0] + fr[2] / 2) * q), Math.round(tiraY * q), 1, t.c.height, 0, 0, 1, t.c.height)
     tira = t.c
   }
-  return { w, h, ia: ia.c, q, fr, fx: fr[0] + fr[2] / 2, fy: fr[1] + fr[3] / 2, tira, tiraY, tiraH }
+  // a cor do fundo: um ponto no meio da foto do fundo (lá não há cartões nem beirada apagada)
+  const ponto = fundo.g.getImageData(Math.round(cw * 0.6), Math.round(ch * 0.5), 1, 1).data
+  let corFundo = [ponto[0], ponto[1], ponto[2]] as [number, number, number]
+  if (claro) {
+    canvasParaClaro(ia.c)
+    if (tira) canvasParaClaro(tira)
+    corFundo = paraClaro(...corFundo)
+  }
+  return { w, h, ia: ia.c, q, fr, fx: fr[0] + fr[2] / 2, fy: fr[1] + fr[3] / 2, tira, tiraY, tiraH, corFundo: `rgb(${corFundo.join(',')})` }
 }
 
 /**

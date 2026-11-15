@@ -441,3 +441,23 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
   (`desenharTelaNaRede`) só aparece quando a câmera sai; vista por trás, os fios ficam por cima dela.
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
   390×844) da abertura, sem erro de página; quadros em 17 ms (picos de 33–50 ms na saída, no Chromium sem placa de vídeo).
+
+### 15/11/2026 — Claude — Motor do OpusCash no modo claro
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Pedido do Edigar: a seção "O motor do OpusCash" ficava escura e com a tela do Consultor escura também no modo claro.
+- Como foi feito: o desenho do motor é luz somada sobre o escuro; no claro, o canvas é invertido pelo CSS
+  (`invert(1) hue-rotate(180deg)`, `algoritmo.css`): o dourado vira dourado escuro sobre creme, no mesmo tom. O que
+  precisa aparecer com a cor de verdade é desenhado já compensado (`paraClaro` e `canvasParaClaro` em
+  `algoritmoConsultor.ts`: 255 − H·c, sendo H o hue-rotate de 180°; o CSS desfaz). Compensados: a foto da tela do
+  Consultor, a faixa nítida da fresta e a cor do painel; o papel do PDF e da planilha; as cores de cada tipo (textos,
+  esteiras, cubinhos, colunas e legenda do gráfico, a luz que lê os documentos). O amarelo puro não sobrevive à
+  inversão (sai bege): no claro as dívidas são amarelo-mostarda (`MOSTARDA`). A tela final do Consultor fica invertida
+  (creme com âmbar), de propósito.
+- Fotos: `scripts/motor/capturar-consultor.cjs` também tira as do tema claro (`-claro` no nome); a abertura carrega as
+  do tema da página. As do escuro foram refeitas junto (iguais na prática).
+- CSS: no claro, o fundo da seção é creme, os textos escuros e as etiquetas, o contador, os selos e o véu atrás do
+  texto têm versões claras. Trocar o tema com a página aberta refaz fotos, documentos e cores (MutationObserver).
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium nos dois temas
+  (1440×860 e 390×844), sem erro de página.
