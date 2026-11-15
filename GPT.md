@@ -424,3 +424,20 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
   (`CAM[0]`: yaw 0,45). A tela só some depois que a câmera termina de sair.
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
   390×844) da abertura, sem erro de página; quadros do túnel em 17 ms.
+
+### 15/11/2026 — Claude — Abertura do motor: o túnel é a própria teia (não um tubo a mais)
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Problema apontado pelo Edigar: o túnel era um tubo de trilhos à parte, e ao sair dele aparecia a teia de verdade (os
+  fios da tela até a rede) ao lado, como "um túnel dentro do túnel". Ele quer reaproveitar o que já existe.
+- `src/pages/Algoritmo.tsx`: saiu `desenharTunel`. A teia (`fiosTeia`, `montarTeia`) são 31 fios: 30 pontos das costas
+  da tela, cada um ligado ao nó da entrada na posição correspondente (o de cima no de cima; o lado escolhido é o que
+  deixa os fios mais curtos), sem se cruzar, formando um funil; mais o fio da fresta. A câmera atravessa a fresta e anda
+  pelo meio desse funil (da fresta para o meio da camada de entrada): os fios são as paredes do túnel. `desenharTeia`
+  desenha cada fio como uma linha fraca com quadradinhos em perspectiva (a cada 10 unidades; 18 quando o fio está longe,
+  para pesar menos) e dados correndo; é a mesma coisa por dentro e por fora. As linhas lidas (`desenharLinhasNaTeia`)
+  andam em cima dos fios, letra por letra na direção deles, e viram cubinhos numa faixa à frente da câmera. A tela
+  (`desenharTelaNaRede`) só aparece quando a câmera sai; vista por trás, os fios ficam por cima dela.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
+  390×844) da abertura, sem erro de página; quadros em 17 ms (picos de 33–50 ms na saída, no Chromium sem placa de vídeo).
