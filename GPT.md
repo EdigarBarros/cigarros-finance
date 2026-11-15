@@ -242,3 +242,23 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
   cenas do gráfico e da tela final seguem iguais.
 - Validação: `npx tsc -b` e build com Supabase fictício passaram; `npm run lint` sem erros; fotos no Chromium (computador
   1440×860 e celular 390×844) em toda a rolagem, sem erro de página.
+
+### 15/11/2026 — Claude — Abertura do motor sem moldura e sem recortes quadrados
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Pedido do Edigar: a tela do Consultor no começo da seção aparecia numa moldura dourada (um recorte feio); e, no zoom,
+  cada peça vinha num quadrado (o recorte levava o fundo junto, mais as linhas douradas em volta de cada cartão e do
+  corredor). Ele quer a tela plana, combinando com a página, e os elementos soltos, puros, com sombra e luz.
+- Fotos (`scripts/motor/capturar-consultor.cjs`): os blocos (`-b.webp`) e as peças (`-p.webp`) agora saem com
+  transparência de verdade, calculada de duas fotos da mesma camada, sobre preto e sobre branco (quinas redondas,
+  sombras e brilhos inteiros). Saíram a foto inteira (`-a.jpg`) e os blocos opacos (`-b.jpg`); a tela parada é montada
+  com as mesmas camadas do mergulho, então não há salto quando ela abre.
+- `src/pages/algoritmoConsultor.ts`: cada ponto da foto pertence ao recorte mais perto (`dividir`), e cada bloco ou peça
+  vira um desenho próprio, sem nada em volta. As beiradas se apagam na página: o fundo bem devagar, os cartões só na
+  borda (mais embaixo, onde a foto corta a tela). Cada cartão faz sombra no fundo, deslocada pela luz conforme a
+  distância. Saíram as linhas douradas dos cartões, as molduras do corredor e as quinas. O título e a frase dele ficam na
+  mesma profundidade (não se cruzam mais).
+- `src/pages/Algoritmo.tsx`: saíram o halo e o contorno dourados em volta da tela.
+- Validação: `npx tsc -b` e build com Supabase fictício passaram; `npm run lint` sem erros; fotos no Chromium
+  (1440×860 e 390×844) em toda a abertura, sem erro de página.

@@ -3,11 +3,15 @@
  * "motor do OpusCash" na página inicial (src/pages/Algoritmo.tsx), onde ela se desmonta peça por peça.
  *
  * Para cada aparelho (pc, cel) e idioma (pt, en, es) gera em src/pages/motor/:
- *   consultor-<aparelho>-<idioma>-a.jpg  a tela inteira, como a pessoa vê;
- *   ...-b.jpg  só os blocos (cartões, barra lateral, botões) com o conteúdo deles escondido;
- *   ...-c.jpg  só o fundo (sem os blocos);
- *   ...json    onde fica cada bloco (n1) e cada peça de dentro dele (n2: textos, gráficos, ícones), em px.
- * Desenhar o fundo, os blocos (de b) e as peças (de a) uns sobre os outros dá exatamente a foto a.
+ *   consultor-<aparelho>-<idioma>-c.jpg  só o fundo (sem os blocos);
+ *   ...-b.webp  só os blocos (cartões, barra lateral, botões), sem o conteúdo e sem nada atrás: transparente fora
+ *               deles, com as quinas redondas e a sombra de verdade;
+ *   ...-p.webp  só as peças de dentro dos blocos (textos, gráficos, ícones), também transparente em volta;
+ *   ...json     onde fica cada bloco (n1) e cada peça (n2), em px.
+ * O fundo, os blocos e as peças desenhados uns sobre os outros dão a tela como a pessoa vê.
+ *
+ * A transparência sai de duas fotos da mesma camada, uma sobre preto e outra sobre branco: onde a camada é opaca as
+ * duas são iguais; onde ela não existe, uma é preta e a outra branca. A diferença dá a opacidade de cada ponto.
  *
  * Como rodar (depois do build de demonstração, ver scripts/app-de-demonstracao/README.md):
  *   node scripts/motor/capturar-consultor.cjs
@@ -71,6 +75,35 @@ function marcar() {
   }
 }
 
+/** Fotografa só o que `mostrar` deixa visível, sobre preto e sobre branco, e grava com transparência (webp). */
+async function camada(p, arquivo, mostrar) {
+  const fotos = []
+  for (const cor of ['#000', '#fff']) {
+    const estilo = await p.addStyleTag({ content: `html,body{background:${cor}!important}html::before,html::after,body::before,body::after{display:none!important}body *{visibility:hidden!important}${mostrar}` })
+    await p.waitForTimeout(150)
+    fotos.push((await p.screenshot({ type: 'png' })).toString('base64'))
+    await estilo.evaluate((e) => e.remove())
+  }
+  const url = await p.evaluate(async ([preto, branco]) => {
+    const abrir = (b64) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = `data:image/png;base64,${b64}` })
+    const [ip, ib] = await Promise.all([abrir(preto), abrir(branco)])
+    const c = document.createElement('canvas'); c.width = ip.width; c.height = ip.height
+    const g = c.getContext('2d', { willReadFrequently: true })
+    g.drawImage(ib, 0, 0); const B = g.getImageData(0, 0, c.width, c.height).data
+    g.clearRect(0, 0, c.width, c.height); g.drawImage(ip, 0, 0)
+    const d = g.getImageData(0, 0, c.width, c.height), P = d.data
+    for (let i = 0; i < P.length; i += 4) {
+      // sobre preto sai cor × opacidade; sobre branco, isso mais (1 − opacidade) de branco
+      const a = 1 - (B[i] - P[i] + B[i + 1] - P[i + 1] + B[i + 2] - P[i + 2]) / 765
+      if (a < 0.012) { P[i] = P[i + 1] = P[i + 2] = P[i + 3] = 0; continue }
+      P[i] = Math.min(255, P[i] / a); P[i + 1] = Math.min(255, P[i + 1] / a); P[i + 2] = Math.min(255, P[i + 2] / a); P[i + 3] = Math.round(Math.min(1, a) * 255)
+    }
+    g.putImageData(d, 0, 0)
+    return c.toDataURL('image/webp', 0.86)
+  }, fotos)
+  fs.writeFileSync(arquivo, Buffer.from(url.split(',')[1], 'base64'))
+}
+
 ;(async () => {
   fs.mkdirSync(saida, { recursive: true })
   for (const [aparelho, w, h, dpr] of APARELHOS) {
@@ -82,13 +115,14 @@ function marcar() {
       await p.addInitScript(() => { try { localStorage.setItem('opuscash-tema', 'escuro') } catch { /* */ } })
       await p.goto(`${t.url}#/analise`)
       await p.waitForTimeout(4500)
+      // tudo parado: as fotos de cada camada precisam ser do mesmo instante
+      await p.addStyleTag({ content: '*,*::before,*::after{animation-play-state:paused!important;transition:none!important;caret-color:transparent!important}' })
+      await p.waitForTimeout(150)
       const base = path.join(saida, `consultor-${aparelho}-${idioma}`)
       const foto = (letra) => p.screenshot({ path: `${base}-${letra}.jpg`, type: 'jpeg', quality: 80 })
       const mapa = await p.evaluate(marcar)
-      await foto('a')
-      await p.addStyleTag({ content: '[data-m2]{visibility:hidden!important}' })
-      await p.waitForTimeout(150)
-      await foto('b')
+      await camada(p, `${base}-b.webp`, '[data-m1],[data-m1] *{visibility:visible!important}[data-m2],[data-m2] *{visibility:hidden!important}')
+      await camada(p, `${base}-p.webp`, '[data-m2],[data-m2] *{visibility:visible!important}')
       await p.addStyleTag({ content: '[data-m1]{visibility:hidden!important}' })
       await p.waitForTimeout(150)
       await foto('c')
