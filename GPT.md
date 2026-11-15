@@ -24,6 +24,7 @@ consulte `docs/arquitetura-do-painel.md`. Siga as orientações de testes, idiom
 Os dois problemas identificados abaixo foram corrigidos e validados localmente pelo GPT/Codex.
 Veja a entrada "Correções de metas e histórico de faturas" para implementação, comandos e resultados.
 A publicação foi posteriormente autorizada pelo usuário; veja a entrada de publicação ao final para o estado atual.
+Em 15/11/2026 o Claude revisou essas correções (sem achar erro) e as publicou; veja as entradas do Claude ao final.
 As alterações anteriores de documentação (`CLAUDE.md` e criação deste arquivo) foram preservadas.
 
 ## Histórico
@@ -177,3 +178,38 @@ para mantê-las locais. Não há alterações de banco ou pacote Android nesta p
 - Próximo passo: aplicar as liberações de rede nas configurações do ambiente, depois abrir/mesclar o PR,
   acompanhar o deploy e conferir o commit em `/versao.json`. O rascunho salvo requer revisão/salvamento
   nas configurações e publicação do ambiente; isso é distinto de publicar o site.
+
+### 14/11/2026 — Claude — Login, Pix reembolsado e painel de suporte
+
+**Estado:** publicado (site, Supabase e painel de suporte), exceto o item pendente do Stripe abaixo.
+Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam na produção quando o Codex começou.
+
+- **Sair só neste aparelho** (PR #172): `supabase.auth.signOut()` saía de todos os aparelhos por padrão.
+  Os botões Sair do painel (`components/Painel.tsx`) e da assinatura (`components/Assinatura.tsx`) passaram a usar
+  `scope: 'local'`. Excluir a conta continua saindo de tudo. O app Android ainda tem o Sair antigo até uma versão nova.
+- **Pix reembolsado tira os 30 dias** (PR #173): o `stripe-webhook` ignorava o reembolso. A migração 34
+  (`supabase/migracao-34-pix-reembolsado.sql`) criou `pagamentos_pix.estornado_em` e `estornar_pix(sessao)`, que tira os
+  dias uma vez só por pagamento. O webhook passou a ouvir `charge.refunded`, e só o reembolso total mexe no acesso.
+  A migração foi aplicada e o webhook publicado (versão 7) pelo Claude. A conta de teste do dono teve os dias tirados à mão.
+- **Painel de suporte** (repositório `painel-opus-cash`, PRs #21 e #22): saiu a saída automática depois de 30 minutos parado;
+  o login vencido agora é renovado antes de deslogar; o Sair passou a valer só para o aparelho. Reembolsar um Pix pelo
+  painel chama `estornar_pix`. A função `admin` foi publicada no Supabase (versão 10).
+- **Pendente (dono):** adicionar o evento `charge.refunded` ao webhook no painel do Stripe. Sem isso, um reembolso feito
+  direto no Stripe não tira os dias (o feito pelo painel tira).
+
+### 15/11/2026 — Claude — Revisão das correções de metas e faturas do GPT/Codex
+
+**Estado:** revisado sem erros encontrados; nenhuma mudança no código do Codex.
+
+- Lido o diff de `11b11ae` até `1ae7180`: `src/lib/useDados.ts`, `src/pages/Metas.tsx`, `src/lib/useCartoes.ts`,
+  o teste `scripts/app-de-demonstracao/testar-correcoes.cjs`, o README da demonstração e o `CLAUDE.md`.
+- Conferido: `addMeta`, `updMeta` e `addMovimentoMeta` só são chamadas pelos formulários corrigidos; os textos
+  "Salvando…" e "Não deu certo. Tente de novo." já têm `en` e `es`; `faturas_pagas.id` existe (migração 8) e serve de
+  desempate; `lerTudo` devolve o mesmo formato `{ data, error }` que a consulta antiga, então o tratamento de erro segue igual.
+- Procurado o mesmo problema das 1.000 linhas em outras consultas: as tabelas que crescem já usam `lerTudo`; as que não
+  usam (bancos, categorias, metas, dívidas, contas do mês) ficam bem abaixo desse limite por pessoa.
+- Validações executadas pelo Claude: `npx tsc -b` passou; `npm run lint` sem erros (só avisos antigos); build com
+  Supabase fictício passou; painel 20/20; extrato 54/54 e pistas 2/2; Invest 27/27; `testar-correcoes.cjs` no
+  Chromium passou (metas com falha e nova tentativa, envio duplicado bloqueado, 1.002 faturas).
+- Publicação: registrada na entrada seguinte, depois de confirmada.
+
