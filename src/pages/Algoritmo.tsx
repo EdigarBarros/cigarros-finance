@@ -6,7 +6,7 @@ import { tx } from '../lib/textos'
 import { ANO } from './apresentacaoCena'
 import { alturaIdeal, desenharTela, type TelaPronta } from './algoritmoTela'
 import { ajustarConsultor, carregarConsultor, desenharConsultor, idiomaDasFotos, mergulho, Z_REDE, type ConsultorReal } from './algoritmoConsultor'
-import { desenharDocs, desenharLancamento, LIDAS_PDF, LIDAS_PLANILHA, type DocPronto, type LinhaLida } from './algoritmoDocs'
+import { COR_TIPO, desenharDocs, LIDAS, LIDAS_PDF, type DocPronto, type TextoLido } from './algoritmoDocs'
 import './algoritmo.css'
 
 /**
@@ -15,17 +15,19 @@ import './algoritmo.css'
  * enquanto a pessoa rola:
  *   0. por trás do Consultor: a tela de verdade do Consultor (fotos do app, algoritmoConsultor.ts) vira um espaço com
  *      profundidade, a câmera avança por dentro dela e chega na rede, que já estava rodando atrás;
- *   1. lê o extrato e a planilha: uma luz passa por um PDF do banco e por uma planilha, e cada linha sai como um
- *      lançamento limpo que entra pela primeira camada da rede (algoritmoDocs.ts);
- *   2. o motor calcula: o sinal corre mais rápido e mais nós acendem;
- *   3. compara: a rede se desmancha e os fragmentos se arrumam num gráfico 3D dos meses (entrou × saiu, com a média);
- *   4. responde: os fragmentos pousam nos traços da tela do Consultor (as letras, o círculo da nota, as barras) e ela
+ *   1. lê o extrato e a planilha: uma luz passa por um PDF do banco e por uma planilha; o texto de cada linha sai do
+ *      documento já limpo, entra num fio da rede, corre por ele e se desfaz em cubinhos de dados na cor do que é:
+ *      verde o que entrou, vermelho o que saiu, amarelo as dívidas (algoritmoDocs.ts);
+ *   2. o motor calcula: o sinal corre mais rápido, mais nós acendem e os cubinhos coloridos andam pelos fios;
+ *   3. compara: cada cubinho sai da rede e vai para a sua coluna (os verdes nas entradas, os vermelhos nas saídas, os
+ *      amarelos nas dívidas), as colunas crescem de baixo para cima e o gráfico se firma de uma vez, da esquerda para
+ *      a direita, com uma linha de luz; antes da próxima cena ele volta a ser cubinhos do mesmo jeito;
+ *   4. responde: os cubinhos pousam nos traços da tela do Consultor (as letras, o círculo da nota, as barras) e ela
  *      acende de cima para baixo no lugar deles (algoritmoTela.ts). Termina onde começou.
  *
- * A rede é desenhada em linhas e nós; por cima dela correm os fragmentos (a poeira de dados: uns em volta dos nós, a
- * maioria andando pelos fios). Cada fragmento tem um lugar em cada forma; o desenho mistura as formas conforme o
- * scroll, com um atraso por fragmento (a mudança passa como uma onda) e um redemoinho no meio do caminho. Tudo num
- * <canvas> somando luz.
+ * A rede é desenhada em fios e nós; por cima dela correm os cubinhos (a poeira dourada desde o começo e os coloridos,
+ * que nascem das linhas lidas). Cada cubinho tem um lugar em cada forma; o desenho mistura as formas conforme o
+ * scroll, com um atraso por cubinho (a mudança passa como uma onda). Tudo num <canvas> somando luz.
  *
  * É uma imagem do que o motor faz, não um retrato técnico dele: o Consultor (lib/analise.ts) é feito de regras de
  * finanças, então os textos falam em cruzar e comparar, nunca em "inteligência artificial".
@@ -38,10 +40,13 @@ const CENAS = [
   { titulo: tx('E diz o que fazer'), texto: tx('Uma nota para o seu dinheiro e um plano de ação na ordem certa, refeito a cada lançamento.') },
 ] as const
 
-// ─── o gráfico da cena 3: os meses do Resumo do ano (entrou e saiu) e a média do que saiu ───
+// ─── o gráfico da cena 3: os meses do Resumo do ano (entrou, saiu e as dívidas) e a média do que saiu ───
 const MESES = ANO.entrou.length
 const MEDIA_SAIU = ANO.saiu.reduce((a, b) => a + b, 0) / MESES
-const TETO = Math.max(...ANO.entrou, ...ANO.saiu)
+/** As séries, na ordem das categorias dos cubinhos: 0 entrou, 1 saiu, 2 dívidas. */
+const SERIES = [ANO.entrou, ANO.saiu, ANO.divida]
+const TIPOS = ['entrada', 'saida', 'divida'] as const
+const TETO = Math.max(...SERIES.flat())
 /** As etiquetas da cena 3: em cima de qual mês (índice) e o que dizem. */
 const COMPARA: { mes: number; x: string; y: string; r: string; bom?: boolean }[] = [
   { mes: 10, x: MESES_NOME[10], y: tx('sua média'), r: tx('8% menos'), bom: true },
@@ -97,6 +102,27 @@ function forca(no: number, k: number, limiar: number) {
   return u < limiar ? 0 : 0.35 + 0.65 * ((u - limiar) / (1 - limiar))
 }
 const BASE_GRAF = 170, ALTO_GRAF = 330, LARGO_GRAF = 640
+/** A largura (e a profundidade) de cada coluna e a distância entre as três de um mês. */
+const LARGO_BARRA = 15, PASSO_BARRA = 18
+/** O meio de cada coluna (mês m, série k). */
+const xColuna = (m: number, k: number) => (m / (MESES - 1) - 0.5) * LARGO_GRAF + (k - 1) * PASSO_BARRA
+
+// ─── o caminho de cada linha lida pela rede: de um nó da entrada, de fio em fio, até a saída ───
+const CAMINHOS = LIDAS.map((_, r) => {
+  let no = (r * 5 + 2) % REDE.entrada
+  const c = [no]
+  for (let k = 0; k < CAMADAS.length - 1; k++) {
+    const saem = REDE.elos.filter((e) => e.a === no)
+    no = saem[(r * 3 + k) % saem.length].b
+    c.push(no)
+  }
+  return c
+})
+/** Por quantos fios o texto passa enquanto se desfaz. */
+const TRECHOS = 3
+/** Quando a luz chega em cada linha (no andamento da leitura, 0 a 1) e quanto dura a viagem do texto dela. */
+const INICIO_LINHA = LIDAS.map((_, r) => (r < LIDAS_PDF.length ? 0.06 + r * 0.065 : 0.5 + (r - LIDAS_PDF.length) * 0.065))
+const DUR_LINHA = 0.3
 
 interface Frag {
   no: number // na rede: em volta de qual nó (-1 = anda por um fio)
@@ -104,29 +130,30 @@ interface Frag {
   des: V3 // o quanto fica fora do nó ou do fio
   barra: V3 // lugar no gráfico
   tela: V3 // lugar na tela
-  atraso: number // a mudança de forma passa como uma onda
-  w: number; h: number // tamanho do pedacinho
+  atraso: number // a ida para o gráfico passa como uma onda (de baixo para cima em cada coluna)
+  atrasoTela: number // a ida para a tela também
+  w: number; h: number // tamanho do cubinho
   brilho: number // 0 a 4 (cinco tons)
-  cat: number // no gráfico: 0 entrou, 1 saiu, 2 linha da média, 3 chão (fica dourado)
+  cat: number // 0 entrou (verde), 1 saiu (vermelho), 2 dívida (amarelo), 3 poeira dourada (a média e o chão do gráfico)
+  linha: number // de qual linha lida ele nasce (-1: a poeira dourada, que está na rede desde o começo)
+  pt: number // de que ponto das letras dela
   fase: number
 }
 
-/** Os fragmentos e o lugar de cada um em cada forma. */
+/** Os cubinhos e o lugar de cada um em cada forma. */
 function montar(N: number, pontos: Float32Array, k4: number, oy: number) {
   const r = sorteio(31)
   const fr: Frag[] = []
-  // gráfico: colunas de fragmentos, uma por mês e por série (entrou na frente, saiu atrás), mais a linha da média
-  const colunas: { x: number; z: number; alto: number }[] = []
-  for (let m = 0; m < MESES; m++) {
-    const x = (m / (MESES - 1) - 0.5) * LARGO_GRAF
-    // lado a lado e quase no mesmo plano: com a câmera de lado, uma atrás da outra misturaria o verde e o vermelho
-    colunas.push({ x: x - 13, z: 6, alto: (ANO.entrou[m] / TETO) * ALTO_GRAF })
-    colunas.push({ x: x + 13, z: -6, alto: (ANO.saiu[m] / TETO) * ALTO_GRAF })
-  }
+  // gráfico: uma coluna por mês e por série (entrou, saiu, dívidas, lado a lado)
+  const colunas: { x: number; alto: number; cat: number }[] = []
+  for (let m = 0; m < MESES; m++) SERIES.forEach((serie, k) => colunas.push({ x: xColuna(m, k), alto: (serie[m] / TETO) * ALTO_GRAF, cat: k }))
   const somaAlto = colunas.reduce((a, c) => a + c.alto, 0)
   const yMedia = BASE_GRAF - (MEDIA_SAIU / TETO) * ALTO_GRAF
+  // as linhas lidas de cada tipo (os cubinhos de uma cor nascem das linhas daquela cor, em rodízio)
+  const porTipo = TIPOS.map((t) => LIDAS.flatMap((l, i) => (l.tipo === t ? [i] : [])))
+  const vez = [0, 0, 0]
   for (let i = 0; i < N; i++) {
-    // rede: um terço em volta dos nós (uma casquinha em cada um), o resto andando pelos fios
+    // rede: uns em volta dos nós (uma casquinha em cada um), o resto andando pelos fios
     let no = -1, elo = 0, des: V3
     if (r() < 0.22) {
       no = Math.floor(r() * REDE.nos.length)
@@ -137,28 +164,30 @@ function montar(N: number, pontos: Float32Array, k4: number, oy: number) {
       des = [(r() - 0.5) * 2.4, (r() - 0.5) * 2.4, (r() - 0.5) * 2.4]
     }
     const t0 = r(), vel = 0.05 + r() * 0.12
-    // gráfico: 82% nas colunas (proporcional à altura), o resto na linha da média e no chão
-    let barra: V3, cat = 3
-    const q = r()
-    if (q < 0.82) {
+    // gráfico: 70% nas colunas (proporcional à altura de cada uma), coloridos; o resto, dourado, na média e no chão
+    let barra: V3, cat = 3, atraso = r() * 0.3, linha = -1
+    if (r() < 0.7) {
       let alvo = r() * somaAlto, c = 0
       while (c < colunas.length - 1 && alvo > colunas[c].alto) { alvo -= colunas[c].alto; c++ }
-      const col = colunas[c]
-      barra = [col.x + (r() - 0.5) * 16, BASE_GRAF - r() * col.alto, col.z + (r() - 0.5) * 8]
-      cat = c % 2 // as colunas vêm em pares: entrou, saiu
-    } else if (q < 0.93) {
-      barra = [(r() - 0.5) * (LARGO_GRAF + 50), yMedia + (r() - 0.5) * 3, 0]
-      cat = 2
+      const col = colunas[c], hf = r()
+      barra = [col.x + (r() - 0.5) * LARGO_BARRA, BASE_GRAF - hf * col.alto, (r() - 0.5) * LARGO_BARRA]
+      cat = col.cat
+      // as colunas enchem de baixo para cima
+      atraso = 0.04 * r() + 0.3 * hf
+      const lista = porTipo[cat]
+      linha = lista[vez[cat]++ % lista.length]
+    } else if (r() < 0.4) {
+      barra = [(r() - 0.5) * (LARGO_GRAF + 60), yMedia + (r() - 0.5) * 2.5, -LARGO_BARRA]
     } else {
-      barra = [(r() - 0.5) * (LARGO_GRAF + 60), BASE_GRAF + 6 + r() * 4, (r() - 0.5) * 120]
+      barra = [(r() - 0.5) * (LARGO_GRAF + 70), BASE_GRAF + 4 + r() * 3, (r() - 0.5) * 90]
     }
     // tela: um ponto dos traços da tela do Consultor (sorteados em algoritmoTela.ts), em px de desenho
     const tela: V3 = [pontos[i * 2] / k4, pontos[i * 2 + 1] / k4 + oy, 0]
+    // cubinhos: a maioria pequena; uns 12% maiores (os pacotes de dados)
+    const lado = r() < 0.12 ? 3.4 + r() * 2.6 : 1.3 + r() * 2.2
     fr.push({
-      // a maioria são traços e pontos; uns 12% são placas maiores (os pacotes de dados)
-      no, elo, t0, vel, des, barra, tela, atraso: r() * 0.35,
-      ...(r() < 0.12 ? { w: 6 + r() * 9, h: 2 + r() * 2.5 } : { w: 1 + r() * 4.5, h: 1 + r() * 1.4 }),
-      brilho: Math.min(4, Math.floor(Math.pow(r(), 1.15) * 5)), fase: r() * 10, cat,
+      no, elo, t0, vel, des, barra, tela, atraso, atrasoTela: r() * 0.35, w: lado, h: lado,
+      brilho: Math.min(4, Math.floor(Math.pow(r(), 1.15) * 5)), fase: r() * 10, cat, linha, pt: Math.floor(r() * 700),
     })
   }
   return fr
@@ -167,7 +196,7 @@ function montar(N: number, pontos: Float32Array, k4: number, oy: number) {
 /** Câmera em cada cena: giro e inclinação (rad), aproximação. Na primeira e na última fica de frente: a tela encaixa na tela. */
 const CAM = [
   { yaw: 0, pitch: 0, zoom: 1.08 },
-  { yaw: -0.14, pitch: 0.18, zoom: 0.8 },
+  { yaw: -0.14, pitch: 0.18, zoom: 0.7 },
   { yaw: -0.22, pitch: 0.3, zoom: 1.05 },
   { yaw: 0.26, pitch: 0.12, zoom: 1.0 },
   { yaw: 0, pitch: 0, zoom: 1.08 },
@@ -187,11 +216,11 @@ function brilho(tam: number, paradas: [number, string][]) {
 }
 const TONS = ['rgba(180,85,10,0.6)', 'rgba(235,130,30,0.8)', 'rgba(255,170,50,0.9)', 'rgba(255,210,120,0.97)', 'rgba(255,248,222,1)']
 /**
- * Cores do gráfico (as do app): entrou verde, saiu vermelho, a média azul-clara. Cada uma nos mesmos cinco tons do
- * dourado. A troca de cor tem PASSOS degraus entre o dourado e a cor, e cada fragmento anda neles na sua vez.
+ * As cores dos cubinhos (as do gráfico do app): entrou verde, saiu vermelho, dívida amarelo. Cada uma nos mesmos cinco
+ * tons do dourado. Na ida para a tela final eles voltam ao dourado em PASSOS degraus.
  */
 const PASSOS = 6
-const CORES_GRAF: [number, number, number][] = [[46, 214, 128], [255, 92, 108], [120, 196, 255]]
+const CORES_GRAF: [number, number, number][] = TIPOS.map((t) => COR_TIPO[t])
 const DOURADO: [number, number, number, number][] = [[180, 85, 10, 0.6], [235, 130, 30, 0.8], [255, 170, 50, 0.9], [255, 210, 120, 0.97], [255, 248, 222, 1]]
 /** PALETA[cat][tom][passo]: o fragmento da categoria cat, no tom, com passo/(PASSOS-1) da cor do gráfico. */
 const PALETA = CORES_GRAF.map((c) => DOURADO.map(([r, g, b, a], tom) => {
@@ -236,7 +265,9 @@ export function Algoritmo() {
     }
     let perto = false
     // a leitura (cena 1): o documento fica em (docX, docY) e a rede anda (desX, desY) para dar lugar a ele
-    let docs: { pdf: DocPronto; planilha: DocPronto } | null = null, docX = 0, docY = 0, desX = 0, desY = 0, chaveDocs = ''
+    let docs: { pdf: DocPronto; planilha: DocPronto; textos: TextoLido[] } | null = null, docX = 0, docY = 0, desX = 0, desY = 0, chaveDocs = ''
+    // onde o texto de cada linha se desfaz (apagando o que já virou cubinho) antes de ir para a tela
+    const rasc = document.createElement('canvas'), rg = rasc.getContext('2d')!
     const texto = sticky.querySelector<HTMLElement>('.ag-texto')!, selos = sticky.querySelector<HTMLElement>('.ag-selos')!
     const estilo = getComputedStyle(document.documentElement)
     const fonte = (v: string, padrao: string) => estilo.getPropertyValue(v).trim() || padrao
@@ -293,18 +324,23 @@ export function Algoritmo() {
       let dw: number, dh: number
       if (celular) {
         const topo = texto.getBoundingClientRect().bottom - sticky.getBoundingClientRect().top + 10
-        dw = Math.min(W - 56, 290); dh = 196
+        dw = Math.min(W - 36, 380); dh = Math.min(dw * 0.66, H * 0.3)
         docX = W / 2; docY = topo + dh / 2
         desX = 0; desY = (docY + dh / 2 + H - 24) / 2 - cy
       } else {
         const esq = Math.min(460, W * 0.36), aw = W - esq - 40
-        dw = Math.min(320, aw * 0.42); dh = dw * 1.2
-        docX = Math.max(esq + 16 + dw / 2, esq + aw * 0.22); docY = cy
-        desX = aw * 0.2; desY = 0
+        dw = Math.min(420, aw * 0.44); dh = Math.min(dw * 0.95, H * 0.62)
+        docX = esq + 20 + dw / 2; docY = cy
+        // a rede vai para a direita até a entrada dela ficar logo depois do documento
+        desX = docX + dw / 2 + 100 + 300 * esc * CAM[1].zoom - cx; desY = 0
       }
       dw = Math.round(dw); dh = Math.round(dh)
       const chaveD = `${dw}|${dh}|${document.documentElement.lang}`
-      if (chaveD !== chaveDocs) { chaveDocs = chaveD; docs = desenharDocs(dw, dh, Math.min(window.devicePixelRatio || 1, 2), letras) }
+      if (chaveD !== chaveDocs) {
+        chaveDocs = chaveD
+        docs = desenharDocs(dw, dh, Math.min(window.devicePixelRatio || 1, 2), letras)
+        rasc.width = Math.max(...docs.textos.map((t) => t.img.width)); rasc.height = Math.max(...docs.textos.map((t) => t.img.height))
+      }
     }
 
     let yaw = 0, pitch = 0, zoom = 1, offX = 0, offY = 0
@@ -327,6 +363,104 @@ export function Algoritmo() {
     const rx = new Float32Array(NN), ry = new Float32Array(NN), rz = new Float32Array(NN)
     const nx = new Float32Array(NN), ny = new Float32Array(NN), ns = new Float32Array(NN), aceso = new Float32Array(NN)
     const xs = new Float32Array(2000), ys = new Float32Array(2000), ss = new Float32Array(2000), vs = new Float32Array(2000), ms = new Float32Array(2000)
+    const gs = new Float32Array(2000), esconde = new Uint8Array(2000)
+    // cada linha lida: onde ela está na viagem (linhaT) e, enquanto o texto dela existe, onde ele está e de que tamanho
+    const NL = LIDAS.length
+    const linhaT = new Float32Array(NL), tX = new Float32Array(NL), tY = new Float32Array(NL), tE = new Float32Array(NL), ativo = new Uint8Array(NL)
+
+    /**
+     * O gráfico firme da cena 3: cada coluna uma caixa 3D (o topo mais claro, a frente na cor, os lados mais escuros),
+     * o chão, os meses, a linha da média e a legenda. solido(x) diz o quanto a coluna em x já está firme (a linha de luz
+     * passa da esquerda para a direita para firmar e de novo para desfazer).
+     */
+    const legenda = [tx('Entradas'), tx('Saídas'), tx('Dívidas')]
+    const desenharGrafico = (solido: (x: number) => number, fazendo: number, desfazendo: number, xFaz: number, xDesfaz: number) => {
+      const geral = suave(0, 0.35, fazendo) * (1 - suave(0.65, 1, desfazendo))
+      ctx.save()
+      ctx.globalCompositeOperation = 'source-over'
+      const L = LARGO_GRAF / 2 + 44, y0 = BASE_GRAF
+      // o chão: um plano bem leve, com uma linha por mês
+      const chao = [[-L, -46], [L, -46], [L, 46], [-L, 46]].map(([x, z]) => proj(x, y0 + 1, z))
+      ctx.globalAlpha = geral
+      ctx.beginPath(); chao.forEach((P, i) => (i ? ctx.lineTo(P.x, P.y) : ctx.moveTo(P.x, P.y))); ctx.closePath()
+      ctx.fillStyle = 'rgba(255,255,255,0.035)'; ctx.fill()
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1; ctx.stroke()
+      ctx.beginPath()
+      for (let m = 0; m < MESES; m++) {
+        const x = xColuna(m, 1), A = proj(x, y0 + 1, -46), B = proj(x, y0 + 1, 46)
+        ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y)
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.stroke()
+      // as colunas, da mais longe para a mais perto; em cada uma, as faces de trás antes das da frente
+      const caixas: { c: { x: number; y: number; s: number }[]; a: number; k: number; s: number }[] = []
+      for (let m = 0; m < MESES; m++) {
+        for (let k = 0; k < SERIES.length; k++) {
+          const x = xColuna(m, k), a = solido(x)
+          if (a <= 0.01) continue
+          const alto = Math.max(2, (SERIES[k][m] / TETO) * ALTO_GRAF), x0 = x - LARGO_BARRA / 2, x1 = x + LARGO_BARRA / 2, y1 = y0 - alto, z0 = -LARGO_BARRA / 2, z1 = LARGO_BARRA / 2
+          const c = ([[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0], [x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]] as V3[]).map(([px, py, pz]) => proj(px, py, pz))
+          caixas.push({ c, a, k, s: proj(x, y0 - alto / 2, 0).s })
+        }
+      }
+      caixas.sort((m, n) => m.s - n.s)
+      // as faces: frente, trás, esquerda, direita, topo, base; e o quanto cada uma recebe de luz (vem de cima)
+      const FACES: [number[], number][] = [[[0, 1, 2, 3], 1], [[5, 4, 7, 6], 0.7], [[4, 0, 3, 7], 0.62], [[1, 5, 6, 2], 0.62], [[3, 2, 6, 7], 1.35], [[4, 5, 1, 0], 0.4]]
+      for (const { c, a, k } of caixas) {
+        const [cr, cg, cb] = CORES_GRAF[k]
+        const faces = FACES.map(([v, luz]) => ({ v, luz, s: v.reduce((t, i) => t + c[i].s, 0) })).sort((m, n) => m.s - n.s)
+        for (const { v, luz } of faces) {
+          const tom = (q: number) => Math.round(luz > 1 ? q + (255 - q) * (luz - 1) : q * luz)
+          ctx.beginPath(); v.forEach((i, j) => (j ? ctx.lineTo(c[i].x, c[i].y) : ctx.moveTo(c[i].x, c[i].y))); ctx.closePath()
+          ctx.globalAlpha = a * 0.94
+          ctx.fillStyle = `rgb(${tom(cr)},${tom(cg)},${tom(cb)})`; ctx.fill()
+        }
+        // a quina de cima pega a luz
+        ctx.globalAlpha = a * 0.7
+        ctx.beginPath(); [3, 2, 6, 7].forEach((i, j) => (j ? ctx.lineTo(c[i].x, c[i].y) : ctx.moveTo(c[i].x, c[i].y))); ctx.closePath()
+        ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 1; ctx.stroke()
+      }
+      // a média do que saiu: tracejada, na frente das colunas
+      const yMedia = y0 - (MEDIA_SAIU / TETO) * ALTO_GRAF
+      const M0 = proj(-L + 10, yMedia, -LARGO_BARRA), M1 = proj(L - 10, yMedia, -LARGO_BARRA)
+      ctx.globalAlpha = geral
+      ctx.setLineDash([6, 5]); ctx.strokeStyle = 'rgba(255,205,130,0.9)'; ctx.lineWidth = 1.4
+      ctx.beginPath(); ctx.moveTo(M0.x, M0.y); ctx.lineTo(M1.x, M1.y); ctx.stroke()
+      ctx.setLineDash([])
+      // os meses, embaixo de cada grupo
+      ctx.font = `600 ${celular ? 9.5 : 11}px ${letras.texto}`; ctx.textAlign = 'center'; ctx.textBaseline = 'top'
+      ctx.fillStyle = 'rgba(232,238,255,0.62)'
+      let baixo = 0
+      for (let m = 0; m < MESES; m++) {
+        if (celular && m % 2) continue
+        const P = proj(xColuna(m, 1), y0 + 12, -46)
+        ctx.fillText(MESES_NOME[m].slice(0, 3), P.x, P.y)
+        baixo = Math.max(baixo, P.y)
+      }
+      // a legenda, embaixo do mês mais baixo, no meio
+      const Lg = { x: proj(0, y0 + 12, -46).x, y: baixo + (celular ? 26 : 32) }
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = `600 ${celular ? 10.5 : 12}px ${letras.texto}`
+      let lx = Lg.x - legenda.reduce((t, l) => t + 31 + ctx.measureText(l).width, -16) / 2
+      legenda.forEach((t, k) => {
+        const [cr, cg, cb] = CORES_GRAF[k]
+        ctx.fillStyle = `rgb(${cr},${cg},${cb})`; ctx.beginPath(); ctx.roundRect(lx, Lg.y - 5, 10, 10, 2.5); ctx.fill()
+        ctx.fillStyle = 'rgba(240,244,255,0.82)'; ctx.fillText(t, lx + 15, Lg.y)
+        lx += 15 + ctx.measureText(t).width + 16
+      })
+      // a linha de luz que firma (e depois desfaz) o gráfico: um plano fino de pé, do chão até acima da coluna mais alta
+      ctx.globalCompositeOperation = 'lighter'
+      for (const [xl, f] of [[xFaz, fazendo], [xDesfaz, desfazendo]]) {
+        if (f <= 0 || f >= 1) continue
+        const A = proj(xl, y0 + 4, -50), B = proj(xl, y0 - ALTO_GRAF - 16, -50), C = proj(xl, y0 - ALTO_GRAF - 16, 50), D = proj(xl, y0 + 4, 50)
+        const plano = ctx.createLinearGradient(A.x, A.y, B.x, B.y)
+        plano.addColorStop(0, 'rgba(255,240,210,0.5)'); plano.addColorStop(1, 'rgba(255,240,210,0)')
+        ctx.globalAlpha = Math.sin(Math.PI * f)
+        ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(C.x, C.y); ctx.lineTo(D.x, D.y); ctx.closePath()
+        ctx.fillStyle = plano; ctx.fill()
+        ctx.strokeStyle = 'rgba(255,245,225,0.95)'; ctx.lineWidth = 1.6
+        ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.stroke()
+      }
+      ctx.restore()
+    }
 
     const desenhar = (p: number, tempo: number) => {
       const pres: number[] = [], and: number[] = []
@@ -365,8 +499,21 @@ export function Algoritmo() {
       }
       const limiar = 0.42 - 0.22 * calc
 
-      // as formas ao longo do scroll: rede → gráfico → tela. Cada fragmento muda com um atraso
-      const g0 = limitar((p - 0.576) / 0.144), v0 = limitar((p - 0.776) / 0.128), raioK = 1 / (1 + Z_REDE - mg.cam)
+      // cada linha lida: de 0 (a luz chega nela) a 1 (o texto já se desfez num fio da rede); depois disso continua
+      // contando (os cubinhos dela ainda vão para o lugar deles na rede)
+      let chegada = 0
+      for (let r = 0; r < NL; r++) {
+        linhaT[r] = ((p - 0.2) / 0.2 - INICIO_LINHA[r]) / DUR_LINHA
+        chegada += Math.max(0, 1 - Math.abs(linhaT[r] - 0.45) / 0.08)
+      }
+      chegada = Math.min(1, chegada)
+      // o documento: chega, gira do PDF para a planilha e sai
+      const vira = limitar((u1 - 0.42) / 0.08)
+      const chegaDoc = suave(0, 0.08, u1), saiDoc = suave(0.9, 0.99, u1)
+      const docE = mistura(0.92, 1, chegaDoc) * (1 - 0.12 * saiDoc)
+
+      // as formas ao longo do scroll: rede → gráfico → tela. Cada cubinho muda com um atraso
+      const g0 = limitar((p - 0.58) / 0.12), v0 = limitar((p - 0.8) / 0.1), raioK = 1 / (1 + Z_REDE - mg.cam)
       const forma = (fx: Frag, i: number): V3 => {
         let ex: number, ey: number, ez: number
         if (fx.no >= 0) { ex = rx[fx.no]; ey = ry[fx.no]; ez = rz[fx.no] }
@@ -376,17 +523,18 @@ export function Algoritmo() {
         }
         ex += fx.des[0] * raioK; ey += fx.des[1] * raioK; ez += fx.des[2] * raioK
         const g = suave(fx.atraso, fx.atraso + 0.55, g0)
-        const v = suave(fx.atraso, fx.atraso + 0.55, v0)
-        vs[i] = v
-        // na rede os fragmentos são poeira fina; viram peça inteira quando saem para o gráfico
-        ms[i] = 0.42 + 0.58 * Math.max(g, v)
+        const v = suave(fx.atrasoTela, fx.atrasoTela + 0.55, v0)
+        gs[i] = g; vs[i] = v
+        // na rede os cubinhos são poeira fina; no gráfico e na tela ficam inteiros
+        ms[i] = fx.cat < 3 ? 0.95 + 0.05 * Math.max(g, v) : 0.42 + 0.58 * Math.max(g, v)
         let x = mistura(ex, fx.barra[0], g), y = mistura(ey, fx.barra[1], g), z = mistura(ez, fx.barra[2], g)
+        // para o gráfico, um arco por cima: cada cubinho sobe da rede e desce na sua coluna
+        y -= Math.sin(Math.PI * g) * 70
         x = mistura(x, fx.tela[0], v); y = mistura(y, fx.tela[1], v); z = mistura(z, fx.tela[2], v)
-        // redemoinho no meio de cada viagem: o fragmento faz uma curva em vez de ir reto
-        const meio = Math.sin(Math.PI * g) + Math.sin(Math.PI * v)
-        if (meio > 0.01) {
-          const a = fx.fase + s * 0.8
-          x += Math.cos(a) * 90 * meio; y += Math.sin(a * 1.3) * 60 * meio; z += Math.sin(a) * 90 * meio
+        // para a tela, uma curva leve
+        if (v > 0 && v < 1) {
+          const meio = Math.sin(Math.PI * v), a = fx.fase + s * 0.8
+          x += Math.cos(a) * 40 * meio; y += Math.sin(a * 1.3) * 30 * meio; z += Math.sin(a) * 40 * meio
         }
         return [x, y, z]
       }
@@ -397,27 +545,9 @@ export function Algoritmo() {
 
       // névoa de luz atrás (mais forte com a rede inteira)
       const centro = proj(0, 0, 0)
-      const redeCheia = (1 - suave(0.576, 0.68, p)) * (1 - 0.8 * oculto)
-      // a leitura: onde está a luz em cada documento e os lançamentos no ar; cada um que chega acende a entrada da rede
-      let chegada = 0, bPdf = 0, bPla = 0
-      const lidos: { l: LinhaLida; doc: DocPronto; i: number; c: number }[] = []
-      if (docs && pres[1] > 0.01) {
-        const leitura = (doc: DocPronto, lista: LinhaLida[], ini: number, dur: number) => {
-          const b = mistura(-0.05, 1.4, limitar((u1 - ini) / dur))
-          lista.forEach((l, i) => {
-            const t0 = (doc.linhas[i] - doc.topoLinhas) / (doc.fimLinhas - doc.topoLinhas)
-            const c = limitar((b - t0) / 0.42)
-            if (c > 0 && c < 1) lidos.push({ l, doc, i, c })
-            chegada += Math.max(0, 1 - Math.abs(c - 0.97) / 0.06)
-          })
-          return b
-        }
-        bPdf = leitura(docs.pdf, LIDAS_PDF, 0.08, 0.36)
-        bPla = leitura(docs.planilha, LIDAS_PLANILHA, 0.56, 0.33)
-      }
-      chegada = Math.min(1, chegada) * pres[1]
+      const redeCheia = (1 - suave(0.58, 0.68, p)) * (1 - 0.8 * oculto)
       const th = (720 + 160 * calc) * esc * zoom
-      ctx.globalAlpha = Math.min(1, 0.2 + 0.3 * redeCheia + 0.3 * pres[n - 1] + 0.3 * pres[0] + 0.3 * chegada)
+      ctx.globalAlpha = Math.min(1, 0.2 + 0.3 * redeCheia + 0.3 * pres[n - 1] + 0.3 * pres[0] + 0.3 * chegada * pres[1])
       ctx.drawImage(sprHalo, centro.x - th / 2, centro.y - th / 2, th, th)
       ctx.globalAlpha = 1
 
@@ -430,8 +560,34 @@ export function Algoritmo() {
         nx[i] = P.x; ny[i] = P.y; ns[i] = P.s * esc * zoom * raioK
         const fase = (pulso - no.camada) / ESPACO, k = Math.floor(fase)
         aceso[i] = forca(i, k, limiar) * Math.exp(-(fase - k) * ESPACO * 1.15)
-        if (no.camada === 0) aceso[i] = Math.max(aceso[i], chegada)
       }
+
+      // onde está o texto de cada linha lida: sai do documento, voa até um nó da entrada e corre pelos fios
+      for (let r = 0; r < NL; r++) {
+        ativo[r] = 0
+        const tr = linhaT[r]
+        if (!docs || tr <= 0 || tr > 1.6) continue
+        const t = Math.min(1, tr), pdf = r < LIDAS_PDF.length, dl = pdf ? docs.pdf : docs.planilha, i = pdf ? r : r - LIDAS_PDF.length
+        const sx = docX, sy = docY + (dl.linhas[i] - dl.h / 2) * docE - 8 * suave(0, 0.12, t)
+        const cam = CAMINHOS[r]
+        let x: number, y: number, k: number
+        if (t < 0.12) { x = sx; y = sy; k = mistura(1, 1.1, t / 0.12) }
+        else if (t < 0.45) {
+          const u = suave(0.12, 0.45, t), ax = nx[cam[0]], ay = ny[cam[0]]
+          const kx = celular ? docX + (i % 2 ? 70 : -70) : (sx + ax) / 2, ky = celular ? (sy + ay) / 2 : Math.min(sy, ay) - 70
+          x = (1 - u) * (1 - u) * sx + 2 * (1 - u) * u * kx + u * u * ax
+          y = (1 - u) * (1 - u) * sy + 2 * (1 - u) * u * ky + u * u * ay
+          k = mistura(1.1, 0.95, u)
+        } else {
+          const tau = ((t - 0.45) / 0.55) * TRECHOS, j = Math.min(TRECHOS - 1, Math.floor(tau)), f = tau - j
+          x = mistura(nx[cam[j]], nx[cam[j + 1]], f); y = mistura(ny[cam[j]], ny[cam[j + 1]], f)
+          k = mistura(0.95, 0.72, (t - 0.45) / 0.55)
+          // os nós por onde ele passa acendem
+          for (let q = 0; q <= TRECHOS; q++) aceso[cam[q]] = Math.max(aceso[cam[q]], 1 - Math.abs(tau - q) / 0.7)
+        }
+        tX[r] = x; tY[r] = y; tE[r] = k * (celular ? 0.85 : 1); ativo[r] = 1
+      }
+
       if (redeCheia > 0.02) {
         // os fios: todos bem fracos (os de trás mais ainda) e, mais fortes, os que estão levando sinal agora
         const fios = [new Path2D(), new Path2D()], vivos = new Path2D(), pontas: [number, number, number, number][] = []
@@ -457,23 +613,22 @@ export function Algoritmo() {
           ctx.globalAlpha = redeCheia * (0.5 + 0.5 * v)
           ctx.drawImage(sprPonto, x - tam / 2, y - tam / 2, tam, tam)
         }
-        // cada camada num quadro fino, com as quinas marcadas (as fatias da rede)
-        const quadros = new Path2D(), quinas = new Path2D()
-        CAMADAS.forEach(([nz, nyy], c) => {
-          if (nz < 2) return
-          const x = REDE.nos[REDE.inicio[c]].x, my = ((nyy - 1) / 2) * PASSO_Y + 26, mz = ((nz - 1) / 2) * PASSO_Z + 22
-          const q = [[-my, -mz], [-my, mz], [my, mz], [my, -mz]].map(([y, z]) => proj((x * ca + z * sa) * raioK, y * raioK, (-x * sa + z * ca) * raioK))
-          q.forEach((P, i) => {
-            const A = q[(i + 3) % 4], B = q[(i + 1) % 4]
-            if (i === 0) quadros.moveTo(P.x, P.y); else quadros.lineTo(P.x, P.y)
-            quinas.moveTo(mistura(P.x, A.x, 0.14), mistura(P.y, A.y, 0.14)); quinas.lineTo(P.x, P.y); quinas.lineTo(mistura(P.x, B.x, 0.14), mistura(P.y, B.y, 0.14))
-          })
-          quadros.closePath()
-        })
-        ctx.globalAlpha = redeCheia
-        ctx.lineWidth = 1
-        ctx.strokeStyle = 'rgba(255,190,100,0.1)'; ctx.stroke(quadros)
-        ctx.strokeStyle = 'rgba(255,205,130,0.5)'; ctx.stroke(quinas)
+        // os fios por onde cada linha lida está passando, na cor dela
+        for (let r = 0; r < NL; r++) {
+          const tr = linhaT[r]
+          if (!ativo[r] || tr < 0.45) continue
+          const cam = CAMINHOS[r], tau = Math.min(TRECHOS, ((Math.min(1, tr) - 0.45) / 0.55) * TRECHOS), [cr, cg, cb] = docs!.textos[r].cor
+          const a = redeCheia * (1 - suave(1, 1.4, tr))
+          if (a <= 0.01) continue
+          ctx.beginPath(); ctx.moveTo(nx[cam[0]], ny[cam[0]])
+          for (let q = 1; q <= Math.ceil(tau); q++) {
+            const f = Math.min(1, tau - (q - 1))
+            ctx.lineTo(mistura(nx[cam[q - 1]], nx[cam[q]], f), mistura(ny[cam[q - 1]], ny[cam[q]], f))
+          }
+          ctx.globalAlpha = a
+          ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.22)`; ctx.lineWidth = 5; ctx.stroke()
+          ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.9)`; ctx.lineWidth = 1.4; ctx.stroke()
+        }
         // os nós: um halo que cresce com o sinal, um anel fino e o miolo
         const aneis = new Path2D(), miolos = new Path2D(), cheios = new Path2D()
         for (let i = 0; i < NN; i++) {
@@ -486,51 +641,77 @@ export function Algoritmo() {
           m.moveTo(nx[i] + rm, ny[i]); m.arc(nx[i], ny[i], rm, 0, Math.PI * 2)
         }
         ctx.globalAlpha = redeCheia
-        ctx.strokeStyle = 'rgba(255,205,130,0.75)'; ctx.lineWidth = 1.1; ctx.stroke(aneis)
+        ctx.strokeStyle = 'rgba(255,205,130,0.6)'; ctx.lineWidth = 1.1; ctx.stroke(aneis)
         ctx.fillStyle = 'rgba(255,190,100,0.75)'; ctx.fill(miolos)
         ctx.fillStyle = 'rgba(255,246,224,1)'; ctx.fill(cheios)
         ctx.globalAlpha = 1
       }
 
-      // a tela acende de cima para baixo depois que os fragmentos pousam: acima da linha de luz já é a tela; os
-      // fragmentos que ficaram para trás dela somem, os que estão logo abaixo da linha brilham mais
+      // a tela acende de cima para baixo depois que os cubinhos pousam: acima da linha de luz já é a tela; os
+      // cubinhos que ficaram para trás dela somem, os que estão logo abaixo da linha brilham mais
       const kT = zoom / ZOOM_TELA
       const tlx = cx - (tela ? tela.w : 0) * kT / 2, tly = yTela + (centro.y - cy - offY) - (tela ? tela.h : 0) * kT / 2
       const acende = suave(0.908, 0.968, p)
       const yLuz = tela ? tly - 30 + acende * (tela.h * kT + 60) : -1e9
 
-      // os fragmentos: projeta todos, depois pinta por tom (menos trocas de cor)
-      const N = fr.length
+      // o gráfico firme: depois que os cubinhos pousam, uma linha de luz passa da esquerda para a direita e as colunas
+      // ficam sólidas no lugar deles; antes da tela final ela passa de novo e as colunas voltam a ser cubinhos
+      const fazendo = limitar((p - 0.69) / 0.05), desfazendo = limitar((p - 0.772) / 0.026)
+      const ida = -LARGO_GRAF / 2 - 70, volta = LARGO_GRAF / 2 + 70
+      const xFaz = mistura(ida, volta, fazendo), xDesfaz = mistura(ida, volta, desfazendo)
+      const solido = (x: number) => suave(x - 22, x + 22, xFaz) * (1 - suave(x - 22, x + 22, xDesfaz))
+      if (fazendo > 0 && desfazendo < 1) desenharGrafico(solido, fazendo, desfazendo, xFaz, xDesfaz)
+
+      // os cubinhos: projeta todos, depois pinta por tom (menos trocas de cor)
+      const N = fr.length, textos = docs?.textos
       for (let i = 0; i < N; i++) {
-        const [x, y, z] = forma(fr[i], i)
+        const fx = fr[i]
+        const [x, y, z] = forma(fx, i)
         const P = proj(x, y, z)
-        xs[i] = P.x; ys[i] = P.y; ss[i] = P.s
+        xs[i] = P.x; ys[i] = P.y; ss[i] = P.s; esconde[i] = 0
+        // os que nascem de uma linha lida: só existem depois que a parte das letras deles se desfaz; saem dali e vão
+        // para o lugar deles na rede
+        if (fx.linha >= 0 && textos) {
+          const r = fx.linha, tr = linhaT[r], T = textos[r]
+          const lx = T.pontos[fx.pt * 2], ly = T.pontos[fx.pt * 2 + 1]
+          const solta = 0.5 + 0.47 * limitar((lx + T.w / 2) / T.w)
+          if (tr < solta) { esconde[i] = 1; continue }
+          const k = suave(0, 0.55, tr - solta)
+          if (k < 1 && ativo[r]) {
+            const abre = suave(0, 0.25, tr - solta) * 14
+            const bx = tX[r] + lx * tE[r] + Math.cos(fx.fase * 7) * abre, by = tY[r] + ly * tE[r] + Math.sin(fx.fase * 5) * abre
+            xs[i] = mistura(bx, xs[i], k); ys[i] = mistura(by, ys[i], k); ss[i] = mistura(1.1, ss[i], k)
+          }
+        }
       }
       const pisca = Math.floor(s * 7)
-      // a cor do gráfico: depois que as colunas se formam, a cor varre o gráfico da esquerda para a direita (o mês de
-      // janeiro troca primeiro) e volta ao dourado quando ele vira a tela
-      const fimTela = suave(0.776, 0.84, p)
+      // na ida para a tela final, os coloridos voltam ao dourado
+      const fimTela = suave(0.8, 0.86, p)
+      const passoCor = Math.round((1 - fimTela) * (PASSOS - 1))
+      const varrendo = (fazendo > 0 && fazendo < 1) || (desfazendo > 0 && desfazendo < 1)
       const grupos = new Map<string, number[]>()
       for (let i = 0; i < N; i++) {
+        if (esconde[i]) continue
         const fx = fr[i]
         // alguns piscam: sobem de tom de tempos em tempos
         let tom = reduzir ? fx.brilho : Math.min(4, fx.brilho + ((i * 7 + pisca) % 11 === 0 ? 2 : 0))
+        // os coloridos nunca no tom mais apagado: a cor tem que aparecer no meio da poeira dourada
+        if (fx.cat < 3) tom = Math.max(2, tom)
+        // no gráfico firme, os cubinhos que viraram coluna somem; os que estão na linha de luz brilham
+        if (gs[i] > 0.995 && vs[i] < 0.005) {
+          if (solido(fx.barra[0]) > 0.5) continue
+          if (varrendo && (Math.abs(fx.barra[0] - xFaz) < 30 || Math.abs(fx.barra[0] - xDesfaz) < 30)) tom = 4
+        }
         if (acende > 0 && vs[i] > 0.98) {
           if (ys[i] < yLuz - 3) continue
           if (ys[i] < yLuz + 34) tom = 4
         }
-        let chave = `d${tom}`
-        if (fx.cat < 3) {
-          const ini = 0.668 + (fx.barra[0] / LARGO_GRAF + 0.5) * 0.048 + fx.atraso * 0.024
-          const c = suave(ini, ini + 0.028, p) * (1 - fimTela)
-          const passo = Math.round(c * (PASSOS - 1))
-          if (passo > 0) chave = `${fx.cat}.${tom}.${passo}`
-        }
+        const chave = fx.cat < 3 && passoCor > 0 ? `${fx.cat}.${tom}.${passoCor}` : `d${tom}`
         let g = grupos.get(chave)
         if (!g) { g = []; grupos.set(chave, g) }
         g.push(i)
       }
-      // escondidos atrás da tela no começo, os fragmentos ficam apagados
+      // escondidos atrás da tela no começo, os cubinhos ficam apagados
       ctx.globalAlpha = 1 - 0.85 * oculto
       grupos.forEach((idx, chave) => {
         if (chave[0] === 'd') ctx.fillStyle = TONS[Number(chave.slice(1))]
@@ -541,10 +722,11 @@ export function Algoritmo() {
           ctx.fillRect(xs[i] - (fx.w * k) / 2, ys[i] - (fx.h * k) / 2, fx.w * k + 0.6, fx.h * k + 0.6)
         }
       })
-      // pontos mais quentes com brilho (um a cada 14 fragmentos)
+      // pontos mais quentes com brilho (um a cada 14 cubinhos)
       ctx.globalAlpha = 0.6 * (1 - 0.85 * oculto)
       for (let i = 0; i < N; i += 14) {
-        if (acende > 0 && vs[i] > 0.98 && ys[i] < yLuz - 3) continue
+        if (esconde[i] || (acende > 0 && vs[i] > 0.98 && ys[i] < yLuz - 3)) continue
+        if (gs[i] > 0.995 && vs[i] < 0.005 && solido(fr[i].barra[0]) > 0.5) continue
         const tam = (10 + 8 * Math.sin(s * 2 + fr[i].fase)) * ss[i] * esc * ms[i]
         ctx.drawImage(sprPonto, xs[i] - tam / 2, ys[i] - tam / 2, tam, tam)
       }
@@ -558,58 +740,71 @@ export function Algoritmo() {
         ctx.globalCompositeOperation = 'lighter'
       }
 
-      // cena 1: o documento (o PDF, que gira e vira a planilha), a luz que lê as linhas e os lançamentos que saem
-      if (docs && pres[1] > 0.01) {
-        const vira = limitar((u1 - 0.47) / 0.08)
+      // cena 1: o documento (o PDF, que gira e vira a planilha), a luz que lê as linhas e o texto de cada uma, que sai
+      // dele, corre por um fio da rede e se desfaz em cubinhos
+      if (docs) {
         const doc = vira < 0.5 ? docs.pdf : docs.planilha
-        const b = vira < 0.5 ? bPdf : bPla
-        const chegaDoc = suave(0, 0.08, u1), saiDoc = suave(0.9, 0.99, u1)
+        const ini = vira < 0.5 ? 0 : LIDAS_PDF.length, qtd = vira < 0.5 ? LIDAS_PDF.length : LIDAS.length - LIDAS_PDF.length
         const a = pres[1] * chegaDoc * (1 - saiDoc)
-        const e = mistura(0.9, 1, chegaDoc) * (1 - 0.12 * saiDoc), ex = Math.abs(Math.cos(Math.PI * vira))
+        const ex = Math.abs(Math.cos(Math.PI * vira))
         if (a > 0.01) {
           ctx.save()
-          ctx.translate(docX, docY); ctx.scale(e * Math.max(0.02, ex), e)
+          ctx.translate(docX, docY); ctx.scale(docE * Math.max(0.02, ex), docE)
           ctx.globalAlpha = a
           ctx.globalCompositeOperation = 'source-over'
           ctx.drawImage(doc.img, -doc.w / 2 - doc.m, -doc.h / 2 - doc.m, doc.w + doc.m * 2, doc.h + doc.m * 2)
-          ctx.globalCompositeOperation = 'lighter'
-          // as linhas já lidas ficam marcadas de dourado
-          const passo = (doc.fimLinhas - doc.topoLinhas) / doc.linhas.length
-          for (const ly of doc.linhas) {
-            const lida = limitar((b - (ly - doc.topoLinhas) / (doc.fimLinhas - doc.topoLinhas)) * 8)
-            if (lida > 0) { ctx.fillStyle = `rgba(255,170,60,${(0.2 * lida).toFixed(3)})`; ctx.fillRect(-doc.w / 2 + 8, ly - doc.h / 2 - passo / 2 + 1, doc.w - 16, passo - 2) }
+          // as linhas já lidas ficam marcadas na cor do que são
+          const passo = (doc.fimLinhas - doc.topoLinhas) / qtd
+          for (let i = 0; i < qtd; i++) {
+            const lida = limitar(linhaT[ini + i] * 10)
+            if (lida <= 0) continue
+            const [cr, cg, cb] = docs.textos[ini + i].cor
+            ctx.fillStyle = `rgba(${cr},${cg},${cb},${(0.13 * lida).toFixed(3)})`
+            ctx.fillRect(-doc.w / 2 + 8, doc.linhas[i] - doc.h / 2 - passo / 2 + 1, doc.w - 16, passo - 2)
           }
+          // a luz que lê: passa por cada linha na hora em que ela é lida
+          const b = ((u1 - INICIO_LINHA[ini]) / 0.065 + 0.5) / qtd
           if (b > 0 && b < 1) {
             const yb = doc.topoLinhas + b * (doc.fimLinhas - doc.topoLinhas) - doc.h / 2
-            const rastro = ctx.createLinearGradient(0, yb - 40, 0, yb)
-            rastro.addColorStop(0, 'rgba(255,170,60,0)'); rastro.addColorStop(1, 'rgba(255,180,70,0.35)')
-            ctx.fillStyle = rastro; ctx.fillRect(-doc.w / 2, yb - 40, doc.w, 40)
-            ctx.fillStyle = 'rgba(255,215,140,0.95)'; ctx.fillRect(-doc.w / 2 - 14, yb - 1, doc.w + 28, 2)
-            ctx.globalAlpha = a * 0.45; ctx.fillRect(-doc.w / 2 - 14, yb - 5, doc.w + 28, 10)
+            const rastro = ctx.createLinearGradient(0, yb - 36, 0, yb)
+            rastro.addColorStop(0, 'rgba(60,200,255,0)'); rastro.addColorStop(1, 'rgba(60,200,255,0.16)')
+            ctx.fillStyle = rastro; ctx.fillRect(-doc.w / 2, yb - 36, doc.w, 36)
+            ctx.fillStyle = 'rgba(40,170,240,0.95)'; ctx.fillRect(-doc.w / 2 - 12, yb - 1, doc.w + 24, 2)
+            ctx.globalCompositeOperation = 'lighter'
+            ctx.globalAlpha = a * 0.5; ctx.fillStyle = 'rgba(120,210,255,0.6)'; ctx.fillRect(-doc.w / 2 - 12, yb - 5, doc.w + 24, 10)
           }
           ctx.restore()
         }
-        // cada linha lida vira um lançamento que voa até um nó da entrada da rede, com um rastro de faíscas
-        for (const { l, doc: dl, i, c } of lidos) {
-          const alvo = (i * 5 + (dl === docs.pdf ? 0 : 3)) % REDE.entrada, ax = nx[alvo], ay = ny[alvo]
-          const ry = docY + (dl.linhas[i] - dl.h / 2) * e
-          const sx = celular ? docX : docX + dl.w * 0.32, sy = ry
-          const kx = celular ? docX + (i % 2 ? 80 : -80) : (sx + ax) / 2, ky = celular ? (sy + ay) / 2 : Math.min(sy, ay) - 80
-          const ponto = (t: number) => [(1 - t) * (1 - t) * sx + 2 * (1 - t) * t * kx + t * t * ax, (1 - t) * (1 - t) * sy + 2 * (1 - t) * t * ky + t * t * ay]
-          const tb = suave(0.12, 1, c)
-          ctx.globalCompositeOperation = 'lighter'
-          for (let k = 1; k <= 5; k++) {
-            const t = tb - k * 0.035
-            if (t <= 0) break
-            const [x, y] = ponto(t), tam = (16 - k * 2) * (celular ? 0.8 : 1)
-            ctx.globalAlpha = pres[1] * 0.7 * (1 - k / 6)
-            ctx.drawImage(sprPonto, x - tam / 2, y - tam / 2, tam, tam)
+        // o texto de cada linha: o que já virou cubinho se apaga, da esquerda para a direita
+        ctx.globalCompositeOperation = 'source-over'
+        for (let r = 0; r < NL; r++) {
+          const tr = linhaT[r]
+          if (!ativo[r] || tr >= 1) continue
+          const T = docs.textos[r], corte = limitar((tr - 0.5) / 0.47)
+          const al = suave(0, 0.06, tr) * Math.max(pres[1], pres[2])
+          if (al <= 0.01 || corte >= 1) continue
+          const iw = T.img.width, ih = T.img.height
+          rg.globalCompositeOperation = 'source-over'
+          rg.clearRect(0, 0, iw, ih)
+          rg.drawImage(T.img, 0, 0)
+          if (corte > 0) {
+            const fx = (T.m + corte * T.w) * T.q
+            const borda = rg.createLinearGradient(fx - 10 * T.q, 0, fx + 4 * T.q, 0)
+            borda.addColorStop(0, 'rgba(0,0,0,1)'); borda.addColorStop(1, 'rgba(0,0,0,0)')
+            rg.globalCompositeOperation = 'destination-out'
+            rg.fillStyle = borda; rg.fillRect(0, 0, fx + 4 * T.q, ih)
           }
-          ctx.globalAlpha = 1
-          ctx.globalCompositeOperation = 'source-over'
-          const [x, y] = ponto(tb)
-          const tam = (celular ? 0.82 : 1) * (c < 0.12 ? mistura(0.7, 1, c / 0.12) : mistura(1, 0.1, suave(0.45, 1, c)))
-          desenharLancamento(ctx, l, x, y, tam, pres[1] * suave(0, 0.06, c) * (1 - suave(0.86, 1, c)), letras)
+          const k = tE[r]
+          // enquanto ainda está sobre o papel, uma plaquinha escura por baixo (branco no branco não se lê)
+          const placa = al * (1 - suave(0.3, 0.46, tr))
+          if (placa > 0.01) {
+            ctx.globalAlpha = placa
+            ctx.beginPath(); ctx.roundRect(tX[r] - (T.w / 2 + 12) * k, tY[r] - (T.h / 2 + 7) * k, (T.w + 24) * k, (T.h + 14) * k, 9 * k)
+            ctx.fillStyle = 'rgba(14,18,28,0.94)'; ctx.fill()
+            ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1; ctx.stroke()
+          }
+          ctx.globalAlpha = al
+          ctx.drawImage(rasc, 0, 0, iw, ih, tX[r] - (T.w / 2 + T.m) * k, tY[r] - (T.h / 2 + T.m) * k, (T.w + T.m * 2) * k, (T.h + T.m * 2) * k)
         }
         ctx.globalAlpha = 1
         ctx.globalCompositeOperation = 'lighter'
@@ -659,7 +854,7 @@ export function Algoritmo() {
       // cena 3: etiquetas em cima das colunas dos meses
       const fc = COMPARA.map((_, i) => pres[3] * limitar(and[3] * 2.4 - 0.7 - i * 0.28))
       COMPARA.forEach((c, i) => {
-        const x = (c.mes / (MESES - 1) - 0.5) * LARGO_GRAF, alto = (Math.max(ANO.entrou[c.mes], ANO.saiu[c.mes]) / TETO) * ALTO_GRAF
+        const x = xColuna(c.mes, 1), alto = (Math.max(...SERIES.map((v) => v[c.mes])) / TETO) * ALTO_GRAF
         const P0 = proj(x, BASE_GRAF - alto - 24, 0)
         // no celular, presas dentro da tela e em degraus (lado a lado não cabem)
         const P = celular ? { x: limitar(P0.x, 86, W - 86), y: Math.min(P0.y, cy - 60) - i * 52 } : P0
