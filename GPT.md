@@ -286,3 +286,28 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
 - Tradução nova: "Empréstimo pessoal" (`en`, `es`).
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
   390×844) em toda a rolagem da seção, sem erro de página; `extrair.cjs --faltando`: 0 textos sem tradução.
+
+### 15/11/2026 — Claude — Motor: o texto anda numa esteira e o gráfico é feito de pilhas de quadradinhos
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Pedido do Edigar: (1) o texto das linhas lidas flutuava preso a um ponto; ele quer o texto deitado sobre o fio,
+  deslizando como numa esteira; (2) no gráfico os quadradinhos ficavam soltos por cima das colunas; ele quer as colunas
+  feitas de quadradinhos empilhados, que viram o gráfico bonito e, quando a luz passa de novo, revelam que eram a pilha
+  e se desfazem.
+- Esteira (`src/pages/Algoritmo.tsx`): a cada quadro, cada linha ganha um caminho na tela (`eX`, `eY`, `eS`): começa
+  embaixo do papel, sai pela borda direita (no celular, pela de baixo), faz uma curva suave até o nó da entrada na mesma
+  altura da linha (`CAMINHOS`) e segue de fio em fio. O texto é desenhado letra por letra (`TextoLido.glifos`, em
+  `algoritmoDocs.ts`), cada uma no ponto do caminho onde está e virada na direção dele; cada letra só aparece quando passa
+  a borda do papel. No meio do primeiro fio (`sCorte`) as letras se apagam e ali nascem os cubinhos delas, que seguem pela
+  esteira e vão para o lugar deles na rede. Saíram a plaquinha escura e o texto em pé.
+- Gráfico: cada coluna é uma pilha de quadradinhos de `CUBO` de lado, dois por camada (`LUGARES`); os cubinhos coloridos
+  são exatamente esses lugares (o total de cubinhos passou a ser as pilhas mais a poeira dourada). Eles chegam camada por
+  camada, de baixo para cima, encaixados. A coluna firme tem a altura exata da pilha, e os quadradinhos ficam na frente
+  dela, então a luz que firma e a que desfaz trocam uma pela outra no mesmo lugar.
+- A rede é feita dos mesmos quadradinhos (pedido no mesmo dia, depois de ver as linhas da rede ainda ao fundo
+  enquanto os cubinhos iam para o gráfico): os fios são desenhados como fileiras de quadradinhos (tracejado de pontas
+  retas) e os nós como quadradinhos. Cada fio e cada nó sai da rede junto com o primeiro cubinho dele que vai para o
+  gráfico (`saidaFio`, `saidaNo`, calculados em `medir` a partir do `atraso` dos cubinhos); não sobra linha atrás.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
+  390×844) na leitura, na rede, na passagem para o gráfico e no gráfico, sem erro de página; `extrair.cjs --faltando`: 0.
