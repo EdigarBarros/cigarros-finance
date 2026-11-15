@@ -215,7 +215,7 @@ function montar(N: number, pontos: Float32Array, k4: number, oy: number) {
 /** Câmera em cada cena: giro e inclinação (rad), aproximação. Na primeira e na última fica de frente: a tela encaixa na tela. */
 const CAM = [
   // de lado e um pouco de cima: as costas da tela, atrás da rede, aparecem em perspectiva
-  { yaw: 0.2, pitch: 0.1, zoom: 0.75 },
+  { yaw: 0.45, pitch: 0.12, zoom: 0.75 },
   { yaw: -0.14, pitch: 0.18, zoom: 0.62 },
   { yaw: -0.22, pitch: 0.3, zoom: 1.05 },
   { yaw: 0.26, pitch: 0.12, zoom: 1.0 },
@@ -223,12 +223,12 @@ const CAM = [
 ]
 const ZOOM_TELA = CAM[CAM.length - 1].zoom
 /** Na cena 0, quando a câmera sai de dentro do fio do túnel (antes disso ela anda nele; ATRAVESSA é a fresta). */
-const SAI = 0.8
+const SAI = 0.83
 /**
  * A abertura (a fresta, o túnel e a saída) tem mais coisa que as outras cenas: ela fica com ABERTURA da rolagem (as
  * outras dividem o resto). O desenho trabalha com o andamento "por cena" (cada uma 1/5); estas duas funções convertem.
  */
-const ABERTURA = 0.32
+const ABERTURA = 0.38
 const porCena = (r: number) => (r < ABERTURA ? (r / ABERTURA) * 0.2 : 0.2 + ((r - ABERTURA) / (1 - ABERTURA)) * 0.8)
 const daRolagem = (v: number) => (v < 0.2 ? (v / 0.2) * ABERTURA : ABERTURA + ((v - 0.2) / 0.8) * (1 - ABERTURA))
 
@@ -367,13 +367,13 @@ export function Algoritmo() {
         const topo = texto.getBoundingClientRect().bottom - sticky.getBoundingClientRect().top + 10
         dw = Math.min(W - 36, 380); dh = Math.min(dw * 0.66, H * 0.3)
         docX = W / 2; docY = topo + dh / 2
-        desX = 0; desY = (docY + dh / 2 + H - 24) / 2 - cy; desX0 = W * 0.2
+        desX = 0; desY = (docY + dh / 2 + H - 24) / 2 - cy; desX0 = W * 0.26
       } else {
         const esq = Math.min(460, W * 0.36), aw = W - esq - 40
         dw = Math.min(380, aw * 0.4); dh = Math.min(dw * 0.95, H * 0.62)
         docX = esq + 20 + dw / 2; docY = cy
         // a rede vai para a direita: entre o documento e a entrada dela fica o espaço da esteira
-        desX = docX + dw / 2 + 170 + 300 * esc * CAM[1].zoom - cx; desY = 0; desX0 = aw * 0.24
+        desX = docX + dw / 2 + 170 + 300 * esc * CAM[1].zoom - cx; desY = 0; desX0 = aw * 0.3
       }
       dw = Math.round(dw); dh = Math.round(dh)
       const chaveD = `${dw}|${dh}|${document.documentElement.lang}`
@@ -545,10 +545,17 @@ export function Algoritmo() {
     }
 
     /**
-     * A tela do Consultor no espaço da rede: um painel em pé na ponta da entrada (em x = X_TELA, antes da primeira
-     * camada), virado para fora, girando junto com a rede. Do tamanho da altura da rede, na proporção da foto.
+     * A tela do Consultor no espaço da rede (antes de girar com ela): em pé, longe da entrada e mais para o fundo (o fio
+     * até a rede fica comprido, e de fora tudo cabe na cena), virada de costas para a rede (o fio sai reto das costas
+     * dela). Do tamanho da altura da rede, na proporção da foto. C é o meio, D a direção de onde ela está para a
+     * entrada da rede (as costas olham para lá), R a direita de quem olha a tela de frente.
      */
-    const X_TELA = -640
+    const TELA_C = [-820, 0, 720] as const
+    const TELA_D = (() => { const dx = -340 - TELA_C[0], dz = -TELA_C[2], n = Math.hypot(dx, dz); return [dx / n, 0, dz / n] as const })()
+    const TELA_R = [TELA_D[2], 0, -TELA_D[0]] as const
+    /** Um ponto da tela: u da esquerda (-1/2) à direita (+1/2), v de cima a baixo, atras px para trás (para a rede). */
+    const naTela = (Wp: number, Hp: number, u: number, v: number, atras = 0): [number, number, number] =>
+      [TELA_C[0] + TELA_R[0] * u * Wp + TELA_D[0] * atras, v * Hp, TELA_C[2] + TELA_R[2] * u * Wp + TELA_D[2] * atras]
     const tamTela = (t: ConsultorReal) => { const h = 360; return [Math.min(720, (h * t.w) / t.h), h] as const }
     // a tela em miniatura (desenhar a foto inteira em perspectiva a cada quadro pesa)
     let mini: HTMLCanvasElement | null = null, miniDe: ConsultorReal | null = null
@@ -620,13 +627,13 @@ export function Algoritmo() {
       if (!docs) return
       // as linhas lidas, deitadas nas linhas do fio: andam mais rápido que a câmera (passam por ela e seguem na frente)
       // o ponto onde as letras se desfazem fica sempre a uma distância da câmera (perto o bastante para se ver)
-      const WS = 0.42, FAIXA = 40, CORTE = Math.min(L * 0.92, sCam + 62)
+      const WS = 0.42, FAIXA = 80, CORTE = Math.min(L * 0.9, sCam + 95)
       ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left'
       for (let i = 0; i < NL; i++) {
         const T = docs.textos[i], ang = (Math.round((i * M) / NL) / M) * Math.PI * 2
         // cada linha entra logo atrás da câmera (quando chega a vez dela) e escorrega até passar inteira pelo corte,
         // cada vez mais devagar (dá tempo de ler e de ver as letras virando cubinhos)
-        const largura = T.w * WS, vez = i * 0.066, DUR = 0.36
+        const largura = T.w * WS, vez = i * 0.042, DUR = 0.58
         const u = (tau - vez) / DUR
         if (u <= 0 || u >= 1.25) continue
         const de = 0.6 * L * vez - largura - 6, ate = CORTE + FAIXA + 12
@@ -688,8 +695,8 @@ export function Algoritmo() {
      */
     const desenharTelaNaRede = (t: ConsultorReal, a: number, cresce: number, s: number, ca: number, sa: number) => {
       const [Wp, Hp] = tamTela(t)
-      const gira = (x: number, y: number, z: number) => proj(x * ca + z * sa, y, -x * sa + z * ca)
-      const TL = gira(X_TELA, -Hp / 2, Wp / 2), TR = gira(X_TELA, -Hp / 2, -Wp / 2), BR = gira(X_TELA, Hp / 2, -Wp / 2), BL = gira(X_TELA, Hp / 2, Wp / 2)
+      const gira = ([x, y, z]: [number, number, number]) => proj(x * ca + z * sa, y, -x * sa + z * ca)
+      const TL = gira(naTela(Wp, Hp, -0.5, -0.5)), TR = gira(naTela(Wp, Hp, 0.5, -0.5)), BR = gira(naTela(Wp, Hp, 0.5, 0.5)), BL = gira(naTela(Wp, Hp, -0.5, 0.5))
       const inteira = TL.s && TR.s && BR.s && BL.s
       // de frente (a imagem sem espelhar) ou por trás
       const deFrente = inteira && (TR.x - TL.x) * (BL.y - TL.y) - (TR.y - TL.y) * (BL.x - TL.x) > 0
@@ -706,13 +713,13 @@ export function Algoritmo() {
         for (let j = 0; j < 4; j++) {
           for (let i = 0; i < 5; i++) {
             const k = j * 5 + i
-            const Q = gira(X_TELA + 2, (-0.5 + (j + 0.5) / 4) * Hp * 0.8, (0.5 - (i + 0.5) / 5) * Wp * 0.85)
+            const Q = gira(naTela(Wp * 0.85, Hp * 0.8, -0.5 + (i + 0.5) / 5, -0.5 + (j + 0.5) / 4, 2))
             if (Q.s) presos.rect(Q.x - 3, Q.y - 3, 6, 6)
             ligar(Q, e0 + ((k * 5) % n0), k); if (k % 2) ligar(Q, e1 + ((k * 7) % n1), k + 40)
           }
         }
         // o fio do túnel: da fresta ao nó dele
-        const F0 = gira(X_TELA + 2, (t.fy / t.h - 0.5) * Hp, Wp / 2 - (t.fx / t.w) * Wp)
+        const F0 = gira(naTela(Wp, Hp, t.fx / t.w - 0.5, t.fy / t.h - 0.5, 2))
         if (F0.s) presos.rect(F0.x - 4, F0.y - 4, 8, 8)
         ligar(F0, tubo.no, 99)
         ctx.globalAlpha = a
@@ -850,10 +857,10 @@ export function Algoritmo() {
       if (real && desm > ATRAVESSA && desm < 1) {
         // a fresta na tela (que fica na ponta da entrada, girando com a rede) e o nó da entrada mais perto dela
         const [Wp, Hp] = tamTela(real)
-        const fy = (real.fy / real.h - 0.5) * Hp, fz = Wp / 2 - (real.fx / real.w) * Wp
-        const Sx = X_TELA * ca + fz * sa, Sy = fy, Sz = -X_TELA * sa + fz * ca
+        const [fx0, fy, fz0] = naTela(Wp, Hp, real.fx / real.w - 0.5, real.fy / real.h - 0.5)
+        const Sx = fx0 * ca + fz0 * sa, Sy = fy, Sz = -fx0 * sa + fz0 * ca
         let no = 0, melhor = Infinity
-        for (let i = 0; i < REDE.entrada; i++) { const d = Math.abs(REDE.nos[i].y - fy) + Math.abs(REDE.nos[i].z - fz) * 0.5; if (d < melhor) { melhor = d; no = i } }
+        for (let i = 0; i < REDE.entrada; i++) { const d = Math.abs(REDE.nos[i].y - fy) + Math.abs(REDE.nos[i].z) * 0.5; if (d < melhor) { melhor = d; no = i } }
         const N = REDE.nos[no], Nx = (N.x * ca + N.z * sa) * raioK, Ny = N.y * raioK, Nz = (-N.x * sa + N.z * ca) * raioK
         let dx = Nx - Sx, dy = Ny - Sy, dz = Nz - Sz
         const L = Math.hypot(dx, dy, dz); dx /= L; dy /= L; dz /= L
@@ -868,7 +875,7 @@ export function Algoritmo() {
         const th = thT + dth * wGiro, ph = mistura(phT, pitch, wGiro), D = DT * Math.pow(F / DT, Math.pow(w, 0.6))
         const Tx = mistura(Sx + dx * (sCam + 6 + DT), 0, wAlvo), Ty = mistura(Sy + dy * (sCam + 6 + DT), 0, wAlvo), Tz = mistura(Sz + dz * (sCam + 6 + DT), 0, wAlvo)
         const b = base(th, ph)
-        Object.assign(cam, { x: Tx - D * b.f[0], y: Ty - D * b.f[1], z: Tz - D * b.f[2], r: b.r, u: b.u, f: b.f, foco: F * esc * zoom })
+        Object.assign(cam, { x: Tx - D * b.f[0], y: Ty - D * b.f[1], z: Tz - D * b.f[2], r: b.r, u: b.u, f: b.f, foco: F * esc * mistura(1, zoom, wGiro) })
         livre = true
       }
       for (let i = 0; i < NN; i++) {
@@ -929,7 +936,7 @@ export function Algoritmo() {
       // túnel; somem quando o documento chega)
       // a tela presa na ponta da entrada da rede, com os fios saindo de trás dela (aparece quando a câmera sai do túnel;
       // some quando o documento chega)
-      const naRede = real ? suave(SAI, SAI + 0.1, desm) * (1 - suave(0.16, 0.23, p)) : 0
+      const naRede = real ? suave(SAI, SAI + 0.1, desm) * (1 - suave(0.19, 0.235, p)) : 0
       if (real && naRede > 0.01) desenharTelaNaRede(real, naRede, suave(SAI, 0.95, desm), s, ca, sa)
 
       if (g0 < 0.6) {
