@@ -1,5 +1,13 @@
 # OpusCash: como trabalhar neste repositório
 
+## Trabalho compartilhado com GPT/Codex
+
+Antes de analisar ou alterar o projeto, leia também [`GPT.md`](GPT.md). Ele registra o trabalho feito pelo
+GPT/Codex: alterações, problemas identificados, evidências, validações e pendências. Considere esse histórico
+para continuar o trabalho sem desfazer mudanças intencionais nem repetir investigações já concluídas.
+Confira o código atual: um problema registrado como pendente não significa que já foi corrigido.
+Quando resolver uma pendência desse documento, atualize seu estado e registre como foi validada.
+
 ## Publicar (combinado com o dono do projeto)
 
 Toda alteração pedida vai direto para o site, sem perguntar antes:

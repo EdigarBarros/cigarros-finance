@@ -25,3 +25,19 @@ Para os juros de atraso (migração 22): `semColunas: { dividas: ['atraso_juros_
 `toque: true` abre como celular com tela de toque (para testar `page.touchscreen.tap`).
 
 O `npm run build` acima é só para os testes; o site de verdade usa as variáveis do Supabase reais na Vercel.
+
+## Regressões de metas e histórico de faturas
+
+Depois do build com `fake.supabase.co` acima, rode:
+
+```bash
+node scripts/app-de-demonstracao/testar-correcoes.cjs
+```
+
+O teste cobre falhas de gravação e nova tentativa em metas, bloqueio de envio duplicado e carregamento de mais
+de 1.000 faturas pagas, usando somente dados fictícios. Precisa do Playwright e de um Chromium disponível.
+Para usar o Chromium do sistema em vez do navegador instalado pelo Playwright:
+
+```bash
+PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium node scripts/app-de-demonstracao/testar-correcoes.cjs
+```

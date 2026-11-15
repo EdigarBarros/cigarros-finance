@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { COR } from '../lib/charts'
 import { casasDaMoeda, dataPlausivel, erroDataFora, erroValorGrande, mascarar, paraCampoMoeda, valorGrandeDemais } from '../lib/dinheiro'
 import { fmtDataLonga, fmtMoeda, fmtValor, MESES_NOME, parseNumero, paraCampo, simbolo, noMeioDaFrase, mesEAno } from '../lib/format'
@@ -383,6 +383,9 @@ function FormMeta({ c, meta, modelo, aoFechar }: { c: Ctx; meta?: Meta; modelo?:
   const [alvo, setAlvo] = useState(ini?.alvo ? paraCampo(ini.alvo) : '')
   const [prazo, setPrazo] = useState(meta?.prazo?.slice(0, 7) ?? '')
   const [erro, setErro] = useState<string | null>(null)
+  const [salvando, setSalvando] = useState(false)
+  const enviando = useRef(false)
+  const fechar = () => { if (!enviando.current) aoFechar() }
   const [confirmar, setConfirmar] = useState(false)
   // Meta com prazo que já passou: o campo não pode exigir um mês futuro, senão o navegador trava até um simples renomear.
   const prazoJaPassou = Boolean(meta?.prazo && meta.prazo.slice(0, 7) < hoje().slice(0, 7))
@@ -390,27 +393,38 @@ function FormMeta({ c, meta, modelo, aoFechar }: { c: Ctx; meta?: Meta; modelo?:
   const minhas = [c.perfil.moeda, ...c.perfil.moedas]
   const opcoesMoeda = [...MOEDAS.filter((m) => minhas.includes(m.codigo)), ...MOEDAS.filter((m) => !minhas.includes(m.codigo))]
 
-  const salvar = () => {
+  const salvar = async () => {
+    if (enviando.current) return
     if (!nome.trim()) return setErro(tx('Dê um nome para a meta.'))
     const n = parseNumero(alvo)
     if (!n || n <= 0) return setErro(tx('Digite quanto você quer juntar.'))
     if (valorGrandeDemais(n)) return setErro(erroValorGrande())
     if (prazo && !dataPlausivel(`${prazo}-01`)) return setErro(erroDataFora())
     const dados = { nome: nome.trim(), icone, cor, moeda, alvo: n, prazo: prazo ? `${prazo}-01` : null }
-    if (meta) void c.d.updMeta(meta.id, dados)
-    else void c.d.addMeta(dados)
-    aoFechar()
+    enviando.current = true
+    setSalvando(true)
+    setErro(null)
+    try {
+      const ok = meta ? await c.d.updMeta(meta.id, dados) : await c.d.addMeta(dados)
+      if (ok) aoFechar()
+      else setErro(tx('Não deu certo. Tente de novo.'))
+    } catch {
+      setErro(tx('Não deu certo. Tente de novo.'))
+    } finally {
+      enviando.current = false
+      setSalvando(false)
+    }
   }
 
   return (
-    <Modal titulo={meta ? tx('Editar meta') : tx('Nova meta')} aoFechar={aoFechar} tamanho="tela" cor={cor} palco={
+    <Modal titulo={meta ? tx('Editar meta') : tx('Nova meta')} aoFechar={fechar} tamanho="tela" cor={cor} palco={
       <div className="palco" style={{ '--c': cor } as React.CSSProperties}>
         <span className="palco-pote"><PoteMeta key={icone + cor} progresso={0.55} cor={cor} icone={icone} tamanho={150} /></span>
         {nome.trim() && <span className="palco-legenda">{nome.trim()}</span>}
         {parseNumero(alvo) ? <span className="palco-valor"><small>{tx('Quanto quer juntar')}</small><strong>{fmtMoeda(parseNumero(alvo)!, moeda)}</strong></span> : null}
       </div>
     }>
-      <form className="form" onSubmit={(e) => { e.preventDefault(); salvar() }}>
+      <form className="form" onSubmit={(e) => { e.preventDefault(); void salvar() }}>
         <div className="editor-categoria-nome">
           <input autoFocus={!meta} value={nome} onChange={(e) => setNome(e.target.value)} maxLength={40}
             placeholder={tx('Ex.: Viagem pra praia, Notebook novo…')} aria-label={tx('Nome da meta')} />
@@ -450,12 +464,12 @@ function FormMeta({ c, meta, modelo, aoFechar }: { c: Ctx; meta?: Meta; modelo?:
         <div className="form-acoes">
           {meta && (
             confirmar
-              ? <button type="button" className="btn perigo" onClick={() => { void c.d.delMeta(meta.id); aoFechar() }}>{tx('Sim, excluir')}</button>
-              : <button type="button" className="btn perigo" onClick={() => setConfirmar(true)}>{tx('Excluir')}</button>
+              ? <button type="button" disabled={salvando} className="btn perigo" onClick={() => { void c.d.delMeta(meta.id); aoFechar() }}>{tx('Sim, excluir')}</button>
+              : <button type="button" disabled={salvando} className="btn perigo" onClick={() => setConfirmar(true)}>{tx('Excluir')}</button>
           )}
           <span className="espaco" />
-          <button type="button" className="btn" onClick={aoFechar}>{tx('Cancelar')}</button>
-          <button type="submit" className="btn primario">{meta ? tx('Salvar') : tx('Criar meta')}</button>
+          <button type="button" className="btn" onClick={fechar}>{tx('Cancelar')}</button>
+          <button type="submit" className="btn primario" disabled={salvando}>{salvando ? tx('Salvando…') : meta ? tx('Salvar') : tx('Criar meta')}</button>
         </div>
         {confirmar && <span className="campo-ajuda">{tx('A meta e todo o histórico dela serão excluídos.')}</span>}
       </form>
@@ -469,6 +483,9 @@ function FormMovimento({ c, meta, retirar: inicial, valorInicial, aoFechar }: { 
   const [data, setData] = useState(hoje())
   const [descricao, setDescricao] = useState('')
   const [erro, setErro] = useState<string | null>(null)
+  const [salvando, setSalvando] = useState(false)
+  const enviando = useRef(false)
+  const fechar = () => { if (!enviando.current) aoFechar() }
   const guardado = c.d.movimentosMeta.filter((m) => m.meta_id === meta.id).reduce((a, m) => a + m.valor, 0)
   const s = situacaoMeta(meta, c.d.movimentosMeta)
   const sobra = meta.moeda === c.perfil.moeda ? Math.max(0, c.r.fluxo) : 0
@@ -485,18 +502,30 @@ function FormMovimento({ c, meta, retirar: inicial, valorInicial, aoFechar }: { 
   // o pote do palco já mostra como fica depois deste movimento
   const depois = Math.max(0, guardado + (retirar ? -1 : 1) * (parseNumero(valor) ?? 0))
 
-  const salvar = () => {
+  const salvar = async () => {
+    if (enviando.current) return
     const n = parseNumero(valor)
     if (!n || n <= 0) return setErro(tx('Digite um valor maior que zero.'))
     if (valorGrandeDemais(n)) return setErro(erroValorGrande())
     if (!dataPlausivel(data)) return setErro(erroDataFora())
     if (retirar && n > guardado + 0.001) return setErro(tx('Na meta só tem {0}.', fmtMoeda(guardado, meta.moeda)))
-    void c.d.addMovimentoMeta({ meta_id: meta.id, data, valor: retirar ? -n : n, descricao: descricao.trim() })
-    aoFechar()
+    enviando.current = true
+    setSalvando(true)
+    setErro(null)
+    try {
+      const ok = await c.d.addMovimentoMeta({ meta_id: meta.id, data, valor: retirar ? -n : n, descricao: descricao.trim() })
+      if (ok) aoFechar()
+      else setErro(tx('Não deu certo. Tente de novo.'))
+    } catch {
+      setErro(tx('Não deu certo. Tente de novo.'))
+    } finally {
+      enviando.current = false
+      setSalvando(false)
+    }
   }
 
   return (
-    <Modal titulo={meta.nome} aoFechar={aoFechar} tamanho="tela" cor={meta.cor} palco={
+    <Modal titulo={meta.nome} aoFechar={fechar} tamanho="tela" cor={meta.cor} palco={
       <div className="palco" style={{ '--c': meta.cor } as React.CSSProperties}>
         <span className="palco-pote"><PoteMeta progresso={depois / meta.alvo} cor={meta.cor} icone={meta.icone} tamanho={150} /></span>
         <span className="palco-valor">
@@ -506,7 +535,7 @@ function FormMovimento({ c, meta, retirar: inicial, valorInicial, aoFechar }: { 
         </span>
       </div>
     }>
-      <form className="form" onSubmit={(e) => { e.preventDefault(); salvar() }}>
+      <form className="form" onSubmit={(e) => { e.preventDefault(); void salvar() }}>
         <Segmentado rotulo={tx('Movimento')} valor={retirar ? 'retirar' : 'guardar'} aoMudar={(v) => setRetirar(v === 'retirar')}
           opcoes={[{ id: 'guardar', nome: tx('Guardar'), cor: COR.entradas }, { id: 'retirar', nome: tx('Retirar'), cor: COR.saidas }]} />
         <label className="valor-grande" style={{ '--c': retirar ? COR.saidas : COR.entradas } as React.CSSProperties}>
@@ -541,8 +570,8 @@ function FormMovimento({ c, meta, retirar: inicial, valorInicial, aoFechar }: { 
         {erro && <p className="form-erro">{erro}</p>}
         <div className="form-acoes">
           <span className="espaco" />
-          <button type="button" className="btn" onClick={aoFechar}>{tx('Cancelar')}</button>
-          <button type="submit" className="btn primario">{retirar ? tx('Retirar') : tx('Guardar')}</button>
+          <button type="button" className="btn" onClick={fechar}>{tx('Cancelar')}</button>
+          <button type="submit" className="btn primario" disabled={salvando}>{salvando ? tx('Salvando…') : retirar ? tx('Retirar') : tx('Guardar')}</button>
         </div>
       </form>
     </Modal>
