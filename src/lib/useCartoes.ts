@@ -19,7 +19,7 @@ const faltaTabela = (e: { code?: string; message: string }) =>
 const buscar = () =>
   Promise.all([
     supabase.from('cartoes').select('*').order('created_at'),
-    supabase.from('faturas_pagas').select('*').order('ano').order('mes'),
+    lerTudo(() => supabase.from('faturas_pagas').select('*').order('ano').order('mes').order('id')),
     lerTudo(() => supabase.from('lancamentos').select('*').not('cartao_id', 'is', null).order('data').order('id')),
     // só para saber se a migração 9 (renegociar, juros, limite garantido) já foi rodada
     supabase.from('faturas_pagas').select('tipo, juros, juros_lanc_id, divida_id').limit(1),

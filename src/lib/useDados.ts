@@ -774,15 +774,17 @@ export function useDados(userId: string, ano: number) {
     if (error) falhou(error.message)
   }
 
-  const addMeta = async (nova: Omit<Meta, 'id' | 'ordem'>) => {
+  const addMeta = async (nova: Omit<Meta, 'id' | 'ordem'>): Promise<boolean> => {
     const { data, error } = await supabase.from('metas').insert({ ...nova, ordem: metas.length }).select().single()
-    if (error) return falhou(error.message)
+    if (error) { falhou(error.message); return false }
     setMetas((xs) => [...xs, normMeta(data as Meta)])
+    return true
   }
-  const updMeta = async (id: string, patch: Partial<Meta>) => {
-    setMetas((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
+  const updMeta = async (id: string, patch: Partial<Meta>): Promise<boolean> => {
     const { error } = await supabase.from('metas').update(patch).eq('id', id)
-    if (error) falhou(error.message)
+    if (error) { falhou(error.message); return false }
+    setMetas((xs) => xs.map((x) => (x.id === id ? { ...x, ...patch } : x)))
+    return true
   }
   /** Apaga a meta e todo o histórico dela. */
   const delMeta = async (id: string) => {
@@ -792,10 +794,11 @@ export function useDados(userId: string, ano: number) {
     if (error) falhou(error.message)
   }
   /** Guardar (valor positivo) ou retirar (negativo) dinheiro de uma meta. */
-  const addMovimentoMeta = async (mov: Omit<MovimentoMeta, 'id'>) => {
+  const addMovimentoMeta = async (mov: Omit<MovimentoMeta, 'id'>): Promise<boolean> => {
     const { data, error } = await supabase.from('meta_movimentos').insert(mov).select().single()
-    if (error) return falhou(error.message)
+    if (error) { falhou(error.message); return false }
     setMovimentosMeta((xs) => [...xs, normMovMeta(data as MovimentoMeta)])
+    return true
   }
   const delMovimentoMeta = async (id: string) => {
     setMovimentosMeta((xs) => xs.filter((x) => x.id !== id))
