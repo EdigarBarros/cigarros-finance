@@ -409,3 +409,18 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
 - `src/pages/algoritmoConsultor.ts`: os tempos da fresta (escurecer e a luz) acompanharam o novo `ATRAVESSA`.
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
   390×844) da abertura e das outras cenas, sem erro de página; quadros do túnel em 17 ms.
+
+### 15/11/2026 — Claude — Abertura do motor: o fio do túnel bem mais longo
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Pedido do Edigar: o texto ainda sumia rápido demais; ele pediu esticar o túnel, com o fim dele mais longe.
+- `src/pages/Algoritmo.tsx`: a tela do Consultor não fica mais logo antes da entrada da rede, e sim longe e mais para o
+  fundo (`TELA_C`), virada de costas para a entrada (`TELA_D`; o fio sai reto das costas dela). O fio do túnel passou de
+  ~330 para ~900 unidades, e de fora tudo cabe na cena (posição achada calculando a projeção da tela e da rede). As
+  linhas lidas entram a cada 0,042 do túnel e levam 0,58 dele para escorregar até o corte (95 unidades à frente da
+  câmera, numa faixa de 80). A abertura ficou com 38% da rolagem (`ABERTURA`) e `SAI` 0,83. Dentro do túnel a lente é
+  a dele (foco sem o zoom da cena), passando para a da vista de fora durante a saída. A vista de fora olha mais de lado
+  (`CAM[0]`: yaw 0,45). A tela só some depois que a câmera termina de sair.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
+  390×844) da abertura, sem erro de página; quadros do túnel em 17 ms.
