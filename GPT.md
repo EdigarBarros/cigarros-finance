@@ -262,3 +262,27 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
 - `src/pages/Algoritmo.tsx`: saíram o halo e o contorno dourados em volta da tela.
 - Validação: `npx tsc -b` e build com Supabase fictício passaram; `npm run lint` sem erros; fotos no Chromium
   (1440×860 e 390×844) em toda a abertura, sem erro de página.
+
+### 15/11/2026 — Claude — Motor: as linhas lidas viram cubinhos coloridos, e os cubinhos viram o gráfico
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Pedido do Edigar: (1) a passagem da rede para o gráfico parecia uma troca de cena, e não os quadradinhos formando o
+  gráfico; (2) a rede tinha quadros quadrados em volta de cada camada; (3) o PDF e a planilha eram pequenos e laranja, e
+  as linhas lidas viravam um cartão em vez de as letras entrarem na rede. Ele pediu: o texto sai do documento, entra num
+  fio da rede, corre por ele e se desfaz em cubinhos (verde o que entrou, vermelho o que saiu, amarelo as dívidas,
+  diferente do laranja); os cubinhos viram o gráfico, que se firma como a tela final e depois volta a ser cubinhos.
+- `src/pages/algoritmoDocs.ts`: documentos brancos, maiores (desenhados numa largura base e ampliados), sem brilho
+  laranja; cada linha tem um tipo (`entrada`, `saida`, `divida`), com uma dívida em cada documento. `desenharTextos`
+  desenha o texto limpo de cada linha (nome e valor, na cor do tipo) e sorteia pontos nas letras dele.
+- `src/pages/Algoritmo.tsx`: cada linha tem um caminho de fios (`CAMINHOS`) e um relógio (`linhaT`). O texto sai da linha
+  numa plaquinha escura, voa até um nó da entrada e corre por três fios, que acendem na cor dele; as letras se apagam da
+  esquerda para a direita e, no lugar de cada uma, nascem os cubinhos dela (os coloridos só existem depois disso).
+  70% dos cubinhos são coloridos e cada um já tem a sua coluna no gráfico (mês e série: entrou, saiu, dívidas), por isso a
+  cor não muda no caminho. Eles sobem da rede num arco e enchem cada coluna de baixo para cima; depois uma linha de luz
+  passa da esquerda para a direita e as colunas viram caixas 3D sólidas (`desenharGrafico`: faces com luz, chão, meses,
+  média tracejada, legenda); antes da tela final ela passa de novo e as colunas voltam a ser cubinhos. Os quadros e as
+  quinas das camadas da rede saíram.
+- Tradução nova: "Empréstimo pessoal" (`en`, `es`).
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
+  390×844) em toda a rolagem da seção, sem erro de página; `extrair.cjs --faltando`: 0 textos sem tradução.
