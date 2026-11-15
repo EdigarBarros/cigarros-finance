@@ -36,6 +36,8 @@ export const LIDAS = [...LIDAS_PDF, ...LIDAS_PLANILHA]
 
 /** As cores de cada tipo (as do gráfico do app): na tela escura e no papel branco. */
 export const COR_TIPO: Record<Tipo, [number, number, number]> = { entrada: [46, 214, 128], saida: [255, 92, 108], divida: [255, 214, 10] }
+/** As mesmas no modo claro: mais fortes, para se lerem no fundo branco (o amarelo vira âmbar). */
+export const COR_TIPO_CLARO: Record<Tipo, [number, number, number]> = { entrada: [16, 185, 110], saida: [239, 68, 68], divida: [245, 158, 11] }
 const COR_PAPEL: Record<Tipo, string> = { entrada: '#16884f', saida: '#c8333f', divida: '#b88a00' }
 const SINAL: Record<Tipo, string> = { entrada: '+', saida: '−', divida: '−' }
 
@@ -173,15 +175,15 @@ export interface TextoLido {
   cor: [number, number, number]
 }
 
-export function desenharTextos(q: number, f: Fontes): TextoLido[] {
+export function desenharTextos(q: number, f: Fontes, claro = false): TextoLido[] {
   return LIDAS.map((l, idx) => {
-    const cor = COR_TIPO[l.tipo], css = `rgb(${cor.join(',')})`
+    const cor = (claro ? COR_TIPO_CLARO : COR_TIPO)[l.tipo], css = `rgb(${cor.join(',')})`
     const fNome = `700 15px ${f.texto}`, fValor = `800 15px ${f.numeros}`
     const valor = `${SINAL[l.tipo]} R$ ${l.valor}` // sem-tx
     const c = document.createElement('canvas'), g = c.getContext('2d', { willReadFrequently: true })!
     // as letras, uma a uma (a largura de cada uma é o quanto o texto cresce com ela, para o espaçamento ficar certo)
     const glifos: TextoLido['glifos'] = []
-    const partes: [string, string, string, number][] = [[l.nome, fNome, '#f4f7ff', 0]]
+    const partes: [string, string, string, number][] = [[l.nome, fNome, claro ? '#14213d' : '#f4f7ff', 0]]
     g.font = fNome
     const wn = g.measureText(l.nome).width
     partes.push([valor, fValor, css, wn + 12])
@@ -213,6 +215,6 @@ export function desenharTextos(q: number, f: Fontes): TextoLido[] {
   })
 }
 
-export function desenharDocs(w: number, h: number, q: number, f: Fontes) {
-  return { pdf: desenharPdf(w, h, q, f), planilha: desenharPlanilha(w, h, q, f), textos: desenharTextos(q, f) }
+export function desenharDocs(w: number, h: number, q: number, f: Fontes, claro = false) {
+  return { pdf: desenharPdf(w, h, q, f), planilha: desenharPlanilha(w, h, q, f), textos: desenharTextos(q, f, claro) }
 }
