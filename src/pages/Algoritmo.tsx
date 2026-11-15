@@ -268,6 +268,7 @@ export function Algoritmo() {
 
     let W = 0, H = 0, dpr = 1, cx = 0, cy = 0, esc = 1, celular = false, reduzir = false
     let fr: Frag[] = [], chaveTela = ''
+    const saidaFio = new Float32Array(REDE.elos.length), saidaNo = new Float32Array(REDE.nos.length)
     // a tela do Consultor (cena 4): desenhada em px de CSS, centrada em (cx, yTela). No computador fica no lugar da
     // rede; no celular, entre o texto e os selos
     let tela: TelaPronta | null = null, yTela = 0
@@ -321,6 +322,17 @@ export function Algoritmo() {
         letras = fontes()
         tela = desenharTela(tw, th, q, N, letras, sorteio(7))
         fr = montar(N, tela.pontos, k4, (yTela - cy) / k4)
+        // quando cada fio e cada nó saem da rede: junto com o primeiro cubinho dele que vai para o gráfico (a rede é
+        // feita dos cubinhos; não fica nada para trás)
+        saidaFio.fill(9); saidaNo.fill(9)
+        for (const f of fr) {
+          if (f.no >= 0) saidaNo[f.no] = Math.min(saidaNo[f.no], f.atraso)
+          else saidaFio[f.elo] = Math.min(saidaFio[f.elo], f.atraso)
+        }
+        REDE.elos.forEach(({ a, b }, e) => {
+          if (saidaFio[e] > 1) saidaFio[e] = 0.15
+          saidaNo[a] = Math.min(saidaNo[a], saidaFio[e]); saidaNo[b] = Math.min(saidaNo[b], saidaFio[e])
+        })
       }
       if (perto) pedirReal()
       if (real) {
@@ -647,46 +659,61 @@ export function Algoritmo() {
         ativo[r] = 1
       }
 
-      if (redeCheia > 0.02) {
-        // os fios: todos bem fracos (os de trás mais ainda) e, mais fortes, os que estão levando sinal agora
-        const fios = [new Path2D(), new Path2D()], vivos = new Path2D(), pontas: [number, number, number, number][] = []
-        for (const { a, b } of REDE.elos) {
-          const f = fios[rz[a] + rz[b] > 0 ? 0 : 1]
+      if (g0 < 0.6) {
+        // o quanto o fio (ou o nó) ainda está na rede: some junto com os cubinhos dele quando eles vão para o gráfico
+        const apagada = 1 - 0.8 * oculto
+        const fica = (at: number) => (1 - suave(at, at + 0.1, g0)) * apagada
+        // os fios, feitos de quadradinhos em fila (tracejado de pontas retas), em seis níveis de presença; os de trás
+        // mais fracos; e, mais fortes, os trechos que estão levando sinal agora
+        const fios = Array.from({ length: 12 }, () => new Path2D()), vivos = Array.from({ length: 6 }, () => new Path2D())
+        const pontas: [number, number, number, number][] = []
+        REDE.elos.forEach(({ a, b }, e) => {
+          const fa = fica(saidaFio[e]), q = Math.round(fa * 5)
+          if (!q) return
+          const f = fios[(rz[a] + rz[b] > 0 ? 0 : 6) + q]
           f.moveTo(nx[a], ny[a]); f.lineTo(nx[b], ny[b])
           const fase = (pulso - REDE.nos[a].camada) / ESPACO, k = Math.floor(fase), u = (fase - k) * ESPACO
-          if (u >= 1.25) continue
+          if (u >= 1.25) return
           const v = forca(a, k, limiar) * forca(b, k, limiar)
-          if (!v) continue
+          if (!v) return
           // o trecho aceso é um rastro curto atrás da ponta do sinal
           const t1 = Math.min(1, u), t0 = Math.max(0, u - 0.45)
-          vivos.moveTo(mistura(nx[a], nx[b], t0), mistura(ny[a], ny[b], t0)); vivos.lineTo(mistura(nx[a], nx[b], t1), mistura(ny[a], ny[b], t1))
-          if (u < 1) pontas.push([mistura(nx[a], nx[b], u), mistura(ny[a], ny[b], u), mistura(ns[a], ns[b], u), v])
+          vivos[q].moveTo(mistura(nx[a], nx[b], t0), mistura(ny[a], ny[b], t0)); vivos[q].lineTo(mistura(nx[a], nx[b], t1), mistura(ny[a], ny[b], t1))
+          if (u < 1) pontas.push([mistura(nx[a], nx[b], u), mistura(ny[a], ny[b], u), mistura(ns[a], ns[b], u), v * fa])
+        })
+        ctx.lineCap = 'butt'
+        ctx.setLineDash([2.2, 3.2]); ctx.lineWidth = 1.7
+        for (let q = 1; q <= 5; q++) {
+          ctx.globalAlpha = q / 5
+          ctx.strokeStyle = 'rgba(255,170,70,0.13)'; ctx.stroke(fios[q])
+          ctx.strokeStyle = 'rgba(255,190,100,0.3)'; ctx.stroke(fios[6 + q])
         }
-        ctx.lineWidth = 1
-        ctx.strokeStyle = `rgba(255,170,70,${(0.07 * redeCheia).toFixed(3)})`; ctx.stroke(fios[0])
-        ctx.strokeStyle = `rgba(255,185,90,${(0.16 * redeCheia).toFixed(3)})`; ctx.stroke(fios[1])
-        ctx.strokeStyle = `rgba(255,170,60,${(0.16 * redeCheia).toFixed(3)})`; ctx.lineWidth = 3; ctx.stroke(vivos)
-        ctx.strokeStyle = `rgba(255,232,180,${(0.85 * redeCheia).toFixed(3)})`; ctx.lineWidth = 1.1; ctx.stroke(vivos)
+        ctx.setLineDash([2.6, 2.2])
+        for (let q = 1; q <= 5; q++) {
+          ctx.globalAlpha = q / 5
+          ctx.strokeStyle = 'rgba(255,170,60,0.2)'; ctx.lineWidth = 3.4; ctx.stroke(vivos[q])
+          ctx.strokeStyle = 'rgba(255,232,180,0.9)'; ctx.lineWidth = 1.7; ctx.stroke(vivos[q])
+        }
+        ctx.setLineDash([])
         for (const [x, y, k, v] of pontas) {
           const tam = (9 + 9 * v) * k
-          ctx.globalAlpha = redeCheia * (0.5 + 0.5 * v)
+          ctx.globalAlpha = 0.5 + 0.5 * v
           ctx.drawImage(sprPonto, x - tam / 2, y - tam / 2, tam, tam)
         }
-        // os nós: um halo que cresce com o sinal, um anel fino e o miolo
-        const aneis = new Path2D(), miolos = new Path2D(), cheios = new Path2D()
+        // os nós: um halo que cresce com o sinal, um quadradinho de contorno e o miolo (também quadrado)
+        ctx.lineWidth = 1.1
         for (let i = 0; i < NN; i++) {
+          const fn = fica(saidaNo[i])
+          if (fn <= 0.01) continue
           const saida = REDE.nos[i].camada === CAMADAS.length - 1, a = aceso[i], k = ns[i] * (saida ? 2.4 : 1)
           const tam = (16 + 50 * a) * k
-          ctx.globalAlpha = redeCheia * (0.25 + 0.75 * a)
+          ctx.globalAlpha = fn * (0.25 + 0.75 * a)
           ctx.drawImage(sprPonto, nx[i] - tam / 2, ny[i] - tam / 2, tam, tam)
-          aneis.moveTo(nx[i] + 6 * k, ny[i]); aneis.arc(nx[i], ny[i], 6 * k, 0, Math.PI * 2)
-          const m = a > 0.45 ? cheios : miolos, rm = (2 + 2.6 * a) * k
-          m.moveTo(nx[i] + rm, ny[i]); m.arc(nx[i], ny[i], rm, 0, Math.PI * 2)
+          ctx.globalAlpha = fn
+          const lc = 5 * k, rm = (1.8 + 2.4 * a) * k
+          ctx.strokeStyle = 'rgba(255,205,130,0.6)'; ctx.strokeRect(nx[i] - lc, ny[i] - lc, lc * 2, lc * 2)
+          ctx.fillStyle = a > 0.45 ? 'rgba(255,246,224,1)' : 'rgba(255,190,100,0.75)'; ctx.fillRect(nx[i] - rm, ny[i] - rm, rm * 2, rm * 2)
         }
-        ctx.globalAlpha = redeCheia
-        ctx.strokeStyle = 'rgba(255,205,130,0.6)'; ctx.lineWidth = 1.1; ctx.stroke(aneis)
-        ctx.fillStyle = 'rgba(255,190,100,0.75)'; ctx.fill(miolos)
-        ctx.fillStyle = 'rgba(255,246,224,1)'; ctx.fill(cheios)
         ctx.globalAlpha = 1
       }
 
