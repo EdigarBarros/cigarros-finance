@@ -355,3 +355,21 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
   costas aparecerem em perspectiva.
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
   390×844) em toda a abertura, sem erro de página.
+
+### 15/11/2026 — Claude — Abertura do motor: o túnel é um fio de verdade e a câmera sai dele sem corte
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Pedido do Edigar: no túnel, os nomes flutuavam; eles têm que andar deitados nos trilhos (como na esteira da rede) e
+  virar quadradinhos. E a saída era uma troca de imagem para a tela de costas; ele quer uma câmera de verdade, que sai de
+  dentro e pega o sistema por fora, mostrando tudo ligado nas costas da tela (que depois some).
+- `src/pages/Algoritmo.tsx`: câmera livre no `proj` (posição, direções e foco; o que fica atrás dela não é desenhado). Na
+  cena 0, de `ATRAVESSA` a `SAI` (0,72) ela anda dentro do fio que liga a fresta (nas costas da tela, `Z_COSTAS`) ao nó
+  da entrada mais perto da altura dela (`tubo`); de `SAI` a 1 ela gira e se afasta até a câmera de sempre (yaw, pitch e
+  distância F; em desm = 1 as duas coincidem, então a cena seguinte não salta). O túnel é desenhado em 3D em volta desse
+  fio: anéis de quadradinhos e trilhos; as linhas lidas andam nos trilhos letra por letra, cada letra deitada na parede
+  (comprimento ao longo do fio, altura ao longo do anel, sem espelhar), mais rápido que a câmera; num ponto fixo perto
+  da rede (80% do fio) cada letra vira cubinhos, que seguem pelo trilho. Saindo, os anéis somem e o fio fica um fio da
+  teia das costas da tela (`desenharCostas` liga a fresta ao nó). Fios e nós atrás da câmera não são desenhados.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium (1440×860 e
+  390×844) em toda a abertura, sem erro de página.
