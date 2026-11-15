@@ -2,8 +2,9 @@
  * Fotografa a tela do Consultor de verdade (o app de demonstração, conta inventada da Marina) para a abertura do
  * "motor do OpusCash" na página inicial (src/pages/Algoritmo.tsx), onde ela se desmonta peça por peça.
  *
- * Para cada aparelho (pc, cel) e idioma (pt, en, es) gera em src/pages/motor/:
- *   consultor-<aparelho>-<idioma>-c.jpg  só o fundo (sem os blocos);
+ * Para cada aparelho (pc, cel), idioma (pt, en, es) e tema (escuro; claro, com "-claro" no nome) gera em
+ * src/pages/motor/:
+ *   consultor-<aparelho>-<idioma>[-claro]-c.jpg  só o fundo (sem os blocos);
  *   ...-b.webp  só os blocos (cartões, barra lateral, botões), sem o conteúdo e sem nada atrás: transparente fora
  *               deles, com as quinas redondas e a sombra de verdade;
  *   ...-p.webp  só as peças de dentro dos blocos (textos, gráficos, ícones), também transparente em volta;
@@ -25,6 +26,7 @@ const saida = path.join(raiz, 'src/pages/motor')
 
 const APARELHOS = [['pc', 1240, 800, 1.5], ['cel', 390, 844, 2]]
 const IDIOMAS = ['pt', 'en', 'es']
+const TEMAS = [['escuro', ''], ['claro', '-claro']]
 
 /** Escolhe as peças na página (roda dentro do navegador). */
 function marcar() {
@@ -124,18 +126,18 @@ async function camada(p, arquivo, mostrar) {
 ;(async () => {
   fs.mkdirSync(saida, { recursive: true })
   for (const [aparelho, w, h, dpr] of APARELHOS) {
-    for (const idioma of IDIOMAS) {
+    for (const idioma of IDIOMAS) for (const [tema, sufixo] of TEMAS) {
       const t = await iniciar({ perfil: demo.perfil, dados: demo.dados, porta: 4700 + Math.floor(Math.random() * 200), dpr })
       const p = t.page
       await p.setViewportSize({ width: w, height: h })
       if (idioma !== 'pt') await p.context().addCookies([{ name: 'googtrans', value: `/pt/${idioma}`, url: t.url }])
-      await p.addInitScript(() => { try { localStorage.setItem('opuscash-tema', 'escuro') } catch { /* */ } })
+      await p.addInitScript(([t]) => { try { localStorage.setItem('opuscash-tema', t) } catch { /* */ } }, [tema])
       await p.goto(`${t.url}#/analise`)
       await p.waitForTimeout(4500)
       // tudo parado: as fotos de cada camada precisam ser do mesmo instante
       await p.addStyleTag({ content: '*,*::before,*::after{animation-play-state:paused!important;transition:none!important;caret-color:transparent!important}' })
       await p.waitForTimeout(150)
-      const base = path.join(saida, `consultor-${aparelho}-${idioma}`)
+      const base = path.join(saida, `consultor-${aparelho}-${idioma}${sufixo}`)
       const foto = (letra) => p.screenshot({ path: `${base}-${letra}.jpg`, type: 'jpeg', quality: 80 })
       const mapa = await p.evaluate(marcar)
       await camada(p, `${base}-b.webp`, '[data-m1],[data-m1] *{visibility:visible!important}[data-m2],[data-m2] *{visibility:hidden!important}')
@@ -144,7 +146,7 @@ async function camada(p, arquivo, mostrar) {
       await p.waitForTimeout(150)
       await foto('c')
       fs.writeFileSync(`${base}.json`, JSON.stringify(mapa))
-      console.log(aparelho, idioma, await p.evaluate(() => document.documentElement.lang), 'blocos', mapa.n1.length, 'peças', mapa.n2.length)
+      console.log(aparelho, idioma, tema, await p.evaluate(() => document.documentElement.lang), 'blocos', mapa.n1.length, 'peças', mapa.n2.length)
       await t.fechar()
     }
   }
