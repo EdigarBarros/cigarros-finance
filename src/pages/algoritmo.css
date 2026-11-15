@@ -88,6 +88,8 @@
   .ag-texto { left: 0; right: 0; top: clamp(56px, 9vh, 90px); transform: none; width: auto; padding: 0 22px; text-align: center; justify-items: center; gap: 14px; }
   .ag-rotulo { justify-self: center; }
   .ag-pilha { min-height: 128px; }
+  /* do mergulho até a saída do túnel a cena ocupa a tela inteira (--imerso, escrito pelo componente) */
+  .ag-texto, .ag-sticky::after { opacity: calc(1 - var(--imerso, 0)); }
   .ag-legenda h2 { font-size: 1.6rem; }
   .ag-legenda p { margin-inline: auto; font-size: .95rem; max-width: 34ch; }
   .ag-sticky::after { background: linear-gradient(180deg, rgba(6, 4, 3, .9) 0, rgba(6, 4, 3, .75) min(250px, 30vh), transparent min(320px, 38vh)); -webkit-mask-image: none; mask-image: none; }

@@ -498,3 +498,25 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
   trilho, etiquetas, contador, selos, véu) seguem a marca.
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium nos dois temas
   (1440×860 e 390×844), sem erro de página; o escuro continua igual.
+
+### 15/11/2026 — Claude — Motor: o túnel por dentro, o modo claro e o celular
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Pedido do Edigar: a cena de dentro (a câmera no meio da teia) não agradava; o claro continuava feio; no celular a
+  cena de dentro não estava boa. Ele pediu para pegar o que existe e melhorar, não trocar.
+- Problema visto nas fotos: por dentro, os 31 fios pontilhados se juntavam num único ponto, como um asterisco branco,
+  sem parede nem profundidade. No celular, os fios passavam por cima do título e o texto das linhas andava em pé.
+- `src/pages/Algoritmo.tsx`, `desenharTeia` (ganhou `dentro`, de 0 a 1): cada fio é uma linha mais fina e mais fraca
+  quanto mais longe (`P.tunel`, quatro níveis); os quadradinhos de longe somem na névoa; por dentro há costelas (30
+  voltas pela beirada do feixe, `BEIRADA`), poeira parada no ar (`POEIRA`), três sinais por fio com rastro e a luz no fim
+  do túnel. Os fios do miolo do feixe viram um risco fino (as linhas lidas continuam andando neles). A câmera vai para o
+  eixo do funil logo depois da fresta, então as paredes ficam em volta dela. A rede já aparece apagada no fim do túnel
+  (`oculto`).
+- Celular: do mergulho até a saída do túnel a cena ocupa a tela inteira (`--imerso` no `.ag-sticky`: o texto e o véu
+  somem, `algoritmo.css`), o ponto de fuga vai para o meio da tela e as linhas lidas usam só os fios das laterais
+  (`FIOS_DEITADOS`), onde o texto anda deitado.
+- Claro: túnel em azul até azul-marinho (`tunel`, `tunelQuad`), fios e poeira da rede mais fortes (`TONS_CLARO`,
+  `fioFundo`, `fioFrente`) e nós com fundo branco e contorno azul (`noFundo`). O escuro da rede não mudou.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium nos dois temas
+  (1440×860 e 390×844) da abertura e das outras cenas, sem erro de página. Fluidez do movimento não foi medida.

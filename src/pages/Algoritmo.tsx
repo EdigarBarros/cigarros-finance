@@ -254,7 +254,7 @@ const DOURADO: [number, number, number, number][] = [[180, 85, 10, 0.6], [235, 1
 /** As cores de cada tipo no claro: mais fortes, para se lerem no fundo branco (o amarelo vira âmbar). */
 const CORES_GRAF_CLARO: [number, number, number][] = [[16, 185, 110], [239, 68, 68], [245, 158, 11]]
 /** A poeira de dados no claro: do azul ao verde-água da marca, os tons fortes por último (nada some no branco). */
-const TONS_CLARO = ['rgba(31,142,241,0.35)', 'rgba(31,142,241,0.55)', 'rgba(26,160,226,0.75)', 'rgba(20,184,180,0.88)', 'rgba(14,160,140,0.96)']
+const TONS_CLARO = ['rgba(37,99,235,0.5)', 'rgba(31,130,241,0.68)', 'rgba(20,150,220,0.82)', 'rgba(14,165,170,0.92)', 'rgba(8,145,125,1)']
 /** A PALETA do claro: do tom da poeira (azul-verde) até a cor do tipo, sem clarear para o branco. */
 const PALETA_CLARO = CORES_GRAF_CLARO.map((c) => TONS_CLARO.map((tom) => {
   const [r, g, b, a] = tom.slice(5, -1).split(',').map(Number)
@@ -297,10 +297,12 @@ export function Algoritmo() {
      */
     const paleta = (c: boolean) => c ? {
       luz: 'source-over' as GlobalCompositeOperation, tons: TONS_CLARO, cubos: PALETA_CLARO, tipos: CORES_GRAF_CLARO,
-      halo: brilho(256, [[0, 'rgba(31,142,241,0.16)'], [0.3, 'rgba(20,201,160,0.08)'], [0.7, 'rgba(31,142,241,0.02)'], [1, 'rgba(31,142,241,0)']]),
+      halo: brilho(256, [[0, 'rgba(31,142,241,0.26)'], [0.3, 'rgba(20,201,160,0.14)'], [0.7, 'rgba(31,142,241,0.04)'], [1, 'rgba(31,142,241,0)']]),
       ponto: brilho(48, [[0, 'rgba(255,255,255,1)'], [0.2, 'rgba(31,160,241,0.8)'], [0.55, 'rgba(20,201,160,0.18)'], [1, 'rgba(20,201,160,0)']]),
-      fioFundo: 'rgba(31,142,241,0.12)', fioFrente: 'rgba(31,142,241,0.3)', vivoBrilho: 'rgba(20,201,160,0.22)', vivo: 'rgba(14,160,140,0.95)',
-      anel: 'rgba(31,142,241,0.55)', cheio: 'rgba(14,170,150,1)', miolo: 'rgba(31,142,241,0.7)', dado: 'rgba(14,170,150,1)', teia: 'rgba(31,142,241,0.18)',
+      fioFundo: 'rgba(37,99,235,0.2)', fioFrente: 'rgba(37,99,235,0.46)', vivoBrilho: 'rgba(20,201,160,0.3)', vivo: 'rgba(8,145,125,1)',
+      anel: 'rgba(29,78,216,0.85)', cheio: 'rgba(8,150,130,1)', miolo: 'rgba(37,99,235,0.85)', dado: 'rgba(8,145,125,1)', noFundo: 'rgba(255,255,255,0.95)',
+      tunel: ['rgba(31,142,241,0.2)', 'rgba(31,120,235,0.4)', 'rgba(29,90,216,0.64)', 'rgba(23,58,168,0.88)'],
+      tunelQuad: ['', 'rgba(31,142,241,0.6)', 'rgba(31,120,235,0.8)', 'rgba(29,90,216,0.92)', 'rgba(20,50,150,1)'],
       chao: 'rgba(20,33,61,0.04)', chaoBorda: 'rgba(20,33,61,0.14)', chaoMes: 'rgba(20,33,61,0.06)', media: 'rgba(31,142,241,0.9)',
       mes: 'rgba(20,33,61,0.6)', legenda: 'rgba(20,33,61,0.82)', varre: ['rgba(31,142,241,0.3)', 'rgba(31,142,241,0)', 'rgba(31,142,241,0.95)'],
       nomeTexto: '#14213d', fresta: 'rgb(238,243,250)', brilhoFresta: '31,142,241',
@@ -310,7 +312,9 @@ export function Algoritmo() {
       halo: brilho(256, [[0, 'rgba(255,200,110,0.55)'], [0.25, 'rgba(255,150,40,0.22)'], [0.6, 'rgba(255,120,20,0.06)'], [1, 'rgba(255,100,10,0)']]),
       ponto: brilho(48, [[0, 'rgba(255,248,225,1)'], [0.2, 'rgba(255,200,90,0.9)'], [0.55, 'rgba(255,150,40,0.22)'], [1, 'rgba(255,130,20,0)']]),
       fioFundo: 'rgba(255,170,70,0.13)', fioFrente: 'rgba(255,190,100,0.3)', vivoBrilho: 'rgba(255,170,60,0.2)', vivo: 'rgba(255,232,180,0.9)',
-      anel: 'rgba(255,205,130,0.6)', cheio: 'rgba(255,246,224,1)', miolo: 'rgba(255,190,100,0.75)', dado: 'rgba(255,246,224,1)', teia: 'rgba(255,170,70,0.14)',
+      anel: 'rgba(255,205,130,0.6)', cheio: 'rgba(255,246,224,1)', miolo: 'rgba(255,190,100,0.75)', dado: 'rgba(255,246,224,1)', noFundo: '',
+      tunelQuad: TONS,
+      tunel: ['rgba(255,140,40,0.1)', 'rgba(255,165,65,0.22)', 'rgba(255,190,105,0.42)', 'rgba(255,224,165,0.62)'],
       chao: 'rgba(255,255,255,0.035)', chaoBorda: 'rgba(255,255,255,0.12)', chaoMes: 'rgba(255,255,255,0.05)', media: 'rgba(255,205,130,0.9)',
       mes: 'rgba(232,238,255,0.62)', legenda: 'rgba(240,244,255,0.82)', varre: ['rgba(255,240,210,0.5)', 'rgba(255,240,210,0)', 'rgba(255,245,225,0.95)'],
       nomeTexto: '#f4f7ff', fresta: 'rgb(3,4,8)', brilhoFresta: '255,190,100',
@@ -649,46 +653,105 @@ export function Algoritmo() {
     }
     const compFio = (k: number) => { const c = fiosTeia[k], b = c.no; return Math.hypot(rx[b] - c.ax, ry[b] - c.ay, rz[b] - c.az) }
 
+    /** O ponto do fio k no espaço, a uma fração f do caminho. */
+    const noFio3 = (k: number, f: number): V3 => { const c = fiosTeia[k], b = c.no; return [mistura(c.ax, rx[b], f), mistura(c.ay, ry[b], f), mistura(c.az, rz[b], f)] }
+    /** Os fios da beirada do feixe, em volta: por eles passam as costelas do túnel. */
+    const BEIRADA = [0, 1, 2, 3, 4, 5, 11, 17, 23, 29, 28, 27, 26, 25, 24, 18, 12, 6]
+    const NA_BEIRADA = Array.from({ length: 31 }, (_, k) => BEIRADA.includes(k))
+    /** A poeira parada no ar dentro do túnel: cada grão fica entre dois fios, num ponto do caminho. */
+    const POEIRA = (() => { const r = sorteio(23); return Array.from({ length: 150 }, () => ({ a: Math.floor(r() * 30), b: Math.floor(r() * 30), w: r(), f: r() })) })()
+
     /**
-     * Desenha a teia: cada fio é uma linha fraca com uma fileira de quadradinhos em cima (a cada 10 unidades, em
-     * perspectiva: maiores perto da câmera), como os fios da rede, e dados correndo da tela para a rede. cresce vai de
-     * 0 (os fios ainda presos na tela) a 1.
+     * Desenha a teia: cada fio é uma linha (mais fina e mais fraca quanto mais longe, como numa névoa) com uma fileira
+     * de quadradinhos em cima (a cada 10 unidades, em perspectiva), como os fios da rede, e sinais correndo da tela para
+     * a rede. cresce vai de 0 (os fios ainda presos na tela) a 1. dentro (0 a 1) é o quanto a câmera está no túnel: lá
+     * aparecem a luz do fim, as costelas em volta do feixe, a poeira no ar e mais sinais.
      */
-    const desenharTeia = (a: number, cresce: number, s: number) => {
+    const desenharTeia = (a: number, cresce: number, s: number, dentro: number) => {
       ctx.globalCompositeOperation = P.luz
-      const linhas = new Path2D(), dados: [number, number][] = []
-      const quads: [number, number, number, number][] = []
+      const fc = tubo.sCam / tubo.L
+      // a luz no fim do túnel: é para onde os fios vão (o meio da entrada da rede)
+      if (dentro > 0.01) {
+        const fim = proj(tubo.Sx + tubo.dx * tubo.L, tubo.Sy + tubo.dy * tubo.L, tubo.Sz + tubo.dz * tubo.L)
+        if (fim.s) {
+          const tam = (260 + 560 * fc) * (celular ? 0.8 : 1)
+          ctx.globalAlpha = a * dentro
+          ctx.drawImage(P.halo, fim.x - tam / 2, fim.y - tam / 2, tam, tam)
+        }
+      }
+      const faixas = [new Path2D(), new Path2D(), new Path2D(), new Path2D()], rastros = new Path2D()
+      const dados: [number, number, number][] = [], quads: [number, number, number, number][] = []
+      const nivel = (px: number) => px < 0.5 ? 0 : px < 1.1 ? 1 : px < 2.6 ? 2 : 3
+      const sinais = dentro > 0.3 ? 3 : 1
+      const miolo = new Path2D()
       fiosTeia.forEach((c, k) => {
         if (!ns[c.no] && !livre) return
+        // por dentro, os fios do miolo do feixe (os que não são da beirada) ficam só um risco fino: são as paredes que
+        // fazem o túnel, e o meio fica livre para as linhas lidas
+        const deDentro = dentro > 0.01 && !NA_BEIRADA[k]
         // longe (pequeno na tela) os quadradinhos ficam mais espaçados: o espaço na tela é o mesmo e desenha menos
         const meio = noFio(k, 0.5), pxMeio = meio.s ? meio.s * esc * zoom : 1
         const L = compFio(k), passos = Math.max(2, Math.floor((L * cresce) / (pxMeio < 0.9 ? 18 : 10)))
         let antes = noFio(k, 0)
         for (let q = 1; q <= passos; q++) {
           const f = (q / passos) * cresce, P = noFio(k, f)
-          if (antes.s && P.s) { linhas.moveTo(antes.x, antes.y); linhas.lineTo(P.x, P.y) }
-          antes = P
-          if (!P.s) continue
           const px = P.s * esc * zoom
-          if (px > 12) continue
-          quads.push([P.x, P.y, Math.max(1.1, Math.min(9, 1.8 * px)), Math.min(1, px * 1.6)])
+          if (antes.s && P.s) { const fx = deDentro ? miolo : faixas[nivel(px)]; fx.moveTo(antes.x, antes.y); fx.lineTo(P.x, P.y) }
+          antes = P
+          if (!P.s || px > 12) continue
+          // dentro do túnel os de longe somem na névoa (senão todos se juntam num borrão no ponto de fuga)
+          const n = mistura(Math.min(1, px * 1.6), deDentro ? 0 : limitar(px * 0.85 - 0.25), dentro)
+          if (n > 0.02) quads.push([P.x, P.y, Math.max(1.1, Math.min(9, 1.8 * px)), n])
         }
-        const u = ((s * 0.25 + k * 0.137) % 1) * cresce, D = noFio(k, u)
-        if (D.s) dados.push([D.x, D.y])
+        for (let m = 0; m < (deDentro ? 0 : sinais); m++) {
+          const u = ((s * 0.22 + k * 0.137 + m / sinais) % 1) * cresce, D = noFio(k, u), E = noFio(k, Math.max(0, u - 0.03))
+          if (!D.s) continue
+          if (E.s) { rastros.moveTo(E.x, E.y); rastros.lineTo(D.x, D.y) }
+          dados.push([D.x, D.y, Math.max(3.2, Math.min(8, 2.2 * D.s * esc * zoom))])
+        }
       })
-      ctx.globalAlpha = a
-      ctx.strokeStyle = P.teia; ctx.lineWidth = 1; ctx.stroke(linhas)
-      for (let nivel = 1; nivel <= 4; nivel++) {
-        ctx.fillStyle = P.tons[nivel]
+      ctx.lineCap = 'round'
+      ctx.globalAlpha = a * mistura(1, 0.5, dentro); ctx.strokeStyle = P.tunel[1]; ctx.lineWidth = 0.8; ctx.stroke(miolo)
+      faixas.forEach((fx, i) => { ctx.globalAlpha = a; ctx.strokeStyle = P.tunel[i]; ctx.lineWidth = [0.7, 1, 1.5, 2.2][i]; ctx.stroke(fx) })
+      if (dentro > 0.01) {
+        // as costelas: de trecho em trecho, uma volta pela beirada do feixe (o túnel ganha parede)
+        ctx.lineWidth = 1.2
+        for (let r = 1; r <= 30; r++) {
+          const f = r / 31
+          if (f < fc + 0.01) continue
+          const volta = new Path2D()
+          let ok = true, px = 0
+          BEIRADA.forEach((k, i) => { const P = noFio(k, f); if (!P.s) ok = false; px = P.s * esc * zoom; if (i) volta.lineTo(P.x, P.y); else volta.moveTo(P.x, P.y) })
+          if (!ok) continue
+          volta.closePath()
+          ctx.globalAlpha = a * dentro * (1 - suave(6, 12, px))
+          ctx.strokeStyle = P.tunel[nivel(px)]; ctx.stroke(volta)
+        }
+        // a poeira: grãos parados no ar, que passam pela câmera
+        POEIRA.forEach((g, i) => {
+          const f = (g.f + s * 0.006) % 1, A = noFio3(g.a, f), B = noFio3(g.b, f)
+          const Q = proj(mistura(A[0], B[0], g.w), mistura(A[1], B[1], g.w), mistura(A[2], B[2], g.w))
+          if (!Q.s) return
+          const px = Q.s * esc * zoom, lado = Math.max(1, Math.min(6, 1.3 * px))
+          ctx.globalAlpha = a * dentro * 0.75 * limitar(px * 0.8 - 0.1) * (1 - suave(5, 11, px))
+          ctx.fillStyle = P.tons[1 + (i % 3)]
+          ctx.fillRect(Q.x - lado / 2, Q.y - lado / 2, lado, lado)
+        })
+      }
+      for (let nv = 1; nv <= 4; nv++) {
+        ctx.fillStyle = dentro > 0.5 ? P.tunelQuad[nv] : P.tons[nv]
         for (const [x, y, lado, n] of quads) {
-          if (Math.min(4, Math.max(1, Math.ceil(n * 4))) !== nivel) continue
-          ctx.globalAlpha = a * (0.45 + 0.55 * n)
+          if (Math.min(4, Math.max(1, Math.ceil(n * 4))) !== nv) continue
+          ctx.globalAlpha = a * mistura(0.45 + 0.55 * n, n, dentro)
           ctx.fillRect(x - lado / 2, y - lado / 2, lado, lado)
         }
       }
+      ctx.globalAlpha = a * 0.85
+      ctx.strokeStyle = P.vivo; ctx.lineWidth = 1.6; ctx.stroke(rastros)
       ctx.globalAlpha = a
       ctx.fillStyle = P.dado
-      for (const [x, y] of dados) ctx.fillRect(x - 1.8, y - 1.8, 3.6, 3.6)
+      for (const [x, y, lado] of dados) ctx.fillRect(x - lado / 2, y - lado / 2, lado, lado)
+      ctx.lineCap = 'butt'
       ctx.globalAlpha = 1
     }
 
@@ -697,13 +760,15 @@ export function Algoritmo() {
      * direção do fio; um pouco à frente da câmera elas se desfazem em cubinhos (cada pedacinho na sua vez, numa faixa),
      * que seguem pelo fio. fc é onde a câmera está no caminho (0 na tela, 1 na rede); tau o andamento do túnel.
      */
+    const FIOS_DEITADOS = [12, 17, 6, 23, 18, 11, 13, 16, 7, 22, 19, 10]
     const desenharLinhasNaTeia = (a: number, tau: number, fc: number) => {
       if (!docs || !fiosTeia.length) return
       const n = fiosTeia.length - 1, CF = 0.16, FB = 0.12, WS = 0.42
       const corte = Math.min(0.94, fc + CF)
       ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left'
       for (let i = 0; i < NL; i++) {
-        const T = docs.textos[i], k = (i * 7 + 2) % n, L = compFio(k)
+        // no celular, só os fios das laterais: neles o texto anda deitado (nos de cima e de baixo ficaria em pé)
+        const T = docs.textos[i], k = celular ? FIOS_DEITADOS[i % FIOS_DEITADOS.length] : (i * 7 + 2) % n, L = compFio(k)
         // cada linha entra logo atrás da câmera na sua vez e escorrega, cada vez mais devagar, até passar pelo corte
         const vez = i * 0.042, DUR = 0.58, u = (tau - vez) / DUR
         if (u <= 0 || u >= 1.3) continue
@@ -800,7 +865,15 @@ export function Algoritmo() {
       // cena 0 (desm): a câmera vira para a fresta entre os dois cartões, chega perto e atravessa; anda dentro do túnel;
       // sai dele e se afasta. A rede só aparece nessa última parte (oculto vai a 0), vinda de perto (zoom maior) para o
       // tamanho dela
-      const desm = real ? limitar((p - 0.02) / 0.165) : 1, oculto = real ? 1 - suave(SAI + 0.02, 0.96, desm) : 0
+      const desm = real ? limitar((p - 0.02) / 0.165) : 1
+      // dentro: o quanto a câmera está no túnel. Lá, a rede já aparece no fim dele, ainda apagada (é para onde se vai)
+      const dentro = real ? suave(ATRAVESSA, ATRAVESSA + 0.04, desm) * (1 - suave(SAI, SAI + 0.12, desm)) : 0
+      const oculto = real ? 1 - Math.max(suave(SAI + 0.02, 0.96, desm), 0.7 * suave(ATRAVESSA + 0.08, SAI - 0.12, desm)) : 0
+      // no celular, do mergulho até a saída do túnel a cena ocupa a tela inteira: o texto some e o ponto de fuga vai
+      // para o meio dela
+      const imerso = real && celular ? suave(0.04, 0.14, desm) * (1 - suave(0.9, 1, desm)) : 0
+      offY += (H * 0.5 - cy) * imerso
+      por('imerso', imerso.toFixed(3), () => sticky.style.setProperty('--imerso', imerso.toFixed(3)))
       // o ponto da cena onde fica o meio da fresta: começa onde ele está na tela e vai para o meio da rede
       let alvoX = cx, alvoY = cy
       if (real && desm < 1) {
@@ -904,7 +977,11 @@ export function Algoritmo() {
         // saindo: primeiro recua (para longe da rede, ao longo do fio), depois vira e o alvo vai para o meio da rede
         const wGiro = suave(0.15, 1, w), wAlvo = suave(0.35, 1, w)
         const th = thT + dth * wGiro, ph = mistura(phT, pitch, wGiro), D = DT * Math.pow(F / DT, Math.pow(w, 0.6))
-        const Tx = mistura(Sx + dx * (sCam + 6 + DT), 0, wAlvo), Ty = mistura(Sy + dy * (sCam + 6 + DT), 0, wAlvo), Tz = mistura(Sz + dz * (sCam + 6 + DT), 0, wAlvo)
+        // logo depois da fresta a câmera vai para o eixo do funil (o meio da tela → o meio da entrada): as paredes ficam
+        // à mesma distância em volta dela
+        const [mx0, my, mz0] = naTela(Wp, Hp, 0, 0), eixo = suave(0, 0.3, tau) * (1 - sCam / L) * (1 - w)
+        const ex = (mx0 * ca + mz0 * sa - Sx) * eixo, ey = (my - Sy) * eixo, ez = (-mx0 * sa + mz0 * ca - Sz) * eixo
+        const Tx = mistura(Sx + ex + dx * (sCam + 6 + DT), 0, wAlvo), Ty = mistura(Sy + ey + dy * (sCam + 6 + DT), 0, wAlvo), Tz = mistura(Sz + ez + dz * (sCam + 6 + DT), 0, wAlvo)
         const b = base(th, ph)
         Object.assign(cam, { x: Tx - D * b.f[0], y: Ty - D * b.f[1], z: Tz - D * b.f[2], r: b.r, u: b.u, f: b.f, foco: F * esc * mistura(1, zoom, wGiro) })
         livre = true
@@ -975,7 +1052,7 @@ export function Algoritmo() {
         const telaA = suave(SAI, SAI + 0.1, desm) * (1 - suave(0.19, 0.235, p))
         // vista por trás, os fios ficam por cima da tela (presos nela); de frente, saem de trás dela
         const deFrente = telaA > 0.01 && desenharTelaNaRede(real, telaA, ca, sa)
-        if (deFrente) { desenharTeia(teiaA, 1, s); desenharTelaNaRede(real, telaA, ca, sa) } else desenharTeia(teiaA, 1, s)
+        if (deFrente) { desenharTeia(teiaA, 1, s, dentro); desenharTelaNaRede(real, telaA, ca, sa) } else desenharTeia(teiaA, 1, s, dentro)
       }
 
       if (g0 < 0.6) {
@@ -1030,6 +1107,7 @@ export function Algoritmo() {
           ctx.drawImage(P.ponto, nx[i] - tam / 2, ny[i] - tam / 2, tam, tam)
           ctx.globalAlpha = fn
           const lc = 5 * k, rm = (1.8 + 2.4 * a) * k
+          if (P.noFundo) { ctx.fillStyle = P.noFundo; ctx.fillRect(nx[i] - lc, ny[i] - lc, lc * 2, lc * 2) }
           ctx.strokeStyle = P.anel; ctx.strokeRect(nx[i] - lc, ny[i] - lc, lc * 2, lc * 2)
           ctx.fillStyle = a > 0.45 ? P.cheio : P.miolo; ctx.fillRect(nx[i] - rm, ny[i] - rm, rm * 2, rm * 2)
         }
