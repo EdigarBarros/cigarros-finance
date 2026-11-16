@@ -22,24 +22,31 @@ const semAcento = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLo
  * barra de topo; sem ele, é um botão redondo da barra do painel, ao lado do tema.
  * O menu inteiro é `translate="no"`: cada idioma aparece escrito nele mesmo, nunca traduzido.
  */
-export function BotaoIdioma({ flutuante, emLista }: {
+export function BotaoIdioma({ flutuante, emLista, semBotao, aberto: abertoFora, aoMudarAberto }: {
   flutuante?: boolean
   /** Linha do menu "Mais" do celular (jeito simples): o ícone com o nome "Idioma" e o idioma atual, e a lista sobe de baixo. */
   emLista?: boolean
+  /** Só a lista, aberta de fora (o item "Idioma" do menu "Mais opções" do topo no celular). */
+  semBotao?: boolean
+  aberto?: boolean
+  aoMudarAberto?: (aberto: boolean) => void
 }) {
   const codigo = useIdioma()
-  const [aberto, setAberto] = useState(false)
+  const [abertoAqui, setAbertoAqui] = useState(false)
+  const aberto = abertoFora ?? abertoAqui
+  const setAberto = (x: boolean) => (aoMudarAberto ? aoMudarAberto(x) : setAbertoAqui(x))
   const [busca, setBusca] = useState('')
   const campo = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!aberto) return
+    const fechar = () => (aoMudarAberto ? aoMudarAberto(false) : setAbertoAqui(false))
     // no celular o teclado subiria cobrindo a lista: o foco automático na busca é só no computador
     if (matchMedia('(pointer: fine)').matches) campo.current?.focus()
-    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setAberto(false)
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && fechar()
     window.addEventListener('keydown', esc)
     return () => window.removeEventListener('keydown', esc)
-  }, [aberto])
+  }, [aberto]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const lista = useMemo(() => {
     const termo = semAcento(busca.trim())
@@ -59,14 +66,16 @@ export function BotaoIdioma({ flutuante, emLista }: {
   }
 
   return (
-    <div className={`idioma ${flutuante ? 'flutuante' : ''} ${emLista ? 'em-lista' : ''}`} translate="no">
-      <button className="idioma-btn" onClick={() => setAberto(!aberto)} aria-expanded={aberto} aria-haspopup="dialog"
-        aria-label={ROTULO} title={ROTULO}>
-        <IconeTraduzir />
-        {emLista
-          ? <><span className="idioma-nome">Idioma · Language</span><small className="idioma-atual">{idiomaPorCodigo(codigo).nativo}</small></>
-          : <span className="idioma-sigla">{sigla(codigo)}</span>}
-      </button>
+    <div className={`idioma ${flutuante ? 'flutuante' : ''} ${emLista ? 'em-lista' : ''} ${semBotao ? 'solto' : ''}`} translate="no">
+      {!semBotao && (
+        <button className="idioma-btn" onClick={() => setAberto(!aberto)} aria-expanded={aberto} aria-haspopup="dialog"
+          aria-label={ROTULO} title={ROTULO}>
+          <IconeTraduzir />
+          {emLista
+            ? <><span className="idioma-nome">Idioma · Language</span><small className="idioma-atual">{idiomaPorCodigo(codigo).nativo}</small></>
+            : <span className="idioma-sigla">{sigla(codigo)}</span>}
+        </button>
+      )}
       {aberto && (
         <>
           <div className="fora" onClick={() => setAberto(false)} />

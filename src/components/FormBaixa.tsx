@@ -15,13 +15,21 @@ import { Modal } from './ui'
  * "Paguei" / "Recebi" com o valor, o dia e o banco à vista para conferir (a conta de luz muda todo mês). Abre pelo lápis da
  * tela Contas do mês e pelo "Marcar como paga" da Início no jeito simples. A baixa vale só para este mês.
  */
-export function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () => void }) {
+export function FormBaixa({ c, s, aoFechar, conferir }: {
+  c: Ctx; s: SituacaoConta; aoFechar: () => void
+  /**
+   * Aberto pelo "Marcar como paga" da Início do equilibrado: o botão diz "Marcar como paga" e, sem mudar valor, dia nem
+   * banco, a baixa segue o caminho normal (que pergunta se um lançamento que já existe é o pagamento, em vez de lançar de novo).
+   */
+  conferir?: boolean
+}) {
   const entrada = s.conta.tipo === 'entrada'
   const moeda = s.moeda ?? c.perfil.moeda
   const [valor, setValor] = useState(paraCampoMoeda(s.valorNativo, moeda))
   // a cotação combinada da conta (se houver) já vem preenchida; dá para trocar pela que valeu no dia do pagamento
   const [cotacao, setCotacao] = useState<number | null>(s.conta.cotacao ?? null)
-  const [data, setData] = useState(dataDaBaixa(s.conta, c.ano, c.mes))
+  const dataInicial = dataDaBaixa(s.conta, c.ano, c.mes)
+  const [data, setData] = useState(dataInicial)
   // o banco de costume da conta já vem marcado; trocar aqui muda só este pagamento
   const [bancoId, setBancoId] = useState(s.conta.banco_id ?? '')
   const comBancos = c.v.bancos && c.d.bancos.length > 0
@@ -37,7 +45,8 @@ export function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFech
     const taxa = s.moeda ? cotacao ?? c.taxas[s.moeda] : undefined
     if (s.moeda && !taxa) return setErro(tx('Não há cotação de hoje para {0}. Informe a cotação que você pagou.', s.moeda))
     if (s.moeda && cotacaoInvertida(taxa, s.moeda, c.perfil.moeda, c.taxas)) return setErro(tx('A cotação parece estar ao contrário (o valor ficaria centenas de vezes maior ou menor). Toque em “Desvirar” ou confira.'))
-    c.pagarConta(s, { valor: n, data, ...(comBancos ? { banco_id: bancoId || null } : {}), ...(s.moeda && taxa ? { cotacao: taxa } : {}) })
+    if (conferir && !s.moeda && n === s.valorNativo && data === dataInicial && bancoId === (s.conta.banco_id ?? '')) c.pagarConta(s)
+    else c.pagarConta(s, { valor: n, data, ...(comBancos ? { banco_id: bancoId || null } : {}), ...(s.moeda && taxa ? { cotacao: taxa } : {}) })
     aoFechar()
   }
 
@@ -70,7 +79,7 @@ export function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFech
         <div className="form-acoes">
           <span className="espaco" />
           <button type="button" className="btn" onClick={aoFechar}>{tx('Cancelar')}</button>
-          <button type="submit" className="btn primario">{entrada ? tx('Recebi') : tx('Paguei')}</button>
+          <button type="submit" className="btn primario">{conferir ? (entrada ? tx('Marcar como recebida') : tx('Marcar como paga')) : entrada ? tx('Recebi') : tx('Paguei')}</button>
         </div>
       </form>
     </Modal>

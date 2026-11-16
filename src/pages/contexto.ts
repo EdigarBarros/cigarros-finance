@@ -15,7 +15,7 @@ import type { Visao } from '../lib/perfil'
 import type { DadosCartoes } from '../lib/useCartoes'
 import type { ContasFixas } from '../lib/useContasFixas'
 import type { Dados } from '../lib/useDados'
-import type { Categoria, Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
+import type { Categoria, Detalhe, Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 import type { Invest } from '../lib/useInvest'
 import type { Operacao } from '../lib/invest/tipos'
 
@@ -108,6 +108,8 @@ export interface Ctx {
   categoriaDe: (l: Lancamento) => Categoria | undefined
   gerenciarCategorias: () => void
   personalizar: () => void
+  /** Troca o jeito de ver (simples, equilibrado, detalhado) e guarda no perfil. */
+  mudarDetalhe: (d: Detalhe) => void
   irPara: (p: Pagina) => void
   /** Abre a escolha de arquivo da planilha. */
   importar: () => void

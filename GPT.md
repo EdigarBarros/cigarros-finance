@@ -703,6 +703,7 @@ migração. O app Android ainda não recebeu (precisa de versão nova, assinada 
   `scripts/extrato/testar.mjs` 54/54, `scripts/invest/testar.mjs` 27/27, `testar-correcoes.cjs` passou e o novo
   `scripts/app-de-demonstracao/testar-inicio-simples.cjs` 31/31. Lápis da tela Contas do mês conferido à parte.
 - Limite: a alça que esconde a barra de baixo continua com 52×22 px (controle antigo, fora desta mudança).
+### 16/11/2026 — Claude — Início do modo equilibrado reestruturada para o celular
 
 ### 16/11/2026 — Claude — Início do jeito simples: ajustes com as capturas reais
 
@@ -716,4 +717,40 @@ migração. O app Android ainda não recebeu (precisa de versão nova, assinada 
   `divida: { nome, parcelas }` (campo novo, opcional; os outros jeitos não usam).
 - Validação: `npx tsc -b`, lint, build, `scripts/painel/testar.mjs` 20/20 e `testar-inicio-simples.cjs` 33/33 (com caso
   novo de 3 parcelas atrasadas da mesma dívida e a conferência das 2 frases).
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração de banco. O app Android **não** foi gerado nesta
+sessão (sem Android SDK e sem a chave de upload no ambiente): precisa de versão nova com `versionCode` 12.
 
+- Pedido do Edigar: equilibrado que permita entender o mês, ver as contas prioritárias e o que mudou desde o mês anterior,
+  com pouca leitura e página mais curta; detalhes por toque. Simples e detalhado mantêm a organização própria.
+- Ordem nova e regras: `docs/arquitetura-do-painel.md`, seção 4.0.2 (reescrita). Peças em `components/InicioEquilibrado.tsx`
+  (`ResumoEq`, `RegistrarEq`, `ContasEq`, `ComparacaoEq`, `ComoCalculamos`, `PrincipaisGastos`, `OrientacaoEq`,
+  `ResumosCompactos`, `SeletorDoJeito`) e o ramo `equilibrado` de `pages/Inicio.tsx`.
+- Compartilhado com os outros jeitos (de propósito, só cromo do celular): cabeçalho com marca, mês, olho, sino e "Mais
+  opções" (suporte, idioma, tema e configurações foram para o menu; `BotaoIdioma` ganhou o modo `semBotao`) e barra de abas
+  mais baixa e discreta. O botão "+" flutuante só some na Início do equilibrado (lá há o "+ Registrar").
+- Cálculos: nada da previsão mudou. `lib/comparacao.ts` ganhou `destaqueDaComparacao` (uma categoria, na direção do total;
+  queda em "Sem categoria" vira "reclassificação", não economia), `fatiasDoPeriodo` (participação no total, mesma escala) e
+  `faturaEmDobro` (pagamento de fatura lançado como saída junto com compras no cartão). `lib/paraFazer.ts`: a `Tarefa`
+  carrega origem, conta, dívida, nº de parcelas, vencidas e saldo da dívida (a lista do simples não mudou).
+- Divergência investigada (não é erro): o "Saiu" do resumo exclui compras em fatura aberta (estão em "A pagar"); a
+  comparação e os principais gastos contam a compra na data dela. Agora isso aparece escrito no resumo e no "Como calculamos".
+- "Paguei" da Início equilibrada virou "Marcar como paga/recebida" e abre a conferência (`FormBaixa` de `pages/Contas.tsx`,
+  exportada com `conferir`); sem mudar valor nem data, segue o caminho normal (pergunta pelo lançamento já existente).
+- Removida a sugestão "N meses de histórico / Ver mais detalhes" (`lib/adaptacao.ts`); o jeito de ver muda só em
+  "Modo equilibrado · Alterar" (`Ctx.mudarDetalhe`, gravado no perfil).
+- "Abrir em Lançamentos" filtra a categoria (`pedirCategoriaNosLancamentos` em `lib/busca.ts`). Compras no cartão continuam
+  na tela Cartões, não em Lançamentos; a janela de categorias da Início lista as duas.
+- Junção com a Início detalhada do GPT/Codex (#195), publicada antes: o "Falta pagar" das dívidas no equilibrado segue o
+  critério combinado lá (`restanteHoje`, com juros de atraso estimados, e o aviso quando há juros); o "% quitado" usa o valor
+  registrado. O botão "+" flutuante some nas duas Inícios; o menu "Mais opções" mostra "Mais" escrito na detalhada.
+- Junção com a Início do simples (#196): o `FormBaixa` agora mora em `components/FormBaixa.tsx` (com banco); a opção
+  `conferir` foi para lá. O simples mantém o topo dele (`simples-movel`, idioma e suporte no "Mais" de baixo); nos outros
+  jeitos e telas do celular vale o topo com "Mais opções" (⋯). Os dois caminhos levam aos mesmos destinos; unificar fica
+  como decisão do Edigar.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros; avisos antigos), build, `node scripts/painel/testar.mjs` (23 de 23,
+  com 3 casos novos), app de demonstração em 320/360/390/430 px e com zoom de 130%: sem rolagem horizontal, sem valor
+  cortado, sem rolagem interna, último conteúdo acima da barra de abas; 22 checagens de interação no Playwright (registrar,
+  ver cálculo, conferência antes da baixa, comparação, metodologia, categorias e filtro, menu Mais/idioma, valores ocultos,
+  troca e persistência do jeito, mês futuro), sem erro de página.
+- Atenção: `node scripts/traducao/extrair.cjs --limpar …` também extrai textos de todos os arquivos que recebe (mexeu em
+  12 arquivos fora do escopo). Foi desfeito; as traduções novas entraram direto no `traducoes.json`.
