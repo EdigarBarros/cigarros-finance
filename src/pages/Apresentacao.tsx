@@ -336,11 +336,10 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
       // o fundo, a luz e o véu viram os do motor enquanto a câmera chega na sexta face; a legenda sai
       por('fim', suave(1, PARA, p).toFixed(3), (v) => sticky.style.setProperty('--fim', v))
       por('fimt', suave(1, 1.07, p).toFixed(3), (v) => sticky.style.setProperty('--fim-texto', v))
-      // a passagem: com a câmera parada e o motor já preso embaixo (pelo scroll e pelo desenhado, o que estiver atrás:
-      // subindo de volta, o palco volta antes de o motor se soltar), o palco se apaga e fica só o motor
-      const passa = rampa(pPega, FIM, Math.min(p, alvo))
-      por('passa', passa < 0.001 ? '' : (1 - passa).toFixed(3), (v) => { sticky.style.opacity = v })
-      por('vpassa', passa > 0.999 ? 'hidden' : '', (v) => { sticky.style.visibility = v })
+      // a passagem: assim que o motor fica preso embaixo (pela rolagem de verdade, não pela câmera, que anda com atraso),
+      // o palco some de uma vez. As duas imagens são a mesma no mesmo lugar, então a troca não aparece; um apagar aos
+      // poucos aparecia como uma cópia da tela subindo junto com a página quando se rolava rápido
+      por('vpassa', alvo >= pPega ? 'hidden' : '', (v) => { sticky.style.visibility = v })
       if (!pediu && p > 0.5) { pediu = true; pedirConsultor() }
 
       const qual = FIM_CENA.findIndex((f) => p <= f)

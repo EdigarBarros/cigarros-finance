@@ -599,3 +599,22 @@ inicial mudou; sem migração. Precisa de versão nova do app Android só se a p
   `devicePixelRatio` > 1,5 (o canvas do motor é limitado a 1,5 e a face 3D não: pode haver diferença de nitidez, não
   de posição), troca de tema com a página parada na sexta face e celular de verdade (barra do navegador mudando a
   altura). Fluidez do movimento não foi medida.
+
+### 16/11/2026 — Claude — Passagem sem a cópia subindo e a rede do modo claro em preto
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Bug apontado pelo Edigar: na passagem do carrossel para o motor, aparecia uma cópia da tela do Consultor subindo e
+  sumindo enquanto a outra ficava parada. Causa: o palco se apagava aos poucos seguindo o progresso suavizado da câmera
+  (`Math.min(p, alvo)`), que anda atrás da rolagem; rolando rápido, a página já levava o palco para cima enquanto ele
+  ainda estava meio visível. Correção em `src/pages/Apresentacao.tsx`: o palco some de uma vez (`visibility: hidden`)
+  assim que a rolagem de verdade (`alvo`) passa de `pPega`, quando o motor já está preso embaixo com a mesma imagem no
+  mesmo lugar. Testado rolando 180px por quadro nos dois temas: uma tela só em cada quadro.
+- Pedido do Edigar: no modo claro, a rede em azul não agradava; ele quis preto forte, com as cores do app se destacando
+  e tingindo as linhas. `src/pages/Algoritmo.tsx`, paleta do claro: fios, nós, poeira (`TONS_CLARO`), túnel e camadas em
+  tinta preta; os sinais que correm nos fios e os nós acesos levam uma das cores do app (`SINAIS_CLARO`: azul, verde,
+  vermelho, laranja; cada fio e cada nó sempre a mesma), com brilho da mesma cor (`P.pontos`). No túnel os sinais também
+  são coloridos. Sala do claro: traços em cinza-escuro e LEDs acesos verdes. O escuro não mudou (os sinais continuam
+  dourados).
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium no claro (1440×860 e
+  390×844) da abertura até a rede, e a passagem com rolagem rápida nos dois temas, sem erro de página.
