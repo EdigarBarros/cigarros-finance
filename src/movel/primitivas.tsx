@@ -16,6 +16,8 @@ export interface PaginaDoHero {
   valor: string
   sub?: ReactNode
   pilula?: { texto: string; acao: () => void }
+  /** Só com o tom 'cor': a cor do degradê (o cartão de crédito na cor do banco). */
+  cor?: string
 }
 
 /** Número longo encolhe para caber numa linha (R$ 1.234.567,89 não pode quebrar). */
@@ -25,9 +27,14 @@ const tamanhoDoValor = (v: string) => (v.length > 13 ? 34 : v.length > 10 ? 42 :
  * O topo da tela: um número grande por página, e a pessoa desliza para os lados para ver a próxima (com os pontos embaixo).
  * Desliza com a rolagem do próprio navegador (scroll-snap): o gesto é o do sistema e não briga com o "voltar" do Android.
  */
-export function HeroDeslizante({ paginas, aoMudar }: { paginas: PaginaDoHero[]; aoMudar?: (p: PaginaDoHero) => void }) {
+export function HeroDeslizante({ paginas, aoMudar, inicial = 0 }: { paginas: PaginaDoHero[]; aoMudar?: (p: PaginaDoHero) => void; inicial?: number }) {
   const ref = useRef<HTMLDivElement>(null)
-  const [atual, setAtual] = useState(0)
+  const [atual, setAtual] = useState(() => Math.max(0, Math.min(inicial, paginas.length - 1)))
+  // abre na página pedida (o cartão da compra que acabou de ser lançada, o lado "Me devem"…)
+  useEffect(() => {
+    const el = ref.current
+    if (el && atual > 0) el.scrollLeft = atual * el.clientWidth
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const i = Math.min(atual, paginas.length - 1)
   const chave = paginas.map((p) => p.id).join()
   useEffect(() => { if (paginas[i]) aoMudar?.(paginas[i]) }, [i, chave]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -68,7 +75,7 @@ export interface Acao { id: string; icone: string; rotulo: string; acao: () => v
 /** A fileira de botões redondos logo abaixo do topo: o que se faz nesta tela. */
 export function BotoesDeAcao({ acoes, refAcoes }: { acoes: Acao[]; refAcoes?: React.Ref<HTMLDivElement> }) {
   return (
-    <div className="acoes-movel" ref={refAcoes}>
+    <div className="acoes-movel" ref={refAcoes} style={{ '--n': acoes.length } as CSSProperties}>
       {acoes.map((a) => (
         <button key={a.id} onClick={a.acao} data-tour={a.tour}>
           <span className="acoes-movel-circulo" aria-hidden="true"><Icone nome={a.icone} tamanho={24} /></span>

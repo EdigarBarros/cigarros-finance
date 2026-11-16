@@ -15366,5 +15366,81 @@
   "Pagas": {
     "en": "Paid",
     "es": "Pagadas"
+  },
+  "{0} · fatura de {1}": {
+    "en": "{0} · {1} bill",
+    "es": "{0} · factura de {1}"
+  },
+  "{0} · fecha {1}": {
+    "en": "{0} · closes {1}",
+    "es": "{0} · cierra {1}"
+  },
+  "Para renegociar faturas, registrar juros de atraso e usar limite garantido, rode a migração 9 no Supabase.": {
+    "en": "To renegotiate bills, record late interest and use a secured limit, run migration 9 in Supabase.",
+    "es": "Para renegociar facturas, registrar intereses de mora y usar límite garantizado, ejecuta la migración 9 en Supabase."
+  },
+  "Compras desta fatura · {0}": {
+    "en": "Purchases on this bill · {0}",
+    "es": "Compras de esta factura · {0}"
+  },
+  "Nenhuma compra nesta fatura. Toque em “Compra” para lançar uma neste cartão.": {
+    "en": "No purchases on this bill. Tap “Purchase” to record one on this card.",
+    "es": "Ninguna compra en esta factura. Toca “Compra” para registrar una en esta tarjeta."
+  },
+  "Parceladas em andamento · {0}": {
+    "en": "Installments in progress · {0}",
+    "es": "En cuotas en curso · {0}"
+  },
+  "Sem dívidas em {0}": {
+    "en": "Debt-free in {0}",
+    "es": "Sin deudas en {0}"
+  },
+  "Pagar o atrasado": {
+    "en": "Pay what is overdue",
+    "es": "Pagar lo atrasado"
+  },
+  "Ninguém te deve nada registrado.": {
+    "en": "Nobody owes you anything on record.",
+    "es": "Nadie te debe nada registrado."
+  },
+  "{0} já venceu": {
+    "en": "{0} already overdue",
+    "es": "{0} ya venció"
+  },
+  "Tudo recebido em {0}": {
+    "en": "All received by {0}",
+    "es": "Todo recibido en {0}"
+  },
+  "próxima {0} · {1}": {
+    "en": "next {0} · {1}",
+    "es": "próxima {0} · {1}"
+  },
+  "Entra por mês: {0}": {
+    "en": "Comes in per month: {0}",
+    "es": "Entra por mes: {0}"
+  },
+  "Parcelas por mês: {0}": {
+    "en": "Installments per month: {0}",
+    "es": "Cuotas por mes: {0}"
+  },
+  "Aluguel, mesada ou qualquer valor que cai todo mês fica em Contas do mês, como recebimento: o app lembra o dia e você dá baixa com “Recebi”.": {
+    "en": "Rent, allowance or anything that comes in every month goes in Monthly bills as income: the app remembers the day and you mark it with “Received”.",
+    "es": "Alquiler, mesada o cualquier valor que entra cada mes va en Cuentas del mes, como ingreso: la app recuerda el día y lo marcas con “Recibí”."
+  },
+  "Não consegui salvar os juros. Nada foi gravado: tente de novo.": {
+    "en": "Could not save the interest. Nothing was saved: try again.",
+    "es": "No pude guardar los intereses. No se guardó nada: inténtalo de nuevo."
+  },
+  "Não consegui marcar a fatura como paga. Nada foi gravado: tente de novo.": {
+    "en": "Could not mark the bill as paid. Nothing was saved: try again.",
+    "es": "No pude marcar la factura como pagada. No se guardó nada: inténtalo de nuevo."
+  },
+  "Não consegui criar a dívida do acordo. Nada foi gravado: tente de novo.": {
+    "en": "Could not create the debt from the agreement. Nothing was saved: try again.",
+    "es": "No pude crear la deuda del acuerdo. No se guardó nada: inténtalo de nuevo."
+  },
+  "Não consegui marcar a fatura como renegociada. Nada foi gravado: tente de novo.": {
+    "en": "Could not mark the bill as renegotiated. Nothing was saved: try again.",
+    "es": "No pude marcar la factura como renegociada. No se guardó nada: inténtalo de nuevo."
   }
 }

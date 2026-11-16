@@ -648,3 +648,44 @@ export function promessasDe(s: Pick<SituacaoDivida, 'divida' | 'original' | 'tax
   const ativa = s.restante > 0 && (ultima.estado === 'aguardando' || ultima.estado === 'hoje') ? ultima : null
   return { lista, ativa, quebradas: lista.filter((x) => x.estado === 'nao_cumprida').length }
 }
+
+/** Situação resumida de uma dívida, para o selo e para ordenar a lista. */
+export function estadoDaDivida(s: SituacaoDivida, cal: Calendario | null) {
+  if (s.restante <= 0) return { id: 'quitada', texto: tx('Quitada'), ordem: 4 }
+  if (cal?.atrasadas.length) return { id: 'atrasada', texto: cal.atrasadas.length === 1 ? tx('1 atrasada') : tx('{0} atrasadas', cal.atrasadas.length), ordem: 0 }
+  if (cal?.parcelas.some((p) => p.estado === 'vence_hoje')) return { id: 'vence_hoje', texto: tx('Vence hoje'), ordem: 1 }
+  if (cal) return { id: 'em_dia', texto: tx('Em dia'), ordem: 2 }
+  return { id: 'sem_data', texto: tx('Sem data'), ordem: 3 }
+}
+
+/**
+ * Os números de um lado das dívidas (o que você deve ou o que te devem), os mesmos no computador e no celular: cada uma com
+ * o calendário e a situação (atrasadas primeiro), as quitadas no mês, o total de hoje (com os juros de atraso estimados), o
+ * atrasado, o pago no mês, as parcelas por mês, a projeção dos próximos 12 meses, quando tudo acaba e quanto já foi pago.
+ */
+export function resumoDasDividas(lista: SituacaoDivida[], diaRef: string) {
+  const comCal = lista.map((s) => ({ s, cal: calendarioDe(s, diaRef) }))
+  const itens = comCal
+    .filter((x) => !x.s.quitadaNoMes)
+    .map((x) => ({ ...x, estado: estadoDaDivida(x.s, x.cal) }))
+    .sort((a, b) => a.estado.ordem - b.estado.ordem || (b.cal?.emAtraso ?? 0) - (a.cal?.emAtraso ?? 0)
+      || (a.cal?.proxima?.vencimento ?? '9').localeCompare(b.cal?.proxima?.vencimento ?? '9') || b.s.restante - a.s.restante)
+  const quitadas = comCal.filter((x) => x.s.quitadaNoMes)
+  // quanto se deve hoje: com os juros de atraso estimados
+  const falta = lista.reduce((a, s) => a + s.restanteHoje, 0)
+  const registrado = lista.reduce((a, s) => a + s.restante, 0)
+  const inicial = lista.reduce((a, s) => a + s.saldoInicial, 0)
+  const emAtraso = comCal.reduce((a, x) => a + atrasadoHoje(x.s, x.cal), 0)
+  const nAtraso = comCal.reduce((a, x) => a + (x.cal?.atrasadas.length ?? 0), 0)
+  const noMes = lista.reduce((a, s) => a + s.pagoNoMes, 0)
+  const porMes = lista.filter((s) => s.restante > 0).reduce((a, s) => a + (s.divida.valor_parcela ?? 0), 0)
+  const projecao = projecaoMensal(lista, diaRef, 12)
+  // dá para dizer quando acaba só se toda dívida em aberto tem parcela fixa
+  const semParcela = lista.some((s) => s.restante > 0 && !s.quitacao && !calendarioDe(s, diaRef))
+  const fim = semParcela ? null : lista
+    .map((s) => { const cal = calendarioDe(s, diaRef); const u = cal?.parcelas.at(-1)?.vencimento; return u && s.restante > 0 ? [Number(u.slice(0, 4)), Number(u.slice(5, 7))] as [number, number] : s.quitacao })
+    .filter((q): q is [number, number] => Boolean(q))
+    .sort((a, b) => b[0] * 12 + b[1] - (a[0] * 12 + a[1]))[0] ?? null
+  const pct = inicial > 0 ? (inicial - registrado) / inicial : 0
+  return { comCal, itens, quitadas, falta, registrado, inicial, emAtraso, nAtraso, noMes, porMes, projecao, fim, pct }
+}

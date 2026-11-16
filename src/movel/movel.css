@@ -16,6 +16,10 @@
 .movel-fundo i[data-t='guardado'] { background: linear-gradient(180deg, #06142f 0, #123a74 260px, #1d4f93 430px, var(--fundo) 600px); }
 .movel-fundo i[data-t='dividas'] { background: linear-gradient(180deg, #241404 0, #573309 260px, #6f4413 430px, var(--fundo) 600px); }
 .movel-fundo i[data-t='invest'] { background: linear-gradient(180deg, #120a33 0, #302074 260px, #45339a 430px, var(--fundo) 600px); }
+.movel-fundo i[data-t='cor'] {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--tom-cor, #3d4be0) 32%, #04060c) 0, color-mix(in srgb, var(--tom-cor, #3d4be0) 46%, #070b14) 260px,
+    color-mix(in srgb, var(--tom-cor, #3d4be0) 52%, #101828) 430px, var(--fundo) 600px);
+}
 
 /* ---------- topo: foto, busca, mês, olho e sino ---------- */
 .topo-movel {
@@ -84,7 +88,7 @@
 .hero-movel-pontos button.ativo i { background: #fff; transform: scale(1.25); }
 
 /* ---------- a fileira de ações redondas ---------- */
-.acoes-movel { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 14px -4px 22px; }
+.acoes-movel { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 6px; margin: 14px -4px 22px; }
 .acoes-movel button {
   display: grid; justify-items: center; gap: 8px; padding: 0; border: 0; background: none; color: var(--texto);
   font: 600 13.5px var(--fonte); min-width: 0;

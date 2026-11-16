@@ -34,7 +34,7 @@ const dias = (a: string, b: string) => Math.round((Date.parse(`${b}T12:00:00`) -
 const anoMesDe = (iso: string) => ({ ano: Number(iso.slice(0, 4)), mes: Number(iso.slice(5, 7)) })
 
 /** Uma fatura escolhida para pagar, renegociar ou ajeitar. */
-interface Alvo { cartao: CartaoCredito; f: Fatura; pagamento?: FaturaPaga }
+export interface Alvo { cartao: CartaoCredito; f: Fatura; pagamento?: FaturaPaga }
 
 /**
  * Cartões de crédito: a carteira com os cartões desenhados e, do cartão escolhido, a fatura do mês, o limite (com o
@@ -185,7 +185,7 @@ export function Cartoes(c: Ctx) {
  * O que a busca do topo achou nas compras no cartão, em todos os cartões e meses. As compras no cartão não aparecem em
  * Lançamentos, então a busca de lá avisa e traz para cá.
  */
-function ResultadoDaBusca({ c }: { c: Ctx }) {
+export function ResultadoDaBusca({ c }: { c: Ctx }) {
   const hoje = hojeLocal()
   const casa = useMemo(() => criarBusca(c.busca, hoje, hojeLocal(new Date(Date.parse(`${hoje}T12:00:00`) - 86400000))), [c.busca, hoje])
   const achadas = useMemo(() => {
@@ -241,7 +241,7 @@ function ResultadoDaBusca({ c }: { c: Ctx }) {
 }
 
 /** Conta sem cartões: uma pilha de cartões desenhados e o convite para adicionar o primeiro. */
-function SemCartoes({ aoCriar }: { aoCriar: () => void }) {
+export function SemCartoes({ aoCriar }: { aoCriar: () => void }) {
   return (
     <section className="cartao cc-vazio">
       <div className="cc-vazio-pilha" aria-hidden="true">
@@ -264,11 +264,6 @@ function Detalhe({ s, c, destacada, nivel, aoEditar, aoPagar, aoRenegociar }: {
   aoRenegociar: (f: Fatura) => void
 }) {
   const { cartao } = s
-  const historico = c.cartoes.faturasPagas
-    .filter((p) => p.cartao_id === cartao.id)
-    .sort((a, b) => b.ano * 12 + b.mes - (a.ano * 12 + a.mes))
-  const [verTodas, setVerTodas] = useState(false)
-  const faturaDe = (p: FaturaPaga) => faturaDoMes(cartao, c.cartoes.compras, c.cartoes.faturasPagas, p.ano, p.mes)
   const banco = c.d.bancos.find((b) => b.id === cartao.banco_id)
   /** Abre uma parcela da compra para editar ou excluir, esteja ela na fatura que está na tela ou não. */
   const abrirCompra = (p: CompraParcelada) => {
@@ -290,34 +285,7 @@ function Detalhe({ s, c, destacada, nivel, aoEditar, aoPagar, aoRenegociar }: {
         <button className="btn primario" onClick={() => c.novaCompraNoCartao(cartao.id)}><Icone nome="mais" tamanho={16} /> {tx('Nova compra')}</button>
       </header>
 
-      {s.atrasadas.length > 0 && (
-        <section className="cartao ccd-atrasadas">
-          <header className="ccd-atrasadas-cab">
-            <h3 className="ccd-titulo"><Icone nome="sino" tamanho={18} /> {s.atrasadas.length === 1 ? tx('Uma fatura venceu sem pagar') : tx('{0} faturas venceram sem pagar', s.atrasadas.length)}</h3>
-            {s.atrasadas.length > 1 && (
-              <button className="link" onClick={async () => {
-                if (!(await confirmar(tx('Marcar as {0} faturas como pagas no dia do vencimento de cada uma?', s.atrasadas.length), { botao: tx('Marcar como pagas') }))) return
-                for (const f of s.atrasadas) void c.cartoes.pagarFatura({ cartao_id: cartao.id, ano: f.ano, mes: f.mes, valor: f.valor, pago_em: f.vencimento, banco_id: cartao.banco_id, tipo: 'paga', juros: 0 })
-              }}>{tx('Já paguei todas')}</button>
-            )}
-          </header>
-          <ul>
-            {s.atrasadas.map((f) => (
-              <li key={`${f.ano}-${f.mes}`}>
-                <span className="ccd-atrasada-mes">{sufixoMes(f.ano, f.mes)}</span>
-                <span className="ccd-atrasada-texto">
-                  <strong>{fmtValor(f.valor)}</strong>
-                  <small>{dias(f.vencimento, hojeLocal()) === 1 ? tx('venceu há 1 dia, em {0}', fmtDataLonga(f.vencimento)) : tx('venceu há {0} dias, em {1}', dias(f.vencimento, hojeLocal()), fmtDataLonga(f.vencimento))}</small>
-                </span>
-                <span className="ccd-atrasada-acoes">
-                  <button className="btn" onClick={() => aoPagar(f)}><Icone nome="check" tamanho={15} /> {tx('Paguei')}</button>
-                  <button className="btn" onClick={() => aoRenegociar(f)} disabled={c.cartoes.semExtras}><Icone nome="acordo" tamanho={15} /> {tx('Renegociei')}</button>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <FaturasAtrasadas s={s} c={c} aoPagar={aoPagar} aoRenegociar={aoRenegociar} />
 
       <div className={`ccd-linha ${nivel === 'simples' ? 'so-uma' : ''}`}>
         <FaturaDoMes s={s} c={c} aoPagar={aoPagar} aoRenegociar={aoRenegociar} />
@@ -369,42 +337,7 @@ function Detalhe({ s, c, destacada, nivel, aoEditar, aoPagar, aoRenegociar }: {
             <p className="quadro-vazio">{tx('Nenhuma compra parcelada pela frente.')}</p>
           )}
         </section>
-        <section className="cartao">
-          <h3 className="ccd-titulo">{tx('Faturas resolvidas')} <small>{tx('toque para ajeitar')}</small></h3>
-          {historico.length ? (
-            <ul className="ccd-historico">
-              {historico.slice(0, verTodas ? undefined : 8).map((p) => {
-                const f = faturaDe(p)
-                const reneg = renegociada(p)
-                const atraso = pagaComAtraso(p, f.vencimento)
-                return (
-                  <li key={p.id}>
-                    <button onClick={() => (reneg ? aoRenegociar(f) : aoPagar(f, p))}>
-                      <span className={`ccd-hist-icone ${reneg ? 'reneg' : atraso ? 'atraso' : 'ok'}`}>
-                        <Icone nome={reneg ? 'acordo' : atraso ? 'relogio' : 'check'} tamanho={16} />
-                      </span>
-                      <span className="ccd-hist-texto">
-                        <strong>{MESES_NOME[p.mes - 1]}{p.ano !== c.ano ? `/${p.ano}` : ''}</strong>
-                        <small>
-                          {reneg ? tx('renegociada') : tx('paga em {0}', fmtDataCurta(p.pago_em))}
-                          {atraso && ` · ${dias(f.vencimento, p.pago_em) === 1 ? tx('1 dia de atraso') : tx('{0} dias de atraso', dias(f.vencimento, p.pago_em))}`}
-                          {(p.juros ?? 0) > 0 && ` · ${reneg ? tx('acréscimo') : tx('juros')} ${fmtValor(p.juros!)}`}
-                        </small>
-                      </span>
-                      <span className="ccd-hist-valor">{fmtValor(p.valor)}</span>
-                      <Icone nome="lapis" tamanho={15} />
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          ) : (
-            <p className="quadro-vazio">{tx('Quando você marcar uma fatura como paga ou renegociada, ela aparece aqui.')}</p>
-          )}
-          {historico.length > 8 && (
-            <button type="button" className="link" onClick={() => setVerTodas(!verTodas)}>{verTodas ? tx('Ver menos') : tx('Ver todas ({0})', historico.length)}</button>
-          )}
-        </section>
+        <FaturasResolvidas s={s} c={c} aoPagar={aoPagar} aoRenegociar={aoRenegociar} />
       </div>}
 
       {nivel === 'equilibrado' && s.parceladas.length > 0 && (
@@ -425,8 +358,94 @@ function Detalhe({ s, c, destacada, nivel, aoEditar, aoPagar, aoRenegociar }: {
   )
 }
 
+/** As faturas de meses anteriores que venceram sem pagar, cada uma com "Paguei" e "Renegociei" (e "Já paguei todas"). */
+export function FaturasAtrasadas({ s, c, aoPagar, aoRenegociar }: {
+  s: SituacaoCartao; c: Ctx; aoPagar: (f: Fatura) => void; aoRenegociar: (f: Fatura) => void
+}) {
+  if (!s.atrasadas.length) return null
+  const { cartao } = s
+  return (
+    <section className="cartao ccd-atrasadas">
+      <header className="ccd-atrasadas-cab">
+        <h3 className="ccd-titulo"><Icone nome="sino" tamanho={18} /> {s.atrasadas.length === 1 ? tx('Uma fatura venceu sem pagar') : tx('{0} faturas venceram sem pagar', s.atrasadas.length)}</h3>
+        {s.atrasadas.length > 1 && (
+          <button className="link" onClick={async () => {
+            if (!(await confirmar(tx('Marcar as {0} faturas como pagas no dia do vencimento de cada uma?', s.atrasadas.length), { botao: tx('Marcar como pagas') }))) return
+            for (const f of s.atrasadas) void c.cartoes.pagarFatura({ cartao_id: cartao.id, ano: f.ano, mes: f.mes, valor: f.valor, pago_em: f.vencimento, banco_id: cartao.banco_id, tipo: 'paga', juros: 0 })
+          }}>{tx('Já paguei todas')}</button>
+        )}
+      </header>
+      <ul>
+        {s.atrasadas.map((f) => (
+          <li key={`${f.ano}-${f.mes}`}>
+            <span className="ccd-atrasada-mes">{sufixoMes(f.ano, f.mes)}</span>
+            <span className="ccd-atrasada-texto">
+              <strong>{fmtValor(f.valor)}</strong>
+              <small>{dias(f.vencimento, hojeLocal()) === 1 ? tx('venceu há 1 dia, em {0}', fmtDataLonga(f.vencimento)) : tx('venceu há {0} dias, em {1}', dias(f.vencimento, hojeLocal()), fmtDataLonga(f.vencimento))}</small>
+            </span>
+            <span className="ccd-atrasada-acoes">
+              <button className="btn" onClick={() => aoPagar(f)}><Icone nome="check" tamanho={15} /> {tx('Paguei')}</button>
+              <button className="btn" onClick={() => aoRenegociar(f)} disabled={c.cartoes.semExtras}><Icone nome="acordo" tamanho={15} /> {tx('Renegociei')}</button>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+/** As faturas já pagas ou renegociadas deste cartão (toque para ajeitar). */
+export function FaturasResolvidas({ s, c, aoPagar, aoRenegociar }: {
+  s: SituacaoCartao; c: Ctx; aoPagar: (f: Fatura, pagamento?: FaturaPaga) => void; aoRenegociar: (f: Fatura) => void
+}) {
+  const { cartao } = s
+  const historico = c.cartoes.faturasPagas
+    .filter((p) => p.cartao_id === cartao.id)
+    .sort((a, b) => b.ano * 12 + b.mes - (a.ano * 12 + a.mes))
+  const [verTodas, setVerTodas] = useState(false)
+  const faturaDe = (p: FaturaPaga) => faturaDoMes(cartao, c.cartoes.compras, c.cartoes.faturasPagas, p.ano, p.mes)
+  return (
+    <section className="cartao">
+      <h3 className="ccd-titulo">{tx('Faturas resolvidas')} <small>{tx('toque para ajeitar')}</small></h3>
+      {historico.length ? (
+        <ul className="ccd-historico">
+          {historico.slice(0, verTodas ? undefined : 8).map((p) => {
+            const f = faturaDe(p)
+            const reneg = renegociada(p)
+            const atraso = pagaComAtraso(p, f.vencimento)
+            return (
+              <li key={p.id}>
+                <button onClick={() => (reneg ? aoRenegociar(f) : aoPagar(f, p))}>
+                  <span className={`ccd-hist-icone ${reneg ? 'reneg' : atraso ? 'atraso' : 'ok'}`}>
+                    <Icone nome={reneg ? 'acordo' : atraso ? 'relogio' : 'check'} tamanho={16} />
+                  </span>
+                  <span className="ccd-hist-texto">
+                    <strong>{MESES_NOME[p.mes - 1]}{p.ano !== c.ano ? `/${p.ano}` : ''}</strong>
+                    <small>
+                      {reneg ? tx('renegociada') : tx('paga em {0}', fmtDataCurta(p.pago_em))}
+                      {atraso && ` · ${dias(f.vencimento, p.pago_em) === 1 ? tx('1 dia de atraso') : tx('{0} dias de atraso', dias(f.vencimento, p.pago_em))}`}
+                      {(p.juros ?? 0) > 0 && ` · ${reneg ? tx('acréscimo') : tx('juros')} ${fmtValor(p.juros!)}`}
+                    </small>
+                  </span>
+                  <span className="ccd-hist-valor">{fmtValor(p.valor)}</span>
+                  <Icone nome="lapis" tamanho={15} />
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      ) : (
+        <p className="quadro-vazio">{tx('Quando você marcar uma fatura como paga ou renegociada, ela aparece aqui.')}</p>
+      )}
+      {historico.length > 8 && (
+        <button type="button" className="link" onClick={() => setVerTodas(!verTodas)}>{verTodas ? tx('Ver menos') : tx('Ver todas ({0})', historico.length)}</button>
+      )}
+    </section>
+  )
+}
+
 /** A fatura do mês aberto: valor, situação, a linha do tempo (abriu → fecha → vence) e o que dá para fazer com ela. */
-function FaturaDoMes({ s, c, aoPagar, aoRenegociar }: {
+export function FaturaDoMes({ s, c, aoPagar, aoRenegociar }: {
   s: SituacaoCartao; c: Ctx; aoPagar: (f: Fatura, p?: FaturaPaga) => void; aoRenegociar: (f: Fatura) => void
 }) {
   const hoje = hojeLocal()
@@ -521,7 +540,7 @@ function PorCategoria({ s, c }: { s: SituacaoCartao; c: Ctx }) {
 }
 
 /** Anel do limite: usado na cor do cartão, o garantido (caixinha) num arco por fora, e quanto sobra no meio. */
-function Limite({ s, c, aoEditar }: { s: SituacaoCartao; c: Ctx; aoEditar: () => void }) {
+export function Limite({ s, c, aoEditar }: { s: SituacaoCartao; c: Ctx; aoEditar: () => void }) {
   if (s.limiteTotal == null) {
     return (
       <section className="cartao ccd-limite sem">
@@ -574,7 +593,7 @@ function Limite({ s, c, aoEditar }: { s: SituacaoCartao; c: Ctx; aoEditar: () =>
 }
 
 /** Barras da fatura do mês e das 6 seguintes (o que já está comprometido pelas parcelas). */
-function Proximas({ s, c }: { s: SituacaoCartao; c: Ctx }) {
+export function Proximas({ s, c }: { s: SituacaoCartao; c: Ctx }) {
   const todas: Fatura[] = [s, ...s.proximas]
   const maior = Math.max(1, ...todas.map((f) => f.valor))
   const comprometido = centavos(s.proximas.reduce((a, f) => a + f.valor, 0))
@@ -596,7 +615,7 @@ function Proximas({ s, c }: { s: SituacaoCartao; c: Ctx }) {
   )
 }
 
-function Parcelada({ p, aoAbrir }: { p: CompraParcelada; aoAbrir: () => void }) {
+export function Parcelada({ p, aoAbrir }: { p: CompraParcelada; aoAbrir: () => void }) {
   const pagas = p.parcelas - p.restantes
   return (
     <li>
@@ -618,7 +637,7 @@ function Parcelada({ p, aoAbrir }: { p: CompraParcelada; aoAbrir: () => void }) 
   )
 }
 
-function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; aoFechar: () => void }) {
+export function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCredito; aoFechar: () => void }) {
   const [nome, setNome] = useState(cartao?.nome ?? '')
   const [cor, setCor] = useState(cartao?.cor ?? CORES_LIVRES[0])
   const [fecha, setFecha] = useState(cartao ? String(cartao.dia_fechamento) : '')
@@ -804,7 +823,7 @@ const lancamentoDosJuros = (c: Ctx, cartao: CartaoCredito, f: Fatura, juros: num
 })
 
 /** Pagar a fatura (ou ajeitar um pagamento já feito): dia, valor, banco, e juros/multa quando pagou com atraso. */
-function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: () => void }) {
+export function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: () => void }) {
   const { cartao, f, pagamento } = alvo
   const [data, setData] = useState(pagamento?.pago_em ?? hojeLocal())
   const [valor, setValor] = useState(paraCampo(pagamento?.valor ?? f.valor))
@@ -931,7 +950,7 @@ function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: 
  * juros inclusos) e marca a fatura como renegociada; as compras dela deixam de contar nas saídas do mês e o que passa a
  * contar é cada parcela paga da dívida. Aberto numa fatura já renegociada, mostra o acordo e deixa desfazer.
  */
-function FormRenegociar({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: () => void }) {
+export function FormRenegociar({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: () => void }) {
   const { cartao, f } = alvo
   const feita = f.paga && renegociada(f.paga) ? f.paga : null
   const divida = feita?.divida_id ? c.d.dividas.find((x) => x.id === feita.divida_id) : undefined

@@ -2,7 +2,7 @@ import { CenaDividas } from '../components/Vazios'
 import { useState } from 'react'
 import { COR } from '../lib/charts'
 import {
-  aproxDiv, atrasadoHoje, aumentaDivida, calendarioDe, sugeridoParaPagar, fmtDiv, gruposDasPartes, inicioPelaProxima, meDevem, parcelasDe, projecaoMensal, promessasDe, tomarLadoDividas, totalDeParcelas,
+  aproxDiv, atrasadoHoje, aumentaDivida, estadoDaDivida, resumoDasDividas, sugeridoParaPagar, fmtDiv, gruposDasPartes, inicioPelaProxima, meDevem, parcelasDe, promessasDe, tomarLadoDividas, totalDeParcelas,
   type Calendario, type ParcelaDivida, type Promessas, type SituacaoDivida,
 } from '../lib/dividas'
 import { fmtConta, hojeLocal } from '../lib/contasFixas'
@@ -27,7 +27,7 @@ type Lado = 'devo' | 'me_devem'
 const CORES_PESSOA = ['#4c8dff', '#e255a1', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444', '#22c55e', '#0ea5e9']
 const hash = (s: string) => [...s].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7)
 /** A cor de cada dívida nos gráficos: a do banco quando é um banco conhecido; senão uma da paleta, sempre a mesma pelo nome. */
-const corDe = (s: SituacaoDivida) => estiloDoBanco(s.divida.pessoa || s.divida.descricao)?.fundo[0] ?? estiloDoBanco(s.divida.descricao)?.fundo[0]
+export const corDe = (s: SituacaoDivida) => estiloDoBanco(s.divida.pessoa || s.divida.descricao)?.fundo[0] ?? estiloDoBanco(s.divida.descricao)?.fundo[0]
   ?? CORES_PESSOA[hash(s.divida.pessoa || s.divida.descricao) % CORES_PESSOA.length]
 const chaveDoMes = (iso: string) => Number(iso.slice(0, 4)) * 12 + Number(iso.slice(5, 7)) - 1
 
@@ -57,14 +57,7 @@ function linhasDoTempo(lista: { s: SituacaoDivida; cal: Calendario | null }[], d
 
 const mesCurto = (iso: string) => `${noMeioDaFrase(MESES_CURTO[Number(iso.slice(5, 7)) - 1])}/${iso.slice(2, 4)}`
 
-/** Situação resumida de uma dívida, para o selo e para ordenar a lista. */
-function estadoDe(s: SituacaoDivida, cal: Calendario | null) {
-  if (s.restante <= 0) return { id: 'quitada', texto: tx('Quitada'), ordem: 4 }
-  if (cal?.atrasadas.length) return { id: 'atrasada', texto: cal.atrasadas.length === 1 ? tx('1 atrasada') : tx('{0} atrasadas', cal.atrasadas.length), ordem: 0 }
-  if (cal?.parcelas.some((p) => p.estado === 'vence_hoje')) return { id: 'vence_hoje', texto: tx('Vence hoje'), ordem: 1 }
-  if (cal) return { id: 'em_dia', texto: tx('Em dia'), ordem: 2 }
-  return { id: 'sem_data', texto: tx('Sem data'), ordem: 3 }
-}
+const estadoDe = estadoDaDivida
 
 /**
  * Dívidas dos dois lados: o que você deve e o que te devem (venda parcelada, empréstimo que você fez). Cada uma tem o
@@ -79,31 +72,10 @@ export function Dividas(c: Ctx) {
   const [conferindo, setConferindo] = useState(false)
   const recebe = lado === 'me_devem'
   const lista = recebe ? c.aReceber : c.situacao
-  const comCal = lista.map((s) => ({ s, cal: calendarioDe(s, c.diaRef) }))
-  const itens = comCal
-    .filter((x) => !x.s.quitadaNoMes)
-    .map((x) => ({ ...x, estado: estadoDe(x.s, x.cal) }))
-    .sort((a, b) => a.estado.ordem - b.estado.ordem || (b.cal?.emAtraso ?? 0) - (a.cal?.emAtraso ?? 0)
-      || (a.cal?.proxima?.vencimento ?? '9').localeCompare(b.cal?.proxima?.vencimento ?? '9') || b.s.restante - a.s.restante)
-  const quitadas = comCal.filter((x) => x.s.quitadaNoMes)
-  // quanto se deve hoje: com os juros de atraso estimados
-  const falta = lista.reduce((a, s) => a + s.restanteHoje, 0)
-  const registrado = lista.reduce((a, s) => a + s.restante, 0)
-  const inicial = lista.reduce((a, s) => a + s.saldoInicial, 0)
-  const emAtraso = comCal.reduce((a, x) => a + atrasadoHoje(x.s, x.cal), 0)
-  const nAtraso = comCal.reduce((a, x) => a + (x.cal?.atrasadas.length ?? 0), 0)
-  const noMes = lista.reduce((a, s) => a + s.pagoNoMes, 0)
-  const porMes = lista.filter((s) => s.restante > 0).reduce((a, s) => a + (s.divida.valor_parcela ?? 0), 0)
-  const projecao = projecaoMensal(lista, c.diaRef, 12)
-  // dá para dizer quando acaba só se toda dívida em aberto tem parcela fixa
-  const semParcela = lista.some((s) => s.restante > 0 && !s.quitacao && !calendarioDe(s, c.diaRef))
-  const fim = semParcela ? null : lista
-    .map((s) => { const cal = calendarioDe(s, c.diaRef); const u = cal?.parcelas.at(-1)?.vencimento; return u && s.restante > 0 ? [Number(u.slice(0, 4)), Number(u.slice(5, 7))] as [number, number] : s.quitacao })
-    .filter((q): q is [number, number] => Boolean(q))
-    .sort((a, b) => b[0] * 12 + b[1] - (a[0] * 12 + a[1]))[0] ?? null
+  // os números do lado aberto (os mesmos do celular): lib/dividas.ts
+  const { comCal, itens, quitadas, falta, registrado, inicial, emAtraso, nAtraso, noMes, porMes, projecao, fim, pct } = resumoDasDividas(lista, c.diaRef)
   const aberto = comCal.find((x) => x.s.divida.id === aberta)
   const contasEntrada = c.situacoesContas.filter((s) => s.conta.tipo === 'entrada' && s.estado !== 'fora')
-  const pct = inicial > 0 ? (inicial - registrado) / inicial : 0
   const nivel = c.perfil.detalhe
   const composicao = lista.filter((s) => s.restanteHoje > 0)
     .sort((a, b) => b.restanteHoje - a.restanteHoje)
@@ -297,7 +269,7 @@ export function Dividas(c: Ctx) {
   )
 }
 
-function VazioLado({ recebe, aoNova }: { recebe: boolean; aoNova: () => void }) {
+export function VazioLado({ recebe, aoNova }: { recebe: boolean; aoNova: () => void }) {
   return (
     <section className="cartao dv-vazio">
       <CenaDividas recebe={recebe} />
@@ -442,7 +414,7 @@ const ROTULO_PARCELA: Record<ParcelaDivida['estado'], string> = {
  * Tudo de uma dívida: quanto falta, cada parcela com a situação, o que já foi pago ou recebido e o botão de pagar.
  * Dívida sem vencimento pede só "quando vence a próxima?" para montar o calendário.
  */
-function Ficha({ c, s, cal, recebe, conferir, aoFechar, aoEditar }: {
+export function Ficha({ c, s, cal, recebe, conferir, aoFechar, aoEditar }: {
   c: Ctx; s: SituacaoDivida; cal: Calendario | null; recebe: boolean; conferir?: boolean; aoFechar: () => void; aoEditar: () => void
 }) {
   const [proxima, setProxima] = useState('')
