@@ -123,15 +123,23 @@ function ResumoDoMes({ dd, composicao, momento, vazio, nomeMes, previsaoPossivel
 const textoDaAcao = (t: Tarefa) => (t.chave.startsWith('conta:') ? tx('Marcar como paga') : t.chave.startsWith('divida:') ? tx('Registrar pagamento') : t.botao.texto)
 
 function LinhaConta({ t }: { t: Tarefa }) {
+  // várias parcelas da mesma dívida numa linha: o valor é a soma delas (nunca o total da dívida) e o prazo é o da mais antiga
+  const varias = t.divida && t.divida.parcelas > 1 ? t.divida : null
   return (
     <li className={`is-conta ${t.estado}`}>
       <span className="is-conta-topo">
-        <span className="is-conta-nome">{t.titulo}</span>
-        <span className="is-conta-valor">{t.valor}{t.aprox && <small>{t.aprox}</small>}</span>
+        <span className="is-conta-nome">{varias ? varias.nome : t.titulo}</span>
+        <span className="is-conta-valor">
+          {t.valor}
+          {varias && <small>{tx('soma de {0} parcelas', varias.parcelas)}</small>}
+          {t.aprox && <small>{t.aprox}</small>}
+        </span>
       </span>
       <span className="is-conta-prazo">
         {t.estado === 'atrasada' ? <Icone nome="relogio" tamanho={13} /> : <Icone nome="calendario" tamanho={13} />}
-        {t.frase}
+        {varias && t.estado === 'atrasada' && t.diasAtraso
+          ? (t.diasAtraso === 1 ? tx('a mais antiga venceu ontem') : tx('a mais antiga venceu há {0} dias', t.diasAtraso))
+          : t.frase}
       </span>
       <button type="button" className={`btn ${t.chave.startsWith('fatura:') ? '' : 'primario'}`} onClick={t.botao.acao}>{textoDaAcao(t)}</button>
     </li>
@@ -193,6 +201,9 @@ function ContasAPagar({ tarefas, aoAbrirContas }: { tarefas: Tarefa[]; aoAbrirCo
 // ---------------------------------------------------------------------------------------------------------------------
 // Orientação, últimos lançamentos e acessos
 
+/** As duas primeiras frases de um texto (o resto da explicação fica no Consultor). */
+const duasFrases = (texto: string) => texto.split(/(?<=[.!?])\s+(?=\p{Lu})/u).slice(0, 2).join(' ')
+
 /** Só o conselho mais importante (o conselheiro já ordena e só fala com dados que sustentam a frase). */
 function Orientacao({ c }: { c: Ctx }) {
   const o = c.conselhos[0]
@@ -202,7 +213,7 @@ function Orientacao({ c }: { c: Ctx }) {
       <span className="is-orientacao-icone" aria-hidden="true"><Icone nome={o.icone} tamanho={18} /></span>
       <div className="is-orientacao-texto">
         <h2>{o.titulo}</h2>
-        <p>{o.porque}</p>
+        <p>{duasFrases(o.porque)}</p>
       </div>
       <div className="is-orientacao-acoes">
         <button type="button" className="btn" onClick={() => c.irPara(o.destino)}>{o.botao}</button>
