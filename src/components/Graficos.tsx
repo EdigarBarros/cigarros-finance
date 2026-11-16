@@ -715,7 +715,7 @@ export function GraficoEvolucao({ porMes, previsto, indices, visao, modo, moeda,
   const k = indices.indexOf(selecionado)
   const da = <T,>(xs: T[]) => indices.map((i) => xs[i])
   const larga = (d: ReturnType<typeof barra>, cor: string, valores: (number | null)[]) => ({
-    ...d, maxBarThickness: 92, categoryPercentage: 0.8, barPercentage: 0.9, borderRadius: 6,
+    ...d, maxBarThickness: 64, categoryPercentage: 0.8, barPercentage: 0.9, borderRadius: 6,
     balaoCor: cor, balao: !comPrevisao && k >= 0 && valores[k] != null && !valoresEstaoOcultos() ? fmt(valores[k]!) : undefined,
   })
   const dividas = fora ? serie(porMes, (r) => (r.dividaMoeda[moeda] ?? null) as number) : serie(porMes, (r) => r.divida)
@@ -729,8 +729,8 @@ export function GraficoEvolucao({ porMes, previsto, indices, visao, modo, moeda,
       larga(barra(tx('Entradas'), PALETA.entradas, entrou, false, comPrevisao ? 'entrou' : undefined), PALETA.entradas[1], entrou),
       larga(barra(tx('Saídas'), PALETA.saidas, saiu, false, comPrevisao ? 'saiu' : undefined), PALETA.saidas[0], saiu),
       ...(comPrevisao ? [
-        { ...barraPrevista(tx('Vai entrar'), PALETA.entradas[0], da(f.vaiEntrar), false, 'entrou'), maxBarThickness: 92, categoryPercentage: 0.8, barPercentage: 0.9 },
-        { ...barraPrevista(tx('Vai sair'), PALETA.saidas[0], da(f.vaiSair), false, 'saiu'), maxBarThickness: 92, categoryPercentage: 0.8, barPercentage: 0.9 },
+        { ...barraPrevista(tx('Vai entrar'), PALETA.entradas[0], da(f.vaiEntrar), false, 'entrou'), maxBarThickness: 64, categoryPercentage: 0.8, barPercentage: 0.9 },
+        { ...barraPrevista(tx('Vai sair'), PALETA.saidas[0], da(f.vaiSair), false, 'saiu'), maxBarThickness: 64, categoryPercentage: 0.8, barPercentage: 0.9 },
       ] : []),
       ...linhaDivida,
     ]
@@ -759,7 +759,7 @@ export function GraficoEvolucao({ porMes, previsto, indices, visao, modo, moeda,
       ...base.plugins,
       tooltip: { enabled: false },
       filler: { drawTime: 'beforeDatasetsDraw' },
-      legend: { ...base.plugins?.legend, position: 'top', labels: { ...base.plugins?.legend?.labels, pointStyle: 'circle', padding: 26, boxWidth: 13, boxHeight: 13, font: { size: 15, weight: 500 } } },
+      legend: { ...base.plugins?.legend, position: 'top', labels: { ...base.plugins?.legend?.labels, pointStyle: 'circle', padding: 18, boxWidth: 10, boxHeight: 10, font: { size: 12.5, weight: 500 } } },
       destaqueMes: {
         indice: k, largura: 0.94,
         cor: c.tema === 'escuro' ? 'rgba(42, 212, 160, .07)' : 'rgba(13, 159, 119, .06)',
@@ -769,8 +769,8 @@ export function GraficoEvolucao({ porMes, previsto, indices, visao, modo, moeda,
     },
     scales: {
       ...base.scales,
-      y: { ...base.scales?.y, beginAtZero: true, grace: '16%', ticks: { callback: (x: string | number) => (valoresEstaoOcultos() ? '' : compacto.format(Number(x))), maxTicksLimit: 5, padding: 12, font: { size: 14 } } },
-      x: { ...base.scales?.x, ticks: { ...base.scales?.x?.ticks, font: (t: { index: number }) => ({ weight: indices[t.index] === selecionado ? 800 : 500, size: 15 }) } },
+      y: { ...base.scales?.y, beginAtZero: true, grace: '16%', ticks: { callback: (x: string | number) => (valoresEstaoOcultos() ? '' : compacto.format(Number(x))), maxTicksLimit: 5, padding: 10, font: { size: 12 } } },
+      x: { ...base.scales?.x, ticks: { ...base.scales?.x?.ticks, font: (t: { index: number }) => ({ weight: indices[t.index] === selecionado ? 800 : 500, size: 12.5 }) } },
     },
   }
   // a legenda mostra cada série como uma bolinha, como no layout

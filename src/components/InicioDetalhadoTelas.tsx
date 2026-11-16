@@ -28,7 +28,7 @@ const COR_DO_TOM: Record<Tom, string> = { bom: 'var(--entrada)', medio: 'var(--d
 function Titulo({ titulo, sub, icone, lado }: { titulo: string; sub?: ReactNode; icone?: string; lado?: ReactNode }) {
   return (
     <header className="dt-titulo">
-      {icone && <span className="dt-titulo-ic"><Icone nome={icone} tamanho={30} /></span>}
+      {icone && <span className="dt-titulo-ic"><Icone nome={icone} tamanho={22} /></span>}
       <div className="dt-titulo-txt">
         <h2>{titulo}</h2>
         {sub && <p>{sub}</p>}
@@ -39,7 +39,7 @@ function Titulo({ titulo, sub, icone, lado }: { titulo: string; sub?: ReactNode;
 }
 
 /** Quadradinho colorido com o ícone (a cor vem de `cor`, uma variável do tema). */
-const Tile = ({ icone, cor, tamanho = 27 }: { icone: string; cor: string; tamanho?: number }) => (
+const Tile = ({ icone, cor, tamanho = 20 }: { icone: string; cor: string; tamanho?: number }) => (
   <span className="dt-tile" style={{ '--c': cor } as CSSProperties}><Icone nome={icone} tamanho={tamanho} /></span>
 )
 
@@ -85,28 +85,28 @@ export function VisaoGeral({ nome, dd, nomeMes, decorridos, saldoContas, divida,
           {primeiro && <span className="dt-ola">{tx('Olá, {0}', primeiro)}</span>}
           <div className="dt-topo-linha">
             <h1>{tx('Visão geral')}</h1>
-            <button type="button" className="dt-modo" onClick={aoModo}><Icone nome="camadas" tamanho={17} />{tx('Modo detalhado')}</button>
+            <button type="button" className="dt-modo" onClick={aoModo}><Icone nome="camadas" tamanho={13} />{tx('Modo detalhado')}</button>
           </div>
         </div>
-        <button type="button" className="btn primario dt-novo" onClick={aoNovo}><Icone nome="mais" tamanho={20} />{tx('Novo lançamento')}</button>
+        <button type="button" className="btn primario dt-novo" onClick={aoNovo}><Icone nome="mais" tamanho={15} />{tx('Novo lançamento')}</button>
       </header>
 
       <div className="dt-destaques">
         <div className="cartao dt-destaque">
-          <Tile icone={resultado >= 0 ? 'investir' : 'desce'} cor={resultado >= 0 ? 'var(--entrada)' : 'var(--saida)'} tamanho={40} />
+          <Tile icone={resultado >= 0 ? 'investir' : 'desce'} cor={resultado >= 0 ? 'var(--entrada)' : 'var(--saida)'} tamanho={30} />
           <div>
             <span className="dt-rot-maior">{tx('Resultado do mês')}</span>
             <strong className="dt-enorme" style={{ color: resultado >= 0 ? 'var(--entrada)' : 'var(--saida)' }}>{futuro ? tx('Período não iniciado') : fmtValor(resultado)}</strong>
           </div>
         </div>
         <button type="button" className="cartao dt-destaque dt-clicavel" onClick={aoEntender}>
-          <Tile icone="calendario" cor="var(--divida)" tamanho={40} />
+          <Tile icone="calendario" cor="var(--divida)" tamanho={30} />
           <div>
             <span className="dt-rot-maior">{tx('Previsão para o fim do mês')}</span>
             <strong className="dt-grande" style={{ color: fim >= 0 ? 'var(--entrada)' : 'var(--divida)' }}>{fmtValor(fim)}</strong>
             <small className="dt-sub">{tx('Até {0} de {1}', dd.dias, nomeMes)}</small>
           </div>
-          <span className="dt-seta"><Icone nome="dir" tamanho={22} /></span>
+          <span className="dt-seta"><Icone nome="dir" tamanho={16} /></span>
         </button>
       </div>
 
@@ -119,7 +119,7 @@ export function VisaoGeral({ nome, dd, nomeMes, decorridos, saldoContas, divida,
               <strong className="dt-medio" style={k.corValor ? { color: k.corValor } : undefined}>{futuro && (k.chave === 'entrou' || k.chave === 'saiu') ? tx('Período não iniciado') : k.valor}</strong>
               {k.sub && <small className="dt-sub">{k.sub}</small>}
             </div>
-            <span className="dt-seta"><Icone nome="dir" tamanho={20} /></span>
+            <span className="dt-seta"><Icone nome="dir" tamanho={15} /></span>
           </button>
         ))}
       </div>
@@ -165,7 +165,7 @@ function LinhaConta({ t }: { t: Tarefa }) {
           {t.estado === 'vence_hoje' && <small className="hoje">{tx('vence hoje')}</small>}
         </span>
         <strong className={t.entrada ? 'bom' : undefined}>{t.valor}</strong>
-        <Icone nome="dir" tamanho={18} />
+        <Icone nome="dir" tamanho={14} />
       </button>
       {aberta && (
         <Modal titulo={t.titulo} aoFechar={() => setAberta(false)}>
@@ -191,12 +191,12 @@ function ListaContas({ tipo, titulo, itens, visiveis, resto, verTudo }: {
       {itens.length ? (
         <ul>{(todas ? itens : itens.slice(0, visiveis)).map((t) => <LinhaConta key={t.chave} t={t} />)}</ul>
       ) : (
-        <p className="dt-vazio dt-lista-vazia"><Icone nome={tipo === 'atrasadas' ? 'check' : 'calendario'} tamanho={30} />{tipo === 'atrasadas' ? tx('Nenhuma conta atrasada.') : tx('Nenhum vencimento próximo.')}</p>
+        <p className="dt-vazio dt-lista-vazia"><Icone nome={tipo === 'atrasadas' ? 'check' : 'calendario'} tamanho={22} />{tipo === 'atrasadas' ? tx('Nenhuma conta atrasada.') : tx('Nenhum vencimento próximo.')}</p>
       )}
       {mais > 0 && (
         <footer>
           <span>{todas ? '' : resto(mais)}</span>
-          <button type="button" className="dt-link" onClick={() => setTodas(!todas)}>{todas ? tx('Mostrar menos') : verTudo}<Icone nome={todas ? 'cima' : 'dir'} tamanho={18} /></button>
+          <button type="button" className="dt-link" onClick={() => setTodas(!todas)}>{todas ? tx('Mostrar menos') : verTudo}<Icone nome={todas ? 'cima' : 'dir'} tamanho={14} /></button>
         </footer>
       )}
     </div>
@@ -210,8 +210,8 @@ export function ContasPrioritarias({ tarefas, aoOrganizar }: { tarefas: Tarefa[]
     <section id="det-prioridades" className="dt-secao" tabIndex={-1}>
       <Titulo titulo={tx('Contas prioritárias')} sub={tx('O que exige sua atenção agora')} lado={tarefas.length > 0 && (
         <>
-          <span className="dt-pilula ruim"><Icone nome="relogio" tamanho={20} />{atrasadas.length === 1 ? tx('1 atrasada') : tx('{0} atrasadas', atrasadas.length)}</span>
-          <span className="dt-pilula bom"><Icone nome="calendario" tamanho={20} />{proximas.length === 1 ? tx('1 próxima') : tx('{0} próximas', proximas.length)}</span>
+          <span className="dt-pilula ruim"><Icone nome="relogio" tamanho={15} />{atrasadas.length === 1 ? tx('1 atrasada') : tx('{0} atrasadas', atrasadas.length)}</span>
+          <span className="dt-pilula bom"><Icone nome="calendario" tamanho={15} />{proximas.length === 1 ? tx('1 próxima') : tx('{0} próximas', proximas.length)}</span>
         </>
       )} />
       {tarefas.length === 0 ? <p className="cartao dt-vazio-grande">{tx('Nenhuma conta pendente neste período.')}</p> : (
@@ -224,9 +224,9 @@ export function ContasPrioritarias({ tarefas, aoOrganizar }: { tarefas: Tarefa[]
           </div>
           {atrasadas.length > 0 && (
             <div className="cartao dt-faixa">
-              <span className="dt-faixa-ic"><Icone nome="escudo" tamanho={34} /></span>
+              <span className="dt-faixa-ic"><Icone nome="escudo" tamanho={26} /></span>
               <p>{tx('Priorize o que está vencido para evitar mais juros.')}</p>
-              <button type="button" className="btn primario dt-faixa-btn" onClick={aoOrganizar}>{tx('Organizar pagamentos')}<Icone nome="dir" tamanho={18} /></button>
+              <button type="button" className="btn primario dt-faixa-btn" onClick={aoOrganizar}>{tx('Organizar pagamentos')}<Icone nome="dir" tamanho={14} /></button>
             </div>
           )}
         </>
@@ -248,7 +248,7 @@ function LinhaCategoria({ x, cat, maior, rotuloAtual, rotuloAnterior }: {
       <tr className={aberta ? 'aberta' : undefined}>
         <td>
           <button type="button" className="dt-cat" aria-expanded={aberta} onClick={() => setAberta(!aberta)}>
-            <span className="dt-cat-ic" style={{ '--c': cat.cor } as CSSProperties}><IconeCategoria emoji={cat.icone} tamanho={18} /></span>
+            <span className="dt-cat-ic" style={{ '--c': cat.cor } as CSSProperties}><IconeCategoria emoji={cat.icone} tamanho={14} /></span>
             <b>{cat.nome}</b>
           </button>
         </td>
@@ -307,7 +307,7 @@ export function ComparacaoDetalhada({ comp, categorias, atrasadas, aoVerLancamen
       <div className={`cartao dt-cmp-topo${atrasadas > 0 ? '' : ' sem-aviso'}`}>
         <div className="dt-cmp-manchete">
           <div className="dt-cmp-linha1">
-            {tom !== 'igual' && <Tile icone={tom === 'sobe' ? 'investir' : 'desce'} cor={tom === 'sobe' ? 'var(--saida)' : 'var(--entrada)'} tamanho={26} />}
+            {tom !== 'igual' && <Tile icone={tom === 'sobe' ? 'investir' : 'desce'} cor={tom === 'sobe' ? 'var(--saida)' : 'var(--entrada)'} tamanho={20} />}
             <strong className={tom}>{manchete}</strong>
           </div>
           <div className="dt-cmp-valores">
@@ -326,7 +326,7 @@ export function ComparacaoDetalhada({ comp, categorias, atrasadas, aoVerLancamen
         </div>
         {atrasadas > 0 && (
           <div className="dt-cmp-aviso">
-            <Tile icone="info" cor="var(--divida)" tamanho={26} />
+            <Tile icone="info" cor="var(--divida)" tamanho={20} />
             <div>
               <strong>{atrasadas === 1 ? tx('1 conta vencida ainda não foi paga.') : tx('{0} contas vencidas ainda não foram pagas.', atrasadas)}</strong>
               <p>{tx('Ao pagar, esses valores entram na comparação.')}</p>
@@ -350,10 +350,10 @@ export function ComparacaoDetalhada({ comp, categorias, atrasadas, aoVerLancamen
         <footer>
           {mudaram.length > CATEGORIAS ? (
             <button type="button" className="dt-link" onClick={() => setTodas(!todas)}>
-              {todas ? tx('Mostrar menos') : tx('Ver todas as {0} categorias', mudaram.length)}<Icone nome={todas ? 'cima' : 'dir'} tamanho={18} />
+              {todas ? tx('Mostrar menos') : tx('Ver todas as {0} categorias', mudaram.length)}<Icone nome={todas ? 'cima' : 'dir'} tamanho={14} />
             </button>
           ) : <span />}
-          <button type="button" className="dt-link" onClick={aoVerLancamentos}>{tx('Ver lançamentos')}<Icone nome="dir" tamanho={18} /></button>
+          <button type="button" className="dt-link" onClick={aoVerLancamentos}>{tx('Ver lançamentos')}<Icone nome="dir" tamanho={14} /></button>
         </footer>
       </div>
     </section>
@@ -410,7 +410,7 @@ export function Panorama({ pecas, inicial = null, aoAbrir, aoCartoes, aoDividas,
               <span className="dt-peca-cab"><Tile icone={p.icone} cor={p.cor} /><span className="dt-peca-rot">{p.rotulo}</span></span>
               <strong className="dt-peca-valor">{p.valor}</strong>
               {p.progresso !== undefined && <span className="dt-trilho"><b style={{ width: `${Math.min(100, Math.max(0, p.progresso * 100))}%`, background: p.cor }} /></span>}
-              {p.sub && <span className="dt-peca-sub" style={{ '--s': p.subCor ?? p.cor } as CSSProperties}>{p.subIcone && <Icone nome={p.subIcone} tamanho={20} />}{p.sub}</span>}
+              {p.sub && <span className="dt-peca-sub" style={{ '--s': p.subCor ?? p.cor } as CSSProperties}>{p.subIcone && <Icone nome={p.subIcone} tamanho={15} />}{p.sub}</span>}
             </button>
           ))}
         </div>
@@ -419,9 +419,9 @@ export function Panorama({ pecas, inicial = null, aoAbrir, aoCartoes, aoDividas,
       <div className="cartao dt-compromissos">
         <strong>{tx('Visão de compromissos')}</strong>
         <span className="dt-compromissos-sep" aria-hidden="true" />
-        <button type="button" onClick={aoCartoes} style={{ '--c': 'var(--caixa)' } as CSSProperties}><Icone nome="cartao" tamanho={22} />{tx('Cartões e contas')}</button>
-        <button type="button" onClick={aoDividas} style={{ '--c': 'var(--saida)' } as CSSProperties}><Icone nome="divida" tamanho={22} />{tx('Dívidas')}</button>
-        <button type="button" className="dt-link dt-compromissos-ir" onClick={aoGerenciar}>{tx('Gerenciar compromissos')}<Icone nome="seta" tamanho={20} /></button>
+        <button type="button" onClick={aoCartoes} style={{ '--c': 'var(--caixa)' } as CSSProperties}><Icone nome="cartao" tamanho={16} />{tx('Cartões e contas')}</button>
+        <button type="button" onClick={aoDividas} style={{ '--c': 'var(--saida)' } as CSSProperties}><Icone nome="divida" tamanho={16} />{tx('Dívidas')}</button>
+        <button type="button" className="dt-link dt-compromissos-ir" onClick={aoGerenciar}>{tx('Gerenciar compromissos')}<Icone nome="seta" tamanho={15} /></button>
       </div>
     </section>
   )
@@ -467,7 +467,7 @@ function Orientacao({ c, aoIr, aoDispensar }: { c: Conselho; aoIr: (d: Conselho[
   const titulo = c.id === 'sem-reserva' ? tx('Confira a cobertura para imprevistos.') : c.titulo
   return (
     <li className={`dt-orientacao${aberta ? ' aberta' : ''}`} style={{ '--c': COR_GRAVIDADE[c.gravidade] } as CSSProperties}>
-      <Tile icone={c.icone} cor={COR_GRAVIDADE[c.gravidade]} tamanho={26} />
+      <Tile icone={c.icone} cor={COR_GRAVIDADE[c.gravidade]} tamanho={20} />
       <div className="dt-orientacao-txt">
         <span className="dt-selo">{SELO[c.gravidade]()}</span>
         <strong>{titulo}</strong>
@@ -481,7 +481,7 @@ function Orientacao({ c, aoIr, aoDispensar }: { c: Conselho; aoIr: (d: Conselho[
         )}
       </div>
       <button type="button" className="dt-orientacao-abrir" aria-expanded={aberta} aria-label={aberta ? tx('Recolher') : tx('Saber mais')} onClick={() => setAberta(!aberta)}>
-        <Icone nome={aberta ? 'abaixo' : 'dir'} tamanho={22} />
+        <Icone nome={aberta ? 'abaixo' : 'dir'} tamanho={16} />
       </button>
     </li>
   )
@@ -506,8 +506,8 @@ export function Diagnostico({ analise, conselhos, semDados, aoIr, aoDispensar, a
           <Medidor nota={analise.nota} tom={analise.tom} rotulo={analise.rotulo} />
           <small className="dt-saude-base">{tx('Baseado nos registros disponíveis')}</small>
           <hr />
-          <p className="dt-saude-aviso"><Icone nome="info" tamanho={30} />{tx('Saldo em conta não é reserva de emergência.')}</p>
-          <button type="button" className="dt-contorno" onClick={aoAnalise}>{tx('Entenda a pontuação')}<Icone nome="externo" tamanho={20} /></button>
+          <p className="dt-saude-aviso"><Icone nome="info" tamanho={22} />{tx('Saldo em conta não é reserva de emergência.')}</p>
+          <button type="button" className="dt-contorno" onClick={aoAnalise}>{tx('Entenda a pontuação')}<Icone nome="externo" tamanho={15} /></button>
         </div>
         <div className="dt-diag-lado">
           <div className="cartao dt-orientacoes">
@@ -520,7 +520,7 @@ export function Diagnostico({ analise, conselhos, semDados, aoIr, aoDispensar, a
           </div>
           <div className={`cartao dt-como${como ? ' aberto' : ''}`}>
             <button type="button" className="dt-como-cab" aria-expanded={como} onClick={() => setComo(!como)}>
-              <Icone nome="calculadora" tamanho={22} /><span>{tx('Como calculamos a saúde financeira')}</span><Icone nome={como ? 'cima' : 'abaixo'} tamanho={22} />
+              <Icone nome="calculadora" tamanho={16} /><span>{tx('Como calculamos a saúde financeira')}</span><Icone nome={como ? 'cima' : 'abaixo'} tamanho={16} />
             </button>
             {como && (
               <div className="dt-como-corpo">
@@ -532,7 +532,7 @@ export function Diagnostico({ analise, conselhos, semDados, aoIr, aoDispensar, a
                     <small>{p.referencia}</small>
                   </div>
                 ))}
-                <button type="button" className="dt-link" onClick={aoAnalise}>{tx('Abrir a análise completa')}<Icone nome="dir" tamanho={18} /></button>
+                <button type="button" className="dt-link" onClick={aoAnalise}>{tx('Abrir a análise completa')}<Icone nome="dir" tamanho={14} /></button>
               </div>
             )}
           </div>
