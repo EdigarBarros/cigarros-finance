@@ -190,14 +190,15 @@ export function dataDaBaixa(c: ContaFixa, ano: number, mes: number, hoje = hojeL
  * Devolve null quando a conta é em outra moeda e não há cotação nenhuma.
  */
 export function lancamentoDaBaixa(
-  c: ContaFixa, ano: number, mes: number, mudancas: { valor?: number; data?: string; cotacao?: number } = {}, taxas: Taxas = {},
+  c: ContaFixa, ano: number, mes: number, mudancas: { valor?: number; data?: string; cotacao?: number; banco_id?: string | null } = {}, taxas: Taxas = {},
 ): Omit<Lancamento, 'id'> | null {
   const moeda = moedaDaConta(c)
   const nativo = mudancas.valor ?? c.valor
   const base = {
     ano, mes, tipo: c.tipo, descricao: c.descricao,
     data: mudancas.data ?? dataDaBaixa(c, ano, mes),
-    categoria_id: c.categoria_id, banco_id: c.banco_id, conta_fixa_id: c.id,
+    // o banco pode ser trocado só neste pagamento ("Saiu de qual banco?" ao conferir a baixa)
+    categoria_id: c.categoria_id, banco_id: mudancas.banco_id !== undefined ? mudancas.banco_id : c.banco_id, conta_fixa_id: c.id,
   }
   if (!moeda) return { ...base, valor: nativo }
   const taxa = mudancas.cotacao ? cotacaoNoSentidoCerto(mudancas.cotacao, moeda, moedaAtual(), taxas) : taxaDaConta(c, taxas)

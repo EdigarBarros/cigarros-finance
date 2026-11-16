@@ -41,3 +41,16 @@ Para usar o Chromium do sistema em vez do navegador instalado pelo Playwright:
 ```bash
 PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium node scripts/app-de-demonstracao/testar-correcoes.cjs
 ```
+
+## Início do jeito simples no celular
+
+Depois do mesmo build, rode:
+
+```bash
+node scripts/app-de-demonstracao/testar-inicio-simples.cjs
+```
+
+Com a data presa em 16/11/2026 (contas atrasadas e próximas), confere em 320, 360, 390 e 430 px que nada fica cortado,
+fora da tela ou atrás da barra de baixo e que os toques têm 44 px; depois o topo enxuto, o "Mais", a previsão igual ao
+"Ver cálculo", as barras dos gastos por categoria na escala do total, o "Marcar como paga" (grava valor, dia e banco) e a
+troca de modo gravada no perfil.

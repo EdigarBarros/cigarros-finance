@@ -198,32 +198,39 @@ Legenda: **[M]** só aparece se o módulo estiver ligado. **(slot)** é preenchi
 
 ### 4.1 Simples: "está tudo bem? o que eu faço hoje?"
 
-Tela própria, para quem não entende de finanças: poucas palavras, números com nome, nenhum gráfico. Código em
-`components/Simples.tsx` (resumo e "Para fazer"), `lib/paraFazer.ts` (a lista) e `components/simples.css`; o resto
-reaproveita os blocos de `Blocos.tsx`.
+Tela própria, para quem não entende de finanças: pouca leitura, pouca rolagem e uma coisa por vez. Código em
+`components/InicioSimples.tsx` e `components/inicio-simples.css`; a lista de contas sai de `lib/paraFazer.ts` e os
+números da previsão de `lib/previsao.ts` (a mesma conta dos outros jeitos). Reorganizada em 16/11/2026 (antes: um
+cartão de resumo comprido com selo, frase, barra e previsão, "Saúde do seu dinheiro" inteira e os blocos grandes de
+categorias, dívidas, metas e dinheiro guardado).
 
 | # | Zona | Conteúdo |
 | - | --- | --- |
-| 0 | Cabeçalho | "Olá, Nome" e "Resumo de outubro de 2026" (sem os botões de lançar: eles ficam no resumo) |
-| 1 | **Resumo do mês** (cartão grande) | Selo em palavras, do estado do mês (4.0.3): **Mês no azul**, **Mês apertado**, **Contas atrasadas**, **Pede atenção**, **Previsão no vermelho** ou **Mês no vermelho**, com o motivo embaixo do número; tocar no selo abre o "Entender previsão". O número fica na cor do sinal, não na do estado. "Sobrou em outubro" (ou "Faltou") em número grande, a frase de ancoragem e uma barra só: a barra inteira é o que entrou, o que saiu pinta por cima (listrado quando passa do que entrou). Ao lado (embaixo no celular), só no mês atual: **Até o fim do mês**: "Ainda falta pagar" (contas e parcelas do mês), "Ainda falta receber" (contas que entram) e **Deve sobrar / Pode faltar**. Botões **Lançar entrada** e **Lançar saída**, grandes, também no celular |
-| 2 | **Para fazer** [M contas, cartões ou dívidas] | Em grupos: **Precisam de atenção** (já venceu, com há quantos dias) e **Próximos vencimentos**; na ordem do vencimento: contas em aberto ("Paguei"/"Recebi"), faturas a pagar ("Ver fatura") e parcelas de dívida que vencem até o fim do mês ("Pagar"). Dia do vencimento em bloco colorido, selo "N com atraso" no topo, 5 linhas e "Ver mais". Tudo pago: "Tudo em dia neste mês! 🎉" |
-| 4 | **Últimos lançamentos** | 5 linhas |
-| 5 | **Para onde foi o dinheiro** | As 4 maiores categorias em lista com barra; "Ver todas as N categorias" |
-| 6 | **Dívidas** [M] | Só o progresso: anel com quanto já pagou, quanto falta e quando acaba; "Ver dívidas" (as parcelas do mês estão no "Para fazer") |
-| 7 | **Metas** [M] | 2 metas com barra de progresso |
-| 8 | **Dinheiro guardado** [M] | Uma linha por módulo ligado |
-| 8b | Convite para importar e sugestão (se houver) | No fim, em faixa fina, com "x" para dispensar |
-| 9 | Rodapé | "Quer ver gráficos e comparar com o mês passado? **Mudar o jeito de ver**" (abre Configurações → Painel) |
+| 1 | Topo (celular) | Símbolo, seletor de mês com cara de filtro (contorno discreto, sem a pílula verde), olho (ocultar valores) e sino. Idioma, suporte, tema, configurações e o resto do menu da conta vão para o **Mais** da barra de baixo, que no simples sempre aparece. Topo preso com fundo quase opaco (o espaço dele é reservado: é `sticky`) |
+| 2 | Saudação | "Olá, Marina!" em 22 px, só o primeiro nome. Sem "Resumo de outubro de 2026" (o mês está no seletor) |
+| 3 | **Resumo do mês** | **Resultado do mês até hoje** (o que entrou menos o que saiu; nunca "saldo disponível"), valor inteiro em 30–36 px, verde se positivo, vermelho com "−" se negativo (e "Saiu mais do que entrou."), e **Entrou R$ … / Saiu R$ …** lado a lado ou um embaixo do outro. Embaixo, em faixa própria, **Previsão para o fim do mês**: "Pode sobrar R$ …", "Pode faltar R$ …" (sem sinal: "faltar" já diz) ou "Deve fechar perto de zero (R$ …)" quando fica a menos de 2% do movimento do mês (ou de R$ 10); "Conta com o que está registrado e pode mudar." e **Ver cálculo**, que abre o "Entender previsão" (4.0.3). Sem nada a pagar ou receber e sem contas do mês cadastradas: "Ainda não há dados suficientes para prever." e "Cadastrar contas" |
+| 4 | Ações | **Registrar entrada** (seta para cima) e **Registrar saída** (seta para baixo), lado a lado, 52 px. Sem o "+" flutuante nesta tela (ele cobria valores); nas outras telas o "+" continua. Compra no cartão e o resto ficam no formulário, como antes |
+| 5 | **Contas a pagar** [M contas, cartões ou dívidas] | Selo "N atrasadas" (ou "N em aberto"). Até 3 linhas: as atrasadas e, guardando um lugar, a próxima a vencer; com os dois grupos, os títulos **Atrasadas** e **Próximas**. Cada linha: nome (até 2 linhas), valor inteiro, prazo curto ("venceu há 11 dias", "vence amanhã") e a ação real: **Marcar como paga** (conta do mês: abre a conferência do valor, do dia e do banco, `components/FormBaixa.tsx`; se o dinheiro parece já estar num lançamento, pergunta antes, como o "Paguei"), **Ver fatura** (cartão) e **Registrar pagamento** (parcela de dívida: abre o lançamento com o valor da parcela; o valor da linha é o das parcelas do mês, nunca o total da dívida). "Ver todas as contas (N)" abre a lista inteira ali mesmo; "Abrir contas do mês" leva à tela. Recebimentos não são contas a pagar: viram uma linha "N valores a receber" |
+| 6 | Orientação [se houver] | Só o conselho mais importante do conselheiro (que só fala com dados que sustentam a frase): título, 1–2 frases, a ação dele, **Ver análise** (Consultor) e **Agora não**. Sem a nota do consultor, selos e a lista inteira (estão no Consultor). O conselheiro não tem conselho de previsão negativa, então não repete o resumo |
+| 7 | **Últimos lançamentos** | 3: os já feitos, do mais novo para o mais antigo; os de data mais à frente só completam a lista, com a etiqueta **agendado** e o valor apagado. Compra no cartão leva **no cartão**. "Mais N lançamentos agendados para depois de hoje." Tocar abre o lançamento |
+| 8 | Acessos | Uma linha cada: **Gastos por categoria** ("Maior: Moradia (32%)", abre a janela com todas as categorias), **Dívidas** [M] (total que falta pagar), **Metas** [M] (quantas em andamento e quanto guardado), **Contas e investimentos** [M] (só o que foi informado entra no total; "Investimentos não informados" em vez de "R$ 0,00 investido") |
+| 9 | Rodapé | "Modo simples · **Alterar**": janela com os três jeitos e a descrição de cada um; grava no perfil. O app não troca sozinho, e o convite "Mostrar gráficos" (sugestão `detalhe:*`) não aparece no simples |
 
-Computador: o resumo ocupa a largura toda; embaixo, duas colunas: à esquerda Para fazer e Últimos lançamentos, à direita
-Para onde foi, Dívidas, Metas e Dinheiro guardado. Celular: uma coluna, na ordem Para fazer, Para onde foi, Últimos
-lançamentos, Dívidas, Metas, Dinheiro guardado.
+**Gastos por categoria** (janela): o total é tudo o que foi lançado como saída no mês (`r.saidas`, com compras no cartão e
+contas de data mais à frente); cada porcentagem é parte desse total e a barra tem a largura da porcentagem (61% ocupa 61%).
+Todas as categorias aparecem, sem juntar o resto: "Outros" é sempre a categoria de verdade. No mês de hoje, se o total
+difere do "Saiu" do resumo, a janela diz por quê (o resumo conta só o que já saiu do bolso; compra no cartão entra quando
+a fatura é paga).
 
-Casos especiais: mês sem lançamentos mostra "Seu mês" com a frase "Nada lançado em outubro ainda…" e os botões; mês que
-ainda não começou não ganha selo ("Já sai em novembro" + "Novembro ainda não começou…"), sem barra. Conta nova vê as
-mesmas boas-vindas dos outros jeitos.
+Computador: duas colunas (resumo, ações e contas à esquerda; orientação, lançamentos e acessos à direita). Celular: uma
+coluna, nessa mesma ordem. Barra de baixo do simples no celular: mais baixa, item escolhido sem brilho; o fim da página
+tem espaço para ela e para a área segura do aparelho.
 
-Não aparecem: indicadores em cartões, gráficos, comparação com o mês anterior, banner, "Acompanhe mais", página Ano no menu.
+Casos especiais: mês sem lançamentos: "Nada registrado em outubro ainda…"; mês que já passou: "Resultado de outubro" e
+"Ver como o mês fechou"; mês que ainda não começou: "Já lançado para dezembro" (Vai entrar / Vai sair) sem previsão.
+Conta nova vê as mesmas boas-vindas dos outros jeitos. Teste: `scripts/app-de-demonstracao/testar-inicio-simples.cjs`.
+
+Não aparecem: gráficos, comparação com o mês anterior, banner, "Acompanhe mais", página Ano no menu.
 
 ### 4.2 Equilibrado: o painel com comparação e gráficos
 
@@ -600,7 +607,7 @@ Ordem dos itens (computador), por frequência e por pergunta respondida:
 
 Justificativa: o que se usa todo dia primeiro (Início, Lançamentos); depois o que tem prazo, do mais próximo para o mais distante (contas, cartões, dívidas); depois o que se constrói (metas, dinheiro guardado); a retrospectiva por último, porque é a menos urgente.
 
-**Celular (barra de abas, no máximo 5)**: se houver até 5 páginas, aparecem todas. Com mais de 5, aparecem as **4 primeiras** da ordem acima e a quinta aba é **Mais**, que abre uma folha com as demais. A ordem do menu é também a prioridade das abas, então Dívidas e Contas ganham lugar antes de Resumo do ano. "Mais" fica ativa quando a página aberta está dentro dela. Configurações (Personalizar, Importar, Baixar backup, Sair) continuam no menu do topo.
+**Celular (barra de abas, no máximo 5)**: se houver até 5 páginas, aparecem todas. Com mais de 5, aparecem as **4 primeiras** da ordem acima e a quinta aba é **Mais**, que abre uma folha com as demais. A ordem do menu é também a prioridade das abas, então Dívidas e Contas ganham lugar antes de Resumo do ano. "Mais" fica ativa quando a página aberta está dentro dela. Configurações (Personalizar, Importar, Baixar backup, Sair) continuam no menu do topo. No jeito simples, no celular, o topo fica só com o mês, o olho e o sino: a quinta aba é sempre **Mais**, e ela leva, além das páginas que não couberam, o idioma, o suporte, o tema e todo o menu da conta (4.1).
 
 | Quem liga o quê | Abas |
 | --- | --- |

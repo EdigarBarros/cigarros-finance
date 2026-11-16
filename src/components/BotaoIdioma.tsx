@@ -22,7 +22,11 @@ const semAcento = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLo
  * barra de topo; sem ele, é um botão redondo da barra do painel, ao lado do tema.
  * O menu inteiro é `translate="no"`: cada idioma aparece escrito nele mesmo, nunca traduzido.
  */
-export function BotaoIdioma({ flutuante }: { flutuante?: boolean }) {
+export function BotaoIdioma({ flutuante, emLista }: {
+  flutuante?: boolean
+  /** Linha do menu "Mais" do celular (jeito simples): o ícone com o nome "Idioma" e o idioma atual, e a lista sobe de baixo. */
+  emLista?: boolean
+}) {
   const codigo = useIdioma()
   const [aberto, setAberto] = useState(false)
   const [busca, setBusca] = useState('')
@@ -55,11 +59,13 @@ export function BotaoIdioma({ flutuante }: { flutuante?: boolean }) {
   }
 
   return (
-    <div className={`idioma ${flutuante ? 'flutuante' : ''}`} translate="no">
+    <div className={`idioma ${flutuante ? 'flutuante' : ''} ${emLista ? 'em-lista' : ''}`} translate="no">
       <button className="idioma-btn" onClick={() => setAberto(!aberto)} aria-expanded={aberto} aria-haspopup="dialog"
         aria-label={ROTULO} title={ROTULO}>
         <IconeTraduzir />
-        <span className="idioma-sigla">{sigla(codigo)}</span>
+        {emLista
+          ? <><span className="idioma-nome">Idioma · Language</span><small className="idioma-atual">{idiomaPorCodigo(codigo).nativo}</small></>
+          : <span className="idioma-sigla">{sigla(codigo)}</span>}
       </button>
       {aberto && (
         <>

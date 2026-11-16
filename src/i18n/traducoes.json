@@ -14066,5 +14066,221 @@
   "devem sobrar neste mês": {
     "en": "should be left this month",
     "es": "deberían sobrar este mes"
+  },
+  "Resultado do mês até hoje": {
+    "en": "Month's result so far",
+    "es": "Resultado del mes hasta hoy"
+  },
+  "Já lançado para {0}": {
+    "en": "Already recorded for {0}",
+    "es": "Ya registrado para {0}"
+  },
+  "Resultado de {0}": {
+    "en": "Result for {0}",
+    "es": "Resultado de {0}"
+  },
+  "Resumo do mês": {
+    "en": "Month summary",
+    "es": "Resumen del mes"
+  },
+  "Nada registrado em {0} ainda. Comece registrando uma entrada ou uma saída.": {
+    "en": "Nothing recorded in {0} yet. Start by recording money in or money out.",
+    "es": "Nada registrado en {0} todavía. Empieza registrando una entrada o una salida."
+  },
+  "Já há mais saídas lançadas do que entradas.": {
+    "en": "There is already more money out recorded than money in.",
+    "es": "Ya hay más salidas registradas que entradas."
+  },
+  "Saiu mais do que entrou.": {
+    "en": "More went out than came in.",
+    "es": "Salió más de lo que entró."
+  },
+  "Previsão para o fim do mês": {
+    "en": "Forecast for the end of the month",
+    "es": "Previsión para fin de mes"
+  },
+  "Deve fechar perto de zero": {
+    "en": "Should end close to zero",
+    "es": "Debería cerrar cerca de cero"
+  },
+  "Pode sobrar": {
+    "en": "You may have left",
+    "es": "Puede sobrar"
+  },
+  "Conta com o que está registrado e pode mudar.": {
+    "en": "Based on what is recorded; it may change.",
+    "es": "Se basa en lo registrado y puede cambiar."
+  },
+  "Ver cálculo": {
+    "en": "See calculation",
+    "es": "Ver cálculo"
+  },
+  "Ainda não há dados suficientes para prever.": {
+    "en": "There isn't enough data to forecast yet.",
+    "es": "Todavía no hay datos suficientes para prever."
+  },
+  "Cadastre o que entra e sai todo mês (salário, aluguel, contas) para o app prever.": {
+    "en": "Add what comes in and goes out every month (salary, rent, bills) so the app can forecast.",
+    "es": "Registra lo que entra y sale cada mes (sueldo, alquiler, cuentas) para que la app pueda prever."
+  },
+  "Cadastrar contas": {
+    "en": "Add bills",
+    "es": "Registrar cuentas"
+  },
+  "Ver como o mês fechou": {
+    "en": "See how the month ended",
+    "es": "Ver cómo cerró el mes"
+  },
+  "O mês ainda não começou: isto é o que já está lançado para ele, como parcelas e compras no cartão.": {
+    "en": "The month hasn't started yet: this is what is already recorded for it, like installments and card purchases.",
+    "es": "El mes aún no empezó: esto es lo que ya está registrado para él, como cuotas y compras con tarjeta."
+  },
+  "Registrar pagamento": {
+    "en": "Record payment",
+    "es": "Registrar pago"
+  },
+  "Contas a pagar": {
+    "en": "Bills to pay",
+    "es": "Cuentas por pagar"
+  },
+  "Nenhuma conta pendente neste mês.": {
+    "en": "No pending bills this month.",
+    "es": "Ninguna cuenta pendiente este mes."
+  },
+  "Próximas": {
+    "en": "Upcoming",
+    "es": "Próximas"
+  },
+  "Ver todas as contas ({0})": {
+    "en": "See all bills ({0})",
+    "es": "Ver todas las cuentas ({0})"
+  },
+  "Abrir contas do mês": {
+    "en": "Open monthly bills",
+    "es": "Abrir cuentas del mes"
+  },
+  "1 valor a receber": {
+    "en": "1 amount to receive",
+    "es": "1 monto por cobrar"
+  },
+  "{0} valores a receber": {
+    "en": "{0} amounts to receive",
+    "es": "{0} montos por cobrar"
+  },
+  "Orientação": {
+    "en": "Guidance",
+    "es": "Orientación"
+  },
+  "agendado": {
+    "en": "scheduled",
+    "es": "programado"
+  },
+  "no cartão": {
+    "en": "on card",
+    "es": "con tarjeta"
+  },
+  "Mais 1 lançamento agendado para depois de hoje.": {
+    "en": "1 more entry scheduled for after today.",
+    "es": "1 registro más programado para después de hoy."
+  },
+  "Mais {0} lançamentos agendados para depois de hoje.": {
+    "en": "{0} more entries scheduled for after today.",
+    "es": "{0} registros más programados para después de hoy."
+  },
+  "Gastos por categoria": {
+    "en": "Spending by category",
+    "es": "Gastos por categoría"
+  },
+  "Maior: {0} ({1}%)": {
+    "en": "Largest: {0} ({1}%)",
+    "es": "Mayor: {0} ({1}%)"
+  },
+  "Total que falta pagar · 1 dívida": {
+    "en": "Total left to pay · 1 debt",
+    "es": "Total por pagar · 1 deuda"
+  },
+  "Total que falta pagar · {0} dívidas": {
+    "en": "Total left to pay · {0} debts",
+    "es": "Total por pagar · {0} deudas"
+  },
+  "Crie uma meta para juntar dinheiro": {
+    "en": "Create a goal to save money",
+    "es": "Crea una meta para ahorrar dinero"
+  },
+  "{0} em andamento · {1} guardado": {
+    "en": "{0} in progress · {1} saved",
+    "es": "{0} en curso · {1} ahorrado"
+  },
+  "Todas batidas · {0} guardado": {
+    "en": "All reached · {0} saved",
+    "es": "Todas cumplidas · {0} ahorrado"
+  },
+  "Saldo nas contas {0}": {
+    "en": "Account balances {0}",
+    "es": "Saldo en cuentas {0}"
+  },
+  "Saldos das contas não informados": {
+    "en": "Account balances not provided",
+    "es": "Saldos de cuentas no informados"
+  },
+  "Investido {0}": {
+    "en": "Invested {0}",
+    "es": "Invertido {0}"
+  },
+  "Investimentos não informados": {
+    "en": "Investments not provided",
+    "es": "Inversiones no informadas"
+  },
+  "Outras moedas {0}": {
+    "en": "Other currencies {0}",
+    "es": "Otras monedas {0}"
+  },
+  "valores de {0}": {
+    "en": "values from {0}",
+    "es": "valores de {0}"
+  },
+  "Contas e investimentos": {
+    "en": "Accounts and investments",
+    "es": "Cuentas e inversiones"
+  },
+  "Mais informações": {
+    "en": "More information",
+    "es": "Más información"
+  },
+  "Tudo o que foi lançado como saída em {0}": {
+    "en": "Everything recorded as money out in {0}",
+    "es": "Todo lo registrado como salida en {0}"
+  },
+  "Inclui compras no cartão e contas com data mais à frente no mês. Cada porcentagem é a parte deste total, e a barra tem o mesmo tamanho da porcentagem.": {
+    "en": "Includes card purchases and bills dated later in the month. Each percentage is a share of this total, and each bar is the same size as its percentage.",
+    "es": "Incluye compras con tarjeta y cuentas con fecha más adelante en el mes. Cada porcentaje es una parte de este total, y la barra tiene el mismo tamaño que el porcentaje."
+  },
+  "No resumo, “Saiu” mostra {0}: ali entra só o que já saiu do bolso até hoje, e a compra no cartão entra quando a fatura é paga.": {
+    "en": "In the summary, “Out” shows {0}: it only counts money that has actually left your pocket so far, and card purchases count when the bill is paid.",
+    "es": "En el resumen, “Salió” muestra {0}: solo cuenta lo que ya salió del bolsillo hasta hoy, y la compra con tarjeta cuenta cuando se paga el resumen."
+  },
+  "Dá para trocar quando quiser. O app não muda o jeito sozinho.": {
+    "en": "You can change it anytime. The app never changes it on its own.",
+    "es": "Puedes cambiarlo cuando quieras. La app no lo cambia sola."
+  },
+  "Olá!": {
+    "en": "Hi!",
+    "es": "¡Hola!"
+  },
+  "Registrar entrada": {
+    "en": "Record money in",
+    "es": "Registrar entrada"
+  },
+  "Registrar saída": {
+    "en": "Record money out",
+    "es": "Registrar salida"
+  },
+  "Modo simples": {
+    "en": "Simple mode",
+    "es": "Modo simple"
+  },
+  "Alterar": {
+    "en": "Change",
+    "es": "Cambiar"
   }
 }

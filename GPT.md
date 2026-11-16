@@ -637,3 +637,26 @@ inicial mudou; sem migração. Precisa de versão nova do app Android só se a p
 - O escuro não mudou.
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium no claro (1440×860
   e 390×844) da abertura até a tela final, e a passagem do carrossel, sem erro de página.
+
+### 16/11/2026 — Claude — Início do jeito simples reorganizada para o celular
+
+**Estado:** implementado e validado localmente; publicação no site registrada na conversa da sessão (PR e deploy). Sem
+migração. O app Android ainda não recebeu (precisa de versão nova, assinada pelo dono).
+
+- O que mudou: a Início do jeito simples virou uma tela própria (`src/components/InicioSimples.tsx`,
+  `src/components/inicio-simples.css`), na ordem: saudação curta, resultado do mês até hoje com Entrou/Saiu, previsão
+  para o fim do mês ("Pode sobrar/Pode faltar", "Ver cálculo"), Registrar entrada/saída, Contas a pagar (até 3, com
+  lugar guardado para a próxima a vencer), uma orientação, 3 últimos lançamentos (agendados marcados) e acessos curtos
+  (gastos por categoria em janela, dívidas, metas, contas e investimentos). Rodapé "Modo simples · Alterar".
+- Topo do simples no celular (`Painel.tsx`, classe `simples-movel`; CSS no fim de `src/index.css`): só mês, olho e sino;
+  idioma (`BotaoIdioma emLista`), suporte, tema e menu da conta foram para o "Mais". Sem o "+" na Início do simples.
+- "Paguei" com outro valor/dia saiu de `pages/Contas.tsx` para `components/FormBaixa.tsx` e ganhou a escolha do banco
+  (`lancamentoDaBaixa` aceita `banco_id`). A Início usa o mesmo formulário no "Marcar como paga".
+- Cálculos não mudaram: o resumo usa `comporPrevisao` (a mesma conta do "Ver cálculo"); o total das categorias é
+  `r.saidas`, e a janela explica por que difere do "Saiu" do resumo no mês de hoje.
+- Equilibrado e detalhado: sem mudança visível (o `BlocoParaFazer` continua em `Simples.tsx`; o `ResumoSimples` saiu).
+- Validação: `npx tsc -b`, `npm run lint` (só avisos antigos), build, `scripts/painel/testar.mjs` 20/20,
+  `scripts/extrato/testar.mjs` 54/54, `scripts/invest/testar.mjs` 27/27, `testar-correcoes.cjs` passou e o novo
+  `scripts/app-de-demonstracao/testar-inicio-simples.cjs` 31/31. Lápis da tela Contas do mês conferido à parte.
+- Limite: a alça que esconde a barra de baixo continua com 52×22 px (controle antigo, fora desta mudança).
+
