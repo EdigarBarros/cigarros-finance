@@ -20,7 +20,7 @@ const CATEGORIAS_DETALHADO = 5
 
 const comSinal = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${fmtValor(Math.abs(n))}`
 
-function Lancs({ titulo, lancs }: { titulo: string; lancs: Lancamento[] }) {
+export function Lancs({ titulo, lancs }: { titulo: string; lancs: Lancamento[] }) {
   const [todos, setTodos] = useState(false)
   return (
     <div className="cmp-lado">

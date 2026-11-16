@@ -145,28 +145,25 @@ anterior (`Ctx.lancsComparar`). Com conta vencida sem baixa, o bloco avisa que e
 mostra os botões de lançar (resumo do simples, boas-vindas, "Comece por aqui"). O fim da página tem espaço para o "+" e a
 barra de abas, somando a área do gesto do iPhone; `scroll-padding` faz o que é rolado até a vista parar entre as barras.
 
-**Arrumação** (`lib/arrumacao.ts`, só no aparelho): o gráfico do detalhado recolhido e a peça do mosaico que abre sozinha.
+**Arrumação** (`lib/arrumacao.ts`, só no aparelho): a peça do panorama do detalhado que abre sozinha.
 Se a pessoa abre a mesma peça em 3 dias diferentes em 2 semanas, o app **pergunta** se ela deve abrir ao entrar (nada muda
 sem o sim); "Restaurar a arrumação original" desfaz tudo. Guarda só os dias de abertura dos últimos 30 dias, no navegador.
 
-### 4.0.1 Detalhado: o mês em gráfico e o mosaico (`components/InicioDetalhado.tsx`)
+### 4.0.1 Detalhado: as seções do layout do OpusCash (`components/InicioDetalhadoTelas.tsx`, `components/EvolucaoDetalhada.tsx`)
 
-Para o detalhado não virar uma parede de cartões e frases, a tela se lê olhando: ícone, número e cor.
+No computador e no tablet (o celular tem a sua Início, em `src/movel`), seis seções, uma embaixo da outra, cada uma com
+título grande e sem botão de recolher:
 
-| Parte | O que mostra |
+| Seção | O que mostra |
 | --- | --- |
-| Cartão do mês | **Sobrou/Faltou até hoje** em número grande, **Resultado previsto no dia 30** (com "Entender previsão"), a pílula do estado do mês, a linha **Dívidas: hoje → no dia 30** e, embaixo, o **gráfico do ano mês a mês** (`GraficoAnual`, o mesmo do Resumo do ano: entrou e saiu em barras, guardado, dívidas e investido em linhas, "Já aconteceu / O que vem aí" e o quadro do mês tocado). Ele substituiu o antigo gráfico do mês dia a dia (`GraficoDoMes`), que ficava quase vazio no começo do mês. O gráfico pode ser recolhido (a escolha fica no aparelho); no celular ele vem num cartão próprio depois dos números e do "o que vem aí", para não empurrar o resumo para baixo |
-| Números | **Entrou até hoje**, **Saiu até hoje** e **Gasto por dia** ("o que saiu ÷ N dias", escrito embaixo do número) |
-| O que vem aí | **Precisam de atenção** (até 2 atrasadas, com há quantos dias, e "e mais N atrasadas") e **O que vem aí** (até 3 próximas), de `tarefasDoMes` |
-| Mosaico | Peças **Gastos do mês, Contas do mês, Cartões, Dívidas, Dinheiro guardado, Metas** (só as ligadas), cada uma com ícone, número e bolinha: verde tudo certo, amarela pede atenção, vermelha precisa de você. Tocar abre o bloco completo logo abaixo (Gastos abre categorias e lançamentos), tocar de novo fecha |
-| Saúde do seu dinheiro | Igual aos outros jeitos |
+| Visão geral | "Olá, {nome}", **Visão geral**, a pílula "Modo detalhado" (abre o Personalizar) e "+ Novo lançamento". **Resultado do mês** (entrou − saiu até hoje) e **Previsão para o fim do mês** (abre o "Entender"); seis cartões que levam a algum lugar: Entradas e Saídas realizadas (Lançamentos), Ainda a receber e Ainda a pagar (Entender), Saldo nas contas (Dinheiro guardado) e Saldo devedor com os juros estimados (Dívidas); **Fluxo de {mês}** em barras deitadas e a Média diária de saídas |
+| Contas prioritárias | Pílulas "N atrasadas" e "N próximas"; dois cartões, **Atrasadas** (2, com "N dias em atraso") e **Próximos vencimentos** (3), de `tarefasDoMes`; "+ N" e "Ver…" abrem o resto ali mesmo; tocar numa conta abre a janela com a ação dela. Com atrasadas, a faixa "Priorize o que está vencido" e "Organizar pagamentos" (Contas do mês) |
+| Evolução financeira | Movimentação ou Saldos, Realizado ou Previsto, últimos 3/6/12 meses e a moeda (só com outra moeda no ano). `GraficoEvolucao` (`Graficos.tsx`): barras largas e a **linha da dívida no mesmo eixo**, passando entre as barras, para ver se o que se deve está acima ou abaixo do que entra e sai. O mês escolhido ganha moldura e balões com os valores (plugins `destaqueMes` e `baloes`, `lib/charts.ts`); tocar noutro mês troca o resumo de baixo (Entradas, Saídas, Resultado, Saldo nas contas e Saldo devedor). Saldos de meses que ainda não chegaram ficam em branco |
+| Comparação entre períodos | O mesmo `compararGastos` de `lib/comparacao.ts`: "Gastos X% maiores/menores", os dois totais, a variação em dinheiro, as duas barras e, no mês de hoje, o aviso das contas vencidas sem baixa. Tabela **Onde seus gastos mudaram** (5 categorias, "Ver todas"); tocar numa categoria abre os lançamentos dos dois lados |
+| Dívidas, contas, cartões e metas | Seis cartões (Gastos do mês com a barra de quanto do que entrou já saiu, Contas cadastradas a pagar, Cartões, Dívidas, Saldo nas contas, Metas), cada um com ícone, número e uma linha com ícone colorido. Tocar abre o bloco completo logo abaixo (Gastos abre categorias e lançamentos). Faixa **Visão de compromissos**: Cartões, Dívidas e Contas do mês |
+| Diagnóstico financeiro | Medidor da nota em arco (`lib/analise.ts`), o rótulo, o aviso "Saldo em conta não é reserva de emergência" e "Entenda a pontuação" (aba Consultor); as orientações do conselheiro com selo, título e o link para a tela certa (a seta abre o porquê e o "Agora não"); "Como calculamos a saúde financeira" com os pilares |
 
-Bolinhas (com legenda em palavras embaixo do mosaico): Gastos compara com o **mesmo período** do mês anterior (`lib/comparacao.ts`; até igual: verde; até 20% a mais: amarela; mais: vermelha).
-Contas e Cartões: vermelha com algo atrasado, amarela vencendo em até 3 dias. Dívidas: vermelha com parcela atrasada.
-
-Arrumação (por largura do conteúdo, com container query): **celular** uma coluna e peças 2 por linha; **tablet** gráfico na
-largura toda e peças 3 por linha; **computador** gráfico à esquerda, números e "o que vem aí" à direita, peças numa fileira só.
-O **Fluxo financeiro** de 6 meses, o banner e o "Acompanhe mais" saíram do detalhado: o fluxo do ano fica no Resumo do ano.
+Arrumação por largura do conteúdo (container query): 3 colunas a partir de 1100 px, 2 a partir de 700 px.
 
 Menos texto, mais sinais: minilinha com os valores reais dos últimos 6 meses nos indicadores (Sobrou, Entrou, Saiu e, no
 detalhado, Gasto médio por dia e Maior saída; passando o ponteiro ou o dedo aparece o valor de cada mês), anel com quanto das dívidas já foi

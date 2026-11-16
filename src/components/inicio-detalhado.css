@@ -1,185 +1,317 @@
-/* Início no jeito detalhado: o mês em gráfico em cima, o mosaico de peças embaixo.
-   Celular: uma coluna. Tablet: o gráfico na largura toda e as peças em 3 colunas. Computador: gráfico à esquerda,
-   números e "o que vem aí" à direita, peças numa fileira só. */
-.inicio-det { container-type: inline-size; }
-.idet-cima { display: grid; gap: 16px; }
-.idet-lado { display: grid; gap: 16px; align-content: start; min-width: 0; }
-.idet-rot { display: block; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--texto-2); }
-
-/* o mês */
-.idet-mes { display: grid; gap: 12px; }
-.idet-mes-cab { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
-.idet-grande { display: block; margin-top: 4px; font-family: var(--fonte-numeros); font-size: 34px; font-weight: 750; letter-spacing: -.035em; line-height: 1.05; font-variant-numeric: tabular-nums; }
-.idet-grande.bom { color: var(--entrada); }
-.idet-grande.ruim, .idet-prev strong.ruim { color: var(--saida); }
-.idet-prev { text-align: right; }
-.idet-divida { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 6px; font-size: 13.5px; color: var(--texto-2); }
-.idet-divida i { width: 9px; height: 9px; border-radius: 50%; background: var(--divida); margin-right: 2px; }
-.idet-divida-fim { white-space: nowrap; }
-.idet-divida b { font-family: var(--fonte-numeros); color: var(--texto); font-variant-numeric: tabular-nums; }
-.idet-prev strong { display: block; margin-top: 4px; font-family: var(--fonte-numeros); font-size: 19px; font-weight: 700; color: var(--divida); font-variant-numeric: tabular-nums; }
-
-/* entrou, saiu, por dia */
-.idet-numeros { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; gap: 10px; }
-.idet-num { padding: 12px 14px; display: grid; gap: 4px; }
-.idet-num strong { font-family: var(--fonte-numeros); font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-/* o que vem aí */
-.idet-vem { display: grid; gap: 10px; padding: 16px; }
-.idet-vem ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.idet-vem li { display: flex; align-items: center; gap: 10px; font-size: 14px; min-width: 0; }
-.idet-vem li strong { margin-left: auto; font-family: var(--fonte-numeros); font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.idet-vem li strong.bom { color: var(--entrada); }
-.idet-vem-nome { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.idet-vem-nome small { display: block; font-size: 11.5px; color: var(--divida); }
-.idet-vem li.atrasada .idet-vem-nome small { color: var(--saida); }
-.idet-dia { width: 32px; flex: none; text-align: center; font-size: 10.5px; line-height: 1.1; color: var(--texto-3); text-transform: lowercase; }
-.idet-dia b { display: block; font-size: 15px; color: var(--texto); font-variant-numeric: tabular-nums; }
-.idet-ic {
-  width: 38px; height: 38px; flex: none; display: grid; place-items: center; border-radius: 12px; color: var(--c, var(--texto-2));
-  background: color-mix(in srgb, var(--c, var(--texto-2)) 16%, transparent);
-}
-
-/* o mosaico */
-.idet-mosaico-area { display: grid; gap: 16px; }
-.idet-mosaico { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.idet-mosaico.impar > :last-child { grid-column: 1 / -1; }
-.idet-peca {
-  --c: var(--texto-2);
-  display: flex; flex-direction: column; align-items: stretch; gap: 6px; padding: 14px; text-align: left;
-  color: inherit; font: inherit; cursor: pointer; transition: transform .18s, border-color .18s;
-}
-.idet-peca-topo { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
-.idet-peca .idet-ic { width: 42px; height: 42px; }
-.idet-peca-valor { font-family: var(--fonte-numeros); font-size: 19px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.idet-peca-sub { font-size: 12.5px; line-height: 1.35; color: var(--texto-2); }
-.idet-peca.aberta { border-color: color-mix(in srgb, var(--c) 60%, transparent); background: linear-gradient(150deg, color-mix(in srgb, var(--c) 14%, transparent), transparent 70%), var(--superficie); }
-.idet-peca:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
-@media (hover: hover) and (pointer: fine) { .idet-peca:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--c) 40%, var(--borda)); } }
-.idet-sinal { width: 11px; height: 11px; border-radius: 50%; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent); }
-.idet-sinal.bom { background: var(--entrada); color: var(--entrada); }
-.idet-sinal.atencao { background: var(--divida); color: var(--divida); }
-.idet-sinal.ruim { background: var(--saida); color: var(--saida); }
-.idet-barra { height: 6px; border-radius: 9px; background: var(--superficie-2); overflow: hidden; }
-.idet-barra i { display: block; height: 100%; border-radius: 9px; background: var(--c); }
-.idet-detalhe { display: grid; gap: 16px; animation: idet-abre .25s ease-out; scroll-margin-top: 90px; }
-.idet-detalhe-duas { display: grid; gap: 16px; }
-@keyframes idet-abre { from { opacity: 0; transform: translateY(-6px); } }
-@media (prefers-reduced-motion: reduce) { .idet-detalhe { animation: none; } .idet-peca { transition: none; } }
-
-/* tablet */
-@container (min-width: 640px) {
-  .idet-grande { font-size: 40px; }
-    .idet-mosaico { grid-template-columns: repeat(var(--meio), minmax(0, 1fr)); }
-  .idet-mosaico.impar > :last-child { grid-column: auto; }
-  .idet-detalhe-duas { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
-}
-/* computador */
-@container (min-width: 1000px) {
-  .idet-cima { grid-template-columns: minmax(0, 2.2fr) minmax(280px, 1fr); align-items: start; }
-    .idet-numeros { grid-auto-flow: row; grid-template-columns: 1fr; }
-  .idet-num { display: flex; justify-content: space-between; align-items: center; }
-  .idet-mosaico { grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
-}
-
-/* estado do mês, "Entender previsão", gráfico recolhível, ajuda dos números, atrasadas e legenda das bolinhas */
-.idet-prev .btn-entender { margin-top: 2px; }
-.idet-estado { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; font-size: 13.5px; line-height: 1.4; color: var(--texto-2); }
-.idet-recolher {
-  justify-self: start; display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 10px; margin-left: -10px;
-  border: 0; border-radius: 10px; background: none; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600; color: var(--texto-2);
-}
-.idet-recolher:hover { color: var(--texto); background: var(--superficie-2); }
-.idet-recolher:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px; }
-.idet-grafico-solto { display: grid; gap: 8px; }
-.idet-ajuda { font-size: 11.5px; color: var(--texto-3); }
-.idet-rot-atencao { color: var(--saida); }
-.idet-vem-mais { margin: -4px 0 0; font-size: 12.5px; color: var(--texto-3); }
-.idet-vem-tudo { justify-self: start; min-height: 36px; }
-.idet-legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: -6px 0 0; font-size: 12.5px; color: var(--texto-2); }
-.idet-legenda span { display: inline-flex; align-items: center; gap: 7px; }
-.idet-legenda .idet-sinal { width: 9px; height: 9px; }
-@container (min-width: 1000px) {
-  .idet-num { flex-wrap: wrap; }
-  .idet-num .idet-ajuda { flex-basis: 100%; }
-}
-
-/* Camadas de investigação: estilos limitados à Início detalhada. */
-.inicio-det { gap: 18px; }
-.inicio-det .saudacao { margin: 4px 0 0; }
-.inicio-det .saudacao h1 { font-size: 23px; }
-.inicio-det .saudacao-lado { display: none; }
+/* Início no jeito detalhado (computador e tablet), no layout do OpusCash: Visão geral, Contas prioritárias, Evolução,
+   Comparação, panorama (dívidas, contas, cartões e metas) e Diagnóstico. A largura vem do conteúdo (container query):
+   3 colunas no computador, 2 no tablet, 1 no estreito. Veja docs/arquitetura-do-painel.md, 4.0.1. */
+.inicio-det { container-type: inline-size; gap: 40px; }
 .inicio-det :is(section, [id^="det-"]) { scroll-margin-top: 86px; min-width: 0; }
-.det-ferramentas { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
-.det-ferramentas label, .det-mes-selecionado { display: grid; gap: 6px; color: var(--texto-2); font-size: .8rem; }
-.inicio-det select { max-width: 100%; min-width: 0; padding: 9px; border: 1px solid var(--borda); border-radius: 10px; background: var(--superficie); color: var(--texto); font: inherit; }
-.inicio-det .idet-mes { gap: 8px; box-shadow: none; }
-.inicio-det .idet-grande { font-size: clamp(1.5rem, 7vw, 2.2rem); line-height: 1.25; overflow-wrap: anywhere; margin-bottom: 12px; }
-.det-previsao { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 8px; text-align: left; color: var(--texto); background: var(--superficie-2); border: 0; border-radius: 12px; padding: 14px; cursor: pointer; font: inherit; }
-.det-previsao > span { grid-column: 1 / -1; font-size: .85rem; }
-.det-previsao small { display: block; margin-top: 5px; color: var(--texto-2); font-size: .75rem; }
-.det-previsao strong { color: var(--divida); font-size: 1.4rem; overflow-wrap: anywhere; }
-.det-linha { display: flex; align-items: baseline; gap: 8px; justify-content: space-between; flex-wrap: wrap; padding: 8px 0; font-size: .875rem; }
-.det-linha span { color: var(--texto-2); }
-.det-linha b { font-family: var(--fonte-numeros); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.det-linha-btn { width: 100%; background: none; border: 0; font: inherit; text-align: left; color: var(--texto); cursor: pointer; }
-.det-linha-btn b { margin-left: auto; }
-.det-posicoes { margin-top: 10px; box-shadow: none; }
-.det-registrar { margin-top: 12px; width: 100%; min-height: 44px; }
-.det-nota { color: var(--texto-2); font-size: .78rem; line-height: 1.6; }
-.inicio-det .idet-numeros { grid-auto-flow: row; grid-template-columns: repeat(auto-fit,minmax(min(100%, 10.5rem),1fr)); align-items: start; }
-.inicio-det .idet-num { gap: 8px; padding: 15px; box-shadow: none; }
-.inicio-det .idet-num strong { font-size: 1.1rem; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; }
-.inicio-det .idet-rot { font-size: .72rem; letter-spacing: .035em; line-height: 1.5; }
-.inicio-det summary { cursor: pointer; padding: 9px 0; font-size: .85rem; }
-.det-secao { padding: 0; box-shadow: none; }
-.det-secao-cab { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: left; padding: 18px; border: 0; background: none; color: var(--texto); font: inherit; cursor: pointer; }
-.det-secao-cab h2 { margin: 0 0 5px; font-size: 1rem; line-height: 1.4; }
-.det-secao-cab small { color: var(--texto-2); font-size: .75rem; line-height: 1.5; display: block; }
-.det-secao-cab > span:last-child { color: var(--texto-2); font-size: 1.2rem; }
-.det-secao-corpo { padding: 0 18px 18px; }
-.inicio-det .idet-vem { padding: 0; border: 0; background: none; box-shadow: none; }
-.det-tarefa { width: 100%; display: grid; grid-template-columns: 28px minmax(0,1fr) 14px; align-items: center; gap: 7px 10px; border: 0; padding: 9px 0; text-align: left; font: inherit; color: var(--texto); background: none; cursor: pointer; }
-.det-tarefa .idet-dia { grid-row: 1 / 3; }
-.det-tarefa .idet-vem-nome { white-space: normal; overflow: visible; font-size: .875rem; line-height: 1.5; overflow-wrap: anywhere; }
-.det-tarefa > strong { grid-column: 2; font-size: .875rem; margin: 0 !important; justify-self: start; white-space: normal !important; overflow-wrap: anywhere; }
-.det-tarefa > svg { grid-column: 3; grid-row: 1 / 3; }
-.det-evolucao { display: grid; gap: 12px; min-width: 0; }
-.det-controles { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
-.det-controles label { font-size: .8rem; color: var(--texto-2); }
-.det-series { display: flex; flex-wrap: wrap; gap: 8px 12px; font-size: .8rem; }
-.det-series label { display: flex; align-items: center; gap: 5px; min-height: 36px; }
-.det-chart { height: 230px; position: relative; min-width: 0; }
-.det-chart.projecao { border: 1px dashed var(--divida); border-radius: 10px; padding: 8px; }
-.det-grafico-privado { padding: 40px 12px; color: var(--texto-2); border: 1px dashed var(--borda); border-radius: 10px; font-size: .85rem; }
-.det-painel { border-radius: 12px; padding: 14px; background: var(--superficie-2); }
-.det-painel h3 { margin: 0 0 8px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 1rem; }
-.det-painel h3 small { color: var(--texto-2); font-size: .7rem; }
-.det-lista-mes { border-top: 1px solid var(--borda); padding: 8px 0; }
-.inicio-det .idet-mosaico { display: flex; flex-direction: column; gap: 8px; }
-.inicio-det .idet-peca { display: grid; grid-template-columns: 30px minmax(0,1fr); gap: 4px 10px; box-shadow: none; padding: 12px; }
-.inicio-det .idet-peca-topo { grid-row: 1 / 4; margin: 0; }
-.inicio-det .idet-peca .idet-ic { width: 28px; height: 28px; border-radius: 8px; }
-.inicio-det .idet-peca .idet-sinal, .inicio-det .idet-legenda { display: none; }
-.inicio-det .idet-peca-valor { font-size: 1rem; white-space: normal; overflow: visible; overflow-wrap: anywhere; }
-.inicio-det .idet-peca-sub, .inicio-det .idet-barra { grid-column: 2; }
-.det-alerta { border-top: 1px solid var(--borda); padding: 8px 0; }
-.det-alerta summary small { display: block; color: var(--divida); font-size: .7rem; margin-bottom: 5px; }
-.det-alerta summary strong { display: block; line-height: 1.5; font-size: .875rem; }
-.det-alerta summary span { display: block; color: var(--destaque); font-size: .8rem; margin-top: 5px; }
-.det-alerta p { color: var(--texto-2); font-size: .85rem; line-height: 1.6; }
-.det-alerta .link { margin: 10px; }
-.inicio-det .comparacao-mes { border: 0; background: none; box-shadow: none; }
-.inicio-det .comparacao-mes .bloco-cab { padding: 0; }
-.inicio-det .cmp-corpo { padding: 12px 0 0; }
-.inicio-det .cmp-linha-botao { display: grid; grid-template-columns: 26px minmax(0,1fr) 16px; gap: 8px; }
-.inicio-det .cmp-nome { white-space: normal; overflow: visible; }
-.inicio-det .cmp-dif { grid-column: 2; grid-row: 2; white-space: normal; justify-self: start; }
-.inicio-det .cmp-linha-botao > svg { grid-column: 3; grid-row: 1 / 3; }
-.inicio-det .cmp-l-desc { white-space: normal; }
-.inicio-det .cmp-lado li { flex-wrap: wrap; }
-.inicio-det .cmp-lado li b { margin-left: auto; }
 .inicio-det :focus-visible { outline: 2px solid var(--destaque); outline-offset: 3px; }
+.inicio-det .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.inicio-det .cartao { box-shadow: none; border-radius: 18px; }
+.det-nota { color: var(--texto-2); font-size: .78rem; line-height: 1.6; }
+.det-grafico-privado { padding: 40px 12px; color: var(--texto-2); border: 1px dashed var(--borda); border-radius: 10px; font-size: .85rem; text-align: center; }
+
+/* ---------- peças comuns ---------- */
+.dt-secao { display: grid; gap: 22px; min-width: 0; }
+.dt-titulo { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.dt-titulo-txt { flex: 1; min-width: 0; }
+.dt-titulo h2 { margin: 0; font-size: 34px; font-weight: 750; letter-spacing: -.03em; line-height: 1.15; color: var(--texto); }
+.dt-titulo p { margin: 6px 0 0; color: var(--texto-2); font-size: 17px; line-height: 1.4; }
+.dt-titulo-ic {
+  width: 64px; height: 64px; flex: none; display: grid; place-items: center; border-radius: 16px; color: var(--entrada);
+  background: color-mix(in srgb, var(--entrada) 10%, var(--superficie)); border: 1px solid color-mix(in srgb, var(--entrada) 30%, transparent);
+}
+.dt-titulo-lado { display: flex; gap: 14px; flex-wrap: wrap; }
+.dt-tile {
+  --c: var(--texto-2);
+  width: 52px; height: 52px; flex: none; display: grid; place-items: center; border-radius: 14px; color: var(--c);
+  background: color-mix(in srgb, var(--c) 16%, var(--superficie)); border: 1px solid color-mix(in srgb, var(--c) 14%, transparent);
+}
+.dt-tile.mini { width: 30px; height: 30px; border-radius: 8px; }
+.dt-rot { display: block; font-size: 15px; font-weight: 500; color: var(--texto-2); }
+.dt-rot-maior { display: block; font-size: 16px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; color: var(--texto-2); }
+.dt-enorme, .dt-grande, .dt-medio { display: block; font-family: var(--fonte-numeros); font-weight: 750; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.15; overflow-wrap: anywhere; color: var(--texto); }
+.dt-enorme { font-size: 54px; margin-top: 4px; }
+.dt-grande { font-size: 42px; margin-top: 4px; }
+.dt-medio { font-size: 30px; margin-top: 4px; }
+.dt-sub { display: block; margin-top: 6px; color: var(--texto-2); font-size: 14px; }
+.dt-seta { margin-left: auto; color: var(--texto-2); display: grid; place-items: center; }
+.dt-clicavel { color: inherit; font: inherit; text-align: left; cursor: pointer; transition: border-color .2s, transform .2s, background .2s; }
+@media (hover: hover) and (pointer: fine) {
+  .dt-clicavel:hover { border-color: var(--borda-forte); transform: translateY(-2px); }
+  .dt-clicavel:hover .dt-seta { color: var(--texto); }
+}
+.dt-trilho { display: block; height: 10px; border-radius: 99px; background: color-mix(in srgb, var(--texto-3) 30%, transparent); overflow: hidden; }
+.dt-trilho.grosso { height: 24px; }
+.dt-trilho > b { display: block; height: 100%; border-radius: 99px; background: var(--c, var(--entrada)); transition: width .6s var(--mola); }
+.dt-link { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; padding: 0; color: var(--destaque); font: inherit; font-weight: 650; font-size: 17px; cursor: pointer; }
+.dt-link:hover { text-decoration: underline; }
+.dt-vazio { margin: 0; color: var(--texto-2); font-size: 14px; }
+.dt-vazio-grande { margin: 0; color: var(--texto-2); }
+.dt-duas { display: grid; gap: 22px; }
+.dt-grade3 { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+.dt-restaurar { justify-self: start; }
+
+/* ---------- 1. Visão geral ---------- */
+.dt-topo { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding-top: 14px; }
+.dt-ola { display: block; font-size: 21px; font-weight: 650; color: var(--texto-2); margin-bottom: 4px; }
+.dt-topo-linha { display: flex; align-items: center; gap: 18px 34px; flex-wrap: wrap; }
+.dt-topo h1 { margin: 0; font-size: 44px; font-weight: 750; letter-spacing: -.035em; line-height: 1.1; }
+.dt-modo {
+  display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 20px; border-radius: 99px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--entrada) 70%, transparent); background: none; color: var(--texto); font: inherit; font-size: 16px; font-weight: 550;
+}
+.dt-modo:hover { background: color-mix(in srgb, var(--entrada) 10%, transparent); }
+.dt-novo { height: 52px; padding: 0 28px; font-size: 18px; border-radius: 10px; gap: 12px; }
+.dt-destaques { display: grid; gap: 16px; }
+.dt-destaque { display: flex; align-items: center; gap: 30px; padding: 30px 34px; min-height: 162px; }
+.dt-destaque .dt-tile { width: 76px; height: 76px; border-radius: 16px; }
+.dt-numero { display: flex; align-items: center; gap: 26px; padding: 22px 26px; min-height: 120px; }
+.dt-numero .dt-tile { width: 56px; height: 56px; }
+.dt-numero .dt-sub { font-size: 14.5px; }
+.dt-fluxo { display: grid; gap: 22px; padding: 28px; }
+.dt-fluxo h3 { margin: 0 0 6px; font-size: 28px; font-weight: 700; letter-spacing: -.02em; }
+.dt-fluxo-barras { display: grid; gap: 18px; min-width: 0; }
+.dt-fluxo-linha { display: grid; grid-template-columns: 130px 140px minmax(0, 1fr); align-items: center; gap: 12px; font-size: 18px; }
+.dt-fluxo-nome { display: flex; align-items: center; gap: 12px; font-weight: 550; }
+.dt-fluxo-nome i { width: 15px; height: 15px; border-radius: 50%; background: var(--c); }
+.dt-fluxo-valor { color: var(--texto-2); font-family: var(--fonte-numeros); font-variant-numeric: tabular-nums; }
+.dt-fluxo-linha .dt-trilho { height: 22px; background: none; }
+.dt-fluxo-media { display: flex; align-items: center; gap: 24px; }
+.dt-fluxo-media .dt-tile { width: 56px; height: 56px; }
+.dt-fluxo-media .dt-rot { font-size: 18px; }
+.dt-fluxo-media .dt-medio { font-size: 38px; }
+
+/* ---------- 2. Contas prioritárias ---------- */
+.dt-pilula { display: inline-flex; align-items: center; gap: 12px; height: 58px; padding: 0 26px; border-radius: 18px; font-size: 21px; font-weight: 700; }
+.dt-pilula.ruim { color: var(--saida); background: color-mix(in srgb, var(--saida) 12%, var(--superficie)); }
+.dt-pilula.bom { color: var(--entrada); background: color-mix(in srgb, var(--entrada) 12%, var(--superficie)); }
+.dt-lista { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+.dt-lista.atrasadas { --c: var(--saida); border-color: color-mix(in srgb, var(--saida) 30%, var(--borda)); }
+.dt-lista.proximas { --c: var(--entrada); border-color: color-mix(in srgb, var(--entrada) 30%, var(--borda)); }
+.dt-lista h3 {
+  margin: 0; display: flex; align-items: center; gap: 16px; padding: 22px 26px; font-size: 27px; font-weight: 700; letter-spacing: -.02em;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 9%, transparent), transparent 90%);
+}
+.dt-lista h3::before { content: ''; width: 7px; height: 38px; border-radius: 6px; background: var(--c); }
+.dt-lista ul { list-style: none; margin: 0; padding: 4px 26px; display: grid; }
+.dt-lista li + li { border-top: 1px solid var(--borda); }
+.dt-lista .dt-vazio { padding: 22px 26px; }
+.dt-lista-vazia { flex: 1; display: grid; place-content: center; justify-items: center; gap: 12px; min-height: 160px; text-align: center; font-size: 17px !important; }
+.dt-lista-vazia svg { color: var(--c); }
+.dt-conta { width: 100%; display: flex; align-items: center; gap: 22px; padding: 18px 0; border: 0; background: none; color: var(--texto); font: inherit; text-align: left; cursor: pointer; }
+.dt-conta > strong { margin-left: auto; font-family: var(--fonte-numeros); font-size: 21px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dt-conta > strong.bom { color: var(--entrada); }
+.dt-conta > svg { flex: none; color: var(--texto-2); }
+.dt-dia {
+  width: 68px; height: 68px; flex: none; display: grid; place-content: center; text-align: center; border-radius: 12px; line-height: 1.05;
+  font-size: 16px; color: color-mix(in srgb, var(--texto) 80%, transparent); background: color-mix(in srgb, var(--entrada) 14%, var(--superficie));
+  box-shadow: 18px 0 0 -17px var(--borda);
+}
+.dt-dia b { font-size: 26px; font-weight: 750; color: var(--texto); font-variant-numeric: tabular-nums; }
+.dt-dia.atrasada { background: color-mix(in srgb, var(--saida) 26%, var(--superficie)); }
+.dt-conta-nome { min-width: 0; padding-left: 22px; border-left: 1px solid var(--borda); font-size: 20px; font-weight: 650; line-height: 1.3; overflow-wrap: anywhere; }
+.dt-conta-nome small { display: block; margin-top: 4px; color: var(--saida); font-size: 16px; font-weight: 500; }
+.dt-conta-nome small.hoje { color: var(--divida); }
+.dt-lista footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 22px 26px; border-top: 1px solid var(--borda); color: var(--texto-2); font-size: 18px; font-weight: 600; }
+.dt-lista.atrasadas footer .dt-link { color: var(--saida); font-size: 19px; }
+.dt-lista.proximas footer .dt-link { color: var(--entrada); font-size: 19px; }
+.dt-faixa { display: flex; align-items: center; gap: 30px; padding: 22px 26px 22px 36px; flex-wrap: wrap; border-color: color-mix(in srgb, var(--entrada) 26%, var(--borda)); background: linear-gradient(90deg, color-mix(in srgb, var(--entrada) 7%, var(--superficie)), var(--superficie)); }
+.dt-faixa-ic { color: var(--entrada); display: grid; padding-right: 30px; border-right: 1px solid var(--borda); }
+.dt-faixa p { flex: 1; min-width: 220px; margin: 0; font-size: 21px; font-weight: 650; }
+.dt-faixa-btn { height: 52px; padding: 0 30px; font-size: 19px; border-radius: 99px; gap: 10px; }
+
+/* ---------- 3. Evolução financeira ---------- */
+.dt-evolucao { display: grid; gap: 24px; padding: 34px 20px 20px; }
+.dt-evo-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; padding: 0 14px; }
+.dt-evo-cab h2 { margin: 0; font-size: 40px; font-weight: 750; letter-spacing: -.03em; line-height: 1.1; }
+.dt-evo-cab p { margin: 8px 0 0; color: var(--texto-2); font-size: 18px; }
+.dt-evo-data { display: inline-flex; align-items: center; gap: 12px; color: var(--texto-2); font-size: 17px; }
+.dt-evo-controles { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; padding: 0 10px; }
+.dt-evo-controles .segmentado { padding: 4px; border-radius: 12px; }
+.dt-evo-controles .segmentado button { height: 40px; padding: 0 28px; font-size: 17px; }
+.dt-evo-sep { width: 1px; height: 30px; background: var(--borda-forte); }
+.dt-evo-espaco { flex: 1; }
+.dt-evo-select { position: relative; display: inline-flex; align-items: center; gap: 4px; height: 46px; padding: 0 16px 0 20px; border-radius: 12px; border: 1px solid var(--borda-forte); background: var(--superficie); color: var(--texto); font-size: 17px; }
+.dt-evo-select select { appearance: none; border: 0; background: none; color: inherit; font: inherit; padding: 0 30px 0 0; cursor: pointer; }
+.dt-evo-select select option { color: #111; }
+.dt-evo-select svg { position: absolute; right: 14px; pointer-events: none; color: var(--texto-2); }
+.dt-evo-select-rot { color: var(--texto-2); }
+.dt-evo-grafico { padding: 24px 22px 18px; background: color-mix(in srgb, var(--superficie-2) 50%, var(--superficie)); }
+.dt-evo-resumo { display: flex; align-items: center; gap: 24px 32px; flex-wrap: wrap; padding: 30px; background: color-mix(in srgb, var(--superficie-2) 50%, var(--superficie)); }
+.dt-evo-mes { font-size: 28px; font-weight: 700; letter-spacing: -.02em; padding-right: 36px; white-space: nowrap; border-right: 1px solid var(--borda); }
+.dt-evo-numeros { flex: 1; display: flex; justify-content: space-around; gap: 20px 36px; flex-wrap: wrap; }
+.dt-evo-num { display: grid; gap: 10px; }
+.dt-evo-rot { display: flex; align-items: center; gap: 14px; font-size: 18px; color: var(--texto); }
+.dt-evo-num b { font-family: var(--fonte-numeros); font-size: 30px; font-weight: 750; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.dt-evo-saldos { display: grid; gap: 14px; padding-left: 32px; border-left: 1px solid var(--borda); }
+.dt-evo-saldos > * { display: flex; align-items: center; gap: 18px; border: 0; background: none; padding: 0; color: var(--texto); font: inherit; text-align: left; }
+.dt-evo-saldos button { cursor: pointer; }
+.dt-evo-saldos small { display: block; color: var(--texto-2); font-size: 15px; }
+.dt-evo-saldos b { font-family: var(--fonte-numeros); font-size: 22px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.dt-evo-saldos .dt-tile.mini { width: 44px; height: 44px; border-radius: 10px; }
+
+/* ---------- 4. Comparação entre períodos ---------- */
+.inicio-det #det-comparacao .dt-titulo h2 { font-size: 36px; }
+.dt-cmp-topo { display: grid; gap: 26px; padding: 30px; }
+.dt-cmp-manchete { display: grid; gap: 18px; align-content: start; }
+.dt-cmp-linha1 { display: flex; align-items: center; gap: 18px; }
+.dt-cmp-linha1 strong { font-size: 40px; font-weight: 750; letter-spacing: -.03em; line-height: 1.1; }
+.dt-cmp-linha1 strong.sobe { color: var(--saida); }
+.dt-cmp-linha1 strong.desce { color: var(--entrada); }
+.dt-cmp-valores { display: flex; gap: 0; flex-wrap: wrap; }
+.dt-cmp-valores span { display: grid; gap: 2px; color: var(--texto-2); font-size: 19px; padding-right: 30px; }
+.dt-cmp-valores span + span { padding-left: 30px; padding-right: 0; border-left: 1px solid var(--borda-forte); }
+.dt-cmp-valores b { color: var(--texto); font-family: var(--fonte-numeros); font-size: 30px; font-weight: 750; font-variant-numeric: tabular-nums; }
+.dt-cmp-variacao { justify-self: start; padding: 12px 22px; border-radius: 99px; font-size: 21px; color: var(--texto-2); background: color-mix(in srgb, var(--texto-3) 14%, transparent); }
+.dt-cmp-variacao.sobe { background: color-mix(in srgb, var(--saida) 16%, var(--superficie)); color: color-mix(in srgb, var(--saida) 70%, var(--texto)); }
+.dt-cmp-variacao.sobe b { color: var(--saida); }
+.dt-cmp-variacao.desce { background: color-mix(in srgb, var(--entrada) 14%, var(--superficie)); }
+.dt-cmp-variacao.desce b { color: var(--entrada); }
+.dt-cmp-barras { display: grid; gap: 24px; align-content: center; }
+.dt-cmp-barras > div { display: grid; gap: 12px; }
+.dt-cmp-barras span:first-child { display: flex; justify-content: space-between; gap: 12px; font-size: 19px; }
+.dt-cmp-barras em { font-style: normal; }
+.dt-cmp-barras b { font-family: var(--fonte-numeros); font-variant-numeric: tabular-nums; }
+.dt-cmp-aviso { display: flex; gap: 20px; align-items: flex-start; }
+.dt-cmp-aviso strong { display: block; font-size: 23px; font-weight: 700; line-height: 1.3; }
+.dt-cmp-aviso p { margin: 12px 0 0; color: var(--texto-2); font-size: 18px; line-height: 1.5; }
+.dt-cmp-tabela { padding: 30px 28px 24px; display: grid; gap: 14px; }
+.dt-cmp-tabela h3 { margin: 0 0 8px; font-size: 28px; font-weight: 700; letter-spacing: -.02em; }
+.dt-tabela-rolagem { overflow-x: auto; }
+.dt-cmp-tabela table { width: 100%; border-collapse: collapse; font-size: 19px; }
+.dt-cmp-tabela thead tr { background: color-mix(in srgb, var(--superficie-2) 60%, transparent); }
+.dt-cmp-tabela th { text-align: left; padding: 18px 16px; font-weight: 500; color: var(--texto); border-bottom: 1px solid var(--borda-forte); }
+.dt-cmp-tabela td { padding: 8px 16px; border-bottom: 1px solid var(--borda-forte); font-family: var(--fonte-numeros); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dt-cmp-tabela td:first-child { padding-left: 10px; font-family: inherit; }
+.dt-cmp-tabela td.sobe { color: var(--saida); font-weight: 700; }
+.dt-cmp-tabela td.desce { color: var(--entrada); font-weight: 700; }
+.dt-cmp-tabela td.dt-cat-barra { width: 24%; min-width: 120px; }
+.dt-cat-barra .dt-trilho { height: 16px; }
+.dt-cat { display: flex; align-items: center; gap: 24px; border: 0; background: none; padding: 0; color: var(--texto); font: inherit; cursor: pointer; text-align: left; }
+.dt-cat b { font-weight: 650; }
+.dt-cat-ic { width: 46px; height: 46px; flex: none; display: grid; place-items: center; border-radius: 10px; color: var(--c); background: color-mix(in srgb, var(--c) 18%, var(--superficie)); }
+.dt-cmp-tabela tr.aberta td { border-bottom-color: transparent; }
+.dt-cat-detalhe td { white-space: normal; padding: 0 0 12px; }
+.dt-cmp-tabela footer { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 18px; }
+
+/* ---------- 5. Dívidas, contas, cartões e metas ---------- */
+.inicio-det #det-patrimonio .dt-titulo h2 { font-size: 46px; }
+.inicio-det #det-patrimonio .dt-titulo p { font-size: 21px; }
+.dt-peca { --c: var(--texto-2); display: flex; flex-direction: column; align-items: stretch; gap: 22px; padding: 26px 30px; min-height: 232px; text-align: left; color: inherit; font: inherit; cursor: pointer; transition: transform .2s, border-color .2s; }
+.dt-peca-cab { display: flex; align-items: center; gap: 22px; }
+.dt-peca-cab .dt-tile { width: 62px; height: 62px; }
+.dt-peca-rot { font-size: 16.5px; font-weight: 650; letter-spacing: .03em; text-transform: uppercase; color: color-mix(in srgb, var(--texto) 85%, transparent); }
+.dt-peca-valor { font-family: var(--fonte-numeros); font-size: 50px; font-weight: 800; letter-spacing: -.035em; line-height: 1; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.dt-peca .dt-trilho { height: 10px; }
+.dt-peca-sub { display: flex; align-items: center; gap: 14px; font-size: 19px; color: color-mix(in srgb, var(--texto) 85%, transparent); }
+.dt-peca-sub svg { flex: none; color: var(--s); }
+.dt-peca.aberta { border-color: color-mix(in srgb, var(--c) 55%, transparent); background: linear-gradient(150deg, color-mix(in srgb, var(--c) 10%, transparent), transparent 70%), var(--superficie); }
+@media (hover: hover) and (pointer: fine) { .dt-peca:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--c) 40%, var(--borda)); } }
+.dt-peca-detalhe { display: grid; gap: 16px; animation: dt-abre .25s ease-out; scroll-margin-top: 90px; }
+.idet-detalhe-duas { display: grid; gap: 16px; }
+@keyframes dt-abre { from { opacity: 0; transform: translateY(-6px); } }
+.dt-compromissos { display: flex; align-items: center; gap: 18px 40px; flex-wrap: wrap; padding: 24px 26px; }
+.dt-compromissos > strong { font-size: 25px; font-weight: 700; letter-spacing: -.02em; }
+.dt-compromissos-sep { width: 1px; height: 46px; background: var(--borda-forte); margin-left: -6px; }
+.dt-compromissos > button:not(.dt-link) { display: inline-flex; align-items: center; gap: 16px; border: 0; background: none; padding: 0; color: var(--texto); font: inherit; font-size: 19px; cursor: pointer; }
+.dt-compromissos > button:not(.dt-link) svg { color: var(--c); }
+.dt-compromissos > button:not(.dt-link):hover { color: var(--c); }
+.dt-compromissos-ir { margin-left: auto; font-size: 20px; gap: 12px; }
+
+/* ---------- 6. Diagnóstico financeiro ---------- */
+.inicio-det #det-diagnostico .dt-titulo h2 { font-size: 40px; }
+.inicio-det #det-diagnostico .dt-titulo p { font-size: 20px; }
+.dt-diag { display: grid; gap: 28px; align-items: start; }
+.dt-diag-lado { display: grid; gap: 20px; min-width: 0; }
+.dt-saude { display: grid; justify-items: center; gap: 12px; padding: 26px 24px 30px; }
+.dt-saude h3, .dt-orientacoes h3 { justify-self: start; margin: 0; font-size: 30px; font-weight: 700; letter-spacing: -.02em; }
+.dt-medidor { position: relative; width: min(100%, 380px); margin-top: 8px; }
+.dt-medidor svg { display: block; width: 100%; height: auto; }
+.dt-medidor-nota { position: absolute; left: 0; right: 0; top: 34%; display: flex; justify-content: center; align-items: baseline; gap: 4px; }
+.dt-medidor-nota strong { font-family: var(--fonte-numeros); font-size: 76px; font-weight: 800; letter-spacing: -.04em; line-height: 1; }
+.dt-medidor-nota span { font-size: 44px; color: var(--texto); }
+.dt-saude-rotulo { --c: var(--saida); position: absolute; left: 50%; top: 63%; transform: translateX(-50%); white-space: nowrap; padding: 6px 22px; border-radius: 99px; font-size: 20px; font-weight: 650; color: color-mix(in srgb, var(--c) 70%, var(--texto)); border: 1.5px solid var(--c); background: color-mix(in srgb, var(--c) 18%, var(--superficie)); }
+.dt-saude-base { color: var(--texto-2); font-size: 17px; margin-top: 4px; }
+.dt-saude hr { width: 100%; border: 0; border-top: 1px solid var(--borda-forte); margin: 14px 0; }
+.dt-saude-aviso { justify-self: stretch; display: flex; align-items: center; gap: 20px; margin: 0; padding: 18px 20px; border-radius: 12px; font-size: 19px; line-height: 1.35; color: var(--texto); border: 1px solid color-mix(in srgb, var(--divida) 45%, transparent); background: color-mix(in srgb, var(--divida) 12%, var(--superficie)); }
+.dt-saude-aviso svg { flex: none; color: var(--divida); }
+.dt-contorno { justify-self: stretch; margin-top: 26px; height: 54px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; border-radius: 10px; border: 1.5px solid color-mix(in srgb, var(--entrada) 60%, transparent); background: none; color: var(--entrada); font: inherit; font-size: 19px; font-weight: 600; cursor: pointer; }
+.dt-contorno:hover { background: color-mix(in srgb, var(--entrada) 8%, transparent); }
+.dt-orientacoes { padding: 30px 26px 12px 32px; display: grid; gap: 18px; }
+.dt-orientacoes ul { list-style: none; margin: 0; padding: 0; display: grid; }
+.dt-orientacao { display: flex; align-items: flex-start; gap: 34px; padding: 22px 0; }
+.dt-orientacao + .dt-orientacao { border-top: 1px solid var(--borda-forte); }
+.dt-orientacao > .dt-tile { width: 64px; height: 64px; border-radius: 12px; margin-top: 6px; }
+.dt-orientacao-txt { flex: 1; min-width: 0; display: grid; justify-items: start; gap: 6px; }
+.dt-selo { padding: 2px 12px; border-radius: 99px; font-size: 16px; font-weight: 650; color: color-mix(in srgb, var(--c) 75%, var(--texto)); border: 1.5px solid var(--c); background: color-mix(in srgb, var(--c) 18%, var(--superficie)); }
+.dt-orientacao-txt strong { font-size: 21px; font-weight: 650; line-height: 1.35; }
+.dt-orientacao-txt .dt-link { font-size: 19px; font-weight: 500; }
+.dt-orientacao-mais { display: grid; justify-items: start; gap: 6px; margin-top: 6px; }
+.dt-orientacao-mais p { margin: 0; color: var(--texto-2); font-size: 15px; line-height: 1.55; }
+.dt-orientacao-abrir { align-self: center; border: 0; background: none; color: var(--texto); padding: 8px; border-radius: 10px; cursor: pointer; display: grid; }
+.dt-orientacao-abrir:hover { background: var(--superficie-2); }
+.dt-como { padding: 0; }
+.dt-como-cab { width: 100%; display: flex; align-items: center; gap: 18px; padding: 22px 28px; border: 0; background: none; color: var(--texto); font: inherit; font-size: 20px; text-align: left; cursor: pointer; }
+.dt-como-cab span { flex: 1; }
+.dt-como-cab svg { color: var(--texto-2); }
+.dt-como-corpo { display: grid; gap: 14px; padding: 0 28px 24px; color: var(--texto-2); font-size: 15px; line-height: 1.55; }
+.dt-como-corpo p { margin: 0; }
+.dt-pilar { display: grid; gap: 4px; padding-top: 12px; border-top: 1px solid var(--borda); }
+.dt-pilar > span { display: flex; justify-content: space-between; gap: 12px; color: var(--texto); }
+.dt-pilar em { font-style: normal; font-weight: 700; font-family: var(--fonte-numeros); }
+.dt-pilar small { color: var(--texto-3); }
+
+/* ---------- tablet ---------- */
+@container (min-width: 700px) {
+  .dt-grade3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .idet-detalhe-duas { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .dt-duas { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+}
+/* ---------- computador ---------- */
+@container (min-width: 1100px) {
+  .dt-grade3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dt-fluxo { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 44px; }
+  .dt-fluxo-media { padding-left: 44px; border-left: 1px solid var(--borda-forte); min-height: 120px; }
+  .dt-cmp-topo { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr) minmax(0, .9fr); gap: 0; }
+  .dt-cmp-topo.sem-aviso { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .dt-cmp-topo > * + * { padding-left: 32px; margin-left: 32px; border-left: 1px solid var(--borda-forte); }
+}
+@container (min-width: 900px) {
+  .dt-destaques { grid-template-columns: minmax(0, 1.18fr) minmax(0, 1fr); }
+  .dt-diag { grid-template-columns: minmax(320px, .56fr) minmax(0, 1fr); }
+}
+/* ---------- estreito ---------- */
+@container (max-width: 699px) {
+  .inicio-det { gap: 30px; }
+  .dt-titulo h2, .dt-evo-cab h2, .inicio-det #det-patrimonio .dt-titulo h2, .inicio-det #det-diagnostico .dt-titulo h2, .inicio-det #det-comparacao .dt-titulo h2 { font-size: 26px; }
+  .dt-topo h1 { font-size: 34px; }
+  .dt-enorme { font-size: 38px; }
+  .dt-grande, .dt-cmp-linha1 strong { font-size: 30px; }
+  .dt-medio { font-size: 24px; }
+  .dt-peca-valor { font-size: 36px; }
+  .dt-destaque { gap: 18px; padding: 22px; min-height: 0; }
+  .dt-destaque .dt-tile { width: 56px; height: 56px; }
+  .dt-numero { gap: 16px; padding: 18px; min-height: 0; }
+  .dt-fluxo-linha { grid-template-columns: auto 1fr; font-size: 16px; }
+  .dt-fluxo-linha .dt-trilho { grid-column: 1 / -1; }
+  .dt-conta { gap: 12px; }
+  .dt-conta-nome { padding-left: 12px; font-size: 16px; }
+  .dt-conta > strong { font-size: 17px; }
+  .dt-dia { width: 54px; height: 54px; }
+  .dt-faixa-ic { padding-right: 0; border: 0; }
+  .dt-evo-mes, .dt-evo-saldos { padding: 0; border: 0; }
+  .dt-evo-numeros { gap: 18px 30px; }
+  .dt-evo-num b { font-size: 24px; }
+  .dt-evo-controles .segmentado button { padding: 0 14px; font-size: 15px; }
+  .dt-evo-sep, .dt-evo-espaco { display: none; }
+  .dt-cmp-tabela td.dt-cat-barra, .dt-cmp-tabela th:last-child { display: none; }
+  .dt-cmp-tabela table { font-size: 15px; }
+  .dt-cat { gap: 12px; }
+  .dt-orientacao { gap: 16px; }
+  .dt-compromissos-sep { display: none; }
+  .dt-compromissos-ir { margin-left: 0; }
+}
+
+/* a barra de cima do app fica mais enxuta na Início detalhada em telas estreitas (o resto vai para "Mais") */
 @media (max-width:860px) {
   .app.inicio-detalhada .barra { padding: 7px 0; min-height: 54px; }
   .app.inicio-detalhada .barra::before { box-shadow: none; background: var(--fundo); backdrop-filter: none; }
@@ -194,9 +326,4 @@
   .app.inicio-detalhada .abas-movel button svg { width: 20px; height: 20px; }
   .app.inicio-detalhada .conteudo { padding-bottom: calc(90px + env(safe-area-inset-bottom)); }
 }
-@media (prefers-reduced-motion: reduce) { .inicio-det *, .inicio-detalhada * { animation: none !important; scroll-behavior: auto !important; } }
-.inicio-det .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.inicio-det .idet-num:last-child { grid-column: 1 / -1; }
-.inicio-det .det-secao-cab > span:last-child { flex: none; width: 24px; text-align: center; }
-.inicio-det .det-secao-cab > span:first-child { min-width: 0; }
-.inicio-det .cmp-principal { color: var(--texto); }
+@media (prefers-reduced-motion: reduce) { .inicio-det *, .inicio-detalhada * { animation: none !important; scroll-behavior: auto !important; transition: none !important; } }

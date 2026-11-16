@@ -839,3 +839,27 @@ nem a fase 1.
   cartão), a página inicial (`inicial`) e a fileira de ações se ajusta ao número de botões.
 - Traduções: textos novos e quatro avisos de erro de Cartões que estavam sem `en`/`es`.
 - Regras: `docs/arquitetura-do-painel.md`, seção 4.25.
+
+### 16/11/2026 — Claude — Início detalhada redesenhada (computador)
+
+**Estado:** implementado e validado localmente; publicação no site registrada na conversa da sessão (PR e deploy). Sem
+migração. O celular não usa esta tela (tem a sua Início em `src/movel`), então o app Android não precisa de versão nova
+por causa dela.
+
+- Pedido do Edigar: a Início detalhada da entrada "Início detalhada no celular" (GPT/Codex, acima) ficou feia; recriar
+  igual a 6 imagens que ele mandou e, no gráfico da Evolução, pôr a linha da dívida passando entre as barras.
+- Substitui a organização em seções recolhíveis (`SecaoDetalhada`, seletor "Ir para seção", listas `det-linha`) por seis
+  seções no layout das imagens: Visão geral, Contas prioritárias, Evolução financeira, Comparação entre períodos, Dívidas/
+  contas/cartões/metas e Diagnóstico (`components/InicioDetalhadoTelas.tsx`, `EvolucaoDetalhada.tsx`, CSS reescrito em
+  `inicio-detalhado.css`). Saíram `InicioDetalhado.tsx` e `SecaoDetalhada.tsx` (ninguém mais usava).
+- Nenhum cálculo mudou: tudo vem de `useMesDaInicio`, `c.porMes`, `c.previsto`, `compararGastos`, `c.conselhos` e
+  `c.analise`. Mantidos: Saldo devedor com juros estimados, contas abrindo a janela com a ação, peças abrindo o bloco
+  completo, "Agora não" dos conselhos, pilares da nota, saldos futuros em branco.
+- Gráfico novo `GraficoEvolucao` (`Graficos.tsx`): dívida no mesmo eixo das barras; plugins `destaqueMes` (agora com
+  moldura) e `baloes` (valores do mês escolhido) em `lib/charts.ts`.
+- Ficaram fora da tela (estão no Resumo do ano): composição da dívida mês a mês, saldo de um mês para o outro e lista
+  alternativa dos números.
+
+**Validação:** `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício, `scripts/painel/testar.mjs` 31/31,
+`testar-movel.cjs` todo OK. App de demonstração em 1586 e 1100 px, escuro e claro: sem rolagem lateral nem erro de página;
+trocar mês no gráfico, Previsto, Saldos, 12 meses, abrir peça, categoria, conselho, "Como calculamos" e a janela da conta.

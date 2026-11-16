@@ -6,7 +6,7 @@ import { hojeLocal } from '../lib/cartoes'
 import { useModoDoGrafico, type ModoDoGrafico } from '../lib/modoDoGrafico'
 import { PALETA, useCoresDoGrafico } from '../lib/charts'
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
-import { fmtDataCurta, fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, moedaAtual, noMeioDaFrase, valoresEstaoOcultos } from '../lib/format'
+import { fmtDataCurta, fmtMoeda, fmtValor, LOCAL_DAS_DATAS, MESES_CURTO, MESES_NOME, moedaAtual, noMeioDaFrase, valoresEstaoOcultos } from '../lib/format'
 import { Icone } from './Icone'
 import { Segmentado } from './ui'
 import { FormSaldoInicial } from './SaldoInicial'
@@ -684,6 +684,107 @@ export function GraficoAnual({ porMes, previsto, mesAtual, altura = 400, compact
         ? <p className="campo-ajuda">{tx('Valores em {0}, como você lançou: sem conversão. Entrou, Saiu e Dívidas só desta moeda.', moeda)}</p>
         : temDividaFora && <p className="campo-ajuda">{tx('As dívidas em outras moedas entram aqui pela cotação de hoje. Para ver os valores exatos, escolha a moeda acima.')}</p>}
     </>
+  )
+}
+
+/** O que a Evolução da Início detalhada mostra: o que entrou e saiu, ou os saldos. */
+export type VisaoEvolucao = 'movimento' | 'saldos'
+
+/**
+ * Gráfico da Evolução financeira (Início detalhada): barras largas de Entradas e Saídas (ou dos saldos) dos meses da janela e
+ * a linha da dívida no mesmo eixo, passando entre as barras, para a pessoa ver se o que deve está acima ou abaixo do que
+ * entra e sai. O mês escolhido ganha uma moldura e balões com os valores das barras; tocar num mês escolhe outro.
+ */
+export function GraficoEvolucao({ porMes, previsto, indices, visao, modo, moeda, v, selecionado, aoEscolher, ultimoComSaldo = 11, altura = 330 }: {
+  porMes: (Resumo | null)[]; previsto: PrevisaoMes[]
+  /** Último mês (0 = janeiro) com saldo de verdade: os saldos dos meses seguintes ainda não existem e ficam em branco. */
+  ultimoComSaldo?: number
+  /** Os meses da janela (0 = janeiro). */
+  indices: number[]
+  visao: VisaoEvolucao; modo: ModoDoGrafico; moeda: string; v: Visao
+  /** Mês escolhido (0 = janeiro). */
+  selecionado: number
+  aoEscolher: (mes: number) => void
+  altura?: number
+}) {
+  const c = useCoresDoGrafico()
+  const fora = moeda !== moedaAtual()
+  const fmt = fora ? (n: number) => fmtMoeda(n, moeda) : fmtValor
+  const comPrevisao = !fora && visao === 'movimento' && modo === 'previsto'
+  const f = fluxoDosMeses(porMes, previsto, fora ? 'feito' : modo)
+  const k = indices.indexOf(selecionado)
+  const da = <T,>(xs: T[]) => indices.map((i) => xs[i])
+  const larga = (d: ReturnType<typeof barra>, cor: string, valores: (number | null)[]) => ({
+    ...d, maxBarThickness: 92, categoryPercentage: 0.8, barPercentage: 0.9, borderRadius: 6,
+    balaoCor: cor, balao: !comPrevisao && k >= 0 && valores[k] != null && !valoresEstaoOcultos() ? fmt(valores[k]!) : undefined,
+  })
+  const dividas = fora ? serie(porMes, (r) => (r.dividaMoeda[moeda] ?? null) as number) : serie(porMes, (r) => r.divida)
+  const temDivida = fora ? dividas.some((x) => (x ?? 0) > 0) : v.dividas
+  const linhaDivida = temDivida ? [{ ...linhaSuave(tx('Dívidas'), PALETA.divida, da(dividas), c.fundo, false, true), borderWidth: 2.5 }] : []
+  let datasets: object[]
+  if (visao === 'movimento') {
+    const entrou = da(fora ? serie(porMes, (r) => r.entradasMoeda[moeda] ?? 0) : f.entrou)
+    const saiu = da(fora ? serie(porMes, (r) => r.saidasMoeda[moeda] ?? 0) : f.saiu)
+    datasets = [
+      larga(barra(tx('Entradas'), PALETA.entradas, entrou, false, comPrevisao ? 'entrou' : undefined), PALETA.entradas[1], entrou),
+      larga(barra(tx('Saídas'), PALETA.saidas, saiu, false, comPrevisao ? 'saiu' : undefined), PALETA.saidas[0], saiu),
+      ...(comPrevisao ? [
+        { ...barraPrevista(tx('Vai entrar'), PALETA.entradas[0], da(f.vaiEntrar), false, 'entrou'), maxBarThickness: 92, categoryPercentage: 0.8, barPercentage: 0.9 },
+        { ...barraPrevista(tx('Vai sair'), PALETA.saidas[0], da(f.vaiSair), false, 'saiu'), maxBarThickness: 92, categoryPercentage: 0.8, barPercentage: 0.9 },
+      ] : []),
+      ...linhaDivida,
+    ]
+  } else {
+    const ate = <T,>(xs: (T | null)[]) => xs.map((x, i) => (i <= ultimoComSaldo ? x : null))
+    const caixa = da(ate(fora ? serie(porMes, (r) => (r.moedas[moeda] ?? null) as number) : saldo(porMes, (r) => r.caixa)))
+    const investido = da(ate(saldo(porMes, (r) => r.investimentos)))
+    datasets = [
+      ...(v.bancos || fora ? [larga(barra(tx('Saldo nas contas'), [PALETA.caixa, '#1677c9'], caixa, false), PALETA.caixa, caixa)] : []),
+      ...(v.investimentos && !fora ? [larga(barra(tx('Investimentos'), [PALETA.investimentos, '#8e3fc0'], investido, false), PALETA.investimentos, investido)] : []),
+      ...linhaDivida,
+    ]
+  }
+  const compacto = new Intl.NumberFormat(LOCAL_DAS_DATAS, { style: 'currency', currency: moeda, notation: 'compact', maximumFractionDigits: 1 })
+  const base = opcoes(c, {
+    rotulos: indices.map((i) => MESES_CURTO[i]), mesDoIndice: (x) => indices[x] + 1, mesAtual: selecionado + 1, destacar: true, formatar: fmt,
+  })
+  const opcoesFinais: ChartOptions<'bar'> = {
+    ...base,
+    layout: { padding: { top: 6, left: 4, right: 4 } },
+    onClick: (e: ChartEvent, _: unknown, chart: ChartJS) => {
+      const i = chart.getElementsAtEventForMode(e as unknown as Event, 'index', { intersect: false }, true)[0]?.index
+      if (i !== undefined) aoEscolher(indices[i])
+    },
+    plugins: {
+      ...base.plugins,
+      tooltip: { enabled: false },
+      filler: { drawTime: 'beforeDatasetsDraw' },
+      legend: { ...base.plugins?.legend, position: 'top', labels: { ...base.plugins?.legend?.labels, pointStyle: 'circle', padding: 26, boxWidth: 13, boxHeight: 13, font: { size: 15, weight: 500 } } },
+      destaqueMes: {
+        indice: k, largura: 0.94,
+        cor: c.tema === 'escuro' ? 'rgba(42, 212, 160, .07)' : 'rgba(13, 159, 119, .06)',
+        borda: c.tema === 'escuro' ? 'rgba(42, 212, 160, .45)' : 'rgba(13, 159, 119, .4)',
+      },
+      baloes: { indice: k, fundo: c.fundo, texto: c.textoForte },
+    },
+    scales: {
+      ...base.scales,
+      y: { ...base.scales?.y, beginAtZero: true, grace: '16%', ticks: { callback: (x: string | number) => (valoresEstaoOcultos() ? '' : compacto.format(Number(x))), maxTicksLimit: 5, padding: 12, font: { size: 14 } } },
+      x: { ...base.scales?.x, ticks: { ...base.scales?.x?.ticks, font: (t: { index: number }) => ({ weight: indices[t.index] === selecionado ? 800 : 500, size: 15 }) } },
+    },
+  }
+  // a legenda mostra cada série como uma bolinha, como no layout
+  const legenda = opcoesFinais.plugins!.legend!.labels!
+  const gerar = legenda.generateLabels!
+  legenda.generateLabels = (chart) => gerar(chart).map((x) => ({ ...x, pointStyle: 'circle', lineWidth: 0, fillStyle: x.strokeStyle }))
+  const { datasets: finais, opcoes: comPilha } = comPrevisao
+    ? empilhar(datasets as { type?: string }[], opcoesFinais)
+    : { datasets, opcoes: opcoesFinais }
+  return (
+    <CaixaDoGrafico style={{ height: altura }}>
+      <Misto type="bar" key={c.tema + c.ocultos + moeda + modo + visao + indices.length}
+        data={{ labels: indices.map((i) => MESES_CURTO[i]), datasets: finais } as unknown as ChartData<'bar'>} options={comPilha} />
+    </CaixaDoGrafico>
   )
 }
 

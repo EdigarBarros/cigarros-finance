@@ -15442,5 +15442,253 @@
   "Não consegui marcar a fatura como renegociada. Nada foi gravado: tente de novo.": {
     "en": "Could not mark the bill as renegotiated. Nothing was saved: try again.",
     "es": "No pude marcar la factura como renegociada. No se guardó nada: inténtalo de nuevo."
+  },
+  "Inclui {0} em juros estimados": {
+    "en": "Includes {0} in estimated interest",
+    "es": "Incluye {0} en intereses estimados"
+  },
+  "Olá, {0}": {
+    "en": "Hi, {0}",
+    "es": "Hola, {0}"
+  },
+  "Modo detalhado": {
+    "en": "Detailed mode",
+    "es": "Modo detallado"
+  },
+  "Resultado do mês": {
+    "en": "Month result",
+    "es": "Resultado del mes"
+  },
+  "Até {0} de {1}": {
+    "en": "Through {1} {0}",
+    "es": "Hasta el {0} de {1}"
+  },
+  "Fluxo de {0}": {
+    "en": "{0} cash flow",
+    "es": "Flujo de {0}"
+  },
+  "1 dia em atraso": {
+    "en": "1 day overdue",
+    "es": "1 día de atraso"
+  },
+  "{0} dias em atraso": {
+    "en": "{0} days overdue",
+    "es": "{0} días de atraso"
+  },
+  "Nenhuma conta atrasada.": {
+    "en": "No overdue bills.",
+    "es": "Ninguna cuenta atrasada."
+  },
+  "Nenhum vencimento próximo.": {
+    "en": "Nothing due soon.",
+    "es": "Ningún vencimiento próximo."
+  },
+  "O que exige sua atenção agora": {
+    "en": "What needs your attention now",
+    "es": "Lo que requiere tu atención ahora"
+  },
+  "1 próxima": {
+    "en": "1 upcoming",
+    "es": "1 próxima"
+  },
+  "{0} próximas": {
+    "en": "{0} upcoming",
+    "es": "{0} próximas"
+  },
+  "+ 1 conta atrasada": {
+    "en": "+ 1 overdue bill",
+    "es": "+ 1 cuenta atrasada"
+  },
+  "+ {0} contas atrasadas": {
+    "en": "+ {0} overdue bills",
+    "es": "+ {0} cuentas atrasadas"
+  },
+  "Ver atrasadas": {
+    "en": "See overdue",
+    "es": "Ver atrasadas"
+  },
+  "+ 1 próxima conta": {
+    "en": "+ 1 upcoming bill",
+    "es": "+ 1 próxima cuenta"
+  },
+  "+ {0} próximas contas": {
+    "en": "+ {0} upcoming bills",
+    "es": "+ {0} próximas cuentas"
+  },
+  "Priorize o que está vencido para evitar mais juros.": {
+    "en": "Pay what is overdue first to avoid more interest.",
+    "es": "Prioriza lo vencido para evitar más intereses."
+  },
+  "Organizar pagamentos": {
+    "en": "Organize payments",
+    "es": "Organizar pagos"
+  },
+  "{0} vs. {1} · dias 1 a {2}": {
+    "en": "{0} vs. {1} · days 1 to {2}",
+    "es": "{0} vs. {1} · días 1 a {2}"
+  },
+  "{0} vs. {1} · mês inteiro": {
+    "en": "{0} vs. {1} · whole month",
+    "es": "{0} vs. {1} · mes completo"
+  },
+  "Gastos novos neste período": {
+    "en": "New spending this period",
+    "es": "Gastos nuevos en este período"
+  },
+  "Nenhum gasto nos dois períodos": {
+    "en": "No spending in either period",
+    "es": "Ningún gasto en los dos períodos"
+  },
+  "Gastos iguais": {
+    "en": "Same spending",
+    "es": "Gastos iguales"
+  },
+  "Variação:": {
+    "en": "Change:",
+    "es": "Variación:"
+  },
+  "1 conta vencida ainda não foi paga.": {
+    "en": "1 overdue bill hasn't been paid yet.",
+    "es": "1 cuenta vencida aún no se ha pagado."
+  },
+  "{0} contas vencidas ainda não foram pagas.": {
+    "en": "{0} overdue bills haven't been paid yet.",
+    "es": "{0} cuentas vencidas aún no se han pagado."
+  },
+  "Ao pagar, esses valores entram na comparação.": {
+    "en": "Once paid, these amounts enter the comparison.",
+    "es": "Al pagarlas, esos valores entran en la comparación."
+  },
+  "Onde seus gastos mudaram": {
+    "en": "Where your spending changed",
+    "es": "Dónde cambiaron tus gastos"
+  },
+  "Variação": {
+    "en": "Change",
+    "es": "Variación"
+  },
+  "Nenhuma categoria mudou entre os dois períodos.": {
+    "en": "No category changed between the two periods.",
+    "es": "Ninguna categoría cambió entre los dos períodos."
+  },
+  "Seu panorama financeiro em um só lugar.": {
+    "en": "Your financial overview in one place.",
+    "es": "Tu panorama financiero en un solo lugar."
+  },
+  "Visão de compromissos": {
+    "en": "Commitments",
+    "es": "Compromisos"
+  },
+  "Cartões e contas": {
+    "en": "Cards and bills",
+    "es": "Tarjetas y cuentas"
+  },
+  "Gerenciar compromissos": {
+    "en": "Manage commitments",
+    "es": "Gestionar compromisos"
+  },
+  "Confira a cobertura para imprevistos.": {
+    "en": "Check your emergency coverage.",
+    "es": "Revisa tu cobertura para imprevistos."
+  },
+  "Saber mais": {
+    "en": "Learn more",
+    "es": "Saber más"
+  },
+  "Entenda seus riscos e saiba por onde começar": {
+    "en": "Understand your risks and where to start",
+    "es": "Entiende tus riesgos y por dónde empezar"
+  },
+  "Saúde financeira": {
+    "en": "Financial health",
+    "es": "Salud financiera"
+  },
+  "Baseado nos registros disponíveis": {
+    "en": "Based on the records available",
+    "es": "Basado en los registros disponibles"
+  },
+  "Saldo em conta não é reserva de emergência.": {
+    "en": "Account balance isn't an emergency fund.",
+    "es": "El saldo en cuenta no es un fondo de emergencia."
+  },
+  "Entenda a pontuação": {
+    "en": "Understand the score",
+    "es": "Entiende la puntuación"
+  },
+  "Orientações para você": {
+    "en": "Guidance for you",
+    "es": "Orientaciones para ti"
+  },
+  "1 orientação para você": {
+    "en": "1 tip for you",
+    "es": "1 orientación para ti"
+  },
+  "{0} orientações para você": {
+    "en": "{0} tips for you",
+    "es": "{0} orientaciones para ti"
+  },
+  "Entradas e saídas ao longo de {0}": {
+    "en": "Income and spending through {0}",
+    "es": "Entradas y salidas a lo largo de {0}"
+  },
+  "Saldos ao longo de {0}": {
+    "en": "Balances through {0}",
+    "es": "Saldos a lo largo de {0}"
+  },
+  "Últimos {0} meses": {
+    "en": "Last {0} months",
+    "es": "Últimos {0} meses"
+  },
+  "Moeda:": {
+    "en": "Currency:",
+    "es": "Moneda:"
+  },
+  "Igual ao mesmo período de {0}": {
+    "en": "Same as the same period of {0}",
+    "es": "Igual al mismo período de {0}"
+  },
+  "Igual a {0}": {
+    "en": "Same as {0}",
+    "es": "Igual a {0}"
+  },
+  "{0}% acima do mesmo período de {1}": {
+    "en": "{0}% above the same period of {1}",
+    "es": "{0}% por encima del mismo período de {1}"
+  },
+  "{0}% acima de {1}": {
+    "en": "{0}% above {1}",
+    "es": "{0}% por encima de {1}"
+  },
+  "{0}% abaixo do mesmo período de {1}": {
+    "en": "{0}% below the same period of {1}",
+    "es": "{0}% por debajo del mismo período de {1}"
+  },
+  "{0}% abaixo de {1}": {
+    "en": "{0}% below {1}",
+    "es": "{0}% por debajo de {1}"
+  },
+  "Sem faturas e parcelas de dívidas": {
+    "en": "Excludes card bills and debt installments",
+    "es": "Sin facturas ni cuotas de deudas"
+  },
+  "Fatura do mês": {
+    "en": "This month's bill",
+    "es": "Factura del mes"
+  },
+  "Em 1 banco": {
+    "en": "In 1 bank",
+    "es": "En 1 banco"
+  },
+  "Distribuído em {0} bancos": {
+    "en": "Spread across {0} banks",
+    "es": "Distribuido en {0} bancos"
+  },
+  "1 meta cadastrada": {
+    "en": "1 goal set",
+    "es": "1 meta registrada"
+  },
+  "{0} metas cadastradas": {
+    "en": "{0} goals set",
+    "es": "{0} metas registradas"
   }
 }
