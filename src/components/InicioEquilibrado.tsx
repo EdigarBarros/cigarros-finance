@@ -27,7 +27,7 @@ const maiuscula = (t: string) => (t ? t[0].toUpperCase() + t.slice(1) : t)
 const COR_DO_TOM: Record<Tom, string> = { bom: 'var(--entrada)', medio: 'var(--divida)', ruim: 'var(--saida)' }
 
 /** Quadradinho com o ícone, na cor `cor` (uma variável do tema). */
-const Tile = ({ icone, cor, tamanho = 18, children }: { icone?: string; cor: string; tamanho?: number; children?: ReactNode }) => (
+export const Tile = ({ icone, cor, tamanho = 18, children }: { icone?: string; cor: string; tamanho?: number; children?: ReactNode }) => (
   <span className="eq-tile" style={{ '--c': cor } as CSSProperties} aria-hidden="true">{children ?? <Icone nome={icone!} tamanho={tamanho} />}</span>
 )
 
@@ -231,9 +231,9 @@ export function AteOFimEq({ dd, previsaoSabe, aoVerCalculo }: {
 const VISIVEIS = 2
 
 const tituloDaConta = (t: Tarefa) => (t.divida && t.divida.parcelas > 1 ? tx('{0} · {1} parcelas', t.divida.nome, t.divida.parcelas) : t.titulo)
-const acaoDaConta = (t: Tarefa) => (t.origem === 'fatura' ? tx('Ver fatura') : t.entrada ? tx('Marcar como recebida') : tx('Marcar como paga'))
+const acaoPadrao = (t: Tarefa) => (t.origem === 'fatura' ? tx('Ver fatura') : t.entrada ? tx('Marcar como recebida') : tx('Marcar como paga'))
 
-function LinhaConta({ t, aoAgir, comBotao }: { t: Tarefa; aoAgir: (t: Tarefa) => void; comBotao: boolean }) {
+function LinhaConta({ t, aoAgir, comBotao, acaoDaConta }: { t: Tarefa; aoAgir: (t: Tarefa) => void; comBotao: boolean; acaoDaConta: (t: Tarefa) => string }) {
   const atrasada = t.estado === 'atrasada'
   const n = t.diasAtraso ?? 0
   const quando = atrasada
@@ -250,6 +250,8 @@ function LinhaConta({ t, aoAgir, comBotao }: { t: Tarefa; aoAgir: (t: Tarefa) =>
       </span>
     </>
   )
+  // no simples o botão de dar baixa é o principal da linha (a fatura só leva aos cartões)
+  const destaque = comBotao === true && t.origem !== 'fatura' && acaoDaConta !== acaoPadrao
   const valor = <b className={`eq-conta-valor${t.entrada ? ' entrada' : ''}`} title={detalhe}>{t.entrada ? '+ ' : ''}{t.valor}{t.aprox && <small>{t.aprox}</small>}</b>
   if (!comBotao) {
     return (
@@ -266,18 +268,19 @@ function LinhaConta({ t, aoAgir, comBotao }: { t: Tarefa; aoAgir: (t: Tarefa) =>
       {corpo}
       <span className="eq-conta-lado">
         {valor}
-        <button type="button" className="btn eq-conta-acao" onClick={() => aoAgir(t)}>{acaoDaConta(t)}</button>
+        <button type="button" className={`btn eq-conta-acao${destaque ? ' primario' : ''}`} onClick={() => aoAgir(t)}>{acaoDaConta(t)}</button>
       </span>
     </li>
   )
 }
 
-function ColunaContas({ tipo, titulo, itens, aoAgir, comBotao, maisRotulo, vazio, pe }: {
+function ColunaContas({ tipo, titulo, itens, aoAgir, comBotao, acaoDaConta, maisRotulo, vazio, pe }: {
   tipo: 'atrasadas' | 'proximas'
   titulo: ReactNode
   itens: Tarefa[]
   aoAgir: (t: Tarefa) => void
   comBotao: boolean
+  acaoDaConta: (t: Tarefa) => string
   maisRotulo: (n: number) => string
   vazio: string
   pe?: ReactNode
@@ -289,7 +292,7 @@ function ColunaContas({ tipo, titulo, itens, aoAgir, comBotao, maisRotulo, vazio
     <div className={`eq-coluna ${tipo}`}>
       <h3>{titulo}</h3>
       {itens.length ? (
-        <ul className="eq-contas">{visiveis.map((t) => <LinhaConta key={t.chave} t={t} aoAgir={aoAgir} comBotao={comBotao} />)}</ul>
+        <ul className="eq-contas">{visiveis.map((t) => <LinhaConta key={t.chave} t={t} aoAgir={aoAgir} comBotao={comBotao} acaoDaConta={acaoDaConta} />)}</ul>
       ) : (
         <p className="eq-vazio"><Icone nome="check" tamanho={16} /> {vazio}</p>
       )}
@@ -307,8 +310,18 @@ function ColunaContas({ tipo, titulo, itens, aoAgir, comBotao, maisRotulo, vazio
  * ação). Duas de cada; o resto atrás de "Ver mais". Nada é pago ao tocar: a conta abre a conferência, a fatura leva aos cartões
  * e a parcela abre o lançamento já preenchido, que a pessoa confirma.
  */
-export function ContasEq({ tarefas, limite, hoje, aoAgir, aoVerContas }: {
+export function ContasEq({ tarefas, limite, hoje, aoAgir, aoVerContas, titulo, tituloProximas, botaoNasProximas = false, acaoDaConta = acaoPadrao, pe }: {
   tarefas: Tarefa[]
+  /** O título da segunda coluna quando não há limite de 7 dias (o simples usa "Próximas"; senão, "Em aberto"). */
+  tituloProximas?: string
+  /** "Contas e vencimentos" (o simples usa "Contas a pagar"). */
+  titulo?: string
+  /** As próximas também com o botão ao lado do valor (no simples, toda linha tem a ação escrita). */
+  botaoNasProximas?: boolean
+  /** O texto do botão de cada linha. */
+  acaoDaConta?: (t: Tarefa) => string
+  /** Mais um link no pé da segunda coluna (no simples: "N valores a receber"). */
+  pe?: ReactNode
   /** AAAA-MM-DD do fim dos "próximos 7 dias"; sem ele (outro mês), o que está em aberto numa coluna só. */
   limite?: string
   /** "16 de novembro de 2026" */
@@ -319,23 +332,25 @@ export function ContasEq({ tarefas, limite, hoje, aoAgir, aoVerContas }: {
   const g = agruparTarefas(tarefas, limite ?? '9999-12-31')
   const na = g.atrasadas.length
   const proximas = limite ? g.proximas : [...g.proximas, ...g.depois]
-  const verContas = aoVerContas && <button type="button" className="eq-link" onClick={aoVerContas}>{tx('Ver contas do mês')} <Icone nome="dir" tamanho={15} /></button>
+  const verContas = (aoVerContas || pe) && <>{aoVerContas && <button type="button" className="eq-link" onClick={aoVerContas}>{tx('Ver contas do mês')} <Icone nome="dir" tamanho={15} /></button>}{pe}</>
+  const nome = titulo ?? tx('Contas e vencimentos')
   return (
-    <section className="eq-secao-contas" aria-label={tx('Contas e vencimentos')}>
+    <section className="eq-secao-contas" aria-label={nome}>
       <header className="eq-cab-contas">
-        <h2>{tx('Contas e vencimentos')}</h2>
+        <h2>{nome}</h2>
         <span className="eq-hoje">{tx('Hoje, {0}', hoje)}</span>
       </header>
       <div className="cartao eq-cartao eq-contas-cartao">
-        <ColunaContas tipo="atrasadas" itens={g.atrasadas} aoAgir={aoAgir} comBotao
+        <ColunaContas tipo="atrasadas" itens={g.atrasadas} aoAgir={aoAgir} comBotao acaoDaConta={acaoDaConta}
           titulo={<><Icone nome="exclamacao" tamanho={20} />{na === 0 ? tx('Atrasadas') : na === 1 ? tx('1 atrasada') : tx('{0} atrasadas', na)}</>}
           maisRotulo={(n) => (n === 1 ? tx('Ver mais 1 atrasada') : tx('Ver mais {0} atrasadas', n))} vazio={tx('Nenhuma conta atrasada.')} />
-        <ColunaContas tipo="proximas" itens={proximas} aoAgir={aoAgir} comBotao={false}
-          titulo={<><Icone nome="calendario" tamanho={20} />{limite ? tx('Próximos 7 dias') : tx('Em aberto')}<small>{proximas.length}</small></>}
+        <ColunaContas tipo="proximas" itens={proximas} aoAgir={aoAgir} comBotao={botaoNasProximas} acaoDaConta={acaoDaConta}
+          titulo={<><Icone nome="calendario" tamanho={20} />{limite ? tx('Próximos 7 dias') : tituloProximas ?? tx('Em aberto')}<small>{proximas.length}</small></>}
           maisRotulo={(n) => (limite
             ? (n === 1 ? tx('Ver mais 1 dos próximos 7 dias') : tx('Ver mais {0} dos próximos 7 dias', n))
-            : (n === 1 ? tx('Ver mais 1 em aberto') : tx('Ver mais {0} em aberto', n)))}
-          vazio={limite ? tx('Nada vence nos próximos 7 dias.') : tx('Nenhuma conta em aberto neste mês.')} pe={verContas} />
+            : tituloProximas ? (n === 1 ? tx('Ver mais 1 próxima') : tx('Ver mais {0} próximas', n))
+              : (n === 1 ? tx('Ver mais 1 em aberto') : tx('Ver mais {0} em aberto', n)))}
+          vazio={limite ? tx('Nada vence nos próximos 7 dias.') : tituloProximas ? tx('Nada mais vence neste mês.') : tx('Nenhuma conta em aberto neste mês.')} pe={verContas} />
       </div>
     </section>
   )
@@ -587,6 +602,8 @@ const SELO: Record<Gravidade, () => string> = {
 }
 /** A primeira frase (o resto da explicação fica em "Ver todas as orientações"). */
 const primeiraFrase = (t: string) => t.split(/(?<=[.!?])\s+/)[0] ?? t
+/** As duas primeiras frases (no simples). */
+const duasFrases = (t: string) => t.split(/(?<=[.!?])\s+(?=\p{Lu})/u).slice(0, 2).join(' ')
 /** Conselhos que pedem um dado que falta (juros não informados…): não são conclusão tirada dos números. */
 const pedeDado = (c: Conselho) => c.id.startsWith('informe-')
 
@@ -594,13 +611,15 @@ const pedeDado = (c: Conselho) => c.id.startsWith('informe-')
  * Uma orientação só (a mais importante que não repete o que a comparação já diz): o selo, o título, uma frase, a ação e o
  * "Agora não". As outras e a explicação completa abrem em "Ver todas as orientações".
  */
-export function OrientacaoEq({ conselhos, semDados, aoIr, aoDispensar, todas }: {
+export function OrientacaoEq({ conselhos, semDados, aoIr, aoDispensar, todas, aoAnalise }: {
   conselhos: Conselho[]
   semDados: boolean
   aoIr: (destino: Conselho['destino']) => void
   aoDispensar: (id: string) => void
   /** A lista completa (BlocoConselhos), para a janela "Ver todas as orientações". */
-  todas: ReactNode
+  todas?: ReactNode
+  /** Simples: duas frases e "Ver análise" (o Consultor) no lugar da lista de orientações. */
+  aoAnalise?: () => void
 }) {
   const [aberta, setAberta] = useState(false)
   const c = conselhos[0]
@@ -610,7 +629,7 @@ export function OrientacaoEq({ conselhos, semDados, aoIr, aoDispensar, todas }: 
         <div className={`eq-conselho ${pedeDado(c) ? 'atencao' : c.gravidade}`}>
           <span className="eq-conselho-selo">{pedeDado(c) ? tx('Falta um dado') : SELO[c.gravidade]()}</span>
           <strong>{c.titulo}</strong>
-          <p>{primeiraFrase(c.porque)}</p>
+          <p>{aoAnalise ? duasFrases(c.porque) : primeiraFrase(c.porque)}</p>
           <div className="eq-conselho-acoes">
             <button type="button" className="btn primario" onClick={() => aoIr(c.destino)}>{c.botao}</button>
             <button type="button" className="eq-agora-nao" onClick={() => aoDispensar(c.id)} aria-label={tx('Agora não: esconde este aviso até o mês que vem')}>{tx('Agora não')}</button>
@@ -623,7 +642,11 @@ export function OrientacaoEq({ conselhos, semDados, aoIr, aoDispensar, todas }: 
           <p>{semDados ? tx('Lance entradas e saídas de pelo menos 2 meses que já terminaram.') : tx('Tudo em ordem por aqui.')}</p>
         </div>
       )}
-      {conselhos.length > 0 && (
+      {aoAnalise ? (
+        <div className="eq-orientacao-pe">
+          <button type="button" className="eq-link" onClick={aoAnalise}>{tx('Ver análise')} <Icone nome="dir" tamanho={15} /></button>
+        </div>
+      ) : conselhos.length > 0 && (
         <div className="eq-orientacao-pe">
           <button type="button" className="eq-link" onClick={() => setAberta(true)}>
             {conselhos.length > 1 ? tx('Ver todas as orientações ({0})', conselhos.length) : tx('Entender esta orientação')} <Icone nome="dir" tamanho={15} />
@@ -677,7 +700,7 @@ export interface ResumoCompacto {
 export function ResumosCompactos({ itens }: { itens: ResumoCompacto[] }) {
   if (!itens.length) return null
   return (
-    <div className="eq-resumos">
+    <div className={`eq-resumos${itens.length === 4 ? ' quatro' : ''}`}>
       {itens.map((x) => (
         <button key={x.chave} type="button" className="cartao eq-cartao eq-resumo" onClick={x.aoAbrir} style={{ '--c': x.cor } as CSSProperties}>
           <span className="eq-resumo-linha">
