@@ -545,3 +545,57 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium nos dois temas
   (1440×860 e 390×844) da abertura e da seção inteira, sem erro de página. Inglês e espanhol não foram fotografados.
   Fluidez do movimento não foi medida.
+
+### 16/11/2026 — Claude — Motor: a rede passa a flutuar numa sala de servidores
+
+**Estado:** veja a entrada de publicação junto com a da "sexta tela" (as duas foram feitas ao mesmo tempo e publicadas juntas).
+
+- Pedido do Edigar: a rede flutuava no vazio, sem dar para ver em que ambiente estava. Ideia aprovada: uma sala de
+  servidores, desenhada na mesma linguagem de quadradinhos (nada de rack realista, que fica com cara de banco de imagem).
+- `src/pages/Algoritmo.tsx`, `desenharSala`: um corredor fixo no mundo (não gira com a rede; ela flutua dentro dele).
+  `RACKS`: uma fileira de cada lado (x = ±`LADO_SALA`), em grupos de 6 com um vão, sumindo na névoa até `LONGE`. Cada rack
+  é uma placa de frente para o corredor, com `GAVETAS` (as unidades do servidor) e dois LEDs na ponta de cada uma, quase
+  todos apagados; uns piscam sozinhos e, cada vez que o sinal chega na saída da rede, uma onda acende os racks de perto da
+  rede até o fundo. Chão em `CHAO` com grade (em faixas de névoa) e o reflexo dos nós da rede; duas faixas de luz no teto;
+  uma luz fraca no fim do corredor. Cores na paleta (`P.sala`): no escuro, dourado fraco somado; no claro, racks brancos
+  com LEDs azuis.
+- A sala aparece quando a câmera sai do túnel (antes ela está na tela do Consultor e dentro do fio) e fica mais apagada
+  na tela final.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium nos dois temas
+  (1440×860 e 390×844) da saída do túnel até a tela final, sem erro de página. Fluidez não foi medida.
+
+### 16/11/2026 — Claude — A sexta tela: o carrossel desemboca no motor sem recorte
+
+**Estado:** commit local no branch `sexta-tela` (não publicado; o agente principal junta e publica). Só a página
+inicial mudou; sem migração. Precisa de versão nova do app Android só se a página inicial for para lá também.
+
+- Pedido do Edigar: entre o carrossel e o motor havia um recorte (o carrossel terminava, vinha uma faixa de fundo e a
+  tela do Consultor surgia de baixo). Solução aprovada por ele: "a sexta tela".
+- `src/pages/Apresentacao.tsx`: o progresso do palco vai de 0 a `FIM` (1,2). Até 1 é o carrossel de antes; de 1 a
+  `PARA` (1,165) o cilindro gira mais um passo até a sexta face (`.td-sexta`, em `lugar(5)`), as cinco telas se
+  apagam, o balanço da câmera para e o fundo, a luz e o véu viram os do motor (`--fim`); a legenda sai
+  (`--fim-texto`). A câmera para de frente na face, com escala e foco calculados em `medir()` para a face cair no
+  retângulo exato do motor (no plano z = 0 a perspectiva não altera nada; `cx`/`cy` em px inteiros). De `PARA` a
+  `FIM` ela fica parada; na reta final o palco se apaga (opacidade do `.ap-palco-sticky`) por cima do motor, que já
+  está preso embaixo dele. A opacidade usa o menor entre o scroll e o progresso desenhado: descendo rápido o palco só
+  some com a câmera já parada; subindo, ele volta antes de o motor se soltar.
+- `src/pages/passagem.ts` (novo): o motor publica a foto carregada (`ConsultorReal`, no tema, idioma e aparelho dele)
+  e o retângulo (`realX`, `realY`, `realS`); a sexta face usa o mesmo canvas (`real.ia`, com as beiradas já apagadas)
+  e a mesma máscara de cima e de baixo do canvas do motor. O carrossel pede a foto a partir da metade do palco
+  (`pedirConsultor`), antes de o motor estar perto.
+- `src/pages/Algoritmo.tsx`: só duas coisas — `publicarPassagem` no fim do cálculo de `realX/realY/realS` em
+  `medir()` e o registro de `aoPedirConsultor`. Nada da rede, túnel, camadas, gráfico ou tela final mudou.
+- CSS: `.ag` sobe 116vh por baixo do palco (`margin-top: calc(-100vh - 16vh)`, `z-index: 1`; `.ap-palco` tem
+  `z-index: 2`) e o topo do fundo dela começa no breu (não aparece mais). Palco: 1180vh (celular 1084vh), as mesmas
+  proporções de antes para as cinco telas. `.ap-motor` e `.ap-palco-sticky::before` copiam o fundo e o véu do motor
+  nos dois temas e no celular (se mudarem em `algoritmo.css`, mudar também em `apresentacao.css`).
+- Armadilha achada: a face escrevia `visibility: visible`, que aparece mesmo com o palco escondido; ficou `inherit`.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício. Chromium, fotos do fim do carrossel
+  ao começo do mergulho em 1440×860 (escuro e claro), 390×844 com toque (escuro e claro), 1100×800, 1440×700 e com
+  animações reduzidas (computador e celular), sem erro de página. No ponto da troca, com os dois presos, foto só do
+  palco × só do motor: a face fica no mesmo retângulo (diferença < 0,02 px no `getBoundingClientRect`) e o melhor
+  alinhamento entre as duas fotos é dx = 0, dy = 0 em todos os tamanhos (diferença média de 0,6 a 1,9 de 255, só
+  nas bordas, pela reamostragem do canvas × textura 3D). Não conferido: inglês e espanhol, telas com
+  `devicePixelRatio` > 1,5 (o canvas do motor é limitado a 1,5 e a face 3D não: pode haver diferença de nitidez, não
+  de posição), troca de tema com a página parada na sexta face e celular de verdade (barra do navegador mudando a
+  altura). Fluidez do movimento não foi medida.

@@ -8,6 +8,7 @@ import { alturaIdeal, desenharTela, type TelaPronta } from './algoritmoTela'
 import { ATRAVESSA, carregarConsultor, COR_PAINEL, desenharConsultor, idiomaDasFotos, type ConsultorReal } from './algoritmoConsultor'
 import { montarCamadas, type Camada } from './algoritmoCamadas'
 import { COR_TIPO, desenharDocs, LIDAS, LIDAS_PDF, type DocPronto, type TextoLido } from './algoritmoDocs'
+import { aoPedirConsultor, publicarPassagem } from './passagem'
 import './algoritmo.css'
 
 /**
@@ -99,6 +100,15 @@ const REDE = (() => {
   }
   return { nos, elos, inicio, entrada: inicio[1] }
 })()
+// ─── a sala: o servidor onde a rede roda. Um corredor largo, com uma fileira de racks de cada lado sumindo no fundo,
+// chão com grade e o reflexo da rede, e duas faixas de luz no teto. Não gira com a rede: ela flutua dentro dele ───
+const CHAO = 270, TETO_SALA = -560, LADO_SALA = 1250, LONGE = 4600
+/** Os racks de um lado (z de onde começa cada um, de frente para o corredor), em grupos de 6 com um vão entre eles. */
+const RACKS = Array.from({ length: 44 }, (_, i) => -420 + i * 86 + Math.floor(i / 6) * 130).filter((z) => z < LONGE - 200)
+const RACK_LARGO = 74, GAVETAS = 14
+/** A névoa: de 1 (perto) a 0 (no fundo do corredor). */
+const nevoa = (z: number) => 1 - suave(700, LONGE, z)
+
 /** A força com que o nó dispara na onda k (0 = fica quieto). Sempre a mesma para o mesmo nó e a mesma onda. */
 function forca(no: number, k: number, limiar: number) {
   if (REDE.nos[no].camada === CAMADAS.length - 1) return 1
@@ -309,6 +319,7 @@ export function Algoritmo() {
       mes: 'rgba(20,33,61,0.6)', legenda: 'rgba(20,33,61,0.82)', varre: ['rgba(31,142,241,0.3)', 'rgba(31,142,241,0)', 'rgba(31,142,241,0.95)'],
       nomeTexto: '#14213d', fresta: 'rgb(238,243,250)', brilhoFresta: '31,142,241',
       telaRastro: ['rgba(31,142,241,0)', 'rgba(31,142,241,0.22)'], telaLinha: ['rgba(31,142,241,0)', 'rgba(31,142,241,0.9)'], reflexo: 'rgba(255,255,255,0.4)',
+      sala: { face: 'rgba(255,255,255,0.62)', borda: 'rgba(37,99,235,0.16)', led: 'rgba(37,99,235,0.3)', aceso: ['rgba(31,142,241,0.55)', 'rgba(31,142,241,0.95)'], chao: 'rgba(37,99,235,0.11)', teto: 'rgba(31,142,241,0.3)', espelho: 0.16 },
     } : {
       luz: 'lighter' as GlobalCompositeOperation, tons: TONS, cubos: PALETA, tipos: CORES_GRAF,
       halo: brilho(256, [[0, 'rgba(255,200,110,0.55)'], [0.25, 'rgba(255,150,40,0.22)'], [0.6, 'rgba(255,120,20,0.06)'], [1, 'rgba(255,100,10,0)']]),
@@ -322,6 +333,7 @@ export function Algoritmo() {
       mes: 'rgba(232,238,255,0.62)', legenda: 'rgba(240,244,255,0.82)', varre: ['rgba(255,240,210,0.5)', 'rgba(255,240,210,0)', 'rgba(255,245,225,0.95)'],
       nomeTexto: '#f4f7ff', fresta: 'rgb(3,4,8)', brilhoFresta: '255,190,100',
       telaRastro: ['rgba(255,170,60,0)', 'rgba(255,190,90,0.38)'], telaLinha: ['rgba(255,200,110,0)', 'rgba(255,220,150,0.95)'], reflexo: 'rgba(255,220,160,0.07)',
+      sala: { face: 'rgba(255,190,120,0.035)', borda: 'rgba(255,175,90,0.13)', led: 'rgba(255,165,70,0.3)', aceso: ['rgba(255,190,90,0.6)', 'rgba(255,240,205,1)'], chao: 'rgba(255,170,80,0.09)', teto: 'rgba(255,200,120,0.22)', espelho: 0.2 },
     }
     let P = paleta(claro)
 
@@ -409,6 +421,8 @@ export function Algoritmo() {
           realX = esq + 20 + (aw - real.w * realS) / 2; realY = (H - real.h * realS) / 2
         }
         realE = Math.max(20, (1.3 * 2 * Math.max(cy, H - cy)) / (real.fr[3] * realS))
+        // o carrossel termina com a câmera parada nesta mesma tela, neste mesmo lugar (passagem.ts)
+        publicarPassagem({ real, x: realX, y: realY, s: realS })
       }
       let dw: number, dh: number
       if (celular) {
@@ -660,6 +674,97 @@ export function Algoritmo() {
       return proj(mistura(c.ax, rx[b], f), mistura(c.ay, ry[b], f), mistura(c.az, rz[b], f))
     }
     const compFio = (k: number) => { const c = fiosTeia[k], b = c.no; return Math.hypot(rx[b] - c.ax, ry[b] - c.ay, rz[b] - c.az) }
+
+    /**
+     * A sala do servidor, atrás de tudo. Os racks são placas de frente para o corredor, cada uma com colunas de LEDs
+     * (os mesmos quadradinhos da rede), quase todos apagados. Quando o sinal chega na saída da rede, uma onda de luz
+     * corre pelos racks, de perto da rede até o fundo do corredor: a resposta se espalhando pelo servidor. No chão, a
+     * grade e o reflexo da rede.
+     */
+    const desenharSala = (a: number, s: number, refl: number) => {
+      ctx.globalCompositeOperation = P.luz
+      const S = P.sala
+      // o chão: as linhas ao longo do corredor e as de través, mais fracas quanto mais longe (em faixas de profundidade)
+      const faixas = 10, chao = Array.from({ length: faixas }, () => new Path2D())
+      const zDe = (b: number) => -700 + (b / faixas) * (LONGE + 700)
+      const reta = (path: Path2D, A: { x: number; y: number; s: number }, B: { x: number; y: number; s: number }) => {
+        if (A.s && B.s) { path.moveTo(A.x, A.y); path.lineTo(B.x, B.y) }
+      }
+      for (let b = 0; b < faixas; b++) {
+        const z0 = zDe(b), z1 = zDe(b + 1)
+        for (let x = -LADO_SALA; x <= LADO_SALA; x += 125) reta(chao[b], proj(x, CHAO, z0), proj(x, CHAO, z1))
+        for (let z = Math.ceil(z0 / 125) * 125; z < z1; z += 125) reta(chao[b], proj(-LADO_SALA, CHAO, z), proj(LADO_SALA, CHAO, z))
+      }
+      ctx.lineWidth = 1; ctx.strokeStyle = S.chao
+      chao.forEach((path, b) => { ctx.globalAlpha = a * nevoa(zDe(b + 0.5)); ctx.stroke(path) })
+      // o teto: duas faixas de luz ao longo do corredor
+      const teto = new Path2D()
+      for (const x of [-LADO_SALA * 0.45, LADO_SALA * 0.45]) for (let b = 0; b < faixas; b++) reta(teto, proj(x, TETO_SALA, zDe(b)), proj(x, TETO_SALA, zDe(b + 1)))
+      ctx.globalAlpha = a * 0.8; ctx.strokeStyle = S.teto; ctx.lineWidth = 1.4; ctx.stroke(teto)
+
+      // uma luz fraca no fim do corredor: dá o fundo para onde tudo foge
+      const fim = proj(0, (CHAO + TETO_SALA) / 2, LONGE)
+      if (fim.s) { const t2 = 1100 * esc * zoom; ctx.globalAlpha = a * 0.35; ctx.drawImage(P.halo, fim.x - t2 / 2, fim.y - t2 / 2, t2, t2) }
+      // a onda que corre pelos racks cada vez que o sinal chega na saída da rede
+      const fSaida = (pulso - (CAMADAS.length - 1)) / ESPACO, zOnda = (fSaida - Math.floor(fSaida)) * (LONGE + 900) - 500
+      const pisca = Math.floor(s * 2.5)
+      const faces = new Path2D(), gavetas = new Path2D(), apagados: number[] = [], acesos: number[] = []
+      for (const lado of [-1, 1]) {
+        const x = lado * LADO_SALA
+        for (let r = 0; r < RACKS.length; r++) {
+          const z0 = RACKS[r], z1 = z0 + RACK_LARGO, f = nevoa(z0)
+          if (f < 0.03) continue
+          const A = proj(x, TETO_SALA + 60, z0), B = proj(x, TETO_SALA + 60, z1), C = proj(x, CHAO, z1), D = proj(x, CHAO, z0)
+          if (!A.s || !B.s || !C.s || !D.s) continue
+          if (Math.max(A.x, B.x, C.x, D.x) < 0 || Math.min(A.x, B.x, C.x, D.x) > W) continue
+          faces.moveTo(A.x, A.y); faces.lineTo(B.x, B.y); faces.lineTo(C.x, C.y); faces.lineTo(D.x, D.y); faces.closePath()
+          // longe, as gavetas ficam pequenas demais: o rack fica só a placa
+          const alto = Math.abs(D.y - A.y)
+          if (alto < 36) continue
+          const onda = Math.max(0, 1 - Math.abs(z0 - zOnda) / 260)
+          // as gavetas (cada servidor do rack): uma linha de través e dois LEDs na ponta de dentro
+          for (let l = 0; l < GAVETAS; l++) {
+            const v0 = l / GAVETAS, y0 = mistura(TETO_SALA + 60, CHAO, v0)
+            if (l) { const E = proj(x, y0, z0 + 4), G = proj(x, y0, z1 - 4); if (E.s && G.s) { gavetas.moveTo(E.x, E.y); gavetas.lineTo(G.x, G.y) } }
+            const yl = mistura(TETO_SALA + 60, CHAO, v0 + 0.5 / GAVETAS)
+            for (let c = 0; c < 2; c++) {
+              const P2 = proj(x, yl, z0 + 9 + c * 8)
+              if (!P2.s) continue
+              const lado2 = Math.max(1.2, Math.min(6, 3 * P2.s * esc * zoom))
+              // alguns piscam sozinhos; na passagem da onda, o rack acende de cima para baixo
+              const k = r * 97 + l * 7 + c * 3 + (lado > 0 ? 5000 : 0), h = Math.sin(k * 12.9898 + pisca * 78.233) * 43758.5453
+              const solto = h - Math.floor(h) < 0.06
+              const lista = onda * (1 - 0.5 * v0) > 0.35 || solto ? acesos : apagados
+              lista.push(P2.x, P2.y, lado2, f * (solto && onda < 0.35 ? 0.75 : 1))
+            }
+          }
+        }
+      }
+      ctx.globalAlpha = a; ctx.fillStyle = S.face; ctx.fill(faces)
+      ctx.strokeStyle = S.borda; ctx.lineWidth = 1; ctx.stroke(faces); ctx.stroke(gavetas)
+      const pontos = (lista: number[], cor: string, k: number) => {
+        ctx.fillStyle = cor
+        for (let i = 0; i < lista.length; i += 4) {
+          ctx.globalAlpha = a * lista[i + 3] * k
+          const l = lista[i + 2]
+          ctx.fillRect(lista[i] - l / 2, lista[i + 1] - l / 2, l, l)
+        }
+      }
+      pontos(apagados, S.led, 1)
+      pontos(acesos, S.aceso[0], 1)
+
+      // o reflexo da rede no chão: cada nó espelhado, apagado e borrado
+      if (refl > 0.01) {
+        for (let i = 0; i < NN; i++) {
+          const Q = proj(rx[i], 2 * CHAO - ry[i], rz[i])
+          if (!Q.s) continue
+          const tam = Math.min(60, (14 + 30 * aceso[i]) * Q.s * esc * zoom)
+          ctx.globalAlpha = a * refl * S.espelho * (0.4 + 0.6 * aceso[i])
+          ctx.drawImage(P.ponto, Q.x - tam / 2, Q.y - tam / 2, tam, tam)
+        }
+      }
+      ctx.globalAlpha = 1
+    }
 
     /** O ponto do fio k no espaço, a uma fração f do caminho. */
     const noFio3 = (k: number, f: number): V3 => { const c = fiosTeia[k], b = c.no; return [mistura(c.ax, rx[b], f), mistura(c.ay, ry[b], f), mistura(c.az, rz[b], f)] }
@@ -1037,8 +1142,11 @@ export function Algoritmo() {
         ativo[r] = 1
       }
 
-      // as costas da tela do Consultor, atrás da rede, presas nela por uma teia de fios (aparecem quando a câmera sai do
-      // túnel; somem quando o documento chega)
+      // a sala do servidor: aparece quando a câmera sai do túnel (antes, ela está na tela do Consultor e dentro do fio) e
+      // fica mais apagada na tela final, que precisa ser lida
+      const salaA = (real ? suave(SAI, SAI + 0.12, desm) : 1) * (1 - 0.55 * pres[n - 1])
+      if (salaA > 0.01) desenharSala(salaA, s, (1 - suave(0.58, 0.68, p)) * (1 - oculto))
+
       // a tela presa na ponta da entrada da rede, com os fios saindo de trás dela (aparece quando a câmera sai do túnel;
       // some quando o documento chega)
       // a teia (o túnel por dentro, os fios da tela até a rede por fora) e a tela presa nela; somem quando o documento
@@ -1371,6 +1479,8 @@ export function Algoritmo() {
     }
     const chegando = new IntersectionObserver(([e]) => { if (e.isIntersecting && !perto) { perto = true; pedirReal() } }, { rootMargin: '1500px 0px' })
     chegando.observe(secao)
+    // o carrossel pede a foto antes: a sexta face dele é esta tela
+    const soltarPedido = aoPedirConsultor(() => { if (!perto) { perto = true; pedirReal() } })
     // trocou o tema: as fotos, os documentos e as cores compensadas são refeitos
     const tema = new MutationObserver(() => {
       const agora = document.documentElement.dataset.tema === 'claro'
@@ -1395,7 +1505,7 @@ export function Algoritmo() {
     window.addEventListener('scroll', aoScroll, { passive: true })
     window.addEventListener('resize', aoRedim)
     return () => {
-      obs.disconnect(); chegando.disconnect(); tamanhos.disconnect(); tema.disconnect()
+      obs.disconnect(); chegando.disconnect(); tamanhos.disconnect(); tema.disconnect(); soltarPedido()
       window.removeEventListener('scroll', aoScroll); window.removeEventListener('resize', aoRedim)
       if (quadro) cancelAnimationFrame(quadro)
     }
