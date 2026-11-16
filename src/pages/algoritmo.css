@@ -8,7 +8,10 @@
 .ag {
   --ouro: #ffc46b; --ouro-forte: #ffb04a; --tinta: #fff2dc; --tinta-2: rgba(255, 236, 210, .7); --breu: #060403;
   position: relative; height: 1010vh; color: var(--tinta);
-  background: linear-gradient(var(--fundo), var(--breu) 32vh, var(--breu) calc(100% - 32vh), var(--fundo));
+  /* a passagem do carrossel (a sexta tela, Apresentacao.tsx): a seção sobe por baixo do palco e já está presa quando o
+     carrossel termina; nos últimos 16vh o palco se apaga por cima dela. Por isso o topo não aparece e começa no breu */
+  z-index: 1; margin-top: calc(-100vh - 16vh);
+  background: linear-gradient(var(--breu), var(--breu) calc(100% - 32vh), var(--fundo));
 }
 .ag-sticky { position: sticky; top: 0; height: 100vh; height: 100dvh; overflow: hidden; }
 .ag-rede {

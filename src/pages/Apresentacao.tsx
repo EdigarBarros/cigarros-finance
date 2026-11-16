@@ -9,6 +9,7 @@ import { Fundadores } from './Fundadores'
 import { FundoOpus } from './FundoOpus'
 import { Preco } from './Preco'
 import { TelaDaApresentacao } from './ApresentacaoTelas'
+import { ouvirPassagem, pedirConsultor, type Passagem } from './passagem'
 import { BLOCOS, DH, DW, TELAS, ZONAS, dividaEm, escalonar, formatar, type Formato, type Ret, type Tela } from './apresentacaoCena'
 
 /**
@@ -16,7 +17,9 @@ import { BLOCOS, DH, DW, TELAS, ZONAS, dividaEm, escalonar, formatar, type Forma
  * carrossel 3D, como as faces de um cilindro. Conforme a pessoa rola, a câmera voa de uma tela para a outra: no Início
  * os blocos se soltam em camadas; no Resumo do ano o gráfico se abre em planos (barras, dívida, guardado, investido) e a
  * linha da dívida se desenha com o valor acompanhando; nos Cartões os plásticos saltam e inclinam; nos Lançamentos cada
- * lançamento chega voando; nas Metas os potes enchem. No fim a câmera se afasta e mostra tudo junto.
+ * lançamento chega voando; nas Metas os potes enchem. No fim a câmera se afasta e mostra tudo junto; depois o cilindro
+ * gira mais um passo até a sexta face, a tela do Consultor, e a câmera para nela exatamente onde o motor (Algoritmo.tsx)
+ * começa: o palco se apaga por cima do motor, que já está preso embaixo dele com a mesma foto no mesmo lugar.
  * Tudo é escrito direto no DOM a cada quadro, a partir de um progresso suavizado: nada de re-render por pixel.
  */
 const CENAS = [
@@ -27,11 +30,19 @@ const CENAS = [
   { titulo: tx('Metas que enchem'), texto: tx('Cada pote enche conforme você guarda e mostra quando a meta chega.'), p: 0.86 },
   { titulo: tx('Tudo em um só lugar'), texto: tx('Seu dinheiro organizado, do jeito que deveria ser.'), p: 0.985 },
 ] as const
-/** Onde termina cada cena (progresso do scroll). */
-const FIM_CENA = [0.195, 0.405, 0.59, 0.775, 0.925, 1]
+/**
+ * O progresso vai de 0 a FIM: até 1 é o carrossel das cinco telas; de 1 a PARA o cilindro gira até a sexta face (a
+ * tela do Consultor) e a câmera para no enquadramento em que o motor começa; de PARA a FIM ela fica parada e, na reta
+ * final (quando o motor já está preso embaixo), o palco se apaga por cima dele.
+ */
+const FIM = 1.2, PARA = 1.165
+/** Onde termina cada cena (progresso do scroll). A última vai até o fim (a sexta face ainda é "tudo em um só lugar"). */
+const FIM_CENA = [0.195, 0.405, 0.59, 0.775, 0.925, FIM]
 
 // ─── o carrossel: as telas são faces de um cilindro, PASSO graus uma da outra ───
 const PASSO = 32, RAIO = 2600
+/** A sexta face (a tela do Consultor) fica um passo depois das cinco telas. */
+const SEXTA = TELAS.length
 const rad = (g: number) => (g * Math.PI) / 180
 const lugar = (i: number) => {
   const a = (i - (TELAS.length - 1) / 2) * PASSO
@@ -76,6 +87,10 @@ const CAMERA: Quadro[] = [
   // no fim a câmera se afasta e o carrossel gira de volta, passando pelas telas
   { p: 0.955, alvo: 'mundo', m: 0.95, rx: 14, ry: 8, rz: 0, a: 22 },
   { p: 1, alvo: 'mundo', m: 1, rx: 6, ry: -4, rz: 0, a: -14 },
+  // a sexta face: o cilindro gira mais um passo, a câmera chega de lado e para de frente onde o motor começa
+  { p: 1.09, alvo: 'sexta', m: 0.78, rx: 8, ry: -14, rz: 1 },
+  { p: PARA, alvo: 'passagem', m: 1, rx: 0, ry: 0, rz: 0 },
+  { p: FIM, alvo: 'passagem', m: 1, rx: 0, ry: 0, rz: 0 },
 ]
 
 /** Quando cada tela se solta em camadas: [sobe de, até, desce de, até]. */
@@ -154,14 +169,19 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
   const palcoRef = useRef<HTMLElement>(null)
   const stickyRef = useRef<HTMLDivElement>(null)
   const mundoRef = useRef<HTMLDivElement>(null)
+  const sextaRef = useRef<HTMLDivElement>(null)
   const [cena, setCena] = useState(0)
 
   // rodinha do mouse com inércia, como o arrasto no celular (a animação 3D acompanha sem trancos)
   useEffect(() => ligarRolagemSuave(), [])
 
   useEffect(() => {
-    const palco = palcoRef.current, sticky = stickyRef.current, mundo = mundoRef.current
-    if (!palco || !sticky || !mundo) return
+    const palco = palcoRef.current, sticky = stickyRef.current, mundo = mundoRef.current, sexta = sextaRef.current
+    if (!palco || !sticky || !mundo || !sexta) return
+    // a sexta face: a tela do Consultor que o motor publica (passagem.ts), do tamanho de uma tela na proporção da foto
+    let pas: Passagem | null = null, sw = DH * (1240 / 800), sh = DH
+    // em que progresso o motor (a seção seguinte) fica preso embaixo do palco: dali em diante o palco pode se apagar
+    let pPega = FIM + 1, pediu = false
 
     const telas = TELAS.map((t) => {
       const el = mundo.querySelector<HTMLElement>(`[data-tela="${t}"]`)!
@@ -201,12 +221,37 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
         const esq = Math.min(460, w * 0.38)
         cx = esq + (w - esq) / 2; cy = h / 2; aw = w - esq - 40; ah = h * 0.84
       }
-      sticky.style.setProperty('--cx', `${cx.toFixed(0)}px`)
-      sticky.style.setProperty('--cy', `${cy.toFixed(0)}px`)
+      // em px inteiros: o centro da perspectiva entra na conta da passagem (meio pixel já apareceria)
+      cx = Math.round(cx); cy = Math.round(cy)
+      const ag = palco.nextElementSibling as HTMLElement | null, total = palco.offsetHeight - window.innerHeight
+      pPega = ag && total > 0 ? FIM * ((ag.getBoundingClientRect().top - palco.getBoundingClientRect().top) / total) : FIM + 1
+      // a sexta face no lugar dela no cilindro e, por cima, a mesma máscara do canvas do motor (some em cima e
+      // embaixo da área presa: .ag-rede em algoritmo.css), posta nas medidas da face parada no fim
+      const L6 = lugar(SEXTA)
+      if (pas) { sw = DH * (pas.real.w / pas.real.h); sh = DH }
+      sexta.style.width = `${sw.toFixed(2)}px`; sexta.style.height = `${sh}px`
+      sexta.style.transform = `translate3d(${(L6.x - sw / 2).toFixed(2)}px, ${-sh / 2}px, ${L6.z.toFixed(2)}px) rotateY(${L6.a}deg)`
+      if (pas) {
+        const ry0 = pas.y, rh = pas.real.h * pas.s, pc = (y: number) => `${(((y - ry0) / rh) * 100).toFixed(3)}%`
+        const mascara = `linear-gradient(to bottom, transparent ${pc(0)}, #000 ${pc(h * 0.12)}, #000 ${pc(h * 0.88)}, transparent ${pc(h)})`
+        sexta.style.maskImage = mascara; sexta.style.webkitMaskImage = mascara
+      }
+      sticky.style.setProperty('--cx', `${cx}px`)
+      sticky.style.setProperty('--cy', `${cy}px`)
       sticky.style.setProperty('--persp', `${Math.max(1200, aw * 1.6).toFixed(0)}px`)
-      const focos = CAMERA.map((q) => focoDe(q.alvo))
+      // a sexta face inteira; e a passagem: o ponto para onde a câmera olha de modo que o meio da face caia no meio do
+      // retângulo do motor, com a escala que dá a mesma largura (de frente, no plano z = 0, a perspectiva não muda nada)
+      const naSexta = { x: L6.x, y: 0, z: L6.z, a: L6.a, w: sw, h: sh }
+      let escPassa = 0, naPassagem = naSexta
+      if (pas) {
+        escPassa = (pas.real.w * pas.s) / sw
+        const du = -(pas.x + (pas.real.w * pas.s) / 2 - cx) / escPassa, dv = -(pas.y + (pas.real.h * pas.s) / 2 - cy) / escPassa
+        naPassagem = { ...naSexta, x: L6.x + du * Math.cos(rad(L6.a)), y: dv, z: L6.z - du * Math.sin(rad(L6.a)) }
+      }
+      const focos = CAMERA.map((q) => (q.alvo === 'sexta' ? naSexta : q.alvo === 'passagem' ? naPassagem : focoDe(q.alvo)))
       const escalas = CAMERA.map((q, i) => {
-        const f = focos[i], tudo = q.alvo === 'mundo' || !q.alvo.includes('.')
+        if (q.alvo === 'passagem' && escPassa) return escPassa
+        const f = focos[i], tudo = q.alvo === 'mundo' || q.alvo === 'sexta' || q.alvo === 'passagem' || !q.alvo.includes('.')
         // no celular a visão geral pode vazar um pouco das bordas (senão a tela fica minúscula);
         // de perto, sem passar de 1,3x o tamanho de desenho (fica nítido e não estoura a tela)
         const folga = tudo && celular ? 1.3 : 1
@@ -236,17 +281,23 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
       // câmera: segue a curva do roteiro
       const fx = cam.fx(p), fy = cam.fy(p), fz = cam.fz(p), a = cam.a(p), s = Math.exp(cam.s(p))
       const giro = giroMax
-      // um balanço leve e contínuo, para a tela nunca parecer congelada
-      const bx = reduzir ? 0 : Math.sin(tempo * 0.00055) * 1.4, by = reduzir ? 0 : Math.cos(tempo * 0.00043) * 1.8
+      // um balanço leve e contínuo, para a tela nunca parecer congelada (menos na chegada à sexta face: ali a câmera
+      // para no enquadramento exato do motor)
+      const quieto = reduzir ? 0 : 1 - suave(1, PARA, p)
+      const bx = Math.sin(tempo * 0.00055) * 1.4 * quieto, by = Math.cos(tempo * 0.00043) * 1.8 * quieto
       const rx = cam.rx(p) * giro + bx, ry = cam.ry(p) * giro + by, rz = cam.rz(p) * giro
       mundo.style.transform = `scale3d(${s.toFixed(4)}, ${s.toFixed(4)}, ${s.toFixed(4)}) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) rotateZ(${rz.toFixed(2)}deg) rotateY(${(-a).toFixed(2)}deg) translate3d(${(-fx).toFixed(1)}px, ${(-fy).toFixed(1)}px, ${(-fz).toFixed(1)}px)`
 
       // só as telas perto da câmera ficam visíveis (as outras nem são pintadas); na visão final, todas
       const ci = a / PASSO + (TELAS.length - 1) / 2
       const geral = p > 0.915
+      // a caminho da sexta face as cinco telas se apagam (no motor não há nada em volta da tela do Consultor)
+      const some = suave(1.03, 1.12, p)
+      por('vsexta', Math.abs(SEXTA - ci) < 2.6 ? 'inherit' : 'hidden', (v) => { sexta.style.visibility = v })
       telas.forEach(({ t, el, blocos }, i) => {
-        const perto = geral || Math.abs(i - ci) < 1.55
+        const perto = some < 0.999 && (geral || Math.abs(i - ci) < 1.55)
         por(`v${t}`, perto ? '' : 'hidden', (v) => { el.style.visibility = v })
+        por(`a${t}`, some < 0.001 ? '' : (1 - some).toFixed(3), (v) => { el.style.opacity = v })
         if (!perto) return
         // explosão em camadas; foco (sobe e acende) no bloco da vez, com os outros da tela um pouco apagados
         const explode = reduzir ? 0 : sino(EXPLODE[t], p)
@@ -282,6 +333,16 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
         })
       }
 
+      // o fundo, a luz e o véu viram os do motor enquanto a câmera chega na sexta face; a legenda sai
+      por('fim', suave(1, PARA, p).toFixed(3), (v) => sticky.style.setProperty('--fim', v))
+      por('fimt', suave(1, 1.07, p).toFixed(3), (v) => sticky.style.setProperty('--fim-texto', v))
+      // a passagem: com a câmera parada e o motor já preso embaixo (pelo scroll e pelo desenhado, o que estiver atrás:
+      // subindo de volta, o palco volta antes de o motor se soltar), o palco se apaga e fica só o motor
+      const passa = rampa(pPega, FIM, Math.min(p, alvo))
+      por('passa', passa < 0.001 ? '' : (1 - passa).toFixed(3), (v) => { sticky.style.opacity = v })
+      por('vpassa', passa > 0.999 ? 'hidden' : '', (v) => { sticky.style.visibility = v })
+      if (!pediu && p > 0.5) { pediu = true; pedirConsultor() }
+
       const qual = FIM_CENA.findIndex((f) => p <= f)
       if (qual !== cenaAtual) { cenaAtual = qual; setCena(qual) }
     }
@@ -291,7 +352,7 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
     let alvo = 0, atual = 0, vel = 0, antes = 0, quadro = 0, visivel = false
     const lerScroll = () => {
       const total = palco.offsetHeight - window.innerHeight
-      alvo = total > 0 ? limitar(-palco.getBoundingClientRect().top / total) : 0
+      alvo = total > 0 ? limitar(-palco.getBoundingClientRect().top / total) * FIM : 0
     }
     const RIGIDEZ = 42, AMORTECE = 2 * Math.sqrt(RIGIDEZ), VEL_MAX = 0.2 // VEL_MAX em progresso por segundo
     const laco = (agora: number) => {
@@ -319,7 +380,19 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
     medir(); lerScroll(); atual = alvo; vel = 0; desenhar(atual, performance.now())
     window.addEventListener('scroll', aoScroll, { passive: true })
     window.addEventListener('resize', aoRedimensionar)
+    // a tela do Consultor (a mesma foto e o mesmo lugar do motor): chegou ou mudou (tema, tamanho), refaz a face
+    const soltar = ouvirPassagem((nova) => {
+      if (!nova) return
+      if (nova.real !== pas?.real) {
+        const c = nova.real.ia
+        c.className = 'td-sexta-foto'
+        sexta.replaceChildren(c)
+      }
+      pas = nova
+      medir(); desenhar(atual, performance.now())
+    })
     return () => {
+      soltar()
       obs.disconnect()
       window.removeEventListener('scroll', aoScroll)
       window.removeEventListener('resize', aoRedimensionar)
@@ -333,7 +406,7 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
     if (!el) return
     const topo = el.getBoundingClientRect().top + window.scrollY
     const total = el.offsetHeight - window.innerHeight
-    window.scrollTo({ top: topo + total * CENAS[i].p, behavior: 'smooth' })
+    window.scrollTo({ top: topo + (total * CENAS[i].p) / FIM, behavior: 'smooth' })
   }
 
   return (
@@ -379,6 +452,8 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
       <section className="ap-palco" ref={palcoRef}>
         <div className="ap-palco-sticky" ref={stickyRef}>
           <div className="ap-luz" aria-hidden="true" />
+          {/* o fundo do motor, que entra enquanto a câmera chega na sexta face */}
+          <div className="ap-motor" aria-hidden="true" />
 
           <div className="ap-palco-cena" aria-hidden="true">
             <div className="td-mundo" ref={mundoRef}>
@@ -391,6 +466,8 @@ export function Apresentacao({ onLogin, onSignup }: { onLogin: () => void; onSig
                   </div>
                 )
               })}
+              {/* a sexta face: a tela do Consultor, a mesma que abre o motor (posta pelo componente) */}
+              <div className="td-sexta" ref={sextaRef} />
             </div>
           </div>
 

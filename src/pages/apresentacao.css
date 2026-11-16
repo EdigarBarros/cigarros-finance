@@ -238,7 +238,9 @@
    .td-tela é uma tela do app desenhada em 1280 x 860 px; o componente escreve o transform dela (a câmera) e o de
    cada bloco (as camadas) a cada quadro. --cx/--cy marcam onde fica o centro da área da tela.
    ========================================================================= */
-.ap-palco { position: relative; height: 1000vh; }
+/* z-index 2: o motor (.ag, z-index 1) sobe por baixo do palco no fim dele (a passagem da sexta tela). A altura tem
+   1,2 vez a rolagem de antes: o último trecho é a ida até a sexta face (FIM em Apresentacao.tsx) */
+.ap-palco { position: relative; z-index: 2; height: 1180vh; }
 
 .ap-palco-sticky {
   --cx: 60%; --cy: 50%; --persp: 1800px;
@@ -255,7 +257,33 @@
   /* a luz some em cima e embaixo: quando o palco chega ao fim e sobe, a borda dele não vira uma linha na tela */
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 68%, transparent);
   mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 68%, transparent);
+  opacity: calc(1 - var(--fim, 0));
 }
+
+/* ─── a passagem para o motor (a sexta tela) ───
+   --fim (0 a 1, escrito pelo componente) sobe enquanto a câmera chega na sexta face: o fundo, a luz e o véu do palco
+   viram os do começo do motor (as mesmas cores de .ag, .ag-sticky e .ag-sticky::after em algoritmo.css), para o palco
+   se apagar sobre ele sem que nada mude em volta da tela do Consultor. */
+.ap-palco-sticky { --motor-breu: #060403; --motor-veu: 6, 4, 3; }
+:root[data-tema='claro'] .ap-palco-sticky { --motor-breu: #f2f6fb; --motor-veu: 242, 246, 251; }
+.ap-motor { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: var(--motor-breu); opacity: var(--fim, 0); }
+:root[data-tema='claro'] .ap-motor {
+  background:
+    radial-gradient(55% 50% at 64% 48%, rgba(31, 142, 241, .09), transparent 75%),
+    radial-gradient(40% 45% at 100% 90%, rgba(20, 201, 160, .1), transparent 70%),
+    radial-gradient(40% 45% at 30% 10%, rgba(61, 75, 224, .06), transparent 70%),
+    var(--motor-breu);
+}
+.ap-palco-sticky::before {
+  content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: var(--fim, 0);
+  background: linear-gradient(90deg, rgba(var(--motor-veu), .92) 0%, rgba(var(--motor-veu), .7) 24%, transparent 42%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+}
+:root[data-tema='claro'] .ap-palco-sticky::before { background: linear-gradient(90deg, rgba(var(--motor-veu), .95) 0%, rgba(var(--motor-veu), .72) 24%, transparent 42%); }
+/* a sexta face: só a foto (com as beiradas já apagadas), sem moldura, como no motor */
+.td-sexta { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; visibility: hidden; }
+.td-sexta-foto { display: block; width: 100%; height: 100%; }
 
 .ap-palco-cena {
   position: absolute; inset: 0; z-index: 1;
@@ -274,12 +302,14 @@
 .ap-palco-sticky::after {
   content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
   background: linear-gradient(90deg, var(--fundo) 0%, color-mix(in srgb, var(--fundo) 82%, transparent) 22%, transparent 42%);
+  opacity: calc(1 - var(--fim, 0));
 }
 
 /* legenda e trilho */
 .ap-cenas {
   position: absolute; z-index: 3; left: clamp(20px, 5vw, 72px); bottom: clamp(36px, 12vh, 120px);
   width: min(360px, 40vw); display: grid; gap: 26px;
+  opacity: calc(1 - var(--fim-texto, 0));
 }
 .ap-cena-pilha { display: grid; }
 .ap-cena-label {
@@ -302,10 +332,15 @@
 
 /* celular: texto em cima, telas embaixo (grandes, passando um pouco da borda) */
 @media (max-width: 900px) {
-  .ap-palco { height: 920vh; }
+  .ap-palco { height: 1084vh; }
   .ap-palco-sticky::after {
     background: linear-gradient(180deg, var(--fundo) 0, color-mix(in srgb, var(--fundo) 88%, transparent) min(210px, 25vh), transparent min(300px, 36vh));
   }
+  .ap-palco-sticky::before {
+    background: linear-gradient(180deg, rgba(var(--motor-veu), .9) 0, rgba(var(--motor-veu), .75) min(250px, 30vh), transparent min(320px, 38vh));
+    -webkit-mask-image: none; mask-image: none;
+  }
+  :root[data-tema='claro'] .ap-palco-sticky::before { background: linear-gradient(180deg, rgba(var(--motor-veu), .95) 0, rgba(var(--motor-veu), .78) min(250px, 30vh), transparent min(320px, 38vh)); }
   .ap-cenas {
     left: 0; right: 0; top: clamp(56px, 9vh, 90px); bottom: auto; width: auto;
     padding: 0 22px; text-align: center; justify-items: center; gap: 16px;
