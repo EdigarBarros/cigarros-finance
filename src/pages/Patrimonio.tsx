@@ -44,14 +44,12 @@ const TEXTO_TIPO: Record<TipoCaixa, string> = {
 }
 
 /**
- * Dinheiro guardado: o patrimônio do mês (bancos, investimentos e outras moedas) com a composição e a evolução, quantos
- * meses a reserva cobre, cada banco com o selo e a divisão conta/caixinha/reserva (toque para ver só ele) e os campos
- * para atualizar os saldos. Caixinha ligada a um cartão mostra o limite que ela garante.
+ * As contas do Dinheiro guardado (a tela do computador e a do celular usam as mesmas): os saldos de cada banco no mês,
+ * gravar um saldo ou confirmar os herdados, os lançamentos de cada banco (compra no cartão conta no banco que pagou a
+ * fatura), o total por tipo, o que tem em investimentos e outras moedas, a evolução e quantos meses a reserva cobre.
  */
-export function Patrimonio(c: Ctx) {
+export function useGuardado(c: Ctx) {
   const { v } = c
-  const [aberto, setAberto] = useState<string | null>(c.bancoAberto)
-  const [gerenciar, setGerenciar] = useState<Banco | 'novo' | null>(null)
   const bancos = c.d.bancos
   const caixa = c.mesEf.caixa
   const herdado = c.mesEf.herdadoDe
@@ -79,12 +77,44 @@ export function Patrimonio(c: Ctx) {
   // Caixinha que vira limite de cartão (limite garantido ligado à caixinha do banco).
   const garantias = (bancoId: string) => c.cartoes.cartoes.filter((k) => k.ativo && k.garantia_caixinha && k.banco_id === bancoId)
 
-  const faixaHerdado = herdado && (
-    <div className="faixa-herdado">
-      <span>{tx('Os saldos vêm de')} <b>{mesEAno(herdado[0], herdado[1])}</b>{tx('. Se nada mudou, confirme; se mudou, edite.')}</span>
-      <button className="btn" onClick={confirmar}><Icone nome="check" tamanho={16} /> {tx('Continua igual')}</button>
-    </div>
-  )
+  const semBanco = lancsDe(SEM_BANCO)
+  const porTipo = Object.fromEntries(TIPOS_CAIXA.map((t) => [t, bancos.reduce((a, b) => a + (caixa[b.id]?.[t] ?? 0), 0)])) as Record<TipoCaixa, number>
+  const investido = v.investimentos ? c.r.investimentos : 0
+  const emMoedas = v.moedas ? c.r.moedasConvertido : 0
+  // só os bancos que ainda existem (excluir um banco não limpa o que ficou guardado nele), como em porTipo
+  const emBancos = v.bancos ? bancos.reduce((a, b) => a + caixaDoBanco(caixa, b.id), 0) : 0
+  const total = emBancos + investido + emMoedas
+  const valorDe = (x: NonNullable<Ctx['porMes'][number]>) => (v.bancos ? x.caixa : 0) + (v.investimentos ? x.investimentos : 0) + (v.moedas ? x.moedasConvertido : 0)
+  const anterior = c.anterior ? valorDe(c.anterior) : 0
+  const janela = Array.from({ length: Math.min(6, c.mes) }, (_, i) => c.mes - Math.min(6, c.mes) + i + 1)
+  const tendencia = { valores: janela.map((m) => { const x = c.porMes[m - 1]; return x ? valorDe(x) : null }), meses: janela.map((m) => MESES_CURTO[m - 1]) }
+  // Reserva de emergência: quantos meses de gastos ela cobre. O gasto do mês é o mesmo do Consultor: a média dos últimos
+  // meses fechados (antes do mês de hoje) em que entrou e saiu dinheiro; sem eles, a média dos meses com gasto.
+  const gastoMedio = gastoMensalMedio(c.porMes, c.ano)
+  const reserva = porTipo.reserva
+  const mesesReserva = gastoMedio > 0 ? reserva / gastoMedio : 0
+  return {
+    bancos, caixa, herdado, salvarCaixa, salvarMoeda, confirmar, bancoDe, lancsDe, soma, garantias, semBanco, porTipo, investido, emMoedas,
+    emBancos, total, valorDe, anterior, janela, tendencia, gastoMedio, reserva, mesesReserva,
+  }
+}
+export type Guardado = ReturnType<typeof useGuardado>
+
+/**
+ * Dinheiro guardado: o patrimônio do mês (bancos, investimentos e outras moedas) com a composição e a evolução, quantos
+ * meses a reserva cobre, cada banco com o selo e a divisão conta/caixinha/reserva (toque para ver só ele) e os campos
+ * para atualizar os saldos. Caixinha ligada a um cartão mostra o limite que ela garante.
+ */
+export function Patrimonio(c: Ctx) {
+  const { v } = c
+  const [aberto, setAberto] = useState<string | null>(c.bancoAberto)
+  const [gerenciar, setGerenciar] = useState<Banco | 'novo' | null>(null)
+  const g = useGuardado(c)
+  const {
+    bancos, caixa, lancsDe, soma, garantias, semBanco, investido, emMoedas, total, anterior, janela,
+    tendencia, porTipo,
+  } = g
+  const faixaHerdado = <FaixaHerdado g={g} />
 
   // ---------- detalhe de um banco ----------
   if (aberto) {
@@ -94,7 +124,6 @@ export function Patrimonio(c: Ctx) {
     const sai = soma(ls, 'saida')
     const nome = banco?.nome ?? tx('Sem banco')
     const cor = banco?.cor ?? '#55555f'
-    const cartoesDoBanco = banco ? c.cartoes.cartoes.filter((k) => k.ativo && k.banco_id === banco.id) : []
     return (
       <div className="pagina pg-guardado" style={{ '--c': cor } as React.CSSProperties}>
         <header className="pagina-topo">
@@ -114,35 +143,8 @@ export function Patrimonio(c: Ctx) {
         {banco && (
           <>
             {faixaHerdado}
-            <section className="gd-tipos">
-              {TIPOS_CAIXA.map((t, i) => (
-                <div key={t} className="cartao gd-tipo" style={{ '--t': COR_TIPO[t], animationDelay: `${i * 70}ms` } as React.CSSProperties}>
-                  <span className="gd-tipo-icone"><Icone nome={ICONE_TIPO[t]} tamanho={22} /></span>
-                  <span className="gd-tipo-texto"><strong>{NOME_TIPO_CAIXA[t]}</strong><small>{TEXTO_TIPO[t]}</small></span>
-                  <CampoValor rotulo={tx('Quanto tem em {0}', NOME_TIPO_CAIXA[t].toLowerCase())} valor={caixa[banco.id]?.[t] ?? 0} prefixo={simbolo()}
-                    aoSalvar={(n) => salvarCaixa(banco.id, t, n)} />
-                  {t === 'caixinha' && garantias(banco.id).map((k) => (
-                    <span key={k.id} className="chip-info bom"><Icone nome="escudo" tamanho={12} /> {tx('vira limite no {0}', k.nome)}</span>
-                  ))}
-                </div>
-              ))}
-            </section>
-            {cartoesDoBanco.length > 0 && (
-              <section className="cartao gd-cartoes-banco">
-                <h3 className="ccd-titulo">{tx('Cartões deste banco')}</h3>
-                <div className="gd-cartoes-lista">
-                  {cartoesDoBanco.map((k) => {
-                    const f = c.faturas.find((x) => x.cartao.id === k.id)
-                    return (
-                      <button key={k.id} className="gd-cartao-mini" onClick={() => c.irPara('cartoes')}>
-                        <CartaoIlustrado nome={k.nome} cor={k.cor} banco={banco.nome} compacto
-                          conteudo={f ? <span className="cc-plastico-fatura"><small>{tx('fatura')}</small><b>{fmtValor(f.valor)}</b></span> : undefined} />
-                      </button>
-                    )
-                  })}
-                </div>
-              </section>
-            )}
+            <SaldosDoBanco c={c} g={g} banco={banco} />
+            <CartoesDoBanco c={c} banco={banco} />
           </>
         )}
         <Cartao titulo={tx('Lançamentos ({0})', ls.length)}>
@@ -160,27 +162,11 @@ export function Patrimonio(c: Ctx) {
   }
 
   // ---------- visão geral ----------
-  const semBanco = lancsDe(SEM_BANCO)
-  const porTipo = Object.fromEntries(TIPOS_CAIXA.map((t) => [t, bancos.reduce((a, b) => a + (caixa[b.id]?.[t] ?? 0), 0)])) as Record<TipoCaixa, number>
-  const investido = v.investimentos ? c.r.investimentos : 0
-  const emMoedas = v.moedas ? c.r.moedasConvertido : 0
-  // só os bancos que ainda existem (excluir um banco não limpa o que ficou guardado nele), como em porTipo
-  const emBancos = v.bancos ? bancos.reduce((a, b) => a + caixaDoBanco(caixa, b.id), 0) : 0
-  const total = emBancos + investido + emMoedas
-  const valorDe = (x: NonNullable<Ctx['porMes'][number]>) => (v.bancos ? x.caixa : 0) + (v.investimentos ? x.investimentos : 0) + (v.moedas ? x.moedasConvertido : 0)
-  const anterior = c.anterior ? valorDe(c.anterior) : 0
-  const janela = Array.from({ length: Math.min(6, c.mes) }, (_, i) => c.mes - Math.min(6, c.mes) + i + 1)
-  const tendencia = { valores: janela.map((m) => { const x = c.porMes[m - 1]; return x ? valorDe(x) : null }), meses: janela.map((m) => MESES_CURTO[m - 1]) }
   const partes = [
     ...(v.bancos ? TIPOS_CAIXA.map((t) => ({ id: t, nome: NOME_TIPO_CAIXA[t], valor: porTipo[t], cor: COR_TIPO[t] })) : []),
     ...(v.investimentos ? [{ id: 'inv', nome: tx('Investimentos'), valor: investido, cor: COR.investimentos }] : []),
     ...(v.moedas ? [{ id: 'moedas', nome: tx('Outras moedas'), valor: emMoedas, cor: COR.usd }] : []),
   ].filter((p) => p.valor > 0)
-  // Reserva de emergência: quantos meses de gastos ela cobre. O gasto do mês é o mesmo do Consultor: a média dos últimos
-  // meses fechados (antes do mês de hoje) em que entrou e saiu dinheiro; sem eles, a média dos meses com gasto.
-  const gastoMedio = gastoMensalMedio(c.porMes, c.ano)
-  const reserva = porTipo.reserva
-  const mesesReserva = gastoMedio > 0 ? reserva / gastoMedio : 0
   const nivel = c.perfil.detalhe
   const cartoesBanco = [
     ...bancos.map((b) => ({ id: b.id, nome: b.nome, cor: b.cor, guardado: caixaDoBanco(caixa, b.id), ls: lancsDe(b.id) })),
@@ -211,28 +197,7 @@ export function Patrimonio(c: Ctx) {
         pilulas={partes.map((p) => ({ icone: p.id === 'inv' ? 'investir' : p.id === 'moedas' ? 'globo' : ICONE_TIPO[p.id as TipoCaixa], rotulo: p.nome, valor: fmtValor(p.valor), cor: p.cor }))} />
 
       <section className="vt-grade gd-graficos">
-        {v.bancos && (
-          <div className="cartao gd-reserva">
-            <h3 className="ccd-titulo"><Icone nome="escudo" tamanho={18} /> {tx('Reserva de emergência')}</h3>
-            <div className="gd-reserva-corpo">
-              <Anel valor={Math.min(1, mesesReserva / 6)} cor={mesesReserva >= 6 ? COR.entradas : mesesReserva >= 3 ? COR.caixa : COR.divida} tamanho={104}>
-                <span className="gd-reserva-meses"><b>{mesesReserva >= 10 ? Math.round(mesesReserva) : fmtMeses(mesesReserva)}</b><small>{fmtMeses(mesesReserva) === fmtMeses(1) ? tx('mês') : tx('meses')}</small></span>
-              </Anel>
-              <span className="gd-reserva-texto">
-                <span>{reserva > 0
-                  ? comNegrito(mesesReserva >= 6
-                    ? tx('Sua reserva de {0} cobre mais de {1} do que você gasta.', NEGRITO[0], NEGRITO[1])
-                    : tx('Sua reserva de {0} cobre {1} do que você gasta.', NEGRITO[0], NEGRITO[1]),
-                  fmtValor(reserva), fmtMeses(mesesReserva) === fmtMeses(1) ? tx('1 mês') : tx('{0} meses', fmtMeses(mesesReserva)))
-                  : comNegrito(tx('Marque em cada banco quanto é {0}: o app mostra quantos meses de gastos ela cobre.', NEGRITO[0]), tx('reserva'))}</span>
-                <small>{gastoMedio > 0 ? tx('O ideal são 6 meses: {0}.', fmtValor(gastoMedio * 6)) : tx('Lance seus gastos para o app calcular.')}</small>
-                {v.metas && reserva < gastoMedio * 6 && gastoMedio > 0 && (
-                  <button className="link" onClick={() => c.irPara('metas')}>{tx('Criar meta para a reserva')} <Icone nome="seta" tamanho={14} /></button>
-                )}
-              </span>
-            </div>
-          </div>
-        )}
+        {v.bancos && <ReservaDeEmergencia c={c} g={g} />}
         {nivel !== 'simples' && tendencia.valores.filter((x) => x !== null).length > 1 && (
           <div className="cartao vt-cartao">
             <h3><Icone nome="ano" tamanho={17} /> {tx('Como tem mudado')}</h3>
@@ -296,61 +261,152 @@ export function Patrimonio(c: Ctx) {
         </div>
       )}
 
-      {(v.investimentos || v.moedas) && (
-        <div className="gd-extras">
-          {v.investimentos && (
-            <section className="cartao gd-extra" style={{ '--c': COR.investimentos } as React.CSSProperties}>
-              <h3 className="ccd-titulo"><span className="gd-extra-icone"><Icone nome="investir" tamanho={18} /></span> {tx('Investimentos')}</h3>
-              {c.mesEf.investimentosDaCarteira ? (
-                // com operações no Invest, o valor vem da carteira: digitar aqui contaria o mesmo dinheiro duas vezes
-                <div className="gd-extra-invest">
-                  <strong>{fmtValor(c.r.investimentos)}</strong>
-                  <small>{tx('Vem da sua carteira no Invest, pelo valor no fim do mês.')}</small>
-                  <button className="btn" onClick={() => c.irPara('invest')}><Icone nome="investir" tamanho={15} /> {tx('Abrir o Invest')}</button>
-                </div>
-              ) : (
-                <CampoValor rotulo={tx('Quanto você tem investido neste mês')} prefixo={simbolo()} valor={c.r.investimentos}
-                  aoSalvar={(investimentos) => c.d.salvarMes(c.ano, c.mes, { investimentos })} />
-              )}
-              {(() => {
-                const serie = { valores: janela.map((m) => c.porMes[m - 1]?.investimentos ?? null), meses: janela.map((m) => MESES_CURTO[m - 1]) }
-                return serie.valores.filter((x) => x).length > 1 ? <span className="gd-extra-faisca"><Faisca {...serie} cor={COR.investimentos} /></span> : null
-              })()}
-              {c.mesEf.investimentosDaCarteira
-                ? null
-                : <p className="dica">{tx('Aceita contas:')} <code>=1500+320</code> · <button className="link" onClick={() => c.irPara('invest')}>{tx('Detalhar no Invest')}</button></p>}
-            </section>
-          )}
-          {v.moedas && (
-            <section className="cartao gd-extra" style={{ '--c': COR.usd } as React.CSSProperties}>
-              <h3 className="ccd-titulo"><span className="gd-extra-icone"><Icone nome="globo" tamanho={18} /></span> {tx('Outras moedas')} <small>≈ {fmtValor(c.r.moedasConvertido)}</small></h3>
-              <ul className="gd-moedas">
-                {c.perfil.moedas.map((m) => {
-                  const conv = converter(c.mesEf.moedas[m] ?? 0, m, c.taxas)
-                  return (
-                    <li key={m}>
-                      <Bandeira moeda={m} tamanho={34} />
-                      <CampoValor rotulo={infoMoeda(m).nome} prefixo={simbolo(m)} moeda={m} valor={c.mesEf.moedas[m] ?? 0} aoSalvar={(valor) => salvarMoeda(m, valor)} />
-                      <span className="gd-moeda-conv">
-                        <b>{conv === null ? '—' : `≈ ${fmtValor(conv)}`}</b>
-                        <small>{c.taxas[m] ? (c.taxas[m] < 0.2 ? `1 ${simbolo()} = ${fmtTaxa(1 / c.taxas[m])} ${m}` : `1 ${m} = ${fmtTaxa(c.taxas[m])} ${simbolo()}`) : tx('sem cotação agora')}</small>
-                      </span>
-                    </li>
-                  )
-                })}
-              </ul>
-              <p className="dica">{tx('Cotação do dia por')} <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer">{tx('ExchangeRate-API')}</a>{tx('. Para mudar as moedas, use')} <button className="link" onClick={c.personalizar}>{tx('Configurações')}</button>.</p>
-            </section>
-          )}
-        </div>
-      )}
+      <ExtrasDoGuardado c={c} g={g} />
 
       {gerenciar && <FormBanco c={c} banco={gerenciar === 'novo' ? undefined : gerenciar} aoFechar={() => setGerenciar(null)} />}
     </div>
   )
 }
 
-function FormBanco({ c, banco, aoFechar, aoExcluir }: { c: Ctx; banco?: Banco; aoFechar: () => void; aoExcluir?: () => void }) {
+/** Os saldos já vêm de um mês anterior: "Continua igual" grava os mesmos neste mês. */
+export function FaixaHerdado({ g }: { g: Guardado }) {
+  const { herdado, confirmar } = g
+  if (!herdado) return null
+  return (
+    <div className="faixa-herdado">
+      <span>{tx('Os saldos vêm de')} <b>{mesEAno(herdado[0], herdado[1])}</b>{tx('. Se nada mudou, confirme; se mudou, edite.')}</span>
+      <button className="btn" onClick={confirmar}><Icone nome="check" tamanho={16} /> {tx('Continua igual')}</button>
+    </div>
+  )
+}
+
+/** Conta, caixinha e reserva de um banco, cada uma com o campo para atualizar o saldo do mês. */
+export function SaldosDoBanco({ c, g, banco }: { c: Ctx; g: Guardado; banco: Banco }) {
+  const { caixa, salvarCaixa, garantias } = g
+  void c
+  return (
+    <section className="gd-tipos">
+      {TIPOS_CAIXA.map((t, i) => (
+        <div key={t} className="cartao gd-tipo" style={{ '--t': COR_TIPO[t], animationDelay: `${i * 70}ms` } as React.CSSProperties}>
+          <span className="gd-tipo-icone"><Icone nome={ICONE_TIPO[t]} tamanho={22} /></span>
+          <span className="gd-tipo-texto"><strong>{NOME_TIPO_CAIXA[t]}</strong><small>{TEXTO_TIPO[t]}</small></span>
+          <CampoValor rotulo={tx('Quanto tem em {0}', NOME_TIPO_CAIXA[t].toLowerCase())} valor={caixa[banco.id]?.[t] ?? 0} prefixo={simbolo()}
+            aoSalvar={(n) => salvarCaixa(banco.id, t, n)} />
+          {t === 'caixinha' && garantias(banco.id).map((k) => (
+            <span key={k.id} className="chip-info bom"><Icone nome="escudo" tamanho={12} /> {tx('vira limite no {0}', k.nome)}</span>
+          ))}
+        </div>
+      ))}
+    </section>
+  )
+}
+
+/** Os cartões de crédito do banco, com a fatura do mês. */
+export function CartoesDoBanco({ c, banco }: { c: Ctx; banco: Banco }) {
+  const cartoesDoBanco = c.cartoes.cartoes.filter((k) => k.ativo && k.banco_id === banco.id)
+  if (!cartoesDoBanco.length) return null
+  return (
+    <section className="cartao gd-cartoes-banco">
+      <h3 className="ccd-titulo">{tx('Cartões deste banco')}</h3>
+      <div className="gd-cartoes-lista">
+        {cartoesDoBanco.map((k) => {
+          const f = c.faturas.find((x) => x.cartao.id === k.id)
+          return (
+            <button key={k.id} className="gd-cartao-mini" onClick={() => c.irPara('cartoes')}>
+              <CartaoIlustrado nome={k.nome} cor={k.cor} banco={banco.nome} compacto
+                conteudo={f ? <span className="cc-plastico-fatura"><small>{tx('fatura')}</small><b>{fmtValor(f.valor)}</b></span> : undefined} />
+            </button>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+/** Quantos meses de gastos a reserva cobre (o ideal são 6). */
+export function ReservaDeEmergencia({ c, g }: { c: Ctx; g: Guardado }) {
+  const { gastoMedio, reserva, mesesReserva } = g
+  const { v } = c
+  return (
+    <div className="cartao gd-reserva">
+      <h3 className="ccd-titulo"><Icone nome="escudo" tamanho={18} /> {tx('Reserva de emergência')}</h3>
+      <div className="gd-reserva-corpo">
+        <Anel valor={Math.min(1, mesesReserva / 6)} cor={mesesReserva >= 6 ? COR.entradas : mesesReserva >= 3 ? COR.caixa : COR.divida} tamanho={104}>
+          <span className="gd-reserva-meses"><b>{mesesReserva >= 10 ? Math.round(mesesReserva) : fmtMeses(mesesReserva)}</b><small>{fmtMeses(mesesReserva) === fmtMeses(1) ? tx('mês') : tx('meses')}</small></span>
+        </Anel>
+        <span className="gd-reserva-texto">
+          <span>{reserva > 0
+            ? comNegrito(mesesReserva >= 6
+              ? tx('Sua reserva de {0} cobre mais de {1} do que você gasta.', NEGRITO[0], NEGRITO[1])
+              : tx('Sua reserva de {0} cobre {1} do que você gasta.', NEGRITO[0], NEGRITO[1]),
+            fmtValor(reserva), fmtMeses(mesesReserva) === fmtMeses(1) ? tx('1 mês') : tx('{0} meses', fmtMeses(mesesReserva)))
+            : comNegrito(tx('Marque em cada banco quanto é {0}: o app mostra quantos meses de gastos ela cobre.', NEGRITO[0]), tx('reserva'))}</span>
+          <small>{gastoMedio > 0 ? tx('O ideal são 6 meses: {0}.', fmtValor(gastoMedio * 6)) : tx('Lance seus gastos para o app calcular.')}</small>
+          {v.metas && reserva < gastoMedio * 6 && gastoMedio > 0 && (
+            <button className="link" onClick={() => c.irPara('metas')}>{tx('Criar meta para a reserva')} <Icone nome="seta" tamanho={14} /></button>
+          )}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+/** Investimentos e outras moedas: o valor do mês (ou o da carteira do Invest) e o campo para atualizar. */
+export function ExtrasDoGuardado({ c, g }: { c: Ctx; g: Guardado }) {
+  const { v } = c
+  const { salvarMoeda, janela } = g
+  if (!v.investimentos && !v.moedas) return null
+  return (
+    <div className="gd-extras">
+      {v.investimentos && (
+        <section className="cartao gd-extra" style={{ '--c': COR.investimentos } as React.CSSProperties}>
+          <h3 className="ccd-titulo"><span className="gd-extra-icone"><Icone nome="investir" tamanho={18} /></span> {tx('Investimentos')}</h3>
+          {c.mesEf.investimentosDaCarteira ? (
+            // com operações no Invest, o valor vem da carteira: digitar aqui contaria o mesmo dinheiro duas vezes
+            <div className="gd-extra-invest">
+              <strong>{fmtValor(c.r.investimentos)}</strong>
+              <small>{tx('Vem da sua carteira no Invest, pelo valor no fim do mês.')}</small>
+              <button className="btn" onClick={() => c.irPara('invest')}><Icone nome="investir" tamanho={15} /> {tx('Abrir o Invest')}</button>
+            </div>
+          ) : (
+            <CampoValor rotulo={tx('Quanto você tem investido neste mês')} prefixo={simbolo()} valor={c.r.investimentos}
+              aoSalvar={(investimentos) => c.d.salvarMes(c.ano, c.mes, { investimentos })} />
+          )}
+          {(() => {
+            const serie = { valores: janela.map((m) => c.porMes[m - 1]?.investimentos ?? null), meses: janela.map((m) => MESES_CURTO[m - 1]) }
+            return serie.valores.filter((x) => x).length > 1 ? <span className="gd-extra-faisca"><Faisca {...serie} cor={COR.investimentos} /></span> : null
+          })()}
+          {c.mesEf.investimentosDaCarteira
+            ? null
+            : <p className="dica">{tx('Aceita contas:')} <code>=1500+320</code> · <button className="link" onClick={() => c.irPara('invest')}>{tx('Detalhar no Invest')}</button></p>}
+        </section>
+      )}
+      {v.moedas && (
+        <section className="cartao gd-extra" style={{ '--c': COR.usd } as React.CSSProperties}>
+          <h3 className="ccd-titulo"><span className="gd-extra-icone"><Icone nome="globo" tamanho={18} /></span> {tx('Outras moedas')} <small>≈ {fmtValor(c.r.moedasConvertido)}</small></h3>
+          <ul className="gd-moedas">
+            {c.perfil.moedas.map((m) => {
+              const conv = converter(c.mesEf.moedas[m] ?? 0, m, c.taxas)
+              return (
+                <li key={m}>
+                  <Bandeira moeda={m} tamanho={34} />
+                  <CampoValor rotulo={infoMoeda(m).nome} prefixo={simbolo(m)} moeda={m} valor={c.mesEf.moedas[m] ?? 0} aoSalvar={(valor) => salvarMoeda(m, valor)} />
+                  <span className="gd-moeda-conv">
+                    <b>{conv === null ? '—' : `≈ ${fmtValor(conv)}`}</b>
+                    <small>{c.taxas[m] ? (c.taxas[m] < 0.2 ? `1 ${simbolo()} = ${fmtTaxa(1 / c.taxas[m])} ${m}` : `1 ${m} = ${fmtTaxa(c.taxas[m])} ${simbolo()}`) : tx('sem cotação agora')}</small>
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+          <p className="dica">{tx('Cotação do dia por')} <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer">{tx('ExchangeRate-API')}</a>{tx('. Para mudar as moedas, use')} <button className="link" onClick={c.personalizar}>{tx('Configurações')}</button>.</p>
+        </section>
+      )}
+    </div>
+  )
+}
+
+export function FormBanco({ c, banco, aoFechar, aoExcluir }: { c: Ctx; banco?: Banco; aoFechar: () => void; aoExcluir?: () => void }) {
   const [nome, setNome] = useState(banco?.nome ?? '')
   const [cor, setCor] = useState(banco?.cor ?? PALETA_BANCOS[c.d.bancos.length % PALETA_BANCOS.length])
   const [outro, setOutro] = useState(Boolean(banco))

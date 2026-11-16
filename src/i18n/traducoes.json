@@ -15690,5 +15690,49 @@
   "{0} metas cadastradas": {
     "en": "{0} goals set",
     "es": "{0} metas registradas"
+  },
+  "{0}% de {1} · {2} de {3} batidas": {
+    "en": "{0}% of {1} · {2} of {3} reached",
+    "es": "{0}% de {1} · {2} de {3} alcanzadas"
+  },
+  "para chegar nos prazos · faltam {0}": {
+    "en": "to meet the deadlines · {0} to go",
+    "es": "para llegar a los plazos · faltan {0}"
+  },
+  "Modelos": {
+    "en": "Templates",
+    "es": "Modelos"
+  },
+  "Sobrou {0} em {1}. Guardar numa meta?": {
+    "en": "{0} left over in {1}. Save it toward a goal?",
+    "es": "Sobró {0} en {1}. ¿Ahorrar para una meta?"
+  },
+  "Retirar de qual meta?": {
+    "en": "Withdraw from which goal?",
+    "es": "¿Retirar de qué meta?"
+  },
+  "Guardar em qual meta?": {
+    "en": "Save toward which goal?",
+    "es": "¿Ahorrar para qué meta?"
+  },
+  "Modelos de meta": {
+    "en": "Goal templates",
+    "es": "Modelos de meta"
+  },
+  "Os saldos vêm de {0}.": {
+    "en": "Balances come from {0}.",
+    "es": "Los saldos vienen de {0}."
+  },
+  "Se nada mudou, confirme; se mudou, toque no banco e edite.": {
+    "en": "If nothing changed, confirm; if it did, tap the bank and edit.",
+    "es": "Si nada cambió, confirma; si cambió, toca el banco y edita."
+  },
+  "Lançamentos sem banco": {
+    "en": "Entries without a bank",
+    "es": "Registros sin banco"
+  },
+  "Ver o banco": {
+    "en": "See the bank",
+    "es": "Ver el banco"
   }
 }

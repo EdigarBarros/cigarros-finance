@@ -1200,7 +1200,7 @@ No celular (até 860 px, `useMobile`) o painel tem cara própria, separada do co
 `Painel` escolhe a moldura (`mobile ? moldura do celular : a de sempre`) e as duas usam os mesmos dados, formulários e janelas.
 Tela que ainda não tem versão de celular abre a do computador dentro da moldura nova (com o "+"), e é isso que deixa
 publicar por partes. Fases: 1) moldura e Início (feita); 2) escolher, tirar e reordenar cartões, salvo na conta
-(`perfis.celular`, feita); 3) Lançamentos e Contas (feita); 4) Cartões e Dívidas (feita); 5) Metas e Guardado; 6) Consultor e Invest; 7) Ano e
+(`perfis.celular`, feita); 3) Lançamentos e Contas (feita); 4) Cartões e Dívidas (feita); 5) Metas e Guardado (feita); 6) Consultor e Invest; 7) Ano e
 limpeza do que ficou sem uso (`.fab`, `simples-movel`, `menu-movel`, a alça das abas, os ramos de celular dos três jeitos).
 
 **Moldura** (`src/movel/Casca.tsx`, estilos em `src/movel/movel.css`, todos debaixo de `.movel`):
@@ -1259,6 +1259,21 @@ mesmos do computador):
 - Cartões: cada dívida (quanto falta, quanto já foi pago, a próxima parcela; tocar abre a ficha com o calendário e o
   "Conferi com o banco"), quanto sai nos próximos meses (fora do simples), "Recebe todo mês" no lado "Me devem" (tocar
   abre a conferência) e as quitadas no mês.
+
+**Metas** (`src/movel/telas/MetasMovel.tsx`; números de `resumoDasMetas` em `lib/metas.ts`, os mesmos do computador e da
+Início; ficha e formulários de `pages/Metas.tsx`):
+- Topo: guardado nas metas (com quantas foram batidas) → quanto guardar por mês para chegar nos prazos (ou quanto falta).
+- Ações: Guardar e Retirar (com mais de uma meta, perguntam em qual), Criar meta e Modelos. A sobra do mês vira dica
+  ("Guardar numa meta?"), já com o valor até o que falta.
+- Cartões: as metas (quanto tem, de quanto, o ritmo ou o prazo; tocar abre a ficha), quando cada uma chega e quanto
+  guardar por mês (detalhado) e as batidas. Sem metas, os modelos.
+
+**Dinheiro guardado** (`src/movel/telas/GuardadoMovel.tsx`; contas em `useGuardado` e peças de `pages/Patrimonio.tsx`):
+- Topo: tudo o que você tem (com a diferença para o mês anterior) → uma página por banco, na cor dele, com "Ver o banco".
+- Ações: Novo banco, Continua igual (saldos herdados), Invest e Metas (cada uma só com o módulo ligado).
+- Cartões: os bancos (tocar abre o banco), a reserva de emergência, como o total tem mudado (fora do simples) e os
+  investimentos e outras moedas. O banco aberto tem o topo na cor dele, conta/caixinha/reserva para atualizar, os
+  cartões do banco e os lançamentos do mês; "Todos" volta.
 
 **Escolher e arrumar os cartões** (`lib/widgets.ts`, `src/movel/FolhaDeCartoes.tsx`, migração 35):
 - "+ Adicionar cartões" abre uma folha com os cartões que não estão na Início, cada um com a prévia de verdade (os dados da

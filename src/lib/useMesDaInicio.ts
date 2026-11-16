@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
-import { converter } from './moedas'
 import { parcelasDoMes, type SituacaoDivida } from './dividas'
 import { MESES_NOME, noMeioDaFrase } from './format'
-import { situacaoMeta } from './metas'
+import { resumoDasMetas, situacaoMeta } from './metas'
 import { tarefasDoMes } from './paraFazer'
 import { comporPrevisao, type DiaADia, type ItemPrevisto } from './previsao'
 import { situacaoDoMes, type Momento } from './situacaoDoMes'
@@ -80,10 +79,8 @@ export function useMesDaInicio(c: Ctx) {
   const pilulaBruta = pilulaDeGastos(comparacao)
   const pilulaGastos = pilulaBruta && !(pilulaBruta.tom === 'bom' && atrasadasAPagar > 0 && momento === 'atual') ? pilulaBruta : null
   const situacaoMetas = c.d.metas.map((m) => situacaoMeta(m, c.d.movimentosMeta))
-  // o mesmo número da tela Metas: tudo o que foi guardado sobre o total das metas (na moeda principal), não a média das metas
-  const naPrincipal = (valor: number, moeda: string) => converter(valor, moeda, c.taxas) ?? 0
-  const alvoDasMetas = situacaoMetas.reduce((t, s) => t + naPrincipal(s.meta.alvo, s.meta.moeda), 0)
-  const progressoDasMetas = alvoDasMetas > 0 ? Math.min(1, situacaoMetas.reduce((t, s) => t + naPrincipal(s.guardado, s.meta.moeda), 0) / alvoDasMetas) : 0
+  // o mesmo número da tela Metas: tudo o que foi guardado sobre o total das metas (lib/metas.ts)
+  const progressoDasMetas = resumoDasMetas(situacaoMetas, c.taxas).progresso
   return {
     hoje, hojeIso, nomeMes, mesDeHoje, momento, ddMes, tarefas, composicao, situacao, comparacao, gastosDoPeriodo,
     atrasadasAPagar, pilulaGastos, situacaoMetas, progressoDasMetas,

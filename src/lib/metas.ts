@@ -1,4 +1,5 @@
 import { hojeLocal } from './cartoes'
+import { converter, type Taxas } from './moedas'
 import type { Meta, MovimentoMeta } from './types'
 import { tx } from './textos'
 
@@ -72,3 +73,20 @@ export const MODELOS: { nome: string; icone: string; cor: string; dica: string; 
   { nome: tx('Estudos'), icone: '🎓', cor: '#5e5ce6', dica: tx('curso, faculdade, intercâmbio') },
   { nome: tx('Aposentadoria'), icone: '🌴', cor: '#bf5af2', dica: tx('para o futuro, sem pressa') },
 ]
+
+/**
+ * As metas somadas na moeda principal (a tela Metas, a Início e o celular usam os mesmos números): as que faltam e as
+ * batidas, tudo o que foi guardado, o alvo de todas, o que falta e quanto guardar por mês para chegar nos prazos.
+ */
+export function resumoDasMetas(sits: SituacaoMeta[], taxas: Taxas) {
+  const naPrincipal = (valor: number, moeda: string) => converter(valor, moeda, taxas) ?? 0
+  const ativas = sits.filter((s) => !s.batida)
+  const batidas = sits.filter((s) => s.batida)
+  const guardado = sits.reduce((a, s) => a + naPrincipal(s.guardado, s.meta.moeda), 0)
+  const alvoTotal = sits.reduce((a, s) => a + naPrincipal(s.meta.alvo, s.meta.moeda), 0)
+  const falta = ativas.reduce((a, s) => a + naPrincipal(s.falta, s.meta.moeda), 0)
+  const porMes = ativas.reduce((a, s) => a + naPrincipal(s.porMesNoPrazo ?? 0, s.meta.moeda), 0)
+  // o mesmo número da tela Metas: tudo o que foi guardado sobre o total das metas, não a média das metas
+  const progresso = alvoTotal > 0 ? Math.min(1, guardado / alvoTotal) : 0
+  return { ativas, batidas, guardado, alvoTotal, falta, porMes, progresso, naPrincipal }
+}
