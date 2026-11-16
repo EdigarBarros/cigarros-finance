@@ -6,9 +6,10 @@
 .app.movel { position: relative; display: block; min-height: 100vh; }
 .app.movel > .conteudo { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; padding: 0 16px calc(120px + env(safe-area-inset-bottom)); }
 
-/* ---------- o degradê do topo (um por tom; troca por opacidade) ---------- */
+/* ---------- o degradê do topo (um por tom; troca por opacidade, só na placa de vídeo) ----------
+   Sobre ele, nada de backdrop-filter: refazer o desfoque a cada quadro da troca de cor travava o arrasto no celular. */
 .movel-fundo { position: absolute; z-index: 0; inset: 0 0 auto; height: 620px; pointer-events: none; overflow: hidden; }
-.movel-fundo i { position: absolute; inset: 0; opacity: 0; transition: opacity .7s var(--mola); }
+.movel-fundo i { position: absolute; inset: 0; opacity: 0; transition: opacity .7s var(--mola); will-change: opacity; }
 .movel-fundo i.ativo { opacity: 1; }
 /* escuro em cima, onde fica o texto branco; desce até o fundo da tela abaixo das ações */
 .movel-fundo i[data-t='sobra'] { background: linear-gradient(180deg, #04241f 0, #0b4d47 260px, #13666a 430px, var(--fundo) 600px); }
@@ -46,8 +47,7 @@
 .topo-movel-redondo .sino-ponto { top: 8px; right: 9px; }
 /* sobre o degradê: vidro claro e texto branco */
 .topo-movel.sobre-cor button:not(.topo-movel-avatar), .topo-movel.sobre-cor .topo-movel-busca {
-  color: #fff; background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .18);
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  color: #fff; background: rgba(255, 255, 255, .16); border-color: rgba(255, 255, 255, .2);
 }
 .topo-movel.sobre-cor .topo-movel-busca input::placeholder { color: rgba(255, 255, 255, .78); }
 /* tela estreita: a busca vira um botão redondo e abre ao tocar (o campo ocupa o espaço enquanto a pessoa digita) */
@@ -79,7 +79,7 @@
 .hero-movel-pilula {
   margin-top: 12px; height: 44px; padding: 0 22px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .2);
   background: rgba(255, 255, 255, .16); color: #fff; font: 600 15px var(--fonte);
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); transition: transform .3s var(--mola-salto), background .2s;
+  transition: transform .3s var(--mola-salto), background .2s;
 }
 .hero-movel-pilula:active { transform: scale(.94); background: rgba(255, 255, 255, .26); }
 .hero-movel-pontos { display: flex; justify-content: center; margin-top: 6px; }
@@ -100,7 +100,7 @@
 }
 .acoes-movel button:active .acoes-movel-circulo { transform: scale(.88); }
 .com-cor .acoes-movel button { color: #fff; }
-.com-cor .acoes-movel-circulo { background: rgba(255, 255, 255, .16); border-color: rgba(255, 255, 255, .2); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.com-cor .acoes-movel-circulo { background: rgba(255, 255, 255, .17); border-color: rgba(255, 255, 255, .22); }
 
 /* ---------- dicas que deslizam ---------- */
 .dicas-movel {

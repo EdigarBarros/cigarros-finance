@@ -2,7 +2,7 @@
  * As peças do layout do celular (docs/arquitetura-do-painel.md, seção "Celular"): o topo grande que desliza entre páginas,
  * a fileira de ações redondas, os cartões com título e as linhas de lista. Cada tela do celular é montada com elas.
  */
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { startTransition, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { Icone } from '../components/Icone'
 import { tx } from '../lib/textos'
 import { semMovimento } from '../lib/tema'
@@ -26,23 +26,68 @@ const tamanhoDoValor = (v: string) => (v.length > 13 ? 34 : v.length > 10 ? 42 :
 /**
  * O topo da tela: um número grande por página, e a pessoa desliza para os lados para ver a próxima (com os pontos embaixo).
  * Desliza com a rolagem do próprio navegador (scroll-snap): o gesto é o do sistema e não briga com o "voltar" do Android.
+ *
+ * Fluidez: enquanto o dedo arrasta, só os pontos acompanham (no máximo uma conta por quadro). A tela só fica sabendo da página
+ * nova (cor do topo, lista de baixo, o lado das dívidas…) quando a rolagem para: avisar no meio do gesto redesenhava o
+ * painel inteiro com o dedo na tela, e a rolagem travava e perdia o encaixe.
  */
 export function HeroDeslizante({ paginas, aoMudar, inicial = 0 }: { paginas: PaginaDoHero[]; aoMudar?: (p: PaginaDoHero) => void; inicial?: number }) {
   const ref = useRef<HTMLDivElement>(null)
-  const [atual, setAtual] = useState(() => Math.max(0, Math.min(inicial, paginas.length - 1)))
+  const limitar = (n: number) => Math.max(0, Math.min(n, paginas.length - 1))
+  /** O ponto aceso: acompanha o dedo. */
+  const [atual, setAtual] = useState(() => limitar(inicial))
+  /** A página em que a rolagem parou: é a que a tela usa (e a única que o leitor de tela e o Tab alcançam). */
+  const [assentada, setAssentada] = useState(() => limitar(inicial))
+  const assentadaAgora = useRef(assentada)
+  // o aviso usa sempre a versão mais nova da função e das páginas (a tela redesenha entre um gesto e outro)
+  const avisar = useRef(aoMudar)
+  const paginasAgora = useRef(paginas)
+  useEffect(() => { avisar.current = aoMudar; paginasAgora.current = paginas })
+  const quadro = useRef(0)
+  const espera = useRef(0)
   // abre na página pedida (o cartão da compra que acabou de ser lançada, o lado "Me devem"…)
   useEffect(() => {
     const el = ref.current
-    if (el && atual > 0) el.scrollLeft = atual * el.clientWidth
+    if (el && assentada > 0) el.scrollLeft = assentada * el.clientWidth
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const i = Math.min(atual, paginas.length - 1)
+  const fixa = Math.min(assentada, paginas.length - 1)
   const chave = paginas.map((p) => p.id).join()
-  useEffect(() => { if (paginas[i]) aoMudar?.(paginas[i]) }, [i, chave]) // eslint-disable-line react-hooks/exhaustive-deps
-  const aoRolar = () => {
+  // ao abrir (e quando as páginas mudam), a tela fica sabendo da página em que o topo está
+  useEffect(() => { if (paginas[fixa]) aoMudar?.(paginas[fixa]) }, [chave]) // eslint-disable-line react-hooks/exhaustive-deps
+  const indiceDaRolagem = () => {
     const el = ref.current
-    if (!el || !el.clientWidth) return
-    const n = Math.round(el.scrollLeft / el.clientWidth)
-    if (n !== atual) setAtual(n)
+    return el && el.clientWidth ? limitar(Math.round(el.scrollLeft / el.clientWidth)) : null
+  }
+  /** A rolagem parou: agora sim a tela troca de página (sem pressa, para não travar nada). */
+  const parou = () => {
+    window.clearTimeout(espera.current)
+    const n = indiceDaRolagem()
+    if (n === null) return
+    setAtual(n)
+    if (n === assentadaAgora.current) return
+    assentadaAgora.current = n
+    setAssentada(n)
+    const p = paginasAgora.current[n]
+    if (p) startTransition(() => avisar.current?.(p))
+  }
+  // o fim da rolagem: o evento do navegador onde existe; senão, 120 ms sem rolar (Safari do iPhone)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.addEventListener('scrollend', parou)
+    return () => { el.removeEventListener('scrollend', parou); window.clearTimeout(espera.current); cancelAnimationFrame(quadro.current) }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const aoRolar = () => {
+    if (!quadro.current) {
+      quadro.current = requestAnimationFrame(() => {
+        quadro.current = 0
+        const n = indiceDaRolagem()
+        if (n !== null) setAtual(n)
+      })
+    }
+    window.clearTimeout(espera.current)
+    espera.current = window.setTimeout(parou, 120)
   }
   const irPara = (n: number) => ref.current?.scrollTo({ left: n * ref.current.clientWidth, behavior: semMovimento() ? 'auto' : 'smooth' })
   return (
@@ -50,11 +95,11 @@ export function HeroDeslizante({ paginas, aoMudar, inicial = 0 }: { paginas: Pag
       <div className="hero-movel-trilho" ref={ref} onScroll={aoRolar}>
         {paginas.map((p, n) => (
           <div key={p.id} className="hero-movel-pagina" role="group" aria-roledescription={tx('página')}
-            aria-label={tx('{0} de {1}: {2}', n + 1, paginas.length, p.rotulo)} aria-hidden={n !== i || undefined}>
+            aria-label={tx('{0} de {1}: {2}', n + 1, paginas.length, p.rotulo)} aria-hidden={n !== fixa || undefined}>
             <p className="hero-movel-rotulo">{p.rotulo}</p>
             <p className="hero-movel-valor" style={{ fontSize: tamanhoDoValor(p.valor) }}>{p.valor}</p>
             {p.sub && <p className="hero-movel-sub">{p.sub}</p>}
-            {p.pilula && <button className="hero-movel-pilula" onClick={p.pilula.acao} tabIndex={n === i ? undefined : -1}>{p.pilula.texto}</button>}
+            {p.pilula && <button className="hero-movel-pilula" onClick={p.pilula.acao} tabIndex={n === fixa ? undefined : -1}>{p.pilula.texto}</button>}
           </div>
         ))}
       </div>
