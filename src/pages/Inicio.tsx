@@ -276,6 +276,8 @@ export function Inicio(c: Ctx) {
       perfil={c.perfil}
       semMoeda={c.d.dividasSemMoeda}
       semJuros={c.d.dividasSemJuros}
+      semAtraso={c.d.dividasSemAtraso}
+      semCusto={c.d.dividasSemCusto}
       aoFechar={() => setDivida(null)}
     />
   )

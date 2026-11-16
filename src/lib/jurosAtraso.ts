@@ -1,6 +1,6 @@
 import type { Calendario, SituacaoDivida } from './dividas'
 import type { Divida } from './types'
-import { fmtDataCurta, fmtTaxa } from './format'
+import { fmtDataCurta, fmtMoeda, fmtTaxa, moedaAtual } from './format'
 import { tx } from './textos'
 
 /**
@@ -29,10 +29,21 @@ const diaDe = (iso: string) => {
 /** Dias corridos de `a` até `b` (b depois de a dá positivo). */
 export const diasEntre = (a: string, b: string) => Math.round(diaDe(b) - diaDe(a))
 
-/** A dívida tem regra de juros de atraso? Só em dívida que você deve, com a taxa (ou a multa) informada. */
-export const temJurosDeAtraso = (d: Pick<Divida, 'sentido' | 'atraso_juros_mes' | 'atraso_multa'>) =>
+/** A dívida tem regra de juros de atraso? Só em dívida que você deve, com a taxa, o valor por dia ou a multa informados. */
+export const temJurosDeAtraso = (d: Pick<Divida, 'sentido' | 'atraso_juros_mes' | 'atraso_multa' | 'atraso_reais_dia'>) =>
   (d.sentido ?? 'devo') === 'devo' && typeof d.atraso_juros_mes === 'number' && d.atraso_juros_mes >= 0
-  && (d.atraso_juros_mes > 0 || (d.atraso_multa ?? 0) > 0)
+  && (d.atraso_juros_mes > 0 || (d.atraso_multa ?? 0) > 0 || (d.atraso_reais_dia ?? 0) > 0)
+
+/**
+ * Quanto `valor` atrasado cresce em `dias` pela regra (sem a multa): a mesma conta do cálculo de cada parcela. Serve para o
+ * exemplo do formulário ("R$ 100 atrasados há 10 dias ficam R$ 150").
+ */
+export function crescimentoPorDias(valor: number, dias: number, r: { taxa: number; periodo: 'mes' | 'dia'; composto: boolean; reaisDia?: number }) {
+  const t = r.taxa / 100
+  const passos = r.periodo === 'dia' ? dias : dias / 30
+  const juros = r.composto ? valor * (Math.pow(1 + t, passos) - 1) : valor * t * passos
+  return juros + (r.reaisDia ?? 0) * dias
+}
 
 const vazio = (desde: string | null): JurosDoAtraso => ({ total: 0, porParcela: new Map(), porParte: new Map(), desde, diario: 0 })
 
@@ -54,7 +65,9 @@ export function jurosDoAtraso(s: SituacaoDivida, cal: Calendario | null, hoje: s
   const taxa = (d.atraso_juros_mes ?? 0) / 100
   const multa = Math.max(0, d.atraso_multa ?? 2) / 100
   const composto = d.atraso_tipo === 'composto'
-  const fator = (dias: number) => (composto ? Math.pow(1 + taxa, dias / 30) - 1 : (taxa / 30) * dias)
+  // a taxa vale por mês (30 dias) ou por dia (migração 36)
+  const passos = (dias: number) => (d.atraso_periodo === 'dia' ? dias : dias / 30)
+  const fator = (dias: number) => (composto ? Math.pow(1 + taxa, passos(dias)) - 1 : taxa * passos(dias))
   /** Juros (e multa) de um valor atrasado desde `venc`, e quanto ele cresce por dia hoje. */
   const crescimento = (base: number, venc: string, semMulta = false) => {
     if (base <= 0 || venc >= hoje) return { valor: 0, diario: 0 }
@@ -69,6 +82,26 @@ export function jurosDoAtraso(s: SituacaoDivida, cal: Calendario | null, hoje: s
 
   const r = vazio(conf)
   let diario = 0
+  // valor fixo por dia de atraso (migração 36): uma vez por dia para a dívida, desde a parcela atrasada mais antiga (ou desde a
+  // conferência), repartido entre as parcelas atrasadas pelo que falta de cada uma
+  const reaisDia = Math.max(0, d.atraso_reais_dia ?? 0)
+  const somaFixa = () => {
+    if (!reaisDia) return
+    const primeira = cal ? cal.atrasadas.find((p) => p.falta > 0)?.vencimento : conf
+    if (!primeira || primeira >= hoje) return
+    const inicio = conf && conf > primeira ? conf : primeira
+    const fixo = reaisDia * Math.max(0, diasEntre(inicio, hoje))
+    diario += reaisDia
+    const atrasadas = (cal?.atrasadas ?? []).filter((p) => p.falta > 0)
+    const soma = atrasadas.reduce((a, p) => a + p.falta, 0)
+    for (const p of atrasadas) {
+      const parte = soma > 0 ? (fixo * p.falta) / soma : 0
+      r.porParcela.set(p.n, centavos((r.porParcela.get(p.n) ?? 0) + parte))
+      const somaPartes = p.partes?.reduce((a, x) => a + x.valor, 0) ?? 0
+      for (const x of p.partes ?? []) r.porParte.set(x.id, centavos((r.porParte.get(x.id) ?? 0) + (somaPartes > 0 ? (parte * x.valor) / somaPartes : 0)))
+    }
+    r.total = centavos(r.total + fixo)
+  }
 
   if (d.atraso_base === 'saldo') {
     // o saldo inteiro cresce: desde a primeira parcela atrasada; sem calendário, desde a conferência (sem multa: já veio no valor)
@@ -86,6 +119,7 @@ export function jurosDoAtraso(s: SituacaoDivida, cal: Calendario | null, hoje: s
       const somaPartes = p.partes?.reduce((a, x) => a + x.valor, 0) ?? 0
       for (const x of p.partes ?? []) r.porParte.set(x.id, centavos(somaPartes > 0 ? (parte * x.valor) / somaPartes : 0))
     }
+    somaFixa()
     r.diario = centavos(diario)
     return r
   }
@@ -112,6 +146,7 @@ export function jurosDoAtraso(s: SituacaoDivida, cal: Calendario | null, hoje: s
     if (arred > 0) r.porParcela.set(p.n, arred)
     r.total = centavos(r.total + arred)
   }
+  somaFixa()
   r.diario = centavos(diario)
   return r
 }
@@ -121,9 +156,18 @@ export function regraDoAtraso(d: Divida): string | null {
   if (!temJurosDeAtraso(d)) return null
   const t = fmtTaxa(d.atraso_juros_mes ?? 0)
   const composto = d.atraso_tipo === 'composto'
-  const regra = d.atraso_base === 'saldo'
-    ? (composto ? tx('No atraso: {0}% ao mês, juros sobre juros, sobre o saldo inteiro', t) : tx('No atraso: {0}% ao mês sobre o saldo inteiro', t))
-    : (composto ? tx('No atraso: {0}% ao mês, juros sobre juros, em cada parcela atrasada', t) : tx('No atraso: {0}% ao mês sobre cada parcela atrasada', t))
+  const porDia = d.atraso_periodo === 'dia'
+  const reais = d.atraso_reais_dia ?? 0
+  const regra = reais > 0
+    ? tx('No atraso: {0} por dia', fmtMoeda(reais, d.moeda || moedaAtual()))
+    : (d.atraso_juros_mes ?? 0) <= 0 ? tx('No atraso')
+    : d.atraso_base === 'saldo'
+      ? (porDia
+        ? (composto ? tx('No atraso: {0}% ao dia, juros sobre juros, sobre o saldo inteiro', t) : tx('No atraso: {0}% ao dia sobre o saldo inteiro', t))
+        : (composto ? tx('No atraso: {0}% ao mês, juros sobre juros, sobre o saldo inteiro', t) : tx('No atraso: {0}% ao mês sobre o saldo inteiro', t)))
+      : (porDia
+        ? (composto ? tx('No atraso: {0}% ao dia, juros sobre juros, em cada parcela atrasada', t) : tx('No atraso: {0}% ao dia sobre cada parcela atrasada', t))
+        : (composto ? tx('No atraso: {0}% ao mês, juros sobre juros, em cada parcela atrasada', t) : tx('No atraso: {0}% ao mês sobre cada parcela atrasada', t)))
   const multa = (d.atraso_multa ?? 0) > 0 ? tx('multa de {0}%', fmtTaxa(d.atraso_multa!)) : null
   const conf = d.conferido_em ? tx('conferido em {0}', fmtDataCurta(d.conferido_em)) : null
   return [regra, multa, conf].filter(Boolean).join(' · ')

@@ -226,7 +226,7 @@ export function InicioMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom) =>
       {divida && (
         <FormDivida ano={c.ano} mes={c.mes} aoCriar={c.d.addDivida} aoEditar={c.d.updDivida} aoNovoSaldo={c.d.addSaldo}
           aoMudarValor={c.d.ajustarValorDivida} aoMoverInicio={c.d.moverInicioDivida} pagamentos={c.d.pagamentos} aoExcluir={c.d.delDivida}
-          perfil={c.perfil} semMoeda={c.d.dividasSemMoeda} semJuros={c.d.dividasSemJuros} aoFechar={() => setDivida(null)} />
+          perfil={c.perfil} semMoeda={c.d.dividasSemMoeda} semJuros={c.d.dividasSemJuros} semAtraso={c.d.dividasSemAtraso} semCusto={c.d.dividasSemCusto} aoFechar={() => setDivida(null)} />
       )}
     </div>
   )

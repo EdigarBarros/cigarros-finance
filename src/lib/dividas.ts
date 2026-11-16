@@ -262,6 +262,50 @@ export const meDevem = (d: Divida) => sentidoDe(d) === 'me_devem'
 
 /** Juros de um mês viram quanto no ano (juros compostos): 2,5% ao mês dão cerca de 34,5% ao ano. */
 export const jurosAoAno = (jurosMes: number) => (Math.pow(1 + jurosMes / 100, 12) - 1) * 100
+
+/** Juros já combinados num empréstimo: quanto a pessoa recebeu contra quanto vai devolver. */
+export interface JurosEmbutidos {
+  /** Quanto a mais vai ser devolvido (0 se devolve o mesmo ou menos). */
+  juros: number
+  /** Os juros como parte do que foi recebido: 0,08 = 8%. */
+  sobreRecebido: number
+  /** O mesmo custo em % ao mês (juros compostos), quando dá para saber o prazo; null sem prazo. */
+  aoMes: number | null
+}
+
+/**
+ * Pegou R$ 250 e vai devolver R$ 270: R$ 20 de juros, 8% do que recebeu. Com o prazo, o custo vira % ao mês, para comparar
+ * com as outras dívidas (os conselhos de juros usam esse número):
+ * - em parcelas (`parcela` × `parcelas`, a primeira um mês depois de receber): a taxa que faz as parcelas valerem hoje o que
+ *   foi recebido (como a tabela Price dos bancos);
+ * - de uma vez (`total` em `dias` corridos): (total ÷ recebido) elevado a (30 ÷ dias), menos 1.
+ */
+export function jurosEmbutidos(recebido: number, devolve: { parcela: number; parcelas: number } | { total: number; dias: number | null }): JurosEmbutidos | null {
+  if (!(recebido > 0)) return null
+  const total = 'parcela' in devolve ? devolve.parcela * devolve.parcelas : devolve.total
+  if (!(total > 0)) return null
+  const juros = Math.max(0, Math.round((total - recebido) * 100) / 100)
+  const sobreRecebido = juros / recebido
+  if (juros <= 0) return { juros: 0, sobreRecebido: 0, aoMes: 0 }
+  let aoMes: number | null = null
+  if ('parcela' in devolve) {
+    const { parcela, parcelas: n } = devolve
+    if (n >= 1 && parcela > 0) {
+      // valor de hoje das parcelas a uma taxa i: cai quando i sobe; procura i por bisseção até 1000% ao mês
+      const valorHoje = (i: number) => (i === 0 ? parcela * n : (parcela * (1 - Math.pow(1 + i, -n))) / i)
+      let lo = 0, hi = 10
+      for (let k = 0; k < 200; k++) {
+        const mid = (lo + hi) / 2
+        if (valorHoje(mid) > recebido) lo = mid
+        else hi = mid
+      }
+      aoMes = ((lo + hi) / 2) * 100
+    }
+  } else if (devolve.dias && devolve.dias > 0) {
+    aoMes = (Math.pow(total / recebido, 30 / devolve.dias) - 1) * 100
+  }
+  return { juros, sobreRecebido, aoMes: aoMes === null ? null : Math.round(aoMes * 100) / 100 }
+}
 /** O lançamento é dinheiro emprestado a mais (e não pagamento nem recebimento)? */
 export const ehEmprestimo = (l: { tipo: Pagamento['tipo']; divida_id?: string | null }, dividas: Divida[]) => {
   const d = l.divida_id ? dividas.find((x) => x.id === l.divida_id) : undefined
@@ -377,7 +421,14 @@ export function sugeridoParaPagar(s: SituacaoDivida, cal: Calendario | null) {
  */
 export function jurosQuePesam(s: SituacaoDivida): number | null {
   const a = s.divida.atraso_juros_mes
-  if (s.atraso && typeof a === 'number' && a >= 0) return a
+  if (s.atraso && typeof a === 'number' && a >= 0) {
+    // por dia (migração 36): o mesmo em 30 dias; o valor fixo por dia, como parte do que falta
+    const porDia = s.divida.atraso_periodo === 'dia'
+    const taxa = porDia ? (s.divida.atraso_tipo === 'composto' ? (Math.pow(1 + a / 100, 30) - 1) * 100 : a * 30) : a
+    const reais = s.divida.atraso_reais_dia ?? 0
+    const fixo = reais > 0 && s.restante > 0 ? ((reais * 30) / nativoDiv(s, s.restante)) * 100 : 0
+    return Math.round((taxa + fixo) * 100) / 100
+  }
   const j = s.divida.juros_mes
   return typeof j === 'number' && j >= 0 ? j : null
 }

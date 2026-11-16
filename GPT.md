@@ -955,3 +955,30 @@ sua Início (`src/movel`), então o app Android não precisa de versão nova.
 App de demonstração no simples em 1586, 1100 (claro) e 900 px, meses passado, atual e futuro, sem rolagem lateral nem erro;
 10 cliques conferidos (Registrar saída, pílula, Ver mais atrasadas, Marcar como paga na próxima, Ver cálculo, Gastos por
 categoria, lançamento, Ver análise, valores a receber, troca para o equilibrado). Equilibrado: os mesmos 13 cliques de antes.
+
+### 16/11/2026 — Claude — Dívidas: juros por dia, valor fixo por dia, valor recebido e o bloco "Juros" reorganizado
+
+**Estado:** implementado e validado localmente; publicação registrada na conversa da sessão. **Precisa da migração 36**
+(`supabase/migracao-36-juros-por-dia-e-valor-recebido.sql`); sem ela o app funciona como antes e as opções novas ficam
+escondidas. O formulário também roda no app Android: ele só recebe com uma versão nova do app.
+
+- Pedido do Edigar: credor que cobra juros por dia no atraso, empréstimo em que a pessoa recebe menos do que devolve (pega
+  R$ 250 e devolve R$ 270), sem dizer que é agiota, e reorganizar os campos de juros para não confundir.
+- Banco (migração 36): `dividas.valor_recebido`, `atraso_periodo` ('mes' | 'dia') e `atraso_reais_dia`. `useDados` testa a
+  coluna (`dividasSemCusto`) e tira os campos ao gravar quando ela não existe (`CAMPOS_36`).
+- Motor: `lib/jurosAtraso.ts` (taxa por dia, valor fixo por dia repartido entre as parcelas atrasadas, `crescimentoPorDias`
+  para o exemplo do formulário, `regraDoAtraso` com "% ao dia" e "R$ 20,00 por dia"); `lib/dividas.ts` (`jurosEmbutidos`,
+  tabela Price por bisseção; `jurosQuePesam` converte o atraso por dia em % ao mês).
+- Formulário (`components/Formularios.tsx`): bloco "Juros" com "Tem juros no que você paga?" (Sem juros / Sei quanto recebi /
+  Sei a taxa) e "Se atrasar, a dívida aumenta?" (Não / Sim → % ao mês, % ao dia ou R$ por dia, multa opcional, exemplo
+  calculado, "Ajustes avançados" fechado). A multa deixou de vir preenchida com 2% numa dívida nova (o padrão do banco era
+  surpresa para quem pegou com pessoa física); dívidas antigas continuam com a delas. "Valores conferidos em" virou "Os juros
+  contam desde". As quatro telas que abrem o formulário passam `semAtraso` e `semCusto` (a Início do computador e a do
+  celular não passavam `semAtraso`, então a seção "Se atrasar" não aparecia por lá).
+- Ficha da dívida (`pages/Dividas.tsx`): "Você recebeu R$ 250,00 e vai devolver R$ 270,00: R$ 20,00 de juros (8%)."
+
+**Validação:** `npx tsc -b`, lint sem aviso novo, build, `scripts/painel/testar.mjs` 34/34 (2 casos novos: juros embutidos
+e atraso por dia/valor fixo/multa/conferência/regra/peso ao mês), `testar-movel.cjs` sem falha, `testar-correcoes.cjs` OK. No
+app de demonstração, em 1440 e 360 px: criar "Empréstimo do Zé" (R$ 270, recebeu R$ 250, R$ 20 por dia), ficha com o custo
+e a regra, reabrir com os valores; dívida antiga com 13% ao mês composto reabre igual e muda para 1% ao dia; com a migração
+36 simulada como ausente, as opções novas somem e nada quebra.

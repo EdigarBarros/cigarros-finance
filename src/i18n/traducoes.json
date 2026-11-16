@@ -15906,5 +15906,241 @@
   "O que fazer agora e onde está o seu dinheiro": {
     "en": "What to do now and where your money is",
     "es": "Qué hacer ahora y dónde está tu dinero"
+  },
+  "Exemplo: {0} atrasados há 1 mês viram {1}.": {
+    "en": "Example: {0} overdue for 1 month becomes {1}.",
+    "es": "Ejemplo: {0} atrasados hace 1 mes se vuelven {1}."
+  },
+  "Exemplo: {0} atrasados há {1} dias viram {2}.": {
+    "en": "Example: {0} overdue for {1} days becomes {2}.",
+    "es": "Ejemplo: {0} atrasados hace {1} días se vuelven {2}."
+  },
+  "Digite os juros por mês de 0 a 100 (ex.: 2,5), ou escolha \"Sem juros\".": {
+    "en": "Enter the monthly interest from 0 to 100 (e.g. 2.5), or choose \"No interest\".",
+    "es": "Escribe el interés mensual de 0 a 100 (ej.: 2,5), o elige \"Sin intereses\"."
+  },
+  "Digite quanto você emprestou.": {
+    "en": "Enter how much you lent.",
+    "es": "Escribe cuánto prestaste."
+  },
+  "Digite quanto você recebeu.": {
+    "en": "Enter how much you received.",
+    "es": "Escribe cuánto recibiste."
+  },
+  "Digite quanto é cobrado por dia de atraso.": {
+    "en": "Enter how much is charged per day late.",
+    "es": "Escribe cuánto se cobra por día de atraso."
+  },
+  "Digite os juros do atraso por dia, de 0 a 100 (ex.: 5).": {
+    "en": "Enter the late interest per day, from 0 to 100 (e.g. 5).",
+    "es": "Escribe el interés por atraso por día, de 0 a 100 (ej.: 5)."
+  },
+  "Digite os juros do atraso por mês, de 0 a 100 (ex.: 13).": {
+    "en": "Enter the late interest per month, from 0 to 100 (e.g. 13).",
+    "es": "Escribe el interés por atraso por mes, de 0 a 100 (ej.: 13)."
+  },
+  "Digite a multa de 0 a 100 (ex.: 2), ou deixe em branco.": {
+    "en": "Enter the penalty from 0 to 100 (e.g. 2), or leave it blank.",
+    "es": "Escribe la multa de 0 a 100 (ej.: 2), o déjala en blanco."
+  },
+  "Escolha desde quando os juros do atraso contam (em Ajustes avançados).": {
+    "en": "Choose when the late interest starts counting (in Advanced settings).",
+    "es": "Elige desde cuándo cuentan los intereses por atraso (en Ajustes avanzados)."
+  },
+  "Você cobrou juros?": {
+    "en": "Did you charge interest?",
+    "es": "¿Cobraste intereses?"
+  },
+  "Tem juros no que você paga?": {
+    "en": "Is there interest in what you pay?",
+    "es": "¿Hay intereses en lo que pagas?"
+  },
+  "Sem juros": {
+    "en": "No interest",
+    "es": "Sin intereses"
+  },
+  "Sei quanto emprestei": {
+    "en": "I know how much I lent",
+    "es": "Sé cuánto presté"
+  },
+  "Sei quanto recebi": {
+    "en": "I know how much I got",
+    "es": "Sé cuánto recibí"
+  },
+  "Sei a taxa": {
+    "en": "I know the rate",
+    "es": "Sé la tasa"
+  },
+  "Vão te devolver o mesmo valor que você emprestou.": {
+    "en": "You will get back the same amount you lent.",
+    "es": "Te devolverán el mismo valor que prestaste."
+  },
+  "Também serve se você não souber. Dá para mudar depois.": {
+    "en": "Also fine if you don't know. You can change it later.",
+    "es": "También sirve si no lo sabes. Puedes cambiarlo después."
+  },
+  "Quanto você emprestou": {
+    "en": "How much you lent",
+    "es": "Cuánto prestaste"
+  },
+  "Quanto você recebeu": {
+    "en": "How much you received",
+    "es": "Cuánto recibiste"
+  },
+  "O dinheiro que saiu da sua mão. O valor da dívida, acima, é o que vão te devolver: a diferença são os juros.": {
+    "en": "The money that left your hands. The debt amount above is what you will get back: the difference is the interest.",
+    "es": "El dinero que salió de tu mano. El valor de la deuda, arriba, es lo que te devolverán: la diferencia son los intereses."
+  },
+  "O dinheiro que chegou na sua mão (ou o preço à vista). O valor da dívida, acima, é o que você vai devolver: a diferença são os juros.": {
+    "en": "The money that reached your hands (or the cash price). The debt amount above is what you will pay back: the difference is the interest.",
+    "es": "El dinero que llegó a tu mano (o el precio al contado). El valor de la deuda, arriba, es lo que vas a devolver: la diferencia son los intereses."
+  },
+  "Vão te devolver {0} a mais: {1}% sobre o que você emprestou.": {
+    "en": "You will get back {0} more: {1}% on what you lent.",
+    "es": "Te devolverán {0} más: {1}% sobre lo que prestaste."
+  },
+  "Você devolve {0} a mais: {1}% sobre o que recebeu.": {
+    "en": "You pay back {0} more: {1}% on what you received.",
+    "es": "Devuelves {0} más: {1}% sobre lo que recibiste."
+  },
+  "Dá cerca de {0}% ao mês.": {
+    "en": "That is about {0}% per month.",
+    "es": "Es cerca de {0}% al mes."
+  },
+  "Com a data combinada, o app mostra quanto isso dá por mês.": {
+    "en": "With the agreed date, the app shows how much that is per month.",
+    "es": "Con la fecha acordada, la app muestra cuánto es al mes."
+  },
+  "Sem juros: o valor a devolver é igual ao que foi recebido (ou menor).": {
+    "en": "No interest: the amount to pay back is the same as received (or less).",
+    "es": "Sin intereses: el valor a devolver es igual a lo recibido (o menor)."
+  },
+  "Está no contrato ou na fatura (procure por \"juros ao mês\" ou \"a.m.\").": {
+    "en": "It is in the contract or the bill (look for \"monthly interest\").",
+    "es": "Está en el contrato o en la factura (busca \"interés mensual\")."
+  },
+  "Se atrasar, a dívida aumenta?": {
+    "en": "If late, does the debt grow?",
+    "es": "Si se atrasa, ¿la deuda aumenta?"
+  },
+  "Não, nada muda": {
+    "en": "No, nothing changes",
+    "es": "No, nada cambia"
+  },
+  "Sim, cobra juros": {
+    "en": "Yes, interest is charged",
+    "es": "Sí, cobra intereses"
+  },
+  "Como é cobrado": {
+    "en": "How it is charged",
+    "es": "Cómo se cobra"
+  },
+  "% ao mês": {
+    "en": "% per month",
+    "es": "% al mes"
+  },
+  "% ao dia": {
+    "en": "% per day",
+    "es": "% al día"
+  },
+  "{0} por dia": {
+    "en": "{0} per day",
+    "es": "{0} por día"
+  },
+  "Quanto por dia": {
+    "en": "How much per day",
+    "es": "Cuánto por día"
+  },
+  "Juros por dia (%)": {
+    "en": "Interest per day (%)",
+    "es": "Interés por día (%)"
+  },
+  "Ex.: 5": {
+    "en": "E.g. 5",
+    "es": "Ej.: 5"
+  },
+  "A multa é cobrada uma vez, quando a parcela vence sem ser paga. Banco costuma cobrar 2%.": {
+    "en": "The penalty is charged once, when an installment is due and unpaid. Banks usually charge 2%.",
+    "es": "La multa se cobra una vez, cuando la cuota vence sin pagarse. Los bancos suelen cobrar 2%."
+  },
+  "O app aumenta a dívida sozinho enquanto ela está atrasada. É uma estimativa: quando quiser, confira o valor real na ficha da dívida.": {
+    "en": "The app grows the debt on its own while it is late. It is an estimate: whenever you want, check the real amount on the debt card.",
+    "es": "La app aumenta la deuda sola mientras está atrasada. Es una estimación: cuando quieras, confirma el valor real en la ficha de la deuda."
+  },
+  "Ajustes avançados": {
+    "en": "Advanced settings",
+    "es": "Ajustes avanzados"
+  },
+  "só sobre o valor devido": {
+    "en": "only on the amount due",
+    "es": "solo sobre el valor debido"
+  },
+  "juros sobre juros": {
+    "en": "compound interest",
+    "es": "interés sobre interés"
+  },
+  "cada parcela atrasada": {
+    "en": "each late installment",
+    "es": "cada cuota atrasada"
+  },
+  "o saldo inteiro": {
+    "en": "the whole balance",
+    "es": "el saldo entero"
+  },
+  "Os juros contam só sobre o que está atrasado. É o mais comum.": {
+    "en": "Interest counts only on what is late. This is the most common.",
+    "es": "Los intereses cuentan solo sobre lo atrasado. Es lo más común."
+  },
+  "Os juros de cada dia (ou mês) também passam a render juros.": {
+    "en": "Each day's (or month's) interest also earns interest.",
+    "es": "Los intereses de cada día (o mes) también generan intereses."
+  },
+  "Os juros contam desde": {
+    "en": "Interest counts from",
+    "es": "Los intereses cuentan desde"
+  },
+  "Dia em que o valor da dívida no app estava certo (igual ao do banco ou ao combinado). Antes dele, nada é somado.": {
+    "en": "The day the debt amount in the app was right (same as the bank or the agreement). Nothing is added before it.",
+    "es": "Día en que el valor de la deuda en la app estaba correcto (igual al del banco o al acordado). Antes de él, no se suma nada."
+  },
+  "Você emprestou {0}, sem juros.": {
+    "en": "You lent {0}, with no interest.",
+    "es": "Prestaste {0}, sin intereses."
+  },
+  "Você recebeu {0}, sem juros.": {
+    "en": "You received {0}, with no interest.",
+    "es": "Recibiste {0}, sin intereses."
+  },
+  "Você emprestou {0} e vai receber {1}: {2} de juros ({3}%).": {
+    "en": "You lent {0} and will get back {1}: {2} in interest ({3}%).",
+    "es": "Prestaste {0} y vas a recibir {1}: {2} de intereses ({3}%)."
+  },
+  "Você recebeu {0} e vai devolver {1}: {2} de juros ({3}%).": {
+    "en": "You received {0} and will pay back {1}: {2} in interest ({3}%).",
+    "es": "Recibiste {0} y vas a devolver {1}: {2} de intereses ({3}%)."
+  },
+  "No atraso: {0} por dia": {
+    "en": "When late: {0} per day",
+    "es": "En atraso: {0} por día"
+  },
+  "No atraso": {
+    "en": "When late",
+    "es": "En atraso"
+  },
+  "No atraso: {0}% ao dia, juros sobre juros, sobre o saldo inteiro": {
+    "en": "When late: {0}% per day, compounded, on the whole balance",
+    "es": "En atraso: {0}% al día, interés sobre interés, sobre el saldo entero"
+  },
+  "No atraso: {0}% ao dia sobre o saldo inteiro": {
+    "en": "When late: {0}% per day on the whole balance",
+    "es": "En atraso: {0}% al día sobre el saldo entero"
+  },
+  "No atraso: {0}% ao dia, juros sobre juros, em cada parcela atrasada": {
+    "en": "When late: {0}% per day, compounded, on each late installment",
+    "es": "En atraso: {0}% al día, interés sobre interés, en cada cuota atrasada"
+  },
+  "No atraso: {0}% ao dia sobre cada parcela atrasada": {
+    "en": "When late: {0}% per day on each late installment",
+    "es": "En atraso: {0}% al día sobre cada cuota atrasada"
   }
 }

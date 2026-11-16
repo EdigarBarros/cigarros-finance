@@ -2,12 +2,12 @@ import { CenaDividas } from '../components/Vazios'
 import { useState } from 'react'
 import { COR } from '../lib/charts'
 import {
-  aproxDiv, atrasadoHoje, aumentaDivida, estadoDaDivida, resumoDasDividas, sugeridoParaPagar, fmtDiv, gruposDasPartes, inicioPelaProxima, meDevem, parcelasDe, promessasDe, tomarLadoDividas, totalDeParcelas,
+  aproxDiv, atrasadoHoje, aumentaDivida, estadoDaDivida, resumoDasDividas, sugeridoParaPagar, fmtDiv, gruposDasPartes, inicioPelaProxima, meDevem, nativoDiv, parcelasDe, promessasDe, tomarLadoDividas, totalDeParcelas,
   type Calendario, type ParcelaDivida, type Promessas, type SituacaoDivida,
 } from '../lib/dividas'
 import { fmtConta, hojeLocal } from '../lib/contasFixas'
 import { estiloDoBanco } from '../lib/estiloBanco'
-import { fmtDataCurta, fmtDataLonga, fmtMesAno, fmtMoeda, fmtTaxa, fmtValor, MESES_CURTO, noMeioDaFrase } from '../lib/format'
+import { fmtDataCurta, fmtDataLonga, fmtMesAno, fmtMoeda, fmtTaxa, fmtValor, MESES_CURTO, moedaAtual, noMeioDaFrase } from '../lib/format'
 import { BancoIcone } from '../components/BancoIcone'
 import { FormDivida } from '../components/Formularios'
 import { PartesDaDivida } from '../components/PartesDaDivida'
@@ -252,6 +252,7 @@ export function Dividas(c: Ctx) {
           semMoeda={c.d.dividasSemMoeda}
           semJuros={c.d.dividasSemJuros}
           semAtraso={c.d.dividasSemAtraso}
+          semCusto={c.d.dividasSemCusto}
           aoCriar={async (d) => {
             if (d.sentido && d.sentido !== lado) setLado(d.sentido)
             return c.d.addDivida(d)
@@ -294,6 +295,24 @@ function Quem({ s, tamanho = 42 }: { s: SituacaoDivida; tamanho?: number }) {
       {iniciais || '?'}
     </span>
   )
+}
+
+/**
+ * Empréstimo com juros já combinados (migração 36): "Você recebeu R$ 250 e vai devolver R$ 270: R$ 20 de juros (8%)." O total
+ * a devolver é o das parcelas (valor × quantas no total) ou o valor da dívida quando começou. null sem o valor recebido.
+ */
+const custoDoEmprestimo = (s: SituacaoDivida, recebe: boolean) => {
+  const o = s.original
+  const r = o.valor_recebido
+  if (r == null || r <= 0) return null
+  const moeda = o.moeda || moedaAtual()
+  const total = o.valor_parcela && o.total_parcelas ? o.valor_parcela * o.total_parcelas : nativoDiv(s, s.saldoInicial)
+  const juros = Math.max(0, Math.round((total - r) * 100) / 100)
+  if (juros <= 0) return recebe ? tx('Você emprestou {0}, sem juros.', fmtMoeda(r, moeda)) : tx('Você recebeu {0}, sem juros.', fmtMoeda(r, moeda))
+  const p = fmtTaxa((juros / r) * 100)
+  return recebe
+    ? tx('Você emprestou {0} e vai receber {1}: {2} de juros ({3}%).', fmtMoeda(r, moeda), fmtMoeda(total, moeda), fmtMoeda(juros, moeda), p)
+    : tx('Você recebeu {0} e vai devolver {1}: {2} de juros ({3}%).', fmtMoeda(r, moeda), fmtMoeda(total, moeda), fmtMoeda(juros, moeda), p)
 }
 
 /** "1,8% ao mês" quando a pessoa informou os juros de uma dívida que ela deve e ainda não quitou; senão null. */
@@ -457,6 +476,8 @@ export function Ficha({ c, s, cal, recebe, conferir, aoFechar, aoEditar }: {
           <span><small>{recebe ? tx('já recebido') : tx('já pago')}</small><strong className="bom">{fmtDiv(s, Math.max(0, s.saldoInicial - s.restante))}</strong></span>
           <span><small>{s.divida.valor_parcela ? tx('parcela') : tx('total')}</small><strong>{fmtDiv(s, s.divida.valor_parcela ?? s.saldoInicial)}</strong></span>
         </div>
+
+        {custoDoEmprestimo(s, recebe) && <p className="campo-ajuda dv-custo"><Icone nome="calculadora" tamanho={14} /> {custoDoEmprestimo(s, recebe)}</p>}
 
         {!recebe && !quitada && temJurosDeAtraso(s.divida) && !c.d.dividasSemAtraso && (
           <section className="dv-atraso">
