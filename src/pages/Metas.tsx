@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { COR } from '../lib/charts'
 import { casasDaMoeda, dataPlausivel, erroDataFora, erroValorGrande, mascarar, paraCampoMoeda, valorGrandeDemais } from '../lib/dinheiro'
 import { fmtDataLonga, fmtMoeda, fmtValor, MESES_NOME, parseNumero, paraCampo, simbolo, noMeioDaFrase, mesEAno } from '../lib/format'
-import { situacaoMeta, MODELOS, type SituacaoMeta } from '../lib/metas'
+import { resumoDasMetas, situacaoMeta, MODELOS, type SituacaoMeta } from '../lib/metas'
 import { gastoMensalMedio } from '../lib/conselheiro'
 import { hojeLocal } from '../lib/cartoes'
 import { converter, MOEDAS } from '../lib/moedas'
@@ -28,7 +28,7 @@ const hoje = () => hojeLocal()
 const mesAno = (iso: string) => quando([Number(iso.slice(0, 4)), Number(iso.slice(5, 7))])
 
 /** Situação da meta em uma palavra, para o selo do cartão. */
-function estadoMeta(s: SituacaoMeta) {
+export function estadoMeta(s: SituacaoMeta) {
   if (s.batida) return { id: 'batida', texto: tx('Batida 🎉') }
   if (s.atrasada) return { id: 'atrasada', texto: tx('Prazo passou') }
   if (s.porMesNoPrazo !== null && s.ritmo !== null) return s.ritmo >= s.porMesNoPrazo - 0.01 ? { id: 'em_dia', texto: tx('No ritmo') } : { id: 'devagar', texto: tx('Abaixo do ritmo') }
@@ -46,13 +46,8 @@ export function Metas(c: Ctx) {
   const [movendo, setMovendo] = useState<{ meta: Meta; retirar: boolean; valor?: number } | null>(null)
   const [aberta, setAberta] = useState<string | null>(null)
   const sits = c.d.metas.map((m) => situacaoMeta(m, c.d.movimentosMeta))
-  const ativas = sits.filter((s) => !s.batida)
-  const batidas = sits.filter((s) => s.batida)
-  const naPrincipal = (valor: number, moeda: string) => converter(valor, moeda, c.taxas) ?? 0
-  const guardado = sits.reduce((a, s) => a + naPrincipal(s.guardado, s.meta.moeda), 0)
-  const alvoTotal = sits.reduce((a, s) => a + naPrincipal(s.meta.alvo, s.meta.moeda), 0)
-  const falta = ativas.reduce((a, s) => a + naPrincipal(s.falta, s.meta.moeda), 0)
-  const porMes = ativas.reduce((a, s) => a + naPrincipal(s.porMesNoPrazo ?? 0, s.meta.moeda), 0)
+  // os totais (os mesmos da Início e do celular): lib/metas.ts
+  const { ativas, batidas, guardado, alvoTotal, falta, porMes, naPrincipal } = resumoDasMetas(sits, c.taxas)
   // Para a reserva de emergência: o gasto de um mês típico, pela mesma régua do Consultor e do Dinheiro guardado.
   const gastoMedio = gastoMensalMedio(c.porMes, c.ano)
   const sobra = Math.max(0, c.r.fluxo)
@@ -224,7 +219,7 @@ function PoteGrande({ s, indice, aoAbrir, aoGuardar }: { s: SituacaoMeta; indice
 }
 
 /** As barras de "Quando cada meta chega": de hoje até o prazo (ou a previsão no ritmo), pintadas até onde já foi guardado. */
-function linhasDeChegada(ativas: SituacaoMeta[]) {
+export function linhasDeChegada(ativas: SituacaoMeta[]) {
   const [a0, m0] = hoje().split('-').map(Number)
   const agora = a0 * 12 + m0 - 1
   const fins = ativas.map((s) => {
@@ -319,7 +314,7 @@ function Evolucao({ s }: { s: SituacaoMeta }) {
   )
 }
 
-function FichaMeta({ s, c, aoFechar, aoEditar, aoGuardar, aoRetirar }: {
+export function FichaMeta({ s, c, aoFechar, aoEditar, aoGuardar, aoRetirar }: {
   s: SituacaoMeta; c: Ctx; aoFechar: () => void; aoEditar: () => void; aoGuardar: () => void; aoRetirar: () => void
 }) {
   const { meta } = s
@@ -374,7 +369,7 @@ function FichaMeta({ s, c, aoFechar, aoEditar, aoGuardar, aoRetirar }: {
   )
 }
 
-function FormMeta({ c, meta, modelo, aoFechar }: { c: Ctx; meta?: Meta; modelo?: Partial<Meta>; aoFechar: () => void }) {
+export function FormMeta({ c, meta, modelo, aoFechar }: { c: Ctx; meta?: Meta; modelo?: Partial<Meta>; aoFechar: () => void }) {
   const ini = meta ?? modelo
   const [nome, setNome] = useState(ini?.nome ?? '')
   const [icone, setIcone] = useState(ini?.icone ?? '🎯')
@@ -477,7 +472,7 @@ function FormMeta({ c, meta, modelo, aoFechar }: { c: Ctx; meta?: Meta; modelo?:
   )
 }
 
-function FormMovimento({ c, meta, retirar: inicial, valorInicial, aoFechar }: { c: Ctx; meta: Meta; retirar: boolean; valorInicial?: number; aoFechar: () => void }) {
+export function FormMovimento({ c, meta, retirar: inicial, valorInicial, aoFechar }: { c: Ctx; meta: Meta; retirar: boolean; valorInicial?: number; aoFechar: () => void }) {
   const [retirar, setRetirar] = useState(inicial)
   const [valor, setValor] = useState(valorInicial ? paraCampo(valorInicial) : '')
   const [data, setData] = useState(hoje())

@@ -866,3 +866,18 @@ trocar mês no gráfico, Previsto, Saldos, 12 meses, abrir peça, categoria, con
 - 16/11/2026, ajustes pedidos depois: tudo cerca de 30% menor (textos com no mínimo 13 px) e a Evolução financeira
   passou a ser a primeira seção, logo depois do topo ("Olá", Visão geral, Modo detalhado, Novo lançamento), que virou o
   componente `TopoDetalhado`.
+
+### 16/11/2026 — Claude — Celular: Metas e Dinheiro guardado com tela própria (fase 5 de 7)
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração. O app Android ainda não recebeu as fases 1 a 5.
+
+- Pedido do Edigar (plano aprovado): seguir com Metas e Dinheiro guardado. Antes, o branch foi refeito sobre a produção,
+  que já tinha #203–#205 (Início detalhada do computador, de outra sessão; nada no celular).
+- `lib/metas.ts`: `resumoDasMetas` (totais na moeda principal e o progresso), usado também pela tela Metas e por
+  `lib/useMesDaInicio.ts` (antes a Início repetia a conta). `pages/Metas.tsx` exporta `estadoMeta`, `linhasDeChegada`,
+  `FichaMeta`, `FormMeta` e `FormMovimento`.
+- `pages/Patrimonio.tsx`: `useGuardado` (saldos, gravar, confirmar herdados, lançamentos por banco, totais, reserva) e as
+  peças `FaixaHerdado`, `SaldosDoBanco`, `CartoesDoBanco`, `ReservaDeEmergencia`, `ExtrasDoGuardado` (mesmo HTML);
+  `FormBanco` exportado.
+- `src/movel/telas/MetasMovel.tsx` e `GuardadoMovel.tsx` (novos); as duas entram em `TELAS_DO_CELULAR`.
+- Regras: `docs/arquitetura-do-painel.md`, seção 4.25.
