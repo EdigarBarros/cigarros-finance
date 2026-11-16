@@ -1,23 +1,22 @@
 /**
- * A Início no jeito simples: uma coluna que responde, nesta ordem, quanto entrou e saiu no mês, como ele pode terminar,
- * como registrar uma entrada ou saída e qual conta pede atenção. Depois vêm uma orientação, os últimos lançamentos e acessos
- * curtos para o resto (gastos por categoria, dívidas, metas, contas e investimentos). Os detalhes continuam a um toque:
- * "Ver cálculo" abre a conta da previsão, "Gastos por categoria" abre a distribuição inteira e cada acesso leva à sua tela.
- * Todos os números saem das mesmas contas dos outros jeitos (lib/previsao.ts, lib/paraFazer.ts). Veja
- * docs/arquitetura-do-painel.md, seção 4.1.
+ * A Início no jeito simples (computador e tablet; o celular tem a sua em src/movel), no mesmo layout da equilibrada, com
+ * menos coisa: Visão geral (quanto entrou e saiu, como o mês pode terminar, registrar entrada ou saída e as contas a pagar)
+ * e Seu próximo passo (uma orientação, os últimos lançamentos e acessos curtos para gastos, dívidas, metas e dinheiro).
+ * Sem gráficos nem comparação. Os detalhes continuam a um toque: "Ver cálculo" abre a conta da previsão, "Gastos por
+ * categoria" abre a distribuição inteira e cada acesso leva à sua tela. Todos os números saem das mesmas contas dos outros
+ * jeitos (lib/previsao.ts, lib/paraFazer.ts). Veja docs/arquitetura-do-painel.md, seção 4.1.
  */
 import { useState, type ReactNode } from 'react'
 import { caixaDoBanco } from '../lib/calc'
 import { fatiasDeGastos } from '../lib/categorias'
 import type { SituacaoConta } from '../lib/contasFixas'
-import { fmtDataCurta, fmtMesAno, fmtValor } from '../lib/format'
+import { fmtDataCurta, fmtMesAno, fmtValor, LOCAL_DAS_DATAS } from '../lib/format'
 import type { SituacaoMeta } from '../lib/metas'
 import { converter } from '../lib/moedas'
-import { agruparTarefas, tarefasDoMes, type Tarefa } from '../lib/paraFazer'
-import { DETALHES } from '../lib/perfil'
+import { tarefasDoMes, type Tarefa } from '../lib/paraFazer'
 import type { ComposicaoDaPrevisao, DiaADia } from '../lib/previsao'
 import { tx } from '../lib/textos'
-import { TIPOS_CAIXA, type Detalhe, type Lancamento } from '../lib/types'
+import { TIPOS_CAIXA, type Lancamento } from '../lib/types'
 import { useAcoesDeLancar } from '../lib/botaoMais'
 import type { Ctx } from '../pages/contexto'
 import { Selo } from './Categorias'
@@ -25,11 +24,10 @@ import { FormBaixa } from './FormBaixa'
 import { Icone } from './Icone'
 import { SEM_CATEGORIA } from '../lib/categorias'
 import { Modal } from './ui'
+import { CabecalhoEq, ContasEq, OrientacaoEq, PilulaDoJeito, ResumosCompactos, Tile, TopoEq, type ResumoCompacto } from './InicioEquilibrado'
 import './inicio-simples.css'
 
 const centavos = (n: number) => Math.round(n * 100) / 100
-/** Contas mostradas antes do "Ver todas as contas". */
-const NA_TELA = 3
 /** Lançamentos mostrados na Início. */
 const ULTIMOS = 3
 
@@ -37,20 +35,15 @@ const ULTIMOS = 3
 const comSinal = (n: number) => `${n < 0 ? '− ' : ''}${fmtValor(Math.abs(n))}`
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Resumo do mês e previsão
+// Visão geral: resultado do mês e previsão
 
-function ResumoDoMes({ dd, composicao, momento, vazio, nomeMes, previsaoPossivel, aoVerCalculo, aoCadastrarContas }: {
+function ResultadoSimples({ dd, momento, vazio, nomeMes, aoVerCalculo }: {
   dd: DiaADia
-  composicao: ComposicaoDaPrevisao
   momento: 'atual' | 'passado' | 'futuro'
   /** Nenhum lançamento no mês. */
   vazio: boolean
   nomeMes: string
-  /** Há o que prever: algo ainda a pagar ou receber, ou contas do mês cadastradas (aí "nada pendente" também é informação). */
-  previsaoPossivel: boolean
   aoVerCalculo: () => void
-  /** Leva às Contas do mês (só com o módulo ligado). */
-  aoCadastrarContas?: () => void
 }) {
   const futuro = momento === 'futuro'
   // num mês que ainda não começou, o que já está lançado para ele; nos outros, só o que já aconteceu (como nos outros jeitos)
@@ -59,172 +52,80 @@ function ResumoDoMes({ dd, composicao, momento, vazio, nomeMes, previsaoPossivel
   const resultado = centavos(entrou - saiu)
   const semNada = vazio && entrou === 0 && saiu === 0
   const rotulo = momento === 'atual' ? tx('Resultado do mês até hoje') : futuro ? tx('Já lançado para {0}', nomeMes) : tx('Resultado de {0}', nomeMes)
-  const tom = resultado > 0 ? 'pos' : resultado < 0 ? 'neg' : 'zero'
+  const tom = resultado > 0 ? 'bom' : resultado < 0 ? 'ruim' : 'zero'
+  return (
+    <section className="cartao eq-cartao eq-resultado is-resultado" aria-label={tx('Resumo do mês')}>
+      <header className="eq-cartao-cab">
+        <Tile icone="carteira" cor="var(--entrada)" />
+        <h3>{rotulo}</h3>
+      </header>
+      {semNada ? (
+        <p className="is-vazio">{tx('Nada registrado em {0} ainda. Comece registrando uma entrada ou uma saída.', nomeMes)}</p>
+      ) : (
+        <>
+          <strong className={`eq-enorme ${tom}`}>{comSinal(resultado)}</strong>
+          {resultado < 0 && <p className="is-explica">{futuro ? tx('Já há mais saídas lançadas do que entradas.') : tx('Saiu mais do que entrou.')}</p>}
+          <div className="is-entrou-saiu">
+            <span className="entrou"><Icone nome="sobe" tamanho={17} /> {futuro ? tx('Vai entrar') : tx('Entrou')} <b>{fmtValor(entrou)}</b></span>
+            <span className="saiu"><Icone nome="desce" tamanho={17} /> {futuro ? tx('Vai sair') : tx('Saiu')} <b>{fmtValor(saiu)}</b></span>
+          </div>
+        </>
+      )}
+      {momento === 'passado' && !semNada && (
+        <button type="button" className="eq-link is-pe-cartao" onClick={aoVerCalculo}>{tx('Ver como o mês fechou')} <Icone nome="dir" tamanho={15} /></button>
+      )}
+      {futuro && !semNada && <p className="is-nota is-pe-cartao">{tx('O mês ainda não começou: isto é o que já está lançado para ele, como parcelas e compras no cartão.')}</p>}
+    </section>
+  )
+}
 
+function PrevisaoSimples({ composicao, previsaoPossivel, aoVerCalculo, aoCadastrarContas }: {
+  composicao: ComposicaoDaPrevisao
+  /** Há o que prever: algo ainda a pagar ou receber, ou contas do mês cadastradas (aí "nada pendente" também é informação). */
+  previsaoPossivel: boolean
+  aoVerCalculo: () => void
+  /** Leva às Contas do mês (só com o módulo ligado). */
+  aoCadastrarContas?: () => void
+}) {
   // a mesma conta do "Ver cálculo" (lib/previsao.ts → comporPrevisao): o que já entrou − o que já saiu + o que vem − o que vai sair
   const previsto = composicao.resultado
   const escala = Math.max(composicao.entrou + composicao.totalReceber, composicao.saiu + composicao.totalPagar)
   const pertoDeZero = Math.abs(previsto) < Math.max(10, escala * 0.02)
-
+  const tom = !previsaoPossivel ? 'sem' : pertoDeZero ? 'zero' : previsto < 0 ? 'ruim' : 'bom'
   return (
-    <section className="is-resumo" aria-label={tx('Resumo do mês')}>
-      <div className={`is-resultado ${semNada ? 'sem-nada' : tom}`}>
-        <p className="is-rotulo">{rotulo}</p>
-        {semNada ? (
-          <p className="is-vazio">{tx('Nada registrado em {0} ainda. Comece registrando uma entrada ou uma saída.', nomeMes)}</p>
-        ) : (
-          <>
-            <strong className="is-valor">{comSinal(resultado)}</strong>
-            {resultado < 0 && <p className="is-explica">{futuro ? tx('Já há mais saídas lançadas do que entradas.') : tx('Saiu mais do que entrou.')}</p>}
-            <div className="is-entrou-saiu">
-              <span><Icone nome="sobe" tamanho={15} /> {futuro ? tx('Vai entrar') : tx('Entrou')} <b>{fmtValor(entrou)}</b></span>
-              <span><Icone nome="desce" tamanho={15} /> {futuro ? tx('Vai sair') : tx('Saiu')} <b>{fmtValor(saiu)}</b></span>
-            </div>
-          </>
-        )}
-      </div>
-
-      {momento === 'atual' && (
-        <div className={`is-previsao ${previsaoPossivel ? (pertoDeZero ? 'zero' : previsto < 0 ? 'neg' : 'pos') : 'sem'}`}>
-          <p className="is-rotulo">{tx('Previsão para o fim do mês')}</p>
-          {previsaoPossivel ? (
-            <>
-              <p className="is-previsao-frase">
-                {pertoDeZero
-                  ? <>{tx('Deve fechar perto de zero')} <small>({comSinal(previsto)})</small></>
-                  : previsto < 0
-                    ? <>{tx('Pode faltar')} <b>{fmtValor(-previsto)}</b></>
-                    : <>{tx('Pode sobrar')} <b>{fmtValor(previsto)}</b></>}
-              </p>
-              <p className="is-nota">{tx('Conta com o que está registrado e pode mudar.')}</p>
-              <button type="button" className="is-ver-calculo" onClick={aoVerCalculo}>{tx('Ver cálculo')} <Icone nome="dir" tamanho={15} /></button>
-            </>
-          ) : (
-            <>
-              <p className="is-previsao-frase sem">{tx('Ainda não há dados suficientes para prever.')}</p>
-              <p className="is-nota">{tx('Cadastre o que entra e sai todo mês (salário, aluguel, contas) para o app prever.')}</p>
-              {aoCadastrarContas && <button type="button" className="is-ver-calculo" onClick={aoCadastrarContas}>{tx('Cadastrar contas')} <Icone nome="dir" tamanho={15} /></button>}
-            </>
-          )}
-        </div>
+    <section className={`cartao eq-cartao is-previsao ${tom}`} aria-label={tx('Previsão para o fim do mês')}>
+      <header className="eq-cartao-cab">
+        <Tile icone="calendario" cor={tom === 'ruim' ? 'var(--saida)' : 'var(--entrada)'} />
+        <h3>{tx('Previsão para o fim do mês')}</h3>
+      </header>
+      {previsaoPossivel ? (
+        <>
+          <p className="is-previsao-frase">
+            {pertoDeZero
+              ? <>{tx('Deve fechar perto de zero')} <small>({comSinal(previsto)})</small></>
+              : previsto < 0
+                ? <><Icone nome="alerta" tamanho={24} />{tx('Pode faltar')} <b>{fmtValor(-previsto)}</b></>
+                : <><Icone nome="check" tamanho={24} />{tx('Pode sobrar')} <b>{fmtValor(previsto)}</b></>}
+          </p>
+          <p className="is-nota">{tx('Conta com o que está registrado e pode mudar.')}</p>
+          <button type="button" className="eq-link is-pe-cartao" onClick={aoVerCalculo}>{tx('Ver cálculo')} <Icone nome="dir" tamanho={15} /></button>
+        </>
+      ) : (
+        <>
+          <p className="is-previsao-frase sem">{tx('Ainda não há dados suficientes para prever.')}</p>
+          <p className="is-nota">{tx('Cadastre o que entra e sai todo mês (salário, aluguel, contas) para o app prever.')}</p>
+          {aoCadastrarContas && <button type="button" className="eq-link is-pe-cartao" onClick={aoCadastrarContas}>{tx('Cadastrar contas')} <Icone nome="dir" tamanho={15} /></button>}
+        </>
       )}
-      {momento === 'passado' && !semNada && (
-        <button type="button" className="is-ver-calculo solto" onClick={aoVerCalculo}>{tx('Ver como o mês fechou')} <Icone nome="dir" tamanho={15} /></button>
-      )}
-      {futuro && !semNada && <p className="is-nota solta">{tx('O mês ainda não começou: isto é o que já está lançado para ele, como parcelas e compras no cartão.')}</p>}
     </section>
   )
 }
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Contas a pagar
 
 /** Ação de cada linha, conforme o que o app faz de verdade: dar baixa numa conta, abrir a fatura ou lançar o pagamento da parcela. */
-const textoDaAcao = (t: Tarefa) => (t.chave.startsWith('conta:') ? tx('Marcar como paga') : t.chave.startsWith('divida:') ? tx('Registrar pagamento') : t.botao.texto)
-
-function LinhaConta({ t }: { t: Tarefa }) {
-  // várias parcelas da mesma dívida numa linha: o valor é a soma delas (nunca o total da dívida) e o prazo é o da mais antiga
-  const varias = t.divida && t.divida.parcelas > 1 ? t.divida : null
-  return (
-    <li className={`is-conta ${t.estado}`}>
-      <span className="is-conta-topo">
-        <span className="is-conta-nome">{varias ? varias.nome : t.titulo}</span>
-        <span className="is-conta-valor">
-          {t.valor}
-          {varias && <small>{tx('soma de {0} parcelas', varias.parcelas)}</small>}
-          {t.aprox && <small>{t.aprox}</small>}
-        </span>
-      </span>
-      <span className="is-conta-prazo">
-        {t.estado === 'atrasada' ? <Icone nome="relogio" tamanho={13} /> : <Icone nome="calendario" tamanho={13} />}
-        {varias && t.estado === 'atrasada' && t.diasAtraso
-          ? (t.diasAtraso === 1 ? tx('a mais antiga venceu ontem') : tx('a mais antiga venceu há {0} dias', t.diasAtraso))
-          : t.frase}
-      </span>
-      <button type="button" className={`btn ${t.chave.startsWith('fatura:') ? '' : 'primario'}`} onClick={t.botao.acao}>{textoDaAcao(t)}</button>
-    </li>
-  )
-}
-
-/**
- * Até 3 contas: o que já venceu e, guardando um lugar, a próxima a vencer (senão atrasos antigos escondem a conta de amanhã).
- * O resto abre no "Ver todas as contas". Recebimentos ficam numa linha à parte: não são contas a pagar.
- */
-function ContasAPagar({ tarefas, aoAbrirContas }: { tarefas: Tarefa[]; aoAbrirContas?: () => void }) {
-  const [todas, setTodas] = useState(false)
-  const pagar = tarefas.filter((t) => !t.entrada)
-  const receber = tarefas.filter((t) => t.entrada)
-  const g = agruparTarefas(pagar, '9999-12-31')
-  const atr = g.atrasadas.length
-  const prox = g.proximas.length
-  const nProx = todas ? prox : atr ? Math.min(prox, 1, NA_TELA) : Math.min(prox, NA_TELA)
-  const nAtr = todas ? atr : Math.min(atr, NA_TELA - nProx)
-  // sobrou lugar (poucas atrasadas)? volta para as próximas
-  const nProxFinal = todas ? prox : Math.min(prox, NA_TELA - nAtr)
-  const escondidas = pagar.length - nAtr - nProxFinal
-  const doisGrupos = atr > 0 && prox > 0
-  return (
-    <section className="bloco is-contas" aria-labelledby="is-contas-titulo">
-      <header className="is-cab">
-        <h2 id="is-contas-titulo">{tx('Contas a pagar')}</h2>
-        {atr > 0
-          ? <span className="is-chip neg">{atr === 1 ? tx('1 atrasada') : tx('{0} atrasadas', atr)}</span>
-          : pagar.length > 0 && <span className="is-chip">{pagar.length === 1 ? tx('1 em aberto') : tx('{0} em aberto', pagar.length)}</span>}
-      </header>
-      {!pagar.length && <p className="is-tudo-em-dia"><Icone nome="check" tamanho={17} /> {tx('Nenhuma conta pendente neste mês.')}</p>}
-      {nAtr > 0 && (
-        <>
-          {doisGrupos && <h3 className="is-grupo neg">{tx('Atrasadas')}</h3>}
-          <ul className="is-lista-contas">{g.atrasadas.slice(0, nAtr).map((t) => <LinhaConta key={t.chave} t={t} />)}</ul>
-        </>
-      )}
-      {nProxFinal > 0 && (
-        <>
-          {doisGrupos && <h3 className="is-grupo">{tx('Próximas')}</h3>}
-          <ul className="is-lista-contas">{g.proximas.slice(0, nProxFinal).map((t) => <LinhaConta key={t.chave} t={t} />)}</ul>
-        </>
-      )}
-      <div className="is-pe">
-        {escondidas > 0 && <button type="button" className="is-ver" onClick={() => setTodas(true)}>{tx('Ver todas as contas ({0})', pagar.length)}</button>}
-        {todas && pagar.length > NA_TELA && <button type="button" className="is-ver" onClick={() => setTodas(false)}>{tx('Mostrar menos')}</button>}
-        {aoAbrirContas && (todas || !escondidas) && pagar.length > 0 && <button type="button" className="is-ver" onClick={aoAbrirContas}>{tx('Abrir contas do mês')}</button>}
-        {receber.length > 0 && aoAbrirContas && (
-          <button type="button" className="is-ver discreto" onClick={aoAbrirContas}>
-            <Icone nome="receber" tamanho={15} /> {receber.length === 1 ? tx('1 valor a receber') : tx('{0} valores a receber', receber.length)}
-          </button>
-        )}
-      </div>
-    </section>
-  )
-}
+const textoDaAcao = (t: Tarefa) => (t.origem === 'fatura' ? tx('Ver fatura') : t.origem === 'parcela' ? tx('Registrar pagamento') : tx('Marcar como paga'))
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Orientação, últimos lançamentos e acessos
-
-/** As duas primeiras frases de um texto (o resto da explicação fica no Consultor). */
-const duasFrases = (texto: string) => texto.split(/(?<=[.!?])\s+(?=\p{Lu})/u).slice(0, 2).join(' ')
-
-/** Só o conselho mais importante (o conselheiro já ordena e só fala com dados que sustentam a frase). */
-function Orientacao({ c }: { c: Ctx }) {
-  const o = c.conselhos[0]
-  if (!o) return null
-  return (
-    <section className={`bloco is-orientacao ${o.gravidade}`} aria-label={tx('Orientação')}>
-      <span className="is-orientacao-icone" aria-hidden="true"><Icone nome={o.icone} tamanho={18} /></span>
-      <div className="is-orientacao-texto">
-        <h2>{o.titulo}</h2>
-        <p>{duasFrases(o.porque)}</p>
-      </div>
-      <div className="is-orientacao-acoes">
-        <button type="button" className="btn" onClick={() => c.irPara(o.destino)}>{o.botao}</button>
-        <button type="button" className="link" onClick={() => c.irPara('analise')}>{tx('Ver análise')}</button>
-        <button type="button" className="is-dispensar" onClick={() => c.dispensarConselho(o.id)} title={tx('Esconde este aviso até o mês que vem')}>
-          {tx('Agora não')}
-        </button>
-      </div>
-    </section>
-  )
-}
+// Seu próximo passo: últimos lançamentos e acessos
 
 function UltimosLancamentos({ c, hojeIso }: { c: Ctx; hojeIso: string }) {
   // feitos (até hoje) do mais novo para o mais antigo; agendados (data à frente) só completam a lista, e com etiqueta
@@ -236,90 +137,79 @@ function UltimosLancamentos({ c, hojeIso }: { c: Ctx; hojeIso: string }) {
     ...agendados.slice(0, Math.max(0, ULTIMOS - feitos.length)).map((l) => [l, true] as [Lancamento, boolean]),
   ]
   const agendadosFora = agendados.length - lista.filter(([, a]) => a).length
-  if (!lista.length) return null
   return (
-    <section className="bloco is-lancs" aria-labelledby="is-lancs-titulo">
+    <section className="cartao eq-cartao is-lancs" aria-labelledby="is-lancs-titulo">
       <header className="is-cab">
-        <h2 id="is-lancs-titulo">{tx('Últimos lançamentos')}</h2>
-        <button type="button" className="link" onClick={() => c.irPara('lancamentos')}>{tx('Ver todos')}</button>
+        <h3 id="is-lancs-titulo">{tx('Últimos lançamentos')}</h3>
+        <button type="button" className="eq-link" onClick={() => c.irPara('lancamentos')}>{tx('Ver todos')} <Icone nome="dir" tamanho={15} /></button>
       </header>
-      <ul className="is-lista-lancs">
-        {lista.map(([l, agendado]) => {
-          const cat = c.categoriaDe(l)
-          const entrada = l.tipo === 'entrada'
-          return (
-            <li key={l.id}>
-              <button type="button" className={`is-lanc ${agendado ? 'agendado' : ''}`} onClick={() => c.editarLancamento(l)}>
-                <Selo c={cat ?? SEM_CATEGORIA} tamanho={30} />
-                <span className="is-lanc-corpo">
-                <span className="is-lanc-texto">
-                  <span className="is-lanc-desc">{l.descricao || (entrada ? tx('Entrada') : tx('Saída'))}</span>
-                  <span className="is-lanc-meta">
-                    {agendado && <span className="is-tag">{tx('agendado')}</span>}
-                    {l.cartao_id && <span className="is-tag cartao">{tx('no cartão')}</span>}
-                    {l.data && fmtDataCurta(l.data)}
-                    {cat && <> · {cat.nome}</>}
+      {lista.length ? (
+        <ul className="is-lista-lancs">
+          {lista.map(([l, agendado]) => {
+            const cat = c.categoriaDe(l)
+            const entrada = l.tipo === 'entrada'
+            return (
+              <li key={l.id}>
+                <button type="button" className={`is-lanc ${agendado ? 'agendado' : ''}`} onClick={() => c.editarLancamento(l)}>
+                  <Selo c={cat ?? SEM_CATEGORIA} tamanho={32} />
+                  <span className="is-lanc-texto">
+                    <span className="is-lanc-desc">{l.descricao || (entrada ? tx('Entrada') : tx('Saída'))}</span>
+                    <span className="is-lanc-meta">
+                      {agendado && <span className="is-tag">{tx('agendado')}</span>}
+                      {l.cartao_id && <span className="is-tag cartao">{tx('no cartão')}</span>}
+                      {l.data && fmtDataCurta(l.data)}
+                      {cat && <> · {cat.nome}</>}
+                    </span>
                   </span>
-                </span>
-                <span className={`is-lanc-valor ${entrada ? 'mais' : ''}`}>{entrada ? '+' : '−'} {fmtValor(l.valor)}</span>
-                </span>
-              </button>
-            </li>
-          )
-        })}
-      </ul>
+                  <span className={`is-lanc-valor ${entrada ? 'mais' : ''}`}>{entrada ? '+' : '−'} {fmtValor(l.valor)}</span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      ) : (
+        <p className="is-nota">{tx('Nenhum lançamento neste mês ainda.')}</p>
+      )}
       {agendadosFora > 0 && (
-        <p className="is-nota pe">{agendadosFora === 1 ? tx('Mais 1 lançamento agendado para depois de hoje.') : tx('Mais {0} lançamentos agendados para depois de hoje.', agendadosFora)}</p>
+        <p className="is-nota is-pe-cartao">{agendadosFora === 1 ? tx('Mais 1 lançamento agendado para depois de hoje.') : tx('Mais {0} lançamentos agendados para depois de hoje.', agendadosFora)}</p>
       )}
     </section>
   )
 }
 
-function Acesso({ icone, cor, titulo, sub, valor, aoAbrir }: { icone: string; cor: string; titulo: string; sub?: ReactNode; valor?: string; aoAbrir: () => void }) {
-  return (
-    <li>
-      <button type="button" className="is-acesso" onClick={aoAbrir} style={{ '--c': cor } as React.CSSProperties}>
-        <span className="is-acesso-icone" aria-hidden="true"><Icone nome={icone} tamanho={18} /></span>
-        <span className="is-acesso-texto">
-          <span className="is-acesso-titulo">{titulo}</span>
-          {sub && <small>{sub}</small>}
-        </span>
-        {valor && <b className="is-acesso-valor">{valor}</b>}
-        <Icone nome="dir" tamanho={16} />
-      </button>
-    </li>
-  )
-}
-
 const caixaInformado = (caixa: Ctx['mesEf']['caixa']) => Object.values(caixa ?? {}).some((b) => TIPOS_CAIXA.some((t) => typeof b?.[t] === 'number'))
 
-function Acessos({ c, metas, aoAbrirGastos }: { c: Ctx; metas: SituacaoMeta[]; aoAbrirGastos?: () => void }) {
+/** Gastos por categoria, dívidas, metas e contas e investimentos, em cartões curtos: tocar abre a janela ou a página. */
+function acessos(c: Ctx, metas: SituacaoMeta[], aoAbrirGastos?: () => void): ResumoCompacto[] {
   const { v } = c
-  const itens: ReactNode[] = []
+  const itens: ResumoCompacto[] = []
   if (aoAbrirGastos) {
     const maior = fatiasDeGastos(c.r.gastosPorCategoria, c.categorias, Infinity)[0]
-    itens.push(
-      <Acesso key="gastos" icone="ano" cor="var(--marca-2)" titulo={tx('Gastos por categoria')} aoAbrir={aoAbrirGastos}
-        sub={maior && c.r.saidas > 0 ? tx('Maior: {0} ({1}%)', maior.nome, Math.round((maior.valor / c.r.saidas) * 100)) : undefined} />,
-    )
+    if (maior && c.r.saidas > 0) {
+      itens.push({
+        chave: 'gastos', icone: 'barras', cor: 'var(--marca-2)', rotulo: tx('Gastos por categoria'), texto: true,
+        valor: maior.nome, sub: tx('O maior gasto: {0}% do que saiu no mês', Math.round((maior.valor / c.r.saidas) * 100)), aoAbrir: aoAbrirGastos,
+      })
+    }
   }
   if (v.dividas) {
     const abertas = c.situacao.filter((s) => s.restante > 0 && !s.semCotacao)
     if (abertas.length) {
-      itens.push(
-        <Acesso key="dividas" icone="divida" cor="var(--saida)" titulo={tx('Dívidas')} valor={fmtValor(abertas.reduce((t, s) => t + s.restanteHoje, 0))}
-          sub={abertas.length === 1 ? tx('Total que falta pagar · 1 dívida') : tx('Total que falta pagar · {0} dívidas', abertas.length)} aoAbrir={() => c.irPara('dividas')} />,
-      )
+      itens.push({
+        chave: 'dividas', icone: 'cartao', cor: 'var(--divida)', rotulo: tx('Dívidas'), valor: fmtValor(abertas.reduce((t, s) => t + s.restanteHoje, 0)),
+        sub: abertas.length === 1 ? tx('Total que falta pagar · 1 dívida') : tx('Total que falta pagar · {0} dívidas', abertas.length), aoAbrir: () => c.irPara('dividas'),
+      })
     }
   }
   if (v.metas && !c.d.metasSemTabela) {
     const guardado = metas.reduce((t, s) => t + (converter(s.guardado, s.meta.moeda, c.taxas) ?? 0), 0)
     const ativas = metas.filter((s) => !s.batida).length
-    itens.push(
-      <Acesso key="metas" icone="meta" cor="var(--violeta)" titulo={tx('Metas')} aoAbrir={() => c.irPara('metas')}
-        sub={!metas.length ? tx('Crie uma meta para juntar dinheiro')
-          : ativas ? tx('{0} em andamento · {1} guardado', ativas, fmtValor(guardado)) : tx('Todas batidas · {0} guardado', fmtValor(guardado))} />,
-    )
+    itens.push({
+      chave: 'metas', icone: 'meta', cor: 'var(--violeta)', rotulo: tx('Metas'), aoAbrir: () => c.irPara('metas'),
+      ...(metas.length
+        ? { valor: fmtValor(guardado), sub: ativas ? (ativas === 1 ? tx('Guardado · 1 meta em andamento') : tx('Guardado · {0} metas em andamento', ativas)) : tx('Guardado · todas as metas batidas') }
+        : { valor: tx('Nenhuma meta ainda'), texto: true, sub: tx('Crie uma meta para juntar dinheiro') }),
+    })
   }
   if (v.bancos || v.investimentos || v.moedas) {
     // só o que foi informado entra no total: investimento não informado não vira "R$ 0,00 investido"
@@ -335,21 +225,17 @@ function Acessos({ c, metas, aoAbrirGastos }: { c: Ctx; metas: SituacaoMeta[]; a
       v.moedas && emMoedas > 0 && tx('Outras moedas {0}', fmtValor(emMoedas)),
       ef.herdadoDe && tx('valores de {0}', fmtMesAno(ef.herdadoDe[0], ef.herdadoDe[1])),
     ].filter(Boolean)
-    itens.push(
-      <Acesso key="dinheiro" icone="cofre" cor="var(--caixa)" titulo={tx('Contas e investimentos')} valor={comCaixa || comInvest || emMoedas ? fmtValor(total) : undefined}
-        sub={partes.join(' · ')} aoAbrir={() => c.irPara('patrimonio')} />,
-    )
+    const informado = comCaixa || comInvest || emMoedas > 0
+    itens.push({
+      chave: 'dinheiro', icone: 'cofre', cor: 'var(--caixa)', rotulo: tx('Contas e investimentos'),
+      valor: informado ? fmtValor(total) : tx('Não informado'), texto: !informado, sub: partes.join(' · '), aoAbrir: () => c.irPara('patrimonio'),
+    })
   }
-  if (!itens.length) return null
-  return (
-    <section className="bloco is-acessos" aria-label={tx('Mais informações')}>
-      <ul>{itens}</ul>
-    </section>
-  )
+  return itens
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Janelas: gastos por categoria e o jeito de ver
+// Janela: gastos por categoria
 
 function JanelaGastos({ c, nomeMes, saiuAteHoje, momento, aoFechar }: {
   c: Ctx; nomeMes: string; saiuAteHoje: number; momento: 'atual' | 'passado' | 'futuro'; aoFechar: () => void
@@ -396,23 +282,6 @@ function JanelaGastos({ c, nomeMes, saiuAteHoje, momento, aoFechar }: {
   )
 }
 
-function JanelaModo({ atual, aoEscolher, aoFechar }: { atual: Detalhe; aoEscolher: (d: Detalhe) => void; aoFechar: () => void }) {
-  return (
-    <Modal titulo={tx('Jeito de ver')} aoFechar={aoFechar}>
-      <div className="is-modos" role="radiogroup" aria-label={tx('Jeito de ver')}>
-        {DETALHES.map((d) => (
-          <button key={d.id} type="button" role="radio" aria-checked={atual === d.id} className={`is-modo ${atual === d.id ? 'ativo' : ''}`}
-            onClick={() => aoEscolher(d.id)}>
-            <span className="is-modo-texto"><strong>{d.nome}</strong><small>{d.descricao}</small></span>
-            <i className="is-modo-marca" aria-hidden="true">{atual === d.id && <Icone nome="check" tamanho={13} />}</i>
-          </button>
-        ))}
-      </div>
-      <p className="is-nota">{tx('Dá para trocar quando quiser. O app não muda o jeito sozinho.')}</p>
-    </Modal>
-  )
-}
-
 // ---------------------------------------------------------------------------------------------------------------------
 
 export function InicioSimples({ c, dd, composicao, momento, nomeMes, hojeIso, metas, aoEntender, extras }: {
@@ -432,7 +301,6 @@ export function InicioSimples({ c, dd, composicao, momento, nomeMes, hojeIso, me
   const refAcoes = useAcoesDeLancar<HTMLDivElement>()
   const [baixa, setBaixa] = useState<SituacaoConta | null>(null)
   const [gastos, setGastos] = useState(false)
-  const [modo, setModo] = useState(false)
   const vazio = c.lancsMes.length === 0
 
   // "Marcar como paga": se o dinheiro parece já estar num lançamento, o app pergunta antes (como no "Paguei" de sempre);
@@ -443,41 +311,62 @@ export function InicioSimples({ c, dd, composicao, momento, nomeMes, hojeIso, me
     dividas: v.dividas ? c.situacao.filter((s) => s.restante > 0) : [],
     diaRef: c.diaRef, aoPagarConta: marcarComoPaga, aoPagarDivida: c.pagarDivida, aoVerCartoes: () => c.irPara('cartoes'),
   }).lista
+  // recebimentos não são contas a pagar: viram um link no pé das contas
+  const pagar = tarefas.filter((t) => !t.entrada)
+  const receber = tarefas.length - pagar.length
   const comContas = (v.contas && c.situacoesContas.length > 0) || (v.cartoes && c.faturas.length > 0) || (v.dividas && c.situacao.some((s) => s.restante > 0))
   const previsaoPossivel = composicao.receber.length + composicao.pagar.length > 0 || (!vazio && v.contas && c.situacoesContas.length > 0)
-  const primeiroNome = c.perfil.nome.trim().split(/\s+/)[0]
+  const hojePorExtenso = new Date(`${hojeIso}T12:00:00`).toLocaleDateString(LOCAL_DAS_DATAS, { day: 'numeric', month: 'long', year: 'numeric' })
+  const modo = <PilulaDoJeito atual="simples" aoMudar={c.mudarDetalhe} />
+  const itens = acessos(c, metas, !vazio && c.r.saidas > 0 ? () => setGastos(true) : undefined)
+  const temOrientacao = c.conselhos.length > 0
+
+  const registrar = (
+    <div className="is-acoes" data-tour="lancar" ref={refAcoes}>
+      <button type="button" className="btn entrada" onClick={() => c.novoLancamento('entrada')}><Icone nome="sobe" tamanho={18} /> {tx('Registrar entrada')}</button>
+      <button type="button" className="btn saida" onClick={() => c.novoLancamento('saida')}><Icone nome="desce" tamanho={18} /> {tx('Registrar saída')}</button>
+    </div>
+  )
 
   return (
-    <div className="pagina inicio inicio-simples">
-      <h1 className="is-ola">
-        {primeiroNome ? <>{tx('Olá,')} <span className="nome" translate="no">{primeiroNome}!</span></> : tx('Olá!')}
-      </h1>
-      <div className="is-grade">
-        <div className="is-col">
-          <ResumoDoMes dd={dd} composicao={composicao} momento={momento} vazio={vazio} nomeMes={nomeMes} previsaoPossivel={previsaoPossivel}
-            aoVerCalculo={aoEntender} aoCadastrarContas={v.contas ? () => c.irPara('contas') : undefined} />
-          <div className="is-acoes" data-tour="lancar" ref={refAcoes}>
-            <button type="button" className="btn entrada" onClick={() => c.novoLancamento('entrada')}><Icone nome="sobe" tamanho={18} /> {tx('Registrar entrada')}</button>
-            <button type="button" className="btn saida" onClick={() => c.novoLancamento('saida')}><Icone nome="desce" tamanho={18} /> {tx('Registrar saída')}</button>
-          </div>
-          {comContas && <ContasAPagar tarefas={tarefas} aoAbrirContas={v.contas ? () => c.irPara('contas') : undefined} />}
+    <div className="pagina inicio inicio-eq inicio-simples">
+      {/* ---------- 1. Visão geral ---------- */}
+      <section className="eq-secao" aria-label={tx('Visão geral')}>
+        <TopoEq nome={c.perfil.nome ?? ''} modo={modo} registrar={registrar} />
+        <div className={`eq-duas${momento === 'atual' ? '' : ' uma'}`}>
+          <ResultadoSimples dd={dd} momento={momento} vazio={vazio} nomeMes={nomeMes} aoVerCalculo={aoEntender} />
+          {momento === 'atual' && (
+            <PrevisaoSimples composicao={composicao} previsaoPossivel={previsaoPossivel} aoVerCalculo={aoEntender}
+              aoCadastrarContas={v.contas ? () => c.irPara('contas') : undefined} />
+          )}
         </div>
-        <div className="is-col">
-          <Orientacao c={c} />
+        {comContas && (
+          <ContasEq titulo={tx('Contas a pagar')} tituloProximas={momento === 'passado' ? undefined : tx('Próximas')} tarefas={pagar} hoje={hojePorExtenso} aoAgir={(t) => t.botao.acao()} botaoNasProximas acaoDaConta={textoDaAcao}
+            aoVerContas={v.contas ? () => c.irPara('contas') : undefined}
+            pe={receber > 0 && v.contas ? (
+              <button type="button" className="eq-link is-receber" onClick={() => c.irPara('contas')}>
+                <Icone nome="receber" tamanho={15} /> {receber === 1 ? tx('1 valor a receber') : tx('{0} valores a receber', receber)}
+              </button>
+            ) : undefined} />
+        )}
+      </section>
+
+      {/* ---------- 2. Seu próximo passo ---------- */}
+      <section className="eq-secao" aria-label={tx('Seu próximo passo')}>
+        <CabecalhoEq modo={modo} titulo={tx('Seu próximo passo')} sub={tx('O que fazer agora e onde está o seu dinheiro')} hoje={hojePorExtenso} />
+        <div className={`eq-duas${temOrientacao ? ' is-passo' : ' uma'}`}>
+          {temOrientacao && (
+            <OrientacaoEq conselhos={c.conselhos.slice(0, 1)} semDados={c.conselhosSemDados} aoIr={c.irPara} aoDispensar={c.dispensarConselho}
+              aoAnalise={() => c.irPara('analise')} />
+          )}
           <UltimosLancamentos c={c} hojeIso={hojeIso} />
-          <Acessos c={c} metas={metas} aoAbrirGastos={!vazio && c.r.saidas > 0 ? () => setGastos(true) : undefined} />
         </div>
-      </div>
-      <p className="is-modo-atual">
-        {tx('Modo simples')} · <button type="button" className="link" onClick={() => setModo(true)}>{tx('Alterar')}</button>
-      </p>
+        <ResumosCompactos itens={itens} />
+      </section>
+
       {extras}
       {baixa && <FormBaixa c={c} s={baixa} aoFechar={() => setBaixa(null)} />}
       {gastos && <JanelaGastos c={c} nomeMes={nomeMes} saiuAteHoje={dd.saiu} momento={momento} aoFechar={() => setGastos(false)} />}
-      {modo && (
-        <JanelaModo atual={c.perfil.detalhe} aoFechar={() => setModo(false)}
-          aoEscolher={(d) => { setModo(false); if (d !== c.perfil.detalhe) void c.d.salvarPerfil({ ...c.perfil, detalhe: d }) }} />
-      )}
     </div>
   )
 }

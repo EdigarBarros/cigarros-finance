@@ -15818,5 +15818,45 @@
   "Ver o banco": {
     "en": "See the bank",
     "es": "Ver el banco"
+  },
+  "Ver mais 1 próxima": {
+    "en": "See 1 more upcoming",
+    "es": "Ver 1 próxima más"
+  },
+  "Ver mais {0} próximas": {
+    "en": "See {0} more upcoming",
+    "es": "Ver {0} próximas más"
+  },
+  "Nada mais vence neste mês.": {
+    "en": "Nothing else is due this month.",
+    "es": "Nada más vence este mes."
+  },
+  "Nenhum lançamento neste mês ainda.": {
+    "en": "No entries this month yet.",
+    "es": "Ningún registro este mes todavía."
+  },
+  "O maior gasto: {0}% do que saiu no mês": {
+    "en": "Top expense: {0}% of what went out this month",
+    "es": "El mayor gasto: {0}% de lo que salió en el mes"
+  },
+  "Guardado · 1 meta em andamento": {
+    "en": "Saved · 1 goal in progress",
+    "es": "Ahorrado · 1 meta en curso"
+  },
+  "Guardado · {0} metas em andamento": {
+    "en": "Saved · {0} goals in progress",
+    "es": "Ahorrado · {0} metas en curso"
+  },
+  "Guardado · todas as metas batidas": {
+    "en": "Saved · all goals reached",
+    "es": "Ahorrado · todas las metas alcanzadas"
+  },
+  "Nenhuma meta ainda": {
+    "en": "No goals yet",
+    "es": "Ninguna meta todavía"
+  },
+  "O que fazer agora e onde está o seu dinheiro": {
+    "en": "What to do now and where your money is",
+    "es": "Qué hacer ahora y dónde está tu dinero"
   }
 }
