@@ -863,3 +863,6 @@ por causa dela.
 **Validação:** `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício, `scripts/painel/testar.mjs` 31/31,
 `testar-movel.cjs` todo OK. App de demonstração em 1586 e 1100 px, escuro e claro: sem rolagem lateral nem erro de página;
 trocar mês no gráfico, Previsto, Saldos, 12 meses, abrir peça, categoria, conselho, "Como calculamos" e a janela da conta.
+- 16/11/2026, ajustes pedidos depois: tudo cerca de 30% menor (textos com no mínimo 13 px) e a Evolução financeira
+  passou a ser a primeira seção, logo depois do topo ("Olá", Visão geral, Modo detalhado, Novo lançamento), que virou o
+  componente `TopoDetalhado`.

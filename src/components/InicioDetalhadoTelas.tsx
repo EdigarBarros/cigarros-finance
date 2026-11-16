@@ -43,9 +43,25 @@ const Tile = ({ icone, cor, tamanho = 20 }: { icone: string; cor: string; tamanh
   <span className="dt-tile" style={{ '--c': cor } as CSSProperties}><Icone nome={icone} tamanho={tamanho} /></span>
 )
 
-// ---------- 1. Visão geral ----------
-export function VisaoGeral({ nome, dd, nomeMes, decorridos, saldoContas, divida, dividaJuros, aoModo, aoNovo, aoEntender, aoLancamentos, aoPatrimonio, aoDividas }: {
-  nome: string
+// ---------- 0. Topo: o título da página, antes do gráfico da Evolução ----------
+export function TopoDetalhado({ nome, aoModo, aoNovo }: { nome: string; aoModo: () => void; aoNovo: () => void }) {
+  const primeiro = nome.trim().split(/\s+/)[0]
+  return (
+    <header className="dt-topo">
+      <div>
+        {primeiro && <span className="dt-ola">{tx('Olá, {0}', primeiro)}</span>}
+        <div className="dt-topo-linha">
+          <h1>{tx('Visão geral')}</h1>
+          <button type="button" className="dt-modo" onClick={aoModo}><Icone nome="camadas" tamanho={13} />{tx('Modo detalhado')}</button>
+        </div>
+      </div>
+      <button type="button" className="btn primario dt-novo" onClick={aoNovo}><Icone nome="mais" tamanho={15} />{tx('Novo lançamento')}</button>
+    </header>
+  )
+}
+
+// ---------- 1. Visão geral (os números do mês, depois do gráfico) ----------
+export function VisaoGeral({ dd, nomeMes, decorridos, saldoContas, divida, dividaJuros, aoEntender, aoLancamentos, aoPatrimonio, aoDividas }: {
   dd: DiaADia
   nomeMes: string
   /** Dias contados na média por dia (no mês de hoje, até hoje). */
@@ -55,8 +71,6 @@ export function VisaoGeral({ nome, dd, nomeMes, decorridos, saldoContas, divida,
   /** Saldo devedor (undefined = dívidas desligadas). */
   divida?: number
   dividaJuros: number
-  aoModo: () => void
-  aoNovo: () => void
   aoEntender: () => void
   aoLancamentos: () => void
   aoPatrimonio: () => void
@@ -66,7 +80,6 @@ export function VisaoGeral({ nome, dd, nomeMes, decorridos, saldoContas, divida,
   const fim = dd.entrou - dd.saiu + dd.vaiEntrar - dd.vaiSair
   const futuro = dd.hoje === 0
   const maior = Math.max(dd.entrou, dd.saiu, 1)
-  const primeiro = nome.trim().split(/\s+/)[0]
   const cartoes: { chave: string; icone: string; cor: string; rotulo: string; valor: string; corValor?: string; sub?: string; acao: () => void }[] = [
     { chave: 'entrou', icone: 'receber', cor: 'var(--entrada)', rotulo: tx('Entradas realizadas'), valor: fmtValor(dd.entrou), corValor: 'var(--entrada)', acao: aoLancamentos },
     { chave: 'saiu', icone: 'sobe', cor: 'var(--saida)', rotulo: tx('Saídas realizadas'), valor: fmtValor(dd.saiu), corValor: 'var(--saida)', acao: aoLancamentos },
@@ -80,17 +93,6 @@ export function VisaoGeral({ nome, dd, nomeMes, decorridos, saldoContas, divida,
   ]
   return (
     <section id="det-resumo" className="dt-secao" tabIndex={-1}>
-      <header className="dt-topo">
-        <div>
-          {primeiro && <span className="dt-ola">{tx('Olá, {0}', primeiro)}</span>}
-          <div className="dt-topo-linha">
-            <h1>{tx('Visão geral')}</h1>
-            <button type="button" className="dt-modo" onClick={aoModo}><Icone nome="camadas" tamanho={13} />{tx('Modo detalhado')}</button>
-          </div>
-        </div>
-        <button type="button" className="btn primario dt-novo" onClick={aoNovo}><Icone nome="mais" tamanho={15} />{tx('Novo lançamento')}</button>
-      </header>
-
       <div className="dt-destaques">
         <div className="cartao dt-destaque">
           <Tile icone={resultado >= 0 ? 'investir' : 'desce'} cor={resultado >= 0 ? 'var(--entrada)' : 'var(--saida)'} tamanho={30} />
