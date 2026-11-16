@@ -8,7 +8,9 @@ declare module 'chart.js' {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface PluginOptionsByType<TType extends ChartType> {
     /** Faixa atrás do mês escolhido: índice do rótulo (-1 = nenhum). */
-    destaqueMes?: { indice?: number; cor?: string }
+    destaqueMes?: { indice?: number; cor?: string; borda?: string; largura?: number }
+    /** Balões com o valor de cada barra do mês escolhido (o texto vem em `balao` de cada série). */
+    baloes?: { indice?: number; fundo?: string; texto?: string }
   }
 }
 import { useValoresOcultos } from './format'
@@ -49,25 +51,78 @@ const revelar: Plugin = {
 /** Faixa clarinha atrás do mês escolhido (options.plugins.destaqueMes.indice). */
 const destaqueMes: Plugin = {
   id: 'destaqueMes',
-  beforeDatasetsDraw(chart, _args, opts: { indice?: number; cor?: string }) {
+  beforeDatasetsDraw(chart, _args, opts: { indice?: number; cor?: string; borda?: string; largura?: number }) {
     const x = chart.scales.x
     if (opts?.indice == null || opts.indice < 0 || !x || !chart.chartArea) return
     const meio = x.getPixelForValue(opts.indice)
-    const largura = (x.width / Math.max(1, x.ticks.length)) * 0.86
-    const { top, bottom } = chart.chartArea
+    const largura = (x.width / Math.max(1, x.ticks.length)) * (opts.largura ?? 0.86)
+    // com borda, a moldura desce até o nome do mês (como um cartão em volta da coluna)
+    const top = chart.chartArea.top - (opts.borda ? 6 : 0)
+    const bottom = opts.borda ? x.bottom + 4 : chart.chartArea.bottom
     const ctx = chart.ctx
     ctx.save()
     ctx.fillStyle = opts.cor ?? 'rgba(128, 140, 170, .1)'
     ctx.beginPath()
-    ctx.roundRect(meio - largura / 2, top, largura, bottom - top, 10)
+    ctx.roundRect(meio - largura / 2, top, largura, bottom - top, opts.borda ? 12 : 10)
     ctx.fill()
+    if (opts.borda) { ctx.strokeStyle = opts.borda; ctx.lineWidth = 1.5; ctx.stroke() }
+    ctx.restore()
+  },
+}
+
+/**
+ * Balões em cima das barras do mês escolhido, cada um com o valor da barra e a borda na cor dela (`balao` e `balaoCor` em
+ * cada série). Quando dois se encostam, o segundo sobe um pouco, para os dois ficarem legíveis.
+ */
+const baloes: Plugin = {
+  id: 'baloes',
+  afterDatasetsDraw(chart, _args, opts: { indice?: number; fundo?: string; texto?: string }) {
+    if (opts?.indice == null || opts.indice < 0) return
+    const ctx = chart.ctx
+    const feitos: { x: number; y: number; l: number; a: number }[] = []
+    ctx.save()
+    ctx.font = '700 12px Inter, system-ui, sans-serif'
+    chart.data.datasets.forEach((d, i) => {
+      const extra = d as { balao?: string; balaoCor?: string }
+      if (!extra.balao || !chart.isDatasetVisible(i)) return
+      const el = chart.getDatasetMeta(i).data[opts.indice!] as unknown as { x: number; y: number } | undefined
+      if (!el || !Number.isFinite(el.y)) return
+      const l = ctx.measureText(extra.balao).width + 18, a = 24
+      const x = Math.min(Math.max(el.x - l / 2, 2), chart.width - l - 2)
+      let y = el.y - a - 12
+      for (const f of feitos) {
+        if (x < f.x + f.l + 4 && x + l + 4 > f.x && y < f.y + f.a + 4 && y + a + 4 > f.y) y = f.y - a - 6
+      }
+      y = Math.max(2, y)
+      feitos.push({ x, y, l, a })
+      const cor = extra.balaoCor ?? '#888'
+      ctx.beginPath()
+      ctx.roundRect(x, y, l, a, 7)
+      ctx.fillStyle = opts.fundo ?? '#0e1525'
+      ctx.fill()
+      ctx.lineWidth = 1.5
+      ctx.strokeStyle = cor
+      ctx.stroke()
+      // a pontinha apontando para a barra
+      const px = Math.min(Math.max(el.x, x + 10), x + l - 10)
+      ctx.beginPath()
+      ctx.moveTo(px - 5, y + a); ctx.lineTo(px, y + a + 6); ctx.lineTo(px + 5, y + a)
+      ctx.fillStyle = opts.fundo ?? '#0e1525'
+      ctx.fill()
+      ctx.beginPath()
+      ctx.moveTo(px - 5, y + a); ctx.lineTo(px, y + a + 6); ctx.lineTo(px + 5, y + a)
+      ctx.stroke()
+      ctx.fillStyle = opts.texto ?? '#fff'
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+      ctx.fillText(extra.balao, x + l / 2, y + a / 2 + .5)
+    })
     ctx.restore()
   },
 }
 
 Chart.register(
   ArcElement, BarController, BarElement, CategoryScale, Filler, Legend, LinearScale,
-  LineController, LineElement, PointElement, Tooltip, revelar, destaqueMes,
+  LineController, LineElement, PointElement, Tooltip, revelar, destaqueMes, baloes,
 )
 Chart.defaults.font.family = 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif'
 Chart.defaults.font.size = 11
