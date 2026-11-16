@@ -921,6 +921,7 @@ calculamos, Todas as categorias, (i), Ver diagnóstico, faixa → Lançamentos).
   sem desfoque; as camadas do degradê com `will-change: opacity`.
 - Depois: 4 mudanças com o dedo na tela (só os pontos), deslocamento zero, a página troca e encaixa.
   `scripts/app-de-demonstracao/testar-arrasto.cjs` (novo) cobre todas as telas com topo que desliza.
+
 ### 16/11/2026 — Claude — Início simples no mesmo layout da equilibrada (computador)
 
 **Estado:** implementado e validado localmente; publicação registrada na conversa da sessão. Sem migração; o celular tem a
