@@ -14034,5 +14034,37 @@
   "Empréstimo pessoal": {
     "en": "Personal loan",
     "es": "Préstamo personal"
+  },
+  "Seus lançamentos": {
+    "en": "Your transactions",
+    "es": "Tus movimientos"
+  },
+  "Suas dívidas": {
+    "en": "Your debts",
+    "es": "Tus deudas"
+  },
+  "As contas do motor": {
+    "en": "The engine's math",
+    "es": "Las cuentas del motor"
+  },
+  "acaba em {0}": {
+    "en": "ends in {0}",
+    "es": "termina en {0}"
+  },
+  "{0}% pago": {
+    "en": "{0}% paid",
+    "es": "{0}% pagado"
+  },
+  "do que entra vai para parcelas": {
+    "en": "of your income goes to installments",
+    "es": "de lo que entra va a cuotas"
+  },
+  "do que entra fica guardado": {
+    "en": "of your income is saved",
+    "es": "de lo que entra queda guardado"
+  },
+  "devem sobrar neste mês": {
+    "en": "should be left this month",
+    "es": "deberían sobrar este mes"
   }
 }

@@ -39,7 +39,7 @@ export const COR_TIPO: Record<Tipo, [number, number, number]> = { entrada: [46, 
 /** As mesmas no modo claro: mais fortes, para se lerem no fundo branco (o amarelo vira âmbar). */
 export const COR_TIPO_CLARO: Record<Tipo, [number, number, number]> = { entrada: [16, 185, 110], saida: [239, 68, 68], divida: [245, 158, 11] }
 const COR_PAPEL: Record<Tipo, string> = { entrada: '#16884f', saida: '#c8333f', divida: '#b88a00' }
-const SINAL: Record<Tipo, string> = { entrada: '+', saida: '−', divida: '−' }
+export const SINAL: Record<Tipo, string> = { entrada: '+', saida: '−', divida: '−' }
 
 export interface DocPronto {
   img: HTMLCanvasElement

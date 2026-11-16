@@ -6,6 +6,7 @@ import { tx } from '../lib/textos'
 import { ANO } from './apresentacaoCena'
 import { alturaIdeal, desenharTela, type TelaPronta } from './algoritmoTela'
 import { ATRAVESSA, carregarConsultor, COR_PAINEL, desenharConsultor, idiomaDasFotos, type ConsultorReal } from './algoritmoConsultor'
+import { montarCamadas, type Camada } from './algoritmoCamadas'
 import { COR_TIPO, desenharDocs, LIDAS, LIDAS_PDF, type DocPronto, type TextoLido } from './algoritmoDocs'
 import './algoritmo.css'
 
@@ -228,7 +229,7 @@ const SAI = 0.83
  * A abertura (a fresta, o túnel e a saída) tem mais coisa que as outras cenas: ela fica com ABERTURA da rolagem (as
  * outras dividem o resto). O desenho trabalha com o andamento "por cena" (cada uma 1/5); estas duas funções convertem.
  */
-const ABERTURA = 0.38
+const ABERTURA = 0.5
 const porCena = (r: number) => (r < ABERTURA ? (r / ABERTURA) * 0.2 : 0.2 + ((r - ABERTURA) / (1 - ABERTURA)) * 0.8)
 const daRolagem = (v: number) => (v < 0.2 ? (v / 0.2) * ABERTURA : ABERTURA + ((v - 0.2) / 0.8) * (1 - ABERTURA))
 
@@ -302,6 +303,7 @@ export function Algoritmo() {
       fioFundo: 'rgba(37,99,235,0.2)', fioFrente: 'rgba(37,99,235,0.46)', vivoBrilho: 'rgba(20,201,160,0.3)', vivo: 'rgba(8,145,125,1)',
       anel: 'rgba(29,78,216,0.85)', cheio: 'rgba(8,150,130,1)', miolo: 'rgba(37,99,235,0.85)', dado: 'rgba(8,145,125,1)', noFundo: 'rgba(255,255,255,0.95)',
       tunel: ['rgba(31,142,241,0.2)', 'rgba(31,120,235,0.4)', 'rgba(29,90,216,0.64)', 'rgba(23,58,168,0.88)'],
+      camada: ['#14213d', 'rgba(37,99,235,0.28)', '#1d4ed8', 'rgb(13,160,95)', 'rgb(225,50,50)', 'rgb(217,130,5)'],
       tunelQuad: ['', 'rgba(31,142,241,0.6)', 'rgba(31,120,235,0.8)', 'rgba(29,90,216,0.92)', 'rgba(20,50,150,1)'],
       chao: 'rgba(20,33,61,0.04)', chaoBorda: 'rgba(20,33,61,0.14)', chaoMes: 'rgba(20,33,61,0.06)', media: 'rgba(31,142,241,0.9)',
       mes: 'rgba(20,33,61,0.6)', legenda: 'rgba(20,33,61,0.82)', varre: ['rgba(31,142,241,0.3)', 'rgba(31,142,241,0)', 'rgba(31,142,241,0.95)'],
@@ -313,6 +315,7 @@ export function Algoritmo() {
       ponto: brilho(48, [[0, 'rgba(255,248,225,1)'], [0.2, 'rgba(255,200,90,0.9)'], [0.55, 'rgba(255,150,40,0.22)'], [1, 'rgba(255,130,20,0)']]),
       fioFundo: 'rgba(255,170,70,0.13)', fioFrente: 'rgba(255,190,100,0.3)', vivoBrilho: 'rgba(255,170,60,0.2)', vivo: 'rgba(255,232,180,0.9)',
       anel: 'rgba(255,205,130,0.6)', cheio: 'rgba(255,246,224,1)', miolo: 'rgba(255,190,100,0.75)', dado: 'rgba(255,246,224,1)', noFundo: '',
+      camada: ['rgba(255,247,230,1)', 'rgba(255,185,95,0.34)', 'rgba(255,196,107,1)', 'rgb(46,214,128)', 'rgb(255,92,108)', 'rgb(255,214,10)'],
       tunelQuad: TONS,
       tunel: ['rgba(255,140,40,0.1)', 'rgba(255,165,65,0.22)', 'rgba(255,190,105,0.42)', 'rgba(255,224,165,0.62)'],
       chao: 'rgba(255,255,255,0.035)', chaoBorda: 'rgba(255,255,255,0.12)', chaoMes: 'rgba(255,255,255,0.05)', media: 'rgba(255,205,130,0.9)',
@@ -328,6 +331,8 @@ export function Algoritmo() {
     // a tela do Consultor (cena 4): desenhada em px de CSS, centrada em (cx, yTela). No computador fica no lugar da
     // rede; no celular, entre o texto e os selos
     let tela: TelaPronta | null = null, yTela = 0
+    // as camadas do túnel (algoritmoCamadas.ts) e o espaço que elas têm na cena
+    let fatias: Camada[] = [], chaveCamadas = '', areaW = 0, areaH = 0
     // a abertura: a foto do Consultor de verdade (carrega quando a seção chega perto), em (realX, realY) com escala realS
     // realE: o quanto a tela precisa crescer para a fresta ocupar a cena inteira (com o meio dela no meio da rede)
     let real: ConsultorReal | null = null, chaveReal = '', realX = 0, realY = 0, realS = 1, realE = 100
@@ -420,6 +425,9 @@ export function Algoritmo() {
       }
       dw = Math.round(dw); dh = Math.round(dh)
       const chaveD = `${dw}|${dh}|${document.documentElement.lang}|${claro}`
+      areaW = celular ? W - 22 : (W - Math.min(460, W * 0.36) - 40) * 0.9; areaH = celular ? H * 0.8 : H * 0.7
+      const chaveC = `${celular}|${document.documentElement.lang}|${letras.texto}`
+      if (chaveC !== chaveCamadas) { chaveCamadas = chaveC; fatias = montarCamadas(celular, letras) }
       if (chaveD !== chaveDocs) {
         chaveDocs = chaveD
         docs = desenharDocs(dw, dh, Math.min(window.devicePixelRatio || 1, 2), letras, claro)
@@ -669,13 +677,14 @@ export function Algoritmo() {
      */
     const desenharTeia = (a: number, cresce: number, s: number, dentro: number) => {
       ctx.globalCompositeOperation = P.luz
-      const fc = tubo.sCam / tubo.L
+      // por dentro o túnel fica mais apagado: ele é o cenário, e as camadas é que têm de se ler
+      const fc = tubo.sCam / tubo.L, calma = 1 - 0.7 * dentro
       // a luz no fim do túnel: é para onde os fios vão (o meio da entrada da rede)
       if (dentro > 0.01) {
         const fim = proj(tubo.Sx + tubo.dx * tubo.L, tubo.Sy + tubo.dy * tubo.L, tubo.Sz + tubo.dz * tubo.L)
         if (fim.s) {
           const tam = (260 + 560 * fc) * (celular ? 0.8 : 1)
-          ctx.globalAlpha = a * dentro
+          ctx.globalAlpha = a * dentro * 0.5
           ctx.drawImage(P.halo, fim.x - tam / 2, fim.y - tam / 2, tam, tam)
         }
       }
@@ -712,7 +721,7 @@ export function Algoritmo() {
       })
       ctx.lineCap = 'round'
       ctx.globalAlpha = a * mistura(1, 0.5, dentro); ctx.strokeStyle = P.tunel[1]; ctx.lineWidth = 0.8; ctx.stroke(miolo)
-      faixas.forEach((fx, i) => { ctx.globalAlpha = a; ctx.strokeStyle = P.tunel[i]; ctx.lineWidth = [0.7, 1, 1.5, 2.2][i]; ctx.stroke(fx) })
+      faixas.forEach((fx, i) => { ctx.globalAlpha = a * calma; ctx.strokeStyle = P.tunel[i]; ctx.lineWidth = [0.7, 1, 1.5, 2.2][i]; ctx.stroke(fx) })
       if (dentro > 0.01) {
         // as costelas: de trecho em trecho, uma volta pela beirada do feixe (o túnel ganha parede)
         ctx.lineWidth = 1.2
@@ -724,7 +733,7 @@ export function Algoritmo() {
           BEIRADA.forEach((k, i) => { const P = noFio(k, f); if (!P.s) ok = false; px = P.s * esc * zoom; if (i) volta.lineTo(P.x, P.y); else volta.moveTo(P.x, P.y) })
           if (!ok) continue
           volta.closePath()
-          ctx.globalAlpha = a * dentro * (1 - suave(6, 12, px))
+          ctx.globalAlpha = a * dentro * 0.5 * (1 - suave(6, 12, px))
           ctx.strokeStyle = P.tunel[nivel(px)]; ctx.stroke(volta)
         }
         // a poeira: grãos parados no ar, que passam pela câmera
@@ -742,13 +751,13 @@ export function Algoritmo() {
         ctx.fillStyle = dentro > 0.5 ? P.tunelQuad[nv] : P.tons[nv]
         for (const [x, y, lado, n] of quads) {
           if (Math.min(4, Math.max(1, Math.ceil(n * 4))) !== nv) continue
-          ctx.globalAlpha = a * mistura(0.45 + 0.55 * n, n, dentro)
+          ctx.globalAlpha = a * calma * mistura(0.45 + 0.55 * n, n, dentro)
           ctx.fillRect(x - lado / 2, y - lado / 2, lado, lado)
         }
       }
-      ctx.globalAlpha = a * 0.85
+      ctx.globalAlpha = a * 0.85 * calma
       ctx.strokeStyle = P.vivo; ctx.lineWidth = 1.6; ctx.stroke(rastros)
-      ctx.globalAlpha = a
+      ctx.globalAlpha = a * calma
       ctx.fillStyle = P.dado
       for (const [x, y, lado] of dados) ctx.fillRect(x - lado / 2, y - lado / 2, lado, lado)
       ctx.lineCap = 'butt'
@@ -756,67 +765,49 @@ export function Algoritmo() {
     }
 
     /**
-     * Dentro do túnel (o meio da teia): as linhas lidas andam em cima dos fios, da tela para a rede, letra por letra na
-     * direção do fio; um pouco à frente da câmera elas se desfazem em cubinhos (cada pedacinho na sua vez, numa faixa),
-     * que seguem pelo fio. fc é onde a câmera está no caminho (0 na tela, 1 na rede); tau o andamento do túnel.
+     * Dentro do túnel, as camadas do que está por trás do conselho (algoritmoCamadas.ts), uma de cada vez, de frente
+     * para a câmera e no meio do feixe. Cada uma é feita de quadradinhos que saem dos fios da beirada, logo à frente da
+     * câmera, voam para o lugar deles (a camada se escreve da esquerda para a direita), ficam enquanto a câmera chega
+     * perto e, antes de ela passar, se soltam de volta para os fios e correm por eles até a rede. tau é o andamento do
+     * túnel (0 na fresta, 1 na saída); a é o quanto a cena de dentro está presente.
      */
-    const FIOS_DEITADOS = [12, 17, 6, 23, 18, 11, 13, 16, 7, 22, 19, 10]
-    const desenharLinhasNaTeia = (a: number, tau: number, fc: number) => {
-      if (!docs || !fiosTeia.length) return
-      const n = fiosTeia.length - 1, CF = 0.16, FB = 0.12, WS = 0.42
-      const corte = Math.min(0.94, fc + CF)
-      ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left'
-      for (let i = 0; i < NL; i++) {
-        // no celular, só os fios das laterais: neles o texto anda deitado (nos de cima e de baixo ficaria em pé)
-        const T = docs.textos[i], k = celular ? FIOS_DEITADOS[i % FIOS_DEITADOS.length] : (i * 7 + 2) % n, L = compFio(k)
-        // cada linha entra logo atrás da câmera na sua vez e escorrega, cada vez mais devagar, até passar pelo corte
-        const vez = i * 0.042, DUR = 0.58, u = (tau - vez) / DUR
-        if (u <= 0 || u >= 1.3) continue
-        const fCamVez = fc - (tau - vez) * (fc / Math.max(0.001, tau)), larg = (T.w * WS) / L
-        const de = fCamVez - larg - 0.01, ate = corte + FB + 0.04
-        const cauda = mistura(de, ate, 1 - Math.pow(1 - Math.min(1, u), 2)) + Math.max(0, u - 1) * 0.3
-        // a direção do fio na tela no meio do texto: se for para a esquerda, monta ao contrário (lê da esquerda)
-        const A = noFio(k, Math.max(fc + 0.02, cauda + larg / 2)), B = noFio(k, Math.max(fc + 0.02, cauda + larg / 2) + 0.01)
-        if (!A.s || !B.s) continue
-        const vira = B.x < A.x
-        ctx.globalCompositeOperation = 'source-over'
-        let fonte = ''
-        for (const gl of T.glifos) {
-          const lx = vira ? T.w - gl.x - gl.w : gl.x
-          const fg = cauda + ((lx + gl.w / 2) * WS) / L
-          if (fg < fc + 0.01 || fg > corte + FB) continue
-          const P = noFio(k, fg), Q = noFio(k, fg + 1 / L)
-          if (!P.s || !Q.s) continue
-          // a letra em pé sobre o fio: o comprimento ao longo dele, a altura do tamanho que ela tem ali
-          let ux = (Q.x - P.x) * WS, uy = (Q.y - P.y) * WS
-          const alto = P.s * esc * zoom * WS, lu = Math.hypot(ux, uy) || 1
-          if (vira) { ux = -ux; uy = -uy }
-          const vx = (-uy / lu) * alto, vy = (ux / lu) * alto
-          if (lu > 9 || alto > 9) continue
-          ctx.globalAlpha = a * (1 - suave(corte, corte + FB, fg)) * suave(fc + 0.01, fc + 0.05, fg)
-          ctx.setTransform(dpr * ux, dpr * uy, dpr * vx, dpr * vy, dpr * P.x, dpr * P.y)
-          if (gl.fonte !== fonte) { fonte = gl.fonte; ctx.font = fonte }
-          ctx.fillStyle = gl.cor
-          ctx.fillText(gl.c, -gl.w / 2, -2)
+    const FATIAS = [[0.03, 0.35], [0.35, 0.67], [0.67, 0.98]]
+    const desenharCamadas = (a: number, tau: number) => {
+      const fc = tubo.sCam / tubo.L, mx = cx + offX, my = cy + offY
+      ctx.globalCompositeOperation = P.luz
+      fatias.forEach((c, k) => {
+        const x = (tau - FATIAS[k][0]) / (FATIAS[k][1] - FATIAS[k][0])
+        if (x <= 0 || x >= 1.5) return
+        // a câmera chega perto: a camada cresce devagar enquanto está montada
+        const e = Math.min(areaW / c.w, areaH / c.h) * (0.74 + 0.24 * Math.min(1, x))
+        let cor = -1, alfa = -1
+        for (let i = 0; i < c.n; i++) {
+          const vez = c.vez[i], junta = suave(vez * 0.27, vez * 0.27 + 0.13, x)
+          if (junta <= 0) continue
+          const sai = 0.82 + vez * 0.08, solta = suave(sai, sai + 0.1, x)
+          let X = mx + c.u[i] * e, Y = my + c.v[i] * e, lado = c.lado[i] * e, al = a
+          if (junta < 1) {
+            // saindo do fio: nasce nele, do tamanho dos quadradinhos da parede, e voa para a casa dele
+            const Q = noFio(BEIRADA[c.fio[i]], Math.min(0.97, fc + 0.05 + c.df[i] * 0.12))
+            if (!Q.s) continue
+            X = mistura(Q.x, X, junta); Y = mistura(Q.y, Y, junta)
+            lado = mistura(Math.max(1.2, Math.min(7, 1.8 * Q.s * esc * zoom)), lado, junta)
+            al *= Math.min(1, junta * 8)
+          } else if (solta > 0) {
+            // de volta para o fio, e por ele até o nó da entrada da rede (some ao chegar)
+            const f = mistura(Math.min(0.9, fc + 0.08 + c.df[i] * 0.1), 1, limitar((x - sai) / 0.55))
+            const Q = noFio(BEIRADA[c.fio[i]], f)
+            if (!Q.s) continue
+            X = mistura(X, Q.x, solta); Y = mistura(Y, Q.y, solta)
+            lado = mistura(lado, Math.max(1.2, Math.min(7, 1.8 * Q.s * esc * zoom)), solta)
+            al *= 1 - suave(0.86, 1, f)
+          }
+          if (al <= 0.01) continue
+          if (c.cor[i] !== cor) { cor = c.cor[i]; ctx.fillStyle = P.camada[cor] }
+          if (al !== alfa) { alfa = al; ctx.globalAlpha = al }
+          ctx.fillRect(X - lado / 2, Y - lado / 2, lado, lado)
         }
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-        // depois do corte, os cubinhos que as letras viraram, seguindo pelo fio e se abrindo
-        ctx.globalCompositeOperation = P.luz
-        const [cr, cg, cb] = T.cor
-        ctx.fillStyle = `rgb(${cr},${cg},${cb})`
-        for (let q = 0; q < 80; q++) {
-          const j = (q * 11) % 700, px0 = T.pontos[j * 2], py0 = T.pontos[j * 2 + 1]
-          const fp = cauda + (((vira ? -px0 : px0) + T.w / 2) * WS) / L, passou = fp - corte
-          if (passou < ((j % 13) / 13) * FB || fp > 1.02) continue
-          const P = noFio(k, Math.min(1, fp))
-          if (!P.s) continue
-          const abre = Math.min(1, passou / (FB + 0.1)), px = P.s * esc * zoom
-          ctx.globalAlpha = a * (1 - suave(0.95, 1.02, fp))
-          const lado = Math.max(1.4, Math.min(8, 1.6 * px))
-          ctx.fillRect(P.x + (Math.cos(q * 2.1) * abre * 5 - py0 * 0.2) * px - lado / 2, P.y + (Math.sin(q * 1.7) * abre * 5 + py0 * 0.4) * px - lado / 2, lado, lado)
-        }
-      }
-      ctx.textBaseline = 'middle'
+      })
       ctx.globalAlpha = 1
     }
 
@@ -865,14 +856,20 @@ export function Algoritmo() {
       // cena 0 (desm): a câmera vira para a fresta entre os dois cartões, chega perto e atravessa; anda dentro do túnel;
       // sai dele e se afasta. A rede só aparece nessa última parte (oculto vai a 0), vinda de perto (zoom maior) para o
       // tamanho dela
-      const desm = real ? limitar((p - 0.02) / 0.165) : 1
+      // a abertura em três trechos da rolagem: até a fresta (ATRAVESSA), o túnel, que fica com a maior parte (são três
+      // camadas para ler), e a saída (de SAI em diante)
+      const rol = limitar((p - 0.02) / 0.165)
+      const desm = !real ? 1 : rol < 0.186 ? (rol / 0.186) * ATRAVESSA : rol < 0.894 ? ATRAVESSA + ((rol - 0.186) / 0.708) * (SAI - ATRAVESSA) : SAI + ((rol - 0.894) / 0.106) * (1 - SAI)
       // dentro: o quanto a câmera está no túnel. Lá, a rede já aparece no fim dele, ainda apagada (é para onde se vai)
       const dentro = real ? suave(ATRAVESSA, ATRAVESSA + 0.04, desm) * (1 - suave(SAI, SAI + 0.12, desm)) : 0
-      const oculto = real ? 1 - Math.max(suave(SAI + 0.02, 0.96, desm), 0.7 * suave(ATRAVESSA + 0.08, SAI - 0.12, desm)) : 0
+      const oculto = real ? 1 - Math.max(suave(SAI + 0.02, 0.96, desm), 0.4 * suave(SAI - 0.2, SAI, desm)) : 0
       // no celular, do mergulho até a saída do túnel a cena ocupa a tela inteira: o texto some e o ponto de fuga vai
       // para o meio dela
       const imerso = real && celular ? suave(0.04, 0.14, desm) * (1 - suave(0.9, 1, desm)) : 0
       offY += (H * 0.5 - cy) * imerso
+      // o ponto de fuga fica no meio da área da cena enquanto a câmera está lá dentro (as camadas ficam
+      // nele); fora, a rede volta para a direita, onde cabe a tela presa na ponta dela
+      if (real) offX -= desX0 * pres[0] * suave(0, ATRAVESSA * 0.5, desm) * (1 - suave(SAI, 1, desm))
       por('imerso', imerso.toFixed(3), () => sticky.style.setProperty('--imerso', imerso.toFixed(3)))
       // o ponto da cena onde fica o meio da fresta: começa onde ele está na tela e vai para o meio da rede
       let alvoX = cx, alvoY = cy
@@ -1213,9 +1210,9 @@ export function Algoritmo() {
       }
       // do outro lado da fresta: o túnel
       // o fio do túnel: por dentro, e visto de fora enquanto a câmera sai (os anéis somem e ele fica um fio da teia)
-      // dentro do túnel, as linhas lidas andando nos fios da teia
-      const linhasA = livre ? suave(ATRAVESSA, ATRAVESSA + 0.04, desm) * (1 - suave(SAI, SAI + 0.12, desm)) : 0
-      if (linhasA > 0.01) desenharLinhasNaTeia(linhasA, (desm - ATRAVESSA) / (SAI - ATRAVESSA), tubo.sCam / tubo.L)
+      // dentro do túnel, as camadas do que está por trás do conselho, feitas dos quadradinhos dos fios
+      const camadasA = livre ? suave(ATRAVESSA, ATRAVESSA + 0.03, desm) * (1 - suave(SAI + 0.1, SAI + 0.16, desm)) : 0
+      if (camadasA > 0.01) desenharCamadas(camadasA, (desm - ATRAVESSA) / (SAI - ATRAVESSA))
 
       // cena 1: o documento (o PDF, que gira e vira a planilha), a luz que lê as linhas e o texto de cada uma, que sai
       // dele, corre por um fio da rede e se desfaz em cubinhos
