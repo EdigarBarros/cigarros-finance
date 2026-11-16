@@ -264,9 +264,11 @@ const CORES_GRAF: [number, number, number][] = TIPOS.map((t) => COR_TIPO[t])
 const DOURADO: [number, number, number, number][] = [[180, 85, 10, 0.6], [235, 130, 30, 0.8], [255, 170, 50, 0.9], [255, 210, 120, 0.97], [255, 248, 222, 1]]
 /** As cores de cada tipo no claro: mais fortes, para se lerem no fundo branco (o amarelo vira âmbar). */
 const CORES_GRAF_CLARO: [number, number, number][] = [[16, 185, 110], [239, 68, 68], [245, 158, 11]]
-/** A poeira de dados no claro: do azul ao verde-água da marca, os tons fortes por último (nada some no branco). */
-const TONS_CLARO = ['rgba(37,99,235,0.5)', 'rgba(31,130,241,0.68)', 'rgba(20,150,220,0.82)', 'rgba(14,165,170,0.92)', 'rgba(8,145,125,1)']
-/** A PALETA do claro: do tom da poeira (azul-verde) até a cor do tipo, sem clarear para o branco. */
+/** A poeira de dados no claro: tinta preta, do cinza ao preto cheio (o desenho da rede é preto; a cor fica para os dados). */
+const TONS_CLARO = ['rgba(10,10,12,0.32)', 'rgba(10,10,12,0.5)', 'rgba(10,10,12,0.68)', 'rgba(10,10,12,0.84)', 'rgba(10,10,12,1)']
+/** As cores dos sinais no claro: as do app (azul, verde, vermelho, laranja). Cada fio leva sempre a mesma. */
+const SINAIS_CLARO: [number, number, number][] = [[29, 108, 240], [12, 170, 100], [232, 52, 52], [245, 130, 10]]
+/** A PALETA do claro: do tom da poeira (preto) até a cor do tipo, sem clarear para o branco. */
 const PALETA_CLARO = CORES_GRAF_CLARO.map((c) => TONS_CLARO.map((tom) => {
   const [r, g, b, a] = tom.slice(5, -1).split(',').map(Number)
   return Array.from({ length: PASSOS }, (_, k) => {
@@ -308,22 +310,26 @@ export function Algoritmo() {
      */
     const paleta = (c: boolean) => c ? {
       luz: 'source-over' as GlobalCompositeOperation, tons: TONS_CLARO, cubos: PALETA_CLARO, tipos: CORES_GRAF_CLARO,
-      halo: brilho(256, [[0, 'rgba(31,142,241,0.26)'], [0.3, 'rgba(20,201,160,0.14)'], [0.7, 'rgba(31,142,241,0.04)'], [1, 'rgba(31,142,241,0)']]),
-      ponto: brilho(48, [[0, 'rgba(255,255,255,1)'], [0.2, 'rgba(31,160,241,0.8)'], [0.55, 'rgba(20,201,160,0.18)'], [1, 'rgba(20,201,160,0)']]),
-      fioFundo: 'rgba(37,99,235,0.2)', fioFrente: 'rgba(37,99,235,0.46)', vivoBrilho: 'rgba(20,201,160,0.3)', vivo: 'rgba(8,145,125,1)',
-      anel: 'rgba(29,78,216,0.85)', cheio: 'rgba(8,150,130,1)', miolo: 'rgba(37,99,235,0.85)', dado: 'rgba(8,145,125,1)', noFundo: 'rgba(255,255,255,0.95)',
-      tunel: ['rgba(31,142,241,0.2)', 'rgba(31,120,235,0.4)', 'rgba(29,90,216,0.64)', 'rgba(23,58,168,0.88)'],
-      camada: ['#14213d', 'rgba(37,99,235,0.28)', '#1d4ed8', 'rgb(13,160,95)', 'rgb(225,50,50)', 'rgb(217,130,5)'],
-      tunelQuad: ['', 'rgba(31,142,241,0.6)', 'rgba(31,120,235,0.8)', 'rgba(29,90,216,0.92)', 'rgba(20,50,150,1)'],
+      halo: brilho(256, [[0, 'rgba(20,24,40,0.08)'], [0.4, 'rgba(20,24,40,0.03)'], [1, 'rgba(20,24,40,0)']]),
+      ponto: brilho(48, [[0, 'rgba(10,10,12,0.5)'], [0.3, 'rgba(10,10,12,0.14)'], [1, 'rgba(10,10,12,0)']]),
+      // o brilho de cada cor de sinal (na ponta do sinal e em volta do nó aceso)
+      pontos: SINAIS_CLARO.map(([r, g, b]) => brilho(48, [[0, `rgba(${r},${g},${b},0.95)`], [0.25, `rgba(${r},${g},${b},0.55)`], [0.6, `rgba(${r},${g},${b},0.12)`], [1, `rgba(${r},${g},${b},0)`]])),
+      sinais: SINAIS_CLARO.map(([r, g, b]) => [`rgba(${r},${g},${b},0.22)`, `rgb(${r},${g},${b})`]),
+      fioFundo: 'rgba(10,10,12,0.34)', fioFrente: 'rgba(10,10,12,0.82)', vivoBrilho: '', vivo: '',
+      anel: 'rgba(10,10,12,0.92)', cheio: 'rgba(10,10,12,1)', miolo: 'rgba(10,10,12,0.9)', dado: 'rgba(10,10,12,1)', noFundo: 'rgba(255,255,255,0.97)',
+      tunel: ['rgba(10,10,12,0.14)', 'rgba(10,10,12,0.3)', 'rgba(10,10,12,0.55)', 'rgba(10,10,12,0.82)'],
+      camada: ['#0a0a0c', 'rgba(10,10,12,0.22)', '#0a0a0c', 'rgb(12,160,95)', 'rgb(225,50,50)', 'rgb(235,125,5)'],
+      tunelQuad: ['', 'rgba(10,10,12,0.5)', 'rgba(10,10,12,0.68)', 'rgba(10,10,12,0.84)', 'rgba(10,10,12,1)'],
       chao: 'rgba(20,33,61,0.04)', chaoBorda: 'rgba(20,33,61,0.14)', chaoMes: 'rgba(20,33,61,0.06)', media: 'rgba(31,142,241,0.9)',
       mes: 'rgba(20,33,61,0.6)', legenda: 'rgba(20,33,61,0.82)', varre: ['rgba(31,142,241,0.3)', 'rgba(31,142,241,0)', 'rgba(31,142,241,0.95)'],
       nomeTexto: '#14213d', fresta: 'rgb(238,243,250)', brilhoFresta: '31,142,241',
       telaRastro: ['rgba(31,142,241,0)', 'rgba(31,142,241,0.22)'], telaLinha: ['rgba(31,142,241,0)', 'rgba(31,142,241,0.9)'], reflexo: 'rgba(255,255,255,0.4)',
-      sala: { face: 'rgba(255,255,255,0.62)', borda: 'rgba(37,99,235,0.16)', led: 'rgba(37,99,235,0.3)', aceso: ['rgba(31,142,241,0.55)', 'rgba(31,142,241,0.95)'], chao: 'rgba(37,99,235,0.11)', teto: 'rgba(31,142,241,0.3)', espelho: 0.16 },
+      sala: { face: 'rgba(255,255,255,0.7)', borda: 'rgba(10,10,12,0.14)', led: 'rgba(10,10,12,0.28)', aceso: ['rgba(12,170,100,0.9)', 'rgba(12,170,100,1)'], chao: 'rgba(10,10,12,0.08)', teto: 'rgba(10,10,12,0.18)', espelho: 0.22 },
     } : {
       luz: 'lighter' as GlobalCompositeOperation, tons: TONS, cubos: PALETA, tipos: CORES_GRAF,
       halo: brilho(256, [[0, 'rgba(255,200,110,0.55)'], [0.25, 'rgba(255,150,40,0.22)'], [0.6, 'rgba(255,120,20,0.06)'], [1, 'rgba(255,100,10,0)']]),
       ponto: brilho(48, [[0, 'rgba(255,248,225,1)'], [0.2, 'rgba(255,200,90,0.9)'], [0.55, 'rgba(255,150,40,0.22)'], [1, 'rgba(255,130,20,0)']]),
+      pontos: [] as HTMLCanvasElement[], sinais: [] as string[][],
       fioFundo: 'rgba(255,170,70,0.13)', fioFrente: 'rgba(255,190,100,0.3)', vivoBrilho: 'rgba(255,170,60,0.2)', vivo: 'rgba(255,232,180,0.9)',
       anel: 'rgba(255,205,130,0.6)', cheio: 'rgba(255,246,224,1)', miolo: 'rgba(255,190,100,0.75)', dado: 'rgba(255,246,224,1)', noFundo: '',
       camada: ['rgba(255,247,230,1)', 'rgba(255,185,95,0.34)', 'rgba(255,196,107,1)', 'rgb(46,214,128)', 'rgb(255,92,108)', 'rgb(255,214,10)'],
@@ -793,8 +799,10 @@ export function Algoritmo() {
           ctx.drawImage(P.halo, fim.x - tam / 2, fim.y - tam / 2, tam, tam)
         }
       }
-      const faixas = [new Path2D(), new Path2D(), new Path2D(), new Path2D()], rastros = new Path2D()
-      const dados: [number, number, number][] = [], quads: [number, number, number, number][] = []
+      // os sinais que correm nos fios: no claro, cada fio na sua cor (como na rede); no escuro, todos dourados
+      const nCores = Math.max(1, P.sinais.length)
+      const faixas = [new Path2D(), new Path2D(), new Path2D(), new Path2D()], rastros = Array.from({ length: nCores }, () => new Path2D())
+      const dados: [number, number, number, number][] = [], quads: [number, number, number, number][] = []
       const nivel = (px: number) => px < 0.5 ? 0 : px < 1.1 ? 1 : px < 2.6 ? 2 : 3
       const sinais = dentro > 0.3 ? 3 : 1
       const miolo = new Path2D()
@@ -820,8 +828,9 @@ export function Algoritmo() {
         for (let m = 0; m < (deDentro ? 0 : sinais); m++) {
           const u = ((s * 0.22 + k * 0.137 + m / sinais) % 1) * cresce, D = noFio(k, u), E = noFio(k, Math.max(0, u - 0.03))
           if (!D.s) continue
-          if (E.s) { rastros.moveTo(E.x, E.y); rastros.lineTo(D.x, D.y) }
-          dados.push([D.x, D.y, Math.max(3.2, Math.min(8, 2.2 * D.s * esc * zoom))])
+          const cor = (k * 7 + 3) % nCores
+          if (E.s) { rastros[cor].moveTo(E.x, E.y); rastros[cor].lineTo(D.x, D.y) }
+          dados.push([D.x, D.y, Math.max(3.2, Math.min(8, 2.2 * D.s * esc * zoom)), cor])
         }
       })
       ctx.lineCap = 'round'
@@ -860,11 +869,10 @@ export function Algoritmo() {
           ctx.fillRect(x - lado / 2, y - lado / 2, lado, lado)
         }
       }
-      ctx.globalAlpha = a * 0.85 * calma
-      ctx.strokeStyle = P.vivo; ctx.lineWidth = 1.6; ctx.stroke(rastros)
+      ctx.globalAlpha = a * 0.85 * calma; ctx.lineWidth = 1.6
+      rastros.forEach((r, c) => { ctx.strokeStyle = P.sinais[c]?.[1] ?? P.vivo; ctx.stroke(r) })
       ctx.globalAlpha = a * calma
-      ctx.fillStyle = P.dado
-      for (const [x, y, lado] of dados) ctx.fillRect(x - lado / 2, y - lado / 2, lado, lado)
+      for (const [x, y, lado, c] of dados) { ctx.fillStyle = P.sinais[c]?.[1] ?? P.dado; ctx.fillRect(x - lado / 2, y - lado / 2, lado, lado) }
       ctx.lineCap = 'butt'
       ctx.globalAlpha = 1
     }
@@ -1166,8 +1174,10 @@ export function Algoritmo() {
         const fica = (at: number) => (1 - suave(at, at + 0.1, g0)) * apagada
         // os fios, feitos de quadradinhos em fila (tracejado de pontas retas), em seis níveis de presença; os de trás
         // mais fracos; e, mais fortes, os trechos que estão levando sinal agora
-        const fios = Array.from({ length: 12 }, () => new Path2D()), vivos = Array.from({ length: 6 }, () => new Path2D())
-        const pontas: [number, number, number, number][] = []
+        // no claro cada fio leva a cor do seu sinal (P.sinais); no escuro todos são da mesma luz dourada
+        const nCores = Math.max(1, P.sinais.length), corDoFio = (e: number) => (e * 7 + 3) % nCores
+        const fios = Array.from({ length: 12 }, () => new Path2D()), vivos = Array.from({ length: 6 * nCores }, () => new Path2D())
+        const pontas: [number, number, number, number, number][] = []
         REDE.elos.forEach(({ a, b }, e) => {
           const fa = fica(saidaFio[e]), q = Math.round(fa * 5)
           if (!q || !ns[a] || !ns[b]) return
@@ -1179,8 +1189,9 @@ export function Algoritmo() {
           if (!v) return
           // o trecho aceso é um rastro curto atrás da ponta do sinal
           const t1 = Math.min(1, u), t0 = Math.max(0, u - 0.45)
-          vivos[q].moveTo(mistura(nx[a], nx[b], t0), mistura(ny[a], ny[b], t0)); vivos[q].lineTo(mistura(nx[a], nx[b], t1), mistura(ny[a], ny[b], t1))
-          if (u < 1) pontas.push([mistura(nx[a], nx[b], u), mistura(ny[a], ny[b], u), mistura(ns[a], ns[b], u), v * fa])
+          const vv = vivos[corDoFio(e) * 6 + q]
+          vv.moveTo(mistura(nx[a], nx[b], t0), mistura(ny[a], ny[b], t0)); vv.lineTo(mistura(nx[a], nx[b], t1), mistura(ny[a], ny[b], t1))
+          if (u < 1) pontas.push([mistura(nx[a], nx[b], u), mistura(ny[a], ny[b], u), mistura(ns[a], ns[b], u), v * fa, corDoFio(e)])
         })
         ctx.lineCap = 'butt'
         ctx.setLineDash([2.2, 3.2]); ctx.lineWidth = 1.7
@@ -1190,16 +1201,17 @@ export function Algoritmo() {
           ctx.strokeStyle = P.fioFrente; ctx.stroke(fios[6 + q])
         }
         ctx.setLineDash([2.6, 2.2])
-        for (let q = 1; q <= 5; q++) {
+        for (let c = 0; c < nCores; c++) for (let q = 1; q <= 5; q++) {
+          const [brilhoCor, cor] = P.sinais[c] ?? [P.vivoBrilho, P.vivo]
           ctx.globalAlpha = q / 5
-          ctx.strokeStyle = P.vivoBrilho; ctx.lineWidth = 3.4; ctx.stroke(vivos[q])
-          ctx.strokeStyle = P.vivo; ctx.lineWidth = 1.7; ctx.stroke(vivos[q])
+          ctx.strokeStyle = brilhoCor; ctx.lineWidth = 3.4; ctx.stroke(vivos[c * 6 + q])
+          ctx.strokeStyle = cor; ctx.lineWidth = 1.9; ctx.stroke(vivos[c * 6 + q])
         }
         ctx.setLineDash([])
-        for (const [x, y, k, v] of pontas) {
+        for (const [x, y, k, v, c] of pontas) {
           const tam = (9 + 9 * v) * k
           ctx.globalAlpha = 0.5 + 0.5 * v
-          ctx.drawImage(P.ponto, x - tam / 2, y - tam / 2, tam, tam)
+          ctx.drawImage(P.pontos[c] ?? P.ponto, x - tam / 2, y - tam / 2, tam, tam)
         }
         // os nós: um halo que cresce com o sinal, um quadradinho de contorno e o miolo (também quadrado)
         ctx.lineWidth = 1.1
@@ -1208,13 +1220,15 @@ export function Algoritmo() {
           if (fn <= 0.01 || !ns[i]) continue
           const saida = REDE.nos[i].camada === CAMADAS.length - 1, a = aceso[i], k = ns[i] * (saida ? 2.4 : 1)
           const tam = Math.min(140, (16 + 50 * a) * k)
-          ctx.globalAlpha = fn * (0.25 + 0.75 * a)
-          ctx.drawImage(P.ponto, nx[i] - tam / 2, ny[i] - tam / 2, tam, tam)
+          // no claro o nó aceso brilha e enche na cor dele (uma das cores dos sinais)
+          const cn = P.sinais.length ? (i * 5 + 1) % P.sinais.length : -1
+          ctx.globalAlpha = fn * (cn >= 0 ? a : 0.25 + 0.75 * a)
+          ctx.drawImage(cn >= 0 ? P.pontos[cn] : P.ponto, nx[i] - tam / 2, ny[i] - tam / 2, tam, tam)
           ctx.globalAlpha = fn
           const lc = 5 * k, rm = (1.8 + 2.4 * a) * k
           if (P.noFundo) { ctx.fillStyle = P.noFundo; ctx.fillRect(nx[i] - lc, ny[i] - lc, lc * 2, lc * 2) }
           ctx.strokeStyle = P.anel; ctx.strokeRect(nx[i] - lc, ny[i] - lc, lc * 2, lc * 2)
-          ctx.fillStyle = a > 0.45 ? P.cheio : P.miolo; ctx.fillRect(nx[i] - rm, ny[i] - rm, rm * 2, rm * 2)
+          ctx.fillStyle = a > 0.45 ? (cn >= 0 ? P.sinais[cn][1] : P.cheio) : P.miolo; ctx.fillRect(nx[i] - rm, ny[i] - rm, rm * 2, rm * 2)
         }
         ctx.globalAlpha = 1
       }
