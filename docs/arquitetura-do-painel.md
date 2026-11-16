@@ -1203,7 +1203,7 @@ No celular (até 860 px, `useMobile`) o painel tem cara própria, separada do co
 `Painel` escolhe a moldura (`mobile ? moldura do celular : a de sempre`) e as duas usam os mesmos dados, formulários e janelas.
 Tela que ainda não tem versão de celular abre a do computador dentro da moldura nova (com o "+"), e é isso que deixa
 publicar por partes. Fases: 1) moldura e Início (feita); 2) escolher, tirar e reordenar cartões, salvo na conta
-(`perfis.celular`); 3) Lançamentos e Contas; 4) Cartões e Dívidas; 5) Metas e Guardado; 6) Consultor e Invest; 7) Ano e
+(`perfis.celular`, feita); 3) Lançamentos e Contas; 4) Cartões e Dívidas; 5) Metas e Guardado; 6) Consultor e Invest; 7) Ano e
 limpeza do que ficou sem uso (`.fab`, `simples-movel`, `menu-movel`, a alça das abas, os ramos de celular dos três jeitos).
 
 **Moldura** (`src/movel/Casca.tsx`, estilos em `src/movel/movel.css`, todos debaixo de `.movel`):
@@ -1227,8 +1227,23 @@ computador):
 4. Os cartões do jeito escolhido (`lib/widgets.ts`): o jeito é o ponto de partida (simples 4, equilibrado 10, detalhado
    14, menos os que não têm o que mostrar). Pequenos ficam dois por linha; pequeno sem par ocupa a linha. Tocar numa
    conta abre a conferência (nunca dá baixa direto); fatura leva aos Cartões; parcela abre o lançamento.
-5. Rodapé "Jeito Equilibrado · Trocar".
+5. "+ Adicionar cartões" e "Arrumar", depois o rodapé "Jeito Equilibrado · Trocar".
 
-Testes: `node scripts/painel/testar.mjs` (grade e modelos) e `node scripts/app-de-demonstracao/testar-movel.cjs`
+**Escolher e arrumar os cartões** (`lib/widgets.ts`, `src/movel/FolhaDeCartoes.tsx`, migração 35):
+- "+ Adicionar cartões" abre uma folha com os cartões que não estão na Início, cada um com a prévia de verdade (os dados da
+  pessoa, sem dar para tocar dentro): pequenos dois por linha, grandes na linha toda. Tocar põe o cartão no fim da Início e
+  leva até ele. Cartão de módulo desligado aparece com "Ao adicionar, liga…".
+- "Arrumar" mostra um cartão por linha, cada um com Subir, Descer e Tirar (botões de 44 px; não depende de arrastar).
+  Subir e descer pulam os cartões escondidos. "Voltar ao modelo" desfaz tudo.
+- Regras (puras, testadas em `scripts/painel/casos.ts`): sem arrumação, ou arrumada em outro jeito, vale o modelo do
+  jeito (trocar de jeito recomeça pelo modelo; voltar ao jeito antigo devolve a arrumação). Cartão sem nada para mostrar
+  some, mas guarda o lugar. Cartão tirado não volta sozinho. Cartão novo do app entra junto do vizinho do modelo. Cartão
+  que a versão do app não conhece é ignorado.
+- Gravação: `perfis.celular` (`{ v: 1, inicio: { base, ordem, removidos, em } }`), sempre também no aparelho; vale a
+  cópia mais recente (`em`). A conta recebe a mudança 400 ms depois do último toque. Sem a migração 35 tudo funciona e
+  fica só no aparelho. O `salvarPerfil` não envia `celular` (uma cópia velha apagaria a arrumação).
+
+Testes: `node scripts/painel/testar.mjs` (grade, modelos e arrumação) e `node scripts/app-de-demonstracao/testar-movel.cjs`
 (3 jeitos × 320/360/390/430 × escuro/claro, fonte 150% e 200%, toques de 44 px, fim da tela acima das abas, deslizar o
-topo, folhas, tutorial e o computador sem nada do celular).
+topo, folhas, tutorial, adicionar/tirar/subir com e sem a migração 35, de volta depois de recarregar e em outro
+aparelho, e o computador sem nada do celular).

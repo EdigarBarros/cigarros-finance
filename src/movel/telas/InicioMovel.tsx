@@ -15,13 +15,14 @@ import { fmtValor } from '../../lib/format'
 import { totalGuardado } from '../../lib/guardado'
 import { tx } from '../../lib/textos'
 import { useMesDaInicio } from '../../lib/useMesDaInicio'
-import { linhasDaGrade, MODELOS } from '../../lib/widgets'
+import { adicionarCartao, cartoesDaInicio, linhasDaGrade, moverCartao, removerCartao, type ArrumacaoInicio, type IdWidget } from '../../lib/widgets'
 import type { Ctx } from '../../pages/contexto'
 import type { Tarefa } from '../../lib/paraFazer'
 import { BotoesDeAcao, CarrosselDeDicas, HeroDeslizante, type Acao, type Dica, type PaginaDoHero } from '../primitivas'
 import { ListaDaFolha } from '../Casca'
 import type { Tom } from '../tom'
 import { WIDGETS, type Contexto } from '../widgets'
+import { FolhaDeCartoes } from '../FolhaDeCartoes'
 
 const NOME_DO_JEITO = { simples: () => tx('Simples'), equilibrado: () => tx('Equilibrado'), detalhado: () => tx('Detalhado') }
 
@@ -32,6 +33,8 @@ export function InicioMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom) =>
   const [conferir, setConferir] = useState<SituacaoConta | null>(null)
   const [divida, setDivida] = useState<'nova' | null>(null)
   const [maisAcoes, setMaisAcoes] = useState(false)
+  const [folhaCartoes, setFolhaCartoes] = useState(false)
+  const [arrumando, setArrumando] = useState(false)
   const refAcoes = useAcoesDeLancar<HTMLDivElement>()
   const { ddMes, composicao, situacao, momento, nomeMes } = m
 
@@ -124,8 +127,22 @@ export function InicioMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom) =>
     else t.botao.acao()
   }
   const x: Contexto = { c, m, agir }
-  const ids = c.contaNova ? [] : MODELOS[c.perfil.detalhe].filter((id) => WIDGETS[id].disponivel(x))
-  const linhas = linhasDaGrade(ids)
+  // a arrumação da pessoa (ou o modelo do jeito); o cartão sem nada para mostrar agora some, mas guarda o lugar
+  const detalhe = c.perfil.detalhe
+  const arrumacao = c.celular?.inicio
+  const lista = c.contaNova ? [] : cartoesDaInicio(arrumacao, detalhe)
+  const ids = lista.filter((id) => WIDGETS[id].disponivel(x))
+  const escondidos = lista.filter((id) => !ids.includes(id))
+  // arrumando, um cartão por linha: subir e descer ficam claros
+  const linhas = arrumando ? ids.map((id) => ({ tipo: 'grande' as const, ids: [id] as IdWidget[] })) : linhasDaGrade(ids)
+  const agora = () => new Date().toISOString()
+  const guardar = (a: ArrumacaoInicio | null) => { if (a) c.salvarCelular({ ...c.celular, v: 1, inicio: a }) }
+  const adicionar = (id: IdWidget) => {
+    guardar(adicionarCartao(arrumacao, detalhe, id, agora()))
+    setFolhaCartoes(false)
+    // leva até o cartão que acabou de entrar
+    window.setTimeout(() => document.querySelector(`[data-cartao="${id}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 350)
+  }
   const nomeDoCartao = (id?: string) => c.cartoes.cartoes.find((k) => k.id === id)?.nome ?? ''
 
   return (
@@ -142,18 +159,51 @@ export function InicioMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom) =>
         </section>
       )}
 
-      <div className="widgets-movel">
+      <div className={`widgets-movel ${arrumando ? 'arrumando' : ''}`}>
         {linhas.map((l) => (
           <div key={l.ids.join()} className={`widgets-linha ${l.tipo}`}>
-            {l.ids.map((id) => <WidgetDaLista key={id} id={id} x={x} />)}
+            {l.ids.map((id) => (
+              <div key={id} className="widget-celula" data-cartao={id}>
+                {arrumando && (
+                  <div className="arrumar-barra">
+                    <span>{WIDGETS[id].titulo()}</span>
+                    <button onClick={() => guardar(moverCartao(arrumacao, detalhe, id, -1, ids, agora()))} disabled={ids[0] === id}
+                      aria-label={tx('Subir o cartão {0}', WIDGETS[id].titulo())}><Icone nome="cima" tamanho={20} /></button>
+                    <button onClick={() => guardar(moverCartao(arrumacao, detalhe, id, 1, ids, agora()))} disabled={ids[ids.length - 1] === id}
+                      aria-label={tx('Descer o cartão {0}', WIDGETS[id].titulo())}><Icone nome="abaixo" tamanho={20} /></button>
+                    <button className="tirar" onClick={() => guardar(removerCartao(arrumacao, detalhe, id, agora()))}
+                      aria-label={tx('Tirar o cartão {0}', WIDGETS[id].titulo())}><Icone nome="fechar" tamanho={18} /></button>
+                  </div>
+                )}
+                <div inert={arrumando || undefined}><WidgetDaLista id={id} x={x} /></div>
+              </div>
+            ))}
           </div>
         ))}
       </div>
 
+      {!c.contaNova && (arrumando ? (
+        <div className="cartoes-acoes">
+          <button className="btn primario" onClick={() => setArrumando(false)}>{tx('Pronto')}</button>
+          {arrumacao?.base === detalhe && (
+            <button className="link" onClick={() => c.salvarCelular({ v: 1 })}>{tx('Voltar ao modelo {0}', NOME_DO_JEITO[detalhe]())}</button>
+          )}
+        </div>
+      ) : (
+        <div className="cartoes-acoes">
+          <button className="cartoes-adicionar" onClick={() => setFolhaCartoes(true)}><Icone nome="mais" tamanho={18} /> {tx('Adicionar cartões')}</button>
+          {ids.length > 1 && <button className="cartoes-arrumar" onClick={() => setArrumando(true)}><Icone nome="ajustes" tamanho={18} /> {tx('Arrumar')}</button>}
+        </div>
+      ))}
+
       {!c.contaNova && (
         <p className="rodape-movel">
-          {tx('Jeito {0}', NOME_DO_JEITO[c.perfil.detalhe]())} · <button className="link" onClick={c.personalizar}>{tx('Trocar')}</button>
+          {tx('Jeito {0}', NOME_DO_JEITO[detalhe]())} · <button className="link" onClick={c.personalizar}>{tx('Trocar')}</button>
         </p>
+      )}
+
+      {folhaCartoes && (
+        <FolhaDeCartoes x={x} naTela={ids} escondidos={escondidos} aoAdicionar={adicionar} aoFechar={() => setFolhaCartoes(false)} />
       )}
 
       {maisAcoes && (

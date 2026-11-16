@@ -18,6 +18,7 @@ import type { Dados } from '../lib/useDados'
 import type { Categoria, Detalhe, Lancamento, Modulo, Perfil, Tipo } from '../lib/types'
 import type { Invest } from '../lib/useInvest'
 import type { Operacao } from '../lib/invest/tipos'
+import type { Celular } from '../lib/widgets'
 
 export type Pagina = 'inicio' | 'lancamentos' | 'analise' | 'invest' | 'contas' | 'cartoes' | 'dividas' | 'metas' | 'patrimonio' | 'ano'
 
@@ -61,6 +62,9 @@ export interface Ctx {
   /** O mês aberto dia a dia: o que já aconteceu até hoje e o que ainda vem (gráfico do mês na Início). */
   diaADia: DiaADia
   mobile: boolean
+  /** O que a pessoa arrumou no celular (cartões da Início; migração 35, ou só no aparelho sem ela). */
+  celular: Celular | null
+  salvarCelular: (c: Celular | null) => void
   perfil: Perfil
   /** O que aparece na tela, conforme o perfil. */
   v: Visao

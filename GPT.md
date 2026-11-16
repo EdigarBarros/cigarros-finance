@@ -783,3 +783,25 @@ sessão: precisa de versão nova para receber a mudança.
 - Pendente (próximas fases): escolher/tirar/reordenar cartões com a coluna `perfis.celular` (migração nova), e as versões de
   celular de Lançamentos, Contas, Cartões, Dívidas, Metas, Guardado, Consultor, Invest e Ano; por fim, limpar o código de
   celular antigo que ficou sem uso.
+
+### 16/11/2026 — Claude — Celular: escolher, tirar e arrumar os cartões da Início (fase 2 de 7)
+
+**Estado:** veja a conversa da sessão para PR e deploy. **Migração nova: `supabase/migracao-35-widgets-do-celular.sql`**
+(só acrescenta a coluna `perfis.celular`; sem ela a arrumação fica só no aparelho). O app Android ainda não recebeu
+nem a fase 1.
+
+- Pedido do Edigar (plano aprovado): a Início do celular parte do modelo do jeito e a pessoa adiciona, tira e muda a ordem
+  dos cartões, gravado na conta.
+- `lib/widgets.ts`: `cartoesDaInicio`, `adicionarCartao`, `removerCartao`, `moverCartao`, `normCelular`, `maisRecente`
+  (puros). `src/movel/FolhaDeCartoes.tsx`: a folha com as prévias. `src/movel/telas/InicioMovel.tsx`: botões "+ Adicionar
+  cartões" e "Arrumar" (Subir, Descer, Tirar, "Voltar ao modelo"). `src/movel/widgets.tsx`: nome, ícone, descrição e
+  módulo de cada cartão.
+- `lib/useDados.ts`: `celular` e `salvarCelular` (aparelho + `perfis.celular`, 400 ms depois do último toque, erro de
+  coluna ausente engolido; ao carregar vale a cópia mais recente e a do aparelho na frente sobe). `salvarPerfil` não envia
+  `celular`. `Ctx` ganhou `celular` e `salvarCelular`.
+- Com uma folha aberta, a barra de abas e o "+" do celular saem da frente (a folha grande ficava por baixo deles).
+- Regras: `docs/arquitetura-do-painel.md`, seção 4.25.
+- Validação: `npx tsc -b`, lint (só avisos), build, `scripts/painel/testar.mjs` 31/31 (5 casos novos),
+  `testar-movel.cjs` 112/112 (com e sem a coluna, recarregando e em "outro aparelho"), `testar-correcoes.cjs` passou.
+  Capturas do computador comparadas com a versão anterior: só diferenças de serrilhado de 1 px que também aparecem entre
+  duas rodadas da mesma versão (sem diferença visível).

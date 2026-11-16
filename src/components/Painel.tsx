@@ -733,6 +733,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     busca, setBusca,
     saldoCorrido,
     ano, mes, d, cartoes, faturas, lancsMes, lancsAno: lancsContados, lancsComparar, lancsMesComGuardados, lancsAnoComGuardados: lancsComGuardados, situacao, aReceber, diaRef, mesEf, porMes, previsto, diaADia, mobile,
+    celular: d.celular, salvarCelular: d.salvarCelular,
     perfil, v, taxas, sugestao,
     aceitarSugestao: (s: Sugestao) => mudarPerfil(s.aplicar(perfil)),
     recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),

@@ -188,12 +188,63 @@ button.linha-movel:active { opacity: .7; }
 .rodape-movel .link { min-height: 44px; padding: 0 4px; font-weight: 600; }
 .inicio-movel { gap: 0; }
 
+/* cada cartão mora numa célula (no par, os dois ficam da mesma altura) */
+.widget-celula { display: flex; flex-direction: column; min-width: 0; }
+.widget-celula > div:last-child { display: flex; flex: 1; min-width: 0; }
+.widget-celula > div:last-child > .widget { flex: 1; }
+
+/* ---------- adicionar e arrumar os cartões ---------- */
+.cartoes-acoes { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin-top: 18px; }
+.cartoes-adicionar, .cartoes-arrumar {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 999px;
+  border: 1px solid var(--borda); background: var(--superficie); color: var(--texto); font: 600 15px var(--fonte);
+  transition: transform .3s var(--mola-salto);
+}
+.cartoes-adicionar:active, .cartoes-arrumar:active { transform: scale(.95); }
+.cartoes-acoes .btn.primario { min-height: 48px; padding: 0 28px; }
+.cartoes-acoes .link { min-height: 44px; font-weight: 600; }
+.widgets-movel.arrumando .widget { opacity: .82; }
+.arrumar-barra { display: flex; align-items: center; gap: 6px; margin: 2px 2px 6px; }
+.arrumar-barra span { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arrumar-barra button {
+  display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 50%; border: 1px solid var(--borda);
+  background: var(--superficie); color: var(--texto); transition: transform .3s var(--mola-salto);
+}
+.arrumar-barra button:active { transform: scale(.88); }
+.arrumar-barra button:disabled { opacity: .35; }
+.arrumar-barra button.tirar { color: var(--saida); }
+
+/* a folha "Adicionar cartões": a prévia de verdade, com o "+" por cima */
+.folha-nota { margin: 4px 0 12px; font-size: 13.5px; color: var(--texto-2); }
+.previas-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+.previas-lista { display: grid; gap: 10px; margin-bottom: 10px; }
+.previa-cartao { position: relative; display: flex; min-width: 0; }
+.previa-cartao-corpo { display: flex; flex: 1; min-width: 0; max-height: 300px; overflow: hidden; pointer-events: none; }
+.previa-cartao-corpo > .widget { flex: 1; box-shadow: none; }
+.previa-cartao-vazia {
+  flex-direction: column; align-items: flex-start; gap: 6px; padding: 16px; border-radius: 24px;
+  border: 1px dashed var(--borda-forte); background: var(--superficie-2);
+}
+.previa-cartao-vazia b { font-size: 15px; }
+.previa-cartao-vazia span { font-size: 13px; color: var(--texto-2); }
+.previa-cartao-vazia small { font-size: 12.5px; font-weight: 600; color: var(--destaque); }
+.previa-cartao-botao { position: absolute; inset: 0; border: 0; border-radius: 24px; background: none; padding: 0; }
+.previa-cartao-botao:focus-visible { box-shadow: 0 0 0 3px var(--foco); }
+.previa-cartao-botao > span {
+  position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--destaque); color: var(--destaque-texto); box-shadow: 0 4px 12px -4px rgba(0, 0, 0, .4);
+}
+.previa-cartao-botao:active { background: var(--preench-4); }
+
 /* ---------- barra de abas: as quatro fixas ---------- */
 .abas-movel.abas-movel-nova { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-flow: row; max-width: 520px; margin: 0 auto; transition: padding .35s var(--mola); }
 .abas-movel-nova button { min-height: 52px; align-content: center; }
 .abas-movel-nova button > span { transition: opacity .25s, max-height .35s var(--mola); max-height: 16px; }
 .abas-movel-nova.encolhida button { min-height: 44px; }
 .abas-movel-nova.encolhida button > span { opacity: 0; max-height: 0; }
+
+/* com uma folha aberta (lançar, adicionar cartões, mais…), a barra de abas e o "+" saem da frente */
+.app.movel:has(.modal-fundo) .abas-movel-nova, .app.movel:has(.modal-fundo) .fab { visibility: hidden; }
 
 /* ---------- folhas: "Mais", a conta e os meses ---------- */
 .mais-grade { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 8px; padding: 6px 0 8px; }
