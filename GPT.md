@@ -934,3 +934,24 @@ calculamos, Todas as categorias, (i), Ver diagnóstico, faixa → Lançamentos).
   `useInvestTela` (aba, ativo aberto, janelas e ações) e `ABAS` exportados; a tela do computador usa o mesmo.
 - `src/movel/telas/ConsultorMovel.tsx` e `InvestMovel.tsx` (novos). `testar-arrasto.cjs` passou a cobrir as duas.
 - `scripts/invest/testar.mjs`: 27/27.
+
+### 16/11/2026 — Claude — Início simples no mesmo layout da equilibrada (computador)
+
+**Estado:** implementado e validado localmente; publicação registrada na conversa da sessão. Sem migração; o celular tem a
+sua Início (`src/movel`), então o app Android não precisa de versão nova.
+
+- Pedido do Edigar: "faz o mesmo no modo simples" depois da equilibrada (#207). Sem imagens próprias: o simples usa o mesmo
+  layout e as mesmas peças, com menos coisa (sem comparação, gráfico, nota ou faixas). Seções: Visão geral (resultado,
+  previsão em palavras, Registrar entrada/saída e Contas a pagar em duas colunas) e Seu próximo passo (uma orientação,
+  últimos lançamentos e quatro cartões de acesso). Regras em `docs/arquitetura-do-painel.md`, 4.1.
+- `components/InicioSimples.tsx` reescrito (mesmos cálculos: previsão de `composicao`, `tarefasDoMes` com "Marcar como
+  paga" que pergunta antes se o dinheiro já parece lançado, janela de gastos por categoria igual). Saíram `JanelaModo` e o
+  rodapé "Modo simples · Alterar" (a pílula faz isso). `inicio-simples.css` reescrito, só com o que é do simples.
+- `InicioEquilibrado.tsx`: `Tile` exportado; `ContasEq` ganhou `titulo`, `tituloProximas`, `botaoNasProximas`,
+  `acaoDaConta` e `pe`; `OrientacaoEq` ganhou `aoAnalise` (duas frases e "Ver análise"); `ResumosCompactos` com 4 itens
+  vira 4 colunas. A equilibrada não mudou.
+
+**Validação:** `npx tsc -b`, lint sem aviso novo, build, `scripts/painel/testar.mjs` 32/32, `testar-movel.cjs` sem falha.
+App de demonstração no simples em 1586, 1100 (claro) e 900 px, meses passado, atual e futuro, sem rolagem lateral nem erro;
+10 cliques conferidos (Registrar saída, pílula, Ver mais atrasadas, Marcar como paga na próxima, Ver cálculo, Gastos por
+categoria, lançamento, Ver análise, valores a receber, troca para o equilibrado). Equilibrado: os mesmos 13 cliques de antes.
