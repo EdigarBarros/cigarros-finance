@@ -55,3 +55,12 @@ lado, nada fora da tela, toques do topo, das ações e das abas com 44 px e o fi
 a 150% e 200%; o topo que desliza (ponto e cor), a conta que abre a conferência, as folhas "Mais", da conta e dos meses,
 a busca do topo, os alvos do tutorial e o computador sem nada do celular. (Os antigos `testar-inicio-simples.cjs` e
 `testar-inicio-detalhado.cjs` saíram: conferiam a Início dos três jeitos no celular, que deu lugar a esta.)
+
+## Arrasto do topo colorido no celular
+
+```bash
+node scripts/app-de-demonstracao/testar-arrasto.cjs
+```
+
+Com o processador 4× mais lento, arrasta o topo de cada tela do celular com um dedo simulado: com o dedo na tela, nada além
+dos pontos pode mudar (nem a lista de baixo, nem a posição da página); ao soltar, a página troca e encaixa.

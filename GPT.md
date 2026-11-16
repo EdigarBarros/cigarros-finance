@@ -905,3 +905,19 @@ migração. O celular não usa esta tela (tem a sua Início em `src/movel`), ent
 claro, meses passado/atual/futuro: sem rolagem lateral nem erro de página; 12 cliques conferidos (Registrar e Saída, pílula
 do jeito, Ver mais atrasadas, Marcar como paga e linha dos próximos abrem a conferência, Explorar comparação, Como
 calculamos, Todas as categorias, (i), Ver diagnóstico, faixa → Lançamentos).
+
+### 16/11/2026 — Claude — Celular: o arrasto do topo colorido travava
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração.
+
+- Relato do Edigar: arrastar o topo para o lado (ex.: Dívidas, "Você deve" → "Me devem") dava uma travada e às vezes não
+  completava.
+- Causa medida no app de demonstração (processador 4× mais lento, dedo simulado): o `HeroDeslizante` avisava a página nova
+  assim que o arrasto passava da metade. Isso redesenhava o painel (cor do topo) e, em Dívidas, trocava a lista de baixo
+  com o dedo na tela: 54 mudanças e a página saindo do lugar no meio do gesto. Somava-se o `backdrop-filter` dos botões
+  sobre o degradê, que o celular refazia a cada quadro da troca de cor.
+- Correção (`src/movel/primitivas.tsx`, `src/movel/movel.css`): durante o arrasto só os pontos mudam; a página nova é
+  avisada quando a rolagem para (`scrollend`, ou 120 ms sem rolar), em `startTransition`. Sobre o degradê, fundo translúcido
+  sem desfoque; as camadas do degradê com `will-change: opacity`.
+- Depois: 4 mudanças com o dedo na tela (só os pontos), deslocamento zero, a página troca e encaixa.
+  `scripts/app-de-demonstracao/testar-arrasto.cjs` (novo) cobre todas as telas com topo que desliza.
