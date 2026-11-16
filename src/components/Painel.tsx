@@ -179,6 +179,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const [extrato, setExtrato] = useState(false)
   // suporte (migração 33): a janela abre de qualquer tela; o aviso conta as respostas do suporte ainda não vistas
   const [suporte, setSuporte] = useState<false | 'lista' | 'novo'>(false)
+  // no celular o idioma fica no menu "Mais opções" (o cabeçalho tem só mês, privacidade e avisos)
+  const [idiomaAberto, setIdiomaAberto] = useState(false)
   const [respostasNovas, conferirRespostas] = useRespostasNovas()
   const [editandoSaldoInicial, setEditandoSaldoInicial] = useState(false)
   const [organizar, setOrganizar] = useState(false)
@@ -731,6 +733,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise, memoria: d.memoria, escolherObjetivo, gosto: d.gosto, salvarGosto: d.salvarGosto,
     ligarModulo,
     personalizar: () => setAjustes('painel'),
+    mudarDetalhe: (x) => mudarPerfil({ ...perfil, detalhe: x }),
     categorias: d.categorias,
     categoriaDe,
     gerenciarCategorias: () => (d.categoriasAntigas
@@ -849,7 +852,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     <>
       <button onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> {tx('Configurações')}</button>
       {assinatura && !noAppAndroid && <button onClick={() => setAjustes('assinatura')}><Icone nome="cartao" /> {tx('Assinatura')}</button>}
-      <button onClick={() => setSuporte('lista')}><Icone nome="conversa" /> {tx('Suporte')}{respostasNovas > 0 && <span className="menu-aviso">{respostasNovas}</span>}</button>
+      <button onClick={() => setSuporte('lista')}><Icone nome="conversa" /> {tx('Mensagens do suporte')}{respostasNovas > 0 && <span className="menu-aviso">{respostasNovas}</span>}</button>
+      {mobile && <button onClick={() => setIdiomaAberto(true)}><Icone nome="globo" /> {tx('Idioma')}</button>}
       <button onClick={() => setTour(true)}><Icone nome="ideia" /> {tx('Ver o tutorial')}</button>
       <button onClick={trocarTema}><Icone nome={tema === 'escuro' ? 'sol' : 'lua'} /> {tema === 'escuro' ? tx('Tema claro') : tx('Tema escuro')}</button>
       <button onClick={() => setExtrato(true)}><Icone nome="relatorio" /> {tx('Importar extrato')}</button>
@@ -928,13 +932,14 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
                 </>
               )}
             </div>
-            <button className="icone-btn suporte-btn" onClick={() => setSuporte('lista')}
+            <button className="icone-btn suporte-btn so-largo" onClick={() => setSuporte('lista')}
               aria-label={respostasNovas ? (respostasNovas === 1 ? tx('Suporte: 1 resposta nova') : tx('Suporte: {0} respostas novas', respostasNovas)) : tx('Suporte')}
               title={respostasNovas ? tx('O suporte respondeu') : tx('Suporte: peça ajuda')}>
               <Icone nome="conversa" />
               {respostasNovas > 0 && <span className="sino-ponto" />}
             </button>
-            <BotaoIdioma />
+            <span className="so-largo"><BotaoIdioma /></span>
+            {mobile && <BotaoIdioma semBotao aberto={idiomaAberto} aoMudarAberto={setIdiomaAberto} />}
             <button className="icone-btn" onClick={() => definirValoresOcultos(!ocultos)} aria-pressed={ocultos}
               aria-label={ocultos ? tx('Mostrar valores') : tx('Ocultar valores')} title={ocultos ? tx('Mostrar valores') : tx('Ocultar valores')}>
               <Icone nome={ocultos ? 'olho-fechado' : 'olho'} />
@@ -970,7 +975,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
               )}
             </div>
             <div className="menu-movel">
-              <button className="icone-btn" data-tour="menu-conta" onClick={() => setMenu(!menu)} aria-label={tx('Menu')} aria-expanded={menu}><Icone nome="menu" /></button>
+              <button className="icone-btn" data-tour="menu-conta" onClick={() => setMenu(!menu)} aria-label={tx('Mais opções')} title={tx('Mais opções')} aria-expanded={menu}>
+                <Icone nome="reticencias" />
+                {respostasNovas > 0 && <span className="sino-ponto" />}
+              </button>
               {menu && mobile && (
                 <>
                   <div className="fora" onClick={() => setMenu(false)} />
@@ -1051,8 +1059,11 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         </Suspense>
       </div>
 
-      <button className={`fab${maisEscondido ? ' recolhido' : ''}`} data-tour="lancar" onClick={() => setForm({})} aria-label={tx('Novo lançamento')}
-        aria-hidden={maisEscondido || undefined} tabIndex={maisEscondido ? -1 : undefined}><Icone nome="mais" tamanho={26} /></button>
+      {/* a Início do equilibrado tem o "+ Registrar" no meio da página: o botão flutuante cobria valores */}
+      {!(paginaAtual === 'inicio' && perfil.detalhe === 'equilibrado' && ctx.contaNova === false) && (
+        <button className={`fab${maisEscondido ? ' recolhido' : ''}`} data-tour="lancar" onClick={() => setForm({})} aria-label={tx('Novo lançamento')}
+          aria-hidden={maisEscondido || undefined} tabIndex={maisEscondido ? -1 : undefined}><Icone nome="mais" tamanho={26} /></button>
+      )}
 
       {avisoReanalise && reanalise && avisosDaAnalise && paginaAtual !== 'analise' && noPainel && (
         <AvisoReanalise r={reanalise} aoFechar={fecharAvisoReanalise}

@@ -30,7 +30,7 @@ Vale para quem nunca controlou dinheiro e para quem quer ver cada número.
 5. **Proximidade e semelhança (Gestalt).** Regra: blocos que respondem à mesma pergunta ficam juntos, com espaço menor entre si (14 px) e maior entre perguntas diferentes (28 px); todo número de dinheiro usa a mesma fonte; verde é só entrada/progresso, vermelho só saída, amarelo só atenção; o gradiente índigo → verde-água do símbolo OpusCash é o destaque do app.
 6. **Aversão à perda e enquadramento.** Regra para dívida e atraso: mostrar o problema **inteiro** (valor, prazo) mas junto do progresso e do próximo passo. "Você já pagou 42%" antes de "faltam R$ 4.800"; "Venceu dia 5" com botão "Pagar", nunca "ATRASADA!" nem vermelho saturado cobrindo o bloco. Resultado negativo vira "Faltou R$ 340" com a frase "saiu R$ 340 a mais do que entrou" e um atalho para ver onde.
 7. **Posição serial (primeiro e último são lembrados).** Topo: o resultado do mês e o que vence. Fim: metas (o que a pessoa está construindo). O meio fica com a análise. O que é opcional (sugestão, personalizar) nunca ocupa topo nem fim: a sugestão vem logo abaixo dos indicadores, em faixa fina, e "Personalizar" é um rodapé discreto.
-8. **Lei de Fitts (alvos grandes e alcançáveis).** Regra: no computador, as duas ações (Lançar entrada, Lançar saída) ficam no mesmo cartão do resultado, a um movimento do olhar; no celular, o botão "+" fixo de 58 px na zona do polegar (canto inferior direito, acima da barra de abas) faz o papel de ação principal (ele recolhe ao rolar para baixo e some quando a tela já mostra os botões de lançar; veja 4.0.3); linhas clicáveis têm 44 px ou mais; "Pagar" e "Guardar" são botões de verdade, não links.
+8. **Lei de Fitts (alvos grandes e alcançáveis).** Regra: no computador, as duas ações (Lançar entrada, Lançar saída) ficam no mesmo cartão do resultado, a um movimento do olhar; no celular, o botão "+" fixo de 58 px na zona do polegar (canto inferior direito, acima da barra de abas) faz o papel de ação principal (ele recolhe ao rolar para baixo e some quando a tela já mostra os botões de lançar; veja 4.0.3; na Início do equilibrado ele dá lugar ao "+ Registrar" no fluxo da página, 4.0.2); linhas clicáveis têm 44 px ou mais; "Pagar" e "Guardar" são botões de verdade, não links.
 9. **Ancoragem.** Um número só faz sentido perto de uma referência. Regra: o resultado vem com "22% do que entrou" e, a partir do equilibrado, com "R$ 120 a mais que em set"; cada indicador compara com o mês anterior; cada categoria, no detalhado, também.
 10. **Controle e otimismo ("o que fazer agora").** Regra: toda zona de alerta termina com um verbo (Pagar, Lançar, Guardar, Adicionar); estados vazios dizem o primeiro passo; contas a vencer aparecem antes de gráficos.
 11. **Pico-fim.** A tela termina com algo positivo e acionável: progresso das metas ("27% da viagem, chega em jul de 2027"). Em estado vazio, termina no botão de lançar.
@@ -76,24 +76,28 @@ cartão, conta lançada antes de vencer), fatura em aberto e conta fixa sem a ba
 um "Faltou" que não tinha acontecido. A comparação com o mês passado some no mês de hoje (até hoje contra o mês inteiro não é
 justo).
 
-### 4.0.2 Equilibrado: o mês num olhar (`components/InicioEquilibrado.tsx`)
+### 4.0.2 Equilibrado: entender, agir e ver o que mudou (`components/InicioEquilibrado.tsx`)
 
-O meio-termo: tem visual, mas sem gráfico com eixo e sem lista comprida.
+Simples = situação e próximas ações. **Equilibrado = isso + comparação com o mês anterior e principais categorias.** Detalhado
+= investigação completa. No equilibrado, explicação longa e lista completa abrem por toque; a página fica curta.
 
-| Parte | O que mostra |
-| --- | --- |
-| O mês | **Sobrou/Faltou até hoje** em número grande, duas barras (entrou e saiu), a pílula do **estado do mês** (4.0.3; tocar abre o "Entender previsão"), a pílula dos **gastos contra o mesmo período do mês anterior** e o quadro **Até o fim do mês** (falta pagar, falta receber, deve sobrar e "Entender previsão") |
-| Contas e vencimentos | O `BlocoParaFazer` em grupos: **Precisam de atenção** (o que já venceu, de qualquer mês, com "venceu há N dias"), **Próximos 7 dias** e, recolhido, **Mais para frente no mês**. Paguei/Recebi na linha. Em outro mês, tudo o que está em aberto |
-| Resumos com anel | **Dívidas** (quanto já foi pago), **Metas** (média do progresso e a que está na frente) e **Dinheiro guardado**. Tocar leva para a página |
-| Aviso | **Saúde do seu dinheiro** só com o conselho mais importante ("Ver todos" abre o resto) |
-| Comparação | **Comparado com outubro** (`ComparacaoMes`): a variação dos gastos no mesmo período e a categoria que mais subiu e a que mais caiu (tocar mostra os lançamentos dos dois lados), ao lado de **Para onde foi o dinheiro** (barras, como no simples) |
-| Por último | Os resumos com anel e as sugestões opcionais (convite para importar e sugestão de recurso), em faixa fina |
+| # | Parte | O que mostra |
+| --- | --- | --- |
+| 1 | Cabeçalho (celular, todas as telas) | Marca, mês, ocultar valores, avisos e **Mais opções** (⋯: suporte, idioma, tema, configurações…). Seletor de mês sem a pílula verde |
+| 2 | Saudação | "Olá, Marina!", sem o parágrafo que repetia a previsão |
+| 3 | Resumo | **Resultado do mês até hoje** (entrou − saiu; não é saldo do banco) com Entrou e Saiu; separador; **Até o fim do mês**: A pagar *pendente*, A receber *previsto* e **Pode faltar / Deve sobrar / Deve fechar no zero** (sem sinal: a palavra diz). "Ver cálculo" abre o `EntenderMes`. Sem selo de estado (a previsão já diz). Mês vazio: "Nenhum lançamento ainda" (não um zero) |
+| 4 | **+ Registrar** | No fluxo, logo abaixo do resumo; abre Entrada, Saída e Importar extrato. Nesta página não há botão flutuante |
+| 5 | Contas e vencimentos | `ContasEq`: **Atrasadas** e **Próximos 7 dias** (2 de cada; "Ver mais 4 atrasadas") e **Restante do mês** recolhido. Ação: conta → "Marcar como paga/recebida" abre a conferência (`FormBaixa` com `conferir`); parcela → abre o lançamento já preenchido; fatura → "Ver fatura". Parcela diz se o valor é de uma parcela ou soma de várias (e quantas venceram) e mostra o saldo da dívida à parte. Tocar na linha não faz nada |
+| 6 | Comparado com outubro | `ComparacaoEq`: "1–16 nov vs. 1–16 out", duas barras na mesma escala com o valor escrito, "Gastos 210% maiores", **uma** categoria (`destaqueDaComparacao`, só acima do ruído) e avisos curtos (contas vencidas fora dos gastos; pagamento de fatura que pode contar duas vezes). "Explorar comparação" abre a `ComparacaoMes` completa; "Como calculamos" abre a metodologia |
+| 7 | Principais gastos | `PrincipaisGastos`: as 3 maiores categorias do mesmo período da comparação (`fatiasDoPeriodo`), barra = parte do total (61% ocupa 61%), "Demais categorias (N)" para o resto. Tocar abre todas, com os lançamentos de cada uma e "Abrir em Lançamentos" (filtrado) |
+| 8 | Orientação | `OrientacaoEq`: um conselho (título, 1 frase, ação, "Agora não"), a nota como "Nota 62 de 100 · Razoável" (abre o Consultor) e "Ver todas as orientações". Conselho que pede dado ausente ganha o selo "Falta um dado". Não repete o "gasto disparou" da categoria que a comparação já destaca |
+| 9 | Resumos | Dívidas ("Falta pagar R$ …" e "X% quitado"), Metas ("Meta em destaque: …", guardado de alvo) e "Saldo nas contas" (ou "e investimentos"). Barra fina, sem anel |
+| 10 | Jeito de ver | "Modo equilibrado · Alterar" abre os três jeitos; a escolha vai para o perfil. O app não sugere mais trocar de jeito pelo tamanho do histórico |
 
-Ordem: resumo do mês e previsão, contas (atrasadas e próximas), aviso financeiro, comparação e para onde foi, o que a pessoa
-tem, sugestões. A sugestão nunca fica acima do saldo nem disputa com um aviso.
-
-Saíram do equilibrado: os indicadores com minilinha, os blocos completos de contas, cartões e dívidas, o fluxo de 6 meses, os
-últimos lançamentos, o banner e o "Acompanhe mais".
+**Três bases de "gasto", de propósito:** o *Saiu* do resumo conta a compra no cartão só quando a fatura é paga (até lá ela
+está em *A pagar*, e o resumo avisa isso numa linha); a comparação e os principais gastos contam a compra na data dela
+(`lib/comparacao.ts`), para comparar meses de forma justa. Por isso Saiu e "Novembro" podem diferir; o "Como calculamos"
+explica. Os principais gastos somam exatamente o "Novembro" da comparação.
 
 **A previsão do fim do mês é a mesma nos três jeitos**: o que ainda vai entrar e sair (`diaADiaDoMes`) mais as parcelas de
 dívida que vencem no mês, com as atrasadas e os juros de atraso (`parcelasPorDia`). A previsão do ano (`previsto`, no

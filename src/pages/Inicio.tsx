@@ -1,15 +1,17 @@
 import { converter } from '../lib/moedas'
-import { Fragment, useMemo, useState, type CSSProperties } from 'react'
+import { Fragment, lazy, Suspense, useMemo, useState, type CSSProperties } from 'react'
 import { PALETA } from '../lib/charts'
 import { calendarioDe, dividaDiaADia, parcelasDoMes, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
-import { fmtValor, MESES_CURTO, moedaAtual, MESES_NOME, LOCAL_DAS_DATAS, noMeioDaFrase } from '../lib/format'
+import { fmtMoeda, fmtValor, MESES_CURTO, moedaAtual, MESES_NOME, LOCAL_DAS_DATAS, noMeioDaFrase } from '../lib/format'
 import { situacaoMeta } from '../lib/metas'
 import {
   Bloco, BlocoDinheiro, BlocoDividas, BlocoGastos, BlocoLancamentos, BlocoMetas,
 } from '../components/Blocos'
 import { totalGuardado } from '../lib/guardado'
 import { CartaoDoMes, GraficoRecolhivel, Mosaico, NumerosDoMes, VemAi, type Peca, type Sinal } from '../components/InicioDetalhado'
-import { MesEquilibrado, ResumosComAnel, type ResumoAnel } from '../components/InicioEquilibrado'
+import {
+  ComparacaoEq, ContasEq, OrientacaoEq, PrincipaisGastos, RegistrarEq, ResumoEq, ResumosCompactos, SaudacaoEq, SeletorDoJeito, type ResumoCompacto,
+} from '../components/InicioEquilibrado'
 import { FormDivida } from '../components/Formularios'
 import { GraficoAnual, GraficoFluxo, moedasDoAno, SeletorDoModo } from '../components/Graficos'
 import { useModoDoGrafico } from '../lib/modoDoGrafico'
@@ -18,13 +20,15 @@ import { BannerCarrossel, type Slide } from '../components/BannerCarrossel'
 import { ConviteImportar } from '../components/ConviteImportar'
 import { CartaoAcompanhar, CartaoSugestao } from '../components/Configuracoes'
 import { Encaixe, type ItemEncaixe } from '../components/Encaixe'
-import { ReguaMeses, Segmentado } from '../components/ui'
+import { Modal, ReguaMeses, Segmentado } from '../components/ui'
 import { BlocoParaFazer, ResumoSimples } from '../components/Simples'
 import { BlocoConselhos } from '../components/BlocoConselhos'
 import { daquiA, tarefasDoMes } from '../lib/paraFazer'
 import { comporPrevisao, type DiaADia, type ItemPrevisto } from '../lib/previsao'
 import { situacaoDoMes, type Momento } from '../lib/situacaoDoMes'
-import { compararGastos, pilulaDeGastos } from '../lib/comparacao'
+import { compararGastos, destaqueDaComparacao, pilulaDeGastos } from '../lib/comparacao'
+import { pedirCategoriaNosLancamentos } from '../lib/busca'
+import type { SituacaoConta } from '../lib/contasFixas'
 import { ComparacaoMes } from '../components/ComparacaoMes'
 import { EntenderMes } from '../components/EntenderMes'
 import { arrumacaoMudou, pecaParaSugerir, useArrumacao } from '../lib/arrumacao'
@@ -33,6 +37,9 @@ import { totaisDoMes } from '../lib/contasFixas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 import { useHoje } from '../lib/useHoje'
+
+// a conferência da baixa (valor e dia) mora na tela Contas: só carrega quando a pessoa toca em "Marcar como paga"
+const FormBaixa = lazy(() => import('./Contas').then((m) => ({ default: m.FormBaixa })))
 
 /** Lista de blocos de uma zona, sem os que não existem. */
 const zona = (xs: unknown[]) => xs.filter(Boolean).map((x, i) => <Fragment key={i}>{x as React.ReactNode}</Fragment>)
@@ -136,6 +143,13 @@ export function Inicio(c: Ctx) {
     () => (comparavel && !c.contaNova ? compararGastos({ lancs: c.lancsComparar, ano: c.ano, mes: c.mes, hoje: hojeIso, categoriaDe: (l) => c.categoriaDe(l)?.id }) : null),
     [comparavel, c.contaNova, c.lancsComparar, c.ano, c.mes, hojeIso, c.categoriaDe], // eslint-disable-line react-hooks/exhaustive-deps
   )
+  // os gastos do mês até hoje por categoria, mesmo sem mês anterior carregado (o equilibrado mostra os principais)
+  const gastosDoPeriodo = useMemo(
+    () => (comparacao || c.contaNova ? null : compararGastos({ lancs: c.lancsComparar, ano: c.ano, mes: c.mes, hoje: hojeIso, categoriaDe: (l) => c.categoriaDe(l)?.id })),
+    [comparacao, c.contaNova, c.lancsComparar, c.ano, c.mes, hojeIso, c.categoriaDe], // eslint-disable-line react-hooks/exhaustive-deps
+  )
+  const [conferir, setConferir] = useState<SituacaoConta | null>(null)
+  const [explorar, setExplorar] = useState(false)
   const atrasadasAPagar = tarefas.lista.filter((t) => t.estado === 'atrasada' && !t.entrada).length
   // "gastando menos" com conta vencida sem baixa é elogio falso: a conta só não entrou nos gastos ainda
   const pilulaBruta = pilulaDeGastos(comparacao)
@@ -389,78 +403,108 @@ export function Inicio(c: Ctx) {
     )
   }
 
-  // ---------- Jeito equilibrado: o mês num olhar, os próximos 7 dias e o essencial do resto ----------
+  // ---------- Jeito equilibrado: entender o mês, agir e ver o que mudou, com pouca leitura ----------
+  // A ordem (docs/arquitetura-do-painel.md, 4.0.4): resultado e previsão, registrar, contas, comparação, principais gastos,
+  // uma orientação, os resumos do que você tem e o jeito de ver. Explicação longa e lista completa abrem por toque.
   if (nivel === 'equilibrado' && !c.contaNova) {
     const dd = ddMes
     const comAgenda = (v.contas && c.situacoesContas.length > 0) || (v.cartoes && c.faturas.length > 0) || (v.dividas && c.situacao.some((s) => s.restante > 0))
-    // No mês de hoje: o que já venceu (precisa de atenção, com os dias), o que vence nos próximos 7 dias e, recolhido, o
-    // resto do mês. Antes, "Próximos 7 dias" abria com uma fatura vencida em outubro. Nos outros meses, tudo o que está em aberto.
-    const agenda = comAgenda && (mesDeHoje
-      ? <BlocoParaFazer tarefas={tarefas.lista} titulo={tx('Contas e vencimentos')} limite={daquiA(7, hoje)} rotuloProximas={tx('Próximos 7 dias')}
-          vazio={tx('Nada vence nos próximos 7 dias.')} aoVerTudo={v.contas ? () => c.irPara('contas') : undefined} />
-      : <BlocoParaFazer tarefas={tarefas.lista} titulo={tx('Contas e vencimentos')} aoVerTudo={v.contas ? () => c.irPara('contas') : undefined} />)
+    // nada é pago ao tocar: a conta abre a conferência (valor e dia), a parcela abre o lançamento já preenchido, a fatura leva aos cartões
+    const agir = (t: (typeof tarefas.lista)[number]) => {
+      if (t.origem === 'conta' && t.conta) setConferir(t.conta)
+      else t.botao.acao()
+    }
+    const agenda = comAgenda && (
+      <ContasEq tarefas={tarefas.lista} limite={mesDeHoje ? daquiA(7, hoje) : undefined} aoAgir={agir}
+        aoVerContas={v.contas ? () => c.irPara('contas') : undefined} />
+    )
+    // o que saiu até hoje, por categoria (a mesma base da comparação): existe mesmo sem mês anterior para comparar
+    const periodo = comparacao ?? (momento !== 'futuro' ? gastosDoPeriodo : null)
+    const principais = periodo && !mesVazio && (
+      <PrincipaisGastos comp={periodo} categorias={c.categorias} momento={momento}
+        aoAbrirLancamentos={(id) => { pedirCategoriaNosLancamentos(id || 'sem'); c.irPara('lancamentos') }} />
+    )
+    const comparar = comparacao && !mesVazio && (
+      <ComparacaoEq comp={comparacao} categorias={c.categorias} atrasadas={momento === 'atual' ? atrasadasAPagar : 0} aoExplorar={() => setExplorar(true)} />
+    )
+    // a orientação não repete a comparação: "gastos disparando" na mesma categoria do destaque já está lá
+    const destaque = destaqueDaComparacao(comparacao)
+    const conselhosEq = c.conselhos.filter((k) => !(destaque && k.id === `gasto-disparou:${destaque.id}`))
+    const orientacao = (
+      <OrientacaoEq conselhos={conselhosEq} semDados={c.conselhosSemDados} aoIr={c.irPara} aoDispensar={c.dispensarConselho}
+        nota={{ valor: c.analise.nota, rotulo: c.analise.rotulo, tom: c.analise.tom }} aoAbrirAnalise={() => c.irPara('analise')}
+        todas={(
+          <BlocoConselhos conselhos={conselhosEq} semDados={c.conselhosSemDados} dispensados={c.conselhosDispensados} simples={false}
+            aoIr={c.irPara} aoDispensar={c.dispensarConselho} />
+        )} />
+    )
 
-    const resumos: ResumoAnel[] = []
+    const resumos: ResumoCompacto[] = []
     if (v.dividas) {
-      const abertas = c.situacao.filter((s) => s.restante > 0 && !s.semCotacao)
-      if (abertas.length) {
-        const falta = abertas.reduce((t, s) => t + s.restante, 0)
-        const base = abertas.reduce((t, s) => t + Math.max(s.saldoInicial, s.restante), 0)
+      // como o bloco Dívidas: o que falta do valor registrado e quanto do valor inicial já foi pago
+      const comSaldo = c.situacao.filter((s) => !s.semCotacao)
+      const falta = comSaldo.reduce((t, s) => t + s.restante, 0)
+      const inicial = comSaldo.reduce((t, s) => t + s.saldoInicial, 0)
+      if (falta > 0) {
+        const pago = inicial > 0 ? Math.max(0, Math.min(1, (inicial - falta) / inicial)) : undefined
         resumos.push({
-          chave: 'dividas', rotulo: tx('Dívidas'), valor: fmtValor(falta), cor: 'var(--divida)', icone: 'divida',
-          progresso: base > 0 ? 1 - falta / base : 0, sub: tx('já pago'), aoAbrir: () => c.irPara('dividas'),
+          chave: 'dividas', rotulo: tx('Dívidas'), valor: tx('Falta pagar {0}', fmtValor(falta)), cor: 'var(--divida)', icone: 'divida',
+          sub: pago !== undefined ? tx('{0}% quitado', Math.round(pago * 100)) : undefined, progresso: pago, aoAbrir: () => c.irPara('dividas'),
         })
       }
     }
     if (metas && situacaoMetas.length) {
-      const media = progressoDasMetas
+      const n = situacaoMetas.length
       const frente = situacaoMetas.filter((s) => !s.batida).sort((x, y) => y.progresso - x.progresso)[0]
       resumos.push({
-        chave: 'metas', rotulo: tx('Metas'), valor: situacaoMetas.length === 1 ? tx('1 meta') : tx('{0} metas', situacaoMetas.length),
-        cor: 'var(--violeta)', icone: 'meta', progresso: media,
-        sub: frente ? tx('{0} na frente', frente.meta.nome) : tx('Todas batidas'), aoAbrir: () => c.irPara('metas'),
+        chave: 'metas', rotulo: n === 1 ? tx('Metas · 1 meta') : tx('Metas · {0} metas', n), cor: 'var(--violeta)', icone: 'meta',
+        valor: frente ? tx('Meta em destaque: {0}', frente.meta.nome) : tx('Todas as metas batidas'),
+        sub: frente ? tx('{0} de {1}', fmtMoeda(frente.guardado, frente.meta.moeda), fmtMoeda(frente.meta.alvo, frente.meta.moeda)) : undefined,
+        progresso: frente ? frente.progresso : 1, aoAbrir: () => c.irPara('metas'),
       })
     }
     if (dinheiro) {
       const nb = c.d.bancos.length
+      // o total soma o saldo dos bancos (e, ligados, investimentos e outras moedas): não é tudo dinheiro livre para gastar
+      const soContas = v.bancos && !v.investimentos && !v.moedas
       resumos.push({
-        chave: 'guardado', rotulo: tx('Dinheiro guardado'), cor: 'var(--caixa)', icone: 'cofre',
+        chave: 'contas', rotulo: soContas ? tx('Saldo nas contas') : tx('Saldo nas contas e investimentos'), cor: 'var(--caixa)', icone: 'carteira',
         valor: fmtValor(totalGuardado({ v, bancos: c.d.bancos, caixa: c.mesEf.caixa, investimentos: r.investimentos, moedas: c.mesEf.moedas, lista: c.perfil.moedas, taxas: c.taxas })),
         sub: v.bancos && nb ? (nb === 1 ? tx('em 1 banco') : tx('em {0} bancos', nb)) : undefined, aoAbrir: () => c.irPara('patrimonio'),
       })
     }
-    const gastosEq = !mesVazio && (
-      <BlocoGastos r={r} anterior={a} categorias={c.categorias} nivel="simples" mesAnterior={mesAnt} aoEditar={c.gerenciarCategorias} />
-    )
-    const conselhoEq = (
-      <BlocoConselhos conselhos={c.conselhos} semDados={c.conselhosSemDados} dispensados={c.conselhosDispensados} simples={false} limite={1}
-        aoIr={c.irPara} aoDispensar={c.dispensarConselho}
-        nota={{ valor: c.analise.nota, rotulo: c.analise.rotulo, tom: c.analise.tom }} aoAbrirAnalise={() => c.irPara('analise')} />
-    )
-    const semNada = mesVazio && !dd.vaiEntrar && !dd.vaiSair
-    const comparar = comparacao && !mesVazio && (
-      <ComparacaoMes comp={comparacao} categorias={c.categorias} atrasadas={momento === 'atual' ? atrasadasAPagar : 0} aoVerLancamentos={() => c.irPara('lancamentos')} />
-    )
-    // a ordem do equilibrado: o mês e a previsão, as contas (atrasadas e próximas), o aviso financeiro mais importante,
-    // a comparação com o mês anterior e para onde foi o dinheiro, os resumos do que você tem e, por último, as sugestões
+    const semNada = mesVazio && !dd.vaiEntrar && !dd.vaiSair && !c.d.carregando
+    const registrar = <RegistrarEq aoEntrada={() => c.novoLancamento('entrada')} aoSaida={() => c.novoLancamento('saida')} aoImportar={c.importarExtrato} />
     return (
       <div className="pagina inicio inicio-eq">
-        {saudacao}
-        <div className="ieq-cima">
-          {semNada ? lancamentos : <MesEquilibrado dd={dd} nomeMes={nomeMes} gastos={pilulaGastos} situacao={situacao} aoEntender={abrirEntender} />}
-          {agenda}
-        </div>
-        {conselhoEq}
-        {(comparar || gastosEq) && (
-          <div className="ieq-baixo">
-            {comparar}
-            {gastosEq}
-          </div>
+        <SaudacaoEq nome={c.perfil.nome} />
+        {semNada ? lancamentos : (
+          <>
+            <ResumoEq dd={dd} nomeMes={nomeMes} momento={momento} mesVazio={mesVazio} carregando={c.d.carregando}
+              previsaoSabe={Boolean(v.contas || v.cartoes || v.dividas)} faturaAberta={composicao.pagar.some((g) => g.origem === 'fatura')}
+              aoVerCalculo={abrirEntender} />
+            {registrar}
+          </>
         )}
-        <ResumosComAnel itens={resumos} />
+        {agenda}
+        {(comparar || principais) && <div className="ieq-duas">{comparar}{principais}</div>}
+        {orientacao}
+        <ResumosCompactos itens={resumos} />
         {opcionais}
+        <SeletorDoJeito atual="equilibrado" aoMudar={c.mudarDetalhe} />
         {formDivida}
         {janelaEntender}
+        {conferir && (
+          <Suspense fallback={null}>
+            <FormBaixa c={c} s={conferir} conferir aoFechar={() => setConferir(null)} />
+          </Suspense>
+        )}
+        {explorar && comparacao && (
+          <Modal titulo={tx('Comparação com o mês anterior')} aoFechar={() => setExplorar(false)} tamanho="grande">
+            <ComparacaoMes comp={comparacao} categorias={c.categorias} detalhado atrasadas={momento === 'atual' ? atrasadasAPagar : 0}
+              aoVerLancamentos={() => { setExplorar(false); c.irPara('lancamentos') }} />
+          </Modal>
+        )}
       </div>
     )
   }

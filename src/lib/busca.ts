@@ -95,3 +95,10 @@ export function criarBusca(consulta: string, hoje: string, ontem: string): ((l: 
     return bateComData(t, l.data, hoje, ontem) === true
   })
 }
+
+// Pedido de filtro vindo de outra tela (a Início abre os lançamentos de uma categoria): vale uma vez, na próxima abertura.
+let categoriaPedida: string | null = null
+/** A Início pede que a tela Lançamentos abra já filtrada por esta categoria ('sem' = sem categoria). */
+export const pedirCategoriaNosLancamentos = (id: string) => { categoriaPedida = id }
+/** A tela Lançamentos lê (e esquece) o pedido ao abrir. */
+export const tirarCategoriaPedida = () => { const c = categoriaPedida; categoriaPedida = null; return c }

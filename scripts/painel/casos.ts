@@ -3,7 +3,7 @@
  * a comparação com o mês anterior e a separação das contas em atrasadas / próximas / depois. Os números esperados foram
  * feitos à mão, não tirados das próprias funções. Achou uma conta errada? Monte o caso aqui antes de consertar.
  */
-import { compararGastos } from '../../src/lib/comparacao'
+import { compararGastos, destaqueDaComparacao, fatiasDoPeriodo } from '../../src/lib/comparacao'
 import { situacoesDoMes } from '../../src/lib/contasFixas'
 import { parcelasDoMes, parcelasPorDia, situacaoDividas } from '../../src/lib/dividas'
 import { agruparTarefas, tarefasDoMes } from '../../src/lib/paraFazer'
@@ -279,6 +279,44 @@ export const CASOS: Caso[] = [
         aoPagarConta: nada, aoPagarDivida: nada, aoVerCartoes: nada,
       })
       igual('nada a fazer', lista.length, 0)
+    },
+  },
+  {
+    nome: 'comparação: o destaque segue a direção do total; queda em "sem categoria" é reclassificação, não economia',
+    rodar() {
+      const cat = (l: Lancamento) => l.categoria_id ?? undefined
+      const sobe = [lanc('2026-10-03', 'saida', 100, { categoria_id: 'mercado' }), lanc('2026-11-03', 'saida', 400, { categoria_id: 'mercado' }),
+        lanc('2026-10-04', 'saida', 50, { categoria_id: 'lazer' }), lanc('2026-11-04', 'saida', 30, { categoria_id: 'lazer' })]
+      const d1 = destaqueDaComparacao(compararGastos({ lancs: sobe, ano: 2026, mes: 11, hoje: '2026-11-14', categoriaDe: cat }))
+      igual('alta', [d1?.tipo, d1?.id], ['alta', 'mercado'])
+      perto('diferença', d1?.diferenca, 300)
+      const cai = [lanc('2026-10-03', 'saida', 900), lanc('2026-11-03', 'saida', 100), lanc('2026-10-05', 'saida', 100, { categoria_id: 'lazer' }), lanc('2026-11-05', 'saida', 120, { categoria_id: 'lazer' })]
+      const d2 = destaqueDaComparacao(compararGastos({ lancs: cai, ano: 2026, mes: 11, hoje: '2026-11-14', categoriaDe: cat }))
+      igual('reclassificação', [d2?.tipo, d2?.id], ['reclassificacao', ''])
+      const semBase = compararGastos({ lancs: [lanc('2026-11-03', 'saida', 100)], ano: 2026, mes: 11, hoje: '2026-11-14', categoriaDe: cat })
+      igual('sem base, sem destaque', destaqueDaComparacao(semBase), null)
+    },
+  },
+  {
+    nome: 'principais gastos: partes do mesmo total, demais categorias somam o resto',
+    rodar() {
+      const cat = (l: Lancamento) => l.categoria_id ?? undefined
+      const lancs = [lanc('2026-10-03', 'saida', 10), ...[['a', 610], ['b', 200], ['c', 100], ['d', 60], ['e', 30]].map(([id, v]) => lanc('2026-11-03', 'saida', v as number, { categoria_id: id as string })),
+        lanc('2026-11-20', 'saida', 999, { categoria_id: 'a' })]
+      const f = fatiasDoPeriodo(compararGastos({ lancs, ano: 2026, mes: 11, hoje: '2026-11-14', categoriaDe: cat })!)
+      igual('as 3 maiores', f.principais.map((x) => x.id), ['a', 'b', 'c'])
+      perto('a é 61% do total (o lançamento do dia 20 ainda não aconteceu)', f.principais[0].parte, 0.61)
+      igual('demais', [f.demais?.quantas, f.demais?.valor], [2, 90])
+      perto('tudo soma 100%', f.principais.reduce((t, x) => t + x.parte, 0) + (f.demais?.parte ?? 0), 1)
+    },
+  },
+  {
+    nome: 'comparação: pagamento de fatura lançado como saída junto com compras no cartão avisa dupla contagem',
+    rodar() {
+      const lancs = [lanc('2026-10-03', 'saida', 100), lanc('2026-11-03', 'saida', 300, { cartao_id: 'k1' }),
+        lanc('2026-11-10', 'saida', 300, { descricao: 'Pagamento fatura Nubank' })]
+      igual('em dobro', compararGastos({ lancs, ano: 2026, mes: 11, hoje: '2026-11-14', categoriaDe: () => undefined })!.faturaEmDobro, true)
+      igual('sem cartão, não', compararGastos({ lancs: [lancs[0], lancs[2]], ano: 2026, mes: 11, hoje: '2026-11-14', categoriaDe: () => undefined })!.faturaEmDobro, false)
     },
   },
 ]

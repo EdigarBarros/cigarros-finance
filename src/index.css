@@ -4542,3 +4542,31 @@ body { top: 0 !important; }
 @media (max-width: 600px) and (max-height: 700px) {
   .fab { width: 50px; height: 50px; bottom: calc(90px + env(safe-area-inset-bottom)); }
 }
+
+/* ---------- cabeçalho e barra de baixo do celular, mais enxutos ----------
+   No topo ficam só a marca, o mês, ocultar valores, avisos e "Mais opções" (⋯), que guarda suporte, idioma, tema e
+   configurações. O seletor de mês perde o brilho da pílula verde; o fundo da barra fica quase opaco, para nada que passa por
+   baixo competir com os botões. A barra de abas fica mais baixa e o item ativo, mais discreto. */
+.so-largo { display: contents; }
+@media (max-width: 860px) {
+  .so-largo, .barra .tema-btn, .barra .ajustes-btn { display: none; }
+  .barra { padding: 8px 0; }
+  .barra::before { background: color-mix(in srgb, var(--fundo) 96%, transparent); }
+  .seletor-mes { height: 40px; border-color: var(--borda); background: var(--superficie-2); }
+  .seletor-mes-nome { background: none; color: var(--texto); height: 34px; font-weight: 650; }
+  .seletor-mes-nome:hover { filter: none; background: var(--preench-4); }
+  .seletor-mes small { color: var(--texto-2); opacity: 1; }
+  .menu-movel .icone-btn { position: relative; }
+  .idioma.solto { position: fixed; z-index: 46; top: calc(56px + env(safe-area-inset-top)); right: 16px; width: 0; height: 0; }
+  .idioma.solto .idioma-menu { top: 0; right: 0; max-height: min(460px, calc(100dvh - 180px)); }
+
+  .abas-movel { left: 12px; right: 12px; bottom: calc(8px + env(safe-area-inset-bottom)); padding: 4px; border-radius: 18px; }
+  .abas-movel button { padding: 5px 0 4px; font-size: 10.5px; gap: 1px; }
+  .abas-movel button svg { width: 20px; height: 20px; }
+  .abas-movel .lente { background: var(--preench-4); box-shadow: none; }
+  .abas-movel button.ativo { color: var(--texto); }
+  .abas-movel button.ativo svg { color: var(--destaque); }
+  @media (max-width: 340px) { .abas-movel button { font-size: 9.5px; letter-spacing: -.01em; } }
+  /* sem o botão flutuante (Início do equilibrado), o último conteúdo só precisa passar da barra de abas (≈ 58px + margem) */
+  .conteudo:has(> .inicio-eq) { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+}

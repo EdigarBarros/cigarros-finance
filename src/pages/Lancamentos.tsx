@@ -4,7 +4,7 @@ import { COR } from '../lib/charts'
 import { SEM_CATEGORIA } from '../lib/categorias'
 import { formaDe, FORMAS, infoForma, type FormaPagamento } from '../lib/formas'
 import { fmtDataCurta, fmtDataLonga, fmtMoeda, fmtValor, MESES_NOME, noMeioDaFrase } from '../lib/format'
-import { criarBusca, semAcento } from '../lib/busca'
+import { criarBusca, semAcento, tirarCategoriaPedida } from '../lib/busca'
 import { ehEmprestimo } from '../lib/dividas'
 import { ehGuardado } from '../lib/guardado'
 import { NOME_TIPO_CAIXA } from '../lib/rotulos'
@@ -37,7 +37,8 @@ export function Lancamentos(c: Ctx) {
   // Dia e categoria escolhidos valem para o mês em que foram escolhidos: ao trocar de mês ou de ano voltam para "todos",
   // senão o mês novo abriria vazio ("Nada com esses filtros") com todos os dias desligados.
   const chaveMes = `${c.ano}-${c.mes}`
-  const [doMes, setDoMes] = useState<{ chave: string; dia: string | null; categoria: Filtro<string> }>({ chave: chaveMes, dia: null, categoria: 'todos' })
+  // a Início pode pedir para abrir já numa categoria ("Principais gastos" → "Abrir em Lançamentos")
+  const [doMes, setDoMes] = useState<{ chave: string; dia: string | null; categoria: Filtro<string> }>(() => ({ chave: chaveMes, dia: null, categoria: tirarCategoriaPedida() ?? 'todos' }))
   const vazios = { chave: chaveMes, dia: null as string | null, categoria: 'todos' as Filtro<string> }
   const escolhidos = doMes.chave === chaveMes ? doMes : vazios
   /** id da categoria, 'sem' (sem categoria) ou 'todos'. */

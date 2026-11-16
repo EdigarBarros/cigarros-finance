@@ -24,6 +24,15 @@ export interface Tarefa {
   /** Só nas atrasadas: há quantos dias venceu (pela data do aparelho, sem fuso de servidor). */
   diasAtraso?: number
   botao: { texto: string; acao: () => void; principal?: boolean }
+  /** De onde veio: conta do mês, fatura de cartão ou parcela de dívida (o equilibrado escolhe o texto e a ação por ela). */
+  origem?: 'conta' | 'fatura' | 'parcela'
+  /** A conta do mês (para abrir a conferência antes da baixa). */
+  conta?: SituacaoConta
+  /** Parcela: a dívida, quantas parcelas a linha soma, quantas já venceram e quanto falta da dívida inteira. */
+  divida?: SituacaoDivida
+  parcelas?: number
+  vencidas?: number
+  saldoDivida?: string
 }
 
 const dois = (n: number) => String(n).padStart(2, '0')
@@ -69,6 +78,7 @@ export function tarefasDoMes({ ano, mes, contas, faturas, dividas, diaRef, aoPag
       chave: `conta:${s.conta.id}`, vencimento: s.vencimento, estado: s.estado === 'paga' || s.estado === 'fora' ? 'a_vencer' : s.estado,
       titulo: s.conta.descricao, frase: fraseDaSituacao(s), valor: fmtConta(s), aprox: aproxConta(s) || undefined, entrada,
       botao: { texto: entrada ? tx('Recebi') : tx('Paguei'), acao: () => aoPagarConta(s), principal: true },
+      origem: 'conta', conta: s,
     })
   }
 
@@ -77,14 +87,14 @@ export function tarefasDoMes({ ano, mes, contas, faturas, dividas, diaRef, aoPag
     for (const f of s.atrasadas) {
       lista.push({
         chave: `fatura:${s.cartao.id}:${f.ano}-${f.mes}`, vencimento: f.vencimento, estado: 'atrasada', titulo: nome,
-        frase: frasePrazo(f.vencimento, hoje), valor: fmtValor(f.valor), botao: { texto: tx('Ver fatura'), acao: aoVerCartoes },
+        frase: frasePrazo(f.vencimento, hoje), valor: fmtValor(f.valor), botao: { texto: tx('Ver fatura'), acao: aoVerCartoes }, origem: 'fatura',
       })
     }
     const aPagar = s.valor > 0 && (s.status === 'aberta' || s.status === 'fechada' || s.status === 'atrasada')
     if (aPagar && s.vencimento <= fim) {
       lista.push({
         chave: `fatura:${s.cartao.id}`, vencimento: s.vencimento, estado: estadoDe(s.vencimento, hoje), titulo: nome,
-        frase: frasePrazo(s.vencimento, hoje), valor: fmtValor(s.valor), botao: { texto: tx('Ver fatura'), acao: aoVerCartoes },
+        frase: frasePrazo(s.vencimento, hoje), valor: fmtValor(s.valor), botao: { texto: tx('Ver fatura'), acao: aoVerCartoes }, origem: 'fatura',
       })
     }
   }
@@ -102,6 +112,8 @@ export function tarefasDoMes({ ano, mes, contas, faturas, dividas, diaRef, aoPag
       titulo: doMes.length > 1 ? tx('{0}: {1} parcelas', s.divida.descricao, doMes.length) : tx('Parcela: {0}', s.divida.descricao),
       frase: frasePrazo(venc, hoje), valor: fmtDiv(s, falta),
       botao: { texto: tx('Pagar'), acao: () => aoPagarDivida(s), principal: true },
+      origem: 'parcela', divida: s, parcelas: doMes.length, vencidas: doMes.filter((p) => p.vencimento < hoje).length,
+      saldoDivida: fmtDiv(s, s.restante),
     })
   }
 

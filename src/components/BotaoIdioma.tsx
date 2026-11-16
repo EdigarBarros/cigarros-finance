@@ -22,20 +22,29 @@ const semAcento = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLo
  * barra de topo; sem ele, é um botão redondo da barra do painel, ao lado do tema.
  * O menu inteiro é `translate="no"`: cada idioma aparece escrito nele mesmo, nunca traduzido.
  */
-export function BotaoIdioma({ flutuante }: { flutuante?: boolean }) {
+export function BotaoIdioma({ flutuante, semBotao, aberto: abertoFora, aoMudarAberto }: {
+  flutuante?: boolean
+  /** Só a lista, aberta de fora (o item "Idioma" do menu "Mais opções" no celular). */
+  semBotao?: boolean
+  aberto?: boolean
+  aoMudarAberto?: (aberto: boolean) => void
+}) {
   const codigo = useIdioma()
-  const [aberto, setAberto] = useState(false)
+  const [abertoAqui, setAbertoAqui] = useState(false)
+  const aberto = abertoFora ?? abertoAqui
+  const setAberto = (x: boolean) => (aoMudarAberto ? aoMudarAberto(x) : setAbertoAqui(x))
   const [busca, setBusca] = useState('')
   const campo = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!aberto) return
+    const fechar = () => (aoMudarAberto ? aoMudarAberto(false) : setAbertoAqui(false))
     // no celular o teclado subiria cobrindo a lista: o foco automático na busca é só no computador
     if (matchMedia('(pointer: fine)').matches) campo.current?.focus()
-    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setAberto(false)
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && fechar()
     window.addEventListener('keydown', esc)
     return () => window.removeEventListener('keydown', esc)
-  }, [aberto])
+  }, [aberto]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const lista = useMemo(() => {
     const termo = semAcento(busca.trim())
@@ -55,12 +64,12 @@ export function BotaoIdioma({ flutuante }: { flutuante?: boolean }) {
   }
 
   return (
-    <div className={`idioma ${flutuante ? 'flutuante' : ''}`} translate="no">
-      <button className="idioma-btn" onClick={() => setAberto(!aberto)} aria-expanded={aberto} aria-haspopup="dialog"
+    <div className={`idioma ${flutuante ? 'flutuante' : ''} ${semBotao ? 'solto' : ''}`} translate="no">
+      {!semBotao && <button className="idioma-btn" onClick={() => setAberto(!aberto)} aria-expanded={aberto} aria-haspopup="dialog"
         aria-label={ROTULO} title={ROTULO}>
         <IconeTraduzir />
         <span className="idioma-sigla">{sigla(codigo)}</span>
-      </button>
+      </button>}
       {aberto && (
         <>
           <div className="fora" onClick={() => setAberto(false)} />

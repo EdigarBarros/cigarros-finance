@@ -78,7 +78,7 @@ const ligar = (m: Modulo) => (p: Perfil): Perfil => ({ ...p, modulos: { ...p.mod
 const nivel = (d: Detalhe) => (p: Perfil): Perfil => ({ ...p, detalhe: d })
 
 /** Sugestões tiradas do uso, da mais útil para a menos útil. */
-export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number, ehPagamentoDeDivida: (l: Lancamento) => boolean): Sugestao[] {
+export function sugestoes(p: Perfil, lancs: Lancamento[], _mesesComDados: number, ehPagamentoDeDivida: (l: Lancamento) => boolean): Sugestao[] {
   const lista: Sugestao[] = []
   const conta = (re: RegExp) => lancs.filter((l) => re.test(l.descricao)).length
 
@@ -155,13 +155,6 @@ export function sugestoes(p: Perfil, lancs: Lancamento[], mesesComDados: number,
       aplicar: nivel('equilibrado'),
     })
   }
-  if (p.detalhe === 'equilibrado' && mesesComDados >= 4 && lancs.length >= 80) {
-    lista.push({
-      id: 'detalhe:detalhado', icone: 'lista', botao: tx('Ver mais detalhes'),
-      titulo: tx('{0} meses de histórico', mesesComDados),
-      texto: tx('Com esse histórico, vale ver todas as categorias, os lançamentos do mês e o ano mês a mês.'),
-      aplicar: nivel('detalhado'),
-    })
-  }
+  // o equilibrado não sugere mais o detalhado pelo tamanho do histórico: o jeito de ver muda no "Modo equilibrado · Alterar"
   return lista.filter((s) => !p.dispensadas.includes(s.id))
 }

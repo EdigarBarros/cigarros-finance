@@ -2399,10 +2399,6 @@
     "en": "Your account",
     "es": "Tu cuenta"
   },
-  "Menu": {
-    "en": "Menu",
-    "es": "Menú"
-  },
   "Não conseguimos cobrar seu cartão. Atualize a forma de pagamento para não perder o acesso.": {
     "en": "We couldn't charge your card. Update your payment method so you don't lose access.",
     "es": "No pudimos cobrar tu tarjeta. Actualiza la forma de pago para no perder el acceso."
@@ -4726,18 +4722,6 @@
   "Gráficos e a comparação com o mês passado ajudam a ver para onde as coisas estão indo.": {
     "en": "Charts and the comparison with last month help you see where things are heading.",
     "es": "Los gráficos y la comparación con el mes pasado te ayudan a ver hacia dónde van las cosas."
-  },
-  "Ver mais detalhes": {
-    "en": "See more details",
-    "es": "Ver más detalles"
-  },
-  "{0} meses de histórico": {
-    "en": "{0} months of history",
-    "es": "{0} meses de historial"
-  },
-  "Com esse histórico, vale ver todas as categorias, os lançamentos do mês e o ano mês a mês.": {
-    "en": "With this history, it's worth seeing all categories, this month's transactions, and the year month by month.",
-    "es": "Con este historial, conviene ver todas las categorías, los movimientos del mes y el año mes a mes."
   },
   "Não foi possível começar o teste agora. Tente de novo.": {
     "en": "Couldn't start the trial right now. Try again.",
@@ -8178,18 +8162,6 @@
   "Nada vence nos próximos 7 dias.": {
     "en": "Nothing is due in the next 7 days.",
     "es": "Nada vence en los próximos 7 días."
-  },
-  "{0} na frente": {
-    "en": "{0} is ahead",
-    "es": "{0} va adelante"
-  },
-  "Todas batidas": {
-    "en": "All reached",
-    "es": "Todas cumplidas"
-  },
-  "Deve faltar": {
-    "en": "Should be short",
-    "es": "Debería faltar"
   },
   "no dia {0}": {
     "en": "on day {0}",
@@ -14066,5 +14038,389 @@
   "devem sobrar neste mês": {
     "en": "should be left this month",
     "es": "deberían sobrar este mes"
+  },
+  "Olá!": {
+    "en": "Hi!",
+    "es": "¡Hola!"
+  },
+  "Resultado de {0}": {
+    "en": "Result for {0}",
+    "es": "Resultado de {0}"
+  },
+  "Resultado do mês até hoje": {
+    "en": "This month's result so far",
+    "es": "Resultado del mes hasta hoy"
+  },
+  "Resumo do mês": {
+    "en": "Month summary",
+    "es": "Resumen del mes"
+  },
+  "Nenhum lançamento em {0} ainda.": {
+    "en": "No entries in {0} yet.",
+    "es": "Ningún movimiento en {0} todavía."
+  },
+  "Compras no cartão ficam em “A pagar” até a fatura ser paga.": {
+    "en": "Card purchases stay in “To pay” until the bill is paid.",
+    "es": "Las compras con tarjeta quedan en “Por pagar” hasta que se pague el resumen."
+  },
+  "A pagar": {
+    "en": "To pay",
+    "es": "Por pagar"
+  },
+  "pendente": {
+    "en": "pending",
+    "es": "pendiente"
+  },
+  "Deve fechar no zero": {
+    "en": "Should break even",
+    "es": "Debería cerrar en cero"
+  },
+  "Nada mais a pagar ou a receber previsto. O mês deve fechar como está.": {
+    "en": "Nothing else expected to pay or receive. The month should close as it is.",
+    "es": "No hay nada más previsto para pagar o recibir. El mes debería cerrar como está."
+  },
+  "Sem contas do mês nem cartões cadastrados, não dá para prever o resto do mês.": {
+    "en": "Without monthly bills or cards set up, the rest of the month can't be forecast.",
+    "es": "Sin cuentas del mes ni tarjetas registradas, no se puede prever el resto del mes."
+  },
+  "Ver cálculo": {
+    "en": "See calculation",
+    "es": "Ver cálculo"
+  },
+  "Registrar": {
+    "en": "Record",
+    "es": "Registrar"
+  },
+  "O que registrar?": {
+    "en": "What do you want to record?",
+    "es": "¿Qué quieres registrar?"
+  },
+  "Dinheiro que entrou": {
+    "en": "Money that came in",
+    "es": "Dinero que entró"
+  },
+  "Dinheiro que saiu, no débito, Pix ou cartão": {
+    "en": "Money that went out, by debit, Pix or card",
+    "es": "Dinero que salió, con débito, Pix o tarjeta"
+  },
+  "Marcar como recebida": {
+    "en": "Mark as received",
+    "es": "Marcar como recibida"
+  },
+  "Soma de {0} parcelas ({1} vencidas)": {
+    "en": "Total of {0} installments ({1} overdue)",
+    "es": "Suma de {0} cuotas ({1} vencidas)"
+  },
+  "Soma de {0} parcelas": {
+    "en": "Total of {0} installments",
+    "es": "Suma de {0} cuotas"
+  },
+  "Saldo da dívida: {0}": {
+    "en": "Debt balance: {0}",
+    "es": "Saldo de la deuda: {0}"
+  },
+  "Nenhuma conta em aberto neste mês.": {
+    "en": "No open bills this month.",
+    "es": "Ninguna cuenta pendiente este mes."
+  },
+  "Ver mais 1 atrasada": {
+    "en": "See 1 more overdue",
+    "es": "Ver 1 atrasada más"
+  },
+  "Ver mais {0} atrasadas": {
+    "en": "See {0} more overdue",
+    "es": "Ver {0} atrasadas más"
+  },
+  "Ver mais 1 dos próximos 7 dias": {
+    "en": "See 1 more in the next 7 days",
+    "es": "Ver 1 más de los próximos 7 días"
+  },
+  "Ver mais {0} dos próximos 7 dias": {
+    "en": "See {0} more in the next 7 days",
+    "es": "Ver {0} más de los próximos 7 días"
+  },
+  "Restante do mês": {
+    "en": "Rest of the month",
+    "es": "Resto del mes"
+  },
+  "Ver mais 1 do restante do mês": {
+    "en": "See 1 more for the rest of the month",
+    "es": "Ver 1 más del resto del mes"
+  },
+  "Ver mais {0} do restante do mês": {
+    "en": "See {0} more for the rest of the month",
+    "es": "Ver {0} más del resto del mes"
+  },
+  "Em aberto": {
+    "en": "Open",
+    "es": "Pendientes"
+  },
+  "Ver mais 1 em aberto": {
+    "en": "See 1 more open",
+    "es": "Ver 1 pendiente más"
+  },
+  "Ver mais {0} em aberto": {
+    "en": "See {0} more open",
+    "es": "Ver {0} pendientes más"
+  },
+  "1–{0} {1}": {
+    "en": "{1} 1–{0}",
+    "es": "1–{0} {1}"
+  },
+  "{0} inteiro": {
+    "en": "all of {0}",
+    "es": "{0} completo"
+  },
+  "Datas comparadas": {
+    "en": "Dates compared",
+    "es": "Fechas comparadas"
+  },
+  "{0} contra {1}: o mesmo intervalo nos dois meses (num mês mais curto, até o último dia dele).": {
+    "en": "{0} against {1}: the same range in both months (in a shorter month, up to its last day).",
+    "es": "{0} contra {1}: el mismo intervalo en los dos meses (en un mes más corto, hasta su último día)."
+  },
+  "{0} contra {1}: os dois meses inteiros.": {
+    "en": "{0} against {1}: both full months.",
+    "es": "{0} contra {1}: los dos meses completos."
+  },
+  "O que conta como gasto": {
+    "en": "What counts as spending",
+    "es": "Qué cuenta como gasto"
+  },
+  "Toda saída lançada com data dentro do intervalo (ou sem data). Entradas e dinheiro que você guardou (caixinha, porquinho) ficam de fora.": {
+    "en": "Every outgoing entry dated within the range (or with no date). Income and money you saved (savings pots) are left out.",
+    "es": "Toda salida registrada con fecha dentro del intervalo (o sin fecha). Los ingresos y el dinero que ahorraste (alcancías) quedan fuera."
+  },
+  "Compras no cartão e fatura": {
+    "en": "Card purchases and bills",
+    "es": "Compras con tarjeta y resumen"
+  },
+  "A compra no cartão conta na data dela (ou da parcela), mesmo com a fatura aberta. Marcar a fatura como paga não cria outro gasto, então nada conta duas vezes. Se o pagamento da fatura também foi lançado como saída comum (vindo do extrato, por exemplo), o mesmo dinheiro aparece duas vezes.": {
+    "en": "A card purchase counts on its date (or the installment's), even while the bill is open. Marking the bill as paid doesn't create another expense, so nothing counts twice. If the bill payment was also recorded as a regular outgoing entry (from a bank statement, for example), the same money shows up twice.",
+    "es": "La compra con tarjeta cuenta en su fecha (o la de la cuota), aunque el resumen esté abierto. Marcar el resumen como pagado no crea otro gasto, así que nada cuenta dos veces. Si el pago del resumen también se registró como salida común (desde el extracto, por ejemplo), el mismo dinero aparece dos veces."
+  },
+  "Contas pendentes": {
+    "en": "Pending bills",
+    "es": "Cuentas pendientes"
+  },
+  "Conta sem baixa e lançamento com data mais à frente ainda não entram. Uma conta vencida e não paga deixa o mês atual mais baixo até ser paga.": {
+    "en": "Bills not marked as paid and entries dated later don't count yet. An overdue unpaid bill makes the current month look lower until it's paid.",
+    "es": "Las cuentas sin marcar como pagadas y los movimientos con fecha posterior todavía no cuentan. Una cuenta vencida y sin pagar deja el mes actual más bajo hasta que se pague."
+  },
+  "O que fica de fora": {
+    "en": "What's left out",
+    "es": "Qué queda fuera"
+  },
+  "Entradas, dinheiro guardado, compras de fatura renegociada (viraram dívida: entram as parcelas) e o que tem data depois do dia de corte.": {
+    "en": "Income, money saved, purchases from a renegotiated bill (they became a debt: the installments count) and anything dated after the cutoff day.",
+    "es": "Ingresos, dinero ahorrado, compras de un resumen renegociado (se volvieron deuda: cuentan las cuotas) y lo que tiene fecha después del día de corte."
+  },
+  "Diferença para o resumo do mês": {
+    "en": "Difference from the month summary",
+    "es": "Diferencia con el resumen del mes"
+  },
+  "O \"Saiu\" do resumo conta a compra no cartão só quando a fatura é paga (até lá ela está em \"A pagar\"). Por isso os dois números podem ser diferentes.": {
+    "en": "The summary's \"Went out\" counts a card purchase only when the bill is paid (until then it's in \"To pay\"). That's why the two numbers can differ.",
+    "es": "El \"Salió\" del resumen cuenta la compra con tarjeta solo cuando se paga el resumen (hasta entonces está en \"Por pagar\"). Por eso los dos números pueden ser distintos."
+  },
+  "Menos gasto \"sem categoria\" pode ser só você ter dado categoria aos lançamentos. Isso não é tratado como economia.": {
+    "en": "Less \"uncategorized\" spending may just mean you categorized your entries. It isn't treated as savings.",
+    "es": "Menos gasto \"sin categoría\" puede ser solo que categorizaste tus movimientos. No se trata como ahorro."
+  },
+  "Como calculamos": {
+    "en": "How we calculate",
+    "es": "Cómo calculamos"
+  },
+  "Nada tinha saído em {0} nesse período: não há porcentagem para comparar.": {
+    "en": "Nothing had gone out in {0} in that period: there's no percentage to compare.",
+    "es": "No había salido nada en {0} en ese período: no hay porcentaje para comparar."
+  },
+  "Gastos {0}% maiores": {
+    "en": "Spending {0}% higher",
+    "es": "Gastos {0}% mayores"
+  },
+  "Gastos {0}% menores": {
+    "en": "Spending {0}% lower",
+    "es": "Gastos {0}% menores"
+  },
+  "{0} teve o maior aumento: {1}.": {
+    "en": "{0} had the biggest increase: {1}.",
+    "es": "{0} tuvo el mayor aumento: {1}."
+  },
+  "{0} teve a maior redução: {1}.": {
+    "en": "{0} had the biggest drop: {1}.",
+    "es": "{0} tuvo la mayor reducción: {1}."
+  },
+  "Menos gastos sem categoria ({0}): pode ser só reclassificação, não economia.": {
+    "en": "Less uncategorized spending ({0}): it may just be recategorizing, not savings.",
+    "es": "Menos gastos sin categoría ({0}): puede ser solo reclasificación, no ahorro."
+  },
+  "1 conta vencida ainda não entrou nos gastos.": {
+    "en": "1 overdue bill isn't in spending yet.",
+    "es": "1 cuenta vencida todavía no entró en los gastos."
+  },
+  "{0} contas vencidas ainda não entraram nos gastos.": {
+    "en": "{0} overdue bills aren't in spending yet.",
+    "es": "{0} cuentas vencidas todavía no entraron en los gastos."
+  },
+  "Parece haver pagamento de fatura lançado junto com as compras do cartão: pode contar duas vezes.": {
+    "en": "A card bill payment seems to be recorded along with the card purchases: it may count twice.",
+    "es": "Parece haber un pago de resumen registrado junto con las compras de la tarjeta: puede contar dos veces."
+  },
+  "{0} vs. {1}": {
+    "en": "{0} vs. {1}",
+    "es": "{0} vs. {1}"
+  },
+  "{0}: {1}. {2}: {3}.": {
+    "en": "{0}: {1}. {2}: {3}.",
+    "es": "{0}: {1}. {2}: {3}."
+  },
+  "Explorar comparação": {
+    "en": "Explore comparison",
+    "es": "Explorar comparación"
+  },
+  "Todas as categorias": {
+    "en": "All categories",
+    "es": "Todas las categorías"
+  },
+  "Abrir em Lançamentos": {
+    "en": "Open in Entries",
+    "es": "Abrir en Movimientos"
+  },
+  "Parte de cada categoria no que saiu até hoje ({0}), com as compras no cartão.": {
+    "en": "Each category's share of what went out so far ({0}), including card purchases.",
+    "es": "Parte de cada categoría en lo que salió hasta hoy ({0}), con las compras con tarjeta."
+  },
+  "Parte de cada categoria nos gastos do mês ({0}), com as compras no cartão.": {
+    "en": "Each category's share of the month's spending ({0}), including card purchases.",
+    "es": "Parte de cada categoría en los gastos del mes ({0}), con las compras con tarjeta."
+  },
+  "Principais gastos": {
+    "en": "Top spending",
+    "es": "Principales gastos"
+  },
+  "Demais categorias (1)": {
+    "en": "Other categories (1)",
+    "es": "Demás categorías (1)"
+  },
+  "Demais categorias ({0})": {
+    "en": "Other categories ({0})",
+    "es": "Demás categorías ({0})"
+  },
+  "Ver todas as categorias": {
+    "en": "See all categories",
+    "es": "Ver todas las categorías"
+  },
+  "Como a nota é calculada": {
+    "en": "How the score is calculated",
+    "es": "Cómo se calcula la nota"
+  },
+  "Nota {0} de 100": {
+    "en": "Score {0} out of 100",
+    "es": "Nota {0} de 100"
+  },
+  "Orientação": {
+    "en": "Guidance",
+    "es": "Orientación"
+  },
+  "Falta um dado": {
+    "en": "Missing information",
+    "es": "Falta un dato"
+  },
+  "Ainda sem orientação: faltam dados. Lance entradas e saídas de pelo menos 2 meses que já terminaram.": {
+    "en": "No guidance yet: data is missing. Record income and expenses for at least 2 finished months.",
+    "es": "Todavía sin orientación: faltan datos. Registra ingresos y salidas de al menos 2 meses ya terminados."
+  },
+  "Nenhum alerta agora. Tudo em ordem por aqui.": {
+    "en": "No alerts right now. All good here.",
+    "es": "Ninguna alerta por ahora. Todo en orden por aquí."
+  },
+  "Ver todas as orientações ({0})": {
+    "en": "See all guidance ({0})",
+    "es": "Ver todas las orientaciones ({0})"
+  },
+  "Entender esta orientação": {
+    "en": "Understand this guidance",
+    "es": "Entender esta orientación"
+  },
+  "Orientações": {
+    "en": "Guidance",
+    "es": "Orientaciones"
+  },
+  "A situação do mês e o que fazer agora.": {
+    "en": "The month's situation and what to do now.",
+    "es": "La situación del mes y qué hacer ahora."
+  },
+  "Também a comparação com o mês anterior e os principais gastos.": {
+    "en": "Also the comparison with last month and top spending.",
+    "es": "También la comparación con el mes anterior y los principales gastos."
+  },
+  "Tudo: gráficos do ano, todas as categorias e os detalhes de cada bloco.": {
+    "en": "Everything: yearly charts, all categories and each block's details.",
+    "es": "Todo: gráficos del año, todas las categorías y los detalles de cada bloque."
+  },
+  "Modo {0}": {
+    "en": "{0} mode",
+    "es": "Modo {0}"
+  },
+  "Alterar": {
+    "en": "Change",
+    "es": "Cambiar"
+  },
+  "Jeito de ver a Início": {
+    "en": "How to view Home",
+    "es": "Forma de ver el Inicio"
+  },
+  "Você pode mudar quando quiser. O app não muda sozinho.": {
+    "en": "You can change it whenever you want. The app never changes it on its own.",
+    "es": "Puedes cambiarlo cuando quieras. La app no lo cambia sola."
+  },
+  "Falta pagar {0}": {
+    "en": "{0} left to pay",
+    "es": "Falta pagar {0}"
+  },
+  "{0}% quitado": {
+    "en": "{0}% paid off",
+    "es": "{0}% pagado"
+  },
+  "Metas · 1 meta": {
+    "en": "Goals · 1 goal",
+    "es": "Metas · 1 meta"
+  },
+  "Metas · {0} metas": {
+    "en": "Goals · {0} goals",
+    "es": "Metas · {0} metas"
+  },
+  "Meta em destaque: {0}": {
+    "en": "Featured goal: {0}",
+    "es": "Meta destacada: {0}"
+  },
+  "Todas as metas batidas": {
+    "en": "All goals reached",
+    "es": "Todas las metas alcanzadas"
+  },
+  "Saldo nas contas": {
+    "en": "Account balance",
+    "es": "Saldo en las cuentas"
+  },
+  "Saldo nas contas e investimentos": {
+    "en": "Accounts and investments balance",
+    "es": "Saldo en cuentas e inversiones"
+  },
+  "Comparação com o mês anterior": {
+    "en": "Comparison with last month",
+    "es": "Comparación con el mes anterior"
+  },
+  "Mensagens do suporte": {
+    "en": "Support messages",
+    "es": "Mensajes de soporte"
+  },
+  "Idioma": {
+    "en": "Language",
+    "es": "Idioma"
+  },
+  "Mais opções": {
+    "en": "More options",
+    "es": "Más opciones"
   }
 }

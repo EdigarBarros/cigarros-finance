@@ -637,3 +637,36 @@ inicial mudou; sem migração. Precisa de versão nova do app Android só se a p
 - O escuro não mudou.
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium no claro (1440×860
   e 390×844) da abertura até a tela final, e a passagem do carrossel, sem erro de página.
+
+### 16/11/2026 — Claude — Início do modo equilibrado reestruturada para o celular
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração de banco. O app Android **não** foi gerado nesta
+sessão (sem Android SDK e sem a chave de upload no ambiente): precisa de versão nova com `versionCode` 12.
+
+- Pedido do Edigar: equilibrado que permita entender o mês, ver as contas prioritárias e o que mudou desde o mês anterior,
+  com pouca leitura e página mais curta; detalhes por toque. Simples e detalhado mantêm a organização própria.
+- Ordem nova e regras: `docs/arquitetura-do-painel.md`, seção 4.0.2 (reescrita). Peças em `components/InicioEquilibrado.tsx`
+  (`ResumoEq`, `RegistrarEq`, `ContasEq`, `ComparacaoEq`, `ComoCalculamos`, `PrincipaisGastos`, `OrientacaoEq`,
+  `ResumosCompactos`, `SeletorDoJeito`) e o ramo `equilibrado` de `pages/Inicio.tsx`.
+- Compartilhado com os outros jeitos (de propósito, só cromo do celular): cabeçalho com marca, mês, olho, sino e "Mais
+  opções" (suporte, idioma, tema e configurações foram para o menu; `BotaoIdioma` ganhou o modo `semBotao`) e barra de abas
+  mais baixa e discreta. O botão "+" flutuante só some na Início do equilibrado (lá há o "+ Registrar").
+- Cálculos: nada da previsão mudou. `lib/comparacao.ts` ganhou `destaqueDaComparacao` (uma categoria, na direção do total;
+  queda em "Sem categoria" vira "reclassificação", não economia), `fatiasDoPeriodo` (participação no total, mesma escala) e
+  `faturaEmDobro` (pagamento de fatura lançado como saída junto com compras no cartão). `lib/paraFazer.ts`: a `Tarefa`
+  carrega origem, conta, dívida, nº de parcelas, vencidas e saldo da dívida (a lista do simples não mudou).
+- Divergência investigada (não é erro): o "Saiu" do resumo exclui compras em fatura aberta (estão em "A pagar"); a
+  comparação e os principais gastos contam a compra na data dela. Agora isso aparece escrito no resumo e no "Como calculamos".
+- "Paguei" da Início equilibrada virou "Marcar como paga/recebida" e abre a conferência (`FormBaixa` de `pages/Contas.tsx`,
+  exportada com `conferir`); sem mudar valor nem data, segue o caminho normal (pergunta pelo lançamento já existente).
+- Removida a sugestão "N meses de histórico / Ver mais detalhes" (`lib/adaptacao.ts`); o jeito de ver muda só em
+  "Modo equilibrado · Alterar" (`Ctx.mudarDetalhe`, gravado no perfil).
+- "Abrir em Lançamentos" filtra a categoria (`pedirCategoriaNosLancamentos` em `lib/busca.ts`). Compras no cartão continuam
+  na tela Cartões, não em Lançamentos; a janela de categorias da Início lista as duas.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros; avisos antigos), build, `node scripts/painel/testar.mjs` (23 de 23,
+  com 3 casos novos), app de demonstração em 320/360/390/430 px e com zoom de 130%: sem rolagem horizontal, sem valor
+  cortado, sem rolagem interna, último conteúdo acima da barra de abas; 22 checagens de interação no Playwright (registrar,
+  ver cálculo, conferência antes da baixa, comparação, metodologia, categorias e filtro, menu Mais/idioma, valores ocultos,
+  troca e persistência do jeito, mês futuro), sem erro de página.
+- Atenção: `node scripts/traducao/extrair.cjs --limpar …` também extrai textos de todos os arquivos que recebe (mexeu em
+  12 arquivos fora do escopo). Foi desfeito; as traduções novas entraram direto no `traducoes.json`.

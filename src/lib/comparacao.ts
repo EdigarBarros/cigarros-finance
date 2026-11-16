@@ -47,6 +47,11 @@ export interface ComparacaoDeGastos {
   /** A categoria que mais cresceu e a que mais caiu, quando a mudança passa do ruído (`RELEVANTE`). */
   maiorAlta: LinhaComparada | null
   maiorQueda: LinhaComparada | null
+  /**
+   * Num dos lados há uma saída comum com "fatura" no nome (o pagamento da fatura lançado como gasto, vindo do extrato, por
+   * exemplo) junto com compras no cartão: o mesmo dinheiro pode estar contando duas vezes.
+   */
+  faturaEmDobro: boolean
 }
 
 /** Mudança de categoria menor que isto (da parte do maior total) é ruído e não vira destaque. */
@@ -106,7 +111,56 @@ export function compararGastos({ lancs, ano, mes, hoje, categoriaDe }: {
     ano, mes, anoAnterior: anoA, mesAnterior: mesA, ateDia, ateDiaAnterior, atual, anterior,
     variacao: semBase || anterior <= 0 ? null : (atual - anterior) / anterior,
     semBase, categorias, maiorAlta, maiorQueda,
+    faturaEmDobro: emDobro(ladoAtual) || emDobro(ladoAnterior),
   }
+}
+
+const PAGAMENTO_DE_FATURA = /\bfatura\b/i
+/** Compras no cartão e, no mesmo período, uma saída comum com "fatura" no nome (o pagamento dela). */
+const emDobro = (xs: Lancamento[]) => xs.some((l) => l.cartao_id) && xs.some((l) => !l.cartao_id && PAGAMENTO_DE_FATURA.test(l.descricao))
+
+export interface DestaqueDaComparacao {
+  id: string
+  diferenca: number
+  /**
+   * 'alta' / 'queda': a categoria que mais puxou o total na direção em que ele andou. 'reclassificacao': o total caiu e quem
+   * mais caiu foi "Sem categoria": isso pode ser só a pessoa ter dado categoria aos lançamentos, não economia.
+   */
+  tipo: 'alta' | 'queda' | 'reclassificacao'
+}
+
+/**
+ * Uma categoria só, para o resumo da comparação: a que mais contribuiu para a mudança, na mesma direção do total. Sem base,
+ * sem mudança no total ou sem categoria acima do ruído (`RELEVANTE`), nada (melhor não dizer do que dizer o que não se sustenta).
+ */
+export function destaqueDaComparacao(comp: ComparacaoDeGastos | null): DestaqueDaComparacao | null {
+  if (!comp || comp.semBase || comp.atual === comp.anterior) return null
+  const x = comp.atual > comp.anterior ? comp.maiorAlta : comp.maiorQueda
+  if (!x) return null
+  return { id: x.id, diferenca: x.diferenca, tipo: comp.atual > comp.anterior ? 'alta' : x.id === '' ? 'reclassificacao' : 'queda' }
+}
+
+export interface FatiaDoPeriodo {
+  id: string
+  valor: number
+  /** Parte do total do período (0 a 1): a barra usa a mesma escala para todas. */
+  parte: number
+  lancs: Lancamento[]
+}
+
+/**
+ * As maiores categorias do lado atual da comparação (o que saiu até hoje, com as compras no cartão), da maior para a menor,
+ * cada uma com a sua parte do total; o resto vira "Demais categorias" (um agrupamento, não a categoria "Outros").
+ */
+export function fatiasDoPeriodo(comp: ComparacaoDeGastos, limite = 3) {
+  const todas: FatiaDoPeriodo[] = comp.categorias.filter((x) => x.atual > 0)
+    .map((x) => ({ id: x.id, valor: x.atual, parte: comp.atual > 0 ? x.atual / comp.atual : 0, lancs: x.lancsAtual }))
+    .sort((a, b) => b.valor - a.valor)
+  const resto = todas.slice(limite)
+  const demais = resto.length
+    ? { valor: centavos(resto.reduce((t, x) => t + x.valor, 0)), quantas: resto.length, parte: comp.atual > 0 ? resto.reduce((t, x) => t + x.valor, 0) / comp.atual : 0 }
+    : null
+  return { total: comp.atual, todas, principais: todas.slice(0, limite), demais }
 }
 
 export interface PilulaDeGastos { texto: string; tom: 'bom' | 'atencao' | 'ruim' }

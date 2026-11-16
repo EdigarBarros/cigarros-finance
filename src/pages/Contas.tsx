@@ -349,14 +349,19 @@ function Boleto({ s, c, indice, aoEditar, aoOutroValor }: { s: SituacaoConta; c:
   )
 }
 
-/** "Paguei" com outro valor ou outra data (a conta de luz muda todo mês). */
-function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () => void }) {
+/**
+ * "Paguei" com outro valor ou outra data (a conta de luz muda todo mês). `conferir`: aberto pela Início (equilibrado) para a
+ * pessoa conferir antes da baixa; sem mudar nada, a baixa segue o caminho normal (que pergunta se um lançamento que já existe
+ * é o pagamento, em vez de lançar de novo).
+ */
+export function FormBaixa({ c, s, aoFechar, conferir }: { c: Ctx; s: SituacaoConta; aoFechar: () => void; conferir?: boolean }) {
   const entrada = s.conta.tipo === 'entrada'
   const moeda = s.moeda ?? c.perfil.moeda
   const [valor, setValor] = useState(paraCampoMoeda(s.valorNativo, moeda))
   // a cotação combinada da conta (se houver) já vem preenchida; dá para trocar pela que valeu no dia do pagamento
   const [cotacao, setCotacao] = useState<number | null>(s.conta.cotacao ?? null)
-  const [data, setData] = useState(dataDaBaixa(s.conta, c.ano, c.mes))
+  const dataInicial = dataDaBaixa(s.conta, c.ano, c.mes)
+  const [data, setData] = useState(dataInicial)
   const [erro, setErro] = useState<string | null>(null)
   const mm = String(c.mes).padStart(2, '0')
   const ultimo = new Date(c.ano, c.mes, 0).getDate()
@@ -369,7 +374,8 @@ function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () 
     const taxa = s.moeda ? cotacao ?? c.taxas[s.moeda] : undefined
     if (s.moeda && !taxa) return setErro(tx('Não há cotação de hoje para {0}. Informe a cotação que você pagou.', s.moeda))
     if (s.moeda && cotacaoInvertida(taxa, s.moeda, c.perfil.moeda, c.taxas)) return setErro(tx('A cotação parece estar ao contrário (o valor ficaria centenas de vezes maior ou menor). Toque em “Desvirar” ou confira.'))
-    c.pagarConta(s, { valor: n, data, ...(s.moeda && taxa ? { cotacao: taxa } : {}) })
+    if (conferir && !s.moeda && n === s.valorNativo && data === dataInicial) c.pagarConta(s)
+    else c.pagarConta(s, { valor: n, data, ...(s.moeda && taxa ? { cotacao: taxa } : {}) })
     aoFechar()
   }
 
@@ -399,7 +405,7 @@ function FormBaixa({ c, s, aoFechar }: { c: Ctx; s: SituacaoConta; aoFechar: () 
         <div className="form-acoes">
           <span className="espaco" />
           <button type="button" className="btn" onClick={aoFechar}>{tx('Cancelar')}</button>
-          <button type="submit" className="btn primario">{entrada ? tx('Recebi') : tx('Paguei')}</button>
+          <button type="submit" className="btn primario">{conferir ? (entrada ? tx('Marcar como recebida') : tx('Marcar como paga')) : entrada ? tx('Recebi') : tx('Paguei')}</button>
         </div>
       </form>
     </Modal>
