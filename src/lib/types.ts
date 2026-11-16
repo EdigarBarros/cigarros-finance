@@ -82,8 +82,17 @@ export interface Divida {
   atraso_multa?: number | null
   /** 'parcela': cada parcela atrasada cresce; 'saldo': o saldo inteiro cresce (cartão). */
   atraso_base?: 'parcela' | 'saldo' | null
+  /** De quanto em quanto tempo vale `atraso_juros_mes` (migração 36): 'mes' (padrão) ou 'dia' (5 = 5% ao dia). */
+  atraso_periodo?: 'mes' | 'dia' | null
+  /** Valor fixo cobrado por dia de atraso, na moeda da dívida (migração 36): "R$ 20 por dia". null = não cobra. */
+  atraso_reais_dia?: number | null
   /** Dia em que os valores foram conferidos com o banco: os juros de atraso contam a partir dele. */
   conferido_em?: string | null
+  /**
+   * Quanto a pessoa recebeu de fato (ou quanto custava à vista), na moeda da dívida (migração 36). Pegou R$ 250 e vai
+   * devolver R$ 270: 250 (os R$ 20 são juros já combinados). Em "me devem", quanto ela emprestou. null = não informado.
+   */
+  valor_recebido?: number | null
   obs?: string | null
   /**
    * Partes da dívida (migração 21), já em ordem de vencimento: as mini-dívidas que formam uma dívida maior, uma linha por

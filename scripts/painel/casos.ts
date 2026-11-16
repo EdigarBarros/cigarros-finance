@@ -5,7 +5,8 @@
  */
 import { compararGastos, destaqueDaComparacao, fatiasDoPeriodo, maiorCategoria } from '../../src/lib/comparacao'
 import { situacoesDoMes } from '../../src/lib/contasFixas'
-import { parcelasDoMes, parcelasPorDia, situacaoDividas } from '../../src/lib/dividas'
+import { jurosEmbutidos, jurosQuePesam, parcelasDoMes, parcelasPorDia, situacaoDividas } from '../../src/lib/dividas'
+import { regraDoAtraso } from '../../src/lib/jurosAtraso'
 import { agruparTarefas, tarefasDoMes } from '../../src/lib/paraFazer'
 import { comporPrevisao, diaADiaDoMes } from '../../src/lib/previsao'
 import { situacaoDoMes } from '../../src/lib/situacaoDoMes'
@@ -189,6 +190,48 @@ export const CASOS: Caso[] = [
       // num mês que ainda não começou, só a que vence nele (a atrasada já está no mês de hoje)
       const dez = parcelasDoMes({ ...args, mes: 12, dias: 31, hoje: 0, soDoMes: true })
       igual('dezembro', dez.map((p) => p.n), [4])
+    },
+  },
+
+  {
+    nome: 'empréstimo com juros já combinados: pegou 250 e devolve 270; em parcelas, a taxa da tabela Price',
+    rodar() {
+      const a = jurosEmbutidos(250, { total: 270, dias: 30 })
+      perto('juros', a?.juros, 20)
+      perto('8% sobre o que recebeu', a?.sobreRecebido, 0.08)
+      perto('8% ao mês em 30 dias', a?.aoMes, 8)
+      perto('em 15 dias, 16,64% ao mês', jurosEmbutidos(250, { total: 270, dias: 15 })?.aoMes, 16.64)
+      igual('sem prazo, sem taxa ao mês', jurosEmbutidos(250, { total: 270, dias: null })?.aoMes, null)
+      // R$ 1.000 em 12 × R$ 100: cerca de 2,92% ao mês
+      perto('Price', jurosEmbutidos(1000, { parcela: 100, parcelas: 12 })?.aoMes, 2.92)
+      igual('devolve o mesmo: sem juros', jurosEmbutidos(300, { total: 300, dias: 30 }), { juros: 0, sobreRecebido: 0, aoMes: 0 })
+      igual('sem valor recebido', jurosEmbutidos(0, { total: 300, dias: 30 }), null)
+    },
+  },
+  {
+    nome: 'juros de atraso por dia: % ao dia (simples e composto) e valor fixo por dia, com multa',
+    rodar() {
+      const base: Divida = {
+        id: 'z1', descricao: 'Zé', valor_parcela: 270, inicio: '2026-11-01', total_parcelas: 1,
+        atraso_juros_mes: 5, atraso_periodo: 'dia', atraso_multa: 0, atraso_tipo: 'simples', atraso_base: 'parcela', conferido_em: '2026-10-01',
+      }
+      const saldos: SaldoDivida[] = [{ id: 'zs', divida_id: 'z1', data: '2026-10-01', saldo: 270 }]
+      const juros = (d: Divida) => situacaoDividas([d], saldos, [], 2026, 11, {}, '2026-11-11')[0]
+      // venceu 01/11, hoje 11/11: 10 dias
+      perto('5% ao dia, 10 dias: 270 × 5% × 10', juros(base).jurosAtraso, 135)
+      perto('1% ao dia, juros sobre juros', juros({ ...base, atraso_juros_mes: 1, atraso_tipo: 'composto' }).jurosAtraso, 28.25)
+      perto('% ao mês continua como antes (30 dias = 1 mês)', juros({ ...base, atraso_periodo: 'mes', atraso_juros_mes: 30 }).jurosAtraso, 27)
+      const fixo = { ...base, atraso_juros_mes: 0, atraso_reais_dia: 20 }
+      perto('R$ 20 por dia, 10 dias', juros(fixo).jurosAtraso, 200)
+      perto('com multa de 2%', juros({ ...fixo, atraso_multa: 2 }).jurosAtraso, 205.4)
+      perto('falta pagar hoje', juros(fixo).restanteHoje, 470)
+      // os juros contam desde a conferência, se ela for depois do vencimento
+      perto('conferido em 06/11: 5 dias', juros({ ...fixo, conferido_em: '2026-11-06' }).jurosAtraso, 100)
+      igual('regra por dia', regraDoAtraso(base), 'No atraso: 5% ao dia sobre cada parcela atrasada · conferido em 1 de out')
+      igual('regra em reais', regraDoAtraso(fixo)?.replace(/\s/g, ' '), 'No atraso: R$ 20,00 por dia · conferido em 1 de out')
+      // para os conselhos: o mesmo em % ao mês
+      perto('5% ao dia pesam 150% ao mês', jurosQuePesam(juros(base)), 150)
+      perto('R$ 20 por dia em R$ 270 pesam cerca de 222% ao mês', jurosQuePesam(juros(fixo)), 222.22)
     },
   },
 

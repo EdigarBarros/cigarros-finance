@@ -5,7 +5,7 @@ import { gerarParcelas, garantidoDo, hojeLocal, nomeDaFatura, textoParcelamento 
 import { aplicarEfeitos, efeitosNoSaldo, guardadoPelaDescricao, mesJaChegou } from '../lib/guardado'
 import { formaDe, formaPelaDescricao, formasDoTipo, type FormaPagamento } from '../lib/formas'
 import { COR } from '../lib/charts'
-import { calendarioDe, dividaPelaDescricao, inicioPelaProxima, jurosAoAno, meDevem, mesesAntes, nativoDiv, parcelasDe, somaMesesData, type SituacaoDivida } from '../lib/dividas'
+import { calendarioDe, dividaPelaDescricao, inicioPelaProxima, jurosAoAno, jurosEmbutidos, meDevem, mesesAntes, nativoDiv, parcelasDe, somaMesesData, type SituacaoDivida } from '../lib/dividas'
 import { dataPadrao, fmtDataLonga, fmtMesAno, fmtMoeda, fmtTaxa, fmtTaxaAno, fmtValor, parseNumero, simbolo } from '../lib/format'
 import { casasDaMoeda, dataPlausivel, erroDataFora, erroValorGrande, mascarar, paraCampoMoeda, valorGrandeDemais } from '../lib/dinheiro'
 import { cotacaoInvertida, infoMoeda, moedasUsaveis, type Taxas } from '../lib/moedas'
@@ -24,6 +24,7 @@ import { Modal, Palco, Segmentado } from './ui'
 import { CampoData, CampoSugestoes, Seletor } from './Escolhas'
 import { confirmar, perguntar } from '../lib/avisos'
 import { tx } from '../lib/textos'
+import { crescimentoPorDias, diasEntre, temJurosDeAtraso } from '../lib/jurosAtraso'
 
 type NovoLanc = Omit<Lancamento, 'id'>
 
@@ -802,6 +803,11 @@ interface FormDividaProps {
   semJuros?: boolean
   /** Juros de atraso (migração 22). A seção "Se atrasar" só aparece com `false`: passe `dividasSemAtraso` de `useDados`. */
   semAtraso?: boolean
+  /**
+   * Juros por dia e valor recebido (migração 36): "Sei quanto recebi", "% ao dia" e "R$ por dia" só aparecem com `false`:
+   * passe `dividasSemCusto` de `useDados`.
+   */
+  semCusto?: boolean
   aoCriar: (d: NovaDivida & { saldo: number; data: string; marcoInicial?: { data: string; saldo: number } }) => unknown
   aoEditar: (id: string, patch: Partial<Divida>) => void
   aoNovoSaldo: (id: string, data: string, saldo: number) => void
@@ -828,7 +834,7 @@ const inteiro = (t: string) => {
  * vence a próxima. Parcelada, pede o valor da parcela e quantas faltam (e, se souber, de quantas); sem parcela fixa,
  * pede quanto falta e, se houver, a data combinada. O vencimento da próxima monta o calendário de parcelas.
  */
-export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perfil, semMoeda, semJuros, semAtraso, aoCriar, aoEditar, aoNovoSaldo, aoMudarValor, aoMoverInicio, pagamentos, aoExcluir, aoFechar, definirParcela }: FormDividaProps) {
+export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perfil, semMoeda, semJuros, semAtraso, semCusto, aoCriar, aoEditar, aoNovoSaldo, aoMudarValor, aoMoverInicio, pagamentos, aoExcluir, aoFechar, definirParcela }: FormDividaProps) {
   // a dívida como foi cadastrada (parcela na moeda dela); `situacao.divida` já vem convertida para a moeda principal
   const d = situacao?.original
   const moedaInicial = d?.moeda || perfil.moeda
@@ -840,15 +846,23 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
   const [sentido, setSentido] = useState<'devo' | 'me_devem'>(d?.sentido ?? sentidoInicial ?? 'devo')
   const [descricao, setDescricao] = useState(d?.descricao ?? '')
   const [pessoa, setPessoa] = useState(d?.pessoa ?? '')
-  // juros por mês, como a pessoa digita ("2,5"); em branco = não sabe
+  // Juros do empréstimo: sem juros (ou não sabe), "sei quanto recebi" (migração 36: os juros já estão no valor a devolver)
+  // ou "sei a taxa" (juros por mês, migração 19, como a pessoa digita: "2,5")
+  const [modoJuros, setModoJuros] = useState<'nao' | 'recebi' | 'taxa'>(d?.valor_recebido != null ? 'recebi' : d?.juros_mes != null ? 'taxa' : 'nao')
   const [juros, setJuros] = useState(d?.juros_mes != null ? fmtTaxa(d.juros_mes) : '')
-  // "Se atrasar" (migração 22): como a dívida cresce enquanto está atrasada; recolhido até a pessoa abrir
-  const [atrasoAberto, setAtrasoAberto] = useState(d?.atraso_juros_mes != null)
-  const [atrasoJuros, setAtrasoJuros] = useState(d?.atraso_juros_mes != null ? fmtTaxa(d.atraso_juros_mes) : '')
-  const [atrasoMulta, setAtrasoMulta] = useState(fmtTaxa(d?.atraso_multa ?? 2))
+  const [recebido, setRecebido] = useState(d?.valor_recebido != null ? paraCampoMoeda(d.valor_recebido, moedaInicial) : '')
+  // Se atrasar (migração 22): nada muda, ou a dívida cresce sozinha enquanto está atrasada (% ao mês, % ao dia ou R$ por dia)
+  const temRegra = Boolean(d && temJurosDeAtraso(d))
+  const [atrasoModo, setAtrasoModo] = useState<'nao' | 'sim'>(temRegra ? 'sim' : 'nao')
+  const [atrasoUnidade, setAtrasoUnidade] = useState<'mes' | 'dia' | 'reais'>((d?.atraso_reais_dia ?? 0) > 0 ? 'reais' : d?.atraso_periodo === 'dia' ? 'dia' : 'mes')
+  const [atrasoJuros, setAtrasoJuros] = useState((d?.atraso_reais_dia ?? 0) > 0 ? paraCampoMoeda(d!.atraso_reais_dia!, moedaInicial)
+    : temRegra && (d?.atraso_juros_mes ?? 0) > 0 ? fmtTaxa(d!.atraso_juros_mes!) : '')
+  const [atrasoMulta, setAtrasoMulta] = useState(temRegra && (d?.atraso_multa ?? 0) > 0 ? fmtTaxa(d!.atraso_multa!) : '')
   const [atrasoTipo, setAtrasoTipo] = useState<'simples' | 'composto'>(d?.atraso_tipo ?? 'simples')
   const [atrasoBase, setAtrasoBase] = useState<'parcela' | 'saldo'>(d?.atraso_base ?? 'parcela')
   const [conferido, setConferido] = useState(d?.conferido_em ?? hoje)
+  // como cresce, sobre o quê e desde quando: o padrão serve quase sempre, então fica fechado
+  const [avancado, setAvancado] = useState(false)
   const [parcelado, setParcelado] = useState<'sim' | 'nao'>(d && !d.valor_parcela && !definirParcela ? 'nao' : 'sim')
   const [parcela, setParcela] = useState(d?.valor_parcela ? paraCampoMoeda(d.valor_parcela, moedaInicial) : '')
   const [faltam, setFaltam] = useState('')
@@ -879,11 +893,14 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
   const comJuros = semJuros === false && !recebe
   const jurosNum = juros.trim() ? parseNumero(juros.replace('%', '')) : null
   const jurosValidos = jurosNum !== null && jurosNum >= 0 && jurosNum <= 100
+  const comCusto = semCusto === false
   const comAtraso = semAtraso === false && !recebe
+  const emReais = atrasoUnidade === 'reais'
   const atrasoNum = atrasoJuros.trim() ? parseNumero(atrasoJuros.replace('%', '')) : null
   const multaNum = atrasoMulta.trim() ? parseNumero(atrasoMulta.replace('%', '')) : 0
-  const atrasoValido = atrasoNum !== null && atrasoNum >= 0 && atrasoNum <= 100
+  const atrasoValido = atrasoNum !== null && atrasoNum > 0 && (emReais ? !valorGrandeDemais(atrasoNum) : atrasoNum <= 100)
   const multaValida = multaNum !== null && multaNum >= 0 && multaNum <= 100
+  const recebidoNum = recebido.trim() ? parseNumero(recebido) : null
   const nFaltam = inteiro(faltam)
   const nTotal = inteiro(total)
   // Prévia do que vai ficar: "falta R$ 3.600 (12 × R$ 300) · última em out de 2027"
@@ -898,6 +915,26 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
           : tx('Falta pagar {0} ({1} × {2}) · última parcela em {3}', fmtMoeda(vp * n, moeda), n, fmtMoeda(vp, moeda), fmtMesAno(ua, um))
       })()
     : null
+
+  // Juros já combinados: quanto vai devolver (parcelas × total delas, ou o valor total) contra o que recebeu
+  const totalDeParcelasJuros = nTotal ?? (d ? d.total_parcelas ?? atuais?.total ?? null : nFaltam)
+  const totalUmaVez = d ? (valorTotal.trim() ? parseNumero(valorTotal) : totalAtual) : parseNumero(saldo)
+  const embutido = modoJuros === 'recebi' && recebidoNum
+    ? jurosEmbutidos(recebidoNum, parcelado === 'sim'
+      ? { parcela: vp ?? 0, parcelas: totalDeParcelasJuros ?? 0 }
+      : { total: totalUmaVez ?? 0, dias: proxima && comecou && proxima > comecou ? diasEntre(comecou, proxima) : null })
+    : null
+  // o exemplo do atraso: R$ 100 atrasados há 1 mês (taxa ao mês) ou 10 dias (por dia)
+  const exemploAtraso = atrasoModo === 'sim' && atrasoValido ? (() => {
+    const dias = atrasoUnidade === 'mes' ? 30 : 10
+    const base = 100
+    const cresce = crescimentoPorDias(base, dias, {
+      taxa: emReais ? 0 : atrasoNum!, periodo: atrasoUnidade === 'mes' ? 'mes' : 'dia', composto: !emReais && atrasoTipo === 'composto', reaisDia: emReais ? atrasoNum! : 0,
+    }) + (multaValida ? (base * (multaNum ?? 0)) / 100 : 0)
+    return dias === 30
+      ? tx('Exemplo: {0} atrasados há 1 mês viram {1}.', fmtMoeda(base, moeda), fmtMoeda(base + cresce, moeda))
+      : tx('Exemplo: {0} atrasados há {1} dias viram {2}.', fmtMoeda(base, moeda), dias, fmtMoeda(base + cresce, moeda))
+  })() : null
 
   const corDivida = recebe ? COR.entradas : COR.divida
   const faltaNoPalco = parcelado === 'sim'
@@ -914,18 +951,36 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
   // Valida tudo primeiro e só depois grava: uma validação que falha no meio não pode deixar metade da edição salva.
   const gravar = async () => {
     if (!descricao.trim()) return setErro(recebe ? tx('Dê um nome (ex.: computador que vendi).') : tx('Dê um nome para a dívida.'))
-    if (comJuros && juros.trim() && !jurosValidos) return setErro(tx('Digite os juros por mês de 0 a 100 (ex.: 2,5), ou deixe em branco se não souber.'))
-    // com o campo à mostra, em branco limpa os juros; em "me devem" ou sem a migração 19, a coluna nem entra
-    if (comAtraso && atrasoJuros.trim() && !atrasoValido) return setErro(tx('Digite os juros do atraso por mês de 0 a 100 (ex.: 13), ou deixe em branco.'))
-    if (comAtraso && atrasoValido && !multaValida) return setErro(tx('Digite a multa de 0 a 100 (ex.: 2).'))
-    if (comAtraso && atrasoValido && (!conferido || !dataPlausivel(conferido))) return setErro(tx('Escolha o dia em que os valores foram conferidos com o banco.'))
-    // sem a migração 22 as colunas nem entram; em branco (ou em "me devem"), a dívida deixa de crescer sozinha
+    if (comJuros && modoJuros === 'taxa' && !jurosValidos) return setErro(tx('Digite os juros por mês de 0 a 100 (ex.: 2,5), ou escolha "Sem juros".'))
+    if (comCusto && modoJuros === 'recebi' && (recebidoNum === null || recebidoNum <= 0 || valorGrandeDemais(recebidoNum))) {
+      return setErro(recebe ? tx('Digite quanto você emprestou.') : tx('Digite quanto você recebeu.'))
+    }
+    const atrasoLigado = comAtraso && atrasoModo === 'sim'
+    if (atrasoLigado && !atrasoValido) {
+      return setErro(emReais ? tx('Digite quanto é cobrado por dia de atraso.') : atrasoUnidade === 'dia'
+        ? tx('Digite os juros do atraso por dia, de 0 a 100 (ex.: 5).') : tx('Digite os juros do atraso por mês, de 0 a 100 (ex.: 13).'))
+    }
+    if (atrasoLigado && !multaValida) return setErro(tx('Digite a multa de 0 a 100 (ex.: 2), ou deixe em branco.'))
+    if (atrasoLigado && (!conferido || !dataPlausivel(conferido))) return setErro(tx('Escolha desde quando os juros do atraso contam (em Ajustes avançados).'))
+    // sem a migração 22 (ou 36) as colunas nem entram; "Nada muda" (ou "me devem") faz a dívida parar de crescer sozinha
     const atraso = semAtraso === false
-      ? (comAtraso && atrasoValido
-        ? { atraso_juros_mes: atrasoNum, atraso_multa: multaNum ?? 0, atraso_tipo: atrasoTipo, atraso_base: atrasoBase, conferido_em: conferido }
-        : { atraso_juros_mes: null })
+      ? (atrasoLigado
+        ? {
+            atraso_juros_mes: emReais ? 0 : atrasoNum, atraso_multa: multaNum ?? 0, atraso_tipo: emReais ? 'simples' as const : atrasoTipo,
+            atraso_base: atrasoBase, conferido_em: conferido,
+            ...(comCusto ? { atraso_periodo: atrasoUnidade === 'mes' ? 'mes' as const : 'dia' as const, atraso_reais_dia: emReais ? atrasoNum : null } : {}),
+          }
+        : { atraso_juros_mes: null, ...(comCusto ? { atraso_reais_dia: null } : {}) })
       : {}
-    const extras = { sentido, pessoa: pessoa.trim() || null, ...(semJuros === false ? { juros_mes: comJuros && jurosValidos ? jurosNum : null } : {}), ...atraso }
+    // os juros por mês valem para os conselhos: digitados ("sei a taxa") ou tirados do que recebeu (o banco aceita até 100)
+    const jurosDoContrato = modoJuros === 'taxa' && jurosValidos ? jurosNum
+      : modoJuros === 'recebi' && embutido?.aoMes != null ? Math.min(100, embutido.aoMes) : null
+    const extras = {
+      sentido, pessoa: pessoa.trim() || null,
+      ...(semJuros === false ? { juros_mes: comJuros ? jurosDoContrato : null } : {}),
+      ...(comCusto ? { valor_recebido: modoJuros === 'recebi' && recebidoNum ? recebidoNum : null } : {}),
+      ...atraso,
+    }
     if (!comecou) return setErro(tx('Escolha quando a dívida começou.'))
     if (!dataPlausivel(comecou) || (proxima && !dataPlausivel(proxima)) || (d && !dataPlausivel(data))) return setErro(erroDataFora())
     // muda o dia em que a dívida começou; chamado só depois das validações do caminho escolhido
@@ -1114,71 +1169,148 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
           )}
           </>
         )}
-        {comJuros && (
-          <label className="campo">
-            <span className="campo-rotulo">{tx('Juros por mês (%)')} <small>(opcional)</small></span>
-            <span className="campo-caixa">
-              <input inputMode="decimal" value={juros} maxLength={6} placeholder={tx('Ex.: 2,5')} onFocus={(e) => e.target.select()}
-                onChange={(e) => setJuros(e.target.value.replace(/[^\d.,]/g, ''))} />
-              <span className="prefixo">%</span>
-            </span>
-            <span className="campo-ajuda">{tx('Quanto a dívida cresce por mês. Está no contrato ou na fatura (procure por "juros ao mês" ou "a.m."). Se não souber, deixe em branco.')}</span>
-            {jurosValidos && jurosNum > 0 && (
-              <span className="campo-ajuda">{tx('{0}% ao mês ≈ {1}% ao ano', fmtTaxa(jurosNum), fmtTaxaAno(jurosAoAno(jurosNum)))}</span>
+        {(comJuros || comCusto || comAtraso) && (
+          <section className="form-juros" aria-label={tx('Juros')}>
+            <h3 className="form-juros-titulo"><Icone nome="calculadora" tamanho={17} /> {tx('Juros')}</h3>
+
+            {/* 1. juros do empréstimo: o que já está combinado desde o começo */}
+            {(comJuros || comCusto) && (
+              <div className="form-juros-parte">
+                <span className="campo-rotulo">{recebe ? tx('Você cobrou juros?') : tx('Tem juros no que você paga?')}</span>
+                <Segmentado rotulo={recebe ? tx('Você cobrou juros?') : tx('Tem juros no que você paga?')} valor={modoJuros} aoMudar={(v) => { setModoJuros(v); setErro(null) }}
+                  opcoes={[
+                    { id: 'nao', nome: tx('Sem juros') },
+                    ...(comCusto ? [{ id: 'recebi' as const, nome: recebe ? tx('Sei quanto emprestei') : tx('Sei quanto recebi') }] : []),
+                    ...(comJuros ? [{ id: 'taxa' as const, nome: tx('Sei a taxa') }] : []),
+                  ]} />
+                {modoJuros === 'nao' && (
+                  <span className="campo-ajuda">{recebe ? tx('Vão te devolver o mesmo valor que você emprestou.')
+                    : tx('Também serve se você não souber. Dá para mudar depois.')}</span>
+                )}
+                {modoJuros === 'recebi' && comCusto && (
+                  <label className="campo">
+                    <span className="campo-rotulo">{recebe ? tx('Quanto você emprestou') : tx('Quanto você recebeu')}</span>
+                    <span className="campo-caixa"><span className="prefixo">{simbolo(moeda)}</span>
+                      <input inputMode="decimal" value={recebido} onFocus={(e) => e.target.select()} placeholder="0,00"
+                        onChange={(e) => setRecebido(mascarar(e.target.value, casasDaMoeda(moeda)))} />
+                    </span>
+                    <span className="campo-ajuda">{recebe
+                      ? tx('O dinheiro que saiu da sua mão. O valor da dívida, acima, é o que vão te devolver: a diferença são os juros.')
+                      : tx('O dinheiro que chegou na sua mão (ou o preço à vista). O valor da dívida, acima, é o que você vai devolver: a diferença são os juros.')}</span>
+                    {embutido && (embutido.juros > 0 ? (
+                      <span className="form-juros-conta">
+                        {recebe
+                          ? tx('Vão te devolver {0} a mais: {1}% sobre o que você emprestou.', fmtMoeda(embutido.juros, moeda), fmtTaxa(embutido.sobreRecebido * 100))
+                          : tx('Você devolve {0} a mais: {1}% sobre o que recebeu.', fmtMoeda(embutido.juros, moeda), fmtTaxa(embutido.sobreRecebido * 100))}
+                        {embutido.aoMes !== null && embutido.aoMes > 0 && <> {tx('Dá cerca de {0}% ao mês.', fmtTaxa(embutido.aoMes))}</>}
+                        {embutido.aoMes === null && parcelado === 'nao' && <> {tx('Com a data combinada, o app mostra quanto isso dá por mês.')}</>}
+                      </span>
+                    ) : <span className="form-juros-conta">{tx('Sem juros: o valor a devolver é igual ao que foi recebido (ou menor).')}</span>)}
+                  </label>
+                )}
+                {modoJuros === 'taxa' && comJuros && (
+                  <label className="campo">
+                    <span className="campo-rotulo">{tx('Juros por mês (%)')}</span>
+                    <span className="campo-caixa">
+                      <input inputMode="decimal" value={juros} maxLength={6} placeholder={tx('Ex.: 2,5')} onFocus={(e) => e.target.select()}
+                        onChange={(e) => setJuros(e.target.value.replace(/[^\d.,]/g, ''))} />
+                      <span className="prefixo">%</span>
+                    </span>
+                    <span className="campo-ajuda">{tx('Está no contrato ou na fatura (procure por "juros ao mês" ou "a.m.").')}</span>
+                    {jurosValidos && jurosNum > 0 && (
+                      <span className="form-juros-conta">{tx('{0}% ao mês ≈ {1}% ao ano', fmtTaxa(jurosNum), fmtTaxaAno(jurosAoAno(jurosNum)))}</span>
+                    )}
+                  </label>
+                )}
+              </div>
             )}
-          </label>
-        )}
-        {comAtraso && (
-          <section className={`form-atraso ${atrasoAberto ? 'aberto' : ''}`}>
-            <button type="button" className="form-atraso-cab" aria-expanded={atrasoAberto} onClick={() => setAtrasoAberto((x) => !x)}>
-              <Icone nome="relogio" tamanho={16} />
-              <span><b>{tx('Se atrasar')}</b> <small>{atrasoValido && atrasoNum! > 0 ? tx('cresce {0}% ao mês', fmtTaxa(atrasoNum!)) : tx('(opcional)')}</small></span>
-              <Icone nome="abaixo" tamanho={16} />
-            </button>
-            {atrasoAberto && (
-              <div className="form-atraso-corpo">
-                <p className="campo-ajuda">{tx('Com isto, o app aumenta a dívida sozinho enquanto ela está atrasada, igual ao banco. É uma estimativa: quando quiser, confira o valor real na ficha da dívida.')}</p>
-                <div className="form-linha">
-                  <label className="campo">
-                    <span className="campo-rotulo">{tx('Juros do atraso (% ao mês)')}</span>
-                    <span className="campo-caixa">
-                      <input inputMode="decimal" value={atrasoJuros} maxLength={6} placeholder={tx('Ex.: 13')} onFocus={(e) => e.target.select()}
-                        onChange={(e) => setAtrasoJuros(e.target.value.replace(/[^\d.,]/g, ''))} />
-                      <span className="prefixo">%</span>
-                    </span>
-                    <span className="campo-ajuda">{tx('Quanto a dívida cresce por mês enquanto está atrasada (no contrato: "juros de mora" ou "encargos de atraso"). Em branco, ela não cresce sozinha.')}</span>
-                  </label>
-                  <label className="campo">
-                    <span className="campo-rotulo">{tx('Multa (%)')}</span>
-                    <span className="campo-caixa">
-                      <input inputMode="decimal" value={atrasoMulta} maxLength={6} placeholder="2" onFocus={(e) => e.target.select()}
-                        onChange={(e) => setAtrasoMulta(e.target.value.replace(/[^\d.,]/g, ''))} />
-                      <span className="prefixo">%</span>
-                    </span>
-                    <span className="campo-ajuda">{tx('Cobrada uma vez, quando a parcela vence sem ser paga. O comum é 2%.')}</span>
-                  </label>
-                </div>
-                <div className="campo">
-                  <span className="campo-rotulo">{tx('Como cresce')}</span>
-                  <Segmentado rotulo={tx('Como cresce')} valor={atrasoTipo} aoMudar={setAtrasoTipo}
-                    opcoes={[{ id: 'simples', nome: tx('Só sobre o valor devido') }, { id: 'composto', nome: tx('Juros sobre juros') }]} />
-                  <span className="campo-ajuda">{atrasoTipo === 'simples'
-                    ? tx('Ex.: R$ 100 atrasados com 10% ao mês viram R$ 120 depois de 2 meses.')
-                    : tx('Ex.: R$ 100 atrasados com 10% ao mês viram R$ 121 depois de 2 meses (os juros também rendem juros).')}</span>
-                </div>
-                <div className="campo">
-                  <span className="campo-rotulo">{tx('Cresce sobre')}</span>
-                  <Segmentado rotulo={tx('Cresce sobre')} valor={atrasoBase} aoMudar={setAtrasoBase}
-                    opcoes={[{ id: 'parcela', nome: tx('Cada parcela atrasada') }, { id: 'saldo', nome: tx('O saldo inteiro') }]} />
-                  <span className="campo-ajuda">{atrasoBase === 'parcela'
-                    ? tx('Só o que venceu e não foi pago cresce (empréstimos, crediários, Pix parcelado).')
-                    : tx('A dívida toda cresce, como num cartão de crédito em atraso.')}</span>
-                </div>
-                <div className="campo">
-                  <span className="campo-rotulo">{tx('Valores conferidos em')}</span>
-                  <CampoData valor={conferido} aoMudar={setConferido} rotulo={tx('Valores conferidos em')} />
-                  <span className="campo-ajuda">{tx('Dia em que o valor da dívida no app estava igual ao do banco. Os juros contam a partir dele.')}</span>
-                </div>
+
+            {/* 2. se atrasar: quanto a dívida cresce sozinha enquanto está atrasada */}
+            {comAtraso && (
+              <div className="form-juros-parte">
+                <span className="campo-rotulo">{tx('Se atrasar, a dívida aumenta?')}</span>
+                <Segmentado rotulo={tx('Se atrasar, a dívida aumenta?')} valor={atrasoModo} aoMudar={(v) => { setAtrasoModo(v); setErro(null) }}
+                  opcoes={[{ id: 'nao', nome: tx('Não, nada muda') }, { id: 'sim', nome: tx('Sim, cobra juros') }]} />
+                {atrasoModo === 'sim' && (
+                  <>
+                    <div className="campo">
+                      <span className="campo-rotulo">{tx('Como é cobrado')}</span>
+                      <Segmentado rotulo={tx('Como é cobrado')} valor={atrasoUnidade}
+                        aoMudar={(v) => {
+                          // trocar entre % e R$: o número digitado não vale mais
+                          if ((v === 'reais') !== emReais) setAtrasoJuros('')
+                          setAtrasoUnidade(v); setErro(null)
+                        }}
+                        opcoes={[
+                          { id: 'mes', nome: tx('% ao mês') },
+                          ...(comCusto ? [{ id: 'dia' as const, nome: tx('% ao dia') }, { id: 'reais' as const, nome: tx('{0} por dia', simbolo(moeda)) }] : []),
+                        ]} />
+                    </div>
+                    <div className="form-linha">
+                      <label className="campo">
+                        <span className="campo-rotulo">{emReais ? tx('Quanto por dia') : atrasoUnidade === 'dia' ? tx('Juros por dia (%)') : tx('Juros por mês (%)')}</span>
+                        <span className="campo-caixa">
+                          {emReais && <span className="prefixo">{simbolo(moeda)}</span>}
+                          <input inputMode="decimal" value={atrasoJuros} maxLength={emReais ? 14 : 6} placeholder={emReais ? '0,00' : atrasoUnidade === 'dia' ? tx('Ex.: 5') : tx('Ex.: 13')}
+                            onFocus={(e) => e.target.select()}
+                            onChange={(e) => setAtrasoJuros(emReais ? mascarar(e.target.value, casasDaMoeda(moeda)) : e.target.value.replace(/[^\d.,]/g, ''))} />
+                          {!emReais && <span className="prefixo">%</span>}
+                        </span>
+                      </label>
+                      <label className="campo">
+                        <span className="campo-rotulo">{tx('Multa (%)')} <small>(opcional)</small></span>
+                        <span className="campo-caixa">
+                          <input inputMode="decimal" value={atrasoMulta} maxLength={6} placeholder="0" onFocus={(e) => e.target.select()}
+                            onChange={(e) => setAtrasoMulta(e.target.value.replace(/[^\d.,]/g, ''))} />
+                          <span className="prefixo">%</span>
+                        </span>
+                      </label>
+                    </div>
+                    <span className="campo-ajuda">{tx('A multa é cobrada uma vez, quando a parcela vence sem ser paga. Banco costuma cobrar 2%.')}</span>
+                    {exemploAtraso && <p className="form-juros-conta">{exemploAtraso}</p>}
+                    <p className="campo-ajuda">{tx('O app aumenta a dívida sozinho enquanto ela está atrasada. É uma estimativa: quando quiser, confira o valor real na ficha da dívida.')}</p>
+                    <div className={`form-atraso ${avancado ? 'aberto' : ''}`}>
+                      <button type="button" className="form-atraso-cab" aria-expanded={avancado} onClick={() => setAvancado((x) => !x)}>
+                        <Icone nome="ajustes" tamanho={16} />
+                        <span><b>{tx('Ajustes avançados')}</b> <small>{[
+                          !emReais && (atrasoTipo === 'simples' ? tx('só sobre o valor devido') : tx('juros sobre juros')),
+                          !emReais && (atrasoBase === 'parcela' ? tx('cada parcela atrasada') : tx('o saldo inteiro')),
+                          tx('desde {0}', fmtDataLonga(conferido)),
+                        ].filter(Boolean).join(' · ')}</small></span>
+                        <Icone nome="abaixo" tamanho={16} />
+                      </button>
+                      {avancado && (
+                        <div className="form-atraso-corpo">
+                          {!emReais && (
+                            <>
+                              <div className="campo">
+                                <span className="campo-rotulo">{tx('Como cresce')}</span>
+                                <Segmentado rotulo={tx('Como cresce')} valor={atrasoTipo} aoMudar={setAtrasoTipo}
+                                  opcoes={[{ id: 'simples', nome: tx('Só sobre o valor devido') }, { id: 'composto', nome: tx('Juros sobre juros') }]} />
+                                <span className="campo-ajuda">{atrasoTipo === 'simples'
+                                  ? tx('Os juros contam só sobre o que está atrasado. É o mais comum.')
+                                  : tx('Os juros de cada dia (ou mês) também passam a render juros.')}</span>
+                              </div>
+                              <div className="campo">
+                                <span className="campo-rotulo">{tx('Cresce sobre')}</span>
+                                <Segmentado rotulo={tx('Cresce sobre')} valor={atrasoBase} aoMudar={setAtrasoBase}
+                                  opcoes={[{ id: 'parcela', nome: tx('Cada parcela atrasada') }, { id: 'saldo', nome: tx('O saldo inteiro') }]} />
+                                <span className="campo-ajuda">{atrasoBase === 'parcela'
+                                  ? tx('Só o que venceu e não foi pago cresce (empréstimos, crediários, Pix parcelado).')
+                                  : tx('A dívida toda cresce, como num cartão de crédito em atraso.')}</span>
+                              </div>
+                            </>
+                          )}
+                          <div className="campo">
+                            <span className="campo-rotulo">{tx('Os juros contam desde')}</span>
+                            <CampoData valor={conferido} aoMudar={setConferido} rotulo={tx('Os juros contam desde')} />
+                            <span className="campo-ajuda">{tx('Dia em que o valor da dívida no app estava certo (igual ao do banco ou ao combinado). Antes dele, nada é somado.')}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </section>

@@ -802,10 +802,28 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
     juros até o dia do pagamento viram valor real. Com partes, entram nas parcelas (como no "Conferi"); com parcela fixa (o
     calendário não tem onde guardar juros de uma parcela), os juros pagos viram uma saída à parte ("Juros do atraso –
     Dívida", sem dívida ligada, como os juros de fatura) e só o resto abate a dívida.
-  - **Formulário**: seção "Se atrasar" no `FormDivida`, só para "Eu devo", recolhida até a pessoa abrir: juros do atraso,
-    multa, "Como cresce" ("Só sobre o valor devido" × "Juros sobre juros"), "Cresce sobre" ("Cada parcela atrasada" × "O
-    saldo inteiro") e "Valores conferidos em" (abre com hoje). Só aparece com `semAtraso={c.d.dividasSemAtraso}`; sem a
-    migração 22 os campos somem e as dívidas não crescem sozinhas.
+  - **Por dia e em reais** (migração 36, `supabase/migracao-36-juros-por-dia-e-valor-recebido.sql`): `atraso_periodo` diz se
+    `atraso_juros_mes` vale por mês (`mes`, o de sempre, 30 dias) ou por dia (`dia`: simples = `base × taxa × dias`; composto =
+    `falta × ((1 + taxa)^dias − 1)`). `atraso_reais_dia` é um valor fixo por dia de atraso ("R$ 20 por dia"), cobrado uma vez
+    por dia para a dívida (não por parcela), desde a parcela atrasada mais antiga (ou da conferência, se depois), repartido
+    entre as atrasadas pelo que falta de cada uma; aí `atraso_juros_mes` = 0. `jurosQuePesam` converte os dois para % ao mês
+    (30 dias; o valor fixo como parte do que falta), para os conselhos compararem com as outras dívidas.
+- **Juros já combinados no empréstimo** (migração 36): `valor_recebido` é quanto a pessoa recebeu de fato (ou o preço à
+  vista; em "me devem", quanto emprestou). Pegou R$ 250 e devolve R$ 270: a dívida vale 270 e os R$ 20 são juros.
+  `jurosEmbutidos` (`lib/dividas.ts`) dá os juros, a parte sobre o recebido e, com prazo, o custo em % ao mês: em parcelas, a
+  taxa da tabela Price (parcelas a partir de um mês depois); de uma vez, `(total ÷ recebido)^(30 ÷ dias) − 1`, com os dias de
+  "Quando começou?" até "Combinado para". Esse % ao mês é gravado em `juros_mes` (até 100, o limite da coluna) para os
+  conselhos de juros funcionarem. A ficha mostra "Você recebeu R$ 250 e vai devolver R$ 270: R$ 20 de juros (8%)".
+- **Formulário** (`FormDivida`): um bloco **Juros** com duas perguntas, para os campos não se embaralharem.
+  1. *Tem juros no que você paga?* (em "me devem": *Você cobrou juros?*): **Sem juros** (também serve para "não sei"),
+     **Sei quanto recebi** (o valor recebido, com a conta dos juros e o % ao mês na hora) ou **Sei a taxa** (juros por mês,
+     com o equivalente ao ano). Ao editar, abre no que a dívida tem (`valor_recebido` → recebi; `juros_mes` → taxa).
+  2. *Se atrasar, a dívida aumenta?* (só "Eu devo"): **Não, nada muda** ou **Sim, cobra juros**. Com juros: *Como é
+     cobrado* (% ao mês, % ao dia ou R$ por dia), o valor, a multa (opcional, em branco = 0; "Banco costuma cobrar 2%") e um
+     exemplo calculado ("R$ 100 atrasados há 10 dias viram R$ 300"). "Como cresce", "Cresce sobre" e "Os juros contam desde"
+     (`conferido_em`, abre com hoje) ficam em **Ajustes avançados**, fechado, com o resumo do que está escolhido.
+  As flags `semJuros`, `semAtraso` e `semCusto` (`dividasSemJuros`, `dividasSemAtraso`, `dividasSemCusto` de `useDados`)
+  escondem o que a migração 19, 22 ou 36 ainda não criou; sem a 36 somem "Sei quanto recebi", "% ao dia" e "R$ por dia".
 
 ### 4.14 Metas (potes)
 

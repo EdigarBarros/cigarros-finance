@@ -23,6 +23,8 @@ const normDiv = (r: Divida): Divida => ({
   ...('juros_mes' in r ? { juros_mes: r.juros_mes == null ? null : num(r.juros_mes) } : {}),
   ...('atraso_juros_mes' in r ? { atraso_juros_mes: r.atraso_juros_mes == null ? null : num(r.atraso_juros_mes) } : {}),
   ...('atraso_multa' in r ? { atraso_multa: r.atraso_multa == null ? null : num(r.atraso_multa) } : {}),
+  ...('atraso_reais_dia' in r ? { atraso_reais_dia: r.atraso_reais_dia == null ? null : num(r.atraso_reais_dia) } : {}),
+  ...('valor_recebido' in r ? { valor_recebido: r.valor_recebido == null ? null : num(r.valor_recebido) } : {}),
 })
 const normSaldo = (r: SaldoDivida): SaldoDivida => ({ ...r, saldo: num(r.saldo) })
 const normParte = (r: ParteDivida): ParteDivida => ({
@@ -112,6 +114,10 @@ const semJurosDivida = <T extends object>(o: T) => { const { juros_mes: _j, ...r
 const CAMPOS_ATRASO = ['atraso_juros_mes', 'atraso_tipo', 'atraso_multa', 'atraso_base', 'conferido_em'] as const
 const semAtrasoDivida = <T extends object>(o: T) =>
   Object.fromEntries(Object.entries(o).filter(([k]) => !(CAMPOS_ATRASO as readonly string[]).includes(k))) as T
+/** Juros por dia e valor recebido, que só existem com a migração 36. */
+const CAMPOS_36 = ['valor_recebido', 'atraso_periodo', 'atraso_reais_dia'] as const
+const semCustoDivida = <T extends object>(o: T) =>
+  Object.fromEntries(Object.entries(o).filter(([k]) => !(CAMPOS_36 as readonly string[]).includes(k))) as T
 /** `partes` vem de outra tabela (divida_partes): nunca vai junto quando a dívida é gravada. */
 const semPartes = <T extends object>(o: T) => { const { partes: _p, promessas: _pr, ...resto } = o as T & { partes?: unknown; promessas?: unknown }; return resto as T }
 /** Promessa nova de pagamento, antes de ganhar id. */
@@ -119,7 +125,7 @@ export type NovaPromessa = Pick<PromessaDivida, 'data' | 'valor' | 'obs'>
 const normPromessa = (r: PromessaDivida): PromessaDivida => ({ ...r, valor: r.valor == null ? null : num(r.valor) })
 /** Parte nova de uma dívida, antes de ganhar id. */
 export type NovaParte = Omit<ParteDivida, 'id' | 'divida_id'>
-export type NovaDivida = Pick<Divida, 'descricao' | 'valor_parcela'> & Partial<Pick<Divida, (typeof EXTRAS_DIVIDA)[number] | 'moeda' | 'juros_mes' | (typeof CAMPOS_ATRASO)[number]>>
+export type NovaDivida = Pick<Divida, 'descricao' | 'valor_parcela'> & Partial<Pick<Divida, (typeof EXTRAS_DIVIDA)[number] | 'moeda' | 'juros_mes' | (typeof CAMPOS_ATRASO)[number] | (typeof CAMPOS_36)[number]>>
 
 /**
  * Lançamentos dos meses que o conselheiro e a análise completa leem (12 fechados + o atual) que caem fora do ano aberto: os
@@ -190,6 +196,8 @@ export function useDados(userId: string, ano: number) {
   const [dividasSemJuros, setDividasSemJuros] = useState(false)
   /** Sem a migração 22: as dívidas não crescem sozinhas com o atraso (a seção "Se atrasar" some). */
   const [dividasSemAtraso, setDividasSemAtraso] = useState(false)
+  /** Sem a migração 36: sem juros de atraso por dia nem o valor recebido (as opções somem do formulário). */
+  const [dividasSemCusto, setDividasSemCusto] = useState(false)
   /** Sem a migração 26: as partes não guardam quando começaram. */
   const [partesSemInicio, setPartesSemInicio] = useState(false)
   /** Lançamentos de outros anos ligados a uma conta do mês: ensinam ao app como cada conta aparece no extrato. */
@@ -205,7 +213,7 @@ export function useDados(userId: string, ano: number) {
   const recarregar = useCallback(async () => {
     const meu = ++pedidoAtual.current
     setCarregando(true)
-    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, xj, vc, rc, pt, xa, pr, xi] = await Promise.all([
+    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, xj, vc, rc, pt, xa, pr, xi, xc] = await Promise.all([
       // as tabelas que crescem sem parar são lidas em páginas (lerTudo): o Supabase corta em 1000 linhas
       lerTudo(() => supabase.from('lancamentos').select('*').eq('ano', ano).order('data').order('created_at').order('id')),
       lerTudo(() => supabase.from('meses').select('*').order('ano').order('mes')),
@@ -226,6 +234,7 @@ export function useDados(userId: string, ano: number) {
       supabase.from('dividas').select('atraso_juros_mes').limit(1),
       lerTudo(() => supabase.from('divida_promessas').select('*').order('created_at').order('id')),
       supabase.from('divida_partes').select('inicio').limit(1),
+      supabase.from('dividas').select('valor_recebido').limit(1),
     ])
     // Conta nova: ganha as categorias padrão (definidas no banco, migração 5). Isso precisa acontecer ANTES de qualquer setState:
     // um await no meio fazia o React desenhar o painel de verdade (perfil já lido, "carregando" ainda ligado) e só depois as
@@ -254,6 +263,7 @@ export function useDados(userId: string, ano: number) {
     marcarFalta(xm, setDividasSemMoeda)
     marcarFalta(xj, setDividasSemJuros)
     marcarFalta(xa, setDividasSemAtraso)
+    marcarFalta(xc, setDividasSemCusto)
     marcarFalta(xi, setPartesSemInicio)
     // sem a migração 21 a tabela não existe: as dívidas funcionam como antes, sem partes
     if (pt.error && faltaTabela(pt.error)) { setPartesSemTabela(true); setPartes([]) }
@@ -381,8 +391,9 @@ export function useDados(userId: string, ano: number) {
   const semMoedaSeFalta = <T extends object>(o: T) => (dividasSemMoeda ? semMoedaDivida(o) : o)
   const semJurosSeFalta = <T extends object>(o: T) => (dividasSemJuros ? semJurosDivida(o) : o)
   const semAtrasoSeFalta = <T extends object>(o: T) => (dividasSemAtraso ? semAtrasoDivida(o) : o)
-  /** Tira da dívida o que o banco ainda não tem (migrações 10, 14, 19 e 22 pendentes) antes de gravar. */
-  const paraBancoDivida = <T extends object>(o: T) => semPartes(semAtrasoSeFalta(semJurosSeFalta(semMoedaSeFalta(dividasSemExtras ? semExtrasDivida(o) : o))))
+  const semCustoSeFalta = <T extends object>(o: T) => (dividasSemCusto ? semCustoDivida(o) : o)
+  /** Tira da dívida o que o banco ainda não tem (migrações 10, 14, 19, 22 e 36 pendentes) antes de gravar. */
+  const paraBancoDivida = <T extends object>(o: T) => semPartes(semCustoSeFalta(semAtrasoSeFalta(semJurosSeFalta(semMoedaSeFalta(dividasSemExtras ? semExtrasDivida(o) : o)))))
   const addLanc = async (novo: Omit<Lancamento, 'id'>): Promise<Lancamento | undefined> => {
     const { data, error } = await gravar(() => supabase.from('lancamentos').insert(paraBanco(novo)).select().single())
     if (error) {
@@ -900,6 +911,7 @@ export function useDados(userId: string, ano: number) {
     dividasSemMoeda,
     dividasSemJuros,
     dividasSemAtraso, conferirDivida,
+    dividasSemCusto,
     partesSemTabela, partesSemInicio, addPartes, updParte, updPartes, delPartes,
     promessasSemTabela, addPromessa, delPromessa,
     lancs, lancsRecentes, meses: mesesDosBancos, dividas: dividasComPartes, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,

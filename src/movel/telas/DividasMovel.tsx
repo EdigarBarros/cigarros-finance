@@ -131,7 +131,7 @@ export function DividasMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom, c
       {conferirConta && <FormBaixa c={c} s={conferirConta} conferir aoFechar={() => setConferirConta(null)} />}
       {editando && (
         <FormDivida ano={c.ano} mes={c.mes} situacao={editando === 'nova' ? undefined : editando} sentidoInicial={lado}
-          semExtras={c.d.dividasSemExtras} perfil={c.perfil} semMoeda={c.d.dividasSemMoeda} semJuros={c.d.dividasSemJuros} semAtraso={c.d.dividasSemAtraso}
+          semExtras={c.d.dividasSemExtras} perfil={c.perfil} semMoeda={c.d.dividasSemMoeda} semJuros={c.d.dividasSemJuros} semAtraso={c.d.dividasSemAtraso} semCusto={c.d.dividasSemCusto}
           aoCriar={async (d) => { if (d.sentido && d.sentido !== lado) setLado(d.sentido); return c.d.addDivida(d) }}
           aoEditar={c.d.updDivida} aoNovoSaldo={c.d.addSaldo} aoMudarValor={c.d.ajustarValorDivida} aoMoverInicio={c.d.moverInicioDivida}
           pagamentos={c.d.pagamentos} aoExcluir={c.d.delDivida} aoFechar={() => setEditando(null)} />
