@@ -1,7 +1,7 @@
 /**
- * Os cartões ("widgets") da Início do celular e o modelo de cada jeito de ver. Puro: quem desenha cada um é
- * src/movel/widgets.tsx. No celular, o jeito (simples, equilibrado, detalhado) é o ponto de partida: diz quais cartões
- * aparecem e em que ordem.
+ * Os cartões ("widgets") da Início do celular, o modelo de cada jeito de ver e a arrumação da pessoa. Puro: quem desenha
+ * cada um é src/movel/widgets.tsx. No celular, o jeito (simples, equilibrado, detalhado) é o ponto de partida: diz quais
+ * cartões aparecem e em que ordem; depois a pessoa adiciona, tira e muda a ordem (guardado em perfis.celular, migração 35).
  */
 import type { Detalhe } from './types'
 
@@ -48,4 +48,98 @@ export function linhasDaGrade(ids: IdWidget[]): LinhaDeWidgets[] {
     else linhas.push({ tipo: 'sozinho', ids: [id] })
   }
   return linhas
+}
+
+/** O que a pessoa arrumou na Início do celular. */
+export interface ArrumacaoInicio {
+  /** O jeito de ver em que a arrumação foi feita: trocar de jeito recomeça pelo modelo do novo. */
+  base: Detalhe
+  /** Os cartões na ordem em que aparecem (inclusive os que agora não têm o que mostrar: guardam o lugar). */
+  ordem: IdWidget[]
+  /** Cartões do modelo que a pessoa tirou: não voltam sozinhos. */
+  removidos: IdWidget[]
+  /** Quando foi arrumada (ISO): entre a cópia do aparelho e a do banco, vale a mais recente. */
+  em: string
+}
+
+/** Tudo o que o celular guarda da pessoa (perfis.celular). */
+export interface Celular { v: 1; inicio?: ArrumacaoInicio }
+
+const ehId = (x: unknown): x is IdWidget => typeof x === 'string' && x in TAMANHO
+const semRepetir = <T,>(xs: T[]) => [...new Set(xs)]
+
+/** Lê o que veio do banco ou do aparelho; o que não tiver o formato certo (ou for de outra versão do app) é ignorado. */
+export function normCelular(x: unknown): Celular | null {
+  if (!x || typeof x !== 'object') return null
+  const i = (x as { inicio?: unknown }).inicio
+  if (!i || typeof i !== 'object') return { v: 1 }
+  const a = i as Partial<Record<keyof ArrumacaoInicio, unknown>>
+  if (!['simples', 'equilibrado', 'detalhado'].includes(a.base as string) || !Array.isArray(a.ordem)) return { v: 1 }
+  return {
+    v: 1,
+    inicio: {
+      base: a.base as Detalhe,
+      ordem: semRepetir(a.ordem.filter(ehId)),
+      removidos: semRepetir(Array.isArray(a.removidos) ? a.removidos.filter(ehId) : []),
+      em: typeof a.em === 'string' ? a.em : '',
+    },
+  }
+}
+
+/** Entre duas cópias (aparelho e banco), a arrumada por último. */
+export const maisRecente = (a: Celular | null, b: Celular | null): Celular | null =>
+  !a?.inicio ? b ?? a : !b?.inicio ? a : (a.inicio.em >= b.inicio.em ? a : b)
+
+/**
+ * Os cartões da Início, na ordem, antes de tirar os que não têm o que mostrar agora:
+ * - sem arrumação (ou feita em outro jeito de ver), vale o modelo do jeito;
+ * - cartão que a versão do app não conhece some; repetido conta uma vez;
+ * - cartão do modelo que a pessoa nunca viu nem tirou (cartão novo do app) entra junto do vizinho que ele tem no modelo.
+ */
+export function cartoesDaInicio(a: ArrumacaoInicio | undefined, detalhe: Detalhe): IdWidget[] {
+  const modelo = MODELOS[detalhe]
+  if (!a || a.base !== detalhe) return [...modelo]
+  const lista = semRepetir(a.ordem.filter(ehId))
+  modelo.forEach((id, i) => {
+    if (lista.includes(id) || a.removidos.includes(id)) return
+    const antes = modelo.slice(0, i).reverse().find((x) => lista.includes(x))
+    const depois = modelo.slice(i + 1).find((x) => lista.includes(x))
+    if (antes) lista.splice(lista.indexOf(antes) + 1, 0, id)
+    else if (depois) lista.splice(lista.indexOf(depois), 0, id)
+    else lista.push(id)
+  })
+  return lista
+}
+
+const arrumada = (detalhe: Detalhe, ordem: IdWidget[], removidos: IdWidget[], em: string): ArrumacaoInicio =>
+  ({ base: detalhe, ordem, removidos: semRepetir(removidos), em })
+
+/** Põe o cartão no fim da Início (e tira da lista dos removidos). */
+export function adicionarCartao(a: ArrumacaoInicio | undefined, detalhe: Detalhe, id: IdWidget, em: string): ArrumacaoInicio {
+  const lista = cartoesDaInicio(a, detalhe).filter((x) => x !== id)
+  const removidos = a?.base === detalhe ? a.removidos.filter((x) => x !== id) : []
+  return arrumada(detalhe, [...lista, id], removidos, em)
+}
+
+/** Tira o cartão da Início; ele vai para a folha "Adicionar cartões" e não volta sozinho. */
+export function removerCartao(a: ArrumacaoInicio | undefined, detalhe: Detalhe, id: IdWidget, em: string): ArrumacaoInicio {
+  const lista = cartoesDaInicio(a, detalhe).filter((x) => x !== id)
+  const removidos = a?.base === detalhe ? a.removidos : []
+  return arrumada(detalhe, lista, [...removidos, id], em)
+}
+
+/**
+ * Sobe (-1) ou desce (+1) o cartão uma posição entre os que estão na tela (`visiveis`): trocar com um cartão escondido
+ * (sem nada para mostrar agora) pareceria que o botão não fez nada.
+ */
+export function moverCartao(a: ArrumacaoInicio | undefined, detalhe: Detalhe, id: IdWidget, passo: -1 | 1, visiveis: IdWidget[], em: string): ArrumacaoInicio | null {
+  const i = visiveis.indexOf(id)
+  const vizinho = visiveis[i + passo]
+  if (i < 0 || !vizinho) return null
+  const lista = cartoesDaInicio(a, detalhe)
+  const x = lista.indexOf(id), y = lista.indexOf(vizinho)
+  if (x < 0 || y < 0) return null
+  lista[x] = vizinho
+  lista[y] = id
+  return arrumada(detalhe, lista, a?.base === detalhe ? a.removidos : [], em)
 }

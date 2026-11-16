@@ -17,6 +17,7 @@ import type { IdWidget } from '../lib/widgets'
 import type { MesDaInicio } from '../lib/useMesDaInicio'
 import type { Tarefa } from '../lib/paraFazer'
 import type { Ctx } from '../pages/contexto'
+import type { Modulo } from '../lib/types'
 import { CartaoWidget, IconeRedondo, LinhaDeLista } from './primitivas'
 
 export interface Contexto {
@@ -27,6 +28,13 @@ export interface Contexto {
 }
 
 interface DefWidget {
+  /** Nome, ícone e uma linha sobre o cartão (a folha "Adicionar cartões" e o modo Arrumar mostram). */
+  titulo: () => string
+  icone: string
+  descricao: () => string
+  /** O módulo de que o cartão depende: desligado, a folha oferece ligar. */
+  modulo?: Modulo
+  /** Tem o que mostrar agora (módulo ligado e dados no mês). Sem isso o cartão some, mas guarda o lugar. */
   disponivel: (x: Contexto) => boolean
   Corpo: (x: Contexto) => ReactNode
 }
@@ -67,6 +75,7 @@ function GraficoDoGasto({ m }: { m: MesDaInicio }) {
 
 export const WIDGETS: Record<IdWidget, DefWidget> = {
   contas: {
+    titulo: () => tx('Contas a pagar'), icone: 'calendario', descricao: () => tx('O que vence no mês, na ordem do vencimento.'), modulo: 'contas',
     disponivel: ({ c, m }) => m.tarefas.lista.length > 0 || c.v.contas,
     Corpo: ({ c, m, agir }) => {
       const lista = m.tarefas.lista
@@ -84,6 +93,7 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
   },
 
   'gasto-mes': {
+    titulo: () => tx('Gasto do mês'), icone: 'enviar', descricao: () => tx('Quanto saiu e a linha do mês até hoje.'),
     disponivel: ({ c, m }) => !c.contaNova && m.momento !== 'futuro',
     Corpo: ({ c, m }) => (
       <CartaoWidget className="widget-gasto">
@@ -103,6 +113,7 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
   },
 
   ultimos: {
+    titulo: () => tx('Últimos lançamentos'), icone: 'lista', descricao: () => tx('Os lançamentos mais recentes do mês.'),
     disponivel: ({ c }) => !c.contaNova,
     Corpo: ({ c, m }) => {
       const lista = [...c.lancsMes].sort((a, b) => (b.data ?? '').localeCompare(a.data ?? '')).slice(0, LIMITE)
@@ -132,6 +143,7 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
   },
 
   categorias: {
+    titulo: () => tx('Para onde foi o dinheiro'), icone: 'relatorio', descricao: () => tx('As categorias em que você mais gastou.'),
     disponivel: ({ m }) => Boolean((m.comparacao ?? m.gastosDoPeriodo)?.atual),
     Corpo: ({ c, m }) => {
       const periodo = (m.comparacao ?? m.gastosDoPeriodo)!
@@ -157,6 +169,7 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
   },
 
   orientacao: {
+    titulo: () => tx('Consultor'), icone: 'bussola', descricao: () => tx('A nota do seu dinheiro e as dicas do momento.'),
     disponivel: ({ c }) => !c.contaNova,
     Corpo: ({ c }) => {
       const { nota, rotulo } = c.analise
@@ -179,6 +192,7 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
   },
 
   'entrou-saiu': {
+    titulo: () => tx('Entrou e saiu'), icone: 'trocar', descricao: () => tx('Os totais do mês, lado a lado.'),
     disponivel: ({ c }) => !c.contaNova,
     Corpo: ({ c, m }) => (
       <CartaoWidget className="widget-pequeno">
@@ -193,6 +207,7 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
   },
 
   'gasto-dia': {
+    titulo: () => tx('Gasto por dia'), icone: 'relogio', descricao: () => tx('Quanto você gasta, em média, por dia.'),
     disponivel: ({ c, m }) => !c.contaNova && decorridos(m) > 0,
     Corpo: ({ c, m }) => {
       const dias = decorridos(m)
@@ -209,6 +224,7 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
   },
 
   nota: {
+    titulo: () => tx('Saúde do dinheiro'), icone: 'escudo', descricao: () => tx('A nota de 0 a 100 do consultor.'),
     disponivel: ({ c }) => !c.contaNova && c.analise.nota !== null,
     Corpo: ({ c }) => (
       <CartaoWidget className="widget-pequeno">
@@ -222,6 +238,7 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
   },
 
   comparacao: {
+    titulo: () => tx('Comparação com o mês anterior'), icone: 'historico', descricao: () => tx('Se você está gastando mais ou menos.'),
     disponivel: ({ m }) => Boolean(m.pilulaGastos),
     Corpo: ({ c, m }) => (
       <CartaoWidget className="widget-pequeno">
@@ -234,6 +251,7 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
   },
 
   dividas: {
+    titulo: () => tx('Dívidas'), icone: 'divida', descricao: () => tx('Quanto falta pagar em cada uma.'), modulo: 'dividas',
     disponivel: ({ c }) => c.v.dividas && c.situacao.some((s) => s.restante > 0),
     Corpo: ({ c }) => {
       const abertas = c.situacao.filter((s) => s.restante > 0)
@@ -257,6 +275,7 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
   },
 
   receber: {
+    titulo: () => tx('Te devem'), icone: 'receber', descricao: () => tx('Quem te deve e quanto falta receber.'), modulo: 'dividas',
     disponivel: ({ c }) => c.v.dividas && c.aReceber.some((s) => s.restante > 0),
     Corpo: ({ c }) => {
       const abertas = c.aReceber.filter((s) => s.restante > 0)
@@ -274,6 +293,7 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
   },
 
   metas: {
+    titulo: () => tx('Metas'), icone: 'meta', descricao: () => tx('Quanto você já juntou em cada meta.'), modulo: 'metas',
     disponivel: ({ c, m }) => c.v.metas && !c.d.metasSemTabela && m.situacaoMetas.length > 0,
     Corpo: ({ c, m }) => (
       <CartaoWidget titulo={tx('Metas')} aoAbrir={() => c.irPara('metas')}>
@@ -288,6 +308,7 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
   },
 
   guardado: {
+    titulo: () => tx('Dinheiro guardado'), icone: 'cofre', descricao: () => tx('O saldo de cada banco.'), modulo: 'bancos',
     disponivel: ({ c }) => c.v.bancos && c.d.bancos.length > 0,
     Corpo: ({ c }) => {
       const bancos = [...c.d.bancos].sort((a, b) => caixaDoBanco(c.mesEf.caixa, b.id) - caixaDoBanco(c.mesEf.caixa, a.id))
@@ -306,6 +327,7 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
   },
 
   cartoes: {
+    titulo: () => tx('Cartões'), icone: 'cartao', descricao: () => tx('A fatura de cada cartão no mês.'), modulo: 'cartoes',
     disponivel: ({ c }) => c.v.cartoes && c.faturas.length > 0,
     Corpo: ({ c }) => (
       <CartaoWidget titulo={tx('Cartões')} aoAbrir={() => c.irPara('cartoes')}>

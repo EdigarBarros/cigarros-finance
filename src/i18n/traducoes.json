@@ -15142,5 +15142,117 @@
   "Ajustes": {
     "en": "Settings",
     "es": "Ajustes"
+  },
+  "O que vence no mês, na ordem do vencimento.": {
+    "en": "What is due this month, by due date.",
+    "es": "Lo que vence en el mes, por fecha de vencimiento."
+  },
+  "Gasto do mês": {
+    "en": "Monthly spending",
+    "es": "Gasto del mes"
+  },
+  "Quanto saiu e a linha do mês até hoje.": {
+    "en": "How much went out and the month so far.",
+    "es": "Cuánto salió y la línea del mes hasta hoy."
+  },
+  "Os lançamentos mais recentes do mês.": {
+    "en": "The most recent entries of the month.",
+    "es": "Los registros más recientes del mes."
+  },
+  "As categorias em que você mais gastou.": {
+    "en": "The categories where you spent the most.",
+    "es": "Las categorías en las que más gastaste."
+  },
+  "A nota do seu dinheiro e as dicas do momento.": {
+    "en": "Your money score and current tips.",
+    "es": "La nota de tu dinero y los consejos del momento."
+  },
+  "Entrou e saiu": {
+    "en": "In and out",
+    "es": "Entró y salió"
+  },
+  "Os totais do mês, lado a lado.": {
+    "en": "The month totals, side by side.",
+    "es": "Los totales del mes, lado a lado."
+  },
+  "Quanto você gasta, em média, por dia.": {
+    "en": "How much you spend per day, on average.",
+    "es": "Cuánto gastas, en promedio, por día."
+  },
+  "A nota de 0 a 100 do consultor.": {
+    "en": "The advisor score from 0 to 100.",
+    "es": "La nota de 0 a 100 del asesor."
+  },
+  "Se você está gastando mais ou menos.": {
+    "en": "Whether you are spending more or less.",
+    "es": "Si estás gastando más o menos."
+  },
+  "Quanto falta pagar em cada uma.": {
+    "en": "How much is left to pay on each.",
+    "es": "Cuánto falta pagar en cada una."
+  },
+  "Quem te deve e quanto falta receber.": {
+    "en": "Who owes you and how much is left.",
+    "es": "Quién te debe y cuánto falta recibir."
+  },
+  "Quanto você já juntou em cada meta.": {
+    "en": "How much you have saved for each goal.",
+    "es": "Cuánto ya juntaste para cada meta."
+  },
+  "O saldo de cada banco.": {
+    "en": "The balance of each bank.",
+    "es": "El saldo de cada banco."
+  },
+  "A fatura de cada cartão no mês.": {
+    "en": "Each card bill this month.",
+    "es": "La factura de cada tarjeta en el mes."
+  },
+  "Subir o cartão {0}": {
+    "en": "Move card {0} up",
+    "es": "Subir la tarjeta {0}"
+  },
+  "Descer o cartão {0}": {
+    "en": "Move card {0} down",
+    "es": "Bajar la tarjeta {0}"
+  },
+  "Tirar o cartão {0}": {
+    "en": "Remove card {0}",
+    "es": "Quitar la tarjeta {0}"
+  },
+  "Voltar ao modelo {0}": {
+    "en": "Back to the {0} layout",
+    "es": "Volver al modelo {0}"
+  },
+  "Adicionar cartões": {
+    "en": "Add cards",
+    "es": "Agregar tarjetas"
+  },
+  "Arrumar": {
+    "en": "Arrange",
+    "es": "Ordenar"
+  },
+  "Bancos": {
+    "en": "Banks",
+    "es": "Bancos"
+  },
+  "Ao adicionar, liga {0}": {
+    "en": "Adding it turns on {0}",
+    "es": "Al agregarla, se activa {0}"
+  },
+  "Aparece quando houver dados no mês": {
+    "en": "Shows up when the month has data",
+    "es": "Aparece cuando haya datos en el mes"
+  },
+  "Adicionar o cartão {0}": {
+    "en": "Add card {0}",
+    "es": "Agregar la tarjeta {0}"
+  },
+  "Todos os cartões já estão na sua Início.": {
+    "en": "All cards are already on your Home.",
+    "es": "Todas las tarjetas ya están en tu Inicio."
+  },
+  "Já estão na sua Início e aparecem quando tiverem o que mostrar: {0}.": {
+    "en": "Already on your Home, they show up when there is something to show: {0}.",
+    "es": "Ya están en tu Inicio y aparecen cuando tengan algo que mostrar: {0}."
   }
 }

@@ -1,7 +1,8 @@
 // Moldura e Início do celular (src/movel): nos três jeitos, em 320, 360, 390 e 430 px, nos temas escuro e claro e com a
 // fonte a 150% e 200%: sem rolagem de lado, nada fora da tela, toques do topo, das ações e das abas com 44 px, e o fim da
 // tela acima da barra de baixo. Depois: o topo que desliza (ponto ativo e cor), o modelo de cada jeito, a conta tocada abre
-// a conferência, as folhas "Mais", da conta e dos meses, os alvos do tutorial e o computador sem nada do celular.
+// a conferência, as folhas "Mais", da conta e dos meses, os alvos do tutorial, adicionar/tirar/subir cartões (gravado na
+// conta, com e sem a migração 35, e de volta depois de recarregar) e o computador sem nada do celular.
 // Uso (depois do build com fake.supabase.co do README desta pasta): node scripts/app-de-demonstracao/testar-movel.cjs
 const path=require('path')
 const R=path.join(__dirname,'..','..')
@@ -101,8 +102,55 @@ const medir=()=>{
   // busca do topo leva aos lançamentos
   await p.locator('.topo-movel-busca input').fill('notebook'); await esperar(p,1200)
   ok(await p.evaluate(()=>location.hash)==='#/lancamentos', 'buscar no topo abre os lançamentos')
+  await t.fechar()
+
+  // ---------- escolher, tirar e mudar a ordem dos cartões (gravado na conta, migração 35) ----------
+  for (const semColuna of [false, true]) {
+    const nome = semColuna ? 'sem a migração 35' : 'com a migração 35'
+    const t = await iniciar({ perfil: {...demo.perfil, detalhe:'simples'}, dados: demo.dados, porta: 4950+Math.floor(Math.random()*40), dpr: 1, toque:true,
+      semColunas: semColuna ? { perfis: ['celular'] } : {} })
+    const p=t.page
+    await p.clock.install({ time: new Date('2026-11-16T10:00:00') })
+    await p.setViewportSize({ width: 390, height: 800 })
+    await abrir(p, `${t.url}#/inicio`)
+    const ordem=()=>p.evaluate(()=>[...document.querySelectorAll('.widgets-movel [data-cartao]')].map(e=>e.dataset.cartao))
+    const antes=await ordem()
+    await p.locator('.cartoes-adicionar').click(); await esperar(p)
+    ok(await p.locator('.previa-cartao').count()>=5, `${nome}: a folha mostra os cartões que faltam`)
+    ok(await p.locator('.abas-movel-nova').isVisible()===false, `${nome}: com a folha aberta a barra de abas sai da frente`)
+    await p.locator('.previa-cartao-botao[aria-label*="Gasto do mês"]').click(); await esperar(p,900)
+    const comGasto=await ordem()
+    ok(comGasto.at(-1)==='gasto-mes' && comGasto.length===antes.length+1, `${nome}: o cartão novo entra no fim (${comGasto.join(', ')})`)
+    await p.locator('.cartoes-arrumar').click(); await esperar(p)
+    await p.locator('button[aria-label="Subir o cartão Gasto do mês"]').click(); await esperar(p,300)
+    await p.locator('button[aria-label="Tirar o cartão Metas"]').click(); await esperar(p,300)
+    await p.getByRole('button', { name: 'Pronto' }).click(); await esperar(p,900)
+    const arrumada=await ordem()
+    const subiu=[...comGasto]; const i=subiu.indexOf('gasto-mes'); [subiu[i-1],subiu[i]]=[subiu[i],subiu[i-1]]; const esperada=subiu.filter(x=>x!=='metas')
+    ok(JSON.stringify(arrumada)===JSON.stringify(esperada), `${nome}: subir e tirar mudam a tela (${arrumada.join(', ')})`)
+    const gravado=t.log.filter(x=>x[0]==='PATCH'&&x[1]==='perfis'&&x[2].celular).at(-1)
+    if (!semColuna) ok(gravado && JSON.stringify(gravado[2].celular.inicio.ordem)===JSON.stringify(arrumada), 'a arrumação vai para a conta (perfis.celular)')
+    ok(await p.locator('.alerta[role="alert"]').count()===0, `${nome}: nenhum aviso de erro`)
+    await abrir(p, `${t.url}#/inicio`)
+    ok(JSON.stringify(await ordem())===JSON.stringify(arrumada), `${nome}: depois de recarregar, a mesma arrumação`)
+    if (!semColuna) {
+      // outro aparelho (sem a cópia local): a arrumação vem da conta
+      await p.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('opuscash-celular-')).forEach(k=>localStorage.removeItem(k)))
+      await abrir(p, `${t.url}#/inicio`)
+      ok(JSON.stringify(await ordem())===JSON.stringify(arrumada), 'em outro aparelho, a arrumação vem da conta')
+      await p.locator('.cartoes-arrumar').click(); await esperar(p)
+      await p.locator('button', { hasText: 'Voltar ao modelo' }).click(); await esperar(p,900)
+      ok(JSON.stringify(await ordem())===JSON.stringify(antes), '"Voltar ao modelo" devolve os cartões do jeito')
+    }
+    await t.fechar()
+  }
+
+  {
+  const t = await iniciar({ perfil: {...demo.perfil, detalhe:'equilibrado'}, dados: demo.dados, porta: 4950+Math.floor(Math.random()*40), dpr: 1, toque:true })
+  const p=t.page
   // computador: nada do celular
   await p.setViewportSize({ width: 1280, height: 900 }); await abrir(p, `${t.url}#/inicio`)
   ok(await p.locator('.app.movel, .topo-movel, .hero-movel').count()===0 && await p.locator('.lateral').count()===1, 'no computador continua a tela de antes')
   await t.fechar()
+  }
 })().catch(e=>{console.error(e);process.exit(1)})
