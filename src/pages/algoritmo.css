@@ -113,30 +113,29 @@
 :root[data-movimento='reduzido'] .ag :is(.ag-hud > span i, .ag-rotulo i, .ag-legenda) { animation: none; transition: none; }
 
 /* ─── modo claro ───
-   No claro o motor é desenhado com uma paleta própria (Algoritmo.tsx, `paleta`): cores por cima do fundo claro, o azul
-   e o verde-água da marca na rede, as cores de cada tipo mais fortes. Aqui: o fundo claro com um toque de azul e
-   verde-água, os textos escuros e as peças em HTML no claro. */
+   O claro é o escuro invertido (Algoritmo.tsx, `paleta`): papel creme no lugar do preto, nanquim no desenho e o laranja
+   como a única cor de destaque. Aqui: o fundo de papel com uma luz laranja bem fraca, os textos em nanquim e as peças em
+   HTML no mesmo par. Se mudar o fundo, mude também a cópia dele em apresentacao.css (a passagem do carrossel). */
 :root[data-tema='claro'] .ag {
-  --ouro: #0b8f74; --ouro-forte: #14c9a0; --tinta: #14213d; --tinta-2: rgba(20, 33, 61, .7); --breu: #f2f6fb;
+  --ouro: #c4500a; --ouro-forte: #de620a; --tinta: #1e1812; --tinta-2: rgba(30, 24, 18, .7); --breu: #f6f0e4;
 }
 :root[data-tema='claro'] .ag-sticky {
   background:
-    radial-gradient(55% 50% at 64% 48%, rgba(31, 142, 241, .09), transparent 75%),
-    radial-gradient(40% 45% at 100% 90%, rgba(20, 201, 160, .1), transparent 70%),
-    radial-gradient(40% 45% at 30% 10%, rgba(61, 75, 224, .06), transparent 70%);
+    radial-gradient(55% 50% at 64% 48%, rgba(222, 98, 10, .07), transparent 75%),
+    radial-gradient(40% 45% at 100% 90%, rgba(196, 80, 8, .05), transparent 70%);
 }
-:root[data-tema='claro'] .ag-sticky::after { background: linear-gradient(90deg, rgba(242, 246, 251, .95) 0%, rgba(242, 246, 251, .72) 24%, transparent 42%); }
+:root[data-tema='claro'] .ag-sticky::after { background: linear-gradient(90deg, rgba(246, 240, 228, .95) 0%, rgba(246, 240, 228, .72) 24%, transparent 42%); }
 :root[data-tema='claro'] .ag-compara {
-  background: rgba(255, 255, 255, .94); border-color: rgba(31, 142, 241, .3);
-  box-shadow: 0 0 0 4px rgba(31, 142, 241, .05), 0 14px 30px -18px rgba(20, 40, 80, .4);
+  background: rgba(255, 252, 245, .96); border-color: rgba(222, 98, 10, .35);
+  box-shadow: 0 0 0 4px rgba(222, 98, 10, .05), 0 14px 30px -18px rgba(60, 35, 10, .4);
 }
-:root[data-tema='claro'] .ag-compara small { color: rgba(20, 33, 61, .6); }
-:root[data-tema='claro'] .ag-compara.bom b { color: #0f9f6e; }
+:root[data-tema='claro'] .ag-compara small { color: rgba(30, 24, 18, .6); }
+:root[data-tema='claro'] .ag-compara.bom b { color: #10a05f; }
 :root[data-tema='claro'] .ag-hud b { text-shadow: none; }
-:root[data-tema='claro'] .ag-selos span { background: rgba(255, 255, 255, .92); border-color: rgba(31, 142, 241, .25); }
-:root[data-tema='claro'] .ag-rotulo { background: rgba(20, 201, 160, .1); border-color: rgba(11, 143, 116, .35); }
-:root[data-tema='claro'] .ag-trilho button { background: rgba(20, 33, 61, .16); }
-:root[data-tema='claro'] .ag-trilho button.ativo { background: linear-gradient(90deg, #1f8ef1, #14c9a0); box-shadow: 0 0 12px rgba(31, 142, 241, .35); }
+:root[data-tema='claro'] .ag-selos span { background: rgba(255, 252, 245, .94); border-color: rgba(222, 98, 10, .28); }
+:root[data-tema='claro'] .ag-rotulo { background: rgba(222, 98, 10, .08); border-color: rgba(196, 80, 8, .35); }
+:root[data-tema='claro'] .ag-trilho button { background: rgba(30, 24, 18, .16); }
+:root[data-tema='claro'] .ag-trilho button.ativo { background: linear-gradient(90deg, #c4500a, #f08a2c); box-shadow: 0 0 12px rgba(222, 98, 10, .35); }
 @media (max-width: 900px) {
-  :root[data-tema='claro'] .ag-sticky::after { background: linear-gradient(180deg, rgba(242, 246, 251, .95) 0, rgba(242, 246, 251, .78) min(250px, 30vh), transparent min(320px, 38vh)); }
+  :root[data-tema='claro'] .ag-sticky::after { background: linear-gradient(180deg, rgba(246, 240, 228, .95) 0, rgba(246, 240, 228, .78) min(250px, 30vh), transparent min(320px, 38vh)); }
 }

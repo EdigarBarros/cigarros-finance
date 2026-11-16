@@ -21,7 +21,7 @@ export const PLANO = [
 ]
 const NOTA = 72
 
-/** As cores da tela: no escuro, vidro escuro e dourado; no claro, vidro branco com o verde-água e o azul da marca. */
+/** As cores da tela: no escuro, vidro escuro e dourado; no claro, papel com nanquim e laranja. */
 const CORES = {
   escuro: {
     tinta: '#fff2dc', tinta2: 'rgba(255,236,210,0.72)', apagado: 'rgba(255,225,180,0.6)', destaque: '#ffc46b', verde: '#9df5c9',
@@ -31,11 +31,11 @@ const CORES = {
     cartao: 'rgba(255,170,60,0.07)', cartaoBorda: 'rgba(255,190,90,0.24)', numero: ['#ffe2a6', '#ffb04a'], numeroTinta: '#1d1205',
   },
   claro: {
-    tinta: '#14213d', tinta2: 'rgba(20,33,61,0.72)', apagado: 'rgba(20,33,61,0.55)', destaque: '#0fae8c', verde: '#0f9f6e',
-    fundo: ['rgba(255,255,255,0.97)', 'rgba(240,246,252,0.97)'], sombra: 'rgba(31,142,241,0.28)', dentro: 'rgba(20,201,160,0.07)',
-    moldura: 'rgba(31,142,241,0.4)', icone: 'rgba(20,201,160,0.12)', iconeBorda: 'rgba(15,174,140,0.35)', linha: 'rgba(20,33,61,0.12)',
-    trilho: 'rgba(20,33,61,0.08)', brilhoNota: 'rgba(20,201,160,0.45)', brilhoNumero: 'rgba(0,0,0,0)', barraVazia: 'rgba(20,33,61,0.07)',
-    cartao: 'rgba(31,142,241,0.05)', cartaoBorda: 'rgba(31,142,241,0.18)', numero: ['#14c9a0', '#1f8ef1'], numeroTinta: '#ffffff',
+    tinta: '#1e1812', tinta2: 'rgba(30,24,18,0.72)', apagado: 'rgba(30,24,18,0.55)', destaque: '#c4500a', verde: '#10a05f',
+    fundo: ['rgba(255,253,248,0.98)', 'rgba(248,242,231,0.98)'], sombra: 'rgba(222,98,10,0.26)', dentro: 'rgba(222,98,10,0.05)',
+    moldura: 'rgba(222,98,10,0.45)', icone: 'rgba(222,98,10,0.1)', iconeBorda: 'rgba(196,80,8,0.35)', linha: 'rgba(30,24,18,0.12)',
+    trilho: 'rgba(30,24,18,0.08)', brilhoNota: 'rgba(222,98,10,0.4)', brilhoNumero: 'rgba(0,0,0,0)', barraVazia: 'rgba(30,24,18,0.07)',
+    cartao: 'rgba(222,98,10,0.04)', cartaoBorda: 'rgba(222,98,10,0.2)', numero: ['#f08a2c', '#c4500a'], numeroTinta: '#ffffff',
   },
 }
 
