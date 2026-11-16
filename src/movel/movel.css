@@ -236,6 +236,39 @@ button.linha-movel:active { opacity: .7; }
 }
 .previa-cartao-botao:active { background: var(--preench-4); }
 
+/* ---------- Lançamentos ---------- */
+.filtros-movel { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 0 0 10px; font-size: 13px; color: var(--texto-2); }
+.filtros-movel .link { min-height: 36px; font-weight: 600; }
+.pilulas-movel {
+  display: flex; gap: 8px; margin: 0 -16px 12px; padding: 0 16px 2px; overflow-x: auto; scrollbar-width: none;
+}
+.pilulas-movel::-webkit-scrollbar { display: none; }
+.pilulas-movel button {
+  display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 44px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid var(--borda); background: var(--superficie); color: var(--texto); font: 500 14px var(--fonte); white-space: nowrap;
+}
+.pilulas-movel button b { font-weight: 650; color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.pilulas-movel button.ativo { border-color: color-mix(in srgb, var(--c) 60%, transparent); background: color-mix(in srgb, var(--c) 16%, var(--superficie)); }
+.pilulas-movel button.ativo b { color: var(--texto); }
+.calendario-movel { margin-bottom: 12px; }
+.calendario-movel .lc-calor, .lanc-movel .lc-nodia { border-radius: 24px; }
+.lanc-movel .lc-nodia { margin-bottom: 12px; }
+.dia-movel-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dia-movel-cab > span { font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.dia-movel-cab .positivo { color: var(--entrada); }
+.dia-movel-cab .negativo { color: var(--texto-2); }
+.filtrar-movel { display: grid; gap: 14px; }
+
+/* ---------- Contas do mês ---------- */
+.conta-movel { display: grid; }
+.sugestao-movel {
+  display: grid; gap: 8px; margin: -2px 0 8px 56px; padding: 10px 12px; border-radius: 14px; font-size: 13px;
+  background: var(--destaque-suave); color: var(--texto);
+}
+.sugestao-movel-acoes { display: flex; gap: 8px; }
+.sugestao-movel-acoes .btn { min-height: 40px; }
+.linha-do-mes-movel .ct-linha { border-radius: 24px; }
+
 /* ---------- barra de abas: as quatro fixas ---------- */
 .abas-movel.abas-movel-nova { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-flow: row; max-width: 520px; margin: 0 auto; transition: padding .35s var(--mola); }
 .abas-movel-nova button { min-height: 52px; align-content: center; }

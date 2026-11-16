@@ -1203,7 +1203,7 @@ No celular (até 860 px, `useMobile`) o painel tem cara própria, separada do co
 `Painel` escolhe a moldura (`mobile ? moldura do celular : a de sempre`) e as duas usam os mesmos dados, formulários e janelas.
 Tela que ainda não tem versão de celular abre a do computador dentro da moldura nova (com o "+"), e é isso que deixa
 publicar por partes. Fases: 1) moldura e Início (feita); 2) escolher, tirar e reordenar cartões, salvo na conta
-(`perfis.celular`, feita); 3) Lançamentos e Contas; 4) Cartões e Dívidas; 5) Metas e Guardado; 6) Consultor e Invest; 7) Ano e
+(`perfis.celular`, feita); 3) Lançamentos e Contas (feita); 4) Cartões e Dívidas; 5) Metas e Guardado; 6) Consultor e Invest; 7) Ano e
 limpeza do que ficou sem uso (`.fab`, `simples-movel`, `menu-movel`, a alça das abas, os ramos de celular dos três jeitos).
 
 **Moldura** (`src/movel/Casca.tsx`, estilos em `src/movel/movel.css`, todos debaixo de `.movel`):
@@ -1228,6 +1228,24 @@ computador):
    14, menos os que não têm o que mostrar). Pequenos ficam dois por linha; pequeno sem par ocupa a linha. Tocar numa
    conta abre a conferência (nunca dá baixa direto); fatura leva aos Cartões; parcela abre o lançamento.
 5. "+ Adicionar cartões" e "Arrumar", depois o rodapé "Jeito Equilibrado · Trocar".
+
+**Lançamentos** (`src/movel/telas/LancamentosMovel.tsx`; filtros e contas em `pages/lancamentos/useLancamentos.ts`, os
+mesmos do computador):
+- Topo que desliza: saiu → entrou → sobrou (ou faltou), sempre com os filtros e a busca aplicados; filtrando, a pílula do
+  topo é "Limpar filtros". Cores: coral para o que saiu, verde-água para o que entrou e para a sobra.
+- Ações: Gasto, Entrada, Filtrar (folha com tipo, ordem, banco e forma) e Mais (importar extrato ou planilha, organizar
+  nomes, editar categorias).
+- Compras no cartão do mês viram um cartão de dica que leva aos Cartões (continuam fora da lista, como no computador).
+- As categorias viram pílulas que deslizam e filtram com um toque; abaixo, o calendário do mês (fora do simples) e o dia
+  escolhido, depois os lançamentos num cartão por dia (com o saldo do dia), ou num cartão só em "Maiores".
+
+**Contas do mês** (`src/movel/telas/ContasMovel.tsx`; cadastro, linha do mês e `useEdicaoDeConta` vêm de `pages/Contas.tsx`):
+- Topo: o que falta pagar (coral com conta atrasada, âmbar com contas a vencer, verde com tudo pago; a pílula "Pagar …"
+  abre a conferência da próxima) → o que vai entrar ou já entrou (só com entradas fixas).
+- Ações: Nova conta, Entrada fixa, Pagar (a próxima) e Todas (folha com as contas fixas para editar, pausar ou excluir).
+- Aviso de meses anteriores com conta sem pagar como dica; a linha do mês (fora do simples); as contas em cartões
+  Atrasadas, Esta semana, Mais à frente e Pagas. Tocar numa conta em aberto abre a conferência (nunca dá baixa direto);
+  numa paga, o lançamento. "Parece que já foi pago" aparece embaixo da conta, com "É esse" e "Não é".
 
 **Escolher e arrumar os cartões** (`lib/widgets.ts`, `src/movel/FolhaDeCartoes.tsx`, migração 35):
 - "+ Adicionar cartões" abre uma folha com os cartões que não estão na Início, cada um com a prévia de verdade (os dados da

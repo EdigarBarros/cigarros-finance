@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { categoriaPelaDescricao, doTipo } from '../lib/categorias'
 import { COR } from '../lib/charts'
 import {
-  agruparContas, aproxConta, fmtConta, fraseDaSituacao, hojeLocal, inicioDoMes, mesesComAtraso, tomarEntradaFixa, totaisDoMes, ENTRADA_FIXA_PEDIDA, type SituacaoConta,
+  agruparContas, aproxConta, contasPorCategoria, fmtConta, fraseDaSituacao, hojeLocal, inicioDoMes, mesesComAtraso, tomarEntradaFixa, totaisDoMes, ENTRADA_FIXA_PEDIDA, type SituacaoConta,
 } from '../lib/contasFixas'
 import { casasDaMoeda, mascarar, paraCampoMoeda } from '../lib/dinheiro'
 import { fmtDataCurta, fmtMesAno, fmtMoeda, fmtValor, MESES_NOME, parseNumero, simbolo, noMeioDaFrase } from '../lib/format'
@@ -36,9 +36,9 @@ const EXEMPLOS: { nome: string; tipo: Tipo; icone: string; dica: string; categor
   { nome: tx('Salário'), tipo: 'entrada', icone: '💼', dica: tx('o dia em que cai na conta'), categoria: tx('Salário') },
 ]
 
-type Modelo = Pick<(typeof EXEMPLOS)[number], 'nome' | 'tipo' | 'categoria'>
+export type Modelo = Pick<(typeof EXEMPLOS)[number], 'nome' | 'tipo' | 'categoria'>
 /** Entrada fixa em branco: o formulário já abre em "Entrada fixa". */
-const ENTRADA_FIXA: Modelo = { nome: '', tipo: 'entrada', categoria: '' }
+export const ENTRADA_FIXA: Modelo = { nome: '', tipo: 'entrada', categoria: '' }
 
 const mesDe = (iso: string | null) => (iso ? iso.slice(0, 7) : '')
 const quando = (iso: string) => fmtMesAno(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)))
@@ -49,17 +49,25 @@ const MES_CURTO = (m: number) => MESES_NOME[m - 1].slice(0, 3).toLowerCase()
  * Contas que se repetem todo mês: o pote do mês enche conforme você paga, a linha do mês mostra quando vence cada uma
  * e cada conta é um boleto que ganha o carimbo "pago" com um toque em "Paguei" (o app lança por você).
  */
-export function Contas(c: Ctx) {
-  // vindo do "Cadastrar como entrada fixa" do lançamento: já abre o cadastro como entrada
+/**
+ * A conta aberta para cadastrar ou editar (a tela do computador e a do celular usam o mesmo). Vindo do "Cadastrar como
+ * entrada fixa" do lançamento, já abre o cadastro como entrada, também com a tela já aberta.
+ */
+export function useEdicaoDeConta() {
   const [pedida] = useState(tomarEntradaFixa)
   const [editando, setEditando] = useState<ContaFixa | 'nova' | null>(pedida ? 'nova' : null)
   const [modelo, setModelo] = useState<Modelo | undefined>(pedida ? ENTRADA_FIXA : undefined)
-  // pedido feito com a página já aberta
   useEffect(() => {
     const abrir = () => { if (tomarEntradaFixa()) { setModelo(ENTRADA_FIXA); setEditando('nova') } }
     window.addEventListener(ENTRADA_FIXA_PEDIDA, abrir)
     return () => window.removeEventListener(ENTRADA_FIXA_PEDIDA, abrir)
   }, [])
+  const nova = (m?: Modelo) => { setModelo(m); setEditando('nova') }
+  return { editando, setEditando, modelo, nova }
+}
+
+export function Contas(c: Ctx) {
+  const { editando, setEditando, modelo, nova } = useEdicaoDeConta()
   const [outroValor, setOutroValor] = useState<SituacaoConta | null>(null)
   const { contas } = c.contas
   const sits = c.situacoesContas
@@ -67,17 +75,11 @@ export function Contas(c: Ctx) {
   const g = agruparContas(sits)
   const nomeMes = noMeioDaFrase(MESES_NOME[c.mes - 1])
   const anteriores = mesesComAtraso(contas, c.d.lancs, c.ano, c.mes)
-  const nova = (m?: Modelo) => { setModelo(m); setEditando('nova') }
   const totalSaidas = t.jaPago + t.faltaPagar
   const nivel = c.perfil.detalhe
   const [verTodas, setVerTodas] = useState(false)
   // as contas a pagar do mês somadas por categoria (rosca do detalhado)
-  const porCategoria = Object.values(sits.filter((x) => x.conta.tipo === 'saida').reduce<Record<string, { rotulo: string; valor: number; cor: string }>>((acc, x) => {
-    const cat = c.categorias.find((k) => k.id === x.conta.categoria_id)
-    const chave = cat?.id ?? 'sem'
-    acc[chave] = { rotulo: cat?.nome ?? tx('Sem categoria'), cor: cat?.cor ?? '#8e8e93', valor: (acc[chave]?.valor ?? 0) + x.valor }
-    return acc
-  }, {})).sort((x, y) => y.valor - x.valor)
+  const porCategoria = contasPorCategoria(sits, c.categorias)
 
   if (c.contas.semTabela) {
     return (
@@ -207,7 +209,7 @@ export function Contas(c: Ctx) {
 }
 
 /** Conta sem contas fixas: uma pilha de boletos de exemplo e os atalhos para começar. */
-function SemContas({ aoNova }: { aoNova: (m?: Modelo) => void }) {
+export function SemContas({ aoNova }: { aoNova: (m?: Modelo) => void }) {
   const exemplos = [
     { nome: tx('Aluguel'), icone: '🏠', cor: '#ff9f0a', dia: 5, valor: 'R$ 1.200', pago: true },
     { nome: tx('Luz'), icone: '💡', cor: '#ffd60a', dia: 12, valor: 'R$ 180', pago: false },
@@ -258,7 +260,7 @@ function SemContas({ aoNova }: { aoNova: (m?: Modelo) => void }) {
 const CORES_EXEMPLO = ['#ff9f0a', '#ffd60a', '#64d2ff', '#0a84ff', '#ff375f', '#bf5af2']
 
 /** Os dias do mês numa linha, com cada conta no dia em que vence (cor da situação) e o dia de hoje marcado. */
-function LinhaDoMes({ c, sits }: { c: Ctx; sits: SituacaoConta[] }) {
+export function LinhaDoMes({ c, sits }: { c: Ctx; sits: SituacaoConta[] }) {
   const dias = new Date(c.ano, c.mes, 0).getDate()
   const [hojeIso] = useState(hojeLocal)
   const hoje = { ano: Number(hojeIso.slice(0, 4)), mes: Number(hojeIso.slice(5, 7)), dia: Number(hojeIso.slice(8, 10)) }
@@ -350,7 +352,7 @@ function Boleto({ s, c, indice, aoEditar, aoOutroValor }: { s: SituacaoConta; c:
   )
 }
 
-function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; modelo?: Modelo; aoFechar: () => void }) {
+export function FormConta({ c, conta, modelo, aoFechar }: { c: Ctx; conta?: ContaFixa; modelo?: Modelo; aoFechar: () => void }) {
   const hint = (tipo: Tipo, nome: string) => {
     const pelaDica = modelo?.categoria ? c.categorias.find((k) => k.tipo === tipo && mesmoNome(k.nome, modelo.categoria)) : undefined
     return (pelaDica ?? categoriaPelaDescricao(nome, tipo, c.categorias))?.id ?? ''

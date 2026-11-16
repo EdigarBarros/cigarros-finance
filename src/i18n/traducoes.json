@@ -15254,5 +15254,117 @@
   "Já estão na sua Início e aparecem quando tiverem o que mostrar: {0}.": {
     "en": "Already on your Home, they show up when there is something to show: {0}.",
     "es": "Ya están en tu Inicio y aparecen cuando tengan algo que mostrar: {0}."
+  },
+  "Saiu na busca": {
+    "en": "Out in search results",
+    "es": "Salió en la búsqueda"
+  },
+  "Entrou na busca": {
+    "en": "In in search results",
+    "es": "Entró en la búsqueda"
+  },
+  "Sobrou na busca": {
+    "en": "Left over in search results",
+    "es": "Sobró en la búsqueda"
+  },
+  "Faltou na busca": {
+    "en": "Short in search results",
+    "es": "Faltó en la búsqueda"
+  },
+  "Saiu em {0}, com os filtros": {
+    "en": "Out in {0}, with filters",
+    "es": "Salió en {0}, con los filtros"
+  },
+  "Entrou em {0}, com os filtros": {
+    "en": "In in {0}, with filters",
+    "es": "Entró en {0}, con los filtros"
+  },
+  "Sobrou em {0}, com os filtros": {
+    "en": "Left over in {0}, with filters",
+    "es": "Sobró en {0}, con los filtros"
+  },
+  "Faltou em {0}, com os filtros": {
+    "en": "Short in {0}, with filters",
+    "es": "Faltó en {0}, con los filtros"
+  },
+  "Saiu em {0}": {
+    "en": "Out in {0}",
+    "es": "Salió en {0}"
+  },
+  "Entrou em {0}": {
+    "en": "In in {0}",
+    "es": "Entró en {0}"
+  },
+  "Saiu {0}% do que entrou": {
+    "en": "{0}% of what came in went out",
+    "es": "Salió el {0}% de lo que entró"
+  },
+  "Filtrando": {
+    "en": "Filtering",
+    "es": "Filtrando"
+  },
+  "Filtrar": {
+    "en": "Filter",
+    "es": "Filtrar"
+  },
+  "Os maiores": {
+    "en": "The largest",
+    "es": "Los mayores"
+  },
+  "Falta pagar em {0}": {
+    "en": "Left to pay in {0}",
+    "es": "Falta pagar en {0}"
+  },
+  "1 conta atrasada · {0}": {
+    "en": "1 overdue bill · {0}",
+    "es": "1 cuenta atrasada · {0}"
+  },
+  "{0} contas atrasadas · {1}": {
+    "en": "{0} overdue bills · {1}",
+    "es": "{0} cuentas atrasadas · {1}"
+  },
+  "Já pago {0} de {1}": {
+    "en": "{0} of {1} already paid",
+    "es": "Ya pagado {0} de {1}"
+  },
+  "Vai entrar em {0}": {
+    "en": "Coming in {0}",
+    "es": "Entrará en {0}"
+  },
+  "Recebido em {0}": {
+    "en": "Received in {0}",
+    "es": "Recibido en {0}"
+  },
+  "Já recebido {0}": {
+    "en": "{0} already received",
+    "es": "Ya recibido {0}"
+  },
+  "Ficou conta sem pagar em {0}.": {
+    "en": "Bills left unpaid in {0}.",
+    "es": "Quedaron cuentas sin pagar en {0}."
+  },
+  "Parece que já caiu": {
+    "en": "Looks like it already came in",
+    "es": "Parece que ya entró"
+  },
+  "Parece que já foi pago": {
+    "en": "Looks like it was already paid",
+    "es": "Parece que ya se pagó"
+  },
+  "Todas": {
+    "en": "All",
+    "es": "Todas"
+  },
+  "Esta semana": {
+    "en": "This week",
+    "es": "Esta semana"
+  },
+  "Mais à frente": {
+    "en": "Later on",
+    "es": "Más adelante"
+  },
+  "Pagas": {
+    "en": "Paid",
+    "es": "Pagadas"
   }
 }

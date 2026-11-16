@@ -83,6 +83,10 @@ const Patrimonio = lazy(() => paginas.Patrimonio().then((m) => ({ default: m.Pat
 const Ano = lazy(() => paginas.Ano().then((m) => ({ default: m.Ano })))
 // as telas do celular (src/movel/telas): a que ainda não tem versão própria abre a do computador, dentro da moldura do celular
 const InicioMovel = lazy(() => import('../movel/telas/InicioMovel').then((m) => ({ default: m.InicioMovel })))
+const LancamentosMovel = lazy(() => import('../movel/telas/LancamentosMovel').then((m) => ({ default: m.LancamentosMovel })))
+const ContasMovel = lazy(() => import('../movel/telas/ContasMovel').then((m) => ({ default: m.ContasMovel })))
+/** As telas que já têm versão de celular (com o topo colorido e a fileira de ações, sem o "+"). */
+const TELAS_DO_CELULAR: Pagina[] = ['inicio', 'lancamentos', 'contas']
 const janelas = {
   Formularios: () => import('./Formularios'),
   Configuracoes: () => import('./Configuracoes'),
@@ -937,10 +941,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const telas = (noCelular: boolean) => (
     <Suspense fallback={null}>
     {paginaMostrada === 'inicio' && (noCelular ? <InicioMovel c={ctx} aoMudarTom={setTomMovel} /> : <Inicio {...ctx} />)}
-    {paginaMostrada === 'lancamentos' && <Lancamentos {...ctx} />}
+    {paginaMostrada === 'lancamentos' && (noCelular ? <LancamentosMovel c={ctx} aoMudarTom={setTomMovel} /> : <Lancamentos {...ctx} />)}
     {paginaMostrada === 'analise' && <PaginaAnalise {...ctx} />}
     {paginaMostrada === 'invest' && <PaginaInvest {...ctx} />}
-    {paginaMostrada === 'contas' && <Contas {...ctx} />}
+    {paginaMostrada === 'contas' && (noCelular ? <ContasMovel c={ctx} aoMudarTom={setTomMovel} /> : <Contas {...ctx} />)}
     {paginaMostrada === 'cartoes' && <Cartoes key={cartaoAberto ?? 'todos'} {...ctx} />}
     {paginaMostrada === 'dividas' && <Dividas {...ctx} />}
     {paginaMostrada === 'metas' && <Metas {...ctx} />}
@@ -1128,10 +1132,11 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     const naAba = (['inicio', 'lancamentos', 'analise'] as Pagina[])
     const outras = paginas.filter((p) => !naAba.includes(p.id))
     const nomeDe = (id: Pagina) => PAGINAS.find((p) => p.id === id)!
-    const comCor = paginaAtual === 'inicio' && tomMovel !== null
+    const temTopo = TELAS_DO_CELULAR.includes(paginaAtual)
+    const comCor = temTopo && tomMovel !== null
     return (
       <div className={`app movel ${comCor ? 'com-cor' : ''}`}>
-        <FundoMovel tom={paginaAtual === 'inicio' ? tomMovel : null} />
+        <FundoMovel tom={temTopo ? tomMovel : null} />
         <div className="conteudo">
           <TopoMovel sobreCor={comCor} foto={d.foto} iniciais={iniciais} avisoConta={respostasNovas > 0} aoConta={() => setContaMovel(true)}
             busca={busca} aoBuscar={buscar} mes={`${MESES_CURTO[mes - 1]}${ano !== hoje.getFullYear() ? ` ${String(ano).slice(2)}` : ''}`}
@@ -1145,7 +1150,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         </div>
 
         {/* o "+" só nas telas que ainda não têm a fileira de ações do celular */}
-        {paginaAtual !== 'inicio' && (
+        {!temTopo && (
           <button className={`fab${maisEscondido ? ' recolhido' : ''}`} data-tour="lancar" onClick={() => setForm({})} aria-label={tx('Novo lançamento')}
             aria-hidden={maisEscondido || undefined} tabIndex={maisEscondido ? -1 : undefined}><Icone nome="mais" tamanho={26} /></button>
         )}
