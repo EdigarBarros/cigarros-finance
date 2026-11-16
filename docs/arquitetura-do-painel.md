@@ -1205,6 +1205,12 @@ limpeza do que ficou sem uso (`.fab`, `simples-movel`, `menu-movel`, a alça das
   Ajustes, e fica marcada quando a tela aberta está lá. Rolando para baixo a barra encolhe (some o nome); não há alça para
   esconder.
 
+**O topo que desliza** (`HeroDeslizante` em `src/movel/primitivas.tsx`): enquanto o dedo arrasta, só os pontos acompanham
+(uma conta por quadro). A tela só fica sabendo da página nova (cor do topo, lista de baixo, lado das dívidas, cartão
+escolhido) quando a rolagem para (`scrollend`, ou 120 ms sem rolar no Safari), e o aviso vai em `startTransition`. Sobre o
+degradê não há `backdrop-filter`: os botões usam fundo translúcido. Avisar no meio do gesto redesenhava o painel com o dedo
+na tela e o arrasto travava (teste: `scripts/app-de-demonstracao/testar-arrasto.cjs`).
+
 **Início** (`src/movel/telas/InicioMovel.tsx`; os números saem de `lib/useMesDaInicio.ts`, o mesmo cálculo da Início do
 computador):
 1. Topo que desliza para os lados, uma página por resumo, com um degradê de cor por página (`src/movel/tom.ts`): o que
