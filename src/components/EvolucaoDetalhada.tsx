@@ -57,7 +57,7 @@ export function EvolucaoDetalhada({ c, dd }: { c: Ctx; dd: DiaADia }) {
           <h2>{tx('Evolução financeira')}</h2>
           <p>{visao === 'movimento' ? tx('Entradas e saídas ao longo de {0}', c.ano) : tx('Saldos ao longo de {0}', c.ano)}</p>
         </div>
-        <span className="dt-evo-data"><Icone nome="calendario" tamanho={20} />{dataHoje}</span>
+        <span className="dt-evo-data"><Icone nome="calendario" tamanho={15} />{dataHoje}</span>
       </header>
       <div className="dt-evo-controles">
         <Segmentado rotulo={tx('Visualização')} valor={visao} aoMudar={setVisao} opcoes={[{ id: 'movimento', nome: tx('Movimentação') }, { id: 'saldos', nome: tx('Saldos') }]} />
@@ -73,7 +73,7 @@ export function EvolucaoDetalhada({ c, dd }: { c: Ctx; dd: DiaADia }) {
           <select value={janela} onChange={(ev) => setJanela(ev.target.value)}>
             {['3', '6', '12'].map((x) => <option key={x} value={x}>{tx('Últimos {0} meses', x)}</option>)}
           </select>
-          <Icone nome="abaixo" tamanho={18} />
+          <Icone nome="abaixo" tamanho={14} />
         </label>
         {extras.length > 0 && (
           <>
@@ -83,7 +83,7 @@ export function EvolucaoDetalhada({ c, dd }: { c: Ctx; dd: DiaADia }) {
               <select aria-label={tx('Ver o gráfico em')} value={moeda} onChange={(ev) => setMoeda(ev.target.value)}>
                 {[moedaAtual(), ...extras].map((m) => <option key={m}>{m}</option>)}
               </select>
-              <Icone nome="abaixo" tamanho={18} />
+              <Icone nome="abaixo" tamanho={14} />
             </label>
           </>
         )}
@@ -92,7 +92,7 @@ export function EvolucaoDetalhada({ c, dd }: { c: Ctx; dd: DiaADia }) {
         {ocultos
           ? <p className="det-grafico-privado">{tx('Gráfico oculto para preservar seus valores.')}</p>
           : <GraficoEvolucao porMes={c.porMes} previsto={c.previsto.map((x, i) => (i === c.mes - 1 ? { ...x, entrou: dd.entrou, saiu: dd.saiu, vaiEntrar: dd.vaiEntrar, vaiSair: dd.vaiSair } : x))} indices={indices} visao={visao} modo={modo}
-              moeda={moeda} v={c.v} selecionado={sel} ultimoComSaldo={atual - c.ano * 12 - 1} aoEscolher={(mes) => setEscolha({ ref: c.mes, mes })} altura={c.mobile ? 280 : 340} />}
+              moeda={moeda} v={c.v} selecionado={sel} ultimoComSaldo={atual - c.ano * 12 - 1} aoEscolher={(mes) => setEscolha({ ref: c.mes, mes })} altura={c.mobile ? 240 : 280} />}
         {fora && <p className="det-nota">{tx('Valores na moeda do registro, sem conversão.')}</p>}
       </div>
       <div className="cartao dt-evo-resumo">
@@ -101,7 +101,7 @@ export function EvolucaoDetalhada({ c, dd }: { c: Ctx; dd: DiaADia }) {
           {([[tx('Entradas'), 'receber', 'var(--entrada)', e, undefined], [tx('Saídas'), 'enviar', 'var(--saida)', s, undefined],
             [modo === 'previsto' ? tx('Resultado previsto') : tx('Resultado'), 'ano', 'var(--entrada)', resultado, resultado == null ? undefined : resultado >= 0 ? 'var(--entrada)' : 'var(--saida)']] as const).map(([rot, ic, cor, v, corValor]) => (
             <div key={rot} className="dt-evo-num">
-              <span className="dt-evo-rot"><span className="dt-tile mini" style={{ '--c': cor } as CSSProperties}><Icone nome={ic} tamanho={16} /></span>{rot}</span>
+              <span className="dt-evo-rot"><span className="dt-tile mini" style={{ '--c': cor } as CSSProperties}><Icone nome={ic} tamanho={13} /></span>{rot}</span>
               <b style={corValor ? { color: corValor } : undefined}>{valor(v)}</b>
             </div>
           ))}
@@ -109,10 +109,10 @@ export function EvolucaoDetalhada({ c, dd }: { c: Ctx; dd: DiaADia }) {
         {(caixa !== undefined || divida !== undefined) && (
           <div className="dt-evo-saldos">
             {caixa !== undefined && (
-              <div><span className="dt-tile mini" style={{ '--c': 'var(--texto-2)' } as CSSProperties}><Icone nome="carteira" tamanho={16} /></span><span><small>{tx('Saldo nas contas')}</small><b>{valor(caixa)}</b></span></div>
+              <div><span className="dt-tile mini" style={{ '--c': 'var(--texto-2)' } as CSSProperties}><Icone nome="carteira" tamanho={13} /></span><span><small>{tx('Saldo nas contas')}</small><b>{valor(caixa)}</b></span></div>
             )}
             {divida !== undefined && (
-              <button type="button" onClick={() => c.irPara('dividas')}><span className="dt-tile mini" style={{ '--c': 'var(--divida)' } as CSSProperties}><Icone nome="camadas" tamanho={16} /></span><span><small>{tx('Saldo devedor')}</small><b>{valor(divida)}</b></span></button>
+              <button type="button" onClick={() => c.irPara('dividas')}><span className="dt-tile mini" style={{ '--c': 'var(--divida)' } as CSSProperties}><Icone nome="camadas" tamanho={13} /></span><span><small>{tx('Saldo devedor')}</small><b>{valor(divida)}</b></span></button>
             )}
           </div>
         )}
