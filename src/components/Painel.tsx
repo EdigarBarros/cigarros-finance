@@ -866,7 +866,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   )
 
   return (
-    <div className={`app ${barra.trilho ? 'trilho' : ''} ${barra.retrato ? 'retrato' : ''} ${barra.abasOcultas ? 'abas-ocultas' : ''}`}>
+    <div className={`app ${paginaAtual === 'inicio' && perfil.detalhe === 'detalhado' ? 'inicio-detalhada' : ''} ${barra.trilho ? 'trilho' : ''} ${barra.retrato ? 'retrato' : ''} ${barra.abasOcultas ? 'abas-ocultas' : ''}`}>
       {barra.retrato && !barra.trilho && <div className="lateral-fundo" onClick={barra.fechar} aria-hidden="true" />}
       <aside className="lateral">
         <div className="lateral-topo">
@@ -970,13 +970,14 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
                   <div className="menu-lista" onClick={() => setMenu(false)}>
                     <span className="email">{email}</span>
                     {menuItens}
+                    {paginaAtual === 'inicio' && perfil.detalhe === 'detalhado' && <div onClick={e => e.stopPropagation()}><BotaoIdioma /></div>}
                   </div>
                 </>
               )}
             </div>
             <div className="menu-movel">
               <button className="icone-btn" data-tour="menu-conta" onClick={() => setMenu(!menu)} aria-label={tx('Mais opções')} title={tx('Mais opções')} aria-expanded={menu}>
-                <Icone nome="reticencias" />
+                {paginaAtual === 'inicio' && perfil.detalhe === 'detalhado' ? tx('Mais') : <Icone nome="reticencias" />}
                 {respostasNovas > 0 && <span className="sino-ponto" />}
               </button>
               {menu && mobile && (
@@ -985,6 +986,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
                   <div className="menu-lista" onClick={() => setMenu(false)}>
                     <span className="email">{email}</span>
                     {menuItens}
+                    {paginaAtual === 'inicio' && perfil.detalhe === 'detalhado' && <div onClick={e => e.stopPropagation()}><BotaoIdioma /></div>}
                   </div>
                 </>
               )}
@@ -1059,8 +1061,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         </Suspense>
       </div>
 
-      {/* a Início do equilibrado tem o "+ Registrar" no meio da página: o botão flutuante cobria valores */}
-      {!(paginaAtual === 'inicio' && perfil.detalhe === 'equilibrado' && ctx.contaNova === false) && (
+      {/* a Início do equilibrado tem o "+ Registrar" no meio da página e a do detalhado tem as ações dela: o botão flutuante cobria valores */}
+      {!(paginaAtual === 'inicio' && ((perfil.detalhe === 'equilibrado' && ctx.contaNova === false) || (perfil.detalhe === 'detalhado' && temDados))) && (
         <button className={`fab${maisEscondido ? ' recolhido' : ''}`} data-tour="lancar" onClick={() => setForm({})} aria-label={tx('Novo lançamento')}
           aria-hidden={maisEscondido || undefined} tabIndex={maisEscondido ? -1 : undefined}><Icone nome="mais" tamanho={26} /></button>
       )}
