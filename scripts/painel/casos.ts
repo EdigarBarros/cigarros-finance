@@ -3,7 +3,7 @@
  * a comparação com o mês anterior e a separação das contas em atrasadas / próximas / depois. Os números esperados foram
  * feitos à mão, não tirados das próprias funções. Achou uma conta errada? Monte o caso aqui antes de consertar.
  */
-import { compararGastos, destaqueDaComparacao, fatiasDoPeriodo } from '../../src/lib/comparacao'
+import { compararGastos, destaqueDaComparacao, fatiasDoPeriodo, maiorCategoria } from '../../src/lib/comparacao'
 import { situacoesDoMes } from '../../src/lib/contasFixas'
 import { parcelasDoMes, parcelasPorDia, situacaoDividas } from '../../src/lib/dividas'
 import { agruparTarefas, tarefasDoMes } from '../../src/lib/paraFazer'
@@ -310,6 +310,22 @@ export const CASOS: Caso[] = [
       perto('a é 61% do total (o lançamento do dia 20 ainda não aconteceu)', f.principais[0].parte, 0.61)
       igual('demais', [f.demais?.quantas, f.demais?.valor], [2, 90])
       perto('tudo soma 100%', f.principais.reduce((t, x) => t + x.parte, 0) + (f.demais?.parte ?? 0), 1)
+    },
+  },
+  {
+    nome: 'a frase da categoria que mais pesou: nome no meio da frase, sigla intacta, sem categoria e mês sem gastos',
+    rodar() {
+      const cat = (l: Lancamento) => l.categoria_id ?? undefined
+      const comp = (lancs: Lancamento[]) => compararGastos({ lancs, ano: 2026, mes: 11, hoje: '2026-11-14', categoriaDe: cat })
+      const cats = [{ id: 'm', nome: 'Moradia' }, { id: 'p', nome: 'PIX enviados' }]
+      const a = maiorCategoria(comp([lanc('2026-10-03', 'saida', 10), lanc('2026-11-03', 'saida', 700, { categoria_id: 'm' }), lanc('2026-11-04', 'saida', 300, { categoria_id: 'p' })]), cats, 'novembro')
+      igual('moradia', a, { id: 'm', frase: 'Em novembro, moradia concentra a maior parte das suas despesas.' })
+      const b = maiorCategoria(comp([lanc('2026-11-03', 'saida', 900, { categoria_id: 'p' }), lanc('2026-11-04', 'saida', 100, { categoria_id: 'm' })]), cats, 'novembro')
+      igual('sigla fica como está', b?.frase, 'Em novembro, PIX enviados concentra a maior parte das suas despesas.')
+      const c = maiorCategoria(comp([lanc('2026-11-03', 'saida', 500)]), cats, 'novembro')
+      igual('sem categoria', c?.frase, 'Em novembro, a maior parte das suas despesas está sem categoria.')
+      igual('sem gastos, sem frase', maiorCategoria(comp([lanc('2026-11-03', 'entrada', 500)]), cats, 'novembro'), null)
+      igual('sem comparação, sem frase', maiorCategoria(null, cats, 'novembro'), null)
     },
   },
   {
