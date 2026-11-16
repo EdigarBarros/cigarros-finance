@@ -21,7 +21,9 @@ const medir=()=>{
   const cw=document.documentElement.clientWidth
   const visivel=(e)=>{const b=e.getBoundingClientRect();return b.width>0&&b.height>0&&getComputedStyle(e).visibility!=='hidden'}
   // o topo que desliza tem as páginas seguintes à direita, de propósito (rolam por dentro do trilho)
-  const fora=[...document.querySelectorAll('.app.movel *')].filter(e=>!e.closest('.hero-movel-trilho, .dicas-movel')&&visivel(e)&&(e.getBoundingClientRect().right>cw+0.5||e.getBoundingClientRect().left<-0.5)).map(e=>e.className||e.tagName)
+  // dentro de um contêiner que corta ou rola o conteúdo (e que está na tela), o que passa da borda não aparece
+  const cortado=(e)=>{ for(let x=e.parentElement;x&&x!==document.body;x=x.parentElement){ const st=getComputedStyle(x); if(st.overflowX!=='visible'||st.overflow==='hidden'){ const b=x.getBoundingClientRect(); if(b.left>=-0.5&&b.right<=cw+0.5) return true } } return false }
+  const fora=[...document.querySelectorAll('.app.movel *')].filter(e=>!e.closest('.hero-movel-trilho, .dicas-movel')&&visivel(e)&&(e.getBoundingClientRect().right>cw+0.5||e.getBoundingClientRect().left<-0.5)&&!cortado(e)).map(e=>e.className||e.tagName)
   const pequenos=[...document.querySelectorAll('.topo-movel button, .topo-movel-busca, .acoes-movel button, .abas-movel-nova button, .hero-movel-pilula, .linha-movel, .widget-titulo, .widget-rodape, .pilulas-movel button')]
     .filter(visivel).filter(e=>{const b=e.getBoundingClientRect();return b.height<36||b.width<36||(e.matches('.topo-movel button, .acoes-movel button, .abas-movel-nova button, .hero-movel-pilula')&&b.height<44)})
     .map(e=>`${(e.getAttribute('aria-label')||e.textContent).trim().slice(0,20)} ${Math.round(e.getBoundingClientRect().width)}x${Math.round(e.getBoundingClientRect().height)}`)
@@ -189,7 +191,7 @@ const medir=()=>{
     // Invest: as quatro abas cabem e trocam
     await abrir(p, `${movel.t.url}#/invest`)
     ok(await p.locator('.invest-movel .hero-movel-pagina').count()>=2 && await p.locator('.fab').count()===0, 'Invest: topo com a carteira e o aportado, sem o "+"')
-    const cortadas=await p.evaluate(()=>[...document.querySelectorAll('.invest-movel .inv-abas span')].filter(e=>e.scrollWidth>e.clientWidth+1).map(e=>e.textContent))
+    const cortadas=await p.evaluate(()=>[...document.querySelectorAll('.invest-movel .inv-abas button')].filter(e=>e.scrollWidth>e.clientWidth+1).map(e=>e.textContent))
     ok(!cortadas.length, `Invest: o nome das quatro abas cabe ${cortadas.join(', ')}`)
     await p.locator('.invest-movel .inv-abas button', { hasText: 'Análises' }).click(); await esperar(p,1200)
     ok(await p.locator('.invest-movel .peca').count()>0, 'Invest: a aba Análises mostra as descobertas montadas pelo analista')
