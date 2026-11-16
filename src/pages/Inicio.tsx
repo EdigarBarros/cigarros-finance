@@ -9,7 +9,8 @@ import {
 import { totalGuardado } from '../lib/guardado'
 import { ComparacaoDetalhada, ContasPrioritarias, Diagnostico, Panorama, VisaoGeral, type PecaDet } from '../components/InicioDetalhadoTelas'
 import {
-  ComparacaoEq, ContasEq, OrientacaoEq, PrincipaisGastos, RegistrarEq, ResumoEq, ResumosCompactos, SaudacaoEq, SeletorDoJeito, type ResumoCompacto,
+  AteOFimEq, CabecalhoEq, ComparacaoEq, ContasEq, FaixaEq, OrientacaoEq, PilulaDoJeito, PrincipaisGastos, RegistrarEq, ResultadoEq,
+  ResumosCompactos, SaudeEq, TopoEq, type ResumoCompacto,
 } from '../components/InicioEquilibrado'
 import { FormDivida } from '../components/Formularios'
 import { GraficoFluxo, moedasDoAno, SeletorDoModo } from '../components/Graficos'
@@ -24,7 +25,7 @@ import { InicioSimples } from '../components/InicioSimples'
 import { FormBaixa } from '../components/FormBaixa'
 import { BlocoConselhos } from '../components/BlocoConselhos'
 import { daquiA } from '../lib/paraFazer'
-import { destaqueDaComparacao } from '../lib/comparacao'
+import { destaqueDaComparacao, maiorCategoria } from '../lib/comparacao'
 import { useMesDaInicio } from '../lib/useMesDaInicio'
 import { pedirCategoriaNosLancamentos } from '../lib/busca'
 import type { SituacaoConta } from '../lib/contasFixas'
@@ -294,8 +295,9 @@ export function Inicio(c: Ctx) {
   }
 
   // ---------- Jeito equilibrado: entender o mês, agir e ver o que mudou, com pouca leitura ----------
-  // A ordem (docs/arquitetura-do-painel.md, 4.0.4): resultado e previsão, registrar, contas, comparação, principais gastos,
-  // uma orientação, os resumos do que você tem e o jeito de ver. Explicação longa e lista completa abrem por toque.
+  // Três seções (docs/arquitetura-do-painel.md, 4.0.2): Visão geral (resultado, até o fim do mês e contas), Seu dinheiro em
+  // perspectiva (comparação e principais gastos) e Seu próximo passo (orientação, saúde e resumos). Explicação longa e lista
+  // completa abrem por toque.
   if (nivel === 'equilibrado' && !c.contaNova) {
     const dd = ddMes
     const comAgenda = (v.contas && c.situacoesContas.length > 0) || (v.cartoes && c.faturas.length > 0) || (v.dividas && c.situacao.some((s) => s.restante > 0))
@@ -304,10 +306,6 @@ export function Inicio(c: Ctx) {
       if (t.origem === 'conta' && t.conta) setConferir(t.conta)
       else t.botao.acao()
     }
-    const agenda = comAgenda && (
-      <ContasEq tarefas={tarefas.lista} limite={mesDeHoje ? daquiA(7, hoje) : undefined} aoAgir={agir}
-        aoVerContas={v.contas ? () => c.irPara('contas') : undefined} />
-    )
     // o que saiu até hoje, por categoria (a mesma base da comparação): existe mesmo sem mês anterior para comparar
     const periodo = comparacao ?? (momento !== 'futuro' ? gastosDoPeriodo : null)
     const principais = periodo && !mesVazio && (
@@ -322,7 +320,6 @@ export function Inicio(c: Ctx) {
     const conselhosEq = c.conselhos.filter((k) => !(destaque && k.id === `gasto-disparou:${destaque.id}`))
     const orientacao = (
       <OrientacaoEq conselhos={conselhosEq} semDados={c.conselhosSemDados} aoIr={c.irPara} aoDispensar={c.dispensarConselho}
-        nota={{ valor: c.analise.nota, rotulo: c.analise.rotulo, tom: c.analise.tom }} aoAbrirAnalise={() => c.irPara('analise')}
         todas={(
           <BlocoConselhos conselhos={conselhosEq} semDados={c.conselhosSemDados} dispensados={c.conselhosDispensados} simples={false}
             aoIr={c.irPara} aoDispensar={c.dispensarConselho} />
@@ -341,7 +338,7 @@ export function Inicio(c: Ctx) {
       if (falta > 0) {
         const pago = inicial > 0 ? Math.max(0, Math.min(1, (inicial - registrado) / inicial)) : undefined
         resumos.push({
-          chave: 'dividas', rotulo: tx('Dívidas'), valor: tx('Falta pagar {0}', fmtValor(falta)), cor: 'var(--divida)', icone: 'divida',
+          chave: 'dividas', rotulo: tx('Dívidas'), valor: fmtValor(falta), cor: 'var(--divida)', icone: 'cartao',
           sub: pago !== undefined
             ? (comJuros ? tx('{0}% quitado · inclui juros de atraso estimados', Math.round(pago * 100)) : tx('{0}% quitado', Math.round(pago * 100)))
             : (comJuros ? tx('Inclui juros de atraso estimados') : undefined),
@@ -350,11 +347,10 @@ export function Inicio(c: Ctx) {
       }
     }
     if (metas && situacaoMetas.length) {
-      const n = situacaoMetas.length
       const frente = situacaoMetas.filter((s) => !s.batida).sort((x, y) => y.progresso - x.progresso)[0]
       resumos.push({
-        chave: 'metas', rotulo: n === 1 ? tx('Metas · 1 meta') : tx('Metas · {0} metas', n), cor: 'var(--violeta)', icone: 'meta',
-        valor: frente ? tx('Meta em destaque: {0}', frente.meta.nome) : tx('Todas as metas batidas'),
+        chave: 'metas', rotulo: frente ? tx('Meta em destaque:') : tx('Metas'), cor: 'var(--violeta)', icone: 'meta', texto: true,
+        valor: frente ? frente.meta.nome : tx('Todas as metas batidas'),
         sub: frente ? tx('{0} de {1}', fmtMoeda(frente.guardado, frente.meta.moeda), fmtMoeda(frente.meta.alvo, frente.meta.moeda)) : undefined,
         progresso: frente ? frente.progresso : 1, aoAbrir: () => c.irPara('metas'),
       })
@@ -366,28 +362,64 @@ export function Inicio(c: Ctx) {
       resumos.push({
         chave: 'contas', rotulo: soContas ? tx('Saldo nas contas') : tx('Saldo nas contas e investimentos'), cor: 'var(--caixa)', icone: 'carteira',
         valor: fmtValor(totalGuardado({ v, bancos: c.d.bancos, caixa: c.mesEf.caixa, investimentos: r.investimentos, moedas: c.mesEf.moedas, lista: c.perfil.moedas, taxas: c.taxas })),
-        sub: v.bancos && nb ? (nb === 1 ? tx('em 1 banco') : tx('em {0} bancos', nb)) : undefined, aoAbrir: () => c.irPara('patrimonio'),
+        sub: v.bancos && nb ? (nb === 1 ? tx('Em 1 banco') : tx('Em {0} bancos', nb)) : undefined, aoAbrir: () => c.irPara('patrimonio'),
       })
     }
     const semNada = mesVazio && !dd.vaiEntrar && !dd.vaiSair && !c.d.carregando
+    const modo = <PilulaDoJeito atual="equilibrado" aoMudar={c.mudarDetalhe} />
     const registrar = <RegistrarEq aoEntrada={() => c.novoLancamento('entrada')} aoSaida={() => c.novoLancamento('saida')} aoImportar={c.importarExtrato} />
+    const faturaAberta = composicao.pagar.some((g) => g.origem === 'fatura')
+    const maior = maiorCategoria(periodo && !mesVazio ? periodo : null, c.categorias, nomeMes)
+    const temPerspectiva = Boolean(comparar || principais)
     return (
       <div className="pagina inicio inicio-eq">
-        <SaudacaoEq nome={c.perfil.nome} />
-        {semNada ? lancamentos : (
-          <>
-            <ResumoEq dd={dd} nomeMes={nomeMes} momento={momento} mesVazio={mesVazio} carregando={c.d.carregando}
-              previsaoSabe={Boolean(v.contas || v.cartoes || v.dividas)} faturaAberta={composicao.pagar.some((g) => g.origem === 'fatura')}
-              aoVerCalculo={abrirEntender} />
-            {registrar}
-          </>
+        {/* ---------- 1. Visão geral ---------- */}
+        <section className="eq-secao" aria-label={tx('Visão geral')}>
+          <TopoEq nome={c.perfil.nome ?? ''} modo={modo} registrar={registrar} />
+          {semNada ? lancamentos : (
+            <div className={`eq-duas${momento === 'atual' ? '' : ' uma'}`}>
+              <ResultadoEq dd={dd} nomeMes={nomeMes} momento={momento} mesVazio={mesVazio} carregando={c.d.carregando}
+                faturaAberta={faturaAberta} aoVerCalculo={abrirEntender} />
+              {momento === 'atual' && <AteOFimEq dd={dd} previsaoSabe={Boolean(v.contas || v.cartoes || v.dividas)} aoVerCalculo={abrirEntender} />}
+            </div>
+          )}
+          {comAgenda && (
+            <ContasEq tarefas={tarefas.lista} limite={mesDeHoje ? daquiA(7, hoje) : undefined} hoje={hojePorExtenso} aoAgir={agir}
+              aoVerContas={v.contas ? () => c.irPara('contas') : undefined} />
+          )}
+        </section>
+
+        {/* ---------- 2. Seu dinheiro em perspectiva ---------- */}
+        {temPerspectiva && (
+          <section className="eq-secao" aria-label={tx('Seu dinheiro em perspectiva')}>
+            <CabecalhoEq modo={modo} titulo={tx('Seu dinheiro em perspectiva')} hoje={hojePorExtenso}
+              sub={<>{tx('Comparativo e principais gastos')} · <b>{tx('{0} de {1}', nomeMes, c.ano)}</b></>} />
+            <div className={`eq-duas eq-duas-perspectiva${comparar && principais ? '' : ' uma'}`}>{comparar}{principais}</div>
+            {maior && (
+              <FaixaEq titulo={maior.frase} botao={tx('Ver lançamentos')}
+                acao={() => { pedirCategoriaNosLancamentos(maior.id || 'sem'); c.irPara('lancamentos') }} />
+            )}
+          </section>
         )}
-        {agenda}
-        {(comparar || principais) && <div className="ieq-duas">{comparar}{principais}</div>}
-        {orientacao}
-        <ResumosCompactos itens={resumos} />
+
+        {/* ---------- 3. Seu próximo passo ---------- */}
+        <section className="eq-secao" aria-label={tx('Seu próximo passo')}>
+          <CabecalhoEq modo={modo} titulo={tx('Seu próximo passo')} sub={tx('Orientações e compromissos financeiros')} hoje={hojePorExtenso} />
+          <div className="eq-duas eq-duas-passo">
+            {orientacao}
+            <SaudeEq nota={{ valor: c.analise.nota, rotulo: c.analise.rotulo, tom: c.analise.tom }} aoDiagnostico={() => c.irPara('analise')} />
+          </div>
+          <ResumosCompactos itens={resumos} />
+          {v.investimentos ? (
+            <FaixaEq titulo={tx('Seus investimentos')} texto={tx('Veja quanto você tem investido e quanto rendeu.')} botao={tx('Ver investimentos')}
+              acao={() => c.irPara('invest')} />
+          ) : (
+            <FaixaEq titulo={tx('Começou a investir?')} texto={tx('Acompanhe quanto você tem investido mês a mês.')} botao={tx('Acompanhar investimentos')}
+              acao={() => { c.ligarModulo('investimentos'); c.irPara('invest') }} />
+          )}
+        </section>
+
         {opcionais}
-        <SeletorDoJeito atual="equilibrado" aoMudar={c.mudarDetalhe} />
         {formDivida}
         {janelaEntender}
         {conferir && (

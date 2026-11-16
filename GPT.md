@@ -863,3 +863,26 @@ por causa dela.
 **Validação:** `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício, `scripts/painel/testar.mjs` 31/31,
 `testar-movel.cjs` todo OK. App de demonstração em 1586 e 1100 px, escuro e claro: sem rolagem lateral nem erro de página;
 trocar mês no gráfico, Previsto, Saldos, 12 meses, abrir peça, categoria, conselho, "Como calculamos" e a janela da conta.
+
+### 16/11/2026 — Claude — Início equilibrada redesenhada (computador)
+
+**Estado:** implementado e validado localmente; publicação no site registrada na conversa da sessão (PR e deploy). Sem
+migração. O celular não usa esta tela (tem a sua Início em `src/movel`), então o app Android não precisa de versão nova.
+
+- Pedido do Edigar: recriar a Início equilibrada igual a 3 imagens (Visão geral, Seu dinheiro em perspectiva, Seu próximo
+  passo), coerente com a detalhada. Feita direto na escala da detalhada depois do "tudo menor" (#204, ~70% das imagens).
+- `components/InicioEquilibrado.tsx` reescrito: `TopoEq`, `PilulaDoJeito` (a pílula "Modo equilibrado" substitui o
+  "Modo equilibrado · Alterar" do fim), `RegistrarEq` (opções num menu sob o botão), `ResultadoEq`, `AteOFimEq`, `ContasEq`
+  (duas colunas), `CabecalhoEq`, `ComparacaoEq`, `PrincipaisGastos`, `FaixaEq`, `OrientacaoEq`, `SaudeEq` (nota em anel) e
+  `ResumosCompactos`. Saíram `SaudacaoEq`, `ResumoEq` e `SeletorDoJeito`. CSS reescrito em `inicio-equilibrado.css`.
+- Nenhum cálculo mudou. Novo só `maiorCategoria` (`lib/comparacao.ts`): a frase "Em novembro, moradia concentra a maior
+  parte das suas despesas." (nome no meio da frase; sigla fica como está; "sem categoria" tem frase própria). Caso novo em
+  `scripts/painel/casos.ts`. Ícones novos: `diag-sobe`, `diag-desce`, `barras`, `balanca`, `exclamacao`.
+- Saiu da tela (fica por toque ou em outra página): o grupo "Restante do mês" (está em "Ver contas do mês") e a linha
+  "Compras no cartão ficam em A pagar" (foi para o título do (i) do resultado e para o "Como calculamos").
+
+**Validação:** `npx tsc -b`, `npm run lint` (sem erros; nenhum aviso novo), build com Supabase fictício,
+`scripts/painel/testar.mjs` 32/32, `testar-movel.cjs` sem falha. App de demonstração em 1586, 1440, 1100 e 900 px, escuro e
+claro, meses passado/atual/futuro: sem rolagem lateral nem erro de página; 12 cliques conferidos (Registrar e Saída, pílula
+do jeito, Ver mais atrasadas, Marcar como paga e linha dos próximos abrem a conferência, Explorar comparação, Como
+calculamos, Todas as categorias, (i), Ver diagnóstico, faixa → Lançamentos).

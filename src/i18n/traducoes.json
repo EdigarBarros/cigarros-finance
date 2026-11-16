@@ -15690,5 +15690,89 @@
   "{0} metas cadastradas": {
     "en": "{0} goals set",
     "es": "{0} metas registradas"
+  },
+  "Entrou menos saiu até hoje (não é o saldo do banco). Compras no cartão ficam em “A pagar” até a fatura ser paga.": {
+    "en": "Money in minus money out so far (not your bank balance). Card purchases stay in “To pay” until the bill is paid.",
+    "es": "Lo que entró menos lo que salió hasta hoy (no es el saldo del banco). Las compras con tarjeta quedan en “Por pagar” hasta que se pague la factura."
+  },
+  "Entrou menos saiu (não é o saldo do banco).": {
+    "en": "Money in minus money out (not your bank balance).",
+    "es": "Lo que entró menos lo que salió (no es el saldo del banco)."
+  },
+  "{0} · {1} parcelas": {
+    "en": "{0} · {1} installments",
+    "es": "{0} · {1} cuotas"
+  },
+  "1 a {0} de {1}": {
+    "en": "{1} 1 to {0}",
+    "es": "1 al {0} de {1}"
+  },
+  "Parte de cada categoria no que saiu até hoje ({0}).": {
+    "en": "Share of each category in what went out so far ({0}).",
+    "es": "Parte de cada categoría en lo que salió hasta hoy ({0})."
+  },
+  "Parte de cada categoria nos gastos do mês ({0}).": {
+    "en": "Share of each category in the month's spending ({0}).",
+    "es": "Parte de cada categoría en los gastos del mes ({0})."
+  },
+  "Em {0}, a maior parte das suas despesas está sem categoria.": {
+    "en": "In {0}, most of your expenses have no category.",
+    "es": "En {0}, la mayor parte de tus gastos no tiene categoría."
+  },
+  "Em {0}, {1} concentra a maior parte das suas despesas.": {
+    "en": "In {0}, {1} takes up the largest share of your expenses.",
+    "es": "En {0}, {1} concentra la mayor parte de tus gastos."
+  },
+  "Ainda sem orientação: faltam dados.": {
+    "en": "No guidance yet: more data needed.",
+    "es": "Aún sin orientación: faltan datos."
+  },
+  "Nenhum alerta agora.": {
+    "en": "No alerts right now.",
+    "es": "Ninguna alerta por ahora."
+  },
+  "Lance entradas e saídas de pelo menos 2 meses que já terminaram.": {
+    "en": "Record money in and out for at least 2 months that have ended.",
+    "es": "Registra entradas y salidas de al menos 2 meses ya terminados."
+  },
+  "Ver diagnóstico": {
+    "en": "See diagnosis",
+    "es": "Ver diagnóstico"
+  },
+  "Meta em destaque:": {
+    "en": "Featured goal:",
+    "es": "Meta destacada:"
+  },
+  "Em {0} bancos": {
+    "en": "In {0} banks",
+    "es": "En {0} bancos"
+  },
+  "Seu dinheiro em perspectiva": {
+    "en": "Your money in perspective",
+    "es": "Tu dinero en perspectiva"
+  },
+  "Comparativo e principais gastos": {
+    "en": "Comparison and top expenses",
+    "es": "Comparativo y principales gastos"
+  },
+  "Seu próximo passo": {
+    "en": "Your next step",
+    "es": "Tu próximo paso"
+  },
+  "Orientações e compromissos financeiros": {
+    "en": "Guidance and financial commitments",
+    "es": "Orientaciones y compromisos financieros"
+  },
+  "Veja quanto você tem investido e quanto rendeu.": {
+    "en": "See how much you have invested and how much it earned.",
+    "es": "Mira cuánto tienes invertido y cuánto rindió."
+  },
+  "Ver investimentos": {
+    "en": "See investments",
+    "es": "Ver inversiones"
+  },
+  "Acompanhe quanto você tem investido mês a mês.": {
+    "en": "Track how much you have invested month by month.",
+    "es": "Sigue cuánto tienes invertido mes a mes."
   }
 }

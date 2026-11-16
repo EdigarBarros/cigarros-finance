@@ -14,7 +14,7 @@
  */
 import { MESES_CURTO, noMeioDaFrase } from './format'
 import { tx } from './textos'
-import type { Lancamento } from './types'
+import type { Categoria, Lancamento } from './types'
 
 export interface LinhaComparada {
   /** Id da categoria ('' = sem categoria). */
@@ -178,4 +178,16 @@ export function pilulaDeGastos(comp: ComparacaoDeGastos | null): PilulaDeGastos 
   if (p === 0) return { tom: 'bom', texto: mesmo ? tx('Gastos iguais aos do mesmo período de {0}', mes) : tx('Gastos iguais aos de {0}', mes) }
   if (comp.variacao > 0) return { tom, texto: mesmo ? tx('Gastos {0}% acima do mesmo período de {1}', p, mes) : tx('Gastos {0}% acima de {1}', p, mes) }
   return { tom, texto: mesmo ? tx('Gastos {0}% abaixo do mesmo período de {1}', p, mes) : tx('Gastos {0}% abaixo de {1}', p, mes) }
+}
+
+/** A categoria que mais pesou no período, em uma frase, com o caminho para os lançamentos dela. */
+export function maiorCategoria(comp: ComparacaoDeGastos | null, categorias: Pick<Categoria, 'id' | 'nome'>[], nomeMes: string) {
+  if (!comp) return null
+  const f = fatiasDoPeriodo(comp, 1).principais[0]
+  if (!f || f.valor <= 0) return null
+  const c = categorias.find((k) => k.id === f.id)
+  if (!c) return { id: f.id, frase: tx('Em {0}, a maior parte das suas despesas está sem categoria.', nomeMes) }
+  // "moradia" no meio da frase; um nome que começa com sigla ("PIX", "TV a cabo") fica como está
+  const nome = /^\p{Lu}\p{Ll}/u.test(c.nome) ? c.nome[0].toLowerCase() + c.nome.slice(1) : c.nome
+  return { id: f.id, frase: tx('Em {0}, {1} concentra a maior parte das suas despesas.', nomeMes, nome) }
 }
