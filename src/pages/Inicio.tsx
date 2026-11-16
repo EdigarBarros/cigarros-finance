@@ -21,7 +21,8 @@ import { ConviteImportar } from '../components/ConviteImportar'
 import { CartaoAcompanhar, CartaoSugestao } from '../components/Configuracoes'
 import { Encaixe, type ItemEncaixe } from '../components/Encaixe'
 import { ReguaMeses, Segmentado } from '../components/ui'
-import { BlocoParaFazer, ResumoSimples } from '../components/Simples'
+import { BlocoParaFazer } from '../components/Simples'
+import { InicioSimples } from '../components/InicioSimples'
 import { BlocoConselhos } from '../components/BlocoConselhos'
 import { daquiA, tarefasDoMes } from '../lib/paraFazer'
 import { comporPrevisao, type DiaADia, type ItemPrevisto } from '../lib/previsao'
@@ -172,7 +173,6 @@ export function Inicio(c: Ctx) {
   )
 
   // ---------- 1. Como estou este mês? (cada jeito tem o seu resumo do mês) ----------
-  const irParaGastos = () => document.getElementById('para-onde-foi')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   // Gasto por dia: no mês de hoje, só as saídas até hoje (parcela de cartão e conta com data futura ainda não saíram do bolso)
   const diasNoMes = new Date(c.ano, c.mes, 0).getDate()
   const decorridos = mesDeHoje ? hoje.getDate() : diasNoMes
@@ -332,59 +332,14 @@ export function Inicio(c: Ctx) {
   // sugestões opcionais (recursos do app): sempre depois do que é informação e aviso financeiro
   const opcionais = (convite || sugestao) && <div className="inicio-opcionais">{convite}{sugestao}</div>
 
-  // ---------- Jeito simples: a própria tela ----------
+  // ---------- Jeito simples: a própria tela (components/InicioSimples.tsx) ----------
   if (simples) {
-    const contasDoMes = v.contas ? c.situacoesContas : []
-    const faturas = v.cartoes ? c.faturas : []
-    const dividasAbertas = v.dividas ? c.situacao.filter((s) => s.restante > 0) : []
-    // só aparece quem tem algo cadastrado: sem contas, cartões nem dívidas, não há o que fazer
-    const comParaFazer = contasDoMes.length > 0 || faturas.length > 0 || dividasAbertas.length > 0
-    const mesAtual = mesDeHoje
-    // Os mesmos números dos outros jeitos (lib/previsao.ts): no mês de hoje, só o que já aconteceu (parcela de cartão e
-    // conta com data mais para a frente vão para o "falta pagar"); num mês que ainda não começou, o que está previsto
-    // para ele (antes o simples mostrava sem as contas do mês e sem a fatura, e o mesmo mês dava outro número no equilibrado).
-    const dd = ddMes
-    const rSimples = mesFuturo
-      ? { ...r, entradas: dd.vaiEntrar, saidas: dd.vaiSair, fluxo: Math.round((dd.vaiEntrar - dd.vaiSair) * 100) / 100 }
-      : { ...r, entradas: dd.entrou, saidas: dd.saiu, fluxo: Math.round((dd.entrou - dd.saiu) * 100) / 100 }
-    const faltaPagar = dd.vaiSair
-    const faltaReceber = dd.vaiEntrar
-    const previsao = mesAtual && !mesVazio && (faltaPagar > 0 || faltaReceber > 0) ? { faltaPagar, faltaReceber } : null
-    const dividasResumo = v.dividas && (
-      <BlocoDividas itens={c.situacao} nivel={nivel} resumo aoNova={novaDivida} aoEditar={abrirDivida} aoPagar={c.pagarDivida} aoVerTodas={() => c.irPara('dividas')} />
-    )
-    // no computador, duas colunas (o que fazer e o que aconteceu à esquerda; para onde foi e o que você tem à direita);
-    // no celular, uma só, na ordem de `ordem`
-    const esquerda = [
-      comParaFazer && ['fazer', <BlocoParaFazer key="fazer" tarefas={tarefas.lista} aoVerTudo={v.contas ? () => c.irPara('contas') : undefined} />],
-      !mesVazio && ['lancamentos', lancamentos],
-    ].filter(Boolean) as [string, React.ReactNode][]
-    const direita = [
-      gastos && ['gastos', gastos],
-      dividasResumo && ['dividas', dividasResumo],
-      metas && ['metas', metas],
-      dinheiro && ['dinheiro', dinheiro],
-    ].filter(Boolean) as [string, React.ReactNode][]
-    const coluna = (itens: [string, React.ReactNode][]) => itens.length > 0 && (
-      <div className="simples-col">{itens.map(([k, no]) => <div key={k} className={`so so-${k}`}>{no}</div>)}</div>
-    )
+    // o convite para outro jeito de ver não aparece aqui: a troca fica no "Modo simples · Alterar", no fim da tela
+    const sugestaoSimples = c.sugestao && !c.sugestao.id.startsWith('detalhe:') ? sugestao : null
     return (
-      <div className="pagina inicio inicio-simples">
-        {saudacao}
-        <ResumoSimples r={rSimples} nomeMes={nomeMes} vazio={mesVazio} futuro={mesFuturo} previsao={previsao}
-          ateHoje={mesAtual} comCartao={!mesAtual && tarefas.lista.some((t) => t.chave.startsWith('fatura:'))} acoes={botoes} aoVerGastos={irParaGastos}
-          situacao={situacao} aoEntender={abrirEntender} />
-        {saude}
-        {(esquerda.length > 0 || direita.length > 0) && (
-          <div className="simples-colunas">{coluna(esquerda)}{coluna(direita)}</div>
-        )}
-        {opcionais}
-        <p className="simples-rodape">
-          {tx('Quer ver gráficos e comparar com o mês passado?')} <button className="link" onClick={c.personalizar}>{tx('Mudar o jeito de ver')}</button>
-        </p>
-        {formDivida}
-        {janelaEntender}
-      </div>
+      <InicioSimples c={c} dd={ddMes} composicao={composicao} momento={momento} nomeMes={nomeMes} hojeIso={hojeIso} metas={situacaoMetas}
+        aoEntender={abrirEntender}
+        extras={<>{(convite || sugestaoSimples) && <div className="inicio-opcionais">{convite}{sugestaoSimples}</div>}{formDivida}{janelaEntender}</>} />
     )
   }
 
