@@ -703,6 +703,7 @@ migração. O app Android ainda não recebeu (precisa de versão nova, assinada 
   `scripts/extrato/testar.mjs` 54/54, `scripts/invest/testar.mjs` 27/27, `testar-correcoes.cjs` passou e o novo
   `scripts/app-de-demonstracao/testar-inicio-simples.cjs` 31/31. Lápis da tela Contas do mês conferido à parte.
 - Limite: a alça que esconde a barra de baixo continua com 52×22 px (controle antigo, fora desta mudança).
+  **Resolvido em 16/11/2026 (Claude):** no celular a alça saiu; a barra encolhe ao rolar (entrada "Celular com moldura e Início próprias").
 ### 16/11/2026 — Claude — Início do modo equilibrado reestruturada para o celular
 
 ### 16/11/2026 — Claude — Início do jeito simples: ajustes com as capturas reais
@@ -746,7 +747,8 @@ sessão (sem Android SDK e sem a chave de upload no ambiente): precisa de versã
 - Junção com a Início do simples (#196): o `FormBaixa` agora mora em `components/FormBaixa.tsx` (com banco); a opção
   `conferir` foi para lá. O simples mantém o topo dele (`simples-movel`, idioma e suporte no "Mais" de baixo); nos outros
   jeitos e telas do celular vale o topo com "Mais opções" (⋯). Os dois caminhos levam aos mesmos destinos; unificar fica
-  como decisão do Edigar.
+  como decisão do Edigar. **Resolvido em 16/11/2026 (Claude):** o Edigar pediu o celular redesenhado; agora há um topo só
+  (foto → menu da conta) e a aba "Mais" para os três jeitos (entrada "Celular com moldura e Início próprias").
 - Validação: `npx tsc -b`, `npm run lint` (sem erros; avisos antigos), build, `node scripts/painel/testar.mjs` (23 de 23,
   com 3 casos novos), app de demonstração em 320/360/390/430 px e com zoom de 130%: sem rolagem horizontal, sem valor
   cortado, sem rolagem interna, último conteúdo acima da barra de abas; 22 checagens de interação no Playwright (registrar,
@@ -754,3 +756,30 @@ sessão (sem Android SDK e sem a chave de upload no ambiente): precisa de versã
   troca e persistência do jeito, mês futuro), sem erro de página.
 - Atenção: `node scripts/traducao/extrair.cjs --limpar …` também extrai textos de todos os arquivos que recebe (mexeu em
   12 arquivos fora do escopo). Foi desfeito; as traduções novas entraram direto no `traducoes.json`.
+
+### 16/11/2026 — Claude — Celular com moldura e Início próprias (fase 1 de 7)
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração de banco. O app Android **não** foi gerado nesta
+sessão: precisa de versão nova para receber a mudança.
+
+- Pedido do Edigar: telas do celular totalmente diferentes das do computador, no esqueleto de um app de banco que ele
+  mandou em capturas (número grande no topo que desliza, ações redondas, cartões empilhados, abas em pílula). Só o
+  esqueleto: cores, ícones e ações são do OpusCash. Decisões dele: redesenhar todas as telas (por fases), topo da Início
+  com os resumos do mês, os três jeitos viram modelos de partida dos cartões, escolha dos cartões salva na conta.
+- Regras e fases: `docs/arquitetura-do-painel.md`, seção 4.25 (nova); 4.4 e 6 ganharam a nota de que valem para o que
+  ainda abre a versão do computador.
+- `components/Painel.tsx`: os avisos do topo, as telas e as janelas viraram pedaços compartilhados; com `mobile` sai a
+  moldura do celular (`src/movel/Casca.tsx`: topo, fundo em degradê, quatro abas fixas, folhas "Mais", conta e meses).
+  O HTML do computador não mudou: 24 capturas (3 jeitos, 10 telas, 1280 e 1024 px) iguais byte a byte às do código anterior.
+- `lib/useMesDaInicio.ts` (novo): o cálculo do mês que estava dentro de `pages/Inicio.tsx` (dia a dia com parcelas,
+  tarefas, previsão, estado do mês, comparação, metas). As duas Inícios usam o mesmo.
+- `lib/widgets.ts` (novo, puro): os cartões, os modelos de cada jeito e a grade (pequenos em par). `src/movel/widgets.tsx`
+  desenha cada um; `src/movel/telas/InicioMovel.tsx` é a Início do celular; `src/movel/primitivas.tsx` as peças.
+- Telas sem versão de celular ainda (todas menos a Início) abrem a do computador dentro da moldura nova, com o "+".
+- Saíram `testar-inicio-simples.cjs` e `testar-inicio-detalhado.cjs` (conferiam a Início antiga do celular); entrou
+  `scripts/app-de-demonstracao/testar-movel.cjs`.
+- Validação: `npx tsc -b`, `npm run lint` (só avisos), build, `node scripts/painel/testar.mjs` 26/26 (3 casos novos),
+  `testar-movel.cjs` 97/97, `testar-correcoes.cjs` passou; textos novos com `en` e `es` em `traducoes.json`.
+- Pendente (próximas fases): escolher/tirar/reordenar cartões com a coluna `perfis.celular` (migração nova), e as versões de
+  celular de Lançamentos, Contas, Cartões, Dívidas, Metas, Guardado, Consultor, Invest e Ano; por fim, limpar o código de
+  celular antigo que ficou sem uso.

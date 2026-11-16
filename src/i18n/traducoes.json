@@ -14954,5 +14954,193 @@
   "Inclui juros de atraso estimados": {
     "en": "Includes estimated late interest",
     "es": "Incluye intereses de mora estimados"
+  },
+  "carrossel": {
+    "en": "carousel",
+    "es": "carrusel"
+  },
+  "Resumo": {
+    "en": "Summary",
+    "es": "Resumen"
+  },
+  "página": {
+    "en": "page",
+    "es": "página"
+  },
+  "{0} de {1}: {2}": {
+    "en": "{0} of {1}: {2}",
+    "es": "{0} de {1}: {2}"
+  },
+  "Dispensar": {
+    "en": "Dismiss",
+    "es": "Descartar"
+  },
+  "Escolher mês: {0}": {
+    "en": "Choose month: {0}",
+    "es": "Elegir mes: {0}"
+  },
+  "Ver tudo": {
+    "en": "See all",
+    "es": "Ver todo"
+  },
+  "Nada para pagar em {0}.": {
+    "en": "Nothing to pay in {0}.",
+    "es": "Nada que pagar en {0}."
+  },
+  "Gasto este mês": {
+    "en": "Spent this month",
+    "es": "Gastado este mes"
+  },
+  "Gasto em {0}": {
+    "en": "Spent in {0}",
+    "es": "Gastado en {0}"
+  },
+  "Ainda vai sair {0}": {
+    "en": "{0} still to go out",
+    "es": "Todavía saldrán {0}"
+  },
+  "Nada lançado em {0} ainda.": {
+    "en": "Nothing recorded in {0} yet.",
+    "es": "Nada registrado en {0} todavía."
+  },
+  "Mais 1 categoria: {0}": {
+    "en": "1 more category: {0}",
+    "es": "1 categoría más: {0}"
+  },
+  "Mais {0} categorias: {1}": {
+    "en": "{0} more categories: {1}",
+    "es": "{0} categorías más: {1}"
+  },
+  "Lance mais um mês e o consultor começa a dar dicas.": {
+    "en": "Record one more month and the advisor starts giving tips.",
+    "es": "Registra un mes más y el asesor empieza a dar consejos."
+  },
+  "Nenhum alerta agora. Seu dinheiro está em ordem.": {
+    "en": "No alerts right now. Your money is in order.",
+    "es": "Ninguna alerta ahora. Tu dinero está en orden."
+  },
+  "em 1 dia": {
+    "en": "in 1 day",
+    "es": "en 1 día"
+  },
+  "Saúde do dinheiro": {
+    "en": "Money health",
+    "es": "Salud del dinero"
+  },
+  "Comparado a {0}": {
+    "en": "Compared to {0}",
+    "es": "Comparado con {0}"
+  },
+  "Te devem": {
+    "en": "Owed to you",
+    "es": "Te deben"
+  },
+  "Saldos de {0}. Toque para atualizar.": {
+    "en": "Balances from {0}. Tap to update.",
+    "es": "Saldos de {0}. Toca para actualizar."
+  },
+  "Fatura paga": {
+    "en": "Bill paid",
+    "es": "Factura pagada"
+  },
+  "Fatura atrasada": {
+    "en": "Bill overdue",
+    "es": "Factura atrasada"
+  },
+  "Vence {0}": {
+    "en": "Due {0}",
+    "es": "Vence {0}"
+  },
+  "Vai entrar {0} · vai sair {1}": {
+    "en": "{0} coming in · {1} going out",
+    "es": "Entrarán {0} · saldrán {1}"
+  },
+  "Nada previsto ainda.": {
+    "en": "Nothing expected yet.",
+    "es": "Nada previsto todavía."
+  },
+  "Entender a conta": {
+    "en": "Understand the math",
+    "es": "Entender la cuenta"
+  },
+  "Sobrou em {0} até hoje": {
+    "en": "Left over in {0} so far",
+    "es": "Sobró en {0} hasta hoy"
+  },
+  "Faltou em {0} até hoje": {
+    "en": "Short in {0} so far",
+    "es": "Faltó en {0} hasta hoy"
+  },
+  "Lance o que entrou e o que saiu e o painel se monta sozinho.": {
+    "en": "Record what came in and went out and the dashboard builds itself.",
+    "es": "Registra lo que entró y salió y el panel se arma solo."
+  },
+  "Deve sobrar {0} no fim do mês": {
+    "en": "{0} should be left at month end",
+    "es": "Deberían sobrar {0} a fin de mes"
+  },
+  "Pode faltar {0} no fim do mês": {
+    "en": "You may be {0} short at month end",
+    "es": "Pueden faltar {0} a fin de mes"
+  },
+  "Entrou {0} · saiu {1}": {
+    "en": "{0} in · {1} out",
+    "es": "Entró {0} · salió {1}"
+  },
+  "Guardado em 1 banco": {
+    "en": "Saved in 1 bank",
+    "es": "Guardado en 1 banco"
+  },
+  "Guardado em {0} bancos": {
+    "en": "Saved in {0} banks",
+    "es": "Guardado en {0} bancos"
+  },
+  "Ainda não informado": {
+    "en": "Not entered yet",
+    "es": "Todavía no informado"
+  },
+  "Informar saldos": {
+    "en": "Enter balances",
+    "es": "Informar saldos"
+  },
+  "Falta pagar nas dívidas": {
+    "en": "Left to pay on debts",
+    "es": "Falta pagar en las deudas"
+  },
+  "Seus investimentos": {
+    "en": "Your investments",
+    "es": "Tus inversiones"
+  },
+  "Rendeu {0} até hoje": {
+    "en": "Earned {0} so far",
+    "es": "Rindió {0} hasta hoy"
+  },
+  "Perdeu {0} até hoje": {
+    "en": "Lost {0} so far",
+    "es": "Perdió {0} hasta hoy"
+  },
+  "Ver carteira": {
+    "en": "See portfolio",
+    "es": "Ver cartera"
+  },
+  "Importe o extrato do banco ou uma planilha e o app lança tudo para você.": {
+    "en": "Import your bank statement or a spreadsheet and the app records everything for you.",
+    "es": "Importa el extracto del banco o una planilla y la app registra todo por ti."
+  },
+  "O que você quer fazer?": {
+    "en": "What do you want to do?",
+    "es": "¿Qué quieres hacer?"
+  },
+  "Nova dívida": {
+    "en": "New debt",
+    "es": "Nueva deuda"
+  },
+  "Guardar numa meta": {
+    "en": "Save toward a goal",
+    "es": "Ahorrar para una meta"
+  },
+  "Ajustes": {
+    "en": "Settings",
+    "es": "Ajustes"
   }
 }

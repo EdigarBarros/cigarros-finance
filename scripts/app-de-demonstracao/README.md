@@ -42,30 +42,16 @@ Para usar o Chromium do sistema em vez do navegador instalado pelo Playwright:
 PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium node scripts/app-de-demonstracao/testar-correcoes.cjs
 ```
 
-## Início detalhada no celular
+## Celular (moldura e Início)
 
 Depois do build com Supabase fictício:
 
 ```bash
-node scripts/app-de-demonstracao/testar-inicio-detalhado.cjs
+node scripts/app-de-demonstracao/testar-movel.cjs
 ```
 
-Verifica 320/360/390/430 px, fonte raiz a 150% e 200%, ausência de rolagem horizontal, consulta de conta
-sem pagamento, Registrar, seleção mensal, séries de saldos, alternativa em lista, recolhimento persistido,
-privacidade e estruturas independentes dos modos simples e equilibrado. Usa Chromium do sistema por padrão;
-`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` pode substituí-lo. `OPUS_CAPTURAS` define a pasta das capturas
-(padrão `/workspace/artifacts`). Dados e autenticação são fictícios. Ampliar a fonte raiz não substitui
-uma validação manual de todas as configurações de acessibilidade de iOS/Android.
-
-## Início do jeito simples no celular
-
-Depois do mesmo build, rode:
-
-```bash
-node scripts/app-de-demonstracao/testar-inicio-simples.cjs
-```
-
-Com a data presa em 16/11/2026 (contas atrasadas e próximas), confere em 320, 360, 390 e 430 px que nada fica cortado,
-fora da tela ou atrás da barra de baixo e que os toques têm 44 px; depois o topo enxuto, o "Mais", a previsão igual ao
-"Ver cálculo", as barras dos gastos por categoria na escala do total, o "Marcar como paga" (grava valor, dia e banco) e a
-troca de modo gravada no perfil.
+Com a data presa em 16/11/2026, nos três jeitos, em 320, 360, 390 e 430 px e nos temas escuro e claro: sem rolagem de
+lado, nada fora da tela, toques do topo, das ações e das abas com 44 px e o fim da tela acima da barra de baixo; a fonte
+a 150% e 200%; o topo que desliza (ponto e cor), a conta que abre a conferência, as folhas "Mais", da conta e dos meses,
+a busca do topo, os alvos do tutorial e o computador sem nada do celular. (Os antigos `testar-inicio-simples.cjs` e
+`testar-inicio-detalhado.cjs` saíram: conferiam a Início dos três jeitos no celular, que deu lugar a esta.)

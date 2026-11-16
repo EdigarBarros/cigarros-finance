@@ -1,11 +1,9 @@
 import { SecaoDetalhada } from '../components/SecaoDetalhada'
 import { EvolucaoDetalhada } from '../components/EvolucaoDetalhada'
-import { converter } from '../lib/moedas'
 import { Fragment, useMemo, useState, type CSSProperties } from 'react'
 import { PALETA } from '../lib/charts'
-import { calendarioDe, parcelasDoMes, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
-import { fmtMoeda, fmtValor, MESES_CURTO, moedaAtual, MESES_NOME, LOCAL_DAS_DATAS, noMeioDaFrase } from '../lib/format'
-import { situacaoMeta } from '../lib/metas'
+import { calendarioDe, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
+import { fmtMoeda, fmtValor, MESES_CURTO, moedaAtual, LOCAL_DAS_DATAS, noMeioDaFrase } from '../lib/format'
 import {
   Bloco, BlocoDinheiro, BlocoDividas, BlocoGastos, BlocoLancamentos, BlocoMetas,
 } from '../components/Blocos'
@@ -26,10 +24,9 @@ import { Modal, ReguaMeses, Segmentado } from '../components/ui'
 import { InicioSimples } from '../components/InicioSimples'
 import { FormBaixa } from '../components/FormBaixa'
 import { BlocoConselhos } from '../components/BlocoConselhos'
-import { daquiA, tarefasDoMes } from '../lib/paraFazer'
-import { comporPrevisao, type DiaADia, type ItemPrevisto } from '../lib/previsao'
-import { situacaoDoMes, type Momento } from '../lib/situacaoDoMes'
-import { compararGastos, destaqueDaComparacao, pilulaDeGastos } from '../lib/comparacao'
+import { daquiA } from '../lib/paraFazer'
+import { destaqueDaComparacao } from '../lib/comparacao'
+import { useMesDaInicio } from '../lib/useMesDaInicio'
 import { pedirCategoriaNosLancamentos } from '../lib/busca'
 import type { SituacaoConta } from '../lib/contasFixas'
 import { ComparacaoMes } from '../components/ComparacaoMes'
@@ -39,7 +36,6 @@ import { useAcoesDeLancar } from '../lib/botaoMais'
 import { totaisDoMes } from '../lib/contasFixas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
-import { useHoje } from '../lib/useHoje'
 
 /** Lista de blocos de uma zona, sem os que não existem. */
 const zona = (xs: unknown[]) => xs.filter(Boolean).map((x, i) => <Fragment key={i}>{x as React.ReactNode}</Fragment>)
@@ -60,10 +56,12 @@ const palavras = (texto: string, atraso = 0) =>
  */
 export function Inicio(c: Ctx) {
   const { r, anterior: a, mobile, v } = c
-  // muda sozinho na virada do dia (a aba pode ficar aberta de um dia para o outro)
-  const hoje = useHoje()
+  // os números do mês (o mesmo cálculo da Início do celular): lib/useMesDaInicio.ts
+  const {
+    hoje, hojeIso, nomeMes, mesDeHoje, momento, ddMes, tarefas, composicao, situacao, comparacao, gastosDoPeriodo,
+    atrasadasAPagar, pilulaGastos, situacaoMetas, progressoDasMetas,
+  } = useMesDaInicio(c)
   const hojePorExtenso = hoje.toLocaleDateString(LOCAL_DAS_DATAS, { day: 'numeric', month: 'long', year: 'numeric' })
-  const hojeIso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
   const nivel = c.perfil.detalhe
   const detalhado = nivel === 'detalhado'
   // conta nova vê a mesma boas-vindas em todos os jeitos
@@ -77,14 +75,8 @@ export function Inicio(c: Ctx) {
 
   const abrirDivida = (s: SituacaoDivida) => setDivida(s)
   const novaDivida = () => setDivida('nova')
-  const nomeMes = noMeioDaFrase(MESES_NOME[c.mes - 1])
   // Comparação só dentro do mesmo ano (em janeiro não há mês anterior).
   const mesAnt = c.mes > 1 ? noMeioDaFrase(MESES_CURTO[c.mes - 2]) : undefined
-  const situacaoMetas = c.d.metas.map((m) => situacaoMeta(m, c.d.movimentosMeta))
-  // o mesmo número da tela Metas: tudo o que foi guardado sobre o total das metas (na moeda principal), não a média das metas
-  const naPrincipal = (valor: number, moeda: string) => converter(valor, moeda, c.taxas) ?? 0
-  const alvoDasMetas = situacaoMetas.reduce((t, s) => t + naPrincipal(s.meta.alvo, s.meta.moeda), 0)
-  const progressoDasMetas = alvoDasMetas > 0 ? Math.min(1, situacaoMetas.reduce((t, s) => t + naPrincipal(s.guardado, s.meta.moeda), 0) / alvoDasMetas) : 0
   const mesVazio = c.lancsMes.length === 0
   const haAno = c.porMes.some(Boolean)
   // os 6 meses que o gráfico de fluxo mostra (mesma conta do GraficoFluxo)
@@ -94,66 +86,14 @@ export function Inicio(c: Ctx) {
   const semRecebimentoPrevisto = modoDoGrafico === 'previsto' && moedaFluxo === moedaAtual() && c.v.contas && janelaDoFluxo.some((p) => p.vaiSair > 0) && !janelaDoFluxo.some((p) => p.vaiEntrar > 0)
 
   // ---------- 0. Saudação ----------
-  // No mês de hoje os números contam só o que já aconteceu: parcela de cartão e conta com data mais para a frente ainda
-  // não saíram do bolso (senão, no dia 4, o mês já aparece com as contas do dia 20 e um "faltou" que não aconteceu).
-  const mesDeHoje = c.ano === hoje.getFullYear() && c.mes === hoje.getMonth() + 1
-  // O mês dia a dia com as parcelas de dívida que ainda vencem nele: as três telas preveem o fim do mês com a mesma conta.
-  // As parcelas entram uma por uma (com nome) na lista do que ainda vem: o "Entender previsão" mostra a mesma conta.
-  const ddMes = useMemo((): DiaADia => {
-    const dd = c.diaADia
-    if (!v.dividas) return dd
-    const parcelas = parcelasDoMes({ situacao: c.situacao, ano: c.ano, mes: c.mes, dias: dd.dias, hoje: dd.hoje, diaRef: c.diaRef, soDoMes: dd.hoje === 0 })
-    if (!parcelas.length) return dd
-    const porDia = Array<number>(dd.dias).fill(0)
-    for (const p of parcelas) porDia[p.dia - 1] += p.valor
-    const total = parcelas.reduce((t, p) => t + p.valor, 0)
-    const itens: ItemPrevisto[] = parcelas.map((p) => ({
-      origem: 'parcela', tipo: 'saida', descricao: tx('{0}, parcela {1}', p.divida.divida.descricao, p.n), valor: p.valor, data: p.vencimento, atrasado: p.atrasada,
-    }))
-    return {
-      ...dd, vaiSair: Math.round((dd.vaiSair + total) * 100) / 100,
-      vaiSairDia: dd.vaiSairDia.map((n, i) => Math.round((n + porDia[i]) * 100) / 100), pendentes: [...dd.pendentes, ...itens],
-    }
-  }, [c.diaADia, c.situacao, c.ano, c.mes, c.diaRef, v.dividas])
-  const mesFuturo = c.ano * 12 + c.mes > hoje.getFullYear() * 12 + hoje.getMonth() + 1
-  const momento: Momento = mesDeHoje ? 'atual' : mesFuturo ? 'futuro' : 'passado'
-  // Contas, faturas e parcelas do mês numa lista só (a mesma nos três jeitos): o que já venceu, o que vence logo e o resto.
-  const tarefas = tarefasDoMes({
-    ano: c.ano, mes: c.mes, contas: v.contas ? c.situacoesContas : [], faturas: v.cartoes ? c.faturas : [],
-    dividas: v.dividas ? c.situacao.filter((s) => s.restante > 0) : [],
-    diaRef: c.diaRef, aoPagarConta: c.pagarConta, aoPagarDivida: c.pagarDivida, aoVerCartoes: () => c.irPara('cartoes'),
-  })
-  // O estado do mês (favorável, atenção, crítico, sem dados), com os mesmos números nos três jeitos: o "caminho certo"
-  // não aparece mais quando a previsão do fim do mês está no vermelho (lib/situacaoDoMes.ts).
-  const composicao = useMemo(() => comporPrevisao(ddMes), [ddMes])
-  const situacao = situacaoDoMes({
-    momento, entrou: ddMes.entrou, saiu: ddMes.saiu, vaiEntrar: ddMes.vaiEntrar, vaiSair: ddMes.vaiSair,
-    atrasadas: tarefas.lista.filter((t) => t.estado === 'atrasada' && !t.entrada).length, receberAtrasado: composicao.receberAtrasado,
-  })
   const [entender, setEntender] = useState(false)
   const abrirEntender = () => setEntender(true)
   const nomeDoCartao = (id?: string) => c.cartoes.cartoes.find((k) => k.id === id)?.nome ?? ''
   const janelaEntender = entender && (
     <EntenderMes situacao={situacao} composicao={composicao} nomeMes={nomeMes} dias={ddMes.dias} nomeDoCartao={nomeDoCartao} aoFechar={() => setEntender(false)} />
   )
-  // Gastos contra o mesmo período do mês anterior. De outro ano, só há os últimos 12 meses fechados carregados.
-  const idxAnterior = c.ano * 12 + c.mes - 1
-  const comparavel = c.mes > 1 || idxAnterior >= hoje.getFullYear() * 12 + hoje.getMonth() + 1 - 12
-  const comparacao = useMemo(
-    () => (comparavel && !c.contaNova ? compararGastos({ lancs: c.lancsComparar, ano: c.ano, mes: c.mes, hoje: hojeIso, categoriaDe: (l) => c.categoriaDe(l)?.id }) : null),
-    [comparavel, c.contaNova, c.lancsComparar, c.ano, c.mes, hojeIso, c.categoriaDe], // eslint-disable-line react-hooks/exhaustive-deps
-  )
-  // os gastos do mês até hoje por categoria, mesmo sem mês anterior carregado (o equilibrado mostra os principais)
-  const gastosDoPeriodo = useMemo(
-    () => (comparacao || c.contaNova ? null : compararGastos({ lancs: c.lancsComparar, ano: c.ano, mes: c.mes, hoje: hojeIso, categoriaDe: (l) => c.categoriaDe(l)?.id })),
-    [comparacao, c.contaNova, c.lancsComparar, c.ano, c.mes, hojeIso, c.categoriaDe], // eslint-disable-line react-hooks/exhaustive-deps
-  )
   const [conferir, setConferir] = useState<SituacaoConta | null>(null)
   const [explorar, setExplorar] = useState(false)
-  const atrasadasAPagar = tarefas.lista.filter((t) => t.estado === 'atrasada' && !t.entrada).length
-  // "gastando menos" com conta vencida sem baixa é elogio falso: a conta só não entrou nos gastos ainda
-  const pilulaBruta = pilulaDeGastos(comparacao)
-  const pilulaGastos = pilulaBruta && !(pilulaBruta.tom === 'bom' && atrasadasAPagar > 0 && momento === 'atual') ? pilulaBruta : null
   const arrumacao = useArrumacao()
   const refAcoes = useAcoesDeLancar<HTMLDivElement>()
   // a frase do mês, tirada dos números (no simples ela já está no resumo, ao lado do selo)

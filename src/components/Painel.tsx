@@ -53,6 +53,9 @@ import { useHoje } from '../lib/useHoje'
 import { AvisoReanalise } from './AvisoReanalise'
 import { marcarTela, marcarUso } from '../lib/uso'
 import { PopupNovidade, useNovidade } from './Novidades'
+import { BarraDeAbasMovel, FundoMovel, ListaDaFolha, TopoMovel } from '../movel/Casca'
+import type { Tom } from '../movel/tom'
+import { Modal } from './ui'
 
 // Cada tela e cada janela vira um pedaço à parte: o painel abre só com o que a pessoa vê e o resto chega sob demanda
 // (e é baixado em segundo plano logo depois, veja `carregarRestante`).
@@ -78,6 +81,8 @@ const Dividas = lazy(() => paginas.Dividas().then((m) => ({ default: m.Dividas }
 const Metas = lazy(() => paginas.Metas().then((m) => ({ default: m.Metas })))
 const Patrimonio = lazy(() => paginas.Patrimonio().then((m) => ({ default: m.Patrimonio })))
 const Ano = lazy(() => paginas.Ano().then((m) => ({ default: m.Ano })))
+// as telas do celular (src/movel/telas): a que ainda não tem versão própria abre a do computador, dentro da moldura do celular
+const InicioMovel = lazy(() => import('../movel/telas/InicioMovel').then((m) => ({ default: m.InicioMovel })))
 const janelas = {
   Formularios: () => import('./Formularios'),
   Configuracoes: () => import('./Configuracoes'),
@@ -181,6 +186,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const [suporte, setSuporte] = useState<false | 'lista' | 'novo'>(false)
   // no celular o idioma fica no menu "Mais opções" (o cabeçalho tem só mês, privacidade e avisos)
   const [idiomaAberto, setIdiomaAberto] = useState(false)
+  // celular: a cor do topo (a página do resumo que está à vista na Início) e a folha da conta (aberta pela foto)
+  const [tomMovel, setTomMovel] = useState<Tom | null>(null)
+  const [contaMovel, setContaMovel] = useState(false)
   const [respostasNovas, conferirRespostas] = useRespostasNovas()
   const [editandoSaldoInicial, setEditandoSaldoInicial] = useState(false)
   const [organizar, setOrganizar] = useState(false)
@@ -868,6 +876,343 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     </>
   )
 
+  // Pedaços que o computador e o celular mostram iguais: avisos do topo, a tela aberta e as janelas.
+  const faixasDoTopo = (
+    <>
+    <AvisoTeste assinatura={assinatura ?? null} userId={userId} moeda={perfil.moeda} adiar={tour} />
+
+    {/* no app da Play Store não há link para pagamento (lib/appAndroid.ts) */}
+    {assinatura?.status === 'past_due' && !noAppAndroid && (
+      <div className="alerta" role="status">
+        <span>{tx('Não conseguimos cobrar seu cartão. Atualize a forma de pagamento para não perder o acesso.')}</span>
+        <button className="link" onClick={() => void irParaStripe('stripe-portal').then((m) => m && avisar(m))}>{tx('Atualizar cartão')}</button>
+      </div>
+    )}
+
+    {/* o Pix de 30 dias não renova sozinho: avisa nos últimos dias */}
+    {emPix(assinatura ?? null) && diasDePix(assinatura ?? null) <= 5 && !noAppAndroid && (
+      <div className="alerta" role="status">
+        <span>{diasDePix(assinatura ?? null) === 1 ? tx('Seu acesso por Pix termina em menos de 1 dia. Renove para não perder o acesso.') : tx('Seu acesso por Pix termina em {0} dias. Renove para não perder o acesso.', diasDePix(assinatura ?? null))}</span>
+        <button className="link" onClick={() => void irParaStripe('stripe-checkout', 'BRL', 'pix').then((m) => m && avisar(m))}>{tx('Renovar com Pix')}</button>
+        <button className="link" onClick={() => setAjustes('assinatura')}>{tx('Ver assinatura')}</button>
+      </div>
+    )}
+
+    {d.perfilSemTabela && (
+      <div className="alerta aviso-migracao" role="status">
+        {tx('Falta atualizar o banco de dados para guardar suas preferências e usar outras moedas. Rode {0}', ' ')}<code>supabase/migracao-04-perfil-e-moedas.sql</code> {tx('no SQL Editor do Supabase.')}
+      </div>
+    )}
+
+    {avisoFatura && (
+      <div className="alerta aviso-ok" role="status">
+        <span>
+          {avisoFatura.depoisDoFechamento
+            ? <>{tx('Compra lançada na fatura de')} <b>{nomeDaFatura(avisoFatura.ano, avisoFatura.mes, avisoFatura.anoCompra)}</b> {tx('do {0}, porque a fatura anterior já fechou (dia {1}).', avisoFatura.cartao, avisoFatura.fechamento)}</>
+            : <>{tx('Compra lançada na fatura de')} <b>{nomeDaFatura(avisoFatura.ano, avisoFatura.mes, avisoFatura.anoCompra)}</b> {tx('do {0}.', avisoFatura.cartao)}</>}
+        </span>
+        <span>
+          {!(paginaAtual === 'cartoes' && ano === avisoFatura.ano && mes === avisoFatura.mes && cartaoAberto === avisoFatura.cartaoId) && (
+            <button className="link" onClick={() => {
+              setAno(avisoFatura.ano); setMes(avisoFatura.mes); setAvisoFatura(null)
+              irPara('cartoes'); setCartaoAberto(avisoFatura.cartaoId); setCompraDestacada(avisoFatura.compraId)
+            }}>{tx('Ver fatura')}</button>
+          )}
+          {' '}<button className="link" onClick={() => setAvisoFatura(null)}>{tx('Fechar')}</button>
+        </span>
+      </div>
+    )}
+
+    <FaixaSemInternet />
+
+    {d.erro && (
+      <div className="alerta" role="alert">
+        <span>{tx('Não deu certo. Tente de novo.')} <small>{tx('Detalhe: {0}', d.erro)}</small></span>
+        <button className="link" onClick={() => d.setErro(null)}>{tx('Fechar')}</button>
+      </div>
+    )}
+    </>
+  )
+  const telas = (noCelular: boolean) => (
+    <Suspense fallback={null}>
+    {paginaMostrada === 'inicio' && (noCelular ? <InicioMovel c={ctx} aoMudarTom={setTomMovel} /> : <Inicio {...ctx} />)}
+    {paginaMostrada === 'lancamentos' && <Lancamentos {...ctx} />}
+    {paginaMostrada === 'analise' && <PaginaAnalise {...ctx} />}
+    {paginaMostrada === 'invest' && <PaginaInvest {...ctx} />}
+    {paginaMostrada === 'contas' && <Contas {...ctx} />}
+    {paginaMostrada === 'cartoes' && <Cartoes key={cartaoAberto ?? 'todos'} {...ctx} />}
+    {paginaMostrada === 'dividas' && <Dividas {...ctx} />}
+    {paginaMostrada === 'metas' && <Metas {...ctx} />}
+    {paginaMostrada === 'patrimonio' && <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />}
+    {paginaMostrada === 'ano' && <Ano {...ctx} />}
+    </Suspense>
+  )
+  const janelasDoPainel = (
+    <>
+    <input ref={arquivo} type="file" accept=".xlsx,.xlsm,.xls" hidden onChange={(e) => e.target.files?.[0] && importar(e.target.files[0])} />
+
+    <Suspense fallback={null}>
+    {form && (
+      <FormLancamento
+        key={form.inicial?.id ?? form.preset?.divida_id ?? 'novo'}
+        ano={ano}
+        mes={mes}
+        inicial={form.inicial}
+        tipoInicial={form.tipo}
+        preset={form.preset}
+        historico={d.lancs}
+        dividas={dividasDoForm}
+        aoNovaDivida={criarEmprestimo}
+        inicioDivida={(id) => inicioDaDivida(d.saldos, id)}
+        saldoDaDivida={(id) => saldoMaisRecenteDaDivida(d.saldos, id)}
+        aoMoverInicioDivida={d.moverInicioDivida}
+        perfil={perfil}
+        taxas={taxas}
+        aoMudarPerfil={mudarPerfil}
+        categorias={d.categorias}
+        categoriaDe={categoriaDe}
+        aoNovaCategoria={d.categoriasAntigas ? undefined : d.addCategoria}
+        bancos={d.bancos}
+        aoNovoBanco={d.addBanco}
+        // `sem`: o lançamento aberto, com o que ele já fez nos saldos desfeito (para a prévia do antes e depois ao editar)
+        saldoDoMes={(a, m, sem) => mesEfetivo(sem ? ajustarMeses(d.meses, sem, undefined).meses : d.meses, a, m).caixa}
+        aoSalvar={(l, id) => emFila(() => salvarLancamento(l, id))}
+        aoExcluir={(id) => {
+          // a parcela de cartão apagada também sai dos totais dos outros anos, que só são lidos de novo ao recarregar
+          const apagado = d.lancs.find((x) => x.id === id)
+          emFila(async () => {
+            const apagou = await d.delLanc(id)
+            if (apagou && apagado) await ajustarSaldos(apagado, undefined)
+            if (!apagado || apagado.cartao_id) await cartoes.recarregar()
+          })
+        }}
+        cartoes={v.cartoes && !cartoes.semTabela ? cartoes.cartoes : undefined}
+        cartaoInicial={form.cartaoId}
+        aoSalvarCompra={cartoes.addCompra}
+        aoExcluirCompra={cartoes.delCompra}
+        comprasCartao={cartoes.compras}
+        aoCompraSalva={(a) => {
+          setAvisoFatura(a)
+          // Compra no cartão lançada na tela Lançamentos: ao fechar o formulário, leva para a tela Cartões, no cartão e na fatura em que ela caiu
+          if (paginaAtual === 'lancamentos') idaParaCartao.current = { ano: a.ano, mes: a.mes, cartaoId: a.cartaoId, compraId: a.compraId }
+        }}
+        aoNovoCartao={() => { setForm(null); irPara('cartoes') }}
+        aoEntradaFixa={comContas ? () => { setForm(null); pedirEntradaFixa(); irPara('contas') } : undefined}
+        aoAReceberParcelado={v.dividas ? () => { setForm(null); pedirLadoDividas('me_devem'); irPara('dividas') } : undefined}
+        contasFixas={comContas ? contas.contas : undefined}
+        memoriaContas={memoriaContas}
+        aoFechar={() => {
+          setForm(null)
+          const ida = idaParaCartao.current
+          idaParaCartao.current = null
+          if (ida) {
+            setAno(ida.ano); setMes(ida.mes)
+            irPara('cartoes')
+            setCartaoAberto(ida.cartaoId)
+            setCompraDestacada(ida.compraId)
+          }
+        }}
+      />
+    )}
+
+    {parecidos && (() => {
+      const conta = contas.contas.find((x) => x.id === parecidos.modelo.conta_fixa_id)
+      return conta && (
+        <ParecidosConta conta={conta} modelo={parecidos.modelo} itens={parecidos.itens}
+          aoLigar={(ids) => {
+            // um por mês: pula o mês que já tem lançamento ligado (ou que já recebeu outro desta lista)
+            const meses = new Set<number>()
+            for (const id of ids) {
+              const l = d.lancs.find((x) => x.id === id)
+              if (!l || meses.has(l.ano * 12 + l.mes) || contaOcupada(conta.id, l)) continue
+              meses.add(l.ano * 12 + l.mes)
+              void d.updLanc(id, { conta_fixa_id: conta.id })
+            }
+          }}
+          aoRecusar={(ids) => recusarVinculos(ids, conta.id)}
+          aoFechar={() => setParecidos(null)} />
+      )
+    })()}
+
+    {ajustes && (
+      <Configuracoes
+        secaoInicial={ajustes === 'painel' || ajustes === 'assinatura' ? ajustes : undefined}
+        perfil={perfil}
+        email={email}
+        categorias={d.categorias}
+        foto={d.foto}
+        aoMudarFoto={(f) => void d.salvarFoto(f)}
+        aoMudar={mudarPerfil}
+        aoRefazer={() => { setAjustes(false); setRefazendo(true) }}
+        aoTour={() => { setAjustes(false); setTour(true) }}
+        saldoInicial={d.saldoInicial}
+        aoSaldoInicial={() => { setAjustes(false); setEditandoSaldoInicial(true) }}
+        aoCategorias={() => { setAjustes(false); ctx.gerenciarCategorias() }}
+        aoBackup={() => tarefa(tx('Preparando o backup…'), async () => (await import('../lib/planilha')).exportarBackup())}
+        aoImportar={() => { setAjustes(false); arquivo.current?.click() }}
+        aoExtrato={() => { setAjustes(false); setExtrato(true) }}
+        aoOrganizar={() => { setAjustes(false); setOrganizar(true) }}
+        aoZerar={() => { setAjustes(false); setZerando(true) }}
+        assinatura={assinatura}
+        confirmandoPagamento={confirmandoPagamento}
+        aoSuporte={() => { setAjustes(false); setSuporte('novo') }}
+        aoSair={() => supabase.auth.signOut({ scope: 'local' })}
+        aoExcluirConta={() => { setAjustes(false); setExcluindo(true) }}
+        aoFechar={() => setAjustes(false)}
+      />
+    )}
+
+    {extrato && <ImportarExtrato c={ctx} aoFechar={() => setExtrato(false)} />}
+    {suporte && <Suporte inicial={suporte === 'novo' ? 'novo' : undefined} aoFechar={() => { setSuporte(false); conferirRespostas() }} aoMudar={conferirRespostas} />}
+    {editandoSaldoInicial && (
+      <FormSaldoInicial inicial={d.saldoInicial} mesSugerido={`${ano}-${String(Math.max(0, porMes.findIndex(Boolean)) + 1).padStart(2, '0')}`}
+        aoSalvar={(novo) => void d.salvarSaldoInicial(novo)} aoFechar={() => setEditandoSaldoInicial(false)} />
+    )}
+    {tour && !form && !ajustes && !extrato && !organizar && (
+      <Tour perfil={perfil} v={v} nome={perfil.nome.trim()} mobile={mobile} aoLigar={ligarModulo} aoIrPara={irPara}
+        aoTerminar={(como, passo, total) => {
+          setTour(false)
+          marcarUso(perfil.dispensadas.includes('tour') ? 'tutorial_reviu' : como === 'terminou' ? 'tutorial_terminou' : 'tutorial_pulou',
+            { como, passo, total })
+          if (!perfil.dispensadas.includes('tour')) ctx.dispensar('tour')
+        }} />
+    )}
+    {mostrarNovidade && novidade && (
+      <PopupNovidade novidade={novidade}
+        aoFechar={() => vistaNovidade(novidade.id)}
+        aoVer={(tela) => {
+          vistaNovidade(novidade.id)
+          if (tela === 'configuracoes') setAjustes(true)
+          else if (tela === 'suporte') setSuporte('lista')
+          else irPara(paginas.some((p) => p.id === tela) ? tela as Pagina : 'inicio')
+        }} />
+    )}
+    {organizar && <OrganizarNomes c={ctx} aoFechar={() => setOrganizar(false)} />}
+
+    {excluindo && (
+      <ExcluirContaModal email={email} aoBaixarBackup={async () => (await import('../lib/planilha')).exportarBackup()} aoFechar={() => setExcluindo(false)} />
+    )}
+
+    {zerando && (
+      <ZerarDados
+        contagem={{
+          entradas: d.lancs.filter((l) => l.tipo === 'entrada').length,
+          saidas: d.lancs.filter((l) => l.tipo === 'saida').length,
+          dividas: d.dividas.length, cartoes: cartoes.cartoes.length, contas: contas.contas.length, metas: d.metas.length,
+          guardado: d.meses.filter((m) => m.investimentos || Object.keys(m.moedas ?? {}).length || Object.keys(m.caixa ?? {}).length).length,
+          investimentos: investDados.ativos.length,
+        }}
+        aoBaixarBackup={async () => (await import('../lib/planilha')).exportarBackup()}
+        // depois de apagar, recarrega a página: todos os dados e o perfil voltam do zero
+        aoZerar={async (escolha) => { if (escolha.tudo || escolha.investimentos) await investDados.zerar(); await d.zerarDados(escolha); location.hash = '/inicio'; location.reload() }}
+        aoFechar={() => setZerando(false)}
+      />
+    )}
+
+    {editarCategorias && (
+      <GerenciarCategorias
+        categorias={d.categorias}
+        contagem={d.lancs.reduce<Record<string, number>>((m, l) => { const id = idCategoria(l); if (id) m[id] = (m[id] ?? 0) + 1; return m }, {})}
+        aoCriar={d.addCategoria}
+        aoEditar={d.updCategoria}
+        aoExcluir={d.delCategoria}
+        aoFechar={() => setEditarCategorias(false)}
+      />
+    )}
+    </Suspense>
+    </>
+  )
+
+  if (mobile) {
+    const naAba = (['inicio', 'lancamentos', 'analise'] as Pagina[])
+    const outras = paginas.filter((p) => !naAba.includes(p.id))
+    const nomeDe = (id: Pagina) => PAGINAS.find((p) => p.id === id)!
+    const comCor = paginaAtual === 'inicio' && tomMovel !== null
+    return (
+      <div className={`app movel ${comCor ? 'com-cor' : ''}`}>
+        <FundoMovel tom={paginaAtual === 'inicio' ? tomMovel : null} />
+        <div className="conteudo">
+          <TopoMovel sobreCor={comCor} foto={d.foto} iniciais={iniciais} avisoConta={respostasNovas > 0} aoConta={() => setContaMovel(true)}
+            busca={busca} aoBuscar={buscar} mes={`${MESES_CURTO[mes - 1]}${ano !== hoje.getFullYear() ? ` ${String(ano).slice(2)}` : ''}`}
+            aoMes={() => setQuadroMeses(true)} ocultos={ocultos} aoOcultar={() => definirValoresOcultos(!ocultos)}
+            sino={comContas ? {
+              rotulo: avisos.length ? (avisos.length === 1 ? tx('1 conta pede atenção') : tx('{0} contas pedem atenção', avisos.length)) : tx('Contas do mês'),
+              ponto: avisos.length > 0, atraso: atrasadas > 0, acao: () => irPara('contas'),
+            } : undefined} />
+          {faixasDoTopo}
+          {telas(true)}
+        </div>
+
+        {/* o "+" só nas telas que ainda não têm a fileira de ações do celular */}
+        {paginaAtual !== 'inicio' && (
+          <button className={`fab${maisEscondido ? ' recolhido' : ''}`} data-tour="lancar" onClick={() => setForm({})} aria-label={tx('Novo lançamento')}
+            aria-hidden={maisEscondido || undefined} tabIndex={maisEscondido ? -1 : undefined}><Icone nome="mais" tamanho={26} /></button>
+        )}
+
+        {avisoReanalise && reanalise && avisosDaAnalise && paginaAtual !== 'analise' && noPainel && (
+          <AvisoReanalise r={reanalise} aoFechar={fecharAvisoReanalise}
+            aoVer={() => { setAvisoReanalise(false); irPara('analise') }}
+            aoDesligar={() => { setAvisoReanalise(false); mudarAvisosDaAnalise(false) }} />
+        )}
+
+        <BarraDeAbasMovel encolhida={recolherMais} abas={[
+          ...naAba.map((id) => ({ id, nome: nomeDe(id).curto, icone: nomeDe(id).icone, ativo: paginaAtual === id, acao: () => irPara(id), tour: `nav-${id}` })),
+          { id: 'mais', nome: tx('Mais'), icone: 'reticencias', ativo: !naAba.includes(paginaAtual) || mais, aberta: mais, acao: () => setMais(true), tour: 'mais' },
+        ]} />
+
+        {mais && (
+          <Modal titulo={tx('Mais')} aoFechar={() => setMais(false)}>
+            <div className="mais-grade">
+              {outras.map((p) => (
+                <button key={p.id} data-tour={`nav-${p.id}`} className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}
+                  aria-current={paginaAtual === p.id ? 'page' : undefined}>
+                  <span className="mais-grade-circulo" aria-hidden="true"><Icone nome={p.icone} tamanho={24} /></span>
+                  <span>{p.curto}</span>
+                </button>
+              ))}
+              <button data-tour="nav-config" onClick={() => { setMais(false); setAjustes(true) }}>
+                <span className="mais-grade-circulo" aria-hidden="true"><Icone nome="engrenagem" tamanho={24} /></span>
+                <span>{tx('Ajustes')}</span>
+              </button>
+            </div>
+          </Modal>
+        )}
+
+        {contaMovel && (
+          <Modal titulo={nome} aoFechar={() => setContaMovel(false)}>
+            <p className="folha-email">{email}</p>
+            <ListaDaFolha aoEscolher={() => setContaMovel(false)}>
+              {menuItens}
+            </ListaDaFolha>
+            <div className="folha-idioma"><BotaoIdioma emLista /></div>
+          </Modal>
+        )}
+
+        {quadroMeses && (
+          <Modal titulo={tx('Escolher mês')} aoFechar={() => setQuadroMeses(false)}>
+            <div className="meses-movel">
+              <div className="quadro-meses-ano">
+                <button className="icone-btn" onClick={() => setAno(ano - 1)} aria-label={tx('Ano anterior')}><Icone nome="esq" tamanho={18} /></button>
+                {ano}
+                <button className="icone-btn" onClick={() => setAno(ano + 1)} aria-label={tx('Próximo ano')}><Icone nome="dir" tamanho={18} /></button>
+              </div>
+              <div className="quadro-meses-grade">
+                {MESES_CURTO.map((m, i) => (
+                  <button key={m} className={`${i + 1 === mes ? 'ativo' : ''} ${porMes[i] ? 'com-dados' : ''}`}
+                    onClick={() => { setMes(i + 1); setQuadroMeses(false) }} aria-current={i + 1 === mes ? 'date' : undefined}>
+                    {m}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        {janelasDoPainel}
+      </div>
+    )
+  }
+
   return (
     <div className={`app ${paginaAtual === 'inicio' && perfil.detalhe === 'detalhado' ? 'inicio-detalhada' : ''} ${barra.trilho ? 'trilho' : ''} ${barra.retrato ? 'retrato' : ''} ${barra.abasOcultas ? 'abas-ocultas' : ''} ${simplesMovel ? 'simples-movel' : ''}`}>
       {barra.retrato && !barra.trilho && <div className="lateral-fundo" onClick={barra.fechar} aria-hidden="true" />}
@@ -999,71 +1344,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
           </div>
         </header>
 
-        <AvisoTeste assinatura={assinatura ?? null} userId={userId} moeda={perfil.moeda} adiar={tour} />
+        {faixasDoTopo}
 
-        {/* no app da Play Store não há link para pagamento (lib/appAndroid.ts) */}
-        {assinatura?.status === 'past_due' && !noAppAndroid && (
-          <div className="alerta" role="status">
-            <span>{tx('Não conseguimos cobrar seu cartão. Atualize a forma de pagamento para não perder o acesso.')}</span>
-            <button className="link" onClick={() => void irParaStripe('stripe-portal').then((m) => m && avisar(m))}>{tx('Atualizar cartão')}</button>
-          </div>
-        )}
-
-        {/* o Pix de 30 dias não renova sozinho: avisa nos últimos dias */}
-        {emPix(assinatura ?? null) && diasDePix(assinatura ?? null) <= 5 && !noAppAndroid && (
-          <div className="alerta" role="status">
-            <span>{diasDePix(assinatura ?? null) === 1 ? tx('Seu acesso por Pix termina em menos de 1 dia. Renove para não perder o acesso.') : tx('Seu acesso por Pix termina em {0} dias. Renove para não perder o acesso.', diasDePix(assinatura ?? null))}</span>
-            <button className="link" onClick={() => void irParaStripe('stripe-checkout', 'BRL', 'pix').then((m) => m && avisar(m))}>{tx('Renovar com Pix')}</button>
-            <button className="link" onClick={() => setAjustes('assinatura')}>{tx('Ver assinatura')}</button>
-          </div>
-        )}
-
-        {d.perfilSemTabela && (
-          <div className="alerta aviso-migracao" role="status">
-            {tx('Falta atualizar o banco de dados para guardar suas preferências e usar outras moedas. Rode {0}', ' ')}<code>supabase/migracao-04-perfil-e-moedas.sql</code> {tx('no SQL Editor do Supabase.')}
-          </div>
-        )}
-
-        {avisoFatura && (
-          <div className="alerta aviso-ok" role="status">
-            <span>
-              {avisoFatura.depoisDoFechamento
-                ? <>{tx('Compra lançada na fatura de')} <b>{nomeDaFatura(avisoFatura.ano, avisoFatura.mes, avisoFatura.anoCompra)}</b> {tx('do {0}, porque a fatura anterior já fechou (dia {1}).', avisoFatura.cartao, avisoFatura.fechamento)}</>
-                : <>{tx('Compra lançada na fatura de')} <b>{nomeDaFatura(avisoFatura.ano, avisoFatura.mes, avisoFatura.anoCompra)}</b> {tx('do {0}.', avisoFatura.cartao)}</>}
-            </span>
-            <span>
-              {!(paginaAtual === 'cartoes' && ano === avisoFatura.ano && mes === avisoFatura.mes && cartaoAberto === avisoFatura.cartaoId) && (
-                <button className="link" onClick={() => {
-                  setAno(avisoFatura.ano); setMes(avisoFatura.mes); setAvisoFatura(null)
-                  irPara('cartoes'); setCartaoAberto(avisoFatura.cartaoId); setCompraDestacada(avisoFatura.compraId)
-                }}>{tx('Ver fatura')}</button>
-              )}
-              {' '}<button className="link" onClick={() => setAvisoFatura(null)}>{tx('Fechar')}</button>
-            </span>
-          </div>
-        )}
-
-        <FaixaSemInternet />
-
-        {d.erro && (
-          <div className="alerta" role="alert">
-            <span>{tx('Não deu certo. Tente de novo.')} <small>{tx('Detalhe: {0}', d.erro)}</small></span>
-            <button className="link" onClick={() => d.setErro(null)}>{tx('Fechar')}</button>
-          </div>
-        )}
-
-        <Suspense fallback={null}>
-        {paginaMostrada === 'inicio' && <Inicio {...ctx} />}
-        {paginaMostrada === 'lancamentos' && <Lancamentos {...ctx} />}
-        {paginaMostrada === 'analise' && <PaginaAnalise {...ctx} />}
-        {paginaMostrada === 'invest' && <PaginaInvest {...ctx} />}
-        {paginaMostrada === 'contas' && <Contas {...ctx} />}
-        {paginaMostrada === 'cartoes' && <Cartoes key={cartaoAberto ?? 'todos'} {...ctx} />}
-        {paginaMostrada === 'dividas' && <Dividas {...ctx} />}
-        {paginaMostrada === 'metas' && <Metas {...ctx} />}
-        {paginaMostrada === 'patrimonio' && <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />}
-        {paginaMostrada === 'ano' && <Ano {...ctx} />}
-        </Suspense>
+        {telas(false)}
       </div>
 
       {/* sem "+" nas Inícios do celular: o simples tem "Registrar entrada/saída", o equilibrado o "+ Registrar" e o detalhado
@@ -1119,177 +1402,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         </div>
       )}
 
-      <input ref={arquivo} type="file" accept=".xlsx,.xlsm,.xls" hidden onChange={(e) => e.target.files?.[0] && importar(e.target.files[0])} />
-
-      <Suspense fallback={null}>
-      {form && (
-        <FormLancamento
-          key={form.inicial?.id ?? form.preset?.divida_id ?? 'novo'}
-          ano={ano}
-          mes={mes}
-          inicial={form.inicial}
-          tipoInicial={form.tipo}
-          preset={form.preset}
-          historico={d.lancs}
-          dividas={dividasDoForm}
-          aoNovaDivida={criarEmprestimo}
-          inicioDivida={(id) => inicioDaDivida(d.saldos, id)}
-          saldoDaDivida={(id) => saldoMaisRecenteDaDivida(d.saldos, id)}
-          aoMoverInicioDivida={d.moverInicioDivida}
-          perfil={perfil}
-          taxas={taxas}
-          aoMudarPerfil={mudarPerfil}
-          categorias={d.categorias}
-          categoriaDe={categoriaDe}
-          aoNovaCategoria={d.categoriasAntigas ? undefined : d.addCategoria}
-          bancos={d.bancos}
-          aoNovoBanco={d.addBanco}
-          // `sem`: o lançamento aberto, com o que ele já fez nos saldos desfeito (para a prévia do antes e depois ao editar)
-          saldoDoMes={(a, m, sem) => mesEfetivo(sem ? ajustarMeses(d.meses, sem, undefined).meses : d.meses, a, m).caixa}
-          aoSalvar={(l, id) => emFila(() => salvarLancamento(l, id))}
-          aoExcluir={(id) => {
-            // a parcela de cartão apagada também sai dos totais dos outros anos, que só são lidos de novo ao recarregar
-            const apagado = d.lancs.find((x) => x.id === id)
-            emFila(async () => {
-              const apagou = await d.delLanc(id)
-              if (apagou && apagado) await ajustarSaldos(apagado, undefined)
-              if (!apagado || apagado.cartao_id) await cartoes.recarregar()
-            })
-          }}
-          cartoes={v.cartoes && !cartoes.semTabela ? cartoes.cartoes : undefined}
-          cartaoInicial={form.cartaoId}
-          aoSalvarCompra={cartoes.addCompra}
-          aoExcluirCompra={cartoes.delCompra}
-          comprasCartao={cartoes.compras}
-          aoCompraSalva={(a) => {
-            setAvisoFatura(a)
-            // Compra no cartão lançada na tela Lançamentos: ao fechar o formulário, leva para a tela Cartões, no cartão e na fatura em que ela caiu
-            if (paginaAtual === 'lancamentos') idaParaCartao.current = { ano: a.ano, mes: a.mes, cartaoId: a.cartaoId, compraId: a.compraId }
-          }}
-          aoNovoCartao={() => { setForm(null); irPara('cartoes') }}
-          aoEntradaFixa={comContas ? () => { setForm(null); pedirEntradaFixa(); irPara('contas') } : undefined}
-          aoAReceberParcelado={v.dividas ? () => { setForm(null); pedirLadoDividas('me_devem'); irPara('dividas') } : undefined}
-          contasFixas={comContas ? contas.contas : undefined}
-          memoriaContas={memoriaContas}
-          aoFechar={() => {
-            setForm(null)
-            const ida = idaParaCartao.current
-            idaParaCartao.current = null
-            if (ida) {
-              setAno(ida.ano); setMes(ida.mes)
-              irPara('cartoes')
-              setCartaoAberto(ida.cartaoId)
-              setCompraDestacada(ida.compraId)
-            }
-          }}
-        />
-      )}
-
-      {parecidos && (() => {
-        const conta = contas.contas.find((x) => x.id === parecidos.modelo.conta_fixa_id)
-        return conta && (
-          <ParecidosConta conta={conta} modelo={parecidos.modelo} itens={parecidos.itens}
-            aoLigar={(ids) => {
-              // um por mês: pula o mês que já tem lançamento ligado (ou que já recebeu outro desta lista)
-              const meses = new Set<number>()
-              for (const id of ids) {
-                const l = d.lancs.find((x) => x.id === id)
-                if (!l || meses.has(l.ano * 12 + l.mes) || contaOcupada(conta.id, l)) continue
-                meses.add(l.ano * 12 + l.mes)
-                void d.updLanc(id, { conta_fixa_id: conta.id })
-              }
-            }}
-            aoRecusar={(ids) => recusarVinculos(ids, conta.id)}
-            aoFechar={() => setParecidos(null)} />
-        )
-      })()}
-
-      {ajustes && (
-        <Configuracoes
-          secaoInicial={ajustes === 'painel' || ajustes === 'assinatura' ? ajustes : undefined}
-          perfil={perfil}
-          email={email}
-          categorias={d.categorias}
-          foto={d.foto}
-          aoMudarFoto={(f) => void d.salvarFoto(f)}
-          aoMudar={mudarPerfil}
-          aoRefazer={() => { setAjustes(false); setRefazendo(true) }}
-          aoTour={() => { setAjustes(false); setTour(true) }}
-          saldoInicial={d.saldoInicial}
-          aoSaldoInicial={() => { setAjustes(false); setEditandoSaldoInicial(true) }}
-          aoCategorias={() => { setAjustes(false); ctx.gerenciarCategorias() }}
-          aoBackup={() => tarefa(tx('Preparando o backup…'), async () => (await import('../lib/planilha')).exportarBackup())}
-          aoImportar={() => { setAjustes(false); arquivo.current?.click() }}
-          aoExtrato={() => { setAjustes(false); setExtrato(true) }}
-          aoOrganizar={() => { setAjustes(false); setOrganizar(true) }}
-          aoZerar={() => { setAjustes(false); setZerando(true) }}
-          assinatura={assinatura}
-          confirmandoPagamento={confirmandoPagamento}
-          aoSuporte={() => { setAjustes(false); setSuporte('novo') }}
-          aoSair={() => supabase.auth.signOut({ scope: 'local' })}
-          aoExcluirConta={() => { setAjustes(false); setExcluindo(true) }}
-          aoFechar={() => setAjustes(false)}
-        />
-      )}
-
-      {extrato && <ImportarExtrato c={ctx} aoFechar={() => setExtrato(false)} />}
-      {suporte && <Suporte inicial={suporte === 'novo' ? 'novo' : undefined} aoFechar={() => { setSuporte(false); conferirRespostas() }} aoMudar={conferirRespostas} />}
-      {editandoSaldoInicial && (
-        <FormSaldoInicial inicial={d.saldoInicial} mesSugerido={`${ano}-${String(Math.max(0, porMes.findIndex(Boolean)) + 1).padStart(2, '0')}`}
-          aoSalvar={(novo) => void d.salvarSaldoInicial(novo)} aoFechar={() => setEditandoSaldoInicial(false)} />
-      )}
-      {tour && !form && !ajustes && !extrato && !organizar && (
-        <Tour perfil={perfil} v={v} nome={perfil.nome.trim()} mobile={mobile} aoLigar={ligarModulo} aoIrPara={irPara}
-          aoTerminar={(como, passo, total) => {
-            setTour(false)
-            marcarUso(perfil.dispensadas.includes('tour') ? 'tutorial_reviu' : como === 'terminou' ? 'tutorial_terminou' : 'tutorial_pulou',
-              { como, passo, total })
-            if (!perfil.dispensadas.includes('tour')) ctx.dispensar('tour')
-          }} />
-      )}
-      {mostrarNovidade && novidade && (
-        <PopupNovidade novidade={novidade}
-          aoFechar={() => vistaNovidade(novidade.id)}
-          aoVer={(tela) => {
-            vistaNovidade(novidade.id)
-            if (tela === 'configuracoes') setAjustes(true)
-            else if (tela === 'suporte') setSuporte('lista')
-            else irPara(paginas.some((p) => p.id === tela) ? tela as Pagina : 'inicio')
-          }} />
-      )}
-      {organizar && <OrganizarNomes c={ctx} aoFechar={() => setOrganizar(false)} />}
-
-      {excluindo && (
-        <ExcluirContaModal email={email} aoBaixarBackup={async () => (await import('../lib/planilha')).exportarBackup()} aoFechar={() => setExcluindo(false)} />
-      )}
-
-      {zerando && (
-        <ZerarDados
-          contagem={{
-            entradas: d.lancs.filter((l) => l.tipo === 'entrada').length,
-            saidas: d.lancs.filter((l) => l.tipo === 'saida').length,
-            dividas: d.dividas.length, cartoes: cartoes.cartoes.length, contas: contas.contas.length, metas: d.metas.length,
-            guardado: d.meses.filter((m) => m.investimentos || Object.keys(m.moedas ?? {}).length || Object.keys(m.caixa ?? {}).length).length,
-            investimentos: investDados.ativos.length,
-          }}
-          aoBaixarBackup={async () => (await import('../lib/planilha')).exportarBackup()}
-          // depois de apagar, recarrega a página: todos os dados e o perfil voltam do zero
-          aoZerar={async (escolha) => { if (escolha.tudo || escolha.investimentos) await investDados.zerar(); await d.zerarDados(escolha); location.hash = '/inicio'; location.reload() }}
-          aoFechar={() => setZerando(false)}
-        />
-      )}
-
-      {editarCategorias && (
-        <GerenciarCategorias
-          categorias={d.categorias}
-          contagem={d.lancs.reduce<Record<string, number>>((m, l) => { const id = idCategoria(l); if (id) m[id] = (m[id] ?? 0) + 1; return m }, {})}
-          aoCriar={d.addCategoria}
-          aoEditar={d.updCategoria}
-          aoExcluir={d.delCategoria}
-          aoFechar={() => setEditarCategorias(false)}
-        />
-      )}
-      </Suspense>
+      {janelasDoPainel}
     </div>
   )
 }
