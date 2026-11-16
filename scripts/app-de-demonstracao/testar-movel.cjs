@@ -3,7 +3,8 @@
 // tela acima da barra de baixo. Depois: o topo que desliza (ponto ativo e cor), o modelo de cada jeito, a conta tocada abre
 // a conferência, as folhas "Mais", da conta e dos meses, os alvos do tutorial, adicionar/tirar/subir cartões (gravado na
 // conta, com e sem a migração 35, e de volta depois de recarregar), Lançamentos e Contas do mês no celular (larguras, temas,
-// filtros, edição, conferência sem baixa) e o computador sem nada do celular.
+// filtros, edição, conferência sem baixa), Cartões e Dívidas (cor de cada cartão, deslizar troca o cartão ou o lado) e o
+// computador sem nada do celular.
 // Uso (depois do build com fake.supabase.co do README desta pasta): node scripts/app-de-demonstracao/testar-movel.cjs
 const path=require('path')
 const R=path.join(__dirname,'..','..')
@@ -70,7 +71,7 @@ const medir=()=>{
     await p.clock.install({ time: new Date('2026-11-16T10:00:00') })
     for (const tema of ['escuro','claro']) {
       await p.addInitScript((tema)=>{try{localStorage.setItem('opuscash-tema',tema)}catch{}},tema)
-      for (const pg of ['lancamentos','contas']) for (const w of [320, 360, 390, 430]) {
+      for (const pg of ['lancamentos','contas','cartoes','dividas']) for (const w of [320, 360, 390, 430]) {
         await p.setViewportSize({ width: w, height: 800 })
         await abrir(p, `${t.url}#/${pg}`)
         const r=await p.evaluate(medir)
@@ -117,6 +118,29 @@ const medir=()=>{
     await p.locator('.modal .lista-folha .linha-movel').first().click(); await esperar(p,900)
     ok(await p.locator('.modal').count()===1 && /Editar conta fixa/.test(await p.locator('.modal').innerText()), 'tocar numa conta fixa abre a edição')
     await p.keyboard.press('Escape'); await esperar(p)
+    // Cartões: uma página por cartão, na cor dele; deslizar troca o cartão de baixo
+    await abrir(p, `${t.url}#/cartoes`)
+    const nCartoes=await p.locator('.hero-movel-pagina').count()
+    const cor0=await p.evaluate(()=>getComputedStyle(document.querySelector('.movel-fundo')).getPropertyValue('--tom-cor').trim())
+    ok(nCartoes>=2 && await p.evaluate(()=>document.querySelector('.movel-fundo i.ativo')?.dataset.t)==='cor' && cor0, `Cartões: ${nCartoes} cartões no topo, na cor de cada um (${cor0})`)
+    ok(await p.locator('.fab').count()===0, 'Cartões: sem o "+"')
+    const fatura0=await p.locator('.ccd-fatura .ccd-valor').innerText()
+    await p.locator('.hero-movel-pontos button').nth(1).click(); await esperar(p,1400)
+    const cor1=await p.evaluate(()=>getComputedStyle(document.querySelector('.movel-fundo')).getPropertyValue('--tom-cor').trim())
+    const fatura1=await p.locator('.ccd-fatura .ccd-valor').innerText()
+    ok(cor1 && cor1!==cor0 && fatura1!==fatura0, `deslizar troca o cartão e a cor (${fatura0} → ${fatura1})`)
+    await p.locator('.cartoes-movel .widget .linha-movel').first().click(); await esperar(p,900)
+    ok(await p.locator('.modal').count()===1, 'tocar numa compra abre a edição')
+    await p.keyboard.press('Escape'); await esperar(p)
+    // Dívidas: deslizar troca o lado (no lugar das abas)
+    await abrir(p, `${t.url}#/dividas`)
+    ok(/Cada dívida/.test(await p.locator('.dividas-movel').innerText()) && await p.locator('.fab').count()===0, 'Dívidas: "Cada dívida", sem o "+"')
+    await p.locator('.dividas-movel .widget .linha-movel').first().click(); await esperar(p,900)
+    ok(await p.locator('.modal').count()===1, 'tocar numa dívida abre a ficha')
+    await p.keyboard.press('Escape'); await esperar(p)
+    await p.locator('.hero-movel-pontos button').nth(1).click(); await esperar(p,1400)
+    const ladoReceber=await p.locator('.dividas-movel').innerText()
+    ok(/Recebe todo mês/.test(ladoReceber) && await p.evaluate(()=>document.querySelector('.movel-fundo i.ativo')?.dataset.t)==='sobra', 'deslizar leva ao lado "Me devem"')
     await t.fechar()
   }
 
@@ -147,8 +171,8 @@ const medir=()=>{
   await p.locator('.abas-movel-nova button[data-tour="mais"]').click(); await esperar(p)
   const mais=await p.locator('.mais-grade').innerText()
   ok(/Contas/.test(mais) && /Dívidas/.test(mais) && /Ajustes/.test(mais), 'o "Mais" tem as outras telas e os ajustes')
-  await p.locator('.mais-grade button[data-tour="nav-dividas"]').click(); await esperar(p,1500)
-  ok(await p.evaluate(()=>location.hash)==='#/dividas' && await p.locator('.abas-movel-nova button[data-tour="mais"].ativo').count()===1, 'tela do "Mais" abre e a aba "Mais" fica marcada')
+  await p.locator('.mais-grade button[data-tour="nav-metas"]').click(); await esperar(p,1500)
+  ok(await p.evaluate(()=>location.hash)==='#/metas' && await p.locator('.abas-movel-nova button[data-tour="mais"].ativo').count()===1, 'tela do "Mais" abre e a aba "Mais" fica marcada')
   ok(await p.locator('.fab').count()===1, 'nas telas sem versão de celular ainda, o "+" continua')
   await p.locator('.topo-movel-avatar').click(); await esperar(p)
   const conta=await p.locator('.lista-folha').innerText()

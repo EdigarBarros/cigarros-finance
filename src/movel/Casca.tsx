@@ -10,9 +10,9 @@ import { TONS, type Tom } from './tom'
 import './movel.css'
 
 /** O degradê do topo: uma camada por tom, e a troca é só de opacidade (degradê não tem transição). */
-export function FundoMovel({ tom }: { tom: Tom | null }) {
+export function FundoMovel({ tom, cor }: { tom: Tom | null; cor?: string | null }) {
   return (
-    <div className={`movel-fundo ${tom ? 'ligado' : ''}`} aria-hidden="true">
+    <div className={`movel-fundo ${tom ? 'ligado' : ''}`} aria-hidden="true" style={cor ? ({ '--tom-cor': cor } as React.CSSProperties) : undefined}>
       {TONS.map((t) => <i key={t} data-t={t} className={t === tom ? 'ativo' : ''} />)}
     </div>
   )

@@ -824,3 +824,18 @@ nem a fase 1.
 - Validação: `npx tsc -b`, lint (sem erro), build, `scripts/painel/testar.mjs` 31/31, `testar-movel.cjs` com as duas telas
   novas (larguras 320–430, temas, filtros, edição, conferência sem baixa, "Todas"). Computador comparado com a produção:
   só serrilhado de 3 pixels na Início e o gráfico da tela Ano capturado em outro momento da animação (tela não tocada).
+
+### 16/11/2026 — Claude — Celular: Cartões e Dívidas com tela própria (fase 4 de 7)
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração. O app Android ainda não recebeu as fases 1 a 4.
+
+- Pedido do Edigar: seguir com Cartões e Dívidas.
+- `pages/Cartoes.tsx`: as faturas atrasadas e o histórico do `Detalhe` viraram `FaturasAtrasadas` e `FaturasResolvidas`
+  (mesmo HTML); `FaturaDoMes`, `Limite`, `Proximas`, `Parcelada`, `ResultadoDaBusca`, `SemCartoes` e os três formulários
+  passaram a ser exportados.
+- `lib/dividas.ts`: `estadoDaDivida` e `resumoDasDividas` (o que estava dentro de `pages/Dividas.tsx`); `Ficha`, `corDe`
+  e `VazioLado` exportados.
+- `src/movel/telas/CartoesMovel.tsx` e `DividasMovel.tsx` (novos). O topo do celular ganhou o tom `cor` (degradê da cor do
+  cartão), a página inicial (`inicial`) e a fileira de ações se ajusta ao número de botões.
+- Traduções: textos novos e quatro avisos de erro de Cartões que estavam sem `en`/`es`.
+- Regras: `docs/arquitetura-do-painel.md`, seção 4.25.

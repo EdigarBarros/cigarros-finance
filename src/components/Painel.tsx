@@ -85,8 +85,10 @@ const Ano = lazy(() => paginas.Ano().then((m) => ({ default: m.Ano })))
 const InicioMovel = lazy(() => import('../movel/telas/InicioMovel').then((m) => ({ default: m.InicioMovel })))
 const LancamentosMovel = lazy(() => import('../movel/telas/LancamentosMovel').then((m) => ({ default: m.LancamentosMovel })))
 const ContasMovel = lazy(() => import('../movel/telas/ContasMovel').then((m) => ({ default: m.ContasMovel })))
+const CartoesMovel = lazy(() => import('../movel/telas/CartoesMovel').then((m) => ({ default: m.CartoesMovel })))
+const DividasMovel = lazy(() => import('../movel/telas/DividasMovel').then((m) => ({ default: m.DividasMovel })))
 /** As telas que já têm versão de celular (com o topo colorido e a fileira de ações, sem o "+"). */
-const TELAS_DO_CELULAR: Pagina[] = ['inicio', 'lancamentos', 'contas']
+const TELAS_DO_CELULAR: Pagina[] = ['inicio', 'lancamentos', 'contas', 'cartoes', 'dividas']
 const janelas = {
   Formularios: () => import('./Formularios'),
   Configuracoes: () => import('./Configuracoes'),
@@ -192,6 +194,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const [idiomaAberto, setIdiomaAberto] = useState(false)
   // celular: a cor do topo (a página do resumo que está à vista na Início) e a folha da conta (aberta pela foto)
   const [tomMovel, setTomMovel] = useState<Tom | null>(null)
+  const [corMovel, setCorMovel] = useState<string | null>(null)
+  const mudarTom = useCallback((t: Tom, cor?: string) => { setTomMovel(t); setCorMovel(cor ?? null) }, [])
   const [contaMovel, setContaMovel] = useState(false)
   const [respostasNovas, conferirRespostas] = useRespostasNovas()
   const [editandoSaldoInicial, setEditandoSaldoInicial] = useState(false)
@@ -940,13 +944,13 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   )
   const telas = (noCelular: boolean) => (
     <Suspense fallback={null}>
-    {paginaMostrada === 'inicio' && (noCelular ? <InicioMovel c={ctx} aoMudarTom={setTomMovel} /> : <Inicio {...ctx} />)}
-    {paginaMostrada === 'lancamentos' && (noCelular ? <LancamentosMovel c={ctx} aoMudarTom={setTomMovel} /> : <Lancamentos {...ctx} />)}
+    {paginaMostrada === 'inicio' && (noCelular ? <InicioMovel c={ctx} aoMudarTom={mudarTom} /> : <Inicio {...ctx} />)}
+    {paginaMostrada === 'lancamentos' && (noCelular ? <LancamentosMovel c={ctx} aoMudarTom={mudarTom} /> : <Lancamentos {...ctx} />)}
     {paginaMostrada === 'analise' && <PaginaAnalise {...ctx} />}
     {paginaMostrada === 'invest' && <PaginaInvest {...ctx} />}
-    {paginaMostrada === 'contas' && (noCelular ? <ContasMovel c={ctx} aoMudarTom={setTomMovel} /> : <Contas {...ctx} />)}
-    {paginaMostrada === 'cartoes' && <Cartoes key={cartaoAberto ?? 'todos'} {...ctx} />}
-    {paginaMostrada === 'dividas' && <Dividas {...ctx} />}
+    {paginaMostrada === 'contas' && (noCelular ? <ContasMovel c={ctx} aoMudarTom={mudarTom} /> : <Contas {...ctx} />)}
+    {paginaMostrada === 'cartoes' && (noCelular ? <CartoesMovel key={cartaoAberto ?? 'todos'} c={ctx} aoMudarTom={mudarTom} /> : <Cartoes key={cartaoAberto ?? 'todos'} {...ctx} />)}
+    {paginaMostrada === 'dividas' && (noCelular ? <DividasMovel c={ctx} aoMudarTom={mudarTom} /> : <Dividas {...ctx} />)}
     {paginaMostrada === 'metas' && <Metas {...ctx} />}
     {paginaMostrada === 'patrimonio' && <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />}
     {paginaMostrada === 'ano' && <Ano {...ctx} />}
@@ -1136,7 +1140,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     const comCor = temTopo && tomMovel !== null
     return (
       <div className={`app movel ${comCor ? 'com-cor' : ''}`}>
-        <FundoMovel tom={temTopo ? tomMovel : null} />
+        <FundoMovel tom={temTopo ? tomMovel : null} cor={corMovel} />
         <div className="conteudo">
           <TopoMovel sobreCor={comCor} foto={d.foto} iniciais={iniciais} avisoConta={respostasNovas > 0} aoConta={() => setContaMovel(true)}
             busca={busca} aoBuscar={buscar} mes={`${MESES_CURTO[mes - 1]}${ano !== hoje.getFullYear() ? ` ${String(ano).slice(2)}` : ''}`}

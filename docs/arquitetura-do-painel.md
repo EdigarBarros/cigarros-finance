@@ -1203,7 +1203,7 @@ No celular (até 860 px, `useMobile`) o painel tem cara própria, separada do co
 `Painel` escolhe a moldura (`mobile ? moldura do celular : a de sempre`) e as duas usam os mesmos dados, formulários e janelas.
 Tela que ainda não tem versão de celular abre a do computador dentro da moldura nova (com o "+"), e é isso que deixa
 publicar por partes. Fases: 1) moldura e Início (feita); 2) escolher, tirar e reordenar cartões, salvo na conta
-(`perfis.celular`, feita); 3) Lançamentos e Contas (feita); 4) Cartões e Dívidas; 5) Metas e Guardado; 6) Consultor e Invest; 7) Ano e
+(`perfis.celular`, feita); 3) Lançamentos e Contas (feita); 4) Cartões e Dívidas (feita); 5) Metas e Guardado; 6) Consultor e Invest; 7) Ano e
 limpeza do que ficou sem uso (`.fab`, `simples-movel`, `menu-movel`, a alça das abas, os ramos de celular dos três jeitos).
 
 **Moldura** (`src/movel/Casca.tsx`, estilos em `src/movel/movel.css`, todos debaixo de `.movel`):
@@ -1246,6 +1246,22 @@ mesmos do computador):
 - Aviso de meses anteriores com conta sem pagar como dica; a linha do mês (fora do simples); as contas em cartões
   Atrasadas, Esta semana, Mais à frente e Pagas. Tocar numa conta em aberto abre a conferência (nunca dá baixa direto);
   numa paga, o lançamento. "Parece que já foi pago" aparece embaixo da conta, com "É esse" e "Não é".
+
+**Cartões** (`src/movel/telas/CartoesMovel.tsx`; as peças e os formulários vêm de `pages/Cartoes.tsx`):
+- Topo: uma página por cartão ativo, no degradê da cor do cartão (tom `cor`), com a fatura do mês, a situação e "Paguei a
+  fatura". Deslizar troca o cartão de baixo; abre no cartão da compra que acabou de ser lançada.
+- Ações: Compra, Paguei (só com fatura para pagar), Editar e Novo cartão.
+- Embaixo, do cartão escolhido: faturas que venceram sem pagar, a fatura do mês (linha do tempo, categorias, pagar,
+  renegociar), as compras da fatura, o limite, as próximas faturas e as parceladas (fora do simples) e, no detalhado, as
+  faturas resolvidas. Cartões arquivados no fim.
+
+**Dívidas** (`src/movel/telas/DividasMovel.tsx`; números de `resumoDasDividas` em `lib/dividas.ts`, os mesmos do computador):
+- Topo: o que você deve (coral com atraso, âmbar em dia; "Pagar o atrasado") → o que te devem. Deslizar troca o lado, no
+  lugar das abas "Eu devo / Me devem".
+- Ações: Pagar (ou Receber) a próxima e Nova dívida (ou "Alguém me deve").
+- Cartões: cada dívida (quanto falta, quanto já foi pago, a próxima parcela; tocar abre a ficha com o calendário e o
+  "Conferi com o banco"), quanto sai nos próximos meses (fora do simples), "Recebe todo mês" no lado "Me devem" (tocar
+  abre a conferência) e as quitadas no mês.
 
 **Escolher e arrumar os cartões** (`lib/widgets.ts`, `src/movel/FolhaDeCartoes.tsx`, migração 35):
 - "+ Adicionar cartões" abre uma folha com os cartões que não estão na Início, cada um com a prévia de verdade (os dados da
