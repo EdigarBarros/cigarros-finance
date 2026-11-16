@@ -704,3 +704,16 @@ migração. O app Android ainda não recebeu (precisa de versão nova, assinada 
   `scripts/app-de-demonstracao/testar-inicio-simples.cjs` 31/31. Lápis da tela Contas do mês conferido à parte.
 - Limite: a alça que esconde a barra de baixo continua com 52×22 px (controle antigo, fora desta mudança).
 
+### 16/11/2026 — Claude — Início do jeito simples: ajustes com as capturas reais
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Sem migração; o app Android ainda não recebeu.
+
+- O dono mandou as capturas da tela antiga com os dados dele. Duas coisas que a conta de demonstração não mostrava:
+  a orientação "Mercado Pago cobra juros muito altos" tinha 3 frases (o conselheiro junta "juros altos" e "a mais cara"),
+  e "Mercado Pago: 6 parcelas · R$ 659,46 · venceu há 259 dias" não dizia que o valor é a soma de 6 parcelas atrasadas.
+- `components/InicioSimples.tsx`: a orientação mostra as 2 primeiras frases; a linha de várias parcelas mostra o nome da
+  dívida, "soma de N parcelas" e "a mais antiga venceu há N dias". `lib/paraFazer.ts`: a tarefa de dívida leva
+  `divida: { nome, parcelas }` (campo novo, opcional; os outros jeitos não usam).
+- Validação: `npx tsc -b`, lint, build, `scripts/painel/testar.mjs` 20/20 e `testar-inicio-simples.cjs` 33/33 (com caso
+  novo de 3 parcelas atrasadas da mesma dívida e a conferência das 2 frases).
+
