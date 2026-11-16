@@ -805,3 +805,22 @@ nem a fase 1.
   `testar-movel.cjs` 112/112 (com e sem a coluna, recarregando e em "outro aparelho"), `testar-correcoes.cjs` passou.
   Capturas do computador comparadas com a versão anterior: só diferenças de serrilhado de 1 px que também aparecem entre
   duas rodadas da mesma versão (sem diferença visível).
+
+### 16/11/2026 — Claude — Celular: Lançamentos e Contas do mês com tela própria (fase 3 de 7)
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração. O app Android ainda não recebeu as fases 1 a 3.
+
+- Pedido do Edigar (plano aprovado): seguir o redesenho do celular tela por tela; esta fase faz Lançamentos e Contas do mês.
+- `pages/lancamentos/useLancamentos.ts` (novo): os filtros e as contas que estavam dentro de `pages/Lancamentos.tsx`
+  (tipo, banco, forma, categoria, dia, ordem, busca, grupos por dia, categorias, formas, totais, compras no cartão).
+  `Lancamentos.tsx` passou a usar o hook e exporta `CalorDoMes`, `NoDia` e `SEMANA`.
+- `pages/Contas.tsx`: `useEdicaoDeConta` (abrir cadastro, inclusive a "entrada fixa" pedida por outro formulário),
+  `FormConta`, `LinhaDoMes`, `SemContas` e `ENTRADA_FIXA` exportados; a rosca por categoria saiu para
+  `contasPorCategoria` em `lib/contasFixas.ts`.
+- `src/movel/telas/LancamentosMovel.tsx` e `ContasMovel.tsx` (novos); o `Painel` escolhe as telas do celular pela lista
+  `TELAS_DO_CELULAR` (topo colorido e sem o "+").
+- Regras: `docs/arquitetura-do-painel.md`, seção 4.25. Rótulos do topo escritos como frases inteiras em cada caso (busca,
+  filtros, mês todo), como pede o guia de idiomas.
+- Validação: `npx tsc -b`, lint (sem erro), build, `scripts/painel/testar.mjs` 31/31, `testar-movel.cjs` com as duas telas
+  novas (larguras 320–430, temas, filtros, edição, conferência sem baixa, "Todas"). Computador comparado com a produção:
+  só serrilhado de 3 pixels na Início e o gráfico da tela Ano capturado em outro momento da animação (tela não tocada).
