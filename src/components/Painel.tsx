@@ -89,8 +89,10 @@ const CartoesMovel = lazy(() => import('../movel/telas/CartoesMovel').then((m) =
 const DividasMovel = lazy(() => import('../movel/telas/DividasMovel').then((m) => ({ default: m.DividasMovel })))
 const MetasMovel = lazy(() => import('../movel/telas/MetasMovel').then((m) => ({ default: m.MetasMovel })))
 const GuardadoMovel = lazy(() => import('../movel/telas/GuardadoMovel').then((m) => ({ default: m.GuardadoMovel })))
+const ConsultorMovel = lazy(() => import('../movel/telas/ConsultorMovel').then((m) => ({ default: m.ConsultorMovel })))
+const InvestMovel = lazy(() => import('../movel/telas/InvestMovel').then((m) => ({ default: m.InvestMovel })))
 /** As telas que já têm versão de celular (com o topo colorido e a fileira de ações, sem o "+"). */
-const TELAS_DO_CELULAR: Pagina[] = ['inicio', 'lancamentos', 'contas', 'cartoes', 'dividas', 'metas', 'patrimonio']
+const TELAS_DO_CELULAR: Pagina[] = ['inicio', 'lancamentos', 'analise', 'invest', 'contas', 'cartoes', 'dividas', 'metas', 'patrimonio']
 const janelas = {
   Formularios: () => import('./Formularios'),
   Configuracoes: () => import('./Configuracoes'),
@@ -948,8 +950,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     <Suspense fallback={null}>
     {paginaMostrada === 'inicio' && (noCelular ? <InicioMovel c={ctx} aoMudarTom={mudarTom} /> : <Inicio {...ctx} />)}
     {paginaMostrada === 'lancamentos' && (noCelular ? <LancamentosMovel c={ctx} aoMudarTom={mudarTom} /> : <Lancamentos {...ctx} />)}
-    {paginaMostrada === 'analise' && <PaginaAnalise {...ctx} />}
-    {paginaMostrada === 'invest' && <PaginaInvest {...ctx} />}
+    {paginaMostrada === 'analise' && (noCelular ? <ConsultorMovel c={ctx} aoMudarTom={mudarTom} /> : <PaginaAnalise {...ctx} />)}
+    {paginaMostrada === 'invest' && (noCelular ? <InvestMovel c={ctx} aoMudarTom={mudarTom} /> : <PaginaInvest {...ctx} />)}
     {paginaMostrada === 'contas' && (noCelular ? <ContasMovel c={ctx} aoMudarTom={mudarTom} /> : <Contas {...ctx} />)}
     {paginaMostrada === 'cartoes' && (noCelular ? <CartoesMovel key={cartaoAberto ?? 'todos'} c={ctx} aoMudarTom={mudarTom} /> : <Cartoes key={cartaoAberto ?? 'todos'} {...ctx} />)}
     {paginaMostrada === 'dividas' && (noCelular ? <DividasMovel c={ctx} aoMudarTom={mudarTom} /> : <Dividas {...ctx} />)}

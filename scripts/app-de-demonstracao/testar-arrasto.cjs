@@ -14,7 +14,7 @@ const ok=(c,m)=>{console.log((c?'OK   ':'FALHA ')+m); if(!c) process.exitCode=1}
   await p.clock.install({ time: new Date('2026-11-16T10:00:00') })
   await p.setViewportSize({ width: 390, height: 844 })
   const cdp=await p.context().newCDPSession(p)
-  for (const tela of ['dividas', 'inicio', 'lancamentos', 'contas', 'cartoes', 'metas', 'patrimonio']) {
+  for (const tela of ['dividas', 'inicio', 'lancamentos', 'analise', 'invest', 'contas', 'cartoes', 'metas', 'patrimonio']) {
     await p.goto(`${t.url}#/${tela}`); await p.waitForTimeout(2200); await p.clock.runFor(3000).catch(()=>{}); await p.waitForTimeout(400)
     if (await p.locator('.hero-movel-pagina').count() < 2) { console.log(`      ${tela}: uma página só no topo, nada a arrastar`); continue }
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 })

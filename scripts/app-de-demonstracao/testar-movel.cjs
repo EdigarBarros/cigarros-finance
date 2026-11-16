@@ -4,7 +4,8 @@
 // a conferência, as folhas "Mais", da conta e dos meses, os alvos do tutorial, adicionar/tirar/subir cartões (gravado na
 // conta, com e sem a migração 35, e de volta depois de recarregar), Lançamentos e Contas do mês no celular (larguras, temas,
 // filtros, edição, conferência sem baixa), Cartões e Dívidas (cor de cada cartão, deslizar troca o cartão ou o lado), Metas e
-// Dinheiro guardado (escolher a meta, abrir o banco) e o computador sem nada do celular.
+// Dinheiro guardado (escolher a meta, abrir o banco), Consultor e Invest (a ordem que o Consultor monta é a mesma do
+// computador) e o computador sem nada do celular.
 // Uso (depois do build com fake.supabase.co do README desta pasta): node scripts/app-de-demonstracao/testar-movel.cjs
 const path=require('path')
 const R=path.join(__dirname,'..','..')
@@ -20,7 +21,9 @@ const medir=()=>{
   const cw=document.documentElement.clientWidth
   const visivel=(e)=>{const b=e.getBoundingClientRect();return b.width>0&&b.height>0&&getComputedStyle(e).visibility!=='hidden'}
   // o topo que desliza tem as páginas seguintes à direita, de propósito (rolam por dentro do trilho)
-  const fora=[...document.querySelectorAll('.app.movel *')].filter(e=>!e.closest('.hero-movel-trilho, .dicas-movel')&&visivel(e)&&(e.getBoundingClientRect().right>cw+0.5||e.getBoundingClientRect().left<-0.5)).map(e=>e.className||e.tagName)
+  // dentro de um contêiner que corta ou rola o conteúdo (e que está na tela), o que passa da borda não aparece
+  const cortado=(e)=>{ for(let x=e.parentElement;x&&x!==document.body;x=x.parentElement){ const st=getComputedStyle(x); if(st.overflowX!=='visible'||st.overflow==='hidden'){ const b=x.getBoundingClientRect(); if(b.left>=-0.5&&b.right<=cw+0.5) return true } } return false }
+  const fora=[...document.querySelectorAll('.app.movel *')].filter(e=>!e.closest('.hero-movel-trilho, .dicas-movel')&&visivel(e)&&(e.getBoundingClientRect().right>cw+0.5||e.getBoundingClientRect().left<-0.5)&&!cortado(e)).map(e=>e.className||e.tagName)
   const pequenos=[...document.querySelectorAll('.topo-movel button, .topo-movel-busca, .acoes-movel button, .abas-movel-nova button, .hero-movel-pilula, .linha-movel, .widget-titulo, .widget-rodape, .pilulas-movel button')]
     .filter(visivel).filter(e=>{const b=e.getBoundingClientRect();return b.height<36||b.width<36||(e.matches('.topo-movel button, .acoes-movel button, .abas-movel-nova button, .hero-movel-pilula')&&b.height<44)})
     .map(e=>`${(e.getAttribute('aria-label')||e.textContent).trim().slice(0,20)} ${Math.round(e.getBoundingClientRect().width)}x${Math.round(e.getBoundingClientRect().height)}`)
@@ -71,7 +74,7 @@ const medir=()=>{
     await p.clock.install({ time: new Date('2026-11-16T10:00:00') })
     for (const tema of ['escuro','claro']) {
       await p.addInitScript((tema)=>{try{localStorage.setItem('opuscash-tema',tema)}catch{}},tema)
-      for (const pg of ['lancamentos','contas','cartoes','dividas','metas','patrimonio']) for (const w of [320, 360, 390, 430]) {
+      for (const pg of ['lancamentos','contas','cartoes','dividas','metas','patrimonio','analise','invest']) for (const w of [320, 360, 390, 430]) {
         await p.setViewportSize({ width: w, height: 800 })
         await abrir(p, `${t.url}#/${pg}`)
         const r=await p.evaluate(medir)
@@ -163,6 +166,36 @@ const medir=()=>{
     await p.locator('.acoes-movel button', { hasText: 'Todos' }).click(); await esperar(p,900)
     ok(await p.locator('.gd-tipos').count()===0 && await p.locator('.hero-movel-pagina').count()===nPag, '"Todos" volta para todos os bancos')
     await t.fechar()
+  }
+
+  // ---------- Consultor e Invest: a tela que eles montam fica como eles montaram ----------
+  {
+    const titulos = async (largura, toque) => {
+      const t = await iniciar({ perfil: {...demo.perfil, detalhe:'detalhado'}, dados: demo.dados, porta: 4950+Math.floor(Math.random()*40), dpr: 1, toque })
+      const p=t.page
+      await p.clock.install({ time: new Date('2026-11-16T10:00:00') })
+      await p.setViewportSize({ width: largura, height: 900 })
+      await abrir(p, `${t.url}#/analise`)
+      const r = await p.evaluate(()=>({ cartoes:[...document.querySelectorAll('.peca h3, .peca .peca-titulo')].map(e=>e.textContent.trim()).filter(Boolean), movel:Boolean(document.querySelector('.consultor-movel')) }))
+      return { t, p, r }
+    }
+    const movel = await titulos(390, true)
+    const computador = await titulos(1280, false)
+    ok(movel.r.movel && !computador.r.movel, 'Consultor: no celular a tela do celular, no computador a de sempre')
+    ok(movel.r.cartoes.length >= 3 && JSON.stringify(movel.r.cartoes)===JSON.stringify(computador.r.cartoes),
+      `Consultor: os cartões que ele monta vêm na mesma ordem no celular e no computador (${movel.r.cartoes.length} cartões)`)
+    const p=movel.p
+    ok(await p.locator('.consultor-movel .an-manchete').count()===1 && await p.locator('.fab').count()===0, 'Consultor: a manchete dele logo abaixo do topo, sem o "+"')
+    await p.locator('.acoes-movel button', { hasText: 'Objetivo' }).click(); await esperar(p,900)
+    ok(await p.evaluate(()=>{ const el=document.querySelector('.consultor-movel .an-obj, .consultor-movel .an-obj-faixa'); if(!el) return false; const b=el.getBoundingClientRect(); return b.top>=0 && b.top<innerHeight }), '"Objetivo" leva até o objetivo')
+    // Invest: as quatro abas cabem e trocam
+    await abrir(p, `${movel.t.url}#/invest`)
+    ok(await p.locator('.invest-movel .hero-movel-pagina').count()>=2 && await p.locator('.fab').count()===0, 'Invest: topo com a carteira e o aportado, sem o "+"')
+    const cortadas=await p.evaluate(()=>[...document.querySelectorAll('.invest-movel .inv-abas button')].filter(e=>e.scrollWidth>e.clientWidth+1).map(e=>e.textContent))
+    ok(!cortadas.length, `Invest: o nome das quatro abas cabe ${cortadas.join(', ')}`)
+    await p.locator('.invest-movel .inv-abas button', { hasText: 'Análises' }).click(); await esperar(p,1200)
+    ok(await p.locator('.invest-movel .peca').count()>0, 'Invest: a aba Análises mostra as descobertas montadas pelo analista')
+    await movel.t.fechar(); await computador.t.fechar()
   }
 
   const t = await iniciar({ perfil: {...demo.perfil, detalhe:'equilibrado'}, dados: demo.dados, porta: 4950+Math.floor(Math.random()*40), dpr: 1, toque:true })
