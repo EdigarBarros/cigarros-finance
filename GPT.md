@@ -618,3 +618,22 @@ inicial mudou; sem migração. Precisa de versão nova do app Android só se a p
   dourados).
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium no claro (1440×860 e
   390×844) da abertura até a rede, e a passagem com rolagem rápida nos dois temas, sem erro de página.
+
+### 16/11/2026 — Claude — Motor no modo claro: papel creme, nanquim e laranja
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Pedido do Edigar: o claro (preto com azul, verde, vermelho e laranja nos sinais) não combinava e não tinha a estética
+  do escuro (laranja com preto). Diagnóstico: o escuro tem uma cor só no desenho (o dourado) e usa verde, vermelho e
+  amarelo só nos dados; o claro espalhava quatro cores pela rede inteira, sobre um fundo azulado. Combinado: o claro é o
+  escuro invertido.
+- `src/pages/Algoritmo.tsx`: `NANQUIM` (preto quente) para fios, nós, poeira, túnel, camadas, chão e racks; `LARANJA`
+  como a única cor de destaque (sinais, nós acesos, LEDs, linha da média, luz da tela final); papel creme
+  (`rgb(246,240,228)`) no lugar do azul-gelo. Dados: verde, vermelho e mostarda (`CORES_GRAF_CLARO`; a dívida virou
+  mostarda para não se confundir com o laranja), também em `COR_TIPO_CLARO` (`algoritmoDocs.ts`).
+- `src/pages/algoritmoTela.ts`: a tela final do Consultor no claro em papel, nanquim e laranja.
+- CSS: `algoritmo.css` (fundo, véu, etiquetas, rótulo, trilho, selos) e a cópia do fundo da passagem em
+  `apresentacao.css` (`--motor-breu`, `.ap-motor`), para o carrossel continuar desembocando no motor sem emenda.
+- O escuro não mudou.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium no claro (1440×860
+  e 390×844) da abertura até a tela final, e a passagem do carrossel, sem erro de página.

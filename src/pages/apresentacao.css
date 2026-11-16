@@ -265,13 +265,12 @@
    viram os do começo do motor (as mesmas cores de .ag, .ag-sticky e .ag-sticky::after em algoritmo.css), para o palco
    se apagar sobre ele sem que nada mude em volta da tela do Consultor. */
 .ap-palco-sticky { --motor-breu: #060403; --motor-veu: 6, 4, 3; }
-:root[data-tema='claro'] .ap-palco-sticky { --motor-breu: #f2f6fb; --motor-veu: 242, 246, 251; }
+:root[data-tema='claro'] .ap-palco-sticky { --motor-breu: #f6f0e4; --motor-veu: 246, 240, 228; }
 .ap-motor { position: absolute; inset: 0; z-index: 0; pointer-events: none; background: var(--motor-breu); opacity: var(--fim, 0); }
 :root[data-tema='claro'] .ap-motor {
   background:
-    radial-gradient(55% 50% at 64% 48%, rgba(31, 142, 241, .09), transparent 75%),
-    radial-gradient(40% 45% at 100% 90%, rgba(20, 201, 160, .1), transparent 70%),
-    radial-gradient(40% 45% at 30% 10%, rgba(61, 75, 224, .06), transparent 70%),
+    radial-gradient(55% 50% at 64% 48%, rgba(222, 98, 10, .07), transparent 75%),
+    radial-gradient(40% 45% at 100% 90%, rgba(196, 80, 8, .05), transparent 70%),
     var(--motor-breu);
 }
 .ap-palco-sticky::before {

@@ -263,12 +263,18 @@ const PASSOS = 6
 const CORES_GRAF: [number, number, number][] = TIPOS.map((t) => COR_TIPO[t])
 const DOURADO: [number, number, number, number][] = [[180, 85, 10, 0.6], [235, 130, 30, 0.8], [255, 170, 50, 0.9], [255, 210, 120, 0.97], [255, 248, 222, 1]]
 /** As cores de cada tipo no claro: mais fortes, para se lerem no fundo branco (o amarelo vira âmbar). */
-const CORES_GRAF_CLARO: [number, number, number][] = [[16, 185, 110], [239, 68, 68], [245, 158, 11]]
-/** A poeira de dados no claro: tinta preta, do cinza ao preto cheio (o desenho da rede é preto; a cor fica para os dados). */
-const TONS_CLARO = ['rgba(10,10,12,0.32)', 'rgba(10,10,12,0.5)', 'rgba(10,10,12,0.68)', 'rgba(10,10,12,0.84)', 'rgba(10,10,12,1)']
-/** As cores dos sinais no claro: as do app (azul, verde, vermelho, laranja). Cada fio leva sempre a mesma. */
-const SINAIS_CLARO: [number, number, number][] = [[29, 108, 240], [12, 170, 100], [232, 52, 52], [245, 130, 10]]
-/** A PALETA do claro: do tom da poeira (preto) até a cor do tipo, sem clarear para o branco. */
+const CORES_GRAF_CLARO: [number, number, number][] = [[16, 160, 95], [226, 54, 54], [196, 146, 0]]
+/**
+ * O claro é o escuro invertido: papel creme no lugar do preto, nanquim (preto quente) no lugar da luz dourada para o
+ * desenho, e uma cor só de destaque, o laranja, onde no escuro a luz é mais forte (sinais, nós acesos, LEDs). Verde,
+ * vermelho e mostarda só nos dados (entrou, saiu, dívida), como no escuro.
+ */
+const NANQUIM = '30,24,18', LARANJA: [number, number, number] = [222, 98, 10]
+/** A poeira de dados no claro: nanquim, do cinza ao preto cheio. */
+const TONS_CLARO = [0.3, 0.48, 0.66, 0.84, 1].map((a) => `rgba(${NANQUIM},${a})`)
+/** A cor dos sinais no claro: só o laranja (no escuro, a luz dourada). */
+const SINAIS_CLARO: [number, number, number][] = [LARANJA]
+/** A PALETA do claro: do tom da poeira (nanquim) até a cor do tipo, sem clarear para o branco. */
 const PALETA_CLARO = CORES_GRAF_CLARO.map((c) => TONS_CLARO.map((tom) => {
   const [r, g, b, a] = tom.slice(5, -1).split(',').map(Number)
   return Array.from({ length: PASSOS }, (_, k) => {
@@ -310,21 +316,21 @@ export function Algoritmo() {
      */
     const paleta = (c: boolean) => c ? {
       luz: 'source-over' as GlobalCompositeOperation, tons: TONS_CLARO, cubos: PALETA_CLARO, tipos: CORES_GRAF_CLARO,
-      halo: brilho(256, [[0, 'rgba(20,24,40,0.08)'], [0.4, 'rgba(20,24,40,0.03)'], [1, 'rgba(20,24,40,0)']]),
-      ponto: brilho(48, [[0, 'rgba(10,10,12,0.5)'], [0.3, 'rgba(10,10,12,0.14)'], [1, 'rgba(10,10,12,0)']]),
-      // o brilho de cada cor de sinal (na ponta do sinal e em volta do nó aceso)
-      pontos: SINAIS_CLARO.map(([r, g, b]) => brilho(48, [[0, `rgba(${r},${g},${b},0.95)`], [0.25, `rgba(${r},${g},${b},0.55)`], [0.6, `rgba(${r},${g},${b},0.12)`], [1, `rgba(${r},${g},${b},0)`]])),
-      sinais: SINAIS_CLARO.map(([r, g, b]) => [`rgba(${r},${g},${b},0.22)`, `rgb(${r},${g},${b})`]),
-      fioFundo: 'rgba(10,10,12,0.34)', fioFrente: 'rgba(10,10,12,0.82)', vivoBrilho: '', vivo: '',
-      anel: 'rgba(10,10,12,0.92)', cheio: 'rgba(10,10,12,1)', miolo: 'rgba(10,10,12,0.9)', dado: 'rgba(10,10,12,1)', noFundo: 'rgba(255,255,255,0.97)',
-      tunel: ['rgba(10,10,12,0.14)', 'rgba(10,10,12,0.3)', 'rgba(10,10,12,0.55)', 'rgba(10,10,12,0.82)'],
-      camada: ['#0a0a0c', 'rgba(10,10,12,0.22)', '#0a0a0c', 'rgb(12,160,95)', 'rgb(225,50,50)', 'rgb(235,125,5)'],
-      tunelQuad: ['', 'rgba(10,10,12,0.5)', 'rgba(10,10,12,0.68)', 'rgba(10,10,12,0.84)', 'rgba(10,10,12,1)'],
-      chao: 'rgba(20,33,61,0.04)', chaoBorda: 'rgba(20,33,61,0.14)', chaoMes: 'rgba(20,33,61,0.06)', media: 'rgba(31,142,241,0.9)',
-      mes: 'rgba(20,33,61,0.6)', legenda: 'rgba(20,33,61,0.82)', varre: ['rgba(31,142,241,0.3)', 'rgba(31,142,241,0)', 'rgba(31,142,241,0.95)'],
-      nomeTexto: '#14213d', fresta: 'rgb(238,243,250)', brilhoFresta: '31,142,241',
-      telaRastro: ['rgba(31,142,241,0)', 'rgba(31,142,241,0.22)'], telaLinha: ['rgba(31,142,241,0)', 'rgba(31,142,241,0.9)'], reflexo: 'rgba(255,255,255,0.4)',
-      sala: { face: 'rgba(255,255,255,0.7)', borda: 'rgba(10,10,12,0.14)', led: 'rgba(10,10,12,0.28)', aceso: ['rgba(12,170,100,0.9)', 'rgba(12,170,100,1)'], chao: 'rgba(10,10,12,0.08)', teto: 'rgba(10,10,12,0.18)', espelho: 0.22 },
+      halo: brilho(256, [[0, 'rgba(222,98,10,0.12)'], [0.35, 'rgba(222,98,10,0.05)'], [1, 'rgba(222,98,10,0)']]),
+      ponto: brilho(48, [[0, `rgba(${NANQUIM},0.45)`], [0.3, `rgba(${NANQUIM},0.12)`], [1, `rgba(${NANQUIM},0)`]]),
+      // o brilho e as cores do sinal (na ponta do sinal e em volta do nó aceso)
+      pontos: SINAIS_CLARO.map(([r, g, b]) => brilho(48, [[0, `rgba(${r},${g},${b},0.95)`], [0.25, `rgba(${r},${g},${b},0.5)`], [0.6, `rgba(${r},${g},${b},0.12)`], [1, `rgba(${r},${g},${b},0)`]])),
+      sinais: SINAIS_CLARO.map(([r, g, b]) => [`rgba(${r},${g},${b},0.2)`, `rgb(${r},${g},${b})`]),
+      fioFundo: `rgba(${NANQUIM},0.3)`, fioFrente: `rgba(${NANQUIM},0.78)`, vivoBrilho: '', vivo: '',
+      anel: `rgba(${NANQUIM},0.9)`, cheio: `rgba(${NANQUIM},1)`, miolo: `rgba(${NANQUIM},0.88)`, dado: `rgba(${NANQUIM},1)`, noFundo: 'rgba(251,247,239,0.97)',
+      tunel: [0.14, 0.3, 0.55, 0.8].map((a) => `rgba(${NANQUIM},${a})`),
+      camada: [`rgb(${NANQUIM})`, `rgba(${NANQUIM},0.2)`, 'rgb(196,80,8)', 'rgb(16,150,90)', 'rgb(220,48,48)', 'rgb(190,140,0)'],
+      tunelQuad: ['', ...[0.5, 0.68, 0.84, 1].map((a) => `rgba(${NANQUIM},${a})`)],
+      chao: `rgba(${NANQUIM},0.04)`, chaoBorda: `rgba(${NANQUIM},0.16)`, chaoMes: `rgba(${NANQUIM},0.06)`, media: 'rgba(222,98,10,0.95)',
+      mes: `rgba(${NANQUIM},0.6)`, legenda: `rgba(${NANQUIM},0.82)`, varre: ['rgba(222,98,10,0.3)', 'rgba(222,98,10,0)', 'rgba(222,98,10,0.95)'],
+      nomeTexto: `rgb(${NANQUIM})`, fresta: 'rgb(246,240,228)', brilhoFresta: '222,98,10',
+      telaRastro: ['rgba(222,98,10,0)', 'rgba(222,98,10,0.2)'], telaLinha: ['rgba(222,98,10,0)', 'rgba(222,98,10,0.9)'], reflexo: 'rgba(255,255,255,0.4)',
+      sala: { face: 'rgba(252,248,240,0.8)', borda: `rgba(${NANQUIM},0.16)`, led: `rgba(${NANQUIM},0.26)`, aceso: ['rgba(222,98,10,0.85)', 'rgba(222,98,10,1)'], chao: `rgba(${NANQUIM},0.08)`, teto: `rgba(${NANQUIM},0.16)`, espelho: 0.2 },
     } : {
       luz: 'lighter' as GlobalCompositeOperation, tons: TONS, cubos: PALETA, tipos: CORES_GRAF,
       halo: brilho(256, [[0, 'rgba(255,200,110,0.55)'], [0.25, 'rgba(255,150,40,0.22)'], [0.6, 'rgba(255,120,20,0.06)'], [1, 'rgba(255,100,10,0)']]),

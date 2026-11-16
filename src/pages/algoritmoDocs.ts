@@ -36,8 +36,8 @@ export const LIDAS = [...LIDAS_PDF, ...LIDAS_PLANILHA]
 
 /** As cores de cada tipo (as do gráfico do app): na tela escura e no papel branco. */
 export const COR_TIPO: Record<Tipo, [number, number, number]> = { entrada: [46, 214, 128], saida: [255, 92, 108], divida: [255, 214, 10] }
-/** As mesmas no modo claro: mais fortes, para se lerem no fundo branco (o amarelo vira âmbar). */
-export const COR_TIPO_CLARO: Record<Tipo, [number, number, number]> = { entrada: [16, 185, 110], saida: [239, 68, 68], divida: [245, 158, 11] }
+/** As mesmas no modo claro: mais fortes, para se lerem no papel creme (o amarelo vira mostarda, longe do laranja). */
+export const COR_TIPO_CLARO: Record<Tipo, [number, number, number]> = { entrada: [16, 160, 95], saida: [226, 54, 54], divida: [196, 146, 0] }
 const COR_PAPEL: Record<Tipo, string> = { entrada: '#16884f', saida: '#c8333f', divida: '#b88a00' }
 export const SINAL: Record<Tipo, string> = { entrada: '+', saida: '−', divida: '−' }
 
@@ -183,7 +183,7 @@ export function desenharTextos(q: number, f: Fontes, claro = false): TextoLido[]
     const c = document.createElement('canvas'), g = c.getContext('2d', { willReadFrequently: true })!
     // as letras, uma a uma (a largura de cada uma é o quanto o texto cresce com ela, para o espaçamento ficar certo)
     const glifos: TextoLido['glifos'] = []
-    const partes: [string, string, string, number][] = [[l.nome, fNome, claro ? '#14213d' : '#f4f7ff', 0]]
+    const partes: [string, string, string, number][] = [[l.nome, fNome, claro ? '#1e1812' : '#f4f7ff', 0]]
     g.font = fNome
     const wn = g.measureText(l.nome).width
     partes.push([valor, fValor, css, wn + 12])
