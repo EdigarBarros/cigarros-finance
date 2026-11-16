@@ -232,7 +232,7 @@ tem espaço para ela e para a área segura do aparelho.
 
 Casos especiais: mês sem lançamentos: "Nada registrado em outubro ainda…"; mês que já passou: "Resultado de outubro" e
 "Ver como o mês fechou"; mês que ainda não começou: "Já lançado para dezembro" (Vai entrar / Vai sair) sem previsão.
-Conta nova vê as mesmas boas-vindas dos outros jeitos. Teste: `scripts/app-de-demonstracao/testar-inicio-simples.cjs`.
+Conta nova vê as mesmas boas-vindas dos outros jeitos. (No celular, desde 16/11/2026, a Início é a da seção 4.25.)
 
 Não aparecem: gráficos, comparação com o mês anterior, banner, "Acompanhe mais", página Ano no menu.
 
@@ -267,6 +267,9 @@ Acrescenta ao equilibrado:
 Saíram da Início: quadros de Entradas e Saídas (a página **Lançamentos** lista tudo, com filtros) e a tabela do ano (a página **Ano** tem a tabela completa).
 
 ### 4.4 Computador × celular
+
+> Desde 16/11/2026 o celular (até 860 px) tem moldura e Início próprias: veja a seção 4.25. A tabela abaixo vale para
+> as telas que ainda abrem a versão do computador dentro da moldura do celular.
 
 | Aspecto | Computador (≥ 861 px) | Celular |
 | --- | --- | --- |
@@ -611,7 +614,10 @@ Ordem dos itens (computador), por frequência e por pergunta respondida:
 
 Justificativa: o que se usa todo dia primeiro (Início, Lançamentos); depois o que tem prazo, do mais próximo para o mais distante (contas, cartões, dívidas); depois o que se constrói (metas, dinheiro guardado); a retrospectiva por último, porque é a menos urgente.
 
-**Celular (barra de abas, no máximo 5)**: se houver até 5 páginas, aparecem todas. Com mais de 5, aparecem as **4 primeiras** da ordem acima e a quinta aba é **Mais**, que abre uma folha com as demais. A ordem do menu é também a prioridade das abas, então Dívidas e Contas ganham lugar antes de Resumo do ano. "Mais" fica ativa quando a página aberta está dentro dela. Configurações (Personalizar, Importar, Baixar backup, Sair) continuam no menu do topo. No jeito simples, no celular, o topo fica só com o mês, o olho e o sino: a quinta aba é sempre **Mais**, e ela leva, além das páginas que não couberam, o idioma, o suporte, o tema e todo o menu da conta (4.1).
+**Celular**: desde 16/11/2026 são quatro abas fixas (seção 4.25): Início · Lançamentos · Consultor · Mais. O texto abaixo
+descreve como era antes.
+
+**Celular, antes (barra de abas, no máximo 5)**: se houver até 5 páginas, aparecem todas. Com mais de 5, aparecem as **4 primeiras** da ordem acima e a quinta aba é **Mais**, que abre uma folha com as demais. A ordem do menu é também a prioridade das abas, então Dívidas e Contas ganham lugar antes de Resumo do ano. "Mais" fica ativa quando a página aberta está dentro dela. Configurações (Personalizar, Importar, Baixar backup, Sair) continuam no menu do topo. No jeito simples, no celular, o topo fica só com o mês, o olho e o sino: a quinta aba é sempre **Mais**, e ela leva, além das páginas que não couberam, o idioma, o suporte, o tema e todo o menu da conta (4.1).
 
 | Quem liga o quê | Abas |
 | --- | --- |
@@ -1190,3 +1196,39 @@ migração num Postgres local e confere que uma pessoa não lê nem grava nada d
   `suporte_responder`, `suporte_lido` e `suporte_encerrar`. No máximo 5 pedidos em andamento, 20 mensagens a cada 10 minutos, 4000 letras por mensagem.
 - **O suporte:** responde pelo painel de suporte (repositório `painel-opus-cash`, tela Suporte), pela chave de serviço. Tudo fica no registro do suporte.
 - **No app Android:** o botão só chega numa versão nova do app enviada à loja.
+
+### 4.25 Celular: moldura e Início próprias (`src/movel/`)
+
+No celular (até 860 px, `useMobile`) o painel tem cara própria, separada do computador. O computador não muda: o
+`Painel` escolhe a moldura (`mobile ? moldura do celular : a de sempre`) e as duas usam os mesmos dados, formulários e janelas.
+Tela que ainda não tem versão de celular abre a do computador dentro da moldura nova (com o "+"), e é isso que deixa
+publicar por partes. Fases: 1) moldura e Início (feita); 2) escolher, tirar e reordenar cartões, salvo na conta
+(`perfis.celular`); 3) Lançamentos e Contas; 4) Cartões e Dívidas; 5) Metas e Guardado; 6) Consultor e Invest; 7) Ano e
+limpeza do que ficou sem uso (`.fab`, `simples-movel`, `menu-movel`, a alça das abas, os ramos de celular dos três jeitos).
+
+**Moldura** (`src/movel/Casca.tsx`, estilos em `src/movel/movel.css`, todos debaixo de `.movel`):
+- Topo: foto (abre a folha da conta: configurações, suporte, tutorial, tema, importar, backup, sair e idioma), busca
+  (digitar leva aos Lançamentos), o mês (abre a folha dos meses), o olho e o sino. Sobre o degradê da Início fica em
+  vidro claro com texto branco; ao rolar ganha o vidro fosco. Em tela de até 370 px a busca vira um botão redondo e
+  abre ao tocar.
+- Abas fixas: **Início · Lançamentos · Consultor · Mais**. "Mais" abre uma folha com as outras telas ligadas e os
+  Ajustes, e fica marcada quando a tela aberta está lá. Rolando para baixo a barra encolhe (some o nome); não há alça para
+  esconder.
+
+**Início** (`src/movel/telas/InicioMovel.tsx`; os números saem de `lib/useMesDaInicio.ts`, o mesmo cálculo da Início do
+computador):
+1. Topo que desliza para os lados, uma página por resumo, com um degradê de cor por página (`src/movel/tom.ts`): o que
+   sobrou no mês (verde-água; coral quando falta ou o mês está crítico; "Entender a conta" abre o `EntenderMes`) →
+   dinheiro guardado → o que falta pagar nas dívidas → investimentos. Cada página só aparece com o módulo ligado
+   (dívidas: só com algo a pagar; investimentos: só com carteira).
+2. Quatro ações redondas: Gasto, Entrada, Contas (ou Importar, sem o módulo de contas) e Mais (importar, compra no cartão,
+   nova dívida, guardar numa meta…).
+3. Dicas que deslizam e podem ser dispensadas: o convite para importar e a sugestão do momento.
+4. Os cartões do jeito escolhido (`lib/widgets.ts`): o jeito é o ponto de partida (simples 4, equilibrado 10, detalhado
+   14, menos os que não têm o que mostrar). Pequenos ficam dois por linha; pequeno sem par ocupa a linha. Tocar numa
+   conta abre a conferência (nunca dá baixa direto); fatura leva aos Cartões; parcela abre o lançamento.
+5. Rodapé "Jeito Equilibrado · Trocar".
+
+Testes: `node scripts/painel/testar.mjs` (grade e modelos) e `node scripts/app-de-demonstracao/testar-movel.cjs`
+(3 jeitos × 320/360/390/430 × escuro/claro, fonte 150% e 200%, toques de 44 px, fim da tela acima das abas, deslizar o
+topo, folhas, tutorial e o computador sem nada do celular).

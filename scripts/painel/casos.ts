@@ -9,6 +9,8 @@ import { parcelasDoMes, parcelasPorDia, situacaoDividas } from '../../src/lib/di
 import { agruparTarefas, tarefasDoMes } from '../../src/lib/paraFazer'
 import { comporPrevisao, diaADiaDoMes } from '../../src/lib/previsao'
 import { situacaoDoMes } from '../../src/lib/situacaoDoMes'
+import { linhasDaGrade, MODELOS, TAMANHO } from '../../src/lib/widgets'
+import { comParcelasDoMes } from '../../src/lib/useMesDaInicio'
 import type { SituacaoCartao } from '../../src/lib/cartoes'
 import type { ContaFixa, Divida, Lancamento, SaldoDivida } from '../../src/lib/types'
 
@@ -317,6 +319,36 @@ export const CASOS: Caso[] = [
         lanc('2026-11-10', 'saida', 300, { descricao: 'Pagamento fatura Nubank' })]
       igual('em dobro', compararGastos({ lancs, ano: 2026, mes: 11, hoje: '2026-11-14', categoriaDe: () => undefined })!.faturaEmDobro, true)
       igual('sem cartão, não', compararGastos({ lancs: [lancs[0], lancs[2]], ano: 2026, mes: 11, hoje: '2026-11-14', categoriaDe: () => undefined })!.faturaEmDobro, false)
+    },
+  },
+
+  // ==================== Início do celular ====================
+  {
+    nome: 'celular: pequenos vizinhos viram par, pequeno sem vizinho fica sozinho, ordem da lista mantida',
+    rodar() {
+      igual('linhas', linhasDaGrade(['entrou-saiu', 'gasto-dia', 'contas', 'nota', 'metas', 'comparacao']), [
+        { tipo: 'par', ids: ['entrou-saiu', 'gasto-dia'] }, { tipo: 'grande', ids: ['contas'] }, { tipo: 'sozinho', ids: ['nota'] },
+        { tipo: 'grande', ids: ['metas'] }, { tipo: 'sozinho', ids: ['comparacao'] },
+      ])
+      igual('três pequenos: par e sozinho', linhasDaGrade(['nota', 'gasto-dia', 'comparacao']).map((l) => l.tipo), ['par', 'sozinho'])
+      igual('vazio', linhasDaGrade([]), [])
+    },
+  },
+  {
+    nome: 'celular: os modelos dos três jeitos só usam cartões que existem e não repetem',
+    rodar() {
+      for (const [jeito, ids] of Object.entries(MODELOS)) {
+        certo(`${jeito}: todos existem`, ids.every((id) => id in TAMANHO))
+        igual(`${jeito}: sem repetir`, new Set(ids).size, ids.length)
+      }
+      certo('simples mostra menos que o detalhado', MODELOS.simples.length < MODELOS.detalhado.length)
+    },
+  },
+  {
+    nome: 'celular e computador: sem parcela no mês, o dia a dia volta igual',
+    rodar() {
+      const dd = diaADiaDoMes({ ...base, lancs: [lanc('2026-11-03', 'saida', 100)], contas: [], ano: 2026, mes: 11 })
+      igual('mesmo objeto', comParcelasDoMes(dd, { situacao: [], ano: 2026, mes: 11, diaRef: '2026-11-14' }) === dd, true)
     },
   },
 ]
