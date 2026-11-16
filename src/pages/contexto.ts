@@ -137,7 +137,7 @@ export interface Ctx {
   contas: ContasFixas
   situacoesContas: SituacaoConta[]
   /** "Paguei" / "Recebi": cria o lançamento da conta neste mês (valor e data podem ser trocados). */
-  pagarConta: (s: SituacaoConta, mudancas?: { valor?: number; data?: string }) => void
+  pagarConta: (s: SituacaoConta, mudancas?: { valor?: number; data?: string; cotacao?: number; banco_id?: string | null }) => void
   /** Apaga o lançamento da baixa, e a conta volta a ficar em aberto. */
   desfazerBaixa: (s: SituacaoConta) => void
   /** Como cada conta aparece nos lançamentos (nomes e valores já ligados a ela), pelo id da conta. */

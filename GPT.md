@@ -681,6 +681,28 @@ reproduzíveis em `scripts/app-de-demonstracao/`.
 individual de saldos não existem no contexto atual; a interface distingue a data do período da atualização
 indisponível. Estados globais de carregamento/erro continuam com os componentes existentes, sem nova
 injeção de falhas nesta validação. Não gerado pacote Android assinado, nem aplicada migração de banco.
+
+### 16/11/2026 — Claude — Início do jeito simples reorganizada para o celular
+
+**Estado:** implementado e validado localmente; publicação no site registrada na conversa da sessão (PR e deploy). Sem
+migração. O app Android ainda não recebeu (precisa de versão nova, assinada pelo dono).
+
+- O que mudou: a Início do jeito simples virou uma tela própria (`src/components/InicioSimples.tsx`,
+  `src/components/inicio-simples.css`), na ordem: saudação curta, resultado do mês até hoje com Entrou/Saiu, previsão
+  para o fim do mês ("Pode sobrar/Pode faltar", "Ver cálculo"), Registrar entrada/saída, Contas a pagar (até 3, com
+  lugar guardado para a próxima a vencer), uma orientação, 3 últimos lançamentos (agendados marcados) e acessos curtos
+  (gastos por categoria em janela, dívidas, metas, contas e investimentos). Rodapé "Modo simples · Alterar".
+- Topo do simples no celular (`Painel.tsx`, classe `simples-movel`; CSS no fim de `src/index.css`): só mês, olho e sino;
+  idioma (`BotaoIdioma emLista`), suporte, tema e menu da conta foram para o "Mais". Sem o "+" na Início do simples.
+- "Paguei" com outro valor/dia saiu de `pages/Contas.tsx` para `components/FormBaixa.tsx` e ganhou a escolha do banco
+  (`lancamentoDaBaixa` aceita `banco_id`). A Início usa o mesmo formulário no "Marcar como paga".
+- Cálculos não mudaram: o resumo usa `comporPrevisao` (a mesma conta do "Ver cálculo"); o total das categorias é
+  `r.saidas`, e a janela explica por que difere do "Saiu" do resumo no mês de hoje.
+- Equilibrado e detalhado: sem mudança visível (o `BlocoParaFazer` continua em `Simples.tsx`; o `ResumoSimples` saiu).
+- Validação: `npx tsc -b`, `npm run lint` (só avisos antigos), build, `scripts/painel/testar.mjs` 20/20,
+  `scripts/extrato/testar.mjs` 54/54, `scripts/invest/testar.mjs` 27/27, `testar-correcoes.cjs` passou e o novo
+  `scripts/app-de-demonstracao/testar-inicio-simples.cjs` 31/31. Lápis da tela Contas do mês conferido à parte.
+- Limite: a alça que esconde a barra de baixo continua com 52×22 px (controle antigo, fora desta mudança).
 ### 16/11/2026 — Claude — Início do modo equilibrado reestruturada para o celular
 
 **Estado:** veja a conversa da sessão para PR e deploy. Sem migração de banco. O app Android **não** foi gerado nesta
@@ -709,6 +731,10 @@ sessão (sem Android SDK e sem a chave de upload no ambiente): precisa de versã
 - Junção com a Início detalhada do GPT/Codex (#195), publicada antes: o "Falta pagar" das dívidas no equilibrado segue o
   critério combinado lá (`restanteHoje`, com juros de atraso estimados, e o aviso quando há juros); o "% quitado" usa o valor
   registrado. O botão "+" flutuante some nas duas Inícios; o menu "Mais opções" mostra "Mais" escrito na detalhada.
+- Junção com a Início do simples (#196): o `FormBaixa` agora mora em `components/FormBaixa.tsx` (com banco); a opção
+  `conferir` foi para lá. O simples mantém o topo dele (`simples-movel`, idioma e suporte no "Mais" de baixo); nos outros
+  jeitos e telas do celular vale o topo com "Mais opções" (⋯). Os dois caminhos levam aos mesmos destinos; unificar fica
+  como decisão do Edigar.
 - Validação: `npx tsc -b`, `npm run lint` (sem erros; avisos antigos), build, `node scripts/painel/testar.mjs` (23 de 23,
   com 3 casos novos), app de demonstração em 320/360/390/430 px e com zoom de 130%: sem rolagem horizontal, sem valor
   cortado, sem rolagem interna, último conteúdo acima da barra de abas; 22 checagens de interação no Playwright (registrar,

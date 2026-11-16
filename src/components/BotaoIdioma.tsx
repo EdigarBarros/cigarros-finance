@@ -22,9 +22,11 @@ const semAcento = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLo
  * barra de topo; sem ele, é um botão redondo da barra do painel, ao lado do tema.
  * O menu inteiro é `translate="no"`: cada idioma aparece escrito nele mesmo, nunca traduzido.
  */
-export function BotaoIdioma({ flutuante, semBotao, aberto: abertoFora, aoMudarAberto }: {
+export function BotaoIdioma({ flutuante, emLista, semBotao, aberto: abertoFora, aoMudarAberto }: {
   flutuante?: boolean
-  /** Só a lista, aberta de fora (o item "Idioma" do menu "Mais opções" no celular). */
+  /** Linha do menu "Mais" do celular (jeito simples): o ícone com o nome "Idioma" e o idioma atual, e a lista sobe de baixo. */
+  emLista?: boolean
+  /** Só a lista, aberta de fora (o item "Idioma" do menu "Mais opções" do topo no celular). */
   semBotao?: boolean
   aberto?: boolean
   aoMudarAberto?: (aberto: boolean) => void
@@ -64,12 +66,16 @@ export function BotaoIdioma({ flutuante, semBotao, aberto: abertoFora, aoMudarAb
   }
 
   return (
-    <div className={`idioma ${flutuante ? 'flutuante' : ''} ${semBotao ? 'solto' : ''}`} translate="no">
-      {!semBotao && <button className="idioma-btn" onClick={() => setAberto(!aberto)} aria-expanded={aberto} aria-haspopup="dialog"
-        aria-label={ROTULO} title={ROTULO}>
-        <IconeTraduzir />
-        <span className="idioma-sigla">{sigla(codigo)}</span>
-      </button>}
+    <div className={`idioma ${flutuante ? 'flutuante' : ''} ${emLista ? 'em-lista' : ''} ${semBotao ? 'solto' : ''}`} translate="no">
+      {!semBotao && (
+        <button className="idioma-btn" onClick={() => setAberto(!aberto)} aria-expanded={aberto} aria-haspopup="dialog"
+          aria-label={ROTULO} title={ROTULO}>
+          <IconeTraduzir />
+          {emLista
+            ? <><span className="idioma-nome">Idioma · Language</span><small className="idioma-atual">{idiomaPorCodigo(codigo).nativo}</small></>
+            : <span className="idioma-sigla">{sigla(codigo)}</span>}
+        </button>
+      )}
       {aberto && (
         <>
           <div className="fora" onClick={() => setAberto(false)} />

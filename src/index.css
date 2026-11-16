@@ -4570,3 +4570,38 @@ body { top: 0 !important; }
   /* sem o botão flutuante (Início do equilibrado), o último conteúdo só precisa passar da barra de abas (≈ 58px + margem) */
   .conteudo:has(> .inicio-eq) { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
 }
+
+/* ---------- topo e barra de baixo do jeito simples no celular (Painel.tsx: .simples-movel) ----------
+   Fica aqui e não em inicio-simples.css: vale em todas as telas, e a Início é carregada só quando abre. */
+@media (max-width: 860px) {
+  /* o topo é preso: fundo quase opaco, para nada ficar ilegível por baixo dele */
+  .simples-movel .barra { padding: 8px 0; }
+  .simples-movel .barra::before { background: color-mix(in srgb, var(--fundo) 96%, transparent); }
+  /* o mês parece um filtro: contorno discreto em vez da pílula cheia da marca */
+  .simples-movel .seletor-mes { height: 44px; padding: 0; border: 0; background: none; }
+  .simples-movel .seletor-mes-nome {
+    height: 44px; padding: 0 14px; border: 1px solid var(--borda-forte); background: var(--superficie); color: var(--texto); font-weight: 650;
+  }
+  .simples-movel .seletor-mes-nome small { color: var(--texto-2); opacity: 1; }
+  .simples-movel .barra .icone-btn { width: 44px; height: 44px; }
+
+  /* barra de baixo mais baixa e sem brilho no item escolhido */
+  .simples-movel .conteudo { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+  .simples-movel .abas-movel { left: 12px; right: 12px; bottom: calc(8px + env(safe-area-inset-bottom)); padding: 4px; border-radius: 18px; box-shadow: var(--sombra); }
+  .simples-movel .abas-movel button { padding: 6px 0 5px; border-radius: 14px; }
+  .simples-movel .abas-movel .lente { background: var(--preench-3); box-shadow: none; }
+
+  /* "Mais": as páginas que não couberam e o que saiu do topo (idioma, suporte, tema, configurações) */
+  .simples-movel .mais-lista {
+    bottom: calc(80px + env(safe-area-inset-bottom)); max-height: calc(100dvh - 120px - env(safe-area-inset-bottom)); overflow-y: auto;
+    min-width: 260px;
+  }
+  .mais-separador { margin: 4px 8px; border: 0; border-top: 1px solid var(--separador); }
+}
+.idioma.em-lista .idioma-btn {
+  display: flex; align-items: center; gap: 12px; width: 100%; height: auto; min-height: 44px; padding: 10px 12px; border-radius: 10px;
+  justify-content: flex-start; border: 0; background: none; color: var(--texto); font: inherit; font-size: 14.5px; text-align: left;
+}
+.idioma.em-lista .idioma-btn svg { color: var(--texto-2); }
+.idioma.em-lista .idioma-atual { margin-left: auto; font-size: 13px; color: var(--texto-3); }
+.idioma.em-lista .idioma-menu { position: fixed; left: 12px; right: 12px; top: auto; bottom: calc(80px + env(safe-area-inset-bottom)); width: auto; }
