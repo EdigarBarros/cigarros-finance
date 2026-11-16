@@ -87,8 +87,10 @@ const LancamentosMovel = lazy(() => import('../movel/telas/LancamentosMovel').th
 const ContasMovel = lazy(() => import('../movel/telas/ContasMovel').then((m) => ({ default: m.ContasMovel })))
 const CartoesMovel = lazy(() => import('../movel/telas/CartoesMovel').then((m) => ({ default: m.CartoesMovel })))
 const DividasMovel = lazy(() => import('../movel/telas/DividasMovel').then((m) => ({ default: m.DividasMovel })))
+const MetasMovel = lazy(() => import('../movel/telas/MetasMovel').then((m) => ({ default: m.MetasMovel })))
+const GuardadoMovel = lazy(() => import('../movel/telas/GuardadoMovel').then((m) => ({ default: m.GuardadoMovel })))
 /** As telas que já têm versão de celular (com o topo colorido e a fileira de ações, sem o "+"). */
-const TELAS_DO_CELULAR: Pagina[] = ['inicio', 'lancamentos', 'contas', 'cartoes', 'dividas']
+const TELAS_DO_CELULAR: Pagina[] = ['inicio', 'lancamentos', 'contas', 'cartoes', 'dividas', 'metas', 'patrimonio']
 const janelas = {
   Formularios: () => import('./Formularios'),
   Configuracoes: () => import('./Configuracoes'),
@@ -951,8 +953,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     {paginaMostrada === 'contas' && (noCelular ? <ContasMovel c={ctx} aoMudarTom={mudarTom} /> : <Contas {...ctx} />)}
     {paginaMostrada === 'cartoes' && (noCelular ? <CartoesMovel key={cartaoAberto ?? 'todos'} c={ctx} aoMudarTom={mudarTom} /> : <Cartoes key={cartaoAberto ?? 'todos'} {...ctx} />)}
     {paginaMostrada === 'dividas' && (noCelular ? <DividasMovel c={ctx} aoMudarTom={mudarTom} /> : <Dividas {...ctx} />)}
-    {paginaMostrada === 'metas' && <Metas {...ctx} />}
-    {paginaMostrada === 'patrimonio' && <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />}
+    {paginaMostrada === 'metas' && (noCelular ? <MetasMovel c={ctx} aoMudarTom={mudarTom} /> : <Metas {...ctx} />)}
+    {paginaMostrada === 'patrimonio' && (noCelular ? <GuardadoMovel key={bancoAberto ?? 'todos'} c={ctx} aoMudarTom={mudarTom} /> : <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />)}
     {paginaMostrada === 'ano' && <Ano {...ctx} />}
     </Suspense>
   )

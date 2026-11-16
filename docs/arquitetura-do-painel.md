@@ -147,14 +147,14 @@ sem o sim); "Restaurar a arrumação original" desfaz tudo. Guarda só os dias d
 
 ### 4.0.1 Detalhado: as seções do layout do OpusCash (`components/InicioDetalhadoTelas.tsx`, `components/EvolucaoDetalhada.tsx`)
 
-No computador e no tablet (o celular tem a sua Início, em `src/movel`), seis seções, uma embaixo da outra, cada uma com
+No computador e no tablet (o celular tem a sua Início, em `src/movel`), o topo e seis seções, uma embaixo da outra, cada uma com
 título grande e sem botão de recolher:
 
 | Seção | O que mostra |
 | --- | --- |
-| Visão geral | "Olá, {nome}", **Visão geral**, a pílula "Modo detalhado" (abre o Personalizar) e "+ Novo lançamento". **Resultado do mês** (entrou − saiu até hoje) e **Previsão para o fim do mês** (abre o "Entender"); seis cartões que levam a algum lugar: Entradas e Saídas realizadas (Lançamentos), Ainda a receber e Ainda a pagar (Entender), Saldo nas contas (Dinheiro guardado) e Saldo devedor com os juros estimados (Dívidas); **Fluxo de {mês}** em barras deitadas e a Média diária de saídas |
+| Evolução financeira | Vem logo depois do topo ("Olá, {nome}", **Visão geral**, a pílula "Modo detalhado", que abre o Personalizar, e "+ Novo lançamento"): é a primeira coisa da tela. Movimentação ou Saldos, Realizado ou Previsto, últimos 3/6/12 meses e a moeda (só com outra moeda no ano). `GraficoEvolucao` (`Graficos.tsx`): barras largas e a **linha da dívida no mesmo eixo**, passando entre as barras, para ver se o que se deve está acima ou abaixo do que entra e sai. O mês escolhido ganha moldura e balões com os valores (plugins `destaqueMes` e `baloes`, `lib/charts.ts`); tocar noutro mês troca o resumo de baixo (Entradas, Saídas, Resultado, Saldo nas contas e Saldo devedor). Saldos de meses que ainda não chegaram ficam em branco |
+| Visão geral | **Resultado do mês** (entrou − saiu até hoje) e **Previsão para o fim do mês** (abre o "Entender"); seis cartões que levam a algum lugar: Entradas e Saídas realizadas (Lançamentos), Ainda a receber e Ainda a pagar (Entender), Saldo nas contas (Dinheiro guardado) e Saldo devedor com os juros estimados (Dívidas); **Fluxo de {mês}** em barras deitadas e a Média diária de saídas |
 | Contas prioritárias | Pílulas "N atrasadas" e "N próximas"; dois cartões, **Atrasadas** (2, com "N dias em atraso") e **Próximos vencimentos** (3), de `tarefasDoMes`; "+ N" e "Ver…" abrem o resto ali mesmo; tocar numa conta abre a janela com a ação dela. Com atrasadas, a faixa "Priorize o que está vencido" e "Organizar pagamentos" (Contas do mês) |
-| Evolução financeira | Movimentação ou Saldos, Realizado ou Previsto, últimos 3/6/12 meses e a moeda (só com outra moeda no ano). `GraficoEvolucao` (`Graficos.tsx`): barras largas e a **linha da dívida no mesmo eixo**, passando entre as barras, para ver se o que se deve está acima ou abaixo do que entra e sai. O mês escolhido ganha moldura e balões com os valores (plugins `destaqueMes` e `baloes`, `lib/charts.ts`); tocar noutro mês troca o resumo de baixo (Entradas, Saídas, Resultado, Saldo nas contas e Saldo devedor). Saldos de meses que ainda não chegaram ficam em branco |
 | Comparação entre períodos | O mesmo `compararGastos` de `lib/comparacao.ts`: "Gastos X% maiores/menores", os dois totais, a variação em dinheiro, as duas barras e, no mês de hoje, o aviso das contas vencidas sem baixa. Tabela **Onde seus gastos mudaram** (5 categorias, "Ver todas"); tocar numa categoria abre os lançamentos dos dois lados |
 | Dívidas, contas, cartões e metas | Seis cartões (Gastos do mês com a barra de quanto do que entrou já saiu, Contas cadastradas a pagar, Cartões, Dívidas, Saldo nas contas, Metas), cada um com ícone, número e uma linha com ícone colorido. Tocar abre o bloco completo logo abaixo (Gastos abre categorias e lançamentos). Faixa **Visão de compromissos**: Cartões, Dívidas e Contas do mês |
 | Diagnóstico financeiro | Medidor da nota em arco (`lib/analise.ts`), o rótulo, o aviso "Saldo em conta não é reserva de emergência" e "Entenda a pontuação" (aba Consultor); as orientações do conselheiro com selo, título e o link para a tela certa (a seta abre o porquê e o "Agora não"); "Como calculamos a saúde financeira" com os pilares |
@@ -1196,7 +1196,7 @@ No celular (até 860 px, `useMobile`) o painel tem cara própria, separada do co
 `Painel` escolhe a moldura (`mobile ? moldura do celular : a de sempre`) e as duas usam os mesmos dados, formulários e janelas.
 Tela que ainda não tem versão de celular abre a do computador dentro da moldura nova (com o "+"), e é isso que deixa
 publicar por partes. Fases: 1) moldura e Início (feita); 2) escolher, tirar e reordenar cartões, salvo na conta
-(`perfis.celular`, feita); 3) Lançamentos e Contas (feita); 4) Cartões e Dívidas (feita); 5) Metas e Guardado; 6) Consultor e Invest; 7) Ano e
+(`perfis.celular`, feita); 3) Lançamentos e Contas (feita); 4) Cartões e Dívidas (feita); 5) Metas e Guardado (feita); 6) Consultor e Invest; 7) Ano e
 limpeza do que ficou sem uso (`.fab`, `simples-movel`, `menu-movel`, a alça das abas, os ramos de celular dos três jeitos).
 
 **Moldura** (`src/movel/Casca.tsx`, estilos em `src/movel/movel.css`, todos debaixo de `.movel`):
@@ -1255,6 +1255,21 @@ mesmos do computador):
 - Cartões: cada dívida (quanto falta, quanto já foi pago, a próxima parcela; tocar abre a ficha com o calendário e o
   "Conferi com o banco"), quanto sai nos próximos meses (fora do simples), "Recebe todo mês" no lado "Me devem" (tocar
   abre a conferência) e as quitadas no mês.
+
+**Metas** (`src/movel/telas/MetasMovel.tsx`; números de `resumoDasMetas` em `lib/metas.ts`, os mesmos do computador e da
+Início; ficha e formulários de `pages/Metas.tsx`):
+- Topo: guardado nas metas (com quantas foram batidas) → quanto guardar por mês para chegar nos prazos (ou quanto falta).
+- Ações: Guardar e Retirar (com mais de uma meta, perguntam em qual), Criar meta e Modelos. A sobra do mês vira dica
+  ("Guardar numa meta?"), já com o valor até o que falta.
+- Cartões: as metas (quanto tem, de quanto, o ritmo ou o prazo; tocar abre a ficha), quando cada uma chega e quanto
+  guardar por mês (detalhado) e as batidas. Sem metas, os modelos.
+
+**Dinheiro guardado** (`src/movel/telas/GuardadoMovel.tsx`; contas em `useGuardado` e peças de `pages/Patrimonio.tsx`):
+- Topo: tudo o que você tem (com a diferença para o mês anterior) → uma página por banco, na cor dele, com "Ver o banco".
+- Ações: Novo banco, Continua igual (saldos herdados), Invest e Metas (cada uma só com o módulo ligado).
+- Cartões: os bancos (tocar abre o banco), a reserva de emergência, como o total tem mudado (fora do simples) e os
+  investimentos e outras moedas. O banco aberto tem o topo na cor dele, conta/caixinha/reserva para atualizar, os
+  cartões do banco e os lançamentos do mês; "Todos" volta.
 
 **Escolher e arrumar os cartões** (`lib/widgets.ts`, `src/movel/FolhaDeCartoes.tsx`, migração 35):
 - "+ Adicionar cartões" abre uma folha com os cartões que não estão na Início, cada um com a prévia de verdade (os dados da

@@ -3,8 +3,8 @@
 // tela acima da barra de baixo. Depois: o topo que desliza (ponto ativo e cor), o modelo de cada jeito, a conta tocada abre
 // a conferência, as folhas "Mais", da conta e dos meses, os alvos do tutorial, adicionar/tirar/subir cartões (gravado na
 // conta, com e sem a migração 35, e de volta depois de recarregar), Lançamentos e Contas do mês no celular (larguras, temas,
-// filtros, edição, conferência sem baixa), Cartões e Dívidas (cor de cada cartão, deslizar troca o cartão ou o lado) e o
-// computador sem nada do celular.
+// filtros, edição, conferência sem baixa), Cartões e Dívidas (cor de cada cartão, deslizar troca o cartão ou o lado), Metas e
+// Dinheiro guardado (escolher a meta, abrir o banco) e o computador sem nada do celular.
 // Uso (depois do build com fake.supabase.co do README desta pasta): node scripts/app-de-demonstracao/testar-movel.cjs
 const path=require('path')
 const R=path.join(__dirname,'..','..')
@@ -71,7 +71,7 @@ const medir=()=>{
     await p.clock.install({ time: new Date('2026-11-16T10:00:00') })
     for (const tema of ['escuro','claro']) {
       await p.addInitScript((tema)=>{try{localStorage.setItem('opuscash-tema',tema)}catch{}},tema)
-      for (const pg of ['lancamentos','contas','cartoes','dividas']) for (const w of [320, 360, 390, 430]) {
+      for (const pg of ['lancamentos','contas','cartoes','dividas','metas','patrimonio']) for (const w of [320, 360, 390, 430]) {
         await p.setViewportSize({ width: w, height: 800 })
         await abrir(p, `${t.url}#/${pg}`)
         const r=await p.evaluate(medir)
@@ -141,6 +141,27 @@ const medir=()=>{
     await p.locator('.hero-movel-pontos button').nth(1).click(); await esperar(p,1400)
     const ladoReceber=await p.locator('.dividas-movel').innerText()
     ok(/Recebe todo mês/.test(ladoReceber) && await p.evaluate(()=>document.querySelector('.movel-fundo i.ativo')?.dataset.t)==='sobra', 'deslizar leva ao lado "Me devem"')
+    // Metas: guardar pede a meta (há mais de uma) e abre o formulário dela
+    await abrir(p, `${t.url}#/metas`)
+    ok(await p.locator('.metas-movel .widget .linha-movel').count()>=2 && await p.locator('.fab').count()===0, 'Metas: as metas em linhas, sem o "+"')
+    await p.locator('.acoes-movel button', { hasText: 'Guardar' }).click(); await esperar(p)
+    ok(/Guardar em qual meta/.test(await p.locator('.modal').innerText()), '"Guardar" pergunta em qual meta')
+    await p.locator('.modal .lista-folha .linha-movel').first().click(); await esperar(p,900)
+    ok(await p.locator('.modal').count()===1 && !/Guardar em qual meta/.test(await p.locator('.modal').innerText()), 'escolher a meta abre o formulário de guardar')
+    await p.keyboard.press('Escape'); await esperar(p)
+    await p.locator('.metas-movel .widget .linha-movel').first().click(); await esperar(p,900)
+    ok(await p.locator('.modal').count()===1, 'tocar numa meta abre a ficha')
+    await p.keyboard.press('Escape'); await esperar(p)
+    // Dinheiro guardado: o total e uma página por banco; tocar no banco abre os saldos para editar
+    await abrir(p, `${t.url}#/patrimonio`)
+    const nPag=await p.locator('.hero-movel-pagina').count(), nBancos=await p.locator('.guardado-movel .widget .linha-movel').count()
+    ok(nPag>=2 && nPag===1+await p.evaluate(()=>[...document.querySelectorAll('.guardado-movel .widget .linha-movel .icone-banco-movel')].length) && await p.locator('.fab').count()===0, `Guardado: total + uma página por banco (${nPag} páginas, ${nBancos} linhas)`)
+    await p.locator('.hero-movel-pontos button').nth(1).click(); await esperar(p,1400)
+    ok(await p.evaluate(()=>document.querySelector('.movel-fundo i.ativo')?.dataset.t)==='cor', 'a página do banco tem a cor dele')
+    await p.locator('.guardado-movel .widget .linha-movel').first().click(); await esperar(p,1200)
+    ok(await p.locator('.gd-tipos .gd-tipo').count()===3, 'abrir o banco mostra conta, caixinha e reserva para atualizar')
+    await p.locator('.acoes-movel button', { hasText: 'Todos' }).click(); await esperar(p,900)
+    ok(await p.locator('.gd-tipos').count()===0 && await p.locator('.hero-movel-pagina').count()===nPag, '"Todos" volta para todos os bancos')
     await t.fechar()
   }
 
@@ -171,8 +192,8 @@ const medir=()=>{
   await p.locator('.abas-movel-nova button[data-tour="mais"]').click(); await esperar(p)
   const mais=await p.locator('.mais-grade').innerText()
   ok(/Contas/.test(mais) && /Dívidas/.test(mais) && /Ajustes/.test(mais), 'o "Mais" tem as outras telas e os ajustes')
-  await p.locator('.mais-grade button[data-tour="nav-metas"]').click(); await esperar(p,1500)
-  ok(await p.evaluate(()=>location.hash)==='#/metas' && await p.locator('.abas-movel-nova button[data-tour="mais"].ativo').count()===1, 'tela do "Mais" abre e a aba "Mais" fica marcada')
+  await p.locator('.mais-grade button[data-tour="nav-ano"]').click(); await esperar(p,1500)
+  ok(await p.evaluate(()=>location.hash)==='#/ano' && await p.locator('.abas-movel-nova button[data-tour="mais"].ativo').count()===1, 'tela do "Mais" abre e a aba "Mais" fica marcada')
   ok(await p.locator('.fab').count()===1, 'nas telas sem versão de celular ainda, o "+" continua')
   await p.locator('.topo-movel-avatar').click(); await esperar(p)
   const conta=await p.locator('.lista-folha').innerText()

@@ -7,7 +7,7 @@ import {
   Bloco, BlocoDinheiro, BlocoDividas, BlocoGastos, BlocoLancamentos, BlocoMetas,
 } from '../components/Blocos'
 import { totalGuardado } from '../lib/guardado'
-import { ComparacaoDetalhada, ContasPrioritarias, Diagnostico, Panorama, VisaoGeral, type PecaDet } from '../components/InicioDetalhadoTelas'
+import { ComparacaoDetalhada, ContasPrioritarias, Diagnostico, Panorama, TopoDetalhado, VisaoGeral, type PecaDet } from '../components/InicioDetalhadoTelas'
 import {
   AteOFimEq, CabecalhoEq, ComparacaoEq, ContasEq, FaixaEq, OrientacaoEq, PilulaDoJeito, PrincipaisGastos, RegistrarEq, ResultadoEq,
   ResumosCompactos, SaudeEq, TopoEq, type ResumoCompacto,
@@ -512,13 +512,15 @@ export function Inicio(c: Ctx) {
 
     return (
       <div className="pagina inicio inicio-det">
-        <VisaoGeral nome={c.perfil.nome ?? ''} dd={dd} nomeMes={nomeMes} decorridos={decorridos}
+        <TopoDetalhado nome={c.perfil.nome ?? ''} aoModo={c.personalizar} aoNovo={() => c.novoLancamento()} />
+        {/* o gráfico do ano vem primeiro: a leitura de relance de como o dinheiro anda */}
+        <EvolucaoDetalhada c={c} dd={dd} />
+        <VisaoGeral dd={dd} nomeMes={nomeMes} decorridos={decorridos}
           saldoContas={v.bancos ? (Object.keys(c.mesEf.caixa).length ? r.caixa : null) : undefined}
           divida={v.dividas ? r.divida : undefined} dividaJuros={r.dividaJuros}
-          aoModo={c.personalizar} aoNovo={() => c.novoLancamento()} aoEntender={abrirEntender}
+          aoEntender={abrirEntender}
           aoLancamentos={() => c.irPara('lancamentos')} aoPatrimonio={() => c.irPara('patrimonio')} aoDividas={() => c.irPara('dividas')} />
         <ContasPrioritarias tarefas={tarefas.lista} aoOrganizar={() => c.irPara('contas')} />
-        <EvolucaoDetalhada c={c} dd={dd} />
         <ComparacaoDetalhada comp={mesVazio ? null : comparacao} categorias={c.categorias} atrasadas={momento === 'atual' ? atrasadasAPagar : 0}
           aoVerLancamentos={() => c.irPara('lancamentos')} />
         <Panorama pecas={pecas} inicial={arrumacao.a.pecaFixa} aoAbrir={arrumacao.abriuPeca}
