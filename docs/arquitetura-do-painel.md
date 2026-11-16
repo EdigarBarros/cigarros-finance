@@ -1211,7 +1211,7 @@ No celular (até 860 px, `useMobile`) o painel tem cara própria, separada do co
 `Painel` escolhe a moldura (`mobile ? moldura do celular : a de sempre`) e as duas usam os mesmos dados, formulários e janelas.
 Tela que ainda não tem versão de celular abre a do computador dentro da moldura nova (com o "+"), e é isso que deixa
 publicar por partes. Fases: 1) moldura e Início (feita); 2) escolher, tirar e reordenar cartões, salvo na conta
-(`perfis.celular`, feita); 3) Lançamentos e Contas (feita); 4) Cartões e Dívidas (feita); 5) Metas e Guardado (feita); 6) Consultor e Invest; 7) Ano e
+(`perfis.celular`, feita); 3) Lançamentos e Contas (feita); 4) Cartões e Dívidas (feita); 5) Metas e Guardado (feita); 6) Consultor e Invest (feita); 7) Ano e
 limpeza do que ficou sem uso (`.fab`, `simples-movel`, `menu-movel`, a alça das abas, os ramos de celular dos três jeitos).
 
 **Moldura** (`src/movel/Casca.tsx`, estilos em `src/movel/movel.css`, todos debaixo de `.movel`):
@@ -1291,6 +1291,21 @@ Início; ficha e formulários de `pages/Metas.tsx`):
 - Cartões: os bancos (tocar abre o banco), a reserva de emergência, como o total tem mudado (fora do simples) e os
   investimentos e outras moedas. O banco aberto tem o topo na cor dele, conta/caixinha/reserva para atualizar, os
   cartões do banco e os lançamentos do mês; "Todos" volta.
+
+**Consultor** (`src/movel/telas/ConsultorMovel.tsx`). Regra: o Consultor monta a própria tela (`lib/composicao.ts` escolhe
+ordem, desenho e tamanho; `lib/gosto.ts` aprende com o uso), então o celular **não** impõe cartões nem ordem.
+- Topo: o veredito do próprio Consultor, a nota de 0 a 100 (cor pelo tom dela), e depois o plano de ação, com "Ver o
+  plano".
+- Ações: Plano e Objetivo (levam até a parte da tela) e Avisos (liga e desliga o aviso de reanálise).
+- Logo abaixo, a tela que ele montou, com as mesmas peças e na mesma ordem do computador: manchete, perfil, o que mudou,
+  agora, próximo passo (ou o plano inteiro no detalhado), objetivo e as faixas (favoritar, esconder, "outro jeito").
+- `testar-movel.cjs` confere que os cartões vêm na mesma ordem no celular e no computador.
+
+**Invest** (`src/movel/telas/InvestMovel.tsx`; estado, ações e janelas em `useInvestTela`, de `pages/Invest.tsx`):
+- Topo: a carteira (com o resultado) → o que foi aportado → os proventos.
+- Ações: Aplicar, Novo, Valores e Importar.
+- Embaixo, as mesmas quatro abas, sem ícones para os nomes caberem. A aba Análises continua montada pelo próprio
+  analista.
 
 **Escolher e arrumar os cartões** (`lib/widgets.ts`, `src/movel/FolhaDeCartoes.tsx`, migração 35):
 - "+ Adicionar cartões" abre uma folha com os cartões que não estão na Início, cada um com a prévia de verdade (os dados da
