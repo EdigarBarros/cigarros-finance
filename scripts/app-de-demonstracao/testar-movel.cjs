@@ -2,7 +2,8 @@
 // fonte a 150% e 200%: sem rolagem de lado, nada fora da tela, toques do topo, das ações e das abas com 44 px, e o fim da
 // tela acima da barra de baixo. Depois: o topo que desliza (ponto ativo e cor), o modelo de cada jeito, a conta tocada abre
 // a conferência, as folhas "Mais", da conta e dos meses, os alvos do tutorial, adicionar/tirar/subir cartões (gravado na
-// conta, com e sem a migração 35, e de volta depois de recarregar) e o computador sem nada do celular.
+// conta, com e sem a migração 35, e de volta depois de recarregar), Lançamentos e Contas do mês no celular (larguras, temas,
+// filtros, edição, conferência sem baixa) e o computador sem nada do celular.
 // Uso (depois do build com fake.supabase.co do README desta pasta): node scripts/app-de-demonstracao/testar-movel.cjs
 const path=require('path')
 const R=path.join(__dirname,'..','..')
@@ -19,11 +20,11 @@ const medir=()=>{
   const visivel=(e)=>{const b=e.getBoundingClientRect();return b.width>0&&b.height>0&&getComputedStyle(e).visibility!=='hidden'}
   // o topo que desliza tem as páginas seguintes à direita, de propósito (rolam por dentro do trilho)
   const fora=[...document.querySelectorAll('.app.movel *')].filter(e=>!e.closest('.hero-movel-trilho, .dicas-movel')&&visivel(e)&&(e.getBoundingClientRect().right>cw+0.5||e.getBoundingClientRect().left<-0.5)).map(e=>e.className||e.tagName)
-  const pequenos=[...document.querySelectorAll('.topo-movel button, .topo-movel-busca, .acoes-movel button, .abas-movel-nova button, .hero-movel-pilula, .linha-movel, .widget-titulo, .widget-rodape')]
+  const pequenos=[...document.querySelectorAll('.topo-movel button, .topo-movel-busca, .acoes-movel button, .abas-movel-nova button, .hero-movel-pilula, .linha-movel, .widget-titulo, .widget-rodape, .pilulas-movel button')]
     .filter(visivel).filter(e=>{const b=e.getBoundingClientRect();return b.height<36||b.width<36||(e.matches('.topo-movel button, .acoes-movel button, .abas-movel-nova button, .hero-movel-pilula')&&b.height<44)})
     .map(e=>`${(e.getAttribute('aria-label')||e.textContent).trim().slice(0,20)} ${Math.round(e.getBoundingClientRect().width)}x${Math.round(e.getBoundingClientRect().height)}`)
   window.scrollTo(0, document.documentElement.scrollHeight)
-  const ult=[...document.querySelectorAll('.inicio-movel > *')].filter(visivel).pop().getBoundingClientRect(), nav=document.querySelector('.abas-movel').getBoundingClientRect()
+  const ult=[...document.querySelectorAll('.app.movel .pagina > *')].filter(visivel).pop().getBoundingClientRect(), nav=document.querySelector('.abas-movel').getBoundingClientRect()
   window.scrollTo(0,0)
   return {lado:document.documentElement.scrollWidth>cw, fora:fora.slice(0,5), pequenos, acima:ult.bottom<=nav.top+1}
 }
@@ -59,6 +60,63 @@ const medir=()=>{
     console.log(`      ${jeito}: ${n} cartões`)
     if (jeito==='simples') ok(n>=2 && n<=5, `simples com poucos cartões (${n})`)
     if (jeito==='detalhado') ok(n>=8, `detalhado com mais cartões (${n})`)
+    await t.fechar()
+  }
+
+  // ---------- Lançamentos e Contas do mês no celular ----------
+  {
+    const t = await iniciar({ perfil: {...demo.perfil, detalhe:'equilibrado'}, dados: demo.dados, porta: 4950+Math.floor(Math.random()*40), dpr: 1, toque:true })
+    const p=t.page
+    await p.clock.install({ time: new Date('2026-11-16T10:00:00') })
+    for (const tema of ['escuro','claro']) {
+      await p.addInitScript((tema)=>{try{localStorage.setItem('opuscash-tema',tema)}catch{}},tema)
+      for (const pg of ['lancamentos','contas']) for (const w of [320, 360, 390, 430]) {
+        await p.setViewportSize({ width: w, height: 800 })
+        await abrir(p, `${t.url}#/${pg}`)
+        const r=await p.evaluate(medir)
+        ok(!r.lado && !r.fora.length, `${pg} ${tema} ${w}px: sem rolagem de lado e nada fora da tela ${r.fora.join(', ')}`)
+        ok(!r.pequenos.length, `${pg} ${tema} ${w}px: toques grandes o bastante ${r.pequenos.join(' | ')}`)
+        ok(r.acima, `${pg} ${tema} ${w}px: o fim da tela rola para cima da barra de baixo`)
+      }
+    }
+    await p.setViewportSize({ width: 390, height: 800 })
+    // Lançamentos: outubro tem lançamentos fora do cartão
+    await abrir(p, `${t.url}#/lancamentos`)
+    ok(await p.locator('.hero-movel-pagina').count()===3 && await p.locator('.fab').count()===0, 'Lançamentos: topo com saiu, entrou e sobrou, sem o "+"')
+    await p.locator('.topo-movel-mes').click(); await esperar(p)
+    await p.locator('.meses-movel .quadro-meses-grade button').nth(9).click(); await esperar(p,1200)
+    const linhas=await p.locator('.dia-movel .linha-movel').count()
+    ok(linhas>0, `Lançamentos de outubro em cartões por dia (${linhas})`)
+    const saiuAntes=await p.locator('.hero-movel-pagina').first().locator('.hero-movel-valor').innerText()
+    await p.locator('.pilulas-movel button').first().click(); await esperar(p,700)
+    const saiuDepois=await p.locator('.hero-movel-pagina').first().locator('.hero-movel-valor').innerText()
+    ok(await p.locator('.filtros-movel').count()===1 && saiuAntes!==saiuDepois, `a pílula da categoria filtra e o topo acompanha (${saiuAntes} → ${saiuDepois})`)
+    await p.locator('.filtros-movel .link').click(); await esperar(p,500)
+    ok(await p.locator('.filtros-movel').count()===0, '"Limpar filtros" volta tudo')
+    await p.locator('.acoes-movel button', { hasText: 'Filtrar' }).click(); await esperar(p)
+    ok(await p.locator('.filtrar-movel').count()===1, 'Filtrar abre a folha dos filtros')
+    await p.locator('.filtrar-movel').getByRole('radio', { name: 'Entradas' }).click().catch(async()=>{ await p.locator('.filtrar-movel button', { hasText: 'Entradas' }).first().click() })
+    await esperar(p,400)
+    await p.locator('.filtrar-movel .btn.primario').click(); await esperar(p,500)
+    ok((await p.locator('.filtros-movel').innerText()).includes('Entradas'), 'filtrar por entradas aparece nos filtros ativos')
+    await p.locator('.dia-movel .linha-movel').first().click(); await esperar(p,900)
+    ok(await p.locator('.modal').count()===1, 'tocar num lançamento abre a edição')
+    await p.keyboard.press('Escape'); await esperar(p)
+    // Contas do mês
+    await p.locator('.topo-movel-mes').click(); await esperar(p)
+    await p.locator('.meses-movel .quadro-meses-grade button').nth(10).click(); await esperar(p,900)
+    await p.locator('.abas-movel-nova button[data-tour="mais"]').click(); await esperar(p)
+    await p.locator('.mais-grade button[data-tour="nav-contas"]').click(); await esperar(p,1500)
+    ok(await p.locator('.hero-movel-pagina').count()>=1 && await p.locator('.fab').count()===0, 'Contas: topo com o que falta pagar, sem o "+"')
+    const baixasAntes=t.log.filter(x=>x[0]==='POST'&&x[1]==='lancamentos').length
+    await p.locator('.conta-movel .linha-movel', { hasText: 'Internet' }).click(); await esperar(p,900)
+    ok(await p.locator('.modal').count()===1 && t.log.filter(x=>x[0]==='POST'&&x[1]==='lancamentos').length===baixasAntes, 'tocar numa conta abre a conferência, sem dar baixa')
+    await p.keyboard.press('Escape'); await esperar(p)
+    await p.locator('.acoes-movel button', { hasText: 'Todas' }).click(); await esperar(p)
+    ok(await p.locator('.modal .lista-folha .linha-movel').count()>=5, '"Todas" lista as contas fixas para editar')
+    await p.locator('.modal .lista-folha .linha-movel').first().click(); await esperar(p,900)
+    ok(await p.locator('.modal').count()===1 && /Editar conta fixa/.test(await p.locator('.modal').innerText()), 'tocar numa conta fixa abre a edição')
+    await p.keyboard.press('Escape'); await esperar(p)
     await t.fechar()
   }
 

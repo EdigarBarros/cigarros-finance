@@ -4,7 +4,7 @@
  */
 import { fmtDataCurta, fmtMoeda, fmtValor, moedaAtual } from './format'
 import { cotacaoNoSentidoCerto, type Taxas } from './moedas'
-import type { ContaFixa, Lancamento } from './types'
+import type { Categoria, ContaFixa, Lancamento } from './types'
 import { tx } from './textos'
 
 export type EstadoConta = 'paga' | 'atrasada' | 'vence_hoje' | 'a_vencer' | 'fora'
@@ -121,6 +121,16 @@ export interface TotaisContas {
 }
 
 const soma = (xs: SituacaoConta[]) => centavos(xs.reduce((a, s) => a + s.valor, 0))
+
+/** As contas a pagar do mês somadas por categoria, da maior para a menor (a rosca da tela Contas do mês). */
+export function contasPorCategoria(sits: SituacaoConta[], categorias: Categoria[]) {
+  return Object.values(sits.filter((x) => x.conta.tipo === 'saida').reduce<Record<string, { rotulo: string; valor: number; cor: string }>>((acc, x) => {
+    const cat = categorias.find((k) => k.id === x.conta.categoria_id)
+    const chave = cat?.id ?? 'sem'
+    acc[chave] = { rotulo: cat?.nome ?? tx('Sem categoria'), cor: cat?.cor ?? '#8e8e93', valor: (acc[chave]?.valor ?? 0) + x.valor }
+    return acc
+  }, {})).sort((x, y) => y.valor - x.valor)
+}
 
 export function totaisDoMes(sits: SituacaoConta[]): TotaisContas {
   const saidas = sits.filter((s) => s.conta.tipo === 'saida')
