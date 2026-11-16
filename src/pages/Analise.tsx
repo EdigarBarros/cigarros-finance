@@ -79,7 +79,7 @@ export function Analise(c: Ctx) {
 }
 
 /** No detalhado: o plano de ação inteiro, em ordem, com o ganho de cada passo e o atalho. */
-function PlanoDeAcao({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
+export function PlanoDeAcao({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
   const [aberto, setAberto] = useState<string | null>(null)
   const [ref, vivo] = useEmVista<HTMLElement>()
   if (!a.acoes.length) {
@@ -119,7 +119,7 @@ function PlanoDeAcao({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
  * O que a última mudança fez com a análise ou, sem mudança nesta visita, o que mudou desde a anterior. O retrato da visita
  * fica no navegador (só números), para comparar na próxima.
  */
-function useDesdeAUltimaVisita(id: string, a: DadosAnalise) {
+export function useDesdeAUltimaVisita(id: string, a: DadosAnalise) {
   const chave = `opuscash:analise:${id}`
   const [antes] = useState<Retrato | null>(() => {
     try { return JSON.parse(localStorage.getItem(chave) ?? 'null') as Retrato | null } catch { return null }
@@ -135,7 +135,7 @@ function useDesdeAUltimaVisita(id: string, a: DadosAnalise) {
 }
 
 /** Só aparece quando algo mudou de fato: uma faixa com setas para cima ou para baixo. */
-function OQueMudou({ reanalise, desdeAVisita, max }: { reanalise: Ctx['reanalise']; desdeAVisita: { em: string; mudancas: Mudanca[] } | null; max: number }) {
+export function OQueMudou({ reanalise, desdeAVisita, max }: { reanalise: Ctx['reanalise']; desdeAVisita: { em: string; mudancas: Mudanca[] } | null; max: number }) {
   const lista = reanalise?.mudancas.length ? reanalise.mudancas : desdeAVisita?.mudancas ?? []
   if (!lista.length) return null
   return (

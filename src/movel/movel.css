@@ -279,6 +279,13 @@ button.linha-movel:active { opacity: .7; }
 .widgets-movel > .pecas-do-computador:empty { display: none; }
 .metas-movel .mt-modelos { margin-top: 6px; }
 
+/* ---------- Consultor e Invest: a tela que eles montam, logo abaixo do topo ---------- */
+.consultor-movel-tela, .invest-movel-tela { display: grid; gap: 14px; min-width: 0; }
+.app.movel .consultor-movel-tela .cartao, .app.movel .invest-movel-tela .cartao { border-radius: 24px; }
+/* as quatro abas do Invest cabem sem cortar o nome: no celular, sem os ícones */
+.invest-movel-tela .inv-abas svg { display: none; }
+.invest-movel-tela .inv-abas button { padding: 0 6px; font-size: 13.5px; }
+
 /* ---------- barra de abas: as quatro fixas ---------- */
 .abas-movel.abas-movel-nova { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-flow: row; max-width: 520px; margin: 0 auto; transition: padding .35s var(--mola); }
 .abas-movel-nova button { min-height: 52px; align-content: center; }

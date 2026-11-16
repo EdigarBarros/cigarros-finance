@@ -921,3 +921,16 @@ calculamos, Todas as categorias, (i), Ver diagnóstico, faixa → Lançamentos).
   sem desfoque; as camadas do degradê com `will-change: opacity`.
 - Depois: 4 mudanças com o dedo na tela (só os pontos), deslocamento zero, a página troca e encaixa.
   `scripts/app-de-demonstracao/testar-arrasto.cjs` (novo) cobre todas as telas com topo que desliza.
+
+### 16/11/2026 — Claude — Celular: Consultor e Invest com tela própria (fase 6 de 7)
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração. O app Android ainda não recebeu as fases do celular.
+
+- Pedido do Edigar: seguir com a fase 6, cuidando que o Consultor monta a própria tela.
+- Decisão: no Consultor o celular só põe o topo (a nota e o plano do próprio Consultor) e as ações. A tela que ele monta
+  (`useTelaViva`, `Manchete`, `Faixas` e os blocos de `AnaliseTopo`) vem inteira e na mesma ordem do computador; nada do
+  sistema de cartões da Início entra aqui. Teste: mesma lista de cartões, na mesma ordem, a 390 px e a 1280 px.
+- `pages/Analise.tsx`: `PlanoDeAcao`, `OQueMudou` e `useDesdeAUltimaVisita` exportados. `pages/Invest.tsx`:
+  `useInvestTela` (aba, ativo aberto, janelas e ações) e `ABAS` exportados; a tela do computador usa o mesmo.
+- `src/movel/telas/ConsultorMovel.tsx` e `InvestMovel.tsx` (novos). `testar-arrasto.cjs` passou a cobrir as duas.
+- `scripts/invest/testar.mjs`: 27/27.

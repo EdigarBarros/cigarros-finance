@@ -46,7 +46,7 @@ type Janela =
   | { tipo: 'plano' }
   | { tipo: 'porque'; achado: Achado }
 
-const ABAS: { id: Aba; nome: () => string; icone: string }[] = [
+export const ABAS: { id: Aba; nome: () => string; icone: string }[] = [
   { id: 'geral', nome: () => tx('Visão geral'), icone: 'inicio' },
   { id: 'carteira', nome: () => tx('Carteira'), icone: 'carteira' },
   { id: 'analises', nome: () => tx('Análises'), icone: 'ideia' },
@@ -60,12 +60,14 @@ const abaGuardada = (): Aba => {
   } catch { return 'geral' }
 }
 
-export function Invest(c: Ctx) {
-  const inv = c.invest
+/**
+ * O que está aberto no Invest e o que dá para pedir (a tela do computador e a do celular usam o mesmo): a aba, o ativo, a
+ * janela (cadastro, operação, valores, importar, pendências, plano, "por quê") e as janelas abertas, prontas para mostrar.
+ */
+export function useInvestTela(c: Ctx) {
   const [aba, setAba] = useState<Aba>(abaGuardada)
   const [ativoAberto, setAtivoAberto] = useState<string | null>(null)
   const [janela, setJanela] = useState<Janela | null>(null)
-  const movimento = useMovimento()
   const abrirAba = (a: Aba) => {
     setAba(a)
     setAtivoAberto(null)
@@ -95,6 +97,26 @@ export function Invest(c: Ctx) {
   }
   const fechar = () => setJanela(null)
   const legado = legadoDigitado(c.d.meses)
+  const janelasAbertas = (
+    <Suspense fallback={null}>
+      {janela?.tipo === 'ativo' && <FormAtivo c={c} ativo={janela.ativo} aoFechar={fechar}
+        aoCriar={(a) => setJanela({ tipo: 'operacao', ativoId: a.id })} aoExcluir={() => { fechar(); setAtivoAberto(null) }} />}
+      {janela?.tipo === 'operacao' && <FormOperacao key={janela.op?.id ?? janela.ativoId ?? 'nova'} c={c} op={janela.op} ativoId={janela.ativoId} tipoInicial={janela.tipoInicial}
+        pendente={janela.pendente} aoFechar={() => (janela.pendente ? setJanela({ tipo: 'pendencias' }) : fechar())} aoNovoAtivo={acoes.novoAtivo} />}
+      {janela?.tipo === 'valores' && <AtualizarValores c={c} ativoId={janela.ativoId} aoFechar={fechar} />}
+      {janela?.tipo === 'importar' && <ImportarArquivo c={c} aoFechar={fechar} aoVerPendencias={acoes.pendencias} />}
+      {janela?.tipo === 'pendencias' && <Pendencias c={c} aoFechar={fechar} acoes={acoes} />}
+      {janela?.tipo === 'plano' && <FormPlano c={c} legado={legado} aoFechar={fechar} />}
+      {janela?.tipo === 'porque' && <PorQue achado={janela.achado} aoFechar={fechar} aoIr={(d) => { fechar(); acoes.ir(d) }} />}
+    </Suspense>
+  )
+  return { aba, abrirAba, ativoAberto, acoes, janelasAbertas, legado }
+}
+
+export function Invest(c: Ctx) {
+  const inv = c.invest
+  const movimento = useMovimento()
+  const { aba, abrirAba, ativoAberto, acoes, janelasAbertas, legado } = useInvestTela(c)
   const topo = (sub: string, comAcoes: boolean) => (
     <header className="pagina-topo">
       <div>
@@ -108,19 +130,6 @@ export function Invest(c: Ctx) {
         </div>
       )}
     </header>
-  )
-  const janelasAbertas = (
-    <Suspense fallback={null}>
-      {janela?.tipo === 'ativo' && <FormAtivo c={c} ativo={janela.ativo} aoFechar={fechar}
-        aoCriar={(a) => setJanela({ tipo: 'operacao', ativoId: a.id })} aoExcluir={() => { fechar(); setAtivoAberto(null) }} />}
-      {janela?.tipo === 'operacao' && <FormOperacao key={janela.op?.id ?? janela.ativoId ?? 'nova'} c={c} op={janela.op} ativoId={janela.ativoId} tipoInicial={janela.tipoInicial}
-        pendente={janela.pendente} aoFechar={() => (janela.pendente ? setJanela({ tipo: 'pendencias' }) : fechar())} aoNovoAtivo={acoes.novoAtivo} />}
-      {janela?.tipo === 'valores' && <AtualizarValores c={c} ativoId={janela.ativoId} aoFechar={fechar} />}
-      {janela?.tipo === 'importar' && <ImportarArquivo c={c} aoFechar={fechar} aoVerPendencias={acoes.pendencias} />}
-      {janela?.tipo === 'pendencias' && <Pendencias c={c} aoFechar={fechar} acoes={acoes} />}
-      {janela?.tipo === 'plano' && <FormPlano c={c} legado={legado} aoFechar={fechar} />}
-      {janela?.tipo === 'porque' && <PorQue achado={janela.achado} aoFechar={fechar} aoIr={(d) => { fechar(); acoes.ir(d) }} />}
-    </Suspense>
   )
 
   if (inv.d.semTabela) {
