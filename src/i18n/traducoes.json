@@ -14595,6 +14595,18 @@
     "en": "Change",
     "es": "Cambiar"
   },
+  "soma de {0} parcelas": {
+    "en": "sum of {0} installments",
+    "es": "suma de {0} cuotas"
+  },
+  "a mais antiga venceu ontem": {
+    "en": "the oldest was due yesterday",
+    "es": "la más antigua venció ayer"
+  },
+  "a mais antiga venceu há {0} dias": {
+    "en": "the oldest was due {0} days ago",
+    "es": "la más antigua venció hace {0} días"
+  },
   "Nenhum lançamento em {0} ainda.": {
     "en": "No entries in {0} yet.",
     "es": "Ningún movimiento en {0} todavía."

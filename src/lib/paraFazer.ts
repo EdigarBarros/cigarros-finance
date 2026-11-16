@@ -21,6 +21,8 @@ export interface Tarefa {
   valor: string
   aprox?: string
   entrada?: boolean
+  /** Parcelas de dívida: o nome da dívida e quantas parcelas o valor soma (para dizer "soma de 6 parcelas"). */
+  divida?: { nome: string; parcelas: number }
   /** Só nas atrasadas: há quantos dias venceu (pela data do aparelho, sem fuso de servidor). */
   diasAtraso?: number
   botao: { texto: string; acao: () => void; principal?: boolean }
@@ -28,8 +30,7 @@ export interface Tarefa {
   origem?: 'conta' | 'fatura' | 'parcela'
   /** A conta do mês (para abrir a conferência antes da baixa). */
   conta?: SituacaoConta
-  /** Parcela: a dívida, quantas parcelas a linha soma, quantas já venceram e quanto falta da dívida inteira. */
-  divida?: SituacaoDivida
+  /** Parcela: quantas parcelas a linha soma, quantas já venceram e quanto falta da dívida inteira. */
   parcelas?: number
   vencidas?: number
   saldoDivida?: string
@@ -110,9 +111,9 @@ export function tarefasDoMes({ ano, mes, contas, faturas, dividas, diaRef, aoPag
     lista.push({
       chave: `divida:${s.divida.id}`, vencimento: venc, estado: estadoDe(venc, hoje),
       titulo: doMes.length > 1 ? tx('{0}: {1} parcelas', s.divida.descricao, doMes.length) : tx('Parcela: {0}', s.divida.descricao),
-      frase: frasePrazo(venc, hoje), valor: fmtDiv(s, falta),
+      frase: frasePrazo(venc, hoje), valor: fmtDiv(s, falta), divida: { nome: s.divida.descricao, parcelas: doMes.length },
       botao: { texto: tx('Pagar'), acao: () => aoPagarDivida(s), principal: true },
-      origem: 'parcela', divida: s, parcelas: doMes.length, vencidas: doMes.filter((p) => p.vencimento < hoje).length,
+      origem: 'parcela', parcelas: doMes.length, vencidas: doMes.filter((p) => p.vencimento < hoje).length,
       saldoDivida: fmtDiv(s, s.restante),
     })
   }

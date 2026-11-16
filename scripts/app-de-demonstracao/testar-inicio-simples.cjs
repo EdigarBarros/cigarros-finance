@@ -33,6 +33,8 @@ const ok=(c,m)=>{console.log((c?'OK   ':'FALHA ')+m); if(!c) process.exitCode=1}
   ok(await p.locator('.fab').count()===0, 'sem o "+" no Início do jeito simples')
   ok(await p.locator('.barra .suporte-btn, .barra .idioma, .barra .menu-movel, .barra .ajustes-btn').count()===0, 'topo sem suporte, idioma, menu e configurações')
   ok(await p.locator('.barra button[aria-pressed]').count()===1, 'topo com o olho')
+  const porque=await p.locator('.is-orientacao-texto p').innerText()
+  ok(porque.length>0 && porque.split(/(?<=[.!?])\s+(?=\p{Lu})/u).length<=2, 'orientação com até 2 frases: '+porque.slice(0,60))
   // o "Mais" tem idioma, suporte, configurações, tema e sair
   await p.locator('.abas-movel button[data-tour="mais"]').click(); await foto()
   const textoMais=await p.locator('.mais-lista').innerText()
@@ -71,4 +73,16 @@ const ok=(c,m)=>{console.log((c?'OK   ':'FALHA ')+m); if(!c) process.exitCode=1}
   ok(await p.locator('.inicio-simples').count()===0, 'tela mudou para o equilibrado')
   const erros=t.msgs.filter(m=>m.startsWith('PAGEERROR')); ok(!erros.length, 'nenhum PAGEERROR '+erros.join(' '))
   await t.fechar()
+
+  // várias parcelas atrasadas da mesma dívida numa linha: o valor diz que é a soma delas, e o prazo é o da mais antiga
+  const dados=JSON.parse(JSON.stringify(demo.dados))
+  dados.lancamentos=dados.lancamentos.filter(l=>!(l.divida_id===dados.dividas[1].id&&l.mes>=9))
+  const t2 = await iniciar({ perfil: {...demo.perfil, detalhe:'simples'}, dados, porta: 4990+Math.floor(Math.random()*9), dpr: 1, toque:true })
+  await t2.page.clock.install({ time: new Date('2026-11-16T10:00:00') })
+  await t2.page.setViewportSize({ width: 360, height: 800 })
+  await t2.page.goto(`${t2.url}#/`); await t2.page.waitForTimeout(2500); await t2.page.clock.runFor(3000).catch(()=>{}); await t2.page.waitForTimeout(500)
+  if(await t2.page.locator('.is-pe .is-ver').first().innerText().then(x=>x.startsWith('Ver todas'))) await t2.page.locator('.is-pe .is-ver').first().click()
+  const linhaParcelas=await t2.page.locator('.is-conta',{hasText:'Empréstimo pessoal'}).innerText()
+  ok(/soma de 3 parcelas/.test(linhaParcelas) && /a mais antiga venceu há \d+ dias/.test(linhaParcelas) && /Registrar pagamento/.test(linhaParcelas), 'parcelas somadas explícitas: '+linhaParcelas.replace(/\n/g,' | '))
+  await t2.fechar()
 })()
