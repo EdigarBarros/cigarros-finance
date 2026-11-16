@@ -520,3 +520,28 @@ Registro feito em 15/11/2026, depois do trabalho; os commits citados já estavam
   `fioFundo`, `fioFrente`) e nós com fundo branco e contorno azul (`noFundo`). O escuro da rede não mudou.
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium nos dois temas
   (1440×860 e 390×844) da abertura e das outras cenas, sem erro de página. Fluidez do movimento não foi medida.
+
+### 16/11/2026 — Claude — Motor: por dentro do túnel, as camadas do que está por trás do conselho
+
+**Estado:** publicado no site (veja o PR e o deploy na conversa da sessão). Só a página inicial mudou; sem migração.
+
+- Pedido do Edigar: a cena de dentro continuava sem agradar. Diagnóstico combinado com ele: o túnel não mostrava nada
+  (o título promete "por trás de cada conselho" e a cena entregava fios). Ele aprovou trocar o vazio por camadas, com
+  duas condições: tudo feito de quadradinhos que se juntam e formam as coisas, e nada de imagem entrando por cima.
+- `src/pages/algoritmoCamadas.ts` (novo): três camadas, na ordem em que a câmera passa: os lançamentos do mês (as linhas
+  de `LIDAS_PDF`), as dívidas (quanto já foi pago e quando acabam) e as contas do motor (42% em parcelas, 8% guardado,
+  R$ 1.937 de sobra, os mesmos números da tela do Consultor). Cada camada é desenhada uma vez num quadriculado pequeno
+  (216×116 casas no computador, 112×196 no celular, em pé) e cada casa pintada vira um quadradinho, do tamanho da tinta
+  que tem nela; a cor vai codificada no vermelho do desenho.
+- `src/pages/Algoritmo.tsx`: `desenharCamadas` no lugar de `desenharLinhasNaTeia` (que saiu). Cada quadradinho nasce num
+  fio da beirada do túnel, logo à frente da câmera, voa para a casa dele (a camada se escreve da esquerda para a
+  direita), fica enquanto a câmera chega perto e se solta de volta para o fio, por onde corre até a rede. Uma camada de
+  cada vez (`FATIAS`). O túnel fica mais apagado por dentro (`calma`), para as camadas se lerem; o ponto de fuga vai para
+  o meio da área da cena enquanto a câmera está lá dentro.
+- Rolagem: a abertura passou de 38% para 50% da seção (`ABERTURA`), a seção de 820vh para 1010vh (celular: 780 para 970)
+  e `desm` anda em três trechos: a fresta e a saída com a rolagem de antes, o túnel com o resto. As outras cenas ficaram
+  com o mesmo tamanho.
+- Traduções: oito textos novos em `traducoes.json` (pt, en, es); `extrair.cjs --faltando` dá 0.
+- Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium nos dois temas
+  (1440×860 e 390×844) da abertura e da seção inteira, sem erro de página. Inglês e espanhol não foram fotografados.
+  Fluidez do movimento não foi medida.
