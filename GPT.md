@@ -638,6 +638,50 @@ inicial mudou; sem migração. Precisa de versão nova do app Android só se a p
 - Validação: `npx tsc -b`, `npm run lint` (sem erros), build com Supabase fictício; fotos no Chromium no claro (1440×860
   e 390×844) da abertura até a tela final, e a passagem do carrossel, sem erro de página.
 
+### 16/11/2026 — GPT/Codex — Início detalhada no celular
+
+**Estado:** implementação e validação locais; publicação registrada separadamente quando confirmada.
+
+- Reorganizada a Início detalhada em resumo, indicadores, contas prioritárias, evolução, comparação,
+  dívidas/contas/cartões/metas e diagnóstico. Navegação por seletor não fixo; seções recolhíveis usam
+  `useArrumacao`, com resumo visível e preferência persistida. Mantidos os blocos completos e ações existentes.
+- Cabeçalho e navegação inferior compactados por classe restrita à Início detalhada. Controles secundários
+  ficam em Mais, incluindo idioma. Registrar abre o formulário existente; o FAB deixa de ocupar essa página.
+- Resultado realizado, previsão, saldo bancário e dívida têm identificação separada. A composição original da
+  previsão continua em EntenderMes, sem modificar suas regras. Removida a apresentação de um saldo de dívida
+  futuro como redução garantida: o cálculo dia a dia não projeta todos os juros futuros.
+- Investigação da divergência de dívidas: `dividaDiaADia` parte de `restante`, enquanto `resumoMes.divida`
+  soma `restanteHoje`, incluindo `jurosAtraso`. O novo resumo, painel mensal e linha de dívidas usam a segunda
+  base, com juros estimados identificados. Também alinhado o valor do anel do equilibrado a `restanteHoje`,
+  sem alterar sua organização. O bloco de dívidas do simples já usa esse critério.
+  Os dois valores citados pelo usuário não puderam ser reproduzidos: capturas anexadas e dados reais não
+  estavam disponíveis nesta sessão. Não se inferiu nem alterou um registro para forçar coincidência.
+- `Contas cadastradas a pagar` cobre somente contas fixas sem baixa; a previsão também inclui faturas,
+  parcelas e lançamentos futuros. Saldo nas contas usa caixa bancário, separado de investimentos, sem
+  presumir que todo dinheiro seja reserva de emergência. Diagnóstico explica essa limitação do motor existente.
+- Novo `EvolucaoDetalhada`: movimentações em barras agrupadas e saldos em visualização separada, seleção
+  de séries, 3/6/12 meses, seleção por toque ou seletor, valores completos e lista alternativa. Sem segundo
+  eixo. Saldos futuros desconhecidos ficam em branco. Moedas adicionais mostram registros nativos sem
+  conversão nova. Consulta ao saldo acumulado e edição do ponto de partida continuam disponíveis.
+- Comparação detalhada mantém períodos, totais e percentuais, explicita diferença monetária, mostra cinco
+  categorias e permite expandir categorias e todos os lançamentos. Metodologia fica em Como calculamos.
+  Sua base de consumo (inclui compras no cartão pela parcela) difere da previsão de caixa; isso está explicado.
+  Não se alterou o motor de comparação, transferências ou baixas nesta entrega.
+- Diagnóstico passa a lista expansível, mantendo ações e dispensa de avisos; composição da nota 0–100
+  e pesos foram conferidos em `analise.ts`. Acrescentadas traduções em inglês e espanhol.
+
+**Validação:** TypeScript/build com Supabase fictício, lint (sem erros, avisos existentes), painel 20/20,
+`testar-inicio-detalhado.cjs` no Chromium com dados fictícios. Larguras 320/360/390/430 e fonte raiz 150%/200%
+sem rolagem horizontal; Registrar, consulta sem pagamento, seleção mensal, séries, alternativa textual,
+recolhimento após reload e privacidade da previsão/gráfico verificados. Simples e equilibrado renderizam
+suas próprias estruturas sem erros de página. Capturas em `/workspace/artifacts`; script e instruções
+reproduzíveis em `scripts/app-de-demonstracao/`.
+
+**Limites:** não foram acessados dados financeiros reais nem fornecidas capturas anexadas. Datas de atualização
+individual de saldos não existem no contexto atual; a interface distingue a data do período da atualização
+indisponível. Estados globais de carregamento/erro continuam com os componentes existentes, sem nova
+injeção de falhas nesta validação. Não gerado pacote Android assinado, nem aplicada migração de banco.
+
 ### 16/11/2026 — Claude — Início do jeito simples reorganizada para o celular
 
 **Estado:** implementado e validado localmente; publicação no site registrada na conversa da sessão (PR e deploy). Sem

@@ -8,6 +8,7 @@ import type { DiaADia } from '../lib/previsao'
 import { fraseDoAtraso, type Tarefa } from '../lib/paraFazer'
 import { fmtValor, MESES_CURTO } from '../lib/format'
 import { Icone } from './Icone'
+import { Modal } from './ui'
 import { tx } from '../lib/textos'
 import type { SituacaoDoMes } from '../lib/situacaoDoMes'
 import './entender.css'
@@ -26,7 +27,7 @@ const NOME_DO_SINAL: Record<Sinal, () => string> = {
  * O cartão do mês: quanto sobrou até hoje, o estado do mês (a mesma conta dos outros jeitos), o resultado previsto para o
  * último dia com o "Entender previsão" e, embaixo, o gráfico do ano mês a mês (`grafico`), que a pessoa pode recolher.
  */
-export function CartaoDoMes({ dd, nomeMes, divida, grafico, situacao, aoEntender, graficoRecolhido, aoAlternarGrafico }: {
+export function CartaoDoMes({ dd, nomeMes, grafico, aoEntender, graficoRecolhido, aoAlternarGrafico }: {
   dd: DiaADia; nomeMes: string
   /** O gráfico do cartão: o ano mês a mês (o mesmo do Resumo do ano), no lugar do antigo dia a dia. */
   grafico?: ReactNode
@@ -38,47 +39,17 @@ export function CartaoDoMes({ dd, nomeMes, divida, grafico, situacao, aoEntender
   graficoRecolhido?: boolean
   aoAlternarGrafico?: () => void
 }) {
-  const dividaHoje = divida?.length ? divida[Math.max(1, Math.min(dd.dias, dd.hoje)) - 1] : 0
-  const dividaFim = divida?.length ? divida[dd.dias - 1] : 0
-  const futuro = dd.hoje === 0
-  const acabou = dd.hoje === dd.dias
-  const ateHoje = dd.entrou - dd.saiu
-  const fim = ateHoje + dd.vaiEntrar - dd.vaiSair
-  const temPrevisao = dd.vaiEntrar > 0 || dd.vaiSair > 0
-  const valor = futuro ? fim : ateHoje
-  const positivo = valor >= 0
-  const rotulo = futuro ? tx('Previsto para {0}', nomeMes)
-    : acabou ? (positivo ? tx('Sobrou em {0}', nomeMes) : tx('Faltou em {0}', nomeMes))
-    : (positivo ? tx('Sobrou até hoje') : tx('Faltou até hoje'))
-  const comSelo = situacao.estado !== 'sem_dados'
+  const fim = dd.entrou - dd.saiu + dd.vaiEntrar - dd.vaiSair
   return (
     <section className="cartao idet-mes">
-      <div className="idet-mes-cab">
-        <div>
-          <span className="idet-rot">{rotulo}</span>
-          <strong className={`idet-grande ${positivo ? 'bom' : 'ruim'}`}>{positivo ? '' : '− '}{fmtValor(Math.abs(valor))}</strong>
-        </div>
-        {!futuro && !acabou && temPrevisao && (
-          <div className="idet-prev">
-            <span className="idet-rot">{tx('Resultado previsto no dia {0}', dd.dias)}</span>
-            <strong className={fim < 0 ? 'ruim' : undefined}>{fim < 0 ? '− ' : '≈ '}{fmtValor(Math.abs(fim))}</strong>
-            <button type="button" className="btn-entender" onClick={aoEntender}><Icone nome="ideia" tamanho={15} /> {tx('Entender previsão')}</button>
-          </div>
-        )}
-      </div>
-      {comSelo && (
-        <div className="idet-estado">
-          <button type="button" className={`selo-mes ${situacao.estado}`} onClick={aoEntender} title={tx('Por que este estado?')}>
-            <i aria-hidden="true" />{situacao.selo}
-          </button>
-        </div>
-      )}
-      {dividaHoje > 0 && (
-        <p className="idet-divida">
-          <i />{tx('Dívidas')} <b>{fmtValor(dividaHoje)}</b>
-          {!acabou && Math.abs(dividaFim - dividaHoje) >= 0.5 && <span className="idet-divida-fim">{'→ '}<b>{fmtValor(dividaFim)}</b> {tx('no dia {0}', dd.dias)}</span>}
-        </p>
-      )}
+      <span className="idet-rot">{tx('Resultado do mês até hoje')}</span>
+      <strong className={`idet-grande ${dd.entrou >= dd.saiu ? 'bom' : 'ruim'}`}>{fmtValor(dd.entrou - dd.saiu)}</strong>
+      <button className="det-previsao" onClick={aoEntender}>
+        <span>{tx('Previsão para o fim do mês')}<small>{tx('Até {0} de {1} · consultar composição', dd.dias, nomeMes)}</small></span>
+        <strong>{fmtValor(fim)}</strong><Icone nome="dir" tamanho={16} />
+      </button>
+      <button className="det-linha det-linha-btn" onClick={aoEntender}><span>{tx('Ainda a receber')}</span><b>{fmtValor(dd.vaiEntrar)}</b><Icone nome="dir" tamanho={14} /></button>
+      <button className="det-linha det-linha-btn" onClick={aoEntender}><span>{tx('Ainda a pagar')}</span><b>{fmtValor(dd.vaiSair)}</b><Icone nome="dir" tamanho={14} /></button>
       {grafico && <GraficoRecolhivel grafico={grafico} recolhido={graficoRecolhido} aoAlternar={aoAlternarGrafico} />}
     </section>
   )
@@ -109,20 +80,18 @@ export function GraficoRecolhivel({ grafico, recolhido, aoAlternar }: { grafico:
  */
 export function NumerosDoMes({ dd, porDia, diasContados }: { dd: DiaADia; porDia: number; diasContados: number }) {
   const futuro = dd.hoje === 0
-  const itens: [string, number, string, string?][] = futuro
-    ? [[tx('Vai entrar'), dd.vaiEntrar, 'var(--entrada)'], [tx('Vai sair'), dd.vaiSair, 'var(--saida)']]
-    : [
-      [dd.hoje < dd.dias ? tx('Entrou até hoje') : tx('Entrou'), dd.entrou, 'var(--entrada)'],
-      [dd.hoje < dd.dias ? tx('Saiu até hoje') : tx('Saiu'), dd.saiu, 'var(--saida)'],
-      [tx('Gasto por dia'), porDia, 'var(--caixa)', diasContados === 1 ? tx('o que saiu ÷ 1 dia') : tx('o que saiu ÷ {0} dias', diasContados)],
+  const itens: [string, number, string, string?][] = [
+      [tx('Entradas realizadas'), dd.entrou, 'var(--entrada)'],
+      [tx('Saídas realizadas'), dd.saiu, 'var(--saida)'],
+      [tx('Média diária de saídas'), porDia, 'var(--caixa)', diasContados === 1 ? tx('o que saiu ÷ 1 dia') : tx('o que saiu ÷ {0} dias', diasContados)],
     ]
   return (
     <div className="idet-numeros">
       {itens.map(([rot, v, cor, ajuda]) => (
         <div key={rot} className="cartao idet-num">
           <span className="idet-rot">{rot}</span>
-          <strong style={{ color: cor }}>{fmtValor(v)}</strong>
-          {ajuda && <small className="idet-ajuda">{ajuda}</small>}
+          <strong style={{ color: cor }}>{futuro ? tx('Período não iniciado') : fmtValor(v)}</strong>
+          {ajuda && <details className="idet-ajuda"><summary>{tx('Como calculamos')}</summary><p>{ajuda}. {tx('Saídas realizadas do mês selecionado, incluindo faturas reconhecidas como pagas. Não é um limite recomendado de gasto.')}</p></details>}
         </div>
       ))}
     </div>
@@ -130,25 +99,23 @@ export function NumerosDoMes({ dd, porDia, diasContados }: { dd: DiaADia; porDia
 }
 
 // ---------- o que vem aí ----------
-const iconeDaTarefa = (t: Tarefa) => (t.chave.startsWith('fatura:') ? 'cartao' : t.chave.startsWith('divida:') ? 'divida' : t.entrada ? 'receber' : 'calendario')
-const corDaTarefa = (t: Tarefa) => (t.chave.startsWith('fatura:') ? 'var(--caixa)' : t.chave.startsWith('divida:') ? 'var(--saida)' : t.entrada ? 'var(--entrada)' : 'var(--divida)')
-
 /** Atrasadas mostradas antes do resumo "e mais N". */
 const ATRASADAS_VISIVEIS = 2
 /** Próximas mostradas. */
 const PROXIMAS_VISIVEIS = 3
 
 function LinhaVem({ t }: { t: Tarefa }) {
+  const [aberta, setAberta] = useState(false)
   return (
     <li className={t.estado === 'atrasada' ? 'atrasada' : undefined}>
-      <span className="idet-dia"><b>{t.vencimento.slice(8, 10)}</b>{MESES_CURTO[+t.vencimento.slice(5, 7) - 1]}</span>
-      <span className="idet-ic" style={{ '--c': corDaTarefa(t) } as CSSProperties}><Icone nome={iconeDaTarefa(t)} tamanho={18} /></span>
+      <button className="det-tarefa" onClick={() => setAberta(true)} aria-label={tx('Detalhar {0}', t.titulo)}><span className="idet-dia"><b>{t.vencimento.slice(8, 10)}</b>{MESES_CURTO[+t.vencimento.slice(5, 7) - 1]}</span>
       <span className="idet-vem-nome">
         {t.titulo}
         {t.estado === 'atrasada' && <small>{fraseDoAtraso(t)}</small>}
         {t.estado === 'vence_hoje' && <small>{tx('vence hoje')}</small>}
       </span>
-      <strong className={t.entrada ? 'bom' : undefined}>{t.valor}</strong>
+      <strong className={t.entrada ? 'bom' : undefined}>{t.valor}</strong><Icone nome="dir" tamanho={14} /></button>
+      {aberta && <Modal titulo={t.titulo} aoFechar={() => setAberta(false)}><p>{t.valor}</p><p>{t.vencimento} · {t.frase}</p><p className="det-nota">{t.chave.startsWith('divida:') ? tx('Valor da parcela pendente. Não representa o saldo total da dívida.') : tx('Registro pendente; abrir não confirma pagamento.')}</p><button className="btn" onClick={() => { setAberta(false); t.botao.acao() }}>{t.botao.texto}</button></Modal>}
     </li>
   )
 }
@@ -158,6 +125,7 @@ function LinhaVem({ t }: { t: Tarefa }) {
  * 4 linhas eram as 4 mais antigas: com faturas atrasadas, a conta de amanhã nem aparecia.
  */
 export function VemAi({ tarefas, aoVerTudo }: { tarefas: Tarefa[]; aoVerTudo?: () => void }) {
+  const [todas, setTodas] = useState(false)
   if (!tarefas.length) return null
   const atrasadas = tarefas.filter((t) => t.estado === 'atrasada')
   const proximas = tarefas.filter((t) => t.estado !== 'atrasada')
@@ -166,20 +134,21 @@ export function VemAi({ tarefas, aoVerTudo }: { tarefas: Tarefa[]; aoVerTudo?: (
     <section className="cartao idet-vem">
       {atrasadas.length > 0 && (
         <>
-          <span className="idet-rot idet-rot-atencao">{tx('Precisam de atenção')}</span>
+          <span className="idet-rot idet-rot-atencao">{tx('Atrasadas ({0})', atrasadas.length)}</span>
           <ul>
-            {atrasadas.slice(0, ATRASADAS_VISIVEIS).map((t) => <LinhaVem key={t.chave} t={t} />)}
+            {(todas ? atrasadas : atrasadas.slice(0, ATRASADAS_VISIVEIS)).map((t) => <LinhaVem key={t.chave} t={t} />)}
           </ul>
-          {maisAtrasadas > 0 && <p className="idet-vem-mais">{maisAtrasadas === 1 ? tx('e mais 1 atrasada') : tx('e mais {0} atrasadas', maisAtrasadas)}</p>}
+          {!todas && maisAtrasadas > 0 && <p className="idet-vem-mais">{maisAtrasadas === 1 ? tx('e mais 1 atrasada') : tx('e mais {0} atrasadas', maisAtrasadas)}</p>}
         </>
       )}
       {proximas.length > 0 && (
         <>
-          <span className="idet-rot">{tx('O que vem aí')}</span>
-          <ul>{proximas.slice(0, PROXIMAS_VISIVEIS).map((t) => <LinhaVem key={t.chave} t={t} />)}</ul>
+          <span className="idet-rot">{tx('Próximas ({0})', proximas.length)}</span>
+          <ul>{(todas ? proximas : proximas.slice(0, PROXIMAS_VISIVEIS)).map((t) => <LinhaVem key={t.chave} t={t} />)}</ul>
         </>
       )}
-      {aoVerTudo && <button type="button" className="link idet-vem-tudo" onClick={aoVerTudo}>{tx('Ver todas as contas')}</button>}
+      <button type="button" className="link idet-vem-tudo" onClick={() => setTodas(!todas)}>{todas ? tx('Mostrar menos') : tx('Ver todas as contas')}</button>
+      {todas && aoVerTudo && <button className="link" onClick={aoVerTudo}>{tx('Contas do mês')}</button>}
     </section>
   )
 }
@@ -216,7 +185,7 @@ export function Mosaico({ pecas, inicial = null, aoAbrir }: { pecas: Peca[]; ini
   if (!pecas.length) return null
   const n = pecas.length
   const estilo = { '--n': n, '--meio': n <= 4 ? n : 3 } as CSSProperties
-  const sinais = [...new Set(pecas.map((p) => p.sinal).filter(Boolean))] as Sinal[]
+  const sinais = [...new Set(pecas.map((p) => p.sinal).filter(x => x && x !== 'bom'))] as Sinal[]
   return (
     <div className="idet-mosaico-area">
       <div className={`idet-mosaico${n % 2 ? ' impar' : ''}`} style={estilo}>
@@ -230,7 +199,7 @@ export function Mosaico({ pecas, inicial = null, aoAbrir }: { pecas: Peca[]; ini
             }}>
             <span className="idet-peca-topo">
               <span className="idet-ic"><Icone nome={p.icone} tamanho={20} /></span>
-              {p.sinal && <span className={`idet-sinal ${p.sinal}`} title={NOME_DO_SINAL[p.sinal]()} aria-label={NOME_DO_SINAL[p.sinal]()} role="img" />}
+              {p.sinal && p.sinal !== 'bom' && <span className={`idet-sinal ${p.sinal}`} title={NOME_DO_SINAL[p.sinal]()} aria-label={NOME_DO_SINAL[p.sinal]()} role="img" />}
             </span>
             <span className="idet-rot">{p.rotulo}</span>
             <strong className="idet-peca-valor">{p.valor}</strong>

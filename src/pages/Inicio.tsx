@@ -1,17 +1,19 @@
+import { SecaoDetalhada } from '../components/SecaoDetalhada'
+import { EvolucaoDetalhada } from '../components/EvolucaoDetalhada'
 import { converter } from '../lib/moedas'
 import { Fragment, useMemo, useState, type CSSProperties } from 'react'
 import { PALETA } from '../lib/charts'
-import { calendarioDe, dividaDiaADia, parcelasDoMes, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
+import { calendarioDe, parcelasDoMes, pedirLadoDividas, type SituacaoDivida } from '../lib/dividas'
 import { fmtValor, MESES_CURTO, moedaAtual, MESES_NOME, LOCAL_DAS_DATAS, noMeioDaFrase } from '../lib/format'
 import { situacaoMeta } from '../lib/metas'
 import {
   Bloco, BlocoDinheiro, BlocoDividas, BlocoGastos, BlocoLancamentos, BlocoMetas,
 } from '../components/Blocos'
 import { totalGuardado } from '../lib/guardado'
-import { CartaoDoMes, GraficoRecolhivel, Mosaico, NumerosDoMes, VemAi, type Peca, type Sinal } from '../components/InicioDetalhado'
+import { CartaoDoMes, Mosaico, NumerosDoMes, VemAi, type Peca, type Sinal } from '../components/InicioDetalhado'
 import { MesEquilibrado, ResumosComAnel, type ResumoAnel } from '../components/InicioEquilibrado'
 import { FormDivida } from '../components/Formularios'
-import { GraficoAnual, GraficoFluxo, moedasDoAno, SeletorDoModo } from '../components/Graficos'
+import { GraficoFluxo, moedasDoAno, SeletorDoModo } from '../components/Graficos'
 import { useModoDoGrafico } from '../lib/modoDoGrafico'
 import { Icone } from '../components/Icone'
 import { BannerCarrossel, type Slide } from '../components/BannerCarrossel'
@@ -28,7 +30,7 @@ import { situacaoDoMes, type Momento } from '../lib/situacaoDoMes'
 import { compararGastos, pilulaDeGastos } from '../lib/comparacao'
 import { ComparacaoMes } from '../components/ComparacaoMes'
 import { EntenderMes } from '../components/EntenderMes'
-import { arrumacaoMudou, pecaParaSugerir, useArrumacao } from '../lib/arrumacao'
+import { useArrumacao } from '../lib/arrumacao'
 import { useAcoesDeLancar } from '../lib/botaoMais'
 import { totaisDoMes } from '../lib/contasFixas'
 import type { Ctx } from './contexto'
@@ -158,7 +160,7 @@ export function Inicio(c: Ctx) {
           {palavras(tx('Olá,'))}
           {c.perfil.nome ? <span className="nome" translate="no">{palavras(`${c.perfil.nome}!`, 0.09)}</span> : palavras('!')}
         </h1>
-        <p className="sub">{tx('Resumo de {0} de {1}.{2}', nomeMes, c.ano, animo)}</p>
+        {!detalhado && <p className="sub">{tx('Resumo de {0} de {1}.{2}', nomeMes, c.ano, animo)}</p>}
       </div>
       <div className="saudacao-lado">
         <div className="data-hoje">
@@ -175,10 +177,7 @@ export function Inicio(c: Ctx) {
   const diasNoMes = new Date(c.ano, c.mes, 0).getDate()
   const decorridos = mesDeHoje ? hoje.getDate() : diasNoMes
   // (no mês aberto vale o mesmo "Saiu" do quadro: compra em fatura ainda aberta não saiu do bolso)
-  const saidasContadas = (m: number) => (mesDeHoje && m === c.mes ? ddMes.saiu
-    : c.ano === hoje.getFullYear() && m === hoje.getMonth() + 1
-      ? c.lancsAno.reduce((t, l) => (l.mes === m && l.tipo === 'saida' && (!l.data || l.data <= hojeIso) ? t + l.valor : t), 0)
-      : c.porMes[m - 1]?.saidas ?? 0)
+
 
   const sugestao = c.sugestao && (
     <CartaoSugestao s={c.sugestao} aoAceitar={() => c.aceitarSugestao(c.sugestao!)} aoRecusar={() => c.recusarSugestao(c.sugestao!)} />
@@ -359,7 +358,7 @@ export function Inicio(c: Ctx) {
     if (v.dividas) {
       const abertas = c.situacao.filter((s) => s.restante > 0 && !s.semCotacao)
       if (abertas.length) {
-        const falta = abertas.reduce((t, s) => t + s.restante, 0)
+        const falta = abertas.reduce((t, s) => t + s.restanteHoje, 0)
         const base = abertas.reduce((t, s) => t + Math.max(s.saldoInicial, s.restante), 0)
         resumos.push({
           chave: 'dividas', rotulo: tx('Dívidas'), valor: fmtValor(falta), cor: 'var(--divida)', icone: 'divida',
@@ -425,7 +424,6 @@ export function Inicio(c: Ctx) {
     const dd = ddMes
     const contasDoMes = v.contas ? c.situacoesContas : []
     // o mês que já acabou não tem "o que vem aí" (o atrasado continua nas peças de contas, cartões e dívidas)
-    const proximas = dd.hoje < dd.dias ? tarefas.lista : []
     const pecas: Peca[] = []
 
     if (!mesVazio) {
@@ -444,9 +442,9 @@ export function Inicio(c: Ctx) {
       const pertoDeVencer = contasDoMes.some((s) => s.conta.tipo === 'saida' && (s.estado === 'vence_hoje' || (s.estado === 'a_vencer' && (s.diasRestantes ?? 99) <= 3)))
       const n = tot.qtdAtrasadas
       pecas.push({
-        chave: 'contas', icone: 'calendario', cor: 'var(--divida)', rotulo: tx('Contas do mês'),
+        chave: 'contas', icone: 'calendario', cor: 'var(--divida)', rotulo: tx('Contas cadastradas a pagar'),
         valor: fmtValor(tot.faltaPagar),
-        sub: n ? (n === 1 ? tx('1 atrasada') : tx('{0} atrasadas', n)) : tot.faltaPagar > 0 ? tx('falta pagar') : contasDoMes.length ? tx('tudo pago') : undefined,
+        sub: tx('Somente contas cadastradas; exclui faturas e parcelas de dívidas.'),
         sinal: !contasDoMes.length ? undefined : n ? 'ruim' : pertoDeVencer ? 'atencao' : 'bom',
         detalhe: c.blocos.contas,
       })
@@ -469,7 +467,7 @@ export function Inicio(c: Ctx) {
       const atrasadas = abertas.filter((s) => (calendarioDe(s, c.diaRef)?.emAtraso ?? 0) > 0).length
       pecas.push({
         chave: 'dividas', icone: 'divida', cor: 'var(--saida)', rotulo: tx('Dívidas'),
-        valor: fmtValor(abertas.reduce((t, s) => t + s.restante, 0)),
+        valor: fmtValor(r.divida),
         sub: atrasadas ? (atrasadas === 1 ? tx('1 atrasada') : tx('{0} atrasadas', atrasadas))
           : abertas.length ? (abertas.length === 1 ? tx('1 em dia') : tx('{0} em dia', abertas.length)) : tx('nenhuma em aberto'),
         sinal: atrasadas ? 'ruim' : abertas.length ? 'bom' : undefined,
@@ -477,10 +475,10 @@ export function Inicio(c: Ctx) {
       })
     }
     if (dinheiro) {
-      const guardado = totalGuardado({ v, bancos: c.d.bancos, caixa: c.mesEf.caixa, investimentos: r.investimentos, moedas: c.mesEf.moedas, lista: c.perfil.moedas, taxas: c.taxas })
+      const guardado = r.caixa
       const nb = c.d.bancos.length
       pecas.push({
-        chave: 'dinheiro', icone: 'cofre', cor: 'var(--caixa)', rotulo: tx('Dinheiro guardado'), valor: fmtValor(guardado),
+        chave: 'dinheiro', icone: 'cofre', cor: 'var(--caixa)', rotulo: tx('Saldo nas contas'), valor: Object.keys(c.mesEf.caixa).length ? fmtValor(guardado) : tx('Não informado'),
         sub: v.bancos && nb ? (nb === 1 ? tx('em 1 banco') : tx('em {0} bancos', nb)) : undefined,
         sinal: guardado < 0 ? 'ruim' : undefined,
         detalhe: dinheiro,
@@ -497,59 +495,40 @@ export function Inicio(c: Ctx) {
       })
     }
 
-    const semNada = mesVazio && !dd.vaiEntrar && !dd.vaiSair
-    const graficoAno = <GraficoAnual porMes={c.porMes} previsto={c.previsto} mesAtual={c.mes} altura={mobile ? 260 : 300} compacto={mobile} v={v} saldoCorrido={c.saldoCorrido} ano={c.ano} />
-    const graficoRecolhido = arrumacao.recolhida('grafico-ano')
-    const alternarGrafico = () => arrumacao.alternar('grafico-ano')
-    // a peça que a pessoa abre quase toda vez: o app pergunta (nunca muda sozinho) se ela deve abrir ao entrar
-    const pecaSugerida = pecaParaSugerir(arrumacao.a, pecas.map((p) => p.chave))
-    const nomeDaPeca = pecas.find((p) => p.chave === pecaSugerida)?.rotulo
     const comparar = comparacao && !mesVazio && (
       <ComparacaoMes comp={comparacao} categorias={c.categorias} detalhado atrasadas={momento === 'atual' ? atrasadasAPagar : 0} aoVerLancamentos={() => c.irPara('lancamentos')} />
     )
     return (
       <div className="pagina inicio inicio-det">
         {saudacao}
-        {semNada ? lancamentos : (
-          <div className="idet-cima">
-            {/* o gráfico do cartão é o do ano mês a mês, o mesmo do Resumo do ano (tocar num mês mostra os números dele). No
-                celular ele vem depois dos números e do "o que vem aí", para não empurrar o resumo para baixo */}
-            <CartaoDoMes dd={dd} nomeMes={nomeMes} situacao={situacao} aoEntender={abrirEntender}
-              grafico={mobile ? undefined : graficoAno} graficoRecolhido={graficoRecolhido} aoAlternarGrafico={alternarGrafico}
-              divida={v.dividas ? dividaDiaADia({ situacao: c.situacao, pagamentos: c.d.pagamentos, ano: c.ano, mes: c.mes, dias: dd.dias, hoje: dd.hoje, diaRef: c.diaRef }) : undefined} />
-            <div className="idet-lado">
-              <NumerosDoMes dd={dd} porDia={saidasContadas(c.mes) / decorridos} diasContados={decorridos} />
-              <VemAi tarefas={proximas} aoVerTudo={v.contas ? () => c.irPara('contas') : undefined} />
-            </div>
-            {mobile && (
-              <section className="cartao idet-grafico-solto">
-                <GraficoRecolhivel grafico={graficoAno} recolhido={graficoRecolhido} aoAlternar={alternarGrafico} />
-              </section>
-            )}
+        <div className="det-ferramentas">
+          <label>{tx('Ir para seção')}<select defaultValue="" onChange={e => { const el = document.getElementById(e.target.value); if (el) { el.scrollIntoView({ behavior: 'smooth' }); el.focus({ preventScroll: true }) } e.target.value = '' }}><option value="" disabled>{tx('Selecionar…')}</option>{[['resumo',tx('Resumo financeiro')],['indicadores',tx('Indicadores complementares')],['prioridades',tx('Contas prioritárias')],['evolucao',tx('Evolução financeira')],['comparacao',tx('Comparação entre períodos')],['patrimonio',tx('Dívidas, contas, cartões e metas')],['diagnostico',tx('Diagnóstico financeiro')]].map(([id,nome]) => <option key={id} value={`det-${id}`}>{nome}</option>)}</select></label>
+          <button className="link" onClick={c.personalizar}>{tx('Modo detalhado · Alterar')}</button>
+        </div>
+        <div id="det-resumo" tabIndex={-1}>
+          <CartaoDoMes dd={dd} nomeMes={nomeMes} situacao={situacao} aoEntender={abrirEntender} />
+          <div className="cartao det-posicoes">
+            <div className="det-linha"><span>{tx('Saldo nas contas')}</span><b>{Object.keys(c.mesEf.caixa).length ? fmtValor(r.caixa) : tx('Não informado')}</b></div>
+            <button className="det-linha det-linha-btn" onClick={() => c.irPara('dividas')}><span>{tx('Saldo devedor')}</span><b>{fmtValor(r.divida)}</b><Icone nome="dir" tamanho={14} /></button>
+            <small className="det-nota">{tx('Saldo devedor inclui {0} de juros de atraso estimados.', fmtValor(r.dividaJuros))}</small>
           </div>
-        )}
-        <Mosaico key={arrumacao.a.pecaFixa ?? ''} pecas={pecas} inicial={arrumacao.a.pecaFixa} aoAbrir={arrumacao.abriuPeca} />
-        {pecaSugerida && nomeDaPeca && (
-          <section className="arrumacao-sugestao" aria-label={tx('Sugestão de arrumação')}>
-            <Icone nome="ideia" tamanho={18} />
-            <p>{tx('Você abriu “{0}” em vários dias desta quinzena. Quer que ela já apareça aberta quando você entrar?', nomeDaPeca)}</p>
-            <div>
-              <button type="button" className="btn primario" onClick={() => arrumacao.fixarPeca(pecaSugerida)}>{tx('Deixar aberta')}</button>
-              <button type="button" className="icone-btn" onClick={() => arrumacao.recusar(`peca:${pecaSugerida}`)} aria-label={tx('Não, obrigado')} title={tx('Não, obrigado')}><Icone nome="fechar" tamanho={16} /></button>
-            </div>
-          </section>
-        )}
-        {saude}
-        {comparar}
+          <button className="btn primario det-registrar" onClick={() => c.novoLancamento()}><Icone nome="mais" tamanho={18} />{tx('Registrar')}</button>
+        </div>
+        <div id="det-indicadores" tabIndex={-1}><NumerosDoMes dd={dd} porDia={dd.saiu / decorridos} diasContados={decorridos} /></div>
+        <SecaoDetalhada id="det-prioridades" titulo={tx('Contas prioritárias')} resumo={tx('{0} atrasadas · {1} próximas', tarefas.lista.filter(t=>t.estado==='atrasada').length, tarefas.lista.filter(t=>t.estado!=='atrasada').length)} recolhida={arrumacao.recolhida('det-prioridades')} alternar={() => arrumacao.alternar('det-prioridades')}>
+          {tarefas.lista.length ? <VemAi tarefas={tarefas.lista} aoVerTudo={() => c.irPara('contas')} /> : <p>{tx('Nenhuma conta pendente neste período.')}</p>}
+        </SecaoDetalhada>
+        <SecaoDetalhada id="det-evolucao" titulo={tx('Evolução financeira')} resumo={tx('{0} · movimentações e posições por mês', c.ano)} recolhida={arrumacao.recolhida('det-evolucao')} alternar={() => arrumacao.alternar('det-evolucao')}><EvolucaoDetalhada c={c} dd={dd} /></SecaoDetalhada>
+        <SecaoDetalhada id="det-comparacao" titulo={tx('Comparação entre períodos')} resumo={comparacao && !comparacao.semBase ? tx('Variação de {0} nas saídas registradas.', fmtValor(comparacao.atual-comparacao.anterior)) : tx('A comparação depende de registros nos dois períodos.')} recolhida={arrumacao.recolhida('det-comparacao')} alternar={() => arrumacao.alternar('det-comparacao')}>{comparar || <p>{tx('Sem dados suficientes para comparar este período.')}</p>}</SecaoDetalhada>
+        <SecaoDetalhada id="det-patrimonio" titulo={tx('Dívidas, contas, cartões e metas')} resumo={tx('Consulte saldos, compromissos e registros.')} recolhida={arrumacao.recolhida('det-patrimonio')} alternar={() => arrumacao.alternar('det-patrimonio')}><Mosaico pecas={pecas} inicial={arrumacao.a.pecaFixa} aoAbrir={arrumacao.abriuPeca} /></SecaoDetalhada>
+        <SecaoDetalhada id="det-diagnostico" titulo={tx('Diagnóstico financeiro')} resumo={tx('{0} orientações disponíveis', c.conselhos.length)} recolhida={arrumacao.recolhida('det-diagnostico')} alternar={() => arrumacao.alternar('det-diagnostico')}>
+          <p className="det-nota">{tx('Orientações calculadas com os registros disponíveis. Saldo em conta não comprova reserva para emergências.')}</p>
+          {c.conselhos.map(conselho => <details className="det-alerta" key={conselho.id}><summary><small>{conselho.gravidade === 'urgente' ? tx('Prioridade alta') : conselho.gravidade === 'atencao' ? tx('Atenção') : tx('Informação')}</small><strong>{conselho.id === 'sem-reserva' ? tx('Confira a cobertura para imprevistos') : conselho.titulo}</strong><span>{conselho.botao} →</span></summary><p>{conselho.porque}{conselho.id === 'sem-reserva' && <small className="det-nota"> {tx('Esta regra considera saldos bancários e investimentos; não verifica liquidez nem destinação para emergências.')}</small>}</p><button className="btn" onClick={() => c.irPara(conselho.destino)}>{conselho.botao}</button><button className="link" onClick={() => c.dispensarConselho(conselho.id)}>{tx('Agora não')}</button></details>)}
+          {!c.conselhos.length && <p>{c.conselhosSemDados ? tx('Dados insuficientes para gerar orientações.') : tx('Nenhum alerta ativo para os registros disponíveis.')}</p>}
+          <details className="det-alerta"><summary>{tx('Como calculamos a saúde financeira')} {c.analise.nota !== null && `${c.analise.nota}/100`}</summary><p>{tx('Escala de 0 a 100. Média ponderada: sobra 25, reserva 20, dívidas 20, controle 15, cartão 10 e metas 10. Pilares sem dados são removidos e os pesos restantes são redistribuídos.')}</p>{c.analise.pilares.map(p => <div key={p.id}><h4>{p.nome} · {p.nota}/100</h4><p>{p.frase}</p><small>{p.referencia}</small></div>)}<button className="link" onClick={() => c.irPara('analise')}>{tx('Abrir a análise completa')}</button></details>
+        </SecaoDetalhada>
         {opcionais}
-        {arrumacaoMudou(arrumacao.a) && (
-          <p className="arrumacao-restaurar">
-            {arrumacao.a.pecaFixa
-              ? tx('“{0}” abre sozinha ao entrar.', pecas.find((p) => p.chave === arrumacao.a.pecaFixa)?.rotulo ?? '')
-              : tx('Você mudou a arrumação desta tela.')}{' '}
-            <button type="button" className="link" onClick={arrumacao.restaurar}>{tx('Restaurar a arrumação original')}</button>
-          </p>
-        )}
+        <button className="link" onClick={arrumacao.restaurar}>{tx('Restaurar a arrumação original')}</button>
         {formDivida}
         {janelaEntender}
       </div>

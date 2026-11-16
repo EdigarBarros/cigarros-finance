@@ -16,20 +16,21 @@ import './comparacao.css'
 /** Lançamentos mostrados de cada lado ao abrir uma categoria. */
 const POR_LADO = 5
 /** Categorias no detalhado antes do "Ver todas". */
-const CATEGORIAS_DETALHADO = 6
+const CATEGORIAS_DETALHADO = 5
 
 const comSinal = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${fmtValor(Math.abs(n))}`
 
 function Lancs({ titulo, lancs }: { titulo: string; lancs: Lancamento[] }) {
+  const [todos, setTodos] = useState(false)
   return (
     <div className="cmp-lado">
       <span className="cmp-lado-tit">{titulo}</span>
       {!lancs.length ? <p className="cmp-nada">{tx('Nenhum gasto')}</p> : (
         <ul>
-          {lancs.slice(0, POR_LADO).map((l) => (
+          {(todos ? lancs : lancs.slice(0, POR_LADO)).map((l) => (
             <li key={l.id}><span className="cmp-l-data">{l.data ? fmtDataCurta(l.data) : '—'}</span><span className="cmp-l-desc">{l.descricao}</span><b>{fmtValor(l.valor)}</b></li>
           ))}
-          {lancs.length > POR_LADO && <li className="cmp-l-mais">{tx('e mais {0}', lancs.length - POR_LADO)}</li>}
+          {lancs.length > POR_LADO && <li className="cmp-l-mais"><button className="link" onClick={() => setTodos(!todos)}>{todos ? tx('Mostrar menos') : tx('e mais {0}', lancs.length - POR_LADO)}</button></li>}
         </ul>
       )}
     </div>
@@ -120,7 +121,8 @@ export function ComparacaoMes({ comp, categorias, detalhado, atrasadas = 0, aoVe
             <span>{rotuloAnterior} <b>{fmtValor(comp.anterior)}</b></span>
           </p>
         )}
-        <p className="cmp-periodo">{periodo} {tx('Conta as saídas lançadas, com as compras no cartão; dinheiro guardado não entra.')}</p>
+        {detalhado && !comp.semBase && <p className="cmp-valores">{tx('Variação: {0}', comSinal(comp.atual-comp.anterior))}</p>}
+        {detalhado ? <><p className="cmp-periodo">{periodo}</p><details><summary>{tx('Como calculamos')}</summary><p className="cmp-periodo">{tx('Compara saídas registradas pela data da parcela, incluindo compras no cartão. Pagamento de fatura não é uma segunda compra. Contas sem baixa ficam fora. Transferências identificadas como dinheiro guardado ficam fora. Esta base de consumo difere da movimentação financeira realizada.')}</p><p className="cmp-periodo">{tx('Mudanças em Sem categoria podem refletir reclassificação, não economia. Uma variação não determina se o gasto foi adequado.')}</p></details></> : <p className="cmp-periodo">{periodo} {tx('Conta as saídas lançadas, com as compras no cartão; dinheiro guardado não entra.')}</p>}
         {atrasadas > 0 && !comp.semBase && (
           <p className="cmp-aviso"><Icone nome="relogio" tamanho={14} />{' '}
             {atrasadas === 1

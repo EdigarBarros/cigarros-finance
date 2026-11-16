@@ -9596,8 +9596,8 @@
     "es": "Elige el mes."
   },
   "Saldo de um mês para o outro": {
-    "en": "Balance from one month to the next",
-    "es": "Saldo de un mes al otro"
+    "en": "Balance carried between months",
+    "es": "Saldo entre meses"
   },
   "Diga quanto você tinha no começo de um mês. A partir dele, cada mês começa com o que sobrou do anterior: o que sobra soma, o que falta tira.": {
     "en": "Tell us how much you had at the start of a month. From then on, each month starts with what was left from the one before: what's left over adds up, what's short takes away.",
@@ -14067,9 +14067,353 @@
     "en": "should be left this month",
     "es": "deberían sobrar este mes"
   },
+  "A comparação depende de registros nos dois períodos.": {
+    "en": "Comparison requires records in both periods.",
+    "es": "La comparación requiere registros en ambos períodos."
+  },
+  "Ainda a pagar": {
+    "en": "Still payable",
+    "es": "Pendiente de pagar"
+  },
+  "Ainda a receber": {
+    "en": "Still receivable",
+    "es": "Pendiente de recibir"
+  },
+  "Ajustes e juros confirmados": {
+    "en": "Adjustments and confirmed interest",
+    "es": "Ajustes e intereses confirmados"
+  },
+  "Atenção": {
+    "en": "Attention",
+    "es": "Atención"
+  },
+  "Atrasadas ({0})": {
+    "en": "Overdue ({0})",
+    "es": "Atrasadas ({0})"
+  },
+  "Atual · parcial": {
+    "en": "Current · partial",
+    "es": "Actual · parcial"
+  },
+  "Até {0} de {1} · consultar composição": {
+    "en": "Through {0} {1} · view breakdown",
+    "es": "Hasta el {0} de {1} · ver composición"
+  },
+  "Como calculamos": {
+    "en": "How we calculate",
+    "es": "Cómo calculamos"
+  },
+  "Como calculamos a saúde financeira": {
+    "en": "How financial health is calculated",
+    "es": "Cómo calculamos la salud financiera"
+  },
+  "Comparação entre períodos": {
+    "en": "Period comparison",
+    "es": "Comparación entre períodos"
+  },
+  "Composição das dívidas": {
+    "en": "Debt breakdown",
+    "es": "Composición de las deudas"
+  },
+  "Concluído": {
+    "en": "Completed",
+    "es": "Concluido"
+  },
+  "Consultar os números em lista": {
+    "en": "View numbers as a list",
+    "es": "Consultar los números en lista"
+  },
+  "Consulte saldos, compromissos e registros.": {
+    "en": "Explore balances, commitments and records.",
+    "es": "Consulte saldos, compromisos y registros."
+  },
+  "Contas cadastradas a pagar": {
+    "en": "Registered bills payable",
+    "es": "Cuentas registradas por pagar"
+  },
+  "Contas prioritárias": {
+    "en": "Priority bills",
+    "es": "Cuentas prioritarias"
+  },
+  "Dados insuficientes para gerar orientações.": {
+    "en": "Insufficient data to provide guidance.",
+    "es": "Datos insuficientes para generar orientaciones."
+  },
+  "Detalhamento do mês": {
+    "en": "Month details",
+    "es": "Detalle del mes"
+  },
+  "Detalhar {0}": {
+    "en": "View details for {0}",
+    "es": "Ver detalles de {0}"
+  },
+  "Diagnóstico financeiro": {
+    "en": "Financial assessment",
+    "es": "Diagnóstico financiero"
+  },
+  "Dívidas, contas, cartões e metas": {
+    "en": "Debts, accounts, cards and goals",
+    "es": "Deudas, cuentas, tarjetas y metas"
+  },
+  "Entradas realizadas": {
+    "en": "Actual inflows",
+    "es": "Entradas realizadas"
+  },
+  "Evolução financeira": {
+    "en": "Financial evolution",
+    "es": "Evolución financiera"
+  },
+  "Expandir": {
+    "en": "Expand",
+    "es": "Expandir"
+  },
+  "Gráfico oculto para preservar seus valores.": {
+    "en": "Chart hidden to protect your amounts.",
+    "es": "Gráfico oculto para proteger sus valores."
+  },
+  "Indicadores complementares": {
+    "en": "Additional indicators",
+    "es": "Indicadores complementarios"
+  },
+  "Informação": {
+    "en": "Information",
+    "es": "Información"
+  },
+  "Ir para seção": {
+    "en": "Go to section",
+    "es": "Ir a la sección"
+  },
+  "Juros de atraso estimados": {
+    "en": "Estimated late interest",
+    "es": "Intereses de demora estimados"
+  },
+  "Modo detalhado · Alterar": {
+    "en": "Detailed mode · Change",
+    "es": "Modo detallado · Cambiar"
+  },
+  "Movimentação": {
+    "en": "Cash movements",
+    "es": "Movimientos"
+  },
+  "Média diária de saídas": {
+    "en": "Average daily outflows",
+    "es": "Promedio diario de salidas"
+  },
+  "Nenhum alerta ativo para os registros disponíveis.": {
+    "en": "No active alerts for available records.",
+    "es": "No hay alertas activas para los registros disponibles."
+  },
+  "Nenhuma conta pendente neste período.": {
+    "en": "No pending bills in this period.",
+    "es": "No hay cuentas pendientes en este período."
+  },
+  "Novas dívidas": {
+    "en": "New debts",
+    "es": "Nuevas deudas"
+  },
+  "Não informado": {
+    "en": "Not provided",
+    "es": "No informado"
+  },
+  "O que os valores incluem?": {
+    "en": "What do these amounts include?",
+    "es": "¿Qué incluyen los valores?"
+  },
+  "Previsto": {
+    "en": "Forecast",
+    "es": "Previsto"
+  },
+  "Previsão para o fim do mês": {
+    "en": "End-of-month forecast",
+    "es": "Previsión para el fin de mes"
+  },
+  "Prioridade alta": {
+    "en": "High priority",
+    "es": "Prioridad alta"
+  },
+  "Projeção futura": {
+    "en": "Future projection",
+    "es": "Proyección futura"
+  },
+  "Próximas ({0})": {
+    "en": "Upcoming ({0})",
+    "es": "Próximas ({0})"
+  },
+  "Realizado": {
+    "en": "Actual",
+    "es": "Realizado"
+  },
+  "Recolher": {
+    "en": "Collapse",
+    "es": "Contraer"
+  },
+  "Referência dos saldos: {0}.": {
+    "en": "Balance reference date: {0}.",
+    "es": "Fecha de referencia de los saldos: {0}."
+  },
+  "Registrar": {
+    "en": "Record",
+    "es": "Registrar"
+  },
+  "Registro pendente; abrir não confirma pagamento.": {
+    "en": "Pending record; opening does not confirm payment.",
+    "es": "Registro pendiente; abrirlo no confirma el pago."
+  },
   "Resultado do mês até hoje": {
-    "en": "Month's result so far",
+    "en": "Month result to date",
     "es": "Resultado del mes hasta hoy"
+  },
+  "Resultado previsto": {
+    "en": "Forecast result",
+    "es": "Resultado previsto"
+  },
+  "Resumo financeiro": {
+    "en": "Financial summary",
+    "es": "Resumen financiero"
+  },
+  "Saldo devedor": {
+    "en": "Outstanding debt",
+    "es": "Saldo deudor"
+  },
+  "Saldo devedor inclui {0} de juros de atraso estimados.": {
+    "en": "Outstanding debt includes {0} in estimated late interest.",
+    "es": "El saldo deudor incluye {0} de intereses de demora estimados."
+  },
+  "Saldo inicial, sem juros estimados": {
+    "en": "Opening balance, excluding estimated interest",
+    "es": "Saldo inicial, sin intereses estimados"
+  },
+  "Saldo nas contas": {
+    "en": "Account balances",
+    "es": "Saldo en las cuentas"
+  },
+  "Saldos": {
+    "en": "Balances",
+    "es": "Saldos"
+  },
+  "Saídas realizadas": {
+    "en": "Actual outflows",
+    "es": "Salidas realizadas"
+  },
+  "Selecionar…": {
+    "en": "Select…",
+    "es": "Seleccionar…"
+  },
+  "Sem dados suficientes para comparar este período.": {
+    "en": "Insufficient data to compare this period.",
+    "es": "Datos insuficientes para comparar este período."
+  },
+  "Somente contas cadastradas; exclui faturas e parcelas de dívidas.": {
+    "en": "Registered bills only; excludes card bills and debt installments.",
+    "es": "Solo cuentas registradas; excluye facturas de tarjetas y cuotas de deudas."
+  },
+  "Valor da parcela pendente. Não representa o saldo total da dívida.": {
+    "en": "Pending installment amount. This is not the total debt balance.",
+    "es": "Valor de la cuota pendiente. No representa el saldo total de la deuda."
+  },
+  "Valores adicionais emprestados": {
+    "en": "Additional borrowed amounts",
+    "es": "Importes adicionales prestados"
+  },
+  "Valores do gráfico": {
+    "en": "Chart amounts",
+    "es": "Valores del gráfico"
+  },
+  "Variação de {0} nas saídas registradas.": {
+    "en": "Change of {0} in recorded outflows.",
+    "es": "Variación de {0} en las salidas registradas."
+  },
+  "Variação: {0}": {
+    "en": "Change: {0}",
+    "es": "Variación: {0}"
+  },
+  "Visualização": {
+    "en": "View",
+    "es": "Visualización"
+  },
+  "{0} atrasadas · {1} próximas": {
+    "en": "{0} overdue · {1} upcoming",
+    "es": "{0} atrasadas · {1} próximas"
+  },
+  "{0} orientações disponíveis": {
+    "en": "{0} insights available",
+    "es": "{0} orientaciones disponibles"
+  },
+  "{0} · movimentações e posições por mês": {
+    "en": "{0} · monthly movements and balances",
+    "es": "{0} · movimientos y posiciones por mes"
+  },
+  "Movimentações ocorrem durante o mês. Selecione um mês para investigar os valores.": {
+    "en": "Movements occur throughout the month. Select a month to explore its amounts.",
+    "es": "Los movimientos ocurren durante el mes. Seleccione un mes para investigar los valores."
+  },
+  "Saldos são posições em uma data, não movimentações do mês. Saldos futuros não informados ficam em branco.": {
+    "en": "Balances are positions at a given date, rather than monthly movements. Unreported future balances remain blank.",
+    "es": "Los saldos son posiciones en una fecha, no movimientos del mes. Los saldos futuros no informados quedan en blanco."
+  },
+  "Saldos bancários são os últimos informados; a data de atualização não está disponível.": {
+    "en": "Bank balances are the latest reported; the update date is unavailable.",
+    "es": "Los saldos bancarios son los últimos informados; la fecha de actualización no está disponible."
+  },
+  "Juros estimados ainda precisam ser conferidos com o credor. Juros confirmados podem estar incorporados ao contrato ou aos ajustes.": {
+    "en": "Estimated interest still needs to be checked with the creditor. Confirmed interest may be included in the contract or adjustments.",
+    "es": "Los intereses estimados aún deben verificarse con el acreedor. Los intereses confirmados pueden estar incluidos en el contrato o los ajustes."
+  },
+  "Saídas realizadas do mês selecionado, incluindo faturas reconhecidas como pagas. Não é um limite recomendado de gasto.": {
+    "en": "Actual outflows for the selected month, including bills recognized as paid. This is not a recommended spending limit.",
+    "es": "Salidas realizadas del mes seleccionado, incluidas las facturas reconocidas como pagadas. No es un límite de gasto recomendado."
+  },
+  "Orientações calculadas com os registros disponíveis. Saldo em conta não comprova reserva para emergências.": {
+    "en": "Guidance based on available records. An account balance does not establish an emergency reserve.",
+    "es": "Orientaciones calculadas con los registros disponibles. El saldo en cuenta no acredita una reserva para emergencias."
+  },
+  "Mudanças em Sem categoria podem refletir reclassificação, não economia. Uma variação não determina se o gasto foi adequado.": {
+    "en": "Changes in Uncategorized may reflect reclassification rather than savings. A change does not determine whether spending was appropriate.",
+    "es": "Los cambios en Sin categoría pueden reflejar reclasificación, no ahorro. Una variación no determina si el gasto fue adecuado."
+  },
+  "Realizado inclui entradas e saídas reconhecidas. Previsto soma ao realizado os recebimentos e pagamentos pendentes; não é confirmação de pagamento. Compras em faturas abertas seguem a regra da previsão.": {
+    "en": "Actual includes recognized inflows and outflows. Forecast adds pending receipts and payments; it does not confirm payment. Purchases on open card bills follow forecast rules.",
+    "es": "Realizado incluye entradas y salidas reconocidas. Previsto suma los cobros y pagos pendientes; no confirma el pago. Las compras en facturas abiertas siguen la regla de previsión."
+  },
+  "Compara saídas registradas pela data da parcela, incluindo compras no cartão. Pagamento de fatura não é uma segunda compra. Contas sem baixa ficam fora. Transferências identificadas como dinheiro guardado ficam fora. Esta base de consumo difere da movimentação financeira realizada.": {
+    "en": "Compares recorded outflows by installment date, including card purchases. Paying a card bill is not a second purchase. Unsettled bills and transfers identified as savings are excluded. This consumption basis differs from actual cash movements.",
+    "es": "Compara salidas registradas por fecha de cuota, incluidas compras con tarjeta. Pagar una factura no es una segunda compra. Se excluyen cuentas sin liquidar y transferencias identificadas como ahorro. Esta base de consumo difiere del movimiento financiero realizado."
+  },
+  "Escala de 0 a 100. Média ponderada: sobra 25, reserva 20, dívidas 20, controle 15, cartão 10 e metas 10. Pilares sem dados são removidos e os pesos restantes são redistribuídos.": {
+    "en": "Scale from 0 to 100. Weighted average: surplus 25, reserve 20, debts 20, tracking 15, cards 10 and goals 10. Pillars without data are removed and remaining weights are redistributed.",
+    "es": "Escala de 0 a 100. Promedio ponderado: sobrante 25, reserva 20, deudas 20, control 15, tarjeta 10 y metas 10. Se eliminan pilares sin datos y se redistribuyen los pesos restantes."
+  },
+  "Confira a cobertura para imprevistos": {
+    "en": "Check your coverage for unexpected expenses",
+    "es": "Revise su cobertura para imprevistos"
+  },
+  "Esta regra considera saldos bancários e investimentos; não verifica liquidez nem destinação para emergências.": {
+    "en": "This rule considers bank balances and investments; it does not check liquidity or allocation to emergencies.",
+    "es": "Esta regla considera saldos bancarios e inversiones; no verifica liquidez ni asignación para emergencias."
+  },
+  "Valores na moeda do registro, sem conversão.": {
+    "en": "Amounts in the recorded currency, without conversion.",
+    "es": "Valores en la moneda del registro, sin conversión."
+  },
+  "Sem informação": {
+    "en": "No information",
+    "es": "Sin información"
+  },
+  "Este saldo parte do valor inicial informado e acumula os resultados; pode diferir dos saldos bancários cadastrados.": {
+    "en": "This balance starts from the reported opening amount and accumulates results; it may differ from recorded bank balances.",
+    "es": "Este saldo parte del valor inicial informado y acumula los resultados; puede diferir de los saldos bancarios registrados."
+  },
+  "Saldo inicial": {
+    "en": "Opening balance",
+    "es": "Saldo inicial"
+  },
+  "Saldo final": {
+    "en": "Closing balance",
+    "es": "Saldo final"
+  },
+  "Período não iniciado": {
+    "en": "Period not started",
+    "es": "Período no iniciado"
   },
   "Já lançado para {0}": {
     "en": "Already recorded for {0}",
@@ -14094,10 +14438,6 @@
   "Saiu mais do que entrou.": {
     "en": "More went out than came in.",
     "es": "Salió más de lo que entró."
-  },
-  "Previsão para o fim do mês": {
-    "en": "Forecast for the end of the month",
-    "es": "Previsión para fin de mes"
   },
   "Deve fechar perto de zero": {
     "en": "Should end close to zero",
