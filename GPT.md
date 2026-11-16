@@ -681,3 +681,19 @@ reproduzíveis em `scripts/app-de-demonstracao/`.
 individual de saldos não existem no contexto atual; a interface distingue a data do período da atualização
 indisponível. Estados globais de carregamento/erro continuam com os componentes existentes, sem nova
 injeção de falhas nesta validação. Não gerado pacote Android assinado, nem aplicada migração de banco.
+
+#### Publicação da Início detalhada — 16/11/2026
+
+- Implementação enviada em `286c7003ef163f0ad7d3d1d4f9c9648f426ee618`, branch
+  `codex/inicio-detalhado-mobile`; PR #195 mesclado por squash em
+  `fa360a14a29570c8768a762aa4787598bf403df5` na produção `claude/practical-mccarthy-qt2qoa`.
+- Antes do merge, produção confirmada no mesmo commit base da sessão, sem mudanças concorrentes.
+- Status do commit via conector GitHub: `Vercel: success`, deploy
+  `https://vercel.com/edigar-barros/cigarros-finance/5oAJfzENzAdXZosH5vyecYPRRBdz`.
+  A conferência direta de `https://www.opuscash.com.br/versao.json` retornou HTTP 403 neste ambiente;
+  portanto a confirmação é do deploy reportado pela Vercel, não da resposta desse endpoint.
+- A credencial do `gh` estava inválida; push Git funcionou e criação/merge/status do PR foram feitos pelo
+  conector GitHub. Nenhuma credencial foi alterada.
+- Nova execução do script mobile sobre o build final passou. Conferências adicionais no Chromium:
+  tema escuro em 390 px sem rolagem horizontal e estado inicial sem registros preservado, sem PAGEERROR.
+- Android instalado continua exigindo nova compilação/publicação na loja; não foi gerado pacote assinado.
