@@ -18,6 +18,17 @@ export function FundoMovel({ tom, cor }: { tom: Tom | null; cor?: string | null 
   )
 }
 
+/** Celular no tema escuro: a barra do navegador (Android) no mesmo grafite do fundo; ao sair, volta a cor do tema. */
+export function useCorDaBarraDoCelular(escuro: boolean) {
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]')
+    if (!meta || !escuro) return
+    const antes = meta.getAttribute('content')
+    meta.setAttribute('content', '#0e0f11')
+    return () => { if (antes) meta.setAttribute('content', antes) }
+  }, [escuro])
+}
+
 /** A página já rolou um pouco: o topo ganha o vidro fosco para continuar legível sobre o conteúdo. */
 function useRolou() {
   const [rolou, setRolou] = useState(() => window.scrollY > 8)

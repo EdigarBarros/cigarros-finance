@@ -6,20 +6,45 @@
 .app.movel { position: relative; display: block; min-height: 100vh; }
 .app.movel > .conteudo { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; padding: 0 16px calc(120px + env(safe-area-inset-bottom)); }
 
+/* ---------- celular no tema escuro: grafite neutro (sem o azul-marinho do computador) ----------
+   Fundo quase preto, cartões cinza-escuros e bordas quase invisíveis; o verde-água da marca fica para destaques. Vale só
+   com a moldura do celular na tela (:has), então o computador e o tema claro não mudam. */
+:root[data-tema='escuro']:has(.app.movel) {
+  --fundo: #0e0f11;
+  --superficie: #1c1d20;
+  --superficie-2: #242529;
+  --superficie-forte: #212226;
+  --borda: rgba(255, 255, 255, .06);
+  --borda-forte: rgba(255, 255, 255, .11);
+  --texto: #f3f4f6;
+  --texto-2: rgba(235, 236, 240, .62);
+  --texto-3: rgba(235, 236, 240, .38);
+  --separador: rgba(255, 255, 255, .07);
+  --preench-1: rgba(255, 255, 255, .2);
+  --preench-2: rgba(255, 255, 255, .12);
+  --preench-3: rgba(255, 255, 255, .075);
+  --preench-4: rgba(255, 255, 255, .04);
+  --vidro: rgba(30, 31, 35, .78);
+  --sombra: 0 10px 30px -22px rgba(0, 0, 0, .9);
+}
+/* sem a luz azulada da marca no alto e com a faixa do relógio (iPhone) no mesmo grafite */
+:root[data-tema='escuro']:has(.app.movel) body::before { display: none; }
+:root[data-tema='escuro']:has(.app.movel)::before { background: #0e0f11; }
+
 /* ---------- o degradê do topo (um por tom; troca por opacidade, só na placa de vídeo) ----------
    Sobre ele, nada de backdrop-filter: refazer o desfoque a cada quadro da troca de cor travava o arrasto no celular. */
 .movel-fundo { position: absolute; z-index: 0; inset: 0 0 auto; height: 620px; pointer-events: none; overflow: hidden; }
 .movel-fundo i { position: absolute; inset: 0; opacity: 0; transition: opacity .7s var(--mola); will-change: opacity; }
 .movel-fundo i.ativo { opacity: 1; }
 /* escuro em cima, onde fica o texto branco; desce até o fundo da tela abaixo das ações */
-.movel-fundo i[data-t='sobra'] { background: linear-gradient(180deg, #04241f 0, #0b4d47 260px, #13666a 430px, var(--fundo) 600px); }
-.movel-fundo i[data-t='falta'] { background: linear-gradient(180deg, #2a0710 0, #5c1326 260px, #7a2337 430px, var(--fundo) 600px); }
-.movel-fundo i[data-t='guardado'] { background: linear-gradient(180deg, #06142f 0, #123a74 260px, #1d4f93 430px, var(--fundo) 600px); }
-.movel-fundo i[data-t='dividas'] { background: linear-gradient(180deg, #241404 0, #573309 260px, #6f4413 430px, var(--fundo) 600px); }
-.movel-fundo i[data-t='invest'] { background: linear-gradient(180deg, #120a33 0, #302074 260px, #45339a 430px, var(--fundo) 600px); }
+.movel-fundo i[data-t='sobra'] { background: linear-gradient(180deg, #3f9488 0, #25685f 170px, #1a4a44 300px, #142d2a 440px, var(--fundo) 600px); }
+.movel-fundo i[data-t='falta'] { background: linear-gradient(180deg, #a8606b 0, #763a45 170px, #50272f 300px, #2c1a1e 440px, var(--fundo) 600px); }
+.movel-fundo i[data-t='guardado'] { background: linear-gradient(180deg, #7d84a6 0, #535a7a 170px, #383d55 300px, #23252f 440px, var(--fundo) 600px); }
+.movel-fundo i[data-t='dividas'] { background: linear-gradient(180deg, #a98656 0, #775c36 170px, #4f3f27 300px, #2a241b 440px, var(--fundo) 600px); }
+.movel-fundo i[data-t='invest'] { background: linear-gradient(180deg, #8d7fbd 0, #61568f 170px, #413a63 300px, #26233a 440px, var(--fundo) 600px); }
 .movel-fundo i[data-t='cor'] {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--tom-cor, #3d4be0) 32%, #04060c) 0, color-mix(in srgb, var(--tom-cor, #3d4be0) 46%, #070b14) 260px,
-    color-mix(in srgb, var(--tom-cor, #3d4be0) 52%, #101828) 430px, var(--fundo) 600px);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--tom-cor, #3d4be0) 50%, #8a8f99) 0, color-mix(in srgb, var(--tom-cor, #3d4be0) 42%, #3a3d44) 170px,
+    color-mix(in srgb, var(--tom-cor, #3d4be0) 38%, #24262b) 300px, color-mix(in srgb, var(--tom-cor, #3d4be0) 16%, #17181b) 440px, var(--fundo) 600px);
 }
 
 /* ---------- topo: foto, busca, mês, olho e sino ---------- */
