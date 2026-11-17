@@ -324,7 +324,7 @@ button.linha-movel:active { opacity: .7; }
 .abas-movel-nova.encolhida button > span { opacity: 0; max-height: 0; }
 
 /* com uma folha aberta (lançar, adicionar cartões, mais…), a barra de abas e o "+" saem da frente */
-.app.movel:has(.modal-fundo) .abas-movel-nova, .app.movel:has(.modal-fundo) .fab { visibility: hidden; }
+.app.movel:has(.modal-fundo) .abas-movel-nova { visibility: hidden; }
 
 /* ---------- folhas: "Mais", a conta e os meses ---------- */
 .mais-grade { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 8px; padding: 6px 0 8px; }

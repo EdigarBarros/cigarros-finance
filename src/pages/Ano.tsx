@@ -1,4 +1,4 @@
-import type { Resumo } from '../lib/calc'
+import { resumoDoAno } from '../lib/calc'
 import { fmtValor, MESES_NOME } from '../lib/format'
 import { TabelaAnual } from '../components/Blocos'
 import { GraficoAnual, GraficoSaldo } from '../components/Graficos'
@@ -12,14 +12,10 @@ import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 
 export function Ano(c: Ctx) {
-  const meses = c.porMes.filter((r): r is Resumo => r !== null)
-  const soma = (k: 'entradas' | 'saidas' | 'fluxo') => meses.reduce((a, r) => a + r[k], 0)
-  // A média só conta os meses em que saiu dinheiro: mês com caixa herdado ou dívida, sem lançamentos, não é um mês de gasto zero.
-  const mesesComGasto = meses.filter((r) => r.saidas > 0).length
-  const mediaGasto = mesesComGasto ? soma('saidas') / mesesComGasto : 0
+  // os números do ano (os mesmos do celular): lib/calc.ts
+  const { meses, soma, mediaGasto, melhor } = resumoDoAno(c.porMes)
   const abrirMes = (m: number) => { c.irParaMes(m); c.irPara('inicio') }
   const nivel = c.perfil.detalhe
-  const melhor = c.porMes.reduce<number | null>((b, r, i) => (r && (r.entradas > 0 || r.saidas > 0) && (b === null || r.fluxo > c.porMes[b]!.fluxo) ? i : b), null)
 
   return (
     <div className="pagina">
@@ -84,7 +80,7 @@ export function Ano(c: Ctx) {
  * O ano em 12 quadros: cada mês com o que sobrou (verde) ou faltou (vermelho), a cor mais forte quanto maior, e uma
  * barrinha do que saiu contra o que entrou. Tocar abre o mês na Início.
  */
-function MesesDoAno({ c, aoAbrir }: { c: Ctx; aoAbrir: (m: number) => void }) {
+export function MesesDoAno({ c, aoAbrir }: { c: Ctx; aoAbrir: (m: number) => void }) {
   const maior = Math.max(1, ...c.porMes.map((r) => Math.abs(r?.fluxo ?? 0)))
   return (
     <section className="ano-meses" aria-label={tx('Os meses de {0}', c.ano)}>

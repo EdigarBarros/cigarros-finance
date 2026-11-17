@@ -42,6 +42,5 @@
 /* celular: acima do "+" e da barra de abas, de ponta a ponta */
 @media (max-width: 600px) {
   .reanalise { left: 12px; right: 12px; width: auto; bottom: calc(164px + env(safe-area-inset-bottom)); }
-  .app.abas-ocultas .reanalise { bottom: calc(110px + env(safe-area-inset-bottom)); }
   .reanalise-acoes .btn { height: 40px; }
 }

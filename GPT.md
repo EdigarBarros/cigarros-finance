@@ -982,3 +982,25 @@ e atraso por dia/valor fixo/multa/conferência/regra/peso ao mês), `testar-move
 app de demonstração, em 1440 e 360 px: criar "Empréstimo do Zé" (R$ 270, recebeu R$ 250, R$ 20 por dia), ficha com o custo
 e a regra, reabrir com os valores; dívida antiga com 13% ao mês composto reabre igual e muda para 1% ao dia; com a migração
 36 simulada como ausente, as opções novas somem e nada quebra.
+
+### 17/11/2026 — Claude — Celular: tela do Ano e limpeza do celular antigo (fase 7 de 7)
+
+**Estado:** implementado e validado localmente; publicação registrada na conversa da sessão. Sem migração nova. O app
+Android só recebe com uma versão nova.
+
+- Ano no celular (`src/movel/telas/AnoMovel.tsx`): topo sobrou → entrou → saiu, ações ano anterior/próximo/mês atual,
+  os meses, melhor mês, gasto médio e os gráficos conforme o jeito. As contas do ano saíram de `pages/Ano.tsx` para
+  `resumoDoAno` (`lib/calc.ts`), usado pelas duas telas; `MesesDoAno` passou a ser exportado e o contexto ganhou
+  `irParaAno`.
+- Limpeza (`components/Painel.tsx`, `index.css`, `lib/useBarraLateral.ts`, `components/reanalise.css`, `movel/movel.css`):
+  saíram o "+" fixo, a barra de abas antiga com a alça de esconder, a folha "Mais" antiga, o "⋯" do jeito simples
+  (`menu-movel`, `simples-movel`) e os ramos `mobile` do topo do computador, que nunca mais eram desenhados.
+- **Defeito corrigido:** no menu da conta do celular havia um item "Idioma" que acionava um seletor que só existia no topo
+  do computador; tocar não fazia nada. O idioma já aparece no mesmo menu (`BotaoIdioma emLista`), então o item quebrado saiu.
+- `lib/botaoMais.ts` ficou com `useRecolherAoRolar` (encolhe a barra de abas) e `useAcoesDeLancar` (ainda usado pelas
+  Inícios); `useAcoesNaTela` não tem mais quem leia.
+
+**Validação:** `npx tsc -b`, lint sem erro, build, `scripts/painel/testar.mjs` 34/34, `scripts/invest/testar.mjs` 27/27,
+`testar-movel.cjs` 364/364 (Ano em 320–430 px nos dois temas, botões de ano, melhor mês abre a Início; o teste que esperava
+o "+" foi trocado por "não existe mais"), `testar-arrasto.cjs` com o Ano (0 mudanças durante o arrasto). Computador: capturas
+de 1280 e 1024 px contra a produção iguais ou com o ruído de captura conhecido (brilhos e animação do gráfico do Ano).

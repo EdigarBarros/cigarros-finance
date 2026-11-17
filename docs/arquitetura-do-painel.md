@@ -258,8 +258,9 @@ Saíram da Início: quadros de Entradas e Saídas (a página **Lançamentos** li
 
 ### 4.4 Computador × celular
 
-> Desde 16/11/2026 o celular (até 860 px) tem moldura e Início próprias: veja a seção 4.25. A tabela abaixo vale para
-> as telas que ainda abrem a versão do computador dentro da moldura do celular.
+> Desde 17/11/2026 todas as telas do celular (até 860 px) têm versão própria: veja a seção 4.25. A tabela abaixo é o
+> registro de como a Início do computador se adaptava à tela estreita antes disso; nenhuma tela do celular usa mais o
+> botão "+" fixo (cada uma tem a fileira de ações abaixo do topo).
 
 | Aspecto | Computador (≥ 861 px) | Celular |
 | --- | --- | --- |
@@ -604,8 +605,9 @@ Ordem dos itens (computador), por frequência e por pergunta respondida:
 
 Justificativa: o que se usa todo dia primeiro (Início, Lançamentos); depois o que tem prazo, do mais próximo para o mais distante (contas, cartões, dívidas); depois o que se constrói (metas, dinheiro guardado); a retrospectiva por último, porque é a menos urgente.
 
-**Celular**: desde 16/11/2026 são quatro abas fixas (seção 4.25): Início · Lançamentos · Consultor · Mais. O texto abaixo
-descreve como era antes.
+**Celular**: desde 16/11/2026 são quatro abas fixas (seção 4.25): Início · Lançamentos · Consultor · Mais. "Mais" abre a
+grade com as outras telas ligadas, na ordem acima, e os Ajustes. O texto e a tabela abaixo são o registro de como era
+antes; o código dessa barra (alça para esconder, "+" fixo, "⋯" do jeito simples) saiu em 17/11/2026.
 
 **Celular, antes (barra de abas, no máximo 5)**: se houver até 5 páginas, aparecem todas. Com mais de 5, aparecem as **4 primeiras** da ordem acima e a quinta aba é **Mais**, que abre uma folha com as demais. A ordem do menu é também a prioridade das abas, então Dívidas e Contas ganham lugar antes de Resumo do ano. "Mais" fica ativa quando a página aberta está dentro dela. Configurações (Personalizar, Importar, Baixar backup, Sair) continuam no menu do topo. No jeito simples, no celular, o topo fica só com o mês, o olho e o sino: a quinta aba é sempre **Mais**, e ela leva, além das páginas que não couberam, o idioma, o suporte, o tema e todo o menu da conta (4.1).
 
@@ -1209,10 +1211,13 @@ migração num Postgres local e confere que uma pessoa não lê nem grava nada d
 
 No celular (até 860 px, `useMobile`) o painel tem cara própria, separada do computador. O computador não muda: o
 `Painel` escolhe a moldura (`mobile ? moldura do celular : a de sempre`) e as duas usam os mesmos dados, formulários e janelas.
-Tela que ainda não tem versão de celular abre a do computador dentro da moldura nova (com o "+"), e é isso que deixa
-publicar por partes. Fases: 1) moldura e Início (feita); 2) escolher, tirar e reordenar cartões, salvo na conta
-(`perfis.celular`, feita); 3) Lançamentos e Contas (feita); 4) Cartões e Dívidas (feita); 5) Metas e Guardado (feita); 6) Consultor e Invest (feita); 7) Ano e
-limpeza do que ficou sem uso (`.fab`, `simples-movel`, `menu-movel`, a alça das abas, os ramos de celular dos três jeitos).
+Todas as telas têm versão de celular (lista `TELAS_DO_CELULAR` no `Painel`); tela nova que entrar no app sem versão
+própria abre a do computador dentro da moldura, mas sem o "+": dê a ela topo e ações (regra: recurso novo entra nas duas
+versões, e as contas ficam em `lib/`). Feito em 7 fases, de 16 a 17/11/2026: moldura e Início; cartões salvos na conta
+(`perfis.celular`); Lançamentos e Contas; Cartões e Dívidas; Metas e Guardado; Consultor e Invest; Ano e limpeza. A
+limpeza tirou do `Painel` e do `index.css` o que só o celular antigo usava (`.fab`, `simples-movel`, `menu-movel`, a
+alça e o "esconder abas" de `useBarraLateral`, a folha `mais-fundo`) e o item "Idioma" do menu da conta, que no celular
+não abria nada.
 
 **Moldura** (`src/movel/Casca.tsx`, estilos em `src/movel/movel.css`, todos debaixo de `.movel`):
 - Topo: foto (abre a folha da conta: configurações, suporte, tutorial, tema, importar, backup, sair e idioma), busca
@@ -1306,6 +1311,13 @@ ordem, desenho e tamanho; `lib/gosto.ts` aprende com o uso), então o celular **
 - Ações: Aplicar, Novo, Valores e Importar.
 - Embaixo, as mesmas quatro abas, sem ícones para os nomes caberem. A aba Análises continua montada pelo próprio
   analista.
+
+**Resumo do ano** (`src/movel/telas/AnoMovel.tsx`; números de `resumoDoAno` em `lib/calc.ts` e a grade `MesesDoAno` de
+`pages/Ano.tsx`, os mesmos do computador):
+- Topo: quanto sobrou (ou faltou) no ano → o que entrou (com quanto ficou com você) → o que saiu (com o gasto médio).
+- Ações: ano anterior, próximo ano (o rótulo é o próprio ano) e "Mês atual", que volta ao ano e ao mês de hoje na Início.
+- Embaixo: os meses do ano (tocar abre o mês na Início), o melhor mês e o gasto médio lado a lado, o gráfico mês a mês
+  (fora do simples) e quanto sobrou em cada mês (detalhado). Ano sem lançamento: um cartão que convida a lançar.
 
 **Escolher e arrumar os cartões** (`lib/widgets.ts`, `src/movel/FolhaDeCartoes.tsx`, migração 35):
 - "+ Adicionar cartões" abre uma folha com os cartões que não estão na Início, cada um com a prévia de verdade (os dados da

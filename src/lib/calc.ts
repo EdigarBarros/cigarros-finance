@@ -126,3 +126,17 @@ export function resumoMes(lancs: Lancamento[], dividas: SituacaoDivida[], mes: M
 }
 
 export type Resumo = ReturnType<typeof resumoMes>
+
+/**
+ * O ano em números (a tela Ano do computador e a do celular usam os mesmos): os meses com dados, o que entrou, saiu e
+ * sobrou, o gasto médio (só dos meses em que saiu dinheiro: mês com caixa herdado ou dívida, sem lançamentos, não é um mês
+ * de gasto zero) e o melhor mês (o que mais sobrou, entre os que tiveram movimento).
+ */
+export function resumoDoAno(porMes: (Resumo | null)[]) {
+  const meses = porMes.filter((r): r is Resumo => r !== null)
+  const soma = (k: 'entradas' | 'saidas' | 'fluxo') => meses.reduce((a, r) => a + r[k], 0)
+  const mesesComGasto = meses.filter((r) => r.saidas > 0).length
+  const mediaGasto = mesesComGasto ? soma('saidas') / mesesComGasto : 0
+  const melhor = porMes.reduce<number | null>((b, r, i) => (r && (r.entradas > 0 || r.saidas > 0) && (b === null || r.fluxo > porMes[b]!.fluxo) ? i : b), null)
+  return { meses, entradas: soma('entradas'), saidas: soma('saidas'), fluxo: soma('fluxo'), mediaGasto, melhor, soma }
+}

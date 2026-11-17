@@ -123,6 +123,8 @@ export interface Ctx {
   /** Conta sem nenhum dado ainda (primeiro acesso). */
   contaNova: boolean
   irParaMes: (mes: number) => void
+  /** Troca o ano aberto (a tela Ano do celular tem "Ano anterior" e "Próximo ano"). */
+  irParaAno: (ano: number) => void
   novoLancamento: (tipo?: Tipo) => void
   editarLancamento: (l: Lancamento) => void
   /** Abre o formulário de saída já no cartão escolhido. */
