@@ -1004,3 +1004,13 @@ Android só recebe com uma versão nova.
 `testar-movel.cjs` 364/364 (Ano em 320–430 px nos dois temas, botões de ano, melhor mês abre a Início; o teste que esperava
 o "+" foi trocado por "não existe mais"), `testar-arrasto.cjs` com o Ano (0 mudanças durante o arrasto). Computador: capturas
 de 1280 e 1024 px contra a produção iguais ou com o ruído de captura conhecido (brilhos e animação do gráfico do Ano).
+
+### 17/11/2026 — Claude — App Android 2.7.0 (código 12)
+
+**Estado:** `.aab` gerado, assinado com a chave de upload e entregue ao Edigar; falta ele enviar no Play Console.
+
+- Leva o celular redesenhado (fases 1 a 7, até o PR #213). `versionCode` 11 → 12, `versionName` 2.6.0 → 2.7.0.
+- Feito com `npm run app` e `./gradlew bundleRelease` (JDK 21, Android SDK 36), assinado com `jarsigner` (README → App
+  Android). A chave e a senha vieram do Drive do dono só para esta assinatura e foram apagadas da máquina em seguida.
+- Conferido: `jarsigner -verify` ("jar verified") e a impressão SHA-256 do certificado igual à da chave de upload
+  (A7:07:94:…:5D:9D).
