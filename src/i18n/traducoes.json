@@ -16142,5 +16142,33 @@
   "No atraso: {0}% ao dia sobre cada parcela atrasada": {
     "en": "When late: {0}% per day on each late installment",
     "es": "En atraso: {0}% al día sobre cada cuota atrasada"
+  },
+  "1 mês com dados": {
+    "en": "1 month with data",
+    "es": "1 mes con datos"
+  },
+  "{0} meses com dados": {
+    "en": "{0} months with data",
+    "es": "{0} meses con datos"
+  },
+  "{0}% ficou com você": {
+    "en": "{0}% stayed with you",
+    "es": "{0}% se quedó contigo"
+  },
+  "Gasto médio de {0} por mês": {
+    "en": "Average spending of {0} per month",
+    "es": "Gasto medio de {0} por mes"
+  },
+  "Mês atual": {
+    "en": "This month",
+    "es": "Mes actual"
+  },
+  "Toque num mês para abrir.": {
+    "en": "Tap a month to open it.",
+    "es": "Toca un mes para abrirlo."
+  },
+  "sobrou {0}": {
+    "en": "{0} left over",
+    "es": "sobraron {0}"
   }
 }

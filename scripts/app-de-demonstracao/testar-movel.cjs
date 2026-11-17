@@ -74,7 +74,7 @@ const medir=()=>{
     await p.clock.install({ time: new Date('2026-11-16T10:00:00') })
     for (const tema of ['escuro','claro']) {
       await p.addInitScript((tema)=>{try{localStorage.setItem('opuscash-tema',tema)}catch{}},tema)
-      for (const pg of ['lancamentos','contas','cartoes','dividas','metas','patrimonio','analise','invest']) for (const w of [320, 360, 390, 430]) {
+      for (const pg of ['lancamentos','contas','cartoes','dividas','metas','patrimonio','analise','invest','ano']) for (const w of [320, 360, 390, 430]) {
         await p.setViewportSize({ width: w, height: 800 })
         await abrir(p, `${t.url}#/${pg}`)
         const r=await p.evaluate(medir)
@@ -165,6 +165,17 @@ const medir=()=>{
     ok(await p.locator('.gd-tipos .gd-tipo').count()===3, 'abrir o banco mostra conta, caixinha e reserva para atualizar')
     await p.locator('.acoes-movel button', { hasText: 'Todos' }).click(); await esperar(p,900)
     ok(await p.locator('.gd-tipos').count()===0 && await p.locator('.hero-movel-pagina').count()===nPag, '"Todos" volta para todos os bancos')
+    // Resumo do ano: sobrou, entrou e saiu; os botões trocam o ano e tocar num mês abre a Início nele
+    await abrir(p, `${t.url}#/ano`)
+    ok(await p.locator('.ano-movel .hero-movel-pagina').count()===3 && await p.locator('.ano-movel .widget').count()>=3, 'Ano: topo com sobrou, entrou e saiu e os cartões do ano')
+    const rotuloAno=async()=>p.locator('.ano-movel .hero-movel-pagina').first().locator('.hero-movel-rotulo').innerText()
+    const antesAno=await rotuloAno()
+    await p.locator('.acoes-movel button', { hasText: '2025' }).click(); await esperar(p,900)
+    const depoisAno=await rotuloAno()
+    ok(/2026/.test(antesAno) && /2025/.test(depoisAno), `o botão do ano anterior troca o ano (${antesAno} → ${depoisAno})`)
+    await p.locator('.acoes-movel button', { hasText: '2026' }).click(); await esperar(p,900)
+    await p.locator('.ano-movel .widget-pequeno-corpo').first().click(); await esperar(p,1200)
+    ok(await p.evaluate(()=>location.hash)==='#/inicio' && await p.locator('.inicio-movel, .widgets-movel').count()>0, 'tocar no melhor mês abre a Início')
     await t.fechar()
   }
 
@@ -227,7 +238,7 @@ const medir=()=>{
   ok(/Contas/.test(mais) && /Dívidas/.test(mais) && /Ajustes/.test(mais), 'o "Mais" tem as outras telas e os ajustes')
   await p.locator('.mais-grade button[data-tour="nav-ano"]').click(); await esperar(p,1500)
   ok(await p.evaluate(()=>location.hash)==='#/ano' && await p.locator('.abas-movel-nova button[data-tour="mais"].ativo').count()===1, 'tela do "Mais" abre e a aba "Mais" fica marcada')
-  ok(await p.locator('.fab').count()===1, 'nas telas sem versão de celular ainda, o "+" continua')
+  ok(await p.locator('.fab').count()===0 && await p.locator('.ano-movel .acoes-movel').count()===1, 'todas as telas têm a fileira de ações: o "+" antigo não existe mais')
   await p.locator('.topo-movel-avatar').click(); await esperar(p)
   const conta=await p.locator('.lista-folha').innerText()
   ok(/Configurações/.test(conta) && /Sair/.test(conta) && /Suporte/.test(conta), 'a foto abre a conta (configurações, suporte, sair)')

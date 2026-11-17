@@ -22,7 +22,7 @@ import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
 import { supabase } from '../lib/supabase'
 import type { Lancamento, Modulo, Perfil, SaldoInicial, Tipo } from '../lib/types'
 import { useMobile } from '../lib/useMobile'
-import { useAcoesNaTela, useRecolherAoRolar } from '../lib/botaoMais'
+import { useRecolherAoRolar } from '../lib/botaoMais'
 import { useBarraLateral } from '../lib/useBarraLateral'
 import { estiloLente, useLente } from '../lib/useLente'
 import { definirTema, semMovimento, useTema } from '../lib/tema'
@@ -91,8 +91,9 @@ const MetasMovel = lazy(() => import('../movel/telas/MetasMovel').then((m) => ({
 const GuardadoMovel = lazy(() => import('../movel/telas/GuardadoMovel').then((m) => ({ default: m.GuardadoMovel })))
 const ConsultorMovel = lazy(() => import('../movel/telas/ConsultorMovel').then((m) => ({ default: m.ConsultorMovel })))
 const InvestMovel = lazy(() => import('../movel/telas/InvestMovel').then((m) => ({ default: m.InvestMovel })))
+const AnoMovel = lazy(() => import('../movel/telas/AnoMovel').then((m) => ({ default: m.AnoMovel })))
 /** As telas que já têm versão de celular (com o topo colorido e a fileira de ações, sem o "+"). */
-const TELAS_DO_CELULAR: Pagina[] = ['inicio', 'lancamentos', 'analise', 'invest', 'contas', 'cartoes', 'dividas', 'metas', 'patrimonio']
+const TELAS_DO_CELULAR: Pagina[] = ['inicio', 'lancamentos', 'analise', 'invest', 'contas', 'cartoes', 'dividas', 'metas', 'patrimonio', 'ano']
 const janelas = {
   Formularios: () => import('./Formularios'),
   Configuracoes: () => import('./Configuracoes'),
@@ -152,9 +153,6 @@ const PAGINAS: { id: Pagina; nome: string; curto: string; icone: string }[] = [
   { id: 'ano', nome: tx('Resumo do ano'), curto: tx('Ano'), icone: 'ano' },
 ]
 
-/** Na barra do celular cabem 5 abas; passando disso, as 4 primeiras ficam e o resto vai para "Mais". */
-const MAX_ABAS = 5
-
 const paginaDoHash = (): Pagina => {
   const h = location.hash.replace('#/', '') as Pagina
   return PAGINAS.some((p) => p.id === h) ? h : 'inicio'
@@ -195,7 +193,6 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   // suporte (migração 33): a janela abre de qualquer tela; o aviso conta as respostas do suporte ainda não vistas
   const [suporte, setSuporte] = useState<false | 'lista' | 'novo'>(false)
   // no celular o idioma fica no menu "Mais opções" (o cabeçalho tem só mês, privacidade e avisos)
-  const [idiomaAberto, setIdiomaAberto] = useState(false)
   // celular: a cor do topo (a página do resumo que está à vista na Início) e a folha da conta (aberta pela foto)
   const [tomMovel, setTomMovel] = useState<Tom | null>(null)
   const [corMovel, setCorMovel] = useState<string | null>(null)
@@ -209,7 +206,6 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const arquivo = useRef<HTMLInputElement>(null)
   // pílula que desliza até o item ativo (menu lateral e abas do celular)
   const refNav = useRef<HTMLElement>(null)
-  const refAbas = useRef<HTMLElement>(null)
   const { tema } = useTema()
   const ocultos = useValoresOcultos()
   const d = useDados(userId, ano)
@@ -221,8 +217,6 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const mobile = useMobile()
   // o "+" do celular recolhe enquanto a pessoa rola para baixo e some quando a tela já mostra os botões de lançar
   const recolherMais = useRecolherAoRolar(mobile)
-  const acoesNaTela = useAcoesNaTela()
-  const maisEscondido = mobile && (recolherMais || acoesNaTela)
   const barra = useBarraLateral()
   useCorDaBarraDoCelular(mobile && tema === 'escuro')
 
@@ -294,12 +288,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     return () => window.removeEventListener('hashchange', aoMudar)
   }, [])
   const lenteNav = useLente(refNav, 'button.ativo', `${paginaAtual}|${paginas.length}|${noPainel}|${barra.trilho}|${barra.retrato}`)
-  const lenteAbas = useLente(refAbas, 'button.ativo', `${paginaAtual}|${mobile}|${paginas.length}|${noPainel}|${barra.abasOcultas}`)
   // Jeito simples no celular: o topo fica só com o mês, o olho e o sino; idioma, suporte, tema e configurações vão para o
   // "Mais" da barra de baixo (que então sempre aparece). Veja docs/arquitetura-do-painel.md, seção 4.1.
-  const simplesMovel = mobile && perfil.detalhe === 'simples'
-  const abas = paginas.length <= MAX_ABAS && !simplesMovel ? paginas : paginas.slice(0, MAX_ABAS - 1)
-  const naMais = paginas.slice(abas.length)
 
   // Ao trocar de mês, os blocos da página sobem de novo (mesma animação da entrada).
   const primeiraVez = useRef(true)
@@ -772,6 +762,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     anterior: mes > 1 ? porMes[mes - 2] : null,
     irPara,
     irParaMes: setMes,
+    irParaAno: setAno,
     novoLancamento: (tipo) => setForm({ tipo }),
     editarLancamento: (l) => setForm({ inicial: l }),
     novaCompraNoCartao: (cartaoId) => setForm({ tipo: 'saida', cartaoId }),
@@ -878,7 +869,6 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
       <button onClick={() => setAjustes(true)}><Icone nome="engrenagem" /> {tx('Configurações')}</button>
       {assinatura && !noAppAndroid && <button onClick={() => setAjustes('assinatura')}><Icone nome="cartao" /> {tx('Assinatura')}</button>}
       <button onClick={() => setSuporte('lista')}><Icone nome="conversa" /> {tx('Suporte')}{respostasNovas > 0 && <span className="menu-aviso">{respostasNovas}</span>}</button>
-      {mobile && !simplesMovel && <button onClick={() => setIdiomaAberto(true)}><Icone nome="globo" /> {tx('Idioma')}</button>}
       <button onClick={() => setTour(true)}><Icone nome="ideia" /> {tx('Ver o tutorial')}</button>
       <button onClick={trocarTema}><Icone nome={tema === 'escuro' ? 'sol' : 'lua'} /> {tema === 'escuro' ? tx('Tema claro') : tx('Tema escuro')}</button>
       <button onClick={() => setExtrato(true)}><Icone nome="relatorio" /> {tx('Importar extrato')}</button>
@@ -958,7 +948,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     {paginaMostrada === 'dividas' && (noCelular ? <DividasMovel c={ctx} aoMudarTom={mudarTom} /> : <Dividas {...ctx} />)}
     {paginaMostrada === 'metas' && (noCelular ? <MetasMovel c={ctx} aoMudarTom={mudarTom} /> : <Metas {...ctx} />)}
     {paginaMostrada === 'patrimonio' && (noCelular ? <GuardadoMovel key={bancoAberto ?? 'todos'} c={ctx} aoMudarTom={mudarTom} /> : <Patrimonio key={bancoAberto ?? 'todos'} {...ctx} />)}
-    {paginaMostrada === 'ano' && <Ano {...ctx} />}
+    {paginaMostrada === 'ano' && (noCelular ? <AnoMovel c={ctx} aoMudarTom={mudarTom} /> : <Ano {...ctx} />)}
     </Suspense>
   )
   const janelasDoPainel = (
@@ -1158,11 +1148,6 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
           {telas(true)}
         </div>
 
-        {/* o "+" só nas telas que ainda não têm a fileira de ações do celular */}
-        {!temTopo && (
-          <button className={`fab${maisEscondido ? ' recolhido' : ''}`} data-tour="lancar" onClick={() => setForm({})} aria-label={tx('Novo lançamento')}
-            aria-hidden={maisEscondido || undefined} tabIndex={maisEscondido ? -1 : undefined}><Icone nome="mais" tamanho={26} /></button>
-        )}
 
         {avisoReanalise && reanalise && avisosDaAnalise && paginaAtual !== 'analise' && noPainel && (
           <AvisoReanalise r={reanalise} aoFechar={fecharAvisoReanalise}
@@ -1229,7 +1214,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   }
 
   return (
-    <div className={`app ${paginaAtual === 'inicio' && perfil.detalhe === 'detalhado' ? 'inicio-detalhada' : ''} ${barra.trilho ? 'trilho' : ''} ${barra.retrato ? 'retrato' : ''} ${barra.abasOcultas ? 'abas-ocultas' : ''} ${simplesMovel ? 'simples-movel' : ''}`}>
+    <div className={`app ${paginaAtual === 'inicio' && perfil.detalhe === 'detalhado' ? 'inicio-detalhada' : ''} ${barra.trilho ? 'trilho' : ''} ${barra.retrato ? 'retrato' : ''}`}>
       {barra.retrato && !barra.trilho && <div className="lateral-fundo" onClick={barra.fechar} aria-hidden="true" />}
       <aside className="lateral">
         <div className="lateral-topo">
@@ -1259,19 +1244,16 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
 
       <div className="conteudo">
         <header className="barra">
-          {mobile && <Marca compacta />}
-          {!mobile && (
-            <label className="busca-topo">
-              <Icone nome="busca" tamanho={18} />
-              <input type="search" placeholder={tx('Busque por nome, valor ou data…')} value={busca} onChange={(e) => buscar(e.target.value)} aria-label={tx('Buscar lançamentos')} />
-            </label>
-          )}
+          <label className="busca-topo">
+            <Icone nome="busca" tamanho={18} />
+            <input type="search" placeholder={tx('Busque por nome, valor ou data…')} value={busca} onChange={(e) => buscar(e.target.value)} aria-label={tx('Buscar lançamentos')} />
+          </label>
           <div className="barra-direita">
             {(ocupado || d.carregando) && <span className="carregando so-desktop">{ocupado ?? tx('Carregando…')}</span>}
             <div className="seletor-mes">
               <button className="icone-btn" onClick={() => mudarMes(-1)} aria-label={tx('Mês anterior')}><Icone nome="esq" tamanho={18} /></button>
               <button className="seletor-mes-nome" onClick={() => setQuadroMeses(!quadroMeses)} aria-expanded={quadroMeses} aria-label={tx('Escolher mês')}>
-                <Icone nome="calendario" tamanho={17} />{mobile ? MESES_CURTO[mes - 1] : MESES_NOME[mes - 1]} <small>{ano}</small>
+                <Icone nome="calendario" tamanho={17} />{MESES_NOME[mes - 1]} <small>{ano}</small>
               </button>
               <button className="icone-btn" onClick={() => mudarMes(1)} aria-label={tx('Próximo mês')}><Icone nome="dir" tamanho={18} /></button>
               {quadroMeses && (
@@ -1295,26 +1277,23 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
                 </>
               )}
             </div>
-            {!simplesMovel && <button className="icone-btn suporte-btn so-largo" onClick={() => setSuporte('lista')}
+            <button className="icone-btn suporte-btn so-largo" onClick={() => setSuporte('lista')}
               aria-label={respostasNovas ? (respostasNovas === 1 ? tx('Suporte: 1 resposta nova') : tx('Suporte: {0} respostas novas', respostasNovas)) : tx('Suporte')}
               title={respostasNovas ? tx('O suporte respondeu') : tx('Suporte: peça ajuda')}>
               <Icone nome="conversa" />
               {respostasNovas > 0 && <span className="sino-ponto" />}
-            </button>}
-            {!simplesMovel && <span className="so-largo"><BotaoIdioma /></span>}
-            {mobile && !simplesMovel && <BotaoIdioma semBotao aberto={idiomaAberto} aoMudarAberto={setIdiomaAberto} />}
+            </button>
+            <span className="so-largo"><BotaoIdioma /></span>
             <button className="icone-btn" onClick={() => definirValoresOcultos(!ocultos)} aria-pressed={ocultos}
               aria-label={ocultos ? tx('Mostrar valores') : tx('Ocultar valores')} title={ocultos ? tx('Mostrar valores') : tx('Ocultar valores')}>
               <Icone nome={ocultos ? 'olho-fechado' : 'olho'} />
             </button>
-            {!simplesMovel && <button className="icone-btn tema-btn" onClick={trocarTema} aria-label={tema === 'escuro' ? tx('Usar tema claro') : tx('Usar tema escuro')} title={tema === 'escuro' ? tx('Tema claro') : tx('Tema escuro')}>
+            <button className="icone-btn tema-btn" onClick={trocarTema} aria-label={tema === 'escuro' ? tx('Usar tema claro') : tx('Usar tema escuro')} title={tema === 'escuro' ? tx('Tema claro') : tx('Tema escuro')}>
               <Icone nome={tema === 'escuro' ? 'sol' : 'lua'} />
-            </button>}
-            {!simplesMovel && (
-              <button className="icone-btn ajustes-btn" onClick={() => setAjustes(true)} aria-label={tx('Configurações')} title={tx('Configurações')}>
-                <Icone nome="engrenagem" />
-              </button>
-            )}
+            </button>
+            <button className="icone-btn ajustes-btn" onClick={() => setAjustes(true)} aria-label={tx('Configurações')} title={tx('Configurações')}>
+              <Icone nome="engrenagem" />
+            </button>
             {comContas && (
               <button className="icone-btn" onClick={() => irPara('contas')}
                 aria-label={avisos.length ? (avisos.length === 1 ? tx('1 conta pede atenção') : tx('{0} contas pedem atenção', avisos.length)) : tx('Contas do mês')}
@@ -1329,7 +1308,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
                 <span>{tx('Olá,')} <span translate="no">{nome}</span></span>
                 <Icone nome="abaixo" tamanho={18} />
               </button>
-              {menu && !mobile && (
+              {menu && (
                 <>
                   <div className="fora" onClick={() => setMenu(false)} />
                   <div className="menu-lista" onClick={() => setMenu(false)}>
@@ -1340,22 +1319,6 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
                 </>
               )}
             </div>
-            {!simplesMovel && <div className="menu-movel">
-              <button className="icone-btn" data-tour="menu-conta" onClick={() => setMenu(!menu)} aria-label={tx('Mais opções')} title={tx('Mais opções')} aria-expanded={menu}>
-                {paginaAtual === 'inicio' && perfil.detalhe === 'detalhado' ? tx('Mais') : <Icone nome="reticencias" />}
-                {respostasNovas > 0 && <span className="sino-ponto" />}
-              </button>
-              {menu && mobile && (
-                <>
-                  <div className="fora" onClick={() => setMenu(false)} />
-                  <div className="menu-lista" onClick={() => setMenu(false)}>
-                    <span className="email">{email}</span>
-                    {menuItens}
-                    {paginaAtual === 'inicio' && perfil.detalhe === 'detalhado' && <div onClick={e => e.stopPropagation()}><BotaoIdioma /></div>}
-                  </div>
-                </>
-              )}
-            </div>}
           </div>
         </header>
 
@@ -1364,57 +1327,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         {telas(false)}
       </div>
 
-      {/* sem "+" nas Inícios do celular: o simples tem "Registrar entrada/saída", o equilibrado o "+ Registrar" e o detalhado
-          as ações dele (o botão flutuante cobria valores) */}
-      {!(simplesMovel && paginaAtual === 'inicio' && !ctx.contaNova) && !(paginaAtual === 'inicio' && perfil.detalhe === 'detalhado' && temDados)
-        && !(paginaAtual === 'inicio' && perfil.detalhe === 'equilibrado' && ctx.contaNova === false) && (
-        <button className={`fab${maisEscondido ? ' recolhido' : ''}`} data-tour="lancar" onClick={() => setForm({})} aria-label={tx('Novo lançamento')}
-          aria-hidden={maisEscondido || undefined} tabIndex={maisEscondido ? -1 : undefined}><Icone nome="mais" tamanho={26} /></button>
-      )}
-
       {avisoReanalise && reanalise && avisosDaAnalise && paginaAtual !== 'analise' && noPainel && (
         <AvisoReanalise r={reanalise} aoFechar={fecharAvisoReanalise}
           aoVer={() => { setAvisoReanalise(false); irPara('analise') }}
           aoDesligar={() => { setAvisoReanalise(false); mudarAvisosDaAnalise(false) }} />
-      )}
-
-      <nav className="abas-movel" ref={refAbas}>
-        <button className="abas-alca" onClick={barra.alternarAbas} aria-expanded={!barra.abasOcultas}
-          aria-label={barra.abasOcultas ? tx('Mostrar a barra de baixo') : tx('Esconder a barra de baixo')}>
-          <Icone nome={barra.abasOcultas ? 'cima' : 'abaixo'} tamanho={16} />
-        </button>
-        {lenteAbas && <span className="lente" aria-hidden="true" style={estiloLente(lenteAbas)} />}
-        {abas.map((p) => (
-          <button key={p.id} data-tour={`nav-${p.id}`} className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}>
-            <Icone nome={p.icone} /> <span>{p.curto}</span>
-          </button>
-        ))}
-        {(naMais.length > 0 || simplesMovel) && (
-          <button data-tour="mais" className={naMais.some((p) => p.id === paginaAtual) ? 'ativo' : ''} onClick={() => setMais(!mais)} aria-expanded={mais}>
-            <Icone nome="reticencias" /> <span>{tx('Mais')}</span>
-          </button>
-        )}
-      </nav>
-
-      {mobile && mais && (
-        <div className="mais-fundo" onClick={() => setMais(false)}>
-          <div className="menu-lista mais-lista" role="menu">
-            {naMais.map((p) => (
-              <button key={p.id} role="menuitem" className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}>
-                <Icone nome={p.icone} /> {p.nome}
-              </button>
-            ))}
-            {/* jeito simples: o que saiu do topo (idioma, suporte, tema, configurações e o resto do menu da conta) */}
-            {simplesMovel && (
-              <>
-                {naMais.length > 0 && <hr className="mais-separador" />}
-                <div className="mais-idioma" onClick={(e) => e.stopPropagation()}><BotaoIdioma emLista /></div>
-                {menuItens}
-                <span className="email">{email}</span>
-              </>
-            )}
-          </div>
-        </div>
       )}
 
       {janelasDoPainel}

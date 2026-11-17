@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
 const CHAVE_LATERAL = 'opuscash.lateral-recolhida'
-const CHAVE_ABAS = 'opuscash.abas-ocultas'
 
 function ler(chave: string): boolean | null {
   try {
@@ -29,14 +28,13 @@ function useMedia(consulta: string) {
  * Menu do painel que pode ser escondido:
  * - computador e tablet deitado: a lateral vira uma faixa só de ícones (a escolha fica guardada; em tela estreita já começa recolhida);
  * - tablet em pé: a faixa de ícones fica sempre à vista e o menu completo abre por cima do conteúdo, sem ficar guardado;
- * - celular: não tem lateral, o que se esconde é a barra de abas de baixo (a escolha fica guardada).
+ * - celular: não tem lateral (a casca do celular, src/movel/, tem a própria barra de abas).
  */
 export function useBarraLateral() {
   const retrato = useMedia('(min-width: 601px) and (max-width: 860px)')
   const celular = useMedia('(max-width: 600px)')
   const estreita = useMedia('(max-width: 1100px)')
   const [recolhidaPref, setRecolhidaPref] = useState<boolean | null>(() => ler(CHAVE_LATERAL))
-  const [abasOcultas, setAbasOcultas] = useState<boolean>(() => ler(CHAVE_ABAS) ?? false)
   const [abertaPedida, setAbertaPedida] = useState(false)
 
   // o menu por cima só existe no tablet em pé
@@ -50,12 +48,7 @@ export function useBarraLateral() {
     gravar(CHAVE_LATERAL, proxima)
   }, [retrato, aberta, recolhidaPref, estreita])
 
-  const alternarAbas = useCallback(() => {
-    setAbasOcultas(!abasOcultas)
-    gravar(CHAVE_ABAS, !abasOcultas)
-  }, [abasOcultas])
-
   const fechar = useCallback(() => setAbertaPedida(false), [])
 
-  return { trilho, retrato, celular, aberta, abasOcultas, alternarLateral, alternarAbas, fechar }
+  return { trilho, retrato, celular, aberta, alternarLateral, fechar }
 }
