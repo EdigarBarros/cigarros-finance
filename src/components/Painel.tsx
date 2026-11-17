@@ -53,7 +53,7 @@ import { useHoje } from '../lib/useHoje'
 import { AvisoReanalise } from './AvisoReanalise'
 import { marcarTela, marcarUso } from '../lib/uso'
 import { PopupNovidade, useNovidade } from './Novidades'
-import { BarraDeAbasMovel, FundoMovel, ListaDaFolha, TopoMovel } from '../movel/Casca'
+import { BarraDeAbasMovel, FundoMovel, ListaDaFolha, TopoMovel, useCorDaBarraDoCelular } from '../movel/Casca'
 import type { Tom } from '../movel/tom'
 import { Modal } from './ui'
 
@@ -224,6 +224,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const acoesNaTela = useAcoesNaTela()
   const maisEscondido = mobile && (recolherMais || acoesNaTela)
   const barra = useBarraLateral()
+  useCorDaBarraDoCelular(mobile && tema === 'escuro')
 
   // Quem já tinha dados antes das perguntas existirem ganha um perfil com o que já usa, sem questionário.
   const temDados = d.lancs.length > 0 || d.bancos.length > 0 || d.dividas.length > 0 || d.meses.length > 0
