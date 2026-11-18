@@ -80,7 +80,10 @@ do celular. Os números da faixa contam até o valor ao abrir e ao trocar de mê
 outro; com o mouse, sobem 4 px, a borda fica verde-água e uma luz acompanha o ponteiro (a posição vai direto no estilo do
 cartão, `--mx/--my` registradas com `@property` para a luz deslizar em vez de pular; nenhum redesenho a cada movimento). A luz
 da faixa, os resumos, as ações redondas, as linhas (o ícone dá um pulinho), as setas dos títulos e o menu lateral também
-respondem ao mouse. Com "animações reduzidas" tudo isso para (regra geral do `index.css`).
+respondem ao mouse. Tudo com a curva `--deslize` (`index.css`): sai rápido e vai freando aos poucos até parar, sem
+passar do ponto, como a rolagem com inércia da página inicial; os movimentos duram ~0,9 s. No computador (mouse) o
+`--mola-salto` vira o deslize, porque o "pulinho" da mola parecia duro; no celular a mola continua. Com "animações
+reduzidas" tudo isso para (regra geral do `index.css`).
 
 **Tema escuro grafite no painel inteiro** (desde 18/11/2026): o grafite neutro que era só do celular (`:has(.app)` em
 `index.css`) vale também no computador; o verde-água combina com ele, e no azul-marinho antigo brigava. Página inicial,
