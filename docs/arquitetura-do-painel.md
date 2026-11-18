@@ -75,10 +75,9 @@ sempre; o resto → `InicioPC`. Os três jeitos usam esta tela; o que muda entre
    (sem `compacto`) e cada conta mostra a ação ao lado do valor ("Paguei", "Recebi", "Ver fatura"); clicar abre a
    conferência, como no celular (nunca dá baixa direto). Embaixo, "Adicionar cartões", "Arrumar" e "Jeito X · Trocar".
 
-**Cor e movimento no computador** (`components/inicio-pc.css`): só um **brilho suave atrás de tudo**, na cor do mês (verde-água ou
-coral): sai de trás da faixa, escorre pelos espaços entre os cartões e some conforme desce, antes do fim da página e das
-laterais. Recusados pelo dono em 18/11/2026: lâmpada com cone e feixes por cima da página ("um sol no meio do painel") e
-luz que segue o mouse. Os números da faixa contam até o valor ao abrir e ao trocar de mês (`Numero`). Os cartões entram um depois do
+**Cor e movimento no computador** (`components/inicio-pc.css`): o **fundo é grafite liso** (sem brilho nem luz). Recusados pelo dono em
+18/11/2026: brilho verde atrás escorrendo entre os cartões, lâmpada com cone e feixes por cima ("um sol no meio do
+painel") e luz que segue o mouse. Os números da faixa contam até o valor ao abrir e ao trocar de mês (`Numero`). Os cartões entram um depois do
 outro. Com o mouse em cima, ganham o **pulinho 3D** (`lib/mola3d.ts`): os cartões (sobem 6 px, inclinam 3°), a faixa
 inteira (4 px, 1,2°: é grande), os resumos da faixa (7°) e os botões redondos (5 px, 14°, crescem 6%). A faixa e o que
 está dentro dela flutuam juntos, cada um com a sua mola. Os cartões ganham uma sombra de profundidade que acende
