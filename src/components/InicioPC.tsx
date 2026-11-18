@@ -7,7 +7,7 @@
  * - os cartões do jeito escolhido (lib/widgets.ts), numa grade de 12 colunas, com a mesma arrumação do celular.
  * A conta nova continua na boas-vindas de pages/Inicio.tsx.
  */
-import { useState, type PointerEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { EntenderMes } from './EntenderMes'
 import { FormBaixa } from './FormBaixa'
 import { Icone } from './Icone'
@@ -18,6 +18,7 @@ import { Numero } from './Numero'
 import type { Tarefa } from '../lib/paraFazer'
 import { tx } from '../lib/textos'
 import { useMesDaInicio } from '../lib/useMesDaInicio'
+import { ligarMola3d } from '../lib/mola3d'
 import type { Ctx } from '../pages/contexto'
 import { GradeDeCartoes } from '../movel/GradeDeCartoes'
 import { CarrosselDeDicas } from '../movel/primitivas'
@@ -48,18 +49,12 @@ export function InicioPC({ c }: { c: Ctx }) {
   // o número conta até o valor ao abrir e ao trocar de mês (o mesmo Numero do resto do app)
   const valor = (p: { valor: string; numero?: number }) => (p.numero === undefined ? p.valor : <Numero valor={p.numero} formato={fmtValor} />)
 
-  // a luz da faixa segue o mouse: a posição vai direto no estilo (sem redesenhar a tela a cada movimento)
-  const aoMover = (e: PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType !== 'mouse') return
-    const alvo = (e.target as HTMLElement).closest<HTMLElement>('.faixa-pc')
-    if (!alvo) return
-    const b = alvo.getBoundingClientRect()
-    alvo.style.setProperty('--mx', `${e.clientX - b.left}px`)
-    alvo.style.setProperty('--my', `${e.clientY - b.top}px`)
-  }
+  // o "pulinho 3D" dos cartões e dos resumos da faixa: uma mola de verdade, que emenda entrar e sair sem tranco (lib/mola3d.ts)
+  const refRaiz = useRef<HTMLDivElement>(null)
+  useEffect(() => (refRaiz.current ? ligarMola3d(refRaiz.current, '.widgets-pc:not(.arrumando) .widget, .faixa-pc-resumo') : undefined), [])
 
   return (
-    <div className="pagina inicio inicio-pc" data-t={principal.tom} onPointerMove={aoMover}>
+    <div className="pagina inicio inicio-pc" data-t={principal.tom} ref={refRaiz}>
       <section className="faixa-pc" data-t={principal.tom} aria-label={tx('Resumo')}>
         <header className="faixa-pc-topo">
           <h1>
@@ -79,7 +74,7 @@ export function InicioPC({ c }: { c: Ctx }) {
           {outros.length > 0 && (
             <div className="faixa-pc-resumos">
               {outros.map((p) => (
-                <button key={p.id} className="faixa-pc-resumo" data-t={p.tom} onClick={p.pilula?.acao}>
+                <button key={p.id} className="faixa-pc-resumo" data-t={p.tom} data-3d="7" onClick={p.pilula?.acao}>
                   <span className="faixa-pc-resumo-rotulo">{p.rotulo}</span>
                   <b>{valor(p)}</b>
                   {p.sub && <small>{p.sub}</small>}
