@@ -292,6 +292,39 @@ const medir=()=>{
     await t.fechar()
   }
 
+  // ---------- barra de abas: segurar e arrastar a lente; trocar de tela ----------
+  {
+    const t = await iniciar({ perfil: {...demo.perfil, detalhe:'equilibrado'}, dados: demo.dados, porta: 4950+Math.floor(Math.random()*40), dpr: 1, toque:true })
+    const p=t.page
+    await p.setViewportSize({ width: 390, height: 844 }); await abrir(p, `${t.url}#/inicio`)
+    const cdp=await p.context().newCDPSession(p)
+    const bs=await p.locator('.abas-movel-nova > button').evaluateAll(b=>b.map(x=>{const r=x.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}}))
+    const dedo=(type,pt)=>cdp.send('Input.dispatchTouchEvent',{type,touchPoints:type==='touchEnd'?[]:[{x:pt.x,y:pt.y}]})
+    await dedo('touchStart',bs[0]); await esperar(p,350)
+    ok(await p.locator('.abas-movel-nova.arrastando').count()===1, 'segurar a barra pega a lente')
+    for (let k=1;k<=10;k++){ await dedo('touchMove',{x:bs[0].x+(bs[2].x-bs[0].x)*k/10,y:bs[0].y}); await esperar(p,25) }
+    await esperar(p,200)
+    const lente=await p.locator('.abas-movel-nova .lente').boundingBox(), alvo=await p.locator('.abas-movel-nova > button').nth(2).boundingBox()
+    ok(await p.locator('.abas-movel-nova button.sob-lente').getAttribute('data-tour')==='nav-analise' && Math.abs((lente.x+lente.width/2)-(alvo.x+alvo.width/2))<8,
+      `a lente segue o dedo e aumenta a aba embaixo dela (${await p.locator('.abas-movel-nova button.sob-lente').getAttribute('data-tour')}, lente ${Math.round(lente.x+lente.width/2)} × aba ${Math.round(alvo.x+alvo.width/2)})`)
+    ok(await p.evaluate(()=>location.hash)==='#/inicio', 'enquanto arrasta, a tela não troca')
+    await dedo('touchEnd',bs[2]); await esperar(p,1300)
+    ok(await p.evaluate(()=>location.hash)==='#/analise' && await p.locator('.abas-movel-nova.arrastando').count()===0
+      && await p.locator('.abas-movel-nova button[data-tour="nav-analise"].ativo').count()===1, 'ao soltar, abre a aba que ficou embaixo')
+    await dedo('touchStart',bs[1]); await dedo('touchMove',{x:bs[1].x,y:bs[1].y-40}); await esperar(p,400); await dedo('touchEnd',bs[1]); await esperar(p,800)
+    ok(await p.evaluate(()=>location.hash)==='#/analise' && await p.locator('.abas-movel-nova.arrastando').count()===0, 'arrastar para cima não pega a lente nem troca de tela')
+    // toque rápido: a aba acende na hora e a tela troca; voltar do navegador volta à tela anterior
+    await p.locator('.abas-movel-nova button[data-tour="nav-lancamentos"]').tap(); await esperar(p,1200)
+    ok(await p.evaluate(()=>location.hash)==='#/lancamentos' && await p.locator('.lanc-movel').count()===1, 'tocar numa aba abre a tela')
+    await p.goBack(); await esperar(p,1200)
+    ok(await p.evaluate(()=>location.hash)==='#/analise' && await p.locator('.abas-movel-nova button[data-tour="nav-analise"].ativo').count()===1, 'o "voltar" do celular volta à tela anterior')
+    // tela comprida rolada: trocar de aba começa no topo
+    await p.evaluate(()=>window.scrollTo(0, 900)); await esperar(p,400)
+    await p.locator('.abas-movel-nova button[data-tour="nav-inicio"]').tap(); await esperar(p,1200)
+    ok(await p.evaluate(()=>window.scrollY)===0, 'a tela nova abre no topo')
+    await t.fechar()
+  }
+
   {
   const t = await iniciar({ perfil: {...demo.perfil, detalhe:'equilibrado'}, dados: demo.dados, porta: 4950+Math.floor(Math.random()*40), dpr: 1, toque:true })
   const p=t.page

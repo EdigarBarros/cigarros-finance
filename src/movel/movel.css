@@ -323,6 +323,48 @@ button.linha-movel:active { opacity: .7; }
 .abas-movel-nova.encolhida button { min-height: 44px; }
 .abas-movel-nova.encolhida button > span { opacity: 0; max-height: 0; }
 
+/* segurar e arrastar: a lente vira uma gota de vidro que segue o dedo e aumenta a aba embaixo (Casca.tsx). Sem rolagem nem
+   menu de "copiar" do sistema ao segurar a barra. */
+.abas-movel-nova { touch-action: none; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.abas-movel-nova .lente { transition: transform .6s var(--mola), width .6s var(--mola), height .4s var(--mola), background-color .2s, box-shadow .2s; }
+/* a gota: duas camadas por dentro da lente, que crescem sem mexer na posição dela (o "scale" na própria lente também
+   multiplicaria o deslocamento, e a lente correria na frente do dedo) */
+.abas-movel-nova .lente::before, .abas-movel-nova .lente::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; opacity: 0; scale: 1;
+  transition: opacity .2s, scale .4s var(--mola-salto);
+}
+.abas-movel-nova .lente::before {
+  background: color-mix(in srgb, #fff 12%, transparent);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .38), inset 0 1px 0 rgba(255, 255, 255, .5), 0 12px 28px -10px rgba(0, 0, 0, .5);
+}
+:root:not([data-tema='escuro']) .abas-movel-nova .lente::before { background: rgba(255, 255, 255, .55); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .9), 0 12px 28px -10px rgba(10, 20, 40, .35); }
+.abas-movel-nova .lente::after {
+  padding: 1.5px; background: conic-gradient(from 120deg, #ff8ad8, #8fb8ff, #6ff5cf, #ffe788, #ff8ad8);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+}
+/* seguindo o dedo, sem atraso: a lente em si fica transparente e só a gota (por dentro) cresce e brilha; ela fica atrás dos
+   ícones, então a aba embaixo aparece nítida e maior dentro dela */
+.abas-movel.abas-movel-nova.arrastando .lente { transition: background-color .2s, box-shadow .2s; background: transparent; box-shadow: none; }
+.abas-movel-nova.arrastando .lente::before { opacity: 1; scale: 1.16 1.3; }
+.abas-movel-nova.arrastando .lente::after { opacity: .55; scale: 1.16 1.3; }
+.abas-movel-nova button svg { transition: transform .35s var(--mola-salto); }
+.abas-movel-nova button > span { transition: opacity .25s, max-height .35s var(--mola), transform .35s var(--mola-salto); }
+.abas-movel-nova.arrastando button.sob-lente { color: var(--texto); }
+.abas-movel-nova.arrastando button.sob-lente svg { transform: scale(1.28); }
+.abas-movel-nova.arrastando button.sob-lente > span { transform: scale(1.12); }
+.abas-movel-nova.arrastando button:active { transform: none; }
+
+/* trocar de tela no celular: a tela entra de uma vez, num sopro (sem a cascata lenta do computador) */
+.app.movel .pagina > * { animation: surgir-celular .3s var(--mola) backwards; animation-delay: 0s; }
+.app.movel .pagina > :nth-child(2) { animation-delay: .03s; }
+.app.movel .pagina > :nth-child(n+3) { animation-delay: .06s; }
+@keyframes surgir-celular { from { opacity: 0; transform: translateY(8px); } }
+/* os cartões fora da vista só são calculados e pintados quando chegam perto dela: trocar de tela desenha só o que aparece
+   (o tamanho que eles ocupavam fica guardado, então a rolagem não pula) */
+.app.movel .widgets-movel > *, .app.movel .consultor-movel-tela > *, .app.movel .invest-movel-tela > *, .app.movel .dia-movel {
+  content-visibility: auto; contain-intrinsic-size: auto 260px;
+}
+
 /* com uma folha aberta (lançar, adicionar cartões, mais…), a barra de abas e o "+" saem da frente */
 .app.movel:has(.modal-fundo) .abas-movel-nova { visibility: hidden; }
 

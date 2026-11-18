@@ -1227,6 +1227,17 @@ não abria nada.
 - Abas fixas: **Início · Lançamentos · Consultor · Mais**. "Mais" abre uma folha com as outras telas ligadas e os
   Ajustes, e fica marcada quando a tela aberta está lá. Rolando para baixo a barra encolhe (some o nome); não há alça para
   esconder.
+- Segurar a barra (220 ms) ou arrastar o dedo de lado nela pega a lente: ela vira uma gota de vidro com borda furta-cor, segue
+  o dedo e aumenta a aba que está embaixo; soltar abre essa aba (subir o dedo cancela). A posição vai direto no estilo da
+  lente, sem redesenhar a barra a cada quadro, e o aumento fica nas camadas de dentro dela (`::before`/`::after`): com
+  `scale` na própria lente o deslocamento também cresceria e ela correria na frente do dedo. Só no celular.
+- Trocar de tela é instantâneo para o toque: a aba acende na hora (estado só da barra) e a tela nova é desenhada numa
+  transição (`startTransition` em `irPara`), num desenho só. O endereço muda com `history.pushState` (o "hashchange"
+  faria um segundo desenho com urgência) e a volta ao topo acontece no quadro em que a tela nova aparece. As telas do
+  celular são baixadas em segundo plano logo que o painel abre (`carregarRestante`), antes das outras; os cartões fora
+  da vista têm `content-visibility: auto` (só são calculados quando chegam perto); e a tela entra num sopro só (0,3 s,
+  sem a cascata do computador). Guardar as telas abertas escondidas (`<Activity>`) foi medido e piorou: o contexto muda
+  a cada desenho, então elas são redesenhadas do mesmo jeito e ainda gastam o aparelho em segundo plano.
 
 **O topo que desliza** (`HeroDeslizante` em `src/movel/primitivas.tsx`): enquanto o dedo arrasta, só os pontos acompanham
 (uma conta por quadro). A tela só fica sabendo da página nova (cor do topo, lista de baixo, lado das dívidas, cartão

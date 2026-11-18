@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { saldosDoAno, sobrasPorMes } from '../lib/saldoCorrido'
 import { FormSaldoInicial } from './SaldoInicial'
 import { sugestoes, type Sugestao } from '../lib/adaptacao'
@@ -82,16 +82,29 @@ const Metas = lazy(() => paginas.Metas().then((m) => ({ default: m.Metas })))
 const Patrimonio = lazy(() => paginas.Patrimonio().then((m) => ({ default: m.Patrimonio })))
 const Ano = lazy(() => paginas.Ano().then((m) => ({ default: m.Ano })))
 // as telas do celular (src/movel/telas): a que ainda não tem versão própria abre a do computador, dentro da moldura do celular
-const InicioMovel = lazy(() => import('../movel/telas/InicioMovel').then((m) => ({ default: m.InicioMovel })))
-const LancamentosMovel = lazy(() => import('../movel/telas/LancamentosMovel').then((m) => ({ default: m.LancamentosMovel })))
-const ContasMovel = lazy(() => import('../movel/telas/ContasMovel').then((m) => ({ default: m.ContasMovel })))
-const CartoesMovel = lazy(() => import('../movel/telas/CartoesMovel').then((m) => ({ default: m.CartoesMovel })))
-const DividasMovel = lazy(() => import('../movel/telas/DividasMovel').then((m) => ({ default: m.DividasMovel })))
-const MetasMovel = lazy(() => import('../movel/telas/MetasMovel').then((m) => ({ default: m.MetasMovel })))
-const GuardadoMovel = lazy(() => import('../movel/telas/GuardadoMovel').then((m) => ({ default: m.GuardadoMovel })))
-const ConsultorMovel = lazy(() => import('../movel/telas/ConsultorMovel').then((m) => ({ default: m.ConsultorMovel })))
-const InvestMovel = lazy(() => import('../movel/telas/InvestMovel').then((m) => ({ default: m.InvestMovel })))
-const AnoMovel = lazy(() => import('../movel/telas/AnoMovel').then((m) => ({ default: m.AnoMovel })))
+// as telas do celular (src/movel/telas): também baixadas em segundo plano, antes das outras quando o painel abre no celular
+const telasMovel = {
+  InicioMovel: () => import('../movel/telas/InicioMovel'),
+  LancamentosMovel: () => import('../movel/telas/LancamentosMovel'),
+  ConsultorMovel: () => import('../movel/telas/ConsultorMovel'),
+  ContasMovel: () => import('../movel/telas/ContasMovel'),
+  CartoesMovel: () => import('../movel/telas/CartoesMovel'),
+  DividasMovel: () => import('../movel/telas/DividasMovel'),
+  MetasMovel: () => import('../movel/telas/MetasMovel'),
+  GuardadoMovel: () => import('../movel/telas/GuardadoMovel'),
+  InvestMovel: () => import('../movel/telas/InvestMovel'),
+  AnoMovel: () => import('../movel/telas/AnoMovel'),
+}
+const InicioMovel = lazy(() => telasMovel.InicioMovel().then((m) => ({ default: m.InicioMovel })))
+const LancamentosMovel = lazy(() => telasMovel.LancamentosMovel().then((m) => ({ default: m.LancamentosMovel })))
+const ContasMovel = lazy(() => telasMovel.ContasMovel().then((m) => ({ default: m.ContasMovel })))
+const CartoesMovel = lazy(() => telasMovel.CartoesMovel().then((m) => ({ default: m.CartoesMovel })))
+const DividasMovel = lazy(() => telasMovel.DividasMovel().then((m) => ({ default: m.DividasMovel })))
+const MetasMovel = lazy(() => telasMovel.MetasMovel().then((m) => ({ default: m.MetasMovel })))
+const GuardadoMovel = lazy(() => telasMovel.GuardadoMovel().then((m) => ({ default: m.GuardadoMovel })))
+const ConsultorMovel = lazy(() => telasMovel.ConsultorMovel().then((m) => ({ default: m.ConsultorMovel })))
+const InvestMovel = lazy(() => telasMovel.InvestMovel().then((m) => ({ default: m.InvestMovel })))
+const AnoMovel = lazy(() => telasMovel.AnoMovel().then((m) => ({ default: m.AnoMovel })))
 /** As telas que já têm versão de celular (com o topo colorido e a fileira de ações, sem o "+"). */
 const TELAS_DO_CELULAR: Pagina[] = ['inicio', 'lancamentos', 'analise', 'invest', 'contas', 'cartoes', 'dividas', 'metas', 'patrimonio', 'ano']
 const janelas = {
@@ -115,9 +128,12 @@ const Questionario = lazy(() => import('./Questionario').then((m) => ({ default:
 const Tour = lazy(() => import('./Tour').then((m) => ({ default: m.Tour })))
 
 /** Com o painel já na tela e o aparelho parado, baixa as outras telas e janelas para a troca de tela ser instantânea. */
-function carregarRestante() {
-  // Configurações e o lançamento primeiro: são o que a pessoa mais abre e não pode clicar e ver nada acontecer
-  const fila = [janelas.Configuracoes, janelas.Formularios, ...Object.values(paginas), ...Object.values(janelas)]
+function carregarRestante(celular: boolean) {
+  // Configurações e o lançamento primeiro: são o que a pessoa mais abre e não pode clicar e ver nada acontecer.
+  // No celular, as telas dele vêm antes de tudo (as do computador ficam por último: só servem de peças).
+  const fila = celular
+    ? [...Object.values(telasMovel), janelas.Formularios, janelas.Configuracoes, ...Object.values(janelas), ...Object.values(paginas)]
+    : [janelas.Configuracoes, janelas.Formularios, ...Object.values(paginas), ...Object.values(janelas)]
   const proximo = () => {
     const f = fila.shift()
     if (!f) return
@@ -166,7 +182,6 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const [ano, setAno] = useState(() => mesAntesDeAtualizar()?.ano ?? hoje.getFullYear())
   const [mes, setMes] = useState(() => mesAntesDeAtualizar()?.mes ?? hoje.getMonth() + 1)
   useEffect(() => lembrarMes(ano, mes), [ano, mes])
-  useEffect(carregarRestante, [])
   const [avisoFatura, setAvisoFatura] = useState<{ compraId: string; cartaoId: string; cartao: string; fechamento: number; depoisDoFechamento: boolean; ano: number; mes: number; anoCompra: number } | null>(null)
   const [form, setForm] = useState<{ inicial?: Lancamento; tipo?: Tipo; preset?: Partial<Lancamento>; cartaoId?: string } | null>(null)
   const [menu, setMenu] = useState(false)
@@ -215,6 +230,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const baixando = useRef(new Set<string>())
   const esfriando = useRef(false)
   const mobile = useMobile()
+  // a fila de telas para baixar em segundo plano depende só de como o painel abriu
+  useEffect(() => carregarRestante(mobile), []) // eslint-disable-line react-hooks/exhaustive-deps
   // o "+" do celular recolhe enquanto a pessoa rola para baixo e some quando a tela já mostra os botões de lançar
   const recolherMais = useRecolherAoRolar(mobile)
   const barra = useBarraLateral()
@@ -308,18 +325,38 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     )
   }, [mes, ano])
 
+  const rolarAoTopo = useRef(false)
   const irPara = (p: Pagina) => {
-    setBancoAberto(null)
-    setCartaoAberto(null)
-    setCompraDestacada(null)
     idaParaCartao.current = null
-    setMais(false)
-    setMenu(false)
-    barra.fechar()
+    const trocar = () => {
+      setBancoAberto(null)
+      setCartaoAberto(null)
+      setCompraDestacada(null)
+      setMais(false)
+      setMenu(false)
+      barra.fechar()
+      setPagina(p)
+    }
+    if (mobile) {
+      // Celular: a troca inteira vai numa transição (um desenho só, com a tela nova, que o toque seguinte pode
+      // interromper). A barra de abas já acende a aba sozinha (Casca.tsx), então nada espera por esse desenho. O endereço
+      // muda sem o evento "hashchange", que faria um segundo desenho com urgência; a volta ao topo é no mesmo quadro em
+      // que a tela nova aparece, para a antiga não pular para cima antes.
+      if (p === paginaAtual) { trocar(); window.scrollTo({ top: 0, behavior: semMovimento() ? 'auto' : 'smooth' }); return } // tocar na aba aberta sobe ao topo
+      if (location.hash !== `#/${p}`) history.pushState(null, '', `#/${p}`)
+      rolarAoTopo.current = true
+      startTransition(trocar)
+      return
+    }
+    trocar()
     location.hash = `/${p}`
-    setPagina(p)
     window.scrollTo({ top: 0 })
   }
+  useLayoutEffect(() => {
+    if (!rolarAoTopo.current) return
+    rolarAoTopo.current = false
+    window.scrollTo({ top: 0 })
+  }, [paginaMostrada])
 
   // Compras de fatura renegociada saem das contas do mês: a fatura virou dívida, e o que sai do bolso são as parcelas dela.
   const comFaturas = v.cartoes && !cartoes.semTabela
