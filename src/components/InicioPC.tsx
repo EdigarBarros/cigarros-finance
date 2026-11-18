@@ -49,13 +49,14 @@ export function InicioPC({ c }: { c: Ctx }) {
   // o número conta até o valor ao abrir e ao trocar de mês (o mesmo Numero do resto do app)
   const valor = (p: { valor: string; numero?: number }) => (p.numero === undefined ? p.valor : <Numero valor={p.numero} formato={fmtValor} />)
 
-  // o "pulinho 3D" dos cartões e dos resumos da faixa: uma mola de verdade, que emenda entrar e sair sem tranco (lib/mola3d.ts)
+  // o "pulinho 3D" dos cartões, da faixa e do que está dentro dela (resumos e botões redondos): uma mola de verdade, que emenda entrar e sair sem tranco (lib/mola3d.ts)
   const refRaiz = useRef<HTMLDivElement>(null)
-  useEffect(() => (refRaiz.current ? ligarMola3d(refRaiz.current, '.widgets-pc:not(.arrumando) .widget, .faixa-pc-resumo') : undefined), [])
+  useEffect(() => (refRaiz.current ? ligarMola3d(refRaiz.current, '.widgets-pc:not(.arrumando) .widget, .faixa-pc, .faixa-pc-resumo, .faixa-pc-acoes button') : undefined), [])
 
   return (
     <div className="pagina inicio inicio-pc" data-t={principal.tom} ref={refRaiz}>
-      <section className="faixa-pc" data-t={principal.tom} aria-label={tx('Resumo')}>
+      {/* a faixa inteira flutua pouco (é grande); os resumos e os botões dentro dela, mais */}
+      <section className="faixa-pc" data-t={principal.tom} data-3d="1.2" data-sobe="4" data-cresce="0.004" aria-label={tx('Resumo')}>
         <header className="faixa-pc-topo">
           <h1>
             {c.perfil.nome ? <>{tx('Olá,')} <span translate="no">{c.perfil.nome}</span>!</> : tx('Olá!')}
@@ -87,7 +88,7 @@ export function InicioPC({ c }: { c: Ctx }) {
 
         <div className="faixa-pc-acoes">
           {acoes.map((a) => (
-            <button key={a.id} onClick={a.acao} data-tour={a.tour}>
+            <button key={a.id} onClick={a.acao} data-tour={a.tour} data-3d="14" data-sobe="5" data-cresce="0.06">
               <span className="faixa-pc-circulo" aria-hidden="true"><Icone nome={a.icone} tamanho={22} /></span>
               <span>{a.rotulo}</span>
             </button>
