@@ -75,17 +75,20 @@ sempre; o resto → `InicioPC`. Os três jeitos usam esta tela; o que muda entre
    (sem `compacto`) e cada conta mostra a ação ao lado do valor ("Paguei", "Recebi", "Ver fatura"); clicar abre a
    conferência, como no celular (nunca dá baixa direto). Embaixo, "Adicionar cartões", "Arrumar" e "Jeito X · Trocar".
 
-**Cor e movimento no computador** (`components/inicio-pc.css`): a cor da faixa escorre para o fundo da página, como o topo
-do celular. Os números da faixa contam até o valor ao abrir e ao trocar de mês (`Numero`). Os cartões entram um depois do
-outro. Com o mouse em cima, cartões e resumos da faixa ganham o **pulinho 3D** (`lib/mola3d.ts`): sobem 6 px, crescem um
-tico e inclinam para o lado do mouse (3° nos cartões, 7° nos resumos), com uma sombra de profundidade que acende
+**Cor e movimento no computador** (`components/inicio-pc.css`): uma **luz acesa no topo** da página, na cor do mês (verde-água
+ou coral): um ponto forte colado no topo, um cone que se abre para baixo e um clarão largo; uma máscara tira força aos
+poucos conforme desce, e a luz some antes do fim da página, como uma lâmpada que não alcança o chão. Ela aparece em volta
+da faixa e nos espaços entre os cartões; no tema claro, com metade da força. Os números da faixa contam até o valor ao abrir e ao trocar de mês (`Numero`). Os cartões entram um depois do
+outro. Com o mouse em cima, ganham o **pulinho 3D** (`lib/mola3d.ts`): os cartões (sobem 6 px, inclinam 3°), a faixa
+inteira (4 px, 1,2°: é grande), os resumos da faixa (7°) e os botões redondos (5 px, 14°, crescem 6%). A faixa e o que
+está dentro dela flutuam juntos, cada um com a sua mola. Os cartões ganham uma sombra de profundidade que acende
 (`[data-flutua]`). O movimento é uma mola calculada quadro a quadro (ζ ≈ 0,82: sobe em ~0,35 s, assenta em ~0,7 s), a ideia
 do `quickTo` do GSAP dos sites de referência: entrar, sair e mexer o mouse no meio do caminho emendam com a velocidade que o
 cartão já tinha, sem recomeçar do zero como a transição de CSS (que parecia travada). Só `transform`; parado, o estilo sai
 e o texto volta nítido. "O mouse está em cima?" usa o lugar de repouso do cartão, senão ele tremeria ao subir e fugir do
 mouse. Testados e recusados pelo dono em 18/11/2026: luz que segue o mouse dentro dos cartões, contorno que se desenha em
-volta e a luz da faixa seguindo o mouse (redesenhava a faixa a cada movimento e travava). As ações redondas, as linhas
-(o ícone cresce um pouco), as setas dos títulos e o menu lateral também respondem ao mouse. Tudo com a curva `--deslize` (`index.css`): sai rápido e vai freando aos poucos até parar, sem
+volta e a luz da faixa seguindo o mouse (redesenhava a faixa a cada movimento e travava). As linhas (o ícone cresce um
+pouco), as setas dos títulos e o menu lateral também respondem ao mouse. Tudo com a curva `--deslize` (`index.css`): sai rápido e vai freando aos poucos até parar, sem
 passar do ponto, como a rolagem com inércia da página inicial; os movimentos duram ~0,9 s. No computador (mouse) o
 `--mola-salto` vira o deslize, porque o "pulinho" da mola parecia duro; no celular a mola continua. Com "animações
 reduzidas" tudo isso para (regra geral do `index.css`).

@@ -11,16 +11,22 @@
    Com "animações reduzidas" (data-movimento='reduzido', index.css) transições e entradas somem; a mola também não liga.
    ========================================================================== */
 
-/* ---------- a cor da faixa escorre para o fundo da página, como o topo do celular ---------- */
-.inicio-pc { --tom: #3f9488; position: relative; isolation: isolate; }
+/* ---------- a luz do fundo: como uma lâmpada acesa no topo da página ----------
+   Três camadas na cor do mês (verde-água quando sobra, coral quando falta): o ponto mais forte, colado no topo; o cone
+   de luz que se abre para baixo; e o clarão largo que ilumina a página. Uma máscara apaga tudo aos poucos de cima para
+   baixo: a luz vai perdendo força conforme desce e some antes do fim, como uma luz que não alcança o chão. Não se mexe
+   (nada de redesenho com o mouse). */
+.inicio-pc { --tom: #3f9488; --forca: 1; position: relative; isolation: isolate; }
 .inicio-pc[data-t='falta'] { --tom: #a8606b; }
+:root[data-tema='claro'] .inicio-pc { --forca: .55; }
 .inicio-pc::before {
-  content: ''; position: absolute; z-index: -1; inset: -90px 0 auto; height: 760px; pointer-events: none;
-  background: radial-gradient(70% 75% at 40% 0%, color-mix(in srgb, var(--tom) 24%, transparent), transparent 72%);
-  transition: background .8s var(--deslize);
-}
-:root[data-tema='claro'] .inicio-pc::before {
-  background: radial-gradient(70% 75% at 40% 0%, color-mix(in srgb, var(--tom) 13%, transparent), transparent 72%);
+  content: ''; position: absolute; z-index: -1; inset: -120px -40px auto; height: min(2200px, 260vh); pointer-events: none;
+  background:
+    radial-gradient(34% 12% at 50% 0%, color-mix(in srgb, var(--tom) calc(75% * var(--forca)), transparent), transparent 100%),
+    radial-gradient(55% 45% at 50% 0%, color-mix(in srgb, var(--tom) calc(45% * var(--forca)), transparent), transparent 100%),
+    radial-gradient(100% 80% at 50% 0%, color-mix(in srgb, var(--tom) calc(26% * var(--forca)), transparent), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .85) 25%, rgba(0, 0, 0, .45) 55%, transparent 92%);
+          mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .85) 25%, rgba(0, 0, 0, .45) 55%, transparent 92%);
 }
 
 /* ---------- a faixa do topo: um degradê escuro por estado (as mesmas cores do topo do celular, src/movel/tom.ts) ---------- */
@@ -28,8 +34,7 @@
   --faixa: linear-gradient(135deg, #3f9488 0%, #25685f 45%, #163d38 100%);
   --brilho: #3f9488;
   position: relative; display: grid; gap: 22px; padding: 22px 28px 24px; border-radius: 28px; overflow: hidden;
-  background: var(--faixa); color: #fff; box-shadow: 0 24px 50px -34px rgba(0, 0, 0, .6);
-  transition: box-shadow .9s var(--deslize);
+  background: var(--faixa); color: #fff; box-shadow: 0 30px 60px -36px color-mix(in srgb, var(--brilho) 60%, rgba(0, 0, 0, .6));
 }
 .faixa-pc[data-t='falta'] { --faixa: linear-gradient(135deg, #a8606b 0%, #763a45 45%, #3e2025 100%); --brilho: #a8606b; }
 /* um brilho parado no canto de cima, para a faixa não ficar chapada (não segue o mouse: redesenhar o degradê a cada
@@ -38,7 +43,6 @@
   content: ''; position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(560px circle at 22% 0%, rgba(255, 255, 255, .16), transparent 70%);
 }
-.faixa-pc:hover { box-shadow: 0 36px 70px -40px color-mix(in srgb, var(--brilho) 85%, transparent); }
 .faixa-pc > * { position: relative; }
 
 .faixa-pc-topo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -98,7 +102,8 @@
   transition: background .5s var(--deslize), transform .9s var(--deslize), box-shadow .9s var(--deslize);
 }
 .faixa-pc-circulo svg { transition: transform .9s var(--deslize); }
-.faixa-pc-acoes button:hover .faixa-pc-circulo { background: rgba(255, 255, 255, .28); transform: translateY(-4px); box-shadow: 0 14px 24px -14px rgba(0, 0, 0, .6); }
+/* o botão inteiro sobe e inclina com a mola (lib/mola3d.ts); aqui só o círculo clareia e ganha sombra */
+.faixa-pc-acoes button:hover .faixa-pc-circulo { background: rgba(255, 255, 255, .28); box-shadow: 0 14px 24px -14px rgba(0, 0, 0, .6); }
 .faixa-pc-acoes button:hover .faixa-pc-circulo svg { transform: scale(1.1); }
 .faixa-pc-acoes button:active .faixa-pc-circulo { transform: scale(.9); transition-duration: .25s; }
 .faixa-pc button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }

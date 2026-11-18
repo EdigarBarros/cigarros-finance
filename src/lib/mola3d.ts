@@ -13,8 +13,10 @@ import { semMovimento } from './tema'
  * Só mexe em `transform` (a placa de vídeo faz o resto, sem redesenhar a página) e, parado, tira o estilo de vez (o texto
  * volta a ficar nítido). Só com mouse; toque e "animações reduzidas" ficam de fora.
  *
- * `seletor`: os elementos que flutuam (procurados a partir do alvo do evento). Cada um pode ter `data-3d="<graus>"` para
- * dizer quanto inclina (padrão 3). Devolve a função que desliga.
+ * `seletor`: os elementos que flutuam (procurados a partir do alvo do evento). Um pode estar dentro do outro (a faixa do
+ * topo e os botões dela): com o mouse no botão, os dois flutuam, cada um com a sua mola. Cada elemento pode dizer quanto
+ * inclina (`data-3d="<graus>"`, padrão 3), quanto sobe (`data-sobe="<px>"`, padrão 6) e quanto cresce
+ * (`data-cresce="<fração>"`, padrão 0,012). Devolve a função que desliga.
  */
 export function ligarMola3d(raiz: HTMLElement, seletor: string): () => void {
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return () => {}
@@ -22,13 +24,11 @@ export function ligarMola3d(raiz: HTMLElement, seletor: string): () => void {
   /** Rigidez e atrito da mola: ζ = 18 / (2·√120) ≈ 0,82 → sobe em ~0,35 s e assenta em ~0,7 s, sem tranco. */
   const RIGIDEZ = 120
   const ATRITO = 18
-  const SOBE = -6 // px
-  const CRESCE = 0.012
 
   type Canal = { x: number; v: number; alvo: number }
   /** `base`: onde o cartão fica parado (medido sem a transformação, com a rolagem da hora). Decidir "o mouse está em
    *  cima?" pela posição transformada faria o cartão tremer: ele sobe, a borda foge do mouse, ele desce, o mouse volta… */
-  interface Estado { y: Canal; s: Canal; rx: Canal; ry: Canal; base: DOMRect; rolagem: number }
+  interface Estado { y: Canal; s: Canal; rx: Canal; ry: Canal; base: DOMRect; rolagem: number; sobe: number; cresce: number }
   const estados = new Map<HTMLElement, Estado>()
   const canal = (): Canal => ({ x: 0, v: 0, alvo: 0 })
   let quadro = 0
@@ -41,7 +41,10 @@ export function ligarMola3d(raiz: HTMLElement, seletor: string): () => void {
       el.style.transform = ''
       const base = el.getBoundingClientRect()
       el.style.transform = t
-      e = { y: canal(), s: canal(), rx: canal(), ry: canal(), base, rolagem: window.scrollY }
+      e = {
+        y: canal(), s: canal(), rx: canal(), ry: canal(), base, rolagem: window.scrollY,
+        sobe: Number(el.dataset.sobe ?? 6), cresce: Number(el.dataset.cresce ?? 0.012),
+      }
       estados.set(el, e)
     }
     return e
@@ -84,7 +87,7 @@ export function ligarMola3d(raiz: HTMLElement, seletor: string): () => void {
       }
       algumMexendo = algumMexendo || mexendo
       el.style.transform =
-        `perspective(1100px) translate3d(0, ${(e.y.x * SOBE).toFixed(2)}px, 0) rotateX(${e.rx.x.toFixed(3)}deg) rotateY(${e.ry.x.toFixed(3)}deg) scale(${(1 + e.s.x * CRESCE).toFixed(4)})`
+        `perspective(1100px) translate3d(0, ${(-e.y.x * e.sobe).toFixed(2)}px, 0) rotateX(${e.rx.x.toFixed(3)}deg) rotateY(${e.ry.x.toFixed(3)}deg) scale(${(1 + e.s.x * e.cresce).toFixed(4)})`
     }
     quadro = estados.size && algumMexendo ? requestAnimationFrame(passo) : 0
     if (!quadro) antes = 0
@@ -113,16 +116,20 @@ export function ligarMola3d(raiz: HTMLElement, seletor: string): () => void {
     andar()
   }
 
-  let atual: HTMLElement | null = null
+  /** Os que estão flutuando agora (o de fora e os de dentro dele, como a faixa e um botão dela). */
+  let atuais = new Set<HTMLElement>()
   const aoMover = (ev: PointerEvent) => {
     if (ev.pointerType !== 'mouse' || semMovimento()) return
-    let el = (ev.target as Element | null)?.closest<HTMLElement>(seletor) ?? null
-    // ainda dentro do lugar de repouso do cartão de agora: continua nele (mesmo que, levantado, ele tenha saído de baixo do mouse)
-    if (atual && el !== atual && dentro(atual, ev.clientX, ev.clientY)) el = atual
-    if (el !== atual) { if (atual) soltar(atual); atual = el }
-    if (el) mirar(el, ev.clientX, ev.clientY)
+    const novos = new Set<HTMLElement>()
+    // o elemento debaixo do mouse e os que o contêm
+    for (let el = (ev.target as Element | null)?.closest<HTMLElement>(seletor) ?? null; el; el = el.parentElement?.closest<HTMLElement>(seletor) ?? null) novos.add(el)
+    // ainda dentro do lugar de repouso: continua flutuando (mesmo que, levantado, tenha saído de baixo do mouse)
+    for (const el of atuais) if (!novos.has(el) && dentro(el, ev.clientX, ev.clientY)) novos.add(el)
+    for (const el of atuais) if (!novos.has(el)) soltar(el)
+    atuais = novos
+    for (const el of novos) mirar(el, ev.clientX, ev.clientY)
   }
-  const aoSair = () => { if (atual) soltar(atual); atual = null }
+  const aoSair = () => { for (const el of atuais) soltar(el); atuais = new Set() }
 
   raiz.addEventListener('pointermove', aoMover)
   raiz.addEventListener('pointerleave', aoSair)
