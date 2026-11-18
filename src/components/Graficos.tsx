@@ -73,7 +73,7 @@ const barra = (label: string, cores: readonly [string, string], data: (number | 
   type: 'bar' as const, label, data, order: 2, ...(stack ? { stack } : {}),
   backgroundColor: degradeBarra(cores), hoverBackgroundColor: cores[0],
   borderRadius: compacto ? 3 : 5, borderSkipped: 'start' as const,
-  maxBarThickness: compacto ? 10 : 20, categoryPercentage: 0.64, barPercentage: 0.84,
+  maxBarThickness: compacto ? 14 : 20, categoryPercentage: 0.64, barPercentage: 0.84,
 })
 
 /** Fundo listrado na cor da barra: o que ainda não aconteceu (o desenho avisa, sem depender só da cor). */
@@ -98,7 +98,7 @@ const barraPrevista = (label: string, cor: string, data: (number | null)[], comp
   type: 'bar' as const, label, data, order: 2, stack, previsto: true,
   backgroundColor: listrado(cor), hoverBackgroundColor: cor, borderColor: cor, borderWidth: 1.5,
   borderRadius: compacto ? 3 : 5, borderSkipped: false as const,
-  maxBarThickness: compacto ? 10 : 20, categoryPercentage: 0.64, barPercentage: 0.84,
+  maxBarThickness: compacto ? 14 : 20, categoryPercentage: 0.64, barPercentage: 0.84,
 })
 
 /** Linha fina e suave (curva monotônica, sem exageros), com bolinhas discretas com contorno da cor do cartão. */
@@ -137,7 +137,7 @@ function opcoes(c: ReturnType<typeof useCoresDoGrafico>, {
   formatar?: (n: number) => string
 }): ChartOptions<'bar'> {
   const ticksReais = compacto
-    ? { callback: (v: string | number) => milhar(Number(v)), maxTicksLimit: 5, font: { size: 9 } }
+    ? { callback: (v: string | number) => milhar(Number(v)), maxTicksLimit: 5, font: { size: 10.5 }, padding: 4 }
     : { callback: (v: string | number) => semCentavos(Number(v), formatar), maxTicksLimit: 7, padding: 8 }
   return {
     maintainAspectRatio: false,
@@ -149,8 +149,8 @@ function opcoes(c: ReturnType<typeof useCoresDoGrafico>, {
       legend: {
         display: legenda, position: 'bottom',
         labels: {
-          usePointStyle: true, padding: compacto ? 10 : 18, boxWidth: compacto ? 7 : 9, boxHeight: compacto ? 7 : 9,
-          font: { size: compacto ? 10 : 12, weight: 600 },
+          usePointStyle: true, padding: compacto ? 10 : 18, boxWidth: compacto ? 8 : 9, boxHeight: compacto ? 8 : 9,
+          font: { size: compacto ? 11 : 12, weight: 600 },
           // barra vira um quadradinho; linha vira um traço, como na legenda da planilha
           generateLabels: (chart) => chart.data.datasets.map((d, i) => {
             const linhaSerie = (d as { type?: string }).type === 'line'
@@ -177,7 +177,7 @@ function opcoes(c: ReturnType<typeof useCoresDoGrafico>, {
         grid: { display: false }, border: { color: c.eixo },
         ticks: {
           color: (t) => (mesDoIndice(t.index) === mesAtual ? c.textoForte : c.texto),
-          font: (t) => ({ weight: mesDoIndice(t.index) === mesAtual ? 800 : 600, size: compacto ? 9 : 11 }),
+          font: (t) => ({ weight: mesDoIndice(t.index) === mesAtual ? 800 : 600, size: compacto ? 10.5 : 11 }),
           maxRotation: 0, autoSkip: false,
           callback: (_v, i) => (compacto && rotulos.length > 6 ? rotulos[i].slice(0, 1) : rotulos[i]),
         },

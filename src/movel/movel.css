@@ -212,6 +212,11 @@ button.linha-movel:active { opacity: .7; }
 .widget-resumo-grade .widget-nota { margin: 0; }
 /* o gráfico do ano: o canvas não pode empurrar a largura do cartão */
 .widget-evolucao > :not(.widget-titulo) { min-width: 0; }
+/* maior sem ocupar a tela: os seletores (Já aconteceu / O que vem aí e a moeda) numa linha só, mais baixos, e o
+   gráfico encostando mais na borda do cartão (Início e Resumo do ano) */
+.app.movel .grafico-moeda { gap: 6px; margin-bottom: 6px; }
+.app.movel .grafico-moeda .segmentado button { height: 32px; padding: 0 8px; font-size: 12.5px; }
+.app.movel .widget-evolucao .gcp > .grafico { width: auto; margin: 0 -10px; }
 .grafico-gasto { width: 100%; height: 100px; overflow: visible; }
 .grafico-gasto line { stroke: var(--separador); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .grafico-gasto path { fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }

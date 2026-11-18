@@ -124,7 +124,7 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
     disponivel: ({ c }) => !c.contaNova,
     Corpo: ({ c }) => (
       <CartaoWidget titulo={tx('Mês a mês')} aoAbrir={() => c.irPara('ano')} className="widget-evolucao">
-        <GraficoAnual porMes={c.porMes} previsto={c.previsto} mesAtual={c.mes} altura={220} compacto semPainel v={c.v} saldoCorrido={c.saldoCorrido} ano={c.ano} />
+        <GraficoAnual porMes={c.porMes} previsto={c.previsto} mesAtual={c.mes} altura={300} compacto semPainel v={c.v} saldoCorrido={c.saldoCorrido} ano={c.ano} />
       </CartaoWidget>
     ),
   },

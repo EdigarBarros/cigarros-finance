@@ -1088,3 +1088,19 @@ a 2.7.1 (código 13) se ela ainda não foi enviada.
   Android; JDK 21, Android SDK 36 instalado nesta máquina); chave e senha vieram do Drive do dono e foram apagadas em seguida.
 - Conferido: `jarsigner -verify` ("jar verified"), impressão SHA-256 igual à da chave de upload (A7:07:94:…:5D:9D) e o
   código novo ("Contas a pagar e a receber") dentro do pacote.
+
+### 18/11/2026 — Claude — Celular: gráfico "Mês a mês" maior
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração. O app Android precisa de versão nova (2.7.3).
+
+- Pedido do Edigar (com captura do celular): o gráfico do ano na Início do celular é bom, mas ficava pequeno; queria
+  maior e completo sem ocupar a tela toda nem mudar o desenho.
+- O que tomava o espaço: 220 px de altura, os dois seletores em duas linhas cheias, 16 px de borda de cada lado e, no
+  `compacto`, barras de no máximo 10 px e letras 9/10.
+- Mudou: altura 300 no cartão da Início (`src/movel/widgets.tsx`); seletores numa linha só e mais baixos, gráfico 10 px
+  mais perto de cada borda (`src/movel/movel.css`, `.app.movel .grafico-moeda` e `.widget-evolucao .gcp > .grafico`; a
+  tela Ano ganhou a classe `widget-evolucao` no cartão "Mês a mês"); no `compacto` (`components/Graficos.tsx`), barras até
+  14 px, meses e eixo 10,5, legenda 11. Séries, linhas e cores iguais. Só o celular usa `compacto`.
+- Medido no app de demonstração (com uma compra em USD, para aparecer o BRL/USD como na captura): área do gráfico a
+  390 px de 324×220 para 344×300 (≈ +45%), cartão de 370 para 400 px; seletores numa linha a 390 e 360 px, quebrando
+  sem cortar a 320; nada sai do cartão, sem rolagem lateral, nos dois temas. A tela Ano ganha o mesmo.

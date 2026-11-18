@@ -69,7 +69,7 @@ export function AnoMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom, cor?:
               </CartaoWidget>
             </div>
             {nivel !== 'simples' && (
-              <CartaoWidget titulo={tx('Mês a mês')}>
+              <CartaoWidget titulo={tx('Mês a mês')} className="widget-evolucao">
                 <div className="pecas-do-computador">
                   <GraficoAnual porMes={c.porMes} previsto={c.previsto} mesAtual={c.mes} altura={300} compacto v={c.v} saldoCorrido={c.saldoCorrido} ano={c.ano} />
                 </div>
