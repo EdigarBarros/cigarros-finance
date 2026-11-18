@@ -77,12 +77,15 @@ sempre; o resto → `InicioPC`. Os três jeitos usam esta tela; o que muda entre
 
 **Cor e movimento no computador** (`components/inicio-pc.css`): a cor da faixa escorre para o fundo da página, como o topo
 do celular. Os números da faixa contam até o valor ao abrir e ao trocar de mês (`Numero`). Os cartões entram um depois do
-outro; com o mouse em cima, não se mexem: uma linha verde-água **se desenha em volta** do cartão (sai do canto do título,
-dá a volta e fecha; ao tirar o mouse, se desfaz pelo mesmo caminho), com uma sombra suave (`--volta`, registrada com
-`@property`, anda na transição). A luz que seguia o mouse dentro dos cartões e o cartão subindo saíram em 18/11/2026: o
-dono não gostou. A luz
-da faixa, os resumos, as ações redondas, as linhas (o ícone dá um pulinho), as setas dos títulos e o menu lateral também
-respondem ao mouse. Tudo com a curva `--deslize` (`index.css`): sai rápido e vai freando aos poucos até parar, sem
+outro. Com o mouse em cima, cartões e resumos da faixa ganham o **pulinho 3D** (`lib/mola3d.ts`): sobem 6 px, crescem um
+tico e inclinam para o lado do mouse (3° nos cartões, 7° nos resumos), com uma sombra de profundidade que acende
+(`[data-flutua]`). O movimento é uma mola calculada quadro a quadro (ζ ≈ 0,82: sobe em ~0,35 s, assenta em ~0,7 s), a ideia
+do `quickTo` do GSAP dos sites de referência: entrar, sair e mexer o mouse no meio do caminho emendam com a velocidade que o
+cartão já tinha, sem recomeçar do zero como a transição de CSS (que parecia travada). Só `transform`; parado, o estilo sai
+e o texto volta nítido. "O mouse está em cima?" usa o lugar de repouso do cartão, senão ele tremeria ao subir e fugir do
+mouse. Testados e recusados pelo dono em 18/11/2026: luz que segue o mouse dentro dos cartões, contorno que se desenha em
+volta e a luz da faixa seguindo o mouse (redesenhava a faixa a cada movimento e travava). As ações redondas, as linhas
+(o ícone cresce um pouco), as setas dos títulos e o menu lateral também respondem ao mouse. Tudo com a curva `--deslize` (`index.css`): sai rápido e vai freando aos poucos até parar, sem
 passar do ponto, como a rolagem com inércia da página inicial; os movimentos duram ~0,9 s. No computador (mouse) o
 `--mola-salto` vira o deslize, porque o "pulinho" da mola parecia duro; no celular a mola continua. Com "animações
 reduzidas" tudo isso para (regra geral do `index.css`).
