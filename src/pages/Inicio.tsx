@@ -22,6 +22,7 @@ import { CartaoAcompanhar, CartaoSugestao } from '../components/Configuracoes'
 import { Encaixe, type ItemEncaixe } from '../components/Encaixe'
 import { Modal, ReguaMeses, Segmentado } from '../components/ui'
 import { InicioSimples } from '../components/InicioSimples'
+import { InicioPC } from '../components/InicioPC'
 import { FormBaixa } from '../components/FormBaixa'
 import { BlocoConselhos } from '../components/BlocoConselhos'
 import { daquiA } from '../lib/paraFazer'
@@ -55,6 +56,11 @@ const palavras = (texto: string, atraso = 0) =>
  * a sua própria tela: o mês em palavras, uma lista única do que fazer e menos números (veja docs/arquitetura-do-painel.md).
  */
 export function Inicio(c: Ctx) {
+  // desde 18/11/2026 o computador tem a Início no desenho do celular (faixa do topo + cartões); a conta nova continua aqui
+  return c.contaNova ? <InicioDeSempre {...c} /> : <InicioPC c={c} />
+}
+
+function InicioDeSempre(c: Ctx) {
   const { r, anterior: a, mobile, v } = c
   // os números do mês (o mesmo cálculo da Início do celular): lib/useMesDaInicio.ts
   const {

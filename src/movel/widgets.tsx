@@ -20,12 +20,15 @@ import type { Tarefa } from '../lib/paraFazer'
 import type { Ctx } from '../pages/contexto'
 import type { Modulo } from '../lib/types'
 import { CartaoWidget, IconeRedondo, LinhaDeLista } from './primitivas'
+import './cartoes.css'
 
 export interface Contexto {
   c: Ctx
   m: MesDaInicio
   /** Conta do mês tocada: abre a conferência (valor e dia) antes da baixa. */
   agir: (t: Tarefa) => void
+  /** Na Início do computador: gráfico com eixo completo e, nas contas, a ação escrita ao lado do valor. */
+  computador?: boolean
 }
 
 interface DefWidget {
@@ -122,9 +125,9 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
   evolucao: {
     titulo: () => tx('Mês a mês'), icone: 'ano', descricao: () => tx('Quanto entrou, saiu e sobrou em cada mês do ano.'),
     disponivel: ({ c }) => !c.contaNova,
-    Corpo: ({ c }) => (
+    Corpo: ({ c, computador }) => (
       <CartaoWidget titulo={tx('Mês a mês')} aoAbrir={() => c.irPara('ano')} className="widget-evolucao">
-        <GraficoAnual porMes={c.porMes} previsto={c.previsto} mesAtual={c.mes} altura={300} compacto semPainel v={c.v} saldoCorrido={c.saldoCorrido} ano={c.ano} />
+        <GraficoAnual porMes={c.porMes} previsto={c.previsto} mesAtual={c.mes} altura={computador ? 320 : 300} compacto={!computador} semPainel v={c.v} saldoCorrido={c.saldoCorrido} ano={c.ano} />
       </CartaoWidget>
     ),
   },
@@ -138,7 +141,7 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
   contas: {
     titulo: () => tx('Contas do mês'), icone: 'calendario', descricao: () => tx('O que vence no mês, a pagar e a receber, na ordem do vencimento.'), modulo: 'contas',
     disponivel: ({ c, m }) => m.tarefas.lista.length > 0 || c.v.contas,
-    Corpo: ({ c, m, agir }) => {
+    Corpo: ({ c, m, agir, computador }) => {
       const lista = m.tarefas.lista
       return (
         <CartaoWidget titulo={tituloDasContas(lista)} aoAbrir={c.v.contas ? () => c.irPara('contas') : undefined}
@@ -146,7 +149,7 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
           {lista.length ? lista.slice(0, LIMITE).map((t) => (
             <LinhaDeLista key={t.chave} icone={<IconeRedondo icone={iconeDaOrigem(t)} cor={corDoEstado(t)} />}
               titulo={t.titulo} sub={t.frase} valor={t.valor} tomValor={t.entrada ? 'entrada' : t.estado === 'atrasada' ? 'alerta' : undefined}
-              aoTocar={() => agir(t)} />
+              valorSub={computador ? <span className="linha-acao">{t.botao.texto}</span> : undefined} aoTocar={() => agir(t)} />
           )) : <p className="widget-vazio">{tx('Nada para pagar ou receber em {0}.', m.nomeMes)}</p>}
         </CartaoWidget>
       )

@@ -49,6 +49,37 @@ Por que essa ordem: a primeira pergunta é a que a pessoa abre o app para respon
 
 ### 4.0 Layout OpusCash (grade da Início)
 
+> **Desde 18/11/2026 o computador tem a Início no desenho do celular** (seção 4.0.0 abaixo). As seções 4.0.1 (detalhado),
+> 4.0.2 (equilibrado) e a tela do simples (seção 5) ficam como registro: o computador não as mostra mais. A grade abaixo
+> continua valendo para a **conta nova** (boas-vindas e blocos), que segue em `pages/Inicio.tsx`.
+
+### 4.0.0 Computador: a faixa do topo e os cartões (`components/InicioPC.tsx`)
+
+A mesma ideia da Início do celular (4.25), com o espaço do computador. `pages/Inicio.tsx` escolhe: conta nova → a tela de
+sempre; o resto → `InicioPC`. Os três jeitos usam esta tela; o que muda entre eles são os cartões.
+
+1. **A faixa do topo** (`.faixa-pc`, estilos em `components/inicio-pc.css`): um degradê escuro na cor do estado do mês
+   (verde-água quando sobra, coral quando falta ou o mês está crítico; as cores de `src/movel/tom.ts`), texto branco nos dois
+   temas. Em cima: "Olá, Nome!", a pílula do jeito (`PilulaDoJeito`) e a data de hoje. À esquerda, o número grande do mês
+   ("Sobrou em novembro até hoje", com "Deve sobrar … no fim do mês" e "Entender a conta"); à direita, lado a lado, os outros
+   resumos que no celular deslizam (dinheiro guardado, falta pagar nas dívidas, investimentos), cada um com um fio na cor
+   dele e o atalho para a tela. Embaixo, as ações redondas: Gasto, Entrada, Contas, Cartões e Importar (no computador cabe
+   tudo: sem o "Mais"). Os resumos, as ações e as dicas saem de `src/movel/resumosDaInicio.ts`, o mesmo do celular. Até
+   1100 px a faixa empilha.
+2. **As dicas** (convite para importar e a sugestão do momento), lado a lado.
+3. **Os cartões** (`src/movel/GradeDeCartoes.tsx`, os mesmos de `src/movel/widgets.tsx`), com a **mesma arrumação do
+   celular** (`perfis.celular`): o que a pessoa adiciona, tira ou muda de ordem num aparelho vale no outro. A grade tem 12
+   colunas (`linhasDoComputador` em `lib/widgets.ts`): o Mês a mês ocupa 8 e o Resumo do mês 4 (ao lado, um número embaixo do
+   outro), os grandes 6 (dois por linha) e os pequenos 3; a sobra de cada linha vai para os cartões dela, então nenhuma
+   linha fica com buraco. Cartões da mesma linha ficam da mesma altura. No computador, o gráfico do ano tem o eixo completo
+   (sem `compacto`) e cada conta mostra a ação ao lado do valor ("Paguei", "Recebi", "Ver fatura"); clicar abre a
+   conferência, como no celular (nunca dá baixa direto). Embaixo, "Adicionar cartões", "Arrumar" e "Jeito X · Trocar".
+
+O CSS dos cartões, das dicas e da folha "Adicionar cartões" mora em `src/movel/cartoes.css` (importado por
+`src/movel/widgets.tsx`), para servir aos dois; o que é só do celular continua em `movel.css`.
+
+### 4.0 (registro) Grade da Início antes de 18/11/2026
+
 A grade abaixo é a da **conta nova** (boas-vindas e blocos); cada jeito tem a sua tela: simples (seção 5), equilibrado (4.0.2) e detalhado (4.0.1). A ordem das perguntas continua a mesma; a grade segue o layout do OpusCash:
 
 | Linha | Computador | Celular |

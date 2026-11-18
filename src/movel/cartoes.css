@@ -1,0 +1,155 @@
+/* ==========================================================================
+   Os cartões da Início, as dicas e a folha "Adicionar cartões": iguais no celular e no computador (src/movel/widgets.tsx,
+   GradeDeCartoes.tsx). O que é só do celular fica em movel.css; o que é só do computador, em components/inicio-pc.css.
+   ========================================================================== */
+
+/* ---------- dicas que deslizam ---------- */
+.dicas-movel {
+  display: flex; gap: 10px; margin: 0 -16px 12px; padding: 0 16px; overflow-x: auto; scroll-snap-type: x mandatory;
+  scroll-padding: 0 16px; scrollbar-width: none;
+}
+.dicas-movel::-webkit-scrollbar { display: none; }
+.dica-movel {
+  flex: 0 0 88%; scroll-snap-align: start; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start;
+  padding: 16px; border-radius: 24px; background: var(--superficie); border: 1px solid var(--borda); box-shadow: var(--sombra);
+}
+.dicas-movel.uma .dica-movel { flex-basis: 100%; }
+.dica-movel h3 { margin: 2px 0 4px; font-size: 16px; font-weight: 650; }
+.dica-movel p { margin: 0 0 6px; font-size: 14px; color: var(--texto-2); }
+.dica-movel .link { min-height: 36px; padding: 0; font-weight: 600; }
+.dica-movel-fechar { display: grid; place-items: center; width: 36px; height: 36px; margin: -8px -8px 0 0; border: 0; border-radius: 50%; background: none; color: var(--texto-2); }
+
+/* ---------- cartões ---------- */
+.widgets-movel { display: grid; gap: 12px; }
+.widgets-linha.par { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.widget {
+  display: flex; flex-direction: column; padding: 12px 16px 6px; border-radius: 24px; background: var(--superficie);
+  border: 1px solid var(--borda); box-shadow: var(--sombra); min-width: 0;
+}
+.widget-titulo {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 2px; min-height: 36px; margin: 0; padding: 0;
+  border: 0; background: none; color: var(--texto-2); font: 500 14.5px var(--fonte);
+}
+.widget-titulo svg { opacity: .7; }
+.widget-titulo-solto { font-size: 14px; font-weight: 500; color: var(--texto-2); }
+.widget-numero { font-family: var(--fonte-numeros); font-size: 22px; font-weight: 750; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.widget-numero small { font-size: 13px; font-weight: 600; color: var(--texto-2); }
+.widget-numero.entrada { color: var(--entrada); }
+.widget-numero.saida { color: var(--saida); }
+.widget-nota { margin: 2px 0 8px; font-size: 12.5px; color: var(--texto-2); }
+.widget-frase { font-size: 14px; font-weight: 600; line-height: 1.3; }
+.widget-vazio { margin: 4px 0 10px; font-size: 14px; color: var(--texto-2); }
+.widget-vazio p { margin: 0 0 10px; }
+.widget-rodape {
+  min-height: 48px; margin: 0 -16px; border: 0; border-top: 1px solid var(--separador); background: none;
+  color: var(--texto); font: 600 15px var(--fonte);
+}
+.tom-bom { color: var(--entrada); }
+.tom-atencao, .tom-medio { color: var(--divida); }
+.tom-ruim { color: var(--saida); }
+
+.linha-movel {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%; min-height: 60px;
+  padding: 8px 0; border: 0; background: none; color: inherit; font: inherit; text-align: left;
+}
+button.linha-movel:active { opacity: .7; }
+.linha-movel-texto { display: grid; gap: 2px; min-width: 0; }
+.linha-movel-titulo { font-size: 15.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.linha-movel-sub { font-size: 13px; color: var(--texto-2); overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.linha-movel-barra { display: block; height: 4px; margin-top: 4px; border-radius: 999px; background: var(--preench-3); overflow: hidden; }
+.linha-movel-barra i { display: block; height: 100%; border-radius: inherit; background: var(--destaque); }
+.linha-movel-valor { display: grid; justify-items: end; gap: 1px; text-align: right; }
+.linha-movel-valor b { font-size: 15px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.linha-movel-valor b.v-entrada { color: var(--entrada); }
+.linha-movel-valor b.v-alerta { color: var(--saida); }
+.linha-movel-valor small { font-size: 12px; color: var(--texto-2); white-space: nowrap; }
+.icone-redondo {
+  display: grid; place-items: center; flex: none; border-radius: 50%; color: var(--c);
+  background: color-mix(in srgb, var(--c) 16%, transparent);
+}
+.icone-banco-movel { display: grid; place-items: center; width: 44px; height: 44px; }
+
+/* pequenos: um número só, dois lado a lado */
+.widget-pequeno { padding: 14px 16px; }
+.widget-pequeno-corpo { display: grid; gap: 2px; align-content: start; width: 100%; min-height: 96px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; }
+.widget-pequeno-corpo .widget-titulo-solto + .widget-numero + .widget-titulo-solto { margin-top: 6px; }
+
+/* gasto do mês: o número à esquerda e a linha do mês à direita */
+.widget-gasto { padding: 14px 16px; }
+.widget-gasto-corpo { display: grid; grid-template-columns: minmax(0, 1fr) 42%; gap: 10px; align-items: stretch; width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; }
+.widget-gasto-texto { display: grid; align-content: start; gap: 4px; min-width: 0; }
+.widget-gasto .widget-numero { font-size: 28px; }
+.widget-gasto-pe { display: grid; gap: 4px; margin-top: 16px; font-size: 13px; color: var(--texto-2); }
+
+/* resumo do mês: quatro números em duas colunas (entradas, saídas, o que sobrou e o mês anterior) */
+.widget-resumo-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }
+.widget-resumo-grade > div { display: grid; gap: 2px; align-content: start; min-width: 0; }
+.widget-resumo-grade .widget-numero { overflow-wrap: anywhere; }
+.widget-resumo-grade .widget-nota { margin: 0; }
+/* o gráfico do ano: o canvas não pode empurrar a largura do cartão */
+.widget-evolucao > :not(.widget-titulo) { min-width: 0; }
+/* maior sem ocupar a tela: os seletores (Já aconteceu / O que vem aí e a moeda) numa linha só, mais baixos, e o
+   gráfico encostando mais na borda do cartão (Início e Resumo do ano) */
+.app.movel .grafico-moeda { gap: 6px; margin-bottom: 6px; }
+.app.movel .grafico-moeda .segmentado button { height: 32px; padding: 0 8px; font-size: 12.5px; }
+.app.movel .widget-evolucao .gcp > .grafico { width: auto; margin: 0 -10px; }
+.grafico-gasto { width: 100%; height: 100px; overflow: visible; }
+.grafico-gasto line { stroke: var(--separador); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.grafico-gasto path { fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.grafico-gasto .feito { stroke: var(--saida); }
+.grafico-gasto .vem { stroke: var(--saida); stroke-dasharray: 4 4; opacity: .55; }
+
+.boas-vindas-movel { align-items: center; gap: 8px; padding: 22px 20px; text-align: center; margin-bottom: 12px; }
+.boas-vindas-movel h2 { margin: 6px 0 0; font-size: 19px; }
+.boas-vindas-movel p { margin: 0; color: var(--texto-2); font-size: 14.5px; }
+.rodape-movel { margin: 18px 0 0; text-align: center; font-size: 13.5px; color: var(--texto-2); }
+.rodape-movel .link { min-height: 44px; padding: 0 4px; font-weight: 600; }
+.inicio-movel { gap: 0; }
+
+/* cada cartão mora numa célula (no par, os dois ficam da mesma altura) */
+.widget-celula { display: flex; flex-direction: column; min-width: 0; }
+.widget-celula > div:last-child { display: flex; flex: 1; min-width: 0; }
+.widget-celula > div:last-child > .widget { flex: 1; }
+
+/* ---------- adicionar e arrumar os cartões ---------- */
+.cartoes-acoes { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; margin-top: 18px; }
+.cartoes-adicionar, .cartoes-arrumar {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 999px;
+  border: 1px solid var(--borda); background: var(--superficie); color: var(--texto); font: 600 15px var(--fonte);
+  transition: transform .3s var(--mola-salto);
+}
+.cartoes-adicionar:active, .cartoes-arrumar:active { transform: scale(.95); }
+.cartoes-acoes .btn.primario { min-height: 48px; padding: 0 28px; }
+.cartoes-acoes .link { min-height: 44px; font-weight: 600; }
+.widgets-movel.arrumando .widget { opacity: .82; }
+.arrumar-barra { display: flex; align-items: center; gap: 6px; margin: 2px 2px 6px; }
+.arrumar-barra span { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arrumar-barra button {
+  display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 50%; border: 1px solid var(--borda);
+  background: var(--superficie); color: var(--texto); transition: transform .3s var(--mola-salto);
+}
+.arrumar-barra button:active { transform: scale(.88); }
+.arrumar-barra button:disabled { opacity: .35; }
+.arrumar-barra button.tirar { color: var(--saida); }
+
+/* a folha "Adicionar cartões": a prévia de verdade, com o "+" por cima */
+.folha-nota { margin: 4px 0 12px; font-size: 13.5px; color: var(--texto-2); }
+.previas-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+.previas-lista { display: grid; gap: 10px; margin-bottom: 10px; }
+.previa-cartao { position: relative; display: flex; min-width: 0; }
+.previa-cartao-corpo { display: flex; flex: 1; min-width: 0; max-height: 300px; overflow: hidden; pointer-events: none; }
+.previa-cartao-corpo > .widget { flex: 1; box-shadow: none; }
+.previa-cartao-vazia {
+  flex-direction: column; align-items: flex-start; gap: 6px; padding: 16px; border-radius: 24px;
+  border: 1px dashed var(--borda-forte); background: var(--superficie-2);
+}
+.previa-cartao-vazia b { font-size: 15px; }
+.previa-cartao-vazia span { font-size: 13px; color: var(--texto-2); }
+.previa-cartao-vazia small { font-size: 12.5px; font-weight: 600; color: var(--destaque); }
+.previa-cartao-botao { position: absolute; inset: 0; border: 0; border-radius: 24px; background: none; padding: 0; }
+.previa-cartao-botao:focus-visible { box-shadow: 0 0 0 3px var(--foco); }
+.previa-cartao-botao > span {
+  position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--destaque); color: var(--destaque-texto); box-shadow: 0 4px 12px -4px rgba(0, 0, 0, .4);
+}
+.previa-cartao-botao:active { background: var(--preench-4); }
