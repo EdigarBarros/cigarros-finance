@@ -4,7 +4,7 @@
 .inicio-det { container-type: inline-size; gap: 30px; }
 .inicio-det :is(section, [id^="det-"]) { scroll-margin-top: 86px; min-width: 0; }
 .inicio-det :focus-visible { outline: 2px solid var(--destaque); outline-offset: 3px; }
-.inicio-det .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+:is(.inicio-det, .inicio-eq) .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .inicio-det .cartao { box-shadow: none; border-radius: 18px; }
 .det-nota { color: var(--texto-2); font-size: .78rem; line-height: 1.6; }
 .det-grafico-privado { padding: 40px 12px; color: var(--texto-2); border: 1px dashed var(--borda); border-radius: 10px; font-size: .85rem; text-align: center; }

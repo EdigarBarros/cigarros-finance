@@ -1048,3 +1048,32 @@ a 2.7.0 (código 12) se ela ainda não foi enviada.
   `versionName` 2.7.0 → 2.7.1. Mesmo processo da 2.7.0 (README → App Android); chave e senha apagadas da máquina depois.
 - Conferido: `jarsigner -verify` ("jar verified"), impressão SHA-256 igual à da chave de upload, e o código novo (lente)
   está dentro do pacote.
+
+### 18/11/2026 — Claude — Início: gráfico do ano no Equilibrado e no celular, resumo do mês, contas a receber e atalho Cartões
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração. O app Android precisa de versão nova para receber a
+parte do celular.
+
+- Pedido do Edigar: opinar sobre 7 sugestões que recebeu e fazer as que fizessem sentido. Decisões dele (plano aprovado):
+  manter o número grande no topo do celular (a sugestão era trocá-lo pelo gráfico) e, no computador, gráfico só no
+  Equilibrado (o Simples continua sem gráfico; o panorama segue só na Detalhada).
+- **Defeito corrigido:** o cartão de contas da Início do celular tinha o título fixo "Contas a pagar", mas a lista
+  (`tarefasDoMes`) traz contas de entrada; um valor a receber aparecia sob "Contas a pagar". Agora o título segue a lista
+  ("Contas a pagar", "Contas a receber" ou "Contas a pagar e a receber"); `src/movel/widgets.tsx`, `tituloDasContas`. O
+  computador já separava pagar e receber.
+- Celular (`lib/widgets.ts`, `src/movel/widgets.tsx`): cartões novos `evolucao` (o `GraficoAnual` compacto com a opção nova
+  `semPainel`, sem o painel do mês ao lado) e `resumo-mes` (Entradas, Saídas, Sobrou/Faltou até hoje e o mês anterior;
+  futuro: Vai entrar, Vai sair, Deve sobrar/Pode faltar; janeiro: sem mês anterior). Os três modelos abrem com
+  `evolucao, resumo-mes, contas, ultimos`; `entrou-saiu` e `gasto-dia` saíram dos modelos (continuam na folha).
+- Celular, ações da Início: com o módulo de cartões, a quarta é **Cartões** (abre a tela); sem ele, continua o "Mais".
+- Computador, Equilibrado (`pages/Inicio.tsx`): a `EvolucaoDetalhada` entra na Visão geral, entre o resultado do mês e as
+  contas (à vista ao abrir: começa em ~477 px a 1586 e 1100 px de largura). `.sr-only` do `inicio-detalhado.css` passou a
+  valer também em `.inicio-eq`.
+- Regras: `docs/arquitetura-do-painel.md`, 4.0.2 e 4.25.
+
+**Validação:** `npx tsc -b`, `npm run lint` (sem erros; 1 aviso novo do mesmo tipo do `GraficoDoGasto` no mesmo arquivo),
+build com Supabase fictício, `scripts/painel/testar.mjs` 34/34 (casos dos modelos atualizados e um novo: os três abrem
+igual), `testar-movel.cjs` (novos: título das contas com entrada, ordem do começo, gráfico, resumo com o mês anterior,
+atalhos Gasto/Entrada/Contas/Cartões e o atalho abrindo Cartões; o limite do simples foi a 6 e entrou "equilibrado com mais
+cartões que o simples"). Capturas a 390 px (escuro e claro) e 360 px em janeiro; computador a 1586, 1100 e 900 px, sem
+rolagem lateral.

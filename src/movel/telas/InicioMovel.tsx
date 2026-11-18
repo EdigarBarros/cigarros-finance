@@ -1,6 +1,7 @@
 /**
  * Início do celular: o topo grande que desliza (o que sobrou no mês, o guardado, as dívidas e os investimentos), as ações
- * redondas, as dicas e os cartões do jeito escolhido (lib/widgets.ts). Os números são os mesmos da Início do computador
+ * redondas (Gasto, Entrada, Contas e Cartões, ou "Mais" sem o módulo de cartões), as dicas e os cartões do jeito escolhido
+ * (lib/widgets.ts). Os números são os mesmos da Início do computador
  * (lib/useMesDaInicio.ts).
  */
 import { useState } from 'react'
@@ -104,7 +105,10 @@ export function InicioMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom) =>
     v.contas
       ? { id: 'contas', icone: 'calendario', rotulo: tx('Contas'), acao: () => c.irPara('contas') }
       : { id: 'importar', icone: 'relatorio', rotulo: tx('Importar'), acao: c.importarExtrato },
-    { id: 'mais', icone: 'reticencias', rotulo: tx('Mais'), acao: () => setMaisAcoes(true) },
+    // com o módulo de cartões ligado, o atalho é a tela Cartões (importar fica em Lançamentos e na dica do topo)
+    v.cartoes
+      ? { id: 'cartoes', icone: 'cartao', rotulo: tx('Cartões'), acao: () => c.irPara('cartoes') }
+      : { id: 'mais', icone: 'reticencias', rotulo: tx('Mais'), acao: () => setMaisAcoes(true) },
   ]
 
   // ---------- dicas: o convite para importar e a sugestão do momento ----------

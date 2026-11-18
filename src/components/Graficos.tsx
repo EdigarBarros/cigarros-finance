@@ -583,7 +583,7 @@ export function moedasDoAno(porMes: (Resumo | null)[]) {
   return [...achadas].sort()
 }
 
-export function GraficoAnual({ porMes, previsto, mesAtual, altura = 400, compacto, v, saldoCorrido, ano }: {
+export function GraficoAnual({ porMes, previsto, mesAtual, altura = 400, compacto, v, saldoCorrido, ano, semPainel }: {
   porMes: (Resumo | null)[]; mesAtual: number; altura?: number; v: Visao
   /** O saldo que passa de um mês para o outro (sem isso, o painel não fala dele). */
   saldoCorrido?: SaldoCorrido
@@ -593,6 +593,8 @@ export function GraficoAnual({ porMes, previsto, mesAtual, altura = 400, compact
   previsto: PrevisaoMes[]
   /** Celular: eixo em "mil" e legenda menor. */
   compacto?: boolean
+  /** Só o gráfico, sem o painel do mês ao lado (a Início do celular tem o resumo do mês num cartão próprio). */
+  semPainel?: boolean
 }) {
   const c = useCoresDoGrafico()
   const principal = moedaAtual()
@@ -673,8 +675,8 @@ export function GraficoAnual({ porMes, previsto, mesAtual, altura = 400, compact
           <CaixaDoGrafico style={{ height: altura }}>
             <Misto type="bar" key={c.tema + c.ocultos + moeda + modo} data={dadosFinais} options={opcoesFinais} />
           </CaixaDoGrafico>
-          <PainelDoMes indice={indice} r={porMes[indice] ?? null} v={v} fora={fora} moeda={moeda} aoMudar={escolher} p={previsto[indice]} modo={modo}
-            saldo={saldoCorrido?.porMes[indice]} temSaldoInicial={Boolean(saldoCorrido?.inicial)} aoInformarSaldo={saldoCorrido ? () => setEditandoSaldo(true) : undefined} />
+          {!semPainel && <PainelDoMes indice={indice} r={porMes[indice] ?? null} v={v} fora={fora} moeda={moeda} aoMudar={escolher} p={previsto[indice]} modo={modo}
+            saldo={saldoCorrido?.porMes[indice]} temSaldoInicial={Boolean(saldoCorrido?.inicial)} aoInformarSaldo={saldoCorrido ? () => setEditandoSaldo(true) : undefined} />}
         </div>
       </div>
       {editandoSaldo && saldoCorrido && (

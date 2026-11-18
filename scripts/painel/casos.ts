@@ -401,6 +401,8 @@ export const CASOS: Caso[] = [
         igual(`${jeito}: sem repetir`, new Set(ids).size, ids.length)
       }
       certo('simples mostra menos que o detalhado', MODELOS.simples.length < MODELOS.detalhado.length)
+      // os três abrem igual: gráfico, resumo do mês, contas por data e últimos lançamentos
+      for (const ids of Object.values(MODELOS)) igual('começo', ids.slice(0, 4), ['evolucao', 'resumo-mes', 'contas', 'ultimos'])
     },
   },
   {
@@ -422,10 +424,10 @@ export const CASOS: Caso[] = [
     nome: 'celular: tirar, pôr de volta (no fim) e o tirado não volta sozinho',
     rodar() {
       const a = removerCartao(undefined, 'simples', 'ultimos', '1')
-      igual('sem últimos', cartoesDaInicio(a, 'simples'), ['contas', 'orientacao', 'metas'])
+      igual('sem últimos', cartoesDaInicio(a, 'simples'), ['evolucao', 'resumo-mes', 'contas', 'orientacao', 'metas'])
       igual('lembra que tirou', a.removidos, ['ultimos'])
       const b = adicionarCartao(a, 'simples', 'ultimos', '2')
-      igual('volta no fim', cartoesDaInicio(b, 'simples'), ['contas', 'orientacao', 'metas', 'ultimos'])
+      igual('volta no fim', cartoesDaInicio(b, 'simples'), ['evolucao', 'resumo-mes', 'contas', 'orientacao', 'metas', 'ultimos'])
       igual('sai dos tirados', b.removidos, [])
       const c = adicionarCartao(b, 'simples', 'guardado', '3')
       igual('cartão de fora do modelo entra no fim', cartoesDaInicio(c, 'simples').at(-1), 'guardado')
@@ -436,7 +438,7 @@ export const CASOS: Caso[] = [
     rodar() {
       // 'ultimos' escondido (sem nada para mostrar): descer 'contas' troca com 'orientacao', o próximo que está na tela
       const d = moverCartao(undefined, 'simples', 'contas', 1, ['contas', 'orientacao', 'metas'], '1')!
-      igual('trocou com o visível', cartoesDaInicio(d, 'simples'), ['orientacao', 'ultimos', 'contas', 'metas'])
+      igual('trocou com o visível', cartoesDaInicio(d, 'simples'), ['evolucao', 'resumo-mes', 'orientacao', 'ultimos', 'contas', 'metas'])
       igual('primeiro não sobe', moverCartao(undefined, 'simples', 'contas', -1, ['contas', 'metas'], '1'), null)
       igual('último não desce', moverCartao(undefined, 'simples', 'metas', 1, ['contas', 'metas'], '1'), null)
     },
@@ -446,7 +448,8 @@ export const CASOS: Caso[] = [
     rodar() {
       // arrumação antiga, de quando o equilibrado não tinha 'categorias' (e com lixo de outra versão)
       const a = { base: 'equilibrado', ordem: ['metas', 'contas', 'gasto-mes', 'gasto-mes', 'cartao-que-nao-existe'], removidos: ['entrou-saiu', 'gasto-dia', 'orientacao', 'ultimos', 'dividas', 'guardado'], em: '1' } as unknown as ArrumacaoInicio
-      igual('categorias depois de gasto-mes', cartoesDaInicio(a, 'equilibrado'), ['metas', 'contas', 'gasto-mes', 'categorias'])
+      // 'evolucao' e 'resumo-mes' (novos, no começo do modelo) entram antes de 'contas', o primeiro vizinho que a pessoa tem
+      igual('categorias depois de gasto-mes', cartoesDaInicio(a, 'equilibrado'), ['metas', 'evolucao', 'resumo-mes', 'contas', 'gasto-mes', 'categorias'])
       const n = normCelular({ v: 1, inicio: a })!
       igual('normalizado', n.inicio!.ordem, ['metas', 'contas', 'gasto-mes'])
       igual('formato errado vira vazio', normCelular({ inicio: { base: 'outro', ordem: 3 } }), { v: 1 })
