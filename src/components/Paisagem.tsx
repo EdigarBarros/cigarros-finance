@@ -2,8 +2,19 @@ import { useTema } from '../lib/tema'
 
 export type Cena = 'montanhas' | 'mar' | 'cidade' | 'floresta' | 'dunas'
 
-/** Cores de cada cena: à noite no tema escuro, de dia no tema claro. */
+/**
+ * Cores de cada cena: à noite no tema escuro, de dia no tema claro. `grafite` é a noite do painel (que no tema escuro é
+ * grafite, sem o azul-marinho): céu e relevo em cinzas quase pretos, árvores com um fundo do verde da marca, e a lua e as
+ * janelas acesas continuam quentes.
+ */
 const PALETAS = {
+  grafite: {
+    ceu: ['#0c0d0f', '#1c1e21', '#383b40'], astro: '#ffd9a0', brilho: 'rgba(255, 170, 90, .45)',
+    longe: '#43464c', meio: '#2e3034', perto: '#18191c', agua: '#25282c', reflexo: 'rgba(255, 200, 140, .32)',
+    janela: '#ffd27a', predio: ['#3a3c41', '#2c2e32', '#1f2023'], arvore: ['#2a3d37', '#1e2c28', '#141d1a'],
+    duna: ['#463e3b', '#342e2c', '#231f1e'], estrela: 'rgba(255, 255, 255, .7)',
+  },
+
   escuro: {
     ceu: ['#0a1330', '#1c2c55', '#3a3f6b'], astro: '#ffd9a0', brilho: 'rgba(255, 170, 90, .55)',
     longe: '#26365f', meio: '#172446', perto: '#0b1326', agua: '#13244a', reflexo: 'rgba(255, 200, 140, .35)',
@@ -22,10 +33,15 @@ const PALETAS = {
  * Paisagem desenhada em SVG para fundos ilustrados (banner da Início, cartão de dicas). Preenche a caixa toda
  * (corta as sobras, mantendo o chão embaixo) e acompanha o tema.
  */
-export function Paisagem({ cena, className = '' }: { cena: Cena; className?: string }) {
+export function Paisagem({ cena, className = '', grafite = false }: {
+  cena: Cena; className?: string
+  /** Dentro do painel: a noite em grafite (o tema escuro do painel), no lugar do azul-marinho. O claro não muda. */
+  grafite?: boolean
+}) {
   const { tema } = useTema()
-  const c = PALETAS[tema]
-  const id = `ceu-${cena}-${tema}`
+  const paleta = tema === 'escuro' && grafite ? 'grafite' : tema
+  const c = PALETAS[paleta]
+  const id = `ceu-${cena}-${paleta}`
   const estrelas = tema === 'escuro' && (
     <g fill={c.estrela}>
       {[[30, 30], [80, 18], [140, 40], [210, 22], [260, 50], [320, 28], [370, 44], [110, 70], [300, 76], [50, 88]].map(([x, y], i) => (

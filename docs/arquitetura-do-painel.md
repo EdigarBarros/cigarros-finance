@@ -94,7 +94,9 @@ reduzidas" tudo isso para (regra geral do `index.css`).
 
 **Tema escuro grafite no painel inteiro** (desde 18/11/2026): o grafite neutro que era só do celular (`:has(.app)` em
 `index.css`) vale também no computador; o verde-água combina com ele, e no azul-marinho antigo brigava. Página inicial,
-login e tema claro não mudam.
+login e tema claro não mudam. O cartão de avisos do pé do menu lateral e o banner ilustrado também: as paisagens
+(`Paisagem` com `grafite`) passam a uma noite em grafite (céu e relevo cinza, árvores com um fundo verde, lua e janelas
+quentes) e a película do texto é grafite. O questionário do primeiro acesso, fora do painel, continua com a noite azul.
 
 O CSS dos cartões, das dicas e da folha "Adicionar cartões" mora em `src/movel/cartoes.css` (importado por
 `src/movel/widgets.tsx`), para servir aos dois; o que é só do celular continua em `movel.css`.

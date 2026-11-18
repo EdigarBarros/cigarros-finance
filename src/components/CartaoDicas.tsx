@@ -42,7 +42,7 @@ export function CartaoDicas({ dicas }: { dicas: Dica[] }) {
       onMouseEnter={() => setParado(true)} onMouseLeave={() => setParado(false)}
       onFocus={() => setParado(true)} onBlur={() => setParado(false)} aria-live="polite">
       {/* cada dica com a sua paisagem, preenchendo o alto do cartão */}
-      <div className="dica-cena" key={`cena-${atual.id}`}><Paisagem cena={CENAS[(n ? i % n : 0) % CENAS.length]} /></div>
+      <div className="dica-cena" key={`cena-${atual.id}`}><Paisagem cena={CENAS[(n ? i % n : 0) % CENAS.length]} grafite /></div>
       {atual.dispensar && (
         <button className="dica-dispensar" onClick={atual.dispensar} aria-label={tx('Dispensar por este mês')} title={tx('Dispensar por este mês')}>
           <Icone nome="fechar" tamanho={14} />

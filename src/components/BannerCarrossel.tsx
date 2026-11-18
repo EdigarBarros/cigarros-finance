@@ -33,7 +33,7 @@ export function BannerCarrossel({ slides }: { slides: Slide[] }) {
   if (!atual) return null
   return (
     <section className="banner" onMouseEnter={() => setParado(true)} onMouseLeave={() => setParado(false)} aria-roledescription="carrossel">
-      <div className="banner-cena" key={atual.cena}><Paisagem cena={atual.cena} /></div>
+      <div className="banner-cena" key={atual.cena}><Paisagem cena={atual.cena} grafite /></div>
       <div className="banner-topo">
         <Marca />
         {n > 1 && (
