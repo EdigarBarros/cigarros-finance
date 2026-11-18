@@ -1104,3 +1104,12 @@ a 2.7.1 (código 13) se ela ainda não foi enviada.
 - Medido no app de demonstração (com uma compra em USD, para aparecer o BRL/USD como na captura): área do gráfico a
   390 px de 324×220 para 344×300 (≈ +45%), cartão de 370 para 400 px; seletores numa linha a 390 e 360 px, quebrando
   sem cortar a 320; nada sai do cartão, sem rolagem lateral, nos dois temas. A tela Ano ganha o mesmo.
+
+### 18/11/2026 — Claude — App Android 2.7.3 (código 15)
+
+**Estado:** `.aab` gerado, assinado e entregue ao Edigar; falta ele enviar no Play Console. Substitui a 2.7.2 (código 14),
+que ainda não tinha sido enviada.
+
+- Leva a Início nova do celular (#217) e o gráfico "Mês a mês" maior (#219). `versionCode` 14 → 15, `versionName`
+  2.7.2 → 2.7.3. Mesmo processo; chave do Drive do dono apagada da máquina logo depois de assinar.
+- Conferido: `jarsigner -verify` ("jar verified"), SHA-256 da chave de upload (A7:07:94:…:5D:9D) e o CSS novo no pacote.
