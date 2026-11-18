@@ -1259,7 +1259,8 @@ computador):
 3. Dicas que deslizam e podem ser dispensadas: o convite para importar e a sugestão do momento.
 4. Os cartões do jeito escolhido (`lib/widgets.ts`): o jeito é o ponto de partida (simples 6, equilibrado 10, detalhado
    14, menos os que não têm o que mostrar). Os três abrem igual: **Mês a mês** (o gráfico do ano, `GraficoAnual` com
-   `semPainel`; toque no título abre o Resumo do ano), **Resumo do mês** (Entradas, Saídas, Sobrou/Faltou até hoje e o
+   `semPainel` e 300 px de altura; os seletores Já aconteceu/O que vem aí e de moeda numa linha só, mais baixos, e o
+   gráfico encostando mais na borda do cartão, o mesmo na tela Resumo do ano; toque no título abre o Resumo do ano), **Resumo do mês** (Entradas, Saídas, Sobrou/Faltou até hoje e o
    resultado do **mês anterior**; no mês futuro, Vai entrar, Vai sair e Deve sobrar/Pode faltar; em janeiro, sem mês
    anterior), as **contas** por data e os **últimos lançamentos**. O título das contas segue a lista: "Contas a pagar",
    "Contas a receber" ou "Contas a pagar e a receber" (conta de entrada, como um valor que alguém vai te pagar, não é
