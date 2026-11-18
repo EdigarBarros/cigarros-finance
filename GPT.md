@@ -1077,3 +1077,14 @@ igual), `testar-movel.cjs` (novos: título das contas com entrada, ordem do come
 atalhos Gasto/Entrada/Contas/Cartões e o atalho abrindo Cartões; o limite do simples foi a 6 e entrou "equilibrado com mais
 cartões que o simples"). Capturas a 390 px (escuro e claro) e 360 px em janeiro; computador a 1586, 1100 e 900 px, sem
 rolagem lateral.
+
+### 18/11/2026 — Claude — App Android 2.7.2 (código 14)
+
+**Estado:** `.aab` gerado, assinado com a chave de upload e entregue ao Edigar; falta ele enviar no Play Console. Substitui
+a 2.7.1 (código 13) se ela ainda não foi enviada.
+
+- Leva a Início nova do celular (PR #217: gráfico mês a mês, resumo do mês com o mês anterior, título das contas a
+  receber, atalho Cartões). `versionCode` 13 → 14, `versionName` 2.7.1 → 2.7.2. Mesmo processo das anteriores (README → App
+  Android; JDK 21, Android SDK 36 instalado nesta máquina); chave e senha vieram do Drive do dono e foram apagadas em seguida.
+- Conferido: `jarsigner -verify` ("jar verified"), impressão SHA-256 igual à da chave de upload (A7:07:94:…:5D:9D) e o
+  código novo ("Contas a pagar e a receber") dentro do pacote.
