@@ -1113,3 +1113,18 @@ que ainda não tinha sido enviada.
 - Leva a Início nova do celular (#217) e o gráfico "Mês a mês" maior (#219). `versionCode` 14 → 15, `versionName`
   2.7.2 → 2.7.3. Mesmo processo; chave do Drive do dono apagada da máquina logo depois de assinar.
 - Conferido: `jarsigner -verify` ("jar verified"), SHA-256 da chave de upload (A7:07:94:…:5D:9D) e o CSS novo no pacote.
+
+### 18/11/2026 — Claude — Celular: a cor do topo acompanha o dedo
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração. O app Android precisa de versão nova.
+
+- Relato do Edigar (captura da Início): ao trocar a página do topo, a cor demorava e não acompanhava a troca.
+- Causa: desde a correção do arrasto (16/11), a tela só recebia o tom novo quando a rolagem parava (`scrollend` ou 120 ms
+  sem rolar), e as camadas do degradê ainda levavam 0,7 s para trocar. De propósito, para não redesenhar com o dedo na tela.
+- Correção (`src/movel/primitivas.tsx`, `HeroDeslizante`): a cada quadro do arrasto, as camadas de cor das duas páginas
+  vizinhas recebem a opacidade na proporção do arrasto, direto no estilo (sem React); no tom `cor` (Cartões), a `--tom-cor`
+  vira um `color-mix` das duas cores. Ao assentar, quando a classe `ativo` chega ao tom novo, o estilo é tirado (a cor do
+  cartão fica com o valor exato que a tela põe). Um quadro de mistura na fila é cancelado ao parar, senão prendia a cor.
+- `testar-arrasto.cjs`: as camadas de cor podem mudar com o dedo na tela (o resto continua não podendo); novos: a cor de
+  antes já está abaixo de 0,5 no meio do gesto, nos Cartões a cor vira mistura, e depois de assentar não sobra estilo solto.
+  41/41 com o processador 4× mais lento, nas 10 telas com topo que desliza.

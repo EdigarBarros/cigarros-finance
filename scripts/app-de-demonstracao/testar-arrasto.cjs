@@ -20,8 +20,8 @@ const ok=(c,m)=>{console.log((c?'OK   ':'FALHA ')+m); if(!c) process.exitCode=1}
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 })
     await p.evaluate(()=>{
       window.__mud=0; window.__desloc=0; window.__dedo=true
-      // os pontos podem mudar; o resto da tela não
-      new MutationObserver((m)=>{ if(window.__dedo) window.__mud+=m.filter((x)=>!x.target.closest?.('.hero-movel-pontos')).length })
+      // os pontos e as camadas de cor do fundo (que acompanham o dedo) podem mudar; o resto da tela não
+      new MutationObserver((m)=>{ if(window.__dedo) window.__mud+=m.filter((x)=>!x.target.closest?.('.hero-movel-pontos, .movel-fundo')).length })
         .observe(document.querySelector('.app.movel'),{subtree:true,childList:true,characterData:true,attributes:true})
       new PerformanceObserver((l)=>l.getEntries().forEach(e=>{ if(window.__dedo) window.__desloc+=e.value })).observe({type:'layout-shift',buffered:false})
     })
@@ -29,12 +29,22 @@ const ok=(c,m)=>{console.log((c?'OK   ':'FALHA ')+m); if(!c) process.exitCode=1}
     const y=caixa.y+caixa.height/2, x0=caixa.x+caixa.width*0.85, x1=caixa.x+caixa.width*0.15
     await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:x0,y}]})
     for (let i=1;i<=20;i++) { await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x0+(x1-x0)*i/20,y}]}); await p.waitForTimeout(16) }
-    const durante=await p.evaluate(()=>{ window.__dedo=false; return { mud:window.__mud, desloc:window.__desloc } })
+    const durante=await p.evaluate(()=>{ window.__dedo=false
+      // a cor já mudou com o dedo na tela: a camada do tom de antes sumiu quase toda
+      const antes=document.querySelector('.movel-fundo i.ativo'); const opAntes=antes?Number(getComputedStyle(antes).opacity):1
+      return { mud:window.__mud, desloc:window.__desloc, opAntes, tomAntes:antes?.dataset.t, corDurante:document.querySelector('.movel-fundo').style.getPropertyValue('--tom-cor') } })
     await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]})
     await p.waitForTimeout(2000)
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 })
     const fim=await p.evaluate(()=>{ const el=document.querySelector('.hero-movel-trilho'); return { pagina:Math.round(el.scrollLeft/el.clientWidth), torto:Math.round(el.scrollLeft%el.clientWidth), ponto:[...document.querySelectorAll('.hero-movel-pontos button')].findIndex(b=>b.classList.contains('ativo')) } })
-    ok(durante.mud===0 && durante.desloc===0, `${tela}: com o dedo na tela, nada além dos pontos muda (${durante.mud} mudanças, deslocamento ${durante.desloc.toFixed(3)})`)
+    ok(durante.mud===0 && durante.desloc===0, `${tela}: com o dedo na tela, nada além dos pontos e da cor muda (${durante.mud} mudanças, deslocamento ${durante.desloc.toFixed(3)})`)
+    const fundoFinal=await p.evaluate(()=>[...document.querySelectorAll('.movel-fundo i')].map(i=>i.style.opacity).join(''))
+    const tomDepois=await p.evaluate(()=>document.querySelector('.movel-fundo i.ativo')?.dataset.t)
+    // páginas do mesmo tom (os cartões: tom "cor", cada um com a sua cor) não têm duas camadas para misturar
+    if (tomDepois!==durante.tomAntes) ok(durante.opAntes<0.5, `${tela}: a cor acompanha o dedo (a cor de antes já está em ${durante.opAntes.toFixed(2)})`)
+    else if (tomDepois==='cor') ok(/color-mix/.test(durante.corDurante), `${tela}: a cor de um cartão passa para a do outro com o dedo na tela (${durante.corDurante})`)
+    else console.log(`      ${tela}: as duas páginas têm o mesmo tom (${tomDepois}), nada a misturar`)
+    ok(fundoFinal==='', `${tela}: depois de assentar, a cor volta a ser só da tela (sem estilo solto)`)
     ok(fim.pagina===1 && fim.ponto===1 && fim.torto===0, `${tela}: ao soltar, troca para a segunda página e encaixa (página ${fim.pagina}, ponto ${fim.ponto})`)
     if (tela==='dividas') ok(/Recebe todo mês/.test(await p.locator('.dividas-movel').innerText()), 'dividas: depois de parar, a lista de baixo passa para "Me devem"')
   }
