@@ -667,6 +667,7 @@ select option { background: var(--superficie-forte); color: var(--texto); }
   min-height: 250px; padding: 22px 24px; border-radius: var(--raio); border: 1px solid var(--borda); color: var(--bt); background: var(--superficie);
 }
 :root[data-tema='claro'] .banner { --bt: #0f1d3a; --bt2: rgba(15, 29, 58, .72); --bv: rgba(255, 255, 255, .9); }
+:root[data-tema='escuro']:has(.app) .banner { --bv: rgba(17, 18, 20, .86); }
 .banner-cena { position: absolute; inset: 0; z-index: -2; animation: cena-entra 1.4s var(--mola) both; }
 .paisagem { display: block; width: 100%; height: 100%; }
 /* véu embaixo para o texto ler bem sobre qualquer paisagem */
@@ -2918,6 +2919,8 @@ button.ex-tipo:hover { transform: scale(1.1); }
   flex: 1; min-height: 230px; justify-content: flex-end; isolation: isolate; color: var(--bt); padding: 18px;
 }
 :root[data-tema='claro'] .lateral-promo.dicas { --bt: #0f1d3a; --bt2: rgba(15, 29, 58, .7); --bv: rgba(255, 255, 255, .94); }
+/* no tema escuro do painel (grafite), a película do texto também é grafite (era azul-marinho) */
+:root[data-tema='escuro']:has(.app) .lateral-promo.dicas { --bv: rgba(17, 18, 20, .92); }
 .lateral-promo.dicas::before { display: none; }
 .lateral-promo.dicas::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(180deg, transparent 20%, var(--bv) 72%); }
 .dica-cena { position: absolute; inset: 0; z-index: -2; animation: cena-entra 1.2s var(--mola) both; }
