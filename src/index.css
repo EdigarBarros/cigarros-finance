@@ -61,6 +61,9 @@
   --raio-p: 12px;
   --mola: cubic-bezier(.22, 1, .36, 1);
   --mola-salto: cubic-bezier(.34, 1.4, .64, 1);
+  /* deslize: sai rápido e vai freando aos poucos até parar, sem passar do ponto (a mesma sensação da rolagem com inércia
+     da página inicial). É a curva de tudo o que responde ao mouse no computador. */
+  --deslize: cubic-bezier(.16, 1, .3, 1);
 
   --fonte: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --fonte-numeros: Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -160,6 +163,13 @@ body::before {
 /* sem a luz azulada da marca no alto e com a faixa do relógio (iPhone) no mesmo grafite */
 :root[data-tema='escuro']:has(.app) body::before { display: none; }
 :root[data-tema='escuro']:has(.app)::before { background: #0e0f11; }
+
+/* No computador (mouse), nada de "pulinho": o salto com mola que os botões usam ao passar o mouse vira o deslize, que freia
+   aos poucos sem passar do ponto. No celular (toque) a mola continua: lá ela só aparece ao tocar. */
+@media (hover: hover) and (pointer: fine) {
+  :root { --mola-salto: var(--deslize); }
+  :root .lateral button, :root .menu-lista button { transition: background .5s var(--deslize), color .4s, transform .9s var(--deslize); }
+}
 
 /* troca de tema: o tema novo se espalha num círculo (View Transitions) */
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
@@ -266,9 +276,9 @@ body::before {
   background: none; color: var(--texto-2); font-weight: 500; text-align: left;
   transition: background .25s var(--mola), color .2s, transform .3s var(--mola-salto);
 }
-/* no mouse, o ícone do menu lateral dá um pulinho e o item anda um pouco para a direita */
-.lateral nav button svg { transition: transform .45s var(--mola-salto), color .2s; }
-.lateral nav button:hover svg { transform: scale(1.14); color: var(--destaque); }
+/* no mouse, o ícone do menu lateral cresce um pouco e o item desliza para a direita, freando aos poucos */
+.lateral nav button svg { transition: transform .9s var(--deslize), color .5s var(--deslize); }
+.lateral nav button:hover svg { transform: scale(1.1); color: var(--destaque); }
 .lateral nav button:hover:not(.ativo) { transform: translateX(3px); }
 .lateral button svg, .menu-lista button svg { flex: none; }
 .lateral button:hover, .menu-lista button:hover { background: var(--preench-4); color: var(--texto); }

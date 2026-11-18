@@ -2,7 +2,9 @@
    Início do computador (components/InicioPC.tsx): a faixa colorida do topo e a grade de cartões. Os cartões em si
    (.widget, .linha-movel…) ficam em src/movel/cartoes.css, iguais aos do celular; aqui só o que muda no computador:
    a grade, a cor que escorre da faixa para o fundo e o movimento com o mouse (luz que segue, cartões que sobem).
-   Com "animações reduzidas" (data-movimento='reduzido', index.css) as transições e entradas somem sozinhas.
+   O movimento do mouse usa a curva --deslize (index.css): sai rápido e vai freando aos poucos, sem passar do ponto e
+   voltar, como a rolagem com inércia da página inicial (lib/rolagemSuave.ts). Nada de mola com salto aqui: o dono achou
+   o "pulinho" duro. Com "animações reduzidas" (data-movimento='reduzido', index.css) as transições e entradas somem sozinhas.
    ========================================================================== */
 
 /* posições da luz que segue o mouse: registradas para a transição andar (sem isso a luz pularia de um ponto ao outro).
@@ -16,7 +18,7 @@
 .inicio-pc::before {
   content: ''; position: absolute; z-index: -1; inset: -90px 0 auto; height: 760px; pointer-events: none;
   background: radial-gradient(70% 75% at 40% 0%, color-mix(in srgb, var(--tom) 24%, transparent), transparent 72%);
-  transition: background .8s;
+  transition: background .8s var(--deslize);
 }
 :root[data-tema='claro'] .inicio-pc::before {
   background: radial-gradient(70% 75% at 40% 0%, color-mix(in srgb, var(--tom) 13%, transparent), transparent 72%);
@@ -29,7 +31,7 @@
   --mx: 22%; --my: 0%;
   position: relative; display: grid; gap: 22px; padding: 22px 28px 24px; border-radius: 28px; overflow: hidden;
   background: var(--faixa); color: #fff; box-shadow: 0 24px 50px -34px rgba(0, 0, 0, .6);
-  transition: --mx 1s var(--mola), --my 1s var(--mola), box-shadow .6s var(--mola);
+  transition: --mx 1s var(--deslize), --my 1s var(--deslize), box-shadow .9s var(--deslize);
 }
 .faixa-pc[data-t='falta'] { --faixa: linear-gradient(135deg, #a8606b 0%, #763a45 45%, #3e2025 100%); --brilho: #a8606b; }
 /* a luz da faixa: parada no canto de cima; com o mouse em cima, vai atrás dele devagar */
@@ -42,7 +44,7 @@
 
 .faixa-pc-topo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .faixa-pc-topo h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
-.faixa-pc-topo .eq-modo { color: #fff; background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .24); transition: background .25s, transform .45s var(--mola-salto); }
+.faixa-pc-topo .eq-modo { color: #fff; background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .24); transition: background .5s var(--deslize), transform .9s var(--deslize); }
 .faixa-pc-topo .eq-modo:hover { background: rgba(255, 255, 255, .24); transform: translateY(-2px); }
 .faixa-pc-data { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: 13.5px; color: rgba(255, 255, 255, .78); }
 
@@ -58,10 +60,10 @@
 .faixa-pc-pilula {
   margin-top: 12px; min-height: 40px; padding: 0 18px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .26);
   background: rgba(255, 255, 255, .14); color: #fff; font: 600 14.5px var(--fonte);
-  transition: background .25s, transform .45s var(--mola-salto);
+  transition: background .5s var(--deslize), transform .9s var(--deslize);
 }
 .faixa-pc-pilula:hover { background: rgba(255, 255, 255, .26); transform: translateY(-2px); }
-.faixa-pc-pilula:active { transform: scale(.96); transition-duration: .12s; }
+.faixa-pc-pilula:active { transform: scale(.96); transition-duration: .25s; }
 
 /* os outros resumos: vidro claro sobre o degradê, com um fio na cor de cada um; sobem com o mouse */
 .faixa-pc-resumos { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
@@ -70,7 +72,7 @@
   display: grid; align-content: start; gap: 3px; min-width: 0; padding: 14px 16px; border-radius: 20px; text-align: left;
   border: 1px solid rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .09); color: #fff; font: inherit;
   box-shadow: inset 3px 0 0 var(--c);
-  transition: background .25s, transform .5s var(--mola), box-shadow .5s var(--mola), border-color .3s;
+  transition: background .5s var(--deslize), transform .9s var(--deslize), box-shadow .9s var(--deslize), border-color .6s var(--deslize);
 }
 .faixa-pc-resumo[data-t='dividas'] { --c: #d9ab6c; }
 .faixa-pc-resumo[data-t='invest'] { --c: #b2a3ea; }
@@ -78,12 +80,12 @@
   background: rgba(255, 255, 255, .16); border-color: rgba(255, 255, 255, .28); transform: translateY(-4px);
   box-shadow: inset 3px 0 0 var(--c), 0 18px 30px -20px rgba(0, 0, 0, .55);
 }
-.faixa-pc-resumo:active { transform: translateY(-1px) scale(.98); transition-duration: .12s; }
+.faixa-pc-resumo:active { transform: translateY(-1px) scale(.98); transition-duration: .25s; }
 .faixa-pc-resumo-rotulo { font-size: 13px; color: rgba(255, 255, 255, .8); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .faixa-pc-resumo b { font-family: var(--fonte-numeros); font-size: 22px; font-weight: 750; letter-spacing: -.02em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .faixa-pc-resumo small { font-size: 12.5px; color: rgba(255, 255, 255, .74); }
 .faixa-pc-resumo-ir { display: inline-flex; align-items: center; gap: 2px; margin-top: 6px; font-size: 12.5px; font-weight: 600; color: rgba(255, 255, 255, .9); }
-.faixa-pc-resumo-ir svg { transition: transform .4s var(--mola); }
+.faixa-pc-resumo-ir svg { transition: transform .9s var(--deslize); }
 .faixa-pc-resumo:hover .faixa-pc-resumo-ir svg { transform: translateX(4px); }
 
 /* as ações redondas, como no celular: o círculo sobe e o ícone cresce com o mouse */
@@ -95,19 +97,19 @@
 .faixa-pc-circulo {
   display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%;
   background: rgba(255, 255, 255, .15); border: 1px solid rgba(255, 255, 255, .22);
-  transition: background .25s, transform .5s var(--mola-salto), box-shadow .5s var(--mola);
+  transition: background .5s var(--deslize), transform .9s var(--deslize), box-shadow .9s var(--deslize);
 }
-.faixa-pc-circulo svg { transition: transform .5s var(--mola-salto); }
+.faixa-pc-circulo svg { transition: transform .9s var(--deslize); }
 .faixa-pc-acoes button:hover .faixa-pc-circulo { background: rgba(255, 255, 255, .28); transform: translateY(-4px); box-shadow: 0 14px 24px -14px rgba(0, 0, 0, .6); }
-.faixa-pc-acoes button:hover .faixa-pc-circulo svg { transform: scale(1.14); }
-.faixa-pc-acoes button:active .faixa-pc-circulo { transform: scale(.9); transition-duration: .12s; }
+.faixa-pc-acoes button:hover .faixa-pc-circulo svg { transform: scale(1.1); }
+.faixa-pc-acoes button:active .faixa-pc-circulo { transform: scale(.9); transition-duration: .25s; }
 .faixa-pc button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 
 /* ---------- as dicas: lado a lado, sem deslizar ---------- */
 .inicio-pc .dicas-movel {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin: 0; padding: 0; overflow: visible;
 }
-.inicio-pc .dica-movel { transition: transform .5s var(--mola), border-color .3s; }
+.inicio-pc .dica-movel { transition: transform .9s var(--deslize), border-color .6s var(--deslize); }
 .inicio-pc .dica-movel:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--destaque) 24%, var(--borda)); }
 
 /* ---------- a grade de cartões: 12 colunas (lib/widgets.ts, linhasDoComputador) ---------- */
@@ -116,7 +118,7 @@
 .widgets-pc .widget-celula {
   container-type: inline-size;
   /* entram um depois do outro, de cima para baixo (--i vem de GradeDeCartoes.tsx) */
-  animation: surgir-sem-desfoque .7s var(--mola) backwards; animation-delay: min(calc(.14s + var(--i, 0) * 55ms), .8s);
+  animation: surgir-sem-desfoque .7s var(--deslize) backwards; animation-delay: min(calc(.14s + var(--i, 0) * 55ms), .8s);
 }
 .widgets-pc.arrumando .widget { opacity: .82; }
 .inicio-pc .widget { padding: 14px 20px 8px; }
@@ -126,10 +128,10 @@
 /* o cartão sobe um pouco com o mouse e acende uma luz verde-água onde o mouse está */
 .inicio-pc .widget {
   position: relative; --mx: 50%; --my: 0%;
-  transition: transform .55s var(--mola), box-shadow .55s var(--mola), border-color .35s, --mx .5s var(--mola), --my .5s var(--mola);
+  transition: transform .9s var(--deslize), box-shadow .9s var(--deslize), border-color .6s var(--deslize), --mx 1.1s var(--deslize), --my 1.1s var(--deslize);
 }
 .inicio-pc .widget::after {
-  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .45s;
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .7s var(--deslize);
   background: radial-gradient(400px circle at var(--mx) var(--my), color-mix(in srgb, var(--destaque) 10%, transparent), transparent 65%);
 }
 .widgets-pc:not(.arrumando) .widget:hover {
@@ -148,21 +150,21 @@
 /* as linhas: fundo ao passar o mouse, o ícone dá um pulinho e a seta do título anda */
 .inicio-pc .linha-movel {
   margin: 0 -10px; padding: 8px 10px; width: calc(100% + 20px); border-radius: 14px; min-height: 56px;
-  transition: background .2s, transform .3s var(--mola);
+  transition: background .5s var(--deslize), transform .9s var(--deslize);
 }
 .inicio-pc button.linha-movel:hover { background: var(--preench-3); }
-.inicio-pc button.linha-movel:active { transform: scale(.985); transition-duration: .1s; }
-.inicio-pc .linha-movel .icone-redondo, .inicio-pc .linha-movel .icone-banco-movel { transition: transform .5s var(--mola-salto); }
-.inicio-pc button.linha-movel:hover .icone-redondo, .inicio-pc button.linha-movel:hover .icone-banco-movel { transform: scale(1.1) rotate(-5deg); }
-.inicio-pc .widget-titulo { transition: color .2s; }
-.inicio-pc .widget-titulo svg { transition: transform .4s var(--mola), opacity .2s; }
+.inicio-pc button.linha-movel:active { transform: scale(.985); transition-duration: .25s; }
+.inicio-pc .linha-movel .icone-redondo, .inicio-pc .linha-movel .icone-banco-movel { transition: transform .9s var(--deslize); }
+.inicio-pc button.linha-movel:hover .icone-redondo, .inicio-pc button.linha-movel:hover .icone-banco-movel { transform: scale(1.08); }
+.inicio-pc .widget-titulo { transition: color .5s var(--deslize); }
+.inicio-pc .widget-titulo svg { transition: transform .9s var(--deslize), opacity .5s var(--deslize) var(--deslize); }
 .inicio-pc .widget-titulo:hover { color: var(--texto); }
 .inicio-pc .widget-titulo:hover svg { transform: translateX(4px); opacity: 1; }
-.inicio-pc .widget-rodape { transition: background .2s, color .2s; }
+.inicio-pc .widget-rodape { transition: background .5s var(--deslize), color .5s var(--deslize); }
 .inicio-pc .widget-rodape:hover { background: var(--preench-3); color: var(--destaque); }
 .linha-acao { font-size: 12.5px; font-weight: 650; color: var(--destaque); }
 
-.inicio-pc .cartoes-adicionar, .inicio-pc .cartoes-arrumar { transition: transform .5s var(--mola-salto), background .2s, border-color .25s; }
+.inicio-pc .cartoes-adicionar, .inicio-pc .cartoes-arrumar { transition: transform .9s var(--deslize), background .5s var(--deslize), border-color .6s var(--deslize); }
 .inicio-pc .cartoes-adicionar:hover, .inicio-pc .cartoes-arrumar:hover {
   background: var(--superficie-2); transform: translateY(-2px); border-color: color-mix(in srgb, var(--destaque) 32%, var(--borda));
 }
