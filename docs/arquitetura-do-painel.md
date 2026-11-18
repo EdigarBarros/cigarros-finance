@@ -1241,9 +1241,11 @@ não abria nada.
   sem a cascata do computador). Guardar as telas abertas escondidas (`<Activity>`) foi medido e piorou: o contexto muda
   a cada desenho, então elas são redesenhadas do mesmo jeito e ainda gastam o aparelho em segundo plano.
 
-**O topo que desliza** (`HeroDeslizante` em `src/movel/primitivas.tsx`): enquanto o dedo arrasta, só os pontos acompanham
-(uma conta por quadro). A tela só fica sabendo da página nova (cor do topo, lista de baixo, lado das dívidas, cartão
-escolhido) quando a rolagem para (`scrollend`, ou 120 ms sem rolar no Safari), e o aviso vai em `startTransition`. Sobre o
+**O topo que desliza** (`HeroDeslizante` em `src/movel/primitivas.tsx`): enquanto o dedo arrasta, os pontos e a **cor do
+fundo** acompanham (uma conta por quadro): as camadas de cor das duas páginas vizinhas (`FundoMovel`) se misturam na
+proporção do arrasto, direto no estilo, sem redesenhar a tela; no tom `cor` (cartões), a própria `--tom-cor` passa de um
+cartão para o outro com `color-mix`. Quando a tela pinta o tom da página assentada, o estilo volta para a classe. A tela só
+fica sabendo da página nova (lista de baixo, lado das dívidas, cartão escolhido) quando a rolagem para (`scrollend`, ou 120 ms sem rolar no Safari), e o aviso vai em `startTransition`. Sobre o
 degradê não há `backdrop-filter`: os botões usam fundo translúcido. Avisar no meio do gesto redesenhava o painel com o dedo
 na tela e o arrasto travava (teste: `scripts/app-de-demonstracao/testar-arrasto.cjs`).
 

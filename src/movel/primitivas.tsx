@@ -27,9 +27,9 @@ const tamanhoDoValor = (v: string) => (v.length > 13 ? 34 : v.length > 10 ? 42 :
  * O topo da tela: um número grande por página, e a pessoa desliza para os lados para ver a próxima (com os pontos embaixo).
  * Desliza com a rolagem do próprio navegador (scroll-snap): o gesto é o do sistema e não briga com o "voltar" do Android.
  *
- * Fluidez: enquanto o dedo arrasta, só os pontos acompanham (no máximo uma conta por quadro). A tela só fica sabendo da página
- * nova (cor do topo, lista de baixo, o lado das dívidas…) quando a rolagem para: avisar no meio do gesto redesenhava o
- * painel inteiro com o dedo na tela, e a rolagem travava e perdia o encaixe.
+ * Fluidez: enquanto o dedo arrasta, os pontos e a cor do fundo acompanham (no máximo uma conta por quadro; a cor muda direto
+ * no estilo das camadas, sem redesenhar nada). A tela só fica sabendo da página nova (lista de baixo, o lado das dívidas…)
+ * quando a rolagem para: avisar no meio do gesto redesenhava o painel inteiro com o dedo na tela, e a rolagem travava.
  */
 export function HeroDeslizante({ paginas, aoMudar, inicial = 0 }: { paginas: PaginaDoHero[]; aoMudar?: (p: PaginaDoHero) => void; inicial?: number }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -45,6 +45,7 @@ export function HeroDeslizante({ paginas, aoMudar, inicial = 0 }: { paginas: Pag
   useEffect(() => { avisar.current = aoMudar; paginasAgora.current = paginas })
   const quadro = useRef(0)
   const espera = useRef(0)
+  const soltando = useRef(0)
   // abre na página pedida (o cartão da compra que acabou de ser lançada, o lado "Me devem"…)
   useEffect(() => {
     const el = ref.current
@@ -59,16 +60,59 @@ export function HeroDeslizante({ paginas, aoMudar, inicial = 0 }: { paginas: Pag
     const el = ref.current
     return el && el.clientWidth ? limitar(Math.round(el.scrollLeft / el.clientWidth)) : null
   }
+  /**
+   * A cor do fundo acompanha o dedo: durante o arrasto, as camadas de cor das duas páginas vizinhas (FundoMovel, em
+   * Casca.tsx) se misturam na proporção do arrasto, direto no estilo, sem redesenhar a tela (redesenhar no meio do gesto
+   * travava o arrasto). Quando a página assenta e a tela pinta o tom novo, o estilo volta para a classe.
+   */
+  const camadas = () => document.querySelectorAll<HTMLElement>('.movel-fundo i')
+  const misturar = () => {
+    const el = ref.current
+    const ps = paginasAgora.current
+    if (!el || !el.clientWidth || ps.length < 2) return
+    const f = Math.max(0, Math.min(el.scrollLeft / el.clientWidth, ps.length - 1))
+    const k = Math.floor(f), t = f - k
+    const peso = new Map<string, number>()
+    const somar = (tom: string | undefined, v: number) => { if (tom) peso.set(tom, (peso.get(tom) ?? 0) + v) }
+    const a = ps[k], b = ps[Math.min(k + 1, ps.length - 1)]
+    somar(a?.tom, 1 - t)
+    somar(b?.tom, t)
+    camadas().forEach((c) => { c.style.transition = 'none'; c.style.opacity = String(peso.get(c.dataset.t ?? '') ?? 0) })
+    // tom 'cor' (cada cartão na cor do banco): a própria cor passa de um cartão para o outro
+    const fundo = document.querySelector<HTMLElement>('.movel-fundo')
+    const ca = a?.cor, cb = b?.cor
+    const cor = ca && cb && ca !== cb ? `color-mix(in srgb, ${ca} ${Math.round((1 - t) * 100)}%, ${cb})` : t < 0.5 ? ca ?? cb : cb ?? ca
+    if (fundo && cor) fundo.style.setProperty('--tom-cor', cor)
+  }
+  /** Devolve as camadas à classe (o tom que a tela pintou) assim que ela pintar o tom da página assentada. */
+  const soltar = (tom: string | undefined) => {
+    cancelAnimationFrame(soltando.current)
+    // a cor exata da página assentada: a mesma que a tela vai pôr (a mistura do meio do gesto não pode ficar)
+    const cor = paginasAgora.current[indiceDaRolagem() ?? -1]?.cor
+    if (cor) document.querySelector<HTMLElement>('.movel-fundo')?.style.setProperty('--tom-cor', cor)
+    let quadros = 0
+    const tentar = () => {
+      const pronto = !tom || document.querySelector(`.movel-fundo i.ativo[data-t="${tom}"]`)
+      if (pronto || ++quadros > 90) camadas().forEach((c) => { c.style.transition = ''; c.style.opacity = '' })
+      else soltando.current = requestAnimationFrame(tentar)
+    }
+    tentar()
+  }
   /** A rolagem parou: agora sim a tela troca de página (sem pressa, para não travar nada). */
   const parou = () => {
     window.clearTimeout(espera.current)
     const n = indiceDaRolagem()
     if (n === null) return
     setAtual(n)
+    // um quadro de mistura ainda na fila não pode voltar a prender a cor depois de soltar
+    cancelAnimationFrame(quadro.current)
+    quadro.current = 0
+    misturar()
+    const p = paginasAgora.current[n]
+    soltar(p?.tom)
     if (n === assentadaAgora.current) return
     assentadaAgora.current = n
     setAssentada(n)
-    const p = paginasAgora.current[n]
     if (p) startTransition(() => avisar.current?.(p))
   }
   // o fim da rolagem: o evento do navegador onde existe; senão, 120 ms sem rolar (Safari do iPhone)
@@ -76,12 +120,18 @@ export function HeroDeslizante({ paginas, aoMudar, inicial = 0 }: { paginas: Pag
     const el = ref.current
     if (!el) return
     el.addEventListener('scrollend', parou)
-    return () => { el.removeEventListener('scrollend', parou); window.clearTimeout(espera.current); cancelAnimationFrame(quadro.current) }
+    return () => {
+      el.removeEventListener('scrollend', parou); window.clearTimeout(espera.current); cancelAnimationFrame(quadro.current)
+      cancelAnimationFrame(soltando.current)
+      camadas().forEach((c) => { c.style.transition = ''; c.style.opacity = '' })
+    }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const aoRolar = () => {
     if (!quadro.current) {
       quadro.current = requestAnimationFrame(() => {
         quadro.current = 0
+        cancelAnimationFrame(soltando.current)
+        misturar()
         const n = indiceDaRolagem()
         if (n !== null) setAtual(n)
       })
