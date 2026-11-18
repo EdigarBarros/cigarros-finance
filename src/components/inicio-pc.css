@@ -11,23 +11,10 @@
    Com "animações reduzidas" (data-movimento='reduzido', index.css) transições e entradas somem; a mola também não liga.
    ========================================================================== */
 
-/* ---------- o brilho do fundo ----------
-   Só um brilho suave ATRÁS de tudo, na cor do mês (verde-água quando sobra, coral quando falta): sai de trás da faixa,
-   escorre pelos espaços entre os cartões e vai sumindo conforme desce, antes do fim da página e antes das laterais.
-   Sem lâmpada, sem cone e sem feixes: o dono achou que parecia "um sol no meio do painel". Também já recusados: luz por
-   cima da página (tingia os cartões) e luz que segue o mouse. Parado (nada é redesenhado). */
-.inicio-pc { --tom: #3f9488; --forca: 1; position: relative; isolation: isolate; }
-.inicio-pc[data-t='falta'] { --tom: #c27380; }
-:root[data-tema='claro'] .inicio-pc { --forca: .55; }
-.inicio-pc::before {
-  content: ''; position: absolute; z-index: -1; pointer-events: none;
-  top: -200px; left: -32px; right: -32px; height: min(2000px, 220vh);
-  background:
-    radial-gradient(60% 30% at 50% 14%, color-mix(in srgb, var(--tom) calc(22% * var(--forca)), transparent), transparent 100%),
-    radial-gradient(85% 70% at 50% 0%, color-mix(in srgb, var(--tom) calc(14% * var(--forca)), transparent), transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .75) 25%, rgba(0, 0, 0, .3) 55%, transparent 85%);
-          mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .75) 25%, rgba(0, 0, 0, .3) 55%, transparent 85%);
-}
+/* ---------- o fundo: liso ----------
+   Fundo grafite liso, sem brilho nem luz (pedido do dono em 18/11/2026). Já testados e recusados: brilho verde atrás
+   escorrendo entre os cartões, lâmpada com cone e feixes por cima ("um sol no meio do painel") e luz que segue o mouse. */
+.inicio-pc { position: relative; }
 
 /* ---------- a faixa do topo: um degradê escuro por estado (as mesmas cores do topo do celular, src/movel/tom.ts) ---------- */
 .faixa-pc {

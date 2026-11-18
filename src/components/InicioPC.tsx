@@ -54,7 +54,7 @@ export function InicioPC({ c }: { c: Ctx }) {
   useEffect(() => (refRaiz.current ? ligarMola3d(refRaiz.current, '.widgets-pc:not(.arrumando) .widget, .faixa-pc, .faixa-pc-resumo, .faixa-pc-acoes button') : undefined), [])
 
   return (
-    <div className="pagina inicio inicio-pc" data-t={principal.tom} ref={refRaiz}>
+    <div className="pagina inicio inicio-pc" ref={refRaiz}>
       {/* a faixa inteira flutua pouco (é grande); os resumos e os botões dentro dela, mais */}
       <section className="faixa-pc" data-t={principal.tom} data-3d="1.2" data-sobe="4" data-cresce="0.004" aria-label={tx('Resumo')}>
         <header className="faixa-pc-topo">
