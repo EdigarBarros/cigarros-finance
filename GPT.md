@@ -1038,3 +1038,13 @@ segurar pega a lente, ela segue o dedo e fica centrada na aba, arrastando não t
 dedo cancela, toque normal abre, "voltar" do navegador volta, tela nova abre no topo), `testar-arrasto.cjs` 21/21,
 `testar-correcoes.cjs` OK. Computador: 24 capturas iguais às da produção do mesmo dia (só o brilho animado da Início em
 1024 px varia, como sempre).
+
+### 18/11/2026 — Claude — App Android 2.7.1 (código 13)
+
+**Estado:** `.aab` gerado, assinado com a chave de upload e entregue ao Edigar; falta ele enviar no Play Console. Substitui
+a 2.7.0 (código 12) se ela ainda não foi enviada.
+
+- Leva a troca de tela mais rápida e a lente de arrastar da barra de abas (PR #215). `versionCode` 12 → 13,
+  `versionName` 2.7.0 → 2.7.1. Mesmo processo da 2.7.0 (README → App Android); chave e senha apagadas da máquina depois.
+- Conferido: `jarsigner -verify` ("jar verified"), impressão SHA-256 igual à da chave de upload, e o código novo (lente)
+  está dentro do pacote.
