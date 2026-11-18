@@ -11,48 +11,22 @@
    Com "animações reduzidas" (data-movimento='reduzido', index.css) transições e entradas somem; a mola também não liga.
    ========================================================================== */
 
-/* ---------- a luz: uma lâmpada acesa no topo da página ----------
-   A luz fica POR CIMA da página, como luz de verdade: uma camada translúcida que tinge a faixa, os cartões e o fundo ao
-   mesmo tempo e não pega clique. Atrás de tudo ela ficava escondida pela faixa, que cobre justamente o centro, onde a luz
-   é mais forte. Mistura normal de propósito: com mix-blend-mode: screen ficava bonita, mas a página caía de ~60 para ~40
-   quadros por segundo no pulinho dos cartões (medido); balançar a camada também pesava.
-   - ::after (na frente): a lâmpada quase branca colada no topo, o cone que desce dela e feixes finos e macios; parada
-     (respirar ou balançar a camada custava quadros no pulinho dos cartões);
-   - ::before (atrás): o clarão largo, que tinge o fundo entre os cartões.
-   Uma máscara tira força conforme desce: forte no topo, some antes do fim da página, como uma luz que não alcança o chão;
-   e o cone se apaga antes das laterais (nada de linha reta na beira do menu). Na cor do mês: verde-água quando sobra,
-   coral quando falta. */
+/* ---------- o brilho do fundo ----------
+   Só um brilho suave ATRÁS de tudo, na cor do mês (verde-água quando sobra, coral quando falta): sai de trás da faixa,
+   escorre pelos espaços entre os cartões e vai sumindo conforme desce, antes do fim da página e antes das laterais.
+   Sem lâmpada, sem cone e sem feixes: o dono achou que parecia "um sol no meio do painel". Também já recusados: luz por
+   cima da página (tingia os cartões) e luz que segue o mouse. Parado (nada é redesenhado). */
 .inicio-pc { --tom: #3f9488; --forca: 1; position: relative; isolation: isolate; }
 .inicio-pc[data-t='falta'] { --tom: #c27380; }
-:root[data-tema='claro'] .inicio-pc { --forca: .7; }
-.inicio-pc::before, .inicio-pc::after {
-  content: ''; position: absolute; pointer-events: none;
-  top: -200px; left: -32px; right: -32px; height: min(2100px, 240vh);
-  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .8) 16%, rgba(0, 0, 0, .42) 40%, rgba(0, 0, 0, .14) 64%, transparent 84%);
-          mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .8) 16%, rgba(0, 0, 0, .42) 40%, rgba(0, 0, 0, .14) 64%, transparent 84%);
-}
-/* atrás: o clarão que tinge o fundo entre os cartões */
+:root[data-tema='claro'] .inicio-pc { --forca: .55; }
 .inicio-pc::before {
-  z-index: -1;
-  background: radial-gradient(62% 48% at 50% 0%, color-mix(in srgb, var(--tom) calc(30% * var(--forca)), transparent), transparent 100%);
-}
-/* na frente: a lâmpada, o cone e os feixes, clareando o que estiver embaixo */
-.inicio-pc::after {
-  z-index: 3;
+  content: ''; position: absolute; z-index: -1; pointer-events: none;
+  top: -200px; left: -32px; right: -32px; height: min(2000px, 220vh);
   background:
-    /* a lâmpada: quase branca no centro */
-    radial-gradient(14% 110px at 50% 0%, color-mix(in srgb, color-mix(in srgb, var(--tom) 45%, #fff) calc(55% * var(--forca)), transparent), transparent 100%),
-    /* os feixes: cada um acende e apaga macio nas bordas, largos e espaçados */
-    repeating-conic-gradient(from 180deg at 50% -3%,
-      transparent 0deg, color-mix(in srgb, color-mix(in srgb, var(--tom) 55%, #fff) calc(5% * var(--forca)), transparent) 2.5deg,
-      transparent 5deg, transparent 11deg),
-    /* o cone: mais forte no eixo, suave nas bordas e apagado antes das laterais */
-    conic-gradient(from 180deg at 50% -3%,
-      color-mix(in srgb, var(--tom) calc(20% * var(--forca)), transparent) 0deg,
-      color-mix(in srgb, var(--tom) calc(12% * var(--forca)), transparent) 16deg,
-      transparent 34deg 326deg,
-      color-mix(in srgb, var(--tom) calc(12% * var(--forca)), transparent) 344deg,
-      color-mix(in srgb, var(--tom) calc(20% * var(--forca)), transparent) 360deg);
+    radial-gradient(60% 30% at 50% 14%, color-mix(in srgb, var(--tom) calc(22% * var(--forca)), transparent), transparent 100%),
+    radial-gradient(85% 70% at 50% 0%, color-mix(in srgb, var(--tom) calc(14% * var(--forca)), transparent), transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .75) 25%, rgba(0, 0, 0, .3) 55%, transparent 85%);
+          mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, .75) 25%, rgba(0, 0, 0, .3) 55%, transparent 85%);
 }
 
 /* ---------- a faixa do topo: um degradê escuro por estado (as mesmas cores do topo do celular, src/movel/tom.ts) ---------- */
