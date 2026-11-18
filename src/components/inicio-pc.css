@@ -1,25 +1,49 @@
 /* ==========================================================================
    Início do computador (components/InicioPC.tsx): a faixa colorida do topo e a grade de cartões. Os cartões em si
-   (.widget, .linha-movel…) ficam em src/movel/cartoes.css, iguais aos do celular; aqui só o que muda no computador.
+   (.widget, .linha-movel…) ficam em src/movel/cartoes.css, iguais aos do celular; aqui só o que muda no computador:
+   a grade, a cor que escorre da faixa para o fundo e o movimento com o mouse (luz que segue, cartões que sobem).
+   Com "animações reduzidas" (data-movimento='reduzido', index.css) as transições e entradas somem sozinhas.
    ========================================================================== */
+
+/* posições da luz que segue o mouse: registradas para a transição andar (sem isso a luz pularia de um ponto ao outro).
+   InicioPC.tsx põe --mx/--my direto no estilo do cartão, sem redesenhar a tela a cada movimento. */
+@property --mx { syntax: '<length-percentage>'; inherits: false; initial-value: 50%; }
+@property --my { syntax: '<length-percentage>'; inherits: false; initial-value: 0%; }
+
+/* ---------- a cor da faixa escorre para o fundo da página, como o topo do celular ---------- */
+.inicio-pc { --tom: #3f9488; position: relative; isolation: isolate; }
+.inicio-pc[data-t='falta'] { --tom: #a8606b; }
+.inicio-pc::before {
+  content: ''; position: absolute; z-index: -1; inset: -90px 0 auto; height: 760px; pointer-events: none;
+  background: radial-gradient(70% 75% at 40% 0%, color-mix(in srgb, var(--tom) 24%, transparent), transparent 72%);
+  transition: background .8s;
+}
+:root[data-tema='claro'] .inicio-pc::before {
+  background: radial-gradient(70% 75% at 40% 0%, color-mix(in srgb, var(--tom) 13%, transparent), transparent 72%);
+}
 
 /* ---------- a faixa do topo: um degradê escuro por estado (as mesmas cores do topo do celular, src/movel/tom.ts) ---------- */
 .faixa-pc {
   --faixa: linear-gradient(135deg, #3f9488 0%, #25685f 45%, #163d38 100%);
+  --brilho: #3f9488;
+  --mx: 22%; --my: 0%;
   position: relative; display: grid; gap: 22px; padding: 22px 28px 24px; border-radius: 28px; overflow: hidden;
   background: var(--faixa); color: #fff; box-shadow: 0 24px 50px -34px rgba(0, 0, 0, .6);
+  transition: --mx 1s var(--mola), --my 1s var(--mola), box-shadow .6s var(--mola);
 }
-.faixa-pc[data-t='falta'] { --faixa: linear-gradient(135deg, #a8606b 0%, #763a45 45%, #3e2025 100%); }
-/* um brilho suave no canto, para a faixa não ficar chapada */
+.faixa-pc[data-t='falta'] { --faixa: linear-gradient(135deg, #a8606b 0%, #763a45 45%, #3e2025 100%); --brilho: #a8606b; }
+/* a luz da faixa: parada no canto de cima; com o mouse em cima, vai atrás dele devagar */
 .faixa-pc::before {
-  content: ''; position: absolute; inset: -40% auto auto -10%; width: 60%; height: 140%; pointer-events: none;
-  background: radial-gradient(closest-side, rgba(255, 255, 255, .14), transparent);
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(540px circle at var(--mx) var(--my), rgba(255, 255, 255, .18), transparent 70%);
 }
+.faixa-pc:hover { box-shadow: 0 36px 70px -40px color-mix(in srgb, var(--brilho) 85%, transparent); }
 .faixa-pc > * { position: relative; }
 
 .faixa-pc-topo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .faixa-pc-topo h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
-.faixa-pc-topo .eq-modo { color: #fff; background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .24); }
+.faixa-pc-topo .eq-modo { color: #fff; background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .24); transition: background .25s, transform .45s var(--mola-salto); }
+.faixa-pc-topo .eq-modo:hover { background: rgba(255, 255, 255, .24); transform: translateY(-2px); }
 .faixa-pc-data { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: 13.5px; color: rgba(255, 255, 255, .78); }
 
 .faixa-pc-corpo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 28px; align-items: center; }
@@ -33,30 +57,36 @@
 .faixa-pc-sub { margin: 2px 0 0; font-size: 15px; color: rgba(255, 255, 255, .84); }
 .faixa-pc-pilula {
   margin-top: 12px; min-height: 40px; padding: 0 18px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .26);
-  background: rgba(255, 255, 255, .14); color: #fff; font: 600 14.5px var(--fonte); transition: background .2s, transform .3s var(--mola-salto);
+  background: rgba(255, 255, 255, .14); color: #fff; font: 600 14.5px var(--fonte);
+  transition: background .25s, transform .45s var(--mola-salto);
 }
-.faixa-pc-pilula:hover { background: rgba(255, 255, 255, .24); }
-.faixa-pc-pilula:active { transform: scale(.96); }
+.faixa-pc-pilula:hover { background: rgba(255, 255, 255, .26); transform: translateY(-2px); }
+.faixa-pc-pilula:active { transform: scale(.96); transition-duration: .12s; }
 
-/* os outros resumos: vidro claro sobre o degradê, com um fio na cor de cada um */
+/* os outros resumos: vidro claro sobre o degradê, com um fio na cor de cada um; sobem com o mouse */
 .faixa-pc-resumos { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
 .faixa-pc-resumo {
-  --c: #7d84a6;
+  --c: #a9b0d6;
   display: grid; align-content: start; gap: 3px; min-width: 0; padding: 14px 16px; border-radius: 20px; text-align: left;
   border: 1px solid rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .09); color: #fff; font: inherit;
-  box-shadow: inset 3px 0 0 var(--c); transition: background .2s, transform .3s var(--mola-salto);
+  box-shadow: inset 3px 0 0 var(--c);
+  transition: background .25s, transform .5s var(--mola), box-shadow .5s var(--mola), border-color .3s;
 }
 .faixa-pc-resumo[data-t='dividas'] { --c: #d9ab6c; }
 .faixa-pc-resumo[data-t='invest'] { --c: #b2a3ea; }
-.faixa-pc-resumo[data-t='guardado'] { --c: #a9b0d6; }
-.faixa-pc-resumo:hover { background: rgba(255, 255, 255, .16); }
-.faixa-pc-resumo:active { transform: scale(.98); }
+.faixa-pc-resumo:hover {
+  background: rgba(255, 255, 255, .16); border-color: rgba(255, 255, 255, .28); transform: translateY(-4px);
+  box-shadow: inset 3px 0 0 var(--c), 0 18px 30px -20px rgba(0, 0, 0, .55);
+}
+.faixa-pc-resumo:active { transform: translateY(-1px) scale(.98); transition-duration: .12s; }
 .faixa-pc-resumo-rotulo { font-size: 13px; color: rgba(255, 255, 255, .8); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .faixa-pc-resumo b { font-family: var(--fonte-numeros); font-size: 22px; font-weight: 750; letter-spacing: -.02em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .faixa-pc-resumo small { font-size: 12.5px; color: rgba(255, 255, 255, .74); }
 .faixa-pc-resumo-ir { display: inline-flex; align-items: center; gap: 2px; margin-top: 6px; font-size: 12.5px; font-weight: 600; color: rgba(255, 255, 255, .9); }
+.faixa-pc-resumo-ir svg { transition: transform .4s var(--mola); }
+.faixa-pc-resumo:hover .faixa-pc-resumo-ir svg { transform: translateX(4px); }
 
-/* as ações redondas, como no celular */
+/* as ações redondas, como no celular: o círculo sobe e o ícone cresce com o mouse */
 .faixa-pc-acoes { display: flex; flex-wrap: wrap; gap: 8px 22px; }
 .faixa-pc-acoes button {
   display: grid; justify-items: center; gap: 6px; min-width: 64px; padding: 0; border: 0; background: none; color: #fff;
@@ -64,25 +94,50 @@
 }
 .faixa-pc-circulo {
   display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%;
-  background: rgba(255, 255, 255, .15); border: 1px solid rgba(255, 255, 255, .22); transition: background .2s, transform .3s var(--mola-salto);
+  background: rgba(255, 255, 255, .15); border: 1px solid rgba(255, 255, 255, .22);
+  transition: background .25s, transform .5s var(--mola-salto), box-shadow .5s var(--mola);
 }
-.faixa-pc-acoes button:hover .faixa-pc-circulo { background: rgba(255, 255, 255, .26); }
-.faixa-pc-acoes button:active .faixa-pc-circulo { transform: scale(.9); }
+.faixa-pc-circulo svg { transition: transform .5s var(--mola-salto); }
+.faixa-pc-acoes button:hover .faixa-pc-circulo { background: rgba(255, 255, 255, .28); transform: translateY(-4px); box-shadow: 0 14px 24px -14px rgba(0, 0, 0, .6); }
+.faixa-pc-acoes button:hover .faixa-pc-circulo svg { transform: scale(1.14); }
+.faixa-pc-acoes button:active .faixa-pc-circulo { transform: scale(.9); transition-duration: .12s; }
 .faixa-pc button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 
 /* ---------- as dicas: lado a lado, sem deslizar ---------- */
 .inicio-pc .dicas-movel {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin: 0; padding: 0; overflow: visible;
 }
+.inicio-pc .dica-movel { transition: transform .5s var(--mola), border-color .3s; }
+.inicio-pc .dica-movel:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--destaque) 24%, var(--borda)); }
 
 /* ---------- a grade de cartões: 12 colunas (lib/widgets.ts, linhasDoComputador) ---------- */
 .inicio-pc-cartoes { display: grid; gap: 0; min-width: 0; }
 .widgets-pc { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
-.widgets-pc .widget-celula { container-type: inline-size; }
+.widgets-pc .widget-celula {
+  container-type: inline-size;
+  /* entram um depois do outro, de cima para baixo (--i vem de GradeDeCartoes.tsx) */
+  animation: surgir-sem-desfoque .7s var(--mola) backwards; animation-delay: min(calc(.14s + var(--i, 0) * 55ms), .8s);
+}
 .widgets-pc.arrumando .widget { opacity: .82; }
 .inicio-pc .widget { padding: 14px 20px 8px; }
 .inicio-pc .widget-rodape { margin: 0 -20px; }
 .inicio-pc .widget-pequeno, .inicio-pc .widget-gasto { padding: 16px 20px; }
+
+/* o cartão sobe um pouco com o mouse e acende uma luz verde-água onde o mouse está */
+.inicio-pc .widget {
+  position: relative; --mx: 50%; --my: 0%;
+  transition: transform .55s var(--mola), box-shadow .55s var(--mola), border-color .35s, --mx .5s var(--mola), --my .5s var(--mola);
+}
+.inicio-pc .widget::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .45s;
+  background: radial-gradient(400px circle at var(--mx) var(--my), color-mix(in srgb, var(--destaque) 10%, transparent), transparent 65%);
+}
+.widgets-pc:not(.arrumando) .widget:hover {
+  transform: translateY(-4px); border-color: color-mix(in srgb, var(--destaque) 26%, var(--borda));
+  box-shadow: 0 26px 46px -30px rgba(0, 0, 0, .75);
+}
+:root[data-tema='claro'] .widgets-pc:not(.arrumando) .widget:hover { box-shadow: 0 24px 44px -28px rgba(15, 29, 58, .28); }
+.widgets-pc:not(.arrumando) .widget:hover::after { opacity: 1; }
 
 /* resumo do mês estreito (ao lado do gráfico): um número embaixo do outro, maiores */
 @container (max-width: 440px) {
@@ -90,13 +145,27 @@
   .widget-resumo-grade .widget-numero { font-size: 26px; }
 }
 
-/* no mouse, a linha e o título mostram que dá para clicar */
-.inicio-pc .linha-movel { margin: 0 -10px; padding: 8px 10px; width: calc(100% + 20px); border-radius: 14px; min-height: 56px; transition: background .15s; }
-.inicio-pc button.linha-movel:hover { background: var(--preench-4); }
+/* as linhas: fundo ao passar o mouse, o ícone dá um pulinho e a seta do título anda */
+.inicio-pc .linha-movel {
+  margin: 0 -10px; padding: 8px 10px; width: calc(100% + 20px); border-radius: 14px; min-height: 56px;
+  transition: background .2s, transform .3s var(--mola);
+}
+.inicio-pc button.linha-movel:hover { background: var(--preench-3); }
+.inicio-pc button.linha-movel:active { transform: scale(.985); transition-duration: .1s; }
+.inicio-pc .linha-movel .icone-redondo, .inicio-pc .linha-movel .icone-banco-movel { transition: transform .5s var(--mola-salto); }
+.inicio-pc button.linha-movel:hover .icone-redondo, .inicio-pc button.linha-movel:hover .icone-banco-movel { transform: scale(1.1) rotate(-5deg); }
+.inicio-pc .widget-titulo { transition: color .2s; }
+.inicio-pc .widget-titulo svg { transition: transform .4s var(--mola), opacity .2s; }
 .inicio-pc .widget-titulo:hover { color: var(--texto); }
-.inicio-pc .widget-rodape:hover { background: var(--preench-4); }
+.inicio-pc .widget-titulo:hover svg { transform: translateX(4px); opacity: 1; }
+.inicio-pc .widget-rodape { transition: background .2s, color .2s; }
+.inicio-pc .widget-rodape:hover { background: var(--preench-3); color: var(--destaque); }
 .linha-acao { font-size: 12.5px; font-weight: 650; color: var(--destaque); }
-.inicio-pc .cartoes-adicionar:hover, .inicio-pc .cartoes-arrumar:hover { background: var(--superficie-2); }
+
+.inicio-pc .cartoes-adicionar, .inicio-pc .cartoes-arrumar { transition: transform .5s var(--mola-salto), background .2s, border-color .25s; }
+.inicio-pc .cartoes-adicionar:hover, .inicio-pc .cartoes-arrumar:hover {
+  background: var(--superficie-2); transform: translateY(-2px); border-color: color-mix(in srgb, var(--destaque) 32%, var(--borda));
+}
 
 /* tablet deitado e janelas estreitas: a faixa empilha */
 @media (max-width: 1100px) {

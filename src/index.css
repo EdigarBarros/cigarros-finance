@@ -134,6 +134,33 @@ body::before {
 }
 :root[data-tema='claro'] body::before { opacity: .6; }
 
+/* ---------- painel no tema escuro: grafite neutro (celular desde 17/11/2026, computador desde 18/11/2026) ----------
+   Fundo quase preto, cartões cinza-escuros e bordas quase invisíveis; o verde-água da marca fica para destaques e combina
+   com o grafite (no azul-marinho antigo ele brigava). Vale só com o painel na tela (:has(.app)): a página inicial, o login
+   e o tema claro não mudam. */
+:root[data-tema='escuro']:has(.app) {
+  --fundo: #0e0f11;
+  --fundo-lateral: #111214;
+  --superficie: #1c1d20;
+  --superficie-2: #242529;
+  --superficie-forte: #212226;
+  --borda: rgba(255, 255, 255, .06);
+  --borda-forte: rgba(255, 255, 255, .11);
+  --texto: #f3f4f6;
+  --texto-2: rgba(235, 236, 240, .62);
+  --texto-3: rgba(235, 236, 240, .38);
+  --separador: rgba(255, 255, 255, .07);
+  --preench-1: rgba(255, 255, 255, .2);
+  --preench-2: rgba(255, 255, 255, .12);
+  --preench-3: rgba(255, 255, 255, .075);
+  --preench-4: rgba(255, 255, 255, .04);
+  --vidro: rgba(30, 31, 35, .78);
+  --sombra: 0 10px 30px -22px rgba(0, 0, 0, .9);
+}
+/* sem a luz azulada da marca no alto e com a faixa do relógio (iPhone) no mesmo grafite */
+:root[data-tema='escuro']:has(.app) body::before { display: none; }
+:root[data-tema='escuro']:has(.app)::before { background: #0e0f11; }
+
 /* troca de tema: o tema novo se espalha num círculo (View Transitions) */
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
 .trocando-tema *, .trocando-tema *::before, .trocando-tema *::after { transition: none !important; }
@@ -239,6 +266,10 @@ body::before {
   background: none; color: var(--texto-2); font-weight: 500; text-align: left;
   transition: background .25s var(--mola), color .2s, transform .3s var(--mola-salto);
 }
+/* no mouse, o ícone do menu lateral dá um pulinho e o item anda um pouco para a direita */
+.lateral nav button svg { transition: transform .45s var(--mola-salto), color .2s; }
+.lateral nav button:hover svg { transform: scale(1.14); color: var(--destaque); }
+.lateral nav button:hover:not(.ativo) { transform: translateX(3px); }
 .lateral button svg, .menu-lista button svg { flex: none; }
 .lateral button:hover, .menu-lista button:hover { background: var(--preench-4); color: var(--texto); }
 .lateral button:active, .menu-lista button:active { transform: scale(.97); }

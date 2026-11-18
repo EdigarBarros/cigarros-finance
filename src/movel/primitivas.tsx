@@ -14,6 +14,8 @@ export interface PaginaDoHero {
   rotulo: string
   /** O número grande, já formatado. */
   valor: string
+  /** O mesmo número, cru (sem sinal): o computador conta até ele ao abrir. */
+  numero?: number
   sub?: ReactNode
   pilula?: { texto: string; acao: () => void }
   /** Só com o tom 'cor': a cor do degradê (o cartão de crédito na cor do banco). */

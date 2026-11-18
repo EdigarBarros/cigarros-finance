@@ -56,7 +56,7 @@ export function GradeDeCartoes({ x, computador = false }: { x: Contexto; computa
     // linhas de 12 colunas, cada cartão com a sua largura; os da mesma linha ficam da mesma altura
     grade = (
       <div className={`widgets-pc ${arrumando ? 'arrumando' : ''}`}>
-        {linhasDoComputador(ids).flatMap((l) => l.map(({ id, colunas }) => celula(id, { gridColumn: `span ${colunas}` })))}
+        {linhasDoComputador(ids).flat().map(({ id, colunas }, i) => celula(id, { gridColumn: `span ${colunas}`, '--i': i } as CSSProperties))}
       </div>
     )
   } else {

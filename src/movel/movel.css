@@ -6,30 +6,7 @@
 .app.movel { position: relative; display: block; min-height: 100vh; }
 .app.movel > .conteudo { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; padding: 0 16px calc(120px + env(safe-area-inset-bottom)); }
 
-/* ---------- celular no tema escuro: grafite neutro (sem o azul-marinho do computador) ----------
-   Fundo quase preto, cartões cinza-escuros e bordas quase invisíveis; o verde-água da marca fica para destaques. Vale só
-   com a moldura do celular na tela (:has), então o computador e o tema claro não mudam. */
-:root[data-tema='escuro']:has(.app.movel) {
-  --fundo: #0e0f11;
-  --superficie: #1c1d20;
-  --superficie-2: #242529;
-  --superficie-forte: #212226;
-  --borda: rgba(255, 255, 255, .06);
-  --borda-forte: rgba(255, 255, 255, .11);
-  --texto: #f3f4f6;
-  --texto-2: rgba(235, 236, 240, .62);
-  --texto-3: rgba(235, 236, 240, .38);
-  --separador: rgba(255, 255, 255, .07);
-  --preench-1: rgba(255, 255, 255, .2);
-  --preench-2: rgba(255, 255, 255, .12);
-  --preench-3: rgba(255, 255, 255, .075);
-  --preench-4: rgba(255, 255, 255, .04);
-  --vidro: rgba(30, 31, 35, .78);
-  --sombra: 0 10px 30px -22px rgba(0, 0, 0, .9);
-}
-/* sem a luz azulada da marca no alto e com a faixa do relógio (iPhone) no mesmo grafite */
-:root[data-tema='escuro']:has(.app.movel) body::before { display: none; }
-:root[data-tema='escuro']:has(.app.movel)::before { background: #0e0f11; }
+/* O tema escuro grafite (sem o azul-marinho antigo) vale no painel inteiro, celular e computador: fica em index.css. */
 
 /* ---------- o degradê do topo (um por tom; troca por opacidade, só na placa de vídeo) ----------
    Sobre ele, nada de backdrop-filter: refazer o desfoque a cada quadro da troca de cor travava o arrasto no celular. */
