@@ -52,6 +52,40 @@ export function linhasDaGrade(ids: IdWidget[]): LinhaDeWidgets[] {
   return linhas
 }
 
+/** Um cartão numa linha do computador: quantas das 12 colunas ele ocupa. */
+export interface CelulaDoComputador { id: IdWidget; colunas: number }
+
+/**
+ * A grade do computador: linhas de 12 colunas, na ordem da lista. O gráfico do ano ocupa 8 e o resumo do mês 4 (cabe ao lado),
+ * os grandes 6 (dois por linha) e os pequenos 3. O cartão que não cabe na sobra da linha começa a próxima; a sobra vai para
+ * os cartões da linha (todos iguais: dividem por igual; senão, o último cresce). Assim a linha sempre fecha, sem buraco.
+ */
+export function linhasDoComputador(ids: IdWidget[]): CelulaDoComputador[][] {
+  const largura = (id: IdWidget) => (id === 'evolucao' ? 8 : id === 'resumo-mes' ? 4 : TAMANHO[id] === 'pequeno' ? 3 : 6)
+  const linhas: CelulaDoComputador[][] = []
+  let linha: CelulaDoComputador[] = []
+  let usadas = 0
+  const fechar = () => {
+    if (!linha.length) return
+    const sobra = 12 - usadas
+    if (sobra > 0) {
+      if (linha.every((x) => x.colunas === linha[0].colunas) && 12 % linha.length === 0) linha = linha.map((x) => ({ ...x, colunas: 12 / linha.length }))
+      else linha[linha.length - 1] = { ...linha[linha.length - 1], colunas: linha[linha.length - 1].colunas + sobra }
+    }
+    linhas.push(linha)
+    linha = []
+    usadas = 0
+  }
+  for (const id of ids) {
+    const w = largura(id)
+    if (usadas + w > 12) fechar()
+    linha.push({ id, colunas: w })
+    usadas += w
+  }
+  fechar()
+  return linhas
+}
+
 /** O que a pessoa arrumou na Início do celular. */
 export interface ArrumacaoInicio {
   /** O jeito de ver em que a arrumação foi feita: trocar de jeito recomeça pelo modelo do novo. */
