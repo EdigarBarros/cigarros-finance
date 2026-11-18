@@ -19,7 +19,7 @@ export function resumosDaInicio(c: Ctx, m: MesDaInicio, aoEntender: () => void):
   if (momento === 'futuro') {
     paginas.push({
       id: 'sobra', tom: composicao.resultado < 0 ? 'falta' : 'sobra', rotulo: tx('Previsto para {0}', nomeMes),
-      valor: fmtValor(composicao.resultado),
+      valor: fmtValor(composicao.resultado), numero: composicao.resultado,
       sub: temPrevisao ? tx('Vai entrar {0} · vai sair {1}', fmtValor(ddMes.vaiEntrar), fmtValor(ddMes.vaiSair)) : tx('Nada previsto ainda.'),
       pilula: temPrevisao ? { texto: tx('Entender a conta'), acao: aoEntender } : undefined,
     })
@@ -35,7 +35,7 @@ export function resumosDaInicio(c: Ctx, m: MesDaInicio, aoEntender: () => void):
         ? (composicao.resultado >= 0 ? tx('Deve sobrar {0} no fim do mês', fmtValor(composicao.resultado)) : tx('Pode faltar {0} no fim do mês', fmtValor(-composicao.resultado)))
         : tx('Entrou {0} · saiu {1}', fmtValor(ddMes.entrou), fmtValor(ddMes.saiu))
     paginas.push({
-      id: 'sobra', tom: !sobrou || situacao.estado === 'critico' ? 'falta' : 'sobra', rotulo, valor: fmtValor(Math.abs(resultado)), sub,
+      id: 'sobra', tom: !sobrou || situacao.estado === 'critico' ? 'falta' : 'sobra', rotulo, valor: fmtValor(Math.abs(resultado)), numero: Math.abs(resultado), sub,
       pilula: c.contaNova ? undefined : { texto: tx('Entender a conta'), acao: aoEntender },
     })
   }
@@ -45,7 +45,7 @@ export function resumosDaInicio(c: Ctx, m: MesDaInicio, aoEntender: () => void):
     const nb = c.d.bancos.length
     paginas.push({
       id: 'guardado', tom: 'guardado', rotulo: v.bancos && nb ? (nb === 1 ? tx('Guardado em 1 banco') : tx('Guardado em {0} bancos', nb)) : tx('Dinheiro guardado'),
-      valor: fmtValor(total), sub: informado ? undefined : tx('Ainda não informado'),
+      valor: fmtValor(total), numero: total, sub: informado ? undefined : tx('Ainda não informado'),
       pilula: { texto: informado ? tx('Ver o guardado') : tx('Informar saldos'), acao: () => c.irPara('patrimonio') },
     })
   }
@@ -57,7 +57,7 @@ export function resumosDaInicio(c: Ctx, m: MesDaInicio, aoEntender: () => void):
     if (falta > 0) {
       const pago = inicial > 0 ? Math.max(0, Math.min(1, (inicial - registrado) / inicial)) : null
       paginas.push({
-        id: 'dividas', tom: 'dividas', rotulo: tx('Falta pagar nas dívidas'), valor: fmtValor(falta),
+        id: 'dividas', tom: 'dividas', rotulo: tx('Falta pagar nas dívidas'), valor: fmtValor(falta), numero: falta,
         sub: pago !== null ? tx('{0}% quitado', Math.round(pago * 100)) : undefined,
         pilula: { texto: tx('Ver dívidas'), acao: () => c.irPara('dividas') },
       })
@@ -66,7 +66,7 @@ export function resumosDaInicio(c: Ctx, m: MesDaInicio, aoEntender: () => void):
   if (v.investimentos && c.invest.c.valor > 0) {
     const res = c.invest.c.resultado
     paginas.push({
-      id: 'invest', tom: 'invest', rotulo: tx('Seus investimentos'), valor: fmtValor(c.invest.c.valor),
+      id: 'invest', tom: 'invest', rotulo: tx('Seus investimentos'), valor: fmtValor(c.invest.c.valor), numero: c.invest.c.valor,
       sub: res >= 0 ? tx('Rendeu {0} até hoje', fmtValor(res)) : tx('Perdeu {0} até hoje', fmtValor(-res)),
       pilula: { texto: tx('Ver carteira'), acao: () => c.irPara('invest') },
     })

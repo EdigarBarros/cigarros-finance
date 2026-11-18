@@ -75,6 +75,17 @@ sempre; o resto → `InicioPC`. Os três jeitos usam esta tela; o que muda entre
    (sem `compacto`) e cada conta mostra a ação ao lado do valor ("Paguei", "Recebi", "Ver fatura"); clicar abre a
    conferência, como no celular (nunca dá baixa direto). Embaixo, "Adicionar cartões", "Arrumar" e "Jeito X · Trocar".
 
+**Cor e movimento no computador** (`components/inicio-pc.css`): a cor da faixa escorre para o fundo da página, como o topo
+do celular. Os números da faixa contam até o valor ao abrir e ao trocar de mês (`Numero`). Os cartões entram um depois do
+outro; com o mouse, sobem 4 px, a borda fica verde-água e uma luz acompanha o ponteiro (a posição vai direto no estilo do
+cartão, `--mx/--my` registradas com `@property` para a luz deslizar em vez de pular; nenhum redesenho a cada movimento). A luz
+da faixa, os resumos, as ações redondas, as linhas (o ícone dá um pulinho), as setas dos títulos e o menu lateral também
+respondem ao mouse. Com "animações reduzidas" tudo isso para (regra geral do `index.css`).
+
+**Tema escuro grafite no painel inteiro** (desde 18/11/2026): o grafite neutro que era só do celular (`:has(.app)` em
+`index.css`) vale também no computador; o verde-água combina com ele, e no azul-marinho antigo brigava. Página inicial,
+login e tema claro não mudam.
+
 O CSS dos cartões, das dicas e da folha "Adicionar cartões" mora em `src/movel/cartoes.css` (importado por
 `src/movel/widgets.tsx`), para servir aos dois; o que é só do celular continua em `movel.css`.
 
