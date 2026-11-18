@@ -1128,3 +1128,13 @@ que ainda não tinha sido enviada.
 - `testar-arrasto.cjs`: as camadas de cor podem mudar com o dedo na tela (o resto continua não podendo); novos: a cor de
   antes já está abaixo de 0,5 no meio do gesto, nos Cartões a cor vira mistura, e depois de assentar não sobra estilo solto.
   41/41 com o processador 4× mais lento, nas 10 telas com topo que desliza.
+
+### 18/11/2026 — Claude — App Android 2.7.4 (código 16)
+
+**Estado:** `.aab` gerado, assinado e entregue ao Edigar; falta ele enviar no Play Console. Substitui a 2.7.2 e a 2.7.3
+(nenhuma foi enviada).
+
+- Leva #217 (Início nova), #219 (gráfico maior) e #221 (cor do topo acompanha o dedo). `versionCode` 15 → 16,
+  `versionName` 2.7.3 → 2.7.4. Chave do Drive do dono apagada logo depois de assinar.
+- Conferido: `jarsigner -verify`, SHA-256 da chave de upload (A7:07:94:…:5D:9D) e o código novo (`--tom-cor` em
+  `primitivas`) dentro do pacote.
