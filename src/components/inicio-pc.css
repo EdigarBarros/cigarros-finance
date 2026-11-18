@@ -8,7 +8,7 @@
    ========================================================================== */
 
 /* posições da luz que segue o mouse: registradas para a transição andar (sem isso a luz pularia de um ponto ao outro).
-   InicioPC.tsx põe --mx/--my direto no estilo do cartão, sem redesenhar a tela a cada movimento. */
+   InicioPC.tsx põe --mx/--my direto no estilo da faixa, sem redesenhar a tela a cada movimento. */
 @property --mx { syntax: '<length-percentage>'; inherits: false; initial-value: 50%; }
 @property --my { syntax: '<length-percentage>'; inherits: false; initial-value: 0%; }
 
@@ -125,21 +125,24 @@
 .inicio-pc .widget-rodape { margin: 0 -20px; }
 .inicio-pc .widget-pequeno, .inicio-pc .widget-gasto { padding: 16px 20px; }
 
-/* o cartão sobe um pouco com o mouse e acende uma luz verde-água onde o mouse está */
-.inicio-pc .widget {
-  position: relative; --mx: 50%; --my: 0%;
-  transition: transform .9s var(--deslize), box-shadow .9s var(--deslize), border-color .6s var(--deslize), --mx 1.1s var(--deslize), --my 1.1s var(--deslize);
-}
+/* o contorno: com o mouse em cima, uma linha verde-água se desenha em volta do cartão, saindo do canto do título e dando a
+   volta inteira (rápido no começo, freando no fim); ao tirar o mouse, ela se desfaz pelo mesmo caminho. O cartão não se
+   mexe: só o contorno e uma sombra suave. --volta é @property, então a transição anda (e volta) sozinha. */
+@property --volta { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
+.inicio-pc .widget { position: relative; transition: box-shadow .9s var(--deslize); }
 .inicio-pc .widget::after {
-  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .7s var(--deslize);
-  background: radial-gradient(400px circle at var(--mx) var(--my), color-mix(in srgb, var(--destaque) 10%, transparent), transparent 65%);
+  content: ''; position: absolute; inset: -1px; padding: 1.5px; border-radius: inherit; pointer-events: none;
+  --volta: 0%;
+  background: conic-gradient(from 300deg,
+    var(--destaque) 0%, color-mix(in srgb, var(--destaque) 55%, var(--caixa)) calc(var(--volta) * .5), var(--destaque) var(--volta), transparent var(--volta));
+  /* só a borda: o miolo é recortado */
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  transition: --volta 1.1s var(--deslize);
 }
-.widgets-pc:not(.arrumando) .widget:hover {
-  transform: translateY(-4px); border-color: color-mix(in srgb, var(--destaque) 26%, var(--borda));
-  box-shadow: 0 26px 46px -30px rgba(0, 0, 0, .75);
-}
-:root[data-tema='claro'] .widgets-pc:not(.arrumando) .widget:hover { box-shadow: 0 24px 44px -28px rgba(15, 29, 58, .28); }
-.widgets-pc:not(.arrumando) .widget:hover::after { opacity: 1; }
+.widgets-pc:not(.arrumando) .widget:hover { box-shadow: 0 0 0 4px color-mix(in srgb, var(--destaque) 7%, transparent), 0 22px 44px -32px rgba(0, 0, 0, .7); }
+:root[data-tema='claro'] .widgets-pc:not(.arrumando) .widget:hover { box-shadow: 0 0 0 4px color-mix(in srgb, var(--destaque) 10%, transparent), 0 22px 40px -30px rgba(15, 29, 58, .22); }
+.widgets-pc:not(.arrumando) .widget:hover::after { --volta: 100%; }
 
 /* resumo do mês estreito (ao lado do gráfico): um número embaixo do outro, maiores */
 @container (max-width: 440px) {

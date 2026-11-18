@@ -48,21 +48,14 @@ export function InicioPC({ c }: { c: Ctx }) {
   // o número conta até o valor ao abrir e ao trocar de mês (o mesmo Numero do resto do app)
   const valor = (p: { valor: string; numero?: number }) => (p.numero === undefined ? p.valor : <Numero valor={p.numero} formato={fmtValor} />)
 
-  // a luz que segue o mouse: a posição vai direto no estilo do cartão (sem redesenhar a tela a cada movimento)
+  // a luz da faixa segue o mouse: a posição vai direto no estilo (sem redesenhar a tela a cada movimento)
   const aoMover = (e: PointerEvent<HTMLDivElement>) => {
     if (e.pointerType !== 'mouse') return
-    const alvo = (e.target as HTMLElement).closest<HTMLElement>('.widget, .faixa-pc, .faixa-pc-resumo')
+    const alvo = (e.target as HTMLElement).closest<HTMLElement>('.faixa-pc')
     if (!alvo) return
     const b = alvo.getBoundingClientRect()
     alvo.style.setProperty('--mx', `${e.clientX - b.left}px`)
     alvo.style.setProperty('--my', `${e.clientY - b.top}px`)
-    // dentro da faixa, a luz da faixa acompanha também quando o mouse está num dos resumos
-    const faixa = alvo.closest<HTMLElement>('.faixa-pc')
-    if (faixa && faixa !== alvo) {
-      const f = faixa.getBoundingClientRect()
-      faixa.style.setProperty('--mx', `${e.clientX - f.left}px`)
-      faixa.style.setProperty('--my', `${e.clientY - f.top}px`)
-    }
   }
 
   return (
