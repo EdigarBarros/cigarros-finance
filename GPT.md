@@ -1138,3 +1138,15 @@ que ainda não tinha sido enviada.
   `versionName` 2.7.3 → 2.7.4. Chave do Drive do dono apagada logo depois de assinar.
 - Conferido: `jarsigner -verify`, SHA-256 da chave de upload (A7:07:94:…:5D:9D) e o código novo (`--tom-cor` em
   `primitivas`) dentro do pacote.
+
+### 18/11/2026 — Claude — App Android 2.7.5 (código 17)
+
+**Estado:** `.aab` gerado, assinado e entregue ao Edigar; falta ele enviar no Play Console (teste fechado).
+
+- Motivo: ao enviar a 2.7.4 no teste fechado, o Play Console recusou ("O código de versão 16 já foi usado"), mas o 16 não
+  aparecia em "Adicionar da biblioteca" (a lista ia só até o código 6). O 16 provavelmente está numa versão de outra faixa.
+  Em vez de procurar, subiu o código: `versionCode` 16 → 17, `versionName` 2.7.4 → 2.7.5. Mesmo conteúdo da 2.7.4.
+- Lição: código de versão enviado uma vez ao Play Console nunca mais pode ser usado, nem em outra faixa nem depois de
+  descartar o rascunho. Na dúvida, suba o número.
+- Conferido: `jarsigner -verify` ("jar verified"), SHA-256 da chave de upload (A7:07:94:…:5D:9D), "2.7.5" no manifesto e o
+  endereço do Supabase de produção no pacote. Chave e senha do Drive apagadas da máquina logo depois de assinar.
