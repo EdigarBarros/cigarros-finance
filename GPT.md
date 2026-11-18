@@ -1014,3 +1014,27 @@ de 1280 e 1024 px contra a produção iguais ou com o ruído de captura conhecid
   Android). A chave e a senha vieram do Drive do dono só para esta assinatura e foram apagadas da máquina em seguida.
 - Conferido: `jarsigner -verify` ("jar verified") e a impressão SHA-256 do certificado igual à da chave de upload
   (A7:07:94:…:5D:9D).
+
+### 18/11/2026 — Claude — Celular: troca de tela mais rápida e lente de arrastar na barra de abas
+
+**Estado:** implementado e validado localmente; publicação registrada na conversa da sessão. Sem migração. O app Android só
+recebe numa versão nova.
+
+- Pedido do Edigar (com um vídeo da barra do WhatsApp no iOS 26): a troca de tela e de aba demorava; queria instantânea e
+  fluida, e segurar a barra para arrastar a lente pelas abas, só no celular.
+- Medição (app de demonstração, 390 px, processador 4× mais lento, rede 4G simulada), do toque até a tela nova na tela:
+  antes, Início ~290 ms em toda troca, Consultor ~165–250, telas do "Mais" ~275 na primeira vez (as telas do celular não
+  estavam na fila de pré-carga). Depois: Início ~175–220, Consultor ~150–225, telas do "Mais" ~100–145 já na primeira vez;
+  a aba acende no próprio toque. O ruído entre rodadas é de ±50 ms.
+- O que mudou: `components/Painel.tsx` (fila `telasMovel` baixada primeiro no celular; `irPara` no celular em
+  `startTransition`, com `history.pushState` e volta ao topo num `useLayoutEffect`; tocar na aba aberta sobe ao topo),
+  `movel/Casca.tsx` (aba acesa na hora e o gesto da lente), `movel/movel.css` (lente de vidro, entrada da tela em 0,3 s sem
+  cascata, `content-visibility: auto` nos cartões).
+- Tentado e desfeito: manter as telas abertas escondidas com `<Activity>`. Mediu pior (Início ~390 ms): o `ctx` é um objeto
+  novo a cada desenho do Painel, então as telas guardadas eram redesenhadas do mesmo jeito.
+
+**Validação:** `npx tsc -b`, lint sem erro, build, `scripts/painel/testar.mjs` 34/34, `testar-movel.cjs` 372/372 (8 novos:
+segurar pega a lente, ela segue o dedo e fica centrada na aba, arrastando não troca a tela, soltar abre a aba, subir o
+dedo cancela, toque normal abre, "voltar" do navegador volta, tela nova abre no topo), `testar-arrasto.cjs` 21/21,
+`testar-correcoes.cjs` OK. Computador: 24 capturas iguais às da produção do mesmo dia (só o brilho animado da Início em
+1024 px varia, como sempre).

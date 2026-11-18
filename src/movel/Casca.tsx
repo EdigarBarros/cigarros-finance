@@ -2,7 +2,7 @@
  * A moldura do painel no celular (até 860 px): o topo (foto, busca, mês e olho), o fundo colorido da página e a barra de
  * abas flutuante. Quem decide o que entra em cada uma é o Painel (components/Painel.tsx); aqui só se desenha.
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Icone } from '../components/Icone'
 import { tx } from '../lib/textos'
 import { estiloLente, useLente } from '../lib/useLente'
@@ -79,16 +79,112 @@ export function TopoMovel({ sobreCor, foto, iniciais, avisoConta, aoConta, busca
 
 export interface Aba { id: string; nome: string; icone: string; ativo: boolean; acao: () => void; tour?: string; aberta?: boolean }
 
-/** As quatro abas fixas, na pílula de vidro. Rolando para baixo, ela encolhe (some o nome) para mostrar mais da tela. */
+/** Quanto tempo segurando a barra até a lente "soltar" e passar a seguir o dedo. */
+const SEGURAR_MS = 220
+/** Arrastar de lado mais que isto já pega a lente, sem esperar. */
+const ARRASTE_PX = 10
+
+/**
+ * As quatro abas fixas, na pílula de vidro. Rolando para baixo, ela encolhe (some o nome) para mostrar mais da tela.
+ * Segurando a barra (ou arrastando de lado), a lente cresce, vira uma gota de vidro e segue o dedo pelas abas, aumentando a
+ * que está embaixo; ao soltar, abre essa aba. Os movimentos da lente vão direto no estilo (sem redesenhar a barra a cada
+ * quadro); o React só redesenha quando muda a aba embaixo do dedo.
+ */
 export function BarraDeAbasMovel({ abas, encolhida }: { abas: Aba[]; encolhida: boolean }) {
   const ref = useRef<HTMLElement>(null)
-  const lente = useLente(ref, 'button.ativo', `${abas.map((a) => `${a.id}${a.ativo}`).join()}|${encolhida}`)
+  const refLente = useRef<HTMLSpanElement>(null)
+  const [sob, setSob] = useState<number | null>(null)
+  const gesto = useRef<{ id: number; x: number; y: number; timer: number; ativo: boolean; indice: number } | null>(null)
+  const engolirClique = useRef(false)
+  const ultimoX = useRef(0)
+  // a aba tocada acende na hora, só aqui na barra; a tela troca logo depois (numa transição, no Painel). Quando o Painel
+  // confirma (ou outra coisa muda as abas), vale de novo o que ele diz.
+  const [pedida, setPedida] = useState<string | null>(null)
+  const chave = abas.map((a) => `${a.id}${a.ativo}`).join()
+  const [chaveVista, setChaveVista] = useState(chave)
+  if (chave !== chaveVista) { setChaveVista(chave); setPedida(null) }
+  const ativa = (a: Aba) => (pedida ? a.aberta === undefined && a.id === pedida : a.ativo)
+  const abrir = (a: Aba) => { if (a.aberta === undefined && !a.ativo) setPedida(a.id); a.acao() }
+  const lente = useLente(ref, 'button.ativo', `${abas.map((a) => `${a.id}${ativa(a)}`).join()}|${encolhida}`)
+
+  const botoes = () => [...(ref.current?.querySelectorAll<HTMLButtonElement>(':scope > button') ?? [])]
+  /** A aba embaixo do dedo (a mais perto, se o dedo passou da ponta). */
+  const indiceEm = (x: number) => {
+    let melhor = 0, dist = Infinity
+    botoes().forEach((b, i) => {
+      const r = b.getBoundingClientRect()
+      const d = x < r.left ? r.left - x : x > r.right ? x - r.right : 0
+      if (d < dist) { dist = d; melhor = i }
+    })
+    return melhor
+  }
+  /** Leva a lente para o dedo: centrada nele, sem passar das pontas da barra. */
+  const moverLente = (x: number) => {
+    const nav = ref.current, el = refLente.current, b = botoes()[0]
+    if (!nav || !el || !b) return
+    const r = nav.getBoundingClientRect()
+    const w = b.offsetWidth, h = b.offsetHeight
+    const minimo = b.offsetLeft, maximo = nav.clientWidth - b.offsetLeft - w
+    const esq = Math.min(maximo, Math.max(minimo, x - r.left - nav.clientLeft - w / 2))
+    el.style.width = `${w}px`
+    el.style.height = `${h}px`
+    el.style.transform = `translate(${esq}px, ${b.offsetTop}px)`
+  }
+  const comecar = (x: number) => {
+    const g = gesto.current
+    if (!g || g.ativo) return
+    g.ativo = true
+    try { ref.current?.setPointerCapture(g.id) } catch { /* o dedo já saiu */ }
+    g.indice = indiceEm(x)
+    setSob(g.indice)
+    navigator.vibrate?.(8)
+  }
+  const abrirAba = abrir
+  const terminar = (abrir: boolean) => {
+    const g = gesto.current
+    if (!g) return
+    window.clearTimeout(g.timer)
+    gesto.current = null
+    if (!g.ativo) return
+    engolirClique.current = true
+    window.setTimeout(() => { engolirClique.current = false }, 400)
+    setSob(null)
+    const alvo = abas[g.indice]
+    if (abrir && alvo) abrirAba(alvo)
+  }
+
+  const arrastando = sob !== null
+  // ao pegar a lente, o React tira o estilo dela (que segue a aba ativa); aqui ela vai para o dedo
+  useLayoutEffect(() => { if (arrastando) moverLente(ultimoX.current) }, [arrastando]) // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <nav className={`abas-movel abas-movel-nova ${encolhida ? 'encolhida' : ''}`} ref={ref} aria-label={tx('Páginas')}>
-      {lente && <span className="lente" aria-hidden="true" style={estiloLente(lente)} />}
-      {abas.map((a) => (
-        <button key={a.id} data-tour={a.tour} className={a.ativo ? 'ativo' : ''} onClick={a.acao}
-          aria-current={a.ativo && a.aberta === undefined ? 'page' : undefined} aria-expanded={a.aberta} aria-label={a.nome}>
+    <nav className={`abas-movel abas-movel-nova ${encolhida ? 'encolhida' : ''} ${arrastando ? 'arrastando' : ''}`} ref={ref} aria-label={tx('Páginas')}
+      onPointerDown={(e) => {
+        if (e.button !== 0 || gesto.current) return
+        ultimoX.current = e.clientX
+        gesto.current = { id: e.pointerId, x: e.clientX, y: e.clientY, ativo: false, indice: 0, timer: window.setTimeout(() => comecar(ultimoX.current), SEGURAR_MS) }
+      }}
+      onPointerMove={(e) => {
+        const g = gesto.current
+        if (!g || e.pointerId !== g.id) return
+        ultimoX.current = e.clientX
+        if (!g.ativo) {
+          const dx = Math.abs(e.clientX - g.x), dy = Math.abs(e.clientY - g.y)
+          if (dx > ARRASTE_PX && dx > dy) { window.clearTimeout(g.timer); comecar(e.clientX) }
+          else if (dy > ARRASTE_PX) terminar(false) // o dedo subiu ou desceu: não é para pegar a lente
+          return
+        }
+        moverLente(e.clientX)
+        const i = indiceEm(e.clientX)
+        if (i !== g.indice) { g.indice = i; setSob(i); navigator.vibrate?.(6) }
+      }}
+      onPointerUp={(e) => { if (gesto.current?.id === e.pointerId) terminar(true) }}
+      onPointerCancel={() => terminar(false)}
+      onClickCapture={(e) => { if (engolirClique.current) { e.preventDefault(); e.stopPropagation(); engolirClique.current = false } }}
+      onContextMenu={(e) => e.preventDefault()}>
+      {lente && <span ref={refLente} className="lente" aria-hidden="true" style={arrastando ? undefined : estiloLente(lente)} />}
+      {abas.map((a, i) => (
+        <button key={a.id} data-tour={a.tour} className={`${ativa(a) ? 'ativo' : ''} ${sob === i ? 'sob-lente' : ''}`} onClick={() => abrir(a)}
+          aria-current={ativa(a) && a.aberta === undefined ? 'page' : undefined} aria-expanded={a.aberta} aria-label={a.nome}>
           <Icone nome={a.icone} /> <span>{a.nome}</span>
         </button>
       ))}
