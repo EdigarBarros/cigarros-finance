@@ -7,7 +7,7 @@ import type { Detalhe } from './types'
 
 export type IdWidget =
   | 'contas' | 'gasto-mes' | 'ultimos' | 'categorias' | 'orientacao' | 'entrou-saiu' | 'gasto-dia' | 'nota' | 'comparacao'
-  | 'dividas' | 'receber' | 'metas' | 'guardado' | 'cartoes'
+  | 'dividas' | 'receber' | 'metas' | 'guardado' | 'cartoes' | 'evolucao' | 'resumo-mes'
 
 /** Pequeno ocupa meia linha (dois lado a lado); grande ocupa a linha inteira. */
 export type TamanhoWidget = 'pequeno' | 'grande'
@@ -16,18 +16,20 @@ export const TAMANHO: Record<IdWidget, TamanhoWidget> = {
   contas: 'grande', 'gasto-mes': 'grande', ultimos: 'grande', categorias: 'grande', orientacao: 'grande',
   'entrou-saiu': 'pequeno', 'gasto-dia': 'pequeno', nota: 'pequeno', comparacao: 'pequeno',
   dividas: 'grande', receber: 'grande', metas: 'grande', guardado: 'grande', cartoes: 'grande',
+  evolucao: 'grande', 'resumo-mes': 'grande',
 }
 
 /**
  * O modelo de cada jeito, na ordem das perguntas da Início (docs/arquitetura-do-painel.md, seção 3): como estou, o que
- * preciso fazer, para onde está indo, o que estou construindo. Cartão de módulo desligado (ou sem nada para mostrar) fica
- * de fora sozinho.
+ * preciso fazer, para onde está indo, o que estou construindo. Os três abrem igual: o gráfico mês a mês, o resumo do mês
+ * (com o mês anterior), as contas por data e os últimos lançamentos; o que muda é o que vem depois. Cartão de módulo
+ * desligado (ou sem nada para mostrar) fica de fora sozinho.
  */
 export const MODELOS: Record<Detalhe, IdWidget[]> = {
-  simples: ['contas', 'ultimos', 'orientacao', 'metas'],
-  equilibrado: ['entrou-saiu', 'gasto-dia', 'contas', 'gasto-mes', 'categorias', 'orientacao', 'ultimos', 'dividas', 'metas', 'guardado'],
+  simples: ['evolucao', 'resumo-mes', 'contas', 'ultimos', 'orientacao', 'metas'],
+  equilibrado: ['evolucao', 'resumo-mes', 'contas', 'ultimos', 'gasto-mes', 'categorias', 'orientacao', 'dividas', 'metas', 'guardado'],
   detalhado: [
-    'entrou-saiu', 'gasto-dia', 'contas', 'gasto-mes', 'categorias', 'nota', 'comparacao', 'orientacao', 'ultimos', 'cartoes',
+    'evolucao', 'resumo-mes', 'contas', 'ultimos', 'gasto-mes', 'categorias', 'nota', 'comparacao', 'orientacao', 'cartoes',
     'dividas', 'receber', 'metas', 'guardado',
   ],
 }

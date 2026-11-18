@@ -34,6 +34,7 @@ const medir=()=>{
 }
 
 ;(async()=>{
+  const contagem={}
   for (const jeito of ['simples','equilibrado','detalhado']) {
     const t = await iniciar({ perfil: {...demo.perfil, detalhe:jeito}, dados: demo.dados, porta: 4950+Math.floor(Math.random()*40), dpr: 1, toque:true })
     const p=t.page
@@ -62,7 +63,10 @@ const medir=()=>{
     await abrir(p, `${t.url}#/inicio`)
     const n=await p.locator('.widgets-movel .widget').count()
     console.log(`      ${jeito}: ${n} cartões`)
-    if (jeito==='simples') ok(n>=2 && n<=5, `simples com poucos cartões (${n})`)
+    // (o simples também abre com o gráfico e o resumo do mês, mas continua mais curto que o equilibrado)
+    contagem[jeito]=n
+    if (jeito==='simples') ok(n>=2 && n<=6, `simples com poucos cartões (${n})`)
+    if (jeito==='equilibrado') ok(n>contagem.simples, `equilibrado com mais cartões que o simples (${n} > ${contagem.simples})`)
     if (jeito==='detalhado') ok(n>=8, `detalhado com mais cartões (${n})`)
     await t.fechar()
   }
@@ -226,12 +230,28 @@ const medir=()=>{
   ok(await p.locator('.fab').count()===0, 'sem o "+" na Início (a fileira de ações faz o papel dele)')
   // a conta tocada abre a conferência, sem pagar nada
   // (a fatura leva para a tela Cartões; a conta do mês, "Internet" nos dados de demonstração, abre a conferência)
-  const linhaDaConta=p.locator('.widget[aria-label="Contas a pagar"] .linha-movel', { hasText: 'Internet' })
-  ok(await linhaDaConta.count()===1, 'a conta "Internet" está na lista de contas a pagar')
+  const linhaDaConta=p.locator('[data-cartao="contas"] .linha-movel', { hasText: 'Internet' })
+  ok(await linhaDaConta.count()===1, 'a conta "Internet" está na lista de contas do mês')
   await linhaDaConta.click(); await esperar(p,900)
-  ok(await p.locator('.modal').count()===1 && await p.locator('.widget[aria-label="Contas a pagar"] .linha-movel', { hasText: 'Internet' }).count()===1,
+  ok(await p.locator('.modal').count()===1 && await p.locator('[data-cartao="contas"] .linha-movel', { hasText: 'Internet' }).count()===1,
     'tocar numa conta abre a conferência, sem dar baixa direto')
   await p.keyboard.press('Escape'); await esperar(p)
+  // contas de entrada (o salário, o aluguel da garagem) não ficam sob "Contas a pagar"
+  const tituloContas=await p.locator('[data-cartao="contas"] .widget-titulo').innerText()
+  ok(tituloContas.trim()==='Contas a pagar e a receber', `com conta de entrada, o título fala de pagar e receber: "${tituloContas.trim()}"`)
+  // os três jeitos abrem com o gráfico do ano e o resumo do mês, antes das contas e dos últimos lançamentos
+  const ordem=await p.evaluate(()=>[...document.querySelectorAll('.widgets-movel [data-cartao]')].map(e=>e.dataset.cartao).slice(0,4))
+  ok(ordem.join()==='evolucao,resumo-mes,contas,ultimos', `começo da Início: ${ordem.join(', ')}`)
+  ok(await p.locator('[data-cartao="evolucao"] canvas').count()===1, 'o gráfico mês a mês aparece na Início')
+  const resumo=await p.locator('[data-cartao="resumo-mes"]').innerText()
+  ok(/Entradas/.test(resumo) && /Saídas/.test(resumo) && /Sobrou até hoje|Faltou até hoje/.test(resumo) && /Mês anterior/.test(resumo) && /em outubro/.test(resumo),
+    'o resumo tem entradas, saídas, o que sobrou e o mês anterior')
+  // com cartões ligado, o 4º atalho é a tela Cartões (no lugar do "Mais")
+  const atalhos=await p.locator('.inicio-movel .acoes-movel button').allInnerTexts()
+  ok(atalhos.map(x=>x.trim()).join()==='Gasto,Entrada,Contas,Cartões', `atalhos da Início: ${atalhos.map(x=>x.trim()).join(', ')}`)
+  await p.locator('.inicio-movel .acoes-movel button', { hasText: 'Cartões' }).click(); await esperar(p,1200)
+  ok(await p.evaluate(()=>location.hash)==='#/cartoes', 'o atalho Cartões abre a tela Cartões')
+  await abrir(p, `${t.url}#/inicio`)
   // folhas
   await p.locator('.abas-movel-nova button[data-tour="mais"]').click(); await esperar(p)
   const mais=await p.locator('.mais-grade').innerText()

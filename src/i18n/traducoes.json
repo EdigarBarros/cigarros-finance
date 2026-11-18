@@ -16170,5 +16170,29 @@
   "sobrou {0}": {
     "en": "{0} left over",
     "es": "sobraron {0}"
+  },
+  "Contas a pagar e a receber": {
+    "en": "Bills to pay and receive",
+    "es": "Cuentas por pagar y por cobrar"
+  },
+  "faltou em {0}": {
+    "en": "short in {0}",
+    "es": "faltó en {0}"
+  },
+  "Quanto entrou, saiu e sobrou em cada mês do ano.": {
+    "en": "How much came in, went out and was left each month of the year.",
+    "es": "Cuánto entró, salió y sobró en cada mes del año."
+  },
+  "Entradas, saídas, o que sobrou e o mês anterior.": {
+    "en": "Income, expenses, what was left and the previous month.",
+    "es": "Entradas, salidas, lo que sobró y el mes anterior."
+  },
+  "O que vence no mês, a pagar e a receber, na ordem do vencimento.": {
+    "en": "What is due this month, to pay and to receive, by due date.",
+    "es": "Lo que vence en el mes, por pagar y por cobrar, por fecha de vencimiento."
+  },
+  "Nada para pagar ou receber em {0}.": {
+    "en": "Nothing to pay or receive in {0}.",
+    "es": "Nada que pagar ni cobrar en {0}."
   }
 }

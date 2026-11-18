@@ -6,10 +6,11 @@
 import type { ReactNode } from 'react'
 import { IconeCategoria } from '../components/IconeCategoria'
 import { BancoIcone } from '../components/BancoIcone'
+import { GraficoAnual } from '../components/Graficos'
 import { caixaDoBanco } from '../lib/calc'
 import { calendarioDe } from '../lib/dividas'
 import { fatiasDoPeriodo } from '../lib/comparacao'
-import { fmtDataCurta, fmtMoeda, fmtValor, MESES_CURTO, noMeioDaFrase } from '../lib/format'
+import { fmtDataCurta, fmtMoeda, fmtValor, MESES_CURTO, MESES_NOME, noMeioDaFrase } from '../lib/format'
 import { pedirCategoriaNosLancamentos } from '../lib/busca'
 import { pedirLadoDividas } from '../lib/dividas'
 import { tx } from '../lib/textos'
@@ -44,6 +45,50 @@ const corDoEstado = (t: Tarefa) => (t.estado === 'atrasada' ? 'var(--saida)' : t
 const iconeDaOrigem = (t: Tarefa) => (t.origem === 'fatura' ? 'cartao' : t.origem === 'parcela' ? 'divida' : t.entrada ? 'receber' : 'calendario')
 const decorridos = (m: MesDaInicio) => (m.momento === 'atual' ? m.ddMes.hoje : m.momento === 'futuro' ? 0 : m.ddMes.dias)
 
+/** O título das contas conforme a lista: a de entrada (ex.: um valor que alguém vai te pagar) não é conta a pagar. */
+function tituloDasContas(lista: Tarefa[]) {
+  const receber = lista.some((t) => t.entrada), pagar = lista.some((t) => !t.entrada)
+  return receber && !pagar ? tx('Contas a receber') : receber ? tx('Contas a pagar e a receber') : tx('Contas a pagar')
+}
+
+/** Entrou, saiu, o que sobrou (ou faltou) e o resultado do mês anterior. No mês futuro, o que está previsto. */
+function ResumoDoMes({ c, m }: Contexto) {
+  const futuro = m.momento === 'futuro'
+  const resultado = futuro ? m.composicao.resultado : m.situacao.resultado
+  const sobra = resultado >= 0
+  const anterior = c.mes > 1 ? c.porMes[c.mes - 2] : null
+  const nomeAnterior = c.mes > 1 ? noMeioDaFrase(MESES_NOME[c.mes - 2]) : ''
+  const temAnterior = Boolean(anterior && (anterior.entradas > 0 || anterior.saidas > 0))
+  const rotuloResultado = futuro
+    ? (sobra ? tx('Deve sobrar') : tx('Pode faltar'))
+    : m.momento === 'atual' ? (sobra ? tx('Sobrou até hoje') : tx('Faltou até hoje')) : (sobra ? tx('Sobrou') : tx('Faltou'))
+  return (
+    <CartaoWidget titulo={tx('Resumo de {0}', m.nomeMes)} aoAbrir={() => c.irPara('lancamentos')} className="widget-resumo">
+      <div className="widget-resumo-grade">
+        <div>
+          <span className="widget-titulo-solto">{futuro ? tx('Vai entrar') : tx('Entradas')}</span>
+          <b className="widget-numero entrada">{fmtValor(futuro ? m.ddMes.vaiEntrar : m.ddMes.entrou)}</b>
+        </div>
+        <div>
+          <span className="widget-titulo-solto">{futuro ? tx('Vai sair') : tx('Saídas')}</span>
+          <b className="widget-numero saida">{fmtValor(futuro ? m.ddMes.vaiSair : m.ddMes.saiu)}</b>
+        </div>
+        <div>
+          <span className="widget-titulo-solto">{rotuloResultado}</span>
+          <b className={`widget-numero ${sobra ? 'entrada' : 'saida'}`}>{fmtValor(Math.abs(resultado))}</b>
+        </div>
+        {temAnterior && (
+          <div>
+            <span className="widget-titulo-solto">{tx('Mês anterior')}</span>
+            <b className={`widget-numero ${anterior!.fluxo >= 0 ? 'entrada' : 'saida'}`}>{fmtValor(Math.abs(anterior!.fluxo))}</b>
+            <span className="widget-nota">{anterior!.fluxo >= 0 ? tx('sobrou em {0}', nomeAnterior) : tx('faltou em {0}', nomeAnterior)}</span>
+          </div>
+        )}
+      </div>
+    </CartaoWidget>
+  )
+}
+
 /** O gasto acumulado dia a dia (linha cheia) e o que ainda deve sair (tracejada). */
 function GraficoDoGasto({ m }: { m: MesDaInicio }) {
   const { saiuDia, vaiSairDia, dias, hoje } = m.ddMes
@@ -74,19 +119,35 @@ function GraficoDoGasto({ m }: { m: MesDaInicio }) {
 }
 
 export const WIDGETS: Record<IdWidget, DefWidget> = {
+  evolucao: {
+    titulo: () => tx('Mês a mês'), icone: 'ano', descricao: () => tx('Quanto entrou, saiu e sobrou em cada mês do ano.'),
+    disponivel: ({ c }) => !c.contaNova,
+    Corpo: ({ c }) => (
+      <CartaoWidget titulo={tx('Mês a mês')} aoAbrir={() => c.irPara('ano')} className="widget-evolucao">
+        <GraficoAnual porMes={c.porMes} previsto={c.previsto} mesAtual={c.mes} altura={220} compacto semPainel v={c.v} saldoCorrido={c.saldoCorrido} ano={c.ano} />
+      </CartaoWidget>
+    ),
+  },
+
+  'resumo-mes': {
+    titulo: () => tx('Resumo do mês'), icone: 'trocar', descricao: () => tx('Entradas, saídas, o que sobrou e o mês anterior.'),
+    disponivel: ({ c }) => !c.contaNova,
+    Corpo: (x) => <ResumoDoMes {...x} />,
+  },
+
   contas: {
-    titulo: () => tx('Contas a pagar'), icone: 'calendario', descricao: () => tx('O que vence no mês, na ordem do vencimento.'), modulo: 'contas',
+    titulo: () => tx('Contas do mês'), icone: 'calendario', descricao: () => tx('O que vence no mês, a pagar e a receber, na ordem do vencimento.'), modulo: 'contas',
     disponivel: ({ c, m }) => m.tarefas.lista.length > 0 || c.v.contas,
     Corpo: ({ c, m, agir }) => {
       const lista = m.tarefas.lista
       return (
-        <CartaoWidget titulo={tx('Contas a pagar')} aoAbrir={c.v.contas ? () => c.irPara('contas') : undefined}
+        <CartaoWidget titulo={tituloDasContas(lista)} aoAbrir={c.v.contas ? () => c.irPara('contas') : undefined}
           rodape={lista.length > LIMITE ? { texto: tx('Ver tudo'), acao: () => c.irPara(c.v.contas ? 'contas' : 'dividas') } : undefined}>
           {lista.length ? lista.slice(0, LIMITE).map((t) => (
             <LinhaDeLista key={t.chave} icone={<IconeRedondo icone={iconeDaOrigem(t)} cor={corDoEstado(t)} />}
               titulo={t.titulo} sub={t.frase} valor={t.valor} tomValor={t.entrada ? 'entrada' : t.estado === 'atrasada' ? 'alerta' : undefined}
               aoTocar={() => agir(t)} />
-          )) : <p className="widget-vazio">{tx('Nada para pagar em {0}.', m.nomeMes)}</p>}
+          )) : <p className="widget-vazio">{tx('Nada para pagar ou receber em {0}.', m.nomeMes)}</p>}
         </CartaoWidget>
       )
     },

@@ -86,7 +86,9 @@ Início detalhada (4.0.1). Duas colunas a partir de 900 px de conteúdo; uma aba
 
 | # | Seção | O que mostra |
 | --- | --- | --- |
-| 1 | **Visão geral** | Título, "Olá, Marina!" com a pílula **Modo equilibrado** (abre os três jeitos; a escolha vai para o perfil) e **+ Registrar** à direita (abre Entrada, Saída e Importar extrato). `ResultadoEq`: **Resultado do mês** (entrou − saiu; não é saldo do banco), Entrou e Saiu e as duas barras na mesma escala; o (i) abre o `EntenderMes` e diz no título que compra no cartão fica em "A pagar". `AteOFimEq` (só no mês de hoje): A pagar, A receber e **Pode faltar / Deve sobrar / Deve fechar no zero**, com "Ver cálculo". Mês passado ou futuro: só o resultado (ou o previsto), largura inteira. Mês vazio: "Comece por aqui". `ContasEq`: **Contas e vencimentos** com a data de hoje; duas colunas, **atrasadas** (2, ação ao lado do valor: "Marcar como paga/recebida" abre a conferência `FormBaixa` com `conferir`; fatura → "Ver fatura"; parcela → lançamento preenchido) e **Próximos 7 dias** (2; a linha inteira abre a mesma ação). "Ver mais N" abre o resto ali mesmo; "Ver contas do mês" leva à página. Em outro mês, a segunda coluna é "Em aberto". Parcelas da mesma dívida: "Mercado Pago · 6 parcelas" |
+| 1 | **Visão geral** | Título, "Olá, Marina!" com a pílula **Modo equilibrado** (abre os três jeitos; a escolha vai para o perfil) e **+ Registrar** à direita (abre Entrada, Saída e Importar extrato). `ResultadoEq`: **Resultado do mês** (entrou − saiu; não é saldo do banco), Entrou e Saiu e as duas barras na mesma escala; o (i) abre o `EntenderMes` e diz no título que compra no cartão fica em "A pagar". `AteOFimEq` (só no mês de hoje): A pagar, A receber e **Pode faltar / Deve sobrar / Deve fechar no zero**, com "Ver cálculo". Mês passado ou futuro: só o resultado (ou o previsto), largura inteira. Mês vazio: "Comece por aqui". Logo abaixo (fora do mês vazio), a **Evolução financeira** da detalhada
+(`EvolucaoDetalhada`, o gráfico do ano), à vista ao abrir: o equilibrado é o jeito padrão e sem isso quase ninguém via o
+gráfico. O simples continua sem gráfico e o panorama segue só na detalhada. `ContasEq`: **Contas e vencimentos** com a data de hoje; duas colunas, **atrasadas** (2, ação ao lado do valor: "Marcar como paga/recebida" abre a conferência `FormBaixa` com `conferir`; fatura → "Ver fatura"; parcela → lançamento preenchido) e **Próximos 7 dias** (2; a linha inteira abre a mesma ação). "Ver mais N" abre o resto ali mesmo; "Ver contas do mês" leva à página. Em outro mês, a segunda coluna é "Em aberto". Parcelas da mesma dívida: "Mercado Pago · 6 parcelas" |
 | 2 | **Seu dinheiro em perspectiva** | `ComparacaoEq`: "1 a 16 de novembro vs. 1 a 16 de outubro", duas barras na mesma escala (a do mês vermelha se subiu, verde se caiu), a pílula "Gastos 210% maiores", **uma** categoria (`destaqueDaComparacao`), avisos curtos (contas vencidas fora dos gastos; fatura que pode contar duas vezes), "Explorar comparação" (`ComparacaoMes` completa) e "Como calculamos". `PrincipaisGastos`: as 3 maiores categorias do mesmo período (`fatiasDoPeriodo`), barra = parte do total, "Demais categorias (N)"; tocar abre todas, com os lançamentos e "Abrir em Lançamentos". Faixa embaixo: a frase de `maiorCategoria` ("Em novembro, moradia concentra a maior parte das suas despesas.") com "Ver lançamentos" filtrado. Sem comparação nem gastos (mês futuro, mês vazio), a seção não aparece |
 | 3 | **Seu próximo passo** | `OrientacaoEq`: um conselho (selo "Importante/Fique de olho/Parabéns" ou "Falta um dado", título, 1 frase, ação e "Agora não") e "Ver todas as orientações (N)"; não repete o "gasto disparou" da categoria que a comparação destaca. `SaudeEq`: a nota num anel, o rótulo na cor do tom e "Ver diagnóstico" (Consultor). `ResumosCompactos`: Dívidas (o que se deve hoje, com juros de atraso estimados, e "% quitado"), "Meta em destaque:" e "Saldo nas contas" (ou "e investimentos"). Faixa embaixo: "Começou a investir?" (liga o módulo e abre o Invest) ou, com investimentos ligados, "Seus investimentos" |
 
@@ -1251,12 +1253,19 @@ computador):
    sobrou no mês (verde-água; coral quando falta ou o mês está crítico; "Entender a conta" abre o `EntenderMes`) →
    dinheiro guardado → o que falta pagar nas dívidas → investimentos. Cada página só aparece com o módulo ligado
    (dívidas: só com algo a pagar; investimentos: só com carteira).
-2. Quatro ações redondas: Gasto, Entrada, Contas (ou Importar, sem o módulo de contas) e Mais (importar, compra no cartão,
-   nova dívida, guardar numa meta…).
+2. Quatro ações redondas: Gasto, Entrada, Contas (ou Importar, sem o módulo de contas) e **Cartões** (abre a tela Cartões).
+   Sem o módulo de cartões, a quarta é Mais (importar, nova dívida, guardar numa meta…). Importar continua em Lançamentos
+   e na dica do topo.
 3. Dicas que deslizam e podem ser dispensadas: o convite para importar e a sugestão do momento.
-4. Os cartões do jeito escolhido (`lib/widgets.ts`): o jeito é o ponto de partida (simples 4, equilibrado 10, detalhado
-   14, menos os que não têm o que mostrar). Pequenos ficam dois por linha; pequeno sem par ocupa a linha. Tocar numa
-   conta abre a conferência (nunca dá baixa direto); fatura leva aos Cartões; parcela abre o lançamento.
+4. Os cartões do jeito escolhido (`lib/widgets.ts`): o jeito é o ponto de partida (simples 6, equilibrado 10, detalhado
+   14, menos os que não têm o que mostrar). Os três abrem igual: **Mês a mês** (o gráfico do ano, `GraficoAnual` com
+   `semPainel`; toque no título abre o Resumo do ano), **Resumo do mês** (Entradas, Saídas, Sobrou/Faltou até hoje e o
+   resultado do **mês anterior**; no mês futuro, Vai entrar, Vai sair e Deve sobrar/Pode faltar; em janeiro, sem mês
+   anterior), as **contas** por data e os **últimos lançamentos**. O título das contas segue a lista: "Contas a pagar",
+   "Contas a receber" ou "Contas a pagar e a receber" (conta de entrada, como um valor que alguém vai te pagar, não é
+   conta a pagar). Pequenos ficam dois por linha; pequeno sem par ocupa a linha. Tocar numa conta abre a conferência
+   (nunca dá baixa direto); fatura leva aos Cartões; parcela abre o lançamento. Quem já tinha arrumado a Início recebe os
+   cartões novos antes das contas (a regra do vizinho de `cartoesDaInicio`).
 5. "+ Adicionar cartões" e "Arrumar", depois o rodapé "Jeito Equilibrado · Trocar".
 
 **Lançamentos** (`src/movel/telas/LancamentosMovel.tsx`; filtros e contas em `pages/lancamentos/useLancamentos.ts`, os

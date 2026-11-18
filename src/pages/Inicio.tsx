@@ -385,6 +385,8 @@ export function Inicio(c: Ctx) {
               {momento === 'atual' && <AteOFimEq dd={dd} previsaoSabe={Boolean(v.contas || v.cartoes || v.dividas)} aoVerCalculo={abrirEntender} />}
             </div>
           )}
+          {/* o gráfico do ano, o mesmo da detalhada, à vista ao abrir: quem fica no jeito padrão também vê o dinheiro mês a mês */}
+          {!semNada && <EvolucaoDetalhada c={c} dd={dd} />}
           {comAgenda && (
             <ContasEq tarefas={tarefas.lista} limite={mesDeHoje ? daquiA(7, hoje) : undefined} hoje={hojePorExtenso} aoAgir={agir}
               aoVerContas={v.contas ? () => c.irPara('contas') : undefined} />
