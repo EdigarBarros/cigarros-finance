@@ -102,7 +102,7 @@ function GraficoInicio() {
   const W = 640, H = 236
   const { x, y, serie } = escala(W, H)
   const div = serie(DIVIDA, 0, OUTUBRO + 1)
-  const area = tx('{0} L{1} {2} L{3} {4} Z', curvaSvg(div), x(OUTUBRO), H, x(0), H)
+  const area = `${curvaSvg(div)} L${x(OUTUBRO)} ${H} L${x(0)} ${H} Z`
   const bw = 11
   return (
     <svg className="ti-graf" width={W} height={H + 22} viewBox={`0 0 ${W} ${H + 22}`} aria-hidden="true">
@@ -118,7 +118,7 @@ function GraficoInicio() {
       <path d={curvaSvg(div)} pathLength={1} className="linha divida" />
       <path d={curvaSvg(serie(GUARDADO, 0, OUTUBRO + 1))} pathLength={1} className="linha guardado" />
       <path d={curvaSvg(serie(INVESTIDO, 0, OUTUBRO + 1))} pathLength={1} className="linha investido" />
-      {MESES_CURTO.map((m, i) => <text key={i} x={x(i)} y={H + 17} className={i === OUTUBRO ? tx('mes atual') : tx('mes')}>{m}</text>)}
+      {MESES_CURTO.map((m, i) => <text key={i} x={x(i)} y={H + 17} className={i === OUTUBRO ? 'mes atual' : 'mes'}>{m}</text>)}
     </svg>
   )
 }
@@ -269,7 +269,7 @@ function GraficoAno() {
   const y = (v: number) => H * (1 - v / TETO_ANO)
   const serie = (vs: number[]) => vs.map((v, i): Pt => [x(i), y(v)])
   const div = serie(ANO.divida)
-  const area = tx('{0} L{1} {2} L{3} {4} Z', curvaMonotona(div), x(MES_ANO), H, x(0), H)
+  const area = `${curvaMonotona(div)} L${x(MES_ANO)} ${H} L${x(0)} ${H} Z`
   const bw = 16
   const ponta = (vs: number[]) => [x(MES_ANO), y(vs[MES_ANO])] as const
   const camada = (d: number, c: string, rotulo: string | null, filhos: ReactNode, extra = '', nomeA = -14) => (
@@ -385,7 +385,7 @@ function TelaAno() {
           <div className="td-abas"><span className="ativo">{tx('Já aconteceu')}</span><span>{tx('O que vem aí')}</span></div>
         </header>
         <div className="ta-eixo">
-          {[12, 10, 8, 6, 4, 2, 0].map((v) => <small key={v}>{v ? tx('R$ {0}.000', v) : 'R$ 0'}</small>)}
+          {[12, 10, 8, 6, 4, 2, 0].map((v) => <small key={v}>{v ? `R$ ${v}.000` : 'R$ 0'}</small>)}
         </div>
         <GraficoAno />
         <div className="ta-meses-eixo">{MESES_CURTO.map((m, i) => <small key={i} className={i === MES_ANO ? 'atual' : ''}>{m}</small>)}</div>
@@ -453,11 +453,11 @@ function TelaCartoes() {
         </div>
       </B>
       <B t={t} id="nubank" z={240} className="tc-cartao">
-        <Plastico banco={tx('Nubank')} c1="#a136f5" c2="#5b0aa6" valor={960} fecha={tx('fecha dia 25 · vence dia 2')} lado={-1} />
+        <Plastico banco="Nubank" c1="#a136f5" c2="#5b0aa6" valor={960} fecha={tx('fecha dia 25 · vence dia 2')} lado={-1} />
         <span className="tc-status azul">{tx('Aberta · fecha em 8 dias')}</span>
       </B>
       <B t={t} id="itau" z={320} className="tc-cartao">
-        <Plastico banco={tx('Itaú')} c1="#f28a1c" c2="#a4480a" valor={1230} fecha={tx('fecha dia 20 · vence dia 27')} lado={1} />
+        <Plastico banco="Itaú" c1="#f28a1c" c2="#a4480a" valor={1230} fecha={tx('fecha dia 20 · vence dia 27')} lado={1} />
         <span className="tc-status amarelo">{tx('Fecha em 3 dias')}</span>
       </B>
       <B t={t} id="novo" z={110} className="tc-novo">
@@ -467,8 +467,8 @@ function TelaCartoes() {
       <B t={t} id="limites" z={170} className="tc-limites">
         <strong><Icone nome="escudo" tamanho={16} /> {tx('Quanto do limite cada cartão usa')}</strong>
         {[
-          { banco: tx('Nubank'), v: 0.21, c1: '#c06bff', c2: '#7a12d0' },
-          { banco: tx('Itaú'), v: 0.68, c1: '#f7b06a', c2: '#ec7110' },
+          { banco: 'Nubank', v: 0.21, c1: '#c06bff', c2: '#7a12d0' },
+          { banco: 'Itaú', v: 0.68, c1: '#f7b06a', c2: '#ec7110' },
         ].map((l, i) => (
           <span key={l.banco} className="tc-limite" style={{ '--v': l.v, '--i': i, '--c1': l.c1, '--c2': l.c2 } as CSSProperties}>
             <BancoIcone nome={l.banco} tamanho={24} /><b translate="no">{l.banco}</b>
@@ -602,7 +602,7 @@ function TelaLancamentos() {
                       <small>{CATEGORIAS[it.cat].nome}</small>
                       <strong>{it.nome}</strong>
                       <b className={it.entra ? 'entra' : 'sai'}>{it.entra ? `+ ${R(it.v)}` : `− ${R(it.v)}`}</b>
-                      <span className="tl-tags"><i translate="no">{tx('Nubank')}</i><i>{it.forma}</i></span>
+                      <span className="tl-tags"><i translate="no">{'Nubank'}</i><i>{it.forma}</i></span>
                     </span>
                   ))}
                 </div>

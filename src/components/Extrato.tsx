@@ -119,7 +119,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
         // registrado, com as quantidades (nunca o conteúdo). Comprovante ou arquivo sem lançamentos é só o arquivo errado.
         if (!p.comprovante && p.comDataEValor >= 3) {
           registrarErro(new Error('Extrato com datas e valores, mas nenhum lançamento lido'),
-            tx('importar extrato .{0} ({1} bytes) · {2} linhas, {3} com data, {4} com valor, {5} com os dois', extensao(f.name), f.size, p.linhas, p.comData, p.comValor, p.comDataEValor))
+            `importar extrato .${extensao(f.name)} (${f.size} bytes) · ${p.linhas} linhas, ${p.comData} com data, ${p.comValor} com valor, ${p.comDataEValor} com os dois`)
         }
         throw new ArquivoSemLancamentos(p.comprovante
           ? tx('Esse arquivo é um comprovante (de um pagamento só), não o extrato. No app ou site do banco, abra o extrato da conta e use “Exportar” ou “Baixar PDF”, ou envie em CSV, Excel ou OFX.')
@@ -144,7 +144,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
       // fica registrado para entender o que falhou: só o tipo e o tamanho do arquivo, nunca o conteúdo do extrato
       // (o PDF que não abre já foi registrado com o erro do leitor, em lib/extrato.ts)
       // (arquivo sem lançamentos já decidiu acima se era defeito do leitor)
-      if (!msg.startsWith(tx('Não consegui abrir esse PDF')) && !(e instanceof ArquivoSemLancamentos)) registrarErro(e, tx('importar extrato .{0} ({1} bytes)', extensao(f.name), f.size))
+      if (!msg.startsWith('Não consegui abrir esse PDF') && !(e instanceof ArquivoSemLancamentos)) registrarErro(e, `importar extrato .${extensao(f.name)} (${f.size} bytes)`)
       setErro(msg)
       setEtapa('escolher')
     } finally {

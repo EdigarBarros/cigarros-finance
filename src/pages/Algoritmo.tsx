@@ -373,7 +373,7 @@ export function Algoritmo() {
     const texto = sticky.querySelector<HTMLElement>('.ag-texto')!, selos = sticky.querySelector<HTMLElement>('.ag-selos')!
     const estilo = getComputedStyle(document.documentElement)
     const fonte = (v: string, padrao: string) => estilo.getPropertyValue(v).trim() || padrao
-    const fontes = () => ({ texto: fonte('--fonte', tx('Inter, sans-serif')), titulo: fonte('--fonte-titulo', tx('Inter, sans-serif')), numeros: fonte('--fonte-numeros', tx('Inter, sans-serif')) })
+    const fontes = () => ({ texto: fonte('--fonte', 'Inter, sans-serif'), titulo: fonte('--fonte-titulo', 'Inter, sans-serif'), numeros: fonte('--fonte-numeros', 'Inter, sans-serif') })
     let letras = fontes()
     const medir = () => {
       reduzir = semMovimento()
@@ -586,7 +586,7 @@ export function Algoritmo() {
       ctx.beginPath(); ctx.moveTo(M0.x, M0.y); ctx.lineTo(M1.x, M1.y); ctx.stroke()
       ctx.setLineDash([])
       // os meses, embaixo de cada grupo
-      ctx.font = tx('600 {0}px {1}', celular ? 9.5 : 11, letras.texto); ctx.textAlign = 'center'; ctx.textBaseline = 'top'
+      ctx.font = `600 ${celular ? 9.5 : 11}px ${letras.texto}`; ctx.textAlign = 'center'; ctx.textBaseline = 'top'
       ctx.fillStyle = P.mes
       let baixo = 0
       for (let m = 0; m < MESES; m++) {
@@ -597,7 +597,7 @@ export function Algoritmo() {
       }
       // a legenda, embaixo do mês mais baixo, no meio
       const Lg = { x: proj(0, y0 + 12, -46).x, y: baixo + (celular ? 26 : 32) }
-      ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = tx('600 {0}px {1}', celular ? 10.5 : 12, letras.texto)
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = `600 ${celular ? 10.5 : 12}px ${letras.texto}`
       let lx = Lg.x - legenda.reduce((t, l) => t + 31 + ctx.measureText(l).width, -16) / 2
       legenda.forEach((t, k) => {
         const [cr, cg, cb] = P.tipos[k]
@@ -1497,7 +1497,7 @@ export function Algoritmo() {
       desenhar(atual, agora)
       quadro = visivel ? requestAnimationFrame(laco) : 0
     }
-    const chegando = new IntersectionObserver(([e]) => { if (e.isIntersecting && !perto) { perto = true; pedirReal() } }, { rootMargin: tx('1500px 0px') })
+    const chegando = new IntersectionObserver(([e]) => { if (e.isIntersecting && !perto) { perto = true; pedirReal() } }, { rootMargin: '1500px 0px' })
     chegando.observe(secao)
     // o carrossel pede a foto antes: a sexta face dele é esta tela
     const soltarPedido = aoPedirConsultor(() => { if (!perto) { perto = true; pedirReal() } })

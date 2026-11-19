@@ -72,7 +72,7 @@ function folha(w: number, h: number, q: number, m: number) {
 }
 
 function selo(g: CanvasRenderingContext2D, x: number, y: number, texto: string, cor: string, f: Fontes) {
-  g.font = tx('800 10px {0}', f.texto)
+  g.font = `800 10px ${f.texto}`
   const lw = g.measureText(texto).width + 14
   g.beginPath(); g.roundRect(x, y - 10, lw, 20, 5); g.fillStyle = cor; g.fill()
   g.fillStyle = '#fff'; g.fillText(texto, x + 7, y + 0.5)
@@ -84,9 +84,9 @@ function desenharPdf(w: number, h: number, q: number, f: Fontes): DocPronto {
   const m = 44, { g, s, hd } = folha(w, h, q, m), W = LARGO
   const pad = 16
   const lx = selo(g, pad, pad + 11, 'PDF', '#e0473e', f)
-  g.fillStyle = '#1d2330'; g.font = tx('700 13px {0}', f.texto)
+  g.fillStyle = '#1d2330'; g.font = `700 13px ${f.texto}`
   cortar(g, 'extrato_novembro.pdf', pad + lx + 9, pad + 11, W - pad * 2 - lx - 9) // sem-tx
-  g.fillStyle = '#7a8394'; g.font = tx('500 10.5px {0}', f.texto)
+  g.fillStyle = '#7a8394'; g.font = `500 10.5px ${f.texto}`
   cortar(g, tx('Extrato da conta corrente'), pad, pad + 34, W - pad * 2)
   const topoLinhas = pad + 52
   g.fillStyle = 'rgba(29,35,48,0.14)'; g.fillRect(pad, topoLinhas - 4, W - pad * 2, 1)
@@ -95,20 +95,20 @@ function desenharPdf(w: number, h: number, q: number, f: Fontes): DocPronto {
   LIDAS_PDF.forEach((l, i) => {
     const y = topoLinhas + passo * (i + 0.5)
     linhas.push(y * s)
-    g.fillStyle = '#7a8394'; g.font = tx('600 9.5px {0}', f.numeros)
+    g.fillStyle = '#7a8394'; g.font = `600 9.5px ${f.numeros}`
     g.fillText(l.data, pad, y)
-    g.fillStyle = '#2c3342'; g.font = tx('500 10px ui-monospace, Consolas, monospace')
+    g.fillStyle = '#2c3342'; g.font = `500 10px ui-monospace, Consolas, monospace`
     cortar(g, l.bruto, pad + 36, y, W - pad * 2 - 36 - 64)
-    g.textAlign = 'right'; g.font = tx('700 10.5px {0}', f.numeros)
+    g.textAlign = 'right'; g.font = `700 10.5px ${f.numeros}`
     g.fillStyle = COR_PAPEL[l.tipo]
     g.fillText(`${l.tipo === 'entrada' ? '' : '-'}${l.valor}`, W - pad, y)
     g.textAlign = 'left'
     if (i < LIDAS_PDF.length - 1) { g.fillStyle = 'rgba(29,35,48,0.07)'; g.fillRect(pad, y + passo / 2, W - pad * 2, 1) }
   })
   g.fillStyle = 'rgba(29,35,48,0.14)'; g.fillRect(pad, fimLinhas + 2, W - pad * 2, 1)
-  g.fillStyle = '#7a8394'; g.font = tx('600 10px {0}', f.texto)
+  g.fillStyle = '#7a8394'; g.font = `600 10px ${f.texto}`
   g.fillText(tx('Saldo do dia'), pad, hd - 19)
-  g.textAlign = 'right'; g.fillStyle = '#1d2330'; g.font = tx('800 11.5px {0}', f.numeros)
+  g.textAlign = 'right'; g.fillStyle = '#1d2330'; g.font = `800 11.5px ${f.numeros}`
   g.fillText('4.380,20', W - pad, hd - 19) // sem-tx
   g.textAlign = 'left'
   return { img: g.canvas, w, h, m, q, linhas, topoLinhas: topoLinhas * s, fimLinhas: fimLinhas * s }
@@ -119,7 +119,7 @@ function desenharPlanilha(w: number, h: number, q: number, f: Fontes): DocPronto
   const m = 44, { g, s, hd } = folha(w, h, q, m), W = LARGO
   const pad = 16
   const lx = selo(g, pad, pad + 11, 'XLSX', '#1f8f4e', f)
-  g.fillStyle = '#1d2330'; g.font = tx('700 13px {0}', f.texto)
+  g.fillStyle = '#1d2330'; g.font = `700 13px ${f.texto}`
   cortar(g, 'gastos_novembro.xlsx', pad + lx + 9, pad + 11, W - pad * 2 - lx - 9) // sem-tx
   const x0 = pad, x1 = W - pad, gx = [x0, x0 + 20, x0 + 64, x1 - 70, x1]
   const yLetras = pad + 34
@@ -129,9 +129,9 @@ function desenharPlanilha(w: number, h: number, q: number, f: Fontes): DocPronto
   g.fillStyle = '#eceff4'; g.fillRect(x0, yLetras - 9, x1 - x0, 18)
   g.fillStyle = '#e3f3e9'; g.fillRect(x0 + 20, yLetras + 9, x1 - x0 - 20, topoLinhas - yLetras - 9)
   g.fillStyle = '#eceff4'; g.fillRect(x0, yLetras + 9, 20, fimLinhas - yLetras - 9)
-  g.fillStyle = '#7a8394'; g.font = tx('700 9px {0}', f.texto); g.textAlign = 'center'
+  g.fillStyle = '#7a8394'; g.font = `700 9px ${f.texto}`; g.textAlign = 'center'
   ;['A', 'B', 'C'].forEach((c, i) => g.fillText(c, (gx[i + 1] + gx[i + 2]) / 2, yLetras)) // sem-tx
-  g.textAlign = 'left'; g.fillStyle = '#1f6b3d'; g.font = tx('800 9.5px {0}', f.texto)
+  g.textAlign = 'left'; g.fillStyle = '#1f6b3d'; g.font = `800 9.5px ${f.texto}`
   const yCab = (yLetras + 9 + topoLinhas) / 2
   cortar(g, tx('Data'), gx[1] + 6, yCab, gx[2] - gx[1] - 9)
   cortar(g, tx('Descrição'), gx[2] + 6, yCab, gx[3] - gx[2] - 9)
@@ -140,13 +140,13 @@ function desenharPlanilha(w: number, h: number, q: number, f: Fontes): DocPronto
   LIDAS_PLANILHA.forEach((l, i) => {
     const y = topoLinhas + passo * (i + 0.5)
     linhas.push(y * s)
-    g.fillStyle = '#7a8394'; g.font = tx('600 9px {0}', f.numeros); g.textAlign = 'center'
+    g.fillStyle = '#7a8394'; g.font = `600 9px ${f.numeros}`; g.textAlign = 'center'
     g.fillText(String(i + 2), (gx[0] + gx[1]) / 2, y)
-    g.textAlign = 'left'; g.fillStyle = '#2c3342'; g.font = tx('500 9.5px {0}', f.numeros)
+    g.textAlign = 'left'; g.fillStyle = '#2c3342'; g.font = `500 9.5px ${f.numeros}`
     g.fillText(l.data, gx[1] + 6, y)
-    g.font = tx('500 10px {0}', f.texto)
+    g.font = `500 10px ${f.texto}`
     cortar(g, l.bruto, gx[2] + 6, y, gx[3] - gx[2] - 9)
-    g.textAlign = 'right'; g.font = tx('700 10px {0}', f.numeros)
+    g.textAlign = 'right'; g.font = `700 10px ${f.numeros}`
     g.fillStyle = COR_PAPEL[l.tipo]
     g.fillText(`${l.tipo === 'entrada' ? '' : '-'}${l.valor}`, gx[4] - 6, y)
     g.textAlign = 'left'
@@ -178,7 +178,7 @@ export interface TextoLido {
 export function desenharTextos(q: number, f: Fontes, claro = false): TextoLido[] {
   return LIDAS.map((l, idx) => {
     const cor = (claro ? COR_TIPO_CLARO : COR_TIPO)[l.tipo], css = `rgb(${cor.join(',')})`
-    const fNome = tx('700 15px {0}', f.texto), fValor = tx('800 15px {0}', f.numeros)
+    const fNome = `700 15px ${f.texto}`, fValor = `800 15px ${f.numeros}`
     const valor = `${SINAL[l.tipo]} R$ ${l.valor}` // sem-tx
     const c = document.createElement('canvas'), g = c.getContext('2d', { willReadFrequently: true })!
     // as letras, uma a uma (a largura de cada uma é o quanto o texto cresce com ela, para o espaçamento ficar certo)

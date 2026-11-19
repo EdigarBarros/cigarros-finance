@@ -52,7 +52,7 @@ export function InicioPC({ c }: { c: Ctx }) {
 
   // o "pulinho 3D" dos cartões, da faixa e do que está dentro dela (resumos e botões redondos): uma mola de verdade, que emenda entrar e sair sem tranco (lib/mola3d.ts)
   const refRaiz = useRef<HTMLDivElement>(null)
-  useEffect(() => (refRaiz.current ? ligarMola3d(refRaiz.current, tx('.widgets-pc:not(.arrumando) .widget, .faixa-pc, .faixa-pc-resumo, .faixa-pc-acoes button')) : undefined), [])
+  useEffect(() => (refRaiz.current ? ligarMola3d(refRaiz.current, '.widgets-pc:not(.arrumando) .widget, .faixa-pc, .faixa-pc-resumo, .faixa-pc-acoes button') : undefined), [])
 
   return (
     <div className="pagina inicio inicio-pc" ref={refRaiz}>

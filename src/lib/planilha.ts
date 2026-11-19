@@ -28,13 +28,13 @@ export interface MesImportado {
 const FAIXA_ENTRADAS: [number, number] = [3, 106]
 // O primeiro bloco de saídas (o "principal" da planilha) é o Itaú; os outros são NUBANK e INTER.
 const FAIXAS_SAIDAS: [string, number, number][] = [
-  [tx('Itaú'), 3, 54],
-  [tx('Nubank'), 55, 129],
-  [tx('Inter'), 132, 136],
+  ['Itaú', 3, 54],
+  ['Nubank', 55, 129],
+  ['Inter', 132, 136],
 ]
 /** Linhas de soma do fim de cada quadro ("TOTAL", "SUBTOTAL"): o resultado delas já vem dos lançamentos. */
 const ehTotal = (desc: number | string | null) => typeof desc === 'string' && /^sub-?total\b|^total\b/i.test(desc)
-const BANCOS_CAIXA = [['AB', tx('Nubank')], ['AC', tx('Inter')], ['AD', tx('Itaú')]] as const
+const BANCOS_CAIXA = [['AB', 'Nubank'], ['AC', 'Inter'], ['AD', 'Itaú']] as const
 
 function valorCelula(ws: XLSX.WorkSheet, ref: string): number | string | null {
   const c = ws[ref] as XLSX.CellObject | undefined
@@ -88,7 +88,7 @@ const MES_ABREVIADO = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', '
 function mesDaAba(nome: string, ws: XLSX.WorkSheet): { ano: number; mes: number } | null {
   const m = /^([A-ZÇ]+)[\s_/-]*(\d{2}|\d{4})?$/.exec(nome.trim().toUpperCase())
   if (!m) return null
-  const mesCheio = m[1] === 'MARCO' ? tx('MARÇO') : m[1] // sem a cedilha também vale
+  const mesCheio = m[1] === 'MARCO' ? 'MARÇO' : m[1] // sem a cedilha também vale
   const idx = MESES.indexOf(mesCheio) >= 0 ? MESES.indexOf(mesCheio) : m[1].length === 3 ? MES_ABREVIADO.indexOf(m[1]) : -1
   if (idx < 0) return null
   if (m[2]) return { ano: m[2].length === 2 ? 2000 + Number(m[2]) : Number(m[2]), mes: idx + 1 }
@@ -238,7 +238,7 @@ export async function gravarImportacao(userId: string, meses: MesImportado[]) {
     cats = await supabase.from('categorias').select('*')
   }
   const minhas = cats.error ? null : (cats.data as Categoria[])
-  const NOMES: Record<CategoriaAntiga, string> = { alimentacao: tx('alimentação'), transporte: 'transporte', divida: tx('dívidas e parcelas'), outros: 'outros' }
+  const NOMES: Record<CategoriaAntiga, string> = { alimentacao: 'alimentação', transporte: 'transporte', divida: 'dívidas e parcelas', outros: 'outros' }
   const idCategoria = (l: NovoLanc) => {
     const procurado = l.tipo === 'entrada' ? 'outros' : NOMES[l.categoria ?? 'outros']
     const c = minhas?.find((x) => x.tipo === l.tipo && (l.categoria === 'divida' && l.tipo === 'saida' ? x.papel === 'divida' : x.nome.toLowerCase() === procurado))
@@ -333,7 +333,7 @@ export async function exportarBackup() {
   /** Cada código de vínculo vira o nome do que ele aponta; lista e objeto (jsonb) viram texto. */
   const VINCULOS: Record<string, [string, Map<string, string>]> = {
     cartao_id: ['cartao', nomeCartao], divida_id: ['divida', nomeDivida], meta_id: ['meta', nomeMeta], banco_id: ['banco', nomeBanco],
-    conta_fixa_id: [tx('conta do mês'), nomeConta], categoria_id: ['categoria', nomeCategoria], parte_id: ['parte', nomeParte],
+    conta_fixa_id: ['conta do mês', nomeConta], categoria_id: ['categoria', nomeCategoria], parte_id: ['parte', nomeParte],
   }
   const plano = (x: Record<string, unknown>) => Object.fromEntries(Object.entries(x).map(([k, v]) => [k, v !== null && typeof v === 'object' ? JSON.stringify(v) : v]))
   const legivel = (xs: Record<string, unknown>[]) => xs.map((x) => plano(Object.fromEntries(Object.entries(x)
@@ -352,16 +352,16 @@ export async function exportarBackup() {
       cartao: cartao_id ? nomeCartao.get(String(cartao_id)) ?? '' : '',
       'conta do mês': conta_fixa_id ? nomeConta.get(String(conta_fixa_id)) ?? '' : '',
     }))),
-    tx('Lançamentos'),
+    'Lançamentos',
   )
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(semIds(dividas)), tx('Dívidas'))
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(semIds(dividas)), 'Dívidas')
   if (categorias.length) {
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(semIds(categorias).map(({ ordem: _o, ...c }) => c)), tx('Categorias'))
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(semIds(categorias).map(({ ordem: _o, ...c }) => c)), 'Categorias')
   }
   XLSX.utils.book_append_sheet(
     wb,
     XLSX.utils.json_to_sheet(saldos.map((s) => ({ divida: nomeDivida.get(s.divida_id), data: s.data, saldo: s.saldo }))),
-    tx('Saldos das dívidas'),
+    'Saldos das dívidas',
   )
   XLSX.utils.book_append_sheet(
     wb,
@@ -370,11 +370,11 @@ export async function exportarBackup() {
       caixa: JSON.stringify(Object.fromEntries(Object.entries(m.caixa as Caixa).map(([id, v]) => [nomeBanco.get(id) ?? id, v]))),
       moedas: JSON.stringify(m.moedas ?? {}),
     }))),
-    tx('Meses'),
+    'Meses',
   )
   const abas: [string, Record<string, unknown>[]][] = [
-    [tx('Partes das dívidas'), partes], [tx('Promessas de pagamento'), promessas], [tx('Cartões'), cartoes], [tx('Faturas pagas'), faturasPagas],
-    [tx('Contas do mês'), contasFixas], [tx('Metas'), metas], [tx('Metas - movimentos'), movimentos], [tx('Preferências'), perfil],
+    ['Partes das dívidas', partes], ['Promessas de pagamento', promessas], ['Cartões', cartoes], ['Faturas pagas', faturasPagas],
+    ['Contas do mês', contasFixas], ['Metas', metas], ['Metas - movimentos', movimentos], ['Preferências', perfil],
   ]
   for (const [aba, xs] of abas) if (xs.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(legivel(xs)), aba)
   // A carteira do Invest (migração 28): sem as tabelas, o backup sai como antes.
@@ -383,9 +383,9 @@ export async function exportarBackup() {
   if (ativos.length) {
     const nomeAtivo = new Map(ativos.map((a) => [String(a.id), String(a.codigo ?? a.nome)]))
     const comAtivo = (xs: Record<string, unknown>[]) => semIds(xs).map(({ ativo_id, banco_id: _b, lancamento_id: _l, importacao_id: _i, ...x }) => ({ ativo: nomeAtivo.get(String(ativo_id)) ?? '', ...x }))
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(semIds(ativos).map(({ banco_id: _b, ...a }) => a)), tx('Invest - ativos'))
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(comAtivo(operacoes)), tx('Invest - operações'))
-    if (precos.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(comAtivo(precos)), tx('Invest - valores'))
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(semIds(ativos).map(({ banco_id: _b, ...a }) => a)), 'Invest - ativos')
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(comAtivo(operacoes)), 'Invest - operações')
+    if (precos.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(comAtivo(precos)), 'Invest - valores')
   }
   const nome = `backup-financas-${new Date().toLocaleDateString('sv-SE')}.xlsx`
   // no app Android não há download: o arquivo vai para o compartilhar do Android (lib/arquivoNoApp.ts)

@@ -63,7 +63,7 @@ function fonteQueCabe(g: G, texto: string, largura: number, peso: number, max: n
   return `${peso} ${min}px ${familia}`
 }
 function titulo(g: G, texto: string, W: number, f: Fontes) {
-  escrever(g, texto.toUpperCase(), 3, 10, tx('800 9px {0}', f.titulo), DESTAQUE)
+  escrever(g, texto.toUpperCase(), 3, 10, `800 9px ${f.titulo}`, DESTAQUE)
   g.fillStyle = tinta(FRACO); g.fillRect(3, 15, W - 6, 1)
 }
 /** Uma barra de progresso: a parte paga na cor, o resto fraco. */
@@ -89,14 +89,14 @@ function lancamentos(g: G, W: number, cel: boolean, f: Fontes) {
     if (cel) {
       const y = 31 + i * 33
       escrever(g, l.nome, 3, y, fonteQueCabe(g, l.nome, W - 6, 600, 10.5, 8, f.texto), TEXTO)
-      escrever(g, valor, 3, y + 14, tx('800 12px {0}', f.numeros), COR_DO_TIPO[l.tipo])
+      escrever(g, valor, 3, y + 14, `800 12px ${f.numeros}`, COR_DO_TIPO[l.tipo])
       g.fillStyle = tinta(FRACO); g.fillRect(3, y + 20, W - 6, 1)
     } else {
       const y = 32 + i * 18
-      g.font = tx('800 11.5px {0}', f.numeros)
+      g.font = `800 11.5px ${f.numeros}`
       const cabe = W - 6 - g.measureText(valor).width - 10
       escrever(g, l.nome, 3, y, fonteQueCabe(g, l.nome, cabe, 600, 11.5, 8.5, f.texto), TEXTO)
-      escrever(g, valor, W - 3, y, tx('800 11.5px {0}', f.numeros), COR_DO_TIPO[l.tipo], 'right')
+      escrever(g, valor, W - 3, y, `800 11.5px ${f.numeros}`, COR_DO_TIPO[l.tipo], 'right')
       g.fillStyle = tinta(FRACO); g.fillRect(3, y + 6, W - 6, 1)
     }
   })
@@ -108,17 +108,17 @@ function dividas(g: G, W: number, cel: boolean, f: Fontes) {
     g.strokeStyle = tinta(FRACO); g.lineWidth = 1; g.strokeRect(1.5, y0 + 0.5, W - 3, alto)
     const fim = tx('acaba em {0}', d.fim()), pago = tx('{0}% pago', Math.round(d.pago * 100))
     if (cel) {
-      g.font = tx('700 10.5px {0}', f.texto)
+      g.font = `700 10.5px ${f.texto}`
       const linhas = quebrar(g, d.nome(), W - 14)
-      linhas.slice(0, 2).forEach((t, k) => escrever(g, t, 7, y0 + 14 + k * 12, tx('700 10.5px {0}', f.texto), TEXTO))
+      linhas.slice(0, 2).forEach((t, k) => escrever(g, t, 7, y0 + 14 + k * 12, `700 10.5px ${f.texto}`, TEXTO))
       escrever(g, fim, 7, y0 + 42, fonteQueCabe(g, fim, W - 14, 600, 9.5, 7.5, f.texto), 5)
       barra(g, 7, y0 + 50, W - 14, d.pago, 5)
-      escrever(g, pago, 7, y0 + 70, tx('600 9px {0}', f.texto), TEXTO)
+      escrever(g, pago, 7, y0 + 70, `600 9px ${f.texto}`, TEXTO)
     } else {
-      escrever(g, d.nome(), 8, y0 + 14, tx('700 11.5px {0}', f.texto), TEXTO)
+      escrever(g, d.nome(), 8, y0 + 14, `700 11.5px ${f.texto}`, TEXTO)
       barra(g, 8, y0 + 20, W - 16, d.pago, 5)
-      escrever(g, pago, 8, y0 + 38, tx('600 9px {0}', f.texto), TEXTO)
-      escrever(g, fim, W - 8, y0 + 38, tx('600 9px {0}', f.texto), 5, 'right')
+      escrever(g, pago, 8, y0 + 38, `600 9px ${f.texto}`, TEXTO)
+      escrever(g, fim, W - 8, y0 + 38, `600 9px ${f.texto}`, 5, 'right')
     }
   })
 }
@@ -127,15 +127,15 @@ function contas(g: G, W: number, cel: boolean, f: Fontes) {
   CONTAS.forEach((c, i) => {
     if (cel) {
       const y0 = 22 + i * 58
-      escrever(g, c.n, 3, y0 + 24, tx('800 26px {0}', f.numeros), c.cor)
-      g.font = tx('600 9.5px {0}', f.texto)
-      quebrar(g, c.t(), W - 6).slice(0, 2).forEach((t, k) => escrever(g, t, 3, y0 + 37 + k * 11, tx('600 9.5px {0}', f.texto), TEXTO))
+      escrever(g, c.n, 3, y0 + 24, `800 26px ${f.numeros}`, c.cor)
+      g.font = `600 9.5px ${f.texto}`
+      quebrar(g, c.t(), W - 6).slice(0, 2).forEach((t, k) => escrever(g, t, 3, y0 + 37 + k * 11, `600 9.5px ${f.texto}`, TEXTO))
     } else {
       const y = 42 + i * 30, meio = 116
-      escrever(g, c.n, meio - 4, y, tx('800 24px {0}', f.numeros), c.cor, 'right')
-      g.font = tx('600 10.5px {0}', f.texto)
+      escrever(g, c.n, meio - 4, y, `800 24px ${f.numeros}`, c.cor, 'right')
+      g.font = `600 10.5px ${f.texto}`
       const linhas = quebrar(g, c.t(), W - meio - 7).slice(0, 2)
-      linhas.forEach((t, k) => escrever(g, t, meio + 4, y - (linhas.length > 1 ? 10 : 4) + k * 12, tx('600 10.5px {0}', f.texto), TEXTO))
+      linhas.forEach((t, k) => escrever(g, t, meio + 4, y - (linhas.length > 1 ? 10 : 4) + k * 12, `600 10.5px ${f.texto}`, TEXTO))
     }
   })
 }
