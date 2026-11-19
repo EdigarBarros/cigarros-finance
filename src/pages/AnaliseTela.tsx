@@ -194,8 +194,9 @@ function Cartao({ p, largura, indice, manchete, t, aoIr, aoExplicar }: { p: Peca
       style={{ '--c': a.tom ? COR_DO_TOM[a.tom] : 'var(--destaque)', '--l': largura, '--i': Math.min(indice, 8) } as CSSProperties}>
       {manchete && <span className="an-manchete-luz" aria-hidden="true" />}
       <div className="peca-texto">
-        {(manchete || p.novidade || p.importante) && (
+        {(manchete || fav || p.novidade || p.importante) && (
           <span className="peca-selos">
+            {fav && !manchete && <span className="peca-selo fav"><Icone nome="estrela" tamanho={12} /> {tx('Favorito')}</span>}
             {manchete && <span className="peca-selo destaque"><Icone nome="ideia" tamanho={13} /> {tx('Destaque de hoje')}</span>}
             {p.importante && !manchete && <span className="peca-selo">{tx('Importante')}</span>}
             {p.novidade && <span className="peca-selo">{p.novidade === 'novo' ? tx('Novo') : tx('Mudou')}</span>}
@@ -255,8 +256,10 @@ export function Faixas({ t, aoIr, aoExplicar, nivel, depois }: { t: Tela; nivel:
   const naFrente = Math.max(NA_FRENTE[nivel], t.tela.favoritos - 1)
   const vistos = todos || tema !== 'tudo' ? doTema : doTema.slice(0, naFrente)
   // a diagramação só se refaz quando muda o que está na tela (os cartões ou o desenho de algum)
-  const chave = vistos.map((p) => `${p.achado.id}:${p.visual.tipo}`).join()
-  const larguras = useMemo(() => diagramar(vistos), [chave]) // eslint-disable-line react-hooks/exhaustive-deps
+  const ehFav = (p: Peca) => t.tela.pecas.indexOf(p) < t.tela.favoritos
+  const chave = vistos.map((p) => `${p.achado.id}:${p.visual.tipo}:${ehFav(p) ? 1 : 0}`).join()
+  // os favoritos ganham mais colunas e os outros cartões se encaixam em volta deles (lib/composicao.ts, `diagramar`)
+  const arranjo = useMemo(() => diagramar(vistos.map((p) => ({ largo: p.largo, fav: ehFav(p) }))), [chave]) // eslint-disable-line react-hooks/exhaustive-deps
   const temTema = (id: Tema) => t.tela.pecas.some((p) => p.achado.tema === id)
   if (t.tela.pecas.length <= 1 && !t.tela.escondidos.length) return null
   return (
@@ -283,7 +286,7 @@ export function Faixas({ t, aoIr, aoExplicar, nivel, depois }: { t: Tela; nivel:
       </p>
       {vistos.length > 0 && (
         <div className="an-tela" key={tema}>
-          {vistos.map((p, i) => <Cartao key={p.achado.id} p={p} largura={larguras[i] ?? 6} indice={i} t={t} aoIr={aoIr} aoExplicar={aoExplicar} />)}
+          {arranjo.ordem.map((k, i) => vistos[k] && <Cartao key={vistos[k].achado.id} p={vistos[k]} largura={arranjo.larguras[i] ?? 6} indice={i} t={t} aoIr={aoIr} aoExplicar={aoExplicar} />)}
         </div>
       )}
       {tema === 'tudo' && doTema.length > naFrente && (

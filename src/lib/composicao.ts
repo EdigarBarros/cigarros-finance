@@ -272,10 +272,42 @@ export function compor(lista: Achado[], g: Gosto, escolhas: Escolhas): Tela {
 }
 
 /**
- * Quantas das 6 colunas cada cartão ocupa (no computador), na ordem recebida. Cada faixa soma 6:
- * três compactos (2+2+2), dois iguais (3+3), um largo com um compacto (4+2 ou 2+4) ou um sozinho (6).
+ * Onde cada cartão fica e quantas das 6 colunas ocupa (no computador). Devolve a ordem de desenhar (índices da lista
+ * recebida) e a largura de cada um nessa ordem. Cada faixa soma 6.
+ *
+ * Os favoritos (que vêm na frente) ganham destaque pelo tamanho:
+ * - com número ímpar de favoritos, o primeiro abre a área sozinho: largo ocupa a faixa inteira (6); compacto fica com 4 e
+ *   puxa um cartão compacto comum para os 2 que sobram (sem um compacto comum, fica com a faixa inteira);
+ * - os outros favoritos vão em pares de metade da tela (3+3), nunca no tamanho de um terço.
+ * Os cartões comuns se arrumam depois, em faixas de três compactos (2+2+2), dois iguais (3+3), um largo com um compacto
+ * (4+2 ou 2+4) ou um sozinho (6). O que foi puxado para o lado de um favorito sai da fila dos comuns.
  */
-export function diagramar(pecas: Pick<Peca, 'largo'>[]): number[] {
+export function diagramar(pecas: (Pick<Peca, 'largo'> & { fav?: boolean })[]): { ordem: number[]; larguras: number[] } {
+  const ordem: number[] = []
+  const larguras: number[] = []
+  const por = (i: number, l: number) => { ordem.push(i); larguras.push(l) }
+  const favs = pecas.map((p, i) => (p.fav ? i : -1)).filter((i) => i >= 0)
+  const comuns = pecas.map((p, i) => (p.fav ? -1 : i)).filter((i) => i >= 0)
+  let f = 0
+  if (favs.length % 2 === 1) {
+    const i = favs[f++]
+    const vizinho = pecas[i].largo ? -1 : comuns.findIndex((k) => !pecas[k].largo)
+    if (vizinho >= 0) {
+      por(i, 4)
+      por(comuns.splice(vizinho, 1)[0], 2)
+    } else por(i, 6)
+  }
+  for (; f < favs.length; f += 2) {
+    por(favs[f], 3)
+    por(favs[f + 1], 3)
+  }
+  const resto = diagramarComuns(comuns.map((k) => pecas[k]))
+  comuns.forEach((k, j) => por(k, resto[j]))
+  return { ordem, larguras }
+}
+
+/** As faixas dos cartões comuns (sem favoritos). */
+function diagramarComuns(pecas: Pick<Peca, 'largo'>[]): number[] {
   const larguras: number[] = []
   let i = 0
   while (i < pecas.length) {
