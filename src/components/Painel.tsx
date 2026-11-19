@@ -19,7 +19,6 @@ import { atrasadoHoje, aumentaDivida, calendarioDe, parcelasPorDia, pedirLadoDiv
 import { definirMoedaPrincipal, definirValoresOcultos, fmtDataCurta, fmtValor, MESES_CURTO, MESES_NOME, useValoresOcultos } from '../lib/format'
 import { useCambio } from '../lib/moedas'
 import { inferirPerfil, PERFIL_PADRAO, visao } from '../lib/perfil'
-import { supabase } from '../lib/supabase'
 import type { Lancamento, Modulo, Perfil, SaldoInicial, Tipo } from '../lib/types'
 import { useMobile } from '../lib/useMobile'
 import { useRecolherAoRolar } from '../lib/botaoMais'
@@ -43,6 +42,8 @@ import { BlocoCartoes } from './BlocoCartoes'
 import { BlocoContasDoMes } from './BlocoContas'
 import { Kpi } from './ui'
 import { avisar, confirmar } from '../lib/avisos'
+import { atualizarConta, sairDestaConta, useContasSalvas } from '../lib/contas'
+import { ContasNoMenu } from './Contas'
 import { BotaoIdioma } from './BotaoIdioma'
 import { Icone } from './Icone'
 import { useRespostasNovas } from '../lib/useSuporte'
@@ -817,6 +818,11 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     },
   }
 
+  // a lista de contas deste aparelho (lib/contas.ts) mostra o nome e a foto como aqui
+  const contasDoAparelho = useContasSalvas()
+  const outrasContas = contasDoAparelho.some((c) => c.id !== userId)
+  useEffect(() => { atualizarConta(userId, { nome: perfil.nome.trim() || undefined, foto: d.foto }) }, [userId, perfil.nome, d.foto, contasDoAparelho])
+
   // Primeiro acesso: as perguntas montam o painel antes de qualquer coisa.
   if (carregandoPerfil) return <Esqueleto />
   if (perguntar) {
@@ -913,7 +919,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
       <button onClick={() => tarefa(tx('Preparando o backup…'), async () => (await import('../lib/planilha')).exportarBackup())}>
         <Icone nome="exportar" /> {tx('Baixar backup')}
       </button>
-      <button onClick={() => supabase.auth.signOut({ scope: 'local' })}><Icone nome="sair" /> {tx('Sair')}</button>
+      <ContasNoMenu userId={userId} />
+      <button onClick={() => void sairDestaConta()}><Icone nome="sair" /> {outrasContas ? tx('Sair desta conta') : tx('Sair')}</button>
     </>
   )
 
@@ -1097,7 +1104,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         assinatura={assinatura}
         confirmandoPagamento={confirmandoPagamento}
         aoSuporte={() => { setAjustes(false); setSuporte('novo') }}
-        aoSair={() => supabase.auth.signOut({ scope: 'local' })}
+        aoSair={() => void sairDestaConta()}
         aoExcluirConta={() => { setAjustes(false); setExcluindo(true) }}
         aoFechar={() => setAjustes(false)}
       />

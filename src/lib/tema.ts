@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { apagarDaConta, gravarNaConta, lerDaConta } from './contas'
 
 /** O que a pessoa escolheu. 'sistema' segue o claro/escuro do aparelho. */
 export type PreferenciaTema = 'sistema' | 'claro' | 'escuro'
@@ -9,7 +10,7 @@ const escuroNoSistema = window.matchMedia('(prefers-color-scheme: dark)')
 
 const lerPreferencia = (): PreferenciaTema => {
   try {
-    const t = localStorage.getItem(CHAVE)
+    const t = lerDaConta(CHAVE)
     return t === 'claro' || t === 'escuro' ? t : 'sistema'
   } catch {
     return 'sistema'
@@ -49,7 +50,7 @@ export type Movimento = 'completo' | 'reduzido'
 const CHAVE_MOVIMENTO = 'opuscash-movimento'
 let movimento: Movimento = (() => {
   try {
-    return localStorage.getItem(CHAVE_MOVIMENTO) === 'reduzido' ? 'reduzido' : 'completo'
+    return lerDaConta(CHAVE_MOVIMENTO) === 'reduzido' ? 'reduzido' : 'completo'
   } catch {
     return 'completo'
   }
@@ -68,7 +69,7 @@ export function useMovimento() {
 }
 export function definirMovimento(m: Movimento) {
   movimento = m
-  try { localStorage.setItem(CHAVE_MOVIMENTO, m) } catch { /* vale só nesta visita */ }
+  gravarNaConta(CHAVE_MOVIMENTO, m)
   aplicarMovimento()
 }
 
@@ -108,10 +109,9 @@ const DURACAO_TINTA = 950
  * tema novo se espalha, o tema troca por baixo dela e ela some.
  */
 export function definirTema(p: PreferenciaTema, origem?: { x: number; y: number }) {
-  try {
-    if (p === 'sistema') localStorage.removeItem(CHAVE)
-    else localStorage.setItem(CHAVE, p)
-  } catch { /* navegação privada: vale só nesta visita */ }
+  // cada conta do aparelho tem o seu tema (lib/contas.ts)
+  if (p === 'sistema') apagarDaConta(CHAVE)
+  else gravarNaConta(CHAVE, p)
   const mudar = () => { preferencia = p; aplicar() }
   if (!origem || semMovimento() || resolver(p) === estado.tema) return mudar()
   const raiz = document.documentElement

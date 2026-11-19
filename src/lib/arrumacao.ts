@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { gravarNaConta, lerDaConta } from './contas'
 
 /*
  * A arrumação da Início neste aparelho: o que a pessoa escolheu (seções recolhidas, a peça do mosaico que já abre sozinha) e
@@ -6,7 +7,7 @@ import { useCallback, useState } from 'react'
  * PERGUNTA se deve deixar essa peça aberta ao entrar. Nada muda sem o "sim", nada some, e "Restaurar a arrumação original"
  * desfaz tudo.
  *
- * Privacidade: fica só no navegador (localStorage), com o mínimo para a regra funcionar: em que dias (contados desde 1970)
+ * Privacidade: fica só no navegador (localStorage, separada por conta: lib/contas.ts), com o mínimo para a regra funcionar: em que dias (contados desde 1970)
  * cada peça foi aberta, só os dos últimos 30 dias. Não vai para o servidor nem para a medição de uso (lib/uso.ts).
  */
 
@@ -72,10 +73,10 @@ export function pecaParaSugerir(a: Arrumacao, pecas: string[], hoje = new Date()
 export const arrumacaoMudou = (a: Arrumacao) => a.recolhidas.length > 0 || a.pecaFixa !== null
 
 function ler() {
-  try { return lerArrumacao(localStorage.getItem(CHAVE)) } catch { return VAZIA }
+  return lerArrumacao(lerDaConta(CHAVE))
 }
 function gravar(a: Arrumacao) {
-  try { localStorage.setItem(CHAVE, JSON.stringify(a)) } catch { /* sem armazenamento: vale até recarregar */ }
+  gravarNaConta(CHAVE, JSON.stringify(a))
 }
 
 export function useArrumacao() {

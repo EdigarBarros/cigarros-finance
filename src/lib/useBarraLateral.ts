@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
+import { gravarNaConta, lerDaConta } from './contas'
 
 const CHAVE_LATERAL = 'opuscash.lateral-recolhida'
 
 function ler(chave: string): boolean | null {
-  try {
-    const v = localStorage.getItem(chave)
-    return v === '1' ? true : v === '0' ? false : null
-  } catch { return null }
+  const v = lerDaConta(chave)
+  return v === '1' ? true : v === '0' ? false : null
 }
 function gravar(chave: string, valor: boolean) {
-  try { localStorage.setItem(chave, valor ? '1' : '0') } catch { /* navegador sem armazenamento: vale só nesta visita */ }
+  gravarNaConta(chave, valor ? '1' : '0')
 }
 
 function useMedia(consulta: string) {

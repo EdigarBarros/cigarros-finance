@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { noAppAndroid } from './appAndroid'
 import { aoMudarConexao } from './conexao'
 import { supabase } from './supabase'
+import { sairDestaConta } from './contas'
 import { tx } from './textos'
 
 export type StatusAssinatura =
@@ -186,7 +187,8 @@ export async function irParaStripe(funcao: 'stripe-checkout' | 'stripe-portal', 
 export async function excluirConta(email: string): Promise<string | null> {
   const { data, error } = await supabase.functions.invoke('excluir-conta', { body: { confirmar: email } })
   if (data?.ok) {
-    await supabase.auth.signOut()
+    // a conta não existe mais: sai da lista de contas deste aparelho também
+    await sairDestaConta()
     return null
   }
   return (data?.erro as string | undefined) ?? error?.message ?? tx('Não foi possível excluir a conta. Tente de novo.')

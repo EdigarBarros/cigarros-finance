@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { noAppAndroid } from '../lib/appAndroid'
 import { aceitaPix, iniciarTesteGratis, irParaStripe, pixAcabou, podeTestar, type Assinatura } from '../lib/assinatura'
 import { supabase } from '../lib/supabase'
+import { sairDestaConta } from '../lib/contas'
 import { Icone } from './Icone'
 import { LinksLegais } from './Legal'
 import { Marca } from './Marca'
@@ -264,7 +265,7 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
             )
           )}
           <LinksLegais />
-          <button className="link pl-sair" onClick={() => supabase.auth.signOut({ scope: 'local' })}>{tx('Sair ({0})', email)}</button>
+          <button className="link pl-sair" onClick={() => void sairDestaConta()}>{tx('Sair ({0})', email)}</button>
         </div>
       </section>
     </main>
