@@ -35,6 +35,8 @@ export interface SituacaoConta {
   semCotacao: boolean
   /** O mesmo valor na moeda da conta (o que a pessoa lançou ou combinou). */
   valorNativo: number
+  /** A conta deste mês foi recebida ou paga adiantada, num mês anterior (`baixa` é esse lançamento, quando está carregado). */
+  adiantada?: boolean
 }
 
 const dois = (n: number) => String(n).padStart(2, '0')
@@ -75,7 +77,13 @@ export function taxaDaConta(c: Pick<ContaFixa, 'moeda' | 'cotacao'>, taxas: Taxa
 export function situacaoDaConta(c: ContaFixa, lancs: Lancamento[], ano: number, mes: number, hoje = hojeLocal(), taxas: Taxas = {}): SituacaoConta {
   const dia = diaNoMes(c.dia, ano, mes)
   const vencimento = `${ano}-${dois(mes)}-${dois(dia)}`
-  const baixa = lancs.find((l) => l.conta_fixa_id === c.id && l.ano === ano && l.mes === mes) ?? null
+  const doMes = lancs.find((l) => l.conta_fixa_id === c.id && l.ano === ano && l.mes === mes) ?? null
+  // Parcela que caiu antes da hora: a conta deste mês já foi resolvida por um lançamento de um mês anterior.
+  // O lançamento é do ano aberto e sumiu da lista? Foi apagado, e a marca deixa de valer.
+  const marca = doMes ? undefined : c.adiantadas?.find((a) => a.mes === `${ano}-${dois(mes)}`)
+  const lancAdiantado = marca ? lancs.find((l) => l.id === marca.lancId) ?? null : null
+  const adiantada = Boolean(marca && (lancAdiantado || Number(marca.data.slice(0, 4)) !== ano))
+  const baixa = doMes ?? lancAdiantado
   const moeda = moedaDaConta(c)
   // a cotação que a pessoa combinou para a conta; sem ela, a do dia; sem nenhuma, não dá para converter (nunca vale 1 por 1)
   const taxaConhecida = taxaDaConta(c, taxas)
@@ -84,9 +92,11 @@ export function situacaoDaConta(c: ContaFixa, lancs: Lancamento[], ano: number, 
   // o valor de costume numa moeda de fora entra nos totais convertido por ela
   const estimado = !moeda ? c.valor : semCotacao ? 0 : centavos(c.valor * taxa)
   const base = { conta: c, dia, vencimento, baixa, valor: estimado, moeda, taxa, semCotacao, valorNativo: c.valor, diasRestantes: null, diasAtraso: null }
+  // adiantada de outro ano (o lançamento não está carregado): conta como resolvida pelo valor de costume
+  if (adiantada && !baixa) return { ...base, estado: 'paga', adiantada }
   // Uma baixa já dada vale mesmo que a conta tenha sido pausada ou mudado de datas depois.
   if (baixa) {
-    const doAcordo = { ...base, estado: 'paga' as const, valor: baixa.valor, semCotacao: false }
+    const doAcordo = { ...base, estado: 'paga' as const, valor: baixa.valor, semCotacao: false, ...(adiantada ? { adiantada } : {}) }
     if (!moeda) return { ...doAcordo, valorNativo: baixa.valor }
     if (baixa.moeda_original === moeda && baixa.valor_original) return { ...doAcordo, valorNativo: baixa.valor_original }
     // baixa lançada na moeda principal e sem cotação para voltar à da conta: mostra como foi lançada
@@ -399,6 +409,43 @@ export function saidasQueSeRepetem(lancs: Lancamento[]): Repeticao[] {
   return achados.sort((a, b) => b.meses - a.meses || b.valor - a.valor)
 }
 
+/**
+ * Parcela adiantada: a conta do mês `mes` (AAAA-MM) já foi recebida ou paga pelo lançamento `lancId`, de `data`, num mês
+ * anterior. Cada conta tem um lançamento por mês (o banco não aceita dois), então o lançamento fica no mês em que o dinheiro
+ * caiu, sem vínculo, e esta marca nas preferências diz que o mês seguinte já está resolvido.
+ */
+export const chaveAdiantada = (contaId: string, mes: string, lancId: string, data: string) => `adiantada:${contaId}:${mes}:${lancId}:${data}`
+export const ehChaveAdiantada = (x: string) => x.startsWith('adiantada:')
+
+/** Põe em cada conta os meses que já foram resolvidos adiantado (as marcas guardadas nas preferências). */
+export function comAdiantadas(contas: ContaFixa[], dispensadas: string[]): ContaFixa[] {
+  const porConta = new Map<string, NonNullable<ContaFixa['adiantadas']>>()
+  for (const x of dispensadas) {
+    if (!ehChaveAdiantada(x)) continue
+    const [, contaId, mes, lancId, data] = x.split(':')
+    if (!contaId || !/^\d{4}-\d{2}$/.test(mes ?? '') || !lancId || !/^\d{4}-\d{2}-\d{2}$/.test(data ?? '')) continue
+    porConta.set(contaId, [...(porConta.get(contaId) ?? []), { mes, lancId, data }])
+  }
+  if (!porConta.size) return contas
+  return contas.map((c) => (porConta.has(c.id) ? { ...c, adiantadas: porConta.get(c.id) } : c))
+}
+
+/**
+ * O próximo mês depois de `ano`/`mes` em que a conta vale e ainda não foi resolvida (nem lançada, nem adiantada): é dele a
+ * parcela que caiu antes da hora. Olha até dois anos à frente; null se não houver.
+ */
+export function proximoMesEmAberto(c: ContaFixa, lancs: Pick<Lancamento, 'conta_fixa_id' | 'ano' | 'mes'>[], ano: number, mes: number): { ano: number; mes: number } | null {
+  for (let k = chaveMes(ano, mes) + 1; k <= chaveMes(ano, mes) + 24; k++) {
+    const a = Math.floor(k / 12), m = (k % 12) + 1
+    if (c.fim && k > chaveIso(c.fim)) return null
+    if (!valeNoMes(c, a, m)) continue
+    if (lancs.some((l) => l.conta_fixa_id === c.id && l.ano === a && l.mes === m)) continue
+    if (c.adiantadas?.some((x) => x.mes === `${a}-${dois(m)}`)) continue
+    return { ano: a, mes: m }
+  }
+  return null
+}
+
 /** Primeiro dia do mês, como a conta guarda "a partir de" e "até". */
 export const inicioDoMes = (ano: number, mes: number) => `${ano}-${dois(mes)}-01`
 
@@ -408,6 +455,7 @@ export function fraseDaSituacao(s: SituacaoConta) {
   switch (s.estado) {
     case 'paga': {
       const d = fmtDataCurta(s.baixa?.data ?? s.vencimento)
+      if (s.adiantada) return s.baixa ? (entrada ? tx('recebido adiantado em {0}', d) : tx('pago adiantado em {0}', d)) : entrada ? tx('recebido adiantado') : tx('pago adiantado')
       return entrada ? tx('recebido em {0}', d) : tx('pago em {0}', d)
     }
     case 'atrasada': {

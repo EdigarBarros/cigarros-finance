@@ -69,3 +69,8 @@ node scripts/app-de-demonstracao/testar-arrasto.cjs
 
 Com o processador 4× mais lento, arrasta o topo de cada tela do celular com um dedo simulado: com o dedo na tela, nada além
 dos pontos pode mudar (nem a lista de baixo, nem a posição da página); ao soltar, a página troca e encaixa.
+
+## Parcela adiantada (entrada ou conta fixa)
+
+Depois do build com Supabase fictício: `node scripts/app-de-demonstracao/testar-adiantada.cjs` (a mesma entrada fixa lançada
+duas vezes em novembro vira a de dezembro, "recebido adiantado"; Desfazer reabre dezembro).

@@ -337,6 +337,9 @@ function Boleto({ s, c, indice, aoEditar, aoOutroValor }: { s: SituacaoConta; c:
                 <Icone nome="desfazer" tamanho={14} /> {tx('Desfazer')}
               </button>
             </>
+          ) : s.adiantada ? (
+            // adiantada num mês de outro ano (o lançamento não está carregado aqui): desfazer só tira a marca
+            <button className="btn" onClick={() => c.desfazerBaixa(s)}><Icone nome="desfazer" tamanho={14} /> {tx('Desfazer')}</button>
           ) : (
             <>
               <button className="btn primario conta-paguei" onClick={() => (s.semCotacao ? aoOutroValor() : c.pagarConta(s))}>

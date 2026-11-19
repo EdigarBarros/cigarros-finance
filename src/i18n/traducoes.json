@@ -16230,5 +16230,33 @@
   "Sair desta conta": {
     "en": "Sign out of this account",
     "es": "Salir de esta cuenta"
+  },
+  "recebido adiantado em {0}": {
+    "en": "received early on {0}",
+    "es": "recibido por adelantado el {0}"
+  },
+  "pago adiantado em {0}": {
+    "en": "paid early on {0}",
+    "es": "pagado por adelantado el {0}"
+  },
+  "recebido adiantado": {
+    "en": "received early",
+    "es": "recibido por adelantado"
+  },
+  "pago adiantado": {
+    "en": "paid early",
+    "es": "pagado por adelantado"
+  },
+  "já tem lançamento neste mês: entra como adiantada": {
+    "en": "already has an entry this month: goes in as an early payment",
+    "es": "ya tiene un registro este mes: entra como adelantado"
+  },
+  "{0} já foi recebida neste mês. Este valor fica como a de {1}, recebida adiantada: ele conta neste mês e {1} já aparece como recebida.": {
+    "en": "{0} was already received this month. This amount counts as the one for {1}, received early: it counts this month and {1} already shows as received.",
+    "es": "{0} ya se recibió este mes. Este valor queda como el de {1}, recibido por adelantado: cuenta este mes y {1} ya aparece como recibido."
+  },
+  "{0} já foi paga neste mês. Este valor fica como a de {1}, paga adiantada: ele conta neste mês e {1} já aparece como paga.": {
+    "en": "{0} was already paid this month. This amount counts as the one for {1}, paid early: it counts this month and {1} already shows as paid.",
+    "es": "{0} ya se pagó este mes. Este valor queda como el de {1}, pagado por adelantado: cuenta este mes y {1} ya aparece como pagado."
   }
 }
