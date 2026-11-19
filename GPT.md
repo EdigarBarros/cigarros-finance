@@ -1150,3 +1150,12 @@ que ainda não tinha sido enviada.
   descartar o rascunho. Na dúvida, suba o número.
 - Conferido: `jarsigner -verify` ("jar verified"), SHA-256 da chave de upload (A7:07:94:…:5D:9D), "2.7.5" no manifesto e o
   endereço do Supabase de produção no pacote. Chave e senha do Drive apagadas da máquina logo depois de assinar.
+
+### 18/11/2026 — Claude — App Android 2.8.1 (código 19)
+
+**Estado:** `.aab` gerado (`OpusCash-2.8.1-codigo19.aab`, na Área de Trabalho do dono); a assinatura com a chave de upload
+foi feita pelo próprio dono no terminal (a senha não passa pelo Claude). Falta ele enviar no Play Console.
+
+- Leva o plano de ação em etapas (#238) e os favoritos em destaque no Consultor com o rodapé do plano corrigido (#239).
+  `versionCode` 18 → 19, `versionName` 2.8.0 → 2.8.1. JDK 21 em `~/tools`, Android SDK com a plataforma 36 baixada pelo
+  Gradle. Chave baixada do Drive do dono e apagada da máquina depois de assinar.
