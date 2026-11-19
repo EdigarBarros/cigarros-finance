@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Icone } from '../components/Icone'
 import { MESES_NOME } from '../lib/format'
 import { semMovimento } from '../lib/tema'
@@ -1515,11 +1515,29 @@ export function Algoritmo() {
       if (visivel && !quadro) { lerScroll(); antes = 0; antesGiro = 0; quadro = requestAnimationFrame(laco) }
     })
     obs.observe(secao)
-    const aoScroll = () => lerScroll()
+    const aoScroll = () => { lerScroll(); verSeSurgiu() }
     const aoRedim = () => { medir(); lerScroll(); desenhar(atual, performance.now()) }
     medir(); lerScroll(); atual = alvo; desenhar(atual, performance.now())
     document.fonts?.ready.then(() => { medir(); desenhar(atual, performance.now()) })
     // o texto e os selos mudam de altura (fontes, idioma, quebra de linha): a tela do celular se mede de novo
+    // o texto surge quando aparece de verdade: antes ele já nascia pronto, sem entrada. O carrossel de cima fica POR CIMA
+    // desta seção durante quase uma tela de rolagem, então "a seção entrou na tela" não basta (a animação acontecia
+    // escondida): a cada rolagem, enquanto não surgiu, olha se o que está no ponto do selo é o próprio texto. Então o selo
+    // desliza, as palavras do título sobem uma a uma, o parágrafo e os pontinhos. Uma vez só; com animações reduzidas, já
+    // aparece pronto.
+    const rotulo = texto.querySelector<HTMLElement>('.ag-rotulo')!
+    let surgiu = semMovimento()
+    if (surgiu) texto.classList.add('surgiu')
+    const verSeSurgiu = () => {
+      if (surgiu) return
+      const b = rotulo.getBoundingClientRect()
+      if (b.bottom < 0 || b.top > window.innerHeight) return
+      // no celular o texto se apaga enquanto a câmera mergulha na tela: só surge quando estiver aceso
+      if (Number(getComputedStyle(texto).opacity) < 0.5) return
+      const no = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2)
+      if (no && texto.contains(no)) { surgiu = true; texto.classList.add('surgiu') }
+    }
+    verSeSurgiu()
     const tamanhos = new ResizeObserver(() => { medir(); desenhar(atual, performance.now()) })
     tamanhos.observe(texto); tamanhos.observe(selos)
     window.addEventListener('scroll', aoScroll, { passive: true })
@@ -1565,14 +1583,18 @@ export function Algoritmo() {
           <div className="ag-pilha" aria-live="polite">
             {CENAS.map((c, i) => (
               <div key={c.titulo} className={`ag-legenda ${cena === i ? 'ativa' : ''}`} aria-hidden={cena !== i}>
-                <h2>{c.titulo}</h2>
+                {/* cada palavra sobe sozinha quando a cena entra (algoritmo.css, .ag-palavra) */}
+                <h2>{c.titulo.split(' ').map((p, k) => (
+                  <span key={k}>{k > 0 && ' '}<span className="ag-palavra" style={{ '--p': k } as CSSProperties}>{p}</span></span>
+                ))}</h2>
                 <p>{c.texto}</p>
               </div>
             ))}
           </div>
           <div className="ag-trilho" role="tablist" aria-label={tx('Partes do motor do OpusCash')}>
             {CENAS.map((c, i) => (
-              <button key={c.titulo} role="tab" aria-selected={cena === i} aria-label={c.titulo} className={cena === i ? 'ativo' : ''} onClick={() => irPara(i)} />
+              <button key={c.titulo} role="tab" aria-selected={cena === i} aria-label={c.titulo} className={cena === i ? 'ativo' : ''} onClick={() => irPara(i)}
+                style={{ '--p': i } as CSSProperties} />
             ))}
           </div>
         </div>
