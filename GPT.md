@@ -1320,3 +1320,22 @@ numa versão nova (esta sessão rodou na nuvem, sem o SDK do Android; o `.aab` f
   0/250/450/650/850 ms), sem erro na página. Trava proposital do JavaScript da página: com 1,2 s de trava no meio do
   carregamento saíram 29 quadros diferentes, e com 0,7 s de trava na saída, 17 (a animação segue mexendo).
   Animações reduzidas: cena parada e a abertura sai quando carrega.
+
+### 19/11/2026 — Claude — Abertura em 3D: sem engasgos no caminho
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração. O app Android só recebe numa versão nova.
+
+- Relato do Edigar: a abertura em 3D (#252) estava boa, mas "não ta liso", com pequenos engasgos no caminho.
+- Medido com o rastro do Chrome (app de demonstração, abertura inteira): a luz atrás do símbolo (`.ab-luz`, 980 px) era
+  redesenhada o tempo todo (3.755 tarefas de raster, ~2 s de raster numa abertura de 5 s). Causa: duas animações de
+  `transform` no mesmo elemento (acender + respirar), que o navegador não passa para a placa de vídeo. Agora a caixa acende
+  e o `::before` respira (uma animação por elemento, com `will-change`). Lição: nunca duas animações de transform no mesmo
+  elemento.
+- Saída: as 9 camadas de trás do infinito somem logo no começo (antes, dez imagens do tamanho da tela empilhadas) e ele
+  avança até 840 px em vez de 1000.
+- Fontes: a cena espera as fontes do nome e das peças (`fontesProntas`, no máximo 0,5 s) para não trocar de fonte no
+  meio da animação; o tempo mínimo conta a partir daí.
+- **Validação:** raster total 1.971 ms → 248 ms (zero durante a órbita), quadros perdidos 26 → 4 (os que sobram são da
+  carga da página, antes da abertura), sem buracos entre quadros na saída. Trava proposital do JavaScript: 29 quadros
+  diferentes em 1,2 s no carregamento e 22 em 0,7 s na saída. Animações reduzidas: sai quando carrega. `npx tsc -b`, lint
+  sem erro, build, `scripts/painel/testar.mjs` 36/36. Fotos da entrada e da saída nos dois temas, computador e 390 px.

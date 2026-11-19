@@ -36,13 +36,20 @@
 
 .ab-fundo { position: absolute; inset: 0; background: var(--ab-fundo); }
 
-/* a luz atrás: acende e respira */
+/* a luz atrás: acende (a caixa) e respira (o desenho dentro dela). Uma animação de transform por elemento: duas no
+   mesmo elemento o navegador não passa para a placa de vídeo e redesenhava a luz inteira a cada quadro */
 .ab-luz {
   position: absolute; left: 50%; top: 43%; width: min(980px, 170vmax); aspect-ratio: 1; translate: -50% -50%;
+  will-change: transform, opacity;
+  animation: ab-luz-acende 1.4s cubic-bezier(.22, 1, .36, 1) both;
+}
+.ab-luz::before {
+  content: ''; position: absolute; inset: 0;
   background:
     radial-gradient(closest-side, var(--ab-luz-1), transparent 72%),
     radial-gradient(closest-side at 64% 38%, var(--ab-luz-2), transparent 74%);
-  animation: ab-luz-acende 1.4s cubic-bezier(.22, 1, .36, 1) both, ab-luz-respira 5s ease-in-out 1.4s infinite;
+  will-change: transform, opacity;
+  animation: ab-luz-respira 5s ease-in-out 1.4s infinite;
 }
 @keyframes ab-luz-acende { from { opacity: 0; transform: scale(.5); } }
 @keyframes ab-luz-respira { 50% { opacity: .65; transform: scale(1.08); } }
@@ -127,6 +134,11 @@
 .ab-nome .cash { color: var(--ab-cash); }
 @keyframes ab-letra { from { transform: translateY(70%) rotateX(-70deg); opacity: 0; } }
 
+/* até as fontes chegarem (no máximo meio segundo), a cena espera no primeiro quadro: trocar a fonte no meio da animação
+   mexia no nome e no texto das peças */
+.abertura:not(.rodando) :is(.ab-cena, .ab-nome),
+.abertura:not(.rodando) :is(.ab-cena, .ab-nome) * { animation-play-state: paused !important; }
+
 /* ---------- saída: a órbita se abre, o símbolo vem para cima de quem olha ---------- */
 .abertura.saindo .ab-abre { animation: ab-abre 1s cubic-bezier(.55, 0, .25, 1) forwards; }
 @keyframes ab-abre {
@@ -138,9 +150,12 @@
 /* recua um pouco e vem para cima de quem olha, quase de frente (de lado as camadas apareceriam separadas) */
 @keyframes ab-simbolo-sai {
   24% { transform: translateZ(-120px) rotateX(8deg); }
-  100% { transform: translateZ(1000px) rotateX(-6deg); }
+  100% { transform: translateZ(840px) rotateX(-6deg); }
 }
-.abertura.saindo .ab-simbolo img, .abertura.saindo .ab-simbolo-brilho { animation: ab-some .28s ease .64s forwards; }
+/* as camadas de trás saem logo: dez imagens do tamanho da tela, uma por cima da outra, pesariam no fim */
+.abertura.saindo .ab-simbolo img { animation: ab-some .2s ease forwards; }
+.abertura.saindo .ab-simbolo img.frente { animation: ab-some .28s ease .64s forwards; }
+.abertura.saindo .ab-simbolo-brilho { animation: ab-some .35s ease .1s forwards; }
 .abertura.saindo .ab-nome span { animation: ab-nome-sai .45s cubic-bezier(.4, 0, 1, 1) calc(var(--i) * 25ms) forwards; }
 @keyframes ab-nome-sai { to { transform: translateY(-60%); opacity: 0; } }
 .abertura.saindo .ab-luz { animation: ab-luz-sai .8s ease forwards; }
