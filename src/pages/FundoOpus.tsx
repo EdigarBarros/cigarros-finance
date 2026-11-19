@@ -197,6 +197,14 @@ const PECAS = {
   cal: () => <PCalendario />,
 } satisfies Record<string, () => ReactNode>
 
+export type NomeDaPeca = keyof typeof PECAS
+
+/** Uma peça solta, para quem quiser usar os mesmos desenhos (a abertura, components/Abertura.tsx, põe em órbita). */
+export function PecaOpus({ p }: { p: NomeDaPeca }) {
+  const Desenho = PECAS[p]
+  return <Desenho />
+}
+
 /**
  * Uma peça no fundo: onde fica (x, y em % da seção), profundidade (z, em px: negativo é mais longe), tamanho (s),
  * inclinação (rx, ry, rz em graus) e o passeio (t: segundos de uma ida; ax, ay: quanto anda; ar: quanto gira).
