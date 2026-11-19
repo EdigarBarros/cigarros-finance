@@ -43,17 +43,20 @@ function DestaqueDaDivida({ d, t, recebe }: { d: Destaque; t: TracosDaDivida; re
   switch (d) {
     case 'festa':
       return <span className="dvm-festa" aria-hidden="true"><Icone nome="check" tamanho={26} /></span>
-    case 'taxa':
+    case 'taxa': {
+      // "100%" cabe grande; "18,25%" ou "74,47%" precisam de letra menor para caber no círculo
+      const texto = `${fmtTaxa(t.jurosContrato ?? 0)}%`
       return (
         <span className="dvm-taxa" title={tx('Juros do contrato')}>
-          <b>{fmtTaxa(t.jurosContrato ?? 0)}%</b><small>{tx('ao mês')}</small>
+          <b style={{ fontSize: tamanhoNoCirculo(texto, 17) }}>{texto}</b><small>{tx('ao mês')}</small>
         </span>
       )
+    }
     case 'dias': {
       const n = diasDeAtraso(t)
       return (
         <span className="dvm-dias">
-          <b>{n}</b><small>{n === 1 ? tx('dia de atraso') : tx('dias de atraso')}</small>
+          <b style={{ fontSize: tamanhoNoCirculo(String(n), 20) }}>{n}</b><small>{n === 1 ? tx('dia de atraso') : tx('dias de atraso')}</small>
         </span>
       )
     }
@@ -74,6 +77,12 @@ function DestaqueDaDivida({ d, t, recebe }: { d: Destaque; t: TracosDaDivida; re
       return <Anel valor={pct} cor={recebe ? 'var(--entrada)' : 'var(--caixa)'} tamanho={56}>{Math.round(pct * 100)}%</Anel>
   }
 }
+
+/**
+ * O tamanho da letra do número dentro de um círculo de 62 px (cabem ~46 px de largura): até 4 caracteres no tamanho
+ * cheio; mais que isso, menor, para nunca passar da borda.
+ */
+const tamanhoNoCirculo = (texto: string, cheio: number) => (texto.length <= 4 ? cheio : texto.length === 5 ? Math.min(cheio, 14) : Math.min(cheio, 12))
 
 /** Um anel com uma fatia por parcela (paga, pela metade, atrasada, a vencer) e "pagas/total" no meio. */
 function AnelDeFatias({ estados, pagas, total }: { estados: TracosDaDivida['parcelas'] extends infer P ? P extends { estados: infer E } ? E : never : never; pagas: number; total: number }) {
