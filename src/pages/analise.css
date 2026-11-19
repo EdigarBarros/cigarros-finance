@@ -617,3 +617,89 @@ li.caiu .halteres-agora { background: var(--an-bom); }
 
 .peca-falhou { display: flex; align-items: center; gap: 8px; margin: 0; padding: 14px; border-radius: 14px; font-size: 13.5px; line-height: 1.45; color: var(--texto-2); background: var(--preench-4); }
 .peca-falhou svg { flex: none; color: var(--texto-3); }
+
+/* =========================================================================
+   Montagem ao vivo (pages/Analise.tsx, useMontagem): ao abrir o Consultor depois de uma mudança, a tela se refaz na frente
+   da pessoa. Linha do tempo: o cartão "o que mudou" chega no topo (0 s) e conta o que o consultor faz (três passos que se
+   marcam até ~1,6 s) → uma luz desce pela tela (0,35 s a 2,2 s) → os cartões se montam um a um, de cima para baixo, saindo
+   do desfoque e se abrindo de cima para baixo, e acendem a borda ao chegar → os cartões da tela viva vêm por último →
+   a lista do que mudou aparece linha por linha (1,9 s). Com "Animações reduzidas" (.parado), tudo aparece pronto.
+   ========================================================================= */
+.analise.montando, .consultor-movel-tela.montando { position: relative; }
+.montando > :nth-child(3) { --k: 0; } .montando > :nth-child(4) { --k: 1; } .montando > :nth-child(5) { --k: 2; }
+.montando > :nth-child(6) { --k: 3; } .montando > :nth-child(7) { --k: 4; } .montando > :nth-child(8) { --k: 5; }
+.montando > :nth-child(9) { --k: 6; } .montando > :nth-child(n+10) { --k: 7; }
+.montando > :not(.an-varredura, .an-cabecalho, .an-mudou) {
+  animation: an-monta .9s var(--deslize) calc(.5s + var(--k, 0) * 120ms) backwards,
+    an-acende 1.3s ease calc(1.05s + var(--k, 0) * 120ms) backwards;
+}
+.montando .an-tela > * { animation: an-monta .8s var(--deslize) calc(1.3s + var(--j, 6) * 90ms) backwards, an-acende 1.2s ease calc(1.75s + var(--j, 6) * 90ms) backwards; }
+.montando .an-tela > :nth-child(1) { --j: 0; } .montando .an-tela > :nth-child(2) { --j: 1; } .montando .an-tela > :nth-child(3) { --j: 2; }
+.montando .an-tela > :nth-child(4) { --j: 3; } .montando .an-tela > :nth-child(5) { --j: 4; } .montando .an-tela > :nth-child(6) { --j: 5; }
+@keyframes an-monta {
+  from { opacity: 0; transform: translateY(26px) scale(.975); filter: blur(6px); clip-path: inset(0 0 100% 0 round 22px); }
+  55% { opacity: 1; filter: blur(0); }
+  to { opacity: 1; transform: none; filter: none; clip-path: inset(0 0 0 0 round 22px); }
+}
+@keyframes an-acende {
+  from { box-shadow: 0 0 0 1px color-mix(in srgb, var(--destaque) 60%, transparent), 0 0 36px -8px color-mix(in srgb, var(--destaque) 65%, transparent); }
+}
+
+/* a luz que desce pela tela, como se a desenhasse */
+.an-varredura {
+  position: absolute; z-index: 6; left: -16px; right: -16px; top: 0; height: 160px; pointer-events: none;
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--destaque) 7%, transparent) 70%, color-mix(in srgb, var(--destaque) 22%, transparent) 97%, transparent);
+  border-bottom: 1.5px solid color-mix(in srgb, var(--destaque) 70%, transparent);
+  box-shadow: 0 8px 26px -6px color-mix(in srgb, var(--destaque) 55%, transparent);
+  border-radius: 0 0 50% 50% / 0 0 8px 8px;
+  animation: an-varre 1.9s cubic-bezier(.45, 0, .25, 1) .35s both;
+}
+@keyframes an-varre {
+  from { top: -160px; opacity: 0; }
+  12% { opacity: 1; }
+  80% { opacity: 1; }
+  to { top: min(100%, 100vh); opacity: 0; }
+}
+
+/* o cartão "o que mudou" durante a montagem */
+.an-mudou.ao-vivo {
+  position: relative; overflow: hidden; gap: 10px; padding: 16px 18px;
+  border-color: color-mix(in srgb, var(--destaque) 45%, var(--borda));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--destaque) 9%, var(--superficie)), var(--superficie) 70%);
+  animation: an-mudou-chega .7s var(--mola) .05s backwards;
+}
+@keyframes an-mudou-chega { from { opacity: 0; transform: translateY(-12px) scale(.97); filter: blur(4px); } }
+.an-mudou-progresso {
+  position: absolute; left: 0; right: 0; top: 0; height: 2px; transform-origin: left;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--destaque) 20%, transparent), var(--destaque));
+  animation: an-progresso 1.6s cubic-bezier(.65, 0, .35, 1) .2s both, an-some .5s ease 1.9s forwards;
+}
+@keyframes an-progresso { from { transform: scaleX(0); } }
+@keyframes an-some { to { opacity: 0; } }
+.an-mudou.ao-vivo .an-mudou-titulo { flex-wrap: wrap; font-size: 13px; }
+.an-mudou.ao-vivo .an-mudou-titulo > svg { animation: an-bussola 1.7s var(--deslize) .1s backwards; }
+@keyframes an-bussola { from { transform: rotate(-540deg); } }
+.an-mudou-troca { display: inline-grid; }
+.an-mudou-troca > span { grid-area: 1 / 1; }
+.an-mudou-troca .antes { animation: an-some .3s ease 1.7s forwards; }
+.an-mudou-troca .depois { animation: an-surge-texto .45s var(--mola) 1.8s backwards; }
+@keyframes an-surge-texto { from { opacity: 0; transform: translateY(6px); } }
+.an-mudou-nota {
+  display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px;
+  font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums;
+  animation: an-pula 0.6s var(--mola-salto) 1.9s backwards;
+}
+.an-mudou-nota.bom { color: var(--an-bom); background: color-mix(in srgb, var(--an-bom) 15%, transparent); }
+.an-mudou-nota.ruim { color: var(--an-ruim); background: color-mix(in srgb, var(--an-ruim) 15%, transparent); }
+@keyframes an-pula { from { opacity: 0; transform: scale(.5); } }
+
+.an-mudou-passos { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--texto-2); }
+.an-mudou-passos li { display: inline-flex; align-items: center; gap: 6px; animation: an-passo .4s ease calc(.35s + var(--i) * .45s) backwards; }
+@keyframes an-passo { from { opacity: .3; } }
+.an-mudou-ok {
+  display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%;
+  color: var(--fundo); background: var(--destaque);
+  animation: an-pula .45s var(--mola-salto) calc(.45s + var(--i) * .45s) backwards;
+}
+.an-mudou.ao-vivo ul li { animation: an-linha .55s var(--mola) calc(1.95s + var(--i) * 140ms) backwards; }
+@keyframes an-linha { from { opacity: 0; transform: translateX(-12px); } }

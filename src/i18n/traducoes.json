@@ -16462,5 +16462,29 @@
   "+{0} partes": {
     "en": "+{0} parts",
     "es": "+{0} partes"
+  },
+  "Refazendo sua tela…": {
+    "en": "Rebuilding your screen…",
+    "es": "Rehaciendo tu pantalla…"
+  },
+  "Refiz sua tela": {
+    "en": "I rebuilt your screen",
+    "es": "Rehíce tu pantalla"
+  },
+  "Nota {0} → {1}": {
+    "en": "Score {0} → {1}",
+    "es": "Nota {0} → {1}"
+  },
+  "Li o que mudou": {
+    "en": "Read what changed",
+    "es": "Leí lo que cambió"
+  },
+  "Refiz as contas": {
+    "en": "Redid the math",
+    "es": "Rehíce las cuentas"
+  },
+  "Montei a tela de novo": {
+    "en": "Built the screen again",
+    "es": "Armé la pantalla de nuevo"
   }
 }

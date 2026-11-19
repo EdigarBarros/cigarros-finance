@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect, useReducer, useRef, useState } from 'react'
 import { BotaoIdioma } from './components/BotaoIdioma'
 import { BotaoTema } from './components/BotaoTema'
 import { Carregando } from './components/Carregando'
+import { temSessaoSalva } from './lib/abertura'
 import { Configuracao, Login, NovaSenha } from './components/Entrada'
 import { TelaAssinatura } from './components/Assinatura'
 import { TelaSemInternet } from './components/SemInternet'
@@ -41,9 +42,7 @@ const Painel = lazy(carregarPainel)
  * Quem já tem sessão guardada neste aparelho vai cair no painel: começa a baixá-lo agora, junto com a leitura da sessão e da
  * assinatura, em vez de esperar as duas terminarem (era uma fila: sessão, assinatura e só então o painel).
  */
-try {
-  if (Object.keys(localStorage).some((k) => /^sb-.+-auth-token$/.test(k))) void carregarPainel()
-} catch { /* armazenamento bloqueado: baixa quando precisar */ }
+if (temSessaoSalva()) void carregarPainel()
 
 export default function App() {
   const [sessao, setSessao] = useState<Session | null | undefined>(undefined)
@@ -82,7 +81,7 @@ export default function App() {
 
   if (doc) return comIdioma(<PaginaLegal doc={doc} />, false)
   if (!configurado) return comIdioma(<Configuracao />)
-  if (sessao === undefined) return <Carregando />
+  if (sessao === undefined) return <Carregando segurar={temSessaoSalva()} />
 
   // o link de "Esqueci minha senha" cria uma sessão: a tela de nova senha vem antes de qualquer outra
   if (recuperando) return comIdioma(<NovaSenha aoConcluir={() => setRecuperando(false)} />)
