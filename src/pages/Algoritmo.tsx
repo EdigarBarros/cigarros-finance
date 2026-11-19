@@ -1515,29 +1515,32 @@ export function Algoritmo() {
       if (visivel && !quadro) { lerScroll(); antes = 0; antesGiro = 0; quadro = requestAnimationFrame(laco) }
     })
     obs.observe(secao)
-    const aoScroll = () => { lerScroll(); verSeSurgiu() }
+    const aoScroll = () => { lerScroll(); vigiarEntrada() }
     const aoRedim = () => { medir(); lerScroll(); desenhar(atual, performance.now()) }
     medir(); lerScroll(); atual = alvo; desenhar(atual, performance.now())
     document.fonts?.ready.then(() => { medir(); desenhar(atual, performance.now()) })
-    // o texto e os selos mudam de altura (fontes, idioma, quebra de linha): a tela do celular se mede de novo
-    // o texto surge quando aparece de verdade: antes ele já nascia pronto, sem entrada. O carrossel de cima fica POR CIMA
-    // desta seção durante quase uma tela de rolagem, então "a seção entrou na tela" não basta (a animação acontecia
-    // escondida): a cada rolagem, enquanto não surgiu, olha se o que está no ponto do selo é o próprio texto. Então o selo
-    // desliza, as palavras do título sobem uma a uma, o parágrafo e os pontinhos. Uma vez só; com animações reduzidas, já
-    // aparece pronto.
+    // o texto surge quando aparece de verdade (antes ele já nascia pronto, sem entrada): o selo desliza, as palavras do
+    // título sobem uma a uma, o parágrafo e os pontinhos. "A seção entrou na tela" não basta: o carrossel de cima fica POR
+    // CIMA desta seção durante quase uma tela de rolagem (a animação aconteceria escondida), e no celular o texto se apaga
+    // enquanto a câmera mergulha. Então, a cada rolagem, olha se o texto está aceso, na tela e por cima de tudo (o que está
+    // no ponto do selo é o próprio texto).
+    // Toda vez que ele sai de vista (rolou para fora, o carrossel o cobriu de novo ou ele se apagou), volta a ficar pronto
+    // para surgir: subir e descer de novo repete a entrada. Para não piscar na beira, sair pede mais que entrar (só conta
+    // como apagado abaixo de 5% e como fora quando o selo saiu inteiro da tela). Com animações reduzidas, fica sempre pronto.
     const rotulo = texto.querySelector<HTMLElement>('.ag-rotulo')!
-    let surgiu = semMovimento()
-    if (surgiu) texto.classList.add('surgiu')
-    const verSeSurgiu = () => {
-      if (surgiu) return
+    let surgiu = false
+    const vigiarEntrada = () => {
+      if (semMovimento()) { if (!surgiu) { surgiu = true; texto.classList.add('surgiu') } return }
       const b = rotulo.getBoundingClientRect()
-      if (b.bottom < 0 || b.top > window.innerHeight) return
-      // no celular o texto se apaga enquanto a câmera mergulha na tela: só surge quando estiver aceso
-      if (Number(getComputedStyle(texto).opacity) < 0.5) return
-      const no = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2)
-      if (no && texto.contains(no)) { surgiu = true; texto.classList.add('surgiu') }
+      const naTela = b.bottom > 0 && b.top < window.innerHeight
+      const opacidade = Number(getComputedStyle(texto).opacity)
+      const no = naTela ? document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2) : null
+      const porCima = Boolean(no && texto.contains(no))
+      if (!surgiu && naTela && porCima && opacidade >= 0.5) { surgiu = true; texto.classList.add('surgiu') }
+      else if (surgiu && (!naTela || !porCima || opacidade < 0.05)) { surgiu = false; texto.classList.remove('surgiu') }
     }
-    verSeSurgiu()
+    vigiarEntrada()
+    // o texto e os selos mudam de altura (fontes, idioma, quebra de linha): a tela do celular se mede de novo
     const tamanhos = new ResizeObserver(() => { medir(); desenhar(atual, performance.now()) })
     tamanhos.observe(texto); tamanhos.observe(selos)
     window.addEventListener('scroll', aoScroll, { passive: true })
