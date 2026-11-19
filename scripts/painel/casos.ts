@@ -12,6 +12,7 @@ import { comporPrevisao, diaADiaDoMes } from '../../src/lib/previsao'
 import { situacaoDoMes } from '../../src/lib/situacaoDoMes'
 import { adicionarCartao, cartoesDaInicio, linhasDaGrade, maisRecente, MODELOS, moverCartao, normCelular, removerCartao, TAMANHO, type ArrumacaoInicio } from '../../src/lib/widgets'
 import { comParcelasDoMes } from '../../src/lib/useMesDaInicio'
+import { montarCartao, ORCAMENTO, type TracosDaDivida } from '../../src/lib/cartaoDaDivida'
 import type { SituacaoCartao } from '../../src/lib/cartoes'
 import type { ContaFixa, Divida, Lancamento, SaldoDivida } from '../../src/lib/types'
 
@@ -465,6 +466,80 @@ export const CASOS: Caso[] = [
       igual('aparelho mais novo', maisRecente(nova, velha) === nova, true)
       igual('só o banco', maisRecente(null, velha) === velha, true)
       igual('só o aparelho', maisRecente(velha, { v: 1 }) === velha, true)
+    },
+  },
+
+  // ---------- cartão de cada dívida (lib/cartaoDaDivida.ts): cada tipo ganha o seu desenho ----------
+  {
+    nome: 'dívida: cada tipo ganha o destaque e as peças que servem a ele',
+    rodar() {
+      const base: TracosDaDivida = {
+        recebe: false, quitada: false, restanteHoje: 1000, restante: 1000, inicial: 1000, pago: 0, parcelas: null, proxima: null,
+        temData: false, vencido: null, jurosContrato: null, jurosAtraso: null, emprestimo: null, partes: [], quitacao: null,
+        mesesRestantes: null, hoje: '2026-11-19',
+      }
+      const t = (x: Partial<TracosDaDivida>) => montarCartao({ ...base, ...x })
+      const parcelas = (total: number, pagas: number, atrasadas = 0) => ({
+        total, pagas, atrasadas, estados: Array.from({ length: total }, (_, i) => (i < pagas ? 'paga' : i < pagas + atrasadas ? 'atrasada' : 'aberta') as 'paga' | 'atrasada' | 'aberta'),
+      })
+
+      // valor único sem data (Facio): "paga quando puder", anel de progresso, nada de data
+      const livre = t({})
+      igual('sem data: peça livre', livre.pecas.includes('livre'), true)
+      igual('sem data: sem próxima nem atraso', livre.pecas.some((p) => p === 'proxima' || p === 'atraso'), false)
+
+      // valor único com data e no prazo (Agiota sem juros altos): a folhinha do dia, e a próxima não se repete
+      const folhinha = t({ temData: true, proxima: { data: '2026-11-25', valor: 390 } })
+      igual('data única: folhinha', folhinha.destaque, 'folhinha')
+      igual('data única: sem repetir a próxima', folhinha.pecas.includes('proxima'), false)
+
+      // juros do contrato altos (100% ao mês): a taxa no destaque e o "hoje × em 1 mês"
+      const agiota = t({ temData: true, proxima: { data: '2026-11-25', valor: 390 }, jurosContrato: 100 })
+      igual('agiota: taxa', agiota.destaque, 'taxa')
+      igual('agiota: hoje × em 1 mês', agiota.pecas.includes('jurosContrato'), true)
+
+      // atrasada sem nada pago (Inconveniência): dias de atraso no lugar de um anel em 0%
+      const atrasada = t({ temData: true, vencido: { valor: 30, desde: '2026-11-10' } })
+      igual('atrasada sem pagar: dias', atrasada.destaque, 'dias')
+      igual('atrasada: peça do atraso', atrasada.pecas.includes('atraso'), true)
+
+      // atrasada com juros de atraso (Cartão Nubank): as barrinhas subindo e o "Conferi com o banco"
+      const juros = t({ temData: true, vencido: { valor: 720, desde: '2026-07-27' }, jurosAtraso: { total: 20, porDia: 0.06 } })
+      igual('juros do atraso: peça', juros.pecas.includes('crescendo'), true)
+      igual('juros do atraso: conferir', juros.conferir, true)
+
+      // parcelada em dia, com parcelas pagas (Acordo Vivo): anel de fatias, próxima e quando termina; sem tracinhos repetidos
+      const vivo = t({ temData: true, parcelas: parcelas(5, 3), pago: 600, proxima: { data: '2026-11-26', valor: 31 }, quitacao: [2027, 2], mesesRestantes: 3 })
+      igual('parcelada: fatias', vivo.destaque, 'fatias')
+      igual('parcelada: sem os tracinhos (as fatias já mostram)', vivo.pecas.includes('parcelas'), false)
+      igual('parcelada: próxima', vivo.pecas.includes('proxima'), true)
+      igual('parcelada: termina em', vivo.pecas.includes('chegada'), true)
+
+      // parcelada toda atrasada, nada pago (Atlética, 15 de 15): dias e os tracinhos com a legenda
+      const atletica = t({ temData: true, parcelas: parcelas(15, 0, 15), vencido: { valor: 478, desde: '2026-09-20' } })
+      igual('parcelas atrasadas sem pagar: dias', atletica.destaque, 'dias')
+      igual('parcelas atrasadas: tracinhos', atletica.pecas.includes('parcelas'), true)
+
+      // feita de partes: a barra das partes
+      igual('partes', t({ partes: [{ nome: 'Microfone', valor: 300 }, { nome: 'Mouse', valor: 120 }] }).pecas.includes('partes'), true)
+
+      // empréstimo com o valor recebido: recebeu × devolve
+      igual('empréstimo', t({ emprestimo: { recebido: 250, total: 270 } }).pecas.includes('emprestimo'), true)
+
+      // quitada: festa e a linha de tudo pago, nada mais
+      const quitada = t({ quitada: true, restante: 0, restanteHoje: 0, pago: 1000 })
+      igual('quitada: festa', quitada.destaque, 'festa')
+      igual('quitada: só a linha', quitada.pecas, ['quitada'])
+      igual('quitada: sem conferir', quitada.conferir, false)
+
+      // regras de montagem: nunca passa do espaço, nunca duas da mesma família
+      const cheia = t({ temData: true, parcelas: parcelas(6, 1, 2), pago: 100, vencido: { valor: 50, desde: '2026-10-01' }, jurosContrato: 12,
+        jurosAtraso: { total: 5, porDia: 0.2 }, emprestimo: { recebido: 800, total: 1000 }, partes: [{ nome: 'a', valor: 1 }, { nome: 'b', valor: 2 }] })
+      const ALTURA: Record<string, number> = { crescendo: 2, jurosContrato: 2, emprestimo: 2, partes: 2 }
+      certo('cabe no espaço', cheia.pecas.reduce((a, p) => a + (ALTURA[p] ?? 1), 0) <= ORCAMENTO)
+      certo('uma de custo só', cheia.pecas.filter((p) => ['crescendo', 'jurosContrato', 'emprestimo'].includes(p)).length <= 1)
+      igual('mesmos traços, mesmo cartão', JSON.stringify(cheia), JSON.stringify(t({ temData: true, parcelas: parcelas(6, 1, 2), pago: 100, vencido: { valor: 50, desde: '2026-10-01' }, jurosContrato: 12,
+        jurosAtraso: { total: 5, porDia: 0.2 }, emprestimo: { recebido: 800, total: 1000 }, partes: [{ nome: 'a', valor: 1 }, { nome: 'b', valor: 2 }] })))
     },
   },
 ]

@@ -835,6 +835,19 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
 
 ### 4.13 Dívidas: "Eu devo" e "Me devem"
 
+- **O cartão de cada dívida é montado para ela** (desde 19/11/2026, computador, jeitos equilibrado e detalhado). O topo
+  (quem, nome, estado) e o botão de pagar não mudam; o miolo sai do compositor `lib/cartaoDaDivida.ts`, na ideia do
+  compositor do Consultor (`lib/composicao.ts`): `tracosDe` lê a dívida (parcelas, data, atraso, juros do contrato, juros de
+  atraso, partes, empréstimo com valor recebido, quitação) e `montarCartao` escolhe, por nota de aptidão, **um destaque**
+  ao lado do valor — `dias` de atraso (vencida sem nada pago: um anel em 0% não diz nada), `fatias` (anel com uma fatia por
+  parcela, até 24), `folhinha` (valor único com data, no prazo), `taxa` (juros do contrato de 8% ao mês ou mais), `anel` (%
+  pago) ou `festa` (quitada) — e **as peças** do miolo, das mais aptas para as menos, até 4 unidades de espaço, sem duas da
+  mesma família e sem repetir o destaque: `atraso`, `proxima`, `livre` (sem data), `parcelas` (tracinhos com legenda),
+  `barra`, `chegada` (termina em…), `crescendo` (juros do atraso, barrinhas subindo), `jurosContrato` (hoje × em 1 mês),
+  `emprestimo` (recebeu × devolve) e `partes`. O "Conferi com o banco" aparece quando há juros de atraso estimados. Desenho
+  das peças: `components/CartaoDaDivida.tsx` + `cartao-divida.css`. Testes: `scripts/painel/casos.ts` ("dívida: cada tipo
+  ganha o destaque…"). O celular continua com o cartão dele (`src/movel/telas/DividasMovel.tsx`).
+
 - **Dois lados, um jeito só.** A página tem a chave **Eu devo | Me devem**. "Me devem" é o mesmo modelo de dívida com
   `sentido = 'me_devem'` (venda parcelada, empréstimo que você fez). Pagar o que você deve é uma **saída** ligada pelo
   `divida_id`; receber de quem te deve é uma **entrada** ligada do mesmo jeito: os dois abatem do que falta.
