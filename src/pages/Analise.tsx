@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { compararRetratos, retratoDe, type Analise as DadosAnalise, type Mudanca, type Retrato } from '../lib/analise'
+import { compararRetratos, retratoDe, type Acao, type Analise as DadosAnalise, type EtapaDoPlano, type Mudanca, type Retrato } from '../lib/analise'
 import { fmtDataCurta } from '../lib/format'
 import { useMovimento } from '../lib/tema'
 import { Icone } from '../components/Icone'
@@ -78,9 +78,14 @@ export function Analise(c: Ctx) {
   )
 }
 
-/** No detalhado: o plano de ação inteiro, em ordem, com o ganho de cada passo e o atalho. */
+/**
+ * No detalhado: o plano de ação inteiro, em etapas (lib/analise.ts decide a etapa de cada passo): o que não espera, o que
+ * vem em seguida e o que fica para quando der, cada uma numa coluna no computador. O que só pede para a pessoa informar
+ * algo vai num rodapé, sem número. O "porquê" de cada passo abre ao tocar.
+ */
 export function PlanoDeAcao({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] }) {
   const [aberto, setAberto] = useState<string | null>(null)
+  const [tudo, setTudo] = useState(false)
   const [ref, vivo] = useEmVista<HTMLElement>()
   if (!a.acoes.length) {
     return (
@@ -90,29 +95,80 @@ export function PlanoDeAcao({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] 
       </section>
     )
   }
+  const etapaDe = (x: Acao): EtapaDoPlano => x.etapa ?? (x.urgencia === 'urgente' ? 'agora' : x.urgencia === 'importante' ? 'seguida' : 'depois')
+  const dados = a.acoes.filter((x) => etapaDe(x) === 'dados')
+  const etapas = ETAPAS.map((e) => ({ ...e, passos: a.acoes.filter((x) => etapaDe(x) === e.id) })).filter((e) => e.passos.length)
+  const passos = a.acoes.length - dados.length
+  let n = 0
   return (
     <section ref={ref} className={`cartao an-plano ${vivo ? 'vivo' : ''}`}>
       <header className="vis-cab">
         <h3><Icone nome="ideia" tamanho={17} /> {tx('Seu plano de ação')}</h3>
-        <span className="an-plano-conta">{a.acoes.length === 1 ? tx('1 passo') : tx('{0} passos', a.acoes.length)}</span>
+        <span className="an-plano-conta">{passos === 1 ? tx('1 passo') : tx('{0} passos', passos)}</span>
       </header>
-      <ol>
-        {a.acoes.map((x, i) => (
-          <li key={x.id} className={`nivel-${x.urgencia} ${aberto === x.id ? 'aberto' : ''}`} style={{ '--i': i } as CSSProperties}>
-            <span className="an-plano-n">{i + 1}</span>
-            <span className="an-plano-ic"><Icone nome={x.icone} tamanho={18} /></span>
-            <button className="an-plano-texto" onClick={() => setAberto(aberto === x.id ? null : x.id)} aria-expanded={aberto === x.id}>
-              <strong>{x.titulo}</strong>
-              {x.impacto && <small className="an-plano-ganho"><Icone nome="sobe" tamanho={12} /> {x.impacto}</small>}
-              {aberto === x.id && <span className="an-plano-porque">{x.porque}</span>}
-            </button>
-            <button className="btn" onClick={() => aoIr(x.destino)}>{x.botao} <Icone nome="seta" tamanho={14} /></button>
-          </li>
-        ))}
-      </ol>
+      {passos > 0 && (
+        <div className="an-plano-etapas" style={{ '--colunas': etapas.length } as CSSProperties}>
+          {etapas.map((e) => {
+            // Muitos passos cansam: o "quando der" mostra 3 e esconde o resto atrás de um botão.
+            const visiveis = e.id === 'depois' && !tudo ? e.passos.slice(0, MAX_QUANDO_DER) : e.passos
+            const escondidos = e.passos.length - visiveis.length
+            return (
+              <div key={e.id} className={`an-plano-etapa etapa-${e.id}`}>
+                <div className="an-plano-etapa-cab">
+                  <Icone nome={e.icone} tamanho={15} />
+                  <strong>{e.nome()}</strong>
+                  <span>{e.dica()}</span>
+                </div>
+                <ol>
+                  {visiveis.map((x) => {
+                    const i = n++
+                    return (
+                      <li key={x.id} className={aberto === x.id ? 'aberto' : ''} style={{ '--i': i } as CSSProperties}>
+                        <span className="an-plano-n">{i + 1}</span>
+                        <button className="an-plano-texto" onClick={() => setAberto(aberto === x.id ? null : x.id)} aria-expanded={aberto === x.id}>
+                          <strong>{x.titulo}</strong>
+                          {x.impacto && <small className="an-plano-ganho">{x.impacto}</small>}
+                          {aberto === x.id && <span className="an-plano-porque">{x.porque}</span>}
+                        </button>
+                        <button className="an-plano-ir" onClick={() => aoIr(x.destino)}>
+                          <span>{x.botao}</span> <Icone nome="seta" tamanho={14} />
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ol>
+                {escondidos > 0 && (
+                  <button className="link an-plano-mais" onClick={() => setTudo(true)}>
+                    {escondidos === 1 ? tx('Ver mais 1 passo') : tx('Ver mais {0} passos', escondidos)}
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+      {dados.length > 0 && (
+        <div className="an-plano-dados">
+          <span><Icone nome="lista" tamanho={14} /> {tx('Para o plano ficar mais certo')}</span>
+          <ul>
+            {dados.map((x) => (
+              <li key={x.id}>
+                <button onClick={() => aoIr(x.destino)} title={x.porque}>{x.titulo} <Icone nome="seta" tamanho={13} /></button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
   )
 }
+
+const MAX_QUANDO_DER = 3
+const ETAPAS: { id: Exclude<EtapaDoPlano, 'dados'>; nome: () => string; dica: () => string; icone: string }[] = [
+  { id: 'agora', nome: () => tx('Agora'), dica: () => tx('Não dá para esperar'), icone: 'relogio' },
+  { id: 'seguida', nome: () => tx('Em seguida'), dica: () => tx('Muda o seu mês'), icone: 'seta' },
+  { id: 'depois', nome: () => tx('Quando der'), dica: () => tx('Melhora com o tempo'), icone: 'estrela' },
+]
 
 
 /**
