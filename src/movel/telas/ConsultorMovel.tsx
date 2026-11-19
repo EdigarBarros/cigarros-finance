@@ -9,7 +9,7 @@ import { Icone } from '../../components/Icone'
 import { Interruptor } from '../../components/ui'
 import { semMovimento, useMovimento } from '../../lib/tema'
 import { tx } from '../../lib/textos'
-import { OQueMudou, PlanoDeAcao, useDesdeAUltimaVisita } from '../../pages/Analise'
+import { OQueMudou, PlanoDeAcao, useDesdeAUltimaVisita, useMontagem } from '../../pages/Analise'
 import { Agora, Objetivo, ProximoPasso, SeuPerfil } from '../../pages/AnaliseTopo'
 import { Faixas, Manchete, useTelaViva } from '../../pages/AnaliseTela'
 import type { Ctx } from '../../pages/contexto'
@@ -27,6 +27,8 @@ export function ConsultorMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom,
   const desdeAVisita = useDesdeAUltimaVisita(c.idUsuario, a)
   // a tela que o Consultor monta (a mesma da aba do computador): o gosto é lido na abertura e gravado ao sair
   const tela = useTelaViva(c, a)
+  // depois de uma mudança, a tela se monta ao vivo (pages/Analise.tsx, useMontagem)
+  const montando = useMontagem(c.reanalise, desdeAVisita) && !c.contaNova
   const ir = (x: { destino?: Parameters<Ctx['irPara']>[0] }) => x.destino && c.irPara(x.destino)
 
   // ---------- topo: o veredito do próprio Consultor ----------
@@ -61,11 +63,13 @@ export function ConsultorMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom,
           <p>{tx('Lance o que entra e o que sai. A cada lançamento, os gráficos se refazem sozinhos.')}</p>
         </section>
       ) : (
-        <div className="consultor-movel-tela">
+        <div className={`consultor-movel-tela ${montando ? 'montando' : ''}`}>
+          {montando && <span className="an-varredura" aria-hidden="true" />}
           {/* daqui para baixo, a tela que o Consultor montou: mesmas peças e mesma ordem do computador */}
+          {montando && <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 3} aoVivo />}
           <Manchete t={tela} aoIr={ir} />
           <SeuPerfil a={a} nivel={nivel} />
-          <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 2} />
+          {!montando && <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 2} />}
           <Agora a={a} nivel={nivel} />
           {nivel === 'detalhado' ? <PlanoDeAcao a={a} aoIr={c.irPara} /> : <ProximoPasso a={a} aoIr={c.irPara} />}
           <Objetivo a={a} memoria={c.memoria} nivel={nivel} aoEscolher={c.escolherObjetivo} />

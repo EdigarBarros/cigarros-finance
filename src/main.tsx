@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'
+import { Abertura } from './components/Abertura'
 import { LimiteDeErro } from './components/LimiteDeErro'
 import { noAppNativo } from './lib/appAndroid'
 import { iniciarAtualizacao } from './lib/atualizacao'
@@ -24,6 +25,7 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <LimiteDeErro>
       <App />
+      <Abertura />
     </LimiteDeErro>
   </StrictMode>,
 )
