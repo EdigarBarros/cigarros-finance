@@ -469,7 +469,8 @@ function Ficha({ d, partes, escolhida, arrastando, aoDescer, aoTocar }: {
   const parcial = d.valor !== null && ja > 0
   const quando = d.tipo === 'meta' || d.tipo === 'guardar' ? tx('guardar o que sobrar')
     : d.tipo === 'divida' ? tx('adiantar a dívida')
-      : d.atrasada ? tx('venceu {0}', fmtDataCurta(d.vence)) : tx('vence {0}', fmtDataCurta(d.vence))
+      : d.juntas ? tx('{0} parcelas atrasadas, desde {1}', d.juntas.parcelas, fmtDataCurta(d.vence))
+        : d.atrasada ? tx('venceu {0}', fmtDataCurta(d.vence)) : tx('vence {0}', fmtDataCurta(d.vence))
   const caro = d.tipo === 'divida' || (!d.estimada && (d.juros ?? 0) >= 5)
   return (
     <button className={`pj-ficha ${escolhida ? 'escolhida' : ''} ${arrastando ? 'saiu' : ''} ${d.tipo}`} data-conta={d.id}
