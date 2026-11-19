@@ -492,6 +492,9 @@ e `pages/AnaliseTela.tsx` só mostra e anota:
     (3+3), largo com compacto (4+2 ou 2+4) ou um sozinho (6; se for compacto, deita: texto de um lado, desenho do outro).
     Largos: calendário, fluxo, tabela, linha do tempo, antes × agora, curva, radar, colunas com mais de 6 e barras com mais
     de 4. Os cartões da mesma faixa ficam da mesma altura. Abaixo de 1100 px, uma coluna só, na mesma ordem.
+    Favoritos ganham tamanho: o primeiro é a manchete; dos outros, com número ímpar o primeiro abre a área sozinho (largo
+    com 6; compacto com 4, puxando para o lado o primeiro compacto comum, com 2) e o resto vai em pares de meia tela (3+3),
+    com borda e selo "Favorito". Os cartões comuns se arrumam depois, pelas regras acima.
 - **Gosto** (`lib/gosto.ts`): o que a tela aprende. Por desenho e por assunto, um placar [viu, interessou, rejeitou]. Sinais:
   viu (o desenho ficou 1,2 s na tela), tocou (+0,5), abriu a tela de destino (+1 no desenho, +1,5 no assunto), favoritou
   (+1,5 e +2), escondeu (rejeita 1,5 no assunto e 0,5 no desenho) e trocou o desenho (rejeita o que saiu, +1 no escolhido).
