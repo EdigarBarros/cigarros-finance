@@ -28,6 +28,24 @@ const ORBITA: { p: NomeDaPeca; dy: number }[] = [
 
 type Fase = 'fora' | 'dentro' | 'saindo'
 
+/** Espera as fontes do nome e das peças (no máximo `limite` ms): trocar de fonte no meio da animação dá um pulinho. */
+function fontesProntas(limite: number): Promise<void> {
+  const prontas = new Promise<void>((pronto) => {
+    try {
+      const link = document.getElementById('fontes') as HTMLLinkElement | null
+      const carregar = () => Promise.all(['700 26px Montserrat', '400 12px Inter', '600 12px Inter', '700 12px Inter']
+        .map((f) => document.fonts.load(f))).then(() => pronto(), () => pronto())
+      // o link das fontes nasce com media="print" e vira "all" quando chega (public/tema-inicial.js)
+      if (!link || link.media === 'all') carregar()
+      else {
+        link.addEventListener('load', () => queueMicrotask(carregar), { once: true })
+        link.addEventListener('error', () => pronto(), { once: true })
+      }
+    } catch { pronto() }
+  })
+  return Promise.race([prontas, new Promise<void>((r) => window.setTimeout(r, limite))])
+}
+
 /**
  * A abertura do OpusCash, em 3D: o símbolo do infinito (com espessura) chega girando e fica balançando; dele saem as peças
  * do app (as mesmas que flutuam na página inicial) e entram em órbita em volta, passando por trás e pela frente dele.
@@ -44,16 +62,28 @@ export function Abertura() {
   const [fase, setFase] = useState<Fase>(() => (temSessaoSalva() ? 'dentro' : 'fora'))
   const desde = useRef(0)
   const [vez, setVez] = useState(0)
-  useEffect(() => { desde.current = performance.now() }, [])
+  const [rodando, setRodando] = useState(false)
+
+  // a cena começa quando as fontes chegam; o tempo mínimo conta daí
+  useEffect(() => {
+    let vivo = true
+    void fontesProntas(500).then(() => {
+      if (!vivo) return
+      desde.current = performance.now()
+      setRodando(true)
+    })
+    return () => { vivo = false; setRodando(false) }
+  }, [vez])
 
   useEffect(() => {
     if (segura) {
-      if (fase === 'fora') { desde.current = performance.now(); setVez((v) => v + 1); setFase('dentro') }
+      if (fase === 'fora') { setVez((v) => v + 1); setFase('dentro') }
       else if (fase === 'saindo') setFase('dentro')
       return
     }
     if (fase === 'dentro') {
       const parado = semMovimento()
+      if (!rodando && !parado) return
       const falta = parado ? 0 : Math.max(0, MINIMO - (performance.now() - desde.current))
       const t = window.setTimeout(() => setFase('saindo'), falta + FOLGA)
       return () => window.clearTimeout(t)
@@ -62,11 +92,11 @@ export function Abertura() {
       const t = window.setTimeout(() => setFase('fora'), semMovimento() ? 200 : SAIDA)
       return () => window.clearTimeout(t)
     }
-  }, [segura, fase])
+  }, [segura, fase, rodando])
 
   if (fase === 'fora') return null
   return (
-    <div key={vez} className={`abertura ${fase === 'saindo' ? 'saindo' : ''}`} role="status" aria-label={tx('Carregando')} translate="no">
+    <div key={vez} className={`abertura ${rodando ? 'rodando' : ''} ${fase === 'saindo' ? 'saindo' : ''}`} role="status" aria-label={tx('Carregando')} translate="no">
       <div className="ab-fundo" aria-hidden="true" />
       <div className="ab-luz" aria-hidden="true" />
       <div className="ab-cena" aria-hidden="true">
