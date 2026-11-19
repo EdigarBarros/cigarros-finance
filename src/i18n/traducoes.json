@@ -16862,5 +16862,53 @@
   "{0} parcelas atrasadas, desde {1}": {
     "en": "{0} overdue installments, since {1}",
     "es": "{0} cuotas atrasadas, desde el {1}"
+  },
+  "Guardado: {0}": {
+    "en": "Saved: {0}",
+    "es": "Ahorrado: {0}"
+  },
+  "O dinheiro do mês acabou e faltam {0}. Você tem {1} guardado: dá para tirar de lá o que falta.": {
+    "en": "This month's money ran out and {0} is still missing. You have {1} saved: you can take what's missing from there.",
+    "es": "El dinero del mes se acabó y faltan {0}. Tienes {1} ahorrado: puedes sacar de ahí lo que falta."
+  },
+  "O dinheiro guardado entrou no plano. Use só o que precisar: o resto continua guardado.": {
+    "en": "Your savings are now in the plan. Use only what you need: the rest stays saved.",
+    "es": "El dinero ahorrado entró en el plan. Usa solo lo que necesites: el resto sigue ahorrado."
+  },
+  "O dinheiro guardado saiu do plano. O que ele pagava voltou para a bandeja.": {
+    "en": "Your savings left the plan. What they were paying went back to the tray.",
+    "es": "El dinero ahorrado salió del plan. Lo que pagaba volvió a la bandeja."
+  },
+  "O plano tira {0} do dinheiro guardado. Quando der, devolva para não ficar sem reserva para imprevistos.": {
+    "en": "The plan takes {0} from your savings. When you can, put it back so you still have a cushion for emergencies.",
+    "es": "El plan saca {0} del dinero ahorrado. Cuando puedas, devuélvelo para no quedarte sin reserva para imprevistos."
+  },
+  "O plano tira {0} dos {1} guardados.": {
+    "en": "The plan takes {0} of the {1} saved.",
+    "es": "El plan saca {0} de los {1} ahorrados."
+  },
+  "Usar o dinheiro guardado": {
+    "en": "Use my savings",
+    "es": "Usar el dinero ahorrado"
+  },
+  "Use só se precisar": {
+    "en": "Use only if needed",
+    "es": "Úsalo solo si lo necesitas"
+  },
+  "banco": {
+    "en": "bank",
+    "es": "banco"
+  },
+  "continuam guardados {0}": {
+    "en": "{0} stays saved",
+    "es": "siguen ahorrados {0}"
+  },
+  "dinheiro guardado: só para contas e dívidas": {
+    "en": "savings: only for bills and debts",
+    "es": "dinero ahorrado: solo para cuentas y deudas"
+  },
+  "{0} em caixinhas, reservas e investimentos, para pagar contas e adiantar dívidas.": {
+    "en": "{0} in savings boxes, reserves and investments, to pay bills and pay debts ahead.",
+    "es": "{0} en cajitas, reservas e inversiones, para pagar cuentas y adelantar deudas."
   }
 }

@@ -94,6 +94,34 @@
   animation: pj-sobe .5s var(--deslize) both; animation-delay: calc(var(--i) * 70ms);
 }
 @keyframes pj-sobe { from { opacity: 0; transform: translateY(14px); } }
+/* o dinheiro guardado: barra em âmbar, para não se confundir com o dinheiro do mês */
+.pj-entrada.guardado { --c: var(--caixa, #f5b544); border-style: dashed; }
+
+/* o interruptor "Usar o dinheiro guardado", embaixo das entradas */
+.pj-guardado {
+  --c: var(--caixa, #f5b544);
+  position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px;
+  padding: 14px 18px; border-radius: 18px; border: 1px dashed var(--borda); background: color-mix(in srgb, var(--c) 5%, transparent);
+  cursor: pointer; transition: background .25s, border-color .25s;
+}
+.pj-guardado.ligado { border-style: solid; border-color: color-mix(in srgb, var(--c) 40%, transparent); background: color-mix(in srgb, var(--c) 10%, transparent); }
+.pj-guardado-ic { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
+.pj-guardado-texto { display: grid; gap: 2px; min-width: 0; }
+.pj-guardado-texto b { font-size: 15px; font-weight: 650; }
+.pj-guardado-texto small { font-size: 12.5px; color: var(--texto-2); }
+.pj-guardado input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.pj-guardado-chave {
+  position: relative; width: 46px; height: 28px; border-radius: 99px; background: var(--preench-3, color-mix(in srgb, var(--texto) 18%, transparent));
+  transition: background .25s;
+}
+.pj-guardado-chave::after {
+  content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .3); transition: transform .3s var(--mola, ease);
+}
+.pj-guardado.ligado .pj-guardado-chave { background: var(--c); }
+.pj-guardado.ligado .pj-guardado-chave::after { transform: translateX(18px); }
+.pj-guardado:has(input:focus-visible) { outline: 2px solid var(--c); outline-offset: 2px; }
+.pj.parado .pj-guardado, .pj.parado .pj-guardado-chave, .pj.parado .pj-guardado-chave::after { transition: none; }
 .pj-entrada-topo { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
 .pj-entrada-ic { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
 .pj-entrada-nome { display: grid; min-width: 0; }

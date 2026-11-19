@@ -35,7 +35,7 @@ import { planejar, type Plano } from './planejador'
 import { conselhosDoPlanejamento, quadroDoMes, type Planejamentos, type Quadro } from './planejamento'
 import { tx } from './textos'
 import type {
-  CartaoCredito, Categoria, ContaFixa, Divida, FaturaPaga, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida,
+  Banco, CartaoCredito, Categoria, ContaFixa, Divida, FaturaPaga, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida,
 } from './types'
 import { TIPOS_CAIXA } from './types'
 
@@ -547,6 +547,8 @@ export interface EntradaAnalise {
   memoria?: MemoriaConsultor
   /** O plano do mês que a pessoa montou: com qual dinheiro sai cada conta (lib/planejamento.ts). */
   planejamento?: Planejamentos
+  /** Os bancos (para dar nome ao dinheiro guardado em cada um, no Planejamento). */
+  bancos?: Banco[]
 }
 
 // ---------- apoio ----------
@@ -1627,6 +1629,14 @@ export function analisar(e: EntradaAnalise): Analise {
       abertas: abertas.filter(semParcelaFixa)
         .map((sd) => ({ nome: sd.divida.descricao, saldo: sd.restanteHoje, juros: sd.divida.juros_mes! })),
       metas: [...e.metas].sort((a, b) => a.ordem - b.ordem).map((m) => ({ id: m.id, nome: m.nome })),
+      // o dinheiro guardado (caixinha e reserva de cada banco, e os investimentos), que a pessoa pode escolher usar no
+      // plano: a conta corrente já entra como "O que está na conta"
+      guardados: [
+        ...(v.bancos ? Object.entries(ef.caixa).map(([id, b]) => ({
+          id, nome: tx('Guardado: {0}', e.bancos?.find((x) => x.id === id)?.nome ?? tx('banco')), valor: (b?.caixinha ?? 0) + (b?.reserva ?? 0),
+        })) : []),
+        ...(investido > 0 ? [{ id: 'investimentos', nome: tx('Investimentos'), valor: investido }] : []),
+      ],
     }
     quadros = { este: quadroDoMes(plano, hojeIso, 'este', extras), proximo: quadroDoMes(plano, hojeIso, 'proximo', extras) }
     if (unicos.length || saldoInicial !== null || calendario.dias.some((c) => c.entra || c.sai)) {

@@ -12,7 +12,8 @@ import { createPortal } from 'react-dom'
 import type { Analise } from '../lib/analise'
 import { fmtDataCurta, fmtValor } from '../lib/format'
 import {
-  atrasoDa, custoDa, destinoDe, dicasDe, falta, fonteDe, maximoDa, montarPraMim, mudarParte, pago, placarDe, por, sobra, valerPartes,
+  atrasoDa, comGuardado, custoDa, destinoDe, dicasDe, falta, fonteDe, maximoDa, montarPraMim, mudarParte, pago, placarDe, por, quadroDoPlano,
+  sobra, valerPartes,
   type Destino, type Fonte, type Parte, type Planejamentos, type QualMes, type Quadro,
 } from '../lib/planejamento'
 import { semMovimento } from '../lib/tema'
@@ -95,8 +96,12 @@ export function Planejamento(props: Props) {
   return createPortal(<Mesa key={q.mes} {...props} q={q} qual={qual} setQual={setQual} />, document.body)
 }
 
-function Mesa({ q, qual, setQual, planejamento, salvar, aoFechar, aoLancarEntrada }: Props & { q: Quadro; qual: QualMes; setQual: (q: QualMes) => void }) {
-  const [partes, setPartes] = useState<Parte[]>(() => (planejamento[q.mes] ? valerPartes(q, planejamento[q.mes].partes) : []))
+function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancarEntrada }: Props & { q: Quadro; qual: QualMes; setQual: (q: QualMes) => void }) {
+  // usar o dinheiro guardado é escolha da pessoa, guardada com o plano do mês: ligado, cada lugar com dinheiro guardado
+  // vira mais uma barra (só para pagar contas e dívidas)
+  const [usarGuardado, setUsarGuardado] = useState(() => planejamento[base.mes]?.comGuardado === true)
+  const q = useMemo(() => comGuardado(base, usarGuardado), [base, usarGuardado])
+  const [partes, setPartes] = useState<Parte[]>(() => (planejamento[base.mes] ? valerPartes(quadroDoPlano(base, planejamento[base.mes]), planejamento[base.mes].partes) : []))
 
   const [escolhida, setEscolhida] = useState<string | null>(null)
   const [mira, setMira] = useState<string | null>(null)
@@ -124,9 +129,23 @@ function Mesa({ q, qual, setQual, planejamento, salvar, aoFechar, aoLancarEntrad
   useEffect(() => {
     if (primeira.current) { primeira.current = false; return }
     if (puxando) return
-    const t = window.setTimeout(() => salvarRef.current({ ...planRef.current, [q.mes]: { partes, em: new Date().toISOString() } }), 250)
+    const t = window.setTimeout(() => salvarRef.current({
+      ...planRef.current, [q.mes]: { partes, em: new Date().toISOString(), ...(usarGuardado ? { comGuardado: true } : {}) },
+    }), 250)
     return () => window.clearTimeout(t)
-  }, [partes, puxando]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [partes, puxando, usarGuardado]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Liga ou desliga o dinheiro guardado. Desligar tira do plano o que saía dele (essas contas voltam para a bandeja). */
+  const trocarGuardado = (usar: boolean) => {
+    setUsarGuardado(usar)
+    if (usar) {
+      avisar(tx('O dinheiro guardado entrou no plano. Use só o que precisar: o resto continua guardado.'))
+    } else {
+      const sem = partes.filter((p) => !q.guardados.some((g) => g.id === p.entrada))
+      if (sem.length !== partes.length) avisar(tx('O dinheiro guardado saiu do plano. O que ele pagava voltou para a bandeja.'))
+      setPartes(sem)
+    }
+  }
 
   const placar = useMemo(() => placarDe(q, partes), [q, partes])
   const dicas = useMemo(() => dicasDe(q, partes, fmtValor, fmtDataCurta), [q, partes])
@@ -311,7 +330,7 @@ function Mesa({ q, qual, setQual, planejamento, salvar, aoFechar, aoLancarEntrad
             </div>
           )} />
 
-        {!q.fontes.length ? (
+        {!q.fontes.length && !q.guardados.length ? (
           <section className="pj-vazio">
             <span className="pj-vazio-ic"><Icone nome="receber" tamanho={28} /></span>
             <h3>{tx('Nenhum dinheiro previsto para {0}', nomeDoMes)}</h3>
@@ -326,10 +345,13 @@ function Mesa({ q, qual, setQual, planejamento, salvar, aoFechar, aoLancarEntrad
                   : toque ? tx('Toque numa conta lá embaixo e depois no dinheiro que vai pagá-la. Toque numa fatia para pagar só uma parte.')
                     : tx('Arraste uma conta para dentro de um dinheiro (ou toque na conta e depois nele). Puxe a borda de uma fatia para pagar só uma parte.')}
               </p>
-              {q.fontes.map((f, i) => (
+              {/* o dinheiro do mês, depois o interruptor do guardado e, ligado, as barras dele */}
+              {[...q.fontes.filter((f) => !f.guardado), null, ...q.fontes.filter((f) => f.guardado)].map((f, i) => (f ? (
                 <BarraDaEntrada key={f.id} q={q} f={f} i={i} partes={partes} emJogo={dEmJogo} mira={mira === f.id} recem={recem}
                   aoTocar={tocarEntrada} aoAjustar={(p) => setAjuste({ entrada: p.entrada, conta: p.conta })} aoPuxar={puxar} />
-              ))}
+              ) : q.guardados.length > 0 && (
+                <UsarGuardado key="guardado" ligado={usarGuardado} total={q.guardados.reduce((s, x) => s + x.valor, 0)} doGuardado={placar.doGuardado} aoTrocar={trocarGuardado} />
+              )))}
             </section>
 
             <aside className="pj-lado">
@@ -348,7 +370,8 @@ function Mesa({ q, qual, setQual, planejamento, salvar, aoFechar, aoLancarEntrad
                   ))}
                 </div>
               </section>
-              <Dicas dicas={dicas} aoFazer={(conta, entrada) => colocar(conta, entrada, document.querySelector(`[data-conta="${CSS.escape(conta)}"]`)?.getBoundingClientRect())} />
+              <Dicas dicas={dicas} aoUsarGuardado={() => trocarGuardado(true)}
+                aoFazer={(conta, entrada) => colocar(conta, entrada, document.querySelector(`[data-conta="${CSS.escape(conta)}"]`)?.getBoundingClientRect())} />
             </aside>
           </div>
         )}
@@ -407,21 +430,21 @@ function BarraDaEntrada({ q, f, i, partes, emJogo, mira, recem, aoTocar, aoAjust
 }) {
   const minhas = partes.filter((p) => p.entrada === f.id)
   const livre = sobra(partes, f)
-  const cabe = emJogo ? Math.min(livre, falta(partes, emJogo)) : 0
+  const cabe = emJogo && !(f.guardado && (emJogo.tipo === 'meta' || emJogo.tipo === 'guardar')) ? Math.min(livre, falta(partes, emJogo)) : 0
   const cheia = livre <= 0.009
   const atrasaria = emJogo && emJogo.vence && !emJogo.atrasada && f.data > emJogo.vence
   return (
-    <article className={`pj-entrada ${cheia ? 'cheia' : ''} ${emJogo ? (cabe > 0 ? 'alvo' : 'sem-espaco') : ''} ${mira ? 'mira' : ''}`}
+    <article className={`pj-entrada ${f.guardado ? 'guardado' : ''} ${cheia ? 'cheia' : ''} ${emJogo ? (cabe > 0 ? 'alvo' : 'sem-espaco') : ''} ${mira ? 'mira' : ''}`}
       data-entrada={f.id} style={{ '--i': i } as CSSProperties}
       onClick={(e) => emJogo && aoTocar(f, e.currentTarget)}
       onKeyDown={(e) => { if (emJogo && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); aoTocar(f, e.currentTarget) } }}
       tabIndex={emJogo ? 0 : undefined} role={emJogo ? 'button' : undefined}
       aria-label={emJogo ? tx('Pagar {0} com {1}', emJogo.nome, f.nome) : undefined}>
       <div className="pj-entrada-topo">
-        <span className="pj-entrada-ic"><Icone nome={f.saldo ? 'banco' : 'receber'} tamanho={17} /></span>
+        <span className="pj-entrada-ic"><Icone nome={f.guardado ? 'cofre' : f.saldo ? 'banco' : 'receber'} tamanho={17} /></span>
         <span className="pj-entrada-nome">
           <b>{f.nome}</b>
-          <small>{f.saldo ? tx('já está disponível') : tx('cai {0}', fmtDataCurta(f.data))}</small>
+          <small>{f.guardado ? tx('dinheiro guardado: só para contas e dívidas') : f.saldo ? tx('já está disponível') : tx('cai {0}', fmtDataCurta(f.data))}</small>
         </span>
         <span className="pj-entrada-valor">
           {cheia && <span className="pj-cheia"><Icone nome="check" tamanho={14} /> {tx('tudo com destino')}</span>}
@@ -451,7 +474,7 @@ function BarraDaEntrada({ q, f, i, partes, emJogo, mira, recem, aoTocar, aoAjust
         <span className="pj-sobra">
           {emJogo && cabe > 0
             ? <span className={`pj-cabe ${atrasaria ? 'atrasa' : ''}`}>{atrasaria ? <Icone nome="relogio" tamanho={13} /> : <Icone nome="mais" tamanho={13} />} {tx('cabem {0}', fmtValor(cabe))}</span>
-            : <span>{minhas.length ? tx('sobram {0}', fmtValor(livre)) : tx('Coloque uma conta aqui')}</span>}
+            : <span>{f.guardado ? (minhas.length ? tx('continuam guardados {0}', fmtValor(livre)) : tx('Use só se precisar')) : minhas.length ? tx('sobram {0}', fmtValor(livre)) : tx('Coloque uma conta aqui')}</span>}
         </span>
       </div>
     </article>
@@ -495,7 +518,26 @@ function Ficha({ d, partes, escolhida, arrastando, aoDescer, aoTocar }: {
 
 // ---------- o Consultor comentando ----------
 
-function Dicas({ dicas, aoFazer }: { dicas: ReturnType<typeof dicasDe>; aoFazer: (conta: string, entrada: string) => void }) {
+/** O interruptor do dinheiro guardado, embaixo das entradas. */
+function UsarGuardado({ ligado, total, doGuardado, aoTrocar }: { ligado: boolean; total: number; doGuardado: number; aoTrocar: (usar: boolean) => void }) {
+  return (
+    <label className={`pj-guardado ${ligado ? 'ligado' : ''}`}>
+      <span className="pj-guardado-ic"><Icone nome="cofre" tamanho={18} /></span>
+      <span className="pj-guardado-texto">
+        <b>{tx('Usar o dinheiro guardado')}</b>
+        <small>
+          {ligado && doGuardado > 0.009
+            ? tx('O plano tira {0} dos {1} guardados.', fmtValor(doGuardado), fmtValor(total))
+            : tx('{0} em caixinhas, reservas e investimentos, para pagar contas e adiantar dívidas.', fmtValor(total))}
+        </small>
+      </span>
+      <input type="checkbox" role="switch" checked={ligado} onChange={(e) => aoTrocar(e.target.checked)} />
+      <i className="pj-guardado-chave" aria-hidden="true" />
+    </label>
+  )
+}
+
+function Dicas({ dicas, aoFazer, aoUsarGuardado }: { dicas: ReturnType<typeof dicasDe>; aoFazer: (conta: string, entrada: string) => void; aoUsarGuardado: () => void }) {
   if (!dicas.length) return null
   return (
     <section className="pj-dicas" aria-live="polite">
@@ -506,7 +548,11 @@ function Dicas({ dicas, aoFazer }: { dicas: ReturnType<typeof dicasDe>; aoFazer:
             <span className="pj-dica-ic"><Icone nome={d.icone} tamanho={15} /></span>
             <span className="pj-dica-texto">
               {d.texto}
-              {d.acao && <button className="pj-dica-acao" onClick={() => aoFazer(d.acao!.conta, d.acao!.entrada)}>{d.acao.rotulo} <Icone nome="seta" tamanho={13} /></button>}
+              {d.acao && (
+                <button className="pj-dica-acao" onClick={() => { const a = d.acao!; if ('usarGuardado' in a) aoUsarGuardado(); else aoFazer(a.conta, a.entrada) }}>
+                  {d.acao.rotulo} <Icone nome="seta" tamanho={13} />
+                </button>
+              )}
             </span>
           </li>
         ))}
@@ -585,7 +631,8 @@ function Ajuste({ q, partes, entrada, conta, aoMudar, aoFechar }: {
 // ---------- o cartão no Consultor que abre o jogo ----------
 
 export function CartaoDoPlanejamento({ a, planejamento, aoAbrir }: { a: Analise; planejamento: Planejamentos; aoAbrir: () => void }) {
-  const q = a.quadros?.este
+  const bruto = a.quadros?.este
+  const q = useMemo(() => (bruto ? quadroDoPlano(bruto, planejamento[bruto.mes]) : null), [bruto, planejamento])
   const partes = useMemo(() => (q && planejamento[q.mes] ? valerPartes(q, planejamento[q.mes].partes) : []), [q, planejamento])
   if (!q || (!q.fontes.length && !q.destinos.some((d) => d.tipo === 'conta'))) return null
   const pl = placarDe(q, partes)
