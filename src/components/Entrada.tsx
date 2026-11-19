@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ENDERECO_DO_SITE } from '../lib/appAndroid'
 import { supabase } from '../lib/supabase'
+import { pararDeAdicionar } from '../lib/contas'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
 import { tx } from '../lib/textos'
@@ -19,7 +20,13 @@ type Aviso = { texto: string; ok?: boolean } | null
  * cobre a tela levando a logo junto, o formulário troca por baixo e a cortina sobe de volta inclinada para o outro lado.
  * Cada pessoa tem seus próprios dados (protegidos no banco por RLS).
  */
-export function Login({ inicial = 'entrar', aoVoltar }: { inicial?: Modo; aoVoltar?: () => void }) {
+export function Login({ inicial = 'entrar', aoVoltar, rotuloVoltar, emailInicial = '' }: {
+  inicial?: Modo; aoVoltar?: () => void
+  /** Texto do botão de voltar (padrão: "Início"). */
+  rotuloVoltar?: string
+  /** E-mail já preenchido (conta lembrada neste aparelho cuja sessão venceu). */
+  emailInicial?: string
+}) {
   const [modo, setModo] = useState<Modo>(inicial)
   const [aviso, setAviso] = useState<Aviso>(null)
   const [ocupado, setOcupado] = useState(false)
@@ -33,6 +40,7 @@ export function Login({ inicial = 'entrar', aoVoltar }: { inicial?: Modo; aoVolt
     const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
     setOcupado(false)
     if (error) setAviso({ texto: traduzir(error.message) })
+    else pararDeAdicionar() // entrou: o login aberto por "Adicionar outra conta" fecha (outra conta recarrega a página sozinha)
   }
 
   const esqueci = async (email: string) => {
@@ -55,6 +63,7 @@ export function Login({ inicial = 'entrar', aoVoltar }: { inicial?: Modo; aoVolt
     const { data, error } = await supabase.auth.signUp({ email, password: senha, options: { data: nome ? { nome } : undefined, emailRedirectTo: ENDERECO_DO_SITE } })
     setOcupado(false)
     if (error) setAviso({ texto: traduzir(error.message) })
+    else if (data.session) pararDeAdicionar()
     else if (!data.session) setAviso({ texto: tx('Conta criada! Confirme pelo link que chegou no seu e-mail e depois entre.'), ok: true })
   }
 
@@ -62,11 +71,11 @@ export function Login({ inicial = 'entrar', aoVoltar }: { inicial?: Modo; aoVolt
     <div className="en">
       {aoVoltar && (
         <button type="button" className="en-voltar" onClick={aoVoltar}>
-          <Icone nome="esq" tamanho={18} /> {tx('Início')}
+          <Icone nome="esq" tamanho={18} /> {rotuloVoltar ?? tx('Início')}
         </button>
       )}
       <div className={`en-cartao ${modo} ${trocou ? 'trocou' : ''}`}>
-        <FormEntrar ativo={!criar} ocupado={ocupado} aviso={!criar ? aviso : null} aoEnviar={entrar} aoEsqueci={esqueci} aoReenviar={reenviar} aoTrocar={() => trocar('criar')} />
+        <FormEntrar emailInicial={emailInicial} ativo={!criar} ocupado={ocupado} aviso={!criar ? aviso : null} aoEnviar={entrar} aoEsqueci={esqueci} aoReenviar={reenviar} aoTrocar={() => trocar('criar')} />
         <FormCriar ativo={criar} ocupado={ocupado} aviso={criar ? aviso : null} aoEnviar={cadastrar} aoReenviar={reenviar} aoTrocar={() => trocar('entrar')} />
 
         <div className="en-lamina" aria-hidden="true">
@@ -101,10 +110,11 @@ function Chamada({ visivel, titulo, destaque, texto }: { visivel: boolean; titul
 
 type PropsForm = { ativo: boolean; ocupado: boolean; aviso: Aviso; aoTrocar: () => void }
 
-function FormEntrar({ ativo, ocupado, aviso, aoEnviar, aoEsqueci, aoReenviar, aoTrocar }: PropsForm & {
+function FormEntrar({ emailInicial, ativo, ocupado, aviso, aoEnviar, aoEsqueci, aoReenviar, aoTrocar }: PropsForm & {
+  emailInicial: string
   aoEnviar: (email: string, senha: string) => void; aoEsqueci: (email: string) => void; aoReenviar: (email: string) => void
 }) {
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(emailInicial)
   const [senha, setSenha] = useState('')
   const [recuperar, setRecuperar] = useState(false)
   const naoConfirmado = Boolean(aviso && !aviso.ok && /confirme seu e-mail/i.test(aviso.texto))

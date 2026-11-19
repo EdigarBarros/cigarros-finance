@@ -16194,5 +16194,41 @@
   "Nada para pagar ou receber em {0}.": {
     "en": "Nothing to pay or receive in {0}.",
     "es": "Nada que pagar ni cobrar en {0}."
+  },
+  "Entre de novo com a senha": {
+    "en": "Sign in again with your password",
+    "es": "Vuelve a entrar con la contraseña"
+  },
+  "Tirar {0} deste aparelho": {
+    "en": "Remove {0} from this device",
+    "es": "Quitar {0} de este dispositivo"
+  },
+  "Tirar deste aparelho": {
+    "en": "Remove from this device",
+    "es": "Quitar de este dispositivo"
+  },
+  "Trocar de conta": {
+    "en": "Switch account",
+    "es": "Cambiar de cuenta"
+  },
+  "Adicionar outra conta": {
+    "en": "Add another account",
+    "es": "Añadir otra cuenta"
+  },
+  "Escolha uma conta": {
+    "en": "Choose an account",
+    "es": "Elige una cuenta"
+  },
+  "Contas que já entraram neste aparelho.": {
+    "en": "Accounts that have signed in on this device.",
+    "es": "Cuentas que ya entraron en este dispositivo."
+  },
+  "Usar outra conta": {
+    "en": "Use another account",
+    "es": "Usar otra cuenta"
+  },
+  "Sair desta conta": {
+    "en": "Sign out of this account",
+    "es": "Salir de esta cuenta"
   }
 }

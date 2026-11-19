@@ -42,6 +42,11 @@ Para usar o Chromium do sistema em vez do navegador instalado pelo Playwright:
 PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium node scripts/app-de-demonstracao/testar-correcoes.cjs
 ```
 
+## Várias contas no mesmo aparelho
+
+Depois do build com Supabase fictício: `node scripts/app-de-demonstracao/testar-contas.cjs` (entrar, adicionar, trocar sem
+senha, tema de cada conta, sair de uma, "Escolha uma conta", sessão vencida e tirar da lista, no PC e no celular).
+
 ## Celular (moldura e Início)
 
 Depois do build com Supabase fictício:

@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { idiomaAtual } from './idioma'
 import { nativo, tx } from './textos'
+import { gravarNaConta, lerDaConta } from './contas'
 
 /** Em português e maiúsculas: é como a planilha de importação escreve os meses (lib/planilha.ts). */
 export const MESES = [
@@ -28,7 +29,7 @@ const pct = new Intl.NumberFormat('pt-BR', { style: 'percent', maximumFractionDi
 // ---------- ocultar valores (o botão do olho) ----------
 const CHAVE_OCULTAR = 'opuscash-ocultar-valores'
 let valoresOcultos = (() => {
-  try { return localStorage.getItem(CHAVE_OCULTAR) === '1' } catch { return false }
+  return lerDaConta(CHAVE_OCULTAR) === '1'
 })()
 const ouvintesOcultar = new Set<() => void>()
 /** O que aparece no lugar de cada valor em dinheiro quando a pessoa esconde os números. */
@@ -36,7 +37,7 @@ export const MASCARA_VALOR = '••••••'
 export const valoresEstaoOcultos = () => valoresOcultos
 export function definirValoresOcultos(v: boolean) {
   valoresOcultos = v
-  try { localStorage.setItem(CHAVE_OCULTAR, v ? '1' : '0') } catch { /* vale só nesta visita */ }
+  gravarNaConta(CHAVE_OCULTAR, v ? '1' : '0')
   ouvintesOcultar.forEach((f) => f())
 }
 /** true quando os valores estão escondidos; quem usa re-renderiza ao ligar/desligar. */

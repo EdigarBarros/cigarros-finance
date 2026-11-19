@@ -1090,6 +1090,28 @@ Duas colunas no computador. A lista com selos redondos saiu; cada lançamento ag
   preenchido na primeira pergunta do painel.
 - **Celular:** o painel vira uma faixa diagonal no alto e só o formulário troca.
 
+### 4.20.1 Várias contas no mesmo aparelho (`lib/contas.ts`, `components/Contas.tsx`)
+
+Como a troca de contas do Google. Quem entra numa conta fica lembrado no aparelho (até 5 contas). No menu da conta (PC: a
+foto no canto de cima; celular: a folha aberta pela foto), embaixo dos itens: **Trocar de conta** (as outras contas, com
+foto, nome e e-mail; um toque abre a conta sem senha), **Adicionar outra conta** (abre o login por cima; "Voltar" desiste e a
+conta aberta continua) e **Sair desta conta** ("Sair", quando só há uma). O "x" de cada linha tira a conta deste aparelho.
+
+- **Sem senha guardada.** Fica só a sessão que o Supabase já guarda (os dois tokens), uma por conta, em
+  `localStorage['opuscash.contas']`, atualizada a cada renovação do token. Trocar renova a sessão da escolhida num cliente à
+  parte: se ela não vale mais (venceu, ou alguém saiu de todos os aparelhos), a conta aberta continua aberta e a escolhida
+  abre o login com o e-mail preenchido ("Entre de novo com a senha").
+- **Nada se mistura.** Trocar recarrega a página (dados, cache e telas abertas da anterior somem da memória); entrar pela tela
+  de login também. Outra aba do mesmo aparelho recarrega junto (o Supabase avisa as abas). O que fica guardado no aparelho e é
+  de cada pessoa (tema, animações, valores escondidos, arrumação da Início, modo do gráfico, menu lateral recolhido) é separado
+  por conta (`lerDaConta`/`gravarNaConta`); quem ainda não tem uma escolha própria usa a de antes. O que já era por conta
+  (foto, memória do consultor, gosto) continua com o id no nome da chave.
+- **Sair desta conta** encerra só a sessão dela, só neste aparelho, e tira a conta da lista. Com outras contas lembradas, a
+  tela seguinte é **Escolha uma conta** (também no app Android, no lugar do login direto); "Usar outra conta" abre o login.
+- **Tirar da lista** uma conta que não está aberta também encerra a sessão dela no servidor.
+
+Teste: `node scripts/app-de-demonstracao/testar-contas.cjs` (três contas num Supabase falso, no PC e no celular).
+
 ### 4.21 As telas em cada jeito de ver (a vitrine)
 
 Todas as telas seguem a mesma ideia da Início: **um desenho grande no topo, menos frase e mais sinal**. O topo é a

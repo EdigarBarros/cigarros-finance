@@ -9,9 +9,11 @@ import { TelaSemInternet } from './components/SemInternet'
 import { PaginaLegal } from './components/Legal'
 import { noAppAndroid } from './lib/appAndroid'
 import { documentoDoHash } from './lib/legal'
-import { nativo } from './lib/textos'
+import { nativo, tx } from './lib/textos'
 import { temAcesso, useAssinatura } from './lib/assinatura'
 import { configurado, supabase } from './lib/supabase'
+import { aoMudarSessao, pararDeAdicionar, useAdicionando, useContasSalvas } from './lib/contas'
+import { EscolherConta } from './components/Contas'
 import { useSemInternet } from './lib/conexao'
 import { iniciarUso, marcarTela } from './lib/uso'
 import { Apresentacao } from './pages/Apresentacao'
@@ -49,6 +51,9 @@ export default function App() {
   const [recuperando, setRecuperando] = useState(false)
   // null = landing; senão, qual aba do login abrir (entrar ou criar conta)
   const [login, setLogin] = useState<'entrar' | 'criar' | null>(null)
+  // várias contas no aparelho (lib/contas.ts): as lembradas e o "Adicionar outra conta" pedido no menu
+  const contas = useContasSalvas()
+  const adicionando = useAdicionando()
   // abrir o login entra no histórico: o "voltar" do navegador (ou o gesto de voltar do celular) traz de volta à apresentação
   const abrirLogin = (m: 'entrar' | 'criar') => { history.pushState({ opusLogin: m }, ''); setLogin(m) }
   const voltarAoInicio = () => { if (history.state?.opusLogin) history.back(); else setLogin(null) }
@@ -62,6 +67,7 @@ export default function App() {
     if (!configurado) return
     supabase.auth.getSession().then(({ data }) => setSessao(data.session))
     const { data } = supabase.auth.onAuthStateChange((e, s) => {
+      aoMudarSessao(e, s)
       setSessao(s)
       if (e === 'PASSWORD_RECOVERY') setRecuperando(true)
     })
@@ -80,11 +86,18 @@ export default function App() {
 
   // o link de "Esqueci minha senha" cria uma sessão: a tela de nova senha vem antes de qualquer outra
   if (recuperando) return comIdioma(<NovaSenha aoConcluir={() => setRecuperando(false)} />)
+  // "Adicionar outra conta" (ou entrar de novo numa conta lembrada cuja sessão venceu): o login aparece por cima, e a conta
+  // aberta continua aberta até a outra entrar. "Voltar" desiste sem mudar nada.
+  if (adicionando && (!sessao || adicionando.de === sessao.user.id)) {
+    return comIdioma(<Login key={adicionando.email} inicial="entrar" emailInicial={adicionando.email} rotuloVoltar={tx('Voltar')} aoVoltar={pararDeAdicionar} />)
+  }
   if (!sessao) {
     // Landing page por padrão; o login (ou o cadastro) abre quando a pessoa clica. No app da Play Store, que já foi instalado,
     // a propaganda (com o preço) não faz sentido: abre direto no login.
     // no app da Play Store não há apresentação para onde voltar
-    if (login || noAppAndroid) return comIdioma(<Login inicial={login ?? 'entrar'} aoVoltar={noAppAndroid ? undefined : voltarAoInicio} />)
+    // Com contas lembradas neste aparelho, primeiro a escolha de qual abrir (como no Google).
+    if (!login && contas.length) return comIdioma(<EscolherConta aoOutra={() => abrirLogin('entrar')} />)
+    if (login || noAppAndroid) return comIdioma(<Login inicial={login ?? 'entrar'} aoVoltar={noAppAndroid && !contas.length ? undefined : voltarAoInicio} />)
     return comIdioma(<Apresentacao onLogin={() => abrirLogin('entrar')} onSignup={() => abrirLogin('criar')} />)
   }
 
