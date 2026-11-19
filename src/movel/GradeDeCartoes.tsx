@@ -8,9 +8,10 @@ import { useState, type CSSProperties } from 'react'
 import { Icone } from '../components/Icone'
 import { tx } from '../lib/textos'
 import {
-  adicionarCartao, cartoesDaInicio, linhasDaGrade, linhasDoComputador, moverCartao, removerCartao, type ArrumacaoInicio, type IdWidget,
+  adicionarCartao, cartoesDaInicio, linhasDaGrade, moverCartao, redimensionarCartao, removerCartao, reordenarCartoes, type ArrumacaoInicio, type IdWidget,
 } from '../lib/widgets'
 import { FolhaDeCartoes } from './FolhaDeCartoes'
+import { GradeDoComputador } from './GradeDoComputador'
 import { WIDGETS, type Contexto } from './widgets'
 
 const NOME_DO_JEITO = { simples: () => tx('Simples'), equilibrado: () => tx('Equilibrado'), detalhado: () => tx('Detalhado') }
@@ -34,9 +35,7 @@ export function GradeDeCartoes({ x, computador = false }: { x: Contexto; computa
     window.setTimeout(() => document.querySelector(`[data-cartao="${id}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 350)
   }
 
-  const celula = (id: IdWidget, estilo?: CSSProperties) => (
-    <div key={id} className="widget-celula" data-cartao={id} style={estilo}>
-      {arrumando && (
+  const barra = (id: IdWidget) => (
         <div className="arrumar-barra">
           <span>{WIDGETS[id].titulo()}</span>
           <button onClick={() => guardar(moverCartao(arrumacao, detalhe, id, -1, ids, agora()))} disabled={ids[0] === id}
@@ -46,18 +45,23 @@ export function GradeDeCartoes({ x, computador = false }: { x: Contexto; computa
           <button className="tirar" onClick={() => guardar(removerCartao(arrumacao, detalhe, id, agora()))}
             aria-label={tx('Tirar o cartão {0}', WIDGETS[id].titulo())}><Icone nome="fechar" tamanho={18} /></button>
         </div>
-      )}
+  )
+  const celula = (id: IdWidget, estilo?: CSSProperties) => (
+    <div key={id} className="widget-celula" data-cartao={id} style={estilo}>
+      {arrumando && barra(id)}
       <div inert={arrumando || undefined}><WidgetDaLista id={id} x={x} /></div>
     </div>
   )
 
   let grade
   if (computador) {
-    // linhas de 12 colunas, cada cartão com a sua largura; os da mesma linha ficam da mesma altura
+    // os cartões se encaixam como bloquinhos; no Arrumar, arrasta para mudar o lugar e puxa o canto para mudar o tamanho
+    const tamanhos = arrumacao?.base === detalhe ? arrumacao.tamanhos : undefined
     grade = (
-      <div className={`widgets-pc ${arrumando ? 'arrumando' : ''}`}>
-        {linhasDoComputador(ids).flat().map(({ id, colunas }, i) => celula(id, { gridColumn: `span ${colunas}`, '--i': i } as CSSProperties))}
-      </div>
+      <GradeDoComputador ids={ids} tamanhos={tamanhos} arrumando={arrumando} tituloDe={(id) => WIDGETS[id].titulo()} barra={barra}
+        conteudo={(id, fixo) => <div inert={arrumando || undefined}><WidgetDaLista id={id} x={fixo ? { ...x, limite: 12 } : x} /></div>}
+        aoReordenar={(ordem) => guardar(reordenarCartoes(arrumacao, detalhe, ordem, agora()))}
+        aoRedimensionar={(id, t) => guardar(redimensionarCartao(arrumacao, detalhe, id, t, agora()))} />
     )
   } else {
     // arrumando, um cartão por linha: subir e descer ficam claros
@@ -74,7 +78,9 @@ export function GradeDeCartoes({ x, computador = false }: { x: Contexto; computa
       {grade}
 
       {!c.contaNova && (arrumando ? (
-        <div className="cartoes-acoes">
+        // no computador, a barra do Arrumar fica presa no pé da tela enquanto a pessoa mexe nos cartões
+        <div className={`cartoes-acoes ${computador ? 'arrumar-fixo' : ''}`}>
+          {computador && <p className="arrumar-dica">{tx('Arraste um cartão para mudar o lugar. Puxe o canto de baixo para mudar o tamanho.')}</p>}
           <button className="btn primario" onClick={() => setArrumando(false)}>{tx('Pronto')}</button>
           {arrumacao?.base === detalhe && (
             <button className="link" onClick={() => c.salvarCelular({ v: 1 })}>{tx('Voltar ao modelo {0}', NOME_DO_JEITO[detalhe]())}</button>

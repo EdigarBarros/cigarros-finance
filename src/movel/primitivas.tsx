@@ -18,6 +18,13 @@ export interface PaginaDoHero {
   numero?: number
   sub?: ReactNode
   pilula?: { texto: string; acao: () => void }
+  /**
+   * O estado do mês escrito num selo ("Mês no azul", "Previsão no vermelho"…), com um ponto na cor dele. A cor do topo não
+   * muda com o estado (era confuso: vermelho com "Sobrou" escrito); quem avisa é o selo. Tocar abre "Entender a conta".
+   */
+  selo?: { texto: string; tom: 'bom' | 'atencao' | 'ruim'; acao?: () => void }
+  /** A linha de baixo é um aviso ("Pode faltar … no fim do mês"): sai com o ícone de alerta, num tom claro de coral. */
+  subAlerta?: boolean
   /** Só com o tom 'cor': a cor do degradê (o cartão de crédito na cor do banco). */
   cor?: string
 }
@@ -148,9 +155,10 @@ export function HeroDeslizante({ paginas, aoMudar, inicial = 0 }: { paginas: Pag
         {paginas.map((p, n) => (
           <div key={p.id} className="hero-movel-pagina" role="group" aria-roledescription={tx('página')}
             aria-label={tx('{0} de {1}: {2}', n + 1, paginas.length, p.rotulo)} aria-hidden={n !== fixa || undefined}>
+            {p.selo && <SeloDoMes selo={p.selo} tabIndex={n === fixa ? undefined : -1} />}
             <p className="hero-movel-rotulo">{p.rotulo}</p>
             <p className="hero-movel-valor" style={{ fontSize: tamanhoDoValor(p.valor) }}>{p.valor}</p>
-            {p.sub && <p className="hero-movel-sub">{p.sub}</p>}
+            {p.sub && <p className={`hero-movel-sub ${p.subAlerta ? 'alerta' : ''}`}>{p.subAlerta && <Icone nome="alerta" tamanho={15} />}{p.sub}</p>}
             {p.pilula && <button className="hero-movel-pilula" onClick={p.pilula.acao} tabIndex={n === fixa ? undefined : -1}>{p.pilula.texto}</button>}
           </div>
         ))}
@@ -165,6 +173,14 @@ export function HeroDeslizante({ paginas, aoMudar, inicial = 0 }: { paginas: Pag
       )}
     </section>
   )
+}
+
+/** O selo do estado do mês sobre o topo (celular e computador): ponto colorido + o nome do estado. */
+export function SeloDoMes({ selo, tabIndex, className = '' }: { selo: NonNullable<PaginaDoHero['selo']>; tabIndex?: number; className?: string }) {
+  const conteudo = <><i aria-hidden="true" />{selo.texto}</>
+  return selo.acao
+    ? <button type="button" className={`selo-do-mes ${selo.tom} ${className}`} onClick={selo.acao} tabIndex={tabIndex}>{conteudo}</button>
+    : <span className={`selo-do-mes ${selo.tom} ${className}`}>{conteudo}</span>
 }
 
 export interface Acao { id: string; icone: string; rotulo: string; acao: () => void; tour?: string }
@@ -192,7 +208,8 @@ export function CartaoWidget({ titulo, aoAbrir, children, rodape, className = ''
       {titulo && (aoAbrir
         ? <button className="widget-titulo" onClick={aoAbrir}>{titulo}<Icone nome="dir" tamanho={15} /></button>
         : <h2 className="widget-titulo">{titulo}</h2>)}
-      {children}
+      {/* no celular é invisível (display: contents); no computador é a área que cresce quando a pessoa aumenta o cartão */}
+      <div className="widget-corpo">{children}</div>
       {rodape && <button className="widget-rodape" onClick={rodape.acao}>{rodape.texto}</button>}
     </section>
   )

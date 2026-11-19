@@ -74,3 +74,9 @@ dos pontos pode mudar (nem a lista de baixo, nem a posição da página); ao sol
 
 Depois do build com Supabase fictício: `node scripts/app-de-demonstracao/testar-adiantada.cjs` (a mesma entrada fixa lançada
 duas vezes em novembro vira a de dezembro, "recebido adiantado"; Desfazer reabre dezembro).
+
+## Cartões redimensionáveis da Início do computador
+
+Depois do build com Supabase fictício: `node scripts/app-de-demonstracao/testar-grade-pc.cjs` (com `FOTOS=pasta` salva
+capturas). Faixa do topo verde com o selo do estado, nada sobreposto, puxar o canto (o cartão segue o mouse, a lista ganha
+linhas, sem tarefa longa), arrastar troca a ordem, teclado na alça, tamanhos guardados depois de recarregar e a 1000 px.

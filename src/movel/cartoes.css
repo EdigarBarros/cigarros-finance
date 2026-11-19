@@ -19,7 +19,24 @@
 .dica-movel .link { min-height: 36px; padding: 0; font-weight: 600; }
 .dica-movel-fechar { display: grid; place-items: center; width: 36px; height: 36px; margin: -8px -8px 0 0; border: 0; border-radius: 50%; background: none; color: var(--texto-2); }
 
+/* ---------- o selo do estado do mês no topo da Início (celular e computador): vidro sobre o verde, ponto colorido ---------- */
+.selo-do-mes {
+  --ponto: #7fe0b5;
+  display: inline-flex; align-items: center; gap: 7px; min-height: 30px; padding: 0 12px 0 10px; border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .24); background: rgba(255, 255, 255, .12); color: #fff; font: 600 13px var(--fonte);
+  white-space: nowrap;
+}
+.selo-do-mes i { width: 9px; height: 9px; border-radius: 50%; background: var(--ponto); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ponto) 28%, transparent); }
+.selo-do-mes.atencao { --ponto: #ffd27a; }
+.selo-do-mes.ruim { --ponto: #ff8f9a; background: rgba(255, 120, 135, .2); border-color: rgba(255, 160, 170, .42); }
+button.selo-do-mes { cursor: pointer; transition: background .5s var(--deslize), transform .9s var(--deslize); }
+button.selo-do-mes:hover { background: rgba(255, 255, 255, .22); transform: translateY(-2px); }
+button.selo-do-mes.ruim:hover { background: rgba(255, 120, 135, .3); }
+button.selo-do-mes:active { transform: scale(.96); }
+
 /* ---------- cartões ---------- */
+/* o corpo do cartão (CartaoWidget): no celular não existe para o layout; no computador é a área que cresce (inicio-pc.css) */
+.widget-corpo { display: contents; }
 .widgets-movel { display: grid; gap: 12px; }
 .widgets-linha.par { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .widget {
@@ -87,7 +104,7 @@ button.linha-movel:active { opacity: .7; }
 .widget-resumo-grade .widget-numero { overflow-wrap: anywhere; }
 .widget-resumo-grade .widget-nota { margin: 0; }
 /* o gráfico do ano: o canvas não pode empurrar a largura do cartão */
-.widget-evolucao > :not(.widget-titulo) { min-width: 0; }
+.widget-evolucao > :not(.widget-titulo), .widget-evolucao .widget-corpo > * { min-width: 0; }
 /* maior sem ocupar a tela: os seletores (Já aconteceu / O que vem aí e a moeda) numa linha só, mais baixos, e o
    gráfico encostando mais na borda do cartão (Início e Resumo do ano) */
 .app.movel .grafico-moeda { gap: 6px; margin-bottom: 6px; }

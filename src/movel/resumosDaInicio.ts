@@ -10,6 +10,15 @@ import type { MesDaInicio } from '../lib/useMesDaInicio'
 import type { Ctx } from '../pages/contexto'
 import type { Acao, Dica, PaginaDoHero } from './primitivas'
 
+/** O selo do estado do mês (lib/situacaoDoMes.ts). Sem dados para avaliar, não tem selo. */
+function seloDoMes(m: MesDaInicio, aoEntender: () => void): PaginaDoHero['selo'] {
+  const { situacao, composicao, momento } = m
+  if (momento === 'futuro') return composicao.resultado < 0 ? { texto: tx('Previsão no vermelho'), tom: 'ruim', acao: aoEntender } : undefined
+  if (situacao.estado === 'sem_dados' || !situacao.selo) return undefined
+  const tom = situacao.estado === 'critico' ? 'ruim' : situacao.estado === 'atencao' ? 'atencao' : 'bom'
+  return { texto: situacao.selo, tom, acao: aoEntender }
+}
+
 /** Uma página por resumo, só dos módulos ligados (dívidas: só com algo a pagar; investimentos: só com carteira). */
 export function resumosDaInicio(c: Ctx, m: MesDaInicio, aoEntender: () => void): PaginaDoHero[] {
   const { v, r } = c
@@ -18,7 +27,8 @@ export function resumosDaInicio(c: Ctx, m: MesDaInicio, aoEntender: () => void):
   const temPrevisao = ddMes.vaiEntrar > 0 || ddMes.vaiSair > 0
   if (momento === 'futuro') {
     paginas.push({
-      id: 'sobra', tom: composicao.resultado < 0 ? 'falta' : 'sobra', rotulo: tx('Previsto para {0}', nomeMes),
+      // o topo da Início fica sempre na cor da marca: o estado vai escrito no selo (antes ficava coral, e confundia)
+      id: 'sobra', tom: 'sobra', selo: seloDoMes(m, aoEntender), rotulo: tx('Previsto para {0}', nomeMes),
       valor: fmtValor(composicao.resultado), numero: composicao.resultado,
       sub: temPrevisao ? tx('Vai entrar {0} · vai sair {1}', fmtValor(ddMes.vaiEntrar), fmtValor(ddMes.vaiSair)) : tx('Nada previsto ainda.'),
       pilula: temPrevisao ? { texto: tx('Entender a conta'), acao: aoEntender } : undefined,
@@ -29,13 +39,15 @@ export function resumosDaInicio(c: Ctx, m: MesDaInicio, aoEntender: () => void):
     const rotulo = momento === 'atual'
       ? (sobrou ? tx('Sobrou em {0} até hoje', nomeMes) : tx('Faltou em {0} até hoje', nomeMes))
       : (sobrou ? tx('Sobrou em {0}', nomeMes) : tx('Faltou em {0}', nomeMes))
+    const vaiFaltar = !c.contaNova && momento === 'atual' && temPrevisao && composicao.resultado < 0
     const sub = c.contaNova
       ? tx('Lance o que entrou e o que saiu e o painel se monta sozinho.')
       : momento === 'atual' && temPrevisao
         ? (composicao.resultado >= 0 ? tx('Deve sobrar {0} no fim do mês', fmtValor(composicao.resultado)) : tx('Pode faltar {0} no fim do mês', fmtValor(-composicao.resultado)))
         : tx('Entrou {0} · saiu {1}', fmtValor(ddMes.entrou), fmtValor(ddMes.saiu))
     paginas.push({
-      id: 'sobra', tom: !sobrou || situacao.estado === 'critico' ? 'falta' : 'sobra', rotulo, valor: fmtValor(Math.abs(resultado)), numero: Math.abs(resultado), sub,
+      id: 'sobra', tom: 'sobra', selo: c.contaNova ? undefined : seloDoMes(m, aoEntender), subAlerta: vaiFaltar,
+      rotulo, valor: fmtValor(Math.abs(resultado)), numero: Math.abs(resultado), sub,
       pilula: c.contaNova ? undefined : { texto: tx('Entender a conta'), acao: aoEntender },
     })
   }

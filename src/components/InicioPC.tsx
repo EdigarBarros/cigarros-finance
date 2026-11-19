@@ -1,6 +1,7 @@
 /**
  * Início do computador e do tablet deitado (≥ 861 px), no desenho do celular (docs/arquitetura-do-painel.md, 4.0):
- * - a faixa do topo, colorida pelo estado do mês (verde-água quando sobra, coral quando falta): o número grande do mês com a
+ * - a faixa do topo, sempre no verde-água da marca, com o estado do mês escrito num selo ("Mês no azul", "Previsão no
+ *   vermelho"…; a cor não muda com o estado desde 18/11/2026, porque o coral com "Sobrou" escrito confundia): o número grande do mês com a
  *   previsão e "Entender a conta" à esquerda, os outros resumos (guardado, dívidas, investimentos) lado a lado à direita
  *   e as ações redondas embaixo; no celular essas mesmas páginas deslizam (src/movel/resumosDaInicio.ts);
  * - as dicas (convite para importar, sugestão do momento);
@@ -21,7 +22,7 @@ import { useMesDaInicio } from '../lib/useMesDaInicio'
 import { ligarMola3d } from '../lib/mola3d'
 import type { Ctx } from '../pages/contexto'
 import { GradeDeCartoes } from '../movel/GradeDeCartoes'
-import { CarrosselDeDicas } from '../movel/primitivas'
+import { CarrosselDeDicas, SeloDoMes } from '../movel/primitivas'
 import { acoesDaInicio, dicasDaInicio, resumosDaInicio } from '../movel/resumosDaInicio'
 import type { Contexto } from '../movel/widgets'
 import './inicio-pc.css'
@@ -61,6 +62,7 @@ export function InicioPC({ c }: { c: Ctx }) {
           <h1>
             {c.perfil.nome ? <>{tx('Olá,')} <span translate="no">{c.perfil.nome}</span>!</> : tx('Olá!')}
           </h1>
+          {principal.selo && <SeloDoMes selo={principal.selo} />}
           <PilulaDoJeito atual={c.perfil.detalhe} aoMudar={c.mudarDetalhe} />
           <span className="faixa-pc-data"><Icone nome="calendario" tamanho={16} /> {hojePorExtenso}</span>
         </header>
@@ -69,7 +71,9 @@ export function InicioPC({ c }: { c: Ctx }) {
           <div className="faixa-pc-principal">
             <p className="faixa-pc-rotulo">{principal.rotulo}</p>
             <p className="faixa-pc-valor">{valor(principal)}</p>
-            {principal.sub && <p className="faixa-pc-sub">{principal.sub}</p>}
+            {principal.sub && (
+              <p className={`faixa-pc-sub ${principal.subAlerta ? 'alerta' : ''}`}>{principal.subAlerta && <Icone nome="alerta" tamanho={17} />}{principal.sub}</p>
+            )}
             {principal.pilula && <button className="faixa-pc-pilula" onClick={principal.pilula.acao}>{principal.pilula.texto}</button>}
           </div>
           {outros.length > 0 && (
