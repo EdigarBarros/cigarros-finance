@@ -16346,5 +16346,121 @@
   "Resultado acumulado do mês, dia a dia": {
     "en": "Running total for the month, day by day",
     "es": "Resultado acumulado del mes, día a día"
+  },
+  "ao mês": {
+    "en": "a month",
+    "es": "al mes"
+  },
+  "dia de atraso": {
+    "en": "day overdue",
+    "es": "día de atraso"
+  },
+  "dias de atraso": {
+    "en": "days overdue",
+    "es": "días de atraso"
+  },
+  "{0} de {1} parcelas pagas": {
+    "en": "{0} of {1} installments paid",
+    "es": "{0} de {1} cuotas pagadas"
+  },
+  "Juros do contrato": {
+    "en": "Contract interest",
+    "es": "Intereses del contrato"
+  },
+  "1 dia": {
+    "en": "1 day",
+    "es": "1 día"
+  },
+  "{0} dias": {
+    "en": "{0} days",
+    "es": "{0} días"
+  },
+  "Recebe quanto e quando puder": {
+    "en": "Receive what and when they can",
+    "es": "Recibe lo que pueda y cuando pueda"
+  },
+  "Paga quanto e quando puder": {
+    "en": "Pay what and when you can",
+    "es": "Paga lo que puedas y cuando puedas"
+  },
+  "Já recebeu {0}": {
+    "en": "Already received {0}",
+    "es": "Ya recibió {0}"
+  },
+  "Já pagou {0}": {
+    "en": "Already paid {0}",
+    "es": "Ya pagó {0}"
+  },
+  "Sem data combinada": {
+    "en": "No agreed date",
+    "es": "Sin fecha acordada"
+  },
+  "1 paga": {
+    "en": "1 paid",
+    "es": "1 pagada"
+  },
+  "{0} pagas": {
+    "en": "{0} paid",
+    "es": "{0} pagadas"
+  },
+  "{0} a vencer": {
+    "en": "{0} upcoming",
+    "es": "{0} por vencer"
+  },
+  "Recebido {0} de {1}": {
+    "en": "Received {0} of {1}",
+    "es": "Recibido {0} de {1}"
+  },
+  "Pago {0} de {1}": {
+    "en": "Paid {0} of {1}",
+    "es": "Pagado {0} de {1}"
+  },
+  "Termina em {0}": {
+    "en": "Ends in {0}",
+    "es": "Termina en {0}"
+  },
+  "faltam {0} meses": {
+    "en": "{0} months left",
+    "es": "faltan {0} meses"
+  },
+  "Juros do atraso": {
+    "en": "Late interest",
+    "es": "Intereses por atraso"
+  },
+  "+{0} por dia · estimado": {
+    "en": "+{0} a day · estimated",
+    "es": "+{0} por día · estimado"
+  },
+  "em 30 dias: +{0}": {
+    "en": "in 30 days: +{0}",
+    "es": "en 30 días: +{0}"
+  },
+  "Juros de {0}% ao mês": {
+    "en": "{0}% interest a month",
+    "es": "Intereses del {0}% al mes"
+  },
+  "Se ficar sem pagar": {
+    "en": "If left unpaid",
+    "es": "Si queda sin pagar"
+  },
+  "em 1 mês": {
+    "en": "in 1 month",
+    "es": "en 1 mes"
+  },
+  "Emprestou {0}, recebe {1}": {
+    "en": "Lent {0}, gets back {1}",
+    "es": "Prestó {0}, recibe {1}"
+  },
+  "Recebeu {0}, devolve {1}": {
+    "en": "Got {0}, pays back {1}",
+    "es": "Recibió {0}, devuelve {1}"
+  },
+  "{0} de juros ({1}%)": {
+    "en": "{0} in interest ({1}%)",
+    "es": "{0} de intereses ({1}%)"
+  },
+  "+{0} partes": {
+    "en": "+{0} parts",
+    "es": "+{0} partes"
   }
 }

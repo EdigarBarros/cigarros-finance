@@ -1246,3 +1246,18 @@ então o app Android só a recebe numa versão nova (a 2.8.2 sem assinatura na �
 - Conferido no app de demonstração (com lançamentos de novembro e uma saída futura que deixa a previsão negativa), claro e
   escuro, computador e 390 px: sem erro na página, sem rolagem de lado. Lição: o tema da demonstração vem de
   `localStorage['opuscash-tema']` (o `tema` do perfil não basta para as capturas).
+
+### 19/11/2026 — Claude — Cartões de dívida montados por um compositor
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração. Só o computador (o celular tem o cartão próprio).
+
+- Pedido do Edigar (captura da grade "Cada dívida"): usar "o algoritmo do Consultor" para montar o miolo de cada cartão
+  conforme o tipo da dívida (parcelada, valor único, com juros, renegociação, empréstimo, sem data), mantendo o topo.
+- Feito: `lib/cartaoDaDivida.ts` (puro: `tracosDe` + `montarCartao`, destaque e peças por nota de aptidão, orçamento de
+  espaço, uma peça por família) e `components/CartaoDaDivida.tsx` + `cartao-divida.css` (o desenho de cada peça).
+  `CartaoDivida` em `pages/Dividas.tsx` usa o miolo montado; saiu o `Pips` de lá (foi para a peça `parcelas`). Regras em
+  `docs/arquitetura-do-painel.md`, 4.13.
+- Defeito pego na conferência: a raiz do miolo recebia a classe `dvm-<destaque>` (ex.: `dvm-dias`), a mesma do círculo do
+  destaque, e herdava a altura de 62 px: o conteúdo saía por cima do cartão. Agora o destaque vai em `data-destaque`.
+- Validação: `scripts/painel/testar.mjs` 35/35 (caso novo com 10 tipos de dívida e as regras de espaço e família), tsc,
+  lint, build; app de demonstração com 9 dívidas parecidas com as do dono, claro e escuro, sem erro na página.

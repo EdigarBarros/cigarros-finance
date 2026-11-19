@@ -1,6 +1,5 @@
 import { CenaDividas } from '../components/Vazios'
 import { useState } from 'react'
-import { COR } from '../lib/charts'
 import {
   aproxDiv, atrasadoHoje, aumentaDivida, estadoDaDivida, resumoDasDividas, sugeridoParaPagar, fmtDiv, gruposDasPartes, inicioPelaProxima, meDevem, nativoDiv, parcelasDe, promessasDe, tomarLadoDividas, totalDeParcelas,
   type Calendario, type ParcelaDivida, type Promessas, type SituacaoDivida,
@@ -13,6 +12,7 @@ import { FormDivida } from '../components/Formularios'
 import { PartesDaDivida } from '../components/PartesDaDivida'
 import { LinhaDaPromessa, PromessasDaDivida } from '../components/PromessasDaDivida'
 import { ConferirComBanco, SeloJuros } from '../components/JurosDoAtraso'
+import { mioloDaDivida } from '../components/CartaoDaDivida'
 import { regraDoAtraso, temJurosDeAtraso } from '../lib/jurosAtraso'
 import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
@@ -329,12 +329,11 @@ function CartaoDivida({ s, cal, estado, recebe, indice, prom, aoAbrir, aoPagar, 
 }) {
   const p = parcelasDe(s)
   const nPartes = s.divida.partes?.length ? gruposDasPartes(s.divida.partes).length : 0
-  const pct = s.saldoInicial > 0 ? (s.saldoInicial - s.restante) / s.saldoInicial : 1
   const quitada = s.restante <= 0
   // sem parcela nem data, não há valor certo a sugerir: a pessoa digita quanto pagou; atrasada, já vem com os juros
   const sugerido = sugeridoParaPagar(s, cal)
   const verbo = recebe ? tx('Receber') : tx('Pagar')
-  const comJuros = s.jurosAtraso > 0
+  const { montagem, miolo } = mioloDaDivida(s, cal, recebe, hojeLocal())
   return (
     <article className={`cartao dv-cartao ${estado.id}`} style={{ animationDelay: `${Math.min(indice, 8) * 60}ms` }}>
       <button className="dv-cartao-corpo" onClick={aoAbrir} aria-label={tx('Ver {0}', s.divida.descricao)}>
@@ -346,27 +345,8 @@ function CartaoDivida({ s, cal, estado, recebe, indice, prom, aoAbrir, aoPagar, 
           </span>
           <span className={`chip-estado dv ${estado.id}`}>{estado.texto}</span>
         </header>
-        <div className="dv-cartao-meio">
-          <span>
-            <small>{quitada ? (recebe ? tx('recebido') : tx('quitada')) : recebe ? tx('falta receber') : comJuros ? tx('falta pagar hoje') : tx('falta pagar')}</small>
-            <strong>{quitada ? fmtDiv(s, s.saldoInicial) : <Numero valor={s.restanteHoje} formato={(n) => fmtDiv(s, n)} />}</strong>
-            {s.moeda && !quitada && <small className="dv-aprox">{aproxDiv(s, s.restanteHoje)}</small>}
-            {!quitada && <SeloJuros s={s} />}
-          </span>
-          <Anel valor={pct} cor={quitada ? COR.entradas : recebe ? COR.entradas : COR.caixa} tamanho={54}>{Math.round(pct * 100)}%</Anel>
-        </div>
-        {cal && cal.parcelas.length > 1 ? (
-          <Pips parcelas={cal.parcelas} />
-        ) : (
-          <span className="dv-barra" aria-hidden="true"><i style={{ width: `${pct * 100}%` }} /></span>
-        )}
-        <p className="dv-cartao-linha">
-          {quitada ? <>{tx('Tudo {0}. 🎉', recebe ? tx('recebido') : tx('pago'))}</>
-            : cal?.atrasadas.length ? <><b className="ruim">{fmtDiv(s, atrasadoHoje(s, cal))}</b> {tx('vencido desde {0}', fmtDataCurta(cal.atrasadas[0].vencimento))}</>
-              : cal?.proxima ? <>{tx('Próxima:')} <b>{fmtDataCurta(cal.proxima.vencimento)}</b> · {fmtDiv(s, cal.proxima.falta)}{cal.proxima.pago > 0 && ' (resto)'}</>
-                : s.divida.valor_parcela ? <>{tx('{0} por mês', fmtDiv(s, s.divida.valor_parcela))}{s.quitacao && <> {tx('· até {0}', fmtMesAno(s.quitacao[0], s.quitacao[1]))}</>}</>
-                  : <>{recebe ? tx('Recebe') : tx('Paga')} {tx('quanto e quando puder')}</>}
-        </p>
+        {/* o miolo é montado para esta dívida (lib/cartaoDaDivida.ts): o destaque e as peças que servem a ela */}
+        {miolo}
         {prom && !quitada && <LinhaDaPromessa s={s} p={prom} recebe={recebe} hoje={hojeLocal()} />}
       </button>
       {!quitada && (
@@ -374,7 +354,7 @@ function CartaoDivida({ s, cal, estado, recebe, indice, prom, aoAbrir, aoPagar, 
           <Icone nome={recebe ? 'receber' : 'check'} tamanho={16} /> {sugerido ? `${verbo} ${fmtDiv(s, sugerido)}` : recebe ? tx('Lançar recebimento') : tx('Lançar pagamento')}
         </button>
       )}
-      {!quitada && comJuros && aoConferir && (
+      {montagem.conferir && aoConferir && (
         <button className="link dv-cartao-conferir" onClick={aoConferir}><Icone nome="check" tamanho={14} /> {tx('Conferi com o banco')}</button>
       )}
     </article>
@@ -407,21 +387,6 @@ function TileDivida({ s, cal, estado, recebe, indice, aoAbrir, aoPagar }: {
         <Icone nome={recebe ? 'receber' : 'check'} tamanho={16} /> {sugerido ? (recebe ? tx('Receber {0}', fmtDiv(s, sugerido)) : tx('Pagar {0}', fmtDiv(s, sugerido))) : recebe ? tx('Lançar recebimento') : tx('Lançar pagamento')}
       </button>
     </article>
-  )
-}
-
-/** Um tracinho por parcela, pintado conforme a situação; a parcial enche até onde foi paga. */
-function Pips({ parcelas }: { parcelas: ParcelaDivida[] }) {
-  if (parcelas.length > 36) {
-    const pagas = parcelas.filter((p) => p.estado === 'paga').length
-    return <span className="dv-barra" aria-hidden="true"><i style={{ width: `${(pagas / parcelas.length) * 100}%` }} /></span>
-  }
-  return (
-    <span className="dv-pips" aria-hidden="true">
-      {parcelas.map((p, i) => (
-        <i key={p.n} className={p.estado} style={{ '--p': `${(p.pago / p.valor) * 100}%`, animationDelay: `${150 + i * 22}ms` } as React.CSSProperties} />
-      ))}
-    </span>
   )
 }
 
