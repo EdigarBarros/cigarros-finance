@@ -1364,3 +1364,14 @@ numa versão nova (esta sessão rodou na nuvem, sem o SDK do Android; o `.aab` f
   página). Animações reduzidas: sai quando carrega. `npx tsc -b`, lint sem erro, build, `scripts/painel/testar.mjs` 36/36,
   `testar-movel.cjs` 379 OK.
 - Lição de teste: esperar `.abertura` sumir sem antes esperar ela aparecer passa na hora (a página ainda nem montou).
+
+### 19/11/2026 — Claude — Abertura: o infinito não desce mais
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração.
+
+- Relato do Edigar (duas capturas do celular): o infinito "dá uma descida" perceptível. Causa: o balanço (`ab-balanca`)
+  começava 1,1 s depois, sem `fill` para trás, e o primeiro quadro dele vinha 4 px abaixo e inclinado 6°: no começo do
+  balanço o símbolo pulava para baixo, e depois subia e descia o tempo todo. Agora o balanço é só `rotateY(±22°)`,
+  com `both`, começando da posição em que o símbolo para.
+- **Validação:** posição vertical do símbolo medida a cada 60 ms no app de demonstração (390×844) depois da chegada:
+  variação 0 px. `npx tsc -b`, build.

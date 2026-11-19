@@ -109,10 +109,12 @@
 @keyframes ab-chega {
   from { transform: translateZ(-700px) rotateY(-300deg) rotateX(20deg); }
 }
-.ab-simbolo { animation: ab-balanca 4.2s ease-in-out 1.1s infinite alternate; transform: rotateY(-22deg); }
+/* o balanço é só de lado e começa exatamente de onde o símbolo para (antes o primeiro quadro vinha 4 px abaixo e
+   inclinado: no começo do balanço o símbolo dava um tranco para baixo, e depois ficava subindo e descendo) */
+.ab-simbolo { animation: ab-balanca 4.2s ease-in-out 1.1s infinite alternate both; transform: rotateY(-22deg); }
 @keyframes ab-balanca {
-  from { transform: rotateY(-22deg) rotateX(6deg) translateY(4px); }
-  to { transform: rotateY(22deg) rotateX(-6deg) translateY(-4px); }
+  from { transform: rotateY(-22deg); }
+  to { transform: rotateY(22deg); }
 }
 .ab-simbolo img {
   position: absolute; left: -110px; top: -53px; width: 220px; height: auto; display: block;
