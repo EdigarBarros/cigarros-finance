@@ -13,17 +13,22 @@ import { FormSaldoInicial } from './SaldoInicial'
 import type { SaldoCorrido, SaldoDoMes } from '../lib/saldoCorrido'
 import type { Visao } from '../lib/perfil'
 import { tx } from '../lib/textos'
+import { depoisDaAbertura } from '../lib/abertura'
 
 /**
  * Caixa do gráfico. O gráfico só é criado depois da primeira pintura da página: criar o Chart.js e desenhar os eixos custa
  * dezenas de milissegundos e, junto com o resto da página, deixava a troca de tela travada (a caixa já ocupa o espaço, nada pula).
+ * Na entrada do app, espera também a abertura sair: a entrada do gráfico é desenhada quadro a quadro e roubava quadros
+ * da saída da abertura no celular (e, escondida atrás dela, ninguém via).
  */
 function CaixaDoGrafico({ style, children }: { style?: CSSProperties; children: ReactNode }) {
   const [pronto, setPronto] = useState(false)
   useEffect(() => {
-    let b = 0
-    const a = requestAnimationFrame(() => { b = requestAnimationFrame(() => setPronto(true)) })
-    return () => { cancelAnimationFrame(a); cancelAnimationFrame(b) }
+    let a = 0, b = 0
+    const desistir = depoisDaAbertura(() => {
+      a = requestAnimationFrame(() => { b = requestAnimationFrame(() => setPronto(true)) })
+    })
+    return () => { desistir(); cancelAnimationFrame(a); cancelAnimationFrame(b) }
   }, [])
   return <div className="grafico" style={style}>{pronto ? children : null}</div>
 }

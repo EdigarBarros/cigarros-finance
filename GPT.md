@@ -1339,3 +1339,28 @@ numa versão nova (esta sessão rodou na nuvem, sem o SDK do Android; o `.aab` f
   carga da página, antes da abertura), sem buracos entre quadros na saída. Trava proposital do JavaScript: 29 quadros
   diferentes em 1,2 s no carregamento e 22 em 0,7 s na saída. Animações reduzidas: sai quando carrega. `npx tsc -b`, lint
   sem erro, build, `scripts/painel/testar.mjs` 36/36. Fotos da entrada e da saída nos dois temas, computador e 390 px.
+
+### 19/11/2026 — Claude — Abertura em 3D: pulinhos no celular
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração. O app Android só recebe numa versão nova.
+
+- Relato do Edigar: depois de #253 melhorou, mas ainda havia pulinhos, pelo menos no celular.
+- Medido no app de demonstração como celular (390×844, densidade 3, processador 4× mais lento), com marcas das fases da
+  abertura no rastro. A órbita já não perdia quadros; os 22 quadros perdidos estavam todos na **saída**, e vinham do
+  painel embaixo: (1) os gráficos (Chart.js) e os números que contam (`Numero`) animavam quadro a quadro em JavaScript,
+  escondidos atrás da cortina; (2) transições de cor do topo do celular (fundo e texto dos botões) duravam ~0,9 s. Cor e
+  canvas não andam na placa de vídeo: cada quadro deles fazia a página recalcular, pintar e reenviar tudo, roubando
+  quadros da saída.
+- `lib/abertura.ts`: `marcarAberturaNaTela` (só a abertura chama, de entrar até sair de vez) e `depoisDaAbertura(f)`.
+  `CaixaDoGrafico` (Graficos.tsx) e `Numero` esperam a abertura sair para começar: agora a entrada deles é vista. Enquanto
+  ela está na tela, `html[data-abertura]` desliga as transições do painel (`abertura.css`); as cores mudam na hora.
+- Saída mais leve no celular: a perspectiva lá é 900, e avançar o símbolo 840 px o deixava ~15× maior (camadas de
+  milhares de pixels). Agora `--sai-z`, `--abre-z` e `--abre-esc` por aparelho (celular: 600 px, 90 px e 2,3). A entrada
+  das peças e do símbolo não cresce mais a partir de quase nada (isso obrigava a redesenhá-las); a luz no celular tem
+  150vmin em vez de 980 px.
+- **Validação:** saída no celular simulado: quadros perdidos 22 → 0/1, maior intervalo entre quadros 31 → 17–19 ms,
+  envios de quadro 157 → 35–48 ms; os quadros perdidos que sobram são do painel depois que a abertura sai. Depois da
+  abertura: o atributo sai, o gráfico é criado e os números contam até o valor certo (computador e 390 px, sem erro de
+  página). Animações reduzidas: sai quando carrega. `npx tsc -b`, lint sem erro, build, `scripts/painel/testar.mjs` 36/36,
+  `testar-movel.cjs` 379 OK.
+- Lição de teste: esperar `.abertura` sumir sem antes esperar ela aparecer passa na hora (a página ainda nem montou).

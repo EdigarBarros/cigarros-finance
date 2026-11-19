@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { temSessaoSalva, useAberturaSegura } from '../lib/abertura'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { marcarAberturaNaTela, temSessaoSalva, useAberturaSegura } from '../lib/abertura'
 import { semMovimento } from '../lib/tema'
 import { tx } from '../lib/textos'
 import { PecaOpus, type NomeDaPeca } from '../pages/FundoOpus'
@@ -63,6 +63,8 @@ export function Abertura() {
   const desde = useRef(0)
   const [vez, setVez] = useState(0)
   const [rodando, setRodando] = useState(false)
+  // gráficos e números do painel só começam a animar quando ela sai de vez (lib/abertura.ts, depoisDaAbertura)
+  useLayoutEffect(() => { marcarAberturaNaTela(fase !== 'fora') }, [fase])
 
   // a cena começa quando as fontes chegam; o tempo mínimo conta daí
   useEffect(() => {

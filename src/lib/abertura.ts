@@ -34,3 +34,29 @@ export function useAberturaSegura() {
 export function temSessaoSalva() {
   try { return Object.keys(localStorage).some((k) => /^sb-.+-auth-token$/.test(k)) } catch { return false }
 }
+
+/**
+ * A abertura está na tela (entrando, girando ou saindo)? Quem anima por JavaScript, quadro a quadro (gráficos, números que
+ * contam), espera ela sair: cada quadro desses faz a página redesenhar e mandar tudo de novo para a placa de vídeo, o que
+ * roubava quadros da saída da abertura no celular (os "pulinhos"); e escondida atrás dela a animação nem era vista.
+ */
+let naTela = false
+const ouvintesDaTela = new Set<() => void>()
+
+/** Só a abertura (components/Abertura.tsx) chama: avisa quando entra e quando sai de vez. */
+export function marcarAberturaNaTela(sim: boolean) {
+  if (naTela === sim) return
+  naTela = sim
+  // e, enquanto ela está na tela, o painel embaixo não faz transições (abertura.css): as cores do topo mudavam devagar
+  // atrás dela, e cor não anda na placa de vídeo (a página era repintada a cada quadro da saída)
+  document.documentElement.toggleAttribute('data-abertura', sim)
+  ouvintesDaTela.forEach((f) => f())
+}
+
+/** Roda `f` quando a abertura não estiver na tela (na hora, se ela já não estiver). Devolve como desistir. */
+export function depoisDaAbertura(f: () => void): () => void {
+  if (!naTela) { f(); return () => {} }
+  const ver = () => { if (!naTela) { ouvintesDaTela.delete(ver); f() } }
+  ouvintesDaTela.add(ver)
+  return () => { ouvintesDaTela.delete(ver) }
+}
