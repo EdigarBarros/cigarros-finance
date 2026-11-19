@@ -158,7 +158,7 @@ export function HeroDeslizante({ paginas, aoMudar, inicial = 0 }: { paginas: Pag
             {p.selo && <SeloDoMes selo={p.selo} tabIndex={n === fixa ? undefined : -1} />}
             <p className="hero-movel-rotulo">{p.rotulo}</p>
             <p className="hero-movel-valor" style={{ fontSize: tamanhoDoValor(p.valor) }}>{p.valor}</p>
-            {p.sub && <p className={`hero-movel-sub ${p.subAlerta ? 'alerta' : ''}`}>{p.subAlerta && <Icone nome="alerta" tamanho={15} />}{p.sub}</p>}
+            {p.sub && <p className={`hero-movel-sub ${p.subAlerta ? 'vai-faltar' : ''}`}>{p.subAlerta && <Icone nome="alerta" tamanho={15} />}{p.sub}</p>}
             {p.pilula && <button className="hero-movel-pilula" onClick={p.pilula.acao} tabIndex={n === fixa ? undefined : -1}>{p.pilula.texto}</button>}
           </div>
         ))}

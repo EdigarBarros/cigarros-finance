@@ -78,7 +78,7 @@
   font-variant-numeric: tabular-nums; text-shadow: 0 2px 18px rgba(0, 0, 0, .18);
 }
 .hero-movel-sub { margin: 2px 0 0; max-width: 32ch; font-size: 14px; color: rgba(255, 255, 255, .82); }
-.hero-movel-sub.alerta { display: inline-flex; align-items: center; gap: 5px; color: #ffc2c8; font-weight: 600; }
+.hero-movel-sub.vai-faltar { max-width: 100%; margin-top: 6px; padding: 5px 12px 5px 10px; font-size: 13.5px; }
 .hero-movel-pagina .selo-do-mes { margin-bottom: 2px; }
 .hero-movel-pilula {
   margin-top: 12px; height: 44px; padding: 0 22px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .2);

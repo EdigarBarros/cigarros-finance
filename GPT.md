@@ -1217,3 +1217,17 @@ assinar depois; a chave baixada do Drive foi apagada da máquina.
 - `testar-grade-pc.cjs` 70/70 nos dois temas (novos: cartão preso enquanto cresce, nenhuma linha cortada no meio do
   arrasto e depois, diminuindo as linhas somem junto, Consultor e Dinheiro guardado largos e baixos sem corte, esticar só
   para o lado não trava a altura). `scripts/painel/testar.mjs` 34/34, `npx tsc -b`, lint e build.
+
+### 18/11/2026 — Claude — Topo da Início: contraste do "Pode faltar"
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração.
+
+- Relato do Edigar (capturas nos dois temas): o aviso "Pode faltar … no fim do mês" no topo verde ficava rosa sobre rosa no
+  claro e escuro avermelhado no escuro. Causa: a linha usava a classe `alerta`, que já é a das caixas de aviso do app
+  (`index.css`, fundo rosa com texto `--alerta-texto`) e pintava por cima. Agora é `vai-faltar` (`cartoes.css`): texto
+  branco num vidro escuro com borda e ícone coral, igual nos dois temas e numa linha só no celular. Lição: não usar nomes
+  de classe genéricos que já existam no `index.css`.
+- Conferido no app de demonstração com uma saída futura que deixa a previsão negativa: computador e celular (390 px), claro
+  e escuro, texto branco.
+- Nota da máquina: com pouca memória livre, o `npm run build` falhou alocando memória no rolldown; com
+  `RAYON_NUM_THREADS=1` passou.
