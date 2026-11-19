@@ -624,6 +624,39 @@ export const CASOS: Caso[] = [
       igual('norm', n, { '2026-11': { em: 'y', partes: [{ entrada: 'a', conta: 'b', valor: 10 }] } })
     },
   },
+  {
+    nome: 'planejamento do mês: parcelas atrasadas da mesma dívida numa ficha só',
+    rodar: () => {
+      // a dívida do Mercado Pago feita de várias compras: 3 dias de vencimento atrasados (6 parcelas) e 1 deste mês
+      const pg = (descricao: string, valor: number, vence: string, mais: Partial<PagamentoPlanejado> = {}): PagamentoPlanejado => ({
+        descricao, valor, vence, origem: 'parcela', pagarEm: null, atraso: 0, custo: 0, taxaMes: 17.5, multa: 0.02, estimada: false, fonte: null, fonteData: null, ...mais,
+      })
+      const plano = {
+        comSaldo: false,
+        fontes: [{ data: '2026-11-20', valor: 1000, descricao: 'Salário' }],
+        pagamentos: [],
+        semDinheiro: [
+          pg('Mercado Pago', 87.82, '2026-03-02', { grupo: 'mp', pecas: 2 }), pg('Mercado Pago', 189.04, '2026-03-30', { grupo: 'mp', pecas: 4 }),
+          pg('Mercado Pago', 100, '2026-04-28', { grupo: 'mp', pecas: 1 }), pg('Mercado Pago', 50, '2026-11-28', { grupo: 'mp', pecas: 1 }),
+          pg('Acordo Vivo', 31.04, '2026-10-26', { grupo: 'vivo', pecas: 1 }), pg('Aluguel', 900, '2026-11-22', { origem: 'conta' }),
+        ],
+      } as unknown as Plano
+      const q = quadroDoMes(plano, '2026-11-19', 'este')
+      const mp = q.destinos.filter((d) => d.nome === 'Mercado Pago')
+      igual('mercado pago: a ficha das atrasadas e a deste mês', mp.length, 2)
+      perto('a ficha soma as atrasadas', mp[0].valor, 376.86)
+      igual('conta as parcelas de verdade', mp[0].juntas?.parcelas, 7)
+      igual('desde a mais antiga', mp[0].vence, '2026-03-02')
+      igual('atrasada', mp[0].atrasada, true)
+      certo('vencimento médio entre a mais antiga e a mais nova', mp[0].juntas!.venceMedio > '2026-03-02' && mp[0].juntas!.venceMedio < '2026-04-28')
+      igual('a deste mês fica separada', mp[1].juntas, undefined)
+      igual('uma atrasada sozinha não vira grupo', q.destinos.find((d) => d.nome === 'Acordo Vivo')?.juntas, undefined)
+      // pagar a ficha: entra o que cabe, uma vez só
+      const r = por(q, [], mp[0].id, q.fontes[0].id)
+      perto('paga a ficha inteira', r.valor, 376.86)
+      certo('o custo conta do vencimento médio', custoDa(q, r.partes[0]) > 0)
+    },
+  },
 ]
 
 export function rodar(filtro?: string): number {

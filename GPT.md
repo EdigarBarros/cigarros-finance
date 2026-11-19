@@ -1375,3 +1375,21 @@ numa versão nova (esta sessão rodou na nuvem, sem o SDK do Android; o `.aab` f
   com `both`, começando da posição em que o símbolo para.
 - **Validação:** posição vertical do símbolo medida a cada 60 ms no app de demonstração (390×844) depois da chegada:
   variação 0 px. `npx tsc -b`, build.
+
+### 19/11/2026 — Claude — Planejamento: dívida do Mercado Pago aparecia repetida
+
+**Problema (relatado pelo dono, testando no celular).** No Planejamento apareciam várias fichas "Mercado Pago" iguais.
+Conferido nos dados dele (só leitura): é uma dívida só, feita de 5 compras parceladas, com 16 parcelas atrasadas que vencem
+em 6 dias diferentes. O calendário da dívida junta as parcelas por dia, e cada dia virava uma ficha com o mesmo nome. Além
+disso, a mesma dívida aparecia de novo como "adiantar a dívida": por não ter parcela fixa, o motor a tratava também como
+dívida aberta.
+
+**Correção.** `lib/planejamento.ts`: as parcelas atrasadas da mesma dívida viram uma ficha só (`juntas`: quantas parcelas
+de verdade e o vencimento médio pelo valor, de onde conta o custo); a do mês fica à parte. As parcelas levam o id da dívida
+(`grupo`) e quantas compras vencem no dia (`pecas`) de `lib/analise.ts` até `lib/planejador.ts`. Dívida com compras
+parceladas (`partes`) não conta mais como dívida aberta (`semParcelaFixa` em `lib/analise.ts`), no Planejamento e no
+planejador de pagamentos.
+
+**Validação.** `npx tsc -b`, `npm run lint` (sem erro), `node scripts/painel/testar.mjs` 37/37 (caso novo com uma dívida de
+várias compras), `testar-planejamento.cjs` 40/40, `testar-movel.cjs` sem falha e o app de demonstração com uma dívida
+fictícia no formato da dele: uma ficha só, "8 parcelas atrasadas, desde 2 de mar".

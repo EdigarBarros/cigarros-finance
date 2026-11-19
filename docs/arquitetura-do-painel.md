@@ -634,8 +634,11 @@ tudo, em tela cheia, com **Este mês** e **Mês que vem**.
 - **De onde vêm as peças.** Nada é lançado aqui; o motor só lê o planejador de pagamentos (`plano` de `lib/analise.ts`).
   Entradas: as que ainda vão cair no mês (`plano.fontes`; no mesmo dia, juntas) e, neste mês, **O que está na conta**
   (o saldo de hoje, quando é conhecido). Contas: as contas, parcelas, faturas e repetidas que vencem no mês, e as
-  atrasadas no mês de hoje. Também entram até 3 **dívidas abertas** com juros (para adiantar) e até 3 **metas** (para
-  guardar); sem meta, um "Guardar". `quadroDoMes()` monta isso; a análise guarda os dois meses em `a.quadros`.
+  atrasadas no mês de hoje. As **parcelas atrasadas da mesma dívida** viram uma ficha só ("Mercado Pago · 16 parcelas
+  atrasadas, desde 2 de mar"): o valor é a soma, e o custo de esperar conta do vencimento médio, pesado pelo valor. A
+  parcela deste mês fica numa ficha à parte. Também entram até 3 **dívidas abertas** com juros (para adiantar: só as sem
+  parcela fixa e sem compras parceladas, que já entram pelas parcelas) e até 3 **metas** (para guardar); sem meta, um
+  "Guardar". `quadroDoMes()` monta isso; a análise guarda os dois meses em `a.quadros`.
 - **Jogar.** No computador, arraste a conta da bandeja **Sem dinheiro ainda** para dentro de uma barra; em qualquer
   aparelho, toque na conta e depois na barra (no celular a bandeja fica presa embaixo). Entra o que cabe (`por()`): o
   menor entre o que sobra na entrada e o que falta na conta. O resto continua na bandeja ("faltam R$ 250 de R$ 500"),

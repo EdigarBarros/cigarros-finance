@@ -348,6 +348,10 @@ export interface Evento {
   vence?: string
   /** Juros da dívida em % ao mês, quando a pessoa informou (parcelas). */
   jurosMes?: number | null
+  /** De qual dívida é a parcela (o id), para juntar as atrasadas da mesma dívida no Planejamento. */
+  grupo?: string
+  /** Quantas parcelas de verdade vencem nesse dia (dívida feita de várias compras). */
+  pecas?: number
 }
 
 export interface DiaDaAgenda {
@@ -1402,6 +1406,7 @@ export function analisar(e: EntradaAnalise): Analise {
         valor: centavos(pc.falta + (sd.atraso?.porParcela.get(pc.n) ?? 0)), origem: 'parcela',
         // atrasada: o custo de esperar é o juro do atraso, quando a dívida tem essa regra
         atrasada: pc.vencimento < hojeIso, jurosMes: pc.vencimento < hojeIso ? jurosQuePesam(sd) : sd.divida.juros_mes ?? null,
+        grupo: sd.divida.id, pecas: pc.partes?.length || 1,
       })
     }
     // o que se repete todo mês e ainda não veio (este mês, se o dia não passou faz tempo) ou virá (o mês que vem)
@@ -1603,6 +1608,9 @@ export function analisar(e: EntradaAnalise): Analise {
     const calendario = { ano, mes, hoje: diaHoje, dias: cal.map((c) => ({ dia: c.dia, entra: centavos(c.entra), sai: centavos(c.sai) })) }
     const entradaFutura = dias.find((d) => d.entradas.length)
     const menor = dias.length ? dias.reduce((m, d) => (d.saldo < m.saldo ? d : m)) : null
+    // Dívida aberta = sem parcela fixa e correndo juros. A feita de compras parceladas (partes) já entra pelas parcelas:
+    // tratá-la também como aberta a punha duas vezes (no Planejamento, a ficha das parcelas e outra de "adiantar").
+    const semParcelaFixa = (sd: SituacaoDivida) => !(sd.divida.valor_parcela && sd.divida.valor_parcela > 0) && !sd.divida.partes?.length && (sd.divida.juros_mes ?? 0) > 0
     // o planejador: de qual dinheiro sai cada conta e em que dia pagar
     plano = planejar({
       hoje: hojeIso, fim: fimJanela, saldoInicial, ritmoDia, porDiaDoMes: previsao?.porDia ?? null,
@@ -1610,12 +1618,13 @@ export function analisar(e: EntradaAnalise): Analise {
       entradas: dias.filter((d) => d.entradas.length).map((d) => ({ data: d.data, valor: totalDe(d.entradas), descricao: nomesDe(d.entradas) })),
       compromissos: unicos.filter((ev) => ev.tipo === 'saida').map((ev) => ({
         descricao: ev.descricao, valor: ev.valor, vence: ev.vence ?? ev.data, origem: ev.origem, jurosMes: ev.jurosMes ?? null,
+        grupo: ev.grupo, pecas: ev.pecas,
       })),
-      abertas: abertas.filter((sd) => !(sd.divida.valor_parcela && sd.divida.valor_parcela > 0) && (sd.divida.juros_mes ?? 0) > 0)
+      abertas: abertas.filter(semParcelaFixa)
         .map((sd) => ({ nome: sd.divida.descricao, saldo: sd.restanteHoje, juros: sd.divida.juros_mes! })),
     })
     const extras = {
-      abertas: abertas.filter((sd) => !(sd.divida.valor_parcela && sd.divida.valor_parcela > 0) && (sd.divida.juros_mes ?? 0) > 0)
+      abertas: abertas.filter(semParcelaFixa)
         .map((sd) => ({ nome: sd.divida.descricao, saldo: sd.restanteHoje, juros: sd.divida.juros_mes! })),
       metas: [...e.metas].sort((a, b) => a.ordem - b.ordem).map((m) => ({ id: m.id, nome: m.nome })),
     }
