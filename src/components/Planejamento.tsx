@@ -102,6 +102,12 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
   const [usarGuardado, setUsarGuardado] = useState(() => planejamento[base.mes]?.comGuardado === true)
   const q = useMemo(() => comGuardado(base, usarGuardado), [base, usarGuardado])
   const [partes, setPartes] = useState<Parte[]>(() => (planejamento[base.mes] ? valerPartes(quadroDoPlano(base, planejamento[base.mes]), planejamento[base.mes].partes) : []))
+  // O que mexer na mesa é rascunho: só vale (e só o Consultor lê) depois de "Salvar plano". "Descartar" volta ao salvo.
+  const [salvo, setSalvo] = useState(() => ({ partes, usarGuardado }))
+  const mudou = usarGuardado !== salvo.usarGuardado || JSON.stringify(partes) !== JSON.stringify(salvo.partes)
+  /** Sair (fechar ou trocar de mês) com mudança sem salvar pergunta antes; guarda aqui o que fazer depois da resposta. */
+  const [pergunta, setPergunta] = useState<{ depois: () => void } | null>(null)
+  const [salvou, setSalvou] = useState(0)
 
   const [escolhida, setEscolhida] = useState<string | null>(null)
   const [mira, setMira] = useState<string | null>(null)
@@ -121,19 +127,30 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
     return () => window.clearTimeout(t)
   }, [aviso])
 
-  // gravar: na hora no aparelho, no banco depois de parar (useDados); enquanto puxa a borda, só no fim
-  const salvarRef = useRef(salvar)
-  const planRef = useRef(planejamento)
-  useEffect(() => { salvarRef.current = salvar; planRef.current = planejamento })
-  const primeira = useRef(true)
+  // Salvar: na hora no aparelho, no banco logo depois (useDados). Descartar: volta ao último salvo.
+  const gravar = () => {
+    salvar({ ...planejamento, [q.mes]: { partes, em: new Date().toISOString(), ...(usarGuardado ? { comGuardado: true } : {}) } })
+    setSalvo({ partes, usarGuardado })
+    setSalvou((n) => n + 1)
+    avisar(tx('Plano salvo. O Consultor já está usando ele.'), 'bom')
+    vibrar()
+  }
+  const descartar = () => {
+    setPartes(salvo.partes)
+    setUsarGuardado(salvo.usarGuardado)
+    setAjuste(null)
+    setEscolhida(null)
+    setRecem(null)
+    avisar(tx('Mudanças descartadas. O plano voltou ao último salvo.'))
+  }
+  const sair = (depois: () => void) => (mudou ? setPergunta({ depois }) : depois())
+  // recarregar ou fechar a aba com mudança sem salvar: o navegador pergunta
   useEffect(() => {
-    if (primeira.current) { primeira.current = false; return }
-    if (puxando) return
-    const t = window.setTimeout(() => salvarRef.current({
-      ...planRef.current, [q.mes]: { partes, em: new Date().toISOString(), ...(usarGuardado ? { comGuardado: true } : {}) },
-    }), 250)
-    return () => window.clearTimeout(t)
-  }, [partes, puxando, usarGuardado]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (!mudou) return
+    const segurar = (e: BeforeUnloadEvent) => { e.preventDefault() }
+    window.addEventListener('beforeunload', segurar)
+    return () => window.removeEventListener('beforeunload', segurar)
+  }, [mudou])
 
   /** Liga ou desliga o dinheiro guardado. Desligar tira do plano o que saía dele (essas contas voltam para a bandeja). */
   const trocarGuardado = (usar: boolean) => {
@@ -166,13 +183,15 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
   useEffect(() => {
     const tecla = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
-      if (ajuste) setAjuste(null)
+      if (pergunta) setPergunta(null)
+      else if (ajuste) setAjuste(null)
       else if (escolhida) setEscolhida(null)
+      else if (mudou) setPergunta({ depois: aoFechar })
       else aoFechar()
     }
     window.addEventListener('keydown', tecla)
     return () => window.removeEventListener('keydown', tecla)
-  }, [ajuste, escolhida, aoFechar])
+  }, [ajuste, escolhida, aoFechar, pergunta, mudou])
   useEffect(() => { raiz.current?.focus({ preventScroll: true }) }, [])
 
   // ---------- pôr uma conta numa entrada ----------
@@ -310,15 +329,25 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
     <div className={`pj ${semMovimento() ? 'parado' : ''} ${emJogo ? 'em-jogo' : ''} ${puxando ? 'puxando' : ''}`} ref={raiz} tabIndex={-1} role="dialog" aria-modal="true" aria-label={tx('Planejar o mês')}>
       <div className="pj-palco">
         <header className="pj-cab">
-          <button className="pj-fechar" onClick={aoFechar} aria-label={tx('Fechar')}><Icone nome="fechar" tamanho={18} /></button>
+          <button className="pj-fechar" onClick={() => sair(aoFechar)} aria-label={tx('Fechar')}><Icone nome="fechar" tamanho={18} /></button>
           <div className="pj-titulo">
             <h2>{tx('Planejar o mês')}</h2>
             <p>{tx('Divida cada dinheiro que entra entre as contas.')}</p>
           </div>
           <div className="pj-meses" role="tablist" style={{ '--i': qual === 'este' ? 0 : 1 } as CSSProperties}>
             <i aria-hidden="true" />
-            <button role="tab" aria-selected={qual === 'este'} onClick={() => setQual('este')}>{tx('Este mês')}</button>
-            <button role="tab" aria-selected={qual === 'proximo'} onClick={() => setQual('proximo')}>{tx('Mês que vem')}</button>
+            <button role="tab" aria-selected={qual === 'este'} onClick={() => qual !== 'este' && sair(() => setQual('este'))}>{tx('Este mês')}</button>
+            <button role="tab" aria-selected={qual === 'proximo'} onClick={() => qual !== 'proximo' && sair(() => setQual('proximo'))}>{tx('Mês que vem')}</button>
+          </div>
+          <div className={`pj-salvar ${mudou ? 'mudou' : ''}`} aria-live="polite">
+            {mudou ? (
+              <>
+                <button className="btn pj-descartar" onClick={descartar}><Icone nome="desfazer" tamanho={15} /> {tx('Descartar')}</button>
+                <button className="btn primario pj-gravar" onClick={gravar}><i aria-hidden="true" /> {tx('Salvar plano')}</button>
+              </>
+            ) : (
+              <span key={salvou} className={`pj-salvo ${salvou ? 'agora' : ''}`}><Icone nome="check" tamanho={14} /> {tx('Plano salvo')}</span>
+            )}
           </div>
         </header>
 
@@ -354,6 +383,11 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
               )))}
             </section>
 
+            <aside className="pj-consultor">
+              <Dicas dicas={dicas} aoUsarGuardado={() => trocarGuardado(true)}
+                aoFazer={(conta, entrada) => colocar(conta, entrada, document.querySelector(`[data-conta="${CSS.escape(conta)}"]`)?.getBoundingClientRect())} />
+            </aside>
+
             <aside className="pj-lado">
               <section className={`pj-bandeja ${emJogo ? 'ativa' : ''}`} aria-label={tx('Sem dinheiro ainda')}>
                 <header>
@@ -370,8 +404,6 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
                   ))}
                 </div>
               </section>
-              <Dicas dicas={dicas} aoUsarGuardado={() => trocarGuardado(true)}
-                aoFazer={(conta, entrada) => colocar(conta, entrada, document.querySelector(`[data-conta="${CSS.escape(conta)}"]`)?.getBoundingClientRect())} />
             </aside>
           </div>
         )}
@@ -386,6 +418,21 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
         aoMudar={(v) => setPartes((ps) => mudarParte(q, ps, ajuste.entrada, ajuste.conta, v))}
         aoFechar={() => setAjuste(null)} />}
       {aviso && <div key={aviso.id} className={`pj-aviso ${aviso.tom}`} role="status">{aviso.texto}</div>}
+      {pergunta && (
+        <>
+          <div className="pj-ajuste-fundo" onClick={() => setPergunta(null)} />
+          <div className="pj-pergunta" role="alertdialog" aria-modal="true" aria-labelledby="pj-pergunta-titulo">
+            <span className="pj-pergunta-ic"><Icone nome="lapis" tamanho={22} /></span>
+            <h3 id="pj-pergunta-titulo">{tx('Salvar as mudanças do plano?')}</h3>
+            <p>{tx('Você mexeu no plano e ainda não salvou. Sem salvar, o Consultor continua usando o plano de antes.')}</p>
+            <span className="pj-pergunta-botoes">
+              <button className="btn" onClick={() => setPergunta(null)}>{tx('Continuar mexendo')}</button>
+              <button className="btn pj-descartar" onClick={() => { const d = pergunta.depois; setPergunta(null); d() }}>{tx('Sair sem salvar')}</button>
+              <button className="btn primario" onClick={() => { const d = pergunta.depois; gravar(); setPergunta(null); d() }}>{tx('Salvar e sair')}</button>
+            </span>
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -541,7 +588,10 @@ function Dicas({ dicas, aoFazer, aoUsarGuardado }: { dicas: ReturnType<typeof di
   if (!dicas.length) return null
   return (
     <section className="pj-dicas" aria-live="polite">
-      <h3><Icone nome="bussola" tamanho={15} /> {tx('O Consultor diz')}</h3>
+      <header className="pj-dicas-cab">
+        <span className="pj-dicas-avatar" aria-hidden="true"><Icone nome="bussola" tamanho={18} /></span>
+        <span><h3>{tx('O Consultor diz')}</h3><small>{tx('Comenta enquanto você monta')}</small></span>
+      </header>
       <ul>
         {dicas.map((d) => (
           <li key={d.id} className={d.tom}>

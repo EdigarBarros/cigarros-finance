@@ -666,6 +666,13 @@ tudo, em tela cheia, com **Este mês** e **Mês que vem**.
 - **O Consultor lê o plano** (`conselhosDoPlanejamento()`, no plano de ação): "Seu plano paga X depois do vencimento" e
   "No seu plano, X ainda está sem dinheiro". Sem plano, com 2 entradas ou mais e 3 contas ou mais no mês, sugere planejar.
   Mexer no plano refaz a análise, mas não conta como mudança nos dados (o aviso "Analisei a mudança" não aparece).
+- **Salvar e descartar.** O que se faz na mesa é rascunho: só vale (e só o Consultor lê) depois de **Salvar plano**, no
+  cabeçalho. Com mudança sem salvar, aparecem **Descartar** (volta ao último salvo) e **Salvar plano** (com um ponto
+  pulsando); salvo, fica o selo "Plano salvo". Fechar (X ou Esc) ou trocar de mês com mudança sem salvar pergunta antes:
+  Salvar e sair, Continuar mexendo ou Sair sem salvar. Recarregar a página com mudança sem salvar, o navegador pergunta.
+- **Onde fica o Consultor.** Nas telas de 1360 px ou mais, a mesa tem três colunas: o Consultor à esquerda (acompanha a
+  rolagem), o dinheiro no meio e a bandeja à direita. Abaixo disso, ele fica embaixo da bandeja; no celular, depois das
+  entradas.
 - **Onde fica.** `perfis.consultor.planejamento` (a coluna da memória, migração 24; sem migração nova) e no aparelho
   (`opuscash-planejamento-<id>`), por mês `AAAA-MM`, só o mês de hoje e o próximo. Entre as duas cópias vale, mês a mês,
   a mexida por último. Ao abrir, `valerPartes()` confere o plano guardado: some a parte cuja conta foi paga ou cuja
