@@ -9,11 +9,11 @@ import type { Banco, Categoria, Lancamento } from '../lib/types'
 import { Icone } from '../components/Icone'
 import { CenaLancamentos } from '../components/Vazios'
 import { Segmentado } from '../components/ui'
-import { AnelVivo, Vitrine } from '../components/Vitrine'
 import { Seletor } from '../components/Escolhas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 import { somaPrevistos, type Previsto } from '../lib/previstos'
+import { ResumoDoMes } from './lancamentos/ResumoDoMes'
 import { doisDig, somaDias, somaTipo, useLancamentosFiltrados, type Filtro } from './lancamentos/useLancamentos'
 
 export const SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', tx('sáb')]
@@ -26,7 +26,7 @@ const SEMANA_LETRA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
  */
 export function Lancamentos(c: Ctx) {
   const {
-    tipo, setTipo, banco, setBanco, forma, setForma, categoria, dia, setCategoria, setDia, ordem, setOrdem, todasCategorias, setTodasCategorias, busca, setBusca, hoje, pesquisando, origem, temNoMes, previstos, comCalendario, noCartao, comprasNoCartao, totalNoCartao, semDia, filtrados, grupos, tipoChips, chips, entrou, saiu, filtrando, limpar, formasDoMes, valorDaForma, bancoDe, cartaoDe, totalChips, chipsVisiveis, comBancos, comFormas, parteSaiu, nivel,
+    tipo, setTipo, banco, setBanco, forma, setForma, categoria, dia, setCategoria, setDia, ordem, setOrdem, todasCategorias, setTodasCategorias, busca, setBusca, hoje, pesquisando, origem, temNoMes, previstos, comCalendario, noCartao, comprasNoCartao, totalNoCartao, semDia, filtrados, grupos, tipoChips, chips, entrou, saiu, filtrando, limpar, formasDoMes, valorDaForma, bancoDe, cartaoDe, totalChips, chipsVisiveis, comBancos, comFormas, nivel,
   } = useLancamentosFiltrados(c)
   const cartao = (l: Lancamento, i: number, mostrarData: boolean) => (
     <CartaoLancamento key={l.id} l={l} indice={i} categoria={c.categoriaDe(l)} banco={bancoDe(l)} cartao={cartaoDe(l)} emprestimo={ehEmprestimo(l, c.d.dividas)}
@@ -100,19 +100,10 @@ export function Lancamentos(c: Ctx) {
             <NoDia dia={dia} hoje={hoje} lancs={semDia.filter((l) => l.data === dia)} previstos={previstos.get(dia) ?? []} aoFechar={() => setDia(null)}
               aoAbrir={(p) => c.irPara(p.origem === 'conta' ? 'contas' : p.origem === 'cartao' ? 'cartoes' : 'dividas')} />
           )}
-          {(entrou > 0 || saiu > 0 || filtrando) && !(dia && comCalendario) && <Vitrine cor={entrou - saiu < 0 ? 'var(--saida)' : 'var(--entrada)'} className="lc-vitrine"
-            visual={(entrou > 0 || saiu > 0) ? (
-              <AnelVivo valor={parteSaiu} cor={parteSaiu >= 1 ? 'var(--saida)' : parteSaiu >= 0.85 ? 'var(--divida)' : 'var(--caixa)'} cor2="var(--entrada)" tamanho={c.mobile ? 118 : 132} espessura={12}>
-                <b>{entrou > 0 ? `${Math.round((saiu / entrou) * 100)}%` : '—'}</b><small>{tx('do que entrou saiu')}</small>
-              </AnelVivo>
-            ) : undefined}
-            rotulo={<><Icone nome={entrou - saiu < 0 ? 'desce' : 'sobe'} tamanho={16} /> {entrou - saiu < 0 ? tx('Faltou') : tx('Sobrou')}</>}
-            valor={Math.abs(entrou - saiu)} formato={fmtValor}
-            pilulas={[
-              { icone: 'receber', rotulo: tx('Entrou'), valor: fmtValor(entrou), cor: 'var(--entrada)', tom: 'bom' },
-              { icone: 'enviar', rotulo: tx('Saiu'), valor: fmtValor(saiu), cor: 'var(--saida)' },
-              ...(nivel === 'detalhado' && filtrados.length ? [{ icone: 'lista', rotulo: tx('Lançamentos'), valor: String(filtrados.length), cor: 'var(--violeta)' }] : []),
-            ]} />}
+          {(entrou > 0 || saiu > 0 || filtrando) && !(dia && comCalendario) && (
+            <ResumoDoMes lancs={filtrados} entrou={entrou} saiu={saiu} ano={c.ano} mes={c.mes} hoje={hoje}
+              quantos={nivel === 'detalhado' && filtrados.length ? filtrados.length : undefined} />
+          )}
 
           {(temNoMes || filtrando) && (
             <section className="lc-barra">

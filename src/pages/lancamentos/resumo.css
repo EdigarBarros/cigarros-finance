@@ -1,0 +1,81 @@
+/* O resumo do topo de Lançamentos (pages/lancamentos/ResumoDoMes.tsx): o número, a balança e o mês dia a dia. */
+.rm-caixa { container-type: inline-size; min-width: 0; }
+.rm {
+  --c: var(--entrada);
+  position: relative; display: grid; grid-template-columns: minmax(200px, 1.05fr) minmax(220px, 1.2fr) minmax(200px, 1fr);
+  align-items: center; gap: 22px 28px; padding: 20px 24px; overflow: hidden; border-radius: 24px;
+  background:
+    radial-gradient(90% 160% at 0% 0%, color-mix(in srgb, var(--c) 16%, transparent), transparent 55%),
+    var(--superficie);
+  border: 1px solid color-mix(in srgb, var(--c) 22%, var(--borda));
+}
+.rm.falta { --c: var(--saida); }
+
+/* o número */
+.rm-numero { display: grid; gap: 8px; justify-items: start; min-width: 0; }
+.rm-rotulo { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--texto-2); }
+.rm-rotulo svg { color: var(--c); }
+.rm-valor {
+  font-family: var(--fonte-numeros); font-size: clamp(30px, 6cqi, 44px); font-weight: 780; letter-spacing: -.035em; line-height: 1;
+  color: var(--c); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.rm-fichas { display: flex; flex-wrap: wrap; gap: 6px; }
+.rm-ficha {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 11px 0 6px; border-radius: 999px;
+  font-size: 12.5px; color: var(--texto-2); background: var(--superficie-2); border: 1px solid var(--borda);
+}
+.rm-ficha b { color: var(--texto); font-variant-numeric: tabular-nums; }
+/* um anelzinho que enche com o quanto saiu */
+.rm-ficha > i {
+  width: 16px; height: 16px; border-radius: 50%; flex: none;
+  background: conic-gradient(var(--c) calc(var(--p) * 360deg), color-mix(in srgb, var(--c) 18%, transparent) 0);
+  -webkit-mask: radial-gradient(circle, transparent 4px, #000 4.5px); mask: radial-gradient(circle, transparent 4px, #000 4.5px);
+}
+.rm-ficha.neutra { padding-left: 10px; }
+
+/* a balança */
+.rm-balanca { display: grid; gap: 14px; min-width: 0; }
+.rm-barra { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 4px 9px; }
+.rm-barra-ic { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 9px; color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent); }
+.rm-barra-rotulo { font-size: 13.5px; font-weight: 600; color: var(--texto-2); }
+.rm-barra-valor { font-family: var(--fonte-numeros); font-size: 15px; font-weight: 700; color: var(--texto); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rm-trilho { grid-column: 1 / -1; height: 12px; border-radius: 999px; background: var(--preench-3); overflow: hidden; }
+.rm-trilho i {
+  position: relative; display: block; width: calc(var(--p) * 100%); height: 100%; border-radius: inherit; background: var(--c);
+  transform-origin: 0 50%; animation: rm-estica .9s var(--deslize) backwards;
+}
+/* a ponta que passa da outra barra: listrada, com o que sobrou (ou faltou) */
+.rm-trilho em {
+  position: absolute; top: 0; right: 0; bottom: 0; width: calc(var(--s) / var(--p) * 100%); border-radius: 0 999px 999px 0;
+  background: repeating-linear-gradient(-45deg, rgba(255, 255, 255, .38) 0 4px, transparent 4px 8px);
+}
+@keyframes rm-estica { from { transform: scaleX(0); } }
+
+/* o mês dia a dia */
+.rm-dias { position: relative; display: grid; gap: 4px; margin: 0; min-width: 0; }
+.rm-dias figcaption { font-size: 12.5px; font-weight: 600; color: var(--texto-2); }
+.rm-dias svg { display: block; width: 100%; height: 96px; overflow: visible; }
+.rm-zero { stroke: var(--texto-3); stroke-width: 1; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
+.rm-linha { fill: none; stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.rm-linha.cima { stroke: var(--entrada); }
+.rm-linha.baixo { stroke: var(--saida); }
+.rm-hoje { stroke: var(--texto-3); stroke-width: 1; opacity: .5; vector-effect: non-scaling-stroke; }
+.rm-grafico { position: relative; }
+.rm-ponto {
+  position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; pointer-events: none;
+  background: var(--entrada); box-shadow: 0 0 0 4px color-mix(in srgb, var(--entrada) 25%, transparent);
+}
+.rm-ponto.baixo { background: var(--saida); box-shadow: 0 0 0 4px color-mix(in srgb, var(--saida) 25%, transparent); }
+.rm-dias-eixo { position: relative; display: flex; justify-content: space-between; font-size: 11px; color: var(--texto-3); font-variant-numeric: tabular-nums; }
+.rm-dias-hoje { position: absolute; transform: translateX(-50%); font-weight: 600; color: var(--texto-2); }
+
+/* pela largura do próprio resumo (a coluna ao lado do calendário é mais estreita que a janela):
+   médio, o dia a dia desce para a linha de baixo, inteiro; estreito, um embaixo do outro */
+@container (max-width: 980px) {
+  .rm { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .rm-dias { grid-column: 1 / -1; }
+  .rm-dias svg { height: 80px; }
+}
+@container (max-width: 560px) {
+  .rm { grid-template-columns: minmax(0, 1fr); padding: 18px; gap: 18px; }
+}
