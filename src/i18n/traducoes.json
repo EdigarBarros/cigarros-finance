@@ -16258,5 +16258,45 @@
   "{0} já foi paga neste mês. Este valor fica como a de {1}, paga adiantada: ele conta neste mês e {1} já aparece como paga.": {
     "en": "{0} was already paid this month. This amount counts as the one for {1}, paid early: it counts this month and {1} already shows as paid.",
     "es": "{0} ya se pagó este mes. Este valor queda como el de {1}, pagado por adelantado: cuenta este mes y {1} ya aparece como pagado."
+  },
+  "{0}: {1} vezes por mês, {2} no total.": {
+    "en": "{0}: {1} times a month, {2} in total.",
+    "es": "{0}: {1} veces por mes, {2} en total."
+  },
+  "Agora": {
+    "en": "Now",
+    "es": "Ahora"
+  },
+  "Não dá para esperar": {
+    "en": "Can’t wait",
+    "es": "No puede esperar"
+  },
+  "Em seguida": {
+    "en": "Next",
+    "es": "Después"
+  },
+  "Muda o seu mês": {
+    "en": "Changes your month",
+    "es": "Cambia tu mes"
+  },
+  "Quando der": {
+    "en": "When you can",
+    "es": "Cuando puedas"
+  },
+  "Melhora com o tempo": {
+    "en": "Pays off over time",
+    "es": "Mejora con el tiempo"
+  },
+  "Ver mais 1 passo": {
+    "en": "Show 1 more step",
+    "es": "Ver 1 paso más"
+  },
+  "Ver mais {0} passos": {
+    "en": "Show {0} more steps",
+    "es": "Ver {0} pasos más"
+  },
+  "Para o plano ficar mais certo": {
+    "en": "To make the plan more accurate",
+    "es": "Para que el plan sea más preciso"
   }
 }

@@ -388,6 +388,11 @@ export interface Agenda {
 
 export type Urgencia = 'urgente' | 'importante' | 'sugestao'
 
+/** Passos que só pedem para a pessoa informar algo: ficam num canto à parte do plano. */
+const PASSOS_DE_DADOS = new Set(['informe-juros', 'categorizar', 'atualizar-saldos', 'informar-guardado'])
+/** Passos para o dinheiro crescer: com o mês em crise, vão para o fim. */
+const PASSOS_DE_CRESCER = new Set(['metas', 'crescer', 'pode-gastar', 'dinheiro-parado', 'limite-parcelas', 'colchao', 'reserva'])
+
 export interface Acao {
   /** Estável, para comparar uma análise com a outra. */
   id: string
@@ -402,7 +407,14 @@ export interface Acao {
   pedido?: number
   destino: Destino
   botao: string
+  /**
+   * Em que etapa do plano o passo entra: agora (o que não espera), em seguida (o que muda o mês), quando der (o que
+   * melhora) ou dados (o que a pessoa informa para o plano ficar certo). A tela agrupa por ela.
+   */
+  etapa?: EtapaDoPlano
 }
+
+export type EtapaDoPlano = 'agora' | 'seguida' | 'depois' | 'dados'
 
 /**
  * Como a pessoa lida com o dinheiro, lido dos números (lib/jeito.ts mostra; aqui muda o que o consultor diz).
@@ -1839,9 +1851,11 @@ export function analisar(e: EntradaAnalise): Analise {
         ? tx('Com {0} a mais por mês, você fica sem dívidas em {1} (e não em {2}) e deixa de pagar cerca de {3} em juros.', fmtValor(dividas.extra), mesAno(recom.fim), mesAno(base.fim), fmtValor(recom.economia))
         : tx('Assim você fica sem dívidas em {0} (e não em {1}) e deixa de pagar cerca de {2} em juros.', mesAno(recom.fim), mesAno(base.fim), fmtValor(recom.economia))
       : recom.fim ? tx('Assim você fica sem dívidas em {0}.', mesAno(recom.fim)) : ''
+    // Com conta atrasada, ou com um extra que mal aparece (menos de 1% do que entra), o passo vira "quando sobrar".
+    const pouco = totalAtraso > 0 || dividas.extra < Math.max(30, renda * 0.01)
     nova({
       id: 'adiantar-divida', urgencia: 'importante', prioridade: dividas.temCara ? 82 : 66, icone: 'divida', destino: 'dividas', botao: tx('Ver dívidas'),
-      titulo: dividas.extraExemplo ? tx('Quando sobrar, adiante primeiro {0}.', alvo.nome) : tx('Adiante {0} com {1} por mês.', alvo.nome, fmtValor(dividas.extra)),
+      titulo: dividas.extraExemplo || pouco ? tx('Quando sobrar, adiante primeiro {0}.', alvo.nome) : tx('Adiante {0} com {1} por mês.', alvo.nome, fmtValor(dividas.extra)),
       porque: `${alvo.juros !== null ? tx('É a primeira da fila: cobra {0}% ao mês.', fmtTaxa(alvo.juros)) : tx('É a primeira da fila.')} ${ganho}`.trim(),
       impacto: recom.economia ? tx('{0} a menos de juros', fmtValor(recom.economia)) : undefined,
     })
@@ -1880,7 +1894,8 @@ export function analisar(e: EntradaAnalise): Analise {
         : tx('As próximas 6 faturas já têm {0} em parcelas.', fmtValor(comprometido)),
     })
   }
-  if (jurosPagos > 0) {
+  // Centavos de tarifa num ano não viram passo: só entra quando passa de 1% do que entra num mês (mínimo de 30).
+  if (jurosPagos >= Math.max(30, renda * 0.01)) {
     nova({
       id: 'juros-pagos', urgencia: 'importante', prioridade: 60, icone: 'historico', destino: cartao && jurosDeFatura > 0 ? 'cartoes' : 'lancamentos',
       botao: cartao && jurosDeFatura > 0 ? tx('Ver cartões') : tx('Ver lançamentos'),
@@ -1949,7 +1964,7 @@ export function analisar(e: EntradaAnalise): Analise {
     const f = formigas[0]
     nova({
       id: `formiga:${chaveDescricao(f.descricao)}`, urgencia: 'sugestao', prioridade: 48, icone: 'lista', destino: 'lancamentos', botao: tx('Ver lançamentos'),
-      titulo: tx('{0}: {1} vezes por mês.', f.descricao, Math.round(f.vezesPorMes)),
+      titulo: tx('{0}: {1} vezes por mês, {2} no total.', f.descricao, Math.round(f.vezesPorMes), fmtValor(f.porMes)),
       porque: tx('Parece pouco ({0} em média), mas soma {1} por mês e {2} por ano. Cortar metade já faz diferença.', fmtValor(f.ticket), fmtValor(f.porMes), fmtValor(f.porAno)),
       impacto: tx('{0} por ano', fmtValor(centavos(f.porAno / 2))),
     })
@@ -2041,6 +2056,17 @@ export function analisar(e: EntradaAnalise): Analise {
     x.prioridade = x.urgencia === 'urgente' ? x.prioridade + Math.max(0, b) / 10 : Math.min(94, x.prioridade + b)
   }
   acoes.sort((a, b) => b.prioridade - a.prioridade || a.id.localeCompare(b.id))
+
+  // As etapas do plano. Com conta atrasada ou dinheiro faltando, o que é para crescer (metas, investir, gastar a mais)
+  // espera: primeiro o mês volta a fechar.
+  const emCrise = acoes.some((x) => x.urgencia === 'urgente')
+  for (const x of acoes) {
+    const base = x.id.split(':')[0]
+    x.etapa = PASSOS_DE_DADOS.has(base) ? 'dados'
+      : x.urgencia === 'urgente' ? 'agora'
+        : emCrise && PASSOS_DE_CRESCER.has(base) ? 'depois'
+          : x.urgencia === 'importante' ? 'seguida' : 'depois'
+  }
 
   // ----- fase: por que e o próximo passo -----
   const fases = infoFases(alvoMeses)
