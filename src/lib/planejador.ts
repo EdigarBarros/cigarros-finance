@@ -24,6 +24,10 @@ export interface Compromisso {
   origem: 'lancamento' | 'conta' | 'parcela' | 'cartao' | 'recorrente'
   /** Juros em % ao mês informados pela pessoa (só nas parcelas de dívida); null = estimar. */
   jurosMes?: number | null
+  /** De qual dívida é a parcela (o id), para o Planejamento juntar as atrasadas da mesma dívida. */
+  grupo?: string
+  /** Quantas parcelas de verdade vencem nesse dia (dívida feita de várias compras). */
+  pecas?: number
 }
 
 export interface EntradaDoPlano {
@@ -78,6 +82,8 @@ export interface PagamentoPlanejado {
   fonte: string | null
   /** O dia em que esse dinheiro entrou (o de hoje, quando sai do saldo). */
   fonteData: string | null
+  grupo?: string
+  pecas?: number
 }
 
 /** Uma decisão do planejador, no mesmo formato das percepções da agenda. */
@@ -185,7 +191,7 @@ export function planejar(e: EntradaPlanejador): Plano {
       pendentes.splice(pendentes.indexOf(p), 1)
       pagamentos.push({
         descricao: p.descricao, valor: p.valor, vence: p.vence, origem: p.origem, pagarEm: d, atraso, custo, taxaMes: p.taxaMes,
-        multa: p.multa, estimada: p.estimada, fonte: fonte?.descricao ?? null, fonteData: fonte?.data ?? null,
+        multa: p.multa, estimada: p.estimada, fonte: fonte?.descricao ?? null, fonteData: fonte?.data ?? null, grupo: p.grupo, pecas: p.pecas,
       })
     }
     caixaNoDia.push({ data: d, caixa: centavos(caixa) })
@@ -197,6 +203,7 @@ export function planejar(e: EntradaPlanejador): Plano {
     return {
       descricao: p.descricao, valor: p.valor, vence: p.vence, origem: p.origem, pagarEm: null, atraso,
       custo: custoDoAtraso(p.valor, atraso, p.taxaMes, p.multa), taxaMes: p.taxaMes, multa: p.multa, estimada: p.estimada, fonte: null, fonteData: null,
+      grupo: p.grupo, pecas: p.pecas,
     }
   })
   const atrasados = pagamentos.filter((p) => p.atraso > 0)

@@ -16858,5 +16858,9 @@
   "Montei a tela de novo": {
     "en": "Built the screen again",
     "es": "Armé la pantalla de nuevo"
+  },
+  "{0} parcelas atrasadas, desde {1}": {
+    "en": "{0} overdue installments, since {1}",
+    "es": "{0} cuotas atrasadas, desde el {1}"
   }
 }

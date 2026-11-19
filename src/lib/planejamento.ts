@@ -43,6 +43,11 @@ export interface Destino {
   origem: Compromisso['origem'] | 'aberta' | 'meta' | 'guardar'
   /** Posição estável, para a tela dar a cor. */
   indice: number
+  /**
+   * Parcelas atrasadas da mesma dívida juntas numa ficha só: quantas são e o vencimento médio (pelo valor), que é de onde
+   * conta o custo de esperar. `vence` fica sendo a mais antiga ("desde 2 de mar").
+   */
+  juntas?: { parcelas: number; venceMedio: string }
 }
 
 /** Uma fatia: quanto desta entrada vai para este destino. */
@@ -122,7 +127,29 @@ export function quadroDoMes(plano: Plano | null, hoje: string, qual: QualMes, ex
     .sort((a, b) => a.vence.localeCompare(b.vence) || b.valor - a.valor)
   const ids = new Set<string>()
   const idDe = (base: string) => { let x = base, n = 2; while (ids.has(x)) x = `${base}-${n++}`; ids.add(x); return x }
+  // As parcelas atrasadas da mesma dívida viram uma ficha só (a dívida de 5 compras do Mercado Pago, com 6 dias de
+  // vencimento atrasados, era 6 fichas "Mercado Pago" iguais). Paga-se a ficha; o dinheiro cobre a mais antiga primeiro.
+  const grupos = new Map<string, typeof todos>()
   for (const p of todos) {
+    if (p.origem !== 'parcela' || p.vence >= hoje || !p.grupo) continue
+    grupos.set(p.grupo, [...(grupos.get(p.grupo) ?? []), p])
+  }
+  const feitos = new Set<string>()
+  for (const p of todos) {
+    const grupo = p.origem === 'parcela' && p.vence < hoje && p.grupo ? grupos.get(p.grupo)! : null
+    if (grupo && grupo.length > 1) {
+      if (feitos.has(p.grupo!)) continue
+      feitos.add(p.grupo!)
+      const valor = centavos(grupo.reduce((s, x) => s + x.valor, 0))
+      const medio = grupo.reduce((s, x) => s + utc(x.vence) * x.valor, 0) / Math.max(valor, 0.01)
+      destinos.push({
+        id: idDe(`c:atrasadas:${p.grupo}`), nome: p.descricao, tipo: 'conta', valor, vence: grupo[0].vence, atrasada: true,
+        juros: Math.max(...grupo.map((x) => x.taxaMes)), multa: p.multa, estimada: grupo.every((x) => x.estimada), origem: 'parcela',
+        indice: destinos.length,
+        juntas: { parcelas: grupo.reduce((s, x) => s + (x.pecas ?? 1), 0), venceMedio: new Date(medio).toISOString().slice(0, 10) },
+      })
+      continue
+    }
     destinos.push({
       id: idDe(`c:${p.vence}:${chave(p.descricao)}`), nome: p.descricao, tipo: 'conta', valor: centavos(p.valor), vence: p.vence,
       atrasada: p.vence < hoje, juros: p.taxaMes, multa: p.multa, estimada: p.estimada, origem: p.origem, indice: destinos.length,
@@ -164,7 +191,7 @@ export function atrasoDa(q: Quadro, p: Parte): number {
 export function custoDa(q: Quadro, p: Parte): number {
   const f = fonteDe(q, p.entrada), d = destinoDe(q, p.conta)
   if (!f || !d || !d.vence || d.tipo !== 'conta') return 0
-  const dias = diasEntre(d.vence, f.data)
+  const dias = diasEntre(d.juntas?.venceMedio ?? d.vence, f.data)
   return dias > 0 ? custoDoAtraso(p.valor, dias, d.juros ?? 1, d.multa) : 0
 }
 
