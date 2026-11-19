@@ -1447,3 +1447,20 @@ e enviar no Play Console.
 
 - Leva tudo da 2.8.5 mais o dinheiro guardado no Planejamento. `versionCode` 23 → 24, `versionName` 2.8.5 → 2.8.6.
 - Conferido dentro do pacote: o texto "Usar o dinheiro guardado", nenhum `fake.supabase` e o manifesto com 24 / 2.8.6.
+
+### 19/11/2026 — Claude — Planejamento: Consultor no canto esquerdo e Salvar/Descartar
+
+**Pedido do dono.** No computador sobrava espaço à esquerda da mesa; ele pediu para pôr ali o que o Consultor diz, e
+botões de salvar e descartar.
+
+**O que mudou** (`components/Planejamento.tsx`, `planejamento.css`).
+- A grade da mesa ganhou áreas: de 1360 px para cima, três colunas (Consultor à esquerda, fixo na rolagem; dinheiro;
+  bandeja). Abaixo, o Consultor vai para baixo da bandeja; no celular, depois das entradas. O quadro do Consultor ganhou
+  um avatar com um anel pulsando.
+- O plano deixou de se gravar sozinho: a mesa é rascunho até **Salvar plano**. **Descartar** volta ao último salvo.
+  Fechar ou trocar de mês com mudança pergunta (Salvar e sair, Continuar mexendo, Sair sem salvar); recarregar avisa pelo
+  navegador.
+
+**Validação.** `npx tsc -b`, `npm run lint` (sem erro), `node scripts/painel/testar.mjs` 38/38 e
+`testar-planejamento.cjs` 54/54 (novos: o Consultor à esquerda em 1440 px, a pergunta ao fechar, Continuar mexendo,
+Salvar, Recomeçar + Descartar volta ao salvo, X fecha direto sem mudança), `testar-movel.cjs` sem falha.

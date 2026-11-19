@@ -79,9 +79,32 @@ const estado = (p) => p.evaluate(() => ({
       await foto(p, `${tema}-montado`)
       ok(await p.locator('.pj-dicas li').count() > 0, `${tema}: o Consultor comenta o plano`)
 
-      // fechar, recarregar: o plano continua
+      // o Consultor fica numa coluna própria: à esquerda do dinheiro na tela larga
+      const colunas = await p.evaluate(() => {
+        const c = document.querySelector('.pj-consultor')?.getBoundingClientRect(), e = document.querySelector('.pj-entradas')?.getBoundingClientRect()
+        return c && e ? { consultorAEsquerda: c.right <= e.left + 1, lado: c.left < e.left } : null
+      })
+      ok(colunas?.consultorAEsquerda, `${tema}: em 1440 px o Consultor fica ao lado do dinheiro, à esquerda`)
+
+      // mudança sem salvar: o X pergunta; "Continuar mexendo" volta; "Salvar plano" grava
+      ok(await p.locator('.pj-gravar').count() === 1, `${tema}: com mudança, aparecem Salvar plano e Descartar`)
       await p.locator('.pj-fechar').click(); await esperar(p, 400)
-      ok(await p.locator('.pj').count() === 0, `${tema}: o X fecha a mesa`)
+      ok(await p.locator('.pj-pergunta').count() === 1, `${tema}: fechar com mudança sem salvar pergunta antes`)
+      await foto(p, `${tema}-pergunta`)
+      await p.getByRole('button', { name: 'Continuar mexendo' }).click(); await esperar(p, 300)
+      ok(await p.locator('.pj').count() === 1 && await p.locator('.pj-pergunta').count() === 0, `${tema}: "Continuar mexendo" volta para a mesa`)
+      await p.locator('.pj-gravar').click(); await esperar(p, 500)
+      ok(await p.locator('.pj-salvo').count() === 1, `${tema}: depois de salvar, aparece "Plano salvo"`)
+
+      // descartar: volta ao salvo
+      await p.getByRole('button', { name: 'Recomeçar' }).click(); await esperar(p, 300)
+      ok((await estado(p)).fatias.length === 0, `${tema}: recomeçar limpa a mesa (ainda sem salvar)`)
+      await p.locator('.pj-descartar').first().click(); await esperar(p, 500)
+      ok((await estado(p)).fatias.length === s.fatias.length, `${tema}: "Descartar" volta ao último plano salvo`)
+
+      // fechar, recarregar: o plano salvo continua
+      await p.locator('.pj-fechar').click(); await esperar(p, 400)
+      ok(await p.locator('.pj').count() === 0, `${tema}: sem mudança, o X fecha direto`)
       await p.reload(); await esperar(p, 2600)
       ok(/Continuar o plano/.test(await p.locator('.pj-cartao').textContent()), `${tema}: depois de recarregar, o cartão diz "Continuar o plano"`)
       await p.locator('.pj-cartao button').click(); await esperar(p, 700)

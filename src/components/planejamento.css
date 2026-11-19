@@ -16,7 +16,30 @@
 .pj-palco { width: min(1240px, 100% - 32px); margin: 0 auto; display: grid; gap: 18px; }
 
 /* ---------- cabeçalho ---------- */
-.pj-cab { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding-top: 4px; }
+.pj-cab { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 14px; padding-top: 4px; }
+
+/* salvar e descartar: aparecem quando há mudança sem salvar; salvo, fica só o selo */
+.pj-salvar { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 260px; }
+.pj-salvar .btn { white-space: nowrap; animation: pj-salta .4s var(--mola-salto) both; }
+.pj-gravar i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 0 currentColor; animation: pj-pinga 1.6s ease-out infinite; }
+@keyframes pj-pinga { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 60%, transparent); } 100% { box-shadow: 0 0 0 9px transparent; } }
+.pj-descartar { color: var(--texto-2); }
+.pj-salvo { display: inline-flex; align-items: center; gap: 6px; padding: 8px 13px; border-radius: 999px; font-size: 13px; font-weight: 650; color: var(--texto-2); background: var(--preench-4); border: 1px solid var(--borda); }
+.pj-salvo.agora { color: var(--entrada); background: color-mix(in srgb, var(--entrada) 12%, transparent); border-color: color-mix(in srgb, var(--entrada) 32%, transparent); animation: pj-salta .5s var(--mola-salto) both; }
+
+/* a pergunta ao sair com mudança sem salvar */
+.pj-pergunta {
+  position: fixed; left: 50%; top: 50%; z-index: 990; display: grid; justify-items: center; gap: 8px; width: min(440px, calc(100% - 32px));
+  padding: 24px 22px 20px; border-radius: 24px; text-align: center; background: var(--superficie-forte); border: 1px solid var(--borda-forte);
+  box-shadow: var(--sombra-alta); transform: translate(-50%, -50%); animation: pj-pergunta .38s var(--mola-salto) both;
+}
+@keyframes pj-pergunta { from { opacity: 0; transform: translate(-50%, -46%) scale(.95); } }
+.pj-pergunta-ic { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; color: var(--caixa); background: color-mix(in srgb, var(--caixa) 14%, transparent); }
+.pj-pergunta h3 { margin: 4px 0 0; font-size: 18px; }
+.pj-pergunta p { margin: 0 0 8px; font-size: 14px; line-height: 1.5; color: var(--texto-2); }
+.pj-pergunta-botoes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
+.pj-pergunta-botoes .btn { justify-content: center; }
+.pj-pergunta-botoes .primario { grid-column: 1 / -1; order: -1; padding-block: 12px; }
 .pj-fechar {
   display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--borda-forte);
   color: var(--texto-2); background: var(--superficie); cursor: pointer; transition: transform .2s var(--mola), color .2s;
@@ -83,7 +106,21 @@
 @keyframes pj-brilho { 0%, 70% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
 
 /* ---------- a mesa ---------- */
-.pj-mesa { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; }
+.pj-mesa {
+  display: grid; grid-template-columns: minmax(0, 1fr) 360px; grid-template-areas: 'entradas lado' 'entradas consultor';
+  grid-template-rows: auto 1fr; gap: 18px; align-items: start;
+}
+.pj-entradas { grid-area: entradas; }
+.pj-lado { grid-area: lado; }
+.pj-consultor { grid-area: consultor; }
+/* tela larga: o Consultor ocupa o canto esquerdo, ao lado do dinheiro, e acompanha a rolagem */
+@media (min-width: 1360px) {
+  .pj-palco { width: min(1680px, 100% - 64px); }
+  .pj-mesa { grid-template-columns: 330px minmax(0, 1fr) 360px; grid-template-areas: 'consultor entradas lado'; grid-template-rows: auto; }
+  .pj-consultor { position: sticky; top: 12px; }
+  .pj-consultor .pj-dicas { padding: 18px; }
+  .pj-consultor .pj-dicas li { font-size: 13.5px; }
+}
 .pj-entradas { display: grid; gap: 12px; }
 .pj-instrucao { margin: 0 0 2px; font-size: 13.5px; color: var(--texto-2); min-height: 20px; }
 
@@ -202,6 +239,15 @@
 .pj-bandeja { transition: border-color .25s, box-shadow .25s; }
 .pj-bandeja.ativa { border-color: color-mix(in srgb, var(--caixa) 40%, transparent); }
 .pj-bandeja > header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.pj-dicas-cab { display: flex; align-items: center; gap: 11px; }
+.pj-dicas-cab > span:last-child { display: grid; gap: 1px; }
+.pj-dicas-cab small { font-size: 12px; color: var(--texto-2); }
+.pj-dicas-avatar {
+  position: relative; display: grid; place-items: center; width: 38px; height: 38px; flex: none; border-radius: 50%; color: #fff;
+  background: linear-gradient(135deg, var(--caixa), var(--violeta)); box-shadow: 0 8px 20px -10px var(--caixa);
+}
+.pj-dicas-avatar::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--caixa) 40%, transparent); animation: pj-fala 2.4s ease-out infinite; }
+@keyframes pj-fala { 0% { opacity: .9; transform: scale(.9); } 100% { opacity: 0; transform: scale(1.25); } }
 .pj-bandeja h3, .pj-dicas h3 { display: flex; align-items: center; gap: 7px; margin: 0; font-size: 15px; font-weight: 700; }
 .pj-bandeja-total { font-size: 12.5px; font-weight: 650; color: var(--saida); font-variant-numeric: tabular-nums; }
 .pj-fichas { display: grid; gap: 8px; }
@@ -327,6 +373,9 @@
 
 /* ---------- celular ---------- */
 @media (max-width: 1100px) {
+  .pj-mesa { grid-template-areas: 'entradas' 'lado' 'consultor'; grid-template-rows: auto; }
+  .pj-cab { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .pj-salvar { grid-column: 1 / -1; min-width: 0; }
   .pj-placar { grid-template-columns: auto minmax(0, 1fr); }
   .pj-numeros, .pj-botoes { grid-column: 1 / -1; }
   .pj-botoes { grid-template-columns: 1fr 1fr; }
@@ -338,6 +387,8 @@
   .pj-palco { width: calc(100% - 24px); gap: 14px; padding-bottom: 210px; }
   .pj-cab { grid-template-columns: auto minmax(0, 1fr); }
   .pj-meses { grid-column: 1 / -1; }
+  .pj-salvar .btn { flex: 1; justify-content: center; }
+  .pj-salvar { justify-content: stretch; }
   .pj-titulo p { display: none; }
   .pj-placar { gap: 12px 14px; padding: 14px; border-radius: 20px; }
   .pj-anel { width: 70px; height: 70px; }

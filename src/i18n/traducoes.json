@@ -16910,5 +16910,45 @@
   "{0} em caixinhas, reservas e investimentos, para pagar contas e adiantar dívidas.": {
     "en": "{0} in savings boxes, reserves and investments, to pay bills and pay debts ahead.",
     "es": "{0} en cajitas, reservas e inversiones, para pagar cuentas y adelantar deudas."
+  },
+  "Plano salvo. O Consultor já está usando ele.": {
+    "en": "Plan saved. The Advisor is already using it.",
+    "es": "Plan guardado. El Consultor ya lo está usando."
+  },
+  "Mudanças descartadas. O plano voltou ao último salvo.": {
+    "en": "Changes discarded. The plan is back to the last saved one.",
+    "es": "Cambios descartados. El plan volvió al último guardado."
+  },
+  "Salvar plano": {
+    "en": "Save plan",
+    "es": "Guardar plan"
+  },
+  "Plano salvo": {
+    "en": "Plan saved",
+    "es": "Plan guardado"
+  },
+  "Salvar as mudanças do plano?": {
+    "en": "Save your plan changes?",
+    "es": "¿Guardar los cambios del plan?"
+  },
+  "Você mexeu no plano e ainda não salvou. Sem salvar, o Consultor continua usando o plano de antes.": {
+    "en": "You changed the plan and haven't saved yet. Without saving, the Advisor keeps using the previous plan.",
+    "es": "Cambiaste el plan y todavía no lo guardaste. Sin guardar, el Consultor sigue usando el plan anterior."
+  },
+  "Continuar mexendo": {
+    "en": "Keep editing",
+    "es": "Seguir editando"
+  },
+  "Sair sem salvar": {
+    "en": "Leave without saving",
+    "es": "Salir sin guardar"
+  },
+  "Salvar e sair": {
+    "en": "Save and leave",
+    "es": "Guardar y salir"
+  },
+  "Comenta enquanto você monta": {
+    "en": "Comments while you build",
+    "es": "Comenta mientras armas"
   }
 }
