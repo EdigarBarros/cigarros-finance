@@ -639,6 +639,13 @@ tudo, em tela cheia, com **Este mês** e **Mês que vem**.
   parcela deste mês fica numa ficha à parte. Também entram até 3 **dívidas abertas** com juros (para adiantar: só as sem
   parcela fixa e sem compras parceladas, que já entram pelas parcelas) e até 3 **metas** (para guardar); sem meta, um
   "Guardar". `quadroDoMes()` monta isso; a análise guarda os dois meses em `a.quadros`.
+- **Usar o dinheiro guardado** (só em Este mês). Embaixo das entradas, um interruptor mostra quanto há em caixinhas,
+  reservas e investimentos. Ligado, cada banco com caixinha ou reserva ("Guardado: Nubank") e os investimentos viram
+  barras a mais (`q.guardados`, que `comGuardado()` põe nas `fontes`; a escolha fica no plano do mês, `comGuardado`). Elas
+  pagam contas e dívidas, nunca meta nem "Guardar". O "Montar pra mim" só tira do guardado o que o dinheiro do mês não
+  paga a tempo (antes de pagar atrasado) e não adianta dívida com ele; à mão, a pessoa pode. O guardado que sobra não conta
+  como "sem destino". Desligar tira do plano o que saía dele. Dicas: com o guardado desligado, o dinheiro do mês acabando e
+  conta sem dinheiro, "Você tem R$ X guardado" com o botão de ligar; usando, lembra de devolver.
 - **Jogar.** No computador, arraste a conta da bandeja **Sem dinheiro ainda** para dentro de uma barra; em qualquer
   aparelho, toque na conta e depois na barra (no celular a bandeja fica presa embaixo). Entra o que cabe (`por()`): o
   menor entre o que sobra na entrada e o que falta na conta. O resto continua na bandeja ("faltam R$ 250 de R$ 500"),

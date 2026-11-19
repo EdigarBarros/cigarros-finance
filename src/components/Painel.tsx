@@ -600,8 +600,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     dividasSemJuros: d.dividasSemJuros, contas: comContasFixas ? contas.contas : [],
     compras: comFaturas ? cartoes.compras.filter(contaNasSaidas(cartoes.faturasPagas)) : [],
     cartoes: comFaturas ? cartoes.cartoes : [], faturasPagas: comFaturas ? cartoes.faturasPagas : [],
-    memoria: d.memoria, planejamento: d.planejamento,
-  }), [d.memoria, d.planejamento, lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, mesesVistos, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.moeda, comFaturas, cartoes.compras, cartoes.cartoes, cartoes.faturasPagas, comContasFixas, contas.contas, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
+    memoria: d.memoria, planejamento: d.planejamento, bancos: d.bancos,
+  }), [d.memoria, d.planejamento, d.bancos, lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, mesesVistos, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.moeda, comFaturas, cartoes.compras, cartoes.cartoes, cartoes.faturasPagas, comContasFixas, contas.contas, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reanálise: a cada mudança feita pela pessoa, compara com a análise anterior e conta o que mudou (aviso no canto e
   // "O que mudou" na aba). Troca de ano, virada do dia, cotação nova e dados chegando não são mudança da pessoa: só

@@ -20,6 +20,8 @@ export interface Fonte {
   /** O dia em que o dinheiro está disponível (hoje, para o saldo). */
   data: string
   saldo?: boolean
+  /** Dinheiro guardado (caixinha, reserva, investimento): só entra no plano se a pessoa escolher usar. */
+  guardado?: boolean
 }
 
 export type TipoDestino = 'conta' | 'divida' | 'meta' | 'guardar'
@@ -65,6 +67,11 @@ export interface Quadro {
   mes: string
   hoje: string
   fontes: Fonte[]
+  /**
+   * O dinheiro guardado que pode entrar no plano deste mês (uma barra por banco com caixinha ou reserva, e os
+   * investimentos). Fica de fora das `fontes` até a pessoa ligar "Usar o dinheiro guardado" (`quadroDoPlano`).
+   */
+  guardados: Fonte[]
   destinos: Destino[]
 }
 
@@ -72,6 +79,8 @@ export interface PlanoGuardado {
   partes: Parte[]
   /** Quando a pessoa mexeu pela última vez. */
   em: string
+  /** A pessoa escolheu usar o dinheiro guardado neste mês. */
+  comGuardado?: boolean
 }
 
 /** O plano de cada mês, pela chave 'AAAA-MM'. */
@@ -80,6 +89,8 @@ export type Planejamentos = Record<string, PlanoGuardado>
 /** O que a tela e o Consultor precisam de uma dívida aberta (sem parcela fixa, correndo juros). */
 export interface AbertaDoQuadro { nome: string; saldo: number; juros: number }
 export interface MetaDoQuadro { id: string; nome: string }
+/** Um lugar com dinheiro guardado (o banco, ou os investimentos). */
+export interface GuardadoDoQuadro { id: string; nome: string; valor: number }
 
 const centavos = (n: number) => Math.round(n * 100) / 100
 const utc = (iso: string) => Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1, Number(iso.slice(8, 10)))
@@ -102,7 +113,7 @@ export const JUROS_CARO = 5
  * mês) e as contas, parcelas e faturas que vencem nele (as atrasadas entram no mês de hoje). Dívidas abertas com juros
  * entram como "adiantar"; as metas, como lugar para guardar o que sobrar.
  */
-export function quadroDoMes(plano: Plano | null, hoje: string, qual: QualMes, extras: { abertas?: AbertaDoQuadro[]; metas?: MetaDoQuadro[] } = {}): Quadro {
+export function quadroDoMes(plano: Plano | null, hoje: string, qual: QualMes, extras: { abertas?: AbertaDoQuadro[]; metas?: MetaDoQuadro[]; guardados?: GuardadoDoQuadro[] } = {}): Quadro {
   const mesHoje = hoje.slice(0, 7)
   const mes = qual === 'este' ? mesHoje : mesSeguinte(mesHoje)
   const ini = qual === 'este' ? hoje : `${mes}-01`
@@ -168,8 +179,24 @@ export function quadroDoMes(plano: Plano | null, hoje: string, qual: QualMes, ex
   if (!metas.length) {
     destinos.push({ id: 'guardar', nome: tx('Guardar'), tipo: 'guardar', valor: null, vence: null, atrasada: false, juros: null, multa: 0, estimada: false, origem: 'guardar', indice: destinos.length })
   }
-  return { qual, mes, hoje, fontes, destinos }
+  // o dinheiro guardado está disponível hoje: entra só no plano deste mês (no do mês que vem seria contado duas vezes)
+  const guardados: Fonte[] = qual !== 'este' ? [] : (extras.guardados ?? [])
+    .filter((g) => g.valor >= 0.01)
+    .map((g) => ({ id: unico(`g:${g.id}`), nome: g.nome, valor: centavos(g.valor), data: hoje, guardado: true }))
+  return { qual, mes, hoje, fontes, guardados, destinos }
 }
+
+/** O quadro com o dinheiro guardado entrando como barras, quando a pessoa escolheu usar. */
+export function comGuardado(q: Quadro, usar: boolean): Quadro {
+  const sem = q.fontes.filter((f) => !f.guardado)
+  return { ...q, fontes: usar && q.guardados.length ? [...sem, ...q.guardados] : sem }
+}
+
+/** O quadro como a pessoa deixou o plano deste mês (com ou sem o dinheiro guardado). */
+export const quadroDoPlano = (q: Quadro, guardado: PlanoGuardado | undefined) => comGuardado(q, guardado?.comGuardado === true)
+
+/** Dinheiro guardado não vai para meta nem para "Guardar": já está guardado. */
+const podeIr = (f: Fonte, d: Destino) => !(f.guardado && (d.tipo === 'meta' || d.tipo === 'guardar'))
 
 // ---------- contas do plano ----------
 
@@ -203,7 +230,7 @@ export function valerPartes(q: Quadro, partes: Parte[]): Parte[] {
   const certas: Parte[] = []
   for (const p of partes) {
     const f = fonteDe(q, p.entrada), d = destinoDe(q, p.conta)
-    if (!f || !d || !(p.valor > 0)) continue
+    if (!f || !d || !(p.valor > 0) || !podeIr(f, d)) continue
     const cabe = Math.min(sobra(certas, f), falta(certas, d), p.valor)
     if (cabe >= 0.01) certas.push({ entrada: p.entrada, conta: p.conta, valor: centavos(cabe) })
   }
@@ -213,7 +240,7 @@ export function valerPartes(q: Quadro, partes: Parte[]): Parte[] {
 /** Põe o que cabe de uma conta numa entrada (soma à parte que já existe). Devolve as partes novas e quanto entrou. */
 export function por(q: Quadro, partes: Parte[], conta: string, entrada: string, quanto?: number): { partes: Parte[]; valor: number } {
   const f = fonteDe(q, entrada), d = destinoDe(q, conta)
-  if (!f || !d) return { partes, valor: 0 }
+  if (!f || !d || !podeIr(f, d)) return { partes, valor: 0 }
   const v = centavos(Math.min(sobra(partes, f), falta(partes, d), quanto ?? Infinity))
   if (v <= 0) return { partes, valor: 0 }
   const ja = partes.find((p) => p.entrada === entrada && p.conta === conta)
@@ -249,22 +276,25 @@ function prioridade(a: Destino, b: Destino) {
  * "Montar pra mim": cada conta do mês, na ordem de quem cobra mais caro por esperar, sai do dinheiro que chega a tempo
  * (o mais cedo primeiro); se não chegar a tempo, do primeiro que chegar. Depois, o que sobra adianta a dívida aberta mais
  * cara (acima de 5% ao mês) e o resto vai para a primeira meta (ou "Guardar").
+ * Com o dinheiro guardado ligado, ele só paga conta, e só o que o dinheiro do mês não paga a tempo (pagar atrasado custa
+ * multa e juros; tirar do guardado, não). Não adianta dívida nem vai para meta: guardado fica guardado o quanto der.
  */
 export function montarPraMim(q: Quadro): Parte[] {
   let partes: Parte[] = []
+  const doMes = q.fontes.filter((f) => !f.guardado)
   const contas = q.destinos.filter((d) => d.tipo === 'conta').sort(prioridade)
   for (const d of contas) {
     const fontes = [...q.fontes].sort((a, b) => {
-      const ok = (f: Fonte) => (d.atrasada || !d.vence || f.data <= d.vence ? 0 : 1)
-      return ok(a) - ok(b) || a.data.localeCompare(b.data)
+      const ordem = (f: Fonte) => (f.guardado ? 1 : d.atrasada || !d.vence || f.data <= d.vence ? 0 : 2)
+      return ordem(a) - ordem(b) || a.data.localeCompare(b.data)
     })
     for (const f of fontes) partes = por(q, partes, d.id, f.id).partes
   }
   for (const d of q.destinos.filter((x) => x.tipo === 'divida' && (x.juros ?? 0) >= JUROS_CARO)) {
-    for (const f of q.fontes) partes = por(q, partes, d.id, f.id).partes
+    for (const f of doMes) partes = por(q, partes, d.id, f.id).partes
   }
   const guardar = q.destinos.find((x) => x.tipo === 'meta' || x.tipo === 'guardar')
-  if (guardar) for (const f of q.fontes) partes = por(q, partes, guardar.id, f.id).partes
+  if (guardar) for (const f of doMes) partes = por(q, partes, guardar.id, f.id).partes
   return partes
 }
 
@@ -275,8 +305,10 @@ export interface Placar {
   pct: number
   coberto: number
   total: number
-  /** Dinheiro das entradas ainda sem destino. */
+  /** Dinheiro das entradas ainda sem destino (o guardado que não foi usado não conta: continua guardado). */
   semDestino: number
+  /** Quanto o plano tira do dinheiro guardado. */
+  doGuardado: number
   /** Partes que pagam depois do vencimento. */
   atrasos: number
   /** Quanto o plano custa em multa e juros (atrasos e contas que já venceram). */
@@ -296,7 +328,8 @@ export function placarDe(q: Quadro, partes: Parte[]): Placar {
   return {
     pct: total ? Math.min(100, Math.floor((coberto / total) * 100 + 1e-9)) : 0,
     coberto, total,
-    semDestino: centavos(q.fontes.reduce((s, f) => s + sobra(partes, f), 0)),
+    semDestino: centavos(q.fontes.filter((f) => !f.guardado).reduce((s, f) => s + sobra(partes, f), 0)),
+    doGuardado: centavos(q.fontes.filter((f) => f.guardado).reduce((s, f) => s + usado(partes, f), 0)),
     atrasos,
     custo: centavos(partes.reduce((s, p) => s + custoDa(q, p), 0)),
     faltando,
@@ -311,8 +344,8 @@ export interface DicaDoPlanejamento {
   icone: string
   tom: 'bom' | 'atencao' | 'ruim' | 'neutro'
   texto: string
-  /** Um passo que a tela pode fazer pela pessoa. */
-  acao?: { rotulo: string; conta: string; entrada: string }
+  /** Um passo que a tela pode fazer pela pessoa: pôr uma conta numa entrada, ou ligar o dinheiro guardado. */
+  acao?: { rotulo: string; conta: string; entrada: string } | { rotulo: string; usarGuardado: true }
 }
 
 const dinheiro = (n: number, fmt: (n: number) => string) => fmt(n)
@@ -363,14 +396,31 @@ export function dicasDe(q: Quadro, partes: Parte[], fmt: (n: number) => string, 
       acao: proxima ? { rotulo: tx('Pôr em {0}', proxima.nome), conta: d.id, entrada: proxima.id } : undefined,
     })
   }
-  // 4) dinheiro sem destino
-  const semDestino = centavos(q.fontes.reduce((s, f) => s + sobra(partes, f), 0))
+  // 4) dinheiro sem destino (o guardado que não foi usado continua guardado: não conta)
+  const semDestino = centavos(q.fontes.filter((f) => !f.guardado).reduce((s, f) => s + sobra(partes, f), 0))
   const faltam = contas.filter((d) => falta(partes, d) > 0.009)
+  const usandoGuardado = q.fontes.some((f) => f.guardado)
+  const totalGuardado = centavos(q.guardados.reduce((s, f) => s + f.valor, 0))
+  const doGuardado = centavos(q.fontes.filter((f) => f.guardado).reduce((s, f) => s + usado(partes, f), 0))
+  // o dinheiro do mês acabou e falta conta, mas há dinheiro guardado: oferecer usar
+  if (!usandoGuardado && totalGuardado > 0.009 && faltam.length && semDestino <= 0.009) {
+    dicas.push({
+      id: 'usar-guardado', icone: 'cofre', tom: 'atencao',
+      texto: tx('O dinheiro do mês acabou e faltam {0}. Você tem {1} guardado: dá para tirar de lá o que falta.', dinheiro(faltam.reduce((s, d) => s + falta(partes, d), 0), fmt), dinheiro(totalGuardado, fmt)),
+      acao: { rotulo: tx('Usar o dinheiro guardado'), usarGuardado: true },
+    })
+  }
+  if (doGuardado > 0.009) {
+    dicas.push({
+      id: 'tirou-do-guardado', icone: 'cofre', tom: 'neutro',
+      texto: tx('O plano tira {0} do dinheiro guardado. Quando der, devolva para não ficar sem reserva para imprevistos.', dinheiro(doGuardado, fmt)),
+    })
+  }
   if (semDestino > 0.009) {
     const divida = q.destinos.find((d) => d.tipo === 'divida' && falta(partes, d) > 0.009)
     const guardar = q.destinos.find((d) => d.tipo === 'meta' || d.tipo === 'guardar')
     const alvo = faltam[0] ?? divida ?? guardar
-    const fonte = q.fontes.find((f) => sobra(partes, f) > 0.009)!
+    const fonte = q.fontes.find((f) => !f.guardado && sobra(partes, f) > 0.009)!
     dicas.push({
       id: 'sem-destino', icone: 'cofre', tom: 'neutro',
       texto: faltam.length
@@ -384,7 +434,7 @@ export function dicasDe(q: Quadro, partes: Parte[], fmt: (n: number) => string, 
   // 5) fechou
   const pl = placarDe(q, partes)
   if (pl.fechado) dicas.push({ id: 'fechado', icone: 'check', tom: 'bom', texto: tx('Tudo o que vence no mês tem dinheiro e nada atrasa por causa do plano.') })
-  else if (faltam.length && !semDestino && !caras.length) {
+  else if (faltam.length && !semDestino && !caras.length && (usandoGuardado || totalGuardado <= 0.009)) {
     dicas.push({ id: 'nao-cabe', icone: 'alerta', tom: 'atencao', texto: tx('O dinheiro do mês acabou e {0} ainda ficam sem pagar. Veja o que dá para adiar ou negociar.', dinheiro(faltam.reduce((s, d) => s + falta(partes, d), 0), fmt)) })
   }
   const ordem = { ruim: 0, atencao: 1, neutro: 2, bom: 3 }
@@ -406,6 +456,7 @@ export interface ConselhoDoPlano {
  * dinheiro e (sem plano ainda) o convite para planejar quando o mês tem mais de uma entrada e várias contas.
  */
 export function conselhosDoPlanejamento(q: Quadro, guardado: PlanoGuardado | undefined, fmt: (n: number) => string, fmtData: (iso: string) => string): ConselhoDoPlano[] {
+  q = quadroDoPlano(q, guardado)
   const contas = q.destinos.filter((d) => d.tipo === 'conta')
   if (!q.fontes.length || !contas.length) return []
   const partes = guardado ? valerPartes(q, guardado.partes) : []
@@ -453,6 +504,7 @@ export function normPlanejamentos(x: unknown, hoje?: string): Planejamentos {
     if (!/^\d{4}-\d{2}$/.test(mes) || (valem && !valem.has(mes)) || !v || typeof v !== 'object') continue
     const partes = Array.isArray((v as PlanoGuardado).partes) ? (v as PlanoGuardado).partes : []
     saida[mes] = {
+      ...((v as PlanoGuardado).comGuardado === true ? { comGuardado: true } : {}),
       em: typeof (v as PlanoGuardado).em === 'string' ? (v as PlanoGuardado).em : '',
       partes: partes.filter((p) => p && typeof p.entrada === 'string' && typeof p.conta === 'string' && Number.isFinite(p.valor) && p.valor > 0)
         .map((p) => ({ entrada: p.entrada, conta: p.conta, valor: centavos(p.valor) })),

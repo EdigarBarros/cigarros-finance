@@ -1419,3 +1419,31 @@ Falta ele assinar com a chave de upload e enviar no Play Console. Substitui a 2.
 - Para assinar: baixar `opuscash-upload.keystore` do Drive e rodar
   `jarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore opuscash-upload.keystore OpusCash-2.8.5-codigo23.aab opuscash`
   (o `jarsigner` está em `~/tools/jdk-21.0.12.1+1/bin`); depois apagar a chave.
+
+### 19/11/2026 — Claude — Planejamento: usar o dinheiro guardado
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração (a escolha fica em `perfis.consultor.planejamento`,
+migração 24).
+
+- Pedido do Edigar: no Planejamento do mês (Consultor), poder usar o dinheiro guardado para abater dívidas, se quiser.
+- `lib/planejamento.ts`: `Quadro.guardados` (uma barra por banco com caixinha ou reserva, e os investimentos; só em Este
+  mês), `comGuardado()`/`quadroDoPlano()` põem essas barras nas `fontes` quando o plano do mês tem `comGuardado`. Guardado
+  não vai para meta nem para "Guardar" (`podeIr`). "Montar pra mim" tira do guardado só o que o dinheiro do mês não paga a
+  tempo e não adianta dívida com ele (à mão pode). `placar.doGuardado`; o guardado que sobra não é "sem destino". Dicas
+  `usar-guardado` (com o botão de ligar) e `tirou-do-guardado`. `lib/analise.ts` monta os guardados de `ef.caixa`
+  (caixinha + reserva) e `investido`, com o nome do banco (`bancos` novo em `EntradaAnalise`, passado pelo Painel).
+- `components/Planejamento.tsx`: o interruptor "Usar o dinheiro guardado" entre o dinheiro do mês e as barras do guardado
+  (tracejadas, ícone de cofre); desligar tira do plano o que saía dele. Regras em `docs/arquitetura-do-painel.md` (4.7.1).
+- **Validação:** `scripts/painel/testar.mjs` 38/38 (caso novo "usar o dinheiro guardado"), `testar-planejamento.cjs` 40 OK,
+  `npx tsc -b`, lint sem erro, build, traduções completas. App de demonstração (1440 escuro e 390 claro): o interruptor
+  aparece com o total, ligado entram "Guardado: Nubank" e "Investimentos", o plano lembra a escolha depois de recarregar,
+  desligar tira as barras, sem erro de página.
+
+### 19/11/2026 — Claude — App Android 2.8.6 (código 24)
+
+**Estado:** `.aab` gerado **sem assinatura** (`OpusCash-2.8.6-codigo24.aab`), entregue ao dono pela conversa da sessão.
+Substitui a 2.8.5 (código 23), que não chegou a ser assinada. Falta assinar com a chave de upload (o dono digita a senha)
+e enviar no Play Console.
+
+- Leva tudo da 2.8.5 mais o dinheiro guardado no Planejamento. `versionCode` 23 → 24, `versionName` 2.8.5 → 2.8.6.
+- Conferido dentro do pacote: o texto "Usar o dinheiro guardado", nenhum `fake.supabase` e o manifesto com 24 / 2.8.6.

@@ -14,7 +14,7 @@ import { adicionarCartao, cartoesDaInicio, linhasDaGrade, maisRecente, MODELOS, 
 import { comParcelasDoMes } from '../../src/lib/useMesDaInicio'
 import { montarCartao, ORCAMENTO, type TracosDaDivida } from '../../src/lib/cartaoDaDivida'
 import type { SituacaoCartao } from '../../src/lib/cartoes'
-import { atrasoDa, conselhosDoPlanejamento, custoDa, dicasDe, falta, montarPraMim, mudarParte, normPlanejamentos, placarDe, por, quadroDoMes, sobra, valerPartes } from '../../src/lib/planejamento'
+import { atrasoDa, comGuardado, conselhosDoPlanejamento, custoDa, dicasDe, falta, montarPraMim, mudarParte, normPlanejamentos, placarDe, por, quadroDoMes, sobra, valerPartes } from '../../src/lib/planejamento'
 import type { PagamentoPlanejado, Plano } from '../../src/lib/planejador'
 import type { ContaFixa, Divida, Lancamento, SaldoDivida } from '../../src/lib/types'
 
@@ -655,6 +655,61 @@ export const CASOS: Caso[] = [
       const r = por(q, [], mp[0].id, q.fontes[0].id)
       perto('paga a ficha inteira', r.valor, 376.86)
       certo('o custo conta do vencimento médio', custoDa(q, r.partes[0]) > 0)
+    },
+  },
+  {
+    nome: 'planejamento do mês: usar o dinheiro guardado',
+    rodar: () => {
+      // R$ 1.000 de salário no dia 20 e R$ 1.500 de contas; R$ 2.000 na caixinha do Nubank e R$ 300 investidos
+      const pg = (descricao: string, valor: number, vence: string, mais: Partial<PagamentoPlanejado> = {}): PagamentoPlanejado => ({
+        descricao, valor, vence, origem: 'conta', pagarEm: null, atraso: 0, custo: 0, taxaMes: 1, multa: 0.02, estimada: true, fonte: null, fonteData: null, ...mais,
+      })
+      const plano = {
+        comSaldo: false,
+        fontes: [{ data: '2026-11-20', valor: 1000, descricao: 'Salário' }],
+        pagamentos: [pg('Aluguel', 900, '2026-11-22')],
+        semDinheiro: [pg('Luz', 200, '2026-11-25'), pg('Fatura', 400, '2026-11-26', { origem: 'cartao', taxaMes: 14 })],
+      } as unknown as Plano
+      const guardados = [{ id: 'nu', nome: 'Guardado: Nubank', valor: 2000 }, { id: 'investimentos', nome: 'Investimentos', valor: 300 }, { id: 'vazio', nome: 'x', valor: 0 }]
+      const q = quadroDoMes(plano, '2026-11-19', 'este', { metas: [{ id: 'm1', nome: 'Viagem' }], abertas: [{ nome: 'Cheque especial', saldo: 1000, juros: 8 }], guardados })
+      igual('guardado fica fora das entradas', q.fontes.map((f) => f.nome), ['Salário'])
+      igual('os lugares com dinheiro guardado', q.guardados.map((f) => `${f.nome}:${f.valor}`), ['Guardado: Nubank:2000', 'Investimentos:300'])
+      igual('mês que vem: sem guardado (seria contado duas vezes)', quadroDoMes(plano, '2026-11-19', 'proximo', { guardados }).guardados, [])
+
+      // desligado: o dinheiro acaba e a dica oferece usar o guardado
+      const fmt = (n: number) => `R$ ${n.toFixed(2)}`, data = (iso: string) => iso.slice(8)
+      const sem = montarPraMim(q)
+      const plSem = placarDe(q, sem)
+      certo('sem o guardado falta dinheiro', plSem.pct < 100)
+      igual('sem o guardado não tira nada dele', plSem.doGuardado, 0)
+      const dicaUsar = dicasDe(q, sem, fmt, data).find((d) => d.id === 'usar-guardado')
+      certo('dica de usar o guardado', !!dicaUsar && !!dicaUsar.acao && 'usarGuardado' in dicaUsar.acao)
+
+      // ligado: paga o que falta com o guardado, nada a mais
+      const qg = comGuardado(q, true)
+      igual('ligado: as barras do guardado entram', qg.fontes.map((f) => f.nome), ['Salário', 'Guardado: Nubank', 'Investimentos'])
+      igual('ligar duas vezes não duplica', comGuardado(qg, true).fontes.length, 3)
+      igual('desligar tira', comGuardado(qg, false).fontes.map((f) => f.nome), ['Salário'])
+      const m = montarPraMim(qg)
+      const pl = placarDe(qg, m)
+      igual('tudo coberto com o guardado', pl.pct, 100)
+      perto('tira só o que falta das contas (1.500 − 1.000)', pl.doGuardado, 500)
+      certo('guardado não adianta dívida nem vai para meta', m.filter((p) => p.entrada.startsWith('g:')).every((p) => qg.destinos.find((d) => d.id === p.conta)!.tipo === 'conta'))
+      perto('guardado que sobra não conta como sem destino', pl.semDestino, 0)
+      certo('dica: o plano tira do guardado', dicasDe(qg, m, fmt, data).some((d) => d.id === 'tirou-do-guardado'))
+
+      // guardado não vai para meta, nem à mão
+      const meta = qg.destinos.find((d) => d.tipo === 'meta')!
+      igual('pôr meta no guardado: não entra', por(qg, [], meta.id, qg.guardados[0].id).valor, 0)
+      // mas pode adiantar dívida à mão
+      const cheque = qg.destinos.find((d) => d.tipo === 'divida')!
+      perto('adiantar dívida com o guardado à mão', por(qg, [], cheque.id, qg.guardados[0].id).valor, 1000)
+
+      // o plano guardado lembra a escolha; o Consultor lê o plano com o guardado
+      const n = normPlanejamentos({ '2026-11': { partes: m, em: 'z', comGuardado: true }, '2026-12': { partes: [], em: 'w', comGuardado: 'sim' } }, '2026-11-19')
+      igual('norm guarda a escolha', [n['2026-11'].comGuardado, n['2026-12'].comGuardado], [true, undefined])
+      igual('consultor: plano com o guardado fechado', conselhosDoPlanejamento(q, { partes: m, em: '', comGuardado: true }, fmt, data), [])
+      certo('consultor: sem a escolha, as partes do guardado não valem', conselhosDoPlanejamento(q, { partes: m, em: '' }, fmt, data).some((c) => c.id === 'sem-dinheiro'))
     },
   },
 ]
