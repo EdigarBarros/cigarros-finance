@@ -600,8 +600,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     dividasSemJuros: d.dividasSemJuros, contas: comContasFixas ? contas.contas : [],
     compras: comFaturas ? cartoes.compras.filter(contaNasSaidas(cartoes.faturasPagas)) : [],
     cartoes: comFaturas ? cartoes.cartoes : [], faturasPagas: comFaturas ? cartoes.faturasPagas : [],
-    memoria: d.memoria,
-  }), [d.memoria, lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, mesesVistos, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.moeda, comFaturas, cartoes.compras, cartoes.cartoes, cartoes.faturasPagas, comContasFixas, contas.contas, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
+    memoria: d.memoria, planejamento: d.planejamento,
+  }), [d.memoria, d.planejamento, lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, mesesVistos, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.moeda, comFaturas, cartoes.compras, cartoes.cartoes, cartoes.faturasPagas, comContasFixas, contas.contas, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reanálise: a cada mudança feita pela pessoa, compara com a análise anterior e conta o que mudou (aviso no canto e
   // "O que mudou" na aba). Troca de ano, virada do dia, cotação nova e dados chegando não são mudança da pessoa: só
@@ -610,7 +610,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const [reanalise, setReanalise] = useState<Reanalise | null>(null)
   const [avisoReanalise, setAvisoReanalise] = useState(false)
   const avisosDaAnalise = !perfil.dispensadas.includes('aviso-reanalise')
-  const chaveDaBase = `${ano}|${hojeIso}|${JSON.stringify(taxas)}|${cartoes.carregado}|${contas.carregando}|${JSON.stringify(perfil.modulos)}|${perfil.moeda}|${investDados.carregado}|${invest.indices?.baixadoEm ?? 0}`
+  // mexer no plano do mês não é mudança nos dados: só renova a base (sem aviso)
+  const chaveDaBase = `${ano}|${hojeIso}|${JSON.stringify(d.planejamento)}|${JSON.stringify(taxas)}|${cartoes.carregado}|${contas.carregando}|${JSON.stringify(perfil.modulos)}|${perfil.moeda}|${investDados.carregado}|${invest.indices?.baixadoEm ?? 0}`
   useEffect(() => {
     if (d.carregando || !noPainel) return
     const r = retratoDe(analise)
@@ -800,7 +801,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     conselhosSemDados: faltamDadosParaConselhos({ lancs: lancsDosConselhos, dividas: d.dividas, hoje }),
     conselhosDispensados: avisosDispensadosNoMes(perfil.dispensadas, hoje),
     invest, ajustarSaldosDaOperacao,
-    analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise, memoria: d.memoria, escolherObjetivo, gosto: d.gosto, salvarGosto: d.salvarGosto,
+    analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise, memoria: d.memoria, escolherObjetivo, gosto: d.gosto, salvarGosto: d.salvarGosto, planejamento: d.planejamento, salvarPlanejamento: d.salvarPlanejamento,
     ligarModulo,
     personalizar: () => setAjustes('painel'),
     mudarDetalhe: (x) => mudarPerfil({ ...perfil, detalhe: x }),

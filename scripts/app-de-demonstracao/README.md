@@ -42,6 +42,13 @@ Para usar o Chromium do sistema em vez do navegador instalado pelo Playwright:
 PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium node scripts/app-de-demonstracao/testar-correcoes.cjs
 ```
 
+## Planejamento do mês
+
+Depois do build com Supabase fictício: `node scripts/app-de-demonstracao/testar-planejamento.cjs` (o cartão no Consultor
+abre a mesa; arrastar uma conta para dentro de uma entrada, puxar a borda da fatia, o ajuste, "Montar pra mim", o plano
+guardado depois de recarregar, Esc e X; no celular, tocar na conta e depois na entrada, a bandeja presa embaixo e sem
+rolagem de lado; nos temas escuro e claro, sem erro na página). Com `FOTOS=pasta`, salva capturas.
+
 ## Várias contas no mesmo aparelho
 
 Depois do build com Supabase fictício: `node scripts/app-de-demonstracao/testar-contas.cjs` (entrar, adicionar, trocar sem

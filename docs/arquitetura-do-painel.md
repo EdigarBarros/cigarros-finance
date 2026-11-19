@@ -624,6 +624,50 @@ primeira não encostar no número grande do cartão.
 Sem dados suficientes (menos de 2 dos 3 últimos meses com entradas e saídas), não há nota: a frase explica o que lançar e a aba
 mostra o que já dá. Conta nova vê o convite para o primeiro lançamento.
 
+### 4.7.1 Planejamento do mês (`lib/planejamento.ts`, `components/Planejamento.tsx`)
+
+Um jogo de dividir o dinheiro: cada dinheiro que entra no mês vira uma **barra**, e a pessoa diz com qual dinheiro sai cada
+conta. Abre pelo cartão **Planejar o mês** no Consultor (logo depois de "Agora"), pelo botão **Planejar** no celular e
+pelos passos do plano de ação que falam dele (destino `analise`: a aba abre a mesa em vez de navegar). Fica por cima de
+tudo, em tela cheia, com **Este mês** e **Mês que vem**.
+
+- **De onde vêm as peças.** Nada é lançado aqui; o motor só lê o planejador de pagamentos (`plano` de `lib/analise.ts`).
+  Entradas: as que ainda vão cair no mês (`plano.fontes`; no mesmo dia, juntas) e, neste mês, **O que está na conta**
+  (o saldo de hoje, quando é conhecido). Contas: as contas, parcelas, faturas e repetidas que vencem no mês, e as
+  atrasadas no mês de hoje. Também entram até 3 **dívidas abertas** com juros (para adiantar) e até 3 **metas** (para
+  guardar); sem meta, um "Guardar". `quadroDoMes()` monta isso; a análise guarda os dois meses em `a.quadros`.
+- **Jogar.** No computador, arraste a conta da bandeja **Sem dinheiro ainda** para dentro de uma barra; em qualquer
+  aparelho, toque na conta e depois na barra (no celular a bandeja fica presa embaixo). Entra o que cabe (`por()`): o
+  menor entre o que sobra na entrada e o que falta na conta. O resto continua na bandeja ("faltam R$ 250 de R$ 500"),
+  para ir para outra entrada. Puxar a borda direita da fatia paga mais ou menos, de R$ 10 em R$ 10 (`mudarParte()`,
+  nunca acima de `maximoDa()`); tocar na fatia abre o ajuste (Tudo que cabe, Metade, Metade da conta, controle
+  deslizante, Outro valor, Tirar daqui).
+- **Atraso visível.** Fatia paga com dinheiro que cai depois do vencimento fica listrada de laranja com um relógio
+  (`atrasoDa()`); o custo é o do planejador (multa uma vez e juros proporcionais aos dias, `custoDoAtraso`).
+- **Placar.** Anel de quanto das contas do mês tem dinheiro, quanto ficou sem destino, quantas atrasam e quanto o plano
+  custa em multa e juros (`placarDe()`; conta atrasada antes de hoje entra no custo). Tudo com dinheiro e nada atrasando
+  por causa do plano: **Mês fechado**, o anel fica verde e solta faíscas.
+- **Montar pra mim** (`montarPraMim()`): atrasadas primeiro, depois juros caros (5% ao mês ou mais, e fatura de cartão),
+  depois pelo vencimento; cada uma sai do dinheiro que chega a tempo (o mais cedo primeiro). O que sobra adianta a dívida
+  aberta mais cara e o resto vai para a primeira meta.
+- **O Consultor comenta** (`dicasDe()`, até 4, a mais cara primeiro): conta que vai atrasar e o dinheiro que chega a
+  tempo, atrasada ou cara sem dinheiro, conta paga pela metade, dinheiro sem destino e "mês fechado". Cada dica pode ter
+  um atalho que faz o passo ("Pagar com Salário").
+- **O Consultor lê o plano** (`conselhosDoPlanejamento()`, no plano de ação): "Seu plano paga X depois do vencimento" e
+  "No seu plano, X ainda está sem dinheiro". Sem plano, com 2 entradas ou mais e 3 contas ou mais no mês, sugere planejar.
+  Mexer no plano refaz a análise, mas não conta como mudança nos dados (o aviso "Analisei a mudança" não aparece).
+- **Onde fica.** `perfis.consultor.planejamento` (a coluna da memória, migração 24; sem migração nova) e no aparelho
+  (`opuscash-planejamento-<id>`), por mês `AAAA-MM`, só o mês de hoje e o próximo. Entre as duas cópias vale, mês a mês,
+  a mexida por último. Ao abrir, `valerPartes()` confere o plano guardado: some a parte cuja conta foi paga ou cuja
+  entrada mudou; a que passou do valor encolhe.
+- **Animações** (todas desligam com Animações: Reduzidas): a mesa abre, as barras entram uma a uma, uma moedinha voa da
+  conta até a barra, a fatia nova cresce com mola e um brilho passa por ela, "+R$" sobe da fatia, os números correm, as
+  barras que recebem acendem e mostram "cabem R$ X" (laranja se for atrasar), a conta escolhida pulsa e o celular vibra
+  de leve ao colocar.
+
+Testes: `node scripts/painel/testar.mjs planejamento` (o motor) e `scripts/app-de-demonstracao/testar-planejamento.cjs`
+(a mesa no computador e no celular, nos dois temas).
+
 ## 5. Guia de linguagem
 
 ### 5.1 Regras

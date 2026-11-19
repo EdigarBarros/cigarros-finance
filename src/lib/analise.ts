@@ -32,6 +32,7 @@ import { fraseDoResultado, licaoDe, type MemoriaConsultor, type Objetivo } from 
 import { converter, totalConvertido, type Taxas } from './moedas'
 import { visao } from './perfil'
 import { planejar, type Plano } from './planejador'
+import { conselhosDoPlanejamento, quadroDoMes, type Planejamentos, type Quadro } from './planejamento'
 import { tx } from './textos'
 import type {
   CartaoCredito, Categoria, ContaFixa, Divida, FaturaPaga, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida,
@@ -501,6 +502,8 @@ export interface Analise {
   agenda: Agenda | null
   /** O plano de pagamentos: de qual dinheiro sai cada conta, em que dia, e quanto custa o atraso (lib/planejador.ts). */
   plano: Plano | null
+  /** O quadro do Planejamento (as entradas e as contas de cada mês), para a tela de planejar (lib/planejamento.ts). */
+  quadros: { este: Quadro; proximo: Quadro } | null
   /** Quanto cortar por mês para chegar na sobra-alvo (0 se já chega). */
   corte: number
   /** O que está atrasado hoje (parcelas, contas do mês e faturas). */
@@ -538,6 +541,8 @@ export interface EntradaAnalise {
   dividasSemJuros?: boolean
   /** O que o consultor já aprendeu com a pessoa: o objetivo e os passos conferidos (lib/memoria.ts). */
   memoria?: MemoriaConsultor
+  /** O plano do mês que a pessoa montou: com qual dinheiro sai cada conta (lib/planejamento.ts). */
+  planejamento?: Planejamentos
 }
 
 // ---------- apoio ----------
@@ -1357,6 +1362,7 @@ export function analisar(e: EntradaAnalise): Analise {
   // mais pesado que este.
   let agenda: Agenda | null = null
   let plano: Plano | null = null
+  let quadros: Analise['quadros'] = null
   {
     const prox = doMesChave(atual + 1)
     const fimJanela = isoDoDia(prox.ano, prox.mes, 31)
@@ -1608,6 +1614,12 @@ export function analisar(e: EntradaAnalise): Analise {
       abertas: abertas.filter((sd) => !(sd.divida.valor_parcela && sd.divida.valor_parcela > 0) && (sd.divida.juros_mes ?? 0) > 0)
         .map((sd) => ({ nome: sd.divida.descricao, saldo: sd.restanteHoje, juros: sd.divida.juros_mes! })),
     })
+    const extras = {
+      abertas: abertas.filter((sd) => !(sd.divida.valor_parcela && sd.divida.valor_parcela > 0) && (sd.divida.juros_mes ?? 0) > 0)
+        .map((sd) => ({ nome: sd.divida.descricao, saldo: sd.restanteHoje, juros: sd.divida.juros_mes! })),
+      metas: [...e.metas].sort((a, b) => a.ordem - b.ordem).map((m) => ({ id: m.id, nome: m.nome })),
+    }
+    quadros = { este: quadroDoMes(plano, hojeIso, 'este', extras), proximo: quadroDoMes(plano, hojeIso, 'proximo', extras) }
     if (unicos.length || saldoInicial !== null || calendario.dias.some((c) => c.entra || c.sai)) {
       agenda = {
         dias, saldoInicial, ritmoDia, calendario,
@@ -1782,6 +1794,16 @@ export function analisar(e: EntradaAnalise): Analise {
       destino: divida ? 'dividas' : v.contas ? 'contas' : 'lancamentos',
       botao: divida ? tx('Ver dívidas') : v.contas ? tx('Ver contas') : tx('Ver lançamentos'), titulo: d.titulo, porque: d.porque,
     })
+  }
+  // O plano que a pessoa montou: o que ele deixa atrasar ou sem dinheiro (e, sem plano, o convite para planejar).
+  if (quadros) {
+    for (const d of conselhosDoPlanejamento(quadros.este, e.planejamento?.[quadros.este.mes], fmtValor, fmtDataCurta)) {
+      nova({
+        id: `planejamento:${d.id}`, urgencia: d.tom === 'ruim' ? 'urgente' : d.tom === 'medio' && d.id !== 'planejar' ? 'importante' : 'sugestao',
+        prioridade: d.tom === 'ruim' ? 97 : d.id === 'planejar' ? 60 : 94, icone: d.icone, destino: 'analise',
+        botao: d.id === 'planejar' ? tx('Planejar o mês') : tx('Abrir o plano'), titulo: d.titulo, porque: d.porque,
+      })
+    }
   }
   const aperto = doPlano.some((d) => d.tom !== 'bom') ? undefined : agenda?.percepcoes.find((x) => x.id === 'aperto')
   if (aperto) {
@@ -2148,7 +2170,7 @@ export function analisar(e: EntradaAnalise): Analise {
     tom: nota === null ? 'medio' : tomDa(nota), resumo, fase, fases, porqueFase, proximoPasso, pilares,
     renda, gastos, sobra, sobraFracao, guardando, sobraAlvo, rendaVaria, variacaoRenda, principalFonte, tendenciaGastos, tendenciaRenda,
     serie, mes: previsao, categorias, subiram, cairam, regra, recorrentes, assinaturasPorMes, recorrentesPorMes, formigas,
-    jurosPagos, semCategoria, cartao, dividas, reserva, alocacao, metas, patrimonio, agenda, plano, corte, acoes,
+    jurosPagos, semCategoria, cartao, dividas, reserva, alocacao, metas, patrimonio, agenda, plano, quadros, corte, acoes,
     atrasoTotal: totalAtraso, podeGastar, lancamentosPorMes, jeito, aprendizado,
   }
 }

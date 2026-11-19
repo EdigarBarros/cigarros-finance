@@ -5,6 +5,7 @@ import type { MesEfetivo, Resumo } from '../lib/calc'
 import type { SituacaoCartao } from '../lib/cartoes'
 import type { Analise, Reanalise } from '../lib/analise'
 import type { MemoriaConsultor, Objetivo } from '../lib/memoria'
+import type { Planejamentos } from '../lib/planejamento'
 import type { Gosto } from '../lib/gosto'
 import type { Conselho } from '../lib/conselheiro'
 import type { MemoriaConta, SituacaoConta, SugestaoVinculo } from '../lib/contasFixas'
@@ -98,6 +99,9 @@ export interface Ctx {
   /** O que a tela do Consultor aprendeu com o uso (lib/gosto.ts): desenhos e assuntos preferidos, favoritos e escondidos. */
   gosto: Gosto
   salvarGosto: (g: Gosto) => void
+  /** O plano do mês: com qual dinheiro sai cada conta, por mês 'AAAA-MM' (lib/planejamento.ts). */
+  planejamento: Planejamentos
+  salvarPlanejamento: (p: Planejamentos) => void
   /** Escolhe (ou tira, com null) o objetivo que guia o consultor. */
   escolherObjetivo: (o: Objetivo | null) => void
   /** O que a última mudança nos dados fez com a análise (null até a primeira mudança desta visita). */

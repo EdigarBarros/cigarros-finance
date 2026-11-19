@@ -1262,6 +1262,31 @@ então o app Android só a recebe numa versão nova (a 2.8.2 sem assinatura na �
 - Validação: `scripts/painel/testar.mjs` 35/35 (caso novo com 10 tipos de dívida e as regras de espaço e família), tsc,
   lint, build; app de demonstração com 9 dívidas parecidas com as do dono, claro e escuro, sem erro na página.
 
+### 19/11/2026 — Claude — Planejamento do mês no Consultor
+
+**Objetivo.** O dono pediu uma opção no Consultor para dizer com qual dinheiro sai cada conta, como um jogo, inclusive
+pagando parte agora e o resto com outra entrada, e que o Consultor use isso nas dicas. Antes de construir, foram feitos
+dois protótipos clicáveis; ele escolheu o de "fatiar cada entrada" e pediu animações e visual caprichado.
+
+**O que mudou.**
+- `src/lib/planejamento.ts` (novo, puro): monta o quadro do mês a partir do planejador de pagamentos, põe e ajusta partes,
+  "Montar pra mim", placar, dicas e os conselhos para o plano de ação; confere o plano guardado contra o quadro de agora.
+- `src/lib/analise.ts`: `a.quadros` (este mês e o próximo) e os passos `planejamento:*` no plano de ação.
+- `src/lib/useDados.ts`: `planejamento` e `salvarPlanejamento` (aparelho na hora; banco em `perfis.consultor.planejamento`
+  depois de parar de mexer). As gravações da memória e do gosto passaram a levar o plano junto, para uma não apagar a outra.
+- `src/components/Planejamento.tsx` e `planejamento.css` (novos): a mesa e o cartão do Consultor.
+- `src/pages/Analise.tsx` e `src/movel/telas/ConsultorMovel.tsx`: o cartão, o botão Planejar e os passos que abrem a mesa.
+- `src/components/Painel.tsx`: passa o plano para a análise e não trata mexer no plano como mudança nos dados.
+- Traduções em inglês e espanhol; documentação em `docs/arquitetura-do-painel.md` (4.7.1).
+
+**Banco.** Nenhuma migração: usa a coluna `perfis.consultor` (migração 24).
+
+**Validação.** `npx tsc -b`, `npm run lint` (sem erro), `node scripts/painel/testar.mjs` (36 de 36, com o caso novo do
+planejamento) e `scripts/app-de-demonstracao/testar-planejamento.cjs` (40 verificações, temas escuro e claro, computador e
+celular).
+
+**Observação.** O trabalho foi feito num worktree próprio (`claude/planejamento`) porque outra sessão estava editando os
+mesmos arquivos na pasta principal ao mesmo tempo.
 ### 19/11/2026 — Claude — App Android 2.8.3 (código 21)
 
 **Estado:** `.aab` gerado **sem assinatura** (`OpusCash-2.8.3-codigo21.aab`, na Área de Trabalho do dono). Falta o dono

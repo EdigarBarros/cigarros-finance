@@ -16463,6 +16463,378 @@
     "en": "+{0} parts",
     "es": "+{0} partes"
   },
+  "1 entrada e {0} para dividir. Diga com qual dinheiro sai cada uma.": {
+    "en": "1 income and {0} to split. Choose which money pays each one.",
+    "es": "1 ingreso y {0} para dividir. Elige con qué dinero sale cada una."
+  },
+  "Abrir o plano": {
+    "en": "Open the plan",
+    "es": "Abrir el plan"
+  },
+  "Agora toque na entrada que vai pagar {0}.": {
+    "en": "Now tap the income that will pay {0}.",
+    "es": "Ahora toca el ingreso que va a pagar {0}."
+  },
+  "Arraste uma conta para dentro de um dinheiro (ou toque na conta e depois nele). Puxe a borda de uma fatia para pagar só uma parte.": {
+    "en": "Drag a bill into an income (or tap the bill, then the income). Pull the edge of a slice to pay only part of it.",
+    "es": "Arrastra una cuenta dentro de un ingreso (o toca la cuenta y después el ingreso). Tira del borde de una porción para pagar solo una parte."
+  },
+  "Atrasam": {
+    "en": "Late",
+    "es": "Se atrasan"
+  },
+  "Coloque uma conta aqui": {
+    "en": "Put a bill here",
+    "es": "Pon una cuenta aquí"
+  },
+  "Com isso, a conta fica toda paga.": {
+    "en": "With this, the bill is fully paid.",
+    "es": "Con esto, la cuenta queda pagada por completo."
+  },
+  "Comece pelo dinheiro que cai primeiro: coloque nele a conta que vence antes. Ou toque em \"Montar pra mim\" e ajuste depois.": {
+    "en": "Start with the money that arrives first: put the bill due soonest in it. Or tap \"Build it for me\" and adjust later.",
+    "es": "Empieza por el dinero que llega primero: pon en él la cuenta que vence antes. O toca \"Armarlo por mí\" y ajusta después."
+  },
+  "Contas com dinheiro": {
+    "en": "Bills covered",
+    "es": "Cuentas con dinero"
+  },
+  "Continuar o plano": {
+    "en": "Continue the plan",
+    "es": "Seguir con el plan"
+  },
+  "Coube {0}. Faltam {1} de {2}: coloque o resto em outra entrada.": {
+    "en": "{0} fit. {1} of {2} still missing: put the rest in another income.",
+    "es": "Cupieron {0}. Faltan {1} de {2}: pon el resto en otro ingreso."
+  },
+  "Divida cada dinheiro que entra entre as contas.": {
+    "en": "Split each income among your bills.",
+    "es": "Divide cada ingreso entre tus cuentas."
+  },
+  "Este mês tem {0} entradas e {1} contas. Dividir cada entrada entre as contas, antes de o dinheiro cair, mostra o que atrasa e o que sobra.": {
+    "en": "This month has {0} incomes and {1} bills. Splitting each income among the bills before the money arrives shows what will be late and what is left.",
+    "es": "Este mes tiene {0} ingresos y {1} cuentas. Dividir cada ingreso entre las cuentas, antes de que llegue el dinero, muestra qué se atrasa y qué sobra."
+  },
+  "Faltam {0} no plano do mês. Coloque o que falta em alguma entrada ou veja o que dá para adiar.": {
+    "en": "{0} is missing in this month's plan. Put what is missing in an income or see what can be postponed.",
+    "es": "Faltan {0} en el plan del mes. Pon lo que falta en algún ingreso o mira qué se puede aplazar."
+  },
+  "Ficam {0} para pagar com outra entrada.": {
+    "en": "{0} is left to pay with another income.",
+    "es": "Quedan {0} para pagar con otro ingreso."
+  },
+  "Lance o próximo dinheiro que entra para dividir entre as contas.": {
+    "en": "Add your next income to split it among your bills.",
+    "es": "Registra el próximo ingreso para dividirlo entre tus cuentas."
+  },
+  "Lançar uma entrada": {
+    "en": "Add an income",
+    "es": "Registrar un ingreso"
+  },
+  "Metade": {
+    "en": "Half",
+    "es": "La mitad"
+  },
+  "Metade da conta": {
+    "en": "Half the bill",
+    "es": "La mitad de la cuenta"
+  },
+  "Montar pra mim": {
+    "en": "Build it for me",
+    "es": "Armarlo por mí"
+  },
+  "Multa e juros": {
+    "en": "Fees and interest",
+    "es": "Multa e intereses"
+  },
+  "Mês fechado": {
+    "en": "Month covered",
+    "es": "Mes cerrado"
+  },
+  "Mês fechado: tudo com dinheiro e nada atrasa.": {
+    "en": "Month covered: every bill has money and nothing is late.",
+    "es": "Mes cerrado: todo tiene dinero y nada se atrasa."
+  },
+  "Mês que vem": {
+    "en": "Next month",
+    "es": "Mes que viene"
+  },
+  "Nenhum dinheiro previsto para {0}": {
+    "en": "No income expected for {0}",
+    "es": "Ningún ingreso previsto para {0}"
+  },
+  "Nenhuma conta vence nesse mês": {
+    "en": "No bills are due this month",
+    "es": "Ninguna cuenta vence ese mes"
+  },
+  "No seu plano, {0} ainda está sem dinheiro.": {
+    "en": "In your plan, {0} still has no money.",
+    "es": "En tu plan, {0} todavía no tiene dinero."
+  },
+  "No seu plano, {0} contas ainda estão sem dinheiro.": {
+    "en": "In your plan, {0} bills still have no money.",
+    "es": "En tu plan, {0} cuentas todavía no tienen dinero."
+  },
+  "O Consultor diz": {
+    "en": "The Advisor says",
+    "es": "El Consultor dice"
+  },
+  "O dinheiro do mês acabou e {0} ainda ficam sem pagar. Veja o que dá para adiar ou negociar.": {
+    "en": "This month's money ran out and {0} is still unpaid. See what can be postponed or negotiated.",
+    "es": "El dinero del mes se acabó y {0} todavía quedan sin pagar. Mira qué se puede aplazar o negociar."
+  },
+  "O dinheiro que entra": {
+    "en": "The money coming in",
+    "es": "El dinero que entra"
+  },
+  "O plano usa as entradas que ainda vão cair (lançadas para depois ou que se repetem todo mês) e o saldo dos bancos. Lance a próxima entrada e ela aparece aqui.": {
+    "en": "The plan uses incomes still to arrive (scheduled or repeating every month) and your bank balances. Add the next income and it shows up here.",
+    "es": "El plan usa los ingresos que todavía van a llegar (programados o que se repiten cada mes) y el saldo de los bancos. Registra el próximo ingreso y aparece aquí."
+  },
+  "O que está na conta": {
+    "en": "What's in your account",
+    "es": "Lo que hay en la cuenta"
+  },
+  "Outro valor": {
+    "en": "Other amount",
+    "es": "Otro valor"
+  },
+  "Pagar com {0}": {
+    "en": "Pay with {0}",
+    "es": "Pagar con {0}"
+  },
+  "Pagar {0} com {1}": {
+    "en": "Pay {0} with {1}",
+    "es": "Pagar {0} con {1}"
+  },
+  "Para onde vai {0}": {
+    "en": "Where {0} goes",
+    "es": "Adónde va {0}"
+  },
+  "Planejar": {
+    "en": "Plan",
+    "es": "Planificar"
+  },
+  "Planejar o mês": {
+    "en": "Plan the month",
+    "es": "Planificar el mes"
+  },
+  "Planeje com qual dinheiro sai cada conta.": {
+    "en": "Plan which money pays each bill.",
+    "es": "Planifica con qué dinero sale cada cuenta."
+  },
+  "Plano limpo. As contas voltaram para a bandeja.": {
+    "en": "Plan cleared. The bills are back in the tray.",
+    "es": "Plan vacío. Las cuentas volvieron a la bandeja."
+  },
+  "Plano montado. Toque numa fatia ou puxe a borda dela para ajustar.": {
+    "en": "Plan built. Tap a slice or pull its edge to adjust.",
+    "es": "Plan armado. Toca una porción o tira de su borde para ajustar."
+  },
+  "Pôr em {0}": {
+    "en": "Put in {0}",
+    "es": "Poner en {0}"
+  },
+  "Quanto pagar": {
+    "en": "How much to pay",
+    "es": "Cuánto pagar"
+  },
+  "Recomeçar": {
+    "en": "Start over",
+    "es": "Empezar de nuevo"
+  },
+  "Sem destino": {
+    "en": "Unassigned",
+    "es": "Sin destino"
+  },
+  "Sem dinheiro ainda": {
+    "en": "No money yet",
+    "es": "Todavía sin dinero"
+  },
+  "Seu plano paga {0} depois do vencimento.": {
+    "en": "Your plan pays {0} after its due date.",
+    "es": "Tu plan paga {0} después del vencimiento."
+  },
+  "Tirar daqui": {
+    "en": "Remove from here",
+    "es": "Quitar de aquí"
+  },
+  "Todas as contas têm dinheiro.": {
+    "en": "Every bill has money.",
+    "es": "Todas las cuentas tienen dinero."
+  },
+  "Toque na entrada que vai pagar {0}.": {
+    "en": "Tap the income that will pay {0}.",
+    "es": "Toca el ingreso que va a pagar {0}."
+  },
+  "Toque numa conta lá embaixo e depois no dinheiro que vai pagá-la. Toque numa fatia para pagar só uma parte.": {
+    "en": "Tap a bill below, then the income that will pay it. Tap a slice to pay only part of it.",
+    "es": "Toca una cuenta abajo y después el ingreso que la va a pagar. Toca una porción para pagar solo una parte."
+  },
+  "Tudo com dinheiro e nada atrasa.": {
+    "en": "Every bill has money and nothing is late.",
+    "es": "Todo tiene dinero y nada se atrasa."
+  },
+  "Tudo o que vence no mês tem dinheiro e nada atrasa por causa do plano.": {
+    "en": "Everything due this month has money and nothing is late because of the plan.",
+    "es": "Todo lo que vence en el mes tiene dinero y nada se atrasa por el plan."
+  },
+  "Tudo que cabe": {
+    "en": "All that fits",
+    "es": "Todo lo que cabe"
+  },
+  "Vai para {0} quando {1} cair.": {
+    "en": "Goes to {0} when {1} arrives.",
+    "es": "Va a {0} cuando llegue {1}."
+  },
+  "adiantar a dívida": {
+    "en": "pay the debt early",
+    "es": "adelantar la deuda"
+  },
+  "atrasa 1 dia": {
+    "en": "1 day late",
+    "es": "se atrasa 1 día"
+  },
+  "atrasa {0} dias": {
+    "en": "{0} days late",
+    "es": "se atrasa {0} días"
+  },
+  "cabem {0}": {
+    "en": "{0} fits",
+    "es": "caben {0}"
+  },
+  "cai {0}": {
+    "en": "arrives {0}",
+    "es": "llega el {0}"
+  },
+  "de até {0}": {
+    "en": "of up to {0}",
+    "es": "de hasta {0}"
+  },
+  "este mês": {
+    "en": "this month",
+    "es": "este mes"
+  },
+  "faltam {0}": {
+    "en": "{0} missing",
+    "es": "faltan {0}"
+  },
+  "faltam {0} de {1}": {
+    "en": "{0} of {1} missing",
+    "es": "faltan {0} de {1}"
+  },
+  "guardar o que sobrar": {
+    "en": "save what's left",
+    "es": "guardar lo que sobre"
+  },
+  "já está disponível": {
+    "en": "already available",
+    "es": "ya disponible"
+  },
+  "o mês que vem": {
+    "en": "next month",
+    "es": "el mes que viene"
+  },
+  "sobram {0}": {
+    "en": "{0} left",
+    "es": "sobran {0}"
+  },
+  "tudo com destino": {
+    "en": "all assigned",
+    "es": "todo con destino"
+  },
+  "vence {0}": {
+    "en": "due {0}",
+    "es": "vence el {0}"
+  },
+  "venceu {0}": {
+    "en": "was due {0}",
+    "es": "venció el {0}"
+  },
+  "{0} ainda sem destino, e {1} ainda sem dinheiro.": {
+    "en": "{0} still unassigned, and {1} still has no money.",
+    "es": "{0} todavía sin destino, y {1} todavía sin dinero."
+  },
+  "{0} ainda sem destino. Adiantar {1} ({2}% ao mês) é o que mais rende.": {
+    "en": "{0} still unassigned. Paying {1} early ({2}% a month) is what pays off most.",
+    "es": "{0} todavía sin destino. Adelantar {1} ({2}% al mes) es lo que más rinde."
+  },
+  "{0} ainda sem destino. Dinheiro sem destino some no dia a dia: guarde uma parte.": {
+    "en": "{0} still unassigned. Money without a job disappears day to day: save some of it.",
+    "es": "{0} todavía sin destino. El dinero sin destino se esfuma en el día a día: guarda una parte."
+  },
+  "{0} cai 1 dia depois do vencimento de {1}.": {
+    "en": "{0} arrives 1 day after {1} is due.",
+    "es": "{0} llega 1 día después del vencimiento de {1}."
+  },
+  "{0} cai {1} dias depois do vencimento de {2}.": {
+    "en": "{0} arrives {1} days after {2} is due.",
+    "es": "{0} llega {1} días después del vencimiento de {2}."
+  },
+  "{0} cai {1} e {2} vence {3}: atrasa {4} e custa uns {5}.": {
+    "en": "{0} arrives {1} and {2} is due {3}: {4} late, costing about {5}.",
+    "es": "{0} llega el {1} y {2} vence el {3}: se atrasa {4} y cuesta unos {5}."
+  },
+  "{0} cobra {1}% ao mês se atrasar e tem {2} sem dinheiro. Vale pagar antes das outras.": {
+    "en": "{0} charges {1}% a month if late and has {2} without money. Worth paying before the others.",
+    "es": "{0} cobra {1}% al mes si se atrasa y tiene {2} sin dinero. Conviene pagarla antes que las otras."
+  },
+  "{0} com {1}": {
+    "en": "{0} with {1}",
+    "es": "{0} con {1}"
+  },
+  "{0} entradas e {1} para dividir. Diga com qual dinheiro sai cada uma.": {
+    "en": "{0} incomes and {1} to split. Choose which money pays each one.",
+    "es": "{0} ingresos y {1} para dividir. Elige con qué dinero sale cada una."
+  },
+  "{0} já tem destino para tudo.": {
+    "en": "{0} is already fully assigned.",
+    "es": "{0} ya tiene destino para todo."
+  },
+  "{0} já tem dinheiro para tudo.": {
+    "en": "{0} already has all the money it needs.",
+    "es": "{0} ya tiene dinero para todo."
+  },
+  "{0} já venceu e ainda tem {1} sem dinheiro: cada dia soma multa e juros. É a primeira da fila.": {
+    "en": "{0} is past due and still has {1} without money: every day adds fees and interest. It's first in line.",
+    "es": "{0} ya venció y todavía tiene {1} sin dinero: cada día suma multa e intereses. Es la primera de la fila."
+  },
+  "{0} vence {1} e o plano paga com {2}, que cai {3}. São {4} de multa e juros: troque por um dinheiro que chegue antes.": {
+    "en": "{0} is due {1} and the plan pays it with {2}, which arrives {3}. That's {4} in fees and interest: switch to money that arrives earlier.",
+    "es": "{0} vence el {1} y el plan la paga con {2}, que llega el {3}. Son {4} de multa e intereses: cámbiala por un dinero que llegue antes."
+  },
+  "{0} vence {1}, mas {2} só cai {3}: atrasa 1 dia e custa uns {4}.": {
+    "en": "{0} is due {1}, but {2} only arrives {3}: 1 day late, costing about {4}.",
+    "es": "{0} vence el {1}, pero {2} recién llega el {3}: se atrasa 1 día y cuesta unos {4}."
+  },
+  "{0} vence {1}, mas {2} só cai {3}: atrasa {4} dias e custa uns {5}.": {
+    "en": "{0} is due {1}, but {2} only arrives {3}: {4} days late, costing about {5}.",
+    "es": "{0} vence el {1}, pero {2} recién llega el {3}: se atrasa {4} días y cuesta unos {5}."
+  },
+  "{0}% das contas com dinheiro": {
+    "en": "{0}% of bills covered",
+    "es": "{0}% de las cuentas con dinero"
+  },
+  "{0}% das contas com dinheiro.": {
+    "en": "{0}% of bills covered.",
+    "es": "{0}% de las cuentas con dinero."
+  },
+  "{0}% das contas com dinheiro. 1 atrasa no plano.": {
+    "en": "{0}% of bills covered. 1 is late in the plan.",
+    "es": "{0}% de las cuentas con dinero. 1 se atrasa en el plan."
+  },
+  "{0}% das contas com dinheiro. {1} atrasam no plano.": {
+    "en": "{0}% of bills covered. {1} are late in the plan.",
+    "es": "{0}% de las cuentas con dinero. {1} se atrasan en el plan."
+  },
+  "{0}, {1}. Toque para mudar.": {
+    "en": "{0}, {1}. Tap to change.",
+    "es": "{0}, {1}. Toca para cambiar."
+  },
+  "{0}: {1} já têm dinheiro, faltam {2}. Coloque o resto em outra entrada.": {
+    "en": "{0}: {1} already has money, {2} missing. Put the rest in another income.",
+    "es": "{0}: {1} ya tienen dinero, faltan {2}. Pon el resto en otro ingreso."
+  },
   "Refazendo sua tela…": {
     "en": "Rebuilding your screen…",
     "es": "Rehaciendo tu pantalla…"
