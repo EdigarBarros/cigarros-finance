@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { depoisDaAbertura } from '../lib/abertura'
 import { semMovimento } from '../lib/tema'
 
 const suave = (t: number) => 1 - Math.pow(1 - t, 4)
@@ -10,6 +11,8 @@ const suave = (t: number) => 1 - Math.pow(1 - t, 4)
  * A contagem muda só o texto do número, quadro a quadro, sem passar pelo React: antes cada quadro redesenhava o
  * componente (dezenas de vezes por segundo, em cada número da tela), e trocar de aba rápido no celular engasgava.
  * O React continua dono do texto: ele escreve o valor da hora em cada desenho, e a contagem só mexe nesse mesmo texto.
+ * Na entrada do app, a contagem espera a abertura sair (lib/abertura.ts): atrás dela ninguém via, e cada quadro roubava
+ * quadros da saída dela no celular.
  */
 export function Numero({ valor, formato, duracao = 1200 }: { valor: number; formato: (n: number) => string; duracao?: number }) {
   const [parado] = useState(semMovimento)
@@ -22,16 +25,19 @@ export function Numero({ valor, formato, duracao = 1200 }: { valor: number; form
     if (parado) return
     const de = atual.current
     if (de === valor) return
-    const inicio = performance.now()
-    let quadro = requestAnimationFrame(function passo(agora) {
-      const t = Math.min(1, (agora - inicio) / duracao)
-      const v = t < 1 ? de + (valor - de) * suave(t) : valor
-      atual.current = v
-      const no = texto.current?.firstChild
-      if (no) no.nodeValue = formatoAtual.current(v)
-      if (t < 1) quadro = requestAnimationFrame(passo)
+    let quadro = 0
+    const desistir = depoisDaAbertura(() => {
+      const inicio = performance.now()
+      quadro = requestAnimationFrame(function passo(agora) {
+        const t = Math.min(1, Math.max(0, (agora - inicio) / duracao))
+        const v = t < 1 ? de + (valor - de) * suave(t) : valor
+        atual.current = v
+        const no = texto.current?.firstChild
+        if (no) no.nodeValue = formatoAtual.current(v)
+        if (t < 1) quadro = requestAnimationFrame(passo)
+      })
     })
-    return () => cancelAnimationFrame(quadro)
+    return () => { desistir(); cancelAnimationFrame(quadro) }
   }, [valor, duracao, parado])
   // translate="no": o tradutor do Google (lib/idioma.ts) não mexe em valores, que mudam o tempo todo enquanto contam
   return <span ref={texto} translate="no">{formato(parado ? valor : atual.current)}</span>
