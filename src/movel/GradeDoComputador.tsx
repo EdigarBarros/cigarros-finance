@@ -18,7 +18,7 @@ import {
 
 /** O arrasto em andamento: mudar o tamanho (canto) ou o lugar (o cartão inteiro). */
 type Arrasto =
-  | { tipo: 'tamanho'; id: IdWidget; x0: number; y0: number; w0: number; h0: number; esquerda: number; tamanhos: TamanhosNoComputador }
+  | { tipo: 'tamanho'; id: IdWidget; x0: number; y0: number; w0: number; h0: number; esquerda: number; tamanhos: TamanhosNoComputador; x: number; y: number; hAgora: number; mexeuAltura: boolean }
   | { tipo: 'lugar'; id: IdWidget; x0: number; y0: number; dx: number; dy: number; rolagem0: number; topo0: number; esquerda0: number; ordem: IdWidget[]; alvo: IdWidget | null; andou: boolean }
 
 export function GradeDoComputador({ ids, tamanhos, arrumando, tituloDe, conteudo, barra, aoReordenar, aoRedimensionar }: {
@@ -31,7 +31,8 @@ export function GradeDoComputador({ ids, tamanhos, arrumando, tituloDe, conteudo
   /** A barra do modo Arrumar (nome, subir, descer, tirar). */
   barra: (id: IdWidget) => ReactNode
   aoReordenar: (ordem: IdWidget[]) => void
-  aoRedimensionar: (id: IdWidget, t: TamanhoNoComputador | null) => void
+  /** `ordem`: quando puxar o canto mudou a ordem de leitura dos cartões (os outros se encaixaram em volta). */
+  aoRedimensionar: (id: IdWidget, t: TamanhoNoComputador | null, ordem?: IdWidget[]) => void
 }) {
   const refGrade = useRef<HTMLDivElement>(null)
   const refVaga = useRef<HTMLDivElement>(null)
@@ -54,12 +55,50 @@ export function GradeDoComputador({ ids, tamanhos, arrumando, tituloDe, conteudo
   const yPx = (y: number) => y * (GRADE.linha + GRADE.vao)
 
   /** A conta: onde fica cada cartão, com a ordem e os tamanhos dados (os do arrasto, se houver). */
-  const montar = (ordem: IdWidget[], tams: TamanhosNoComputador | undefined) => {
+  const montar = (ordem: IdWidget[], tams: TamanhosNoComputador | undefined, preso?: { id: IdWidget; x: number; y: number }) => {
     const larguras = new Map(linhasDoComputador(ordem, tams).flat().map((k) => [k.id, k.colunas]))
     return encaixar(ordem.map((id) => {
       const l = tams?.[id]?.l
-      return { id, w: larguras.get(id) ?? 6, h: l ?? linhasPara(alturas.current.get(id) ?? 240), fixo: l !== undefined }
-    }))
+      // o cartão puxado pelo canto tem a largura que a pessoa está dando (sem a sobra da linha)
+      const w = preso?.id === id ? tams?.[id]?.c ?? 6 : larguras.get(id) ?? 6
+      return { id, w, h: l ?? linhasPara(alturas.current.get(id) ?? 240), fixo: l !== undefined }
+    }), undefined, preso)
+  }
+
+  /**
+   * As linhas da lista de um cartão de altura escolhida: aparecem só as que cabem inteiras. É conta com as alturas
+   * medidas quando o conteúdo mudou (`partes`), então dá para fazer a cada quadro do arrasto sem medir nada; esconder é
+   * `visibility`, que não recalcula a página.
+   */
+  const partes = useRef(new Map<IdWidget, { fixas: number; itens: number[] }>())
+  const recortar = (id: IdWidget, altura: number, fixo: boolean) => {
+    const corpo = celulas.current.get(id)?.querySelector<HTMLElement>('.widget-corpo')
+    const m = partes.current.get(id)
+    if (!corpo || !m) return
+    const filhos = corpo.children
+    // um bloco só (gráfico, resumo, número) se ajusta sozinho ao espaço
+    const lista = fixo && filhos.length > 1 && !corpo.closest('.widget-evolucao')
+    let usado = m.fixas
+    for (let i = 0; i < filhos.length; i++) {
+      usado += m.itens[i] ?? 0
+      const some = lista && usado > altura + 0.5
+      const el = filhos[i] as HTMLElement
+      if ((el.style.visibility === 'hidden') !== some) el.style.visibility = some ? 'hidden' : ''
+    }
+  }
+  /** Mede as partes de um cartão (rodapé, título e cada linha da lista), para o recorte acima. */
+  const medirPartes = (id: IdWidget) => {
+    const w = celulas.current.get(id)?.querySelector<HTMLElement>('.widget')
+    const corpo = w?.querySelector<HTMLElement>('.widget-corpo')
+    if (!w || !corpo) return
+    const cs = getComputedStyle(w)
+    let fixas = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth)
+    for (const f of w.children) if (f !== corpo && getComputedStyle(f).position !== 'absolute') fixas += (f as HTMLElement).offsetHeight
+    const itens = [...corpo.children].map((f) => {
+      const c = getComputedStyle(f)
+      return (f as HTMLElement).offsetHeight + parseFloat(c.marginTop) + parseFloat(c.marginBottom)
+    })
+    partes.current.set(id, { fixas, itens })
   }
 
   /** Refaz a conta e escreve o resultado no estilo dos cartões. Só escreve: não lê nada da tela. */
@@ -69,7 +108,8 @@ export function GradeDoComputador({ ids, tamanhos, arrumando, tituloDe, conteudo
     const a = arrasto.current
     const ordem = a?.tipo === 'lugar' ? a.ordem : atual.current.ids
     const tams = a?.tipo === 'tamanho' ? a.tamanhos : atual.current.tamanhos
-    const novos = montar(ordem, tams)
+    // puxando o canto, o cartão fica preso onde estava (não foge do mouse); os outros se encaixam em volta
+    const novos = montar(ordem, tams, a?.tipo === 'tamanho' ? { id: a.id, x: a.x, y: a.y } : undefined)
     blocos.current = novos
     for (const b of novos) {
       const el = celulas.current.get(b.id)
@@ -79,9 +119,14 @@ export function GradeDoComputador({ ids, tamanhos, arrumando, tituloDe, conteudo
       el.classList.toggle('puxando', a?.tipo === 'tamanho' && a.id === b.id)
       el.classList.toggle('pegando', a?.tipo === 'lugar' && a.andou && a.id === b.id)
       if (a?.id === b.id) {
-        // o cartão na mão: o lugar segue o mouse (lugar) ou a conta (tamanho); o tamanho segue o mouse (tamanho)
-        if (a.tipo === 'tamanho') el.style.transform = `translate3d(${xPx(b.x)}px, ${yPx(b.y)}px, 0)`
-        else { el.style.width = `${larguraPx(b.w)}px`; el.style.height = `${alturaDe(b.h)}px` }
+        // o cartão na mão: o lugar segue o mouse (lugar) ou fica preso (tamanho); o tamanho segue o mouse (tamanho)
+        if (a.tipo === 'tamanho') {
+          el.style.transform = `translate3d(${xPx(b.x)}px, ${yPx(b.y)}px, 0)`
+          // só para o lado: a altura é a da conta (a do conteúdo, alinhada com a fileira)
+          if (!a.mexeuAltura) { a.hAgora = alturaDe(b.h); el.style.height = `${a.hAgora}px` }
+          recortar(b.id, a.hAgora, b.fixo || a.mexeuAltura)
+        }
+        else { el.style.width = `${larguraPx(b.w)}px`; el.style.height = `${alturaDe(b.h)}px`; recortar(b.id, alturaDe(b.h), b.fixo) }
         const vaga = refVaga.current
         if (vaga) {
           vaga.style.transform = `translate3d(${xPx(b.x)}px, ${yPx(b.y)}px, 0)`
@@ -93,6 +138,7 @@ export function GradeDoComputador({ ids, tamanhos, arrumando, tituloDe, conteudo
       el.style.transform = `translate3d(${xPx(b.x)}px, ${yPx(b.y)}px, 0)`
       el.style.width = `${larguraPx(b.w)}px`
       el.style.height = `${alturaDe(b.h)}px`
+      recortar(b.id, alturaDe(b.h), b.fixo || b.id === ampliandoAgora.current)
     }
     grade.style.height = `${alturaDe(Math.max(1, linhasDaGradeToda(novos)))}px`
   }
@@ -111,6 +157,10 @@ export function GradeDoComputador({ ids, tamanhos, arrumando, tituloDe, conteudo
   }
 
   const observador = useRef<ResizeObserver | null>(null)
+  const observarPartes = (ro: ResizeObserver, w: Element) => {
+    for (const f of w.children) ro.observe(f)
+    for (const f of w.querySelector('.widget-corpo')?.children ?? []) ro.observe(f)
+  }
   // a cada desenho do React (dados novos, cartão novo, tamanho guardado, modo Arrumar): mede e posiciona, antes de pintar
   useLayoutEffect(() => {
     const grade = refGrade.current
@@ -121,9 +171,11 @@ export function GradeDoComputador({ ids, tamanhos, arrumando, tituloDe, conteudo
     if (!largura.current) largura.current = grade.clientWidth
     for (const id of ids) {
       medir(id)
-      // as partes de cada cartão (título, corpo, rodapé): quando uma muda de altura, mede de novo (observar de novo não repete)
+      medirPartes(id)
+      // as partes de cada cartão (título, corpo, rodapé, cada linha): quando uma muda de altura, mede de novo
+      // (observar de novo o mesmo elemento não repete)
       const w = celulas.current.get(id)?.querySelector('.widget')
-      if (w && observador.current) for (const f of w.children) observador.current.observe(f)
+      if (w && observador.current) observarPartes(observador.current, w)
     }
     desenhar()
   })
@@ -160,12 +212,16 @@ export function GradeDoComputador({ ids, tamanhos, arrumando, tituloDe, conteudo
         if (!id) continue
         const antes = alturas.current.get(id)
         medir(id)
+        medirPartes(id)
         if (alturas.current.get(id) !== antes) mudou = true
+        // a largura mudou no arrasto e as linhas mudaram de altura: o recorte do cartão na mão se refaz na hora
+        const a = arrasto.current
+        if (a?.tipo === 'tamanho' && a.id === id) recortar(id, a.hAgora, a.mexeuAltura || Boolean(a.tamanhos[id]?.l))
       }
       if (mudou) desenhar()
     })
     ro.observe(grade)
-    for (const el of celulas.current.values()) for (const f of el.querySelector('.widget')?.children ?? []) ro.observe(f)
+    for (const el of celulas.current.values()) { const w = el.querySelector('.widget'); if (w) observarPartes(ro, w) }
     observador.current = ro
     return () => { ro.disconnect(); observador.current = null }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -181,13 +237,19 @@ export function GradeDoComputador({ ids, tamanhos, arrumando, tituloDe, conteudo
       // o cartão segue o mouse em px (liso); a grade se reencaixa no tamanho arredondado
       const min = minimoDe(a.id)
       const w = Math.max(larguraPx(min.c), Math.min(largura.current - a.esquerda, a.w0 + x - a.x0))
-      const h = Math.max(alturaDe(min.l), Math.min(alturaDe(GRADE.maxLinhas), a.h0 + y - a.y0))
       el.style.width = `${w}px`
-      el.style.height = `${h}px`
-      const t = limitarTamanho(a.id, {
-        c: Math.round((w + GRADE.vao) / (colunaPx() + GRADE.vao)),
-        l: Math.round((h + GRADE.vao) / (GRADE.linha + GRADE.vao)),
-      })
+      // só para o lado: a altura continua a do conteúdo (esticar para o lado não pode travar a altura)
+      if (!a.mexeuAltura && Math.abs(y - a.y0) > 12) { a.mexeuAltura = true; setAmpliando(a.id) }
+      const c = Math.round((w + GRADE.vao) / (colunaPx() + GRADE.vao))
+      let t
+      if (a.mexeuAltura) {
+        const h = Math.max(alturaDe(min.l), Math.min(alturaDe(GRADE.maxLinhas), a.h0 + y - a.y0))
+        el.style.height = `${h}px`
+        a.hAgora = h
+        // as linhas que cabem acompanham o mouse, quadro a quadro (conta pura, sem medir)
+        recortar(a.id, h, true)
+        t = limitarTamanho(a.id, { c, l: Math.round((h + GRADE.vao) / (GRADE.linha + GRADE.vao)) })
+      } else t = limitarTamanho(a.id, { c })
       const antes = a.tamanhos[a.id]
       if (antes?.c !== t.c || antes?.l !== t.l) { a.tamanhos = { ...a.tamanhos, [a.id]: t }; desenhar() }
       return
@@ -229,8 +291,14 @@ export function GradeDoComputador({ ids, tamanhos, arrumando, tituloDe, conteudo
     if (a.tipo === 'tamanho') {
       const t = a.tamanhos[a.id]
       setAmpliando(null)
-      if (t && (t.c !== atual.current.tamanhos?.[a.id]?.c || t.l !== atual.current.tamanhos?.[a.id]?.l)) aoRedimensionar(a.id, t)
-      else desenhar()
+      // a ordem de leitura do que se vê agora (de cima para baixo, da esquerda para a direita): assim, sem o cartão preso,
+      // a grade se monta do mesmo jeito
+      const ordem = [...blocos.current].sort((p, q) => p.y - q.y || p.x - q.x).map((b) => b.id)
+      const mudouOrdem = ordem.join() !== atual.current.ids.join()
+      if (t && (mudouOrdem || t.c !== atual.current.tamanhos?.[a.id]?.c || t.l !== atual.current.tamanhos?.[a.id]?.l)) {
+        if (mudouOrdem) atual.current = { ...atual.current, ids: ordem }
+        aoRedimensionar(a.id, t, mudouOrdem ? ordem : undefined)
+      } else desenhar()
     } else if (a.ordem.join() !== atual.current.ids.join()) {
       // desenha já na ordem nova (o cartão desliza do mouse para a vaga) e guarda
       atual.current = { ...atual.current, ids: a.ordem }
@@ -256,9 +324,10 @@ export function GradeDoComputador({ ids, tamanhos, arrumando, tituloDe, conteudo
     const b = blocos.current.find((k) => k.id === id)
     if (!b) return
     refVaga.current?.classList.add('visivel')
-    const tams = { ...atual.current.tamanhos, [id]: { c: b.w, l: b.h } }
-    comecar({ tipo: 'tamanho', id, x0: e.clientX, y0: e.clientY, w0: larguraPx(b.w), h0: alturaDe(b.h), esquerda: xPx(b.x), tamanhos: tams }, e)
-    setAmpliando(id)
+    // a altura só fica travada se a pessoa mexer nela (ou se já estava escolhida)
+    const fixa = atual.current.tamanhos?.[id]?.l !== undefined
+    const tams = { ...atual.current.tamanhos, [id]: fixa ? { c: b.w, l: b.h } : { c: b.w } }
+    comecar({ tipo: 'tamanho', id, x0: e.clientX, y0: e.clientY, w0: larguraPx(b.w), h0: alturaDe(b.h), esquerda: xPx(b.x), tamanhos: tams, x: b.x, y: b.y, hAgora: alturaDe(b.h), mexeuAltura: fixa }, e)
     desenhar()
   }
   const pegar = (id: IdWidget) => (e: React.PointerEvent) => {
@@ -276,11 +345,12 @@ export function GradeDoComputador({ ids, tamanhos, arrumando, tituloDe, conteudo
   const teclaNoCanto = (id: IdWidget) => (e: React.KeyboardEvent) => {
     const b = blocos.current.find((k) => k.id === id)
     if (!b) return
-    const t = { c: b.w, l: b.h }
+    // ← → mudam só a largura (a altura continua a do conteúdo, se era); ↑ ↓ travam a altura a partir da de agora
+    const t: TamanhoNoComputador = { c: b.w, l: tamanhos?.[id]?.l }
     if (e.key === 'ArrowRight') t.c++
     else if (e.key === 'ArrowLeft') t.c--
-    else if (e.key === 'ArrowDown') t.l += 2
-    else if (e.key === 'ArrowUp') t.l -= 2
+    else if (e.key === 'ArrowDown') t.l = (t.l ?? b.h) + 2
+    else if (e.key === 'ArrowUp') t.l = (t.l ?? b.h) - 2
     else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); aoRedimensionar(id, null); return }
     else return
     e.preventDefault()

@@ -1199,3 +1199,21 @@ assinar depois; a chave baixada do Drive foi apagada da máquina.
 - Para assinar: baixar `opuscash-upload.keystore` do Drive e rodar
   `jarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore opuscash-upload.keystore OpusCash-2.8.2-codigo20.aab opuscash`
   (o `jarsigner` está em `~/tools/jdk-21.0.12.1+1/bin`); depois apagar a chave.
+
+### 18/11/2026 — Claude — Cartões do computador: linhas cortadas na borda e redimensionar mais firme
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração.
+
+- Relato do Edigar (capturas do Consultor e do Dinheiro guardado): no fim de cada linha aparecia um pedaço de ícone
+  cortado e as linhas não acompanhavam o tamanho. Causa: as linhas que não cabiam iam, por `flex-wrap`, para uma coluna à
+  direita, e a margem de 10 px das linhas deixava o começo dessa coluna à vista. Correção: sem `flex-wrap`; a grade
+  calcula quais linhas cabem inteiras (`recortar` em `GradeDoComputador.tsx`, alturas medidas só quando o conteúdo muda) e
+  esconde as outras com `visibility`, quadro a quadro durante o arrasto (a ideia do Pretext: medir uma vez, depois só conta).
+- Outros defeitos achados na revisão: (1) puxar o canto podia fazer o cartão pular para outro lugar (o encaixe o
+  reposicionava): agora fica preso onde estava (`encaixar(..., preso)`) e, ao soltar, guarda a ordem de leitura do que se
+  vê; (2) esticar só para o lado (mouse ou ← →) travava a altura, e o cartão podia virar uma caixa alta e vazia: a altura
+  só trava com movimento vertical; (3) o Mês a mês largo deixava uma faixa vazia à direita (coluna do painel do mês, que a
+  Início não usa); (4) animações de encaixe de 0,5 s para 0,3 s e o cartão na mão sem atraso.
+- `testar-grade-pc.cjs` 70/70 nos dois temas (novos: cartão preso enquanto cresce, nenhuma linha cortada no meio do
+  arrasto e depois, diminuindo as linhas somem junto, Consultor e Dinheiro guardado largos e baixos sem corte, esticar só
+  para o lado não trava a altura). `scripts/painel/testar.mjs` 34/34, `npx tsc -b`, lint e build.

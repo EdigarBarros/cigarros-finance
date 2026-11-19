@@ -136,9 +136,10 @@ export interface Bloco { id: IdWidget; x: number; y: number; w: number; h: numbe
  * para a direita) onde cabe inteiro; assim um cartão baixo pode ir para o lado de um alto, embaixo de outro. Depois, o
  * cartão de altura automática estica até o fundo do mais alto que começa na mesma linha, se o espaço embaixo dele estiver
  * livre (a fileira fica alinhada, sem degrau). Puro: só conta, nada de medir a tela.
- * `fixo`: a pessoa escolheu a altura; senão é a do conteúdo.
+ * `fixo`: a pessoa escolheu a altura; senão é a do conteúdo. `preso`: um cartão que fica onde está (o que a pessoa está
+ * puxando pelo canto, para não fugir do mouse); os outros se encaixam em volta dele.
  */
-export function encaixar(itens: { id: IdWidget; w: number; h: number; fixo: boolean }[], colunas: number = GRADE.colunas): Bloco[] {
+export function encaixar(itens: { id: IdWidget; w: number; h: number; fixo: boolean }[], colunas: number = GRADE.colunas, preso?: { id: IdWidget; x: number; y: number }): Bloco[] {
   const ocupado: number[] = [] // uma máscara de bits por linha da grade
   const mascara = (x: number, w: number) => ((1 << w) - 1) << x
   const livre = (x: number, y: number, w: number, h: number) => {
@@ -147,7 +148,15 @@ export function encaixar(itens: { id: IdWidget; w: number; h: number; fixo: bool
     return true
   }
   const blocos: Bloco[] = []
+  const doPreso = preso && itens.find((it) => it.id === preso.id)
+  let blocoPreso: Bloco | null = null
+  if (preso && doPreso) {
+    const w = Math.max(1, Math.min(colunas - preso.x, doPreso.w)), h = Math.max(1, doPreso.h)
+    for (let r = preso.y; r < preso.y + h; r++) ocupado[r] = (ocupado[r] ?? 0) | mascara(preso.x, w)
+    blocoPreso = { id: preso.id, x: preso.x, y: preso.y, w, h, fixo: doPreso.fixo }
+  }
   for (const it of itens) {
+    if (blocoPreso && it.id === blocoPreso.id) { blocos.push(blocoPreso); continue }
     const w = Math.max(1, Math.min(colunas, it.w)), h = Math.max(1, it.h)
     let x = 0, y = 0
     procura: for (;; y++) for (x = 0; x + w <= colunas; x++) if (livre(x, y, w, h)) break procura
