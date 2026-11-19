@@ -1,106 +1,168 @@
 /* =========================================================================
-   Abertura do OpusCash (components/Abertura.tsx): carregamento do login e da entrada no site.
-   Linha do tempo da entrada (~1,5 s): a luz acende → o símbolo se desenha da esquerda para a direita, saindo do desfoque →
-   a órbita de luz fecha em volta e fica girando enquanto carrega → o nome sobe letra por letra → um brilho atravessa o
-   símbolo de tempos em tempos. Saída (~0,75 s): o centro cresce e desfoca, o fundo se dissolve.
+   Abertura do OpusCash (components/Abertura.tsx), em 3D.
+   Entrada (~1,6 s): a luz acende → o infinito chega de longe girando e para de frente, balançando (camadas da mesma
+   imagem uma atrás da outra dão a espessura) → as peças do app saem de dentro dele e vão para a órbita, que fica girando
+   (cada peça se vira sempre para quem olha) → o nome sobe letra por letra.
+   Saída (~1 s): a órbita recua um pouco e se abre, as peças voam para fora e para perto; o infinito recua e vem para
+   cima de quem olha, girando; o fundo se dissolve e revela a tela de baixo.
+   Só transform e opacidade (nada de recorte, desfoque ou SVG girando): a placa de vídeo move as camadas sozinha e a
+   animação não engasga enquanto o app monta o painel. Nada com opacidade no meio da cadeia 3D (achataria a cena).
    ========================================================================= */
 
 .abertura {
   --ab-fundo: var(--abertura-fundo);
   --ab-texto: #f3f4f6;
   --ab-cash: var(--marca-3);
-  --ab-trilho: rgba(255, 255, 255, .07);
-  --ab-luz-1: rgba(20, 201, 160, .17);
-  --ab-luz-2: rgba(31, 142, 241, .11);
-  position: fixed; inset: 0; z-index: 2147483000;
-  display: grid; place-items: center;
-  background: var(--ab-fundo);
-  animation: ab-fundo-sai .62s cubic-bezier(.4, 0, .2, 1) .14s paused forwards;
+  --ab-luz-1: rgba(20, 201, 160, .18);
+  --ab-luz-2: rgba(31, 142, 241, .13);
+  --ab-borda: .32; /* brilho das camadas de trás do símbolo */
+  /* a órbita: raio, inclinação (vista de cima), tamanho das peças e quanto as alturas desencontram */
+  --R: 410px;
+  --incl: -21deg;
+  --esc: .62;
+  --sobe: .7px;
+  position: fixed; inset: 0; z-index: 2147483000; overflow: hidden;
+  perspective: 1100px; perspective-origin: 50% 43%;
+  pointer-events: auto;
 }
 :root[data-tema='claro'] .abertura {
   --ab-texto: #14161a;
   --ab-cash: #0c9f80;
-  --ab-trilho: rgba(15, 20, 30, .07);
-  --ab-luz-1: rgba(15, 174, 134, .16);
-  --ab-luz-2: rgba(31, 142, 241, .10);
+  --ab-luz-1: rgba(15, 174, 134, .17);
+  --ab-luz-2: rgba(31, 142, 241, .11);
+  --ab-borda: .55;
 }
-.abertura.saindo { animation-play-state: running; pointer-events: none; }
-@keyframes ab-fundo-sai { to { opacity: 0; visibility: hidden; } }
+.abertura.saindo { pointer-events: none; }
 
-/* a luz atrás: acende devagar e respira */
-.abertura-luz {
-  position: absolute; left: 50%; top: 50%; width: min(760px, 150vmax); aspect-ratio: 1; translate: -50% -54%;
+.ab-fundo { position: absolute; inset: 0; background: var(--ab-fundo); }
+
+/* a luz atrás: acende e respira */
+.ab-luz {
+  position: absolute; left: 50%; top: 43%; width: min(980px, 170vmax); aspect-ratio: 1; translate: -50% -50%;
   background:
-    radial-gradient(closest-side, var(--ab-luz-1), transparent 70%),
-    radial-gradient(closest-side at 62% 40%, var(--ab-luz-2), transparent 72%);
-  filter: blur(8px);
-  animation: ab-luz-acende 1.4s cubic-bezier(.22, 1, .36, 1) both, ab-luz-respira 4.8s ease-in-out 1.4s infinite;
+    radial-gradient(closest-side, var(--ab-luz-1), transparent 72%),
+    radial-gradient(closest-side at 64% 38%, var(--ab-luz-2), transparent 74%);
+  animation: ab-luz-acende 1.4s cubic-bezier(.22, 1, .36, 1) both, ab-luz-respira 5s ease-in-out 1.4s infinite;
 }
-@keyframes ab-luz-acende { from { opacity: 0; transform: scale(.6); } }
-@keyframes ab-luz-respira { 50% { opacity: .7; transform: scale(1.06); } }
+@keyframes ab-luz-acende { from { opacity: 0; transform: scale(.5); } }
+@keyframes ab-luz-respira { 50% { opacity: .65; transform: scale(1.08); } }
 
-.abertura-centro { position: relative; display: grid; justify-items: center; gap: 26px; }
-.abertura.saindo .abertura-centro { animation: ab-centro-sai .5s cubic-bezier(.4, 0, .2, 1) forwards; }
-@keyframes ab-centro-sai { to { opacity: 0; transform: scale(1.08); filter: blur(10px); } }
+/* ---------- a cena 3D: um ponto no meio da tela, um pouco acima do centro ---------- */
+.ab-cena {
+  position: absolute; left: 50%; top: 43%; width: 0; height: 0;
+  transform-style: preserve-3d;
+}
+.ab-inclina, .ab-abre, .ab-anel, .ab-lugar, .ab-entra, .ab-encara, .ab-flutua,
+.ab-simbolo-sai, .ab-simbolo-chega, .ab-simbolo { transform-style: preserve-3d; }
 
-/* ---------- símbolo e órbita ---------- */
-.abertura-simbolo { position: relative; display: grid; place-items: center; width: 220px; height: 220px; }
-.abertura-orbita { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.abertura-trilho { fill: none; stroke: var(--ab-trilho); stroke-width: 1.2; animation: ab-surge .9s ease .1s both; }
-.abertura-arco {
-  fill: none; stroke-width: 2.4; stroke-linecap: round;
-  stroke-dasharray: 32 68; /* começa às 3 horas e vai no sentido do relógio até 115° (onde fica a ponta) */
-  animation: ab-arco-fecha 1.1s cubic-bezier(.65, 0, .35, 1) .25s both;
-}
-@keyframes ab-arco-fecha { from { stroke-dasharray: 0 100; opacity: 0; } 30% { opacity: 1; } }
-.abertura-ponta { fill: var(--ab-cash); filter: drop-shadow(0 0 6px var(--marca-3)); animation: ab-surge .4s ease 1.1s both; }
-.abertura-giro { transform-origin: 110px 110px; animation: ab-gira 1.9s cubic-bezier(.55, .15, .45, .85) .9s infinite; }
-@keyframes ab-gira { to { transform: rotate(360deg); } }
-@keyframes ab-surge { from { opacity: 0; } }
+/* ---------- órbita ---------- */
+.ab-inclina { transform: rotateX(var(--incl)); }
+.ab-anel { animation: ab-gira 26s linear infinite; }
+@keyframes ab-gira { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
 
-.abertura-infinito { position: relative; display: block; width: 140px; }
-.abertura-infinito img {
-  display: block; width: 100%; height: auto;
-  filter: drop-shadow(0 10px 24px color-mix(in srgb, var(--marca-2) 38%, transparent));
-  animation: ab-desenha 1s cubic-bezier(.16, 1, .3, 1) .12s both;
+.ab-lugar {
+  position: absolute; left: 0; top: 0;
+  transform: rotateY(var(--a)) translateZ(var(--R)) translateY(calc(var(--dy) * var(--sobe)));
 }
-@keyframes ab-desenha {
-  /* o recorte passa da borda da imagem (-60%) para não cortar a sombra azul em volta, que virava um retângulo */
-  from { clip-path: inset(-60% 100% -60% -60%); filter: blur(10px) drop-shadow(0 10px 24px transparent); transform: scale(.88); opacity: .2; }
-  60% { opacity: 1; }
-  to { clip-path: inset(-60% -60% -60% -60%); }
+/* a peça sai de dentro do símbolo (o centro da órbita) e vai para o seu lugar */
+.ab-entra { animation: ab-entra 1.05s cubic-bezier(.2, 1.15, .35, 1) calc(.3s + var(--i) * 55ms) both; }
+@keyframes ab-entra {
+  from { transform: translateZ(calc(var(--R) * -1)) translateY(calc(var(--dy) * var(--sobe) * -1)) scale(.12); }
 }
-/* o brilho que atravessa: um degradê que só pinta onde está o símbolo (máscara com a própria imagem) */
-.abertura-infinito::after {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, .5) 48%, rgba(255, 255, 255, 0) 62%) no-repeat;
-  background-size: 260% 100%; background-position: 140% 0;
-  -webkit-mask: url(/simbolo.webp) center / 100% 100% no-repeat; mask: url(/simbolo.webp) center / 100% 100% no-repeat;
-  animation: ab-brilho 2.8s cubic-bezier(.45, 0, .2, 1) 1.05s infinite;
+/* gira ao contrário do anel, no mesmo ritmo: a peça fica sempre de frente (e desfaz quase toda a inclinação) */
+.ab-encara {
+  transform: rotateY(calc(var(--a) * -1)) rotateX(calc(var(--incl) * -.75));
+  animation: ab-encara 26s linear infinite;
 }
-@keyframes ab-brilho { 0% { background-position: 140% 0; } 45%, 100% { background-position: -60% 0; } }
+@keyframes ab-encara {
+  from { transform: rotateY(calc(var(--a) * -1)) rotateX(calc(var(--incl) * -.75)); }
+  to { transform: rotateY(calc(var(--a) * -1 - 360deg)) rotateX(calc(var(--incl) * -.75)); }
+}
+.ab-flutua { animation: ab-flutua 3.4s ease-in-out calc(var(--i) * -.8s) infinite alternate; }
+@keyframes ab-flutua {
+  from { transform: translateY(-7px) rotateZ(-1.5deg); }
+  to { transform: translateY(7px) rotateZ(1.5deg); }
+}
+.ab-peca {
+  position: absolute; left: 0; top: 0; width: max-content;
+  transform: translate(-50%, -50%) scale(var(--esc));
+  animation: ab-aparece .5s ease calc(.3s + var(--i) * 55ms) both;
+}
+@keyframes ab-aparece { from { opacity: 0; } }
+
+/* ---------- o símbolo ---------- */
+.ab-simbolo-chega { animation: ab-chega 1.15s cubic-bezier(.16, 1, .3, 1) .05s both; }
+@keyframes ab-chega {
+  from { transform: translateZ(-700px) rotateY(-300deg) rotateX(20deg) scale(.5); }
+}
+.ab-simbolo { animation: ab-balanca 4.2s ease-in-out 1.1s infinite alternate; transform: rotateY(-22deg); }
+@keyframes ab-balanca {
+  from { transform: rotateY(-22deg) rotateX(6deg) translateY(4px); }
+  to { transform: rotateY(22deg) rotateX(-6deg) translateY(-4px); }
+}
+.ab-simbolo img {
+  position: absolute; left: -110px; top: -53px; width: 220px; height: auto; display: block;
+  transform: translateZ(calc(var(--k) * -2.2px));
+  filter: brightness(var(--ab-borda)) saturate(1.2);
+  animation: ab-aparece .35s ease .05s both;
+  backface-visibility: visible;
+}
+.ab-simbolo img.frente { filter: none; }
+/* o brilho atrás do símbolo (um degradê, não sombra: sombra em camada 3D é cortada num retângulo) */
+.ab-simbolo-brilho {
+  position: absolute; left: -170px; top: -120px; width: 340px; height: 240px; border-radius: 50%;
+  transform: translateZ(-40px);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--marca-2) 34%, transparent), color-mix(in srgb, var(--marca-3) 12%, transparent) 55%, transparent);
+  animation: ab-aparece .6s ease .4s both;
+}
 
 /* ---------- nome, letra por letra ---------- */
-.abertura-nome {
-  display: flex; overflow: hidden; padding: 4px 2px;
-  font-family: var(--fonte-marca); font-size: 25px; font-weight: 700; letter-spacing: .2em; line-height: 1;
-  color: var(--ab-texto); margin-right: -.2em; /* o espaço da última letra não empurra o nome para o lado */
+.ab-nome {
+  position: absolute; left: 50%; bottom: max(7vh, 40px); translate: -50% 0;
+  display: flex; padding: 4px 2px;
+  font-family: var(--fonte-marca); font-size: 26px; font-weight: 700; letter-spacing: .24em; line-height: 1;
+  color: var(--ab-texto); margin-right: -.24em; /* o espaço da última letra não empurra o nome para o lado */
 }
-.abertura-nome span { display: inline-block; animation: ab-letra .8s cubic-bezier(.16, 1, .3, 1) calc(.62s + var(--i) * 45ms) both; }
-.abertura-nome .cash { color: var(--ab-cash); }
-@keyframes ab-letra { from { transform: translateY(110%); opacity: 0; filter: blur(4px); } }
+.ab-nome span { display: inline-block; animation: ab-letra .8s cubic-bezier(.16, 1, .3, 1) calc(.75s + var(--i) * 45ms) both; }
+.ab-nome .cash { color: var(--ab-cash); }
+@keyframes ab-letra { from { transform: translateY(70%) rotateX(-70deg); opacity: 0; } }
 
-@media (max-width: 420px) {
-  .abertura-simbolo { width: 184px; height: 184px; }
-  .abertura-infinito { width: 118px; }
-  .abertura-nome { font-size: 22px; }
+/* ---------- saída: a órbita se abre, o símbolo vem para cima de quem olha ---------- */
+.abertura.saindo .ab-abre { animation: ab-abre 1s cubic-bezier(.55, 0, .25, 1) forwards; }
+@keyframes ab-abre {
+  22% { transform: scale3d(.86, .86, .86); }
+  100% { transform: translateZ(320px) scale3d(3, 3, 3); }
+}
+.abertura.saindo .ab-peca { animation: ab-some .4s ease .5s forwards; }
+.abertura.saindo .ab-simbolo-sai { animation: ab-simbolo-sai 1s cubic-bezier(.6, 0, .25, 1) forwards; }
+/* recua um pouco e vem para cima de quem olha, quase de frente (de lado as camadas apareceriam separadas) */
+@keyframes ab-simbolo-sai {
+  24% { transform: translateZ(-120px) rotateX(8deg); }
+  100% { transform: translateZ(1000px) rotateX(-6deg); }
+}
+.abertura.saindo .ab-simbolo img, .abertura.saindo .ab-simbolo-brilho { animation: ab-some .28s ease .64s forwards; }
+.abertura.saindo .ab-nome span { animation: ab-nome-sai .45s cubic-bezier(.4, 0, 1, 1) calc(var(--i) * 25ms) forwards; }
+@keyframes ab-nome-sai { to { transform: translateY(-60%); opacity: 0; } }
+.abertura.saindo .ab-luz { animation: ab-luz-sai .8s ease forwards; }
+@keyframes ab-luz-sai { to { transform: scale(1.7); opacity: 0; } }
+.abertura.saindo .ab-fundo { animation: ab-some .45s cubic-bezier(.4, 0, .2, 1) .5s forwards; }
+@keyframes ab-some { to { opacity: 0; } }
+
+/* ---------- telas estreitas: órbita menor e peças menores ---------- */
+@media (max-width: 760px) {
+  .abertura { --R: min(42vw, 230px); --esc: .36; --sobe: .5px; --incl: -38deg; perspective: 900px; }
+  .ab-simbolo img { left: -62px; top: -30px; width: 124px; }
+  .ab-simbolo-brilho { left: -120px; top: -85px; width: 240px; height: 170px; }
+  .ab-nome { font-size: 22px; }
+}
+@media (max-height: 560px) {
+  .ab-nome { bottom: 28px; }
 }
 
-/* movimento reduzido (do aparelho ou escolhido no app): tudo parado e pronto, só o fundo some no fim */
+/* movimento reduzido (do aparelho ou escolhido no app): tudo parado no lugar, só o fundo some no fim */
 @media (prefers-reduced-motion: reduce) {
-  .abertura *, .abertura *::after { animation: none !important; }
-  .abertura-infinito::after { display: none; }
-  .abertura { animation-duration: .2s; animation-delay: 0s; }
+  .abertura *, .abertura.saindo * { animation: none !important; }
+  .abertura.saindo { transition: opacity .2s; opacity: 0; }
 }
-:root[data-movimento='reduzido'] .abertura-infinito::after { display: none; }
-:root[data-movimento='reduzido'] .abertura.saindo { animation: none !important; opacity: 0; }
+:root[data-movimento='reduzido'] .abertura *, :root[data-movimento='reduzido'] .abertura.saindo * { animation: none !important; }
+:root[data-movimento='reduzido'] .abertura.saindo { opacity: 0; }

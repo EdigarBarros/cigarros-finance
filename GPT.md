@@ -1298,3 +1298,25 @@ assinar com a chave de upload (ele digita a senha; o Claude não digita senhas) 
 - Para assinar: baixar `opuscash-upload.keystore` do Drive e rodar
   `jarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore opuscash-upload.keystore OpusCash-2.8.3-codigo21.aab opuscash`
   (o `jarsigner` está em `~/tools/jdk-21.0.12.1+1/bin`); depois apagar a chave.
+
+### 19/11/2026 — Claude — Abertura em 3D: o infinito com as peças do app em órbita
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração. O app Android leva a abertura dentro dele: só recebe
+numa versão nova (esta sessão rodou na nuvem, sem o SDK do Android; o `.aab` fica para uma sessão na máquina do dono).
+
+- Relato do Edigar: a abertura nova (#248) "travava" e estava feia; pediu algo em 3D, usando as peças que flutuam no topo
+  da página inicial, e algo em 3D também na saída.
+- Causa do travamento: ela animava `clip-path`, `filter: blur` e um giro dentro de um SVG. O navegador só mexe nisso no
+  mesmo trabalho (main thread) que monta o painel, então a animação parava justo durante o carregamento.
+- Agora (`components/Abertura.tsx` + `abertura.css`): o símbolo do infinito com espessura (10 camadas da mesma imagem) chega
+  girando e fica balançando; as peças da página inicial (`PecaOpus`, exportada de `pages/FundoOpus.tsx`) saem de dentro
+  dele e giram numa órbita inclinada, sempre de frente para quem olha, passando por trás e pela frente do símbolo. Na
+  saída a órbita recua, se abre e as peças voam para fora; o infinito recua e vem para cima de quem olha; o fundo some.
+  Só `transform` e `opacity`. Nada de opacidade no meio da cadeia 3D (achataria a cena) nem `drop-shadow` em camada 3D
+  (é cortado num retângulo): o brilho atrás do símbolo é um degradê. Celular: órbita menor e mais inclinada.
+- Lógica de quando entra e sai (lib/abertura.ts, `MINIMO`, `FOLGA`) igual; `MINIMO` 1,5 s → 1,6 s e `SAIDA` 0,76 s → 1 s.
+- **Validação:** `npx tsc -b`, `npm run lint` (sem erro), build com Supabase fictício. App de demonstração com os dados
+  atrasados de propósito, 1440×860 e 390×844, escuro e claro: quadros da entrada e da saída (a saída congelada em
+  0/250/450/650/850 ms), sem erro na página. Trava proposital do JavaScript da página: com 1,2 s de trava no meio do
+  carregamento saíram 29 quadros diferentes, e com 0,7 s de trava na saída, 17 (a animação segue mexendo).
+  Animações reduzidas: cena parada e a abertura sai quando carrega.
