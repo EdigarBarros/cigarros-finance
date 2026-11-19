@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { Icone } from '../components/Icone'
 import { MESES_NOME } from '../lib/format'
 import { semMovimento } from '../lib/tema'
@@ -1515,10 +1515,31 @@ export function Algoritmo() {
       if (visivel && !quadro) { lerScroll(); antes = 0; antesGiro = 0; quadro = requestAnimationFrame(laco) }
     })
     obs.observe(secao)
-    const aoScroll = () => lerScroll()
+    const aoScroll = () => { lerScroll(); vigiarEntrada() }
     const aoRedim = () => { medir(); lerScroll(); desenhar(atual, performance.now()) }
     medir(); lerScroll(); atual = alvo; desenhar(atual, performance.now())
     document.fonts?.ready.then(() => { medir(); desenhar(atual, performance.now()) })
+    // o texto surge quando aparece de verdade (antes ele já nascia pronto, sem entrada): o selo desliza, as palavras do
+    // título sobem uma a uma, o parágrafo e os pontinhos. "A seção entrou na tela" não basta: o carrossel de cima fica POR
+    // CIMA desta seção durante quase uma tela de rolagem (a animação aconteceria escondida), e no celular o texto se apaga
+    // enquanto a câmera mergulha. Então, a cada rolagem, olha se o texto está aceso, na tela e por cima de tudo (o que está
+    // no ponto do selo é o próprio texto).
+    // Toda vez que ele sai de vista (rolou para fora, o carrossel o cobriu de novo ou ele se apagou), volta a ficar pronto
+    // para surgir: subir e descer de novo repete a entrada. Para não piscar na beira, sair pede mais que entrar (só conta
+    // como apagado abaixo de 5% e como fora quando o selo saiu inteiro da tela). Com animações reduzidas, fica sempre pronto.
+    const rotulo = texto.querySelector<HTMLElement>('.ag-rotulo')!
+    let surgiu = false
+    const vigiarEntrada = () => {
+      if (semMovimento()) { if (!surgiu) { surgiu = true; texto.classList.add('surgiu') } return }
+      const b = rotulo.getBoundingClientRect()
+      const naTela = b.bottom > 0 && b.top < window.innerHeight
+      const opacidade = Number(getComputedStyle(texto).opacity)
+      const no = naTela ? document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2) : null
+      const porCima = Boolean(no && texto.contains(no))
+      if (!surgiu && naTela && porCima && opacidade >= 0.5) { surgiu = true; texto.classList.add('surgiu') }
+      else if (surgiu && (!naTela || !porCima || opacidade < 0.05)) { surgiu = false; texto.classList.remove('surgiu') }
+    }
+    vigiarEntrada()
     // o texto e os selos mudam de altura (fontes, idioma, quebra de linha): a tela do celular se mede de novo
     const tamanhos = new ResizeObserver(() => { medir(); desenhar(atual, performance.now()) })
     tamanhos.observe(texto); tamanhos.observe(selos)
@@ -1565,14 +1586,18 @@ export function Algoritmo() {
           <div className="ag-pilha" aria-live="polite">
             {CENAS.map((c, i) => (
               <div key={c.titulo} className={`ag-legenda ${cena === i ? 'ativa' : ''}`} aria-hidden={cena !== i}>
-                <h2>{c.titulo}</h2>
+                {/* cada palavra sobe sozinha quando a cena entra (algoritmo.css, .ag-palavra) */}
+                <h2>{c.titulo.split(' ').map((p, k) => (
+                  <span key={k}>{k > 0 && ' '}<span className="ag-palavra" style={{ '--p': k } as CSSProperties}>{p}</span></span>
+                ))}</h2>
                 <p>{c.texto}</p>
               </div>
             ))}
           </div>
           <div className="ag-trilho" role="tablist" aria-label={tx('Partes do motor do OpusCash')}>
             {CENAS.map((c, i) => (
-              <button key={c.titulo} role="tab" aria-selected={cena === i} aria-label={c.titulo} className={cena === i ? 'ativo' : ''} onClick={() => irPara(i)} />
+              <button key={c.titulo} role="tab" aria-selected={cena === i} aria-label={c.titulo} className={cena === i ? 'ativo' : ''} onClick={() => irPara(i)}
+                style={{ '--p': i } as CSSProperties} />
             ))}
           </div>
         </div>

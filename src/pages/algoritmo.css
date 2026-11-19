@@ -75,6 +75,19 @@
 .ag-trilho button { width: 10px; height: 10px; padding: 0; border: 0; border-radius: 99px; cursor: pointer; background: rgba(255, 220, 170, .22); transition: width .4s var(--mola), background .3s; }
 .ag-trilho button.ativo { width: 34px; background: linear-gradient(90deg, var(--ouro-forte), #ffe2a6); box-shadow: 0 0 14px rgba(255, 170, 60, .6); }
 .ag-trilho button:focus-visible { outline: 2px solid var(--ouro); outline-offset: 3px; }
+/* a entrada do texto: escondido até a seção aparecer (Algoritmo.tsx põe .surgiu); então o selo desliza, as palavras do
+   título sobem uma a uma saindo do desfoque, depois o parágrafo e os pontinhos. A cada troca de cena as palavras do título
+   novo sobem de novo. Rápido no começo e freando no fim (--deslize), como o resto do site. */
+.ag-palavra { display: inline-block; }
+.ag-texto:not(.surgiu) :is(.ag-rotulo, .ag-legenda.ativa .ag-palavra, .ag-legenda.ativa p, .ag-trilho button) { opacity: 0; }
+.ag-texto.surgiu .ag-rotulo { animation: ag-surge 1s var(--deslize, cubic-bezier(.16, 1, .3, 1)) both; }
+.ag-texto.surgiu .ag-legenda.ativa .ag-palavra { animation: ag-palavra 1.15s var(--deslize, cubic-bezier(.16, 1, .3, 1)) both; animation-delay: calc(.16s + var(--p, 0) * 80ms); }
+.ag-texto.surgiu .ag-legenda.ativa p { animation: ag-surge 1.1s var(--deslize, cubic-bezier(.16, 1, .3, 1)) both; animation-delay: .45s; }
+.ag-texto.surgiu .ag-trilho button { animation: ag-ponto .8s var(--deslize, cubic-bezier(.16, 1, .3, 1)) both; animation-delay: calc(.65s + var(--p, 0) * 70ms); }
+@keyframes ag-surge { from { opacity: 0; transform: translateY(16px); filter: blur(6px); } }
+@keyframes ag-palavra { from { opacity: 0; transform: translateY(.6em) rotate(2deg); filter: blur(8px); } }
+@keyframes ag-ponto { from { opacity: 0; transform: scale(.3); } }
+
 /* véu atrás do texto: a luz passa por baixo dele. Some em cima e embaixo, onde a seção ainda tem a cor da página */
 .ag-sticky::after {
   content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
@@ -110,7 +123,7 @@
 }
 
 /* animações reduzidas nas Configurações do OpusCash */
-:root[data-movimento='reduzido'] .ag :is(.ag-hud > span i, .ag-rotulo i, .ag-legenda) { animation: none; transition: none; }
+:root[data-movimento='reduzido'] .ag :is(.ag-hud > span i, .ag-rotulo i, .ag-legenda, .ag-rotulo, .ag-palavra, .ag-legenda p, .ag-trilho button) { animation: none; transition: none; }
 
 /* ─── modo claro ───
    O claro é o escuro invertido (Algoritmo.tsx, `paleta`): papel creme no lugar do preto, nanquim no desenho e o laranja
