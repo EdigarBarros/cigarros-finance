@@ -1186,3 +1186,16 @@ sem falha, `testar-arrasto.cjs` 41/41 (uma rodada antes teve 1 falha intermitent
 arrasto, nenhuma tarefa longa (>50 ms) durante o arrasto, Contas 548×368 → 736×728 mostrando 4 → 10 contas, tamanho
 guardado e de volta depois de recarregar, arrastar troca a ordem, setas e Delete na alça, Resumo largo com 4 colunas e
 nada sobreposto a 1000 px.
+
+### 18/11/2026 — Claude — App Android 2.8.2 (código 20)
+
+**Estado:** `.aab` gerado **sem assinatura** (`OpusCash-2.8.2-codigo20.aab`, na Área de Trabalho do dono). Falta o dono
+assinar com a chave de upload (ele digita a senha; o Claude não digita senhas) e enviar no Play Console. Ele preferiu
+assinar depois; a chave baixada do Drive foi apagada da máquina.
+
+- Leva a faixa do topo sempre verde com o selo do estado do mês e os tamanhos dos cartões do computador guardados quando a
+  pessoa arruma pelo celular (#241). `versionCode` 19 → 20, `versionName` 2.8.1 → 2.8.2.
+- Conferido: o código novo (`selo-do-mes`, `alca-tamanho`), "2.8.2" no manifesto e o Supabase de produção no pacote.
+- Para assinar: baixar `opuscash-upload.keystore` do Drive e rodar
+  `jarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore opuscash-upload.keystore OpusCash-2.8.2-codigo20.aab opuscash`
+  (o `jarsigner` está em `~/tools/jdk-21.0.12.1+1/bin`); depois apagar a chave.
