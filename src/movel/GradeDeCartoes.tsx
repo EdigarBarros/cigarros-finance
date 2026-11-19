@@ -61,7 +61,10 @@ export function GradeDeCartoes({ x, computador = false }: { x: Contexto; computa
       <GradeDoComputador ids={ids} tamanhos={tamanhos} arrumando={arrumando} tituloDe={(id) => WIDGETS[id].titulo()} barra={barra}
         conteudo={(id, fixo) => <div inert={arrumando || undefined}><WidgetDaLista id={id} x={fixo ? { ...x, limite: 12 } : x} /></div>}
         aoReordenar={(ordem) => guardar(reordenarCartoes(arrumacao, detalhe, ordem, agora()))}
-        aoRedimensionar={(id, t) => guardar(redimensionarCartao(arrumacao, detalhe, id, t, agora()))} />
+        aoRedimensionar={(id, t, ordem) => {
+          const a = redimensionarCartao(arrumacao, detalhe, id, t, agora())
+          guardar(ordem ? reordenarCartoes(a, detalhe, ordem, agora()) : a)
+        }} />
     )
   } else {
     // arrumando, um cartão por linha: subir e descer ficam claros

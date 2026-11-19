@@ -80,16 +80,20 @@ sempre; o resto → `InicioPC`. Os três jeitos usam esta tela; o que muda entre
    baixo e da esquerda para a direita, então um cartão baixo pode ficar ao lado de um alto, embaixo de outro. A altura é a
    do conteúdo; os que começam na mesma linha esticam até o fundo do mais alto, se o espaço embaixo estiver livre.
    **Personalizar (Arrumar), só no computador:** cada cartão ganha uma alça no canto de baixo. Puxar a alça muda largura e
-   altura: o cartão segue o mouse em px e os outros se reencaixam ao vivo no tamanho arredondado para a grade; uma vaga
-   tracejada mostra onde ele vai ficar ao soltar. Arrastar o cartão (por qualquer lugar fora dos botões) muda o lugar:
+   altura: o cartão segue o mouse em px, **fica preso no lugar** (`encaixar` com `preso`) e os outros se reencaixam ao vivo
+   em volta, no tamanho arredondado para a grade; uma vaga tracejada mostra onde ele vai ficar ao soltar (ao soltar, a
+   ordem guardada é a de leitura do que se vê). **A altura só trava se a pessoa mexer nela** (mais de 12 px na vertical,
+   ou ↑ ↓ no teclado): esticar só para o lado mantém a altura do conteúdo. Arrastar o cartão (por qualquer lugar fora dos botões) muda o lugar:
    passou por cima de outro, os dois trocam na ordem. A barra de cada cartão (subir, descer, tirar) flutua no canto de
    cima, sem mudar a altura; a barra "Arraste um cartão… · Pronto" fica presa no pé da tela. Pelo teclado, na alça:
    setas mudam o tamanho, Delete (ou clique duplo) volta ao de sempre. Limites: o mínimo de cada cartão
    (`MINIMO`, para o conteúdo caber), 12 colunas e 40 linhas (~950 px). O tamanho fica em `perfis.celular.inicio.tamanhos`
    (`{ c, l }`, sem migração: a coluna já é jsonb); o celular ignora e "Voltar ao modelo" apaga junto.
    **Cartão de altura escolhida** (`.fixo`): o corpo (`widget-corpo`, que no celular é `display: contents`) ocupa o que
-   sobra e mostra só as linhas que cabem inteiras (as demais quebram para uma coluna escondida), então mais alto = mais
-   linhas, ao vivo; a lista traz até 12 (`limite` no `Contexto`). O gráfico do ano ocupa a altura toda; o Resumo do mês
+   sobra e mostra só as linhas que cabem inteiras, então mais alto = mais linhas, ao vivo; a lista traz até 12 (`limite` no
+   `Contexto`). Quais cabem é conta (`recortar`): a altura de cada linha é medida quando o conteúdo muda (ResizeObserver) e,
+   a cada quadro do arrasto, as que passam do fundo ganham `visibility: hidden` (não recalcula a página). Antes era um
+   `flex-wrap` que jogava as sobras numa coluna à direita, e o começo dessa coluna aparecia na borda (ícones cortados). O gráfico do ano ocupa a altura toda; o Resumo do mês
    com 640 px ou mais põe os quatro números numa fileira.
    **Por que não trava:** a posição é só conta. No arrasto nada passa pelo React: a cada quadro a conta é refeita e vai
    direto para o estilo (`transform` para o lugar). A tela só é medida quando o conteúdo de um cartão muda
