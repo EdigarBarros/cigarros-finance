@@ -192,10 +192,8 @@
   .ab-nome { bottom: 28px; }
 }
 
-/* movimento reduzido (do aparelho ou escolhido no app): tudo parado no lugar, só o fundo some no fim */
-@media (prefers-reduced-motion: reduce) {
-  .abertura *, .abertura.saindo * { animation: none !important; }
-  .abertura.saindo { transition: opacity .2s; opacity: 0; }
-}
+/* animações reduzidas escolhidas no app (Configurações): tudo parado no lugar, só o fundo some no fim.
+   O "reduzir movimento" do aparelho não vale aqui, como no resto do app (lib/tema.ts): no Windows ele vem de "Efeitos de
+   animação" desligado, e a abertura ficava congelada no computador */
 :root[data-movimento='reduzido'] .abertura *, :root[data-movimento='reduzido'] .abertura.saindo * { animation: none !important; }
 :root[data-movimento='reduzido'] .abertura.saindo { opacity: 0; }
