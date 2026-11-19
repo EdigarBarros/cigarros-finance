@@ -16834,5 +16834,29 @@
   "{0}: {1} já têm dinheiro, faltam {2}. Coloque o resto em outra entrada.": {
     "en": "{0}: {1} already has money, {2} missing. Put the rest in another income.",
     "es": "{0}: {1} ya tienen dinero, faltan {2}. Pon el resto en otro ingreso."
+  },
+  "Refazendo sua tela…": {
+    "en": "Rebuilding your screen…",
+    "es": "Rehaciendo tu pantalla…"
+  },
+  "Refiz sua tela": {
+    "en": "I rebuilt your screen",
+    "es": "Rehíce tu pantalla"
+  },
+  "Nota {0} → {1}": {
+    "en": "Score {0} → {1}",
+    "es": "Nota {0} → {1}"
+  },
+  "Li o que mudou": {
+    "en": "Read what changed",
+    "es": "Leí lo que cambió"
+  },
+  "Refiz as contas": {
+    "en": "Redid the math",
+    "es": "Rehíce las cuentas"
+  },
+  "Montei a tela de novo": {
+    "en": "Built the screen again",
+    "es": "Armé la pantalla de nuevo"
   }
 }

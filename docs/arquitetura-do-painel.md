@@ -447,6 +447,13 @@ mês, dívidas, data sem dívidas, reserva, passos que entraram ou saíram do pl
 dia, cotação nova e dados chegando do banco não contam como mudança: só renovam a base de comparação. Sem mudança nesta visita,
 "O que mudou" compara com o retrato da última visita (guardado no navegador, só números).
 
+**Montagem ao vivo** (`useMontagem` em `pages/Analise.tsx`, CSS no fim de `analise.css`; computador e celular). Ao abrir a aba
+depois de uma mudança que ainda não foi montada (ou, na primeira visita da sessão, com algo diferente da visita anterior), a
+tela se refaz na frente da pessoa: "O que mudou" sobe para o topo e conta o que o consultor fez ("Refazendo sua tela…", três
+passos que se marcam, a nota de antes → depois), uma luz desce pela tela e os cartões se montam um a um, de cima para baixo,
+acendendo a borda ao chegar. Cada mudança anima uma vez; voltar à aba sem mudança nova abre a tela pronta. Com "Animações
+reduzidas" tudo aparece pronto.
+
 **Agenda do dinheiro.** O motor também monta, dia a dia, de hoje até o fim do mês que vem, o que tem data certa: contas do mês,
 parcelas das dívidas (pelo calendário de cada uma), faturas de cada cartão, lançamentos marcados para depois e o que se repete
 todo mês. Com o saldo da conta corrente informado, desconta também o gasto do dia a dia entre um dia e outro. Dessa agenda saem

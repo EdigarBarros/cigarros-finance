@@ -30,6 +30,7 @@ export function Analise(c: Ctx) {
   const [planejando, setPlanejando] = useState(false)
   // os passos do plano que falam do Planejamento (destino 'analise') abrem a mesa em vez de navegar
   const irPara: Ctx['irPara'] = (p) => (p === 'analise' ? setPlanejando(true) : c.irPara(p))
+  const montando = useMontagem(c.reanalise, desdeAVisita) && !c.contaNova
 
   if (c.contaNova) {
     return (
@@ -49,16 +50,18 @@ export function Analise(c: Ctx) {
   }
 
   return (
-    <div className={`pagina analise an-${nivel} ${movimento === 'reduzido' ? 'parado' : ''}`}>
+    <div className={`pagina analise an-${nivel} ${movimento === 'reduzido' ? 'parado' : ''} ${montando ? 'montando' : ''}`}>
+      {montando && <span className="an-varredura" aria-hidden="true" />}
       <header className="pagina-topo an-cabecalho">
         <div>
           <h1>{tx('Seu consultor')}</h1>
           <p className="sub">{nivel === 'simples' ? tx('O que importa hoje, num olhar.') : tx('Uma tela montada para você, refeita a cada lançamento.')}</p>
         </div>
       </header>
+      {montando && <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 3} aoVivo />}
       <Manchete t={tela} aoIr={(x) => x.destino && c.irPara(x.destino)} />
       <SeuPerfil a={a} nivel={nivel} />
-      <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 2} />
+      {!montando && <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 2} />}
       <Agora a={a} nivel={nivel} />
       <CartaoDoPlanejamento a={a} planejamento={c.planejamento} aoAbrir={() => setPlanejando(true)} />
       {nivel === 'detalhado' ? <PlanoDeAcao a={a} aoIr={irPara} /> : <ProximoPasso a={a} aoIr={irPara} />}
@@ -199,16 +202,57 @@ export function useDesdeAUltimaVisita(id: string, a: DadosAnalise) {
   return useMemo(() => (antes ? { em: antes.em, mudancas: compararRetratos(antes, retratoDe(a)) } : null), [antes, a])
 }
 
-/** Só aparece quando algo mudou de fato: uma faixa com setas para cima ou para baixo. */
-export function OQueMudou({ reanalise, desdeAVisita, max }: { reanalise: Ctx['reanalise']; desdeAVisita: { em: string; mudancas: Mudanca[] } | null; max: number }) {
+/**
+ * A montagem ao vivo: ao abrir o Consultor depois de uma mudança que mexeu na análise (um lançamento, uma dívida, uma conta
+ * paga) ou, na primeira visita da sessão, quando algo mudou desde a anterior, a pessoa vê a tela sendo refeita: o cartão
+ * "o que mudou" vem para o topo contando o que o consultor fez (lendo, refazendo as contas, montando) e a lista de mudanças,
+ * enquanto uma luz desce pela tela e os cartões se montam um a um, de cima para baixo. Cada mudança anima uma vez só.
+ */
+let reanaliseMontada = 0
+let visitaMontada = false
+export function useMontagem(reanalise: Ctx['reanalise'], desdeAVisita: { mudancas: Mudanca[] } | null) {
+  const [montar] = useState(() => (reanalise?.mudancas.length ? reanalise.em.getTime() > reanaliseMontada : !visitaMontada && !!desdeAVisita?.mudancas.length))
+  useEffect(() => {
+    if (!montar) return
+    if (reanalise) reanaliseMontada = Math.max(reanaliseMontada, reanalise.em.getTime())
+    visitaMontada = true
+  }, [montar]) // eslint-disable-line react-hooks/exhaustive-deps
+  // a visita já conta mesmo sem montagem: voltar à aba não repete o "desde a última visita"
+  useEffect(() => { visitaMontada = true }, [])
+  return montar
+}
+
+/** Só aparece quando algo mudou de fato: uma faixa com setas para cima ou para baixo. `aoVivo`: a montagem (acima). */
+export function OQueMudou({ reanalise, desdeAVisita, max, aoVivo }: { reanalise: Ctx['reanalise']; desdeAVisita: { em: string; mudancas: Mudanca[] } | null; max: number; aoVivo?: boolean }) {
   const lista = reanalise?.mudancas.length ? reanalise.mudancas : desdeAVisita?.mudancas ?? []
   if (!lista.length) return null
+  const titulo = reanalise?.mudancas.length ? tx('Mudou agora') : tx('Desde {0}', fmtDataCurta(desdeAVisita!.em.slice(0, 10)))
+  const nota = reanalise?.mudancas.length && reanalise.nota !== null && reanalise.notaAntes !== null && reanalise.nota !== reanalise.notaAntes
+    ? { de: reanalise.notaAntes, para: reanalise.nota } : null
   return (
-    <section className="cartao an-mudou">
+    <section className={`cartao an-mudou ${aoVivo ? 'ao-vivo' : ''}`}>
+      {aoVivo && <span className="an-mudou-progresso" aria-hidden="true" />}
       <span className="an-mudou-titulo">
-        <Icone nome="historico" tamanho={14} />
-        {reanalise?.mudancas.length ? tx('Mudou agora') : tx('Desde {0}', fmtDataCurta(desdeAVisita!.em.slice(0, 10)))}
+        <Icone nome={aoVivo ? 'bussola' : 'historico'} tamanho={14} />
+        {aoVivo ? (
+          <span className="an-mudou-troca">
+            <span className="antes" aria-hidden="true">{tx('Refazendo sua tela…')}</span>
+            <span className="depois">{tx('Refiz sua tela')} · {titulo}</span>
+          </span>
+        ) : titulo}
+        {aoVivo && nota && (
+          <span className={`an-mudou-nota ${nota.para > nota.de ? 'bom' : 'ruim'}`}>
+            {tx('Nota {0} → {1}', nota.de, nota.para)}
+          </span>
+        )}
       </span>
+      {aoVivo && (
+        <ol className="an-mudou-passos" aria-hidden="true">
+          {[tx('Li o que mudou'), tx('Refiz as contas'), tx('Montei a tela de novo')].map((p, i) => (
+            <li key={i} style={{ '--i': i } as CSSProperties}><span className="an-mudou-ok"><Icone nome="check" tamanho={11} /></span>{p}</li>
+          ))}
+        </ol>
+      )}
       <ul>
         {lista.slice(0, max).map((m, i) => (
           <li key={i} className={m.tom} style={{ '--i': i } as CSSProperties}>

@@ -49,6 +49,7 @@ import { Icone } from './Icone'
 import { useRespostasNovas } from '../lib/useSuporte'
 import { CartaoDicas, type Dica } from './CartaoDicas'
 import { Marca } from './Marca'
+import { useSegurarAbertura } from '../lib/abertura'
 import { tx } from '../lib/textos'
 import { useHoje } from '../lib/useHoje'
 import { AvisoReanalise } from './AvisoReanalise'
@@ -1404,6 +1405,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
 
 /** Enquanto os dados chegam: a moldura do painel com blocos que brilham, em vez de uma tela vazia. */
 function Esqueleto() {
+  // na primeira carga a abertura (components/Abertura.tsx) fica por cima até os dados chegarem: o painel aparece pronto
+  useSegurarAbertura()
   return (
     <div className="app" aria-busy="true" aria-label={tx('Carregando')}>
       <aside className="lateral"><Marca /></aside>
