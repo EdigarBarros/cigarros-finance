@@ -1393,3 +1393,29 @@ planejador de pagamentos.
 **Validação.** `npx tsc -b`, `npm run lint` (sem erro), `node scripts/painel/testar.mjs` 37/37 (caso novo com uma dívida de
 várias compras), `testar-planejamento.cjs` 40/40, `testar-movel.cjs` sem falha e o app de demonstração com uma dívida
 fictícia no formato da dele: uma ficha só, "8 parcelas atrasadas, desde 2 de mar".
+
+### 19/11/2026 — Claude — Abertura congelada no computador
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração.
+
+- Relato do Edigar: a animação acontecia no celular e ficava congelada no computador. Causa: `abertura.css` desligava
+  tudo com `@media (prefers-reduced-motion: reduce)`, e no Windows esse aviso vem de "Efeitos de animação" desligado. O
+  app já tinha decidido não obedecer o aviso do sistema (`lib/tema.ts`): quem quer menos movimento escolhe em
+  Configurações. Agora a abertura só para com `data-movimento='reduzido'`.
+- **Validação:** app de demonstração com `reducedMotion: 'reduce'` (como o Windows assim): a órbita gira; com
+  "Animações reduzidas" do app, para; a abertura sai nos dois casos.
+
+### 19/11/2026 — Claude — App Android 2.8.5 (código 23)
+
+**Estado:** `.aab` gerado **sem assinatura** (`OpusCash-2.8.5-codigo23.aab`), entregue ao dono pela conversa da sessão.
+Falta ele assinar com a chave de upload e enviar no Play Console. Substitui a 2.8.3 e a 2.8.4 se ainda não foram enviadas.
+
+- Primeira versão gerada na nuvem: Android SDK instalado na sessão (`platforms;android-36`, build-tools 35 e 36) e
+  `sdk.dir=/opt/android-sdk` em `android/local.properties` (fora do git). `npm run app` e `./gradlew bundleRelease`.
+- Leva a abertura em 3D e as correções de fluidez, da descida do símbolo e do congelamento (#252 a #255 e o PR desta
+  entrada), além do Planejamento (#250, #256). `versionCode` 22 → 23, `versionName` 2.8.4 → 2.8.5.
+- Conferido dentro do pacote: o CSS novo da abertura (balanço só de lado, sem o bloqueio do sistema), o `data-abertura`
+  no código e o Supabase de produção.
+- Para assinar: baixar `opuscash-upload.keystore` do Drive e rodar
+  `jarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore opuscash-upload.keystore OpusCash-2.8.5-codigo23.aab opuscash`
+  (o `jarsigner` está em `~/tools/jdk-21.0.12.1+1/bin`); depois apagar a chave.
