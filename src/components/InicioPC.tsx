@@ -72,7 +72,7 @@ export function InicioPC({ c }: { c: Ctx }) {
             <p className="faixa-pc-rotulo">{principal.rotulo}</p>
             <p className="faixa-pc-valor">{valor(principal)}</p>
             {principal.sub && (
-              <p className={`faixa-pc-sub ${principal.subAlerta ? 'alerta' : ''}`}>{principal.subAlerta && <Icone nome="alerta" tamanho={17} />}{principal.sub}</p>
+              <p className={`faixa-pc-sub ${principal.subAlerta ? 'vai-faltar' : ''}`}>{principal.subAlerta && <Icone nome="alerta" tamanho={17} />}{principal.sub}</p>
             )}
             {principal.pilula && <button className="faixa-pc-pilula" onClick={principal.pilula.acao}>{principal.pilula.texto}</button>}
           </div>

@@ -49,7 +49,7 @@
   line-height: 1.05; font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .faixa-pc-sub { margin: 2px 0 0; font-size: 15px; color: rgba(255, 255, 255, .84); }
-.faixa-pc-sub.alerta { display: inline-flex; align-items: center; gap: 6px; color: #ffc2c8; font-weight: 600; }
+.faixa-pc-sub.vai-faltar { color: #fff; margin-top: 6px; padding: 6px 12px 6px 10px; font-size: 14.5px; }
 .faixa-pc-pilula {
   margin-top: 12px; min-height: 40px; padding: 0 18px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .26);
   background: rgba(255, 255, 255, .14); color: #fff; font: 600 14.5px var(--fonte);

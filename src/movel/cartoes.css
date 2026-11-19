@@ -34,6 +34,15 @@ button.selo-do-mes:hover { background: rgba(255, 255, 255, .22); transform: tran
 button.selo-do-mes.ruim:hover { background: rgba(255, 120, 135, .3); }
 button.selo-do-mes:active { transform: scale(.96); }
 
+/* "Pode faltar … no fim do mês" no topo verde (celular e computador): texto branco sobre um vidro escuro, borda e ícone
+   coral (o coral misturado ao verde ficava marrom).
+   (Não usar a classe .alerta: ela é das caixas de aviso do app e pinta fundo rosa.) O topo é escuro nos dois temas. */
+.vai-faltar {
+  display: inline-flex; align-items: center; gap: 7px; border-radius: 999px; color: #fff; font-weight: 600;
+  background: rgba(8, 22, 20, .32); border: 1px solid rgba(255, 138, 152, .6);
+}
+.vai-faltar svg { flex: none; color: #ff9aa6; }
+
 /* ---------- cartões ---------- */
 /* o corpo do cartão (CartaoWidget): no celular não existe para o layout; no computador é a área que cresce (inicio-pc.css) */
 .widget-corpo { display: contents; }
