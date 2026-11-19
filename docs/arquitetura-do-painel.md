@@ -212,6 +212,20 @@ cartão em aberto, parcelas de dívida, lançamentos com data à frente), o que 
 que está no app, gasto do dia a dia não lançado não entra, cada valor conta uma vez, fatura de mês passado já contou no mês
 dela). Os itens vêm de `diaADiaDoMes(...).pendentes` e de `parcelasDoMes` (`lib/dividas.ts`), as mesmas listas que somam o
 "Deve sobrar": o explicado é sempre o previsto (`comporPrevisao`, testado em `scripts/painel`).
+Desenho desde 18/11/2026 (pedido do dono: mais visual, menos texto): **a resposta primeiro** (cartão grande "Pode faltar
+/ Deve sobrar no dia N" com o valor, o selo do estado e cada motivo numa ficha com ícone); **a conta em cascata** (SVG:
+Até hoje → + Vai entrar → − Vai sair → = Fim do mês, cada coluna começando onde a anterior terminou, com a linha do zero;
+mês passado: Entrou → − Saiu → = Sobrou/Faltou); **Vai entrar / Vai sair**, cada um com uma barra dividida pelos grupos
+(cada grupo na cor do seu ícone: contas azul, fatura violeta, parcelas âmbar, data à frente cinza), quanto já venceu numa
+barra e os grupos **fechados** (ícone, %, quantos itens, quantos vencidos, a parte do total), que abrem os itens; as
+premissas e os critérios do estado **recolhidos** no fim.
+
+**Resumo do topo de Lançamentos** (`pages/lancamentos/ResumoDoMes.tsx`, computador; desde 18/11/2026 no lugar da
+`Vitrine` com o anel): o que sobrou/faltou grande, uma ficha com um anelzinho "N% do que entrou saiu" (e quantos
+lançamentos, no detalhado); **a balança** (Entrou e Saiu em barras na mesma escala, a ponta listrada é o que sobrou ou
+faltou); e **o mês dia a dia** (o resultado acumulado de cada dia, verde acima do zero e coral abaixo, com hoje marcado).
+Segue os filtros da tela. Responde à largura do próprio cartão (`@container`): três colunas, duas com o dia a dia embaixo,
+ou uma.
 
 **Comparado com o mês anterior** (`lib/comparacao.ts`, `components/ComparacaoMes.tsx`, equilibrado e detalhado): no mês
 de hoje, do dia 1 até hoje contra o mesmo intervalo do mês anterior (num mês mais curto, até o último dia dele); num mês que

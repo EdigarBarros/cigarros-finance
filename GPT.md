@@ -1231,3 +1231,18 @@ assinar depois; a chave baixada do Drive foi apagada da máquina.
   e escuro, texto branco.
 - Nota da máquina: com pouca memória livre, o `npm run build` falhou alocando memória no rolldown; com
   `RAYON_NUM_THREADS=1` passou.
+
+### 19/11/2026 — Claude — "Entender previsão" e o resumo de Lançamentos redesenhados
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração. O celular abre a mesma janela "Entender previsão",
+então o app Android só a recebe numa versão nova (a 2.8.2 sem assinatura na Área de Trabalho do dono é de antes disto).
+
+- Pedido do Edigar (3 capturas): as duas telas estavam feias e muito textuais. Decisões e detalhes em
+  `docs/arquitetura-do-painel.md` (parágrafos "Entender previsão" e "Resumo do topo de Lançamentos").
+- `components/EntenderMes.tsx` + `entender.css` reescritos: resposta primeiro, cascata em SVG, barras por grupo, quanto
+  já venceu, grupos fechados com os itens a um clique, explicações recolhidas. Mesmos números de antes (`comporPrevisao`).
+- `pages/lancamentos/ResumoDoMes.tsx` + `resumo.css` (novos) no lugar da `Vitrine` em Lançamentos: número, balança e o mês
+  dia a dia. `Vitrine`/`AnelVivo` continuam nas outras telas.
+- Conferido no app de demonstração (com lançamentos de novembro e uma saída futura que deixa a previsão negativa), claro e
+  escuro, computador e 390 px: sem erro na página, sem rolagem de lado. Lição: o tema da demonstração vem de
+  `localStorage['opuscash-tema']` (o `tema` do perfil não basta para as capturas).

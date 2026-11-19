@@ -16310,5 +16310,41 @@
   "Mudar o tamanho do cartão {0}. Use as setas; Delete volta ao tamanho de sempre.": {
     "en": "Resize the {0} card. Use the arrow keys; Delete restores the usual size.",
     "es": "Cambiar el tamaño de la tarjeta {0}. Usa las flechas; Supr vuelve al tamaño de siempre."
+  },
+  "Até hoje": {
+    "en": "So far",
+    "es": "Hasta hoy"
+  },
+  "Fim do mês": {
+    "en": "End of month",
+    "es": "Fin de mes"
+  },
+  "1 item": {
+    "en": "1 item",
+    "es": "1 ítem"
+  },
+  "{0} itens": {
+    "en": "{0} items",
+    "es": "{0} ítems"
+  },
+  "1 vencido": {
+    "en": "1 overdue",
+    "es": "1 vencido"
+  },
+  "{0} vencidos": {
+    "en": "{0} overdue",
+    "es": "{0} vencidos"
+  },
+  "{0} já devia ter caído": {
+    "en": "{0} should have come in already",
+    "es": "{0} ya debería haber entrado"
+  },
+  "em {0} até hoje": {
+    "en": "in {0} so far",
+    "es": "en {0} hasta hoy"
+  },
+  "Resultado acumulado do mês, dia a dia": {
+    "en": "Running total for the month, day by day",
+    "es": "Resultado acumulado del mes, día a día"
   }
 }
