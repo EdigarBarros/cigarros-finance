@@ -6,12 +6,12 @@ import { aplicarEfeitos, efeitosNoSaldo, guardadoPelaDescricao, mesJaChegou } fr
 import { formaDe, formaPelaDescricao, formasDoTipo, type FormaPagamento } from '../lib/formas'
 import { COR } from '../lib/charts'
 import { calendarioDe, dividaPelaDescricao, inicioPelaProxima, jurosAoAno, jurosEmbutidos, meDevem, mesesAntes, nativoDiv, parcelasDe, somaMesesData, type SituacaoDivida } from '../lib/dividas'
-import { dataPadrao, fmtDataLonga, fmtMesAno, fmtMoeda, fmtTaxa, fmtTaxaAno, fmtValor, parseNumero, simbolo } from '../lib/format'
+import { dataPadrao, fmtDataLonga, fmtMesAno, fmtMoeda, fmtTaxa, fmtTaxaAno, fmtValor, mesEAno, parseNumero, simbolo } from '../lib/format'
 import { casasDaMoeda, dataPlausivel, erroDataFora, erroValorGrande, mascarar, paraCampoMoeda, valorGrandeDemais } from '../lib/dinheiro'
 import { cotacaoInvertida, infoMoeda, moedasUsaveis, type Taxas } from '../lib/moedas'
 import { visao } from '../lib/perfil'
 import { bancoConhecido, bancoNaDescricao, CORES_LIVRES, mesmoNome, NOME_TIPO_CAIXA } from '../lib/rotulos'
-import { contaPeloNome, type MemoriaConta } from '../lib/contasFixas'
+import { contaPeloNome, proximoMesEmAberto, type MemoriaConta } from '../lib/contasFixas'
 import { TIPOS_CAIXA, type Banco, type Caixa, type CartaoCredito, type Categoria, type ContaFixa, type Divida, type Lancamento, type Pagamento, type Perfil, type Tipo, type TipoCaixa } from '../lib/types'
 import { EscolhaCategoria } from './Categorias'
 import { IconeCategoria } from './IconeCategoria'
@@ -51,7 +51,8 @@ interface FormLancProps {
   /** Saldos guardados (conta, caixinha e reserva de cada banco) como valem no mês: para mostrar o antes e o depois de "guardei no…". */
   /** `sem`: este lançamento já gravado, com o que ele fez nos saldos desfeito (para a prévia do "antes" ao editar). */
   saldoDoMes?: (ano: number, mes: number, sem?: Lancamento) => Caixa
-  aoSalvar: (l: NovoLanc, id?: string) => void
+  /** `adiantada`: parcela que caiu antes da hora; a conta de `mes` (AAAA-MM) fica resolvida por este lançamento. */
+  aoSalvar: (l: NovoLanc, id?: string, adiantada?: { contaId: string; mes: string }) => void
   /** Cria a dívida de um empréstimo recebido ("quem emprestou") e devolve ela, para ligar à entrada. */
   /** Dia em que a dívida começou, para avisar quando o lançamento ligado a ela é de antes. */
   inicioDivida?: (id: string) => string | null
@@ -196,6 +197,9 @@ export function FormLancamento(p: FormLancProps) {
   const contasDoTipo = (p.contasFixas ?? []).filter((c) => c.tipo === tipo && (c.ativa || c.id === ini.conta_fixa_id))
   const ocupada = (id: string) => p.historico.some((x) => x.conta_fixa_id === id && x.ano === anoData && x.mes === mesData && x.id !== p.inicial?.id)
   const contaEscolhida = contasDoTipo.find((c) => c.id === contaId)
+  // A conta já tem lançamento neste mês e este é novo: é a parcela de um mês seguinte que caiu antes da hora (adiantada).
+  // O lançamento fica neste mês, sem vínculo (o banco aceita um por mês), e a conta do mês seguinte fica resolvida.
+  const adiantarPara = contaEscolhida && !p.inicial && ocupada(contaEscolhida.id) ? proximoMesEmAberto(contaEscolhida, p.historico, anoData, mesData) : null
   const escolherConta = (id: string) => {
     setContaId(id)
     setMexeuConta(true)
@@ -329,7 +333,7 @@ export function FormLancamento(p: FormLancProps) {
     if (estrangeira && (!taxa || taxa <= 0)) return setErro(tx('Digite quanto vale 1 {0} em {1}.', infoMoeda(moeda).nome.toLowerCase(), simbolo(principal)))
     if (estrangeira && cotacaoInvertida(taxa, moeda, principal, p.taxas)) return setErro(tx('A cotação parece estar ao contrário (o valor ficaria centenas de vezes maior ou menor). Toque em “Desvirar” ou confira.'))
     if (estrangeira && valorGrandeDemais(Math.round(n * taxa! * 100) / 100)) return setErro(erroValorGrande())
-    if (contaEscolhida && !cartao && ocupada(contaEscolhida.id)) {
+    if (contaEscolhida && !cartao && ocupada(contaEscolhida.id) && !adiantarPara) {
       return setErro(tx('{0} já tem um lançamento neste mês. Escolha “Não” ou mude a data.', contaEscolhida.descricao))
     }
     const [a, m] = data.split('-').map(Number)
@@ -387,10 +391,11 @@ export function FormLancamento(p: FormLancProps) {
             ? { guardado_banco_id: bancoGuardado.id, guardado_tipo: guardadoTipo, guardado_saldo: acertarSaldos && mesChegou && Boolean(p.saldoDoMes) }
             : ini.guardado_banco_id ? { guardado_banco_id: null, guardado_tipo: null, guardado_saldo: false } : {}),
           // sem o módulo de contas o campo não aparece: o vínculo que já existia fica como está
-          ...(p.contasFixas ? { conta_fixa_id: contaEscolhida?.id ?? null } : {}),
+          ...(p.contasFixas ? { conta_fixa_id: adiantarPara ? null : contaEscolhida?.id ?? null } : {}),
           ...moedaOriginal,
         },
         p.inicial?.id,
+        adiantarPara && contaEscolhida ? { contaId: contaEscolhida.id, mes: `${adiantarPara.ano}-${String(adiantarPara.mes).padStart(2, '0')}` } : undefined,
       )
     }
     if (!continuar) return p.aoFechar()
@@ -593,11 +598,19 @@ export function FormLancamento(p: FormLancProps) {
               opcoes={[
                 { valor: '', rotulo: tx('Não') },
                 ...contasDoTipo.map((k) => ({
-                  valor: k.id, rotulo: k.descricao, desativado: ocupada(k.id) && k.id !== contaId,
-                  detalhe: ocupada(k.id) ? tx('já tem lançamento neste mês') : undefined,
+                  // já lançada neste mês: um lançamento novo vira a parcela do mês seguinte, adiantada
+                  valor: k.id, rotulo: k.descricao, desativado: ocupada(k.id) && k.id !== contaId && (Boolean(p.inicial) || !proximoMesEmAberto(k, p.historico, anoData, mesData)),
+                  detalhe: ocupada(k.id) ? (p.inicial ? tx('já tem lançamento neste mês') : tx('já tem lançamento neste mês: entra como adiantada')) : undefined,
                 })),
               ]} />
-            {contaEscolhida && (
+            {contaEscolhida && adiantarPara && (
+              <span className="campo-ajuda">
+                {tipo === 'entrada'
+                  ? tx('{0} já foi recebida neste mês. Este valor fica como a de {1}, recebida adiantada: ele conta neste mês e {1} já aparece como recebida.', contaEscolhida.descricao, mesEAno(adiantarPara.ano, adiantarPara.mes))
+                  : tx('{0} já foi paga neste mês. Este valor fica como a de {1}, paga adiantada: ele conta neste mês e {1} já aparece como paga.', contaEscolhida.descricao, mesEAno(adiantarPara.ano, adiantarPara.mes))}
+              </span>
+            )}
+            {contaEscolhida && !adiantarPara && (
               <span className="campo-ajuda">
                 {tx('{0} fica como {1} neste mês, sem precisar tocar em “', contaEscolhida.descricao, tipo === 'entrada' ? tx('recebida') : tx('paga'))}{tipo === 'entrada' ? tx('Recebi') : tx('Paguei')}”.
                 {!ini.conta_fixa_id && (' ' + tx('Depois o app procura os parecidos dos outros meses.'))}

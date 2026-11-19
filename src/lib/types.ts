@@ -265,6 +265,11 @@ export interface ContaFixa {
   fim: string | null
   ativa: boolean
   created_at?: string
+  /**
+   * Meses (AAAA-MM) em que a conta já foi recebida ou paga adiantada, num mês anterior (a parcela que caiu antes da hora).
+   * Não é coluna do banco: vem das preferências (`adiantadaDaConta` em lib/contasFixas.ts) e é posta na conta ao carregar.
+   */
+  adiantadas?: { mes: string; lancId: string; data: string }[]
 }
 
 /** Cartão de crédito. As compras entram na fatura do mês que vence depois do dia de fechamento. */

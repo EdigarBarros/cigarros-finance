@@ -6,7 +6,7 @@ import { mesEfetivo, resumoMes, saldoInformado } from '../lib/calc'
 import { ajustarMeses, ajustarMesesComEfeitos, ehGuardado } from '../lib/guardado'
 import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
 import {
-  chaveRecusa, faltaPagarNoMes, pedirEntradaFixa, lancamentoDaBaixa, memoriaDasContas, parecidosNosOutrosMeses, situacoesDoMes, sugestoesDoMes,
+  chaveAdiantada, chaveRecusa, comAdiantadas, ehChaveAdiantada, faltaPagarNoMes, pedirEntradaFixa, lancamentoDaBaixa, memoriaDasContas, parecidosNosOutrosMeses, situacoesDoMes, sugestoesDoMes,
   type SituacaoConta, type SugestaoVinculo,
 } from '../lib/contasFixas'
 import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
@@ -225,7 +225,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const { tema } = useTema()
   const ocultos = useValoresOcultos()
   const d = useDados(userId, ano)
-  const contas = useContasFixas(d.setErro)
+  const contasDoBanco = useContasFixas(d.setErro)
   // Baixas em andamento e uma pausa curta depois de cada uma: ao dar baixa a conta sai da lista e a de baixo sobe, então um toque
   // duplo (ou apressado) não pode cair em "Paguei" de outra conta.
   const baixando = useRef(new Set<string>())
@@ -242,6 +242,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const temDados = d.lancs.length > 0 || d.bancos.length > 0 || d.dividas.length > 0 || d.meses.length > 0
   const perfil: Perfil = d.perfil ?? (temDados || d.perfilSemTabela ? inferirPerfil(d) : PERFIL_PADRAO)
   const precisaPerfil = !d.carregando && d.perfil === null && !d.perfilSemTabela && temDados
+  // As contas com os meses que já foram recebidos ou pagos adiantado (as marcas ficam nas preferências).
+  const dispensadas = perfil.dispensadas
+  const contasComAdiantadas = useMemo(() => comAdiantadas(contasDoBanco.contas, dispensadas), [contasDoBanco.contas, dispensadas])
+  const contas = { ...contasDoBanco, contas: contasComAdiantadas }
   // Antes do painel podem aparecer o carregamento e as perguntas do primeiro acesso.
   const carregandoPerfil = d.perfil === undefined && d.carregando
   const perguntar = (d.perfil === null && !temDados && !d.perfilSemTabela && !d.carregando) || refazendo
@@ -398,7 +402,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   }, [lancsContados, dividasDevo, d.saldos, d.pagamentos, d.meses, mesesVistos, ano, taxas, d.categorias, hoje, cartoes.faturasPagas, comFaturas]) // eslint-disable-line react-hooks/exhaustive-deps
   const porMes = porMesCompleto.map((x) => x.resumo)
   // O que já aconteceu e o que ainda vem em cada mês (gráficos de fluxo).
-  const { contas: contasFixas, semTabela: contasSemTabela } = contas
+  const contasFixas = contasComAdiantadas
+  const contasSemTabela = contasDoBanco.semTabela
   const { faturasPagas } = cartoes
   const contasNaPrevisao = Boolean(v.contas) && !contasSemTabela
   const comFaturasNaPrevisao = Boolean(comFaturas)
@@ -484,8 +489,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     })
 
   const situacoesContas = useMemo(
-    () => situacoesDoMes(contas.contas, d.lancs, ano, mes, undefined, taxas),
-    [contas.contas, d.lancs, ano, mes, taxas],
+    () => situacoesDoMes(contasComAdiantadas, d.lancs, ano, mes, undefined, taxas),
+    [contasComAdiantadas, d.lancs, ano, mes, taxas],
   )
   const esfriar = () => {
     esfriando.current = true
@@ -494,8 +499,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
 
   // Como cada conta aparece nos lançamentos: o nome dela e tudo o que a pessoa já ligou a ela (deste e dos outros anos).
   const memoriaContas = useMemo(
-    () => memoriaDasContas(contas.contas, [...d.lancs.filter((l) => l.conta_fixa_id), ...d.vinculosOutrosAnos], taxas),
-    [contas.contas, d.lancs, d.vinculosOutrosAnos, taxas],
+    () => memoriaDasContas(contasComAdiantadas, [...d.lancs.filter((l) => l.conta_fixa_id), ...d.vinculosOutrosAnos], taxas),
+    [contasComAdiantadas, d.lancs, d.vinculosOutrosAnos, taxas],
   )
   // Lançamento do mês que parece ser de cada conta ainda sem baixa (veio do extrato, por exemplo).
   const sugestoesVinculo = useMemo(
@@ -548,6 +553,11 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     void d.addLanc(baixa).finally(() => baixando.current.delete(s.conta.id))
   }
   const desfazerBaixa = (s: SituacaoConta) => {
+    // adiantada: o lançamento é de um mês anterior; apaga ele e tira a marca do mês desta conta
+    if (s.adiantada) {
+      const mesDaConta = s.vencimento.slice(0, 7)
+      mudarPerfil({ ...perfil, dispensadas: perfil.dispensadas.filter((x) => !(ehChaveAdiantada(x) && x.startsWith(`adiantada:${s.conta.id}:${mesDaConta}:`))) })
+    }
     if (s.baixa) void d.delLanc(s.baixa.id)
   }
 
@@ -747,6 +757,12 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     if (salvo?.conta_fixa_id && salvo.conta_fixa_id !== antes?.conta_fixa_id) {
       perguntarParecidos(salvo, [...lancs.filter((x) => x.id !== salvo.id), salvo])
     }
+    return salvo
+  }
+  /** Parcela que caiu antes da hora: o lançamento fica no mês em que caiu e a conta de `mes` (AAAA-MM) fica resolvida. */
+  const marcarAdiantada = (contaId: string, mes: string, l: Lancamento) => {
+    if (!l.data) return
+    mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, chaveAdiantada(contaId, mes, l.id, l.data)] })
   }
 
   // Contas fixas e cartões entram na Início pelos lugares reservados para eles (zona "O que fazer" e indicadores).
@@ -1024,7 +1040,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         aoNovoBanco={d.addBanco}
         // `sem`: o lançamento aberto, com o que ele já fez nos saldos desfeito (para a prévia do antes e depois ao editar)
         saldoDoMes={(a, m, sem) => mesEfetivo(sem ? ajustarMeses(d.meses, sem, undefined).meses : d.meses, a, m).caixa}
-        aoSalvar={(l, id) => emFila(() => salvarLancamento(l, id))}
+        aoSalvar={(l, id, adiantada) => emFila(async () => {
+          const salvo = await salvarLancamento(l, id)
+          if (salvo && adiantada) marcarAdiantada(adiantada.contaId, adiantada.mes, salvo)
+        })}
         aoExcluir={(id) => {
           // a parcela de cartão apagada também sai dos totais dos outros anos, que só são lidos de novo ao recarregar
           const apagado = d.lancs.find((x) => x.id === id)
