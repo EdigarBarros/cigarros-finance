@@ -3,6 +3,7 @@ import { CATEGORIAS_ANTIGAS } from './categorias'
 import { normPerfil } from './perfil'
 import { MEMORIA_VAZIA, normMemoria, type MemoriaConsultor } from './memoria'
 import { GOSTO_VAZIO, normGosto, type Gosto } from './gosto'
+import { normPlanejamentos, type Planejamentos } from './planejamento'
 import { maisRecente, normCelular, type Celular } from './widgets'
 import { lerTudo, supabase } from './supabase'
 import type { EscolhaZerar, ParteZerar } from './zerar'
@@ -91,6 +92,22 @@ const gostoLocal = (userId: string): Gosto => {
     return GOSTO_VAZIO
   }
 }
+/** O plano do mês (lib/planejamento.ts): no aparelho e, com a migração 24, junto da memória no banco. */
+const chavePlanejamento = (userId: string) => `opuscash-planejamento-${userId}`
+const planejamentoLocal = (userId: string): Planejamentos => {
+  try {
+    const t = localStorage.getItem(chavePlanejamento(userId))
+    return t ? normPlanejamentos(JSON.parse(t)) : {}
+  } catch {
+    return {}
+  }
+}
+/** Entre o plano do aparelho e o do banco, vale, mês a mês, o que foi mexido por último. */
+const juntarPlanejamentos = (a: Planejamentos, b: Planejamentos): Planejamentos => {
+  const saida: Planejamentos = { ...a }
+  for (const [mes, v] of Object.entries(b)) if (!saida[mes] || v.em > saida[mes].em) saida[mes] = v
+  return saida
+}
 const temAlgo = (m: MemoriaConsultor) => m.objetivo !== null || m.acompanhados.length > 0
 const fotoLocal = (userId: string) => {
   try {
@@ -170,6 +187,7 @@ export function useDados(userId: string, ano: number) {
   const [foto, setFoto] = useState<string | null>(() => fotoLocal(userId))
   const [memoria, setMemoria] = useState<MemoriaConsultor>(() => memoriaLocal(userId))
   const [gosto, setGosto] = useState<Gosto>(() => gostoLocal(userId))
+  const [planejamento, setPlanejamento] = useState<Planejamentos>(() => planejamentoLocal(userId))
   /** De onde parte o saldo de um mês para o outro (migração 27; sem ela, só neste aparelho). */
   const [saldoInicial, setSaldoInicial] = useState<SaldoInicial | null>(() => saldoInicialLocal(userId))
   /** Os cartões que a pessoa arrumou na Início do celular (migração 35; sem ela, só neste aparelho). */
@@ -181,6 +199,8 @@ export function useDados(userId: string, ano: number) {
   // memória e gosto moram na mesma coluna (perfis.consultor): quem grava um leva o outro junto, sempre o mais recente
   const memoriaAgora = useRef(memoria)
   const gostoAgora = useRef(gosto)
+  const planejamentoAgora = useRef(planejamento)
+  const esperaPlanejamento = useRef<number | undefined>(undefined)
   const [categorias, setCategorias] = useState<Categoria[]>([])
   /** Sem a migração 5: usa as 4 categorias antigas. */
   const [categoriasAntigas, setCategoriasAntigas] = useState(false)
@@ -296,6 +316,13 @@ export function useDados(userId: string, ano: number) {
       // o gosto que sabe mais vale (o do aparelho pode estar na frente: nem toda saída da aba chega ao banco)
       const gostoDoBanco = pf.data && 'consultor' in pf.data ? normGosto((pf.data as { consultor?: { gosto?: unknown } | null }).consultor?.gosto) : null
       if (gostoDoBanco && gostoDoBanco.total > gostoAgora.current.total) { gostoAgora.current = gostoDoBanco; setGosto(gostoDoBanco) }
+      // o plano do mês: vale o mexido por último, mês a mês
+      const planoDoBanco = pf.data && 'consultor' in pf.data ? normPlanejamentos((pf.data as { consultor?: { planejamento?: unknown } | null }).consultor?.planejamento) : null
+      if (planoDoBanco && Object.keys(planoDoBanco).length) {
+        const junto = juntarPlanejamentos(planejamentoAgora.current, planoDoBanco)
+        planejamentoAgora.current = junto
+        setPlanejamento(junto)
+      }
       // o do banco vale (vem de qualquer aparelho); vazio lá (migração recém-rodada ou nunca informado), fica o deste aparelho
       const saldoDoBanco = pf.data && 'saldo_inicial' in pf.data ? normSaldoInicial((pf.data as { saldo_inicial?: unknown }).saldo_inicial) : null
       if (saldoDoBanco) setSaldoInicial(saldoDoBanco)
@@ -341,8 +368,8 @@ export function useDados(userId: string, ano: number) {
     let vivo = true
     const ler = (colunas: string) => lerTudo(() => supabase.from('lancamentos').select(colunas).gte('ano', anoDaPartida).lt('ano', ano).order('id'))
     void (async () => {
-      let r = await ler('id, ano, mes, tipo, valor, cartao_id, guardado_banco_id')
-      if (r.error && faltaColuna(r.error)) r = await ler('id, ano, mes, tipo, valor, cartao_id')
+      let r = await ler(tx('id, ano, mes, tipo, valor, cartao_id, guardado_banco_id'))
+      if (r.error && faltaColuna(r.error)) r = await ler(tx('id, ano, mes, tipo, valor, cartao_id'))
       if (!vivo) return
       setLancsAntesDoAno(r.error ? [] : (r.data as unknown as LancParaSaldo[]).map((l) => ({ ...l, valor: num(l.valor), guardado_banco_id: l.guardado_banco_id ?? null })))
     })()
@@ -783,7 +810,7 @@ export function useDados(userId: string, ano: number) {
       localStorage.setItem(chaveMemoria(userId), JSON.stringify(nova))
     } catch { /* sem armazenamento: vale até recarregar */ }
     if (perfilSemTabela || !perfil) return
-    const { error } = await supabase.from('perfis').update({ consultor: { ...nova, gosto: gostoAgora.current } }).eq('user_id', userId)
+    const { error } = await supabase.from('perfis').update({ consultor: { ...nova, gosto: gostoAgora.current, planejamento: planejamentoAgora.current } }).eq('user_id', userId)
     if (error && !faltaTabela(error) && !faltaColuna(error)) falhou(error.message)
   }
 
@@ -799,8 +826,27 @@ export function useDados(userId: string, ano: number) {
     } catch { /* sem armazenamento: vale até recarregar */ }
     if (perfilSemTabela || !perfil) return
     try {
-      await supabase.from('perfis').update({ consultor: { ...memoriaAgora.current, gosto: novo } }).eq('user_id', userId)
+      await supabase.from('perfis').update({ consultor: { ...memoriaAgora.current, gosto: novo, planejamento: planejamentoAgora.current } }).eq('user_id', userId)
     } catch { /* sem rede: fica a cópia do aparelho */ }
+  }
+
+  /**
+   * Grava o plano do mês (lib/planejamento.ts). Na hora no aparelho; no banco, junto da memória e do gosto, depois de a
+   * pessoa parar de mexer (cada fatia arrastada não vira uma gravação).
+   */
+  const salvarPlanejamento = (novo: Planejamentos) => {
+    planejamentoAgora.current = novo
+    setPlanejamento(novo)
+    try {
+      localStorage.setItem(chavePlanejamento(userId), JSON.stringify(novo))
+    } catch { /* sem armazenamento: vale até recarregar */ }
+    if (perfilSemTabela || !perfil) return
+    window.clearTimeout(esperaPlanejamento.current)
+    esperaPlanejamento.current = window.setTimeout(async () => {
+      try {
+        await supabase.from('perfis').update({ consultor: { ...memoriaAgora.current, gosto: gostoAgora.current, planejamento: planejamentoAgora.current } }).eq('user_id', userId)
+      } catch { /* sem rede: fica a cópia do aparelho */ }
+    }, 800)
   }
 
   const addCategoria = async (c: Omit<Categoria, 'id' | 'ordem'>): Promise<Categoria | undefined> => {
@@ -893,10 +939,12 @@ export function useDados(userId: string, ano: number) {
     if (todo) {
       memoriaAgora.current = MEMORIA_VAZIA
       gostoAgora.current = GOSTO_VAZIO
+      planejamentoAgora.current = {}
+      setPlanejamento({})
       setMemoria(MEMORIA_VAZIA)
       setGosto(GOSTO_VAZIO)
       setSaldoInicial(null)
-      try { localStorage.removeItem(chaveMemoria(userId)); localStorage.removeItem(chaveGosto(userId)); localStorage.removeItem(chaveSaldoInicial(userId)) } catch { /* nada guardado */ }
+      try { localStorage.removeItem(chaveMemoria(userId)); localStorage.removeItem(chaveGosto(userId)); localStorage.removeItem(chavePlanejamento(userId)); localStorage.removeItem(chaveSaldoInicial(userId)) } catch { /* nada guardado */ }
     }
   }
 
@@ -904,7 +952,7 @@ export function useDados(userId: string, ano: number) {
     zerarDados,
     metas, movimentosMeta, metasSemTabela, addMeta, updMeta, delMeta, addMovimentoMeta, delMovimentoMeta,
     categorias, categoriasAntigas, addCategoria, updCategoria, delCategoria,
-    perfil, perfilSemTabela, salvarPerfil, foto, salvarFoto, memoria, salvarMemoria, gosto, salvarGosto,
+    perfil, perfilSemTabela, salvarPerfil, foto, salvarFoto, memoria, salvarMemoria, gosto, salvarGosto, planejamento, salvarPlanejamento,
     saldoInicial, salvarSaldoInicial, celular, salvarCelular, lancsAntesDoAno,
     bancos, addBanco, updBanco, delBanco,
     dividasSemExtras,

@@ -118,8 +118,8 @@ function PGuardado() {
     <div className="fo-card fo-guardado">
       <header><Icone nome="carteira" tamanho={13} /> {tx('Dinheiro guardado')}</header>
       <strong>{R(25290)}</strong>
-      <span className="fo-banco"><BancoIcone nome="Nubank" tamanho={18} /><span translate="no">Nubank</span><b>{R(15800)}</b></span>
-      <span className="fo-banco"><BancoIcone nome="Itaú" tamanho={18} /><span translate="no">Itaú</span><b>{R(9490)}</b></span>
+      <span className="fo-banco"><BancoIcone nome="Nubank" tamanho={18} /><span translate="no">{tx('Nubank')}</span><b>{R(15800)}</b></span>
+      <span className="fo-banco"><BancoIcone nome="Itaú" tamanho={18} /><span translate="no">{tx('Itaú')}</span><b>{R(9490)}</b></span>
     </div>
   )
 }
@@ -184,8 +184,8 @@ const PECAS = {
   grafico: () => <PGrafico />,
   pote: () => <PPote c="#38bdf8" v={0.72} nome={tx('Viagem ao Japão')} />,
   pote2: () => <PPote c="#a855f7" v={0.87} nome={tx('Notebook novo')} />,
-  nubank: () => <PCartao banco="Nubank" c1="#a136f5" c2="#5b0aa6" valor={960} />,
-  itau: () => <PCartao banco="Itaú" c1="#f28a1c" c2="#a4480a" valor={1230} />,
+  nubank: () => <PCartao banco={tx('Nubank')} c1="#a136f5" c2="#5b0aa6" valor={960} />,
+  itau: () => <PCartao banco={tx('Itaú')} c1="#f28a1c" c2="#a4480a" valor={1230} />,
   conta: () => <PConta />,
   lanc: () => <PLancamento />,
   divida: () => <PDivida />,

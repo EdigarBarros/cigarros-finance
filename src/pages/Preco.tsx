@@ -84,7 +84,7 @@ export function Preco({ onLogin, onSignup }: { onLogin: () => void; onSignup: ()
               <i className="pr-reflexo" aria-hidden="true" />
               <div className="pr-plano-topo">
                 <span className="pr-selo"><Icone nome="estrela" tamanho={13} /> {tx('7 dias grátis')}</span>
-                <span className="pr-nome">OpusCash</span>
+                <span className="pr-nome">{tx('OpusCash')}</span>
               </div>
               <div className="pr-valor">
                 <small>R$</small><strong>9,99</strong><span>{tx('/mês')}</span>

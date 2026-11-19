@@ -5,7 +5,9 @@
  * vem a tela que ele montou, com as mesmas peças e na mesma ordem da tela do computador (manchete, o que mudou, agora,
  * próximo passo, objetivo e as faixas, com favoritar, esconder e "outro jeito").
  */
+import { useState } from 'react'
 import { Icone } from '../../components/Icone'
+import { CartaoDoPlanejamento, Planejamento } from '../../components/Planejamento'
 import { Interruptor } from '../../components/ui'
 import { semMovimento, useMovimento } from '../../lib/tema'
 import { tx } from '../../lib/textos'
@@ -28,6 +30,9 @@ export function ConsultorMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom,
   // a tela que o Consultor monta (a mesma da aba do computador): o gosto é lido na abertura e gravado ao sair
   const tela = useTelaViva(c, a)
   const ir = (x: { destino?: Parameters<Ctx['irPara']>[0] }) => x.destino && c.irPara(x.destino)
+  const [planejando, setPlanejando] = useState(false)
+  // os passos do plano que falam do Planejamento (destino 'analise') abrem a mesa em vez de navegar
+  const irPara: Ctx['irPara'] = (p) => (p === 'analise' ? setPlanejando(true) : c.irPara(p))
 
   // ---------- topo: o veredito do próprio Consultor ----------
   const paginas: PaginaDoHero[] = [
@@ -44,6 +49,7 @@ export function ConsultorMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom,
     { id: 'lancar', icone: 'mais', rotulo: tx('Lançar'), acao: () => c.novoLancamento('saida') },
     { id: 'importar', icone: 'relatorio', rotulo: tx('Importar'), acao: c.importarExtrato },
   ] : [
+    { id: 'planejar', icone: 'calendario', rotulo: tx('Planejar'), acao: () => setPlanejando(true) },
     { id: 'plano', icone: 'ideia', rotulo: tx('Plano'), acao: () => irAte('.consultor-movel .an-plano, .consultor-movel .an-passo') },
     { id: 'objetivo', icone: 'meta', rotulo: tx('Objetivo'), acao: () => irAte('.consultor-movel .an-obj, .consultor-movel .an-obj-faixa') },
     { id: 'avisos', icone: 'sino', rotulo: c.avisosDaAnalise ? tx('Avisos ligados') : tx('Avisos desligados'), acao: () => c.mudarAvisosDaAnalise(!c.avisosDaAnalise) },
@@ -67,7 +73,8 @@ export function ConsultorMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom,
           <SeuPerfil a={a} nivel={nivel} />
           <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 2} />
           <Agora a={a} nivel={nivel} />
-          {nivel === 'detalhado' ? <PlanoDeAcao a={a} aoIr={c.irPara} /> : <ProximoPasso a={a} aoIr={c.irPara} />}
+          <CartaoDoPlanejamento a={a} planejamento={c.planejamento} aoAbrir={() => setPlanejando(true)} />
+          {nivel === 'detalhado' ? <PlanoDeAcao a={a} aoIr={irPara} /> : <ProximoPasso a={a} aoIr={irPara} />}
           <Objetivo a={a} memoria={c.memoria} nivel={nivel} aoEscolher={c.escolherObjetivo} />
           <Faixas t={tela} aoIr={ir} nivel={nivel} />
           <footer className="an-rodape">
@@ -78,6 +85,10 @@ export function ConsultorMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom,
             <p>{tx('Orientações de educação financeira, feitas com o que você lançou. Não é recomendação de investimento.')}</p>
           </footer>
         </div>
+      )}
+      {planejando && (
+        <Planejamento a={a} planejamento={c.planejamento} salvar={c.salvarPlanejamento} aoFechar={() => setPlanejando(false)}
+          aoLancarEntrada={() => { setPlanejando(false); c.novoLancamento('entrada') }} />
       )}
     </div>
   )

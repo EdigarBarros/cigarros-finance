@@ -7,6 +7,7 @@ import { Interruptor } from '../components/ui'
 import { useEmVista } from './analiseApoio'
 import { Agora, Objetivo, ProximoPasso, SeuPerfil } from './AnaliseTopo'
 import { Faixas, Manchete, useTelaViva } from './AnaliseTela'
+import { CartaoDoPlanejamento, Planejamento } from '../components/Planejamento'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 import './analise.css'
@@ -26,6 +27,9 @@ export function Analise(c: Ctx) {
   const movimento = useMovimento()
   const desdeAVisita = useDesdeAUltimaVisita(c.idUsuario, a)
   const tela = useTelaViva(c, a)
+  const [planejando, setPlanejando] = useState(false)
+  // os passos do plano que falam do Planejamento (destino 'analise') abrem a mesa em vez de navegar
+  const irPara: Ctx['irPara'] = (p) => (p === 'analise' ? setPlanejando(true) : c.irPara(p))
 
   if (c.contaNova) {
     return (
@@ -56,7 +60,8 @@ export function Analise(c: Ctx) {
       <SeuPerfil a={a} nivel={nivel} />
       <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 2} />
       <Agora a={a} nivel={nivel} />
-      {nivel === 'detalhado' ? <PlanoDeAcao a={a} aoIr={c.irPara} /> : <ProximoPasso a={a} aoIr={c.irPara} />}
+      <CartaoDoPlanejamento a={a} planejamento={c.planejamento} aoAbrir={() => setPlanejando(true)} />
+      {nivel === 'detalhado' ? <PlanoDeAcao a={a} aoIr={irPara} /> : <ProximoPasso a={a} aoIr={irPara} />}
       <Objetivo a={a} memoria={c.memoria} nivel={nivel} aoEscolher={c.escolherObjetivo} />
 
       <Faixas t={tela} aoIr={(x) => x.destino && c.irPara(x.destino)} nivel={nivel} />
@@ -74,6 +79,10 @@ export function Analise(c: Ctx) {
         </label>
         <p>{tx('Orientações de educação financeira, feitas com o que você lançou. Não é recomendação de investimento.')}</p>
       </footer>
+      {planejando && (
+        <Planejamento a={a} planejamento={c.planejamento} salvar={c.salvarPlanejamento} aoFechar={() => setPlanejando(false)}
+          aoLancarEntrada={() => { setPlanejando(false); c.novoLancamento('entrada') }} />
+      )}
     </div>
   )
 }

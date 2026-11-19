@@ -14,6 +14,8 @@ import { adicionarCartao, cartoesDaInicio, linhasDaGrade, maisRecente, MODELOS, 
 import { comParcelasDoMes } from '../../src/lib/useMesDaInicio'
 import { montarCartao, ORCAMENTO, type TracosDaDivida } from '../../src/lib/cartaoDaDivida'
 import type { SituacaoCartao } from '../../src/lib/cartoes'
+import { atrasoDa, conselhosDoPlanejamento, custoDa, dicasDe, falta, montarPraMim, mudarParte, normPlanejamentos, placarDe, por, quadroDoMes, sobra, valerPartes } from '../../src/lib/planejamento'
+import type { PagamentoPlanejado, Plano } from '../../src/lib/planejador'
 import type { ContaFixa, Divida, Lancamento, SaldoDivida } from '../../src/lib/types'
 
 // ---------- dados de mentira ----------
@@ -540,6 +542,86 @@ export const CASOS: Caso[] = [
       certo('uma de custo só', cheia.pecas.filter((p) => ['crescendo', 'jurosContrato', 'emprestimo'].includes(p)).length <= 1)
       igual('mesmos traços, mesmo cartão', JSON.stringify(cheia), JSON.stringify(t({ temData: true, parcelas: parcelas(6, 1, 2), pago: 100, vencido: { valor: 50, desde: '2026-10-01' }, jurosContrato: 12,
         jurosAtraso: { total: 5, porDia: 0.2 }, emprestimo: { recebido: 800, total: 1000 }, partes: [{ nome: 'a', valor: 1 }, { nome: 'b', valor: 2 }] })))
+    },
+  },
+  {
+    nome: 'planejamento do mês: fatiar cada entrada',
+    rodar: () => {
+      // hoje 19/11, R$ 300 na conta; Salário 3.200 no dia 20, Freela 800 no dia 25, Pensão 600 no dia 28 e um dinheiro de dezembro
+      const pg = (descricao: string, valor: number, vence: string, mais: Partial<PagamentoPlanejado> = {}): PagamentoPlanejado => ({
+        descricao, valor, vence, origem: 'conta', pagarEm: null, atraso: 0, custo: 0, taxaMes: 1, multa: 0.02, estimada: true, fonte: null, fonteData: null, ...mais,
+      })
+      const plano = {
+        comSaldo: true,
+        fontes: [
+          { data: '2026-11-19', valor: 300, descricao: 'o saldo de hoje' }, { data: '2026-11-20', valor: 3200, descricao: 'Salário' },
+          { data: '2026-11-25', valor: 800, descricao: 'Freela' }, { data: '2026-11-28', valor: 600, descricao: 'Pensão' },
+          { data: '2026-12-05', valor: 3200, descricao: 'Salário' },
+        ],
+        pagamentos: [pg('Aluguel', 1400, '2026-11-22'), pg('Internet', 119.9, '2026-11-21'), pg('Luz', 180, '2026-11-30'), pg('Aluguel', 1400, '2026-12-22')],
+        semDinheiro: [pg('Fatura do Nubank', 1170.73, '2026-11-10', { origem: 'cartao', taxaMes: 14 }), pg('Agiota', 500, '2026-11-24', { origem: 'parcela', taxaMes: 20, estimada: false })],
+      } as unknown as Plano
+      const q = quadroDoMes(plano, '2026-11-19', 'este', { metas: [{ id: 'm1', nome: 'Reserva' }], abertas: [{ nome: 'Cheque especial', saldo: 400, juros: 8 }] })
+      igual('fontes do mês (com o saldo, sem dezembro)', q.fontes.map((f) => `${f.nome}:${f.valor}`), ['O que está na conta:300', 'Salário:3200', 'Freela:800', 'Pensão:600'])
+      igual('contas do mês (atrasada entra, dezembro não)', q.destinos.filter((d) => d.tipo === 'conta').map((d) => d.nome), ['Fatura do Nubank', 'Internet', 'Aluguel', 'Agiota', 'Luz'])
+      igual('nubank atrasada', q.destinos[0].atrasada, true)
+      igual('dívida aberta e meta entram', q.destinos.filter((d) => d.tipo !== 'conta').map((d) => `${d.tipo}:${d.nome}`), ['divida:Cheque especial', 'meta:Reserva'])
+      const proximo = quadroDoMes(plano, '2026-11-19', 'proximo')
+      igual('mês que vem: só o de dezembro', proximo.fontes.map((f) => f.nome), ['Salário'])
+      igual('mês que vem: aluguel de dezembro e o Guardar', proximo.destinos.map((d) => d.nome), ['Aluguel', 'Guardar'])
+
+      const id = (nome: string) => q.destinos.find((d) => d.nome === nome)!.id
+      const fid = (nome: string) => q.fontes.find((f) => f.nome === nome)!.id
+      // pôr o aluguel no Freela: cabe 800 de 1.400 e atrasa 3 dias
+      let r = por(q, [], id('Aluguel'), fid('Freela'))
+      perto('coube só o que tinha', r.valor, 800)
+      perto('falta do aluguel', falta(r.partes, q.destinos.find((d) => d.nome === 'Aluguel')!), 600)
+      igual('atrasa 3 dias', atrasoDa(q, r.partes[0]), 3)
+      perto('custo do atraso: 2% + 1% × 3/30', custoDa(q, r.partes[0]), 800 * 0.02 + 800 * 0.01 * 0.1, 0.01)
+      // o resto no Salário (chega a tempo): conta fechada
+      r = por(q, r.partes, id('Aluguel'), fid('Salário'))
+      perto('o resto', r.valor, 600)
+      perto('sobra do salário', sobra(r.partes, q.fontes[1]), 2600)
+      // puxar a borda: Freela paga 500, não passa do máximo
+      let partes = mudarParte(q, r.partes, fid('Freela'), id('Aluguel'), 500)
+      perto('diminuiu', partes.find((p) => p.entrada === fid('Freela'))!.valor, 500)
+      partes = mudarParte(q, partes, fid('Freela'), id('Aluguel'), 99999)
+      perto('não passa do que falta', partes.find((p) => p.entrada === fid('Freela'))!.valor, 800)
+      partes = mudarParte(q, partes, fid('Freela'), id('Aluguel'), 0)
+      igual('zero tira a parte', partes.length, 1)
+
+      // montar pra mim: Nubank (atrasada) e Agiota (20%) primeiro, cada conta com o dinheiro que chega a tempo
+      const m = montarPraMim(q)
+      const pl = placarDe(q, m)
+      igual('tudo coberto', pl.pct, 100)
+      igual('nada atrasa', pl.atrasos, 0)
+      igual('fechado', pl.fechado, true)
+      igual('nubank sai do saldo e do salário', m.filter((p) => p.conta === id('Fatura do Nubank')).map((p) => p.entrada), [fid('O que está na conta'), fid('Salário')])
+      certo('internet sai de quem chega antes do dia 21', m.filter((p) => p.conta === id('Internet')).every((p) => p.entrada === fid('Salário') || p.entrada === fid('O que está na conta')))
+      igual('o que sobra adianta a dívida cara', m.some((p) => p.conta === id('Cheque especial')), true)
+      perto('o dinheiro todo tem destino', pl.semDestino, 0)
+
+      // o plano guardado contra um quadro que mudou: a conta sumiu (foi paga), a parte sai; valor maior que o que falta encolhe
+      const certas = valerPartes(q, [{ entrada: fid('Salário'), conta: 'c:2026-11-01:sumiu', valor: 100 }, { entrada: fid('Salário'), conta: id('Internet'), valor: 500 }])
+      igual('valer: tira e encolhe', certas, [{ entrada: fid('Salário'), conta: id('Internet'), valor: 119.9 }])
+
+      // dicas: sem plano, o convite; com atraso, o aviso e o atalho para quem chega a tempo
+      const fmt = (n: number) => `R$ ${n.toFixed(2)}`, data = (iso: string) => iso.slice(8)
+      igual('dica de começar', dicasDe(q, [], fmt, data).map((d) => d.id), ['comecar'])
+      const comAtraso = por(q, [], id('Aluguel'), fid('Freela')).partes
+      const ds = dicasDe(q, comAtraso, fmt, data)
+      certo('dica do atraso', ds.some((d) => d.id === `atraso:${id('Aluguel')}` && d.acao?.entrada === fid('Salário')))
+      certo('dica da atrasada cara primeiro', ds[0].tom === 'ruim')
+      igual('fechado: a dica boa', dicasDe(q, m, fmt, data).map((d) => d.id), ['fechado'])
+
+      // o Consultor lendo o plano
+      igual('consultor sem plano: convite', conselhosDoPlanejamento(q, undefined, fmt, data).map((c) => c.id), ['planejar'])
+      igual('consultor com atraso e falta', conselhosDoPlanejamento(q, { partes: comAtraso, em: '' }, fmt, data).map((c) => c.id), [`atraso:${id('Aluguel')}`, 'sem-dinheiro'])
+      igual('consultor com plano fechado: nada', conselhosDoPlanejamento(q, { partes: m, em: '' }, fmt, data), [])
+
+      // guardar: só o mês de hoje e o próximo, partes estranhas saem
+      const n = normPlanejamentos({ '2026-10': { partes: [], em: 'x' }, '2026-11': { partes: [{ entrada: 'a', conta: 'b', valor: 10 }, { entrada: 1, conta: 'b', valor: 5 }, { entrada: 'a', conta: 'b', valor: -1 }], em: 'y' }, lixo: 3 }, '2026-11-19')
+      igual('norm', n, { '2026-11': { em: 'y', partes: [{ entrada: 'a', conta: 'b', valor: 10 }] } })
     },
   },
 ]

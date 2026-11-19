@@ -134,10 +134,10 @@ function pintar(g: CanvasRenderingContext2D, w: number, h: number, f: Fontes, ma
   if (!mascara) { g.save(); g.shadowColor = C.brilhoNota; g.shadowBlur = 12; g.stroke(); g.restore() } else g.stroke()
   g.textAlign = 'center'
   g.fillStyle = em(TINTA)
-  g.font = `800 ${Math.round(d * 0.3)}px ${f.numeros}`
+  g.font = tx('800 {0}px {1}', Math.round(d * 0.3), f.numeros)
   if (!mascara) { g.save(); g.shadowColor = C.brilhoNumero; g.shadowBlur = 18; g.fillText(String(NOTA), nx, ny - d * 0.04); g.restore() } else g.fillText(String(NOTA), nx, ny - d * 0.04)
   g.fillStyle = em(VERDE)
-  g.font = `700 ${deitada ? 13 : 11.5}px ${f.texto}`
+  g.font = tx('700 {0}px {1}', deitada ? 13 : 11.5, f.texto)
   g.fillText(tx('Boa'), nx, ny + d * 0.2)
   g.textAlign = 'left'
 
@@ -179,7 +179,7 @@ function pintar(g: CanvasRenderingContext2D, w: number, h: number, f: Fontes, ma
       ouro.addColorStop(0, C.numero[0]); ouro.addColorStop(1, C.numero[1])
       g.fillStyle = ouro; g.fill()
       g.fillStyle = C.numeroTinta; g.textAlign = 'center'
-      g.font = `800 12.5px ${f.texto}`; g.fillText(String(i + 1), nxq + nq / 2, nyq + nq / 2 + 0.5)
+      g.font = tx('800 12.5px {0}', f.texto); g.fillText(String(i + 1), nxq + nq / 2, nyq + nq / 2 + 0.5)
       g.textAlign = 'left'
     }
     const xt = nxq + nq + 11, wt = xp + wp - xt - 10

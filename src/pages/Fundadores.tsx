@@ -11,9 +11,9 @@ import './fundadores.css'
  * `tam` e `tamSob`: tamanho da letra (em % da largura do cartão) para o nome ocupar a largura certa em Montserrat 800.
  */
 const SOCIOS = [
-  { primeiro: 'EDIGAR', sobrenome: 'BARROS', nome: 'Edigar Barros', foto: '/fundadores/edigar.webp', alt: 900 / 1561,
+  { primeiro: 'EDIGAR', sobrenome: 'BARROS', nome: tx('Edigar Barros'), foto: '/fundadores/edigar.webp', alt: 900 / 1561,
     papel: tx('Fundador'), tam: 22.7, tamSob: 15.4 },
-  { primeiro: 'EDUARDO', sobrenome: 'MATOS', nome: 'Eduardo Matos', foto: '/fundadores/eduardo.webp', alt: 900 / 1565,
+  { primeiro: 'EDUARDO', sobrenome: 'MATOS', nome: tx('Eduardo Matos'), foto: '/fundadores/eduardo.webp', alt: 900 / 1565,
     papel: tx('Sócio-fundador'), tam: 17.2, tamSob: 18.3 },
 ]
 
