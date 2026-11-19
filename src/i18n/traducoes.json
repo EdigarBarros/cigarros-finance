@@ -16302,5 +16302,13 @@
   "Favorito": {
     "en": "Favorite",
     "es": "Favorito"
+  },
+  "Arraste um cartão para mudar o lugar. Puxe o canto de baixo para mudar o tamanho.": {
+    "en": "Drag a card to move it. Pull the bottom corner to resize it.",
+    "es": "Arrastra una tarjeta para moverla. Tira de la esquina inferior para cambiar su tamaño."
+  },
+  "Mudar o tamanho do cartão {0}. Use as setas; Delete volta ao tamanho de sempre.": {
+    "en": "Resize the {0} card. Use the arrow keys; Delete restores the usual size.",
+    "es": "Cambiar el tamaño de la tarjeta {0}. Usa las flechas; Supr vuelve al tamaño de siempre."
   }
 }

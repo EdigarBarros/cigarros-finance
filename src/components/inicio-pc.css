@@ -16,7 +16,9 @@
    escorrendo entre os cartões, lâmpada com cone e feixes por cima ("um sol no meio do painel") e luz que segue o mouse. */
 .inicio-pc { position: relative; }
 
-/* ---------- a faixa do topo: um degradê escuro por estado (as mesmas cores do topo do celular, src/movel/tom.ts) ---------- */
+/* ---------- a faixa do topo: o degradê verde-água da marca (o mesmo do topo do celular, src/movel/tom.ts). A cor não
+   muda com o estado do mês: o estado vai escrito no selo (.selo-do-mes, em cartoes.css). O [data-t='falta'] fica para
+   quem um dia precisar. ---------- */
 .faixa-pc {
   --faixa: linear-gradient(135deg, #3f9488 0%, #25685f 45%, #163d38 100%);
   --brilho: #3f9488;
@@ -47,6 +49,7 @@
   line-height: 1.05; font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .faixa-pc-sub { margin: 2px 0 0; font-size: 15px; color: rgba(255, 255, 255, .84); }
+.faixa-pc-sub.alerta { display: inline-flex; align-items: center; gap: 6px; color: #ffc2c8; font-weight: 600; }
 .faixa-pc-pilula {
   margin-top: 12px; min-height: 40px; padding: 0 18px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .26);
   background: rgba(255, 255, 255, .14); color: #fff; font: 600 14.5px var(--fonte);
@@ -102,15 +105,91 @@
 .inicio-pc .dica-movel { transition: transform .9s var(--deslize), border-color .6s var(--deslize); }
 .inicio-pc .dica-movel:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--destaque) 24%, var(--borda)); }
 
-/* ---------- a grade de cartões: 12 colunas (lib/widgets.ts, linhasDoComputador) ---------- */
+/* ---------- a grade de cartões: bloquinhos de 12 colunas (src/movel/GradeDoComputador.tsx, lib/widgets.ts encaixar) ----------
+   Cada cartão é posto por conta: o lugar vai no transform e o tamanho em largura/altura, escritos direto pela grade.
+   Ao mudar (outro cartão cresceu, a ordem mudou), eles deslizam até o lugar novo. */
 .inicio-pc-cartoes { display: grid; gap: 0; min-width: 0; }
-.widgets-pc { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+.widgets-pc { position: relative; min-height: 120px; transition: height .5s var(--deslize); }
 .widgets-pc .widget-celula {
-  container-type: inline-size;
-  /* entram um depois do outro, de cima para baixo (--i vem de GradeDeCartoes.tsx) */
+  position: absolute; top: 0; left: 0; container-type: inline-size;
+  transition: transform .5s var(--deslize), width .5s var(--deslize), height .5s var(--deslize);
+}
+.widgets-pc.instantaneo, .widgets-pc.instantaneo .widget-celula, .widgets-pc.instantaneo .vaga-do-cartao { transition: none; }
+/* entram um depois do outro, de cima para baixo (--i vem da grade); só na primeira vez ('montada' vem depois) */
+.widgets-pc .widget-celula > div:last-child {
   animation: surgir-sem-desfoque .7s var(--deslize) backwards; animation-delay: min(calc(.14s + var(--i, 0) * 55ms), .8s);
 }
-.widgets-pc.arrumando .widget { opacity: .82; }
+.widgets-pc.montada .widget-celula > div:last-child { animation: none; }
+
+/* as partes do cartão não encolhem (a grade mede a altura do conteúdo somando elas); o rodapé fica no pé */
+.widgets-pc .widget-corpo { display: flex; flex-direction: column; min-width: 0; }
+.widgets-pc .widget > * { flex-shrink: 0; }
+.widgets-pc .widget > .widget-rodape { margin-top: auto; }
+
+/* cartão de altura escolhida: o corpo ocupa o que sobra e mostra só as linhas que cabem inteiras (as outras quebram para
+   uma coluna escondida à direita). Mais altura = mais linhas, ao vivo, enquanto a pessoa puxa o canto. */
+.widgets-pc .fixo .widget { overflow: hidden; }
+.widgets-pc .fixo .widget-corpo {
+  flex: 1 1 0; min-height: 0; flex-wrap: wrap; align-content: flex-start; overflow: hidden;
+  /* 10 px de folga dos lados: o fundo da linha ao passar o mouse sai 10 px do texto e não pode ser cortado */
+  margin: 0 -10px; padding: 0 10px;
+}
+.widgets-pc .fixo .widget-corpo > * { width: 100%; flex: none; }
+.widgets-pc .fixo .widget-corpo > .linha-movel { width: calc(100% + 20px); }
+.widgets-pc .fixo .widget-corpo > :only-child { flex: 1 1 auto; }
+/* o gráfico do ano ocupa toda a sobra do cartão (o Chart.js redesenha sozinho a cada tamanho) */
+.widgets-pc .fixo .widget-evolucao .widget-corpo { flex-wrap: nowrap; }
+.widgets-pc .fixo .widget-evolucao .grafico-com-painel { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+.widgets-pc .fixo .widget-evolucao .gcp { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; }
+.widgets-pc .fixo .widget-evolucao .gcp > .grafico { flex: 1 1 0; min-height: 140px; height: auto !important; }
+/* o gasto do mês: a linha do mês cresce junto */
+.widgets-pc .fixo .widget-gasto-corpo { height: 100%; }
+
+/* ---------- o modo Arrumar (personalizar) ---------- */
+.widgets-pc.arrumando .widget-celula { cursor: grab; touch-action: none; user-select: none; }
+.widgets-pc.arrumando .widget { opacity: .86; }
+/* a barra do cartão flutua no canto de cima, só com os botões (o nome já está no cartão; não muda a altura: o que se vê
+   arrumando é o que fica) */
+.widgets-pc .arrumar-barra span { display: none; }
+.widgets-pc .arrumar-barra {
+  position: absolute; z-index: 3; top: 8px; right: 8px; gap: 2px; margin: 0; padding: 3px; border-radius: 14px;
+  border: 1px solid var(--borda); background: color-mix(in srgb, var(--superficie) 90%, transparent); box-shadow: var(--sombra);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.widgets-pc .arrumar-barra button { width: 36px; height: 36px; }
+/* a alça do canto: puxar muda o tamanho */
+.alca-tamanho {
+  position: absolute; z-index: 3; right: 6px; bottom: 6px; display: grid; place-items: center; width: 34px; height: 34px; padding: 0;
+  border: 1px solid color-mix(in srgb, var(--destaque) 40%, var(--borda)); border-radius: 12px; cursor: nwse-resize; touch-action: none;
+  background: var(--superficie); color: var(--destaque); box-shadow: var(--sombra);
+  transition: transform .5s var(--deslize), background .4s var(--deslize);
+}
+.alca-tamanho svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.alca-tamanho:hover, .puxando .alca-tamanho { transform: scale(1.12); background: color-mix(in srgb, var(--destaque) 14%, var(--superficie)); }
+.alca-tamanho:focus-visible { outline: 2px solid var(--destaque); outline-offset: 2px; }
+/* o cartão na mão: segue o mouse sem atraso (só o que a grade decide desliza) */
+.widgets-pc .widget-celula.puxando { z-index: 4; transition: transform .35s var(--deslize); }
+.widgets-pc .widget-celula.pegando { z-index: 5; cursor: grabbing; transition: width .35s var(--deslize), height .35s var(--deslize); }
+.widgets-pc .widget-celula.pegando .widget, .widgets-pc .widget-celula.puxando .widget {
+  opacity: 1; box-shadow: 0 34px 60px -28px rgba(0, 0, 0, .55), 0 0 0 2px color-mix(in srgb, var(--destaque) 55%, transparent);
+}
+.widgets-pc .widget-celula.pegando > div:last-child { transform: scale(1.02) rotate(.6deg); transition: transform .3s var(--deslize); }
+:root.arrastando-cartao, :root.arrastando-cartao * { cursor: grabbing !important; }
+:root.arrastando-cartao:has(.puxando), :root.arrastando-cartao:has(.puxando) * { cursor: nwse-resize !important; }
+/* onde o cartão vai encaixar quando soltar */
+.vaga-do-cartao {
+  position: absolute; top: 0; left: 0; z-index: 0; border-radius: 24px; pointer-events: none; opacity: 0;
+  border: 2px dashed color-mix(in srgb, var(--destaque) 60%, transparent); background: color-mix(in srgb, var(--destaque) 8%, transparent);
+  transition: transform .35s var(--deslize), width .35s var(--deslize), height .35s var(--deslize), opacity .3s var(--deslize);
+}
+.vaga-do-cartao.visivel { opacity: 1; }
+/* a barra do Arrumar presa no pé da tela, com a explicação */
+.cartoes-acoes.arrumar-fixo {
+  position: sticky; bottom: 16px; z-index: 6; width: fit-content; max-width: 100%; margin: 18px auto 0; padding: 8px 8px 8px 20px;
+  border-radius: 999px; border: 1px solid var(--borda); background: color-mix(in srgb, var(--superficie) 92%, transparent);
+  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, .45); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+.arrumar-dica { margin: 0; font-size: 14px; color: var(--texto-2); }
 .inicio-pc .widget { padding: 14px 20px 8px; }
 .inicio-pc .widget-rodape { margin: 0 -20px; }
 .inicio-pc .widget-pequeno, .inicio-pc .widget-gasto { padding: 16px 20px; }
@@ -130,6 +209,11 @@
 /* resumo do mês estreito (ao lado do gráfico): um número embaixo do outro, maiores */
 @container (max-width: 440px) {
   .widget-resumo-grade { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .widget-resumo-grade .widget-numero { font-size: 26px; }
+}
+/* resumo do mês largo (o cartão foi esticado): os quatro números numa fileira */
+@container (min-width: 640px) {
+  .widget-resumo-grade { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .widget-resumo-grade .widget-numero { font-size: 26px; }
 }
 

@@ -1159,3 +1159,30 @@ foi feita pelo próprio dono no terminal (a senha não passa pelo Claude). Falta
 - Leva o plano de ação em etapas (#238) e os favoritos em destaque no Consultor com o rodapé do plano corrigido (#239).
   `versionCode` 18 → 19, `versionName` 2.8.0 → 2.8.1. JDK 21 em `~/tools`, Android SDK com a plataforma 36 baixada pelo
   Gradle. Chave baixada do Drive do dono e apagada da máquina depois de assinar.
+
+### 18/11/2026 — Claude — Início: faixa do topo sempre verde com selo do estado, e cartões redimensionáveis no computador
+
+**Estado:** veja a conversa da sessão para PR e deploy. Sem migração (o tamanho dos cartões vai na coluna `perfis.celular`,
+que já é jsonb). O app Android precisa de versão nova para o selo no topo do celular e para guardar os tamanhos do
+computador quando a pessoa arruma pelo celular (o app antigo lê `perfis.celular` sem `tamanhos` e, se a pessoa arrumar
+pelo celular, a gravação dele apaga os tamanhos do computador; a ordem continua certa).
+
+- Pedido do Edigar (1): não entendia a cor do topo da Início ("uma parte vermelha, depois verde"). Causa: a cor seguia o
+  estado do mês (a previsão), mas o número grande é o de até hoje; ficava coral com "Sobrou … até hoje" escrito, e o
+  Resumo logo abaixo mostrava o mesmo número em verde. Decisão dele (entre 3 opções): a faixa fica **sempre verde** e o
+  estado vai escrito num selo (`SeloDoMes` em `src/movel/primitivas.tsx`, dados em `resumosDaInicio.ts`: `selo` e
+  `subAlerta`), com "Pode faltar … no fim do mês" em coral claro com ícone. Vale no computador e no celular.
+- Pedido do Edigar (2): no computador, redimensionar os cartões puxando o canto, com eles se encaixando como bloquinhos,
+  sem travar ("o sistema que redimensiona em tempo real", na linha do Pretext: calcular em vez de medir a tela a cada
+  quadro). Feito: `src/movel/GradeDoComputador.tsx` (grade posicionada por conta, arrasto direto no estilo, React só ao
+  soltar) e, puros em `lib/widgets.ts`, `GRADE`, `encaixar`, `limitarTamanho`, `MINIMO`, `reordenarCartoes`,
+  `redimensionarCartao` e `tamanhos` na `ArrumacaoInicio` (as funções de antes passaram a guardá-los). `CartaoWidget`
+  ganhou o `widget-corpo` (`display: contents` no celular). Detalhes e regras: `docs/arquitetura-do-painel.md`, 4.0.0.
+
+**Validação:** `npx tsc -b`, `npm run lint` (sem erros; 1 aviso novo de `react(immutability)` por escrever no estilo do
+cartão no arrasto, de propósito), build com Supabase fictício, `scripts/painel/testar.mjs` 34/34, `testar-movel.cjs` 379 OK
+sem falha, `testar-arrasto.cjs` 41/41 (uma rodada antes teve 1 falha intermitente em Metas, tela não tocada) e o novo
+`testar-grade-pc.cjs` 46/46 nos dois temas: faixa verde com selo, nada sobreposto nem fora, o cartão segue o mouse no
+arrasto, nenhuma tarefa longa (>50 ms) durante o arrasto, Contas 548×368 → 736×728 mostrando 4 → 10 contas, tamanho
+guardado e de volta depois de recarregar, arrastar troca a ordem, setas e Delete na alça, Resumo largo com 4 colunas e
+nada sobreposto a 1000 px.

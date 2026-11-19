@@ -59,8 +59,12 @@ A mesma ideia da Início do celular (4.25), com o espaço do computador. `pages/
 sempre; o resto → `InicioPC`. Os três jeitos usam esta tela; o que muda entre eles são os cartões.
 
 1. **A faixa do topo** (`.faixa-pc`, estilos em `components/inicio-pc.css`): um degradê escuro na cor do estado do mês
-   (verde-água quando sobra, coral quando falta ou o mês está crítico; as cores de `src/movel/tom.ts`), texto branco nos dois
-   temas. Em cima: "Olá, Nome!", a pílula do jeito (`PilulaDoJeito`) e a data de hoje. À esquerda, o número grande do mês
+   (sempre o verde-água da marca desde 18/11/2026; antes ficava coral quando o mês estava crítico, e confundia: o número
+   dizia "Sobrou" e a cor dizia o contrário), texto branco nos dois
+   temas. Em cima: "Olá, Nome!", o **selo do estado do mês** (`SeloDoMes`: ponto verde "Mês no azul", âmbar "Mês apertado",
+   "Contas atrasadas"…, coral "Previsão no vermelho"/"Mês no vermelho"; clicar abre "Entender a conta"), a pílula do jeito
+   (`PilulaDoJeito`) e a data de hoje. Quando a previsão é de faltar, a linha "Pode faltar … no fim do mês" sai com o ícone
+   de alerta num coral claro. À esquerda, o número grande do mês
    ("Sobrou em novembro até hoje", com "Deve sobrar … no fim do mês" e "Entender a conta"); à direita, lado a lado, os outros
    resumos que no celular deslizam (dinheiro guardado, falta pagar nas dívidas, investimentos), cada um com um fio na cor
    dele e o atalho para a tela. Embaixo, as ações redondas: Gasto, Entrada, Contas, Cartões e Importar (no computador cabe
@@ -68,10 +72,29 @@ sempre; o resto → `InicioPC`. Os três jeitos usam esta tela; o que muda entre
    1100 px a faixa empilha.
 2. **As dicas** (convite para importar e a sugestão do momento), lado a lado.
 3. **Os cartões** (`src/movel/GradeDeCartoes.tsx`, os mesmos de `src/movel/widgets.tsx`), com a **mesma arrumação do
-   celular** (`perfis.celular`): o que a pessoa adiciona, tira ou muda de ordem num aparelho vale no outro. A grade tem 12
-   colunas (`linhasDoComputador` em `lib/widgets.ts`): o Mês a mês ocupa 8 e o Resumo do mês 4 (ao lado, um número embaixo do
-   outro), os grandes 6 (dois por linha) e os pequenos 3; a sobra de cada linha vai para os cartões dela, então nenhuma
-   linha fica com buraco. Cartões da mesma linha ficam da mesma altura. No computador, o gráfico do ano tem o eixo completo
+   celular** (`perfis.celular`): o que a pessoa adiciona, tira ou muda de ordem num aparelho vale no outro. A grade
+   (`src/movel/GradeDoComputador.tsx`) tem 12 colunas e linhas de 8 px com 16 px entre os cartões (`GRADE` em
+   `lib/widgets.ts`). Larguras de sempre (`linhasDoComputador`): o Mês a mês 8 e o Resumo do mês 4 (ao lado, um número
+   embaixo do outro), os grandes 6 e os pequenos 3; a sobra de cada linha vai para os cartões dela. Os cartões se
+   **encaixam como bloquinhos** (`encaixar`): cada um vai para o primeiro lugar livre onde cabe inteiro, de cima para
+   baixo e da esquerda para a direita, então um cartão baixo pode ficar ao lado de um alto, embaixo de outro. A altura é a
+   do conteúdo; os que começam na mesma linha esticam até o fundo do mais alto, se o espaço embaixo estiver livre.
+   **Personalizar (Arrumar), só no computador:** cada cartão ganha uma alça no canto de baixo. Puxar a alça muda largura e
+   altura: o cartão segue o mouse em px e os outros se reencaixam ao vivo no tamanho arredondado para a grade; uma vaga
+   tracejada mostra onde ele vai ficar ao soltar. Arrastar o cartão (por qualquer lugar fora dos botões) muda o lugar:
+   passou por cima de outro, os dois trocam na ordem. A barra de cada cartão (subir, descer, tirar) flutua no canto de
+   cima, sem mudar a altura; a barra "Arraste um cartão… · Pronto" fica presa no pé da tela. Pelo teclado, na alça:
+   setas mudam o tamanho, Delete (ou clique duplo) volta ao de sempre. Limites: o mínimo de cada cartão
+   (`MINIMO`, para o conteúdo caber), 12 colunas e 40 linhas (~950 px). O tamanho fica em `perfis.celular.inicio.tamanhos`
+   (`{ c, l }`, sem migração: a coluna já é jsonb); o celular ignora e "Voltar ao modelo" apaga junto.
+   **Cartão de altura escolhida** (`.fixo`): o corpo (`widget-corpo`, que no celular é `display: contents`) ocupa o que
+   sobra e mostra só as linhas que cabem inteiras (as demais quebram para uma coluna escondida), então mais alto = mais
+   linhas, ao vivo; a lista traz até 12 (`limite` no `Contexto`). O gráfico do ano ocupa a altura toda; o Resumo do mês
+   com 640 px ou mais põe os quatro números numa fileira.
+   **Por que não trava:** a posição é só conta. No arrasto nada passa pelo React: a cada quadro a conta é refeita e vai
+   direto para o estilo (`transform` para o lugar). A tela só é medida quando o conteúdo de um cartão muda
+   (ResizeObserver) e na largura da grade; o React só entra ao soltar, para guardar. Teste:
+   `scripts/app-de-demonstracao/testar-grade-pc.cjs` (inclusive: nenhuma tarefa longa durante o arrasto). No computador, o gráfico do ano tem o eixo completo
    (sem `compacto`) e cada conta mostra a ação ao lado do valor ("Paguei", "Recebi", "Ver fatura"); clicar abre a
    conferência, como no celular (nunca dá baixa direto). Embaixo, "Adicionar cartões", "Arrumar" e "Jeito X · Trocar".
 
@@ -1331,7 +1354,8 @@ na tela e o arrasto travava (teste: `scripts/app-de-demonstracao/testar-arrasto.
 **Início** (`src/movel/telas/InicioMovel.tsx`; os números saem de `lib/useMesDaInicio.ts`, o mesmo cálculo da Início do
 computador):
 1. Topo que desliza para os lados, uma página por resumo, com um degradê de cor por página (`src/movel/tom.ts`): o que
-   sobrou no mês (verde-água; coral quando falta ou o mês está crítico; "Entender a conta" abre o `EntenderMes`) →
+   sobrou no mês (sempre verde-água, com o selo do estado do mês em cima, como no computador, 4.0.0; "Entender a conta"
+   abre o `EntenderMes`) →
    dinheiro guardado → o que falta pagar nas dívidas → investimentos. Cada página só aparece com o módulo ligado
    (dívidas: só com algo a pagar; investimentos: só com carteira).
 2. Quatro ações redondas: Gasto, Entrada, Contas (ou Importar, sem o módulo de contas) e **Cartões** (abre a tela Cartões).

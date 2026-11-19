@@ -60,17 +60,24 @@ export interface CelulaDoComputador { id: IdWidget; colunas: number }
  * os grandes 6 (dois por linha) e os pequenos 3. O cartão que não cabe na sobra da linha começa a próxima; a sobra vai para
  * os cartões da linha (todos iguais: dividem por igual; senão, o último cresce). Assim a linha sempre fecha, sem buraco.
  */
-export function linhasDoComputador(ids: IdWidget[]): CelulaDoComputador[][] {
-  const largura = (id: IdWidget) => (id === 'evolucao' ? 8 : id === 'resumo-mes' ? 4 : TAMANHO[id] === 'pequeno' ? 3 : 6)
+export function linhasDoComputador(ids: IdWidget[], tamanhos?: TamanhosNoComputador): CelulaDoComputador[][] {
+  const escolhida = (id: IdWidget) => tamanhos?.[id]?.c
+  const largura = (id: IdWidget) => escolhida(id) ?? (id === 'evolucao' ? 8 : id === 'resumo-mes' ? 4 : TAMANHO[id] === 'pequeno' ? 3 : 6)
   const linhas: CelulaDoComputador[][] = []
   let linha: CelulaDoComputador[] = []
   let usadas = 0
   const fechar = () => {
     if (!linha.length) return
     const sobra = 12 - usadas
-    if (sobra > 0) {
-      if (linha.every((x) => x.colunas === linha[0].colunas) && 12 % linha.length === 0) linha = linha.map((x) => ({ ...x, colunas: 12 / linha.length }))
-      else linha[linha.length - 1] = { ...linha[linha.length - 1], colunas: linha[linha.length - 1].colunas + sobra }
+    // a sobra vai só para quem a pessoa não redimensionou; se todos foram, o espaço fica (outro cartão pode encaixar nele)
+    const livres = linha.filter((x) => escolhida(x.id) === undefined)
+    if (sobra > 0 && livres.length) {
+      if (livres.length === linha.length && linha.every((x) => x.colunas === linha[0].colunas) && 12 % linha.length === 0) {
+        linha = linha.map((x) => ({ ...x, colunas: 12 / linha.length }))
+      } else {
+        const ultimo = livres[livres.length - 1]
+        linha = linha.map((x) => (x === ultimo ? { ...x, colunas: x.colunas + sobra } : x))
+      }
     }
     linhas.push(linha)
     linha = []
@@ -86,6 +93,82 @@ export function linhasDoComputador(ids: IdWidget[]): CelulaDoComputador[][] {
   return linhas
 }
 
+/**
+ * O tamanho que a pessoa deu a um cartão no computador (arrastando o canto, no modo Arrumar): `c` colunas das 12 e `l`
+ * linhas da grade (veja GRADE). Sem `l`, a altura é a do conteúdo. O celular ignora.
+ */
+export interface TamanhoNoComputador { c: number; l?: number }
+export type TamanhosNoComputador = Partial<Record<IdWidget, TamanhoNoComputador>>
+
+/**
+ * A grade do computador em números: 12 colunas, linhas de 8 px e 16 px entre os cartões (um passo de 24 px na altura).
+ * A posição de cada cartão é só conta com esses números: nunca depende de medir a tela no meio do arrasto (é o que deixa
+ * o redimensionar liso, sem travar).
+ */
+export const GRADE = { colunas: 12, linha: 8, vao: 16, maxLinhas: 40 } as const
+const PASSO = GRADE.linha + GRADE.vao
+/** Quantas linhas da grade uma altura em px ocupa (para cima: o cartão nunca corta o conteúdo). */
+export const linhasPara = (px: number) => Math.max(1, Math.ceil((px + GRADE.vao) / PASSO))
+/** A altura, em px, de um cartão de `l` linhas. */
+export const alturaDe = (l: number) => l * PASSO - GRADE.vao
+
+/** O menor tamanho de cada cartão (colunas, altura em px): abaixo disso o conteúdo não cabe direito. */
+const MINIMO: Record<IdWidget, [number, number]> = {
+  evolucao: [5, 340], 'resumo-mes': [3, 170],
+  contas: [4, 200], ultimos: [4, 200], categorias: [4, 180], orientacao: [4, 180], dividas: [4, 180], receber: [3, 150],
+  metas: [4, 180], guardado: [3, 150], cartoes: [3, 150], 'gasto-mes': [4, 130],
+  'entrou-saiu': [2, 120], 'gasto-dia': [2, 110], nota: [2, 110], comparacao: [2, 110],
+}
+export const minimoDe = (id: IdWidget) => ({ c: MINIMO[id][0], l: linhasPara(MINIMO[id][1]) })
+
+/** Põe o tamanho dentro dos limites: entre o mínimo do cartão e a grade inteira (12 colunas, 40 linhas). */
+export function limitarTamanho(id: IdWidget, t: TamanhoNoComputador): TamanhoNoComputador {
+  const min = minimoDe(id)
+  const c = Math.max(min.c, Math.min(GRADE.colunas, Math.round(t.c)))
+  return t.l === undefined ? { c } : { c, l: Math.max(min.l, Math.min(GRADE.maxLinhas, Math.round(t.l))) }
+}
+
+/** Um cartão posto na grade do computador: coluna e linha onde começa, largura e altura em células. */
+export interface Bloco { id: IdWidget; x: number; y: number; w: number; h: number; fixo: boolean }
+
+/**
+ * Encaixa os cartões, na ordem, como bloquinhos: cada um vai para o primeiro lugar livre (de cima para baixo, da esquerda
+ * para a direita) onde cabe inteiro; assim um cartão baixo pode ir para o lado de um alto, embaixo de outro. Depois, o
+ * cartão de altura automática estica até o fundo do mais alto que começa na mesma linha, se o espaço embaixo dele estiver
+ * livre (a fileira fica alinhada, sem degrau). Puro: só conta, nada de medir a tela.
+ * `fixo`: a pessoa escolheu a altura; senão é a do conteúdo.
+ */
+export function encaixar(itens: { id: IdWidget; w: number; h: number; fixo: boolean }[], colunas: number = GRADE.colunas): Bloco[] {
+  const ocupado: number[] = [] // uma máscara de bits por linha da grade
+  const mascara = (x: number, w: number) => ((1 << w) - 1) << x
+  const livre = (x: number, y: number, w: number, h: number) => {
+    const bits = mascara(x, w)
+    for (let r = y; r < y + h; r++) if ((ocupado[r] ?? 0) & bits) return false
+    return true
+  }
+  const blocos: Bloco[] = []
+  for (const it of itens) {
+    const w = Math.max(1, Math.min(colunas, it.w)), h = Math.max(1, it.h)
+    let x = 0, y = 0
+    procura: for (;; y++) for (x = 0; x + w <= colunas; x++) if (livre(x, y, w, h)) break procura
+    for (let r = y; r < y + h; r++) ocupado[r] = (ocupado[r] ?? 0) | mascara(x, w)
+    blocos.push({ id: it.id, x, y, w, h, fixo: it.fixo })
+  }
+  for (const b of blocos) {
+    if (b.fixo) continue
+    const fundo = Math.max(...blocos.filter((o) => o.y === b.y).map((o) => o.y + o.h))
+    const bits = mascara(b.x, b.w)
+    while (b.y + b.h < fundo && !((ocupado[b.y + b.h] ?? 0) & bits)) {
+      ocupado[b.y + b.h] = (ocupado[b.y + b.h] ?? 0) | bits
+      b.h++
+    }
+  }
+  return blocos
+}
+
+/** A altura da grade inteira, em linhas. */
+export const linhasDaGradeToda = (blocos: Bloco[]) => blocos.reduce((m, b) => Math.max(m, b.y + b.h), 0)
+
 /** O que a pessoa arrumou na Início do celular. */
 export interface ArrumacaoInicio {
   /** O jeito de ver em que a arrumação foi feita: trocar de jeito recomeça pelo modelo do novo. */
@@ -96,6 +179,8 @@ export interface ArrumacaoInicio {
   removidos: IdWidget[]
   /** Quando foi arrumada (ISO): entre a cópia do aparelho e a do banco, vale a mais recente. */
   em: string
+  /** O tamanho dos cartões no computador (só os que a pessoa redimensionou). O celular não usa, mas guarda. */
+  tamanhos?: TamanhosNoComputador
 }
 
 /** Tudo o que o celular guarda da pessoa (perfis.celular). */
@@ -104,6 +189,19 @@ export interface Celular { v: 1; inicio?: ArrumacaoInicio }
 const ehId = (x: unknown): x is IdWidget => typeof x === 'string' && x in TAMANHO
 const semRepetir = <T,>(xs: T[]) => [...new Set(xs)]
 
+/** Lê os tamanhos do computador: o que não tiver o formato certo some; o que passar dos limites volta para eles. */
+function normTamanhos(x: unknown): TamanhosNoComputador | undefined {
+  if (!x || typeof x !== 'object') return undefined
+  const saida: TamanhosNoComputador = {}
+  for (const [id, t] of Object.entries(x as Record<string, unknown>)) {
+    if (!ehId(id) || !t || typeof t !== 'object') continue
+    const { c, l } = t as { c?: unknown; l?: unknown }
+    if (typeof c !== 'number' || !Number.isFinite(c)) continue
+    saida[id] = limitarTamanho(id, typeof l === 'number' && Number.isFinite(l) ? { c, l } : { c })
+  }
+  return Object.keys(saida).length ? saida : undefined
+}
+
 /** Lê o que veio do banco ou do aparelho; o que não tiver o formato certo (ou for de outra versão do app) é ignorado. */
 export function normCelular(x: unknown): Celular | null {
   if (!x || typeof x !== 'object') return null
@@ -111,6 +209,7 @@ export function normCelular(x: unknown): Celular | null {
   if (!i || typeof i !== 'object') return { v: 1 }
   const a = i as Partial<Record<keyof ArrumacaoInicio, unknown>>
   if (!['simples', 'equilibrado', 'detalhado'].includes(a.base as string) || !Array.isArray(a.ordem)) return { v: 1 }
+  const tamanhos = normTamanhos(a.tamanhos)
   return {
     v: 1,
     inicio: {
@@ -118,6 +217,7 @@ export function normCelular(x: unknown): Celular | null {
       ordem: semRepetir(a.ordem.filter(ehId)),
       removidos: semRepetir(Array.isArray(a.removidos) ? a.removidos.filter(ehId) : []),
       em: typeof a.em === 'string' ? a.em : '',
+      ...(tamanhos ? { tamanhos } : {}),
     },
   }
 }
@@ -147,21 +247,24 @@ export function cartoesDaInicio(a: ArrumacaoInicio | undefined, detalhe: Detalhe
   return lista
 }
 
-const arrumada = (detalhe: Detalhe, ordem: IdWidget[], removidos: IdWidget[], em: string): ArrumacaoInicio =>
-  ({ base: detalhe, ordem, removidos: semRepetir(removidos), em })
+/** Os tamanhos que continuam valendo: os da mesma base (trocar de jeito recomeça tudo pelo modelo). */
+const tamanhosDe = (a: ArrumacaoInicio | undefined, detalhe: Detalhe) => (a?.base === detalhe ? a.tamanhos : undefined)
+
+const arrumada = (detalhe: Detalhe, ordem: IdWidget[], removidos: IdWidget[], em: string, tamanhos?: TamanhosNoComputador): ArrumacaoInicio =>
+  ({ base: detalhe, ordem, removidos: semRepetir(removidos), em, ...(tamanhos && Object.keys(tamanhos).length ? { tamanhos } : {}) })
 
 /** Põe o cartão no fim da Início (e tira da lista dos removidos). */
 export function adicionarCartao(a: ArrumacaoInicio | undefined, detalhe: Detalhe, id: IdWidget, em: string): ArrumacaoInicio {
   const lista = cartoesDaInicio(a, detalhe).filter((x) => x !== id)
   const removidos = a?.base === detalhe ? a.removidos.filter((x) => x !== id) : []
-  return arrumada(detalhe, [...lista, id], removidos, em)
+  return arrumada(detalhe, [...lista, id], removidos, em, tamanhosDe(a, detalhe))
 }
 
 /** Tira o cartão da Início; ele vai para a folha "Adicionar cartões" e não volta sozinho. */
 export function removerCartao(a: ArrumacaoInicio | undefined, detalhe: Detalhe, id: IdWidget, em: string): ArrumacaoInicio {
   const lista = cartoesDaInicio(a, detalhe).filter((x) => x !== id)
   const removidos = a?.base === detalhe ? a.removidos : []
-  return arrumada(detalhe, lista, [...removidos, id], em)
+  return arrumada(detalhe, lista, [...removidos, id], em, tamanhosDe(a, detalhe))
 }
 
 /**
@@ -177,5 +280,25 @@ export function moverCartao(a: ArrumacaoInicio | undefined, detalhe: Detalhe, id
   if (x < 0 || y < 0) return null
   lista[x] = vizinho
   lista[y] = id
-  return arrumada(detalhe, lista, a?.base === detalhe ? a.removidos : [], em)
+  return arrumada(detalhe, lista, a?.base === detalhe ? a.removidos : [], em, tamanhosDe(a, detalhe))
+}
+
+/**
+ * A nova ordem dos cartões que estão na tela (o arrastar do computador). Os escondidos (sem nada para mostrar agora)
+ * continuam onde estavam na lista; os da tela ocupam os lugares deles, na ordem nova.
+ */
+export function reordenarCartoes(a: ArrumacaoInicio | undefined, detalhe: Detalhe, novaOrdem: IdWidget[], em: string): ArrumacaoInicio {
+  const lista = cartoesDaInicio(a, detalhe)
+  const naTela = new Set(novaOrdem.filter((id) => lista.includes(id)))
+  const fila = [...naTela]
+  const ordem = lista.map((id) => (naTela.has(id) ? fila.shift()! : id))
+  return arrumada(detalhe, ordem, a?.base === detalhe ? a.removidos : [], em, tamanhosDe(a, detalhe))
+}
+
+/** Muda o tamanho de um cartão no computador (null: volta ao tamanho de sempre). */
+export function redimensionarCartao(a: ArrumacaoInicio | undefined, detalhe: Detalhe, id: IdWidget, t: TamanhoNoComputador | null, em: string): ArrumacaoInicio {
+  const tamanhos: TamanhosNoComputador = { ...tamanhosDe(a, detalhe) }
+  if (t) tamanhos[id] = limitarTamanho(id, t)
+  else delete tamanhos[id]
+  return arrumada(detalhe, cartoesDaInicio(a, detalhe), a?.base === detalhe ? a.removidos : [], em, tamanhos)
 }
