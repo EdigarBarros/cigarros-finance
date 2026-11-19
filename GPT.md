@@ -1261,3 +1261,15 @@ então o app Android só a recebe numa versão nova (a 2.8.2 sem assinatura na �
   destaque, e herdava a altura de 62 px: o conteúdo saía por cima do cartão. Agora o destaque vai em `data-destaque`.
 - Validação: `scripts/painel/testar.mjs` 35/35 (caso novo com 10 tipos de dívida e as regras de espaço e família), tsc,
   lint, build; app de demonstração com 9 dívidas parecidas com as do dono, claro e escuro, sem erro na página.
+
+### 19/11/2026 — Claude — App Android 2.8.3 (código 21)
+
+**Estado:** `.aab` gerado **sem assinatura** (`OpusCash-2.8.3-codigo21.aab`, na Área de Trabalho do dono). Falta o dono
+assinar com a chave de upload (ele digita a senha; o Claude não digita senhas) e enviar no Play Console. Substitui a 2.8.2
+(código 20) se ela ainda não foi enviada.
+
+- Leva a abertura nova e a montagem ao vivo do Consultor (#248). `versionCode` 20 → 21, `versionName` 2.8.2 → 2.8.3.
+- Conferido: o código novo (`abertura-orbita`, `an-varredura`), "2.8.3" no manifesto e o Supabase de produção no pacote.
+- Para assinar: baixar `opuscash-upload.keystore` do Drive e rodar
+  `jarsigner -sigalg SHA256withRSA -digestalg SHA-256 -keystore opuscash-upload.keystore OpusCash-2.8.3-codigo21.aab opuscash`
+  (o `jarsigner` está em `~/tools/jdk-21.0.12.1+1/bin`); depois apagar a chave.
