@@ -214,9 +214,10 @@ export function ArteAjustada({ arte, idioma, larguraMax }: { arte: Arte; idioma?
     if (!el) return
     const medir = () => setEscala(Math.min(el.clientWidth, larguraMax ?? Infinity) / t.w)
     medir()
-    const ro = new ResizeObserver(medir)
+    let quadro = 0
+    const ro = new ResizeObserver(() => { cancelAnimationFrame(quadro); quadro = requestAnimationFrame(medir) })
     ro.observe(el)
-    return () => ro.disconnect()
+    return () => { cancelAnimationFrame(quadro); ro.disconnect() }
   }, [t.w, larguraMax])
   return (
     <div ref={caixa} className="arte-ajustada" style={{ height: t.h * escala }}>

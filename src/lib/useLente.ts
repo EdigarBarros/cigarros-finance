@@ -16,9 +16,10 @@ export function useLente(ref: RefObject<HTMLElement | null>, seletor: string, ch
       setLente(el ? { x: el.offsetLeft, y: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight } : null)
     }
     medir()
-    const ro = new ResizeObserver(medir)
+    let quadro = 0
+    const ro = new ResizeObserver(() => { cancelAnimationFrame(quadro); quadro = requestAnimationFrame(medir) })
     ro.observe(caixa)
-    return () => ro.disconnect()
+    return () => { cancelAnimationFrame(quadro); ro.disconnect() }
   }, [ref, seletor, chave])
   return lente
 }

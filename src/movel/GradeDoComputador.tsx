@@ -194,7 +194,22 @@ export function GradeDoComputador({ ids, tamanhos, arrumando, tituloDe, conteudo
   useEffect(() => {
     const grade = refGrade.current
     if (!grade) return
+    // o trabalho roda no quadro seguinte: mexer no layout dentro do próprio callback gera o aviso
+    // "ResizeObserver loop completed with undelivered notifications"
+    let pendentes: ResizeObserverEntry[] = []
+    let quadroRO = 0
     const ro = new ResizeObserver((entradas) => {
+      pendentes.push(...entradas)
+      if (quadroRO) return
+      quadroRO = requestAnimationFrame(() => {
+        quadroRO = 0
+        const lote = pendentes
+        pendentes = []
+        processar(lote)
+      })
+    })
+    const processar = (entradas: ResizeObserverEntry[]) => {
+      if (!grade.isConnected) return
       let mudou = false
       for (const e of entradas) {
         if (e.target === grade) {
@@ -219,11 +234,11 @@ export function GradeDoComputador({ ids, tamanhos, arrumando, tituloDe, conteudo
         if (a?.tipo === 'tamanho' && a.id === id) recortar(id, a.hAgora, a.mexeuAltura || Boolean(a.tamanhos[id]?.l))
       }
       if (mudou) desenhar()
-    })
+    }
     ro.observe(grade)
     for (const el of celulas.current.values()) { const w = el.querySelector('.widget'); if (w) observarPartes(ro, w) }
     observador.current = ro
-    return () => { ro.disconnect(); observador.current = null }
+    return () => { cancelAnimationFrame(quadroRO); ro.disconnect(); observador.current = null }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------- o arrasto ----------

@@ -88,9 +88,14 @@ export function Encaixe({ itens, versao }: { itens: ItemEncaixe[]; versao: strin
     const mq = window.matchMedia(larguraMinima)
     const aoMudar = () => setLarga(mq.matches)
     mq.addEventListener('change', aoMudar)
-    const ro = new ResizeObserver(([e]) => setLargura(Math.round(e.contentRect.width / 40)))
+    let quadro = 0
+    const ro = new ResizeObserver(([e]) => {
+      const l = Math.round(e.contentRect.width / 40)
+      cancelAnimationFrame(quadro)
+      quadro = requestAnimationFrame(() => setLargura(l))
+    })
     if (caixa.current) ro.observe(caixa.current)
-    return () => { mq.removeEventListener('change', aoMudar); ro.disconnect() }
+    return () => { cancelAnimationFrame(quadro); mq.removeEventListener('change', aoMudar); ro.disconnect() }
   }, [])
 
   // mede o tamanho natural de cada bloco (sem esticar) e escolhe a divisão, antes de a tela ser pintada

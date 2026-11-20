@@ -1541,12 +1541,16 @@ export function Algoritmo() {
     }
     vigiarEntrada()
     // o texto e os selos mudam de altura (fontes, idioma, quebra de linha): a tela do celular se mede de novo
-    const tamanhos = new ResizeObserver(() => { medir(); desenhar(atual, performance.now()) })
+    let quadroTamanhos = 0
+    const tamanhos = new ResizeObserver(() => {
+      cancelAnimationFrame(quadroTamanhos)
+      quadroTamanhos = requestAnimationFrame(() => { medir(); desenhar(atual, performance.now()) })
+    })
     tamanhos.observe(texto); tamanhos.observe(selos)
     window.addEventListener('scroll', aoScroll, { passive: true })
     window.addEventListener('resize', aoRedim)
     return () => {
-      obs.disconnect(); chegando.disconnect(); tamanhos.disconnect(); tema.disconnect(); soltarPedido()
+      cancelAnimationFrame(quadroTamanhos); obs.disconnect(); chegando.disconnect(); tamanhos.disconnect(); tema.disconnect(); soltarPedido()
       window.removeEventListener('scroll', aoScroll); window.removeEventListener('resize', aoRedim)
       if (quadro) cancelAnimationFrame(quadro)
     }
