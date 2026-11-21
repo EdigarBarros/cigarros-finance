@@ -16950,5 +16950,17 @@
   "Comenta enquanto você monta": {
     "en": "Comments while you build",
     "es": "Comenta mientras armas"
+  },
+  "Backup pronto": {
+    "en": "Backup ready",
+    "es": "Copia de seguridad lista"
+  },
+  "Seu backup está pronto. Toque no botão e escolha Salvar em Arquivos (ou mande para você mesmo por e-mail ou WhatsApp).": {
+    "en": "Your backup is ready. Tap the button and choose Save to Files (or send it to yourself by email or WhatsApp).",
+    "es": "Tu copia de seguridad está lista. Toca el botón y elige Guardar en Archivos (o envíatela por correo o WhatsApp)."
+  },
+  "Salvar backup": {
+    "en": "Save backup",
+    "es": "Guardar copia"
   }
 }
