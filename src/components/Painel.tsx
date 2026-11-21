@@ -313,7 +313,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     return () => window.removeEventListener('hashchange', aoMudar)
   }, [])
   const lenteNav = useLente(refNav, 'button.ativo', `${paginaAtual}|${paginas.length}|${noPainel}|${barra.trilho}|${barra.retrato}`)
-  // Jeito simples no celular: o topo fica só com o mês, o olho e o sino; idioma, suporte, tema e configurações vão para o
+  // Jeito simples no celular: o topo fica só com o mês e o olho; idioma, suporte, tema e configurações vão para o
   // "Mais" da barra de baixo (que então sempre aparece). Veja docs/arquitetura-do-painel.md, seção 4.1.
 
   // Ao trocar de mês, os blocos da página sobem de novo (mesma animação da entrada).
@@ -1208,11 +1208,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         <div className="conteudo">
           <TopoMovel sobreCor={comCor} foto={d.foto} iniciais={iniciais} avisoConta={respostasNovas > 0} aoConta={() => setContaMovel(true)}
             busca={busca} aoBuscar={buscar} mes={`${MESES_CURTO[mes - 1]}${ano !== hoje.getFullYear() ? ` ${String(ano).slice(2)}` : ''}`}
-            aoMes={() => setQuadroMeses(true)} ocultos={ocultos} aoOcultar={() => definirValoresOcultos(!ocultos)}
-            sino={comContas ? {
-              rotulo: avisos.length ? (avisos.length === 1 ? tx('1 conta pede atenção') : tx('{0} contas pedem atenção', avisos.length)) : tx('Contas do mês'),
-              ponto: avisos.length > 0, atraso: atrasadas > 0, acao: () => irPara('contas'),
-            } : undefined} />
+            aoMes={() => setQuadroMeses(true)} ocultos={ocultos} aoOcultar={() => definirValoresOcultos(!ocultos)} />
           {faixasDoTopo}
           {telas(true)}
         </div>
