@@ -1,5 +1,5 @@
 // Várias contas no mesmo aparelho (src/lib/contas.ts): entrar, adicionar outra, trocar sem senha, o tema de cada uma, sair de
-// uma sem perder as outras, a tela "Escolha uma conta", conta cuja sessão venceu (pede a senha com o e-mail preenchido), tirar
+// uma sem perder as outras, a tela "Quem está usando?", conta cuja sessão venceu (pede a senha com o e-mail preenchido), tirar
 // uma conta da lista (encerra a sessão dela no servidor) e a folha da conta no celular.
 // Uso (depois do build com fake.supabase.co do README desta pasta): node scripts/app-de-demonstracao/testar-contas.cjs
 const path = require('path')
@@ -132,10 +132,11 @@ async function abrirMenu(p) { await p.locator('.perfil-botao').click(); await es
   // sair da Bia: as outras continuam, e a tela de escolher aparece
   await abrirMenu(p)
   await p.locator('.menu-lista').getByText('Sair desta conta').click(); await esperar(p, 1500)
-  ok(await p.locator('.escolher-conta').count() === 1, 'depois de sair, aparece "Escolha uma conta"')
-  ok((await p.locator('.escolher-conta .cs-linha').allTextContents()).join('|').match(/ana@.*caio@|caio@.*ana@/) && !(await p.locator('.escolher-conta').textContent()).includes('bia@'), 'a lista tem Ana e Caio, sem a Bia')
+  ok(await p.locator('.escolher-conta').count() === 1, 'depois de sair, aparece "Quem está usando?"')
+  ok((await p.locator('.escolher-conta .pf-perfil:not(.pf-outra)').allTextContents()).join('|').match(/ana@.*caio@|caio@.*ana@/) && !(await p.locator('.escolher-conta').textContent()).includes('bia@'), 'a lista tem Ana e Caio, sem a Bia')
   ok(s.encerrados.includes('bia@exemplo.com'), 'a sessão da Bia foi encerrada no servidor')
-  await p.locator('.escolher-conta .cs-linha', { hasText: 'ana@exemplo.com' }).locator('.cs-abrir').click()
+  ok(await p.locator('.escolher-conta .cn-cena').count() >= 1, 'as cenas do app passam no fundo')
+  await p.locator('.escolher-conta .pf-perfil', { hasText: 'ana@exemplo.com' }).click()
   await esperar(p, 3000)
   ok(/Ana/.test(await ola(p)), 'escolheu a Ana na lista e entrou sem senha')
   // a sessão do Caio venceu (encerrada em outro lugar): pede a senha com o e-mail preenchido, e a Ana continua aberta até lá
@@ -185,7 +186,12 @@ async function abrirMenu(p) { await p.locator('.perfil-botao').click(); await es
   await folha()
   ok(/Ana/.test(await q.locator('.modal h2, h2').first().textContent()), 'celular: trocou para a Ana')
   await q.locator('.lista-folha').getByText('Sair desta conta').click(); await esperar(q, 1500)
-  ok(await q.locator('.escolher-conta .cs-linha').count() === 1, 'celular: saiu da Ana e a Bia continua na lista')
+  ok(await q.locator('.escolher-conta .pf-perfil:not(.pf-outra):not(.pf-editar)').count() === 1, 'celular: saiu da Ana e a Bia continua na lista')
+  ok(await q.locator('.escolher-conta .pf-editar').count() === 1, 'celular: o quadro "Editar" aparece no lugar de "Gerenciar contas"')
+  await q.locator('.escolher-conta .pf-editar').click(); await esperar(q, 400)
+  ok(await q.locator('.escolher-conta.editando .pf-tirar').count() === 1, 'celular: "Editar" mostra a lixeira em cada conta')
+  await q.locator('.escolher-conta .pf-editar').click(); await esperar(q, 400)
+  ok(await q.locator('.escolher-conta.editando').count() === 0, 'celular: "Concluir" volta ao normal sem tirar ninguém')
   await q.screenshot({ path: path.join(R, 'node_modules/.cache/contas-escolher.png') })
   ok(!m.msgs.some((x) => x.startsWith('PAGEERROR')), 'sem erro na página (celular)')
   await m.fechar()

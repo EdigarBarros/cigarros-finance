@@ -17010,5 +17010,205 @@
   "Na conferência de {0} o app mostrava {1}, e o banco mostrou {2}: {3} a mais. Vale entender de onde veio.": {
     "en": "At the check on {0} the app showed {1}, and the bank showed {2}: {3} more. Worth finding out where it came from.",
     "es": "En la conferencia del {0} la app mostraba {1}, y el banco mostró {2}: {3} más. Vale entender de dónde vino."
+  },
+  "Freela para fora": {
+    "en": "Freelance abroad",
+    "es": "Freelance al exterior"
+  },
+  "Hotel em Lisboa": {
+    "en": "Hotel in Lisbon",
+    "es": "Hotel en Lisboa"
+  },
+  "Onde mais saiu": {
+    "en": "Where most went",
+    "es": "Dónde más salió"
+  },
+  "Dia {0}": {
+    "en": "Day {0}",
+    "es": "Día {0}"
+  },
+  "Várias moedas": {
+    "en": "Many currencies",
+    "es": "Varias monedas"
+  },
+  "Mercado +18%": {
+    "en": "Groceries +18%",
+    "es": "Supermercado +18%"
+  },
+  "Salário caiu dia 5": {
+    "en": "Salary landed on the 5th",
+    "es": "El sueldo cayó el día 5"
+  },
+  "3 assinaturas": {
+    "en": "3 subscriptions",
+    "es": "3 suscripciones"
+  },
+  "Fatura fecha dia 5": {
+    "en": "Bill closes on the 5th",
+    "es": "El resumen cierra el día 5"
+  },
+  "Meta da viagem": {
+    "en": "Trip goal",
+    "es": "Meta del viaje"
+  },
+  "Sua tela de hoje": {
+    "en": "Your screen today",
+    "es": "Tu pantalla de hoy"
+  },
+  "Sobra prevista no fim do mês": {
+    "en": "Expected left at month end",
+    "es": "Sobrante previsto a fin de mes"
+  },
+  "Corte {0} em assinaturas e feche o mês no azul.": {
+    "en": "Cut {0} in subscriptions and end the month in the black.",
+    "es": "Recorta {0} en suscripciones y cierra el mes en positivo."
+  },
+  "Montei sua tela com o que importa agora.": {
+    "en": "I built your screen with what matters now.",
+    "es": "Armé tu pantalla con lo que importa ahora."
+  },
+  "Nova conta do mês": {
+    "en": "New monthly bill",
+    "es": "Nueva cuenta del mes"
+  },
+  "Vence": {
+    "en": "Due",
+    "es": "Vence"
+  },
+  "Todo dia {0}": {
+    "en": "Every {0}th",
+    "es": "Todos los días {0}"
+  },
+  "Salvar conta": {
+    "en": "Save bill",
+    "es": "Guardar cuenta"
+  },
+  "Loja de roupas": {
+    "en": "Clothing store",
+    "es": "Tienda de ropa"
+  },
+  "Passagem": {
+    "en": "Plane ticket",
+    "es": "Pasaje"
+  },
+  "Restaurante": {
+    "en": "Restaurant",
+    "es": "Restaurante"
+  },
+  "À vista": {
+    "en": "Paid in full",
+    "es": "Al contado"
+  },
+  "Fecha dia {0} · vence dia {1}": {
+    "en": "Closes on the {0}th · due on the {1}th",
+    "es": "Cierra el día {0} · vence el día {1}"
+  },
+  "24 parcelas de {0}": {
+    "en": "24 installments of {0}",
+    "es": "24 cuotas de {0}"
+  },
+  "{0} de 24 parcelas pagas": {
+    "en": "{0} of 24 installments paid",
+    "es": "{0} de 24 cuotas pagadas"
+  },
+  "Acaba em": {
+    "en": "Paid off in",
+    "es": "Termina en"
+  },
+  "Cheque especial": {
+    "en": "Overdraft",
+    "es": "Descubierto"
+  },
+  "Cartão atrasado": {
+    "en": "Late card bill",
+    "es": "Tarjeta atrasada"
+  },
+  "Concluída": {
+    "en": "Done",
+    "es": "Cumplida"
+  },
+  "Chega em": {
+    "en": "Reached in",
+    "es": "Llega en"
+  },
+  "{0} de rendimento este mês": {
+    "en": "{0} earned this month",
+    "es": "{0} de rendimiento este mes"
+  },
+  "Exterior": {
+    "en": "International",
+    "es": "Exterior"
+  },
+  "Sua carteira": {
+    "en": "Your portfolio",
+    "es": "Tu cartera"
+  },
+  "{0} no ano": {
+    "en": "{0} this year",
+    "es": "{0} en el año"
+  },
+  "Cada entrada e saída no lugar, em real, dólar, euro e outras moedas.": {
+    "en": "Every income and expense in its place, in reais, dollars, euros and other currencies.",
+    "es": "Cada ingreso y gasto en su lugar, en reales, dólares, euros y otras monedas."
+  },
+  "Ele lê o seu mês e monta a tela com o que importa agora.": {
+    "en": "It reads your month and builds the screen around what matters now.",
+    "es": "Lee tu mes y arma la pantalla con lo que importa ahora."
+  },
+  "Crie a conta uma vez e veja o pote encher a cada pagamento.": {
+    "en": "Create the bill once and watch the jar fill with every payment.",
+    "es": "Crea la cuenta una vez y mira el frasco llenarse con cada pago."
+  },
+  "As faturas, o limite e as parcelas de todos os cartões.": {
+    "en": "The bills, limit and installments of every card.",
+    "es": "Los resúmenes, el límite y las cuotas de todas las tarjetas."
+  },
+  "Cada parcela paga e o mês em que a dívida acaba.": {
+    "en": "Every installment paid and the month the debt ends.",
+    "es": "Cada cuota pagada y el mes en que termina la deuda."
+  },
+  "Diga quanto quer juntar e acompanhe até chegar lá.": {
+    "en": "Say how much you want to save and follow it until you get there.",
+    "es": "Di cuánto quieres juntar y acompáñalo hasta llegar."
+  },
+  "A reserva e as caixinhas somadas, rendendo à vista.": {
+    "en": "Your reserve and savings pots added up, earning in plain sight.",
+    "es": "La reserva y las alcancías sumadas, rindiendo a la vista."
+  },
+  "Os doze meses lado a lado: quanto entrou, saiu e sobrou.": {
+    "en": "All twelve months side by side: what came in, went out and was left.",
+    "es": "Los doce meses lado a lado: cuánto entró, salió y sobró."
+  },
+  "A carteira inteira, com quanto rendeu de verdade.": {
+    "en": "Your whole portfolio, with what it really earned.",
+    "es": "Toda la cartera, con cuánto rindió de verdad."
+  },
+  "Mostrar: {0}": {
+    "en": "Show: {0}",
+    "es": "Mostrar: {0}"
+  },
+  "Pede a senha": {
+    "en": "Needs password",
+    "es": "Pide contraseña"
+  },
+  "Tirar contas deste aparelho": {
+    "en": "Remove accounts from this device",
+    "es": "Quitar cuentas de este dispositivo"
+  },
+  "Escolha sua conta": {
+    "en": "Choose your account",
+    "es": "Elige tu cuenta"
+  },
+  "Quem está usando?": {
+    "en": "Who's using OpusCash?",
+    "es": "¿Quién está usando?"
+  },
+  "Toque numa conta para tirá-la deste aparelho. Os dados dela continuam guardados.": {
+    "en": "Tap an account to remove it from this device. Its data stays saved.",
+    "es": "Toca una cuenta para quitarla de este dispositivo. Sus datos siguen guardados."
+  },
+  "Gerenciar contas": {
+    "en": "Manage accounts",
+    "es": "Administrar cuentas"
   }
 }
