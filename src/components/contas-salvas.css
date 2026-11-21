@@ -1,4 +1,4 @@
-/* Várias contas no mesmo aparelho: a lista no menu da conta e a tela "Escolha uma conta" (components/Contas.tsx). */
+/* Várias contas no mesmo aparelho: a lista no menu da conta (components/Contas.tsx); a tela de escolher fica em components/EscolherConta.tsx. */
 .cs-lista { display: grid; gap: 2px; padding: 4px 0; border-top: 1px solid var(--separador); border-bottom: 1px solid var(--separador); margin: 4px 0; }
 .cs-titulo { padding: 6px 14px 2px; font-size: 12px; font-weight: 600; color: var(--texto-2); letter-spacing: .02em; }
 .cs-linha { display: flex; align-items: center; gap: 4px; border-radius: 12px; }
@@ -31,15 +31,4 @@
 }
 .lista-folha .cs-lista > .cs-adicionar svg { color: var(--texto-2); }
 
-/* a tela de escolher */
-.escolher-conta .cartao.login h1 { text-align: center; }
-.escolher-sub { margin: -10px 0 0; text-align: center; font-size: 14px; color: var(--texto-2); }
-.escolher-conta .cs-lista { border: 0; margin: 0; }
-.escolher-conta .cs-lista > .cs-adicionar {
-  width: 100%; padding: 12px 10px; border: 0; border-radius: 12px; background: none; color: var(--texto); font: 500 15px var(--fonte); text-align: left; cursor: pointer;
-}
-.escolher-conta .cs-lista > .cs-adicionar:hover { background: var(--preench-4); }
-.escolher-conta .cs-lista > .cs-adicionar svg { color: var(--texto-2); }
-.escolher-conta .cs-linha { border: 1px solid var(--separador); }
-.escolher-conta .cs-lista { gap: 8px; }
 .lista-folha .cs-titulo { padding-left: 4px; }

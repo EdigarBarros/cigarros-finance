@@ -1232,7 +1232,18 @@ conta aberta continua) e **Sair desta conta** ("Sair", quando só há uma). O "x
   por conta (`lerDaConta`/`gravarNaConta`); quem ainda não tem uma escolha própria usa a de antes. O que já era por conta
   (foto, memória do consultor, gosto) continua com o id no nome da chave.
 - **Sair desta conta** encerra só a sessão dela, só neste aparelho, e tira a conta da lista. Com outras contas lembradas, a
-  tela seguinte é **Escolha uma conta** (também no app Android, no lugar do login direto); "Usar outra conta" abre o login.
+  tela seguinte é **Quem está usando?** (também no app Android, no lugar do login direto); "Outra conta" abre o login.
+- **Quem está usando?** (`components/EscolherConta.tsx`, `perfis.css`), como a escolha de perfis de um serviço de vídeo. No
+  computador: o símbolo no canto, as contas numa fileira embaixo (foto ou iniciais numa cor fixa por conta) e "Gerenciar
+  contas"; o nome da cena fica embaixo à esquerda se sobra espaço ao lado das contas, senão sobe para perto do símbolo. No
+  celular: as cenas em cima e as contas numa folha de borda curva, três por linha, com os quadros "Outra conta" e "Editar".
+  Editando, cada conta mostra a lixeira e um toque a tira do aparelho (Esc ou "Concluir" sai). Conta com sessão vencida
+  ganha o selo "Pede a senha".
+- **O fundo** (`components/CenasDoOpus.tsx`, `cenas-opus.css`, baixado só quando a tela aparece): nove cenas em 3D que
+  passam em loop (lançamentos e moedas, consultor, contas do mês, cartões, dívidas, metas, dinheiro guardado, resumo do ano,
+  investimentos), com valores inventados. As marcas embaixo do nome mostram o tempo de cada uma e levam a qualquer cena. Cada
+  peça é um ponto no centro do palco com a perspectiva, o balanço do mundo e a sua pose, para todas parecerem vistas pela
+  mesma câmera; só transform e opacidade. Com animações reduzidas, cada cena aparece já pronta e só troca.
 - **Tirar da lista** uma conta que não está aberta também encerra a sessão dela no servidor.
 
 Teste: `node scripts/app-de-demonstracao/testar-contas.cjs` (três contas num Supabase falso, no PC e no celular).
