@@ -17211,6 +17211,58 @@
     "en": "Manage accounts",
     "es": "Administrar cuentas"
   },
+  "1M": {
+    "en": "1M",
+    "es": "1M"
+  },
+  "3M": {
+    "en": "3M",
+    "es": "3M"
+  },
+  "6M": {
+    "en": "6M",
+    "es": "6M"
+  },
+  "1A": {
+    "en": "1Y",
+    "es": "1A"
+  },
+  "3 meses": {
+    "en": "3 months",
+    "es": "3 meses"
+  },
+  "desde o início": {
+    "en": "since the start",
+    "es": "desde el inicio"
+  },
+  "no último mês": {
+    "en": "in the last month",
+    "es": "en el último mes"
+  },
+  "em 3 meses": {
+    "en": "in 3 months",
+    "es": "en 3 meses"
+  },
+  "em 6 meses": {
+    "en": "in 6 months",
+    "es": "en 6 meses"
+  },
+  "em 12 meses": {
+    "en": "in 12 months",
+    "es": "en 12 meses"
+  },
+  "Você aportou {0}": {
+    "en": "You put in {0}",
+    "es": "Aportaste {0}"
+  },
+  "Evolução: de {0} a {1}. Mínimo {2}, máximo {3}.": {
+    "en": "Evolution: from {0} to {1}. Low {2}, high {3}.",
+    "es": "Evolución: de {0} a {1}. Mínimo {2}, máximo {3}."
+  },
+  "O ganho do topo já desconta os aportes: dinheiro que você pôs não conta como rendimento. A linha tracejada é o que você aportou.": {
+    "en": "The gain at the top already excludes contributions: money you put in does not count as return. The dashed line is what you put in.",
+    "es": "La ganancia de arriba ya descuenta los aportes: el dinero que pusiste no cuenta como rendimiento. La línea discontinua es lo que aportaste."
+  },
   "Senha incorreta. Tente de novo.": {
     "en": "Wrong password. Try again.",
     "es": "Contraseña incorrecta. Inténtalo de nuevo."

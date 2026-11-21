@@ -777,7 +777,7 @@ Justificativa: o que se usa todo dia primeiro (Início, Lançamentos); depois o 
 grade com as outras telas ligadas, na ordem acima, e os Ajustes. O texto e a tabela abaixo são o registro de como era
 antes; o código dessa barra (alça para esconder, "+" fixo, "⋯" do jeito simples) saiu em 17/11/2026.
 
-**Celular, antes (barra de abas, no máximo 5)**: se houver até 5 páginas, aparecem todas. Com mais de 5, aparecem as **4 primeiras** da ordem acima e a quinta aba é **Mais**, que abre uma folha com as demais. A ordem do menu é também a prioridade das abas, então Dívidas e Contas ganham lugar antes de Resumo do ano. "Mais" fica ativa quando a página aberta está dentro dela. Configurações (Personalizar, Importar, Baixar backup, Sair) continuam no menu do topo. No jeito simples, no celular, o topo fica só com o mês, o olho e o sino: a quinta aba é sempre **Mais**, e ela leva, além das páginas que não couberam, o idioma, o suporte, o tema e todo o menu da conta (4.1).
+**Celular, antes (barra de abas, no máximo 5)**: se houver até 5 páginas, aparecem todas. Com mais de 5, aparecem as **4 primeiras** da ordem acima e a quinta aba é **Mais**, que abre uma folha com as demais. A ordem do menu é também a prioridade das abas, então Dívidas e Contas ganham lugar antes de Resumo do ano. "Mais" fica ativa quando a página aberta está dentro dela. Configurações (Personalizar, Importar, Baixar backup, Sair) continuam no menu do topo. No jeito simples, no celular, o topo fica só com o mês e o olho: a quinta aba é sempre **Mais**, e ela leva, além das páginas que não couberam, o idioma, o suporte, o tema e todo o menu da conta (4.1).
 
 | Quem liga o quê | Abas |
 | --- | --- |
@@ -1354,10 +1354,17 @@ mesma pessoa (chave estrangeira composta com `user_id`).
 
 | Aba | O que tem |
 | --- | --- |
-| Visão geral | Investido hoje, rentabilidade do período (6 meses, 12 meses, tudo) com o CDI ao lado, aportado × resultado, o gráfico **Vale × Você aportou**, a divisão por tipo, a descoberta em destaque, o que vem pela frente (vencimentos e proventos anunciados), proventos recebidos, a meta e onde está |
+| Visão geral | Investido hoje no **gráfico do valor** (ganho e rentabilidade do período: 1 mês a tudo) com o CDI ao lado, aportado × resultado, a divisão por tipo, a descoberta em destaque, o que vem pela frente (vencimentos e proventos anunciados), proventos recebidos, a meta e onde está |
 | Carteira | Busca, filtro por tipo, ordenação, cada ativo com valor, fatia, resultado e o selo da idade do valor; o **detalhe do ativo** ("Como chegamos a esses números", características, evolução, operações e valores informados); todas as movimentações, de 30 em 30 |
 | Análises | A manchete, **O retrato da carteira** (maior ativo, renda variável, resgate a qualquer hora, valores em dia) e os cartões montados pelo compositor do Consultor, com "Por que estou vendo isso?" em cada um |
 | Planejamento | O plano, o aporte do mês contra o planejado e a sobra do orçamento, 12 meses de aportes, a projeção em três cenários com as hipóteses escritas, a simulação "e se eu aportar outro valor", a renda dos investimentos e os objetivos (as metas do OpusCash, por prazo) |
+
+**O gráfico do valor** (`pages/invest/GraficoDoValor.tsx`, na Visão geral e no detalhe de cada ativo) segue o jeito dos apps
+de corretora: o valor grande com os centavos menores, o ganho e a rentabilidade do período logo abaixo, a linha verde quando o
+período ganhou e vermelha quando perdeu (degradê embaixo), o maior e o menor valor marcados à direita, o ponto de hoje
+pulsando e os períodos em pílulas (1M, 3M, 6M, 1A, Tudo). Passar o dedo (ou as setas do teclado) troca o topo pelos números
+daquele dia. O ganho de cada ponto sai de `serieDoValor` (`pages/invest/analista.ts`), nas mesmas contas de `desempenho`:
+aporte não conta como ganho. A linha tracejada é o que a pessoa aportou.
 
 De propósito **não há nota da carteira**: uma nota diria se a carteira é boa, e isso depende do objetivo e do risco de cada
 pessoa. No lugar, medidas que qualquer um confere.
@@ -1450,7 +1457,7 @@ não abria nada.
 
 **Moldura** (`src/movel/Casca.tsx`, estilos em `src/movel/movel.css`, todos debaixo de `.movel`):
 - Topo: foto (abre a folha da conta: configurações, suporte, tutorial, tema, importar, backup, sair e idioma), busca
-  (digitar leva aos Lançamentos), o mês (abre a folha dos meses), o olho e o sino. Sobre o degradê da Início fica em
+  (digitar leva aos Lançamentos), o mês (abre a folha dos meses) e o olho (o sino saiu: só levava às Contas, e o aviso das contas já está no Início). Sobre o degradê da Início fica em
   vidro claro com texto branco; ao rolar ganha o vidro fosco. Em tela de até 370 px a busca vira um botão redondo e
   abre ao tocar.
 - Abas fixas: **Início · Lançamentos · Consultor · Mais**. "Mais" abre uma folha com as outras telas ligadas e os
