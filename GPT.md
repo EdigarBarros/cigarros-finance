@@ -1483,3 +1483,24 @@ ignorado pelo iOS). Servidor falso: opção `ordemEstrita` (liga o 42703 de orde
 **Validação.** `tsc -b`, lint, `testar.mjs` 38/38, `testar-backup.cjs`, e as suítes planejamento, contas, correções e móvel sem falha.
 Com o `planilha.ts` antigo o `testar-backup.cjs` falha; com o novo passa. **Não testado em iPhone de verdade.**
 
+
+### 21/11/2026 — Claude — Dívidas: histórico das conferências com o banco e ícone novo
+
+**Pedido do dono.** Quando ele usa "Conferi com o banco" e a dívida mudou (diminuiu ou aumentou), isso precisa ficar
+registrado: estava tanto, o banco mostrou tanto, em tal dia; o consultor também precisa saber. E o ícone de Dívidas era
+igual ao de Cartões.
+
+**O que mudou.**
+- `supabase/migracao-37-conferencias-da-divida.sql` (tabela `divida_conferencias`: dia, `antes`, `depois`, origem).
+  **Precisa rodar no Supabase**; sem ela o app funciona como antes e mostra um aviso na ficha da dívida.
+- `useDados.conferirDivida` grava uma linha a cada conferência (`antes` = o que o app mostrava, com juros estimados;
+  `depois` = o valor do banco). No modo `pagar` (acerto antes de um pagamento) só grava se o valor mudou.
+- `lib/conferencias.ts` (puro) e `components/ConferenciasDaDivida.tsx`: lista na ficha da dívida (PC e celular usam a
+  mesma `Ficha`), com "caiu/subiu R$ X (−Y%)" e botão de excluir.
+- `lib/conselheiro.ts`: regra `divida-mudou:<id>` (conferência dos últimos 45 dias com mudança de 3% ou mais; caiu =
+  elogio, subiu = atenção). Entrada nova opcional `conferencias`.
+- Ícone `divida` virou um recibo (era um cartão, igual ao de Cartões). Backup em planilha ganhou a aba "Conferências".
+- Pendente: o Consultor completo (`lib/analise.ts`) ainda não lê o histórico; só o conselheiro lê.
+
+**Validação.** `npx tsc -b`, lint sem erro, build, traduções completas, `testar.mjs` 38/38; app de demonstração: conferir
+R$ 9.000 numa dívida estimada em R$ 7.697 gravou e mostrou "subiu R$ 1.302,95 (+16,9%)".

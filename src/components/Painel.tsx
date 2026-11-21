@@ -586,9 +586,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const conselhos = useMemo(() => conselhosDe({
     hoje, lancs: lancsDosConselhos, categorias: d.categorias, categoriaDe: idCategoria, dividas: d.dividas, saldos: d.saldos,
     pagamentos: d.pagamentos, taxas, meses: mesesVistos, metas: d.metas, movimentosMeta: d.movimentosMeta, perfil,
-    dividasSemJuros: d.dividasSemJuros,
+    dividasSemJuros: d.dividasSemJuros, conferencias: d.conferencias,
     compras: comFaturas ? cartoes.compras.filter(contaNasSaidas(cartoes.faturasPagas)) : [],
-  }), [lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, mesesVistos, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.dispensadas, comFaturas, cartoes.compras, chaveRenegociadas]) // eslint-disable-line react-hooks/exhaustive-deps
+  }), [lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.conferencias, d.pagamentos, taxas, mesesVistos, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.dispensadas, comFaturas, cartoes.compras, chaveRenegociadas]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // "Agora não": o conselho some até o mês que vem (se ainda for verdade, volta).
   const dispensarConselho = (id: string) => mudarPerfil({ ...perfil, dispensadas: dispensarPorUmMes(perfil.dispensadas, id, hoje) })
