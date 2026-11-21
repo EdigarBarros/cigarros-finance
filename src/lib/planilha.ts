@@ -3,6 +3,7 @@ import { noAppNativo } from './appAndroid'
 import { compartilharArquivo } from './arquivoNoApp'
 import { noIOS, oferecerArquivo } from './arquivoPronto'
 import { tx } from './textos'
+import { paraErro } from './textoDoErro'
 import { MESES, parseNumero } from './format'
 import { lerTudo, supabase } from './supabase'
 import { inicioDoMes } from './dividas'
@@ -294,11 +295,23 @@ export async function gravarImportacao(userId: string, meses: MesImportado[]) {
 }
 
 /** Todas as linhas de uma tabela, de mil em mil, em ordem fixa (sem ordem, uma página podia repetir ou pular linhas). */
-async function buscarTudo<T>(tabela: string, ordem = 'id'): Promise<T[]> {
+/** Repete uma vez a leitura que falhou por rede (o celular troca de rede ou o app volta do segundo plano); erro do banco não repete. */
+async function comUmaRepeticao<R extends { error: { message: string } | null }>(f: () => PromiseLike<R>): Promise<R> {
+  const r = await f()
+  if (!r.error || !/Load failed|Failed to fetch|NetworkError|network/i.test(r.error.message)) return r
+  await new Promise((ok) => setTimeout(ok, 800))
+  return f()
+}
+
+/** Lê a tabela inteira, de mil em mil, na ordem das colunas dadas (`id` por padrão: `meses` e `perfis` não têm `id`). */
+async function buscarTudo<T>(tabela: string, ...ordem: string[]): Promise<T[]> {
+  const colunas = ordem.length ? ordem : ['id']
   const linhas: T[] = []
   for (let de = 0; ; de += 1000) {
-    const { data, error } = await supabase.from(tabela).select('*').order(ordem).range(de, de + 999)
-    if (error) throw error
+    let q = supabase.from(tabela).select('*')
+    for (const c of colunas) q = q.order(c)
+    const { data, error } = await comUmaRepeticao(() => q.range(de, de + 999))
+    if (error) throw paraErro(error)
     linhas.push(...(data as T[]))
     if (data.length < 1000) return linhas
   }
@@ -313,7 +326,7 @@ export async function exportarBackup() {
     buscarTudo<Lancamento>('lancamentos'),
     buscarTudo<{ id: string; descricao: string; valor_parcela: number | null }>('dividas'),
     buscarTudo<{ divida_id: string; data: string; saldo: number }>('divida_saldos'),
-    buscarTudo<Mes>('meses'),
+    buscarTudo<Mes>('meses', 'ano', 'mes'), // meses não tem id: a chave é (user_id, ano, mes)
     buscarTudo<Banco>('bancos'),
   ])
   // Sem a migração 5 não há tabela de categorias; o backup sai com a coluna antiga.

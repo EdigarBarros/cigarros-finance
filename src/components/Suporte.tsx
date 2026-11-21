@@ -8,6 +8,7 @@ import { tx } from '../lib/textos'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
 import { Modal, Opcao, Segmentado } from './ui'
+import { textoDoErro } from '../lib/textoDoErro'
 
 /*
  * Suporte (migração 33): de qualquer tela, a pessoa abre um pedido de ajuda, acompanha a conversa e vê só os pedidos dela.
@@ -146,7 +147,7 @@ function Conversa({ pedido, aoVoltar, aoMudou }: { pedido: PedidoSuporte | undef
   const fim = useRef<HTMLDivElement>(null)
   const ler = useCallback(() => {
     if (!id) return
-    lerConversa(id).then((m) => { setMsgs(m); setErro(null) }, (e) => setErro(e instanceof Error ? e.message : String(e)))
+    lerConversa(id).then((m) => { setMsgs(m); setErro(null) }, (e) => setErro(textoDoErro(e)))
   }, [id])
   // abre lendo e confere de novo a cada 15 s enquanto a conversa está aberta (a resposta aparece sozinha)
   useEffect(() => {
@@ -210,7 +211,7 @@ function Conversa({ pedido, aoVoltar, aoMudou }: { pedido: PedidoSuporte | undef
       </form>
       {!resolvido && (
         <button type="button" className="link sp-encerrar" onClick={async () => {
-          try { await encerrarPedido(pedido.id); aoMudou() } catch (e) { setErro(e instanceof Error ? e.message : String(e)) }
+          try { await encerrarPedido(pedido.id); aoMudou() } catch (e) { setErro(textoDoErro(e)) }
         }}>{tx('Meu problema foi resolvido')}</button>
       )}
     </div>
@@ -223,7 +224,7 @@ export function Suporte({ aoFechar, aoMudar, inicial }: { aoFechar: () => void; 
   const [pedidos, setPedidos] = useState<PedidoSuporte[] | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const carregar = useCallback(() => {
-    listarPedidos().then((p) => { setPedidos(p); setErro(null) }, (e) => setErro(e instanceof Error ? e.message : String(e)))
+    listarPedidos().then((p) => { setPedidos(p); setErro(null) }, (e) => setErro(textoDoErro(e)))
   }, [])
   useEffect(() => {
     carregar()

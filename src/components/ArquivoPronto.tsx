@@ -3,6 +3,7 @@ import { dispensarArquivo, entregarArquivo, useArquivoPronto } from '../lib/arqu
 import { tx } from '../lib/textos'
 import { Icone } from './Icone'
 import { Modal } from './ui'
+import { textoDoErro } from '../lib/textoDoErro'
 
 /** O arquivo já está pronto; o segundo toque (aqui) abre o compartilhar do iPhone. Veja lib/arquivoPronto.ts. */
 export function ArquivoPronto() {
@@ -15,7 +16,7 @@ export function ArquivoPronto() {
       await entregarArquivo(arquivo)
       dispensarArquivo()
     } catch (e) {
-      setErro(e instanceof Error ? e.message : String(e))
+      setErro(textoDoErro(e))
     }
   }
   return (

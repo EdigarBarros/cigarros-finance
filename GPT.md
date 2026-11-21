@@ -1464,3 +1464,22 @@ botões de salvar e descartar.
 **Validação.** `npx tsc -b`, `npm run lint` (sem erro), `node scripts/painel/testar.mjs` 38/38 e
 `testar-planejamento.cjs` 54/54 (novos: o Consultor à esquerda em 1440 px, a pergunta ao fechar, Continuar mexendo,
 Salvar, Recomeçar + Descartar volta ao salvo, X fecha direto sem mudança), `testar-movel.cjs` sem falha.
+
+### 21/11/2026 — Claude — Backup: quebrava em todos os aparelhos ("[object Object]") e não dava sinal no iPhone
+
+**Problema (relatado pelo dono, no iPhone).** Tocar em Baixar backup não fazia nada; ao voltar apareceu "Detalhe: [object Object]".
+
+**Causa.** `exportarBackup` (`lib/planilha.ts`) lia `meses` ordenando por `id`, coluna que a tabela não tem (a chave é `user_id, ano, mes`;
+conferido no banco de produção). O Supabase respondia 42703 e o erro, um objeto simples, virava "[object Object]". Quebrava desde o #210
+(computador, Android e iPhone). O servidor falso ignorava `order`, por isso nenhum teste pegou. Além disso o aviso geral ficava por trás da
+janela de Configurações, então a pessoa só o via ao fechá-la.
+
+**O que mudou.** `buscarTudo` aceita as colunas de ordem (`meses`: `ano, mes`) e repete uma vez só em falha de rede; `lib/textoDoErro.ts`
+(novo) lê `message/details/hint/code` e substitui `e instanceof Error ? e.message : String(e)` em Painel, Configurações, Extrato, Suporte,
+Importar e `ArquivoPronto`; Configurações mostra "Preparando o backup…" e o erro dentro da própria janela. No iPhone/iPad o arquivo fica pronto
+e a folha "Backup pronto" (`lib/arquivoPronto.ts`, `components/ArquivoPronto.tsx`) abre o compartilhar no segundo toque (o download tardio é
+ignorado pelo iOS). Servidor falso: opção `ordemEstrita` (liga o 42703 de ordem por coluna inexistente); teste novo `testar-backup.cjs`.
+
+**Validação.** `tsc -b`, lint, `testar.mjs` 38/38, `testar-backup.cjs`, e as suítes planejamento, contas, correções e móvel sem falha.
+Com o `planilha.ts` antigo o `testar-backup.cjs` falha; com o novo passa. **Não testado em iPhone de verdade.**
+

@@ -17,6 +17,7 @@ import { SecaoAssinatura } from './SecaoAssinatura'
 import { CartaoAcao, Interruptor, Modal, Opcao } from './ui'
 import { fmtValor, mesEAno } from '../lib/format'
 import { tx } from '../lib/textos'
+import { textoDoErro } from '../lib/textoDoErro'
 
 type Secao = 'perfil' | 'aparencia' | 'painel' | 'categorias' | 'dados' | 'assinatura' | 'conta'
 const SECOES: { id: Secao; nome: string; icone: string; sub: string }[] = [
@@ -39,7 +40,7 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
   /** Foto de perfil (data URL) e como trocá-la (null tira a foto). */
   foto?: string | null
   aoMudarFoto?: (f: string | null) => void
-  aoBackup: () => void; aoImportar: () => void
+  aoBackup: () => Promise<unknown>; aoImportar: () => void
   /** Importar extrato do banco e organizar os nomes dos lançamentos. */
   aoExtrato?: () => void; aoOrganizar?: () => void
   /** Abre a confirmação de zerar os dados. */
@@ -62,6 +63,13 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
   const secoes = SECOES.filter((x) => x.id !== 'assinatura' || comAssinatura)
   const [secao, setSecao] = useState<Secao>(secaoInicial === 'assinatura' && !comAssinatura ? 'perfil' : secaoInicial)
   const [nome, setNome] = useState(perfil.nome)
+  // o backup mostra o andamento e o erro aqui mesmo: o aviso geral fica por trás desta janela
+  const [backup, setBackup] = useState<{ ocupado?: boolean; erro?: string }>({})
+  const baixarBackup = async () => {
+    if (backup.ocupado) return
+    setBackup({ ocupado: true })
+    try { await aoBackup(); setBackup({}) } catch (e) { setBackup({ erro: textoDoErro(e) }) }
+  }
   const { preferencia } = useTema()
   const movimento = useMovimento()
   const nav = useRef<HTMLElement>(null)
@@ -233,7 +241,8 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
 
           {secao === 'dados' && (
             <div className="cfg-acoes">
-              <CartaoAcao icone="exportar" titulo={tx('Baixar backup')} texto={tx('Um arquivo com todos os seus dados, para guardar com você.')} aoClicar={aoBackup} />
+              <CartaoAcao icone="exportar" titulo={backup.ocupado ? tx('Preparando o backup…') : tx('Baixar backup')} texto={tx('Um arquivo com todos os seus dados, para guardar com você.')} aoClicar={baixarBackup} />
+              {backup.erro && <p className="form-erro" role="alert">{tx('Não consegui gerar o backup: {0}', backup.erro)}</p>}
               {aoExtrato && <CartaoAcao icone="relatorio" titulo={tx('Importar extrato')} texto={tx('PDF, CSV, Excel, Word ou OFX do seu banco. Arruma os nomes e mostra tudo antes de gravar.')} aoClicar={aoExtrato} />}
               {aoOrganizar && <CartaoAcao icone="lapis" titulo={tx('Organizar nomes')} texto={tx('Tira CPF, CNPJ, códigos e texto de banco dos nomes dos lançamentos que você já tem.')} aoClicar={aoOrganizar} />}
               <CartaoAcao icone="importar" titulo={tx('Importar planilha')} texto={tx('Traz os meses de uma planilha (.xlsx). Pede confirmação antes.')} aoClicar={aoImportar} />
@@ -284,14 +293,14 @@ export function ZerarDados({ contagem, aoBaixarBackup, aoZerar, aoFechar }: {
   const alternar = (id: ParteZerar) => setEscolha((e) => ({ ...e, [id]: !e[id] }))
   const baixar = async () => {
     setOcupado(tx('Gerando backup…'))
-    try { await aoBaixarBackup(); setBaixou(true) } catch (e) { setErro(e instanceof Error ? e.message : String(e)) }
+    try { await aoBaixarBackup(); setBaixou(true) } catch (e) { setErro(textoDoErro(e)) }
     setOcupado(null)
   }
   const zerar = async () => {
     setOcupado(tx('Apagando…'))
     setErro(null)
     try { await aoZerar(escolha) } catch (e) {
-      setErro(tx('Não deu para apagar tudo: {0}. Tente de novo.', e instanceof Error ? e.message : String(e)))
+      setErro(tx('Não deu para apagar tudo: {0}. Tente de novo.', textoDoErro(e)))
       setOcupado(null)
     }
   }
@@ -413,7 +422,7 @@ export function FotoPerfil({ foto, iniciais, aoMudar }: { foto: string | null; i
     try {
       aoMudar(await reduzirFoto(f))
     } catch (e) {
-      setErro(e instanceof Error ? e.message : String(e))
+      setErro(textoDoErro(e))
     } finally {
       setLendo(false)
       if (entrada.current) entrada.current.value = ''
@@ -469,7 +478,7 @@ export function ExcluirContaModal({ email, aoBaixarBackup, aoFechar }: { email: 
 
   const baixar = async () => {
     setOcupado(tx('Gerando backup…'))
-    try { await aoBaixarBackup(); setBaixou(true) } catch (e) { setErro(e instanceof Error ? e.message : String(e)) }
+    try { await aoBaixarBackup(); setBaixou(true) } catch (e) { setErro(textoDoErro(e)) }
     setOcupado(null)
   }
   const excluir = async () => {

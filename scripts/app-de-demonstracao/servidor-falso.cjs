@@ -10,7 +10,7 @@ const jwt=`${b64({alg:'HS256',typ:'JWT'})}.${b64({sub:uid,role:'authenticated',e
 const user={id:uid,aud:'authenticated',role:'authenticated',email:'teste@exemplo.com',user_metadata:{nome:'Teste'},app_metadata:{},created_at:'2026-01-01T00:00:00Z'}
 const sessao={access_token:jwt,refresh_token:'r',token_type:'bearer',expires_in:99999,expires_at:4102444800,user}
 const body0=r=>{try{return r.postDataJSON()}catch{return null}}
-exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,semSessao=false,assinatura=null,funcoes={},dpr=1,toque=false,semColunas={}}={}){
+exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,semSessao=false,assinatura=null,funcoes={},dpr=1,toque=false,semColunas={},ordemEstrita=false}={}){
   const db={assinaturas:[{user_id:uid,status:'cortesia',teste_fim:null,periodo_fim:null,cancela_no_fim:false,moeda:null}],
     perfis:[{user_id:uid,nome:'Teste',moeda:'BRL',moedas:[],detalhe:'detalhado',modulos:{dividas:true,contas:true,cartoes:true,bancos:true,investimentos:true,moedas:false,metas:true},dispensadas:['tour','importar'],onboarding_em:'2026-01-01T00:00:00Z',...perfil}],
     categorias:[],lancamentos:[],meses:[],dividas:[],divida_saldos:[],bancos:[],metas:[],meta_movimentos:[],contas_fixas:[],cartoes:[],faturas_pagas:[],divida_partes:[],divida_promessas:[],invest_ativos:[],invest_operacoes:[],invest_precos:[],invest_importacoes:[],invest_config:[],erros_app:[],suporte_tickets:[],suporte_mensagens:[],...dados}
@@ -52,6 +52,9 @@ exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,se
     let body=null;try{body=req.postDataJSON()}catch{}
     if(faltam.length&&(m==='POST'||m==='PATCH')){const col=faltam.find(c=>(Array.isArray(body)?body:[body]).some(x=>x&&c in x));if(col)return erroColuna('PGRST204',`Could not find the '${col}' column of '${t}' in the schema cache`)}
     if(faltam.length&&m==='GET'){const col=faltam.find(c=>(u.searchParams.get('select')||'').split(',').map(x=>x.trim()).includes(c));if(col)return erroColuna('42703',`column ${t}.${col} does not exist`)}
+    // ordemEstrita: como o Supabase, ordenar por coluna que a tabela não tem dá erro 42703 (foi assim que o backup quebrou em
+    // `meses`, que não tem id). Fica desligado por padrão: os dados de demonstração não trazem todas as colunas.
+    if(ordemEstrita&&m==='GET'){const semCol=db[t][0]&&(u.searchParams.get('order')||'').split(',').map(x=>x.split('.')[0]).filter(Boolean).find(c=>!(c in db[t][0]));if(semCol)return erroColuna('42703',`column ${t}.${semCol} does not exist`)}
     if(m==='GET'||m==='HEAD'){const off=+(u.searchParams.get('offset')||0),lim=Math.min(+(u.searchParams.get('limit')||1000),1000);const rows=db[t].slice(off,off+lim).map(x=>faltam.length?Object.fromEntries(Object.entries(x).filter(([k])=>!faltam.includes(k))):x);// como o Supabase: no máximo 1000 linhas por consulta
     return route.fulfill({status:200,headers:h,body:JSON.stringify(single?(rows[0]??null):rows)})}
     if(m==='POST'){const arr=Array.isArray(body)?body:[body];if(t==='invest_operacoes'){const ks=new Set(db[t].map(x=>x.chave).filter(Boolean));if(arr.some(x=>x.chave&&ks.has(x.chave)))return route.fulfill({status:409,headers:h,body:JSON.stringify({code:'23505',message:'duplicate key value violates unique constraint "invest_operacoes_chave"'})})}const novos=arr.map(x=>({id:crypto.randomUUID(),user_id:uid,created_at:new Date().toISOString(),...x}));
