@@ -256,7 +256,7 @@ ao app numa versão nova enviada à loja. Mudança no banco (migração) que que
 app no mesmo dia.
 
 Como o app difere do site (`src/lib/appAndroid.ts`, montado no modo `app`):
-- abre direto no login, sem a página de propaganda, e não mostra preço nem botão de assinar, gerenciar a assinatura ou
+- não tem a página de propaganda (no site, que também abre no login ou nos perfis, ela aparece pelo "Início"), e não mostra preço nem botão de assinar, gerenciar a assinatura ou
   atualizar o cartão (a política de pagamentos do Google Play não deixa levar a pessoa ao Stripe). O teste grátis continua,
   e quem assinou pelo site entra normalmente;
 - os e-mails de confirmar a conta e de criar senha nova levam ao site (dentro do app a página é `https://localhost`);

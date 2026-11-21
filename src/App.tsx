@@ -50,8 +50,8 @@ export default function App() {
   const [sessao, setSessao] = useState<Session | null | undefined>(undefined)
   const [doc, setDoc] = useState(documentoDoHash)
   const [recuperando, setRecuperando] = useState(false)
-  // null = a tela de entrada (perfis, ou a apresentação para quem nunca entrou); senão, qual abrir: o login (entrar ou criar
-  // conta) ou a apresentação pedida na tela de perfis
+  // null = a tela de entrada (os perfis; sem contas no aparelho, o login); senão, qual abrir: o login (entrar ou criar
+  // conta) ou a apresentação (pelo "Início" dos perfis ou do login)
   const [login, setLogin] = useState<Destino | null>(null)
   // várias contas no aparelho (lib/contas.ts): as lembradas e o "Adicionar outra conta" pedido no menu
   const contas = useContasSalvas()
@@ -67,13 +67,6 @@ export default function App() {
     window.addEventListener('popstate', aoVoltar)
     return () => window.removeEventListener('popstate', aoVoltar)
   }, [])
-  // tirou a última conta do aparelho (Gerenciar contas): segue para o login, em vez de voltar à apresentação
-  const tinhaContas = useRef(contas.length > 0)
-  useEffect(() => {
-    if (tinhaContas.current && !contas.length && !login) abrirLogin('entrar')
-    tinhaContas.current = contas.length > 0
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contas.length])
 
   useEffect(() => {
     if (!configurado) return
@@ -113,11 +106,12 @@ export default function App() {
       return comIdioma(<EscolherConta aoOutra={() => abrirLogin('entrar')} aoInicio={noAppAndroid ? undefined : () => abrirLogin('apresentacao')} />)
     }
     if (login === 'apresentacao' && !noAppAndroid) return comIdioma(<Apresentacao onLogin={() => abrirLogin('entrar')} onSignup={() => abrirLogin('criar')} />)
-    if (login || noAppAndroid) {
-      return comIdioma(<Login inicial={login === 'criar' ? 'criar' : 'entrar'} aoVoltar={noAppAndroid && !contas.length ? undefined : voltarAoInicio}
-        rotuloVoltar={contas.length ? tx('Voltar') : undefined} />)
+    if (login) {
+      return comIdioma(<Login inicial={login === 'criar' ? 'criar' : 'entrar'} aoVoltar={voltarAoInicio} rotuloVoltar={contas.length ? tx('Voltar') : undefined} />)
     }
-    return comIdioma(<Apresentacao onLogin={() => abrirLogin('entrar')} onSignup={() => abrirLogin('criar')} />)
+    // sem nenhuma conta no aparelho (visitante novo, ou tirou a última): direto no login; "Início" mostra a apresentação
+    // (no app da Play Store não há apresentação: sem botão de voltar)
+    return comIdioma(<Login inicial="entrar" aoVoltar={noAppAndroid ? undefined : () => abrirLogin('apresentacao')} />)
   }
 
   return <ComAcesso userId={sessao.user.id} email={sessao.user.email ?? ''} nome={sessao.user.user_metadata?.nome} />

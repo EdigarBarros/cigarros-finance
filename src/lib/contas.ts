@@ -93,9 +93,71 @@ function encerrarSeNaoFicaConectada(id: string | null): boolean {
   } catch { return false }
 }
 
+// ---------- com duas ou mais contas: escolher ao abrir, a não ser que uma seja quase sempre a usada ----------
+
+/** As últimas contas abertas neste aparelho (a mais recente no fim): cada escolha de perfil, entrada ou abertura direta. */
+const CHAVE_ABERTURAS = 'opuscash.aberturas'
+const ABERTURAS = 10
+/** Com pelo menos 5 aberturas, a conta que tem 70% delas é "a de sempre": o app abre direto nela. */
+const MINIMO_DE_ABERTURAS = 5
+const PARTE_DA_DE_SEMPRE = 0.7
+
+function lerAberturas(): string[] {
+  try {
+    const x = JSON.parse(localStorage.getItem(CHAVE_ABERTURAS) ?? '[]') as unknown
+    return Array.isArray(x) ? x.filter((i): i is string => typeof i === 'string') : []
+  } catch { return [] }
+}
+function registrarAbertura(id: string) {
+  try { localStorage.setItem(CHAVE_ABERTURAS, JSON.stringify([...lerAberturas(), id].slice(-ABERTURAS))) } catch { /* sem armazenamento */ }
+}
+/** A conta usada quase sempre (entre as que ainda estão no aparelho), ou null quando a pessoa alterna. */
+export function contaDeSempre(ids: string[], aberturas = lerAberturas()): string | null {
+  const validas = aberturas.filter((i) => ids.includes(i))
+  if (validas.length < MINIMO_DE_ABERTURAS) return null
+  const vezes = new Map<string, number>()
+  validas.forEach((i) => vezes.set(i, (vezes.get(i) ?? 0) + 1))
+  const [id, n] = [...vezes].sort((a, b) => b[1] - a[1])[0]
+  return n / validas.length >= PARTE_DA_DE_SEMPRE ? id : null
+}
+
+/**
+ * O app (ou o navegador) acabou de abrir com a sessão de uma conta, e há duas ou mais contas no aparelho: se essa não é a de
+ * sempre, a pessoa escolhe nos perfis. A sessão sai só deste lugar (não é encerrada): fica guardada na lista, com os tokens mais
+ * novos, e o perfil abre sem senha. Sendo a de sempre, abre direto (e conta mais uma abertura).
+ */
+function escolherAoAbrir(id: string | null): boolean {
+  if (!id || !abriuAgora()) return false
+  try {
+    const contas = JSON.parse(localStorage.getItem(CHAVE) ?? '[]') as ContaSalva[]
+    const conta = contas.find((c) => c?.id === id)
+    if (contas.length < 2 || !conta || conta.manter === false || contaDeSempre(contas.map((c) => c.id)) === id) {
+      registrarAbertura(id)
+      return false
+    }
+    let tokens: { access_token?: string; refresh_token?: string } | null = null
+    for (const k of chavesDoSupabase()) {
+      try { tokens ??= JSON.parse(localStorage.getItem(k) ?? 'null') } catch { /* chave estragada */ }
+    }
+    if (!tokens?.refresh_token || !tokens.access_token) { registrarAbertura(id); return false }
+    const { access_token, refresh_token } = tokens
+    localStorage.setItem(CHAVE, JSON.stringify(contas.map((c) => (c.id === id ? { ...c, access_token, refresh_token, precisaEntrar: false } : c))))
+    chavesDoSupabase().forEach((k) => localStorage.removeItem(k))
+    return true
+  } catch { return false }
+}
+
+/** A página é de um app (ou navegador) que acabou de abrir: aba nova e nenhuma outra aba deu sinal há pouco. */
+function abriuAgora() {
+  try {
+    if (sessionStorage.getItem(CHAVE_VIVA)) return false
+    return Date.now() - Number(localStorage.getItem(CHAVE_PULSO) ?? 0) >= 45_000
+  } catch { return false }
+}
+
 /** A conta com que esta página abriu. Trocar de conta recarrega a página, então isto vale enquanto a página viver. */
 const idGuardado = idGuardadoPeloSupabase()
-const idDaPagina = encerrarSeNaoFicaConectada(idGuardado) ? null : idGuardado
+const idDaPagina = encerrarSeNaoFicaConectada(idGuardado) || escolherAoAbrir(idGuardado) ? null : idGuardado
 /** A conta aberta agora (muda sem recarregar quando a pessoa sai, ou entra a partir da tela de login). */
 let idAberto = idDaPagina
 
@@ -342,6 +404,7 @@ export function aoMudarSessao(evento: AuthChangeEvent, s: Session | null): boole
   idAberto = s?.user.id ?? null
   // a página abriu com outra conta (ou sem nenhuma, lendo as preferências de antes): recarrega na conta que entrou
   if (evento === 'SIGNED_IN' && s && s.user.id !== idDaPagina && !emRecuperacao) {
+    registrarAbertura(s.user.id)
     pararDeAdicionar()
     void Promise.resolve(esperaDaRecarga).finally(() => location.reload())
     return true

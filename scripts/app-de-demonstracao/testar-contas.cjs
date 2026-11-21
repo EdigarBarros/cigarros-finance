@@ -89,6 +89,9 @@ async function abrirMenu(p) { await p.locator('.perfil-botao').click(); await es
   const p = t.page
   const s = await comTresContas(t)
   await p.goto(t.url); await esperar(p, 1500)
+  ok(await p.locator('form.en-form.entrar.ativo').count() === 1, 'visitante novo (sem contas no aparelho) cai direto no login')
+  await p.locator('.en-voltar').click(); await esperar(p, 1500)
+  ok(await p.locator('.ap-btn-ghost').count() >= 1, '"Início" do login mostra a apresentação')
   await p.locator('.ap-btn-ghost').first().click(); await esperar(p, 900)
   await entrar(p, 'ana@exemplo.com')
   ok(/Ana/.test(await ola(p)), 'entrou na Ana: ' + await ola(p))
@@ -195,7 +198,6 @@ async function abrirMenu(p) { await p.locator('.perfil-botao').click(); await es
   await q.setViewportSize({ width: 390, height: 844 })
   await comTresContas(m)
   await q.goto(m.url); await esperar(q, 1500)
-  await q.locator('.ap-btn-ghost').first().click(); await esperar(q, 900)
   await entrar(q, 'ana@exemplo.com')
   const folha = async () => { await q.locator('.topo-movel-avatar').click(); await esperar(q, 700) }
   await folha()
@@ -219,6 +221,22 @@ async function abrirMenu(p) { await p.locator('.perfil-botao').click(); await es
   await q.locator('.escolher-conta .pf-editar').click(); await esperar(q, 400)
   ok(await q.locator('.escolher-conta.editando').count() === 0, 'celular: "Concluir" volta ao normal sem tirar ninguém')
   await q.screenshot({ path: path.join(R, 'node_modules/.cache/contas-escolher.png') })
+  // abrir o app de novo com duas contas: escolhe nos perfis, a não ser que uma seja quase sempre a usada
+  await m.page.context().addInitScript(() => { if (localStorage.getItem('teste-fechou')) { localStorage.removeItem('teste-fechou'); localStorage.setItem('opuscash.pulso', '0'); sessionStorage.clear() } })
+  const reabrir = async () => { await q.evaluate(() => localStorage.setItem('teste-fechou', '1')); await q.reload(); await esperar(q, 2500) }
+  const idDe = (email) => q.evaluate((e) => JSON.parse(localStorage.getItem('opuscash.contas')).find((c) => c.email === e).id, email)
+  await Promise.all([q.waitForEvent('load'), q.locator('.escolher-conta .pf-perfil', { hasText: 'bia@exemplo.com' }).click()])
+  await esperar(q, 2500)
+  const [ana, bia] = [await idDe('ana@exemplo.com'), await idDe('bia@exemplo.com')]
+  await q.evaluate(([a, b]) => localStorage.setItem('opuscash.aberturas', JSON.stringify([a, b, a, b, a, b])), [ana, bia])
+  await reabrir()
+  ok(await q.locator('.escolher-conta').count() === 1, 'celular: alternando entre as contas, abrir o app mostra os perfis')
+  await Promise.all([q.waitForEvent('load'), q.locator('.escolher-conta .pf-perfil', { hasText: 'bia@exemplo.com' }).click()])
+  await esperar(q, 2500)
+  ok(await q.locator('.escolher-conta').count() === 0, 'celular: o perfil da Bia abriu sem senha')
+  await q.evaluate((b) => localStorage.setItem('opuscash.aberturas', JSON.stringify([b, b, b, b, b, b])), bia)
+  await reabrir()
+  ok(await q.locator('.escolher-conta').count() === 0 && await q.locator('.topo-movel-avatar').count() === 1, 'celular: quase sempre a Bia, abrir o app entra direto nela')
   ok(!m.msgs.some((x) => x.startsWith('PAGEERROR')), 'sem erro na página (celular)')
   await m.fechar()
 })().catch((e) => { console.error(e); process.exitCode = 1 })
