@@ -3,7 +3,7 @@
 Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLANILHA_FINANCEIRA_2026.xlsx`
 (mesmos conceitos, mas com cara de app):
 
-- **Visual OpusCash, claro e escuro**: menu lateral com a marca, barra de busca, seletor de mês, sino de contas e
+- **Visual OpusCash, claro e escuro**: menu lateral com a marca, barra de busca, seletor de mês e
   perfil no topo; na Início, saudação, cartões de indicadores, fluxo financeiro dos últimos 6 meses, últimos
   lançamentos, rosca por categoria, metas e um convite para planejar. As cores vêm do símbolo (índigo → azul →
   verde-água). O tema segue o aparelho ou é escolhido no botão ☀/☾ do topo e em **Configurações → Aparência**
