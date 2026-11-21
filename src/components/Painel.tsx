@@ -43,7 +43,7 @@ import { BlocoContasDoMes } from './BlocoContas'
 import { Kpi } from './ui'
 import { ArquivoPronto } from './ArquivoPronto'
 import { avisar, confirmar } from '../lib/avisos'
-import { atualizarConta, sairDestaConta, useContasSalvas } from '../lib/contas'
+import { atualizarConta, sairParaOsPerfis, useContasSalvas } from '../lib/contas'
 import { ContasNoMenu } from './Contas'
 import { BotaoIdioma } from './BotaoIdioma'
 import { Icone } from './Icone'
@@ -840,7 +840,6 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
 
   // a lista de contas deste aparelho (lib/contas.ts) mostra o nome e a foto como aqui
   const contasDoAparelho = useContasSalvas()
-  const outrasContas = contasDoAparelho.some((c) => c.id !== userId)
   useEffect(() => { atualizarConta(userId, { nome: perfil.nome.trim() || undefined, foto: d.foto }) }, [userId, perfil.nome, d.foto, contasDoAparelho])
 
   // Primeiro acesso: as perguntas montam o painel antes de qualquer coisa.
@@ -939,7 +938,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         <Icone nome="exportar" /> {tx('Baixar backup')}
       </button>
       <ContasNoMenu userId={userId} />
-      <button onClick={() => void sairDestaConta()}><Icone nome="sair" /> {outrasContas ? tx('Sair desta conta') : tx('Sair')}</button>
+      <button onClick={() => void sairParaOsPerfis()}><Icone nome="sair" /> {tx('Sair')}</button>
     </>
   )
 
@@ -1126,7 +1125,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         assinatura={assinatura}
         confirmandoPagamento={confirmandoPagamento}
         aoSuporte={() => { setAjustes(false); setSuporte('novo') }}
-        aoSair={() => void sairDestaConta()}
+        aoSair={() => void sairParaOsPerfis()}
         aoExcluirConta={() => { setAjustes(false); setExcluindo(true) }}
         aoFechar={() => setAjustes(false)}
       />

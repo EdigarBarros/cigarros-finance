@@ -261,7 +261,7 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
               <div className="cfg-acoes">
                 {aoTour && <CartaoAcao icone="ideia" titulo={tx('Ver o tutorial')} texto={tx('Um passeio rápido pelo painel, mostrando onde fica cada coisa e como ligar mais abas.')} aoClicar={aoTour} />}
                 <CartaoAcao icone="ajustes" titulo={tx('Refazer as perguntas')} texto={tx('Responda de novo as perguntas iniciais para reajustar o painel.')} aoClicar={aoRefazer} />
-                <CartaoAcao icone="sair" titulo={tx('Sair')} texto={tx('Encerra a sessão neste aparelho.')} aoClicar={aoSair} />
+                <CartaoAcao icone="sair" titulo={tx('Sair')} texto={tx('Volta para a escolha de contas. A conta continua neste aparelho.')} aoClicar={aoSair} />
                 {aoExcluirConta && <CartaoAcao icone="lixeira" titulo={tx('Excluir minha conta')} texto={tx('Apaga seu login e todos os seus dados de vez e cancela a assinatura.')} aoClicar={aoExcluirConta} perigo />}
               </div>
             </>

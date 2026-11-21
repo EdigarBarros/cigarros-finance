@@ -17262,5 +17262,41 @@
   "O ganho do topo já desconta os aportes: dinheiro que você pôs não conta como rendimento. A linha tracejada é o que você aportou.": {
     "en": "The gain at the top already excludes contributions: money you put in does not count as return. The dashed line is what you put in.",
     "es": "La ganancia de arriba ya descuenta los aportes: el dinero que pusiste no cuenta como rendimiento. La línea discontinua es lo que aportaste."
+  },
+  "Senha incorreta. Tente de novo.": {
+    "en": "Wrong password. Try again.",
+    "es": "Contraseña incorrecta. Inténtalo de nuevo."
+  },
+  "Não deu para entrar agora. Tente de novo em instantes.": {
+    "en": "Couldn't sign in right now. Try again in a moment.",
+    "es": "No se pudo entrar ahora. Inténtalo de nuevo en un momento."
+  },
+  "Enviamos um link para {0} criar uma senha nova. Olhe também o spam.": {
+    "en": "We sent a link to {0} to create a new password. Check your spam too.",
+    "es": "Enviamos un enlace a {0} para crear una contraseña nueva. Revisa también el spam."
+  },
+  "Senha desta conta": {
+    "en": "Password for this account",
+    "es": "Contraseña de esta cuenta"
+  },
+  "Conhecer o OpusCash": {
+    "en": "Discover OpusCash",
+    "es": "Conocer OpusCash"
+  },
+  "Manter conectado": {
+    "en": "Stay signed in",
+    "es": "Mantener la sesión"
+  },
+  "Neste aparelho, a conta abre sem pedir a senha.": {
+    "en": "On this device, the account opens without asking for the password.",
+    "es": "En este dispositivo, la cuenta abre sin pedir la contraseña."
+  },
+  "A senha será pedida toda vez que abrir a conta.": {
+    "en": "The password will be asked every time you open the account.",
+    "es": "Se pedirá la contraseña cada vez que abras la cuenta."
+  },
+  "Volta para a escolha de contas. A conta continua neste aparelho.": {
+    "en": "Goes back to the account picker. The account stays on this device.",
+    "es": "Vuelve a la elección de cuentas. La cuenta sigue en este dispositivo."
   }
 }

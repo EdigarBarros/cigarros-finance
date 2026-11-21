@@ -1217,22 +1217,37 @@ Duas colunas no computador. A lista com selos redondos saiu; cada lançamento ag
 
 ### 4.20.1 Várias contas no mesmo aparelho (`lib/contas.ts`, `components/Contas.tsx`)
 
-Como a troca de contas do Google. Quem entra numa conta fica lembrado no aparelho (até 5 contas). No menu da conta (PC: a
-foto no canto de cima; celular: a folha aberta pela foto), embaixo dos itens: **Trocar de conta** (as outras contas, com
-foto, nome e e-mail; um toque abre a conta sem senha), **Adicionar outra conta** (abre o login por cima; "Voltar" desiste e a
-conta aberta continua) e **Sair desta conta** ("Sair", quando só há uma). O "x" de cada linha tira a conta deste aparelho.
+Como os perfis de um serviço de vídeo. Quem entra numa conta fica lembrado no aparelho (até 5 contas). No menu da conta
+(PC: a foto no canto de cima; celular: a folha aberta pela foto), embaixo dos itens: **Trocar de conta** (as outras contas,
+com foto, nome e e-mail; um toque abre a conta), **Adicionar outra conta** (abre o login por cima; "Voltar" desiste e a conta
+aberta continua) e **Sair**.
 
+- **Sair** volta para a tela de perfis e **a conta continua no aparelho** (`sairParaOsPerfis`). A página recarrega: nada da
+  conta fica na memória. **Tirar uma conta do aparelho é só pelo "Gerenciar contas"** ("Editar" no celular) da tela de perfis;
+  o menu não tem mais o "x". Sem nenhuma conta lembrada, a tela de perfis não aparece: tirar a última leva ao login.
+- **Manter conectado** (chave no login e na tela de senha, ligada por padrão no login). Ligado: a lista guarda a sessão
+  (os dois tokens) e tocar no perfil abre a conta direto. Desligado (`manter: false`): a lista não guarda a sessão, "Sair"
+  encerra a sessão no servidor, o perfil mostra "Pede a senha" e tocar nele abre a **tela de senha**
+  (`components/SenhaDaConta.tsx`). E fechar o app (ou o navegador) encerra a sessão: ao abrir, se a aba é nova
+  (`sessionStorage` vazio) e nenhuma outra aba deu sinal nos últimos 45 s (`opuscash.pulso`), a sessão sai antes de o Supabase
+  lê-la. Contas de antes dessa opção ficam conectadas.
+- **Tela de senha**: o e-mail já escolhido, só a senha, com as peças do OpusCash vagando em 3D atrás (`FundoOpus`). A foto
+  tem um anel que enche e pulsa a cada letra; senha errada faz o cartão tremer e o anel ficar vermelho; certa, o anel fecha
+  verde e o cartão vem para perto antes de a página recarregar na conta. "Esqueci minha senha" manda o link para esse e-mail.
+  Também aparece quando a sessão de uma conta conectada venceu.
+- **Escolher um perfil**: o quadro voa em 3D para o meio da tela e some (`.pf-voo`); a conta abre enquanto ele voa e a
+  página só recarrega (e entra a abertura do OpusCash) quando ele pousa (`trocarPara(id, pouso)`).
 - **Sem senha guardada.** Fica só a sessão que o Supabase já guarda (os dois tokens), uma por conta, em
   `localStorage['opuscash.contas']`, atualizada a cada renovação do token. Trocar renova a sessão da escolhida num cliente à
-  parte: se ela não vale mais (venceu, ou alguém saiu de todos os aparelhos), a conta aberta continua aberta e a escolhida
-  abre o login com o e-mail preenchido ("Entre de novo com a senha").
-- **Nada se mistura.** Trocar recarrega a página (dados, cache e telas abertas da anterior somem da memória); entrar pela tela
-  de login também. Outra aba do mesmo aparelho recarrega junto (o Supabase avisa as abas). O que fica guardado no aparelho e é
-  de cada pessoa (tema, animações, valores escondidos, arrumação da Início, modo do gráfico, menu lateral recolhido) é separado
-  por conta (`lerDaConta`/`gravarNaConta`); quem ainda não tem uma escolha própria usa a de antes. O que já era por conta
-  (foto, memória do consultor, gosto) continua com o id no nome da chave.
-- **Sair desta conta** encerra só a sessão dela, só neste aparelho, e tira a conta da lista. Com outras contas lembradas, a
-  tela seguinte é **Quem está usando?** (também no app Android, no lugar do login direto); "Outra conta" abre o login.
+  parte: se ela não vale mais, a escolhida pede a senha.
+- **Nada se mistura.** Trocar e sair recarregam a página; entrar pela tela de login também. Outra aba do mesmo aparelho
+  recarrega junto (o Supabase avisa as abas). O que fica guardado no aparelho e é de cada pessoa (tema, animações, valores
+  escondidos, arrumação da Início, modo do gráfico, menu lateral recolhido) é separado por conta
+  (`lerDaConta`/`gravarNaConta`); quem ainda não tem uma escolha própria usa a de antes.
+- **Tirar da lista** uma conta que não está aberta também encerra a sessão dela no servidor.
+- **Trocas de tela com transição**: perfis, login/criar conta e apresentação ("Início" na tela de perfis) trocam com uma
+  transição em 3D (`trocarDeTela` em `App.tsx`, `::view-transition` no `index.css`), indo e voltando (o voltar do navegador
+  também). Sem suporte do navegador, ou com animações reduzidas, só troca.
 - **Quem está usando?** (`components/EscolherConta.tsx`, `perfis.css`), como a escolha de perfis de um serviço de vídeo. No
   computador: o símbolo no canto, as contas numa fileira embaixo (foto ou iniciais numa cor fixa por conta) e "Gerenciar
   contas"; o nome da cena fica embaixo à esquerda se sobra espaço ao lado das contas, senão sobe para perto do símbolo. No
@@ -1244,9 +1259,9 @@ conta aberta continua) e **Sair desta conta** ("Sair", quando só há uma). O "x
   investimentos), com valores inventados. As marcas embaixo do nome mostram o tempo de cada uma e levam a qualquer cena. Cada
   peça é um ponto no centro do palco com a perspectiva, o balanço do mundo e a sua pose, para todas parecerem vistas pela
   mesma câmera; só transform e opacidade. Com animações reduzidas, cada cena aparece já pronta e só troca.
-- **Tirar da lista** uma conta que não está aberta também encerra a sessão dela no servidor.
 
-Teste: `node scripts/app-de-demonstracao/testar-contas.cjs` (três contas num Supabase falso, no PC e no celular).
+Teste: `node scripts/app-de-demonstracao/testar-contas.cjs` (três contas num Supabase falso, no PC e no celular: sair e voltar
+sem senha, "Manter conectado" desligado, tela de senha, reabrir o app, Gerenciar contas, Início e a última conta tirada).
 
 ### 4.21 As telas em cada jeito de ver (a vitrine)
 

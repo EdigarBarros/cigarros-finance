@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ENDERECO_DO_SITE } from '../lib/appAndroid'
 import { supabase } from '../lib/supabase'
-import { pararDeAdicionar } from '../lib/contas'
+import { manterNaEntrada, pararDeAdicionar } from '../lib/contas'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
 import { tx } from '../lib/textos'
@@ -35,8 +35,9 @@ export function Login({ inicial = 'entrar', aoVoltar, rotuloVoltar, emailInicial
 
   const trocar = (m: Modo) => { setModo(m); setAviso(null); setTrocou(true) }
 
-  const entrar = async (email: string, senha: string) => {
+  const entrar = async (email: string, senha: string, manter: boolean) => {
     setOcupado(true); setAviso(null)
+    manterNaEntrada(email, manter)
     const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
     setOcupado(false)
     if (error) setAviso({ texto: traduzir(error.message) })
@@ -112,19 +113,21 @@ type PropsForm = { ativo: boolean; ocupado: boolean; aviso: Aviso; aoTrocar: () 
 
 function FormEntrar({ emailInicial, ativo, ocupado, aviso, aoEnviar, aoEsqueci, aoReenviar, aoTrocar }: PropsForm & {
   emailInicial: string
-  aoEnviar: (email: string, senha: string) => void; aoEsqueci: (email: string) => void; aoReenviar: (email: string) => void
+  aoEnviar: (email: string, senha: string, manter: boolean) => void; aoEsqueci: (email: string) => void; aoReenviar: (email: string) => void
 }) {
   const [email, setEmail] = useState(emailInicial)
   const [senha, setSenha] = useState('')
+  const [manter, setManter] = useState(true)
   const [recuperar, setRecuperar] = useState(false)
   const naoConfirmado = Boolean(aviso && !aviso.ok && /confirme seu e-mail/i.test(aviso.texto))
   return (
     <form className={`en-form entrar ${ativo ? 'ativo' : ''}`} inert={!ativo} aria-hidden={!ativo}
-      onSubmit={(e) => { e.preventDefault(); if (recuperar) aoEsqueci(email); else aoEnviar(email, senha) }}>
+      onSubmit={(e) => { e.preventDefault(); if (recuperar) aoEsqueci(email); else aoEnviar(email, senha, manter) }}>
       <h1>{recuperar ? tx('Nova senha') : tx('Entrar')}</h1>
       <p className="en-sub">{recuperar ? tx('Digite seu e-mail e enviamos um link para você criar uma senha nova.') : tx('Que bom que voltou. Seu painel está esperando.')}</p>
       <Campo rotulo={tx('E-mail')} icone="email" tipo="email" valor={email} mudar={setEmail} completar="email" />
       {!recuperar && <CampoSenha valor={senha} mudar={setSenha} completar="current-password" />}
+      {!recuperar && <ChaveManter ligada={manter} mudar={setManter} />}
       <BotaoEnviar ocupado={ocupado}>{recuperar ? tx('Enviar link') : tx('Entrar')}</BotaoEnviar>
       {aviso && <p className={`en-aviso ${aviso.ok ? 'ok' : ''}`} role="alert">{aviso.texto}</p>}
       {naoConfirmado && email && <button type="button" className="link" onClick={() => aoReenviar(email)} disabled={ocupado}>{tx('Reenviar e-mail de confirmação')}</button>}
@@ -186,6 +189,23 @@ function CampoSenha({ valor, mudar, completar }: { valor: string; mudar: (v: str
         <Icone nome={ver ? 'olho-fechado' : 'olho'} tamanho={17} />
       </button>
     </Campo>
+  )
+}
+
+/**
+ * "Manter conectado": ligado, a conta abre direto pelo perfil, sem senha. Desligado, o perfil pede a senha a cada vez e fechar
+ * o app encerra a sessão (lib/contas.ts). Também na tela de senha do perfil (components/SenhaDaConta.tsx).
+ */
+export function ChaveManter({ ligada, mudar }: { ligada: boolean; mudar: (v: boolean) => void }) {
+  return (
+    <label className={`chave-manter ${ligada ? 'ligada' : ''}`}>
+      <input type="checkbox" role="switch" checked={ligada} onChange={(e) => mudar(e.target.checked)} />
+      <span className="chave-manter-trilho" aria-hidden="true"><i /></span>
+      <span className="chave-manter-texto">
+        <b>{tx('Manter conectado')}</b>
+        <small>{ligada ? tx('Neste aparelho, a conta abre sem pedir a senha.') : tx('A senha será pedida toda vez que abrir a conta.')}</small>
+      </span>
+    </label>
   )
 }
 

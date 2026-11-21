@@ -1535,3 +1535,29 @@ Falta assinar com a chave de upload e enviar no Play Console. Substitui a 2.8.6 
 - Leva a tela "Quem está usando?" com as cenas (#265) e tudo o que entrou desde a 2.8.6 (#262 a #264: backup e dívidas).
 - `versionCode` 24 → 25, `versionName` 2.8.6 → 2.8.7. SDK instalado na sessão como na 2.8.5 (`/opt/android-sdk`).
 - Conferido dentro do pacote: os arquivos `CenasDoOpus`, o texto "Quem está usando?" e nenhum `fake.supabase`.
+
+### 21/11/2026 — Claude — Perfis: "Sair" volta aos perfis, "Manter conectado", tela de senha e transições
+
+**Pedido do dono.** "Sair" no painel volta para a tela de perfis e a conta continua lá; tirar a conta só pelo "Gerenciar
+contas". Nos perfis, um botão para a apresentação. No login, "Manter conectado": ligado, o perfil abre direto; desligado, tocar
+no perfil abre uma tela própria pedindo só a senha (e-mail já preenchido, peças do OpusCash em 3D no fundo, resposta visual).
+Escolher o perfil: o quadro vai para o centro em 3D, some e entra a abertura. Sem contas no aparelho, ir para o login.
+Transições entre perfis, login/criar conta e apresentação.
+
+**O que mudou.**
+- `lib/contas.ts`: `manter` em cada conta, `manterNaEntrada` (a escolha feita no login vale para a conta que entrar),
+  `pedeSenha`, `sairParaOsPerfis` (com manter: tira a sessão só deste aparelho e recarrega; sem: encerra e marca "pede a
+  senha"), `trocarPara(id, antesDeRecarregar)`, `esperarAntesDeRecarregar` e `aoMudarSessao` devolvendo se vai recarregar.
+  Sem manter, a lista não guarda os tokens e, ao reabrir o app (aba nova, sem sinal de outra aba em 45 s), a sessão sai
+  antes de o Supabase lê-la. Contas antigas (sem o campo) ficam conectadas.
+- `components/SenhaDaConta.tsx` + `senha-da-conta.css` (tela de senha); `EscolherConta.tsx` (voo do quadro com verso do
+  símbolo, botão "Início"); `Entrada.tsx` (`ChaveManter`); menu da conta sem o "x"; `App.tsx` (`trocarDeTela` com
+  View Transitions, apresentação a partir dos perfis, login quando a última conta sai, limpeza da marca de login no histórico).
+- Defeitos achados no caminho: sair sem manter não recarregava (o painel aparecia cortando a animação de acerto); o histórico
+  guardava "estava no login" depois de entrar e sair, e o voltar a partir da apresentação caía no login.
+- Ficou como antes: visitante sem nenhuma conta no aparelho continua vendo a apresentação em `opuscash.com.br`.
+
+**Validação.** `npx tsc -b`, lint sem erro, build, traduções completas, `testar-contas.cjs` 48/48 (inclui sair e voltar sem
+senha, manter desligado, senha errada e certa, reabrir o app, sessão vencida, Início e voltar, Gerenciar e a última conta).
+Fotos no app de demonstração (PC 1440×900 e celular 390×844): voo, tela de senha, transição para o login e login com a chave.
+**Não testado em celular de verdade.**
