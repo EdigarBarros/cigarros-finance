@@ -128,7 +128,9 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   acerta o valor real quando você quiser. Os juros do atraso podem ser por mês, por dia ou um valor fixo por dia, e um
   empréstimo pode guardar quanto você recebeu de fato (pegou R$ 250, devolve R$ 270: R$ 20 de juros) ([migração 36](supabase/migracao-36-juros-por-dia-e-valor-recebido.sql)). Atrasou e prometeu pagar outro dia? Anote as **promessas de pagamento**
   ([migração 25](supabase/migracao-25-promessas-de-pagamento.sql)): o cartão mostra "prometeu pagar amanhã", o calendário
-  de Lançamentos põe o atrasado no dia prometido e o app diz, pelos pagamentos, se cada promessa foi cumprida
+  de Lançamentos põe o atrasado no dia prometido e o app diz, pelos pagamentos, se cada promessa foi cumprida. Cada **Conferi com o
+  banco** fica registrado no histórico da dívida (estava R$ X, o banco mostrou R$ Y, caiu ou subiu tanto %) e o conselheiro avisa
+  quando uma dívida mudou por fora ([migração 37](supabase/migracao-37-conferencias-da-divida.sql))
 - **Invest** ([migração 28](supabase/migracao-28-invest.sql)): a carteira de investimentos. Cada investimento (CDB, LCI, LCA,
   Tesouro, ações, fundos imobiliários, ETFs, fundos) com as operações dele (aplicação, resgate, venda parcial, proventos,
   amortização, desdobramento…), de onde o app refaz quantidade, custo médio, resultado e a **rentabilidade de verdade**
@@ -170,7 +172,7 @@ Tudo grátis: o site fica na **Vercel** e os dados no **Supabase** (Postgres), p
    [`22`](supabase/migracao-22-juros-de-atraso.sql), [`23`](supabase/migracao-23-guardado-em-banco.sql),
    [`24`](supabase/migracao-24-memoria-do-consultor.sql), [`25`](supabase/migracao-25-promessas-de-pagamento.sql),
    [`26`](supabase/migracao-26-inicio-da-parte.sql), [`27`](supabase/migracao-27-saldo-de-um-mes-para-o-outro.sql),
-   [`28`](supabase/migracao-28-invest.sql), [`29`](supabase/migracao-29-pix-30-dias.sql), [`36`](supabase/migracao-36-juros-por-dia-e-valor-recebido.sql) e, **por último**, a
+   [`28`](supabase/migracao-28-invest.sql), [`29`](supabase/migracao-29-pix-30-dias.sql), [`36`](supabase/migracao-36-juros-por-dia-e-valor-recebido.sql), [`37`](supabase/migracao-37-conferencias-da-divida.sql) e, **por último**, a
    [`20`](supabase/migracao-20-acesso-no-banco-definitivo.sql).
    O `schema.sql` sozinho **não** tem cobrança nem bloqueio: sem a 12 e a 20 o painel abre para qualquer conta, paga ou não.
    Não rode as migrações 02 a 08 num banco novo (o `schema.sql` já inclui o que elas fazem) nem a 13 (a 20 a substitui).

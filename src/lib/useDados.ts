@@ -7,7 +7,7 @@ import { normPlanejamentos, type Planejamentos } from './planejamento'
 import { maisRecente, normCelular, type Celular } from './widgets'
 import { lerTudo, supabase } from './supabase'
 import type { EscolhaZerar, ParteZerar } from './zerar'
-import type { Banco, Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, ParteDivida, Perfil, PromessaDivida, SaldoDivida, SaldoInicial } from './types'
+import type { Banco, Categoria, ConferenciaDivida, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, ParteDivida, Perfil, PromessaDivida, SaldoDivida, SaldoInicial } from './types'
 import { fmtDataLonga } from './format'
 import { mesesDaAnalise } from './conselheiro'
 import { moedaDaDivida, nativoDiv, type Calendario, type SituacaoDivida } from './dividas'
@@ -139,6 +139,7 @@ const semCustoDivida = <T extends object>(o: T) =>
 const semPartes = <T extends object>(o: T) => { const { partes: _p, promessas: _pr, ...resto } = o as T & { partes?: unknown; promessas?: unknown }; return resto as T }
 /** Promessa nova de pagamento, antes de ganhar id. */
 export type NovaPromessa = Pick<PromessaDivida, 'data' | 'valor' | 'obs'>
+const normConferencia = (r: ConferenciaDivida): ConferenciaDivida => ({ ...r, antes: num(r.antes), depois: num(r.depois) })
 const normPromessa = (r: PromessaDivida): PromessaDivida => ({ ...r, valor: r.valor == null ? null : num(r.valor) })
 /** Parte nova de uma dívida, antes de ganhar id. */
 export type NovaParte = Omit<ParteDivida, 'id' | 'divida_id'>
@@ -178,6 +179,10 @@ export function useDados(userId: string, ano: number) {
   const [promessas, setPromessas] = useState<PromessaDivida[]>([])
   /** Sem a migração 25: não há onde guardar as promessas. */
   const [promessasSemTabela, setPromessasSemTabela] = useState(false)
+  /** Conferências com o banco (migração 37): o histórico de quanto a dívida mostrava e quanto o banco mostrou. */
+  const [conferencias, setConferencias] = useState<ConferenciaDivida[]>([])
+  /** Sem a migração 37: não há onde guardar o histórico. */
+  const [conferenciasSemTabela, setConferenciasSemTabela] = useState(false)
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
   const [bancos, setBancos] = useState<Banco[]>([])
   /** undefined = carregando; null = a pessoa ainda não tem perfil salvo. */
@@ -233,7 +238,7 @@ export function useDados(userId: string, ano: number) {
   const recarregar = useCallback(async () => {
     const meu = ++pedidoAtual.current
     setCarregando(true)
-    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, xj, vc, rc, pt, xa, pr, xi, xc] = await Promise.all([
+    const [l, m, d, s, p, b, pf, ct, mt, mv, xd, xm, xj, vc, rc, pt, xa, pr, xi, xc, cf] = await Promise.all([
       // as tabelas que crescem sem parar são lidas em páginas (lerTudo): o Supabase corta em 1000 linhas
       lerTudo(() => supabase.from('lancamentos').select('*').eq('ano', ano).order('data').order('created_at').order('id')),
       lerTudo(() => supabase.from('meses').select('*').order('ano').order('mes')),
@@ -255,6 +260,7 @@ export function useDados(userId: string, ano: number) {
       lerTudo(() => supabase.from('divida_promessas').select('*').order('created_at').order('id')),
       supabase.from('divida_partes').select('inicio').limit(1),
       supabase.from('dividas').select('valor_recebido').limit(1),
+      lerTudo(() => supabase.from('divida_conferencias').select('*').order('data').order('created_at').order('id')),
     ])
     // Conta nova: ganha as categorias padrão (definidas no banco, migração 5). Isso precisa acontecer ANTES de qualquer setState:
     // um await no meio fazia o React desenhar o painel de verdade (perfil já lido, "carregando" ainda ligado) e só depois as
@@ -291,6 +297,9 @@ export function useDados(userId: string, ano: number) {
     // sem a migração 25: as dívidas funcionam como antes, sem promessas
     if (pr.error && faltaTabela(pr.error)) { setPromessasSemTabela(true); setPromessas([]) }
     else if (!pr.error) { setPromessasSemTabela(false); setPromessas((pr.data as PromessaDivida[]).map(normPromessa)) }
+    // sem a migração 37: tudo funciona como antes, sem o histórico das conferências
+    if (cf.error && faltaTabela(cf.error)) { setConferenciasSemTabela(true); setConferencias([]) }
+    else if (!cf.error) { setConferenciasSemTabela(false); setConferencias((cf.data as ConferenciaDivida[]).map(normConferencia)) }
     // sem a migração 7 a coluna não existe: o app só não aprende com os outros anos
     setVinculosOutrosAnos(vc.error ? [] : (vc.data as Pick<Lancamento, 'id' | 'conta_fixa_id' | 'descricao' | 'valor'>[]).map((x) => ({ ...x, valor: num(x.valor) })))
     const e = l.error ?? m.error ?? d.error ?? s.error ?? p.error ?? b.error
@@ -509,6 +518,7 @@ export function useDados(userId: string, ano: number) {
     setSaldos((xs) => xs.filter((x) => x.divida_id !== id))
     setPartes((xs) => xs.filter((x) => x.divida_id !== id))
     setPromessas((xs) => xs.filter((x) => x.divida_id !== id))
+    setConferencias((xs) => xs.filter((x) => x.divida_id !== id))
     setPagamentos((xs) => xs.filter((x) => x.divida_id !== id))
     setLancs((xs) => xs.map((x) => (x.divida_id === id ? { ...x, divida_id: null } : x)))
     const { error } = await supabase.from('dividas').delete().eq('id', id)
@@ -619,6 +629,11 @@ export function useDados(userId: string, ano: number) {
     const id = s.divida.id
     const dif = centavos(valor - s.restante)
     const doBanco = partesDa(id)
+    // o histórico: o que o app mostrava (com os juros estimados) e o que o banco mostrou. Antes do pagamento só conta se mudou.
+    const mostrava = centavos(s.restanteHoje)
+    if (!conferenciasSemTabela && (modo === 'conferir' || Math.abs(valor - mostrava) >= 0.005)) {
+      void registrarConferencia(id, data, mostrava, centavos(valor), modo)
+    }
     if (doBanco.length && Math.abs(dif) >= 0.005) {
       const atrasadas = (cal?.atrasadas.length ? cal.atrasadas : cal?.proxima ? [cal.proxima] : []).flatMap((p) => p.partes ?? [])
       const alvo = atrasadas.length ? atrasadas : doBanco
@@ -653,6 +668,18 @@ export function useDados(userId: string, ano: number) {
     const { error } = await supabase.from('divida_partes').delete().in('id', ids)
     if (error) return falhou(error.message)
     await acertarSaldoDasPartes(alvo.divida_id, antes, antes.filter((p) => !ids.includes(p.id)))
+  }
+
+  /** Guarda uma linha do histórico de conferências (falhar aqui não atrapalha a conferência em si). */
+  const registrarConferencia = async (divida_id: string, data: string, antes: number, depois: number, origem: 'conferir' | 'pagar') => {
+    const { data: linha, error } = await supabase.from('divida_conferencias').insert({ divida_id, data, antes, depois, origem }).select().single()
+    if (error) { if (faltaTabela(error)) setConferenciasSemTabela(true); else falhou(error.message); return }
+    setConferencias((xs) => [...xs, normConferencia(linha as ConferenciaDivida)])
+  }
+  const delConferencia = async (id: string) => {
+    setConferencias((xs) => xs.filter((x) => x.id !== id))
+    const { error } = await supabase.from('divida_conferencias').delete().eq('id', id)
+    if (error) falhou(error.message)
   }
 
   /** Anota uma promessa de pagamento ("vai pagar dia 30"). */
@@ -986,6 +1013,7 @@ export function useDados(userId: string, ano: number) {
     dividasSemCusto,
     partesSemTabela, partesSemInicio, addPartes, updParte, updPartes, delPartes,
     promessasSemTabela, addPromessa, delPromessa,
+    conferencias, conferenciasSemTabela, delConferencia,
     lancs, lancsRecentes, meses: mesesDosBancos, dividas: dividasComPartes, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,
     addLanc, addLancs, renomearLancs, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, ajustarValorDivida, moverInicioDivida, salvarMes,
   }

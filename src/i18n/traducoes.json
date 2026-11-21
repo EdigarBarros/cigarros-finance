@@ -16962,5 +16962,49 @@
   "Salvar backup": {
     "en": "Save backup",
     "es": "Guardar copia"
+  },
+  "Conferências com o banco": {
+    "en": "Bank checks",
+    "es": "Conferencias con el banco"
+  },
+  "Para guardar o histórico das conferências com o banco, rode": {
+    "en": "To keep the history of bank checks, run",
+    "es": "Para guardar el historial de las conferencias con el banco, ejecuta"
+  },
+  "O banco confirmou {0}.": {
+    "en": "The bank confirmed {0}.",
+    "es": "El banco confirmó {0}."
+  },
+  "Estava {0}; o banco mostrou {1}.": {
+    "en": "It was {0}; the bank showed {1}.",
+    "es": "Estaba en {0}; el banco mostró {1}."
+  },
+  "caiu {0}": {
+    "en": "dropped {0}",
+    "es": "bajó {0}"
+  },
+  "subiu {0}": {
+    "en": "rose {0}",
+    "es": "subió {0}"
+  },
+  "Excluir conferência": {
+    "en": "Delete bank check",
+    "es": "Eliminar conferencia"
+  },
+  "{0} diminuiu no banco.": {
+    "en": "{0} went down at the bank.",
+    "es": "{0} bajó en el banco."
+  },
+  "{0} aumentou no banco.": {
+    "en": "{0} went up at the bank.",
+    "es": "{0} subió en el banco."
+  },
+  "Na conferência de {0} o app mostrava {1}, e o banco mostrou {2}: {3} a menos.": {
+    "en": "At the check on {0} the app showed {1}, and the bank showed {2}: {3} less.",
+    "es": "En la conferencia del {0} la app mostraba {1}, y el banco mostró {2}: {3} menos."
+  },
+  "Na conferência de {0} o app mostrava {1}, e o banco mostrou {2}: {3} a mais. Vale entender de onde veio.": {
+    "en": "At the check on {0} the app showed {1}, and the bank showed {2}: {3} more. Worth finding out where it came from.",
+    "es": "En la conferencia del {0} la app mostraba {1}, y el banco mostró {2}: {3} más. Vale entender de dónde vino."
   }
 }
