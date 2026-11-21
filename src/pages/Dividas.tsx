@@ -11,6 +11,7 @@ import { BancoIcone } from '../components/BancoIcone'
 import { FormDivida } from '../components/Formularios'
 import { PartesDaDivida } from '../components/PartesDaDivida'
 import { LinhaDaPromessa, PromessasDaDivida } from '../components/PromessasDaDivida'
+import { ConferenciasDaDivida } from '../components/ConferenciasDaDivida'
 import { ConferirComBanco, SeloJuros } from '../components/JurosDoAtraso'
 import { mioloDaDivida } from '../components/CartaoDaDivida'
 import { regraDoAtraso, temJurosDeAtraso } from '../lib/jurosAtraso'
@@ -490,6 +491,8 @@ export function Ficha({ c, s, cal, recebe, conferir, aoFechar, aoEditar }: {
         {!c.d.dividasSemExtras && <PromessasDaDivida s={s} p={promessasDe(s, c.d.pagamentos, hojeLocal())} d={c.d} recebe={recebe} hoje={hojeLocal()} />}
 
         {!c.d.dividasSemExtras && <PartesDaDivida s={s} cal={cal} d={c.d} recebe={recebe} />}
+
+        <ConferenciasDaDivida s={s} d={c.d} />
 
         <section>
           <h4 className="dv-ficha-titulo">{recebe ? tx('Recebimentos') : tx('Pagamentos')} <small>{movimentos.length || ''}</small></h4>

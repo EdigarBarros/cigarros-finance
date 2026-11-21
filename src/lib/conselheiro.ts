@@ -20,17 +20,18 @@
  *    (lib/mudaDeBolso.ts).
  *  - Regras de módulos desligados no perfil (dívidas, cartões, bancos, metas) não falam.
  */
+import { mudancaDe } from './conferencias'
 import { caixaDoBanco, mesEfetivo } from './calc'
 import { doMesChave, chaveMes, hojeLocal } from './cartoes'
 import { aumentaDivida, jurosAoAno, meDevem, situacaoDividas } from './dividas'
-import { fmtMesAno, fmtMoeda, fmtTaxa, fmtTaxaAno, fmtValor, LOCAL_DAS_DATAS, MESES_NOME, noMeioDaFrase } from './format'
+import { fmtDataCurta, fmtMesAno, fmtMoeda, fmtTaxa, fmtTaxaAno, fmtValor, LOCAL_DAS_DATAS, MESES_NOME, noMeioDaFrase } from './format'
 import type { Taxas } from './moedas'
 import { situacaoMeta } from './metas'
 import { ehGuardado } from './guardado'
 import { mudaDeBolso } from './mudaDeBolso'
 import { visao } from './perfil'
 import { tx } from './textos'
-import type { Categoria, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida } from './types'
+import type { Categoria, ConferenciaDivida, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida } from './types'
 import { TIPOS_CAIXA } from './types'
 
 // ---------- limites ----------
@@ -50,6 +51,9 @@ export const PARCELAS_URGENTE = 0.5
 export const DIVIDA_CRESCEU_MIN = 0.02
 /** Há quantos meses se compara o total que a pessoa deve. */
 export const MESES_DA_DIVIDA = 3
+/** A conferência com o banco só vira conselho se é recente (dias) e a dívida mudou pelo menos isto (% do que o app mostrava). */
+export const CONFERENCIA_RECENTE_DIAS = 45
+export const CONFERENCIA_MUDOU_MIN = 3
 /** Reserva abaixo disto, em meses de gastos, merece um aviso. */
 export const RESERVA_MIN_MESES = 3
 /** O que o texto cita como ideal para imprevistos (3 a 6 meses). */
@@ -121,6 +125,8 @@ export interface EntradaConselheiro {
   perfil: Perfil
   /** Migração 19 pendente (a tabela de dívidas não tem `juros_mes`): o convite para informar os juros fica calado. */
   dividasSemJuros?: boolean
+  /** Conferências com o banco (migração 37): serve para avisar quando uma dívida mudou de valor por fora do app. Opcional. */
+  conferencias?: ConferenciaDivida[]
 }
 
 // ---------- apoio ----------
@@ -303,6 +309,36 @@ export function conselhos(e: EntradaConselheiro): Conselho[] {
         titulo: tx('As dívidas estão aumentando.'),
         porque: tx('Há {0} meses você devia {1}. Hoje são {2}: {3} a mais.',
           MESES_DA_DIVIDA, fmtValor(totalAntes), fmtValor(totalHoje), fmtValor(centavos(totalHoje - totalAntes))),
+      })
+    }
+  }
+
+  // 4a. Dívida que mudou no banco: a conferência mais recente de cada dívida que ela devia (ou que devem a ela) mostra que o
+  //     valor real caiu (elogio) ou subiu (atenção) em relação ao que o app mostrava. Fala só da que mais mudou.
+  if (v.dividas && e.conferencias?.length) {
+    const limite = new Date(hoje); limite.setDate(limite.getDate() - CONFERENCIA_RECENTE_DIAS)
+    const desde = hojeLocal(limite)
+    const porNome = new Map(e.dividas.map((d) => [d.id, d]))
+    const ultimas = new Map<string, ConferenciaDivida>()
+    for (const c of e.conferencias) {
+      const d = porNome.get(c.divida_id)
+      if (!d || meDevem(d) || c.data < desde) continue
+      const antiga = ultimas.get(c.divida_id)
+      if (!antiga || c.data > antiga.data || (c.data === antiga.data && c.created_at > antiga.created_at)) ultimas.set(c.divida_id, c)
+    }
+    const mudou = [...ultimas.values()].map(mudancaDe).filter((m) => m.sentido !== 'igual' && Math.abs(m.percentual) >= CONFERENCIA_MUDOU_MIN)
+      .sort((a, b) => Math.abs(b.diferenca) - Math.abs(a.diferenca))[0]
+    if (mudou) {
+      const nome = porNome.get(mudou.conferencia.divida_id)?.descricao ?? ''
+      const quanto = fmtValor(Math.abs(mudou.diferenca))
+      const caiu = mudou.sentido === 'caiu'
+      nova({
+        id: `divida-mudou:${mudou.conferencia.divida_id}`, gravidade: caiu ? 'elogio' : 'atencao', prioridade: caiu ? 11 : 74,
+        icone: caiu ? 'desce' : 'sobe', destino: 'dividas', botao: tx('Ver dívidas'),
+        titulo: caiu ? tx('{0} diminuiu no banco.', nome) : tx('{0} aumentou no banco.', nome),
+        porque: caiu
+          ? tx('Na conferência de {0} o app mostrava {1}, e o banco mostrou {2}: {3} a menos.', fmtDataCurta(mudou.conferencia.data), fmtValor(mudou.conferencia.antes), fmtValor(mudou.conferencia.depois), quanto)
+          : tx('Na conferência de {0} o app mostrava {1}, e o banco mostrou {2}: {3} a mais. Vale entender de onde veio.', fmtDataCurta(mudou.conferencia.data), fmtValor(mudou.conferencia.antes), fmtValor(mudou.conferencia.depois), quanto),
       })
     }
   }

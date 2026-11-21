@@ -118,6 +118,18 @@ export interface PromessaDivida {
   created_at: string
 }
 
+/** Uma conferência com o banco (migração 37): o que o app mostrava e o que o banco mostrou, na moeda principal. */
+export interface ConferenciaDivida {
+  id: string
+  divida_id: string
+  data: string
+  antes: number
+  depois: number
+  /** 'conferir': a pessoa digitou o valor do banco; 'pagar': o app acertou os juros do atraso antes de um pagamento. */
+  origem: 'conferir' | 'pagar'
+  created_at: string
+}
+
 /** Uma parcela de uma parte da dívida: "Microfone, parcela 2 de 6, R$ 78,50, vence 02/03" (migração 21). */
 export interface ParteDivida {
   id: string
