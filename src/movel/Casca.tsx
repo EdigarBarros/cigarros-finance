@@ -40,14 +40,13 @@ function useRolou() {
   return rolou
 }
 
-export function TopoMovel({ sobreCor, foto, iniciais, avisoConta, aoConta, busca, aoBuscar, mes, aoMes, ocultos, aoOcultar, sino }: {
+export function TopoMovel({ sobreCor, foto, iniciais, avisoConta, aoConta, busca, aoBuscar, mes, aoMes, ocultos, aoOcultar }: {
   /** Há um degradê atrás (a Início): ícones e textos brancos até a página rolar. */
   sobreCor: boolean
   foto: string | null; iniciais: string; avisoConta: boolean; aoConta: () => void
   busca: string; aoBuscar: (q: string) => void
   mes: string; aoMes: () => void
   ocultos: boolean; aoOcultar: () => void
-  sino?: { rotulo: string; ponto: boolean; atraso: boolean; acao: () => void }
 }) {
   const rolou = useRolou()
   return (
@@ -67,12 +66,6 @@ export function TopoMovel({ sobreCor, foto, iniciais, avisoConta, aoConta, busca
         aria-label={ocultos ? tx('Mostrar valores') : tx('Ocultar valores')}>
         <Icone nome={ocultos ? 'olho-fechado' : 'olho'} tamanho={20} />
       </button>
-      {sino && (
-        <button className="topo-movel-redondo" onClick={sino.acao} aria-label={sino.rotulo}>
-          <Icone nome="sino" tamanho={20} />
-          {sino.ponto && <span className={`sino-ponto ${sino.atraso ? 'atraso' : ''}`} />}
-        </button>
-      )}
     </header>
   )
 }

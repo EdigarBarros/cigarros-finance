@@ -777,7 +777,7 @@ Justificativa: o que se usa todo dia primeiro (Início, Lançamentos); depois o 
 grade com as outras telas ligadas, na ordem acima, e os Ajustes. O texto e a tabela abaixo são o registro de como era
 antes; o código dessa barra (alça para esconder, "+" fixo, "⋯" do jeito simples) saiu em 17/11/2026.
 
-**Celular, antes (barra de abas, no máximo 5)**: se houver até 5 páginas, aparecem todas. Com mais de 5, aparecem as **4 primeiras** da ordem acima e a quinta aba é **Mais**, que abre uma folha com as demais. A ordem do menu é também a prioridade das abas, então Dívidas e Contas ganham lugar antes de Resumo do ano. "Mais" fica ativa quando a página aberta está dentro dela. Configurações (Personalizar, Importar, Baixar backup, Sair) continuam no menu do topo. No jeito simples, no celular, o topo fica só com o mês, o olho e o sino: a quinta aba é sempre **Mais**, e ela leva, além das páginas que não couberam, o idioma, o suporte, o tema e todo o menu da conta (4.1).
+**Celular, antes (barra de abas, no máximo 5)**: se houver até 5 páginas, aparecem todas. Com mais de 5, aparecem as **4 primeiras** da ordem acima e a quinta aba é **Mais**, que abre uma folha com as demais. A ordem do menu é também a prioridade das abas, então Dívidas e Contas ganham lugar antes de Resumo do ano. "Mais" fica ativa quando a página aberta está dentro dela. Configurações (Personalizar, Importar, Baixar backup, Sair) continuam no menu do topo. No jeito simples, no celular, o topo fica só com o mês e o olho: a quinta aba é sempre **Mais**, e ela leva, além das páginas que não couberam, o idioma, o suporte, o tema e todo o menu da conta (4.1).
 
 | Quem liga o quê | Abas |
 | --- | --- |
@@ -1442,7 +1442,7 @@ não abria nada.
 
 **Moldura** (`src/movel/Casca.tsx`, estilos em `src/movel/movel.css`, todos debaixo de `.movel`):
 - Topo: foto (abre a folha da conta: configurações, suporte, tutorial, tema, importar, backup, sair e idioma), busca
-  (digitar leva aos Lançamentos), o mês (abre a folha dos meses), o olho e o sino. Sobre o degradê da Início fica em
+  (digitar leva aos Lançamentos), o mês (abre a folha dos meses) e o olho (o sino saiu: só levava às Contas, e o aviso das contas já está no Início). Sobre o degradê da Início fica em
   vidro claro com texto branco; ao rolar ganha o vidro fosco. Em tela de até 370 px a busca vira um botão redondo e
   abre ao tocar.
 - Abas fixas: **Início · Lançamentos · Consultor · Mais**. "Mais" abre uma folha com as outras telas ligadas e os
