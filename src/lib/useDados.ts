@@ -318,10 +318,13 @@ export function useDados(userId: string, ano: number) {
       if (gostoDoBanco && gostoDoBanco.total > gostoAgora.current.total) { gostoAgora.current = gostoDoBanco; setGosto(gostoDoBanco) }
       // o plano do mês: vale o mexido por último, mês a mês
       const planoDoBanco = pf.data && 'consultor' in pf.data ? normPlanejamentos((pf.data as { consultor?: { planejamento?: unknown } | null }).consultor?.planejamento) : null
-      if (planoDoBanco && Object.keys(planoDoBanco).length) {
+      if (planoDoBanco) {
         const junto = juntarPlanejamentos(planejamentoAgora.current, planoDoBanco)
+        const diferente = JSON.stringify(junto) !== JSON.stringify(planoDoBanco)
         planejamentoAgora.current = junto
         setPlanejamento(junto)
+        // o plano deste aparelho está na frente do banco (a gravação não chegou, ou outro aparelho apagou): sobe agora
+        if (diferente && Object.keys(junto).length) void gravarConsultor().then(() => {}, () => {})
       }
       // o do banco vale (vem de qualquer aparelho); vazio lá (migração recém-rodada ou nunca informado), fica o deste aparelho
       const saldoDoBanco = pf.data && 'saldo_inicial' in pf.data ? normSaldoInicial((pf.data as { saldo_inicial?: unknown }).saldo_inicial) : null
@@ -803,6 +806,26 @@ export function useDados(userId: string, ano: number) {
    * Grava o que o consultor aprendeu (objetivo e passos acompanhados). Fica sempre no aparelho e, com a migração 24,
    * também no banco. Sem a coluna, o erro é engolido: a cópia do aparelho já vale.
    */
+  /**
+   * Grava perfis.consultor (memória + gosto + plano do mês) sem apagar o que outro aparelho gravou: antes de gravar, lê o
+   * que está no banco e junta (plano: o mexido por último, mês a mês; gosto: o que sabe mais). Gravar a cópia do aparelho
+   * às cegas fazia um celular aberto desde antes apagar o plano feito no computador.
+   */
+  const gravarConsultor = async () => {
+    const { data, error: erroLeitura } = await supabase.from('perfis').select('consultor').eq('user_id', userId).maybeSingle()
+    if (erroLeitura) return { error: erroLeitura }
+    const doBanco = (data as { consultor?: { gosto?: unknown; planejamento?: unknown } | null } | null)?.consultor
+    const plano = juntarPlanejamentos(planejamentoAgora.current, normPlanejamentos(doBanco?.planejamento))
+    if (JSON.stringify(plano) !== JSON.stringify(planejamentoAgora.current)) {
+      planejamentoAgora.current = plano
+      setPlanejamento(plano)
+      try { localStorage.setItem(chavePlanejamento(userId), JSON.stringify(plano)) } catch { /* sem armazenamento */ }
+    }
+    const gostoBanco = normGosto(doBanco?.gosto)
+    if (gostoBanco && gostoBanco.total > gostoAgora.current.total) { gostoAgora.current = gostoBanco; setGosto(gostoBanco) }
+    return supabase.from('perfis').update({ consultor: { ...memoriaAgora.current, gosto: gostoAgora.current, planejamento: plano } }).eq('user_id', userId)
+  }
+
   const salvarMemoria = async (nova: MemoriaConsultor) => {
     memoriaAgora.current = nova
     setMemoria(nova)
@@ -810,7 +833,7 @@ export function useDados(userId: string, ano: number) {
       localStorage.setItem(chaveMemoria(userId), JSON.stringify(nova))
     } catch { /* sem armazenamento: vale até recarregar */ }
     if (perfilSemTabela || !perfil) return
-    const { error } = await supabase.from('perfis').update({ consultor: { ...nova, gosto: gostoAgora.current, planejamento: planejamentoAgora.current } }).eq('user_id', userId)
+    const { error } = await gravarConsultor()
     if (error && !faltaTabela(error) && !faltaColuna(error)) falhou(error.message)
   }
 
@@ -826,7 +849,7 @@ export function useDados(userId: string, ano: number) {
     } catch { /* sem armazenamento: vale até recarregar */ }
     if (perfilSemTabela || !perfil) return
     try {
-      await supabase.from('perfis').update({ consultor: { ...memoriaAgora.current, gosto: novo, planejamento: planejamentoAgora.current } }).eq('user_id', userId)
+      await gravarConsultor()
     } catch { /* sem rede: fica a cópia do aparelho */ }
   }
 
@@ -844,8 +867,9 @@ export function useDados(userId: string, ano: number) {
     window.clearTimeout(esperaPlanejamento.current)
     esperaPlanejamento.current = window.setTimeout(async () => {
       try {
-        await supabase.from('perfis').update({ consultor: { ...memoriaAgora.current, gosto: gostoAgora.current, planejamento: planejamentoAgora.current } }).eq('user_id', userId)
-      } catch { /* sem rede: fica a cópia do aparelho */ }
+        const { error } = await gravarConsultor()
+        if (error && !faltaTabela(error) && !faltaColuna(error)) falhou(error.message)
+      } catch { /* sem rede: fica a cópia do aparelho; sobe na próxima abertura */ }
     }, 800)
   }
 
