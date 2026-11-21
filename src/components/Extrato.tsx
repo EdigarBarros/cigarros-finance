@@ -14,6 +14,7 @@ import { Icone } from './Icone'
 import { Modal } from './ui'
 import { Seletor } from './Escolhas'
 import { tx } from '../lib/textos'
+import { textoDoErro } from '../lib/textoDoErro'
 
 interface Linha extends LinhaExtrato {
   chave: number
@@ -140,7 +141,7 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
       setBancoId(meu?.id ?? '')
       setEtapa('revisar')
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
+      const msg = textoDoErro(e)
       // fica registrado para entender o que falhou: só o tipo e o tamanho do arquivo, nunca o conteúdo do extrato
       // (o PDF que não abre já foi registrado com o erro do leitor, em lib/extrato.ts)
       // (arquivo sem lançamentos já decidiu acima se era defeito do leitor)

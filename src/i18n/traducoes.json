@@ -16963,6 +16963,10 @@
     "en": "Save backup",
     "es": "Guardar copia"
   },
+  "Não consegui gerar o backup: {0}": {
+    "en": "Couldn't create the backup: {0}",
+    "es": "No pude crear la copia de seguridad: {0}"
+  },
   "Conferências com o banco": {
     "en": "Bank checks",
     "es": "Conferencias con el banco"

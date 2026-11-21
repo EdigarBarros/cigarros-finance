@@ -59,6 +59,7 @@ import { PopupNovidade, useNovidade } from './Novidades'
 import { BarraDeAbasMovel, FundoMovel, ListaDaFolha, TopoMovel, useCorDaBarraDoCelular } from '../movel/Casca'
 import type { Tom } from '../movel/tom'
 import { Modal } from './ui'
+import { textoDoErro } from '../lib/textoDoErro'
 
 // Cada tela e cada janela vira um pedaço à parte: o painel abre só com o que a pessoa vê e o resto chega sob demanda
 // (e é baixado em segundo plano logo depois, veja `carregarRestante`).
@@ -465,7 +466,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     } catch (e) {
       d.setErro(ehErroDeVersao(e)
         ? tx('Saiu uma versão nova do OpusCash. Feche esta janela e ele se atualiza sozinho; depois é só tentar de novo.')
-        : e instanceof Error ? e.message : String(e))
+        : textoDoErro(e))
     } finally {
       setOcupado(null)
     }
@@ -1118,7 +1119,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         saldoInicial={d.saldoInicial}
         aoSaldoInicial={() => { setAjustes(false); setEditandoSaldoInicial(true) }}
         aoCategorias={() => { setAjustes(false); ctx.gerenciarCategorias() }}
-        aoBackup={() => tarefa(tx('Preparando o backup…'), async () => (await import('../lib/planilha')).exportarBackup())}
+        aoBackup={async () => (await import('../lib/planilha')).exportarBackup()}
         aoImportar={() => { setAjustes(false); arquivo.current?.click() }}
         aoExtrato={() => { setAjustes(false); setExtrato(true) }}
         aoOrganizar={() => { setAjustes(false); setOrganizar(true) }}

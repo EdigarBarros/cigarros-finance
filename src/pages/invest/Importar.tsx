@@ -20,6 +20,7 @@ import { Modal } from '../../components/ui'
 import type { Ctx } from '../contexto'
 import { type AcoesInvest } from './apoio'
 import { fmtQtd } from './formatos'
+import { textoDoErro } from '../../lib/textoDoErro'
 
 type Passo = { em: 'escolher' } | { em: 'lendo' } | { em: 'previa'; lido: ArquivoLido & { hash: string }; nome: string } | { em: 'gravando' }
   | { em: 'pronto'; importadas: number; repetidas: number; pendentes: number; precos: number; ativos: number }
@@ -130,7 +131,7 @@ export function ImportarArquivo({ c, aoFechar, aoVerPendencias }: { c: Ctx; aoFe
       setPasso({ em: 'pronto', importadas: r.gravadas.length, repetidas, pendentes: pendentes.length, precos, ativos: criados.size })
     } catch (e) {
       registrarErro(e, 'invest gravar importacao')
-      setErro(e instanceof Error ? e.message : String(e))
+      setErro(textoDoErro(e))
       setPasso({ em: 'previa', lido, nome })
       void inv.recarregar()
     }
