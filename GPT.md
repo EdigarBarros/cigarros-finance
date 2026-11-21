@@ -1561,3 +1561,11 @@ Transições entre perfis, login/criar conta e apresentação.
 senha, manter desligado, senha errada e certa, reabrir o app, sessão vencida, Início e voltar, Gerenciar e a última conta).
 Fotos no app de demonstração (PC 1440×900 e celular 390×844): voo, tela de senha, transição para o login e login com a chave.
 **Não testado em celular de verdade.**
+
+### 21/11/2026 — Claude — App Android 2.8.8 (código 26)
+
+**Estado:** `.aab` gerado **sem assinatura** (`OpusCash-2.8.8-codigo26.aab`), entregue ao dono pela conversa da sessão.
+Substitui a 2.8.7 (código 25) se ela ainda não foi enviada. Falta assinar com a chave de upload e enviar no Play Console.
+
+- Leva os perfis com "Manter conectado", tela de senha e transições (#270), além de #267 a #269 (sino, Invest).
+- `versionCode` 25 → 26, `versionName` 2.8.7 → 2.8.8. Conferido no pacote: o texto "Manter conectado" e nenhum `fake.supabase`.
