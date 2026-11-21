@@ -1569,3 +1569,22 @@ Substitui a 2.8.7 (código 25) se ela ainda não foi enviada. Falta assinar com 
 
 - Leva os perfis com "Manter conectado", tela de senha e transições (#270), além de #267 a #269 (sino, Invest).
 - `versionCode` 25 → 26, `versionName` 2.8.7 → 2.8.8. Conferido no pacote: o texto "Manter conectado" e nenhum `fake.supabase`.
+
+### 21/11/2026 — Claude — Abrir o app: login para quem não tem conta; perfis com duas ou mais contas
+
+**Pedido do dono.** Visitante novo vai direto para o login. Com duas contas ou mais no aparelho, abrir o app cai sempre nos
+perfis; se o sistema perceber que uma conta é quase sempre a usada, entra direto nela; se a pessoa alterna, mostra os perfis.
+
+**O que mudou.** `lib/contas.ts`: `escolherAoAbrir` (na abertura do app, antes de o Supabase ler a sessão) e `contaDeSempre`
+(70% das últimas 10 aberturas, com pelo menos 5). As aberturas ficam em `opuscash.aberturas` (escolha de perfil, entrada com
+senha, abertura direta). "Acabou de abrir" é a mesma regra do "Manter conectado": aba nova e nenhuma outra com sinal em 45 s;
+recarregar não conta. `App.tsx`: sem contas, o login (com "Início" para a apresentação; no app Android, sem botão).
+
+**Validação.** `npx tsc -b`, build, `testar-contas.cjs` 53/53 (visitante novo no login, "Início" do login, alternando abre os
+perfis, quase sempre a mesma abre direto).
+
+### 21/11/2026 — Claude — App Android 2.8.9 (código 27)
+
+**Estado:** `.aab` gerado **sem assinatura** (`OpusCash-2.8.9-codigo27.aab`), entregue ao dono pela conversa da sessão.
+Substitui a 2.8.7 e a 2.8.8 se ainda não foram enviadas. Leva a abertura com perfis (duas ou mais contas) e o login direto
+sem contas. `versionCode` 26 → 27, `versionName` 2.8.8 → 2.8.9. Conferido no pacote: `opuscash.aberturas` e nenhum `fake.supabase`.
