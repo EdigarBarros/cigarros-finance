@@ -12,13 +12,13 @@ import { infoClasse, nomeOperacao, rotuloDoAtivo } from '../../lib/invest/tipos'
 import { fmtCurto } from '../../lib/visuais'
 import { tx } from '../../lib/textos'
 import { Icone } from '../../components/Icone'
-import { Numero } from '../../components/Numero'
-import { Progresso, Segmentado } from '../../components/ui'
+import { Progresso } from '../../components/ui'
 import { BarraDividida, Rosquinha } from '../../components/Vitrine'
 import { COR_DO_TOM } from '../analiseApoio'
 import type { Ctx } from '../contexto'
-import { amostrar, inicioDoPeriodo, useDescobertas, type Periodo } from './analista'
-import { GraficoDeLinhas, Quadro, type AcoesInvest } from './apoio'
+import { inicioDoPeriodo, serieDoValor, useDescobertas, type Periodo } from './analista'
+import { Quadro, type AcoesInvest } from './apoio'
+import { GraficoDoValor, textoDoPeriodo } from './GraficoDoValor'
 import { fmtVariacao, tomDoNumero } from './formatos'
 
 export function VisaoGeral({ c, acoes }: { c: Ctx; acoes: AcoesInvest }) {
@@ -28,7 +28,7 @@ export function VisaoGeral({ c, acoes }: { c: Ctx; acoes: AcoesInvest }) {
   const [periodo, setPeriodo] = useState<Periodo>('12m')
   const de = inicioDoPeriodo(periodo, k.hoje, k.primeiraOperacao)
   const d = useMemo(() => desempenho(inv.linha, de), [inv.linha, de])
-  const amostra = useMemo(() => amostrar(inv.linha, de, k.hoje), [inv.linha, de, k.hoje])
+  const serie = useMemo(() => serieDoValor(inv.linha, de, k.hoje), [inv.linha, de, k.hoje])
   const cdi = d && d.rentabilidade !== null && diasEntre(d.de, d.ate) >= 30 ? cdiNoPeriodo(d.de, d.ate, inv.indices) : null
   const lista = useDescobertas(c)
   const destaque = lista[0]
@@ -46,27 +46,20 @@ export function VisaoGeral({ c, acoes }: { c: Ctx; acoes: AcoesInvest }) {
   return (
     <>
       <section className="cartao inv-resumo">
-        <div className="inv-resumo-topo">
-          <div className="inv-resumo-numeros">
-            <span className="inv-rotulo">{tx('Investido hoje')}</span>
-            <strong className="inv-numero"><Numero valor={k.valor} formato={fmtValor} /></strong>
-            <div className="inv-chips">
-              {d && d.rentabilidade !== null && (
-                <span className={`inv-chip ${tomDoNumero(d.rentabilidade)}`} title={tx('Rentabilidade no período, já descontados os aportes')}>
-                  <Icone nome={d.rentabilidade >= 0 ? 'sobe' : 'desce'} tamanho={13} /> {tx('{0} de rentabilidade', fmtVariacao(d.rentabilidade))}
-                </span>
-              )}
+        <GraficoDoValor estreito={c.mobile} rotulo={tx('Investido hoje')} formato={fmtValor} formatoCurto={fmtCurto} altura={c.mobile ? 190 : 250}
+          agora={{ valor: k.valor, ganho: d?.ganho ?? null, rentabilidade: d?.rentabilidade ?? null, aportado: k.aportadoLiquido }}
+          serie={serie} texto={textoDoPeriodo(periodo, de === null)} periodo={{ valor: periodo, aoMudar: setPeriodo }}
+          extras={(cdi || k.emDia < 0.9) && (
+            <>
               {cdi && <span className="inv-chip" title={tx('Quanto o CDI rendeu no mesmo período')}>{tx('CDI: {0}', fmtVariacao(cdi.retorno))}</span>}
               {k.emDia < 0.9 && (
                 <button className="inv-chip atencao" onClick={() => acoes.atualizarValores()}>
                   <Icone nome="relogio" tamanho={13} /> {tx('{0} com valor antigo', fmtVariacao(1 - k.emDia).replace('+', ''))}
                 </button>
               )}
-            </div>
-          </div>
-          <Segmentado rotulo={tx('Período')} valor={periodo} aoMudar={setPeriodo}
-            opcoes={[{ id: '6m', nome: tx('6 meses') }, { id: '12m', nome: tx('12 meses') }, { id: 'tudo', nome: tx('Tudo') }]} />
-        </div>
+            </>
+          )}
+          vazio={<p className="quadro-vazio">{tx('O gráfico da evolução aparece a partir da segunda movimentação ou do segundo dia.')}</p>} />
         <ul className="inv-tres">
           <li>
             <small>{tx('Você aportou')}</small>
@@ -79,18 +72,12 @@ export function VisaoGeral({ c, acoes }: { c: Ctx; acoes: AcoesInvest }) {
             <span>{tx('valorização, vendas e proventos')}</span>
           </li>
           <li>
-            <small>{d && de ? tx('Ganho no período') : tx('Proventos em 12 meses')}</small>
-            {d && de ? <b className={tomDoNumero(d.ganho)}>{d.ganho > 0 ? '+' : ''}{fmtValor(d.ganho)}</b> : <b>{fmtValor(doze)}</b>}
-            <span>{d && de ? tx('sem contar {0} de aportes', fmtValor(d.aportes)) : tx('dividendos, rendimentos e juros')}</span>
+            <small>{tx('Proventos em 12 meses')}</small>
+            <b>{fmtValor(doze)}</b>
+            <span>{tx('dividendos, rendimentos e juros')}</span>
           </li>
         </ul>
-        {amostra.pontos.length >= 2 && inv.linha.length >= 2 ? (
-          <GraficoDeLinhas formato={fmtCurto} altura={c.mobile ? 180 : 230} rotulos={amostra.rotulos} series={[
-            { nome: tx('Vale'), cor: 'var(--destaque)', valores: amostra.pontos.map((p) => p?.valor ?? null), area: true },
-            { nome: tx('Você aportou'), cor: 'var(--an-destino)', valores: amostra.pontos.map((p) => p?.aportado ?? null), tracejada: true },
-          ]} />
-        ) : <p className="quadro-vazio">{tx('O gráfico da evolução aparece a partir da segunda movimentação ou do segundo dia.')}</p>}
-        {nivel !== 'simples' && <p className="inv-nota">{tx('A distância entre as duas linhas é o que o dinheiro rendeu e ainda está na carteira. Aporte não entra como ganho.')}</p>}
+        {nivel !== 'simples' && <p className="inv-nota">{tx('O ganho do topo já desconta os aportes: dinheiro que você pôs não conta como rendimento. A linha tracejada é o que você aportou.')}</p>}
       </section>
 
       <section className="vt-grade-2">

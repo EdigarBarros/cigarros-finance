@@ -1339,10 +1339,17 @@ mesma pessoa (chave estrangeira composta com `user_id`).
 
 | Aba | O que tem |
 | --- | --- |
-| Visão geral | Investido hoje, rentabilidade do período (6 meses, 12 meses, tudo) com o CDI ao lado, aportado × resultado, o gráfico **Vale × Você aportou**, a divisão por tipo, a descoberta em destaque, o que vem pela frente (vencimentos e proventos anunciados), proventos recebidos, a meta e onde está |
+| Visão geral | Investido hoje no **gráfico do valor** (ganho e rentabilidade do período: 1 mês a tudo) com o CDI ao lado, aportado × resultado, a divisão por tipo, a descoberta em destaque, o que vem pela frente (vencimentos e proventos anunciados), proventos recebidos, a meta e onde está |
 | Carteira | Busca, filtro por tipo, ordenação, cada ativo com valor, fatia, resultado e o selo da idade do valor; o **detalhe do ativo** ("Como chegamos a esses números", características, evolução, operações e valores informados); todas as movimentações, de 30 em 30 |
 | Análises | A manchete, **O retrato da carteira** (maior ativo, renda variável, resgate a qualquer hora, valores em dia) e os cartões montados pelo compositor do Consultor, com "Por que estou vendo isso?" em cada um |
 | Planejamento | O plano, o aporte do mês contra o planejado e a sobra do orçamento, 12 meses de aportes, a projeção em três cenários com as hipóteses escritas, a simulação "e se eu aportar outro valor", a renda dos investimentos e os objetivos (as metas do OpusCash, por prazo) |
+
+**O gráfico do valor** (`pages/invest/GraficoDoValor.tsx`, na Visão geral e no detalhe de cada ativo) segue o jeito dos apps
+de corretora: o valor grande com os centavos menores, o ganho e a rentabilidade do período logo abaixo, a linha verde quando o
+período ganhou e vermelha quando perdeu (degradê embaixo), o maior e o menor valor marcados à direita, o ponto de hoje
+pulsando e os períodos em pílulas (1M, 3M, 6M, 1A, Tudo). Passar o dedo (ou as setas do teclado) troca o topo pelos números
+daquele dia. O ganho de cada ponto sai de `serieDoValor` (`pages/invest/analista.ts`), nas mesmas contas de `desempenho`:
+aporte não conta como ganho. A linha tracejada é o que a pessoa aportou.
 
 De propósito **não há nota da carteira**: uma nota diria se a carteira é boa, e isso depende do objetivo e do risco de cada
 pessoa. No lugar, medidas que qualquer um confere.

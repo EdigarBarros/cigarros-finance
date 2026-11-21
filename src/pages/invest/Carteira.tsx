@@ -15,8 +15,9 @@ import { Icone } from '../../components/Icone'
 import { Numero } from '../../components/Numero'
 import { Rosquinha } from '../../components/Vitrine'
 import type { Ctx } from '../contexto'
-import { amostrar } from './analista'
-import { Fatia, GraficoDeLinhas, Quadro, SeloDoValor, type AcoesInvest } from './apoio'
+import { inicioDoPeriodo, serieDoValor, type Periodo } from './analista'
+import { GraficoDoValor, textoDoPeriodo } from './GraficoDoValor'
+import { Fatia, Quadro, SeloDoValor, type AcoesInvest } from './apoio'
 import { fmtQtd, fmtVariacao, fonteDoValor, tomDoNumero } from './formatos'
 
 type Ordem = 'valor' | 'resultado' | 'nome' | 'vencimento'
@@ -252,7 +253,10 @@ export function DetalheDoAtivo({ c, p, acoes }: { c: Ctx; p: Posicao; acoes: Aco
   const emOutraMoeda = p.moeda !== c.perfil.moeda
   const linha = useMemo(() => linhaDoTempo(inv.entrada, { ativos: new Set([a.id]) }), [inv.entrada, a.id])
   const d = useMemo(() => desempenho(linha, null), [linha])
-  const amostra = useMemo(() => amostrar(linha, null, inv.c.hoje, 40), [linha, inv.c.hoje])
+  const [periodo, setPeriodo] = useState<Periodo>('tudo')
+  const de = inicioDoPeriodo(periodo, inv.c.hoje, p.primeiraOperacao)
+  const dp = useMemo(() => desempenho(linha, de), [linha, de])
+  const serie = useMemo(() => serieDoValor(linha, de, inv.c.hoje), [linha, de, inv.c.hoje])
   const precos = inv.d.precos.filter((x) => x.ativo_id === a.id).sort((x, y) => (x.data < y.data ? 1 : -1))
   const pontas = [
     a.indexador && a.taxa !== null ? { rotulo: tx('Como rende'), valor: a.indexador === 'pre' ? tx('{0}% ao ano', fmtTaxa(a.taxa)) : a.indexador === 'ipca' ? tx('IPCA + {0}% ao ano', fmtTaxa(a.taxa)) : tx('{0}{1}', fmtTaxa(a.taxa), NOME_INDEXADOR[a.indexador]()) } : null,
@@ -349,13 +353,13 @@ export function DetalheDoAtivo({ c, p, acoes }: { c: Ctx; p: Posicao; acoes: Aco
         </Quadro>
       </section>
 
-      {amostra.pontos.length >= 2 && linha.length >= 2 && (
-        <Quadro icone="ano" titulo={tx('Evolução')}>
-          <GraficoDeLinhas formato={fmtCurto} altura={c.mobile ? 160 : 200} rotulos={amostra.rotulos} series={[
-            { nome: tx('Vale'), cor: info.cor, valores: amostra.pontos.map((x) => x?.valor ?? null), area: true },
-            { nome: tx('Você aportou'), cor: 'var(--an-destino)', valores: amostra.pontos.map((x) => x?.aportado ?? null), tracejada: true },
-          ]} />
-        </Quadro>
+      {linha.length >= 2 && (
+        <section className="cartao inv-quadro">
+          <GraficoDoValor estreito={c.mobile} rotulo={tx('Evolução')} formato={fmtValor} formatoCurto={fmtCurto} altura={c.mobile ? 170 : 220}
+            agora={{ valor: serie.pontos[serie.pontos.length - 1]?.valor ?? p.valorP, ganho: dp?.ganho ?? null, rentabilidade: dp?.rentabilidade ?? null, aportado: serie.pontos[serie.pontos.length - 1]?.aportado ?? null }}
+            serie={serie} texto={textoDoPeriodo(periodo, de === null)} periodo={{ valor: periodo, aoMudar: setPeriodo }}
+            vazio={<p className="quadro-vazio">{tx('O gráfico da evolução aparece a partir da segunda movimentação ou do segundo dia.')}</p>} />
+        </section>
       )}
 
       <Movimentacoes c={c} acoes={acoes} ativoId={a.id} />
