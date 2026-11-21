@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js'
 import { lazy, Suspense, useEffect, useReducer, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { BotaoIdioma } from './components/BotaoIdioma'
 import { BotaoTema } from './components/BotaoTema'
 import { Carregando } from './components/Carregando'
@@ -17,6 +18,7 @@ import { aoMudarSessao, pararDeAdicionar, useAdicionando, useContasSalvas } from
 import { EscolherConta } from './components/EscolherConta'
 import { useSemInternet } from './lib/conexao'
 import { iniciarUso, marcarTela } from './lib/uso'
+import { semMovimento } from './lib/tema'
 import { Apresentacao } from './pages/Apresentacao'
 import './pages/apresentacao.css'
 import './pages/apresentacao-telas.css'
@@ -48,25 +50,37 @@ export default function App() {
   const [sessao, setSessao] = useState<Session | null | undefined>(undefined)
   const [doc, setDoc] = useState(documentoDoHash)
   const [recuperando, setRecuperando] = useState(false)
-  // null = landing; senão, qual aba do login abrir (entrar ou criar conta)
-  const [login, setLogin] = useState<'entrar' | 'criar' | null>(null)
+  // null = a tela de entrada (perfis, ou a apresentação para quem nunca entrou); senão, qual abrir: o login (entrar ou criar
+  // conta) ou a apresentação pedida na tela de perfis
+  const [login, setLogin] = useState<Destino | null>(null)
   // várias contas no aparelho (lib/contas.ts): as lembradas e o "Adicionar outra conta" pedido no menu
   const contas = useContasSalvas()
   const adicionando = useAdicionando()
-  // abrir o login entra no histórico: o "voltar" do navegador (ou o gesto de voltar do celular) traz de volta à apresentação
-  const abrirLogin = (m: 'entrar' | 'criar') => { history.pushState({ opusLogin: m }, ''); setLogin(m) }
-  const voltarAoInicio = () => { if (history.state?.opusLogin) history.back(); else setLogin(null) }
+  // abrir o login entra no histórico: o "voltar" do navegador (ou o gesto de voltar do celular) traz de volta à tela anterior
+  const abrirLogin = (m: Destino) => trocarDeTela('vai', () => { history.pushState({ opusLogin: m }, ''); setLogin(m) })
+  const voltarAoInicio = () => { if (history.state?.opusLogin) history.back(); else trocarDeTela('volta', () => setLogin(null)) }
   useEffect(() => {
-    const aoVoltar = () => setLogin(history.state?.opusLogin ?? null)
+    // a página abre sempre na tela de entrada: uma marca de login que ficou no histórico (entrou, recarregou, saiu) faria o
+    // "voltar" cair no login em vez dos perfis
+    if (history.state?.opusLogin) history.replaceState(null, '')
+    const aoVoltar = () => trocarDeTela('volta', () => setLogin(history.state?.opusLogin ?? null))
     window.addEventListener('popstate', aoVoltar)
     return () => window.removeEventListener('popstate', aoVoltar)
   }, [])
+  // tirou a última conta do aparelho (Gerenciar contas): segue para o login, em vez de voltar à apresentação
+  const tinhaContas = useRef(contas.length > 0)
+  useEffect(() => {
+    if (tinhaContas.current && !contas.length && !login) abrirLogin('entrar')
+    tinhaContas.current = contas.length > 0
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contas.length])
 
   useEffect(() => {
     if (!configurado) return
     supabase.auth.getSession().then(({ data }) => setSessao(data.session))
     const { data } = supabase.auth.onAuthStateChange((e, s) => {
-      aoMudarSessao(e, s)
+      // outra conta entrou e a página vai recarregar: a tela de agora (a senha com o "tudo certo") fica até lá
+      if (aoMudarSessao(e, s)) return
       setSessao(s)
       if (e === 'PASSWORD_RECOVERY') setRecuperando(true)
     })
@@ -95,12 +109,33 @@ export default function App() {
     // a propaganda (com o preço) não faz sentido: abre direto no login.
     // no app da Play Store não há apresentação para onde voltar
     // Com contas lembradas neste aparelho, primeiro a escolha de qual abrir (como no Google).
-    if (!login && contas.length) return comIdioma(<EscolherConta aoOutra={() => abrirLogin('entrar')} />)
-    if (login || noAppAndroid) return comIdioma(<Login inicial={login ?? 'entrar'} aoVoltar={noAppAndroid && !contas.length ? undefined : voltarAoInicio} />)
+    if (!login && contas.length) {
+      return comIdioma(<EscolherConta aoOutra={() => abrirLogin('entrar')} aoInicio={noAppAndroid ? undefined : () => abrirLogin('apresentacao')} />)
+    }
+    if (login === 'apresentacao' && !noAppAndroid) return comIdioma(<Apresentacao onLogin={() => abrirLogin('entrar')} onSignup={() => abrirLogin('criar')} />)
+    if (login || noAppAndroid) {
+      return comIdioma(<Login inicial={login === 'criar' ? 'criar' : 'entrar'} aoVoltar={noAppAndroid && !contas.length ? undefined : voltarAoInicio}
+        rotuloVoltar={contas.length ? tx('Voltar') : undefined} />)
+    }
     return comIdioma(<Apresentacao onLogin={() => abrirLogin('entrar')} onSignup={() => abrirLogin('criar')} />)
   }
 
   return <ComAcesso userId={sessao.user.id} email={sessao.user.email ?? ''} nome={sessao.user.user_metadata?.nome} />
+}
+
+type Destino = 'entrar' | 'criar' | 'apresentacao'
+
+/**
+ * Troca entre as telas de fora do painel (perfis, login, apresentação) com uma transição: a tela de agora recua e gira um
+ * pouco, a nova chega do outro lado (index.css, ::view-transition). `vai` entra mais fundo, `volta` faz o caminho contrário.
+ * Sem suporte do navegador, ou com animações reduzidas, só troca.
+ */
+function trocarDeTela(sentido: 'vai' | 'volta', mudar: () => void) {
+  const doc = document as Document & { startViewTransition?: (f: () => void) => { finished: Promise<void> } }
+  if (!doc.startViewTransition || semMovimento()) { mudar(); return }
+  document.documentElement.dataset.troca = sentido
+  const t = doc.startViewTransition(() => flushSync(mudar))
+  void t.finished.finally(() => { delete document.documentElement.dataset.troca })
 }
 
 /** Só abre o painel para quem está no teste grátis, com a assinatura em dia ou com a conta liberada. */

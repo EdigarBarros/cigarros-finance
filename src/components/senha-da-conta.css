@@ -1,0 +1,125 @@
+/* =========================================================================
+   Tela de senha do perfil (components/SenhaDaConta.tsx): o cartão no meio, as peças do OpusCash vagando em 3D atrás.
+   Resposta ao digitar: o anel em volta da foto enche e pulsa a cada letra. Errou: o cartão treme e o anel fica vermelho.
+   Acertou: o anel fecha verde, o selo de certo salta e o cartão vem para perto antes de a página recarregar na conta.
+   ========================================================================= */
+
+.sc {
+  --sc-fundo: #05070d;
+  --sc-cor: var(--destaque);
+  position: fixed; inset: 0; z-index: 1; overflow: hidden auto; display: grid; place-items: center;
+  padding: calc(84px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));
+  background: radial-gradient(60% 50% at 50% 45%, color-mix(in srgb, var(--marca-2) 18%, transparent), transparent 70%), var(--sc-fundo);
+  color: var(--texto);
+}
+:root[data-tema='claro'] .sc { --sc-fundo: #e9eef7; }
+.sc .fo { position: fixed; }
+.sc-veu {
+  position: fixed; inset: 0; pointer-events: none;
+  background: radial-gradient(42% 46% at 50% 50%, color-mix(in srgb, var(--sc-fundo) 82%, transparent), transparent 75%);
+}
+.sc-errou { --sc-cor: var(--saida); }
+.sc-certo { --sc-cor: var(--entrada); }
+
+.sc-topo {
+  position: fixed; z-index: 2; top: calc(14px + env(safe-area-inset-top)); left: calc(14px + env(safe-area-inset-left));
+  display: flex; align-items: center; gap: 18px;
+}
+.sc-voltar {
+  display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px 0 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--borda); color: var(--texto-2); font: 600 14px var(--fonte);
+  background: color-mix(in srgb, var(--superficie-forte) 78%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+.sc-voltar:hover { color: var(--texto); }
+
+.sc-cartao {
+  position: relative; z-index: 1; box-sizing: border-box; width: min(400px, calc(100vw - 32px)); display: grid; justify-items: center; gap: 14px; padding: 30px 28px 22px;
+  border-radius: 28px; text-align: center;
+  background: color-mix(in srgb, var(--superficie) 96%, transparent); border: 1px solid var(--borda);
+  backdrop-filter: blur(18px) saturate(150%); -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow: var(--sombra-alta), 0 0 0 1px color-mix(in srgb, var(--sc-cor) 0%, transparent);
+  animation: sc-chega .7s var(--mola) both; transition: box-shadow .4s;
+}
+@keyframes sc-chega { from { opacity: 0; transform: perspective(900px) translateY(26px) rotateX(14deg) scale(.94); } }
+.sc-cartao.tremeu { animation: sc-treme .5s ease both; }
+@keyframes sc-treme { 15%, 55% { transform: translateX(-12px); } 35%, 75% { transform: translateX(12px); } 90% { transform: translateX(-4px); } }
+.sc-certo .sc-cartao {
+  box-shadow: var(--sombra-alta), 0 0 0 2px color-mix(in srgb, var(--entrada) 60%, transparent), 0 0 60px -10px var(--entrada);
+  animation: sc-vai .9s .35s cubic-bezier(.6, 0, .8, .4) both;
+}
+@keyframes sc-vai { to { opacity: 0; transform: perspective(900px) translateZ(220px) scale(1.06); } }
+
+/* a foto com o anel */
+.sc-palco { position: relative; width: 120px; height: 120px; display: grid; place-items: center; margin-bottom: 4px; animation: sc-foto .8s var(--mola) both; }
+@keyframes sc-foto { from { transform: scale(1.5); opacity: 0; } }
+.sc-aro { position: absolute; inset: 0; overflow: visible; transform: rotate(-90deg); }
+.sc-aro circle { fill: none; stroke-width: 5; }
+.sc-aro-trilho { stroke: var(--preench-2); }
+.sc-aro-valor {
+  stroke: var(--sc-cor); stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--p));
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--sc-cor) 70%, transparent));
+  transition: stroke-dashoffset .35s var(--mola), stroke .3s;
+}
+.sc-errou .sc-aro-valor { stroke-dashoffset: 0; animation: sc-apaga 1s .2s ease both; }
+@keyframes sc-apaga { to { stroke-dashoffset: 1; } }
+.sc-foto { position: relative; width: 96px !important; aspect-ratio: 1; border-radius: 50% !important; font-size: 36px; transition: transform .4s var(--mola-salto); }
+.sc-foto > b { font: 700 36px var(--fonte-titulo); }
+.sc-pulso {
+  position: absolute; inset: 12px; border-radius: 50%; border: 2px solid var(--sc-cor); pointer-events: none;
+  animation: sc-pulso .55s ease-out both;
+}
+@keyframes sc-pulso { from { transform: scale(1); opacity: .8; } to { transform: scale(1.32); opacity: 0; } }
+.sc-ok {
+  position: absolute; right: 2px; bottom: 2px; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+  color: #04241a; background: var(--entrada); box-shadow: 0 0 0 4px var(--superficie), 0 6px 18px -4px var(--entrada);
+  transform: scale(0); transition: transform .45s var(--mola-salto);
+}
+.sc-certo .sc-ok { transform: scale(1); }
+.sc-certo .sc-foto { transform: scale(1.06); }
+
+.sc-cartao h1 { margin: 0; font: 650 25px var(--fonte-titulo); letter-spacing: -.02em; }
+.sc-email { margin: -10px 0 4px; font-size: 14px; color: var(--texto-2); overflow-wrap: anywhere; }
+
+/* o campo: a linha embaixo acende com a cor do momento */
+.sc-campo {
+  position: relative; width: 100%; display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 6px 0 14px;
+  border-radius: 14px; background: var(--superficie-2); border: 1px solid var(--borda); color: var(--texto-2);
+  transition: border-color .25s, box-shadow .25s;
+}
+.sc-campo:focus-within { border-color: var(--sc-cor); box-shadow: 0 0 0 4px color-mix(in srgb, var(--sc-cor) 22%, transparent); }
+.sc-errou .sc-campo { border-color: var(--saida); }
+.sc-campo input {
+  flex: 1; min-width: 0; height: 100%; border: 0; outline: none; background: none; color: var(--texto);
+  font: 500 16px var(--fonte); letter-spacing: .04em;
+}
+.sc-campo input[type='password'] { letter-spacing: .22em; }
+.sc-campo input::placeholder { letter-spacing: 0; color: var(--texto-3); }
+.sc-olho { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 10px; background: none; color: var(--texto-2); cursor: pointer; }
+.sc-olho:hover { color: var(--texto); background: var(--preench-4); }
+.sc-linha {
+  position: absolute; left: 14px; right: 14px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--sc-cor);
+  transform: scaleX(var(--p, 0)); transform-origin: left; transition: transform .35s var(--mola);
+}
+.sc-cartao .chave-manter { width: 100%; }
+
+.sc-entrar {
+  width: 100%; height: 50px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 14px;
+  cursor: pointer; font: 650 15.5px var(--fonte); color: var(--destaque-texto); background: var(--destaque);
+  box-shadow: 0 12px 26px -12px var(--destaque); transition: transform .2s, opacity .2s, background .3s;
+}
+.sc-entrar:hover:not(:disabled) { transform: translateY(-1px); }
+.sc-entrar:active:not(:disabled) { transform: scale(.98); }
+.sc-entrar:disabled { cursor: default; opacity: .55; }
+.sc-conferindo .sc-entrar, .sc-certo .sc-entrar { opacity: 1; }
+.sc-certo .sc-entrar { background: var(--entrada); }
+.sc-entrar .en-girando { border-color: rgba(0, 0, 0, .2); border-top-color: var(--destaque-texto); }
+.sc-cartao .en-aviso { width: 100%; box-sizing: border-box; text-align: left; animation: sc-aviso .35s var(--mola) both; }
+@keyframes sc-aviso { from { opacity: 0; transform: translateY(-6px); } }
+.sc-esqueci { font-size: 13.5px; }
+
+@media (max-width: 860px) {
+  .sc { align-items: start; padding-top: calc(96px + env(safe-area-inset-top)); }
+  .sc-topo { gap: 10px; }
+  .sc-topo .marca { display: none; }
+  .sc-cartao { padding: 26px 20px 20px; border-radius: 24px; }
+}

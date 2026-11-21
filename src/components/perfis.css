@@ -20,7 +20,45 @@
 }
 .pf-fundo { position: absolute; inset: 0; }
 .pf-topo { position: absolute; z-index: 3; top: calc(24px + env(safe-area-inset-top)); left: calc(4vw + env(safe-area-inset-left)); }
+.pf-topo { display: flex; align-items: center; gap: 18px; }
 .pf-topo .marca-nome { color: var(--pf-texto); }
+/* "Início": volta para a apresentação do OpusCash */
+.pf-inicio {
+  display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 14px; border-radius: 999px; cursor: pointer;
+  color: var(--pf-texto-2); font: 600 13.5px var(--fonte); border: 1px solid color-mix(in srgb, var(--pf-texto) 18%, transparent);
+  background: color-mix(in srgb, var(--pf-texto) 6%, transparent); transition: color .2s, background .2s, border-color .2s;
+}
+.pf-inicio:hover { color: var(--pf-texto); background: color-mix(in srgb, var(--pf-texto) 12%, transparent); border-color: color-mix(in srgb, var(--pf-texto) 40%, transparent); }
+
+/* escolheu um perfil: o resto da tela recua e some enquanto o quadro voa para o meio */
+.pf.saindo .pf-escolha, .pf.saindo .pf-topo { transition: opacity .45s ease, transform .6s var(--mola); opacity: 0; transform: scale(.94); pointer-events: none; }
+.pf.saindo .pf-fundo { transition: opacity .7s .15s ease, transform .9s var(--mola); opacity: .25; transform: scale(1.06); }
+.pf-perfil.voando .pf-foto { visibility: hidden; }
+.pf-voo { position: fixed; z-index: 50; pointer-events: none; animation: pf-voa .85s cubic-bezier(.5, 0, .2, 1) both; }
+/* o giro fica numa camada sem opacidade (senão o 3D achata): frente com a foto, verso com o símbolo do OpusCash */
+.pf-voo-giro { position: absolute; inset: 0; transform-style: preserve-3d; animation: pf-gira .85s cubic-bezier(.5, 0, .2, 1) both; }
+.pf-voo-giro .pf-foto {
+  position: absolute; inset: 0; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .8);
+}
+.pf-voo-giro .pf-foto > b { font-size: clamp(34px, 3vw, 46px); }
+.pf-voo-verso { transform: rotateY(180deg); background: linear-gradient(145deg, #0e1525, #05070d) !important; }
+.pf-voo-verso img { width: 72% !important; height: auto !important; object-fit: contain !important; }
+.pf-voo-luz {
+  position: absolute; inset: -40%; border-radius: 50%; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle, color-mix(in srgb, var(--c1) 55%, transparent), transparent 65%);
+  animation: pf-luz .85s ease both;
+}
+@keyframes pf-voa {
+  0% { transform: none; }
+  60%, 80% { transform: translate(var(--dx), var(--dy)) scale(var(--s)); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(calc(var(--s) * 1.7)); opacity: 0; }
+}
+@keyframes pf-gira {
+  0% { transform: perspective(700px) rotateY(0deg); }
+  60%, 100% { transform: perspective(700px) rotateY(360deg); }
+}
+@keyframes pf-luz { 40% { opacity: 0; } 70% { opacity: 1; transform: scale(1.3); } 100% { opacity: 0; transform: scale(2); } }
 
 .pf-escolha {
   position: absolute; z-index: 3; left: 0; right: 0; bottom: max(30px, 5vh); padding: 0 24px;
@@ -100,7 +138,10 @@
   .pf { display: flex; flex-direction: column; }
   .pf-fundo { position: relative; flex: 1 1 auto; min-height: max(330px, 46dvh); }
   .pf-topo { top: calc(16px + env(safe-area-inset-top)); left: calc(16px + env(safe-area-inset-left)); }
-  .pf-topo .marca { transform: scale(.86); transform-origin: left center; }
+  .pf-topo { gap: 10px; }
+  .pf-topo .marca { transform: scale(.86); transform-origin: left center; margin-right: -18px; }
+  .pf-inicio { width: 36px; padding: 0; justify-content: center; }
+  .pf-inicio span { display: none; }
   .pf-escolha {
     position: relative; bottom: auto; isolation: isolate; gap: 16px;
     padding: 4px 16px calc(28px + env(safe-area-inset-bottom));

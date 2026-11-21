@@ -1,36 +1,30 @@
 import { lazy, Suspense, useEffect, useState, type CSSProperties } from 'react'
-import { abrir, iniciaisDe, nomeDe } from '../lib/abrirConta'
-import { esquecerConta, useContasSalvas, type ContaSalva } from '../lib/contas'
+import { coresDe, nomeDe } from '../lib/abrirConta'
+import { esquecerConta, pedeSenha, trocarPara, useContasSalvas, type ContaSalva } from '../lib/contas'
+import { semMovimento } from '../lib/tema'
 import { tx } from '../lib/textos'
 import { useMobile } from '../lib/useMobile'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
+import { FotoDaConta, SenhaDaConta } from './SenhaDaConta'
 import './perfis.css'
 
 // o fundo animado vem num arquivo à parte: só quem vê esta tela o baixa
 const CenasDoOpus = lazy(() => import('./CenasDoOpus'))
 
-/** Cores da foto de quem não tem foto: sempre a mesma para a mesma conta. */
-const CORES: [string, string][] = [
-  ['#1f8ef1', '#3d4be0'], ['#14c9a0', '#0b7d66'], ['#ff6b81', '#b8304a'], ['#ffb547', '#d9740b'], ['#8b7cf6', '#5340d6'],
-]
-function coresDe(id: string) {
-  let h = 0
-  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) >>> 0
-  const [c1, c2] = CORES[h % CORES.length]
-  return { '--c1': c1, '--c2': c2 } as CSSProperties
-}
+/** Quanto dura o voo do quadro escolhido até o centro (perfis.css, .pf-voo). */
+const VOO = 850
 
-function Perfil({ conta, ordem, editando, ocupada, aoEscolher }: {
-  conta: ContaSalva; ordem: number; editando: boolean; ocupada: boolean; aoEscolher: () => void
+function Perfil({ conta, ordem, editando, ocupada, voando, aoEscolher }: {
+  conta: ContaSalva; ordem: number; editando: boolean; ocupada: boolean; voando: boolean; aoEscolher: (foto: HTMLElement) => void
 }) {
   return (
-    <button type="button" className={`pf-perfil ${ocupada ? 'ocupada' : ''}`} style={{ '--i': ordem } as CSSProperties}
-      onClick={aoEscolher} disabled={ocupada} aria-label={editando ? tx('Tirar {0} deste aparelho', conta.email) : undefined}>
+    <button type="button" className={`pf-perfil ${ocupada ? 'ocupada' : ''} ${voando ? 'voando' : ''}`} style={{ '--i': ordem } as CSSProperties}
+      onClick={(e) => aoEscolher(e.currentTarget.querySelector('.pf-foto') as HTMLElement)} disabled={ocupada}
+      aria-label={editando ? tx('Tirar {0} deste aparelho', conta.email) : undefined}>
       <span className="pf-foto" style={coresDe(conta.id)}>
-        {conta.foto ? <img src={conta.foto} alt="" /> : <b aria-hidden="true">{iniciaisDe(conta) || '?'}</b>}
-        {conta.precisaEntrar && !editando && <em className="pf-selo">{tx('Pede a senha')}</em>}
-        {ocupada && <span className="pf-espera"><span className="en-girando" /></span>}
+        <FotoDaConta conta={conta} />
+        {pedeSenha(conta) && !editando && <em className="pf-selo">{tx('Pede a senha')}</em>}
         {editando && <span className="pf-tirar"><Icone nome="lixeira" tamanho={30} /></span>}
       </span>
       <span className="pf-nome" translate="no">{nomeDe(conta)}</span>
@@ -39,17 +33,40 @@ function Perfil({ conta, ordem, editando, ocupada, aoEscolher }: {
   )
 }
 
+/** O quadro escolhido saindo do lugar e voando, em 3D, para o meio da tela, onde some (e entra a abertura ou a senha). */
+function Voo({ conta, de }: { conta: ContaSalva; de: DOMRect }) {
+  const meioX = window.innerWidth / 2, meioY = window.innerHeight / 2
+  const estilo = {
+    left: de.left, top: de.top, width: de.width, height: de.height,
+    '--dx': `${meioX - (de.left + de.width / 2)}px`, '--dy': `${meioY - (de.top + de.height / 2)}px`,
+    '--s': Math.min(2.2, 200 / de.width),
+    ...coresDe(conta.id),
+  } as CSSProperties
+  return (
+    <div className="pf-voo" style={estilo} aria-hidden="true">
+      <i className="pf-voo-luz" />
+      <div className="pf-voo-giro">
+        <span className="pf-foto"><FotoDaConta conta={conta} /></span>
+        <span className="pf-foto pf-voo-verso"><img src="/simbolo.webp" alt="" /></span>
+      </div>
+    </div>
+  )
+}
+
 /**
  * Sem conta aberta, mas com contas lembradas neste aparelho: escolher com qual entrar, como os perfis de um serviço de
- * vídeo. No fundo passam as cenas do que o app faz (CenasDoOpus). "Gerenciar contas" (no celular, "Editar") deixa tirar
- * contas deste aparelho; "Outra conta" abre o login.
+ * vídeo. No fundo passam as cenas do que o app faz (CenasDoOpus). Tocar num perfil: o quadro voa para o meio e some, e entra
+ * a abertura do OpusCash (a conta abre direto) ou a tela de senha (conta sem "Manter conectado", ou com a sessão vencida).
+ * "Gerenciar contas" (no celular, "Editar") tira contas deste aparelho; "Outra conta" abre o login; "Início", a apresentação.
  */
-export function EscolherConta({ aoOutra }: { aoOutra: () => void }) {
+export function EscolherConta({ aoOutra, aoInicio }: { aoOutra: () => void; aoInicio?: () => void }) {
   const contas = useContasSalvas()
   const mobile = useMobile()
   const [ocupada, setOcupada] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [editando, setEditando] = useState(false)
+  const [voo, setVoo] = useState<{ conta: ContaSalva; de: DOMRect } | null>(null)
+  const [senhaDe, setSenhaDe] = useState<ContaSalva | null>(null)
 
   // no computador, o nome da cena fica embaixo à esquerda (como o título de uma série) se sobra espaço ao lado das contas
   const [largura, setLargura] = useState(() => window.innerWidth)
@@ -70,29 +87,51 @@ export function EscolherConta({ aoOutra }: { aoOutra: () => void }) {
     return () => window.removeEventListener('keydown', aoTeclar)
   }, [editando])
 
-  const escolher = (c: ContaSalva) => {
+  const escolher = async (c: ContaSalva, foto: HTMLElement) => {
     if (ocupada) return
     setErro(null)
     if (editando) { void esquecerConta(c.id); return }
     setOcupada(c.id)
-    void abrir(c, setErro).finally(() => setOcupada(null))
+    setVoo({ conta: c, de: foto.getBoundingClientRect() })
+    const pouso = new Promise<void>((r) => window.setTimeout(r, semMovimento() ? 0 : VOO))
+    // a conta abre enquanto o quadro voa; a página só recarrega (e a abertura entra) quando ele termina
+    const r = pedeSenha(c) ? 'precisa-entrar' : await trocarPara(c.id, pouso)
+    if (r === 'ok') return
+    await pouso
+    if (r === 'precisa-entrar') setSenhaDe(c)
+    else setErro(tx('Sem internet. Confira sua conexão e tente de novo.'))
+    setVoo(null)
+    setOcupada(null)
   }
   const alternarEdicao = () => { setErro(null); setEditando((x) => !x) }
 
+  if (senhaDe) {
+    const atual = contas.find((c) => c.id === senhaDe.id) ?? senhaDe
+    return <SenhaDaConta conta={atual} aoVoltar={() => setSenhaDe(null)} />
+  }
+
   const titulo = editando ? tx('Tirar contas deste aparelho') : mobile ? tx('Escolha sua conta') : tx('Quem está usando?')
   return (
-    <div className={`escolher-conta pf ${editando ? 'editando' : ''} ${legendaEmbaixo ? '' : 'legenda-no-alto'}`}
+    <div className={`escolher-conta pf ${editando ? 'editando' : ''} ${voo ? 'saindo' : ''} ${legendaEmbaixo ? '' : 'legenda-no-alto'}`}
       style={legendaEmbaixo ? { '--pf-livre': `${Math.min(460, livre)}px` } as CSSProperties : undefined}>
       <div className="pf-fundo">
         <Suspense fallback={null}><CenasDoOpus /></Suspense>
       </div>
-      <header className="pf-topo"><Marca /></header>
+      <header className="pf-topo">
+        <Marca />
+        {aoInicio && (
+          <button type="button" className="pf-inicio" onClick={aoInicio} title={tx('Conhecer o OpusCash')}>
+            <Icone nome="inicio" tamanho={16} /><span>{tx('Início')}</span>
+          </button>
+        )}
+      </header>
       <section className="pf-escolha" aria-labelledby="pf-titulo">
         <h1 id="pf-titulo" key={titulo}>{titulo}</h1>
         {editando && <p className="pf-dica">{tx('Toque numa conta para tirá-la deste aparelho. Os dados dela continuam guardados.')}</p>}
         <div className="pf-grade">
           {contas.map((c, k) => (
-            <Perfil key={c.id} conta={c} ordem={k} editando={editando} ocupada={ocupada === c.id} aoEscolher={() => escolher(c)} />
+            <Perfil key={c.id} conta={c} ordem={k} editando={editando} ocupada={ocupada === c.id} voando={voo?.conta.id === c.id}
+              aoEscolher={(foto) => void escolher(c, foto)} />
           ))}
           {!editando && (
             <button type="button" className="pf-perfil pf-outra" style={{ '--i': contas.length } as CSSProperties} onClick={aoOutra}>
@@ -114,6 +153,7 @@ export function EscolherConta({ aoOutra }: { aoOutra: () => void }) {
           </button>
         )}
       </section>
+      {voo && <Voo conta={voo.conta} de={voo.de} />}
     </div>
   )
 }
