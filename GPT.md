@@ -1582,3 +1582,9 @@ recarregar não conta. `App.tsx`: sem contas, o login (com "Início" para a apre
 
 **Validação.** `npx tsc -b`, build, `testar-contas.cjs` 53/53 (visitante novo no login, "Início" do login, alternando abre os
 perfis, quase sempre a mesma abre direto).
+
+### 21/11/2026 — Claude — App Android 2.8.9 (código 27)
+
+**Estado:** `.aab` gerado **sem assinatura** (`OpusCash-2.8.9-codigo27.aab`), entregue ao dono pela conversa da sessão.
+Substitui a 2.8.7 e a 2.8.8 se ainda não foram enviadas. Leva a abertura com perfis (duas ou mais contas) e o login direto
+sem contas. `versionCode` 26 → 27, `versionName` 2.8.8 → 2.8.9. Conferido no pacote: `opuscash.aberturas` e nenhum `fake.supabase`.
