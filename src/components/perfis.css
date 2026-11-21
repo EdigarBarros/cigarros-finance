@@ -135,8 +135,11 @@
 
 /* ---------- celular ---------- */
 @media (max-width: 860px) {
-  .pf { display: flex; flex-direction: column; }
-  .pf-fundo { position: relative; flex: 1 1 auto; min-height: max(330px, 46dvh); }
+  /* a tela tem a altura do celular: o palco de cima encolhe para as contas caberem. Se ainda assim não couber (muitas
+     contas num celular baixo), rola por dentro, sem a barra de rolagem aparecendo por cima das cenas */
+  .pf { display: flex; flex-direction: column; height: 100vh; height: 100dvh; min-height: 0; overflow: hidden auto; overscroll-behavior: none; scrollbar-width: none; }
+  .pf::-webkit-scrollbar { display: none; }
+  .pf-fundo { position: relative; flex: 1 0 auto; min-height: 250px; }
   .pf-topo { top: calc(16px + env(safe-area-inset-top)); left: calc(16px + env(safe-area-inset-left)); }
   .pf-topo { gap: 10px; }
   .pf-topo .marca { transform: scale(.86); transform-origin: left center; margin-right: -18px; }
@@ -161,4 +164,12 @@
   .pf-outra .pf-nome, .pf-editar .pf-nome { font-weight: 500; }
   .pf-perfil:hover .pf-foto { transform: none; outline-color: transparent; }
   .pf-perfil:focus-visible .pf-foto { outline-color: var(--pf-texto); }
+}
+
+/* celular baixo (ou com as barras do navegador à mostra): menos espaço entre as coisas */
+@media (max-width: 860px) and (max-height: 760px) {
+  .pf-escolha { gap: 12px; padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+  .pf-escolha::before { top: calc(34px + min(13vw, 56px)); }
+  .pf-grade { gap: 14px 16px; }
+  .pf-perfil { gap: 7px; font-size: 15px; }
 }
