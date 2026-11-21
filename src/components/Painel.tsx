@@ -41,6 +41,7 @@ import type { Ctx, Pagina } from '../pages/contexto'
 import { BlocoCartoes } from './BlocoCartoes'
 import { BlocoContasDoMes } from './BlocoContas'
 import { Kpi } from './ui'
+import { ArquivoPronto } from './ArquivoPronto'
 import { avisar, confirmar } from '../lib/avisos'
 import { atualizarConta, sairDestaConta, useContasSalvas } from '../lib/contas'
 import { ContasNoMenu } from './Contas'
@@ -1189,6 +1190,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
       />
     )}
     </Suspense>
+    {/* por último: o "Backup pronto" do iPhone fica por cima de Configurações, Zerar dados e Excluir conta */}
+    <ArquivoPronto />
     </>
   )
 

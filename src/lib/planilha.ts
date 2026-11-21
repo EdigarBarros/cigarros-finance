@@ -1,6 +1,7 @@
 import * as XLSX from 'xlsx'
 import { noAppNativo } from './appAndroid'
 import { compartilharArquivo } from './arquivoNoApp'
+import { noIOS, oferecerArquivo } from './arquivoPronto'
 import { tx } from './textos'
 import { MESES, parseNumero } from './format'
 import { lerTudo, supabase } from './supabase'
@@ -390,5 +391,11 @@ export async function exportarBackup() {
   const nome = `backup-financas-${new Date().toLocaleDateString('sv-SE')}.xlsx`
   // no app Android não há download: o arquivo vai para o compartilhar do Android (lib/arquivoNoApp.ts)
   if (noAppNativo) return compartilharArquivo(nome, XLSX.write(wb, { bookType: 'xlsx', type: 'base64' }) as string, tx('Backup do OpusCash'))
+  // no iPhone o download depois de esperar o banco é ignorado: o arquivo fica pronto e a pessoa toca de novo (lib/arquivoPronto.ts)
+  if (noIOS()) {
+    const bytes = XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer
+    oferecerArquivo({ nome, blob: new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), titulo: tx('Backup do OpusCash') })
+    return
+  }
   XLSX.writeFile(wb, nome)
 }
