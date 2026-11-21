@@ -101,6 +101,7 @@ export function GraficoDeLinhas({ series, rotulos, formato, altura = 220, legend
               ))}
             </defs>
             {[0, 0.5, 1].map((f) => <line key={f} className="inv-grafico-grade" x1="0" x2={L} y1={A * f} y2={A * f} />)}
+            {[1, 2, 3, 4, 5].map((k) => <line key={`v${k}`} className="inv-grafico-grade vertical" x1={(k / 6) * L} x2={(k / 6) * L} y1="0" y2={A} />)}
             {series.filter((s) => s.area).map((s, i) => {
               const vs = s.valores
               const primeiro = vs.findIndex((v) => v !== null)
@@ -111,6 +112,9 @@ export function GraficoDeLinhas({ series, rotulos, formato, altura = 220, legend
               <path key={s.nome} className={`inv-grafico-linha ${s.tracejada ? 'tracejada' : ''}`} d={caminho(s.valores)} stroke={s.cor} vectorEffect="non-scaling-stroke" />
             ))}
           </svg>
+          {foco === null && series.filter((s) => s.area && s.valores[n - 1] !== null && s.valores[n - 1] !== undefined).map((s) => (
+            <i key={s.nome} className="inv-grafico-fim" style={{ top: `${(y(s.valores[n - 1]!) / A) * 100}%`, '--c': s.cor } as CSSProperties} aria-hidden="true" />
+          ))}
           {foco !== null && (
             <>
               <span className="inv-grafico-cursor" style={{ left: `${(foco / (n - 1)) * 100}%` }} aria-hidden="true" />
