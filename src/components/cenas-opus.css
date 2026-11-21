@@ -405,3 +405,10 @@
   .cn-marcas { justify-content: center; gap: 3px; }
   .cn-marcas button { width: 20px; }
 }
+
+/* celular baixo: o nome da cena sem a frase de baixo, e o palco ganha a altura */
+@media (max-width: 860px) and (max-height: 760px) {
+  .cn-sub { display: none; }
+  .cn-titulo { font-size: clamp(24px, 7vw, 30px); margin-bottom: 4px; }
+  .cn-area { bottom: 64px; }
+}

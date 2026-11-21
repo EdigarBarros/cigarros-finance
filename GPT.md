@@ -1588,3 +1588,12 @@ perfis, quase sempre a mesma abre direto).
 **Estado:** `.aab` gerado **sem assinatura** (`OpusCash-2.8.9-codigo27.aab`), entregue ao dono pela conversa da sessão.
 Substitui a 2.8.7 e a 2.8.8 se ainda não foram enviadas. Leva a abertura com perfis (duas ou mais contas) e o login direto
 sem contas. `versionCode` 26 → 27, `versionName` 2.8.8 → 2.8.9. Conferido no pacote: `opuscash.aberturas` e nenhum `fake.supabase`.
+
+### 21/11/2026 — Claude — Perfis no celular: sem a barra de rolagem; app 2.9.0 (código 28)
+
+**Pedido do dono** (foto do iPhone): a barra branca de rolagem aparecia por cima da tela de perfis. A tela passava 20 a 30 px
+da altura útil quando o Safari mostra as barras dele (o palco tinha altura mínima de 330 px). Agora a tela tem a altura do
+celular (`100dvh`), o palco encolhe até 250 px, em celular baixo o texto da cena some e os espaços diminuem; se ainda assim
+não couber (muitas contas), rola por dentro sem a barra. Medido em 390×844, 390×664, 375×667 e 430×932 com 2, 3 e 5 contas:
+a página não rola mais. `testar-contas.cjs` 53/53. App 2.9.0 (código 28), `.aab` sem assinatura entregue pela conversa;
+substitui a 2.8.7, 2.8.8 e 2.8.9 se ainda não foram enviadas.
