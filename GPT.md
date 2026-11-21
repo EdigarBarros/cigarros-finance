@@ -1526,3 +1526,12 @@ pote enchendo, cartões e faturas, dívidas, metas, dinheiro guardado, resumo do
 Fotos no app de demonstração em 1600×900, 1366×768 (cinco contas, tema claro, editando) e 390×844 (escuro, claro e
 animações reduzidas), as nove cenas sem erro no console. **Não testado em celular de verdade** (desempenho do 3D em
 aparelho fraco não medido).
+
+### 21/11/2026 — Claude — App Android 2.8.7 (código 25)
+
+**Estado:** `.aab` gerado **sem assinatura** (`OpusCash-2.8.7-codigo25.aab`), entregue ao dono pela conversa da sessão.
+Falta assinar com a chave de upload e enviar no Play Console. Substitui a 2.8.6 (código 24) se ela ainda não foi enviada.
+
+- Leva a tela "Quem está usando?" com as cenas (#265) e tudo o que entrou desde a 2.8.6 (#262 a #264: backup e dívidas).
+- `versionCode` 24 → 25, `versionName` 2.8.6 → 2.8.7. SDK instalado na sessão como na 2.8.5 (`/opt/android-sdk`).
+- Conferido dentro do pacote: os arquivos `CenasDoOpus`, o texto "Quem está usando?" e nenhum `fake.supabase`.
