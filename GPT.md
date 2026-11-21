@@ -1504,3 +1504,25 @@ igual ao de Cartões.
 
 **Validação.** `npx tsc -b`, lint sem erro, build, traduções completas, `testar.mjs` 38/38; app de demonstração: conferir
 R$ 9.000 numa dívida estimada em R$ 7.697 gravou e mostrou "subiu R$ 1.302,95 (+16,9%)".
+
+### 21/11/2026 — Claude — "Quem está usando?": a tela de contas virou uma escolha de perfis com cenas do app
+
+**Pedido do dono.** Redesenhar a tela de escolher a conta inspirada na escolha de perfis de um serviço de vídeo (fotos
+de tela do computador e do celular): o símbolo do OpusCash no canto e, no fundo, no lugar do pôster, animações em 3D em
+loop mostrando o que o app faz (lançamentos com o calendário e várias moedas, consultor montando a tela, contas do mês com o
+pote enchendo, cartões e faturas, dívidas, metas, dinheiro guardado, resumo do ano e investimentos).
+
+**O que mudou.**
+- `components/EscolherConta.tsx` + `perfis.css`: a tela nova (antes era a lista no cartão de login, em `Contas.tsx`).
+  Computador: fileira de quadros + "Gerenciar contas"; celular: folha curva com três por linha, "Outra conta" e "Editar".
+  Editar mostra a lixeira; tocar tira a conta do aparelho (mesmo `esquecerConta` de antes). Sessão vencida: selo "Pede a senha".
+- `components/CenasDoOpus.tsx` + `cenas-opus.css` (arquivo à parte, carregado só nessa tela): as nove cenas, com marcas
+  clicáveis e o nome de cada cena. Valores inventados. Respeita as animações reduzidas.
+- `lib/abrirConta.ts`: `nomeDe`, `iniciaisDe` e `abrir` saíram de `Contas.tsx` (usados pelo menu e pela tela nova).
+- Armadilha encontrada: `.so-largo` já existe no `index.css` (`display: contents`); a classe das cenas é `cn-so-largo`.
+- `scripts/app-de-demonstracao/testar-contas.cjs` atualizado para a tela nova, com o "Editar" do celular.
+
+**Validação.** `npx tsc -b`, lint sem erro novo, build, traduções completas (0 faltando), `testar-contas.cjs` 40/40.
+Fotos no app de demonstração em 1600×900, 1366×768 (cinco contas, tema claro, editando) e 390×844 (escuro, claro e
+animações reduzidas), as nove cenas sem erro no console. **Não testado em celular de verdade** (desempenho do 3D em
+aparelho fraco não medido).

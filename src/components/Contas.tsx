@@ -1,13 +1,10 @@
 import { useState } from 'react'
 import { avisar } from '../lib/avisos'
-import { adicionarConta, esquecerConta, MAX_CONTAS, trocarPara, useContasSalvas, type ContaSalva } from '../lib/contas'
+import { abrir, iniciaisDe, nomeDe } from '../lib/abrirConta'
+import { adicionarConta, esquecerConta, MAX_CONTAS, useContasSalvas, type ContaSalva } from '../lib/contas'
 import { tx } from '../lib/textos'
 import { Icone } from './Icone'
-import { Marca } from './Marca'
 import './contas-salvas.css'
-
-const nomeDe = (c: ContaSalva) => c.nome?.trim() || c.email.split('@')[0]
-const iniciaisDe = (c: ContaSalva) => nomeDe(c).split(/\s+/).slice(0, 2).map((x) => x[0]?.toUpperCase() ?? '').join('')
 
 function Avatar({ conta }: { conta: ContaSalva }) {
   return <span className="avatar" aria-hidden="true">{conta.foto ? <img src={conta.foto} alt="" /> : iniciaisDe(conta) || '?'}</span>
@@ -36,14 +33,6 @@ function LinhaDaConta({ conta, ocupada, aoAbrir, aoTirar }: {
   )
 }
 
-/** Abre a conta; se a sessão dela venceu, leva ao login com o e-mail já preenchido. */
-async function abrir(c: ContaSalva, aoErro: (m: string) => void) {
-  if (c.precisaEntrar) { adicionarConta(c.email); return }
-  const r = await trocarPara(c.id)
-  if (r === 'precisa-entrar') adicionarConta(c.email)
-  else if (r === 'sem-internet') aoErro(tx('Sem internet. Confira sua conexão e tente de novo.'))
-}
-
 /**
  * No menu da conta (PC e celular): as outras contas lembradas neste aparelho, para trocar com um toque, e "Adicionar outra
  * conta". A conta aberta não aparece aqui: ela já está no topo do menu.
@@ -65,33 +54,6 @@ export function ContasNoMenu({ userId }: { userId: string }) {
           <Icone nome="mais" /> {tx('Adicionar outra conta')}
         </button>
       )}
-    </div>
-  )
-}
-
-/** Sem conta aberta, mas com contas lembradas: escolher com qual entrar (como no Google), ou entrar com outra. */
-export function EscolherConta({ aoOutra }: { aoOutra: () => void }) {
-  const contas = useContasSalvas()
-  const [ocupada, setOcupada] = useState<string | null>(null)
-  const [erro, setErro] = useState<string | null>(null)
-  return (
-    <div className="tela-central escolher-conta">
-      <div className="cartao login">
-        <div className="login-marca"><Marca grande /></div>
-        <h1>{tx('Escolha uma conta')}</h1>
-        <p className="escolher-sub">{tx('Contas que já entraram neste aparelho.')}</p>
-        <div className="cs-lista">
-          {contas.map((c) => (
-            <LinhaDaConta key={c.id} conta={c} ocupada={ocupada === c.id}
-              aoAbrir={() => { setErro(null); setOcupada(c.id); void abrir(c, setErro).finally(() => setOcupada(null)) }}
-              aoTirar={() => void esquecerConta(c.id)} />
-          ))}
-          <button type="button" className="cs-adicionar" onClick={aoOutra}>
-            <Icone nome="pessoa" /> {tx('Usar outra conta')}
-          </button>
-        </div>
-        {erro && <p className="en-aviso" role="alert">{erro}</p>}
-      </div>
     </div>
   )
 }
