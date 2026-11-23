@@ -53,6 +53,8 @@ export default function App() {
   // null = a tela de entrada (os perfis; sem contas no aparelho, o login); senão, qual abrir: o login (entrar ou criar
   // conta) ou a apresentação (pelo "Início" dos perfis ou do login)
   const [login, setLogin] = useState<Destino | null>(null)
+  const loginAgora = useRef(login)
+  useEffect(() => { loginAgora.current = login }, [login])
   // várias contas no aparelho (lib/contas.ts): as lembradas e o "Adicionar outra conta" pedido no menu
   const contas = useContasSalvas()
   const adicionando = useAdicionando()
@@ -63,7 +65,14 @@ export default function App() {
     // a página abre sempre na tela de entrada: uma marca de login que ficou no histórico (entrou, recarregou, saiu) faria o
     // "voltar" cair no login em vez dos perfis
     if (history.state?.opusLogin) history.replaceState(null, '')
-    const aoVoltar = () => trocarDeTela('volta', () => setLogin(history.state?.opusLogin ?? null))
+    // Só anima quando a tela de fora do painel muda de verdade. Dentro do painel, trocar de tela no computador muda o endereço
+    // (#/dividas) e isso também dispara "popstate": sem esta conta, toda troca de tela do painel girava em 3D por cima da
+    // animação dele (os blocos que sobem).
+    const aoVoltar = () => {
+      const destino = (history.state?.opusLogin ?? null) as Destino | null
+      if (destino === loginAgora.current) return
+      trocarDeTela('volta', () => setLogin(destino))
+    }
     window.addEventListener('popstate', aoVoltar)
     return () => window.removeEventListener('popstate', aoVoltar)
   }, [])
