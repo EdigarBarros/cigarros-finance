@@ -4487,7 +4487,8 @@ body { top: 0 !important; }
    Android pinta na barra de status (theme-color) */
 :root::before {
   content: ''; position: fixed; z-index: 9990; top: 0; left: 0; right: 0; height: var(--seguro-topo);
-  background: #090d18; pointer-events: none;
+  /* no celular, a cor do topo da tela aberta (movel/Casca.tsx, useCorDaBarraDoCelular): o degradê continua por trás da ilha */
+  background: var(--faixa-topo, #090d18); pointer-events: none; transition: background-color .7s var(--mola);
 }
 #root { padding-top: var(--seguro-topo); }
 .app { padding-left: var(--seguro-esq); padding-right: var(--seguro-dir); }
