@@ -108,13 +108,17 @@ export const pagaComAtraso = (p: Pick<FaturaPaga, 'pago_em' | 'tipo'> | null | u
   Boolean(p && !renegociada(p) && p.pago_em > vencimento)
 
 const chaveFatura = (cartao_id: string, ano: number, mes: number) => `${cartao_id}|${ano}|${mes}`
+/** Compra que outra pessoa paga (a assinatura da mãe no seu cartão): está na fatura, mas o gasto não é seu. */
+export const ehDeOutraPessoa = (l: Pick<Lancamento, 'pago_por'>) => Boolean(l.pago_por?.trim())
+
 /**
  * Compras de faturas renegociadas não contam nas saídas: a fatura virou uma dívida, e o que sai do bolso passa a ser
- * cada parcela paga dela (senão o mesmo gasto contaria duas vezes). Devolve o teste para filtrar os lançamentos.
+ * cada parcela paga dela (senão o mesmo gasto contaria duas vezes). Compra que outra pessoa paga também não: o dinheiro
+ * dela cobre a compra, e nem o gasto nem o que ela te passa são seus. Devolve o teste para filtrar os lançamentos.
  */
 export function contaNasSaidas(pagas: FaturaPaga[]) {
   const fora = new Set(pagas.filter(renegociada).map((p) => chaveFatura(p.cartao_id, p.ano, p.mes)))
-  return (l: Lancamento) => !fora.size || !l.cartao_id || !fora.has(chaveFatura(l.cartao_id, l.ano, l.mes))
+  return (l: Lancamento) => !ehDeOutraPessoa(l) && (!fora.size || !l.cartao_id || !fora.has(chaveFatura(l.cartao_id, l.ano, l.mes)))
 }
 
 export interface Fatura {
@@ -135,6 +139,8 @@ export interface Fatura {
   falta: number
   /** Compras que estavam nesta fatura e foram puladas para uma seguinte ("pula compra" do banco). */
   puladas: Lancamento[]
+  /** Parte da fatura que outras pessoas pagam, por pessoa (a maior primeiro). Está no valor, mas não é gasto seu. */
+  deOutros: { nome: string; valor: number }[]
 }
 
 /** Compra parcelada que ainda tem parcelas pela frente. */
@@ -221,8 +227,11 @@ export function faturaDoMes(
   const pagoEmParte = soma(destas.map((p) => p.valor))
   const falta = paga ? 0 : centavos(Math.max(0, valor - pagoEmParte))
   const puladas = doC.filter((l) => l.pulada_de && mesDaData(l.pulada_de, ano, mes) && !(l.ano === ano && l.mes === mes))
+  const porPessoa = new Map<string, number>()
+  for (const l of compras) if (ehDeOutraPessoa(l)) porPessoa.set(l.pago_por!.trim(), (porPessoa.get(l.pago_por!.trim()) ?? 0) + l.valor)
+  const deOutros = [...porPessoa].map(([nome, v]) => ({ nome, valor: centavos(v) })).sort((a, b) => b.valor - a.valor)
   return {
-    ano, mes, valor, fechamento, vencimento, paga, compras, parciais: destas, pagoEmParte, falta, puladas,
+    ano, mes, valor, fechamento, vencimento, paga, compras, parciais: destas, pagoEmParte, falta, puladas, deOutros,
     status: statusDaFatura(falta, paga, datasDaFatura(c, anterior.ano, anterior.mes).fechamento, fechamento, vencimento, hoje),
   }
 }

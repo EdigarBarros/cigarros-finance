@@ -30,6 +30,8 @@ const buscar = () =>
     // migração 38 (pular compra, pagar parte, pagar com o cofrinho): a tabela de pagamentos de parte e a coluna da compra pulada
     lerTudo(() => supabase.from('faturas_parciais').select('*').order('pago_em').order('id')),
     supabase.from('lancamentos').select('pulada_de').limit(1),
+    // migração 39 (compra que outra pessoa paga)
+    supabase.from('lancamentos').select('pago_por').limit(1),
   ])
 
 /** Campos que só existem com a migração 9: sem ela, ficam de fora do que é gravado. */
@@ -73,9 +75,12 @@ export function useCartoes(opcoes: {
   const [parciais, setParciais] = useState<FaturaParcial[]>([])
   /** Migração 38 pendente: pular compra, pagar parte e pagar com o cofrinho ficam desligados. */
   const [sem38, setSem38] = useState(false)
+  /** Migração 39 pendente: "Quem paga esta compra?" fica desligado. */
+  const [semPagoPor, setSemPagoPor] = useState(false)
   const [carregado, setCarregado] = useState(false)
 
-  const aplicar = useCallback(([c, f, l, xf, xc, p, xp]: Awaited<ReturnType<typeof buscar>>) => {
+  const aplicar = useCallback(([c, f, l, xf, xc, p, xp, x39]: Awaited<ReturnType<typeof buscar>>) => {
+    setSemPagoPor(Boolean(x39.error && faltaTabela(x39.error)))
     const e = c.error ?? f.error ?? l.error
     const ex = xf.error ?? xc.error
     setSemExtras(Boolean(ex && faltaTabela(ex)))
@@ -236,6 +241,14 @@ export function useCartoes(opcoes: {
     return !error
   }
 
+  /** Muda todas as parcelas de uma compra de uma vez (quem paga). */
+  const atualizarCompra = async (compra_id: string, patch: Partial<Lancamento>) => {
+    setTodas((xs) => xs.map((x) => (x.compra_id === compra_id ? { ...x, ...patch } : x)))
+    const { error } = await supabase.from('lancamentos').update(patch).eq('compra_id', compra_id)
+    if (error) return falhou(error.message)
+    await recarregarLancs()
+  }
+
   // ---------- pular compra para a próxima fatura (migração 38) ----------
 
   /**
@@ -258,7 +271,7 @@ export function useCartoes(opcoes: {
   }
 
   return {
-    cartoes, faturasPagas, parciais, compras, semTabela, semExtras, sem38, carregado, recarregar,
+    cartoes, faturasPagas, parciais, compras, semTabela, semExtras, sem38, semPagoPor, carregado, recarregar, atualizarCompra,
     addCartao, updCartao, delCartao, temRenegociada, addCompra, delCompra, pagarFatura, editarPagamento, desfazerPagamento,
     pagarParte, editarParte, apagarParte, moverParcelas,
   }

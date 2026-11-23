@@ -47,7 +47,7 @@ export function normSaldoInicial(x: unknown): SaldoInicial | null {
  * Quanto sobrou (positivo) ou faltou (negativo) em cada mês de anos que não estão abertos na tela, pelos lançamentos.
  * Chave: `chaveDoMes(ano, mes)`. Mesma regra do quadro do mês para meses que já passaram.
  */
-export function sobrasPorMes(lancs: Pick<Lancamento, 'ano' | 'mes' | 'tipo' | 'valor' | 'cartao_id' | 'guardado_banco_id'>[], faturasPagas: FaturaPaga[]): Map<number, number> {
+export function sobrasPorMes(lancs: Pick<Lancamento, 'ano' | 'mes' | 'tipo' | 'valor' | 'cartao_id' | 'guardado_banco_id' | 'pago_por'>[], faturasPagas: FaturaPaga[]): Map<number, number> {
   const conta = contaNasSaidas(faturasPagas)
   const r = new Map<number, number>()
   for (const l of lancs) {

@@ -317,6 +317,7 @@ function Detalhe({ s, c, destacada, nivel, aoEditar, aoPagar, aoRenegociar }: {
                           {fmtDataCurta(l.data_compra ?? null) && <>{fmtDataCurta(l.data_compra ?? null)} · </>}{k.nome}
                           {(l.parcelas ?? 1) > 1 && <> · {l.parcela}/{l.parcelas}</>}
                           {puladaDe(l, c.ano) && <> · <em className="cc-pulada">{puladaDe(l, c.ano)}</em></>}
+                          {l.pago_por?.trim() && <> · <em className="cc-de-outro">{tx('paga por {0}', l.pago_por.trim())}</em></>}
                         </span>
                       </span>
                       <span className="item-valor">{fmtValor(l.valor)}</span>
@@ -543,6 +544,18 @@ export function FaturaDoMes({ s, c, aoPagar, aoRenegociar }: {
           </span>
           <b>{fmtValor(pulou)}</b>
         </button>
+      )}
+
+      {s.deOutros.length > 0 && (
+        <p className="ccd-outros">
+          <Icone nome="pessoa" tamanho={16} />
+          <span>
+            {s.deOutros.length === 1
+              ? tx('{0} paga {1} desta fatura.', s.deOutros[0].nome, fmtValor(s.deOutros[0].valor))
+              : tx('Outras pessoas pagam {0} desta fatura ({1}).', fmtValor(centavos(s.deOutros.reduce((a, x) => a + x.valor, 0))), s.deOutros.map((x) => x.nome).join(', '))}
+            {' '}<b>{tx('Seu gasto: {0}', fmtValor(centavos(s.valor - s.deOutros.reduce((a, x) => a + x.valor, 0))))}</b>
+          </span>
+        </p>
       )}
 
       <PorCategoria s={s} c={c} />

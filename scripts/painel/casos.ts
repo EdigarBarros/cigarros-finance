@@ -14,12 +14,13 @@ import { adicionarCartao, cartoesDaInicio, linhasDaGrade, maisRecente, MODELOS, 
 import { comParcelasDoMes } from '../../src/lib/useMesDaInicio'
 import { montarCartao, ORCAMENTO, type TracosDaDivida } from '../../src/lib/cartaoDaDivida'
 import {
-  efeitoNaCaixinha, faturaDoMes, garantidoDo, limiteDoCartao, pularParcela, situacaoCartao, taxaParaPular, textoStatus, totalFaturasAPagar, voltarParcela,
+  contaNasSaidas, efeitoNaCaixinha, faturaDoMes, garantidoDo, limiteDoCartao, pularParcela, situacaoCartao, taxaParaPular, textoStatus, totalFaturasAPagar, voltarParcela,
   type SituacaoCartao,
 } from '../../src/lib/cartoes'
 import { ajustarMesesComEfeitos } from '../../src/lib/guardado'
 import { fmtValor } from '../../src/lib/format'
 import { previsaoDoAno } from '../../src/lib/previsao'
+import { chaveDoMes, sobrasPorMes } from '../../src/lib/saldoCorrido'
 import { atrasoDa, comGuardado, conselhosDoPlanejamento, custoDa, dicasDe, falta, montarPraMim, mudarParte, normPlanejamentos, placarDe, por, quadroDoMes, sobra, valerPartes } from '../../src/lib/planejamento'
 import type { PagamentoPlanejado, Plano } from '../../src/lib/planejador'
 import type { CartaoCredito, ContaFixa, Divida, FaturaParcial, Lancamento, Mes, SaldoDivida } from '../../src/lib/types'
@@ -391,6 +392,24 @@ export const CASOS: Caso[] = [
       const nov = r.meses.find((m) => m.ano === 2026 && m.mes === 11)!
       igual('caixinha 300 → 200, conta igual', nov.caixa.b1, { cc: 50, caixinha: 200 })
       perto('limite garantido acompanha a caixinha', garantidoDo(PICPAY, nov.caixa.b1?.caixinha), 200)
+    },
+  },
+  {
+    nome: 'cartão: compra que outra pessoa paga fica na fatura e no limite, fora dos seus gastos',
+    rodar() {
+      const prime = compra('2026-12-05', 19.9, { descricao: 'Amazon Prime', pago_por: 'Mãe' })
+      const lancs = [compra('2026-12-05', 300, { descricao: 'Mercado' }), prime, compra('2026-12-05', 10, { pago_por: '  ' })]
+      const f = faturaDoMes(PICPAY, lancs, [], 2026, 12, '2026-11-14')
+      perto('a fatura do banco tem tudo', f.valor, 329.9)
+      igual('de quem é', f.deOutros, [{ nome: 'Mãe', valor: 19.9 }])
+      perto('o limite usa tudo', limiteDoCartao(PICPAY, lancs, [], '2026-11-14', 0).usado, 329.9)
+      const conta = contaNasSaidas([])
+      igual('nos seus gastos, só as suas (nome em branco é você)', lancs.filter(conta).map((l) => l.valor), [300, 10])
+      // o mês: entra 3.000, a fatura é de 329,90 mas 19,90 é da mãe → sobra 3.000 − 310
+      const mes = [lanc('2026-12-02', 'entrada', 3000), ...lancs]
+      perto('sobra do mês', sobrasPorMes(mes, []).get(chaveDoMes(2026, 12)), 2690)
+      const dd = diaADiaDoMes({ ...base, lancs: mes.filter(conta), contas: [], ano: 2026, mes: 12 })
+      perto('a previsão não espera os 19,90', dd.vaiSair, 310)
     },
   },
   {
