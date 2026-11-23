@@ -162,7 +162,7 @@ body::before {
 }
 /* sem a luz azulada da marca no alto e com a faixa do relógio (iPhone) no mesmo grafite */
 :root[data-tema='escuro']:has(.app) body::before { display: none; }
-:root[data-tema='escuro']:has(.app)::before { background: #0e0f11; }
+:root[data-tema='escuro']:has(.app)::before { background: var(--faixa-topo, #0e0f11); }
 
 /* No computador (mouse), nada de "pulinho": o salto com mola que os botões usam ao passar o mouse vira o deslize, que freia
    aos poucos sem passar do ponto. No celular (toque) a mola continua: lá ela só aparece ao tocar. */
