@@ -43,6 +43,14 @@ const demo = require('./dados-de-demonstracao.cjs')
     assert.equal(f.cor, doDegrade, 'em Dívidas, a cor de cima do degradê')
     assert.equal(f.barra, doDegrade)
 
+    // no tema escuro também (ele tinha uma regra própria que deixava a faixa grafite por cima da cor)
+    await p.emulateMedia({ colorScheme: 'dark' })
+    await p.goto(t.url + '#/inicio')
+    await p.waitForTimeout(2000)
+    const pintada = await p.evaluate(() => getComputedStyle(document.documentElement, '::before').backgroundColor)
+    assert.equal(pintada, 'rgb(63, 148, 136)', 'tema escuro: a faixa é o verde do topo, não o grafite')
+    if (process.env.FOTOS) await p.screenshot({ path: path.join(process.env.FOTOS, 'ilha-inicio-escuro.png') })
+
     // no computador, nada muda: a faixa volta ao padrão
     await p.setViewportSize({ width: 1280, height: 900 })
     await p.waitForTimeout(1500)
