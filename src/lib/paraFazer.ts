@@ -88,14 +88,14 @@ export function tarefasDoMes({ ano, mes, contas, faturas, dividas, diaRef, aoPag
     for (const f of s.atrasadas) {
       lista.push({
         chave: `fatura:${s.cartao.id}:${f.ano}-${f.mes}`, vencimento: f.vencimento, estado: 'atrasada', titulo: nome,
-        frase: frasePrazo(f.vencimento, hoje), valor: fmtValor(f.valor), botao: { texto: tx('Ver fatura'), acao: aoVerCartoes }, origem: 'fatura',
+        frase: frasePrazo(f.vencimento, hoje), valor: fmtValor(f.falta), botao: { texto: tx('Ver fatura'), acao: aoVerCartoes }, origem: 'fatura',
       })
     }
-    const aPagar = s.valor > 0 && (s.status === 'aberta' || s.status === 'fechada' || s.status === 'atrasada')
+    const aPagar = s.falta > 0 && (s.status === 'aberta' || s.status === 'fechada' || s.status === 'atrasada')
     if (aPagar && s.vencimento <= fim) {
       lista.push({
         chave: `fatura:${s.cartao.id}`, vencimento: s.vencimento, estado: estadoDe(s.vencimento, hoje), titulo: nome,
-        frase: frasePrazo(s.vencimento, hoje), valor: fmtValor(s.valor), botao: { texto: tx('Ver fatura'), acao: aoVerCartoes }, origem: 'fatura',
+        frase: frasePrazo(s.vencimento, hoje), valor: fmtValor(s.falta), botao: { texto: tx('Ver fatura'), acao: aoVerCartoes }, origem: 'fatura',
       })
     }
   }

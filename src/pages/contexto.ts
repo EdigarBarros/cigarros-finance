@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { SaldoCorrido } from '../lib/saldoCorrido'
+import type { EfeitoDatado } from '../lib/guardado'
 import type { Sugestao } from '../lib/adaptacao'
 import type { MesEfetivo, Resumo } from '../lib/calc'
 import type { SituacaoCartao } from '../lib/cartoes'
@@ -90,6 +91,8 @@ export interface Ctx {
   invest: Invest
   /** Acerta o saldo da conta ligada a uma operação de investimento: desfaz o que `antes` fez e aplica o que `depois` faz. */
   ajustarSaldosDaOperacao: (antes?: Operacao, depois?: Operacao) => void
+  /** Fatura paga com o cofrinho: tira (ou devolve) o valor da caixinha do banco, no mês do pagamento. False se não gravou. */
+  ajustarCaixinha: (efeitos: EfeitoDatado[]) => Promise<boolean>
   /** A análise completa do consultor (lib/analise.ts), refeita a cada mudança nos dados. */
   analise: Analise
   /** O saldo que passa de um mês para o outro (lib/saldoCorrido.ts): o de cada mês do ano aberto e o ponto de partida. */

@@ -975,7 +975,7 @@ export function useDados(userId: string, ano: number) {
     const desvincular = async (coluna: string) => checar((await tab('lancamentos').update({ [coluna]: null }).eq('user_id', userId)).error)
 
     if (tem('metas')) { await apagar('meta_movimentos'); await apagar('metas') }
-    if (tem('cartoes')) { await apagar('faturas_pagas'); await desvincular('cartao_id') }
+    if (tem('cartoes')) { await apagar('faturas_parciais'); await apagar('faturas_pagas'); await desvincular('cartao_id') }
     if (tem('dividas')) await desvincular('divida_id')
     if (tem('contas')) await desvincular('conta_fixa_id')
     if (tem('entradas')) await apagar('lancamentos', ['tipo', 'entrada'])

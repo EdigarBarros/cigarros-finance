@@ -878,6 +878,24 @@ ano aberto vêm de `lancsRecentes` em `useDados`.
 - **Pagar / ajeitar:** dia, valor, banco e juros/multa. Pago depois do vencimento aparece "com N dias de atraso"; os
   juros viram uma saída na categoria de dívidas, no mês do pagamento (`juros_lanc_id`). Ajeitar atualiza, cria ou apaga
   essa saída; desfazer apaga também.
+- **Pular compra** (migração 38): o "pula compra" do PicPay e de outros bancos. Na fatura ainda sem pagar, "Pular compra"
+  abre a lista das compras dela; as escolhidas vão para a fatura seguinte (`pularParcela`: mês seguinte, no dia do vencimento
+  dela). De parcelada, só aquela parcela muda; as outras ficam onde estão. `lancamentos.pulada_de` guarda o vencimento da fatura
+  de onde ela saiu da primeira vez: a compra mostra "pulada de novembro" e a fatura antiga, a linha "foi pulada para…", que
+  reabre a janela com "Voltar para esta fatura" (`voltarParcela`). Taxa para pular (opcional): uma compra à vista na fatura
+  seguinte (`taxaParaPular`), na categoria de dívidas. Não pula para fatura já marcada como paga.
+- **Pagar parte e pagar com o cofrinho** (migração 38): no "Paguei a fatura", valor menor do que falta vira um pagamento de
+  parte (`faturas_parciais`); a fatura continua em aberto e `Fatura.falta` (valor − `pagoEmParte`) é o que vale no selo
+  ("Faltam R$ 400 · vence em 7 dias"), no "Falta pagar", no limite usado, no "Em atraso", no "Para fazer" e na análise. Vencida
+  com parte paga continua atrasada pelo resto; coberta pelos pagamentos, não. O pagamento que completa vai para
+  `faturas_pagas` como antes (o histórico mostra a soma e "em N pagamentos"). Cada pagamento de parte aparece na fatura (toque
+  para ajeitar ou desfazer). "De onde saiu o dinheiro?": da conta (não mexe em saldo, como sempre) ou **do cofrinho**, a
+  caixinha do banco: `efeitoNaCaixinha` tira o valor da caixinha no mês do pagamento (`ajustarCaixinha` no `Ctx`, mesma fila dos
+  lançamentos guardados), e com o limite garantido ligado à caixinha o limite diminui junto, como no PicPay. `saldo_mexido`
+  diz se o app mexeu mesmo (mês que ainda não chegou não muda), para ajeitar e desfazer devolverem só o que foi tirado. Na
+  previsão da Início (`previsaoDoAno`, `diaADiaDoMes`), o que foi pago em parte sai do "vem aí" e entra no "já saiu", no mês da
+  fatura. Sem a migração, nada disso aparece e pagar continua marcando a fatura como paga. Teste de ponta a ponta:
+  `scripts/app-de-demonstracao/testar-pular-e-pagar-parte.cjs`.
 - **Renegociar:** o banco parcelou a fatura. Cria uma dívida (total do acordo, parcelas) e marca a fatura como
   `renegociada`. As compras dela saem das saídas do mês (`contaNasSaidas`, aplicado em `Painel` antes de `resumoMes`), e o
   que passa a contar é cada parcela paga da dívida: nada conta duas vezes. Também saem do total de faturas e do "falta

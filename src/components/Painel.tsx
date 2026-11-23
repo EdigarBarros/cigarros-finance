@@ -3,7 +3,7 @@ import { saldosDoAno, sobrasPorMes } from '../lib/saldoCorrido'
 import { FormSaldoInicial } from './SaldoInicial'
 import { sugestoes, type Sugestao } from '../lib/adaptacao'
 import { mesEfetivo, resumoMes, saldoInformado } from '../lib/calc'
-import { ajustarMeses, ajustarMesesComEfeitos, ehGuardado } from '../lib/guardado'
+import { ajustarMeses, ajustarMesesComEfeitos, ehGuardado, type EfeitoDatado } from '../lib/guardado'
 import { categoriaDe as categoriaDoLanc } from '../lib/categorias'
 import {
   chaveAdiantada, chaveRecusa, comAdiantadas, ehChaveAdiantada, faltaPagarNoMes, pedirEntradaFixa, lancamentoDaBaixa, memoriaDasContas, parecidosNosOutrosMeses, situacoesDoMes, sugestoesDoMes,
@@ -407,11 +407,11 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   // O que já aconteceu e o que ainda vem em cada mês (gráficos de fluxo).
   const contasFixas = contasComAdiantadas
   const contasSemTabela = contasDoBanco.semTabela
-  const { faturasPagas } = cartoes
+  const { faturasPagas, parciais: faturasParciais } = cartoes
   const contasNaPrevisao = Boolean(v.contas) && !contasSemTabela
   const comFaturasNaPrevisao = Boolean(comFaturas)
   const previsto = useMemo(() => {
-    const p = previsaoDoAno({ lancs: lancsContados, lancsBaixas: d.lancs, faturasPagas, comFaturas: comFaturasNaPrevisao, contas: contasNaPrevisao ? contasFixas : [], ano, taxas, hoje })
+    const p = previsaoDoAno({ lancs: lancsContados, lancsBaixas: d.lancs, faturasPagas, faturasParciais, comFaturas: comFaturasNaPrevisao, contas: contasNaPrevisao ? contasFixas : [], ano, taxas, hoje })
     if (!v.dividas) return p
     // As parcelas de dívida que ainda vão sair (do mês de hoje em diante), como no "Previsto no dia 30" da Início: sem
     // elas, o "Vai sobrar" do quadro do mês e o saldo de fim de mês ficavam maiores que a previsão da própria Início.
@@ -424,7 +424,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
       const total = parcelas.reduce((t, n) => t + n, 0)
       return total ? { ...x, vaiSair: Math.round((x.vaiSair + total) * 100) / 100 } : x
     })
-  }, [lancsContados, d.lancs, faturasPagas, comFaturasNaPrevisao, contasNaPrevisao, contasFixas, ano, taxas, hoje, v.dividas, porMesCompleto, hojeIso])
+  }, [lancsContados, d.lancs, faturasPagas, faturasParciais, comFaturasNaPrevisao, contasNaPrevisao, contasFixas, ano, taxas, hoje, v.dividas, porMesCompleto, hojeIso])
 
   // O saldo que passa de um mês para o outro: parte do que a pessoa informou e soma o que sobrou em cada mês até o aberto.
   const sobrasAntes = useMemo(() => sobrasPorMes(d.lancsAntesDoAno, comFaturas ? faturasPagas : []), [d.lancsAntesDoAno, comFaturas, faturasPagas])
@@ -436,8 +436,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
 
   // o mês aberto dia a dia (gráfico do mês na Início): o que já aconteceu até hoje e o que ainda vem
   const diaADia = useMemo(
-    () => diaADiaDoMes({ lancs: lancsContados, lancsBaixas: d.lancs, faturasPagas, comFaturas: comFaturasNaPrevisao, contas: contasNaPrevisao ? contasFixas : [], ano, mes, taxas, hoje }),
-    [lancsContados, d.lancs, faturasPagas, comFaturasNaPrevisao, contasNaPrevisao, contasFixas, ano, mes, taxas, hoje],
+    () => diaADiaDoMes({ lancs: lancsContados, lancsBaixas: d.lancs, faturasPagas, faturasParciais, comFaturas: comFaturasNaPrevisao, contas: contasNaPrevisao ? contasFixas : [], ano, mes, taxas, hoje }),
+    [lancsContados, d.lancs, faturasPagas, faturasParciais, comFaturasNaPrevisao, contasNaPrevisao, contasFixas, ano, mes, taxas, hoje],
   )
 
   const lancsMes = lancsContados.filter((l) => l.mes === mes && l.ano === ano)
@@ -601,9 +601,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     pagamentos: d.pagamentos, taxas, meses: mesesVistos, metas: d.metas, movimentosMeta: d.movimentosMeta, perfil,
     dividasSemJuros: d.dividasSemJuros, contas: comContasFixas ? contas.contas : [],
     compras: comFaturas ? cartoes.compras.filter(contaNasSaidas(cartoes.faturasPagas)) : [],
-    cartoes: comFaturas ? cartoes.cartoes : [], faturasPagas: comFaturas ? cartoes.faturasPagas : [],
+    cartoes: comFaturas ? cartoes.cartoes : [], faturasPagas: comFaturas ? cartoes.faturasPagas : [], faturasParciais: comFaturas ? cartoes.parciais : [],
     memoria: d.memoria, planejamento: d.planejamento, bancos: d.bancos,
-  }), [d.memoria, d.planejamento, d.bancos, lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, mesesVistos, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.moeda, comFaturas, cartoes.compras, cartoes.cartoes, cartoes.faturasPagas, comContasFixas, contas.contas, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
+  }), [d.memoria, d.planejamento, d.bancos, lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, mesesVistos, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.moeda, comFaturas, cartoes.compras, cartoes.cartoes, cartoes.faturasPagas, cartoes.parciais, comContasFixas, contas.contas, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reanálise: a cada mudança feita pela pessoa, compara com a análise anterior e conta o que mudou (aviso no canto e
   // "O que mudou" na aba). Troca de ano, virada do dia, cotação nova e dados chegando não são mudança da pessoa: só
@@ -663,7 +663,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   // Limite garantido que vem da caixinha do banco do cartão: o valor guardado nela hoje (tela Dinheiro guardado).
   const caixaHoje = mesEfetivo(d.meses, hoje.getFullYear(), hoje.getMonth() + 1).caixa
   const garantidoDe = (k: (typeof cartoes.cartoes)[number]) => garantidoDo(k, k.banco_id ? caixaHoje[k.banco_id]?.caixinha : 0)
-  const faturas = comFaturas ? situacoesDosCartoes(cartoes.cartoes, cartoes.compras, cartoes.faturasPagas, ano, mes, undefined, garantidoDe) : []
+  const faturas = comFaturas ? situacoesDosCartoes(cartoes.cartoes, cartoes.compras, cartoes.faturasPagas, ano, mes, undefined, garantidoDe, cartoes.parciais) : []
   // faturas que venceram sem pagar (em qualquer cartão), para o alerta das dicas
   const faturasAtrasadas = faturas.flatMap((s) => [...s.atrasadas, ...(s.status === 'atrasada' ? [s] : [])].map((f) => ({ ...f, cartao: s.cartao })))
 
@@ -716,6 +716,20 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     }
     if (!ok) d.setErro(tx('A operação foi salva, mas não consegui acertar o saldo da conta em Dinheiro guardado. Confira lá.'))
   })
+  /**
+   * Fatura paga com o cofrinho (a caixinha do banco): tira o valor da caixinha no mês do pagamento (ou devolve, ao desfazer).
+   * Na mesma fila dos lançamentos. Devolve false se não deu para gravar os saldos.
+   */
+  const ajustarCaixinha = (efeitos: EfeitoDatado[]) => new Promise<boolean>((fim) => emFila(async () => {
+    const r = ajustarMesesComEfeitos(mesesAgora.current, efeitos)
+    mesesAgora.current = r.meses
+    let ok = true
+    for (const m of r.mudados) {
+      if (!(await d.salvarMes(m.ano, m.mes, { caixa: m.caixa, moedas: m.moedas }))) ok = false
+    }
+    if (!ok) d.setErro(tx('O pagamento foi salvo, mas não consegui acertar a caixinha em Dinheiro guardado. Confira lá.'))
+    fim(ok)
+  }))
 
   const salvarLancamento = async (l: Omit<Lancamento, 'id'>, id?: string) => {
     const antes = id ? d.lancs.find((x) => x.id === id) : undefined
@@ -802,7 +816,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     conselhos, dispensarConselho,
     conselhosSemDados: faltamDadosParaConselhos({ lancs: lancsDosConselhos, dividas: d.dividas, hoje }),
     conselhosDispensados: avisosDispensadosNoMes(perfil.dispensadas, hoje),
-    invest, ajustarSaldosDaOperacao,
+    invest, ajustarSaldosDaOperacao, ajustarCaixinha,
     analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise, memoria: d.memoria, escolherObjetivo, gosto: d.gosto, salvarGosto: d.salvarGosto, planejamento: d.planejamento, salvarPlanejamento: d.salvarPlanejamento,
     ligarModulo,
     personalizar: () => setAjustes('painel'),

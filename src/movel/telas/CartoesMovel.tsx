@@ -65,7 +65,7 @@ export function CartoesMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom, c
     valor: fmtValor(x.valor),
     // o selo já diz quando vence ("vence em 3 dias", "venceu há 6 dias"); a data do fechamento completa
     sub: x.status === 'aberta' && !x.paga ? tx('{0} · fecha {1}', textoStatus(x), fmtDataCurta(x.fechamento)) : textoStatus(x),
-    pilula: podeResolver(x) ? { texto: tx('Paguei a fatura'), acao: () => setPagando({ cartao: x.cartao, f: x }) } : undefined,
+    pilula: podeResolver(x) ? { texto: x.pagoEmParte > 0 ? tx('Pagar o resto') : tx('Paguei a fatura'), acao: () => setPagando({ cartao: x.cartao, f: x }) } : undefined,
   })) : [{ id: 'nenhum', tom: 'invest', rotulo: tx('Faturas de {0}', nomeMes), valor: fmtValor(0), sub: tx('Coloque seus cartões aqui') }]
   const inicial = Math.max(0, faturas.findIndex((x) => x.cartao.id === s?.cartao.id))
 
@@ -97,7 +97,7 @@ export function CartoesMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom, c
       {s && (
         <div className="widgets-movel pecas-do-computador" style={{ '--c': s.cartao.cor } as React.CSSProperties}>
           <FaturasAtrasadas s={s} c={c} aoPagar={(f) => setPagando({ cartao: s.cartao, f })} aoRenegociar={(f) => setRenegociando({ cartao: s.cartao, f })} />
-          <FaturaDoMes s={s} c={c} aoPagar={(f, p) => setPagando({ cartao: s.cartao, f, pagamento: p })} aoRenegociar={(f) => setRenegociando({ cartao: s.cartao, f })} />
+          <FaturaDoMes s={s} c={c} aoPagar={(f, p, parcial) => setPagando({ cartao: s.cartao, f, pagamento: p, parcial })} aoRenegociar={(f) => setRenegociando({ cartao: s.cartao, f })} />
           <CartaoWidget titulo={s.compras.length ? tx('Compras desta fatura · {0}', s.compras.length) : tx('Compras desta fatura')}>
             {s.compras.length ? s.compras.map((l) => {
               const k = c.categoriaDe(l) ?? SEM_CATEGORIA
@@ -105,7 +105,10 @@ export function CartoesMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom, c
                 <div key={l.id} className={l.compra_id && l.compra_id === destacada ? 'compra-nova' : undefined}>
                   <LinhaDeLista icone={<IconeRedondo cor={k.cor}><IconeCategoria emoji={k.icone} tamanho={20} /></IconeRedondo>}
                     titulo={l.descricao || tx('Compra')}
-                    sub={[fmtDataCurta(l.data_compra ?? null), k.nome, (l.parcelas ?? 1) > 1 ? `${l.parcela}/${l.parcelas}` : null].filter(Boolean).join(' · ')}
+                    sub={[
+                      fmtDataCurta(l.data_compra ?? null), k.nome, (l.parcelas ?? 1) > 1 ? `${l.parcela}/${l.parcelas}` : null,
+                      l.pulada_de ? tx('pulada de {0}', nomeDaFatura(Number(l.pulada_de.slice(0, 4)), Number(l.pulada_de.slice(5, 7)), c.ano)) : null,
+                    ].filter(Boolean).join(' · ')}
                     valor={fmtValor(l.valor)} aoTocar={() => c.editarLancamento(l)} />
                 </div>
               )
@@ -120,7 +123,7 @@ export function CartoesMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom, c
               </ul>
             </CartaoWidget>
           )}
-          {nivel === 'detalhado' && <FaturasResolvidas s={s} c={c} aoPagar={(f, p) => setPagando({ cartao: s.cartao, f, pagamento: p })} aoRenegociar={(f) => setRenegociando({ cartao: s.cartao, f })} />}
+          {nivel === 'detalhado' && <FaturasResolvidas s={s} c={c} aoPagar={(f, p, parcial) => setPagando({ cartao: s.cartao, f, pagamento: p, parcial })} aoRenegociar={(f) => setRenegociando({ cartao: s.cartao, f })} />}
         </div>
       )}
 

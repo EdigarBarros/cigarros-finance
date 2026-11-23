@@ -6,7 +6,8 @@
  */
 import { semAcento } from './busca'
 import { fmtValor, MESES_NOME, noMeioDaFrase } from './format'
-import type { CartaoCredito, FaturaPaga, Lancamento } from './types'
+import type { EfeitoDatado } from './guardado'
+import type { CartaoCredito, FaturaPaga, FaturaParcial, Lancamento } from './types'
 import { tx } from './textos'
 
 export type DiasCartao = Pick<CartaoCredito, 'dia_fechamento' | 'dia_vencimento'>
@@ -126,6 +127,14 @@ export interface Fatura {
   paga: FaturaPaga | null
   /** Parcelas que compõem a fatura, da compra mais antiga para a mais nova. */
   compras: Lancamento[]
+  /** Pagamentos de parte da fatura (migração 38), do mais antigo para o mais novo. */
+  parciais: FaturaParcial[]
+  /** Soma dos pagamentos de parte. */
+  pagoEmParte: number
+  /** Quanto ainda falta pagar: o valor menos o que já foi pago em parte (0 quando paga ou renegociada). */
+  falta: number
+  /** Compras que estavam nesta fatura e foram puladas para uma seguinte ("pula compra" do banco). */
+  puladas: Lancamento[]
 }
 
 /** Compra parcelada que ainda tem parcelas pela frente. */
@@ -181,26 +190,93 @@ export function casaCompraNoCartao(
 const doCartao = (c: CartaoCredito, lancs: Lancamento[]) => lancs.filter((l) => l.cartao_id === c.id && l.tipo === 'saida')
 const dataDaCompra = (l: Lancamento) => l.data_compra ?? l.data ?? ''
 
-function statusDaFatura(valor: number, paga: FaturaPaga | null, fechAnterior: string, fech: string, venc: string, hoje: string): StatusFatura {
+function statusDaFatura(falta: number, paga: FaturaPaga | null, fechAnterior: string, fech: string, venc: string, hoje: string): StatusFatura {
   if (paga) return renegociada(paga) ? 'renegociada' : 'paga'
   if (hoje <= fechAnterior) return 'futura'
   if (hoje <= fech) return 'aberta'
-  // fatura vazia que venceu não está "atrasada": não há nada a pagar
-  return hoje <= venc || valor === 0 ? 'fechada' : 'atrasada'
+  // fatura vazia (ou já coberta pelos pagamentos de parte) que venceu não está "atrasada": não há nada a pagar
+  return hoje <= venc || falta <= 0 ? 'fechada' : 'atrasada'
 }
 
-/** A fatura de um cartão num mês. `lancs` pode ter lançamentos de qualquer cartão e até os sem cartão. */
-export function faturaDoMes(c: CartaoCredito, lancs: Lancamento[], pagas: FaturaPaga[], ano: number, mes: number, hoje = hojeLocal()): Fatura {
-  const compras = doCartao(c, lancs)
+/** Os pagamentos de parte de uma fatura, do mais antigo para o mais novo. */
+export const parciaisDaFatura = (parciais: FaturaParcial[], cartao_id: string, ano: number, mes: number) =>
+  parciais.filter((p) => p.cartao_id === cartao_id && p.ano === ano && p.mes === mes).sort((a, b) => a.pago_em.localeCompare(b.pago_em))
+
+/**
+ * A fatura de um cartão num mês. `lancs` pode ter lançamentos de qualquer cartão e até os sem cartão; `parciais`, os
+ * pagamentos de parte de qualquer fatura.
+ */
+export function faturaDoMes(
+  c: CartaoCredito, lancs: Lancamento[], pagas: FaturaPaga[], ano: number, mes: number, hoje = hojeLocal(), parciais: FaturaParcial[] = [],
+): Fatura {
+  const doC = doCartao(c, lancs)
+  const compras = doC
     .filter((l) => l.ano === ano && l.mes === mes)
     .sort((a, b) => dataDaCompra(a).localeCompare(dataDaCompra(b)) || (a.parcela ?? 0) - (b.parcela ?? 0))
   const valor = soma(compras.map((l) => l.valor))
   const { fechamento, vencimento } = datasDaFatura(c, ano, mes)
   const anterior = somaMeses({ ano, mes }, -1)
   const paga = pagas.find((p) => p.cartao_id === c.id && p.ano === ano && p.mes === mes) ?? null
+  const destas = parciaisDaFatura(parciais, c.id, ano, mes)
+  const pagoEmParte = soma(destas.map((p) => p.valor))
+  const falta = paga ? 0 : centavos(Math.max(0, valor - pagoEmParte))
+  const puladas = doC.filter((l) => l.pulada_de && mesDaData(l.pulada_de, ano, mes) && !(l.ano === ano && l.mes === mes))
   return {
-    ano, mes, valor, fechamento, vencimento, paga, compras,
-    status: statusDaFatura(valor, paga, datasDaFatura(c, anterior.ano, anterior.mes).fechamento, fechamento, vencimento, hoje),
+    ano, mes, valor, fechamento, vencimento, paga, compras, parciais: destas, pagoEmParte, falta, puladas,
+    status: statusDaFatura(falta, paga, datasDaFatura(c, anterior.ano, anterior.mes).fechamento, fechamento, vencimento, hoje),
+  }
+}
+
+// ---------- pular uma compra para a próxima fatura ----------
+
+/** A data (AAAA-MM-DD) cai no mês e ano dados. */
+const mesDaData = (data: string, ano: number, mes: number) => {
+  const [a, m] = partes(data)
+  return a === ano && m === mes
+}
+
+/**
+ * Pular a parcela para a fatura seguinte ("pula compra" do PicPay e de outros bancos): vai para o mês seguinte, no dia do
+ * vencimento daquela fatura. `pulada_de` guarda onde ela estava da primeira vez, para desfazer de uma vez só.
+ */
+export function pularParcela(l: Pick<Lancamento, 'ano' | 'mes' | 'data' | 'pulada_de'>, c: DiasCartao) {
+  const prox = somaMeses({ ano: l.ano, mes: l.mes }, 1)
+  return {
+    ano: prox.ano, mes: prox.mes, data: datasDaFatura(c, prox.ano, prox.mes).vencimento,
+    pulada_de: l.pulada_de ?? datasDaFatura(c, l.ano, l.mes).vencimento,
+  }
+}
+
+/** Desfaz o pulo: a parcela volta para a fatura em que estava antes (null se ela não foi pulada). */
+export function voltarParcela(l: Pick<Lancamento, 'pulada_de'>) {
+  if (!l.pulada_de) return null
+  const [ano, mes] = partes(l.pulada_de)
+  return { ano, mes, data: l.pulada_de, pulada_de: null }
+}
+
+// ---------- pagar com o cofrinho (a caixinha do banco) ----------
+
+type PagamentoDaCaixinha = Pick<FaturaParcial, 'valor' | 'pago_em' | 'banco_id'> & Partial<Pick<FaturaParcial, 'da_caixinha' | 'saldo_mexido'>>
+
+/**
+ * O que um pagamento feito com o cofrinho faz em Dinheiro guardado: tira o valor da caixinha do banco, no mês do pagamento
+ * (`sinal` -1 desfaz, devolvendo). Vazio quando o dinheiro não saiu da caixinha ou o app não mexeu no saldo (`saldo_mexido`).
+ * Com o limite garantido ligado à caixinha, o limite do cartão diminui junto, como no banco.
+ */
+export function efeitoNaCaixinha(p: PagamentoDaCaixinha | null | undefined, sinal: 1 | -1 = 1): EfeitoDatado[] {
+  if (!p?.da_caixinha || !p.saldo_mexido || !p.banco_id || !(p.valor > 0)) return []
+  const [ano, mes] = partes(p.pago_em)
+  return [{ ano, mes, efeitos: [{ banco: p.banco_id, tipo: 'caixinha', delta: centavos(-p.valor * sinal) }] }]
+}
+
+/** Taxa que o banco cobrou para pular: uma compra à vista no cartão, na fatura seguinte à de `de`. */
+export function taxaParaPular(c: CartaoCredito, de: MesFatura, valor: number, hoje = hojeLocal()): Omit<Lancamento, 'id'> {
+  const prox = somaMeses(de, 1)
+  return {
+    ano: prox.ano, mes: prox.mes, tipo: 'saida', valor: centavos(valor),
+    descricao: tx('Taxa para pular compra – fatura de {0}', nomeDaFatura(de.ano, de.mes)),
+    data: datasDaFatura(c, prox.ano, prox.mes).vencimento, data_compra: hoje,
+    cartao_id: c.id, parcela: 1, parcelas: 1, banco_id: null, divida_id: null,
   }
 }
 
@@ -213,19 +289,24 @@ export const garantidoDo = (c: CartaoCredito, caixinha?: number) =>
  * fechadas ou vencidas (o banco só devolve o limite quando a fatura é paga; sem elas, o "livre" aparecia maior que o real). O limite
  * total é o do banco mais o garantido (dinheiro na caixinha que vira limite); sem nenhum dos dois, não há limite.
  */
-export function limiteDoCartao(c: CartaoCredito, lancs: Lancamento[], pagas: FaturaPaga[], hoje = hojeLocal(), garantido = garantidoDo(c)) {
+export function limiteDoCartao(
+  c: CartaoCredito, lancs: Lancamento[], pagas: FaturaPaga[], hoje = hojeLocal(), garantido = garantidoDo(c), parciais: FaturaParcial[] = [],
+) {
   const [ha, hm] = partes(hoje)
   const agora = chaveMes(ha, hm)
+  const naoPaga = (ano: number, mes: number) => !pagas.some((p) => p.cartao_id === c.id && p.ano === ano && p.mes === mes)
   const daqui = soma(
     doCartao(c, lancs)
-      .filter((l) => chaveMes(l.ano, l.mes) >= agora && !pagas.some((p) => p.cartao_id === c.id && p.ano === l.ano && p.mes === l.mes))
+      .filter((l) => chaveMes(l.ano, l.mes) >= agora && naoPaga(l.ano, l.mes))
       .map((l) => l.valor),
   )
+  // o que já foi pago em parte das faturas daqui em diante devolve o limite (como no banco)
+  const pagoDaqui = soma(parciais.filter((p) => p.cartao_id === c.id && chaveMes(p.ano, p.mes) >= agora && naoPaga(p.ano, p.mes)).map((p) => p.valor))
   // de meses anteriores: a fatura fechada que ainda vai vencer e a que venceu sem pagar (as mesmas do "Em atraso")
   const anteriores = new Set(doCartao(c, lancs).map((l) => chaveMes(l.ano, l.mes)).filter((k) => k < agora && k >= agora - 12))
-  const naoPagas = [...anteriores].map(doMesChave).map((m) => faturaDoMes(c, lancs, pagas, m.ano, m.mes, hoje))
+  const naoPagas = [...anteriores].map(doMesChave).map((m) => faturaDoMes(c, lancs, pagas, m.ano, m.mes, hoje, parciais))
     .filter((f) => f.status === 'fechada' || f.status === 'atrasada')
-  const usado = centavos(daqui + soma(naoPagas.map((f) => f.valor)))
+  const usado = centavos(Math.max(0, daqui - pagoDaqui) + soma(naoPagas.map((f) => f.falta)))
   const total = c.limite == null && !garantido ? null : centavos((c.limite ?? 0) + garantido)
   return { usado, total, garantido, disponivel: total == null ? null : centavos(total - usado) }
 }
@@ -261,9 +342,10 @@ export function comprasParceladas(c: CartaoCredito, lancs: Lancamento[], ano: nu
 /** Tudo sobre um cartão no mês: a fatura, o limite, as próximas faturas e as compras parceladas. */
 export function situacaoCartao(
   c: CartaoCredito, lancs: Lancamento[], pagas: FaturaPaga[], ano: number, mes: number, hoje = hojeLocal(), garantido = garantidoDo(c),
+  parciais: FaturaParcial[] = [],
 ): SituacaoCartao {
-  const f = faturaDoMes(c, lancs, pagas, ano, mes, hoje)
-  const limite = limiteDoCartao(c, lancs, pagas, hoje, garantido)
+  const f = faturaDoMes(c, lancs, pagas, ano, mes, hoje, parciais)
+  const limite = limiteDoCartao(c, lancs, pagas, hoje, garantido, parciais)
   return {
     ...f,
     cartao: c,
@@ -272,10 +354,10 @@ export function situacaoCartao(
     limiteDisponivel: limite.disponivel,
     limiteTotal: limite.total,
     garantido: limite.garantido,
-    atrasadas: faturasAtrasadas(c, lancs, pagas, ano, mes, hoje),
+    atrasadas: faturasAtrasadas(c, lancs, pagas, ano, mes, hoje, parciais),
     proximas: [1, 2, 3, 4, 5, 6].map((i) => {
       const m = somaMeses({ ano, mes }, i)
-      return faturaDoMes(c, lancs, pagas, m.ano, m.mes, hoje)
+      return faturaDoMes(c, lancs, pagas, m.ano, m.mes, hoje, parciais)
     }),
     parceladas: comprasParceladas(c, lancs, ano, mes),
   }
@@ -285,12 +367,14 @@ export function situacaoCartao(
  * Faturas dos 12 meses antes do de referência que venceram com valor e ficaram sem pagar (as mais antigas primeiro).
  * Mais para trás que isso fica de fora: é quase sempre fatura paga que só não foi marcada.
  */
-export function faturasAtrasadas(c: CartaoCredito, lancs: Lancamento[], pagas: FaturaPaga[], ano: number, mes: number, hoje = hojeLocal()): Fatura[] {
+export function faturasAtrasadas(
+  c: CartaoCredito, lancs: Lancamento[], pagas: FaturaPaga[], ano: number, mes: number, hoje = hojeLocal(), parciais: FaturaParcial[] = [],
+): Fatura[] {
   const ref = chaveMes(ano, mes)
   const meses = new Set(doCartao(c, lancs).map((l) => chaveMes(l.ano, l.mes)).filter((k) => k < ref && k >= ref - 12))
   return [...meses].sort((a, b) => a - b)
     .map((k) => doMesChave(k))
-    .map((m) => faturaDoMes(c, lancs, pagas, m.ano, m.mes, hoje))
+    .map((m) => faturaDoMes(c, lancs, pagas, m.ano, m.mes, hoje, parciais))
     .filter((f) => f.status === 'atrasada')
 }
 
@@ -300,8 +384,8 @@ export function faturasAtrasadas(c: CartaoCredito, lancs: Lancamento[], pagas: F
  */
 export const situacoesDoMes = (
   cartoes: CartaoCredito[], lancs: Lancamento[], pagas: FaturaPaga[], ano: number, mes: number, hoje = hojeLocal(),
-  garantidoDe: (c: CartaoCredito) => number = (c) => garantidoDo(c),
-) => cartoes.filter((c) => c.ativo).map((c) => situacaoCartao(c, lancs, pagas, ano, mes, hoje, garantidoDe(c)))
+  garantidoDe: (c: CartaoCredito) => number = (c) => garantidoDo(c), parciais: FaturaParcial[] = [],
+) => cartoes.filter((c) => c.ativo).map((c) => situacaoCartao(c, lancs, pagas, ano, mes, hoje, garantidoDe(c), parciais))
 
 /**
  * Para um indicador: quanto vence de fatura no mês, somando todos os cartões (paga ou não). Fatura renegociada fica
@@ -309,9 +393,9 @@ export const situacoesDoMes = (
  */
 export const totalFaturasDoMes = (situacoes: Pick<SituacaoCartao, 'valor' | 'status'>[]) =>
   soma(situacoes.filter((s) => s.status !== 'renegociada').map((s) => s.valor))
-/** Quanto das faturas do mês ainda falta pagar. */
-export const totalFaturasAPagar = (situacoes: Pick<SituacaoCartao, 'valor' | 'status'>[]) =>
-  soma(situacoes.filter((s) => s.status !== 'paga' && s.status !== 'renegociada').map((s) => s.valor))
+/** Quanto das faturas do mês ainda falta pagar (o que já foi pago em parte fica de fora). */
+export const totalFaturasAPagar = (situacoes: Pick<SituacaoCartao, 'falta' | 'status'>[]) =>
+  soma(situacoes.filter((s) => s.status !== 'paga' && s.status !== 'renegociada').map((s) => s.falta))
 
 /** "vence hoje", "vence em 9 dias", "venceu há 3 dias"… */
 export function quandoVence(s: Pick<SituacaoCartao, 'status' | 'diasParaVencer'>) {
@@ -341,11 +425,13 @@ export function textoParcelamento(ps: ParcelaGerada[], anoCompra: number) {
     : tx('{0}x de {1} · {2}', ps.length, fmtValor(resto), primeira)
 }
 
-/** Uma frase com a situação da fatura: "Fechada · vence em 9 dias", "Paga", "Venceu há 3 dias". */
-export function textoStatus(s: Pick<SituacaoCartao, 'status' | 'diasParaVencer' | 'valor'>) {
+/** Uma frase com a situação da fatura: "Fechada · vence em 9 dias", "Paga", "Venceu há 3 dias", "Faltam R$ 400 · vence amanhã". */
+export function textoStatus(s: Pick<SituacaoCartao, 'status' | 'diasParaVencer' | 'valor'> & Partial<Pick<SituacaoCartao, 'pagoEmParte' | 'falta'>>) {
   if (s.status === 'paga') return tx('Paga')
   if (s.status === 'renegociada') return tx('Renegociada')
   if (s.valor === 0) return tx('Sem compras na fatura')
   const quando = quandoVence(s)
+  // paga em parte: o que falta e quando vence ("Faltam R$ 400 · vence em 9 dias")
+  if ((s.pagoEmParte ?? 0) > 0) return (s.falta ?? 0) > 0 ? tx('Faltam {0} · {1}', fmtValor(s.falta!), quando) : tx('Paga em parte, já coberta')
   return s.status === 'atrasada' ? quando[0].toUpperCase() + quando.slice(1) : `${ROTULO_STATUS[s.status]} · ${quando}`
 }

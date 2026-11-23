@@ -336,8 +336,8 @@ export async function exportarBackup() {
   const nomeDivida = new Map(dividas.map((d) => [d.id, d.descricao]))
   // O resto do que a pessoa cadastrou (cada parte veio numa migração: sem a tabela, a aba não sai)
   const outra = (t: string) => buscarTudo<Record<string, unknown>>(t).catch(() => [] as Record<string, unknown>[])
-  const [cartoes, faturasPagas, contasFixas, metas, movimentos, partes, promessas, conferencias] = await Promise.all(
-    ['cartoes', 'faturas_pagas', 'contas_fixas', 'metas', 'meta_movimentos', 'divida_partes', 'divida_promessas', 'divida_conferencias'].map(outra))
+  const [cartoes, faturasPagas, contasFixas, metas, movimentos, partes, promessas, conferencias, parciais] = await Promise.all(
+    ['cartoes', 'faturas_pagas', 'contas_fixas', 'metas', 'meta_movimentos', 'divida_partes', 'divida_promessas', 'divida_conferencias', 'faturas_parciais'].map(outra))
   const perfil = await buscarTudo<Record<string, unknown>>('perfis', 'user_id').catch(() => [] as Record<string, unknown>[])
   const nomes = (xs: Record<string, unknown>[], campo: string) => new Map(xs.map((x) => [String(x.id), String(x[campo] ?? '')]))
   const nomeCartao = nomes(cartoes, 'nome')
@@ -387,7 +387,7 @@ export async function exportarBackup() {
     'Meses',
   )
   const abas: [string, Record<string, unknown>[]][] = [
-    ['Partes das dívidas', partes], ['Promessas de pagamento', promessas], ['Conferências com o banco', conferencias], ['Cartões', cartoes], ['Faturas pagas', faturasPagas],
+    ['Partes das dívidas', partes], ['Promessas de pagamento', promessas], ['Conferências com o banco', conferencias], ['Cartões', cartoes], ['Faturas pagas', faturasPagas], ['Faturas pagas em parte', parciais],
     ['Contas do mês', contasFixas], ['Metas', metas], ['Metas - movimentos', movimentos], ['Preferências', perfil],
   ]
   for (const [aba, xs] of abas) if (xs.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(legivel(xs)), aba)
