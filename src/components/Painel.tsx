@@ -57,7 +57,7 @@ import { AvisoReanalise } from './AvisoReanalise'
 import { marcarTela, marcarUso } from '../lib/uso'
 import { PopupNovidade, useNovidade } from './Novidades'
 import { BarraDeAbasMovel, FundoMovel, ListaDaFolha, TopoMovel, useCorDaBarraDoCelular } from '../movel/Casca'
-import type { Tom } from '../movel/tom'
+import { corDoTopo, type Tom } from '../movel/tom'
 import { Modal } from './ui'
 import { textoDoErro } from '../lib/textoDoErro'
 
@@ -239,7 +239,6 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   // o "+" do celular recolhe enquanto a pessoa rola para baixo e some quando a tela já mostra os botões de lançar
   const recolherMais = useRecolherAoRolar(mobile)
   const barra = useBarraLateral()
-  useCorDaBarraDoCelular(mobile && tema === 'escuro')
 
   // Quem já tinha dados antes das perguntas existirem ganha um perfil com o que já usa, sem questionário.
   const temDados = d.lancs.length > 0 || d.bancos.length > 0 || d.dividas.length > 0 || d.meses.length > 0
@@ -278,6 +277,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     p.id === 'invest' ? v.investimentos : p.id === 'contas' ? v.contas : p.id === 'cartoes' ? v.cartoes : p.id === 'dividas' ? v.dividas : p.id === 'metas' ? v.metas : p.id === 'patrimonio' ? v.bancos || v.investimentos || v.moedas : p.id === 'ano' ? v.paginaAno : true,
   )
   const paginaAtual = paginas.some((p) => p.id === pagina) ? pagina : 'inicio'
+  // a faixa do relógio / ilha (iPhone) e a barra de status (Android) na cor do topo da tela aberta
+  useCorDaBarraDoCelular(mobile, tema === 'escuro', TELAS_DO_CELULAR.includes(paginaAtual) ? corDoTopo(tomMovel, corMovel) : null)
   // O menu muda na hora; a página nova é montada em segundo plano (em pedaços), sem congelar a animação do menu.
   const paginaMostrada = useDeferredValue(paginaAtual)
   // a tela que a pessoa está vendo, para a medição de uso (lib/uso.ts): janelas abertas contam como telas próprias

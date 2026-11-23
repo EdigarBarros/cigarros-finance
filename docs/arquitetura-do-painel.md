@@ -1477,6 +1477,13 @@ migração num Postgres local e confere que uma pessoa não lê nem grava nada d
 
 ### 4.25 Celular: moldura e Início próprias (`src/movel/`)
 
+**App na tela de início (iPhone com ilha dinâmica, Android com furo da câmera).** O site pede a tela inteira
+(`viewport-fit=cover`, barra de status translúcida) e o conteúdo desvia das áreas seguras (`--seguro-topo`, `env(safe-area-inset-*)`).
+A faixa do relógio e da ilha não é mais preta fixa: `useCorDaBarraDoCelular` (`movel/Casca.tsx`) põe em `--faixa-topo` e no
+`theme-color` (a barra de status do Android) a cor de cima do degradê da tela aberta (`corDoTopo`, `movel/tom.ts`; as cores
+têm de ser as mesmas do primeiro ponto de cada `.movel-fundo i[data-t=…]`). O degradê continua por trás da ilha, e a cor troca
+junto com a tela. Teste: `scripts/app-de-demonstracao/testar-ilha.cjs` (simula o 17 Pro Max).
+
 No celular (até 860 px, `useMobile`) o painel tem cara própria, separada do computador. O computador não muda: o
 `Painel` escolhe a moldura (`mobile ? moldura do celular : a de sempre`) e as duas usam os mesmos dados, formulários e janelas.
 Todas as telas têm versão de celular (lista `TELAS_DO_CELULAR` no `Painel`); tela nova que entrar no app sem versão

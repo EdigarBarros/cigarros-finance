@@ -18,15 +18,24 @@ export function FundoMovel({ tom, cor }: { tom: Tom | null; cor?: string | null 
   )
 }
 
-/** Celular no tema escuro: a barra do navegador (Android) no mesmo grafite do fundo; ao sair, volta a cor do tema. */
-export function useCorDaBarraDoCelular(escuro: boolean) {
+/**
+ * A faixa de cima do celular na cor do topo da tela aberta: a barra de status do Android (theme-color) e, no app da tela de
+ * início do iPhone, a faixa do relógio e da ilha (`--faixa-topo`, pintada em index.css). Sem topo colorido, o grafite do fundo
+ * no tema escuro. Ao sair (ou no computador), volta tudo como o tema deixou.
+ */
+export function useCorDaBarraDoCelular(celular: boolean, escuro: boolean, corTopo: string | null) {
+  const cor = celular ? corTopo ?? (escuro ? '#0e0f11' : null) : null
   useEffect(() => {
+    if (!cor) return
     const meta = document.querySelector('meta[name="theme-color"]')
-    if (!meta || !escuro) return
-    const antes = meta.getAttribute('content')
-    meta.setAttribute('content', '#0e0f11')
-    return () => { if (antes) meta.setAttribute('content', antes) }
-  }, [escuro])
+    const antes = meta?.getAttribute('content')
+    meta?.setAttribute('content', cor)
+    document.documentElement.style.setProperty('--faixa-topo', cor)
+    return () => {
+      if (meta && antes) meta.setAttribute('content', antes)
+      document.documentElement.style.removeProperty('--faixa-topo')
+    }
+  }, [cor])
 }
 
 /** A página já rolou um pouco: o topo ganha o vidro fosco para continuar legível sobre o conteúdo. */
