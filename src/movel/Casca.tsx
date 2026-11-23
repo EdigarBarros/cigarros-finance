@@ -59,7 +59,7 @@ export function TopoMovel({ sobreCor, foto, iniciais, avisoConta, aoConta, busca
 }) {
   const rolou = useRolou()
   return (
-    <header className={`topo-movel ${sobreCor && !rolou ? 'sobre-cor' : ''} ${rolou ? 'rolou' : ''}`}>
+    <header className={`topo-movel ${sobreCor ? 'sobre-cor' : ''} ${rolou ? 'rolou' : ''}`}>
       <button className="topo-movel-avatar" data-tour="menu-conta" onClick={aoConta} aria-label={tx('Sua conta')}>
         <span className="avatar" aria-hidden="true">{foto ? <img src={foto} alt="" /> : iniciais || '?'}</span>
         {avisoConta && <span className="sino-ponto" />}

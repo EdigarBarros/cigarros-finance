@@ -50,6 +50,18 @@ const demo = require('./dados-de-demonstracao.cjs')
     const pintada = await p.evaluate(() => getComputedStyle(document.documentElement, '::before').backgroundColor)
     assert.equal(pintada, 'rgb(63, 148, 136)', 'tema escuro: a faixa é o verde do topo, não o grafite')
     if (process.env.FOTOS) await p.screenshot({ path: path.join(process.env.FOTOS, 'ilha-inicio-escuro.png') })
+    // rolou: a barra de busca fica na mesma cor da faixa (antes, a faixa verde e a barra cinza pareciam duas peças coladas)
+    for (const esquema of ['dark', 'light']) {
+      await p.emulateMedia({ colorScheme: esquema })
+      await p.evaluate(() => window.scrollTo(0, 600))
+      await p.waitForTimeout(1200)
+      const [faixaCor, barraCor] = await p.evaluate(() => [
+        getComputedStyle(document.documentElement, '::before').backgroundColor, getComputedStyle(document.querySelector('.topo-movel')).backgroundColor,
+      ])
+      assert.equal(barraCor, faixaCor, `rolou (${esquema}): barra e faixa da mesma cor`)
+      if (process.env.FOTOS) await p.screenshot({ path: path.join(process.env.FOTOS, `ilha-rolou-${esquema}.png`) })
+      await p.evaluate(() => window.scrollTo(0, 0))
+    }
 
     // no computador, nada muda: a faixa volta ao padrão
     await p.setViewportSize({ width: 1280, height: 900 })
