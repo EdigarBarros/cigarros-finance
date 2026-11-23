@@ -52,6 +52,12 @@
   color: #fff; background: rgba(255, 255, 255, .16); border-color: rgba(255, 255, 255, .2);
 }
 .topo-movel.sobre-cor .topo-movel-busca input::placeholder { color: rgba(255, 255, 255, .78); }
+/* rolou numa tela com topo colorido: a barra fica na mesma cor da faixa do relógio / ilha (--faixa-topo, movel/Casca.tsx),
+   e as duas viram uma peça só, como nos apps de banco. Sem a cor (computador estreito, tela sem topo), o vidro de sempre. */
+.topo-movel.sobre-cor.rolou {
+  background: var(--faixa-topo, var(--vidro)); border-bottom-color: transparent; box-shadow: 0 8px 22px rgba(0, 0, 0, .16);
+  transition: background-color .7s var(--mola), box-shadow .3s;
+}
 /* tela estreita: a busca vira um botão redondo e abre ao tocar (o campo ocupa o espaço enquanto a pessoa digita) */
 @media (max-width: 370px) {
   .topo-movel { gap: 6px; }
