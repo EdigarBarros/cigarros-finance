@@ -1597,3 +1597,30 @@ celular (`100dvh`), o palco encolhe até 250 px, em celular baixo o texto da cen
 não couber (muitas contas), rola por dentro sem a barra. Medido em 390×844, 390×664, 375×667 e 430×932 com 2, 3 e 5 contas:
 a página não rola mais. `testar-contas.cjs` 53/53. App 2.9.0 (código 28), `.aab` sem assinatura entregue pela conversa;
 substitui a 2.8.7, 2.8.8 e 2.8.9 se ainda não foram enviadas.
+
+### 23/11/2026 — Claude — Cartões no computador: carteira de couro em 3D e o cartão fora dela, com abas
+
+**Pedido do dono.** A tela Cartões estava com tudo misturado (fatura, compras, pular compra, renegociar, caixinha que vira
+limite, histórico). Ele quis, só no computador, uma carteira em 3D com os cartões: escolher um tira o cartão da carteira e
+mostra as informações dele organizadas; dá para guardar de volta e tirar outro. Muita animação, sem pesar. Escolhas dele:
+abas fixas, couro escuro, carteira encolhendo para o lado. O celular ficou igual.
+
+**O que mudou.**
+- `src/components/Carteira3D.tsx` (novo): a carteira (bolsos, costura, valor da fatura gravado em dourado, inclinação e
+  brilho pelo ponteiro, setas do teclado) e as animações `sairDaCarteira`, `voltarParaCarteira` e `moverCarteira` (FLIP com
+  a Web Animations API, só `transform`/`opacity`/`clip-path`, nada roda com Animações: Reduzidas).
+- `src/pages/Cartoes.tsx`: o componente `Cartoes` (só computador) refeito: carteira + resumo (vitrine, faixa de atraso com
+  "Resolver no <cartão>", uso dos limites); com cartão escolhido, `DetalheEmAbas` (cartão grande, ações, abas Fatura,
+  Compras, Pagas e renegociadas, Próximas e parceladas, Limite e caixinha; aba lembrada em `opus.cartoes.aba`; Esc guarda).
+  A lista de compras virou `ComprasDaFatura`. As peças usadas pelo celular (`FaturaDoMes`, `Limite`, forms...) não mudaram.
+- `src/pages/cartoes-pc.css` (novo, tudo dentro de `.pg-cartoes-pc`). Sem biblioteca nova; o CSS da tela tem 3,4 kB gzip.
+- Cuidado achado no caminho: já existe uma classe global `.fora` (`position: fixed; z-index: 30`) no `index.css`; o
+  cartão que saiu usa `.saiu`.
+- `docs/arquitetura-do-painel.md` 4.11 e a tabela dos jeitos de ver; 15 textos novos com `en`/`es`.
+
+**Validação.** `npx tsc -b`, `npm run lint` (sem erro), build com Supabase falso. `testar-carteira-pc.cjs` (novo): 11/11
+(cartões visíveis em cada estado, o voo existe, cinco abas e as setas, troca de cartão mantendo a aba, Esc, faixa de
+atraso, "Guardar na carteira", aba lembrada, 1000 px sem rolagem de lado, jeito simples com 2 abas, animações reduzidas sem
+voo). `testar-pular-e-pagar-parte.cjs` 3/3 (seletores atualizados e a aba Compras) e `testar-correcoes.cjs` passando.
+Limitação local: o `xlsx` vem de cdn.sheetjs.com, bloqueado nesta sessão; para testar, foi instalado o `xlsx` 0.18.5 do npm
+só na pasta local (o `package.json` e o lock não mudaram).

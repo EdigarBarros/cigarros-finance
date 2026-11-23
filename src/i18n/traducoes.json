@@ -17542,5 +17542,65 @@
   "Outras pessoas pagam {0} desta fatura ({1}).": {
     "en": "Other people pay {0} of this bill ({1}).",
     "es": "Otras personas pagan {0} de esta factura ({1})."
+  },
+  "Fatura de {0}, compras, pagamentos e limite do {1}.": {
+    "en": "{1}: statement for {0}, purchases, payments and limit.",
+    "es": "{1}: resumen de {0}, compras, pagos y límite."
+  },
+  "Escolha um cartão na carteira para ver a fatura, as compras e o limite dele.": {
+    "en": "Pick a card from the wallet to see its statement, purchases and limit.",
+    "es": "Elige una tarjeta de la billetera para ver su resumen, sus compras y su límite."
+  },
+  "Cartões que você não usa mais ({0})": {
+    "en": "Cards you no longer use ({0})",
+    "es": "Tarjetas que ya no usas ({0})"
+  },
+  "Faturas que venceram sem pagar": {
+    "en": "Overdue unpaid statements",
+    "es": "Resúmenes vencidos sin pagar"
+  },
+  "Uma fatura venceu sem pagar.": {
+    "en": "A statement is overdue and unpaid.",
+    "es": "Un resumen venció sin pagar."
+  },
+  "Resolver no {0}": {
+    "en": "Sort out on {0}",
+    "es": "Resolver en {0}"
+  },
+  "Clique num cartão para tirá-lo da carteira e ver tudo dele.": {
+    "en": "Click a card to take it out of the wallet and see everything about it.",
+    "es": "Haz clic en una tarjeta para sacarla de la billetera y ver todo sobre ella."
+  },
+  "Fatura": {
+    "en": "Statement",
+    "es": "Resumen"
+  },
+  "Compras": {
+    "en": "Purchases",
+    "es": "Compras"
+  },
+  "Pagas e renegociadas": {
+    "en": "Paid and renegotiated",
+    "es": "Pagadas y renegociadas"
+  },
+  "Próximas e parceladas": {
+    "en": "Upcoming and installments",
+    "es": "Próximas y en cuotas"
+  },
+  "Limite e caixinha": {
+    "en": "Limit and savings",
+    "es": "Límite y ahorro"
+  },
+  "Guardar na carteira": {
+    "en": "Put back in the wallet",
+    "es": "Guardar en la billetera"
+  },
+  "O que ver deste cartão": {
+    "en": "What to see on this card",
+    "es": "Qué ver de esta tarjeta"
+  },
+  "Quer ver limite, parcelas e faturas pagas? Mudar o jeito de ver": {
+    "en": "Want to see limit, installments and paid statements? Change the view",
+    "es": "¿Quieres ver el límite, las cuotas y los resúmenes pagados? Cambiar la vista"
   }
 }

@@ -866,15 +866,33 @@ ano aberto vêm de `lancsRecentes` em `useDados`.
 
 ### 4.11 Cartões de crédito (página redesenhada)
 
-- **Carteira:** cada cartão ativo é desenhado (`CartaoIlustrado`): plástico na cor do cartão, desenho de fundo escolhido
-  pelo nome, chip, aproximação, selo do banco (`BancoIcone`, monograma em SVG na cor da marca, sem logos reais), a fatura
-  do mês e os dias de fechamento/vencimento. Inclina em 3D e brilha seguindo o ponteiro; um reflexo passa ao aparecer e ao
-  ser escolhido. No celular os cartões deslizam de lado. Tocar num cartão abre o detalhe dele.
-- **Detalhe do cartão:** faturas que venceram sem pagar (até 12 meses para trás, com "Paguei", "Renegociei" e "Já paguei
-  todas"), fatura do mês (valor que conta, linha do tempo abriu → fecha → vence com o "hoje" pulsando, divisão por
-  categoria, ações), anel do limite (usado na cor do cartão; o garantido num arco dourado por fora; o usado soma as faturas
-  do mês de hoje em diante e as anteriores ainda não pagas, fechadas ou vencidas, como faz o banco), barras das próximas
-  faturas, parceladas com um tracinho por parcela e o histórico das faturas resolvidas (toque para ajeitar).
+- **Carteira (computador, `components/Carteira3D.tsx`, estilos em `pages/cartoes-pc.css`):** uma carteira de couro escuro
+  com costura dourada, feita só com CSS 3D, gradientes e um ruído em SVG (nada de imagem nem biblioteca 3D). Cada cartão
+  ativo é desenhado (`CartaoIlustrado`: plástico na cor do cartão, desenho de fundo escolhido pelo nome, chip, aproximação,
+  selo do banco `BancoIcone`, monograma em SVG na cor da marca, sem logos reais) e aparece pela fenda de um bolso; no bolso,
+  gravados em dourado, o valor da fatura do mês e a situação com um pontinho colorido. A carteira inclina e brilha seguindo
+  o ponteiro; passar o ponteiro levanta o cartão da fenda; ao abrir a tela, os cartões descem para dentro dos bolsos.
+  Setas para cima/baixo andam entre os cartões. Ao lado (sem cartão escolhido): a vitrine (rosca das faturas, falta pagar,
+  limite livre, em atraso), a faixa "N faturas venceram sem pagar" com "Resolver no <cartão>" (abre o cartão na aba Fatura),
+  "Quanto do limite cada cartão usa" (com 2 ou mais com limite) e "Clique num cartão…". Arquivados: "Cartões que você não
+  usa mais (N)" embaixo da carteira.
+- **Cartão fora da carteira:** clicar num cartão faz ele sair (sobe da fenda, gira e pousa grande à direita, `sairDaCarteira`)
+  e a carteira encolhe para a coluna da esquerda (`moverCarteira`), presa ao rolar; clicar noutro troca (o anterior volta
+  para a fenda, `voltarParaCarteira`). "Guardar na carteira" ou Esc devolvem. Só `transform`, `opacity` e `clip-path` com a
+  Web Animations API; com Animações: Reduzidas nada voa. Ao lado do cartão grande (que flutua de leve): situação, nome,
+  banco e dias, fatura do mês e limite livre, e "Paguei a fatura" (ou "Pagar o resto"), "Nova compra", "Editar",
+  "Guardar na carteira". Embaixo, **abas** (a escolhida fica lembrada no aparelho; setas esquerda/direita trocam):
+  **Fatura** (faturas que venceram sem pagar e a fatura do mês), **Compras** (as compras da fatura; a compra que acabou de
+  ser lançada abre aqui, destacada), **Pagas e renegociadas** (histórico, toque para ajeitar), **Próximas e parceladas** e
+  **Limite e caixinha**. No jeito simples, só Fatura e Compras. Abaixo de 1100px de largura, a carteira fica em cima.
+- **Celular** (`movel/telas/CartoesMovel.tsx`): continua como está (cartões deslizando de lado e o detalhe embaixo); usa as
+  mesmas peças da fatura, do limite e das listas.
+- **Detalhe do cartão (as peças, iguais no computador e no celular):** faturas que venceram sem pagar (até 12 meses para
+  trás, com "Paguei", "Renegociei" e "Já paguei todas"), fatura do mês (valor que conta, linha do tempo abriu → fecha →
+  vence com o "hoje" pulsando, divisão por categoria, ações), anel do limite (usado na cor do cartão; o garantido num arco
+  dourado por fora; o usado soma as faturas do mês de hoje em diante e as anteriores ainda não pagas, fechadas ou vencidas,
+  como faz o banco), barras das próximas faturas, parceladas com um tracinho por parcela e o histórico das faturas
+  resolvidas (toque para ajeitar).
 - **Pagar / ajeitar:** dia, valor, banco e juros/multa. Pago depois do vencimento aparece "com N dias de atraso"; os
   juros viram uma saída na categoria de dívidas, no mês do pagamento (`juros_lanc_id`). Ajeitar atualiza, cria ou apaga
   essa saída; desfazer apaga também.
@@ -1309,7 +1327,7 @@ começo ao fim), `BarraDividida` (as partes de um todo, com legenda), `Rosquinha
 | --- | --- | --- | --- |
 | **Dívidas** | Vitrine (anel do quanto já foi pago, quanto deve, "Sem dívidas em", parcelas por mês e o atrasado se houver) e cada dívida num quadro grande com um botão só ("Pagar R$ X") | + a **trilha** até ficar livre dentro da vitrine, **Quanto sai nos próximos meses** (colunas) e **Do que é feita a sua dívida** (rosca e barra dividida, na cor do banco), e os cartões completos de cada dívida | + **Quando cada dívida acaba** (linha do tempo, pintada até o que já foi pago) e a pílula do total já pago |
 | **Metas** | Vitrine (pote de todas as metas) e um **pote grande por meta** com "Guardar" | Vitrine com "Guardar por mês" e os cartões completos (Guardar e Retirar) | + **Quando cada meta chega** (linha do tempo até o prazo ou a previsão) e **Quanto guardar por mês** (barra dividida por meta) |
-| **Cartões** | Vitrine (rosca das faturas por cartão, falta pagar, limite livre, em atraso), a carteira e, do cartão escolhido, só a fatura e as compras | + limite e próximas faturas, e as parceladas | + **Quanto do limite cada cartão usa** (com 2 cartões ou mais), as parceladas e as faturas resolvidas |
+| **Cartões** | Carteira 3D e vitrine (rosca das faturas por cartão, falta pagar, limite livre, em atraso); do cartão escolhido, as abas Fatura e Compras | + as abas Pagas e renegociadas, Próximas e parceladas, Limite e caixinha | igual ao equilibrado; **Quanto do limite cada cartão usa** aparece ao lado da carteira com 2 cartões ou mais |
 | **Contas do mês** | Vitrine (pote do que já foi pago, falta pagar, atrasadas, a receber) e os boletos | + a linha do mês | + **Para onde vão as contas** (rosca e barra por categoria) e a lista de contas fixas aberta |
 | **Lançamentos** | Vitrine (anel do quanto do que entrou já saiu, sobrou, entrou e saiu), só busca e tipo nos filtros, sem a coluna do lado | + o calendário de calor e as categorias ao lado, e a ordem (por dia ou maiores) | + filtros de banco e de forma de pagamento e a pílula com o número de lançamentos |
 | **Dinheiro guardado** | Vitrine (rosca de onde está o dinheiro e uma pílula por parte) e a reserva | + **Como tem mudado** (colunas dos últimos meses) | + **Onde está cada parte** (barra dividida) |
