@@ -107,7 +107,7 @@ async function fluxo() {
 async function semMigracao() {
   const d = dados()
   delete d.faturas_parciais
-  const t = await iniciar({ perfil: demo.perfil, dados: d, porta: 4811, semColunas: { lancamentos: ['pulada_de'], faturas_pagas: ['da_caixinha', 'saldo_mexido'] } })
+  const t = await iniciar({ perfil: demo.perfil, dados: d, porta: 4811, semColunas: { lancamentos: ['pulada_de', 'pago_por'], faturas_pagas: ['da_caixinha', 'saldo_mexido'] } })
   try {
     t.db.faturas_parciais = undefined
     delete t.db.faturas_parciais
@@ -123,7 +123,48 @@ async function semMigracao() {
     const paga = t.db.faturas_pagas.find((p) => p.cartao_id === CARTAO)
     assert.equal(paga.valor, 300)
     assert.ok(!('da_caixinha' in paga))
+    // sem a migração 39, a compra nova não pergunta quem paga
+    await t.page.locator('.ccd-cab').getByRole('button', { name: 'Nova compra' }).click()
+    await expect(dialog.getByRole('radio', { name: 'Outra pessoa' })).toHaveCount(0)
     console.log('✓ sem a migração 38: tudo como antes')
+  } finally {
+    await t.fechar()
+  }
+}
+
+/** Compra que outra pessoa paga (migração 39): a assinatura da mãe no seu cartão. */
+async function quemPaga() {
+  const t = await iniciar({ perfil: demo.perfil, dados: dados(), porta: 4812 })
+  const { page, db } = t
+  try {
+    await abrirPicPay(page, t.url)
+    await page.locator('.ccd-cab').getByRole('button', { name: 'Nova compra' }).click()
+    const dialog = page.getByRole('dialog')
+    await dialog.getByLabel('Valor').fill('19,90')
+    await dialog.getByRole('combobox', { name: 'Descrição' }).or(dialog.getByRole('textbox', { name: 'Descrição' })).first().fill('Amazon Prime')
+    await dialog.getByRole('radio', { name: 'Outra pessoa' }).click()
+    await dialog.getByRole('button', { name: 'Salvar', exact: true }).click()
+    await expect(dialog.locator('.form-erro')).toContainText('Escreva quem paga')
+    await dialog.getByPlaceholder('Quem? Ex.: Mãe').fill('Mãe')
+    await foto(page, '7-quem-paga')
+    await dialog.getByRole('button', { name: 'Salvar', exact: true }).click()
+    await expect(dialog).toHaveCount(0)
+    const prime = db.lancamentos.find((l) => l.descricao === 'Amazon Prime')
+    assert.equal(prime.pago_por, 'Mãe')
+    await expect(page.locator('.ccd-outros')).toContainText('19,90')
+    await expect(page.locator('.ccd-outros')).toContainText('Mãe paga R$ 19,90')
+    await expect(page.locator('.ccd-compras')).toContainText('paga por Mãe')
+    await foto(page, '8-fatura-com-a-mae')
+    // ao editar a parcela, "Eu" tira o nome da compra
+    await page.locator('.ccd-compras .item-lanc', { hasText: 'Amazon Prime' }).click()
+    await expect(dialog.getByRole('radio', { name: 'Outra pessoa' })).toHaveAttribute('aria-checked', 'true')
+    await dialog.getByRole('radio', { name: 'Eu' }).click()
+    await dialog.getByRole('button', { name: 'Salvar', exact: true }).click()
+    await expect(dialog).toHaveCount(0)
+    await expect.poll(() => db.lancamentos.find((l) => l.descricao === 'Amazon Prime').pago_por).toBe(null)
+    await expect(page.locator('.ccd-outros')).toHaveCount(0)
+    assert.deepEqual(t.msgs.filter((m) => m.includes('PAGEERROR')), [])
+    console.log('✓ compra que outra pessoa paga: grava, mostra na fatura e volta para "Eu"')
   } finally {
     await t.fechar()
   }
@@ -132,4 +173,5 @@ async function semMigracao() {
 ;(async () => {
   await fluxo()
   await semMigracao()
+  await quemPaga()
 })().catch((e) => { console.error(e); process.exit(1) })

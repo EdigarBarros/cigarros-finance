@@ -108,6 +108,7 @@ export function CartoesMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom, c
                     sub={[
                       fmtDataCurta(l.data_compra ?? null), k.nome, (l.parcelas ?? 1) > 1 ? `${l.parcela}/${l.parcelas}` : null,
                       l.pulada_de ? tx('pulada de {0}', nomeDaFatura(Number(l.pulada_de.slice(0, 4)), Number(l.pulada_de.slice(5, 7)), c.ano)) : null,
+                      l.pago_por?.trim() ? tx('paga por {0}', l.pago_por.trim()) : null,
                     ].filter(Boolean).join(' · ')}
                     valor={fmtValor(l.valor)} aoTocar={() => c.editarLancamento(l)} />
                 </div>

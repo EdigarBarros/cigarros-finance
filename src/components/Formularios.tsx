@@ -68,6 +68,8 @@ interface FormLancProps {
   /** Devolve false quando não gravou: o formulário fica aberto com o que foi digitado. */
   aoSalvarCompra?: (parcelas: NovoLanc[]) => Promise<boolean | void> | void
   aoExcluirCompra?: (compraId: string) => void
+  /** Sem a migração 39: o campo "Quem paga esta compra?" não aparece. */
+  semPagoPor?: boolean
   /** Compras já lançadas nos cartões: servem para avisar quando a mesma compra é lançada duas vezes. */
   comprasCartao?: Lancamento[]
   /** Avisa em que fatura a compra caiu (principalmente quando já passou do fechamento). */
@@ -132,12 +134,20 @@ export function FormLancamento(p: FormLancProps) {
   const [forma, setForma] = useState<FormaPagamento | ''>(formaDe({ forma: ini.forma, cartao_id: ini.cartao_id ?? p.cartaoInicial }) ?? '')
   const [mexeuForma, setMexeuForma] = useState(Boolean(p.inicial || p.cartaoInicial))
   const [vezes, setVezes] = useState(1)
+  // Compra no cartão que outra pessoa paga (a assinatura da mãe no seu cartão): fica na fatura, fora dos seus gastos.
+  const [deOutro, setDeOutro] = useState(Boolean(ini.pago_por?.trim()))
+  const [pagoPor, setPagoPor] = useState(ini.pago_por ?? '')
   const [contaId, setContaId] = useState(ini.conta_fixa_id ?? '')
   const [mexeuConta, setMexeuConta] = useState(Boolean(p.inicial || p.preset))
   const inicioLigada = dividaId && !novoEmprestimo ? p.inicioDivida?.(dividaId) ?? null : null
   const saldoLigado = dividaId && !novoEmprestimo ? p.saldoDaDivida?.(dividaId) ?? null : null
   const ehParcela = Boolean(p.inicial?.compra_id)
   const cartaoDaParcela = p.cartoes?.find((c) => c.id === p.inicial?.cartao_id)
+  // nomes de quem já pagou alguma compra, para sugerir ao digitar
+  const nomesQuePagam = useMemo(
+    () => [...new Set((p.comprasCartao ?? []).map((l) => l.pago_por?.trim()).filter((n): n is string => Boolean(n)))].slice(0, 20),
+    [p.comprasCartao],
+  )
 
   // Última conta/categoria usada para cada descrição — "iFood" já vem como alimentação.
   const memoria = useMemo(() => {
@@ -179,6 +189,8 @@ export function FormLancamento(p: FormLancProps) {
   const numero = parseNumero(valor)
   const dica = dicaDaDescricao(descricao, p.perfil, tipo)
   const cartao = !p.inicial && tipo === 'saida' && forma === 'credito' && p.aoSalvarCompra ? p.cartoes?.find((c) => c.id === cartaoId && c.ativo) : undefined
+  // "Quem paga esta compra?": compra nova no cartão, ou uma parcela de compra no cartão aberta para editar (migração 39)
+  const mostraQuemPaga = !p.semPagoPor && Boolean(cartao || (ehParcela && p.inicial?.cartao_id))
   const cartoesAtivos = p.cartoes?.filter((c) => c.ativo) ?? []
   const parcelas = useMemo(() => {
     const total = numero && numero > 0 ? (estrangeira ? (taxa ? Math.round(numero * taxa * 100) / 100 : 0) : numero) : 0
@@ -355,6 +367,10 @@ export function FormLancamento(p: FormLancProps) {
     const moedaOriginal = estrangeira
       ? { valor_original: n, moeda_original: moeda }
       : original ? { valor_original: null, moeda_original: null } : {}
+    // quem paga: o nome de outra pessoa, ou nada (você). Só vai para o banco com a migração 39 e quando há o que gravar.
+    const quemPaga = deOutro ? pagoPor.trim().slice(0, 60) : ''
+    if (mostraQuemPaga && deOutro && !quemPaga) return setErro(tx('Escreva quem paga esta compra.'))
+    const comQuemPaga = !mostraQuemPaga ? {} : quemPaga ? { pago_por: quemPaga } : ini.pago_por ? { pago_por: null } : {}
     if (cartao && p.aoSalvarCompra) {
       if (duplicada && !duplicadaOk) {
         setDuplicadaOk(true)
@@ -370,6 +386,7 @@ export function FormLancamento(p: FormLancProps) {
         banco_id: null, categoria_id: categoriaId || null, divida_id: null,
         cartao_id: cartao.id, compra_id: compraId, parcela: x.parcela, parcelas: x.parcelas, data_compra: data,
         ...(estrangeira ? { valor_original: originais[i], moeda_original: moeda } : {}),
+        ...comQuemPaga,
       })))
       if (gravou === false) return setErro(tx('Não deu certo. Tente de novo.'))
       setVezes(1)
@@ -393,6 +410,7 @@ export function FormLancamento(p: FormLancProps) {
           // sem o módulo de contas o campo não aparece: o vínculo que já existia fica como está
           ...(p.contasFixas ? { conta_fixa_id: adiantarPara ? null : contaEscolhida?.id ?? null } : {}),
           ...moedaOriginal,
+          ...comQuemPaga,
         },
         p.inicial?.id,
         adiantarPara && contaEscolhida ? { contaId: contaEscolhida.id, mes: `${adiantarPara.ano}-${String(adiantarPara.mes).padStart(2, '0')}` } : undefined,
@@ -571,6 +589,26 @@ export function FormLancamento(p: FormLancProps) {
               {parcelas.length ? textoParcelamento(parcelas, Number(data.slice(0, 4))) : tx('Informe o valor para ver como as parcelas ficam.')}
             </span>
           </label>
+        )}
+        {mostraQuemPaga && (
+          <div className="campo">
+            <span className="campo-rotulo"><Icone nome="pessoa" tamanho={15} />{tx('Quem paga esta compra?')}</span>
+            <div className="chips" role="radiogroup" aria-label={tx('Quem paga esta compra?')}>
+              <button type="button" role="radio" aria-checked={!deOutro} className={`chip ${!deOutro ? 'ativo' : ''}`} onClick={() => { setDeOutro(false); setErro(null) }}>{tx('Eu')}</button>
+              <button type="button" role="radio" aria-checked={deOutro} className={`chip ${deOutro ? 'ativo' : ''}`} onClick={() => { setDeOutro(true); setErro(null) }}>{tx('Outra pessoa')}</button>
+            </div>
+            {deOutro && (
+              <>
+                <input value={pagoPor} onChange={(e) => { setPagoPor(e.target.value); setErro(null) }} maxLength={60} list={`${idForm}-quem`}
+                  placeholder={tx('Quem? Ex.: Mãe')} aria-label={tx('Nome de quem paga')} />
+                <datalist id={`${idForm}-quem`}>{nomesQuePagam.map((n) => <option key={n} value={n} />)}</datalist>
+                <span className="campo-ajuda">
+                  {tx('A compra fica na fatura e no limite do cartão, mas não entra nos seus gastos. O dinheiro que essa pessoa te passar não precisa ser lançado como entrada.')}
+                  {ehParcela && (p.inicial!.parcelas ?? 1) > 1 && (' ' + tx('Vale para todas as parcelas da compra.'))}
+                </span>
+              </>
+            )}
+          </div>
         )}
         {(v.bancos || bancoId) && !cartao && !ehParcela && (
           <EscolhaBanco

@@ -1121,6 +1121,11 @@ button.cc-plastico:not(.ativo):hover { filter: none; }
 .ccd-puladas span { flex: 1; min-width: 0; }
 .ccd-puladas b { color: var(--texto); font-variant-numeric: tabular-nums; }
 .cc-pulada { font-style: normal; color: var(--violeta); }
+/* parte da fatura que outra pessoa paga (fica na fatura, fora dos seus gastos) */
+.cc-de-outro { font-style: normal; color: var(--caixa); }
+.ccd-outros { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: var(--raio-p); font-size: 13.5px; color: var(--texto-2); background: color-mix(in srgb, var(--caixa) 9%, transparent); }
+.ccd-outros svg { flex: none; color: var(--caixa); margin-top: 2px; }
+.ccd-outros b { color: var(--texto); }
 .ccd-acoes .btn[disabled], .ccd-atrasadas .btn[disabled] { opacity: .45; cursor: not-allowed; }
 
 /* anel do limite */

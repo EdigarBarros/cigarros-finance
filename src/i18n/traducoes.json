@@ -17494,5 +17494,53 @@
   "{0} vão para {1}": {
     "en": "{0} go to {1}",
     "es": "{0} van a {1}"
+  },
+  "paga por {0}": {
+    "en": "paid by {0}",
+    "es": "pagada por {0}"
+  },
+  "Seu gasto: {0}": {
+    "en": "Your spending: {0}",
+    "es": "Tu gasto: {0}"
+  },
+  "Escreva quem paga esta compra.": {
+    "en": "Write who pays for this purchase.",
+    "es": "Escribe quién paga esta compra."
+  },
+  "Quem paga esta compra?": {
+    "en": "Who pays for this purchase?",
+    "es": "¿Quién paga esta compra?"
+  },
+  "Eu": {
+    "en": "Me",
+    "es": "Yo"
+  },
+  "Outra pessoa": {
+    "en": "Someone else",
+    "es": "Otra persona"
+  },
+  "Quem? Ex.: Mãe": {
+    "en": "Who? E.g.: Mom",
+    "es": "¿Quién? Ej.: Mamá"
+  },
+  "Nome de quem paga": {
+    "en": "Name of who pays",
+    "es": "Nombre de quien paga"
+  },
+  "A compra fica na fatura e no limite do cartão, mas não entra nos seus gastos. O dinheiro que essa pessoa te passar não precisa ser lançado como entrada.": {
+    "en": "The purchase stays on the bill and the card limit, but doesn't count as your spending. The money this person gives you doesn't need to be added as income.",
+    "es": "La compra queda en la factura y en el límite de la tarjeta, pero no entra en tus gastos. El dinero que esa persona te pase no necesita registrarse como ingreso."
+  },
+  "Vale para todas as parcelas da compra.": {
+    "en": "Applies to all installments of the purchase.",
+    "es": "Vale para todas las cuotas de la compra."
+  },
+  "{0} paga {1} desta fatura.": {
+    "en": "{0} pays {1} of this bill.",
+    "es": "{0} paga {1} de esta factura."
+  },
+  "Outras pessoas pagam {0} desta fatura ({1}).": {
+    "en": "Other people pay {0} of this bill ({1}).",
+    "es": "Otras personas pagan {0} de esta factura ({1})."
   }
 }

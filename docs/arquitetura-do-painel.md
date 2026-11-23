@@ -896,6 +896,13 @@ ano aberto vêm de `lancsRecentes` em `useDados`.
   previsão da Início (`previsaoDoAno`, `diaADiaDoMes`), o que foi pago em parte sai do "vem aí" e entra no "já saiu", no mês da
   fatura. Sem a migração, nada disso aparece e pagar continua marcando a fatura como paga. Teste de ponta a ponta:
   `scripts/app-de-demonstracao/testar-pular-e-pagar-parte.cjs`.
+- **Compra que outra pessoa paga** (migração 39): a assinatura que está no seu cartão, mas quem paga é a sua mãe. No formulário
+  da compra (nova, ou uma parcela aberta para editar), "Quem paga esta compra? Eu | Outra pessoa" com o nome (sugere os nomes
+  já usados). `lancamentos.pago_por` guarda o nome em todas as parcelas (editar uma muda a compra inteira, `atualizarCompra`).
+  A compra continua na fatura, no limite e no "Falta pagar" (é o que o banco cobra), mas `contaNasSaidas` a tira dos gastos:
+  saídas do mês, categorias, previsão, sobra que passa de um mês para o outro, conselhos e Consultor. O dinheiro que a pessoa
+  te passa não precisa ser lançado como entrada (os dois se anulam). Na fatura: "Mãe paga R$ 19,90 desta fatura. Seu gasto:
+  R$ 680,10"; na compra, "paga por Mãe". Sem a migração, o campo não aparece.
 - **Renegociar:** o banco parcelou a fatura. Cria uma dívida (total do acordo, parcelas) e marca a fatura como
   `renegociada`. As compras dela saem das saídas do mês (`contaNasSaidas`, aplicado em `Painel` antes de `resumoMes`), e o
   que passa a contar é cada parcela paga da dívida: nada conta duas vezes. Também saem do total de faturas e do "falta

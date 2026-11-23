@@ -45,6 +45,8 @@ export interface Lancamento {
   data_compra?: string | null
   /** Compra pulada para a fatura seguinte ("pula compra" do banco): o vencimento da fatura em que estava antes (migração 38). */
   pulada_de?: string | null
+  /** Compra no cartão que outra pessoa paga: o nome dela (migração 39). Fica na fatura e no limite, fora dos seus gastos. */
+  pago_por?: string | null
   /** Pix, débito, dinheiro, boleto ou transferência (migração 11). Compra no cartão não usa: veja `formaDe`. */
   forma?: 'pix' | 'debito' | 'dinheiro' | 'boleto' | 'transferencia' | null
   /**

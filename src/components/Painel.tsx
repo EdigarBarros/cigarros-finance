@@ -370,8 +370,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const comFaturas = v.cartoes && !cartoes.semTabela
   // só as renegociações mudam a conta: a chave evita refazer tudo a cada fatura marcada como paga
   const chaveRenegociadas = cartoes.faturasPagas.filter(renegociada).map((p) => `${p.cartao_id}${p.ano}${p.mes}`).join()
+  // (compra que outra pessoa paga também sai: está na fatura, mas o gasto não é seu)
   const lancsComGuardados = useMemo(
-    () => (comFaturas && chaveRenegociadas ? d.lancs.filter(contaNasSaidas(cartoes.faturasPagas)) : d.lancs),
+    () => (comFaturas ? d.lancs.filter(contaNasSaidas(cartoes.faturasPagas)) : d.lancs),
     [d.lancs, chaveRenegociadas, comFaturas], // eslint-disable-line react-hooks/exhaustive-deps
   )
   // Saída que é dinheiro indo para o seu dinheiro guardado (Itaú → porquinho do PicPay) só muda de lugar: aparece na lista de
@@ -579,7 +580,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     const abertos = new Set(lancsComGuardados.map((l) => l.id))
     const outros = d.lancsRecentes.filter((l) => !abertos.has(l.id))
     // os guardados vão junto: o conselheiro e o consultor os reconhecem (não são gasto) e o consultor conta quanto foi guardado
-    return [...lancsComGuardados, ...(comFaturas && chaveRenegociadas ? outros.filter(contaNasSaidas(cartoes.faturasPagas)) : outros)]
+    return [...lancsComGuardados, ...(comFaturas ? outros.filter(contaNasSaidas(cartoes.faturasPagas)) : outros)]
   }, [lancsComGuardados, d.lancsRecentes, chaveRenegociadas, comFaturas]) // eslint-disable-line react-hooks/exhaustive-deps
   // a comparação com o mês anterior (Início) lê os mesmos lançamentos, sem os guardados (não são gasto)
   const lancsComparar = useMemo(() => lancsDosConselhos.filter((l) => !ehGuardado(l)), [lancsDosConselhos])
@@ -770,7 +771,12 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
       const gravou = await d.updLanc(id, l)
       if (antes) salvo = { ...antes, ...l }
       if (gravou) await ajustarSaldos(antes, salvo)
-      if (antes?.cartao_id) await cartoes.recarregar()
+      // quem paga vale para a compra inteira: as outras parcelas acompanham (a parcela pode ser de outro ano)
+      const parcela = antes ?? cartoes.compras.find((x) => x.id === id)
+      if (gravou && parcela?.compra_id && 'pago_por' in l && (l.pago_por ?? null) !== (parcela.pago_por ?? null)) {
+        await cartoes.atualizarCompra(parcela.compra_id, { pago_por: l.pago_por ?? null })
+      }
+      if (parcela?.cartao_id) await cartoes.recarregar()
     }
     if (salvo?.conta_fixa_id && salvo.conta_fixa_id !== antes?.conta_fixa_id) {
       perguntarParecidos(salvo, [...lancs.filter((x) => x.id !== salvo.id), salvo])
@@ -1072,6 +1078,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         cartoes={v.cartoes && !cartoes.semTabela ? cartoes.cartoes : undefined}
         cartaoInicial={form.cartaoId}
         aoSalvarCompra={cartoes.addCompra}
+        semPagoPor={cartoes.semPagoPor}
         aoExcluirCompra={cartoes.delCompra}
         comprasCartao={cartoes.compras}
         aoCompraSalva={(a) => {
