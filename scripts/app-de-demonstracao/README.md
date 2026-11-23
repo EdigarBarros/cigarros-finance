@@ -90,3 +90,10 @@ duas vezes em novembro vira a de dezembro, "recebido adiantado"; Desfazer reabre
 Depois do build com Supabase fictício: `node scripts/app-de-demonstracao/testar-grade-pc.cjs` (com `FOTOS=pasta` salva
 capturas). Faixa do topo verde com o selo do estado, nada sobreposto, puxar o canto (o cartão segue o mouse, a lista ganha
 linhas, sem tarefa longa), arrastar troca a ordem, teclado na alça, tamanhos guardados depois de recarregar e a 1000 px.
+
+## Cartões no computador (carteira 3D)
+
+Depois do build com Supabase fictício: `node scripts/app-de-demonstracao/testar-carteira-pc.cjs` (os cartões aparecendo pela
+fenda, o cartão saindo com animação, as cinco abas e as setas, trocar de cartão mantendo a aba, Esc e "Guardar na carteira",
+a faixa de atraso, a aba lembrada, 1000 px sem rolagem de lado, o jeito simples com 2 abas e Animações: Reduzidas sem voo).
+Com `FOTOS=pasta`, salva capturas.

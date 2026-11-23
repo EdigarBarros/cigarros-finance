@@ -1,5 +1,5 @@
 import { casasDaMoeda, mascarar } from '../lib/dinheiro'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { criarBusca } from '../lib/busca'
 import { CATALOGO_BANCOS } from '../lib/bancos'
@@ -20,6 +20,7 @@ import type { CartaoCredito, FaturaPaga, FaturaParcial, Lancamento } from '../li
 import { BancoIcone } from '../components/BancoIcone'
 import { Rosquinha, Vitrine, type Nivel } from '../components/Vitrine'
 import { CartaoIlustrado } from '../components/CartaoIlustrado'
+import { Carteira3D, moverCarteira, quadroDaVaga, quadroDe, quantoAparece, sairDaCarteira, voltarParaCarteira, type VagaDaCarteira } from '../components/Carteira3D'
 import { Selo } from '../components/Categorias'
 import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
@@ -28,6 +29,7 @@ import { confirmar } from '../lib/avisos'
 import { CampoData, Seletor } from '../components/Escolhas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
+import './cartoes-pc.css'
 
 const DIAS = Array.from({ length: 31 }, (_, i) => i + 1)
 const sufixoMes = (ano: number, mes: number) => `${noMeioDaFrase(MESES_CURTO[mes - 1])}/${String(ano).slice(2)}`
@@ -46,30 +48,94 @@ const puladaDe = (l: Lancamento, anoRef: number) => (l.pulada_de ? tx('pulada de
  * garantido da caixinha), as faturas que atrasaram, as próximas, as parceladas e o histórico do que já foi pago ou
  * renegociado. Renegociar cria uma dívida; juros de atraso viram uma saída.
  */
+type Aba = 'fatura' | 'compras' | 'resolvidas' | 'proximas' | 'limite'
+const CHAVE_ABA = 'opus.cartoes.aba'
+const abaGuardada = (): Aba => {
+  try {
+    const v = localStorage.getItem(CHAVE_ABA)
+    return (['fatura', 'compras', 'resolvidas', 'proximas', 'limite'] as const).find((a) => a === v) ?? 'fatura'
+  } catch { return 'fatura' }
+}
+
+/**
+ * Tela Cartões do computador: a carteira de couro com os cartões. Escolher um tira o cartão da carteira (a carteira
+ * encolhe para o lado) e mostra as coisas dele em abas: fatura, compras, faturas pagas e renegociadas, próximas e
+ * parceladas, limite e caixinha. "Guardar na carteira" (ou Esc) devolve. O celular usa `CartoesMovel`.
+ */
 export function Cartoes(c: Ctx) {
   const [editando, setEditando] = useState<CartaoCredito | 'novo' | null>(null)
   const [pagando, setPagando] = useState<Alvo | null>(null)
   const [renegociando, setRenegociando] = useState<Alvo | null>(null)
-  // vem da compra que acabou de ser lançada (tela Lançamentos): abre direto no cartão dela
+  // vem da compra que acabou de ser lançada (tela Lançamentos): abre direto no cartão dela, nas compras
   const [escolhido, setEscolhido] = useState<string | null>(c.cartaoAberto)
+  const [aba, setAba] = useState<Aba>(() => (c.compraDestacada ? 'compras' : abaGuardada()))
+  const [verArquivados, setVerArquivados] = useState(false)
   const { cartoes, faturas } = c
   const arquivados = cartoes.cartoes.filter((x) => !x.ativo)
-  const s = faturas.find((x) => x.cartao.id === escolhido) ?? faturas[0]
+  const s = faturas.find((x) => x.cartao.id === escolhido) ?? null
   // Acabou de lançar uma compra (tela Lançamentos): quando ela já está na fatura (a gravação pode demorar um pouco), rola até
   // ela uma vez só, deixa o destaque aceso por alguns segundos e o apaga (trocar de cartão não repete nada).
   const [destacada, setDestacada] = useState<string | null>(c.compraDestacada)
   const jaRolou = useRef(false)
-  const apareceu = Boolean(destacada && s?.compras.some((l) => l.compra_id === destacada))
+  const apareceu = Boolean(destacada && aba === 'compras' && s?.compras.some((l) => l.compra_id === destacada))
   useEffect(() => {
     if (!apareceu || jaRolou.current) return
     jaRolou.current = true
-    const rolar = window.setTimeout(() => document.querySelector('.ccd-compras .compra-nova')?.scrollIntoView({ block: 'center', behavior: semMovimento() ? 'auto' : 'smooth' }), 350)
-    const apagar = window.setTimeout(() => setDestacada(null), 3600)
+    const rolar = window.setTimeout(() => document.querySelector('.ccd-compras .compra-nova')?.scrollIntoView({ block: 'center', behavior: semMovimento() ? 'auto' : 'smooth' }), 1000)
+    const apagar = window.setTimeout(() => setDestacada(null), 4200)
     return () => { window.clearTimeout(rolar); window.clearTimeout(apagar) }
   }, [apareceu])
+
+  // ---------- o cartão saindo e voltando da carteira ----------
+  const carteira = useRef<HTMLDivElement>(null)
+  const grande = useRef<HTMLDivElement>(null)
+  const topo = useRef<HTMLDivElement>(null)
+  const voo = useRef<{ carteira: ReturnType<typeof quadroDe>; sai?: { id: string; de: NonNullable<ReturnType<typeof quadroDe>>; aparece: number }; volta?: { id: string; de: NonNullable<ReturnType<typeof quadroDe>> } } | null>(null)
+  const trocar = (novo: string | null) => {
+    if (novo === escolhido) return
+    if (!semMovimento()) {
+      // trocando de cartão lá embaixo na página: volta ao topo antes, para ver o cartão sair
+      const t = topo.current?.getBoundingClientRect().top ?? 0
+      if (escolhido && novo && t < 0) topo.current?.scrollIntoView({ block: 'start' })
+      const de = novo ? quadroDaVaga(carteira.current, novo) : null
+      const antes = grande.current?.querySelector('.cc-plastico')
+      const deGrande = quadroDe(antes)
+      voo.current = {
+        carteira: quadroDe(carteira.current),
+        sai: novo && de ? { id: novo, de, aparece: quantoAparece(carteira.current, novo) } : undefined,
+        volta: escolhido && deGrande ? { id: escolhido, de: deGrande } : undefined,
+      }
+    }
+    setEscolhido(novo)
+  }
+  useLayoutEffect(() => {
+    const v = voo.current
+    voo.current = null
+    if (!v) return
+    moverCarteira(carteira.current, v.carteira)
+    if (v.volta) voltarParaCarteira(carteira.current, v.volta.id, v.volta.de)
+    const el = grande.current?.querySelector<HTMLElement>('.ccx-voo')
+    if (v.sai && el) sairDaCarteira(el, v.sai.de, v.sai.aparece)
+  }, [escolhido])
+  // Esc guarda o cartão (quando não há janela aberta por cima)
+  useEffect(() => {
+    if (!escolhido) return
+    const tecla = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented || document.querySelector('[role="dialog"]')) return
+      trocar(null)
+    }
+    window.addEventListener('keydown', tecla)
+    return () => window.removeEventListener('keydown', tecla)
+  })
+  const escolherAba = (a: Aba) => {
+    setAba(a)
+    try { localStorage.setItem(CHAVE_ABA, a) } catch { /* sem armazenamento: só não lembra */ }
+  }
+
   const comLimite = faturas.filter((x) => x.limiteDisponivel !== null)
   const atrasadas = faturas.flatMap((x) => [...x.atrasadas, ...(x.status === 'atrasada' ? [x] : [])])
   const emAtraso = centavos(atrasadas.reduce((a, f) => a + f.falta, 0))
+  const comAtraso = faturas.filter((x) => x.atrasadas.length > 0 || x.status === 'atrasada')
   const nomeMes = noMeioDaFrase(MESES_NOME[c.mes - 1])
   const nivel = c.perfil.detalhe
 
@@ -82,14 +148,20 @@ export function Cartoes(c: Ctx) {
     )
   }
 
+  const vagas: VagaDaCarteira[] = faturas.map((x) => ({
+    id: x.cartao.id, nome: x.cartao.nome, cor: x.cartao.cor, banco: c.d.bancos.find((b) => b.id === x.cartao.banco_id)?.nome,
+    rotulo: tx('fatura de {0}', nomeDaFatura(x.ano, x.mes, c.ano)), valor: fmtValor(x.valor),
+    estado: x.atrasadas.length ? 'atrasada' : x.status, textoEstado: textoStatus(x),
+    rodape: <>{tx('fecha dia {0} · vence dia {1}', x.cartao.dia_fechamento, x.cartao.dia_vencimento)}</>,
+  }))
+
   return (
-    <div className="pagina pg-cartoes">
+    <div className="pagina pg-cartoes pg-cartoes-pc">
       <header className="pagina-topo">
         <div>
           <h1>{tx('Cartões')}</h1>
-          <p className="sub">{tx('Faturas de {0}/{1}, limite e parcelas de cada cartão.', nomeMes, c.ano)}</p>
+          <p className="sub">{s ? tx('Fatura de {0}, compras, pagamentos e limite do {1}.', nomeDaFatura(s.ano, s.mes, c.ano), s.cartao.nome) : tx('Escolha um cartão na carteira para ver a fatura, as compras e o limite dele.')}</p>
         </div>
-        {cartoes.cartoes.length > 0 && <button className="btn primario" onClick={() => setEditando('novo')}><Icone nome="mais" tamanho={16} /> {tx('Adicionar cartão')}</button>}
       </header>
 
       {cartoes.semExtras && cartoes.carregado && cartoes.cartoes.length > 0 && (
@@ -103,86 +175,105 @@ export function Cartoes(c: Ctx) {
 
       {cartoes.carregado && !cartoes.cartoes.length && <SemCartoes aoCriar={() => setEditando('novo')} />}
 
-      {faturas.length > 0 && s && (
-        <>
-          <Vitrine cor="var(--violeta)" className="cc-vitrine"
-            visual={
-              <Rosquinha tamanho={c.mobile ? 130 : 150} partes={faturas.map((x) => ({ rotulo: x.cartao.nome, valor: x.valor, cor: x.cartao.cor }))}>
-                <b>{faturas.length === 1 ? tx('1 cartão') : tx('{0} cartões', faturas.length)}</b>
-              </Rosquinha>
-            }
-            rotulo={<><Icone nome="cartao" tamanho={16} /> {tx('Faturas de {0}', nomeMes)}</>}
-            valor={totalFaturasDoMes(faturas)} formato={fmtValor}
-            pilulas={[
-              { icone: 'relogio', rotulo: tx('Falta pagar'), valor: fmtValor(totalFaturasAPagar(faturas)), cor: 'var(--divida)' },
-              ...(comLimite.length > 0 ? [{ icone: 'escudo', rotulo: tx('Limite livre'), valor: fmtValor(comLimite.reduce((a, x) => a + Math.max(0, x.limiteDisponivel!), 0)), cor: 'var(--caixa)' }] : []),
-              ...(emAtraso > 0 ? [{ icone: 'sino', rotulo: tx('Em atraso ({0})', atrasadas.length), valor: fmtValor(emAtraso), cor: 'var(--saida)', tom: 'ruim' as const }] : []),
-            ]} />
-
-          <section className="cc-carteira" aria-label={tx('Seus cartões')}>
-            {faturas.map((x, i) => (
-              <div key={x.cartao.id} className="cc-carteira-item" style={{ animationDelay: `${i * 70}ms` }}>
-                <CartaoIlustrado
-                  nome={x.cartao.nome} cor={x.cartao.cor} banco={c.d.bancos.find((b) => b.id === x.cartao.banco_id)?.nome}
-                  ativo={x === s} aoClicar={() => setEscolhido(x.cartao.id)}
-                  conteudo={<span className="cc-plastico-fatura"><small>{tx('fatura de {0}', nomeDaFatura(x.ano, x.mes, c.ano))}</small><b>{fmtValor(x.valor)}</b></span>}
-                  rodape={<>{tx('fecha dia {0} · vence dia {1}', x.cartao.dia_fechamento, x.cartao.dia_vencimento)}</>}
-                />
-                <span className={`chip-estado cc ${x.status}`}>{textoStatus(x)}</span>
-              </div>
-            ))}
-            <button className="cc-carteira-novo" onClick={() => setEditando('novo')}>
-              <span><Icone nome="mais" tamanho={22} /></span>{tx('Adicionar cartão')}
-            </button>
-          </section>
-
-          {nivel === 'detalhado' && comLimite.length > 1 && (
-            <section className="cartao vt-cartao">
-              <h3><Icone nome="escudo" tamanho={17} /> {tx('Quanto do limite cada cartão usa')}</h3>
-              <ul className="cc-usos">
-                {comLimite.map((x, i) => {
-                  const lim = x.limiteTotal ?? 0
-                  const p = lim > 0 ? Math.min(1, Math.max(0, x.limiteUsado / lim)) : 0
-                  return (
-                    <li key={x.cartao.id} style={{ '--c': x.cartao.cor, '--i': i } as React.CSSProperties}>
-                      <BancoIcone nome={x.cartao.nome} cor={x.cartao.cor} tamanho={28} />
-                      <span className="cc-usos-nome">{x.cartao.nome}</span>
-                      <span className="cc-usos-trilho"><i style={{ width: `${p * 100}%` }} /></span>
-                      <b className={p >= 0.9 ? 'ruim' : p >= 0.7 ? 'atencao' : ''}>{Math.round(p * 100)}%</b>
-                    </li>
-                  )
-                })}
-              </ul>
-            </section>
-          )}
-
-          <Detalhe key={s.cartao.id} s={s} c={c} destacada={destacada} nivel={nivel}
-            aoEditar={() => setEditando(s.cartao)}
-            aoPagar={(f, pagamento, parcial) => setPagando({ cartao: s.cartao, f, pagamento, parcial })}
-            aoRenegociar={(f) => setRenegociando({ cartao: s.cartao, f })} />
-        </>
-      )}
-
-      {arquivados.length > 0 && (
-        <Cartao titulo={tx('Cartões que você não usa mais')}>
-          <ul className="cc-arquivados">
-            {arquivados.map((x) => (
-              <li key={x.id}>
-                <button onClick={() => setEditando(x)}>
-                  <BancoIcone nome={x.nome} cor={x.cor} tamanho={30} />
-                  <span>{x.nome}</span>
-                  <Icone nome="lapis" tamanho={16} />
+      {faturas.length > 0 && (
+        <div ref={topo} className={`ccx ${s ? 'com-cartao' : ''}`}>
+          <aside className="ccx-lado">
+            <Carteira3D ref={carteira} vagas={vagas} fora={s?.cartao.id ?? null} compacta={Boolean(s)}
+              aoEscolher={(id) => trocar(id === escolhido ? null : id)} aoNovo={() => setEditando('novo')} />
+            {arquivados.length > 0 && (
+              <div className="ccx-arquivados">
+                <button type="button" className="link" onClick={() => setVerArquivados(!verArquivados)} aria-expanded={verArquivados}>
+                  <Icone nome="cofre" tamanho={14} /> {tx('Cartões que você não usa mais ({0})', arquivados.length)}
                 </button>
-              </li>
-            ))}
-          </ul>
-        </Cartao>
+                {verArquivados && (
+                  <ul className="cc-arquivados">
+                    {arquivados.map((x) => (
+                      <li key={x.id}>
+                        <button onClick={() => setEditando(x)}>
+                          <BancoIcone nome={x.nome} cor={x.cor} tamanho={26} />
+                          <span>{x.nome}</span>
+                          <Icone nome="lapis" tamanho={15} />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </aside>
+
+          <div className="ccx-palco">
+            {s ? (
+              <DetalheEmAbas key={s.cartao.id} ref={grande} s={s} c={c} aba={aba} aoAba={escolherAba} destacada={destacada} nivel={nivel}
+                aoGuardar={() => trocar(null)}
+                aoEditar={() => setEditando(s.cartao)}
+                aoPagar={(f, pagamento, parcial) => setPagando({ cartao: s.cartao, f, pagamento, parcial })}
+                aoRenegociar={(f) => setRenegociando({ cartao: s.cartao, f })} />
+            ) : (
+              <div className="ccx-resumo">
+                <Vitrine cor="var(--violeta)" className="cc-vitrine"
+                  visual={
+                    <Rosquinha tamanho={150} partes={faturas.map((x) => ({ rotulo: x.cartao.nome, valor: x.valor, cor: x.cartao.cor }))}>
+                      <b>{faturas.length === 1 ? tx('1 cartão') : tx('{0} cartões', faturas.length)}</b>
+                    </Rosquinha>
+                  }
+                  rotulo={<><Icone nome="cartao" tamanho={16} /> {tx('Faturas de {0}', nomeMes)}</>}
+                  valor={totalFaturasDoMes(faturas)} formato={fmtValor}
+                  pilulas={[
+                    { icone: 'relogio', rotulo: tx('Falta pagar'), valor: fmtValor(totalFaturasAPagar(faturas)), cor: 'var(--divida)' },
+                    ...(comLimite.length > 0 ? [{ icone: 'escudo', rotulo: tx('Limite livre'), valor: fmtValor(comLimite.reduce((a, x) => a + Math.max(0, x.limiteDisponivel!), 0)), cor: 'var(--caixa)' }] : []),
+                    ...(emAtraso > 0 ? [{ icone: 'sino', rotulo: tx('Em atraso ({0})', atrasadas.length), valor: fmtValor(emAtraso), cor: 'var(--saida)', tom: 'ruim' as const }] : []),
+                  ]} />
+
+                {comAtraso.length > 0 && (
+                  <section className="ccx-alerta" aria-label={tx('Faturas que venceram sem pagar')}>
+                    <Icone nome="sino" tamanho={18} />
+                    <span>{atrasadas.length === 1 ? tx('Uma fatura venceu sem pagar.') : tx('{0} faturas venceram sem pagar.', atrasadas.length)}</span>
+                    <span className="espaco" />
+                    {comAtraso.map((x) => (
+                      <button key={x.cartao.id} type="button" className="btn" onClick={() => { escolherAba('fatura'); trocar(x.cartao.id) }}>
+                        <BancoIcone nome={x.cartao.nome} cor={x.cartao.cor} tamanho={20} /> {tx('Resolver no {0}', x.cartao.nome)}
+                      </button>
+                    ))}
+                  </section>
+                )}
+
+                {comLimite.length > 1 && <UsoDosLimites faturas={comLimite} />}
+
+                <p className="ccx-dica"><Icone nome="dir" tamanho={15} /> {tx('Clique num cartão para tirá-lo da carteira e ver tudo dele.')}</p>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {editando && <FormCartao c={c} cartao={editando === 'novo' ? undefined : editando} aoFechar={() => setEditando(null)} />}
       {pagando && <FormPagarFatura c={c} alvo={pagando} aoFechar={() => setPagando(null)} />}
       {renegociando && <FormRenegociar c={c} alvo={renegociando} aoFechar={() => setRenegociando(null)} />}
     </div>
+  )
+}
+
+/** Quanto do limite cada cartão usa, uma barra por cartão (com 2 cartões ou mais com limite). */
+function UsoDosLimites({ faturas }: { faturas: SituacaoCartao[] }) {
+  return (
+    <section className="cartao vt-cartao">
+      <h3><Icone nome="escudo" tamanho={17} /> {tx('Quanto do limite cada cartão usa')}</h3>
+      <ul className="cc-usos">
+        {faturas.map((x, i) => {
+          const lim = x.limiteTotal ?? 0
+          const p = lim > 0 ? Math.min(1, Math.max(0, x.limiteUsado / lim)) : 0
+          return (
+            <li key={x.cartao.id} style={{ '--c': x.cartao.cor, '--i': i } as React.CSSProperties}>
+              <BancoIcone nome={x.cartao.nome} cor={x.cartao.cor} tamanho={28} />
+              <span className="cc-usos-nome">{x.cartao.nome}</span>
+              <span className="cc-usos-trilho"><i style={{ width: `${p * 100}%` }} /></span>
+              <b className={p >= 0.9 ? 'ruim' : p >= 0.7 ? 'atencao' : ''}>{Math.round(p * 100)}%</b>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
   )
 }
 
@@ -263,107 +354,162 @@ export function SemCartoes({ aoCriar }: { aoCriar: () => void }) {
   )
 }
 
-function Detalhe({ s, c, destacada, nivel, aoEditar, aoPagar, aoRenegociar }: {
-  s: SituacaoCartao; c: Ctx; destacada: string | null; nivel: Nivel; aoEditar: () => void
+/** As compras da fatura do mês aberto, com o total ao lado e o destaque da compra que acabou de ser lançada. */
+export function ComprasDaFatura({ s, c, destacada }: { s: SituacaoCartao; c: Ctx; destacada: string | null }) {
+  return (
+    <section className="cartao ccd-compras">
+      <h3 className="ccd-titulo ccd-compras-cab">
+        <span>{tx('Compras desta fatura')} <small>{s.compras.length || ''}</small></span>
+        {s.compras.length > 0 && <b>{fmtValor(s.valor)}</b>}
+      </h3>
+      {s.compras.length ? (
+        <ul className="lista-lanc">
+          {s.compras.map((l, i) => {
+            const k = c.categoriaDe(l) ?? SEM_CATEGORIA
+            return (
+              <li key={l.id} style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
+                <button className={`item-lanc ${l.compra_id && l.compra_id === destacada ? 'compra-nova' : ''}`} onClick={() => c.editarLancamento(l)}>
+                  <Selo c={k} tamanho={34} />
+                  <span className="item-texto">
+                    <span className="item-desc">{l.descricao || tx('Compra')}</span>
+                    <span className="item-meta">
+                      {fmtDataCurta(l.data_compra ?? null) && <>{fmtDataCurta(l.data_compra ?? null)} · </>}{k.nome}
+                      {(l.parcelas ?? 1) > 1 && <> · {l.parcela}/{l.parcelas}</>}
+                      {puladaDe(l, c.ano) && <> · <em className="cc-pulada">{puladaDe(l, c.ano)}</em></>}
+                      {l.pago_por?.trim() && <> · <em className="cc-de-outro">{tx('paga por {0}', l.pago_por.trim())}</em></>}
+                    </span>
+                  </span>
+                  <span className="item-valor">{fmtValor(l.valor)}</span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      ) : (
+        <p className="quadro-vazio">{tx('Nenhuma compra nesta fatura. Toque em “Nova compra” e escolha este cartão.')}</p>
+      )}
+    </section>
+  )
+}
+
+/**
+ * O cartão fora da carteira: o plástico grande flutuando, o nome e as ações principais, e embaixo as abas (cada função
+ * no seu lugar). O jeito de ver decide as abas: o simples fica só com a fatura e as compras.
+ */
+const DetalheEmAbas = forwardRef<HTMLDivElement, {
+  s: SituacaoCartao; c: Ctx; aba: Aba; aoAba: (a: Aba) => void; destacada: string | null; nivel: Nivel
+  aoGuardar: () => void; aoEditar: () => void
   aoPagar: (f: Fatura, pagamento?: FaturaPaga, parcial?: FaturaParcial) => void
   aoRenegociar: (f: Fatura) => void
-}) {
+}>(function DetalheEmAbas({ s, c, aba, aoAba, destacada, nivel, aoGuardar, aoEditar, aoPagar, aoRenegociar }, ref) {
   const { cartao } = s
   const banco = c.d.bancos.find((b) => b.id === cartao.banco_id)
+  const resolvidas = c.cartoes.faturasPagas.filter((p) => p.cartao_id === cartao.id).length
+  const atrasado = s.atrasadas.length > 0 || s.status === 'atrasada'
+  const podePagar = s.valor > 0 && s.status !== 'futura' && !s.paga
   /** Abre uma parcela da compra para editar ou excluir, esteja ela na fatura que está na tela ou não. */
   const abrirCompra = (p: CompraParcelada) => {
     const ps = c.cartoes.compras.filter((l) => l.compra_id === p.compra_id)
     const l = ps.find((x) => (x.parcela ?? 1) === p.atual) ?? ps[0]
     if (l) c.editarLancamento(l)
   }
+  const abas: { id: Aba; rotulo: string; icone: string; conta?: number | string; alerta?: boolean }[] = [
+    { id: 'fatura', rotulo: tx('Fatura'), icone: 'cartao', alerta: atrasado },
+    { id: 'compras', rotulo: tx('Compras'), icone: 'lista', conta: s.compras.length || undefined },
+    ...(nivel !== 'simples' ? [
+      { id: 'resolvidas' as const, rotulo: tx('Pagas e renegociadas'), icone: 'check', conta: resolvidas || undefined },
+      { id: 'proximas' as const, rotulo: tx('Próximas e parceladas'), icone: 'calendario', conta: s.parceladas.length || undefined },
+      { id: 'limite' as const, rotulo: tx('Limite e caixinha'), icone: 'escudo' },
+    ] : []),
+  ]
+  const atual = abas.some((a) => a.id === aba) ? aba : 'fatura'
+
+  // o risquinho embaixo da aba escolhida desliza até ela
+  const lista = useRef<HTMLDivElement>(null)
+  const [risco, setRisco] = useState<{ x: number; w: number } | null>(null)
+  useLayoutEffect(() => {
+    const b = lista.current?.querySelector<HTMLElement>(`[data-aba="${atual}"]`)
+    if (b) setRisco({ x: b.offsetLeft, w: b.offsetWidth })
+  }, [atual, abas.length])
+  const teclas = (e: React.KeyboardEvent) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return
+    const i = abas.findIndex((a) => a.id === atual)
+    const prox = abas[(i + (e.key === 'ArrowRight' ? 1 : -1) + abas.length) % abas.length]
+    aoAba(prox.id)
+    lista.current?.querySelector<HTMLElement>(`[data-aba="${prox.id}"]`)?.focus()
+  }
 
   return (
-    <div className="ccd" style={{ '--c': cartao.cor } as React.CSSProperties}>
-      <header className="ccd-cab">
-        <BancoIcone nome={cartao.nome} reserva={banco?.nome} cor={cartao.cor} tamanho={40} />
-        <span>
+    <div ref={ref} className="ccx-detalhe" style={{ '--c': cartao.cor } as React.CSSProperties}>
+      <header className="ccx-cab">
+        <div className="ccx-voo">
+          <div className="ccx-flutua">
+            <CartaoIlustrado nome={cartao.nome} cor={cartao.cor} banco={banco?.nome} ativo
+              conteudo={<span className="cc-plastico-fatura"><small>{tx('fatura de {0}', nomeDaFatura(s.ano, s.mes, c.ano))}</small><b>{fmtValor(s.valor)}</b></span>}
+              rodape={<>{tx('fecha dia {0} · vence dia {1}', cartao.dia_fechamento, cartao.dia_vencimento)}</>} />
+          </div>
+          <span className="ccx-sombra" aria-hidden="true" />
+        </div>
+        <div className="ccx-info">
+          <span className={`chip-estado cc ${s.status}`}>{textoStatus(s)}</span>
           <h2>{cartao.nome}</h2>
           <small>{banco ? `${banco.nome} · ` : ''}{tx('fecha dia {0}, vence dia {1}', cartao.dia_fechamento, cartao.dia_vencimento)}</small>
-        </span>
-        <span className="espaco" />
-        <button className="btn" onClick={aoEditar}><Icone nome="lapis" tamanho={16} /> {tx('Editar')}</button>
-        <button className="btn primario" onClick={() => c.novaCompraNoCartao(cartao.id)}><Icone nome="mais" tamanho={16} /> {tx('Nova compra')}</button>
+          <dl className="ccx-numeros">
+            <div><dt>{tx('Fatura de {0}', nomeDaFatura(s.ano, s.mes, c.ano))}</dt><dd><Numero valor={s.valor} formato={fmtValor} /></dd></div>
+            {s.limiteDisponivel !== null && <div><dt>{tx('Limite livre')}</dt><dd className={s.limiteDisponivel < 0 ? 'ruim' : ''}><Numero valor={s.limiteDisponivel} formato={fmtValor} /></dd></div>}
+          </dl>
+          <div className="ccx-acoes">
+            {podePagar && <button className="btn primario" onClick={() => aoPagar(s)}><Icone nome="check" tamanho={16} /> {s.pagoEmParte > 0 ? tx('Pagar o resto') : tx('Paguei a fatura')}</button>}
+            <button className={`btn ${podePagar ? '' : 'primario'}`} onClick={() => c.novaCompraNoCartao(cartao.id)}><Icone nome="mais" tamanho={16} /> {tx('Nova compra')}</button>
+            <button className="btn" onClick={aoEditar}><Icone nome="lapis" tamanho={16} /> {tx('Editar')}</button>
+            <button className="btn ccx-guardar" onClick={aoGuardar}><Icone nome="desfazer" tamanho={16} /> {tx('Guardar na carteira')}</button>
+          </div>
+        </div>
       </header>
 
-      <FaturasAtrasadas s={s} c={c} aoPagar={aoPagar} aoRenegociar={aoRenegociar} />
-
-      <div className={`ccd-linha ${nivel === 'simples' ? 'so-uma' : ''}`}>
-        <FaturaDoMes s={s} c={c} aoPagar={aoPagar} aoRenegociar={aoRenegociar} />
-        {nivel !== 'simples' && <Limite s={s} c={c} aoEditar={aoEditar} />}
+      <div ref={lista} className="ccx-abas" role="tablist" aria-label={tx('O que ver deste cartão')} onKeyDown={teclas}>
+        {risco && <span className="ccx-risco" aria-hidden="true" style={{ transform: `translateX(${risco.x}px)`, width: risco.w }} />}
+        {abas.map((a) => (
+          <button key={a.id} type="button" role="tab" data-aba={a.id} id={`ccx-aba-${a.id}`} aria-selected={atual === a.id}
+            aria-controls="ccx-painel" tabIndex={atual === a.id ? 0 : -1} className={atual === a.id ? 'ativa' : ''} onClick={() => aoAba(a.id)}>
+            <Icone nome={a.icone} tamanho={15} /> {a.rotulo}
+            {a.conta !== undefined && <small>{a.conta}</small>}
+            {a.alerta && <i className="ccx-ponto" aria-label={tx('atrasada')} />}
+          </button>
+        ))}
       </div>
 
-      <div className={`ccd-linha ${nivel === 'simples' ? 'so-uma' : ''}`}>
-        <section className="cartao ccd-compras">
-          <h3 className="ccd-titulo ccd-compras-cab">
-            <span>{tx('Compras desta fatura')} <small>{s.compras.length || ''}</small></span>
-            {s.compras.length > 0 && <b>{fmtValor(s.valor)}</b>}
-          </h3>
-          {s.compras.length ? (
-            <ul className="lista-lanc">
-              {s.compras.map((l, i) => {
-                const k = c.categoriaDe(l) ?? SEM_CATEGORIA
-                return (
-                  <li key={l.id} style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
-                    <button className={`item-lanc ${l.compra_id && l.compra_id === destacada ? 'compra-nova' : ''}`} onClick={() => c.editarLancamento(l)}>
-                      <Selo c={k} tamanho={34} />
-                      <span className="item-texto">
-                        <span className="item-desc">{l.descricao || tx('Compra')}</span>
-                        <span className="item-meta">
-                          {fmtDataCurta(l.data_compra ?? null) && <>{fmtDataCurta(l.data_compra ?? null)} · </>}{k.nome}
-                          {(l.parcelas ?? 1) > 1 && <> · {l.parcela}/{l.parcelas}</>}
-                          {puladaDe(l, c.ano) && <> · <em className="cc-pulada">{puladaDe(l, c.ano)}</em></>}
-                          {l.pago_por?.trim() && <> · <em className="cc-de-outro">{tx('paga por {0}', l.pago_por.trim())}</em></>}
-                        </span>
-                      </span>
-                      <span className="item-valor">{fmtValor(l.valor)}</span>
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          ) : (
-            <p className="quadro-vazio">{tx('Nenhuma compra nesta fatura. Toque em “Nova compra” e escolha este cartão.')}</p>
-          )}
-        </section>
-        {nivel !== 'simples' && <Proximas s={s} c={c} />}
+      <div key={atual} id="ccx-painel" role="tabpanel" aria-labelledby={`ccx-aba-${atual}`} className={`ccx-painel aba-${atual}`}>
+        {atual === 'fatura' && <>
+          <FaturasAtrasadas s={s} c={c} aoPagar={aoPagar} aoRenegociar={aoRenegociar} />
+          <FaturaDoMes s={s} c={c} aoPagar={aoPagar} aoRenegociar={aoRenegociar} />
+        </>}
+        {atual === 'compras' && <ComprasDaFatura s={s} c={c} destacada={destacada} />}
+        {atual === 'resolvidas' && <FaturasResolvidas s={s} c={c} aoPagar={aoPagar} aoRenegociar={aoRenegociar} />}
+        {atual === 'proximas' && <div className="ccx-duas">
+          <Proximas s={s} c={c} />
+          <section className="cartao">
+            <h3 className="ccd-titulo">{tx('Parceladas em andamento')} <small>{s.parceladas.length || ''}</small></h3>
+            {s.parceladas.length ? (
+              <ul className="ccd-parceladas">
+                {s.parceladas.map((p) => <Parcelada key={p.compra_id} p={p} aoAbrir={() => abrirCompra(p)} />)}
+              </ul>
+            ) : (
+              <p className="quadro-vazio">{tx('Nenhuma compra parcelada pela frente.')}</p>
+            )}
+          </section>
+        </div>}
+        {atual === 'limite' && <Limite s={s} c={c} aoEditar={aoEditar} />}
       </div>
-
-      {nivel === 'detalhado' && <div className="ccd-linha">
-        <section className="cartao">
-          <h3 className="ccd-titulo">{tx('Parceladas em andamento')} <small>{s.parceladas.length || ''}</small></h3>
-          {s.parceladas.length ? (
-            <ul className="ccd-parceladas">
-              {s.parceladas.map((p) => <Parcelada key={p.compra_id} p={p} aoAbrir={() => abrirCompra(p)} />)}
-            </ul>
-          ) : (
-            <p className="quadro-vazio">{tx('Nenhuma compra parcelada pela frente.')}</p>
-          )}
-        </section>
-        <FaturasResolvidas s={s} c={c} aoPagar={aoPagar} aoRenegociar={aoRenegociar} />
-      </div>}
-
-      {nivel === 'equilibrado' && s.parceladas.length > 0 && (
-        <section className="cartao vt-cartao">
-          <h3>{tx('Parceladas em andamento')} <small>{s.parceladas.length}</small></h3>
-          <ul className="ccd-parceladas">
-            {s.parceladas.map((p) => <Parcelada key={p.compra_id} p={p} aoAbrir={() => abrirCompra(p)} />)}
-          </ul>
-        </section>
-      )}
 
       {nivel === 'simples' && (
         <button className="vt-mais-detalhe" onClick={c.personalizar}>
-          <Icone nome="ano" tamanho={16} /> {tx('Quer ver limite, parcelas e próximas faturas? Mudar o jeito de ver')}
+          <Icone nome="ano" tamanho={16} /> {tx('Quer ver limite, parcelas e faturas pagas? Mudar o jeito de ver')}
         </button>
       )}
     </div>
   )
-}
+})
 
 /** As faturas de meses anteriores que venceram sem pagar, cada uma com "Paguei" e "Renegociei" (e "Já paguei todas"). */
 export function FaturasAtrasadas({ s, c, aoPagar, aoRenegociar }: {

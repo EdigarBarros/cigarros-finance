@@ -1,0 +1,190 @@
+/* Tela Cartões do computador: a carteira de couro (components/Carteira3D.tsx) e o cartão fora dela, com abas.
+   Tudo dentro de .pg-cartoes-pc: o celular (movel/telas/CartoesMovel.tsx) importa peças de pages/Cartoes.tsx e não muda.
+   Só CSS 3D, gradientes e um ruído em SVG para o couro: nada de imagem nem biblioteca 3D. As animações mexem só em
+   transform, translate e opacity; Animações: Reduzidas desliga tudo (regra geral do index.css). */
+
+.pg-cartoes-pc {
+  --couro-1: #3b2a1f; --couro-2: #241810; --couro-3: #160e09;
+  --couro-borda: #4c3626;
+  --linha: rgba(214, 173, 98, .55);
+  --ouro-1: #f8e3a8; --ouro-2: #c9974a;
+  --grao: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .28 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- o palco: carteira à esquerda, o resto à direita ---------- */
+.ccx { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 36px; align-items: start; }
+.ccx-lado { position: sticky; top: 18px; display: grid; gap: 14px; justify-items: center; z-index: 2; }
+.ccx-palco { min-width: 0; }
+.ccx-resumo { display: grid; gap: 18px; animation: ccx-surge .75s .15s var(--mola) backwards; }
+@keyframes ccx-surge { from { opacity: 0; transform: translateY(16px); } }
+.ccx-alerta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px 16px; border-radius: var(--raio-m);
+  background: color-mix(in srgb, var(--saida) 9%, var(--superficie)); border: 1px solid color-mix(in srgb, var(--saida) 32%, transparent);
+  color: var(--texto); font-weight: 600; font-size: 14px;
+}
+.ccx-alerta > svg { color: var(--saida); }
+.ccx-alerta .espaco { flex: 1; }
+.ccx-alerta .btn { gap: 8px; }
+.ccx-dica { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--texto-3); font-size: 13.5px; }
+.ccx-arquivados { display: grid; gap: 10px; justify-items: center; max-width: 100%; }
+.ccx-arquivados .link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.ccx-arquivados .cc-arquivados { justify-content: center; }
+
+/* ---------- a carteira ---------- */
+.cw { --w: 300px; --espia: 58px; --passo: 100px; --pad: 26px; --topo: 54px; width: calc(var(--w) + 2 * var(--pad)); max-width: 100%; perspective: 1500px; }
+.cw.compacta { --w: 196px; --espia: 38px; --passo: 68px; --pad: 16px; --topo: 38px; }
+.cw-couro {
+  --wx: 0deg; --wy: 0deg; --lx: 30%; --ly: 0%;
+  position: relative; padding: var(--topo) var(--pad) var(--pad); border-radius: 28px; isolation: isolate;
+  transform: rotateX(calc(5deg + var(--wx))) rotateY(var(--wy));
+  transition: transform .7s var(--mola);
+  background: var(--grao), linear-gradient(158deg, var(--couro-1) 0%, var(--couro-2) 55%, var(--couro-3) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 226, 180, .12), inset 0 0 0 1px rgba(0, 0, 0, .45), inset 0 -18px 30px -18px rgba(0, 0, 0, .6),
+    0 2px 0 var(--couro-borda), 0 46px 70px -34px rgba(0, 0, 0, .75), 0 18px 30px -20px rgba(0, 0, 0, .55);
+  animation: cw-abre 1.05s var(--mola) backwards;
+}
+.cw.compacta .cw-couro { border-radius: 22px; }
+@keyframes cw-abre { from { opacity: 0; transform: rotateX(30deg) translateY(36px) scale(.93); } }
+/* a costura em volta */
+.cw-couro::before {
+  content: ''; position: absolute; inset: 9px; border-radius: 20px; border: 1.5px dashed var(--linha); pointer-events: none;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .6));
+}
+.cw.compacta .cw-couro::before { inset: 7px; border-radius: 16px; }
+/* o brilho do couro, seguindo o ponteiro */
+.cw-luz {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 200; mix-blend-mode: soft-light;
+  background: radial-gradient(70% 55% at var(--lx) var(--ly), rgba(255, 236, 205, .32), transparent 70%);
+}
+.cw-titulo {
+  position: absolute; top: calc(var(--topo) / 2 - 7px); left: 0; right: 0; text-align: center;
+  font-family: var(--fonte-marca); font-size: 11px; font-weight: 800; letter-spacing: .34em; text-transform: uppercase;
+  color: rgba(0, 0, 0, .55); text-shadow: 0 1px 0 rgba(255, 226, 180, .16);
+}
+.cw.compacta .cw-titulo { font-size: 9px; letter-spacing: .28em; top: calc(var(--topo) / 2 - 6px); }
+
+.cw-vagas { list-style: none; margin: 0; padding: 0; display: grid; }
+.cw-vaga { position: relative; width: var(--w); height: calc(var(--w) / 1.586); }
+.cw-vaga + .cw-vaga { margin-top: calc(var(--passo) - var(--w) / 1.586); }
+/* cada bolso fica na frente do seu cartão e atrás do cartão seguinte (sem z-index na vaga, para o cartão poder passar por cima de tudo) */
+.cw-cartao { position: absolute; inset: 0; z-index: calc(var(--i) * 2 + 1); transition: translate .55s var(--mola); }
+/* cada cartão desce para dentro do bolso quando a tela abre */
+.cw-vaga .cw-cartao { animation: cw-guarda .95s calc(var(--i) * 90ms + .35s) var(--mola) backwards; }
+@keyframes cw-guarda { from { translate: 0 -70px; opacity: 0; } }
+.cw-vaga:not(.saiu):hover .cw-cartao, .cw-vaga:not(.saiu):focus-within .cw-cartao { translate: 0 -16px; }
+.cw.compacta .cw-vaga:not(.saiu):hover .cw-cartao, .cw.compacta .cw-vaga:not(.saiu):focus-within .cw-cartao { translate: 0 -10px; }
+.cw-cartao .cc-plastico { box-shadow: 0 1px 0 rgba(255, 255, 255, .28) inset, 0 -1px 0 rgba(0, 0, 0, .25) inset, 0 10px 18px -10px rgba(0, 0, 0, .7); }
+.cw-cartao button.cc-plastico:not(.ativo) { filter: none; }
+.cw-cartao button.cc-plastico:focus-visible { outline: 2px solid var(--ouro-1); outline-offset: 3px; }
+/* o cartão que saiu: a fenda fica vazia, com a luz da cor dele (tocar ali guarda de volta) */
+.cw-vaga.saiu .cw-cartao { opacity: 0; }
+.cw-vaga.saiu::before {
+  content: ''; position: absolute; left: 6px; right: 6px; top: calc(var(--espia) - 16px); height: 16px; border-radius: 10px 10px 0 0;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--c) 55%, transparent));
+  filter: blur(4px); animation: cw-vazia 2.4s ease-in-out infinite;
+}
+@keyframes cw-vazia { 50% { opacity: .45; } }
+
+/* o bolso de couro na frente do cartão, com a fatura gravada em dourado */
+.cw-bolso {
+  position: absolute; left: -8px; right: -8px; top: var(--espia); bottom: -12px; z-index: calc(var(--i) * 2 + 2); border-radius: 9px 9px 14px 14px; pointer-events: none;
+  background: var(--grao), linear-gradient(180deg, #4d392b 0, #36271c 16px, #2a1d14 100%);
+  box-shadow: 0 -12px 18px -10px rgba(0, 0, 0, .65), inset 0 1px 0 rgba(255, 225, 180, .18), inset 0 -1px 0 rgba(0, 0, 0, .45);
+}
+.cw-bolso::before { content: ''; position: absolute; left: 10px; right: 10px; top: 6px; border-top: 1.5px dashed var(--linha); }
+.cw-bolso-linha { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px 0; min-width: 0; }
+.cw.compacta .cw-bolso-linha { padding: 11px 11px 0; gap: 6px; }
+.cw-bolso-valor {
+  flex: none; font-family: var(--fonte-numeros); font-size: 15.5px; font-weight: 800; letter-spacing: -.01em; font-variant-numeric: tabular-nums; white-space: nowrap;
+  background: linear-gradient(180deg, var(--ouro-1), var(--ouro-2)); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .55));
+}
+.cw.compacta .cw-bolso-valor { font-size: 12.5px; }
+.cw-estado { display: inline-flex; align-items: center; gap: 6px; min-width: 0; font-size: 11.5px; font-weight: 600; color: rgba(240, 225, 200, .8); }
+.cw-estado { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cw.compacta .cw-estado { font-size: 0; gap: 0; }
+.cw-estado i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: #e8b45a; box-shadow: 0 0 8px #e8b45a; }
+.cw-estado.paga i { background: #4ade80; box-shadow: 0 0 8px #4ade80; }
+.cw-estado.atrasada i { background: #f87171; box-shadow: 0 0 9px #f87171; animation: cw-pisca 1.6s ease-in-out infinite; }
+.cw-estado.renegociada i { background: #a78bfa; box-shadow: 0 0 8px #a78bfa; }
+.cw-estado.futura i { background: #94a3b8; box-shadow: none; }
+@keyframes cw-pisca { 50% { opacity: .35; } }
+
+.cw-novo {
+  position: relative; z-index: 200; display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin-top: 24px;
+  padding: 13px; border-radius: 14px; border: 1.5px dashed rgba(214, 173, 98, .45); background: rgba(0, 0, 0, .2);
+  color: rgba(240, 222, 190, .85); font-weight: 600; font-size: 14px; cursor: pointer; transition: border-color .3s, color .3s, background .3s;
+}
+.cw.compacta .cw-novo { margin-top: 20px; padding: 9px; font-size: 12.5px; gap: 8px; }
+.cw-novo span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: rgba(214, 173, 98, .16); transition: transform .5s var(--mola-salto); }
+.cw.compacta .cw-novo span { width: 24px; height: 24px; }
+.cw-novo:hover, .cw-novo:focus-visible { border-color: rgba(214, 173, 98, .9); color: #fff; background: rgba(0, 0, 0, .3); }
+.cw-novo:hover span { transform: rotate(90deg); }
+
+/* ---------- o cartão fora da carteira ---------- */
+.ccx-detalhe { display: grid; gap: 22px; min-width: 0; }
+.ccx-cab { display: grid; grid-template-columns: minmax(250px, 360px) minmax(0, 1fr); gap: 34px; align-items: center; padding: 6px 0 10px; }
+.ccx-voo { position: relative; z-index: 50; transform-origin: top left; }
+.ccx-flutua { animation: ccx-flutua 7s ease-in-out 1.2s infinite; }
+@keyframes ccx-flutua { 50% { translate: 0 -8px; rotate: -.7deg; } }
+.ccx-flutua .cc-plastico, .ccx-flutua .cc-plastico.ativo {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .3) inset, 0 -1px 0 rgba(0, 0, 0, .25) inset, 0 44px 60px -30px color-mix(in srgb, var(--c) 75%, #000);
+}
+.ccx-flutua .cc-plastico-fatura b { font-size: 25px; }
+.ccx-sombra {
+  position: absolute; left: 12%; right: 12%; bottom: -28px; height: 22px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, .34), transparent); filter: blur(5px);
+  animation: ccx-sombra 7s ease-in-out 1.2s infinite;
+}
+@keyframes ccx-sombra { 50% { scale: .88; opacity: .7; } }
+
+.ccx-info { display: grid; gap: 6px; justify-items: start; min-width: 0; animation: ccx-surge .8s .35s var(--mola) backwards; }
+.ccx-info h2 { margin: 4px 0 0; font-size: 30px; font-weight: 700; letter-spacing: -.03em; line-height: 1.1; overflow-wrap: anywhere; }
+.ccx-info > small { color: var(--texto-2); font-size: 14px; }
+.ccx-numeros { display: flex; flex-wrap: wrap; gap: 10px 30px; margin: 12px 0 8px; }
+.ccx-numeros dt { font-size: 12px; font-weight: 600; letter-spacing: .02em; color: var(--texto-3); }
+.ccx-numeros dd { margin: 2px 0 0; font-family: var(--fonte-numeros); font-size: 24px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.ccx-numeros dd.ruim { color: var(--saida); }
+.ccx-acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* as abas: pílulas, com um fundo que desliza até a escolhida */
+.ccx-abas {
+  position: relative; display: flex; gap: 2px; width: max-content; max-width: 100%; padding: 5px; overflow-x: auto; scrollbar-width: none;
+  border-radius: 999px; background: var(--preench-4); border: 1px solid var(--borda);
+  animation: ccx-surge .7s .45s var(--mola) backwards;
+}
+.ccx-abas::-webkit-scrollbar { display: none; }
+.ccx-abas button {
+  position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 7px; padding: 9px 15px; border: 0; border-radius: 999px;
+  background: transparent; color: var(--texto-2); font-size: 13.5px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: color .3s;
+}
+.ccx-abas button:hover, .ccx-abas button.ativa { color: var(--texto); }
+.ccx-abas button.ativa svg { color: color-mix(in srgb, var(--c) 70%, var(--texto)); }
+.ccx-abas button:focus-visible { outline: 2px solid var(--destaque); outline-offset: -2px; }
+.ccx-abas small { padding: 1px 7px; border-radius: 999px; background: var(--preench-2); color: var(--texto-2); font-size: 11px; font-variant-numeric: tabular-nums; }
+.ccx-ponto { width: 7px; height: 7px; border-radius: 50%; background: var(--saida); box-shadow: 0 0 0 3px color-mix(in srgb, var(--saida) 24%, transparent); }
+.ccx-risco {
+  position: absolute; top: 5px; bottom: 5px; left: 0; border-radius: 999px; background: var(--superficie-forte); pointer-events: none;
+  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, .45), inset 0 0 0 1px color-mix(in srgb, var(--c) 40%, transparent);
+  transition: transform .5s var(--mola), width .5s var(--mola);
+}
+.ccx-risco::after {
+  content: ''; position: absolute; left: 22%; right: 22%; bottom: -1px; height: 2px; border-radius: 2px;
+  background: var(--c); box-shadow: 0 0 10px var(--c);
+}
+
+.ccx-painel { display: grid; gap: 18px; min-width: 0; animation: ccx-painel .55s var(--mola) backwards; }
+@keyframes ccx-painel { from { opacity: 0; transform: translateY(14px); } }
+.ccx-painel.aba-limite > .cartao { max-width: 640px; }
+.ccx-duas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+
+/* tela mais estreita: carteira em cima, o resto embaixo */
+@media (max-width: 1100px) {
+  .ccx { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+  .ccx-lado { position: static; }
+  .ccx-cab { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+  .ccx-voo { width: min(340px, 100%); }
+  .ccx-duas { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 420px) { .cw { --w: calc(100vw - 110px); } }

@@ -35,8 +35,8 @@ function dados() {
 
 async function abrirPicPay(page, url) {
   await page.goto(url + '#/cartoes')
-  await page.locator('.cc-carteira-item', { hasText: 'PicPay' }).locator('.cc-plastico, button, [role="button"]').first().click()
-  await expect(page.locator('.ccd-cab h2')).toHaveText('PicPay')
+  await page.locator('.cw-vaga', { hasText: 'PicPay' }).locator('.cc-plastico').click()
+  await expect(page.locator('.ccx-cab h2')).toHaveText('PicPay')
 }
 
 async function fluxo() {
@@ -124,7 +124,7 @@ async function semMigracao() {
     assert.equal(paga.valor, 300)
     assert.ok(!('da_caixinha' in paga))
     // sem a migração 39, a compra nova não pergunta quem paga
-    await t.page.locator('.ccd-cab').getByRole('button', { name: 'Nova compra' }).click()
+    await t.page.locator('.ccx-cab').getByRole('button', { name: 'Nova compra' }).click()
     await expect(dialog.getByRole('radio', { name: 'Outra pessoa' })).toHaveCount(0)
     console.log('✓ sem a migração 38: tudo como antes')
   } finally {
@@ -138,7 +138,7 @@ async function quemPaga() {
   const { page, db } = t
   try {
     await abrirPicPay(page, t.url)
-    await page.locator('.ccd-cab').getByRole('button', { name: 'Nova compra' }).click()
+    await page.locator('.ccx-cab').getByRole('button', { name: 'Nova compra' }).click()
     const dialog = page.getByRole('dialog')
     await dialog.getByLabel('Valor').fill('19,90')
     await dialog.getByRole('combobox', { name: 'Descrição' }).or(dialog.getByRole('textbox', { name: 'Descrição' })).first().fill('Amazon Prime')
@@ -153,8 +153,10 @@ async function quemPaga() {
     assert.equal(prime.pago_por, 'Mãe')
     await expect(page.locator('.ccd-outros')).toContainText('19,90')
     await expect(page.locator('.ccd-outros')).toContainText('Mãe paga R$ 19,90')
-    await expect(page.locator('.ccd-compras')).toContainText('paga por Mãe')
     await foto(page, '8-fatura-com-a-mae')
+    // as compras ficam na aba Compras (no computador, cada coisa do cartão tem a sua aba)
+    await page.getByRole('tab', { name: /^Compras/ }).click()
+    await expect(page.locator('.ccd-compras')).toContainText('paga por Mãe')
     // ao editar a parcela, "Eu" tira o nome da compra
     await page.locator('.ccd-compras .item-lanc', { hasText: 'Amazon Prime' }).click()
     await expect(dialog.getByRole('radio', { name: 'Outra pessoa' })).toHaveAttribute('aria-checked', 'true')
@@ -162,6 +164,8 @@ async function quemPaga() {
     await dialog.getByRole('button', { name: 'Salvar', exact: true }).click()
     await expect(dialog).toHaveCount(0)
     await expect.poll(() => db.lancamentos.find((l) => l.descricao === 'Amazon Prime').pago_por).toBe(null)
+    await page.getByRole('tab', { name: /^Fatura/ }).click()
+    await expect(page.locator('.ccd-fatura')).toBeVisible()
     await expect(page.locator('.ccd-outros')).toHaveCount(0)
     assert.deepEqual(t.msgs.filter((m) => m.includes('PAGEERROR')), [])
     console.log('✓ compra que outra pessoa paga: grava, mostra na fatura e volta para "Eu"')
