@@ -1,19 +1,22 @@
 import { casasDaMoeda, mascarar } from '../lib/dinheiro'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { criarBusca } from '../lib/busca'
 import { CATALOGO_BANCOS } from '../lib/bancos'
 import { mesEfetivo } from '../lib/calc'
 import {
-  casaCompraNoCartao, chaveDaCompra, datasDaFatura, ehCompraNoCartao, faturaDoMes, hojeLocal, nomeDaFatura, pagaComAtraso, quandoVence, renegociada, somaMeses, textoStatus,
-  totalFaturasAPagar, totalFaturasDoMes, type CompraParcelada, type Fatura, type SituacaoCartao,
+  casaCompraNoCartao, chaveDaCompra, datasDaFatura, efeitoNaCaixinha, ehCompraNoCartao, faturaDoMes, hojeLocal, nomeDaFatura, pagaComAtraso, pularParcela,
+  quandoVence, renegociada, somaMeses, taxaParaPular, textoStatus, totalFaturasAPagar, totalFaturasDoMes, voltarParcela,
+  type CompraParcelada, type Fatura, type SituacaoCartao,
 } from '../lib/cartoes'
+import { mesJaChegou } from '../lib/guardado'
 import { COR } from '../lib/charts'
 import { somaMesesData } from '../lib/dividas'
 import { SEM_CATEGORIA } from '../lib/categorias'
 import { fmtDataCurta, fmtDataLonga, fmtValor, MESES_CURTO, MESES_NOME, moedaAtual, paraCampo, parseNumero, simbolo, noMeioDaFrase } from '../lib/format'
 import { CORES_LIVRES, mesmoNome } from '../lib/rotulos'
 import { semMovimento } from '../lib/tema'
-import type { CartaoCredito, FaturaPaga } from '../lib/types'
+import type { CartaoCredito, FaturaPaga, FaturaParcial, Lancamento } from '../lib/types'
 import { BancoIcone } from '../components/BancoIcone'
 import { Rosquinha, Vitrine, type Nivel } from '../components/Vitrine'
 import { CartaoIlustrado } from '../components/CartaoIlustrado'
@@ -33,8 +36,10 @@ const centavos = (n: number) => Math.round(n * 100) / 100
 const dias = (a: string, b: string) => Math.round((Date.parse(`${b}T12:00:00`) - Date.parse(`${a}T12:00:00`)) / 86400000)
 const anoMesDe = (iso: string) => ({ ano: Number(iso.slice(0, 4)), mes: Number(iso.slice(5, 7)) })
 
-/** Uma fatura escolhida para pagar, renegociar ou ajeitar. */
-export interface Alvo { cartao: CartaoCredito; f: Fatura; pagamento?: FaturaPaga }
+/** Uma fatura escolhida para pagar, renegociar ou ajeitar (`parcial`: um pagamento de parte dela). */
+export interface Alvo { cartao: CartaoCredito; f: Fatura; pagamento?: FaturaPaga; parcial?: FaturaParcial }
+/** "pulada de novembro": de qual fatura a compra veio. */
+const puladaDe = (l: Lancamento, anoRef: number) => (l.pulada_de ? tx('pulada de {0}', nomeDaFatura(Number(l.pulada_de.slice(0, 4)), Number(l.pulada_de.slice(5, 7)), anoRef)) : null)
 
 /**
  * Cartões de crédito: a carteira com os cartões desenhados e, do cartão escolhido, a fatura do mês, o limite (com o
@@ -64,7 +69,7 @@ export function Cartoes(c: Ctx) {
   }, [apareceu])
   const comLimite = faturas.filter((x) => x.limiteDisponivel !== null)
   const atrasadas = faturas.flatMap((x) => [...x.atrasadas, ...(x.status === 'atrasada' ? [x] : [])])
-  const emAtraso = centavos(atrasadas.reduce((a, f) => a + f.valor, 0))
+  const emAtraso = centavos(atrasadas.reduce((a, f) => a + f.falta, 0))
   const nomeMes = noMeioDaFrase(MESES_NOME[c.mes - 1])
   const nivel = c.perfil.detalhe
 
@@ -153,7 +158,7 @@ export function Cartoes(c: Ctx) {
 
           <Detalhe key={s.cartao.id} s={s} c={c} destacada={destacada} nivel={nivel}
             aoEditar={() => setEditando(s.cartao)}
-            aoPagar={(f, pagamento) => setPagando({ cartao: s.cartao, f, pagamento })}
+            aoPagar={(f, pagamento, parcial) => setPagando({ cartao: s.cartao, f, pagamento, parcial })}
             aoRenegociar={(f) => setRenegociando({ cartao: s.cartao, f })} />
         </>
       )}
@@ -260,7 +265,7 @@ export function SemCartoes({ aoCriar }: { aoCriar: () => void }) {
 
 function Detalhe({ s, c, destacada, nivel, aoEditar, aoPagar, aoRenegociar }: {
   s: SituacaoCartao; c: Ctx; destacada: string | null; nivel: Nivel; aoEditar: () => void
-  aoPagar: (f: Fatura, pagamento?: FaturaPaga) => void
+  aoPagar: (f: Fatura, pagamento?: FaturaPaga, parcial?: FaturaParcial) => void
   aoRenegociar: (f: Fatura) => void
 }) {
   const { cartao } = s
@@ -311,6 +316,7 @@ function Detalhe({ s, c, destacada, nivel, aoEditar, aoPagar, aoRenegociar }: {
                         <span className="item-meta">
                           {fmtDataCurta(l.data_compra ?? null) && <>{fmtDataCurta(l.data_compra ?? null)} · </>}{k.nome}
                           {(l.parcelas ?? 1) > 1 && <> · {l.parcela}/{l.parcelas}</>}
+                          {puladaDe(l, c.ano) && <> · <em className="cc-pulada">{puladaDe(l, c.ano)}</em></>}
                         </span>
                       </span>
                       <span className="item-valor">{fmtValor(l.valor)}</span>
@@ -371,7 +377,7 @@ export function FaturasAtrasadas({ s, c, aoPagar, aoRenegociar }: {
         {s.atrasadas.length > 1 && (
           <button className="link" onClick={async () => {
             if (!(await confirmar(tx('Marcar as {0} faturas como pagas no dia do vencimento de cada uma?', s.atrasadas.length), { botao: tx('Marcar como pagas') }))) return
-            for (const f of s.atrasadas) void c.cartoes.pagarFatura({ cartao_id: cartao.id, ano: f.ano, mes: f.mes, valor: f.valor, pago_em: f.vencimento, banco_id: cartao.banco_id, tipo: 'paga', juros: 0 })
+            for (const f of s.atrasadas) void c.cartoes.pagarFatura({ cartao_id: cartao.id, ano: f.ano, mes: f.mes, valor: f.falta, pago_em: f.vencimento, banco_id: cartao.banco_id, tipo: 'paga', juros: 0 })
           }}>{tx('Já paguei todas')}</button>
         )}
       </header>
@@ -380,8 +386,8 @@ export function FaturasAtrasadas({ s, c, aoPagar, aoRenegociar }: {
           <li key={`${f.ano}-${f.mes}`}>
             <span className="ccd-atrasada-mes">{sufixoMes(f.ano, f.mes)}</span>
             <span className="ccd-atrasada-texto">
-              <strong>{fmtValor(f.valor)}</strong>
-              <small>{dias(f.vencimento, hojeLocal()) === 1 ? tx('venceu há 1 dia, em {0}', fmtDataLonga(f.vencimento)) : tx('venceu há {0} dias, em {1}', dias(f.vencimento, hojeLocal()), fmtDataLonga(f.vencimento))}</small>
+              <strong>{fmtValor(f.falta)}</strong>
+              <small>{f.pagoEmParte > 0 && <>{tx('pagou {0} de {1}', fmtValor(f.pagoEmParte), fmtValor(f.valor))} · </>}{dias(f.vencimento, hojeLocal()) === 1 ? tx('venceu há 1 dia, em {0}', fmtDataLonga(f.vencimento)) : tx('venceu há {0} dias, em {1}', dias(f.vencimento, hojeLocal()), fmtDataLonga(f.vencimento))}</small>
             </span>
             <span className="ccd-atrasada-acoes">
               <button className="btn" onClick={() => aoPagar(f)}><Icone nome="check" tamanho={15} /> {tx('Paguei')}</button>
@@ -396,14 +402,14 @@ export function FaturasAtrasadas({ s, c, aoPagar, aoRenegociar }: {
 
 /** As faturas já pagas ou renegociadas deste cartão (toque para ajeitar). */
 export function FaturasResolvidas({ s, c, aoPagar, aoRenegociar }: {
-  s: SituacaoCartao; c: Ctx; aoPagar: (f: Fatura, pagamento?: FaturaPaga) => void; aoRenegociar: (f: Fatura) => void
+  s: SituacaoCartao; c: Ctx; aoPagar: (f: Fatura, pagamento?: FaturaPaga, parcial?: FaturaParcial) => void; aoRenegociar: (f: Fatura) => void
 }) {
   const { cartao } = s
   const historico = c.cartoes.faturasPagas
     .filter((p) => p.cartao_id === cartao.id)
     .sort((a, b) => b.ano * 12 + b.mes - (a.ano * 12 + a.mes))
   const [verTodas, setVerTodas] = useState(false)
-  const faturaDe = (p: FaturaPaga) => faturaDoMes(cartao, c.cartoes.compras, c.cartoes.faturasPagas, p.ano, p.mes)
+  const faturaDe = (p: FaturaPaga) => faturaDoMes(cartao, c.cartoes.compras, c.cartoes.faturasPagas, p.ano, p.mes, undefined, c.cartoes.parciais)
   return (
     <section className="cartao">
       <h3 className="ccd-titulo">{tx('Faturas resolvidas')} <small>{tx('toque para ajeitar')}</small></h3>
@@ -425,9 +431,10 @@ export function FaturasResolvidas({ s, c, aoPagar, aoRenegociar }: {
                       {reneg ? tx('renegociada') : tx('paga em {0}', fmtDataCurta(p.pago_em))}
                       {atraso && ` · ${dias(f.vencimento, p.pago_em) === 1 ? tx('1 dia de atraso') : tx('{0} dias de atraso', dias(f.vencimento, p.pago_em))}`}
                       {(p.juros ?? 0) > 0 && ` · ${reneg ? tx('acréscimo') : tx('juros')} ${fmtValor(p.juros!)}`}
+                      {f.parciais.length > 0 && ` · ${tx('em {0} pagamentos', f.parciais.length + 1)}`}
                     </small>
                   </span>
-                  <span className="ccd-hist-valor">{fmtValor(p.valor)}</span>
+                  <span className="ccd-hist-valor">{fmtValor(centavos(p.valor + f.pagoEmParte))}</span>
                   <Icone nome="lapis" tamanho={15} />
                 </button>
               </li>
@@ -446,8 +453,9 @@ export function FaturasResolvidas({ s, c, aoPagar, aoRenegociar }: {
 
 /** A fatura do mês aberto: valor, situação, a linha do tempo (abriu → fecha → vence) e o que dá para fazer com ela. */
 export function FaturaDoMes({ s, c, aoPagar, aoRenegociar }: {
-  s: SituacaoCartao; c: Ctx; aoPagar: (f: Fatura, p?: FaturaPaga) => void; aoRenegociar: (f: Fatura) => void
+  s: SituacaoCartao; c: Ctx; aoPagar: (f: Fatura, p?: FaturaPaga, parcial?: FaturaParcial) => void; aoRenegociar: (f: Fatura) => void
 }) {
+  const [pulando, setPulando] = useState(false)
   const hoje = hojeLocal()
   const ant = somaMeses({ ano: s.ano, mes: s.mes }, -1)
   const abriu = datasDaFatura(s.cartao, ant.ano, ant.mes).fechamento
@@ -455,8 +463,12 @@ export function FaturaDoMes({ s, c, aoPagar, aoRenegociar }: {
   const pos = (d: string) => Math.min(100, Math.max(0, (dias(abriu, d) / total) * 100))
   const p = s.paga
   const atraso = pagaComAtraso(p, s.vencimento)
-  const mudou = p && !renegociada(p) && Math.abs(p.valor - s.valor) >= 0.01
+  const pagoAoTodo = centavos((p?.valor ?? 0) + s.pagoEmParte)
+  const mudou = p && !renegociada(p) && Math.abs(pagoAoTodo - s.valor) >= 0.01
   const podeResolver = s.valor > 0 && s.status !== 'futura' && !p
+  // pular compra (migração 38): só de fatura ainda sem pagar, que já abriu e tem compras
+  const podePular = !c.cartoes.sem38 && !p && s.compras.length > 0 && s.status !== 'futura'
+  const pulou = centavos(s.puladas.reduce((a, l) => a + l.valor, 0))
 
   return (
     <section className={`cartao ccd-fatura ${s.status}`}>
@@ -489,17 +501,59 @@ export function FaturaDoMes({ s, c, aoPagar, aoRenegociar }: {
             {renegociada(p)
               ? <>{tx('Renegociada em {0}. Virou uma dívida em parcelas; as compras dela saíram das saídas do mês.', fmtDataLonga(p.pago_em))}</>
               : <>{tx('Paga em {0}', fmtDataLonga(p.pago_em))}{atraso && <>{tx(', com')} <b>{tx('{0} dias de atraso', dias(s.vencimento, p.pago_em))}</b></>}{(p.juros ?? 0) > 0 && <> {tx('e {0} de juros', fmtValor(p.juros!))}</>}.</>}
-            {mudou && <small className="cc-aviso"> {tx('Você pagou {0}; depois disso a fatura mudou.', fmtValor(p.valor))}</small>}
+            {mudou && <small className="cc-aviso"> {tx('Você pagou {0}; depois disso a fatura mudou.', fmtValor(pagoAoTodo))}</small>}
           </span>
         </div>
       ) : s.valor > 0 && s.status !== 'futura' ? (
         <p className="ccd-quando">{s.status === 'atrasada' ? tx('Atrasada') : tx('Para pagar')}: <b>{quandoVence(s)}</b></p>
       ) : null}
 
+      {s.parciais.length > 0 && (
+        <div className="ccd-parte">
+          {!p && (
+            <>
+              <span className="ccd-parte-barra" aria-hidden="true"><i style={{ width: `${Math.min(100, s.valor > 0 ? (s.pagoEmParte / s.valor) * 100 : 100)}%` }} /></span>
+              <p>{s.falta > 0
+                ? <>{tx('Você já pagou {0} desta fatura.', fmtValor(s.pagoEmParte))} <b>{tx('Faltam {0}.', fmtValor(s.falta))}</b></>
+                : tx('O que você pagou já cobre esta fatura. Marque como paga para fechar.')}</p>
+            </>
+          )}
+          <ul>
+            {s.parciais.map((x) => (
+              <li key={x.id}>
+                <button type="button" onClick={() => aoPagar(s, undefined, x)}>
+                  <Icone nome={x.da_caixinha ? 'cofre' : 'check'} tamanho={15} />
+                  <span>{fmtDataCurta(x.pago_em)}<small>{x.da_caixinha ? tx('do cofrinho') : tx('pagamento de parte')}</small></span>
+                  <b>{fmtValor(x.valor)}</b>
+                  <Icone nome="lapis" tamanho={14} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {s.puladas.length > 0 && (
+        <button type="button" className="ccd-puladas" onClick={() => setPulando(true)} disabled={Boolean(p) || c.cartoes.sem38}>
+          <Icone nome="dir" tamanho={16} />
+          <span>
+            {s.puladas.length === 1
+              ? tx('“{0}” foi pulada para a fatura de {1}', s.puladas[0].descricao || tx('Compra'), nomeDaFatura(s.puladas[0].ano, s.puladas[0].mes, c.ano))
+              : tx('{0} compras puladas para as próximas faturas', s.puladas.length)}
+          </span>
+          <b>{fmtValor(pulou)}</b>
+        </button>
+      )}
+
       <PorCategoria s={s} c={c} />
 
       <div className="ccd-acoes">
-        {podeResolver && <button className="btn primario" onClick={() => aoPagar(s)}><Icone nome="check" tamanho={16} /> {tx('Paguei a fatura')}</button>}
+        {podeResolver && <button className="btn primario" onClick={() => aoPagar(s)}><Icone nome="check" tamanho={16} /> {s.pagoEmParte > 0 ? tx('Pagar o resto') : tx('Paguei a fatura')}</button>}
+        {podePular && (
+          <button className="btn" onClick={() => setPulando(true)} title={tx('Passar uma compra para a próxima fatura')}>
+            <Icone nome="dir" tamanho={16} /> {tx('Pular compra')}
+          </button>
+        )}
         {/* só fatura fechada ou vencida: renegociada ainda aberta, as compras que caíssem nela depois sumiriam das saídas */}
         {podeResolver && s.status !== 'aberta' && (
           <button className="btn" onClick={() => aoRenegociar(s)} disabled={c.cartoes.semExtras}
@@ -510,7 +564,137 @@ export function FaturaDoMes({ s, c, aoPagar, aoRenegociar }: {
         {p && !renegociada(p) && <button className="btn" onClick={() => aoPagar(s, p)}><Icone nome="lapis" tamanho={16} /> {tx('Ajeitar pagamento')}</button>}
         {p && renegociada(p) && <button className="btn" onClick={() => aoRenegociar(s)}><Icone nome="acordo" tamanho={16} /> {tx('Ver renegociação')}</button>}
       </div>
+      {/* fora da seção: a animação do cartão prenderia a janela dentro dele (no celular, principalmente) */}
+      {pulando && createPortal(<FormPularCompra c={c} cartao={s.cartao} f={s} aoFechar={() => setPulando(false)} />, document.body)}
     </section>
+  )
+}
+
+/**
+ * Pular compra ("pula compra" do PicPay e de outros bancos): as parcelas escolhidas passam para a fatura seguinte. Se o banco
+ * cobrou uma taxa para isso, ela entra como uma compra à vista na fatura seguinte. As que já foram puladas desta fatura
+ * podem voltar.
+ */
+export function FormPularCompra({ c, cartao, f, aoFechar }: { c: Ctx; cartao: CartaoCredito; f: Fatura; aoFechar: () => void }) {
+  const [escolhidas, setEscolhidas] = useState<Set<string>>(() => new Set())
+  const [taxa, setTaxa] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
+  const [salvando, setSalvando] = useState(false)
+  const prox = somaMeses({ ano: f.ano, mes: f.mes }, 1)
+  const nomeProx = nomeDaFatura(prox.ano, prox.mes, c.ano)
+  const proxPaga = c.cartoes.faturasPagas.some((p) => p.cartao_id === cartao.id && p.ano === prox.ano && p.mes === prox.mes)
+  const total = centavos(f.compras.filter((l) => escolhidas.has(l.id)).reduce((a, l) => a + l.valor, 0))
+  const ficaNesta = centavos(f.valor - total)
+  const alternar = (id: string) => {
+    setErro(null)
+    setEscolhidas((xs) => {
+      const novo = new Set(xs)
+      if (novo.has(id)) novo.delete(id)
+      else novo.add(id)
+      return novo
+    })
+  }
+
+  const salvar = async () => {
+    if (salvando) return
+    if (!escolhidas.size) return setErro(tx('Escolha pelo menos uma compra para pular.'))
+    if (proxPaga) return setErro(tx('A fatura de {0} já está marcada como paga. Desfaça o pagamento dela antes de pular uma compra para lá.', nomeProx))
+    const t = taxa.trim() ? parseNumero(taxa) : 0
+    if (t == null || t < 0) return setErro(tx('Taxa inválida.'))
+    setSalvando(true)
+    const ok = await c.cartoes.moverParcelas(f.compras.filter((l) => escolhidas.has(l.id)).map((l) => ({ id: l.id, patch: pularParcela(l, cartao) })))
+    if (!ok) { setSalvando(false); return setErro(tx('Não deu certo. Tente de novo.')) }
+    if (t > 0) {
+      const gravou = await c.cartoes.addCompra([{
+        ...taxaParaPular(cartao, f, t), compra_id: crypto.randomUUID(), categoria_id: c.categorias.find((k) => k.papel === 'divida')?.id ?? null,
+      }])
+      if (!gravou) { setSalvando(false); return setErro(tx('A compra foi pulada, mas não consegui lançar a taxa. Lance a taxa como uma compra no cartão.')) }
+    }
+    aoFechar()
+  }
+
+  const voltar = async (l: Lancamento) => {
+    const patch = voltarParcela(l)
+    if (!patch || salvando) return
+    setSalvando(true)
+    const ok = await c.cartoes.moverParcelas([{ id: l.id, patch }])
+    setSalvando(false)
+    if (!ok) setErro(tx('Não deu certo. Tente de novo.'))
+  }
+
+  return (
+    <Modal titulo={tx('Pular compra')} aoFechar={aoFechar} tamanho="tela" cor={cartao.cor} palco={
+      <div className="cc-confirma palco-fatura">
+        <span className="cc-confirma-quem"><BancoIcone nome={cartao.nome} cor={cartao.cor} tamanho={34} /><span>{tx('Fatura de {0}', nomeDaFatura(f.ano, f.mes, c.ano))}<small>{total > 0 ? tx('{0} vão para {1}', fmtValor(total), nomeProx) : tx('vence em {0}', fmtDataLonga(f.vencimento))}</small></span></span>
+        <strong>{fmtValor(total > 0 ? ficaNesta : f.valor)}</strong>
+      </div>
+    }>
+      <form className="form" onSubmit={(e) => { e.preventDefault(); void salvar() }}>
+        <span className="campo-ajuda">{tx('Usou o “pular compra” do app do banco? Escolha as compras que passaram para a fatura de {0}. De parcelada, só a parcela desta fatura muda de mês.', nomeProx)}</span>
+        {!f.compras.length && <p className="quadro-vazio">{tx('Nenhuma compra ficou nesta fatura.')}</p>}
+        <ul className="cc-pular-lista">
+          {f.compras.map((l) => {
+            const k = c.categoriaDe(l) ?? SEM_CATEGORIA
+            const marcada = escolhidas.has(l.id)
+            return (
+              <li key={l.id}>
+                <button type="button" className={`cc-pular-item ${marcada ? 'ativo' : ''}`} role="checkbox" aria-checked={marcada} onClick={() => alternar(l.id)}>
+                  <span className="cc-pular-marca" aria-hidden="true">{marcada && <Icone nome="check" tamanho={14} />}</span>
+                  <Selo c={k} tamanho={30} />
+                  <span className="item-texto">
+                    <span className="item-desc">{l.descricao || tx('Compra')}</span>
+                    <span className="item-meta">
+                      {fmtDataCurta(l.data_compra ?? null) || k.nome}
+                      {(l.parcelas ?? 1) > 1 && <> · {tx('parcela {0}/{1}', l.parcela ?? 1, l.parcelas ?? 1)}</>}
+                      {puladaDe(l, c.ano) && <> · {puladaDe(l, c.ano)}</>}
+                    </span>
+                  </span>
+                  <span className="item-valor">{fmtValor(l.valor)}</span>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+        {total > 0 && (
+          <div className="cc-acordo-resumo">
+            <span><small>{tx('nesta fatura')}</small><b>{fmtValor(ficaNesta)}</b></span>
+            <span><small>{tx('vai para {0}', nomeProx)}</small><b>{fmtValor(total)}</b></span>
+          </div>
+        )}
+        <label className="campo">
+          <span className="campo-rotulo">{tx('Taxa para pular')} <small>(opcional)</small></span>
+          <span className="campo-caixa">
+            <span className="prefixo">{simbolo()}</span>
+            <input inputMode="decimal" value={taxa} onChange={(e) => { setTaxa(mascarar(e.target.value, casasDaMoeda(moedaAtual()))); setErro(null) }} placeholder="0,00" />
+          </span>
+          <span className="campo-ajuda">{tx('Se o banco cobrou alguma coisa para pular, ela entra na fatura de {0}.', nomeProx)}</span>
+        </label>
+        {f.puladas.length > 0 && (
+          <div className="campo">
+            <span className="campo-rotulo">{tx('Já puladas desta fatura')}</span>
+            <ul className="cc-pular-lista">
+              {f.puladas.map((l) => (
+                <li key={l.id} className="cc-pular-feita">
+                  <span className="item-texto">
+                    <span className="item-desc">{l.descricao || tx('Compra')}</span>
+                    <span className="item-meta">{tx('na fatura de {0}', nomeDaFatura(l.ano, l.mes, c.ano))} · {fmtValor(l.valor)}</span>
+                  </span>
+                  <button type="button" className="btn" disabled={salvando} onClick={() => void voltar(l)}><Icone nome="desfazer" tamanho={15} /> {tx('Voltar para esta fatura')}</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {erro && <p className="form-erro">{erro}</p>}
+        <div className="form-acoes">
+          <span className="espaco" />
+          <button type="button" className="btn" onClick={aoFechar}>{tx('Cancelar')}</button>
+          <button type="submit" className="btn primario" disabled={salvando || !escolhidas.size}>
+            {escolhidas.size > 1 ? tx('Pular {0} compras', escolhidas.size) : tx('Pular para {0}', nomeProx)}
+          </button>
+        </div>
+      </form>
+    </Modal>
   )
 }
 
@@ -822,38 +1006,90 @@ const lancamentoDosJuros = (c: Ctx, cartao: CartaoCredito, f: Fatura, juros: num
   banco_id: bancoId,
 })
 
-/** Pagar a fatura (ou ajeitar um pagamento já feito): dia, valor, banco, e juros/multa quando pagou com atraso. */
+/**
+ * Pagar a fatura (ou ajeitar um pagamento já feito): dia, valor, banco, de onde saiu o dinheiro (a conta ou o cofrinho) e
+ * juros/multa quando pagou com atraso. Com a migração 38, pagar menos do que falta é um pagamento de parte: a fatura continua
+ * em aberto pelo resto. Pagar com o cofrinho tira o valor da caixinha do banco em Dinheiro guardado.
+ */
 export function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: () => void }) {
-  const { cartao, f, pagamento } = alvo
-  const [data, setData] = useState(pagamento?.pago_em ?? hojeLocal())
-  const [valor, setValor] = useState(paraCampo(pagamento?.valor ?? f.valor))
+  const { cartao, f, pagamento, parcial } = alvo
+  const antigo = pagamento ?? parcial
+  const [data, setData] = useState(antigo?.pago_em ?? hojeLocal())
+  const [valor, setValor] = useState(paraCampo(antigo?.valor ?? f.falta))
   const [juros, setJuros] = useState(pagamento?.juros ? paraCampo(pagamento.juros) : '')
-  const [bancoId, setBancoId] = useState(pagamento?.banco_id ?? cartao.banco_id ?? '')
+  const [bancoId, setBancoId] = useState(antigo?.banco_id ?? cartao.banco_id ?? '')
+  const [daCaixinha, setDaCaixinha] = useState(Boolean(antigo?.da_caixinha))
   const [erro, setErro] = useState<string | null>(null)
   const [desfazer, setDesfazer] = useState(false)
   const [salvando, setSalvando] = useState(false)
   const bancos = c.v.bancos ? c.d.bancos : []
   const atraso = data > f.vencimento ? dias(f.vencimento, data) : 0
   const semExtras = c.cartoes.semExtras
-  // o campo de juros só aparece com atraso (ou se já havia juros); escondido, o que foi digitado antes não vale
-  const mostraJuros = !semExtras && (atraso > 0 || (pagamento?.juros ?? 0) > 0)
+  const sem38 = c.cartoes.sem38
+  const v = parseNumero(valor) ?? 0
+  // o que falta sem contar este pagamento (ajeitando uma parte, ela volta para a conta)
+  const faltaAntes = parcial ? centavos(f.falta + parcial.valor) : f.falta
+  // pagar menos do que falta deixa a fatura em aberto pelo resto (ajeitar o pagamento que quitou continua quitando)
+  const emParte = !sem38 && !pagamento && v > 0 && v < faltaAntes - 0.005
+  // o cofrinho é a caixinha de um banco (no PicPay ela vira limite do cartão): só com bancos na tela e a migração 38
+  const podeCofrinho = !sem38 && bancos.length > 0
+  const usaCaixinha = podeCofrinho && daCaixinha
+  const pagoEm = data || hojeLocal()
+  const caixinhaNoMes = bancoId ? mesEfetivo(c.d.meses, Number(pagoEm.slice(0, 4)), Number(pagoEm.slice(5, 7))).caixa[bancoId]?.caixinha ?? 0 : 0
+  // o que este pagamento já tinha tirado da caixinha volta para ela antes de tirar o novo valor
+  const caixinhaLivre = centavos(caixinhaNoMes + (antigo && efeitoNaCaixinha(antigo).length && antigo.banco_id === bancoId ? antigo.valor : 0))
+  const ligadoAoLimite = cartao.garantia_caixinha && cartao.banco_id === bancoId
+  // o campo de juros só aparece com atraso (ou se já havia juros), e não num pagamento de parte; escondido, o que foi digitado antes não vale
+  const mostraJuros = !semExtras && !emParte && !parcial && (atraso > 0 || (pagamento?.juros ?? 0) > 0)
+
+  /**
+   * Depois de gravar: desfaz o que o pagamento antigo tinha tirado da caixinha e tira o do novo. Devolve se o app mexeu no
+   * saldo do novo (vai para `saldo_mexido`, para desfazer só o que foi feito de verdade).
+   */
+  const acertarCaixinha = async (novo: { valor: number; pago_em: string; banco_id: string | null; da_caixinha: boolean } | null) => {
+    const mexer = Boolean(novo?.da_caixinha && novo.banco_id && mesJaChegou(Number(novo.pago_em.slice(0, 4)), Number(novo.pago_em.slice(5, 7))))
+    const efeitos = [...efeitoNaCaixinha(antigo, -1), ...(novo && mexer ? efeitoNaCaixinha({ ...novo, saldo_mexido: true }) : [])]
+    if (!efeitos.length) return mexer
+    return (await c.ajustarCaixinha(efeitos)) && mexer
+  }
 
   const salvar = async () => {
-    const v = parseNumero(valor)
+    // fatura já coberta pelos pagamentos de parte (uma compra foi pulada depois): marcar como paga com 0 fecha a conta
+    const zeroQueFecha = v === 0 && faltaAntes === 0 && !parcial && !pagamento
     const j = mostraJuros && juros.trim() ? parseNumero(juros) : 0
-    if (!v || v <= 0) return setErro(tx('Valor inválido.'))
+    if (parseNumero(valor) == null || (v <= 0 && !zeroQueFecha)) return setErro(tx('Valor inválido.'))
     if (j == null || j < 0) return setErro(tx('Juros inválidos.'))
-    const pagoEm = data || hojeLocal()
+    if (usaCaixinha && !bancoId) return setErro(tx('Escolha o banco do cofrinho.'))
     if (salvando) return
+    const dados = { valor: v, pago_em: pagoEm, banco_id: bancoId || null, da_caixinha: usaCaixinha && Boolean(bancoId) }
+    setSalvando(true)
+
+    // ---------- pagamento de parte: novo, ou ajeitando um que continua sendo parte ----------
+    if (emParte) {
+      const mexeu = dados.da_caixinha && mesJaChegou(Number(pagoEm.slice(0, 4)), Number(pagoEm.slice(5, 7)))
+      let id = parcial?.id
+      if (parcial) {
+        if (!(await c.cartoes.editarParte(parcial.id, { ...dados, saldo_mexido: mexeu }))) { setSalvando(false); return setErro(tx('Não deu certo. Tente de novo.')) }
+      } else {
+        id = (await c.cartoes.pagarParte({ ...dados, saldo_mexido: mexeu, cartao_id: cartao.id, ano: f.ano, mes: f.mes }))?.id
+        if (!id) { setSalvando(false); return setErro(tx('Não consegui salvar o pagamento. Nada foi gravado: tente de novo.')) }
+      }
+      aoFechar()
+      const ok = await acertarCaixinha(dados)
+      if (mexeu && !ok && id) await c.cartoes.editarParte(id, { saldo_mexido: false })
+      return
+    }
+
+    // ---------- quita a fatura (novo pagamento, ou um pagamento de parte que passou a cobrir o que faltava) ----------
     if (!pagamento) {
       // Grava com a janela aberta: a saída dos juros e o pagamento andam juntos. Se o pagamento não grava, a saída dos juros
       // é desfeita (senão sobrava um gasto de juros sem fatura paga) e a janela fica, com o aviso.
-      setSalvando(true)
       const comJuros = j > 0 && !semExtras
       const lanc = comJuros ? await c.d.addLanc(lancamentoDosJuros(c, cartao, f, j, pagoEm, bancoId || null)) : undefined
       if (comJuros && !lanc) { setSalvando(false); return setErro(tx('Não consegui salvar os juros. Nada foi gravado: tente de novo.')) }
+      const mexeu = dados.da_caixinha && mesJaChegou(Number(pagoEm.slice(0, 4)), Number(pagoEm.slice(5, 7)))
       const nova = await c.cartoes.pagarFatura({
-        cartao_id: cartao.id, ano: f.ano, mes: f.mes, valor: v, pago_em: pagoEm, banco_id: bancoId || null,
+        cartao_id: cartao.id, ano: f.ano, mes: f.mes, ...dados, saldo_mexido: mexeu,
         tipo: 'paga', juros: j, juros_lanc_id: lanc?.id ?? null,
       })
       if (!nova) {
@@ -861,7 +1097,11 @@ export function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoF
         setSalvando(false)
         return setErro(tx('Não consegui marcar a fatura como paga. Nada foi gravado: tente de novo.'))
       }
+      // o pagamento de parte que virou quitação sai da lista (o valor dele passa a ser o da quitação)
+      if (parcial) await c.cartoes.apagarParte(parcial.id)
       aoFechar()
+      const ok = await acertarCaixinha(dados)
+      if (mexeu && !ok) await c.cartoes.editarPagamento(nova.id, { saldo_mexido: false })
       return
     }
     aoFechar()
@@ -875,20 +1115,26 @@ export function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoF
         jurosLanc = null
       }
     }
-    await c.cartoes.editarPagamento(pagamento.id, { valor: v, pago_em: pagoEm, banco_id: bancoId || null, juros: j, juros_lanc_id: jurosLanc })
+    const mexeu = dados.da_caixinha && mesJaChegou(Number(pagoEm.slice(0, 4)), Number(pagoEm.slice(5, 7)))
+    if (await c.cartoes.editarPagamento(pagamento.id, { ...dados, saldo_mexido: mexeu, juros: j, juros_lanc_id: jurosLanc })) {
+      const ok = await acertarCaixinha(dados)
+      if (mexeu && !ok) await c.cartoes.editarPagamento(pagamento.id, { saldo_mexido: false })
+    }
   }
 
   const desfazerPagamento = async () => {
-    if (!pagamento) return
+    if (!antigo) return
     aoFechar()
-    if (pagamento.juros_lanc_id) await c.d.delLanc(pagamento.juros_lanc_id)
-    await c.cartoes.desfazerPagamento(pagamento.id)
+    if (pagamento?.juros_lanc_id) await c.d.delLanc(pagamento.juros_lanc_id)
+    const apagou = parcial ? await c.cartoes.apagarParte(parcial.id) : await c.cartoes.desfazerPagamento(antigo.id)
+    // o que tinha saído do cofrinho volta para a caixinha
+    if (apagou) await acertarCaixinha(null)
   }
 
   return (
-    <Modal titulo={pagamento ? tx('Ajeitar pagamento') : tx('Pagar fatura {0}', cartao.nome)} aoFechar={aoFechar} tamanho="tela" cor={cartao.cor} palco={
+    <Modal titulo={antigo ? tx('Ajeitar pagamento') : tx('Pagar fatura {0}', cartao.nome)} aoFechar={aoFechar} tamanho="tela" cor={cartao.cor} palco={
       <div className="cc-confirma palco-fatura">
-        <span className="cc-confirma-quem"><BancoIcone nome={cartao.nome} cor={cartao.cor} tamanho={34} /><span>{tx('Fatura de {0}', nomeDaFatura(f.ano, f.mes, c.ano))}<small>{tx('{0} em {1}', f.vencimento < hojeLocal() ? tx('venceu') : tx('vence'), fmtDataLonga(f.vencimento))}</small></span></span>
+        <span className="cc-confirma-quem"><BancoIcone nome={cartao.nome} cor={cartao.cor} tamanho={34} /><span>{tx('Fatura de {0}', nomeDaFatura(f.ano, f.mes, c.ano))}<small>{f.pagoEmParte > 0 && !f.paga ? tx('já pagou {0} · faltam {1}', fmtValor(f.pagoEmParte), fmtValor(f.falta)) : tx('{0} em {1}', f.vencimento < hojeLocal() ? tx('venceu') : tx('vence'), fmtDataLonga(f.vencimento))}</small></span></span>
         <strong>{fmtValor(f.valor)}</strong>
       </div>
     }>
@@ -921,24 +1167,53 @@ export function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoF
             </span>
           </label>
         )}
+        {podeCofrinho && (
+          <div className="campo">
+            <span className="campo-rotulo">{tx('De onde saiu o dinheiro?')}</span>
+            <div className="chips" role="radiogroup" aria-label={tx('De onde saiu o dinheiro?')}>
+              <button type="button" role="radio" aria-checked={!daCaixinha} className={`chip cc-origem ${!daCaixinha ? 'ativo' : ''}`} onClick={() => { setDaCaixinha(false); setErro(null) }}>
+                <Icone nome="banco" tamanho={15} /> {tx('Da conta')}
+              </button>
+              <button type="button" role="radio" aria-checked={daCaixinha} className={`chip cc-origem ${daCaixinha ? 'ativo' : ''}`} onClick={() => { setDaCaixinha(true); setErro(null) }}>
+                <Icone nome="cofre" tamanho={15} /> {tx('Do cofrinho (caixinha)')}
+              </button>
+            </div>
+          </div>
+        )}
         {bancos.length > 0 && (
           <label className="campo">
-            <span className="campo-rotulo">{tx('De qual banco saiu?')} <small>(opcional)</small></span>
-            <Seletor valor={bancoId} aoMudar={setBancoId} rotulo={tx('Banco')}
-              opcoes={[{ valor: '', rotulo: tx('Não sei / não importa') }, ...bancos.map((b) => ({ valor: b.id, rotulo: b.nome, cor: b.cor }))]} />
+            <span className="campo-rotulo">{usaCaixinha ? tx('Cofrinho de qual banco?') : tx('De qual banco saiu?')} {!usaCaixinha && <small>(opcional)</small>}</span>
+            <Seletor valor={bancoId} aoMudar={(x) => { setBancoId(x); setErro(null) }} rotulo={tx('Banco')}
+              opcoes={[...(usaCaixinha ? [] : [{ valor: '', rotulo: tx('Não sei / não importa') }]), ...bancos.map((b) => ({ valor: b.id, rotulo: b.nome, cor: b.cor }))]}
+              placeholder={tx('Escolher…')} />
           </label>
         )}
+        {usaCaixinha && bancoId && (
+          <div className={`cc-caixinha ${v > caixinhaLivre ? 'pouco' : ''}`}>
+            <Icone nome="cofre" tamanho={18} />
+            <span>
+              {tx('Na caixinha: {0}.', fmtValor(caixinhaLivre))}{' '}
+              {mesJaChegou(Number(pagoEm.slice(0, 4)), Number(pagoEm.slice(5, 7)))
+                ? tx('O valor pago sai dela em Dinheiro guardado.')
+                : tx('Num mês que ainda não chegou, a caixinha não muda.')}
+              {ligadoAoLimite && (' ' + tx('O limite garantido do cartão diminui junto, como no banco.'))}
+              {v > caixinhaLivre && <b> {tx('É mais do que tem na caixinha.')}</b>}
+            </span>
+          </div>
+        )}
         <span className="campo-ajuda">
-          {tx('Isso marca a fatura como paga. O gasto de cada compra já está nas suas saídas de {0}, então nada é contado duas vezes.', noMeioDaFrase(MESES_NOME[f.mes - 1]))}
+          {emParte
+            ? tx('Fica faltando {0} nesta fatura. Ela continua em aberto até você pagar o resto.', fmtValor(centavos(faltaAntes - v)))
+            : tx('Isso marca a fatura como paga. O gasto de cada compra já está nas suas saídas de {0}, então nada é contado duas vezes.', noMeioDaFrase(MESES_NOME[f.mes - 1]))}
         </span>
         {erro && <p className="form-erro">{erro}</p>}
         <div className="form-acoes">
-          {pagamento && (desfazer
+          {antigo && (desfazer
             ? <button type="button" className="btn perigo" onClick={() => void desfazerPagamento()}>{tx('Desfazer mesmo')}</button>
             : <button type="button" className="btn perigo" onClick={() => setDesfazer(true)}><Icone nome="desfazer" tamanho={15} /> {tx('Desfazer')}</button>)}
           <span className="espaco" />
           <button type="button" className="btn" onClick={aoFechar}>{tx('Cancelar')}</button>
-          <button type="submit" className="btn primario" disabled={salvando}>{pagamento ? tx('Salvar') : tx('Marcar como paga')}</button>
+          <button type="submit" className="btn primario" disabled={salvando}>{antigo ? tx('Salvar') : emParte ? tx('Pagar esta parte') : tx('Marcar como paga')}</button>
         </div>
       </form>
     </Modal>

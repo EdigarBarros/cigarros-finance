@@ -3,10 +3,12 @@
  *
  * Já aconteceu: lançamentos de verdade (o que entrou, o que foi pago). Compra no cartão só conta quando a fatura foi paga.
  * Vem aí: a fatura do cartão ainda em aberto e as contas fixas (saída ou recebimento) sem a baixa "Paguei" / "Recebi".
+ * Fatura paga em parte (migração 38): o que já foi pago sai do "vem aí" e entra no "já saiu", no mês da fatura.
  */
 import { hojeLocal, situacoesDoMes } from './contasFixas'
 import type { Taxas } from './moedas'
-import type { ContaFixa, FaturaPaga, Lancamento } from './types'
+import { tx } from './textos'
+import type { ContaFixa, FaturaPaga, FaturaParcial, Lancamento } from './types'
 
 export interface PrevisaoMes {
   /** Já entrou (lançamentos de entrada e recebimentos dados). */
@@ -33,12 +35,32 @@ const chaveFatura = (cartao: string, ano: number, mes: number) => `${cartao}|${a
 export const faturaEmAberto = (l: Lancamento, pagas: Set<string>, comFaturas: boolean, agora: number) =>
   comFaturas && l.tipo === 'saida' && Boolean(l.cartao_id) && l.ano * 12 + l.mes >= agora && !pagas.has(chaveFatura(l.cartao_id!, l.ano, l.mes))
 
-export function previsaoDoAno({ lancs, lancsBaixas = lancs, faturasPagas, comFaturas, contas, ano, taxas, hoje = new Date() }: {
+/**
+ * O que já foi pago em parte de cada fatura ainda em aberto do mês: por cartão, sem passar do que a fatura tem em aberto
+ * (compra pulada depois do pagamento não deixa o "vem aí" negativo).
+ */
+function pagoEmParteDoMes(emAberto: Lancamento[], parciais: FaturaParcial[], ano: number, mes: number) {
+  const porCartao = new Map<string, { aberto: number; pago: number; dia: string }>()
+  for (const l of emAberto) {
+    const g = porCartao.get(l.cartao_id!) ?? { aberto: 0, pago: 0, dia: l.data ?? '' }
+    g.aberto += l.valor
+    porCartao.set(l.cartao_id!, g)
+  }
+  for (const p of parciais) {
+    const g = p.ano === ano && p.mes === mes ? porCartao.get(p.cartao_id) : undefined
+    if (g) g.pago += p.valor
+  }
+  return [...porCartao.entries()].map(([cartao, g]) => ({ cartao, valor: centavos(Math.min(g.aberto, g.pago)), vencimento: g.dia })).filter((x) => x.valor > 0)
+}
+
+export function previsaoDoAno({ lancs, lancsBaixas = lancs, faturasPagas, faturasParciais = [], comFaturas, contas, ano, taxas, hoje = new Date() }: {
   /** Lançamentos do ano (já sem as compras de fatura renegociada). */
   lancs: Lancamento[]
   /** Onde procurar a baixa ("Paguei" / "Recebi") das contas fixas: todos os lançamentos, como no resto do app. */
   lancsBaixas?: Lancamento[]
   faturasPagas: FaturaPaga[]
+  /** Pagamentos de parte das faturas. */
+  faturasParciais?: FaturaParcial[]
   comFaturas: boolean
   contas: ContaFixa[]
   ano: number
@@ -54,11 +76,12 @@ export function previsaoDoAno({ lancs, lancsBaixas = lancs, faturasPagas, comFat
     const emAberto = doMes.filter((l) => faturaEmAberto(l, pagas, comFaturas, agora))
     const feitas = doMes.filter((l) => !emAberto.includes(l))
     const sits = situacoesDoMes(contas, lancsBaixas, ano, mes, iso, taxas).filter((s) => s.estado !== 'paga')
+    const pagoEmParte = soma(pagoEmParteDoMes(emAberto, faturasParciais, ano, mes).map((x) => x.valor))
     return {
       entrou: soma(feitas.filter((l) => l.tipo === 'entrada').map((l) => l.valor)),
-      saiu: soma(feitas.filter((l) => l.tipo === 'saida').map((l) => l.valor)),
+      saiu: soma([...feitas.filter((l) => l.tipo === 'saida').map((l) => l.valor), pagoEmParte]),
       vaiEntrar: soma(sits.filter((s) => s.conta.tipo === 'entrada').map((s) => s.valor)),
-      vaiSair: soma([...emAberto.map((l) => l.valor), ...sits.filter((s) => s.conta.tipo === 'saida').map((s) => s.valor)]),
+      vaiSair: soma([...emAberto.map((l) => l.valor), -pagoEmParte, ...sits.filter((s) => s.conta.tipo === 'saida').map((s) => s.valor)]),
       futuro: ano * 12 + mes > agora,
     }
   })
@@ -109,10 +132,11 @@ export interface DiaADia {
  * aconteceu, mesmo já estando lançado. Assim o "sobrou até hoje" não conta, no dia 4, as contas do dia 20.
  * Mesma regra de `previsaoDoAno` para fatura em aberto e contas fixas sem a baixa.
  */
-export function diaADiaDoMes({ lancs, lancsBaixas = lancs, faturasPagas, comFaturas, contas, ano, mes, taxas, hoje = new Date() }: {
+export function diaADiaDoMes({ lancs, lancsBaixas = lancs, faturasPagas, faturasParciais = [], comFaturas, contas, ano, mes, taxas, hoje = new Date() }: {
   lancs: Lancamento[]
   lancsBaixas?: Lancamento[]
   faturasPagas: FaturaPaga[]
+  faturasParciais?: FaturaParcial[]
   comFaturas: boolean
   contas: ContaFixa[]
   ano: number
@@ -149,6 +173,18 @@ export function diaADiaDoMes({ lancs, lancsBaixas = lancs, faturasPagas, comFatu
         atrasado: Boolean(l.data && l.data < iso), cartaoId: naFatura ? l.cartao_id ?? undefined : undefined,
       })
     }
+  }
+  // Fatura paga em parte: o pago sai do "vem aí" (no dia em que a fatura vence) e entra no "já saiu" (no dia do pagamento,
+  // ou no dia 1 se foi pago antes do mês começar).
+  const emAberto = lancs.filter((l) => l.ano === ano && l.mes === mes && faturaEmAberto(l, pagas, comFaturas, agora))
+  for (const x of pagoEmParteDoMes(emAberto, faturasParciais, ano, mes)) {
+    const pagos = faturasParciais.filter((p) => p.cartao_id === x.cartao && p.ano === ano && p.mes === mes)
+    const ultimo = pagos.map((p) => p.pago_em).sort().pop() ?? null
+    saiu += x.valor
+    saiuDia[Math.min(dias, Math.max(1, diaDe(ultimo))) - 1] += x.valor
+    vaiSair -= x.valor
+    vaiSairDia[diaDoQueVem(diaDe(x.vencimento))] -= x.valor
+    pendentes.push({ origem: 'fatura', tipo: 'saida', descricao: tx('Já pago em parte'), valor: -x.valor, data: ultimo, atrasado: false, cartaoId: x.cartao })
   }
   for (const s of situacoesDoMes(contas, lancsBaixas, ano, mes, iso, taxas)) {
     if (s.estado === 'paga') continue

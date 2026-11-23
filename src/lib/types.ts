@@ -43,6 +43,8 @@ export interface Lancamento {
   parcelas?: number | null
   /** Dia em que a pessoa comprou. */
   data_compra?: string | null
+  /** Compra pulada para a fatura seguinte ("pula compra" do banco): o vencimento da fatura em que estava antes (migração 38). */
+  pulada_de?: string | null
   /** Pix, débito, dinheiro, boleto ou transferência (migração 11). Compra no cartão não usa: veja `formaDe`. */
   forma?: 'pix' | 'debito' | 'dinheiro' | 'boleto' | 'transferencia' | null
   /**
@@ -321,4 +323,20 @@ export interface FaturaPaga {
   /** Dívida criada na renegociação. */
   divida_id?: string | null
   obs?: string | null
+  /** Campos da migração 38: o dinheiro saiu da caixinha (cofrinho) do banco, e o app tirou o valor dela em Dinheiro guardado. */
+  da_caixinha?: boolean
+  saldo_mexido?: boolean
+}
+
+/** Pagamento de parte de uma fatura (migração 38): a fatura continua em aberto pelo que falta. */
+export interface FaturaParcial {
+  id: string
+  cartao_id: string
+  ano: number
+  mes: number
+  valor: number
+  pago_em: string
+  banco_id: string | null
+  da_caixinha: boolean
+  saldo_mexido: boolean
 }

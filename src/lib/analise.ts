@@ -35,7 +35,7 @@ import { planejar, type Plano } from './planejador'
 import { conselhosDoPlanejamento, quadroDoMes, type Planejamentos, type Quadro } from './planejamento'
 import { tx } from './textos'
 import type {
-  Banco, CartaoCredito, Categoria, ContaFixa, Divida, FaturaPaga, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida,
+  Banco, CartaoCredito, Categoria, ContaFixa, Divida, FaturaPaga, FaturaParcial, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida,
 } from './types'
 import { TIPOS_CAIXA } from './types'
 
@@ -529,6 +529,8 @@ export interface EntradaAnalise {
   compras: Lancamento[]
   cartoes: CartaoCredito[]
   faturasPagas: FaturaPaga[]
+  /** Pagamentos de parte das faturas (migração 38; vazio sem ela). */
+  faturasParciais?: FaturaParcial[]
   contas: ContaFixa[]
   categorias: Categoria[]
   /** id da categoria do lançamento ('' = sem categoria). */
@@ -1335,13 +1337,14 @@ export function analisar(e: EntradaAnalise): Analise {
     let atrasadas = 0
     let valorAtrasado = 0
     for (const c of ativos) {
-      const l = limiteDoCartao(c, e.compras, e.faturasPagas, hojeIso, garantidoDo(c, c.banco_id ? ef.caixa[c.banco_id]?.caixinha : 0))
+      const parciais = e.faturasParciais ?? []
+      const l = limiteDoCartao(c, e.compras, e.faturasPagas, hojeIso, garantidoDo(c, c.banco_id ? ef.caixa[c.banco_id]?.caixinha : 0), parciais)
       usado += l.usado
       if (l.total !== null) { limite += l.total; algumLimite = true }
-      const vencidas = [...faturasAtrasadas(c, e.compras, e.faturasPagas, ano, mes, hojeIso), faturaDoMes(c, e.compras, e.faturasPagas, ano, mes, hojeIso)]
+      const vencidas = [...faturasAtrasadas(c, e.compras, e.faturasPagas, ano, mes, hojeIso, parciais), faturaDoMes(c, e.compras, e.faturasPagas, ano, mes, hojeIso, parciais)]
         .filter((f) => f.status === 'atrasada')
       atrasadas += vencidas.length
-      valorAtrasado += soma(vencidas.map((f) => f.valor))
+      valorAtrasado += soma(vencidas.map((f) => f.falta))
     }
     const deCartao = new Set(ativos.map((c) => c.id))
     // As próximas faturas a vencer: a deste mês entra quando ainda tem fatura por vencer nele (cartão que vence dia 27,

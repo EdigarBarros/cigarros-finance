@@ -17298,5 +17298,201 @@
   "Volta para a escolha de contas. A conta continua neste aparelho.": {
     "en": "Goes back to the account picker. The account stays on this device.",
     "es": "Vuelve a la elección de cuentas. La cuenta sigue en este dispositivo."
+  },
+  "pulada de {0}": {
+    "en": "moved from {0}",
+    "es": "pasada de {0}"
+  },
+  "pagou {0} de {1}": {
+    "en": "paid {0} of {1}",
+    "es": "pagó {0} de {1}"
+  },
+  "em {0} pagamentos": {
+    "en": "in {0} payments",
+    "es": "en {0} pagos"
+  },
+  "Você já pagou {0} desta fatura.": {
+    "en": "You've already paid {0} of this bill.",
+    "es": "Ya pagaste {0} de esta factura."
+  },
+  "Faltam {0}.": {
+    "en": "{0} left.",
+    "es": "Faltan {0}."
+  },
+  "O que você pagou já cobre esta fatura. Marque como paga para fechar.": {
+    "en": "What you paid already covers this bill. Mark it as paid to close it.",
+    "es": "Lo que pagaste ya cubre esta factura. Márcala como pagada para cerrarla."
+  },
+  "do cofrinho": {
+    "en": "from the piggy bank",
+    "es": "de la alcancía"
+  },
+  "pagamento de parte": {
+    "en": "partial payment",
+    "es": "pago parcial"
+  },
+  "“{0}” foi pulada para a fatura de {1}": {
+    "en": "“{0}” was moved to the {1} bill",
+    "es": "“{0}” se pasó a la factura de {1}"
+  },
+  "{0} compras puladas para as próximas faturas": {
+    "en": "{0} purchases moved to the next bills",
+    "es": "{0} compras pasadas a las próximas facturas"
+  },
+  "Pagar o resto": {
+    "en": "Pay the rest",
+    "es": "Pagar el resto"
+  },
+  "Passar uma compra para a próxima fatura": {
+    "en": "Move a purchase to the next bill",
+    "es": "Pasar una compra a la próxima factura"
+  },
+  "Pular compra": {
+    "en": "Skip purchase",
+    "es": "Saltar compra"
+  },
+  "Escolha pelo menos uma compra para pular.": {
+    "en": "Choose at least one purchase to skip.",
+    "es": "Elige al menos una compra para saltar."
+  },
+  "A fatura de {0} já está marcada como paga. Desfaça o pagamento dela antes de pular uma compra para lá.": {
+    "en": "The {0} bill is already marked as paid. Undo its payment before moving a purchase there.",
+    "es": "La factura de {0} ya está marcada como pagada. Deshaz su pago antes de pasar una compra allí."
+  },
+  "Taxa inválida.": {
+    "en": "Invalid fee.",
+    "es": "Tarifa no válida."
+  },
+  "A compra foi pulada, mas não consegui lançar a taxa. Lance a taxa como uma compra no cartão.": {
+    "en": "The purchase was skipped, but I couldn't add the fee. Add the fee as a card purchase.",
+    "es": "La compra se saltó, pero no pude registrar la tarifa. Regístrala como una compra con la tarjeta."
+  },
+  "Usou o “pular compra” do app do banco? Escolha as compras que passaram para a fatura de {0}. De parcelada, só a parcela desta fatura muda de mês.": {
+    "en": "Used the bank app's “skip purchase”? Choose the purchases that moved to the {0} bill. For installments, only this bill's installment changes month.",
+    "es": "¿Usaste el “saltar compra” de la app del banco? Elige las compras que pasaron a la factura de {0}. En compras a plazos, solo la cuota de esta factura cambia de mes."
+  },
+  "Nenhuma compra ficou nesta fatura.": {
+    "en": "No purchases are left on this bill.",
+    "es": "No quedó ninguna compra en esta factura."
+  },
+  "parcela {0}/{1}": {
+    "en": "installment {0}/{1}",
+    "es": "cuota {0}/{1}"
+  },
+  "nesta fatura": {
+    "en": "on this bill",
+    "es": "en esta factura"
+  },
+  "vai para {0}": {
+    "en": "goes to {0}",
+    "es": "va a {0}"
+  },
+  "Taxa para pular": {
+    "en": "Fee to skip",
+    "es": "Tarifa por saltar"
+  },
+  "Se o banco cobrou alguma coisa para pular, ela entra na fatura de {0}.": {
+    "en": "If the bank charged something to skip, it goes on the {0} bill.",
+    "es": "Si el banco cobró algo por saltar, entra en la factura de {0}."
+  },
+  "Já puladas desta fatura": {
+    "en": "Already skipped from this bill",
+    "es": "Ya saltadas de esta factura"
+  },
+  "na fatura de {0}": {
+    "en": "on the {0} bill",
+    "es": "en la factura de {0}"
+  },
+  "Voltar para esta fatura": {
+    "en": "Move back to this bill",
+    "es": "Volver a esta factura"
+  },
+  "Pular {0} compras": {
+    "en": "Skip {0} purchases",
+    "es": "Saltar {0} compras"
+  },
+  "Pular para {0}": {
+    "en": "Skip to {0}",
+    "es": "Saltar a {0}"
+  },
+  "Escolha o banco do cofrinho.": {
+    "en": "Choose the piggy bank's bank.",
+    "es": "Elige el banco de la alcancía."
+  },
+  "Não consegui salvar o pagamento. Nada foi gravado: tente de novo.": {
+    "en": "I couldn't save the payment. Nothing was saved: try again.",
+    "es": "No pude guardar el pago. No se guardó nada: inténtalo de nuevo."
+  },
+  "já pagou {0} · faltam {1}": {
+    "en": "paid {0} · {1} left",
+    "es": "ya pagó {0} · faltan {1}"
+  },
+  "De onde saiu o dinheiro?": {
+    "en": "Where did the money come from?",
+    "es": "¿De dónde salió el dinero?"
+  },
+  "Da conta": {
+    "en": "From the account",
+    "es": "De la cuenta"
+  },
+  "Do cofrinho (caixinha)": {
+    "en": "From the piggy bank (savings box)",
+    "es": "De la alcancía (cajita de ahorro)"
+  },
+  "Cofrinho de qual banco?": {
+    "en": "Piggy bank at which bank?",
+    "es": "¿Alcancía de qué banco?"
+  },
+  "Na caixinha: {0}.": {
+    "en": "In the savings box: {0}.",
+    "es": "En la alcancía: {0}."
+  },
+  "O valor pago sai dela em Dinheiro guardado.": {
+    "en": "The amount paid comes out of it in Money saved.",
+    "es": "El valor pagado sale de ella en Dinero ahorrado."
+  },
+  "Num mês que ainda não chegou, a caixinha não muda.": {
+    "en": "In a month that hasn't arrived yet, the savings box doesn't change.",
+    "es": "En un mes que aún no llegó, la alcancía no cambia."
+  },
+  "O limite garantido do cartão diminui junto, como no banco.": {
+    "en": "The card's secured limit goes down too, just like at the bank.",
+    "es": "El límite garantizado de la tarjeta baja junto, como en el banco."
+  },
+  "É mais do que tem na caixinha.": {
+    "en": "That's more than there is in the savings box.",
+    "es": "Es más de lo que hay en la alcancía."
+  },
+  "Fica faltando {0} nesta fatura. Ela continua em aberto até você pagar o resto.": {
+    "en": "{0} will still be due on this bill. It stays open until you pay the rest.",
+    "es": "Quedan {0} por pagar en esta factura. Sigue abierta hasta que pagues el resto."
+  },
+  "Pagar esta parte": {
+    "en": "Pay this part",
+    "es": "Pagar esta parte"
+  },
+  "Taxa para pular compra – fatura de {0}": {
+    "en": "Fee to skip purchase – {0} bill",
+    "es": "Tarifa por saltar compra – factura de {0}"
+  },
+  "Faltam {0} · {1}": {
+    "en": "{0} left · {1}",
+    "es": "Faltan {0} · {1}"
+  },
+  "Paga em parte, já coberta": {
+    "en": "Partly paid, already covered",
+    "es": "Pagada en parte, ya cubierta"
+  },
+  "Já pago em parte": {
+    "en": "Already partly paid",
+    "es": "Ya pagado en parte"
+  },
+  "O pagamento foi salvo, mas não consegui acertar a caixinha em Dinheiro guardado. Confira lá.": {
+    "en": "The payment was saved, but I couldn't update the savings box in Money saved. Check there.",
+    "es": "El pago se guardó, pero no pude ajustar la alcancía en Dinero ahorrado. Revisa allí."
+  },
+  "{0} vão para {1}": {
+    "en": "{0} go to {1}",
+    "es": "{0} van a {1}"
   }
 }

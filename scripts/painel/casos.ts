@@ -13,10 +13,16 @@ import { situacaoDoMes } from '../../src/lib/situacaoDoMes'
 import { adicionarCartao, cartoesDaInicio, linhasDaGrade, maisRecente, MODELOS, moverCartao, normCelular, removerCartao, TAMANHO, type ArrumacaoInicio } from '../../src/lib/widgets'
 import { comParcelasDoMes } from '../../src/lib/useMesDaInicio'
 import { montarCartao, ORCAMENTO, type TracosDaDivida } from '../../src/lib/cartaoDaDivida'
-import type { SituacaoCartao } from '../../src/lib/cartoes'
+import {
+  efeitoNaCaixinha, faturaDoMes, garantidoDo, limiteDoCartao, pularParcela, situacaoCartao, taxaParaPular, textoStatus, totalFaturasAPagar, voltarParcela,
+  type SituacaoCartao,
+} from '../../src/lib/cartoes'
+import { ajustarMesesComEfeitos } from '../../src/lib/guardado'
+import { fmtValor } from '../../src/lib/format'
+import { previsaoDoAno } from '../../src/lib/previsao'
 import { atrasoDa, comGuardado, conselhosDoPlanejamento, custoDa, dicasDe, falta, montarPraMim, mudarParte, normPlanejamentos, placarDe, por, quadroDoMes, sobra, valerPartes } from '../../src/lib/planejamento'
 import type { PagamentoPlanejado, Plano } from '../../src/lib/planejador'
-import type { ContaFixa, Divida, Lancamento, SaldoDivida } from '../../src/lib/types'
+import type { CartaoCredito, ContaFixa, Divida, FaturaParcial, Lancamento, Mes, SaldoDivida } from '../../src/lib/types'
 
 // ---------- dados de mentira ----------
 let seq = 0
@@ -27,6 +33,15 @@ const conta = (descricao: string, tipo: 'entrada' | 'saida', valor: number, dia:
   id: `c${++seq}`, tipo, descricao, valor, categoria_id: null, banco_id: null, dia, inicio: '2026-01-01', fim: null, ativa: true, ...mais,
 })
 const nada = () => {}
+/** Cartão de mentira no jeito do PicPay: fecha dia 25, vence dia 5, limite de 1.000, garantido ligado à caixinha do banco b1. */
+const PICPAY: CartaoCredito = {
+  id: 'pp', nome: 'PicPay', cor: '#21c25e', banco_id: 'b1', limite: 1000, dia_fechamento: 25, dia_vencimento: 5, ativo: true,
+  limite_garantido: 0, garantia_caixinha: true,
+}
+const compra = (venc: string, valor: number, mais: Partial<Lancamento> = {}) => lanc(venc, 'saida', valor, { cartao_id: 'pp', data_compra: venc, ...mais })
+const parcial = (ano: number, mes: number, valor: number, pago_em: string, mais: Partial<FaturaParcial> = {}): FaturaParcial => ({
+  id: `p${++seq}`, cartao_id: 'pp', ano, mes, valor, pago_em, banco_id: 'b1', da_caixinha: false, saldo_mexido: false, ...mais,
+})
 
 // ---------- conferir ----------
 class Falha extends Error {}
@@ -294,6 +309,110 @@ export const CASOS: Caso[] = [
     },
   },
 
+  // ==================== cartão: pular compra, pagar parte, pagar com o cofrinho ====================
+  {
+    nome: 'cartão: pular compra tira 100 da fatura de 800 e põe na próxima; voltar desfaz',
+    rodar() {
+      const a = compra('2026-12-05', 700, { descricao: 'Mercado' })
+      const b = compra('2026-12-05', 100, { descricao: 'Tênis' })
+      const patch = pularParcela(b, PICPAY)
+      igual('vai para janeiro, no vencimento dela, lembrando de onde saiu', patch, { ano: 2027, mes: 1, data: '2027-01-05', pulada_de: '2026-12-05' })
+      const pulada = { ...b, ...patch }
+      const dez = faturaDoMes(PICPAY, [a, pulada], [], 2026, 12, '2026-11-14')
+      const jan = faturaDoMes(PICPAY, [a, pulada], [], 2027, 1, '2026-11-14')
+      perto('dezembro fica com 700', dez.valor, 700)
+      perto('janeiro ganha os 100', jan.valor, 100)
+      igual('dezembro sabe o que pulou', dez.puladas.map((l) => l.descricao), ['Tênis'])
+      igual('janeiro não acha que pulou dele', jan.puladas.length, 0)
+      // pular de novo (de janeiro para fevereiro): continua lembrando de dezembro, e voltar leva direto para lá
+      const deNovo = { ...pulada, ...pularParcela(pulada, PICPAY) }
+      igual('pulou de novo', [deNovo.ano, deNovo.mes, deNovo.pulada_de], [2027, 2, '2026-12-05'])
+      igual('voltar', voltarParcela(deNovo), { ano: 2026, mes: 12, data: '2026-12-05', pulada_de: null })
+      igual('compra que não pulou não volta', voltarParcela(a), null)
+      // a taxa do banco para pular entra como compra à vista na fatura seguinte
+      const t = taxaParaPular(PICPAY, { ano: 2026, mes: 12 }, 4.9, '2026-11-14')
+      igual('taxa na fatura de janeiro', [t.ano, t.mes, t.data, t.valor, t.parcelas, t.cartao_id], [2027, 1, '2027-01-05', 4.9, 1, 'pp'])
+    },
+  },
+  {
+    nome: 'cartão: pular uma parcela só muda aquela parcela; as outras ficam onde estão',
+    rodar() {
+      const ps = ['2026-11-05', '2026-12-05', '2027-01-05'].map((d, i) => compra(d, 100, { compra_id: 'fone', parcela: i + 1, parcelas: 3, data_compra: '2026-10-20' }))
+      const movida = ps.map((l) => (l.parcela === 2 ? { ...l, ...pularParcela(l, PICPAY) } : l))
+      igual('valores por fatura', [[2026, 11], [2026, 12], [2027, 1], [2027, 2]].map(([a, m]) => faturaDoMes(PICPAY, movida, [], a, m, '2026-11-14').valor), [100, 0, 200, 0])
+      igual('a 3ª continua a 3ª', movida.filter((l) => l.mes === 1).map((l) => l.parcela).sort(), [2, 3])
+    },
+  },
+  {
+    nome: 'cartão: pagar parte deixa a fatura em aberto pelo que falta (status, limite e "falta pagar")',
+    rodar() {
+      const lancs = [compra('2026-12-05', 800)]
+      const ps = [parcial(2026, 12, 300, '2026-11-10')]
+      const s = situacaoCartao(PICPAY, lancs, [], 2026, 12, '2026-11-14', 0, ps)
+      perto('pago em parte', s.pagoEmParte, 300)
+      perto('falta', s.falta, 500)
+      igual('continua aberta', s.status, 'aberta')
+      igual('o selo diz quanto falta', textoStatus(s), `Faltam ${fmtValor(500)} · vence em 21 dias`)
+      perto('limite usado só pelo que falta', s.limiteUsado, 500)
+      perto('falta pagar no topo', totalFaturasAPagar([s]), 500)
+      // sem o pagamento de parte, tudo como antes
+      const antes = situacaoCartao(PICPAY, lancs, [], 2026, 12, '2026-11-14', 0)
+      perto('sem parte: falta tudo', antes.falta, 800)
+      perto('sem parte: limite usado inteiro', antes.limiteUsado, 800)
+    },
+  },
+  {
+    nome: 'cartão: fatura vencida paga em parte continua atrasada pelo resto; coberta, não fica atrasada',
+    rodar() {
+      const lancs = [compra('2026-10-05', 400)]
+      const metade = faturaDoMes(PICPAY, lancs, [], 2026, 10, '2026-11-14', [parcial(2026, 10, 100, '2026-10-05')])
+      igual('atrasada', metade.status, 'atrasada')
+      perto('pelo resto', metade.falta, 300)
+      perto('o limite conta o resto', limiteDoCartao(PICPAY, lancs, [], '2026-11-14', 0, [parcial(2026, 10, 100, '2026-10-05')]).usado, 300)
+      const coberta = faturaDoMes(PICPAY, lancs, [], 2026, 10, '2026-11-14', [parcial(2026, 10, 400, '2026-10-05')])
+      igual('coberta: não fica atrasada', coberta.status, 'fechada')
+      perto('nada falta', coberta.falta, 0)
+      // pagamento de outra fatura (ou de outro cartão) não entra
+      const outra = faturaDoMes(PICPAY, lancs, [], 2026, 10, '2026-11-14', [parcial(2026, 9, 100, '2026-09-05'), { ...parcial(2026, 10, 100, '2026-10-05'), cartao_id: 'outro' }])
+      perto('só os desta fatura', outra.falta, 400)
+    },
+  },
+  {
+    nome: 'cartão: pagar com o cofrinho tira da caixinha no mês do pagamento, e o limite garantido diminui junto',
+    rodar() {
+      const pago = { valor: 100, pago_em: '2026-11-10', banco_id: 'b1', da_caixinha: true, saldo_mexido: true }
+      igual('tira', efeitoNaCaixinha(pago), [{ ano: 2026, mes: 11, efeitos: [{ banco: 'b1', tipo: 'caixinha', delta: -100 }] }])
+      igual('desfazer devolve', efeitoNaCaixinha(pago, -1), [{ ano: 2026, mes: 11, efeitos: [{ banco: 'b1', tipo: 'caixinha', delta: 100 }] }])
+      igual('da conta: não mexe na caixinha', efeitoNaCaixinha({ ...pago, da_caixinha: false }), [])
+      igual('o app não mexeu: desfazer não devolve nada', efeitoNaCaixinha({ ...pago, saldo_mexido: false }, -1), [])
+      igual('sem banco: nada', efeitoNaCaixinha({ ...pago, banco_id: null }), [])
+      const meses: Mes[] = [{ ano: 2026, mes: 11, investimentos: 0, moedas: {}, meta_usd: 0, caixa: { b1: { cc: 50, caixinha: 300 } } }]
+      const r = ajustarMesesComEfeitos(meses, efeitoNaCaixinha(pago), HOJE)
+      const nov = r.meses.find((m) => m.ano === 2026 && m.mes === 11)!
+      igual('caixinha 300 → 200, conta igual', nov.caixa.b1, { cc: 50, caixinha: 200 })
+      perto('limite garantido acompanha a caixinha', garantidoDo(PICPAY, nov.caixa.b1?.caixinha), 200)
+    },
+  },
+  {
+    nome: 'previsão: fatura paga em parte sai do "vem aí" e entra no "já saiu" (nada conta duas vezes)',
+    rodar() {
+      const lancs = [compra('2026-11-20', 800), lanc('2026-11-02', 'entrada', 3000)]
+      const ps = [parcial(2026, 11, 300, '2026-11-10')]
+      const dd = diaADiaDoMes({ ...base, lancs, faturasParciais: ps, contas: [], ano: 2026, mes: 11 })
+      perto('já saiu', dd.saiu, 300)
+      perto('vem aí', dd.vaiSair, 500)
+      perto('saiu no dia do pagamento', dd.saiuDia[9], 300)
+      const comp = comporPrevisao(dd)
+      perto('fatura no "a pagar"', comp.totalPagar, 500)
+      perto('resultado: 3.000 − 800', comp.resultado, 2200)
+      const ano = previsaoDoAno({ ...base, lancs, faturasParciais: ps, contas: [], ano: 2026 })[10]
+      igual('ano: saiu e vai sair', [ano.saiu, ano.vaiSair], [300, 500])
+      // compra pulada depois do pagamento de parte: o "vem aí" não fica negativo
+      const pouco = diaADiaDoMes({ ...base, lancs: [compra('2026-11-20', 200)], faturasParciais: ps, contas: [], ano: 2026, mes: 11 })
+      igual('limitado ao que está em aberto', [pouco.saiu, pouco.vaiSair], [200, 0])
+    },
+  },
+
   // ==================== contas: atrasadas, próximas, depois ====================
   {
     nome: 'fatura de outubro não entra em "próximos 7 dias": vai para atrasadas, com os dias',
@@ -303,8 +422,8 @@ export const CASOS: Caso[] = [
       const iptu = conta('IPTU', 'saida', 300, 28)
       const contas = situacoesDoMes([internet, agua, iptu], [], 2026, 11, '2026-11-14')
       const cartao = {
-        cartao: { id: 'k1', nome: 'Itaú' }, valor: 960, status: 'aberta', vencimento: '2026-11-20',
-        atrasadas: [{ ano: 2026, mes: 10, valor: 1400, vencimento: '2026-10-27' }],
+        cartao: { id: 'k1', nome: 'Itaú' }, valor: 960, falta: 960, status: 'aberta', vencimento: '2026-11-20',
+        atrasadas: [{ ano: 2026, mes: 10, valor: 1400, falta: 1400, vencimento: '2026-10-27' }],
       } as unknown as SituacaoCartao
       const { lista } = tarefasDoMes({
         ano: 2026, mes: 11, contas, faturas: [cartao], dividas: [], diaRef: '2026-11-14', hoje: '2026-11-14',
