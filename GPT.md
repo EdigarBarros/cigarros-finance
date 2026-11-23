@@ -1624,3 +1624,27 @@ atraso, "Guardar na carteira", aba lembrada, 1000 px sem rolagem de lado, jeito 
 voo). `testar-pular-e-pagar-parte.cjs` 3/3 (seletores atualizados e a aba Compras) e `testar-correcoes.cjs` passando.
 Limitação local: o `xlsx` vem de cdn.sheetjs.com, bloqueado nesta sessão; para testar, foi instalado o `xlsx` 0.18.5 do npm
 só na pasta local (o `package.json` e o lock não mudaram).
+
+### 23/11/2026 — Claude — Cartões no computador: resumo e limite redesenhados, volta sem "teleporte" e novidade animada
+
+**Pedido do dono** (com prints): não gostou da cor nem do layout do card de Limite (anel rosa e amarelo) e do resumo ao lado
+da carteira (rosca verde e barras do limite). Ao guardar, o cartão ficava por cima do bolso e "teleportava" para dentro. E
+pediu uma novidade feita por nós, uma mini animação em 3D com o antes e depois, que conste no painel de Novidades.
+
+**O que mudou.**
+- `pages/Cartoes.tsx`: `ResumoDosCartoes` (no lugar da vitrine roxa e de "Quanto do limite cada cartão usa") e `LimitePC`
+  (aba Limite e caixinha, só computador; o `Limite` do celular não mudou). Estilos em `pages/cartoes-pc.css`.
+- `components/Carteira3D.tsx`, `voltarParaCarteira`: causa do "teleporte": o cartão descia ainda na camada de cima e só no
+  fim (80%) ia para trás do bolso; além disso, o zIndex corria numa linha do tempo linear e o movimento numa suavizada, então
+  a troca acontecia em pontos diferentes. Agora ele sobe até passar da boca do bolso, troca de camada ali e desliza para dentro,
+  tudo na mesma linha do tempo.
+- Novidade: `components/CenaNovidade.tsx` + `cena-novidade.css` (cena `carteira-cartoes`, só CSS 3D), `Novidades.tsx`
+  (pop-up com a cena quando `arte.animacao`; cena `SO_COMPUTADOR` não aparece no celular), `ArteNovidade.tsx` (campo
+  `animacao`), `Painel.tsx` (passa `mobile`). No painel de suporte (repositório Painel-Opus-Cash): os dois arquivos copiados
+  em `src/pecas/`, prévia da cena na lista e no editor (modo "cena": muda título, texto, tela e onde aparece) e a função
+  `admin` (`limparArte` guarda `animacao`; com cena, um item de até 160 letras).
+
+**Validação.** `npx tsc -b`, lint sem erros, build. `testar-carteira-pc.cjs` 15/15 (novos: resumo e linhas, aba Limite, a
+volta nunca passa por cima do próprio bolso já alinhada com a fenda, a linha do resumo abre o cartão, a novidade aparece no
+computador com "Ver de novo" e "Ver agora", e não aparece no celular). `testar-pular-e-pagar-parte.cjs` 3/3,
+`testar-correcoes.cjs` ok. Painel: `tsc -b`, lint, build e `deno check` da função `admin`.

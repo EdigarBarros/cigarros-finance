@@ -284,7 +284,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   // a tela que a pessoa está vendo, para a medição de uso (lib/uso.ts): janelas abertas contam como telas próprias
   // Pop-up de novidade (publicada no painel de suporte): uma vez por pessoa, com o painel livre, depois do tutorial de quem acabou de chegar
   const recemChegou = perfil.onboarding_em ? Date.now() - new Date(perfil.onboarding_em).getTime() < 3 * 86400000 : false
-  const novidade = useNovidade(noPainel && !d.carregando && Boolean(perfil.onboarding_em), perfil.dispensadas)
+  const novidade = useNovidade(noPainel && !d.carregando && Boolean(perfil.onboarding_em), perfil.dispensadas, mobile)
   const [novidadeLiberada, setNovidadeLiberada] = useState(false)
   useEffect(() => {
     if (!novidade) return

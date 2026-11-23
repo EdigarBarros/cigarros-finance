@@ -6,6 +6,7 @@ import { nativo, tx } from '../lib/textos'
 import { ArteAjustada, TAMANHO, type Arte } from './ArteNovidade'
 import { Icone } from './Icone'
 import { CartaoNovidade, CORES_NOVIDADE, type CorNovidade } from './CartaoNovidade'
+import { CenaNovidade, ehCena, SO_COMPUTADOR } from './CenaNovidade'
 
 /*
  * Pop-up "Tem novidade!" (migração 31). As novidades são criadas e publicadas no painel de suporte; aqui só se lê a
@@ -33,7 +34,7 @@ const vistaAte = (dispensadas: string[]) =>
   Math.max(0, ...dispensadas.filter((d) => d.startsWith('novidade:')).map((d) => Number(d.slice(9)) || 0))
 
 /** A novidade que esta pessoa ainda não viu (ou null). Lê uma vez por abertura do painel. */
-export function useNovidade(ativo: boolean, dispensadas: string[]) {
+export function useNovidade(ativo: boolean, dispensadas: string[], celular = false) {
   const [nova, setNova] = useState<Novidade | null>(null)
   const ate = vistaAte(dispensadas)
   useEffect(() => {
@@ -56,6 +57,9 @@ export function useNovidade(ativo: boolean, dispensadas: string[]) {
     })()
     return () => { cancelado = true }
   }, [ativo])
+  // a cena mostra uma tela que só existe no computador: no celular a novidade espera (não conta como vista)
+  const cena = nova?.arte?.animacao
+  if (celular && ehCena(cena) && SO_COMPUTADOR.includes(cena)) return null
   return nova && nova.id > ate ? nova : null
 }
 
@@ -67,6 +71,31 @@ export function PopupNovidade({ novidade, aoVer, aoFechar }: { novidade: Novidad
   }, [aoFechar])
   const rotulos = { ver: tx('Ver agora'), ok: tx('Legal!'), depois: tx('Depois'), fechar: tx('Fechar') }
   const arte = novidade.arte
+  if (arte && ehCena(arte.animacao)) {
+    const texto = novidade.itens?.[0]?.texto
+    return (
+      <div className="novidade-fundo" onMouseDown={(e) => e.target === e.currentTarget && aoFechar()}>
+        <div className="novidade novidade-cena" role="dialog" aria-modal="true" aria-label={noIdioma(novidade.titulo)}>
+          <CenaNovidade nome={arte.animacao} rotulos={{
+            antes: tx('Antes'), depois: tx('Agora'), tudoJunto: tx('Tudo junto'), fatura: tx('Fatura'), compras: tx('Compras'),
+            pagas: tx('Pagas'), limite: tx('Limite'), verDeNovo: tx('Ver de novo'),
+          }} />
+          <button type="button" className="novidade-x" onClick={aoFechar} aria-label={rotulos.fechar}><Icone nome="fechar" tamanho={16} /></button>
+          <div className="novidade-cena-texto">
+            <span className="novidade-selo"><Icone nome="estrela" tamanho={13} />{tx('Novidade')}</span>
+            <h2 className="novidade-titulo">{noIdioma(novidade.titulo)}</h2>
+            {texto && <p>{noIdioma(texto)}</p>}
+          </div>
+          <div className="novidade-botoes">
+            {novidade.tela && <button type="button" className="novidade-depois" onClick={aoFechar}>{rotulos.depois}</button>}
+            <button type="button" className="novidade-ok" onClick={novidade.tela ? () => aoVer(novidade.tela!) : aoFechar} autoFocus>
+              {novidade.tela ? rotulos.ver : rotulos.ok}{novidade.tela && <Icone nome="seta" tamanho={17} />}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
   if (arte && Array.isArray(arte.elementos) && arte.elementos.length) {
     const i = idiomaAtual()
     const largura = (TAMANHO[arte.formato] ?? TAMANHO.em_pe).w
