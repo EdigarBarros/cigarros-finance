@@ -103,6 +103,12 @@ export interface Divida {
    * devolver R$ 270: 250 (os R$ 20 são juros já combinados). Em "me devem", quanto ela emprestou. null = não informado.
    */
   valor_recebido?: number | null
+  /**
+   * Em espera (migração 45): a pessoa não pretende pagar agora. A dívida continua existindo e correndo juros, e dá para
+   * pagar e conferir; mas fica fora do consultor, dos gráficos, da Início e do "Para fazer". Só a página Dívidas mostra,
+   * à parte, e soma no total geral.
+   */
+  em_espera?: boolean | null
   obs?: string | null
   /**
    * Partes da dívida (migração 21), já em ordem de vencimento: as mini-dívidas que formam uma dívida maior, uma linha por

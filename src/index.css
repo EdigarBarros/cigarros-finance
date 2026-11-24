@@ -4731,3 +4731,14 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .aviso-consultor.ruim .aviso-consultor-ic { color: var(--saida); background: color-mix(in srgb, var(--saida) 16%, transparent); }
 @keyframes aviso-consultor-entra { from { opacity: 0; transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .aviso-consultor { animation: none; } }
+
+/* dívidas em espera: a seção à parte e o interruptor na ficha */
+.dv-espera { display: grid; gap: 10px; }
+.dv-espera .dv-grade { opacity: .78; }
+.dv-espera .dv-grade:hover { opacity: 1; }
+.dv-espera-nota { margin: -4px 0 4px; }
+.dv-espera-ficha { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; padding: 12px 14px; border-radius: var(--raio-m); background: var(--superficie-2); border: 1px solid var(--borda); }
+.dv-espera-ficha.ligada { border-color: color-mix(in srgb, var(--caixa) 45%, var(--borda)); background: color-mix(in srgb, var(--caixa) 8%, var(--superficie-2)); }
+.dv-espera-ficha-texto { display: grid; gap: 2px; flex: 1 1 240px; min-width: 0; }
+.dv-espera-ficha-texto strong { display: inline-flex; align-items: center; gap: 6px; }
+.dv-espera-ficha-texto small { color: var(--texto-2); line-height: 1.4; }

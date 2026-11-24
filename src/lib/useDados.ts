@@ -233,6 +233,8 @@ export function useDados(userId: string, ano: number) {
   const [dividasSemAtraso, setDividasSemAtraso] = useState(false)
   /** Sem a migração 36: sem juros de atraso por dia nem o valor recebido (as opções somem do formulário). */
   const [dividasSemCusto, setDividasSemCusto] = useState(false)
+  /** Sem a migração 45: não dá para pôr dívida em espera. */
+  const [dividasSemEspera, setDividasSemEspera] = useState(false)
   /** Sem a migração 26: as partes não guardam quando começaram. */
   const [partesSemInicio, setPartesSemInicio] = useState(false)
   /** Lançamentos de outros anos ligados a uma conta do mês: ensinam ao app como cada conta aparece no extrato. */
@@ -318,6 +320,8 @@ export function useDados(userId: string, ano: number) {
       setLancs((l.data as Lancamento[]).map(normLanc))
       setMeses((m.data as Mes[]).map(normMes))
       setDividas((d.data as Divida[]).map(normDiv))
+      // sem a migração 45 a coluna não vem: a opção "Em espera" fica escondida
+      setDividasSemEspera(Boolean((d.data as Divida[]).length) && !('em_espera' in (d.data as Divida[])[0]))
       setSaldos((s.data as SaldoDivida[]).map(normSaldo))
       setPagamentos((p.data as Pagamento[]).map((x) => ({ ...x, valor: num(x.valor), valor_original: x.valor_original == null ? null : num(x.valor_original) })))
       setBancos(b.data as Banco[])
@@ -442,7 +446,13 @@ export function useDados(userId: string, ano: number) {
   const semAtrasoSeFalta = <T extends object>(o: T) => (dividasSemAtraso ? semAtrasoDivida(o) : o)
   const semCustoSeFalta = <T extends object>(o: T) => (dividasSemCusto ? semCustoDivida(o) : o)
   /** Tira da dívida o que o banco ainda não tem (migrações 10, 14, 19, 22 e 36 pendentes) antes de gravar. */
-  const paraBancoDivida = <T extends object>(o: T) => semPartes(semCustoSeFalta(semAtrasoSeFalta(semJurosSeFalta(semMoedaSeFalta(dividasSemExtras ? semExtrasDivida(o) : o)))))
+  const paraBancoDivida = <T extends object>(o: T) => semEsperaSeFalta(semPartes(semCustoSeFalta(semAtrasoSeFalta(semJurosSeFalta(semMoedaSeFalta(dividasSemExtras ? semExtrasDivida(o) : o))))))
+  /** Sem a migração 45: a coluna em_espera não existe e não vai na gravação. */
+  function semEsperaSeFalta<T extends object>(o: T): T {
+    if (!dividasSemEspera || !('em_espera' in o)) return o
+    const { em_espera: _e, ...resto } = o as T & { em_espera?: unknown }
+    return resto as T
+  }
   const addLanc = async (novo: Omit<Lancamento, 'id'>): Promise<Lancamento | undefined> => {
     const { data, error } = await gravar(() => supabase.from('lancamentos').insert(paraBanco(novo)).select().single())
     if (error) {
@@ -1041,7 +1051,7 @@ export function useDados(userId: string, ano: number) {
     dividasSemMoeda,
     dividasSemJuros,
     dividasSemAtraso, conferirDivida,
-    dividasSemCusto,
+    dividasSemCusto, dividasSemEspera,
     partesSemTabela, partesSemInicio, addPartes, updParte, updPartes, delPartes,
     promessasSemTabela, addPromessa, delPromessa,
     conferencias, conferenciasSemTabela, conferenciasSemPista, delConferencia, anotarValorParaQuitar,

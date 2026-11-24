@@ -76,7 +76,11 @@ export function Dividas(c: Ctx) {
   const lista = recebe ? c.aReceber : c.situacao
   // os números do lado aberto (os mesmos do celular): lib/dividas.ts
   const { comCal, itens, quitadas, falta, registrado, inicial, emAtraso, nAtraso, noMes, porMes, projecao, fim, pct } = resumoDasDividas(lista, c.diaRef)
-  const aberto = comCal.find((x) => x.s.divida.id === aberta)
+  // em espera (só "eu devo"): fora dos números e dos gráficos de cima; aparecem à parte e somam no total geral
+  const espera = recebe ? null : resumoDasDividas(c.emEspera, c.diaRef)
+  const esperaAbertas = espera ? espera.comCal.filter((x) => x.s.restante > 0) : []
+  const totalGeral = falta + (espera?.falta ?? 0)
+  const aberto = comCal.find((x) => x.s.divida.id === aberta) ?? espera?.comCal.find((x) => x.s.divida.id === aberta)
   const contasEntrada = c.situacoesContas.filter((s) => s.conta.tipo === 'entrada' && s.estado !== 'fora')
   const nivel = c.perfil.detalhe
   const composicao = lista.filter((s) => s.restanteHoje > 0)
@@ -114,7 +118,7 @@ export function Dividas(c: Ctx) {
         </p>
       )}
 
-      {!lista.length ? (
+      {!lista.length && !esperaAbertas.length ? (
         <VazioLado recebe={recebe} aoNova={() => setEditando('nova')} />
       ) : (
         <Vitrine key={`v-${lado}`} cor={recebe ? 'var(--entrada)' : falta > 0 ? 'var(--divida)' : 'var(--entrada)'} className="dv-vitrine"
@@ -124,10 +128,12 @@ export function Dividas(c: Ctx) {
               <small>{recebe ? tx('já recebido') : tx('já pago')}</small>
             </AnelVivo>
           }
-          rotulo={<><Icone nome={recebe ? 'receber' : 'divida'} tamanho={16} /> {recebe ? tx('Falta receber') : tx('Você deve no total')}</>}
+          rotulo={<><Icone nome={recebe ? 'receber' : 'divida'} tamanho={16} /> {recebe ? tx('Falta receber') : esperaAbertas.length ? tx('Você deve nas dívidas ativas') : tx('Você deve no total')}</>}
           valor={falta} formato={fmtValor}
-          sub={falta <= 0 ? (recebe ? tx('Tudo recebido. 🎉') : tx('Sem dívidas. 🎉')) : fim ? <>{recebe ? tx('Tudo recebido em') : tx('Sem dívidas em')} <b>{fmtMesAno(fim[0], fim[1])}</b></> : null}
+          sub={falta <= 0 ? (recebe ? tx('Tudo recebido. 🎉') : esperaAbertas.length ? tx('Nenhuma dívida ativa. As em espera estão logo abaixo.') : tx('Sem dívidas. 🎉')) : fim ? <>{recebe ? tx('Tudo recebido em') : tx('Sem dívidas em')} <b>{fmtMesAno(fim[0], fim[1])}</b></> : null}
           pilulas={[
+            // o total geral: as ativas e as em espera, nada de fora
+            ...(esperaAbertas.length ? [{ icone: 'camadas', rotulo: tx('Total geral, com as em espera'), valor: fmtValor(totalGeral), cor: 'var(--divida)' }] : []),
             { icone: 'calendario', rotulo: recebe ? tx('Entra por mês') : tx('Parcelas por mês'), valor: fmtValor(porMes), cor: 'var(--caixa)' },
             ...(emAtraso > 0 || nivel !== 'simples' ? [{ icone: 'relogio', rotulo: nAtraso ? tx('Atrasado ({0} {1})', nAtraso, nAtraso === 1 ? tx('parcela') : tx('parcelas')) : tx('Atrasado'), valor: fmtValor(emAtraso), cor: emAtraso ? 'var(--saida)' : 'var(--entrada)', tom: emAtraso ? 'ruim' as const : 'bom' as const }] : []),
             ...(nivel !== 'simples' ? [{ icone: 'check', rotulo: recebe ? tx('Recebido no mês') : tx('Pago no mês'), valor: fmtValor(noMes), cor: 'var(--entrada)' }] : []),
@@ -193,6 +199,23 @@ export function Dividas(c: Ctx) {
             ))}
           </div>
         </>
+      )}
+
+      {esperaAbertas.length > 0 && (
+        <section className="dv-espera">
+          <TituloDaSecao icone="relogio">{tx('Em espera')}</TituloDaSecao>
+          <p className="campo-ajuda dv-espera-nota">
+            {esperaAbertas.length === 1
+              ? tx('1 dívida que você não vai pagar agora: {0}. Ela continua correndo juros, mas fica fora do consultor, dos gráficos e da Início.', fmtValor(espera!.falta))
+              : tx('{0} dívidas que você não vai pagar agora: {1}. Elas continuam correndo juros, mas ficam fora do consultor, dos gráficos e da Início.', esperaAbertas.length, fmtValor(espera!.falta))}
+          </p>
+          <div className="dv-grade">
+            {esperaAbertas.map((x, i) => (
+              <CartaoDivida key={x.s.divida.id} s={x.s} cal={x.cal} estado={estadoDe(x.s, x.cal)} recebe={false} indice={i}
+                aoAbrir={() => { setConferindo(false); setAberta(x.s.divida.id) }} aoPagar={() => c.pagarDivida(x.s)} />
+            ))}
+          </div>
+        </section>
       )}
 
       {recebe && (
@@ -444,6 +467,20 @@ export function Ficha({ c, s, cal, recebe, conferir, aoFechar, aoEditar }: {
           <span><small>{recebe ? tx('já recebido') : tx('já pago')}</small><strong className="bom">{fmtDiv(s, Math.max(0, s.saldoInicial - s.restante))}</strong></span>
           <span><small>{s.divida.valor_parcela ? tx('parcela') : tx('total')}</small><strong>{fmtDiv(s, s.divida.valor_parcela ?? s.saldoInicial)}</strong></span>
         </div>
+
+        {!recebe && !quitada && !c.d.dividasSemEspera && (
+          <section className={`dv-espera-ficha ${s.divida.em_espera ? 'ligada' : ''}`}>
+            <span className="dv-espera-ficha-texto">
+              <strong><Icone nome="relogio" tamanho={15} /> {s.divida.em_espera ? tx('Em espera') : tx('Não vai pagar esta agora?')}</strong>
+              <small>{s.divida.em_espera
+                ? tx('Fica fora do consultor, dos gráficos e da Início. Continua correndo juros e somando no total geral.')
+                : tx('Ponha em espera: ela continua aqui, correndo juros, mas o consultor e os gráficos deixam de contar com ela.')}</small>
+            </span>
+            <button className="btn" onClick={() => void c.d.updDivida(s.divida.id, { em_espera: !s.divida.em_espera })}>
+              {s.divida.em_espera ? tx('Voltar a contar') : tx('Pôr em espera')}
+            </button>
+          </section>
+        )}
 
         {custoDoEmprestimo(s, recebe) && <p className="campo-ajuda dv-custo"><Icone nome="calculadora" tamanho={14} /> {custoDoEmprestimo(s, recebe)}</p>}
 

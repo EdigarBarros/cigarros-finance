@@ -33,7 +33,10 @@ export function DividasMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom, c
   const receber = resumoDasDividas(c.aReceber, c.diaRef)
   const r = recebe ? receber : devo
   const lista = recebe ? c.aReceber : c.situacao
-  const aberto = r.comCal.find((x) => x.s.divida.id === aberta)
+  // em espera: fora dos números de cima; aparecem à parte e somam no total geral
+  const espera = resumoDasDividas(c.emEspera, c.diaRef)
+  const esperaAbertas = espera.comCal.filter((x) => x.s.restante > 0)
+  const aberto = r.comCal.find((x) => x.s.divida.id === aberta) ?? (recebe ? undefined : espera.comCal.find((x) => x.s.divida.id === aberta))
   const nivel = c.perfil.detalhe
   const contasEntrada = c.situacoesContas.filter((s) => s.conta.tipo === 'entrada' && s.estado !== 'fora')
   const primeira = r.itens.find((x) => x.s.restante > 0)
@@ -42,8 +45,10 @@ export function DividasMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom, c
   // ---------- topo: o que você deve → o que te devem ----------
   const quando = (fim: [number, number] | null) => (fim ? fmtMesAno(fim[0], fim[1]) : null)
   const paginas: PaginaDoHero[] = [{
-    id: 'devo', tom: devo.emAtraso > 0 ? 'falta' : devo.falta > 0 ? 'dividas' : 'sobra', rotulo: tx('Você deve no total'), valor: fmtValor(devo.falta),
-    sub: devo.falta <= 0 ? tx('Sem dívidas. 🎉') : devo.emAtraso > 0 ? tx('{0} atrasado', fmtValor(devo.emAtraso))
+    id: 'devo', tom: devo.emAtraso > 0 ? 'falta' : devo.falta > 0 ? 'dividas' : 'sobra',
+    rotulo: esperaAbertas.length ? tx('Você deve nas dívidas ativas') : tx('Você deve no total'), valor: fmtValor(devo.falta),
+    sub: esperaAbertas.length ? tx('Total geral, com as em espera: {0}', fmtValor(devo.falta + espera.falta))
+      : devo.falta <= 0 ? tx('Sem dívidas. 🎉') : devo.emAtraso > 0 ? tx('{0} atrasado', fmtValor(devo.emAtraso))
       : quando(devo.fim) ? tx('Sem dívidas em {0}', quando(devo.fim)!) : tx('{0}% quitado', Math.round(devo.pct * 100)),
     pilula: atrasadaDevo ? { texto: tx('Pagar o atrasado'), acao: () => c.pagarDivida(atrasadaDevo.s) } : undefined,
   }]
@@ -86,7 +91,7 @@ export function DividasMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom, c
       <BotoesDeAcao acoes={acoes} />
 
       <div className="widgets-movel">
-        {!lista.length ? <VazioLado recebe={recebe} aoNova={() => setEditando('nova')} /> : (
+        {!lista.length && !(esperaAbertas.length && !recebe) ? <VazioLado recebe={recebe} aoNova={() => setEditando('nova')} /> : (
           <>
             {r.itens.length > 0 && (
               <CartaoWidget titulo={recebe ? tx('Cada valor a receber') : tx('Cada dívida')}>
@@ -103,6 +108,15 @@ export function DividasMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom, c
               </CartaoWidget>
             )}
           </>
+        )}
+
+        {!recebe && esperaAbertas.length > 0 && (
+          <CartaoWidget titulo={tx('Em espera')}>
+            <p className="widget-nota">{esperaAbertas.length === 1
+              ? tx('1 dívida que você não vai pagar agora: {0}. Ela continua correndo juros, mas fica fora do consultor, dos gráficos e da Início.', fmtValor(espera.falta))
+              : tx('{0} dívidas que você não vai pagar agora: {1}. Elas continuam correndo juros, mas ficam fora do consultor, dos gráficos e da Início.', esperaAbertas.length, fmtValor(espera.falta))}</p>
+            {esperaAbertas.map((x) => linha(x, tx('em espera')))}
+          </CartaoWidget>
         )}
 
         {recebe && (

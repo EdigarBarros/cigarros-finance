@@ -133,7 +133,8 @@ export function sinaisDe(e: EntradaSinais): Sinal[] {
   const nome = e.nome.trim().split(/\s+/)[0] ?? ''
   const comNome = (frase: string) => (nome ? tx('{0}, {1}', nome, frase) : frase.charAt(0).toUpperCase() + frase.slice(1))
   const out: Sinal[] = []
-  const devo = e.dividas.filter((d) => (d.sentido ?? 'devo') === 'devo')
+  // a dívida em espera (a pessoa não vai pagar agora) não entra nos sinais
+  const devo = e.dividas.filter((d) => (d.sentido ?? 'devo') === 'devo' && !d.em_espera)
   const situacoesDe = (k: number) => {
     const m = doChave(k)
     return situacaoDividas(devo, e.saldos, e.pagamentos, m.ano, m.mes, e.taxas, hoje).filter((s) => !s.semCotacao)
@@ -327,7 +328,7 @@ export function sinaisDe(e: EntradaSinais): Sinal[] {
   // ---------- promessas: remarcadas ou não cumpridas ----------
   {
     // a situação de verdade (com a cotação da moeda da dívida); dívida quitada não tem mais o que remarcar
-    const comPromessa = e.dividas.filter((d) => d.promessas?.length)
+    const comPromessa = e.dividas.filter((d) => d.promessas?.length && !d.em_espera)
     const sits = comPromessa.length ? situacaoDividas(comPromessa, e.saldos, e.pagamentos, ano, mes, e.taxas, hoje) : []
     for (const s of sits) {
       const d = s.divida
@@ -512,7 +513,7 @@ export interface Compromisso {
 export function compromissoDe(e: Pick<EntradaSinais, 'hojeIso' | 'compras' | 'dividas' | 'saldos' | 'pagamentos' | 'taxas'>): Compromisso {
   const hoje = e.hojeIso
   const atual = chave(Number(hoje.slice(0, 4)), Number(hoje.slice(5, 7)))
-  const devo = e.dividas.filter((d) => (d.sentido ?? 'devo') === 'devo')
+  const devo = e.dividas.filter((d) => (d.sentido ?? 'devo') === 'devo' && !d.em_espera)
   const abertas = situacaoDividas(devo, e.saldos, e.pagamentos, Number(hoje.slice(0, 4)), Number(hoje.slice(5, 7)), e.taxas, hoje).filter((s) => !s.semCotacao && s.restante > 0)
   const cals = abertas.map((s) => ({ s, cal: calendarioDe(s, hoje) }))
   const doMes = (k: number) => {

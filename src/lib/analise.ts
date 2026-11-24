@@ -1115,7 +1115,8 @@ export function analisar(e: EntradaAnalise): Analise {
   const jurosPagos = centavos(jurosDeFatura + jurosLancados)
 
   // ----- dívidas -----
-  const devo = e.dividas.filter((d) => !meDevem(d))
+  // a dívida em espera (a pessoa não vai pagar agora) fica fora da análise, do plano e da agenda
+  const devo = e.dividas.filter((d) => !meDevem(d) && !d.em_espera)
   const dividasHoje = v.dividas ? situacaoDividas(devo, e.saldos, e.pagamentos, ano, mes, e.taxas, hojeIso) : []
   const abertas = dividasHoje.filter((s) => s.restante > 0 && !s.semCotacao)
   // quanto se deve agora: com os juros de atraso estimados

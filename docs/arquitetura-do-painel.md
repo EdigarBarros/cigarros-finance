@@ -1097,6 +1097,14 @@ no avatar do topo e das Configurações. Fica guardada neste aparelho e, com a m
     por dia para a dívida (não por parcela), desde a parcela atrasada mais antiga (ou da conferência, se depois), repartido
     entre as atrasadas pelo que falta de cada uma; aí `atraso_juros_mes` = 0. `jurosQuePesam` converte os dois para % ao mês
     (30 dias; o valor fixo como parte do que falta), para os conselhos compararem com as outras dívidas.
+- **Em espera** (migração 45, `dividas.em_espera`): a dívida que a pessoa não vai pagar agora. Ela continua existindo,
+  correndo juros, e dá para pagar e conferir com o banco. Mas fica fora de `situacao` (o Painel separa `dividasAtivas`, de
+  onde saem os números do mês, `r.divida`, os gráficos, a Início, o "Para fazer" e os widgets), do consultor, do
+  conselheiro e dos sinais (`analisar`, `conselhosDe` e `sinaisDe` filtram `em_espera`; os lançamentos ligados a ela
+  continuam sendo reconhecidos como empréstimo ou pagamento). A página Dívidas mostra o que se deve nas **ativas**, a
+  pílula **Total geral, com as em espera** e a seção **Em espera** à parte (`c.emEspera`); no celular, o mesmo no topo e
+  num cartão. A ficha tem **Pôr em espera** / **Voltar a contar**. Sem a migração, a opção não aparece. Teste:
+  `scripts/app-de-demonstracao/testar-dividas-em-espera.cjs`.
 - **Juros já combinados no empréstimo** (migração 36): `valor_recebido` é quanto a pessoa recebeu de fato (ou o preço à
   vista; em "me devem", quanto emprestou). Pegou R$ 250 e devolve R$ 270: a dívida vale 270 e os R$ 20 são juros.
   `jurosEmbutidos` (`lib/dividas.ts`) dá os juros, a parte sobre o recebido e, com prazo, o custo em % ao mês: em parcelas, a

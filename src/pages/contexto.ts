@@ -52,6 +52,8 @@ export interface Ctx {
   situacao: SituacaoDivida[]
   /** Dinheiro que te devem (dívidas com sentido 'me_devem') como está neste mês. Fica fora de `r.divida`. */
   aReceber: SituacaoDivida[]
+  /** Dívidas suas em espera (a pessoa não vai pagar agora), como estão neste mês. Ficam fora de `situacao` e de `r.divida`. */
+  emEspera: SituacaoDivida[]
   /** Dia para dizer o que está atrasado: hoje, ou o fim do mês aberto quando ele já passou. */
   diaRef: string
   /** Valores do mês, com caixa/US$ herdados do último mês informado. */
