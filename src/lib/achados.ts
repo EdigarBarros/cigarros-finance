@@ -77,6 +77,8 @@ export interface Achado {
   porQue?: PorQue
   /** Informação que a pessoa não pode deixar de ver mesmo sem ser um problema em vermelho (um título que venceu, por exemplo). */
   essencial?: boolean
+  /** O que fazer, no tom que a pessoa escolheu para o consultor (gentil, direto ou sem filtro: lib/sinais.ts). */
+  chamado?: string
 }
 
 /**
@@ -308,6 +310,21 @@ export function achados(a: Analise): Achado[] {
         dado: { forma: 'comparacao', antes: { rotulo: tx('Média de hoje'), valor: Math.max(0, a.sobra) }, agora: { rotulo: mesCurto(melhor.ano, melhor.mes), valor: melhor.sobra }, subirEBom: true },
       })
     }
+  }
+
+  // ---- os sinais de comportamento (lib/sinais.ts): ritmo da dívida, dívida sobre dívida, futuro já gasto… ----
+  const hojeIso = new Date().toISOString().slice(0, 10)
+  for (const x of a.sinais ?? []) {
+    novos.push({
+      // o que o consultor percebe no jeito de usar o dinheiro passa na frente dos gráficos de sempre: é o que abre o olho
+      id: x.id, tema: x.tema, forca: x.tema === 'como' ? x.forca : Math.min(99, x.forca + (x.tom === 'ruim' ? 15 : x.tom === 'medio' ? 8 : 0)), tom: x.tom, destino: x.destino, titulo: x.titulo, frase: x.frase, chamado: x.chamado, dado: x.dado,
+      essencial: x.tom === 'ruim' && x.forca >= 80,
+      porQue: {
+        explicacao: `${x.frase} ${x.chamado}`, dados: x.dados, periodo: x.periodo, confianca: x.confianca,
+        ...(x.confianca !== 'alta' ? { ressalva: tx('Quanto mais você lança e confere com o banco, mais certo isso fica.') } : {}),
+        fonte: tx('Seus lançamentos, dívidas, cartões e conferências com o banco'), atualizadoEm: hojeIso,
+      },
+    })
   }
 
   const objetivo = a.aprendizado.objetivo

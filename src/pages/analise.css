@@ -49,6 +49,7 @@
 .peca-selo.fav { color: color-mix(in srgb, var(--destaque) 80%, var(--texto)); background: color-mix(in srgb, var(--destaque) 15%, transparent); }
 .peca-selo.fav svg path { fill: currentColor; }
 .vis-frase { margin: 0; font-size: 14px; line-height: 1.45; color: var(--texto-2); }
+.vis-chamado { margin: 6px 0 0; padding-left: 10px; border-left: 3px solid var(--c, var(--destaque)); font-size: 14px; line-height: 1.45; font-weight: 600; color: var(--texto); }
 .vis-corpo { margin-top: 8px; min-width: 0; }
 .an-cabecalho { align-items: flex-end; }
 

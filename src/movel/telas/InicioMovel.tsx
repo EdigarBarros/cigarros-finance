@@ -13,6 +13,7 @@ import { Icone } from '../../components/Icone'
 import { useAcoesDeLancar } from '../../lib/botaoMais'
 import type { SituacaoConta } from '../../lib/contasFixas'
 import { tx } from '../../lib/textos'
+import { naHoraDaDividaNova } from '../../lib/naHora'
 import { useMesDaInicio } from '../../lib/useMesDaInicio'
 import type { Ctx } from '../../pages/contexto'
 import type { Tarefa } from '../../lib/paraFazer'
@@ -78,7 +79,7 @@ export function InicioMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom) =>
       )}
       {conferir && <FormBaixa c={c} s={conferir} conferir aoFechar={() => setConferir(null)} />}
       {divida && (
-        <FormDivida ano={c.ano} mes={c.mes} aoCriar={c.d.addDivida} aoEditar={c.d.updDivida} aoNovoSaldo={c.d.addSaldo}
+        <FormDivida ano={c.ano} mes={c.mes} naHora={(p, n, primeira) => naHoraDaDividaNova(c.analise, p, n, primeira)} aoCriar={c.d.addDivida} aoEditar={c.d.updDivida} aoNovoSaldo={c.d.addSaldo}
           aoMudarValor={c.d.ajustarValorDivida} aoMoverInicio={c.d.moverInicioDivida} pagamentos={c.d.pagamentos} aoExcluir={c.d.delDivida}
           perfil={c.perfil} semMoeda={c.d.dividasSemMoeda} semJuros={c.d.dividasSemJuros} semAtraso={c.d.dividasSemAtraso} semCusto={c.d.dividasSemCusto} aoFechar={() => setDivida(null)} />
       )}

@@ -493,6 +493,42 @@ export function conselhosDoPlanejamento(q: Quadro, guardado: PlanoGuardado | und
   return lista
 }
 
+/** O próximo dinheiro do plano que a pessoa montou e o que ela decidiu pagar com ele. */
+export interface PassoDoPlano {
+  fonte: { nome: string; data: string; valor: number; saldo: boolean }
+  pagar: { nome: string; valor: number; tipo: TipoDestino; atrasa: boolean }[]
+  total: number
+}
+
+/** O plano do mês como o Consultor lê: o placar e o próximo passo que a própria pessoa decidiu. null sem plano salvo. */
+export interface LeituraDoPlano {
+  placar: Placar
+  /** O dinheiro mais cedo (de hoje em diante) que tem contas para pagar no plano. */
+  proximo: PassoDoPlano | null
+  partes: number
+}
+
+export function lerPlano(q: Quadro, guardado: PlanoGuardado | undefined): LeituraDoPlano | null {
+  if (!guardado?.partes.length) return null
+  const qq = quadroDoPlano(q, guardado)
+  const partes = valerPartes(qq, guardado.partes)
+  if (!partes.length) return null
+  const placar = placarDe(qq, partes)
+  const fontes = [...qq.fontes].filter((f) => f.data >= qq.hoje || f.saldo).sort((a, b) => a.data.localeCompare(b.data) || Number(Boolean(b.saldo)) - Number(Boolean(a.saldo)))
+  let proximo: PassoDoPlano | null = null
+  for (const f of fontes) {
+    const dela = partes.filter((p) => p.entrada === f.id)
+    if (!dela.length) continue
+    const pagar = dela.map((p) => {
+      const d = destinoDe(qq, p.conta)!
+      return { nome: d.nome, valor: p.valor, tipo: d.tipo, atrasa: atrasoDa(qq, p) > 0 }
+    }).sort((a, b) => b.valor - a.valor)
+    proximo = { fonte: { nome: f.nome, data: f.data, valor: f.valor, saldo: Boolean(f.saldo) }, pagar, total: centavos(pagar.reduce((s, x) => s + x.valor, 0)) }
+    break
+  }
+  return { placar, proximo, partes: partes.length }
+}
+
 // ---------- guardar ----------
 
 /** Lê o que veio do banco ou do aparelho, sem confiar no formato. Fica só o mês de hoje e o próximo. */

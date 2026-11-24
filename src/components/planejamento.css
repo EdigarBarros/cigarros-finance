@@ -370,6 +370,19 @@
 .pj-cartao-barras > span { display: flex; gap: 2px; height: 14px; min-width: 18px; padding: 2px; border-radius: 6px; background: repeating-linear-gradient(135deg, var(--preench-3) 0 4px, transparent 4px 8px), var(--preench-4); box-shadow: inset 0 0 0 1px var(--borda); overflow: hidden; }
 .pj-cartao-barras i { display: block; border-radius: 3px; }
 .pj-cartao .btn { white-space: nowrap; }
+/* em destaque: é o primeiro cartão do Consultor */
+.pj-cartao.destaque { position: relative; border: 1px solid color-mix(in srgb, var(--caixa) 45%, var(--borda)); background: linear-gradient(120deg, color-mix(in srgb, var(--caixa) 10%, var(--superficie)), var(--superficie) 60%); }
+.pj-cartao.destaque.fechado { border-color: color-mix(in srgb, var(--entrada) 45%, var(--borda)); background: linear-gradient(120deg, color-mix(in srgb, var(--entrada) 10%, var(--superficie)), var(--superficie) 60%); }
+.pj-cartao.destaque h3 { font-size: 18px; }
+.pj-cartao-selo { display: inline-block; margin-bottom: 2px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--caixa); }
+.pj-cartao.fechado .pj-cartao-selo { color: var(--entrada); }
+.pj-cartao p.pj-cartao-proximo { display: flex; gap: 6px; align-items: flex-start; margin-top: 8px; font-size: 14px; font-weight: 600; color: var(--texto); }
+.pj-cartao-proximo svg { flex: none; margin-top: 2px; color: var(--caixa); }
+.pj-cartao p.pj-cartao-porque { margin-top: 6px; font-size: 13px; }
+.pj-cartao.convite .btn.primario { animation: pj-chama 2.4s ease-in-out 1s 2; }
+@keyframes pj-chama { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--destaque) 25%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .pj-cartao.convite .btn.primario { animation: none; } }
+.parado .pj-cartao.convite .btn.primario { animation: none; }
 
 /* ---------- celular ---------- */
 @media (max-width: 1100px) {

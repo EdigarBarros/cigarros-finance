@@ -5,7 +5,7 @@ import { useMovimento } from '../lib/tema'
 import { Icone } from '../components/Icone'
 import { Interruptor } from '../components/ui'
 import { useEmVista } from './analiseApoio'
-import { Agora, Objetivo, ProximoPasso, SeuPerfil } from './AnaliseTopo'
+import { Agora, JeitoDeFalar, Objetivo, ProximoPasso, SeuPerfil } from './AnaliseTopo'
 import { Faixas, Manchete, useTelaViva } from './AnaliseTela'
 import { CartaoDoPlanejamento, Planejamento } from '../components/Planejamento'
 import type { Ctx } from './contexto'
@@ -31,6 +31,8 @@ export function Analise(c: Ctx) {
   // os passos do plano que falam do Planejamento (destino 'analise') abrem a mesa em vez de navegar
   const irPara: Ctx['irPara'] = (p) => (p === 'analise' ? setPlanejando(true) : c.irPara(p))
   const montando = useMontagem(c.reanalise, desdeAVisita) && !c.contaNova
+  // o atalho "Planejar o mês" de outra tela (a Início) abre a mesa assim que o Consultor monta
+  usePlanejarAoAbrir(c, setPlanejando)
 
   if (c.contaNova) {
     return (
@@ -59,13 +61,15 @@ export function Analise(c: Ctx) {
         </div>
       </header>
       {montando && <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 3} aoVivo />}
+      {/* o plano de pagamentos que a pessoa monta vem primeiro: o Consultor segue as decisões dela */}
+      <CartaoDoPlanejamento a={a} planejamento={c.planejamento} aoAbrir={() => setPlanejando(true)} />
       <Manchete t={tela} aoIr={(x) => x.destino && c.irPara(x.destino)} />
       <SeuPerfil a={a} nivel={nivel} />
       {!montando && <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 2} />}
       <Agora a={a} nivel={nivel} />
-      <CartaoDoPlanejamento a={a} planejamento={c.planejamento} aoAbrir={() => setPlanejando(true)} />
       {nivel === 'detalhado' ? <PlanoDeAcao a={a} aoIr={irPara} /> : <ProximoPasso a={a} aoIr={irPara} />}
       <Objetivo a={a} memoria={c.memoria} nivel={nivel} aoEscolher={c.escolherObjetivo} />
+      <JeitoDeFalar a={a} aoEscolher={c.escolherFirmeza} />
 
       <Faixas t={tela} aoIr={(x) => x.destino && c.irPara(x.destino)} nivel={nivel} />
 
@@ -263,4 +267,13 @@ export function OQueMudou({ reanalise, desdeAVisita, max, aoVivo }: { reanalise:
       </ul>
     </section>
   )
+}
+
+/** Quando outra tela pediu o Planejar o mês (o atalho da Início), abre a mesa assim que o Consultor aparece. */
+export function usePlanejarAoAbrir(c: Pick<Ctx, 'planejarAoAbrir' | 'planejamentoAberto'>, abrir: (v: boolean) => void) {
+  useEffect(() => {
+    if (!c.planejarAoAbrir) return
+    abrir(true)
+    c.planejamentoAberto()
+  }, [c.planejarAoAbrir]) // eslint-disable-line react-hooks/exhaustive-deps
 }

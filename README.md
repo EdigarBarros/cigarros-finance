@@ -182,7 +182,8 @@ Tudo grátis: o site fica na **Vercel** e os dados no **Supabase** (Postgres), p
    [`28`](supabase/migracao-28-invest.sql), [`29`](supabase/migracao-29-pix-30-dias.sql) e as migrações numeradas
    de 30 a 40 em ordem. Em seguida rode a [`20`](supabase/migracao-20-acesso-no-banco-definitivo.sql) para
    recompor as políticas de acesso e as migrações [`41`](supabase/migracao-41-isolamento-de-vinculos.sql),
-   [`42`](supabase/migracao-42-pix-eventos-fora-de-ordem.sql) e [`43`](supabase/migracao-43-limites-e-privacidade-da-telemetria.sql).
+   [`42`](supabase/migracao-42-pix-eventos-fora-de-ordem.sql), [`43`](supabase/migracao-43-limites-e-privacidade-da-telemetria.sql)
+   e [`44`](supabase/migracao-44-juros-aprendidos.sql).
    O `schema.sql` sozinho **não** tem cobrança nem bloqueio: sem a 12 e a 20 o painel abre para qualquer conta, paga ou não.
    Não rode as migrações 02 a 08 num banco novo (o `schema.sql` já inclui o que elas fazem) nem a 13 (a 20 a substitui).
 3. Em **Project Settings → API** (ou botão **Connect**), copie:

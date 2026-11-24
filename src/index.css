@@ -4697,3 +4697,37 @@ button.ex-tipo:hover { transform: scale(1.1); }
 @keyframes troca-entra-vai { from { opacity: 0; transform: perspective(1400px) translateX(10%) rotateY(-16deg) scale(1.04); } }
 @keyframes troca-sai-volta { to { opacity: 0; transform: perspective(1400px) translateX(8%) rotateY(-14deg) scale(.88); } }
 @keyframes troca-entra-volta { from { opacity: 0; transform: perspective(1400px) translateX(-10%) rotateY(16deg) scale(1.04); } }
+
+/* conferir com o banco: qual número é e a leitura na hora (quanto cresceu por dia) */
+.dv-conferir-qual { display: grid; gap: 6px; justify-items: start; }
+.dv-conferir-qual .campo-ajuda { margin: 0; }
+.dv-conferir-leitura { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: var(--raio-m); font-size: 13px; line-height: 1.4; background: var(--preench-3); }
+.dv-conferir-leitura svg { flex: none; margin-top: 1px; }
+.dv-conferir-leitura.mais svg { color: var(--saida); }
+.dv-conferir-leitura.menos svg { color: var(--entrada); }
+/* "O que aprendi com o banco" na ficha da dívida */
+.dv-aprendi { display: grid; gap: 10px; margin-bottom: 14px; padding: 12px 14px; border-radius: var(--raio-m); background: var(--superficie-2); border: 1px solid var(--borda); }
+.dv-aprendi.mais { border-color: color-mix(in srgb, var(--saida) 40%, var(--borda)); background: color-mix(in srgb, var(--saida) 6%, var(--superficie-2)); }
+.dv-aprendi.menos { border-color: color-mix(in srgb, var(--entrada) 40%, var(--borda)); }
+.dv-aprendi .dv-ficha-titulo { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.dv-aprendi .dv-ficha-titulo svg { color: var(--destaque); }
+.dv-aprendi-frase { margin: 0; font-weight: 600; line-height: 1.4; }
+.dv-aprendi-numeros { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 0; padding: 0; list-style: none; }
+.dv-aprendi-numeros li { display: grid; }
+.dv-aprendi-numeros small { color: var(--texto-3); font-size: 12px; }
+.dv-aprendi-numeros strong { font-variant-numeric: tabular-nums; }
+.dv-aprendi > .btn { justify-self: start; }
+.dv-aprendi-confirmar { display: grid; gap: 8px; font-size: 14px; }
+.dv-aprendi-quitar { margin: 0; }
+.dv-aprendi-quitar svg { vertical-align: -2px; }
+
+/* o consultor falando na hora da decisão (compra parcelada, dívida nova, pular compra, pagar parte, promessa) */
+.aviso-consultor { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: var(--raio-m); font-size: 13.5px; line-height: 1.45; color: var(--texto); background: var(--preench-3); border: 1px solid var(--borda); animation: aviso-consultor-entra .35s var(--mola) both; }
+.aviso-consultor strong { font-weight: 700; }
+.aviso-consultor-ic { display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%; color: var(--destaque); background: color-mix(in srgb, var(--destaque) 14%, transparent); }
+.aviso-consultor.medio { border-color: color-mix(in srgb, var(--divida) 40%, var(--borda)); background: color-mix(in srgb, var(--divida) 7%, var(--superficie-2)); }
+.aviso-consultor.medio .aviso-consultor-ic { color: var(--divida); background: color-mix(in srgb, var(--divida) 16%, transparent); }
+.aviso-consultor.ruim { border-color: color-mix(in srgb, var(--saida) 40%, var(--borda)); background: color-mix(in srgb, var(--saida) 7%, var(--superficie-2)); }
+.aviso-consultor.ruim .aviso-consultor-ic { color: var(--saida); background: color-mix(in srgb, var(--saida) 16%, transparent); }
+@keyframes aviso-consultor-entra { from { opacity: 0; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .aviso-consultor { animation: none; } }

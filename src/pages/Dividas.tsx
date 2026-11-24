@@ -14,7 +14,7 @@ import { LinhaDaPromessa, PromessasDaDivida } from '../components/PromessasDaDiv
 import { ConferenciasDaDivida } from '../components/ConferenciasDaDivida'
 import { ConferirComBanco, SeloJuros } from '../components/JurosDoAtraso'
 import { mioloDaDivida } from '../components/CartaoDaDivida'
-import { regraDoAtraso, temJurosDeAtraso } from '../lib/jurosAtraso'
+import { regraDoAtraso } from '../lib/jurosAtraso'
 import { Icone } from '../components/Icone'
 import { Numero } from '../components/Numero'
 import { Anel, Modal } from '../components/ui'
@@ -23,6 +23,7 @@ import { fmtCurto } from '../lib/visuais'
 import { CampoData } from '../components/Escolhas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
+import { naHoraDaDividaNova, naHoraDaPromessa } from '../lib/naHora'
 
 type Lado = 'devo' | 'me_devem'
 const CORES_PESSOA = ['#4c8dff', '#e255a1', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444', '#22c55e', '#0ea5e9']
@@ -246,6 +247,7 @@ export function Dividas(c: Ctx) {
         <FormDivida
           ano={c.ano}
           mes={c.mes}
+          naHora={(p, n, primeira) => naHoraDaDividaNova(c.analise, p, n, primeira)}
           situacao={editando === 'nova' ? undefined : editando}
           sentidoInicial={lado}
           semExtras={c.d.dividasSemExtras}
@@ -445,10 +447,10 @@ export function Ficha({ c, s, cal, recebe, conferir, aoFechar, aoEditar }: {
 
         {custoDoEmprestimo(s, recebe) && <p className="campo-ajuda dv-custo"><Icone nome="calculadora" tamanho={14} /> {custoDoEmprestimo(s, recebe)}</p>}
 
-        {!recebe && !quitada && temJurosDeAtraso(s.divida) && !c.d.dividasSemAtraso && (
+        {!recebe && !quitada && !c.d.dividasSemAtraso && (
           <section className="dv-atraso">
             <p className="campo-ajuda">
-              <Icone nome="relogio" tamanho={14} /> {regra}
+              <Icone nome="relogio" tamanho={14} /> {regra ?? tx('Confira com o banco de tempos em tempos: eu aprendo quanto essa dívida cresce de verdade.')}
               {comJuros && <> · {tx('{0} de juros estimados até hoje (registrado: {1})', fmtDiv(s, s.jurosAtraso), fmtDiv(s, s.restante))}</>}
             </p>
             {conferindo
@@ -488,11 +490,16 @@ export function Ficha({ c, s, cal, recebe, conferir, aoFechar, aoEditar }: {
           </section>
         ) : null}
 
-        {!c.d.dividasSemExtras && <PromessasDaDivida s={s} p={promessasDe(s, c.d.pagamentos, hojeLocal())} d={c.d} recebe={recebe} hoje={hojeLocal()} />}
+        {!c.d.dividasSemExtras && (() => {
+          const pr = promessasDe(s, c.d.pagamentos, hojeLocal())
+          const vencidas = pr.lista.filter((x) => x.estado !== 'aguardando' && x.estado !== 'hoje')
+          const fala = naHoraDaPromessa(c.analise, { cumpridas: vencidas.filter((x) => x.estado === 'cumprida').length, falhas: vencidas.filter((x) => x.estado === 'nao_cumprida' || x.estado === 'trocada').length }, recebe)
+          return <PromessasDaDivida s={s} p={pr} d={c.d} recebe={recebe} hoje={hojeLocal()} fala={fala} />
+        })()}
 
         {!c.d.dividasSemExtras && <PartesDaDivida s={s} cal={cal} d={c.d} recebe={recebe} />}
 
-        <ConferenciasDaDivida s={s} d={c.d} />
+        <ConferenciasDaDivida s={s} cal={cal} d={c.d} />
 
         <section>
           <h4 className="dv-ficha-titulo">{recebe ? tx('Recebimentos') : tx('Pagamentos')} <small>{movimentos.length || ''}</small></h4>

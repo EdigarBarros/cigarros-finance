@@ -6,6 +6,8 @@ import type { Dados } from '../lib/useDados'
 import { CampoData } from './Escolhas'
 import { Icone } from './Icone'
 import { tx } from '../lib/textos'
+import type { FalaNaHora } from '../lib/naHora'
+import { AvisoDoConsultor } from './AvisoDoConsultor'
 
 const ROTULO: Record<EstadoPromessa, string> = {
   aguardando: tx('aguardando'), hoje: tx('é hoje'), cumprida: tx('cumprida'), em_parte: tx('cumprida em parte'),
@@ -40,8 +42,10 @@ export function LinhaDaPromessa({ s, p, recebe, hoje }: { s: SituacaoDivida; p: 
  * As promessas de pagamento de uma dívida, da mais nova para a mais antiga: o dia prometido e o que aconteceu (o app vê
  * pelos pagamentos). Dá para anotar uma nova ("agora paga amanhã") e apagar uma anotada errado.
  */
-export function PromessasDaDivida({ s, p, d, recebe, hoje }: {
+export function PromessasDaDivida({ s, p, d, recebe, hoje, fala }: {
   s: SituacaoDivida; p: Promessas; d: Pick<Dados, 'promessasSemTabela' | 'addPromessa' | 'delPromessa'>; recebe: boolean; hoje: string
+  /** O consultor na hora de anotar mais uma promessa: como foram as anteriores (lib/naHora.ts). */
+  fala?: FalaNaHora | null
 }) {
   const [nova, setNova] = useState(false)
   const quitada = s.restante <= 0
@@ -70,6 +74,7 @@ export function PromessasDaDivida({ s, p, d, recebe, hoje }: {
           ? tx('Ficou de te pagar num dia e não pagou? Anote cada promessa: o app mostra o dia prometido, avisa no cartão e diz se foi cumprida.')
           : tx('Combinou pagar num dia? Anote cada promessa: o app mostra o dia combinado, avisa no cartão e diz se foi cumprida.')}</p>
       )}
+      {!quitada && nova && <AvisoDoConsultor fala={fala ?? null} />}
       {!quitada && (nova
         ? <NovaPromessa s={s} hoje={hoje} recebe={recebe} aoCancelar={() => setNova(false)}
             aoSalvar={async (n) => { if (await d.addPromessa(s.divida.id, n)) setNova(false) }} />

@@ -687,12 +687,17 @@ export function CartaoDoPlanejamento({ a, planejamento, aoAbrir }: { a: Analise;
   if (!q || (!q.fontes.length && !q.destinos.some((d) => d.tipo === 'conta'))) return null
   const pl = placarDe(q, partes)
   const comecou = partes.length > 0
+  // o próximo passo que a própria pessoa decidiu (o Consultor segue o plano dela: lib/analise.ts, planoDoMes)
+  const px = comecou ? a.planoDoMes?.proximo ?? null : null
+  const hoje = q.hoje
+  const nomes = px ? px.pagar.slice(0, 3).map((x) => x.nome).join(', ') + (px.pagar.length > 3 ? ` +${px.pagar.length - 3}` : '') : ''
   return (
-    <section className={`cartao pj-cartao ${pl.fechado ? 'fechado' : ''}`}>
+    <section className={`cartao pj-cartao destaque ${pl.fechado ? 'fechado' : ''} ${comecou ? 'comecou' : 'convite'}`}>
       <div className="pj-cartao-texto">
-        <span className="pj-cartao-ic"><Icone nome="calendario" tamanho={20} /></span>
+        <span className="pj-cartao-ic"><Icone nome="calendario" tamanho={22} /></span>
         <div>
-          <h3>{tx('Planejar o mês')}</h3>
+          <span className="pj-cartao-selo">{comecou ? tx('Seu plano do mês') : tx('Comece por aqui')}</span>
+          <h3>{comecou ? (pl.fechado ? tx('Mês fechado no plano') : tx('Seu plano de pagamentos')) : tx('Planejar o mês')}</h3>
           <p>
             {!q.fontes.length ? tx('Lance o próximo dinheiro que entra para dividir entre as contas.')
               : !comecou ? (q.fontes.length === 1 ? tx('1 entrada e {0} para dividir. Diga com qual dinheiro sai cada uma.', q.destinos.filter((d) => d.tipo === 'conta').length === 1 ? tx('1 conta') : tx('{0} contas', q.destinos.filter((d) => d.tipo === 'conta').length))
@@ -701,6 +706,15 @@ export function CartaoDoPlanejamento({ a, planejamento, aoAbrir }: { a: Analise;
                   : pl.atrasos ? (pl.atrasos === 1 ? tx('{0}% das contas com dinheiro. 1 atrasa no plano.', pl.pct) : tx('{0}% das contas com dinheiro. {1} atrasam no plano.', pl.pct, pl.atrasos))
                     : tx('{0}% das contas com dinheiro.', pl.pct)}
           </p>
+          {px && (
+            <p className="pj-cartao-proximo">
+              <Icone nome="seta" tamanho={14} />
+              <span>{px.fonte.saldo ? tx('Agora, com o que está na conta: {0} ({1}).', nomes, fmtValor(px.total))
+                : px.fonte.data <= hoje ? tx('Hoje, com {0}: {1} ({2}).', px.fonte.nome, nomes, fmtValor(px.total))
+                  : tx('Quando {0} cair ({1}): {2} ({3}).', px.fonte.nome, fmtDataCurta(px.fonte.data), nomes, fmtValor(px.total))}</span>
+            </p>
+          )}
+          {!comecou && <p className="pj-cartao-porque">{tx('O consultor passa a seguir o que você decidir aqui.')}</p>}
         </div>
       </div>
       {q.fontes.length > 0 && (

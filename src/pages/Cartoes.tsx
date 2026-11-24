@@ -29,6 +29,8 @@ import { confirmar } from '../lib/avisos'
 import { CampoData, Seletor } from '../components/Escolhas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
+import { naHoraDePagarParte, naHoraDePular } from '../lib/naHora'
+import { AvisoDoConsultor } from '../components/AvisoDoConsultor'
 import './cartoes-pc.css'
 import { estornoTotal, foiEstornado, valorAntesDoEstorno } from '../lib/estorno'
 
@@ -933,6 +935,7 @@ export function FormPularCompra({ c, cartao, f, aoFechar }: { c: Ctx; cartao: Ca
             )
           })}
         </ul>
+        {total > 0 && <AvisoDoConsultor fala={naHoraDePular(c.analise, total, nomeProx, f.puladas.length)} />}
         {total > 0 && (
           <div className="cc-acordo-resumo">
             <span><small>{tx('nesta fatura')}</small><b>{fmtValor(ficaNesta)}</b></span>
@@ -1479,6 +1482,7 @@ export function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoF
             </span>
           </div>
         )}
+        {emParte && !parcial && <AvisoDoConsultor fala={naHoraDePagarParte(c.analise, centavos(faltaAntes - v))} />}
         <span className="campo-ajuda">
           {emParte
             ? tx('Fica faltando {0} nesta fatura. Ela continua em aberto até você pagar o resto.', fmtValor(centavos(faltaAntes - v)))

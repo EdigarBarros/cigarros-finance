@@ -24,6 +24,8 @@ import { Modal, Palco, Segmentado } from './ui'
 import { CampoData, CampoSugestoes, Seletor } from './Escolhas'
 import { confirmar, perguntar } from '../lib/avisos'
 import { tx } from '../lib/textos'
+import type { FalaNaHora } from '../lib/naHora'
+import { AvisoDoConsultor } from './AvisoDoConsultor'
 import { foiEstornado, totaisDoEstorno } from '../lib/estorno'
 import { crescimentoPorDias, diasEntre, temJurosDeAtraso } from '../lib/jurosAtraso'
 
@@ -82,6 +84,8 @@ interface FormLancProps {
   }
   /** Compras já lançadas nos cartões: servem para avisar quando a mesma compra é lançada duas vezes. */
   comprasCartao?: Lancamento[]
+  /** O consultor na hora de parcelar (lib/naHora.ts): recebe as parcelas que vão ser gravadas. */
+  naHoraDeParcelar?: (parcelas: { ano: number; mes: number; valor: number }[]) => FalaNaHora | null
   /** Avisa em que fatura a compra caiu (principalmente quando já passou do fechamento). */
   aoCompraSalva?: (aviso: { compraId: string; cartaoId: string; cartao: string; fechamento: number; depoisDoFechamento: boolean; ano: number; mes: number; anoCompra: number }) => void
   aoNovoCartao?: () => void
@@ -603,6 +607,9 @@ export function FormLancamento(p: FormLancProps) {
             </span>
           </label>
         )}
+        {cartao && vezes >= 2 && parcelas.length >= 2 && p.naHoraDeParcelar && (
+          <AvisoDoConsultor fala={p.naHoraDeParcelar(parcelas)} />
+        )}
         {mostraQuemPaga && (
           <div className="campo">
             <span className="campo-rotulo"><Icone nome="pessoa" tamanho={15} />{tx('Quem paga esta compra?')}</span>
@@ -980,6 +987,8 @@ interface FormDividaProps {
   aoFechar: () => void
   /** Aberto por "Definir parcela": começa no modo parcelado, com o cursor no valor da parcela. */
   definirParcela?: boolean
+  /** O consultor na hora de criar uma dívida sua (lib/naHora.ts): a parcela, quantas e o vencimento da primeira. */
+  naHora?: (parcela: number | null, parcelas: number | null, primeira: string | null) => FalaNaHora | null
 }
 
 /** Quantidade de parcelas digitada: inteiro de 1 a 600, ou null. */
@@ -993,7 +1002,7 @@ const inteiro = (t: string) => {
  * vence a próxima. Parcelada, pede o valor da parcela e quantas faltam (e, se souber, de quantas); sem parcela fixa,
  * pede quanto falta e, se houver, a data combinada. O vencimento da próxima monta o calendário de parcelas.
  */
-export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perfil, semMoeda, semJuros, semAtraso, semCusto, aoCriar, aoEditar, aoNovoSaldo, aoMudarValor, aoMoverInicio, pagamentos, aoExcluir, aoFechar, definirParcela }: FormDividaProps) {
+export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perfil, semMoeda, semJuros, semAtraso, semCusto, aoCriar, aoEditar, aoNovoSaldo, aoMudarValor, aoMoverInicio, pagamentos, aoExcluir, aoFechar, definirParcela, naHora }: FormDividaProps) {
   // a dívida como foi cadastrada (parcela na moeda dela); `situacao.divida` já vem convertida para a moeda principal
   const d = situacao?.original
   const moedaInicial = d?.moeda || perfil.moeda
@@ -1481,6 +1490,7 @@ export function FormDivida({ ano, mes, situacao, sentidoInicial, semExtras, perf
             <span className="campo-ajuda">{recebe ? tx('Cada recebimento lançado') : tx('Os pagamentos lançados')} {tx('já abatem sozinhos. Mude o que falta só se houve juros, acordo ou se estava errado. A data é o mês em que o gráfico muda.')}</span>
           </label>
         )}
+        {!d && sentido === 'devo' && naHora && <AvisoDoConsultor fala={naHora(parcelado === 'sim' ? vp : null, parcelado === 'sim' ? nFaltam : null, parcelado === 'sim' ? proxima || null : null)} />}
         {erro && <p className="form-erro">{erro}</p>}
         <div className="form-acoes">
           {d && (

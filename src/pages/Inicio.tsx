@@ -37,6 +37,7 @@ import { useAcoesDeLancar } from '../lib/botaoMais'
 import { totaisDoMes } from '../lib/contasFixas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
+import { naHoraDaDividaNova } from '../lib/naHora'
 
 /** Lista de blocos de uma zona, sem os que não existem. */
 const zona = (xs: unknown[]) => xs.filter(Boolean).map((x, i) => <Fragment key={i}>{x as React.ReactNode}</Fragment>)
@@ -271,6 +272,7 @@ function InicioDeSempre(c: Ctx) {
     <FormDivida
       ano={c.ano}
       mes={c.mes}
+      naHora={(p, n, primeira) => naHoraDaDividaNova(c.analise, p, n, primeira)}
       situacao={divida === 'nova' ? undefined : divida}
       aoCriar={c.d.addDivida}
       aoEditar={c.d.updDivida}
