@@ -89,7 +89,6 @@ const dataCurta = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
  */
 /** O arquivo abriu, mas não tem lançamentos (comprovante, outro documento): é o arquivo errado, não defeito do app. */
 class ArquivoSemLancamentos extends Error {}
-const extensao = (nome: string) => (nome.split('.').pop() ?? '').toLowerCase().slice(0, 8)
 
 export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void }) {
   const [etapa, setEtapa] = useState<'escolher' | 'lendo' | 'revisar' | 'gravando' | 'pronto'>('escolher')
@@ -117,10 +116,9 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
       if (!r.linhas.length) {
         const p = r.pistas
         // só é defeito do leitor se o arquivo tem cara de extrato (várias linhas com data e valor) e nada foi lido: aí fica
-        // registrado, com as quantidades (nunca o conteúdo). Comprovante ou arquivo sem lançamentos é só o arquivo errado.
+        // registrado como uma categoria técnica. Comprovante ou arquivo sem lançamentos é só o arquivo errado.
         if (!p.comprovante && p.comDataEValor >= 3) {
-          registrarErro(new Error('Extrato com datas e valores, mas nenhum lançamento lido'),
-            `importar extrato .${extensao(f.name)} (${f.size} bytes) · ${p.linhas} linhas, ${p.comData} com data, ${p.comValor} com valor, ${p.comDataEValor} com os dois`)
+          registrarErro(new Error('Extrato sem lançamentos'), 'extrato sem lancamentos')
         }
         throw new ArquivoSemLancamentos(p.comprovante
           ? tx('Esse arquivo é um comprovante (de um pagamento só), não o extrato. No app ou site do banco, abra o extrato da conta e use “Exportar” ou “Baixar PDF”, ou envie em CSV, Excel ou OFX.')
@@ -142,11 +140,11 @@ export function ImportarExtrato({ c, aoFechar }: { c: Ctx; aoFechar: () => void 
       setEtapa('revisar')
     } catch (e) {
       const msg = textoDoErro(e)
-      // fica registrado para entender o que falhou: só o tipo e o tamanho do arquivo, nunca o conteúdo do extrato
+      // registra a categoria técnica junto com o tipo de erro
       // (o PDF que não abre já foi registrado com o erro do leitor, em lib/extrato.ts)
       // (arquivo sem lançamentos já decidiu acima se era defeito do leitor)
-      if (!msg.startsWith('Não consegui abrir esse PDF') && !(e instanceof ArquivoSemLancamentos)) registrarErro(e, `importar extrato .${extensao(f.name)} (${f.size} bytes)`)
-      setErro(msg)
+      if (!msg.startsWith('Não consegui abrir esse PDF') && !(e instanceof ArquivoSemLancamentos)) registrarErro(e, 'importar extrato')
+      setErro(tx(msg))
       setEtapa('escolher')
     } finally {
       if (entrada.current) entrada.current.value = ''

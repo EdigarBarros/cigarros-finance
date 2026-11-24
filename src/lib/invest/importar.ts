@@ -501,6 +501,8 @@ export async function lerArquivoDeInvestimentos(arquivo: File): Promise<ArquivoL
     return { ...lerLinhasDeTexto(paginas.flatMap(linhasDaPagina)), hash }
   }
   if (ext === 'xlsx' || ext === 'xls' || ext === 'xlsm' || ext === 'ods') {
+    const { validarZipImportado } = await import('../zip')
+    await validarZipImportado(dados)
     const XLSX = await import('xlsx')
     const wb = XLSX.read(dados, { type: 'array', cellDates: true })
     const celula = (v: unknown): Celula => (v instanceof Date ? `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, '0')}-${String(v.getDate()).padStart(2, '0')}` : typeof v === 'number' ? v : String(v ?? ''))

@@ -75,6 +75,7 @@ async function liberarPix(sessaoId: unknown): Promise<Response> {
   if (error?.code === '23503') return new Response('conta excluída')
   if (error) return new Response(error.message, { status: 500 })
   if (data?.repetido) return new Response('já registrado')
+  if (data?.estornado) return new Response('pagamento já estornado')
   if (data?.creditado === false) {
     // a pessoa pagou o Pix já tendo acesso (cortesia ou assinatura ativa): fica em pagamentos_pix com creditado = false para reembolso
     console.error(`Pix ${s.id}: pago por quem já tinha acesso; sem crédito (pagamentos_pix.creditado = false)`)

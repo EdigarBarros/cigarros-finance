@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx'
+import { validarZipImportado } from './zip'
 import { noAppNativo } from './appAndroid'
 import { compartilharArquivo } from './arquivoNoApp'
 import { noIOS, oferecerArquivo } from './arquivoPronto'
@@ -104,7 +105,10 @@ function mesDaAba(nome: string, ws: XLSX.WorkSheet): { ano: number; mes: number 
 }
 
 export async function lerPlanilha(arquivo: File): Promise<MesImportado[]> {
-  const wb = XLSX.read(await arquivo.arrayBuffer(), { cellFormula: true, cellDates: false, sheetStubs: true })
+  if (arquivo.size > 25 * 1024 * 1024) throw new Error(tx('Esse arquivo passa de 25 MB. Exporte um período menor.'))
+  const dados = await arquivo.arrayBuffer()
+  try { await validarZipImportado(dados) } catch (e) { throw new Error(tx(paraErro(e).message)) }
+  const wb = XLSX.read(dados, { cellFormula: true, cellDates: false, sheetStubs: true })
   const resultado: MesImportado[] = []
 
   for (const nome of wb.SheetNames) {

@@ -171,7 +171,7 @@ function useVisto<T extends Element>(aoVer: () => void) {
 class DesenhoSeguro extends Component<{ id: string; children: ReactNode }, { quebrou: boolean }> {
   state = { quebrou: false }
   static getDerivedStateFromError() { return { quebrou: true } }
-  componentDidCatch(erro: Error) { registrarErro(erro, `consultor ${this.props.id}`) }
+  componentDidCatch(erro: Error) { registrarErro(erro, 'consultor') }
   render() {
     if (!this.state.quebrou) return this.props.children
     return <p className="peca-falhou"><Icone nome="escudo" tamanho={16} /> {tx('Não deu para desenhar este gráfico agora. O resto da tela continua valendo.')}</p>

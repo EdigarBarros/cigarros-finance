@@ -32,15 +32,40 @@ function formulario(obj: Record<string, unknown>, prefixo = '', saida = new URLS
 // Versão antiga da API só para o Pix: nas versões novas o Stripe recusa `payment_method_types` ao criar a página de pagamento
 // (os meios de pagamento passam a vir do painel) e o Pix deixaria de ser a única opção da tela.
 const VERSAO_API_PIX = '2024-06-20'
-async function stripe(caminho: string, dados?: Record<string, unknown>, versao?: string) {
+async function assinaturaDosDados(dados: Record<string, unknown>) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(formulario(dados).toString()))
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+async function stripe(caminho: string, dados?: Record<string, unknown>, versao?: string, idempotencia?: string) {
   const r = await fetch(`https://api.stripe.com/v1/${caminho}`, {
     method: dados ? 'POST' : 'GET',
-    headers: { Authorization: `Bearer ${Deno.env.get('STRIPE_SECRET_KEY')}`, ...(versao ? { 'Stripe-Version': versao } : {}), ...(dados ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {}) },
+    headers: {
+      Authorization: `Bearer ${Deno.env.get('STRIPE_SECRET_KEY')}`,
+      ...(versao ? { 'Stripe-Version': versao } : {}),
+      ...(dados ? { 'Content-Type': 'application/x-www-form-urlencoded' } : {}),
+      ...(idempotencia ? { 'Idempotency-Key': idempotencia } : {}),
+    },
     body: dados ? formulario(dados) : undefined,
   })
   const j = await r.json()
   if (!r.ok) throw new Error(j?.error?.message ?? 'Erro no Stripe')
   return j
+}
+
+async function abrirCheckout(cliente: string, dados: Record<string, unknown>, versao?: string) {
+  const marca = await assinaturaDosDados(dados)
+  const consulta = new URLSearchParams({ customer: cliente, limit: '100' })
+  const sessoes = await stripe(`checkout/sessions?${consulta}`, undefined, versao)
+  const iguais = (sessoes.data ?? []).filter((s: { metadata?: Record<string, string> }) => s.metadata?.opus_tentativa === marca)
+  const existente = iguais.find((s: { status: string; url?: string }) => s.status === 'open' && s.url)
+  if (existente) return existente
+
+  // A última sessão encerrada marca o início de uma nova tentativa, inclusive para quem quer pagar outro Pix.
+  const anterior = iguais[0]?.id ?? 'nova'
+  const metadata = dados.metadata as Record<string, string> | undefined
+  return stripe('checkout/sessions', { ...dados, metadata: { ...metadata, opus_tentativa: marca } },
+    versao, `opuscash:checkout:${marca}:${anterior}`)
 }
 
 Deno.serve(async (req) => {
@@ -58,7 +83,8 @@ Deno.serve(async (req) => {
     const origem = origemDeRetorno(req, retorno)
     if (!origem) return resposta({ erro: 'Endereço de retorno inválido.' }, 400, req)
 
-    const { data: atual } = await servico.from('assinaturas').select('*').eq('user_id', user.id).maybeSingle()
+    const { data: atual, error: erroAssinatura } = await servico.from('assinaturas').select('*').eq('user_id', user.id).maybeSingle()
+    if (erroAssinatura) return resposta({ erro: 'Não foi possível conferir sua assinatura.' }, 503, req)
     if (atual && ['trialing', 'active', 'cortesia'].includes(atual.status)) return resposta({ erro: 'ja_ativa' }, 409, req)
     // Já existe uma assinatura no Stripe com pagamento por resolver (cobrança recusada, pendente ou parada): uma segunda assinatura
     // cobraria em dobro. O app manda a pessoa para o portal, onde ela acerta o cartão da assinatura que já existe.
@@ -66,15 +92,17 @@ Deno.serve(async (req) => {
 
     let cliente: string | null = atual?.stripe_customer_id ?? null
     if (!cliente) {
-      const c = await stripe('customers', { email: user.email, metadata: { supabase_user_id: user.id } })
+      const dados = { email: user.email, metadata: { supabase_user_id: user.id } }
+      const c = await stripe('customers', dados, undefined, `opuscash:cliente:${await assinaturaDosDados(dados)}`)
       cliente = c.id as string
-      await servico.from('assinaturas').upsert({ user_id: user.id, stripe_customer_id: cliente, atualizado_em: new Date().toISOString() })
+      const { error } = await servico.from('assinaturas').upsert({ user_id: user.id, stripe_customer_id: cliente, atualizado_em: new Date().toISOString() })
+      if (error) return resposta({ erro: 'Não foi possível preparar seu cadastro de cobrança.' }, 503, req)
     }
 
     // Pix de 30 dias: pagamento ÚNICO em reais (a conta não tem o Pix Automático, então o Pix não cabe em assinatura). Quando o Stripe
     // avisa que foi pago, o stripe-webhook dá 30 dias de acesso (status 'pix'). O preço vai aqui mesmo, sem produto cadastrado.
     if (ehPix) {
-      const sessaoPix = await stripe('checkout/sessions', {
+      const sessaoPix = await abrirCheckout(cliente, {
         mode: 'payment',
         customer: cliente,
         client_reference_id: user.id,
@@ -90,6 +118,18 @@ Deno.serve(async (req) => {
       return resposta({ url: sessaoPix.url }, 200, req)
     }
 
+    // O Stripe pode já ter ativado a assinatura enquanto o webhook ainda não atualizou o Supabase.
+    const consulta = new URLSearchParams({ customer: cliente, status: 'all', limit: '100' })
+    const assinaturas = await stripe(`subscriptions?${consulta}`)
+    const ativas = (assinaturas.data ?? []).filter((s: { metadata?: Record<string, string>; id: string }) =>
+      s.metadata?.supabase_user_id === user.id || s.id === atual?.stripe_subscription_id)
+    if (ativas.some((s: { status: string }) => ['trialing', 'active'].includes(s.status))) {
+      return resposta({ erro: 'ja_ativa' }, 409, req)
+    }
+    if (ativas.some((s: { status: string }) => ['past_due', 'unpaid', 'incomplete', 'paused'].includes(s.status))) {
+      return resposta({ erro: 'pagamento_pendente' }, 409, req)
+    }
+
     const precos = await stripe('prices?lookup_keys[]=opuscash_mensal&active=true')
     const preco = precos.data?.[0]?.id
     if (!preco) return resposta({ erro: 'Plano não encontrado no Stripe.' }, 500, req)
@@ -99,7 +139,7 @@ Deno.serve(async (req) => {
     const esperarPeloPix = fimDoPix - Date.now() > PIX_MINIMO_PARA_ESPERAR_MS
 
     const moedaEscolhida = typeof moeda === 'string' && MOEDAS.includes(moeda.toLowerCase()) ? moeda.toLowerCase() : undefined
-    const sessao = await stripe('checkout/sessions', {
+    const sessao = await abrirCheckout(cliente, {
       mode: 'subscription',
       customer: cliente,
       client_reference_id: user.id,

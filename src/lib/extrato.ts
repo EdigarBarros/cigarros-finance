@@ -6,7 +6,7 @@
 import { CATALOGO_BANCOS } from './bancos'
 import type { Tipo } from './types'
 import { formaPelaDescricao, type FormaGravada } from './formas'
-import { lerDoZip } from './zip'
+import { lerDoZip, validarZipImportado } from './zip'
 import { lerTudo, supabase } from './supabase'
 import { registrarErro } from './erros'
 
@@ -977,7 +977,7 @@ export interface ItemPdf { str: string; x: number; y: number; w: number; h: numb
 
 /** O que o leitor usa do pdf.js (em `lib/pdfjs.ts`; os testes passam o deles). */
 export interface LeitorDePdf {
-  getDocument: (o: object) => { promise: Promise<{ numPages: number; getPage: (n: number) => Promise<{ getTextContent: (o?: object) => Promise<{ items: unknown[] }> }> }> }
+  getDocument: (o: object) => { promise: Promise<{ numPages: number; destroy?: () => Promise<void>; getPage: (n: number) => Promise<{ getTextContent: (o?: object) => Promise<{ items: unknown[] }> }> }> }
 }
 
 /** Os pedaços de texto de cada página do PDF (pdf.js). */
@@ -986,44 +986,49 @@ export async function itensDoPdf(dados: ArrayBuffer, leitor?: LeitorDePdf): Prom
   try {
     pdfjs = leitor ?? (await import('./pdfjs')).pdfjs
   } catch (e) {
-    registrarErro(e, 'carregar o leitor de PDF')
+    registrarErro(e, 'leitor pdf')
     throw new Error('Não consegui carregar o leitor de PDF. Confira a internet e tente de novo, ou exporte o extrato em CSV, Excel ou OFX.')
   }
   // Cada tentativa recebe uma cópia: o pdf.js leva os bytes para o worker e o original fica vazio.
   const abrir = (opcoes: object) => pdfjs.getDocument({ data: new Uint8Array(dados.slice(0)), ...opcoes }).promise
   let doc
   try {
-    doc = await abrir({})
+    doc = await abrir({ isEvalSupported: false })
   } catch (primeiro) {
     if (/password/i.test(String(primeiro))) throw new Error('Esse PDF tem senha. Abra no app do banco e exporte sem senha (ou em CSV).')
     // PDF meio torto (comum em extrato gerado por sistema de banco): tenta de novo sem as partes que costumam quebrar
     try {
       doc = await abrir({ isEvalSupported: false, disableFontFace: true, useSystemFonts: false, stopAtErrors: false })
     } catch (e) {
-      registrarErro(e, `extrato PDF (${dados.byteLength} bytes): ${String(primeiro).slice(0, 200)}`)
+      registrarErro(e, 'extrato pdf')
       throw new Error('Não consegui abrir esse PDF. Ele pode estar corrompido: baixe de novo pelo app do banco ou exporte em CSV, Excel ou OFX.')
     }
   }
-  const paginas: ItemPdf[][] = []
-  let comErro = 0
-  for (let p = 1; p <= doc.numPages; p++) {
-    // uma página que não dá para ler não derruba as outras
-    try {
-      const page = await doc.getPage(p)
-      const { items } = await page.getTextContent()
-      paginas.push(itensDaPagina(items as ItemTexto[]))
-    } catch (e) {
-      comErro++
-      registrarErro(e, `extrato PDF: página ${p} de ${doc.numPages}`)
-      paginas.push([])
+  try {
+    if (doc.numPages > 300) throw new Error('Este PDF passa de 300 páginas. Exporte um período menor.')
+    const paginas: ItemPdf[][] = []
+    let comErro = 0
+    for (let p = 1; p <= doc.numPages; p++) {
+      // uma página que não dá para ler não derruba as outras
+      try {
+        const page = await doc.getPage(p)
+        const { items } = await page.getTextContent()
+        paginas.push(itensDaPagina(items as ItemTexto[]))
+      } catch (e) {
+        comErro++
+        registrarErro(e, 'extrato pdf')
+        paginas.push([])
+      }
     }
+    if (comErro === doc.numPages) throw new Error('Não consegui ler o texto desse PDF. Baixe de novo pelo app do banco ou exporte em CSV, Excel ou OFX.')
+    // PDF sem texto nenhum: é foto ou papel escaneado
+    if (paginas.reduce((n, p) => n + p.reduce((k, it) => k + it.str.replace(/\s/g, '').length, 0), 0) < 20) {
+      throw new Error('Esse PDF é uma foto do extrato (escaneado ou print): não tem texto para ler. Baixe o extrato pelo app ou site do banco, em PDF, CSV, Excel ou OFX.')
+    }
+    return paginas
+  } finally {
+    await doc.destroy?.().catch(() => {})
   }
-  if (comErro === doc.numPages) throw new Error('Não consegui ler o texto desse PDF. Baixe de novo pelo app do banco ou exporte em CSV, Excel ou OFX.')
-  // PDF sem texto nenhum: é foto ou papel escaneado
-  if (paginas.reduce((n, p) => n + p.reduce((k, it) => k + it.str.replace(/\s/g, '').length, 0), 0) < 20) {
-    throw new Error('Esse PDF é uma foto do extrato (escaneado ou print): não tem texto para ler. Baixe o extrato pelo app ou site do banco, em PDF, CSV, Excel ou OFX.')
-  }
-  return paginas
 }
 
 /** Os pedaços de uma página como o pdf.js entrega (`getTextContent().items`) → texto e posição. */
@@ -1527,11 +1532,13 @@ function especieDoArquivo(dados: ArrayBuffer, ext: string): 'pdf' | 'zip' | 'ole
 
 /** Lê o arquivo do extrato e devolve os lançamentos encontrados (do mais antigo para o mais novo). */
 export async function lerExtrato(arquivo: File, anoPadrao = new Date().getFullYear(), leitorDePdf?: LeitorDePdf): Promise<ExtratoLido> {
+  if (arquivo.size > 25 * 1024 * 1024) throw new Error('Esse arquivo passa de 25 MB. Exporte um período menor.')
   const nome = arquivo.name.toLowerCase()
   const ext = nome.split('.').pop() ?? ''
   const dados = await arquivo.arrayBuffer()
   if (!dados.byteLength) throw new Error('Esse arquivo está vazio. Baixe o extrato de novo pelo app ou site do banco.')
   const especie = especieDoArquivo(dados, ext)
+  if (especie === 'zip') await validarZipImportado(dados)
   let linhas: LinhaExtrato[] = []
   let formato = ext.toUpperCase()
   let cabecalho = ''
