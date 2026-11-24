@@ -54,8 +54,8 @@ rolagem de lado; nos temas escuro e claro, sem erro na página). Com `FOTOS=past
 
 ## Várias contas no mesmo aparelho
 
-Depois do build com Supabase fictício: `node scripts/app-de-demonstracao/testar-contas.cjs` (entrar, adicionar, trocar sem
-senha, tema de cada conta, sair de uma, "Escolha uma conta", sessão vencida e tirar da lista, no PC e no celular).
+Depois do build com Supabase fictício: `node scripts/app-de-demonstracao/testar-contas.cjs` (limpeza de sessões antigas, troca com
+senha, isolamento entre abas, recuperação, saída e perfis no PC e no celular).
 
 ## Celular (moldura e Início)
 

@@ -27,6 +27,14 @@ A publicação foi posteriormente autorizada pelo usuário; veja a entrada de pu
 Em 15/11/2026 o Claude revisou essas correções (sem achar erro) e as publicou; veja as entradas do Claude ao final.
 As alterações anteriores de documentação (`CLAUDE.md` e criação deste arquivo) foram preservadas.
 
+Em 24/11/2026 o GPT/Codex auditou a segurança do OpusCash e implementou correções locais no site e no painel de
+suporte, em repositórios separados. Veja a entrada [Segurança do OpusCash em 24 de novembro](#segurança-do-opuscash-em-24-de-novembro)
+para localizar os commits, conferir as decisões e preparar uma revisão ou reversão. As branches de revisão
+`seguranca-opuscash` estão no GitHub nos dois repositórios. A implantação em produção permanece pendente.
+
+A continuação tratou os achados médios no código e nas migrações 41 a 43. Veja
+[Correções adicionais de segurança](#correções-adicionais-de-segurança) para os testes e os limites desta entrega.
+
 ## Histórico
 
 ### 14/11/2026 — GPT/Codex — Análise de bugs
@@ -1694,3 +1702,259 @@ liso, "inter" e Mastercard embaixo). Redesenhados como o cartão de verdade vira
 dele: Nubank (violeta, "nu" e nome de lado, Mastercard e chip à direita), Santander Visa Platinum (grafite com a pintura
 vermelha e rosa, feita com um filtro SVG de turbulência) e Inter novo (laranja-avermelhado, "inter" com os raios, Mastercard
 com aro branco). **Next** ganhou desenho (verde-limão com o triângulo preto, "next", VISA). Agora são 13 bancos.
+
+### Segurança do OpusCash em 24 de novembro
+
+**Data e autoria.** 24/11/2026, GPT/Codex. **Estado.** Auditoria de código concluída no escopo descrito.
+Correções implementadas e testadas localmente em dois repositórios. Após a autorização do Edigar, as duas
+branches de revisão foram enviadas ao GitHub. Nenhuma função, migração ou configuração de produção foi alterada
+nesta série de trabalhos.
+
+**O que Edigar pediu.** Primeiro, pediu uma análise ampla da segurança do OpusCash contra acessos indevidos e outros
+ataques. Confirmou o site e depois perguntou se dava para simular um ataque no próprio projeto, procurando e corrigindo
+brechas. O GPT/Codex fez inspeção de código e verificações defensivas com contas, dados e serviços simulados. Edigar
+pediu em seguida a correção dos dois pontos pendentes, sessões e recuperação pelo suporte, com teste depois da
+correção. Por fim, pediu este registro antes de qualquer outra etapa para o Claude poder conferir, ajustar ou reverter
+o trabalho com contexto.
+
+#### Onde estão as mudanças
+
+| Repositório | Branch local | Base examinada | Commits de segurança, em ordem |
+|---|---|---|---|
+| `EdigarBarros/cigarros-finance` em `/workspace/cigarros-finance` | `seguranca-opuscash` | `e6cb0b7`, branch remota `claude/practical-mccarthy-qt2qoa` | `96a5dee` pagamentos, exclusão de conta, migração 20 e Vite. `89518b4` sessões por aba e remoção do tradutor externo. |
+| `EdigarBarros/Painel-Opus-Cash` em `/workspace/painel-opus-cash` | `seguranca-opuscash` | `7ca8e0e`, branch remota `main` | `b5da3b7` permissões de recuperação no suporte e sessão administrativa por aba. |
+
+O primeiro parecer partiu do checkout local em `8da5be7` e comparou as partes relevantes com a branch padrão do
+GitHub. As implementações foram feitas sobre `e6cb0b7` no site e `7ca8e0e` no painel. Os hashes acima estão disponíveis nas branches de revisão. Em outra sessão, consulte
+`origin/seguranca-opuscash` no repositório correspondente e confira as alterações com `git show --stat <hash>`.
+O painel de suporte usa o mesmo projeto Supabase do OpusCash.
+
+#### Site e base de dados — `96a5dee`
+
+- **Webhook do Stripe** (`supabase/functions/stripe-webhook/index.ts`): valida `Stripe-Signature` no corpo bruto
+  com o SDK Stripe `23.2.0` e o segredo de assinatura do endpoint `STRIPE_WEBHOOK_SECRET`. Só depois processa
+  o evento. O gateway aceita a chamada sem JWT do Supabase, pois a autenticação do webhook é a assinatura do
+  Stripe. A leitura do estado atual de assinaturas, sessões de checkout e cobranças relevantes continua no Stripe.
+- **Checkout e portal** (`stripe-checkout/index.ts`, `stripe-portal/index.ts` e
+  `supabase/functions/_shared/origens-stripe.ts`): CORS e retorno usam as origens exatas
+  `https://www.opuscash.com.br` e `https://opuscash.com.br`. Homologação ou desenvolvimento pode ter origens
+  próprias em `STRIPE_ALLOWED_ORIGINS`, separadas por vírgula e sem barra final. Se a requisição traz
+  `Origin`, o retorno precisa coincidir.
+- **Excluir conta** (`supabase/functions/excluir-conta/index.ts`, `src/lib/assinatura.ts` e
+  `src/components/Configuracoes.tsx`): a interface pede a senha atual. A função confere a identidade e a senha
+  antes de consultar a cobrança. A sessão temporária criada para conferir a senha é encerrada com escopo
+  local, sem encerrar deliberadamente as demais sessões da pessoa nessa etapa. Falha ao consultar a assinatura
+  interrompe a operação antes de qualquer exclusão. Cancelamento no Stripe e exclusão no Supabase continuam
+  sendo operações separadas, com falha parcial ainda possível.
+- **Conferências de dívida** (`supabase/migracao-20-acesso-no-banco-definitivo.sql`): a tabela
+  `divida_conferencias` foi incluída na reconstrução das políticas de proprietário e assinatura. Bancos
+  existentes precisam reaplicar a versão atualizada da migração 20 para receber essa correção.
+- **Vite** (`package.json` e `package-lock.json`): atualização de `8.3.5` para `8.3.8` após comparar a
+  versão bloqueada com o aviso do fornecedor sobre o servidor de desenvolvimento. O `npm audit` tinha retornado
+  zero alertas nas consultas concluídas. O aviso, por si só, não demonstrou exposição do site estático.
+  [Aviso do Vite](https://github.com/vitejs/vite/security/advisories/GHSA-p4f5-76q4-ffq7)
+
+#### Sessões e idiomas — `89518b4` no site e `b5da3b7` no painel
+
+- **Site:** `src/lib/sessaoDaAba.ts` e `src/lib/supabase.ts` configuram o cliente Supabase com
+  `sessionStorage` e uma chave por aba. `src/lib/contas.ts` limpa as credenciais que versões antigas
+  deixaram em `localStorage` e mantém apenas metadados para mostrar os perfis. O perfil lembrado continua
+  disponível, mas exige senha ao entrar ou trocar de conta. O login da aba continua ao recarregar. A ação
+  de sair tenta encerrar a sessão no servidor e limpa a cópia local mesmo se o servidor falhar. A atualização
+  pode pedir novo login. A limpeza local não revoga em massa sessões antigas no Supabase.
+- **Fluxos afetados no site:** `src/App.tsx`, `src/components/Entrada.tsx`, `Contas.tsx`,
+  `EscolherConta.tsx`, `SenhaDaConta.tsx` e `src/lib/abrirConta.ts` ajustam login, troca e seleção de
+  perfis. O seletor “Manter conectado” foi removido. Ao concluir uma recuperação por e-mail, a aplicação
+  recarrega com a identidade recuperada. `src/lib/abertura.ts` e `public/tema-inicial.js` passaram a
+  consultar a sessão da aba.
+- **Tradutor externo removido:** `src/lib/idioma.ts`, `src/components/BotaoIdioma.tsx` e
+  `vercel.json` agora usam apenas a tradução local em português, inglês e espanhol. As páginas legais
+  ficam em português. Preferências legadas compatíveis são lidas, e idiomas indisponíveis voltam ao
+  português. `public/offline.js` usa a mesma preferência e `public/sw.js` renova o cache offline.
+  A regra antiga de idiomas no `CLAUDE.md` descreve a versão anterior. Nesse branch, use o comportamento
+  documentado no `README.md` atualizado e acrescente traduções locais sem reintroduzir o script externo.
+- **Painel:** `src/lib/supabase.ts` e `src/App.tsx` limpam a sessão legada, mantêm o login na aba
+  atual e limpam a cópia local ao sair. O painel não usa a URL como fonte de sessão. A checagem de operador
+  autorizado e MFA permanece no servidor.
+- **Limite da mudança:** tokens da sessão ativa continuam acessíveis ao JavaScript da própria aba.
+  Migrar para cookies `HttpOnly` requer uma mudança de arquitetura porque o aplicativo usa o cliente
+  Supabase no navegador. A ausência de credenciais em `localStorage` foi verificada, mas não equivale
+  a essa migração.
+
+#### Recuperação pelo suporte — `b5da3b7`
+
+- `supabase/functions/admin/index.ts` retorna HTTP 403 para as antigas ações `senha_link`,
+  `confirmar_email` e `trocar_email`, inclusive para um operador com MFA. `src/telas/Ficha.tsx`
+  retirou essas opções da interface. Os nomes dessas ações continuam disponíveis para exibir o histórico
+  administrativo já existente em `src/lib/formato.ts`.
+- Permanecem disponíveis o envio de recuperação e o reenvio da confirmação ao endereço que já está
+  cadastrado no Supabase. A função descarta qualquer e-mail alternativo enviado na requisição, bloqueia
+  alvos administrativos e interrompe se não conseguir verificar o alvo. As ações permitidas registram
+  auditoria. Para alguém sem acesso ao endereço cadastrado, essa entrega não criou um fluxo alternativo
+  de troca de e-mail pelo suporte.
+- O cliente de teste `supabase/functions/admin/recuperacao.test.ts` verifica a rejeição das ações antigas,
+  o destino do e-mail, o registro de auditoria, o MFA, a proteção de contas administrativas e a interrupção
+  em caso de erro na verificação do alvo.
+
+#### Validação executada
+
+- **Site:** build com `VITE_SUPABASE_URL=https://fake.supabase.co VITE_SUPABASE_ANON_KEY=anon npm run build`
+  e build Vite em `--mode app` passaram. O segundo é um build de recursos web para o Android, sem teste em
+  APK nativo nem geração de AAB assinado. O lint terminou sem erros, com avisos.
+- **Navegador, site:** Playwright com Chromium em `/usr/bin/chromium` e Supabase simulado.
+  `node scripts/app-de-demonstracao/testar-contas.cjs` passou no computador e no celular simulado.
+  Cobriu limpeza das credenciais legadas, senha incorreta, sessão na recarga, abas independentes, troca
+  com senha, saída, remoção de perfil, idioma e recuperação por e-mail até gravar a nova senha simulada.
+  O servidor de demonstração foi ajustado para iniciar a sessão fictícia na aba.
+  `node scripts/app-de-demonstracao/testar-correcoes.cjs` passou para metas e para 1.002 faturas na repetição.
+- **Edge Functions do site:** `deno check --node-modules-dir=none --no-lock` passou para o webhook,
+  checkout, portal e exclusão. Quatro verificações em Deno com serviços simulados passaram, incluindo
+  assinatura válida e inválida, origens permitidas, senha ausente ou incorreta e interrupção da exclusão
+  em caso de falha na consulta de cobrança. A migração 20 foi reaplicada duas vezes em PostgreSQL
+  descartável via PGlite. A conta fictícia com teste vencido perdeu acesso à conferência, e a ativa leu
+  seu registro.
+- **Painel:** build e lint passaram, com avisos. Passaram os quatro testes da API com
+  `deno test --allow-env --node-modules-dir=none --no-lock supabase/functions/admin/recuperacao.test.ts`.
+  Uma checagem adicional no Chromium confirmou a limpeza da credencial legada, a recarga na mesma aba,
+  a aba nova sem sessão, a recusa de acesso administrativo a uma conta comum e a saída.
+- Os verificadores avulsos de Edge Functions, banco descartável e sessão do painel ficaram em
+  `/workspace/scratch/work` como material temporário. Os testes versionados estão nos caminhos acima.
+
+#### Publicação, revisão e reversão
+
+- A disponibilidade pública do domínio e seus cabeçalhos não puderam ser confirmados pelo ambiente da
+  auditoria. Migrações e políticas ativas, registros de incidentes, configurações reais de autenticação,
+  alertas, backups e estado das integrações em produção seguem sem validação nesta entrega. Os testes
+  locais não usaram contas, cobranças ou dados reais e não dizem se houve incidente.
+- Antes de integrar, compare as branches remotas atuais com as bases acima para preservar publicações
+  de outras sessões. Para disponibilizar as correções sob a configuração real, confira em homologação
+  as origens do Stripe, o segredo de assinatura do endpoint, o fluxo de checkout, o portal e a exigência
+  de senha na exclusão. A exclusão de conta requer coordenação entre a função, o site e a versão
+  Android. Usuários do app antigo só poderão excluir pelo site atualizado enquanto não atualizarem o app.
+- Publique a função `admin` junto com a atualização do painel para efetivar as restrições no servidor.
+  Se só o frontend mudar, a API anterior continua com as ações antigas. Aplique a migração 20 separadamente.
+  Um revert Git não desfaz funções, migrações nem configurações já aplicadas no Supabase ou na Vercel.
+- Para diagnosticar regressão, inspecione `git show <hash>` e confira as alterações independentes por
+  caminho antes de reverter. Um revert integral de `96a5dee` remove as proteções de pagamento e exclusão.
+  Um revert integral de `89518b4` restaura o armazenamento persistente de sessão e o tradutor externo.
+  Um revert integral de `b5da3b7` remove as barreiras de recuperação administrativa quando a função
+  revertida for publicada. Prefira corrigir ou reverter a parte responsável pela regressão, teste com
+  os cenários acima e coordene o deploy. Tokens legados apagados no navegador não são restaurados por
+  revert. A pessoa pode entrar novamente.
+- Achados da auditoria ainda abertos incluem vínculos de banco que não exigem o mesmo `user_id` no pai
+  e no filho, idempotência do checkout, reconciliação de pagamentos e estornos fora de ordem, trilha de
+  auditoria em falhas parciais de ações administrativas, limites de importação e telemetria, e revisão
+  de privacidade e retenção. Esses pontos ficaram fora dos três commits.
+
+### Correções adicionais de segurança
+
+**Data e autoria.** 24/11/2026, GPT/Codex. **Pedido.** Edigar pediu que as pendências da auditoria fossem investigadas
+e corrigidas, com prioridade aos vínculos financeiros entre contas. **Commits da branch de revisão.** OpusCash
+`f2483af` e Painel-Opus-Cash `f30059e`, ambos em `seguranca-opuscash`. Nenhum banco ou serviço de produção foi
+alterado nesta etapa.
+
+- **Vínculos financeiros.** A [migração 41](supabase/migracao-41-isolamento-de-vinculos.sql) substitui as chaves
+  estrangeiras simples elegíveis entre tabelas financeiras por chaves com o mesmo `user_id` nos dois lados. Preserva
+  os nomes e a ação de exclusão de cada vínculo. Em PostgreSQL 15 ou superior, o `SET NULL` limpa só a referência
+  opcional e preserva o proprietário. A migração inteira é transacional e falha se encontrar vínculos incompatíveis
+  já gravados. Revise qualquer inconsistência antes de reaplicar, sem apagar dados automaticamente. Aplique também
+  a versão atualizada da migração 20 para as conferências de dívida nos bancos existentes.
+- **Checkout.** `supabase/functions/stripe-checkout/index.ts` reutiliza sessões Stripe abertas com os mesmos
+  parâmetros e usa chaves de idempotência na criação de clientes e tentativas equivalentes. Uma sessão encerrada
+  permite a próxima compra. O cartão verifica também o estado no Stripe antes de abrir uma segunda assinatura.
+  Em caso de erro na leitura ou gravação da referência de cobrança no banco, interrompe a criação do checkout.
+  A proteção de equivalência não serializa opções de pagamento diferentes, e a consulta ao Stripe cobre até
+  100 registros por listagem. Casos com configurações diferentes, cadastros Stripe duplicados herdados ou
+  assinaturas antigas fora da primeira página ainda merecem acompanhamento.
+- **Pix fora de ordem.** A [migração 42](supabase/migracao-42-pix-eventos-fora-de-ordem.sql) exige as migrações 29
+  e 34. Registra o estorno que chega antes do pagamento e serializa as duas rotinas por sessão Stripe. Quando
+  chega o pagamento dessa sessão, ele fica registrado como estornado e não libera dias. Reenvios continuam
+  idempotentes. O webhook reconhece o novo resultado. O painel só tenta retirar dias diretamente quando o
+  reembolso integral retorna como concluído pelo Stripe. A migração não recalcula períodos já processados nem
+  resolve toda a conciliação de assinaturas e estornos históricos. Aplique a 42 antes de publicar o webhook.
+- **Auditoria administrativa.** `supabase/functions/admin/index.ts` do painel grava a tentativa antes de ações
+  Stripe, bloqueios, desbloqueios, encerramentos de sessões e exclusões. O resultado referencia a tentativa.
+  Se falhar o registro inicial, a ação é interrompida. Em falha posterior, o registro inicial permanece.
+  Stripe, Supabase Auth e a conclusão da auditoria continuam operações separadas. O painel identifica
+  tentativas no registro. As permissões de recuperação seguras da entrega anterior foram preservadas.
+- **Importações.** Extratos e planilhas têm limite de 25 MB antes da leitura. Investimentos mantém 15 MB.
+  O PDF tem teto de 300 páginas, leitura com avaliação de JavaScript desativada e liberação do leitor.
+  Arquivos ZIP têm validação do tamanho real descompactado, teto de 24 MiB por item, 96 MiB no conjunto e
+  4.096 entradas. Mensagens de limite têm tradução em inglês e espanhol.
+- **Privacidade e telemetria.** O cliente registra só a categoria do erro, a área e a versão. A
+  [migração 43](supabase/migracao-43-limites-e-privacidade-da-telemetria.sql) aplica filtragem no servidor
+  mesmo para clientes antigos. Ela também limita envios por conta e minuto (20 sinais de uso, 10 marcos e
+  12 erros), aceita campos de uso conhecidos e descarta detalhes livres. A política de privacidade explica
+  o novo registro técnico. A migração não apaga registros anteriores. A revisão da retenção histórica
+  continua pendente.
+
+**Validação executada.** Em PostgreSQL descartável com PGlite, o esquema completo recebeu as migrações 41 a 43
+duas vezes. Foram encontrados 26 vínculos compostos, contando os dois que já existiam em investimentos.
+Com duas contas fictícias, o banco negou vínculos entre usuários em gravação e atualização, preservou a RLS e
+manteve `CASCADE` e `SET NULL` nas exclusões legítimas. Passaram pagamento e estorno nas duas ordens com reenvios,
+cotas de telemetria e filtragem de detalhes livres. Stripe simulado confirmou checkout Pix concorrente com
+uma única sessão, reaproveitamento da URL, nova compra após encerramento e recusa de assinatura já ativa no
+Stripe. Os quatro testes anteriores das funções e os seis testes do painel passaram, incluindo falha na
+trilha inicial. Extratos 54/54, pistas 2/2, investimentos 27/27, arquivos ZIP e XLSX válidos aceitos e limite
+de tamanho aplicado. Builds do site e painel, checagem Deno e lint concluídos. Os verificadores avulsos
+ficaram em `/workspace/scratch/work`. O teste administrativo está versionado.
+
+**Implantação e reversão.** Valide as migrações em homologação com cópia segura ou dados sintéticos. Aplique
+41 a 43 pelo Supabase após os pré-requisitos e confira checkout, estorno e trilha de auditoria em modo de
+teste antes de atualizar as funções de produção. Reverter o Git não reverte SQL já aplicado. Os testes
+acima não usaram contas, pagamentos ou registros de produção.
+
+### Preparação da implantação de segurança
+
+**Data e autoria.** 24/11/2026, GPT/Codex. Edigar autorizou prosseguir com a implantação e pediu confirmação.
+Foram abertos os PRs em rascunho [OpusCash #287](https://github.com/EdigarBarros/cigarros-finance/pull/287)
+e [Painel #24](https://github.com/EdigarBarros/Painel-Opus-Cash/pull/24). As bases remotas verificadas foram
+`e6cb0b7` para o site e `7ca8e0e` para o painel. As bases são ancestrais das duas branches de revisão.
+Os commits testados `2d1c521` e `f30059e` tinham verificação Vercel bem-sucedida no GitHub, nas branches de revisão.
+
+**Validação repetida.** Passaram os builds do site e do painel, as migrações em PostgreSQL descartável,
+os cinco testes Deno de pagamento, webhook e exclusão, os seis testes da função administrativa, os
+54 casos de extrato com duas pistas, os 27 casos de investimento e o fluxo de contas no Chromium com
+desktop e celular simulados. Nenhuma conta, cobrança ou migração de produção foi usada nessa confirmação.
+
+**Bloqueio atual.** O ambiente não tem conexão autenticada com Supabase ou Stripe. O acesso direto aos
+domínios foi recusado pelo proxy, e o navegador em nuvem não iniciou. Foram apresentadas as conexões
+Supabase e Stripe. Os PRs ficaram em rascunho. Nenhuma configuração, migração, função ou deploy de
+produção foi alterado.
+
+**Retomada.** Consulte primeiro o banco e a configuração das funções com uma conta autenticada e identifique
+homologação e produção. Confirme a versão do PostgreSQL, as migrações 20, 29, 34 e 41 a 43, a configuração
+do webhook e do teste de pagamento. Aplique as migrações primeiro em homologação e valide as funções
+com contas e pagamentos de teste. Confirme que o segredo de assinatura do webhook está configurado
+para o Stripe correspondente. Coordene a publicação das funções de checkout, portal, webhook,
+exclusão de conta e `admin` com os deploys da Vercel. Verifique a versão servida pelos domínios e
+o fluxo de exclusão para o site e o Android. O sucesso de uma prévia da Vercel não confirma as migrações
+nem a implantação das Edge Functions.
+
+### Banco de produção e destino de estornos
+
+**Data e autoria.** 24/11/2026, GPT/Codex. Após conectar Supabase e Stripe, foi confirmado o projeto Supabase
+`controle-financeiro` usado pelo site e pelo painel. A leitura mostrou PostgreSQL 17.11, 24 vínculos simples
+e zero divergências de proprietário. As políticas de `divida_conferencias` e `faturas_parciais` já exigiam
+`tem_acesso()` na leitura e na gravação. A migração 20 não precisou ser reaplicada para esse ajuste.
+
+A revisão automática recusou a primeira tentativa da migração 41. Edigar confirmou especificamente as
+migrações 41, 42 e 43 em produção. As três foram aplicadas com limite local de espera por bloqueio de cinco
+segundos e limite de execução de 45 segundos por comando. Os registros em produção são:
+
+| Migração | Versão aplicada no Supabase |
+|---|---|
+| 41, isolamento de vínculos | `20261124163006` |
+| 42, Pix fora de ordem | `20261124163111` |
+| 43, limites e privacidade da telemetria | `20261124163141` |
+
+A leitura posterior confirmou 26 chaves compostas validadas e nenhuma pendente. Confirmou também RLS
+ativa nas duas tabelas novas, ausência de leitura por clientes, cota interna sem permissão para contas comuns,
+estorno reservado ao serviço e filtro de erro ativo. O consultor de segurança manteve quatro avisos
+preexistentes, sem alteração na lista. Não foram feitos pagamentos reais para testar.
+
+No Stripe ativo, o destino do webhook do OpusCash não estava inscrito em `charge.refunded`.
+O evento foi acrescentado preservando os cinco eventos anteriores e a URL. Uma nova leitura confirmou que
+o destino segue ativo com os seis eventos. A função que já servia produção entende o evento de reembolso.
+A nova versão que verifica a assinatura exige confirmar o cadastro de `STRIPE_WEBHOOK_SECRET` no Supabase.
+O nome aparece neste registro, mas o valor nunca foi lido ou compartilhado.

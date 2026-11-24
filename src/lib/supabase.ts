@@ -1,10 +1,18 @@
 import { createClient, type PostgrestError } from '@supabase/supabase-js'
+import { apagarSessaoLegada, sessaoDaAba } from './sessaoDaAba'
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
 export const configurado = Boolean(url && key)
-export const supabase = createClient(url ?? 'http://localhost', key ?? 'missing')
+if (url) apagarSessaoLegada(url)
+export const supabase = createClient(url ?? 'http://localhost', key ?? 'missing', {
+  auth: {
+    storageKey: sessaoDaAba.chave,
+    storage: sessaoDaAba.armazenamento,
+    persistSession: Boolean(sessaoDaAba.armazenamento),
+  },
+})
 
 /** O Supabase entrega no máximo 1000 linhas por consulta. */
 const PAGINA = 1000

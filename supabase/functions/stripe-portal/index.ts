@@ -1,25 +1,14 @@
 // Abre o portal do Stripe, onde a pessoa troca o cartão, vê as faturas ou cancela a assinatura.
 // Segredo necessário: STRIPE_SECRET_KEY.
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { getCorsHeaders, origemDeRetorno } from '../_shared/origens-stripe.ts'
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
-// Restringe CORS: aceita a origem da requisição se for localhost ou .netlify.app, senão usa '*'.
-const getCorsHeaders = (req: Request) => {
-  const origin = req.headers.get('Origin') || ''
-  const isAllowed = origin.includes('localhost') || origin.includes('netlify.app') || origin.includes('opuscash')
-  return {
-    ...CORS_HEADERS,
-    'Access-Control-Allow-Origin': isAllowed ? origin : '*',
-  }
-}
 const resposta = (corpo: unknown, status = 200, req: Request) =>
   new Response(JSON.stringify(corpo), { status, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } })
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: getCorsHeaders(req) })
+  if (req.method !== 'POST') return resposta({ erro: 'Use POST.' }, 405, req)
   try {
     const url = Deno.env.get('SUPABASE_URL')!
     const eu = createClient(url, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } })
@@ -28,8 +17,8 @@ Deno.serve(async (req) => {
     const servico = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 
     const { retorno } = await req.json().catch(() => ({}))
-    let origem: string
-    try { origem = new URL(String(retorno)).origin } catch { return resposta({ erro: 'Endereço de retorno inválido.' }, 400, req) }
+    const origem = origemDeRetorno(req, retorno)
+    if (!origem) return resposta({ erro: 'Endereço de retorno inválido.' }, 400, req)
 
     const { data } = await servico.from('assinaturas').select('stripe_customer_id').eq('user_id', user.id).maybeSingle()
     if (!data?.stripe_customer_id) return resposta({ erro: 'Você ainda não tem assinatura.' }, 404, req)

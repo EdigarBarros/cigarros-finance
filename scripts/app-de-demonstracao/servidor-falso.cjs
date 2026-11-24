@@ -18,9 +18,15 @@ exports.iniciar=async function({semPerfil=false,perfil={},dados={},porta=4999,se
   const srv=http.createServer((q,r)=>{let p=path.join(root,q.url.split('?')[0]);if(!fs.existsSync(p)||fs.statSync(p).isDirectory())p=path.join(root,'index.html');r.writeHead(200,{'content-type':mime[path.extname(p)]||'text/plain','content-security-policy':CSP});fs.createReadStream(p).pipe(r)})
   await new Promise(r=>srv.listen(porta,r))
   const {chromium}=require('playwright')
-  const browser=await chromium.launch()
+  const browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH})
   const ctx=await browser.newContext({viewport:{width:1280,height:900},deviceScaleFactor:dpr,hasTouch:toque,isMobile:toque})
-  if(!semSessao) await ctx.addInitScript(([s])=>{try{localStorage.setItem('sb-fake-auth-token',JSON.stringify(s))}catch{}},[sessao])
+  if(!semSessao) await ctx.addInitScript((s)=>{
+    const marcador='opuscash.sessao-chave'
+    if(sessionStorage.getItem(marcador))return
+    const chave='opuscash-sessao-'+crypto.randomUUID()
+    sessionStorage.setItem(marcador,chave)
+    sessionStorage.setItem(chave,JSON.stringify(s))
+  },sessao)
   const log=[]
   if(semPerfil) db.perfis=[]
   if(assinatura) db.assinaturas=assinatura==='nenhuma'?[]:[{user_id:uid,teste_fim:null,periodo_fim:null,cancela_no_fim:false,moeda:null,...(typeof assinatura==='object'?assinatura:{status:assinatura})}]

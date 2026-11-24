@@ -2,7 +2,7 @@
 // página de erro do navegador (o app instalado pela Play Store e pela tela de início precisa disso para parecer app).
 // Não guarda o app em cache: cada abertura busca a versão publicada, então a atualização automática
 // (src/lib/atualizacao.ts) continua igual. Trocou /offline.html ou o que ela usa? Mude o número de CACHE.
-const CACHE = 'opuscash-offline-1'
+const CACHE = 'opuscash-offline-2'
 const GUARDAR = ['/offline.html', '/offline.js', '/simbolo.webp']
 
 self.addEventListener('install', (e) => {

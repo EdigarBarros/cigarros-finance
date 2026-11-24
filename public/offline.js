@@ -1,8 +1,9 @@
-// Textos da página sem internet no idioma escolhido no app (cookie googtrans, veja src/lib/idioma.ts).
-// Inglês e espanhol têm tradução nossa; os outros idiomas ficam em português, porque o tradutor do Google precisa de internet.
+// A página offline usa a mesma preferência de idioma do site.
 try {
-  var m = document.cookie.match(/(?:^|;\s*)googtrans=\/[^/;]*\/([^;]+)/)
-  var idioma = m ? m[1].slice(0, 2) : ''
+  var cookie = document.cookie
+  var atual = cookie.match(/(?:^|;\s*)opuscash-idioma=([a-z]+)(?:;|$)/)
+  var legado = cookie.match(/(?:^|;\s*)googtrans=\/pt\/([a-z]+)(?:;|$)/)
+  var idioma = (atual || legado || [])[1]
   var textos = {
     en: ['You are offline', 'OpusCash needs a connection to show your data. Your entries are still saved.', 'Try again'],
     es: ['Estás sin internet', 'OpusCash necesita conexión para mostrar tus datos. Tus movimientos siguen guardados.', 'Intentar de nuevo'],

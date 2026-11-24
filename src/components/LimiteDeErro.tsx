@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { Component, type ReactNode } from 'react'
 import { ehErroDeVersao, versaoNovaNecessaria } from '../lib/atualizacao'
 import { registrarErro } from '../lib/erros'
 import { Marca } from './Marca'
@@ -9,10 +9,10 @@ import { tx } from '../lib/textos'
 export class LimiteDeErro extends Component<{ children: ReactNode }, { quebrou: boolean; versao: boolean }> {
   state = { quebrou: false, versao: false }
   static getDerivedStateFromError(erro: unknown) { return { quebrou: true, versao: ehErroDeVersao(erro) } }
-  componentDidCatch(erro: Error, info: ErrorInfo) {
+  componentDidCatch(erro: Error) {
     // saiu versão nova e esta aba ainda era da antiga: não é defeito, é só atualizar
     if (ehErroDeVersao(erro)) { versaoNovaNecessaria(); return }
-    registrarErro(erro, `tela ${location.hash || '/'} ${info.componentStack?.split('\n')[1]?.trim() ?? ''}`)
+    registrarErro(erro, 'tela')
   }
   render() {
     if (!this.state.quebrou) return this.props.children

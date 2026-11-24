@@ -39,6 +39,6 @@ export function Numero({ valor, formato, duracao = 1200 }: { valor: number; form
     })
     return () => { desistir(); cancelAnimationFrame(quadro) }
   }, [valor, duracao, parado])
-  // translate="no": o tradutor do Google (lib/idioma.ts) não mexe em valores, que mudam o tempo todo enquanto contam
+  // Os valores já usam a formatação do idioma escolhido no aplicativo.
   return <span ref={texto} translate="no">{formato(parado ? valor : atual.current)}</span>
 }

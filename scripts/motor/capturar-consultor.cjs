@@ -130,7 +130,7 @@ async function camada(p, arquivo, mostrar) {
       const t = await iniciar({ perfil: demo.perfil, dados: demo.dados, porta: 4700 + Math.floor(Math.random() * 200), dpr })
       const p = t.page
       await p.setViewportSize({ width: w, height: h })
-      if (idioma !== 'pt') await p.context().addCookies([{ name: 'googtrans', value: `/pt/${idioma}`, url: t.url }])
+      if (idioma !== 'pt') await p.context().addCookies([{ name: 'opuscash-idioma', value: idioma, url: t.url }])
       await p.addInitScript(([t]) => { try { localStorage.setItem('opuscash-tema', t) } catch { /* */ } }, [tema])
       await p.goto(`${t.url}#/analise`)
       await p.waitForTimeout(4500)

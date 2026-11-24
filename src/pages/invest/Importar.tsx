@@ -50,7 +50,7 @@ export function ImportarArquivo({ c, aoFechar, aoVerPendencias }: { c: Ctx; aoFe
     } catch (e) {
       registrarErro(e, 'invest importar')
       setPasso({ em: 'escolher' })
-      setErro(e instanceof Error ? e.message : tx('Não consegui ler esse arquivo.'))
+      setErro(e instanceof Error ? tx(e.message) : tx('Não consegui ler esse arquivo.'))
     }
   }
 

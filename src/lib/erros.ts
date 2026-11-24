@@ -6,30 +6,32 @@ import { supabase } from './supabase'
  * Nunca atrapalha o app (qualquer falha aqui é ignorada) e grava no máximo 5 por sessão, sem repetir a mesma mensagem.
  */
 const vistos = new Set<string>()
+const classes = new Set(['TypeError', 'RangeError', 'SyntaxError', 'ReferenceError', 'AbortError'])
+type OrigemDoErro = 'janela' | 'promessa' | 'tela' | 'consultor' | 'invest importar' | 'invest gravar importacao'
+  | 'leitor pdf' | 'extrato pdf' | 'importar extrato' | 'extrato sem lancamentos'
 
-export function registrarErro(erro: unknown, onde: string) {
+export function registrarErro(erro: unknown, onde: OrigemDoErro) {
   try {
     const e = erro instanceof Error ? erro : new Error(String(erro))
     // saiu versão nova e esta aba ainda pedia um pedaço da antiga (em qualquer lugar, não só nas telas): não é defeito,
     // é só atualizar. O app recarrega na hora certa (lib/atualizacao.ts).
     if (ehErroDeVersao(e)) { versaoNovaNecessaria(); return }
-    // "Script error." é o navegador escondendo um erro de um script de outro site (o tradutor do Google, por exemplo):
-    // não traz mensagem, linha nem arquivo, então não há o que consertar aqui
     if (/^script error\.?$/i.test(e.message.trim())) return
-    const mensagem = e.message.slice(0, 500) || 'erro sem mensagem'
-    if (vistos.size >= 5 || vistos.has(mensagem)) return
-    vistos.add(mensagem)
-    console.error('[OpusCash]', onde, e)
+    const mensagem = classes.has(e.name) ? e.name : 'Erro do aplicativo'
+    const chave = `${onde}:${mensagem}`
+    if (vistos.size >= 5 || vistos.has(chave)) return
+    vistos.add(chave)
+    if (import.meta.env.DEV) console.error('[OpusCash]', onde, e)
     void supabase.auth.getSession().then(({ data }) => {
       if (!data.session) return
       return supabase.from('erros_app').insert({
-        mensagem, onde: onde.slice(0, 300), detalhe: (e.stack ?? '').slice(0, 4000), versao: VERSAO,
+        mensagem, onde, versao: VERSAO,
       })
     }).catch(() => {})
   } catch { /* nunca atrapalha */ }
 }
 
 export function iniciarRegistroDeErros() {
-  window.addEventListener('error', (ev) => registrarErro(ev.error ?? ev.message, `janela ${location.hash || '/'}`))
-  window.addEventListener('unhandledrejection', (ev) => registrarErro(ev.reason, `promessa ${location.hash || '/'}`))
+  window.addEventListener('error', (ev) => registrarErro(ev.error ?? ev.message, 'janela'))
+  window.addEventListener('unhandledrejection', (ev) => registrarErro(ev.reason, 'promessa'))
 }

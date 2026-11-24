@@ -39,7 +39,7 @@ do $$
 declare t text;
 begin
   foreach t in array array['lancamentos', 'categorias', 'bancos', 'dividas', 'divida_saldos', 'meses', 'metas', 'meta_movimentos',
-                           'contas_fixas', 'cartoes', 'faturas_pagas', 'faturas_parciais', 'divida_partes', 'divida_promessas',
+                           'contas_fixas', 'cartoes', 'faturas_pagas', 'faturas_parciais', 'divida_partes', 'divida_promessas', 'divida_conferencias',
                            'invest_ativos', 'invest_operacoes', 'invest_precos', 'invest_importacoes', 'invest_config'] loop
     if to_regclass('public.' || t) is not null then
       execute format('alter table public.%I enable row level security', t);

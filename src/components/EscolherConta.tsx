@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState, type CSSProperties } from 'react'
 import { coresDe, nomeDe } from '../lib/abrirConta'
-import { esquecerConta, pedeSenha, trocarPara, useContasSalvas, type ContaSalva } from '../lib/contas'
+import { esquecerConta, useContasSalvas, type ContaSalva } from '../lib/contas'
 import { semMovimento } from '../lib/tema'
 import { tx } from '../lib/textos'
 import { useMobile } from '../lib/useMobile'
@@ -24,7 +24,7 @@ function Perfil({ conta, ordem, editando, ocupada, voando, aoEscolher }: {
       aria-label={editando ? tx('Tirar {0} deste aparelho', conta.email) : undefined}>
       <span className="pf-foto" style={coresDe(conta.id)}>
         <FotoDaConta conta={conta} />
-        {pedeSenha(conta) && !editando && <em className="pf-selo">{tx('Pede a senha')}</em>}
+        {!editando && <em className="pf-selo">{tx('Pede a senha')}</em>}
         {editando && <span className="pf-tirar"><Icone nome="lixeira" tamanho={30} /></span>}
       </span>
       <span className="pf-nome" translate="no">{nomeDe(conta)}</span>
@@ -56,14 +56,13 @@ function Voo({ conta, de }: { conta: ContaSalva; de: DOMRect }) {
 /**
  * Sem conta aberta, mas com contas lembradas neste aparelho: escolher com qual entrar, como os perfis de um serviço de
  * vídeo. No fundo passam as cenas do que o app faz (CenasDoOpus). Tocar num perfil: o quadro voa para o meio e some, e entra
- * a abertura do OpusCash (a conta abre direto) ou a tela de senha (conta sem "Manter conectado", ou com a sessão vencida).
+ * a tela de senha.
  * "Gerenciar contas" (no celular, "Editar") tira contas deste aparelho; "Outra conta" abre o login; "Início", a apresentação.
  */
 export function EscolherConta({ aoOutra, aoInicio }: { aoOutra: () => void; aoInicio?: () => void }) {
   const contas = useContasSalvas()
   const mobile = useMobile()
   const [ocupada, setOcupada] = useState<string | null>(null)
-  const [erro, setErro] = useState<string | null>(null)
   const [editando, setEditando] = useState(false)
   const [voo, setVoo] = useState<{ conta: ContaSalva; de: DOMRect } | null>(null)
   const [senhaDe, setSenhaDe] = useState<ContaSalva | null>(null)
@@ -89,21 +88,15 @@ export function EscolherConta({ aoOutra, aoInicio }: { aoOutra: () => void; aoIn
 
   const escolher = async (c: ContaSalva, foto: HTMLElement) => {
     if (ocupada) return
-    setErro(null)
-    if (editando) { void esquecerConta(c.id); return }
+    if (editando) { esquecerConta(c.id); return }
     setOcupada(c.id)
     setVoo({ conta: c, de: foto.getBoundingClientRect() })
-    const pouso = new Promise<void>((r) => window.setTimeout(r, semMovimento() ? 0 : VOO))
-    // a conta abre enquanto o quadro voa; a página só recarrega (e a abertura entra) quando ele termina
-    const r = pedeSenha(c) ? 'precisa-entrar' : await trocarPara(c.id, pouso)
-    if (r === 'ok') return
-    await pouso
-    if (r === 'precisa-entrar') setSenhaDe(c)
-    else setErro(tx('Sem internet. Confira sua conexão e tente de novo.'))
+    await new Promise<void>((r) => window.setTimeout(r, semMovimento() ? 0 : VOO))
+    setSenhaDe(c)
     setVoo(null)
     setOcupada(null)
   }
-  const alternarEdicao = () => { setErro(null); setEditando((x) => !x) }
+  const alternarEdicao = () => setEditando((x) => !x)
 
   if (senhaDe) {
     const atual = contas.find((c) => c.id === senhaDe.id) ?? senhaDe
@@ -146,7 +139,6 @@ export function EscolherConta({ aoOutra, aoInicio }: { aoOutra: () => void; aoIn
             </button>
           )}
         </div>
-        {erro && <p className="en-aviso" role="alert">{erro}</p>}
         {!mobile && (
           <button type="button" className="pf-gerenciar" onClick={alternarEdicao}>
             <Icone nome={editando ? 'check' : 'lapis'} tamanho={16} />{editando ? tx('Concluir') : tx('Gerenciar contas')}

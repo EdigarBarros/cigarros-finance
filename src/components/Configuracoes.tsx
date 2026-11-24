@@ -471,10 +471,11 @@ const CIENCIAS: { chave: string; texto: React.ReactNode }[] = [
 /** Excluir a conta de vez (login, dados e assinatura). Pede o aceite de cada termo de ciência e oferece o backup antes. */
 export function ExcluirContaModal({ email, aoBaixarBackup, aoFechar }: { email: string; aoBaixarBackup: () => Promise<unknown>; aoFechar: () => void }) {
   const [aceites, setAceites] = useState<Record<string, boolean>>({})
+  const [senha, setSenha] = useState('')
   const [baixou, setBaixou] = useState(false)
   const [ocupado, setOcupado] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
-  const pode = CIENCIAS.every((c) => aceites[c.chave]) && !ocupado
+  const pode = CIENCIAS.every((c) => aceites[c.chave]) && senha.length > 0 && !ocupado
 
   const baixar = async () => {
     setOcupado(tx('Gerando backup…'))
@@ -483,8 +484,15 @@ export function ExcluirContaModal({ email, aoBaixarBackup, aoFechar }: { email: 
   }
   const excluir = async () => {
     setOcupado(tx('Excluindo…')); setErro(null)
-    const msg = await excluirConta(email)
-    if (msg) { setErro(msg); setOcupado(null) }
+    try {
+      const msg = await excluirConta(email, senha)
+      if (msg) setErro(msg)
+    } catch (e) {
+      setErro(textoDoErro(e))
+    } finally {
+      setSenha('')
+      setOcupado(null)
+    }
   }
 
   return (
@@ -507,6 +515,11 @@ export function ExcluirContaModal({ email, aoBaixarBackup, aoFechar }: { email: 
             </label>
           ))}
         </div>
+        <label>
+          {tx('Senha')}
+          <input type="password" autoComplete="current-password" value={senha} disabled={Boolean(ocupado)}
+            onChange={(e) => setSenha(e.target.value)} />
+        </label>
         {erro && <p className="form-erro" role="alert">{erro}</p>}
         <div className="form-acoes">
           <span className="espaco" />

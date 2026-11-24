@@ -11,12 +11,8 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   da base, barras de progresso que enchem, pílula do menu que desliza até a página aberta e cartões que sobem sob o
   ponteiro. A troca de tema espalha o tema novo como uma mancha de tinta a partir do botão. Quem quiser menos movimento
   escolhe **Animações: Reduzidas** em Configurações → Aparência
-- **Qualquer idioma**: o botão 文A (no topo do painel; nas outras telas, preso no canto de cima) abre a lista de mais de
-  100 idiomas, cada um escrito nele mesmo, com busca. O app é escrito em português. Inglês e espanhol têm tradução nossa
-  (`lib/textos.ts` e `src/i18n/traducoes.json`, no app inteiro menos as páginas legais); os outros idiomas são a
-  tradução automática do Google (`lib/idioma.ts`). A escolha fica salva no navegador. Valores em dinheiro, a marca e o nome da pessoa não são traduzidos.
-  A política de segurança (`vercel.json`) libera o tradutor do Google; se ele mudar o script que roda na barra dele, o hash
-  `sha256-…` do `script-src` precisa ser atualizado (o console do navegador mostra o novo)
+- **Idioma**: o botão 文A oferece português, inglês e espanhol. A interface usa os textos incluídos no aplicativo
+  (`lib/textos.ts` e `src/i18n/traducoes.json`) e guarda a preferência no navegador. As páginas legais ficam em português.
 
 - **Painel que se adapta a cada pessoa**: no primeiro acesso, o seu nome e 4 perguntas rápidas (moeda, outras moedas, o que faz
   parte da vida financeira, jeito de ver) montam o painel só com o que faz sentido. Dívidas, bancos, investimentos e
@@ -183,8 +179,10 @@ Tudo grátis: o site fica na **Vercel** e os dados no **Supabase** (Postgres), p
    [`22`](supabase/migracao-22-juros-de-atraso.sql), [`23`](supabase/migracao-23-guardado-em-banco.sql),
    [`24`](supabase/migracao-24-memoria-do-consultor.sql), [`25`](supabase/migracao-25-promessas-de-pagamento.sql),
    [`26`](supabase/migracao-26-inicio-da-parte.sql), [`27`](supabase/migracao-27-saldo-de-um-mes-para-o-outro.sql),
-   [`28`](supabase/migracao-28-invest.sql), [`29`](supabase/migracao-29-pix-30-dias.sql), [`36`](supabase/migracao-36-juros-por-dia-e-valor-recebido.sql), [`37`](supabase/migracao-37-conferencias-da-divida.sql), [`38`](supabase/migracao-38-pular-compra-e-pagar-parte.sql), [`39`](supabase/migracao-39-compra-paga-por-outra-pessoa.sql), [`40`](supabase/migracao-40-estorno.sql) e, **por último**, a
-   [`20`](supabase/migracao-20-acesso-no-banco-definitivo.sql).
+   [`28`](supabase/migracao-28-invest.sql), [`29`](supabase/migracao-29-pix-30-dias.sql) e as migrações numeradas
+   de 30 a 40 em ordem. Em seguida rode a [`20`](supabase/migracao-20-acesso-no-banco-definitivo.sql) para
+   recompor as políticas de acesso e as migrações [`41`](supabase/migracao-41-isolamento-de-vinculos.sql),
+   [`42`](supabase/migracao-42-pix-eventos-fora-de-ordem.sql) e [`43`](supabase/migracao-43-limites-e-privacidade-da-telemetria.sql).
    O `schema.sql` sozinho **não** tem cobrança nem bloqueio: sem a 12 e a 20 o painel abre para qualquer conta, paga ou não.
    Não rode as migrações 02 a 08 num banco novo (o `schema.sql` já inclui o que elas fazem) nem a 13 (a 20 a substitui).
 3. Em **Project Settings → API** (ou botão **Connect**), copie:
@@ -206,12 +204,23 @@ Tudo grátis: o site fica na **Vercel** e os dados no **Supabase** (Postgres), p
 > **Não rode de novo** o `schema.sql` nem as migrações 04 a 08, 13 e 16 num banco que já tem cobrança: elas apagam as regras de acesso
 > (política `dono` sem `tem_acesso()`, ou a função sem o teste grátis) e o bloqueio de quem não pagou deixa de valer. Se isso
 > acontecer, rode a [`migracao-20`](supabase/migracao-20-acesso-no-banco-definitivo.sql), que é segura de rodar quantas vezes precisar.
+> Em bancos existentes, reaplique a versão atual da migração 20 para incluir as conferências de dívida no bloqueio por assinatura.
+> Valide as migrações 41 a 43 em homologação. A 41 exige PostgreSQL 15 ou superior e valida os vínculos existentes:
+> se houver registros ligados a outra conta, a transação inteira é revertida. Investigue os registros antes de reaplicar.
+> Aplique a 42 antes do novo webhook do Stripe e confira a entrega do pagamento e do estorno no ambiente de teste.
+> A 43 filtra novos registros técnicos, inclusive de versões antigas do app. O histórico existente segue sujeito à política de retenção.
 
 ### 2b. Cobrança (Stripe) e contas de cortesia
 
 1. No Stripe, crie o produto com preço mensal e `lookup_key = opuscash_mensal` (em reais e nas outras moedas aceitas).
 2. Supabase → **Edge Functions**: publique `stripe-checkout`, `stripe-portal`, `excluir-conta` (com verificação de JWT) e `stripe-webhook`
-   (**sem** verificação de JWT). Em **Secrets**, defina `STRIPE_SECRET_KEY`.
+   (com verificação de JWT desligada no gateway e autenticação pela assinatura do Stripe). Em **Secrets**, defina `STRIPE_SECRET_KEY` e, antes de publicar o webhook,
+   defina `STRIPE_WEBHOOK_SECRET` com o segredo de assinatura do endpoint no Stripe. Use o segredo do ambiente correspondente
+   e confirme a entrega de eventos assinados antes de liberar a cobrança.
+   Para usar checkout e portal em homologação ou no desenvolvimento, configure `STRIPE_ALLOWED_ORIGINS` no Supabase
+   daquele ambiente com as origens exatas, separadas por vírgula e sem barra final.
+   A exclusão da conta exige a senha atual. Atualize o site e o app Android para exibir o campo de senha junto com a função.
+   Quem estiver com uma versão antiga do app pode excluir a conta pelo site atualizado.
 3. Stripe → Webhooks: aponte para a função `stripe-webhook` com os eventos `customer.subscription.created`, `.updated` e `.deleted` e, para o Pix de 30 dias,
    `checkout.session.completed` e `checkout.session.async_payment_succeeded` e, para o reembolso do Pix tirar os 30 dias (migração 34),
    `charge.refunded`. Ordem para publicar o Pix: migração 29, depois as funções `stripe-webhook` e

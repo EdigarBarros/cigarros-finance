@@ -17806,5 +17806,41 @@
   "Estorno de {0}": {
     "en": "{0} refunded",
     "es": "Reembolso de {0}"
+  },
+  "Esse arquivo passa de 25 MB. Exporte um período menor.": {
+    "en": "This file is larger than 25 MB. Export a shorter period.",
+    "es": "Este archivo supera los 25 MB. Exporta un período más corto."
+  },
+  "Este PDF passa de 300 páginas. Exporte um período menor.": {
+    "en": "This PDF has more than 300 pages. Export a shorter period.",
+    "es": "Este PDF supera las 300 páginas. Exporta un período más corto."
+  },
+  "O arquivo compactado não pôde ser lido. Exporte uma nova cópia e tente novamente.": {
+    "en": "The compressed file could not be read. Export a new copy and try again.",
+    "es": "No se pudo leer el archivo comprimido. Exporta una copia nueva e inténtalo de nuevo."
+  },
+  "O arquivo tem muitos itens internos. Importe uma planilha ou documento menor.": {
+    "en": "The file contains too many entries. Import a smaller spreadsheet or document.",
+    "es": "El archivo contiene demasiados elementos. Importa una hoja de cálculo o un documento más pequeño."
+  },
+  "O arquivo é grande demais ao descompactar. Exporte um período menor.": {
+    "en": "The file is too large when decompressed. Export a shorter period.",
+    "es": "El archivo es demasiado grande al descomprimirlo. Exporta un período más corto."
+  },
+  "Documento compactado inválido.": {
+    "en": "Invalid compressed document.",
+    "es": "Documento comprimido no válido."
+  },
+  "Este formato de compactação não é compatível.": {
+    "en": "This compression format is unsupported.",
+    "es": "Este formato de compresión no es compatible."
+  },
+  "O documento excedeu o tamanho declarado ao descompactar.": {
+    "en": "The document exceeded its declared size when decompressed.",
+    "es": "El documento superó su tamaño declarado al descomprimirlo."
+  },
+  "Documento compactado incompleto.": {
+    "en": "Incomplete compressed document.",
+    "es": "Documento comprimido incompleto."
   }
 }
