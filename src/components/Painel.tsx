@@ -385,6 +385,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
 
   // O que você deve entra nas contas do mês; o que te devem fica à parte (só vira entrada quando você recebe).
   const dividasDevo = useMemo(() => d.dividas.filter((x) => !meDevem(x)), [d.dividas])
+  // Em espera: a pessoa não vai pagar agora. Ficam fora dos números do mês, dos gráficos, da Início e do "Para fazer"; a
+  // página Dívidas mostra à parte (e soma no total geral). O consultor e o conselheiro filtram sozinhos (lib/analise.ts).
+  const dividasAtivas = useMemo(() => dividasDevo.filter((x) => !x.em_espera), [dividasDevo])
+  const dividasEmEspera = useMemo(() => dividasDevo.filter((x) => x.em_espera), [dividasDevo])
   const dividasMeDevem = useMemo(() => d.dividas.filter(meDevem), [d.dividas])
 
   // Dia que vale para dizer o que está atrasado: hoje, ou o fim do mês aberto quando ele já passou.
@@ -399,7 +403,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     return MESES_NOME.map((_, i) => {
       const m = i + 1
       const l = lancsContados.filter((x) => x.mes === m && x.ano === ano && !faturaEmAberto(x, pagas, Boolean(comFaturas), agora))
-      const sit = situacaoDividas(dividasDevo, d.saldos, d.pagamentos, ano, m, taxas, hojeIso)
+      const sit = situacaoDividas(dividasAtivas, d.saldos, d.pagamentos, ano, m, taxas, hojeIso)
       const ef = mesEfetivo(mesesVistos, ano, m)
       const temProprio = d.meses.some((x) => x.ano === ano && x.mes === m)
       // Meses futuros sem lançamentos ficam em branco, como na planilha.
@@ -407,7 +411,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
       // Mês futuro sem saldo informado: o saldo é desconhecido, não zero (a linha do gráfico para em vez de despencar).
       return { sit, ef, resumo: vazio ? null : resumoMes(l, sit, ef, taxas, idCategoria, ano * 12 + m > agora && !saldoInformado(ef)) }
     })
-  }, [lancsContados, dividasDevo, d.saldos, d.pagamentos, d.meses, mesesVistos, ano, taxas, d.categorias, hoje, cartoes.faturasPagas, comFaturas]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lancsContados, dividasAtivas, d.saldos, d.pagamentos, d.meses, mesesVistos, ano, taxas, d.categorias, hoje, cartoes.faturasPagas, comFaturas]) // eslint-disable-line react-hooks/exhaustive-deps
   const porMes = porMesCompleto.map((x) => x.resumo)
   // O que já aconteceu e o que ainda vem em cada mês (gráficos de fluxo).
   const contasFixas = contasComAdiantadas
@@ -452,9 +456,13 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     () => situacaoDividas(dividasMeDevem, d.saldos, d.pagamentos, ano, mes, taxas, hojeIso),
     [dividasMeDevem, d.saldos, d.pagamentos, ano, mes, taxas, hojeIso],
   )
+  const emEspera = useMemo(
+    () => (dividasEmEspera.length ? situacaoDividas(dividasEmEspera, d.saldos, d.pagamentos, ano, mes, taxas, hojeIso) : []),
+    [dividasEmEspera, d.saldos, d.pagamentos, ano, mes, taxas, hojeIso],
+  )
   const diaRef = fimDoMes(ano, mes) < hojeIso ? fimDoMes(ano, mes) : hojeIso
   // as dívidas como foram cadastradas (parcela na moeda delas), para as listas dos formulários
-  const dividasAbertas = [...situacao, ...aReceber].filter((s) => s.restante > 0).map((s) => s.original)
+  const dividasAbertas = [...situacao, ...emEspera, ...aReceber].filter((s) => s.restante > 0).map((s) => s.original)
 
   const mudarMes = (delta: number) => {
     let [a, m] = [ano, mes + delta]
@@ -766,8 +774,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     // Pagamento de dívida com juros de atraso estimados: antes de gravar, os juros até o dia do pagamento viram valor real
     // (senão o pagamento abateria só o valor sem juros e o atraso pareceria pago).
     // (os juros só existem na situação do mês de hoje, que pode não ser o mês aberto nem do ano aberto)
-    const situacaoHoje = ano === hoje.getFullYear() ? porMesCompleto[hoje.getMonth()].sit
-      : situacaoDividas(dividasDevo, d.saldos, d.pagamentos, hoje.getFullYear(), hoje.getMonth() + 1, taxas, hojeIso)
+    // todas as suas, inclusive as em espera: pagar uma delas também acerta os juros do atraso
+    const situacaoHoje = situacaoDividas(dividasDevo, d.saldos, d.pagamentos, hoje.getFullYear(), hoje.getMonth() + 1, taxas, hojeIso)
     const sd = !id && l.divida_id && l.data ? situacaoHoje.find((x) => x.divida.id === l.divida_id) : undefined
     let lanc: Omit<Lancamento, 'id'> | null = l
     if (sd?.atraso && l.data && !aumentaDivida(l.tipo, sd.divida) && (!sd.divida.conferido_em || l.data > sd.divida.conferido_em)) {
@@ -840,7 +848,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     },
     busca, setBusca,
     saldoCorrido,
-    ano, mes, d, cartoes, faturas, lancsMes, lancsAno: lancsContados, lancsComparar, lancsMesComGuardados, lancsAnoComGuardados: lancsComGuardados, situacao, aReceber, diaRef, mesEf, porMes, previsto, diaADia, mobile,
+    ano, mes, d, cartoes, faturas, lancsMes, lancsAno: lancsContados, lancsComparar, lancsMesComGuardados, lancsAnoComGuardados: lancsComGuardados, situacao, aReceber, emEspera, diaRef, mesEf, porMes, previsto, diaADia, mobile,
     celular: d.celular, salvarCelular: d.salvarCelular,
     perfil, v, taxas, sugestao,
     aceitarSugestao: (s: Sugestao) => mudarPerfil(s.aplicar(perfil)),

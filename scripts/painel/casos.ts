@@ -979,6 +979,14 @@ export const CASOS: Caso[] = [
       // dívida quitada: as promessas antigas não voltam
       const quitada = sinaisDe({ ...e, saldos: [...saldos, { id: 'zero', divida_id: 'loja', data: '2026-11-10', saldo: 0 }] })
       certo('promessas de dívida quitada não aparecem', !quitada.some((x) => x.id.startsWith('promessas')))
+      // em espera: o Mercado Pago (atrasado) e a loja saem dos sinais e do compromisso, mas o fone (cartão) continua
+      const espera = { ...e, dividas: [{ ...mp, em_espera: true }, { ...nova, em_espera: true }] }
+      const se = sinaisDe(espera)
+      certo('em espera: sem dívida sobre dívida (nada atrasado que conte)', !se.some((x) => x.id === 'divida-sobre-divida'))
+      certo('em espera: sem promessas', !se.some((x) => x.id.startsWith('promessas')))
+      const ce = compromissoDe(espera)
+      igual('em espera: dezembro só com o fone', ce.meses[0].valor, 100)
+      igual('em espera: nada atrasado', ce.atrasadas, [])
       igual('promessas: 2 não cumpridas', (de('promessas').dado as { valor: number }).valor, 2)
       // a firmeza muda só o chamado
       const gentil = sinaisDe({ ...e, firmeza: 'gentil' }).find((x) => x.id === 'ritmo-divida')!

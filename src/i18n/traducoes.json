@@ -18798,5 +18798,57 @@
   "{0} cumpriu só 1 de {1} promessas de pagamento.": {
     "en": "{0} kept only 1 of {1} payment promises.",
     "es": "{0} cumplió solo 1 de {1} promesas de pago."
+  },
+  "Você deve nas dívidas ativas": {
+    "en": "You owe on active debts",
+    "es": "Debes en las deudas activas"
+  },
+  "Total geral, com as em espera: {0}": {
+    "en": "Grand total, including on-hold: {0}",
+    "es": "Total general, con las en espera: {0}"
+  },
+  "Em espera": {
+    "en": "On hold",
+    "es": "En espera"
+  },
+  "1 dívida que você não vai pagar agora: {0}. Ela continua correndo juros, mas fica fora do consultor, dos gráficos e da Início.": {
+    "en": "1 debt you won't pay right now: {0}. It keeps accruing interest, but stays out of the advisor, the charts and Home.",
+    "es": "1 deuda que no vas a pagar ahora: {0}. Sigue sumando intereses, pero queda fuera del asesor, de los gráficos y del Inicio."
+  },
+  "{0} dívidas que você não vai pagar agora: {1}. Elas continuam correndo juros, mas ficam fora do consultor, dos gráficos e da Início.": {
+    "en": "{0} debts you won't pay right now: {1}. They keep accruing interest, but stay out of the advisor, the charts and Home.",
+    "es": "{0} deudas que no vas a pagar ahora: {1}. Siguen sumando intereses, pero quedan fuera del asesor, de los gráficos y del Inicio."
+  },
+  "em espera": {
+    "en": "on hold",
+    "es": "en espera"
+  },
+  "Nenhuma dívida ativa. As em espera estão logo abaixo.": {
+    "en": "No active debts. The on-hold ones are right below.",
+    "es": "Ninguna deuda activa. Las en espera están justo abajo."
+  },
+  "Total geral, com as em espera": {
+    "en": "Grand total, including on-hold",
+    "es": "Total general, con las en espera"
+  },
+  "Não vai pagar esta agora?": {
+    "en": "Not paying this one now?",
+    "es": "¿No vas a pagar esta ahora?"
+  },
+  "Fica fora do consultor, dos gráficos e da Início. Continua correndo juros e somando no total geral.": {
+    "en": "Stays out of the advisor, the charts and Home. Keeps accruing interest and counting in the grand total.",
+    "es": "Queda fuera del asesor, de los gráficos y del Inicio. Sigue sumando intereses y contando en el total general."
+  },
+  "Ponha em espera: ela continua aqui, correndo juros, mas o consultor e os gráficos deixam de contar com ela.": {
+    "en": "Put it on hold: it stays here, accruing interest, but the advisor and the charts stop counting it.",
+    "es": "Ponla en espera: sigue aquí, sumando intereses, pero el asesor y los gráficos dejan de contarla."
+  },
+  "Voltar a contar": {
+    "en": "Count it again",
+    "es": "Volver a contarla"
+  },
+  "Pôr em espera": {
+    "en": "Put on hold",
+    "es": "Poner en espera"
   }
 }

@@ -279,7 +279,8 @@ export function conselhos(e: EntradaConselheiro): Conselho[] {
   }
 
   // 3. Parcelas das dívidas pesando (só dívidas que a pessoa deve)
-  const devo = e.dividas.filter((d) => !meDevem(d))
+  // a dívida em espera (a pessoa não vai pagar agora) não entra nos conselhos
+  const devo = e.dividas.filter((d) => !meDevem(d) && !d.em_espera)
   const dividasHoje = v.dividas ? situacaoDividas(devo, e.saldos, e.pagamentos, hoje.getFullYear(), hoje.getMonth() + 1, e.taxas, hojeLocal(hoje)) : []
   if (v.dividas && temFluxo && entradasMedia > 0) {
     const parcelas = centavos(soma(dividasHoje.filter((s) => s.restante > 0).map((s) => s.divida.valor_parcela ?? 0)))
@@ -322,7 +323,7 @@ export function conselhos(e: EntradaConselheiro): Conselho[] {
     const ultimas = new Map<string, ConferenciaDivida>()
     for (const c of e.conferencias) {
       const d = porNome.get(c.divida_id)
-      if (!d || meDevem(d) || c.data < desde || c.qual_valor === 'quitar') continue
+      if (!d || meDevem(d) || d.em_espera || c.data < desde || c.qual_valor === 'quitar') continue
       const antiga = ultimas.get(c.divida_id)
       if (!antiga || c.data > antiga.data || (c.data === antiga.data && c.created_at > antiga.created_at)) ultimas.set(c.divida_id, c)
     }
