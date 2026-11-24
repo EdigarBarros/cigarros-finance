@@ -32,6 +32,9 @@ suporte, em repositórios separados. Veja a entrada [Segurança do OpusCash em 2
 para localizar os commits, conferir as decisões e preparar uma revisão ou reversão. As branches de revisão
 `seguranca-opuscash` estão no GitHub nos dois repositórios. A implantação em produção permanece pendente.
 
+A continuação tratou os achados médios no código e nas migrações 41 a 43. Veja
+[Correções adicionais de segurança](#correções-adicionais-de-segurança) para os testes e os limites desta entrega.
+
 ## Histórico
 
 ### 14/11/2026 — GPT/Codex — Análise de bugs
@@ -1842,3 +1845,61 @@ O painel de suporte usa o mesmo projeto Supabase do OpusCash.
   e no filho, idempotência do checkout, reconciliação de pagamentos e estornos fora de ordem, trilha de
   auditoria em falhas parciais de ações administrativas, limites de importação e telemetria, e revisão
   de privacidade e retenção. Esses pontos ficaram fora dos três commits.
+
+### Correções adicionais de segurança
+
+**Data e autoria.** 24/11/2026, GPT/Codex. **Pedido.** Edigar pediu que as pendências da auditoria fossem investigadas
+e corrigidas, com prioridade aos vínculos financeiros entre contas. **Commits da branch de revisão.** OpusCash
+`f2483af` e Painel-Opus-Cash `f30059e`, ambos em `seguranca-opuscash`. Nenhum banco ou serviço de produção foi
+alterado nesta etapa.
+
+- **Vínculos financeiros.** A [migração 41](supabase/migracao-41-isolamento-de-vinculos.sql) substitui as chaves
+  estrangeiras simples elegíveis entre tabelas financeiras por chaves com o mesmo `user_id` nos dois lados. Preserva
+  os nomes e a ação de exclusão de cada vínculo. Em PostgreSQL 15 ou superior, o `SET NULL` limpa só a referência
+  opcional e preserva o proprietário. A migração inteira é transacional e falha se encontrar vínculos incompatíveis
+  já gravados. Revise qualquer inconsistência antes de reaplicar, sem apagar dados automaticamente. Aplique também
+  a versão atualizada da migração 20 para as conferências de dívida nos bancos existentes.
+- **Checkout.** `supabase/functions/stripe-checkout/index.ts` reutiliza sessões Stripe abertas com os mesmos
+  parâmetros e usa chaves de idempotência na criação de clientes e tentativas equivalentes. Uma sessão encerrada
+  permite a próxima compra. O cartão verifica também o estado no Stripe antes de abrir uma segunda assinatura.
+  Em caso de erro na leitura ou gravação da referência de cobrança no banco, interrompe a criação do checkout.
+  A proteção de equivalência não serializa opções de pagamento diferentes, e a consulta ao Stripe cobre até
+  100 registros por listagem. Casos com configurações diferentes, cadastros Stripe duplicados herdados ou
+  assinaturas antigas fora da primeira página ainda merecem acompanhamento.
+- **Pix fora de ordem.** A [migração 42](supabase/migracao-42-pix-eventos-fora-de-ordem.sql) exige as migrações 29
+  e 34. Registra o estorno que chega antes do pagamento e serializa as duas rotinas por sessão Stripe. Quando
+  chega o pagamento dessa sessão, ele fica registrado como estornado e não libera dias. Reenvios continuam
+  idempotentes. O webhook reconhece o novo resultado. O painel só tenta retirar dias diretamente quando o
+  reembolso integral retorna como concluído pelo Stripe. A migração não recalcula períodos já processados nem
+  resolve toda a conciliação de assinaturas e estornos históricos. Aplique a 42 antes de publicar o webhook.
+- **Auditoria administrativa.** `supabase/functions/admin/index.ts` do painel grava a tentativa antes de ações
+  Stripe, bloqueios, desbloqueios, encerramentos de sessões e exclusões. O resultado referencia a tentativa.
+  Se falhar o registro inicial, a ação é interrompida. Em falha posterior, o registro inicial permanece.
+  Stripe, Supabase Auth e a conclusão da auditoria continuam operações separadas. O painel identifica
+  tentativas no registro. As permissões de recuperação seguras da entrega anterior foram preservadas.
+- **Importações.** Extratos e planilhas têm limite de 25 MB antes da leitura. Investimentos mantém 15 MB.
+  O PDF tem teto de 300 páginas, leitura com avaliação de JavaScript desativada e liberação do leitor.
+  Arquivos ZIP têm validação do tamanho real descompactado, teto de 24 MiB por item, 96 MiB no conjunto e
+  4.096 entradas. Mensagens de limite têm tradução em inglês e espanhol.
+- **Privacidade e telemetria.** O cliente registra só a categoria do erro, a área e a versão. A
+  [migração 43](supabase/migracao-43-limites-e-privacidade-da-telemetria.sql) aplica filtragem no servidor
+  mesmo para clientes antigos. Ela também limita envios por conta e minuto (20 sinais de uso, 10 marcos e
+  12 erros), aceita campos de uso conhecidos e descarta detalhes livres. A política de privacidade explica
+  o novo registro técnico. A migração não apaga registros anteriores. A revisão da retenção histórica
+  continua pendente.
+
+**Validação executada.** Em PostgreSQL descartável com PGlite, o esquema completo recebeu as migrações 41 a 43
+duas vezes. Foram encontrados 26 vínculos compostos, contando os dois que já existiam em investimentos.
+Com duas contas fictícias, o banco negou vínculos entre usuários em gravação e atualização, preservou a RLS e
+manteve `CASCADE` e `SET NULL` nas exclusões legítimas. Passaram pagamento e estorno nas duas ordens com reenvios,
+cotas de telemetria e filtragem de detalhes livres. Stripe simulado confirmou checkout Pix concorrente com
+uma única sessão, reaproveitamento da URL, nova compra após encerramento e recusa de assinatura já ativa no
+Stripe. Os quatro testes anteriores das funções e os seis testes do painel passaram, incluindo falha na
+trilha inicial. Extratos 54/54, pistas 2/2, investimentos 27/27, arquivos ZIP e XLSX válidos aceitos e limite
+de tamanho aplicado. Builds do site e painel, checagem Deno e lint concluídos. Os verificadores avulsos
+ficaram em `/workspace/scratch/work`. O teste administrativo está versionado.
+
+**Implantação e reversão.** Valide as migrações em homologação com cópia segura ou dados sintéticos. Aplique
+41 a 43 pelo Supabase após os pré-requisitos e confira checkout, estorno e trilha de auditoria em modo de
+teste antes de atualizar as funções de produção. Reverter o Git não reverte SQL já aplicado. Os testes
+acima não usaram contas, pagamentos ou registros de produção.
