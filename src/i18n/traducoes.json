@@ -17714,5 +17714,97 @@
   "Ver de novo": {
     "en": "Watch again",
     "es": "Ver de nuevo"
+  },
+  "Estornada": {
+    "en": "Refunded",
+    "es": "Reembolsada"
+  },
+  "Estorno de parte": {
+    "en": "Partial refund",
+    "es": "Reembolso parcial"
+  },
+  "Em {0} voltaram {1} de {2}.": {
+    "en": "On {0}, {1} of {2} came back.",
+    "es": "El {0} volvieron {1} de {2}."
+  },
+  "Voltaram {0} de {1}.": {
+    "en": "{0} of {1} came back.",
+    "es": "Volvieron {0} de {1}."
+  },
+  "Ela não conta mais nos gastos, na fatura nem no limite.": {
+    "en": "It no longer counts in spending, the statement or the limit.",
+    "es": "Ya no cuenta en los gastos, el resumen ni el límite."
+  },
+  "Só o resto ({0}) conta nos gastos.": {
+    "en": "Only the rest ({0}) counts in spending.",
+    "es": "Solo el resto ({0}) cuenta en los gastos."
+  },
+  "Desfazer o estorno? A compra volta a contar com {0}.": {
+    "en": "Undo the refund? The purchase counts again as {0}.",
+    "es": "¿Deshacer el reembolso? La compra vuelve a contar con {0}."
+  },
+  "Desfazer estorno": {
+    "en": "Undo refund",
+    "es": "Deshacer reembolso"
+  },
+  "Foi estornada": {
+    "en": "It was refunded",
+    "es": "Fue reembolsada"
+  },
+  "O banco devolveu o dinheiro desta compra, inteiro ou em parte": {
+    "en": "The bank returned the money for this purchase, in full or in part",
+    "es": "El banco devolvió el dinero de esta compra, total o parcialmente"
+  },
+  "Escreva quanto voltou.": {
+    "en": "Enter how much came back.",
+    "es": "Escribe cuánto volvió."
+  },
+  "O estorno não pode passar do valor da compra ({0}).": {
+    "en": "The refund cannot exceed the purchase amount ({0}).",
+    "es": "El reembolso no puede superar el valor de la compra ({0})."
+  },
+  "Escolha o dia do estorno.": {
+    "en": "Choose the refund date.",
+    "es": "Elige el día del reembolso."
+  },
+  "Estorno": {
+    "en": "Refund",
+    "es": "Reembolso"
+  },
+  "Quanto voltou?": {
+    "en": "How much came back?",
+    "es": "¿Cuánto volvió?"
+  },
+  "Dia do estorno": {
+    "en": "Refund date",
+    "es": "Día del reembolso"
+  },
+  "Tudo ({0})": {
+    "en": "All ({0})",
+    "es": "Todo ({0})"
+  },
+  "Vale para a compra inteira ({0} parcelas): cada parcela devolve a sua parte. O que voltou sai da fatura, do limite e dos gastos; ela continua na lista, riscada.": {
+    "en": "Applies to the whole purchase ({0} installments): each installment returns its share. What came back leaves the statement, the limit and spending; it stays on the list, crossed out.",
+    "es": "Vale para la compra entera ({0} cuotas): cada cuota devuelve su parte. Lo que volvió sale del resumen, del límite y de los gastos; sigue en la lista, tachada."
+  },
+  "O que voltou sai dos gastos (e da fatura e do limite, se foi no cartão). O lançamento continua na lista, riscado.": {
+    "en": "What came back leaves spending (and the statement and limit, if it was on the card). The entry stays on the list, crossed out.",
+    "es": "Lo que volvió sale de los gastos (y del resumen y del límite, si fue con tarjeta). El movimiento sigue en la lista, tachado."
+  },
+  "Marcar como estornada": {
+    "en": "Mark as refunded",
+    "es": "Marcar como reembolsada"
+  },
+  "estornada": {
+    "en": "refunded",
+    "es": "reembolsada"
+  },
+  "estorno de {0}": {
+    "en": "{0} refunded",
+    "es": "reembolso de {0}"
+  },
+  "Estorno de {0}": {
+    "en": "{0} refunded",
+    "es": "Reembolso de {0}"
   }
 }

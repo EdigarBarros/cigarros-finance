@@ -24,6 +24,7 @@ import { Modal, Palco, Segmentado } from './ui'
 import { CampoData, CampoSugestoes, Seletor } from './Escolhas'
 import { confirmar, perguntar } from '../lib/avisos'
 import { tx } from '../lib/textos'
+import { foiEstornado, totaisDoEstorno } from '../lib/estorno'
 import { crescimentoPorDias, diasEntre, temJurosDeAtraso } from '../lib/jurosAtraso'
 
 type NovoLanc = Omit<Lancamento, 'id'>
@@ -70,6 +71,15 @@ interface FormLancProps {
   aoExcluirCompra?: (compraId: string) => void
   /** Sem a migração 39: o campo "Quem paga esta compra?" não aparece. */
   semPagoPor?: boolean
+  /**
+   * Estorno (migração 40), só ao editar uma saída: as parcelas da compra (ou o lançamento sozinho) e o que fazer.
+   * Sem a migração, não vem e o botão "Foi estornada" não aparece.
+   */
+  estorno?: {
+    partes: Lancamento[]
+    aoEstornar: (quanto: number, quando: string) => Promise<boolean>
+    aoDesfazer: () => Promise<boolean>
+  }
   /** Compras já lançadas nos cartões: servem para avisar quando a mesma compra é lançada duas vezes. */
   comprasCartao?: Lancamento[]
   /** Avisa em que fatura a compra caiu (principalmente quando já passou do fechamento). */
@@ -142,6 +152,8 @@ export function FormLancamento(p: FormLancProps) {
   const inicioLigada = dividaId && !novoEmprestimo ? p.inicioDivida?.(dividaId) ?? null : null
   const saldoLigado = dividaId && !novoEmprestimo ? p.saldoDaDivida?.(dividaId) ?? null : null
   const ehParcela = Boolean(p.inicial?.compra_id)
+  // estornada inteira: não tem valor para salvar; para mudar algo, desfaz o estorno antes
+  const estornadaInteira = Boolean(p.estorno && p.inicial && foiEstornado(p.inicial) && p.inicial.valor < 0.005)
   const cartaoDaParcela = p.cartoes?.find((c) => c.id === p.inicial?.cartao_id)
   // nomes de quem já pagou alguma compra, para sugerir ao digitar
   const nomesQuePagam = useMemo(
@@ -504,6 +516,7 @@ export function FormLancamento(p: FormLancProps) {
     <Modal titulo={p.inicial ? tx('Editar lançamento') : p.preset?.divida_id ? (p.preset.tipo === 'entrada' ? tx('Receber') : tx('Pagar dívida')) : tx('Novo lançamento')}
       aoFechar={p.aoFechar} tamanho="tela" cor={cor} palco={palco}>
       <form id={idForm} className="form" onSubmit={(e) => { e.preventDefault(); void salvar(false) }}>
+        {p.estorno && p.inicial && <EstornoNoForm estorno={p.estorno} moeda={principal} aoFechar={p.aoFechar} />}
         <label className="campo-ic">
           <Icone nome="lapis" tamanho={18} />
           <CampoSugestoes
@@ -816,10 +829,105 @@ export function FormLancamento(p: FormLancProps) {
           )}
           <span className="espaco" />
           {!p.inicial && !p.preset && <button type="button" className="btn" disabled={salvando} onClick={() => void salvar(true)}><Icone nome="mais" tamanho={16} />{tx('Salvar e lançar outro')}</button>}
-          <button type="submit" className="btn primario" disabled={salvando}><Icone nome="check" tamanho={17} />{tx('Salvar')}</button>
+          <button type="submit" className="btn primario" disabled={salvando || estornadaInteira}><Icone nome="check" tamanho={17} />{tx('Salvar')}</button>
         </div>
       </form>
     </Modal>
+  )
+}
+
+/**
+ * "Foi estornada": o banco devolveu a compra (ou o gasto), inteira ou em parte. Abre um quadro com quanto voltou (já
+ * preenchido com tudo) e o dia. Estornada, mostra quanto voltou e "Desfazer estorno". Compra no cartão: vale para a compra
+ * inteira; em parcelada, cada parcela devolve a sua parte (`lib/estorno.ts`).
+ */
+function EstornoNoForm({ estorno, moeda, aoFechar }: { estorno: NonNullable<FormLancProps['estorno']>; moeda: string; aoFechar: () => void }) {
+  const { antes, voltou } = totaisDoEstorno(estorno.partes)
+  const ja = estorno.partes.some(foiEstornado)
+  const quando = estorno.partes.find(foiEstornado)?.estornado_em ?? null
+  const parcelas = estorno.partes.length
+  const [aberto, setAberto] = useState(false)
+  const [quanto, setQuanto] = useState(paraCampoMoeda(antes, moeda))
+  const [dia, setDia] = useState(hojeLocal())
+  const [erro, setErro] = useState<string | null>(null)
+  const [salvando, setSalvando] = useState(false)
+  const fazer = async (acao: () => Promise<boolean>) => {
+    setSalvando(true)
+    const ok = await acao()
+    setSalvando(false)
+    if (ok) aoFechar()
+    else setErro(tx('Não deu certo. Tente de novo.'))
+  }
+
+  if (ja) {
+    const inteira = voltou >= antes - 0.005
+    return (
+      <div className="lf-estorno feito" role="status">
+        <Icone nome="desfazer" tamanho={18} />
+        <span>
+          <b>{inteira ? tx('Estornada') : tx('Estorno de parte')}</b>
+          <small>
+            {quando ? tx('Em {0} voltaram {1} de {2}.', fmtDataLonga(quando), fmtValor(voltou), fmtValor(antes)) : tx('Voltaram {0} de {1}.', fmtValor(voltou), fmtValor(antes))}
+            {' '}{inteira ? tx('Ela não conta mais nos gastos, na fatura nem no limite.') : tx('Só o resto ({0}) conta nos gastos.', fmtValor(Math.round((antes - voltou) * 100) / 100))}
+          </small>
+          {erro && <small className="lf-estorno-erro">{erro}</small>}
+        </span>
+        <button type="button" className="btn" disabled={salvando} onClick={async () => {
+          if (!(await confirmar(tx('Desfazer o estorno? A compra volta a contar com {0}.', fmtValor(antes)), { botao: tx('Desfazer estorno') }))) return
+          void fazer(estorno.aoDesfazer)
+        }}>{tx('Desfazer estorno')}</button>
+      </div>
+    )
+  }
+
+  if (!aberto) {
+    return (
+      <button type="button" className="lf-estorno-abrir" onClick={() => setAberto(true)}>
+        <Icone nome="desfazer" tamanho={16} />
+        <span>{tx('Foi estornada')}<small>{tx('O banco devolveu o dinheiro desta compra, inteiro ou em parte')}</small></span>
+        <Icone nome="dir" tamanho={15} />
+      </button>
+    )
+  }
+
+  const confirmarEstorno = () => {
+    const q = parseNumero(quanto)
+    if (q == null || q <= 0) return setErro(tx('Escreva quanto voltou.'))
+    if (q > antes + 0.005) return setErro(tx('O estorno não pode passar do valor da compra ({0}).', fmtValor(antes)))
+    if (!dia) return setErro(tx('Escolha o dia do estorno.'))
+    void fazer(() => estorno.aoEstornar(q, dia))
+  }
+  return (
+    <section className="lf-estorno" aria-label={tx('Estorno')}>
+      <h3><Icone nome="desfazer" tamanho={17} /> {tx('Foi estornada')}</h3>
+      <div className="form-linha">
+        <label className="campo">
+          <span className="campo-rotulo">{tx('Quanto voltou?')}</span>
+          <input inputMode="decimal" value={quanto} autoFocus onChange={(e) => { setQuanto(mascarar(e.target.value, casasDaMoeda(moeda))); setErro(null) }} />
+        </label>
+        <label className="campo">
+          <span className="campo-rotulo">{tx('Dia do estorno')}</span>
+          <CampoData valor={dia} aoMudar={setDia} rotulo={tx('Dia do estorno')} obrigatorio />
+        </label>
+      </div>
+      <div className="chips">
+        <button type="button" className={`chip ${parseNumero(quanto) === antes ? 'ativo' : ''}`} onClick={() => setQuanto(paraCampoMoeda(antes, moeda))}>{tx('Tudo ({0})', fmtValor(antes))}</button>
+        <button type="button" className={`chip ${parseNumero(quanto) === Math.round(antes * 50) / 100 ? 'ativo' : ''}`} onClick={() => setQuanto(paraCampoMoeda(Math.round(antes * 50) / 100, moeda))}>{tx('Metade')}</button>
+      </div>
+      <p className="campo-ajuda">
+        {parcelas > 1
+          ? tx('Vale para a compra inteira ({0} parcelas): cada parcela devolve a sua parte. O que voltou sai da fatura, do limite e dos gastos; ela continua na lista, riscada.', parcelas)
+          : tx('O que voltou sai dos gastos (e da fatura e do limite, se foi no cartão). O lançamento continua na lista, riscado.')}
+      </p>
+      {erro && <p className="form-erro">{erro}</p>}
+      <div className="lf-estorno-acoes">
+        <button type="button" className="btn" onClick={() => { setAberto(false); setErro(null) }}>{tx('Cancelar')}</button>
+        <span className="espaco" />
+        <button type="button" className="btn primario" disabled={salvando} onClick={confirmarEstorno}>
+          <Icone nome="check" tamanho={16} />{salvando ? tx('Salvando…') : tx('Marcar como estornada')}
+        </button>
+      </div>
+    </section>
   )
 }
 

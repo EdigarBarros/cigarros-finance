@@ -12,6 +12,7 @@ import { SEM_CATEGORIA } from '../../lib/categorias'
 import { nomeDaFatura, textoStatus, type SituacaoCartao } from '../../lib/cartoes'
 import { fmtDataCurta, fmtValor, MESES_NOME, noMeioDaFrase } from '../../lib/format'
 import { semMovimento } from '../../lib/tema'
+import { estornoTotal, foiEstornado } from '../../lib/estorno'
 import { tx } from '../../lib/textos'
 import type { CartaoCredito } from '../../lib/types'
 import {
@@ -109,8 +110,9 @@ export function CartoesMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom, c
                       fmtDataCurta(l.data_compra ?? null), k.nome, (l.parcelas ?? 1) > 1 ? `${l.parcela}/${l.parcelas}` : null,
                       l.pulada_de ? tx('pulada de {0}', nomeDaFatura(Number(l.pulada_de.slice(0, 4)), Number(l.pulada_de.slice(5, 7)), c.ano)) : null,
                       l.pago_por?.trim() ? tx('paga por {0}', l.pago_por.trim()) : null,
+                      foiEstornado(l) ? (estornoTotal(l) ? tx('estornada') : tx('estorno de {0}', fmtValor(l.estorno_valor!))) : null,
                     ].filter(Boolean).join(' · ')}
-                    valor={fmtValor(l.valor)} aoTocar={() => c.editarLancamento(l)} />
+                    valor={estornoTotal(l) ? tx('Estornada') : fmtValor(l.valor)} aoTocar={() => c.editarLancamento(l)} />
                 </div>
               )
             }) : <p className="widget-vazio">{tx('Nenhuma compra nesta fatura. Toque em “Compra” para lançar uma neste cartão.')}</p>}

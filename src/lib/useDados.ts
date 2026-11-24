@@ -18,6 +18,7 @@ const num = (v: unknown) => Number(v ?? 0)
 
 const normLanc = (r: Lancamento): Lancamento => ({
   ...r, valor: num(r.valor), valor_original: r.valor_original == null ? null : num(r.valor_original),
+  estorno_valor: r.estorno_valor == null ? null : num(r.estorno_valor),
 })
 const normDiv = (r: Divida): Divida => ({
   ...r, valor_parcela: r.valor_parcela == null ? null : num(r.valor_parcela),

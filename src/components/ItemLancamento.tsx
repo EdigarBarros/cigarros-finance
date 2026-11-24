@@ -6,6 +6,7 @@ import { BancoIcone } from './BancoIcone'
 import { Selo } from './Categorias'
 import { Icone } from './Icone'
 import { tx } from '../lib/textos'
+import { estornoTotal, foiEstornado, valorAntesDoEstorno } from '../lib/estorno'
 
 /**
  * Um lançamento na lista: selo da categoria, descrição, categoria e banco, e etiquetas do que ele é além de um gasto
@@ -38,10 +39,11 @@ export function ItemLancamento({ l, banco, categoria, cartao, emprestimo, aoClic
     ),
     l.divida_id && <span key="dv" className={`item-tag ${entrada ? 'receber' : 'divida'}`}><Icone nome={entrada ? 'receber' : 'divida'} tamanho={12} />{emprestimo ? (entrada ? tx('emprestado') : tx('emprestei')) : entrada ? tx('recebido') : tx('dívida')}</span>,
     l.conta_fixa_id && <span key="cf" className="item-tag conta"><Icone nome="calendario" tamanho={12} />{tx('todo mês')}</span>,
+    foiEstornado(l) && <span key="es" className="item-tag estorno"><Icone nome="desfazer" tamanho={12} />{estornoTotal(l) ? tx('estornada') : tx('estorno de {0}', fmtValor(l.estorno_valor!))}</span>,
   ].filter(Boolean)
   return (
     <li style={indice !== undefined ? { animationDelay: `${Math.min(indice, 12) * 30}ms` } : undefined}>
-      <button className="item-lanc" onClick={aoClicar}>
+      <button className={`item-lanc ${estornoTotal(l) ? 'estornado' : ''}`} onClick={aoClicar}>
         <Selo c={c} tamanho={38} />
         <span className="item-texto">
           <span className="item-desc">{l.descricao || (entrada ? tx('Entrada') : tx('Saída'))}</span>
@@ -53,7 +55,8 @@ export function ItemLancamento({ l, banco, categoria, cartao, emprestimo, aoClic
           </span>
         </span>
         <span className={`item-valor ${entrada ? 'mais' : ''}`}>
-          {entrada ? '+' : '−'} {fmtValor(l.valor)}
+          {estornoTotal(l) ? <s>{fmtValor(valorAntesDoEstorno(l))}</s> : <>{entrada ? '+' : '−'} {fmtValor(l.valor)}</>}
+          {foiEstornado(l) && !estornoTotal(l) && <small><s>{fmtValor(valorAntesDoEstorno(l))}</s></small>}
           {l.moeda_original && l.valor_original != null && <small>{fmtMoeda(l.valor_original, l.moeda_original)}</small>}
         </span>
       </button>

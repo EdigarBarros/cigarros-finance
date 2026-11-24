@@ -1592,6 +1592,38 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .item-tag.receber { color: var(--entrada); background: color-mix(in srgb, var(--entrada) 13%, transparent); }
 .item-tag.forma { color: var(--c, var(--texto-2)); background: color-mix(in srgb, var(--c, var(--texto-2)) 13%, transparent); }
 .item-tag.conta { color: var(--caixa); background: color-mix(in srgb, var(--caixa) 13%, transparent); }
+/* estorno (migração 40): a compra que voltou fica na lista, riscada e apagadinha */
+.item-tag.estorno { color: var(--entrada); background: color-mix(in srgb, var(--entrada) 13%, transparent); }
+.item-lanc.estornado .item-desc { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--texto) 45%, transparent); color: var(--texto-2); }
+.item-lanc.estornado .selo { opacity: .5; filter: grayscale(.6); }
+.item-lanc.estornado .item-valor, .item-valor s { color: var(--texto-3); font-weight: 600; }
+.item-valor small s { color: var(--texto-3); }
+.cc-estorno { font-style: normal; color: var(--entrada); }
+.lc-card.estornado .lc-card-desc { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--texto) 45%, transparent); color: var(--texto-2); }
+.lc-card.estornado .lc-card-valor { color: var(--texto-3); }
+.lc-card-valor s { color: var(--texto-3); }
+.lc-card-etiquetas .estorno { color: var(--entrada) !important; }
+.lf-estorno-abrir {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: 14px; text-align: left; cursor: pointer;
+  border: 1px dashed var(--borda-forte); background: transparent; color: var(--texto); transition: border-color .25s, background .25s;
+}
+.lf-estorno-abrir:hover, .lf-estorno-abrir:focus-visible { border-color: var(--entrada); background: color-mix(in srgb, var(--entrada) 6%, transparent); }
+.lf-estorno-abrir > svg:first-child { color: var(--entrada); flex: none; }
+.lf-estorno-abrir > svg:last-child { color: var(--texto-3); flex: none; }
+.lf-estorno-abrir span { flex: 1; display: grid; gap: 2px; font-weight: 600; font-size: 14px; }
+.lf-estorno-abrir small, .lf-estorno.feito small { font-weight: 400; font-size: 12.5px; color: var(--texto-2); }
+.lf-estorno {
+  display: grid; gap: 12px; padding: 14px 16px; border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--entrada) 35%, var(--borda)); background: color-mix(in srgb, var(--entrada) 6%, var(--superficie-2));
+}
+.lf-estorno h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 15px; }
+.lf-estorno h3 svg { color: var(--entrada); }
+.lf-estorno-acoes { display: flex; align-items: center; gap: 8px; }
+.lf-estorno-acoes .espaco { flex: 1; }
+.lf-estorno.feito { display: flex; align-items: center; gap: 12px; }
+.lf-estorno.feito > svg { color: var(--entrada); flex: none; }
+.lf-estorno.feito > span { flex: 1; display: grid; gap: 3px; font-size: 14px; }
+.lf-estorno-erro { color: var(--saida) !important; }
 
 
 /* duas colunas: à esquerda (presa ao rolar) o calendário e as categorias; à direita o resumo, os filtros e os cartões */

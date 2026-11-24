@@ -47,6 +47,12 @@ export interface Lancamento {
   pulada_de?: string | null
   /** Compra no cartão que outra pessoa paga: o nome dela (migração 39). Fica na fatura e no limite, fora dos seus gastos. */
   pago_por?: string | null
+  /**
+   * Estorno (migração 40): quanto voltou e em que dia. Com estorno, `valor` é só o que ainda conta (0 no estorno total),
+   * então as somas já tiram o que voltou. Veja `lib/estorno.ts`.
+   */
+  estorno_valor?: number | null
+  estornado_em?: string | null
   /** Pix, débito, dinheiro, boleto ou transferência (migração 11). Compra no cartão não usa: veja `formaDe`. */
   forma?: 'pix' | 'debito' | 'dinheiro' | 'boleto' | 'transferencia' | null
   /**
