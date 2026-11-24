@@ -30,7 +30,8 @@ As alterações anteriores de documentação (`CLAUDE.md` e criação deste arqu
 Em 24/11/2026 o GPT/Codex auditou a segurança do OpusCash e implementou correções locais no site e no painel de
 suporte, em repositórios separados. Veja a entrada [Segurança do OpusCash em 24 de novembro](#segurança-do-opuscash-em-24-de-novembro)
 para localizar os commits, conferir as decisões e preparar uma revisão ou reversão. As branches de revisão
-`seguranca-opuscash` estão no GitHub nos dois repositórios. A implantação em produção permanece pendente.
+`seguranca-opuscash` estão no GitHub nos dois repositórios. A implantação foi concluída conforme o registro
+[Publicação das funções, do site e do painel](#publicação-das-funções-do-site-e-do-painel).
 
 A continuação tratou os achados médios no código e nas migrações 41 a 43. Veja
 [Correções adicionais de segurança](#correções-adicionais-de-segurança) para os testes e os limites desta entrega.
@@ -1958,3 +1959,27 @@ O evento foi acrescentado preservando os cinco eventos anteriores e a URL. Uma n
 o destino segue ativo com os seis eventos. A função que já servia produção entende o evento de reembolso.
 A nova versão que verifica a assinatura exige confirmar o cadastro de `STRIPE_WEBHOOK_SECRET` no Supabase.
 O nome aparece neste registro, mas o valor nunca foi lido ou compartilhado.
+
+### Publicação das funções, do site e do painel
+
+**Data e autoria.** 24/11/2026, GPT/Codex. Edigar autorizou explicitamente a troca das Edge Functions e
+a mesclagem dos dois PRs. Também confirmou que o segredo de assinatura do endpoint do Stripe estava
+cadastrado no Supabase. O valor não foi solicitado nem lido.
+
+- Supabase de produção ativou `admin` v12, `stripe-portal` v5, `stripe-checkout` v10 e `stripe-webhook` v8.
+  Após o deploy do site, foi ativada `excluir-conta` v3. Conferi os arquivos servidos pelo Supabase contra o
+  código aprovado, incluindo o arquivo compartilhado de origens do Stripe. JWT permaneceu ligado em
+  `admin`, `stripe-portal`, `stripe-checkout` e `excluir-conta`. O webhook faz validação da assinatura do Stripe.
+- O painel foi mesclado pelo [PR #24](https://github.com/EdigarBarros/Painel-Opus-Cash/pull/24), commit
+  `11366cd`, e o site pelo [PR #287](https://github.com/EdigarBarros/cigarros-finance/pull/287), commit
+  `58695b1`. Os dois commits de produção receberam verificação Vercel bem-sucedida.
+  O branch do site avançou posteriormente para `e41fd24`, também com verificação Vercel bem-sucedida.
+  Esse commit contém a mesclagem de segurança e mantém os arquivos verificados de sessão, exclusão e pagamento.
+- As migrações 41, 42 e 43 já estavam aplicadas e verificadas. O evento `charge.refunded` está habilitado no
+  destino Stripe existente. O ambiente de execução recusou o acesso HTTP direto aos domínios públicos.
+  A confirmação de deploy veio da Vercel e do Supabase. O intervalo dos logs desde a ativação da v8 até a
+  conferência não mostrou chamadas ao webhook. A primeira entrega assinada em produção ainda não foi observada.
+  Nenhum pagamento ou estorno real foi criado como teste.
+- A tela web atual pede a senha ao excluir a conta. Para Android antigo, a exclusão pode ser feita pelo site.
+  Esta etapa não gerou nem publicou um AAB. Este registro final está na branch `seguranca-opuscash` para
+  preservar os deploys de produção já conferidos.
