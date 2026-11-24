@@ -18762,5 +18762,41 @@
   "Confira com o banco de tempos em tempos: eu aprendo quanto essa dívida cresce de verdade.": {
     "en": "Check with the bank every now and then: I learn how much this debt really grows.",
     "es": "Compruébalo con el banco de vez en cuando: aprendo cuánto crece esta deuda de verdad."
+  },
+  "Para anotar o valor para quitar, rode {0} no SQL Editor do Supabase.": {
+    "en": "To save the payoff amount, run {0} in the Supabase SQL Editor.",
+    "es": "Para anotar el valor para saldar, ejecuta {0} en el SQL Editor de Supabase."
+  },
+  "Atenção: \"{0}\" está em atraso ({1}).": {
+    "en": "Heads up: \"{0}\" is overdue ({1}).",
+    "es": "Atención: \"{0}\" está atrasada ({1})."
+  },
+  "A promessa anterior não foi cumprida.": {
+    "en": "The previous promise wasn't kept.",
+    "es": "La promesa anterior no se cumplió."
+  },
+  "Nenhuma das {0} promessas anteriores foi cumprida.": {
+    "en": "None of the {0} previous promises was kept.",
+    "es": "Ninguna de las {0} promesas anteriores se cumplió."
+  },
+  "Das {0} promessas anteriores, só 1 foi cumprida.": {
+    "en": "Of the {0} previous promises, only 1 was kept.",
+    "es": "De las {0} promesas anteriores, solo se cumplió 1."
+  },
+  "com \"{0}\" em atraso": {
+    "en": "with \"{0}\" overdue",
+    "es": "con \"{0}\" atrasada"
+  },
+  "Este mês saíram {0} em {1}, com \"{2}\" em atraso.": {
+    "en": "This month {0} went to {1}, with \"{2}\" overdue.",
+    "es": "Este mes salieron {0} en {1}, con \"{2}\" atrasada."
+  },
+  "{0} não cumpriu nenhuma das {1} promessas de pagamento.": {
+    "en": "{0} kept none of the {1} payment promises.",
+    "es": "{0} no cumplió ninguna de las {1} promesas de pago."
+  },
+  "{0} cumpriu só 1 de {1} promessas de pagamento.": {
+    "en": "{0} kept only 1 of {1} payment promises.",
+    "es": "{0} cumplió solo 1 de {1} promesas de pago."
   }
 }

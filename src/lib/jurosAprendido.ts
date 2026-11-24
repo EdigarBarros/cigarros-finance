@@ -103,15 +103,28 @@ export function pistaDaConferencia(s: SituacaoDivida, cal: Calendario | null, da
   const d = s.divida
   const conf = d.conferido_em ?? null
   const atrasadas = (cal?.atrasadas ?? []).filter((p) => p.falta > 0)
-  // a multa que o app pôs (uma vez, nas parcelas que venceram depois da última conferência) não é juro por dia
-  const multa = temJurosDeAtraso(d) && d.atraso_base !== 'saldo'
-    ? atrasadas.filter((p) => !conf || p.vencimento >= conf).reduce((a, p) => a + p.falta * (Math.max(0, d.atraso_multa ?? 2) / 100), 0)
-    : 0
-  const juros = Math.max(0, centavos(s.jurosAtraso - multa))
+  const taxaMulta = Math.max(0, d.atraso_multa ?? 2) / 100
   const primeira = atrasadas[0]?.vencimento ?? null
+  // a multa que o app pôs é cobrada uma vez, não é juro por dia: nas parcelas que venceram depois da última conferência
+  // ou, na regra do cartão, sobre o saldo inteiro quando a primeira atrasada venceu depois dela (como em jurosDoAtraso)
+  const multa = !temJurosDeAtraso(d) ? 0
+    : d.atraso_base === 'saldo'
+      ? (cal && primeira && (!conf || primeira >= conf) ? s.restante * taxaMulta : 0)
+      : atrasadas.filter((p) => !conf || p.vencimento >= conf).reduce((a, p) => a + p.falta * taxaMulta, 0)
+  const juros = Math.max(0, centavos(s.jurosAtraso - multa))
   const desde = primeira && conf ? (conf > primeira ? conf : primeira) : primeira ?? conf
   const dias = desde && desde < data ? diasEntre(desde, data) : null
-  return { juros_estimado: juros, base_juros: centavos(baseDoAtraso(s, cal)), dias_juros: dias }
+  // cada parcela atrasada cresce desde o próprio vencimento (ou desde a conferência): a base é a média do que esteve
+  // crescendo no período, para "juros ÷ (base × dias)" dar a taxa por dia mesmo com parcelas que venceram em dias diferentes
+  let base = baseDoAtraso(s, cal)
+  if (d.atraso_base !== 'saldo' && dias && atrasadas.length) {
+    const exposicao = atrasadas.reduce((a, p) => {
+      const inicio = conf && conf > p.vencimento ? conf : p.vencimento
+      return a + p.falta * Math.max(0, diasEntre(inicio, data))
+    }, 0)
+    base = exposicao / dias
+  }
+  return { juros_estimado: juros, base_juros: centavos(base), dias_juros: dias }
 }
 
 /** A conferência "para quitar hoje" mais recente, com o desconto que o banco dá. */
@@ -123,7 +136,8 @@ export function descontoParaQuitar(cs: ConferenciaDivida[]): DescontoParaQuitar 
 
 /** As pistas de juros de uma dívida: uma por intervalo entre conferências em que dá para dizer o que o banco cobrou. */
 export function amostrasDeJuros(divida: Divida, cs: ConferenciaDivida[]): AmostraDeJuros[] {
-  const lista = ordenadas(cs.filter((c) => c.divida_id === divida.id && c.qual_valor !== 'quitar'))
+  // só o que a pessoa digitou do banco ensina: o acerto antes de um pagamento ('pagar') é a própria estimativa do app
+  const lista = ordenadas(cs.filter((c) => c.divida_id === divida.id && c.qual_valor !== 'quitar' && c.origem !== 'pagar'))
   const semRegra = !temJurosDeAtraso(divida)
   const out: AmostraDeJuros[] = []
   for (let i = 0; i < lista.length; i++) {

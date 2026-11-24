@@ -313,7 +313,8 @@ export function achados(a: Analise): Achado[] {
   }
 
   // ---- os sinais de comportamento (lib/sinais.ts): ritmo da dívida, dívida sobre dívida, futuro já gasto… ----
-  const hojeIso = new Date().toISOString().slice(0, 10)
+  const agora = new Date()
+  const hojeIso = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`
   for (const x of a.sinais ?? []) {
     novos.push({
       // o que o consultor percebe no jeito de usar o dinheiro passa na frente dos gráficos de sempre: é o que abre o olho

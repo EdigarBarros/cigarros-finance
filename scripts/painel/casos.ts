@@ -24,7 +24,8 @@ import { chaveDoMes, sobrasPorMes } from '../../src/lib/saldoCorrido'
 import { atrasoDa, comGuardado, conselhosDoPlanejamento, custoDa, dicasDe, falta, montarPraMim, mudarParte, normPlanejamentos, placarDe, por, quadroDoMes, sobra, valerPartes } from '../../src/lib/planejamento'
 import type { PagamentoPlanejado, Plano } from '../../src/lib/planejador'
 import type { CartaoCredito, ContaFixa, Divida, FaturaParcial, Lancamento, Mes, SaldoDivida } from '../../src/lib/types'
-import { aprenderJuros, descontoParaQuitar } from '../../src/lib/jurosAprendido'
+import { aprenderJuros, descontoParaQuitar, pistaDaConferencia } from '../../src/lib/jurosAprendido'
+import { historicoDaDivida } from '../../src/lib/conferencias'
 import { compromissoDe, emDiasDeRenda, sinaisDe, type EntradaSinais } from '../../src/lib/sinais'
 import { naHoraDaPromessa, naHoraDeParcelar, naHoraDePagarParte, naHoraDePular } from '../../src/lib/naHora'
 import { lerPlano, type Quadro } from '../../src/lib/planejamento'
@@ -886,6 +887,9 @@ export const CASOS: Caso[] = [
       const a = aprenderJuros(s, cal, cs)!
       certo('aprendeu', a)
       igual('2 conferências serviram', a.amostras, 2)
+      // o acerto antes de um pagamento é a estimativa do próprio app: não ensina
+      igual('"pagar" não ensina', aprenderJuros(s, cal, [...cs, conf('pg', '2026-11-08', 1250, 1200, { origem: 'pagar', juros_estimado: 30, base_juros: 1220, dias_juros: 8 })])!.amostras, 2)
+      igual('o valor para quitar fica fora do histórico', historicoDaDivida(cs, 'mp').map((m) => m.conferencia.id), ['c2', 'c1', 'c0'])
       igual('modelo: percentual por dia', a.modelo, 'pct')
       // média pesada pelos dias: (0,7% × 20 + 0,70175% × 10) ÷ 30 = 0,700585%
       perto('taxa por dia', a.taxaDia, 0.00700585, 0.0000001)
@@ -911,6 +915,22 @@ export const CASOS: Caso[] = [
     },
   },
   {
+    nome: 'juros aprendidos: a pista pesa cada parcela atrasada pelos dias dela',
+    rodar() {
+      // duas parcelas de 100: venceram em 01/10 e 01/11; conferido em 01/10; hoje 11/11
+      // exposição = 100 × 41 + 100 × 10 = 5.100 real-dias em 41 dias → base média 124,39
+      const d: Divida = { id: 'e2', descricao: 'Loja', valor_parcela: 100, inicio: '2026-10-01', total_parcelas: 2, atraso_juros_mes: 1, atraso_periodo: 'dia', atraso_multa: 0, atraso_tipo: 'simples', atraso_base: 'parcela', conferido_em: '2026-10-01' }
+      const s = situacaoDividas([d], [{ id: 'x', divida_id: 'e2', data: '2026-09-15', saldo: 200 }], [], 2026, 11, {}, '2026-11-11')[0]
+      const cal = calendarioDe(s, '2026-11-11')
+      const p = pistaDaConferencia(s, cal, '2026-11-11')
+      igual('41 dias', p.dias_juros, 41)
+      perto('base média', p.base_juros, 124.39)
+      // 1% ao dia: 100 × 1% × 41 + 100 × 1% × 10 = 51, e 51 ÷ (124,39 × 41) = 1% ao dia
+      perto('juros estimados', p.juros_estimado, 51)
+      perto('a taxa volta certa', p.juros_estimado / (p.base_juros * p.dias_juros!), 0.01, 0.00002)
+    },
+  },
+  {
     nome: 'sinais: ritmo da dívida, dívida sobre dívida, futuro já gasto, pular compra, fatura pela metade e promessas',
     rodar() {
       const hoje = '2026-11-11'
@@ -931,7 +951,7 @@ export const CASOS: Caso[] = [
       ]
       const e: EntradaSinais = {
         hojeIso: hoje, renda: 1000, lancs: [], compras, faturasPagas: [],
-        faturasParciais: [parcial(2026, 10, 200, '2026-10-05'), parcial(2026, 11, 150, '2026-11-05')],
+        faturasParciais: [parcial(2026, 9, 200, '2026-09-05'), parcial(2026, 10, 150, '2026-10-05'), parcial(2026, 11, 90, '2026-11-05'), parcial(2026, 10, 50, '2026-10-06', { cartao_id: 'outro' })],
         dividas: [mp, nova], saldos, pagamentos: [], taxas: {}, conferencias: [], firmeza: 'direto', nome: 'Edigar Teste', lancamentosPorMes: 0, jurosCaro: 3,
       }
       const ss = sinaisDe(e)
@@ -948,7 +968,17 @@ export const CASOS: Caso[] = [
       certo('futuro: 40% em dezembro', de('futuro-comprometido').frase.includes('40%'))
       igual('futuro: tom médio', de('futuro-comprometido').tom, 'medio')
       certo('pulou 2 compras (150)', de('pulou-compra').frase.includes('2 compras') && de('pulou-compra').frase.includes('150'))
+      // setembro e outubro no PicPay; a de novembro ainda está sendo paga; o outro cartão não emenda a sequência
       igual('2 faturas seguidas pela metade', (de('fatura-parcial').dado as { valor: number }).valor, 2)
+      // um amigo devolvendo dinheiro ("me devem") não é dívida nova
+      const amigo: Divida = { id: 'amigo', descricao: 'Rafa', valor_parcela: null, sentido: 'me_devem' }
+      const devolveu = sinaisDe({ ...e, dividas: [mp], saldos: [saldos[0], { id: 'sa', divida_id: 'amigo', data: '2026-08-01', saldo: 300 }], compras: [],
+        lancs: [lanc('2026-11-09', 'entrada', 300, { divida_id: 'amigo' })] }).concat(sinaisDe({ ...e, dividas: [mp, amigo], compras: [],
+        saldos: [saldos[0], { id: 'sa', divida_id: 'amigo', data: '2026-08-01', saldo: 300 }], lancs: [lanc('2026-11-09', 'entrada', 300, { divida_id: 'amigo' })] }))
+      certo('devolução de quem te deve não vira dívida nova', !devolveu.some((x) => x.id === 'divida-sobre-divida'))
+      // dívida quitada: as promessas antigas não voltam
+      const quitada = sinaisDe({ ...e, saldos: [...saldos, { id: 'zero', divida_id: 'loja', data: '2026-11-10', saldo: 0 }] })
+      certo('promessas de dívida quitada não aparecem', !quitada.some((x) => x.id.startsWith('promessas')))
       igual('promessas: 2 não cumpridas', (de('promessas').dado as { valor: number }).valor, 2)
       // a firmeza muda só o chamado
       const gentil = sinaisDe({ ...e, firmeza: 'gentil' }).find((x) => x.id === 'ritmo-divida')!

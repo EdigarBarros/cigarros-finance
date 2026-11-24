@@ -201,9 +201,11 @@ export function sinaisDe(e: EntradaSinais): Sinal[] {
     const novasCompras = compras.filter((c) => c.feita > desde && c.feita <= hoje)
     const novasDividas = abertas.filter((s) => s.inicioEm && s.inicioEm > desde && s.inicioEm <= hoje)
     // empréstimo a mais numa dívida que já existia (o "pegar mais")
-    const maisEmprestimo = e.lancs.filter((l) => l.divida_id && l.data && l.data > desde && l.data <= hoje && l.valor > 0
-      && aumentaDivida(l.tipo, devo.find((d) => d.id === l.divida_id) ?? { sentido: 'devo' } as Divida)
-      && !novasDividas.some((s) => s.divida.id === l.divida_id))
+    // (só dívida sua: o dinheiro que alguém te devolve, em "me devem", não é dívida nova)
+    const maisEmprestimo = e.lancs.filter((l) => {
+      const d = l.divida_id ? devo.find((x) => x.id === l.divida_id) : undefined
+      return Boolean(d && l.data && l.data > desde && l.data <= hoje && l.valor > 0 && aumentaDivida(l.tipo, d) && !novasDividas.some((s) => s.divida.id === l.divida_id))
+    })
     const n = novasCompras.length + novasDividas.length + maisEmprestimo.length
     const valor = centavos(soma(novasCompras.map((c) => c.total)) + soma(novasDividas.map((s) => s.restante + s.pagoNoMes)) + soma(maisEmprestimo.map((l) => l.valor)))
     const pesoAtras = atrasadas[0]
@@ -211,7 +213,7 @@ export function sinaisDe(e: EntradaSinais): Sinal[] {
     if (n > 0 && valor > 0 && (pesoAtras || pesoCara)) {
       const ref = pesoAtras ?? pesoCara!
       const porque = pesoAtras
-        ? tx('enquanto {0} está atrasada', ref.divida.descricao)
+        ? tx('com "{0}" em atraso', ref.divida.descricao)
         : tx('enquanto {0} cobra juros', ref.divida.descricao)
       out.push({
         id: 'divida-sobre-divida', tema: 'dividas', tom: 'ruim', forca: 80 + 12 * peso(valor, e.renda || valor, 0.5),
@@ -314,7 +316,7 @@ export function sinaisDe(e: EntradaSinais): Sinal[] {
           titulo: tx('Troque parte dos gastos miúdos pelo atrasado de {0}.', alvo.divida.descricao),
           porque: porDia > 0
             ? tx('Este mês saíram {0} em {1}. O atrasado de {2} cresce uns {3} por dia.', fmtValor(total), nomes, alvo.divida.descricao, fmtValor(porDia))
-            : tx('Este mês saíram {0} em {1}, e {2} está atrasada.', fmtValor(total), nomes, alvo.divida.descricao),
+            : tx('Este mês saíram {0} em {1}, com "{2}" em atraso.', fmtValor(total), nomes, alvo.divida.descricao),
         } : undefined,
         dados: miudos.map((g) => ({ rotulo: g.descricao, valor: tx('{0} vezes · {1}', g.vezes, fmtValor(g.valor)) })),
         periodo: tx('Este mês'), confianca: 'alta',
@@ -324,10 +326,13 @@ export function sinaisDe(e: EntradaSinais): Sinal[] {
 
   // ---------- promessas: remarcadas ou não cumpridas ----------
   {
-    for (const d of e.dividas) {
-      if (!d.promessas?.length) continue
+    // a situação de verdade (com a cotação da moeda da dívida); dívida quitada não tem mais o que remarcar
+    const comPromessa = e.dividas.filter((d) => d.promessas?.length)
+    const sits = comPromessa.length ? situacaoDividas(comPromessa, e.saldos, e.pagamentos, ano, mes, e.taxas, hoje) : []
+    for (const s of sits) {
+      const d = s.divida
+      if (s.semCotacao || s.restante <= 0) continue
       const recebe = (d.sentido ?? 'devo') === 'me_devem'
-      const s = { divida: d, original: d, taxa: 1, restante: 1 }
       const p = promessasDe(s, e.pagamentos, hoje)
       const vencidas = p.lista.filter((x) => x.estado !== 'aguardando' && x.estado !== 'hoje')
       const falhou = vencidas.filter((x) => x.estado === 'nao_cumprida' || x.estado === 'trocada').length
@@ -338,7 +343,9 @@ export function sinaisDe(e: EntradaSinais): Sinal[] {
         id: `promessas:${d.id}`, tema: 'dividas', tom: recebe ? 'medio' : 'ruim', forca: recebe ? 52 + falhou * 4 : 60 + falhou * 5,
         titulo: recebe ? tx('Promessa que não se cumpre') : tx('Pagamento sempre remarcado'),
         frase: recebe
-          ? tx('{0} cumpriu {1} de {2} promessas de pagamento.', quem, cumpridas, vencidas.length)
+          ? (cumpridas === 0 ? tx('{0} não cumpriu nenhuma das {1} promessas de pagamento.', quem, vencidas.length)
+            : cumpridas === 1 ? tx('{0} cumpriu só 1 de {1} promessas de pagamento.', quem, vencidas.length)
+              : tx('{0} cumpriu {1} de {2} promessas de pagamento.', quem, cumpridas, vencidas.length))
           : tx('Você remarcou ou não cumpriu {0} das {1} datas combinadas para pagar {2}.', falhou, vencidas.length, d.descricao),
         chamado: recebe
           ? chamar(f, tx('Talvez valha combinar valores menores, que caibam no bolso de quem deve.'),
@@ -380,10 +387,21 @@ export function sinaisDe(e: EntradaSinais): Sinal[] {
 
   // ---------- fatura paga só em parte, mês após mês ----------
   {
-    const meses = new Set(e.faturasParciais.filter((p) => !e.faturasPagas.some((x) => x.cartao_id === p.cartao_id && x.ano === p.ano && x.mes === p.mes)).map((p) => chave(p.ano, p.mes)))
-    // seguidas até a mais recente (a deste mês pode ainda nem ter sido paga)
+    // por cartão: faturas que ficaram em parte (sem o pagamento que completa), contando só as que já passaram: a deste mês
+    // pode estar sendo paga em partes antes do vencimento
+    const porCartao = new Map<string, Set<number>>()
+    for (const p of e.faturasParciais) {
+      if (e.faturasPagas.some((x) => x.cartao_id === p.cartao_id && x.ano === p.ano && x.mes === p.mes)) continue
+      const k = chave(p.ano, p.mes)
+      if (k >= atual) continue
+      porCartao.set(p.cartao_id, (porCartao.get(p.cartao_id) ?? new Set()).add(k))
+    }
     let seguidas = 0
-    for (let k = meses.has(atual) ? atual : atual - 1; meses.has(k) && seguidas < 24; k--) seguidas++
+    for (const meses of porCartao.values()) {
+      let n = 0
+      for (let k = atual - 1; meses.has(k) && n < 24; k--) n++
+      seguidas = Math.max(seguidas, n)
+    }
     if (seguidas >= 2) {
       out.push({
         id: 'fatura-parcial', tema: 'dividas', tom: 'ruim', forca: 74 + Math.min(16, seguidas * 4),
