@@ -29,8 +29,8 @@ As alterações anteriores de documentação (`CLAUDE.md` e criação deste arqu
 
 Em 24/11/2026 o GPT/Codex auditou a segurança do OpusCash e implementou correções locais no site e no painel de
 suporte, em repositórios separados. Veja a entrada [Segurança do OpusCash em 24 de novembro](#segurança-do-opuscash-em-24-de-novembro)
-para localizar os commits, conferir as decisões e preparar uma revisão ou reversão. Esses commits de segurança
-ainda não foram enviados ao GitHub nem publicados.
+para localizar os commits, conferir as decisões e preparar uma revisão ou reversão. As branches de revisão
+`seguranca-opuscash` estão no GitHub nos dois repositórios. A implantação em produção permanece pendente.
 
 ## Histórico
 
@@ -1703,8 +1703,8 @@ com aro branco). **Next** ganhou desenho (verde-limão com o triângulo preto, "
 ### Segurança do OpusCash em 24 de novembro
 
 **Data e autoria.** 24/11/2026, GPT/Codex. **Estado.** Auditoria de código concluída no escopo descrito.
-Correções implementadas, testadas e commitadas localmente em dois repositórios. Nenhum dos três commits de
-segurança foi enviado ao GitHub ou publicado. Nenhuma função, migração ou configuração de produção foi alterada
+Correções implementadas e testadas localmente em dois repositórios. Após a autorização do Edigar, as duas
+branches de revisão foram enviadas ao GitHub. Nenhuma função, migração ou configuração de produção foi alterada
 nesta série de trabalhos.
 
 **O que Edigar pediu.** Primeiro, pediu uma análise ampla da segurança do OpusCash contra acessos indevidos e outros
@@ -1722,9 +1722,8 @@ o trabalho com contexto.
 | `EdigarBarros/Painel-Opus-Cash` em `/workspace/painel-opus-cash` | `seguranca-opuscash` | `7ca8e0e`, branch remota `main` | `b5da3b7` permissões de recuperação no suporte e sessão administrativa por aba. |
 
 O primeiro parecer partiu do checkout local em `8da5be7` e comparou as partes relevantes com a branch padrão do
-GitHub. As implementações foram feitas sobre `e6cb0b7` no site e `7ca8e0e` no painel. Os hashes acima só são
-utilizáveis em checkouts que contenham esses commits locais. Em outra sessão, confirme com
-`git branch --list seguranca-opuscash` e `git show --stat <hash>` no repositório correspondente.
+GitHub. As implementações foram feitas sobre `e6cb0b7` no site e `7ca8e0e` no painel. Os hashes acima estão disponíveis nas branches de revisão. Em outra sessão, consulte
+`origin/seguranca-opuscash` no repositório correspondente e confira as alterações com `git show --stat <hash>`.
 O painel de suporte usa o mesmo projeto Supabase do OpusCash.
 
 #### Site e base de dados — `96a5dee`
