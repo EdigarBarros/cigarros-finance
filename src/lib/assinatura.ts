@@ -184,8 +184,11 @@ export async function irParaStripe(funcao: 'stripe-checkout' | 'stripe-portal', 
 }
 
 /** Apaga a conta (login e todos os dados) e cancela a assinatura. Devolve a mensagem de erro, ou null se deu certo. */
-export async function excluirConta(email: string): Promise<string | null> {
-  const { data, error } = await supabase.functions.invoke('excluir-conta', { body: { confirmar: email } })
+export async function excluirConta(email: string, senha: string): Promise<string | null> {
+  const { data: ok, error } = await supabase.functions.invoke('excluir-conta', { body: { confirmar: email, senha } })
+  let data: { ok?: boolean; erro?: string } | null = ok
+  const resposta = (error as { context?: unknown } | null)?.context
+  if (!data && resposta instanceof Response) data = await resposta.clone().json().catch(() => null)
   if (data?.ok) {
     // a conta não existe mais: sai da lista de contas deste aparelho também
     await sairDestaConta()

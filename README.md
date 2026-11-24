@@ -206,12 +206,19 @@ Tudo grátis: o site fica na **Vercel** e os dados no **Supabase** (Postgres), p
 > **Não rode de novo** o `schema.sql` nem as migrações 04 a 08, 13 e 16 num banco que já tem cobrança: elas apagam as regras de acesso
 > (política `dono` sem `tem_acesso()`, ou a função sem o teste grátis) e o bloqueio de quem não pagou deixa de valer. Se isso
 > acontecer, rode a [`migracao-20`](supabase/migracao-20-acesso-no-banco-definitivo.sql), que é segura de rodar quantas vezes precisar.
+> Em bancos existentes, reaplique a versão atual da migração 20 para incluir as conferências de dívida no bloqueio por assinatura.
 
 ### 2b. Cobrança (Stripe) e contas de cortesia
 
 1. No Stripe, crie o produto com preço mensal e `lookup_key = opuscash_mensal` (em reais e nas outras moedas aceitas).
 2. Supabase → **Edge Functions**: publique `stripe-checkout`, `stripe-portal`, `excluir-conta` (com verificação de JWT) e `stripe-webhook`
-   (**sem** verificação de JWT). Em **Secrets**, defina `STRIPE_SECRET_KEY`.
+   (com verificação de JWT desligada no gateway e autenticação pela assinatura do Stripe). Em **Secrets**, defina `STRIPE_SECRET_KEY` e, antes de publicar o webhook,
+   defina `STRIPE_WEBHOOK_SECRET` com o segredo de assinatura do endpoint no Stripe. Use o segredo do ambiente correspondente
+   e confirme a entrega de eventos assinados antes de liberar a cobrança.
+   Para usar checkout e portal em homologação ou no desenvolvimento, configure `STRIPE_ALLOWED_ORIGINS` no Supabase
+   daquele ambiente com as origens exatas, separadas por vírgula e sem barra final.
+   A exclusão da conta exige a senha atual. Atualize o site e o app Android para exibir o campo de senha junto com a função.
+   Quem estiver com uma versão antiga do app pode excluir a conta pelo site atualizado.
 3. Stripe → Webhooks: aponte para a função `stripe-webhook` com os eventos `customer.subscription.created`, `.updated` e `.deleted` e, para o Pix de 30 dias,
    `checkout.session.completed` e `checkout.session.async_payment_succeeded` e, para o reembolso do Pix tirar os 30 dias (migração 34),
    `charge.refunded`. Ordem para publicar o Pix: migração 29, depois as funções `stripe-webhook` e

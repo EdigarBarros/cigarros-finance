@@ -1,20 +1,16 @@
 // Recebe os avisos do Stripe (assinou, renovou, falhou, cancelou, pagou ou reembolsou o Pix de 30 dias) e atualiza a tabela assinaturas.
-// Segredo necessário: STRIPE_SECRET_KEY. Sem verificação de JWT (quem chama é o Stripe).
-//
-// Em vez de confiar no corpo recebido, a função só lê o id do evento e busca o evento de novo no Stripe com a chave secreta:
-// um aviso falso aponta para um evento que não existe e é ignorado.
-import { createClient } from 'npm:@supabase/supabase-js@2'
+// O Stripe autentica cada notificação com STRIPE_WEBHOOK_SECRET. O gateway não exige JWT deste endpoint.
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
+import Stripe from 'npm:stripe@23.2.0'
 
-const EVENTOS = ['customer.subscription.created', 'customer.subscription.updated', 'customer.subscription.deleted']
 // Pix de 30 dias (pagamento único, criado em stripe-checkout com tipo 'pix'). Estes valores são os mesmos de lá.
-const EVENTOS_PIX = ['checkout.session.completed', 'checkout.session.async_payment_succeeded']
 const PIX_MOEDA = 'brl'
 const PIX_VALOR = 999
 const PIX_TIPO = 'pix_30_dias'
 const PIX_DIAS = 30
 // Reembolso: tira os dias do Pix devolvido (só reembolso total; parcial não mexe no acesso)
-const EVENTOS_REEMBOLSO = ['charge.refunded']
 const STRIPE = 'https://api.stripe.com/v1'
+const cryptoStripe = Stripe.createSubtleCryptoProvider()
 const cab = () => ({ Authorization: `Bearer ${Deno.env.get('STRIPE_SECRET_KEY')}` })
 const iso = (s?: number | null) => (s ? new Date(s * 1000).toISOString() : null)
 
@@ -23,7 +19,7 @@ const iso = (s?: number | null) => (s ? new Date(s * 1000).toISOString() : null)
  * calcula e que não revela o número) e a guarda. Se o mesmo cartão já foi usado no teste de OUTRA conta, encerra o teste agora: a
  * cobrança começa na hora. Não derruba o webhook se algo falhar aqui (o pior caso é a pessoa ganhar o teste).
  */
-async function conferirCartaoDoTeste(servico: ReturnType<typeof createClient>, sub: Record<string, any>, userId: string) {
+async function conferirCartaoDoTeste(servico: SupabaseClient, sub: Record<string, any>, userId: string) {
   try {
     let pm: string | null = typeof sub.default_payment_method === 'string' ? sub.default_payment_method : sub.default_payment_method?.id ?? null
     if (!pm) {
@@ -111,16 +107,31 @@ async function estornarPix(cobrancaId: unknown): Promise<Response> {
 }
 
 Deno.serve(async (req) => {
-  if (req.method !== 'POST') return new Response('ok')
+  if (req.method !== 'POST') return new Response('Use POST', { status: 405, headers: { Allow: 'POST' } })
+  const assinatura = req.headers.get('Stripe-Signature')
+  if (!assinatura) return new Response('Assinatura ausente', { status: 400 })
+  const segredo = Deno.env.get('STRIPE_WEBHOOK_SECRET')
+  const chave = Deno.env.get('STRIPE_SECRET_KEY')
+  if (!segredo || !chave) {
+    console.error('Segredos do Stripe não configurados no webhook')
+    return new Response('Webhook indisponível', { status: 503 })
+  }
+
+  let evento: Stripe.Event
   try {
-    const { id } = await req.json()
-    if (typeof id !== 'string' || !id.startsWith('evt_')) return new Response('ignorado')
-    const r = await fetch(`https://api.stripe.com/v1/events/${id}`, { headers: { Authorization: `Bearer ${Deno.env.get('STRIPE_SECRET_KEY')}` } })
-    if (!r.ok) return new Response('evento não encontrado', { status: 400 })
-    const evento = await r.json()
-    if (EVENTOS_PIX.includes(evento.type)) return await liberarPix(evento.data.object?.id)
-    if (EVENTOS_REEMBOLSO.includes(evento.type)) return await estornarPix(evento.data.object?.id)
-    if (!EVENTOS.includes(evento.type)) return new Response('ignorado')
+    const stripe = new Stripe(chave, { httpClient: Stripe.createFetchHttpClient() })
+    evento = await stripe.webhooks.constructEventAsync(await req.text(), assinatura, segredo, undefined, cryptoStripe)
+  } catch {
+    return new Response('Notificação do Stripe inválida', { status: 400 })
+  }
+
+  try {
+    if (evento.type === 'checkout.session.completed' || evento.type === 'checkout.session.async_payment_succeeded') {
+      return await liberarPix(evento.data.object.id)
+    }
+    if (evento.type === 'charge.refunded') return await estornarPix(evento.data.object.id)
+    if (evento.type !== 'customer.subscription.created' && evento.type !== 'customer.subscription.updated'
+      && evento.type !== 'customer.subscription.deleted') return new Response('ignorado')
 
     // O corpo do evento é uma foto do momento em que ele aconteceu. Avisos chegam fora de ordem (um "created" incompleto depois de um
     // "updated" ativo) e o Stripe reenvia avisos velhos; gravar a foto deixaria quem paga trancado para fora, ou quem cancelou com acesso.
@@ -130,7 +141,8 @@ Deno.serve(async (req) => {
 
     let userId: string | undefined = doEvento.metadata?.supabase_user_id
     if (!userId) {
-      const { data } = await servico.from('assinaturas').select('user_id').eq('stripe_customer_id', doEvento.customer).maybeSingle()
+      const cliente = typeof doEvento.customer === 'string' ? doEvento.customer : doEvento.customer.id
+      const { data } = await servico.from('assinaturas').select('user_id').eq('stripe_customer_id', cliente).maybeSingle()
       userId = data?.user_id
     }
     if (!userId) return new Response('sem usuário', { status: 200 })

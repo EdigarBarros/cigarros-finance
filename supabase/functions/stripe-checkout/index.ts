@@ -2,23 +2,7 @@
 // aqui a cobrança começa assim que a pessoa assina. Com tipo 'pix' cria, em vez disso, um pagamento único de 30 dias só com Pix.
 // Segredo necessário: STRIPE_SECRET_KEY. O resto (SUPABASE_URL, chaves) o Supabase já fornece.
 import { createClient } from 'npm:@supabase/supabase-js@2'
-
-const CORS_HEADERS = {
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-}
-
-// Restringe CORS: aceita a origem da requisição se for localhost ou .netlify.app, senão usa '*' (necessário para o cliente Supabase funcionar em dev/prod sem config extra de env, mas idealmente seria restrito).
-// Nota: Em produção crítica, defina ALLOWED_ORIGINS no ambiente. Aqui, priorizamos funcionalidade com segurança razoável (JWT ainda é validado).
-const getCorsHeaders = (req: Request) => {
-  const origin = req.headers.get('Origin') || ''
-  // Permite localhost (dev) e netlify.app (prod). Ajuste conforme seu domínio real.
-  const isAllowed = origin.includes('localhost') || origin.includes('netlify.app') || origin.includes('opuscash')
-  return {
-    ...CORS_HEADERS,
-    'Access-Control-Allow-Origin': isAllowed ? origin : '*',
-  }
-}
+import { getCorsHeaders, origemDeRetorno } from '../_shared/origens-stripe.ts'
 
 // Pix de 30 dias: o stripe-webhook confere estes mesmos valores antes de liberar o acesso.
 const PIX_MOEDA = 'brl'
@@ -61,6 +45,7 @@ async function stripe(caminho: string, dados?: Record<string, unknown>, versao?:
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: getCorsHeaders(req) })
+  if (req.method !== 'POST') return resposta({ erro: 'Use POST.' }, 405, req)
   try {
     const url = Deno.env.get('SUPABASE_URL')!
     const eu = createClient(url, Deno.env.get('SUPABASE_ANON_KEY')!, { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } })
@@ -70,8 +55,8 @@ Deno.serve(async (req) => {
 
     const { retorno, moeda, tipo } = await req.json().catch(() => ({}))
     const ehPix = tipo === 'pix'
-    let origem: string
-    try { origem = new URL(String(retorno)).origin } catch { return resposta({ erro: 'Endereço de retorno inválido.' }, 400, req) }
+    const origem = origemDeRetorno(req, retorno)
+    if (!origem) return resposta({ erro: 'Endereço de retorno inválido.' }, 400, req)
 
     const { data: atual } = await servico.from('assinaturas').select('*').eq('user_id', user.id).maybeSingle()
     if (atual && ['trialing', 'active', 'cortesia'].includes(atual.status)) return resposta({ erro: 'ja_ativa' }, 409, req)
