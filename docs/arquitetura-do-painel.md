@@ -879,7 +879,7 @@ ano aberto vêm de `lancsRecentes` em `useDados`.
   âmbar a partir de 70% e vermelho a partir de 90%). Clicar na linha tira o cartão da carteira. Arquivados: "Cartões que
   você não usa mais (N)" embaixo da carteira.
 - **Visual do banco** (`components/artesDosCartoes.tsx`, `artes-dos-cartoes.css`): Nubank, Itaú, Bradesco, Banco do Brasil
-  (Ourocard), Caixa, Santander (SX), Inter, C6 Bank, PicPay, Mercado Pago, PagBank e Neon têm o cartão redesenhado como o
+  (Ourocard), Caixa, Santander (Visa Platinum), Inter, C6 Bank, PicPay, Mercado Pago, PagBank, Neon e Next têm o cartão redesenhado como o
   de verdade (fundo, textura, logo do banco dos selos, chip, aproximação, bandeira e o nome da pessoa gravado), num SVG de
   320 × 202 que estica com o plástico. O banco é reconhecido como no selo (`estiloDoBanco` pelo nome do cartão ou do banco
   ligado). A fatura e os dias ficam por cima, onde a arte deixa espaço (tamanhos em `cqw`). Banco que o app não conhece fica
