@@ -3,6 +3,8 @@ import { semMovimento } from '../lib/tema'
 import { corSobre } from '../lib/estiloBanco'
 import { BancoIcone } from './BancoIcone'
 import { tx } from '../lib/textos'
+import { arteDoCartao } from './artesDosCartoes'
+import './artes-dos-cartoes.css'
 
 /** Desenhos de fundo do plástico; cada cartão fica com um, escolhido pelo nome (sempre o mesmo para o mesmo cartão). */
 const PADROES = [
@@ -54,7 +56,7 @@ const Aproximacao = () => (
  * Cartão de crédito desenhado: plástico na cor do cartão, desenho de fundo, chip, aproximação, selo do banco e um
  * brilho que acompanha o ponteiro, com o cartão inclinando de leve em 3D. `conteudo` vai no meio (ex.: a fatura).
  */
-export function CartaoIlustrado({ nome, cor, banco, conteudo, rodape, ativo, compacto, aoClicar }: {
+export function CartaoIlustrado({ nome, cor, banco, conteudo, rodape, ativo, compacto, aoClicar, titular = '', generico }: {
   nome: string
   cor: string
   /** Nome do banco ligado ao cartão (ajuda a achar o selo quando o nome do cartão não diz). */
@@ -64,6 +66,10 @@ export function CartaoIlustrado({ nome, cor, banco, conteudo, rodape, ativo, com
   ativo?: boolean
   compacto?: boolean
   aoClicar?: () => void
+  /** Nome gravado no plástico (o nome da pessoa), nos cartões com o visual do banco. */
+  titular?: string
+  /** Força o cartão genérico (sem o visual do banco). */
+  generico?: boolean
 }) {
   const ref = useRef<HTMLElement>(null)
   const padrao = PADROES[hash(nome) % PADROES.length]
@@ -86,7 +92,20 @@ export function CartaoIlustrado({ nome, cor, banco, conteudo, rodape, ativo, com
     for (const p of ['--rx', '--ry', '--mx', '--my']) el.style.removeProperty(p)
   }
 
-  const corpo = (
+  // banco conhecido: o visual do cartão de verdade dele (artesDosCartoes.tsx); o resto continua igual (brilho, inclinação)
+  const arte = generico ? null : arteDoCartao(nome, banco)
+  const corpo = arte ? (
+    <>
+      <svg className="ca-desenho" viewBox="0 0 320 202" aria-hidden="true">{arte.desenho(titular)}</svg>
+      <span className="cc-brilho" aria-hidden="true" />
+      {(conteudo || rodape) && (
+        <span className={`ca-bloco ${arte.bloco.alinhar === 'end' ? 'fim' : ''}`} style={{ left: arte.bloco.left, right: arte.bloco.right, top: arte.bloco.top, bottom: arte.bloco.bottom }}>
+          {conteudo}
+          {rodape && <span className="ca-rodape">{rodape}</span>}
+        </span>
+      )}
+    </>
+  ) : (
     <>
       <svg className="cc-padrao" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">{padrao}</svg>
       <span className="cc-brilho" aria-hidden="true" />
@@ -106,8 +125,11 @@ export function CartaoIlustrado({ nome, cor, banco, conteudo, rodape, ativo, com
     </>
   )
   const props = {
-    className: `cc-plastico ${ativo ? 'ativo' : ''} ${compacto ? 'compacto' : ''}`,
-    style: { '--c': cor, '--cc-texto': texto } as React.CSSProperties,
+    className: `cc-plastico ${ativo ? 'ativo' : ''} ${compacto ? 'compacto' : ''} ${arte ? `com-arte arte-${arte.chave.replace(/\s+/g, '-')}` : ''}`,
+    style: (arte
+      ? { '--c': arte.cor, '--cc-texto': arte.tinta, background: arte.fundo }
+      : { '--c': cor, '--cc-texto': texto }) as unknown as React.CSSProperties,
+    'aria-label': arte ? nome : undefined,
     onPointerMove: mover,
     onPointerLeave: soltar,
   }

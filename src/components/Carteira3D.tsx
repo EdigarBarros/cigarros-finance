@@ -30,7 +30,9 @@ export const Carteira3D = forwardRef<HTMLDivElement, {
   compacta: boolean
   aoEscolher: (id: string) => void
   aoNovo: () => void
-}>(function Carteira3D({ vagas, fora, compacta, aoEscolher, aoNovo }, ref) {
+  /** Nome gravado nos cartões com o visual do banco. */
+  titular?: string
+}>(function Carteira3D({ vagas, fora, compacta, aoEscolher, aoNovo, titular }, ref) {
   const couro = useRef<HTMLDivElement>(null)
 
   const mover = (e: React.PointerEvent) => {
@@ -69,11 +71,12 @@ export const Carteira3D = forwardRef<HTMLDivElement, {
               style={{ '--i': i, '--c': v.cor } as React.CSSProperties}>
               <div className="cw-cartao">
                 <CartaoIlustrado nome={v.nome} cor={v.cor} banco={v.banco} compacto={compacta} ativo={fora === v.id}
-                  aoClicar={() => aoEscolher(v.id)} rodape={v.rodape}
+                  aoClicar={() => aoEscolher(v.id)} rodape={v.rodape} titular={titular}
                   conteudo={<span className="cc-plastico-fatura"><small>{v.rotulo}</small><b>{v.valor}</b></span>} />
               </div>
               <div className="cw-bolso" aria-hidden="true">
                 <span className="cw-bolso-linha">
+                  <span className="cw-bolso-nome">{v.nome}</span>
                   <b className="cw-bolso-valor">{v.valor}</b>
                   <span className={`cw-estado ${v.estado}`}><i />{v.textoEstado}</span>
                 </span>

@@ -27,6 +27,8 @@ export interface PaginaDoHero {
   subAlerta?: boolean
   /** Só com o tom 'cor': a cor do degradê (o cartão de crédito na cor do banco). */
   cor?: string
+  /** Desenho em cima do rótulo (o cartão de crédito com o visual do banco). */
+  visual?: ReactNode
 }
 
 /** Número longo encolhe para caber numa linha (R$ 1.234.567,89 não pode quebrar). */
@@ -156,6 +158,7 @@ export function HeroDeslizante({ paginas, aoMudar, inicial = 0 }: { paginas: Pag
           <div key={p.id} className="hero-movel-pagina" role="group" aria-roledescription={tx('página')}
             aria-label={tx('{0} de {1}: {2}', n + 1, paginas.length, p.rotulo)} aria-hidden={n !== fixa || undefined}>
             {p.selo && <SeloDoMes selo={p.selo} tabIndex={n === fixa ? undefined : -1} />}
+            {p.visual && <div className="hero-movel-visual" aria-hidden="true">{p.visual}</div>}
             <p className="hero-movel-rotulo">{p.rotulo}</p>
             <p className="hero-movel-valor" style={{ fontSize: tamanhoDoValor(p.valor) }}>{p.valor}</p>
             {p.sub && <p className={`hero-movel-sub ${p.subAlerta ? 'vai-faltar' : ''}`}>{p.subAlerta && <Icone nome="alerta" tamanho={15} />}{p.sub}</p>}

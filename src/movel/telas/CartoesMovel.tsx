@@ -13,6 +13,7 @@ import { nomeDaFatura, textoStatus, type SituacaoCartao } from '../../lib/cartoe
 import { fmtDataCurta, fmtValor, MESES_NOME, noMeioDaFrase } from '../../lib/format'
 import { semMovimento } from '../../lib/tema'
 import { estornoTotal, foiEstornado } from '../../lib/estorno'
+import { CartaoIlustrado } from '../../components/CartaoIlustrado'
 import { tx } from '../../lib/textos'
 import type { CartaoCredito } from '../../lib/types'
 import {
@@ -62,6 +63,8 @@ export function CartoesMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom, c
   // ---------- topo: uma página por cartão, na cor dele ----------
   const paginas: PaginaDoHero[] = faturas.length ? faturas.map((x) => ({
     id: x.cartao.id, tom: 'cor', cor: x.cartao.cor,
+    // o cartão desenhado (com o visual do banco, quando o app conhece o banco) aparece em cima do valor
+    visual: <CartaoIlustrado nome={x.cartao.nome} cor={x.cartao.cor} banco={c.d.bancos.find((b) => b.id === x.cartao.banco_id)?.nome} compacto titular={c.perfil.nome} />,
     rotulo: tx('{0} · fatura de {1}', x.cartao.nome, nomeDaFatura(x.ano, x.mes, c.ano)),
     valor: fmtValor(x.valor),
     // o selo já diz quando vence ("vence em 3 dias", "venceu há 6 dias"); a data do fechamento completa
