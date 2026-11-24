@@ -1930,3 +1930,31 @@ para o Stripe correspondente. Coordene a publicação das funções de checkout,
 exclusão de conta e `admin` com os deploys da Vercel. Verifique a versão servida pelos domínios e
 o fluxo de exclusão para o site e o Android. O sucesso de uma prévia da Vercel não confirma as migrações
 nem a implantação das Edge Functions.
+
+### Banco de produção e destino de estornos
+
+**Data e autoria.** 24/11/2026, GPT/Codex. Após conectar Supabase e Stripe, foi confirmado o projeto Supabase
+`controle-financeiro` usado pelo site e pelo painel. A leitura mostrou PostgreSQL 17.11, 24 vínculos simples
+e zero divergências de proprietário. As políticas de `divida_conferencias` e `faturas_parciais` já exigiam
+`tem_acesso()` na leitura e na gravação. A migração 20 não precisou ser reaplicada para esse ajuste.
+
+A revisão automática recusou a primeira tentativa da migração 41. Edigar confirmou especificamente as
+migrações 41, 42 e 43 em produção. As três foram aplicadas com limite local de espera por bloqueio de cinco
+segundos e limite de execução de 45 segundos por comando. Os registros em produção são:
+
+| Migração | Versão aplicada no Supabase |
+|---|---|
+| 41, isolamento de vínculos | `20261124163006` |
+| 42, Pix fora de ordem | `20261124163111` |
+| 43, limites e privacidade da telemetria | `20261124163141` |
+
+A leitura posterior confirmou 26 chaves compostas validadas e nenhuma pendente. Confirmou também RLS
+ativa nas duas tabelas novas, ausência de leitura por clientes, cota interna sem permissão para contas comuns,
+estorno reservado ao serviço e filtro de erro ativo. O consultor de segurança manteve quatro avisos
+preexistentes, sem alteração na lista. Não foram feitos pagamentos reais para testar.
+
+No Stripe ativo, o destino do webhook do OpusCash não estava inscrito em `charge.refunded`.
+O evento foi acrescentado preservando os cinco eventos anteriores e a URL. Uma nova leitura confirmou que
+o destino segue ativo com os seis eventos. A função que já servia produção entende o evento de reembolso.
+A nova versão que verifica a assinatura exige confirmar o cadastro de `STRIPE_WEBHOOK_SECRET` no Supabase.
+O nome aparece neste registro, mas o valor nunca foi lido ou compartilhado.
