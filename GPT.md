@@ -1689,3 +1689,8 @@ já foi rodada no Supabase em 24/11. App Android: só numa versão nova.
 **Atualização (24/11/2026).** Segundo zip do dono com três visuais novos: **Banco do Brasil** (Ourocard em pé, amarelo
 liso com losangos, "ourocard" e o símbolo do BB em azul), **Bradesco** (prata, Visa Platinum) e **Inter** (em pé, laranja
 liso, "inter" e Mastercard embaixo). Redesenhados como o cartão de verdade virado de lado; os outros nove não mudaram.
+
+**Atualização (24/11/2026, fotos dos cartões do dono).** Nubank, Santander e Inter redesenhados pelas fotos dos cartões
+dele: Nubank (violeta, "nu" e nome de lado, Mastercard e chip à direita), Santander Visa Platinum (grafite com a pintura
+vermelha e rosa, feita com um filtro SVG de turbulência) e Inter novo (laranja-avermelhado, "inter" com os raios, Mastercard
+com aro branco). **Next** ganhou desenho (verde-limão com o triângulo preto, "next", VISA). Agora são 13 bancos.

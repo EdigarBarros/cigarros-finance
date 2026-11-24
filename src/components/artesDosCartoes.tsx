@@ -102,16 +102,15 @@ const Titular = ({ texto, x, y, tam = 10, cor = '#fff', giro = 0, ancora = 'star
 
 const ARTES: Record<string, Omit<ArteCartao, 'chave'>> = {
   nubank: {
-    cor: '#8a05be', tinta: '#fff',
-    fundo: 'radial-gradient(120% 90% at 12% 8%, #b14ae6 0%, transparent 55%), linear-gradient(140deg, #9415cf 0%, #8a05be 40%, #6d0aa8 75%, #5b078f 100%)',
-    bloco: { left: '34%', top: '40%' },
+    // o Nubank do Edigar (foto do cartão dele), deitado: "nu" e o nome de lado à esquerda, Mastercard e chip à direita
+    cor: '#6a2fd0', tinta: '#fff',
+    fundo: 'radial-gradient(70% 90% at 20% 85%, rgba(214,120,255,.55), transparent 60%), radial-gradient(60% 70% at 70% 30%, rgba(150,110,255,.35), transparent 60%), linear-gradient(120deg, #7f45dc 0%, #6331cc 45%, #4a1fa6 100%)',
+    bloco: { left: '6%', top: '64%' },
     desenho: (t) => <>
-      <Master x={282} y={30} r={12} giro={-90} />
-      <text transform="translate(262 52) rotate(-90)" fontFamily={FONTE} fontSize="7" fontWeight="600" fill="#fff" textAnchor="middle">mastercard</text>
-      <Logo chave="nubank" x={6} y={150} w={58} h={32} pinta="#fff" giro={-90} />
-      <Titular texto={t} x={64} y={186} giro={-90} tam={9} />
-      <Chip x={72} y={150} w={30} prata giro={-90} />
-      <Aprox x={88} y={128} s={0.8} giro={-90} />
+      <Logo chave="nubank" x={13} y={36} w={56} h={31} pinta="#f4f0ff" giro={90} />
+      <Titular texto={t} x={98} y={30} tam={9.5} giro={90} cor="#e8e2f7" />
+      <Master x={276} y={52} r={18} giro={90} />
+      <Chip x={240} y={108} w={31} prata giro={90} />
     </>,
   },
   itau: {
@@ -177,29 +176,57 @@ const ARTES: Record<string, Omit<ArteCartao, 'chave'>> = {
     </>,
   },
   santander: {
-    cor: '#ec0000', tinta: '#fff',
-    fundo: 'linear-gradient(115deg, #ff2424 0%, #e00000 56.8%, #1c1c1c 57%, #050505 100%)',
-    bloco: { left: '6%', top: '50%' },
+    // Visa Platinum do Edigar: grafite com a pintura vermelha e rosa (e uns riscos azuis no alto), chama vermelha
+    cor: '#2e2e31', tinta: '#fff',
+    fundo: 'radial-gradient(circle, rgba(255,255,255,.05) 0 .6px, transparent 1px) 0 0 / 4px 4px, linear-gradient(135deg, #3b3b3e 0%, #2f2f32 55%, #252527 100%)',
+    bloco: { left: '6%', top: '56%' },
     desenho: (t) => <>
-      <Logo chave="santander" x={16} y={12} w={22} h={22} pinta="#fff" />
-      <Aprox x={290} y={24} s={0.8} />
-      <Chip x={20} y={46} w={32} prata />
-      <text x="200" y="118" textAnchor="middle" fontFamily={FONTE} fontWeight="900" fontSize="58" letterSpacing="-.04em" fill="#fff">SX</text>
-      <Visa x={302} y={184} tam={24} />
-      <Titular texto={t} x={20} y={188} tam={9} />
+      <defs>
+        <filter id="st-pincel" x="-20%" y="-20%" width="140%" height="140%">
+          <feTurbulence type="fractalNoise" baseFrequency=".035 .09" numOctaves="3" seed="7" />
+          <feDisplacementMap in="SourceGraphic" scale="22" />
+        </filter>
+      </defs>
+      <g filter="url(#st-pincel)">
+        <ellipse cx="170" cy="98" rx="74" ry="82" fill="#e5202c" />
+        <path d="M110 40 C 170 10, 250 40, 262 110 C 270 170, 210 200, 150 196" fill="none" stroke="#ff4d7a" strokeWidth="10" opacity=".8" />
+        <path d="M200 60 C 240 80, 240 140, 200 150 C 170 158, 150 130, 168 110" fill="none" stroke="#2f2f32" strokeWidth="9" />
+        <ellipse cx="205" cy="100" rx="16" ry="9" fill="#2f2f32" />
+        <path d="M100 150 C 120 175, 150 190, 190 200" fill="none" stroke="#e5202c" strokeWidth="14" />
+        <g fill="none" strokeWidth="3" opacity=".9">
+          <path d="M40 4 C 90 10, 150 2, 230 6" stroke="#64b8ff" /><path d="M60 12 C 120 18, 180 10, 250 14" stroke="#ff3d6e" />
+          <path d="M80 2 C 140 8, 200 0, 270 4" stroke="#8fd0ff" />
+        </g>
+      </g>
+      <Aprox x={58} y={50} s={0.9} giro={-90} />
+      <Chip x={36} y={66} w={40} prata />
+      <Logo chave="santander" x={22} y={168} w={24} h={22} pinta="#e5322d" />
+      <Visa x={290} y={86} tam={28} giro={-90} ancora="start" />
+      <text transform="translate(304 86) rotate(-90)" fontFamily={FONTE} fontSize="8.5" fontWeight="500" fill="#fff">Platinum</text>
+      <Titular texto={t} x={60} y={188} tam={8.5} />
     </>,
   },
   inter: {
-    // em pé, virado de lado: chip à esquerda, o nome de lado, "inter" e a Mastercard na direita
-    cor: '#ff7a00', tinta: '#fff',
-    fundo: 'linear-gradient(135deg, #ff8a12 0%, #ff7a00 55%, #f76f00 100%)',
-    bloco: { left: '30%', top: '38%' },
+    // o Inter do Edigar: laranja-avermelhado com brilho, "inter" com os raios no alto à direita, chip à esquerda e Mastercard
+    cor: '#ff5a1a', tinta: '#fff',
+    fundo: 'radial-gradient(circle, rgba(255,210,120,.35) 0 .6px, transparent 1px) 0 0 / 5px 5px, radial-gradient(80% 90% at 25% 15%, rgba(255,170,90,.55), transparent 60%), linear-gradient(135deg, #ff6a22 0%, #ff5a1a 50%, #ec4614 100%)',
+    bloco: { left: '10%', top: '52%' },
     desenho: (t) => <>
-      <Chip x={10} y={84} w={34} prata giro={-90} />
-      <Aprox x={30} y={64} s={0.8} giro={-90} />
-      <Titular texto={t} x={78} y={186} tam={9} giro={-90} />
-      <text transform="translate(298 184) rotate(-90)" fontFamily={FONTE} fontWeight="700" fontSize="34" letterSpacing="-.03em" fill="#fff">inter</text>
-      <Master x={282} y={36} r={13} giro={-90} />
+      <g stroke="#fff" strokeWidth="2.2" strokeLinecap="round">
+        {[0, 1, 2, 3, 4, 5, 6].map((i) => {
+          const ang = (Math.PI / 2) * (i / 6)
+          return <line key={i} x1={199 - Math.cos(ang) * 9} y1={54 - Math.sin(ang) * 9} x2={199 - Math.cos(ang) * 24} y2={54 - Math.sin(ang) * 24} />
+        })}
+      </g>
+      <rect x="195" y="32" width="4.5" height="22" fill="#fff" />
+      <text x="206" y="54" fontFamily={FONTE} fontWeight="800" fontSize="34" letterSpacing="-.02em" fill="#fff">inter</text>
+      <Chip x={36} y={66} w={40} prata />
+      <g>
+        <circle cx="258" cy="170" r="20" fill="#e0201b" stroke="#fff" strokeWidth="2" />
+        <circle cx="286" cy="170" r="20" fill="#f7941d" stroke="#fff" strokeWidth="2" />
+        <path d="M272 155.5a20 20 0 0 1 0 29a20 20 0 0 1 0 -29z" fill="#f05a1a" />
+      </g>
+      <Titular texto={t} x={36} y={188} tam={9} />
     </>,
   },
   'c6 bank': {
@@ -286,6 +313,20 @@ const ARTES: Record<string, Omit<ArteCartao, 'chave'>> = {
       <text x="40" y="182" fontFamily={FONTE} fontWeight="800" fontSize="19" letterSpacing="-.02em" fill="#fff">PicPay</text>
       <Master x={280} y={174} r={13} />
       <Titular texto={t} x={22} y={158} tam={8.5} />
+    </>,
+  },
+  next: {
+    // o Next do Edigar: verde-limão com o triângulo preto, "next" e o nome de lado, VISA de lado no alto à direita
+    cor: '#5fe83a', tinta: '#123308',
+    fundo: 'radial-gradient(90% 90% at 70% 80%, rgba(220,255,170,.45), transparent 60%), linear-gradient(135deg, #66f23f 0%, #5fe83a 55%, #52d630 100%)',
+    bloco: { left: '17%', top: '63%' },
+    desenho: (t) => <>
+      <polygon points="89,27 231,68 165,166 209,153" fill="none" stroke="#1b1f17" strokeWidth="3.4" strokeLinejoin="round" />
+      <Aprox x={58} y={50} s={1} cor="#fff" giro={-90} />
+      <Chip x={38} y={69} w={39} prata />
+      <text transform="translate(40 186) rotate(-90)" fontFamily={FONTE} fontWeight="600" fontSize="22" letterSpacing="-.01em" fill="#fff">next</text>
+      <Titular texto={t} x={257} y={178} tam={9.5} giro={-90} cor="#f2fbe9" />
+      <Visa x={298} y={78} tam={22} giro={-90} ancora="start" cor="#f2fbe9" />
     </>,
   },
 }
