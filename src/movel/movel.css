@@ -78,6 +78,9 @@
   flex: 0 0 100%; scroll-snap-align: center; scroll-snap-stop: always; display: grid; justify-items: center; align-content: center;
   gap: 6px; min-height: 200px; padding: 26px 20px 6px;
 }
+.hero-movel-visual { width: min(190px, 52vw); margin-bottom: 6px; transform: rotate(-3deg); filter: drop-shadow(0 14px 18px rgba(0, 0, 0, .28)); animation: hero-cartao .8s var(--mola) backwards; }
+.hero-movel-visual .cc-plastico { pointer-events: none; }
+@keyframes hero-cartao { from { opacity: 0; transform: translateY(14px) rotate(-8deg) scale(.92); } }
 .hero-movel-rotulo { margin: 0; font-size: 15px; font-weight: 500; color: rgba(255, 255, 255, .86); }
 .hero-movel-valor {
   margin: 0; font-family: var(--fonte-numeros); font-weight: 750; line-height: 1.05; letter-spacing: -.035em; white-space: nowrap;

@@ -174,7 +174,7 @@ export function Cartoes(c: Ctx) {
       {faturas.length > 0 && (
         <div ref={topo} className={`ccx ${s ? 'com-cartao' : ''}`}>
           <aside className="ccx-lado">
-            <Carteira3D ref={carteira} vagas={vagas} fora={s?.cartao.id ?? null} compacta={Boolean(s)}
+            <Carteira3D ref={carteira} vagas={vagas} titular={c.perfil.nome} fora={s?.cartao.id ?? null} compacta={Boolean(s)}
               aoEscolher={(id) => trocar(id === escolhido ? null : id)} aoNovo={() => setEditando('novo')} />
             {arquivados.length > 0 && (
               <div className="ccx-arquivados">
@@ -563,7 +563,7 @@ const DetalheEmAbas = forwardRef<HTMLDivElement, {
       <header className="ccx-cab">
         <div className="ccx-voo">
           <div className="ccx-flutua">
-            <CartaoIlustrado nome={cartao.nome} cor={cartao.cor} banco={banco?.nome} ativo
+            <CartaoIlustrado nome={cartao.nome} cor={cartao.cor} banco={banco?.nome} ativo titular={c.perfil.nome}
               conteudo={<span className="cc-plastico-fatura"><small>{tx('fatura de {0}', nomeDaFatura(s.ano, s.mes, c.ano))}</small><b>{fmtValor(s.valor)}</b></span>}
               rodape={<>{tx('fecha dia {0} · vence dia {1}', cartao.dia_fechamento, cartao.dia_vencimento)}</>} />
           </div>
@@ -1153,7 +1153,7 @@ export function FormCartao({ c, cartao, aoFechar }: { c: Ctx; cartao?: CartaoCre
   return (
     <Modal titulo={cartao ? tx('Editar cartão') : tx('Novo cartão')} aoFechar={aoFechar} tamanho="tela" cor={cor} palco={
       <div className="cc-form-previa">
-        <CartaoIlustrado nome={nome.trim() || tx('Seu cartão')} cor={cor} banco={bancos.find((b) => b.id === bancoId)?.nome}
+        <CartaoIlustrado nome={nome.trim() || tx('Seu cartão')} cor={cor} banco={bancos.find((b) => b.id === bancoId)?.nome} titular={c.perfil.nome}
           rodape={<>{fecha ? tx('fecha dia {0}', fecha) : tx('fecha dia —')} · {vence ? tx('vence dia {0}', vence) : tx('vence dia —')}</>}
           conteudo={parseNumero(limite) ? <span className="cc-plastico-fatura"><small>{tx('limite')}</small><b>{fmtValor(parseNumero(limite)!)}</b></span> : undefined} />
       </div>

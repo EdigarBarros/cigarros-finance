@@ -1,0 +1,17 @@
+/* O visual de cada banco no plástico (artesDosCartoes.tsx). O desenho é um SVG que estica com o cartão; a fatura e os dias
+   ficam por cima, em tamanhos que acompanham a largura do cartão (cqw), do cartão pequeno da carteira ao grande. */
+.cc-plastico.com-arte { container-type: inline-size; padding: 0; color: var(--cc-texto); }
+.cc-plastico.com-arte .ca-desenho { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; overflow: visible; }
+.cc-plastico.com-arte .cc-brilho { z-index: 1; }
+.ca-pinta * { fill: var(--pinta) !important; }
+.ca-bloco {
+  position: absolute; z-index: 1; display: grid; gap: .6cqw; justify-items: start; max-width: 60%; color: var(--cc-texto);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, .18);
+}
+.ca-bloco.fim { justify-items: end; text-align: right; }
+.cc-plastico.com-arte .cc-plastico-fatura { gap: .3cqw; }
+.cc-plastico.com-arte .cc-plastico-fatura small { font-size: 3.4cqw; }
+.cc-plastico.com-arte .cc-plastico-fatura b { font-size: 7.4cqw; }
+.ca-rodape { font-size: 3.2cqw; font-weight: 600; letter-spacing: .02em; opacity: .85; white-space: nowrap; }
+/* cartões claros (amarelo, prata, limão): texto escuro sem sombra clara */
+.cc-plastico.arte-banco-do-brasil .ca-bloco, .cc-plastico.arte-c6-bank .ca-bloco, .cc-plastico.arte-pagbank .ca-bloco { text-shadow: none; }

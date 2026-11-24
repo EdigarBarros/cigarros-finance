@@ -1669,3 +1669,19 @@ fatura) e as do celular (`CartoesMovel`, `LancamentosMovel`).
 **Validação.** `npx tsc -b`, lint sem erros, build. Contas do estorno conferidas com um pacote rolldown (total, parcial,
 refazer, desfazer, recusas). `testar-estorno.cjs` 6/6. **Pendente:** rodar a migração 40 no Supabase e gerar o app Android
 (o formulário e as listas do celular mudaram).
+
+### 24/11/2026 — Claude — Cartões com o visual de cada banco
+
+**Pedido do dono.** Um zip com o visual dos cartões que ele usa (12 bancos) para cada cartão do app ficar igual. As imagens
+eram fotos de divulgação (na mão, inclinadas), então cada cartão foi **redesenhado** em SVG/CSS olhando a foto (as fotos não
+entram no repositório). Escolhas dele: computador e celular; no lugar do nome gravado, o nome do perfil.
+
+**O que mudou.** `components/artesDosCartoes.tsx` (+ `artes-dos-cartoes.css`): os 12 desenhos, com os logos que o app já tinha
+(`lib/logosBancos.ts`) e chip, aproximação e bandeiras (Visa, Mastercard, Elo) desenhados. `CartaoIlustrado` usa a arte quando
+reconhece o banco (prop `titular` para o nome gravado; `generico` força o genérico). `Carteira3D`: o bolso mostra o nome do
+cartão. Celular: `PaginaDoHero.visual` e o cartão em cima do valor em `CartoesMovel`. Também em `Patrimonio.tsx` e no
+formulário do cartão.
+
+**Validação.** `npx tsc -b`, lint sem erros, build. Foto de cada um dos 12 cartões ao lado da foto do zip (ajustados PicPay e
+C6). `testar-carteira-pc.cjs` 15/15, `testar-pular-e-pagar-parte.cjs` 3/3, `testar-estorno.cjs` 6/6, `testar-movel.cjs` 379 OK. A migração 40 (estorno)
+já foi rodada no Supabase em 24/11. App Android: só numa versão nova.

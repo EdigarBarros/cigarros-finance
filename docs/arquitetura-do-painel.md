@@ -878,6 +878,13 @@ ano aberto vêm de `lancsRecentes` em `useDados`.
   **uma linha por cartão** (selo, situação, fatura do mês, régua do limite com "R$ X livres de R$ Y" e a porcentagem, em
   âmbar a partir de 70% e vermelho a partir de 90%). Clicar na linha tira o cartão da carteira. Arquivados: "Cartões que
   você não usa mais (N)" embaixo da carteira.
+- **Visual do banco** (`components/artesDosCartoes.tsx`, `artes-dos-cartoes.css`): Nubank, Itaú, Bradesco, Banco do Brasil
+  (Ourocard), Caixa, Santander (SX), Inter, C6 Bank, PicPay, Mercado Pago, PagBank e Neon têm o cartão redesenhado como o
+  de verdade (fundo, textura, logo do banco dos selos, chip, aproximação, bandeira e o nome da pessoa gravado), num SVG de
+  320 × 202 que estica com o plástico. O banco é reconhecido como no selo (`estiloDoBanco` pelo nome do cartão ou do banco
+  ligado). A fatura e os dias ficam por cima, onde a arte deixa espaço (tamanhos em `cqw`). Banco que o app não conhece fica
+  com o cartão genérico. Aparece na carteira, no cartão grande, na prévia do formulário, em Dinheiro guardado e, no
+  celular, em cima do valor de cada página do topo (`PaginaDoHero.visual`). Na carteira, o bolso mostra o nome do cartão.
 - **Cartão fora da carteira:** clicar num cartão faz ele sair (sobe da fenda, gira e pousa grande à direita, `sairDaCarteira`)
   e a carteira encolhe para a coluna da esquerda (`moverCarteira`), presa ao rolar; clicar noutro troca (o anterior volta
   para a fenda, `voltarParaCarteira`). "Guardar na carteira" ou Esc devolvem. Só `transform`, `opacity` e `clip-path` com a

@@ -313,7 +313,7 @@ export function CartoesDoBanco({ c, banco }: { c: Ctx; banco: Banco }) {
           const f = c.faturas.find((x) => x.cartao.id === k.id)
           return (
             <button key={k.id} className="gd-cartao-mini" onClick={() => c.irPara('cartoes')}>
-              <CartaoIlustrado nome={k.nome} cor={k.cor} banco={banco.nome} compacto
+              <CartaoIlustrado nome={k.nome} cor={k.cor} banco={banco.nome} compacto titular={c.perfil.nome}
                 conteudo={f ? <span className="cc-plastico-fatura"><small>{tx('fatura')}</small><b>{fmtValor(f.valor)}</b></span> : undefined} />
             </button>
           )
