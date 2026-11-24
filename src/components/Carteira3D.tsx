@@ -141,15 +141,22 @@ export function voltarParaCarteira(carteira: HTMLElement | null, id: string, de:
   const el = vaga?.querySelector<HTMLElement>('.cc-plastico')
   const para = quadro(el)
   if (!casca || !el || !para) return
-  // o cartão passa por cima dos outros cartões e bolsos e só no fim volta para trás do bolso dele
+  // Sobe até a boca do bolso ficar livre (a parte de baixo do cartão acima dela), passa para trás do bolso ali em cima e
+  // só então desliza para dentro. Antes, ele descia por cima do bolso e pulava para trás no fim (parecia teleportar).
+  // A linha do tempo é linear para o zIndex e o movimento trocarem no mesmo instante; a suavidade vai em cada trecho.
+  const bolso = quadro(vaga?.querySelector('.cw-bolso'))
+  const espia = bolso ? bolso.top - para.top : para.height * 0.3
+  const sobe = para.height - espia + 12
   const z = Number(getComputedStyle(casca).zIndex) || 1
-  casca.animate([{ zIndex: 150 }, { zIndex: 150, offset: 0.8 }, { zIndex: z, offset: 0.81 }, { zIndex: z }], { duration: 820 })
+  const troca = 0.62
+  const tempo = { duration: 900, easing: 'linear' }
+  casca.animate([{ zIndex: 150 }, { zIndex: 150, offset: troca }, { zIndex: z, offset: troca + 0.001 }, { zIndex: z }], tempo)
   el.animate([
-    { transform: ate(de, para), offset: 0 },
-    { transform: `translate(0, ${-para.height * 0.9}px) rotate(4deg)`, offset: 0.6 },
-    { transform: `translate(0, ${-para.height * 0.55}px)`, offset: 0.8 },
+    { transform: ate(de, para), offset: 0, easing: 'cubic-bezier(.3, .7, .25, 1)' },
+    { transform: `translate(0, ${-sobe}px) rotate(-3deg)`, offset: 0.56, easing: 'ease-in-out' },
+    { transform: `translate(0, ${-sobe}px)`, offset: troca, easing: 'cubic-bezier(.45, 0, .2, 1)' },
     { transform: 'none' },
-  ], { duration: 820, easing: EASE })
+  ], tempo)
 }
 
 /** A carteira mudando de tamanho (grande ↔ ao lado do cartão), sem pulo: anima do lugar antigo para o novo. */

@@ -72,6 +72,10 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   - A novidade pode ter uma **arte livre** ([migração 32](supabase/migracao-32-arte-das-novidades.sql), `components/ArteNovidade.tsx` e `arte.css`),
     montada no editor do painel com os elementos da marca (cartão, gráficos, moedas, selos, textos). O app só desenha a arte guardada em
     `novidades.arte`; o mesmo arquivo é copiado no painel para a prévia ser idêntica (mudou aqui, copie para lá)
+  - Ou uma **animação pronta** feita no código (`components/CenaNovidade.tsx` e `cena-novidade.css`, só CSS 3D): `novidades.arte.animacao`
+    com o nome da cena (hoje `carteira-cartoes`, o antes e depois da tela Cartões). O pop-up mostra a cena (toca uma vez, com "Ver de novo"),
+    o título e o primeiro item como texto. Cena marcada em `SO_COMPUTADOR` não aparece no celular (e não conta como vista). O painel copia os
+    dois arquivos para a prévia e não deixa o editor de arte mexer nela (dá para mudar título, texto, tela e onde aparece)
 - **Suporte dentro do app** ([migração 33](supabase/migracao-33-suporte.sql), `components/Suporte.tsx`, `lib/suporte.ts`): de qualquer tela
   (botão de conversa no topo e "Suporte" no menu da conta), a pessoa pede ajuda escolhendo o assunto (pagamento e assinatura, algo não funciona,
   minha conta, dúvida, sugestão, outro), acompanha a conversa e vê só os próprios pedidos, separados em andamento e resolvidos. Vão junto a tela,

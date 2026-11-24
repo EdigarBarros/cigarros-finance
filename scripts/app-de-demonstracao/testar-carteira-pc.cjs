@@ -40,7 +40,9 @@ async function principal() {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto(t.url + '#/cartoes')
     await expect(page.locator('.cw-vaga')).toHaveCount(3)
-    await expect(page.locator('.ccx-resumo .cc-vitrine')).toBeVisible()
+    await expect(page.locator('.cxr')).toBeVisible()
+    await expect(page.locator('.cxr-linha')).toHaveCount(3)
+    await expect(page.locator('.cxr-linha', { hasText: 'Itaú Click' })).toContainText('livres')
     await expect(page.locator('.ccx-abas')).toHaveCount(0)
     await page.waitForTimeout(1600)
     ok(await cartoesVisiveis(page), 'carteira: os três cartões aparecem pela fenda, cada um com o seu bolso')
@@ -71,7 +73,9 @@ async function principal() {
     await expect(page.getByRole('tabpanel')).toContainText('Próximas faturas')
     await expect(page.getByRole('tabpanel')).toContainText('Parceladas em andamento')
     await page.locator('.ccx-abas').getByRole('tab', { name: /Limite e caixinha/ }).click()
-    await expect(page.locator('.ccx-painel .ccd-titulo', { hasText: 'Limite' })).toBeVisible()
+    await expect(page.locator('.ccx-painel .lpc')).toBeVisible()
+    await expect(page.locator('.lpc')).toContainText('Livre para gastar')
+    await expect(page.locator('.lpc')).toContainText('O que está usando o limite')
     // setas do teclado andam entre as abas
     await page.locator('.ccx-abas').getByRole('tab', { name: /Limite e caixinha/ }).press('ArrowRight')
     await expect(page.locator('.ccx-abas').getByRole('tab', { name: /^Fatura/ })).toHaveAttribute('aria-selected', 'true')
@@ -86,8 +90,28 @@ async function principal() {
     await page.waitForTimeout(1400)
     ok(await cartoesVisiveis(page), 'trocar de cartão: o anterior volta para a fenda e a aba escolhida continua')
 
-    // Esc guarda o cartão
+    // Esc guarda o cartão. Na volta, o cartão nunca fica por cima do próprio bolso: ele sobe acima da boca do bolso,
+    // passa para trás dele e só então desliza para dentro (antes descia por cima e "teleportava" para dentro no fim).
     await page.keyboard.press('Escape')
+    const porCima = await page.evaluate(async () => {
+      const vaga = document.querySelector('[data-vaga] .cw-cartao') && [...document.querySelectorAll('.cw-vaga')].find((v) => v.querySelector('.cw-cartao').getAnimations().some((a) => a.effect.getTiming().duration === 900))
+      if (!vaga) return 'sem animação de volta'
+      const casca = vaga.querySelector('.cw-cartao'), plastico = vaga.querySelector('.cc-plastico'), bolso = vaga.querySelector('.cw-bolso')
+      const anims = [...casca.getAnimations(), ...plastico.getAnimations()].filter((a) => a.effect.getTiming().duration === 900)
+      anims.forEach((a) => a.pause())
+      const ruins = []
+      for (let t = 0; t <= 900; t += 30) {
+        anims.forEach((a) => { a.currentTime = t })
+        const c = plastico.getBoundingClientRect(), b = bolso.getBoundingClientRect()
+        // só vale na descida, já alinhado com a fenda (no voo de lado ele passa por cima da carteira, e é assim mesmo)
+        const alinhado = Math.abs(c.left - (b.left + 8)) < 4 && Math.abs(c.width - (b.width - 16)) < 4
+        const sobre = alinhado && c.bottom > b.top + 2
+        if (sobre && Number(getComputedStyle(casca).zIndex) > Number(getComputedStyle(bolso).zIndex)) ruins.push(t)
+      }
+      anims.forEach((a) => a.play())
+      return ruins.length ? 'por cima do bolso em ' + ruins.join(', ') + ' ms' : ''
+    })
+    ok(porCima === '', `a volta não passa por cima do próprio bolso ${porCima}`)
     await expect(page.locator('.ccx-cab')).toHaveCount(0)
     await expect(page.locator('.cw.compacta')).toHaveCount(0)
     await expect(page.locator('.cw-vaga.saiu')).toHaveCount(0)
@@ -95,7 +119,7 @@ async function principal() {
     ok(await cartoesVisiveis(page), 'Esc guarda o cartão de volta na carteira')
 
     // "Resolver no..." da faixa de atraso tira o cartão certo, na fatura
-    await page.locator('.ccx-alerta').getByRole('button', { name: /Resolver no Nubank/ }).click()
+    await page.locator('.cxr .ccx-alerta').getByRole('button', { name: /Resolver no Nubank/ }).click()
     await expect(page.locator('.ccx-cab h2')).toHaveText('Nubank')
     await expect(page.locator('.ccx-abas').getByRole('tab', { name: /^Fatura/ })).toHaveAttribute('aria-selected', 'true')
     await expect(page.locator('.ccd-atrasadas, .ccd-fatura.atrasada').first()).toBeVisible()
@@ -103,6 +127,13 @@ async function principal() {
     await page.getByRole('button', { name: 'Guardar na carteira' }).click()
     await expect(page.locator('.ccx-cab')).toHaveCount(0)
     ok(true, 'faixa de atraso abre o cartão na fatura; "Guardar na carteira" devolve')
+
+    // clicar na linha do resumo tira aquele cartão
+    await page.locator('.cxr-linha', { hasText: 'Itaú Click' }).click()
+    await expect(page.locator('.ccx-cab h2')).toHaveText('Itaú Click')
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.ccx-cab')).toHaveCount(0)
+    ok(true, 'a linha do resumo abre o cartão')
 
     // aba lembrada ao voltar para a tela
     await vaga(page, 'Inter').click()
@@ -163,7 +194,44 @@ async function simplesEParado() {
   }
 }
 
+/** A novidade com a cena animada: aparece no computador e não aparece no celular. */
+async function novidadeAnimada() {
+  const novidade = () => [{
+    id: 99, titulo: { pt: 'Seus cartões numa carteira' }, itens: [{ icone: 'cartao', texto: { pt: 'Antes ficava tudo junto.' } }],
+    icone: 'cartao', cor: 'marca', tela: 'cartoes', onde: 'site', publicada_em: new Date().toISOString(),
+    arte: { formato: 'deitado', fundo: 'noite', elementos: [], animacao: 'carteira-cartoes' },
+  }]
+  const perfil = { ...demo.perfil, dispensadas: (demo.perfil.dispensadas || []).filter((x) => !x.startsWith('novidade')) }
+  const t = await iniciar({ perfil, dados: { ...dados(), novidades: novidade() }, porta: 4833 })
+  try {
+    const p = t.page
+    await p.setViewportSize({ width: 1440, height: 900 })
+    await p.goto(t.url + '#/inicio')
+    await expect(p.locator('.novidade-cena .cn-palco')).toBeVisible({ timeout: 20000 })
+    await expect(p.locator('.novidade-cena')).toContainText('Seus cartões numa carteira')
+    await p.getByRole('button', { name: /Ver de novo/ }).click()
+    await expect(p.locator('.novidade-cena .cn-palco')).toBeVisible()
+    await p.locator('.novidade-cena').getByRole('button', { name: /Ver agora/ }).click()
+    await expect(p.locator('.novidade-cena')).toHaveCount(0)
+    await expect.poll(() => p.evaluate(() => location.hash)).toBe('#/cartoes')
+    ok(true, 'novidade animada: aparece no computador, "Ver de novo" repete e "Ver agora" leva aos Cartões')
+  } finally {
+    await t.fechar()
+  }
+  const t2 = await iniciar({ perfil, dados: { ...dados(), novidades: novidade() }, porta: 4834, toque: true })
+  try {
+    const p = t2.page
+    await p.setViewportSize({ width: 390, height: 844 })
+    await p.goto(t2.url + '#/inicio')
+    await p.waitForTimeout(5000)
+    ok(await p.locator('.novidade').count() === 0, 'no celular a novidade da carteira não aparece (a tela nova é só do computador)')
+  } finally {
+    await t2.fechar()
+  }
+}
+
 ;(async () => {
   await principal()
   await simplesEParado()
+  await novidadeAnimada()
 })().catch((e) => { console.error(e); process.exit(1) })

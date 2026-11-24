@@ -18,7 +18,7 @@ import { CORES_LIVRES, mesmoNome } from '../lib/rotulos'
 import { semMovimento } from '../lib/tema'
 import type { CartaoCredito, FaturaPaga, FaturaParcial, Lancamento } from '../lib/types'
 import { BancoIcone } from '../components/BancoIcone'
-import { Rosquinha, Vitrine, type Nivel } from '../components/Vitrine'
+import type { Nivel } from '../components/Vitrine'
 import { CartaoIlustrado } from '../components/CartaoIlustrado'
 import { Carteira3D, moverCarteira, quadroDaVaga, quadroDe, quantoAparece, sairDaCarteira, voltarParaCarteira, type VagaDaCarteira } from '../components/Carteira3D'
 import { Selo } from '../components/Categorias'
@@ -132,11 +132,6 @@ export function Cartoes(c: Ctx) {
     try { localStorage.setItem(CHAVE_ABA, a) } catch { /* sem armazenamento: só não lembra */ }
   }
 
-  const comLimite = faturas.filter((x) => x.limiteDisponivel !== null)
-  const atrasadas = faturas.flatMap((x) => [...x.atrasadas, ...(x.status === 'atrasada' ? [x] : [])])
-  const emAtraso = centavos(atrasadas.reduce((a, f) => a + f.falta, 0))
-  const comAtraso = faturas.filter((x) => x.atrasadas.length > 0 || x.status === 'atrasada')
-  const nomeMes = noMeioDaFrase(MESES_NOME[c.mes - 1])
   const nivel = c.perfil.detalhe
 
   if (cartoes.semTabela) {
@@ -211,36 +206,7 @@ export function Cartoes(c: Ctx) {
                 aoRenegociar={(f) => setRenegociando({ cartao: s.cartao, f })} />
             ) : (
               <div className="ccx-resumo">
-                <Vitrine cor="var(--violeta)" className="cc-vitrine"
-                  visual={
-                    <Rosquinha tamanho={150} partes={faturas.map((x) => ({ rotulo: x.cartao.nome, valor: x.valor, cor: x.cartao.cor }))}>
-                      <b>{faturas.length === 1 ? tx('1 cartão') : tx('{0} cartões', faturas.length)}</b>
-                    </Rosquinha>
-                  }
-                  rotulo={<><Icone nome="cartao" tamanho={16} /> {tx('Faturas de {0}', nomeMes)}</>}
-                  valor={totalFaturasDoMes(faturas)} formato={fmtValor}
-                  pilulas={[
-                    { icone: 'relogio', rotulo: tx('Falta pagar'), valor: fmtValor(totalFaturasAPagar(faturas)), cor: 'var(--divida)' },
-                    ...(comLimite.length > 0 ? [{ icone: 'escudo', rotulo: tx('Limite livre'), valor: fmtValor(comLimite.reduce((a, x) => a + Math.max(0, x.limiteDisponivel!), 0)), cor: 'var(--caixa)' }] : []),
-                    ...(emAtraso > 0 ? [{ icone: 'sino', rotulo: tx('Em atraso ({0})', atrasadas.length), valor: fmtValor(emAtraso), cor: 'var(--saida)', tom: 'ruim' as const }] : []),
-                  ]} />
-
-                {comAtraso.length > 0 && (
-                  <section className="ccx-alerta" aria-label={tx('Faturas que venceram sem pagar')}>
-                    <Icone nome="sino" tamanho={18} />
-                    <span>{atrasadas.length === 1 ? tx('Uma fatura venceu sem pagar.') : tx('{0} faturas venceram sem pagar.', atrasadas.length)}</span>
-                    <span className="espaco" />
-                    {comAtraso.map((x) => (
-                      <button key={x.cartao.id} type="button" className="btn" onClick={() => { escolherAba('fatura'); trocar(x.cartao.id) }}>
-                        <BancoIcone nome={x.cartao.nome} cor={x.cartao.cor} tamanho={20} /> {tx('Resolver no {0}', x.cartao.nome)}
-                      </button>
-                    ))}
-                  </section>
-                )}
-
-                {comLimite.length > 1 && <UsoDosLimites faturas={comLimite} />}
-
-                <p className="ccx-dica"><Icone nome="dir" tamanho={15} /> {tx('Clique num cartão para tirá-lo da carteira e ver tudo dele.')}</p>
+                <ResumoDosCartoes faturas={faturas} c={c} aoAbrir={(id, a) => { if (a) escolherAba(a); trocar(id) }} />
               </div>
             )}
           </div>
@@ -254,25 +220,173 @@ export function Cartoes(c: Ctx) {
   )
 }
 
-/** Quanto do limite cada cartão usa, uma barra por cartão (com 2 cartões ou mais com limite). */
-function UsoDosLimites({ faturas }: { faturas: SituacaoCartao[] }) {
+/**
+ * Ao lado da carteira fechada (computador): o total das faturas do mês, falta pagar, limite livre e o atrasado, e uma linha
+ * por cartão com a fatura, a situação e quanto do limite sobra. Clicar numa linha tira aquele cartão da carteira.
+ */
+function ResumoDosCartoes({ faturas, c, aoAbrir }: { faturas: SituacaoCartao[]; c: Ctx; aoAbrir: (id: string, aba?: Aba) => void }) {
+  const nomeMes = noMeioDaFrase(MESES_NOME[c.mes - 1])
+  const comLimite = faturas.filter((x) => x.limiteTotal !== null)
+  const livre = centavos(comLimite.reduce((a, x) => a + Math.max(0, x.limiteDisponivel ?? 0), 0))
+  const limiteTotal = centavos(comLimite.reduce((a, x) => a + (x.limiteTotal ?? 0), 0))
+  const atrasadas = faturas.flatMap((x) => [...x.atrasadas, ...(x.status === 'atrasada' ? [x] : [])])
+  const emAtraso = centavos(atrasadas.reduce((a, f) => a + f.falta, 0))
+  const comAtraso = faturas.filter((x) => x.atrasadas.length > 0 || x.status === 'atrasada')
+  const total = totalFaturasDoMes(faturas)
+  const partes = faturas.filter((x) => x.valor > 0)
   return (
-    <section className="cartao vt-cartao">
-      <h3><Icone nome="escudo" tamanho={17} /> {tx('Quanto do limite cada cartão usa')}</h3>
-      <ul className="cc-usos">
+    <section className="cxr" aria-label={tx('Faturas de {0}', nomeMes)}>
+      <header className="cxr-topo">
+        <div className="cxr-total">
+          <span className="cxr-rotulo"><Icone nome="cartao" tamanho={15} /> {tx('Faturas de {0}', nomeMes)}</span>
+          <strong><Numero valor={total} formato={fmtValor} /></strong>
+          <small>{faturas.length === 1 ? tx('1 cartão') : tx('{0} cartões', faturas.length)}</small>
+        </div>
+        <dl className="cxr-numeros">
+          <div><dt><Icone nome="relogio" tamanho={14} /> {tx('Falta pagar')}</dt><dd>{fmtValor(totalFaturasAPagar(faturas))}</dd></div>
+          {comLimite.length > 0 && <div><dt><Icone nome="escudo" tamanho={14} /> {tx('Limite livre')}</dt><dd>{fmtValor(livre)}<small>{tx('de {0}', fmtValor(limiteTotal))}</small></dd></div>}
+          {emAtraso > 0 && <div className="ruim"><dt><Icone nome="sino" tamanho={14} /> {tx('Em atraso')}</dt><dd>{fmtValor(emAtraso)}</dd></div>}
+        </dl>
+      </header>
+
+      {partes.length > 1 && total > 0 && (
+        <div className="cxr-divide" role="img" aria-label={partes.map((x) => `${x.cartao.nome}: ${fmtValor(x.valor)}`).join(', ')}>
+          {partes.map((x) => <i key={x.cartao.id} style={{ flexGrow: x.valor, '--c': x.cartao.cor } as React.CSSProperties} title={`${x.cartao.nome}: ${fmtValor(x.valor)}`} />)}
+        </div>
+      )}
+
+      {comAtraso.length > 0 && (
+        <div className="ccx-alerta" role="group" aria-label={tx('Faturas que venceram sem pagar')}>
+          <Icone nome="sino" tamanho={16} />
+          <span>{atrasadas.length === 1 ? tx('Uma fatura venceu sem pagar.') : tx('{0} faturas venceram sem pagar.', atrasadas.length)}</span>
+          <span className="espaco" />
+          {comAtraso.map((x) => (
+            <button key={x.cartao.id} type="button" className="btn" onClick={() => aoAbrir(x.cartao.id, 'fatura')}>
+              <BancoIcone nome={x.cartao.nome} cor={x.cartao.cor} tamanho={18} /> {tx('Resolver no {0}', x.cartao.nome)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <ul className="cxr-lista">
         {faturas.map((x, i) => {
-          const lim = x.limiteTotal ?? 0
-          const p = lim > 0 ? Math.min(1, Math.max(0, x.limiteUsado / lim)) : 0
+          const lim = x.limiteTotal
+          const uso = lim ? Math.min(1, Math.max(0, x.limiteUsado / lim)) : 0
+          const estado = x.atrasadas.length ? 'atrasada' : x.status
           return (
             <li key={x.cartao.id} style={{ '--c': x.cartao.cor, '--i': i } as React.CSSProperties}>
-              <BancoIcone nome={x.cartao.nome} cor={x.cartao.cor} tamanho={28} />
-              <span className="cc-usos-nome">{x.cartao.nome}</span>
-              <span className="cc-usos-trilho"><i style={{ width: `${p * 100}%` }} /></span>
-              <b className={p >= 0.9 ? 'ruim' : p >= 0.7 ? 'atencao' : ''}>{Math.round(p * 100)}%</b>
+              <button type="button" className="cxr-linha" onClick={() => aoAbrir(x.cartao.id)} aria-label={tx('Abrir o cartão {0}', x.cartao.nome)}>
+                <BancoIcone nome={x.cartao.nome} cor={x.cartao.cor} tamanho={38} />
+                <span className="cxr-nome">
+                  <b>{x.cartao.nome}</b>
+                  <small className={`cxr-estado ${estado}`}><i />{textoStatus(x)}</small>
+                </span>
+                <span className="cxr-fatura">
+                  <small>{tx('fatura de {0}', nomeDaFatura(x.ano, x.mes, c.ano))}</small>
+                  <b>{fmtValor(x.valor)}</b>
+                </span>
+                {lim ? (
+                  <span className={`cxr-limite ${uso >= 0.9 ? 'ruim' : uso >= 0.7 ? 'atencao' : ''}`}>
+                    <span className="cxr-trilho"><i style={{ width: `${uso * 100}%` }} /></span>
+                    <small>
+                      <b>{tx('{0} livres', fmtValor(Math.max(0, x.limiteDisponivel ?? 0)))}</b> {tx('de {0}', fmtValor(lim))}
+                      <em>{Math.round(uso * 100)}%</em>
+                    </small>
+                  </span>
+                ) : (
+                  <span className="cxr-limite sem"><small>{tx('Sem limite informado')}</small></span>
+                )}
+                <Icone nome="dir" tamanho={16} />
+              </button>
             </li>
           )
         })}
       </ul>
+      <p className="ccx-dica"><Icone nome="ideia" tamanho={14} /> {tx('Clique num cartão, aqui ou na carteira, para ver tudo dele.')}</p>
+    </section>
+  )
+}
+
+/**
+ * Aba "Limite e caixinha" do computador: quanto sobra para gastar (número grande e uma régua), de onde vem o limite (banco e
+ * caixinha) e o que está ocupando ele (fatura do mês, faturas vencidas e as parcelas que já caem nas próximas).
+ */
+function LimitePC({ s, c, aoEditar }: { s: SituacaoCartao; c: Ctx; aoEditar: () => void }) {
+  if (s.limiteTotal == null) return <Limite s={s} c={c} aoEditar={aoEditar} />
+  const total = s.limiteTotal
+  const usado = s.limiteUsado
+  const livre = s.limiteDisponivel ?? 0
+  const estourou = livre < 0
+  const uso = total > 0 ? Math.min(1, Math.max(0, usado / total)) : 0
+  const tom = estourou || uso >= 0.9 ? 'ruim' : uso >= 0.7 ? 'atencao' : 'bom'
+  const doBanco = Math.max(0, centavos(total - s.garantido))
+  // o que ocupa o limite: a fatura do mês (o que falta), as vencidas e o resto (parcelas das próximas faturas)
+  const daFatura = s.paga ? 0 : s.falta
+  const vencidas = centavos(s.atrasadas.reduce((a, f) => a + f.falta, 0))
+  const proximas = Math.max(0, centavos(usado - daFatura - vencidas))
+  const ocupa = [
+    { rotulo: tx('Fatura de {0}', nomeDaFatura(s.ano, s.mes, c.ano)), valor: daFatura, icone: 'cartao' },
+    ...(vencidas > 0 ? [{ rotulo: tx('Faturas vencidas'), valor: vencidas, icone: 'sino' }] : []),
+    { rotulo: tx('Parcelas das próximas faturas'), valor: proximas, icone: 'calendario' },
+  ]
+  const maior = Math.max(1, ...ocupa.map((x) => x.valor))
+  return (
+    <section className={`cartao lpc ${tom}`} style={{ '--c': s.cartao.cor } as React.CSSProperties}>
+      <div className="lpc-principal">
+        <span className="lpc-rotulo">{estourou ? tx('Passou do limite') : tx('Livre para gastar')}</span>
+        <strong className="lpc-livre"><Numero valor={Math.abs(livre)} formato={fmtValor} /></strong>
+        <span className="lpc-de">{tx('de {0} de limite', fmtValor(total))} · <b>{tx('{0}% usado', Math.round(uso * 100))}</b></span>
+
+        <div className="lpc-regua" role="img" aria-label={tx('{0} usados de {1}', fmtValor(usado), fmtValor(total))}>
+          <i className="lpc-usado" style={{ width: `${uso * 100}%` }} />
+          {[25, 50, 75].map((m) => <span key={m} className="lpc-marca" style={{ left: `${m}%` }} />)}
+        </div>
+        <div className="lpc-regua-legenda">
+          <span><i className="usado" />{tx('Usado')} <b>{fmtValor(usado)}</b></span>
+          <span><i className="livre" />{tx('Livre')} <b>{fmtValor(Math.max(0, livre))}</b></span>
+        </div>
+
+        {tom === 'ruim' && (
+          <p className="lpc-aviso"><Icone nome="alerta" tamanho={15} /> {estourou
+            ? tx('As compras passaram do limite. O banco pode recusar as próximas até a fatura ser paga.')
+            : tx('Quase no limite: uma compra maior pode ser recusada.')}</p>
+        )}
+
+        <h4 className="lpc-sub">{tx('De onde vem o limite')}</h4>
+        <div className="lpc-fontes">
+          <i className="banco" style={{ flexGrow: doBanco || 0.0001 }} />
+          {s.garantido > 0 && <i className="caixinha" style={{ flexGrow: s.garantido }} />}
+        </div>
+        <ul className="lpc-fontes-legenda">
+          <li><i className="banco" />{tx('Do banco')}<b>{fmtValor(doBanco)}</b></li>
+          {s.garantido > 0 && <li><i className="caixinha" />{s.cartao.garantia_caixinha ? tx('Da caixinha do banco') : tx('Da caixinha')}<b>{fmtValor(s.garantido)}</b></li>}
+        </ul>
+      </div>
+
+      <div className="lpc-lado">
+        <h4 className="lpc-sub">{tx('O que está usando o limite')}</h4>
+        <ul className="lpc-ocupa">
+          {ocupa.map((x) => (
+            <li key={x.rotulo}>
+              <span className="lpc-ocupa-icone"><Icone nome={x.icone} tamanho={15} /></span>
+              <span className="lpc-ocupa-texto">{x.rotulo}<span className="lpc-ocupa-barra"><i style={{ width: `${(x.valor / maior) * 100}%` }} /></span></span>
+              <b>{fmtValor(x.valor)}</b>
+            </li>
+          ))}
+        </ul>
+        <p className="lpc-nota">{tx('O limite volta a ficar livre conforme você paga as faturas.')}</p>
+        {!c.cartoes.semExtras && (
+          <button type="button" className="lpc-caixinha" onClick={aoEditar}>
+            <span className="lpc-caixinha-icone"><Icone nome="cofre" tamanho={18} /></span>
+            <span>
+              {s.garantido > 0
+                ? <><b>{tx('{0} da caixinha viram limite', fmtValor(s.garantido))}</b><small>{s.cartao.garantia_caixinha ? tx('Acompanha a caixinha do banco: guardou mais, o limite cresce.') : tx('Valor fixo que você informou.')}</small></>
+                : <><b>{tx('Tem dinheiro numa caixinha que vira limite?')}</b><small>{tx('Some ao limite do cartão.')}</small></>}
+            </span>
+            <span className="lpc-caixinha-acao">{s.garantido > 0 ? tx('Mudar') : tx('Somar')}</span>
+          </button>
+        )}
+      </div>
     </section>
   )
 }
@@ -499,7 +613,7 @@ const DetalheEmAbas = forwardRef<HTMLDivElement, {
             )}
           </section>
         </div>}
-        {atual === 'limite' && <Limite s={s} c={c} aoEditar={aoEditar} />}
+        {atual === 'limite' && <LimitePC s={s} c={c} aoEditar={aoEditar} />}
       </div>
 
       {nivel === 'simples' && (

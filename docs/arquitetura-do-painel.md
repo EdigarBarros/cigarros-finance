@@ -872,10 +872,12 @@ ano aberto vêm de `lancsRecentes` em `useDados`.
   selo do banco `BancoIcone`, monograma em SVG na cor da marca, sem logos reais) e aparece pela fenda de um bolso; no bolso,
   gravados em dourado, o valor da fatura do mês e a situação com um pontinho colorido. A carteira inclina e brilha seguindo
   o ponteiro; passar o ponteiro levanta o cartão da fenda; ao abrir a tela, os cartões descem para dentro dos bolsos.
-  Setas para cima/baixo andam entre os cartões. Ao lado (sem cartão escolhido): a vitrine (rosca das faturas, falta pagar,
-  limite livre, em atraso), a faixa "N faturas venceram sem pagar" com "Resolver no <cartão>" (abre o cartão na aba Fatura),
-  "Quanto do limite cada cartão usa" (com 2 ou mais com limite) e "Clique num cartão…". Arquivados: "Cartões que você não
-  usa mais (N)" embaixo da carteira.
+  Setas para cima/baixo andam entre os cartões. Ao lado (sem cartão escolhido), o **resumo** (`ResumoDosCartoes`): o total
+  das faturas do mês com falta pagar, limite livre (de quanto) e em atraso; uma barra dividida na cor de cada cartão (com 2
+  ou mais com fatura); a faixa "N faturas venceram sem pagar" com "Resolver no <cartão>" (abre o cartão na aba Fatura); e
+  **uma linha por cartão** (selo, situação, fatura do mês, régua do limite com "R$ X livres de R$ Y" e a porcentagem, em
+  âmbar a partir de 70% e vermelho a partir de 90%). Clicar na linha tira o cartão da carteira. Arquivados: "Cartões que
+  você não usa mais (N)" embaixo da carteira.
 - **Cartão fora da carteira:** clicar num cartão faz ele sair (sobe da fenda, gira e pousa grande à direita, `sairDaCarteira`)
   e a carteira encolhe para a coluna da esquerda (`moverCarteira`), presa ao rolar; clicar noutro troca (o anterior volta
   para a fenda, `voltarParaCarteira`). "Guardar na carteira" ou Esc devolvem. Só `transform`, `opacity` e `clip-path` com a
@@ -884,7 +886,13 @@ ano aberto vêm de `lancsRecentes` em `useDados`.
   "Guardar na carteira". Embaixo, **abas** (a escolhida fica lembrada no aparelho; setas esquerda/direita trocam):
   **Fatura** (faturas que venceram sem pagar e a fatura do mês), **Compras** (as compras da fatura; a compra que acabou de
   ser lançada abre aqui, destacada), **Pagas e renegociadas** (histórico, toque para ajeitar), **Próximas e parceladas** e
-  **Limite e caixinha**. No jeito simples, só Fatura e Compras. Abaixo de 1100px de largura, a carteira fica em cima.
+  **Limite e caixinha** (`LimitePC`: "Livre para gastar" grande, uma régua do usado, o aviso perto do limite, "De onde vem
+  o limite" (do banco e da caixinha, em dourado listrado) e "O que está usando o limite": a fatura do mês, as vencidas e as
+  parcelas das próximas faturas, que é o resto do usado; embaixo, a caixinha que vira limite, com "Mudar"/"Somar"; sem
+  limite informado, o mesmo convite do celular). No jeito simples, só Fatura e Compras. Abaixo de 1100px de largura, a
+  carteira fica em cima.
+- **A volta para a carteira** sobe o cartão até a parte de baixo dele passar da boca do bolso, troca de camada ali (fica
+  atrás do bolso) e só então desliza para dentro; o movimento e a troca de camada andam na mesma linha do tempo.
 - **Celular** (`movel/telas/CartoesMovel.tsx`): continua como está (cartões deslizando de lado e o detalhe embaixo); usa as
   mesmas peças da fatura, do limite e das listas.
 - **Detalhe do cartão (as peças, iguais no computador e no celular):** faturas que venceram sem pagar (até 12 meses para

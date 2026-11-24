@@ -17602,5 +17602,117 @@
   "Quer ver limite, parcelas e faturas pagas? Mudar o jeito de ver": {
     "en": "Want to see limit, installments and paid statements? Change the view",
     "es": "¿Quieres ver el límite, las cuotas y los resúmenes pagados? Cambiar la vista"
+  },
+  "Abrir o cartão {0}": {
+    "en": "Open the {0} card",
+    "es": "Abrir la tarjeta {0}"
+  },
+  "{0} livres": {
+    "en": "{0} available",
+    "es": "{0} disponibles"
+  },
+  "Sem limite informado": {
+    "en": "No limit set",
+    "es": "Sin límite informado"
+  },
+  "Clique num cartão, aqui ou na carteira, para ver tudo dele.": {
+    "en": "Click a card, here or in the wallet, to see everything about it.",
+    "es": "Haz clic en una tarjeta, aquí o en la billetera, para ver todo sobre ella."
+  },
+  "Faturas vencidas": {
+    "en": "Overdue statements",
+    "es": "Resúmenes vencidos"
+  },
+  "Parcelas das próximas faturas": {
+    "en": "Installments on upcoming statements",
+    "es": "Cuotas de los próximos resúmenes"
+  },
+  "Passou do limite": {
+    "en": "Over the limit",
+    "es": "Superaste el límite"
+  },
+  "Livre para gastar": {
+    "en": "Available to spend",
+    "es": "Disponible para gastar"
+  },
+  "de {0} de limite": {
+    "en": "of {0} limit",
+    "es": "de {0} de límite"
+  },
+  "{0}% usado": {
+    "en": "{0}% used",
+    "es": "{0}% usado"
+  },
+  "{0} usados de {1}": {
+    "en": "{0} used of {1}",
+    "es": "{0} usados de {1}"
+  },
+  "As compras passaram do limite. O banco pode recusar as próximas até a fatura ser paga.": {
+    "en": "Purchases went over the limit. The bank may decline new ones until the statement is paid.",
+    "es": "Las compras superaron el límite. El banco puede rechazar las próximas hasta que se pague el resumen."
+  },
+  "Quase no limite: uma compra maior pode ser recusada.": {
+    "en": "Almost at the limit: a larger purchase may be declined.",
+    "es": "Casi en el límite: una compra mayor puede ser rechazada."
+  },
+  "De onde vem o limite": {
+    "en": "Where the limit comes from",
+    "es": "De dónde viene el límite"
+  },
+  "Do banco": {
+    "en": "From the bank",
+    "es": "Del banco"
+  },
+  "Da caixinha do banco": {
+    "en": "From the bank savings",
+    "es": "Del ahorro del banco"
+  },
+  "Da caixinha": {
+    "en": "From savings",
+    "es": "Del ahorro"
+  },
+  "O que está usando o limite": {
+    "en": "What is using the limit",
+    "es": "Qué está usando el límite"
+  },
+  "O limite volta a ficar livre conforme você paga as faturas.": {
+    "en": "The limit frees up as you pay your statements.",
+    "es": "El límite se libera a medida que pagas los resúmenes."
+  },
+  "{0} da caixinha viram limite": {
+    "en": "{0} from savings become limit",
+    "es": "{0} del ahorro se vuelven límite"
+  },
+  "Acompanha a caixinha do banco: guardou mais, o limite cresce.": {
+    "en": "Follows the bank savings: save more, the limit grows.",
+    "es": "Sigue el ahorro del banco: si guardas más, el límite crece."
+  },
+  "Valor fixo que você informou.": {
+    "en": "A fixed amount you entered.",
+    "es": "Un valor fijo que informaste."
+  },
+  "Tem dinheiro numa caixinha que vira limite?": {
+    "en": "Have savings that become limit?",
+    "es": "¿Tienes un ahorro que se vuelve límite?"
+  },
+  "Some ao limite do cartão.": {
+    "en": "Add it to the card limit.",
+    "es": "Súmalo al límite de la tarjeta."
+  },
+  "Somar": {
+    "en": "Add",
+    "es": "Sumar"
+  },
+  "Antes": {
+    "en": "Before",
+    "es": "Antes"
+  },
+  "Tudo junto": {
+    "en": "All mixed up",
+    "es": "Todo junto"
+  },
+  "Ver de novo": {
+    "en": "Watch again",
+    "es": "Ver de nuevo"
   }
 }
