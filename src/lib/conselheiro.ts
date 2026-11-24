@@ -322,7 +322,7 @@ export function conselhos(e: EntradaConselheiro): Conselho[] {
     const ultimas = new Map<string, ConferenciaDivida>()
     for (const c of e.conferencias) {
       const d = porNome.get(c.divida_id)
-      if (!d || meDevem(d) || c.data < desde) continue
+      if (!d || meDevem(d) || c.data < desde || c.qual_valor === 'quitar') continue
       const antiga = ultimas.get(c.divida_id)
       if (!antiga || c.data > antiga.data || (c.data === antiga.data && c.created_at > antiga.created_at)) ultimas.set(c.divida_id, c)
     }

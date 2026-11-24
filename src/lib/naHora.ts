@@ -45,7 +45,7 @@ export function naHoraDeParcelar(a: Analise, novas: { ano: number; mes: number; 
   const pct = a.renda > 0 && pior ? Math.round((pior.valor / a.renda) * 100) : null
   if (pct !== null && pior && pior.valor > 0) partes.push(tx('Em {0}, {1}% do que entra já sai para parcelas ({2}).', nomeMes(pior.mes), pct, fmtValor(pior.valor)))
   const atrasada = a.compromisso.atrasadas[0]
-  if (atrasada) partes.push(tx('E {0} está atrasada ({1}).', atrasada.descricao, fmtValor(atrasada.valor)))
+  if (atrasada) partes.push(tx('Atenção: "{0}" está em atraso ({1}).', atrasada.descricao, fmtValor(atrasada.valor)))
   if (!partes.length) return null
   const pesado = (pct ?? 0) >= 30 || Boolean(atrasada)
   if (pesado) {
@@ -101,7 +101,10 @@ export function naHoraDaPromessa(a: Analise, anteriores: { cumpridas: number; fa
   if (recebe) {
     return {
       tom: 'medio',
-      texto: `${tx('Das {0} promessas anteriores, {1} foram cumpridas.', total, anteriores.cumpridas)} ${chamar(a.firmeza, tx('Talvez um valor menor ajude.'), tx('Não conte com esse dinheiro até ele cair.'), tx('Só acredito quando cair na conta.'))}`,
+      texto: `${total === 1 ? tx('A promessa anterior não foi cumprida.')
+        : anteriores.cumpridas === 0 ? tx('Nenhuma das {0} promessas anteriores foi cumprida.', total)
+          : anteriores.cumpridas === 1 ? tx('Das {0} promessas anteriores, só 1 foi cumprida.', total)
+            : tx('Das {0} promessas anteriores, {1} foram cumpridas.', total, anteriores.cumpridas)} ${chamar(a.firmeza, tx('Talvez um valor menor ajude.'), tx('Não conte com esse dinheiro até ele cair.'), tx('Só acredito quando cair na conta.'))}`,
     }
   }
   return {

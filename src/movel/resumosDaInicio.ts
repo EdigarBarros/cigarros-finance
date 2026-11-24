@@ -114,14 +114,14 @@ export function dicasDaInicio(c: Ctx): Dica[] {
   }
   // o Planejar o mês: com plano, o próximo passo decidido; sem plano, o convite (abre o Consultor já com a mesa)
   const q = c.analise.quadros?.este
-  if (q && (q.fontes.length || q.destinos.some((d) => d.tipo === 'conta'))) {
+  if (q && (q.fontes.length || q.destinos.some((d) => d.tipo === 'conta')) && !c.perfil.dispensadas.includes('planejar')) {
     const pl = c.analise.planoDoMes
     const px = pl?.proximo
     dicas.push({
       id: 'planejar', icone: 'calendario',
       titulo: pl ? tx('Seu plano do mês: {0}% com dinheiro', pl.placar.pct) : tx('Planeje o mês'),
       texto: px ? tx('Próximo passo: {0}.', px.pagar.slice(0, 2).map((x) => x.nome).join(', ')) : tx('Diga com qual dinheiro sai cada conta. O consultor passa a seguir o seu plano.'),
-      botao: { texto: pl ? tx('Abrir o plano') : tx('Planejar o mês'), acao: c.abrirPlanejamento },
+      botao: { texto: pl ? tx('Abrir o plano') : tx('Planejar o mês'), acao: c.abrirPlanejamento }, aoDispensar: () => c.dispensar('planejar'),
     })
   }
   if (c.sugestao) {

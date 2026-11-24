@@ -1823,7 +1823,8 @@ export function analisar(e: EntradaAnalise): Analise {
   // não sugere outra ordem por cima (as dicas automáticas do planejador saem do plano de ação).
   const planoDoMes = quadros ? lerPlano(quadros.este, e.planejamento?.[quadros.este.mes]) : null
   // O planejador diz o que fazer com cada conta que não cabe no dia: isso vale mais que o aviso genérico de aperto.
-  const doPlano = planoDoMes ? [] : plano?.dicas ?? []
+  // (o que falta dinheiro de verdade continua: o plano da pessoa pode não cobrir o mês que vem)
+  const doPlano = planoDoMes ? (plano?.dicas ?? []).filter((d) => d.tom === 'ruim') : plano?.dicas ?? []
   for (const d of doPlano) {
     const divida = d.id.startsWith('adiantar-aberta:')
     nova({

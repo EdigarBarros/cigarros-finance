@@ -35,6 +35,7 @@ export function ConferirComBanco({ s, cal, d, aoFechar }: {
   const [valor, setValor] = useState(() => paraCampoMoeda(nativoDiv(s, s.restanteHoje), moeda))
   const [qual, setQual] = useState<'total' | 'quitar'>('total')
   const [salvando, setSalvando] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
   const n = parseNumero(valor)
   const estimado = nativoDiv(s, s.restanteHoje)
   const dif = n !== null ? Math.round((n - estimado) * 100) / 100 : 0
@@ -52,8 +53,13 @@ export function ConferirComBanco({ s, cal, d, aoFechar }: {
     setSalvando(true)
     // o valor digitado está na moeda da dívida; o app guarda a situação na moeda principal
     const principal = s.moeda ? n * s.taxa : n
-    if (qual === 'quitar') await d.anotarValorParaQuitar(s, principal, hoje)
-    else await d.conferirDivida(s, cal, principal, hoje, 'conferir')
+    if (qual === 'quitar') {
+      if (!(await d.anotarValorParaQuitar(s, principal, hoje))) {
+        setSalvando(false)
+        setErro(tx('Para anotar o valor para quitar, rode {0} no SQL Editor do Supabase.', 'supabase/migracao-44-juros-aprendidos.sql'))
+        return
+      }
+    } else await d.conferirDivida(s, cal, principal, hoje, 'conferir')
     setSalvando(false)
     aoFechar()
   }
@@ -91,6 +97,7 @@ export function ConferirComBanco({ s, cal, d, aoFechar }: {
           {' '}{tx('Vou guardar isso para acertar a conta.')}</span>
         </p>
       )}
+      {erro && <p className="form-erro">{erro}</p>}
       <div className="form-acoes">
         <span className="espaco" />
         <button type="button" className="btn" onClick={aoFechar}>{tx('Cancelar')}</button>

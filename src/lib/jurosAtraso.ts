@@ -84,7 +84,8 @@ export function jurosDoAtraso(s: SituacaoDivida, cal: Calendario | null, hoje: s
   let diario = 0
   // valor fixo por dia de atraso (migração 36): uma vez por dia para a dívida, desde a parcela atrasada mais antiga (ou desde a
   // conferência), repartido entre as parcelas atrasadas pelo que falta de cada uma
-  const reaisDia = Math.max(0, d.atraso_reais_dia ?? 0)
+  // gravado na moeda da dívida; aqui tudo está na moeda principal
+  const reaisDia = Math.max(0, d.atraso_reais_dia ?? 0) * (s.taxa || 1)
   const somaFixa = () => {
     if (!reaisDia) return
     const primeira = cal ? cal.atrasadas.find((p) => p.falta > 0)?.vencimento : conf

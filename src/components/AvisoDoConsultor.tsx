@@ -6,7 +6,7 @@ import { Icone } from './Icone'
 export function AvisoDoConsultor({ fala }: { fala: FalaNaHora | null }) {
   if (!fala) return null
   return (
-    <p className={`aviso-consultor ${fala.tom}`} role="note">
+    <p className={`aviso-consultor ${fala.tom}`} role="note" aria-live="polite">
       <span className="aviso-consultor-ic" aria-hidden="true"><Icone nome="bussola" tamanho={15} /></span>
       <span><strong>{tx('O consultor:')}</strong> {fala.texto}</span>
     </p>

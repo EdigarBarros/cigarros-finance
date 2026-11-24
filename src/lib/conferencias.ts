@@ -25,7 +25,8 @@ export function mudancaDe(c: ConferenciaDivida): MudancaConferida {
 /** As conferências de uma dívida, da mais nova para a mais antiga. */
 export function historicoDaDivida(todas: ConferenciaDivida[], dividaId: string): MudancaConferida[] {
   return todas
-    .filter((c) => c.divida_id === dividaId)
+    // o valor para quitar (com desconto) não é a dívida mudando: fica no "O que aprendi com o banco"
+    .filter((c) => c.divida_id === dividaId && c.qual_valor !== 'quitar')
     .sort((a, b) => b.data.localeCompare(a.data) || b.created_at.localeCompare(a.created_at))
     .map(mudancaDe)
 }

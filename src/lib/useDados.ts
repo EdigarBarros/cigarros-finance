@@ -685,25 +685,27 @@ export function useDados(userId: string, ano: number) {
   const registrarConferencia = async (
     divida_id: string, data: string, antes: number, depois: number, origem: 'conferir' | 'pagar',
     pista?: Pick<ConferenciaDivida, 'juros_estimado' | 'base_juros' | 'dias_juros' | 'qual_valor'>,
-  ) => {
+  ): Promise<boolean> => {
     const basico = { divida_id, data, antes, depois, origem }
     let r = await supabase.from('divida_conferencias').insert(pista && !conferenciasSemPista ? { ...basico, ...pista } : basico).select().single()
     // sem a migração 44: guarda como antes (só não aprende os juros com esta conferência)
     if (r.error && pista && faltaColuna(r.error)) {
       setConferenciasSemPista(true)
-      if (pista.qual_valor === 'quitar') return
+      if (pista.qual_valor === 'quitar') return false
       r = await supabase.from('divida_conferencias').insert(basico).select().single()
     }
-    if (r.error) { if (faltaTabela(r.error) && !faltaColuna(r.error)) setConferenciasSemTabela(true); else falhou(r.error.message); return }
+    if (r.error) { if (faltaTabela(r.error) && !faltaColuna(r.error)) setConferenciasSemTabela(true); else falhou(r.error.message); return false }
     setConferencias((xs) => [...xs, normConferencia(r.data as ConferenciaDivida)])
+    return true
   }
   /**
    * "Esse é o valor para quitar hoje" (com desconto): só anota no histórico, sem mudar a dívida nem ensinar juros. O consultor
    * usa para dizer quanto o banco abate se a pessoa quitar.
    */
-  const anotarValorParaQuitar = async (s: SituacaoDivida, valor: number, data: string) => {
-    if (conferenciasSemTabela) return
-    await registrarConferencia(s.divida.id, data, centavos(s.restanteHoje), centavos(valor), 'conferir', { qual_valor: 'quitar' })
+  const anotarValorParaQuitar = async (s: SituacaoDivida, valor: number, data: string): Promise<boolean> => {
+    // sem a migração 44 não há como marcar a linha como "para quitar": ela viraria uma conferência do total
+    if (conferenciasSemTabela || conferenciasSemPista) return false
+    return registrarConferencia(s.divida.id, data, centavos(s.restanteHoje), centavos(valor), 'conferir', { qual_valor: 'quitar' })
   }
   const delConferencia = async (id: string) => {
     setConferencias((xs) => xs.filter((x) => x.id !== id))
