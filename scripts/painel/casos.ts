@@ -5,7 +5,7 @@
  */
 import { compararGastos, destaqueDaComparacao, fatiasDoPeriodo, maiorCategoria } from '../../src/lib/comparacao'
 import { situacoesDoMes } from '../../src/lib/contasFixas'
-import { jurosEmbutidos, jurosQuePesam, parcelasDoMes, parcelasPorDia, situacaoDividas } from '../../src/lib/dividas'
+import { calendarioDe, jurosEmbutidos, jurosQuePesam, parcelasDoMes, parcelasPorDia, situacaoDividas } from '../../src/lib/dividas'
 import { regraDoAtraso } from '../../src/lib/jurosAtraso'
 import { agruparTarefas, tarefasDoMes } from '../../src/lib/paraFazer'
 import { comporPrevisao, diaADiaDoMes } from '../../src/lib/previsao'
@@ -24,6 +24,12 @@ import { chaveDoMes, sobrasPorMes } from '../../src/lib/saldoCorrido'
 import { atrasoDa, comGuardado, conselhosDoPlanejamento, custoDa, dicasDe, falta, montarPraMim, mudarParte, normPlanejamentos, placarDe, por, quadroDoMes, sobra, valerPartes } from '../../src/lib/planejamento'
 import type { PagamentoPlanejado, Plano } from '../../src/lib/planejador'
 import type { CartaoCredito, ContaFixa, Divida, FaturaParcial, Lancamento, Mes, SaldoDivida } from '../../src/lib/types'
+import { aprenderJuros, descontoParaQuitar } from '../../src/lib/jurosAprendido'
+import { compromissoDe, emDiasDeRenda, sinaisDe, type EntradaSinais } from '../../src/lib/sinais'
+import { naHoraDaPromessa, naHoraDeParcelar, naHoraDePagarParte, naHoraDePular } from '../../src/lib/naHora'
+import { lerPlano, type Quadro } from '../../src/lib/planejamento'
+import type { Analise } from '../../src/lib/analise'
+import type { ConferenciaDivida, PromessaDivida } from '../../src/lib/types'
 
 // ---------- dados de mentira ----------
 let seq = 0
@@ -848,6 +854,162 @@ export const CASOS: Caso[] = [
       igual('norm guarda a escolha', [n['2026-11'].comGuardado, n['2026-12'].comGuardado], [true, undefined])
       igual('consultor: plano com o guardado fechado', conselhosDoPlanejamento(q, { partes: m, em: '', comGuardado: true }, fmt, data), [])
       certo('consultor: sem a escolha, as partes do guardado não valem', conselhosDoPlanejamento(q, { partes: m, em: '' }, fmt, data).some((c) => c.id === 'sem-dinheiro'))
+    },
+  },
+
+  // ==================== o consultor que aprende (juros de verdade, sinais, na hora, plano) ====================
+  {
+    nome: 'juros aprendidos: o banco cobra mais do que a regra informada',
+    rodar() {
+      // Mercado Pago: a regra informada é 0,4% ao dia sobre o saldo; o banco está cobrando ~0,7%
+      const mp: Divida = {
+        id: 'mp', descricao: 'Mercado Pago', valor_parcela: 1000, inicio: '2026-10-01', total_parcelas: 1,
+        atraso_juros_mes: 0.4, atraso_periodo: 'dia', atraso_multa: 0, atraso_tipo: 'simples', atraso_base: 'saldo', conferido_em: '2026-10-31',
+      }
+      const saldos: SaldoDivida[] = [{ id: 's1', divida_id: 'mp', data: '2026-09-01', saldo: 1000 }, { id: 's2', divida_id: 'mp', data: '2026-10-31', saldo: 1220 }]
+      const hoje = '2026-11-11'
+      const s = situacaoDividas([mp], saldos, [], 2026, 11, {}, hoje)[0]
+      const cal = calendarioDe(s, hoje)
+      perto('pela regra informada cresce 1220 × 0,4% por dia', s.atraso!.diario, 4.88)
+      const conf = (id: string, data: string, antes: number, depois: number, mais: Partial<ConferenciaDivida> = {}): ConferenciaDivida =>
+        ({ id, divida_id: 'mp', data, antes, depois, origem: 'conferir', created_at: `${data}T12:00:00Z`, ...mais })
+      const cs = [
+        // antiga, sem a pista (antes da migração 44): com regra informada, não ensina
+        conf('c0', '2026-10-05', 1000, 1010),
+        // 20 dias sobre 1000: o app estimou 80 (0,4%), o banco mostrou 1140 → cobrou 140 = 0,7% ao dia
+        conf('c1', '2026-10-21', 1080, 1140, { juros_estimado: 80, base_juros: 1000, dias_juros: 20 }),
+        // 10 dias sobre 1140: o app estimou 45,60, o banco mostrou 1220 → cobrou 80 ≈ 0,7018% ao dia
+        conf('c2', '2026-10-31', 1185.6, 1220, { juros_estimado: 45.6, base_juros: 1140, dias_juros: 10 }),
+        // o valor para quitar hoje não ensina juros
+        conf('q1', '2026-11-05', 1260, 1000, { qual_valor: 'quitar' }),
+      ]
+      const a = aprenderJuros(s, cal, cs)!
+      certo('aprendeu', a)
+      igual('2 conferências serviram', a.amostras, 2)
+      igual('modelo: percentual por dia', a.modelo, 'pct')
+      // média pesada pelos dias: (0,7% × 20 + 0,70175% × 10) ÷ 30 = 0,700585%
+      perto('taxa por dia', a.taxaDia, 0.00700585, 0.0000001)
+      perto('cresce hoje 1220 × 0,700585%', a.porDiaHoje, 8.55)
+      igual('o banco cobra mais', a.diverge, 'mais')
+      igual('sugere a regra de 0,7006% ao dia', a.sugestao, { atraso_juros_mes: 0.7006, atraso_periodo: 'dia', atraso_tipo: 'simples', atraso_reais_dia: null })
+      // erro do app: 10 ÷ 1010 = 0,990%; 60 ÷ 1140 = 5,263%; 34,40 ÷ 1220 = 2,820% → média 3,024%
+      perto('erro médio das estimativas', a.erroMedio, 0.030243, 0.00001)
+      igual('confiança média com 2', a.confianca, 'media')
+      perto('equivale a ~21% ao mês', a.taxaMes, 21.02)
+      perto('IOF diário possível: 1220 × 0,0082%', a.iofDia, 0.1)
+      const q = descontoParaQuitar(cs)!
+      perto('desconto para quitar', q.desconto, 260)
+      // com a regra já certa, não sugere trocar
+      const certa = situacaoDividas([{ ...mp, atraso_juros_mes: 0.7006 }], saldos, [], 2026, 11, {}, hoje)[0]
+      const b = aprenderJuros(certa, calendarioDe(certa, hoje), cs)!
+      igual('regra certa: bate', [b.diverge, b.sugestao], [null, null])
+      // sem regra nenhuma: as conferências antigas servem (o app não estimava nada)
+      const semRegra = situacaoDividas([{ ...mp, atraso_juros_mes: null, conferido_em: null }], saldos, [], 2026, 11, {}, hoje)[0]
+      const c = aprenderJuros(semRegra, calendarioDe(semRegra, hoje), [conf('a', '2026-10-01', 1000, 1000), conf('b', '2026-10-11', 1000, 1050)])!
+      perto('sem regra: 50 em 10 dias sobre 1000 = 0,5% ao dia', c.taxaDia, 0.005, 0.0000001)
+      igual('sem regra: avisa que cresce', c.diverge, 'mais')
+    },
+  },
+  {
+    nome: 'sinais: ritmo da dívida, dívida sobre dívida, futuro já gasto, pular compra, fatura pela metade e promessas',
+    rodar() {
+      const hoje = '2026-11-11'
+      const mp: Divida = { id: 'mp', descricao: 'Mercado Pago', valor_parcela: 1000, inicio: '2026-10-01', total_parcelas: 1 }
+      const nova: Divida = {
+        id: 'loja', descricao: 'Crédito da loja', valor_parcela: 300, inicio: '2026-12-10', total_parcelas: 6,
+        promessas: [
+          { id: 'p1', divida_id: 'loja', data: '2026-10-10', valor: null, obs: null, created_at: '2026-10-01T10:00:00Z' },
+          { id: 'p2', divida_id: 'loja', data: '2026-10-20', valor: null, obs: null, created_at: '2026-10-12T10:00:00Z' },
+        ] as PromessaDivida[],
+      }
+      const saldos: SaldoDivida[] = [{ id: 's1', divida_id: 'mp', data: '2026-09-01', saldo: 1000 }, { id: 's2', divida_id: 'loja', data: '2026-11-08', saldo: 1800 }]
+      // compra de 3x 100 feita em 05/11 (dezembro, janeiro, fevereiro) e duas compras puladas para a fatura de dezembro
+      const compras: Lancamento[] = [
+        ...[12, 1, 2].map((m, i) => lanc(`${m === 12 ? 2026 : 2027}-${String(m).padStart(2, '0')}-05`, 'saida', 100, { cartao_id: 'pp', compra_id: 'c1', parcela: i + 1, parcelas: 3, data_compra: '2026-11-05', descricao: 'Fone' })),
+        lanc('2026-12-05', 'saida', 80, { cartao_id: 'pp', compra_id: 'c2', parcela: 1, parcelas: 1, data_compra: '2026-10-20', pulada_de: '2026-11-05' }),
+        lanc('2026-12-05', 'saida', 70, { cartao_id: 'pp', compra_id: 'c3', parcela: 1, parcelas: 1, data_compra: '2026-10-22', pulada_de: '2026-11-05' }),
+      ]
+      const e: EntradaSinais = {
+        hojeIso: hoje, renda: 1000, lancs: [], compras, faturasPagas: [],
+        faturasParciais: [parcial(2026, 10, 200, '2026-10-05'), parcial(2026, 11, 150, '2026-11-05')],
+        dividas: [mp, nova], saldos, pagamentos: [], taxas: {}, conferencias: [], firmeza: 'direto', nome: 'Edigar Teste', lancamentosPorMes: 0, jurosCaro: 3,
+      }
+      const ss = sinaisDe(e)
+      const ids = ss.map((x) => x.id.split(':')[0])
+      const de = (id: string) => ss.find((x) => x.id.startsWith(id))!
+      for (const id of ['ritmo-divida', 'divida-sobre-divida', 'futuro-comprometido', 'pulou-compra', 'fatura-parcial', 'promessas']) certo(`tem ${id} (veio: ${ids.join(', ')})`, ids.includes(id))
+      certo('sem lançamentos frequentes, não fala de dados velhos', !ids.includes('dados-velhos'))
+      // ritmo: set 1000 (Mercado Pago nasceu) + nov 1800 (loja) + 300 (fone) = 3100 de dívida nova, nada pago
+      certo('ritmo: 3.100 novas, 0 pagas', de('ritmo-divida').dado.forma === 'comparacao' && (de('ritmo-divida').dado as { agora: { valor: number } }).agora.valor === 3100)
+      certo('ritmo entra no plano', de('ritmo-divida').acao)
+      // dívida sobre dívida: a loja (1.800) e o fone (300) enquanto o Mercado Pago está atrasado
+      igual('dívida sobre dívida: 2 novas, 2.100', [(de('divida-sobre-divida').dado as { valor: number }).valor, de('divida-sobre-divida').frase.includes('Mercado Pago')], [2100, true])
+      // futuro: dezembro = 100 (fone) + 300 (loja) = 40% de 1.000
+      certo('futuro: 40% em dezembro', de('futuro-comprometido').frase.includes('40%'))
+      igual('futuro: tom médio', de('futuro-comprometido').tom, 'medio')
+      certo('pulou 2 compras (150)', de('pulou-compra').frase.includes('2 compras') && de('pulou-compra').frase.includes('150'))
+      igual('2 faturas seguidas pela metade', (de('fatura-parcial').dado as { valor: number }).valor, 2)
+      igual('promessas: 2 não cumpridas', (de('promessas').dado as { valor: number }).valor, 2)
+      // a firmeza muda só o chamado
+      const gentil = sinaisDe({ ...e, firmeza: 'gentil' }).find((x) => x.id === 'ritmo-divida')!
+      const semFiltro = sinaisDe({ ...e, firmeza: 'sem-filtro' }).find((x) => x.id === 'ritmo-divida')!
+      igual('mesmo fato nos três', [gentil.frase, semFiltro.frase], [de('ritmo-divida').frase, de('ritmo-divida').frase])
+      certo('chamados diferentes', gentil.chamado !== semFiltro.chamado && gentil.chamado !== de('ritmo-divida').chamado)
+      certo('sem filtro chama pelo primeiro nome', semFiltro.chamado.startsWith('Edigar,'))
+      // compromisso: 3 parcelas correndo (o fone, a loja com parcela e o Mercado Pago atrasado)
+      const cp = compromissoDe(e)
+      igual('compromisso de dezembro', cp.meses[0], { ano: 2026, mes: 12, valor: 400 })
+      igual('o atrasado aparece', cp.atrasadas.map((x) => x.descricao), ['Mercado Pago'])
+
+      // gasto miúdo: Uber 4× 20 e Padaria 3× 15 neste mês, com o Mercado Pago atrasado
+      const miudos = [1, 3, 6, 9].map((d) => lanc(`2026-11-0${d}`, 'saida', 20, { descricao: 'Uber' }))
+        .concat([2, 4, 8].map((d) => lanc(`2026-11-0${d}`, 'saida', 15, { descricao: 'Padaria' })))
+      const m = sinaisDe({ ...e, renda: 3000, lancs: miudos }).find((x) => x.id === 'miudo-x-divida')!
+      certo(`miúdo contra a dívida (${m?.frase})`, m && m.frase.replace(/\s/g, ' ').includes('R$ 125,00') && m.frase.includes('Uber') && m.frase.includes('Mercado Pago'))
+      // dados velhos: costuma lançar 10 por mês e o último foi em 01/11
+      const velhos = sinaisDe({ ...e, lancamentosPorMes: 10, lancs: [lanc('2026-11-01', 'saida', 10, { created_at: '2026-11-01T09:00:00Z' })], compras: [] })
+      certo('10 dias sem lançar', velhos.find((x) => x.id === 'dados-velhos')?.frase.includes('10 dias'))
+    },
+  },
+  {
+    nome: 'consultor na hora: parcelar, pular compra, pagar parte da fatura e promessa',
+    rodar() {
+      const a = {
+        firmeza: 'direto', renda: 1000, dividas: null,
+        compromisso: { meses: [12, 1, 2, 3, 4, 5].map((m) => ({ ano: m === 12 ? 2026 : 2027, mes: m, valor: 400 })), esteMes: 0, parcelasAtivas: 3, atrasadas: [] },
+      } as unknown as Analise
+      const f = naHoraDeParcelar(a, [{ ano: 2026, mes: 12, valor: 100 }, { ano: 2027, mes: 1, valor: 100 }])!
+      certo('4ª parcela', f.texto.includes('4ª'))
+      certo('dezembro com 50%', f.texto.includes('50%') && f.texto.includes('dezembro'))
+      igual('50% é ruim', f.tom, 'ruim')
+      igual('à vista e sem atraso: nada a dizer', naHoraDeParcelar(a, [{ ano: 2026, mes: 12, valor: 100 }]), null)
+      certo('pagar parte: 500 no rotativo, uns 60 em 30 dias', naHoraDePagarParte(a, 500)!.texto.replace(/\s/g, ' ').includes('R$ 60,00'))
+      igual('pular de novo é ruim', naHoraDePular(a, 300, 'dezembro', 1)!.tom, 'ruim')
+      igual('promessa: 2 falhas', naHoraDaPromessa(a, { cumpridas: 1, falhas: 2 }, false)!.tom, 'ruim')
+      igual('promessa: sem falha, nada a dizer', naHoraDaPromessa(a, { cumpridas: 2, falhas: 0 }, false), null)
+      igual('100 de 3.000 por mês: 1 dia', emDiasDeRenda(100, 3000), '1 dia do que você ganha')
+      igual('500 de 3.000: 5 dias', emDiasDeRenda(500, 3000), '5 dias do que você ganha')
+      igual('6.000 de 3.000: 2 meses', emDiasDeRenda(6000, 3000), '2 meses do que você ganha')
+      igual('pouco demais: nada', emDiasDeRenda(10, 3000), null)
+    },
+  },
+  {
+    nome: 'o consultor lê o plano: o próximo passo que a pessoa decidiu',
+    rodar() {
+      const destino = (id: string, nome: string, valor: number, vence: string, i: number) => ({
+        id, nome, tipo: 'conta' as const, valor, vence, atrasada: false, juros: null, multa: 0, estimada: false, origem: 'conta' as const, indice: i,
+      })
+      const q: Quadro = {
+        qual: 'este', mes: '2026-11', hoje: '2026-11-19', guardados: [],
+        fontes: [{ id: 'sal', nome: 'Salário', valor: 1000, data: '2026-11-25' }, { id: 'extra', nome: 'Freela', valor: 300, data: '2026-11-28' }],
+        destinos: [destino('luz', 'Luz', 200, '2026-11-27', 0), destino('mp', 'Mercado Pago', 500, '2026-11-26', 1), destino('net', 'Internet', 100, '2026-11-30', 2)],
+      }
+      igual('sem plano: nada', lerPlano(q, undefined), null)
+      const l = lerPlano(q, { em: 'x', partes: [{ entrada: 'extra', conta: 'net', valor: 100 }, { entrada: 'sal', conta: 'mp', valor: 500 }, { entrada: 'sal', conta: 'luz', valor: 200 }] })!
+      igual('próximo dinheiro com conta: o Salário', l.proximo!.fonte.nome, 'Salário')
+      igual('paga o Mercado Pago e a Luz, o maior primeiro', l.proximo!.pagar.map((x) => x.nome), ['Mercado Pago', 'Luz'])
+      perto('total do passo', l.proximo!.total, 700)
+      igual('placar: tudo com dinheiro e nada atrasa', [l.placar.pct, l.placar.fechado], [100, true])
     },
   },
 ]

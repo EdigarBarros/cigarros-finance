@@ -138,6 +138,14 @@ export interface ConferenciaDivida {
   /** 'conferir': a pessoa digitou o valor do banco; 'pagar': o app acertou os juros do atraso antes de um pagamento. */
   origem: 'conferir' | 'pagar'
   created_at: string
+  /** Migração 44: os juros que o app tinha estimado (sem a multa), na moeda principal; null/ausente = não guardado. */
+  juros_estimado?: number | null
+  /** Migração 44: o que estava crescendo (o atrasado, ou o saldo na regra do cartão). */
+  base_juros?: number | null
+  /** Migração 44: há quantos dias os juros contavam. */
+  dias_juros?: number | null
+  /** Migração 44: 'total' (o que se deve) ou 'quitar' (o valor com desconto para quitar hoje, que não muda a dívida). */
+  qual_valor?: 'total' | 'quitar' | null
 }
 
 /** Uma parcela de uma parte da dívida: "Microfone, parcela 2 de 6, R$ 78,50, vence 02/03" (migração 21). */

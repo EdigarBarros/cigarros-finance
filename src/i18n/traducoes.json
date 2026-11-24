@@ -17842,5 +17842,925 @@
   "Documento compactado incompleto.": {
     "en": "Incomplete compressed document.",
     "es": "Documento comprimido incompleto."
+  },
+  "O consultor:": {
+    "en": "The advisor:",
+    "es": "El asesor:"
+  },
+  "precisão alta": {
+    "en": "high accuracy",
+    "es": "precisión alta"
+  },
+  "precisão média": {
+    "en": "medium accuracy",
+    "es": "precisión media"
+  },
+  "ainda aprendendo": {
+    "en": "still learning",
+    "es": "todavía aprendiendo"
+  },
+  "{0}% ao dia sobre o atrasado": {
+    "en": "{0}% a day on the overdue amount",
+    "es": "{0}% al día sobre lo atrasado"
+  },
+  "O que aprendi com o banco": {
+    "en": "What I learned from the bank",
+    "es": "Lo que aprendí con el banco"
+  },
+  "1 conferência": {
+    "en": "1 check",
+    "es": "1 comprobación"
+  },
+  "{0} conferências": {
+    "en": "{0} checks",
+    "es": "{0} comprobaciones"
+  },
+  "O banco está cobrando mais do que você me disse: a dívida cresce uns {0} por dia, e não {1}.": {
+    "en": "The bank is charging more than you told me: the debt grows about {0} a day, not {1}.",
+    "es": "El banco está cobrando más de lo que me dijiste: la deuda crece unos {0} por día, y no {1}."
+  },
+  "Essa dívida cresce uns {0} por dia, mesmo sem regra de juros informada.": {
+    "en": "This debt grows about {0} a day, even without an interest rule set.",
+    "es": "Esta deuda crece unos {0} por día, aunque no tenga una regla de intereses."
+  },
+  "O banco está cobrando menos do que você me disse: a dívida cresce uns {0} por dia, e não {1}.": {
+    "en": "The bank is charging less than you told me: the debt grows about {0} a day, not {1}.",
+    "es": "El banco está cobrando menos de lo que me dijiste: la deuda crece unos {0} por día, y no {1}."
+  },
+  "A regra que você informou bate com o banco: a dívida cresce uns {0} por dia.": {
+    "en": "The rule you set matches the bank: the debt grows about {0} a day.",
+    "es": "La regla que informaste coincide con el banco: la deuda crece unos {0} por día."
+  },
+  "em 30 dias": {
+    "en": "in 30 days",
+    "es": "en 30 días"
+  },
+  "equivale a": {
+    "en": "same as",
+    "es": "equivale a"
+  },
+  "erro das estimativas": {
+    "en": "estimate error",
+    "es": "error de las estimaciones"
+  },
+  "Desses {0} por dia, até {1} pode ser IOF (0,0082% ao dia, regra do governo). O resto, {2}, são juros e encargos do banco.": {
+    "en": "Of those {0} a day, up to {1} may be IOF tax (0.0082% a day, a government rule). The rest, {2}, is the bank's interest and fees.",
+    "es": "De esos {0} por día, hasta {1} puede ser IOF (0,0082% al día, regla del gobierno). El resto, {2}, son intereses y cargos del banco."
+  },
+  "Trocar a regra desta dívida para {0}? As estimativas passam a seguir o que o banco cobra.": {
+    "en": "Change this debt's rule to {0}? Estimates will follow what the bank charges.",
+    "es": "¿Cambiar la regla de esta deuda a {0}? Las estimaciones pasan a seguir lo que cobra el banco."
+  },
+  "Trocar a regra": {
+    "en": "Change the rule",
+    "es": "Cambiar la regla"
+  },
+  "Usar a taxa que calculei": {
+    "en": "Use the rate I calculated",
+    "es": "Usar la tasa que calculé"
+  },
+  "Com mais uma ou duas conferências (de preferência com alguns dias entre elas), eu acerto melhor.": {
+    "en": "With one or two more checks (ideally a few days apart), I'll get it more accurate.",
+    "es": "Con una o dos comprobaciones más (mejor con algunos días entre ellas), acierto más."
+  },
+  "Em {0}, o banco pedia {1} para quitar tudo: {2} a menos que o total.": {
+    "en": "On {0}, the bank asked {1} to pay it all off: {2} less than the total.",
+    "es": "El {0}, el banco pedía {1} para saldarla: {2} menos que el total."
+  },
+  "Mês fechado no seu plano": {
+    "en": "Month closed in your plan",
+    "es": "Mes cerrado en tu plan"
+  },
+  "Seu plano do mês: {0}% das contas com dinheiro": {
+    "en": "Your plan for the month: {0}% of bills covered",
+    "es": "Tu plan del mes: {0}% de las cuentas con dinero"
+  },
+  "Planeje com qual dinheiro sai cada conta": {
+    "en": "Plan which money pays each bill",
+    "es": "Planea con qué dinero sale cada cuenta"
+  },
+  "Próximo passo: com o que está na conta, pague {0}.": {
+    "en": "Next step: with what's in your account, pay {0}.",
+    "es": "Próximo paso: con lo que hay en la cuenta, paga {0}."
+  },
+  "Próximo passo: quando {0} cair ({1}), pague {2}.": {
+    "en": "Next step: when {0} comes in ({1}), pay {2}.",
+    "es": "Próximo paso: cuando entre {0} ({1}), paga {2}."
+  },
+  "O consultor segue o que você decidiu.": {
+    "en": "The advisor follows what you decided.",
+    "es": "El asesor sigue lo que decidiste."
+  },
+  "Em poucos toques você vê o que atrasa e o que sobra, e o consultor passa a seguir o seu plano.": {
+    "en": "In a few taps you see what's late and what's left, and the advisor starts following your plan.",
+    "es": "En pocos toques ves qué se atrasa y qué sobra, y el asesor pasa a seguir tu plan."
+  },
+  "Qual número o banco mostra?": {
+    "en": "Which number does the bank show?",
+    "es": "¿Qué número muestra el banco?"
+  },
+  "O total que devo": {
+    "en": "The total I owe",
+    "es": "El total que debo"
+  },
+  "O valor para quitar hoje": {
+    "en": "The payoff amount today",
+    "es": "El valor para saldar hoy"
+  },
+  "Use sempre o mesmo número: assim eu aprendo quanto o banco cobra de juros de verdade.": {
+    "en": "Always use the same number: that's how I learn how much interest the bank really charges.",
+    "es": "Usa siempre el mismo número: así aprendo cuánto interés cobra el banco de verdad."
+  },
+  "O valor com desconto para quitar não muda a dívida: eu só anoto quanto o banco abate.": {
+    "en": "The discounted payoff amount doesn't change the debt: I just note how much the bank takes off.",
+    "es": "El valor con descuento para saldar no cambia la deuda: solo anoto cuánto descuenta el banco."
+  },
+  "Quanto o banco pede para quitar hoje?": {
+    "en": "How much does the bank ask to pay it off today?",
+    "es": "¿Cuánto pide el banco para saldarla hoy?"
+  },
+  "{0} de desconto para quitar hoje.": {
+    "en": "{0} discount to pay it off today.",
+    "es": "{0} de descuento para saldarla hoy."
+  },
+  "Digite o valor que o banco pede para quitar a dívida inteira hoje.": {
+    "en": "Enter the amount the bank asks to pay off the whole debt today.",
+    "es": "Escribe el valor que el banco pide para saldar toda la deuda hoy."
+  },
+  "Por esse número, ela cresceu uns {0} por dia nos últimos {1} dias. Pela regra que você informou, seriam {2}.": {
+    "en": "By this number, it grew about {0} a day over the last {1} days. By the rule you set, it would be {2}.",
+    "es": "Según este número, creció unos {0} por día en los últimos {1} días. Por la regla que informaste, serían {2}."
+  },
+  "Por esse número, ela cresceu uns {0} por dia nos últimos {1} dias.": {
+    "en": "By this number, it grew about {0} a day over the last {1} days.",
+    "es": "Según este número, creció unos {0} por día en los últimos {1} días."
+  },
+  "Vou guardar isso para acertar a conta.": {
+    "en": "I'll keep this to get the math right.",
+    "es": "Lo guardo para acertar la cuenta."
+  },
+  "Anotar valor para quitar": {
+    "en": "Save payoff amount",
+    "es": "Anotar valor para saldar"
+  },
+  "Bateu com o banco": {
+    "en": "Matches the bank",
+    "es": "Coincide con el banco"
+  },
+  "Seu plano do mês": {
+    "en": "Your plan for the month",
+    "es": "Tu plan del mes"
+  },
+  "Mês fechado no plano": {
+    "en": "Month closed in the plan",
+    "es": "Mes cerrado en el plan"
+  },
+  "Seu plano de pagamentos": {
+    "en": "Your payment plan",
+    "es": "Tu plan de pagos"
+  },
+  "Agora, com o que está na conta: {0} ({1}).": {
+    "en": "Now, with what's in your account: {0} ({1}).",
+    "es": "Ahora, con lo que hay en la cuenta: {0} ({1})."
+  },
+  "Hoje, com {0}: {1} ({2}).": {
+    "en": "Today, with {0}: {1} ({2}).",
+    "es": "Hoy, con {0}: {1} ({2})."
+  },
+  "Quando {0} cair ({1}): {2} ({3}).": {
+    "en": "When {0} comes in ({1}): {2} ({3}).",
+    "es": "Cuando entre {0} ({1}): {2} ({3})."
+  },
+  "O consultor passa a seguir o que você decidir aqui.": {
+    "en": "The advisor starts following what you decide here.",
+    "es": "El asesor pasa a seguir lo que decidas aquí."
+  },
+  "Quanto mais você lança e confere com o banco, mais certo isso fica.": {
+    "en": "The more you log and check with the bank, the more accurate this gets.",
+    "es": "Cuanto más registras y compruebas con el banco, más exacto queda."
+  },
+  "Seus lançamentos, dívidas, cartões e conferências com o banco": {
+    "en": "Your entries, debts, cards and bank checks",
+    "es": "Tus movimientos, deudas, tarjetas y comprobaciones con el banco"
+  },
+  "{0} e mais {1}": {
+    "en": "{0} and {1} more",
+    "es": "{0} y {1} más"
+  },
+  "Seu plano: com o que está na conta, pague {0} ({1}).": {
+    "en": "Your plan: with what's in your account, pay {0} ({1}).",
+    "es": "Tu plan: con lo que hay en la cuenta, paga {0} ({1})."
+  },
+  "Seu plano: hoje, com {0}, pague {1} ({2}).": {
+    "en": "Your plan: today, with {0}, pay {1} ({2}).",
+    "es": "Tu plan: hoy, con {0}, paga {1} ({2})."
+  },
+  "Seu plano: quando {0} cair, {1}, pague {2} ({3}).": {
+    "en": "Your plan: when {0} comes in, {1}, pay {2} ({3}).",
+    "es": "Tu plan: cuando entre {0}, {1}, paga {2} ({3})."
+  },
+  "É o que você decidiu no Planejar o mês. Seguindo o plano, {0}% das contas do mês têm dinheiro.": {
+    "en": "It's what you decided in Plan the month. Following the plan, {0}% of this month's bills are covered.",
+    "es": "Es lo que decidiste en Planear el mes. Siguiendo el plan, el {0}% de las cuentas del mes tiene dinero."
+  },
+  "Você planejou {0}: todas as contas têm dinheiro e nada atrasa. Eu sigo o seu plano.": {
+    "en": "You planned {0}: every bill is covered and nothing is late. I follow your plan.",
+    "es": "Planeaste {0}: todas las cuentas tienen dinero y nada se atrasa. Sigo tu plan."
+  },
+  "Você planejou {0}: {1}% das contas têm dinheiro, e {2} atrasa no plano. Eu sigo o seu plano.": {
+    "en": "You planned {0}: {1}% of bills are covered, and {2} is late in the plan. I follow your plan.",
+    "es": "Planeaste {0}: el {1}% de las cuentas tiene dinero, y {2} se atrasa en el plan. Sigo tu plan."
+  },
+  "Você planejou {0}: {1}% das contas têm dinheiro. Eu sigo o seu plano.": {
+    "en": "You planned {0}: {1}% of bills are covered. I follow your plan.",
+    "es": "Planeaste {0}: el {1}% de las cuentas tiene dinero. Sigo tu plan."
+  },
+  "Vai ser sua primeira parcela correndo.": {
+    "en": "It will be your first installment running.",
+    "es": "Va a ser tu primera cuota en curso."
+  },
+  "Vai ser a sua {0}ª parcela correndo ao mesmo tempo.": {
+    "en": "It will be installment number {0} running at the same time.",
+    "es": "Va a ser tu cuota número {0} en curso al mismo tiempo."
+  },
+  "Em {0}, {1}% do que entra já sai para parcelas ({2}).": {
+    "en": "In {0}, {1}% of what comes in already goes to installments ({2}).",
+    "es": "En {0}, el {1}% de lo que entra ya se va en cuotas ({2})."
+  },
+  "E {0} está atrasada ({1}).": {
+    "en": "And {0} is overdue ({1}).",
+    "es": "Y {0} está atrasada ({1})."
+  },
+  "Se der para esperar, espere.": {
+    "en": "If you can wait, wait.",
+    "es": "Si puedes esperar, espera."
+  },
+  "Pense duas vezes: isso sai de um dinheiro que ainda nem chegou.": {
+    "en": "Think twice: this comes out of money that hasn't even arrived yet.",
+    "es": "Piénsalo dos veces: esto sale de un dinero que ni llegó todavía."
+  },
+  "Sério que vai parcelar mais? Segura essa.": {
+    "en": "Seriously, more installments? Hold off on this one.",
+    "es": "¿En serio más cuotas? Frena esta."
+  },
+  "Você já deve {0} em outras dívidas.": {
+    "en": "You already owe {0} in other debts.",
+    "es": "Ya debes {0} en otras deudas."
+  },
+  "A fatura de {0} já nasce {1} mais pesada ({2}).": {
+    "en": "The {0} bill already starts {1} heavier ({2}).",
+    "es": "La factura de {0} ya nace {1} más pesada ({2})."
+  },
+  "A fatura de {0} já nasce {1} mais pesada.": {
+    "en": "The {0} bill already starts {1} heavier.",
+    "es": "La factura de {0} ya nace {1} más pesada."
+  },
+  "Já tem 1 compra empurrada desta fatura.": {
+    "en": "1 purchase has already been pushed from this bill.",
+    "es": "Ya hay 1 compra pasada de esta factura."
+  },
+  "Já são {0} compras empurradas desta fatura.": {
+    "en": "{0} purchases have already been pushed from this bill.",
+    "es": "Ya son {0} compras pasadas de esta factura."
+  },
+  "Vale separar esse valor desde já.": {
+    "en": "It's worth setting this amount aside now.",
+    "es": "Conviene separar este valor desde ya."
+  },
+  "Separe esse dinheiro agora, senão ele some até lá.": {
+    "en": "Set this money aside now, or it'll be gone by then.",
+    "es": "Separa este dinero ahora, si no desaparece hasta entonces."
+  },
+  "Empurrar conta não paga conta.": {
+    "en": "Pushing a bill forward doesn't pay it.",
+    "es": "Pasar la cuenta para adelante no la paga."
+  },
+  "Os {0} que ficam costumam entrar no rotativo, o juro mais caro do cartão: uns {1} em 30 dias.": {
+    "en": "The {0} left over usually goes into revolving credit, the most expensive card interest: about {1} in 30 days.",
+    "es": "Los {0} que quedan suelen entrar en el rotativo, el interés más caro de la tarjeta: unos {1} en 30 días."
+  },
+  "Se não der para pagar tudo, parcelar a fatura costuma sair mais barato.": {
+    "en": "If you can't pay it all, splitting the bill into installments is usually cheaper.",
+    "es": "Si no puedes pagar todo, financiar la factura suele salir más barato."
+  },
+  "Se não der para pagar tudo, parcele a fatura: sai mais barato que o rotativo.": {
+    "en": "If you can't pay it all, split the bill into installments: it's cheaper than revolving credit.",
+    "es": "Si no puedes pagar todo, financia la factura: sale más barato que el rotativo."
+  },
+  "Rotativo é o pior negócio do país. Parcela a fatura se não der para pagar inteira.": {
+    "en": "Revolving credit is the worst deal in the country. Split the bill if you can't pay it in full.",
+    "es": "El rotativo es el peor negocio del país. Financia la factura si no puedes pagarla entera."
+  },
+  "Das {0} promessas anteriores, {1} foram cumpridas.": {
+    "en": "Of the {0} previous promises, {1} were kept.",
+    "es": "De las {0} promesas anteriores, se cumplieron {1}."
+  },
+  "Talvez um valor menor ajude.": {
+    "en": "Maybe a smaller amount would help.",
+    "es": "Quizás un valor menor ayude."
+  },
+  "Não conte com esse dinheiro até ele cair.": {
+    "en": "Don't count on this money until it arrives.",
+    "es": "No cuentes con ese dinero hasta que llegue."
+  },
+  "Só acredito quando cair na conta.": {
+    "en": "I'll believe it when it hits the account.",
+    "es": "Lo creo cuando caiga en la cuenta."
+  },
+  "Uma data anterior não foi cumprida.": {
+    "en": "One previous date wasn't kept.",
+    "es": "Una fecha anterior no se cumplió."
+  },
+  "{0} datas anteriores não foram cumpridas.": {
+    "en": "{0} previous dates weren't kept.",
+    "es": "{0} fechas anteriores no se cumplieron."
+  },
+  "Escolha uma data que dê mesmo, nem que seja mais longe.": {
+    "en": "Pick a date that really works, even if it's further out.",
+    "es": "Elige una fecha que funcione de verdad, aunque sea más lejos."
+  },
+  "Escolha uma data que você consegue cumprir. Cada remarcada soma juros.": {
+    "en": "Pick a date you can keep. Every rescheduling adds interest.",
+    "es": "Elige una fecha que puedas cumplir. Cada vez que se cambia, suma intereses."
+  },
+  "Promessa que não se cumpre vira juros. Escolhe uma data de verdade.": {
+    "en": "A broken promise turns into interest. Pick a real date.",
+    "es": "Promesa que no se cumple se vuelve interés. Elige una fecha de verdad."
+  },
+  "Gentil": {
+    "en": "Gentle",
+    "es": "Gentil"
+  },
+  "Mostro os números com calma, sem pressionar.": {
+    "en": "I show the numbers calmly, without pressure.",
+    "es": "Muestro los números con calma, sin presionar."
+  },
+  "Direto": {
+    "en": "Direct",
+    "es": "Directo"
+  },
+  "Falo o que vejo e o que eu faria no seu lugar.": {
+    "en": "I say what I see and what I'd do in your place.",
+    "es": "Digo lo que veo y lo que haría en tu lugar."
+  },
+  "Sem filtro": {
+    "en": "No filter",
+    "es": "Sin filtro"
+  },
+  "Falo na lata, como um amigo que não passa pano.": {
+    "en": "I tell it straight, like a friend who doesn't sugarcoat.",
+    "es": "Lo digo sin rodeos, como un amigo que no te endulza nada."
+  },
+  "um mês inteiro do que você ganha": {
+    "en": "a whole month of what you earn",
+    "es": "un mes entero de lo que ganas"
+  },
+  "{0} meses do que você ganha": {
+    "en": "{0} months of what you earn",
+    "es": "{0} meses de lo que ganas"
+  },
+  "1 dia do que você ganha": {
+    "en": "1 day of what you earn",
+    "es": "1 día de lo que ganas"
+  },
+  "{0} dias do que você ganha": {
+    "en": "{0} days of what you earn",
+    "es": "{0} días de lo que ganas"
+  },
+  "{0}, {1}": {
+    "en": "{0}, {1}",
+    "es": "{0}, {1}"
+  },
+  "A dívida entra mais rápido do que sai": {
+    "en": "Debt is coming in faster than it goes out",
+    "es": "La deuda entra más rápido de lo que sale"
+  },
+  "Você paga mais do que faz de dívida": {
+    "en": "You pay off more than you borrow",
+    "es": "Pagas más de lo que te endeudas"
+  },
+  "Nos últimos 3 meses, entraram {0} de dívida nova e você pagou {1}. A diferença, {2}, é {3}.": {
+    "en": "In the last 3 months, {0} of new debt came in and you paid {1}. The difference, {2}, is {3}.",
+    "es": "En los últimos 3 meses entraron {0} de deuda nueva y pagaste {1}. La diferencia, {2}, es {3}."
+  },
+  "Nos últimos 3 meses, entraram {0} de dívida nova e você pagou {1}. A dívida cresceu {2}.": {
+    "en": "In the last 3 months, {0} of new debt came in and you paid {1}. Debt grew {2}.",
+    "es": "En los últimos 3 meses entraron {0} de deuda nueva y pagaste {1}. La deuda creció {2}."
+  },
+  "Nos últimos 3 meses, você pagou {0} de dívidas e fez só {1} de dívida nova. O total caiu {2}.": {
+    "en": "In the last 3 months, you paid {0} of debts and took on only {1} of new debt. The total fell {2}.",
+    "es": "En los últimos 3 meses pagaste {0} de deudas y tomaste solo {1} de deuda nueva. El total bajó {2}."
+  },
+  "Se der, segure dívidas novas por um tempo: cada parcela que termina passa a ser dinheiro seu.": {
+    "en": "If you can, hold off on new debt for a while: every installment that ends becomes your money again.",
+    "es": "Si puedes, frena las deudas nuevas por un tiempo: cada cuota que termina vuelve a ser dinero tuyo."
+  },
+  "Pare de fazer dívida nova até as de agora começarem a cair. Senão você fica pagando parcela para sempre.": {
+    "en": "Stop taking on new debt until the current ones start to drop. Otherwise you'll be paying installments forever.",
+    "es": "Deja de tomar deuda nueva hasta que las actuales empiecen a bajar. Si no, vas a pagar cuotas para siempre."
+  },
+  "você está tirando água do barco com um copo e abrindo outro furo. Nada de dívida nova enquanto essa conta não virar.": {
+    "en": "you're bailing water out of the boat with a cup and drilling another hole. No new debt until this turns around.",
+    "es": "estás sacando agua del barco con un vaso y abriendo otro agujero. Nada de deuda nueva hasta que esto se dé vuelta."
+  },
+  "Bonito de ver. Continue nesse passo.": {
+    "en": "Nice to see. Keep this pace.",
+    "es": "Qué bueno verlo. Sigue a este paso."
+  },
+  "Continue assim: nesse ritmo, as dívidas acabam.": {
+    "en": "Keep it up: at this pace, the debts end.",
+    "es": "Sigue así: a este ritmo, las deudas se terminan."
+  },
+  "isso aqui é virada de jogo. Não estraga agora.": {
+    "en": "this is a turnaround. Don't blow it now.",
+    "es": "esto es dar vuelta el partido. No lo arruines ahora."
+  },
+  "Você pagou": {
+    "en": "You paid",
+    "es": "Pagaste"
+  },
+  "Dívida nova": {
+    "en": "New debt",
+    "es": "Deuda nueva"
+  },
+  "Segure dívidas novas: elas entram mais rápido do que saem.": {
+    "en": "Hold off on new debt: it's coming in faster than it goes out.",
+    "es": "Frena las deudas nuevas: entran más rápido de lo que salen."
+  },
+  "Nos últimos 3 meses entraram {0} de dívida nova e saíram {1}. Enquanto isso não virar, o total só cresce.": {
+    "en": "In the last 3 months, {0} of new debt came in and {1} went out. Until this turns around, the total only grows.",
+    "es": "En los últimos 3 meses entraron {0} de deuda nueva y salieron {1}. Mientras eso no cambie, el total solo crece."
+  },
+  "{0} novas · {1} pagas": {
+    "en": "{0} new · {1} paid",
+    "es": "{0} nuevas · {1} pagadas"
+  },
+  "enquanto {0} está atrasada": {
+    "en": "while {0} is overdue",
+    "es": "mientras {0} está atrasada"
+  },
+  "enquanto {0} cobra juros": {
+    "en": "while {0} charges interest",
+    "es": "mientras {0} cobra intereses"
+  },
+  "Dívida nova em cima de dívida": {
+    "en": "New debt on top of debt",
+    "es": "Deuda nueva encima de deuda"
+  },
+  "Nos últimos 30 dias você fez 1 dívida ou parcelamento novo ({0}) {1}.": {
+    "en": "In the last 30 days you took on 1 new debt or installment plan ({0}) {1}.",
+    "es": "En los últimos 30 días tomaste 1 deuda o compra en cuotas nueva ({0}) {1}."
+  },
+  "Nos últimos 30 dias você fez {0} dívidas ou parcelamentos novos ({1}) {2}.": {
+    "en": "In the last 30 days you took on {0} new debts or installment plans ({1}) {2}.",
+    "es": "En los últimos 30 días tomaste {0} deudas o compras en cuotas nuevas ({1}) {2}."
+  },
+  "Antes da próxima compra parcelada, vale olhar se ela cabe junto com o que já está aberto.": {
+    "en": "Before the next installment purchase, check whether it fits alongside what's already open.",
+    "es": "Antes de la próxima compra en cuotas, conviene ver si cabe junto con lo que ya está abierto."
+  },
+  "Primeiro tire do vermelho o que já existe. Parcela nova agora só empurra o problema para o mês que vem.": {
+    "en": "First get what already exists out of the red. A new installment now just pushes the problem to next month.",
+    "es": "Primero saca del rojo lo que ya existe. Una cuota nueva ahora solo empuja el problema al mes que viene."
+  },
+  "você já devia e foi lá fazer mais dívida. Assim a conta não fecha nunca.": {
+    "en": "you already owed and went and borrowed more. That way the math never works.",
+    "es": "ya debías y fuiste a endeudarte más. Así la cuenta no cierra nunca."
+  },
+  "em 1 dívida nova": {
+    "en": "in 1 new debt",
+    "es": "en 1 deuda nueva"
+  },
+  "em {0} dívidas novas": {
+    "en": "in {0} new debts",
+    "es": "en {0} deudas nuevas"
+  },
+  "Nada de dívida nova até {0} sair do atraso.": {
+    "en": "No new debt until {0} is out of arrears.",
+    "es": "Nada de deuda nueva hasta que {0} salga del atraso."
+  },
+  "Nos últimos 30 dias entraram {0} em dívidas novas enquanto uma conta já estava atrasada e cobrando juros.": {
+    "en": "In the last 30 days, {0} of new debt came in while a bill was already overdue and charging interest.",
+    "es": "En los últimos 30 días entraron {0} en deudas nuevas mientras una cuenta ya estaba atrasada y cobrando intereses."
+  },
+  "Compra parcelada": {
+    "en": "Installment purchase",
+    "es": "Compra en cuotas"
+  },
+  "{0}x de {1}, em {2}": {
+    "en": "{0}x of {1}, on {2}",
+    "es": "{0}x de {1}, el {2}"
+  },
+  "Últimos 30 dias": {
+    "en": "Last 30 days",
+    "es": "Últimos 30 días"
+  },
+  "Seu futuro já tem dono": {
+    "en": "Your future is already spoken for",
+    "es": "Tu futuro ya tiene dueño"
+  },
+  "Em {0}, {1} do que entra já sai para parcelas ({2}%). Isso só cai para menos de 30% em {3}.": {
+    "en": "In {0}, {1} of what comes in already goes to installments ({2}%). It only drops below 30% in {3}.",
+    "es": "En {0}, {1} de lo que entra ya se va en cuotas ({2}%). Solo baja de 30% en {3}."
+  },
+  "Em {0}, {1} do que entra já sai para parcelas ({2}%), e continua acima de 30% pelos próximos 6 meses.": {
+    "en": "In {0}, {1} of what comes in already goes to installments ({2}%), and stays above 30% for the next 6 months.",
+    "es": "En {0}, {1} de lo que entra ya se va en cuotas ({2}%), y sigue por encima de 30% los próximos 6 meses."
+  },
+  "Quando der, espere algumas parcelas terminarem antes de assumir outra.": {
+    "en": "When you can, wait for some installments to end before taking on another.",
+    "es": "Cuando puedas, espera que terminen algunas cuotas antes de tomar otra."
+  },
+  "Não assuma parcela nova até esse número baixar: ela sai de um dinheiro que você ainda nem recebeu.": {
+    "en": "Don't take a new installment until this number drops: it comes out of money you haven't even received.",
+    "es": "No tomes una cuota nueva hasta que este número baje: sale de un dinero que ni recibiste."
+  },
+  "você está gastando o salário de meses que nem chegaram. Para de parcelar.": {
+    "en": "you're spending the salary of months that haven't even come. Stop buying in installments.",
+    "es": "estás gastando el sueldo de meses que ni llegaron. Deja de comprar en cuotas."
+  },
+  "{0} ({1}% do que entra)": {
+    "en": "{0} ({1}% of what comes in)",
+    "es": "{0} ({1}% de lo que entra)"
+  },
+  "Próximos 6 meses": {
+    "en": "Next 6 months",
+    "es": "Próximos 6 meses"
+  },
+  "Isso já pagaria o atrasado de {0} ({1}), que cresce com juros.": {
+    "en": "That would already pay the overdue amount on {0} ({1}), which grows with interest.",
+    "es": "Eso ya pagaría lo atrasado de {0} ({1}), que crece con intereses."
+  },
+  "É {0}% do atrasado de {1} ({2}), que cresce com juros.": {
+    "en": "It's {0}% of the overdue amount on {1} ({2}), which grows with interest.",
+    "es": "Es el {0}% de lo atrasado de {1} ({2}), que crece con intereses."
+  },
+  "Enquanto isso, {0} cobra juros de {1}% ao mês.": {
+    "en": "Meanwhile, {0} charges {1}% interest a month.",
+    "es": "Mientras tanto, {0} cobra intereses de {1}% al mes."
+  },
+  "O miúdo que pagaria a dívida": {
+    "en": "The small stuff that would pay the debt",
+    "es": "Lo pequeño que pagaría la deuda"
+  },
+  "Este mês: {0} em {1} ({2}).": {
+    "en": "This month: {0} on {1} ({2}).",
+    "es": "Este mes: {0} en {1} ({2})."
+  },
+  "Este mês: {0} em {1}.": {
+    "en": "This month: {0} on {1}.",
+    "es": "Este mes: {0} en {1}."
+  },
+  "Não é para cortar tudo: só trocar parte disso pela dívida, até ela sair do atraso.": {
+    "en": "It's not about cutting everything: just swap part of this for the debt until it's out of arrears.",
+    "es": "No es para cortar todo: solo cambia parte de esto por la deuda, hasta que salga del atraso."
+  },
+  "Corte metade disso este mês e mande para a dívida. É o dinheiro mais fácil de achar.": {
+    "en": "Cut half of this this month and send it to the debt. It's the easiest money to find.",
+    "es": "Corta la mitad de esto este mes y mándalo a la deuda. Es el dinero más fácil de encontrar."
+  },
+  "cada corrida e cada pão de hoje estão sendo pagos com juros amanhã. Corta.": {
+    "en": "every ride and every bread today is being paid with interest tomorrow. Cut it.",
+    "es": "cada viaje y cada pan de hoy se pagan con intereses mañana. Córtalo."
+  },
+  "Miúdos do mês": {
+    "en": "Small stuff this month",
+    "es": "Gastos pequeños del mes"
+  },
+  "Atrasado com juros": {
+    "en": "Overdue with interest",
+    "es": "Atrasado con intereses"
+  },
+  "Parcela da dívida": {
+    "en": "Debt installment",
+    "es": "Cuota de la deuda"
+  },
+  "Troque parte dos gastos miúdos pelo atrasado de {0}.": {
+    "en": "Swap part of the small spending for the overdue amount on {0}.",
+    "es": "Cambia parte de los gastos pequeños por lo atrasado de {0}."
+  },
+  "Este mês saíram {0} em {1}. O atrasado de {2} cresce uns {3} por dia.": {
+    "en": "This month {0} went to {1}. The overdue amount on {2} grows about {3} a day.",
+    "es": "Este mes salieron {0} en {1}. Lo atrasado de {2} crece unos {3} por día."
+  },
+  "Este mês saíram {0} em {1}, e {2} está atrasada.": {
+    "en": "This month {0} went to {1}, and {2} is overdue.",
+    "es": "Este mes salieron {0} en {1}, y {2} está atrasada."
+  },
+  "{0} vezes · {1}": {
+    "en": "{0} times · {1}",
+    "es": "{0} veces · {1}"
+  },
+  "Promessa que não se cumpre": {
+    "en": "Promise that isn't kept",
+    "es": "Promesa que no se cumple"
+  },
+  "Pagamento sempre remarcado": {
+    "en": "Payment always rescheduled",
+    "es": "Pago siempre reprogramado"
+  },
+  "{0} cumpriu {1} de {2} promessas de pagamento.": {
+    "en": "{0} kept {1} of {2} payment promises.",
+    "es": "{0} cumplió {1} de {2} promesas de pago."
+  },
+  "Você remarcou ou não cumpriu {0} das {1} datas combinadas para pagar {2}.": {
+    "en": "You rescheduled or missed {0} of the {1} dates set to pay {2}.",
+    "es": "Reprogramaste o no cumpliste {0} de las {1} fechas acordadas para pagar {2}."
+  },
+  "Talvez valha combinar valores menores, que caibam no bolso de quem deve.": {
+    "en": "It may be worth agreeing on smaller amounts that fit the debtor's budget.",
+    "es": "Quizás convenga acordar valores menores, que quepan en el bolsillo de quien debe."
+  },
+  "Não conte com esse dinheiro para pagar suas contas até ele cair de verdade.": {
+    "en": "Don't count on this money to pay your bills until it really arrives.",
+    "es": "No cuentes con ese dinero para pagar tus cuentas hasta que llegue de verdad."
+  },
+  "Esse dinheiro só existe quando cair na conta. Não planeje nada com ele.": {
+    "en": "This money only exists once it hits the account. Don't plan anything with it.",
+    "es": "Ese dinero solo existe cuando cae en la cuenta. No planees nada con él."
+  },
+  "Uma data mais realista, mesmo que mais longe, costuma funcionar melhor.": {
+    "en": "A more realistic date, even if further out, usually works better.",
+    "es": "Una fecha más realista, aunque más lejos, suele funcionar mejor."
+  },
+  "Combine uma data que você consegue cumprir, ou um valor menor. Remarcar de novo só soma juros.": {
+    "en": "Agree on a date you can keep, or a smaller amount. Rescheduling again only adds interest.",
+    "es": "Acuerda una fecha que puedas cumplir, o un valor menor. Reprogramar otra vez solo suma intereses."
+  },
+  "promessa que não se cumpre vira juros. Combina o que dá para pagar e paga.": {
+    "en": "a broken promise turns into interest. Agree on what you can pay, and pay it.",
+    "es": "promesa que no se cumple se vuelve interés. Acuerda lo que puedes pagar y paga."
+  },
+  "promessas não cumpridas": {
+    "en": "promises not kept",
+    "es": "promesas no cumplidas"
+  },
+  "datas remarcadas ou perdidas": {
+    "en": "dates rescheduled or missed",
+    "es": "fechas reprogramadas o perdidas"
+  },
+  "remarcada": {
+    "en": "rescheduled",
+    "es": "reprogramada"
+  },
+  "em parte": {
+    "en": "partly",
+    "es": "en parte"
+  },
+  "paga depois": {
+    "en": "paid later",
+    "es": "pagada después"
+  },
+  "Todas as promessas": {
+    "en": "All promises",
+    "es": "Todas las promesas"
+  },
+  "Conta empurrada para a frente": {
+    "en": "Bill pushed forward",
+    "es": "Cuenta pasada para adelante"
+  },
+  "Você empurrou 1 compra ({0}) para a fatura seguinte. A fatura de {1} já nasce mais pesada.": {
+    "en": "You pushed 1 purchase ({0}) to the next bill. The {1} bill already starts heavier.",
+    "es": "Pasaste 1 compra ({0}) a la factura siguiente. La factura de {1} ya nace más pesada."
+  },
+  "Você empurrou {0} compras ({1}) para a fatura seguinte. A fatura de {2} já nasce mais pesada.": {
+    "en": "You pushed {0} purchases ({1}) to the next bill. The {2} bill already starts heavier.",
+    "es": "Pasaste {0} compras ({1}) a la factura siguiente. La factura de {2} ya nace más pesada."
+  },
+  "Pular uma vez ajuda; virar costume pesa. Vale reservar esse valor desde já.": {
+    "en": "Skipping once helps; making it a habit weighs. It's worth setting this amount aside now.",
+    "es": "Pasar una vez ayuda; volverlo costumbre pesa. Conviene reservar este valor desde ya."
+  },
+  "Separe esse valor agora: a fatura que vem vai cobrar tudo junto, e pular de novo costuma ter taxa.": {
+    "en": "Set this amount aside now: the next bill will charge it all together, and skipping again usually has a fee.",
+    "es": "Separa este valor ahora: la próxima factura va a cobrar todo junto, y pasar otra vez suele tener tarifa."
+  },
+  "empurrar conta não paga conta. No mês que vem ela volta maior.": {
+    "en": "pushing a bill forward doesn't pay it. Next month it comes back bigger.",
+    "es": "pasar la cuenta para adelante no la paga. El mes que viene vuelve más grande."
+  },
+  "empurrados para a próxima fatura": {
+    "en": "pushed to the next bill",
+    "es": "pasados a la próxima factura"
+  },
+  "Esta fatura e a próxima": {
+    "en": "This bill and the next",
+    "es": "Esta factura y la próxima"
+  },
+  "Fatura paga pela metade": {
+    "en": "Bill paid halfway",
+    "es": "Factura pagada a medias"
+  },
+  "São {0} faturas seguidas pagas só em parte. O que fica para trás entra no rotativo, o juro mais caro que existe.": {
+    "en": "That's {0} bills in a row paid only partly. What's left goes into revolving credit, the most expensive interest there is.",
+    "es": "Son {0} facturas seguidas pagadas solo en parte. Lo que queda entra en el rotativo, el interés más caro que existe."
+  },
+  "Se não der para pagar inteira, um parcelamento da fatura costuma sair mais barato que o rotativo.": {
+    "en": "If you can't pay it in full, splitting the bill is usually cheaper than revolving credit.",
+    "es": "Si no puedes pagarla entera, financiar la factura suele salir más barato que el rotativo."
+  },
+  "Pare de usar o cartão até conseguir pagar a fatura inteira. Se precisar, parcele a fatura: sai mais barato que o rotativo.": {
+    "en": "Stop using the card until you can pay the bill in full. If needed, split the bill: it's cheaper than revolving credit.",
+    "es": "Deja de usar la tarjeta hasta poder pagar la factura entera. Si hace falta, financia la factura: sale más barato que el rotativo."
+  },
+  "o rotativo é o pior juro do país. Corta o cartão até pagar a fatura cheia.": {
+    "en": "revolving credit is the worst interest in the country. Cut the card until you pay the full bill.",
+    "es": "el rotativo es el peor interés del país. Corta la tarjeta hasta pagar la factura completa."
+  },
+  "faturas seguidas pagas em parte": {
+    "en": "bills in a row paid partly",
+    "es": "facturas seguidas pagadas en parte"
+  },
+  "Volte a pagar a fatura inteira.": {
+    "en": "Go back to paying the full bill.",
+    "es": "Vuelve a pagar la factura entera."
+  },
+  "São {0} faturas seguidas pagas só em parte, e o que sobra paga o juro do rotativo.": {
+    "en": "That's {0} bills in a row paid only partly, and what's left pays revolving interest.",
+    "es": "Son {0} facturas seguidas pagadas solo en parte, y lo que sobra paga el interés del rotativo."
+  },
+  "Faturas seguidas": {
+    "en": "Bills in a row",
+    "es": "Facturas seguidas"
+  },
+  "Últimas faturas": {
+    "en": "Last bills",
+    "es": "Últimas facturas"
+  },
+  "O banco cobra mais do que você acha": {
+    "en": "The bank charges more than you think",
+    "es": "El banco cobra más de lo que crees"
+  },
+  "O banco cobra menos do que você acha": {
+    "en": "The bank charges less than you think",
+    "es": "El banco cobra menos de lo que crees"
+  },
+  "{0} cresce uns {1} por dia, e não {2} como você informou. Em 30 dias, são {3}.": {
+    "en": "{0} grows about {1} a day, not {2} as you set. In 30 days, that's {3}.",
+    "es": "{0} crece unos {1} por día, y no {2} como informaste. En 30 días son {3}."
+  },
+  "{0} cresce uns {1} por dia. Em 30 dias, são {2}.": {
+    "en": "{0} grows about {1} a day. In 30 days, that's {2}.",
+    "es": "{0} crece unos {1} por día. En 30 días son {2}."
+  },
+  "Vale atualizar a regra da dívida para as estimativas ficarem certas.": {
+    "en": "It's worth updating the debt's rule so the estimates are right.",
+    "es": "Conviene actualizar la regla de la deuda para que las estimaciones salgan bien."
+  },
+  "Atualize a regra da dívida e coloque ela no topo da fila: ela é mais cara do que parecia.": {
+    "en": "Update the debt's rule and put it at the top of the line: it's more expensive than it looked.",
+    "es": "Actualiza la regla de la deuda y ponla primera en la fila: es más cara de lo que parecía."
+  },
+  "essa dívida te morde mais do que você pensava. Ela vai para o topo da fila.": {
+    "en": "this debt bites harder than you thought. It goes to the top of the line.",
+    "es": "esta deuda muerde más de lo que pensabas. Va primera en la fila."
+  },
+  "Boa notícia: dá para atualizar a regra e ver a conta mais leve.": {
+    "en": "Good news: you can update the rule and see a lighter bill.",
+    "es": "Buena noticia: puedes actualizar la regla y ver la cuenta más liviana."
+  },
+  "Atualize a regra da dívida para o plano usar o número certo.": {
+    "en": "Update the debt's rule so the plan uses the right number.",
+    "es": "Actualiza la regla de la deuda para que el plan use el número correcto."
+  },
+  "Pelo menos aqui o banco pegou leve. Atualiza a regra.": {
+    "en": "At least here the bank went easy. Update the rule.",
+    "es": "Por lo menos aquí el banco fue suave. Actualiza la regla."
+  },
+  "Você informou": {
+    "en": "You set",
+    "es": "Informaste"
+  },
+  "O banco cobra": {
+    "en": "The bank charges",
+    "es": "El banco cobra"
+  },
+  "Atualize os juros de {0}: o banco cobra {1} por dia.": {
+    "en": "Update the interest on {0}: the bank charges {1} a day.",
+    "es": "Actualiza los intereses de {0}: el banco cobra {1} por día."
+  },
+  "Pelas {0} conferências com o banco, a dívida cresce {1} por dia ({2}% ao mês). Abra a dívida e toque em \"Usar a taxa que calculei\".": {
+    "en": "From the {0} bank checks, the debt grows {1} a day ({2}% a month). Open the debt and tap \"Use the rate I calculated\".",
+    "es": "Por las {0} comprobaciones con el banco, la deuda crece {1} por día ({2}% al mes). Abre la deuda y toca \"Usar la tasa que calculé\"."
+  },
+  "Conferências usadas": {
+    "en": "Checks used",
+    "es": "Comprobaciones usadas"
+  },
+  "Cresce por dia (banco)": {
+    "en": "Grows per day (bank)",
+    "es": "Crece por día (banco)"
+  },
+  "Cresce por dia (sua regra)": {
+    "en": "Grows per day (your rule)",
+    "es": "Crece por día (tu regla)"
+  },
+  "Dos quais pode ser IOF": {
+    "en": "Of which may be IOF",
+    "es": "De lo cual puede ser IOF"
+  },
+  "Desde a primeira conferência": {
+    "en": "Since the first check",
+    "es": "Desde la primera comprobación"
+  },
+  "Desconto para quitar": {
+    "en": "Payoff discount",
+    "es": "Descuento para saldar"
+  },
+  "Em {0}, o banco pedia {1} para quitar {2}: {3} a menos que o total.": {
+    "en": "On {0}, the bank asked {1} to pay off {2}: {3} less than the total.",
+    "es": "El {0}, el banco pedía {1} para saldar {2}: {3} menos que el total."
+  },
+  "Se um dia sobrar esse valor, vale pensar nisso.": {
+    "en": "If you ever have this amount spare, it's worth thinking about.",
+    "es": "Si algún día te sobra este valor, vale la pena pensarlo."
+  },
+  "Se você tem esse dinheiro guardado, quitar agora pode valer mais que deixar rendendo.": {
+    "en": "If you have this money saved, paying off now may be worth more than leaving it invested.",
+    "es": "Si tienes ese dinero guardado, saldar ahora puede valer más que dejarlo rindiendo."
+  },
+  "Desconto assim não dura. Se tem o dinheiro, quita.": {
+    "en": "Discounts like this don't last. If you have the money, pay it off.",
+    "es": "Un descuento así no dura. Si tienes el dinero, sáldala."
+  },
+  "Total": {
+    "en": "Total",
+    "es": "Total"
+  },
+  "Para quitar": {
+    "en": "To pay off",
+    "es": "Para saldar"
+  },
+  "Desconto": {
+    "en": "Discount",
+    "es": "Descuento"
+  },
+  "Meus números podem estar velhos": {
+    "en": "My numbers may be out of date",
+    "es": "Mis números pueden estar viejos"
+  },
+  "Faz {0} dias que nada é lançado. Você costuma lançar umas {1} coisas por mês, então o que eu digo pode estar otimista.": {
+    "en": "It's been {0} days since anything was logged. You usually log about {1} things a month, so what I say may be optimistic.",
+    "es": "Hace {0} días que no se registra nada. Sueles registrar unas {1} cosas por mes, así que lo que digo puede estar optimista."
+  },
+  "Quando puder, lance o que ficou para trás.": {
+    "en": "When you can, log what's been left behind.",
+    "es": "Cuando puedas, registra lo que quedó atrás."
+  },
+  "Lance o que ficou para trás para eu voltar a acertar.": {
+    "en": "Log what's been left behind so I get it right again.",
+    "es": "Registra lo que quedó atrás para que vuelva a acertar."
+  },
+  "Sem lançamento eu chuto. Lança o que ficou para trás.": {
+    "en": "Without entries I'm guessing. Log what's been left behind.",
+    "es": "Sin movimientos adivino. Registra lo que quedó atrás."
+  },
+  "dias sem lançar": {
+    "en": "days without logging",
+    "es": "días sin registrar"
+  },
+  "Último lançamento": {
+    "en": "Last entry",
+    "es": "Último movimiento"
+  },
+  "Seu plano do mês: {0}% com dinheiro": {
+    "en": "Your plan for the month: {0}% covered",
+    "es": "Tu plan del mes: {0}% con dinero"
+  },
+  "Planeje o mês": {
+    "en": "Plan the month",
+    "es": "Planea el mes"
+  },
+  "Próximo passo: {0}.": {
+    "en": "Next step: {0}.",
+    "es": "Próximo paso: {0}."
+  },
+  "Diga com qual dinheiro sai cada conta. O consultor passa a seguir o seu plano.": {
+    "en": "Say which money pays each bill. The advisor starts following your plan.",
+    "es": "Di con qué dinero sale cada cuenta. El asesor pasa a seguir tu plan."
+  },
+  "{0}% com dinheiro": {
+    "en": "{0}% covered",
+    "es": "{0}% con dinero"
+  },
+  "Sem plano": {
+    "en": "No plan",
+    "es": "Sin plan"
+  },
+  "Próximo: {0}": {
+    "en": "Next: {0}",
+    "es": "Próximo: {0}"
+  },
+  "Diga com qual dinheiro sai cada conta.": {
+    "en": "Say which money pays each bill.",
+    "es": "Di con qué dinero sale cada cuenta."
+  },
+  "Como eu falo com você": {
+    "en": "How I talk to you",
+    "es": "Cómo te hablo"
+  },
+  "Confira com o banco de tempos em tempos: eu aprendo quanto essa dívida cresce de verdade.": {
+    "en": "Check with the bank every now and then: I learn how much this debt really grows.",
+    "es": "Compruébalo con el banco de vez en cuando: aprendo cuánto crece esta deuda de verdad."
   }
 }

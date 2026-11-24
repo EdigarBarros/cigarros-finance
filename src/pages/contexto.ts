@@ -7,6 +7,7 @@ import type { SituacaoCartao } from '../lib/cartoes'
 import type { Analise, Reanalise } from '../lib/analise'
 import type { MemoriaConsultor, Objetivo } from '../lib/memoria'
 import type { Planejamentos } from '../lib/planejamento'
+import type { Firmeza } from '../lib/sinais'
 import type { Gosto } from '../lib/gosto'
 import type { Conselho } from '../lib/conselheiro'
 import type { MemoriaConta, SituacaoConta, SugestaoVinculo } from '../lib/contasFixas'
@@ -107,6 +108,14 @@ export interface Ctx {
   salvarPlanejamento: (p: Planejamentos) => void
   /** Escolhe (ou tira, com null) o objetivo que guia o consultor. */
   escolherObjetivo: (o: Objetivo | null) => void
+  /** Escolhe como o consultor fala: gentil, direto ou sem filtro (lib/sinais.ts). */
+  escolherFirmeza: (f: Firmeza) => void
+  /** Abre o Consultor já com o Planejar o mês aberto (atalho da Início). */
+  abrirPlanejamento: () => void
+  /** O Planejar o mês foi pedido de outra tela: o Consultor abre a mesa ao montar. */
+  planejarAoAbrir: boolean
+  /** O Consultor já abriu a mesa pedida. */
+  planejamentoAberto: () => void
   /** O que a última mudança nos dados fez com a análise (null até a primeira mudança desta visita). */
   reanalise: Reanalise | null
   /** Para guardar no navegador o retrato da última visita à aba Consultor. */

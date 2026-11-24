@@ -11,6 +11,7 @@ import type { Banco, Categoria, ConferenciaDivida, Divida, Lancamento, Mes, Meta
 import { fmtDataLonga } from './format'
 import { mesesDaAnalise } from './conselheiro'
 import { moedaDaDivida, nativoDiv, type Calendario, type SituacaoDivida } from './dividas'
+import { pistaDaConferencia } from './jurosAprendido'
 import { tx } from './textos'
 import { normSaldoInicial } from './saldoCorrido'
 
@@ -140,7 +141,13 @@ const semCustoDivida = <T extends object>(o: T) =>
 const semPartes = <T extends object>(o: T) => { const { partes: _p, promessas: _pr, ...resto } = o as T & { partes?: unknown; promessas?: unknown }; return resto as T }
 /** Promessa nova de pagamento, antes de ganhar id. */
 export type NovaPromessa = Pick<PromessaDivida, 'data' | 'valor' | 'obs'>
-const normConferencia = (r: ConferenciaDivida): ConferenciaDivida => ({ ...r, antes: num(r.antes), depois: num(r.depois) })
+const normConferencia = (r: ConferenciaDivida): ConferenciaDivida => ({
+  ...r, antes: num(r.antes), depois: num(r.depois),
+  juros_estimado: r.juros_estimado == null ? null : num(r.juros_estimado),
+  base_juros: r.base_juros == null ? null : num(r.base_juros),
+  dias_juros: r.dias_juros == null ? null : Number(r.dias_juros),
+  qual_valor: r.qual_valor === 'quitar' ? 'quitar' : 'total',
+})
 const normPromessa = (r: PromessaDivida): PromessaDivida => ({ ...r, valor: r.valor == null ? null : num(r.valor) })
 /** Parte nova de uma dívida, antes de ganhar id. */
 export type NovaParte = Omit<ParteDivida, 'id' | 'divida_id'>
@@ -184,6 +191,8 @@ export function useDados(userId: string, ano: number) {
   const [conferencias, setConferencias] = useState<ConferenciaDivida[]>([])
   /** Sem a migração 37: não há onde guardar o histórico. */
   const [conferenciasSemTabela, setConferenciasSemTabela] = useState(false)
+  /** Sem a migração 44: as conferências não guardam a pista dos juros (nem o valor para quitar). */
+  const [conferenciasSemPista, setConferenciasSemPista] = useState(false)
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
   const [bancos, setBancos] = useState<Banco[]>([])
   /** undefined = carregando; null = a pessoa ainda não tem perfil salvo. */
@@ -633,7 +642,8 @@ export function useDados(userId: string, ano: number) {
     // o histórico: o que o app mostrava (com os juros estimados) e o que o banco mostrou. Antes do pagamento só conta se mudou.
     const mostrava = centavos(s.restanteHoje)
     if (!conferenciasSemTabela && (modo === 'conferir' || Math.abs(valor - mostrava) >= 0.005)) {
-      void registrarConferencia(id, data, mostrava, centavos(valor), modo)
+      // a pista para aprender os juros de verdade (lib/jurosAprendido.ts): o que o app estimou, sobre quanto e há quantos dias
+      void registrarConferencia(id, data, mostrava, centavos(valor), modo, { ...pistaDaConferencia(s, cal, data), qual_valor: 'total' })
     }
     if (doBanco.length && Math.abs(dif) >= 0.005) {
       const atrasadas = (cal?.atrasadas.length ? cal.atrasadas : cal?.proxima ? [cal.proxima] : []).flatMap((p) => p.partes ?? [])
@@ -672,10 +682,28 @@ export function useDados(userId: string, ano: number) {
   }
 
   /** Guarda uma linha do histórico de conferências (falhar aqui não atrapalha a conferência em si). */
-  const registrarConferencia = async (divida_id: string, data: string, antes: number, depois: number, origem: 'conferir' | 'pagar') => {
-    const { data: linha, error } = await supabase.from('divida_conferencias').insert({ divida_id, data, antes, depois, origem }).select().single()
-    if (error) { if (faltaTabela(error)) setConferenciasSemTabela(true); else falhou(error.message); return }
-    setConferencias((xs) => [...xs, normConferencia(linha as ConferenciaDivida)])
+  const registrarConferencia = async (
+    divida_id: string, data: string, antes: number, depois: number, origem: 'conferir' | 'pagar',
+    pista?: Pick<ConferenciaDivida, 'juros_estimado' | 'base_juros' | 'dias_juros' | 'qual_valor'>,
+  ) => {
+    const basico = { divida_id, data, antes, depois, origem }
+    let r = await supabase.from('divida_conferencias').insert(pista && !conferenciasSemPista ? { ...basico, ...pista } : basico).select().single()
+    // sem a migração 44: guarda como antes (só não aprende os juros com esta conferência)
+    if (r.error && pista && faltaColuna(r.error)) {
+      setConferenciasSemPista(true)
+      if (pista.qual_valor === 'quitar') return
+      r = await supabase.from('divida_conferencias').insert(basico).select().single()
+    }
+    if (r.error) { if (faltaTabela(r.error) && !faltaColuna(r.error)) setConferenciasSemTabela(true); else falhou(r.error.message); return }
+    setConferencias((xs) => [...xs, normConferencia(r.data as ConferenciaDivida)])
+  }
+  /**
+   * "Esse é o valor para quitar hoje" (com desconto): só anota no histórico, sem mudar a dívida nem ensinar juros. O consultor
+   * usa para dizer quanto o banco abate se a pessoa quitar.
+   */
+  const anotarValorParaQuitar = async (s: SituacaoDivida, valor: number, data: string) => {
+    if (conferenciasSemTabela) return
+    await registrarConferencia(s.divida.id, data, centavos(s.restanteHoje), centavos(valor), 'conferir', { qual_valor: 'quitar' })
   }
   const delConferencia = async (id: string) => {
     setConferencias((xs) => xs.filter((x) => x.id !== id))
@@ -1014,7 +1042,7 @@ export function useDados(userId: string, ano: number) {
     dividasSemCusto,
     partesSemTabela, partesSemInicio, addPartes, updParte, updPartes, delPartes,
     promessasSemTabela, addPromessa, delPromessa,
-    conferencias, conferenciasSemTabela, delConferencia,
+    conferencias, conferenciasSemTabela, conferenciasSemPista, delConferencia, anotarValorParaQuitar,
     lancs, lancsRecentes, meses: mesesDosBancos, dividas: dividasComPartes, saldos, pagamentos, vinculosOutrosAnos, carregando, erro, setErro, recarregar,
     addLanc, addLancs, renomearLancs, updLanc, delLanc, addDivida, updDivida, delDivida, addSaldo, ajustarValorDivida, moverInicioDivida, salvarMes,
   }

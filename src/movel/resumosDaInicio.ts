@@ -112,6 +112,18 @@ export function dicasDaInicio(c: Ctx): Dica[] {
       botao: { texto: tx('Importar extrato'), acao: c.importarExtrato }, aoDispensar: () => c.dispensar('importar'),
     })
   }
+  // o Planejar o mês: com plano, o próximo passo decidido; sem plano, o convite (abre o Consultor já com a mesa)
+  const q = c.analise.quadros?.este
+  if (q && (q.fontes.length || q.destinos.some((d) => d.tipo === 'conta'))) {
+    const pl = c.analise.planoDoMes
+    const px = pl?.proximo
+    dicas.push({
+      id: 'planejar', icone: 'calendario',
+      titulo: pl ? tx('Seu plano do mês: {0}% com dinheiro', pl.placar.pct) : tx('Planeje o mês'),
+      texto: px ? tx('Próximo passo: {0}.', px.pagar.slice(0, 2).map((x) => x.nome).join(', ')) : tx('Diga com qual dinheiro sai cada conta. O consultor passa a seguir o seu plano.'),
+      botao: { texto: pl ? tx('Abrir o plano') : tx('Planejar o mês'), acao: c.abrirPlanejamento },
+    })
+  }
   if (c.sugestao) {
     const s = c.sugestao
     dicas.push({ id: s.id, icone: s.icone, titulo: s.titulo, texto: s.texto, botao: { texto: s.botao, acao: () => c.aceitarSugestao(s) }, aoDispensar: () => c.recusarSugestao(s) })

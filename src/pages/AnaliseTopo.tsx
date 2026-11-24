@@ -14,6 +14,8 @@ import { perfilDe, reguasDe, tracosDe, type CorDoTraco } from '../lib/jeito'
 import { OBJETIVOS, type MemoriaConsultor } from '../lib/memoria'
 import { tx } from '../lib/textos'
 import { Icone } from '../components/Icone'
+import { Segmentado } from '../components/ui'
+import { FIRMEZAS } from '../lib/sinais'
 import { Numero } from '../components/Numero'
 import { Velocimetro, type Nivel } from '../components/Vitrine'
 import { Medidor } from './AnaliseGraficos'
@@ -276,6 +278,23 @@ export function Objetivo({ a, memoria, nivel, aoEscolher }: { a: Analise; memori
           {ap.acompanhando.map((x, i) => <li key={`c${i}`}><Icone nome="olho" tamanho={14} /> {tx('{0} Confiro quando {1} fechar.', x.titulo, noMeioDaFrase(MESES_NOME[x.mes - 1]))}</li>)}
         </ul>
       )}
+    </section>
+  )
+}
+
+// ---------- como o consultor fala ----------
+
+/** "Como eu falo com você": gentil, direto ou sem filtro. Muda só o chamado de cada descoberta; os números são os mesmos. */
+export function JeitoDeFalar({ a, aoEscolher }: { a: Analise; aoEscolher: Ctx['escolherFirmeza'] }) {
+  const atual = FIRMEZAS.find((f) => f.id === a.firmeza) ?? FIRMEZAS[1]
+  return (
+    <section className="cartao an-firmeza">
+      <span className="an-firmeza-texto">
+        <strong><Icone nome="conversa" tamanho={16} /> {tx('Como eu falo com você')}</strong>
+        <small>{atual.descricao()}</small>
+      </span>
+      <Segmentado rotulo={tx('Como eu falo com você')} valor={a.firmeza} aoMudar={aoEscolher}
+        opcoes={FIRMEZAS.map((f) => ({ id: f.id, nome: f.nome() }))} />
     </section>
   )
 }

@@ -15,6 +15,7 @@ import { fmtConta, fraseDaSituacao } from '../../lib/contasFixas'
 import { fmtDataCurta, fmtMesAno, fmtValor, MESES_CURTO, noMeioDaFrase } from '../../lib/format'
 import { fmtCurto } from '../../lib/visuais'
 import { tx } from '../../lib/textos'
+import { naHoraDaDividaNova } from '../../lib/naHora'
 import { corDe, Ficha, VazioLado } from '../../pages/Dividas'
 import type { Ctx } from '../../pages/contexto'
 import { BotoesDeAcao, CartaoWidget, HeroDeslizante, IconeRedondo, LinhaDeLista, type Acao, type PaginaDoHero } from '../primitivas'
@@ -131,6 +132,7 @@ export function DividasMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom, c
       {conferirConta && <FormBaixa c={c} s={conferirConta} conferir aoFechar={() => setConferirConta(null)} />}
       {editando && (
         <FormDivida ano={c.ano} mes={c.mes} situacao={editando === 'nova' ? undefined : editando} sentidoInicial={lado}
+          naHora={(p, n, primeira) => naHoraDaDividaNova(c.analise, p, n, primeira)}
           semExtras={c.d.dividasSemExtras} perfil={c.perfil} semMoeda={c.d.dividasSemMoeda} semJuros={c.d.dividasSemJuros} semAtraso={c.d.dividasSemAtraso} semCusto={c.d.dividasSemCusto}
           aoCriar={async (d) => { if (d.sentido && d.sentido !== lado) setLado(d.sentido); return c.d.addDivida(d) }}
           aoEditar={c.d.updDivida} aoNovoSaldo={c.d.addSaldo} aoMudarValor={c.d.ajustarValorDivida} aoMoverInicio={c.d.moverInicioDivida}

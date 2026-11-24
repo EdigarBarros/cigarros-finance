@@ -11,8 +11,8 @@ import { CartaoDoPlanejamento, Planejamento } from '../../components/Planejament
 import { Interruptor } from '../../components/ui'
 import { semMovimento, useMovimento } from '../../lib/tema'
 import { tx } from '../../lib/textos'
-import { OQueMudou, PlanoDeAcao, useDesdeAUltimaVisita, useMontagem } from '../../pages/Analise'
-import { Agora, Objetivo, ProximoPasso, SeuPerfil } from '../../pages/AnaliseTopo'
+import { OQueMudou, PlanoDeAcao, useDesdeAUltimaVisita, useMontagem, usePlanejarAoAbrir } from '../../pages/Analise'
+import { Agora, JeitoDeFalar, Objetivo, ProximoPasso, SeuPerfil } from '../../pages/AnaliseTopo'
 import { Faixas, Manchete, useTelaViva } from '../../pages/AnaliseTela'
 import type { Ctx } from '../../pages/contexto'
 import '../../pages/analise.css'
@@ -35,12 +35,21 @@ export function ConsultorMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom,
   const [planejando, setPlanejando] = useState(false)
   // os passos do plano que falam do Planejamento (destino 'analise') abrem a mesa em vez de navegar
   const irPara: Ctx['irPara'] = (p) => (p === 'analise' ? setPlanejando(true) : c.irPara(p))
+  usePlanejarAoAbrir(c, setPlanejando)
+  const pl = a.planoDoMes
 
   // ---------- topo: o veredito do próprio Consultor ----------
   const paginas: PaginaDoHero[] = [
     a.nota !== null
       ? { id: 'nota', tom: a.tom === 'bom' ? 'sobra' : a.tom === 'ruim' ? 'falta' : 'dividas', rotulo: tx('Saúde do seu dinheiro'), valor: `${a.nota}/100`, sub: a.rotulo }
       : { id: 'nota', tom: 'invest', rotulo: tx('Saúde do seu dinheiro'), valor: '—', sub: tx('Lance mais um mês e o consultor começa a dar a nota.') },
+    // o plano do mês que a pessoa montou (ou o convite para montar), logo depois da nota
+    ...(a.quadros ? [{
+      id: 'planejar', tom: (pl?.placar.fechado ? 'sobra' : 'invest') as Tom, rotulo: tx('Seu plano do mês'),
+      valor: pl ? tx('{0}% com dinheiro', pl.placar.pct) : tx('Sem plano'),
+      sub: pl?.proximo ? tx('Próximo: {0}', pl.proximo.pagar.map((x) => x.nome).slice(0, 2).join(', ')) : tx('Diga com qual dinheiro sai cada conta.'),
+      pilula: { texto: pl ? tx('Abrir o plano') : tx('Planejar o mês'), acao: () => setPlanejando(true) },
+    }] : []),
     ...(a.acoes.length ? [{
       id: 'plano', tom: 'invest' as const, rotulo: tx('Seu plano de ação'),
       valor: a.acoes.length === 1 ? tx('1 passo') : tx('{0} passos', a.acoes.length), sub: a.acoes[0].titulo,
@@ -73,13 +82,14 @@ export function ConsultorMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom,
           {montando && <span className="an-varredura" aria-hidden="true" />}
           {/* daqui para baixo, a tela que o Consultor montou: mesmas peças e mesma ordem do computador */}
           {montando && <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 3} aoVivo />}
+          <CartaoDoPlanejamento a={a} planejamento={c.planejamento} aoAbrir={() => setPlanejando(true)} />
           <Manchete t={tela} aoIr={ir} />
           <SeuPerfil a={a} nivel={nivel} />
           {!montando && <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 2} />}
           <Agora a={a} nivel={nivel} />
-          <CartaoDoPlanejamento a={a} planejamento={c.planejamento} aoAbrir={() => setPlanejando(true)} />
           {nivel === 'detalhado' ? <PlanoDeAcao a={a} aoIr={irPara} /> : <ProximoPasso a={a} aoIr={irPara} />}
           <Objetivo a={a} memoria={c.memoria} nivel={nivel} aoEscolher={c.escolherObjetivo} />
+          <JeitoDeFalar a={a} aoEscolher={c.escolherFirmeza} />
           <Faixas t={tela} aoIr={ir} nivel={nivel} />
           <footer className="an-rodape">
             <label className="an-avisos">

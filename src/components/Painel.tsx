@@ -12,7 +12,9 @@ import {
 import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
 import { COR } from '../lib/charts'
 import { analisar, compararRetratos, retratoDe, type Reanalise, type Retrato } from '../lib/analise'
+import { naHoraDeParcelar } from '../lib/naHora'
 import { atualizarMemoria, type Objetivo } from '../lib/memoria'
+import type { Firmeza } from '../lib/sinais'
 import { avisosDispensadosNoMes, conselhos as conselhosDe, dispensarPorUmMes, faltamDadosParaConselhos } from '../lib/conselheiro'
 import { jurosDoAtraso } from '../lib/jurosAtraso'
 import { atrasadoHoje, aumentaDivida, calendarioDe, parcelasPorDia, pedirLadoDividas, sugeridoParaPagar, fimDoMes, inicioDaDivida, meDevem, saldoMaisRecenteDaDivida, nativoDiv, situacaoDividas, type SituacaoDivida } from '../lib/dividas'
@@ -605,8 +607,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     dividasSemJuros: d.dividasSemJuros, contas: comContasFixas ? contas.contas : [],
     compras: comFaturas ? cartoes.compras.filter(contaNasSaidas(cartoes.faturasPagas)) : [],
     cartoes: comFaturas ? cartoes.cartoes : [], faturasPagas: comFaturas ? cartoes.faturasPagas : [], faturasParciais: comFaturas ? cartoes.parciais : [],
-    memoria: d.memoria, planejamento: d.planejamento, bancos: d.bancos,
-  }), [d.memoria, d.planejamento, d.bancos, lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, mesesVistos, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.moeda, comFaturas, cartoes.compras, cartoes.cartoes, cartoes.faturasPagas, cartoes.parciais, comContasFixas, contas.contas, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
+    memoria: d.memoria, planejamento: d.planejamento, bancos: d.bancos, conferencias: d.conferencias,
+  }), [d.memoria, d.planejamento, d.bancos, d.conferencias, lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, mesesVistos, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.moeda, comFaturas, cartoes.compras, cartoes.cartoes, cartoes.faturasPagas, cartoes.parciais, comContasFixas, contas.contas, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reanálise: a cada mudança feita pela pessoa, compara com a análise anterior e conta o que mudou (aviso no canto e
   // "O que mudou" na aba). Troca de ano, virada do dia, cotação nova e dados chegando não são mudança da pessoa: só
@@ -640,6 +642,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     if (nova !== d.memoria) void d.salvarMemoria(nova)
   }, [analise, tudoCarregado]) // eslint-disable-line react-hooks/exhaustive-deps
   const escolherObjetivo = (o: Objetivo | null) => void d.salvarMemoria({ ...d.memoria, objetivo: o, objetivoEm: o ? new Date().toISOString() : null })
+  const escolherFirmeza = (f: Firmeza) => void d.salvarMemoria({ ...d.memoria, firmeza: f })
+  // o atalho "Planejar o mês" da Início: vai para o Consultor e ele abre a mesa ao montar
+  const [planejarAoAbrir, setPlanejarAoAbrir] = useState(false)
+  const abrirPlanejamento = () => { setPlanejarAoAbrir(true); irPara('analise') }
   const mudarAvisosDaAnalise = (ligado: boolean) => mudarPerfil({
     ...perfil, dispensadas: ligado ? perfil.dispensadas.filter((x) => x !== 'aviso-reanalise') : [...new Set([...perfil.dispensadas, 'aviso-reanalise'])],
   })
@@ -844,7 +850,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     conselhosSemDados: faltamDadosParaConselhos({ lancs: lancsDosConselhos, dividas: d.dividas, hoje }),
     conselhosDispensados: avisosDispensadosNoMes(perfil.dispensadas, hoje),
     invest, ajustarSaldosDaOperacao, ajustarCaixinha,
-    analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise, memoria: d.memoria, escolherObjetivo, gosto: d.gosto, salvarGosto: d.salvarGosto, planejamento: d.planejamento, salvarPlanejamento: d.salvarPlanejamento,
+    analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise, memoria: d.memoria, escolherObjetivo, escolherFirmeza,
+    abrirPlanejamento, planejarAoAbrir, planejamentoAberto: () => setPlanejarAoAbrir(false), gosto: d.gosto, salvarGosto: d.salvarGosto, planejamento: d.planejamento, salvarPlanejamento: d.salvarPlanejamento,
     ligarModulo,
     personalizar: () => setAjustes('painel'),
     mudarDetalhe: (x) => mudarPerfil({ ...perfil, detalhe: x }),
@@ -1107,6 +1114,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         } : undefined}
         aoExcluirCompra={cartoes.delCompra}
         comprasCartao={cartoes.compras}
+        naHoraDeParcelar={(n) => naHoraDeParcelar(analise, n)}
         aoCompraSalva={(a) => {
           setAvisoFatura(a)
           // Compra no cartão lançada na tela Lançamentos: ao fechar o formulário, leva para a tela Cartões, no cartão e na fatura em que ela caiu

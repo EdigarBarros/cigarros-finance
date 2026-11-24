@@ -32,10 +32,11 @@ import { fraseDoResultado, licaoDe, type MemoriaConsultor, type Objetivo } from 
 import { converter, totalConvertido, type Taxas } from './moedas'
 import { visao } from './perfil'
 import { planejar, type Plano } from './planejador'
-import { conselhosDoPlanejamento, quadroDoMes, type Planejamentos, type Quadro } from './planejamento'
+import { conselhosDoPlanejamento, lerPlano, quadroDoMes, type LeituraDoPlano, type Planejamentos, type Quadro } from './planejamento'
 import { tx } from './textos'
+import { compromissoDe, diasSemLancar, FIRMEZA_PADRAO, sinaisDe, type Compromisso, type Firmeza, type Sinal } from './sinais'
 import type {
-  Banco, CartaoCredito, Categoria, ContaFixa, Divida, FaturaPaga, FaturaParcial, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida,
+  Banco, CartaoCredito, Categoria, ConferenciaDivida, ContaFixa, Divida, FaturaPaga, FaturaParcial, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida,
 } from './types'
 import { TIPOS_CAIXA } from './types'
 
@@ -73,8 +74,8 @@ export const SUBIU_RELEVANTE = 0.05
 
 /** Quanto cada objetivo sobe (ou desce) cada passo do plano, pelo começo do id da ação. */
 const PESO_DO_OBJETIVO: Record<Objetivo, Record<string, number>> = {
-  dividas: { 'adiantar-divida': 25, 'quitar-com-reserva': 12, 'juros-altos': 5, 'sem-novas-parcelas': 18, cartao: 12, 'informe-juros': 30, metas: -15, crescer: -30 },
-  'fechar-mes': { vermelho: 5, corte: 20, formiga: 18, assinaturas: 15, plano: 5, aperto: 5, metas: -20, crescer: -30, 'pode-gastar': -40 },
+  dividas: { 'ritmo-divida': 20, 'divida-sobre-divida': 15, 'fatura-parcial': 10, 'juros-real': 15, 'adiantar-divida': 25, 'quitar-com-reserva': 12, 'juros-altos': 5, 'sem-novas-parcelas': 18, cartao: 12, 'informe-juros': 30, metas: -15, crescer: -30 },
+  'fechar-mes': { 'miudo-x-divida': 15, vermelho: 5, corte: 20, formiga: 18, assinaturas: 15, plano: 5, aperto: 5, metas: -20, crescer: -30, 'pode-gastar': -40 },
   guardar: { reserva: 25, colchao: 10, corte: 15, formiga: 12, assinaturas: 12, metas: 15, 'dinheiro-parado': 20 },
   controle: { categorizar: 40, subiu: 20, formiga: 20, assinaturas: 20, 'juros-pagos': 10, 'atualizar-saldos': 25 },
   tranquilo: { 'pode-gastar': 35, corte: -15, formiga: -25, assinaturas: -10 },
@@ -519,6 +520,16 @@ export interface Analise {
   jeito: JeitoFinanceiro
   aprendizado: Aprendizado
   acoes: Acao[]
+  /** O que o consultor percebe no jeito de usar o dinheiro (lib/sinais.ts): ritmo da dívida, dívida sobre dívida… */
+  sinais: Sinal[]
+  /** Há quantos dias nada é lançado (os números podem estar velhos). */
+  diasSemLancar: number
+  /** Como o consultor fala com a pessoa. */
+  firmeza: Firmeza
+  /** O plano que a pessoa montou para este mês, como o Consultor lê (null sem plano salvo). */
+  planoDoMes: LeituraDoPlano | null
+  /** Quanto dos próximos meses já sai para parcelas (para o consultor falar na hora de parcelar: lib/naHora.ts). */
+  compromisso: Compromisso
 }
 
 export interface EntradaAnalise {
@@ -551,6 +562,8 @@ export interface EntradaAnalise {
   planejamento?: Planejamentos
   /** Os bancos (para dar nome ao dinheiro guardado em cada um, no Planejamento). */
   bancos?: Banco[]
+  /** As conferências das dívidas com o banco (migração 37): o consultor aprende com elas quanto o banco cobra de verdade. */
+  conferencias?: ConferenciaDivida[]
 }
 
 // ---------- apoio ----------
@@ -1806,8 +1819,11 @@ export function analisar(e: EntradaAnalise): Analise {
       porque: tx('Conta atrasada cobra multa e juros todo dia, e é o dinheiro mais caro que existe. Antes de qualquer outro passo, pague o que venceu.'),
     })
   }
+  // O plano que a pessoa montou no Planejar o mês (lib/planejamento.ts): quando existe, o Consultor segue as decisões dela e
+  // não sugere outra ordem por cima (as dicas automáticas do planejador saem do plano de ação).
+  const planoDoMes = quadros ? lerPlano(quadros.este, e.planejamento?.[quadros.este.mes]) : null
   // O planejador diz o que fazer com cada conta que não cabe no dia: isso vale mais que o aviso genérico de aperto.
-  const doPlano = plano?.dicas ?? []
+  const doPlano = planoDoMes ? [] : plano?.dicas ?? []
   for (const d of doPlano) {
     const divida = d.id.startsWith('adiantar-aberta:')
     nova({
@@ -1818,6 +1834,21 @@ export function analisar(e: EntradaAnalise): Analise {
     })
   }
   // O plano que a pessoa montou: o que ele deixa atrasar ou sem dinheiro (e, sem plano, o convite para planejar).
+  if (planoDoMes?.proximo) {
+    const px = planoDoMes.proximo
+    const dias = Math.max(0, Math.round((Date.parse(px.fonte.data) - Date.parse(hojeIso)) / 86400000))
+    const nomes = px.pagar.slice(0, 3).map((x) => x.nome)
+    const lista = px.pagar.length > 3 ? tx('{0} e mais {1}', nomes.join(', '), px.pagar.length - 3) : nomes.join(', ')
+    nova({
+      id: 'planejamento:proximo', urgencia: dias <= 3 ? 'importante' : 'sugestao', prioridade: dias <= 3 ? 95 : 72, icone: 'calendario', destino: 'analise',
+      botao: tx('Abrir o plano'),
+      titulo: px.fonte.saldo
+        ? tx('Seu plano: com o que está na conta, pague {0} ({1}).', lista, fmtValor(px.total))
+        : dias === 0 ? tx('Seu plano: hoje, com {0}, pague {1} ({2}).', px.fonte.nome, lista, fmtValor(px.total))
+          : tx('Seu plano: quando {0} cair, {1}, pague {2} ({3}).', px.fonte.nome, fmtDataCurta(px.fonte.data), lista, fmtValor(px.total)),
+      porque: tx('É o que você decidiu no Planejar o mês. Seguindo o plano, {0}% das contas do mês têm dinheiro.', planoDoMes.placar.pct),
+    })
+  }
   if (quadros) {
     for (const d of conselhosDoPlanejamento(quadros.este, e.planejamento?.[quadros.este.mes], fmtValor, fmtDataCurta)) {
       nova({
@@ -2092,6 +2123,20 @@ export function analisar(e: EntradaAnalise): Analise {
       x.porque = `${tx('Da última vez deu certo.')} ${x.porque}`
     }
   }
+  // Os sinais de comportamento (lib/sinais.ts): o que o consultor percebe no jeito de usar o dinheiro. Os que pedem uma
+  // atitude entram no plano; os outros são só descobertas na tela.
+  const firmeza = memoria?.firmeza ?? FIRMEZA_PADRAO
+  const sinais = sinaisDe({
+    hojeIso, renda, lancs: e.lancs, compras: e.compras, faturasPagas: e.faturasPagas, faturasParciais: e.faturasParciais ?? [],
+    dividas: v.dividas ? e.dividas : [], saldos: e.saldos, pagamentos: e.pagamentos, taxas: e.taxas, conferencias: e.conferencias ?? [],
+    firmeza, nome: e.perfil.nome ?? '', lancamentosPorMes, jurosCaro: JUROS_CARO_MES,
+  })
+  for (const x of sinais) {
+    if (!x.acao || acoes.some((a) => a.id === x.id)) continue
+    nova({ ...x.acao, id: x.id, destino: x.acao.destino ?? x.destino, porque: `${x.acao.porque} ${x.chamado}` })
+  }
+  const semLancar = diasSemLancar([...e.lancs, ...e.compras], hojeIso)
+
   // O objetivo da pessoa sobe o que a aproxima dele (o urgente, como o atraso, continua na frente de tudo).
   const pesos = objetivo ? PESO_DO_OBJETIVO[objetivo] : {}
   for (const x of acoes) {
@@ -2176,6 +2221,12 @@ export function analisar(e: EntradaAnalise): Analise {
     : patrimonio && fase === 'crescer' ? tx('Seu objetivo é fazer o dinheiro render: no ritmo de hoje, o que é seu chega a {0} em 12 meses.', fmtValor(patrimonio.em12))
       : tx('Seu objetivo é fazer o dinheiro render. Antes de investir, a base precisa estar pronta: veja em que degrau você está.')
   if (fraseObjetivo) resumo.splice(Math.min(1, resumo.length), 0, fraseObjetivo)
+  if (planoDoMes) {
+    const pl = planoDoMes.placar
+    resumo.push(pl.fechado ? tx('Você planejou {0}: todas as contas têm dinheiro e nada atrasa. Eu sigo o seu plano.', nomeDoMes(mes))
+      : pl.atrasos ? tx('Você planejou {0}: {1}% das contas têm dinheiro, e {2} atrasa no plano. Eu sigo o seu plano.', nomeDoMes(mes), pl.pct, pl.atrasos)
+        : tx('Você planejou {0}: {1}% das contas têm dinheiro. Eu sigo o seu plano.', nomeDoMes(mes), pl.pct))
+  }
   if (acoes[0]) resumo.push(tx('Primeiro passo: {0}', acoes[0].titulo))
 
   const conferidos = (memoria?.acompanhados ?? []).filter((x) => x.resultado).reverse()
@@ -2194,6 +2245,8 @@ export function analisar(e: EntradaAnalise): Analise {
     serie, mes: previsao, categorias, subiram, cairam, regra, recorrentes, assinaturasPorMes, recorrentesPorMes, formigas,
     jurosPagos, semCategoria, cartao, dividas, reserva, alocacao, metas, patrimonio, agenda, plano, quadros, corte, acoes,
     atrasoTotal: totalAtraso, podeGastar, lancamentosPorMes, jeito, aprendizado,
+    sinais, diasSemLancar: lancamentosPorMes >= 8 ? semLancar : 0, firmeza, planoDoMes,
+    compromisso: compromissoDe({ hojeIso, compras: e.compras, dividas: v.dividas ? e.dividas : [], saldos: e.saldos, pagamentos: e.pagamentos, taxas: e.taxas }),
   }
 }
 

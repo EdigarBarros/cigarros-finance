@@ -10,6 +10,7 @@
  * Fica em `perfis.consultor` (migração 24) e, sem a coluna, no aparelho.
  */
 import type { Analise } from './analise'
+import type { Firmeza } from './sinais'
 import { chaveMes, doMesChave } from './cartoes'
 import { fmtMesAno, fmtValor } from './format'
 import { tx } from './textos'
@@ -52,6 +53,8 @@ export interface MemoriaConsultor {
   objetivo: Objetivo | null
   objetivoEm: string | null
   acompanhados: Acompanhado[]
+  /** Como o consultor fala (lib/sinais.ts): gentil, direto ou sem filtro. Ausente = direto. */
+  firmeza?: Firmeza
 }
 
 export const MEMORIA_VAZIA: MemoriaConsultor = { objetivo: null, objetivoEm: null, acompanhados: [] }
@@ -64,6 +67,7 @@ export function normMemoria(x: unknown): MemoriaConsultor {
   return {
     objetivo: m.objetivo && IDS_OBJETIVO.has(m.objetivo) ? m.objetivo : null,
     objetivoEm: typeof m.objetivoEm === 'string' ? m.objetivoEm : null,
+    ...(m.firmeza === 'gentil' || m.firmeza === 'direto' || m.firmeza === 'sem-filtro' ? { firmeza: m.firmeza } : {}),
     acompanhados: Array.isArray(m.acompanhados)
       ? m.acompanhados.filter((a): a is Acompanhado => Boolean(a && typeof a.id === 'string' && typeof a.desde === 'string' && typeof a.base === 'number' && typeof a.avaliar === 'number'))
       : [],

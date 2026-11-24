@@ -624,10 +624,49 @@ primeira não encostar no número grande do cartão.
 Sem dados suficientes (menos de 2 dos 3 últimos meses com entradas e saídas), não há nota: a frase explica o que lançar e a aba
 mostra o que já dá. Conta nova vê o convite para o primeiro lançamento.
 
+### 4.7.0 O consultor que aprende e fala na hora (desde 24/11/2026)
+
+O objetivo do Consultor, em uma frase: **contar à pessoa o que ela não está vendo no próprio dinheiro**. Cada coisa na
+tela passa por esse filtro: se não revela nada nem muda o que ela faz nesta semana, vai para trás de "ver mais".
+
+- **Juros de verdade** (`lib/jurosAprendido.ts`, migração 44). Cada "Conferi com o banco" grava a pista: os juros que o
+  app tinha estimado sem a multa (`juros_estimado`), sobre quanto (`base_juros`) e há quantos dias (`dias_juros`). Como o
+  valor do banco vira o valor da dívida, o que o banco cobrou no intervalo é `depois − antes + juros_estimado`.
+  `aprenderJuros()` testa dois jeitos de crescer (percentual por dia sobre o atrasado, ou valor fixo por dia) e fica com o
+  mais constante; os intervalos mais longos pesam mais e, com 3 ou mais, a conferência 3 vezes acima da mediana sai (uma
+  compra não lançada não ensina juros). Diz quanto cresce por dia, o equivalente ao mês, quanto pode ser IOF (0,0082% ao
+  dia), o erro médio das últimas estimativas e a confiança (alta com 3 conferências constantes). Quando a regra informada
+  passa de 15% de diferença, sugere a regra calculada, que só entra na dívida com "Usar a taxa que calculei" + "Trocar a
+  regra". A conferência pergunta **qual número** o banco mostra: o total (ensina) ou o valor para quitar hoje (não muda a
+  dívida, só anota o desconto). Enquanto digita, a pessoa já vê quanto a dívida cresceu por dia contra a regra dela. O
+  botão de conferir aparece em toda dívida sua aberta, com ou sem regra de juros. Na ficha: **O que aprendi com o banco**.
+  Sem a migração 44, as conferências gravam como antes e só as dívidas sem regra ensinam.
+- **Sinais de comportamento** (`lib/sinais.ts`, chamado no fim de `analisar()` e mostrado por `lib/achados.ts`): ritmo da
+  dívida (nova × paga nos últimos 3 meses), dívida sobre dívida (nova nos últimos 30 dias com atraso ou dívida cara),
+  futuro já gasto (quanto dos próximos 6 meses já sai para parcelas), gasto miúdo contra a dívida (o que se repete 3 vezes
+  ou mais no mês, na conta e no cartão, lado a lado com o atrasado), promessas remarcadas ou não cumpridas (e quem cumpre em
+  "me devem"), compras puladas para a próxima fatura, faturas seguidas pagas em parte, juros de verdade, desconto para
+  quitar e "meus números podem estar velhos" (7 dias ou mais sem lançar, para quem costuma lançar). Cada sinal tem o fato,
+  a tradução do dinheiro em dias do que a pessoa ganha (`emDiasDeRenda`) e um **chamado**; os que pedem atitude entram no
+  plano de ação. Os de alerta ganham força para passar na frente dos gráficos de sempre.
+- **Firmeza** (`memoria.firmeza`, sem migração): "Como eu falo com você" com Gentil, Direto (padrão) e Sem filtro. Muda só
+  o chamado; o fato é o mesmo. O "sem filtro" chama pelo primeiro nome.
+- **Na hora da decisão** (`lib/naHora.ts`, `components/AvisoDoConsultor.tsx`): compra parcelada no cartão (a enésima
+  parcela correndo e o mês mais pesado com ela), dívida nova (o que já deve), pular compra (a próxima fatura já nasce mais
+  pesada), pagar só parte da fatura (o rotativo, estimado em 12% ao mês) e anotar mais uma promessa (como foram as
+  anteriores).
+- **O plano manda** (`lerPlano` em `lib/planejamento.ts`): com plano salvo, o Consultor segue as decisões da pessoa. As
+  dicas automáticas do planejador saem do plano de ação, entra "Seu plano: quando o Salário cair, pague X e Y" e o resumo
+  diz quanto do mês está planejado. O cartão do Planejar o mês é o primeiro do Consultor (computador e celular), com o
+  próximo passo decidido, e a Início tem o atalho no carrossel de dicas, que abre o Consultor já com a mesa.
+
+Testes: `node scripts/painel/testar.mjs` (casos "juros aprendidos", "sinais", "consultor na hora", "o consultor lê o
+plano") e `scripts/app-de-demonstracao/testar-consultor-que-aprende.cjs`.
+
 ### 4.7.1 Planejamento do mês (`lib/planejamento.ts`, `components/Planejamento.tsx`)
 
 Um jogo de dividir o dinheiro: cada dinheiro que entra no mês vira uma **barra**, e a pessoa diz com qual dinheiro sai cada
-conta. Abre pelo cartão **Planejar o mês** no Consultor (logo depois de "Agora"), pelo botão **Planejar** no celular e
+conta. Abre pelo cartão **Planejar o mês**, o primeiro do Consultor, pelo atalho da Início, pelo botão **Planejar** no celular e
 pelos passos do plano de ação que falam dele (destino `analise`: a aba abre a mesa em vez de navegar). Fica por cima de
 tudo, em tela cheia, com **Este mês** e **Mês que vem**.
 

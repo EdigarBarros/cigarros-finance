@@ -207,6 +207,7 @@ function Cartao({ p, largura, indice, manchete, t, aoIr, aoExplicar }: { p: Peca
           {temDestino && !manchete && <button className="vis-ir" onClick={abrir} aria-label={a.porQue?.acao?.rotulo ?? tx('Abrir')} title={a.porQue?.acao?.rotulo}><Icone nome="dir" tamanho={18} /></button>}
         </header>
         {a.frase && <p className="vis-frase">{a.frase}</p>}
+        {a.chamado && <p className="vis-chamado">{a.chamado}</p>}
         {manchete && temDestino && <button className="btn primario peca-abrir" onClick={abrir}>{a.porQue?.acao?.rotulo ?? tx('Ver de perto')} <Icone nome="seta" tamanho={15} /></button>}
       </div>
       <div ref={refVisto} className="vis-corpo" onPointerUp={() => t.anotar('tocou', p)}>
