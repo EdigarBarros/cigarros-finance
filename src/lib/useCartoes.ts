@@ -14,6 +14,7 @@ const normFatura = (r: FaturaPaga): FaturaPaga => ({
 const normParcial = (r: FaturaParcial): FaturaParcial => ({ ...r, valor: num(r.valor), da_caixinha: Boolean(r.da_caixinha), saldo_mexido: Boolean(r.saldo_mexido) })
 const normLanc = (r: Lancamento): Lancamento => ({
   ...r, valor: num(r.valor), valor_original: r.valor_original == null ? null : num(r.valor_original),
+  estorno_valor: r.estorno_valor == null ? null : num(r.estorno_valor),
 })
 /** Tabela ou coluna ainda não criada (migração 8 ou 9 pendente). */
 const faltaTabela = (e: { code?: string; message: string }) =>

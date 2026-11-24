@@ -56,6 +56,7 @@ import { useHoje } from '../lib/useHoje'
 import { AvisoReanalise } from './AvisoReanalise'
 import { marcarTela, marcarUso } from '../lib/uso'
 import { PopupNovidade, useNovidade } from './Novidades'
+import { planoDesfazerEstorno, planoDoEstorno, useSemEstorno, type MudancaDeEstorno } from '../lib/estorno'
 import { BarraDeAbasMovel, FundoMovel, ListaDaFolha, TopoMovel, useCorDaBarraDoCelular } from '../movel/Casca'
 import { corDoTopo, type Tom } from '../movel/tom'
 import { Modal } from './ui'
@@ -733,6 +734,25 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     fim(ok)
   }))
 
+  // ---------- estorno (migração 40): a compra ou o gasto que voltou, inteiro ou em parte ----------
+  const semEstorno = useSemEstorno()
+  /** As parcelas da compra (de qualquer ano) ou o lançamento sozinho. */
+  const partesDoEstorno = (l: Lancamento) => (l.compra_id ? cartoes.compras.filter((x) => x.compra_id === l.compra_id) : [l])
+  const gravarEstorno = async (l: Lancamento, plano: MudancaDeEstorno[] | null): Promise<boolean> => {
+    if (!plano?.length) return false
+    if (l.cartao_id) return cartoes.moverParcelas(plano)
+    let ok = true
+    for (const m of plano) {
+      const antes = d.lancs.find((x) => x.id === m.id)
+      const gravou = await d.updLanc(m.id, m.patch)
+      if (gravou && antes) await ajustarSaldos(antes, { ...antes, ...m.patch })
+      ok &&= gravou
+    }
+    return ok
+  }
+  const estornar = (l: Lancamento, quanto: number, quando: string) => gravarEstorno(l, planoDoEstorno(partesDoEstorno(l), quanto, quando))
+  const desfazerEstorno = (l: Lancamento) => gravarEstorno(l, planoDesfazerEstorno(partesDoEstorno(l)))
+
   const salvarLancamento = async (l: Omit<Lancamento, 'id'>, id?: string) => {
     const antes = id ? d.lancs.find((x) => x.id === id) : undefined
     const lancs = d.lancs
@@ -1080,6 +1100,11 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         cartaoInicial={form.cartaoId}
         aoSalvarCompra={cartoes.addCompra}
         semPagoPor={cartoes.semPagoPor}
+        estorno={form.inicial && form.inicial.tipo === 'saida' && !semEstorno ? {
+          partes: partesDoEstorno(form.inicial),
+          aoEstornar: (quanto, quando) => estornar(form.inicial!, quanto, quando),
+          aoDesfazer: () => desfazerEstorno(form.inicial!),
+        } : undefined}
         aoExcluirCompra={cartoes.delCompra}
         comprasCartao={cartoes.compras}
         aoCompraSalva={(a) => {

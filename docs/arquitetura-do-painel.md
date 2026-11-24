@@ -929,6 +929,15 @@ ano aberto vêm de `lancsRecentes` em `useDados`.
   saídas do mês, categorias, previsão, sobra que passa de um mês para o outro, conselhos e Consultor. O dinheiro que a pessoa
   te passa não precisa ser lançado como entrada (os dois se anulam). Na fatura: "Mãe paga R$ 19,90 desta fatura. Seu gasto:
   R$ 680,10"; na compra, "paga por Mãe". Sem a migração, o campo não aparece.
+- **Estorno** (migração 40, `lib/estorno.ts`): ao abrir uma saída (compra no cartão ou gasto comum), "Foi estornada" no
+  alto do formulário pergunta quanto voltou (já vem com tudo; "Metade" e qualquer valor até o da compra) e o dia. Guardado
+  assim: `valor` vira o que ainda conta (0 no estorno total) e `estorno_valor`/`estornado_em` guardam o que voltou, então
+  fatura, limite, gastos, categorias, previsão e saldo já tiram o estorno sem mudar nenhuma conta. Compra no cartão: vale
+  para a compra inteira (todas as parcelas, de qualquer ano), cada parcela devolve a sua parte (`planoDoEstorno`). Na lista,
+  a estornada fica riscada com o valor de antes e "estornada"; a de parte mostra o que conta, o de antes riscado e "estorno de
+  R$ X". Estornada inteira não se edita (Salvar desligado): "Desfazer estorno" devolve o valor de antes. Fatura já paga que
+  perde uma compra mostra o aviso de sempre ("Você pagou R$ X; depois disso a fatura mudou"). Sem a migração, o botão não
+  aparece (`useSemEstorno`). Teste: `scripts/app-de-demonstracao/testar-estorno.cjs`.
 - **Renegociar:** o banco parcelou a fatura. Cria uma dívida (total do acordo, parcelas) e marca a fatura como
   `renegociada`. As compras dela saem das saídas do mês (`contaNasSaidas`, aplicado em `Painel` antes de `resumoMes`), e o
   que passa a contar é cada parcela paga da dívida: nada conta duas vezes. Também saem do total de faturas e do "falta

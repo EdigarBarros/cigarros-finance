@@ -30,6 +30,7 @@ import { CampoData, Seletor } from '../components/Escolhas'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 import './cartoes-pc.css'
+import { estornoTotal, foiEstornado, valorAntesDoEstorno } from '../lib/estorno'
 
 const DIAS = Array.from({ length: 31 }, (_, i) => i + 1)
 const sufixoMes = (ano: number, mes: number) => `${noMeioDaFrase(MESES_CURTO[mes - 1])}/${String(ano).slice(2)}`
@@ -482,7 +483,7 @@ export function ComprasDaFatura({ s, c, destacada }: { s: SituacaoCartao; c: Ctx
             const k = c.categoriaDe(l) ?? SEM_CATEGORIA
             return (
               <li key={l.id} style={{ animationDelay: `${Math.min(i, 10) * 40}ms` }}>
-                <button className={`item-lanc ${l.compra_id && l.compra_id === destacada ? 'compra-nova' : ''}`} onClick={() => c.editarLancamento(l)}>
+                <button className={`item-lanc ${l.compra_id && l.compra_id === destacada ? 'compra-nova' : ''} ${estornoTotal(l) ? 'estornado' : ''}`} onClick={() => c.editarLancamento(l)}>
                   <Selo c={k} tamanho={34} />
                   <span className="item-texto">
                     <span className="item-desc">{l.descricao || tx('Compra')}</span>
@@ -491,9 +492,13 @@ export function ComprasDaFatura({ s, c, destacada }: { s: SituacaoCartao; c: Ctx
                       {(l.parcelas ?? 1) > 1 && <> · {l.parcela}/{l.parcelas}</>}
                       {puladaDe(l, c.ano) && <> · <em className="cc-pulada">{puladaDe(l, c.ano)}</em></>}
                       {l.pago_por?.trim() && <> · <em className="cc-de-outro">{tx('paga por {0}', l.pago_por.trim())}</em></>}
+                      {foiEstornado(l) && <> · <em className="cc-estorno">{estornoTotal(l) ? tx('estornada') : tx('estorno de {0}', fmtValor(l.estorno_valor!))}</em></>}
                     </span>
                   </span>
-                  <span className="item-valor">{fmtValor(l.valor)}</span>
+                  <span className="item-valor">
+                    {estornoTotal(l) ? <s>{fmtValor(valorAntesDoEstorno(l))}</s> : fmtValor(l.valor)}
+                    {foiEstornado(l) && !estornoTotal(l) && <small><s>{fmtValor(valorAntesDoEstorno(l))}</s></small>}
+                  </span>
                 </button>
               </li>
             )

@@ -11,6 +11,7 @@ import { CenaLancamentos } from '../components/Vazios'
 import { Segmentado } from '../components/ui'
 import { Seletor } from '../components/Escolhas'
 import type { Ctx } from './contexto'
+import { estornoTotal, foiEstornado, valorAntesDoEstorno } from '../lib/estorno'
 import { tx } from '../lib/textos'
 import { somaPrevistos, type Previsto } from '../lib/previstos'
 import { ResumoDoMes } from './lancamentos/ResumoDoMes'
@@ -216,9 +217,10 @@ function CartaoLancamento({ l, banco, categoria, cartao, emprestimo, guardadoEm,
     !l.cartao_id && l.forma && { id: 'fp', texto: infoForma(l.forma).nome },
     l.divida_id && { id: 'dv', texto: emprestimo ? (entrada ? tx('Dinheiro emprestado') : tx('Empréstimo que você fez')) : entrada ? tx('Recebido de quem devia') : tx('Pagamento de dívida') },
     l.conta_fixa_id && { id: 'cf', texto: tx('Todo mês') },
+    foiEstornado(l) && { id: 'es', texto: estornoTotal(l) ? tx('Estornada') : tx('Estorno de {0}', fmtValor(l.estorno_valor!)), classe: 'estorno' },
   ].filter(Boolean) as { id: string; texto: string; cor?: string; classe?: string }[]
   return (
-    <button className={`lc-card ${entrada ? 'entrada' : ''} ${ehGuardado(l) ? 'guardado' : ''}`} onClick={aoClicar}
+    <button className={`lc-card ${entrada ? 'entrada' : ''} ${ehGuardado(l) ? 'guardado' : ''} ${estornoTotal(l) ? 'estornado' : ''}`} onClick={aoClicar}
       style={{ '--c': k.cor, animationDelay: `${Math.min(indice, 12) * 30}ms` } as React.CSSProperties}>
       <span className="lc-card-topo">
         <span className="lc-card-cat">{k.nome}</span>
@@ -226,7 +228,8 @@ function CartaoLancamento({ l, banco, categoria, cartao, emprestimo, guardadoEm,
       </span>
       <span className="lc-card-desc">{l.descricao || (entrada ? tx('Entrada') : tx('Saída'))}</span>
       <span className="lc-card-valor">
-        {entrada ? '+' : '−'} {fmtValor(l.valor)}
+        {estornoTotal(l) ? <s>{fmtValor(valorAntesDoEstorno(l))}</s> : <>{entrada ? '+' : '−'} {fmtValor(l.valor)}</>}
+        {foiEstornado(l) && !estornoTotal(l) && <small><s>{fmtValor(valorAntesDoEstorno(l))}</s></small>}
         {l.moeda_original && l.valor_original != null && <small>{fmtMoeda(l.valor_original, l.moeda_original)}</small>}
       </span>
       {etiquetas.length > 0 && (

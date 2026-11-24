@@ -49,7 +49,9 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   com taxa opcional, e dá para voltar), **pagar só uma parte** (a fatura fica em aberto pelo resto) e **pagar com o cofrinho**
   (o valor sai da caixinha do banco em Dinheiro guardado e o limite garantido diminui junto). Compra que **outra pessoa paga**
   (a assinatura da mãe no seu cartão, [migração 39](supabase/migracao-39-compra-paga-por-outra-pessoa.sql)): fica na fatura e
-  no limite, mas fora dos seus gastos, e o dinheiro que a pessoa te passa não precisa virar entrada
+  no limite, mas fora dos seus gastos, e o dinheiro que a pessoa te passa não precisa virar entrada. Compra ou gasto
+  **estornado** ([migração 40](supabase/migracao-40-estorno.sql), `lib/estorno.ts`): "Foi estornada" ao abrir uma saída, com
+  quanto voltou (tudo ou parte) e o dia; o que voltou sai da fatura, do limite e dos gastos, e o lançamento fica riscado na lista
 - **Início**: responde, nesta ordem, "como estou este mês?" (quanto sobrou, entrou e saiu), "o que preciso fazer?"
   (dívidas e o que vem por aí) e "para onde está indo meu dinheiro?" (categorias e últimos lançamentos); depois o mês a
   mês do ano, o dinheiro guardado e as metas. O jeito de ver (simples, equilibrado, detalhado) só acrescenta linhas aos
@@ -181,7 +183,7 @@ Tudo grátis: o site fica na **Vercel** e os dados no **Supabase** (Postgres), p
    [`22`](supabase/migracao-22-juros-de-atraso.sql), [`23`](supabase/migracao-23-guardado-em-banco.sql),
    [`24`](supabase/migracao-24-memoria-do-consultor.sql), [`25`](supabase/migracao-25-promessas-de-pagamento.sql),
    [`26`](supabase/migracao-26-inicio-da-parte.sql), [`27`](supabase/migracao-27-saldo-de-um-mes-para-o-outro.sql),
-   [`28`](supabase/migracao-28-invest.sql), [`29`](supabase/migracao-29-pix-30-dias.sql), [`36`](supabase/migracao-36-juros-por-dia-e-valor-recebido.sql), [`37`](supabase/migracao-37-conferencias-da-divida.sql), [`38`](supabase/migracao-38-pular-compra-e-pagar-parte.sql), [`39`](supabase/migracao-39-compra-paga-por-outra-pessoa.sql) e, **por último**, a
+   [`28`](supabase/migracao-28-invest.sql), [`29`](supabase/migracao-29-pix-30-dias.sql), [`36`](supabase/migracao-36-juros-por-dia-e-valor-recebido.sql), [`37`](supabase/migracao-37-conferencias-da-divida.sql), [`38`](supabase/migracao-38-pular-compra-e-pagar-parte.sql), [`39`](supabase/migracao-39-compra-paga-por-outra-pessoa.sql), [`40`](supabase/migracao-40-estorno.sql) e, **por último**, a
    [`20`](supabase/migracao-20-acesso-no-banco-definitivo.sql).
    O `schema.sql` sozinho **não** tem cobrança nem bloqueio: sem a 12 e a 20 o painel abre para qualquer conta, paga ou não.
    Não rode as migrações 02 a 08 num banco novo (o `schema.sql` já inclui o que elas fazem) nem a 13 (a 20 a substitui).

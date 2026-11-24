@@ -13,6 +13,7 @@ import { SEM_CATEGORIA } from '../../lib/categorias'
 import { FORMAS, formaDe, infoForma, type FormaPagamento } from '../../lib/formas'
 import { fmtDataCurta, fmtDataLonga, fmtValor, MESES_NOME, noMeioDaFrase } from '../../lib/format'
 import { ehGuardado } from '../../lib/guardado'
+import { estornoTotal, foiEstornado } from '../../lib/estorno'
 import { tx } from '../../lib/textos'
 import type { Lancamento } from '../../lib/types'
 import { CalorDoMes, NoDia } from '../../pages/Lancamentos'
@@ -70,12 +71,13 @@ export function LancamentosMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: To
       ehGuardado(l) ? tx('Guardado') : null,
       cartao ? tx('Cartão {0}', cartao.nome) : banco?.nome ?? (forma ? infoForma(forma).nome : null),
       l.compra_id && (l.parcelas ?? 1) > 1 ? tx('Parcela {0} de {1}', l.parcela, l.parcelas) : null,
+      foiEstornado(l) ? (estornoTotal(l) ? tx('estornada') : tx('estorno de {0}', fmtValor(l.estorno_valor!))) : null,
     ].filter(Boolean).join(' · ')
     return (
       <LinhaDeLista key={l.id}
         icone={<IconeRedondo cor={(k ?? SEM_CATEGORIA).cor}><IconeCategoria emoji={(k ?? SEM_CATEGORIA).icone} tamanho={20} /></IconeRedondo>}
         titulo={l.descricao || (entrada ? tx('Entrada') : tx('Saída'))} sub={sub}
-        valor={`${entrada ? '+' : '−'}${fmtValor(l.valor)}`} tomValor={entrada ? 'entrada' : undefined}
+        valor={estornoTotal(l) ? tx('Estornada') : `${entrada ? '+' : '−'}${fmtValor(l.valor)}`} tomValor={entrada ? 'entrada' : undefined}
         aoTocar={() => c.editarLancamento(l)} />
     )
   }

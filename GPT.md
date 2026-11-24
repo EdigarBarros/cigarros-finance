@@ -1653,3 +1653,19 @@ computador com "Ver de novo" e "Ver agora", e não aparece no celular). `testar-
 `READY` nos dois. Função `admin` publicada no Supabase (versão 11, JWT ligado). Novidade **id 9** "Seus cartões numa
 carteira" gravada e publicada (`onde = 'site'`, `tela = 'cartoes'`, `arte.animacao = 'carteira-cartoes'`), com en/es; na
 lista do painel ela aparece em primeiro, no ar. Para tirar do ar, apagar ou publicar de novo: painel → Novidades.
+
+### 24/11/2026 — Claude — Estorno de compra ou gasto (migração 40)
+
+**Pedido do dono.** Um botão para marcar que uma compra foi estornada, nos lançamentos. Escolhas dele: vale para compra no
+cartão e gasto comum; a estornada some da conta e fica riscada na lista; estorno total ou parcial.
+
+**O que mudou.** `supabase/migracao-40-estorno.sql` (`lancamentos.estorno_valor`, `estornado_em`). `lib/estorno.ts`
+(funções puras `planoDoEstorno`, `planoDesfazerEstorno`, `totaisDoEstorno` e `useSemEstorno`). `valor` passa a ser o que
+ainda conta, então nenhuma soma do app precisou mudar. `Formularios.tsx` (`EstornoNoForm`, no alto do formulário ao editar
+uma saída), `Painel.tsx` (grava: compra no cartão por `moverParcelas`, todas as parcelas; gasto comum por `updLanc` +
+`ajustarSaldos`), e as listas riscadas: `ItemLancamento`, `Lancamentos.tsx` (cartões do dia), `Cartoes.tsx` (compras da
+fatura) e as do celular (`CartoesMovel`, `LancamentosMovel`).
+
+**Validação.** `npx tsc -b`, lint sem erros, build. Contas do estorno conferidas com um pacote rolldown (total, parcial,
+refazer, desfazer, recusas). `testar-estorno.cjs` 6/6. **Pendente:** rodar a migração 40 no Supabase e gerar o app Android
+(o formulário e as listas do celular mudaram).
