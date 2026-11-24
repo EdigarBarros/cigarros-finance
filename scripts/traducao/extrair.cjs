@@ -1,6 +1,6 @@
 // Tira os textos em português do código e põe no lugar uma chamada tx('texto'), que devolve o texto em inglês ou em
 // espanhol quando a pessoa escolhe um desses idiomas (src/lib/textos.ts). Os textos vão para src/i18n/traducoes.json,
-// onde ficam as traduções. Os outros idiomas continuam com o tradutor do Google (src/lib/idioma.ts).
+// onde ficam as traduções da interface.
 //
 //   node scripts/traducao/extrair.cjs src/pages/Apresentacao.tsx src/components/Entrada.tsx   extrai e troca no código
 //   node scripts/traducao/extrair.cjs --simular src/lib/x.ts                                     só mostra o que trocaria

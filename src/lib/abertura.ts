@@ -1,4 +1,5 @@
 import { useEffect, useSyncExternalStore } from 'react'
+import { usuarioDaSessao } from './sessaoDaAba'
 
 /**
  * Tela de abertura (components/Abertura.tsx): uma camada só, por cima de tudo, que entra quando alguma parte do app está
@@ -30,9 +31,9 @@ export function useAberturaSegura() {
   return useSyncExternalStore((f) => { ouvintes.add(f); return () => ouvintes.delete(f) }, () => seguras > 0)
 }
 
-/** Há uma sessão guardada neste aparelho (quem vai cair no painel). Quem só visita a página inicial não vê a abertura. */
+/** Há uma sessão nesta aba (quem vai cair no painel). Quem só visita a página inicial não vê a abertura. */
 export function temSessaoSalva() {
-  try { return Object.keys(localStorage).some((k) => /^sb-.+-auth-token$/.test(k)) } catch { return false }
+  return Boolean(usuarioDaSessao())
 }
 
 /**

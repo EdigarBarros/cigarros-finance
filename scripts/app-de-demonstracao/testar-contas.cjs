@@ -1,26 +1,24 @@
-// Várias contas no mesmo aparelho (src/lib/contas.ts): entrar, adicionar outra, trocar sem senha, o tema de cada uma, sair de
-// uma sem perder as outras, a tela "Quem está usando?", conta cuja sessão venceu (pede a senha com o e-mail preenchido), tirar
-// uma conta da lista (encerra a sessão dela no servidor) e a folha da conta no celular.
-// Uso (depois do build com fake.supabase.co do README desta pasta): node scripts/app-de-demonstracao/testar-contas.cjs
+// Testa seleção de perfis e isolamento da sessão em Chromium com contas fictícias.
 const path = require('path')
 const R = path.join(__dirname, '..', '..')
 const { iniciar } = require(R + '/scripts/app-de-demonstracao/servidor-falso.cjs')
 const demo = require(R + '/scripts/app-de-demonstracao/dados-de-demonstracao.cjs')
-const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m); if (!c) process.exitCode = 1 }
-const esperar = (p, ms = 700) => p.waitForTimeout(ms)
+const assert = require('node:assert/strict')
+const ok = (condicao, mensagem) => { assert.ok(condicao, mensagem); console.log('OK   ' + mensagem) }
 
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url')
 const CONTAS = {
   'ana@exemplo.com': { id: 'aaaaaaaa-1111-4111-8111-111111111111', nome: 'Ana Souza' },
   'bia@exemplo.com': { id: 'bbbbbbbb-1111-4111-8111-111111111111', nome: 'Bia Lima' },
-  'caio@exemplo.com': { id: 'cccccccc-1111-4111-8111-111111111111', nome: 'Caio Reis' },
 }
 const porId = Object.fromEntries(Object.entries(CONTAS).map(([email, c]) => [c.id, { ...c, email }]))
 
-/** Um Supabase Auth falso com três contas: senha, renovação (o token gira a cada uso), usuário e saída. */
-async function comTresContas(t) {
+/** Supabase Auth simulado com contas, renovação, recuperação e saída. */
+async function comContas(t) {
   const validos = new Map() // refresh_token -> id
   const encerrados = []
+  const recuperacoes = []
+  const senhasAtualizadas = []
   let n = 0
   const sessaoDe = (c) => {
     n += 1
@@ -49,7 +47,12 @@ async function comTresContas(t) {
     }
     if (u.pathname.endsWith('/user')) {
       const c = porId[quem(req)]
+      if (c && req.method() === 'PUT' && body?.password) senhasAtualizadas.push(c.email)
       return c ? route.fulfill({ status: 200, headers: h, body: JSON.stringify(sessaoDe(c).user) }) : route.fulfill({ status: 401, headers: h, body: '{}' })
+    }
+    if (u.pathname.endsWith('/recover')) {
+      recuperacoes.push(body?.email)
+      return route.fulfill({ status: 200, headers: h, body: '{}' })
     }
     if (u.pathname.endsWith('/logout')) {
       const id = quem(req)
@@ -68,175 +71,155 @@ async function comTresContas(t) {
     const single = /pgrst\.object/.test(req.headers().accept || '')
     return route.fulfill({ status: 200, headers: h, body: JSON.stringify(single ? linha : [linha]) })
   })
-  return { encerrados, revogar: (email) => { for (const [rt, x] of [...validos]) if (x === CONTAS[email].id) validos.delete(rt) } }
+  const linkDeRecuperacao = (email) => {
+    const { access_token, refresh_token, token_type } = sessaoDe({ ...CONTAS[email], email })
+    const parametros = new URLSearchParams({ access_token, refresh_token, token_type, expires_in: '3600', type: 'recovery' })
+    return `${t.url}#${parametros}`
+  }
+  return { encerrados, recuperacoes, senhasAtualizadas, linkDeRecuperacao }
 }
 
-const ola = (p) => p.evaluate(() => document.querySelector('.perfil-botao')?.textContent?.trim() ?? document.querySelector('.modal h2, .folha h2')?.textContent ?? '')
-const salvas = (p) => p.evaluate(() => JSON.parse(localStorage.getItem('opuscash.contas') || '[]').map((c) => c.email + (c.precisaEntrar ? '*' : '')))
-async function entrar(p, email, manter = true) {
-  const f = p.locator('form.en-form.entrar.ativo')
+const perfil = (p, email) => p.locator('.pf-perfil', { hasText: email })
+const menu = (p) => p.locator('.perfil-botao')
+const formulario = (p) => p.locator('form.en-form.entrar.ativo')
+const locais = (p) => p.evaluate(() => Object.entries(localStorage))
+const sessaoAtiva = (p) => p.evaluate(() => {
+  const chave = sessionStorage.getItem('opuscash.sessao-chave')
+  return { chave, email: JSON.parse(sessionStorage.getItem(chave) ?? 'null')?.user.email }
+})
+
+async function entrar(p, email) {
+  const f = formulario(p)
   await f.locator('input[type=email]').fill(email)
-  if (!manter) await f.locator('.chave-manter').click()
-  await f.locator('input[autocomplete="current-password"]').fill('senha1234')
-  await Promise.all([p.waitForLoadState('load').catch(() => {}), f.locator('button.en-botao').click()])
-  await esperar(p, 2500)
+  await f.locator('input[autocomplete=current-password]').fill('senha1234')
+  await Promise.all([p.waitForEvent('load'), f.locator('button.en-botao').click()])
 }
-async function abrirMenu(p) { await p.locator('.perfil-botao').click(); await esperar(p, 400) }
+
+async function confirmarPerfil(p, senha) {
+  await p.locator('.sc-campo input').fill(senha)
+  await p.locator('.sc-entrar').click()
+}
+
+async function abrirPainel(p, nome) {
+  await p.locator('.perfil-botao', { hasText: nome }).waitFor()
+}
+
+async function testarComputador() {
+  const t = await iniciar({ perfil: demo.perfil, dados: demo.dados, porta: 4870, semSessao: true })
+  try {
+    const p = t.page
+    const s = await comContas(t)
+    const externos = []
+    p.context().on('request', (r) => {
+      if (r.resourceType() === 'script' && new URL(r.url()).origin !== new URL(t.url).origin) externos.push(r.url())
+    })
+    await p.goto(t.url)
+    await formulario(p).waitFor()
+    await p.evaluate(() => {
+      document.cookie = 'googtrans=/pt/fr; Path=/'
+      const conta = {
+        id: 'aaaaaaaa-1111-4111-8111-111111111111', email: 'ana@exemplo.com', nome: 'Ana Souza',
+        access_token: 'LEGADO_ACESSO', refresh_token: 'LEGADO_RENOVACAO', manter: true,
+      }
+      localStorage.setItem('opuscash.contas', JSON.stringify([conta]))
+      localStorage.setItem('sb-fake-auth-token', JSON.stringify({ ...conta, user: conta }))
+    })
+    await p.reload()
+    await perfil(p, 'ana@exemplo.com').waitFor()
+    const inicial = await locais(p)
+    ok(!JSON.stringify(inicial).includes('LEGADO_'), 'migração remove os tokens antigos e mantém o perfil')
+    ok(!inicial.some(([chave]) => chave === 'sb-fake-auth-token'), 'chave legada do Supabase removida')
+    ok(!(await sessaoAtiva(p)).email, 'token legado não autentica a aba')
+    ok(await p.locator('html').getAttribute('lang') === 'pt-BR', 'idioma legado indisponível volta para português')
+    await perfil(p, 'ana@exemplo.com').click()
+    await confirmarPerfil(p, 'errada123')
+    await p.locator('.sc-errou').waitFor()
+    ok(!(await sessaoAtiva(p)).email, 'senha incorreta mantém a conta fechada')
+    await p.locator('.sc-esqueci').click()
+    await p.locator('.sc .en-aviso.ok').waitFor()
+    assert.deepEqual(s.recuperacoes, ['ana@exemplo.com'])
+    await confirmarPerfil(p, 'senha1234')
+    await abrirPainel(p, 'Ana')
+    const chave = (await sessaoAtiva(p)).chave
+    await p.reload()
+    await abrirPainel(p, 'Ana')
+    ok((await sessaoAtiva(p)).chave === chave, 'a própria aba mantém o login ao recarregar')
+    const outraAba = await p.context().newPage()
+    try {
+      await outraAba.goto(t.url)
+      await perfil(outraAba, 'ana@exemplo.com').waitFor()
+      const outraSessao = await sessaoAtiva(outraAba)
+      ok(outraSessao.chave !== chave && !outraSessao.email, 'uma nova aba pede autenticação')
+      await menu(p).click()
+      await p.locator('.cs-adicionar').click()
+      await entrar(p, 'bia@exemplo.com')
+      await abrirPainel(p, 'Bia')
+      ok(!(await sessaoAtiva(outraAba)).email && !(await menu(outraAba).count()), 'a troca de conta não transmite sessão para outra aba')
+    } finally { await outraAba.close() }
+    await menu(p).click()
+    await p.locator('.cs-linha', { hasText: 'ana@exemplo.com' }).locator('.cs-abrir').click()
+    await formulario(p).waitFor()
+    assert.equal(await formulario(p).locator('input[type=email]').inputValue(), 'ana@exemplo.com')
+    ok((await sessaoAtiva(p)).email === 'bia@exemplo.com', 'trocar de perfil pede a senha e mantém a conta atual até autenticar')
+    await entrar(p, 'ana@exemplo.com')
+    await abrirPainel(p, 'Ana')
+    const dadosLocais = JSON.stringify(await locais(p))
+    ok(!/access_token|refresh_token/.test(dadosLocais), 'perfis e localStorage não guardam tokens novos')
+    const cookies = await p.context().cookies()
+    ok(!cookies.some(({ value }) => /access_token|refresh_token/.test(value)), 'cookies não guardam tokens')
+    await menu(p).click()
+    await p.locator('.menu-lista').getByText('Sair', { exact: true }).click()
+    await perfil(p, 'ana@exemplo.com').waitFor()
+    ok(s.encerrados.includes('ana@exemplo.com') && !(await sessaoAtiva(p)).email, 'Sair encerra a sessão no servidor simulado e apaga a cópia da aba')
+    await p.locator('.idioma-btn').first().click()
+    await p.getByRole('button', { name: 'English', exact: true }).click()
+    await p.locator('html[lang=en]').waitFor()
+    ok((await p.context().cookies()).some((c) => c.name === 'opuscash-idioma' && c.value === 'en'), 'inglês usa a preferência de idioma do app')
+    await p.context().clearCookies()
+    await p.goto(s.linkDeRecuperacao('ana@exemplo.com'))
+    // A confirmação do e-mail abre uma página nova, inclusive quando o endereço só muda no fragmento.
+    await p.reload()
+    await p.getByRole('heading', { name: 'Criar senha nova' }).waitFor()
+    await p.locator('input[autocomplete=new-password]').fill('nova-senha-local-1234')
+    await p.getByRole('button', { name: 'Salvar senha' }).click()
+    await abrirPainel(p, 'Ana')
+    ok(s.senhasAtualizadas.includes('ana@exemplo.com') && (await sessaoAtiva(p)).email === 'ana@exemplo.com', 'o link de recuperação permite definir a senha e abrir a conta')
+    assert.deepEqual(externos, [], 'nenhum script de tradução externo é solicitado')
+    assert.deepEqual(t.msgs.filter((m) => m.startsWith('PAGEERROR')), [])
+  } finally {
+    await t.fechar()
+  }
+}
+
+async function testarCelular() {
+  const t = await iniciar({ perfil: demo.perfil, dados: demo.dados, porta: 4871, semSessao: true, toque: true })
+  try {
+    const p = t.page
+    await p.setViewportSize({ width: 390, height: 844 })
+    await comContas(t)
+    await p.goto(t.url)
+    await entrar(p, 'ana@exemplo.com')
+    await p.locator('.topo-movel-avatar').click()
+    await p.locator('.lista-folha .cs-adicionar').click()
+    await entrar(p, 'bia@exemplo.com')
+    await p.locator('.topo-movel-avatar').click()
+    await p.locator('.lista-folha .cs-linha', { hasText: 'ana@exemplo.com' }).locator('.cs-abrir').click()
+    await formulario(p).waitFor()
+    ok((await sessaoAtiva(p)).email === 'bia@exemplo.com', 'celular: tocar em outro perfil solicita a senha')
+    await entrar(p, 'ana@exemplo.com')
+    await p.locator('.topo-movel-avatar').click()
+    await p.locator('.lista-folha').getByText('Sair', { exact: true }).click()
+    await perfil(p, 'ana@exemplo.com').waitFor()
+    await p.locator('.pf-editar').click()
+    await perfil(p, 'bia@exemplo.com').click()
+    ok(!(await perfil(p, 'bia@exemplo.com').count()), 'celular: é possível esquecer um perfil')
+    assert.deepEqual(t.msgs.filter((m) => m.startsWith('PAGEERROR')), [])
+  } finally {
+    await t.fechar()
+  }
+}
 
 ;(async () => {
-  // ---------- computador ----------
-  const t = await iniciar({ perfil: demo.perfil, dados: demo.dados, porta: 4870, semSessao: true })
-  const p = t.page
-  const s = await comTresContas(t)
-  await p.goto(t.url); await esperar(p, 1500)
-  ok(await p.locator('form.en-form.entrar.ativo').count() === 1, 'visitante novo (sem contas no aparelho) cai direto no login')
-  await p.locator('.en-voltar').click(); await esperar(p, 1500)
-  ok(await p.locator('.ap-btn-ghost').count() >= 1, '"Início" do login mostra a apresentação')
-  await p.locator('.ap-btn-ghost').first().click(); await esperar(p, 900)
-  await entrar(p, 'ana@exemplo.com')
-  ok(/Ana/.test(await ola(p)), 'entrou na Ana: ' + await ola(p))
-  ok(JSON.stringify(await salvas(p)) === '["ana@exemplo.com"]', 'Ana lembrada no aparelho')
-  await abrirMenu(p)
-  ok(await p.locator('.menu-lista').getByText('Sair', { exact: true }).count() === 1, 'com uma conta só, o botão continua "Sair"')
-  await p.locator('.cs-adicionar').click(); await esperar(p, 700)
-  ok(await p.locator('.en-voltar').textContent().then((x) => /Voltar/.test(x)), '"Adicionar outra conta" abre o login com "Voltar"')
-  await p.locator('.en-voltar').click(); await esperar(p, 1200)
-  ok(/Ana/.test(await ola(p)), '"Voltar" mantém a Ana aberta')
-  await abrirMenu(p); await p.locator('.cs-adicionar').click(); await esperar(p, 700)
-  await entrar(p, 'bia@exemplo.com')
-  ok(/Bia/.test(await ola(p)), 'adicionou e abriu a Bia: ' + await ola(p))
-  ok((await salvas(p)).sort().join() === 'ana@exemplo.com,bia@exemplo.com', 'duas contas lembradas')
-  // tema da Bia: escuro; a Ana fica com o dela
-  const temaAna = 'claro'
-  await p.evaluate(() => { const a = Object.keys(localStorage).filter((k) => k.startsWith('opuscash-tema')); a.forEach((k) => localStorage.removeItem(k)) })
-  await abrirMenu(p)
-  const botaoTema = p.locator('.menu-lista button', { hasText: /Tema (escuro|claro)/ })
-  if (/claro/.test(await botaoTema.textContent())) { await botaoTema.click(); await esperar(p, 1200); await abrirMenu(p) }
-  await p.locator('.menu-lista button', { hasText: 'Tema escuro' }).click(); await esperar(p, 1500)
-  ok(await p.evaluate(() => document.documentElement.dataset.tema) === 'escuro', 'Bia escolheu o tema escuro')
-  // troca para a Ana pelo menu
-  await abrirMenu(p)
-  ok(await p.locator('.menu-lista').getByText('Sair', { exact: true }).count() === 1, 'com outra conta, o botão continua "Sair" (a conta fica no aparelho)')
-  ok(await p.locator('.cs-linha', { hasText: 'ana@exemplo.com' }).count() === 1, 'o menu da Bia mostra a Ana para trocar')
-  await Promise.all([p.waitForEvent('load'), p.locator('.cs-linha', { hasText: 'ana@exemplo.com' }).locator('.cs-abrir').click()])
-  await esperar(p, 2500)
-  ok(/Ana/.test(await ola(p)), 'trocou para a Ana sem senha: ' + await ola(p))
-  const temaDaAna = await p.evaluate(() => document.documentElement.dataset.tema)
-  ok(temaDaAna !== 'escuro' || temaAna === 'escuro', `a Ana não herdou o tema escuro da Bia (${temaDaAna})`)
-  // adiciona a Caio e volta para a Bia: o tema escuro dela volta
-  await abrirMenu(p); await p.locator('.cs-adicionar').click(); await esperar(p, 700)
-  await entrar(p, 'caio@exemplo.com')
-  ok(/Caio/.test(await ola(p)), 'adicionou o Caio')
-  await abrirMenu(p)
-  ok(await p.locator('.menu-lista .cs-linha').count() === 2, 'o menu do Caio mostra as outras duas contas')
-  await Promise.all([p.waitForEvent('load'), p.locator('.cs-linha', { hasText: 'bia@exemplo.com' }).locator('.cs-abrir').click()])
-  await esperar(p, 2500)
-  ok(/Bia/.test(await ola(p)), 'trocou para a Bia')
-  ok(await p.evaluate(() => document.documentElement.dataset.tema) === 'escuro', 'o tema escuro da Bia voltou com ela')
-  // "Sair" volta para os perfis e a conta continua lá; com "Manter conectado" (o padrão), abre de novo sem senha
-  const perfis = () => p.locator('.escolher-conta .pf-perfil:not(.pf-outra)')
-  const sair = async () => { await abrirMenu(p); await p.locator('.menu-lista').getByText('Sair', { exact: true }).click(); await esperar(p, 2500) }
-  await sair()
-  ok(await p.locator('.escolher-conta').count() === 1, 'depois de sair, aparece "Quem está usando?"')
-  ok(await perfis().count() === 3 && (await p.locator('.escolher-conta').textContent()).includes('bia@'), 'a Bia continua na lista com a Ana e o Caio')
-  ok(!s.encerrados.includes('bia@exemplo.com'), 'a sessão da Bia não foi encerrada (ela fica conectada)')
-  ok(await p.locator('.escolher-conta .cn-cena').count() >= 1, 'as cenas do app passam no fundo')
-  await Promise.all([p.waitForEvent('load'), perfis().filter({ hasText: 'bia@exemplo.com' }).click()])
-  await esperar(p, 3000)
-  ok(/Bia/.test(await ola(p)), 'tocou na Bia e ela abriu sem senha')
-  // sem "Manter conectado": a lista não guarda a sessão, sair encerra e o perfil pede a senha numa tela própria
-  await sair()
-  await p.locator('.escolher-conta .pf-outra').click(); await esperar(p, 900)
-  await entrar(p, 'caio@exemplo.com', false)
-  ok(/Caio/.test(await ola(p)), 'o Caio entrou sem "Manter conectado"')
-  ok(await p.evaluate(() => JSON.parse(localStorage.getItem('opuscash.contas')).find((c) => c.email === 'caio@exemplo.com').refresh_token === ''), 'a lista não guarda a sessão do Caio')
-  await sair()
-  ok(s.encerrados.includes('caio@exemplo.com'), 'ao sair, a sessão do Caio foi encerrada no servidor')
-  ok(await perfis().filter({ hasText: 'caio@exemplo.com' }).getByText('Pede a senha').count() === 1, 'o perfil do Caio mostra "Pede a senha"')
-  await perfis().filter({ hasText: 'caio@exemplo.com' }).click(); await esperar(p, 1500)
-  ok(await p.locator('.sc').count() === 1 && /caio@exemplo\.com/.test(await p.locator('.sc-email').textContent()), 'tocar no Caio abre a tela de senha com o e-mail dele')
-  await p.locator('.sc-campo input').fill('errada123'); await p.locator('.sc-entrar').click(); await esperar(p, 1200)
-  ok(await p.locator('.sc.sc-errou').count() === 1 && await p.locator('.sc .en-aviso').count() === 1, 'senha errada: o cartão avisa e fica vermelho')
-  await p.locator('.sc-campo input').fill('senha1234')
-  await Promise.all([p.waitForEvent('load'), p.locator('.sc-entrar').click()])
-  await esperar(p, 3000)
-  ok(/Caio/.test(await ola(p)), 'com a senha certa, o Caio abriu')
-  // fechou o app (ou o navegador) e abriu de novo: sem "Manter conectado", a sessão não fica
-  // (recarregar grava o sinal de vida da aba; o script abaixo zera ele antes do app, como se o app tivesse fechado há tempo)
-  await p.context().addInitScript(() => { if (localStorage.getItem('teste-fechou')) { localStorage.removeItem('teste-fechou'); localStorage.setItem('opuscash.pulso', '0'); sessionStorage.clear() } })
-  await p.evaluate(() => { sessionStorage.clear(); localStorage.setItem('teste-fechou', '1') })
-  await p.reload(); await esperar(p, 2500)
-  ok(await p.locator('.escolher-conta').count() === 1, 'reabrindo o app, o Caio (sem manter) volta para os perfis')
-  ok((await salvas(p)).includes('caio@exemplo.com*'), 'e o perfil dele pede a senha')
-  // sessão vencida de uma conta conectada (encerrada em outro lugar): o perfil cai na tela de senha
-  s.revogar('ana@exemplo.com')
-  await perfis().filter({ hasText: 'ana@exemplo.com' }).click(); await esperar(p, 2000)
-  ok(await p.locator('.sc').count() === 1, 'sessão vencida da Ana: tela de senha')
-  ok(await p.locator('.sc .chave-manter.ligada').count() === 1, 'na tela de senha da Ana, "Manter conectado" já vem ligado')
-  await p.locator('.sc-voltar').click(); await esperar(p, 900)
-  ok(await p.locator('.escolher-conta').count() === 1, '"Voltar" da tela de senha volta para os perfis')
-  // "Início" leva à apresentação; o voltar do navegador traz de volta
-  await p.locator('.pf-inicio').click(); await esperar(p, 1500)
-  ok(await p.locator('.ap-btn-ghost').count() >= 1, '"Início" abre a apresentação do OpusCash')
-  await p.goBack(); await esperar(p, 1500)
-  ok(await p.locator('.escolher-conta').count() === 1, 'voltando, os perfis aparecem de novo')
-  // tirar contas só pelo "Gerenciar contas"; sem nenhuma, vai para o login
-  await p.locator('.pf-gerenciar').click(); await esperar(p, 400)
-  await perfis().filter({ hasText: 'bia@exemplo.com' }).click(); await esperar(p, 1200)
-  ok(!(await salvas(p)).some((x) => x.startsWith('bia@')), 'Gerenciar contas: tirou a Bia do aparelho')
-  ok(s.encerrados.includes('bia@exemplo.com'), 'a sessão da Bia foi encerrada no servidor')
-  for (const email of ['ana@exemplo.com', 'caio@exemplo.com']) { await perfis().filter({ hasText: email }).click(); await esperar(p, 900) }
-  await esperar(p, 900)
-  ok(await p.locator('form.en-form.entrar.ativo').count() === 1, 'sem nenhuma conta no aparelho, vai direto para o login')
-  await p.screenshot({ path: path.join(R, 'node_modules/.cache/contas-pc.png') })
-  ok(!t.msgs.some((m) => m.startsWith('PAGEERROR')), 'sem erro na página (PC): ' + t.msgs.filter((m) => m.startsWith('PAGEERROR')).join(' | '))
-  await t.fechar()
-
-  // ---------- celular ----------
-  const m = await iniciar({ perfil: demo.perfil, dados: demo.dados, porta: 4871, semSessao: true, toque: true })
-  const q = m.page
-  await q.setViewportSize({ width: 390, height: 844 })
-  await comTresContas(m)
-  await q.goto(m.url); await esperar(q, 1500)
-  await entrar(q, 'ana@exemplo.com')
-  const folha = async () => { await q.locator('.topo-movel-avatar').click(); await esperar(q, 700) }
-  await folha()
-  ok(await q.locator('.lista-folha .cs-adicionar').count() === 1, 'celular: a folha da conta tem "Adicionar outra conta"')
-  await q.locator('.lista-folha .cs-adicionar').click(); await esperar(q, 900)
-  await entrar(q, 'bia@exemplo.com')
-  await folha()
-  ok(await q.locator('.lista-folha .cs-linha', { hasText: 'ana@exemplo.com' }).count() === 1, 'celular: a folha da Bia mostra a Ana')
-  const largura = await q.evaluate(() => { const l = document.querySelector('.lista-folha .cs-linha').getBoundingClientRect(); return { r: l.right, w: innerWidth } })
-  ok(largura.r <= largura.w, 'celular: a linha da conta cabe na tela')
-  await q.screenshot({ path: path.join(R, 'node_modules/.cache/contas-celular.png') })
-  await Promise.all([q.waitForEvent('load'), q.locator('.lista-folha .cs-linha', { hasText: 'ana@exemplo.com' }).locator('.cs-abrir').click()])
-  await esperar(q, 2500)
-  await folha()
-  ok(/Ana/.test(await q.locator('.modal h2, h2').first().textContent()), 'celular: trocou para a Ana')
-  await q.locator('.lista-folha').getByText('Sair', { exact: true }).click(); await esperar(q, 2500)
-  ok(await q.locator('.escolher-conta .pf-perfil:not(.pf-outra):not(.pf-editar)').count() === 2, 'celular: saiu da Ana e as duas continuam na lista')
-  ok(await q.locator('.escolher-conta .pf-editar').count() === 1, 'celular: o quadro "Editar" aparece no lugar de "Gerenciar contas"')
-  await q.locator('.escolher-conta .pf-editar').click(); await esperar(q, 400)
-  ok(await q.locator('.escolher-conta.editando .pf-tirar').count() === 2, 'celular: "Editar" mostra a lixeira em cada conta')
-  await q.locator('.escolher-conta .pf-editar').click(); await esperar(q, 400)
-  ok(await q.locator('.escolher-conta.editando').count() === 0, 'celular: "Concluir" volta ao normal sem tirar ninguém')
-  await q.screenshot({ path: path.join(R, 'node_modules/.cache/contas-escolher.png') })
-  // abrir o app de novo com duas contas: escolhe nos perfis, a não ser que uma seja quase sempre a usada
-  await m.page.context().addInitScript(() => { if (localStorage.getItem('teste-fechou')) { localStorage.removeItem('teste-fechou'); localStorage.setItem('opuscash.pulso', '0'); sessionStorage.clear() } })
-  const reabrir = async () => { await q.evaluate(() => localStorage.setItem('teste-fechou', '1')); await q.reload(); await esperar(q, 2500) }
-  const idDe = (email) => q.evaluate((e) => JSON.parse(localStorage.getItem('opuscash.contas')).find((c) => c.email === e).id, email)
-  await Promise.all([q.waitForEvent('load'), q.locator('.escolher-conta .pf-perfil', { hasText: 'bia@exemplo.com' }).click()])
-  await esperar(q, 2500)
-  const [ana, bia] = [await idDe('ana@exemplo.com'), await idDe('bia@exemplo.com')]
-  await q.evaluate(([a, b]) => localStorage.setItem('opuscash.aberturas', JSON.stringify([a, b, a, b, a, b])), [ana, bia])
-  await reabrir()
-  ok(await q.locator('.escolher-conta').count() === 1, 'celular: alternando entre as contas, abrir o app mostra os perfis')
-  await Promise.all([q.waitForEvent('load'), q.locator('.escolher-conta .pf-perfil', { hasText: 'bia@exemplo.com' }).click()])
-  await esperar(q, 2500)
-  ok(await q.locator('.escolher-conta').count() === 0, 'celular: o perfil da Bia abriu sem senha')
-  await q.evaluate((b) => localStorage.setItem('opuscash.aberturas', JSON.stringify([b, b, b, b, b, b])), bia)
-  await reabrir()
-  ok(await q.locator('.escolher-conta').count() === 0 && await q.locator('.topo-movel-avatar').count() === 1, 'celular: quase sempre a Bia, abrir o app entra direto nela')
-  ok(!m.msgs.some((x) => x.startsWith('PAGEERROR')), 'sem erro na página (celular)')
-  await m.fechar()
-})().catch((e) => { console.error(e); process.exitCode = 1 })
+  await testarComputador()
+  await testarCelular()
+})().catch((erro) => { console.error(erro); process.exitCode = 1 })

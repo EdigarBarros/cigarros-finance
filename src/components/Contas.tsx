@@ -1,7 +1,5 @@
-import { useState } from 'react'
-import { avisar } from '../lib/avisos'
-import { abrir, iniciaisDe, nomeDe } from '../lib/abrirConta'
-import { adicionarConta, MAX_CONTAS, pedeSenha, useContasSalvas, type ContaSalva } from '../lib/contas'
+import { iniciaisDe, nomeDe } from '../lib/abrirConta'
+import { adicionarConta, MAX_CONTAS, useContasSalvas, type ContaSalva } from '../lib/contas'
 import { tx } from '../lib/textos'
 import { Icone } from './Icone'
 import './contas-salvas.css'
@@ -14,17 +12,16 @@ function Avatar({ conta }: { conta: ContaSalva }) {
  * Uma linha da lista: abrir a conta (ou entrar com a senha, se ela pede). Tirar a conta do aparelho é só pelo "Gerenciar
  * contas" da tela de perfis (components/EscolherConta.tsx).
  */
-function LinhaDaConta({ conta, ocupada, aoAbrir }: { conta: ContaSalva; ocupada: boolean; aoAbrir: () => void }) {
+function LinhaDaConta({ conta, aoAbrir }: { conta: ContaSalva; aoAbrir: () => void }) {
   return (
     <div className="cs-linha">
-      <button type="button" className="cs-abrir" onClick={aoAbrir} disabled={ocupada}>
+      <button type="button" className="cs-abrir" onClick={aoAbrir}>
         <Avatar conta={conta} />
         <span className="cs-texto">
           <b translate="no">{nomeDe(conta)}</b>
           <small translate="no">{conta.email}</small>
-          {pedeSenha(conta) && <small className="cs-venceu">{tx('Entre de novo com a senha')}</small>}
+          <small className="cs-venceu">{tx('Entre de novo com a senha')}</small>
         </span>
-        {ocupada && <span className="en-girando" aria-label={tx('Aguarde')} />}
       </button>
     </div>
   )
@@ -36,14 +33,12 @@ function LinhaDaConta({ conta, ocupada, aoAbrir }: { conta: ContaSalva; ocupada:
  */
 export function ContasNoMenu({ userId }: { userId: string }) {
   const contas = useContasSalvas()
-  const [ocupada, setOcupada] = useState<string | null>(null)
   const outras = contas.filter((c) => c.id !== userId)
   return (
     <div className="cs-lista" onClick={(e) => { if (!(e.target as HTMLElement).closest('.cs-adicionar')) e.stopPropagation() }}>
       {outras.length > 0 && <span className="cs-titulo">{tx('Trocar de conta')}</span>}
       {outras.map((c) => (
-        <LinhaDaConta key={c.id} conta={c} ocupada={ocupada === c.id}
-          aoAbrir={() => { setOcupada(c.id); void abrir(c, (m) => avisar(m)).finally(() => setOcupada(null)) }} />
+        <LinhaDaConta key={c.id} conta={c} aoAbrir={() => adicionarConta(c.email)} />
       ))}
       {contas.length < MAX_CONTAS && (
         <button type="button" className="cs-adicionar" onClick={() => adicionarConta()}>

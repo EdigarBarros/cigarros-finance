@@ -11,12 +11,8 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   da base, barras de progresso que enchem, pílula do menu que desliza até a página aberta e cartões que sobem sob o
   ponteiro. A troca de tema espalha o tema novo como uma mancha de tinta a partir do botão. Quem quiser menos movimento
   escolhe **Animações: Reduzidas** em Configurações → Aparência
-- **Qualquer idioma**: o botão 文A (no topo do painel; nas outras telas, preso no canto de cima) abre a lista de mais de
-  100 idiomas, cada um escrito nele mesmo, com busca. O app é escrito em português. Inglês e espanhol têm tradução nossa
-  (`lib/textos.ts` e `src/i18n/traducoes.json`, no app inteiro menos as páginas legais); os outros idiomas são a
-  tradução automática do Google (`lib/idioma.ts`). A escolha fica salva no navegador. Valores em dinheiro, a marca e o nome da pessoa não são traduzidos.
-  A política de segurança (`vercel.json`) libera o tradutor do Google; se ele mudar o script que roda na barra dele, o hash
-  `sha256-…` do `script-src` precisa ser atualizado (o console do navegador mostra o novo)
+- **Idioma**: o botão 文A oferece português, inglês e espanhol. A interface usa os textos incluídos no aplicativo
+  (`lib/textos.ts` e `src/i18n/traducoes.json`) e guarda a preferência no navegador. As páginas legais ficam em português.
 
 - **Painel que se adapta a cada pessoa**: no primeiro acesso, o seu nome e 4 perguntas rápidas (moeda, outras moedas, o que faz
   parte da vida financeira, jeito de ver) montam o painel só com o que faz sentido. Dívidas, bancos, investimentos e

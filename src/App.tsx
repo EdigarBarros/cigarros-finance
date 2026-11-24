@@ -14,7 +14,7 @@ import { documentoDoHash } from './lib/legal'
 import { nativo, tx } from './lib/textos'
 import { temAcesso, useAssinatura } from './lib/assinatura'
 import { configurado, supabase } from './lib/supabase'
-import { aoMudarSessao, pararDeAdicionar, useAdicionando, useContasSalvas } from './lib/contas'
+import { aoMudarSessao, concluirRecuperacao, pararDeAdicionar, useAdicionando, useContasSalvas } from './lib/contas'
 import { EscolherConta } from './components/EscolherConta'
 import { useSemInternet } from './lib/conexao'
 import { iniciarUso, marcarTela } from './lib/uso'
@@ -25,7 +25,7 @@ import './pages/apresentacao-telas.css'
 
 /**
  * Telas sem a barra do painel: os botões de tema e de idioma ficam presos no canto de cima (no painel, ficam na barra).
- * `traduzida`: a tela tem os textos em inglês e espanhol (lib/textos.ts); nesses idiomas o tradutor do Google não mexe nela.
+ * `traduzida`: a tela tem os textos em inglês e espanhol (lib/textos.ts).
  */
 const comIdioma = (tela: React.ReactNode, traduzida = true) => (
   <>
@@ -100,7 +100,7 @@ export default function App() {
   if (sessao === undefined) return <Carregando segurar={temSessaoSalva()} />
 
   // o link de "Esqueci minha senha" cria uma sessão: a tela de nova senha vem antes de qualquer outra
-  if (recuperando) return comIdioma(<NovaSenha aoConcluir={() => setRecuperando(false)} />)
+  if (recuperando) return comIdioma(<NovaSenha aoConcluir={() => { concluirRecuperacao(); setRecuperando(false) }} />)
   // "Adicionar outra conta" (ou entrar de novo numa conta lembrada cuja sessão venceu): o login aparece por cima, e a conta
   // aberta continua aberta até a outra entrar. "Voltar" desiste sem mudar nada.
   if (adicionando && (!sessao || adicionando.de === sessao.user.id)) {
@@ -123,7 +123,7 @@ export default function App() {
     return comIdioma(<Login inicial="entrar" aoVoltar={noAppAndroid ? undefined : () => abrirLogin('apresentacao')} />)
   }
 
-  return <ComAcesso userId={sessao.user.id} email={sessao.user.email ?? ''} nome={sessao.user.user_metadata?.nome} />
+  return <ComAcesso key={sessao.user.id} userId={sessao.user.id} email={sessao.user.email ?? ''} nome={sessao.user.user_metadata?.nome} />
 }
 
 type Destino = 'entrar' | 'criar' | 'apresentacao'
@@ -188,7 +188,7 @@ function ComAcesso({ userId, email, nome }: { userId: string; email: string; nom
   if (cobranca && !temAcesso(assinatura)) return comIdioma(<TelaAssinatura assinatura={assinatura} email={email} aoAtualizar={recarregar} />)
   return (
     <Suspense fallback={<Carregando />}>
-      {/* inglês e espanhol: o painel já vem traduzido (tx), o tradutor do Google não mexe */}
+      {/* Inglês e espanhol usam os textos do próprio aplicativo. */}
       {nativo
         ? <div translate="no" className="tela-nativa"><Painel userId={userId} email={email} nome={nome} assinatura={cobranca ? assinatura : null} confirmandoPagamento={confirmando} /></div>
         : <Painel userId={userId} email={email} nome={nome} assinatura={cobranca ? assinatura : null} confirmandoPagamento={confirmando} />}

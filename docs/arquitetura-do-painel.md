@@ -1286,23 +1286,15 @@ Duas colunas no computador. A lista com selos redondos saiu; cada lançamento ag
 
 Como os perfis de um serviço de vídeo. Quem entra numa conta fica lembrado no aparelho (até 5 contas). No menu da conta
 (PC: a foto no canto de cima; celular: a folha aberta pela foto), embaixo dos itens: **Trocar de conta** (as outras contas,
-com foto, nome e e-mail; um toque abre a conta), **Adicionar outra conta** (abre o login por cima; "Voltar" desiste e a conta
+com foto, nome e e-mail; tocar abre o login da conta), **Adicionar outra conta** (abre o login por cima; "Voltar" desiste e a conta
 aberta continua) e **Sair**.
 
 - **Sair** volta para a tela de perfis e **a conta continua no aparelho** (`sairParaOsPerfis`). A página recarrega: nada da
   conta fica na memória. **Tirar uma conta do aparelho é só pelo "Gerenciar contas"** ("Editar" no celular) da tela de perfis;
   o menu não tem mais o "x". Sem nenhuma conta lembrada, a tela de perfis não aparece.
-- **Manter conectado** (chave no login e na tela de senha, ligada por padrão no login). Ligado: a lista guarda a sessão
-  (os dois tokens) e tocar no perfil abre a conta direto. Desligado (`manter: false`): a lista não guarda a sessão, "Sair"
-  encerra a sessão no servidor, o perfil mostra "Pede a senha" e tocar nele abre a **tela de senha**
-  (`components/SenhaDaConta.tsx`). E fechar o app (ou o navegador) encerra a sessão: ao abrir, se a aba é nova
-  (`sessionStorage` vazio) e nenhuma outra aba deu sinal nos últimos 45 s (`opuscash.pulso`), a sessão sai antes de o Supabase
-  lê-la. Contas de antes dessa opção ficam conectadas.
-- **Abrir o app com duas ou mais contas**: cai na tela de perfis, a não ser que uma conta seja "a de sempre" (70% das
-  últimas 10 aberturas, com pelo menos 5; `contaDeSempre` em `lib/contas.ts`): aí abre direto nela. Vale só quando o app (ou o
-  navegador) acabou de abrir, não ao recarregar; a sessão da conta sai só daquele lugar e fica guardada na lista, então o
-  perfil abre sem senha. Cada escolha de perfil, entrada com senha e abertura direta conta uma abertura
-  (`localStorage['opuscash.aberturas']`).
+- A lista guarda somente os dados usados para exibir o perfil. Cada troca pede a senha da conta escolhida.
+  A sessão ativa fica na aba durante a navegação e a recarga. Ao sair, o app encerra a sessão e volta aos perfis.
+  Na atualização, as antigas sessões persistidas são removidas e os perfis continuam disponíveis para entrar novamente.
 - **Sem nenhuma conta no aparelho** (visitante novo, ou tirou a última): o site abre direto no **login**; "Início" mostra a
   apresentação.
 - **Tela de senha**: o e-mail já escolhido, só a senha, com as peças do OpusCash vagando em 3D atrás (`FundoOpus`). A foto

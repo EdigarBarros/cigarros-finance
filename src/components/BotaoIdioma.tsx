@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { IDIOMAS, idiomaPorCodigo, ORIGINAL, sugeridos, trocarIdioma, useIdioma } from '../lib/idioma'
+import { IDIOMAS, idiomaAtual, idiomaPorCodigo, ORIGINAL, sugeridos, trocarIdioma } from '../lib/idioma'
 import { Icone } from './Icone'
 
 // "Idioma" em vários idiomas: é o que o leitor de tela fala e o que aparece ao parar o ponteiro, seja qual for a língua da pessoa
-const ROTULO = 'Idioma · Language · Idioma · Langue · Sprache · 语言 · भाषा · لغة · Язык · 言語'
+const ROTULO = 'Idioma · Language'
 
 /** Ícone universal de tradução (o "文A" que o Chrome, o Android e o Google Tradutor usam). */
 function IconeTraduzir({ tamanho = 20 }: { tamanho?: number }) {
@@ -14,7 +14,7 @@ function IconeTraduzir({ tamanho = 20 }: { tamanho?: number }) {
   )
 }
 
-const sigla = (codigo: string) => codigo.split('-')[0].toUpperCase().replace('IW', 'HE').replace('JW', 'JV')
+const sigla = (codigo: string) => codigo.toUpperCase()
 const semAcento = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
 /**
@@ -31,7 +31,7 @@ export function BotaoIdioma({ flutuante, emLista, semBotao, aberto: abertoFora, 
   aberto?: boolean
   aoMudarAberto?: (aberto: boolean) => void
 }) {
-  const codigo = useIdioma()
+  const codigo = idiomaAtual()
   const [abertoAqui, setAbertoAqui] = useState(false)
   const aberto = abertoFora ?? abertoAqui
   const setAberto = (x: boolean) => (aoMudarAberto ? aoMudarAberto(x) : setAbertoAqui(x))
@@ -83,7 +83,7 @@ export function BotaoIdioma({ flutuante, emLista, semBotao, aberto: abertoFora, 
             <div className="idioma-busca">
               <Icone nome="busca" tamanho={17} />
               <input ref={campo} type="search" value={busca} onChange={(e) => setBusca(e.target.value)}
-                placeholder="English, Español, 中文, हिन्दी…" aria-label={ROTULO} />
+                placeholder="Português, English, Español" aria-label={ROTULO} />
             </div>
             <ul className="idioma-lista">
               {lista.map((i) => (
