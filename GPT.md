@@ -1685,3 +1685,7 @@ formulário do cartão.
 **Validação.** `npx tsc -b`, lint sem erros, build. Foto de cada um dos 12 cartões ao lado da foto do zip (ajustados PicPay e
 C6). `testar-carteira-pc.cjs` 15/15, `testar-pular-e-pagar-parte.cjs` 3/3, `testar-estorno.cjs` 6/6, `testar-movel.cjs` 379 OK. A migração 40 (estorno)
 já foi rodada no Supabase em 24/11. App Android: só numa versão nova.
+
+**Atualização (24/11/2026).** Segundo zip do dono com três visuais novos: **Banco do Brasil** (Ourocard em pé, amarelo
+liso com losangos, "ourocard" e o símbolo do BB em azul), **Bradesco** (prata, Visa Platinum) e **Inter** (em pé, laranja
+liso, "inter" e Mastercard embaixo). Redesenhados como o cartão de verdade virado de lado; os outros nove não mudaram.

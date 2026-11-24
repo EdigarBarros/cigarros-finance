@@ -131,31 +131,35 @@ const ARTES: Record<string, Omit<ArteCartao, 'chave'>> = {
     </>,
   },
   bradesco: {
-    cor: '#c9973a', tinta: '#fff7e3',
-    fundo: 'radial-gradient(circle, rgba(255,236,190,.38) 0 .9px, transparent 1.4px) 0 0 / 6px 6px, radial-gradient(120% 120% at 70% 30%, rgba(255,226,150,.55), transparent 55%), linear-gradient(135deg, #d8a548 0%, #b8892f 35%, #e2b75a 62%, #a77724 100%)',
+    // Visa Platinum: prata com a retícula de pontos em ondas
+    cor: '#9a9ca1', tinta: '#fff',
+    fundo: 'radial-gradient(circle, rgba(255,255,255,.34) 0 .85px, transparent 1.35px) 0 0 / 6px 6px, radial-gradient(60% 120% at 50% 50%, rgba(40,40,45,.35), transparent 70%), radial-gradient(90% 90% at 15% 20%, rgba(255,255,255,.35), transparent 60%), linear-gradient(120deg, #7d7f84 0%, #a9abb0 30%, #8a8c91 55%, #b8babe 78%, #77797e 100%)',
     bloco: { left: '7%', top: '50%' },
     desenho: (t) => <>
-      <Logo chave="bradesco" x={18} y={14} w={22} h={22} pinta="#fff" />
-      <text x="44" y="32" fontFamily={FONTE} fontWeight="700" fontSize="19" letterSpacing="-.01em" fill="#fff">bradesco</text>
-      <Chip x={24} y={50} w={36} />
-      <Visa x={300} y={176} tam={30} extra="Gold" />
-      <Titular texto={t} x={22} y={188} tam={9.5} cor="#fff7e3" />
+      <Logo chave="bradesco" x={16} y={14} w={22} h={22} pinta="#fff" />
+      <text x="42" y="32" fontFamily={FONTE} fontWeight="700" fontSize="19" letterSpacing="-.01em" fill="#fff">bradesco</text>
+      <Aprox x={286} y={30} s={0.95} />
+      <Chip x={22} y={52} w={36} prata />
+      <Visa x={300} y={170} tam={30} />
+      <text x="300" y="186" textAnchor="end" fontFamily={FONTE} fontSize="10" fontWeight="500" fill="#fff">Platinum</text>
+      <Titular texto={t} x={22} y={188} tam={9.5} />
     </>,
   },
   'banco do brasil': {
-    cor: '#ffe600', tinta: '#1c3f94',
-    fundo: 'radial-gradient(100% 90% at 20% 10%, #fff7a0, transparent 60%), linear-gradient(160deg, #fff35a 0%, #ffe600 45%, #f4d200 100%)',
-    bloco: { left: '7%', top: '50%' },
+    // Ourocard em pé, virado de lado: "ourocard" embaixo, VISA no alto, chip e símbolo do BB à direita, losangos bem claros
+    cor: '#f7e21b', tinta: '#22408f',
+    fundo: 'linear-gradient(160deg, #fbea2c 0%, #f7e21b 55%, #f2d914 100%)',
+    bloco: { left: '6%', top: '30%' },
     desenho: (t) => <>
-      <g fill="none" stroke="#e6c800" strokeWidth="1.2" opacity=".9">
-        <path d="M-10 120 C 60 60, 140 170, 330 70" /><path d="M-10 140 C 70 80, 150 190, 330 92" /><path d="M120 210 C 160 130, 230 120, 330 150" />
+      <g fill="none" stroke="rgba(255,255,255,.38)" strokeWidth="1.3">
+        {[0, 1, 2, 3, 4, 5, 6].map((i) => <path key={i} d={`M${60 + i * 34} 0 L${60 + i * 34 + 101} 202 M${60 + i * 34 + 101} 0 L${60 + i * 34} 202`} />)}
       </g>
-      <Logo chave="banco do brasil" x={16} y={12} w={30} h={30} />
-      <text x="300" y="34" textAnchor="end" fontFamily={FONTE} fontWeight="800" fontStyle="italic" fontSize="21" letterSpacing="-.02em" fill="#1c3f94">ourocard</text>
-      <Chip x={24} y={56} w={34} prata />
-      <Aprox x={66} y={69} s={0.8} cor="#1c3f94" />
-      <Visa x={300} y={180} tam={26} cor="#1c3f94" />
-      <Titular texto={t} x={22} y={188} tam={9.5} cor="#1c3f94" />
+      <Visa x={18} y={36} tam={26} ancora="start" cor="#c9b80f" />
+      <Titular texto={t} x={300} y={36} tam={9.5} cor="#22408f" ancora="end" />
+      <text x="16" y="186" fontFamily="'Arial Narrow', 'Roboto Condensed', Montserrat, sans-serif" fontWeight="800" fontSize="30" letterSpacing="-.01em" fill="#22408f">ourocard</text>
+      <Chip x={232} y={130} w={34} prata giro={-90} />
+      <Aprox x={238} y={110} s={0.85} cor="#22408f" giro={-90} />
+      <Logo chave="banco do brasil" x={272} y={160} w={30} h={30} pinta="#22408f" />
     </>,
   },
   caixa: {
@@ -186,15 +190,16 @@ const ARTES: Record<string, Omit<ArteCartao, 'chave'>> = {
     </>,
   },
   inter: {
+    // em pé, virado de lado: chip à esquerda, o nome de lado, "inter" e a Mastercard na direita
     cor: '#ff7a00', tinta: '#fff',
-    fundo: 'radial-gradient(100% 90% at 10% 0%, rgba(255,190,90,.5), transparent 55%), linear-gradient(135deg, #ff8f0f 0%, #ff7300 50%, #ff5a00 100%)',
-    bloco: { left: '7%', top: '52%' },
+    fundo: 'linear-gradient(135deg, #ff8a12 0%, #ff7a00 55%, #f76f00 100%)',
+    bloco: { left: '30%', top: '38%' },
     desenho: (t) => <>
-      <Master x={276} y={28} r={13} />
-      <Aprox x={30} y={30} s={0.8} giro={-90} />
-      <Chip x={20} y={50} w={34} prata />
-      <text transform="translate(298 182) rotate(-90)" fontFamily={FONTE} fontWeight="700" fontSize="38" letterSpacing="-.03em" fill="#fff">inter</text>
-      <Titular texto={t} x={20} y={188} tam={9} />
+      <Chip x={10} y={84} w={34} prata giro={-90} />
+      <Aprox x={30} y={64} s={0.8} giro={-90} />
+      <Titular texto={t} x={78} y={186} tam={9} giro={-90} />
+      <text transform="translate(298 184) rotate(-90)" fontFamily={FONTE} fontWeight="700" fontSize="34" letterSpacing="-.03em" fill="#fff">inter</text>
+      <Master x={282} y={36} r={13} giro={-90} />
     </>,
   },
   'c6 bank': {
