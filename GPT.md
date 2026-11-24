@@ -1903,3 +1903,30 @@ ficaram em `/workspace/scratch/work`. O teste administrativo está versionado.
 41 a 43 pelo Supabase após os pré-requisitos e confira checkout, estorno e trilha de auditoria em modo de
 teste antes de atualizar as funções de produção. Reverter o Git não reverte SQL já aplicado. Os testes
 acima não usaram contas, pagamentos ou registros de produção.
+
+### Preparação da implantação de segurança
+
+**Data e autoria.** 24/11/2026, GPT/Codex. Edigar autorizou prosseguir com a implantação e pediu confirmação.
+Foram abertos os PRs em rascunho [OpusCash #287](https://github.com/EdigarBarros/cigarros-finance/pull/287)
+e [Painel #24](https://github.com/EdigarBarros/Painel-Opus-Cash/pull/24). As bases remotas verificadas foram
+`e6cb0b7` para o site e `7ca8e0e` para o painel. As bases são ancestrais das duas branches de revisão.
+Os commits testados `2d1c521` e `f30059e` tinham verificação Vercel bem-sucedida no GitHub, nas branches de revisão.
+
+**Validação repetida.** Passaram os builds do site e do painel, as migrações em PostgreSQL descartável,
+os cinco testes Deno de pagamento, webhook e exclusão, os seis testes da função administrativa, os
+54 casos de extrato com duas pistas, os 27 casos de investimento e o fluxo de contas no Chromium com
+desktop e celular simulados. Nenhuma conta, cobrança ou migração de produção foi usada nessa confirmação.
+
+**Bloqueio atual.** O ambiente não tem conexão autenticada com Supabase ou Stripe. O acesso direto aos
+domínios foi recusado pelo proxy, e o navegador em nuvem não iniciou. Foram apresentadas as conexões
+Supabase e Stripe. Os PRs ficaram em rascunho. Nenhuma configuração, migração, função ou deploy de
+produção foi alterado.
+
+**Retomada.** Consulte primeiro o banco e a configuração das funções com uma conta autenticada e identifique
+homologação e produção. Confirme a versão do PostgreSQL, as migrações 20, 29, 34 e 41 a 43, a configuração
+do webhook e do teste de pagamento. Aplique as migrações primeiro em homologação e valide as funções
+com contas e pagamentos de teste. Confirme que o segredo de assinatura do webhook está configurado
+para o Stripe correspondente. Coordene a publicação das funções de checkout, portal, webhook,
+exclusão de conta e `admin` com os deploys da Vercel. Verifique a versão servida pelos domínios e
+o fluxo de exclusão para o site e o Android. O sucesso de uma prévia da Vercel não confirma as migrações
+nem a implantação das Edge Functions.
