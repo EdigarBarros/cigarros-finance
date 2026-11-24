@@ -1648,3 +1648,8 @@ pediu uma novidade feita por nós, uma mini animação em 3D com o antes e depoi
 volta nunca passa por cima do próprio bolso já alinhada com a fenda, a linha do resumo abre o cartão, a novidade aparece no
 computador com "Ver de novo" e "Ver agora", e não aparece no celular). `testar-pular-e-pagar-parte.cjs` 3/3,
 `testar-correcoes.cjs` ok. Painel: `tsc -b`, lint, build e `deno check` da função `admin`.
+
+**Publicação (24/11/2026).** PRs EdigarBarros/cigarros-finance#281 e EdigarBarros/Painel-Opus-Cash#23 mesclados; Vercel
+`READY` nos dois. Função `admin` publicada no Supabase (versão 11, JWT ligado). Novidade **id 9** "Seus cartões numa
+carteira" gravada e publicada (`onde = 'site'`, `tela = 'cartoes'`, `arte.animacao = 'carteira-cartoes'`), com en/es; na
+lista do painel ela aparece em primeiro, no ar. Para tirar do ar, apagar ou publicar de novo: painel → Novidades.
