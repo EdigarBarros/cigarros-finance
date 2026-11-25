@@ -21,7 +21,7 @@ import { ajustarMesesComEfeitos } from '../../src/lib/guardado'
 import { fmtValor } from '../../src/lib/format'
 import { previsaoDoAno } from '../../src/lib/previsao'
 import { chaveDoMes, sobrasPorMes } from '../../src/lib/saldoCorrido'
-import { atrasoDa, comExtras, comGuardado, conselhosDoPlanejamento, custoDa, dicasDe, falta, montarPraMim, mudarParte, normPlanejamentos, placarDe, por, quadroDoMes, sobra, valerPartes } from '../../src/lib/planejamento'
+import { atrasoDa, comExtras, comFeitos, comGuardado, fotosDe, travada, conselhosDoPlanejamento, custoDa, dicasDe, falta, montarPraMim, mudarParte, normPlanejamentos, placarDe, por, quadroDoMes, sobra, valerPartes } from '../../src/lib/planejamento'
 import { planejar, type PagamentoPlanejado, type Plano } from '../../src/lib/planejador'
 import type { CartaoCredito, ContaFixa, Divida, FaturaParcial, Lancamento, Mes, SaldoDivida } from '../../src/lib/types'
 import { aprenderJuros, descontoParaQuitar, pistaDaConferencia } from '../../src/lib/jurosAprendido'
@@ -871,6 +871,54 @@ export const CASOS: Caso[] = [
       const q = quadroDoMes(pl, '2026-11-25', 'este')
       igual('a mesa mostra a pensão', q.fontes.map((f) => f.nome), ['O que está na conta', 'Pensão'])
       igual('a fatura de hoje não fica sem dinheiro', pl.semDinheiro.length, 0)
+    },
+  },
+  {
+    nome: 'planejamento do mês: o que já aconteceu fica travado',
+    rodar: () => {
+      const hoje = '2026-11-25'
+      const pg = (descricao: string, valor: number, vence: string): PagamentoPlanejado => ({
+        descricao, valor, vence, origem: 'conta', pagarEm: null, atraso: 0, custo: 0, taxaMes: 1, multa: 0.02, estimada: true, fonte: null, fonteData: null,
+      })
+      const fmt = (n: number) => `R$ ${n.toFixed(2)}`, data = (iso: string) => iso.slice(8)
+      // antes: a pensão (800, dia 25) paga a fatura (187,08) e o agiota (390); o freela (300, dia 28) paga a luz (200)
+      const antes = {
+        comSaldo: false, fontes: [{ data: hoje, valor: 800, descricao: 'Pensão' }, { data: '2026-11-28', valor: 300, descricao: 'Freela' }],
+        pagamentos: [pg('Fatura', 187.08, hoje), pg('Agiota', 390, hoje), pg('Luz', 200, '2026-11-29')], semDinheiro: [],
+      } as unknown as Plano
+      const q0 = quadroDoMes(antes, hoje, 'este', { metas: [{ id: 'm1', nome: 'Viagem' }] })
+      const id = (nome: string) => q0.fontes.find((f) => f.nome === nome)?.id ?? q0.destinos.find((d) => d.nome === nome)!.id
+      const partes = [
+        { entrada: id('Pensão'), conta: id('Fatura'), valor: 187.08 }, { entrada: id('Pensão'), conta: id('Agiota'), valor: 390 },
+        { entrada: id('Freela'), conta: id('Luz'), valor: 200 },
+      ]
+      const salvo = { partes, em: 'x', fotos: fotosDe(q0, partes) }
+      igual('as fotos guardam só o que tem fatia', [Object.keys(salvo.fotos.fontes).length, Object.keys(salvo.fotos.destinos).length], [2, 3])
+      igual('norm guarda as fotos', normPlanejamentos({ '2026-11': salvo }, hoje)['2026-11'].fotos, salvo.fotos)
+
+      // depois: a pensão foi lançada (caiu) e a fatura foi paga; o planejador não as prevê mais
+      const depois = {
+        comSaldo: false, fontes: [{ data: '2026-11-28', valor: 300, descricao: 'Freela' }],
+        pagamentos: [pg('Agiota', 390, hoje), pg('Luz', 200, '2026-11-29')], semDinheiro: [],
+      } as unknown as Plano
+      const q = comFeitos(quadroDoMes(depois, hoje, 'este', { metas: [{ id: 'm1', nome: 'Viagem' }] }), salvo)
+      const pensao = q.fontes.find((f) => f.nome === 'Pensão')!, fatura = q.destinos.find((d) => d.nome === 'Fatura')!
+      certo('a pensão continua, como já caiu', !!pensao?.feito)
+      certo('a fatura continua, como paga', !!fatura?.feito)
+      const certas = valerPartes(q, partes)
+      igual('nenhuma fatia some', certas.length, 3)
+      certo('a fatia da fatura paga fica travada', travada(q, certas[0]) && mudarParte(q, certas, certas[0].entrada, certas[0].conta, 10) === certas)
+      igual('na entrada que caiu não entra conta nova', por(q, certas, 'm:m1', pensao.id).valor, 0)
+      igual('nem na conta paga', por(q, certas, fatura.id, id('Freela')).valor, 0)
+      const re = montarPraMim(q, certas)
+      certo('Montar pra mim mantém o que já aconteceu', re.some((p) => p.conta === fatura.id && p.valor === 187.08) && re.some((p) => p.entrada === pensao.id && p.conta === id('Agiota')))
+      const pl = placarDe(q, certas)
+      igual('placar: tudo coberto (a paga conta como coberta)', [pl.pct, pl.fechado], [100, true])
+      perto('a sobra da pensão que já caiu não é "sem destino"', pl.semDestino, 100)
+      igual('sem plano salvo, nada volta', comFeitos(quadroDoMes(depois, hoje, 'este'), undefined).fontes.length, 1)
+      const l = lerPlano(q, salvo)!
+      igual('o próximo passo do Consultor é o freela (a pensão já caiu)', l.proximo!.fonte.nome, 'Freela')
+      igual('consultor: nada a reclamar', conselhosDoPlanejamento(quadroDoMes(depois, hoje, 'este', { metas: [{ id: 'm1', nome: 'Viagem' }] }), salvo, fmt, data), [])
     },
   },
   {

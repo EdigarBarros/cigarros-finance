@@ -12,7 +12,7 @@ import { createPortal } from 'react-dom'
 import type { Analise } from '../lib/analise'
 import { fmtDataCurta, fmtValor } from '../lib/format'
 import {
-  atrasoDa, comExtras, custoDa, destinoDe, dicasDe, falta, fonteDe, maximoDa, montarPraMim, mudarParte, pago, placarDe, por, quadroDoPlano,
+  atrasoDa, comExtras, comFeitos, custoDa, fotosDe, travada, destinoDe, dicasDe, falta, fonteDe, maximoDa, montarPraMim, mudarParte, pago, placarDe, por, quadroDoPlano,
   sobra, valerPartes,
   type Destino, type Fonte, type Parte, type Planejamentos, type QualMes, type Quadro,
 } from '../lib/planejamento'
@@ -102,7 +102,9 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
   const [usarGuardado, setUsarGuardado] = useState(() => planejamento[base.mes]?.comGuardado === true)
   // contar com quem te deve também é escolha da pessoa: ligado, cada dinheiro previsto de "me devem" vira uma barra
   const [usarAReceber, setUsarAReceber] = useState(() => planejamento[base.mes]?.comAReceber === true)
-  const q = useMemo(() => comExtras(base, { guardado: usarGuardado, aReceber: usarAReceber }), [base, usarGuardado, usarAReceber])
+  // o que já aconteceu desde o plano salvo (a entrada que caiu, a conta paga) continua na mesa, travado
+  const doMes = planejamento[base.mes]
+  const q = useMemo(() => comFeitos(comExtras(base, { guardado: usarGuardado, aReceber: usarAReceber }), doMes), [base, usarGuardado, usarAReceber, doMes])
   const [partes, setPartes] = useState<Parte[]>(() => (planejamento[base.mes] ? valerPartes(quadroDoPlano(base, planejamento[base.mes]), planejamento[base.mes].partes) : []))
   // O que mexer na mesa é rascunho: só vale (e só o Consultor lê) depois de "Salvar plano". "Descartar" volta ao salvo.
   const [salvo, setSalvo] = useState(() => ({ partes, usarGuardado, usarAReceber }))
@@ -131,7 +133,7 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
 
   // Salvar: na hora no aparelho, no banco logo depois (useDados). Descartar: volta ao último salvo.
   const gravar = () => {
-    salvar({ ...planejamento, [q.mes]: { partes, em: new Date().toISOString(), ...(usarGuardado ? { comGuardado: true } : {}), ...(usarAReceber ? { comAReceber: true } : {}) } })
+    salvar({ ...planejamento, [q.mes]: { partes, em: new Date().toISOString(), fotos: fotosDe(q, partes), ...(usarGuardado ? { comGuardado: true } : {}), ...(usarAReceber ? { comAReceber: true } : {}) } })
     setSalvo({ partes, usarGuardado, usarAReceber })
     setSalvou((n) => n + 1)
     avisar(tx('Plano salvo. O Consultor já está usando ele.'), 'bom')
@@ -216,6 +218,7 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
     setAviso(null)
     const r = por(q, partes, conta, entrada, quanto)
     if (r.valor <= 0) {
+      if (f.feito) { avisar(tx('{0} já caiu: o dinheiro está na conta. Use O que está na conta.', f.nome), 'atencao'); return }
       avisar(sobra(partes, f) <= 0 ? tx('{0} já tem destino para tudo.', f.nome) : tx('{0} já tem dinheiro para tudo.', d.nome), 'atencao')
       return
     }
@@ -293,6 +296,7 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
   // ---------- puxar a borda de uma fatia ----------
   const puxar = (e: PE<HTMLSpanElement>, p: Parte, f: Fonte) => {
     e.preventDefault(); e.stopPropagation()
+    if (travada(q, p)) return
     const barra = (e.currentTarget.closest('.pj-barra') as HTMLElement).getBoundingClientRect()
     const x0 = e.clientX, v0 = p.valor, porPx = f.valor / barra.width
     const max = maximoDa(q, partes, p)
@@ -322,13 +326,13 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
   }
 
   const montar = () => {
-    const novo = montarPraMim(q)
+    const novo = montarPraMim(q, partes)
     setPartes(novo)
     setEscolhida(null)
     setRecem(null)
     if (!placarDe(q, novo).fechado) avisar(tx('Plano montado. Toque numa fatia ou puxe a borda dela para ajustar.'))
   }
-  const recomecar = () => { setPartes([]); setEscolhida(null); setAjuste(null); avisar(tx('Plano limpo. As contas voltaram para a bandeja.')) }
+  const recomecar = () => { setPartes(partes.filter((p) => travada(q, p) || fonteDe(q, p.entrada)?.feito)); setEscolhida(null); setAjuste(null); avisar(tx('Plano limpo. As contas voltaram para a bandeja.')) }
 
   const bandeja = q.destinos
     .filter((d) => falta(partes, d) > 0.009)
@@ -405,7 +409,7 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
                       : tx('{0} em caixinhas, reservas e investimentos, para pagar contas e adiantar dívidas.', fmtValor(q.guardados.reduce((s, x) => s + x.valor, 0)))} />
                 ) : (
                   <BarraDaEntrada key={f.id} q={q} f={f} i={i} partes={partes} emJogo={dEmJogo} mira={mira === f.id} recem={recem}
-                    aoTocar={tocarEntrada} aoAjustar={(p) => setAjuste({ entrada: p.entrada, conta: p.conta })} aoPuxar={puxar} />
+                    aoTocar={tocarEntrada} aoAjustar={(p) => { if (!travada(q, p)) setAjuste({ entrada: p.entrada, conta: p.conta }) }} aoPuxar={puxar} />
                 )))}
             </section>
 
@@ -503,21 +507,21 @@ function BarraDaEntrada({ q, f, i, partes, emJogo, mira, recem, aoTocar, aoAjust
 }) {
   const minhas = partes.filter((p) => p.entrada === f.id)
   const livre = sobra(partes, f)
-  const cabe = emJogo && !(f.guardado && (emJogo.tipo === 'meta' || emJogo.tipo === 'guardar')) ? Math.min(livre, falta(partes, emJogo)) : 0
+  const cabe = emJogo && !f.feito && !(f.guardado && (emJogo.tipo === 'meta' || emJogo.tipo === 'guardar')) ? Math.min(livre, falta(partes, emJogo)) : 0
   const cheia = livre <= 0.009
   const atrasaria = emJogo && emJogo.vence && !emJogo.atrasada && f.data > emJogo.vence
   return (
-    <article className={`pj-entrada ${f.guardado ? 'guardado' : ''} ${f.aReceber ? 'a-receber' : ''} ${cheia ? 'cheia' : ''} ${emJogo ? (cabe > 0 ? 'alvo' : 'sem-espaco') : ''} ${mira ? 'mira' : ''}`}
+    <article className={`pj-entrada ${f.guardado ? 'guardado' : ''}  ${f.aReceber ? 'a-receber' : ''} ${f.feito ? 'caiu' : ''} ${cheia ? 'cheia' : ''} ${emJogo ? (cabe > 0 ? 'alvo' : 'sem-espaco') : ''} ${mira ? 'mira' : ''}`}
       data-entrada={f.id} style={{ '--i': i } as CSSProperties}
       onClick={(e) => emJogo && aoTocar(f, e.currentTarget)}
       onKeyDown={(e) => { if (emJogo && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); aoTocar(f, e.currentTarget) } }}
       tabIndex={emJogo ? 0 : undefined} role={emJogo ? 'button' : undefined}
       aria-label={emJogo ? tx('Pagar {0} com {1}', emJogo.nome, f.nome) : undefined}>
       <div className="pj-entrada-topo">
-        <span className="pj-entrada-ic"><Icone nome={f.guardado ? 'cofre' : f.saldo ? 'banco' : 'receber'} tamanho={17} /></span>
+        <span className="pj-entrada-ic"><Icone nome={f.feito ? 'check' : f.guardado ? 'cofre' : f.saldo ? 'banco' : 'receber'} tamanho={17} /></span>
         <span className="pj-entrada-nome">
           <b>{f.nome}</b>
-          <small>{f.guardado ? tx('dinheiro guardado: só para contas e dívidas')
+          <small>{f.feito ? tx('já caiu') : f.guardado ? tx('dinheiro guardado: só para contas e dívidas')
             : f.aReceber ? (f.semDia ? tx('sem dia combinado: contei no fim do mês') : tx('ficou de pagar {0}', fmtDataCurta(f.data)))
               : f.saldo ? tx('já está disponível') : tx('cai {0}', fmtDataCurta(f.data))}</small>
         </span>
@@ -532,24 +536,26 @@ function BarraDaEntrada({ q, f, i, partes, emJogo, mira, recem, aoTocar, aoAjust
           const dias = atrasoDa(q, p)
           const parte = p.valor / f.valor
           const nova = recem && recem.chave === `${p.entrada}|${p.conta}`
+          const paga = Boolean(d.feito)
           return (
-            <button key={p.conta} className={`pj-fatia ${parte < 0.09 ? 'estreita' : ''} ${dias ? 'atrasa' : ''} ${nova ? 'nova' : ''}`}
+            <button key={p.conta} className={`pj-fatia ${parte < 0.09 ? 'estreita' : ''} ${dias ? 'atrasa' : ''} ${nova ? 'nova' : ''} ${paga ? 'paga' : ''}`}
               style={{ '--b': corDe(d), flexBasis: `${parte * 100}%` } as CSSProperties}
               onClick={(e) => { e.stopPropagation(); if (!emJogo) aoAjustar(p) }}
-              title={`${d.nome}: ${fmtValor(p.valor)}${dias ? ` (${dias === 1 ? tx('atrasa 1 dia') : tx('atrasa {0} dias', dias)})` : ''}`}
-              aria-label={tx('{0}, {1}. Toque para mudar.', d.nome, fmtValor(p.valor))}>
-              {dias > 0 && <span className="pj-relogio"><Icone nome="relogio" tamanho={13} /></span>}
+              title={paga ? tx('{0}: {1}, já paga', d.nome, fmtValor(p.valor)) : `${d.nome}: ${fmtValor(p.valor)}${dias ? ` (${dias === 1 ? tx('atrasa 1 dia') : tx('atrasa {0} dias', dias)})` : ''}`}
+              aria-label={paga ? tx('{0}, {1}, já paga.', d.nome, fmtValor(p.valor)) : tx('{0}, {1}. Toque para mudar.', d.nome, fmtValor(p.valor))}
+              aria-disabled={paga || undefined}>
+              {paga ? <span className="pj-relogio"><Icone nome="check" tamanho={13} /></span> : dias > 0 && <span className="pj-relogio"><Icone nome="relogio" tamanho={13} /></span>}
               <b>{d.nome}</b>
-              <small>{fmtValor(p.valor)}</small>
+              <small>{paga ? tx('paga · {0}', fmtValor(p.valor)) : fmtValor(p.valor)}</small>
               {nova && <span key={recem!.n} className="pj-mais" aria-hidden="true">+{fmtValor(recem!.valor)}</span>}
-              <span className="pj-puxador" onPointerDown={(e) => aoPuxar(e, p, f)} onClick={(e) => e.stopPropagation()} aria-hidden="true"><i /></span>
+              {!paga && <span className="pj-puxador" onPointerDown={(e) => aoPuxar(e, p, f)} onClick={(e) => e.stopPropagation()} aria-hidden="true"><i /></span>}
             </button>
           )
         })}
         <span className="pj-sobra">
           {emJogo && cabe > 0
             ? <span className={`pj-cabe ${atrasaria ? 'atrasa' : ''}`}>{atrasaria ? <Icone nome="relogio" tamanho={13} /> : <Icone nome="mais" tamanho={13} />} {tx('cabem {0}', fmtValor(cabe))}</span>
-            : <span>{f.guardado ? (minhas.length ? tx('continuam guardados {0}', fmtValor(livre)) : tx('Use só se precisar'))
+            : <span>{f.feito ? (livre > 0.009 ? tx('o resto ({0}) já está na conta', fmtValor(livre)) : '') : f.guardado ? (minhas.length ? tx('continuam guardados {0}', fmtValor(livre)) : tx('Use só se precisar'))
               : f.aReceber && !minhas.length ? tx('Conte só se for cair mesmo') : minhas.length ? tx('sobram {0}', fmtValor(livre)) : tx('Coloque uma conta aqui')}</span>}
         </span>
       </div>

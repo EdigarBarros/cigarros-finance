@@ -696,6 +696,12 @@ tudo, em tela cheia, com **Este mês** e **Mês que vem**.
   não conta como "sem destino". À mão, vai para onde a pessoa quiser. Dicas: com o interruptor desligado, o dinheiro do
   mês acabando e conta sem dinheiro, "Te devem R$ X" com o botão de ligar; usando, lembra de cobrar antes do vencimento e,
   sem dia combinado, de anotar a promessa na dívida. Desligar tira do plano o que saía dele.
+- **O que já aconteceu fica** (`comFeitos()`, `fotosDe()`, `travada()`). Ao salvar, o plano guarda uma foto (`fotos`)
+  de cada entrada e conta que tem fatia. Depois, quando a entrada é lançada (não vem mais como prevista) ela continua na
+  mesa como **já caiu**, com as fatias que tinha, mas não recebe conta nova (o dinheiro já está na conta); a sobra dela não
+  conta como "sem destino". Quando a conta é paga, a fatia fica como **paga**: listrada, com um visto, sem puxador e sem
+  ajuste, e conta como coberta no placar. "Montar pra mim" e "Recomeçar" mantêm essas fatias; o Consultor pula o que já
+  caiu no próximo passo. Vale para o que te devem também (o pagamento lançado na dívida). O guardado não entra nisso.
 - **Jogar.** No computador, arraste a conta da bandeja **Sem dinheiro ainda** para dentro de uma barra; em qualquer
   aparelho, toque na conta e depois na barra (no celular a bandeja fica presa embaixo). Entra o que cabe (`por()`): o
   menor entre o que sobra na entrada e o que falta na conta. O resto continua na bandeja ("faltam R$ 250 de R$ 500"),

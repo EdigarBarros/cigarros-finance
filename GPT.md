@@ -1999,3 +1999,24 @@ vence hoje sumia da agenda (`l.data <= hoje`).
 à 0h do dia 25, a pensão prevista para o dia 25 (ainda não lançada) sumia da mesa e as fatias dela também. Agora a entrada
 de hoje conta (`>=`); quando ela é lançada, deixa de vir como prevista. Teste: caso "a entrada que cai hoje continua no
 plano" em `scripts/painel/casos.ts` (falha sem a correção, passa com ela); 52 de 52; testes da demonstração sem falha.
+
+### 25/11/2026 — Claude — Planejamento: o que já aconteceu fica travado
+
+**Estado:** implementado, testado localmente e publicado.
+
+**Pedido.** A entrada deve continuar na mesa até ser lançada, e o que for lançado (a entrada que caiu, a conta paga) deve
+ficar no plano, travado, em vez de sumir.
+
+**Antes.** Lançar a pensão a tirava da mesa e as fatias dela voltavam para a bandeja; pagar uma conta a tirava da mesa e
+devolvia à entrada um dinheiro que já tinha sido gasto.
+
+**O que mudou** (`src/lib/planejamento.ts`, `src/components/Planejamento.tsx`, sem migração). O plano salvo leva `fotos`
+das entradas e contas com fatia. `comFeitos()` devolve à mesa a entrada que sumiu como `feito` ("já caiu": guarda as
+fatias, não recebe nova, sobra fora do "sem destino") e a conta que sumiu como `feito` ("paga": fatia travada, coberta no
+placar). `por`, `mudarParte`, `maximoDa`, `montarPraMim` e o "Recomeçar" respeitam a trava; `lerPlano` pula o que já caiu.
+Limite conhecido: conta paga **em parte** continua na mesa com o que falta, e a parte paga não vira fatia travada (a fatia
+encolhe); e o plano precisa ter sido salvo antes do lançamento.
+
+**Validação.** tsc, lint, build; `node scripts/painel/testar.mjs` 53 de 53 (caso novo "o que já aconteceu fica travado");
+`testar-planejamento.cjs` 54 OK; `testar-a-receber.cjs` e `testar-fatura-em-parte.cjs` sem falha; novo
+`testar-plano-travado.cjs` 20 OK (computador e celular).

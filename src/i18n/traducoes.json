@@ -18902,5 +18902,29 @@
   "{0} que {1} pessoas te devem, para contar neste mês.": {
     "en": "{0} that {1} people owe you, to count on this month.",
     "es": "{0} que {1} personas te deben, para contar este mes."
+  },
+  "{0} já caiu: o dinheiro está na conta. Use O que está na conta.": {
+    "en": "{0} has already come in: the money is in your account. Use What’s in your account.",
+    "es": "{0} ya llegó: el dinero está en la cuenta. Usa Lo que hay en la cuenta."
+  },
+  "já caiu": {
+    "en": "already came in",
+    "es": "ya llegó"
+  },
+  "o resto ({0}) já está na conta": {
+    "en": "the rest ({0}) is already in the account",
+    "es": "el resto ({0}) ya está en la cuenta"
+  },
+  "{0}: {1}, já paga": {
+    "en": "{0}: {1}, already paid",
+    "es": "{0}: {1}, ya pagada"
+  },
+  "{0}, {1}, já paga.": {
+    "en": "{0}, {1}, already paid.",
+    "es": "{0}, {1}, ya pagada."
+  },
+  "paga · {0}": {
+    "en": "paid · {0}",
+    "es": "pagada · {0}"
   }
 }

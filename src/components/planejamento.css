@@ -135,6 +135,10 @@
 .pj-entrada.guardado { --c: var(--caixa, #f5b544); border-style: dashed; }
 /* o que te devem: dinheiro que ainda não é certo, tracejado na cor de entrada */
 .pj-entrada.a-receber { --c: var(--entrada, #34c38f); border-style: dashed; }
+/* o que já aconteceu desde o plano salvo: a entrada que caiu e a fatia da conta paga ficam, travadas */
+.pj-entrada.caiu { opacity: .92; }
+.pj-entrada.caiu .pj-entrada-ic { color: var(--pj-livre); }
+.pj-fatia.paga .pj-relogio { color: var(--pj-livre); animation: none; }
 
 /* o interruptor "Usar o dinheiro guardado", embaixo das entradas */
 .pj-guardado {
@@ -208,6 +212,12 @@
   box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--pj-atraso) 60%, #fff), 0 6px 16px -10px var(--pj-atraso);
 }
 .pj-fatia.atrasa.nova { animation: pj-entra .65s var(--mola-salto) both, pj-listras 1.6s linear infinite; }
+.pj-fatia.paga {
+  cursor: default; filter: saturate(.7);
+  background: repeating-linear-gradient(135deg, transparent 0 9px, rgba(255, 255, 255, .16) 9px 12px), linear-gradient(180deg, color-mix(in srgb, var(--b) 100%, #fff 12%), var(--b));
+}
+.pj-fatia.paga:hover { filter: saturate(.7); }
+.pj-fatia.paga:active { transform: none; }
 @keyframes pj-listras { to { background-position: 28.28px 0; } }
 .pj-relogio { position: absolute; top: 5px; right: 6px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; color: var(--pj-atraso); background: #fff; animation: pj-balanca 1.2s ease-in-out 2; }
 @keyframes pj-balanca { 25% { transform: rotate(-14deg); } 75% { transform: rotate(14deg); } }

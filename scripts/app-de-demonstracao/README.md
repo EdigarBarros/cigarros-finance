@@ -54,6 +54,8 @@ rolagem de lado; nos temas escuro e claro, sem erro na página). Com `FOTOS=past
 `node scripts/app-de-demonstracao/testar-a-receber.cjs`: o interruptor "Contar com quem me deve" (o Rafael da
 demonstração vira uma barra, paga conta, a escolha fica salva, desligar tira), no computador e no celular.
 `node scripts/app-de-demonstracao/testar-fatura-em-parte.cjs`: a fatura paga em parte entra na mesa só com o que falta.
+`node scripts/app-de-demonstracao/testar-plano-travado.cjs`: depois de salvar o plano, a entrada lançada fica como "já caiu"
+e a conta paga fica como "paga", travada (computador e celular).
 
 ## Várias contas no mesmo aparelho
 
