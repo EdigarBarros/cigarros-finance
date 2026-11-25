@@ -1958,3 +1958,21 @@ O evento foi acrescentado preservando os cinco eventos anteriores e a URL. Uma n
 o destino segue ativo com os seis eventos. A função que já servia produção entende o evento de reembolso.
 A nova versão que verifica a assinatura exige confirmar o cadastro de `STRIPE_WEBHOOK_SECRET` no Supabase.
 O nome aparece neste registro, mas o valor nunca foi lido ou compartilhado.
+
+### 25/11/2026 — Claude — Planejamento conta com quem me deve
+
+**Estado:** implementado, testado localmente e publicado pelo fluxo do `CLAUDE.md` (veja o PR desta data).
+
+**Pedido.** No Planejar o mês só entrava o dinheiro certo (a pensão, o salário); o que outras pessoas devem ficava de fora.
+
+**O que mudou.** Novo interruptor "Contar com quem me deve" na mesa, ao lado do "Usar o dinheiro guardado". As dívidas de
+"me devem" viram barras "A receber: Fulano" no dia da promessa ativa ou da parcela; o atrasado sem promessa e a dívida sem
+data entram sem dia, no fim do mês de hoje. `aReceberPrevisto()` em `src/lib/dividas.ts`; `comExtras()`, `q.aReceber`,
+`comAReceber` e as dicas em `src/lib/planejamento.ts`; `extras.aReceber` em `src/lib/analise.ts`; a tela em
+`src/components/Planejamento.tsx`. Sem migração (a escolha vai no JSON do plano, já guardado em `perfis.consultor`).
+De carona: no celular, o selo "tudo com destino" foi para baixo do valor (espremia o nome da entrada).
+
+**Validação.** `npx tsc -b`, `npm run lint` (só avisos antigos), build; `node scripts/painel/testar.mjs` (51 de 51, caso
+novo "contar com quem me deve"); `testar-planejamento.cjs` (54 OK, nenhuma falha) e o novo `testar-a-receber.cjs` (18 OK).
+Limite: o ambiente não baixa o `xlsx` do `cdn.sheetjs.com`; os testes rodaram com o `xlsx@0.18.5` do npm instalado sem
+salvar (o `package.json` e o lockfile não mudaram).

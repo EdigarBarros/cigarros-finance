@@ -22,6 +22,12 @@ export interface Fonte {
   saldo?: boolean
   /** Dinheiro guardado (caixinha, reserva, investimento): só entra no plano se a pessoa escolher usar. */
   guardado?: boolean
+  /** Dinheiro que alguém te deve ("me devem"): só entra no plano se a pessoa escolher contar com ele. */
+  aReceber?: boolean
+  /** A receber sem dia combinado: conta no fim do mês (o plano não sabe quando cai). */
+  semDia?: boolean
+  /** A receber: quem paga. */
+  quem?: string
 }
 
 export type TipoDestino = 'conta' | 'divida' | 'meta' | 'guardar'
@@ -72,6 +78,11 @@ export interface Quadro {
    * investimentos). Fica de fora das `fontes` até a pessoa ligar "Usar o dinheiro guardado" (`quadroDoPlano`).
    */
   guardados: Fonte[]
+  /**
+   * O que te devem e deve cair no mês (a promessa, a parcela; o atrasado sem dia, no fim do mês de hoje). Fica de fora das
+   * `fontes` até a pessoa ligar "Contar com quem me deve" (`quadroDoPlano`).
+   */
+  aReceber: Fonte[]
   destinos: Destino[]
 }
 
@@ -81,6 +92,8 @@ export interface PlanoGuardado {
   em: string
   /** A pessoa escolheu usar o dinheiro guardado neste mês. */
   comGuardado?: boolean
+  /** A pessoa escolheu contar, neste mês, com o dinheiro de quem te deve. */
+  comAReceber?: boolean
 }
 
 /** O plano de cada mês, pela chave 'AAAA-MM'. */
@@ -91,6 +104,8 @@ export interface AbertaDoQuadro { nome: string; saldo: number; juros: number }
 export interface MetaDoQuadro { id: string; nome: string }
 /** Um lugar com dinheiro guardado (o banco, ou os investimentos). */
 export interface GuardadoDoQuadro { id: string; nome: string; valor: number }
+/** Um dinheiro que alguém ficou de te pagar (`aReceberPrevisto` em lib/dividas.ts); `data` null = sem dia combinado. */
+export interface AReceberDoQuadro { id: string; nome: string; valor: number; data: string | null }
 
 const centavos = (n: number) => Math.round(n * 100) / 100
 const utc = (iso: string) => Date.UTC(Number(iso.slice(0, 4)), Number(iso.slice(5, 7)) - 1, Number(iso.slice(8, 10)))
@@ -113,7 +128,7 @@ export const JUROS_CARO = 5
  * mês) e as contas, parcelas e faturas que vencem nele (as atrasadas entram no mês de hoje). Dívidas abertas com juros
  * entram como "adiantar"; as metas, como lugar para guardar o que sobrar.
  */
-export function quadroDoMes(plano: Plano | null, hoje: string, qual: QualMes, extras: { abertas?: AbertaDoQuadro[]; metas?: MetaDoQuadro[]; guardados?: GuardadoDoQuadro[] } = {}): Quadro {
+export function quadroDoMes(plano: Plano | null, hoje: string, qual: QualMes, extras: { abertas?: AbertaDoQuadro[]; metas?: MetaDoQuadro[]; guardados?: GuardadoDoQuadro[]; aReceber?: AReceberDoQuadro[] } = {}): Quadro {
   const mesHoje = hoje.slice(0, 7)
   const mes = qual === 'este' ? mesHoje : mesSeguinte(mesHoje)
   const ini = qual === 'este' ? hoje : `${mes}-01`
@@ -183,17 +198,33 @@ export function quadroDoMes(plano: Plano | null, hoje: string, qual: QualMes, ex
   const guardados: Fonte[] = qual !== 'este' ? [] : (extras.guardados ?? [])
     .filter((g) => g.valor >= 0.01)
     .map((g) => ({ id: unico(`g:${g.id}`), nome: g.nome, valor: centavos(g.valor), data: hoje, guardado: true }))
-  return { qual, mes, hoje, fontes, guardados, destinos }
+  // o que te devem: no dia combinado (a promessa, a parcela); o que não tem dia entra no fim do mês de hoje, só neste mês
+  // (no do mês que vem seria contado duas vezes)
+  const aReceber: Fonte[] = (extras.aReceber ?? [])
+    .filter((r) => r.valor >= 0.01 && (r.data === null ? qual === 'este' : r.data >= ini && r.data <= fim))
+    .sort((a, b) => (a.data ?? fim).localeCompare(b.data ?? fim) || b.valor - a.valor)
+    .map((r) => ({
+      id: unico(`r:${r.id}`), nome: tx('A receber: {0}', r.nome), valor: centavos(r.valor), data: r.data ?? fim, aReceber: true, quem: r.nome,
+      ...(r.data === null ? { semDia: true } : {}),
+    }))
+  return { qual, mes, hoje, fontes, guardados, aReceber, destinos }
 }
 
-/** O quadro com o dinheiro guardado entrando como barras, quando a pessoa escolheu usar. */
-export function comGuardado(q: Quadro, usar: boolean): Quadro {
-  const sem = q.fontes.filter((f) => !f.guardado)
-  return { ...q, fontes: usar && q.guardados.length ? [...sem, ...q.guardados] : sem }
+/** O quadro com o dinheiro guardado e o que te devem entrando como barras, conforme a pessoa escolheu. */
+export function comExtras(q: Quadro, usar: { guardado: boolean; aReceber: boolean }): Quadro {
+  const sem = q.fontes.filter((f) => !f.guardado && !f.aReceber)
+  return {
+    ...q,
+    fontes: [...sem, ...(usar.aReceber ? q.aReceber ?? [] : []), ...(usar.guardado ? q.guardados : [])],
+  }
 }
 
-/** O quadro como a pessoa deixou o plano deste mês (com ou sem o dinheiro guardado). */
-export const quadroDoPlano = (q: Quadro, guardado: PlanoGuardado | undefined) => comGuardado(q, guardado?.comGuardado === true)
+/** O quadro com o dinheiro guardado entrando como barras, quando a pessoa escolheu usar (o que te devem fica como está). */
+export const comGuardado = (q: Quadro, usar: boolean): Quadro => comExtras(q, { guardado: usar, aReceber: q.fontes.some((f) => f.aReceber) })
+
+/** O quadro como a pessoa deixou o plano deste mês (com ou sem o dinheiro guardado e o que te devem). */
+export const quadroDoPlano = (q: Quadro, guardado: PlanoGuardado | undefined) =>
+  comExtras(q, { guardado: guardado?.comGuardado === true, aReceber: guardado?.comAReceber === true })
 
 /** Dinheiro guardado não vai para meta nem para "Guardar": já está guardado. */
 const podeIr = (f: Fonte, d: Destino) => !(f.guardado && (d.tipo === 'meta' || d.tipo === 'guardar'))
@@ -278,14 +309,17 @@ function prioridade(a: Destino, b: Destino) {
  * cara (acima de 5% ao mês) e o resto vai para a primeira meta (ou "Guardar").
  * Com o dinheiro guardado ligado, ele só paga conta, e só o que o dinheiro do mês não paga a tempo (pagar atrasado custa
  * multa e juros; tirar do guardado, não). Não adianta dívida nem vai para meta: guardado fica guardado o quanto der.
+ * O que te devem (ligado) vem depois do dinheiro certo: só paga conta que ele não cobre a tempo, porque pode não cair.
  */
 export function montarPraMim(q: Quadro): Parte[] {
   let partes: Parte[] = []
-  const doMes = q.fontes.filter((f) => !f.guardado)
+  // o que te devem pode não cair: no automático só cobre conta, não adianta dívida nem vai para meta
+  const doMes = q.fontes.filter((f) => !f.guardado && !f.aReceber)
   const contas = q.destinos.filter((d) => d.tipo === 'conta').sort(prioridade)
   for (const d of contas) {
     const fontes = [...q.fontes].sort((a, b) => {
-      const ordem = (f: Fonte) => (f.guardado ? 1 : d.atrasada || !d.vence || f.data <= d.vence ? 0 : 2)
+      // o dinheiro certo que chega a tempo, depois o que te devem e chega a tempo, depois o guardado, e por fim o que atrasa
+      const ordem = (f: Fonte) => (f.guardado ? 2 : !(d.atrasada || !d.vence || f.data <= d.vence) ? 3 : f.aReceber ? 1 : 0)
       return ordem(a) - ordem(b) || a.data.localeCompare(b.data)
     })
     for (const f of fontes) partes = por(q, partes, d.id, f.id).partes
@@ -305,10 +339,12 @@ export interface Placar {
   pct: number
   coberto: number
   total: number
-  /** Dinheiro das entradas ainda sem destino (o guardado que não foi usado não conta: continua guardado). */
+  /** Dinheiro das entradas ainda sem destino (não contam o guardado que não foi usado, que continua guardado, nem o que te devem). */
   semDestino: number
   /** Quanto o plano tira do dinheiro guardado. */
   doGuardado: number
+  /** Quanto o plano conta com o dinheiro de quem te deve. */
+  doAReceber: number
   /** Partes que pagam depois do vencimento. */
   atrasos: number
   /** Quanto o plano custa em multa e juros (atrasos e contas que já venceram). */
@@ -328,8 +364,9 @@ export function placarDe(q: Quadro, partes: Parte[]): Placar {
   return {
     pct: total ? Math.min(100, Math.floor((coberto / total) * 100 + 1e-9)) : 0,
     coberto, total,
-    semDestino: centavos(q.fontes.filter((f) => !f.guardado).reduce((s, f) => s + sobra(partes, f), 0)),
+    semDestino: centavos(q.fontes.filter((f) => !f.guardado && !f.aReceber).reduce((s, f) => s + sobra(partes, f), 0)),
     doGuardado: centavos(q.fontes.filter((f) => f.guardado).reduce((s, f) => s + usado(partes, f), 0)),
+    doAReceber: centavos(q.fontes.filter((f) => f.aReceber).reduce((s, f) => s + usado(partes, f), 0)),
     atrasos,
     custo: centavos(partes.reduce((s, p) => s + custoDa(q, p), 0)),
     faltando,
@@ -345,7 +382,7 @@ export interface DicaDoPlanejamento {
   tom: 'bom' | 'atencao' | 'ruim' | 'neutro'
   texto: string
   /** Um passo que a tela pode fazer pela pessoa: pôr uma conta numa entrada, ou ligar o dinheiro guardado. */
-  acao?: { rotulo: string; conta: string; entrada: string } | { rotulo: string; usarGuardado: true }
+  acao?: { rotulo: string; conta: string; entrada: string } | { rotulo: string; usarGuardado: true } | { rotulo: string; usarAReceber: true }
 }
 
 const dinheiro = (n: number, fmt: (n: number) => string) => fmt(n)
@@ -397,7 +434,7 @@ export function dicasDe(q: Quadro, partes: Parte[], fmt: (n: number) => string, 
     })
   }
   // 4) dinheiro sem destino (o guardado que não foi usado continua guardado: não conta)
-  const semDestino = centavos(q.fontes.filter((f) => !f.guardado).reduce((s, f) => s + sobra(partes, f), 0))
+  const semDestino = centavos(q.fontes.filter((f) => !f.guardado && !f.aReceber).reduce((s, f) => s + sobra(partes, f), 0))
   const faltam = contas.filter((d) => falta(partes, d) > 0.009)
   const usandoGuardado = q.fontes.some((f) => f.guardado)
   const totalGuardado = centavos(q.guardados.reduce((s, f) => s + f.valor, 0))
@@ -410,6 +447,27 @@ export function dicasDe(q: Quadro, partes: Parte[], fmt: (n: number) => string, 
       acao: { rotulo: tx('Usar o dinheiro guardado'), usarGuardado: true },
     })
   }
+  // o dinheiro do mês acabou e falta conta, mas alguém te deve e deve pagar neste mês: oferecer contar com isso
+  const usandoAReceber = q.fontes.some((f) => f.aReceber)
+  const listaAReceber = q.aReceber ?? []
+  const totalAReceber = centavos(listaAReceber.reduce((s, f) => s + f.valor, 0))
+  if (!usandoAReceber && totalAReceber > 0.009 && faltam.length && semDestino <= 0.009) {
+    dicas.push({
+      id: 'usar-a-receber', icone: 'receber', tom: 'atencao',
+      texto: tx('O dinheiro do mês acabou e faltam {0}. Te devem {1} para este mês: dá para contar com isso no plano.', dinheiro(faltam.reduce((s, d) => s + falta(partes, d), 0), fmt), dinheiro(totalAReceber, fmt)),
+      acao: { rotulo: tx('Contar com quem me deve'), usarAReceber: true },
+    })
+  }
+  const doAReceber = centavos(q.fontes.filter((f) => f.aReceber).reduce((s, f) => s + usado(partes, f), 0))
+  if (doAReceber > 0.009) {
+    const semDia = q.fontes.filter((f) => f.aReceber && f.semDia && usado(partes, f) > 0.009)
+    dicas.push({
+      id: 'conta-com-a-receber', icone: 'receber', tom: 'neutro',
+      texto: semDia.length
+        ? tx('O plano conta com {0} de quem te deve, e {1} não tem dia combinado (contei no fim do mês). Anote a promessa na dívida para o plano saber quando cai.', dinheiro(doAReceber, fmt), semDia[0].quem ?? semDia[0].nome)
+        : tx('O plano conta com {0} de quem te deve. Se não cair no dia, essas contas ficam sem dinheiro: cobre antes do vencimento.', dinheiro(doAReceber, fmt)),
+    })
+  }
   if (doGuardado > 0.009) {
     dicas.push({
       id: 'tirou-do-guardado', icone: 'cofre', tom: 'neutro',
@@ -420,7 +478,7 @@ export function dicasDe(q: Quadro, partes: Parte[], fmt: (n: number) => string, 
     const divida = q.destinos.find((d) => d.tipo === 'divida' && falta(partes, d) > 0.009)
     const guardar = q.destinos.find((d) => d.tipo === 'meta' || d.tipo === 'guardar')
     const alvo = faltam[0] ?? divida ?? guardar
-    const fonte = q.fontes.find((f) => !f.guardado && sobra(partes, f) > 0.009)!
+    const fonte = q.fontes.find((f) => !f.guardado && !f.aReceber && sobra(partes, f) > 0.009)!
     dicas.push({
       id: 'sem-destino', icone: 'cofre', tom: 'neutro',
       texto: faltam.length
@@ -434,7 +492,7 @@ export function dicasDe(q: Quadro, partes: Parte[], fmt: (n: number) => string, 
   // 5) fechou
   const pl = placarDe(q, partes)
   if (pl.fechado) dicas.push({ id: 'fechado', icone: 'check', tom: 'bom', texto: tx('Tudo o que vence no mês tem dinheiro e nada atrasa por causa do plano.') })
-  else if (faltam.length && !semDestino && !caras.length && (usandoGuardado || totalGuardado <= 0.009)) {
+  else if (faltam.length && !semDestino && !caras.length && (usandoGuardado || totalGuardado <= 0.009) && (usandoAReceber || totalAReceber <= 0.009)) {
     dicas.push({ id: 'nao-cabe', icone: 'alerta', tom: 'atencao', texto: tx('O dinheiro do mês acabou e {0} ainda ficam sem pagar. Veja o que dá para adiar ou negociar.', dinheiro(faltam.reduce((s, d) => s + falta(partes, d), 0), fmt)) })
   }
   const ordem = { ruim: 0, atencao: 1, neutro: 2, bom: 3 }
@@ -541,6 +599,7 @@ export function normPlanejamentos(x: unknown, hoje?: string): Planejamentos {
     const partes = Array.isArray((v as PlanoGuardado).partes) ? (v as PlanoGuardado).partes : []
     saida[mes] = {
       ...((v as PlanoGuardado).comGuardado === true ? { comGuardado: true } : {}),
+      ...((v as PlanoGuardado).comAReceber === true ? { comAReceber: true } : {}),
       em: typeof (v as PlanoGuardado).em === 'string' ? (v as PlanoGuardado).em : '',
       partes: partes.filter((p) => p && typeof p.entrada === 'string' && typeof p.conta === 'string' && Number.isFinite(p.valor) && p.valor > 0)
         .map((p) => ({ entrada: p.entrada, conta: p.conta, valor: centavos(p.valor) })),

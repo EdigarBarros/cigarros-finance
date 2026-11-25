@@ -5,7 +5,7 @@
  */
 import { compararGastos, destaqueDaComparacao, fatiasDoPeriodo, maiorCategoria } from '../../src/lib/comparacao'
 import { situacoesDoMes } from '../../src/lib/contasFixas'
-import { calendarioDe, jurosEmbutidos, jurosQuePesam, parcelasDoMes, parcelasPorDia, situacaoDividas } from '../../src/lib/dividas'
+import { aReceberPrevisto, calendarioDe, jurosEmbutidos, jurosQuePesam, parcelasDoMes, parcelasPorDia, situacaoDividas } from '../../src/lib/dividas'
 import { regraDoAtraso } from '../../src/lib/jurosAtraso'
 import { agruparTarefas, tarefasDoMes } from '../../src/lib/paraFazer'
 import { comporPrevisao, diaADiaDoMes } from '../../src/lib/previsao'
@@ -21,7 +21,7 @@ import { ajustarMesesComEfeitos } from '../../src/lib/guardado'
 import { fmtValor } from '../../src/lib/format'
 import { previsaoDoAno } from '../../src/lib/previsao'
 import { chaveDoMes, sobrasPorMes } from '../../src/lib/saldoCorrido'
-import { atrasoDa, comGuardado, conselhosDoPlanejamento, custoDa, dicasDe, falta, montarPraMim, mudarParte, normPlanejamentos, placarDe, por, quadroDoMes, sobra, valerPartes } from '../../src/lib/planejamento'
+import { atrasoDa, comExtras, comGuardado, conselhosDoPlanejamento, custoDa, dicasDe, falta, montarPraMim, mudarParte, normPlanejamentos, placarDe, por, quadroDoMes, sobra, valerPartes } from '../../src/lib/planejamento'
 import type { PagamentoPlanejado, Plano } from '../../src/lib/planejador'
 import type { CartaoCredito, ContaFixa, Divida, FaturaParcial, Lancamento, Mes, SaldoDivida } from '../../src/lib/types'
 import { aprenderJuros, descontoParaQuitar, pistaDaConferencia } from '../../src/lib/jurosAprendido'
@@ -858,6 +858,64 @@ export const CASOS: Caso[] = [
     },
   },
 
+  {
+    nome: 'planejamento do mês: contar com quem me deve',
+    rodar: () => {
+      const hoje = '2026-11-19'
+      // João: R$ 600 em 3 parcelas de R$ 200 desde 10/10 (pagou 1): a de 10/11 atrasada, a de 10/12 a vencer
+      const joao: Divida = { id: 'jo', descricao: 'Empréstimo', pessoa: 'João', sentido: 'me_devem', valor_parcela: 200, total_parcelas: 3, inicio: '2026-10-10' }
+      // Maria: R$ 300 sem data; Ana: R$ 500 com promessa para 28/11 de R$ 150
+      const maria: Divida = { id: 'ma', descricao: 'Maria', sentido: 'me_devem', valor_parcela: null }
+      const prom: PromessaDivida = { id: 'p1', divida_id: 'an', data: '2026-11-28', valor: 150, obs: null, created_at: '2026-11-15T10:00:00Z' }
+      const ana: Divida = { id: 'an', descricao: 'Ana', sentido: 'me_devem', valor_parcela: null, inicio: '2026-11-01', promessas: [prom] }
+      const saldos: SaldoDivida[] = [
+        { id: 's1', divida_id: 'jo', data: '2026-10-01', saldo: 600 }, { id: 's2', divida_id: 'ma', data: '2026-10-01', saldo: 300 },
+        { id: 's3', divida_id: 'an', data: '2026-10-01', saldo: 500 },
+      ]
+      const pags = [{ id: 'x1', divida_id: 'jo', data: '2026-10-10', valor: 200, tipo: 'entrada' as const }]
+      const sits = situacaoDividas([joao, maria, ana], saldos, pags, 2026, 11, {}, hoje)
+      const prev = sits.flatMap((s) => aReceberPrevisto(s, pags, hoje, '2026-12-31'))
+      igual('João: o atrasado sem dia e a parcela de dezembro', prev.filter((r) => r.nome === 'João').map((r) => `${r.data}:${r.valor}`), ['null:200', '2026-12-10:200'])
+      igual('Maria: tudo, sem dia', prev.filter((r) => r.nome === 'Maria').map((r) => `${r.data}:${r.valor}`), ['null:300'])
+      igual('Ana: a promessa, no dia prometido', prev.filter((r) => r.nome === 'Ana').map((r) => `${r.data}:${r.valor}`), ['2026-11-28:150'])
+
+      const pg = (descricao: string, valor: number, vence: string): PagamentoPlanejado => ({
+        descricao, valor, vence, origem: 'conta', pagarEm: null, atraso: 0, custo: 0, taxaMes: 1, multa: 0.02, estimada: true, fonte: null, fonteData: null,
+      })
+      // a pensão (R$ 1.000 no dia 20) não paga o aluguel (900) e a luz (400, dia 30)
+      const plano = {
+        comSaldo: false, fontes: [{ data: '2026-11-20', valor: 1000, descricao: 'Pensão' }],
+        pagamentos: [pg('Aluguel', 900, '2026-11-22')], semDinheiro: [pg('Luz', 400, '2026-11-30')],
+      } as unknown as Plano
+      const q = quadroDoMes(plano, hoje, 'este', { aReceber: prev })
+      igual('o que te devem fica fora das entradas', q.fontes.map((f) => f.nome), ['Pensão'])
+      igual('este mês: a promessa e os sem dia (no fim do mês)', q.aReceber.map((f) => `${f.nome}:${f.data}:${f.valor}`),
+        ['A receber: Ana:2026-11-28:150', 'A receber: Maria:2026-11-30:300', 'A receber: João:2026-11-30:200'])
+      certo('sem dia fica marcado', q.aReceber.filter((f) => f.semDia).length === 2)
+      igual('mês que vem: só a parcela de dezembro', quadroDoMes(plano, hoje, 'proximo', { aReceber: prev }).aReceber.map((f) => `${f.data}:${f.valor}`), ['2026-12-10:200'])
+
+      const fmt = (n: number) => `R$ ${n.toFixed(2)}`, data = (iso: string) => iso.slice(8)
+      const sem = montarPraMim(q)
+      const dica = dicasDe(q, sem, fmt, data).find((d) => d.id === 'usar-a-receber')
+      certo('desligado: falta dinheiro e a dica oferece contar com quem deve', placarDe(q, sem).pct < 100 && !!dica?.acao && 'usarAReceber' in dica.acao)
+
+      const qr = comExtras(q, { guardado: false, aReceber: true })
+      igual('ligado: as barras entram depois do dinheiro do mês', qr.fontes.map((f) => f.nome), ['Pensão', 'A receber: Ana', 'A receber: Maria', 'A receber: João'])
+      const m = montarPraMim(qr)
+      const pl = placarDe(qr, m)
+      igual('tudo coberto contando com quem deve', pl.pct, 100)
+      perto('usa só o que a pensão não cobre (1.300 − 1.000)', pl.doAReceber, 300)
+      certo('a luz sai primeiro da Ana, que paga antes do vencimento', m.some((p) => p.entrada.includes(':an:') && qr.destinos.find((d) => d.id === p.conta)!.nome === 'Luz'))
+      certo('dica: o plano conta com quem deve', dicasDe(qr, m, fmt, data).some((d) => d.id === 'conta-com-a-receber'))
+
+      const n = normPlanejamentos({ '2026-11': { partes: m, em: 'z', comAReceber: true } }, hoje)
+      igual('norm guarda a escolha', n['2026-11'].comAReceber, true)
+      igual('consultor: com a escolha, o plano fecha', conselhosDoPlanejamento(q, { partes: m, em: '', comAReceber: true }, fmt, data), [])
+      certo('consultor: sem a escolha, as partes de quem deve não valem', conselhosDoPlanejamento(q, { partes: m, em: '' }, fmt, data).some((c) => c.id === 'sem-dinheiro'))
+      igual('ligar o guardado não tira o que te devem', comGuardado(qr, true).fontes.filter((f) => f.aReceber).length, 3)
+    },
+  },
+
   // ==================== o consultor que aprende (juros de verdade, sinais, na hora, plano) ====================
   {
     nome: 'juros aprendidos: o banco cobra mais do que a regra informada',
@@ -1038,7 +1096,7 @@ export const CASOS: Caso[] = [
         id, nome, tipo: 'conta' as const, valor, vence, atrasada: false, juros: null, multa: 0, estimada: false, origem: 'conta' as const, indice: i,
       })
       const q: Quadro = {
-        qual: 'este', mes: '2026-11', hoje: '2026-11-19', guardados: [],
+        qual: 'este', mes: '2026-11', hoje: '2026-11-19', guardados: [], aReceber: [],
         fontes: [{ id: 'sal', nome: 'Salário', valor: 1000, data: '2026-11-25' }, { id: 'extra', nome: 'Freela', valor: 300, data: '2026-11-28' }],
         destinos: [destino('luz', 'Luz', 200, '2026-11-27', 0), destino('mp', 'Mercado Pago', 500, '2026-11-26', 1), destino('net', 'Internet', 100, '2026-11-30', 2)],
       }

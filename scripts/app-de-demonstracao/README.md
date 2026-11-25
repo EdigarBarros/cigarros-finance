@@ -51,6 +51,8 @@ abre a mesa; arrastar uma conta para dentro de uma entrada, puxar a borda da fat
 Consultor à esquerda na tela larga, Salvar plano, Descartar, a pergunta ao fechar sem salvar, o plano salvo depois de
 recarregar, Esc e X; no celular, tocar na conta e depois na entrada, a bandeja presa embaixo e sem
 rolagem de lado; nos temas escuro e claro, sem erro na página). Com `FOTOS=pasta`, salva capturas.
+`node scripts/app-de-demonstracao/testar-a-receber.cjs`: o interruptor "Contar com quem me deve" (o Rafael da
+demonstração vira uma barra, paga conta, a escolha fica salva, desligar tira), no computador e no celular.
 
 ## Várias contas no mesmo aparelho
 

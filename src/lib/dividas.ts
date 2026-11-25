@@ -740,3 +740,44 @@ export function resumoDasDividas(lista: SituacaoDivida[], diaRef: string) {
   const pct = inicial > 0 ? (inicial - registrado) / inicial : 0
   return { comCal, itens, quitadas, falta, registrado, inicial, emAtraso, nAtraso, noMes, porMes, projecao, fim, pct }
 }
+
+/** Um dinheiro que alguém ficou de te pagar ("me devem"), com o dia em que deve cair; `data` null = sem dia combinado. */
+export interface ReceberPrevisto {
+  id: string
+  /** Quem paga: a pessoa (ou, sem ela, o nome da dívida). */
+  nome: string
+  valor: number
+  data: string | null
+}
+
+/**
+ * O que uma dívida de "me devem" deve trazer de dinheiro até `ate`, para o Planejamento poder contar com ele: a promessa
+ * que vale agora (no dia prometido), as parcelas que ainda vão vencer e, sem promessa, o que já está atrasado (sem dia
+ * certo para cair). Sem calendário (sem data combinada), o que falta inteiro, sem dia. Nunca passa do que ainda falta.
+ */
+export function aReceberPrevisto(s: SituacaoDivida, pagamentos: Pagamento[], hoje: string, ate: string): ReceberPrevisto[] {
+  if (s.semCotacao || s.restante <= 0.004 || s.divida.em_espera) return []
+  const nome = s.divida.pessoa?.trim() || s.divida.descricao.trim()
+  const cal = calendarioDe(s, hoje)
+  const ativa = promessasDe(s, pagamentos, hoje).ativa
+  const lista: ReceberPrevisto[] = []
+  let resta = s.restante
+  const por = (data: string | null, valor: number) => {
+    const v = centavos(Math.min(valor, resta))
+    if (v < 0.01) return
+    resta = centavos(resta - v)
+    lista.push({ id: `${s.divida.id}:${data ?? 'sem-dia'}`, nome, valor: v, data })
+  }
+  const futuras = (depois: string) => (cal?.parcelas ?? []).filter((p) => p.falta > 0 && p.vencimento >= depois && p.vencimento <= ate)
+  if (ativa) {
+    const dia = ativa.promessa.data
+    por(dia, ativa.valor ?? (cal ? cal.emAtraso + futuras(hoje).filter((p) => p.vencimento <= dia).reduce((t, p) => t + p.falta, 0) || cal.proxima?.falta || resta : resta))
+    for (const p of futuras(hoje).filter((x) => x.vencimento > dia)) por(p.vencimento, p.falta)
+  } else if (cal) {
+    if (cal.emAtraso > 0) por(null, cal.emAtraso)
+    for (const p of futuras(hoje)) por(p.vencimento, p.falta)
+  } else {
+    por(null, resta)
+  }
+  return lista
+}

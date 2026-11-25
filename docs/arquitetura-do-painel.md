@@ -685,6 +685,16 @@ tudo, em tela cheia, com **Este mês** e **Mês que vem**.
   paga a tempo (antes de pagar atrasado) e não adianta dívida com ele; à mão, a pessoa pode. O guardado que sobra não conta
   como "sem destino". Desligar tira do plano o que saía dele. Dicas: com o guardado desligado, o dinheiro do mês acabando e
   conta sem dinheiro, "Você tem R$ X guardado" com o botão de ligar; usando, lembra de devolver.
+- **Contar com quem me deve** (este mês e o próximo). Acima do guardado, outro interruptor põe no plano o dinheiro de
+  "me devem" (`aReceberPrevisto()` em `lib/dividas.ts`, que a análise passa como `extras.aReceber`; no quadro,
+  `q.aReceber`, e `comExtras()` põe nas `fontes`; a escolha fica no plano do mês, `comAReceber`). Cada pessoa vira a barra
+  "A receber: Rafael", no dia da promessa que vale agora ou da parcela que vence; sem promessa, o atrasado (e a dívida sem
+  data combinada) entra sem dia, no fim deste mês ("sem dia combinado: contei no fim do mês"), só em Este mês. Nunca passa
+  do que falta. Dívida em espera fica de fora. Como pode não cair: o "Montar pra mim" usa esse dinheiro depois do dinheiro
+  certo que chega a tempo (antes do guardado) e só para conta, nunca para adiantar dívida nem para meta; o que sobra dele
+  não conta como "sem destino". À mão, vai para onde a pessoa quiser. Dicas: com o interruptor desligado, o dinheiro do
+  mês acabando e conta sem dinheiro, "Te devem R$ X" com o botão de ligar; usando, lembra de cobrar antes do vencimento e,
+  sem dia combinado, de anotar a promessa na dívida. Desligar tira do plano o que saía dele.
 - **Jogar.** No computador, arraste a conta da bandeja **Sem dinheiro ainda** para dentro de uma barra; em qualquer
   aparelho, toque na conta e depois na barra (no celular a bandeja fica presa embaixo). Entra o que cabe (`por()`): o
   menor entre o que sobra na entrada e o que falta na conta. O resto continua na bandeja ("faltam R$ 250 de R$ 500"),
@@ -722,7 +732,8 @@ tudo, em tela cheia, com **Este mês** e **Mês que vem**.
   de leve ao colocar.
 
 Testes: `node scripts/painel/testar.mjs planejamento` (o motor) e `scripts/app-de-demonstracao/testar-planejamento.cjs`
-(a mesa no computador e no celular, nos dois temas).
+(a mesa no computador e no celular, nos dois temas) e `scripts/app-de-demonstracao/testar-a-receber.cjs` (contar com
+quem me deve).
 
 ## 5. Guia de linguagem
 
