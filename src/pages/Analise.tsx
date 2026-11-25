@@ -226,44 +226,53 @@ export function useMontagem(reanalise: Ctx['reanalise'], desdeAVisita: { mudanca
   return montar
 }
 
-/** Só aparece quando algo mudou de fato: uma faixa com setas para cima ou para baixo. `aoVivo`: a montagem (acima). */
+/**
+ * Só aparece quando algo mudou de fato. Cabeçalho (a bússola, o título, quando e a nota de → para), a trilha dos três passos
+ * enquanto a tela é refeita (`aoVivo`, a montagem acima) e as mudanças em blocos, com a seta subindo ou descendo.
+ */
 export function OQueMudou({ reanalise, desdeAVisita, max, aoVivo }: { reanalise: Ctx['reanalise']; desdeAVisita: { em: string; mudancas: Mudanca[] } | null; max: number; aoVivo?: boolean }) {
   const lista = reanalise?.mudancas.length ? reanalise.mudancas : desdeAVisita?.mudancas ?? []
   if (!lista.length) return null
-  const titulo = reanalise?.mudancas.length ? tx('Mudou agora') : tx('Desde {0}', fmtDataCurta(desdeAVisita!.em.slice(0, 10)))
+  const quando = reanalise?.mudancas.length ? tx('Agora há pouco') : tx('Desde {0}', fmtDataCurta(desdeAVisita!.em.slice(0, 10)))
   const nota = reanalise?.mudancas.length && reanalise.nota !== null && reanalise.notaAntes !== null && reanalise.nota !== reanalise.notaAntes
     ? { de: reanalise.notaAntes, para: reanalise.nota } : null
+  const mostradas = lista.slice(0, max)
+  const resto = lista.length - mostradas.length
   return (
-    <section className={`cartao an-mudou ${aoVivo ? 'ao-vivo' : ''}`}>
-      {aoVivo && <span className="an-mudou-progresso" aria-hidden="true" />}
-      <span className="an-mudou-titulo">
-        <Icone nome={aoVivo ? 'bussola' : 'historico'} tamanho={14} />
-        {aoVivo ? (
-          <span className="an-mudou-troca">
-            <span className="antes" aria-hidden="true">{tx('Refazendo sua tela…')}</span>
-            <span className="depois">{tx('Refiz sua tela')} · {titulo}</span>
-          </span>
-        ) : titulo}
-        {aoVivo && nota && (
+    <section className={`cartao an-mudou ${aoVivo ? 'ao-vivo' : ''}`} aria-label={aoVivo ? tx('Refiz sua tela') : tx('O que mudou')}>
+      <header className="an-mudou-cab">
+        <span className="an-mudou-selo" aria-hidden="true"><Icone nome={aoVivo ? 'bussola' : 'historico'} tamanho={18} /></span>
+        <span className="an-mudou-textos">
+          {aoVivo ? (
+            <span className="an-mudou-troca">
+              <b className="antes" aria-hidden="true">{tx('Refazendo sua tela…')}</b>
+              <b className="depois">{tx('Refiz sua tela')}</b>
+            </span>
+          ) : <b>{tx('O que mudou')}</b>}
+          <small>{quando}{lista.length > 1 && ` · ${lista.length === 1 ? tx('1 mudança') : tx('{0} mudanças', lista.length)}`}</small>
+        </span>
+        {nota && (
           <span className={`an-mudou-nota ${nota.para > nota.de ? 'bom' : 'ruim'}`}>
-            {tx('Nota {0} → {1}', nota.de, nota.para)}
+            <small>{tx('Nota')}</small> {nota.de} <Icone nome="seta" tamanho={12} /> <b>{nota.para}</b>
           </span>
         )}
-      </span>
+      </header>
       {aoVivo && (
         <ol className="an-mudou-passos" aria-hidden="true">
+          <i className="an-mudou-linha" />
           {[tx('Li o que mudou'), tx('Refiz as contas'), tx('Montei a tela de novo')].map((p, i) => (
-            <li key={i} style={{ '--i': i } as CSSProperties}><span className="an-mudou-ok"><Icone nome="check" tamanho={11} /></span>{p}</li>
+            <li key={i} style={{ '--i': i } as CSSProperties}><span className="an-mudou-ok"><Icone nome="check" tamanho={11} /></span><span>{p}</span></li>
           ))}
         </ol>
       )}
-      <ul>
-        {lista.slice(0, max).map((m, i) => (
+      <ul className="an-mudou-lista">
+        {mostradas.map((m, i) => (
           <li key={i} className={m.tom} style={{ '--i': i } as CSSProperties}>
             <span className="an-mudou-seta"><Icone nome={m.tom === 'bom' ? 'sobe' : m.tom === 'ruim' ? 'desce' : 'seta'} tamanho={14} /></span>
-            <span>{m.texto}</span>
+            <span className="an-mudou-texto">{m.texto}</span>
           </li>
         ))}
+        {resto > 0 && <li className="an-mudou-mais" style={{ '--i': mostradas.length } as CSSProperties}>{tx('+{0}', resto)}</li>}
       </ul>
     </section>
   )

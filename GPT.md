@@ -2020,3 +2020,13 @@ encolhe); e o plano precisa ter sido salvo antes do lançamento.
 **Validação.** tsc, lint, build; `node scripts/painel/testar.mjs` 53 de 53 (caso novo "o que já aconteceu fica travado");
 `testar-planejamento.cjs` 54 OK; `testar-a-receber.cjs` e `testar-fatura-em-parte.cjs` sem falha; novo
 `testar-plano-travado.cjs` 20 OK (computador e celular).
+
+### 25/11/2026 — Claude — Consultor: o cartão "Refiz sua tela" redesenhado
+
+**Pedido do dono** (print): o cartão do topo do Consultor que aparece depois de uma mudança estava feio no computador (título
+pequeno solto, os três passos espremidos numa coluna à direita, as mudanças numa fila só). `OQueMudou` (`pages/Analise.tsx`) e o
+bloco `.an-mudou*` de `pages/analise.css` refeitos: cabeçalho com o selo da bússola, o título ("Refiz sua tela" ao vivo, "O que
+mudou" fora), quando e quantas mudanças, e a nota de → para à direita; os três passos viram uma trilha (bolinhas ligadas por uma
+linha que se enche, nomes embaixo) que some ao terminar; as mudanças em blocos de duas colunas (uma no celular), com "+N" quando
+passam do limite. As regras antigas espalhadas pelo arquivo saíram. **Validação:** `tsc -b`, lint, build, `scripts/painel/testar.mjs`
+53/53, `testar-movel.cjs` 379 OK, fotos no computador (claro e escuro, durante e depois da montagem) e no celular.

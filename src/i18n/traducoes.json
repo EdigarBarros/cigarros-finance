@@ -18926,5 +18926,29 @@
   "paga · {0}": {
     "en": "paid · {0}",
     "es": "pagada · {0}"
+  },
+  "Agora há pouco": {
+    "en": "Just now",
+    "es": "Hace un momento"
+  },
+  "O que mudou": {
+    "en": "What changed",
+    "es": "Qué cambió"
+  },
+  "1 mudança": {
+    "en": "1 change",
+    "es": "1 cambio"
+  },
+  "{0} mudanças": {
+    "en": "{0} changes",
+    "es": "{0} cambios"
+  },
+  "Nota": {
+    "en": "Score",
+    "es": "Nota"
+  },
+  "+{0}": {
+    "en": "+{0}",
+    "es": "+{0}"
   }
 }

@@ -156,13 +156,6 @@
 .an-porque p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--texto-2); animation: vis-aparece .35s var(--mola); }
 
 /* ---------- o que mudou ---------- */
-.an-mudou { display: grid; gap: 8px; padding: 14px 18px; border-color: color-mix(in srgb, var(--destaque) 30%, var(--borda)); animation: vis-aparece .45s var(--mola); }
-.an-mudou-titulo { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--destaque); }
-.an-mudou ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.an-mudou li { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; line-height: 1.4; }
-.an-mudou li svg { flex: none; margin-top: 2px; color: var(--texto-3); }
-.an-mudou li.bom svg { color: var(--an-bom); }
-.an-mudou li.ruim svg { color: var(--an-ruim); }
 
 .an-impacto {
   justify-self: start; display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 999px;
@@ -426,15 +419,6 @@ li.caiu .halteres-agora { background: var(--an-bom); }
 /* ---------- toques visuais do redesenho ---------- */
 @keyframes vt-pulso-borda { 0% { opacity: 1; transform: scale(.92); } 100% { opacity: 0; transform: scale(1.18); } }
 
-/* o que mudou: uma faixa com setas em bolinhas coloridas */
-.an-mudou { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px 16px; }
-.an-mudou ul { display: flex; flex-wrap: wrap; gap: 8px 18px; }
-.an-mudou li { align-items: center; animation: vis-aparece .4s var(--mola) calc(var(--i) * 80ms) backwards; }
-.an-mudou-seta { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 50%; color: var(--texto-2); background: var(--preench-3); }
-.an-mudou li.bom .an-mudou-seta { color: var(--an-bom); background: color-mix(in srgb, var(--an-bom) 15%, transparent); }
-.an-mudou li.ruim .an-mudou-seta { color: var(--an-ruim); background: color-mix(in srgb, var(--an-ruim) 15%, transparent); }
-.an-mudou li svg { margin: 0; color: inherit !important; }
-@media (max-width: 700px) { .an-mudou { grid-template-columns: minmax(0, 1fr); } }
 
 /* cartões dos gráficos: leve elevação ao passar o ponteiro */
 @media (hover: hover) and (pointer: fine) {
@@ -662,45 +646,85 @@ li.caiu .halteres-agora { background: var(--an-bom); }
   to { top: min(100%, 100vh); opacity: 0; }
 }
 
-/* o cartão "o que mudou" durante a montagem */
+/* ---------- o que mudou / "Refiz sua tela" (OQueMudou) ---------- */
+.an-mudou {
+  position: relative; overflow: hidden; display: grid; gap: 14px; padding: 18px 20px;
+  border-color: color-mix(in srgb, var(--destaque) 28%, var(--borda));
+  background: radial-gradient(90% 140% at 0% 0%, color-mix(in srgb, var(--destaque) 10%, transparent), transparent 55%), var(--superficie);
+  animation: vis-aparece .45s var(--mola);
+}
+.an-mudou-cab { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.an-mudou-selo {
+  display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 50%;
+  color: var(--destaque); background: color-mix(in srgb, var(--destaque) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--destaque) 30%, transparent);
+}
+.an-mudou-textos { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.an-mudou-textos b { font-size: 16px; font-weight: 700; letter-spacing: -.01em; color: var(--texto); }
+.an-mudou-textos small { font-size: 12.5px; color: var(--texto-3); }
+.an-mudou-troca { display: inline-grid; }
+.an-mudou-troca > b { grid-area: 1 / 1; }
+.an-mudou-nota {
+  display: inline-flex; align-items: center; gap: 5px; flex: none; height: 30px; padding: 0 12px; border-radius: 999px;
+  font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--texto-2); background: var(--preench-3);
+}
+.an-mudou-nota small { font-size: 11px; font-weight: 600; color: var(--texto-3); }
+.an-mudou-nota b { font-weight: 800; }
+.an-mudou-nota.bom b, .an-mudou-nota.bom svg { color: var(--an-bom); }
+.an-mudou-nota.ruim b, .an-mudou-nota.ruim svg { color: var(--an-ruim); }
+
+/* as mudanças: blocos em duas colunas */
+.an-mudou-lista { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.an-mudou-lista li {
+  display: flex; align-items: center; gap: 10px; min-width: 0; padding: 10px 12px; border-radius: 14px;
+  background: var(--preench-4); border: 1px solid var(--borda); font-size: 13.5px; line-height: 1.35; color: var(--texto);
+  animation: vis-aparece .4s var(--mola) calc(var(--i) * 70ms) backwards;
+}
+.an-mudou-texto { min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.an-mudou-seta { display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%; color: var(--texto-2); background: var(--preench-3); }
+.an-mudou-seta svg { color: inherit; }
+.an-mudou-lista li.bom .an-mudou-seta { color: var(--an-bom); background: color-mix(in srgb, var(--an-bom) 15%, transparent); }
+.an-mudou-lista li.ruim .an-mudou-seta { color: var(--an-ruim); background: color-mix(in srgb, var(--an-ruim) 15%, transparent); }
+.an-mudou-lista li.an-mudou-mais { justify-content: center; font-weight: 700; color: var(--texto-3); background: transparent; border-style: dashed; }
+@media (max-width: 760px) {
+  .an-mudou { padding: 16px; }
+  .an-mudou-lista { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* montagem ao vivo: a bússola gira, a trilha dos três passos se enche e some, o título troca */
 .an-mudou.ao-vivo {
-  position: relative; overflow: hidden; gap: 10px; padding: 16px 18px;
   border-color: color-mix(in srgb, var(--destaque) 45%, var(--borda));
-  background: linear-gradient(135deg, color-mix(in srgb, var(--destaque) 9%, var(--superficie)), var(--superficie) 70%);
   animation: an-mudou-chega .7s var(--mola) .05s backwards;
 }
 @keyframes an-mudou-chega { from { opacity: 0; transform: translateY(-12px) scale(.97); filter: blur(4px); } }
-.an-mudou-progresso {
-  position: absolute; left: 0; right: 0; top: 0; height: 2px; transform-origin: left;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--destaque) 20%, transparent), var(--destaque));
-  animation: an-progresso 1.6s cubic-bezier(.65, 0, .35, 1) .2s both, an-some .5s ease 1.9s forwards;
-}
-@keyframes an-progresso { from { transform: scaleX(0); } }
-@keyframes an-some { to { opacity: 0; } }
-.an-mudou.ao-vivo .an-mudou-titulo { flex-wrap: wrap; font-size: 13px; }
-.an-mudou.ao-vivo .an-mudou-titulo > svg { animation: an-bussola 1.7s var(--deslize) .1s backwards; }
+.an-mudou.ao-vivo .an-mudou-selo svg { animation: an-bussola 1.7s var(--deslize) .1s backwards; }
 @keyframes an-bussola { from { transform: rotate(-540deg); } }
-.an-mudou-troca { display: inline-grid; }
-.an-mudou-troca > span { grid-area: 1 / 1; }
 .an-mudou-troca .antes { animation: an-some .3s ease 1.7s forwards; }
 .an-mudou-troca .depois { animation: an-surge-texto .45s var(--mola) 1.8s backwards; }
+@keyframes an-some { to { opacity: 0; } }
 @keyframes an-surge-texto { from { opacity: 0; transform: translateY(6px); } }
-.an-mudou-nota {
-  display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px;
-  font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums;
-  animation: an-pula 0.6s var(--mola-salto) 1.9s backwards;
-}
-.an-mudou-nota.bom { color: var(--an-bom); background: color-mix(in srgb, var(--an-bom) 15%, transparent); }
-.an-mudou-nota.ruim { color: var(--an-ruim); background: color-mix(in srgb, var(--an-ruim) 15%, transparent); }
+.an-mudou.ao-vivo .an-mudou-nota { animation: an-pula .6s var(--mola-salto) 1.9s backwards; }
 @keyframes an-pula { from { opacity: 0; transform: scale(.5); } }
-
-.an-mudou-passos { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--texto-2); }
-.an-mudou-passos li { display: inline-flex; align-items: center; gap: 6px; animation: an-passo .4s ease calc(.35s + var(--i) * .45s) backwards; }
+.an-mudou-passos {
+  position: relative; list-style: none; margin: 0; padding: 0 2px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  font-size: 12.5px; color: var(--texto-2); overflow: hidden;
+  animation: an-trilha-some .45s ease 2.3s forwards;
+}
+@keyframes an-trilha-some { to { opacity: 0; max-height: 0; margin-top: -14px; } }
+.an-mudou-passos { max-height: 52px; }
+.an-mudou-linha {
+  position: absolute; left: 11px; right: calc(33.3% - 9px); top: 8px; height: 2px; border-radius: 2px; transform-origin: left;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--destaque) 35%, transparent), var(--destaque));
+  animation: an-progresso 1.4s cubic-bezier(.65, 0, .35, 1) .3s both;
+}
+@keyframes an-progresso { from { transform: scaleX(0); } }
+.an-mudou-passos li { position: relative; display: grid; justify-items: start; gap: 6px; white-space: nowrap; min-width: 0; animation: an-passo .4s ease calc(.35s + var(--i) * .45s) backwards; }
+.an-mudou-passos li > span:last-child { overflow: hidden; text-overflow: ellipsis; }
 @keyframes an-passo { from { opacity: .3; } }
 .an-mudou-ok {
-  display: grid; place-items: center; width: 16px; height: 16px; border-radius: 50%;
-  color: var(--fundo); background: var(--destaque);
+  position: relative; z-index: 1; display: grid; place-items: center; flex: none; width: 18px; height: 18px; border-radius: 50%;
+  color: var(--fundo); background: var(--destaque); box-shadow: 0 0 0 3px var(--superficie);
   animation: an-pula .45s var(--mola-salto) calc(.45s + var(--i) * .45s) backwards;
 }
-.an-mudou.ao-vivo ul li { animation: an-linha .55s var(--mola) calc(1.95s + var(--i) * 140ms) backwards; }
-@keyframes an-linha { from { opacity: 0; transform: translateX(-12px); } }
+.an-mudou.ao-vivo .an-mudou-lista li { animation: an-linha .55s var(--mola) calc(1.95s + var(--i) * 140ms) backwards; }
+@keyframes an-linha { from { opacity: 0; transform: translateY(8px); } }
