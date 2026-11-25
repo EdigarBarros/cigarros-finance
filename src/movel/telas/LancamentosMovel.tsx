@@ -22,6 +22,7 @@ import type { Ctx } from '../../pages/contexto'
 import { ListaDaFolha } from '../Casca'
 import { BotoesDeAcao, CarrosselDeDicas, CartaoWidget, HeroDeslizante, IconeRedondo, LinhaDeLista, type PaginaDoHero } from '../primitivas'
 import type { Tom } from '../tom'
+import { pagoDaFatura } from '../../lib/cartoes'
 
 export function LancamentosMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom) => void }) {
   const f = useLancamentosFiltrados(c)
@@ -54,7 +55,7 @@ export function LancamentosMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: To
     id: 'cartao', icone: 'cartao',
     titulo: f.pesquisando
       ? (f.comprasNoCartao === 1 ? tx('1 compra no cartão combina com a busca.') : tx('{0} compras no cartão combinam com a busca.', f.comprasNoCartao))
-      : (f.comprasNoCartao === 1 ? tx('1 compra no cartão na fatura de {0} ({1}) fica na tela Cartões.', nomeMes, fmtValor(f.totalNoCartao)) : tx('{0} compras no cartão na fatura de {1} ({2}) ficam na tela Cartões.', f.comprasNoCartao, nomeMes, fmtValor(f.totalNoCartao))),
+      : (f.comprasNoCartao === 1 ? tx('1 compra no cartão na fatura de {0} ({1}) fica na tela Cartões.', nomeMes, fmtValor(f.totalNoCartao)) : tx('{0} compras no cartão na fatura de {1} ({2}) ficam na tela Cartões.', f.comprasNoCartao, nomeMes, fmtValor(f.totalNoCartao))) + (f.pesquisando ? '' : pagoDaFatura(c.faturas)),
     botao: { texto: tx('Ver em Cartões'), acao: () => c.irPara('cartoes') },
   }] : []
   const nomeDaCategoria = f.categoria === 'sem' ? SEM_CATEGORIA.nome : f.chips.find((k) => k.id === f.categoria)?.nome ?? c.categorias.find((k) => k.id === f.categoria)?.nome ?? tx('Categoria')

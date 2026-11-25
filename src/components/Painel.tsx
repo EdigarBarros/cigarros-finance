@@ -9,7 +9,7 @@ import {
   chaveAdiantada, chaveRecusa, comAdiantadas, ehChaveAdiantada, faltaPagarNoMes, pedirEntradaFixa, lancamentoDaBaixa, memoriaDasContas, parecidosNosOutrosMeses, situacoesDoMes, sugestoesDoMes,
   type SituacaoConta, type SugestaoVinculo,
 } from '../lib/contasFixas'
-import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasDoMes } from '../lib/cartoes'
+import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasAPagar, totalFaturasDoMes } from '../lib/cartoes'
 import { COR } from '../lib/charts'
 import { analisar, compararRetratos, retratoDe, type Reanalise, type Retrato } from '../lib/analise'
 import { naHoraDeParcelar } from '../lib/naHora'
@@ -831,12 +831,14 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const dividasDoForm = ligadaAoForm && !dividasAbertas.some((x) => x.id === ligadaAoForm.id) ? [...dividasAbertas, ligadaAoForm] : dividasAbertas
   const comCartoes = comFaturas
   // Indicador zerado no topo só ocupa atenção: a fatura entra quando há fatura no mês.
-  const totalFaturas = comCartoes ? totalFaturasDoMes(faturas) : 0
+  // pago em parte: o indicador mostra o que falta pagar, como a tela Cartões
+  const emParte = faturas.some((f) => !f.paga && f.pagoEmParte > 0)
+  const totalFaturas = comCartoes ? (emParte ? totalFaturasAPagar(faturas) : totalFaturasDoMes(faturas)) : 0
   const comKpiContas = comContas && situacoesContas.length > 0
   const kpisExtras = comKpiContas || totalFaturas > 0 ? (
     <>
       {comKpiContas && <Kpi rotulo={tx('Falta pagar no mês')} valor={faltaPagarNoMes(situacoesContas)} cor={COR.divida} icone="calendario" aoClicar={() => irPara('contas')} />}
-      {totalFaturas > 0 && <Kpi rotulo={tx('Fatura do cartão')} valor={totalFaturas} cor={COR.investimentos} icone="cartao" aoClicar={() => irPara('cartoes')} />}
+      {totalFaturas > 0 && <Kpi rotulo={emParte ? tx('Falta da fatura') : tx('Fatura do cartão')} valor={totalFaturas} cor={COR.investimentos} icone="cartao" aoClicar={() => irPara('cartoes')} />}
     </>
   ) : undefined
 

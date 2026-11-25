@@ -73,9 +73,10 @@ export function previstosDoMes({ ano, mes, contas, dividas, faturas = [], pagame
   }
   // fatura do cartão em aberto no dia em que vence (as compras ficam na tela Cartões; aqui sai o valor da fatura)
   for (const f of faturas) {
-    if (f.paga || f.valor <= 0 || !f.vencimento.startsWith(prefixo)) continue
+    // o que já foi pago em parte não sai de novo: só o que falta
+    if (f.paga || f.falta <= 0 || !f.vencimento.startsWith(prefixo)) continue
     por(f.vencimento, {
-      chave: `f-${f.cartao.id}-${f.ano}-${f.mes}`, nome: f.cartao.nome, valor: f.valor, tipo: 'saida', origem: 'cartao',
+      chave: `f-${f.cartao.id}-${f.ano}-${f.mes}`, nome: f.cartao.nome, valor: f.falta, tipo: 'saida', origem: 'cartao',
       atrasado: f.vencimento < hoje,
     })
   }

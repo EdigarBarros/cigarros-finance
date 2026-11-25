@@ -2021,6 +2021,28 @@ encolhe); e o plano precisa ter sido salvo antes do lançamento.
 `testar-planejamento.cjs` 54 OK; `testar-a-receber.cjs` e `testar-fatura-em-parte.cjs` sem falha; novo
 `testar-plano-travado.cjs` 20 OK (computador e celular).
 
+### 25/11/2026 — Claude — Fatura paga em parte em todo o app; parte paga travada no Planejamento
+
+**Estado:** implementado, testado localmente e publicado.
+
+**Problema.** Com R$ 468,20 pagos em parte de uma fatura de R$ 655,28, o dia a dia de Lançamentos ("Vai sair") e outros
+pontos ainda mostravam R$ 655,28. Cada fatura tem `valor` (o que foi comprado) e `falta` (o que falta pagar); alguns
+lugares usavam `valor` onde a pergunta é "quanto pagar".
+
+**O que mudou.**
+- `src/lib/previstos.ts`: a fatura prevista no dia do vencimento sai com `falta` (paga toda em partes, não aparece).
+- `src/lib/analise.ts`: as próximas faturas do Consultor (`cartao.proximas`) descontam o pago em parte.
+- `src/components/Painel.tsx`: o indicador vira "Falta da fatura" (o que falta pagar) quando há pagamento em parte.
+- `src/movel/widgets.tsx`: o cartão de Cartões mostra o que falta e "Pagou R$ X · vence …".
+- Lançamentos (computador e celular): o aviso das compras no cartão diz "Na fatura do X, já pagou R$ Y e faltam R$ Z"
+  (`pagoDaFatura()` em `src/lib/cartoes.ts`).
+- Gráficos de gasto continuam com o valor das compras de propósito: pagar a fatura não muda quanto se gastou.
+- Planejamento: conta paga em parte depois do plano salvo fica travada na parte paga (ficha irmã `<id>~pago`).
+
+**Validação.** tsc, lint, build; `node scripts/painel/testar.mjs` 55 de 55 (casos novos "conta paga em parte fica
+travada…" e "fatura paga em parte: o dia a dia e o aviso…", este falha sem a correção com R$ 655,28);
+`testar-fatura-em-parte.cjs` 4 OK; `testar-plano-travado.cjs` 28 OK; `testar-a-receber.cjs` 18 OK;
+`testar-planejamento.cjs` 54 OK.
 ### 25/11/2026 — Claude — Consultor: o cartão "Refiz sua tela" redesenhado
 
 **Pedido do dono** (print): o cartão do topo do Consultor que aparece depois de uma mudança estava feio no computador (título

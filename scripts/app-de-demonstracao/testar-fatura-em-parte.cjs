@@ -7,6 +7,15 @@ const demo = require(R + '/scripts/app-de-demonstracao/dados-de-demonstracao.cjs
 const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALHA ') + m); if (!c) process.exitCode = 1 }
 const valorEmReais = (t) => Number(t.replace(/[^\d,]/g, '').replace(',', '.'))
 
+async function telaLancamentos(dados) {
+  const t = await iniciar({ perfil: { ...demo.perfil, detalhe: 'equilibrado' }, dados, porta: 4900 + Math.floor(Math.random() * 60), dpr: 1 })
+  try {
+    await t.page.setViewportSize({ width: 1440, height: 900 })
+    await t.page.goto(t.url + '#/lancamentos'); await t.page.waitForTimeout(2600)
+    return await t.page.locator('.lc-nota-cartao').first().textContent().catch(() => '')
+  } finally { await t.fechar() }
+}
+
 async function fichaDaFatura(dados) {
   const t = await iniciar({ perfil: { ...demo.perfil, detalhe: 'equilibrado' }, dados, porta: 4900 + Math.floor(Math.random() * 60), dpr: 1 })
   const p = t.page
@@ -36,5 +45,7 @@ async function fichaDaFatura(dados) {
   const depois = await fichaDaFatura(dados)
   const resto = valorEmReais(depois.ficha?.valor ?? '0')
   ok(Math.abs(resto - (cheia - metade)) < 0.02, `paga ${metade} em parte, a mesa mostra só o que falta: ${cheia} → ${resto}`)
+  const aviso = await telaLancamentos(dados)
+  ok(/já pagou R\$\s495,00 e faltam R\$\s495,00/i.test(aviso), `Lançamentos: o aviso do cartão diz quanto já pagou e quanto falta (${aviso.trim()})`)
   ok(!antes.erros.length && !depois.erros.length, `sem erro na página ${[...antes.erros, ...depois.erros].join(' | ')}`)
 })()

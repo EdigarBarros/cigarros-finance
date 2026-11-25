@@ -1367,7 +1367,10 @@ export function analisar(e: EntradaAnalise): Analise {
       && !e.faturasPagas.some((f) => f.cartao_id === l.cartao_id && f.ano === l.ano && f.mes === l.mes))
     const meses7 = [0, 1, 2, 3, 4, 5, 6].map((i) => {
       const k = doMesChave(atual + i)
-      return { ...k, valor: centavos(soma(e.compras.filter((l) => l.ano === k.ano && l.mes === k.mes && aVencer(l)).map((l) => l.valor))) }
+      // o que já foi pago em parte de cada fatura sai do valor a pagar
+      const doMes = (cid: string) => soma(e.compras.filter((l) => l.cartao_id === cid && l.ano === k.ano && l.mes === k.mes && aVencer(l)).map((l) => l.valor))
+      const emParte = (cid: string) => soma((e.faturasParciais ?? []).filter((p) => p.cartao_id === cid && p.ano === k.ano && p.mes === k.mes).map((p) => p.valor))
+      return { ...k, valor: centavos(soma([...deCartao].map((cid) => Math.max(0, doMes(cid) - (doMes(cid) > 0 ? emParte(cid) : 0))))) }
     })
     const proximas = meses7[0].valor > 0 ? meses7.slice(0, 6) : meses7.slice(1)
     const porMes = rec.length ? centavos(media(rec.map((b) => b.cartao))) : 0

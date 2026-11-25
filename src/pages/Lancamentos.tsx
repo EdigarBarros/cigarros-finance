@@ -16,6 +16,7 @@ import { tx } from '../lib/textos'
 import { somaPrevistos, type Previsto } from '../lib/previstos'
 import { ResumoDoMes } from './lancamentos/ResumoDoMes'
 import { doisDig, somaDias, somaTipo, useLancamentosFiltrados, type Filtro } from './lancamentos/useLancamentos'
+import { pagoDaFatura } from '../lib/cartoes'
 
 export const SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', tx('sáb')]
 const SEMANA_LETRA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
@@ -58,6 +59,7 @@ export function Lancamentos(c: Ctx) {
             {pesquisando
               ? (comprasNoCartao === 1 ? tx('1 compra no cartão combina com a busca.') : tx('{0} compras no cartão combinam com a busca.', comprasNoCartao))
               : (comprasNoCartao === 1 ? tx('1 compra no cartão na fatura de {0} ({1}) fica na tela Cartões.', noMeioDaFrase(MESES_NOME[c.mes - 1]), fmtValor(totalNoCartao)) : tx('{0} compras no cartão na fatura de {1} ({2}) ficam na tela Cartões.', comprasNoCartao, noMeioDaFrase(MESES_NOME[c.mes - 1]), fmtValor(totalNoCartao)))}
+            {!pesquisando && pagoDaFatura(c.faturas)}
           </span>
           <button className="btn" onClick={() => c.irPara('cartoes')}>{tx('Ver em Cartões')} <Icone nome="seta" tamanho={14} /></button>
         </section>

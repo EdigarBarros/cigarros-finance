@@ -406,6 +406,14 @@ export const totalFaturasDoMes = (situacoes: Pick<SituacaoCartao, 'valor' | 'sta
 export const totalFaturasAPagar = (situacoes: Pick<SituacaoCartao, 'falta' | 'status'>[]) =>
   soma(situacoes.filter((s) => s.status !== 'paga' && s.status !== 'renegociada').map((s) => s.falta))
 
+/** " Na fatura do PicPay, já pagou R$ 468,20 e faltam R$ 187,08." quando alguma fatura do mês foi paga em parte (senão, vazio). */
+export function pagoDaFatura(situacoes: (Pick<SituacaoCartao, 'paga' | 'pagoEmParte' | 'falta'> & { cartao?: Pick<CartaoCredito, 'nome'> })[]) {
+  const emParte = situacoes.filter((s) => !s.paga && s.pagoEmParte > 0)
+  if (!emParte.length) return ''
+  const pago = fmtValor(soma(emParte.map((s) => s.pagoEmParte))), falta = fmtValor(soma(emParte.map((s) => s.falta)))
+  return ` ${emParte.length === 1 && emParte[0].cartao ? tx('Na fatura do {0}, já pagou {1} e faltam {2}.', emParte[0].cartao.nome, pago, falta) : tx('Já pagou {0} e faltam {1}.', pago, falta)}`
+}
+
 /** "vence hoje", "vence em 9 dias", "venceu há 3 dias"… */
 export function quandoVence(s: Pick<SituacaoCartao, 'status' | 'diasParaVencer'>) {
   if (s.status === 'paga') return 'paga'
