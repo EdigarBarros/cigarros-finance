@@ -1976,3 +1976,19 @@ De carona: no celular, o selo "tudo com destino" foi para baixo do valor (esprem
 novo "contar com quem me deve"); `testar-planejamento.cjs` (54 OK, nenhuma falha) e o novo `testar-a-receber.cjs` (18 OK).
 Limite: o ambiente não baixa o `xlsx` do `cdn.sheetjs.com`; os testes rodaram com o `xlsx@0.18.5` do npm instalado sem
 salvar (o `package.json` e o lockfile não mudaram).
+
+### 25/11/2026 — Claude — Fatura paga em parte no Planejamento
+
+**Estado:** corrigido, testado localmente e publicado pelo fluxo do `CLAUDE.md`.
+
+**Problema.** No Planejar o mês, a fatura do cartão entrava com a soma das compras e ignorava os pagamentos em parte
+(`faturas_parciais`, migração 38). Caso real conferido só pelos totais: compras R$ 655,28, pago em parte R$ 468,20; a
+mesa cobrava R$ 655,28, quando faltavam R$ 187,08. A tela Cartões já descontava (`faturaDoMes`). Também a fatura que
+vence hoje sumia da agenda (`l.data <= hoje`).
+
+**Correção.** Em `src/lib/analise.ts` (agenda do dinheiro), as faturas abatem os pagamentos em parte de cada fatura
+(cartão + mês) e a que vence hoje entra. Ponto em aberto, não mexido: fatura que já venceu sem pagar não entra na agenda
+(nem no Planejamento); a tela Cartões mostra como atrasada.
+
+**Validação.** `npx tsc -b`, lint, build; `node scripts/painel/testar.mjs` (51 de 51); `testar-planejamento.cjs` e
+`testar-a-receber.cjs` sem falha; novo `testar-fatura-em-parte.cjs` (R$ 990 com R$ 495 pagos em parte → mesa mostra R$ 495).

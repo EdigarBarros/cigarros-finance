@@ -1396,18 +1396,33 @@ export function analisar(e: EntradaAnalise): Analise {
       if (!l.data || l.data <= hojeIso || l.data > fimJanela || l.cartao_id || !(l.valor > 0) || ehEmprestimo(l)) continue
       eventos.push({ data: l.data, tipo: l.tipo, descricao: l.descricao.trim(), valor: l.valor, origem: 'lancamento' })
     }
-    // faturas: as parcelas de cada cartão somadas no vencimento (fatura já paga fica de fora)
-    const faturas = new Map<string, Evento>()
+    // faturas: as parcelas de cada cartão somadas no vencimento (fatura já paga fica de fora), menos o que já foi pago em
+    // parte (sem isso, a fatura de R$ 655 com R$ 468 já pagos aparecia inteira no Planejamento). A que vence hoje ainda entra.
+    const faturas = new Map<string, Evento & { cartao: string; ano: number; mes: number }>()
     for (const l of e.compras) {
-      if (!l.cartao_id || !l.data || l.data <= hojeIso || l.data > fimJanela || !(l.valor > 0)) continue
+      if (!l.cartao_id || !l.data || l.data < hojeIso || l.data > fimJanela || !(l.valor > 0)) continue
       if (e.faturasPagas.some((f) => f.cartao_id === l.cartao_id && f.ano === l.ano && f.mes === l.mes)) continue
-      const chave = `${l.cartao_id}|${l.data}`
+      const chave = `${l.cartao_id}|${l.ano}-${l.mes}|${l.data}`
       const nome = e.cartoes.find((c) => c.id === l.cartao_id)?.nome
-      const f = faturas.get(chave) ?? { data: l.data, tipo: 'saida' as const, descricao: nome ? tx('Fatura do {0}', nome) : tx('Fatura do cartão'), valor: 0, origem: 'cartao' as const }
+      const f = faturas.get(chave) ?? {
+        data: l.data, tipo: 'saida' as const, descricao: nome ? tx('Fatura do {0}', nome) : tx('Fatura do cartão'), valor: 0, origem: 'cartao' as const,
+        cartao: l.cartao_id, ano: l.ano, mes: l.mes,
+      }
       f.valor = centavos(f.valor + l.valor)
       faturas.set(chave, f)
     }
-    eventos.push(...faturas.values())
+    const jaPagoEmParte = new Map<string, number>()
+    for (const p of e.faturasParciais ?? []) {
+      const k = `${p.cartao_id}|${p.ano}-${p.mes}`
+      jaPagoEmParte.set(k, (jaPagoEmParte.get(k) ?? 0) + p.valor)
+    }
+    for (const f of [...faturas.values()].sort((a, b) => a.data.localeCompare(b.data))) {
+      const k = `${f.cartao}|${f.ano}-${f.mes}`
+      const abate = Math.min(f.valor, jaPagoEmParte.get(k) ?? 0)
+      if (abate > 0) jaPagoEmParte.set(k, centavos((jaPagoEmParte.get(k) ?? 0) - abate))
+      const falta = centavos(f.valor - abate)
+      if (falta >= 0.01) eventos.push({ data: f.data, tipo: f.tipo, descricao: f.descricao, valor: falta, origem: f.origem })
+    }
     // contas do mês (este e o próximo) ainda em aberto; as atrasadas entram hoje
     const contasDoMes = (m: { ano: number; mes: number }) => (v.contas ? situacoesDasContas(e.contas, e.lancs, m.ano, m.mes, hojeIso, e.taxas) : [])
     const sitsAtual = contasDoMes({ ano, mes })

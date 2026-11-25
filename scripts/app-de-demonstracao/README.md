@@ -53,6 +53,7 @@ recarregar, Esc e X; no celular, tocar na conta e depois na entrada, a bandeja p
 rolagem de lado; nos temas escuro e claro, sem erro na página). Com `FOTOS=pasta`, salva capturas.
 `node scripts/app-de-demonstracao/testar-a-receber.cjs`: o interruptor "Contar com quem me deve" (o Rafael da
 demonstração vira uma barra, paga conta, a escolha fica salva, desligar tira), no computador e no celular.
+`node scripts/app-de-demonstracao/testar-fatura-em-parte.cjs`: a fatura paga em parte entra na mesa só com o que falta.
 
 ## Várias contas no mesmo aparelho
 
