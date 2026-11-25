@@ -2102,3 +2102,25 @@ a tela de assinatura mostra "Ainda não recebemos a confirmação do seu pagamen
 no app de demonstração: painel no computador (abre o suporte), celular nos 3 jeitos (botão acima da barra), tela de assinatura
 (abre o suporte), confirmação que não chega (aviso e pedido novo), login sem conta (mailto), sem erros na página.
 O app Android não foi regerado: o botão chega a ele na próxima versão.
+
+### 25/11/2026 — Claude — Aba "Suporte" em absolutamente todas as telas
+
+**Estado:** implementado, testado no app de demonstração e publicado. Substitui o botão flutuante da entrada anterior.
+
+**Pedido.** O dono quer o suporte em qualquer tela, sem atrapalhar a visualização, com ícone E a palavra "Suporte".
+
+**Problema do botão anterior.** Ficava no canto de baixo por cima do conteúdo e sumia com janelas, planejamento e tutorial
+abertos (estava abaixo deles).
+
+**O que mudou.** `src/components/SuporteGlobal.tsx`, montado em `main.tsx` FORA do `App` e do `LimiteDeErro`: uma aba presa na
+borda direita (vertical, ícone + "Suporte", menos de 32 px de largura; 21 px no celular, a 66% da altura para ficar longe dos
+atalhos), numa camada `z-index: 9500` acima de janelas, planejamento e tutorial. Com conta: abre a janela de suporte do app
+por cima do que estiver aberto, com a bolinha de respostas novas. Sem conta (login, apresentação, termos, sem internet, erro):
+e-mail para `VITE_EMAIL_SUPORTE`. `abrirSuporte()` (em `lib/suporte.ts`) abre a mesma janela de qualquer lugar; a tela de
+assinatura usa no aviso "Ainda não recebemos a confirmação do seu pagamento". Saíram `BotaoSuporte.tsx`, o botão do painel
+e o do `comIdioma`. O ícone de suporte do topo do painel (computador) e o item do menu continuam.
+
+**Validação.** `npx tsc -b`, lint (só avisos antigos), build, `scripts/painel/testar.mjs`; Playwright (41 conferências): aba
+visível, por cima e sem cobrir nenhum botão/link/campo no painel e em 4 telas no computador, com a janela de Configurações
+aberta, no celular nos 3 jeitos a 360 e 390 px, na tela de assinatura (computador e celular), no login e nos termos; abre o
+suporte em cada caso; login vira mailto; sem erros na página. App Android não regerado.

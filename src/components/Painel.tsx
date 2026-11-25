@@ -50,7 +50,6 @@ import { ContasNoMenu } from './Contas'
 import { BotaoIdioma } from './BotaoIdioma'
 import { Icone } from './Icone'
 import { useRespostasNovas } from '../lib/useSuporte'
-import { BotaoSuporte } from './BotaoSuporte'
 import { CartaoDicas, type Dica } from './CartaoDicas'
 import { Marca } from './Marca'
 import { useSegurarAbertura } from '../lib/abertura'
@@ -1198,7 +1197,6 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     )}
 
     {extrato && <ImportarExtrato c={ctx} aoFechar={() => setExtrato(false)} />}
-    <BotaoSuporte className="no-painel" aoAbrir={() => setSuporte('lista')} avisos={respostasNovas} />
     {suporte && <Suporte inicial={suporte === 'novo' ? 'novo' : undefined} aoFechar={() => { setSuporte(false); conferirRespostas() }} aoMudar={conferirRespostas} />}
     {editandoSaldoInicial && (
       <FormSaldoInicial inicial={d.saldoInicial} mesSugerido={`${ano}-${String(Math.max(0, porMes.findIndex(Boolean)) + 1).padStart(2, '0')}`}
