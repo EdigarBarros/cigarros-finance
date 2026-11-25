@@ -60,5 +60,28 @@ const anel = (p) => p.locator('.pj-anel').getAttribute('aria-label')
       ok(await b.p.locator('.pj-fatia.paga').count() === 1, `${nome}: "Montar pra mim" mantém a fatia paga (${await anel(b.p)})`)
       ok(!b.erros.length, `${nome}: sem erro na página (depois) ${b.erros.join(' | ')}`)
     } finally { await b.t.fechar() }
+
+    // 3. conta paga em parte: a fatura do Itaú Click no "O que está na conta"; depois, R$ 400 pagos em parte
+    const c = await abrir(demo.dados, tela)
+    let plano2
+    try {
+      await c.p.locator('.pj-ficha', { hasText: 'Fatura do' }).first().click(); await esperar(c.p, 300)
+      await c.p.locator('.pj-entrada', { hasText: 'O que está na conta' }).first().click(); await esperar(c.p, 600)
+      await c.p.locator('button', { hasText: 'Salvar plano' }).first().click(); await esperar(c.p, 600)
+      plano2 = await c.p.evaluate(() => Object.entries(localStorage).filter(([k]) => k.startsWith('opuscash-planejamento-')))
+    } finally { await c.t.fechar() }
+    const cartao = demo.dados.cartoes.find((x) => x.nome === 'Itaú Click')
+    const compra = demo.dados.lancamentos.filter((l) => l.cartao_id === cartao.id && l.data && l.data >= hoje).sort((x, y) => x.data.localeCompare(y.data))[0]
+    const parcial = { id: 'fp-1', user_id: cartao.user_id, cartao_id: cartao.id, ano: compra.ano, mes: compra.mes, valor: 400, pago_em: hoje, banco_id: null, da_caixinha: false, saldo_mexido: false, created_at: hoje + 'T00:00:00Z' }
+    const d = await abrir({ ...demo.dados, faturas_parciais: [parcial] }, tela, plano2)
+    try {
+      const conta = d.p.locator('.pj-entrada', { hasText: 'O que está na conta' })
+      const paga = conta.locator('.pj-fatia.paga'), solta = conta.locator('.pj-fatia:not(.paga)')
+      ok(await paga.count() === 1 && /400,00/.test(await paga.locator('small').textContent()), `${nome}: os R$ 400 pagos em parte ficam travados (${await paga.locator('small').textContent().catch(() => '')})`)
+      ok(await solta.count() === 1 && /590,00/.test(await solta.locator('small').textContent()), `${nome}: o resto da fatura continua solto (${await solta.locator('small').textContent().catch(() => '')})`)
+      ok(await d.p.locator('.pj-ficha', { hasText: 'Fatura do Itaú' }).count() === 0, `${nome}: a fatura não volta para a bandeja`)
+      await foto(d.p, `parte-paga-${nome}`)
+      ok(!d.erros.length, `${nome}: sem erro na página (paga em parte) ${d.erros.join(' | ')}`)
+    } finally { await d.t.fechar() }
   }
 })()
