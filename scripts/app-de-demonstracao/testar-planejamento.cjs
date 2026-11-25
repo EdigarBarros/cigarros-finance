@@ -129,6 +129,11 @@ const estado = (p) => p.evaluate(() => ({
       const lado = await p.evaluate(() => document.querySelector('.pj').scrollWidth > document.querySelector('.pj').clientWidth)
       ok(!lado, `${tema}: sem rolagem para o lado no celular`)
       await foto(p, `${tema}-cel`)
+      // o ajuste da fatia abre como folha embaixo, inteira na tela (antes, metade saía pela esquerda)
+      await p.locator('.pj-fatia').first().click(); await esperar(p, 900)
+      const folha = await p.locator('.pj-ajuste').boundingBox()
+      ok(folha && Math.abs(folha.x) < 1 && Math.abs(folha.width - 390) < 1, `${tema}: no celular o ajuste abre inteiro na tela (${JSON.stringify(folha)})`)
+      await foto(p, `${tema}-cel-ajuste`)
       ok(!erros.length, `${tema}: nenhum erro na página ${erros.join(' | ')}`)
     } finally {
       await t.fechar()
