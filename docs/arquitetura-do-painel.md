@@ -671,7 +671,7 @@ pelos passos do plano de ação que falam dele (destino `analise`: a aba abre a 
 tudo, em tela cheia, com **Este mês** e **Mês que vem**.
 
 - **De onde vêm as peças.** Nada é lançado aqui; o motor só lê o planejador de pagamentos (`plano` de `lib/analise.ts`).
-  Entradas: as que ainda vão cair no mês (`plano.fontes`; no mesmo dia, juntas) e, neste mês, **O que está na conta**
+  Entradas: as que ainda vão cair no mês, a de hoje inclusive enquanto não for lançada (`plano.fontes`; no mesmo dia, juntas) e, neste mês, **O que está na conta**
   (o saldo de hoje, quando é conhecido). A fatura do cartão entra com o que falta: o valor menos os pagamentos em parte
   (`faturas_parciais`); a que vence hoje ainda entra. Contas: as contas, parcelas, faturas e repetidas que vencem no mês, e as
   atrasadas no mês de hoje. As **parcelas atrasadas da mesma dívida** viram uma ficha só ("Mercado Pago · 16 parcelas

@@ -1992,3 +1992,10 @@ vence hoje sumia da agenda (`l.data <= hoje`).
 
 **Validação.** `npx tsc -b`, lint, build; `node scripts/painel/testar.mjs` (51 de 51); `testar-planejamento.cjs` e
 `testar-a-receber.cjs` sem falha; novo `testar-fatura-em-parte.cjs` (R$ 990 com R$ 495 pagos em parte → mesa mostra R$ 495).
+
+### 25/11/2026 — Claude — A entrada do dia sumia do Planejamento à meia-noite
+
+**Estado:** corrigido e publicado. `planejar()` (`src/lib/planejador.ts`) só aceitava entradas com data depois de hoje:
+à 0h do dia 25, a pensão prevista para o dia 25 (ainda não lançada) sumia da mesa e as fatias dela também. Agora a entrada
+de hoje conta (`>=`); quando ela é lançada, deixa de vir como prevista. Teste: caso "a entrada que cai hoje continua no
+plano" em `scripts/painel/casos.ts` (falha sem a correção, passa com ela); 52 de 52; testes da demonstração sem falha.
