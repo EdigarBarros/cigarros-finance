@@ -18966,5 +18966,17 @@
   "Na fatura do {0}, já pagou {1} e faltam {2}.": {
     "en": "On the {0} bill, you already paid {1} and {2} is left.",
     "es": "En la factura de {0}, ya pagaste {1} y faltan {2}."
+  },
+  "Ajuda com o OpusCash": {
+    "en": "Help with OpusCash",
+    "es": "Ayuda con OpusCash"
+  },
+  "Ainda não recebemos a confirmação do seu pagamento": {
+    "en": "We haven't received your payment confirmation yet",
+    "es": "Todavía no recibimos la confirmación de tu pago"
+  },
+  "Se você já pagou, não pague de novo: fale com o suporte e a gente libera seu acesso.": {
+    "en": "If you've already paid, don't pay again: contact support and we'll unlock your access.",
+    "es": "Si ya pagaste, no vuelvas a pagar: habla con soporte y liberamos tu acceso."
   }
 }
