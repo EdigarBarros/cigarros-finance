@@ -133,6 +133,8 @@
 @keyframes pj-sobe { from { opacity: 0; transform: translateY(14px); } }
 /* o dinheiro guardado: barra em âmbar, para não se confundir com o dinheiro do mês */
 .pj-entrada.guardado { --c: var(--caixa, #f5b544); border-style: dashed; }
+/* o que te devem: dinheiro que ainda não é certo, tracejado na cor de entrada */
+.pj-entrada.a-receber { --c: var(--entrada, #34c38f); border-style: dashed; }
 
 /* o interruptor "Usar o dinheiro guardado", embaixo das entradas */
 .pj-guardado {
@@ -158,6 +160,7 @@
 .pj-guardado.ligado .pj-guardado-chave { background: var(--c); }
 .pj-guardado.ligado .pj-guardado-chave::after { transform: translateX(18px); }
 .pj-guardado:has(input:focus-visible) { outline: 2px solid var(--c); outline-offset: 2px; }
+.pj-guardado.a-receber { --c: var(--entrada, #34c38f); }
 .pj.parado .pj-guardado, .pj.parado .pj-guardado-chave, .pj.parado .pj-guardado-chave::after { transition: none; }
 .pj-entrada-topo { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
 .pj-entrada-ic { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 12px; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
@@ -410,7 +413,9 @@
   .pj-numeros > div { min-width: 0; padding: 8px 9px; }
   .pj-numeros dd b { font-size: 14px; }
   .pj-entrada { padding: 13px 13px 14px; border-radius: 18px; }
-  .pj-entrada-valor { font-size: 17px; }
+  /* o selo "tudo com destino" vai para baixo do valor: ao lado, espremia o nome da entrada */
+  .pj-entrada-valor { font-size: 17px; flex-direction: column-reverse; align-items: flex-end; gap: 4px; }
+  .pj-entrada-valor .pj-cheia { font-size: 11.5px; padding: 2px 8px; }
   .pj-barra { height: 58px; }
   .pj-puxador { display: none; }
   /* a bandeja fica presa embaixo: as contas à mão, sem rolar */

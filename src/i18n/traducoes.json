@@ -18850,5 +18850,57 @@
   "Pôr em espera": {
     "en": "Put on hold",
     "es": "Poner en espera"
+  },
+  "A receber: {0}": {
+    "en": "To receive: {0}",
+    "es": "Por cobrar: {0}"
+  },
+  "O dinheiro do mês acabou e faltam {0}. Te devem {1} para este mês: dá para contar com isso no plano.": {
+    "en": "This month’s money ran out and {0} is still missing. You’re owed {1} this month: you can count on it in the plan.",
+    "es": "El dinero del mes se acabó y faltan {0}. Te deben {1} para este mes: puedes contar con eso en el plan."
+  },
+  "Contar com quem me deve": {
+    "en": "Count on who owes me",
+    "es": "Contar con quien me debe"
+  },
+  "O plano conta com {0} de quem te deve, e {1} não tem dia combinado (contei no fim do mês). Anote a promessa na dívida para o plano saber quando cai.": {
+    "en": "The plan counts on {0} from people who owe you, and {1} has no agreed day (I counted it at the end of the month). Write down the promise on the debt so the plan knows when it arrives.",
+    "es": "El plan cuenta con {0} de quien te debe, y {1} no tiene día acordado (lo conté a fin de mes). Anota la promesa en la deuda para que el plan sepa cuándo llega."
+  },
+  "O plano conta com {0} de quem te deve. Se não cair no dia, essas contas ficam sem dinheiro: cobre antes do vencimento.": {
+    "en": "The plan counts on {0} from people who owe you. If it doesn’t arrive on the day, those bills are left without money: ask for it before the due date.",
+    "es": "El plan cuenta con {0} de quien te debe. Si no llega ese día, esas cuentas quedan sin dinero: cobra antes del vencimiento."
+  },
+  "O dinheiro de quem te deve entrou no plano. Conte com ele só se for cair mesmo.": {
+    "en": "The money people owe you is now in the plan. Count on it only if it’s really coming.",
+    "es": "El dinero de quien te debe entró en el plan. Cuenta con él solo si de verdad va a llegar."
+  },
+  "O dinheiro de quem te deve saiu do plano. O que ele pagava voltou para a bandeja.": {
+    "en": "The money people owe you left the plan. What it was paying went back to the tray.",
+    "es": "El dinero de quien te debe salió del plan. Lo que pagaba volvió a la bandeja."
+  },
+  "O plano conta com {0} dos {1} que te devem.": {
+    "en": "The plan counts on {0} of the {1} you’re owed.",
+    "es": "El plan cuenta con {0} de los {1} que te deben."
+  },
+  "sem dia combinado: contei no fim do mês": {
+    "en": "no agreed day: counted at the end of the month",
+    "es": "sin día acordado: lo conté a fin de mes"
+  },
+  "ficou de pagar {0}": {
+    "en": "said they’d pay on {0}",
+    "es": "quedó en pagar el {0}"
+  },
+  "Conte só se for cair mesmo": {
+    "en": "Count on it only if it’s really coming",
+    "es": "Cuenta con él solo si de verdad va a llegar"
+  },
+  "{0} que {1} te deve, para contar neste mês.": {
+    "en": "{0} that {1} owes you, to count on this month.",
+    "es": "{0} que {1} te debe, para contar este mes."
+  },
+  "{0} que {1} pessoas te devem, para contar neste mês.": {
+    "en": "{0} that {1} people owe you, to count on this month.",
+    "es": "{0} que {1} personas te deben, para contar este mes."
   }
 }

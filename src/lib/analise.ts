@@ -23,7 +23,7 @@ import {
   CARTAO_ATENCAO, JUROS_ALTOS_MES, MESES_DA_ANALISE, MESES_NA_MEDIA, MIN_MESES_COM_DADOS, PARCELAS_ATENCAO, type Destino,
 } from './conselheiro'
 import { situacoesDoMes as situacoesDasContas } from './contasFixas'
-import { atrasadoHoje, aumentaDivida, calendarioDe, jurosAoAno, jurosQuePesam, meDevem, projecaoMensal, situacaoDividas, type SituacaoDivida } from './dividas'
+import { aReceberPrevisto, atrasadoHoje, aumentaDivida, calendarioDe, jurosAoAno, jurosQuePesam, meDevem, projecaoMensal, situacaoDividas, type SituacaoDivida } from './dividas'
 import { fmtDataCurta, fmtMesAno, fmtMoeda, fmtPct, fmtTaxa, fmtTaxaAno, fmtValor, LOCAL_DAS_DATAS, MESES_NOME, noMeioDaFrase } from './format'
 import { situacaoMeta } from './metas'
 import { ehGuardado } from './guardado'
@@ -1654,6 +1654,11 @@ export function analisar(e: EntradaAnalise): Analise {
         })) : []),
         ...(investido > 0 ? [{ id: 'investimentos', nome: tx('Investimentos'), valor: investido }] : []),
       ],
+      // o que te devem ("me devem") e deve cair até o fim do mês que vem: a pessoa escolhe se conta com ele no plano
+      aReceber: v.dividas
+        ? situacaoDividas(e.dividas.filter((d) => meDevem(d) && !d.em_espera), e.saldos, e.pagamentos, ano, mes, e.taxas, hojeIso)
+          .flatMap((sd) => aReceberPrevisto(sd, e.pagamentos, hojeIso, fimJanela))
+        : [],
     }
     quadros = { este: quadroDoMes(plano, hojeIso, 'este', extras), proximo: quadroDoMes(plano, hojeIso, 'proximo', extras) }
     if (unicos.length || saldoInicial !== null || calendario.dias.some((c) => c.entra || c.sai)) {
