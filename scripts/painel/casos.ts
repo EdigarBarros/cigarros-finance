@@ -19,6 +19,8 @@ import {
 } from '../../src/lib/cartoes'
 import { ajustarMesesComEfeitos } from '../../src/lib/guardado'
 import { fmtValor } from '../../src/lib/format'
+import { previstosDoMes } from '../../src/lib/previstos'
+import { pagoDaFatura } from '../../src/lib/cartoes'
 import { previsaoDoAno } from '../../src/lib/previsao'
 import { chaveDoMes, sobrasPorMes } from '../../src/lib/saldoCorrido'
 import { atrasoDa, comExtras, comFeitos, irmaPaga, comGuardado, fotosDe, travada, conselhosDoPlanejamento, custoDa, dicasDe, falta, montarPraMim, mudarParte, normPlanejamentos, placarDe, por, quadroDoMes, sobra, valerPartes } from '../../src/lib/planejamento'
@@ -962,6 +964,19 @@ export const CASOS: Caso[] = [
       const q3 = comFeitos(quadroDoMes({ comSaldo: false, fontes, pagamentos: [], semDinheiro: [] } as unknown as Plano, hoje, 'este'), salvo2)
       igual('paga inteira: as duas fichas pagas', q3.destinos.filter((d) => d.feito).map((d) => d.id).sort(), [fat, irmaPaga(fat)].sort())
       igual('e nada fica sem dinheiro', placarDe(q3, valerPartes(q3, certas)).pct, 100)
+    },
+  },
+  {
+    nome: 'fatura paga em parte: o dia a dia e o aviso mostram só o que falta',
+    rodar: () => {
+      const cartao = { id: 'pp', nome: 'PicPay' } as unknown as CartaoCredito
+      const fatura = { cartao, ano: 2026, mes: 11, valor: 655.28, pagoEmParte: 468.2, falta: 187.08, paga: null, vencimento: '2026-11-25' }
+      const prev = previstosDoMes({ ano: 2026, mes: 11, contas: [], dividas: [], faturas: [fatura as never], diaRef: '2026-11-25', hoje: '2026-11-25' })
+      igual('no dia 25, sai só o que falta', [...prev.values()].flat().map((p) => p.valor), [187.08])
+      const quitada = previstosDoMes({ ano: 2026, mes: 11, contas: [], dividas: [], faturas: [{ ...fatura, pagoEmParte: 655.28, falta: 0 } as never], diaRef: '2026-11-25', hoje: '2026-11-25' })
+      igual('paga toda em partes, nada sai', [...quitada.values()].flat().length, 0)
+      certo('o aviso diz quanto já pagou e quanto falta', /468,20.*187,08/.test(pagoDaFatura([fatura])))
+      igual('sem pagamento em parte, o aviso não muda', pagoDaFatura([{ ...fatura, pagoEmParte: 0, falta: 655.28 }]), '')
     },
   },
   {

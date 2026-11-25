@@ -408,8 +408,8 @@ export const WIDGETS: Record<IdWidget, DefWidget> = {
           return (
             <LinhaDeLista key={f.cartao.id} icone={<IconeRedondo icone="cartao" cor={f.cartao.cor || 'var(--caixa)'} />}
               titulo={f.cartao.nome}
-              sub={f.paga ? tx('Fatura paga') : atrasada ? tx('Fatura atrasada') : tx('Vence {0}', fmtDataCurta(f.vencimento))}
-              valor={fmtValor(f.valor)} tomValor={atrasada ? 'alerta' : undefined} aoTocar={() => c.irPara('cartoes')} />
+              sub={f.paga ? tx('Fatura paga') : atrasada ? tx('Fatura atrasada') : f.pagoEmParte > 0 ? tx('Pagou {0} · vence {1}', fmtValor(f.pagoEmParte), fmtDataCurta(f.vencimento)) : tx('Vence {0}', fmtDataCurta(f.vencimento))}
+              valor={fmtValor(f.paga ? f.valor : f.falta)} tomValor={atrasada ? 'alerta' : undefined} aoTocar={() => c.irPara('cartoes')} />
           )
         })}
       </CartaoWidget>
