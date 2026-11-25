@@ -672,7 +672,8 @@ tudo, em tela cheia, com **Este mês** e **Mês que vem**.
 
 - **De onde vêm as peças.** Nada é lançado aqui; o motor só lê o planejador de pagamentos (`plano` de `lib/analise.ts`).
   Entradas: as que ainda vão cair no mês (`plano.fontes`; no mesmo dia, juntas) e, neste mês, **O que está na conta**
-  (o saldo de hoje, quando é conhecido). Contas: as contas, parcelas, faturas e repetidas que vencem no mês, e as
+  (o saldo de hoje, quando é conhecido). A fatura do cartão entra com o que falta: o valor menos os pagamentos em parte
+  (`faturas_parciais`); a que vence hoje ainda entra. Contas: as contas, parcelas, faturas e repetidas que vencem no mês, e as
   atrasadas no mês de hoje. As **parcelas atrasadas da mesma dívida** viram uma ficha só ("Mercado Pago · 16 parcelas
   atrasadas, desde 2 de mar"): o valor é a soma, e o custo de esperar conta do vencimento médio, pesado pelo valor. A
   parcela deste mês fica numa ficha à parte. Também entram até 3 **dívidas abertas** com juros (para adiantar: só as sem
