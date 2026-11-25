@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { noAppAndroid } from '../lib/appAndroid'
 import { aceitaPix, iniciarTesteGratis, irParaStripe, pixAcabou, podeTestar, type Assinatura } from '../lib/assinatura'
 import { supabase } from '../lib/supabase'
 import { abrirSuporte } from '../lib/suporte'
 import { sairDestaConta } from '../lib/contas'
+import { BotaoSuporte } from './BotaoSuporte'
 import { Icone } from './Icone'
 import { LinksLegais } from './Legal'
 import { Marca } from './Marca'
@@ -16,6 +17,9 @@ const ETAPAS = [
   // no app da Play Store não se fala de preço nem de como assinar (lib/appAndroid.ts)
   ...(noAppAndroid ? [] : [{ icone: 'cartao', cor: 'var(--destaque)', titulo: tx('Para continuar'), texto: tx('Assine por R$ 9,99 por mês. Sem fidelidade, cancele quando quiser.') }]),
 ]
+
+// a janela de suporte só baixa quando a pessoa pede ajuda
+const Suporte = lazy(() => import('./Suporte').then((m) => ({ default: m.Suporte })))
 
 /** Já existe uma assinatura de cartão com pagamento por resolver: o servidor manda acertar no portal (um Pix em cima cobraria em dobro). */
 const PAGAMENTO_POR_RESOLVER = ['past_due', 'unpaid', 'incomplete', 'paused']

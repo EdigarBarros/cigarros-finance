@@ -306,7 +306,7 @@ body::before {
 .lateral .lateral-promo .btn svg { color: currentColor; }
 .email { padding: 8px 12px; font-size: 12px; color: var(--texto-3); overflow-wrap: anywhere; }
 
-.conteudo { min-width: 0; padding: 0 32px 56px; }
+.conteudo { min-width: 0; padding: 0 32px 88px; }
 .barra {
   position: sticky; top: 0; z-index: 15; display: flex; align-items: center; gap: 12px; padding: 18px 0;
 }

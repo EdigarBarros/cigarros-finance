@@ -2,6 +2,7 @@ import type { Session } from '@supabase/supabase-js'
 import { lazy, Suspense, useEffect, useReducer, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { BotaoIdioma } from './components/BotaoIdioma'
+import { BotaoSuporte } from './components/BotaoSuporte'
 import { BotaoTema } from './components/BotaoTema'
 import { Carregando } from './components/Carregando'
 import { temSessaoSalva } from './lib/abertura'
@@ -28,13 +29,14 @@ import './pages/apresentacao-telas.css'
  * `traduzida`: a tela tem os textos em inglês e espanhol (lib/textos.ts).
  * A aba "Suporte" de todas as telas fica fora daqui (components/SuporteGlobal.tsx, em main.tsx).
  */
-const comIdioma = (tela: React.ReactNode, traduzida = true) => (
+const comIdioma = (tela: React.ReactNode, traduzida = true, suporte = true) => (
   <>
     {traduzida && nativo ? <div translate="no" className="tela-nativa">{tela}</div> : tela}
     <div className="topo-flutuante">
       <BotaoTema />
       <BotaoIdioma flutuante />
     </div>
+    {suporte && <BotaoSuporte />}
   </>
 )
 
@@ -186,7 +188,7 @@ function ComAcesso({ userId, email, nome }: { userId: string; email: string; nom
   useEffect(() => { if (naAssinatura) marcarTela('assinatura') }, [naAssinatura])
   // sem internet (ou sem resposta do servidor) antes de o painel abrir: avisa, em vez do carregando para sempre
   if (carregando) return semInternet || erro ? comIdioma(<TelaSemInternet aoTentar={recarregar} />) : <Carregando />
-  if (cobranca && !temAcesso(assinatura)) return comIdioma(<TelaAssinatura assinatura={assinatura} email={email} aoAtualizar={recarregar} />)
+  if (cobranca && !temAcesso(assinatura)) return comIdioma(<TelaAssinatura assinatura={assinatura} email={email} aoAtualizar={recarregar} />, true, false)
   return (
     <Suspense fallback={<Carregando />}>
       {/* Inglês e espanhol usam os textos do próprio aplicativo. */}
