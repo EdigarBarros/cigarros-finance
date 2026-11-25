@@ -19,9 +19,11 @@ import {
 } from '../../src/lib/cartoes'
 import { ajustarMesesComEfeitos } from '../../src/lib/guardado'
 import { fmtValor } from '../../src/lib/format'
+import { previstosDoMes } from '../../src/lib/previstos'
+import { pagoDaFatura } from '../../src/lib/cartoes'
 import { previsaoDoAno } from '../../src/lib/previsao'
 import { chaveDoMes, sobrasPorMes } from '../../src/lib/saldoCorrido'
-import { atrasoDa, comExtras, comFeitos, comGuardado, fotosDe, travada, conselhosDoPlanejamento, custoDa, dicasDe, falta, montarPraMim, mudarParte, normPlanejamentos, placarDe, por, quadroDoMes, sobra, valerPartes } from '../../src/lib/planejamento'
+import { atrasoDa, comExtras, comFeitos, irmaPaga, comGuardado, fotosDe, travada, conselhosDoPlanejamento, custoDa, dicasDe, falta, montarPraMim, mudarParte, normPlanejamentos, placarDe, por, quadroDoMes, sobra, valerPartes } from '../../src/lib/planejamento'
 import { planejar, type PagamentoPlanejado, type Plano } from '../../src/lib/planejador'
 import type { CartaoCredito, ContaFixa, Divida, FaturaParcial, Lancamento, Mes, SaldoDivida } from '../../src/lib/types'
 import { aprenderJuros, descontoParaQuitar, pistaDaConferencia } from '../../src/lib/jurosAprendido'
@@ -919,6 +921,62 @@ export const CASOS: Caso[] = [
       const l = lerPlano(q, salvo)!
       igual('o próximo passo do Consultor é o freela (a pensão já caiu)', l.proximo!.fonte.nome, 'Freela')
       igual('consultor: nada a reclamar', conselhosDoPlanejamento(quadroDoMes(depois, hoje, 'este', { metas: [{ id: 'm1', nome: 'Viagem' }] }), salvo, fmt, data), [])
+    },
+  },
+  {
+    nome: 'planejamento do mês: conta paga em parte fica travada na parte paga',
+    rodar: () => {
+      const hoje = '2026-11-20'
+      const pg = (descricao: string, valor: number, vence: string, origem = 'cartao'): PagamentoPlanejado => ({
+        descricao, valor, vence, origem, pagarEm: null, atraso: 0, custo: 0, taxaMes: 1, multa: 0.02, estimada: true, fonte: null, fonteData: null,
+      } as PagamentoPlanejado)
+      const fontes = [{ data: hoje, valor: 500, descricao: 'Pix' }, { data: '2026-11-25', valor: 800, descricao: 'Pensão' }]
+      const plano = (fatura: number) => ({ comSaldo: false, fontes, pagamentos: [pg('Fatura do PicPay', fatura, '2026-11-25')], semDinheiro: [] } as unknown as Plano)
+      // o plano: a fatura de 655,28 sai 400 do Pix (dia 20) e 255,28 da pensão (dia 25)
+      const q0 = quadroDoMes(plano(655.28), hoje, 'este')
+      const fat = q0.destinos.find((d) => d.nome === 'Fatura do PicPay')!.id
+      const [pix, pensao] = q0.fontes.map((f) => f.id)
+      const partes = [{ entrada: pensao, conta: fat, valor: 255.28 }, { entrada: pix, conta: fat, valor: 400 }]
+      const salvo = { partes, em: 'x', fotos: fotosDe(q0, partes) }
+
+      // pagou 468,20 em parte: a fatura passa a prever só 187,08
+      const q = comFeitos(quadroDoMes(plano(187.08), hoje, 'este'), salvo)
+      const irma = q.destinos.find((d) => d.id === irmaPaga(fat))!
+      certo('a parte paga vira uma ficha travada', !!irma?.feito)
+      perto('com o valor pago', irma.valor!, 468.2)
+      const certas = valerPartes(q, partes)
+      const de = (entrada: string, conta: string) => certas.find((p) => p.entrada === entrada && p.conta === conta)?.valor ?? 0
+      perto('o Pix (que cai antes) vai todo para a parte paga', de(pix, irma.id), 400)
+      perto('a pensão completa a parte paga', de(pensao, irma.id), 68.2)
+      perto('e o resto da pensão fica na fatura, solto', de(pensao, fat), 187.08)
+      certo('a parte paga não muda', travada(q, { entrada: pensao, conta: irma.id, valor: 68.2 }) && mudarParte(q, certas, pensao, irma.id, 0) === certas)
+      certo('a parte solta muda', mudarParte(q, certas, pensao, fat, 100) !== certas)
+      igual('placar: tudo coberto', placarDe(q, certas).pct, 100)
+
+      // salvar de novo e pagar mais 87,08: a parte paga cresce, sem duplicar
+      const salvo2 = { partes: certas, em: 'y', fotos: fotosDe(q, certas) }
+      const q2 = comFeitos(quadroDoMes(plano(100), hoje, 'este'), salvo2)
+      igual('uma ficha paga só', q2.destinos.filter((d) => d.id === irmaPaga(fat)).length, 1)
+      perto('que agora tem 555,28', q2.destinos.find((d) => d.id === irmaPaga(fat))!.valor!, 555.28)
+      perto('e a fatura solta fica com 100', valerPartes(q2, certas).filter((p) => p.conta === fat).reduce((s, p) => s + p.valor, 0), 100)
+
+      // pagou tudo: a fatura some e a ficha original volta como paga, junto com a irmã
+      const q3 = comFeitos(quadroDoMes({ comSaldo: false, fontes, pagamentos: [], semDinheiro: [] } as unknown as Plano, hoje, 'este'), salvo2)
+      igual('paga inteira: as duas fichas pagas', q3.destinos.filter((d) => d.feito).map((d) => d.id).sort(), [fat, irmaPaga(fat)].sort())
+      igual('e nada fica sem dinheiro', placarDe(q3, valerPartes(q3, certas)).pct, 100)
+    },
+  },
+  {
+    nome: 'fatura paga em parte: o dia a dia e o aviso mostram só o que falta',
+    rodar: () => {
+      const cartao = { id: 'pp', nome: 'PicPay' } as unknown as CartaoCredito
+      const fatura = { cartao, ano: 2026, mes: 11, valor: 655.28, pagoEmParte: 468.2, falta: 187.08, paga: null, vencimento: '2026-11-25' }
+      const prev = previstosDoMes({ ano: 2026, mes: 11, contas: [], dividas: [], faturas: [fatura as never], diaRef: '2026-11-25', hoje: '2026-11-25' })
+      igual('no dia 25, sai só o que falta', [...prev.values()].flat().map((p) => p.valor), [187.08])
+      const quitada = previstosDoMes({ ano: 2026, mes: 11, contas: [], dividas: [], faturas: [{ ...fatura, pagoEmParte: 655.28, falta: 0 } as never], diaRef: '2026-11-25', hoje: '2026-11-25' })
+      igual('paga toda em partes, nada sai', [...quitada.values()].flat().length, 0)
+      certo('o aviso diz quanto já pagou e quanto falta', /468,20.*187,08/.test(pagoDaFatura([fatura])))
+      igual('sem pagamento em parte, o aviso não muda', pagoDaFatura([{ ...fatura, pagoEmParte: 0, falta: 655.28 }]), '')
     },
   },
   {

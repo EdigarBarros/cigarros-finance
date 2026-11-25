@@ -18926,5 +18926,21 @@
   "paga · {0}": {
     "en": "paid · {0}",
     "es": "pagada · {0}"
+  },
+  "Pagou {0} · vence {1}": {
+    "en": "Paid {0} · due {1}",
+    "es": "Pagó {0} · vence {1}"
+  },
+  "Falta da fatura": {
+    "en": "Left on the bill",
+    "es": "Falta de la factura"
+  },
+  "Já pagou {0} e faltam {1}.": {
+    "en": "You already paid {0} and {1} is left.",
+    "es": "Ya pagaste {0} y faltan {1}."
+  },
+  "Na fatura do {0}, já pagou {1} e faltam {2}.": {
+    "en": "On the {0} bill, you already paid {1} and {2} is left.",
+    "es": "En la factura de {0}, ya pagaste {1} y faltan {2}."
   }
 }

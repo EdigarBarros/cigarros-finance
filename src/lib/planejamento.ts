@@ -265,8 +265,23 @@ export function comFeitos(q: Quadro, guardado: PlanoGuardado | undefined): Quadr
       juros: null, multa: 0, estimada: false, origem: 'conta', indice: destinos.length, feito: true,
     })
   }
+  // conta paga em parte: continua prevista, mas menor que na foto. A diferença foi paga: vira a ficha irmã "<id>~pago",
+  // travada como as pagas, e `valerPartes` passa para ela as primeiras fatias da conta (do dinheiro que cai antes).
+  for (const id of pagas) {
+    const d = fotos.destinos[id], x = destinos.find((y) => y.id === id)
+    if (!d || d.valor === null || !x || x.feito || x.valor === null || d.valor - x.valor < 0.01) continue
+    const planejado = centavos(guardado.partes.filter((p) => p.conta === id || p.conta === irmaPaga(id)).reduce((s, p) => s + p.valor, 0))
+    const ja = destinos.find((y) => y.id === irmaPaga(id))
+    const valor = centavos(Math.min(planejado, (ja?.valor ?? 0) + d.valor - x.valor))
+    if (valor < 0.01) continue
+    if (ja) ja.valor = valor
+    else destinos.push({ ...x, id: irmaPaga(id), valor, atrasada: false, juros: null, multa: 0, estimada: false, juntas: undefined, feito: true })
+  }
   return { ...q, fontes, destinos }
 }
+
+/** A parte já paga de uma conta paga em parte (ficha irmã, travada). */
+export const irmaPaga = (id: string) => `${id}~pago`
 
 /** O quadro como a pessoa deixou o plano deste mês (com ou sem o dinheiro guardado e o que te devem, e o que já foi feito). */
 export const quadroDoPlano = (q: Quadro, guardado: PlanoGuardado | undefined) =>
@@ -321,11 +336,24 @@ export function custoDa(q: Quadro, p: Parte): number {
  */
 export function valerPartes(q: Quadro, partes: Parte[]): Parte[] {
   const certas: Parte[] = []
-  for (const p of partes) {
+  const somar = (entrada: string, conta: string, valor: number) => {
+    const ja = certas.find((x) => x.entrada === entrada && x.conta === conta)
+    if (ja) ja.valor = centavos(ja.valor + valor)
+    else certas.push({ entrada, conta, valor: centavos(valor) })
+  }
+  // do dinheiro que cai antes para o que cai depois: numa conta paga em parte, o que foi pago sai das primeiras fatias
+  const data = (p: Parte) => fonteDe(q, p.entrada)?.data ?? '9'
+  for (const p of [...partes].sort((a, b) => data(a).localeCompare(data(b)))) {
     const f = fonteDe(q, p.entrada), d = destinoDe(q, p.conta)
     if (!f || !d || !(p.valor > 0) || !podeIr(f, d)) continue
-    const cabe = Math.min(sobra(certas, f), falta(certas, d), p.valor)
-    if (cabe >= 0.01) certas.push({ entrada: p.entrada, conta: p.conta, valor: centavos(cabe) })
+    let resto = p.valor
+    const irma = destinoDe(q, irmaPaga(p.conta))
+    if (irma) {
+      const vai = Math.min(sobra(certas, f), falta(certas, irma), resto)
+      if (vai >= 0.01) { somar(p.entrada, irma.id, vai); resto = centavos(resto - vai) }
+    }
+    const cabe = Math.min(sobra(certas, f), falta(certas, d), resto)
+    if (cabe >= 0.01) somar(p.entrada, p.conta, cabe)
   }
   return certas
 }

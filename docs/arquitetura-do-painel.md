@@ -700,7 +700,9 @@ tudo, em tela cheia, com **Este mês** e **Mês que vem**.
   de cada entrada e conta que tem fatia. Depois, quando a entrada é lançada (não vem mais como prevista) ela continua na
   mesa como **já caiu**, com as fatias que tinha, mas não recebe conta nova (o dinheiro já está na conta); a sobra dela não
   conta como "sem destino". Quando a conta é paga, a fatia fica como **paga**: listrada, com um visto, sem puxador e sem
-  ajuste, e conta como coberta no placar. "Montar pra mim" e "Recomeçar" mantêm essas fatias; o Consultor pula o que já
+  ajuste, e conta como coberta no placar. Conta paga **em parte** (continua prevista, mas menor que na foto): a diferença
+  vira a ficha irmã `<id>~pago` (`irmaPaga()`), travada, e `valerPartes()` passa para ela as primeiras fatias da conta
+  (do dinheiro que cai antes); o resto continua solto. "Montar pra mim" e "Recomeçar" mantêm essas fatias; o Consultor pula o que já
   caiu no próximo passo. Vale para o que te devem também (o pagamento lançado na dívida). O guardado não entra nisso.
 - **Jogar.** No computador, arraste a conta da bandeja **Sem dinheiro ainda** para dentro de uma barra; em qualquer
   aparelho, toque na conta e depois na barra (no celular a bandeja fica presa embaixo). Entra o que cabe (`por()`): o
