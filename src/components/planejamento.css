@@ -439,7 +439,9 @@
   .pj-fichas::-webkit-scrollbar { display: none; }
   .pj-ficha { flex: 0 0 auto; width: min(240px, 72vw); scroll-snap-align: start; cursor: pointer; }
   .pj-tudo { flex: 1; }
-  .pj-ajuste { left: 0 !important; right: 0; top: auto !important; bottom: 0; width: 100%; padding-bottom: calc(18px + var(--seguro-baixo, 0px)); border-radius: 24px 24px 0 0; transform: none; animation: pj-folha .4s var(--deslize) both; }
+  /* folha presa embaixo, na largura toda; o seletor repete o do centralizar (translateX(-50%)), que ganhava por ser mais
+     específico e empurrava metade da folha para fora da tela */
+  .pj-ajuste, .pj-ajuste:not([style*='left:']) { left: 0 !important; right: 0; top: auto !important; bottom: 0; width: 100%; padding-bottom: calc(18px + var(--seguro-baixo, 0px)); border-radius: 24px 24px 0 0; transform: none; animation: pj-folha .4s var(--deslize) both; }
   .pj-aviso { bottom: calc(150px + var(--seguro-baixo, 0px)); }
   .pj-cartao { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .pj-cartao .btn { justify-content: center; }

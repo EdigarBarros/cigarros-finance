@@ -2052,3 +2052,10 @@ mudou" fora), quando e quantas mudanças, e a nota de → para à direita; os tr
 linha que se enche, nomes embaixo) que some ao terminar; as mudanças em blocos de duas colunas (uma no celular), com "+N" quando
 passam do limite. As regras antigas espalhadas pelo arquivo saíram. **Validação:** `tsc -b`, lint, build, `scripts/painel/testar.mjs`
 53/53, `testar-movel.cjs` 379 OK, fotos no computador (claro e escuro, durante e depois da montagem) e no celular.
+
+### 25/11/2026 — Claude — Ajuste da fatia cortado no celular
+
+**Estado:** corrigido e publicado. No celular, o ajuste da fatia (Planejar o mês) abria com metade para fora da tela, à
+esquerda. A regra do computador `.pj-ajuste:not([style*='left:']) { transform: translateX(-50%) }` é mais específica que a
+da folha do celular (`transform: none`) e ganhava. Em `src/components/planejamento.css`, a regra do celular repete esse
+seletor. `testar-planejamento.cjs` ganhou a conferência (x = −195 sem a correção, 0 com ela); 56 OK.
