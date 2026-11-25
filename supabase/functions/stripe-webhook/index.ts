@@ -1,5 +1,5 @@
 // Recebe os avisos do Stripe (assinou, renovou, falhou, cancelou, pagou ou reembolsou o Pix de 30 dias) e atualiza a tabela assinaturas.
-// O Stripe autentica cada notificação com STRIPE_WEBHOOK_SECRET. O gateway não exige JWT deste endpoint.
+// O Stripe autentica cada notificação com STRIPE_WEBHOOK_SECRET; sem ele, o evento é lido de novo na API do Stripe (ver abaixo). O gateway não exige JWT deste endpoint.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import Stripe from 'npm:stripe@23.2.0'
 
@@ -113,17 +113,32 @@ Deno.serve(async (req) => {
   if (!assinatura) return new Response('Assinatura ausente', { status: 400 })
   const segredo = Deno.env.get('STRIPE_WEBHOOK_SECRET')
   const chave = Deno.env.get('STRIPE_SECRET_KEY')
-  if (!segredo || !chave) {
-    console.error('Segredos do Stripe não configurados no webhook')
+  if (!chave) {
+    console.error('STRIPE_SECRET_KEY não configurada no webhook')
     return new Response('Webhook indisponível', { status: 503 })
   }
 
   let evento: Stripe.Event
-  try {
-    const stripe = new Stripe(chave, { httpClient: Stripe.createFetchHttpClient() })
-    evento = await stripe.webhooks.constructEventAsync(await req.text(), assinatura, segredo, undefined, cryptoStripe)
-  } catch {
-    return new Response('Notificação do Stripe inválida', { status: 400 })
+  const corpo = await req.text()
+  if (segredo) {
+    try {
+      const stripe = new Stripe(chave, { httpClient: Stripe.createFetchHttpClient() })
+      evento = await stripe.webhooks.constructEventAsync(corpo, assinatura, segredo, undefined, cryptoStripe)
+    } catch {
+      return new Response('Notificação do Stripe inválida', { status: 400 })
+    }
+  } else {
+    // Sem STRIPE_WEBHOOK_SECRET o pagamento não pode parar (em 25/11/2026 um Pix pago ficou sem liberar por isso). O corpo não
+    // vale nada: dele só sai o id, e o evento inteiro é lido no próprio Stripe com a chave secreta. Um id inventado ou de outra
+    // conta não existe lá (404) e é recusado. Mesma garantia da assinatura, com uma chamada a mais.
+    console.error('STRIPE_WEBHOOK_SECRET ausente: evento conferido direto na API do Stripe. Cadastre o segredo no Supabase.')
+    let id: unknown
+    try { id = JSON.parse(corpo)?.id } catch { /* corpo inválido: cai no teste abaixo */ }
+    if (typeof id !== 'string' || !/^evt_[A-Za-z0-9]+$/.test(id)) return new Response('Notificação do Stripe inválida', { status: 400 })
+    const re = await fetch(`${STRIPE}/events/${id}`, { headers: cab() })
+    if (re.status === 404) return new Response('Notificação do Stripe inválida', { status: 400 })
+    if (!re.ok) return new Response('não foi possível ler o evento', { status: 500 }) // o Stripe tenta de novo
+    evento = await re.json()
   }
 
   try {

@@ -2059,3 +2059,27 @@ passam do limite. As regras antigas espalhadas pelo arquivo saíram. **Validaç�
 esquerda. A regra do computador `.pj-ajuste:not([style*='left:']) { transform: translateX(-50%) }` é mais específica que a
 da folha do celular (`transform: none`) e ganhava. Em `src/components/planejamento.css`, a regra do celular repete esse
 seletor. `testar-planejamento.cjs` ganhou a conferência (x = −195 sem a correção, 0 com ela); 56 OK.
+
+### 25/11/2026 — Claude — Pix pago não liberava o acesso (webhook sem STRIPE_WEBHOOK_SECRET)
+
+**Estado:** corrigido e publicado (função `stripe-webhook` versão 9 no Supabase). Pendente (dono): cadastrar o segredo.
+
+**Problema.** Um cliente pagou o Pix de R$ 9,99 às 08h26 e o app ficou parado em "processando". A versão 8 do webhook
+(publicada em 24/11 17:16 UTC, entrada "Segurança do OpusCash") passou a exigir `STRIPE_WEBHOOK_SECRET`, que não estava
+cadastrado no Supabase. Resultado: os dois avisos do Stripe desse pagamento receberam 503 ("Segredos do Stripe não
+configurados no webhook" nos logs) e nada foi gravado. Era o único aviso desde a versão 8, mas qualquer pagamento (Pix,
+assinatura, cancelamento, reembolso) teria o mesmo destino.
+
+**Correção.** Com o segredo, nada muda: a assinatura é conferida. Sem ele, o webhook não devolve mais 503: tira do corpo só
+o `id` do evento e lê o evento inteiro em `GET /v1/events/{id}` com `STRIPE_SECRET_KEY`. Id inventado ou de outra conta dá
+404 no Stripe e é recusado com 400; o conteúdo vem do Stripe, não de quem chamou. Só falta de `STRIPE_SECRET_KEY` dá 503.
+
+**Cliente afetado.** Conta liberada à mão com uma ponte de 3 dias (`teste_fim` = agora + 3 dias). Quando o Stripe reenviar o
+aviso (tenta por até 3 dias), `registrar_pix` soma os 30 dias a partir do fim da ponte e grava o pagamento em `pagamentos_pix`.
+
+**Validação.** Sintaxe conferida com o `typescript` do projeto; versão 9 publicada; `POST` com evento falso respondeu 400
+"Notificação do Stripe inválida" (prova de que a chave secreta funciona e o Stripe disse 404). Sem pagamento real de teste.
+
+**Pendente (dono).** Stripe → Desenvolvedores → Webhooks → destino do OpusCash → "Segredo de assinatura" (`whsec_...`):
+cadastrar como `STRIPE_WEBHOOK_SECRET` em Supabase → Edge Functions → Secrets. Para liberar o cliente na hora, reenviar no
+Stripe o evento `checkout.session.async_payment_succeeded` desse pagamento.
