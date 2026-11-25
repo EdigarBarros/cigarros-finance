@@ -148,7 +148,8 @@ interface Pendente extends Compromisso { taxaMes: number; multa: number; estimad
 export function planejar(e: EntradaPlanejador): Plano {
   const comSaldo = e.saldoInicial !== null
   const ritmo = comSaldo ? Math.max(0, e.ritmoDia) : 0
-  const entradas = [...e.entradas].filter((x) => x.valor > 0 && x.data > e.hoje && x.data <= e.fim).sort((a, b) => a.data.localeCompare(b.data))
+  // a entrada de hoje ainda conta: se ela estivesse lançada, não viria como prevista (a pensão do dia 25 sumia à meia-noite)
+  const entradas = [...e.entradas].filter((x) => x.valor > 0 && x.data >= e.hoje && x.data <= e.fim).sort((a, b) => a.data.localeCompare(b.data))
   const pendentes: Pendente[] = e.compromissos
     .filter((c) => c.valor > 0 && c.vence <= e.fim)
     .map((c) => ({ ...c, ...taxasDe(c) }))

@@ -22,7 +22,7 @@ import { fmtValor } from '../../src/lib/format'
 import { previsaoDoAno } from '../../src/lib/previsao'
 import { chaveDoMes, sobrasPorMes } from '../../src/lib/saldoCorrido'
 import { atrasoDa, comExtras, comGuardado, conselhosDoPlanejamento, custoDa, dicasDe, falta, montarPraMim, mudarParte, normPlanejamentos, placarDe, por, quadroDoMes, sobra, valerPartes } from '../../src/lib/planejamento'
-import type { PagamentoPlanejado, Plano } from '../../src/lib/planejador'
+import { planejar, type PagamentoPlanejado, type Plano } from '../../src/lib/planejador'
 import type { CartaoCredito, ContaFixa, Divida, FaturaParcial, Lancamento, Mes, SaldoDivida } from '../../src/lib/types'
 import { aprenderJuros, descontoParaQuitar, pistaDaConferencia } from '../../src/lib/jurosAprendido'
 import { historicoDaDivida } from '../../src/lib/conferencias'
@@ -858,6 +858,21 @@ export const CASOS: Caso[] = [
     },
   },
 
+  {
+    nome: 'planejamento do mês: a entrada que cai hoje continua no plano',
+    rodar: () => {
+      // meia-noite do dia 25: a pensão do dia 25 ainda não caiu (senão estaria lançada e não viria como prevista)
+      const pl = planejar({
+        hoje: '2026-11-25', fim: '2026-12-31', saldoInicial: 100, ritmoDia: 0, porDiaDoMes: null, gastouHoje: 0, abertas: [],
+        entradas: [{ data: '2026-11-25', valor: 800, descricao: 'Pensão' }, { data: '2026-11-24', valor: 50, descricao: 'Velha' }],
+        compromissos: [{ descricao: 'Fatura', valor: 187.08, vence: '2026-11-25', origem: 'cartao', jurosMes: null }],
+      })
+      igual('o saldo e a pensão de hoje são entradas', pl.fontes.map((f) => f.descricao), ['o saldo de hoje', 'Pensão'])
+      const q = quadroDoMes(pl, '2026-11-25', 'este')
+      igual('a mesa mostra a pensão', q.fontes.map((f) => f.nome), ['O que está na conta', 'Pensão'])
+      igual('a fatura de hoje não fica sem dinheiro', pl.semDinheiro.length, 0)
+    },
+  },
   {
     nome: 'planejamento do mês: contar com quem me deve',
     rodar: () => {
