@@ -1,4 +1,5 @@
 import { StrictMode } from 'react'
+import { SuporteGlobal } from './components/SuporteGlobal'
 import { createRoot } from 'react-dom/client'
 import App from './App'
 import { Abertura } from './components/Abertura'
@@ -27,5 +28,6 @@ createRoot(document.getElementById('root')!).render(
       <App />
       <Abertura />
     </LimiteDeErro>
+    <SuporteGlobal />
   </StrictMode>,
 )

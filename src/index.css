@@ -306,7 +306,7 @@ body::before {
 .lateral .lateral-promo .btn svg { color: currentColor; }
 .email { padding: 8px 12px; font-size: 12px; color: var(--texto-3); overflow-wrap: anywhere; }
 
-.conteudo { min-width: 0; padding: 0 32px 88px; }
+.conteudo { min-width: 0; padding: 0 32px 56px; }
 .barra {
   position: sticky; top: 0; z-index: 15; display: flex; align-items: center; gap: 12px; padding: 18px 0;
 }
@@ -4743,30 +4743,6 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .dv-espera-ficha-texto strong { display: inline-flex; align-items: center; gap: 6px; }
 .dv-espera-ficha-texto small { color: var(--texto-2); line-height: 1.4; }
 
-/* ---------- botão de suporte flutuante (components/BotaoSuporte.tsx): em todas as telas, no canto de baixo ---------- */
-.suporte-flutuante {
-  position: fixed; z-index: 25; right: calc(18px + env(safe-area-inset-right)); bottom: calc(18px + env(safe-area-inset-bottom));
-  display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px 11px 14px; border-radius: 999px; border: 0;
-  font: inherit; font-size: 14.5px; font-weight: 700; letter-spacing: .01em; color: #fff; text-decoration: none; cursor: pointer;
-  background: var(--gradiente); box-shadow: 0 12px 30px -10px var(--marca-2), 0 0 0 1px rgba(255, 255, 255, .14) inset;
-  transition: transform .45s var(--mola-salto), box-shadow .25s; animation: suporte-chega .6s .8s var(--mola) backwards;
-}
-.suporte-flutuante:hover { transform: translateY(-2px); box-shadow: 0 16px 34px -10px var(--marca-2), 0 0 0 1px rgba(255, 255, 255, .22) inset; }
-.suporte-flutuante:active { transform: scale(.95); }
-.suporte-flutuante:focus-visible { outline: 3px solid var(--destaque); outline-offset: 3px; }
-.suporte-flutuante-aviso {
-  position: absolute; top: -6px; right: -4px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; display: grid; place-items: center;
-  font-size: 12px; font-weight: 800; color: #fff; background: #f04438; box-shadow: 0 0 0 2px var(--fundo, #0b0f1a);
-}
-@keyframes suporte-chega { from { opacity: 0; transform: translateY(16px) scale(.9); } }
-@media (max-width: 860px) {
-  .suporte-flutuante { right: calc(14px + env(safe-area-inset-right)); bottom: calc(14px + env(safe-area-inset-bottom)); padding: 10px 15px 10px 12px; font-size: 13.5px; }
-}
-/* no painel do celular, fica acima da barra de abas de baixo (no tablet a barra some) */
-@media (max-width: 600px) { .suporte-flutuante.no-painel { bottom: calc(92px + env(safe-area-inset-bottom)); } }
-@media (prefers-reduced-motion: reduce) { .suporte-flutuante { animation: none; transition: none; } }
-@media print { .suporte-flutuante { display: none; } }
-
 /* tela de assinatura: voltou do pagamento e a confirmação não chegou (components/Assinatura.tsx) */
 .pl-sem-confirmacao {
   display: flex; gap: 12px; align-items: flex-start; width: 100%; padding: 16px; border-radius: 18px; text-align: left;
@@ -4777,3 +4753,31 @@ button.ex-tipo:hover { transform: scale(1.1); }
 .pl-sem-confirmacao strong { font-size: 15px; }
 .pl-sem-confirmacao p { margin: 0; color: var(--texto-2); font-size: 14px; line-height: 1.45; }
 .pl-sem-confirmacao .btn { margin-top: 4px; display: inline-flex; align-items: center; gap: 8px; }
+
+/* ---------- aba "Suporte" de todas as telas (components/SuporteGlobal.tsx) ----------
+ * Presa na borda direita, um pouco abaixo do meio: uma faixa fina (menos de 32 px) que não cobre botões, o fim das listas nem
+ * as barras de cima e de baixo. A camada fica por cima de tudo (janelas, planejamento, tutorial), menos a abertura animada. */
+.suporte-camada { position: relative; z-index: 9500; }
+.suporte-aba {
+  position: fixed; z-index: 1; right: 0; top: 58%; translate: 0 -50%;
+  display: inline-flex; align-items: center; gap: 7px; padding: 13px 7px 14px; border: 0; border-radius: 12px 0 0 12px;
+  writing-mode: vertical-rl; rotate: 180deg; /* lê de baixo para cima, como as abas laterais de costume */
+  font: inherit; font-size: 13px; font-weight: 700; letter-spacing: .03em; line-height: 1; color: #fff; text-decoration: none; cursor: pointer;
+  background: var(--gradiente); box-shadow: 0 8px 22px -8px var(--marca-2), inset 0 0 0 1px rgba(255, 255, 255, .16);
+  opacity: .94; transition: padding .3s var(--mola), opacity .2s; animation: suporte-aba-chega .6s 1s var(--mola) backwards;
+}
+.suporte-aba svg { rotate: 180deg; flex: none; } /* a aba é girada 180°: o ícone volta a ficar em pé */
+.suporte-aba:hover, .suporte-aba:focus-visible { opacity: 1; padding-right: 11px; }
+.suporte-aba:focus-visible { outline: 3px solid var(--destaque); outline-offset: 2px; }
+.suporte-aba-aviso {
+  writing-mode: horizontal-tb; rotate: 180deg; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px; display: grid; place-items: center;
+  font-size: 11px; font-weight: 800; color: #fff; background: #f04438;
+}
+@keyframes suporte-aba-chega { from { translate: 100% -50%; } }
+@media (max-width: 600px) {
+  .suporte-aba { top: 66%; font-size: 11.5px; padding: 10px 3px 11px; gap: 5px; border-radius: 10px 0 0 10px; }
+  .suporte-aba svg { width: 15px; height: 15px; }
+  .suporte-aba:hover, .suporte-aba:focus-visible { padding-right: 3px; }
+}
+@media (prefers-reduced-motion: reduce) { .suporte-aba { animation: none; transition: none; } }
+@media print { .suporte-camada { display: none; } }

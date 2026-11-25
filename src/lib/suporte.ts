@@ -97,3 +97,8 @@ export function contextoDoPedido() {
   const t = telaAtual()
   return { tela: telas[t] ?? t, aparelho: nomes[aparelho()] ?? aparelho(), versao: VERSAO }
 }
+
+/** A aba "Suporte" de todas as telas (components/SuporteGlobal.tsx) ouve este evento. */
+export const EVENTO_ABRIR_SUPORTE = 'opus:abrir-suporte'
+/** Abre a janela de suporte de qualquer lugar do app. `novo` já abre o formulário de pedido. */
+export const abrirSuporte = (inicial?: 'novo') => window.dispatchEvent(new CustomEvent(EVENTO_ABRIR_SUPORTE, { detail: inicial ?? null }))
