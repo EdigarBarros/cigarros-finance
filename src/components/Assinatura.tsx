@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { noAppAndroid } from '../lib/appAndroid'
 import { aceitaPix, iniciarTesteGratis, irParaStripe, pixAcabou, podeTestar, type Assinatura } from '../lib/assinatura'
 import { supabase } from '../lib/supabase'
 import { sairDestaConta } from '../lib/contas'
+import { BotaoSuporte } from './BotaoSuporte'
 import { Icone } from './Icone'
 import { LinksLegais } from './Legal'
 import { Marca } from './Marca'
@@ -15,6 +16,9 @@ const ETAPAS = [
   // no app da Play Store não se fala de preço nem de como assinar (lib/appAndroid.ts)
   ...(noAppAndroid ? [] : [{ icone: 'cartao', cor: 'var(--destaque)', titulo: tx('Para continuar'), texto: tx('Assine por R$ 9,99 por mês. Sem fidelidade, cancele quando quiser.') }]),
 ]
+
+// a janela de suporte só baixa quando a pessoa pede ajuda
+const Suporte = lazy(() => import('./Suporte').then((m) => ({ default: m.Suporte })))
 
 /** Já existe uma assinatura de cartão com pagamento por resolver: o servidor manda acertar no portal (um Pix em cima cobraria em dobro). */
 const PAGAMENTO_POR_RESOLVER = ['past_due', 'unpaid', 'incomplete', 'paused']
@@ -41,6 +45,10 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
   const [lendoMoeda, setLendoMoeda] = useState(!noAppAndroid) // enquanto lê, mostra o carregando (não troca a tela de repente)
   const [erro, setErro] = useState<string | null>(null)
   const [esperando, setEsperando] = useState(voltou)
+  // voltou do pagamento e a confirmação não chegou nos 40 s: avisa e oferece o suporte (sem isso a tela voltava a pedir o pagamento,
+  // e quem já tinha pago o Pix achava que precisava pagar de novo)
+  const [semConfirmacao, setSemConfirmacao] = useState(false)
+  const [suporte, setSuporte] = useState<false | 'lista' | 'novo'>(false)
   const [saindo, setSaindo] = useState(false)
   const testeGravado = useRef(false)
   const tentativas = useRef(0)
@@ -51,7 +59,7 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
     const t = window.setInterval(() => {
       tentativas.current += 1
       void aoAtualizar()
-      if (tentativas.current >= 20) setEsperando(false)
+      if (tentativas.current >= 20) { setEsperando(false); setSemConfirmacao(true) }
     }, 2000)
     return () => window.clearInterval(t)
   }, [esperando, aoAtualizar])
@@ -127,6 +135,7 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
     : tx('Assine para voltar ao seu painel. Seus dados continuam guardados.')
 
   return (
+    <>
     <main className={`pl ${saindo ? 'saindo' : ''} ${escolha ? 'escolha' : ''}`}>
       <section className="pl-lado">
         <div className="pl-orbe pl-orbe-a" aria-hidden="true" />
@@ -151,6 +160,18 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
 
       <section className="pl-planos">
         <div className="pl-planos-miolo">
+          {semConfirmacao && (
+            <div className="pl-sem-confirmacao" role="alert">
+              <Icone nome="relogio" tamanho={20} />
+              <div>
+                <strong>{tx('Ainda não recebemos a confirmação do seu pagamento')}</strong>
+                <p>{tx('Se você já pagou, não pague de novo: fale com o suporte e a gente libera seu acesso.')}</p>
+                <button type="button" className="btn gradiente" onClick={() => setSuporte('novo')}>
+                  <Icone nome="conversa" tamanho={17} />{tx('Falar com o suporte')}
+                </button>
+              </div>
+            </div>
+          )}
           {carregandoMoeda ? (
             <>
               <h1>{titulo}</h1>
@@ -269,5 +290,12 @@ export function TelaAssinatura({ assinatura, email, aoAtualizar }: { assinatura:
         </div>
       </section>
     </main>
+    <BotaoSuporte aoAbrir={() => setSuporte('lista')} />
+    {suporte && (
+      <Suspense fallback={null}>
+        <Suporte inicial={suporte === 'novo' ? 'novo' : undefined} aoFechar={() => setSuporte(false)} aoMudar={() => {}} />
+      </Suspense>
+    )}
+    </>
   )
 }

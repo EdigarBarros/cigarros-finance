@@ -2083,3 +2083,22 @@ aviso (tenta por até 3 dias), `registrar_pix` soma os 30 dias a partir do fim d
 **Pendente (dono).** Stripe → Desenvolvedores → Webhooks → destino do OpusCash → "Segredo de assinatura" (`whsec_...`):
 cadastrar como `STRIPE_WEBHOOK_SECRET` em Supabase → Edge Functions → Secrets. Para liberar o cliente na hora, reenviar no
 Stripe o evento `checkout.session.async_payment_succeeded` desse pagamento.
+
+### 25/11/2026 — Claude — Botão de suporte em todas as telas
+
+**Estado:** implementado, testado no app de demonstração e publicado pelo fluxo do `CLAUDE.md`.
+
+**Pedido.** Depois do Pix que não liberou (entrada anterior), o dono pediu um botão de suporte bem destacado em todas as telas.
+
+**O que mudou.** `src/components/BotaoSuporte.tsx`: botão flutuante "Suporte" (gradiente da marca, canto de baixo à direita,
+bolinha com as respostas novas). No painel abre a janela de suporte (`Suporte.tsx`); no celular fica acima da barra de abas.
+Na tela de assinatura (sem acesso) também abre a janela do app, carregada só quando pedida. Sem conta (login, apresentação,
+termos, sem internet) vira um e-mail para `VITE_EMAIL_SUPORTE` (sem o e-mail configurado, não aparece). Em `App.tsx`, o
+`comIdioma` põe o botão em toda tela de fora do painel. De carona: voltando do pagamento, se a confirmação não chega em 40 s,
+a tela de assinatura mostra "Ainda não recebemos a confirmação do seu pagamento… não pague de novo" com "Falar com o suporte"
+(antes ela voltava a oferecer o pagamento, sem aviso). O fim do conteúdo no computador ganhou espaço para o botão (88 px).
+
+**Validação.** `npx tsc -b`, `npm run lint` (só avisos antigos), build, `node scripts/painel/testar.mjs` (55 de 55); Playwright
+no app de demonstração: painel no computador (abre o suporte), celular nos 3 jeitos (botão acima da barra), tela de assinatura
+(abre o suporte), confirmação que não chega (aviso e pedido novo), login sem conta (mailto), sem erros na página.
+O app Android não foi regerado: o botão chega a ele na próxima versão.
