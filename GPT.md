@@ -2043,3 +2043,12 @@ lugares usavam `valor` onde a pergunta é "quanto pagar".
 travada…" e "fatura paga em parte: o dia a dia e o aviso…", este falha sem a correção com R$ 655,28);
 `testar-fatura-em-parte.cjs` 4 OK; `testar-plano-travado.cjs` 28 OK; `testar-a-receber.cjs` 18 OK;
 `testar-planejamento.cjs` 54 OK.
+### 25/11/2026 — Claude — Consultor: o cartão "Refiz sua tela" redesenhado
+
+**Pedido do dono** (print): o cartão do topo do Consultor que aparece depois de uma mudança estava feio no computador (título
+pequeno solto, os três passos espremidos numa coluna à direita, as mudanças numa fila só). `OQueMudou` (`pages/Analise.tsx`) e o
+bloco `.an-mudou*` de `pages/analise.css` refeitos: cabeçalho com o selo da bússola, o título ("Refiz sua tela" ao vivo, "O que
+mudou" fora), quando e quantas mudanças, e a nota de → para à direita; os três passos viram uma trilha (bolinhas ligadas por uma
+linha que se enche, nomes embaixo) que some ao terminar; as mudanças em blocos de duas colunas (uma no celular), com "+N" quando
+passam do limite. As regras antigas espalhadas pelo arquivo saíram. **Validação:** `tsc -b`, lint, build, `scripts/painel/testar.mjs`
+53/53, `testar-movel.cjs` 379 OK, fotos no computador (claro e escuro, durante e depois da montagem) e no celular.
