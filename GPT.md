@@ -2216,3 +2216,14 @@ porque o celular tem a barra própria em `src/movel`).
 **Validação.** tsc, lint, build; fotos a 1440, 1180 e 1000 px (claro e escuro): parada, busca aberta, suporte, idioma e
 conta. Mês exatamente no centro a 1440 px. Nada passa da borda. Sem erro na página. `testar-contas.cjs` 34 OK,
 `scripts/painel/testar.mjs` 55/55.
+
+**Atualização (26/11/2026, animação lisa).** O dono achou a animação travada, diferente da troca de abas. Antes, o CSS
+animava o layout (`grid-template-columns`, `padding`, `gap`) e o botão ainda crescia 10% e era puxado pelo ímã. Ao passar de
+um círculo para o vizinho, o vão entre eles fechava os dois e reabria um. Agora `src/lib/barraElastica.ts` cuida disso. O
+tamanho muda de uma vez (`data-aberto`), e o que se vê anda com FLIP: `transform` nos vizinhos e no mês, e a largura do fundo
+`::before`, absoluto, com a mesma curva e duração da lente das abas (560 ms). Um `clip-path` recorta o nome na borda do fundo.
+O círculo fica aberto enquanto o mouse está no vão. Fica aberto também com o foco do teclado ou com o menu do botão aberto.
+Animações reduzidas: troca sem animação.
+Medido no Chromium sem placa de vídeo, o tempo de layout é parecido nas duas versões (~45 ms em 2,6 s de idas e vindas). O
+ganho é o movimento contínuo, sem o piscar no vão e sem a briga com o ímã. Conferido congelando as animações em 100, 250 e
+450 ms. `testar-contas.cjs` 34 OK, `scripts/painel/testar.mjs` 55/55.

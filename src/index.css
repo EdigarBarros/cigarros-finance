@@ -4802,7 +4802,8 @@ button.ex-tipo:hover { transform: scale(1.1); }
 
 /* ===== Barra do computador (components/Painel.tsx): a busca à esquerda, o mês no meio, os atalhos à direita =====
    Busca e atalhos são círculos. Passando o mouse (ou com o foco do teclado), o círculo se estica e mostra o nome, e os
-   vizinhos abrem espaço. A busca fica aberta enquanto tem texto. No celular a barra é outra (src/movel). */
+   vizinhos abrem espaço. Os atalhos (`[data-elastico]`) mudam de tamanho de uma vez com `data-aberto`, e lib/barraElastica.ts
+   anima só o que se vê (transform e a largura do fundo `::before`), como a lente das abas. No celular a barra é outra. */
 .pilula-rotulo { display: none; }
 @media (min-width: 861px) {
   /* o mês fica no centro enquanto cabe; em tela estreita, os atalhos ganham o lugar deles e o mês anda para a esquerda */
@@ -4812,39 +4813,45 @@ button.ex-tipo:hover { transform: scale(1.1); }
 
   .barra .busca-topo {
     display: flex; justify-self: start; flex: none; width: 44px; max-width: 100%; height: 44px; padding: 0 12px; gap: 10px;
-    border-color: var(--borda); cursor: pointer; overflow: hidden;
-    transition: width .45s var(--mola), border-color .2s, box-shadow .2s;
+    border-color: var(--borda); cursor: pointer; overflow: hidden; will-change: width;
+    transition: width .56s var(--mola), border-color .2s, box-shadow .2s;
   }
   .barra .busca-topo > svg { flex: none; }
-  .barra .busca-topo input { opacity: 0; cursor: pointer; transition: opacity .15s; }
+  .barra .busca-topo input { opacity: 0; cursor: pointer; transition: opacity .2s; }
   .barra .busca-topo:is(:hover, :focus-within, .cheia) { width: min(360px, 100%); border-color: var(--borda-forte); }
-  .barra .busca-topo:is(:hover, :focus-within, .cheia) input { opacity: 1; cursor: text; transition-delay: .12s; }
+  .barra .busca-topo:is(:hover, :focus-within, .cheia) input { opacity: 1; cursor: text; transition-delay: .1s; }
   .barra .busca-topo:focus-within { border-color: var(--destaque); }
 
-  .barra :is(.pilula, .idioma-btn) {
-    display: inline-flex; align-items: center; justify-content: flex-start; width: auto; min-width: 44px; height: 44px;
-    padding: 0 11px; gap: 0; border-radius: 999px; letter-spacing: 0;
-    transition: gap .4s var(--mola), padding .4s var(--mola), color .2s, border-color .2s;
+  /* o círculo: o botão é só o lugar; o fundo e a borda são o ::before, que estica sem empurrar ninguém */
+  .barra [data-elastico] {
+    position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: flex-start;
+    width: auto; min-width: 44px; height: 44px; padding: 0 11px; gap: 0; border: 0; border-radius: 999px; background: none;
+    letter-spacing: 0; transform: none; transition: color .2s;
   }
-  .barra :is(.pilula, .idioma-btn) > svg { flex: none; }
-  .barra .pilula:is(:hover, :active) { --s: 1; } /* esticar já é a resposta ao mouse: sem o crescer dos outros botões redondos */
+  .barra [data-elastico]::before {
+    content: ''; position: absolute; z-index: -1; left: 0; top: 0; width: 100%; height: 100%; box-sizing: border-box;
+    border-radius: 999px; border: 1px solid var(--borda); background: var(--superficie); transition: border-color .2s, background .2s;
+  }
+  .barra [data-elastico] > svg, .barra [data-elastico] > .avatar { flex: none; }
   .barra .idioma-sigla { display: none; }
   .barra .pilula .sino-ponto { top: 8px; right: auto; left: 27px; }
-  .barra .pilula-rotulo { display: grid; grid-template-columns: 0fr; transition: grid-template-columns .4s var(--mola); }
-  .barra .pilula-rotulo > span {
-    display: inline-flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; white-space: nowrap;
-    font-size: 13.5px; font-weight: 600; letter-spacing: 0;
+  .barra [data-elastico] > .pilula-rotulo {
+    display: none; align-items: center; gap: 6px; white-space: nowrap; font-size: 13.5px; font-weight: 600; letter-spacing: 0;
   }
-  .barra :is(.pilula, .idioma-btn):is(:hover, :focus-visible, [aria-expanded='true']) { gap: 8px; padding: 0 16px 0 11px; color: var(--texto); border-color: var(--borda-forte); }
-  .barra :is(.pilula, .idioma-btn, .perfil-botao):is(:hover, :focus-visible, [aria-expanded='true']) .pilula-rotulo { grid-template-columns: 1fr; }
+  .barra [data-elastico][data-aberto] > .pilula-rotulo { display: inline-flex; }
+  /* o nome de quem acabou de fechar some por cima, solto, enquanto o fundo encolhe */
+  .barra [data-elastico] > .pilula-rotulo[data-saindo] { display: inline-flex; position: absolute; left: 39px; pointer-events: none; }
+  .barra [data-elastico][data-aberto] { gap: 8px; padding: 0 16px 0 11px; color: var(--texto); }
+  .barra [data-elastico][data-aberto]::before { border-color: var(--borda-forte); }
 
-  /* a conta: só a foto; passando o mouse, "Olá, nome ▾" (vence a regra das telas médias que escondia a saudação) */
-  .barra .perfil-botao { height: 44px; padding: 2px; gap: 0; transition: gap .4s var(--mola), padding .4s var(--mola), background .2s; }
-  .barra .perfil-botao > .pilula-rotulo { display: grid; }
-  .barra .perfil-botao .avatar { flex: none; }
+  /* a conta: só a foto; aberta, "Olá, nome ▾" (vence a regra das telas médias que escondia a saudação) */
+  .barra .perfil-botao[data-elastico] { padding: 2px; }
+  .barra .perfil-botao[data-elastico]::before { border-color: transparent; background: transparent; }
+  .barra .perfil-botao[data-elastico][data-aberto] { gap: 10px; padding: 2px 12px 2px 2px; }
+  .barra .perfil-botao[data-elastico][data-aberto]::before { background: var(--preench-4); border-color: transparent; }
+  .barra .perfil-botao > .pilula-rotulo[data-saindo] { left: 52px; }
   .barra .perfil-botao .pilula-rotulo > span { font-size: 14.5px; }
-  .barra .perfil-botao:is(:hover, :focus-visible, [aria-expanded='true']) { gap: 10px; padding: 2px 12px 2px 2px; }
 }
 @media (min-width: 861px) and (prefers-reduced-motion: reduce) {
-  .barra :is(.busca-topo, .pilula, .idioma-btn, .perfil-botao, .pilula-rotulo) { transition: none; }
+  .barra .busca-topo { transition: none; }
 }

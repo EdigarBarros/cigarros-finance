@@ -26,6 +26,7 @@ import { useMobile } from '../lib/useMobile'
 import { useRecolherAoRolar } from '../lib/botaoMais'
 import { useBarraLateral } from '../lib/useBarraLateral'
 import { estiloLente, useLente } from '../lib/useLente'
+import { useBarraElastica } from '../lib/barraElastica'
 import { definirTema, semMovimento, useTema } from '../lib/tema'
 import { ehErroDeVersao, lembrarMes, mesAntesDeAtualizar } from '../lib/atualizacao'
 import { noAppAndroid } from '../lib/appAndroid'
@@ -183,7 +184,7 @@ const paginaDoHash = (): Pagina => {
 
 /** O nome que aparece quando o círculo da barra de cima se estica (passar o mouse ou foco do teclado). */
 function Rotulo({ children }: { children: ReactNode }) {
-  return <span className="pilula-rotulo" aria-hidden="true"><span>{children}</span></span>
+  return <span className="pilula-rotulo" aria-hidden="true">{children}</span>
 }
 
 export function Painel({ userId, email, nome: nomeConta, assinatura, confirmandoPagamento }: { userId: string; email: string; nome?: string; assinatura?: Assinatura | null; confirmandoPagamento?: boolean }) {
@@ -242,6 +243,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const baixando = useRef(new Set<string>())
   const esfriando = useRef(false)
   const mobile = useMobile()
+  // barra de cima do computador: os atalhos que se esticam ao passar o mouse (lib/barraElastica.ts)
+  const refBarra = useRef<HTMLElement>(null)
+  useBarraElastica(refBarra, !mobile)
   // a fila de telas para baixar em segundo plano depende só de como o painel abriu
   useEffect(() => carregarRestante(mobile), []) // eslint-disable-line react-hooks/exhaustive-deps
   // o "+" do celular recolhe enquanto a pessoa rola para baixo e some quando a tela já mostra os botões de lançar
@@ -1378,7 +1382,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
       <div className="conteudo">
         {/* Barra do computador: a busca à esquerda, o mês no meio e os atalhos à direita. Busca e atalhos são círculos que se
             esticam ao passar o mouse (ou com o foco do teclado) e mostram o nome; os vizinhos abrem espaço. */}
-        <header className="barra">
+        <header className="barra" ref={refBarra}>
           <label className={`busca-topo ${busca ? 'cheia' : ''}`}>
             <Icone nome="busca" tamanho={18} />
             <input type="search" placeholder={tx('Pesquisar por nome, valor ou data…')} value={busca} onChange={(e) => buscar(e.target.value)} aria-label={tx('Buscar lançamentos')} />
@@ -1412,28 +1416,28 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
           </div>
           <div className="barra-direita">
             {(ocupado || d.carregando) && <span className="carregando so-desktop">{ocupado ?? tx('Carregando…')}</span>}
-            <button className="icone-btn pilula suporte-btn so-largo" onClick={() => setSuporte('lista')}
+            <button className="icone-btn pilula suporte-btn so-largo" data-elastico onClick={() => setSuporte('lista')}
               aria-label={respostasNovas ? (respostasNovas === 1 ? tx('Suporte: 1 resposta nova') : tx('Suporte: {0} respostas novas', respostasNovas)) : tx('Suporte')}>
               <Icone nome="conversa" />
               <Rotulo>{respostasNovas ? tx('O suporte respondeu') : tx('Suporte')}</Rotulo>
               {respostasNovas > 0 && <span className="sino-ponto" />}
             </button>
             <span className="so-largo"><BotaoIdioma /></span>
-            <button className="icone-btn pilula" onClick={() => definirValoresOcultos(!ocultos)} aria-pressed={ocultos}
+            <button className="icone-btn pilula" data-elastico onClick={() => definirValoresOcultos(!ocultos)} aria-pressed={ocultos}
               aria-label={ocultos ? tx('Mostrar valores') : tx('Ocultar valores')}>
               <Icone nome={ocultos ? 'olho-fechado' : 'olho'} />
               <Rotulo>{ocultos ? tx('Mostrar valores') : tx('Ocultar valores')}</Rotulo>
             </button>
-            <button className="icone-btn pilula tema-btn" onClick={trocarTema} aria-label={tema === 'escuro' ? tx('Usar tema claro') : tx('Usar tema escuro')}>
+            <button className="icone-btn pilula tema-btn" data-elastico onClick={trocarTema} aria-label={tema === 'escuro' ? tx('Usar tema claro') : tx('Usar tema escuro')}>
               <Icone nome={tema === 'escuro' ? 'sol' : 'lua'} />
               <Rotulo>{tema === 'escuro' ? tx('Tema claro') : tx('Tema escuro')}</Rotulo>
             </button>
-            <button className="icone-btn pilula ajustes-btn" onClick={() => setAjustes(true)} aria-label={tx('Configurações')}>
+            <button className="icone-btn pilula ajustes-btn" data-elastico onClick={() => setAjustes(true)} aria-label={tx('Configurações')}>
               <Icone nome="engrenagem" />
               <Rotulo>{tx('Configurações')}</Rotulo>
             </button>
             <div className="perfil-topo">
-              <button className="perfil-botao" data-tour="menu-conta" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label={tx('Sua conta')}>
+              <button className="perfil-botao" data-elastico data-tour="menu-conta" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label={tx('Sua conta')}>
                 <span className="avatar" aria-hidden="true">{d.foto ? <img src={d.foto} alt="" /> : iniciais || '?'}</span>
                 <Rotulo><span>{tx('Olá,')} <span translate="no">{nome}</span></span><Icone nome="abaixo" tamanho={18} /></Rotulo>
               </button>
