@@ -409,7 +409,12 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
                       : tx('{0} em caixinhas, reservas e investimentos, para pagar contas e adiantar dívidas.', fmtValor(q.guardados.reduce((s, x) => s + x.valor, 0)))} />
                 ) : (
                   <BarraDaEntrada key={f.id} q={q} f={f} i={i} partes={partes} emJogo={dEmJogo} mira={mira === f.id} recem={recem}
-                    aoTocar={tocarEntrada} aoAjustar={(p) => { if (!travada(q, p)) setAjuste({ entrada: p.entrada, conta: p.conta }) }} aoPuxar={puxar} />
+                    aoTocar={tocarEntrada} aoAjustar={(p) => {
+                      // a fatia travada (conta já paga) não muda: tocar nela diz qual conta é
+                      if (!travada(q, p)) { setAjuste({ entrada: p.entrada, conta: p.conta }); return }
+                      const d = destinoDe(q, p.conta)
+                      if (d) avisar(tx('{0}: {1}, já paga. Fica travada no plano.', d.nome, fmtValor(p.valor)), 'bom')
+                    }} aoPuxar={puxar} />
                 )))}
             </section>
 

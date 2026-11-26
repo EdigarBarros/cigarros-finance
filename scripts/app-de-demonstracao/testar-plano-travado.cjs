@@ -53,6 +53,8 @@ const anel = (p) => p.locator('.pj-anel').getAttribute('aria-label')
       ok(await fatia.locator('.pj-puxador').count() === 0, `${nome}: a fatia paga não tem puxador`)
       await fatia.click({ force: true }); await esperar(b.p, 400)
       ok(await b.p.locator('.pj-ajuste').count() === 0, `${nome}: tocar na fatia paga não abre o ajuste`)
+      const aviso = await b.p.locator('.pj-aviso').textContent().catch(() => '')
+      ok(/Plano de saúde: R\$\s?[\d.,]+, já paga/.test(aviso), `${nome}: tocar na fatia paga diz qual conta é (${aviso})`)
       ok(await b.p.locator('.pj-ficha', { hasText: 'Plano de saúde' }).count() === 0, `${nome}: o Plano de saúde não volta para a bandeja`)
       await foto(b.p, `travado-${nome}`)
       // Montar pra mim não desfaz o que já aconteceu
