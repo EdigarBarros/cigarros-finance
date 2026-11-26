@@ -3,6 +3,12 @@ try {
   var t = null
   var k = sessionStorage.getItem('opuscash.sessao-chave')
   var s = k && JSON.parse(sessionStorage.getItem(k) || 'null')
+  // sem sessão na aba: a conta conectada no aparelho ("Manter conectado", src/lib/sessaoDaAba.ts), se o prazo vale
+  if (!(s && s.user) && sessionStorage.getItem('opuscash.escolher-perfil') !== '1') {
+    var a = JSON.parse(localStorage.getItem('opuscash-conectado') || 'null')
+    var p = JSON.parse(localStorage.getItem('opuscash.conectado') || 'null')
+    if (a && a.user && p && p.id === a.user.id && Date.now() < p.ate) s = a
+  }
   if (s && s.user && s.user.id) t = localStorage.getItem('opuscash-tema@' + s.user.id)
   if (!t) t = localStorage.getItem('opuscash-tema')
   if (t !== 'claro' && t !== 'escuro') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'escuro' : 'claro'

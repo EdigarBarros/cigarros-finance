@@ -18978,5 +18978,37 @@
   "Se você já pagou, não pague de novo: fale com o suporte e a gente libera seu acesso.": {
     "en": "If you've already paid, don't pay again: contact support and we'll unlock your access.",
     "es": "Si ya pagaste, no vuelvas a pagar: habla con soporte y liberamos tu acceso."
+  },
+  "Fica aberta por 30 dias neste aparelho. Não ligue em aparelho de outra pessoa.": {
+    "en": "Stays open for 30 days on this device. Don’t turn it on on someone else’s device.",
+    "es": "Queda abierta 30 días en este dispositivo. No lo actives en el dispositivo de otra persona."
+  },
+  "Fechar o app ou o navegador encerra o login.": {
+    "en": "Closing the app or the browser signs you out.",
+    "es": "Cerrar la app o el navegador cierra la sesión."
+  },
+  "Encerra o login neste aparelho e volta para a escolha de contas.": {
+    "en": "Signs you out on this device and goes back to choosing an account.",
+    "es": "Cierra la sesión en este dispositivo y vuelve a la elección de cuentas."
+  },
+  "Toque de novo para sair de todos": {
+    "en": "Tap again to sign out everywhere",
+    "es": "Toca de nuevo para salir de todos"
+  },
+  "Sair de todos os aparelhos": {
+    "en": "Sign out of all devices",
+    "es": "Salir de todos los dispositivos"
+  },
+  "Não deu certo. Confira a internet e tente de novo.": {
+    "en": "That didn’t work. Check your internet and try again.",
+    "es": "No funcionó. Revisa tu conexión e inténtalo de nuevo."
+  },
+  "A senha vai ser pedida em todo lugar, inclusive aqui.": {
+    "en": "Your password will be asked for everywhere, including here.",
+    "es": "Se pedirá la contraseña en todas partes, incluso aquí."
+  },
+  "Perdeu o celular ou entrou num aparelho de outra pessoa? Encerra o login em todos.": {
+    "en": "Lost your phone or signed in on someone else’s device? Signs you out everywhere.",
+    "es": "¿Perdiste el celular o entraste en el dispositivo de otra persona? Cierra la sesión en todos."
   }
 }

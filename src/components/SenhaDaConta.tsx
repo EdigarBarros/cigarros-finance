@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import { coresDe, iniciaisDe, nomeDe } from '../lib/abrirConta'
 import { ENDERECO_DO_SITE } from '../lib/appAndroid'
-import { esperarAntesDeRecarregar, type ContaSalva } from '../lib/contas'
+import { entrarComSenha, esperarAntesDeRecarregar, type ContaSalva } from '../lib/contas'
 import { supabase } from '../lib/supabase'
 import { semMovimento } from '../lib/tema'
 import { tx } from '../lib/textos'
 import { FundoOpus } from '../pages/FundoOpus'
+import { ChaveManter, MANTER_PADRAO } from './Entrada'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
 import './senha-da-conta.css'
@@ -30,11 +31,12 @@ function motivo(m: string) {
  * Ao tocar num perfil, a pessoa confirma a senha da conta no meio da
  * tela, com o e-mail já escolhido e as peças do OpusCash vagando em 3D no fundo. A foto tem um anel que enche conforme a
  * pessoa digita; senha errada faz o cartão tremer e o anel ficar vermelho; certa, o anel fecha verde, o cartão vem para perto
- * e a página recarrega na conta (com a abertura).
+ * e a página recarrega na conta (com a abertura). "Manter conectado" escolhe se ela fica aberta no aparelho.
  */
 export function SenhaDaConta({ conta, aoVoltar }: { conta: ContaSalva; aoVoltar: () => void }) {
   const [senha, setSenha] = useState('')
   const [ver, setVer] = useState(false)
+  const [manter, setManter] = useState(MANTER_PADRAO)
   const [estado, setEstado] = useState<Estado>('digitando')
   const [aviso, setAviso] = useState<{ texto: string; ok?: boolean } | null>(null)
   const [tremidas, setTremidas] = useState(0)
@@ -53,15 +55,14 @@ export function SenhaDaConta({ conta, aoVoltar }: { conta: ContaSalva; aoVoltar:
     // a página recarrega quando a conta entra (lib/contas.ts): antes, o anel fecha verde e o cartão vem para perto
     let soltar = () => {}
     esperarAntesDeRecarregar(new Promise<void>((r) => { soltar = r }))
-    const { error } = await supabase.auth.signInWithPassword({ email: conta.email, password: senha })
-    if (error) {
+    // senha certa: o anel fecha verde enquanto a sessão vai para o lugar dela; a página recarrega quando ele termina
+    const certo = () => { setEstado('certo'); window.setTimeout(soltar, semMovimento() ? 0 : 1100) }
+    const erro = await entrarComSenha(conta.email, senha, manter, certo)
+    if (erro) {
       soltar()
-      setEstado('errou'); setAviso({ texto: motivo(error.message) }); setTremidas((n) => n + 1); setSenha('')
+      setEstado('errou'); setAviso({ texto: motivo(erro) }); setTremidas((n) => n + 1); setSenha('')
       campo.current?.focus()
-      return
     }
-    setEstado('certo')
-    window.setTimeout(soltar, semMovimento() ? 0 : 1100)
   }
 
   const esqueci = async () => {
@@ -104,6 +105,7 @@ export function SenhaDaConta({ conta, aoVoltar }: { conta: ContaSalva; aoVoltar:
           </button>
           <i className="sc-linha" aria-hidden="true" />
         </label>
+        <ChaveManter ligada={manter} mudar={setManter} />
         <button className="sc-entrar" disabled={!senha || ocupado}>
           {estado === 'conferindo' ? <span className="en-girando" aria-label={tx('Aguarde')} />
             : estado === 'certo' ? <><Icone nome="check" tamanho={18} /> {tx('Tudo certo')}</>

@@ -2124,3 +2124,37 @@ e o do `comIdioma`. O ícone de suporte do topo do painel (computador) e o item 
 visível, por cima e sem cobrir nenhum botão/link/campo no painel e em 4 telas no computador, com a janela de Configurações
 aberta, no celular nos 3 jeitos a 360 e 390 px, na tela de assinatura (computador e celular), no login e nos termos; abre o
 suporte em cada caso; login vira mailto; sem erros na página. App Android não regerado.
+
+### 26/11/2026 — Claude — "Manter conectado" de volta, com prazo e travas
+
+**Estado:** implementado, testado no app de demonstração e publicado pelo fluxo do `CLAUDE.md`. Pendente (dono): rodar a
+migração 46 no Supabase e enviar o app Android novo à loja.
+
+**Pedido.** A entrada "Sessões e idiomas" do GPT (24/11) deixou a sessão só na aba e tirou o "Manter conectado": toda vez que
+o app ou o navegador fechava, a senha era pedida. O dono pediu a opção de volta, com segurança, no site, no celular e no painel.
+
+**Como ficou** (`src/lib/sessaoDaAba.ts`, `src/lib/contas.ts`). A sessão tem dois lugares: na aba (padrão do navegador, como o
+GPT deixou) ou no aparelho (chave ligada no login ou na tela de senha do perfil; já vem ligada no app Android). No aparelho:
+- prazo de 30 dias desde a senha (`opuscash.conectado` = { id, ate }); vencido, de outra conta ou esticado além de 30 dias, a
+  sessão sai do `localStorage` antes de o Supabase lê-la e é encerrada no servidor; com o app aberto, confere a cada minuto,
+  ao voltar para a tela e quando outra aba muda o aparelho;
+- uma conta conectada por aparelho; a senha é conferida num cliente à parte e a sessão vai para o lugar escolhido; a que ocupava
+  o lugar é encerrada no servidor;
+- link de e-mail (nova senha, confirmação) nunca vai para o aparelho; trocar a senha encerra as outras sessões (`scope: 'others'`);
+- "Sair" agora encerra de verdade (antes, no tempo do "Manter conectado" antigo, só voltava aos perfis); novo "Sair de todos os
+  aparelhos" em Configurações → Conta (`scope: 'global'`, pede segundo toque);
+- o perfil conectado abre sem senha (tela de perfis e menu "Trocar de conta"); `public/tema-inicial.js` lê o tema dele.
+- **Migração 46** (`supabase/migracao-46-prazo-das-sessoes.sql`): pg_cron apaga de hora em hora as sessões com mais de 30 dias
+  em `auth.sessions` (vale para site, app e painel): sessão copiada de um aparelho para de renovar no prazo.
+Os tokens no `localStorage` continuam ao alcance de JavaScript da própria página; a defesa contra isso é a CSP
+`script-src 'self'` do `vercel.json`, que não mudou.
+
+**Painel de suporte** (repositório `Painel-Opus-Cash`): "Manter conectado por 7 dias" no login (`src/lib/supabase.ts`,
+`src/telas/Entrar.tsx`), com as mesmas regras; o código do celular continua obrigatório, e a função `admin` recusa (401) login
+cuja senha (`amr` do token) tem mais de 7 dias.
+
+**Validação.** `npx tsc -b`, lint (só avisos antigos), build; `testar-contas.cjs` 34 OK (os antigos e os novos: chave desligada
+no navegador e ligada no app, prazo de 30 dias, aba nova sem senha, conta sem a chave só na aba, abrir a conectada pelo menu
+encerra a da aba, Sair, prazo vencido derruba a aba aberta e encerra no servidor, prazo adulterado, sair de todos);
+`scripts/painel/testar.mjs` 55/55; `testar-correcoes.cjs` sem falha. Limite do teste: com duas abas carregando as cenas 3D, a
+CPU do contêiner não dá conta dos cliques; o teste clica sempre numa aba só e só observa a outra.

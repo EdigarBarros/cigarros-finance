@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useState, type CSSProperties } from 'react'
 import { coresDe, nomeDe } from '../lib/abrirConta'
-import { esquecerConta, useContasSalvas, type ContaSalva } from '../lib/contas'
+import { abrirContaConectada, contaConectada, esquecerConta, useContasSalvas, type ContaSalva } from '../lib/contas'
 import { semMovimento } from '../lib/tema'
 import { tx } from '../lib/textos'
 import { useMobile } from '../lib/useMobile'
@@ -24,7 +24,7 @@ function Perfil({ conta, ordem, editando, ocupada, voando, aoEscolher }: {
       aria-label={editando ? tx('Tirar {0} deste aparelho', conta.email) : undefined}>
       <span className="pf-foto" style={coresDe(conta.id)}>
         <FotoDaConta conta={conta} />
-        {!editando && <em className="pf-selo">{tx('Pede a senha')}</em>}
+        {!editando && conta.id !== contaConectada() && <em className="pf-selo">{tx('Pede a senha')}</em>}
         {editando && <span className="pf-tirar"><Icone nome="lixeira" tamanho={30} /></span>}
       </span>
       <span className="pf-nome" translate="no">{nomeDe(conta)}</span>
@@ -56,7 +56,7 @@ function Voo({ conta, de }: { conta: ContaSalva; de: DOMRect }) {
 /**
  * Sem conta aberta, mas com contas lembradas neste aparelho: escolher com qual entrar, como os perfis de um serviço de
  * vídeo. No fundo passam as cenas do que o app faz (CenasDoOpus). Tocar num perfil: o quadro voa para o meio e some, e entra
- * a tela de senha.
+ * a abertura do OpusCash (a conta conectada neste aparelho abre direto) ou a tela de senha.
  * "Gerenciar contas" (no celular, "Editar") tira contas deste aparelho; "Outra conta" abre o login; "Início", a apresentação.
  */
 export function EscolherConta({ aoOutra, aoInicio }: { aoOutra: () => void; aoInicio?: () => void }) {
@@ -91,7 +91,10 @@ export function EscolherConta({ aoOutra, aoInicio }: { aoOutra: () => void; aoIn
     if (editando) { esquecerConta(c.id); return }
     setOcupada(c.id)
     setVoo({ conta: c, de: foto.getBoundingClientRect() })
-    await new Promise<void>((r) => window.setTimeout(r, semMovimento() ? 0 : VOO))
+    const pouso = new Promise<void>((r) => window.setTimeout(r, semMovimento() ? 0 : VOO))
+    // conectada neste aparelho ("Manter conectado" dentro do prazo): abre sem senha quando o quadro pousa
+    if (c.id === contaConectada()) { await abrirContaConectada(pouso); return }
+    await pouso
     setSenhaDe(c)
     setVoo(null)
     setOcupada(null)

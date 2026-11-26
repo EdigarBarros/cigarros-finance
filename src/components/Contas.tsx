@@ -1,5 +1,5 @@
 import { iniciaisDe, nomeDe } from '../lib/abrirConta'
-import { adicionarConta, MAX_CONTAS, useContasSalvas, type ContaSalva } from '../lib/contas'
+import { abrirContaConectada, adicionarConta, contaConectada, MAX_CONTAS, useContasSalvas, type ContaSalva } from '../lib/contas'
 import { tx } from '../lib/textos'
 import { Icone } from './Icone'
 import './contas-salvas.css'
@@ -12,7 +12,7 @@ function Avatar({ conta }: { conta: ContaSalva }) {
  * Uma linha da lista: abrir a conta (ou entrar com a senha, se ela pede). Tirar a conta do aparelho é só pelo "Gerenciar
  * contas" da tela de perfis (components/EscolherConta.tsx).
  */
-function LinhaDaConta({ conta, aoAbrir }: { conta: ContaSalva; aoAbrir: () => void }) {
+function LinhaDaConta({ conta, conectada, aoAbrir }: { conta: ContaSalva; conectada: boolean; aoAbrir: () => void }) {
   return (
     <div className="cs-linha">
       <button type="button" className="cs-abrir" onClick={aoAbrir}>
@@ -20,7 +20,7 @@ function LinhaDaConta({ conta, aoAbrir }: { conta: ContaSalva; aoAbrir: () => vo
         <span className="cs-texto">
           <b translate="no">{nomeDe(conta)}</b>
           <small translate="no">{conta.email}</small>
-          <small className="cs-venceu">{tx('Entre de novo com a senha')}</small>
+          {!conectada && <small className="cs-venceu">{tx('Entre de novo com a senha')}</small>}
         </span>
       </button>
     </div>
@@ -34,11 +34,13 @@ function LinhaDaConta({ conta, aoAbrir }: { conta: ContaSalva; aoAbrir: () => vo
 export function ContasNoMenu({ userId }: { userId: string }) {
   const contas = useContasSalvas()
   const outras = contas.filter((c) => c.id !== userId)
+  const conectada = contaConectada()
   return (
     <div className="cs-lista" onClick={(e) => { if (!(e.target as HTMLElement).closest('.cs-adicionar')) e.stopPropagation() }}>
       {outras.length > 0 && <span className="cs-titulo">{tx('Trocar de conta')}</span>}
       {outras.map((c) => (
-        <LinhaDaConta key={c.id} conta={c} aoAbrir={() => adicionarConta(c.email)} />
+        <LinhaDaConta key={c.id} conta={c} conectada={c.id === conectada}
+          aoAbrir={() => (c.id === conectada ? void abrirContaConectada() : adicionarConta(c.email))} />
       ))}
       {contas.length < MAX_CONTAS && (
         <button type="button" className="cs-adicionar" onClick={() => adicionarConta()}>

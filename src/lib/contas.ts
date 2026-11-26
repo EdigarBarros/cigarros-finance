@@ -1,9 +1,17 @@
-import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
+import { createClient, type AuthChangeEvent, type Session } from '@supabase/supabase-js'
 import { useSyncExternalStore } from 'react'
 import { supabase } from './supabase'
-import { apagarSessaoDaAba, sessaoDaAba, usuarioDaSessao } from './sessaoDaAba'
+import {
+  apagarDoAparelho, apagarSessaoDaAba, apagarSoDaAba, CHAVE_DO_APARELHO, CHAVE_DO_PRAZO, contaConectada, guardarNaAba, marcarPrazo,
+  pedirEscolhaDePerfil, refreshDaAba, sessaoDaAba, usuarioDaSessao,
+} from './sessaoDaAba'
 
-/** Perfis lembrados no aparelho. A sessão ativa pertence ao armazenamento da aba, separado desta lista. */
+export { contaConectada, PRAZO_CONECTADO } from './sessaoDaAba'
+
+/**
+ * Perfis lembrados no aparelho (nome, e-mail, foto): nenhuma senha nem token fica nesta lista. A sessão fica na aba ou, com
+ * "Manter conectado", no lugar do aparelho com prazo (lib/sessaoDaAba.ts).
+ */
 export interface ContaSalva {
   id: string
   email: string
@@ -19,6 +27,40 @@ const CHAVE_ADICIONANDO = 'opuscash.adicionando'
 const idDaPagina = usuarioDaSessao()
 let idAberto = idDaPagina
 let emRecuperacao = false
+
+/** Cliente que não guarda nada: entra, renova ou encerra uma sessão sem mexer na que a página usa. */
+function clienteAParte() {
+  return createClient(import.meta.env.VITE_SUPABASE_URL as string, import.meta.env.VITE_SUPABASE_ANON_KEY as string, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'opuscash-outra-conta' },
+  })
+}
+
+/** Encerra no servidor uma sessão que saiu deste aparelho (melhor esforço: sem internet, ela vence sozinha no banco). */
+async function encerrarNoServidor(refresh_token: string | null) {
+  if (!refresh_token) return
+  const tarefa = (async () => {
+    const outro = clienteAParte()
+    const { data } = await outro.auth.refreshSession({ refresh_token })
+    if (data.session) await outro.auth.signOut({ scope: 'local' })
+  })().catch(() => {})
+  await Promise.race([tarefa, new Promise((r) => window.setTimeout(r, 4000))])
+}
+
+// a sessão do aparelho venceu (30 dias) e saiu daqui ao abrir: encerra também no servidor
+if (sessaoDaAba.vencida) void encerrarNoServidor(sessaoDaAba.vencida)
+
+// Página na sessão do aparelho: se o prazo vence com o app aberto, ou outra aba sai ou entra com outra conta, recarrega (ao
+// abrir, a sessão vencida sai e o perfil pede a senha).
+if (sessaoDaAba.modo === 'aparelho') {
+  const conferir = () => {
+    if (contaConectada() === idAberto) return
+    void supabase.auth.stopAutoRefresh()
+    location.reload()
+  }
+  window.setInterval(conferir, 60_000)
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') conferir() })
+  window.addEventListener('storage', (e) => { if (e.key === null || e.key === CHAVE_DO_APARELHO || e.key === CHAVE_DO_PRAZO) conferir() })
+}
 
 export function concluirRecuperacao() {
   emRecuperacao = false
@@ -135,9 +177,12 @@ export function esquecerConta(id: string) {
 }
 
 async function encerrarSessao() {
+  // nesta aba, depois de sair, aparecem os perfis (a conta conectada no aparelho não abre sozinha)
+  pedirEscolhaDePerfil(true)
   try {
     await supabase.auth.stopAutoRefresh()
-    await supabase.auth.signOut({ scope: 'local' })
+    // sem resposta do servidor em 6 s, sai assim mesmo (a cópia local é apagada abaixo; a sessão vence no banco)
+    await Promise.race([supabase.auth.signOut({ scope: 'local' }), new Promise((r) => window.setTimeout(r, 6000))])
   } catch {
     // A sessão local também é removida quando o servidor está indisponível.
   } finally {
@@ -155,6 +200,76 @@ export async function sairParaOsPerfis() {
 export async function sairDestaConta() {
   if (idAberto) esquecerConta(idAberto)
   await encerrarSessao()
+}
+
+/**
+ * "Sair de todos os aparelhos": encerra no servidor todas as sessões da conta (celular perdido, computador de outra pessoa),
+ * inclusive esta. Em todo lugar a senha volta a ser pedida.
+ */
+export async function sairDeTodosOsAparelhos(): Promise<boolean> {
+  const { error } = await supabase.auth.signOut({ scope: 'global' })
+  if (error && !/session.*missing|not.*found/i.test(error.message)) return false
+  if (contaConectada() === idAberto) apagarDoAparelho()
+  pedirEscolhaDePerfil(true)
+  apagarSessaoDaAba()
+  location.reload()
+  return true
+}
+
+/** Trocou a senha: as outras sessões da conta (outros aparelhos, outras abas) são encerradas no servidor. */
+export async function encerrarOutrasSessoes() {
+  try { await supabase.auth.signOut({ scope: 'others' }) } catch { /* sem internet: ficam até vencer */ }
+  // a sessão conectada neste aparelho, se for de outra sessão da mesma conta, acabou de ser encerrada
+  if (sessaoDaAba.modo === 'aba' && contaConectada() === idAberto) apagarDoAparelho()
+}
+
+/**
+ * Entra com a senha. A conta é conferida num cliente à parte e a sessão vai para onde a pessoa escolheu: com "Manter
+ * conectado", para o aparelho (prazo de 30 dias, uma conta conectada por aparelho); sem ele, só para esta aba. A sessão que
+ * ocupava o lugar sai e é encerrada no servidor. Dando certo, a página recarrega na conta. Devolve a mensagem de erro.
+ */
+export async function entrarComSenha(email: string, senha: string, manter: boolean, aoAcertar?: () => void): Promise<string | null> {
+  const { data, error } = await clienteAParte().auth.signInWithPassword({ email: email.trim(), password: senha })
+  if (error || !data.session) return error?.message ?? 'Invalid login credentials'
+  aoAcertar?.()
+  const s = data.session
+  lembrar(s)
+  pararDeAdicionar()
+  // sem armazenamento (navegação privada muito restrita): a sessão fica só na memória desta página
+  if (!sessaoDaAba.armazenamento) {
+    const { error: e2 } = await supabase.auth.setSession({ access_token: s.access_token, refresh_token: s.refresh_token })
+    return e2?.message ?? null
+  }
+  await supabase.auth.stopAutoRefresh()
+  pedirEscolhaDePerfil(false)
+  // a sessão própria que a aba tinha (outra conta, ou a mesma sem "Manter conectado") dá lugar à nova
+  const daAba = refreshDaAba()
+  apagarSoDaAba()
+  const antigas = [daAba]
+  if (manter) {
+    antigas.push(apagarDoAparelho())
+    marcarPrazo(s.user.id)
+    try { localStorage.setItem(CHAVE_DO_APARELHO, JSON.stringify(s)) } catch { guardarNaAba(s) }
+  } else {
+    guardarNaAba(s)
+  }
+  await Promise.all(antigas.filter((rt) => rt && rt !== s.refresh_token).map((rt) => encerrarNoServidor(rt)))
+  await Promise.resolve(esperaDaRecarga)
+  location.reload()
+  return null
+}
+
+/** Abre a conta que está conectada neste aparelho (perfil sem senha): a sessão própria da aba, se houver, sai. */
+export async function abrirContaConectada(antesDeRecarregar?: Promise<unknown>) {
+  pedirEscolhaDePerfil(false)
+  if (sessaoDaAba.modo === 'aba' && usuarioDaSessao()) {
+    await supabase.auth.stopAutoRefresh()
+    const rt = refreshDaAba()
+    apagarSoDaAba()
+    await encerrarNoServidor(rt)
+  }
+  await antesDeRecarregar
+  location.reload()
 }
 
 // ---------- "Adicionar outra conta" ----------

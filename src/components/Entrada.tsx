@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { ENDERECO_DO_SITE } from '../lib/appAndroid'
+import { ENDERECO_DO_SITE, noAppAndroid } from '../lib/appAndroid'
 import { supabase } from '../lib/supabase'
-import { pararDeAdicionar } from '../lib/contas'
+import { encerrarOutrasSessoes, entrarComSenha, pararDeAdicionar } from '../lib/contas'
 import { Icone } from './Icone'
 import { Marca } from './Marca'
 import { tx } from '../lib/textos'
@@ -35,12 +35,11 @@ export function Login({ inicial = 'entrar', aoVoltar, rotuloVoltar, emailInicial
 
   const trocar = (m: Modo) => { setModo(m); setAviso(null); setTrocou(true) }
 
-  const entrar = async (email: string, senha: string) => {
+  const entrar = async (email: string, senha: string, manter: boolean) => {
     setOcupado(true); setAviso(null)
-    const { error } = await supabase.auth.signInWithPassword({ email, password: senha })
-    setOcupado(false)
-    if (error) setAviso({ texto: traduzir(error.message) })
-    else pararDeAdicionar() // entrou: o login aberto por "Adicionar outra conta" fecha (outra conta recarrega a página sozinha)
+    // dando certo, a página recarrega já na conta (lib/contas.ts)
+    const erro = await entrarComSenha(email, senha, manter)
+    if (erro) { setOcupado(false); setAviso({ texto: traduzir(erro) }) }
   }
 
   const esqueci = async (email: string) => {
@@ -112,19 +111,21 @@ type PropsForm = { ativo: boolean; ocupado: boolean; aviso: Aviso; aoTrocar: () 
 
 function FormEntrar({ emailInicial, ativo, ocupado, aviso, aoEnviar, aoEsqueci, aoReenviar, aoTrocar }: PropsForm & {
   emailInicial: string
-  aoEnviar: (email: string, senha: string) => void; aoEsqueci: (email: string) => void; aoReenviar: (email: string) => void
+  aoEnviar: (email: string, senha: string, manter: boolean) => void; aoEsqueci: (email: string) => void; aoReenviar: (email: string) => void
 }) {
   const [email, setEmail] = useState(emailInicial)
   const [senha, setSenha] = useState('')
+  const [manter, setManter] = useState(MANTER_PADRAO)
   const [recuperar, setRecuperar] = useState(false)
   const naoConfirmado = Boolean(aviso && !aviso.ok && /confirme seu e-mail/i.test(aviso.texto))
   return (
     <form className={`en-form entrar ${ativo ? 'ativo' : ''}`} inert={!ativo} aria-hidden={!ativo}
-      onSubmit={(e) => { e.preventDefault(); if (recuperar) aoEsqueci(email); else aoEnviar(email, senha) }}>
+      onSubmit={(e) => { e.preventDefault(); if (recuperar) aoEsqueci(email); else aoEnviar(email, senha, manter) }}>
       <h1>{recuperar ? tx('Nova senha') : tx('Entrar')}</h1>
       <p className="en-sub">{recuperar ? tx('Digite seu e-mail e enviamos um link para você criar uma senha nova.') : tx('Que bom que voltou. Seu painel está esperando.')}</p>
       <Campo rotulo={tx('E-mail')} icone="email" tipo="email" valor={email} mudar={setEmail} completar="email" />
       {!recuperar && <CampoSenha valor={senha} mudar={setSenha} completar="current-password" />}
+      {!recuperar && <ChaveManter ligada={manter} mudar={setManter} />}
       <BotaoEnviar ocupado={ocupado}>{recuperar ? tx('Enviar link') : tx('Entrar')}</BotaoEnviar>
       {aviso && <p className={`en-aviso ${aviso.ok ? 'ok' : ''}`} role="alert">{aviso.texto}</p>}
       {naoConfirmado && email && <button type="button" className="link" onClick={() => aoReenviar(email)} disabled={ocupado}>{tx('Reenviar e-mail de confirmação')}</button>}
@@ -189,6 +190,26 @@ function CampoSenha({ valor, mudar, completar }: { valor: string; mudar: (v: str
   )
 }
 
+/** No app Android (o celular da pessoa) "Manter conectado" já vem ligado; no navegador, que pode ser de outra pessoa, não. */
+export const MANTER_PADRAO = noAppAndroid
+
+/**
+ * "Manter conectado": ligado, a conta fica aberta neste aparelho por 30 dias e o perfil abre sem senha (lib/sessaoDaAba.ts).
+ * Desligado, fechar o app ou o navegador encerra o login. Também na tela de senha do perfil (components/SenhaDaConta.tsx).
+ */
+export function ChaveManter({ ligada, mudar }: { ligada: boolean; mudar: (v: boolean) => void }) {
+  return (
+    <label className={`chave-manter ${ligada ? 'ligada' : ''}`}>
+      <input type="checkbox" role="switch" checked={ligada} onChange={(e) => mudar(e.target.checked)} />
+      <span className="chave-manter-trilho" aria-hidden="true"><i /></span>
+      <span className="chave-manter-texto">
+        <b>{tx('Manter conectado')}</b>
+        <small>{ligada ? tx('Fica aberta por 30 dias neste aparelho. Não ligue em aparelho de outra pessoa.') : tx('Fechar o app ou o navegador encerra o login.')}</small>
+      </span>
+    </label>
+  )
+}
+
 function BotaoEnviar({ ocupado, children }: { ocupado: boolean; children: React.ReactNode }) {
   return (
     <button className="en-botao" disabled={ocupado}>
@@ -242,8 +263,10 @@ export function NovaSenha({ aoConcluir }: { aoConcluir: () => void }) {
     setOcupado(true); setAviso(null)
     const { error } = await supabase.auth.updateUser({ password: senha })
     setOcupado(false)
-    if (error) setAviso({ texto: traduzir(error.message) })
-    else { setAviso({ texto: tx('Senha trocada! Entrando…'), ok: true }); window.setTimeout(aoConcluir, 900) }
+    if (error) { setAviso({ texto: traduzir(error.message) }); return }
+    // senha nova: quem tinha a senha antiga (ou uma sessão roubada) sai dos outros aparelhos
+    await encerrarOutrasSessoes()
+    setAviso({ texto: tx('Senha trocada! Entrando…'), ok: true }); window.setTimeout(aoConcluir, 900)
   }
   return (
     <div className="en" style={{ display: 'grid' }}>
