@@ -1,14 +1,21 @@
 import { useEffect, type RefObject } from 'react'
 
-/** Mesma curva e duração da lente das abas (`.lente` em index.css). */
-const DURACAO = 560
-const CURVA = 'cubic-bezier(.22, 1, .36, 1)'
+/**
+ * "Macia", a escolhida pelo dono entre quatro jeitos testados: começa e termina devagar (sem o tranco de quem arranca
+ * rápido) e espera um instante antes de abrir, para o mouse que só passa de raspão não abrir nada.
+ */
+const DURACAO = 420
+const CURVA = 'cubic-bezier(.65, 0, .35, 1)'
+/** Espera antes de abrir do nada (ms). Trocar de um círculo aberto para o vizinho é na hora. */
+const ESPERA_ABRIR = 90
+/** Espera antes de fechar quando o mouse sai (ms): sair e voltar logo não fecha e reabre. */
+const ESPERA_FECHAR = 40
 
 /**
  * Barra de cima do computador (components/Painel.tsx): cada atalho `[data-elastico]` é um círculo que se estica ao passar o
  * mouse (ou com o foco do teclado) e mostra o nome, e os vizinhos abrem espaço.
  *
- * Para ficar liso como a troca de abas, nada é animado no layout: o tamanho muda de uma vez (atributo `data-aberto`) e o que
+ * Para ficar liso, nada é animado no layout: o tamanho muda de uma vez (atributo `data-aberto`) e o que
  * se vê anda do lugar antigo para o novo só com `transform` (técnica FLIP) e com a largura do fundo (`::before`, absoluto, que
  * não empurra ninguém). Uma animação interrompida no meio continua de onde estava.
  */
@@ -46,7 +53,7 @@ export function useBarraElastica(ref: RefObject<HTMLElement | null>, ligada: boo
       const rotuloQueSai = saindo?.querySelector<HTMLElement>(':scope > .pilula-rotulo')
       if (rotuloQueSai) {
         rotuloQueSai.setAttribute('data-saindo', '')
-        rotuloQueSai.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'ease-out', fill: 'forwards' })
+        rotuloQueSai.animate([{ opacity: 1 }, { opacity: 0 }], { duration: DURACAO * 0.6, easing: CURVA, fill: 'forwards' })
           .finished.then(() => rotuloQueSai.removeAttribute('data-saindo'), () => {})
       }
       for (const el of lista) {
@@ -62,16 +69,21 @@ export function useBarraElastica(ref: RefObject<HTMLElement | null>, ligada: boo
       }
       // o nome de quem abre aparece depois que o fundo começou a crescer
       alvo?.querySelector<HTMLElement>(':scope > .pilula-rotulo')?.animate(
-        [{ opacity: 0, transform: 'translateX(-6px)' }, { opacity: 0, transform: 'translateX(-6px)', offset: 0.18 }, { opacity: 1, transform: 'translateX(0)' }],
-        { duration: DURACAO - 120, easing: CURVA },
+        [{ opacity: 0, transform: 'translateX(-6px)' }, { opacity: 0, transform: 'translateX(-4px)', offset: 0.4 }, { opacity: 1, transform: 'translateX(0)' }],
+        { duration: DURACAO, easing: 'linear' },
       )
     }
 
     // o que fica aberto: o que está sob o mouse; senão, o que tem o foco do teclado; senão, o que tem o menu aberto
+    let espera = 0
     const decidir = () => {
       // um círculo que saiu da tela (a barra foi refeita) não conta mais
       if (aberto && !aberto.isConnected) aberto = null
-      trocar(sobMouse ?? comFoco ?? grupoAgora()?.querySelector<HTMLElement>('[data-elastico][aria-expanded="true"]') ?? null)
+      const alvo = sobMouse ?? comFoco ?? grupoAgora()?.querySelector<HTMLElement>('[data-elastico][aria-expanded="true"]') ?? null
+      window.clearTimeout(espera)
+      const ms = !alvo && aberto ? ESPERA_FECHAR : alvo && !aberto && alvo === sobMouse ? ESPERA_ABRIR : 0
+      if (ms && !reduzido.matches) espera = window.setTimeout(() => trocar(alvo), ms)
+      else trocar(alvo)
     }
     const item = (t: EventTarget | null) => (t instanceof Element ? t.closest<HTMLElement>('.barra-direita [data-elastico]') : null)
     const noGrupo = (t: EventTarget | null) => t instanceof Element && Boolean(t.closest('.barra-direita'))
@@ -96,6 +108,7 @@ export function useBarraElastica(ref: RefObject<HTMLElement | null>, ligada: boo
     document.addEventListener('pointerout', saiuDaJanela)
     document.addEventListener('focusin', focou)
     return () => {
+      window.clearTimeout(espera)
       document.removeEventListener('pointerover', sobre)
       document.removeEventListener('pointerout', saiuDaJanela)
       document.removeEventListener('focusin', focou)
