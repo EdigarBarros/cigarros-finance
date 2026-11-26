@@ -1,5 +1,6 @@
 import { noAppAndroid } from '../lib/appAndroid'
 import { excluirConta, type Assinatura } from '../lib/assinatura'
+import { sairDeTodosOsAparelhos } from '../lib/contas'
 import { useRef, useState } from 'react'
 import type { Sugestao } from '../lib/adaptacao'
 import { reduzirFoto } from '../lib/foto'
@@ -65,6 +66,8 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
   const [nome, setNome] = useState(perfil.nome)
   // o backup mostra o andamento e o erro aqui mesmo: o aviso geral fica por trás desta janela
   const [backup, setBackup] = useState<{ ocupado?: boolean; erro?: string }>({})
+  // "Sair de todos os aparelhos" pede um segundo toque antes de encerrar
+  const [todos, setTodos] = useState<'' | 'confirmar' | 'saindo' | 'erro'>('')
   const baixarBackup = async () => {
     if (backup.ocupado) return
     setBackup({ ocupado: true })
@@ -261,7 +264,17 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
               <div className="cfg-acoes">
                 {aoTour && <CartaoAcao icone="ideia" titulo={tx('Ver o tutorial')} texto={tx('Um passeio rápido pelo painel, mostrando onde fica cada coisa e como ligar mais abas.')} aoClicar={aoTour} />}
                 <CartaoAcao icone="ajustes" titulo={tx('Refazer as perguntas')} texto={tx('Responda de novo as perguntas iniciais para reajustar o painel.')} aoClicar={aoRefazer} />
-                <CartaoAcao icone="sair" titulo={tx('Sair')} texto={tx('Volta para a escolha de contas. A conta continua neste aparelho.')} aoClicar={aoSair} />
+                <CartaoAcao icone="sair" titulo={tx('Sair')} texto={tx('Encerra o login neste aparelho e volta para a escolha de contas.')} aoClicar={aoSair} />
+                <CartaoAcao icone="escudo" titulo={todos === 'confirmar' ? tx('Toque de novo para sair de todos') : tx('Sair de todos os aparelhos')}
+                  texto={todos === 'erro' ? tx('Não deu certo. Confira a internet e tente de novo.')
+                    : todos === 'confirmar' ? tx('A senha vai ser pedida em todo lugar, inclusive aqui.')
+                    : tx('Perdeu o celular ou entrou num aparelho de outra pessoa? Encerra o login em todos.')}
+                  ocupado={todos === 'saindo'} perigo={todos === 'confirmar'}
+                  aoClicar={() => {
+                    if (todos !== 'confirmar') { setTodos('confirmar'); return }
+                    setTodos('saindo')
+                    void sairDeTodosOsAparelhos().then((ok) => { if (!ok) setTodos('erro') }).catch(() => setTodos('erro'))
+                  }} />
                 {aoExcluirConta && <CartaoAcao icone="lixeira" titulo={tx('Excluir minha conta')} texto={tx('Apaga seu login e todos os seus dados de vez e cancela a assinatura.')} aoClicar={aoExcluirConta} perigo />}
               </div>
             </>
