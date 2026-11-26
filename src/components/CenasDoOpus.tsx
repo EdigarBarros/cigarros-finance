@@ -564,9 +564,12 @@ export default function CenasDoOpus() {
       el.style.setProperty('--esc', String(Math.max(0.4, Math.min(w / m.w, h / m.h, 1.5))))
     }
     medir()
-    const ro = new ResizeObserver(medir)
+    // mede no quadro seguinte: mudar a escala dentro do aviso de tamanho fazia o navegador reclamar
+    // ("ResizeObserver loop completed with undelivered notifications")
+    let quadro = 0
+    const ro = new ResizeObserver(() => { cancelAnimationFrame(quadro); quadro = requestAnimationFrame(medir) })
     ro.observe(el)
-    return () => ro.disconnect()
+    return () => { cancelAnimationFrame(quadro); ro.disconnect() }
   }, [])
 
   // o mouse inclina um pouco o palco (só com mouse e com animações completas)
