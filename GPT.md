@@ -2158,3 +2158,24 @@ no navegador e ligada no app, prazo de 30 dias, aba nova sem senha, conta sem a 
 encerra a da aba, Sair, prazo vencido derruba a aba aberta e encerra no servidor, prazo adulterado, sair de todos);
 `scripts/painel/testar.mjs` 55/55; `testar-correcoes.cjs` sem falha. Limite do teste: com duas abas carregando as cenas 3D, a
 CPU do contêiner não dá conta dos cliques; o teste clica sempre numa aba só e só observa a outra.
+
+### 26/11/2026 — Claude — Fatura paga que "sumiu" do Planejamento
+
+**Pedido.** O dono planejou pagar o resto de uma fatura de cartão, quitou a fatura pelo celular e a fatia sumiu do Planejar o
+mês. Pediu a sincronia em todo o app e poder tocar na barra para ver qual é a conta.
+
+**Investigação** (a pedido do dono, na conta dele; nenhum valor ou nome é registrado aqui). O plano salvo tinha a fatia e a
+foto da fatura, e a fatura estava quitada no banco (parte paga antes, quitação depois). Com esses dados, `quadroDoPlano`
+devolve a fatura como `feito` (paga, travada), e no app de demonstração a mesa do site a mostra como "já paga". **Causa:** o
+app Android publicado (2.9.0, 21/11) é anterior aos PRs #292–#295 (fatura paga em parte, "o que já aconteceu fica travado");
+no celular o plano ainda é o antigo, e a conta paga sai da mesa. A correção é o app Android novo.
+Lançamentos: pagar fatura não cria lançamento, de propósito (as compras no cartão já são os gastos). O pagamento fica no
+histórico da fatura em Cartões e no aviso "já pagou R$ X e faltam R$ Y" de Lançamentos.
+Visto de passagem e não mexido: uma dívida de "me devem" com dois recebimentos iguais em dias seguidos. Foi avisado ao dono
+para conferir se é repetição.
+
+**Mudança.** Tocar numa fatia paga (travada) mostra qual conta é ("<conta>: R$ …, já paga. Fica travada no plano.") em
+`src/components/Planejamento.tsx`. Antes, o toque não fazia nada. As fatias não pagas já abriam o ajuste com o nome.
+
+**Validação.** tsc, lint, build; `testar-plano-travado.cjs` (caso novo, computador e celular), `testar-fatura-em-parte.cjs`,
+`testar-planejamento.cjs` sem falha; `scripts/painel/testar.mjs` 55/55.

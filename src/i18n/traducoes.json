@@ -19010,5 +19010,9 @@
   "Perdeu o celular ou entrou num aparelho de outra pessoa? Encerra o login em todos.": {
     "en": "Lost your phone or signed in on someone else’s device? Signs you out everywhere.",
     "es": "¿Perdiste el celular o entraste en el dispositivo de otra persona? Cierra la sesión en todos."
+  },
+  "{0}: {1}, já paga. Fica travada no plano.": {
+    "en": "{0}: {1}, already paid. It stays locked in the plan.",
+    "es": "{0}: {1}, ya pagada. Queda fija en el plan."
   }
 }
