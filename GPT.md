@@ -2179,3 +2179,13 @@ para conferir se é repetição.
 
 **Validação.** tsc, lint, build; `testar-plano-travado.cjs` (caso novo, computador e celular), `testar-fatura-em-parte.cjs`,
 `testar-planejamento.cjs` sem falha; `scripts/painel/testar.mjs` 55/55.
+
+### 26/11/2026 — Claude — App Android 2.9.1 (código 29)
+
+**Estado:** `.aab` gerado, assinado com a chave de upload e entregue ao Edigar; falta ele enviar no Play Console.
+- Leva tudo desde o 2.9.0 (PRs #274–#302): fatura paga em parte, o Planejamento que trava o que já aconteceu, "Manter
+  conectado" (já ligado no app), "Sair de todos os aparelhos" e o toque na fatia paga. `versionCode` 28 → 29.
+- `npm run app` e `./gradlew bundleRelease` (Android SDK 36 baixado no scratchpad), `jarsigner`. A chave e a senha vieram do
+  Drive do dono só para esta assinatura e foram apagadas da máquina em seguida.
+- Conferido: `jarsigner -verify` ("jar verified"), impressão SHA-256 igual à da chave de upload (A7:07:94:…:5D:9D) e os
+  textos novos dentro do pacote.
