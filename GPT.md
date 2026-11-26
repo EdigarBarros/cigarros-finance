@@ -2189,3 +2189,8 @@ para conferir se é repetição.
   Drive do dono só para esta assinatura e foram apagadas da máquina em seguida.
 - Conferido: `jarsigner -verify` ("jar verified"), impressão SHA-256 igual à da chave de upload (A7:07:94:…:5D:9D) e os
   textos novos dentro do pacote.
+
+**Atualização (26/11/2026, migração 46 aplicada).** A pedido do dono, a migração 46 foi aplicada no Supabase de produção. A
+extensão pg_cron está ligada, e o agendamento `encerrar-sessoes-vencidas` está ativo (minuto 17 de cada hora). Contas comuns
+e anônimas não podem chamar a função. Antes de aplicar, nenhuma sessão passava de 30 dias, e a primeira execução manual
+encerrou 0. Fica pendente: publicar a função `admin` do painel com a trava de 7 dias (já no repositório do painel).
