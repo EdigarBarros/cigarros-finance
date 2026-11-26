@@ -2227,3 +2227,10 @@ Animações reduzidas: troca sem animação.
 Medido no Chromium sem placa de vídeo, o tempo de layout é parecido nas duas versões (~45 ms em 2,6 s de idas e vindas). O
 ganho é o movimento contínuo, sem o piscar no vão e sem a briga com o ímã. Conferido congelando as animações em 100, 250 e
 450 ms. `testar-contas.cjs` 34 OK, `scripts/painel/testar.mjs` 55/55.
+
+**Atualização (26/11/2026, função `admin` publicada).** A pedido do dono, a função `admin` do painel foi publicada no
+Supabase como versão 13 (antes 12), com a conferência de JWT ligada como antes. Ela recusa (401, "Faz mais de 7 dias que você
+digitou a senha") o login cuja senha tem mais de 7 dias, mesmo que o crachá tenha sido copiado para outro aparelho. O código
+publicado é o de `supabase/functions/admin/index.ts` do Painel-Opus-Cash (`main`): `deno check` e 7 testes passaram. Não deu
+para chamar a função deste ambiente, porque o proxy bloqueia o Supabase. A confirmação final é o dono entrar no painel. Para
+voltar atrás, publique o `index.ts` do commit `11366cd` do painel (a versão 12).
