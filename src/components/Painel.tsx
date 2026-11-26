@@ -1,4 +1,4 @@
-import { lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { saldosDoAno, sobrasPorMes } from '../lib/saldoCorrido'
 import { FormSaldoInicial } from './SaldoInicial'
 import { sugestoes, type Sugestao } from '../lib/adaptacao'
@@ -179,6 +179,11 @@ const PAGINAS: { id: Pagina; nome: string; curto: string; icone: string }[] = [
 const paginaDoHash = (): Pagina => {
   const h = location.hash.replace('#/', '') as Pagina
   return PAGINAS.some((p) => p.id === h) ? h : 'inicio'
+}
+
+/** O nome que aparece quando o círculo da barra de cima se estica (passar o mouse ou foco do teclado). */
+function Rotulo({ children }: { children: ReactNode }) {
+  return <span className="pilula-rotulo" aria-hidden="true"><span>{children}</span></span>
 }
 
 export function Painel({ userId, email, nome: nomeConta, assinatura, confirmandoPagamento }: { userId: string; email: string; nome?: string; assinatura?: Assinatura | null; confirmandoPagamento?: boolean }) {
@@ -1371,62 +1376,66 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
       </aside>
 
       <div className="conteudo">
+        {/* Barra do computador: a busca à esquerda, o mês no meio e os atalhos à direita. Busca e atalhos são círculos que se
+            esticam ao passar o mouse (ou com o foco do teclado) e mostram o nome; os vizinhos abrem espaço. */}
         <header className="barra">
-          <label className="busca-topo">
+          <label className={`busca-topo ${busca ? 'cheia' : ''}`}>
             <Icone nome="busca" tamanho={18} />
-            <input type="search" placeholder={tx('Busque por nome, valor ou data…')} value={busca} onChange={(e) => buscar(e.target.value)} aria-label={tx('Buscar lançamentos')} />
+            <input type="search" placeholder={tx('Pesquisar por nome, valor ou data…')} value={busca} onChange={(e) => buscar(e.target.value)} aria-label={tx('Buscar lançamentos')} />
           </label>
+          <div className="seletor-mes">
+            <button className="icone-btn" onClick={() => mudarMes(-1)} aria-label={tx('Mês anterior')}><Icone nome="esq" tamanho={18} /></button>
+            <button className="seletor-mes-nome" onClick={() => setQuadroMeses(!quadroMeses)} aria-expanded={quadroMeses} aria-label={tx('Escolher mês')}>
+              <Icone nome="calendario" tamanho={17} />{MESES_NOME[mes - 1]} <small>{ano}</small>
+            </button>
+            <button className="icone-btn" onClick={() => mudarMes(1)} aria-label={tx('Próximo mês')}><Icone nome="dir" tamanho={18} /></button>
+            {quadroMeses && (
+              <>
+                <div className="fora" onClick={() => setQuadroMeses(false)} />
+                <div className="quadro-meses" role="dialog" aria-label={tx('Meses')}>
+                  <div className="quadro-meses-ano">
+                    <button className="icone-btn" onClick={() => setAno(ano - 1)} aria-label={tx('Ano anterior')}><Icone nome="esq" tamanho={16} /></button>
+                    {ano}
+                    <button className="icone-btn" onClick={() => setAno(ano + 1)} aria-label={tx('Próximo ano')}><Icone nome="dir" tamanho={16} /></button>
+                  </div>
+                  <div className="quadro-meses-grade">
+                    {MESES_CURTO.map((m, i) => (
+                      <button key={m} className={`${i + 1 === mes ? 'ativo' : ''} ${porMes[i] ? 'com-dados' : ''}`}
+                        onClick={() => { setMes(i + 1); setQuadroMeses(false) }} aria-current={i + 1 === mes ? 'date' : undefined}>
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <div className="barra-direita">
             {(ocupado || d.carregando) && <span className="carregando so-desktop">{ocupado ?? tx('Carregando…')}</span>}
-            <div className="seletor-mes">
-              <button className="icone-btn" onClick={() => mudarMes(-1)} aria-label={tx('Mês anterior')}><Icone nome="esq" tamanho={18} /></button>
-              <button className="seletor-mes-nome" onClick={() => setQuadroMeses(!quadroMeses)} aria-expanded={quadroMeses} aria-label={tx('Escolher mês')}>
-                <Icone nome="calendario" tamanho={17} />{MESES_NOME[mes - 1]} <small>{ano}</small>
-              </button>
-              <button className="icone-btn" onClick={() => mudarMes(1)} aria-label={tx('Próximo mês')}><Icone nome="dir" tamanho={18} /></button>
-              {quadroMeses && (
-                <>
-                  <div className="fora" onClick={() => setQuadroMeses(false)} />
-                  <div className="quadro-meses" role="dialog" aria-label={tx('Meses')}>
-                    <div className="quadro-meses-ano">
-                      <button className="icone-btn" onClick={() => setAno(ano - 1)} aria-label={tx('Ano anterior')}><Icone nome="esq" tamanho={16} /></button>
-                      {ano}
-                      <button className="icone-btn" onClick={() => setAno(ano + 1)} aria-label={tx('Próximo ano')}><Icone nome="dir" tamanho={16} /></button>
-                    </div>
-                    <div className="quadro-meses-grade">
-                      {MESES_CURTO.map((m, i) => (
-                        <button key={m} className={`${i + 1 === mes ? 'ativo' : ''} ${porMes[i] ? 'com-dados' : ''}`}
-                          onClick={() => { setMes(i + 1); setQuadroMeses(false) }} aria-current={i + 1 === mes ? 'date' : undefined}>
-                          {m}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-            <button className="icone-btn suporte-btn so-largo" onClick={() => setSuporte('lista')}
-              aria-label={respostasNovas ? (respostasNovas === 1 ? tx('Suporte: 1 resposta nova') : tx('Suporte: {0} respostas novas', respostasNovas)) : tx('Suporte')}
-              title={respostasNovas ? tx('O suporte respondeu') : tx('Suporte: peça ajuda')}>
+            <button className="icone-btn pilula suporte-btn so-largo" onClick={() => setSuporte('lista')}
+              aria-label={respostasNovas ? (respostasNovas === 1 ? tx('Suporte: 1 resposta nova') : tx('Suporte: {0} respostas novas', respostasNovas)) : tx('Suporte')}>
               <Icone nome="conversa" />
+              <Rotulo>{respostasNovas ? tx('O suporte respondeu') : tx('Suporte')}</Rotulo>
               {respostasNovas > 0 && <span className="sino-ponto" />}
             </button>
             <span className="so-largo"><BotaoIdioma /></span>
-            <button className="icone-btn" onClick={() => definirValoresOcultos(!ocultos)} aria-pressed={ocultos}
-              aria-label={ocultos ? tx('Mostrar valores') : tx('Ocultar valores')} title={ocultos ? tx('Mostrar valores') : tx('Ocultar valores')}>
+            <button className="icone-btn pilula" onClick={() => definirValoresOcultos(!ocultos)} aria-pressed={ocultos}
+              aria-label={ocultos ? tx('Mostrar valores') : tx('Ocultar valores')}>
               <Icone nome={ocultos ? 'olho-fechado' : 'olho'} />
+              <Rotulo>{ocultos ? tx('Mostrar valores') : tx('Ocultar valores')}</Rotulo>
             </button>
-            <button className="icone-btn tema-btn" onClick={trocarTema} aria-label={tema === 'escuro' ? tx('Usar tema claro') : tx('Usar tema escuro')} title={tema === 'escuro' ? tx('Tema claro') : tx('Tema escuro')}>
+            <button className="icone-btn pilula tema-btn" onClick={trocarTema} aria-label={tema === 'escuro' ? tx('Usar tema claro') : tx('Usar tema escuro')}>
               <Icone nome={tema === 'escuro' ? 'sol' : 'lua'} />
+              <Rotulo>{tema === 'escuro' ? tx('Tema claro') : tx('Tema escuro')}</Rotulo>
             </button>
-            <button className="icone-btn ajustes-btn" onClick={() => setAjustes(true)} aria-label={tx('Configurações')} title={tx('Configurações')}>
+            <button className="icone-btn pilula ajustes-btn" onClick={() => setAjustes(true)} aria-label={tx('Configurações')}>
               <Icone nome="engrenagem" />
+              <Rotulo>{tx('Configurações')}</Rotulo>
             </button>
             <div className="perfil-topo">
               <button className="perfil-botao" data-tour="menu-conta" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label={tx('Sua conta')}>
                 <span className="avatar" aria-hidden="true">{d.foto ? <img src={d.foto} alt="" /> : iniciais || '?'}</span>
-                <span>{tx('Olá,')} <span translate="no">{nome}</span></span>
-                <Icone nome="abaixo" tamanho={18} />
+                <Rotulo><span>{tx('Olá,')} <span translate="no">{nome}</span></span><Icone nome="abaixo" tamanho={18} /></Rotulo>
               </button>
               {menu && (
                 <>
