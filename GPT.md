@@ -2255,3 +2255,11 @@ como usuário logado numa transação desfeita, e funciona. Desde a migração 4
 
 **Validação.** tsc, lint, build, `scripts/painel/testar.mjs` 55/55. O app Android só recebe a correção numa versão nova
 (2.9.2).
+
+### 26/11/2026 — Claude — App Android 2.9.2 (código 30)
+
+**Estado:** `.aab` gerado, assinado com a chave de upload e entregue ao Edigar; falta ele enviar no Play Console. Substitui
+o 2.9.1 (que ele ainda não tinha enviado): leva tudo do 2.9.1 mais o `roundRect` próprio e o filtro dos avisos de
+ResizeObserver (#308). `versionCode` 29 → 30. Chave e senha vieram do Drive do dono só para assinar e foram apagadas em
+seguida. Conferido: `jarsigner -verify` ("jar verified"), impressão SHA-256 da chave de upload (A7:07:94:…:5D:9D) e as duas
+correções dentro do pacote.
