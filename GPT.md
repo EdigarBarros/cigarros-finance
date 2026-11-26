@@ -2194,3 +2194,25 @@ para conferir se é repetição.
 extensão pg_cron está ligada, e o agendamento `encerrar-sessoes-vencidas` está ativo (minuto 17 de cada hora). Contas comuns
 e anônimas não podem chamar a função. Antes de aplicar, nenhuma sessão passava de 30 dias, e a primeira execução manual
 encerrou 0. Fica pendente: publicar a função `admin` do painel com a trava de 7 dias (já no repositório do painel).
+
+### 26/11/2026 — Claude — Barra de cima do computador em círculos
+
+**Pedido.** Os botões do topo ocupavam muito espaço. O dono pediu para reorganizar: algo no centro, o resto dos lados, em
+círculos que se esticam ao passar o mouse e mostram o nome (a lupa vira "Pesquisar…"), com os vizinhos abrindo espaço.
+
+**O que mudou** (`src/components/Painel.tsx`, `src/components/BotaoIdioma.tsx`, fim de `src/index.css`; só acima de 860 px,
+porque o celular tem a barra própria em `src/movel`).
+- A barra virou uma grade de três colunas: a busca à esquerda, o mês no centro e os atalhos à direita. Em tela estreita, os
+  atalhos ganham o lugar deles e o mês anda um pouco para a esquerda.
+- A busca é um círculo com a lupa. Ela abre ao passar o mouse, ao clicar ou enquanto tem texto. Antes, sumia abaixo de 1100 px;
+  agora fica em todas as larguras do computador.
+- Suporte, idioma, ocultar valores, tema e configurações são círculos de 44 px. Ao passar o mouse ou com foco do teclado, o
+  nome desliza para fora (`Rotulo`, `.pilula-rotulo`, `grid-template-columns` 0fr → 1fr). O idioma mostra o nome dele no
+  próprio idioma. Sem o "crescer 10%" dos outros botões redondos nesses círculos.
+- A conta mostra só a foto. Passando o mouse, aparece "Olá, nome ▾" (antes a saudação sumia abaixo de 1280 px).
+- As dicas que o navegador mostrava ao parar o mouse saíram desses botões (o nome já aparece). Com animações reduzidas, sem
+  transição.
+
+**Validação.** tsc, lint, build; fotos a 1440, 1180 e 1000 px (claro e escuro): parada, busca aberta, suporte, idioma e
+conta. Mês exatamente no centro a 1440 px. Nada passa da borda. Sem erro na página. `testar-contas.cjs` 34 OK,
+`scripts/painel/testar.mjs` 55/55.

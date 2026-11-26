@@ -4799,3 +4799,52 @@ button.ex-tipo:hover { transform: scale(1.1); }
 }
 @media (prefers-reduced-motion: reduce) { .suporte-aba { animation: none; transition: none; } }
 @media print { .suporte-camada { display: none; } }
+
+/* ===== Barra do computador (components/Painel.tsx): a busca à esquerda, o mês no meio, os atalhos à direita =====
+   Busca e atalhos são círculos. Passando o mouse (ou com o foco do teclado), o círculo se estica e mostra o nome, e os
+   vizinhos abrem espaço. A busca fica aberta enquanto tem texto. No celular a barra é outra (src/movel). */
+.pilula-rotulo { display: none; }
+@media (min-width: 861px) {
+  /* o mês fica no centro enquanto cabe; em tela estreita, os atalhos ganham o lugar deles e o mês anda para a esquerda */
+  .barra { display: grid; grid-template-columns: minmax(44px, 1fr) auto minmax(max-content, 1fr); gap: 16px; }
+  .barra > .seletor-mes { grid-column: 2; }
+  .barra-direita { grid-column: 3; justify-self: end; margin-left: 0; gap: 8px; min-width: 0; }
+
+  .barra .busca-topo {
+    display: flex; justify-self: start; flex: none; width: 44px; max-width: 100%; height: 44px; padding: 0 12px; gap: 10px;
+    border-color: var(--borda); cursor: pointer; overflow: hidden;
+    transition: width .45s var(--mola), border-color .2s, box-shadow .2s;
+  }
+  .barra .busca-topo > svg { flex: none; }
+  .barra .busca-topo input { opacity: 0; cursor: pointer; transition: opacity .15s; }
+  .barra .busca-topo:is(:hover, :focus-within, .cheia) { width: min(360px, 100%); border-color: var(--borda-forte); }
+  .barra .busca-topo:is(:hover, :focus-within, .cheia) input { opacity: 1; cursor: text; transition-delay: .12s; }
+  .barra .busca-topo:focus-within { border-color: var(--destaque); }
+
+  .barra :is(.pilula, .idioma-btn) {
+    display: inline-flex; align-items: center; justify-content: flex-start; width: auto; min-width: 44px; height: 44px;
+    padding: 0 11px; gap: 0; border-radius: 999px; letter-spacing: 0;
+    transition: gap .4s var(--mola), padding .4s var(--mola), color .2s, border-color .2s;
+  }
+  .barra :is(.pilula, .idioma-btn) > svg { flex: none; }
+  .barra .pilula:is(:hover, :active) { --s: 1; } /* esticar já é a resposta ao mouse: sem o crescer dos outros botões redondos */
+  .barra .idioma-sigla { display: none; }
+  .barra .pilula .sino-ponto { top: 8px; right: auto; left: 27px; }
+  .barra .pilula-rotulo { display: grid; grid-template-columns: 0fr; transition: grid-template-columns .4s var(--mola); }
+  .barra .pilula-rotulo > span {
+    display: inline-flex; align-items: center; gap: 6px; min-width: 0; overflow: hidden; white-space: nowrap;
+    font-size: 13.5px; font-weight: 600; letter-spacing: 0;
+  }
+  .barra :is(.pilula, .idioma-btn):is(:hover, :focus-visible, [aria-expanded='true']) { gap: 8px; padding: 0 16px 0 11px; color: var(--texto); border-color: var(--borda-forte); }
+  .barra :is(.pilula, .idioma-btn, .perfil-botao):is(:hover, :focus-visible, [aria-expanded='true']) .pilula-rotulo { grid-template-columns: 1fr; }
+
+  /* a conta: só a foto; passando o mouse, "Olá, nome ▾" (vence a regra das telas médias que escondia a saudação) */
+  .barra .perfil-botao { height: 44px; padding: 2px; gap: 0; transition: gap .4s var(--mola), padding .4s var(--mola), background .2s; }
+  .barra .perfil-botao > .pilula-rotulo { display: grid; }
+  .barra .perfil-botao .avatar { flex: none; }
+  .barra .perfil-botao .pilula-rotulo > span { font-size: 14.5px; }
+  .barra .perfil-botao:is(:hover, :focus-visible, [aria-expanded='true']) { gap: 10px; padding: 2px 12px 2px 2px; }
+}
+@media (min-width: 861px) and (prefers-reduced-motion: reduce) {
+  .barra :is(.busca-topo, .pilula, .idioma-btn, .perfil-botao, .pilula-rotulo) { transition: none; }
+}

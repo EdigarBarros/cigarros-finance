@@ -73,7 +73,11 @@ export function BotaoIdioma({ flutuante, emLista, semBotao, aberto: abertoFora, 
           <IconeTraduzir />
           {emLista
             ? <><span className="idioma-nome">Idioma · Language</span><small className="idioma-atual">{idiomaPorCodigo(codigo).nativo}</small></>
-            : <span className="idioma-sigla">{sigla(codigo)}</span>}
+            : <>
+              <span className="idioma-sigla">{sigla(codigo)}</span>
+              {/* na barra do computador, o nome do idioma aparece quando o círculo se estica */}
+              <span className="pilula-rotulo" aria-hidden="true"><span>{idiomaPorCodigo(codigo).nativo}</span></span>
+            </>}
         </button>
       )}
       {aberto && (

@@ -19014,5 +19014,9 @@
   "{0}: {1}, já paga. Fica travada no plano.": {
     "en": "{0}: {1}, already paid. It stays locked in the plan.",
     "es": "{0}: {1}, ya pagada. Queda fija en el plan."
+  },
+  "Pesquisar por nome, valor ou data…": {
+    "en": "Search by name, amount or date…",
+    "es": "Busca por nombre, valor o fecha…"
   }
 }
