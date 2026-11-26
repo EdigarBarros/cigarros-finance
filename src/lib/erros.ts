@@ -17,6 +17,8 @@ export function registrarErro(erro: unknown, onde: OrigemDoErro) {
     // é só atualizar. O app recarrega na hora certa (lib/atualizacao.ts).
     if (ehErroDeVersao(e)) { versaoNovaNecessaria(); return }
     if (/^script error\.?$/i.test(e.message.trim())) return
+    // aviso do navegador, não defeito: um observador de tamanho mudou o layout e a medição segue no quadro seguinte
+    if (/^ResizeObserver loop/i.test(e.message.trim())) return
     const mensagem = classes.has(e.name) ? e.name : 'Erro do aplicativo'
     const chave = `${onde}:${mensagem}`
     if (vistos.size >= 5 || vistos.has(chave)) return

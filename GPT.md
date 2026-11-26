@@ -2234,3 +2234,24 @@ digitou a senha") o login cuja senha tem mais de 7 dias, mesmo que o crachá ten
 publicado é o de `supabase/functions/admin/index.ts` do Painel-Opus-Cash (`main`): `deno check` e 7 testes passaram. Não deu
 para chamar a função deste ambiente, porque o proxy bloqueia o Supabase. A confirmação final é o dono entrar no painel. Para
 voltar atrás, publique o `index.ts` do commit `11366cd` do painel (a versão 12).
+
+### 26/11/2026 — Claude — Erros do painel: roundRect e ResizeObserver
+
+**Pedido.** O dono viu no painel de suporte (tela Erros) "c.roundRect is not a function" e dois avisos de "ResizeObserver
+loop".
+
+**Situação.** Nenhum dos três acontece desde 21/11. A gravação de erros (filtro da migração 43) foi conferida com um insert
+como usuário logado numa transação desfeita, e funciona. Desde a migração 43, os erros chegam só com o tipo ("TypeError" ou
+"Erro do aplicativo").
+
+**Correções.**
+- `src/lib/roundRect.ts` + `main.tsx`: `roundRect` próprio no canvas (`CanvasRenderingContext2D`, `OffscreenCanvas`,
+  `Path2D`), só quando o navegador não tem (Safari < 16, WebView de Android antigo). O erro tinha versão no formato do app
+  Android. Sem a função nativa, a tela do Algoritmo fez 104 desenhos sem erro. Comparado com a nativa, 5 formatos (raio
+  único, 2, 3 e 4 raios, tamanho negativo) deram 0 pixels diferentes.
+- `src/lib/erros.ts`: o aviso "ResizeObserver loop…" não é gravado (é aviso do navegador, não defeito).
+- `src/components/CenasDoOpus.tsx`: a medida do palco das cenas passa para o quadro seguinte (`requestAnimationFrame`),
+  como os outros observadores de tamanho. Mudar a escala dentro do aviso provocava o "loop".
+
+**Validação.** tsc, lint, build, `scripts/painel/testar.mjs` 55/55. O app Android só recebe a correção numa versão nova
+(2.9.2).

@@ -10,8 +10,10 @@ import { iniciarIdioma } from './lib/idioma'
 import { nativo, tx } from './lib/textos'
 import { iniciarRegistroDeErros } from './lib/erros'
 import { iniciarIma } from './lib/ima'
+import { completarRoundRect } from './lib/roundRect'
 import './index.css'
 
+completarRoundRect()
 iniciarIma()
 iniciarRegistroDeErros()
 iniciarAtualizacao()
