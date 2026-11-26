@@ -68,7 +68,7 @@ export function BotaoIdioma({ flutuante, emLista, semBotao, aberto: abertoFora, 
   return (
     <div className={`idioma ${flutuante ? 'flutuante' : ''} ${emLista ? 'em-lista' : ''} ${semBotao ? 'solto' : ''}`} translate="no">
       {!semBotao && (
-        <button className="idioma-btn" onClick={() => setAberto(!aberto)} aria-expanded={aberto} aria-haspopup="dialog"
+        <button className="idioma-btn" data-elastico={!flutuante && !emLista ? '' : undefined} onClick={() => setAberto(!aberto)} aria-expanded={aberto} aria-haspopup="dialog"
           aria-label={ROTULO} title={ROTULO}>
           <IconeTraduzir />
           {emLista
@@ -76,7 +76,7 @@ export function BotaoIdioma({ flutuante, emLista, semBotao, aberto: abertoFora, 
             : <>
               <span className="idioma-sigla">{sigla(codigo)}</span>
               {/* na barra do computador, o nome do idioma aparece quando o círculo se estica */}
-              <span className="pilula-rotulo" aria-hidden="true"><span>{idiomaPorCodigo(codigo).nativo}</span></span>
+              <span className="pilula-rotulo" aria-hidden="true">{idiomaPorCodigo(codigo).nativo}</span>
             </>}
         </button>
       )}
