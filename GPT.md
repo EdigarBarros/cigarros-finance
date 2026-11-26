@@ -2263,3 +2263,10 @@ o 2.9.1 (que ele ainda não tinha enviado): leva tudo do 2.9.1 mais o `roundRect
 ResizeObserver (#308). `versionCode` 29 → 30. Chave e senha vieram do Drive do dono só para assinar e foram apagadas em
 seguida. Conferido: `jarsigner -verify` ("jar verified"), impressão SHA-256 da chave de upload (A7:07:94:…:5D:9D) e as duas
 correções dentro do pacote.
+
+**Atualização (26/11/2026, abertura "Macia").** O dono ainda achou a abertura dura. Uma página de teste com quatro jeitos
+(o atual, "Macia", "Mola" e "Lente") foi publicada como artifact, e ele escolheu a "Macia" na velocidade normal. Em
+`src/lib/barraElastica.ts`: curva `cubic-bezier(.65, 0, .35, 1)` (começa e termina devagar) em 420 ms; espera de 90 ms antes
+de abrir do nada (o mouse que passa de raspão não abre); de um círculo aberto para o vizinho, na hora; 40 ms antes de fechar.
+O nome aparece depois de ~40% do movimento e some junto com o fundo. Conferido no Chromium: fechado com 40 ms, aberto com
+190 ms, troca de vizinho imediata, raspão não abre, sem erro.
