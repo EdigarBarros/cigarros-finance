@@ -2293,3 +2293,10 @@ entra em ~0,4 s, com ~30 ms entre os blocos.
 (antes 144 a 202 ms). Fotos da lente congelada em 90, 200, 330 e 600 ms mostram ela esticando e encolhendo. Testes:
 `testar-troca-de-tela`, `testar-movel` (379), `testar-contas` (34), `testar-planejamento` (56), `scripts/painel/testar.mjs`
 55/55. tsc, lint e build ok.
+
+### 27/11/2026 — Claude — App Android 2.9.3 (código 31)
+
+**Estado:** `.aab` gerado, assinado com a chave de upload e entregue ao Edigar; falta enviar no Play Console. Substitui o
+2.9.2 (ainda não enviado): leva o 2.9.2 mais a fluidez do #311 (lente elástica das abas). `versionCode` 30 → 31. Chave e
+senha do Drive do dono, só para assinar, apagadas em seguida. Conferido: `jarsigner -verify`, impressão da chave de upload
+(A7:07:94:…:5D:9D) e o código novo dentro do pacote.
