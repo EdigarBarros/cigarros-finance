@@ -2338,3 +2338,10 @@ Conferido no banco: a de novembro estava quitada (pagamentos de parte e quitaç�
 dezembro. Os números estavam certos, mas o texto não dizia o mês. Agora Dívidas e o "Isso paga…" das saídas mostram "Fatura de
 <mês> do <cartão> · vence <dia> · falta R$ …". O pagamento avisa quando o valor passa do que falta ("Confira se é esta mesma
 fatura"). `testar-fatura-como-divida.cjs` 25 OK. (O PR #315 entrou vazio por engano; a mudança está no PR seguinte.)
+
+### 27/11/2026 — Claude — App Android 2.9.5 (código 33)
+
+**Estado:** `.aab` gerado, assinado e entregue ao Edigar; falta enviar no Play Console. Substitui o 2.9.4 (ainda não
+enviado): leva o 2.9.4 mais o mês nas faturas a pagar e o aviso de valor acima do que falta (#316). `versionCode` 32 → 33.
+Chave do Drive do dono só para assinar, apagada em seguida. Conferido: `jarsigner -verify`, impressão da chave de upload
+(A7:07:94:…:5D:9D) e o código novo no pacote.
