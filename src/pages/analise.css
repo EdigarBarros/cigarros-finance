@@ -90,6 +90,14 @@
 .an-plano-texto strong { font-size: 14px; font-weight: 650; line-height: 1.4; }
 .an-plano-ganho { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; font-size: 12px; font-weight: 750; color: color-mix(in srgb, var(--an-bom) 80%, var(--texto)); background: color-mix(in srgb, var(--an-bom) 13%, transparent); }
 .an-plano-porque { font-size: 13.5px; line-height: 1.5; color: var(--texto-2); animation: vis-aparece .3s var(--mola); }
+.decisao { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.decisao-selo { align-self: flex-start; font-size: 11.5px; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--fundo-2, rgba(127,127,127,.12)); color: var(--texto-2); }
+.decisao-pergunta { color: #2f6fdb; background: rgba(47,111,219,.12); }
+.decisao-condicional { color: #b7791f; background: rgba(214,158,46,.15); }
+.decisao-faltam-dados { color: #8a5cd6; background: rgba(138,92,214,.13); }
+.decisao-bloco { display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; }
+.decisao-bloco b { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; color: var(--texto-3, var(--texto-2)); }
+.decisao-bloco span { padding-left: 10px; border-left: 2px solid var(--borda, rgba(127,127,127,.25)); }
 .an-plano-ir { grid-column: 2; justify-self: start; display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0; border: 0; background: none; font: inherit; font-size: 13px; font-weight: 700; color: color-mix(in srgb, var(--c) 70%, var(--texto)); cursor: pointer; }
 .an-plano-ir:hover span { text-decoration: underline; }
 .an-plano-mais { justify-self: start; font-size: 13.5px; }

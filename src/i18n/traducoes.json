@@ -19238,5 +19238,269 @@
   "Lance mais um mês e o Kairo começa a dar a nota.": {
     "en": "Add one more month and Kairo starts giving you a score.",
     "es": "Registra un mes más y Kairo empieza a darte una nota."
+  },
+  "Você informou que o contrato não tem juros.": {
+    "en": "You said the contract has no interest.",
+    "es": "Indicaste que el contrato no tiene intereses."
+  },
+  "Juros do contrato informados por você: {0}% ao mês.": {
+    "en": "Contract interest you entered: {0}% a month.",
+    "es": "Intereses del contrato que indicaste: {0}% al mes."
+  },
+  "Juros calculados pelo que você recebeu e pelas parcelas: cerca de {0}% ao mês (considerando a 1ª parcela 1 mês depois de receber).": {
+    "en": "Interest worked out from what you received and the installments: about {0}% a month (assuming the 1st installment 1 month after you got the money).",
+    "es": "Intereses calculados por lo que recibiste y las cuotas: cerca de {0}% al mes (considerando la 1.ª cuota 1 mes después de recibir)."
+  },
+  "Os juros do contrato não foram informados.": {
+    "en": "The contract interest wasn't entered.",
+    "es": "No se indicaron los intereses del contrato."
+  },
+  "Inclui cerca de {0} de multa e juros do atraso, estimados pela regra de atraso: eles não entram no desconto.": {
+    "en": "Includes about {0} in late fees and interest, estimated by the late-payment rule: they don't count toward the discount.",
+    "es": "Incluye cerca de {0} de multa e intereses por atraso, estimados por la regla de atraso: no entran en el descuento."
+  },
+  "Valor para quitar informado pelo credor em {0}. Confirme antes de pagar: ele muda com o tempo.": {
+    "en": "Payoff amount given by the lender on {0}. Check it before paying: it changes over time.",
+    "es": "Monto para liquidar informado por el acreedor el {0}. Confírmalo antes de pagar: cambia con el tiempo."
+  },
+  "O credor pediu {0} para quitar em {1}, mas faz mais de {2} dias: peça o valor de novo.": {
+    "en": "The lender asked {0} to pay off on {1}, but that was more than {2} days ago: ask for the amount again.",
+    "es": "El acreedor pidió {0} para liquidar el {1}, pero hace más de {2} días: pide el monto de nuevo."
+  },
+  "Sem os juros do contrato, não dá para saber quanto o credor abate das parcelas que ainda não venceram. Peça a ele o valor para quitar hoje.": {
+    "en": "Without the contract interest, there's no way to know how much the lender takes off the installments not yet due. Ask them for today's payoff amount.",
+    "es": "Sin los intereses del contrato, no se puede saber cuánto descuenta el acreedor de las cuotas que aún no vencen. Pídele el monto para liquidar hoy."
+  },
+  "Contrato sem juros: adiantar não tem desconto.": {
+    "en": "Interest-free contract: paying early has no discount.",
+    "es": "Contrato sin intereses: adelantar no tiene descuento."
+  },
+  "Desconto pela redução proporcional dos juros do contrato ({0}% ao mês) nas parcelas que ainda não venceram. Em crédito ao consumidor isso é direito seu; com pessoa física, depende de acordo.": {
+    "en": "Discount from the proportional cut in contract interest ({0}% a month) on installments not yet due. In consumer credit this is your right; with a private person, it depends on agreement.",
+    "es": "Descuento por la reducción proporcional de los intereses del contrato ({0}% al mes) en las cuotas que aún no vencen. En crédito al consumidor es tu derecho; con una persona, depende de un acuerdo."
+  },
+  "Desconto estimado pela taxa que as parcelas embutem ({0}% ao mês); o contrato pode ter outra taxa. Peça o valor para quitar ao credor.": {
+    "en": "Discount estimated from the rate built into the installments ({0}% a month); the contract may have another rate. Ask the lender for the payoff amount.",
+    "es": "Descuento estimado por la tasa que traen las cuotas ({0}% al mes); el contrato puede tener otra tasa. Pide al acreedor el monto para liquidar."
+  },
+  "Compra nova": {
+    "en": "New purchase",
+    "es": "Compra nueva"
+  },
+  "Sem o saldo de hoje informado, o app não confere se o dinheiro do dia a dia aguenta: contei só o que vai entrar.": {
+    "en": "Without today's balance, the app can't check whether day-to-day money holds up: I only counted what's coming in.",
+    "es": "Sin el saldo de hoy, la app no comprueba si alcanza el dinero del día a día: conté solo lo que va a entrar."
+  },
+  "Já deixei separado o essencial do dia a dia (mercado, farmácia, transporte) até cada entrada.": {
+    "en": "I already set aside day-to-day essentials (groceries, pharmacy, transport) until each payday.",
+    "es": "Ya aparté lo esencial del día a día (súper, farmacia, transporte) hasta cada ingreso."
+  },
+  "E o essencial até o primeiro dinheiro depois do fim do plano.": {
+    "en": "And the essentials until the first money after the plan ends.",
+    "es": "Y lo esencial hasta el primer dinero después del fin del plan."
+  },
+  "O plano vai só até o fim do mês que vem: as parcelas depois disso não entram nesta conta.": {
+    "en": "The plan only goes to the end of next month: installments after that aren't in this calculation.",
+    "es": "El plan llega solo hasta el fin del mes que viene: las cuotas posteriores no entran en esta cuenta."
+  },
+  "Imprevisto": {
+    "en": "Unexpected expense",
+    "es": "Imprevisto"
+  },
+  "Se {0} cair 3 dias depois do previsto": {
+    "en": "If {0} comes in 3 days late",
+    "es": "Si {0} llega 3 días después de lo previsto"
+  },
+  "Se aparecer hoje um gasto de {0} que ninguém esperava (uma semana do seu dia a dia)": {
+    "en": "If an unexpected {0} expense shows up today (a week of your day-to-day spending)",
+    "es": "Si hoy aparece un gasto de {0} que nadie esperaba (una semana de tu día a día)"
+  },
+  "Em {0} o dinheiro não dá para os dois. Você pediu para {1} vir antes, então vai primeiro.": {
+    "en": "On {0} the money doesn't cover both. You asked for {1} to come first, so it goes first.",
+    "es": "El {0} el dinero no alcanza para los dos. Pediste que {1} vaya antes, así que va primero."
+  },
+  "Em {0} o dinheiro não dá para os dois. {1} é uma conta essencial, então vai primeiro, mesmo que {2} cobre mais pelo atraso.": {
+    "en": "On {0} the money doesn't cover both. {1} is an essential bill, so it goes first, even though {2} charges more for paying late.",
+    "es": "El {0} el dinero no alcanza para los dos. {1} es una cuenta esencial, así que va primero, aunque {2} cobre más por el atraso."
+  },
+  "Considerei {0} essencial pela categoria.": {
+    "en": "I treated {0} as essential because of its category.",
+    "es": "Consideré {0} esencial por su categoría."
+  },
+  "Juros de atraso de {0} estimados.": {
+    "en": "Late interest on {0} is estimated.",
+    "es": "Intereses por atraso de {0} estimados."
+  },
+  "Pagar {0} antes custaria cerca de {1} a menos de multa e juros, mas deixaria {2} atrasada. No Planejar o mês, você escolhe o contrário se preferir.": {
+    "en": "Paying {0} first would cost about {1} less in fees and interest, but would leave {2} late. In Plan the month, you can choose the opposite if you prefer.",
+    "es": "Pagar {0} antes costaría cerca de {1} menos de multa e intereses, pero dejaría {2} atrasada. En Planificar el mes, puedes elegir lo contrario si prefieres."
+  },
+  "Sem o saldo de hoje, contei só o dinheiro que ainda vai entrar.": {
+    "en": "Without today's balance, I only counted the money still coming in.",
+    "es": "Sin el saldo de hoy, conté solo el dinero que aún va a entrar."
+  },
+  "Deixei separado o essencial do dia a dia (mercado, farmácia, transporte) até o próximo dinheiro: por isso {0} espera.": {
+    "en": "I set aside day-to-day essentials (groceries, pharmacy, transport) until the next money comes in: that's why {0} waits.",
+    "es": "Aparté lo esencial del día a día (súper, farmacia, transporte) hasta el próximo dinero: por eso {0} espera."
+  },
+  "Pagar {0} em {1} custaria {2} a menos, mas tiraria o dinheiro do essencial do dia a dia até o próximo dinheiro.": {
+    "en": "Paying {0} on {1} would cost {2} less, but would take the money for day-to-day essentials until the next money comes in.",
+    "es": "Pagar {0} el {1} costaría {2} menos, pero quitaría el dinero de lo esencial del día a día hasta el próximo dinero."
+  },
+  "Negociar a data antes de vencer.": {
+    "en": "Negotiate the date before it's due.",
+    "es": "Negociar la fecha antes del vencimiento."
+  },
+  "Usar {0} do dinheiro guardado evita todo atraso (no Planejar o mês, ligue \"Usar o dinheiro guardado\").": {
+    "en": "Using {0} of your savings avoids every delay (in Plan the month, turn on \"Use my savings\").",
+    "es": "Usar {0} del dinero guardado evita todo atraso (en Planificar el mes, activa \"Usar el dinero ahorrado\")."
+  },
+  "O dinheiro guardado ({0}) cobre parte dos {1} que faltam.": {
+    "en": "Your savings ({0}) cover part of the {1} missing.",
+    "es": "El dinero guardado ({0}) cubre parte de los {1} que faltan."
+  },
+  "Se {0} pagar {1} até {2}, ajuda; mas pode não cair, então o plano não conta com isso.": {
+    "en": "If {0} pays {1} by {2}, it helps; but it may not come in, so the plan doesn't count on it.",
+    "es": "Si {0} paga {1} antes del {2}, ayuda; pero puede no llegar, así que el plan no cuenta con eso."
+  },
+  "Se {0} pagar os {1}, ajuda; sem dia combinado, o plano não conta com isso.": {
+    "en": "If {0} pays the {1}, it helps; with no agreed date, the plan doesn't count on it.",
+    "es": "Si {0} paga los {1}, ayuda; sin fecha acordada, el plan no cuenta con eso."
+  },
+  "Negociar as datas antes de vencer, começando pelo que não é essencial.": {
+    "en": "Negotiate the dates before they're due, starting with what isn't essential.",
+    "es": "Negociar las fechas antes del vencimiento, empezando por lo que no es esencial."
+  },
+  "Sem o saldo de hoje, contei só o dinheiro que ainda vai entrar: informe o saldo dos bancos para saber se falta mesmo.": {
+    "en": "Without today's balance, I only counted the money still coming in: enter your bank balances to know if it's really short.",
+    "es": "Sin el saldo de hoy, conté solo el dinero que aún va a entrar: indica el saldo de los bancos para saber si de verdad falta."
+  },
+  "Já deixei {0} separados para o essencial entre {1} e {2}, quando entra o próximo dinheiro.": {
+    "en": "I already set aside {0} for essentials between {1} and {2}, when the next money comes in.",
+    "es": "Ya aparté {0} para lo esencial entre el {1} y el {2}, cuando entra el próximo dinero."
+  },
+  "{0}, {1} atrasa.": {
+    "en": "{0}, {1} will be late.",
+    "es": "{0}, {1} se atrasa."
+  },
+  "{0}, {1} e {2} atrasam.": {
+    "en": "{0}, {1} and {2} will be late.",
+    "es": "{0}, {1} y {2} se atrasan."
+  },
+  "O plano de hoje fecha, mas fica justo. Deixar {0} separados (ou passar o vencimento para depois do dinheiro) cobre esse caso.": {
+    "en": "Today's plan works, but it's tight. Setting aside {0} (or moving the due date to after the money comes in) covers this case.",
+    "es": "El plan de hoy cierra, pero queda justo. Apartar {0} (o pasar el vencimiento para después del dinero) cubre este caso."
+  },
+  "O plano de hoje fecha, mas fica justo. Passar o vencimento para depois do dinheiro cobre esse caso.": {
+    "en": "Today's plan works, but it's tight. Moving the due date to after the money comes in covers this case.",
+    "es": "El plan de hoy cierra, pero queda justo. Pasar el vencimiento para después del dinero cubre este caso."
+  },
+  "É um teste com premissa fixa, não uma previsão.": {
+    "en": "It's a test with a fixed assumption, not a forecast.",
+    "es": "Es una prueba con una premisa fija, no una previsión."
+  },
+  "Cenário tirado do seu histórico.": {
+    "en": "Scenario taken from your history.",
+    "es": "Escenario sacado de tu historial."
+  },
+  "No atraso, essa dívida cobra {0}% ao mês, mais do que qualquer aplicação segura rende.": {
+    "en": "When late, this debt charges {0}% a month, more than any safe investment earns.",
+    "es": "En atraso, esta deuda cobra {0}% al mes, más de lo que rinde cualquier inversión segura."
+  },
+  "Essa dívida cobra {0}% ao mês, mais do que qualquer aplicação segura rende.": {
+    "en": "This debt charges {0}% a month, more than any safe investment earns.",
+    "es": "Esta deuda cobra {0}% al mes, más de lo que rinde cualquier inversión segura."
+  },
+  "O valor é o que o credor informou.": {
+    "en": "The amount is the one the lender gave.",
+    "es": "El monto es el que informó el acreedor."
+  },
+  "O desconto é uma estimativa pela taxa que as parcelas embutem: peça o valor exato ao credor.": {
+    "en": "The discount is an estimate from the rate built into the installments: ask the lender for the exact amount.",
+    "es": "El descuento es una estimación por la tasa que traen las cuotas: pide el monto exacto al acreedor."
+  },
+  "O desconto é o dos juros do contrato nas parcelas que ainda não venceram: confirme o valor com o credor.": {
+    "en": "The discount is the contract interest on installments not yet due: confirm the amount with the lender.",
+    "es": "El descuento es el de los intereses del contrato en las cuotas que aún no vencen: confirma el monto con el acreedor."
+  },
+  "Peça o valor para quitar {0} e use o guardado.": {
+    "en": "Ask for the payoff amount for {0} and use your savings.",
+    "es": "Pide el monto para liquidar {0} y usa lo guardado."
+  },
+  "Só de juros, são cerca de {0} por mês. Quitando hoje, esse custo some, e ainda ficam {1} de reserva.": {
+    "en": "Interest alone is about {0} a month. Paying it off today removes that cost, and you still keep {1} of savings.",
+    "es": "Solo de intereses, son cerca de {0} al mes. Liquidando hoy, ese costo desaparece, y aún te quedan {1} de reserva."
+  },
+  "Quitando hoje, você deixa de pagar cerca de {0} e libera {1} por mês. Ainda ficam {2} de reserva; reponha com a parcela liberada.": {
+    "en": "Paying it off today, you avoid about {0} and free up {1} a month. You still keep {2} of savings; refill it with the freed installment.",
+    "es": "Liquidando hoy, dejas de pagar cerca de {0} y liberas {1} al mes. Aún te quedan {2} de reserva; repónla con la cuota liberada."
+  },
+  "Quitando hoje, você libera {0} por mês. Ainda ficam {1} de reserva; reponha com a parcela liberada.": {
+    "en": "Paying it off today frees up {0} a month. You still keep {1} of savings; refill it with the freed installment.",
+    "es": "Liquidando hoy, liberas {0} al mes. Aún te quedan {1} de reserva; repónla con la cuota liberada."
+  },
+  "Sem os juros do contrato, o app não sabe quanto o credor abate das parcelas que faltam: peça a ele o valor para quitar hoje. Sem desconto nenhum, seriam {0}; mesmo assim você libera {1} por mês e ainda ficam {2} de reserva.": {
+    "en": "Without the contract interest, the app doesn't know how much the lender takes off the remaining installments: ask them for today's payoff amount. With no discount at all, it would be {0}; even so you free up {1} a month and still keep {2} of savings.",
+    "es": "Sin los intereses del contrato, la app no sabe cuánto descuenta el acreedor de las cuotas que faltan: pídele el monto para liquidar hoy. Sin ningún descuento, serían {0}; aun así liberas {1} al mes y te quedan {2} de reserva."
+  },
+  "{0} por mês livres": {
+    "en": "{0} a month freed",
+    "es": "{0} al mes libres"
+  },
+  "Manter a reserva inteira e seguir pagando as parcelas: mais segurança, mais juros.": {
+    "en": "Keep all your savings and keep paying the installments: more safety, more interest.",
+    "es": "Mantener toda la reserva y seguir pagando las cuotas: más seguridad, más intereses."
+  },
+  "Adiantar só parte, deixando mais reserva guardada.": {
+    "en": "Pay only part early, keeping more savings.",
+    "es": "Adelantar solo una parte, dejando más reserva guardada."
+  },
+  "Pelo seu calendário até {0}, com esta compra {1} atrasa.": {
+    "en": "By your calendar up to {0}, with this purchase {1} will be late.",
+    "es": "Según tu calendario hasta el {0}, con esta compra {1} se atrasa."
+  },
+  "Pelo seu calendário até {0}, com esta compra {1} atrasam.": {
+    "en": "By your calendar up to {0}, with this purchase {1} will be late.",
+    "es": "Según tu calendario hasta el {0}, con esta compra {1} se atrasan."
+  },
+  "Pelo seu calendário até {0}, a fatura com esta parcela não teria dinheiro no vencimento.": {
+    "en": "By your calendar up to {0}, the bill with this installment wouldn't have money on its due date.",
+    "es": "Según tu calendario hasta el {0}, la factura con esta cuota no tendría dinero al vencer."
+  },
+  "Pelo seu calendário, cabe até {0}, mas tira {1} do que precisa sobrar para o essencial depois disso.": {
+    "en": "By your calendar, it fits until {0}, but it takes {1} from what has to be left for essentials after that.",
+    "es": "Según tu calendario, cabe hasta el {0}, pero quita {1} de lo que debe quedar para lo esencial después."
+  },
+  "Pelo seu calendário até {0}, cabe sem atrasar nenhuma conta (caberia até {1} por mês).": {
+    "en": "By your calendar up to {0}, it fits without making any bill late (up to {1} a month would fit).",
+    "es": "Según tu calendario hasta el {0}, cabe sin atrasar ninguna cuenta (cabrían hasta {1} al mes)."
+  },
+  "A escolha é sua": {
+    "en": "Your call",
+    "es": "La decisión es tuya"
+  },
+  "Depende de acontecer": {
+    "en": "Depends on it happening",
+    "es": "Depende de que ocurra"
+  },
+  "Pode mudar com um dado que falta": {
+    "en": "Could change with missing info",
+    "es": "Puede cambiar con un dato que falta"
+  },
+  "Segue a sua prioridade": {
+    "en": "Follows your priority",
+    "es": "Sigue tu prioridad"
+  },
+  "Recomendação": {
+    "en": "Recommendation",
+    "es": "Recomendación"
+  },
+  "Com base em": {
+    "en": "Based on",
+    "es": "Con base en"
+  },
+  "Também pensei em": {
+    "en": "I also considered",
+    "es": "También pensé en"
   }
 }

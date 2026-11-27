@@ -31,9 +31,12 @@ import { mudaDeBolso } from './mudaDeBolso'
 import { fraseDoResultado, licaoDe, type MemoriaConsultor, type Objetivo } from './memoria'
 import { converter, totalConvertido, type Taxas } from './moedas'
 import { visao } from './perfil'
-import { planejar, type Plano } from './planejador'
+import { planejar, type EntradaPlanejador, type Plano } from './planejador'
 import { conselhosDoPlanejamento, lerPlano, quadroDoMes, type LeituraDoPlano, type Planejamentos, type Quadro } from './planejamento'
 import { tx } from './textos'
+import { jurosDoContrato, quitacaoHoje, type JurosDoContrato, type Quitacao } from './decisoes/custos'
+import { decisaoDe, type Decisao } from './decisoes/decisao'
+import { descontoParaQuitar } from './jurosAprendido'
 import { compromissoDe, diasSemLancar, FIRMEZA_PADRAO, sinaisDe, type Compromisso, type Firmeza, type Sinal } from './sinais'
 import type {
   Banco, CartaoCredito, Categoria, ConferenciaDivida, ContaFixa, Divida, FaturaPaga, FaturaParcial, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida,
@@ -228,8 +231,17 @@ export interface DividaNoPlano {
   restante: number
   parcela: number | null
   juros: number | null
-  /** Quanto quitaria tudo hoje, com o desconto dos juros das parcelas que faltam. */
+  /**
+   * Quanto quitaria tudo hoje: com o desconto do contrato quando ele é conhecido (ou o valor do credor), senão o valor
+   * cheio (o teto). `quitacao.estado` diz qual dos dois.
+   */
   quitarHoje: number
+  /** O detalhe da quitação: o que é atraso, o que é desconto, e se o desconto é confirmado, calculado ou desconhecido. */
+  quitacao: Quitacao
+  /** O juro do contrato (o que desconta adiantamento), separado de `juros`, que pode ser o do atraso. */
+  contrato: JurosDoContrato
+  /** `juros` é o do atraso (a dívida está atrasada com regra de atraso), não o do contrato. */
+  jurosDoAtraso: boolean
   /** Quando acaba seguindo a estratégia recomendada. */
   quitaEm: { ano: number; mes: number } | null
   /** Quando acaba só pagando as parcelas. */
@@ -353,6 +365,8 @@ export interface Evento {
   grupo?: string
   /** Quantas parcelas de verdade vencem nesse dia (dívida feita de várias compras). */
   pecas?: number
+  /** Conta essencial pela categoria (moradia, água, luz, mercado, saúde…): o planejador a protege. */
+  essencial?: boolean
 }
 
 export interface DiaDaAgenda {
@@ -418,6 +432,8 @@ export interface Acao {
    * melhora) ou dados (o que a pessoa informa para o plano ficar certo). A tela agrupa por ela.
    */
   etapa?: EtapaDoPlano
+  /** O estado da sugestão, as premissas e as alternativas (lib/decisoes/decisao.ts), quando ela depende de algo. */
+  decisao?: Decisao
 }
 
 export type EtapaDoPlano = 'agora' | 'seguida' | 'depois' | 'dados'
@@ -507,6 +523,8 @@ export interface Analise {
   agenda: Agenda | null
   /** O plano de pagamentos: de qual dinheiro sai cada conta, em que dia, e quanto custa o atraso (lib/planejador.ts). */
   plano: Plano | null
+  /** O que entrou no planejador (para refazer o plano com uma compra nova, lib/decisoes/parcelaNova.ts). */
+  entradaDoPlano: EntradaPlanejador | null
   /** O quadro do Planejamento (as entradas e as contas de cada mês), para a tela de planejar (lib/planejamento.ts). */
   quadros: { este: Quadro; proximo: Quadro } | null
   /** Quanto cortar por mês para chegar na sobra-alvo (0 se já chega). */
@@ -674,8 +692,13 @@ interface DividaSim {
   aberto: number
   /** A parcela de costume: o que fica livre por mês quando a dívida acaba. */
   parcela: number
-  /** % ao mês (null = não informado: conta como sem juros). */
+  /** % ao mês do que ela cobra hoje (o do atraso, se estiver atrasada com regra): decide a ordem (null = não informado). */
   juros: number | null
+  /**
+   * % ao mês do contrato: o único que desconta parcela adiantada (lib/decisoes/custos.ts). null = não se sabe, e então
+   * adiantar abate o valor cheio (o app não conta com desconto que não conhece). Nunca é o juro do atraso.
+   */
+  contrato: number | null
 }
 
 /** As parcelas que faltam, mês a mês, pelo calendário da dívida (ou, sem ele, uma parcela por mês a partir do que vem). */
@@ -706,8 +729,8 @@ const saldoSim = (d: Pick<DividaSim, 'agenda' | 'aberto'>) => (d.agenda.length ?
  * Antecipa parcelas do fim de uma dívida parcelada com `dinheiro`, no mês `t`: a parcela de daqui a k meses vale hoje
  * parcela ÷ (1 + juros)^k. É o desconto dos juros que a lei garante a quem adianta. Devolve o que sobrou do dinheiro.
  */
-function antecipar(d: Pick<DividaSim, 'agenda' | 'juros'>, dinheiro: number, t: number, pagar: (v: number) => void) {
-  const i = (d.juros ?? 0) / 100
+function antecipar(d: Pick<DividaSim, 'agenda' | 'contrato'>, dinheiro: number, t: number, pagar: (v: number) => void) {
+  const i = (d.contrato ?? 0) / 100
   let resta = dinheiro
   for (let s = d.agenda.length - 1; s > t && resta > 0.005; s--) {
     const v = d.agenda[s]
@@ -774,14 +797,18 @@ function simular(dividas: DividaSim[], extra: number, estrategia: IdEstrategia) 
   return { meses: null, total: centavos(total), fins: fins() }
 }
 
-/** Quanto a dívida vale hoje (o que quitaria tudo agora, com o desconto dos juros das parcelas que faltam). */
+/**
+ * Quanto a dívida vale hoje (o que quitaria tudo agora, com o desconto dos juros do contrato nas parcelas que faltam). Sem
+ * juro do contrato conhecido, é o valor cheio: desconto desconhecido não é prometido.
+ */
 function valorHoje(d: DividaSim) {
   if (!d.agenda.length) return d.aberto
-  const i = (d.juros ?? 0) / 100
+  const i = (d.contrato ?? 0) / 100
   return soma(d.agenda.map((v, s) => v / Math.pow(1 + i, s)))
 }
 
-function planoDasDividas(abertas: SituacaoDivida[], extraPlano: number, renda: number, atual: number, hojeIso: string): PlanoDividas | null {
+function planoDasDividas(abertas: SituacaoDivida[], extraPlano: number, renda: number, atual: number, hojeIso: string, conferencias: ConferenciaDivida[] = []): PlanoDividas | null {
+  const contratos = new Map(abertas.map((s) => [s.divida.id, jurosDoContrato(s.divida)]))
   const ds: DividaSim[] = abertas.map((s) => {
     const agenda = agendaDa(s, hojeIso, atual)
     const parcela = s.divida.valor_parcela && s.divida.valor_parcela > 0 ? s.divida.valor_parcela : 0
@@ -789,8 +816,20 @@ function planoDasDividas(abertas: SituacaoDivida[], extraPlano: number, renda: n
       id: s.divida.id, nome: s.divida.descricao, agenda, aberto: agenda.length ? 0 : s.restanteHoje, parcela,
       // atrasada com regra de atraso: pesa o juro do atraso (é o que ela está cobrando agora)
       juros: jurosQuePesam(s),
+      contrato: contratos.get(s.divida.id)!.mes,
     }
   })
+  const porId = new Map(abertas.map((s) => [s.divida.id, s]))
+  /** Quitar hoje por datas: o atrasado com os encargos do atraso, e o que vai vencer com o desconto só do contrato. */
+  const quitacaoDe = (d: DividaSim) => {
+    const s = porId.get(d.id)!
+    const cal = calendarioDe(s, hojeIso)
+    const parcelas = cal
+      ? cal.parcelas.filter((x) => x.falta > 0).map((x) => ({ vence: x.vencimento, valor: x.falta }))
+      : [{ vence: hojeIso, valor: s.restante }]
+    const banco = descontoParaQuitar(conferencias.filter((c) => c.divida_id === d.id))
+    return quitacaoHoje({ hoje: hojeIso, parcelas, contrato: contratos.get(d.id)!, encargosDoAtraso: s.jurosAtraso, banco })
+  }
   if (!ds.length) return null
   const total = centavos(soma(abertas.map((s) => s.restanteHoje)))
   const parcelasMes = centavos(soma(ds.map((d) => Math.min(d.parcela, saldoSim(d)))))
@@ -827,11 +866,17 @@ function planoDasDividas(abertas: SituacaoDivida[], extraPlano: number, renda: n
           : tx('A diferença entre as estratégias é pequena, então começar pela menor dívida dá vitórias rápidas e ajuda a manter o ritmo.')
   const ordem = [...ds]
     .sort((a, b) => (escolhida.fins.get(a.id) ?? Infinity) - (escolhida.fins.get(b.id) ?? Infinity) || a.id.localeCompare(b.id))
-    .map((d): DividaNoPlano => ({
-      id: d.id, nome: d.nome, restante: centavos(saldoSim(d)), parcela: d.parcela || null, juros: d.juros, quitarHoje: centavos(valorHoje(d)),
-      quitaEm: quando(escolhida.fins.get(d.id)),
-      quitaSemExtra: quando(base.fins.get(d.id)),
-    }))
+    .map((d): DividaNoPlano => {
+      const q = quitacaoDe(d)
+      const s = porId.get(d.id)!
+      return {
+        id: d.id, nome: d.nome, restante: centavos(saldoSim(d)), parcela: d.parcela || null, juros: d.juros,
+        quitarHoje: centavos(q.paraQuitar ?? q.semDesconto), quitacao: q,
+        contrato: contratos.get(d.id)!, jurosDoAtraso: Boolean(s.atraso && typeof s.divida.atraso_juros_mes === 'number' && s.divida.atraso_juros_mes >= 0),
+        quitaEm: quando(escolhida.fins.get(d.id)),
+        quitaSemExtra: quando(base.fins.get(d.id)),
+      }
+    })
   return {
     total, parcelasMes, jurosPorMes, jurosEmbutidos, extra, extraExemplo, recomendada, porque, ordem,
     estrategias: [estrategia('parcelas', base), estrategia('avalanche', avalanche), estrategia('bola-de-neve', bola)],
@@ -991,6 +1036,21 @@ export function analisar(e: EntradaAnalise): Analise {
   const chavesRecorrentes = new Set(recSaidas.map((r) => r.chave))
   /** Gasto do dia a dia: o que não é conta do mês, cartão, dívida nem algo que se repete todo mês. */
   const ehDiaADia = (l: Lancamento) => l.tipo === 'saida' && !l.conta_fixa_id && !l.cartao_id && !l.divida_id && !chavesRecorrentes.has(chaveDescricao(l.descricao))
+  /** Essencial pelo nome da categoria (inferido: a pessoa ainda não declara o que é essencial). */
+  const essencialDaCategoria = (id: string) => Boolean(id) && grupoDa(catPorId.get(id)) === 'essencial'
+  /** O que se repete é essencial quando a maior parte das vezes caiu numa categoria essencial. */
+  const essencialDaChave = new Map<string, boolean>()
+  {
+    const votos = new Map<string, [number, number]>()
+    for (const l of naJanela) {
+      if (l.tipo !== 'saida') continue
+      const k = chaveDescricao(l.descricao)
+      const v = votos.get(k) ?? [0, 0]
+      v[essencialDaCategoria(e.categoriaDe(l)) ? 0 : 1]++
+      votos.set(k, v)
+    }
+    for (const [k, [sim, nao]] of votos) if (sim > nao) essencialDaChave.set(k, true)
+  }
 
   // ----- série mês a mês -----
   interface Bruto {
@@ -1277,7 +1337,7 @@ export function analisar(e: EntradaAnalise): Analise {
   }
 
   // ----- plano das dívidas -----
-  const dividas = abertas.length ? planoDasDividas(abertas, alocacao?.dividas ?? 0, renda, atual, hojeIso) : null
+  const dividas = abertas.length ? planoDasDividas(abertas, alocacao?.dividas ?? 0, renda, atual, hojeIso, e.conferencias ?? []) : null
 
   // ----- plano da reserva -----
   let reserva: PlanoReserva | null = null
@@ -1388,6 +1448,7 @@ export function analisar(e: EntradaAnalise): Analise {
   // mais pesado que este.
   let agenda: Agenda | null = null
   let plano: Plano | null = null
+  let entradaDoPlano: EntradaPlanejador | null = null
   let quadros: Analise['quadros'] = null
   {
     const prox = doMesChave(atual + 1)
@@ -1397,7 +1458,7 @@ export function analisar(e: EntradaAnalise): Analise {
     // lançamentos já marcados para depois de hoje (o cartão entra como fatura, mais abaixo)
     for (const l of e.lancs) {
       if (!l.data || l.data <= hojeIso || l.data > fimJanela || l.cartao_id || !(l.valor > 0) || ehEmprestimo(l)) continue
-      eventos.push({ data: l.data, tipo: l.tipo, descricao: l.descricao.trim(), valor: l.valor, origem: 'lancamento' })
+      eventos.push({ data: l.data, tipo: l.tipo, descricao: l.descricao.trim(), valor: l.valor, origem: 'lancamento', ...(essencialDaCategoria(e.categoriaDe(l)) ? { essencial: true } : {}) })
     }
     // faturas: as parcelas de cada cartão somadas no vencimento (fatura já paga fica de fora), menos o que já foi pago em
     // parte (sem isso, a fatura de R$ 655 com R$ 468 já pagos aparecia inteira no Planejamento). A que vence hoje ainda entra.
@@ -1432,7 +1493,10 @@ export function analisar(e: EntradaAnalise): Analise {
     const sitsProx = contasDoMes(prox)
     for (const sc of [...sitsAtual, ...sitsProx]) {
       if (sc.estado === 'paga' || sc.estado === 'fora' || sc.semCotacao || !(sc.valor > 0) || sc.vencimento > fimJanela) continue
-      eventos.push({ data: noDia(sc.vencimento), vence: sc.vencimento, tipo: sc.conta.tipo, descricao: sc.conta.descricao, valor: sc.valor, origem: 'conta', atrasada: sc.vencimento < hojeIso })
+      eventos.push({
+        data: noDia(sc.vencimento), vence: sc.vencimento, tipo: sc.conta.tipo, descricao: sc.conta.descricao, valor: sc.valor, origem: 'conta', atrasada: sc.vencimento < hojeIso,
+        ...(sc.conta.tipo === 'saida' && essencialDaCategoria(sc.conta.categoria_id ?? '') ? { essencial: true } : {}),
+      })
     }
     // parcelas das dívidas, pelo calendário de cada uma
     const calendarios = abertas.map((sd) => ({ sd, cal: calendarioDe(sd, hojeIso) }))
@@ -1453,10 +1517,10 @@ export function analisar(e: EntradaAnalise): Analise {
       for (const r of lista) {
         if (r.contaFixa || r.noCartao) continue
         for (const p of faltaDa(r, tipo, doMesDe({ ano, mes }))) {
-          if (p.dia && p.dia >= diaHoje - 5) eventos.push({ data: noDia(isoDoDia(ano, mes, p.dia)), tipo, descricao: r.descricao, valor: p.valor, origem: 'recorrente' })
+          if (p.dia && p.dia >= diaHoje - 5) eventos.push({ data: noDia(isoDoDia(ano, mes, p.dia)), tipo, descricao: r.descricao, valor: p.valor, origem: 'recorrente', ...(tipo === 'saida' && essencialDaChave.get(r.chave) ? { essencial: true } : {}) })
         }
         for (const p of faltaDa(r, tipo, doMesDe(prox))) {
-          if (p.dia) eventos.push({ data: isoDoDia(prox.ano, prox.mes, p.dia), tipo, descricao: r.descricao, valor: p.valor, origem: 'recorrente' })
+          if (p.dia) eventos.push({ data: isoDoDia(prox.ano, prox.mes, p.dia), tipo, descricao: r.descricao, valor: p.valor, origem: 'recorrente', ...(tipo === 'saida' && essencialDaChave.get(r.chave) ? { essencial: true } : {}) })
         }
       }
     }
@@ -1648,18 +1712,25 @@ export function analisar(e: EntradaAnalise): Analise {
     // Dívida aberta = sem parcela fixa e correndo juros. A feita de compras parceladas (partes) já entra pelas parcelas:
     // tratá-la também como aberta a punha duas vezes (no Planejamento, a ficha das parcelas e outra de "adiantar").
     const semParcelaFixa = (sd: SituacaoDivida) => !(sd.divida.valor_parcela && sd.divida.valor_parcela > 0) && !sd.divida.partes?.length && (sd.divida.juros_mes ?? 0) > 0
-    // o planejador: de qual dinheiro sai cada conta e em que dia pagar
-    plano = planejar({
-      hoje: hojeIso, fim: fimJanela, saldoInicial, ritmoDia, porDiaDoMes: previsao?.porDia ?? null,
-      gastouHoje: gastoDeHojeNoDiaADia,
-      entradas: dias.filter((d) => d.entradas.length).map((d) => ({ data: d.data, valor: totalDe(d.entradas), descricao: nomesDe(d.entradas) })),
-      compromissos: unicos.filter((ev) => ev.tipo === 'saida').map((ev) => ({
-        descricao: ev.descricao, valor: ev.valor, vence: ev.vence ?? ev.data, origem: ev.origem, jurosMes: ev.jurosMes ?? null,
-        grupo: ev.grupo, pecas: ev.pecas,
-      })),
-      abertas: abertas.filter(semParcelaFixa)
-        .map((sd) => ({ nome: sd.divida.descricao, saldo: sd.restanteHoje, juros: sd.divida.juros_mes! })),
-    })
+    // A parte essencial do dia a dia (mercado, farmácia, transporte), por dia: o planejador não a usa para conta não essencial.
+    const essencialDia = saldoInicial !== null && rec.length
+      ? centavos(media(recentes.map((k) => soma(naJanela.filter((l) => chaveMes(l.ano, l.mes) === k && ehDiaADia(l) && essencialDaCategoria(e.categoriaDe(l))).map((l) => l.valor)))) / 30.4)
+      : 0
+    // O que precisa sobrar depois do fim do plano (o fim do mês que vem): o essencial até o primeiro dinheiro do mês
+    // seguinte (salário de costume ou conta a receber), com as contas essenciais que vencem antes dele.
+    const depoisDoFim = (() => {
+      const m2 = doMesChave(atual + 2)
+      const diasDeEntrada = [
+        ...recEntradas.filter((r) => !r.noCartao).flatMap((r) => r.partes.map((x) => x.dia)),
+        ...contasAtivas.filter((c) => c.tipo === 'entrada').map((c) => c.dia),
+      ].filter((d) => d > 0)
+      if (!diasDeEntrada.length) return undefined
+      const dia = Math.min(...diasDeEntrada)
+      const ate = isoDoDia(m2.ano, m2.mes, dia)
+      const contasAntes = contasAtivas.filter((c) => c.tipo === 'saida' && c.dia < dia && (!c.moeda || c.moeda === e.perfil.moeda) && essencialDaCategoria(c.categoria_id ?? ''))
+      const valor = centavos(essencialDia * Math.max(0, diasEntre(fimJanela, ate)) + soma(contasAntes.map((c) => c.valor)))
+      return valor > 0 ? { ate, valor } : undefined
+    })()
     const extras = {
       abertas: abertas.filter(semParcelaFixa)
         .map((sd) => ({ nome: sd.divida.descricao, saldo: sd.restanteHoje, juros: sd.divida.juros_mes! })),
@@ -1678,6 +1749,27 @@ export function analisar(e: EntradaAnalise): Analise {
           .flatMap((sd) => aReceberPrevisto(sd, e.pagamentos, hojeIso, fimJanela))
         : [],
     }
+    // o planejador: de qual dinheiro sai cada conta e em que dia pagar
+    entradaDoPlano = {
+      hoje: hojeIso, fim: fimJanela, saldoInicial, ritmoDia, porDiaDoMes: previsao?.porDia ?? null,
+      gastouHoje: gastoDeHojeNoDiaADia,
+      entradas: dias.filter((d) => d.entradas.length).map((d) => ({
+        data: d.data, valor: totalDe(d.entradas), descricao: nomesDe(d.entradas),
+        certeza: d.entradas.every((x) => x.origem !== 'recorrente') ? 'compromisso' as const : 'costume' as const,
+      })),
+      compromissos: unicos.filter((ev) => ev.tipo === 'saida').map((ev) => ({
+        descricao: ev.descricao, valor: ev.valor, vence: ev.vence ?? ev.data, origem: ev.origem, jurosMes: ev.jurosMes ?? null,
+        grupo: ev.grupo, pecas: ev.pecas, ...(ev.essencial ? { essencial: true, essencialPor: 'categoria' as const } : {}),
+      })),
+      essencialDia, depoisDoFim,
+      alternativas: {
+        guardado: centavos(soma(extras.guardados.map((g) => g.valor))),
+        aReceber: extras.aReceber.map((r) => ({ nome: r.nome, valor: r.valor, data: r.data })),
+      },
+      abertas: abertas.filter(semParcelaFixa)
+        .map((sd) => ({ nome: sd.divida.descricao, saldo: sd.restanteHoje, juros: sd.divida.juros_mes! })),
+    }
+    plano = planejar(entradaDoPlano)
     quadros = { este: quadroDoMes(plano, hojeIso, 'este', extras), proximo: quadroDoMes(plano, hojeIso, 'proximo', extras) }
     if (unicos.length || saldoInicial !== null || calendario.dias.some((c) => c.entra || c.sai)) {
       agenda = {
@@ -1853,9 +1945,11 @@ export function analisar(e: EntradaAnalise): Analise {
     const divida = d.id.startsWith('adiantar-aberta:')
     nova({
       id: `plano:${d.id}`, urgencia: d.tom === 'ruim' ? 'urgente' : d.tom === 'medio' ? 'importante' : 'sugestao',
-      prioridade: d.tom === 'ruim' ? 98 : d.tom === 'medio' ? 96 : 70, icone: d.icone,
+      // o "e se" (condicional) avisa, mas não passa na frente do que já está acontecendo
+      prioridade: d.tom === 'ruim' ? 98 : d.estado === 'condicional' ? 74 : d.tom === 'medio' ? 96 : 70, icone: d.icone,
       destino: divida ? 'dividas' : v.contas ? 'contas' : 'lancamentos',
       botao: divida ? tx('Ver dívidas') : v.contas ? tx('Ver contas') : tx('Ver lançamentos'), titulo: d.titulo, porque: d.porque,
+      decisao: decisaoDe(d),
     })
   }
   // O plano que a pessoa montou: o que ele deixa atrasar ou sem dinheiro (e, sem plano, o convite para planejar).
@@ -1928,18 +2022,40 @@ export function analisar(e: EntradaAnalise): Analise {
     })
   }
   if (cara && reserva && usaReserva) {
+    const q = cara.quitacao
     const fica = fmtMeses((reserva.tem - cara.quitarHoje) / gastos)
-    const economia = centavos(cara.restante - cara.quitarHoje)
     const jurosDoMes = centavos(cara.quitarHoje * (cara.juros! / 100))
+    // o juro que pesa pode ser o do atraso: a frase diz qual é, e a economia de quitar sai só do desconto do contrato
+    const cobra = cara.jurosDoAtraso
+      ? tx('No atraso, essa dívida cobra {0}% ao mês, mais do que qualquer aplicação segura rende.', fmtTaxa(cara.juros!))
+      : tx('Essa dívida cobra {0}% ao mês, mais do que qualquer aplicação segura rende.', fmtTaxa(cara.juros!))
+    const conhecido = q.estado !== 'desconhecido' && q.desconto !== null
+    const premissa = q.estado === 'confirmado' ? tx('O valor é o que o credor informou.')
+      : q.estado === 'estimado' ? tx('O desconto é uma estimativa pela taxa que as parcelas embutem: peça o valor exato ao credor.')
+        : q.estado === 'calculado' ? tx('O desconto é o dos juros do contrato nas parcelas que ainda não venceram: confirme o valor com o credor.')
+          : ''
     nova({
       id: `quitar-com-reserva:${cara.id}`, urgencia: 'importante', prioridade: 84, icone: 'cofre', destino: 'dividas', botao: tx('Ver dívidas'),
-      titulo: tx('Use {0} do guardado para quitar {1}.', fmtValor(cara.quitarHoje), cara.nome),
-      porque: cara.parcela
-        ? tx('Essa dívida cobra {0}% ao mês, mais do que qualquer aplicação segura rende. Quitando hoje (pedindo o desconto dos juros das parcelas que faltam), você deixa de pagar {1} e libera {2} por mês. Ainda ficam {3} de reserva; reponha com a parcela liberada.',
-          fmtTaxa(cara.juros!), fmtValor(economia), fmtValor(cara.parcela), fica)
-        : tx('Essa dívida cobra {0}% ao mês, mais do que qualquer aplicação segura rende: só de juros, são cerca de {1} por mês. Quitando hoje, esse custo some, e ainda ficam {2} de reserva.',
-          fmtTaxa(cara.juros!), fmtValor(jurosDoMes), fica),
-      impacto: cara.parcela ? tx('{0} a menos de juros', fmtValor(economia)) : tx('{0} por mês a menos de juros', fmtValor(jurosDoMes)),
+      titulo: conhecido
+        ? tx('Use {0} do guardado para quitar {1}.', fmtValor(cara.quitarHoje), cara.nome)
+        : tx('Peça o valor para quitar {0} e use o guardado.', cara.nome),
+      porque: !cara.parcela
+        ? `${cobra} ${tx('Só de juros, são cerca de {0} por mês. Quitando hoje, esse custo some, e ainda ficam {1} de reserva.', fmtValor(jurosDoMes), fica)}`
+        : conhecido && (q.desconto ?? 0) >= 0.01
+          ? `${cobra} ${tx('Quitando hoje, você deixa de pagar cerca de {0} e libera {1} por mês. Ainda ficam {2} de reserva; reponha com a parcela liberada.', fmtValor(q.desconto!), fmtValor(cara.parcela), fica)} ${premissa}`.trim()
+          : conhecido
+            ? `${cobra} ${tx('Quitando hoje, você libera {0} por mês. Ainda ficam {1} de reserva; reponha com a parcela liberada.', fmtValor(cara.parcela), fica)} ${premissa}`.trim()
+            : `${cobra} ${tx('Sem os juros do contrato, o app não sabe quanto o credor abate das parcelas que faltam: peça a ele o valor para quitar hoje. Sem desconto nenhum, seriam {0}; mesmo assim você libera {1} por mês e ainda ficam {2} de reserva.', fmtValor(q.semDesconto), fmtValor(cara.parcela), fica)}`,
+      impacto: !cara.parcela ? tx('{0} por mês a menos de juros', fmtValor(jurosDoMes))
+        : conhecido && (q.desconto ?? 0) >= 0.01 ? tx('{0} a menos de juros', fmtValor(q.desconto!)) : tx('{0} por mês livres', fmtValor(cara.parcela)),
+      decisao: decisaoDe({
+        estado: conhecido ? 'recomenda' : 'pergunta', regra: 'app',
+        premissas: [...q.premissas, ...(cara.contrato.origem !== 'desconhecida' ? [cara.contrato.nota] : [])],
+        alternativas: [
+          tx('Manter a reserva inteira e seguir pagando as parcelas: mais segurança, mais juros.'),
+          tx('Adiantar só parte, deixando mais reserva guardada.'),
+        ],
+      }),
     })
   }
   if (dividas && !usaReserva && (fase === 'dividas' || (fase === 'colchao' && dividas.temCara) || (alocacao?.dividas ?? 0) > 0)) {
@@ -2268,7 +2384,7 @@ export function analisar(e: EntradaAnalise): Analise {
     tom: nota === null ? 'medio' : tomDa(nota), resumo, fase, fases, porqueFase, proximoPasso, pilares,
     renda, gastos, sobra, sobraFracao, guardando, sobraAlvo, rendaVaria, variacaoRenda, principalFonte, tendenciaGastos, tendenciaRenda,
     serie, mes: previsao, categorias, subiram, cairam, regra, recorrentes, assinaturasPorMes, recorrentesPorMes, formigas,
-    jurosPagos, semCategoria, cartao, dividas, reserva, alocacao, metas, patrimonio, agenda, plano, quadros, corte, acoes,
+    jurosPagos, semCategoria, cartao, dividas, reserva, alocacao, metas, patrimonio, agenda, plano, entradaDoPlano, quadros, corte, acoes,
     atrasoTotal: totalAtraso, podeGastar, lancamentosPorMes, jeito, aprendizado,
     sinais, diasSemLancar: lancamentosPorMes >= 8 ? semLancar : 0, firmeza, planoDoMes,
     compromisso: compromissoDe({ hojeIso, compras: e.compras, dividas: v.dividas ? e.dividas : [], saldos: e.saldos, pagamentos: e.pagamentos, taxas: e.taxas }),
