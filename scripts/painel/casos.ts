@@ -1306,6 +1306,55 @@ export const CASOS: Caso[] = [
     },
   },
   {
+    nome: 'cairo: a pessoa responde se o mês está completo, e as médias mudam',
+    rodar() {
+      const perfil = (marcas: string[]) => ({ nome: 'T', moeda: 'BRL', moedas: [], detalhe: 'detalhado', modulos: { dividas: true, contas: true, cartoes: false, bancos: false, investimentos: false, moedas: false, metas: false }, dispensadas: marcas, onboarding_em: '2026-01-01' } as unknown as Perfil)
+      const lancs: Lancamento[] = []
+      for (const m of [3, 4, 5, 6, 7, 8, 9, 10]) {
+        const mm = String(m).padStart(2, '0')
+        lancs.push(lanc(`2026-${mm}-05`, 'entrada', 4000, { descricao: 'Salário' }))
+        // outubro: só 5 compras (o normal é 30)
+        for (let d = 1; d <= (m === 10 ? 5 : 30); d++) lancs.push(lanc(`2026-${mm}-${String(Math.min(28, d)).padStart(2, '0')}`, 'saida', 50, { descricao: 'Compra' }))
+      }
+      const rodar = (marcas: string[]) => analisar({
+        hoje: new Date(2026, 10, 15), lancs, compras: [], cartoes: [], faturasPagas: [], contas: [], categorias: [], categoriaDe: () => '',
+        dividas: [], saldos: [], pagamentos: [], taxas: {}, meses: [], metas: [], movimentosMeta: [], perfil: perfil(marcas),
+      })
+      const a = rodar([])
+      igual('outubro sozinho com poucas saídas: fora das médias, e o Cairo pergunta', [a.serie.find((x) => x.mes === 10)?.comDados, a.cairo!.qualidade.meses.find((m) => m.mes === '2026-10')?.pergunta?.motivo], [false, 'poucas_saidas'])
+      perto('gasto médio de agosto e setembro', a.gastos, 1500)
+      const b = rodar(['mes-completo:2026-10'])
+      igual('"está tudo lançado": outubro entra', b.serie.find((x) => x.mes === 10)?.comDados, true)
+      perto('e o gasto médio cai: (1500 + 1500 + 250) ÷ 3', b.gastos, 1083.33, 0.01)
+      igual('a pergunta some', b.cairo!.qualidade.meses.find((m) => m.mes === '2026-10')?.pergunta, undefined)
+      igual('o conselheiro concorda com a resposta', faltamDadosParaConselhos({ lancs, dividas: [], hoje: new Date(2026, 10, 15), marcas: ['mes-incompleto:2026-09', 'mes-incompleto:2026-08'] }), true)
+    },
+  },
+  {
+    nome: 'cairo: empréstimo e devolução marcados para o futuro entram no caixa dos cenários, sem virar renda',
+    rodar() {
+      const perfil = { nome: 'T', moeda: 'BRL', moedas: [], detalhe: 'detalhado', modulos: { dividas: true, contas: false, cartoes: false, bancos: false, investimentos: false, moedas: false, metas: false }, dispensadas: [], onboarding_em: '2026-01-01' } as unknown as Perfil
+      const banco: Divida = { id: 'bc', descricao: 'Banco', sentido: 'devo', valor_parcela: null }
+      const ana: Divida = { id: 'an', descricao: 'Ana', sentido: 'me_devem', pessoa: 'Ana', valor_parcela: null }
+      const lancs: Lancamento[] = [
+        lanc('2026-11-20', 'entrada', 1500, { descricao: 'Empréstimo liberado', divida_id: 'bc' }),
+        lanc('2026-11-22', 'saida', 200, { descricao: 'Pix Ana', divida_id: 'an' }),
+        lanc('2026-11-25', 'entrada', 100, { descricao: 'Ana devolve', divida_id: 'an' }),
+        lanc('2026-11-26', 'entrada', 800, { descricao: 'Freela marcado' }),
+      ]
+      const a = analisar({
+        hoje: new Date(2026, 10, 15), lancs, compras: [], cartoes: [], faturasPagas: [], contas: [], categorias: [], categoriaDe: () => '',
+        dividas: [banco, ana], saldos: [], pagamentos: [], taxas: {}, meses: [], metas: [], movimentosMeta: [], perfil,
+      })
+      const m = a.cairo!.cenarios.gerar(1, 1)[0]
+      const de = (d: string) => m.fluxos.find((f) => f.descricao === d)
+      igual('empréstimo liberado: crédito recebido', de('Empréstimo liberado')?.natureza, 'credito_recebido')
+      igual('pix para a Ana: empréstimo concedido', de('Pix Ana')?.natureza, 'emprestimo_concedido')
+      igual('devolução da Ana: recebimento incerto', a.cairo!.cenarios.esperados.find((f) => f.descricao === 'Ana devolve')?.natureza, 'a_receber')
+      igual('o freela marcado continua renda', de('Freela marcado')?.natureza, 'renda')
+    },
+  },
+  {
     nome: 'cairo: receber de volta o que você emprestou não é renda',
     rodar() {
       const perfil = { nome: 'T', moeda: 'BRL', moedas: [], detalhe: 'detalhado', modulos: { dividas: true, contas: false, cartoes: false, bancos: false, investimentos: false, moedas: false, metas: false }, dispensadas: [], onboarding_em: '2026-01-01' } as unknown as Perfil

@@ -669,7 +669,11 @@ O Consultor (`lib/analise.ts`) e o conselheiro (`lib/conselheiro.ts`) decidem os
 (`src/cairo/qualidade/meses.ts`), comparada com os 12 meses fechados da pessoa:
 - mês bem registrado sem nenhuma entrada, de quem costuma lançar o que recebe (entrada em 2 outros meses) e sem conta fixa de
   entrada esperando baixa: **mês sem renda**, e entra (renda zero na média). Antes ele sumia e a renda média ficava inflada;
-- mês com bem menos saídas que o costume dela (menos de 35% do mês típico, quando o típico tem 4 ou mais): **mal lançado**, fica fora;
+- mês com bem menos saídas que o costume dela (menos de 35% do mês típico, quando o típico tem 4 ou mais): se faz parte de
+  meses baixos seguidos até agora (ou de 3 seguidos), é **jeito novo de gastar** e entra; se as contas fixas do mês têm todas
+  baixa, também entra; se é um mês baixo isolado, é **mal lançado** e fica fora. Nos 3 últimos meses o Consultor pergunta
+  ("Outubro está todo lançado?", `components/PerguntaDoMes.tsx`) e a resposta vale (marca `mes-completo:AAAA-MM` em
+  `perfil.dispensadas`);
 - mês sem entrada com salário fixo sem baixa, ou de quem nunca lança renda: **não dá para saber**, fica fora;
 - mês sem nada lançado: fora.
 O que cada lançamento é segue `src/cairo/fatos/movimentos.ts`: emprestar a alguém, receber de volta, dinheiro emprestado

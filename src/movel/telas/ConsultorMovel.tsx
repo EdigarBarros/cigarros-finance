@@ -7,6 +7,7 @@
  */
 import { useState } from 'react'
 import { faturaDoDestino } from '../../lib/faturasAPagar'
+import { PerguntaDoMes } from '../../components/PerguntaDoMes'
 import { CartaoDoPlanejamento, Planejamento } from '../../components/Planejamento'
 import { Interruptor } from '../../components/ui'
 import { semMovimento, useMovimento } from '../../lib/tema'
@@ -93,6 +94,7 @@ export function ConsultorMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom,
           {/* daqui para baixo, a tela que o Consultor montou: mesmas peças e mesma ordem do computador */}
           {montando && <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 3} aoVivo />}
           <CartaoDoPlanejamento a={a} planejamento={c.planejamento} aoAbrir={() => setPlanejando(true)} />
+          <PerguntaDoMes meses={a.cairo?.qualidade.meses} aoResponder={c.responderMes} />
           <Manchete t={tela} aoIr={ir} />
           <SeuPerfil a={a} nivel={nivel} />
           {!montando && <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 2} />}

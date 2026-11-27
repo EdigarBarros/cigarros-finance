@@ -14,11 +14,12 @@ import { conferirContagem, type Contagem } from './fatos/contagem'
 import { aprenderDiaADia, type ModeloDiaADia } from './aprendizado/diaADia'
 import { aprenderEntradas, type FonteDeRenda } from './aprendizado/entradas'
 import { aprenderPontualidade, type Pontualidade } from './aprendizado/pontualidade'
+import { aprenderCartao } from './aprendizado/cartao'
 import { condicoesDeCusto } from './custos/condicoes'
 import { criarGerador } from './cenarios/gerador'
 import { prever, type Previsoes } from './previsao/previsao'
 
-export const CAIRO_DADOS_VERSAO = '1.0.0'
+export const CAIRO_DADOS_VERSAO = '1.1.0'
 
 export interface LeituraDoCairo {
   versao: { contrato: string; dados: string }
@@ -29,6 +30,8 @@ export interface LeituraDoCairo {
     diaADia: Omit<ModeloDiaADia, 'sortear' | 'dias'> | null
     entradas: Omit<FonteDeRenda, 'sortear'>[]
     pontualidade: Pontualidade[]
+    /** (1.1) O ritmo de compras novas no cartão (centavos por dia que vão para faturas); null sem histórico de cartão. */
+    cartao: { mediaDiaria: number; nEf: number; dias: number } | null
   }
   condicoes: CondicaoDeCusto[]
   /** Os futuros possíveis até o fim do horizonte (fim do mês que vem). Gera sob demanda. */
@@ -70,11 +73,12 @@ export function lerCairo(e: EntradaCairo): LeituraDoCairo {
   const diaADia = aprenderDiaADia(h)
   const fontes = aprenderEntradas(h, e.contasFixas)
   const pontualidade = aprenderPontualidade(e.dividas, e.promessas)
+  const cartao = (e.cartoes ?? []).length ? aprenderCartao(e.comprasNoCartao ?? [], h.hoje) : null
   const custos = condicoesDeCusto(e.dividas, e.conferencias, e.faturasPagas, e.jurosAprendidos, h.moeda)
   const ate = lerDia(e.horizonteAte) ?? h.hoje
   const cenarios = criarGerador({
     horizonte: { hoje: h.hoje, ate: ate < h.hoje ? h.hoje : ate }, moeda: h.moeda, compromissos: e.compromissos, contas: e.contasFixas,
-    aReceber: e.aReceber, fontes, pontualidade, diaADia,
+    aReceber: e.aReceber, fontes, pontualidade, diaADia, cartao, cartoes: e.cartoes ?? [],
   })
   const a = Number(h.hoje.slice(0, 4)); const m = Number(h.hoje.slice(5, 7))
   let previstas: Previsoes | null = null
@@ -89,6 +93,7 @@ export function lerCairo(e: EntradaCairo): LeituraDoCairo {
       diaADia: diaADia ? (semFuncao(diaADia, 'sortear', 'dias') as LeituraDoCairo['aprendizado']['diaADia']) : null,
       entradas: fontes.map((f) => semFuncao(f, 'sortear') as Omit<FonteDeRenda, 'sortear'>),
       pontualidade,
+      cartao: cartao ? { mediaDiaria: cartao.mediaDiaria, nEf: cartao.nEf, dias: cartao.dias } : null,
     },
     condicoes: custos.condicoes,
     cenarios,
@@ -97,11 +102,12 @@ export function lerCairo(e: EntradaCairo): LeituraDoCairo {
   }
 }
 
-export type { EntradaCairo } from './entrada'
+export type { CompromissoBruto, EntradaCairo } from './entrada'
 export * from './contrato/tipos'
 export * from './contrato/unidades'
 export { REGRAS } from './contrato/politicas'
 export { revelar, trocarFuturo } from './cenarios/gerador'
-export { qualidadeDosMeses, mesEntraNoFluxo, type ResumoDoMes } from './qualidade/meses'
+export { declaracoesDosMeses, declararMes, marcaDoMes, qualidadeDosMeses, mesEntraNoFluxo, type ResumoDoMes } from './qualidade/meses'
+export { contasDoMes } from './fatos/historico'
 export { classeDoLancamento, contaComoFluxo, type ClasseDoLancamento } from './fatos/movimentos'
 export { contaValeNoMes } from './fatos/historico'

@@ -6,7 +6,7 @@
  */
 import type { EntradaCairo, LancBruto } from '../../src/cairo/entrada'
 import { sorteio } from '../../src/cairo/aprendizado/aleatorio'
-import { diasNoMes, diaIso, diaDaSemana, somarDias, type DiaISO } from '../../src/cairo/contrato/unidades'
+import { diasNoMes, diaIso, diaDaSemana, doNumero, numero, somarDias, type DiaISO } from '../../src/cairo/contrato/unidades'
 
 export const HOJE = '2026-11-27'
 
@@ -183,6 +183,43 @@ export function personas(): Persona[] {
     )
     e.dividas.push({ id: 'usd', descricao: 'Curso nos EUA', sentido: 'devo', valor_parcela: 100, total_parcelas: 10, inicio: '2026-08-01', moeda: 'usd', juros_mes: 1.2 })
     lista.push({ nome: 'bolsos', e, verdade: { foraDoFluxo: ['cx', 'tr'], gasto: ['hotel'] } })
+  }
+  // 9. cartão: compras quase todo dia (algumas parceladas, uma paga por outra pessoa), e empréstimos marcados para o futuro
+  {
+    const id = { n: 0 }; const e = base()
+    salario(e, 6000, () => 0, id)
+    e.lancamentos.push(...diaADia({ semente: 9 }, id))
+    const r = sorteio(99)
+    e.comprasNoCartao = []
+    for (let n = numero('2025-12-01' as DiaISO); n < numero(HOJE as DiaISO); n++) {
+      if (r() < 0.35) continue
+      const d = doNumero(n)
+      const parcelas = r() < 0.15 ? 3 : 1
+      e.comprasNoCartao.push({ cartao_id: 'nu', valor: Math.round((20 + r() * 80) * 100) / 100, data_compra: d, parcela: 1, parcelas })
+      for (let k = 2; k <= parcelas; k++) e.comprasNoCartao.push({ cartao_id: 'nu', valor: 10, data_compra: d, parcela: k, parcelas })
+    }
+    e.comprasNoCartao.push({ cartao_id: 'nu', valor: 5000, data_compra: '2026-11-20', parcela: 1, parcelas: 1, pago_por: 'Mãe' })
+    // Nubank: fecha dia 3, vence dia 10 (os ciclos que o app calcula)
+    e.cartoes = [{ id: 'nu', ciclos: [
+      { fechamento: '2026-12-03', vencimento: '2026-12-10' }, { fechamento: '2027-01-03', vencimento: '2027-01-10' }, { fechamento: '2027-02-03', vencimento: '2027-02-10' },
+    ] }]
+    e.compromissos.push({ data: '2026-12-10', tipo: 'saida', descricao: 'Fatura Nubank', valor: 900, origem: 'cartao' })
+    // empréstimos marcados: o banco libera 2.000 em 03/12; a pessoa empresta 300 ao Caio em 12/12; a Bia devolve 250 em 15/12
+    e.dividas.push(
+      { id: 'banco', descricao: 'Empréstimo do banco', sentido: 'devo', valor_parcela: 250, total_parcelas: 10, inicio: '2027-01-05', juros_mes: 3 },
+      { id: 'caio', descricao: 'Caio', sentido: 'me_devem', pessoa: 'Caio', valor_parcela: null },
+      { id: 'bia', descricao: 'Bia', sentido: 'me_devem', pessoa: 'Bia', valor_parcela: null },
+    )
+    e.compromissos.push(
+      { data: '2026-12-03', tipo: 'entrada', descricao: 'Empréstimo do banco', valor: 2000, origem: 'lancamento', natureza: 'credito_recebido', divida_id: 'banco' },
+      { data: '2026-12-12', tipo: 'saida', descricao: 'Pix Caio', valor: 300, origem: 'lancamento', natureza: 'emprestimo_concedido', divida_id: 'caio' },
+      { data: '2026-12-15', tipo: 'entrada', descricao: 'Bia devolve', valor: 250, origem: 'lancamento', natureza: 'devolucao', divida_id: 'bia' },
+      { data: '2026-12-11', tipo: 'saida', descricao: 'Mercado do mês', valor: 600, origem: 'lancamento', essencial: true },
+    )
+    e.promessas.push({ divida_id: 'bia', data: '2026-10-01', estado: 'cumprida' }, { divida_id: 'bia', data: '2026-11-01', estado: 'cumprida' })
+    // o app também prevê a parcela da Bia para 14/12: é a mesma devolução, não pode contar duas vezes
+    e.aReceber.push({ divida_id: 'bia', data: '2026-12-14', valor: 250, descricao: 'Bia' })
+    lista.push({ nome: 'cartao', e, verdade: {} })
   }
   return lista
 }

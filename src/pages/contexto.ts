@@ -113,6 +113,8 @@ export interface Ctx {
   escolherObjetivo: (o: Objetivo | null) => void
   /** Escolhe como o consultor fala: gentil, direto ou sem filtro (lib/sinais.ts). */
   escolherFirmeza: (f: Firmeza) => void
+  /** A resposta da pessoa sobre um mês ("está tudo lançado" / "faltou lançar"; null desfaz): vai para o perfil e muda as médias. */
+  responderMes: (mes: string, r: 'completo' | 'incompleto' | null) => void
   /** Abre o Consultor já com o Planejar o mês aberto (atalho da Início). */
   abrirPlanejamento: () => void
   /** O Kairo solto no canto das outras telas (components/KairoFlutuante.tsx); o pé do Consultor liga e desliga. */

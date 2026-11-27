@@ -12,7 +12,7 @@ import {
   chaveDoMes, diasEntre, lerDia, mesDe, mesIso, numero, type Centavos, type DiaISO, type MesISO, type Moeda,
 } from '../contrato/unidades'
 import { classeDoLancamento, type ClasseDoLancamento } from './movimentos'
-import { qualidadeDosMeses, type ResumoDoMes } from '../qualidade/meses'
+import { declaracoesDosMeses, qualidadeDosMeses, type ResumoDoMes } from '../qualidade/meses'
 import { recorrencias } from './recorrencias'
 
 /** 12 meses fechados e o atual, como a análise do app. */
@@ -86,6 +86,7 @@ export function montarHistorico(e: EntradaCairo, conhecidoAte?: DiaISO): Histori
     l.diaADia = l.classe === 'gasto' && !l.contaFixa && !l.cartao && !l.divida && !repetem.has(l.chaveDescricao)
   }
 
+  const declarados = declaracoesDosMeses(e.marcasDosMeses ?? [])
   const resumos: ResumoDoMes[] = fechados.map((k) => {
     const doMes = lancs.filter((l) => l.chave === k)
     const m = mesIso(Math.floor((k - 1) / 12), ((k - 1) % 12) + 1)
@@ -94,6 +95,8 @@ export function montarHistorico(e: EntradaCairo, conhecidoAte?: DiaISO): Histori
       nEntradas: doMes.filter((l) => l.classe === 'renda').length,
       nSaidas: doMes.filter((l) => l.classe === 'gasto').length,
       esperavaEntradaFixa: e.contasFixas.some((c) => c.tipo === 'entrada' && contaValeNoMes(c, m)),
+      ...contasDoMes(e.contasFixas, doMes, m),
+      ...(declarados.get(m) ? { declarado: declarados.get(m) } : {}),
     }
   })
   return { hoje, moeda, atual, fechados, lancs, resumos, qualidade: qualidadeDosMeses(resumos), avisos }
@@ -128,3 +131,10 @@ export function lancadosDepois(lancs: LancNormal[], toleranciaDias: number) {
 }
 
 export const idadeEmDias = (de: DiaISO, hoje: DiaISO) => numero(hoje) - numero(de)
+
+/** Quantas contas fixas de saída valiam no mês e quantas delas tiveram baixa (um lançamento ligado à conta). */
+export function contasDoMes(contas: { id: string; tipo: 'entrada' | 'saida'; inicio: string; fim: string | null; ativa: boolean }[], doMes: { contaFixa?: string | null; conta_fixa_id?: string | null }[], m: MesISO) {
+  const valem = contas.filter((c) => c.tipo === 'saida' && contaValeNoMes(c, m))
+  const baixadas = new Set(doMes.map((l) => l.contaFixa ?? l.conta_fixa_id ?? null).filter(Boolean))
+  return { contasFixasSaida: valem.length, contasFixasBaixadas: valem.filter((c) => baixadas.has(c.id)).length }
+}

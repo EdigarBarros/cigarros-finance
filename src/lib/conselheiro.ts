@@ -215,10 +215,10 @@ function classificador(dividas: Divida[], nomeDaCategoria: (l: Lancamento) => st
  * Os meses fechados que entram nas médias de fluxo, pela qualidade de cada um (src/cairo/qualidade/meses.ts) comparada com
  * os 12 meses fechados: o mês bem registrado sem entrada, de quem costuma lançar o que recebe, é mês sem renda e conta.
  */
-function fechadosNoFluxo(lancs: Lancamento[], dividas: Divida[], contas: ContaFixa[], atual: number, categoriaDe: (l: Lancamento) => string, categorias: Categoria[]): Set<number> {
+function fechadosNoFluxo(lancs: Lancamento[], dividas: Divida[], contas: ContaFixa[], atual: number, categoriaDe: (l: Lancamento) => string, categorias: Categoria[], marcas: readonly string[] = []): Set<number> {
   const nomePorId = new Map(categorias.map((c) => [c.id, c.nome]))
   const janela = Array.from({ length: MESES_DA_ANALISE }, (_, i) => atual - MESES_DA_ANALISE + i)
-  const q = qualidadeDosMeses(resumosDosMeses(lancs, janela, classificador(dividas, (l) => nomePorId.get(categoriaDe(l)) ?? ''), contas))
+  const q = qualidadeDosMeses(resumosDosMeses(lancs, janela, classificador(dividas, (l) => nomePorId.get(categoriaDe(l)) ?? ''), contas, marcas))
   return new Set(janela.filter((_, i) => mesEntraNoFluxo(q[i])))
 }
 
@@ -250,12 +250,12 @@ const fechadosAte = (atual: number) => Array.from({ length: MESES_NA_MEDIA }, (_
  * Para a tela explicar uma lista vazia: true quando faltam meses fechados com entradas e saídas para o conselheiro opinar.
  * Usa exatamente o critério do motor (mesmos meses, empréstimo fora), para a tela e o motor nunca discordarem.
  */
-export function faltamDadosParaConselhos(e: Pick<EntradaConselheiro, 'lancs' | 'dividas' | 'hoje'> & Partial<Pick<EntradaConselheiro, 'contas' | 'categorias' | 'categoriaDe'>>): boolean {
+export function faltamDadosParaConselhos(e: Pick<EntradaConselheiro, 'lancs' | 'dividas' | 'hoje'> & Partial<Pick<EntradaConselheiro, 'contas' | 'categorias' | 'categoriaDe'>> & { marcas?: readonly string[] }): boolean {
   const hoje = e.hoje ?? new Date()
   const atual = chaveMes(hoje.getFullYear(), hoje.getMonth() + 1)
   const fechados = fechadosAte(atual)
   const categoriaDe = e.categoriaDe ?? (() => '')
-  const noFluxo = fechadosNoFluxo(e.lancs, e.dividas, e.contas ?? [], atual, categoriaDe, e.categorias ?? [])
+  const noFluxo = fechadosNoFluxo(e.lancs, e.dividas, e.contas ?? [], atual, categoriaDe, e.categorias ?? [], e.marcas ?? [])
   return mesesComDados(analisarMeses(e.lancs, e.dividas, categoriaDe, fechados, e.categorias), fechados, noFluxo).length < MIN_MESES_COM_DADOS
 }
 
@@ -275,7 +275,7 @@ export function conselhos(e: EntradaConselheiro): Conselho[] {
   const analise = analisarMeses(e.lancs, e.dividas, e.categoriaDe, [...fechados, atual], e.categorias)
 
   // Meses fechados que entram no fluxo (a qualidade de cada mês): a base de toda regra de fluxo.
-  const comDados = mesesComDados(analise, fechados, fechadosNoFluxo(e.lancs, e.dividas, e.contas ?? [], atual, e.categoriaDe, e.categorias))
+  const comDados = mesesComDados(analise, fechados, fechadosNoFluxo(e.lancs, e.dividas, e.contas ?? [], atual, e.categoriaDe, e.categorias, e.perfil.dispensadas ?? []))
   const temFluxo = comDados.length >= MIN_MESES_COM_DADOS
   const entradasMedia = temFluxo ? centavos(soma(comDados.map((m) => m.entradas)) / comDados.length) : 0
   const saidasMedia = temFluxo ? centavos(soma(comDados.map((m) => m.saidas)) / comDados.length) : 0

@@ -5,14 +5,14 @@
  * Reaproveita o que o app já calcula e está certo (a agenda dos compromissos, as promessas avaliadas, o que te devem e o
  * aprendizado de juros), para o Cairo não ter uma segunda versão disso. O que o Cairo devolve vai em `analise.cairo`.
  */
-import { contaValeNoMes, lerCairo, mesIso, type ClasseDoLancamento, type EntradaCairo, type LeituraDoCairo, type ResumoDoMes } from '../cairo'
-import { chaveMes, doMesChave } from './cartoes'
+import { classeDoLancamento, contaValeNoMes, contasDoMes, declaracoesDosMeses, lerCairo, mesIso, type CompromissoBruto, type ClasseDoLancamento, type EntradaCairo, type LeituraDoCairo, type ResumoDoMes } from '../cairo'
+import { chaveMes, datasDaFatura, doMesChave } from './cartoes'
 import type { Evento } from './analise'
 import { aReceberPrevisto, calendarioDe, meDevem, promessasDe, situacaoDividas } from './dividas'
 import { aprenderJuros } from './jurosAprendido'
 import type { Taxas } from './moedas'
 import type {
-  Categoria, ConferenciaDivida, ContaFixa, Divida, FaturaPaga, Lancamento, Pagamento, SaldoDivida,
+  CartaoCredito, Categoria, ConferenciaDivida, ContaFixa, Divida, FaturaPaga, Lancamento, Pagamento, SaldoDivida,
 } from './types'
 
 export interface EntradaDaPonte {
@@ -34,6 +34,13 @@ export interface EntradaDaPonte {
   /** A agenda do app, de hoje até o fim do horizonte (lib/analise.ts). */
   eventos: Evento[]
   comDividas: boolean
+  /** Compras no cartão (de qualquer ano) e os cartões ativos: para as compras futuras nos cenários (vazio sem o módulo). */
+  compras?: Lancamento[]
+  cartoes?: CartaoCredito[]
+  /** A categoria é essencial? (a regra da análise, pelo nome da categoria, até a pessoa poder declarar) */
+  essencialDaCategoria?: (id: string) => boolean
+  /** `perfil.dispensadas`: de lá saem as respostas "o mês está completo" (`mes-completo:AAAA-MM`). */
+  marcas?: readonly string[]
 }
 
 export function entradaDoCairo(p: EntradaDaPonte): EntradaCairo {
@@ -46,6 +53,9 @@ export function entradaDoCairo(p: EntradaDaPonte): EntradaCairo {
   return {
     hoje: p.hojeIso,
     moeda: p.moeda,
+    marcasDosMeses: [...(p.marcas ?? [])],
+    comprasNoCartao: (p.compras ?? []).map((l) => ({ cartao_id: l.cartao_id ?? '', valor: l.valor, data_compra: l.data_compra ?? null, parcela: l.parcela ?? null, parcelas: l.parcelas ?? null, pago_por: l.pago_por ?? null })),
+    cartoes: ciclosDosCartoes(p.cartoes ?? [], p.hojeIso, p.fimDoHorizonte),
     horizonteAte: p.fimDoHorizonte,
     lancamentos: p.lancs.map((l) => {
       const c = catPorId.get(p.categoriaDe(l))
@@ -71,9 +81,14 @@ export function entradaDoCairo(p: EntradaDaPonte): EntradaCairo {
     })),
     faturasPagas: p.faturasPagas.map((f) => ({ id: f.id, cartao_id: f.cartao_id, ano: f.ano, mes: f.mes, valor: f.valor, pago_em: f.pago_em, juros: f.juros, tipo: f.tipo })),
     saldoContaCorrente: p.saldoContaCorrente,
-    compromissos: p.eventos.map((ev) => ({
-      data: ev.data, vence: ev.vence ?? null, tipo: ev.tipo, descricao: ev.descricao, valor: ev.valor, origem: ev.origem, atrasada: ev.atrasada, grupo: ev.grupo,
-    })),
+    compromissos: [
+      // a agenda do app, menos os lançamentos futuros (eles vêm abaixo, com o que cada um é)
+      ...p.eventos.filter((ev) => ev.origem !== 'lancamento').map((ev): CompromissoBruto => ({
+        data: ev.data, vence: ev.vence ?? null, tipo: ev.tipo, descricao: ev.descricao, valor: ev.valor, origem: ev.origem, atrasada: ev.atrasada,
+        grupo: ev.grupo, ...(ev.essencial ? { essencial: true } : {}),
+      })),
+      ...lancamentosFuturos(p),
+    ],
     promessas: receber.flatMap((s) => promessasDe(s, p.pagamentos, p.hojeIso).lista.map((x) => ({
       divida_id: s.divida.id, data: x.promessa.data, estado: x.estado, created_at: x.promessa.created_at,
     }))),
@@ -84,6 +99,46 @@ export function entradaDoCairo(p: EntradaDaPonte): EntradaCairo {
       return a ? [{ divida_id: s.divida.id, amostras: a.amostras, modelo: a.modelo, taxaDia: a.taxaDia, reaisDia: a.reaisDia, confianca: a.confianca }] : []
     }),
   }
+}
+
+/**
+ * Os próximos ciclos de cada cartão ativo, pela regra do app (`datasDaFatura`): do ciclo que fecha hoje ou depois até o
+ * que vence no fim do horizonte, e mais dois (as parcelas de uma compra de hoje podem cair neles).
+ */
+function ciclosDosCartoes(cartoes: CartaoCredito[], hoje: string, fim: string) {
+  const [a, m] = [Number(hoje.slice(0, 4)), Number(hoje.slice(5, 7))]
+  return cartoes.filter((c) => c.ativo).map((c) => ({
+    id: c.id,
+    ciclos: Array.from({ length: 5 }, (_, i) => doMesChave(chaveMes(a, m) + i))
+      .map((x) => datasDaFatura(c, x.ano, x.mes))
+      .filter((x) => x.fechamento >= hoje && x.vencimento <= fim.slice(0, 7) + '-31'),
+  }))
+}
+
+/**
+ * Os lançamentos marcados para depois de hoje (fora do cartão, que entra pela fatura), com o que cada um é pela regra do
+ * Cairo: empréstimo que vai cair, dinheiro que vai emprestar, devolução de quem te deve e transferência entre bolsos entram
+ * no caixa dos cenários sem virar renda nem gasto. Pedido 8 de docs/cairo/coordenacao.md.
+ */
+function lancamentosFuturos(p: EntradaDaPonte): CompromissoBruto[] {
+  const sentido = new Map(p.dividas.map((d) => [d.id, d.sentido ?? 'devo'] as const))
+  const catPorId = new Map(p.categorias.map((c) => [c.id, c]))
+  const out: CompromissoBruto[] = []
+  for (const l of p.lancs) {
+    if (!l.data || l.data <= p.hojeIso || l.data > p.fimDoHorizonte || l.cartao_id || !(l.valor > 0)) continue
+    const classe = classeDoLancamento(l, catPorId.get(p.categoriaDe(l))?.nome ?? '', (id) => sentido.get(id))
+    const natureza = classe === 'credito_recebido' ? 'credito_recebido' as const
+      : classe === 'emprestimo_concedido' ? 'emprestimo_concedido' as const
+        : classe === 'devolucao_recebida' ? 'devolucao' as const
+          : classe === 'transferencia_propria' ? 'transferencia_propria' as const : null
+    if (classe === 'pago_por_outro') continue
+    out.push({
+      data: l.data, tipo: l.tipo, descricao: l.descricao.trim(), valor: l.valor, origem: 'lancamento',
+      ...(natureza ? { natureza } : {}), ...(l.divida_id ? { divida_id: l.divida_id } : {}),
+      ...(!natureza && l.tipo === 'saida' && p.essencialDaCategoria?.(p.categoriaDe(l)) ? { essencial: true } : {}),
+    })
+  }
+  return out
 }
 
 /**
@@ -123,17 +178,22 @@ function diagnosticar(d: DiagnosticoDoCairo) {
  * `fechados` vem na numeração do app (`chaveMes`: ano × 12 + mês − 1).
  */
 export function resumosDosMeses(
-  lancs: Lancamento[], fechados: number[], cl: (l: Lancamento) => ClasseDoLancamento, contas: Pick<ContaFixa, 'tipo' | 'inicio' | 'fim' | 'ativa'>[],
+  lancs: Lancamento[], fechados: number[], cl: (l: Lancamento) => ClasseDoLancamento,
+  contas: Pick<ContaFixa, 'id' | 'tipo' | 'inicio' | 'fim' | 'ativa'>[], marcas: readonly string[] = [],
 ): ResumoDoMes[] {
+  const declarados = declaracoesDosMeses(marcas)
   return fechados.map((k) => {
     const { ano, mes } = doMesChave(k)
     const iso = mesIso(ano, mes)
     const doMes = lancs.filter((l) => chaveMes(l.ano, l.mes) === k && l.valor > 0)
+    const d = declarados.get(iso)
     return {
       chave: k, mes: iso,
       nEntradas: doMes.filter((l) => cl(l) === 'renda').length,
       nSaidas: doMes.filter((l) => cl(l) === 'gasto').length,
       esperavaEntradaFixa: contas.some((c) => c.tipo === 'entrada' && contaValeNoMes(c, iso)),
+      ...contasDoMes(contas, doMes, iso),
+      ...(d ? { declarado: d } : {}),
     }
   })
 }

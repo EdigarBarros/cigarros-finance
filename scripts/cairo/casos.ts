@@ -6,7 +6,7 @@ import {
   centavosDe, converterTaxa, diaDaSemana, doNumero, ErroDeUnidade, lerDia, numero, somar, type DiaISO, type MesISO, type Moeda,
 } from '../../src/cairo/contrato/unidades'
 import { lerTaxaFracao, lerTaxaPercentual, lerValor } from '../../src/cairo/contrato/validar'
-import { qualidadeDosMeses, mesEntraNoFluxo } from '../../src/cairo/qualidade/meses'
+import { declaracoesDosMeses, declararMes, qualidadeDosMeses, mesEntraNoFluxo, type ResumoDoMes } from '../../src/cairo/qualidade/meses'
 import { detectarQuebra } from '../../src/cairo/aprendizado/quebras'
 import { proporcao, suavizar } from '../../src/cairo/aprendizado/evidencia'
 import { avaliarDiaADia } from '../../src/cairo/regua/regua'
@@ -91,6 +91,51 @@ const casos: { nome: string; rodar: () => void }[] = [
       certo('persona: e vira aviso', mudou.avisos.some((a) => a.codigo === 'dados.muitos-lancados-depois'))
       const est = leitura(ps.get('estavel')!).qualidade.saldo
       igual('saldo "de novembro" vale até 30/11 e tem até 26 dias', [est.validoAte, est.idadeMaximaDias], ['2026-11-30', 26])
+    },
+  },
+  {
+    nome: 'qualidade: gastar menos de verdade não é registro incompleto',
+    rodar() {
+      const r = (mes: string, nSaidas: number, mais: Partial<ResumoDoMes> = {}): ResumoDoMes => ({ chave: Number(mes.replace('-', '')), mes: mes as MesISO, nEntradas: 1, nSaidas, esperavaEntradaFixa: false, ...mais })
+      const ms = (xs: [string, number][], mais: (m: string) => Partial<ResumoDoMes> = () => ({})) => qualidadeDosMeses(xs.map(([m, n]) => r(m, n, mais(m))))
+      const base: [string, number][] = [['2026-01', 40], ['2026-02', 40], ['2026-03', 40], ['2026-04', 40], ['2026-05', 40], ['2026-06', 40], ['2026-07', 40]]
+      // dois meses baixos seguidos até o mais recente: nível novo, conta (com a incerteza dita e a pergunta)
+      const dois = ms([...base, ['2026-08', 10], ['2026-09', 10]])
+      igual('dois baixos até agora: contam como nível novo', dois.slice(-2).map((q) => [q.gastos, q.incerto, q.pergunta?.motivo]), [['conta', 'nivel_novo', 'poucas_saidas'], ['conta', 'nivel_novo', 'poucas_saidas']])
+      // um mês baixo isolado entre meses normais: falta de registro, fora
+      const isolado = ms([...base, ['2026-08', 10], ['2026-09', 40], ['2026-10', 40]])
+      igual('baixo isolado: fora, mas perguntado (é recente)', [isolado[7].gastos, isolado[7].incerto, isolado[7].pergunta?.motivo], ['parcial', undefined, 'poucas_saidas'])
+      // só o último mês baixo: ainda não dá para saber; fora e perguntado
+      const ultimo = ms([...base, ['2026-08', 40], ['2026-09', 10]])
+      igual('só o último baixo: fora e perguntado', [ultimo[8].gastos, ultimo[8].pergunta?.motivo], ['parcial', 'poucas_saidas'])
+      // três baixos seguidos no meio do ano também são nível (depois voltou ao normal)
+      const tres = ms([['2026-01', 40], ['2026-02', 40], ['2026-03', 8], ['2026-04', 8], ['2026-05', 8], ['2026-06', 40], ['2026-07', 40], ['2026-08', 40]])
+      igual('três baixos seguidos em qualquer ponto: contam', tres.slice(2, 5).map((q) => q.gastos), ['conta', 'conta', 'conta'])
+      igual('meses antigos não viram pergunta', tres.slice(2, 5).map((q) => q.pergunta), [undefined, undefined, undefined])
+      // baixo isolado, mas com todas as contas fixas do mês baixadas: conta, com a incerteza dita
+      const emDia = ms([...base, ['2026-08', 10], ['2026-09', 40], ['2026-10', 40]], (m) => (m === '2026-08' ? { contasFixasSaida: 3, contasFixasBaixadas: 3 } : {}))
+      igual('contas fixas em dia: conta', [emDia[7].gastos, emDia[7].incerto], ['conta', 'contas_em_dia'])
+      const meiaBoca = ms([...base, ['2026-08', 10], ['2026-09', 40], ['2026-10', 40]], (m) => (m === '2026-08' ? { contasFixasSaida: 3, contasFixasBaixadas: 2 } : {}))
+      igual('uma conta fixa sem baixa: fora', meiaBoca[7].gastos, 'parcial')
+      // a pessoa disse: vale o que ela disse, e a pergunta some
+      const disse = ms([...base, ['2026-08', 10], ['2026-09', 40], ['2026-10', 40]], (m) => (m === '2026-08' ? { declarado: 'completo' } : {}))
+      igual('disse que está completo: conta, sem pergunta', [disse[7].gastos, disse[7].declarado, disse[7].pergunta], ['conta', 'completo', undefined])
+      const faltou = ms([...base, ['2026-08', 40], ['2026-09', 10], ['2026-10', 10]], (m) => (m === '2026-09' ? { declarado: 'incompleto' } : {}))
+      igual('disse que faltou lançar: fora, mesmo parecendo nível novo', faltou[8].gastos, 'parcial')
+      // "está tudo lançado" sem nenhuma entrada: mês sem renda, mesmo com salário fixo
+      const semSal = qualidadeDosMeses([r('2026-07', 0, { nEntradas: 1, nSaidas: 30 }), r('2026-08', 30, { nEntradas: 1 }), r('2026-09', 30, { nEntradas: 0, esperavaEntradaFixa: true })])
+      igual('salário fixo sem baixa: não registrada, e pergunta', [semSal[2].renda, semSal[2].pergunta?.motivo], ['nao_registrada', 'renda_nao_registrada'])
+      const semSalDisse = qualidadeDosMeses([r('2026-07', 30), r('2026-08', 30), r('2026-09', 30, { nEntradas: 0, esperavaEntradaFixa: true, declarado: 'completo' })])
+      igual('disse que está completo: renda zero de verdade', semSalDisse[2].renda, 'zero_real')
+      // as marcas do perfil
+      const marcas = declararMes(declararMes(['tour', 'mes-incompleto:2026-08'], '2026-08', 'completo'), '2026-09', 'incompleto')
+      igual('responder troca a resposta do mesmo mês', marcas, ['tour', 'mes-completo:2026-08', 'mes-incompleto:2026-09'])
+      igual('e as marcas viram declarações', [...declaracoesDosMeses(marcas)], [['2026-08', 'completo'], ['2026-09', 'incompleto']])
+      igual('desfazer tira a marca', declararMes(marcas, '2026-08', null), ['tour', 'mes-incompleto:2026-09'])
+      // pela leitura inteira: a declaração chega pelo perfil
+      const p = P().get('mal-lancado')!
+      const lida = lerCairo({ ...p.e, marcasDosMeses: ['mes-completo:2026-03'] }).qualidade.meses.find((m) => m.mes === '2026-03')!
+      igual('persona: março confirmado completo pela pessoa', [lida.gastos, lida.renda, lida.declarado], ['conta', 'zero_real', 'completo'])
     },
   },
   {
@@ -218,6 +263,64 @@ const casos: { nome: string; rodar: () => void }[] = [
       perto('nos esperados, o João vem com a chance dele', esp?.pOcorre, 0.4, 1e-9)
       // o dia a dia: só de amanhã em diante, e o pico depois do salário anda junto com ele
       certo('dia a dia só depois de hoje', a.every((m) => m.fluxos.filter((f) => f.natureza === 'dia_a_dia').every((f) => f.dia > '2026-11-27')))
+    },
+  },
+  {
+    nome: 'cenarios: empréstimo, devolução e essencial no caixa, sem virar renda',
+    rodar() {
+      const l = leitura(P().get('cartao')!)
+      const mundos = l.cenarios.gerar(200, 5)
+      const em = (m: Mundo, tipo: string) => m.fluxos.filter((f) => f.tipo === tipo)
+      certo('o empréstimo do banco entra no caixa em todo mundo, como crédito (não renda)', mundos.every((m) => em(m, 'emprestimo-recebido').length === 1 && em(m, 'emprestimo-recebido')[0].natureza === 'credito_recebido'))
+      certo('e só se sabe que caiu no dia', mundos.every((m) => em(m, 'emprestimo-recebido')[0].reveladoEm === '2026-12-03'))
+      certo('emprestar ao Caio sai do caixa, como empréstimo concedido, conhecido desde hoje', mundos.every((m) => { const f = em(m, 'emprestimo-concedido')[0]; return f && f.natureza === 'emprestimo_concedido' && f.reveladoEm === '2026-11-27' }))
+      const bia = mundos.map((m) => m.fluxos.filter((f) => f.divida === 'bia'))
+      certo('a devolução da Bia aparece uma vez só (a parcela prevista do mesmo dia não conta de novo)', bia.every((xs) => xs.length <= 1))
+      certo('e é recebimento incerto (a_receber), não renda', bia.flat().every((f) => f.natureza === 'a_receber'))
+      perto('com a chance da Bia: 2 de 2 promessas, puxada para 0,5 → 0,75', bia.filter((xs) => xs.length).length / 200, 0.75, 0.08)
+      const esp = l.cenarios.esperados.find((f) => f.divida === 'bia')
+      perto('nos esperados, a devolução vem com pOcorre', esp?.pOcorre, 0.75, 1e-9)
+      certo('nada de empréstimo ou devolução vira renda', mundos.every((m) => m.fluxos.filter((f) => f.natureza === 'renda').every((f) => f.tipo === 'conta-fixa' || f.tipo === 'lancamento-futuro' || f.tipo === 'recorrente')))
+      certo('mercado de categoria essencial vira natureza essencial', mundos.every((m) => m.fluxos.find((f) => f.descricao === 'Mercado do mês')?.natureza === 'essencial'))
+      const sal = l.cenarios.esperados.find((f) => f.descricao === 'Salário')
+      igual('o salário esperado diz de que fonte é (pedido 6)', sal?.fonte, 'conta:cf-sal')
+    },
+  },
+  {
+    nome: 'cenarios: compras futuras no cartão, sem contar de novo o que já está na fatura',
+    rodar() {
+      const l = leitura(P().get('cartao')!)
+      const ap = l.aprendizado.cartao
+      certo('aprendeu o ritmo do cartão', ap && ap.mediaDiaria > 0 && ap.dias > 300)
+      const mundos = l.cenarios.gerar(200, 11)
+      const futuras = mundos.flatMap((m) => m.fluxos.filter((f) => f.tipo === 'compra-cartao-futura'))
+      certo('há compras futuras nos mundos', futuras.length > 100)
+      certo('só compras de amanhã em diante (as de até hoje já estão na fatura)', futuras.every((f) => (f.competencia ?? '') > '2026-11-27'))
+      certo('cada uma cai no vencimento de um ciclo do cartão', futuras.every((f) => ['2026-12-10', '2027-01-10', '2027-02-10'].includes(f.dia)))
+      certo('a compra de dezembro antes do fechamento (dia 3) vai para a fatura de 10/12', futuras.filter((f) => f.competencia! <= '2026-12-03').every((f) => f.dia === '2026-12-10'))
+      certo('a de 04/12 em diante vence depois do horizonte (10/01): fora', futuras.every((f) => f.competencia! <= '2026-12-03'))
+      certo('a pessoa sabe da compra no dia em que compra', futuras.every((f) => f.reveladoEm === f.competencia))
+      igual('a fatura já lançada continua uma só, com o valor dela', mundos[0].fluxos.filter((f) => f.tipo === 'fatura').map((f) => f.valor.centavos), [90000])
+      // a compra de R$ 5.000 que a Mãe paga não entra no ritmo
+      certo('compra paga por outra pessoa fica fora do ritmo', ap!.mediaDiaria < 10000)
+      // o que se espera: compras médias por dia; a que já passou some
+      const esp = l.cenarios.esperados.filter((f) => f.tipo === 'compra-cartao-futura')
+      // o horizonte vai até 31/12: só as compras até o fechamento de 03/12 caem numa fatura que vence dentro dele
+      certo('os esperados têm as compras médias do cartão, até o fechamento de 03/12', esp.length >= 5 && esp.every((f) => f.dia === '2026-12-10' && (f.competencia ?? '') <= '2026-12-03'))
+      const o = revelar(mundos[0], l.cenarios.esperados, '2026-12-05' as DiaISO)
+      certo('no dia 05/12, as compras esperadas de até 05/12 saíram dos esperados', o.esperados.filter((f) => f.tipo === 'compra-cartao-futura').every((f) => (f.competencia ?? '') > '2026-12-05'))
+      certo('e as feitas neste mundo até 05/12 estão nos conhecidos', o.conhecidos.filter((f) => f.tipo === 'compra-cartao-futura').every((f) => (f.competencia ?? '') <= '2026-12-05'))
+      // não-antecipação com o cartão: trocar o futuro não muda o que se sabe
+      const t = trocarFuturo(mundos[0], mundos[1], '2026-12-05' as DiaISO)
+      igual('trocar o futuro não muda o que se sabe até o dia', JSON.stringify(revelar(t, l.cenarios.esperados, '2026-12-05' as DiaISO)), JSON.stringify(o))
+      // com horizonte até fevereiro: a compra de dezembro em 3 vezes cai em dezembro, janeiro e fevereiro
+      const longo = lerCairo({ ...P().get('cartao')!.e, horizonteAte: '2027-02-28' }).cenarios.gerar(100, 3).flatMap((m) => m.fluxos.filter((f) => f.tipo === 'compra-cartao-futura'))
+      const deUmDia = longo.filter((f) => f.competencia === '2026-12-02')
+      certo('compras de 02/12 vão para 10/12, e as parcelas para 10/01 e 10/02', deUmDia.some((f) => f.dia === '2026-12-10') && deUmDia.some((f) => f.dia === '2027-01-10') && deUmDia.some((f) => f.dia === '2027-02-10'))
+      certo('compra de 10/12 (depois do fechamento de 03/12) começa em 10/01', longo.filter((f) => f.competencia === '2026-12-10').every((f) => f.dia >= '2027-01-10'))
+      // sem cartão ativo: nada
+      const sem = lerCairo({ ...P().get('cartao')!.e, cartoes: [] })
+      igual('sem cartão: sem compras futuras', sem.cenarios.gerar(20, 1).flatMap((m) => m.fluxos).filter((f) => f.tipo === 'compra-cartao-futura').length, 0)
     },
   },
   {

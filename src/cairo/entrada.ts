@@ -95,6 +95,15 @@ export interface CompromissoBruto {
   origem: 'lancamento' | 'conta' | 'parcela' | 'cartao' | 'recorrente'
   atrasada?: boolean
   grupo?: string
+  /**
+   * (1.1) O que o dinheiro é, para o caixa dos cenários sem virar renda: empréstimo que vai cair, dinheiro que a pessoa vai
+   * emprestar, devolução de quem te deve, transferência entre bolsos seus. Sem o campo: renda (entrada) ou conta (saída).
+   */
+  natureza?: 'credito_recebido' | 'emprestimo_concedido' | 'devolucao' | 'transferencia_propria'
+  /** (1.1) Conta ou lançamento de categoria essencial. */
+  essencial?: boolean
+  /** (1.1) A dívida ligada (empréstimo, me devem). */
+  divida_id?: string
 }
 
 /** Uma promessa de pagamento já avaliada pelo app (lib/dividas.ts → promessasDe). */
@@ -120,6 +129,22 @@ export interface JurosAprendidoBruto {
   confianca: 'alta' | 'media' | 'baixa'
 }
 
+/** (1.1) Uma compra (parcela) no cartão, como o app guarda: `data` é o vencimento da fatura; `data_compra`, o dia da compra. */
+export interface CompraNoCartaoBruta {
+  cartao_id: string
+  valor: number
+  data_compra?: string | null
+  parcela?: number | null
+  parcelas?: number | null
+  pago_por?: string | null
+}
+
+/**
+ * (1.1) Os próximos ciclos de cada cartão ativo, calculados pelo app (lib/cartoes.ts → datasDaFatura): compra feita até o
+ * `fechamento` cai na fatura que vence em `vencimento`. Em ordem.
+ */
+export interface CartaoBruto { id: string; ciclos: { fechamento: string; vencimento: string }[] }
+
 export interface EntradaCairo {
   /** O dia de hoje no fuso da pessoa (AAAA-MM-DD). Obrigatório: o Cairo não tem relógio. */
   hoje: string
@@ -139,4 +164,9 @@ export interface EntradaCairo {
   promessas: PromessaBruta[]
   aReceber: AReceberBruto[]
   jurosAprendidos: JurosAprendidoBruto[]
+  /** (1.1) As compras no cartão (de qualquer ano) e os ciclos dos cartões, para as compras futuras nos cenários. */
+  comprasNoCartao?: CompraNoCartaoBruta[]
+  cartoes?: CartaoBruto[]
+  /** (1.1) As marcas do perfil com o que a pessoa disse de cada mês ("mes-completo:2026-09"); vazio = nada dito. */
+  marcasDosMeses?: string[]
 }

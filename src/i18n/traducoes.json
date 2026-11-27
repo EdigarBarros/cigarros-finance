@@ -19538,5 +19538,57 @@
   "Pelo que já está marcado até {0}, nenhuma conta atrasa com esta compra (caberia até {1} por mês).": {
     "en": "Based on what's already scheduled up to {0}, no bill is late with this purchase (up to {1} a month would fit).",
     "es": "Por lo que ya está marcado hasta el {0}, ninguna cuenta se atrasa con esta compra (cabrían hasta {1} al mes)."
+  },
+  "Anotado: {0} está todo lançado. Refiz as médias com ele.": {
+    "en": "Got it: {0} is fully recorded. I redid the averages with it.",
+    "es": "Anotado: {0} está todo registrado. Rehíce los promedios con él."
+  },
+  "Anotado: faltou lançar em {0}. Ele fica fora das médias.": {
+    "en": "Got it: some entries are missing in {0}. It stays out of the averages.",
+    "es": "Anotado: faltó registrar en {0}. Queda fuera de los promedios."
+  },
+  "Entrou dinheiro em {0}?": {
+    "en": "Did money come in during {0}?",
+    "es": "¿Entró dinero en {0}?"
+  },
+  "Você está gastando menos?": {
+    "en": "Are you spending less?",
+    "es": "¿Estás gastando menos?"
+  },
+  "{0} está todo lançado?": {
+    "en": "Is {0} fully recorded?",
+    "es": "¿{0} está todo registrado?"
+  },
+  "Em {0} não tem nenhuma entrada lançada, e você tem uma renda fixa. Deixei o mês fora das médias até você me dizer.": {
+    "en": "In {0} there is no income recorded, and you have a fixed income. I left the month out of the averages until you tell me.",
+    "es": "En {0} no hay ningún ingreso registrado, y tienes un ingreso fijo. Dejé el mes fuera de los promedios hasta que me digas."
+  },
+  "Em {0} você lançou 1 saída; o seu normal é {1}. Contei como gasto que caiu de verdade. Está tudo lançado?": {
+    "en": "In {0} you recorded 1 expense; your usual is {1}. I counted it as spending that really dropped. Is everything recorded?",
+    "es": "En {0} registraste 1 gasto; lo normal para ti es {1}. Lo conté como un gasto que bajó de verdad. ¿Está todo registrado?"
+  },
+  "Em {0} você lançou {1} saídas; o seu normal é {2}. Contei como gasto que caiu de verdade. Está tudo lançado?": {
+    "en": "In {0} you recorded {1} expenses; your usual is {2}. I counted it as spending that really dropped. Is everything recorded?",
+    "es": "En {0} registraste {1} gastos; lo normal para ti es {2}. Lo conté como un gasto que bajó de verdad. ¿Está todo registrado?"
+  },
+  "Em {0} não tem nenhuma saída lançada. Deixei o mês fora das médias até você me dizer.": {
+    "en": "In {0} there are no expenses recorded. I left the month out of the averages until you tell me.",
+    "es": "En {0} no hay ningún gasto registrado. Dejé el mes fuera de los promedios hasta que me digas."
+  },
+  "Em {0} você lançou 1 saída; o seu normal é {1}. Deixei o mês fora das médias até você me dizer.": {
+    "en": "In {0} you recorded 1 expense; your usual is {1}. I left the month out of the averages until you tell me.",
+    "es": "En {0} registraste 1 gasto; lo normal para ti es {1}. Dejé el mes fuera de los promedios hasta que me digas."
+  },
+  "Em {0} você lançou {1} saídas; o seu normal é {2}. Deixei o mês fora das médias até você me dizer.": {
+    "en": "In {0} you recorded {1} expenses; your usual is {2}. I left the month out of the averages until you tell me.",
+    "es": "En {0} registraste {1} gastos; lo normal para ti es {2}. Dejé el mes fuera de los promedios hasta que me digas."
+  },
+  "Está tudo lançado": {
+    "en": "Everything is recorded",
+    "es": "Está todo registrado"
+  },
+  "Faltou lançar": {
+    "en": "Some entries are missing",
+    "es": "Faltó registrar"
   }
 }
