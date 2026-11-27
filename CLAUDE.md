@@ -41,6 +41,11 @@ sem `publicada_em`. Ele revisa e publica pelo painel.
 - Início (seção 4.0.3 do mesmo documento): estado do mês, previsão explicada, comparação com o mês anterior e contas
   atrasadas/próximas saem de funções puras (`lib/situacaoDoMes.ts`, `lib/previsao.ts`, `lib/comparacao.ts`,
   `lib/paraFazer.ts`). Mexeu nelas? Rode `node scripts/painel/testar.mjs`.
+- Cairo (motor financeiro novo, `src/cairo/`): dois Claudes trabalham nele em paralelo. Leia
+  [`docs/cairo/contrato.md`](docs/cairo/contrato.md) e [`docs/cairo/coordenacao.md`](docs/cairo/coordenacao.md) antes de
+  mexer (quem é dono de cada pasta, migrações reservadas, ordem de integração). `src/cairo/` não importa `src/lib`, React nem
+  Supabase; a ponte é `src/lib/cairo.ts`. Mexeu no Cairo, em `qualidade/meses.ts`, `fatos/movimentos.ts` ou na ponte? Rode
+  `node scripts/cairo/testar.mjs` e `node scripts/painel/testar.mjs`; no app de demonstração, `testar-cairo.cjs`.
 - Invest (seção 4.22 do mesmo documento): o motor fica em `src/lib/invest/` (puro) e tem testes próprios. Mexeu em conta
   de carteira, rentabilidade, importação ou saldo? Rode `node scripts/invest/testar.mjs` e, se mexeu na migração,
   `scripts/invest/isolamento.sh`.

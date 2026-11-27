@@ -57,6 +57,11 @@ demonstração vira uma barra, paga conta, a escolha fica salva, desligar tira),
 `node scripts/app-de-demonstracao/testar-plano-travado.cjs`: depois de salvar o plano, a entrada lançada fica como "já caiu"
 e a conta paga fica como "paga", travada (computador e celular).
 
+## Cairo
+
+`node scripts/app-de-demonstracao/testar-cairo.cjs`: o núcleo novo (`src/cairo`) roda dentro da análise sem erro, em quanto
+tempo e sem violar a contagem única (pelo diagnóstico `globalThis.__cairo`, sem dado financeiro), no computador e no celular.
+
 ## Várias contas no mesmo aparelho
 
 Depois do build com Supabase fictício: `node scripts/app-de-demonstracao/testar-contas.cjs` (limpeza de sessões antigas, troca com

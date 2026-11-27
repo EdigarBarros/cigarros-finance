@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CATEGORIAS_ANTIGAS } from './categorias'
 import { normPerfil } from './perfil'
-import { MEMORIA_VAZIA, normMemoria, type MemoriaConsultor } from './memoria'
+import { juntarMemorias, MEMORIA_VAZIA, normMemoria, type MemoriaConsultor } from './memoria'
 import { GOSTO_VAZIO, normGosto, type Gosto } from './gosto'
 import { normPlanejamentos, type Planejamentos } from './planejamento'
 import { maisRecente, normCelular, type Celular } from './widgets'
@@ -333,9 +333,14 @@ export function useDados(userId: string, ano: number) {
     else {
       setPerfil(pf.data ? normPerfil(pf.data as Perfil) : null)
       if (pf.data && 'foto' in pf.data) setFoto((pf.data as Perfil).foto ?? fotoLocal(userId))
-      // a do banco vale mais (vem de qualquer aparelho); vazia lá (coluna recém-criada), fica a deste aparelho
+      // a do banco (de qualquer aparelho) junta com a deste aparelho: nada do que um dos dois conferiu se perde
       const doBanco = pf.data && 'consultor' in pf.data ? normMemoria((pf.data as { consultor?: unknown }).consultor) : null
-      if (doBanco && temAlgo(doBanco)) { memoriaAgora.current = doBanco; setMemoria(doBanco) }
+      if (doBanco && temAlgo(doBanco)) {
+        const junta = juntarMemorias(memoriaAgora.current, doBanco)
+        memoriaAgora.current = junta
+        setMemoria(junta)
+        try { localStorage.setItem(chaveMemoria(userId), JSON.stringify(junta)) } catch { /* sem armazenamento */ }
+      }
       // o gosto que sabe mais vale (o do aparelho pode estar na frente: nem toda saída da aba chega ao banco)
       const gostoDoBanco = pf.data && 'consultor' in pf.data ? normGosto((pf.data as { consultor?: { gosto?: unknown } | null }).consultor?.gosto) : null
       if (gostoDoBanco && gostoDoBanco.total > gostoAgora.current.total) { gostoAgora.current = gostoDoBanco; setGosto(gostoDoBanco) }
@@ -888,6 +893,13 @@ export function useDados(userId: string, ano: number) {
       planejamentoAgora.current = plano
       setPlanejamento(plano)
       try { localStorage.setItem(chavePlanejamento(userId), JSON.stringify(plano)) } catch { /* sem armazenamento */ }
+    }
+    // a memória: a deste aparelho junta com a do banco (outro aparelho pode ter conferido um passo enquanto este estava aberto)
+    const memoria = juntarMemorias(memoriaAgora.current, doBanco ? normMemoria(doBanco) : null)
+    if (JSON.stringify(memoria) !== JSON.stringify(memoriaAgora.current)) {
+      memoriaAgora.current = memoria
+      setMemoria(memoria)
+      try { localStorage.setItem(chaveMemoria(userId), JSON.stringify(memoria)) } catch { /* sem armazenamento */ }
     }
     const gostoBanco = normGosto(doBanco?.gosto)
     if (gostoBanco && gostoBanco.total > gostoAgora.current.total) { gostoAgora.current = gostoBanco; setGosto(gostoBanco) }

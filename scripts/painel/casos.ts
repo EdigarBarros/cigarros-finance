@@ -27,8 +27,11 @@ import { previsaoDoAno } from '../../src/lib/previsao'
 import { chaveDoMes, sobrasPorMes } from '../../src/lib/saldoCorrido'
 import { atrasoDa, comExtras, comFeitos, irmaPaga, comGuardado, fotosDe, travada, conselhosDoPlanejamento, custoDa, dicasDe, falta, montarPraMim, mudarParte, normPlanejamentos, placarDe, por, quadroDoMes, sobra, valerPartes } from '../../src/lib/planejamento'
 import { planejar, type PagamentoPlanejado, type Plano } from '../../src/lib/planejador'
-import type { CartaoCredito, ContaFixa, Divida, FaturaParcial, Lancamento, Mes, SaldoDivida } from '../../src/lib/types'
-import { aprenderJuros, descontoParaQuitar, pistaDaConferencia } from '../../src/lib/jurosAprendido'
+import type { CartaoCredito, ContaFixa, Divida, FaturaParcial, Lancamento, Mes, Perfil, SaldoDivida } from '../../src/lib/types'
+import { aprenderJuros, descontoParaQuitar, pistaDaConferencia, regimeDaConferencia } from '../../src/lib/jurosAprendido'
+import { analisar } from '../../src/lib/analise'
+import { faltamDadosParaConselhos } from '../../src/lib/conselheiro'
+import { juntarMemorias } from '../../src/lib/memoria'
 import { historicoDaDivida } from '../../src/lib/conferencias'
 import { compromissoDe, emDiasDeRenda, sinaisDe, type EntradaSinais } from '../../src/lib/sinais'
 import { naHoraDaPromessa, naHoraDeParcelar, naHoraDePagarParte, naHoraDePular } from '../../src/lib/naHora'
@@ -1264,6 +1267,92 @@ export const CASOS: Caso[] = [
       igual('paga o Mercado Pago e a Luz, o maior primeiro', l.proximo!.pagar.map((x) => x.nome), ['Mercado Pago', 'Luz'])
       perto('total do passo', l.proximo!.total, 700)
       igual('placar: tudo com dinheiro e nada atrasa', [l.placar.pct, l.placar.fechado], [100, true])
+    },
+  },
+  // ==================== Cairo (src/cairo): meses que contam, devolução, juros em dia, memória entre aparelhos ====================
+  {
+    nome: 'cairo: mês sem renda bem lançado entra na média; mês mal lançado não',
+    rodar() {
+      // hoje 15/11/2026: 3 últimos fechados = ago, set, out. Freela em ago e out; em setembro nada entrou, mas os gastos foram lançados
+      const perfil = { nome: 'T', moeda: 'BRL', moedas: [], detalhe: 'detalhado', modulos: { dividas: true, contas: true, cartoes: false, bancos: false, investimentos: false, moedas: false, metas: false }, dispensadas: [], onboarding_em: '2026-01-01' } as unknown as Perfil
+      const lancs: Lancamento[] = []
+      for (const m of [5, 6, 7, 8, 9, 10]) {
+        const mm = String(m).padStart(2, '0')
+        if (m !== 9) lancs.push(lanc(`2026-${mm}-10`, 'entrada', 3000, { descricao: 'Freela' }))
+        for (let d = 1; d <= 20; d++) lancs.push(lanc(`2026-${mm}-${String(d).padStart(2, '0')}`, 'saida', 100, { descricao: 'Mercado' }))
+      }
+      const entrada = (ls: Lancamento[]) => analisar({
+        hoje: new Date(2026, 10, 15), lancs: ls, compras: [], cartoes: [], faturasPagas: [], contas: [], categorias: [], categoriaDe: () => '',
+        dividas: [], saldos: [], pagamentos: [], taxas: {}, meses: [], metas: [], movimentosMeta: [], perfil,
+      })
+      const a = entrada(lancs)
+      igual('os 3 meses fechados entram (setembro é mês sem renda de verdade)', a.mesesAnalisados, 6)
+      perto('a renda média conta o zero de setembro: (3000 + 0 + 3000) ÷ 3', a.renda, 2000)
+      certo('o Cairo também leu', a.cairo)
+      igual('e diz que setembro é renda zero de verdade', a.cairo!.qualidade.meses.find((m) => m.mes === '2026-09')?.renda, 'zero_real')
+      // agosto mal lançado: só 2 saídas (o típico é 20) e o freela
+      const mal = lancs.filter((l) => !(l.mes === 8 && l.tipo === 'saida' && Number(l.data!.slice(8, 10)) > 2))
+      const b = entrada(mal)
+      igual('agosto mal lançado fica de fora: sobram setembro e outubro', b.serie.filter((x) => x.comDados && x.mes >= 8).map((x) => x.mes), [9, 10])
+      perto('renda média de setembro e outubro', b.renda, 1500)
+      // quem tem salário de conta fixa e não lançou: o mês sem entrada fica "não registrado", não vira mês sem renda
+      const c = analisar({
+        hoje: new Date(2026, 10, 15), lancs, compras: [], cartoes: [], faturasPagas: [], categorias: [], categoriaDe: () => '',
+        contas: [conta('Salário', 'entrada', 3000, 10)],
+        dividas: [], saldos: [], pagamentos: [], taxas: {}, meses: [], metas: [], movimentosMeta: [], perfil,
+      })
+      perto('com salário fixo sem baixa em setembro: média de agosto e outubro', c.renda, 3000)
+      igual('o conselheiro concorda (mesmo critério)', faltamDadosParaConselhos({ lancs, dividas: [], hoje: new Date(2026, 10, 15) }), false)
+    },
+  },
+  {
+    nome: 'cairo: receber de volta o que você emprestou não é renda',
+    rodar() {
+      const perfil = { nome: 'T', moeda: 'BRL', moedas: [], detalhe: 'detalhado', modulos: { dividas: true, contas: false, cartoes: false, bancos: false, investimentos: false, moedas: false, metas: false }, dispensadas: [], onboarding_em: '2026-01-01' } as unknown as Perfil
+      const joao: Divida = { id: 'jo', descricao: 'João', sentido: 'me_devem', valor_parcela: null }
+      const lancs: Lancamento[] = []
+      for (const m of [8, 9, 10]) {
+        const mm = String(m).padStart(2, '0')
+        lancs.push(lanc(`2026-${mm}-05`, 'entrada', 4000, { descricao: 'Salário' }))
+        for (let d = 1; d <= 10; d++) lancs.push(lanc(`2026-${mm}-${String(d + 10).padStart(2, '0')}`, 'saida', 200, { descricao: 'Gasto' }))
+      }
+      lancs.push(lanc('2026-08-20', 'saida', 900, { descricao: 'Pix João', divida_id: 'jo' }))
+      lancs.push(lanc('2026-10-20', 'entrada', 900, { descricao: 'Pix João', divida_id: 'jo' }))
+      const a = analisar({
+        hoje: new Date(2026, 10, 15), lancs, compras: [], cartoes: [], faturasPagas: [], contas: [], categorias: [], categoriaDe: () => '',
+        dividas: [joao], saldos: [], pagamentos: [], taxas: {}, meses: [], metas: [], movimentosMeta: [], perfil,
+      })
+      perto('renda: só o salário (a devolução de 900 fica de fora)', a.renda, 4000)
+      perto('gastos: o empréstimo ao João também fica de fora', a.gastos, 2000)
+    },
+  },
+  {
+    nome: 'cairo: conferência com a dívida em dia não ensina juros de atraso',
+    rodar() {
+      // dívida aberta com 3% ao mês do contrato, sem nada atrasado: crescer é o contrato, não o atraso
+      const d: Divida = { id: 'ab', descricao: 'Cheque especial', valor_parcela: null, juros_mes: 3 }
+      const saldos: SaldoDivida[] = [{ id: 's', divida_id: 'ab', data: '2026-09-01', saldo: 1000 }]
+      const s = situacaoDividas([d], saldos, [], 2026, 11, {}, '2026-11-11')[0]
+      const conf = (id: string, data: string, antes: number, depois: number, mais: Partial<ConferenciaDivida> = {}): ConferenciaDivida =>
+        ({ id, divida_id: 'ab', data, antes, depois, origem: 'conferir', created_at: `${data}T12:00:00Z`, ...mais })
+      // com a pista da migração 44: base 0 = nada atrasado
+      igual('pista com base 0: não ensina', aprenderJuros(s, calendarioDe(s, '2026-11-11'), [conf('a', '2026-10-01', 1000, 1000, { juros_estimado: 0, base_juros: 0, dias_juros: null }), conf('b', '2026-10-31', 1000, 1030, { juros_estimado: 0, base_juros: 0, dias_juros: 30 })]), null)
+      // antiga, sem pista: dívida aberta com juros do contrato e sem parcela atrasada estava em dia
+      igual('antiga, dívida aberta em dia: não ensina', aprenderJuros(s, calendarioDe(s, '2026-11-11'), [conf('a', '2026-10-01', 1000, 1000), conf('b', '2026-10-31', 1000, 1030)]), null)
+      igual('o regime é "em dia"', regimeDaConferencia(conf('b', '2026-10-31', 1000, 1030), d, calendarioDe(s, '2026-11-11')), 'em_dia')
+    },
+  },
+  {
+    nome: 'cairo: a memória do consultor junta dois aparelhos sem perder nada',
+    rodar() {
+      const passo = (id: string, desde: string, resultado?: 'funcionou' | 'nao') => ({ id, desde, avaliar: 1, base: 100, alvo: 10, titulo: id, ...(resultado ? { resultado } : {}) })
+      const pc = { objetivo: 'dividas' as const, objetivoEm: '2026-11-01T10:00:00Z', acompanhados: [passo('corte', '2026-10-01', 'funcionou'), passo('reserva', '2026-11-02')] }
+      const cel = { objetivo: 'guardar' as const, objetivoEm: '2026-11-10T10:00:00Z', acompanhados: [passo('corte', '2026-10-01'), passo('reserva', '2026-11-05'), passo('atrasos', '2026-11-06', 'nao')] }
+      const j = juntarMemorias(pc, cel)
+      igual('o conferido no computador fica; o do celular também', j.acompanhados.map((x) => `${x.id}:${x.resultado ?? 'aberto'}`), ['corte:funcionou', 'reserva:aberto', 'atrasos:nao'])
+      igual('o passo aberto nos dois fica uma vez, o mais antigo', j.acompanhados.find((x) => x.id === 'reserva')?.desde, '2026-11-02')
+      igual('o objetivo escolhido por último vale', j.objetivo, 'guardar')
+      igual('sem nada no banco, fica o do aparelho', juntarMemorias(pc, null), pc)
     },
   },
 ]
