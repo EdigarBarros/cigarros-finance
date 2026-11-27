@@ -134,14 +134,32 @@ export function descontoParaQuitar(cs: ConferenciaDivida[]): DescontoParaQuitar 
   return { data: q.data, total: q.antes, quitar: q.depois, desconto: centavos(q.antes - q.depois) }
 }
 
+/**
+ * Em que regime a dívida estava no intervalo que a conferência fecha. Só o crescimento DURANTE o atraso ensina a regra do
+ * atraso; crescer em dia é o juro do contrato (outra coisa: src/cairo/custos/condicoes.ts) e não pode virar "regra de atraso".
+ *  - Com a pista da migração 44: base 0 quer dizer que nada estava atrasado.
+ *  - Conferência antiga: estava atrasada se uma parcela que ainda está atrasada hoje já tinha vencido no dia dela; a dívida
+ *    aberta (sem parcela) que corre juros do contrato, sem parcela atrasada, estava em dia.
+ *  - Fora disso, incerto (fica como antes).
+ */
+export function regimeDaConferencia(c: ConferenciaDivida, divida: Divida, cal: Calendario | null): 'atraso' | 'em_dia' | 'incerto' {
+  if (typeof c.base_juros === 'number') return c.base_juros > 0 ? 'atraso' : 'em_dia'
+  if ((cal?.atrasadas ?? []).some((p) => p.falta > 0 && p.vencimento < c.data)) return 'atraso'
+  const aberta = !(divida.valor_parcela && divida.valor_parcela > 0) && !divida.partes?.length
+  if (aberta && (divida.juros_mes ?? 0) > 0) return 'em_dia'
+  return 'incerto'
+}
+
 /** As pistas de juros de uma dívida: uma por intervalo entre conferências em que dá para dizer o que o banco cobrou. */
-export function amostrasDeJuros(divida: Divida, cs: ConferenciaDivida[]): AmostraDeJuros[] {
+export function amostrasDeJuros(divida: Divida, cs: ConferenciaDivida[], cal: Calendario | null = null): AmostraDeJuros[] {
   // só o que a pessoa digitou do banco ensina: o acerto antes de um pagamento ('pagar') é a própria estimativa do app
   const lista = ordenadas(cs.filter((c) => c.divida_id === divida.id && c.qual_valor !== 'quitar' && c.origem !== 'pagar'))
   const semRegra = !temJurosDeAtraso(divida)
   const out: AmostraDeJuros[] = []
   for (let i = 0; i < lista.length; i++) {
     const c = lista[i]
+    // a dívida estava em dia nesse intervalo: o que cresceu é o juro do contrato, não ensina o atraso
+    if (regimeDaConferencia(c, divida, cal) === 'em_dia') continue
     // conferências antigas (antes da migração 44) não guardam o que o app tinha estimado: só servem se o app não estimava nada
     const estimado = typeof c.juros_estimado === 'number' ? c.juros_estimado : semRegra ? 0 : null
     if (estimado === null) continue
@@ -165,7 +183,7 @@ export function amostrasDeJuros(divida: Divida, cs: ConferenciaDivida[]): Amostr
 export function aprenderJuros(s: SituacaoDivida, cal: Calendario | null, cs: ConferenciaDivida[]): JurosAprendido | null {
   const d = s.divida
   if ((d.sentido ?? 'devo') !== 'devo' || s.restante <= 0 || s.semCotacao) return null
-  let amostras = amostrasDeJuros(d, cs)
+  let amostras = amostrasDeJuros(d, cs, cal)
   if (!amostras.length) return null
   // uma conferência muito fora (uma compra nova que não foi lançada, por exemplo) não pode ensinar o resto
   if (amostras.length >= 3) {

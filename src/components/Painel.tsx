@@ -611,19 +611,19 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   }, [lancsComGuardados, d.lancsRecentes, chaveRenegociadas, comFaturas]) // eslint-disable-line react-hooks/exhaustive-deps
   // a comparação com o mês anterior (Início) lê os mesmos lançamentos, sem os guardados (não são gasto)
   const lancsComparar = useMemo(() => lancsDosConselhos.filter((l) => !ehGuardado(l)), [lancsDosConselhos])
+  const comContasFixas = v.contas && !contas.semTabela
   const conselhos = useMemo(() => conselhosDe({
     hoje, lancs: lancsDosConselhos, categorias: d.categorias, categoriaDe: idCategoria, dividas: d.dividas, saldos: d.saldos,
     pagamentos: d.pagamentos, taxas, meses: mesesVistos, metas: d.metas, movimentosMeta: d.movimentosMeta, perfil,
-    dividasSemJuros: d.dividasSemJuros, conferencias: d.conferencias,
+    dividasSemJuros: d.dividasSemJuros, conferencias: d.conferencias, contas: comContasFixas ? contas.contas : [],
     compras: comFaturas ? cartoes.compras.filter(contaNasSaidas(cartoes.faturasPagas)) : [],
-  }), [lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.conferencias, d.pagamentos, taxas, mesesVistos, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.dispensadas, comFaturas, cartoes.compras, chaveRenegociadas]) // eslint-disable-line react-hooks/exhaustive-deps
+  }), [lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.conferencias, d.pagamentos, taxas, mesesVistos, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.dispensadas, comFaturas, cartoes.compras, chaveRenegociadas, comContasFixas, contas.contas]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // "Agora não": o conselho some até o mês que vem (se ainda for verdade, volta).
   const dispensarConselho = (id: string) => mudarPerfil({ ...perfil, dispensadas: dispensarPorUmMes(perfil.dispensadas, id, hoje) })
 
   // Consultor (lib/analise.ts): a análise completa, refeita sempre que qualquer dado muda (lançamento, compra no cartão,
   // dívida, conta do mês, meta, saldo de banco). Lê os 12 meses fechados e o atual, sem depender do mês aberto na tela.
-  const comContasFixas = v.contas && !contas.semTabela
   const analise = useMemo(() => analisar({
     hoje, lancs: lancsDosConselhos, categorias: d.categorias, categoriaDe: idCategoria, dividas: d.dividas, saldos: d.saldos,
     pagamentos: d.pagamentos, taxas, meses: mesesVistos, metas: d.metas, movimentosMeta: d.movimentosMeta, perfil,
@@ -882,7 +882,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),
     dispensar: (id: string) => mudarPerfil({ ...perfil, dispensadas: [...new Set([...perfil.dispensadas, id])] }),
     conselhos, dispensarConselho,
-    conselhosSemDados: faltamDadosParaConselhos({ lancs: lancsDosConselhos, dividas: d.dividas, hoje }),
+    conselhosSemDados: faltamDadosParaConselhos({ lancs: lancsDosConselhos, dividas: d.dividas, hoje, categorias: d.categorias, categoriaDe: idCategoria, contas: comContasFixas ? contas.contas : [] }),
     conselhosDispensados: avisosDispensadosNoMes(perfil.dispensadas, hoje),
     invest, ajustarSaldosDaOperacao, ajustarCaixinha,
     analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise, kairoVisivel, mudarKairo, memoria: d.memoria, escolherObjetivo, escolherFirmeza,

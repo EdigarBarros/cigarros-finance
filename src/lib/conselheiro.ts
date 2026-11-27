@@ -23,15 +23,15 @@
 import { mudancaDe } from './conferencias'
 import { caixaDoBanco, mesEfetivo } from './calc'
 import { doMesChave, chaveMes, hojeLocal } from './cartoes'
-import { aumentaDivida, jurosAoAno, meDevem, situacaoDividas } from './dividas'
+import { jurosAoAno, meDevem, situacaoDividas } from './dividas'
 import { fmtDataCurta, fmtMesAno, fmtMoeda, fmtTaxa, fmtTaxaAno, fmtValor, LOCAL_DAS_DATAS, MESES_NOME, noMeioDaFrase } from './format'
 import type { Taxas } from './moedas'
 import { situacaoMeta } from './metas'
-import { ehGuardado } from './guardado'
-import { mudaDeBolso } from './mudaDeBolso'
+import { classeDoLancamento, mesEntraNoFluxo, qualidadeDosMeses } from '../cairo'
+import { resumosDosMeses } from './cairo'
 import { visao } from './perfil'
 import { tx } from './textos'
-import type { Categoria, ConferenciaDivida, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida } from './types'
+import type { Categoria, ConferenciaDivida, ContaFixa, Divida, Lancamento, Mes, Meta, MovimentoMeta, Pagamento, Perfil, SaldoDivida } from './types'
 import { TIPOS_CAIXA } from './types'
 
 // ---------- limites ----------
@@ -123,6 +123,11 @@ export interface EntradaConselheiro {
   movimentosMeta: MovimentoMeta[]
   /** Dá os módulos ligados (`visao`) e a lista de `dispensadas`. */
   perfil: Perfil
+  /**
+   * Contas do mês (opcional): com uma conta fixa de entrada no mês e nada lançado, a renda do mês fica "não registrada" (pode
+   * ter faltado lançar), em vez de virar mês sem renda.
+   */
+  contas?: ContaFixa[]
   /** Migração 19 pendente (a tabela de dívidas não tem `juros_mes`): o convite para informar os juros fica calado. */
   dividasSemJuros?: boolean
   /** Conferências com o banco (migração 37): serve para avisar quando uma dívida mudou de valor por fora do app. Opcional. */
@@ -175,28 +180,46 @@ interface MesAnalisado {
   porCategoria: Record<string, number>
 }
 
-/** Entradas, saídas e saídas por categoria de cada mês pedido (chave = `chaveMes`). Empréstimo não conta. */
+/**
+ * Entradas, saídas e saídas por categoria de cada mês pedido (chave = `chaveMes`). Só renda e gasto contam: dinheiro
+ * emprestado, o que você emprestou, a devolução dele e a transferência entre bolsos seus ficam de fora (a mesma regra da
+ * análise e do Cairo: src/cairo/fatos/movimentos.ts).
+ */
 function analisarMeses(
   lancs: Lancamento[], dividas: Divida[], categoriaDe: (l: Lancamento) => string, chaves: number[], categorias: Categoria[] = [],
 ): Map<number, MesAnalisado> {
   const nomePorId = new Map(categorias.map((c) => [c.id, c.nome]))
   const mapa = new Map(chaves.map((k) => [k, { entradas: 0, saidas: 0, porCategoria: {} } as MesAnalisado]))
-  const dividaPorId = new Map(dividas.map((d) => [d.id, d]))
+  const classe = classificador(dividas, (l) => nomePorId.get(categoriaDe(l)) ?? '')
   for (const l of lancs) {
     const m = mapa.get(chaveMes(l.ano, l.mes))
     if (!m || !(l.valor > 0)) continue
-    const d = l.divida_id ? dividaPorId.get(l.divida_id) : undefined
-    if (d && aumentaDivida(l.tipo, d)) continue // dinheiro emprestado a mais: não é renda nem gasto
-    // passar para a caixinha, poupança ou investimento (e resgatar): dinheiro guardado não é gasto, nem renda
-    if (ehGuardado(l) || (!l.cartao_id && !l.divida_id && mudaDeBolso(l.descricao, nomePorId.get(categoriaDe(l)) ?? ''))) continue
-    if (l.tipo === 'entrada') m.entradas += l.valor
-    else {
+    const c = classe(l)
+    if (c === 'renda') m.entradas += l.valor
+    else if (c === 'gasto') {
       m.saidas += l.valor
       const k = categoriaDe(l)
       m.porCategoria[k] = (m.porCategoria[k] ?? 0) + l.valor
     }
   }
   return mapa
+}
+
+/** A classe de cada lançamento (renda, gasto, empréstimo, devolução, transferência entre bolsos). */
+function classificador(dividas: Divida[], nomeDaCategoria: (l: Lancamento) => string) {
+  const sentido = new Map(dividas.map((d) => [d.id, d.sentido ?? 'devo'] as const))
+  return (l: Lancamento) => classeDoLancamento(l, nomeDaCategoria(l), (id) => sentido.get(id))
+}
+
+/**
+ * Os meses fechados que entram nas médias de fluxo, pela qualidade de cada um (src/cairo/qualidade/meses.ts) comparada com
+ * os 12 meses fechados: o mês bem registrado sem entrada, de quem costuma lançar o que recebe, é mês sem renda e conta.
+ */
+function fechadosNoFluxo(lancs: Lancamento[], dividas: Divida[], contas: ContaFixa[], atual: number, categoriaDe: (l: Lancamento) => string, categorias: Categoria[]): Set<number> {
+  const nomePorId = new Map(categorias.map((c) => [c.id, c.nome]))
+  const janela = Array.from({ length: MESES_DA_ANALISE }, (_, i) => atual - MESES_DA_ANALISE + i)
+  const q = qualidadeDosMeses(resumosDosMeses(lancs, janela, classificador(dividas, (l) => nomePorId.get(categoriaDe(l)) ?? ''), contas))
+  return new Set(janela.filter((_, i) => mesEntraNoFluxo(q[i])))
 }
 
 const mesesTexto = (n: number) => numeroDecimal.format(n)
@@ -216,9 +239,9 @@ function ritmoDosMesesFechados(movimentos: MovimentoMeta[], atual: number) {
   return Math.max(0, guardado / janela)
 }
 
-/** Meses fechados com entradas E saídas lançadas: a base de toda regra de fluxo (empréstimo não conta). */
-function mesesComDados(analise: Map<number, MesAnalisado>, fechados: number[]) {
-  return fechados.map((k) => analise.get(k)!).filter((m) => m.entradas > 0 && m.saidas > 0)
+/** Meses fechados que entram no fluxo: a base de toda regra de fluxo (empréstimo não conta). */
+function mesesComDados(analise: Map<number, MesAnalisado>, fechados: number[], noFluxo: Set<number>) {
+  return fechados.filter((k) => noFluxo.has(k)).map((k) => analise.get(k)!)
 }
 
 const fechadosAte = (atual: number) => Array.from({ length: MESES_NA_MEDIA }, (_, i) => atual - MESES_NA_MEDIA + i) // do mais antigo ao mais novo
@@ -227,10 +250,13 @@ const fechadosAte = (atual: number) => Array.from({ length: MESES_NA_MEDIA }, (_
  * Para a tela explicar uma lista vazia: true quando faltam meses fechados com entradas e saídas para o conselheiro opinar.
  * Usa exatamente o critério do motor (mesmos meses, empréstimo fora), para a tela e o motor nunca discordarem.
  */
-export function faltamDadosParaConselhos(e: Pick<EntradaConselheiro, 'lancs' | 'dividas' | 'hoje'>): boolean {
+export function faltamDadosParaConselhos(e: Pick<EntradaConselheiro, 'lancs' | 'dividas' | 'hoje'> & Partial<Pick<EntradaConselheiro, 'contas' | 'categorias' | 'categoriaDe'>>): boolean {
   const hoje = e.hoje ?? new Date()
-  const fechados = fechadosAte(chaveMes(hoje.getFullYear(), hoje.getMonth() + 1))
-  return mesesComDados(analisarMeses(e.lancs, e.dividas, () => '', fechados), fechados).length < MIN_MESES_COM_DADOS
+  const atual = chaveMes(hoje.getFullYear(), hoje.getMonth() + 1)
+  const fechados = fechadosAte(atual)
+  const categoriaDe = e.categoriaDe ?? (() => '')
+  const noFluxo = fechadosNoFluxo(e.lancs, e.dividas, e.contas ?? [], atual, categoriaDe, e.categorias ?? [])
+  return mesesComDados(analisarMeses(e.lancs, e.dividas, categoriaDe, fechados, e.categorias), fechados, noFluxo).length < MIN_MESES_COM_DADOS
 }
 
 /** Quantos avisos a pessoa escondeu "por este mês" (as marcas de `dispensarPorUmMes`). */
@@ -248,8 +274,8 @@ export function conselhos(e: EntradaConselheiro): Conselho[] {
   const fechados = fechadosAte(atual)
   const analise = analisarMeses(e.lancs, e.dividas, e.categoriaDe, [...fechados, atual], e.categorias)
 
-  // Meses fechados com entradas E saídas: a base de toda regra de fluxo.
-  const comDados = mesesComDados(analise, fechados)
+  // Meses fechados que entram no fluxo (a qualidade de cada mês): a base de toda regra de fluxo.
+  const comDados = mesesComDados(analise, fechados, fechadosNoFluxo(e.lancs, e.dividas, e.contas ?? [], atual, e.categoriaDe, e.categorias))
   const temFluxo = comDados.length >= MIN_MESES_COM_DADOS
   const entradasMedia = temFluxo ? centavos(soma(comDados.map((m) => m.entradas)) / comDados.length) : 0
   const saidasMedia = temFluxo ? centavos(soma(comDados.map((m) => m.saidas)) / comDados.length) : 0

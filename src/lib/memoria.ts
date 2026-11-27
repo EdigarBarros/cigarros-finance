@@ -74,6 +74,37 @@ export function normMemoria(x: unknown): MemoriaConsultor {
   }
 }
 
+/**
+ * Junta a memória deste aparelho com a que está no banco (outro aparelho pode ter gravado). Nada do que um dos dois aprendeu
+ * se perde: os passos acompanhados são a união (o mesmo passo, do mesmo dia, uma vez só, ficando o que já foi conferido), e
+ * um passo aberto nos dois aparelhos fica uma vez, o mais antigo. O objetivo é o escolhido por último.
+ * Antes, o último aparelho a gravar apagava o que o outro tinha conferido.
+ */
+export function juntarMemorias(local: MemoriaConsultor, banco: MemoriaConsultor | null): MemoriaConsultor {
+  if (!banco) return local
+  const porChave = new Map<string, Acompanhado>()
+  for (const x of [...banco.acompanhados, ...local.acompanhados]) {
+    const k = `${x.id}|${x.desde}`
+    const ja = porChave.get(k)
+    if (!ja || (!ja.resultado && x.resultado)) porChave.set(k, x)
+  }
+  const todos = [...porChave.values()].sort((a, b) => a.desde.localeCompare(b.desde))
+  const abertos = new Set<string>()
+  const acompanhados = todos.filter((x) => {
+    if (x.resultado) return true
+    if (abertos.has(x.id)) return false
+    abertos.add(x.id)
+    return true
+  })
+  const objetivoDoBanco = (banco.objetivoEm ?? '') > (local.objetivoEm ?? '')
+  return {
+    objetivo: objetivoDoBanco ? banco.objetivo : local.objetivo,
+    objetivoEm: objetivoDoBanco ? banco.objetivoEm : local.objetivoEm,
+    ...(local.firmeza ?? banco.firmeza ? { firmeza: local.firmeza ?? banco.firmeza } : {}),
+    acompanhados,
+  }
+}
+
 // ---------- como medir cada passo ----------
 
 const centavos = (n: number) => Math.round(n * 100) / 100

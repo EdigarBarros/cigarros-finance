@@ -2412,3 +2412,43 @@ ainda não foi enviado).
 **Validação.** tsc, lint (sem erro), build, `scripts/painel/testar.mjs` 56/56 e `testar-consultor-que-aprende` sem falha. A
 cena foi filmada quadro a quadro em conta vazia (1440 px escuro e claro, 390 px celular), sem erro na página e sem rolagem
 de lado. A primeira versão tinha um conflito de nome de classe (cartão × gráfico) que achatava dois cartões; corrigido.
+
+### 27/11/2026 — Claude (Claude 1 do Cairo) — Cairo, parte de dados: núcleo puro, qualidade dos meses e cenários
+
+**Contexto.** O Cairo (motor financeiro novo) é feito por dois Claudes em contas separadas. Este é o Claude 1 (dados,
+aprendizado, previsões e cenários). O contrato com o Claude 2 (decisão) e a coordenação estão em `docs/cairo/contrato.md` e
+`docs/cairo/coordenacao.md`.
+
+**O que mudou.**
+- `src/cairo/` (novo, puro: sem React, Supabase, `src/lib`, relógio nem texto): unidades (centavos inteiros, `DiaISO` sem
+  `Date`, `Taxa` com período e regime), validação na fronteira, classificação dos lançamentos, qualidade dos meses, contagem
+  única, recorrências, aprendizado individual (dia a dia por dia da semana com pico depois da entrada e detecção de mudança;
+  atraso e falta de cada renda; pontualidade de quem te deve), condições de custo separadas por tipo, gerador de cenários
+  com `reveladoEm` e `revelar`/`trocarFuturo` para a não-antecipação, previsões com faixa e a régua.
+  `tsconfig.cairo.json` (strict) e regra de lint em `.oxlintrc.json` só para `src/cairo/**`.
+- `src/lib/cairo.ts` (novo): a ponte. `analise.cairo` traz a leitura; `globalThis.__cairo` o diagnóstico sem dado financeiro.
+- `lib/mudaDeBolso.ts` agora reexporta de `src/cairo/fatos/mudaDeBolso.ts` (mesmo código).
+- `lib/analise.ts` e `lib/conselheiro.ts`: os meses das médias saem de `qualidade/meses.ts` (mês bem registrado sem renda
+  entra com zero; mês mal lançado ou sem como saber da renda sai) e a classe de cada lançamento de `fatos/movimentos.ts`
+  (devolução de "me devem" deixou de ser renda). `EntradaConselheiro.contas` (opcional) e `faltamDadosParaConselhos` recebem
+  as contas e categorias; o `Painel` passa os dois.
+- `lib/jurosAprendido.ts`: `regimeDaConferencia`; conferência com a dívida em dia não ensina a regra de atraso.
+- `lib/memoria.ts` `juntarMemorias` e `lib/useDados.ts`: a memória do consultor junta os dois aparelhos (ao carregar e ao
+  gravar) em vez de o último apagar o outro.
+
+**Problema encontrado e corrigido no caminho.** O `chaveMes` do app é `ano × 12 + mês − 1` e o do Cairo é `ano × 12 + mês`;
+a primeira versão da ponte misturou os dois e deslocava os meses. Agora o resumo de cada mês leva o `MesISO`.
+
+**Validação.** `npx tsc -b` (com a checagem estrita do núcleo), `npm run lint` (0 erros; os 67 avisos já existiam), build.
+`node scripts/cairo/testar.mjs`: pureza (o núcleo carrega no Node sem navegador) e 110 verificações em 8 personas
+sintéticas. `node scripts/painel/testar.mjs` 60/60 (4 casos novos: mês sem renda, devolução, juros em dia, memória).
+App de demonstração: `testar-cairo.cjs` (novo; leitura em 3–4 ms, sem violação, sem erro, 1440 e 390 px),
+`testar-consultor-que-aprende`, `testar-planejamento`, `testar-a-receber`, `testar-plano-travado`,
+`testar-fatura-como-divida`, `testar-contas` e `testar-correcoes` sem falha.
+Régua (`--regua`, dados sintéticos): o Cairo erra menos que a melhor referência simples em 6 de 8 personas, por 1 a 3 pontos;
+erra mais em "dividas" e logo depois de uma mudança de comportamento ("mudou"). Faixa de 80% cobriu 67–89%. Não comprova nada
+com dados reais: por isso nenhuma faixa aparece na tela.
+
+**Pendências.** Migrações 47–49 (versão por linha, eventos da pessoa, registro de previsões) reservadas em
+`docs/cairo/coordenacao.md`, não criadas. Gasto futuro no cartão não entra nos cenários. Calibração com dados reais depende do
+registro de previsões. App Android: não gerado nesta etapa (veja a resposta da sessão).

@@ -26,8 +26,8 @@ import { situacoesDoMes as situacoesDasContas } from './contasFixas'
 import { aReceberPrevisto, atrasadoHoje, aumentaDivida, calendarioDe, jurosAoAno, jurosQuePesam, meDevem, projecaoMensal, situacaoDividas, type SituacaoDivida } from './dividas'
 import { fmtDataCurta, fmtMesAno, fmtMoeda, fmtPct, fmtTaxa, fmtTaxaAno, fmtValor, LOCAL_DAS_DATAS, MESES_NOME, noMeioDaFrase } from './format'
 import { situacaoMeta } from './metas'
-import { ehGuardado } from './guardado'
-import { mudaDeBolso } from './mudaDeBolso'
+import { classeDoLancamento, contaComoFluxo, mesEntraNoFluxo, qualidadeDosMeses, type ClasseDoLancamento, type LeituraDoCairo } from '../cairo'
+import { leituraDoCairo, resumosDosMeses } from './cairo'
 import { fraseDoResultado, licaoDe, type MemoriaConsultor, type Objetivo } from './memoria'
 import { converter, totalConvertido, type Taxas } from './moedas'
 import { visao } from './perfil'
@@ -548,6 +548,8 @@ export interface Analise {
   planoDoMes: LeituraDoPlano | null
   /** Quanto dos próximos meses já sai para parcelas (para o consultor falar na hora de parcelar: lib/naHora.ts). */
   compromisso: Compromisso
+  /** A leitura do Cairo (src/cairo, contrato em docs/cairo/contrato.md); null se ele falhar. */
+  cairo: LeituraDoCairo | null
 }
 
 export interface EntradaAnalise {
@@ -1014,12 +1016,22 @@ export function analisar(e: EntradaAnalise): Analise {
     const d = l.divida_id ? dividaPorId.get(l.divida_id) : undefined
     return Boolean(d && aumentaDivida(l.tipo, d))
   }
+  // O que cada lançamento é (renda, gasto, empréstimo, devolução, transferência entre bolsos): a regra do Cairo
+  // (src/cairo/fatos/movimentos.ts), a mesma do conselheiro. Dinheiro emprestado, o que você emprestou e a devolução dele não
+  // são renda nem gasto (antes a devolução contava como renda).
+  const classes = new Map<string, ClasseDoLancamento>()
+  const sentidoDa = (id: string) => { const d = dividaPorId.get(id); return d ? d.sentido ?? 'devo' : undefined }
+  const classe = (l: Lancamento) => {
+    let c = classes.get(l.id)
+    if (!c) { c = classeDoLancamento(l, nomeCat(l), sentidoDa); classes.set(l.id, c) }
+    return c
+  }
   /** Passar dinheiro para a caixinha, a poupança, um investimento ou outra conta sua (e o resgate): não é renda nem gasto. */
   // marcada pela pessoa ("Foi guardar dinheiro?") ou reconhecida pela descrição
-  const ehDeBolso = (l: Lancamento) => ehGuardado(l) || (!l.cartao_id && !l.divida_id && mudaDeBolso(l.descricao, nomeCat(l)))
+  const ehDeBolso = (l: Lancamento) => classe(l) === 'transferencia_propria'
   const daJanela = e.lancs.filter((l) => {
     const k = chaveMes(l.ano, l.mes)
-    return k >= atual - MESES_DA_ANALISE && k <= atual && l.valor > 0 && !ehEmprestimo(l)
+    return k >= atual - MESES_DA_ANALISE && k <= atual && l.valor > 0 && (contaComoFluxo(classe(l)) || ehDeBolso(l))
   })
   const naJanela = daJanela.filter((l) => !ehDeBolso(l))
   /** Quanto foi guardado (passado para a caixinha, poupança, investimento) menos o resgatado, por mês. */
@@ -1079,17 +1091,21 @@ export function analisar(e: EntradaAnalise): Analise {
       else if (diaDe(l.data) <= diaHoje) b.ateDia += l.valor
     }
   }
+  // Que meses entram nas médias (src/cairo/qualidade/meses.ts): o mês bem registrado sem entrada, de quem costuma lançar o
+  // que recebe, é mês sem renda e conta; o mês com bem menos saídas que o costume ou sem como saber da renda fica de fora.
+  const qualidadeDosFechados = qualidadeDosMeses(resumosDosMeses(naJanela, fechados, classe, contasAtivas))
+  const entraNoFluxo = new Map(fechados.map((k, i) => [k, mesEntraNoFluxo(qualidadeDosFechados[i])]))
   const serie: MesDaSerie[] = [...fechados, atual].map((k) => {
     const b = brutos.get(k)!
     const { ano: a, mes: m } = doMesChave(k)
     return {
       ano: a, mes: m, entradas: centavos(b.entradas), saidas: centavos(b.saidas), sobra: centavos(b.entradas - b.saidas),
-      comDados: k !== atual && b.entradas > 0 && b.saidas > 0, atual: k === atual,
+      comDados: k !== atual && Boolean(entraNoFluxo.get(k)), atual: k === atual,
       porCategoria: Object.fromEntries([...b.porCategoria].map(([id, x]) => [id, centavos(x)])),
     }
   })
-  const chavesComDados = fechados.filter((k) => { const b = brutos.get(k)!; return b.entradas > 0 && b.saidas > 0 })
-  // O mesmo critério do conselheiro: os últimos 3 meses fechados, com entradas e saídas.
+  const chavesComDados = fechados.filter((k) => entraNoFluxo.get(k))
+  // O mesmo critério do conselheiro: os últimos 3 meses fechados que entram no fluxo.
   const recentes = chavesComDados.filter((k) => k >= atual - MESES_NA_MEDIA)
   const temFluxo = recentes.length >= MIN_MESES_COM_DADOS
   const rec = recentes.map((k) => brutos.get(k)!)
@@ -1450,6 +1466,10 @@ export function analisar(e: EntradaAnalise): Analise {
   let plano: Plano | null = null
   let entradaDoPlano: EntradaPlanejador | null = null
   let quadros: Analise['quadros'] = null
+  // para o Cairo (lib/cairo.ts): a agenda e o saldo que ela usa
+  let eventosDaAgenda: Evento[] = []
+  let fimDoHorizonte = hojeIso
+  let saldoDaAgenda: { valor: number; mes: string } | null = null
   {
     const prox = doMesChave(atual + 1)
     const fimJanela = isoDoDia(prox.ano, prox.mes, 31)
@@ -1529,10 +1549,14 @@ export function analisar(e: EntradaAnalise): Analise {
     const unicos = eventos.filter((ev) => ev.origem !== 'conta' || ev.tipo !== 'saida'
       || !eventos.some((o) => o.origem === 'parcela' && mesmoCompromisso(vencimentoDe(ev), vencimentoDe(o))))
     unicos.sort((a, b) => a.data.localeCompare(b.data) || (a.tipo === b.tipo ? b.valor - a.valor : a.tipo === 'entrada' ? -1 : 1))
+    eventosDaAgenda = unicos
+    fimDoHorizonte = fimJanela
 
     // saldo dia a dia: com o saldo da conta corrente, conta também o gasto do dia a dia entre um dia e outro
     const ccInformado = v.bancos && Object.values(ef.caixa).some((b) => typeof b?.cc === 'number')
     const saldoInicial = ccInformado ? centavos(soma(Object.values(ef.caixa).map((b) => b?.cc ?? 0))) : null
+    // o saldo é "do mês": o próprio, ou o último informado antes dele (herdado)
+    if (saldoInicial !== null) saldoDaAgenda = { valor: saldoInicial, mes: ef.herdadoDe ? `${ef.herdadoDe[0]}-${String(ef.herdadoDe[1]).padStart(2, '0')}` : `${ano}-${String(mes).padStart(2, '0')}` }
     const ritmoDia = saldoInicial !== null && rec.length
       ? centavos(media(recentes.map((k) => soma(naJanela.filter((l) => chaveMes(l.ano, l.mes) === k && ehDiaADia(l)).map((l) => l.valor)))) / 30.4)
       : 0
@@ -2379,7 +2403,16 @@ export function analisar(e: EntradaAnalise): Analise {
       .map((x) => ({ titulo: x.titulo, ...doMesChave(x.avaliar) })),
   }
 
+  // Cairo, parte de dados (src/cairo): fatos com qualidade, o que aprendeu da pessoa, condições de custo, previsões com faixa e
+  // cenários. Por enquanto ninguém na tela lê: fica pronto para a parte de decisão. Se ele falhar, a análise segue sem ele.
+  const cairo = leituraDoCairo({
+    hojeIso, moeda: e.perfil.moeda, fimDoHorizonte, lancs: e.lancs, categorias: e.categorias, categoriaDe: e.categoriaDe,
+    contas: contasAtivas, dividas: e.dividas, saldos: e.saldos, pagamentos: e.pagamentos, conferencias: e.conferencias ?? [],
+    faturasPagas: e.faturasPagas, taxas: e.taxas, saldoContaCorrente: saldoDaAgenda, eventos: eventosDaAgenda, comDividas: v.dividas,
+  })
+
   return {
+    cairo,
     hoje: { ano, mes }, temFluxo, mesesAnalisados: chavesComDados.length, nota, rotulo: nota === null ? tx('Sem nota ainda') : rotuloDaNota(nota),
     tom: nota === null ? 'medio' : tomDa(nota), resumo, fase, fases, porqueFase, proximoPasso, pilares,
     renda, gastos, sobra, sobraFracao, guardando, sobraAlvo, rendaVaria, variacaoRenda, principalFonte, tendenciaGastos, tendenciaRenda,
