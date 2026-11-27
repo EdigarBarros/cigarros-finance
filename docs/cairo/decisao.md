@@ -3,7 +3,22 @@
 Custos, planejamento de pagamentos e consequências. Consome a parte de dados (Claude 1) pelo contrato
 ([`contrato.md`](contrato.md)); quem faz o quê e os pedidos estão em [`coordenacao.md`](coordenacao.md).
 
-Estado: **etapa 1 publicada** (27/11/2026). O que está abaixo como "ativo" muda o que a pessoa vê no Consultor.
+Estado: **etapa 2 publicada** (27/11/2026). O que está abaixo como "ativo" muda o que a pessoa vê no Consultor.
+
+## 0. Etapa 2: o que mudou
+
+- **Empréstimos e devoluções ficam no caixa, fora de renda e consumo.** O dinheiro emprestado que vai cair (entrada ligada a
+  dívida sua) e o que a pessoa vai emprestar (saída ligada a "me devem") voltaram para a agenda e para o planejador: antes, a
+  agenda os tirava e o plano não via esse dinheiro. Eles não vão ao Cairo pelos eventos da agenda (lá toda entrada vira
+  `natureza: 'renda'`): pedido 8. Emprestar a alguém não tem multa nem juros se esperar (`semCusto`). A devolução marcada de
+  quem te deve já estava na agenda e continua. Nas médias, nada disso é renda nem gasto (regra do Cairo, `classeDoLancamento`).
+- No formato do Cairo: `entraNoCaixa` (toda entrada menos transferência entre bolsos) e `entradaDoObservado` contam crédito
+  contratado e não contam o "me devem" esperado; a devolução entra no caixa quando cai.
+- **Sem promessa além do que os dados permitem.** Quem usa cartão: as compras que ainda vai fazer nele não estão no plano nem
+  nos cenários, então "parcela nova cabe" e "dá para quitar/adiantar" viram **condicionais**, com a premissa dita ("Pelo que já
+  está marcado…", "não contei as compras que você ainda vai fazer no cartão"). O essencial do dia a dia diz que é estimado
+  pelas categorias. Nenhum texto fala em "chance" nem em "seguro".
+- **Redução real de gastos** testada sobre a classificação de meses do Cairo (seção 4).
 
 ## 1. O que está ativo no app
 
@@ -51,9 +66,17 @@ etapa, devolvendo `Motivo` em vez de frase. Fica registrado em `coordenacao.md`.
   que não venceu, estados, oferta velha, antecipação desconhecida), TIR por datas, condições do Cairo, cenários só do
   aprendizado, análise inteira com dívida atrasada (antes, o desconto saía pelo juro do atraso), planejador (essencial,
   prioridade da pessoa, reserva do dia a dia, pós-horizonte, falta mínima, "e se"), parcela nova, não-antecipação.
-- `node scripts/cairo/integracao/testar.mjs` (4 casos, sobre as personas do Claude 1): condições → quitação, "e se" só para a
-  persona cuja renda atrasa, **não-antecipação com `trocarFuturo`** (36 pares de mundos, cortes em 3, 10 e 20 dias), e em
-  nenhum dos 40 mundos executados o plano manda pagar sem dinheiro.
+- `node scripts/cairo/integracao/testar.mjs` (9 casos, sobre as personas do Claude 1): condições → quitação, "e se" só para a
+  persona cuja renda atrasa, **não-antecipação com `trocarFuturo`** (36 pares de mundos, cortes em 3, 10 e 20 dias), em
+  nenhum dos 40 mundos executados o plano manda pagar sem dinheiro, devolução e crédito no caixa (e transferência entre bolsos
+  fora), e **redução de gastos**:
+  - mesmas 40 compras, mais baratas: os meses contam e o gasto médio cai para o de agora (R$ 1.200);
+  - metade das compras (40 → 20): idem;
+  - **corte forte e real (40 → 10 compras por mês, 3 meses, com o salário lançado): limitação conhecida.** Os três meses viram
+    "parcial" (menos de 35% das saídas do mês típico), saem das médias, e o Consultor fica **sem fluxo**: sem nota, sem gasto
+    médio e sem nenhum passo no plano, justamente para quem acabou de cortar. O caso está escrito com o comportamento certo e
+    aparece como "⚠ limitação conhecida" até a regra mudar (pedido 7);
+  - um mês mal lançado no meio de meses normais continua fora (o que a regra existe para pegar).
 - `node scripts/decisoes/testar.mjs avaliar`: 500 mundos sintéticos (semente 11), executados dia a dia vendo só o que se sabe
   em cada dia. Política antiga (ordem pelo custo do atraso) × nova:
 
@@ -87,5 +110,7 @@ que a recomendação causou a melhora.
 - **Regra de antecipação** sempre desconhecida: o desconto pelo contrato é o que dá para pedir, nunca garantido.
 - **Taxa dos fluxos sem a data do recebimento**: convenção de 1 mês antes da 1ª parcela, dita na premissa.
 - O "e se" e a parcela nova olham só até o fim do mês que vem (o horizonte dos cenários).
+- **Compras futuras no cartão** não estão no plano nem nos cenários; **essencial × conforto** no dia a dia é estimado pelas
+  categorias; as faixas e os "e se" **não foram calibrados com dados reais**. Por isso o que depende da sobra é condicional.
 - **Registro das decisões** para avaliar depois (qual foi a sugestão, com que dados, o que aconteceu): depende da migração 49
   do Claude 1. Até lá, a memória do consultor (`lib/memoria.ts`) segue conferindo os passos como antes, sem afirmar causa.

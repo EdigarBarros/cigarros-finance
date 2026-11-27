@@ -76,7 +76,8 @@ export function avaliarParcelaNova(e: EntradaPlanejador, novas: ParcelaNova[]): 
   } else {
     premissas.push(tx('Sem o saldo de hoje informado, o app não confere se o dinheiro do dia a dia aguenta: contei só o que vai entrar.'))
   }
-  if (e.essencialDia) premissas.push(tx('Já deixei separado o essencial do dia a dia (mercado, farmácia, transporte) até cada entrada.'))
+  if (e.essencialDia) premissas.push(tx('Já deixei separado o essencial do dia a dia (mercado, farmácia, transporte, estimado pelas categorias dos seus gastos) até cada entrada.'))
+  if (e.semComprasFuturasDoCartao) premissas.push(tx('Não contei as compras que você ainda vai fazer no cartão: se a fatura vier maior, cabe menos.'))
   if (reserva > 0) premissas.push(tx('E o essencial até o primeiro dinheiro depois do fim do plano.'))
   if (dentro.length < novas.length) premissas.push(tx('O plano vai só até o fim do mês que vem: as parcelas depois disso não entram nesta conta.'))
 
@@ -86,6 +87,7 @@ export function avaliarParcelaNova(e: EntradaPlanejador, novas: ParcelaNova[]): 
     essenciaisAtrasadas: [...new Set(novasAtr.filter((p) => p.essencial).map((p) => p.descricao))],
     custoExtra: centavos(Math.max(0, r.custoTotal - base.custoTotal)),
     faltaDepois, cabePorMes,
-    estado: comSaldo ? 'recomenda' : 'faltam-dados', premissas,
+    // "cabe" nunca é garantido: sem o saldo, falta dado; sem as compras futuras do cartão, depende delas
+    estado: !comSaldo ? 'faltam-dados' : e.semComprasFuturasDoCartao ? 'condicional' : 'recomenda', premissas,
   }
 }

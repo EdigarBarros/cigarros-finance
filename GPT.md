@@ -2488,3 +2488,24 @@ prioridade da pessoa, registro das decisões, ligação fonte ↔ agenda). Sem m
 `versao.json` = `2af0c9695987`. **App Android: não gerado.** Este ambiente não tem o Android SDK e a rede bloqueia
 `dl.google.com`. A próxima versão do app (depois da 2.9.7, código 35) precisa levar o #322 (Cairo, dados) e o #323 (decisão).
 
+### 27/11/2026 — Claude (Claude 2 do Cairo) — Decisões, etapa 2: empréstimos no caixa, redução de gastos, textos condicionais
+
+**Pedido do dono.** Partir da produção com o #322 (Claude 1), preservar `analise.cairo`, conferir que devoluções e empréstimos
+ficam no fluxo de caixa sem compor renda nem consumo, testar redução verdadeira de gastos na classificação de meses e não
+apresentar nada como seguro ou probabilidade como comprovada.
+
+**Problema encontrado e corrigido.** `lib/analise.ts` tirava da agenda os lançamentos futuros de empréstimo (desde o #271):
+o dinheiro emprestado que ia cair e o que a pessoa ia emprestar não entravam no caixa do planejador. Agora entram (só no caixa,
+fora dos eventos que vão ao Cairo); emprestar a alguém não tem custo de esperar (`semCusto`). Nas médias continuam fora.
+
+**Achado registrado para o Claude 1 (pedido 7 em `docs/cairo/coordenacao.md`).** Corte forte e real de gastos (40 → 10
+compras por mês, 3 meses, salário lançado) vira "parcial": os meses saem das médias e o Consultor fica sem nota e sem plano.
+Caso escrito em `scripts/cairo/integracao/casos.ts` como limitação conhecida (não falha o teste; avisa quando for resolvida).
+
+**Textos.** Para quem usa cartão, "parcela nova cabe" e "dá para quitar/adiantar" ficaram condicionais, com a premissa de
+que as compras futuras no cartão não estão no plano; o essencial do dia a dia diz que é estimado pelas categorias.
+
+**Validação.** `scripts/decisoes/testar.mjs` 23/23, `scripts/cairo/integracao/testar.mjs` 8/9 + 1 limitação conhecida,
+`scripts/painel/testar.mjs` 60/60, `scripts/cairo/testar.mjs` 110/110; tsc, lint, build e o app de demonstração (veja a
+resposta da sessão). Sem migração. Nenhum arquivo de `src/cairo/` foi alterado.
+

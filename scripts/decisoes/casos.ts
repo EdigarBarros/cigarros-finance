@@ -11,7 +11,7 @@ import { taxaDosFluxos } from '../../src/lib/decisoes/taxaImplicita'
 import { avaliarParcelaNova } from '../../src/lib/decisoes/parcelaNova'
 import { decisaoDe } from '../../src/lib/decisoes/decisao'
 import { aplicarCenario, custoDoAtraso, faltaMinimaDe, planejar, simularPagamentos, type EntradaPlanejador } from '../../src/lib/planejador'
-import type { Divida, Perfil, SaldoDivida } from '../../src/lib/types'
+import type { ContaFixa, Divida, Lancamento, Perfil, SaldoDivida } from '../../src/lib/types'
 import { avaliar, executar, cenarioDeExemplo, visaoNoDia } from './avaliacao'
 
 class Falha extends Error {}
@@ -37,9 +37,16 @@ const PERFIL: Perfil = {
   modulos: { dividas: true, contas: true, cartoes: true, bancos: true, investimentos: false, moedas: false, metas: true },
   dispensadas: [], onboarding_em: '2026-01-01T00:00:00Z',
 }
-const entradaAnalise = (dividas: Divida[], saldos: SaldoDivida[]): EntradaAnalise => ({
+const entradaAnalise = (dividas: Divida[], saldos: SaldoDivida[], mais: Partial<EntradaAnalise> = {}): EntradaAnalise => ({
   hoje: new Date(2026, 10, 27), lancs: [], compras: [], cartoes: [], faturasPagas: [], contas: [], categorias: [], categoriaDe: () => '',
-  dividas, saldos, pagamentos: [], taxas: {}, meses: [], metas: [], movimentosMeta: [], perfil: PERFIL,
+  dividas, saldos, pagamentos: [], taxas: {}, meses: [], metas: [], movimentosMeta: [], perfil: PERFIL, ...mais,
+})
+let seq = 0
+const lanc = (data: string, tipo: 'entrada' | 'saida', valor: number, mais: Partial<Lancamento> = {}): Lancamento => ({
+  id: `l${++seq}`, ano: +data.slice(0, 4), mes: +data.slice(5, 7), tipo, descricao: `${tipo} ${seq}`, valor, data, ...mais,
+})
+const contaFixa = (descricao: string, tipo: 'entrada' | 'saida', valor: number, dia: number, inicio = '2026-01-01'): ContaFixa => ({
+  id: `c${++seq}`, tipo, descricao, valor, categoria_id: null, banco_id: null, dia, inicio, fim: null, ativa: true,
 })
 
 /** Planejador de base: começa em 1º de novembro, vai até 31 de dezembro. */
@@ -209,6 +216,42 @@ export const CASOS: Caso[] = [
     },
   },
 
+  // ==================== empréstimos e devoluções: no caixa, fora de renda e consumo ====================
+  {
+    nome: 'caixa: o empréstimo que vai cair paga o aluguel, sem virar renda nem ir ao Cairo como renda',
+    rodar() {
+      // dívida com o banco; o dinheiro emprestado (2.000) cai em 01/12 e o aluguel (1.500, desde dezembro) vence em 03/12
+      const banco = divida({ id: 'bco', descricao: 'Empréstimo do banco', valor_parcela: null, juros_mes: 3 })
+      const pegou = lanc('2026-12-01', 'entrada', 2000, { descricao: 'Crédito do banco', divida_id: 'bco' })
+      const a = analisar(entradaAnalise([banco], [{ id: 's', divida_id: 'bco', data: '2026-11-01', saldo: 3000 }], {
+        lancs: [pegou], contas: [contaFixa('Aluguel', 'saida', 1500, 3, '2026-12-01')],
+      }))
+      const e = a.entradaDoPlano!
+      certo('o planejador conta com os 2.000 em 01/12', e.entradas.some((x) => x.data === '2026-12-01' && x.valor === 2000))
+      igual('o aluguel de dezembro é pago no dia, com ele', a.plano!.pagamentos.find((x) => x.descricao === 'Aluguel' && x.vence === '2026-12-03')?.pagarEm, '2026-12-03')
+      igual('não é renda', a.renda, 0)
+      certo('não vai ao Cairo como renda', !a.cairo!.cenarios.esperados.some((f) => f.natureza === 'renda' && f.valor.centavos === 200000))
+      // sem o empréstimo, o aluguel de dezembro ficaria sem dinheiro: o caixa dependia dele
+      const sem = analisar(entradaAnalise([banco], [{ id: 's', divida_id: 'bco', data: '2026-11-01', saldo: 3000 }], { contas: [contaFixa('Aluguel', 'saida', 1500, 3, '2026-12-01')] }))
+      certo('sem ele, falta dinheiro', sem.plano!.semDinheiro.some((x) => x.descricao === 'Aluguel'))
+    },
+  },
+  {
+    nome: 'caixa: emprestar a alguém sai do caixa, sem multa se esperar, e a devolução entra',
+    rodar() {
+      const joao = divida({ id: 'jo', descricao: 'Empréstimo ao João', sentido: 'me_devem', valor_parcela: null })
+      const empresta = lanc('2026-12-02', 'saida', 500, { descricao: 'Pix para o João', divida_id: 'jo' })
+      const devolve = lanc('2026-12-10', 'entrada', 300, { descricao: 'João devolve', divida_id: 'jo' })
+      const a = analisar(entradaAnalise([joao], [{ id: 's', divida_id: 'jo', data: '2026-11-01', saldo: 800 }], { lancs: [empresta, devolve] }))
+      const c = a.entradaDoPlano!.compromissos.find((x) => x.descricao === 'Pix para o João')!
+      certo('emprestar é saída do caixa, sem custo de esperar', c && c.semCusto)
+      certo('a devolução marcada é entrada do caixa', a.entradaDoPlano!.entradas.some((x) => x.data === '2026-12-10' && x.valor === 300))
+      const p = a.plano!.pagamentos.find((x) => x.descricao === 'Pix para o João') ?? a.plano!.semDinheiro.find((x) => x.descricao === 'Pix para o João')!
+      igual('esperar para emprestar não tem multa nem juros', p.custo, 0)
+      igual('nada disso é gasto nem renda', [a.renda, a.gastos], [0, 0])
+    },
+  },
+
   // ==================== planejador ====================
   {
     nome: 'planejador: a conta essencial vai antes, e diz quanto isso custa',
@@ -283,6 +326,9 @@ export const CASOS: Caso[] = [
       certo('sem reserva: adianta os 1.000', solto.titulo.includes('1.000'))
       const comReserva = planejar({ ...base, depoisDoFim: { ate: '2027-01-05', valor: 400 } }).dicas.find((x) => x.id === 'adiantar-aberta:Agiota')!
       certo('com reserva: adianta 600', comReserva.titulo.includes('600'))
+      const comCartao = planejar({ ...base, semComprasFuturasDoCartao: true }).dicas.find((x) => x.id === 'adiantar-aberta:Agiota')!
+      igual('quem usa cartão: adiantar é condicional', comCartao.estado, 'condicional')
+      certo('porque as compras futuras do cartão não estão no plano', comCartao.premissas!.some((x) => x.includes('cartão')))
       certo('e diz por quê', comReserva.premissas!.some((x) => x.includes('400')))
     },
   },
@@ -364,6 +410,11 @@ export const CASOS: Caso[] = [
       perto('cabe até 250 por mês', ok.cabePorMes, 250, 1.01)
       const semSaldo = avaliarParcelaNova({ ...e, saldoInicial: null }, [{ data: '2026-11-10', valor: 100 }, { data: '2026-12-10', valor: 100 }])!
       igual('sem saldo, faltam dados', [semSaldo.estado, semSaldo.cabePorMes], ['faltam-dados', null])
+      igual('com saldo e sem cartão, recomenda', ok.estado, 'recomenda')
+      // quem usa cartão: as compras que ainda vai fazer não estão no plano, então "cabe" depende delas
+      const comCartao = avaliarParcelaNova({ ...e, semComprasFuturasDoCartao: true }, [{ data: '2026-11-10', valor: 100 }, { data: '2026-12-10', valor: 100 }])!
+      igual('com cartão, condicional', comCartao.estado, 'condicional')
+      certo('e diz o porquê', comCartao.premissas.some((x) => x.includes('compras que você ainda vai fazer no cartão')))
     },
   },
 

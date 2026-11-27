@@ -62,9 +62,11 @@ export function naHoraDeParcelar(a: Analise, novas: { ano: number; mes: number; 
     } else if (cal.novasAtrasadas.length) {
       partes.push(tx('Pelo seu calendário até {0}, a fatura com esta parcela não teria dinheiro no vencimento.', fmtDataCurta(fim)))
     } else if (cal.faltaDepois >= 1) {
-      partes.push(tx('Pelo seu calendário, cabe até {0}, mas tira {1} do que precisa sobrar para o essencial depois disso.', fmtDataCurta(fim), fmtValor(cal.faltaDepois)))
+      partes.push(tx('Pelo que já está marcado, nada atrasa até {0}, mas a compra tira {1} do que precisa sobrar para o essencial depois disso.', fmtDataCurta(fim), fmtValor(cal.faltaDepois)))
     } else if (cal.cabePorMes !== null) {
-      partes.push(tx('Pelo seu calendário até {0}, cabe sem atrasar nenhuma conta (caberia até {1} por mês).', fmtDataCurta(fim), fmtValor(cal.cabePorMes)))
+      partes.push(a.entradaDoPlano?.semComprasFuturasDoCartao
+        ? tx('Pelo que já está marcado até {0}, nenhuma conta atrasa com esta compra (caberia até {1} por mês). Isso não conta as compras que você ainda vai fazer no cartão.', fmtDataCurta(fim), fmtValor(cal.cabePorMes))
+        : tx('Pelo que já está marcado até {0}, nenhuma conta atrasa com esta compra (caberia até {1} por mês).', fmtDataCurta(fim), fmtValor(cal.cabePorMes)))
     }
   }
   if (!partes.length) return null
