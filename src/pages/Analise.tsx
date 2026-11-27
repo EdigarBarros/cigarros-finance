@@ -12,6 +12,7 @@ import { useEmVista } from './analiseApoio'
 import { Agora, JeitoDeFalar, Objetivo, ProximoPasso, SeuPerfil } from './AnaliseTopo'
 import { Faixas, Manchete, useTelaViva } from './AnaliseTela'
 import { CartaoDoPlanejamento, Planejamento } from '../components/Planejamento'
+import { DecisaoExplicada } from '../components/DecisaoExplicada'
 import type { Ctx } from './contexto'
 import { tx } from '../lib/textos'
 import './analise.css'
@@ -150,7 +151,7 @@ export function PlanoDeAcao({ a, aoIr }: { a: DadosAnalise; aoIr: Ctx['irPara'] 
                         <button className="an-plano-texto" onClick={() => setAberto(aberto === x.id ? null : x.id)} aria-expanded={aberto === x.id}>
                           <strong>{x.titulo}</strong>
                           {x.impacto && <small className="an-plano-ganho">{x.impacto}</small>}
-                          {aberto === x.id && <span className="an-plano-porque">{x.porque}</span>}
+                          {aberto === x.id && <span className="an-plano-porque">{x.porque}<DecisaoExplicada d={x.decisao} /></span>}
                         </button>
                         <button className="an-plano-ir" onClick={() => aoIr(x.destino)}>
                           <span>{x.botao}</span> <Icone nome="seta" tamanho={14} />

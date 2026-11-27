@@ -6,7 +6,9 @@
  * O fato vem sempre; o "chamado" no fim segue a firmeza que a pessoa escolheu (gentil, direto ou sem filtro).
  */
 import type { Analise } from './analise'
-import { fmtValor, MESES_NOME } from './format'
+import { avaliarParcelaNova } from './decisoes/parcelaNova'
+import { somaMesesData } from './dividas'
+import { fmtDataCurta, fmtValor, MESES_NOME } from './format'
 import { chamar, emDiasDeRenda } from './sinais'
 import { tx } from './textos'
 
@@ -25,8 +27,11 @@ const nomeMes = (mes: number) => MESES_NOME[mes - 1].toLowerCase()
  * Uma compra parcelada no cartão (as parcelas que vão ser gravadas) ou uma dívida nova com parcela: quantas parcelas vão
  * estar correndo e quanto do que entra no mês mais pesado já sai para elas, com esta.
  */
-export function naHoraDeParcelar(a: Analise, novas: { ano: number; mes: number; valor: number }[]): FalaNaHora | null {
+export function naHoraDeParcelar(a: Analise, novas: { ano: number; mes: number; valor: number; data?: string }[]): FalaNaHora | null {
   if (novas.length < 2 && !a.compromisso.atrasadas.length) return null
+  // além do peso na renda, o calendário: com as parcelas nas datas delas, alguma conta passa a atrasar até o fim do mês que vem?
+  const comData = novas.filter((p): p is typeof p & { data: string } => Boolean(p.data))
+  const cal = a.entradaDoPlano && comData.length >= 2 ? avaliarParcelaNova(a.entradaDoPlano, comData.map((p) => ({ data: p.data, valor: p.valor }))) : null
   const f = a.firmeza
   const porMes = new Map(a.compromisso.meses.map((m) => [chave(m.ano, m.mes), m.valor]))
   for (const p of novas) {
@@ -46,12 +51,28 @@ export function naHoraDeParcelar(a: Analise, novas: { ano: number; mes: number; 
   if (pct !== null && pior && pior.valor > 0) partes.push(tx('Em {0}, {1}% do que entra já sai para parcelas ({2}).', nomeMes(pior.mes), pct, fmtValor(pior.valor)))
   const atrasada = a.compromisso.atrasadas[0]
   if (atrasada) partes.push(tx('Atenção: "{0}" está em atraso ({1}).', atrasada.descricao, fmtValor(atrasada.valor)))
+  const fim = a.entradaDoPlano?.fim
+  const quebra = Boolean(cal && (cal.novasAtrasadas.length || cal.faltaDepois >= 1))
+  if (cal && fim) {
+    const outras = cal.novasAtrasadas.filter((x) => x !== tx('Compra nova'))
+    if (outras.length) {
+      partes.push(outras.length === 1
+        ? tx('Pelo seu calendário até {0}, com esta compra {1} atrasa.', fmtDataCurta(fim), outras[0])
+        : tx('Pelo seu calendário até {0}, com esta compra {1} atrasam.', fmtDataCurta(fim), outras.slice(0, 2).join(', ')))
+    } else if (cal.novasAtrasadas.length) {
+      partes.push(tx('Pelo seu calendário até {0}, a fatura com esta parcela não teria dinheiro no vencimento.', fmtDataCurta(fim)))
+    } else if (cal.faltaDepois >= 1) {
+      partes.push(tx('Pelo seu calendário, cabe até {0}, mas tira {1} do que precisa sobrar para o essencial depois disso.', fmtDataCurta(fim), fmtValor(cal.faltaDepois)))
+    } else if (cal.cabePorMes !== null) {
+      partes.push(tx('Pelo seu calendário até {0}, cabe sem atrasar nenhuma conta (caberia até {1} por mês).', fmtDataCurta(fim), fmtValor(cal.cabePorMes)))
+    }
+  }
   if (!partes.length) return null
-  const pesado = (pct ?? 0) >= 30 || Boolean(atrasada)
+  const pesado = (pct ?? 0) >= 30 || Boolean(atrasada) || quebra
   if (pesado) {
     partes.push(chamar(f, tx('Se der para esperar, espere.'), tx('Pense duas vezes: isso sai de um dinheiro que ainda nem chegou.'), tx('Sério que vai parcelar mais? Segura essa.')))
   }
-  return { tom: atrasada || (pct ?? 0) >= 50 ? 'ruim' : pesado ? 'medio' : 'bom', texto: partes.join(' ') }
+  return { tom: atrasada || (pct ?? 0) >= 50 || Boolean(cal?.novasAtrasadas.length) ? 'ruim' : pesado ? 'medio' : 'bom', texto: partes.join(' ') }
 }
 
 /** Uma dívida nova (empréstimo, acordo, crédito de loja): o que já está aberto e o peso nos próximos meses. */
@@ -59,7 +80,7 @@ export function naHoraDaDividaNova(a: Analise, parcela: number | null, parcelas:
   const novas = parcela && parcelas && parcelas > 1 && primeira
     ? Array.from({ length: Math.min(parcelas, 6) }, (_, i) => {
       const k = chave(Number(primeira.slice(0, 4)), Number(primeira.slice(5, 7))) + i
-      return { ano: Math.floor(k / 12), mes: (k % 12) + 1, valor: parcela }
+      return { ano: Math.floor(k / 12), mes: (k % 12) + 1, valor: parcela, data: somaMesesData(primeira, i) }
     })
     : []
   const total = a.dividas?.total ?? 0

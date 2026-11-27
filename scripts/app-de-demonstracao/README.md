@@ -62,6 +62,10 @@ e a conta paga fica como "paga", travada (computador e celular).
 `node scripts/app-de-demonstracao/testar-cairo.cjs`: o núcleo novo (`src/cairo`) roda dentro da análise sem erro, em quanto
 tempo e sem violar a contagem única (pelo diagnóstico `globalThis.__cairo`, sem dado financeiro), no computador e no celular.
 
+`node scripts/app-de-demonstracao/testar-decisoes.cjs`: no plano de ação do Consultor, o passo que depende de algo mostra, ao
+abrir o "por quê", o selo, as premissas e as alternativas; nenhuma economia de R$ 0,00 prometida; sem rolagem de lado no
+celular com o porquê aberto; temas escuro e claro, sem erro na página. Com `FOTOS=pasta`, salva capturas.
+
 ## Várias contas no mesmo aparelho
 
 Depois do build com Supabase fictício: `node scripts/app-de-demonstracao/testar-contas.cjs` (limpeza de sessões antigas, troca com

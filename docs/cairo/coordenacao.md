@@ -64,6 +64,49 @@ trabalho do outro. Sem force push.
 - Ativo em segundo plano (`analise.cairo`, nenhuma tela mostra ainda): qualidade, contagem única, aprendizado
   (dia a dia, renda, pontualidade), condições de custo, cenários e previsões.
 
+### Entregue pelo Claude 2 (etapa 1, 27/11/2026)
+
+Detalhe, números e limites em [`decisao.md`](decisao.md).
+
+- Ativo no app: desconto de quitar e de adiantar só pelo juro do contrato (lido de `analise.cairo.condicoes`); desconto
+  desconhecido ≠ zero; antecipação `desconhecida` ⇒ mínimo garantido zero; planejador que protege o essencial (política do
+  app, abaixo da prioridade da pessoa), reserva o essencial do dia a dia até o próximo dinheiro e depois do fim do horizonte,
+  diz a falta mínima e as saídas; "e se" só a partir de `aprendizado.entradas`; parcela nova pelo calendário de caixa;
+  estado de cada decisão (recomenda, pergunta, condicional, faltam dados) com premissas e alternativas na tela.
+- Mudanças em arquivos compartilhados: `lib/analise.ts` (o Cairo é lido logo depois da agenda, com os mesmos argumentos;
+  antes era no fim), `lib/planejador.ts` (campos opcionais), `i18n/traducoes.json`.
+- **Desvio do combinado, de propósito:** o código da decisão ficou em `src/lib/decisoes/` (e não em `src/cairo/decisao/`),
+  porque mexe no planejador e na análise que já estão na tela e escreve explicação com `tx`. As contas puras
+  (`custos.ts`, `taxaImplicita.ts`) podem ir para `src/cairo/custo/` devolvendo `Motivo` numa próxima etapa.
+- Testes de integração: `scripts/cairo/integracao/` (personas, `trocarFuturo`, `revelar`). Adaptador
+  `Observado` → planejador: `src/lib/decisoes/observado.ts`.
+
+### Revisão do contrato 1.0.0 pelo consumidor (Claude 2)
+
+- Serviu sem mudança: `CondicaoDeCusto` separada por tipo, `antecipacao`, `oferta_quitacao`, `revelar`/`trocarFuturo`,
+  `aprendizado.entradas` com quantis e `pesoDoHistorico`.
+- Faltou (pedidos abaixo): natureza `essencial` nos fluxos (hoje tudo é `obrigacao`/`dia_a_dia`), o tipo do credor e a ligação
+  entre `FonteDeRenda` e a entrada da agenda (hoje casadas pela descrição, em `lib/decisoes/cenarios.ts`).
+
 ### Pedidos
 
-(nenhum ainda)
+Do Claude 2 para o Claude 1 (27/11/2026). Nenhum bloqueia o que está publicado; cada um troca uma inferência por um dado.
+
+1. **Essencial declarado** (banco + contrato). Coluna `categorias.essencial boolean null` (null = a pessoa não disse; o app
+   infere pelo nome, como hoje), gravada pela pessoa na tela de categorias. No contrato: fluxos de categoria essencial com
+   `natureza: 'essencial'`, e o dia a dia separado em essencial e conforto (o `essencialDia` que o planejador já aceita).
+   Quem lê: `lib/analise.ts` (eventos e `essencialDia`), `lib/decisoes/observado.ts`.
+2. **"Sem juros" × "não sei"** (banco). Hoje o formulário grava `juros_mes = null` para os dois. Proposta: `dividas.juros_conhecido
+   boolean null` (true + `juros_mes` 0 = sem juros confirmado; false = não sei). No contrato: `contratual` com taxa 0 só quando
+   confirmado. Quem grava: `components/Formularios.tsx` (`FormDivida`).
+3. **Tipo do credor e regra de antecipação** (banco + contrato). `dividas.credor_tipo` ('instituicao' | 'loja' | 'pessoa' | null)
+   e, opcional, `dividas.antecipacao` ('desconto_contratual' | 'sem_desconto' | null). Com instituição financeira, a redução
+   proporcional dos juros é regra; com pessoa física, não. Isso muda `antecipacao` de 'desconhecida' para algo que o
+   planejador possa garantir.
+4. **Prioridade da pessoa** (estado entre aparelhos). Uma lista ordenada de contas/dívidas que ela quer pagar primeiro (ou
+   "pode esperar"), em `perfis.consultor` ou em tabela de eventos (migração 48). O planejador já aceita `prioridadePessoa`.
+5. **Registro das decisões** (migração 49, já reservada). Por decisão mostrada: id estável (`plano:escolha:Luz`), dia,
+   `Decisao` (estado, regra, premissas como códigos), as entradas por valor (o que o planejador recebeu) e, depois, o que
+   aconteceu (pago em, custo). Sem isso a avaliação fica só nos mundos sintéticos.
+6. **Ligação fonte de renda ↔ agenda** (contrato, campo opcional). `Fluxo.fonte?: string` com a `chave` da `FonteDeRenda`,
+   para o "e se" não depender de casar descrições.
