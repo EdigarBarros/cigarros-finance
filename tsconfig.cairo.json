@@ -1,0 +1,22 @@
+{
+  "//": "O núcleo do Cairo (src/cairo) com checagem estrita e sem DOM nem tipos do Vite: o que passar aqui roda no Node, no Deno e no navegador.",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.cairo.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023"],
+    "types": [],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["src/cairo"]
+}

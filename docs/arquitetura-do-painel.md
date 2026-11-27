@@ -277,7 +277,7 @@ aviso até o mês que vem (`Ctx.dispensarConselho`, a mesma regra do "x" do bal�
 urgentes vêm primeiro (o motor já ordena); no computador os cartões ficam em 2 colunas, no celular em 1, com o botão em largura
 cheia. No jeito **simples** aparecem os 2 primeiros e "Ver todos" abre o resto; no equilibrado e no detalhado, todos. Sem
 conselhos: com dados, "Tudo em ordem por aqui." (e, se a pessoa escondeu avisos neste mês, o lembrete de que voltam no mês que
-vem); sem dados (menos de 2 meses fechados com entradas e saídas, `faltamDadosParaConselhos` em `lib/conselheiro.ts`, com o mesmo critério do motor), a frase
+vem); sem dados (menos de 2 meses fechados que entram no fluxo, `faltamDadosParaConselhos` em `lib/conselheiro.ts`, com o mesmo critério do motor), a frase
 que explica o que lançar. Conta nova não vê o bloco. O rodapé diz, em palavras simples, que são orientações gerais calculadas
 com o que foi lançado, e não recomendação de investimento.
 No canto do cabeçalho do bloco, o selo com a **nota do consultor** (ex.: "66 Razoável", na cor do tom) leva à aba Consultor (4.7).
@@ -621,7 +621,7 @@ cartão estreito (um terço da tela ou celular pequeno), rosca e quadradinhos p�
 No celular, tudo fica numa coluna só, na mesma ordem. Na cascata, o espaço acima das barras é dos rótulos, para o valor da
 primeira não encostar no número grande do cartão.
 
-Sem dados suficientes (menos de 2 dos 3 últimos meses com entradas e saídas), não há nota: a frase explica o que lançar e a aba
+Sem dados suficientes (menos de 2 dos 3 últimos meses que entram no fluxo), não há nota: a frase explica o que lançar e a aba
 mostra o que já dá. Conta nova vê o convite para o primeiro lançamento.
 
 ### 4.7.0 O consultor que aprende e fala na hora (desde 24/11/2026)
@@ -662,6 +662,19 @@ tela passa por esse filtro: se não revela nada nem muda o que ela faz nesta sem
 
 Testes: `node scripts/painel/testar.mjs` (casos "juros aprendidos", "sinais", "consultor na hora", "o consultor lê o
 plano") e `scripts/app-de-demonstracao/testar-consultor-que-aprende.cjs`.
+
+### 4.7.3 Quais meses entram nas médias (Cairo, desde 27/11/2026)
+
+O Consultor (`lib/analise.ts`) e o conselheiro (`lib/conselheiro.ts`) decidem os meses da média pela qualidade de cada mês
+(`src/cairo/qualidade/meses.ts`), comparada com os 12 meses fechados da pessoa:
+- mês bem registrado sem nenhuma entrada, de quem costuma lançar o que recebe (entrada em 2 outros meses) e sem conta fixa de
+  entrada esperando baixa: **mês sem renda**, e entra (renda zero na média). Antes ele sumia e a renda média ficava inflada;
+- mês com bem menos saídas que o costume dela (menos de 35% do mês típico, quando o típico tem 4 ou mais): **mal lançado**, fica fora;
+- mês sem entrada com salário fixo sem baixa, ou de quem nunca lança renda: **não dá para saber**, fica fora;
+- mês sem nada lançado: fora.
+O que cada lançamento é segue `src/cairo/fatos/movimentos.ts`: emprestar a alguém, receber de volta, dinheiro emprestado
+recebido e transferência entre bolsos seus não são renda nem gasto (antes a devolução de "me devem" contava como renda).
+O motor novo inteiro está em [`docs/cairo/contrato.md`](cairo/contrato.md).
 
 ### 4.7.2 O Kairo: o consultor em pessoa (desde 27/11/2026)
 
