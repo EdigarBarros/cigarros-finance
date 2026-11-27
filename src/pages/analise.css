@@ -744,3 +744,6 @@ li.caiu .halteres-agora { background: var(--an-bom); }
 .an-kairo-faixa .kairo-nome { font-size: 17px; }
 .an-kairo-faixa small { font-size: 13px; line-height: 1.4; color: var(--texto-2); }
 @media (max-width: 600px) { .an-kairo-cab h1 { font-size: 26px; } }
+/* conta nova: a apresentação do Kairo em 3D (components/KairoApresentacao.tsx) em cima do convite */
+.an-vazio.an-apresenta { padding: 14px 14px 34px; gap: 10px; overflow: hidden; }
+.an-vazio.an-apresenta h2 { margin-top: 10px; font-size: 22px; }

@@ -5,6 +5,7 @@ import { fmtDataCurta } from '../lib/format'
 import { useMovimento } from '../lib/tema'
 import { Icone } from '../components/Icone'
 import { Kairo, KairoMarca } from '../components/Kairo'
+import { KairoApresentacao } from '../components/KairoApresentacao'
 import { falasDoKairo, humorDe } from '../lib/kairo'
 import { Interruptor } from '../components/ui'
 import { useEmVista } from './analiseApoio'
@@ -41,9 +42,9 @@ export function Analise(c: Ctx) {
   if (c.contaNova) {
     return (
       <div className="pagina analise">
-        <header className="pagina-topo an-cabecalho"><CabecalhoDoKairo humor="calmo" sub={tx('Ele começa a pensar no primeiro lançamento.')} /></header>
-        <section className="cartao an-vazio">
-          <span className="an-vazio-kairo"><Kairo humor="calmo" tamanho={64} vivo flutua sombra /></span>
+        <header className="pagina-topo an-cabecalho"><CabecalhoDoKairo humor="calmo" semBola sub={tx('Ele começa a pensar no primeiro lançamento.')} /></header>
+        <section className="cartao an-vazio an-apresenta">
+          <KairoApresentacao />
           <h2>{tx('O Kairo começa no primeiro lançamento')}</h2>
           <p>{tx('Lance o que entra e o que sai. A cada lançamento, os gráficos se refazem sozinhos.')}</p>
           <div className="an-vazio-acoes">
@@ -298,10 +299,10 @@ export function useHumorDoKairo(c: Pick<Ctx, 'analise' | 'conselhos'>) {
 }
 
 /** O topo da aba: o Kairo em pessoa, com o humor do dinheiro, o nome e a frase do jeito de ver. */
-export function CabecalhoDoKairo({ humor, sub }: { humor: ReturnType<typeof humorDe>; sub: string }) {
+export function CabecalhoDoKairo({ humor, sub, semBola }: { humor: ReturnType<typeof humorDe>; sub: string; semBola?: boolean }) {
   return (
     <div className="an-kairo-cab">
-      <Kairo humor={humor} tamanho={58} vivo flutua sombra segue rotulo={tx('Kairo, seu consultor financeiro')} />
+      {!semBola && <Kairo humor={humor} tamanho={58} vivo flutua sombra segue rotulo={tx('Kairo, seu consultor financeiro')} />}
       <div>
         <h1><KairoMarca /></h1>
         <p className="sub">{sub}</p>

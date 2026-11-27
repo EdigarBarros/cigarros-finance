@@ -31,10 +31,12 @@ const OLHOS: Record<Careta, [JeitoDoOlho, JeitoDoOlho]> = {
   preocupado: ['aberto', 'aberto'],
 }
 
-export function Kairo({ humor = 'calmo', careta, tamanho = 40, vivo, flutua, segue, sombra, rotulo, className = '' }: {
+export function Kairo({ humor = 'calmo', careta, olhar, tamanho = 40, vivo, flutua, segue, sombra, rotulo, className = '' }: {
   humor?: Humor
   /** Uma careta forçada por quem usa (o Kairo solto sorri quando o ponteiro passa, por exemplo). Vale sobre o humor. */
   careta?: Careta | null
+  /** Para onde os olhos apontam, em unidades do desenho (x, y), quando quem usa decide (ex.: olhar para um cartão). */
+  olhar?: [number, number] | null
   tamanho?: number
   /** Pisca, olha em volta e faz caretas sozinho. */
   vivo?: boolean
@@ -55,7 +57,7 @@ export function Kairo({ humor = 'calmo', careta, tamanho = 40, vivo, flutua, seg
   const cara: Careta = careta ?? vida.careta ?? humor
   const [esq, dir] = vida.piscando && cara !== 'feliz' && cara !== 'comemorando' ? ['fechado', 'fechado'] as const : OLHOS[cara]
   const g = (n: string) => `k${id}${n}`
-  const estilo = { '--k': `${tamanho}px`, '--ox': `${vida.olhar[0]}px`, '--oy': `${vida.olhar[1]}px` } as CSSProperties
+  const estilo = { '--k': `${tamanho}px`, '--ox': `${(olhar ?? vida.olhar)[0]}px`, '--oy': `${(olhar ?? vida.olhar)[1]}px` } as CSSProperties
   return (
     <span ref={raiz} className={`kairo k-${humor} c-${cara} ${flutua ? 'flutua' : ''} ${sombra ? 'com-sombra' : ''} ${className}`}
       style={estilo} role={rotulo ? 'img' : undefined} aria-label={rotulo} aria-hidden={rotulo ? undefined : true}>
