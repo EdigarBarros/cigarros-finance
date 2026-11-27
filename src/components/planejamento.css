@@ -453,3 +453,5 @@
 @media (prefers-reduced-motion: reduce) {
   .pj, .pj *, .pj *::before, .pj *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+/* "Já paguei": a fatia de uma fatura de cartão abre o pagamento dela (o mesmo da tela Cartões) */
+.pj-pagar-fatura { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: 100%; }

@@ -1292,13 +1292,17 @@ const lancamentoDosJuros = (c: Ctx, cartao: CartaoCredito, f: Fatura, juros: num
  * juros/multa quando pagou com atraso. Com a migração 38, pagar menos do que falta é um pagamento de parte: a fatura continua
  * em aberto pelo resto. Pagar com o cofrinho tira o valor da caixinha do banco em Dinheiro guardado.
  */
-export function FormPagarFatura({ c, alvo, aoFechar }: { c: Ctx; alvo: Alvo; aoFechar: () => void }) {
+export function FormPagarFatura({ c, alvo, aoFechar, inicial }: {
+  c: Ctx; alvo: Alvo; aoFechar: () => void
+  /** Já preenchido de outra tela (a saída lançada em Lançamentos que paga esta fatura): valor, dia e banco. */
+  inicial?: { valor?: number; data?: string; bancoId?: string | null }
+}) {
   const { cartao, f, pagamento, parcial } = alvo
   const antigo = pagamento ?? parcial
-  const [data, setData] = useState(antigo?.pago_em ?? hojeLocal())
-  const [valor, setValor] = useState(paraCampo(antigo?.valor ?? f.falta))
+  const [data, setData] = useState(antigo?.pago_em ?? inicial?.data ?? hojeLocal())
+  const [valor, setValor] = useState(paraCampo(antigo?.valor ?? inicial?.valor ?? f.falta))
   const [juros, setJuros] = useState(pagamento?.juros ? paraCampo(pagamento.juros) : '')
-  const [bancoId, setBancoId] = useState(antigo?.banco_id ?? cartao.banco_id ?? '')
+  const [bancoId, setBancoId] = useState(antigo?.banco_id ?? inicial?.bancoId ?? cartao.banco_id ?? '')
   const [daCaixinha, setDaCaixinha] = useState(Boolean(antigo?.da_caixinha))
   const [erro, setErro] = useState<string | null>(null)
   const [desfazer, setDesfazer] = useState(false)

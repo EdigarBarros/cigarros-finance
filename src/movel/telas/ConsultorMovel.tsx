@@ -6,6 +6,7 @@
  * próximo passo, objetivo e as faixas, com favoritar, esconder e "outro jeito").
  */
 import { useState } from 'react'
+import { faturaDoDestino } from '../../lib/faturasAPagar'
 import { Icone } from '../../components/Icone'
 import { CartaoDoPlanejamento, Planejamento } from '../../components/Planejamento'
 import { Interruptor } from '../../components/ui'
@@ -102,7 +103,9 @@ export function ConsultorMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom,
       )}
       {planejando && (
         <Planejamento a={a} planejamento={c.planejamento} salvar={c.salvarPlanejamento} aoFechar={() => setPlanejando(false)}
-          aoLancarEntrada={() => { setPlanejando(false); c.novoLancamento('entrada') }} />
+          aoLancarEntrada={() => { setPlanejando(false); c.novoLancamento('entrada') }}
+          faturaDe={(d) => faturaDoDestino(c.faturasAPagar, d)}
+          aoPagarFatura={(chave) => { setPlanejando(false); c.pagarFatura(chave, undefined, () => setPlanejando(true)) }} />
       )}
     </div>
   )

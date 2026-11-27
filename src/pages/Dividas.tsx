@@ -1,4 +1,5 @@
 import { CenaDividas } from '../components/Vazios'
+import { FaturasComoDivida } from '../components/FaturasComoDivida'
 import { useState } from 'react'
 import {
   aproxDiv, atrasadoHoje, aumentaDivida, estadoDaDivida, resumoDasDividas, sugeridoParaPagar, fmtDiv, gruposDasPartes, inicioPelaProxima, meDevem, nativoDiv, parcelasDe, promessasDe, tomarLadoDividas, totalDeParcelas,
@@ -117,6 +118,8 @@ export function Dividas(c: Ctx) {
           <span>{tx('Para registrar quem te deve e ver cada parcela como paga, pela metade ou atrasada, rode')} <code>supabase/migracao-10-dividas-e-a-receber.sql</code> {tx('no SQL Editor do Supabase.')}</span>
         </p>
       )}
+
+      {!recebe && <FaturasComoDivida c={c} />}
 
       {!lista.length && !esperaAbertas.length ? (
         <VazioLado recebe={recebe} aoNova={() => setEditando('nova')} />

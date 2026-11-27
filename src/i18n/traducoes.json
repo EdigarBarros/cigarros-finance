@@ -19018,5 +19018,41 @@
   "Pesquisar por nome, valor ou data…": {
     "en": "Search by name, amount or date…",
     "es": "Busca por nombre, valor o fecha…"
+  },
+  "Faturas de cartão": {
+    "en": "Credit card bills",
+    "es": "Facturas de tarjeta"
+  },
+  "Contam como dívida até serem pagas. Pagar aqui é o mesmo que pagar na aba Cartões.": {
+    "en": "They count as debt until paid. Paying here is the same as paying in the Cards tab.",
+    "es": "Cuentan como deuda hasta que se pagan. Pagar aquí es lo mismo que pagar en la pestaña Tarjetas."
+  },
+  "já pagou {0}": {
+    "en": "already paid {0}",
+    "es": "ya pagaste {0}"
+  },
+  "a pagar": {
+    "en": "to pay",
+    "es": "por pagar"
+  },
+  "Pagar fatura": {
+    "en": "Pay bill",
+    "es": "Pagar factura"
+  },
+  "Ver no cartão": {
+    "en": "See on card",
+    "es": "Ver en la tarjeta"
+  },
+  "Estou pagando a fatura do cartão": {
+    "en": "I’m paying a credit card bill",
+    "es": "Estoy pagando la factura de la tarjeta"
+  },
+  "Ao salvar, isto vira o pagamento desta fatura, igual ao da aba Cartões. Não entra como gasto de novo: as compras do cartão já contam.": {
+    "en": "When you save, this becomes the payment of this bill, just like in the Cards tab. It doesn’t count as spending again: the card purchases already do.",
+    "es": "Al guardar, esto se convierte en el pago de esta factura, igual que en la pestaña Tarjetas. No cuenta como gasto de nuevo: las compras de la tarjeta ya cuentan."
+  },
+  "Já paguei: registrar o pagamento da fatura": {
+    "en": "Already paid: record the bill payment",
+    "es": "Ya pagué: registrar el pago de la factura"
   }
 }

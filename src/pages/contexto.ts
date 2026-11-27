@@ -4,6 +4,7 @@ import type { EfeitoDatado } from '../lib/guardado'
 import type { Sugestao } from '../lib/adaptacao'
 import type { MesEfetivo, Resumo } from '../lib/calc'
 import type { SituacaoCartao } from '../lib/cartoes'
+import type { FaturaAPagar } from '../lib/faturasAPagar'
 import type { Analise, Reanalise } from '../lib/analise'
 import type { MemoriaConsultor, Objetivo } from '../lib/memoria'
 import type { Planejamentos } from '../lib/planejamento'
@@ -149,6 +150,15 @@ export interface Ctx {
   novaCompraNoCartao: (cartaoId: string) => void
   /** Cartão a mostrar ao abrir a tela Cartões (depois de lançar uma compra nele); null = o primeiro. */
   cartaoAberto: string | null
+  /** Faturas de cartão com o que pagar hoje (atrasadas, a do mês ou a que está correndo): aparecem como dívida. */
+  faturasAPagar: FaturaAPagar[]
+  /**
+   * Abre o pagamento da fatura (o mesmo da tela Cartões: pagar parte, quitar, juros, cofrinho), de qualquer tela.
+   * `inicial` já preenche valor, dia e banco.
+   */
+  pagarFatura: (chave: string, inicial?: { valor?: number; data?: string; bancoId?: string | null }, depois?: () => void) => void
+  /** Vai para a tela Cartões, no cartão escolhido. */
+  verCartao: (cartaoId: string) => void
   /** Compra no cartão recém-lançada (id da compra): a tela Cartões rola até ela e a destaca. */
   compraDestacada: string | null
   /** Banco aberto na tela Bancos ('sem' = lançamentos sem banco). */
