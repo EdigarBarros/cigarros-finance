@@ -2385,3 +2385,13 @@ e em mais partes do site, por dentro das análises.
 `node scripts/painel/testar.mjs` 56/56 (caso novo "kairo"). No app de demonstração (computador 1280/1440 e celular 390,
 claro e escuro): o passeio filmado quadro a quadro (sai da pílula, pousa no cartão, olhinhos de ponto lendo, se apresenta,
 volta), o painel, esconder e trazer de volta pelo Consultor, sem erro na página e sem rolagem de lado no celular.
+
+**Testes antigos rodados com o Kairo:** `testar-planejamento`, `testar-consultor-que-aprende`, `testar-plano-travado`,
+`testar-a-receber`, `testar-fatura-como-divida`, `testar-contas` e `testar-correcoes`, todos sem falha.
+
+### 27/11/2026 — Claude — App Android 2.9.6 (código 34)
+
+**Estado:** `.aab` gerado, assinado e entregue ao Edigar; falta enviar no Play Console. Leva o Kairo. `versionCode` 33 → 34.
+`npm run app` e `./gradlew bundleRelease` (Android SDK 36 baixado no scratchpad), `jarsigner`. A chave e a senha vieram do
+Drive do dono só para assinar e foram apagadas da máquina em seguida. Conferido: `jarsigner -verify` ("jar verified"),
+impressão da chave de upload (A7:07:94:…:5D:9D) e o Kairo dentro do pacote.
