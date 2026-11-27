@@ -2332,3 +2332,9 @@ passa da largura. Sem falha: `testar-planejamento` (56), `testar-plano-travado` 
 **Estado:** `.aab` gerado, assinado e entregue ao Edigar; falta enviar no Play Console. Substitui o 2.9.3 (ainda não
 enviado): leva o 2.9.3 mais a fatura como dívida (#313). `versionCode` 31 → 32. Chave do Drive do dono só para assinar,
 apagada em seguida. Conferido: `jarsigner -verify`, impressão da chave de upload (A7:07:94:…:5D:9D) e o código novo no pacote.
+
+**Atualização (27/11/2026, qual fatura é).** O dono viu uma fatura do PicPay em aberto e achou que era a de novembro, já paga.
+Conferido no banco: a de novembro estava quitada (pagamentos de parte e quitação somando as compras), e a da lista era a de
+dezembro. Os números estavam certos, mas o texto não dizia o mês. Agora Dívidas e o "Isso paga…" das saídas mostram "Fatura de
+<mês> do <cartão> · vence <dia> · falta R$ …". O pagamento avisa quando o valor passa do que falta ("Confira se é esta mesma
+fatura"). `testar-fatura-como-divida.cjs` 25 OK. (O PR #315 entrou vazio por engano; a mudança está no PR seguinte.)

@@ -1487,6 +1487,10 @@ export function FormPagarFatura({ c, alvo, aoFechar, inicial }: {
           </div>
         )}
         {emParte && !parcial && <AvisoDoConsultor fala={naHoraDePagarParte(c.analise, centavos(faltaAntes - v))} />}
+        {/* pagando mais do que falta: quase sempre é a fatura de outro mês (a anterior já foi paga) */}
+        {!pagamento && !parcial && v > faltaAntes + 0.005 && (
+          <p className="form-erro">{tx('Você digitou {0}, mais do que falta na fatura de {1} ({2}). Confira se é esta mesma fatura.', fmtValor(v), nomeDaFatura(f.ano, f.mes), fmtValor(faltaAntes))}</p>
+        )}
         <span className="campo-ajuda">
           {emParte
             ? tx('Fica faltando {0} nesta fatura. Ela continua em aberto até você pagar o resto.', fmtValor(centavos(faltaAntes - v)))
