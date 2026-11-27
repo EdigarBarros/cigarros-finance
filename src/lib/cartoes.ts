@@ -5,7 +5,7 @@
  * Uma fatura é identificada pelo mês e ano do vencimento. Tudo aqui é puro (sem tela nem banco).
  */
 import { semAcento } from './busca'
-import { fmtValor, MESES_NOME, noMeioDaFrase } from './format'
+import { fmtDataCurta, fmtValor, MESES_NOME, noMeioDaFrase } from './format'
 import type { EfeitoDatado } from './guardado'
 import type { CartaoCredito, FaturaPaga, FaturaParcial, Lancamento } from './types'
 import { tx } from './textos'
@@ -263,19 +263,21 @@ export function voltarParcela(l: Pick<Lancamento, 'pulada_de'>) {
   return { ano, mes, data: l.pulada_de, pulada_de: null }
 }
 
-// ---------- pagar com o cofrinho (a caixinha do banco) ----------
+// ---------- o pagamento da fatura no saldo do banco (a conta ou o cofrinho) ----------
 
 type PagamentoDaCaixinha = Pick<FaturaParcial, 'valor' | 'pago_em' | 'banco_id'> & Partial<Pick<FaturaParcial, 'da_caixinha' | 'saldo_mexido'>>
 
 /**
- * O que um pagamento feito com o cofrinho faz em Dinheiro guardado: tira o valor da caixinha do banco, no mês do pagamento
- * (`sinal` -1 desfaz, devolvendo). Vazio quando o dinheiro não saiu da caixinha ou o app não mexeu no saldo (`saldo_mexido`).
+ * O que o pagamento da fatura faz no saldo do banco de onde o dinheiro saiu, no mês do pagamento (`sinal` -1 desfaz,
+ * devolvendo): com o cofrinho, tira da caixinha (Dinheiro guardado); senão, da conta. Antes só o cofrinho descontava, e o
+ * pagamento feito pela conta deixava o saldo (e o "O que está na conta" do Planejamento) maior do que era. Vazio quando o
+ * app não mexeu no saldo (`saldo_mexido`) ou não há banco.
  * Com o limite garantido ligado à caixinha, o limite do cartão diminui junto, como no banco.
  */
 export function efeitoNaCaixinha(p: PagamentoDaCaixinha | null | undefined, sinal: 1 | -1 = 1): EfeitoDatado[] {
-  if (!p?.da_caixinha || !p.saldo_mexido || !p.banco_id || !(p.valor > 0)) return []
+  if (!p?.saldo_mexido || !p.banco_id || !(p.valor > 0)) return []
   const [ano, mes] = partes(p.pago_em)
-  return [{ ano, mes, efeitos: [{ banco: p.banco_id, tipo: 'caixinha', delta: centavos(-p.valor * sinal) }] }]
+  return [{ ano, mes, efeitos: [{ banco: p.banco_id, tipo: p.da_caixinha ? 'caixinha' : 'cc', delta: centavos(-p.valor * sinal) }] }]
 }
 
 /** Taxa que o banco cobrou para pular: uma compra à vista no cartão, na fatura seguinte à de `de`. */
@@ -407,11 +409,21 @@ export const totalFaturasAPagar = (situacoes: Pick<SituacaoCartao, 'falta' | 'st
   soma(situacoes.filter((s) => s.status !== 'paga' && s.status !== 'renegociada').map((s) => s.falta))
 
 /** " Na fatura do PicPay, já pagou R$ 468,20 e faltam R$ 187,08." quando alguma fatura do mês foi paga em parte (senão, vazio). */
-export function pagoDaFatura(situacoes: (Pick<SituacaoCartao, 'paga' | 'pagoEmParte' | 'falta'> & { cartao?: Pick<CartaoCredito, 'nome'> })[]) {
+export function pagoDaFatura(situacoes: (Pick<SituacaoCartao, 'paga' | 'pagoEmParte' | 'falta'> & { cartao?: Pick<CartaoCredito, 'nome'>; parciais?: FaturaParcial[] })[]) {
   const emParte = situacoes.filter((s) => !s.paga && s.pagoEmParte > 0)
-  if (!emParte.length) return ''
-  const pago = fmtValor(soma(emParte.map((s) => s.pagoEmParte))), falta = fmtValor(soma(emParte.map((s) => s.falta)))
-  return ` ${emParte.length === 1 && emParte[0].cartao ? tx('Na fatura do {0}, já pagou {1} e faltam {2}.', emParte[0].cartao.nome, pago, falta) : tx('Já pagou {0} e faltam {1}.', pago, falta)}`
+  const textoParte = !emParte.length ? '' : (() => {
+    const pago = fmtValor(soma(emParte.map((s) => s.pagoEmParte))), falta = fmtValor(soma(emParte.map((s) => s.falta)))
+    return ` ${emParte.length === 1 && emParte[0].cartao ? tx('Na fatura do {0}, já pagou {1} e faltam {2}.', emParte[0].cartao.nome, pago, falta) : tx('Já pagou {0} e faltam {1}.', pago, falta)}`
+  })()
+  // fatura quitada: os pagamentos dela (com o dia), para a pessoa ver em Lançamentos que o dinheiro saiu, sem virar gasto de novo
+  const quitadas = situacoes.filter((s) => s.paga && !renegociada(s.paga) && s.cartao)
+  const textoQuitadas = quitadas.map((s) => {
+    const pagamentos = [...(s.parciais ?? []), s.paga!].filter((p) => p.valor > 0)
+      .sort((a, b) => a.pago_em.localeCompare(b.pago_em))
+      .map((p) => tx('{0} em {1}', fmtValor(p.valor), fmtDataCurta(p.pago_em)))
+    return ` ${tx('A fatura do {0} está paga: {1}.', s.cartao!.nome, pagamentos.join(', '))}`
+  }).join('')
+  return textoParte + textoQuitadas
 }
 
 /** "vence hoje", "vence em 9 dias", "venceu há 3 dias"… */

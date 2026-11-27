@@ -96,6 +96,38 @@ const pagos = (t) => (t.db.faturas_parciais?.length ?? 0) + (t.db.faturas_pagas?
       ok(!erros.length, `sem erro na página ${erros.join(' | ')}`)
     } finally { await t.fechar() }
   }
+  // 5. Pagar pela conta de um banco: o valor sai do saldo da conta dele; Lançamentos mostra os pagamentos da fatura quitada
+  {
+    const { t, p, erros } = await abrir()
+    try {
+      await p.goto(t.url + '#/dividas'); await p.waitForTimeout(2500)
+      const hoje = new Date(), aqui = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`
+      const item = p.locator('.fcd-item:not(.atrasada)').first()
+      const falta = reais(await item.locator('.fcd-valor b').textContent())
+      await item.getByRole('button', { name: 'Pagar fatura' }).click(); await p.waitForTimeout(600)
+      const conta = p.locator('.modal .chips .cc-origem', { hasText: 'Da conta' })
+      if (await conta.count()) await conta.click()
+      await p.locator('.modal label.campo', { hasText: 'De qual banco saiu' }).locator('.escolha-gatilho').click(); await p.waitForTimeout(300)
+      await p.locator('[role=listbox] [role=option]').filter({ hasNotText: 'Não sei' }).first().click(); await p.waitForTimeout(300)
+      ok(/sai do saldo da conta deste banco/.test(await p.locator('.modal').textContent()), 'o pagamento avisa que sai do saldo da conta')
+      const caixa = () => {
+        const m = t.db.meses.find((x) => x.ano === hoje.getFullYear() && x.mes === hoje.getMonth() + 1)
+        return JSON.parse(JSON.stringify(m?.caixa ?? {}))
+      }
+      const antes = caixa()
+      await p.locator('.modal button[type=submit]').click(); await p.waitForTimeout(2000)
+      const depois = caixa()
+      const mudou = Object.keys(depois).filter((b) => Math.abs((depois[b]?.cc ?? 0) - (antes[b]?.cc ?? 0)) > 0.005)
+      const delta = mudou.length === 1 ? (depois[mudou[0]].cc ?? 0) - (antes[mudou[0]]?.cc ?? 0) : null
+      ok(delta !== null && Math.abs(delta + falta) < 0.02, `o saldo da conta do banco cai ${falta} no mês do pagamento (${delta})`)
+      const quitada = (t.db.faturas_pagas ?? []).at(-1)
+      ok(quitada && quitada.saldo_mexido === true && quitada.da_caixinha === false, 'o pagamento fica marcado como já descontado do saldo (para desfazer certo)')
+      await p.goto(t.url + '#/lancamentos'); await p.waitForTimeout(2200)
+      const nota = await p.locator('.lc-nota-cartao').first().textContent().catch(() => '')
+      ok(/está paga: R\$\s?[\d.,]+ em /.test(nota), `Lançamentos mostra o pagamento da fatura quitada, com o dia (${nota.trim().slice(0, 160)})`)
+      ok(!erros.length, `sem erro na página ${erros.join(' | ')}`)
+    } finally { await t.fechar() }
+  }
   // 4. Celular: a seção em Dívidas
   {
     const { t, p, erros } = await abrir({ toque: true, largura: 390 })
