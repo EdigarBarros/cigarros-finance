@@ -368,6 +368,11 @@ export interface Evento {
   pecas?: number
   /** Conta essencial pela categoria (moradia, água, luz, mercado, saúde…): o planejador a protege. */
   essencial?: boolean
+  /**
+   * Dinheiro de empréstimo marcado para o futuro: o que você pegou e vai cair (entrada) ou o que vai emprestar (saída). Mexe
+   * no caixa (agenda e planejador), mas não é renda nem gasto, e não vai para o Cairo como renda (lib/cairo.ts).
+   */
+  emprestimo?: boolean
 }
 
 export interface DiaDaAgenda {
@@ -1485,9 +1490,16 @@ export function analisar(e: EntradaAnalise): Analise {
     const fimJanela = isoDoDia(prox.ano, prox.mes, 31)
     const noDia = (data: string) => (data < hojeIso ? hojeIso : data)
     const eventos: Evento[] = []
+    // empréstimo marcado para o futuro: entra no caixa, mas fica fora dos eventos que vão para o Cairo (lá toda entrada da
+    // agenda vira renda) e fora de qualquer média de renda ou gasto
+    const emprestimosFuturos: Evento[] = []
     // lançamentos já marcados para depois de hoje (o cartão entra como fatura, mais abaixo)
     for (const l of e.lancs) {
-      if (!l.data || l.data <= hojeIso || l.data > fimJanela || l.cartao_id || !(l.valor > 0) || ehEmprestimo(l)) continue
+      if (!l.data || l.data <= hojeIso || l.data > fimJanela || l.cartao_id || !(l.valor > 0)) continue
+      if (ehEmprestimo(l)) {
+        emprestimosFuturos.push({ data: l.data, tipo: l.tipo, descricao: l.descricao.trim(), valor: l.valor, origem: 'lancamento', emprestimo: true })
+        continue
+      }
       eventos.push({ data: l.data, tipo: l.tipo, descricao: l.descricao.trim(), valor: l.valor, origem: 'lancamento', ...(essencialDaCategoria(e.categoriaDe(l)) ? { essencial: true } : {}) })
     }
     // faturas: as parcelas de cada cartão somadas no vencimento (fatura já paga fica de fora), menos o que já foi pago em
@@ -1561,6 +1573,9 @@ export function analisar(e: EntradaAnalise): Analise {
     unicos.sort((a, b) => a.data.localeCompare(b.data) || (a.tipo === b.tipo ? b.valor - a.valor : a.tipo === 'entrada' ? -1 : 1))
     eventosDaAgenda = unicos
     fimDoHorizonte = fimJanela
+    // o caixa: a agenda mais o dinheiro de empréstimo que vai entrar ou sair (devolução de quem te deve já está na agenda)
+    const doCaixa = [...unicos, ...emprestimosFuturos]
+      .sort((a, b) => a.data.localeCompare(b.data) || (a.tipo === b.tipo ? b.valor - a.valor : a.tipo === 'entrada' ? -1 : 1))
 
     // saldo dia a dia: com o saldo da conta corrente, conta também o gasto do dia a dia entre um dia e outro
     const ccInformado = v.bancos && Object.values(ef.caixa).some((b) => typeof b?.cc === 'number')
@@ -1585,7 +1600,7 @@ export function analisar(e: EntradaAnalise): Analise {
       ? centavos(media(recentes.map((k) => soma(naJanela.filter((l) => chaveMes(l.ano, l.mes) === k && ehDiaADia(l)).map((l) => l.valor)))) / 30.4)
       : 0
     const porData = new Map<string, Evento[]>()
-    for (const ev of unicos) porData.set(ev.data, [...(porData.get(ev.data) ?? []), ev])
+    for (const ev of doCaixa) porData.set(ev.data, [...(porData.get(ev.data) ?? []), ev])
     let saldoCorrente = saldoInicial ?? 0
     let cursor = hojeIso
     const dias: DiaDaAgenda[] = [...porData].map(([data, evs]) => {
@@ -1748,7 +1763,7 @@ export function analisar(e: EntradaAnalise): Analise {
       if (l.tipo === 'entrada') c.entra += l.valor
       else c.sai += l.valor
     }
-    for (const ev of unicos) {
+    for (const ev of doCaixa) {
       if (ev.data.slice(0, 7) !== hojeIso.slice(0, 7)) continue
       const c = cal[diaDe(ev.data) - 1]
       if (ev.tipo === 'entrada') c.entra += ev.valor
@@ -1805,11 +1820,13 @@ export function analisar(e: EntradaAnalise): Analise {
         data: d.data, valor: totalDe(d.entradas), descricao: nomesDe(d.entradas),
         certeza: d.entradas.every((x) => x.origem !== 'recorrente') ? 'compromisso' as const : 'costume' as const,
       })),
-      compromissos: unicos.filter((ev) => ev.tipo === 'saida').map((ev) => ({
-        descricao: ev.descricao, valor: ev.valor, vence: ev.vence ?? ev.data, origem: ev.origem, jurosMes: ev.jurosMes ?? null,
+      compromissos: doCaixa.filter((ev) => ev.tipo === 'saida').map((ev) => ({
+        descricao: ev.descricao, valor: ev.valor, vence: ev.vence ?? ev.data, origem: ev.origem, jurosMes: ev.jurosMes ?? null, ...(ev.emprestimo ? { semCusto: true } : {}),
         grupo: ev.grupo, pecas: ev.pecas, ...(ev.essencial ? { essencial: true, essencialPor: 'categoria' as const } : {}),
       })),
       essencialDia, depoisDoFim,
+      // as compras que a pessoa ainda vai fazer no cartão não estão no plano nem nos cenários do Cairo
+      ...(v.cartoes && e.cartoes.some((c) => c.ativo) ? { semComprasFuturasDoCartao: true } : {}),
       alternativas: {
         guardado: centavos(soma(extras.guardados.map((g) => g.valor))),
         aReceber: extras.aReceber.map((r) => ({ nome: r.nome, valor: r.valor, data: r.data })),

@@ -81,6 +81,14 @@ Detalhe, números e limites em [`decisao.md`](decisao.md).
 - Testes de integração: `scripts/cairo/integracao/` (personas, `trocarFuturo`, `revelar`). Adaptador
   `Observado` → planejador: `src/lib/decisoes/observado.ts`.
 
+### Entregue pelo Claude 2 (etapa 2, 27/11/2026)
+
+- Empréstimo futuro (recebido e concedido) no caixa do planejador e na agenda, fora dos eventos que vão para o Cairo;
+  emprestar a alguém sem custo de esperar; `entraNoCaixa`/`entradaDoObservado` contam crédito e devolução como caixa.
+- O que depende da sobra (parcela nova, adiantar dívida) é condicional para quem usa cartão (compras futuras fora do plano).
+- Testes de integração de redução real de gastos sobre `qualidade/meses.ts`: dois passam, um é limitação conhecida (pedido 7).
+- `analise.cairo` continua do jeito do Claude 1; nenhum arquivo de `src/cairo/` foi alterado.
+
 ### Revisão do contrato 1.0.0 pelo consumidor (Claude 2)
 
 - Serviu sem mudança: `CondicaoDeCusto` separada por tipo, `antecipacao`, `oferta_quitacao`, `revelar`/`trocarFuturo`,
@@ -110,3 +118,18 @@ Do Claude 2 para o Claude 1 (27/11/2026). Nenhum bloqueia o que está publicado;
    aconteceu (pago em, custo). Sem isso a avaliação fica só nos mundos sintéticos.
 6. **Ligação fonte de renda ↔ agenda** (contrato, campo opcional). `Fluxo.fonte?: string` com a `chave` da `FonteDeRenda`,
    para o "e se" não depender de casar descrições.
+
+Etapa 2 (27/11/2026):
+
+7. **Corte real de gastos vira "parcial"** (`qualidade/meses.ts`, regra `dados.mes-parcial.*`). Quem passa de 40 para 10 compras
+   por mês, com o salário lançado, tem os meses tirados das médias; com 3 meses assim, `temFluxo` fica falso e o Consultor perde
+   nota e plano (caso em `scripts/cairo/integracao/casos.ts`, marcado como limitação). Sugestões para avaliar: não marcar
+   "parcial" quando a renda do mês foi lançada normalmente e as contas fixas tiveram baixa; ou quando vários meses seguidos
+   têm o mesmo nível baixo (mudança de comportamento, que `aprendizado/quebras.ts` já detecta no dia a dia); e a declaração
+   "esse mês está completo" (já prevista).
+8. **Empréstimo na agenda do Cairo.** `lib/cairo.ts` manda `p.eventos` como compromissos e o gerador põe toda entrada como
+   `natureza: 'renda'`. Por isso o empréstimo futuro ficou só no caixa do planejador. Pedido: um campo no `CompromissoBruto`
+   (ou eventos à parte) para o crédito que vai cair (`credito_recebido`) e o dinheiro que a pessoa vai emprestar (saída sem
+   multa), para os cenários terem o mesmo caixa que o planejador.
+9. **Compras futuras no cartão nos cenários** (limitação já anotada no contrato). Enquanto não vierem, a parte de decisão marca
+   como condicional tudo o que depende da sobra de quem usa cartão.

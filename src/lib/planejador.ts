@@ -38,6 +38,8 @@ export interface Compromisso {
   essencialPor?: 'pessoa' | 'categoria'
   /** Prioridade dada pela pessoa (maior vem antes): passa na frente da política do app. */
   prioridadePessoa?: number
+  /** Esperar não custa nada (o dinheiro que a pessoa vai emprestar a alguém): sem multa nem juros, e vai por último. */
+  semCusto?: boolean
 }
 
 export interface EntradaDoPlano {
@@ -85,6 +87,11 @@ export interface EntradaPlanejador {
    * mandaria tudo para adiantar dívida só porque a conta seguinte ficou fora do período.
    */
   depoisDoFim?: { ate: string; valor: number }
+  /**
+   * A pessoa usa cartão, e as compras que ela ainda vai fazer nele não estão no plano (nem nos cenários do Cairo): a fatura
+   * que vem pode ser maior. O que depende da sobra (adiantar dívida, parcela nova) vira condicional e diz isso.
+   */
+  semComprasFuturasDoCartao?: boolean
   /** Para quando não dá para tudo: o dinheiro guardado e o que te devem, que o plano não usa sozinho. */
   alternativas?: { guardado: number; aReceber: { nome: string; valor: number; data: string | null }[] }
   /**
@@ -216,6 +223,7 @@ const diasEntre = (de: string, ate: string) => Math.round((utc(ate) - utc(de)) /
 
 /** Juros e multa de um compromisso: o informado ou a estimativa de cada tipo. */
 function taxasDe(c: Compromisso): { taxaMes: number; multa: number; estimada: boolean } {
+  if (c.semCusto) return { taxaMes: 0, multa: 0, estimada: false }
   if (typeof c.jurosMes === 'number' && c.jurosMes >= 0) return { taxaMes: c.jurosMes, multa: MULTA_PADRAO, estimada: false }
   if (c.origem === 'cartao') return { taxaMes: ROTATIVO_ESTIMADO_MES, multa: MULTA_PADRAO, estimada: true }
   return { taxaMes: MORA_PADRAO_MES, multa: MULTA_PADRAO, estimada: true }
@@ -422,7 +430,7 @@ export function planejar(e: EntradaPlanejador): Plano {
       premissas: [
         ...(pior.estimada ? [tx('Juros de atraso de {0} estimados.', pior.descricao)] : []),
         ...(comSaldo ? [] : [tx('Sem o saldo de hoje, contei só o dinheiro que ainda vai entrar.')]),
-        ...(pelaReserva ? [tx('Deixei separado o essencial do dia a dia (mercado, farmácia, transporte) até o próximo dinheiro: por isso {0} espera.', pior!.descricao)] : []),
+        ...(pelaReserva ? [tx('Deixei separado o essencial do dia a dia (mercado, farmácia, transporte, estimado pelas categorias dos seus gastos) até o próximo dinheiro: por isso {0} espera.', pior!.descricao)] : []),
       ],
       alternativas: [
         ...(pelaReserva ? [tx('Pagar {0} em {1} custaria {2} a menos, mas tiraria o dinheiro do essencial do dia a dia até o próximo dinheiro.', pior.descricao, fmtDataCurta(antesSemReserva!.pagarEm!), fmtValor(centavos(Math.max(0, pior.custo - antesSemReserva!.custo))))] : []),
@@ -480,15 +488,18 @@ export function planejar(e: EntradaPlanejador): Plano {
     const paga = centavos(Math.min(ab.saldo, livre.livre))
     const evita = centavos(paga * (ab.juros / 100))
     dicas.push({
-      id: `adiantar-aberta:${ab.nome}`, icone: 'cofre', tom: 'bom', data: livre.data, estado: 'recomenda', regra: 'app',
+      id: `adiantar-aberta:${ab.nome}`, icone: 'cofre', tom: 'bom', data: livre.data, estado: e.semComprasFuturasDoCartao ? 'condicional' : 'recomenda', regra: 'app',
       titulo: paga >= ab.saldo - 0.005
         ? tx('Dá para quitar {0} em {1}.', ab.nome, fmtDataCurta(livre.data))
         : tx('Dá para adiantar {0} de {1} em {2}.', fmtValor(paga), ab.nome, fmtDataCurta(livre.data)),
       porque: tx('{0} cobra {1}% ao mês, e os juros correm todo dia. Quando entrar {2} e as contas forem pagas, sobram {3}; usando {4} para pagar essa dívida, você evita cerca de {5} de juros por mês.',
         ab.nome, fmtTaxa(ab.juros), livre.fonte, fmtValor(livre.livre), fmtValor(paga), fmtValor(evita)),
-      premissas: reservaDepois > 0 && e.depoisDoFim
-        ? [tx('Já deixei {0} separados para o essencial entre {1} e {2}, quando entra o próximo dinheiro.', fmtValor(reservaDepois), fmtDataCurta(e.fim), fmtDataCurta(e.depoisDoFim.ate))]
-        : [],
+      premissas: [
+        ...(reservaDepois > 0 && e.depoisDoFim
+          ? [tx('Já deixei {0} separados para o essencial entre {1} e {2}, quando entra o próximo dinheiro.', fmtValor(reservaDepois), fmtDataCurta(e.fim), fmtDataCurta(e.depoisDoFim.ate))]
+          : []),
+        ...(e.semComprasFuturasDoCartao ? [tx('Não contei as compras que você ainda vai fazer no cartão: se a fatura vier maior, sobra menos.')] : []),
+      ],
     })
   }
 
@@ -502,8 +513,8 @@ export function planejar(e: EntradaPlanejador): Plano {
       id: `e-se:${fragil.id}`, icone: 'escudo', tom: 'medio', estado: 'condicional', regra: 'app',
       titulo: lista.length === 1 ? tx('{0}, {1} atrasa.', fragil.premissa, lista[0]) : tx('{0}, {1} e {2} atrasam.', fragil.premissa, lista[0], lista[1]),
       porque: fragil.faltaMinima >= 1
-        ? tx('O plano de hoje fecha, mas fica justo. Deixar {0} separados (ou passar o vencimento para depois do dinheiro) cobre esse caso.', fmtValor(fragil.faltaMinima))
-        : tx('O plano de hoje fecha, mas fica justo. Passar o vencimento para depois do dinheiro cobre esse caso.'),
+        ? tx('Pelo que já está marcado, o plano de hoje fecha, mas fica justo. Deixar {0} separados (ou passar o vencimento para depois do dinheiro) cobre esse caso.', fmtValor(fragil.faltaMinima))
+        : tx('Pelo que já está marcado, o plano de hoje fecha, mas fica justo. Passar o vencimento para depois do dinheiro cobre esse caso.'),
       premissas: [fragil.origem === 'app' ? tx('É um teste com premissa fixa, não uma previsão.') : tx('Cenário tirado do seu histórico.')],
     })
   }

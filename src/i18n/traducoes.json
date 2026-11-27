@@ -19291,10 +19291,6 @@
     "en": "Without today's balance, the app can't check whether day-to-day money holds up: I only counted what's coming in.",
     "es": "Sin el saldo de hoy, la app no comprueba si alcanza el dinero del día a día: conté solo lo que va a entrar."
   },
-  "Já deixei separado o essencial do dia a dia (mercado, farmácia, transporte) até cada entrada.": {
-    "en": "I already set aside day-to-day essentials (groceries, pharmacy, transport) until each payday.",
-    "es": "Ya aparté lo esencial del día a día (súper, farmacia, transporte) hasta cada ingreso."
-  },
   "E o essencial até o primeiro dinheiro depois do fim do plano.": {
     "en": "And the essentials until the first money after the plan ends.",
     "es": "Y lo esencial hasta el primer dinero después del fin del plan."
@@ -19306,14 +19302,6 @@
   "Imprevisto": {
     "en": "Unexpected expense",
     "es": "Imprevisto"
-  },
-  "Se {0} cair 3 dias depois do previsto": {
-    "en": "If {0} comes in 3 days late",
-    "es": "Si {0} llega 3 días después de lo previsto"
-  },
-  "Se aparecer hoje um gasto de {0} que ninguém esperava (uma semana do seu dia a dia)": {
-    "en": "If an unexpected {0} expense shows up today (a week of your day-to-day spending)",
-    "es": "Si hoy aparece un gasto de {0} que nadie esperaba (una semana de tu día a día)"
   },
   "Em {0} o dinheiro não dá para os dois. Você pediu para {1} vir antes, então vai primeiro.": {
     "en": "On {0} the money doesn't cover both. You asked for {1} to come first, so it goes first.",
@@ -19338,10 +19326,6 @@
   "Sem o saldo de hoje, contei só o dinheiro que ainda vai entrar.": {
     "en": "Without today's balance, I only counted the money still coming in.",
     "es": "Sin el saldo de hoy, conté solo el dinero que aún va a entrar."
-  },
-  "Deixei separado o essencial do dia a dia (mercado, farmácia, transporte) até o próximo dinheiro: por isso {0} espera.": {
-    "en": "I set aside day-to-day essentials (groceries, pharmacy, transport) until the next money comes in: that's why {0} waits.",
-    "es": "Aparté lo esencial del día a día (súper, farmacia, transporte) hasta el próximo dinero: por eso {0} espera."
   },
   "Pagar {0} em {1} custaria {2} a menos, mas tiraria o dinheiro do essencial do dia a dia até o próximo dinheiro.": {
     "en": "Paying {0} on {1} would cost {2} less, but would take the money for day-to-day essentials until the next money comes in.",
@@ -19386,14 +19370,6 @@
   "{0}, {1} e {2} atrasam.": {
     "en": "{0}, {1} and {2} will be late.",
     "es": "{0}, {1} y {2} se atrasan."
-  },
-  "O plano de hoje fecha, mas fica justo. Deixar {0} separados (ou passar o vencimento para depois do dinheiro) cobre esse caso.": {
-    "en": "Today's plan works, but it's tight. Setting aside {0} (or moving the due date to after the money comes in) covers this case.",
-    "es": "El plan de hoy cierra, pero queda justo. Apartar {0} (o pasar el vencimiento para después del dinero) cubre este caso."
-  },
-  "O plano de hoje fecha, mas fica justo. Passar o vencimento para depois do dinheiro cobre esse caso.": {
-    "en": "Today's plan works, but it's tight. Moving the due date to after the money comes in covers this case.",
-    "es": "El plan de hoy cierra, pero queda justo. Pasar el vencimiento para después del dinero cubre este caso."
   },
   "É um teste com premissa fixa, não uma previsão.": {
     "en": "It's a test with a fixed assumption, not a forecast.",
@@ -19467,14 +19443,6 @@
     "en": "By your calendar up to {0}, the bill with this installment wouldn't have money on its due date.",
     "es": "Según tu calendario hasta el {0}, la factura con esta cuota no tendría dinero al vencer."
   },
-  "Pelo seu calendário, cabe até {0}, mas tira {1} do que precisa sobrar para o essencial depois disso.": {
-    "en": "By your calendar, it fits until {0}, but it takes {1} from what has to be left for essentials after that.",
-    "es": "Según tu calendario, cabe hasta el {0}, pero quita {1} de lo que debe quedar para lo esencial después."
-  },
-  "Pelo seu calendário até {0}, cabe sem atrasar nenhuma conta (caberia até {1} por mês).": {
-    "en": "By your calendar up to {0}, it fits without making any bill late (up to {1} a month would fit).",
-    "es": "Según tu calendario hasta el {0}, cabe sin atrasar ninguna cuenta (cabrían hasta {1} al mes)."
-  },
   "A escolha é sua": {
     "en": "Your call",
     "es": "La decisión es tuya"
@@ -19534,5 +19502,41 @@
   "Se {0} não vier neste mês, como já aconteceu": {
     "en": "If {0} doesn't come this month, as has happened before",
     "es": "Si {0} no llega este mes, como ya pasó"
+  },
+  "Já deixei separado o essencial do dia a dia (mercado, farmácia, transporte, estimado pelas categorias dos seus gastos) até cada entrada.": {
+    "en": "I already set aside day-to-day essentials (groceries, pharmacy, transport, estimated from your spending categories) until each payday.",
+    "es": "Ya aparté lo esencial del día a día (súper, farmacia, transporte, estimado por las categorías de tus gastos) hasta cada ingreso."
+  },
+  "Não contei as compras que você ainda vai fazer no cartão: se a fatura vier maior, cabe menos.": {
+    "en": "I didn't count the card purchases you're still going to make: if the bill comes in higher, less will fit.",
+    "es": "No conté las compras que aún vas a hacer con la tarjeta: si la factura viene mayor, cabe menos."
+  },
+  "Deixei separado o essencial do dia a dia (mercado, farmácia, transporte, estimado pelas categorias dos seus gastos) até o próximo dinheiro: por isso {0} espera.": {
+    "en": "I set aside day-to-day essentials (groceries, pharmacy, transport, estimated from your spending categories) until the next money comes in: that's why {0} waits.",
+    "es": "Aparté lo esencial del día a día (súper, farmacia, transporte, estimado por las categorías de tus gastos) hasta el próximo dinero: por eso {0} espera."
+  },
+  "Não contei as compras que você ainda vai fazer no cartão: se a fatura vier maior, sobra menos.": {
+    "en": "I didn't count the card purchases you're still going to make: if the bill comes in higher, less is left over.",
+    "es": "No conté las compras que aún vas a hacer con la tarjeta: si la factura viene mayor, sobra menos."
+  },
+  "Pelo que já está marcado, o plano de hoje fecha, mas fica justo. Deixar {0} separados (ou passar o vencimento para depois do dinheiro) cobre esse caso.": {
+    "en": "Based on what's already scheduled, today's plan works, but it's tight. Setting aside {0} (or moving the due date to after the money comes in) covers this case.",
+    "es": "Por lo que ya está marcado, el plan de hoy cierra, pero queda justo. Apartar {0} (o pasar el vencimiento para después del dinero) cubre este caso."
+  },
+  "Pelo que já está marcado, o plano de hoje fecha, mas fica justo. Passar o vencimento para depois do dinheiro cobre esse caso.": {
+    "en": "Based on what's already scheduled, today's plan works, but it's tight. Moving the due date to after the money comes in covers this case.",
+    "es": "Por lo que ya está marcado, el plan de hoy cierra, pero queda justo. Pasar el vencimiento para después del dinero cubre este caso."
+  },
+  "Pelo que já está marcado, nada atrasa até {0}, mas a compra tira {1} do que precisa sobrar para o essencial depois disso.": {
+    "en": "Based on what's already scheduled, nothing is late until {0}, but the purchase takes {1} from what has to be left for essentials after that.",
+    "es": "Por lo que ya está marcado, nada se atrasa hasta el {0}, pero la compra quita {1} de lo que debe quedar para lo esencial después."
+  },
+  "Pelo que já está marcado até {0}, nenhuma conta atrasa com esta compra (caberia até {1} por mês). Isso não conta as compras que você ainda vai fazer no cartão.": {
+    "en": "Based on what's already scheduled up to {0}, no bill is late with this purchase (up to {1} a month would fit). That doesn't count the card purchases you're still going to make.",
+    "es": "Por lo que ya está marcado hasta el {0}, ninguna cuenta se atrasa con esta compra (cabrían hasta {1} al mes). Eso no cuenta las compras que aún vas a hacer con la tarjeta."
+  },
+  "Pelo que já está marcado até {0}, nenhuma conta atrasa com esta compra (caberia até {1} por mês).": {
+    "en": "Based on what's already scheduled up to {0}, no bill is late with this purchase (up to {1} a month would fit).",
+    "es": "Por lo que ya está marcado hasta el {0}, ninguna cuenta se atrasa con esta compra (cabrían hasta {1} al mes)."
   }
 }
