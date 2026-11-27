@@ -19502,5 +19502,37 @@
   "Também pensei em": {
     "en": "I also considered",
     "es": "También pensé en"
+  },
+  "Quitando hoje, você pode deixar de pagar cerca de {0}, se o credor der o desconto dos juros que faltam, e libera {1} por mês. Ainda ficam {2} de reserva; reponha com a parcela liberada.": {
+    "en": "Paying it off today, you may avoid about {0}, if the lender gives the discount on the remaining interest, and you free up {1} a month. You still keep {2} of savings; refill it with the freed installment.",
+    "es": "Liquidando hoy, puedes dejar de pagar cerca de {0}, si el acreedor da el descuento de los intereses que faltan, y liberas {1} al mes. Aún te quedan {2} de reserva; repónla con la cuota liberada."
+  },
+  "Até {0} a menos de juros": {
+    "en": "Up to {0} less interest",
+    "es": "Hasta {0} menos de intereses"
+  },
+  "O contrato diz que adiantar não tem desconto.": {
+    "en": "The contract says paying early has no discount.",
+    "es": "El contrato dice que adelantar no tiene descuento."
+  },
+  "O app ainda não sabe o que o seu contrato diz sobre adiantar: o desconto é o que você pode pedir, não um valor garantido.": {
+    "en": "The app doesn't yet know what your contract says about paying early: the discount is what you can ask for, not a guaranteed amount.",
+    "es": "La app aún no sabe qué dice tu contrato sobre adelantar: el descuento es lo que puedes pedir, no un monto garantizado."
+  },
+  "Juros calculados pelo que você recebeu e pelas datas das parcelas: cerca de {0}% ao mês. Inclui o que mais foi cobrado (IOF, tarifas): é o teto, não a taxa do contrato.": {
+    "en": "Interest worked out from what you received and the installment dates: about {0}% a month. It includes other charges (IOF, fees): it's the ceiling, not the contract rate.",
+    "es": "Intereses calculados por lo que recibiste y las fechas de las cuotas: cerca de {0}% al mes. Incluye otros cargos (IOF, tarifas): es el techo, no la tasa del contrato."
+  },
+  "Se {0} cair 1 dia depois, como já aconteceu": {
+    "en": "If {0} comes in 1 day late, as has happened before",
+    "es": "Si {0} llega 1 día después, como ya pasó"
+  },
+  "Se {0} cair {1} dias depois, como já aconteceu": {
+    "en": "If {0} comes in {1} days late, as has happened before",
+    "es": "Si {0} llega {1} días después, como ya pasó"
+  },
+  "Se {0} não vier neste mês, como já aconteceu": {
+    "en": "If {0} doesn't come this month, as has happened before",
+    "es": "Si {0} no llega este mes, como ya pasó"
   }
 }

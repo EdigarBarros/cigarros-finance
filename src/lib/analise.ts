@@ -34,8 +34,9 @@ import { visao } from './perfil'
 import { planejar, type EntradaPlanejador, type Plano } from './planejador'
 import { conselhosDoPlanejamento, lerPlano, quadroDoMes, type LeituraDoPlano, type Planejamentos, type Quadro } from './planejamento'
 import { tx } from './textos'
-import { jurosDoContrato, quitacaoHoje, type JurosDoContrato, type Quitacao } from './decisoes/custos'
+import { custosDasCondicoes, jurosDoContrato, quitacaoHoje, type JurosDoContrato, type Quitacao } from './decisoes/custos'
 import { decisaoDe, type Decisao } from './decisoes/decisao'
+import { cenariosDaPrevisao } from './decisoes/cenarios'
 import { descontoParaQuitar } from './jurosAprendido'
 import { compromissoDe, diasSemLancar, FIRMEZA_PADRAO, sinaisDe, type Compromisso, type Firmeza, type Sinal } from './sinais'
 import type {
@@ -809,6 +810,15 @@ function valorHoje(d: DividaSim) {
   return soma(d.agenda.map((v, s) => v / Math.pow(1 + i, s)))
 }
 
+/** Quitar hoje por datas: o atrasado com os encargos do atraso, e o que vai vencer com o desconto só do contrato. */
+function quitacaoDaSituacao(s: SituacaoDivida, hojeIso: string, custos: ReturnType<typeof custosDasCondicoes>) {
+  const cal = calendarioDe(s, hojeIso)
+  const parcelas = cal
+    ? cal.parcelas.filter((x) => x.falta > 0).map((x) => ({ vence: x.vencimento, valor: x.falta }))
+    : [{ vence: hojeIso, valor: s.restante }]
+  return quitacaoHoje({ hoje: hojeIso, parcelas, contrato: custos.contrato, encargosDoAtraso: s.jurosAtraso, banco: custos.banco, antecipacao: custos.antecipacao })
+}
+
 function planoDasDividas(abertas: SituacaoDivida[], extraPlano: number, renda: number, atual: number, hojeIso: string, conferencias: ConferenciaDivida[] = []): PlanoDividas | null {
   const contratos = new Map(abertas.map((s) => [s.divida.id, jurosDoContrato(s.divida)]))
   const ds: DividaSim[] = abertas.map((s) => {
@@ -822,16 +832,9 @@ function planoDasDividas(abertas: SituacaoDivida[], extraPlano: number, renda: n
     }
   })
   const porId = new Map(abertas.map((s) => [s.divida.id, s]))
-  /** Quitar hoje por datas: o atrasado com os encargos do atraso, e o que vai vencer com o desconto só do contrato. */
-  const quitacaoDe = (d: DividaSim) => {
-    const s = porId.get(d.id)!
-    const cal = calendarioDe(s, hojeIso)
-    const parcelas = cal
-      ? cal.parcelas.filter((x) => x.falta > 0).map((x) => ({ vence: x.vencimento, valor: x.falta }))
-      : [{ vence: hojeIso, valor: s.restante }]
-    const banco = descontoParaQuitar(conferencias.filter((c) => c.divida_id === d.id))
-    return quitacaoHoje({ hoje: hojeIso, parcelas, contrato: contratos.get(d.id)!, encargosDoAtraso: s.jurosAtraso, banco })
-  }
+  const quitacaoDe = (d: DividaSim) => quitacaoDaSituacao(porId.get(d.id)!, hojeIso, {
+    contrato: contratos.get(d.id)!, antecipacao: 'desconhecida', banco: descontoParaQuitar(conferencias.filter((c) => c.divida_id === d.id)),
+  })
   if (!ds.length) return null
   const total = centavos(soma(abertas.map((s) => s.restanteHoje)))
   const parcelasMes = centavos(soma(ds.map((d) => Math.min(d.parcela, saldoSim(d)))))
@@ -1470,6 +1473,13 @@ export function analisar(e: EntradaAnalise): Analise {
   let eventosDaAgenda: Evento[] = []
   let fimDoHorizonte = hojeIso
   let saldoDaAgenda: { valor: number; mes: string } | null = null
+  // o Cairo é lido logo depois da agenda: o planejador usa o que ele aprendeu (os "e se") e as dívidas, as condições de custo
+  let cairo: LeituraDoCairo | null = null
+  const lerOCairo = () => leituraDoCairo({
+    hojeIso, moeda: e.perfil.moeda, fimDoHorizonte, lancs: e.lancs, categorias: e.categorias, categoriaDe: e.categoriaDe,
+    contas: contasAtivas, dividas: e.dividas, saldos: e.saldos, pagamentos: e.pagamentos, conferencias: e.conferencias ?? [],
+    faturasPagas: e.faturasPagas, taxas: e.taxas, saldoContaCorrente: saldoDaAgenda, eventos: eventosDaAgenda, comDividas: v.dividas,
+  })
   {
     const prox = doMesChave(atual + 1)
     const fimJanela = isoDoDia(prox.ano, prox.mes, 31)
@@ -1557,6 +1567,20 @@ export function analisar(e: EntradaAnalise): Analise {
     const saldoInicial = ccInformado ? centavos(soma(Object.values(ef.caixa).map((b) => b?.cc ?? 0))) : null
     // o saldo é "do mês": o próprio, ou o último informado antes dele (herdado)
     if (saldoInicial !== null) saldoDaAgenda = { valor: saldoInicial, mes: ef.herdadoDe ? `${ef.herdadoDe[0]}-${String(ef.herdadoDe[1]).padStart(2, '0')}` : `${ano}-${String(mes).padStart(2, '0')}` }
+    cairo = lerOCairo()
+    // as dívidas passam a usar as condições de custo do Cairo (contrato, fluxos, regra de antecipação, oferta de quitação)
+    if (cairo && dividas) {
+      for (const x of dividas.ordem) {
+        const sd = abertas.find((a) => a.divida.id === x.id)
+        if (!sd) continue
+        const custos = custosDasCondicoes(cairo.condicoes, x.id, sd.divida)
+        // a oferta do credor vem na moeda principal; numa dívida em outra moeda, fica a da conferência já lida
+        if (!custos.banco && x.quitacao.estado === 'confirmado') continue
+        x.contrato = custos.contrato
+        x.quitacao = quitacaoDaSituacao(sd, hojeIso, custos)
+        x.quitarHoje = centavos(x.quitacao.paraQuitar ?? x.quitacao.semDesconto)
+      }
+    }
     const ritmoDia = saldoInicial !== null && rec.length
       ? centavos(media(recentes.map((k) => soma(naJanela.filter((l) => chaveMes(l.ano, l.mes) === k && ehDiaADia(l)).map((l) => l.valor)))) / 30.4)
       : 0
@@ -1793,6 +1817,8 @@ export function analisar(e: EntradaAnalise): Analise {
       abertas: abertas.filter(semParcelaFixa)
         .map((sd) => ({ nome: sd.divida.descricao, saldo: sd.restanteHoje, juros: sd.divida.juros_mes! })),
     }
+    // os "e se" vêm do que o Cairo aprendeu da renda da pessoa (atraso e falta); sem aprendizado, nenhum
+    entradaDoPlano.cenarios = cenariosDaPrevisao(cairo, entradaDoPlano.entradas, hojeIso, fimJanela)
     plano = planejar(entradaDoPlano)
     quadros = { este: quadroDoMes(plano, hojeIso, 'este', extras), proximo: quadroDoMes(plano, hojeIso, 'proximo', extras) }
     if (unicos.length || saldoInicial !== null || calendario.dias.some((c) => c.entra || c.sai)) {
@@ -2054,6 +2080,8 @@ export function analisar(e: EntradaAnalise): Analise {
       ? tx('No atraso, essa dívida cobra {0}% ao mês, mais do que qualquer aplicação segura rende.', fmtTaxa(cara.juros!))
       : tx('Essa dívida cobra {0}% ao mês, mais do que qualquer aplicação segura rende.', fmtTaxa(cara.juros!))
     const conhecido = q.estado !== 'desconhecido' && q.desconto !== null
+    // o desconto calculado pelo contrato é o que dá para pedir; garantido só com a oferta do credor ou a regra do contrato
+    const garantido = q.estado === 'confirmado' || (q.minimoGarantido ?? 0) >= (q.desconto ?? 0) - 0.005
     const premissa = q.estado === 'confirmado' ? tx('O valor é o que o credor informou.')
       : q.estado === 'estimado' ? tx('O desconto é uma estimativa pela taxa que as parcelas embutem: peça o valor exato ao credor.')
         : q.estado === 'calculado' ? tx('O desconto é o dos juros do contrato nas parcelas que ainda não venceram: confirme o valor com o credor.')
@@ -2066,14 +2094,18 @@ export function analisar(e: EntradaAnalise): Analise {
       porque: !cara.parcela
         ? `${cobra} ${tx('Só de juros, são cerca de {0} por mês. Quitando hoje, esse custo some, e ainda ficam {1} de reserva.', fmtValor(jurosDoMes), fica)}`
         : conhecido && (q.desconto ?? 0) >= 0.01
-          ? `${cobra} ${tx('Quitando hoje, você deixa de pagar cerca de {0} e libera {1} por mês. Ainda ficam {2} de reserva; reponha com a parcela liberada.', fmtValor(q.desconto!), fmtValor(cara.parcela), fica)} ${premissa}`.trim()
+          ? garantido
+            ? `${cobra} ${tx('Quitando hoje, você deixa de pagar cerca de {0} e libera {1} por mês. Ainda ficam {2} de reserva; reponha com a parcela liberada.', fmtValor(q.desconto!), fmtValor(cara.parcela), fica)} ${premissa}`.trim()
+            : `${cobra} ${tx('Quitando hoje, você pode deixar de pagar cerca de {0}, se o credor der o desconto dos juros que faltam, e libera {1} por mês. Ainda ficam {2} de reserva; reponha com a parcela liberada.', fmtValor(q.desconto!), fmtValor(cara.parcela), fica)} ${premissa}`.trim()
           : conhecido
             ? `${cobra} ${tx('Quitando hoje, você libera {0} por mês. Ainda ficam {1} de reserva; reponha com a parcela liberada.', fmtValor(cara.parcela), fica)} ${premissa}`.trim()
             : `${cobra} ${tx('Sem os juros do contrato, o app não sabe quanto o credor abate das parcelas que faltam: peça a ele o valor para quitar hoje. Sem desconto nenhum, seriam {0}; mesmo assim você libera {1} por mês e ainda ficam {2} de reserva.', fmtValor(q.semDesconto), fmtValor(cara.parcela), fica)}`,
       impacto: !cara.parcela ? tx('{0} por mês a menos de juros', fmtValor(jurosDoMes))
-        : conhecido && (q.desconto ?? 0) >= 0.01 ? tx('{0} a menos de juros', fmtValor(q.desconto!)) : tx('{0} por mês livres', fmtValor(cara.parcela)),
+        : conhecido && (q.desconto ?? 0) >= 0.01
+          ? garantido ? tx('{0} a menos de juros', fmtValor(q.desconto!)) : tx('Até {0} a menos de juros', fmtValor(q.desconto!))
+          : tx('{0} por mês livres', fmtValor(cara.parcela)),
       decisao: decisaoDe({
-        estado: conhecido ? 'recomenda' : 'pergunta', regra: 'app',
+        estado: !conhecido ? 'pergunta' : garantido ? 'recomenda' : 'condicional', regra: 'app',
         premissas: [...q.premissas, ...(cara.contrato.origem !== 'desconhecida' ? [cara.contrato.nota] : [])],
         alternativas: [
           tx('Manter a reserva inteira e seguir pagando as parcelas: mais segurança, mais juros.'),
@@ -2404,12 +2436,7 @@ export function analisar(e: EntradaAnalise): Analise {
   }
 
   // Cairo, parte de dados (src/cairo): fatos com qualidade, o que aprendeu da pessoa, condições de custo, previsões com faixa e
-  // cenários. Por enquanto ninguém na tela lê: fica pronto para a parte de decisão. Se ele falhar, a análise segue sem ele.
-  const cairo = leituraDoCairo({
-    hojeIso, moeda: e.perfil.moeda, fimDoHorizonte, lancs: e.lancs, categorias: e.categorias, categoriaDe: e.categoriaDe,
-    contas: contasAtivas, dividas: e.dividas, saldos: e.saldos, pagamentos: e.pagamentos, conferencias: e.conferencias ?? [],
-    faturasPagas: e.faturasPagas, taxas: e.taxas, saldoContaCorrente: saldoDaAgenda, eventos: eventosDaAgenda, comDividas: v.dividas,
-  })
+  // cenários. Lido logo depois da agenda (o planejador e as dívidas usam); se ele falhar, a análise segue sem ele.
 
   return {
     cairo,

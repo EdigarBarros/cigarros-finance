@@ -89,7 +89,11 @@ export function executar(m: Mundo, politica: Politica) {
   const decisoes: { dia: string; pagar: string[] }[] = []
   const atrasou = new Set<string>()
   // o aviso do primeiro dia: o plano previu atraso (ou, na nova, um "e se" que atrasa)?
-  const primeira = planejar({ ...entradaNoDia(m, m.hoje, caixa, pendentes, politica), cenarios: politica === 'nova' ? undefined : [] })
+  // o "e se" da nova: o atraso que o Cairo aprenderia destes mundos (o salário atrasa até 3 dias em 9 de cada 10 meses),
+  // passado como dado de teste, do mesmo jeito que lib/decisoes/cenarios.ts passa o aprendido
+  const salario = m.entradas.find((x) => x.descricao.startsWith('Salário'))
+  const cenarios = politica === 'nova' && salario ? [{ id: 'atraso', origem: 'previsao' as const, premissa: '', adiar: { dias: 3, descricao: salario.descricao } }] : []
+  const primeira = planejar({ ...entradaNoDia(m, m.hoje, caixa, pendentes, politica), cenarios })
   const previu = primeira.atrasos > 0
   const condicional = !previu && Boolean(primeira.estresse?.some((r) => r.novasAtrasadas.length))
 

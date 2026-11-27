@@ -46,6 +46,10 @@ sem `publicada_em`. Ele revisa e publica pelo painel.
   mexer (quem é dono de cada pasta, migrações reservadas, ordem de integração). `src/cairo/` não importa `src/lib`, React nem
   Supabase; a ponte é `src/lib/cairo.ts`. Mexeu no Cairo, em `qualidade/meses.ts`, `fatos/movimentos.ts` ou na ponte? Rode
   `node scripts/cairo/testar.mjs` e `node scripts/painel/testar.mjs`; no app de demonstração, `testar-cairo.cjs`.
+- Decisões do Cairo (custos, quitação, planejador de pagamentos, parcela nova; `src/lib/decisoes/`, `lib/planejador.ts`):
+  [`docs/cairo/decisao.md`](docs/cairo/decisao.md). Mexeu? Rode `node scripts/decisoes/testar.mjs` (e `avaliar` para o placar
+  por consequências), `node scripts/cairo/integracao/testar.mjs` e, no app de demonstração, `testar-decisoes.cjs`.
+  Desconto de quitar e de adiantar sai só do juro do contrato; o do atraso nunca entra nessa conta.
 - Invest (seção 4.22 do mesmo documento): o motor fica em `src/lib/invest/` (puro) e tem testes próprios. Mexeu em conta
   de carteira, rentabilidade, importação ou saldo? Rode `node scripts/invest/testar.mjs` e, se mexeu na migração,
   `scripts/invest/isolamento.sh`.

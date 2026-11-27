@@ -2452,3 +2452,35 @@ com dados reais: por isso nenhuma faixa aparece na tela.
 **Pendências.** Migrações 47–49 (versão por linha, eventos da pessoa, registro de previsões) reservadas em
 `docs/cairo/coordenacao.md`, não criadas. Gasto futuro no cartão não entra nos cenários. Calibração com dados reais depende do
 registro de previsões. App Android: não gerado nesta etapa (veja a resposta da sessão).
+
+### 27/11/2026 — Claude (Claude 2 do Cairo) — Decisões: custos, quitação, planejador que protege o essencial
+
+**Contexto.** Parte de decisão do Cairo (custos, planejamento e consequências), consumindo a parte de dados do Claude 1.
+Detalhe completo, números e limites em `docs/cairo/decisao.md`; pedidos ao Claude 1 em `docs/cairo/coordenacao.md`.
+
+**Problema encontrado (estava no site).** Com a dívida atrasada e regra de atraso, `jurosQuePesam` devolve o juro do
+atraso, e `valorHoje`/`antecipar`/`jurosEmbutidos` (`lib/analise.ts`) descontavam as parcelas futuras por ele: o "Use o
+guardado para quitar" prometia uma economia inflada (no caso de teste, ~R$ 35 em vez de R$ 5,91). Além disso, `juros_mes`
+vazio ("Sem juros" e "não sei" gravam igual) era tratado como zero confirmado.
+
+**O que mudou.** `src/lib/decisoes/` (novo): `custos.ts` (juro do contrato separado do atraso; quitação por datas com estados
+confirmado/calculado/estimado/sem-desconto/desconhecido e mínimo garantido; lê `analise.cairo.condicoes`),
+`taxaImplicita.ts` (TIR por datas, sem chamar de CET), `decisao.ts`, `cenarios.ts` ("e se" só do aprendizado do Cairo),
+`parcelaNova.ts`, `observado.ts`. `lib/planejador.ts`: `simularPagamentos` (núcleo), prioridade da pessoa → essencial →
+custo, reserva do essencial do dia a dia e de depois do fim do plano, falta mínima, saídas, "e se"; campos opcionais.
+`lib/analise.ts`: essencial pela categoria nos eventos, o Cairo lido logo depois da agenda, quitação com as condições do
+Cairo, `Acao.decisao`, `entradaDoPlano`. `lib/naHora.ts`: parcela nova pelo calendário. `components/DecisaoExplicada.tsx`.
+74 textos novos com `en` e `es`.
+
+**Validação.** `npx tsc -b`, `npm run lint` (sem aviso novo), build. `scripts/decisoes/testar.mjs` 21/21,
+`scripts/cairo/integracao/testar.mjs` 4/4 (não-antecipação com `trocarFuturo` em 36 pares), `scripts/painel/testar.mjs`
+60/60, `scripts/cairo/testar.mjs` 110/110. App de demonstração: `testar-decisoes.cjs` (novo), `testar-planejamento`,
+`testar-consultor-que-aprende`, `testar-a-receber`, `testar-plano-travado`, `testar-dividas-em-espera`,
+`testar-fatura-como-divida`, `testar-contas` sem falha; `testar-movel` 378 OK e 1 falha intermitente que já existia: a
+saudação do Kairo voador ("Oi, Marina! Eu sou o Kairo…") passa da borda a 320 px em parte das rodadas, também no build da
+produção sem esta mudança (reproduzido: borda direita em 376 px numa tela de 320). Avaliação em 500 mundos sintéticos: dias com essencial atrasado 5.593 → 487, essenciais
+sem pagar 170 → 7, mas multa e juros +74% (a reserva do dia a dia empurra faturas para o rotativo; a dica diz o custo).
+
+**Pendências.** Os pedidos 1–6 de `docs/cairo/coordenacao.md` (essencial declarado, "sem juros" × "não sei", tipo do credor,
+prioridade da pessoa, registro das decisões, ligação fonte ↔ agenda). Sem migração nesta etapa.
+

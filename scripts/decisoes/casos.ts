@@ -4,7 +4,9 @@
  * A avaliação por consequências (o placar das políticas) fica em `avaliacao.ts`.
  */
 import { analisar, type EntradaAnalise } from '../../src/lib/analise'
-import { economiaDeAdiantar, jurosDoContrato, quitacaoHoje, type JurosDoContrato } from '../../src/lib/decisoes/custos'
+import { custosDasCondicoes, economiaDeAdiantar, jurosDoContrato, quitacaoHoje, type JurosDoContrato } from '../../src/lib/decisoes/custos'
+import { cenariosDaPrevisao } from '../../src/lib/decisoes/cenarios'
+import type { CondicaoDeCusto, LeituraDoCairo } from '../../src/cairo'
 import { taxaDosFluxos } from '../../src/lib/decisoes/taxaImplicita'
 import { avaliarParcelaNova } from '../../src/lib/decisoes/parcelaNova'
 import { decisaoDe } from '../../src/lib/decisoes/decisao'
@@ -83,6 +85,12 @@ export const CASOS: Caso[] = [
       perto('a vencer', q.aVencer, 200)
       perto('desconto', q.desconto, 5.84)
       perto('para quitar: 100 + 5 + 194,16', q.paraQuitar, 299.16)
+      // o app não sabe o que o contrato diz sobre adiantar (Cairo: antecipação 'desconhecida'): o mínimo garantido é zero
+      igual('antecipação desconhecida', [q.antecipacao, q.minimoGarantido], ['desconhecida', 0])
+      const g = quitacaoHoje({ hoje: HOJE, parcelas: PARCELAS, contrato: informado(2), encargosDoAtraso: 5, antecipacao: 'desconto_contratual' })
+      perto('com a regra do contrato, o desconto é garantido', g.minimoGarantido, 5.84)
+      const sem = quitacaoHoje({ hoje: HOJE, parcelas: PARCELAS, contrato: informado(2), antecipacao: 'sem_desconto' })
+      igual('contrato que diz "sem desconto": zero confirmado', [sem.estado, sem.desconto], ['sem-desconto', 0])
     },
   },
   {
@@ -109,6 +117,47 @@ export const CASOS: Caso[] = [
       perto('economia', e.economia, 5.84, 0.02)
       const d = economiaDeAdiantar({ hoje: HOJE, parcelas: PARCELAS, contrato: desconhecido, dinheiro: 150 })
       igual('sem taxa: economia null e abate pelo menos o que pagou', [d.economia, d.minimoAbatido], [null, 150])
+    },
+  },
+
+  {
+    nome: 'condições do Cairo: contrato, fluxos e oferta lidos sem tocar na regra de atraso',
+    rodar() {
+      const c: CondicaoDeCusto[] = [
+        { tipo: 'contratual', divida: 'a', taxa: { fracao: 0.02, periodo: 'mes', regime: 'composta' }, fonte: 'informada', desde: null },
+        { tipo: 'atraso', divida: 'a', multa: 0.02, mora: { fracao: 0.15, periodo: 'mes', regime: 'simples' }, porDia: null, base: 'parcela', fonte: 'informada' },
+        { tipo: 'antecipacao', divida: 'a', regra: 'desconhecida' },
+        { tipo: 'oferta_quitacao', divida: 'a', valor: { centavos: 28000, moeda: 'BRL' }, total: { centavos: 30500, moeda: 'BRL' }, dia: '2026-11-17', ref: { tabela: 'divida_conferencias', id: 'x', versao: null } },
+        // só o que recebeu e as parcelas, com a data em que recebeu: 250 em 01/01, 135 em 31/01 e 02/03 → 5,288%
+        { tipo: 'fluxo_do_contrato', divida: 'b', recebido: { centavos: 25000, moeda: 'BRL' }, recebidoEm: '2026-01-01', parcelas: [{ vence: '2026-01-31', valor: { centavos: 13500, moeda: 'BRL' } }, { vence: '2026-03-02', valor: { centavos: 13500, moeda: 'BRL' } }] },
+        { tipo: 'atraso', divida: 'c', multa: 0.02, mora: { fracao: 0.175, periodo: 'mes', regime: 'simples' }, porDia: null, base: 'parcela', fonte: 'informada' },
+      ]
+      const a = custosDasCondicoes(c, 'a')
+      igual('contrato 2%', [a.contrato.mes, a.contrato.origem], [2, 'informada'])
+      igual('oferta de quitação', [a.banco?.quitar, a.banco?.desconto], [280, 25])
+      igual('antecipação desconhecida', a.antecipacao, 'desconhecida')
+      const b = custosDasCondicoes(c, 'b')
+      igual('fluxos: implícita', b.contrato.origem, 'implicita')
+      perto('fluxos: TIR por datas', b.contrato.mes, 5.288, 0.002)
+      igual('só atraso: contrato desconhecido (o atraso não vira contrato)', custosDasCondicoes(c, 'c').contrato.mes, null)
+    },
+  },
+  {
+    nome: 'cenários: o "e se" vem do que o Cairo aprendeu, nunca de premissa fixa',
+    rodar() {
+      const fonte = (descricao: string, p90: number, peso: number, pNaoOcorre: number) => ({
+        chave: `desc:${descricao}`, descricao, diaPrevisto: 5, origem: 'detectada', meses: 8, pNaoOcorre,
+        atraso: { tipo: 'estimativa', dist: { quantis: { p10: 0, p50: 0, p90 }, calibracao: { versao: 'x', cobertura80: null } }, prov: { refs: [], conhecidoEm: null, atualizadoEm: null }, metodo: 'suavizado', nEf: 8, pesoDoHistorico: peso },
+      })
+      const leitura = (fs: unknown[]) => ({ aprendizado: { entradas: fs } }) as unknown as LeituraDoCairo
+      const entradas = [{ data: '2026-11-05', valor: 3000, descricao: 'Salário' }, { data: '2026-11-20', valor: 400, descricao: 'Freela' }]
+      igual('sem Cairo, nenhum', cenariosDaPrevisao(null, entradas, '2026-11-01', '2026-12-31'), [])
+      igual('histórico sem atraso, nenhum', cenariosDaPrevisao(leitura([fonte('Salário', 0, 0.8, 0.01)]), entradas, '2026-11-01', '2026-12-31'), [])
+      igual('pouco histórico, nenhum', cenariosDaPrevisao(leitura([fonte('Salário', 4, 0.2, 0.01)]), entradas, '2026-11-01', '2026-12-31'), [])
+      const c = cenariosDaPrevisao(leitura([fonte('Salário', 4, 0.8, 0.12)]), entradas, '2026-11-01', '2026-12-31')
+      igual('atraso de 4 dias e falta, do Salário', c.map((x) => [x.id, x.adiar?.dias ?? null, x.origem]), [['atraso:desc:Salário', 4, 'previsao'], ['falta:desc:Salário', null, 'previsao']])
+      certo('premissa sem a palavra chance', c.every((x) => !/chance/i.test(x.premissa)))
+      igual('sem cenários, o planejador não testa nada', planejar(plano({ entradas, cenarios: undefined })).estresse, [])
     },
   },
 
@@ -257,14 +306,15 @@ export const CASOS: Caso[] = [
     },
   },
   {
-    nome: 'planejador: e se o salário atrasar 3 dias (condicional, com premissa)',
+    nome: 'planejador: e se o salário atrasar como já atrasou (condicional, com premissa)',
     rodar() {
       // 100 hoje; aluguel 900 (essencial) dia 11; salário 1.000 dia 10. Fecha, mas com 3 dias de atraso o aluguel atrasa.
       const e = plano({
         saldoInicial: 100,
         entradas: [{ data: '2026-11-10', valor: 1000, descricao: 'Salário' }],
         compromissos: [{ descricao: 'Aluguel', valor: 900, vence: '2026-11-11', origem: 'conta', essencial: true }],
-        cenarios: undefined,
+        // o que o Cairo passaria para quem tem salário que já atrasou 3 dias (lib/decisoes/cenarios.ts)
+        cenarios: [{ id: 'renda-atrasa', origem: 'previsao', premissa: 'Se Salário cair 3 dias depois, como já aconteceu', adiar: { dias: 3, descricao: 'Salário' } }],
       })
       const p = planejar(e)
       igual('o plano normal não atrasa', p.atrasos, 0)
@@ -273,7 +323,7 @@ export const CASOS: Caso[] = [
       perto('separar 800 cobre (900 − 100)', r.faltaMinima, 800, 1)
       const d = p.dicas.find((x) => x.id === 'e-se:renda-atrasa')!
       igual('condicional', d.estado, 'condicional')
-      certo('premissa fixa dita', d.premissas!.some((x) => x.includes('não uma previsão')))
+      certo('premissa: o histórico', d.premissas!.some((x) => x.includes('histórico')))
       // o cenário da previsão (Claude 1) entra no lugar dos do app
       const q = planejar({ ...e, cenarios: [{ id: 'aprendido', origem: 'previsao', premissa: 'Se o Salário cair no dia 12', adiar: { dias: 2, descricao: 'Salário' } }] })
       igual('usa só o cenário recebido', q.estresse!.map((x) => x.id), ['aprendido'])

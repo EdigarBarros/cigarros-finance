@@ -88,8 +88,8 @@ export interface EntradaPlanejador {
   /** Para quando não dá para tudo: o dinheiro guardado e o que te devem, que o plano não usa sozinho. */
   alternativas?: { guardado: number; aReceber: { nome: string; valor: number; data: string | null }[] }
   /**
-   * Os testes de estresse. Os cenários de previsão (Claude 1, contrato em docs/cairo-decisoes.md) entram aqui; sem eles,
-   * os do app (`cenariosDoApp`), sempre com a premissa dita.
+   * Os testes de estresse: os cenários que a previsão aprendeu (lib/decisoes/cenarios.ts, a partir de `analise.cairo`).
+   * Sem eles, nenhum: o planejador não inventa atraso com premissa fixa.
    */
   cenarios?: CenarioDoPlano[]
 }
@@ -346,26 +346,9 @@ export function aplicarCenario(e: EntradaPlanejador, c: CenarioDoPlano): Entrada
   return { ...e, entradas, compromissos }
 }
 
-/**
- * Os "e se" que o app testa quando ninguém passou cenários: o maior dinheiro dos próximos 30 dias atrasa 3 dias, e (com o
- * saldo conhecido) um imprevisto de uma semana de gastos do dia a dia hoje. São premissas fixas, ditas na explicação:
- * não são previsão. Quando a previsão (Claude 1) mandar cenários aprendidos, eles entram em `cenarios` no lugar destes.
- */
-export function cenariosDoApp(e: EntradaPlanejador): CenarioDoPlano[] {
-  const limite = maisDias(e.hoje, 30)
-  const maior = [...e.entradas].filter((x) => x.valor > 0 && x.data >= e.hoje && x.data <= limite).sort((a, b) => b.valor - a.valor)[0]
-  const out: CenarioDoPlano[] = []
-  if (maior) out.push({ id: 'renda-atrasa', origem: 'app', adiar: { dias: 3, descricao: maior.descricao }, premissa: tx('Se {0} cair 3 dias depois do previsto', maior.descricao) })
-  const semana = Math.round((Math.max(0, e.ritmoDia) * 7) / 10) * 10
-  if (e.saldoInicial !== null && semana >= 50) {
-    out.push({ id: 'imprevisto', origem: 'app', imprevisto: { valor: semana, data: e.hoje }, premissa: tx('Se aparecer hoje um gasto de {0} que ninguém esperava (uma semana do seu dia a dia)', fmtValor(semana)) })
-  }
-  return out
-}
-
 function estresseDe(e: EntradaPlanejador, base: ReturnType<typeof simularPagamentos>, faltaBase: number): ResultadoDoCenario[] {
   const jaAtrasam = new Set(atrasadosDe(base).map(chaveDoAtraso))
-  return (e.cenarios ?? cenariosDoApp(e)).map((c) => {
+  return (e.cenarios ?? []).map((c) => {
     const ee = aplicarCenario(e, c)
     const r = simularPagamentos(ee)
     const novas = atrasadosDe(r).filter((p) => !jaAtrasam.has(chaveDoAtraso(p)) && p.descricao !== tx('Imprevisto'))
