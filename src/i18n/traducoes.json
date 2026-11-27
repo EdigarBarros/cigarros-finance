@@ -19062,5 +19062,17 @@
   "Você digitou {0}, mais do que falta na fatura de {1} ({2}). Confira se é esta mesma fatura.": {
     "en": "You entered {0}, more than what is left on the {1} bill ({2}). Check that it is the right bill.",
     "es": "Escribiste {0}, más de lo que falta en la factura de {1} ({2}). Verifica que sea esta misma factura."
+  },
+  "O valor sai do saldo da conta deste banco (o mesmo saldo do Planejamento e de Dinheiro guardado).": {
+    "en": "The amount comes out of this bank account balance (the same balance used by the Plan and Saved money).",
+    "es": "El valor sale del saldo de la cuenta de este banco (el mismo saldo de la Planificación y del Dinero guardado)."
+  },
+  "Num mês que ainda não chegou, o saldo do banco não muda.": {
+    "en": "In a month that hasn’t arrived yet, the bank balance doesn’t change.",
+    "es": "En un mes que aún no llegó, el saldo del banco no cambia."
+  },
+  "A fatura do {0} está paga: {1}.": {
+    "en": "The {0} bill is paid: {1}.",
+    "es": "La factura de {0} está pagada: {1}."
   }
 }

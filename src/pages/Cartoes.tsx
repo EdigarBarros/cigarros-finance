@@ -1322,7 +1322,7 @@ export function FormPagarFatura({ c, alvo, aoFechar, inicial }: {
   const pagoEm = data || hojeLocal()
   const caixinhaNoMes = bancoId ? mesEfetivo(c.d.meses, Number(pagoEm.slice(0, 4)), Number(pagoEm.slice(5, 7))).caixa[bancoId]?.caixinha ?? 0 : 0
   // o que este pagamento já tinha tirado da caixinha volta para ela antes de tirar o novo valor
-  const caixinhaLivre = centavos(caixinhaNoMes + (antigo && efeitoNaCaixinha(antigo).length && antigo.banco_id === bancoId ? antigo.valor : 0))
+  const caixinhaLivre = centavos(caixinhaNoMes + (antigo?.da_caixinha && efeitoNaCaixinha(antigo).length && antigo.banco_id === bancoId ? antigo.valor : 0))
   const ligadoAoLimite = cartao.garantia_caixinha && cartao.banco_id === bancoId
   // o campo de juros só aparece com atraso (ou se já havia juros), e não num pagamento de parte; escondido, o que foi digitado antes não vale
   const mostraJuros = !semExtras && !emParte && !parcial && (atraso > 0 || (pagamento?.juros ?? 0) > 0)
@@ -1332,7 +1332,7 @@ export function FormPagarFatura({ c, alvo, aoFechar, inicial }: {
    * saldo do novo (vai para `saldo_mexido`, para desfazer só o que foi feito de verdade).
    */
   const acertarCaixinha = async (novo: { valor: number; pago_em: string; banco_id: string | null; da_caixinha: boolean } | null) => {
-    const mexer = Boolean(novo?.da_caixinha && novo.banco_id && mesJaChegou(Number(novo.pago_em.slice(0, 4)), Number(novo.pago_em.slice(5, 7))))
+    const mexer = Boolean(!sem38 && novo?.banco_id && mesJaChegou(Number(novo.pago_em.slice(0, 4)), Number(novo.pago_em.slice(5, 7))))
     const efeitos = [...efeitoNaCaixinha(antigo, -1), ...(novo && mexer ? efeitoNaCaixinha({ ...novo, saldo_mexido: true }) : [])]
     if (!efeitos.length) return mexer
     return (await c.ajustarCaixinha(efeitos)) && mexer
@@ -1351,7 +1351,7 @@ export function FormPagarFatura({ c, alvo, aoFechar, inicial }: {
 
     // ---------- pagamento de parte: novo, ou ajeitando um que continua sendo parte ----------
     if (emParte) {
-      const mexeu = dados.da_caixinha && mesJaChegou(Number(pagoEm.slice(0, 4)), Number(pagoEm.slice(5, 7)))
+      const mexeu = !sem38 && Boolean(dados.banco_id) && mesJaChegou(Number(pagoEm.slice(0, 4)), Number(pagoEm.slice(5, 7)))
       let id = parcial?.id
       if (parcial) {
         if (!(await c.cartoes.editarParte(parcial.id, { ...dados, saldo_mexido: mexeu }))) { setSalvando(false); return setErro(tx('Não deu certo. Tente de novo.')) }
@@ -1372,7 +1372,7 @@ export function FormPagarFatura({ c, alvo, aoFechar, inicial }: {
       const comJuros = j > 0 && !semExtras
       const lanc = comJuros ? await c.d.addLanc(lancamentoDosJuros(c, cartao, f, j, pagoEm, bancoId || null)) : undefined
       if (comJuros && !lanc) { setSalvando(false); return setErro(tx('Não consegui salvar os juros. Nada foi gravado: tente de novo.')) }
-      const mexeu = dados.da_caixinha && mesJaChegou(Number(pagoEm.slice(0, 4)), Number(pagoEm.slice(5, 7)))
+      const mexeu = !sem38 && Boolean(dados.banco_id) && mesJaChegou(Number(pagoEm.slice(0, 4)), Number(pagoEm.slice(5, 7)))
       const nova = await c.cartoes.pagarFatura({
         cartao_id: cartao.id, ano: f.ano, mes: f.mes, ...dados, saldo_mexido: mexeu,
         tipo: 'paga', juros: j, juros_lanc_id: lanc?.id ?? null,
@@ -1400,7 +1400,7 @@ export function FormPagarFatura({ c, alvo, aoFechar, inicial }: {
         jurosLanc = null
       }
     }
-    const mexeu = dados.da_caixinha && mesJaChegou(Number(pagoEm.slice(0, 4)), Number(pagoEm.slice(5, 7)))
+    const mexeu = !sem38 && Boolean(dados.banco_id) && mesJaChegou(Number(pagoEm.slice(0, 4)), Number(pagoEm.slice(5, 7)))
     if (await c.cartoes.editarPagamento(pagamento.id, { ...dados, saldo_mexido: mexeu, juros: j, juros_lanc_id: jurosLanc })) {
       const ok = await acertarCaixinha(dados)
       if (mexeu && !ok) await c.cartoes.editarPagamento(pagamento.id, { saldo_mexido: false })
@@ -1472,6 +1472,13 @@ export function FormPagarFatura({ c, alvo, aoFechar, inicial }: {
               opcoes={[...(usaCaixinha ? [] : [{ valor: '', rotulo: tx('Não sei / não importa') }]), ...bancos.map((b) => ({ valor: b.id, rotulo: b.nome, cor: b.cor }))]}
               placeholder={tx('Escolher…')} />
           </label>
+        )}
+        {!usaCaixinha && bancoId && !sem38 && (
+          <span className="campo-ajuda">
+            {mesJaChegou(Number(pagoEm.slice(0, 4)), Number(pagoEm.slice(5, 7)))
+              ? tx('O valor sai do saldo da conta deste banco (o mesmo saldo do Planejamento e de Dinheiro guardado).')
+              : tx('Num mês que ainda não chegou, o saldo do banco não muda.')}
+          </span>
         )}
         {usaCaixinha && bancoId && (
           <div className={`cc-caixinha ${v > caixinhaLivre ? 'pouco' : ''}`}>

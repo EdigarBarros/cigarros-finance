@@ -2345,3 +2345,19 @@ fatura"). `testar-fatura-como-divida.cjs` 25 OK. (O PR #315 entrou vazio por eng
 enviado): leva o 2.9.4 mais o mês nas faturas a pagar e o aviso de valor acima do que falta (#316). `versionCode` 32 → 33.
 Chave do Drive do dono só para assinar, apagada em seguida. Conferido: `jarsigner -verify`, impressão da chave de upload
 (A7:07:94:…:5D:9D) e o código novo no pacote.
+
+### 27/11/2026 — Claude — Pagar fatura pela conta tira do saldo do banco; Lançamentos mostra a fatura quitada
+
+**Problema.** O pagamento de fatura só mexia no saldo do banco quando saía do cofrinho (caixinha). Pago pela conta (com o
+banco escolhido), o saldo do banco continuava o mesmo, e o "O que está na conta" do Planejamento ficava maior do que era.
+
+**Correção.** `efeitoNaCaixinha` (`lib/cartoes.ts`) vale também para a conta corrente (`cc`). `FormPagarFatura` marca
+`saldo_mexido` sempre que há banco e o mês já chegou (com a migração 38), desconta ao pagar, devolve ao desfazer e acerta ao
+ajeitar. O formulário avisa "O valor sai do saldo da conta deste banco". Pagamentos antigos (`saldo_mexido` falso) não
+mudam sozinhos. Para descontar um deles: Cartões → a fatura → "Ajeitar pagamento" → Salvar.
+**Lançamentos:** a nota do cartão (`pagoDaFatura`) também mostra a fatura quitada e os pagamentos dela, com o dia ("A fatura
+do X está paga: R$ … em …"). Eles não viram saída, porque as compras já são os gastos.
+
+**Validação.** tsc, lint, build. `testar-fatura-como-divida.cjs`: o saldo da conta cai o valor pago, `saldo_mexido`
+verdadeiro e a nota mostra o pagamento; todos OK. `scripts/painel/testar.mjs` 55/55 (o caso "da conta" passou a esperar o
+desconto na `cc`). `testar-fatura-em-parte`, `testar-plano-travado`, `testar-planejamento` e `testar-movel` sem falha.

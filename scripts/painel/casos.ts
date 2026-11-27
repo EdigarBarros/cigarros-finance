@@ -393,7 +393,8 @@ export const CASOS: Caso[] = [
       const pago = { valor: 100, pago_em: '2026-11-10', banco_id: 'b1', da_caixinha: true, saldo_mexido: true }
       igual('tira', efeitoNaCaixinha(pago), [{ ano: 2026, mes: 11, efeitos: [{ banco: 'b1', tipo: 'caixinha', delta: -100 }] }])
       igual('desfazer devolve', efeitoNaCaixinha(pago, -1), [{ ano: 2026, mes: 11, efeitos: [{ banco: 'b1', tipo: 'caixinha', delta: 100 }] }])
-      igual('da conta: não mexe na caixinha', efeitoNaCaixinha({ ...pago, da_caixinha: false }), [])
+      // pago pela conta: sai da conta corrente do banco (antes não saía de lugar nenhum, e o saldo ficava maior do que era)
+      igual('da conta: tira da conta, não da caixinha', efeitoNaCaixinha({ ...pago, da_caixinha: false }), [{ ano: 2026, mes: 11, efeitos: [{ banco: 'b1', tipo: 'cc', delta: -100 }] }])
       igual('o app não mexeu: desfazer não devolve nada', efeitoNaCaixinha({ ...pago, saldo_mexido: false }, -1), [])
       igual('sem banco: nada', efeitoNaCaixinha({ ...pago, banco_id: null }), [])
       const meses: Mes[] = [{ ano: 2026, mes: 11, investimentos: 0, moedas: {}, meta_usd: 0, caixa: { b1: { cc: 50, caixinha: 300 } } }]
