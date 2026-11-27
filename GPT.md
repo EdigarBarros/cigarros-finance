@@ -2532,7 +2532,12 @@ responder os 9 pedidos do Claude 2 (`docs/cairo/coordenacao.md`).
 **Validação.** tsc, lint (0 erros), build. `scripts/cairo/testar.mjs` 152 verificações; integração 9/9 (o caso "corte forte
 e real" deixou de ser limitação); decisões 23/23; painel 62/62 (casos novos: resposta do mês, empréstimo futuro).
 App de demonstração: `testar-cairo.cjs` (pergunta, resposta, recarregar e desfazer, 1440 e 390 px), `testar-decisoes` e as
-regressões do Consultor, sem falha.
+regressões do Consultor, sem falha. `testar-movel` 379/379 neste build.
+
+**Achado, não corrigido (não é do Cairo):** `testar-movel` falhou uma vez em "lancamentos escuro 320px: nada fora da tela
+(kairo-voador-fala)". Rodando o mesmo teste no build da produção SEM esta entrega, a mesma verificação falhou; neste build
+passou. É intermitente: o balão do Kairo voador (`components/KairoFlutuante.tsx`) às vezes passa da borda em 320 px durante o
+passeio.
 
 **Pendências.** Pedidos 2, 3, 4 e 5 e o resto do 1 dependem de migração (47–49 reservadas). O planejador da agenda ainda não
 recebe as compras futuras do cartão (com o Claude 2).
