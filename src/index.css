@@ -758,7 +758,8 @@ select option { background: var(--superficie-forte); color: var(--texto); }
 .modal {
   position: relative; width: min(500px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; padding: 24px; border-radius: 26px;
   background: var(--superficie-forte); border: 1px solid var(--borda-forte); box-shadow: var(--sombra-alta);
-  animation: modal-entra .5s var(--mola);
+  /* entra em ~0,36 s, como a referência de tempo de resposta (antes 0,5 s) */
+  animation: modal-entra .36s var(--mola);
 }
 .alca { display: none; }
 .modal-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
@@ -2350,17 +2351,19 @@ button.ex-tipo:hover { transform: scale(1.1); }
    'backwards': a animação solta o elemento ao terminar, senão ela anula o hover.
    Sem desfoque nem filtro: animar 'filter' em blocos grandes redesenha tudo a cada quadro e engasga em tablet; só opacidade e
    deslocamento rodam na placa de vídeo. */
-.pagina > *, .kpis > *, .grade-bancos > *, .grade-cartoes > *, .duas-colunas > *, .linha-fluxo > *, .linha-analise > *, .zona > * { animation: surgir-sem-desfoque .6s var(--mola) backwards; }
-.pagina > :nth-child(2) { animation-delay: .06s; }
-.pagina > :nth-child(3) { animation-delay: .12s; }
-.pagina > :nth-child(4) { animation-delay: .18s; }
-.pagina > :nth-child(5) { animation-delay: .24s; }
-.pagina > :nth-child(n+6) { animation-delay: .3s; }
-.kpis > :nth-child(1), .grade-bancos > :nth-child(1), .grade-cartoes > :nth-child(1) { animation-delay: .08s; }
-.kpis > :nth-child(2), .grade-bancos > :nth-child(2), .grade-cartoes > :nth-child(2), .duas-colunas > :nth-child(2), .linha-fluxo > :nth-child(2), .linha-analise > :nth-child(2), .zona > :nth-child(2) { animation-delay: .16s; }
-.kpis > :nth-child(3), .grade-bancos > :nth-child(3), .grade-cartoes > :nth-child(3), .linha-analise > :nth-child(3), .zona > :nth-child(3) { animation-delay: .24s; }
-.kpis > :nth-child(4), .grade-bancos > :nth-child(4), .grade-cartoes > :nth-child(4) { animation-delay: .32s; }
-.kpis > :nth-child(n+5), .grade-bancos > :nth-child(n+5) { animation-delay: .4s; }
+/* Tempo de resposta como nos painéis de referência do dono: tudo entra em ~0,4 s, com 30 a 40 ms entre um bloco e o outro
+   (antes: 0,6 s e até 0,4 s de espera, o último bloco só acabava perto de 1 s depois do clique). */
+.pagina > *, .kpis > *, .grade-bancos > *, .grade-cartoes > *, .duas-colunas > *, .linha-fluxo > *, .linha-analise > *, .zona > * { animation: surgir-sem-desfoque .4s var(--mola) backwards; }
+.pagina > :nth-child(2) { animation-delay: .03s; }
+.pagina > :nth-child(3) { animation-delay: .06s; }
+.pagina > :nth-child(4) { animation-delay: .09s; }
+.pagina > :nth-child(5) { animation-delay: .12s; }
+.pagina > :nth-child(n+6) { animation-delay: .15s; }
+.kpis > :nth-child(1), .grade-bancos > :nth-child(1), .grade-cartoes > :nth-child(1) { animation-delay: .04s; }
+.kpis > :nth-child(2), .grade-bancos > :nth-child(2), .grade-cartoes > :nth-child(2), .duas-colunas > :nth-child(2), .linha-fluxo > :nth-child(2), .linha-analise > :nth-child(2), .zona > :nth-child(2) { animation-delay: .08s; }
+.kpis > :nth-child(3), .grade-bancos > :nth-child(3), .grade-cartoes > :nth-child(3), .linha-analise > :nth-child(3), .zona > :nth-child(3) { animation-delay: .12s; }
+.kpis > :nth-child(4), .grade-bancos > :nth-child(4), .grade-cartoes > :nth-child(4) { animation-delay: .16s; }
+.kpis > :nth-child(n+5), .grade-bancos > :nth-child(n+5) { animation-delay: .2s; }
 .pagina > .modal-fundo { animation: aparece .3s backwards; }
 @keyframes surgir { from { opacity: 0; transform: translateY(16px); filter: blur(12px); } to { opacity: 1; transform: none; filter: none; } }
 
@@ -2383,7 +2386,8 @@ button.ex-tipo:hover { transform: scale(1.1); }
    Controles são puxados de leve na direção do cursor (efeito magnético) e crescem com mola. */
 .btn, .chip, .quadro-mais, .icone-btn, .pagar, .cor {
   transform: translate(var(--tx, 0px), var(--ty, 0px)) scale(var(--s, 1));
-  transition: transform .55s var(--mola-salto), background .3s var(--mola), color .2s, border-color .25s, box-shadow .3s var(--mola), filter .2s;
+  /* a resposta ao ponteiro vem em ~0,36 s (antes 0,55 s): o mesmo crescer com mola, sem o atraso */
+  transition: transform .36s var(--mola-salto), background .25s var(--mola), color .2s, border-color .2s, box-shadow .25s var(--mola), filter .2s;
 }
 @media (hover: hover) and (pointer: fine) {
   .btn:hover { --s: 1.03; }

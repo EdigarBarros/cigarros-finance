@@ -2270,3 +2270,26 @@ correções dentro do pacote.
 de abrir do nada (o mouse que passa de raspão não abre); de um círculo aberto para o vizinho, na hora; 40 ms antes de fechar.
 O nome aparece depois de ~40% do movimento e some junto com o fundo. Conferido no Chromium: fechado com 40 ms, aberto com
 190 ms, troca de vizinho imediata, raspão não abre, sem erro.
+
+### 27/11/2026 — Claude — Fluidez e tempo de resposta (referência: vídeo do dono)
+
+**Pedido.** O dono mandou um vídeo de um painel com a fluidez e o tempo de resposta que quer no site inteiro, "sem trocar
+nenhuma animação". No vídeo (lido quadro a quadro, com o código que aparecia nele): a pílula do menu estica, com a borda da
+frente em 0,36 s (`power3.out`) e a de trás em 0,55 s (`power3.inOut`). O clique responde no quadro seguinte, e a tela nova
+entra em ~0,4 s, com ~30 ms entre os blocos.
+
+**O que mudou** (as mesmas animações, só com outros tempos e outra resposta):
+- **Lentes** (`src/lib/useLente.ts`): menu lateral, Configurações, segmentados, régua de meses e abas do celular. As quatro
+  bordas viram propriedades CSS registradas (`--lente-x0/x1/y0/y1`), e a borda da frente usa 0,36 s
+  `cubic-bezier(.215,.61,.355,1)`, a de trás 0,55 s `cubic-bezier(.645,.045,.355,1)`. Sem `CSS.registerProperty`
+  (navegador antigo), a lente anda como antes. Novo `LenteDe`: a lente é um componente à parte, e medir não redesenha mais a
+  tela inteira. Com `alvos`, ela sai no aperto do botão (`pointerdown`) e volta ao ativo se o clique não acontecer. O arraste
+  da lente do celular (`Casca.tsx`) grava as bordas com `porLente`.
+- **Entrada das telas** (`index.css`): blocos em 0,4 s (antes 0,6 s) e atrasos de 30 a 40 ms, no máximo 0,2 s (antes até
+  0,4 s). O realce ao trocar de mês ficou em 400 ms.
+- **Janela** (`.modal`): 0,36 s (antes 0,5 s). **Resposta ao ponteiro** (`.btn`, `.chip`, `.icone-btn`…): 0,36 s (antes 0,55 s).
+
+**Medido** no Chromium, como uma pessoa (aperta, segura 120 ms e solta): do aperto ao começo do movimento da lente, **~30 ms**
+(antes 144 a 202 ms). Fotos da lente congelada em 90, 200, 330 e 600 ms mostram ela esticando e encolhendo. Testes:
+`testar-troca-de-tela`, `testar-movel` (379), `testar-contas` (34), `testar-planejamento` (56), `scripts/painel/testar.mjs`
+55/55. tsc, lint e build ok.

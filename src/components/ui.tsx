@@ -1,7 +1,7 @@
 import { casasDaMoeda, mascarar } from '../lib/dinheiro'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { fmtPct, fmtValor, paraCampo, parseNumero } from '../lib/format'
-import { estiloLente, useLente } from '../lib/useLente'
+import { LenteDe } from '../lib/useLente'
 import { Icone } from './Icone'
 import { Numero } from './Numero'
 import { tx } from '../lib/textos'
@@ -172,12 +172,9 @@ export function Segmentado<T extends string>({ opcoes, valor, aoMudar, rotulo }:
   opcoes: { id: T; nome: string; cor?: string }[]; valor: T; aoMudar: (v: T) => void; rotulo: string
 }) {
   const caixa = useRef<HTMLDivElement>(null)
-  const pilula = useLente(caixa, 'button.ativo', `${valor}|${opcoes.length}`)
   return (
     <div className="segmentado" role="radiogroup" aria-label={rotulo} ref={caixa}>
-      {pilula && (
-        <span className="segmentado-pilula" aria-hidden="true" style={estiloLente(pilula)} />
-      )}
+      <LenteDe caixa={caixa} seletor="button.ativo" chave={`${valor}|${opcoes.length}`} className="segmentado-pilula" alvos="button" />
       {opcoes.map((o) => (
         <button
           key={o.id}
@@ -316,7 +313,6 @@ const MESES_REGUA = [tx('Jan'), tx('Fev'), tx('Mar'), tx('Abr'), tx('Mai'), tx('
  */
 export function ReguaMeses({ mes, comDados, aoEscolher }: { mes: number; comDados: boolean[]; aoEscolher: (m: number) => void }) {
   const caixa = useRef<HTMLDivElement>(null)
-  const pilula = useLente(caixa, 'button.ativo', mes)
   useEffect(() => {
     const el = caixa.current
     const ativo = el?.querySelector<HTMLElement>('button.ativo')
@@ -324,7 +320,7 @@ export function ReguaMeses({ mes, comDados, aoEscolher }: { mes: number; comDado
   }, [mes])
   return (
     <div className="regua-meses" ref={caixa} role="tablist" aria-label={tx('Escolher o mês')}>
-      {pilula && <span className="regua-pilula" aria-hidden="true" style={estiloLente(pilula)} />}
+      <LenteDe caixa={caixa} seletor="button.ativo" chave={mes} className="regua-pilula" alvos="button" />
       {MESES_REGUA.map((m, i) => (
         <button key={m} type="button" role="tab" aria-selected={mes === i + 1}
           className={`${mes === i + 1 ? 'ativo' : ''} ${comDados[i] ? 'com-dados' : ''}`} onClick={() => aoEscolher(i + 1)}>

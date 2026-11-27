@@ -5,7 +5,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Icone } from '../components/Icone'
 import { tx } from '../lib/textos'
-import { estiloLente, useLente } from '../lib/useLente'
+import { estiloLente, porLente, useLente } from '../lib/useLente'
 import { TONS, type Tom } from './tom'
 import './movel.css'
 
@@ -128,9 +128,7 @@ export function BarraDeAbasMovel({ abas, encolhida }: { abas: Aba[]; encolhida: 
     const w = b.offsetWidth, h = b.offsetHeight
     const minimo = b.offsetLeft, maximo = nav.clientWidth - b.offsetLeft - w
     const esq = Math.min(maximo, Math.max(minimo, x - r.left - nav.clientLeft - w / 2))
-    el.style.width = `${w}px`
-    el.style.height = `${h}px`
-    el.style.transform = `translate(${esq}px, ${b.offsetTop}px)`
+    porLente(el, esq, b.offsetTop, w, h)
   }
   const comecar = (x: number) => {
     const g = gesto.current
