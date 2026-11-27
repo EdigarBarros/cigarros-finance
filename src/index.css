@@ -2710,6 +2710,7 @@ button.ex-tipo:hover { transform: scale(1.1); }
 @keyframes dica-entra { from { opacity: 0; transform: translateY(10px); filter: blur(4px); } }
 .dica-icone { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: var(--destaque); background: var(--destaque-suave); }
 .lateral-promo.alerta-dica .dica-icone { color: var(--saida); background: color-mix(in srgb, var(--saida) 14%, transparent); }
+.lateral-promo .dica-icone.dica-kairo { background: none; }
 .lateral-promo.alerta-dica { border-color: color-mix(in srgb, var(--saida) 35%, var(--borda)); }
 .dica-conteudo strong { min-height: 2.5em; }
 .dica-pontos { display: flex; gap: 6px; margin-top: 12px; }
@@ -4746,11 +4747,9 @@ button.ex-tipo:hover { transform: scale(1.1); }
 /* o consultor falando na hora da decisão (compra parcelada, dívida nova, pular compra, pagar parte, promessa) */
 .aviso-consultor { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: var(--raio-m); font-size: 13.5px; line-height: 1.45; color: var(--texto); background: var(--preench-3); border: 1px solid var(--borda); animation: aviso-consultor-entra .35s var(--mola) both; }
 .aviso-consultor strong { font-weight: 700; }
-.aviso-consultor-ic { display: grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%; color: var(--destaque); background: color-mix(in srgb, var(--destaque) 14%, transparent); }
+.aviso-consultor-ic { display: grid; place-items: center; flex: none; width: 26px; height: 26px; }
 .aviso-consultor.medio { border-color: color-mix(in srgb, var(--divida) 40%, var(--borda)); background: color-mix(in srgb, var(--divida) 7%, var(--superficie-2)); }
-.aviso-consultor.medio .aviso-consultor-ic { color: var(--divida); background: color-mix(in srgb, var(--divida) 16%, transparent); }
 .aviso-consultor.ruim { border-color: color-mix(in srgb, var(--saida) 40%, var(--borda)); background: color-mix(in srgb, var(--saida) 7%, var(--superficie-2)); }
-.aviso-consultor.ruim .aviso-consultor-ic { color: var(--saida); background: color-mix(in srgb, var(--saida) 16%, transparent); }
 @keyframes aviso-consultor-entra { from { opacity: 0; transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .aviso-consultor { animation: none; } }
 

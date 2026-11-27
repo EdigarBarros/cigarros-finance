@@ -2,6 +2,8 @@ import { useState, type CSSProperties } from 'react'
 import type { Tom } from '../lib/analise'
 import type { Conselho, Gravidade } from '../lib/conselheiro'
 import { Bloco } from './Blocos'
+import { Kairo } from './Kairo'
+import { humorDoTom } from '../lib/kairo'
 import { Icone } from './Icone'
 import { tx } from '../lib/textos'
 import './conselhos.css'
@@ -51,6 +53,7 @@ export function BlocoConselhos({ conselhos, semDados, dispensados, simples, limi
           {nota && aoAbrirAnalise && (
             <button className="conselhos-nota" style={{ '--c': COR_DO_TOM[nota.tom] } as CSSProperties} onClick={aoAbrirAnalise}
               title={tx('Abrir a análise completa')}>
+              <Kairo humor={humorDoTom(nota.tom)} tamanho={20} />
               {nota.valor !== null && <b>{nota.valor}</b>} {nota.valor !== null ? nota.rotulo : tx('Análise completa')} <Icone nome="dir" tamanho={14} />
             </button>
           )}

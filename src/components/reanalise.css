@@ -13,8 +13,7 @@
 @keyframes reanalise-entra { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
 
 .reanalise-icone {
-  display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%;
-  color: var(--destaque); background: var(--destaque-suave);
+  display: grid; place-items: center; width: 38px; height: 38px;
 }
 .reanalise-texto { display: grid; gap: 6px; min-width: 0; }
 .reanalise-texto strong { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 15px; font-weight: 650; letter-spacing: -.01em; }

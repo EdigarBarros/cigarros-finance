@@ -1,0 +1,207 @@
+/* O Kairo (components/Kairo.tsx): a bolinha, as caretas e o jeito de se mexer. */
+.kairo {
+  --k: 40px; --ox: 0px; --oy: 0px; --px: 0px; --py: 0px;
+  position: relative; display: inline-block; flex: none; width: var(--k); height: var(--k); line-height: 0; vertical-align: middle;
+}
+.kairo .k-mola { display: block; width: 100%; height: 100%; transform-origin: 50% 90%; }
+.kairo .k-corpo {
+  width: 100%; height: 100%; overflow: visible;
+  /* o halo: a luz que ele espalha em volta, como no vídeo */
+  filter: drop-shadow(0 0 calc(var(--k) * .09) rgba(84, 110, 255, .55)) drop-shadow(0 calc(var(--k) * .1) calc(var(--k) * .16) rgba(35, 66, 220, .28));
+}
+.kairo.com-sombra::after {
+  content: ''; position: absolute; left: 20%; right: 20%; bottom: calc(var(--k) * -.22); height: calc(var(--k) * .1); border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(40, 80, 220, .32), transparent); pointer-events: none;
+}
+
+/* ---------- os olhos ---------- */
+.kairo .k-olhos {
+  transform: translate(calc(var(--ox) + var(--px)), calc(var(--oy) + var(--py)));
+  transition: transform .45s cubic-bezier(.3, 1.5, .5, 1);
+}
+.kairo .k-olho { transform-box: fill-box; transform-origin: center; transition: transform .35s cubic-bezier(.3, 1.4, .5, 1); }
+.kairo .k-traco {
+  fill: #fff; transform-box: fill-box; transform-origin: center;
+  transition: transform .14s ease-out, opacity .12s;
+}
+.kairo .k-arco {
+  fill: none; stroke: #fff; stroke-width: 4.2; stroke-linecap: round; opacity: 0; transform-box: fill-box; transform-origin: center bottom;
+  transform: scale(.4, 0); transition: transform .3s cubic-bezier(.3, 1.6, .5, 1), opacity .12s;
+}
+.kairo .k-olho[data-jeito='fechado'] .k-traco { transform: scale(1.25, .13); }
+.kairo .k-olho[data-jeito='ponto'] .k-traco { transform: scale(1.1, .4); transition: transform .3s cubic-bezier(.3, 1.6, .5, 1); }
+.kairo .k-olho[data-jeito='feliz'] .k-traco { transform: scale(1, 0); opacity: 0; }
+.kairo .k-olho[data-jeito='feliz'] .k-arco { opacity: 1; transform: scale(1); }
+/* na piscadela, o olho aberto cresce um pouco (frame 32 do vídeo) */
+.kairo.c-piscadela .k-dir .k-traco { transform: scale(1.12, 1.1) rotate(8deg); }
+
+/* preocupado: olhos menores, baixos e inclinados para dentro */
+.kairo.c-preocupado .k-esq { transform: translateY(3px) rotate(16deg) scale(.9, .72); }
+.kairo.c-preocupado .k-dir { transform: translateY(3px) rotate(-16deg) scale(.9, .72); }
+
+/* ---------- o corpo ---------- */
+.kairo.flutua .k-mola { animation: k-flutua 3.8s ease-in-out infinite; }
+.kairo.flutua.c-preocupado .k-mola { animation: k-balanca 4.6s ease-in-out infinite; }
+.kairo.c-pensando .k-mola { animation: k-inclina 2.6s ease-in-out infinite; }
+.kairo.c-comemorando .k-mola { animation: k-pula .9s cubic-bezier(.3, 0, .4, 1) infinite; }
+.kairo.flutua.com-sombra::after { animation: k-sombra 3.8s ease-in-out infinite; }
+.kairo.c-comemorando.com-sombra::after { animation: k-sombra-pulo .9s cubic-bezier(.3, 0, .4, 1) infinite; }
+
+@keyframes k-flutua { 0%, 100% { transform: translateY(0) scale(1, 1); } 50% { transform: translateY(-7%) scale(.985, 1.015); } }
+@keyframes k-sombra { 0%, 100% { transform: scaleX(1); opacity: 1; } 50% { transform: scaleX(.8); opacity: .65; } }
+@keyframes k-balanca { 0%, 100% { transform: rotate(-5deg) translateY(0); } 50% { transform: rotate(5deg) translateY(-3%); } }
+@keyframes k-inclina { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg) translateY(-3%); } }
+@keyframes k-pula {
+  0%, 100% { transform: translateY(0) scale(1.1, .9); } 15% { transform: translateY(0) scale(1, 1); }
+  50% { transform: translateY(-24%) scale(.95, 1.05); } 85% { transform: translateY(0) scale(1, 1); }
+}
+@keyframes k-sombra-pulo { 0%, 100% { transform: scaleX(1); opacity: 1; } 50% { transform: scaleX(.6); opacity: .45; } }
+
+/* "Animações reduzidas": parado, com a cara do humor */
+html[data-movimento='reduzido'] .kairo, html[data-movimento='reduzido'] .kairo .k-mola, html[data-movimento='reduzido'] .kairo::after { animation: none !important; }
+html[data-movimento='reduzido'] .kairo .k-olhos { transform: none; }
+
+/* o nome: "Kairo" com o pingo do i em bolinha */
+.kairo-marca { display: inline-grid; gap: 1px; line-height: 1; }
+.kairo-nome { font-weight: 800; letter-spacing: -.02em; }
+.kairo-i { position: relative; display: inline-block; }
+.kairo-i > i {
+  position: absolute; left: 50%; top: -.02em; width: .3em; height: .3em; translate: -50% 0; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #b9ffe0, #2bea9b 45%, #0c9f74);
+  box-shadow: 0 0 0 .03em color-mix(in srgb, var(--texto, #0b1020) 70%, transparent), 0 .05em .12em rgba(43, 234, 155, .45);
+}
+.kairo-marca small { font-size: 10.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--texto-2); }
+
+/* ---------- o Kairo solto no canto (components/KairoFlutuante.tsx) ---------- */
+.kairo-solto { position: fixed; z-index: 25; right: 24px; bottom: 22px; display: grid; justify-items: end; gap: 10px; pointer-events: none; }
+.kairo-solto > * { pointer-events: auto; }
+
+/* a pílula do canto (o "Ask Sage" do vídeo) */
+.kairo-doca {
+  position: relative; display: inline-flex; align-items: center; gap: 9px; height: 50px; padding: 0 18px 0 8px; border: 0; border-radius: 999px;
+  font: inherit; font-size: 14.5px; font-weight: 700; color: #fff; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  background: #10162a; box-shadow: 0 14px 34px -12px rgba(10, 16, 40, .7), inset 0 0 0 1px rgba(255, 255, 255, .08);
+  transition: transform .35s var(--mola), box-shadow .3s, background .3s; animation: kairo-chega .8s 1s var(--mola) backwards;
+}
+:root[data-tema='escuro'] .kairo-doca { background: #1a2240; box-shadow: 0 14px 34px -12px rgba(0, 0, 0, .8), inset 0 0 0 1px rgba(255, 255, 255, .12); }
+.kairo-doca:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 18px 38px -12px rgba(42, 69, 227, .55), inset 0 0 0 1px rgba(255, 255, 255, .14); }
+.kairo-doca:focus-visible { outline: 3px solid var(--destaque); outline-offset: 3px; }
+.kairo-doca .kairo { transition: opacity .2s, transform .35s var(--mola); }
+.kairo-doca.fora .kairo { opacity: 0; transform: scale(.3); }
+.kairo-ponto {
+  position: absolute; top: -5px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px; display: grid; place-items: center;
+  font-size: 11px; font-weight: 800; color: #fff; background: var(--saida); box-shadow: 0 0 0 2px var(--fundo, #fff);
+}
+@keyframes kairo-chega { from { opacity: 0; transform: translateY(30px) scale(.6); } }
+
+/* o Kairo que voa: anda pelo --x/--y com mola; estica na direção do voo; amassa ao pousar */
+.kairo-voador {
+  position: fixed; left: 0; top: 0; z-index: 27; width: 0; height: 0;
+  transform: translate3d(var(--x), var(--y), 0); transition: transform 1s cubic-bezier(.55, 0, .25, 1);
+}
+.kairo-voador.voltando { transition-duration: .8s; transition-timing-function: cubic-bezier(.6, 0, .4, 1); }
+.kairo-voador-bola {
+  position: absolute; left: calc(var(--g) / -2); top: calc(var(--g) / -2); width: var(--g); height: var(--g); padding: 0; border: 0; border-radius: 50%;
+  background: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.kairo-voador-estica { display: block; transform-origin: center; }
+.kairo-voador.indo .kairo-voador-estica { animation: kairo-estica 1s cubic-bezier(.55, 0, .25, 1) both; }
+.kairo-voador.voltando .kairo-voador-estica { animation: kairo-encolhe .8s cubic-bezier(.6, 0, .4, 1) both; }
+.kairo-voador.pousado .kairo-voador-estica { animation: kairo-pousa .7s cubic-bezier(.3, 1.6, .5, 1) both; }
+@keyframes kairo-estica {
+  0% { transform: scale(.42); }
+  35% { transform: rotate(var(--ang)) scale(1.22, .84) rotate(calc(var(--ang) * -1)); }
+  75% { transform: rotate(var(--ang)) scale(1.1, .92) rotate(calc(var(--ang) * -1)); }
+  100% { transform: scale(1); }
+}
+@keyframes kairo-encolhe {
+  0% { transform: scale(1); }
+  40% { transform: rotate(var(--ang)) scale(1.15, .86) rotate(calc(var(--ang) * -1)); }
+  100% { transform: scale(.42); opacity: .9; }
+}
+@keyframes kairo-pousa { 0% { transform: scale(1.18, .8); } 45% { transform: scale(.94, 1.08); } 100% { transform: scale(1); } }
+/* a ondinha de quando ele pousa (o anel do vídeo) */
+.kairo-onda {
+  position: absolute; inset: -6px; border-radius: 50%; pointer-events: none;
+  border: 2px solid rgba(92, 120, 255, .5); animation: kairo-onda 1.3s ease-out .05s both;
+}
+.kairo-onda::after { content: ''; position: absolute; inset: -2px; border-radius: 50%; border: 1.5px solid rgba(64, 220, 255, .4); animation: kairo-onda 1.3s ease-out .35s both; }
+@keyframes kairo-onda { from { transform: scale(.85); opacity: 1; } to { transform: scale(2.3); opacity: 0; } }
+
+/* a fala de quando ele pousa: a pílula em cima dele ("I'm Sage, your dashboard AI") */
+.kairo-voador-fala {
+  position: absolute; left: 50%; bottom: calc(var(--g) / 2 + 14px); translate: -50% 0; width: max-content; max-width: min(300px, calc(100vw - 32px));
+  display: grid; gap: 3px; padding: 10px 14px; border: 0; border-radius: 16px; text-align: center; cursor: pointer;
+  font: inherit; color: var(--texto); background: var(--superficie-forte); box-shadow: var(--sombra-alta), inset 0 0 0 1px var(--borda-forte);
+  animation: kairo-fala .45s cubic-bezier(.3, 1.5, .5, 1) both; transform-origin: 50% 120%;
+}
+.kairo-voador-fala b { font-size: 14px; line-height: 1.35; }
+.kairo-voador-fala span { font-size: 12.5px; color: var(--texto-2); }
+.kairo-voador-fala.urgente { box-shadow: var(--sombra-alta), inset 0 0 0 1.5px color-mix(in srgb, var(--saida) 55%, transparent); }
+.kairo-voador-fala.atencao { box-shadow: var(--sombra-alta), inset 0 0 0 1.5px color-mix(in srgb, var(--divida) 55%, transparent); }
+@keyframes kairo-fala { from { opacity: 0; transform: translateY(10px) scale(.7); } }
+
+/* o balão parado no canto (sem voo, com animações reduzidas) */
+.kairo-balao {
+  position: relative; display: flex; align-items: flex-start; gap: 4px; max-width: min(300px, calc(100vw - 40px)); padding: 12px 8px 12px 14px;
+  border-radius: 18px 18px 6px 18px; background: var(--superficie-forte); border: 1px solid var(--borda-forte); box-shadow: var(--sombra-alta);
+  animation: kairo-balao .45s var(--mola);
+}
+.kairo-balao::before { content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 3px; background: var(--destaque); }
+.kairo-balao.urgente::before { background: var(--saida); }
+.kairo-balao.atencao::before { background: var(--divida); }
+.kairo-balao-texto { display: grid; gap: 3px; padding: 0; border: 0; background: none; color: var(--texto); font: inherit; text-align: left; cursor: pointer; }
+.kairo-balao-texto b { font-size: 14px; line-height: 1.35; }
+.kairo-balao-texto span { font-size: 12.5px; color: var(--texto-2); }
+.kairo-balao-fechar, .kairo-painel-fechar {
+  display: grid; place-items: center; flex: none; width: 28px; height: 28px; border: 0; border-radius: 50%; background: none; color: var(--texto-3); cursor: pointer;
+}
+.kairo-balao-fechar:hover, .kairo-painel-fechar:hover { color: var(--texto); background: var(--preench-3); }
+@keyframes kairo-balao { from { opacity: 0; transform: translateY(12px) scale(.9); transform-origin: right bottom; } }
+
+/* o painel: ele grande no topo, como o "Hi Codexr, I'm Sage" do vídeo */
+.kairo-painel {
+  position: relative; display: grid; gap: 12px; width: min(380px, calc(100vw - 32px)); max-height: min(660px, calc(100dvh - 120px)); overflow: auto; padding: 18px 16px 16px;
+  border-radius: 24px; background: var(--superficie-forte); border: 1px solid color-mix(in srgb, #2a45e3 26%, var(--borda-forte)); box-shadow: var(--sombra-alta);
+  animation: kairo-painel .45s var(--mola); transform-origin: right bottom; outline: none;
+}
+@keyframes kairo-painel { from { opacity: 0; transform: translateY(18px) scale(.92); } }
+.kairo-painel-fechar { position: absolute; top: 10px; right: 10px; }
+.kairo-painel-cab { display: grid; justify-items: center; gap: 6px; padding: 6px 0 2px; text-align: center; }
+.kairo-painel-cab > .kairo { margin-bottom: 12px; animation: kairo-painel-bola .7s cubic-bezier(.3, 1.6, .5, 1) .05s both; }
+@keyframes kairo-painel-bola { from { transform: scale(.3) translateY(30px); opacity: 0; } }
+.kairo-painel-cab strong { font-size: 19px; letter-spacing: -.01em; }
+.kairo-painel-cab .kairo-nome { display: none; }
+.kairo-painel-nota { font-size: 12.5px; font-weight: 600; color: var(--texto-2); }
+.kairo-painel-frase { margin: 0; padding: 10px 12px; border-radius: 14px; font-size: 14px; text-align: center; background: color-mix(in srgb, #2a45e3 9%, transparent); }
+.kairo-painel-falas { display: grid; gap: 8px; }
+.kairo-painel-falas h4 { margin: 4px 0 0; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--texto-3); }
+.kairo-painel-falas ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.kairo-painel-vazio { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13.5px; color: var(--texto-2); }
+.kairo-painel-vazio svg { color: var(--entrada); }
+.kairo-fala { display: flex; gap: 10px; padding: 10px; border-radius: 14px; background: var(--preench-2, var(--preench-3)); animation: kairo-fala-entra .4s var(--mola) calc(.15s + var(--i, 0) * .06s) both; }
+@keyframes kairo-fala-entra { from { opacity: 0; transform: translateY(8px); } }
+.kairo-fala-ic { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 10px; color: var(--destaque); background: color-mix(in srgb, var(--destaque) 14%, transparent); }
+.kairo-fala.urgente .kairo-fala-ic { color: var(--saida); background: color-mix(in srgb, var(--saida) 14%, transparent); }
+.kairo-fala.atencao .kairo-fala-ic { color: var(--divida); background: color-mix(in srgb, var(--divida) 16%, transparent); }
+.kairo-fala.bom .kairo-fala-ic { color: var(--entrada); background: color-mix(in srgb, var(--entrada) 14%, transparent); }
+.kairo-fala-texto { display: grid; gap: 3px; min-width: 0; }
+.kairo-fala-texto b { font-size: 13.5px; line-height: 1.35; }
+.kairo-fala-texto small { font-size: 12.5px; line-height: 1.45; color: var(--texto-2); }
+.kairo-fala-acoes { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 2px; }
+.kairo-fala-acoes .link { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 700; }
+.kairo-fala-acoes .kairo-agora-nao { font-weight: 500; color: var(--texto-3); }
+.kairo-painel-pe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 4px; }
+.kairo-painel-pe .btn { height: 38px; font-size: 13.5px; }
+.kairo-esconder { margin-left: auto; font-size: 12.5px; color: var(--texto-3); }
+
+/* celular: acima da barra de abas; no canto, só ele (sem o nome) */
+@media (max-width: 600px) {
+  .kairo-solto { right: 12px; bottom: calc(90px + env(safe-area-inset-bottom)); }
+  .kairo-doca { width: 54px; height: 54px; padding: 0; justify-content: center; }
+  .kairo-doca .kairo { --k: 40px !important; }
+  .kairo-doca-nome { display: none; }
+  .kairo-painel { width: calc(100vw - 24px); max-height: calc(100dvh - 190px - env(safe-area-inset-bottom)); }
+}
+html[data-movimento='reduzido'] .kairo-doca, html[data-movimento='reduzido'] .kairo-balao, html[data-movimento='reduzido'] .kairo-painel,
+html[data-movimento='reduzido'] .kairo-painel-cab > .kairo, html[data-movimento='reduzido'] .kairo-fala { animation: none; }

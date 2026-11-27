@@ -1,14 +1,15 @@
+import { humorDoTom } from '../lib/kairo'
 import type { FalaNaHora } from '../lib/naHora'
 import { tx } from '../lib/textos'
-import { Icone } from './Icone'
+import { Kairo } from './Kairo'
 
-/** O consultor falando na hora da decisão (lib/naHora.ts): uma caixinha com a bússola, dentro do formulário. */
+/** O Kairo falando na hora da decisão (lib/naHora.ts): uma caixinha com ele, dentro do formulário. */
 export function AvisoDoConsultor({ fala }: { fala: FalaNaHora | null }) {
   if (!fala) return null
   return (
     <p className={`aviso-consultor ${fala.tom}`} role="note" aria-live="polite">
-      <span className="aviso-consultor-ic" aria-hidden="true"><Icone nome="bussola" tamanho={15} /></span>
-      <span><strong>{tx('O consultor:')}</strong> {fala.texto}</span>
+      <span className="aviso-consultor-ic" aria-hidden="true"><Kairo humor={humorDoTom(fala.tom)} tamanho={26} vivo /></span>
+      <span><strong>{tx('Kairo:')}</strong> {fala.texto}</span>
     </p>
   )
 }

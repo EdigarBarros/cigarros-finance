@@ -4,6 +4,8 @@ import { compararRetratos, retratoDe, type Acao, type Analise as DadosAnalise, t
 import { fmtDataCurta } from '../lib/format'
 import { useMovimento } from '../lib/tema'
 import { Icone } from '../components/Icone'
+import { Kairo, KairoMarca } from '../components/Kairo'
+import { falasDoKairo, humorDe } from '../lib/kairo'
 import { Interruptor } from '../components/ui'
 import { useEmVista } from './analiseApoio'
 import { Agora, JeitoDeFalar, Objetivo, ProximoPasso, SeuPerfil } from './AnaliseTopo'
@@ -34,14 +36,15 @@ export function Analise(c: Ctx) {
   const montando = useMontagem(c.reanalise, desdeAVisita) && !c.contaNova
   // o atalho "Planejar o mês" de outra tela (a Início) abre a mesa assim que o Consultor monta
   usePlanejarAoAbrir(c, setPlanejando)
+  const humor = useHumorDoKairo(c)
 
   if (c.contaNova) {
     return (
       <div className="pagina analise">
-        <header className="pagina-topo an-cabecalho"><div><h1>{tx('Seu consultor')}</h1></div></header>
+        <header className="pagina-topo an-cabecalho"><CabecalhoDoKairo humor="calmo" sub={tx('Ele começa a pensar no primeiro lançamento.')} /></header>
         <section className="cartao an-vazio">
-          <span className="an-vazio-icone"><Icone nome="bussola" tamanho={30} /></span>
-          <h2>{tx('Seu consultor começa no primeiro lançamento')}</h2>
+          <span className="an-vazio-kairo"><Kairo humor="calmo" tamanho={64} vivo flutua sombra /></span>
+          <h2>{tx('O Kairo começa no primeiro lançamento')}</h2>
           <p>{tx('Lance o que entra e o que sai. A cada lançamento, os gráficos se refazem sozinhos.')}</p>
           <div className="an-vazio-acoes">
             <button className="btn primario" onClick={() => c.novoLancamento('saida')}><Icone nome="mais" tamanho={16} /> {tx('Fazer o primeiro lançamento')}</button>
@@ -56,10 +59,8 @@ export function Analise(c: Ctx) {
     <div className={`pagina analise an-${nivel} ${movimento === 'reduzido' ? 'parado' : ''} ${montando ? 'montando' : ''}`}>
       {montando && <span className="an-varredura" aria-hidden="true" />}
       <header className="pagina-topo an-cabecalho">
-        <div>
-          <h1>{tx('Seu consultor')}</h1>
-          <p className="sub">{nivel === 'simples' ? tx('O que importa hoje, num olhar.') : tx('Uma tela montada para você, refeita a cada lançamento.')}</p>
-        </div>
+        <CabecalhoDoKairo humor={montando ? 'pensando' : humor}
+          sub={nivel === 'simples' ? tx('O que importa hoje, num olhar.') : tx('Uma tela montada para você, refeita a cada lançamento.')} />
       </header>
       {montando && <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 3} aoVivo />}
       {/* o plano de pagamentos que a pessoa monta vem primeiro: o Consultor segue as decisões dela */}
@@ -85,6 +86,7 @@ export function Analise(c: Ctx) {
           <Interruptor ligado={c.avisosDaAnalise} aoMudar={c.mudarAvisosDaAnalise} rotulo={tx('Avisar quando a análise mudar')} />
           <span>{tx('Avisar quando a análise mudar')}</span>
         </label>
+        <InterruptorDoKairo c={c} />
         <p>{tx('Orientações de educação financeira, feitas com o que você lançou. Não é recomendação de investimento.')}</p>
       </footer>
       {planejando && (
@@ -244,7 +246,7 @@ export function OQueMudou({ reanalise, desdeAVisita, max, aoVivo }: { reanalise:
   return (
     <section className={`cartao an-mudou ${aoVivo ? 'ao-vivo' : ''}`} aria-label={aoVivo ? tx('Refiz sua tela') : tx('O que mudou')}>
       <header className="an-mudou-cab">
-        <span className="an-mudou-selo" aria-hidden="true"><Icone nome={aoVivo ? 'bussola' : 'historico'} tamanho={18} /></span>
+        <span className="an-mudou-selo" aria-hidden="true">{aoVivo ? <Kairo humor="pensando" tamanho={30} /> : <Icone nome="historico" tamanho={18} />}</span>
         <span className="an-mudou-textos">
           {aoVivo ? (
             <span className="an-mudou-troca">
@@ -288,4 +290,32 @@ export function usePlanejarAoAbrir(c: Pick<Ctx, 'planejarAoAbrir' | 'planejament
     abrir(true)
     c.planejamentoAberto()
   }, [c.planejarAoAbrir]) // eslint-disable-line react-hooks/exhaustive-deps
+}
+
+/** O humor do Kairo com o que ele sabe agora (o mesmo do Kairo solto nas outras telas). */
+export function useHumorDoKairo(c: Pick<Ctx, 'analise' | 'conselhos'>) {
+  return useMemo(() => humorDe(c.analise, falasDoKairo(c.analise, c.conselhos)), [c.analise, c.conselhos])
+}
+
+/** O topo da aba: o Kairo em pessoa, com o humor do dinheiro, o nome e a frase do jeito de ver. */
+export function CabecalhoDoKairo({ humor, sub }: { humor: ReturnType<typeof humorDe>; sub: string }) {
+  return (
+    <div className="an-kairo-cab">
+      <Kairo humor={humor} tamanho={58} vivo flutua sombra segue rotulo={tx('Kairo, seu consultor financeiro')} />
+      <div>
+        <h1><KairoMarca /></h1>
+        <p className="sub">{sub}</p>
+      </div>
+    </div>
+  )
+}
+
+/** No pé da aba: o Kairo solto nas outras telas (quem escondeu traz de volta por aqui). */
+export function InterruptorDoKairo({ c }: { c: Pick<Ctx, 'kairoVisivel' | 'mudarKairo'> }) {
+  return (
+    <label className="an-avisos">
+      <Interruptor ligado={c.kairoVisivel} aoMudar={c.mudarKairo} rotulo={tx('Mostrar o Kairo nas outras telas')} />
+      <span>{tx('Mostrar o Kairo nas outras telas')}</span>
+    </label>
+  )
 }

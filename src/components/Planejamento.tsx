@@ -18,6 +18,8 @@ import {
 } from '../lib/planejamento'
 import { semMovimento } from '../lib/tema'
 import { tx } from '../lib/textos'
+import { Kairo } from './Kairo'
+import type { Humor } from '../lib/kairo'
 import { Icone } from './Icone'
 import './planejamento.css'
 
@@ -140,7 +142,7 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
     salvar({ ...planejamento, [q.mes]: { partes, em: new Date().toISOString(), fotos: fotosDe(q, partes), ...(usarGuardado ? { comGuardado: true } : {}), ...(usarAReceber ? { comAReceber: true } : {}) } })
     setSalvo({ partes, usarGuardado, usarAReceber })
     setSalvou((n) => n + 1)
-    avisar(tx('Plano salvo. O Consultor já está usando ele.'), 'bom')
+    avisar(tx('Plano salvo. O Kairo já está usando ele.'), 'bom')
     vibrar()
   }
   const descartar = () => {
@@ -469,7 +471,7 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
           <div className="pj-pergunta" role="alertdialog" aria-modal="true" aria-labelledby="pj-pergunta-titulo">
             <span className="pj-pergunta-ic"><Icone nome="lapis" tamanho={22} /></span>
             <h3 id="pj-pergunta-titulo">{tx('Salvar as mudanças do plano?')}</h3>
-            <p>{tx('Você mexeu no plano e ainda não salvou. Sem salvar, o Consultor continua usando o plano de antes.')}</p>
+            <p>{tx('Você mexeu no plano e ainda não salvou. Sem salvar, o Kairo continua usando o plano de antes.')}</p>
             <span className="pj-pergunta-botoes">
               <button className="btn" onClick={() => setPergunta(null)}>{tx('Continuar mexendo')}</button>
               <button className="btn pj-descartar" onClick={() => { const d = pergunta.depois; setPergunta(null); d() }}>{tx('Sair sem salvar')}</button>
@@ -634,11 +636,14 @@ function Dicas({ dicas, aoFazer, aoUsarGuardado, aoUsarAReceber }: {
   dicas: ReturnType<typeof dicasDe>; aoFazer: (conta: string, entrada: string) => void; aoUsarGuardado: () => void; aoUsarAReceber: () => void
 }) {
   if (!dicas.length) return null
+  // mês fechado no plano: ele comemora; conta cara ou atrasando: preocupado
+  const humor: Humor = dicas.some((d) => d.id === 'fechado') ? 'comemorando'
+    : dicas.some((d) => d.tom === 'ruim' || d.tom === 'atencao') ? 'preocupado' : 'calmo'
   return (
     <section className="pj-dicas" aria-live="polite">
       <header className="pj-dicas-cab">
-        <span className="pj-dicas-avatar" aria-hidden="true"><Icone nome="bussola" tamanho={18} /></span>
-        <span><h3>{tx('O Consultor diz')}</h3><small>{tx('Comenta enquanto você monta')}</small></span>
+        <span className="pj-dicas-avatar" aria-hidden="true"><Kairo humor={humor} tamanho={40} vivo flutua /></span>
+        <span><h3>{tx('Kairo diz')}</h3><small>{tx('Comenta enquanto você monta')}</small></span>
       </header>
       <ul>
         {dicas.map((d) => (
@@ -767,7 +772,7 @@ export function CartaoDoPlanejamento({ a, planejamento, aoAbrir }: { a: Analise;
                   : tx('Quando {0} cair ({1}): {2} ({3}).', px.fonte.nome, fmtDataCurta(px.fonte.data), nomes, fmtValor(px.total))}</span>
             </p>
           )}
-          {!comecou && <p className="pj-cartao-porque">{tx('O consultor passa a seguir o que você decidir aqui.')}</p>}
+          {!comecou && <p className="pj-cartao-porque">{tx('O Kairo passa a seguir o que você decidir aqui.')}</p>}
         </div>
       </div>
       {q.fontes.length > 0 && (

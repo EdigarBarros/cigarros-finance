@@ -19,6 +19,8 @@ import {
 } from '../../src/lib/cartoes'
 import { ajustarMesesComEfeitos } from '../../src/lib/guardado'
 import { fmtValor } from '../../src/lib/format'
+import { falasDaTela, falasDoKairo, humorDe } from '../../src/lib/kairo'
+import type { Conselho } from '../../src/lib/conselheiro'
 import { previstosDoMes } from '../../src/lib/previstos'
 import { pagoDaFatura } from '../../src/lib/cartoes'
 import { previsaoDoAno } from '../../src/lib/previsao'
@@ -1209,6 +1211,40 @@ export const CASOS: Caso[] = [
       igual('500 de 3.000: 5 dias', emDiasDeRenda(500, 3000), '5 dias do que você ganha')
       igual('6.000 de 3.000: 2 meses', emDiasDeRenda(6000, 3000), '2 meses do que você ganha')
       igual('pouco demais: nada', emDiasDeRenda(10, 3000), null)
+    },
+  },
+  {
+    nome: 'kairo: o que ele diz em cada tela e o humor',
+    rodar() {
+      const acao = (id: string, urgencia: 'urgente' | 'importante' | 'sugestao', destino: string, titulo: string, prioridade = 50) =>
+        ({ id, urgencia, prioridade, icone: 'ideia', titulo, porque: 'porque', destino, botao: 'Ir' })
+      const conselho = (id: string, gravidade: 'urgente' | 'atencao' | 'elogio', destino: string, titulo: string): Conselho =>
+        ({ id, gravidade, prioridade: 60, icone: 'ideia', titulo, porque: 'porque', destino: destino as Conselho['destino'], botao: 'Ir' })
+      const a = {
+        temFluxo: true, tom: 'medio', atrasoTotal: 0, nota: 60, rotulo: 'Razoável',
+        acoes: [acao('cortar', 'importante', 'lancamentos', 'Corte R$ 200 por mês'), acao('atrasos', 'urgente', 'dividas', 'Pague o que está atrasado', 90), acao('juros', 'sugestao', 'dividas', 'Informe os juros')],
+        sinais: [
+          { id: 'ritmo', tom: 'ruim', forca: 70, titulo: 'Dívida nova mais rápido que a paga', frase: 'Fato.', chamado: 'Faça isso.', destino: 'dividas' },
+          { id: 'com-passo', tom: 'ruim', forca: 90, titulo: 'Tem passo', frase: 'x', chamado: '', destino: 'dividas', acao: {} },
+        ],
+      } as unknown as Analise
+      const conselhos = [conselho('pague-atrasado', 'urgente', 'dividas', 'Pague o que está ATRASADO!'), conselho('reserva', 'atencao', 'metas', 'Reserva abaixo de 3 meses')]
+      const todas = falasDoKairo(a, conselhos)
+      igual('urgente primeiro', todas[0].id, 'plano:atrasos')
+      certo('mesmo assunto do conselheiro não repete', !todas.some((f) => f.id === 'conselho:pague-atrasado'))
+      certo('sinal com passo não repete (o passo já está no plano)', !todas.some((f) => f.id === 'sinal:com-passo'))
+      certo('sinal sem passo entra', todas.some((f) => f.id === 'sinal:ritmo' && f.texto === 'Fato. Faça isso.'))
+      const dividas = falasDaTela('dividas', todas)
+      certo('na tela de dívidas, só o que leva a ela', dividas.daqui.every((f) => f.destino === 'dividas') && dividas.daqui.length === 3)
+      igual('e 1 importante de outra tela', dividas.deOutras.length, 1)
+      const ano = falasDaTela('ano', todas)
+      certo('tela sem nada: até 2 de outras, sem sugestão', ano.daqui.length === 0 && ano.deOutras.length === 2 && ano.deOutras.every((f) => f.tom !== 'info'))
+      igual('na Início, o mais importante de tudo', falasDaTela('inicio', todas).daqui.length, 4)
+      igual('urgente: preocupado', humorDe(a, todas), 'preocupado')
+      const bom = { ...a, tom: 'bom', acoes: [], sinais: [] } as unknown as Analise
+      igual('tudo em ordem: feliz', humorDe(bom, []), 'feliz')
+      igual('atraso deixa preocupado mesmo com nota boa', humorDe({ ...bom, atrasoTotal: 50 } as Analise, []), 'preocupado')
+      igual('sem dados: calmo', humorDe({ ...a, temFluxo: false } as Analise, []), 'calmo')
     },
   },
   {
