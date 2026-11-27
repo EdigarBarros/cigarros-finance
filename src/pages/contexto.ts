@@ -115,6 +115,9 @@ export interface Ctx {
   escolherFirmeza: (f: Firmeza) => void
   /** Abre o Consultor já com o Planejar o mês aberto (atalho da Início). */
   abrirPlanejamento: () => void
+  /** O Kairo solto no canto das outras telas (components/KairoFlutuante.tsx); o pé do Consultor liga e desliga. */
+  kairoVisivel: boolean
+  mudarKairo: (ligado: boolean) => void
   /** O Planejar o mês foi pedido de outra tela: o Consultor abre a mesa ao montar. */
   planejarAoAbrir: boolean
   /** O Consultor já abriu a mesa pedida. */

@@ -19074,5 +19074,129 @@
   "A fatura do {0} está paga: {1}.": {
     "en": "The {0} bill is paid: {1}.",
     "es": "La factura de {0} está pagada: {1}."
+  },
+  "Kairo:": {
+    "en": "Kairo:",
+    "es": "Kairo:"
+  },
+  "Tem coisa pedindo atenção. Vamos por partes.": {
+    "en": "A few things need your attention. Let's take them one at a time.",
+    "es": "Hay cosas que piden atención. Vamos por partes."
+  },
+  "Seu dinheiro está em ordem. Bom trabalho.": {
+    "en": "Your money is in order. Good job.",
+    "es": "Tu dinero está en orden. Buen trabajo."
+  },
+  "Estou de olho nos seus números.": {
+    "en": "I'm keeping an eye on your numbers.",
+    "es": "Estoy pendiente de tus números."
+  },
+  "Kairo, seu consultor financeiro": {
+    "en": "Kairo, your financial advisor",
+    "es": "Kairo, tu asesor financiero"
+  },
+  "Nota {0} · {1}": {
+    "en": "Score {0} · {1}",
+    "es": "Nota {0} · {1}"
+  },
+  "Ainda aprendendo com os seus lançamentos": {
+    "en": "Still learning from your entries",
+    "es": "Todavía aprendiendo de tus registros"
+  },
+  "Nesta tela": {
+    "en": "On this screen",
+    "es": "En esta pantalla"
+  },
+  "Nesta tela, nada pede atenção agora.": {
+    "en": "Nothing on this screen needs attention right now.",
+    "es": "En esta pantalla, nada pide atención ahora."
+  },
+  "Em outras telas": {
+    "en": "On other screens",
+    "es": "En otras pantallas"
+  },
+  "Ver a análise completa": {
+    "en": "See the full analysis",
+    "es": "Ver el análisis completo"
+  },
+  "Esconder o Kairo": {
+    "en": "Hide Kairo",
+    "es": "Ocultar a Kairo"
+  },
+  "Kairo: 1 coisa para ver nesta tela": {
+    "en": "Kairo: 1 thing to see on this screen",
+    "es": "Kairo: 1 cosa para ver en esta pantalla"
+  },
+  "Kairo: {0} coisas para ver nesta tela": {
+    "en": "Kairo: {0} things to see on this screen",
+    "es": "Kairo: {0} cosas para ver en esta pantalla"
+  },
+  "Falar com o Kairo, seu consultor": {
+    "en": "Talk to Kairo, your advisor",
+    "es": "Hablar con Kairo, tu asesor"
+  },
+  "Kairo, seu consultor": {
+    "en": "Kairo, your advisor",
+    "es": "Kairo, tu asesor"
+  },
+  "Ver": {
+    "en": "See",
+    "es": "Ver"
+  },
+  "Plano salvo. O Kairo já está usando ele.": {
+    "en": "Plan saved. Kairo is already using it.",
+    "es": "Plan guardado. Kairo ya lo está usando."
+  },
+  "Você mexeu no plano e ainda não salvou. Sem salvar, o Kairo continua usando o plano de antes.": {
+    "en": "You changed the plan and haven't saved yet. Until you save, Kairo keeps using the previous plan.",
+    "es": "Cambiaste el plan y todavía no lo guardaste. Sin guardar, Kairo sigue usando el plan anterior."
+  },
+  "Kairo diz": {
+    "en": "Kairo says",
+    "es": "Kairo dice"
+  },
+  "O Kairo passa a seguir o que você decidir aqui.": {
+    "en": "Kairo will follow what you decide here.",
+    "es": "Kairo pasará a seguir lo que decidas aquí."
+  },
+  "Seu consultor financeiro": {
+    "en": "Your financial advisor",
+    "es": "Tu asesor financiero"
+  },
+  "Ele começa a pensar no primeiro lançamento.": {
+    "en": "Kairo starts thinking with your first entry.",
+    "es": "Kairo empieza a pensar con tu primer registro."
+  },
+  "O Kairo começa no primeiro lançamento": {
+    "en": "Kairo starts with your first entry",
+    "es": "Kairo empieza con tu primer registro"
+  },
+  "Mostrar o Kairo nas outras telas": {
+    "en": "Show Kairo on the other screens",
+    "es": "Mostrar a Kairo en las otras pantallas"
+  },
+  "Oi, {0}! Eu sou o Kairo.": {
+    "en": "Hi, {0}! I'm Kairo.",
+    "es": "¡Hola, {0}! Soy Kairo."
+  },
+  "Oi! Eu sou o Kairo.": {
+    "en": "Hi! I'm Kairo.",
+    "es": "¡Hola! Soy Kairo."
+  },
+  "Oi, {0}. Eu sou o Kairo.": {
+    "en": "Hi, {0}. I'm Kairo.",
+    "es": "Hola, {0}. Soy Kairo."
+  },
+  "Seu consultor. Estou de olho nos seus números.": {
+    "en": "Your advisor. I'm keeping an eye on your numbers.",
+    "es": "Tu asesor. Estoy pendiente de tus números."
+  },
+  "Toque em mim para ver o que fazer": {
+    "en": "Tap me to see what to do",
+    "es": "Tócame para ver qué hacer"
+  },
+  "Dei uma olhada aqui. Nada pedindo atenção.": {
+    "en": "I took a look here. Nothing needs attention.",
+    "es": "Eché un vistazo aquí. Nada pide atención."
   }
 }

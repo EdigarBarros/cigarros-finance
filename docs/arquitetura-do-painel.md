@@ -663,6 +663,44 @@ tela passa por esse filtro: se não revela nada nem muda o que ela faz nesta sem
 Testes: `node scripts/painel/testar.mjs` (casos "juros aprendidos", "sinais", "consultor na hora", "o consultor lê o
 plano") e `scripts/app-de-demonstracao/testar-consultor-que-aprende.cjs`.
 
+### 4.7.2 O Kairo: o consultor em pessoa (desde 27/11/2026)
+
+O Consultor ganhou nome e rosto: **Kairo**, "seu consultor financeiro". A referência é o assistente de um vídeo que o dono
+mandou: uma bolinha com dois olhinhos que voa pela tela, faz caretas e fica numa pílula no canto. As cores são as da marca
+(índigo, azul e verde-água, da arte do dono). O motor continua o mesmo: o Kairo não calcula nada, só dá voz e cara ao que
+`lib/analise.ts`, `lib/conselheiro.ts` e `lib/sinais.ts` já decidem.
+
+- **O desenho** (`components/Kairo.tsx`, `components/kairo.css`): SVG (nítido de 20 px a 80 px), vidro fosco, mais claro
+  embaixo e com halo. Cada olho tem um jeito (aberto, feliz `^`, fechado, ponto) e as caretas combinam os dois: calmo `ıı`,
+  feliz `^^`, piscadela `^ı`, fechado `––`, surpreso `••`, preocupado (olhos baixos e inclinados), pensando (pontos, olhando
+  em volta) e comemorando (`^^` com pulinhos). Troca por transição, então a cara muda aos poucos. `vivo` liga o "diretor"
+  (`useVida`): pisca, olha para os lados e faz uma careta que combina com o humor de tempos em tempos. `segue`: os olhos
+  acompanham o ponteiro. Com Animações reduzidas ele fica parado, com a cara do humor.
+- **O humor** (`lib/kairo.ts`, puro): `humorDe` fica preocupado com atraso, urgência ou tom ruim, feliz com tudo em ordem e,
+  no resto, calmo. `humorDoTom` dá a cara de uma fala só.
+- **O que ele diz em cada tela** (`falasDoKairo` e `falasDaTela`): junta o plano de ação, o conselheiro e os sinais que não
+  viraram passo, sem repetir assunto, em ordem (urgente, atenção, elogio, resto). Numa tela, o que leva a ela. Na Início, o
+  mais importante de tudo. Tela sem nada: até 2 importantes de outras telas.
+- **Solto no canto** (`components/KairoFlutuante.tsx`), em todas as telas do painel menos o Consultor: uma pílula escura
+  "Kairo" (no celular, só a bolinha, acima da barra de abas), com o número do que é importante na tela. Passando o ponteiro,
+  ele sorri. **O passeio**: na primeira vez que a pessoa abre uma tela em cada visita ao app (depois da abertura), ele sai da
+  pílula voando (esticado na direção do voo), pousa no primeiro cartão grande (amassa e solta uma ondinha), lê com olhinhos
+  de ponto e diz o que viu num balão em cima dele: na primeira tela se apresenta ("Oi, Marina! Eu sou o Kairo."). Depois diz
+  o mais importante da tela, sem repetir assunto na mesma visita, ou "Dei uma olhada aqui. Nada pedindo atenção.". Depois
+  de uns 4 s volta encolhendo para a pílula. Rolar, trocar de tela ou tocar fora o manda de volta; tocar nele abre o painel.
+  Sem animações, não voa: o balão aparece parado no canto, só para se apresentar ou com algo importante.
+  **O painel**: ele grande no topo, "Oi, Marina. Eu sou o Kairo.", a nota, uma frase do humor, "Nesta tela" e "Em outras
+  telas" (cada fala com o botão que resolve e, nos conselhos, "Agora não"), "Ver a análise completa", "Planejar o mês" e
+  "Esconder o Kairo" (grava `kairo-flutuante` em `perfil.dispensadas`; o interruptor "Mostrar o Kairo nas outras telas", no
+  pé do Consultor, traz de volta). Fica escondido enquanto o aviso "Analisei a mudança" está na tela, porque ali quem fala já é ele.
+- **Onde mais ele aparece**: o topo do Consultor (ele grande, com o nome; pensando enquanto a tela se refaz; no celular, uma
+  faixa com ele e a primeira frase do resumo), "Refiz sua tela" (chega rolando, pensando), "Kairo diz" no Planejar o mês
+  (comemora com o mês fechado, preocupado com conta atrasando), o aviso na hora da decisão ("Kairo:"), o "Analisei a
+  mudança" (pensa e depois mostra a cara da nota), a orientação da Início, o selo da nota em "Saúde do seu dinheiro", os
+  conselhos no cartão do menu lateral e o ícone da aba Consultor (o `kairo` do `Icone.tsx`). A aba continua chamada "Consultor".
+
+Testes: `node scripts/painel/testar.mjs` (caso "kairo: o que ele diz em cada tela e o humor").
+
 ### 4.7.1 Planejamento do mês (`lib/planejamento.ts`, `components/Planejamento.tsx`)
 
 Um jogo de dividir o dinheiro: cada dinheiro que entra no mês vira uma **barra**, e a pessoa diz com qual dinheiro sai cada

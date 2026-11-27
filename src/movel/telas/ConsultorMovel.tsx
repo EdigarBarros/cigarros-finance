@@ -7,12 +7,12 @@
  */
 import { useState } from 'react'
 import { faturaDoDestino } from '../../lib/faturasAPagar'
-import { Icone } from '../../components/Icone'
 import { CartaoDoPlanejamento, Planejamento } from '../../components/Planejamento'
 import { Interruptor } from '../../components/ui'
 import { semMovimento, useMovimento } from '../../lib/tema'
 import { tx } from '../../lib/textos'
-import { OQueMudou, PlanoDeAcao, useDesdeAUltimaVisita, useMontagem, usePlanejarAoAbrir } from '../../pages/Analise'
+import { InterruptorDoKairo, OQueMudou, PlanoDeAcao, useDesdeAUltimaVisita, useHumorDoKairo, useMontagem, usePlanejarAoAbrir } from '../../pages/Analise'
+import { Kairo, KairoMarca } from '../../components/Kairo'
 import { Agora, JeitoDeFalar, Objetivo, ProximoPasso, SeuPerfil } from '../../pages/AnaliseTopo'
 import { Faixas, Manchete, useTelaViva } from '../../pages/AnaliseTela'
 import type { Ctx } from '../../pages/contexto'
@@ -37,6 +37,7 @@ export function ConsultorMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom,
   // os passos do plano que falam do Planejamento (destino 'analise') abrem a mesa em vez de navegar
   const irPara: Ctx['irPara'] = (p) => (p === 'analise' ? setPlanejando(true) : c.irPara(p))
   usePlanejarAoAbrir(c, setPlanejando)
+  const humor = useHumorDoKairo(c)
   const pl = a.planoDoMes
 
   // ---------- topo: o veredito do próprio Consultor ----------
@@ -71,11 +72,18 @@ export function ConsultorMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom,
     <div className={`pagina analise an-${nivel} consultor-movel ${movimento === 'reduzido' ? 'parado' : ''}`}>
       <HeroDeslizante paginas={paginas} aoMudar={(p) => aoMudarTom(p.tom)} />
       <BotoesDeAcao acoes={acoes} />
+      <div className="an-kairo-faixa">
+        <Kairo humor={montando ? 'pensando' : humor} tamanho={46} vivo flutua />
+        <span>
+          <KairoMarca sub={false} />
+          <small>{c.contaNova ? tx('Ele começa a pensar no primeiro lançamento.') : a.resumo[0] ?? tx('Estou de olho nos seus números.')}</small>
+        </span>
+      </div>
 
       {c.contaNova ? (
         <section className="cartao an-vazio">
-          <span className="an-vazio-icone"><Icone nome="bussola" tamanho={30} /></span>
-          <h2>{tx('Seu consultor começa no primeiro lançamento')}</h2>
+          <span className="an-vazio-kairo"><Kairo humor="calmo" tamanho={64} vivo flutua sombra /></span>
+          <h2>{tx('O Kairo começa no primeiro lançamento')}</h2>
           <p>{tx('Lance o que entra e o que sai. A cada lançamento, os gráficos se refazem sozinhos.')}</p>
         </section>
       ) : (
@@ -97,6 +105,7 @@ export function ConsultorMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom,
               <Interruptor ligado={c.avisosDaAnalise} aoMudar={c.mudarAvisosDaAnalise} rotulo={tx('Avisar quando a análise mudar')} />
               <span>{tx('Avisar quando a análise mudar')}</span>
             </label>
+            <InterruptorDoKairo c={c} />
             <p>{tx('Orientações de educação financeira, feitas com o que você lançou. Não é recomendação de investimento.')}</p>
           </footer>
         </div>

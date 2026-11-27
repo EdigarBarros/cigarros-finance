@@ -111,6 +111,10 @@ Dashboard de finanças pessoais, construído a partir da ideia da planilha `PLAN
   mas não conta como gasto (fica fora de Saiu, Faltou e Para onde foi); o app tira o valor da conta de origem e soma na
   caixinha de destino do mês (e o limite garantido do cartão que usa essa caixinha sobe junto). Editar ou apagar o
   lançamento desfaz o ajuste ([migração 23](supabase/migracao-23-guardado-em-banco.sql); sem ela o app funciona e avisa)
+- **Kairo, o consultor em pessoa**: o Consultor tem nome e rosto. Uma bolinha nas cores da marca, com olhinhos que piscam,
+  olham em volta e fazem caretas conforme o dinheiro está. Fica numa pílula no canto das telas, voa até a tela que você abre
+  para dizer o mais importante dela e, tocado, mostra o que tem a dizer ali. Também fala no Consultor, no Planejar o mês e
+  nos avisos ([docs/arquitetura-do-painel.md](docs/arquitetura-do-painel.md), seção 4.7.2)
 - **Consultor que aprende com você**: a aba Consultor pergunta o seu objetivo (sair das dívidas, fechar o mês sem aperto,
   juntar dinheiro, saber para onde vai o dinheiro, gastar sem culpa, fazer render) e muda a ordem do plano e o que diz.
   Cada passo que dá para medir é conferido quando o mês fecha: deu certo, vira vitória; não deu, o próximo vem menor;

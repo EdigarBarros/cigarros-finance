@@ -58,6 +58,8 @@ import { useSegurarAbertura } from '../lib/abertura'
 import { tx } from '../lib/textos'
 import { useHoje } from '../lib/useHoje'
 import { AvisoReanalise } from './AvisoReanalise'
+import { KairoFlutuante } from './KairoFlutuante'
+import { humorDoTom } from '../lib/kairo'
 import { marcarTela, marcarUso } from '../lib/uso'
 import { PopupNovidade, useNovidade } from './Novidades'
 import { planoDesfazerEstorno, planoDoEstorno, useSemEstorno, type MudancaDeEstorno } from '../lib/estorno'
@@ -170,7 +172,7 @@ const agendar = (f: () => void) => {
 const PAGINAS: { id: Pagina; nome: string; curto: string; icone: string }[] = [
   { id: 'inicio', nome: tx('Início'), curto: tx('Início'), icone: 'inicio' },
   { id: 'lancamentos', nome: tx('Lançamentos'), curto: tx('Lançamentos'), icone: 'lista' },
-  { id: 'analise', nome: tx('Consultor'), curto: tx('Consultor'), icone: 'bussola' },
+  { id: 'analise', nome: tx('Consultor'), curto: tx('Consultor'), icone: 'kairo' },
   { id: 'invest', nome: tx('Invest'), curto: tx('Invest'), icone: 'investir' },
   { id: 'contas', nome: tx('Contas do mês'), curto: tx('Contas'), icone: 'calendario' },
   { id: 'cartoes', nome: tx('Cartões'), curto: tx('Cartões'), icone: 'cartao' },
@@ -667,6 +669,11 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   // o atalho "Planejar o mês" da Início: vai para o Consultor e ele abre a mesa ao montar
   const [planejarAoAbrir, setPlanejarAoAbrir] = useState(false)
   const abrirPlanejamento = () => { setPlanejarAoAbrir(true); irPara('analise') }
+  // o Kairo solto no canto das outras telas (components/KairoFlutuante.tsx): "Esconder o Kairo" grava em perfil.dispensadas
+  const kairoVisivel = !perfil.dispensadas.includes('kairo-flutuante')
+  const mudarKairo = (ligado: boolean) => mudarPerfil({
+    ...perfil, dispensadas: ligado ? perfil.dispensadas.filter((x) => x !== 'kairo-flutuante') : [...new Set([...perfil.dispensadas, 'kairo-flutuante'])],
+  })
   const mudarAvisosDaAnalise = (ligado: boolean) => mudarPerfil({
     ...perfil, dispensadas: ligado ? perfil.dispensadas.filter((x) => x !== 'aviso-reanalise') : [...new Set([...perfil.dispensadas, 'aviso-reanalise'])],
   })
@@ -878,7 +885,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     conselhosSemDados: faltamDadosParaConselhos({ lancs: lancsDosConselhos, dividas: d.dividas, hoje }),
     conselhosDispensados: avisosDispensadosNoMes(perfil.dispensadas, hoje),
     invest, ajustarSaldosDaOperacao, ajustarCaixinha,
-    analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise, memoria: d.memoria, escolherObjetivo, escolherFirmeza,
+    analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise, kairoVisivel, mudarKairo, memoria: d.memoria, escolherObjetivo, escolherFirmeza,
     abrirPlanejamento, planejarAoAbrir, planejamentoAberto: () => setPlanejarAoAbrir(false), gosto: d.gosto, salvarGosto: d.salvarGosto, planejamento: d.planejamento, salvarPlanejamento: d.salvarPlanejamento,
     ligarModulo,
     personalizar: () => setAjustes('painel'),
@@ -980,7 +987,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     }] : []),
   ]
   const dicasDoConselheiro: Dica[] = conselhos.slice(0, 3).map((c) => ({
-    id: c.id, alerta: c.gravidade === 'urgente', icone: c.icone, titulo: c.titulo, botao: c.botao, acao: () => irPara(c.destino),
+    id: c.id, alerta: c.gravidade === 'urgente', icone: c.icone, titulo: c.titulo, botao: c.botao, acao: () => irPara(c.destino), kairo: humorDoTom(c.gravidade),
     dispensar: () => dispensarConselho(c.id),
   }))
   const dicasGenericas: Dica[] = [
@@ -1003,6 +1010,12 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     },
   ]
   const dicas: Dica[] = [...alertas, ...(dicasDoConselheiro.length ? dicasDoConselheiro : dicasGenericas)]
+
+  // fora do Consultor (ele já está no topo de lá), fora do tutorial e enquanto o aviso "Analisei a mudança" (que é ele falando) não está na tela
+  const kairoSolto = noPainel && kairoVisivel && !tour && paginaAtual !== 'analise' && !(avisoReanalise && reanalise && avisosDaAnalise) && !d.carregando && temDados && (
+    <KairoFlutuante pagina={paginaAtual} nome={(perfil.nome.trim() || '').split(/\s+/)[0] ?? ''} a={analise} conselhos={conselhos} irPara={irPara} aoDispensar={dispensarConselho}
+      aoPlanejar={abrirPlanejamento} aoEsconder={() => mudarKairo(false)} />
+  )
 
   const menuItens = (
     <>
@@ -1305,6 +1318,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         </div>
 
 
+        {kairoSolto}
+
         {avisoReanalise && reanalise && avisosDaAnalise && paginaAtual !== 'analise' && noPainel && (
           <AvisoReanalise r={reanalise} aoFechar={fecharAvisoReanalise}
             aoVer={() => { setAvisoReanalise(false); irPara('analise') }}
@@ -1479,6 +1494,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
 
         {telas(false)}
       </div>
+
+      {kairoSolto}
 
       {avisoReanalise && reanalise && avisosDaAnalise && paginaAtual !== 'analise' && noPainel && (
         <AvisoReanalise r={reanalise} aoFechar={fecharAvisoReanalise}

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { semMovimento } from '../lib/tema'
 import { Icone } from './Icone'
+import { Kairo } from './Kairo'
+import type { Humor } from '../lib/kairo'
 import { Paisagem, type Cena } from './Paisagem'
 import { tx } from '../lib/textos'
 
@@ -14,6 +16,8 @@ export interface Dica {
   acao: () => void
   /** Pede atenção (conta vencida): fica no tom de alerta. */
   alerta?: boolean
+  /** Quem fala é o Kairo (os conselhos do conselheiro): ele aparece no lugar do ícone, com esse humor. */
+  kairo?: Humor
   /** Quando existe, aparece o "x" do canto: a dica some por um tempo (os conselhos do conselheiro usam). */
   dispensar?: () => void
 }
@@ -49,7 +53,9 @@ export function CartaoDicas({ dicas }: { dicas: Dica[] }) {
         </button>
       )}
       <div className="dica-conteudo" key={atual.id}>
-        <span className="dica-icone"><Icone nome={atual.icone} tamanho={18} /></span>
+        {atual.kairo
+          ? <span className="dica-icone dica-kairo"><Kairo humor={atual.kairo} tamanho={34} vivo flutua /></span>
+          : <span className="dica-icone"><Icone nome={atual.icone} tamanho={18} /></span>}
         <strong>{atual.titulo}</strong>
         <button className="btn" onClick={atual.acao}>{atual.botao} <Icone nome="seta" tamanho={16} /></button>
       </div>

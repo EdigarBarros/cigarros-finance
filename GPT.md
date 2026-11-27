@@ -2361,3 +2361,37 @@ do X está paga: R$ … em …"). Eles não viram saída, porque as compras já 
 **Validação.** tsc, lint, build. `testar-fatura-como-divida.cjs`: o saldo da conta cai o valor pago, `saldo_mexido`
 verdadeiro e a nota mostra o pagamento; todos OK. `scripts/painel/testar.mjs` 55/55 (o caso "da conta" passou a esperar o
 desconto na `cc`). `testar-fatura-em-parte`, `testar-plano-travado`, `testar-planejamento` e `testar-movel` sem falha.
+
+### 27/11/2026 — Claude — Kairo: o consultor ganhou nome, rosto e passeio pela tela
+
+**Pedido do dono.** Dar nome e cara ao Consultor: **Kairo**, "seu consultor financeiro". A referência é o assistente de
+dois vídeos que ele mandou: uma bolinha com dois olhinhos que voa pela tela, faz caretas e fica numa pílula no canto. As cores
+vêm da arte dele (índigo, azul e verde-água). Ele pediu que o Kairo apareça onde o algoritmo está (Consultor, Planejamento)
+e em mais partes do site, por dentro das análises.
+
+**O que mudou.** Veja a seção 4.7.2 de `docs/arquitetura-do-painel.md`.
+- `components/Kairo.tsx` + `kairo.css`: o desenho em SVG e as caretas (cada olho: aberto, feliz, fechado, ponto), com o
+  "diretor" (`useVida`) que pisca, olha em volta e faz caretas sozinho, e os olhos que seguem o ponteiro.
+- `lib/kairo.ts` (puro): o humor (`humorDe`, `humorDoTom`) e o que ele diz em cada tela (`falasDoKairo`, `falasDaTela`), a
+  partir do plano de ação, do conselheiro e dos sinais que já existiam. Nenhuma regra financeira nova.
+- `components/KairoFlutuante.tsx`: a pílula "Kairo" no canto de todas as telas menos o Consultor, o passeio (voa até a
+  tela, pousa com ondinha, lê e fala, volta) uma vez por tela em cada visita, e o painel com ele grande. "Esconder o Kairo"
+  usa `perfil.dispensadas` (`kairo-flutuante`), sem migração; o interruptor no pé do Consultor traz de volta.
+- Trocou a bússola pelo Kairo: topo do Consultor (computador e celular), "Refiz sua tela", "Kairo diz" no Planejar o mês,
+  aviso na hora da decisão, "Analisei a mudança", orientação da Início, selo da nota, cartão do menu lateral e o ícone da aba.
+- Textos novos em `en` e `es`. A aba continua "Consultor".
+
+**Validação.** `npx tsc -b`, `npm run lint` (sem erro; nenhum aviso novo nos arquivos do Kairo), build.
+`node scripts/painel/testar.mjs` 56/56 (caso novo "kairo"). No app de demonstração (computador 1280/1440 e celular 390,
+claro e escuro): o passeio filmado quadro a quadro (sai da pílula, pousa no cartão, olhinhos de ponto lendo, se apresenta,
+volta), o painel, esconder e trazer de volta pelo Consultor, sem erro na página e sem rolagem de lado no celular.
+
+**Testes antigos rodados com o Kairo:** `testar-planejamento`, `testar-consultor-que-aprende`, `testar-plano-travado`,
+`testar-a-receber`, `testar-fatura-como-divida`, `testar-contas` e `testar-correcoes`, todos sem falha.
+
+### 27/11/2026 — Claude — App Android 2.9.6 (código 34)
+
+**Estado:** `.aab` gerado, assinado e entregue ao Edigar; falta enviar no Play Console. Leva o Kairo. `versionCode` 33 → 34.
+`npm run app` e `./gradlew bundleRelease` (Android SDK 36 baixado no scratchpad), `jarsigner`. A chave e a senha vieram do
+Drive do dono só para assinar e foram apagadas da máquina em seguida. Conferido: `jarsigner -verify` ("jar verified"),
+impressão da chave de upload (A7:07:94:…:5D:9D) e o Kairo dentro do pacote.

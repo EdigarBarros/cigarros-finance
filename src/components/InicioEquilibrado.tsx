@@ -7,6 +7,8 @@
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import type { DiaADia } from '../lib/previsao'
 import { fmtValor, MESES_CURTO, MESES_NOME, noMeioDaFrase } from '../lib/format'
+import { Kairo } from './Kairo'
+import { humorDoTom } from '../lib/kairo'
 import { Icone } from './Icone'
 import { IconeCategoria } from './IconeCategoria'
 import { Modal } from './ui'
@@ -627,7 +629,10 @@ export function OrientacaoEq({ conselhos, semDados, aoIr, aoDispensar, todas, ao
     <section className="cartao eq-cartao eq-orientacao" aria-label={tx('Orientação')}>
       {c ? (
         <div className={`eq-conselho ${pedeDado(c) ? 'atencao' : c.gravidade}`}>
-          <span className="eq-conselho-selo">{pedeDado(c) ? tx('Falta um dado') : SELO[c.gravidade]()}</span>
+          <span className="eq-conselho-quem">
+            <Kairo humor={pedeDado(c) ? 'pensando' : humorDoTom(c.gravidade)} tamanho={30} vivo />
+            <span className="eq-conselho-selo">{pedeDado(c) ? tx('Falta um dado') : SELO[c.gravidade]()}</span>
+          </span>
           <strong>{c.titulo}</strong>
           <p>{aoAnalise ? duasFrases(c.porque) : primeiraFrase(c.porque)}</p>
           <div className="eq-conselho-acoes">
@@ -637,7 +642,10 @@ export function OrientacaoEq({ conselhos, semDados, aoIr, aoDispensar, todas, ao
         </div>
       ) : (
         <div className="eq-conselho elogio">
-          <span className="eq-conselho-selo">{tx('Orientação')}</span>
+          <span className="eq-conselho-quem">
+            <Kairo humor={semDados ? 'pensando' : 'feliz'} tamanho={30} vivo />
+            <span className="eq-conselho-selo">{tx('Orientação')}</span>
+          </span>
           <strong>{semDados ? tx('Ainda sem orientação: faltam dados.') : tx('Nenhum alerta agora.')}</strong>
           <p>{semDados ? tx('Lance entradas e saídas de pelo menos 2 meses que já terminaram.') : tx('Tudo em ordem por aqui.')}</p>
         </div>
