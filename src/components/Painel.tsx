@@ -25,7 +25,7 @@ import type { Lancamento, Modulo, Perfil, SaldoInicial, Tipo } from '../lib/type
 import { useMobile } from '../lib/useMobile'
 import { useRecolherAoRolar } from '../lib/botaoMais'
 import { useBarraLateral } from '../lib/useBarraLateral'
-import { estiloLente, useLente } from '../lib/useLente'
+import { LenteDe } from '../lib/useLente'
 import { useBarraElastica } from '../lib/barraElastica'
 import { definirTema, semMovimento, useTema } from '../lib/tema'
 import { ehErroDeVersao, lembrarMes, mesAntesDeAtualizar } from '../lib/atualizacao'
@@ -325,7 +325,6 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     window.addEventListener('hashchange', aoMudar)
     return () => window.removeEventListener('hashchange', aoMudar)
   }, [])
-  const lenteNav = useLente(refNav, 'button.ativo', `${paginaAtual}|${paginas.length}|${noPainel}|${barra.trilho}|${barra.retrato}`)
   // Jeito simples no celular: o topo fica só com o mês e o olho; idioma, suporte, tema e configurações vão para o
   // "Mais" da barra de baixo (que então sempre aparece). Veja docs/arquitetura-do-painel.md, seção 4.1.
 
@@ -341,7 +340,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
       el.animate(
         // só opacidade e deslocamento: animar 'filter' em blocos grandes engasga em tablet
         [{ opacity: 0.35, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }],
-        { duration: 450, delay: Math.min(i, 6) * 30, easing: 'cubic-bezier(.32,.72,0,1)', fill: 'backwards' },
+        { duration: 400, delay: Math.min(i, 5) * 30, easing: 'cubic-bezier(.32,.72,0,1)', fill: 'backwards' },
       ),
     )
   }, [mes, ano])
@@ -1363,7 +1362,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
           </button>
         </div>
         <nav ref={refNav} aria-label={tx('Páginas')}>
-          {lenteNav && <span className="lente" aria-hidden="true" style={estiloLente(lenteNav)} />}
+          <LenteDe caixa={refNav} seletor="button.ativo" chave={`${paginaAtual}|${paginas.length}|${noPainel}|${barra.trilho}|${barra.retrato}`} className="lente"
+            alvos='button[data-tour^="nav-"]:not([data-tour="nav-config"])' />
           {paginas.map((p) => (
             <button key={p.id} data-tour={`nav-${p.id}`} className={paginaAtual === p.id ? 'ativo' : ''} onClick={() => irPara(p.id)}
               aria-current={paginaAtual === p.id ? 'page' : undefined} aria-label={p.nome} title={barra.trilho ? p.nome : undefined}>

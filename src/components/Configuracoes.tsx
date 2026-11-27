@@ -8,7 +8,7 @@ import { MOEDAS } from '../lib/moedas'
 import { DETALHES, MODULOS } from '../lib/perfil'
 import { definirMovimento, definirTema, useMovimento, useTema, type Movimento, type PreferenciaTema } from '../lib/tema'
 import type { Categoria, Modulo, Perfil, SaldoInicial } from '../lib/types'
-import { estiloLente, useLente } from '../lib/useLente'
+import { LenteDe } from '../lib/useLente'
 import { Bandeira } from './Bandeira'
 import { PreviaDetalhe, PreviaTema } from './Previas'
 import { Selo } from './Categorias'
@@ -76,7 +76,6 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
   const { preferencia } = useTema()
   const movimento = useMovimento()
   const nav = useRef<HTMLElement>(null)
-  const lente = useLente(nav, 'button.ativo', secao)
   const ligar = (m: Modulo, v: boolean) => aoMudar({ ...perfil, modulos: { ...perfil.modulos, [m]: v } })
   const alternarMoeda = (m: string) => {
     const moedas = perfil.moedas.includes(m) ? perfil.moedas.filter((x) => x !== m) : [...perfil.moedas, m]
@@ -101,7 +100,7 @@ export function Configuracoes({ perfil, email, categorias, foto, aoMudarFoto, ao
             <span><strong>{nome.trim() || tx('Você')}</strong><small>{email}</small></span>
           </div>
           <nav className="config-nav" aria-label={tx('Seções')} ref={nav}>
-            {lente && <span className="config-lente" aria-hidden="true" style={estiloLente(lente)} />}
+            <LenteDe caixa={nav} seletor="button.ativo" chave={secao} className="config-lente" alvos="button" />
             {secoes.map((x) => (
               <button key={x.id} type="button" className={secao === x.id ? 'ativo' : ''} onClick={() => { salvarNome(); setSecao(x.id) }}>
                 <Icone nome={x.icone} tamanho={18} /><span>{x.nome}</span>
