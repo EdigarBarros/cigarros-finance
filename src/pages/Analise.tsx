@@ -11,6 +11,7 @@ import { Interruptor } from '../components/ui'
 import { useEmVista } from './analiseApoio'
 import { Agora, JeitoDeFalar, Objetivo, ProximoPasso, SeuPerfil } from './AnaliseTopo'
 import { Faixas, Manchete, useTelaViva } from './AnaliseTela'
+import { PerguntaDoMes } from '../components/PerguntaDoMes'
 import { CartaoDoPlanejamento, Planejamento } from '../components/Planejamento'
 import { DecisaoExplicada } from '../components/DecisaoExplicada'
 import type { Ctx } from './contexto'
@@ -67,6 +68,7 @@ export function Analise(c: Ctx) {
       {montando && <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 3} aoVivo />}
       {/* o plano de pagamentos que a pessoa monta vem primeiro: o Consultor segue as decisões dela */}
       <CartaoDoPlanejamento a={a} planejamento={c.planejamento} aoAbrir={() => setPlanejando(true)} />
+      <PerguntaDoMes meses={a.cairo?.qualidade.meses} aoResponder={c.responderMes} />
       <Manchete t={tela} aoIr={(x) => x.destino && c.irPara(x.destino)} />
       <SeuPerfil a={a} nivel={nivel} />
       {!montando && <OQueMudou reanalise={c.reanalise} desdeAVisita={desdeAVisita} max={nivel === 'detalhado' ? 4 : 2} />}

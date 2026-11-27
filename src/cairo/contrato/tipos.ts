@@ -8,7 +8,7 @@
  */
 import type { DiaISO, MesISO, Moeda, Taxa, Valor } from './unidades'
 
-export const CONTRATO_VERSAO = '1.0.0'
+export const CONTRATO_VERSAO = '1.1.0'
 
 // ---------- de onde veio cada informação ----------
 
@@ -75,6 +75,19 @@ export interface QualidadeDoMes {
    */
   renda: 'conta' | 'zero_real' | 'nao_registrada' | 'sem_registros'
   motivos: Motivo[]
+  /**
+   * (1.1) Por que o Cairo não tem certeza do mês, mesmo quando ele entra nas médias: 'nivel_novo' (poucas saídas, mas é o
+   * nível dos meses seguidos até agora: mudança de comportamento, não falta de registro) ou 'contas_em_dia' (poucas
+   * saídas, mas as contas fixas do mês têm baixa). Sem o campo: sem dúvida.
+   */
+  incerto?: 'nivel_novo' | 'contas_em_dia'
+  /** (1.1) O que a pessoa disse do mês ("está tudo lançado" ou "faltou lançar"). Vale mais que qualquer inferência. */
+  declarado?: 'completo' | 'incompleto'
+  /**
+   * (1.1) Vale perguntar à pessoa se o mês está completo: a resposta muda as médias. 'poucas_saidas' traz `saidas` e
+   * `tipico`; 'renda_nao_registrada', o mês sem entrada com renda fixa esperando baixa. Só nos meses recentes.
+   */
+  pergunta?: { motivo: 'poucas_saidas' | 'renda_nao_registrada'; saidas: number; tipico: number }
 }
 
 export interface QualidadeDosDados {
@@ -91,11 +104,17 @@ export interface QualidadeDosDados {
 // ---------- fluxos e cenários (a parte de decisão consome) ----------
 
 /**
+ * Caixa × renda: 'credito_recebido' (empréstimo que vai cair) e 'a_receber' (me devem, inclusive a devolução marcada para o
+ * futuro) entram no caixa quando caem, mas NÃO são renda; 'emprestimo_concedido' sai do caixa e não é gasto. Só 'renda' é
+ * renda, e só o 'a_receber' é incerto (vem com `pOcorre` nos esperados; nunca é dinheiro disponível antes de cair).
+ * 'essencial' (1.1): conta ou lançamento futuro de categoria essencial (inferida pelo nome da categoria, por enquanto).
  * 'dia_a_dia': o gasto miúdo previsto, ainda sem separar essencial de conforto (essa separação depende do que a pessoa
  * declarar). 'obrigacao': conta, parcela ou fatura (contratada ou detectada: veja `origem`).
  */
 export type Natureza =
   | 'essencial' | 'obrigacao' | 'conforto' | 'dia_a_dia' | 'transferencia_propria' | 'credito_recebido' | 'a_receber' | 'renda'
+  /** (1.1) Dinheiro que a pessoa vai emprestar a alguém: sai do caixa, não é gasto, e não tem multa se atrasar. */
+  | 'emprestimo_concedido'
 
 /**
  * Um movimento de dinheiro num cenário. `dia` é quando o dinheiro se move; `reveladoEm` é quando a pessoa fica sabendo
@@ -115,6 +134,10 @@ export interface Fluxo {
   competencia?: DiaISO
   /** Este fluxo só existe se o outro existir, ou anda junto com ele (o gasto do dia do salário anda com o salário). */
   dependeDe?: { fluxo: string; relacao: 'so_se_ocorrer' | 'desloca_junto' }
+  /** (1.1) A fonte de renda deste fluxo (`FonteDeRenda.chave`: 'conta:<id>' ou 'desc:<chave>'), quando há. */
+  fonte?: string
+  /** (1.1) A dívida a que o fluxo pertence (parcela, empréstimo, me devem). */
+  divida?: string
   /** Só nos `esperados`: a chance de acontecer (renda que pode faltar, me devem). Sem o campo: certo. */
   pOcorre?: number
   /** Só nos `esperados`: era para ter acontecido neste dia e ainda não aconteceu (a renda atrasada continua esperada). */

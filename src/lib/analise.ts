@@ -1101,7 +1101,7 @@ export function analisar(e: EntradaAnalise): Analise {
   }
   // Que meses entram nas médias (src/cairo/qualidade/meses.ts): o mês bem registrado sem entrada, de quem costuma lançar o
   // que recebe, é mês sem renda e conta; o mês com bem menos saídas que o costume ou sem como saber da renda fica de fora.
-  const qualidadeDosFechados = qualidadeDosMeses(resumosDosMeses(naJanela, fechados, classe, contasAtivas))
+  const qualidadeDosFechados = qualidadeDosMeses(resumosDosMeses(naJanela, fechados, classe, contasAtivas, e.perfil.dispensadas ?? []))
   const entraNoFluxo = new Map(fechados.map((k, i) => [k, mesEntraNoFluxo(qualidadeDosFechados[i])]))
   const serie: MesDaSerie[] = [...fechados, atual].map((k) => {
     const b = brutos.get(k)!
@@ -1484,6 +1484,7 @@ export function analisar(e: EntradaAnalise): Analise {
     hojeIso, moeda: e.perfil.moeda, fimDoHorizonte, lancs: e.lancs, categorias: e.categorias, categoriaDe: e.categoriaDe,
     contas: contasAtivas, dividas: e.dividas, saldos: e.saldos, pagamentos: e.pagamentos, conferencias: e.conferencias ?? [],
     faturasPagas: e.faturasPagas, taxas: e.taxas, saldoContaCorrente: saldoDaAgenda, eventos: eventosDaAgenda, comDividas: v.dividas,
+    marcas: e.perfil.dispensadas ?? [], essencialDaCategoria, compras: e.compras, cartoes: e.cartoes,
   })
   {
     const prox = doMesChave(atual + 1)

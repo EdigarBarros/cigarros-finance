@@ -1,6 +1,6 @@
 # Cairo: contrato entre a parte de dados e a parte de decisão
 
-Versão do contrato: **1.0.0** (`CONTRATO_VERSAO` em `src/cairo/contrato/tipos.ts`). Dono: parte de dados (Claude 1).
+Versão do contrato: **1.1.0** (compatível com 1.0: só campos opcionais e valores novos) (`CONTRATO_VERSAO` em `src/cairo/contrato/tipos.ts`). Dono: parte de dados (Claude 1).
 Coordenação, quem faz o quê e migrações: [`coordenacao.md`](coordenacao.md).
 
 O Cairo é o motor financeiro novo do OpusCash, em `src/cairo/`. Ele tem duas partes:
@@ -69,10 +69,20 @@ app soube: `created_at`) e `atualizadoEm` (até quando vale com certeza).
 
 ## 6. Qualidade dos dados (`QualidadeDosDados`)
 
-- `meses[]` (`QualidadeDoMes`): `gastos` = `conta` | `parcial` (bem menos saídas que o costume da pessoa) | `sem_registros`;
-  `renda` = `conta` | `zero_real` (mês bem registrado sem entrada, de quem costuma lançar o que recebe e sem conta fixa de
-  entrada esperando baixa) | `nao_registrada` | `sem_registros`. `mesEntraNoFluxo` decide se o mês entra nas médias.
-  **O Consultor antigo (`analise.ts`, `conselheiro.ts`) usa exatamente esta regra desde esta versão.**
+- `meses[]` (`QualidadeDoMes`): `gastos` = `conta` | `parcial` | `sem_registros`; `renda` = `conta` | `zero_real` (mês bem
+  registrado sem entrada, de quem costuma lançar o que recebe e sem conta fixa de entrada esperando baixa, ou mês que a pessoa
+  disse estar completo) | `nao_registrada` | `sem_registros`. `mesEntraNoFluxo` decide se o mês entra nas médias.
+  **O Consultor antigo (`analise.ts`, `conselheiro.ts`) usa exatamente esta regra.**
+  - Mês com poucas saídas (menos de 35% do típico da pessoa) — (1.1):
+    - a pessoa disse (`declarado`): vale o que ela disse;
+    - faz parte de meses baixos seguidos até o mais recente (2 ou mais), ou de 3 seguidos em qualquer ponto: **conta**, com
+      `incerto: 'nivel_novo'` (gastar menos de verdade não tira a nota nem o plano);
+    - todas as contas fixas de saída do mês têm baixa: **conta**, com `incerto: 'contas_em_dia'`;
+    - senão (mês baixo isolado, ou só o último): **parcial**, fora das médias.
+  - `pergunta` (1.1): nos 3 últimos meses fechados, quando a resposta da pessoa mudaria as médias (`poucas_saidas` com `saidas`
+    e `tipico`, ou `renda_nao_registrada`). A tela (`components/PerguntaDoMes.tsx`) pergunta "Outubro está todo lançado?".
+  - A resposta fica em `perfil.dispensadas` como `mes-completo:AAAA-MM` ou `mes-incompleto:AAAA-MM` (`declararMes`,
+    `declaracoesDosMeses`), sem migração; chega ao Cairo em `EntradaCairo.marcasDosMeses`.
 - `lancadosDepois`: lançamentos registrados mais de 3 dias depois da data deles (fração e mediana).
 - `semDataDeCriacao`: registros sem `created_at`.
 - `saldo`: o saldo da conta corrente é "do mês" (o próprio ou herdado de um mês anterior): `validoAte` = fim desse mês;
@@ -113,10 +123,22 @@ Cada `Fluxo` tem `dia` (quando o dinheiro se move) e `reveladoEm` (quando a pess
 
 | O quê | `origem` | `natureza` | `reveladoEm` |
 |---|---|---|---|
-| conta fixa, parcela, fatura, lançamento futuro | `compromisso` | `obrigacao` (saída) / `renda` (entrada) | saída: hoje; entrada: o dia em que caiu no mundo |
+| conta fixa, parcela, fatura, lançamento futuro | `compromisso` | `obrigacao` ou `essencial` (saída, categoria essencial) / `renda` (entrada) | saída: hoje; entrada: o dia em que caiu no mundo |
 | recorrência detectada (ninguém contratou) | `previsto` | `obrigacao` / `renda` | idem |
-| me devem | `previsto` | `a_receber` | o dia em que caiu (só existe nos mundos em que a pessoa pagou) |
+| empréstimo marcado para cair (1.1) | `compromisso` | `credito_recebido` (caixa, **não** renda; tipo `emprestimo-recebido`) | o dia em que cai |
+| dinheiro que a pessoa vai emprestar (1.1) | `compromisso` | `emprestimo_concedido` (sai do caixa, não é gasto, sem multa) | hoje |
+| transferência entre bolsos marcada (1.1) | `compromisso` | `transferencia_propria` | saída: hoje; entrada: o dia |
+| me devem (parcela prevista ou devolução marcada) | `previsto` / `compromisso` | `a_receber` (incerto, com a chance da pessoa) | o dia em que caiu (só nos mundos em que pagou) |
 | dia a dia | `previsto` | `dia_a_dia` | o próprio dia |
+| compra futura no cartão (1.1) | `previsto` | `obrigacao` (tipo `compra-cartao-futura`) | o dia da compra (`competencia`); `dia` = vencimento da fatura |
+
+- (1.1) `Fluxo.fonte`: a `FonteDeRenda.chave` da renda (para o "e se" não casar descrições); `Fluxo.divida`: a dívida ligada.
+- (1.1) A devolução marcada para o futuro vale mais que a parcela prevista da mesma dívida até 7 dias de distância: conta uma vez.
+- (1.1) Compras futuras no cartão (`aprendizado/cartao.ts`): aprende pelo dia da compra dos últimos 12 meses (parcelas
+  incluídas, `pago_por` fora); cada compra sorteada cai no ciclo do dia (fechamento ≥ dia) e as parcelas nos seguintes, só
+  as que vencem no horizonte. Os ciclos vêm do app (`datasDaFatura`, em `lib/cairo.ts`). Só compras de AMANHÃ em diante: as de
+  até hoje já estão na fatura da agenda. Nos `esperados`, a média por dia; a compra esperada some de `esperados` quando o dia
+  da compra passa.
 
 - A renda de cada fonte atrasa ou falta conforme o aprendido (`aprendizado/entradas.ts`); o "me devem", conforme a
   pontualidade da pessoa (`aprendizado/pontualidade.ts`).
@@ -126,8 +148,8 @@ Cada `Fluxo` tem `dia` (quando o dinheiro se move) e `reveladoEm` (quando a pess
   `conhecidos` tem só `reveladoEm <= dia`; `esperados` é igual em todo mundo (renda atrasada continua esperada com
   `esperadoEm`; cada esperado traz `pOcorre`). `trocarFuturo(a, b, dia)` monta o par do teste: dois mundos iguais até `dia`.
   O teste da parte de decisão deve mostrar que as ações até `dia` são as mesmas nos dois.
-- Limitações desta versão: o gasto futuro no cartão (que entra na próxima fatura) não é sorteado, só as parcelas já
-  conhecidas; o dia a dia não separa essencial de conforto (`dia_a_dia`), porque isso depende do que a pessoa declarar.
+- Limitação: o dia a dia não separa essencial de conforto (`dia_a_dia`), porque isso depende do que a pessoa declarar
+  (pedido 1); o essencial de contas e lançamentos futuros vem do nome da categoria.
 
 ## 10. Aprendizado individual
 

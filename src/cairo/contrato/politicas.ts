@@ -22,6 +22,15 @@ export const REGRAS = {
   /** Só dá para julgar "poucas saídas" quando o mês típico tem saídas suficientes. */
   mesParcialMinimoTipico: regra('dados.mes-parcial.minimo', 'parametro_estatistico', 4,
     'Com menos de 4 saídas num mês típico, a contagem varia demais para dizer que um mês ficou incompleto.'),
+  /**
+   * Poucas saídas por tantos meses seguidos até o mês mais recente é nível novo (gastar menos), não registro incompleto.
+   * Com 3 meses seguidos assim, em qualquer ponto, também.
+   */
+  nivelNovoMeses: regra('dados.nivel-novo.meses', 'parametro_estatistico', 2,
+    'Um mês baixo sozinho, entre meses normais, costuma ser lançamento que faltou; dois ou mais seguidos até hoje, um jeito novo de gastar.'),
+  /** Só pergunta "o mês está completo?" dos meses que mexem nas médias de agora. */
+  perguntarMesesRecentes: regra('dados.perguntar.meses-recentes', 'politica', 3,
+    'Perguntar de meses antigos cansa e não muda a nota: só os 3 últimos fechados.'),
   /** Mês sem entrada só é "renda zero de verdade" para quem costuma lançar o que recebe. */
   rendaZeroMesesComRenda: regra('dados.renda-zero.meses-com-renda', 'parametro_estatistico', 2,
     'Se a pessoa lançou entradas em pelo menos 2 outros meses da janela, um mês bem registrado sem entrada é mês sem renda.'),

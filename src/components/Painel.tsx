@@ -1,3 +1,4 @@
+import { declararMes } from '../cairo'
 import { lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { saldosDoAno, sobrasPorMes } from '../lib/saldoCorrido'
 import { FormSaldoInicial } from './SaldoInicial'
@@ -624,6 +625,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
 
   // Consultor (lib/analise.ts): a análise completa, refeita sempre que qualquer dado muda (lançamento, compra no cartão,
   // dívida, conta do mês, meta, saldo de banco). Lê os 12 meses fechados e o atual, sem depender do mês aberto na tela.
+  // as respostas "o mês está completo?" (marcas em perfil.dispensadas) mudam os meses das médias
+  const marcasDosMeses = perfil.dispensadas.filter((x) => x.startsWith('mes-')).join('|')
   const analise = useMemo(() => analisar({
     hoje, lancs: lancsDosConselhos, categorias: d.categorias, categoriaDe: idCategoria, dividas: d.dividas, saldos: d.saldos,
     pagamentos: d.pagamentos, taxas, meses: mesesVistos, metas: d.metas, movimentosMeta: d.movimentosMeta, perfil,
@@ -631,7 +634,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     compras: comFaturas ? cartoes.compras.filter(contaNasSaidas(cartoes.faturasPagas)) : [],
     cartoes: comFaturas ? cartoes.cartoes : [], faturasPagas: comFaturas ? cartoes.faturasPagas : [], faturasParciais: comFaturas ? cartoes.parciais : [],
     memoria: d.memoria, planejamento: d.planejamento, bancos: d.bancos, conferencias: d.conferencias,
-  }), [d.memoria, d.planejamento, d.bancos, d.conferencias, lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, mesesVistos, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.moeda, comFaturas, cartoes.compras, cartoes.cartoes, cartoes.faturasPagas, cartoes.parciais, comContasFixas, contas.contas, hoje]) // eslint-disable-line react-hooks/exhaustive-deps
+  }), [d.memoria, d.planejamento, d.bancos, d.conferencias, lancsDosConselhos, d.categorias, d.dividas, d.saldos, d.pagamentos, taxas, mesesVistos, d.metas, d.movimentosMeta, d.dividasSemJuros, perfil.modulos, perfil.moedas, perfil.moeda, comFaturas, cartoes.compras, cartoes.cartoes, cartoes.faturasPagas, cartoes.parciais, comContasFixas, contas.contas, hoje, marcasDosMeses]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reanálise: a cada mudança feita pela pessoa, compara com a análise anterior e conta o que mudou (aviso no canto e
   // "O que mudou" na aba). Troca de ano, virada do dia, cotação nova e dados chegando não são mudança da pessoa: só
@@ -666,6 +669,7 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   }, [analise, tudoCarregado]) // eslint-disable-line react-hooks/exhaustive-deps
   const escolherObjetivo = (o: Objetivo | null) => void d.salvarMemoria({ ...d.memoria, objetivo: o, objetivoEm: o ? new Date().toISOString() : null })
   const escolherFirmeza = (f: Firmeza) => void d.salvarMemoria({ ...d.memoria, firmeza: f })
+  const responderMes = (mes: string, r: 'completo' | 'incompleto' | null) => mudarPerfil({ ...perfil, dispensadas: declararMes(perfil.dispensadas, mes, r) })
   // o atalho "Planejar o mês" da Início: vai para o Consultor e ele abre a mesa ao montar
   const [planejarAoAbrir, setPlanejarAoAbrir] = useState(false)
   const abrirPlanejamento = () => { setPlanejarAoAbrir(true); irPara('analise') }
@@ -882,10 +886,10 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     recusarSugestao: (s: Sugestao) => mudarPerfil({ ...perfil, dispensadas: [...perfil.dispensadas, s.id] }),
     dispensar: (id: string) => mudarPerfil({ ...perfil, dispensadas: [...new Set([...perfil.dispensadas, id])] }),
     conselhos, dispensarConselho,
-    conselhosSemDados: faltamDadosParaConselhos({ lancs: lancsDosConselhos, dividas: d.dividas, hoje, categorias: d.categorias, categoriaDe: idCategoria, contas: comContasFixas ? contas.contas : [] }),
+    conselhosSemDados: faltamDadosParaConselhos({ lancs: lancsDosConselhos, dividas: d.dividas, hoje, categorias: d.categorias, categoriaDe: idCategoria, contas: comContasFixas ? contas.contas : [], marcas: perfil.dispensadas }),
     conselhosDispensados: avisosDispensadosNoMes(perfil.dispensadas, hoje),
     invest, ajustarSaldosDaOperacao, ajustarCaixinha,
-    analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise, kairoVisivel, mudarKairo, memoria: d.memoria, escolherObjetivo, escolherFirmeza,
+    analise, reanalise, idUsuario: userId, avisosDaAnalise, mudarAvisosDaAnalise, kairoVisivel, mudarKairo, memoria: d.memoria, escolherObjetivo, escolherFirmeza, responderMes,
     abrirPlanejamento, planejarAoAbrir, planejamentoAberto: () => setPlanejarAoAbrir(false), gosto: d.gosto, salvarGosto: d.salvarGosto, planejamento: d.planejamento, salvarPlanejamento: d.salvarPlanejamento,
     ligarModulo,
     personalizar: () => setAjustes('painel'),

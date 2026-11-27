@@ -43,7 +43,9 @@ export function entradaDoObservado(o: Observado, a: { caixa: number | null; ate:
     const id = idDeBase(f.id)
     if (vistos.has(id)) continue
     vistos.add(id)
-    compromissos.push({ descricao: f.descricao || f.tipo, valor: reais(f), vence: f.dia, origem: origemDe(f), jurosMes: null, ...(f.natureza === 'essencial' ? { essencial: true } : {}), grupo: id })
+    compromissos.push({ descricao: f.descricao || f.tipo, valor: reais(f), vence: f.dia, origem: origemDe(f), jurosMes: null, ...(f.natureza === 'essencial' ? { essencial: true } : {}),
+      // emprestar a alguém não tem multa nem juro de atraso (Claude 1, pedido 8)
+      ...(f.natureza === 'emprestimo_concedido' ? { semCusto: true } : {}), grupo: id })
   }
   const diaADia = o.esperados.filter((f) => f.natureza === 'dia_a_dia' && f.dia > o.hoje && f.dia <= a.ate)
   const dias = Math.max(1, Math.round((utc(a.ate) - utc(o.hoje)) / 86400000))

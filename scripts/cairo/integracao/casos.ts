@@ -181,13 +181,13 @@ export const CASOS: Caso[] = [
   },
   {
     nome: 'redução de gastos: corte forte e real (40 → 10 compras por mês, com o salário lançado)',
-    limitacao: 'Mês com menos de 35% das saídas de um mês típico vira "parcial" (fora das médias), mesmo com a renda lançada e por 3 meses seguidos; o Consultor fica sem fluxo (sem nota nem plano). Pedido 7 em docs/cairo/coordenacao.md.',
+    // era limitação (pedido 7): resolvido pelo Claude 1 em qualidade/meses.ts (nível novo de meses seguidos conta)
     rodar() {
       const a = analisar(historico((ano, mes) => ({ n: reduziu(ano, mes) ? 10 : 40, valor: 60 })))
       igual('os meses da redução contam', a.cairo!.qualidade.meses.filter((m) => m.mes >= '2026-08').map((m) => m.gastos), ['conta', 'conta', 'conta'])
       igual('o gasto médio é o de agora (10 × 60)', a.gastos, 600)
-      // hoje, com os 3 meses fora, o Consultor fica sem fluxo: sem nota, sem plano, para quem acabou de cortar gastos
       certo('o Consultor continua com nota e plano', a.temFluxo && a.acoes.length > 0)
+      igual('com a incerteza dita: nível novo, e a pergunta à pessoa', a.cairo!.qualidade.meses.filter((m) => m.mes >= '2026-08').map((m) => [m.incerto, m.pergunta?.motivo]), [['nivel_novo', 'poucas_saidas'], ['nivel_novo', 'poucas_saidas'], ['nivel_novo', 'poucas_saidas']])
     },
   },
   {

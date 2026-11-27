@@ -1,0 +1,11 @@
+/* "Setembro está todo lançado?" (components/PerguntaDoMes.tsx): pergunta curta do Cairo no Consultor */
+.pergunta-mes { display: grid; gap: 10px; padding: 16px 18px; box-shadow: inset 3px 0 0 var(--destaque); }
+.pergunta-mes h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1rem; }
+.pergunta-mes p { margin: 0; color: var(--texto-2); line-height: 1.45; }
+.pergunta-mes-acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.pergunta-mes.respondida { grid-template-columns: 1fr auto; align-items: center; box-shadow: none; }
+.pergunta-mes.respondida p { display: flex; align-items: center; gap: 6px; color: var(--texto); }
+@media (max-width: 520px) {
+  .pergunta-mes-acoes .btn { flex: 1 1 100%; justify-content: center; }
+  .pergunta-mes.respondida { grid-template-columns: 1fr; }
+}

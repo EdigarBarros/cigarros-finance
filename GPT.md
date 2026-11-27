@@ -2509,3 +2509,30 @@ que as compras futuras no cartão não estão no plano; o essencial do dia a dia
 `scripts/painel/testar.mjs` 60/60, `scripts/cairo/testar.mjs` 110/110; tsc, lint, build e o app de demonstração (veja a
 resposta da sessão). Sem migração. Nenhum arquivo de `src/cairo/` foi alterado.
 
+
+### 27/11/2026 — Claude (Claude 1 do Cairo) — Etapa 2: mês com menos gastos, empréstimos e cartão nos cenários
+
+**Pedido do dono.** Corrigir a qualidade dos meses (uma redução real de compras não pode tirar o histórico e a nota),
+pôr empréstimos, devoluções e crédito no caixa dos cenários sem virar renda, completar as compras futuras no cartão e
+responder os 9 pedidos do Claude 2 (`docs/cairo/coordenacao.md`).
+
+**O que mudou** (contrato 1.1.0, compatível):
+- `src/cairo/qualidade/meses.ts`: mês com poucas saídas conta quando é nível novo (meses baixos seguidos até o mais recente,
+  ou 3 seguidos) ou quando as contas fixas do mês têm todas baixa, com `incerto` dito; o baixo isolado continua fora. `pergunta`
+  nos 3 últimos meses; a resposta da pessoa (`mes-completo:AAAA-MM` / `mes-incompleto:AAAA-MM` em `perfil.dispensadas`) vale
+  mais que a inferência. `components/PerguntaDoMes.tsx` (novo) no Consultor do computador e do celular, com Desfazer;
+  `Ctx.responderMes`. A `useMemo` da análise depende das marcas de mês.
+- `lib/cairo.ts`: lançamentos futuros classificados pela regra do Cairo (empréstimo, devolução, transferência); ciclos dos
+  cartões (`datasDaFatura`) e compras no cartão vão ao Cairo; essencial pela categoria.
+- `src/cairo/cenarios/gerador.ts`: naturezas `credito_recebido`, `emprestimo_concedido` (nova), `a_receber` (devolução marcada,
+  sem contar duas vezes), `transferencia_propria`, `essencial`; `Fluxo.fonte` e `Fluxo.divida`; compras futuras no cartão
+  (`aprendizado/cartao.ts`, novo).
+- `lib/decisoes/observado.ts` (do Claude 2, uma linha): `emprestimo_concedido` sem custo de atraso.
+
+**Validação.** tsc, lint (0 erros), build. `scripts/cairo/testar.mjs` 152 verificações; integração 9/9 (o caso "corte forte
+e real" deixou de ser limitação); decisões 23/23; painel 62/62 (casos novos: resposta do mês, empréstimo futuro).
+App de demonstração: `testar-cairo.cjs` (pergunta, resposta, recarregar e desfazer, 1440 e 390 px), `testar-decisoes` e as
+regressões do Consultor, sem falha.
+
+**Pendências.** Pedidos 2, 3, 4 e 5 e o resto do 1 dependem de migração (47–49 reservadas). O planejador da agenda ainda não
+recebe as compras futuras do cartão (com o Claude 2).
