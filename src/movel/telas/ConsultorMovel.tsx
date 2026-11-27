@@ -13,6 +13,7 @@ import { semMovimento, useMovimento } from '../../lib/tema'
 import { tx } from '../../lib/textos'
 import { InterruptorDoKairo, OQueMudou, PlanoDeAcao, useDesdeAUltimaVisita, useHumorDoKairo, useMontagem, usePlanejarAoAbrir } from '../../pages/Analise'
 import { Kairo, KairoMarca } from '../../components/Kairo'
+import { KairoApresentacao } from '../../components/KairoApresentacao'
 import { Agora, JeitoDeFalar, Objetivo, ProximoPasso, SeuPerfil } from '../../pages/AnaliseTopo'
 import { Faixas, Manchete, useTelaViva } from '../../pages/AnaliseTela'
 import type { Ctx } from '../../pages/contexto'
@@ -44,7 +45,7 @@ export function ConsultorMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom,
   const paginas: PaginaDoHero[] = [
     a.nota !== null
       ? { id: 'nota', tom: a.tom === 'bom' ? 'sobra' : a.tom === 'ruim' ? 'falta' : 'dividas', rotulo: tx('Saúde do seu dinheiro'), valor: `${a.nota}/100`, sub: a.rotulo }
-      : { id: 'nota', tom: 'invest', rotulo: tx('Saúde do seu dinheiro'), valor: '—', sub: tx('Lance mais um mês e o consultor começa a dar a nota.') },
+      : { id: 'nota', tom: 'invest', rotulo: tx('Saúde do seu dinheiro'), valor: '—', sub: tx('Lance mais um mês e o Kairo começa a dar a nota.') },
     // o plano do mês que a pessoa montou (ou o convite para montar), logo depois da nota
     ...(a.quadros ? [{
       id: 'planejar', tom: (pl?.placar.fechado ? 'sobra' : 'invest') as Tom, rotulo: tx('Seu plano do mês'),
@@ -72,17 +73,17 @@ export function ConsultorMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom,
     <div className={`pagina analise an-${nivel} consultor-movel ${movimento === 'reduzido' ? 'parado' : ''}`}>
       <HeroDeslizante paginas={paginas} aoMudar={(p) => aoMudarTom(p.tom)} />
       <BotoesDeAcao acoes={acoes} />
-      <div className="an-kairo-faixa">
+      {!c.contaNova && <div className="an-kairo-faixa">
         <Kairo humor={montando ? 'pensando' : humor} tamanho={46} vivo flutua />
         <span>
           <KairoMarca sub={false} />
           <small>{c.contaNova ? tx('Ele começa a pensar no primeiro lançamento.') : a.resumo[0] ?? tx('Estou de olho nos seus números.')}</small>
         </span>
-      </div>
+      </div>}
 
       {c.contaNova ? (
-        <section className="cartao an-vazio">
-          <span className="an-vazio-kairo"><Kairo humor="calmo" tamanho={64} vivo flutua sombra /></span>
+        <section className="cartao an-vazio an-apresenta">
+          <KairoApresentacao />
           <h2>{tx('O Kairo começa no primeiro lançamento')}</h2>
           <p>{tx('Lance o que entra e o que sai. A cada lançamento, os gráficos se refazem sozinhos.')}</p>
         </section>

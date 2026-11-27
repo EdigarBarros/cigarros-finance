@@ -2395,3 +2395,20 @@ volta), o painel, esconder e trazer de volta pelo Consultor, sem erro na página
 `npm run app` e `./gradlew bundleRelease` (Android SDK 36 baixado no scratchpad), `jarsigner`. A chave e a senha vieram do
 Drive do dono só para assinar e foram apagadas da máquina em seguida. Conferido: `jarsigner -verify` ("jar verified"),
 impressão da chave de upload (A7:07:94:…:5D:9D) e o Kairo dentro do pacote.
+
+### 27/11/2026 — Claude — Apresentação do Kairo em 3D (Consultor de conta nova) e app 2.9.7 (código 35)
+
+**Pedido do dono.** Redesenhar o Consultor vazio (conta nova) com uma animação 3D apresentando o Kairo: ele voando de um
+lado para o outro, analisando e comparando dados, mudando de expressão.
+
+**O que mudou.** `components/KairoApresentacao.tsx` + `kairo-apresentacao.css`: palco com perspectiva e cinco cartões de dados
+em profundidade (lançamentos, comparação, tendência, categorias, nota). O Kairo percorre os cartões em volta de ~20 s;
+em cada parada, olha para o cartão (prop nova `olhar` no `Kairo`), faz uma careta, e o cartão acende e refaz o gráfico. A
+legenda conta o que ele faz. No computador o cabeçalho fica sem a bolinha (a cena já é ele), e no celular a faixa do Kairo
+some na conta nova. Números ilustrativos. Com Animações reduzidas, fica na cena final, parado. No topo do Consultor no
+celular: "Lance mais um mês e o Kairo começa a dar a nota." App Android: `versionCode` 34 → 35 (substitui o 2.9.6, que
+ainda não foi enviado).
+
+**Validação.** tsc, lint (sem erro), build, `scripts/painel/testar.mjs` 56/56 e `testar-consultor-que-aprende` sem falha. A
+cena foi filmada quadro a quadro em conta vazia (1440 px escuro e claro, 390 px celular), sem erro na página e sem rolagem
+de lado. A primeira versão tinha um conflito de nome de classe (cartão × gráfico) que achatava dois cartões; corrigido.

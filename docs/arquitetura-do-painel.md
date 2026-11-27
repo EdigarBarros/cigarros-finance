@@ -699,6 +699,13 @@ mandou: uma bolinha com dois olhinhos que voa pela tela, faz caretas e fica numa
   mudança" (pensa e depois mostra a cara da nota), a orientação da Início, o selo da nota em "Saúde do seu dinheiro", os
   conselhos no cartão do menu lateral e o ícone da aba Consultor (o `kairo` do `Icone.tsx`). A aba continua chamada "Consultor".
 
+- **A apresentação** (`components/KairoApresentacao.tsx`, `kairo-apresentacao.css`): o Consultor de conta nova (computador e
+  celular) mostra um palco em 3D. Cinco cartões de dados (lançamentos, comparação, tendência, categorias e a nota) flutuam em
+  profundidade sobre um chão quadriculado, e o mundo balança devagar. O Kairo voa de cartão em cartão: em cada um, olha para
+  ele, faz uma careta, e o cartão acende, uma luz passa e o gráfico se refaz. A legenda embaixo diz o que ele faz ("Lendo o
+  que entra e o que sai…", "Comparando com o mês passado…"…), e no fim ele vem para a frente comemorando. Os números são
+  ilustração. Com Animações reduzidas, fica na cena final, parado.
+
 Testes: `node scripts/painel/testar.mjs` (caso "kairo: o que ele diz em cada tela e o humor").
 
 ### 4.7.1 Planejamento do mês (`lib/planejamento.ts`, `components/Planejamento.tsx`)
