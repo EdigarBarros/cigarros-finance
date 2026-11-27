@@ -6,6 +6,7 @@ import { aplicarEfeitos, efeitosNoSaldo, guardadoPelaDescricao, mesJaChegou } fr
 import { formaDe, formaPelaDescricao, formasDoTipo, type FormaPagamento } from '../lib/formas'
 import { COR } from '../lib/charts'
 import { calendarioDe, dividaPelaDescricao, inicioPelaProxima, jurosAoAno, jurosEmbutidos, meDevem, mesesAntes, nativoDiv, parcelasDe, somaMesesData, type SituacaoDivida } from '../lib/dividas'
+import type { FaturaAPagar } from '../lib/faturasAPagar'
 import { dataPadrao, fmtDataLonga, fmtMesAno, fmtMoeda, fmtTaxa, fmtTaxaAno, fmtValor, mesEAno, parseNumero, simbolo } from '../lib/format'
 import { casasDaMoeda, dataPlausivel, erroDataFora, erroValorGrande, mascarar, paraCampoMoeda, valorGrandeDemais } from '../lib/dinheiro'
 import { cotacaoInvertida, infoMoeda, moedasUsaveis, type Taxas } from '../lib/moedas'
@@ -63,6 +64,9 @@ interface FormLancProps {
   saldoDaDivida?: (id: string) => string | null
   aoMoverInicioDivida?: (id: string, data: string) => Promise<string | null>
   aoNovaDivida?: (d: { quem: string; data: string; sentido: 'devo' | 'me_devem' }) => Promise<Divida | undefined>
+  /** Faturas de cartão com o que pagar: a saída pode ser o pagamento de uma delas (vira o pagamento da tela Cartões). */
+  faturasAPagar?: FaturaAPagar[]
+  aoPagarFatura?: (chave: string, inicial: { valor: number; data: string; bancoId: string | null }) => void
   aoExcluir?: (id: string) => void
   /** Cartões de crédito (só com o módulo ligado): a saída pode ser uma compra no cartão. */
   cartoes?: CartaoCredito[]
@@ -130,6 +134,9 @@ export function FormLancamento(p: FormLancProps) {
     p.inicial ? p.categoriaDe(p.inicial)?.id ?? '' : ini.categoria_id ?? outrosDe(ini.tipo ?? p.tipoInicial ?? 'saida'),
   )
   const [dividaId, setDividaId] = useState<string>(ini.divida_id ?? '')
+  // a saída paga uma fatura de cartão (chave de lib/faturasAPagar.ts): ao salvar, vira o pagamento da fatura
+  const [fatura, setFatura] = useState('')
+  const faturas = !p.inicial && p.aoPagarFatura ? p.faturasAPagar ?? [] : []
   /** Entrada que é empréstimo de alguém ainda sem dívida: a dívida nasce ao salvar. */
   const [novoEmprestimo, setNovoEmprestimo] = useState(false)
   const [quemEmprestou, setQuemEmprestou] = useState('')
@@ -358,6 +365,11 @@ export function FormLancamento(p: FormLancProps) {
     if (!data) return setErro(tx('Escolha a data.'))
     if (!dataPlausivel(data)) return setErro(erroDataFora())
     if (forma === 'credito' && !p.inicial && !cartao) return setErro(tx('Escolha o cartão de crédito da compra.'))
+    // pagamento de fatura: não vira saída (as compras do cartão já são os gastos); abre o pagamento da fatura já preenchido
+    if (fatura && tipo === 'saida' && !cartao && p.aoPagarFatura && faturas.some((x) => x.chave === fatura)) {
+      p.aoPagarFatura(fatura, { valor: n, data, bancoId: bancoId || null })
+      return p.aoFechar()
+    }
     if (estrangeira && (!taxa || taxa <= 0)) return setErro(tx('Digite quanto vale 1 {0} em {1}.', infoMoeda(moeda).nome.toLowerCase(), simbolo(principal)))
     if (estrangeira && cotacaoInvertida(taxa, moeda, principal, p.taxas)) return setErro(tx('A cotação parece estar ao contrário (o valor ficaria centenas de vezes maior ou menor). Toque em “Desvirar” ou confira.'))
     if (estrangeira && valorGrandeDemais(Math.round(n * taxa! * 100) / 100)) return setErro(erroValorGrande())
@@ -678,24 +690,31 @@ export function FormLancamento(p: FormLancProps) {
         )}
         {tipo === 'saida' && !cartao && (
           <>
-            {(v.dividas || dividaId || novoEmprestimo || p.aoNovaDivida) && (
+            {(v.dividas || dividaId || novoEmprestimo || p.aoNovaDivida || faturas.length > 0) && (
               <label className="campo">
                 <span className="campo-rotulo">{tx('Isso paga ou empresta para alguém?')} <small>(opcional)</small></span>
-                <Seletor valor={novoEmprestimo ? NOVO : [...devo, ...jaEmprestei].some((d) => d.id === dividaId) ? dividaId : ''}
+                <Seletor valor={fatura ? `fatura:${fatura}` : novoEmprestimo ? NOVO : [...devo, ...jaEmprestei].some((d) => d.id === dividaId) ? dividaId : ''}
                   rotulo={tx('Isso paga ou empresta para alguém?')}
                   aoMudar={(id) => {
+                    if (id.startsWith('fatura:')) { setFatura(id.slice(7)); setNovoEmprestimo(false); setDividaId(''); return }
+                    setFatura('')
                     setNovoEmprestimo(id === NOVO)
                     if (id === NOVO) { setDividaId(''); setMexeuDivida(true) } else if (jaEmprestei.some((d) => d.id === id)) { setDividaId(id); setMexeuDivida(true) } else escolherDivida(id)
                   }}
                   opcoes={[
                     { valor: '', rotulo: tx('Nenhuma (só entra como gasto)') },
                     ...(p.aoNovaDivida ? [{ valor: NOVO, rotulo: tx('Emprestei para alguém (criar o que me devem)') }] : []),
+                    ...faturas.map((x) => ({
+                      valor: `fatura:${x.chave}`, rotulo: `${tx('Fatura do {0}', x.cartao.nome)} · ${tx('falta {0}', fmtValor(x.f.falta))}`,
+                      grupo: tx('Estou pagando a fatura do cartão'),
+                    })),
                     ...devo.map((d) => ({ valor: d.id, rotulo: nomeComParcela(d), grupo: tx('Estou pagando uma dívida (ela diminui)') })),
                     ...jaEmprestei.map((d) => ({
                       valor: d.id, rotulo: `${d.descricao}${d.pessoa && !d.descricao.includes(d.pessoa) ? ` · ${d.pessoa}` : ''}`,
                       grupo: tx('Emprestei mais para quem já me devia (o que falta receber aumenta)'),
                     })),
                   ]} />
+                {fatura && <span className="campo-ajuda">{tx('Ao salvar, isto vira o pagamento desta fatura, igual ao da aba Cartões. Não entra como gasto de novo: as compras do cartão já contam.')}</span>}
                 {dividaId && devo.some((d) => d.id === dividaId) && <span className="campo-ajuda">{tx('A dívida diminui sozinha com este pagamento.')}</span>}
                 {dividaId && jaEmprestei.some((d) => d.id === dividaId) && <span className="campo-ajuda">{tx('O que falta receber aumenta sozinho com este dinheiro que você emprestou.')}</span>}
                 {novoEmprestimo && (

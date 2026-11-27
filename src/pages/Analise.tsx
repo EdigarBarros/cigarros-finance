@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { faturaDoDestino } from '../lib/faturasAPagar'
 import { compararRetratos, retratoDe, type Acao, type Analise as DadosAnalise, type EtapaDoPlano, type Mudanca, type Retrato } from '../lib/analise'
 import { fmtDataCurta } from '../lib/format'
 import { useMovimento } from '../lib/tema'
@@ -88,7 +89,9 @@ export function Analise(c: Ctx) {
       </footer>
       {planejando && (
         <Planejamento a={a} planejamento={c.planejamento} salvar={c.salvarPlanejamento} aoFechar={() => setPlanejando(false)}
-          aoLancarEntrada={() => { setPlanejando(false); c.novoLancamento('entrada') }} />
+          aoLancarEntrada={() => { setPlanejando(false); c.novoLancamento('entrada') }}
+          faturaDe={(d) => faturaDoDestino(c.faturasAPagar, d)}
+          aoPagarFatura={(chave) => { setPlanejando(false); c.pagarFatura(chave, undefined, () => setPlanejando(true)) }} />
       )}
     </div>
   )

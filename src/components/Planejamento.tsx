@@ -81,6 +81,10 @@ interface Props {
   aoFechar: () => void
   aoLancarEntrada: () => void
   inicial?: QualMes
+  /** A conta é uma fatura de cartão com o que pagar: a chave dela (lib/faturasAPagar.ts), ou null. */
+  faturaDe?: (d: Destino) => string | null
+  /** Abre o pagamento da fatura (o mesmo da tela Cartões). */
+  aoPagarFatura?: (chave: string) => void
 }
 
 export function Planejamento(props: Props) {
@@ -96,7 +100,7 @@ export function Planejamento(props: Props) {
   return createPortal(<Mesa key={q.mes} {...props} q={q} qual={qual} setQual={setQual} />, document.body)
 }
 
-function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancarEntrada }: Props & { q: Quadro; qual: QualMes; setQual: (q: QualMes) => void }) {
+function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancarEntrada, faturaDe, aoPagarFatura }: Props & { q: Quadro; qual: QualMes; setQual: (q: QualMes) => void }) {
   // usar o dinheiro guardado é escolha da pessoa, guardada com o plano do mês: ligado, cada lugar com dinheiro guardado
   // vira mais uma barra (só para pagar contas e dívidas)
   const [usarGuardado, setUsarGuardado] = useState(() => planejamento[base.mes]?.comGuardado === true)
@@ -451,7 +455,13 @@ function Mesa({ q: base, qual, setQual, planejamento, salvar, aoFechar, aoLancar
       )}
       {ajuste && <Ajuste q={q} partes={partes} entrada={ajuste.entrada} conta={ajuste.conta}
         aoMudar={(v) => setPartes((ps) => mudarParte(q, ps, ajuste.entrada, ajuste.conta, v))}
-        aoFechar={() => setAjuste(null)} />}
+        aoFechar={() => setAjuste(null)}
+        aoPagarFatura={(() => {
+          const d = destinoDe(q, ajuste.conta)
+          const chave = d && aoPagarFatura ? faturaDe?.(d) ?? null : null
+          // sair com o plano sem salvar pergunta antes, como fechar a mesa
+          return chave ? () => { setAjuste(null); sair(() => aoPagarFatura!(chave)) } : undefined
+        })()} />}
       {aviso && <div key={aviso.id} className={`pj-aviso ${aviso.tom}`} role="status">{aviso.texto}</div>}
       {pergunta && (
         <>
@@ -651,8 +661,10 @@ function Dicas({ dicas, aoFazer, aoUsarGuardado, aoUsarAReceber }: {
 
 // ---------- ajustar uma fatia: tudo, metade, outro valor, tirar ----------
 
-function Ajuste({ q, partes, entrada, conta, aoMudar, aoFechar }: {
+function Ajuste({ q, partes, entrada, conta, aoMudar, aoFechar, aoPagarFatura }: {
   q: Quadro; partes: Parte[]; entrada: string; conta: string; aoMudar: (v: number) => void; aoFechar: () => void
+  /** Só para fatura de cartão: registrar o pagamento dela (a mesa volta depois, com a fatia travada como paga). */
+  aoPagarFatura?: () => void
 }) {
   const p = partes.find((x) => x.entrada === entrada && x.conta === conta)
   const f = fonteDe(q, entrada)!, d = destinoDe(q, conta)!
@@ -707,6 +719,9 @@ function Ajuste({ q, partes, entrada, conta, aoMudar, aoFechar }: {
               : faltaDepois > 0.009 ? tx('Ficam {0} para pagar com outra entrada.', fmtValor(faltaDepois))
                 : tx('Com isso, a conta fica toda paga.')}
         </p>
+        {aoPagarFatura && (
+          <button className="btn pj-pagar-fatura" onClick={aoPagarFatura}><Icone nome="cartao" tamanho={15} /> {tx('Já paguei: registrar o pagamento da fatura')}</button>
+        )}
         <span className="pj-ajuste-botoes">
           <button className="btn pj-tirar" onClick={() => { aoMudar(0); aoFechar() }}><Icone nome="lixeira" tamanho={15} /> {tx('Tirar daqui')}</button>
           <button className="btn primario" onClick={aoFechar}>{tx('Pronto')}</button>

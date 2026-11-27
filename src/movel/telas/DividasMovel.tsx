@@ -6,6 +6,7 @@
  * (lib/dividas.ts), os mesmos da tela do computador.
  */
 import { useState } from 'react'
+import { FaturasComoDivida } from '../../components/FaturasComoDivida'
 import { FormBaixa } from '../../components/FormBaixa'
 import { FormDivida } from '../../components/Formularios'
 import { Colunas } from '../../components/Vitrine'
@@ -91,6 +92,7 @@ export function DividasMovel({ c, aoMudarTom }: { c: Ctx; aoMudarTom: (t: Tom, c
       <BotoesDeAcao acoes={acoes} />
 
       <div className="widgets-movel">
+        {!recebe && <FaturasComoDivida c={c} />}
         {!lista.length && !(esperaAbertas.length && !recebe) ? <VazioLado recebe={recebe} aoNova={() => setEditando('nova')} /> : (
           <>
             {r.itens.length > 0 && (

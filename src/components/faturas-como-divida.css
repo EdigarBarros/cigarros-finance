@@ -1,0 +1,28 @@
+/* Faturas de cartão na tela Dívidas (components/FaturasComoDivida.tsx) */
+.fcd { display: grid; gap: 10px; padding: 16px 18px; border-radius: var(--raio-l, 20px); background: var(--superficie); border: 1px solid var(--borda); }
+.fcd-topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.fcd-topo h3 { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 16px; }
+.fcd-topo h3 svg { color: var(--divida); }
+.fcd-total { font-weight: 700; font-variant-numeric: tabular-nums; color: var(--divida); white-space: nowrap; }
+.fcd-nota { margin: 0; font-size: 13px; color: var(--texto-2); }
+.fcd-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.fcd-item {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 10px 12px;
+  border-radius: var(--raio-m, 14px); background: var(--superficie-2); border: 1px solid var(--borda);
+}
+.fcd-item.atrasada { border-color: color-mix(in srgb, var(--saida) 45%, var(--borda)); }
+.fcd-texto { display: grid; gap: 2px; min-width: 0; }
+.fcd-texto b { font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fcd-texto small { font-size: 12.5px; color: var(--texto-2); }
+.fcd-item.atrasada .fcd-texto small { color: var(--saida); }
+.fcd-valor { display: grid; justify-items: end; gap: 1px; }
+.fcd-valor b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fcd-valor small { font-size: 12px; color: var(--texto-2); }
+.fcd-acoes { display: flex; align-items: center; gap: 10px; }
+.fcd-acoes .btn { height: 36px; padding: 0 14px; white-space: nowrap; }
+@media (max-width: 720px) {
+  .fcd { padding: 14px; }
+  .fcd-item { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .fcd-acoes { grid-column: 1 / -1; justify-content: space-between; }
+  .fcd-acoes .btn { flex: 1; }
+}

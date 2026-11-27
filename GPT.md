@@ -2300,3 +2300,29 @@ entra em ~0,4 s, com ~30 ms entre os blocos.
 2.9.2 (ainda não enviado): leva o 2.9.2 mais a fluidez do #311 (lente elástica das abas). `versionCode` 30 → 31. Chave e
 senha do Drive do dono, só para assinar, apagadas em seguida. Conferido: `jarsigner -verify`, impressão da chave de upload
 (A7:07:94:…:5D:9D) e o código novo dentro do pacote.
+
+### 27/11/2026 — Claude — Fatura de cartão como dívida, paga de qualquer tela
+
+**Pedido.** O dono pagou a fatura do cartão e não conseguia registrar isso pelo Planejamento nem associar uma saída à fatura.
+Pediu que a fatura apareça automaticamente como dívida e que mexer nela tenha a configuração própria da fatura, sincronizada
+com a aba Cartões.
+
+**O que mudou.** O pagamento em todas as telas é o próprio `FormPagarFatura` da tela Cartões (pagar parte, quitar, juros,
+cofrinho). Então Dívidas, Lançamentos, Planejamento e Cartões gravam a mesma coisa (`faturas_parciais`/`faturas_pagas`) e
+ficam sempre iguais.
+- `src/lib/faturasAPagar.ts`: as faturas com o que pagar hoje, pelo cálculo da tela Cartões. Entram as atrasadas e a do
+  mês; com a do mês já paga, a próxima. `faturaDoDestino` acha a fatura de uma conta do Planejamento.
+- `Painel.tsx` + `contexto.ts`: `c.faturasAPagar`, `c.pagarFatura(chave, inicial?, depois?)` (abre o formulário, preenchido)
+  e `c.verCartao(id)`. `FormPagarFatura` ganhou `inicial` (valor, dia e banco).
+- **Dívidas** (`components/FaturasComoDivida.tsx`, computador e celular, lado "Devo"): seção "Faturas de cartão" com o que
+  falta, o que já foi pago, o vencimento (atrasada em vermelho), "Pagar fatura" e "Ver no cartão".
+- **Lançamentos** (`FormLancamento`): em "Isso paga ou empresta para alguém?", o grupo "Estou pagando a fatura do cartão".
+  Ao salvar, a saída não é gravada (as compras do cartão já são os gastos) e abre o pagamento da fatura com o valor, o dia
+  e o banco digitados.
+- **Planejamento**: a fatia de uma fatura ganha "Já paguei: registrar o pagamento da fatura". A mesa sai (perguntando se há
+  mudança sem salvar), abre o pagamento e volta sozinha, com a fatia travada como paga.
+
+**Validação.** tsc, lint, build. Novo `scripts/app-de-demonstracao/testar-fatura-como-divida.cjs`, 22 OK: as três formas
+gravam o pagamento; pagar parte deixa só o que falta; a saída não vira gasto; a mesa volta com a fatia paga; no celular não
+passa da largura. Sem falha: `testar-planejamento` (56), `testar-plano-travado` (30), `testar-fatura-em-parte`,
+`testar-movel` (379), `testar-correcoes`, `testar-a-receber` (18), `scripts/painel/testar.mjs` 55/55.

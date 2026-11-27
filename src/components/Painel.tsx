@@ -9,6 +9,7 @@ import {
   chaveAdiantada, chaveRecusa, comAdiantadas, ehChaveAdiantada, faltaPagarNoMes, pedirEntradaFixa, lancamentoDaBaixa, memoriaDasContas, parecidosNosOutrosMeses, situacoesDoMes, sugestoesDoMes,
   type SituacaoConta, type SugestaoVinculo,
 } from '../lib/contasFixas'
+import { faturasAPagar } from '../lib/faturasAPagar'
 import { contaNasSaidas, garantidoDo, nomeDaFatura, renegociada, situacoesDoMes as situacoesDosCartoes, totalFaturasAPagar, totalFaturasDoMes } from '../lib/cartoes'
 import { COR } from '../lib/charts'
 import { analisar, compararRetratos, retratoDe, type Reanalise, type Retrato } from '../lib/analise'
@@ -85,6 +86,8 @@ const PaginaAnalise = lazy(() => paginas.Analise().then((m) => ({ default: m.Ana
 const PaginaInvest = lazy(() => paginas.Invest().then((m) => ({ default: m.Invest })))
 const Contas = lazy(() => paginas.Contas().then((m) => ({ default: m.Contas })))
 const Cartoes = lazy(() => paginas.Cartoes().then((m) => ({ default: m.Cartoes })))
+// o pagamento da fatura é o mesmo da tela Cartões, aberto de qualquer tela (Dívidas, Lançamentos, Planejamento)
+const FormPagarFatura = lazy(() => paginas.Cartoes().then((m) => ({ default: m.FormPagarFatura })))
 const Dividas = lazy(() => paginas.Dividas().then((m) => ({ default: m.Dividas })))
 const Metas = lazy(() => paginas.Metas().then((m) => ({ default: m.Metas })))
 const Patrimonio = lazy(() => paginas.Patrimonio().then((m) => ({ default: m.Patrimonio })))
@@ -202,6 +205,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const [bancoAberto, setBancoAberto] = useState<string | null>(null)
   /** Cartão que a tela Cartões abre primeiro (o da compra que acabou de ser lançada). */
   const [cartaoAberto, setCartaoAberto] = useState<string | null>(null)
+  // a fatura sendo paga de fora da tela Cartões (chave de lib/faturasAPagar.ts) e o que já veio preenchido
+  const [pagandoFatura, setPagandoFatura] = useState<{ chave: string; inicial?: { valor?: number; data?: string; bancoId?: string | null }; depois?: () => void } | null>(null)
   /** Compra no cartão lançada na tela Lançamentos: a ida para a tela Cartões acontece quando o formulário fecha (com "Salvar e lançar outro" ele continua aberto). */
   const idaParaCartao = useRef<{ ano: number; mes: number; cartaoId: string; compraId: string } | null>(null)
   /** A compra recém-lançada que a tela Cartões destaca (rola até ela). */
@@ -689,6 +694,11 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
   const caixaHoje = mesEfetivo(d.meses, hoje.getFullYear(), hoje.getMonth() + 1).caixa
   const garantidoDe = (k: (typeof cartoes.cartoes)[number]) => garantidoDo(k, k.banco_id ? caixaHoje[k.banco_id]?.caixinha : 0)
   const faturas = comFaturas ? situacoesDosCartoes(cartoes.cartoes, cartoes.compras, cartoes.faturasPagas, ano, mes, undefined, garantidoDe, cartoes.parciais) : []
+  // as faturas com o que pagar hoje: em Dívidas, no "Isso paga…" das saídas e no Planejamento, como dívida
+  const faturasParaPagar = useMemo(
+    () => (comFaturas ? faturasAPagar(cartoes.cartoes, cartoes.compras, cartoes.faturasPagas, cartoes.parciais, hojeIso) : []),
+    [comFaturas, cartoes.cartoes, cartoes.compras, cartoes.faturasPagas, cartoes.parciais, hojeIso],
+  )
   // faturas que venceram sem pagar (em qualquer cartão), para o alerta das dicas
   const faturasAtrasadas = faturas.flatMap((s) => [...s.atrasadas, ...(s.status === 'atrasada' ? [s] : [])].map((f) => ({ ...f, cartao: s.cartao })))
 
@@ -897,6 +907,9 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     ligarAConta,
     recusarVinculo: (lancId, contaId) => recusarVinculos([lancId], contaId),
     cartaoAberto, compraDestacada,
+    faturasAPagar: faturasParaPagar,
+    pagarFatura: (chave, inicial, depois) => setPagandoFatura({ chave, inicial, depois }),
+    verCartao: (cartaoId) => { irPara('cartoes'); setCartaoAberto(cartaoId) },
     bancoAberto,
     abrirBanco: (id) => {
       irPara('patrimonio')
@@ -1084,6 +1097,11 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
     <input ref={arquivo} type="file" accept=".xlsx,.xlsm,.xls" hidden onChange={(e) => e.target.files?.[0] && importar(e.target.files[0])} />
 
     <Suspense fallback={null}>
+    {pagandoFatura && (() => {
+      const alvo = faturasParaPagar.find((x) => x.chave === pagandoFatura.chave)
+      return alvo ? <FormPagarFatura c={ctx} alvo={{ cartao: alvo.cartao, f: alvo.f }} inicial={pagandoFatura.inicial}
+        aoFechar={() => { const depois = pagandoFatura.depois; setPagandoFatura(null); depois?.() }} /> : null
+    })()}
     {form && (
       <FormLancamento
         key={form.inicial?.id ?? form.preset?.divida_id ?? 'novo'}
@@ -1095,6 +1113,8 @@ export function Painel({ userId, email, nome: nomeConta, assinatura, confirmando
         historico={d.lancs}
         dividas={dividasDoForm}
         aoNovaDivida={criarEmprestimo}
+        faturasAPagar={faturasParaPagar}
+        aoPagarFatura={(chave, inicial) => setPagandoFatura({ chave, inicial })}
         inicioDivida={(id) => inicioDaDivida(d.saldos, id)}
         saldoDaDivida={(id) => saldoMaisRecenteDaDivida(d.saldos, id)}
         aoMoverInicioDivida={d.moverInicioDivida}
