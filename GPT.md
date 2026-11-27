@@ -2326,3 +2326,9 @@ ficam sempre iguais.
 gravam o pagamento; pagar parte deixa só o que falta; a saída não vira gasto; a mesa volta com a fatia paga; no celular não
 passa da largura. Sem falha: `testar-planejamento` (56), `testar-plano-travado` (30), `testar-fatura-em-parte`,
 `testar-movel` (379), `testar-correcoes`, `testar-a-receber` (18), `scripts/painel/testar.mjs` 55/55.
+
+### 27/11/2026 — Claude — App Android 2.9.4 (código 32)
+
+**Estado:** `.aab` gerado, assinado e entregue ao Edigar; falta enviar no Play Console. Substitui o 2.9.3 (ainda não
+enviado): leva o 2.9.3 mais a fatura como dívida (#313). `versionCode` 31 → 32. Chave do Drive do dono só para assinar,
+apagada em seguida. Conferido: `jarsigner -verify`, impressão da chave de upload (A7:07:94:…:5D:9D) e o código novo no pacote.
