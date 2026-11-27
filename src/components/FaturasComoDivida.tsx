@@ -1,6 +1,7 @@
 import type { Ctx } from '../pages/contexto'
 import { fmtDataCurta, fmtValor } from '../lib/format'
 import { hojeLocal } from '../lib/contasFixas'
+import { nomeDaFatura } from '../lib/cartoes'
 import { tx } from '../lib/textos'
 import { BancoIcone } from './BancoIcone'
 import { Icone } from './Icone'
@@ -30,7 +31,7 @@ export function FaturasComoDivida({ c }: { c: Ctx }) {
             <li key={chave} className={`fcd-item ${venceu ? 'atrasada' : ''}`}>
               <BancoIcone nome={cartao.nome} cor={cartao.cor} tamanho={36} />
               <span className="fcd-texto">
-                <b translate="no">{tx('Fatura do {0}', cartao.nome)}</b>
+                <b translate="no">{tx('Fatura de {0} do {1}', nomeDaFatura(f.ano, f.mes), cartao.nome)}</b>
                 <small>
                   {venceu ? tx('venceu {0}', fmtDataCurta(f.vencimento)) : tx('vence {0}', fmtDataCurta(f.vencimento))}
                   {f.pagoEmParte > 0 && <> · {tx('já pagou {0}', fmtValor(f.pagoEmParte))}</>}

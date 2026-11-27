@@ -31,6 +31,9 @@ const pagos = (t) => (t.db.faturas_parciais?.length ?? 0) + (t.db.faturas_pagas?
       await itens.first().getByRole('button', { name: 'Pagar fatura' }).click(); await p.waitForTimeout(600)
       const campo = p.locator('.modal input[inputmode="decimal"]').first()
       ok(Math.abs(reais(await campo.inputValue()) - falta) < 0.02, `o pagamento abre com o que falta da ${nome} (${falta})`)
+      ok(/^Fatura de \S+ do /.test(nome), `Dívidas diz de qual mês é a fatura (${nome})`)
+      await campo.fill(String(Math.round((falta + 50) * 100)))
+      ok(/mais do que falta/.test(await p.locator('.modal').textContent()), 'avisa quando o valor passa do que falta')
       const metade = Math.round(falta * 50) / 100
       // o campo é de dinheiro, como caixa registradora: os dígitos entram em centavos
       await campo.fill(String(Math.round(metade * 100)))
@@ -54,8 +57,9 @@ const pagos = (t) => (t.db.faturas_parciais?.length ?? 0) + (t.db.faturas_pagas?
       await p.locator('.modal input[inputmode="decimal"]').first().fill('10000')
       const campo = p.locator('.modal label.campo', { hasText: 'Isso paga ou empresta' })
       await campo.locator('.escolha-gatilho').click(); await p.waitForTimeout(300)
-      const opcao = p.locator('[role=listbox] [role=option]', { hasText: 'Fatura do' }).first()
+      const opcao = p.locator('[role=listbox] [role=option]', { hasText: 'Fatura de' }).first()
       ok(await opcao.count() > 0, '"Isso paga…" lista as faturas do cartão')
+      ok(/Fatura de \S+ do .+ · vence .+ · falta/.test(await opcao.textContent()), `a opção diz de qual mês é a fatura e quando vence (${(await opcao.textContent()).trim()})`)
       await opcao.click(); await p.waitForTimeout(300)
       ok(/vira o pagamento desta fatura/.test(await campo.textContent()), 'avisa que vira o pagamento da fatura e não um gasto')
       const lancsAntes = t.db.lancamentos.length, antes = pagos(t)

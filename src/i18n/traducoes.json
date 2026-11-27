@@ -19054,5 +19054,13 @@
   "Já paguei: registrar o pagamento da fatura": {
     "en": "Already paid: record the bill payment",
     "es": "Ya pagué: registrar el pago de la factura"
+  },
+  "Fatura de {0} do {1}": {
+    "en": "{1} bill for {0}",
+    "es": "Factura de {0} de {1}"
+  },
+  "Você digitou {0}, mais do que falta na fatura de {1} ({2}). Confira se é esta mesma fatura.": {
+    "en": "You entered {0}, more than what is left on the {1} bill ({2}). Check that it is the right bill.",
+    "es": "Escribiste {0}, más de lo que falta en la factura de {1} ({2}). Verifica que sea esta misma factura."
   }
 }

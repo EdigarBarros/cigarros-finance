@@ -7,7 +7,7 @@ import { formaDe, formaPelaDescricao, formasDoTipo, type FormaPagamento } from '
 import { COR } from '../lib/charts'
 import { calendarioDe, dividaPelaDescricao, inicioPelaProxima, jurosAoAno, jurosEmbutidos, meDevem, mesesAntes, nativoDiv, parcelasDe, somaMesesData, type SituacaoDivida } from '../lib/dividas'
 import type { FaturaAPagar } from '../lib/faturasAPagar'
-import { dataPadrao, fmtDataLonga, fmtMesAno, fmtMoeda, fmtTaxa, fmtTaxaAno, fmtValor, mesEAno, parseNumero, simbolo } from '../lib/format'
+import { dataPadrao, fmtDataCurta, fmtDataLonga, fmtMesAno, fmtMoeda, fmtTaxa, fmtTaxaAno, fmtValor, mesEAno, parseNumero, simbolo } from '../lib/format'
 import { casasDaMoeda, dataPlausivel, erroDataFora, erroValorGrande, mascarar, paraCampoMoeda, valorGrandeDemais } from '../lib/dinheiro'
 import { cotacaoInvertida, infoMoeda, moedasUsaveis, type Taxas } from '../lib/moedas'
 import { visao } from '../lib/perfil'
@@ -705,7 +705,8 @@ export function FormLancamento(p: FormLancProps) {
                     { valor: '', rotulo: tx('Nenhuma (só entra como gasto)') },
                     ...(p.aoNovaDivida ? [{ valor: NOVO, rotulo: tx('Emprestei para alguém (criar o que me devem)') }] : []),
                     ...faturas.map((x) => ({
-                      valor: `fatura:${x.chave}`, rotulo: `${tx('Fatura do {0}', x.cartao.nome)} · ${tx('falta {0}', fmtValor(x.f.falta))}`,
+                      valor: `fatura:${x.chave}`,
+                      rotulo: `${tx('Fatura de {0} do {1}', nomeDaFatura(x.f.ano, x.f.mes), x.cartao.nome)} · ${tx('vence {0}', fmtDataCurta(x.f.vencimento))} · ${tx('falta {0}', fmtValor(x.f.falta))}`,
                       grupo: tx('Estou pagando a fatura do cartão'),
                     })),
                     ...devo.map((d) => ({ valor: d.id, rotulo: nomeComParcela(d), grupo: tx('Estou pagando uma dívida (ela diminui)') })),
