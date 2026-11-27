@@ -2484,3 +2484,7 @@ sem pagar 170 → 7, mas multa e juros +74% (a reserva do dia a dia empurra fatu
 **Pendências.** Os pedidos 1–6 de `docs/cairo/coordenacao.md` (essencial declarado, "sem juros" × "não sei", tipo do credor,
 prioridade da pessoa, registro das decisões, ligação fonte ↔ agenda). Sem migração nesta etapa.
 
+**Publicação.** PR #323 (squash `2af0c96`) no branch de produção; deploy da Vercel `READY` com `www.opuscash.com.br`;
+`versao.json` = `2af0c9695987`. **App Android: não gerado.** Este ambiente não tem o Android SDK e a rede bloqueia
+`dl.google.com`. A próxima versão do app (depois da 2.9.7, código 35) precisa levar o #322 (Cairo, dados) e o #323 (decisão).
+
